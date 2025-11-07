@@ -7,7 +7,7 @@
     body {
         margin: 0;
         padding: 0;
-        background: #0e0e0e;
+        background: url('statedelic.jpeg') center center / cover no-repeat fixed;
         color: #f1f1f1;
         font-family: "Courier New", monospace;
         letter-spacing: 2px;
@@ -41,6 +41,14 @@
 </style>
 </head>
 <body>
+body::after {
+    content: "";
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.35); /* Adjust darker or lighter */
+    z-index: -1;
+}
 
 <div class="title">soitbegins.xyz</div>
 
@@ -50,3 +58,4 @@
 
 </body>
 </html>
+
