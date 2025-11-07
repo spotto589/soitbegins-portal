@@ -20,101 +20,93 @@
         font-family: "Courier New", monospace;
     }
 
+    /* Dark overlay */
     body::after {
         content: "";
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.45);
+        background: rgba(0,0,0,0.55);
         z-index: -1;
     }
 
     .static-text {
-        font-size: clamp(40px, 11vw, 150px);
-        letter-spacing: clamp(6px, 2vw, 22px);
-        color: white;
+        font-size: clamp(40px, 12vw, 160px);
+        letter-spacing: clamp(4px, 1.6vw, 20px);
+        color: #39ff14;
         text-decoration: none;
         cursor: pointer;
         position: relative;
-        animation: flicker 1.6s infinite steps(2, end);
+        animation: chaos 0.15s infinite;
+        filter: drop-shadow(0 0 12px #39ff14);
     }
 
-    /* HOT PINK */
+    /* Multi-layer glitch */
     .static-text::before,
-    .static-text::after,
-    .static-text::nth-layer {
+    .static-text::after {
         content: "S T A T ! C";
         position: absolute;
-        left: 0; top: 0;
+        left: 0;
+        top: 0;
         width: 100%;
-        opacity: 0.85;
-        mix-blend-mode: screen;
+        color: #39ff14;
+        opacity: 0.7;
+        filter: drop-shadow(0 0 22px #39ff14);
     }
 
     .static-text::before {
-        color: #ff2bff;
-        animation: slice1 1.2s infinite;
+        animation: tear1 0.09s infinite;
     }
 
     .static-text::after {
-        color: #00f6ff;
-        animation: slice2 1.4s infinite;
+        animation: tear2 0.11s infinite;
     }
 
-    .nth-layer {
-        color: #39ff14;
-        animation: slice3 1.3s infinite;
+    @keyframes chaos {
+        0% { transform: translate(0,0); }
+        20% { transform: translate(-2px,1px); }
+        40% { transform: translate(3px,-2px); }
+        60% { transform: translate(-1px,-3px); }
+        80% { transform: translate(2px,1px); }
+        100% { transform: translate(0,0); }
     }
 
-    /* We attach the 4th color in JS so we can flicker it */
+    @keyframes tear1 {
+        0% { clip-path: inset(0 0 80% 0); }
+        50% { clip-path: inset(40% 0 20% 0); }
+        100% { clip-path: inset(10% 0 60% 0); }
+    }
+
+    @keyframes tear2 {
+        0% { clip-path: inset(80% 0 0 0); }
+        50% { clip-path: inset(20% 0 40% 0); }
+        100% { clip-path: inset(60% 0 10% 0); }
+    }
 </style>
 </head>
 
 <body>
 
-<a href="static.html" class="static-text">S T A T ! C</a>
-<div class="nth-layer" style="pointer-events:none;"></div>
+<a href="static.html" class="static-text" id="staticText">S T A T ! C</a>
+
+<!-- White noise audio -->
+<audio id="staticSound" preload="auto">
+    <source src="https://upload.wikimedia.org/wikipedia/commons/0/0d/White-noise-sound-20sec-mono-44100Hz.flac">
+</audio>
 
 <script>
-/* Add the 4th neon layer dynamically */
-const txt = document.querySelector(".static-text");
-const layer4 = document.createElement("div");
-layer4.className = "nth-layer";
-layer4.innerText = "S T A T ! C";
-layer4.style.color = "#fff82b"; /* Neon Yellow */
-layer4.style.position = "absolute";
-layer4.style.left = "50%";
-layer4.style.top = "50%";
-layer4.style.transform = "translate(-50%, -50%)";
-layer4.style.mixBlendMode = "screen";
-document.body.appendChild(layer4);
+const txt = document.getElementById("staticText");
+const noise = document.getElementById("staticSound");
 
-/* Keyframes injected at runtime (cleaner render) */
-const style = document.createElement("style");
-style.innerHTML = `
-@keyframes flicker {
-    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
-    20%, 24%, 55% { opacity: 0.4; }
-}
+noise.volume = 0.28; // adjust loudness
 
-@keyframes slice1 {
-  0% { clip-path: inset(0 0 85% 0); transform: translate(-2px, -2px); }
-  50% { clip-path: inset(40% 0 40% 0); transform: translate(2px, 1px); }
-  100% { clip-path: inset(80% 0 10% 0); transform: translate(-1px, 2px); }
-}
+txt.addEventListener("mouseover", () => {
+    noise.currentTime = 0;
+    noise.play();
+});
 
-@keyframes slice2 {
-  0% { clip-path: inset(80% 0 0 0); transform: translate(2px, 2px); }
-  50% { clip-path: inset(30% 0 50% 0); transform: translate(-3px, -1px); }
-  100% { clip-path: inset(50% 0 20% 0); transform: translate(1px, -2px); }
-}
-
-@keyframes slice3 {
-  0% { clip-path: inset(60% 0 10% 0); transform: translate(-1px, 1px); }
-  50% { clip-path: inset(10% 0 60% 0); transform: translate(3px, -2px); }
-  100% { clip-path: inset(0 0 85% 0); transform: translate(-2px, 0); }
-}
-`;
-document.head.appendChild(style);
+txt.addEventListener("mouseout", () => {
+    noise.pause();
+});
 </script>
 
 </body>
