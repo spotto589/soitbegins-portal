@@ -11,16 +11,11 @@
         color: #dfb95a; /* gold */
         font-family: "Courier New", monospace;
         letter-spacing: 2px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between; /* spread vertically */
-        align-items: center;
         height: 100vh;
-        text-align: center;
-        padding: 60px 0; /* breathing space top+bottom */
+        overflow: hidden; /* ✅ no scrolling */
     }
 
-    /* Dark overlay so text stays readable */
+    /* Dark overlay */
     body::after {
         content: "";
         position: fixed;
@@ -32,11 +27,21 @@
         z-index: -1;
     }
 
+    /* Flex container for perfect top/middle/bottom placement */
+    .layout {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between; /* ✅ aligns top / middle / bottom */
+        align-items: center;
+        padding: 40px 0; /* lightweight spacing, no scroll */
+    }
+
     .section {
-        font-size: 36px; /* bigger text */
+        font-size: 42px; /* ✅ bigger text */
         transition: 0.35s;
         text-decoration: none;
-        color: #dfb95a; /* gold */
+        color: #dfb95a;
         cursor: pointer;
     }
 
@@ -48,11 +53,15 @@
 </head>
 <body>
 
-<a href="soitbegins.html" class="section">SO IT BEGINS</a>
+<div class="layout">
 
-<a href="static.html" class="section">S T A T ! C : : rEs0n4ncE_r1s!ng</a>
+    <a href="soitbegins.html" class="section">SO IT BEGINS</a>
 
-<a href="drew.html" class="section">DREW</a>
+    <a href="static.html" class="section">S T A T ! C : : rEs0n4ncE_r1s!ng</a>
+
+    <a href="drew.html" class="section">DREW</a>
+
+</div>
 
 </body>
 </html>
