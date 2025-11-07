@@ -9,65 +9,80 @@
     body {
         margin: 0;
         padding: 0;
-        background: url('statedelic.jpg') center center / cover no-repeat fixed;
         height: 100vh;
         width: 100vw;
         overflow: hidden;
         display: flex;
         justify-content: center;
         align-items: center;
-        position: relative;
         font-family: "Courier New", monospace;
+        background: #111;
+        position: relative;
         touch-action: manipulation;
     }
 
-    body::after {
+    /* ✅ Real TV STATIC background layer */
+    body::before {
         content: "";
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.55);
-        z-index: -1;
+        background: 
+            repeating-radial-gradient(circle, #fff 0 1px, transparent 1px 3px),
+            repeating-linear-gradient(90deg, #fff 0 1px, transparent 1px 3px),
+            repeating-linear-gradient(#fff 0 1px, transparent 1px 3px);
+        opacity: 0.23;   /* static strength */
+        mix-blend-mode: screen;
+        animation: staticNoise 0.08s steps(8) infinite;
     }
 
+    @keyframes staticNoise {
+        0% { transform: translate(0,0); }
+        25% { transform: translate(-1%, 2%); }
+        50% { transform: translate(2%, -1%); }
+        75% { transform: translate(-2%, -2%); }
+        100% { transform: translate(0,0); }
+    }
+
+    /* ✅ Main word */
     .static-text {
         font-size: clamp(40px, 12vw, 160px);
         letter-spacing: clamp(6px, 2vw, 22px);
-        color: #39ff14;
+        color: #ffffff;
         text-decoration: none;
-        filter: drop-shadow(0 0 18px #39ff14);
         cursor: pointer;
         user-select: none;
         display: flex;
         gap: clamp(6px, 1vw, 12px);
-    }
-
-    .char {
         position: relative;
-        display: inline-block;
-        transition: 0.12s ease-out;
-        animation: jitter 0.45s infinite alternate ease-in-out;
+        z-index: 5; /* always above static */
     }
 
-    /* subtle vertical shimmer drift per character */
-    @keyframes jitter {
-        0%   { transform: translateY(0); }
-        100% { transform: translateY(-2px); }
+    /* Flickering characters */
+    .char {
+        display: inline-block;
+        transition: 0.1s ease-out;
+        animation: drift 0.9s infinite ease-in-out alternate;
+    }
+
+    @keyframes drift {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(-2px); opacity: 0.85; }
     }
 </style>
-</head>
 
+</head>
 <body>
 
 <a href="static.html" class="static-text" id="glitchWord">S T A T ! C</a>
 
 <script>
-/* Characters used for mutation */
+/* Character flicker map */
 const glyphs = {
-  "S": ["S","5","§","Ś","$","Ƨ"],
-  "T": ["T","†","7","┼","Ŧ","Ƭ"],
-  "A": ["A","Λ","4","Δ","Å","Ʌ"],
-  "!": ["!","⁎","¡","⚠","⟡","︕"],
-  "C": ["C","⊂","↻","₡","ᑕ","☾"]
+  "S": ["S","5","§","$","Ś"],
+  "T": ["T","7","┼","†"],
+  "A": ["A","Λ","4","Δ"],
+  "!": ["!","¡","︕","⁘"],
+  "C": ["C","⊂","↻","₡"]
 };
 
 const container = document.getElementById("glitchWord");
@@ -84,26 +99,17 @@ baseText.forEach(letter => {
 
 const chars = document.querySelectorAll(".char");
 
-/* MATRIX RAIN FLICKER */
 function rainFlicker() {
   chars.forEach((el, i) => {
     const base = el.dataset.base;
-    const options = glyphs[base];
-    if (!options) return;
-
-    /* random alt glyph */
+    const options = glyphs[base] || [base];
     el.innerText = options[Math.floor(Math.random()*options.length)];
-
-    /* return to base with stagger delay */
-    setTimeout(() => {
-      el.innerText = base;
-    }, 100 + Math.random()*300);
+    setTimeout(() => { el.innerText = base; }, 120 + Math.random()*300 + i*40);
   });
 }
 
-/* Faster loop → more rain effect */
-setInterval(rainFlicker, 260); // <- increase/decrease flicker speed here
-
+/* ✅ "Rain" flicker speed — lower = faster */
+setInterval(rainFlicker, 200);
 </script>
 
 </body>
