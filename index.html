@@ -15,7 +15,7 @@
         overflow: hidden; /* no scroll */
     }
 
-    /* Dark overlay to help text stand out */
+    /* Overlay for readability */
     body::after {
         content: "";
         position: fixed;
@@ -33,45 +33,42 @@
         height: 100vh;
     }
 
-    /* Top */
-    .top {
-        position: absolute;
-        top: 20%; /* adjust up/down */
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 42px;
-    }
-
-    /* Middle (main focus) */
-    .middle {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 110px; /* <- MAIN SIZE */
-        letter-spacing: 10px;
-    }
-
-    /* Bottom */
-    .bottom {
-        position: absolute;
-        bottom: 22%; /* adjust up/down */
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 42px;
-    }
-
-    /* Hover styling (soft and clean) */
+    /* All text same size */
     .section {
+        font-size: 70px; /* <-- Change this to make all text bigger/smaller */
         text-decoration: none;
         color: #ffffff;
         transition: 0.35s;
         cursor: pointer;
     }
 
+    /* Top */
+    .top {
+        position: absolute;
+        top: 14%; /* <-- move up/down */
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    /* Middle */
+    .middle {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    /* Bottom */
+    .bottom {
+        position: absolute;
+        bottom: 12%; /* <-- move up/down */
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
     .section:hover {
-        filter: brightness(1.7);
-        letter-spacing: 12px;
+        letter-spacing: 10px;
+        filter: brightness(1.5);
     }
 </style>
 </head>
