@@ -20,7 +20,6 @@
         font-family: "Courier New", monospace;
     }
 
-    /* Dark wash */
     body::after {
         content: "";
         position: fixed;
@@ -33,54 +32,81 @@
         font-size: clamp(38px, 12vw, 150px);
         letter-spacing: clamp(6px, 2vw, 22px);
         color: #39ff14;
+        text-decoration: none;
         filter: drop-shadow(0 0 14px #39ff14);
         cursor: pointer;
-        text-decoration: none;
-        user-select: none;
         display: flex;
         gap: clamp(6px, 1vw, 12px);
+        user-select: none;
     }
 
     .char {
-        position: relative;
         display: inline-block;
-        transition: 0.25s ease-out;
+        transition: 0.15s ease-out;
     }
 
-    /* Flicker style */
-    @keyframes flicker {
-        0% { opacity: 1; }
-        45% { opacity: 0.9; transform: translateY(-1px); filter: brightness(1.2); }
-        50% { opacity: 0.4; transform: translateY(1px); filter: brightness(0.6); }
-        55% { opacity: 1; transform: translateY(0); filter: brightness(1.4); }
-        100% { opacity: 1; }
+    /* Subtle idle breathing motion */
+    .static-text {
+        animation: breathe 4s infinite ease-in-out;
     }
-
+    @keyframes breathe {
+        0%, 100% { filter: drop-shadow(0 0 14px #39ff14); }
+        50% { filter: drop-shadow(0 0 28px #39ff14); }
+    }
 </style>
 </head>
+
 <body>
 
-<a href="static.html" class="static-text" id="glitchWord">
-    <span class="char">S</span>
-    <span class="char">T</span>
-    <span class="char">A</span>
-    <span class="char">T</span>
-    <span class="char">!</span>
-    <span class="char">C</span>
-</a>
+<a href="static.html" class="static-text" id="glitchWord">S T A T ! C</a>
 
 <script>
-/* Alternate glyph sets for “rune flicker” */
-const alt = {
-    "S": ["S","5","§","Ś","﹩"],
-    "T": ["T","†","7","┼","Ŧ"],
-    "A": ["A","Λ","4","Å","Δ"],
-    "!": ["!","⁎","¡","︖","⟡"],
-    "C": ["C","⊂","↻","₡","Ḉ"]
+/*
+    NEW FLICKER ENGINE
+    - Always fires
+    - Works on iPhone / Android / Desktop
+    - Avoids cached text issues
+*/
+
+const glyphs = {
+  "S": ["S","5","§","Ś","$","Ƨ"],
+  "T": ["T","†","7","┼","Ŧ","Ƭ"],
+  "A": ["A","Λ","4","Δ","Å","Ʌ"],
+  "!": ["!","⁎","¡","⚠","⟡","︕"],
+  "C": ["C","⊂","↻","₡","ᑕ","☾"]
 };
 
-const chars = document.querySelectorAll(".char");
+const container = document.getElementById("glitchWord");
+let letters = [...container.textContent.replace(/\s/g,"")];
 
-function flickerChar(el) {
-    const base = el.innerText;
-    c
+container.innerHTML = ""; 
+letters.forEach(l => {
+  let span = document.createElement("span");
+  span.className = "char";
+  span.dataset.base = l;
+  span.textContent = l;
+  container.appendChild(span);
+});
+
+function flicker() {
+  document.querySelectorAll(".char").forEach((el, i) => {
+    const base = el.dataset.base;
+    const options = glyphs[base];
+    if(!options) return;
+
+    let newChar = options[Math.floor(Math.random()*options.length)];
+    el.textContent = newChar;
+
+    setTimeout(() => {
+      el.textContent = base;
+    }, 120 + Math.random()*400 + i*60);
+  });
+}
+
+// slow ritual flicker pulse
+setInterval(flicker, 1800);
+
+</script>
+
+</body>
+</html>
