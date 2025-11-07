@@ -20,7 +20,7 @@
         font-family: "Courier New", monospace;
     }
 
-    /* Dark overlay */
+    /* Dark wash */
     body::after {
         content: "";
         position: fixed;
@@ -30,84 +30,57 @@
     }
 
     .static-text {
-        font-size: clamp(40px, 12vw, 160px);
-        letter-spacing: clamp(4px, 1.6vw, 20px);
+        font-size: clamp(38px, 12vw, 150px);
+        letter-spacing: clamp(6px, 2vw, 22px);
         color: #39ff14;
-        text-decoration: none;
+        filter: drop-shadow(0 0 14px #39ff14);
         cursor: pointer;
+        text-decoration: none;
+        user-select: none;
+        display: flex;
+        gap: clamp(6px, 1vw, 12px);
+    }
+
+    .char {
         position: relative;
-        animation: chaos 0.15s infinite;
-        filter: drop-shadow(0 0 12px #39ff14);
+        display: inline-block;
+        transition: 0.25s ease-out;
     }
 
-    /* Multi-layer glitch */
-    .static-text::before,
-    .static-text::after {
-        content: "S T A T ! C";
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        color: #39ff14;
-        opacity: 0.7;
-        filter: drop-shadow(0 0 22px #39ff14);
+    /* Flicker style */
+    @keyframes flicker {
+        0% { opacity: 1; }
+        45% { opacity: 0.9; transform: translateY(-1px); filter: brightness(1.2); }
+        50% { opacity: 0.4; transform: translateY(1px); filter: brightness(0.6); }
+        55% { opacity: 1; transform: translateY(0); filter: brightness(1.4); }
+        100% { opacity: 1; }
     }
 
-    .static-text::before {
-        animation: tear1 0.09s infinite;
-    }
-
-    .static-text::after {
-        animation: tear2 0.11s infinite;
-    }
-
-    @keyframes chaos {
-        0% { transform: translate(0,0); }
-        20% { transform: translate(-2px,1px); }
-        40% { transform: translate(3px,-2px); }
-        60% { transform: translate(-1px,-3px); }
-        80% { transform: translate(2px,1px); }
-        100% { transform: translate(0,0); }
-    }
-
-    @keyframes tear1 {
-        0% { clip-path: inset(0 0 80% 0); }
-        50% { clip-path: inset(40% 0 20% 0); }
-        100% { clip-path: inset(10% 0 60% 0); }
-    }
-
-    @keyframes tear2 {
-        0% { clip-path: inset(80% 0 0 0); }
-        50% { clip-path: inset(20% 0 40% 0); }
-        100% { clip-path: inset(60% 0 10% 0); }
-    }
 </style>
 </head>
-
 <body>
 
-<a href="static.html" class="static-text" id="staticText">S T A T ! C</a>
-
-<!-- White noise audio -->
-<audio id="staticSound" preload="auto">
-    <source src="https://upload.wikimedia.org/wikipedia/commons/0/0d/White-noise-sound-20sec-mono-44100Hz.flac">
-</audio>
+<a href="static.html" class="static-text" id="glitchWord">
+    <span class="char">S</span>
+    <span class="char">T</span>
+    <span class="char">A</span>
+    <span class="char">T</span>
+    <span class="char">!</span>
+    <span class="char">C</span>
+</a>
 
 <script>
-const txt = document.getElementById("staticText");
-const noise = document.getElementById("staticSound");
+/* Alternate glyph sets for “rune flicker” */
+const alt = {
+    "S": ["S","5","§","Ś","﹩"],
+    "T": ["T","†","7","┼","Ŧ"],
+    "A": ["A","Λ","4","Å","Δ"],
+    "!": ["!","⁎","¡","︖","⟡"],
+    "C": ["C","⊂","↻","₡","Ḉ"]
+};
 
-noise.volume = 0.28; // adjust loudness
+const chars = document.querySelectorAll(".char");
 
-txt.addEventListener("mouseover", () => {
-    noise.currentTime = 0;
-    noise.play();
-});
-
-txt.addEventListener("mouseout", () => {
-    noise.pause();
-});
-</script>
-
-</body>
-</html>
+function flickerChar(el) {
+    const base = el.innerText;
+    c
