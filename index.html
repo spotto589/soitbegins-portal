@@ -15,61 +15,43 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        background: black;
         font-family: "Courier New", monospace;
         position: relative;
-        background: black; /* fallback */
-        user-select: none;
-        touch-action: manipulation;
     }
 
-    /* ✅ REAL ANALOG STATIC (procedural, no image) */
-    body::before {
-        content: "";
+    /* ✅ Video Background */
+    #static-bg {
         position: fixed;
         inset: 0;
-        background:
-            repeating-linear-gradient(
-                0deg,
-                #fff 0 1px,
-                transparent 1px 2px
-            ),
-            repeating-linear-gradient(
-                90deg,
-                #fff 0 1px,
-                transparent 1px 2px
-            );
-        mix-blend-mode: difference;
-        opacity: 0.55;
-        animation: snow 0.12s steps(2) infinite;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.55) contrast(1.2);
         z-index: -1;
     }
 
-    @keyframes snow {
-        0% { transform: translate(0,0); }
-        25% { transform: translate(-1px, 1px); }
-        50% { transform: translate(1px, -1px); }
-        75% { transform: translate(-1px, -1px); }
-        100% { transform: translate(0,0); }
-    }
-
-    /* TEXT */
     .static-text {
         font-size: clamp(42px, 13vw, 160px);
         letter-spacing: clamp(8px, 2vw, 26px);
-        color: #fff;
+        color: #ffffff;
         text-decoration: none;
         cursor: pointer;
+        user-select: none;
         display: flex;
+        z-index: 5;
     }
 
-    .char {
-        display: inline-block;
-        transition: 0.12s ease-out;
-    }
+    .char { display: inline-block; transition: 0.12s; }
 </style>
 
 </head>
 <body>
+
+<!-- ✅ Background Static Video -->
+<video id="static-bg" autoplay muted loop playsinline>
+  <source src="tv_static.mp4" type="video/mp4">
+</video>
 
 <a href="static.html" class="static-text" id="glitchWord">S T A T ! C</a>
 
@@ -104,7 +86,7 @@ function flicker() {
   });
 }
 
-setInterval(flicker, 260); // slow mysterious glitch
+setInterval(flicker, 260);
 </script>
 
 </body>
