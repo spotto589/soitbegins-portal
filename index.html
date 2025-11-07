@@ -15,22 +15,36 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        background: black;
         font-family: "Courier New", monospace;
         position: relative;
+        background: black; /* fallback */
+        user-select: none;
+        touch-action: manipulation;
     }
 
-    /* ✅ PURE TV STATIC BACKGROUND */
+    /* ✅ REAL ANALOG STATIC (procedural, no image) */
     body::before {
         content: "";
         position: fixed;
         inset: 0;
-        background: url('static.jpeg') center center / cover no-repeat;
-        animation: noiseShift 0.25s steps(2) infinite;
+        background:
+            repeating-linear-gradient(
+                0deg,
+                #fff 0 1px,
+                transparent 1px 2px
+            ),
+            repeating-linear-gradient(
+                90deg,
+                #fff 0 1px,
+                transparent 1px 2px
+            );
+        mix-blend-mode: difference;
+        opacity: 0.55;
+        animation: snow 0.12s steps(2) infinite;
         z-index: -1;
     }
 
-    @keyframes noiseShift {
+    @keyframes snow {
         0% { transform: translate(0,0); }
         25% { transform: translate(-1px, 1px); }
         50% { transform: translate(1px, -1px); }
@@ -40,56 +54,57 @@
 
     /* TEXT */
     .static-text {
-        font-size: clamp(40px, 12vw, 160px);
-        letter-spacing: clamp(8px, 2vw, 24px);
-        color: white;
+        font-size: clamp(42px, 13vw, 160px);
+        letter-spacing: clamp(8px, 2vw, 26px);
+        color: #fff;
         text-decoration: none;
-        user-select: none;
         cursor: pointer;
         display: flex;
     }
 
-    .char { display: inline-block; transition: 0.12s; }
+    .char {
+        display: inline-block;
+        transition: 0.12s ease-out;
+    }
 </style>
-</head>
 
+</head>
 <body>
 
 <a href="static.html" class="static-text" id="glitchWord">S T A T ! C</a>
 
 <script>
 const glyphs = {
-  "S": ["S","5","§","$"],
-  "T": ["T","7","†","┼"],
-  "A": ["A","Λ","4","Δ"],
+  "S": ["S","5","§"],
+  "T": ["T","7","†"],
+  "A": ["A","Λ","4"],
   "!": ["!","¡","︕"],
   "C": ["C","⊂","↻"]
 };
 
-const word = document.getElementById("glitchWord");
-let letters = word.innerText.replace(/\s+/g,"").split("");
+const container = document.getElementById("glitchWord");
+let base = container.innerText.replace(/\s+/g, "").split("");
 
-word.innerHTML = "";
-letters.forEach(l => {
+container.innerHTML = "";
+base.forEach(l => {
   let span = document.createElement("span");
   span.className = "char";
   span.dataset.base = l;
   span.textContent = l;
-  word.appendChild(span);
+  container.appendChild(span);
 });
 
 const chars = document.querySelectorAll(".char");
 
 function flicker() {
   chars.forEach((el, i) => {
-    let base = el.dataset.base;
-    let set = glyphs[base] ?? [base];
-    el.textContent = set[Math.floor(Math.random()*set.length)];
-    setTimeout(() => { el.textContent = base; }, 150 + i*40);
+    const set = glyphs[el.dataset.base] ?? [el.dataset.base];
+    el.textContent = set[Math.random()*set.length|0];
+    setTimeout(() => { el.textContent = el.dataset.base; }, 120 + i*40);
   });
 }
 
-setInterval(flicker, 350); // slower, calmer flicker
+setInterval(flicker, 260); // slow mysterious glitch
 </script>
 
 </body>
