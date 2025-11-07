@@ -18,6 +18,7 @@
         align-items: center;
         position: relative;
         font-family: "Courier New", monospace;
+        touch-action: manipulation;
     }
 
     body::after {
@@ -29,29 +30,28 @@
     }
 
     .static-text {
-        font-size: clamp(38px, 12vw, 150px);
+        font-size: clamp(40px, 12vw, 160px);
         letter-spacing: clamp(6px, 2vw, 22px);
         color: #39ff14;
         text-decoration: none;
-        filter: drop-shadow(0 0 14px #39ff14);
+        filter: drop-shadow(0 0 18px #39ff14);
         cursor: pointer;
+        user-select: none;
         display: flex;
         gap: clamp(6px, 1vw, 12px);
-        user-select: none;
     }
 
     .char {
+        position: relative;
         display: inline-block;
-        transition: 0.15s ease-out;
+        transition: 0.12s ease-out;
+        animation: jitter 0.45s infinite alternate ease-in-out;
     }
 
-    /* Subtle idle breathing motion */
-    .static-text {
-        animation: breathe 4s infinite ease-in-out;
-    }
-    @keyframes breathe {
-        0%, 100% { filter: drop-shadow(0 0 14px #39ff14); }
-        50% { filter: drop-shadow(0 0 28px #39ff14); }
+    /* subtle vertical shimmer drift per character */
+    @keyframes jitter {
+        0%   { transform: translateY(0); }
+        100% { transform: translateY(-2px); }
     }
 </style>
 </head>
@@ -61,13 +61,7 @@
 <a href="static.html" class="static-text" id="glitchWord">S T A T ! C</a>
 
 <script>
-/*
-    NEW FLICKER ENGINE
-    - Always fires
-    - Works on iPhone / Android / Desktop
-    - Avoids cached text issues
-*/
-
+/* Characters used for mutation */
 const glyphs = {
   "S": ["S","5","§","Ś","$","Ƨ"],
   "T": ["T","†","7","┼","Ŧ","Ƭ"],
@@ -77,34 +71,38 @@ const glyphs = {
 };
 
 const container = document.getElementById("glitchWord");
-let letters = [...container.textContent.replace(/\s/g,"")];
+let baseText = container.innerText.replace(/\s+/g,"").split("");
 
-container.innerHTML = ""; 
-letters.forEach(l => {
+container.innerHTML = "";
+baseText.forEach(letter => {
   let span = document.createElement("span");
   span.className = "char";
-  span.dataset.base = l;
-  span.textContent = l;
+  span.dataset.base = letter;
+  span.innerText = letter;
   container.appendChild(span);
 });
 
-function flicker() {
-  document.querySelectorAll(".char").forEach((el, i) => {
+const chars = document.querySelectorAll(".char");
+
+/* MATRIX RAIN FLICKER */
+function rainFlicker() {
+  chars.forEach((el, i) => {
     const base = el.dataset.base;
     const options = glyphs[base];
-    if(!options) return;
+    if (!options) return;
 
-    let newChar = options[Math.floor(Math.random()*options.length)];
-    el.textContent = newChar;
+    /* random alt glyph */
+    el.innerText = options[Math.floor(Math.random()*options.length)];
 
+    /* return to base with stagger delay */
     setTimeout(() => {
-      el.textContent = base;
-    }, 120 + Math.random()*400 + i*60);
+      el.innerText = base;
+    }, 100 + Math.random()*300);
   });
 }
 
-// slow ritual flicker pulse
-setInterval(flicker, 1800);
+/* Faster loop → more rain effect */
+setInterval(rainFlicker, 260); // <- increase/decrease flicker speed here
 
 </script>
 
