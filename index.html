@@ -2,14 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>soitbegins.xyz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S T A T ! C</title>
+
 <style>
     body {
         margin: 0;
         padding: 0;
         background: url('statedelic.jpg') center center / cover no-repeat fixed;
         height: 100vh;
+        width: 100vw;
         overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: "Courier New", monospace;
         position: relative;
     }
 
@@ -19,53 +26,54 @@
         position: fixed;
         top: 0;
         left: 0;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         background: rgba(0,0,0,0.45);
         z-index: -1;
     }
 
-    /* Invisible clickable portal */
-    .portal-zone {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 40vh;
-        height: 40vh;
-        border-radius: 50%;
+    /* The text */
+    .static-text {
+        font-size: 90px;
+        color: white;
+        letter-spacing: 14px;
         cursor: pointer;
-        z-index: 5;
+        text-decoration: none;
+        position: relative;
+        animation: glitch 1.8s infinite;
     }
 
-    /* The shimmer layer */
-    #shimmer {
-        pointer-events: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: 2;
-        background: radial-gradient(circle at center, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 80%);
-        transition: background 0.08s linear;
+    /* Glitch effect */
+    @keyframes glitch {
+        0% { text-shadow: 0 0 0px #fff; }
+        8% { text-shadow: 2px 0px #ff004d; }
+        12% { text-shadow: -2px 0px #00eaff; }
+        16% { text-shadow: 3px 0px #ff004d; }
+        20% { text-shadow: -3px 0px #00eaff; }
+        22% { text-shadow: 0px 0px #fff; }
+        42% { text-shadow: 1px 0px #ff004d; }
+        45% { text-shadow: -1px 0px #00eaff; }
+        50% { text-shadow: 0 0 0px #fff; }
+        100% { text-shadow: 0 0 0px #fff; }
+    }
+
+    /* On hover → stronger distortion */
+    .static-text:hover {
+        animation: glitchHover 0.4s infinite;
+    }
+
+    @keyframes glitchHover {
+        0% { text-shadow: 0px 0px #fff; }
+        33% { text-shadow: 4px 0px #ff004d; }
+        66% { text-shadow: -4px 0px #00eaff; }
+        100% { text-shadow: 0px 0px #fff; }
     }
 </style>
+
 </head>
 <body>
 
-<!-- Shimmer overlay -->
-<div id="shimmer"></div>
-
-<!-- Portal click target -->
-<a href="static.html" class="portal-zone"></a>
-
-<script>
-document.addEventListener("mousemove", function(e) {
-    const shimmer = document.getElementById("shimmer");
-    shimmer.style.background = `radial-gradient(circle at ${e.clientX}px ${e.clientY}px, rgba(255,255,255,0.23) 0%, rgba(255,255,255,0.05) 12%, rgba(255,255,255,0) 40%)`;
-});
-</script>
+<a href="static.html" class="static-text">S T A T ! C</a>
 
 </body>
 </html>
