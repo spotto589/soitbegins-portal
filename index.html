@@ -19,6 +19,18 @@
         text-align: center;
     }
 
+    /* ✅ This is the overlay (now in the correct place) */
+    body::after {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.35); /* change this number to make darker/lighter */
+        z-index: -1;
+    }
+
     .title {
         font-size: 14px;
         opacity: 0.4;
@@ -41,14 +53,6 @@
 </style>
 </head>
 <body>
-body::after {
-    content: "";
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.35); /* Adjust darker or lighter */
-    z-index: -1;
-}
 
 <div class="title">soitbegins.xyz</div>
 
@@ -58,5 +62,3 @@ body::after {
 
 </body>
 </html>
-
-
