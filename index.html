@@ -8,18 +8,19 @@
         margin: 0;
         padding: 0;
         background: url('statedelic.jpg') center center / cover no-repeat fixed;
-        color: #f1f1f1;
+        color: #dfb95a; /* gold */
         font-family: "Courier New", monospace;
         letter-spacing: 2px;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: space-between; /* spread vertically */
         align-items: center;
         height: 100vh;
         text-align: center;
+        padding: 60px 0; /* breathing space top+bottom */
     }
 
-    /* ✅ This is the overlay (now in the correct place) */
+    /* Dark overlay so text stays readable */
     body::after {
         content: "";
         position: fixed;
@@ -27,38 +28,31 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: rgba(0,0,0,0.35); /* change this number to make darker/lighter */
+        background: rgba(0,0,0,0.45);
         z-index: -1;
     }
 
-    .title {
-        font-size: 14px;
-        opacity: 0.4;
-        margin-bottom: 60px;
-    }
-
-    .collection {
-        margin: 12px 0;
-        font-size: 20px;
-        cursor: pointer;
+    .section {
+        font-size: 36px; /* bigger text */
         transition: 0.35s;
         text-decoration: none;
-        color: #f1f1f1;
+        color: #dfb95a; /* gold */
+        cursor: pointer;
     }
 
-    .collection:hover {
-        letter-spacing: 6px;
-        color: #dfb95a; /* gold */
+    .section:hover {
+        letter-spacing: 8px;
+        filter: brightness(1.4);
     }
 </style>
 </head>
 <body>
 
-<div class="title">soitbegins.xyz</div>
+<a href="soitbegins.html" class="section">SO IT BEGINS</a>
 
-<a href="soitbegins.html" class="collection">SO IT BEGINS</a>
-<a href="static.html" class="collection">S T A T ! C : : rEs0n4ncE_r1s!ng</a>
-<a href="drew.html" class="collection">DREW</a>
+<a href="static.html" class="section">S T A T ! C : : rEs0n4ncE_r1s!ng</a>
+
+<a href="drew.html" class="section">DREW</a>
 
 </body>
 </html>
