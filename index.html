@@ -1,148 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>S T A T ! C — Portal</title>
+  <meta charset="UTF-8" />
+  <title>DREW — So It Begins</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<style>
-    body, html {
-        margin: 0;
-        padding: 0;
-        width: 100vw;
-        height: 100vh;
-        overflow: hidden;
-        font-family: "Courier New", monospace;
-        background: #000;
-        display: flex;
-        flex-direction: column;
+  <style>
+    :root {
+      /* Exact pink sampled from your artwork */
+      --drew-pink: #E81D89;
+      --page-bg: #000000;
     }
 
-    /* TOP STATIC (unchanged) */
-    .top-static {
-        position: relative;
-        width: 100%;
-        height: 50vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    #static-bg {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        filter: brightness(0.55) contrast(1.2);
-        z-index: -1;
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--page-bg);
+      overflow: hidden;
     }
 
-    .static-text {
-        font-size: clamp(42px, 13vw, 160px);
-        letter-spacing: clamp(8px, 2vw, 26px);
-        color: #ffffff;
-        text-decoration: none;
-        cursor: pointer;
-        user-select: none;
-        display: flex;
-        z-index: 5;
+    .page {
+      height: 100vh;
+      width: 100%;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
     }
-    .char { display: inline-block; transition: 0.12s; }
 
-    /* BOTTOM DREW */
+    /* 🔹 TOP Static Banner */
+    .static-banner {
+      background: #000;
+      overflow: hidden;
+    }
+
+    .static-banner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* 🔹 BOTTOM Drew Animation — centered with pink fill */
     .drew-section {
-        position: relative;
-        width: 100%;
-        height: 50vh;
-        overflow: hidden;
-        cursor: pointer;
+      background: var(--drew-pink);
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    /* Blurred fill background */
-    .drew-bg-blur {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        filter: blur(40px) brightness(0.4) saturate(1.6);
-        transform: scale(1.2);
-        z-index: 0;
+    .drew-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    /* Main clear video */
-    .drew-video {
-        position: absolute;
-        inset: 0;
-        width: auto;
-        height: 100%;
-        object-fit: contain;
-        z-index: 2;
-        margin: auto;
-        left: 50%;
-        transform: translateX(-50%);
+    .drew-frame {
+      position: relative;
+      max-width: 520px; /* tweak if too big/small */
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-</style>
 
+    .drew-frame video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* 🧩 no stretch */
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .drew-frame {
+        max-width: 420px;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div class="page">
 
-<!-- TOP STATIC -->
-<div class="top-static">
-    <video id="static-bg" autoplay muted loop playsinline>
-        <source src="tv_static.mp4" type="video/mp4">
-    </video>
+    <!-- 🔝 Static Banner (use original image here) -->
+    <section class="static-banner">
+      <img src="static-banner-original.gif" alt="Static Portal" />
+    </section>
 
-    <a href="static.html" class="static-text" id="glitchWord">S T A T ! C</a>
-</div>
+    <!-- 🎥 Drew Animation Full Centered -->
+    <section class="drew-section">
+      <a href="drew.html" class="drew-link">
+        <div class="drew-frame">
+          <video src="drew-animation.mp4" autoplay muted loop playsinline></video>
+        </div>
+      </a>
+    </section>
 
-<!-- BOTTOM DREW -->
-<div class="drew-section" onclick="location.href='drew.html'">
-
-    <!-- Blurred background copy -->
-    <video class="drew-bg-blur" autoplay muted loop playsinline>
-        <source src="text-to-video-dc67619f.mp4" type="video/mp4">
-    </video>
-
-    <!-- Sharp centered foreground -->
-    <video class="drew-video" autoplay muted loop playsinline>
-        <source src="text-to-video-dc67619f.mp4" type="video/mp4">
-    </video>
-
-</div>
-
-<script>
-const glyphs = {
-  "S": ["S","5","§"],
-  "T": ["T","7","†"],
-  "A": ["A","Λ","4"],
-  "!": ["!","¡","︕"],
-  "C": ["C","⊂","↻"]
-};
-
-const container = document.getElementById("glitchWord");
-let base = container.innerText.replace(/\s+/g, "").split("");
-
-container.innerHTML = "";
-base.forEach(l => {
-  let span = document.createElement("span");
-  span.className = "char";
-  span.dataset.base = l;
-  span.textContent = l;
-  container.appendChild(span);
-});
-
-const chars = document.querySelectorAll(".char");
-function flicker() {
-  chars.forEach((el, i) => {
-    const set = glyphs[el.dataset.base] ?? [el.dataset.base];
-    el.textContent = set[Math.random()*set.length|0];
-    setTimeout(() => { el.textContent = el.dataset.base; }, 120 + i*40);
-  });
-}
-setInterval(flicker, 260);
-</script>
-
+  </div>
 </body>
 </html>
