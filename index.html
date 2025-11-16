@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DREW</title>
+<title>S T A T ! C — Portal</title>
 
 <style>
     body, html {
@@ -12,75 +12,120 @@
         width: 100vw;
         height: 100vh;
         overflow: hidden;
-        background: #000;
-        font-family: Arial, sans-serif;
+        font-family: "Courier New", monospace;
+        background: black;
+        display: flex;
+        flex-direction: column;
     }
 
-    /* Top Half Static */
-    .top-half {
-        position: absolute;
-        top: 0;
-        width: 100%;
-        height: 50vh;
-        overflow: hidden;
-        z-index: -1;
-    }
-
-    .top-half video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        filter: brightness(0.45) contrast(1.4);
-    }
-
-    /* Bottom Half DREW Animation */
-    .bottom-half {
-        position: absolute;
-        bottom: 0;
+    /* TOP STATIC SECTION (unchanged layout) */
+    .top-static {
+        position: relative;
         width: 100%;
         height: 50vh;
         display: flex;
         justify-content: center;
         align-items: center;
-        background: #000;
     }
 
-    .bottom-half video {
+    #static-bg {
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
-        object-fit: contain; /* FIXED */
-        background: #000; /* prevents weird edge bleed */
+        object-fit: cover;
+        filter: brightness(0.55) contrast(1.2);
+        z-index: -1;
     }
 
-    .coming-tag {
-        position: absolute;
-        bottom: 14px;
-        width: 100%;
-        text-align: center;
-        font-size: 18px;
-        color: #00eaff;
-        opacity: 0.85;
-        text-shadow: 0 0 12px #00faff;
-        letter-spacing: 1px;
+    .static-text {
+        font-size: clamp(42px, 13vw, 160px);
+        letter-spacing: clamp(8px, 2vw, 26px);
+        color: #ffffff;
+        text-decoration: none;
+        cursor: pointer;
+        user-select: none;
+        display: flex;
         z-index: 5;
     }
-</style>
-</head>
 
+    .char { display: inline-block; transition: 0.12s; }
+
+    /* BOTTOM DREW ANIMATION */
+    .drew-section {
+        width: 100%;
+        height: 50vh;
+        position: relative;
+        background: black;
+    }
+
+    .drew-section video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain; /* ensure full animation visible */
+        background: black;
+    }
+
+    .drew-click {
+        position: absolute;
+        inset: 0;
+        cursor: pointer;
+    }
+</style>
+
+</head>
 <body>
 
-<div class="top-half">
-    <video autoplay muted loop playsinline>
+<!-- 🔺 TOP STATIC (unchanged) -->
+<div class="top-static">
+    <video id="static-bg" autoplay muted loop playsinline>
         <source src="tv_static.mp4" type="video/mp4">
     </video>
+
+    <a href="static.html" class="static-text" id="glitchWord">S T A T ! C</a>
 </div>
 
-<div class="bottom-half">
+<!-- 🔻 BOTTOM DREW ANIMATION -->
+<div class="drew-section">
     <video autoplay muted loop playsinline>
         <source src="text-to-video-dc67619f.mp4" type="video/mp4">
     </video>
-    <div class="coming-tag">Connect Wallet + Token Dashboard Coming Soon</div>
+    <a href="drew.html" class="drew-click"></a>
 </div>
+
+<script>
+const glyphs = {
+  "S": ["S","5","§"],
+  "T": ["T","7","†"],
+  "A": ["A","Λ","4"],
+  "!": ["!","¡","︕"],
+  "C": ["C","⊂","↻"]
+};
+
+const container = document.getElementById("glitchWord");
+let base = container.innerText.replace(/\s+/g, "").split("");
+
+container.innerHTML = "";
+base.forEach(l => {
+  let span = document.createElement("span");
+  span.className = "char";
+  span.dataset.base = l;
+  span.textContent = l;
+  container.appendChild(span);
+});
+
+const chars = document.querySelectorAll(".char");
+
+function flicker() {
+  chars.forEach((el, i) => {
+    const set = glyphs[el.dataset.base] ?? [el.dataset.base];
+    el.textContent = set[Math.random()*set.length|0];
+    setTimeout(() => { el.textContent = el.dataset.base; }, 120 + i*40);
+  });
+}
+
+setInterval(flicker, 260);
+</script>
 
 </body>
 </html>
