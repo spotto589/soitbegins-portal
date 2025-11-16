@@ -32,12 +32,11 @@
       color: #fff;
     }
 
-    /* Darkening overlay for readability */
     body::before {
       content: "";
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(0, 0, 0, 0.78);
       z-index: 0;
       pointer-events: none;
     }
@@ -51,44 +50,61 @@
       justify-content: center;
       align-items: center;
       padding: 6vh 6vw;
-      gap: 32px;
+      gap: 24px;
     }
 
-    /* Clean Neon Pink Title */
     .heading {
-      font-size: clamp(44px, 7vw, 96px);
+      font-size: clamp(44px, 7vw, 90px);
       text-transform: uppercase;
+      letter-spacing: 0.1em;
       font-weight: 700;
       color: var(--drew-pink);
-      letter-spacing: 0.08em;
-      text-shadow: 0 0 15px rgba(232, 29, 137, 0.7);
+      text-shadow:
+        0 0 10px rgba(232, 29, 137, 0.8),
+        0 0 22px rgba(232, 29, 137, 0.7),
+        0 0 40px rgba(232, 29, 137, 0.5);
+      text-align: center;
     }
 
-    /* Two clean text boxes */
-    .card {
+    .subheading {
+      font-size: clamp(14px, 1.8vw, 20px);
+      opacity: 0.9;
+      text-align: center;
+      max-width: 800px;
+      line-height: 1.5;
+    }
+
+    .subheading span {
+      color: var(--drew-pink);
+      font-weight: 600;
+    }
+
+    .cards {
       width: 100%;
       max-width: 860px;
-      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .card {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.9);
       border-radius: 14px;
-      padding: 28px;
+      padding: 26px;
       text-align: center;
-      border: 2px solid var(--drew-pink);
-      box-shadow: 0 0 20px rgba(232, 29, 137, 0.5);
+      border: 1px solid rgba(232, 29, 137, 0.65);
+      box-shadow:
+        0 0 12px rgba(232, 29, 137, 0.5),
+        0 0 28px rgba(232, 29, 137, 0.3);
+      backdrop-filter: blur(6px);
     }
 
     .card-body {
-      font-size: 18px;
+      font-size: 16px;
+      line-height: 1.6;
       opacity: 0.95;
-    }
-
-    @media (max-width: 640px) {
-      .page {
-        padding: 5vh 4vw 8vh;
-      }
-
-      .card {
-        padding: 22px;
-      }
     }
   </style>
 </head>
@@ -96,18 +112,31 @@
 <body>
   <div class="page">
 
-    <!-- TITLE -->
     <div class="heading">DREW</div>
+    <div class="subheading">
+      Supporting men’s mental health by building community, raising awareness,
+      and driving a movement that reminds every man: <span>You are not alone.</span>
+    </div>
 
-    <!-- BOX 1 -->
-    <section class="card">
-      <div class="card-body">This is where the paragraph goes.</div>
-    </section>
+    <div class="cards">
 
-    <!-- BOX 2 -->
-    <section class="card">
-      <div class="card-body">This is where the paragraph goes.</div>
-    </section>
+      <!-- BOX 1 -->
+      <section class="card">
+        <div class="card-body">
+          Community-driven token aimed at encouraging conversations around men’s mental health.
+          Together we support, connect, and show up for one another.
+        </div>
+      </section>
+
+      <!-- BOX 2 -->
+      <section class="card">
+        <div class="card-body">
+          By raising awareness and empowering men to speak openly,
+          DREW aims to become a movement that makes a real difference.
+        </div>
+      </section>
+
+    </div>
 
   </div>
 </body>
