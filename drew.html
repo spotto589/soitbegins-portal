@@ -16,16 +16,8 @@
     box-sizing: border-box;
   }
 
-  html {
-    height: 100%;
-    background-image: url("peacockedit.jpeg");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: scroll;
-  }
-
-  body {
+  html, body {
+    width: 100%;
     min-height: 100%;
     font-family: system-ui, sans-serif;
     color: #fff;
@@ -33,42 +25,45 @@
     position: relative;
   }
 
-  /* FIXED overlay that always covers the viewport */
+  /* NEW: Double mirrored wallpaper */
+  .bg-wallpaper {
+    position: fixed;
+    inset: 0;
+    z-index: -3;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bg-top,
+  .bg-bottom {
+    flex: 1;
+    background-image: url("peacockedit.jpeg");
+    background-size: cover;
+    background-position: center;
+  }
+
+  /* Mirror bottom half */
+  .bg-bottom {
+    transform: scaleY(-1);
+  }
+
+  /* Full screen overlay */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.78);
-    pointer-events: none;
-    z-index: -1;
-  }
-
-  /* Mobile consistency */
-  @media (max-width: 900px) {
-    html {
-      background-attachment: scroll !important;
-      background-size: cover !important;
-    }
+    z-index: -2;
   }
 
   .page {
     position: relative;
+    z-index: 1;
     padding: 10vh 6vw 12vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 38px;
-  }
-
-  .drew-float {
-    width: 200px;
-    margin-bottom: -40px;
-    animation: hover 3s ease-in-out infinite;
-    filter: drop-shadow(0 0 20px var(--drew-pink));
-  }
-  @keyframes hover {
-    0%,100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
   }
 
   .heading {
@@ -78,10 +73,9 @@
     color: var(--drew-pink);
     text-shadow:
       0 0 14px rgba(232,29,137,0.9),
-      0 0 36px rgba(232,29,137,0.6),
-      0 0 60px rgba(232,29,137,0.4);
-    text-transform: uppercase;
+      0 0 36px rgba(232,29,137,0.6);
     text-align: center;
+    text-transform: uppercase;
   }
 
   .divider {
@@ -180,11 +174,14 @@
 </head>
 
 <body>
-<div class="page">
 
-  <video class="drew-float" autoplay muted loop playsinline>
-    <source src="drew-animation.mp4" type="video/mp4">
-  </video>
+<!-- MIRRORED WALLPAPER BACKGROUND -->
+<div class="bg-wallpaper">
+  <div class="bg-top"></div>
+  <div class="bg-bottom"></div>
+</div>
+
+<div class="page">
 
   <div class="heading">$DREW</div>
   <div class="divider"></div>
