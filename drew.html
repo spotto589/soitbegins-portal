@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DREW — Token Info</title>
+  <title>DREW — Purpose</title>
 
   <style>
     * {
@@ -19,7 +19,7 @@
     }
 
     body {
-      background-image: url("peacockedit.jpeg"); /* Your blurred peacock wallpaper */
+      background-image: url("peacockedit.jpeg");
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -49,12 +49,28 @@
       gap: 24px;
     }
 
+    .heading {
+      font-size: clamp(36px, 6vw, 80px);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+
+    .subheading {
+      font-size: clamp(14px, 1.8vw, 20px);
+      opacity: 0.9;
+      text-align: center;
+      max-width: 800px;
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+
     .card {
       width: 100%;
       max-width: 860px;
       background: rgba(0, 0, 0, 0.9);
       border-radius: 14px;
-      padding: 26px;
+      padding: 28px;
       text-align: center;
       border: 1px solid rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(6px);
@@ -65,9 +81,9 @@
     }
 
     .card-body {
-      font-size: 16px;
+      font-size: 17px;
       line-height: 1.5;
-      opacity: 0.9;
+      opacity: 0.95;
     }
 
     @media (max-width: 640px) {
@@ -76,7 +92,7 @@
       }
 
       .card {
-        padding: 20px;
+        padding: 22px;
       }
     }
   </style>
@@ -84,17 +100,3 @@
 
 <body>
   <div class="page">
-
-    <!-- BOX 1 -->
-    <section class="card">
-      <div class="card-body">This is where the paragraph goes.</div>
-    </section>
-
-    <!-- BOX 2 -->
-    <section class="card">
-      <div class="card-body">This is where the paragraph goes.</div>
-    </section>
-
-  </div>
-</body>
-</html>
