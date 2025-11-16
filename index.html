@@ -18,7 +18,7 @@
         flex-direction: column;
     }
 
-    /* TOP STATIC SECTION (unchanged layout) */
+    /* TOP STATIC SECTION (unchanged from original) */
     .top-static {
         position: relative;
         width: 100%;
@@ -57,26 +57,22 @@
         height: 50vh;
         position: relative;
         background: black;
+        cursor: pointer;
     }
 
     .drew-section video {
         width: 100%;
         height: 100%;
-        object-fit: contain; /* ensure full animation visible */
+        object-fit: cover; /* FULL WIDTH FIX */
         background: black;
     }
 
-    .drew-click {
-        position: absolute;
-        inset: 0;
-        cursor: pointer;
-    }
 </style>
 
 </head>
 <body>
 
-<!-- 🔺 TOP STATIC (unchanged) -->
+<!-- 🔺 TOP STATIC (as original) -->
 <div class="top-static">
     <video id="static-bg" autoplay muted loop playsinline>
         <source src="tv_static.mp4" type="video/mp4">
@@ -86,11 +82,10 @@
 </div>
 
 <!-- 🔻 BOTTOM DREW ANIMATION -->
-<div class="drew-section">
+<div class="drew-section" onclick="location.href='drew.html'">
     <video autoplay muted loop playsinline>
         <source src="text-to-video-dc67619f.mp4" type="video/mp4">
     </video>
-    <a href="drew.html" class="drew-click"></a>
 </div>
 
 <script>
