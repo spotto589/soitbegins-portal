@@ -18,7 +18,7 @@
         flex-direction: column;
     }
 
-    /* TOP STATIC SECTION (unchanged from original) */
+    /* TOP STATIC SECTION (unchanged) */
     .top-static {
         position: relative;
         width: 100%;
@@ -56,23 +56,24 @@
         width: 100%;
         height: 50vh;
         position: relative;
-        background: black;
+        background: radial-gradient(circle, #ff00f2 0%, #000 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
         cursor: pointer;
     }
 
     .drew-section video {
-        width: 100%;
         height: 100%;
-        object-fit: cover; /* FULL WIDTH FIX */
-        background: black;
+        width: auto; /* NO DISTORTION */
+        object-fit: contain;
     }
-
 </style>
 
 </head>
 <body>
 
-<!-- 🔺 TOP STATIC (as original) -->
+<!-- 🔺 TOP STATIC (perfect original) -->
 <div class="top-static">
     <video id="static-bg" autoplay muted loop playsinline>
         <source src="tv_static.mp4" type="video/mp4">
