@@ -3,84 +3,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>S T A T ! C — Portal</title>
+<title>DREW</title>
 
 <style>
     body, html {
         margin: 0;
         padding: 0;
-        height: 100vh;
         width: 100vw;
+        height: 100vh;
         overflow: hidden;
-        font-family: "Courier New", monospace;
-        background: black;
+        background: #000;
+        font-family: Arial, sans-serif;
     }
 
-    /* SPLIT HERO LAYOUT */
-    .top-half, .bottom-half {
+    /* Top Half Static */
+    .top-half {
+        position: absolute;
+        top: 0;
         width: 100%;
         height: 50vh;
-        position: relative;
+        overflow: hidden;
+        z-index: -1;
     }
 
-    /* Static */
     .top-half video {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        filter: brightness(0.5) contrast(1.3);
+        filter: brightness(0.45) contrast(1.4);
     }
 
-    /* DREW animation */
+    /* Bottom Half DREW Animation */
+    .bottom-half {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 50vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #000;
+    }
+
     .bottom-half video {
         width: 100%;
         height: 100%;
-        object-fit: cover;
-        filter: brightness(0.85) saturate(1.4);
+        object-fit: contain; /* FIXED */
+        background: #000; /* prevents weird edge bleed */
     }
 
-    /* CLICKABLE DREW OVERLAY */
-    .bottom-link {
+    .coming-tag {
         position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        text-decoration: none;
-    }
-
-    .drew-label {
-        font-size: clamp(48px, 14vw, 150px);
-        font-weight: 900;
-        letter-spacing: 0.1em;
-        background: linear-gradient(90deg, #00faff, #ff00f0);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 15px #00faff;
+        bottom: 14px;
+        width: 100%;
+        text-align: center;
+        font-size: 18px;
+        color: #00eaff;
+        opacity: 0.85;
+        text-shadow: 0 0 12px #00faff;
+        letter-spacing: 1px;
+        z-index: 5;
     }
 </style>
 </head>
 
 <body>
 
-<!-- 🔺 TOP STATIC -->
 <div class="top-half">
     <video autoplay muted loop playsinline>
         <source src="tv_static.mp4" type="video/mp4">
     </video>
 </div>
 
-<!-- 🔻 BOTTOM DREW ANIMATION -->
 <div class="bottom-half">
     <video autoplay muted loop playsinline>
         <source src="text-to-video-dc67619f.mp4" type="video/mp4">
     </video>
-
-    <!-- CLICK AREA TO OPEN NEXT PAGE -->
-    <a href="drew.html" class="bottom-link">
-        <div class="drew-label">DREW</div>
-    </a>
+    <div class="coming-tag">Connect Wallet + Token Dashboard Coming Soon</div>
 </div>
 
 </body>
