@@ -6,61 +6,80 @@
 <title>DREW — Coming Soon</title>
 
 <style>
-    body {
+    body, html {
         margin: 0;
         padding: 0;
-        height: 100vh;
         width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: #000;
         font-family: Arial, sans-serif;
-        background: radial-gradient(circle at center, #0f0f0f 0%, #000000 90%);
-        color: #fff;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
     }
 
-    .logo {
-        width: clamp(200px, 40vw, 480px);
-        filter: drop-shadow(0 0 18px #00E0FF);
+    /* TOP HALF — STATIC BACKGROUND */
+    .static-half {
+        position: absolute;
+        top: 0;
+        width: 100%;
+        height: 50vh;
+        overflow: hidden;
+        z-index: -1;
     }
 
-    .tag {
-        font-size: clamp(16px, 3vw, 28px);
-        margin-top: 20px;
+    .static-half video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.45) contrast(1.4);
+    }
+
+    /* BOTTOM HALF — DREW ANIMATION */
+    .drew-half {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 50vh;
+        overflow: hidden;
+    }
+
+    .drew-half video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.65) saturate(1.3);
+    }
+
+    /* Coming soon tag overlay */
+    .coming-tag {
+        position: absolute;
+        bottom: 20px;
+        width: 100%;
         text-align: center;
-        max-width: 90%;
-    }
-
-    .btn {
-        margin-top: 38px;
-        background: #00c8ff;
-        padding: 14px 32px;
-        border-radius: 6px;
         font-size: 18px;
-        text-decoration: none;
-        color: #000;
-        font-weight: bold;
-        transition: 0.2s;
-        box-shadow: 0 0 14px #00e6ff;
-    }
-
-    .btn:hover {
-        background: #17f4ff;
-        box-shadow: 0 0 22px #00f7ff;
+        color: #b8ffff;
+        opacity: 0.85;
+        text-shadow: 0 0 10px #00f6ff;
+        letter-spacing: 1px;
     }
 </style>
-
 </head>
+
 <body>
 
-<img src="drewlogo.jpeg" class="logo" alt="DREW Logo">
-
-<div class="tag">
-A brighter future for men’s mental health — on-chain and community-powered.
+<!-- 🔺 TOP HALF — STATIC -->
+<div class="static-half">
+    <video autoplay muted loop playsinline>
+      <source src="tv_static.mp4" type="video/mp4">
+    </video>
 </div>
 
-<a href="#" class="btn">Connect Xaman Wallet (Soon)</a>
+<!-- 🔻 BOTTOM HALF — YOUR ANIMATION -->
+<div class="drew-half">
+    <video autoplay muted loop playsinline>
+      <source src="text-to-video-dc67619f.mp4" type="video/mp4">
+    </video>
+    <div class="coming-tag">Connect Wallet + Token Dashboard Coming Soon</div>
+</div>
 
 </body>
 </html>
