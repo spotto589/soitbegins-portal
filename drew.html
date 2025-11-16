@@ -1,85 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DREW — Coming Soon</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DREW — Token Lore</title>
 
-<style>
-    body, html {
-        margin: 0;
-        padding: 0;
-        width: 100vw;
-        height: 100vh;
-        overflow: hidden;
-        background: #000;
-        font-family: Arial, sans-serif;
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    /* TOP HALF — STATIC BACKGROUND */
-    .static-half {
-        position: absolute;
-        top: 0;
-        width: 100%;
-        height: 50vh;
-        overflow: hidden;
-        z-index: -1;
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
     }
 
-    .static-half video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        filter: brightness(0.45) contrast(1.4);
+    body {
+      /* Peacock wallpaper */
+      background-image: url("peacockedit.jpeg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      position: relative;
+      color: #fff;
     }
 
-    /* BOTTOM HALF — DREW ANIMATION */
-    .drew-half {
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-        height: 50vh;
-        overflow: hidden;
+    /* Dark overlay to make text readable */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(
+          circle at top,
+          rgba(0, 0, 0, 0.65),
+          rgba(0, 0, 0, 0.92)
+        );
+      z-index: 0;
+      pointer-events: none;
     }
 
-    .drew-half video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        filter: brightness(0.65) saturate(1.3);
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 6vh 6vw;
+      gap: 24px;
     }
 
-    /* Coming soon tag overlay */
-    .coming-tag {
-        position: absolute;
-        bottom: 20px;
-        width: 100%;
-        text-align: center;
-        font-size: 18px;
-        color: #b8ffff;
-        opacity: 0.85;
-        text-shadow: 0 0 10px #00f6ff;
-        letter-spacing: 1px;
+    .heading {
+      margin-bottom: 10px;
+      font-size: clamp(26px, 3vw, 34px);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: center;
+      opacity: 0.9;
     }
-</style>
+
+    .subheading {
+      margin-bottom: 24px;
+      font-size: clamp(14px, 1.9vw, 18px);
+      text-align: center;
+      opacity: 0.8;
+      max-width: 640px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 860px;
+      background: rgba(0, 0, 0, 0.9); /* clean black box */
+      border-radius: 14px;
+      padding: 22px 26px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow:
+        0 18px 45px rgba(0, 0, 0, 0.95),
+        0 0 0 1px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+    }
+
+    .card + .card {
+      margin-top: 10px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      margin-bottom: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+
+    .card-body {
+      font-size: 15px;
+      line-height: 1.6;
+      opacity: 0.9;
+    }
+
+    .back-link {
+      margin-top: 26px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      text-decoration: none;
+      color: rgba(255, 255, 255, 0.8);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+      padding-bottom: 3px;
+    }
+
+    .back-link:hover {
+      color: #ffffff;
+      border-color: #ffffff;
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 5vh 4vw 6vh;
+      }
+
+      .card {
+        padding: 18px 18px;
+      }
+    }
+  </style>
 </head>
-
 <body>
+  <div class="page">
+    <div class="heading">DREW // TOKEN LORE</div>
+    <div class="subheading">
+      Use these panels to tell the story — what DREW is, why it exists, and how
+      it moves inside the casino universe.
+    </div>
 
-<!-- 🔺 TOP HALF — STATIC -->
-<div class="static-half">
-    <video autoplay muted loop playsinline>
-      <source src="tv_static.mp4" type="video/mp4">
-    </video>
-</div>
+    <!-- BOX 1 -->
+    <section class="card">
+      <div class="card-title">About the Token</div>
+      <div class="card-body">
+        <!-- Replace this with your own copy -->
+        <p>
+          Write your first main paragraph about the DREW token here — origin,
+          theme, connection to the artwork, and how it ties into the wider
+          Casino / Static / Resonance lore.
+        </p>
+      </div>
+    </section>
 
-<!-- 🔻 BOTTOM HALF — YOUR ANIMATION -->
-<div class="drew-half">
-    <video autoplay muted loop playsinline>
-      <source src="text-to-video-dc67619f.mp4" type="video/mp4">
-    </video>
-    <div class="coming-tag">Connect Wallet + Token Dashboard Coming Soon</div>
-</div>
+    <!-- BOX 2 -->
+    <section class="card">
+      <div class="card-title">Utility & Mechanics</div>
+      <div class="card-body">
+        <!-- Replace this with your own copy -->
+        <p>
+          Use this second panel for token mechanics: supply, distribution,
+          holder perks, staking, airdrops, access, or anything else you want
+          people to understand before they enter the DREW loop.
+        </p>
+      </div>
+    </section>
 
+    <!-- Back to main portal -->
+    <a href="index.html" class="back-link">← Return to Static Portal</a>
+  </div>
 </body>
 </html>
