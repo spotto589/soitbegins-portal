@@ -20,7 +20,6 @@
         position: relative;
     }
 
-    /* ✅ Video Background */
     #static-bg {
         position: fixed;
         inset: 0;
@@ -43,17 +42,55 @@
     }
 
     .char { display: inline-block; transition: 0.12s; }
+
+    .center-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4vh;
+    }
+
+    .drew-bar {
+        width: 100vw;
+        display: flex;
+        justify-content: center;
+        padding: 18px 0;
+        background: rgba(0, 0, 0, 0.6);
+        border-top: 2px solid #00F0FF;
+        backdrop-filter: blur(8px);
+    }
+
+    .drew-btn img {
+        width: clamp(120px, 22vw, 240px);
+        filter: drop-shadow(0 0 12px #00E0FF);
+        cursor: pointer;
+        transition: 0.15s ease-in-out;
+    }
+
+    .drew-btn img:hover {
+        transform: scale(1.08);
+        filter: drop-shadow(0 0 24px #00F0FF);
+    }
 </style>
 
 </head>
 <body>
 
-<!-- ✅ Background Static Video -->
 <video id="static-bg" autoplay muted loop playsinline>
   <source src="tv_static.mp4" type="video/mp4">
 </video>
 
-<a href="static.html" class="static-text" id="glitchWord">S T A T ! C</a>
+<div class="center-wrap">
+
+    <a href="static.html" class="static-text" id="glitchWord">S T A T ! C</a>
+
+    <div class="drew-bar">
+        <a href="drew.html" class="drew-btn">
+            <img src="drewlogo.jpeg" alt="DREW Logo">
+        </a>
+    </div>
+
+</div>
 
 <script>
 const glyphs = {
