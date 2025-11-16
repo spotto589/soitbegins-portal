@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DREW — Token Lore</title>
+  <title>DREW — Token Info</title>
 
   <style>
     * {
@@ -15,13 +15,11 @@
     html, body {
       width: 100%;
       height: 100%;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     body {
-      /* Peacock wallpaper */
-      background-image: url("peacockedit.jpeg");
+      background-image: url("peacockedit.jpeg"); /* Your blurred peacock wallpaper */
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -30,16 +28,11 @@
       color: #fff;
     }
 
-    /* Dark overlay to make text readable */
     body::before {
       content: "";
       position: fixed;
       inset: 0;
-      background: radial-gradient(
-          circle at top,
-          rgba(0, 0, 0, 0.65),
-          rgba(0, 0, 0, 0.92)
-        );
+      background: rgba(0, 0, 0, 0.75);
       z-index: 0;
       pointer-events: none;
     }
@@ -56,68 +49,25 @@
       gap: 24px;
     }
 
-    .heading {
-      margin-bottom: 10px;
-      font-size: clamp(26px, 3vw, 34px);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      text-align: center;
-      opacity: 0.9;
-    }
-
-    .subheading {
-      margin-bottom: 24px;
-      font-size: clamp(14px, 1.9vw, 18px);
-      text-align: center;
-      opacity: 0.8;
-      max-width: 640px;
-    }
-
     .card {
       width: 100%;
       max-width: 860px;
-      background: rgba(0, 0, 0, 0.9); /* clean black box */
+      background: rgba(0, 0, 0, 0.9);
       border-radius: 14px;
-      padding: 22px 26px;
+      padding: 26px;
+      text-align: center;
       border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow:
-        0 18px 45px rgba(0, 0, 0, 0.95),
-        0 0 0 1px rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(6px);
     }
 
     .card + .card {
       margin-top: 10px;
     }
 
-    .card-title {
-      font-size: 18px;
-      margin-bottom: 10px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      opacity: 0.85;
-    }
-
     .card-body {
-      font-size: 15px;
-      line-height: 1.6;
+      font-size: 16px;
+      line-height: 1.5;
       opacity: 0.9;
-    }
-
-    .back-link {
-      margin-top: 26px;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      text-decoration: none;
-      color: rgba(255, 255, 255, 0.8);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
-      padding-bottom: 3px;
-    }
-
-    .back-link:hover {
-      color: #ffffff;
-      border-color: #ffffff;
     }
 
     @media (max-width: 640px) {
@@ -126,47 +76,25 @@
       }
 
       .card {
-        padding: 18px 18px;
+        padding: 20px;
       }
     }
   </style>
 </head>
+
 <body>
   <div class="page">
-    <div class="heading">DREW // TOKEN LORE</div>
-    <div class="subheading">
-      Use these panels to tell the story — what DREW is, why it exists, and how
-      it moves inside the casino universe.
-    </div>
 
     <!-- BOX 1 -->
     <section class="card">
-      <div class="card-title">About the Token</div>
-      <div class="card-body">
-        <!-- Replace this with your own copy -->
-        <p>
-          Write your first main paragraph about the DREW token here — origin,
-          theme, connection to the artwork, and how it ties into the wider
-          Casino / Static / Resonance lore.
-        </p>
-      </div>
+      <div class="card-body">This is where the paragraph goes.</div>
     </section>
 
     <!-- BOX 2 -->
     <section class="card">
-      <div class="card-title">Utility & Mechanics</div>
-      <div class="card-body">
-        <!-- Replace this with your own copy -->
-        <p>
-          Use this second panel for token mechanics: supply, distribution,
-          holder perks, staking, airdrops, access, or anything else you want
-          people to understand before they enter the DREW loop.
-        </p>
-      </div>
+      <div class="card-body">This is where the paragraph goes.</div>
     </section>
 
-    <!-- Back to main portal -->
-    <a href="index.html" class="back-link">← Return to Static Portal</a>
   </div>
 </body>
 </html>
