@@ -18,7 +18,7 @@
         flex-direction: column;
     }
 
-    /* TOP STATIC SECTION (unchanged OG look) */
+    /* TOP STATIC (unchanged) */
     .top-static {
         position: relative;
         width: 100%;
@@ -48,33 +48,40 @@
         display: flex;
         z-index: 5;
     }
-
     .char { display: inline-block; transition: 0.12s; }
 
-    /* BOTTOM DREW ANIMATION */
+    /* BOTTOM DREW */
     .drew-section {
         position: relative;
         width: 100%;
         height: 50vh;
-        background: radial-gradient(circle, #ff00f7 0%, #000 80%);
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        overflow: hidden;
         cursor: pointer;
     }
 
-    .drew-section video {
+    /* Blurred fill background */
+    .drew-bg-blur {
+        position: absolute;
+        inset: 0;
         width: 100%;
-        height: auto;
-        max-height: 50vh;
+        height: 100%;
+        object-fit: cover;
+        filter: blur(40px) brightness(0.4) saturate(1.6);
+        transform: scale(1.2);
+        z-index: 0;
     }
 
-    /* Desktop tweaks — scale more horizontally */
-    @media (min-aspect-ratio: 16/10) {
-        .drew-section video {
-            height: 100%;
-            width: auto;
-        }
+    /* Main clear video */
+    .drew-video {
+        position: absolute;
+        inset: 0;
+        width: auto;
+        height: 100%;
+        object-fit: contain;
+        z-index: 2;
+        margin: auto;
+        left: 50%;
+        transform: translateX(-50%);
     }
 </style>
 
@@ -90,11 +97,19 @@
     <a href="static.html" class="static-text" id="glitchWord">S T A T ! C</a>
 </div>
 
-<!-- BOTTOM DREW ANIMATION -->
+<!-- BOTTOM DREW -->
 <div class="drew-section" onclick="location.href='drew.html'">
-    <video autoplay muted loop playsinline>
+
+    <!-- Blurred background copy -->
+    <video class="drew-bg-blur" autoplay muted loop playsinline>
         <source src="text-to-video-dc67619f.mp4" type="video/mp4">
     </video>
+
+    <!-- Sharp centered foreground -->
+    <video class="drew-video" autoplay muted loop playsinline>
+        <source src="text-to-video-dc67619f.mp4" type="video/mp4">
+    </video>
+
 </div>
 
 <script>
@@ -108,8 +123,8 @@ const glyphs = {
 
 const container = document.getElementById("glitchWord");
 let base = container.innerText.replace(/\s+/g, "").split("");
-container.innerHTML = "";
 
+container.innerHTML = "";
 base.forEach(l => {
   let span = document.createElement("span");
   span.className = "char";
@@ -119,7 +134,6 @@ base.forEach(l => {
 });
 
 const chars = document.querySelectorAll(".char");
-
 function flicker() {
   chars.forEach((el, i) => {
     const set = glyphs[el.dataset.base] ?? [el.dataset.base];
@@ -127,7 +141,6 @@ function flicker() {
     setTimeout(() => { el.textContent = el.dataset.base; }, 120 + i*40);
   });
 }
-
 setInterval(flicker, 260);
 </script>
 
