@@ -3,128 +3,106 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>S T A T ! C</title>
+<title>DREW — Coming Soon</title>
 
 <style>
-    body {
+    body, html {
         margin: 0;
         padding: 0;
-        height: 100vh;
         width: 100vw;
+        height: 100vh;
         overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: black;
-        font-family: "Courier New", monospace;
-        position: relative;
+        background: #000;
+        font-family: Arial, sans-serif;
     }
 
-    #static-bg {
-        position: fixed;
-        inset: 0;
+    /* Top Half Static */
+    .static-half {
+        position: absolute;
+        top: 0;
         width: 100%;
-        height: 100%;
-        object-fit: cover;
-        filter: brightness(0.55) contrast(1.2);
+        height: 50vh;
+        overflow: hidden;
         z-index: -1;
     }
 
-    .static-text {
-        font-size: clamp(42px, 13vw, 160px);
-        letter-spacing: clamp(8px, 2vw, 26px);
-        color: #ffffff;
-        text-decoration: none;
-        cursor: pointer;
-        user-select: none;
-        display: flex;
-        z-index: 5;
+    .static-half video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.45) contrast(1.4);
     }
 
-    .char { display: inline-block; transition: 0.12s; }
-
-    .center-wrap {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4vh;
-    }
-
-    .drew-bar {
-        width: 100vw;
+    /* Bottom Hero DREW Section */
+    .drew-half {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 50vh;
         display: flex;
         justify-content: center;
-        padding: 18px 0;
-        background: rgba(0, 0, 0, 0.6);
-        border-top: 2px solid #00F0FF;
-        backdrop-filter: blur(8px);
+        align-items: center;
+        background: radial-gradient(circle at center, #00141a 0%, #000000 90%);
     }
 
-    .drew-btn img {
-        width: clamp(120px, 22vw, 240px);
-        filter: drop-shadow(0 0 12px #00E0FF);
-        cursor: pointer;
-        transition: 0.15s ease-in-out;
+    .drew-title {
+        font-size: clamp(72px, 16vw, 220px);
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        background: linear-gradient(90deg, #00f0ff, #ff00f0);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 0 25px #0ff);
+        position: relative;
     }
 
-    .drew-btn img:hover {
-        transform: scale(1.08);
-        filter: drop-shadow(0 0 24px #00F0FF);
+    /* Drip effect */
+    .drew-title::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 100%;
+        width: 10px;
+        height: 40px;
+        background: #00f0ff;
+        animation: drip 1.4s infinite ease-in-out;
+        filter: drop-shadow(0 0 12px #00f0ff);
+    }
+
+    @keyframes drip {
+        0%   { transform: translateX(0) translateY(0); opacity: 1; height: 10px; }
+        70%  { transform: translateX(0) translateY(20px); opacity: 1; height: 40px; }
+        100% { transform: translateX(0) translateY(60px); opacity: 0; height: 6px; }
+    }
+
+    /* Coming soon message under drip */
+    .coming-tag {
+        position: absolute;
+        bottom: 18px;
+        width: 100%;
+        text-align: center;
+        font-size: 18px;
+        color: #b8ffff;
+        opacity: 0.8;
     }
 </style>
-
 </head>
+
 <body>
 
-<video id="static-bg" autoplay muted loop playsinline>
-  <source src="tv_static.mp4" type="video/mp4">
-</video>
-
-<div class="center-wrap">
-
-    <a href="static.html" class="static-text" id="glitchWord">S T A T ! C</a>
-
-    <div class="drew-bar">
-        <a href="drew.html" class="drew-btn">
-            <img src="drewlogo.jpeg" alt="DREW Logo">
-        </a>
-    </div>
-
+<!-- 🔺 TOP HALF — Static Video Background -->
+<div class="static-half">
+    <video autoplay muted loop playsinline>
+      <source src="tv_static.mp4" type="video/mp4">
+    </video>
 </div>
 
-<script>
-const glyphs = {
-  "S": ["S","5","§"],
-  "T": ["T","7","†"],
-  "A": ["A","Λ","4"],
-  "!": ["!","¡","︕"],
-  "C": ["C","⊂","↻"]
-};
-
-const container = document.getElementById("glitchWord");
-let base = container.innerText.replace(/\s+/g, "").split("");
-
-container.innerHTML = "";
-base.forEach(l => {
-  let span = document.createElement("span");
-  span.className = "char";
-  span.dataset.base = l;
-  span.textContent = l;
-  container.appendChild(span);
-});
-
-const chars = document.querySelectorAll(".char");
-
-function flicker() {
-  chars.forEach((el, i) => {
-    const set = glyphs[el.dataset.base] ?? [el.dataset.base];
-    el.textContent = set[Math.random()*set.length|0];
-    setTimeout(() => { el.textContent = el.dataset.base; }, 120 + i*40);
-  });
-}
-
-setInterval(flicker, 260);
-</script>
+<!-- 🔻 BOTTOM HALF — Neon DREW Drip -->
+<div class="drew-half">
+    <div class="drew-title">DREW</div>
+    <div class="coming-tag">Coming Soon — Connect Wallet + Token Dashboard</div>
+</div>
 
 </body>
 </html>
