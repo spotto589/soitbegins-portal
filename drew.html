@@ -48,15 +48,16 @@
       gap: 38px;
     }
 
+    /* TITLE */
     .heading {
-      font-size: clamp(44px, 7vw, 90px);
-      font-weight: 800;
-      letter-spacing: 0.07em;
+      font-size: clamp(48px, 8vw, 100px);
+      font-weight: 900;
+      letter-spacing: 0.05em;
       color: var(--drew-pink);
       text-shadow:
-        0 0 12px rgba(232, 29, 137, 0.85),
-        0 0 28px rgba(232, 29, 137, 0.6),
-        0 0 50px rgba(232, 29, 137, 0.4);
+        0 0 14px rgba(232, 29, 137, 0.9),
+        0 0 36px rgba(232, 29, 137, 0.6),
+        0 0 60px rgba(232, 29, 137, 0.4);
       text-align: center;
       text-transform: uppercase;
     }
@@ -95,56 +96,79 @@
       opacity: 0.95;
     }
 
-    /* ROADMAP SECTION */
+    /* 🔥 NEW ROADMAP DESIGN */
     .roadmap {
-      margin-top: 30px;
       width: 100%;
       max-width: 900px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 22px;
+      margin-top: 28px;
     }
 
     .roadmap-title {
-      font-size: 28px;
-      font-weight: 700;
-      text-transform: uppercase;
+      font-size: clamp(34px, 6vw, 62px);
       color: var(--drew-pink);
-      text-shadow: 0 0 14px rgba(232, 29, 137, 0.7);
-      text-align: center;
-      margin-bottom: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      text-shadow: 0 0 20px rgba(232, 29, 137, 0.8);
+      margin-bottom: 14px;
       letter-spacing: 0.08em;
-    }
-
-    .roadmap-phase {
-      width: 100%;
-      background: rgba(10, 10, 10, 0.85);
-      border-radius: 12px;
-      padding: 22px 20px;
-      border: 1px solid rgba(232, 29, 137, 0.4);
-      backdrop-filter: blur(5px);
-      box-shadow:
-        0 0 15px rgba(232, 29, 137, 0.4),
-        0 0 40px rgba(232, 29, 137, 0.25);
-    }
-
-    .roadmap-phase h3 {
-      font-size: 20px;
-      margin-bottom: 12px;
-      color: var(--drew-pink);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
       text-align: center;
     }
 
-    .roadmap-list {
+    .phase-box {
+      width: 100%;
+      padding: 24px 18px;
+      text-align: center;
+      border-radius: 16px;
+      background: rgba(10, 10, 10, 0.88);
+      border: 2px solid var(--drew-pink);
+      box-shadow:
+        0 0 18px rgba(232, 29, 137, 0.55),
+        0 0 45px rgba(232, 29, 137, 0.35);
+      backdrop-filter: blur(5px);
+    }
+
+    .phase-number {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--drew-pink);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .phase-text {
+      font-size: 17px;
+      opacity: 0.92;
+    }
+
+    .arrow {
+      font-size: 40px;
+      line-height: 0;
+      color: var(--drew-pink);
+      text-shadow: 0 0 15px rgba(232, 29, 137, 0.8);
+    }
+
+    .future-title {
+      font-size: 24px;
+      color: var(--drew-pink);
+      margin-top: 30px;
+      font-weight: 700;
+      text-align: center;
+      text-shadow: 0 0 12px rgba(232, 29, 137, 0.7);
+      text-transform: uppercase;
+    }
+
+    .future-list {
+      text-align: center;
       list-style: none;
       padding: 0;
+      font-size: 17px;
+      opacity: 0.9;
+      margin-top: 10px;
       line-height: 1.75;
-      font-size: 16px;
-      text-align: center;
-      opacity: 0.92;
     }
 
   </style>
@@ -153,7 +177,7 @@
 <body>
   <div class="page">
 
-    <div class="heading">$DREW UPRISING</div>
+    <div class="heading">$DREW</div>
 
     <div class="subheading">
       Our mission is to build a strong and united community focused on supporting men’s mental health.
@@ -167,7 +191,7 @@
         <div class="card-body">
           <span>$DREW</span> is a community-driven token with a purpose:
           to spark a movement that creates a ripple effect through the minds of men —
-          reminding us that we are all part of this beautiful work of art, together.
+          reminding us that we are stuck in this beautiful work of art, together.
         </div>
       </section>
 
@@ -181,28 +205,43 @@
 
     </div>
 
-    <!-- COOL ROADMAP DESIGN -->
+    <!-- 🌟 Roadmap with connected phases -->
     <section class="roadmap">
 
       <div class="roadmap-title">Roadmap</div>
 
-      <div class="roadmap-phase">
-        <h3>Current Phase</h3>
-        <ul class="roadmap-list">
-          <li>• NFT Collection #1 — 888 $DREW NFTs</li>
-          <li>• Token creation + airdrop to NFT holders after mint-out</li>
-          <li>• Token trading live</li>
-          <li>• First quarter — community vote & first donation</li>
-        </ul>
+      <div class="phase-box">
+        <div class="phase-number">PHASE 1</div>
+        <div class="phase-text">NFT Collection #1 — 888 $DREW NFTs</div>
       </div>
 
-      <div class="roadmap-phase">
-        <h3>Down the Road</h3>
-        <ul class="roadmap-list">
-          <li>• Wave 2 & Wave 3 NFT collections</li>
-          <li>• “The Pit” — future utility & community expansion</li>
-        </ul>
+      <div class="arrow">↓</div>
+
+      <div class="phase-box">
+        <div class="phase-number">PHASE 2</div>
+        <div class="phase-text">$DREW Token Creation — Airdrop to NFT Holders</div>
       </div>
+
+      <div class="arrow">↓</div>
+
+      <div class="phase-box">
+        <div class="phase-number">PHASE 3</div>
+        <div class="phase-text">Token Trading Live</div>
+      </div>
+
+      <div class="arrow">↓</div>
+
+      <div class="phase-box">
+        <div class="phase-number">PHASE 4</div>
+        <div class="phase-text">First quarterly community vote + donation</div>
+      </div>
+
+      <div class="future-title">Down the Road</div>
+
+      <ul class="future-list">
+        <li>• Collection 2 & Collection 3 NFT Drops</li>
+        <li>• “The Pit” opens — future utility and movement expansion</li>
+      </ul>
 
     </section>
 
