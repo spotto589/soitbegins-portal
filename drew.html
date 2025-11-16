@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DREW — Purpose</title>
+  <title>$DREW — Rise Together</title>
 
   <style>
     :root {
@@ -20,16 +20,14 @@
       width: 100%;
       height: 100%;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #fff;
     }
 
     body {
       background-image: url("peacockedit.jpeg");
       background-size: cover;
       background-position: center;
-      background-repeat: no-repeat;
       background-attachment: fixed;
-      position: relative;
-      color: #fff;
     }
 
     body::before {
@@ -38,105 +36,175 @@
       inset: 0;
       background: rgba(0, 0, 0, 0.78);
       z-index: 0;
-      pointer-events: none;
     }
 
     .page {
       position: relative;
       z-index: 1;
-      min-height: 100vh;
+      padding: 6vh 6vw 10vh;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      padding: 6vh 6vw;
-      gap: 24px;
+      gap: 38px;
     }
 
     .heading {
       font-size: clamp(44px, 7vw, 90px);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      font-weight: 700;
+      font-weight: 800;
+      letter-spacing: 0.07em;
       color: var(--drew-pink);
       text-shadow:
-        0 0 10px rgba(232, 29, 137, 0.8),
-        0 0 22px rgba(232, 29, 137, 0.7),
-        0 0 40px rgba(232, 29, 137, 0.5);
+        0 0 12px rgba(232, 29, 137, 0.85),
+        0 0 28px rgba(232, 29, 137, 0.6),
+        0 0 50px rgba(232, 29, 137, 0.4);
       text-align: center;
+      text-transform: uppercase;
     }
 
     .subheading {
-      font-size: clamp(14px, 1.8vw, 20px);
-      opacity: 0.9;
+      font-size: clamp(15px, 1.9vw, 21px);
+      max-width: 900px;
       text-align: center;
-      max-width: 800px;
-      line-height: 1.5;
-    }
-
-    .subheading span {
-      color: var(--drew-pink);
-      font-weight: 600;
+      line-height: 1.6;
+      opacity: 0.95;
     }
 
     .cards {
       width: 100%;
-      max-width: 860px;
+      max-width: 900px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-top: 10px;
+      gap: 14px;
     }
 
     .card {
-      width: 100%;
       background: rgba(0, 0, 0, 0.9);
       border-radius: 14px;
       padding: 26px;
       text-align: center;
       border: 1px solid rgba(232, 29, 137, 0.65);
       box-shadow:
-        0 0 12px rgba(232, 29, 137, 0.5),
-        0 0 28px rgba(232, 29, 137, 0.3);
+        0 0 14px rgba(232, 29, 137, 0.55),
+        0 0 30px rgba(232, 29, 137, 0.28);
       backdrop-filter: blur(6px);
     }
 
     .card-body {
-      font-size: 16px;
-      line-height: 1.6;
+      font-size: 17px;
+      line-height: 1.7;
       opacity: 0.95;
     }
+
+    /* ROADMAP SECTION */
+    .roadmap {
+      margin-top: 30px;
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .roadmap-title {
+      font-size: 28px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--drew-pink);
+      text-shadow: 0 0 14px rgba(232, 29, 137, 0.7);
+      text-align: center;
+      margin-bottom: 12px;
+      letter-spacing: 0.08em;
+    }
+
+    .roadmap-phase {
+      width: 100%;
+      background: rgba(10, 10, 10, 0.85);
+      border-radius: 12px;
+      padding: 22px 20px;
+      border: 1px solid rgba(232, 29, 137, 0.4);
+      backdrop-filter: blur(5px);
+      box-shadow:
+        0 0 15px rgba(232, 29, 137, 0.4),
+        0 0 40px rgba(232, 29, 137, 0.25);
+    }
+
+    .roadmap-phase h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      color: var(--drew-pink);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-align: center;
+    }
+
+    .roadmap-list {
+      list-style: none;
+      padding: 0;
+      line-height: 1.75;
+      font-size: 16px;
+      text-align: center;
+      opacity: 0.92;
+    }
+
   </style>
 </head>
 
 <body>
   <div class="page">
 
-    <div class="heading">DREW</div>
+    <div class="heading">$DREW UPRISING</div>
+
     <div class="subheading">
-      Supporting men’s mental health by building community, raising awareness,
-      and driving a movement that reminds every man: <span>You are not alone.</span>
+      Our mission is to build a strong and united community focused on supporting men’s mental health.
+      Together, we will raise funds and donate to recognised organisations —
+      each decision voted on by the $DREW community.
     </div>
 
     <div class="cards">
 
-      <!-- BOX 1 -->
       <section class="card">
         <div class="card-body">
-          Community-driven token aimed at encouraging conversations around men’s mental health.
-          Together we support, connect, and show up for one another.
+          <span>$DREW</span> is a community-driven token with a purpose:
+          to spark a movement that creates a ripple effect through the minds of men —
+          reminding us that we are all part of this beautiful work of art, together.
         </div>
       </section>
 
-      <!-- BOX 2 -->
       <section class="card">
         <div class="card-body">
-          By raising awareness and empowering men to speak openly,
-          DREW aims to become a movement that makes a real difference.
+          The future of <span>$DREW</span> is shaped entirely by its holders.
+          NFT & token holders vote on donations and the direction of the project —
+          strengthening this movement for men’s mental health awareness.
         </div>
       </section>
 
     </div>
+
+    <!-- COOL ROADMAP DESIGN -->
+    <section class="roadmap">
+
+      <div class="roadmap-title">Roadmap</div>
+
+      <div class="roadmap-phase">
+        <h3>Current Phase</h3>
+        <ul class="roadmap-list">
+          <li>• NFT Collection #1 — 888 $DREW NFTs</li>
+          <li>• Token creation + airdrop to NFT holders after mint-out</li>
+          <li>• Token trading live</li>
+          <li>• First quarter — community vote & first donation</li>
+        </ul>
+      </div>
+
+      <div class="roadmap-phase">
+        <h3>Down the Road</h3>
+        <ul class="roadmap-list">
+          <li>• Wave 2 & Wave 3 NFT collections</li>
+          <li>• “The Pit” — future utility & community expansion</li>
+        </ul>
+      </div>
+
+    </section>
 
   </div>
 </body>
