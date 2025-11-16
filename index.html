@@ -13,12 +13,12 @@
         height: 100vh;
         overflow: hidden;
         font-family: "Courier New", monospace;
-        background: black;
+        background: #000;
         display: flex;
         flex-direction: column;
     }
 
-    /* TOP STATIC SECTION (unchanged) */
+    /* TOP STATIC SECTION (unchanged OG look) */
     .top-static {
         position: relative;
         width: 100%;
@@ -53,10 +53,10 @@
 
     /* BOTTOM DREW ANIMATION */
     .drew-section {
+        position: relative;
         width: 100%;
         height: 50vh;
-        position: relative;
-        background: radial-gradient(circle, #ff00f2 0%, #000 100%);
+        background: radial-gradient(circle, #ff00f7 0%, #000 80%);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -64,16 +64,24 @@
     }
 
     .drew-section video {
-        height: 100%;
-        width: auto; /* NO DISTORTION */
-        object-fit: contain;
+        width: 100%;
+        height: auto;
+        max-height: 50vh;
+    }
+
+    /* Desktop tweaks — scale more horizontally */
+    @media (min-aspect-ratio: 16/10) {
+        .drew-section video {
+            height: 100%;
+            width: auto;
+        }
     }
 </style>
 
 </head>
 <body>
 
-<!-- 🔺 TOP STATIC (perfect original) -->
+<!-- TOP STATIC -->
 <div class="top-static">
     <video id="static-bg" autoplay muted loop playsinline>
         <source src="tv_static.mp4" type="video/mp4">
@@ -82,7 +90,7 @@
     <a href="static.html" class="static-text" id="glitchWord">S T A T ! C</a>
 </div>
 
-<!-- 🔻 BOTTOM DREW ANIMATION -->
+<!-- BOTTOM DREW ANIMATION -->
 <div class="drew-section" onclick="location.href='drew.html'">
     <video autoplay muted loop playsinline>
         <source src="text-to-video-dc67619f.mp4" type="video/mp4">
@@ -100,8 +108,8 @@ const glyphs = {
 
 const container = document.getElementById("glitchWord");
 let base = container.innerText.replace(/\s+/g, "").split("");
-
 container.innerHTML = "";
+
 base.forEach(l => {
   let span = document.createElement("span");
   span.className = "char";
