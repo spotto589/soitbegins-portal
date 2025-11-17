@@ -8,84 +8,70 @@
 <style>
   :root {
     --neon-pink: #E81D89;
-    --neon-pink-soft: rgba(232,29,137,0.4);
+    --neon-pink-soft: rgba(232,29,137,0.45);
+    --neon-border: rgba(232,29,137,0.7);
   }
 
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  html, body {
-    width: 100%;
-    min-height: 100%;
-    background: #000;
-    font-family: system-ui, sans-serif;
-    scroll-behavior: smooth;
-    color: #fff;
-  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; min-height: 100%; scroll-behavior: smooth; background: #000; font-family: system-ui, sans-serif; color: #fff; }
 
   body {
     background-image: url("peacockedit.jpeg");
     background-size: cover;
-    background-position: center;
     background-repeat: repeat-y;
+    background-position: center;
   }
 
-  /* 🔥 Sticky Top Header */
+  /* 🔥 Sticky Glass Header */
   .sticky-header {
     position: fixed;
     top: 0;
     width: 100%;
     padding: 14px 0;
+    background: rgba(0,0,0,0.35);
     backdrop-filter: blur(10px);
-    background: rgba(0, 0, 0, 0.4);
     border-bottom: 1px solid rgba(232,29,137,0.25);
     display: flex;
     justify-content: center;
     z-index: 9999;
   }
 
-  /* Fun neon title */
   .top-title {
-    font-size: clamp(32px, 7vw, 56px);
+    font-size: clamp(32px, 6vw, 58px);
+    font-family: "Impact","Anton",sans-serif;
     font-weight: 900;
-    font-family: "Impact", "Anton", sans-serif;
-    letter-spacing: 0.1em;
     color: var(--neon-pink);
+    letter-spacing: .1em;
     text-transform: uppercase;
     cursor: pointer;
     text-shadow:
-      0 0 14px var(--neon-pink-soft),
-      0 0 34px rgba(232,29,137,0.6);
+      0 0 12px var(--neon-pink-soft),
+      0 0 26px rgba(232,29,137,0.55);
     position: relative;
   }
 
-  /* Ink drip from title */
   .top-title:hover::after {
     content: "";
     position: absolute;
     left: 50%;
     top: 80%;
-    width: 8px;
-    height: 8px;
+    width: 9px;
+    height: 9px;
     background: var(--neon-pink);
     border-radius: 50%;
-    filter: drop-shadow(0 0 12px rgba(232,29,137,0.9));
+    filter: drop-shadow(0 0 12px rgba(232,29,137,0.8));
     transform: translateX(-50%);
     animation: dripFall 1.3s ease forwards;
   }
 
   @keyframes dripFall {
     0% { transform: translate(-50%,0) scale(1); opacity: 1; }
-    70% { transform: translate(-50%,40px) scale(0.9); opacity: .8; }
-    100% { transform: translate(-50%,60px) scale(0.2); opacity: 0; }
+    70% { transform: translate(-50%,38px) scale(.8); opacity: .7; }
+    100%{ transform: translate(-50%,58px) scale(.2); opacity: 0; }
   }
 
-  /* MAIN PAGE LAYOUT */
   .page {
-    padding: 18vh 6vw 14vh; /* extra top spacing for sticky header */
+    padding: 20vh 6vw 14vh;
     display: flex;
     flex-direction: column;
     gap: 50px;
@@ -94,47 +80,90 @@
 
   /* HERO */
   .hero {
-    width: 100%;
-    max-width: 1100px;
-    text-align: center;
     background: rgba(0,0,0,0.42);
-    border-radius: 18px;
     padding: 40px 32px;
+    border-radius: 18px;
+    text-align: center;
     border: 1px solid rgba(232,29,137,0.25);
     backdrop-filter: blur(3px);
   }
 
-  .heading {
-    font-size: clamp(60px, 10vw, 130px);
-    font-weight: 900;
-    color: var(--neon-pink);
-    text-shadow: 0 0 22px var(--neon-pink-soft);
+  .heading { font-size: clamp(60px,10vw,130px); font-weight:900; color:var(--neon-pink); text-shadow:0 0 20px var(--neon-pink-soft); }
+  .divider { width:160px;height:3px;margin:14px auto;background:var(--neon-pink);box-shadow:0 0 14px var(--neon-pink-soft);border-radius:3px; }
+
+  .accordion-wrapper {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
   }
 
-  .divider {
-    width: 160px;
-    height: 3px;
-    background: var(--neon-pink);
-    margin: 14px auto 18px;
-    box-shadow: 0 0 18px var(--neon-pink-soft);
-    border-radius: 3px;
+  /* Neon Expand Boxes */
+  .accordion-header {
+    background:#000;
+    border-radius:14px;
+    padding:20px 26px;
+    border:2px solid var(--neon-border);
+    cursor:pointer;
+    display:flex;
+    justify-content:center;
+    transition:.25s;
+    box-shadow:0 0 16px rgba(232,29,137,0.25);
+  }
+  .accordion-header:hover {
+    border-color:var(--neon-pink);
+    box-shadow:0 0 26px rgba(232,29,137,.75),0 0 40px rgba(232,29,137,.4);
+    transform:translateY(-2px);
   }
 
-  .subheading {
-    opacity: 0.95;
-    line-height: 1.7;
+  .accordion-label {
+    font-size: clamp(20px,2.5vw,28px);
+    letter-spacing:0.2em;
+    color:var(--neon-pink);
+    text-transform:uppercase;
+    text-shadow:0 0 14px var(--neon-pink-soft);
+    position:relative;
   }
+
+  /* 🔥 Ink Dripping From Letters */
+  .accordion-header:hover .accordion-label::before {
+    content:"";
+    position:absolute;
+    left:50%;
+    top:70%;
+    width:8px;height:8px;
+    background:var(--neon-pink);
+    border-radius:50%;
+    filter:drop-shadow(0 0 12px rgba(232,29,137,0.8));
+    transform:translateX(-50%);
+    animation:dripFall 1.3s ease forwards;
+  }
+
+  /* Accordion content */
+  .accordion-content {
+    max-height:0;
+    overflow:hidden;
+    background:rgba(0,0,0,0.85);
+    border-radius:0 0 14px 14px;
+    border:2px solid rgba(232,29,137,0.25);
+    border-top:none;
+    margin-top:-2px;
+    padding:0 24px;
+    transition:max-height .32s ease,padding .25s ease;
+  }
+  .accordion-content.open { max-height:260px; padding:18px 24px 24px; }
+
+  .accordion-text { text-align:center; line-height:1.7; opacity:0.92; }
 
 </style>
 </head>
 
 <body>
 
-<!-- 🔥 Sticky Header -->
+<!-- 🔥 Sticky glass neon title -->
 <div class="sticky-header">
-  <div class="top-title" onclick="window.scrollTo({top:0, behavior:'smooth'});">
-    $DREW
-  </div>
+  <div class="top-title" onclick="window.scrollTo({top:0,behavior:'smooth'});">$DREW</div>
 </div>
 
 <div class="page">
@@ -142,13 +171,49 @@
   <section class="hero">
     <div class="heading">$DREW</div>
     <div class="divider"></div>
-    <p class="subheading">
-      Our mission is to build a strong and united community supporting men’s mental health.<br>
-      Donations are chosen by the community — driven by $DREW holders.
-    </p>
+    <p class="subheading">Our mission is to support men’s mental health together.</p>
+  </section>
+
+  <section class="accordion-wrapper">
+
+    <div class="accordion-item">
+      <div class="accordion-header"><span class="accordion-label">MISSION</span></div>
+      <div class="accordion-content"><p class="accordion-text">Meaningful support starts with real conversation…</p></div>
+    </div>
+
+    <div class="accordion-item">
+      <div class="accordion-header"><span class="accordion-label">COMMUNITY</span></div>
+      <div class="accordion-content"><p class="accordion-text">Holders lead donations and shape initiatives…</p></div>
+    </div>
+
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="window.location='roadmap.html'"><span class="accordion-label">ROADMAP</span></div>
+    </div>
+
+    <div class="accordion-item">
+      <div class="accordion-header"><span class="accordion-label">NFTS</span></div>
+      <div class="accordion-content"><p class="accordion-text">888 genesis access NFTs…</p></div>
+    </div>
+
+    <div class="accordion-item">
+      <div class="accordion-header"><span class="accordion-label">TOKEN</span></div>
+      <div class="accordion-content"><p class="accordion-text">$DREW rewards committed holders…</p></div>
+    </div>
+
   </section>
 
 </div>
+
+<script>
+document.querySelectorAll('.accordion-item').forEach(item=>{
+  const header=item.querySelector('.accordion-header');
+  const content=item.querySelector('.accordion-content');
+  if(!content)return;
+  header.addEventListener('click',()=>{
+    content.classList.toggle('open');
+  });
+});
+</script>
 
 </body>
 </html>
