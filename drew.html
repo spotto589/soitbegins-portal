@@ -22,36 +22,23 @@ html, body {
   font-family: system-ui, sans-serif;
   color: #fff;
   overflow-x: hidden;
+  background: #000;
 }
 
-/* ✔ YOUR EXACT WALLPAPER SETUP */
+/* 🔥 Continuous mirrored wallpaper */
 .bg-wallpaper {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: -3;
-  display: flex;
-  flex-direction: column;
-}
-
-.bg-top,
-.bg-bottom {
-  flex: 1;
-  background-image: url("peacockedit.jpeg");
+  background-image:
+    url("peacockedit.jpeg"),
+    url("peacockedit.jpeg");
   background-size: cover;
-  background-position: center;
+  background-repeat: repeat-y;
+  background-position: center top, center bottom;
 }
 
-.bg-bottom {
-  transform: scaleY(-1);
-}
-
-/* 🧠 This makes wallpaper SCROLL with content */
-html, body {
-  height: auto;
-  background: transparent;
-}
-
-/* Floating content */
+/* CONTENT */
 .page {
   position: relative;
   padding: 12vh 6vw;
@@ -62,20 +49,21 @@ html, body {
   z-index: 10;
 }
 
-/* Designed readable blocks */
+/* GLASS BLOCK SECTIONS */
 .section-block {
   width: 100%;
   max-width: 1100px;
-  background: rgba(0, 0, 0, 0.36); /* wallpaper stays visible */
+  background: rgba(0, 0, 0, 0.35);
   border-radius: 18px;
   padding: 44px 36px;
-  border: 1px solid rgba(232,29,137,0.38);
   backdrop-filter: blur(3px);
+  border: 1px solid rgba(232,29,137,0.38);
+  box-shadow: 0 0 25px rgba(0,0,0,0.3);
   text-align: center;
   text-shadow: 0 0 10px rgba(0,0,0,0.9);
 }
 
-/* Typography */
+/* TITLES + TEXT */
 .heading {
   font-size: clamp(55px, 12vw, 140px);
   font-weight: 900;
@@ -99,7 +87,7 @@ html, body {
   line-height: 1.7;
 }
 
-/* Cards */
+/* CARDS */
 .cards {
   width: 100%;
   display: flex;
@@ -115,7 +103,7 @@ html, body {
   line-height: 1.7;
 }
 
-/* Roadmap */
+/* ROADMAP */
 .roadmap-title {
   font-size: clamp(34px, 7vw, 90px);
   font-weight: 900;
@@ -130,7 +118,7 @@ html, body {
   border-radius: 16px;
   border: 1px solid rgba(232,29,137,0.38);
   padding: 22px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   line-height: 1.6;
 }
 
@@ -143,7 +131,7 @@ html, body {
 .arrow {
   font-size: 36px;
   color: var(--drew-pink);
-  margin: 12px 0;
+  margin: 14px 0;
 }
 
 .future-title {
@@ -156,22 +144,18 @@ html, body {
 .future-list {
   list-style: none;
   padding: 0;
+  line-height: 1.75;
   font-size: clamp(16px, 2vw, 22px);
-  line-height: 1.7;
-  opacity: 0.95;
 }
+
 </style>
 </head>
 
 <body>
 
-<!-- ✔ ORIGINAL MIRRORED WALLPAPER BACKGROUND -->
-<div class="bg-wallpaper">
-  <div class="bg-top"></div>
-  <div class="bg-bottom"></div>
-</div>
+<!-- ONLY change: continuous wallpaper -->
+<div class="bg-wallpaper"></div>
 
-<!-- CONTENT OVER WALLPAPER -->
 <div class="page">
 
   <div class="section-block">
