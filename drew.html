@@ -22,18 +22,36 @@ html, body {
   font-family: system-ui, sans-serif;
   color: #fff;
   overflow-x: hidden;
-  background: #000;
 }
 
-/* BACKGROUND – SCROLLS WITH CONTENT */
-body {
+/* ✔ YOUR EXACT WALLPAPER SETUP */
+.bg-wallpaper {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  display: flex;
+  flex-direction: column;
+}
+
+.bg-top,
+.bg-bottom {
+  flex: 1;
   background-image: url("peacockedit.jpeg");
   background-size: cover;
   background-position: center;
-  background-attachment: fixed; /* keeps wallpaper visible at all times */
 }
 
-/* PAGE LAYOUT */
+.bg-bottom {
+  transform: scaleY(-1);
+}
+
+/* 🧠 This makes wallpaper SCROLL with content */
+html, body {
+  height: auto;
+  background: transparent;
+}
+
+/* Floating content */
 .page {
   position: relative;
   padding: 12vh 6vw;
@@ -41,27 +59,23 @@ body {
   flex-direction: column;
   gap: 70px;
   align-items: center;
+  z-index: 10;
 }
 
-/* GLASS / BOX SECTIONS */
+/* Designed readable blocks */
 .section-block {
   width: 100%;
   max-width: 1100px;
-  background: rgba(0, 0, 0, 0.35); /* readable but wallpaper visible */
+  background: rgba(0, 0, 0, 0.36); /* wallpaper stays visible */
   border-radius: 18px;
   padding: 44px 36px;
-  backdrop-filter: blur(3px);
   border: 1px solid rgba(232,29,137,0.38);
-  box-shadow: 0 0 25px rgba(0,0,0,0.3);
+  backdrop-filter: blur(3px);
   text-align: center;
-}
-
-/* TEXT READABILITY */
-.section-block * {
   text-shadow: 0 0 10px rgba(0,0,0,0.9);
 }
 
-/* MAIN HEADING */
+/* Typography */
 .heading {
   font-size: clamp(55px, 12vw, 140px);
   font-weight: 900;
@@ -85,7 +99,7 @@ body {
   line-height: 1.7;
 }
 
-/* CARDS */
+/* Cards */
 .cards {
   width: 100%;
   display: flex;
@@ -94,15 +108,14 @@ body {
 }
 
 .card {
-  background: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.4);
   border-radius: 14px;
   padding: 26px;
-  border: 1px solid rgba(232,29,137,0.38);
+  border: 1px solid rgba(232,29,137,0.35);
   line-height: 1.7;
-  font-size: clamp(15px, 2vw, 20px);
 }
 
-/* ROADMAP */
+/* Roadmap */
 .roadmap-title {
   font-size: clamp(34px, 7vw, 90px);
   font-weight: 900;
@@ -113,12 +126,11 @@ body {
 
 .phase-block {
   width: 100%;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.4);
   border-radius: 16px;
-  border: 1px solid rgba(232,29,137,0.35);
-  padding: 22px 20px;
-  margin-bottom: 14px;
-  font-size: clamp(15px, 2vw, 20px);
+  border: 1px solid rgba(232,29,137,0.38);
+  padding: 22px;
+  margin-bottom: 12px;
   line-height: 1.6;
 }
 
@@ -126,29 +138,26 @@ body {
   font-size: 24px;
   font-weight: 800;
   color: var(--drew-pink);
-  margin-bottom: 6px;
 }
 
 .arrow {
-  font-size: 38px;
+  font-size: 36px;
   color: var(--drew-pink);
-  margin: 14px 0;
-  text-shadow: 0 0 10px var(--drew-pink);
+  margin: 12px 0;
 }
 
-/* FUTURE */
 .future-title {
   font-size: clamp(24px, 3vw, 38px);
   color: var(--drew-pink);
   font-weight: 700;
-  margin-top: 20px;
+  margin-top: 22px;
 }
 
 .future-list {
   list-style: none;
   padding: 0;
-  line-height: 1.75;
-  font-size: clamp(15px, 2vw, 20px);
+  font-size: clamp(16px, 2vw, 22px);
+  line-height: 1.7;
   opacity: 0.95;
 }
 </style>
@@ -156,9 +165,15 @@ body {
 
 <body>
 
+<!-- ✔ ORIGINAL MIRRORED WALLPAPER BACKGROUND -->
+<div class="bg-wallpaper">
+  <div class="bg-top"></div>
+  <div class="bg-bottom"></div>
+</div>
+
+<!-- CONTENT OVER WALLPAPER -->
 <div class="page">
 
-  <!-- HERO -->
   <div class="section-block">
     <div class="heading">$DREW</div>
     <div class="divider"></div>
@@ -168,7 +183,6 @@ body {
     </div>
   </div>
 
-  <!-- MISSION -->
   <div class="section-block">
     <div class="cards">
       <section class="card">
@@ -183,7 +197,6 @@ body {
     </div>
   </div>
 
-  <!-- ROADMAP -->
   <div class="section-block">
     <div class="roadmap-title">Roadmap</div>
 
