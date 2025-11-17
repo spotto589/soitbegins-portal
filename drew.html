@@ -22,33 +22,17 @@ html, body {
   font-family: system-ui, sans-serif;
   color: #fff;
   overflow-x: hidden;
+  background: #000;
 }
 
-/* ✔ YOUR EXACT WALLPAPER SETUP */
-.bg-wallpaper {
-  position: absolute;
-  inset: 0;
-  z-index: -3;
-  display: flex;
-  flex-direction: column;
-}
-
-.bg-top,
-.bg-bottom {
-  flex: 1;
+/* 🔥 Wallpaper as full-page background image */
+body {
   background-image: url("peacockedit.jpeg");
   background-size: cover;
   background-position: center;
-}
-
-.bg-bottom {
-  transform: scaleY(-1);
-}
-
-/* 🧠 This makes wallpaper SCROLL with content */
-html, body {
-  height: auto;
-  background: transparent;
+  background-attachment: scroll; /* wallpaper moves with page */
+  background-repeat: repeat-y; /* continues down page cleanly */
+  z-index: -5;
 }
 
 /* Floating content */
@@ -66,7 +50,7 @@ html, body {
 .section-block {
   width: 100%;
   max-width: 1100px;
-  background: rgba(0, 0, 0, 0.36); /* wallpaper stays visible */
+  background: rgba(0, 0, 0, 0.36);
   border-radius: 18px;
   padding: 44px 36px;
   border: 1px solid rgba(232,29,137,0.38);
@@ -81,8 +65,8 @@ html, body {
   font-weight: 900;
   letter-spacing: 0.04em;
   color: var(--drew-pink);
-  text-shadow: 0 0 25px rgba(232,29,137,0.8);
   text-transform: uppercase;
+  text-shadow: 0 0 25px rgba(232,29,137,0.8);
 }
 
 .divider {
@@ -90,7 +74,6 @@ html, body {
   height: 5px;
   margin: 18px auto;
   background: var(--drew-pink);
-  border-radius: 4px;
 }
 
 .subheading {
@@ -121,17 +104,14 @@ html, body {
   font-weight: 900;
   color: var(--drew-pink);
   margin-bottom: 32px;
-  text-shadow: 0 0 20px rgba(232,29,137,0.8);
 }
 
 .phase-block {
-  width: 100%;
   background: rgba(0,0,0,0.4);
   border-radius: 16px;
   border: 1px solid rgba(232,29,137,0.38);
   padding: 22px;
   margin-bottom: 12px;
-  line-height: 1.6;
 }
 
 .phase-number {
@@ -165,13 +145,6 @@ html, body {
 
 <body>
 
-<!-- ✔ ORIGINAL MIRRORED WALLPAPER BACKGROUND -->
-<div class="bg-wallpaper">
-  <div class="bg-top"></div>
-  <div class="bg-bottom"></div>
-</div>
-
-<!-- CONTENT OVER WALLPAPER -->
 <div class="page">
 
   <div class="section-block">
