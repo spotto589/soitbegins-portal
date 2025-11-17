@@ -1,229 +1,343 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>$DREW — Rise Together</title>
+  <meta charset="UTF-8">
+  <title>$DREW — Mission & Movement</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-:root {
-  --neon: #E81D89;
-  --bg: #000000;
-  --card: rgba(0,0,0,0.55);
-}
+  <style>
+    :root {
+      --neon-pink: #E81D89;
+      --neon-pink-soft: rgba(232,29,137,0.45);
+      --card-bg: rgba(0,0,0,0.84);
+      --border-pink: rgba(232,29,137,0.7);
+    }
 
-/* RESET */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-html, body {
-  width: 100%;
-  background: var(--bg);
-  font-family: system-ui, sans-serif;
-  color: #fff;
-  overflow-x: hidden;
-}
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      background: #000;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+      scroll-behavior: smooth;
+    }
 
-/* HEADER */
-header {
-  width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  backdrop-filter: blur(6px);
-  background: rgba(0,0,0,0.5);
-  border-bottom: 1px solid rgba(232,29,137,0.4);
-  z-index: 99;
-  padding: 14px 26px;
-}
+    body {
+      background-image: url("peacockedit.jpeg");
+      background-size: cover;
+      background-repeat: repeat-y;
+      background-position: center;
+    }
 
-header .logo {
-  font-size: 32px;
-  font-weight: 900;
-  color: var(--neon);
-  letter-spacing: 0.1em;
-  text-shadow: 0 0 16px rgba(232,29,137,0.8);
-}
+    /* Sticky header */
+    .sticky-header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      padding: 14px 4vw;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(232,29,137,0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 999;
+    }
 
-/* MAIN CONTENT WRAPPER */
-.page {
-  margin-top: 100px;
-  display: flex;
-  flex-direction: column;
-  gap: 70px;
-  padding: 60px 7vw;
-}
+    .top-title {
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--neon-pink);
+      cursor: pointer;
+      text-shadow: 0 0 14px var(--neon-pink-soft);
+      position: relative;
+    }
 
-/* QUOTE CARDS */
-.quote-card {
-  display: flex;
-  align-items: center;
-  gap: 36px;
-  padding: 28px;
-  background: var(--card);
-  border-radius: 18px;
-  border: 1px solid rgba(232,29,137,0.5);
-  box-shadow: 0 0 32px rgba(232,29,137,0.2);
-}
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
 
-.quote-card:nth-child(even) {
-  flex-direction: row-reverse;
-}
+    .nav-link {
+      font-size: clamp(13px, 1.7vw, 16px);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      cursor: pointer;
+      color: var(--neon-pink);
+      text-shadow: 0 0 10px var(--neon-pink-soft);
+      position: relative;
+    }
 
-.quote-card img {
-  width: 260px;
-  height: 260px;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 2px solid var(--neon);
-  box-shadow: 0 0 18px rgba(232,29,137,0.8);
-}
+    .nav-link:hover::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: var(--neon-pink);
+      border-radius: 50%;
+      transform: translateX(-50%);
+      animation: dripFall 0.9s ease forwards;
+    }
 
-.quote-text {
-  font-size: 20px;
-  line-height: 1.55;
-  max-width: 600px;
-  color: #ffffff;
-}
+    @keyframes dripFall {
+      0%   { opacity: 1; transform: translate(-50%,0) scale(1); }
+      60%  { opacity: 0.7; transform: translate(-50%,26px) scale(0.75); }
+      100% { opacity: 0;   transform: translate(-50%,40px) scale(0.2); }
+    }
 
-.author {
-  margin-top: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  opacity: 0.95;
-  color: #ffffff;
-}
+    .page {
+      padding: 18vh 6vw 14vh;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      max-width: 1040px;
+      margin: 0 auto;
+    }
 
-/* BUTTONS */
-.card-link {
-  display: inline-block;
-  margin-top: 18px;
-  padding: 12px 22px;
-  border-radius: 12px;
-  font-size: 16px;
-  text-decoration: none;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  border: 1px solid var(--neon);
-  color: var(--neon);
-  transition: 0.25s ease;
-}
+    /* Quote + photo cards */
+    .quote-block {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      background: var(--card-bg);
+      border-radius: 18px;
+      border: 1px solid rgba(232,29,137,0.3);
+      padding: 18px 22px;
+      box-shadow: 0 0 24px rgba(0,0,0,0.7);
+    }
 
-.card-link:hover {
-  background: var(--neon);
-  color: #000;
-  box-shadow: 0 0 20px var(--neon);
-}
+    .quote-photo {
+      flex-shrink: 0;
+      width: 220px;
+      height: 220px;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 2px solid var(--border-pink);
+      box-shadow:
+        0 0 18px rgba(232,29,137,0.55),
+        0 0 34px rgba(0,0,0,0.9);
+    }
 
-/* ROADMAP SECTION */
-.roadmap-container {
-  position: relative;
-  width: 100%;
-  margin-top: 20px;
-  border-radius: 18px;
-  overflow: hidden;
-  border: 1px solid rgba(232,29,137,0.6);
-  box-shadow: 0 0 34px rgba(232,29,137,0.45);
-}
+    .quote-text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #ffffff; /* force white */
+    }
 
-.roadmap-image {
-  width: 100%;
-  display: block;
-}
+    .quote-text blockquote {
+      margin-bottom: 10px;
+      font-style: italic;
+    }
 
-/* Solid black phase boxes */
-.phase {
-  position: absolute;
-  padding: 14px 22px;
-  background: #000;
-  color: #fff;
-  border: 2px solid var(--neon);
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  box-shadow: 0 0 18px rgba(232,29,137,0.8);
-}
+    .quote-author {
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #ffffff; /* name white too */
+      margin-top: 4px;
+    }
 
-/* Positioned placeholders */
-.phase1 { bottom: 12%; left: 12%; }
-.phase2 { bottom: 12%; right: 12%; }
-.phase3 { top: 22%; left: 12%; }
-.phase4 { top: 22%; right: 12%; }
+    /* Section label above groups */
+    .section-tag {
+      font-size: 13px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.65);
+      margin-left: 4px;
+      margin-bottom: 8px;
+    }
 
-/* MOBILE */
-@media(max-width: 900px){
-  .quote-card {
-    flex-direction: column !important;
-    text-align: center;
-  }
-  .quote-card img {
-    width: 80%;
-    height: auto;
-  }
-}
-</style>
+    /* CTA buttons under quotes */
+    .card-link {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      border: 1px solid var(--neon-pink);
+      color: var(--neon-pink);
+      transition: 0.25s ease;
+    }
+
+    .card-link:hover {
+      background: var(--neon-pink);
+      color: #000;
+      box-shadow: 0 0 20px var(--neon-pink);
+    }
+
+    /* Roadmap card with image + phases */
+    .roadmap-container {
+      position: relative;
+      width: 100%;
+      margin-top: 10px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(232,29,137,0.6);
+      box-shadow: 0 0 34px rgba(232,29,137,0.45);
+    }
+
+    .roadmap-image {
+      width: 100%;
+      display: block;
+    }
+
+    .phase {
+      position: absolute;
+      padding: 12px 18px;
+      background: #000;
+      color: #fff;
+      border: 2px solid var(--neon-pink);
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      box-shadow: 0 0 18px rgba(232,29,137,0.8);
+      text-align: center;
+    }
+
+    .phase1 { bottom: 12%; left: 10%; }
+    .phase2 { bottom: 12%; right: 10%; }
+    .phase3 { top: 20%; left: 10%; }
+    .phase4 { top: 20%; right: 10%; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sticky-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .nav-links {
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+      .page {
+        padding: 16vh 4vw 10vh;
+      }
+      .quote-block {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .quote-photo {
+        width: 180px;
+        height: 180px;
+      }
+      .phase {
+        font-size: 11px;
+        padding: 8px 12px;
+      }
+    }
+  </style>
 </head>
-
 <body>
 
-<header>
-  <div class="logo">$DREW</div>
-</header>
-
-<div class="page">
-
-  <!-- Marcus Aurelius - Mission -->
-  <div class="quote-card">
-    <img src="images/marcus-aurelius.jpg" alt="Marcus Aurelius">
-    <div>
-      <p class="quote-text">“The things you think about determine the quality of your mind. Your soul takes on the color of your thoughts.”</p>
-      <p class="author">— Marcus Aurelius</p>
-      <a href="mission.html" class="card-link">Our Mission →</a>
+  <!-- Sticky header -->
+  <header class="sticky-header">
+    <div class="top-title" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">
+      $DREW
     </div>
-  </div>
+    <nav class="nav-links">
+      <div class="nav-link" onclick="document.getElementById('token-section').scrollIntoView({behavior:'smooth'})">Token</div>
+      <div class="nav-link" onclick="document.getElementById('nft-section').scrollIntoView({behavior:'smooth'})">NFTs</div>
+      <div class="nav-link" onclick="document.getElementById('mission-area').scrollIntoView({behavior:'smooth'})">Movement</div>
+      <div class="nav-link" onclick="document.getElementById('pit-section').scrollIntoView({behavior:'smooth'})">Pit</div>
+    </nav>
+  </header>
 
-  <!-- Alan Watts - Community -->
-  <div class="quote-card">
-    <img src="images/watts.jpeg" alt="Alan Watts">
-    <div>
-      <p class="quote-text">“For the price of intelligence as we now know it is chronic anxiety — anxiety which appears to increase, oddly enough, to the very degree that human life is subjected to intelligent organization.”</p>
-      <p class="author">— Alan Watts</p>
-      <a href="community.html" class="card-link">Join the Community →</a>
-    </div>
-  </div>
+  <main class="page">
 
-  <!-- Roadmap -->
-  <div class="roadmap-container">
-    <img src="images/psychedelic-road.jpeg" alt="Roadmap" class="roadmap-image">
+    <!-- Marcus Aurelius + Mission -->
+    <section id="mission-area">
+      <div class="section-tag">Mission</div>
+      <div class="quote-block">
+        <img src="marcus-aurelius.jpg" alt="Marcus Aurelius" class="quote-photo">
+        <div class="quote-text">
+          <blockquote>
+            “The things you think about determine the quality of your mind. Your soul takes on the color of your thoughts.”
+          </blockquote>
+          <div class="quote-author">— Marcus Aurelius</div>
+          <a href="mission.html" class="card-link">Our Mission →</a>
+        </div>
+      </div>
+    </section>
 
-    <div class="phase phase1">Phase 1</div>
-    <div class="phase phase2">Phase 2</div>
-    <div class="phase phase3">Phase 3</div>
-    <div class="phase phase4">Phase 4</div>
-  </div>
+    <!-- Alan Watts + Community -->
+    <section>
+      <div class="section-tag">Community</div>
+      <div class="quote-block">
+        <img src="watts.jpeg" alt="Alan Watts" class="quote-photo">
+        <div class="quote-text">
+          <blockquote>
+            “For the price of intelligence as we now know it is chronic anxiety — anxiety which appears to increase, oddly enough, to the very degree that human life is subjected to intelligent organization.”
+          </blockquote>
+          <div class="quote-author">— Alan Watts</div>
+          <a href="community.html" class="card-link">Join the Community →</a>
+        </div>
+      </div>
+    </section>
 
-  <!-- Terence McKenna - NFTs -->
-  <div class="quote-card">
-    <img src="images/Mckenna.jpg" alt="Terence McKenna">
-    <div>
-      <p class="quote-text">“The main thing to understand is that we are imprisoned in some kind of work of art.”</p>
-      <p class="author">— Terence McKenna</p>
-      <a href="nfts.html" class="card-link">Access NFTs →</a>
-    </div>
-  </div>
+    <!-- Roadmap (psychedelic image + 4 phases) -->
+    <section id="roadmap-section">
+      <div class="section-tag">Roadmap</div>
+      <div class="roadmap-container">
+        <!-- adjust filename if needed to match your repo -->
+        <img src="psychedelic-road.jpeg" alt="Roadmap" class="roadmap-image">
+        <div class="phase phase1">Phase 1</div>
+        <div class="phase phase2">Phase 2</div>
+        <div class="phase phase3">Phase 3</div>
+        <div class="phase phase4">Phase 4</div>
+      </div>
+    </section>
 
-  <!-- Carl Jung - The Pit -->
-  <div class="quote-card">
-    <img src="images/jung.jpg" alt="Carl Jung">
-    <div>
-      <p class="quote-text">“Loneliness does not come from having no people about one, but from being unable to communicate the things that seem important to oneself, or from holding certain views which others find inadmissible.”</p>
-      <p class="author">— Carl Jung</p>
-      <a href="pit.html" class="card-link">Enter the Pit →</a>
-    </div>
-  </div>
+    <!-- McKenna + NFTs (also anchor for Token nav) -->
+    <section id="nft-section">
+      <!-- invisible anchor so "Token" nav still scrolls here -->
+      <div id="token-section"></div>
 
-</div>
+      <div class="section-tag">NFTs</div>
+      <div class="quote-block">
+        <img src="Mckenna.jpg" alt="Terence McKenna" class="quote-photo">
+        <div class="quote-text">
+          <blockquote>
+            “The main thing to understand is that we are imprisoned in some kind of work of art.”
+          </blockquote>
+          <div class="quote-author">— Terence McKenna</div>
+          <a href="nfts.html" class="card-link">Access NFTs →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Jung + The Pit -->
+    <section id="pit-section">
+      <div class="section-tag">The Pit</div>
+      <div class="quote-block">
+        <img src="jung.jpg" alt="Carl Jung" class="quote-photo">
+        <div class="quote-text">
+          <blockquote>
+            “Loneliness does not come from having no people about one, but from being unable to communicate the things that seem important to oneself, or from holding certain views which others find inadmissible.”
+          </blockquote>
+          <div class="quote-author">— Carl Jung</div>
+          <a href="pit.html" class="card-link">Enter the Pit →</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
 
 </body>
 </html>
