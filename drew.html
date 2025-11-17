@@ -26,7 +26,7 @@
     background: #000;
   }
 
-  /* YOUR BACKGROUND — UNCHANGED */
+  /* BACKGROUND ALWAYS UNCHANGED */
   .bg-wallpaper {
     position: fixed;
     inset: 0;
@@ -47,12 +47,12 @@
     transform: scaleY(-1);
   }
 
-  /* VERY LIGHT tint — wallpaper visible */
+  /* Desktop tint — removed for mobile below */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.12);
+    background: rgba(0,0,0,0.1);
     z-index: -2;
   }
 
@@ -65,45 +65,39 @@
     align-items: center;
   }
 
-  /* GLASS BLOCKS */
+  /* Content blocks */
   .section-block {
     width: 100%;
     max-width: 1100px;
-    background: rgba(0,0,0,0.12);
+    background: rgba(0,0,0,0.1);
     border-radius: 18px;
     padding: 44px 36px;
-    backdrop-filter: blur(2.5px);
+    backdrop-filter: blur(1.5px);
     border: 1px solid rgba(232,29,137,0.28);
-    box-shadow:
-      0 0 26px rgba(232,29,137,0.18),
-      0 0 90px rgba(232,29,137,0.1);
-    text-shadow: 0 0 8px rgba(0,0,0,0.85);
+    box-shadow: 0 0 22px rgba(0,0,0,0.25);
     text-align: center;
+    text-shadow: 0 0 12px rgba(0,0,0,0.98);
   }
 
   .heading {
     font-size: clamp(48px, 10vw, 140px);
     font-weight: 900;
-    letter-spacing: 0.05em;
     color: var(--drew-pink);
-    text-shadow:
-      0 0 20px rgba(232,29,137,0.9),
-      0 0 40px rgba(232,29,137,0.6);
+    text-shadow: 0 0 20px rgba(232,29,137,0.9);
     text-transform: uppercase;
   }
 
   .divider {
     width: 180px;
     height: 4px;
-    border-radius: 2px;
+    margin: 18px auto;
     background: var(--drew-pink);
-    margin: 20px auto;
   }
 
   .subheading {
     font-size: clamp(15px, 2vw, 22px);
     max-width: 900px;
-    opacity: 0.95;
+    opacity: 1;
     line-height: 1.65;
     margin: 0 auto;
   }
@@ -116,13 +110,11 @@
   }
 
   .card {
-    background: rgba(0,0,0,0.38);
+    background: rgba(0,0,0,0.25);
     border-radius: 14px;
     padding: 26px;
-    backdrop-filter: blur(4px);
+    line-height: 1.65;
     border: 1px solid rgba(232,29,137,0.35);
-    line-height: 1.7;
-    text-shadow: 0 0 6px rgba(0,0,0,0.8);
   }
 
   .roadmap-title {
@@ -130,34 +122,27 @@
     font-weight: 900;
     color: var(--drew-pink);
     margin-bottom: 32px;
-    text-shadow:
-      0 0 18px rgba(232,29,137,0.85),
-      0 0 40px rgba(232,29,137,0.5);
   }
 
   .phase-block {
-    width: 100%;
-    background: rgba(10,10,10,0.38);
+    background: rgba(10,10,10,0.25);
     border-radius: 16px;
-    border: 2px solid rgba(232,29,137,0.4);
+    border: 2px solid rgba(232,29,137,0.35);
     padding: 22px 20px;
     margin-bottom: 14px;
     line-height: 1.6;
-    text-shadow: 0 0 6px rgba(0,0,0,0.8);
   }
 
   .phase-number {
     font-size: 22px;
     font-weight: 800;
     color: var(--drew-pink);
-    margin-bottom: 4px;
   }
 
   .arrow {
     font-size: 36px;
     color: var(--drew-pink);
     margin: 10px 0;
-    text-shadow: 0 0 10px rgba(232,29,137,0.8);
   }
 
   .future-title {
@@ -165,7 +150,6 @@
     color: var(--drew-pink);
     font-weight: 700;
     margin-top: 20px;
-    text-shadow: 0 0 10px rgba(232,29,137,0.9);
   }
 
   .future-list {
@@ -173,14 +157,25 @@
     padding: 0;
     line-height: 1.75;
     font-size: clamp(15px, 1.85vw, 21px);
-    opacity: 0.95;
+  }
+
+  /* 📱 MOBILE — remove ANY layer over wallpaper */
+  @media (max-width: 820px) {
+    body::before {
+      background: transparent !important;
+    }
+    .section-block {
+      background: rgba(0,0,0,0.05);
+      backdrop-filter: none;
+      border: none;
+      box-shadow: none;
+    }
   }
 </style>
 </head>
 
 <body>
 
-<!-- BACKGROUND -->
 <div class="bg-wallpaper">
   <div class="bg-top"></div>
   <div class="bg-bottom"></div>
@@ -222,7 +217,7 @@
     <div class="arrow">↓</div>
 
     <div class="phase-block">
-      <div="phase-number">PHASE 2</div>
+      <div class="phase-number">PHASE 2</div>
       $DREW Token Creation — Airdrop to NFT Holders
     </div>
     <div class="arrow">↓</div>
