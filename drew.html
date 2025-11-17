@@ -1,304 +1,276 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>$DREW — Rise Together</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>$DREW — Rise Together</title>
 
-  <style>
-    :root {
-      --drew-pink: #E81D89;
-    }
+<style>
+  :root {
+    --neon-blue: #25F2FF;
+    --bg-black: #000000;
+  }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-    html, body {
-      width: 100%;
-      min-height: 100%;
-      font-family: system-ui, sans-serif;
-      color: #fff;
-      overflow-x: hidden;
-      background: #000;
-    }
+  html, body {
+    width: 100%;
+    min-height: 100%;
+    font-family: system-ui, sans-serif;
+    color: #fff;
+    overflow-x: hidden;
+    background: #000;
+  }
 
-    /* Wallpaper background */
-    body {
-      background-image: url("peacockedit.jpeg");
-      background-size: cover;
-      background-position: center;
-      background-repeat: repeat-y;
-    }
+  body {
+    background-image: url("peacockedit.jpeg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: repeat-y;
+  }
 
-    .page {
-      position: relative;
-      padding: 10vh 6vw 14vh;
-      display: flex;
-      flex-direction: column;
-      gap: 50px;
-      align-items: center;
-      z-index: 1;
-    }
+  .page {
+    position: relative;
+    padding: 10vh 6vw 14vh;
+    display: flex;
+    flex-direction: column;
+    gap: 50px;
+    align-items: center;
+  }
 
-    /* HERO */
-    .hero {
-      width: 100%;
-      max-width: 1100px;
-      text-align: center;
-      background: rgba(0,0,0,0.42);
-      border-radius: 18px;
-      padding: 40px 32px 34px;
-      border: 1px solid rgba(232,29,137,0.38);
-      backdrop-filter: blur(3px);
-      box-shadow: 0 0 24px rgba(0,0,0,0.7);
-    }
+  /* HERO */
+  .hero {
+    width: 100%;
+    max-width: 1100px;
+    text-align: center;
+    background: rgba(0,0,0,0.42);
+    border-radius: 18px;
+    padding: 40px 32px;
+    border: 1px solid rgba(37,242,255,0.3);
+    backdrop-filter: blur(3px);
+    box-shadow: 0 0 24px rgba(0,0,0,0.7);
+  }
 
-    .heading {
-      font-size: clamp(60px, 10vw, 130px);
-      font-weight: 900;
-      letter-spacing: 0.06em;
-      color: var(--drew-pink);
-      text-transform: uppercase;
-      text-shadow:
-        0 0 18px rgba(232,29,137,0.9),
-        0 0 34px rgba(232,29,137,0.6);
-      margin-bottom: 12px;
-    }
+  .heading {
+    font-size: clamp(60px, 10vw, 130px);
+    font-weight: 900;
+    color: var(--neon-blue);
+    text-transform: uppercase;
+    text-shadow:
+      0 0 25px rgba(37,242,255,1),
+      0 0 60px rgba(37,242,255,0.7);
+    margin-bottom: 12px;
+  }
 
-    .divider {
-      width: 180px;
-      height: 4px;
-      margin: 0 auto 18px;
-      background: var(--drew-pink);
-      border-radius: 999px;
-      box-shadow:
-        0 0 10px rgba(232,29,137,0.9),
-        0 0 24px rgba(232,29,137,0.7);
-    }
+  .divider {
+    width: 160px;
+    height: 3px;
+    margin: 0 auto 18px;
+    background: var(--neon-blue);
+    box-shadow: 0 0 20px rgba(37,242,255,0.9);
+    border-radius: 3px;
+  }
 
-    .subheading {
-      font-size: clamp(16px, 2vw, 21px);
-      max-width: 780px;
-      margin: 0 auto;
-      line-height: 1.7;
-      opacity: 0.96;
-    }
+  .subheading {
+    max-width: 780px;
+    margin: 0 auto;
+    line-height: 1.7;
+    opacity: 0.95;
+  }
 
-    /* ACCORDION */
-    .accordion-wrapper {
-      width: 100%;
-      max-width: 900px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
+  /* ACCORDION */
+  .accordion-wrapper {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
 
-    .accordion-item {
-      border-radius: 16px;
-      overflow: visible;
-      background: transparent;
-      position: relative;
-    }
+  .accordion-item {
+    border-radius: 14px;
+    background: transparent;
+    overflow: visible;
+    position: relative;
+  }
 
-    .accordion-header {
-      background: rgba(0,0,0,0.78);
-      border-radius: 16px;
-      border: 2px solid rgba(232,29,137,0.7);
-      padding: 18px 26px;
-      cursor: pointer;
-      position: relative;
-      z-index: 5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      overflow: visible;
-      transition: all 0.24s ease;
-      box-shadow: 0 0 12px rgba(232,29,137,0.3);
-    }
+  .accordion-header {
+    background: var(--bg-black);
+    border-radius: 14px;
+    border: 2px solid rgba(37,242,255,0.7);
+    cursor: pointer;
+    padding: 18px 26px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    transition: all .25s ease;
+    box-shadow: 0 0 18px rgba(37,242,255,0.25);
+  }
 
-    .accordion-header:hover {
-      border-color: rgba(232,29,137,1);
-      box-shadow:
-        0 0 26px rgba(232,29,137,0.95),
-        0 0 40px rgba(232,29,137,0.75);
-      transform: translateY(-2px);
-    }
+  .accordion-header:hover {
+    border-color: rgba(37,242,255,1);
+    box-shadow:
+      0 0 40px rgba(37,242,255,1),
+      0 0 80px rgba(37,242,255,0.6);
+    transform: translateY(-2px);
+  }
 
-    .accordion-header.open {
-      border-color: rgba(232,29,137,1);
-      box-shadow:
-        0 0 28px rgba(232,29,137,1),
-        0 0 60px rgba(232,29,137,0.9);
-      transform: translateY(-3px);
-    }
+  .accordion-label {
+    font-size: clamp(20px, 2.3vw, 28px);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--neon-blue);
+    text-shadow:
+      0 0 10px rgba(37,242,255,1),
+      0 0 24px rgba(37,242,255,0.8);
+    position: relative;
+    padding-bottom: 6px;
+  }
 
-    .accordion-label {
-      font-size: clamp(20px, 2.3vw, 26px);
-      text-transform: uppercase;
-      letter-spacing: 0.22em;
-      position: relative;
-      padding-bottom: 8px;
-    }
+  /* ✨ Ink Drip on Hover Only */
+  .accordion-header:hover .accordion-label::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 0;
+    background: var(--neon-blue);
+    border-radius: 50px;
+    animation: inkDrip 1.3s cubic-bezier(.25,1.5,.32,1) forwards;
+    box-shadow:
+      0 0 14px rgba(37,242,255,1),
+      0 0 40px rgba(37,242,255,0.7);
+  }
 
-    /* Neon Liquid Ink Drip */
-    .accordion-header.open .accordion-label::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 100%;
-      transform: translateX(-50%);
-      width: 4px;
-      height: 0;
-      background: var(--drew-pink);
-      border-radius: 999px;
-      box-shadow:
-        0 0 10px rgba(232,29,137,0.95),
-        0 0 20px rgba(232,29,137,0.8);
-      animation: neonInk 1.4s cubic-bezier(.22,1.45,.32,1) infinite;
-      z-index: 10;
-    }
+  @keyframes inkDrip {
+    0% { height: 0; opacity: 0; }
+    40% { height: 36px; opacity: 1; }
+    90% { height: 6px; transform: translate(-50%,50px); opacity: .6; }
+    100% { height: 0; transform: translate(-50%,60px); opacity: 0; }
+  }
 
-    @keyframes neonInk {
-      0% { height: 0; opacity: 0; transform: translate(-50%,0); }
-      35% { height: 32px; opacity: 1; transform: translate(-50%,10px); }
-      70% { height: 16px; opacity: .75; transform: translate(-50%,46px); }
-      100% { height: 0; opacity: 0; transform: translate(-50%,60px); }
-    }
+  .accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    background: rgba(0,0,0,0.88);
+    border-radius: 0 0 14px 14px;
+    border: 2px solid rgba(37,242,255,0.35);
+    border-top: none;
+    margin-top: -2px;
+    padding: 0 24px;
+    transition: max-height .32s ease, padding .25s ease;
+  }
 
-    .accordion-content {
-      max-height: 0;
-      overflow: hidden;
-      background: rgba(0,0,0,0.85);
-      border: 2px solid rgba(232,29,137,0.4);
-      border-top: none;
-      border-radius: 0 0 16px 16px;
-      padding: 0 24px;
-      transition: max-height .32s ease, padding .25s ease;
-      margin-top: -2px;
-      position: relative;
-      z-index: 1;
-    }
+  .accordion-content.open {
+    max-height: 260px;
+    padding: 20px 24px 24px;
+  }
 
-    .accordion-content.open {
-      max-height: 260px;
-      padding: 20px 24px 24px;
-    }
+  .accordion-text {
+    text-align: center;
+    line-height: 1.7;
+  }
 
-    .accordion-text {
-      font-size: 15px;
-      line-height: 1.7;
-      opacity: 0.96;
-      text-align: center;
-    }
-
-    /* Mobile tweaks */
-    @media (max-width: 768px) {
-      .page { padding: 9vh 5vw 11vh; gap: 36px; }
-      .hero { padding: 30px 20px 26px; }
-      .accordion-header { padding: 14px 18px; }
-      .accordion-content.open { padding: 16px 18px 20px; }
-    }
-  </style>
+  @media(max-width:768px) {
+    .page{gap:36px}
+    .hero{padding:30px 20px}
+    .accordion-header{padding:14px 16px}
+    .accordion-content.open{padding:16px 18px 20px}
+  }
+</style>
 </head>
 
 <body>
-  <div class="page">
+<div class="page">
 
-    <!-- HERO -->
-    <section class="hero">
-      <div class="heading">$DREW</div>
-      <div class="divider"></div>
-      <p class="subheading">
-        Our mission is to build a strong and united community supporting men’s mental health.<br>
-        Donations are chosen by the community — driven by $DREW holders.
-      </p>
-    </section>
+  <section class="hero">
+    <div class="heading">$DREW</div>
+    <div class="divider"></div>
+    <p class="subheading">
+      Our mission is to build a strong and united community supporting men’s mental health.<br>
+      Donations are chosen by the community — driven by $DREW holders.
+    </p>
+  </section>
 
-    <!-- ACCORDION -->
-    <section class="accordion-wrapper">
+  <section class="accordion-wrapper">
 
-      <!-- Mission -->
-      <div class="accordion-item">
-        <div class="accordion-header">
-          <span class="accordion-label">MISSION</span>
-        </div>
-        <div class="accordion-content">
-          <p class="accordion-text">
-            $DREW exists to spark a ripple effect through the minds of men — a reminder that we’re all
-            in this beautiful work of art together, and that support, conversation and connection
-            are always within reach.
-          </p>
-        </div>
+    <!-- Mission -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <span class="accordion-label">MISSION</span>
       </div>
-
-      <!-- Community -->
-      <div class="accordion-item">
-        <div class="accordion-header">
-          <span class="accordion-label">COMMUNITY</span>
-        </div>
-        <div class="accordion-content">
-          <p class="accordion-text">
-            The $DREW community leads from the front: holders choose charities, propose new ideas,
-            vote on initiatives and help shape a culture where men feel safe to speak openly about
-            their mental health.
-          </p>
-        </div>
+      <div class="accordion-content">
+        <p class="accordion-text">
+          $DREW exists to spark a ripple effect through the minds of men — a reminder that we’re all
+          in this beautiful work of art together.
+        </p>
       </div>
+    </div>
 
-      <!-- Roadmap (now above NFTs + Token) -->
-      <div class="accordion-item">
-        <div class="accordion-header" onclick="window.location='roadmap.html'">
-          <span class="accordion-label">ROADMAP</span>
-        </div>
+    <!-- Community -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <span class="accordion-label">COMMUNITY</span>
       </div>
-
-      <!-- NFTs -->
-      <div class="accordion-item">
-        <div class="accordion-header">
-          <span class="accordion-label">NFTS</span>
-        </div>
-        <div class="accordion-content">
-          <p class="accordion-text">
-            The genesis $DREW NFT collection (888 pieces) is your access pass into the movement:
-            early support, future art drops, token distributions and a say in how we grow — all
-            built on-chain with real world impact.
-          </p>
-        </div>
+      <div class="accordion-content">
+        <p class="accordion-text">
+          The $DREW community leads from the front: holders choose charities and shape culture.
+        </p>
       </div>
+    </div>
 
-      <!-- Token -->
-      <div class="accordion-item">
-        <div class="accordion-header">
-          <span class="accordion-label">TOKEN</span>
-        </div>
-        <div class="accordion-content">
-          <p class="accordion-text">
-            The $DREW token is designed as a long-term coordination tool — rewarding committed
-            holders, empowering community-led charity votes and strengthening the feedback loop
-            between art, culture and mental health support.
-          </p>
-        </div>
+    <!-- Roadmap -->
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="window.location='roadmap.html'">
+        <span class="accordion-label">ROADMAP</span>
       </div>
+    </div>
 
-    </section>
-  </div>
+    <!-- NFTs -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <span class="accordion-label">NFTS</span>
+      </div>
+      <div class="accordion-content">
+        <p class="accordion-text">
+          888 genesis pieces — access pass to the movement.
+        </p>
+      </div>
+    </div>
 
-  <script>
-    document.querySelectorAll('.accordion-item').forEach(item => {
-      const header = item.querySelector('.accordion-header');
-      const content = item.querySelector('.accordion-content');
+    <!-- TOKEN -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <span class="accordion-label">TOKEN</span>
+      </div>
+      <div class="accordion-content">
+        <p class="accordion-text">
+          Designed to reward committed holders and drive voting power for donations.
+        </p>
+      </div>
+    </div>
 
-      if (!content) return; // roadmap is clickable, not expandable
+  </section>
 
-      header.addEventListener('click', () => {
-        header.classList.toggle('open');
-        content.classList.toggle('open');
-      });
+</div>
+
+<script>
+  document.querySelectorAll('.accordion-item').forEach(item => {
+    const header = item.querySelector('.accordion-header');
+    const content = item.querySelector('.accordion-content');
+    if (!content) return;
+
+    header.addEventListener('click', () => {
+      content.classList.toggle('open');
     });
-  </script>
+  });
+</script>
+
 </body>
 </html>
