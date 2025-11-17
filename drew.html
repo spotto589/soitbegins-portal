@@ -42,8 +42,8 @@
     font-weight: 900;
     color: var(--neon-pink);
     letter-spacing: .1em;
-    text-transform: uppercase;
     cursor: pointer;
+    text-transform: uppercase;
     text-shadow:
       0 0 12px var(--neon-pink-soft),
       0 0 26px rgba(232,29,137,0.55);
@@ -156,6 +156,12 @@
 
   .accordion-text { text-align:center; line-height:1.7; opacity:0.92; }
 
+  a.roadmap-link {
+    text-decoration: none;
+    color: var(--neon-pink);
+    font-weight: bold;
+  }
+
 </style>
 </head>
 
@@ -186,8 +192,15 @@
       <div class="accordion-content"><p class="accordion-text">Holders lead donations and shape initiatives…</p></div>
     </div>
 
+    <!-- Roadmap now drops down -->
     <div class="accordion-item">
-      <div class="accordion-header" onclick="window.location='roadmap.html'"><span class="accordion-label">ROADMAP</span></div>
+      <div class="accordion-header"><span class="accordion-label">ROADMAP</span></div>
+      <div class="accordion-content">
+        <p class="accordion-text">
+          View our roadmap here: <br><br>
+          <a class="roadmap-link" href="roadmap.html">➡ Click to open the $DREW Roadmap</a>
+        </p>
+      </div>
     </div>
 
     <div class="accordion-item">
@@ -196,7 +209,7 @@
     </div>
 
     <div class="accordion-item">
-      <div class="accordion-header"><span class="accordion-label">TOKEN</span></div>
+      <div class="accordion-header"><span class="accordion-label">$DREW TOKEN</span></div>
       <div class="accordion-content"><p class="accordion-text">$DREW rewards committed holders…</p></div>
     </div>
 
@@ -205,11 +218,18 @@
 </div>
 
 <script>
+// 🔄 AUTO-CLOSE others when one opens
 document.querySelectorAll('.accordion-item').forEach(item=>{
   const header=item.querySelector('.accordion-header');
   const content=item.querySelector('.accordion-content');
-  if(!content)return;
   header.addEventListener('click',()=>{
+
+    // Close ALL others first
+    document.querySelectorAll('.accordion-content').forEach(c=>{
+      if(c!==content) c.classList.remove('open');
+    });
+
+    // Then toggle this one
     content.classList.toggle('open');
   });
 });
