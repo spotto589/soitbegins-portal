@@ -23,9 +23,10 @@
     color: #fff;
     overflow-x: hidden;
     position: relative;
+    background: #000;
   }
 
-  /* Your mirrored wallpaper preserved */
+  /* YOUR BACKGROUND — UNCHANGED */
   .bg-wallpaper {
     position: fixed;
     inset: 0;
@@ -46,16 +47,15 @@
     transform: scaleY(-1);
   }
 
-  /* Slight tint so text reads but wallpaper stays strong */
+  /* VERY LIGHT tint — wallpaper visible */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.45);
+    background: rgba(0,0,0,0.12);
     z-index: -2;
   }
 
-  /* Page wrapper — clean spacing */
   .page {
     position: relative;
     padding: 10vh 6vw 12vh;
@@ -65,37 +65,37 @@
     align-items: center;
   }
 
-  /* NEW: transparent content blocks */
+  /* GLASS BLOCKS */
   .section-block {
     width: 100%;
     max-width: 1100px;
-    background: rgba(0,0,0,0.45);
+    background: rgba(0,0,0,0.12);
     border-radius: 18px;
     padding: 44px 36px;
-    backdrop-filter: blur(6px);
-    border: 1px solid rgba(232,29,137,0.35);
+    backdrop-filter: blur(2.5px);
+    border: 1px solid rgba(232,29,137,0.28);
     box-shadow:
-      0 0 26px rgba(232,29,137,0.25),
-      0 0 88px rgba(232,29,137,0.12);
+      0 0 26px rgba(232,29,137,0.18),
+      0 0 90px rgba(232,29,137,0.1);
+    text-shadow: 0 0 8px rgba(0,0,0,0.85);
     text-align: center;
   }
 
-  /* Title */
   .heading {
     font-size: clamp(48px, 10vw, 140px);
     font-weight: 900;
     letter-spacing: 0.05em;
     color: var(--drew-pink);
     text-shadow:
-      0 0 14px rgba(232,29,137,0.9),
-      0 0 36px rgba(232,29,137,0.6);
+      0 0 20px rgba(232,29,137,0.9),
+      0 0 40px rgba(232,29,137,0.6);
     text-transform: uppercase;
   }
 
   .divider {
-    width: 160px;
+    width: 180px;
     height: 4px;
-    border-radius: 4px;
+    border-radius: 2px;
     background: var(--drew-pink);
     margin: 20px auto;
   }
@@ -103,11 +103,11 @@
   .subheading {
     font-size: clamp(15px, 2vw, 22px);
     max-width: 900px;
+    opacity: 0.95;
     line-height: 1.65;
     margin: 0 auto;
   }
 
-  /* Mission cards (inside a content block now) */
   .cards {
     width: 100%;
     display: flex;
@@ -116,31 +116,34 @@
   }
 
   .card {
-    background: rgba(0,0,0,0.55);
+    background: rgba(0,0,0,0.38);
     border-radius: 14px;
     padding: 26px;
     backdrop-filter: blur(4px);
     border: 1px solid rgba(232,29,137,0.35);
     line-height: 1.7;
+    text-shadow: 0 0 6px rgba(0,0,0,0.8);
   }
 
-  /* Roadmap */
   .roadmap-title {
     font-size: clamp(34px, 6vw, 70px);
     font-weight: 900;
     color: var(--drew-pink);
-    text-transform: uppercase;
     margin-bottom: 32px;
+    text-shadow:
+      0 0 18px rgba(232,29,137,0.85),
+      0 0 40px rgba(232,29,137,0.5);
   }
 
   .phase-block {
     width: 100%;
-    background: rgba(10,10,10,0.55);
+    background: rgba(10,10,10,0.38);
     border-radius: 16px;
     border: 2px solid rgba(232,29,137,0.4);
     padding: 22px 20px;
     margin-bottom: 14px;
     line-height: 1.6;
+    text-shadow: 0 0 6px rgba(0,0,0,0.8);
   }
 
   .phase-number {
@@ -154,14 +157,15 @@
     font-size: 36px;
     color: var(--drew-pink);
     margin: 10px 0;
+    text-shadow: 0 0 10px rgba(232,29,137,0.8);
   }
 
-  /* Future list */
   .future-title {
     font-size: clamp(24px, 3vw, 34px);
     color: var(--drew-pink);
     font-weight: 700;
     margin-top: 20px;
+    text-shadow: 0 0 10px rgba(232,29,137,0.9);
   }
 
   .future-list {
@@ -176,7 +180,7 @@
 
 <body>
 
-<!-- Your original mirrored wallpaper unchanged -->
+<!-- BACKGROUND -->
 <div class="bg-wallpaper">
   <div class="bg-top"></div>
   <div class="bg-bottom"></div>
@@ -184,7 +188,6 @@
 
 <div class="page">
 
-  <!-- HERO SECTION -->
   <div class="section-block">
     <div class="heading">$DREW</div>
     <div class="divider"></div>
@@ -194,7 +197,6 @@
     </div>
   </div>
 
-  <!-- CARDS SECTION -->
   <div class="section-block">
     <div class="cards">
       <section class="card">
@@ -210,7 +212,6 @@
     </div>
   </div>
 
-  <!-- ROADMAP SECTION -->
   <div class="section-block">
     <div class="roadmap-title">Roadmap</div>
 
@@ -221,7 +222,7 @@
     <div class="arrow">↓</div>
 
     <div class="phase-block">
-      <div class="phase-number">PHASE 2</div>
+      <div="phase-number">PHASE 2</div>
       $DREW Token Creation — Airdrop to NFT Holders
     </div>
     <div class="arrow">↓</div>
