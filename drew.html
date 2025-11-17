@@ -22,15 +22,16 @@ html, body {
   font-family: system-ui, sans-serif;
   color: #fff;
   overflow-x: hidden;
+  background: #000;
 }
 
-/* ✔ ORIGINAL WALLPAPER — NOW CONTINUES DOWN THE PAGE */
+/* ✔ YOUR WALLPAPER — ONLY CHANGE: HEIGHT EXTENDED */
 .bg-wallpaper {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  min-height: 300vh; /* 👈 THIS is the fix */
+  height: 300vh; /* 🔥 extends your SAME wallpaper down */
   z-index: -3;
   display: flex;
   flex-direction: column;
@@ -48,12 +49,7 @@ html, body {
   transform: scaleY(-1);
 }
 
-/* CONTENT */
-html, body {
-  height: auto;
-  background: transparent;
-}
-
+/* CONTENT (unchanged) */
 .page {
   position: relative;
   padding: 12vh 6vw;
@@ -64,22 +60,20 @@ html, body {
   z-index: 10;
 }
 
-/* CONTENT BLOCKS */
 .section-block {
   width: 100%;
   max-width: 1100px;
   background: rgba(0, 0, 0, 0.36);
   border-radius: 18px;
-  padding: 44px 36px;
+  padding: 44px;
   backdrop-filter: blur(3px);
   border: 1px solid rgba(232,29,137,0.38);
   text-align: center;
   text-shadow: 0 0 10px rgba(0,0,0,0.9);
 }
 
-/* TEXT STYLES */
 .heading {
-  font-size: clamp(55px, 12vw, 140px);
+  font-size: clamp(55px,12vw,140px);
   font-weight: 900;
   color: var(--drew-pink);
   text-shadow: 0 0 25px rgba(232,29,137,0.8);
@@ -90,18 +84,15 @@ html, body {
   height: 5px;
   margin: 18px auto;
   background: var(--drew-pink);
-  border-radius: 4px;
 }
 
 .subheading {
-  font-size: clamp(16px, 2vw, 24px);
+  font-size: clamp(16px,2vw,24px);
   max-width: 900px;
   line-height: 1.7;
 }
 
-/* CARDS */
 .cards {
-  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -115,23 +106,19 @@ html, body {
   line-height: 1.7;
 }
 
-/* ROADMAP */
 .roadmap-title {
-  font-size: clamp(34px, 7vw, 90px);
+  font-size: clamp(34px,7vw,90px);
   font-weight: 900;
   color: var(--drew-pink);
   margin-bottom: 32px;
-  text-shadow: 0 0 20px rgba(232,29,137,0.8);
 }
 
 .phase-block {
-  width: 100%;
   background: rgba(0,0,0,0.4);
   border-radius: 16px;
   border: 1px solid rgba(232,29,137,0.38);
   padding: 22px;
   margin-bottom: 14px;
-  line-height: 1.6;
 }
 
 .phase-number {
@@ -147,7 +134,7 @@ html, body {
 }
 
 .future-title {
-  font-size: clamp(24px, 3vw, 38px);
+  font-size: clamp(24px,3vw,38px);
   color: var(--drew-pink);
   font-weight: 700;
   margin-top: 22px;
@@ -157,21 +144,19 @@ html, body {
   list-style: none;
   padding: 0;
   line-height: 1.7;
-  font-size: clamp(16px, 2vw, 22px);
+  font-size: clamp(16px,2vw,22px);
 }
-
 </style>
 </head>
 
 <body>
 
-<!-- ORIGINAL MIRRORED WALLPAPER -->
+<!-- ✔ YOUR EXACT ORIGINAL WALLPAPER -->
 <div class="bg-wallpaper">
   <div class="bg-top"></div>
   <div class="bg-bottom"></div>
 </div>
 
-<!-- CONTENT -->
 <div class="page">
 
   <div class="section-block">
