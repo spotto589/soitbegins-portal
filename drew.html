@@ -58,7 +58,6 @@
       color: var(--neon-pink);
       cursor: pointer;
       text-shadow: 0 0 14px var(--neon-pink-soft);
-      position: relative;
     }
 
     .nav-links {
@@ -74,28 +73,9 @@
       cursor: pointer;
       color: var(--neon-pink);
       text-shadow: 0 0 10px var(--neon-pink-soft);
-      position: relative;
     }
 
-    .nav-link:hover::after {
-      content: "";
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      width: 5px;
-      height: 5px;
-      background: var(--neon-pink);
-      border-radius: 50%;
-      transform: translateX(-50%);
-      animation: dripFall 0.9s ease forwards;
-    }
-
-    @keyframes dripFall {
-      0%   { opacity: 1; transform: translate(-50%,0) scale(1); }
-      60%  { opacity: 0.7; transform: translate(-50%,26px) scale(0.75); }
-      100% { opacity: 0;   transform: translate(-50%,40px) scale(0.2); }
-    }
-
+    /* Content wrapper */
     .page {
       padding: 18vh 6vw 14vh;
       display: flex;
@@ -105,7 +85,7 @@
       margin: 0 auto;
     }
 
-    /* Quote + photo cards */
+    /* Quote cards */
     .quote-block {
       display: flex;
       gap: 24px;
@@ -115,6 +95,11 @@
       border: 1px solid rgba(232,29,137,0.3);
       padding: 18px 22px;
       box-shadow: 0 0 24px rgba(0,0,0,0.7);
+    }
+
+    /* Alternate direction every 2 cards */
+    .quote-block:nth-of-type(even) {
+      flex-direction: row-reverse;
     }
 
     .quote-photo {
@@ -132,7 +117,7 @@
     .quote-text {
       font-size: 15px;
       line-height: 1.7;
-      color: #ffffff; /* force white */
+      color: #ffffff;
     }
 
     .quote-text blockquote {
@@ -144,11 +129,11 @@
       font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #ffffff; /* name white too */
+      color: #ffffff;
       margin-top: 4px;
     }
 
-    /* CTA buttons under quotes */
+    /* Buttons under quotes */
     .card-link {
       display: inline-block;
       margin-top: 14px;
@@ -169,7 +154,7 @@
       box-shadow: 0 0 20px var(--neon-pink);
     }
 
-    /* Roadmap card with image + phases */
+    /* Roadmap image + phase boxes */
     .roadmap-container {
       position: relative;
       width: 100%;
@@ -205,44 +190,30 @@
     .phase3 { top: 20%; left: 10%; }
     .phase4 { top: 20%; right: 10%; }
 
-    /* Responsive */
     @media (max-width: 768px) {
       .sticky-header {
         flex-direction: column;
         gap: 10px;
         align-items: flex-start;
       }
-      .nav-links {
-        flex-wrap: wrap;
-        gap: 14px;
-      }
-      .page {
-        padding: 16vh 4vw 10vh;
-      }
       .quote-block {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: column !important;
       }
       .quote-photo {
         width: 180px;
         height: 180px;
-      }
-      .phase {
-        font-size: 11px;
-        padding: 8px 12px;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Sticky header -->
   <header class="sticky-header">
     <div class="top-title" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">
       $DREW
     </div>
     <nav class="nav-links">
-      <div class="nav-link" onclick="document.getElementById('token-section').scrollIntoView({behavior:'smooth'})">Token</div>
+      <div class="nav-link" onclick="document.getElementById('nft-section').scrollIntoView({behavior:'smooth'})">Token</div>
       <div class="nav-link" onclick="document.getElementById('nft-section').scrollIntoView({behavior:'smooth'})">NFTs</div>
       <div class="nav-link" onclick="document.getElementById('mission-area').scrollIntoView({behavior:'smooth'})">Movement</div>
     </nav>
@@ -250,7 +221,7 @@
 
   <main class="page">
 
-    <!-- Marcus Aurelius + Mission -->
+    <!-- Marcus Aurelius -->
     <section id="mission-area">
       <div class="quote-block">
         <img src="marcus-aurelius.jpg" alt="Marcus Aurelius" class="quote-photo">
@@ -264,7 +235,7 @@
       </div>
     </section>
 
-    <!-- Alan Watts + Community -->
+    <!-- Alan Watts -->
     <section>
       <div class="quote-block">
         <img src="watts.jpeg" alt="Alan Watts" class="quote-photo">
@@ -273,27 +244,24 @@
             “For the price of intelligence as we now know it is chronic anxiety — anxiety which appears to increase, oddly enough, to the very degree that human life is subjected to intelligent organization.”
           </blockquote>
           <div class="quote-author">— Alan Watts</div>
-          <a href="community.html" class="card-link">Our Movement →</a>
+          <a href="community.html" class="card-link">Join the Community →</a>
         </div>
       </div>
     </section>
 
-    <!-- Roadmap (psychedelic image + 4 phases) -->
+    <!-- Roadmap -->
     <section id="roadmap-section">
       <div class="roadmap-container">
-        <!-- adjust filename if needed to match your repo -->
-       <img src="psychedelic road.jpeg" alt="Roadmap" class="roadmap-image">
-        <div class="phase phase1">Phase 3</div>
+        <img src="psychedelic road.jpeg" alt="Roadmap" class="roadmap-image">
+        <div class="phase phase1">Phase 1</div>
         <div class="phase phase2">Phase 2</div>
-        <div class="phase phase3">Phase 1</div>
+        <div class="phase phase3">Phase 3</div>
         <div class="phase phase4">Phase 4</div>
       </div>
     </section>
 
-    <!-- McKenna + NFTs (also anchor for Token nav) -->
+    <!-- Terence McKenna -->
     <section id="nft-section">
-      <!-- invisible anchor so "Token" nav still scrolls here -->
-      <div id="token-section"></div>
       <div class="quote-block">
         <img src="Mckenna.jpg" alt="Terence McKenna" class="quote-photo">
         <div class="quote-text">
@@ -306,8 +274,8 @@
       </div>
     </section>
 
-    <!-- Jung + The Pit -->
-    <section id="pit-section">
+    <!-- Carl Jung -->
+    <section>
       <div class="quote-block">
         <img src="jung.jpg" alt="Carl Jung" class="quote-photo">
         <div class="quote-text">
@@ -315,7 +283,7 @@
             “Loneliness does not come from having no people about one, but from being unable to communicate the things that seem important to oneself, or from holding certain views which others find inadmissible.”
           </blockquote>
           <div class="quote-author">— Carl Jung</div>
-        <a href="tokenomics.html" class="card-link">Tokenomics →</a>
+          <a href="tokenomics.html" class="card-link">Tokenomics →</a>
         </div>
       </div>
     </section>
@@ -324,6 +292,3 @@
 
 </body>
 </html>
-
-
-
