@@ -25,7 +25,7 @@
       background: #000;
     }
 
-    /* Wallpaper as the background image */
+    /* Wallpaper background */
     body {
       background-image: url("peacockedit.jpeg");
       background-size: cover;
@@ -43,7 +43,7 @@
       z-index: 1;
     }
 
-    /* HERO / TOP SECTION */
+    /* HERO */
     .hero {
       width: 100%;
       max-width: 1100px;
@@ -87,7 +87,7 @@
       opacity: 0.96;
     }
 
-    /* ACCORDION SECTION WRAPPER */
+    /* ACCORDION */
     .accordion-wrapper {
       width: 100%;
       max-width: 900px;
@@ -96,108 +96,96 @@
       gap: 14px;
     }
 
-    .accordion-title {
-      font-size: clamp(18px, 2.1vw, 22px);
-      text-transform: uppercase;
-      letter-spacing: 0.18em;
-    }
-
-    /* SINGLE ACCORDION ITEM */
     .accordion-item {
-      border-radius: 14px;
-      overflow: hidden;
+      border-radius: 16px;
+      overflow: visible;
       background: transparent;
+      position: relative;
     }
 
     .accordion-header {
-      background: #000;
-      border-radius: 14px;
-      border: 1px solid rgba(232,29,137,0.65); /* neon pink border */
-      padding: 16px 22px;
+      background: rgba(0,0,0,0.78);
+      border-radius: 16px;
+      border: 2px solid rgba(232,29,137,0.7);
+      padding: 18px 26px;
       cursor: pointer;
       position: relative;
+      z-index: 5;
       display: flex;
       align-items: center;
       justify-content: center;
       user-select: none;
-      transition: box-shadow 0.18s ease, transform 0.12s ease, border-color 0.18s ease;
+      overflow: visible;
+      transition: all 0.24s ease;
+      box-shadow: 0 0 12px rgba(232,29,137,0.3);
     }
 
     .accordion-header:hover {
+      border-color: rgba(232,29,137,1);
       box-shadow:
-        0 0 16px rgba(232,29,137,0.9),
-        0 0 32px rgba(232,29,137,0.6);
-      transform: translateY(-1px);
-      border-color: rgba(232,29,137,0.9);
+        0 0 26px rgba(232,29,137,0.95),
+        0 0 40px rgba(232,29,137,0.75);
+      transform: translateY(-2px);
     }
 
     .accordion-header.open {
-      box-shadow:
-        0 0 18px rgba(232,29,137,1),
-        0 0 42px rgba(232,29,137,0.9);
       border-color: rgba(232,29,137,1);
+      box-shadow:
+        0 0 28px rgba(232,29,137,1),
+        0 0 60px rgba(232,29,137,0.9);
+      transform: translateY(-3px);
     }
 
     .accordion-label {
+      font-size: clamp(20px, 2.3vw, 26px);
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
       position: relative;
-      display: inline-block;
-      padding-bottom: 6px;
+      padding-bottom: 8px;
     }
 
-    /* Neon ink drip when open */
+    /* Neon Liquid Ink Drip */
     .accordion-header.open .accordion-label::after {
       content: "";
       position: absolute;
       left: 50%;
-      transform: translateX(-50%);
       top: 100%;
-      width: 2px;
-      height: 16px;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 0;
       background: var(--drew-pink);
       border-radius: 999px;
       box-shadow:
-        0 0 8px rgba(232,29,137,0.9),
-        0 0 18px rgba(232,29,137,0.8);
-      animation: neonDrip 0.9s ease-in infinite;
+        0 0 10px rgba(232,29,137,0.95),
+        0 0 20px rgba(232,29,137,0.8);
+      animation: neonInk 1.4s cubic-bezier(.22,1.45,.32,1) infinite;
+      z-index: 10;
     }
 
-    @keyframes neonDrip {
-      0% {
-        opacity: 0;
-        transform: translate(-50%, 0);
-        height: 0;
-      }
-      40% {
-        opacity: 1;
-        height: 16px;
-        transform: translate(-50%, 4px);
-      }
-      80% {
-        opacity: 0.4;
-        height: 4px;
-        transform: translate(-50%, 18px);
-      }
-      100% {
-        opacity: 0;
-        height: 0;
-        transform: translate(-50%, 22px);
-      }
+    @keyframes neonInk {
+      0% { height: 0; opacity: 0; transform: translate(-50%,0); }
+      35% { height: 32px; opacity: 1; transform: translate(-50%,10px); }
+      70% { height: 16px; opacity: .75; transform: translate(-50%,46px); }
+      100% { height: 0; opacity: 0; transform: translate(-50%,60px); }
     }
 
     .accordion-content {
       max-height: 0;
       overflow: hidden;
-      background: rgba(0,0,0,0.82);
-      border-radius: 0 0 14px 14px;
-      border: 1px solid rgba(232,29,137,0.3);
+      background: rgba(0,0,0,0.85);
+      border: 2px solid rgba(232,29,137,0.4);
       border-top: none;
-      transition: max-height 0.26s ease, padding 0.2s ease;
-      padding: 0 22px;
+      border-radius: 0 0 16px 16px;
+      padding: 0 24px;
+      transition: max-height .32s ease, padding .25s ease;
+      margin-top: -2px;
+      position: relative;
+      z-index: 1;
     }
 
     .accordion-content.open {
-      padding: 18px 22px 22px;
-      max-height: 260px; /* enough for a short paragraph */
+      max-height: 260px;
+      padding: 20px 24px 24px;
     }
 
     .accordion-text {
@@ -207,58 +195,12 @@
       text-align: center;
     }
 
-    /* ROADMAP BUTTON STYLE */
-    .roadmap-link {
-      text-decoration: none;
-    }
-
-    .roadmap-header {
-      background: #000;
-      border-radius: 14px;
-      border: 1px solid rgba(232,29,137,0.85);
-      padding: 16px 22px;
-      cursor: pointer;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      transition: box-shadow 0.18s ease, transform 0.12s ease, border-color 0.18s ease;
-    }
-
-    .roadmap-header:hover {
-      box-shadow:
-        0 0 16px rgba(232,29,137,1),
-        0 0 34px rgba(232,29,137,0.9);
-      border-color: rgba(232,29,137,1);
-      transform: translateY(-1px);
-    }
-
-    .roadmap-label {
-      font-size: clamp(18px, 2.1vw, 22px);
-      text-transform: uppercase;
-      letter-spacing: 0.18em;
-    }
-
-    /* Keep things decent on narrow screens for now (simple) */
+    /* Mobile tweaks */
     @media (max-width: 768px) {
-      .page {
-        padding: 9vh 5vw 11vh;
-        gap: 36px;
-      }
-      .hero {
-        padding: 30px 20px 26px;
-      }
-      .accordion-wrapper {
-        gap: 10px;
-      }
-      .accordion-header,
-      .roadmap-header {
-        padding: 14px 16px;
-      }
-      .accordion-content.open {
-        padding: 14px 16px 18px;
-      }
+      .page { padding: 9vh 5vw 11vh; gap: 36px; }
+      .hero { padding: 30px 20px 26px; }
+      .accordion-header { padding: 14px 18px; }
+      .accordion-content.open { padding: 16px 18px 20px; }
     }
   </style>
 </head>
@@ -276,13 +218,13 @@
       </p>
     </section>
 
-    <!-- ACCORDION BARS -->
+    <!-- ACCORDION -->
     <section class="accordion-wrapper">
 
       <!-- Mission -->
       <div class="accordion-item">
         <div class="accordion-header">
-          <span class="accordion-label accordion-title">MISSION</span>
+          <span class="accordion-label">MISSION</span>
         </div>
         <div class="accordion-content">
           <p class="accordion-text">
@@ -296,7 +238,7 @@
       <!-- Community -->
       <div class="accordion-item">
         <div class="accordion-header">
-          <span class="accordion-label accordion-title">COMMUNITY</span>
+          <span class="accordion-label">COMMUNITY</span>
         </div>
         <div class="accordion-content">
           <p class="accordion-text">
@@ -307,10 +249,17 @@
         </div>
       </div>
 
+      <!-- Roadmap (now above NFTs + Token) -->
+      <div class="accordion-item">
+        <div class="accordion-header" onclick="window.location='roadmap.html'">
+          <span class="accordion-label">ROADMAP</span>
+        </div>
+      </div>
+
       <!-- NFTs -->
       <div class="accordion-item">
         <div class="accordion-header">
-          <span class="accordion-label accordion-title">NFTS</span>
+          <span class="accordion-label">NFTS</span>
         </div>
         <div class="accordion-content">
           <p class="accordion-text">
@@ -324,7 +273,7 @@
       <!-- Token -->
       <div class="accordion-item">
         <div class="accordion-header">
-          <span class="accordion-label accordion-title">TOKEN</span>
+          <span class="accordion-label">TOKEN</span>
         </div>
         <div class="accordion-content">
           <p class="accordion-text">
@@ -335,27 +284,19 @@
         </div>
       </div>
 
-      <!-- Roadmap → new page -->
-      <a class="roadmap-link" href="roadmap.html">
-        <div class="roadmap-header">
-          <span class="roadmap-label">ROADMAP</span>
-        </div>
-      </a>
-
     </section>
   </div>
 
   <script>
-    // Simple accordion logic: click header to toggle its content
     document.querySelectorAll('.accordion-item').forEach(item => {
       const header = item.querySelector('.accordion-header');
       const content = item.querySelector('.accordion-content');
 
+      if (!content) return; // roadmap is clickable, not expandable
+
       header.addEventListener('click', () => {
-        const isOpen = header.classList.contains('open');
-        // Toggle this one only (allow multiple open, no auto-close)
-        header.classList.toggle('open', !isOpen);
-        content.classList.toggle('open', !isOpen);
+        header.classList.toggle('open');
+        content.classList.toggle('open');
       });
     });
   </script>
