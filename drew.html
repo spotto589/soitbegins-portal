@@ -6,177 +6,186 @@
 <title>$DREW — Rise Together</title>
 
 <style>
-:root {
-  --drew-pink: #E81D89;
-}
+  :root {
+    --drew-pink: #E81D89;
+  }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-html, body {
-  width: 100%;
-  min-height: 100%;
-  font-family: system-ui, sans-serif;
-  color: #fff;
-  overflow-x: hidden;
-  background: #000;
-}
+  html, body {
+    width: 100%;
+    min-height: 100%;
+    font-family: system-ui, sans-serif;
+    color: #fff;
+    overflow-x: hidden;
+    position: relative;
+  }
 
-/* Wallpaper ALWAYS visible */
-.bg-wallpaper {
-  position: fixed;
-  inset: 0;
-  z-index: -3;
-  background-image: url("peacockedit.jpeg");
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-}
+  /* Your mirrored wallpaper preserved */
+  .bg-wallpaper {
+    position: fixed;
+    inset: 0;
+    z-index: -3;
+    display: flex;
+    flex-direction: column;
+  }
 
-/* Slight dark tint so text is readable */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: brightness(0.8);
-  z-index: -2;
-}
+  .bg-top,
+  .bg-bottom {
+    flex: 1;
+    background-image: url("peacockedit.jpeg");
+    background-size: cover;
+    background-position: center;
+  }
 
-/* PAGE LAYOUT */
-.page {
-  position: relative;
-  padding: 12vh 7vw;
-  display: flex;
-  flex-direction: column;
-  gap: 110px;
-  text-align: center;
-}
+  .bg-bottom {
+    transform: scaleY(-1);
+  }
 
-/* HERO */
-.heading {
-  font-size: clamp(70px, 12vw, 140px);
-  color: var(--drew-pink);
-  font-weight: 900;
-  text-shadow: 0 0 28px rgba(232,29,137,0.9);
-}
+  /* Slight tint so text reads but wallpaper stays strong */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: -2;
+  }
 
-.divider {
-  width: 200px;
-  height: 6px;
-  margin: 20px auto 0;
-  background: var(--drew-pink);
-  opacity: 0.9;
-  border-radius: 4px;
-}
+  /* Page wrapper — clean spacing */
+  .page {
+    position: relative;
+    padding: 10vh 6vw 12vh;
+    display: flex;
+    flex-direction: column;
+    gap: 90px;
+    align-items: center;
+  }
 
-/* Subtitle */
-.subheading {
-  font-size: clamp(17px, 2.2vw, 26px);
-  max-width: 900px;
-  opacity: 0.95;
-  line-height: 1.65;
-  margin: 18px auto 0;
-}
+  /* NEW: transparent content blocks */
+  .section-block {
+    width: 100%;
+    max-width: 1100px;
+    background: rgba(0,0,0,0.45);
+    border-radius: 18px;
+    padding: 44px 36px;
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(232,29,137,0.35);
+    box-shadow:
+      0 0 26px rgba(232,29,137,0.25),
+      0 0 88px rgba(232,29,137,0.12);
+    text-align: center;
+  }
 
-/* MISSION CARDS */
-.cards {
-  width: 100%;
-  max-width: 1000px;
-  display: grid;
-  gap: 22px;
-  margin: 0 auto;
-}
+  /* Title */
+  .heading {
+    font-size: clamp(48px, 10vw, 140px);
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    color: var(--drew-pink);
+    text-shadow:
+      0 0 14px rgba(232,29,137,0.9),
+      0 0 36px rgba(232,29,137,0.6);
+    text-transform: uppercase;
+  }
 
-.card {
-  background: rgba(0,0,0,0.45);
-  border: 1px solid rgba(232,29,137,0.4);
-  padding: 28px 26px;
-  border-radius: 18px;
-  backdrop-filter: blur(6px);
-  font-size: clamp(15px, 2vw, 20px);
-  line-height: 1.65;
-}
+  .divider {
+    width: 160px;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--drew-pink);
+    margin: 20px auto;
+  }
 
-/* ROADMAP */
-.roadmap-title {
-  font-size: clamp(44px, 8vw, 90px);
-  font-weight: 900;
-  color: var(--drew-pink);
-}
+  .subheading {
+    font-size: clamp(15px, 2vw, 22px);
+    max-width: 900px;
+    line-height: 1.65;
+    margin: 0 auto;
+  }
 
-.timeline {
-  width: 100%;
-  max-width: 800px;
-  margin: auto;
-  border-left: 3px solid var(--drew-pink);
-  display: flex;
-  flex-direction: column;
-  gap: 70px;
-  padding-left: 36px;
-}
+  /* Mission cards (inside a content block now) */
+  .cards {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
 
-/* Timeline blocks */
-.phase-block {
-  position: relative;
-  text-align: left;
-  background: rgba(0,0,0,0.38);
-  padding: 22px 24px;
-  border-radius: 14px;
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(232,29,137,0.4);
-  font-size: clamp(16px, 1.9vw, 20px);
-}
+  .card {
+    background: rgba(0,0,0,0.55);
+    border-radius: 14px;
+    padding: 26px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(232,29,137,0.35);
+    line-height: 1.7;
+  }
 
-/* Bullet dots */
-.phase-block::before {
-  content: "";
-  position: absolute;
-  left: -48px;
-  top: 18px;
-  width: 22px;
-  height: 22px;
-  background: var(--drew-pink);
-  border-radius: 50%;
-  box-shadow: 0 0 14px rgba(232,29,137,0.8);
-}
+  /* Roadmap */
+  .roadmap-title {
+    font-size: clamp(34px, 6vw, 70px);
+    font-weight: 900;
+    color: var(--drew-pink);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
 
-.phase-number {
-  font-size: 22px;
-  font-weight: 800;
-  margin-bottom: 6px;
-  color: var(--drew-pink);
-}
+  .phase-block {
+    width: 100%;
+    background: rgba(10,10,10,0.55);
+    border-radius: 16px;
+    border: 2px solid rgba(232,29,137,0.4);
+    padding: 22px 20px;
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
 
-/* FUTURE */
-.future-title {
-  font-size: clamp(26px, 3.2vw, 40px);
-  color: var(--drew-pink);
-  font-weight: 700;
-}
+  .phase-number {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--drew-pink);
+    margin-bottom: 4px;
+  }
 
-.future-list {
-  list-style: none;
-  padding: 0;
-  line-height: 1.8;
-  opacity: 0.95;
-  font-size: clamp(15px, 2vw, 20px);
-}
+  .arrow {
+    font-size: 36px;
+    color: var(--drew-pink);
+    margin: 10px 0;
+  }
+
+  /* Future list */
+  .future-title {
+    font-size: clamp(24px, 3vw, 34px);
+    color: var(--drew-pink);
+    font-weight: 700;
+    margin-top: 20px;
+  }
+
+  .future-list {
+    list-style: none;
+    padding: 0;
+    line-height: 1.75;
+    font-size: clamp(15px, 1.85vw, 21px);
+    opacity: 0.95;
+  }
 </style>
-
 </head>
+
 <body>
 
-<!-- Wallpaper -->
-<div class="bg-wallpaper"></div>
+<!-- Your original mirrored wallpaper unchanged -->
+<div class="bg-wallpaper">
+  <div class="bg-top"></div>
+  <div class="bg-bottom"></div>
+</div>
 
 <div class="page">
 
-  <!-- HERO -->
-  <div>
+  <!-- HERO SECTION -->
+  <div class="section-block">
     <div class="heading">$DREW</div>
     <div class="divider"></div>
     <div class="subheading">
@@ -185,45 +194,47 @@ body::before {
     </div>
   </div>
 
-  <!-- MISSION CARDS -->
-  <div class="cards">
-    <section class="card">
-      $DREW is a community-driven token with a purpose:<br>
-      to spark a ripple effect through the minds of men —<br>
-      reminding us we are all in this beautiful work of art together.
-    </section>
-
-    <section class="card">
-      The future of $DREW is shaped by its holders.<br>
-      NFT & token holders vote on every step of the project,<br>
-      strengthening a movement for men’s mental health.
-    </section>
+  <!-- CARDS SECTION -->
+  <div class="section-block">
+    <div class="cards">
+      <section class="card">
+        $DREW is a community-driven token with a purpose:<br>
+        to spark a ripple effect through the minds of men —<br>
+        reminding us we are all in this beautiful work of art together.
+      </section>
+      <section class="card">
+        The future of $DREW is shaped by its holders.<br>
+        NFT & token holders vote on every step of the project,<br>
+        strengthening a movement for men’s mental health.
+      </section>
+    </div>
   </div>
 
-  <!-- ROADMAP -->
-  <div>
+  <!-- ROADMAP SECTION -->
+  <div class="section-block">
     <div class="roadmap-title">Roadmap</div>
 
-    <div class="timeline">
-      <div class="phase-block">
-        <div class="phase-number">PHASE 1</div>
-        NFT Collection #1 — 888 $DREW NFTs
-      </div>
+    <div class="phase-block">
+      <div class="phase-number">PHASE 1</div>
+      NFT Collection #1 — 888 $DREW NFTs
+    </div>
+    <div class="arrow">↓</div>
 
-      <div class="phase-block">
-        <div class="phase-number">PHASE 2</div>
-        $DREW Token Creation — Airdrop to NFT Holders
-      </div>
+    <div class="phase-block">
+      <div class="phase-number">PHASE 2</div>
+      $DREW Token Creation — Airdrop to NFT Holders
+    </div>
+    <div class="arrow">↓</div>
 
-      <div class="phase-block">
-        <div class="phase-number">PHASE 3</div>
-        Token Trading Live
-      </div>
+    <div class="phase-block">
+      <div class="phase-number">PHASE 3</div>
+      Token Trading Live
+    </div>
+    <div class="arrow">↓</div>
 
-      <div class="phase-block">
-        <div class="phase-number">PHASE 4</div>
-        First Quarterly Charity Vote + Donation
-      </div>
+    <div class="phase-block">
+      <div class="phase-number">PHASE 4</div>
+      First Quarterly Charity Vote + Donation
     </div>
 
     <div class="future-title">Down The Road</div>
