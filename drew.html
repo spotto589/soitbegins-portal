@@ -97,8 +97,8 @@
       box-shadow: 0 0 24px rgba(0,0,0,0.7);
     }
 
-    /* Alternate direction every 2 cards */
-    .quote-block:nth-of-type(even) {
+    /* Alternate card layout every even section */
+    .page > section:nth-child(even) .quote-block {
       flex-direction: row-reverse;
     }
 
@@ -133,7 +133,7 @@
       margin-top: 4px;
     }
 
-    /* Buttons under quotes */
+    /* Buttons */
     .card-link {
       display: inline-block;
       margin-top: 14px;
@@ -154,7 +154,7 @@
       box-shadow: 0 0 20px var(--neon-pink);
     }
 
-    /* Roadmap image + phase boxes */
+    /* Roadmap layout */
     .roadmap-container {
       position: relative;
       width: 100%;
