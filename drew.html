@@ -22,10 +22,9 @@ html, body {
   font-family: system-ui, sans-serif;
   color: #fff;
   overflow-x: hidden;
-  background: transparent;
 }
 
-/* WALLPAPER — EXACT SAME LOOK, JUST MANY MORE */
+/* ✔ YOUR EXACT WALLPAPER SETUP */
 .bg-wallpaper {
   position: absolute;
   inset: 0;
@@ -46,7 +45,13 @@ html, body {
   transform: scaleY(-1);
 }
 
-/* CONTENT */
+/* 🧠 This makes wallpaper SCROLL with content */
+html, body {
+  height: auto;
+  background: transparent;
+}
+
+/* Floating content */
 .page {
   position: relative;
   padding: 12vh 6vw;
@@ -57,11 +62,11 @@ html, body {
   z-index: 10;
 }
 
-/* CONTENT BLOCKS */
+/* Designed readable blocks */
 .section-block {
   width: 100%;
   max-width: 1100px;
-  background: rgba(0, 0, 0, 0.36);
+  background: rgba(0, 0, 0, 0.36); /* wallpaper stays visible */
   border-radius: 18px;
   padding: 44px 36px;
   border: 1px solid rgba(232,29,137,0.38);
@@ -70,13 +75,14 @@ html, body {
   text-shadow: 0 0 10px rgba(0,0,0,0.9);
 }
 
-/* TEXT STYLES */
+/* Typography */
 .heading {
   font-size: clamp(55px, 12vw, 140px);
   font-weight: 900;
+  letter-spacing: 0.04em;
   color: var(--drew-pink);
-  text-transform: uppercase;
   text-shadow: 0 0 25px rgba(232,29,137,0.8);
+  text-transform: uppercase;
 }
 
 .divider {
@@ -84,6 +90,7 @@ html, body {
   height: 5px;
   margin: 18px auto;
   background: var(--drew-pink);
+  border-radius: 4px;
 }
 
 .subheading {
@@ -92,7 +99,7 @@ html, body {
   line-height: 1.7;
 }
 
-/* CARDS */
+/* Cards */
 .cards {
   width: 100%;
   display: flex;
@@ -108,20 +115,23 @@ html, body {
   line-height: 1.7;
 }
 
-/* ROADMAP */
+/* Roadmap */
 .roadmap-title {
   font-size: clamp(34px, 7vw, 90px);
   font-weight: 900;
   color: var(--drew-pink);
   margin-bottom: 32px;
+  text-shadow: 0 0 20px rgba(232,29,137,0.8);
 }
 
 .phase-block {
+  width: 100%;
   background: rgba(0,0,0,0.4);
   border-radius: 16px;
   border: 1px solid rgba(232,29,137,0.38);
   padding: 22px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  line-height: 1.6;
 }
 
 .phase-number {
@@ -146,31 +156,17 @@ html, body {
 .future-list {
   list-style: none;
   padding: 0;
-  line-height: 1.7;
   font-size: clamp(16px, 2vw, 22px);
+  line-height: 1.7;
+  opacity: 0.95;
 }
 </style>
 </head>
 
 <body>
 
-<!-- WALLPAPER — ORIGINAL PATTERN REPEATED MANY TIMES -->
+<!-- ✔ ORIGINAL MIRRORED WALLPAPER BACKGROUND -->
 <div class="bg-wallpaper">
-  <div class="bg-top"></div>
-  <div class="bg-bottom"></div>
-
-  <div class="bg-top"></div>
-  <div class="bg-bottom"></div>
-
-  <div class="bg-top"></div>
-  <div class="bg-bottom"></div>
-
-  <div class="bg-top"></div>
-  <div class="bg-bottom"></div>
-
-  <div class="bg-top"></div>
-  <div class="bg-bottom"></div>
-
   <div class="bg-top"></div>
   <div class="bg-bottom"></div>
 </div>
@@ -191,8 +187,7 @@ html, body {
     <div class="cards">
       <section class="card">
         $DREW is a community-driven token with a purpose:<br>
-        to spark a ripple effect through the minds of men — reminding us
-        we are all in this beautiful work of art together.
+        to spark a ripple effect through the minds of men — reminding us we are all in this beautiful work of art together.
       </section>
       <section class="card">
         The future of $DREW is shaped by its holders.<br>
