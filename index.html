@@ -292,6 +292,35 @@
     outline-offset:3px;
   }
 
+  .access-status{
+    margin-top:1.25rem;
+    font-size:var(--fs);
+    letter-spacing:0.08em;
+    min-height:1.4em;
+    text-transform:uppercase;
+  }
+  .access-status.checking{
+    color:var(--cyan);
+    text-shadow:0 0 6px rgba(0,255,242,0.5);
+  }
+  .access-status.granted{
+    color:var(--green);
+    text-shadow:0 0 8px rgba(57,255,20,0.7);
+  }
+  .access-status.denied{
+    color:var(--magenta);
+    text-shadow:0 0 8px rgba(255,0,60,0.7);
+    animation:err-flash 0.4s steps(1) 4;
+  }
+
+  .enter-btn:disabled{
+    opacity:0.5;
+    cursor:default;
+  }
+  .enter-btn:disabled:hover{
+    background:transparent;
+  }
+
   .stage.jump{
     animation:jump-cut 0.15s steps(1);
   }
@@ -334,8 +363,10 @@
     <h1 class="msg">STΔTUS: <span class="glitch-word" data-text="GL!TCH!NG">GL!TCH!NG</span></h1>
     <div class="sub">S!GNΔL_ASSESSMΞNT = ΔCT!VΞ :: 🚨 S!RΞN_0NLINE 🚨 :: SYS//UNSTΔBLΞ<span class="cursor"></span></div>
     <button class="enter-btn" id="enterBtn">PRESENT <span style="text-transform:none;">GL!TCH::AccEss_KEy</span> or <span style="text-transform:none;">Σκύλλα</span> CARD TO BEGIN ASSESSMENT...</button>
+    <div class="access-status" id="accessStatus"></div>
   </div>
 
+<script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
 <script>
   // TV static canvas
   const canvas = document.getElementById('static');
@@ -457,9 +488,73 @@
   }
   setInterval(triggerEBS, 13130);
 
-  document.getElementById('enterBtn').addEventListener('click', ()=>{
-    // placeholder — will wire up to Xaman NFT-gated login
-    console.log('access key check goes here');
+  // --- Xaman (XUMM) NFT-gated access ---
+  const GLITCH_ISSUER = 'rNRo76r8C6c1rMi28AR7CdArtK6r8Zptv7';
+  const GLITCH_TAXON = 1;
+  const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
+
+  const enterBtn = document.getElementById('enterBtn');
+  const accessStatus = document.getElementById('accessStatus');
+
+  function setStatus(text, state){
+    accessStatus.textContent = text;
+    accessStatus.className = 'access-status' + (state ? ' ' + state : '');
+  }
+
+  async function checkGlitchAccess(account){
+    const res = await fetch('https://xrplcluster.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        method: 'account_nfts',
+        params: [{ account, limit: 400 }]
+      })
+    });
+    const data = await res.json();
+    const nfts = (data.result && data.result.account_nfts) || [];
+    return nfts.some(n => n.Issuer === GLITCH_ISSUER && n.NFTokenTaxon === GLITCH_TAXON);
+  }
+
+  let xummAuth = null;
+  function getAuth(){
+    if(!xummAuth){
+      xummAuth = new XummPkce(XAMAN_API_KEY, { implicit: true, rememberJwt: false });
+      xummAuth.on('error', (err)=>{
+        console.error('Xaman auth error', err);
+        setStatus('ERR://LOGIN_ABORTED — TRY AGAIN', 'denied');
+        enterBtn.disabled = false;
+      });
+      xummAuth.on('success', async ()=>{
+        try{
+          const state = await xummAuth.state();
+          const account = state && state.me && state.me.account;
+          if(!account){
+            setStatus('ERR://NO_WALLET_DATA', 'denied');
+            enterBtn.disabled = false;
+            return;
+          }
+          setStatus('WALLET LINKED :: SCANNING LEDGER FOR GL!TCH::AccEss_KEy...', 'checking');
+          const hasAccess = await checkGlitchAccess(account);
+          if(hasAccess){
+            setStatus('ΔCCESS GRΔNTED :: GL!TCH KEY VERIFIED', 'granted');
+          } else {
+            setStatus('ΔCCESS DENIED :: NO GL!TCH KEY DETECTED ON THIS WALLET', 'denied');
+          }
+        } catch(e){
+          console.error(e);
+          setStatus('ERR://SIGNAL_LOST — TRY AGAIN', 'denied');
+        } finally {
+          enterBtn.disabled = false;
+        }
+      });
+    }
+    return xummAuth;
+  }
+
+  enterBtn.addEventListener('click', ()=>{
+    enterBtn.disabled = true;
+    setStatus('OPENING SECURE CHANNEL :: SIGN IN WITH XAMAN...', 'checking');
+    getAuth().authorize();
   });
 </script>
 
