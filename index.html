@@ -489,10 +489,6 @@
   setInterval(triggerEBS, 13130);
 
   // --- Xaman (XUMM) NFT-gated access ---
-  const GLITCH_ISSUER = 'rNRo76r8C6c1rMi28AR7CdArtK6r8Zptv7';
-  const GLITCH_TAXON = 1;
-  const SKYLLA_ISSUER = 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92';
-  const SKYLLA_TAXON = 777;
   const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
 
   const enterBtn = document.getElementById('enterBtn');
@@ -503,31 +499,16 @@
     accessStatus.className = 'access-status' + (state ? ' ' + state : '');
   }
 
-  async function fetchAllAccountNfts(account){
-    let all = [];
-    let marker;
-    do {
-      const params = { account, limit: 400 };
-      if(marker) params.marker = marker;
-      const res = await fetch('https://xrplcluster.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method: 'account_nfts', params: [params] })
-      });
-      const data = await res.json();
-      const nfts = (data.result && data.result.account_nfts) || [];
-      all = all.concat(nfts);
-      marker = data.result && data.result.marker;
-    } while(marker);
-    return all;
-  }
-
-  async function checkGlitchAccess(account){
-    const nfts = await fetchAllAccountNfts(account);
-    return nfts.some(n =>
-      (n.Issuer === GLITCH_ISSUER && n.NFTokenTaxon === GLITCH_TAXON) ||
-      (n.Issuer === SKYLLA_ISSUER && n.NFTokenTaxon === SKYLLA_TAXON)
-    );
+  // Verification happens server-side (see /functions/api/verify.js) — the
+  // browser never decides access itself, it only relays the Xaman login jwt.
+  async function verifyAccess(jwt){
+    const res = await fetch('/api/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jwt })
+    });
+    if(!res.ok) throw new Error('verify_failed_' + res.status);
+    return res.json();
   }
 
   let xummAuth = null;
@@ -546,23 +527,24 @@
       xummAuth.on('success', async ()=>{
         try{
           const state = await xummAuth.state();
-          const account = state && state.me && state.me.account;
-          if(!account){
+          const jwt = state && state.jwt;
+          if(!jwt){
             setStatus('ERR://NO_WALLET_DATA', 'denied');
             enterBtn.disabled = false;
             return;
           }
           setStatus('WALLET LINKED :: SCANNING LEDGER FOR GL!TCH::AccEss_KEy...', 'checking');
-          const hasAccess = await checkGlitchAccess(account);
-          if(hasAccess){
-            setStatus('ΔCCESS GRΔNTED :: GL!TCH KEY VERIFIED', 'granted');
+          const result = await verifyAccess(jwt);
+          if(result.granted){
+            setStatus('ΔCCESS GRΔNTED :: GL!TCH KEY VERIFIED — ENTERING...', 'granted');
+            setTimeout(()=>{ window.location.href = '/vault'; }, 1200);
           } else {
             setStatus('ΔCCESS DENIED :: NO GL!TCH KEY DETECTED ON THIS WALLET', 'denied');
+            enterBtn.disabled = false;
           }
         } catch(e){
           console.error(e);
           setStatus('ERR://SIGNAL_LOST — TRY AGAIN', 'denied');
-        } finally {
           enterBtn.disabled = false;
         }
       });
