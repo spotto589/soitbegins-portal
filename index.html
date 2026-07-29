@@ -491,6 +491,8 @@
   // --- Xaman (XUMM) NFT-gated access ---
   const GLITCH_ISSUER = 'rNRo76r8C6c1rMi28AR7CdArtK6r8Zptv7';
   const GLITCH_TAXON = 1;
+  const SKYLLA_ISSUER = 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92';
+  const SKYLLA_TAXON = 777;
   const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
 
   const enterBtn = document.getElementById('enterBtn');
@@ -501,24 +503,41 @@
     accessStatus.className = 'access-status' + (state ? ' ' + state : '');
   }
 
+  async function fetchAllAccountNfts(account){
+    let all = [];
+    let marker;
+    do {
+      const params = { account, limit: 400 };
+      if(marker) params.marker = marker;
+      const res = await fetch('https://xrplcluster.com', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method: 'account_nfts', params: [params] })
+      });
+      const data = await res.json();
+      const nfts = (data.result && data.result.account_nfts) || [];
+      all = all.concat(nfts);
+      marker = data.result && data.result.marker;
+    } while(marker);
+    return all;
+  }
+
   async function checkGlitchAccess(account){
-    const res = await fetch('https://xrplcluster.com', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        method: 'account_nfts',
-        params: [{ account, limit: 400 }]
-      })
-    });
-    const data = await res.json();
-    const nfts = (data.result && data.result.account_nfts) || [];
-    return nfts.some(n => n.Issuer === GLITCH_ISSUER && n.NFTokenTaxon === GLITCH_TAXON);
+    const nfts = await fetchAllAccountNfts(account);
+    return nfts.some(n =>
+      (n.Issuer === GLITCH_ISSUER && n.NFTokenTaxon === GLITCH_TAXON) ||
+      (n.Issuer === SKYLLA_ISSUER && n.NFTokenTaxon === SKYLLA_TAXON)
+    );
   }
 
   let xummAuth = null;
   function getAuth(){
     if(!xummAuth){
-      xummAuth = new XummPkce(XAMAN_API_KEY, { implicit: true, rememberJwt: false });
+      xummAuth = new XummPkce(XAMAN_API_KEY, {
+        implicit: true,
+        rememberJwt: false,
+        redirectUrl: 'https://soitbegins.xyz/'
+      });
       xummAuth.on('error', (err)=>{
         console.error('Xaman auth error', err);
         setStatus('ERR://LOGIN_ABORTED — TRY AGAIN', 'denied');
