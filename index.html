@@ -39,6 +39,11 @@
     opacity:0.32;
     filter:brightness(0.7) contrast(1.3);
     mix-blend-mode:screen;
+    transition:opacity 0.08s linear, filter 0.08s linear;
+  }
+  canvas#static.burst{
+    opacity:0.65;
+    filter:brightness(1) contrast(1.5);
   }
 
   .static-wash{
@@ -154,6 +159,13 @@
     requestAnimationFrame(staticLoop);
   }
   staticLoop();
+
+  function staticBurst(){
+    canvas.classList.add('burst');
+    setTimeout(()=> canvas.classList.remove('burst'), 220 + Math.random()*180);
+    setTimeout(staticBurst, 2200 + Math.random() * 3000);
+  }
+  setTimeout(staticBurst, 1500);
 
   const eyebrowFull = "ERR://STAT!C_BRΞ4CH";
   const eyebrowEl = document.getElementById('eyebrowText');
