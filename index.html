@@ -9,8 +9,10 @@
 
   :root{
     --bg: #08080a;
-    --green: #39ff14;
+    --fg: #e8e8e8;
+    --cyan: #00fff2;
     --magenta: #ff003c;
+    --green: #39ff14;
     --fs: clamp(13px, 2vw, 19px);
   }
 
@@ -20,6 +22,7 @@
     height:100%;
     background:var(--bg);
     overflow:hidden;
+    cursor:default;
   }
 
   body{
@@ -30,6 +33,7 @@
     position:relative;
   }
 
+  /* TV static */
   canvas#static{
     position:fixed;
     inset:0;
@@ -54,10 +58,77 @@
     background:linear-gradient(180deg, rgba(8,8,10,0.35), rgba(8,8,10,0.6));
   }
 
+  /* horizontal tear bars, spawned by JS */
+  .tear{
+    position:fixed;
+    left:0;
+    width:100%;
+    z-index:3;
+    pointer-events:none;
+    mix-blend-mode:screen;
+    opacity:0.8;
+  }
+
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(0,0,0,0.88) 100%);
+    pointer-events:none;
+    z-index:5;
+  }
+
+  /* emergency broadcast style full-screen glitch, fired on an interval */
+  .ebs-overlay{
+    position:fixed;
+    inset:0;
+    z-index:50;
+    pointer-events:none;
+    opacity:0;
+  }
+  .ebs-overlay.hit{
+    animation:ebs-sequence 0.5s steps(1) forwards;
+  }
+  .ebs-bars{
+    position:absolute;
+    inset:0;
+    width:140%;
+    left:-20%;
+    background:linear-gradient(90deg,
+      #ffb000 0 14.2%, #00fff2 14.2% 28.4%, #ff003c 28.4% 42.6%,
+      #39ff14 42.6% 56.8%, #ffffff 56.8% 71%, #a200ff 71% 85.2%, #ffb000 85.2% 100%);
+    mix-blend-mode:normal;
+  }
+  .ebs-overlay.hit .ebs-bars{
+    animation:ebs-swish 0.5s ease-in-out forwards;
+  }
+  @keyframes ebs-swish{
+    0%{ transform:translateX(-15%) scaleY(1); }
+    30%{ transform:translateX(6%) scaleY(1.02); }
+    55%{ transform:translateX(-4%) scaleY(0.98); }
+    75%{ transform:translateX(3%) scaleY(1.01); }
+    100%{ transform:translateX(0%) scaleY(1); }
+  }
+  @keyframes ebs-sequence{
+    0%{ opacity:0; }
+    6%{ opacity:0.95; }
+    14%{ opacity:0; }
+    20%{ opacity:0.9; }
+    26%{ opacity:0.05; }
+    34%{ opacity:0.95; }
+    40%{ opacity:0; }
+    50%{ opacity:0.85; }
+    58%{ opacity:0.05; }
+    68%{ opacity:0.75; }
+    78%{ opacity:0; }
+    88%{ opacity:0.4; }
+    100%{ opacity:0; }
+  }
+
   .scanlines{
     position:fixed;
     inset:0;
-    z-index:3;
+    z-index:6;
     pointer-events:none;
     background:repeating-linear-gradient(
       to bottom,
@@ -73,55 +144,21 @@
     100%{ background-position:0 100px; }
   }
 
-  body::before{
-    content:"";
-    position:fixed;
-    inset:0;
-    background:radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(0,0,0,0.88) 100%);
-    pointer-events:none;
-    z-index:6;
-  }
-
-  .fuzzy-field{
-    position:fixed;
-    inset:0;
-    z-index:4;
-    pointer-events:none;
-    overflow:hidden;
-  }
-
-  .fz{
-    position:absolute;
-    color:var(--green);
-    text-shadow:0 0 8px rgba(57,255,20,0.35);
-    white-space:nowrap;
-    font-weight:700;
-  }
-  .fz--sm{ font-size:clamp(13px,1.6vw,18px); opacity:0.55; }
-
-  .blk{
-    display:inline-block;
-    width:0.55em;
-    height:0.55em;
-    background:#e8e8e8;
-    margin-left:0.45em;
-    vertical-align:-0.05em;
-    opacity:0.8;
-    animation:blk-blink 1.4s step-end infinite;
-  }
-
-  @keyframes blk-blink{
-    0%, 50%{ opacity:0.8; }
-    51%, 100%{ opacity:0.1; }
+  .stage{
+    position:relative;
+    z-index:10;
+    text-align:center;
+    padding:2rem;
+    max-width:90vw;
   }
 
   .eyebrow{
-    position:relative;
-    z-index:10;
     font-size:var(--fs);
     letter-spacing:0.35em;
     color:var(--green);
     text-transform:uppercase;
+    margin-bottom:1.25rem;
+    opacity:0.9;
     text-shadow:0 0 6px rgba(57,255,20,0.5);
     min-height:1.4em;
   }
@@ -144,13 +181,169 @@
     animation:blink 0.6s step-end infinite;
   }
 
+  .msg{
+    position:relative;
+    display:inline-block;
+    font-size:var(--fs);
+    font-weight:700;
+    letter-spacing:0.1em;
+    line-height:1.15;
+    color:var(--fg);
+    text-shadow:0 0 8px rgba(232,232,232,0.15);
+    text-transform:uppercase;
+  }
+
+  .msg .glitch-word{
+    position:relative;
+    display:inline-block;
+    animation:word-shake 2.6s infinite;
+  }
+
+  .glitch-word::before,
+  .glitch-word::after{
+    content:attr(data-text);
+    position:absolute;
+    left:0; top:0;
+    width:100%;
+    overflow:hidden;
+  }
+  .glitch-word::before{
+    color:var(--cyan);
+    z-index:-1;
+    animation:glitch-cyan 1.9s infinite steps(1);
+  }
+  .glitch-word::after{
+    color:var(--magenta);
+    z-index:-2;
+    animation:glitch-magenta 1.9s infinite steps(1);
+  }
+
+  @keyframes word-shake{
+    0%, 100%{ transform:translate(0,0) skew(0deg); }
+    2%{ transform:translate(-3px,1px) skew(-1deg); }
+    4%{ transform:translate(3px,-2px) skew(1deg); }
+    6%{ transform:translate(-2px,0) skew(0deg); }
+    8%{ transform:translate(0,0); }
+    40%{ transform:translate(2px,1px); }
+    42%{ transform:translate(-3px,-1px); }
+    44%{ transform:translate(0,0); }
+    70%{ transform:translate(-2px,2px) skew(-1deg); }
+    72%{ transform:translate(2px,-1px) skew(1deg); }
+    74%{ transform:translate(0,0) skew(0deg); }
+  }
+
+  @keyframes glitch-cyan{
+    0%, 78%, 100%{ transform:translate(0,0); opacity:0; }
+    79%{ transform:translate(-4px,2px); opacity:0.9; }
+    82%{ transform:translate(3px,-2px); opacity:0.9; }
+    85%{ transform:translate(-2px,0); opacity:0.6; }
+    88%{ opacity:0; }
+  }
+  @keyframes glitch-magenta{
+    0%, 78%, 100%{ transform:translate(0,0); opacity:0; }
+    79%{ transform:translate(4px,-2px); opacity:0.9; }
+    82%{ transform:translate(-3px,2px); opacity:0.9; }
+    85%{ transform:translate(2px,0); opacity:0.6; }
+    88%{ opacity:0; }
+  }
+
+  .sub{
+    margin-top:1.5rem;
+    font-size:var(--fs);
+    color:rgba(232,232,232,0.55);
+    letter-spacing:0.05em;
+  }
+
+  .sub .cursor{
+    display:inline-block;
+    width:8px;
+    height:1em;
+    background:var(--green);
+    vertical-align:-2px;
+    margin-left:4px;
+    animation:blink 1s step-end infinite;
+  }
+
   @keyframes blink{
     0%, 50%{ opacity:1; }
     51%, 100%{ opacity:0; }
   }
 
+  .enter-btn{
+    margin-top:2rem;
+    display:inline-block;
+    background:transparent;
+    border:1px solid rgba(57,255,20,0.6);
+    color:var(--green);
+    font-family:inherit;
+    font-size:var(--fs);
+    letter-spacing:0.12em;
+    padding:0.9em 1.6em;
+    cursor:pointer;
+    text-transform:uppercase;
+    text-shadow:0 0 6px rgba(57,255,20,0.6);
+    transition:background 0.15s ease;
+  }
+  .enter-btn:hover{
+    background:rgba(57,255,20,0.12);
+  }
+  .enter-btn:focus-visible{
+    outline:2px solid var(--green);
+    outline-offset:3px;
+  }
+
+  .access-status{
+    margin-top:1.25rem;
+    font-size:var(--fs);
+    letter-spacing:0.08em;
+    min-height:1.4em;
+    text-transform:uppercase;
+  }
+  .access-status.checking{
+    color:var(--cyan);
+    text-shadow:0 0 6px rgba(0,255,242,0.5);
+  }
+  .access-status.granted{
+    color:var(--green);
+    text-shadow:0 0 8px rgba(57,255,20,0.7);
+  }
+  .access-status.denied{
+    color:var(--magenta);
+    text-shadow:0 0 8px rgba(255,0,60,0.7);
+    animation:err-flash 0.4s steps(1) 4;
+  }
+
+  .enter-btn:disabled{
+    opacity:0.5;
+    cursor:default;
+  }
+  .enter-btn:disabled:hover{
+    background:transparent;
+  }
+
+  .stage.jump{
+    animation:jump-cut 0.15s steps(1);
+  }
+  @keyframes jump-cut{
+    0%{ transform:translate(0,0); filter:none; }
+    20%{ transform:translate(-8px,3px); filter:hue-rotate(20deg); }
+    40%{ transform:translate(7px,-4px); filter:hue-rotate(-15deg); }
+    60%{ transform:translate(-3px,0); filter:none; }
+    100%{ transform:translate(0,0); filter:none; }
+  }
+
+  body.blackout .stage,
+  body.blackout .scanlines,
+  body.blackout canvas#static,
+  body.blackout .static-wash{
+    opacity:0;
+  }
+  body.blackout{
+    background:#000;
+  }
+
   @media (prefers-reduced-motion: reduce){
-    .scanlines, .eyebrow .cursor, .eyebrow.err-flash, .blk{
+    .scanlines, .glitch-word, .glitch-word::before, .glitch-word::after, .sub .cursor, .eyebrow .cursor, .eyebrow.err-flash, .ebs-overlay.hit{
       animation:none !important;
     }
   }
@@ -161,14 +354,21 @@
   <canvas id="static"></canvas>
   <div class="static-wash"></div>
   <div class="scanlines"></div>
-
-  <div class="fuzzy-field" aria-hidden="true">
-    <div class="fz fz--sm" style="top:4%; left:3%;"><span class="fz-text" data-final="Fuzzy.">Fuzzy.</span><span class="blk"></span></div>
+  <div class="ebs-overlay" id="ebsOverlay">
+    <div class="ebs-bars"></div>
   </div>
 
-  <div class="eyebrow" id="eyebrow"><span id="eyebrowText"></span><span class="cursor"></span></div>
+  <div class="stage" id="stage">
+    <div class="eyebrow" id="eyebrow"><span id="eyebrowText"></span><span class="cursor"></span></div>
+    <h1 class="msg">STΔTUS: <span class="glitch-word" data-text="GL!TCH!NG">GL!TCH!NG</span></h1>
+    <div class="sub">S!GNΔL_ASSESSMΞNT = ΔCT!VΞ :: 🚨 S!RΞN_0NLINE 🚨 :: SYS//UNSTΔBLΞ<span class="cursor"></span></div>
+    <button class="enter-btn" id="enterBtn">PRESENT <span style="text-transform:none;">GL!TCH::AccEss_KEy</span> or <span style="text-transform:none;">Σκύλλα</span> CARD TO BEGIN ASSESSMENT...</button>
+    <div class="access-status" id="accessStatus"></div>
+  </div>
 
+<script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
 <script>
+  // TV static canvas
   const canvas = document.getElementById('static');
   const ctx = canvas.getContext('2d');
   function resize(){
@@ -197,6 +397,7 @@
   }
   staticLoop();
 
+  // periodic static "burst" — screen looks like it's glitching harder for a moment
   function staticBurst(){
     canvas.classList.add('burst');
     setTimeout(()=> canvas.classList.remove('burst'), 220 + Math.random()*180);
@@ -204,6 +405,48 @@
   }
   setTimeout(staticBurst, 1500);
 
+  // horizontal tear bars — brief displaced noise strips, like signal tearing
+  function spawnTear(){
+    const bar = document.createElement('div');
+    bar.className = 'tear';
+    const h = 4 + Math.random() * 18;
+    bar.style.height = h + 'px';
+    bar.style.top = (Math.random() * 100) + 'vh';
+    const shades = ['#ffffff', '#bfbfbf', '#e8e8e8', '#8f8f8f'];
+    const c1 = shades[Math.floor(Math.random()*shades.length)];
+    const c2 = shades[Math.floor(Math.random()*shades.length)];
+    bar.style.background = `repeating-linear-gradient(90deg, ${c1} 0px, ${c1} 2px, ${c2} 2px, ${c2} 4px)`;
+    bar.style.transform = `translateX(${(Math.random()*40 - 20)}px)`;
+    document.body.appendChild(bar);
+    setTimeout(()=> bar.remove(), 90 + Math.random()*90);
+    scheduleTear();
+  }
+  function scheduleTear(){
+    setTimeout(spawnTear, 300 + Math.random() * 900);
+  }
+  scheduleTear();
+
+  // jump cuts
+  const stage = document.getElementById('stage');
+  function jumpCut(){
+    stage.classList.add('jump');
+    setTimeout(()=> stage.classList.remove('jump'), 180);
+    scheduleJump();
+  }
+  function scheduleJump(){
+    setTimeout(jumpCut, 2200 + Math.random() * 4000);
+  }
+  scheduleJump();
+
+  // blackout blip
+  function blackoutBlip(){
+    document.body.classList.add('blackout');
+    setTimeout(()=> document.body.classList.remove('blackout'), 70);
+    setTimeout(blackoutBlip, 6000 + Math.random() * 8000);
+  }
+  setTimeout(blackoutBlip, 4000);
+
+  // ERR line: type out once, then stay put, with a brief "error flash" flicker
   const eyebrowFull = "ERR://STAT!C_BRΞ4CH";
   const eyebrowEl = document.getElementById('eyebrowText');
   const eyebrowWrap = document.getElementById('eyebrow');
@@ -223,6 +466,7 @@
     }, 65);
   }
 
+  // after it's loaded, it stays — but flashes like an unstable error readout every so often
   function scheduleReflash(){
     setTimeout(()=>{
       eyebrowWrap.classList.add('err-flash');
@@ -233,43 +477,85 @@
 
   typeOnce();
 
-  // Matrix-style scramble/decode effect for the background "Fuzzy." / "Details are ..." field
-  const GLYPHS = "!<>-_\\/[]{}=+*^?#01ΑΒΓΔΞΣΦΨΩαβγδθλμξπ";
+  // emergency broadcast style glitch, every 13.13 seconds
+  const ebsOverlay = document.getElementById('ebsOverlay');
+  function triggerEBS(){
+    ebsOverlay.classList.remove('hit');
+    void ebsOverlay.offsetWidth;
+    ebsOverlay.classList.add('hit');
+    stage.classList.add('jump');
+    setTimeout(()=> stage.classList.remove('jump'), 180);
+  }
+  setInterval(triggerEBS, 13130);
 
-  function scrambleReveal(el, finalText, duration){
-    const chars = finalText.split('');
-    const totalFrames = Math.round(duration / 45);
-    let frame = 0;
-    function tick(){
-      let out = '';
-      for(let i = 0; i < chars.length; i++){
-        const c = chars[i];
-        if(c === ' '){ out += ' '; continue; }
-        const revealFrame = (i / chars.length) * totalFrames * 0.7;
-        if(frame >= revealFrame){
-          out += c;
-        } else {
-          out += GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-        }
-      }
-      el.textContent = out;
-      frame++;
-      if(frame <= totalFrames){
-        setTimeout(tick, 45);
-      } else {
-        el.textContent = finalText;
-      }
-    }
-    tick();
+  // --- Xaman (XUMM) NFT-gated access ---
+  const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
+
+  const enterBtn = document.getElementById('enterBtn');
+  const accessStatus = document.getElementById('accessStatus');
+
+  function setStatus(text, state){
+    accessStatus.textContent = text;
+    accessStatus.className = 'access-status' + (state ? ' ' + state : '');
   }
 
-  document.querySelectorAll('.fz-text').forEach(el => {
-    const finalText = el.dataset.final;
-    function loop(){
-      scrambleReveal(el, finalText, 500 + Math.random() * 400);
-      setTimeout(loop, 3000 + Math.random() * 4000);
+  // Verification happens server-side (see /functions/api/verify.js) — the
+  // browser never decides access itself, it only relays the Xaman login jwt.
+  async function verifyAccess(jwt){
+    const res = await fetch('/api/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jwt })
+    });
+    if(!res.ok) throw new Error('verify_failed_' + res.status);
+    return res.json();
+  }
+
+  let xummAuth = null;
+  function getAuth(){
+    if(!xummAuth){
+      xummAuth = new XummPkce(XAMAN_API_KEY, {
+        implicit: true,
+        rememberJwt: false,
+        redirectUrl: 'https://soitbegins.xyz/'
+      });
+      xummAuth.on('error', (err)=>{
+        console.error('Xaman auth error', err);
+        setStatus('ERR://LOGIN_ABORTED — TRY AGAIN', 'denied');
+        enterBtn.disabled = false;
+      });
+      xummAuth.on('success', async ()=>{
+        try{
+          const state = await xummAuth.state();
+          const jwt = state && state.jwt;
+          if(!jwt){
+            setStatus('ERR://NO_WALLET_DATA', 'denied');
+            enterBtn.disabled = false;
+            return;
+          }
+          setStatus('WALLET LINKED :: SCANNING LEDGER FOR GL!TCH::AccEss_KEy...', 'checking');
+          const result = await verifyAccess(jwt);
+          if(result.granted){
+            setStatus('ΔCCESS GRΔNTED :: GL!TCH KEY VERIFIED — ENTERING...', 'granted');
+            setTimeout(()=>{ window.location.href = '/vault'; }, 1200);
+          } else {
+            setStatus('ΔCCESS DENIED :: NO GL!TCH KEY DETECTED ON THIS WALLET', 'denied');
+            enterBtn.disabled = false;
+          }
+        } catch(e){
+          console.error(e);
+          setStatus('ERR://SIGNAL_LOST — TRY AGAIN', 'denied');
+          enterBtn.disabled = false;
+        }
+      });
     }
-    setTimeout(loop, Math.random() * 3000);
+    return xummAuth;
+  }
+
+  enterBtn.addEventListener('click', ()=>{
+    enterBtn.disabled = true;
+    setStatus('OPENING SECURE CHANNEL :: SIGN IN WITH XAMAN...', 'checking');
+    getAuth().authorize();
   });
 </script>
 
