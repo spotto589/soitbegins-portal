@@ -79,7 +79,56 @@
     inset:0;
     background:radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(0,0,0,0.88) 100%);
     pointer-events:none;
+    z-index:6;
+  }
+
+  .fuzzy-field{
+    position:fixed;
+    inset:0;
     z-index:4;
+    pointer-events:none;
+    overflow:hidden;
+  }
+
+  .fz, .dt{
+    position:absolute;
+    color:var(--green);
+    text-shadow:0 0 8px rgba(57,255,20,0.35);
+    white-space:nowrap;
+  }
+  .fz{ font-weight:700; }
+  .fz--sm{ font-size:clamp(13px,1.6vw,18px); opacity:0.55; }
+  .fz--md{ font-size:clamp(22px,3.2vw,32px); opacity:0.45; }
+  .fz--lg{ font-size:clamp(28px,3.8vw,40px); opacity:0.4; }
+  .fz--xl{ font-size:clamp(34px,5vw,56px); opacity:0.35; }
+  .fz--1{ font-size:clamp(28px,5vw,48px); opacity:0.4; }
+
+  .dt{
+    font-size:clamp(13px,1.8vw,20px);
+    letter-spacing:0.02em;
+    opacity:0.4;
+  }
+
+  .blk{
+    display:inline-block;
+    width:0.55em;
+    height:0.55em;
+    background:#e8e8e8;
+    margin-left:0.45em;
+    vertical-align:-0.05em;
+    opacity:0.8;
+    animation:blk-blink 1.4s step-end infinite;
+  }
+  .blk.lone{
+    position:absolute;
+    width:14px;
+    height:10px;
+    margin-left:0;
+  }
+
+  @keyframes blk-blink{
+    0%, 50%{ opacity:0.8; }
+    51%, 100%{ opacity:0.1; }
   }
 
   .eyebrow{
@@ -117,7 +166,7 @@
   }
 
   @media (prefers-reduced-motion: reduce){
-    .scanlines, .eyebrow .cursor, .eyebrow.err-flash{
+    .scanlines, .eyebrow .cursor, .eyebrow.err-flash, .blk{
       animation:none !important;
     }
   }
@@ -128,6 +177,20 @@
   <canvas id="static"></canvas>
   <div class="static-wash"></div>
   <div class="scanlines"></div>
+
+  <div class="fuzzy-field" aria-hidden="true">
+    <div class="fz fz--1" style="top:6%; left:36%;"><span class="fz-text" data-final="Fuzzy.">Fuzzy.</span></div>
+    <div class="fz fz--sm" style="top:15%; left:6%;"><span class="fz-text" data-final="Fuzzy.">Fuzzy.</span><span class="blk"></span></div>
+    <div class="fz fz--md" style="top:34%; left:15%;"><span class="fz-text" data-final="Fuzzy.">Fuzzy.</span></div>
+    <div class="fz fz--lg" style="top:59%; left:4%;"><span class="fz-text" data-final="Fuzzy.">Fuzzy.</span></div>
+    <div class="fz fz--xl" style="top:87%; left:11%;"><span class="fz-text" data-final="Fuzzy.">Fuzzy.</span></div>
+
+    <div class="dt" style="top:21%; left:56%;"><span class="fz-text" data-final="Details are ...">Details are ...</span><span class="blk"></span></div>
+    <div class="dt" style="top:38%; left:64%;"><span class="fz-text" data-final="Details are ...">Details are ...</span><span class="blk"></span></div>
+    <div class="dt" style="top:77%; left:53%;"><span class="fz-text" data-final="Details are ...">Details are ...</span><span class="blk"></span></div>
+
+    <span class="blk lone" style="top:18%; left:40%;"></span>
+  </div>
 
   <div class="eyebrow" id="eyebrow"><span id="eyebrowText"></span><span class="cursor"></span></div>
 
@@ -195,6 +258,45 @@
   }
 
   typeOnce();
+
+  // Matrix-style scramble/decode effect for the background "Fuzzy." / "Details are ..." field
+  const GLYPHS = "!<>-_\\/[]{}=+*^?#01ΑΒΓΔΞΣΦΨΩαβγδθλμξπ";
+
+  function scrambleReveal(el, finalText, duration){
+    const chars = finalText.split('');
+    const totalFrames = Math.round(duration / 45);
+    let frame = 0;
+    function tick(){
+      let out = '';
+      for(let i = 0; i < chars.length; i++){
+        const c = chars[i];
+        if(c === ' '){ out += ' '; continue; }
+        const revealFrame = (i / chars.length) * totalFrames * 0.7;
+        if(frame >= revealFrame){
+          out += c;
+        } else {
+          out += GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+        }
+      }
+      el.textContent = out;
+      frame++;
+      if(frame <= totalFrames){
+        setTimeout(tick, 45);
+      } else {
+        el.textContent = finalText;
+      }
+    }
+    tick();
+  }
+
+  document.querySelectorAll('.fz-text').forEach(el => {
+    const finalText = el.dataset.final;
+    function loop(){
+      scrambleReveal(el, finalText, 500 + Math.random() * 400);
+      setTimeout(loop, 3000 + Math.random() * 4000);
+    }
+    setTimeout(loop, Math.random() * 3000);
+  });
 </script>
 
 </body>
