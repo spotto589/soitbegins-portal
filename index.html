@@ -342,6 +342,22 @@
     background:#000;
   }
 
+  .shutdown-msg{
+    position:fixed;
+    inset:0;
+    z-index:100;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    color:#3a3a3a;
+    font-size:var(--fs);
+    letter-spacing:0.3em;
+    text-transform:uppercase;
+  }
+  body.shutdown .shutdown-msg{
+    display:flex;
+  }
+
   @media (prefers-reduced-motion: reduce){
     .scanlines, .glitch-word, .glitch-word::before, .glitch-word::after, .sub .cursor, .eyebrow .cursor, .eyebrow.err-flash, .ebs-overlay.hit{
       animation:none !important;
@@ -365,6 +381,8 @@
     <button class="enter-btn" id="enterBtn">PRESENT <span style="text-transform:none;">Σκύλλα</span> CARD TO BEGIN ASSESSMENT...</button>
     <div class="access-status" id="accessStatus"></div>
   </div>
+
+  <div class="shutdown-msg" id="shutdownMsg">CONNECTION TERMINATED</div>
 
 <script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
 <script>
@@ -439,9 +457,11 @@
   scheduleJump();
 
   // blackout blip
+  let shuttingDown = false;
   function blackoutBlip(){
+    if(shuttingDown) return;
     document.body.classList.add('blackout');
-    setTimeout(()=> document.body.classList.remove('blackout'), 70);
+    setTimeout(()=> { if(!shuttingDown) document.body.classList.remove('blackout'); }, 70);
     setTimeout(blackoutBlip, 6000 + Math.random() * 8000);
   }
   setTimeout(blackoutBlip, 4000);
@@ -511,6 +531,27 @@
     return res.json();
   }
 
+  function terminateConnection(){
+    shuttingDown = true;
+    enterBtn.disabled = true;
+
+    // alarm burst — EBS pattern fires rapidly like they tripped a siren
+    triggerEBS();
+    const alarmInterval = setInterval(triggerEBS, 700);
+
+    setTimeout(()=>{
+      clearInterval(alarmInterval);
+      document.body.classList.add('blackout');
+      setTimeout(()=>{
+        document.body.classList.add('shutdown');
+        setTimeout(()=>{
+          window.close();
+          location.replace('about:blank');
+        }, 1400);
+      }, 500);
+    }, 1800);
+  }
+
   let xummAuth = null;
   function getAuth(){
     if(!xummAuth){
@@ -540,7 +581,7 @@
             setTimeout(()=>{ window.location.href = '/vault'; }, 1200);
           } else {
             setStatus('ΔCCESS DENIED :: NO GL!TCH KEY DETECTED ON THIS WALLET', 'denied');
-            enterBtn.disabled = false;
+            terminateConnection();
           }
         } catch(e){
           console.error(e);
