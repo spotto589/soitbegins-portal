@@ -90,24 +90,14 @@
     overflow:hidden;
   }
 
-  .fz, .dt{
+  .fz{
     position:absolute;
     color:var(--green);
     text-shadow:0 0 8px rgba(57,255,20,0.35);
     white-space:nowrap;
+    font-weight:700;
   }
-  .fz{ font-weight:700; }
   .fz--sm{ font-size:clamp(13px,1.6vw,18px); opacity:0.55; }
-  .fz--md{ font-size:clamp(22px,3.2vw,32px); opacity:0.45; }
-  .fz--lg{ font-size:clamp(28px,3.8vw,40px); opacity:0.4; }
-  .fz--xl{ font-size:clamp(34px,5vw,56px); opacity:0.35; }
-  .fz--1{ font-size:clamp(28px,5vw,48px); opacity:0.4; }
-
-  .dt{
-    font-size:clamp(13px,1.8vw,20px);
-    letter-spacing:0.02em;
-    opacity:0.4;
-  }
 
   .blk{
     display:inline-block;
@@ -118,12 +108,6 @@
     vertical-align:-0.05em;
     opacity:0.8;
     animation:blk-blink 1.4s step-end infinite;
-  }
-  .blk.lone{
-    position:absolute;
-    width:14px;
-    height:10px;
-    margin-left:0;
   }
 
   @keyframes blk-blink{
@@ -179,17 +163,7 @@
   <div class="scanlines"></div>
 
   <div class="fuzzy-field" aria-hidden="true">
-    <div class="fz fz--1" style="top:6%; left:36%;"><span class="fz-text" data-final="Fuzzy.">Fuzzy.</span></div>
-    <div class="fz fz--sm" style="top:15%; left:6%;"><span class="fz-text" data-final="Fuzzy.">Fuzzy.</span><span class="blk"></span></div>
-    <div class="fz fz--md" style="top:34%; left:15%;"><span class="fz-text" data-final="Fuzzy.">Fuzzy.</span></div>
-    <div class="fz fz--lg" style="top:59%; left:4%;"><span class="fz-text" data-final="Fuzzy.">Fuzzy.</span></div>
-    <div class="fz fz--xl" style="top:87%; left:11%;"><span class="fz-text" data-final="Fuzzy.">Fuzzy.</span></div>
-
-    <div class="dt" style="top:21%; left:56%;"><span class="fz-text" data-final="Details are ...">Details are ...</span><span class="blk"></span></div>
-    <div class="dt" style="top:38%; left:64%;"><span class="fz-text" data-final="Details are ...">Details are ...</span><span class="blk"></span></div>
-    <div class="dt" style="top:77%; left:53%;"><span class="fz-text" data-final="Details are ...">Details are ...</span><span class="blk"></span></div>
-
-    <span class="blk lone" style="top:18%; left:40%;"></span>
+    <div class="fz fz--sm" style="top:4%; left:3%;"><span class="fz-text" data-final="Fuzzy.">Fuzzy.</span><span class="blk"></span></div>
   </div>
 
   <div class="eyebrow" id="eyebrow"><span id="eyebrowText"></span><span class="cursor"></span></div>
