@@ -269,26 +269,53 @@
     51%, 100%{ opacity:0; }
   }
 
+  .illusion-flag{
+    margin-top:0.6rem;
+    font-size:calc(var(--fs) * 0.75);
+    letter-spacing:0.2em;
+    color:rgba(255,0,60,0.55);
+    text-shadow:0 0 6px rgba(255,0,60,0.35);
+  }
+
   .enter-btn{
-    margin-top:2rem;
+    position:relative;
+    margin-top:2.4rem;
     display:inline-block;
-    background:transparent;
-    border:1px solid rgba(57,255,20,0.6);
-    color:var(--green);
+    background:repeating-linear-gradient(
+      45deg,
+      rgba(255,176,0,0.05) 0px,
+      rgba(255,176,0,0.05) 10px,
+      transparent 10px,
+      transparent 20px
+    );
+    border:1px dashed rgba(255,176,0,0.4);
+    color:#8a8a8a;
     font-family:inherit;
     font-size:var(--fs);
     letter-spacing:0.12em;
     padding:0.9em 1.6em;
     cursor:pointer;
     text-transform:uppercase;
-    text-shadow:0 0 6px rgba(57,255,20,0.6);
-    transition:background 0.15s ease;
+    text-shadow:none;
+    opacity:0.7;
+    transition:opacity 0.15s ease;
+  }
+  .enter-btn::before{
+    content:"[ MΔLFUNCT!0N ]";
+    position:absolute;
+    top:-1.7em;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:0.5em;
+    letter-spacing:0.3em;
+    color:rgba(255,176,0,0.6);
+    white-space:nowrap;
   }
   .enter-btn:hover{
-    background:rgba(57,255,20,0.12);
+    opacity:0.9;
   }
   .enter-btn:focus-visible{
-    outline:2px solid var(--green);
+    outline:2px solid rgba(255,176,0,0.6);
     outline-offset:3px;
   }
 
@@ -378,6 +405,7 @@
     <div class="eyebrow" id="eyebrow"><span id="eyebrowText"></span><span class="cursor"></span></div>
     <h1 class="msg">STΔTUS: <span class="glitch-word" data-text="GL!TCH!NG">GL!TCH!NG</span></h1>
     <div class="sub">S!GNΔL_ASSESSMΞNT = ΔCT!VΞ :: 🚨 S!RΞN_0NLINE 🚨 :: SYS//UNSTΔBLΞ<span class="cursor"></span></div>
+    <div class="illusion-flag">!LLUS!0N_LΔYER = ΞNΔBLΞD</div>
     <button class="enter-btn" id="enterBtn">PRESENT <span style="text-transform:none;">Σκύλλα</span> CARD TO BEGIN ASSESSMENT...</button>
     <div class="access-status" id="accessStatus"></div>
   </div>
@@ -574,13 +602,13 @@
             enterBtn.disabled = false;
             return;
           }
-          setStatus('WALLET LINKED :: SCANNING LEDGER FOR GL!TCH::AccEss_KEy...', 'checking');
+          setStatus('WALLET LINKED :: SCANNING LEDGER FOR Σκύλλα CARD...', 'checking');
           const result = await verifyAccess(jwt);
           if(result.granted){
-            setStatus('ΔCCESS GRΔNTED :: GL!TCH KEY VERIFIED — ENTERING...', 'granted');
+            setStatus('ΔCCESS GRΔNTED :: Σκύλλα CARD VERIFIED — ENTERING...', 'granted');
             setTimeout(()=>{ window.location.href = '/vault'; }, 1200);
           } else {
-            setStatus('ΔCCESS DENIED :: NO GL!TCH KEY DETECTED ON THIS WALLET', 'denied');
+            setStatus('ΔCCESS DENIED :: NO Σκύλλα CARD DETECTED ON THIS WALLET', 'denied');
             terminateConnection();
           }
         } catch(e){
