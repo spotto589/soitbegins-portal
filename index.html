@@ -294,11 +294,11 @@
     font-size:var(--fs);
     letter-spacing:0.12em;
     padding:0.9em 1.6em;
-    cursor:pointer;
+    cursor:default;
     text-transform:uppercase;
     text-shadow:none;
     opacity:0.7;
-    transition:opacity 0.15s ease;
+    pointer-events:none;
   }
   .enter-btn::before{
     content:"[ MΔLFUNCT!0N ]";
@@ -310,9 +310,6 @@
     letter-spacing:0.3em;
     color:rgba(255,176,0,0.6);
     white-space:nowrap;
-  }
-  .enter-btn:hover{
-    opacity:0.9;
   }
   .enter-btn:focus-visible{
     outline:2px solid rgba(255,176,0,0.6);
@@ -538,6 +535,7 @@
 
   // --- Xaman (XUMM) NFT-gated access ---
   const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
+  const ENTRY_ENABLED = false; // flip to true to re-enable the access button
 
   const enterBtn = document.getElementById('enterBtn');
   const accessStatus = document.getElementById('accessStatus');
@@ -622,6 +620,7 @@
   }
 
   enterBtn.addEventListener('click', ()=>{
+    if(!ENTRY_ENABLED) return;
     enterBtn.disabled = true;
     setStatus('OPENING SECURE CHANNEL :: SIGN IN WITH XAMAN...', 'checking');
     getAuth().authorize();
