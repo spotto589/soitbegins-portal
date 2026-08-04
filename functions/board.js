@@ -151,11 +151,11 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
     margin-bottom:1rem;
   }
   .pigeon-thumb{
-    width:44px;
-    height:44px;
+    width:84px;
+    height:84px;
     object-fit:cover;
     border:2px solid rgba(57,255,20,0.25);
-    border-radius:3px;
+    border-radius:4px;
     cursor:pointer;
     opacity:0.6;
     transition:opacity 0.15s ease, border-color 0.15s ease;
@@ -169,7 +169,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:9px;
+    font-size:11px;
     color:rgba(232,232,232,0.5);
     text-align:center;
     background:#000;
