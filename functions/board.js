@@ -65,7 +65,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
     </div>
   ` : (hasSession
     ? `<div class="gate-note">N0 P!GE0N DETECTED :: B!NARY 0NLY. Y0U CANN0T DEC0DE 0R WR!TE HERE.</div>`
-    : `<button class="connect-btn" id="connectBtn">C0NNECT WALLET</button><div class="connect-status" id="connectStatus"></div>`
+    : `<div class="connect-wrap"><button class="connect-btn" id="connectBtn">C0NNECT T0 P!GE0N NETW0RK</button><div class="connect-status" id="connectStatus"></div></div>`
   );
 
   return `<!DOCTYPE html>
@@ -281,6 +281,10 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
     font-size:12px;
     letter-spacing:0.05em;
     color:rgba(255,0,60,0.75);
+  }
+  .connect-wrap{
+    margin-top:2rem;
+    text-align:center;
   }
 </style>
 </head>
