@@ -13,6 +13,13 @@ function escapeHtml(str) {
   return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+function getPigeonCountTier(count) {
+  if (count >= 100) return 'tier-glow';
+  if (count >= 30) return 'tier-gold';
+  if (count >= 10) return 'tier-silver';
+  return 'tier-green';
+}
+
 function renderMessageRow(msg, canDecode) {
   const binary = escapeHtml(textToBinary(msg.text));
   const wallet = escapeHtml(msg.acct ? msg.acct.slice(0, 6) + '...' + msg.acct.slice(-4) : 'UNKN0WN');
@@ -20,12 +27,13 @@ function renderMessageRow(msg, canDecode) {
   const avatar = msg.image
     ? `<img class="msg-avatar" src="${escapeHtml(msg.image)}" alt="" loading="lazy">`
     : `<div class="msg-avatar msg-avatar-blank"></div>`;
+  const tierClass = getPigeonCountTier(msg.pigeonCount || 1);
   return `
     <div class="msg-row">
       ${avatar}
       <div class="msg-body">
         <div class="msg-binary">${binary}</div>
-        ${canDecode ? `<div class="msg-plain">${escapeHtml(msg.text)}</div>` : ''}
+        ${canDecode ? `<div class="msg-plain ${tierClass}">${escapeHtml(msg.text)}</div>` : ''}
         <div class="msg-meta">S!GNED :: ${signer}</div>
       </div>
     </div>`;
@@ -98,15 +106,16 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
   }
   .msg-row{
     display:flex;
-    align-items:flex-start;
-    gap:1rem;
+    align-items:stretch;
+    gap:0;
     border:1px solid rgba(57,255,20,0.25);
-    padding:1rem 1.25rem;
     margin-bottom:1rem;
+    overflow:hidden;
   }
   .msg-body{
     flex:1;
     min-width:0;
+    padding:1rem 1.25rem;
   }
   .msg-binary{
     font-size:11px;
@@ -117,7 +126,27 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
   .msg-plain{
     margin-top:0.6rem;
     font-size:14px;
-    color:#e8e8e8;
+  }
+  .msg-plain.tier-green{
+    color:#39ff14;
+    text-shadow:0 0 4px rgba(57,255,20,0.35);
+  }
+  .msg-plain.tier-silver{
+    color:#cdd6de;
+    text-shadow:0 0 5px rgba(205,214,222,0.45);
+  }
+  .msg-plain.tier-gold{
+    color:#ffd700;
+    text-shadow:0 0 6px rgba(255,215,0,0.5);
+  }
+  .msg-plain.tier-glow{
+    color:#ffd700;
+    text-shadow:0 0 10px rgba(255,215,0,0.9), 0 0 22px rgba(255,215,0,0.6);
+    animation:golden-pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes golden-pulse{
+    0%, 100%{ text-shadow:0 0 10px rgba(255,215,0,0.9), 0 0 22px rgba(255,215,0,0.6); }
+    50%{ text-shadow:0 0 18px rgba(255,215,0,1), 0 0 36px rgba(255,215,0,0.85); }
   }
   .msg-meta{
     margin-top:0.6rem;
@@ -126,12 +155,12 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
     color:rgba(255,0,60,0.7);
   }
   .msg-avatar{
-    flex-shrink:0;
-    width:72px;
-    height:72px;
+    flex:0 0 38%;
+    width:38%;
+    max-width:220px;
     object-fit:cover;
-    border:2px solid rgba(255,0,60,0.5);
-    border-radius:3px;
+    border:none;
+    border-right:2px solid rgba(255,0,60,0.5);
   }
   .msg-avatar-blank{
     background:repeating-linear-gradient(
@@ -141,17 +170,18 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
       transparent 6px,
       transparent 12px
     );
-    border-color:rgba(57,255,20,0.15);
+    border-right-color:rgba(57,255,20,0.15);
   }
   .pigeon-picker{
-    display:flex;
-    flex-wrap:wrap;
+    display:grid;
+    grid-template-columns:repeat(6, 1fr);
     gap:0.5rem;
     margin-bottom:1rem;
   }
   .pigeon-thumb{
-    width:84px;
-    height:84px;
+    width:100%;
+    aspect-ratio:1;
+    height:auto;
     object-fit:cover;
     border:2px solid rgba(57,255,20,0.25);
     border-radius:4px;
@@ -174,6 +204,10 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
     margin-top:2rem;
     border:1px dashed rgba(57,255,20,0.4);
     padding:1.25rem;
+    text-align:center;
+  }
+  .write-box textarea, .write-box input#nameInput{
+    text-align:left;
   }
   .write-label{
     font-size:11px;
