@@ -96,6 +96,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
 <title>S!GNAL_NODE:://P!GΞON_RELAY</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
@@ -184,9 +185,15 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     flex:0 0 128px;
     width:128px;
     object-fit:cover;
-    image-rendering:pixelated;
     border:none;
     border-right:2px solid rgba(255,0,60,0.5);
+  }
+  @media (min-width:641px){
+    .msg-avatar{
+      flex:0 0 180px;
+      width:180px;
+    }
+    .msg-top{ min-height:180px; }
   }
   .msg-avatar-blank{
     background:repeating-linear-gradient(
@@ -209,7 +216,6 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     aspect-ratio:1;
     height:auto;
     object-fit:cover;
-    image-rendering:pixelated;
     border:2px solid rgba(57,255,20,0.25);
     border-radius:4px;
     cursor:pointer;
