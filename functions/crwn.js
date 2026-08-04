@@ -1,10 +1,12 @@
 import {
   COOKIE_NAME, getCookie, verifyToken,
-  fetchAllAccountNfts, hasAccessKey, findKingNft, findHoneypot
+  fetchAllAccountNfts, hasAccessKey, findKingNft, findAllKingNfts, findHoneypot,
+  getBestCrownTier
 } from './_shared.js';
 
 const CRWN_PER_DAY = 1; // placeholder rate — adjust to the real $CRWN emission rate
-const HONEY_PER_DAY = 2; // placeholder rate — adjust to the real $HONEY emission rate
+const HONEY_PER_DAY = 2; // placeholder rate — adjust to the real $HONEY emission rate (eventually scales with # of Honeypots held)
+const BOTH_MULTIPLIER = 3; // $CRWN-only bonus for holding King + Honeypot together (does not affect $HONEY)
 
 // XRPL has no fast way to look up "when did this wallet acquire this NFT" —
 // the only method is scanning tx history, which is too slow for a live page
@@ -21,45 +23,74 @@ async function getOrStartTimer(kv, key) {
   return parseInt(firstSeen, 10);
 }
 
-function statBlock(label, value) {
+function statBlock(label, value, sub) {
   return `
       <div class="stat">
         <div class="stat-label">${label}</div>
         <div class="stat-value">${value}</div>
+        ${sub ? `<div class="stat-sub">${sub}</div>` : ''}
       </div>`;
 }
 
-function renderPage({ state, daysHeld, crwnClaimable, honeyClaimable, denyReason }) {
+function renderPage({ state, daysHeld, crwnClaimable, honeyClaimable, denyReason, crownTier }) {
   let body;
+  let claimHoney = false;
+  let claimCrwn = false;
+  const crownLine = crownTier
+    ? (crownTier.name
+        ? `<div class="crown-line">CR0WN: ${crownTier.name} (×${crownTier.multiplier})</div>`
+        : `<div class="crown-line">CR0WN: N0NE DETECTED (×${crownTier.multiplier})</div>`)
+    : '';
 
-  if (state === 'full') {
+  if (state === 'both') {
+    claimHoney = true;
+    claimCrwn = true;
+    const crwnTotalMult = BOTH_MULTIPLIER * crownTier.multiplier;
     body = `
     <div class="eyebrow">THR0NE R00M</div>
-    <h1>TRUTH VER!F!ED</h1>
-    <p class="intro">King signature found. Honeypot signature found.</p>
+    <h1>Y0U ARE A K!NG, TAKE Y0UR SHARE</h1>
+    <p class="intro">King signature found. Honeypot signature found. $CRWN earnings multiplied ×${BOTH_MULTIPLIER}.</p>
+    ${crownLine}
     <div class="stat-row">${statBlock('VER!F!ED F0R', daysHeld.toFixed(2) + ' DAYS')}</div>
     <div class="stat-row">
-      ${statBlock('$HONEY CLA!MABLE', honeyClaimable.toFixed(2))}
-      ${statBlock('$CRWN CLA!MABLE', crwnClaimable.toFixed(2))}
+      ${statBlock('$HONEY CLA!MABLE', honeyClaimable.toFixed(2), '×1 (n0 b0nus)')}
+      ${statBlock('$CRWN CLA!MABLE', crwnClaimable.toFixed(2), `×${crwnTotalMult} (×${BOTH_MULTIPLIER} b0th · ×${crownTier.multiplier} cr0wn)`)}
     </div>
     <button class="claim-btn" id="claimHoney">CLA!M $H0NEY</button>
     <button class="claim-btn" id="claimCrwn">CLA!M $CRWN</button>
     <div class="claim-status" id="claimStatus"></div>
-    <p class="note">Rates: ${HONEY_PER_DAY} $HONEY/day, ${CRWN_PER_DAY} $CRWN/day. Claims are logged, not yet paid out automatically.</p>
+    <p class="note">Rates: ${HONEY_PER_DAY} $HONEY/day, ${CRWN_PER_DAY} $CRWN/day ×${BOTH_MULTIPLIER} (both-signature bonus, $CRWN only). Claims are logged, not yet paid out automatically.</p>
     `;
-  } else if (state === 'partial') {
+  } else if (state === 'honeypotOnly') {
+    claimHoney = true;
     body = `
     <div class="eyebrow">THR0NE R00M</div>
-    <h1>H0NEYP0T DETECTED</h1>
+    <h1>CLA!M SHARE 0F H0NEY F0R PR0TECT!NG VESSEL/S F0R THE CR0WN</h1>
     <p class="intro">Honeypot signature found. No King signature — $CRWN stays locked until you carry both.</p>
     <div class="stat-row">${statBlock('H0LD!NG F0R', daysHeld.toFixed(2) + ' DAYS')}</div>
     <div class="stat-row">
-      ${statBlock('$HONEY CLA!MABLE', honeyClaimable.toFixed(2))}
+      ${statBlock('$HONEY CLA!MABLE', honeyClaimable.toFixed(2), '×1 (n0 b0nus)')}
       ${statBlock('$CRWN', 'L0CKED')}
     </div>
     <button class="claim-btn" id="claimHoney">CLA!M $H0NEY</button>
     <div class="claim-status" id="claimStatus"></div>
     <p class="note">Rate: ${HONEY_PER_DAY} $HONEY/day held. Acquire a King NFT to unlock $CRWN too.</p>
+    `;
+  } else if (state === 'kingOnly') {
+    claimCrwn = true;
+    body = `
+    <div class="eyebrow">THR0NE R00M</div>
+    <h1>EARN C0!NS F0R THE CT0 (CR0WN TAKE 0VER)</h1>
+    <p class="intro">King signature found. No Honeypot signature — $HONEY stays locked until you carry both.</p>
+    ${crownLine}
+    <div class="stat-row">${statBlock('H0LD!NG F0R', daysHeld.toFixed(2) + ' DAYS')}</div>
+    <div class="stat-row">
+      ${statBlock('$CRWN CLA!MABLE', crwnClaimable.toFixed(2), `×${crownTier.multiplier} (cr0wn)`)}
+      ${statBlock('$HONEY', 'L0CKED')}
+    </div>
+    <button class="claim-btn" id="claimCrwn">CLA!M $CRWN</button>
+    <div class="claim-status" id="claimStatus"></div>
+    <p class="note">Rate: ${CRWN_PER_DAY} $CRWN/day held. Acquire a Honeypot NFT to unlock $HONEY too.</p>
     `;
   } else {
     body = `
@@ -69,7 +100,7 @@ function renderPage({ state, daysHeld, crwnClaimable, honeyClaimable, denyReason
     `;
   }
 
-  const claimScript = (state === 'full' || state === 'partial') ? `<script>
+  const claimScript = (claimHoney || claimCrwn) ? `<script>
   const status = document.getElementById('claimStatus');
   async function claim(kind, btn){
     btn.disabled = true;
@@ -92,16 +123,23 @@ function renderPage({ state, daysHeld, crwnClaimable, honeyClaimable, denyReason
       btn.disabled = false;
     }
   }
-  document.getElementById('claimHoney').addEventListener('click', (e) => claim('honey', e.target));
-  ${state === 'full' ? "document.getElementById('claimCrwn').addEventListener('click', (e) => claim('crwn', e.target));" : ''}
+  ${claimHoney ? "document.getElementById('claimHoney').addEventListener('click', (e) => claim('honey', e.target));" : ''}
+  ${claimCrwn ? "document.getElementById('claimCrwn').addEventListener('click', (e) => claim('crwn', e.target));" : ''}
 </script>` : '';
+
+  const titles = {
+    both: 'Y0U ARE A K!NG',
+    honeypotOnly: 'H0NEYP0T DETECTED',
+    kingOnly: 'K!NG S!GNATURE DETECTED',
+    denied: 'ACCESS DEN!ED'
+  };
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${state === 'denied' ? 'ACCESS DEN!ED' : (state === 'full' ? 'TRUTH VER!F!ED' : 'H0NEYP0T DETECTED')}</title>
+<title>${titles[state]}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -125,18 +163,25 @@ function renderPage({ state, daysHeld, crwnClaimable, honeyClaimable, denyReason
     margin-bottom:0.75rem;
   }
   h1{
-    font-size:clamp(22px,4vw,36px);
-    letter-spacing:0.08em;
+    font-size:clamp(20px,3.6vw,32px);
+    letter-spacing:0.06em;
     color:#fff;
     text-shadow:0 0 10px rgba(57,255,20,0.25);
     margin-bottom:1.5rem;
+    line-height:1.3;
   }
   .intro{
     font-size:14px;
     line-height:1.7;
     color:rgba(232,232,232,0.75);
     font-style:italic;
-    margin-bottom:2.5rem;
+    margin-bottom:1.25rem;
+  }
+  .crown-line{
+    font-size:12px;
+    letter-spacing:0.1em;
+    color:rgba(255,176,0,0.85);
+    margin-bottom:2rem;
   }
   .stat-row{
     display:flex;
@@ -159,6 +204,12 @@ function renderPage({ state, daysHeld, crwnClaimable, honeyClaimable, denyReason
     font-size:20px;
     color:#39ff14;
     text-shadow:0 0 8px rgba(57,255,20,0.5);
+  }
+  .stat-sub{
+    margin-top:0.35rem;
+    font-size:10px;
+    letter-spacing:0.05em;
+    color:rgba(255,176,0,0.7);
   }
   .claim-btn{
     background:transparent;
@@ -223,30 +274,44 @@ export async function onRequestGet(context) {
   const kingNft = findKingNft(nfts);
   const honeypot = findHoneypot(nfts);
 
-  if (!honeypot) {
+  if (!kingNft && !honeypot) {
     return new Response(
       renderPage({ state: 'denied', denyReason: 'R0YAL S!GNATURE M!SS!NG' }),
       { headers: { 'Content-Type': 'text/html' } }
     );
   }
 
-  const honeyFirstSeen = await getOrStartTimer(env.coin, `${payload.acct}:honeypot`);
-  const honeyDays = Math.max(0, (Date.now() / 1000 - honeyFirstSeen) / 86400);
-  const honeyClaimable = honeyDays * HONEY_PER_DAY;
-
-  if (!kingNft) {
+  if (kingNft && honeypot) {
+    const allKingNfts = findAllKingNfts(nfts);
+    const crownTier = await getBestCrownTier(env.coin, allKingNfts);
+    const firstSeen = await getOrStartTimer(env.coin, `${payload.acct}:verified`);
+    const daysHeld = Math.max(0, (Date.now() / 1000 - firstSeen) / 86400);
+    const honeyClaimable = daysHeld * HONEY_PER_DAY;
+    const crwnClaimable = daysHeld * CRWN_PER_DAY * BOTH_MULTIPLIER * crownTier.multiplier;
     return new Response(
-      renderPage({ state: 'partial', daysHeld: honeyDays, honeyClaimable }),
+      renderPage({ state: 'both', daysHeld, crwnClaimable, honeyClaimable, crownTier }),
       { headers: { 'Content-Type': 'text/html' } }
     );
   }
 
-  const verifiedFirstSeen = await getOrStartTimer(env.coin, `${payload.acct}:verified`);
-  const daysHeld = Math.max(0, (Date.now() / 1000 - verifiedFirstSeen) / 86400);
-  const crwnClaimable = daysHeld * CRWN_PER_DAY;
+  if (honeypot) {
+    const firstSeen = await getOrStartTimer(env.coin, `${payload.acct}:honeypot`);
+    const daysHeld = Math.max(0, (Date.now() / 1000 - firstSeen) / 86400);
+    const honeyClaimable = daysHeld * HONEY_PER_DAY;
+    return new Response(
+      renderPage({ state: 'honeypotOnly', daysHeld, honeyClaimable }),
+      { headers: { 'Content-Type': 'text/html' } }
+    );
+  }
 
+  // kingNft only
+  const allKingNfts = findAllKingNfts(nfts);
+  const crownTier = await getBestCrownTier(env.coin, allKingNfts);
+  const firstSeen = await getOrStartTimer(env.coin, `${payload.acct}:king`);
+  const daysHeld = Math.max(0, (Date.now() / 1000 - firstSeen) / 86400);
+  const crwnClaimable = daysHeld * CRWN_PER_DAY * crownTier.multiplier;
   return new Response(
-    renderPage({ state: 'full', daysHeld, crwnClaimable, honeyClaimable }),
+    renderPage({ state: 'kingOnly', daysHeld, crwnClaimable, crownTier }),
     { headers: { 'Content-Type': 'text/html' } }
   );
 }

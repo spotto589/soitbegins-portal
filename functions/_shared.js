@@ -87,6 +87,72 @@ export function findKingNft(nfts) {
   return nfts.find(n => n.Issuer === KING_ISSUER && n.NFTokenTaxon === KING_TAXON) || null;
 }
 
+export function findAllKingNfts(nfts) {
+  return nfts.filter(n => n.Issuer === KING_ISSUER && n.NFTokenTaxon === KING_TAXON);
+}
+
 export function findHoneypot(nfts) {
   return nfts.find(n => n.Issuer === HONEYPOT_ISSUER && n.NFTokenTaxon === HONEYPOT_TAXON) || null;
+}
+
+// Crown tiers, rarest first. "value" must match the NFT metadata's
+// Headwear trait value exactly. Multipliers are placeholders — adjust
+// to the real economy numbers.
+export const CROWN_TIERS = [
+  { value: '9-Spike Total-Reign', multiplier: 3 },
+  { value: 'Invisible crown', multiplier: 2.5 },
+  { value: '8-Spike Broad-Reign', multiplier: 2 },
+  { value: 'Crown of Thorns', multiplier: 1.75 },
+  { value: 'Jewelled Silver Crown', multiplier: 1.6 },
+  { value: '5-Spike Falling-Reign', multiplier: 1.5 },
+  { value: '5-Spike Broken-Reign', multiplier: 1.25 },
+];
+export const NO_CROWN_MULTIPLIER = 1;
+
+function hexToUtf8(hex) {
+  const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+  return new TextDecoder().decode(bytes);
+}
+
+function resolveIpfsUri(uri) {
+  if (uri.startsWith('ipfs://')) {
+    return 'https://ipfs.io/ipfs/' + uri.slice('ipfs://'.length);
+  }
+  return uri;
+}
+
+async function fetchCrownTierIndexForNft(nft) {
+  try {
+    const uri = resolveIpfsUri(hexToUtf8(nft.URI));
+    const res = await fetch(uri);
+    if (!res.ok) return -1;
+    const meta = await res.json();
+    const attrs = (meta && meta.attributes) || [];
+    const headwear = attrs.find(a => a.trait_type === 'Headwear');
+    if (!headwear) return -1;
+    const idx = CROWN_TIERS.findIndex(t => t.value === headwear.value);
+    return idx; // -1 if no match
+  } catch (e) {
+    return -1;
+  }
+}
+
+// Checks every King NFT the wallet holds, caching each token's resolved
+// crown tier in KV permanently (metadata doesn't change), and returns the
+// tier for the rarest crown found (or a "no crown" result if none of their
+// King NFTs have a matching Headwear trait).
+export async function getBestCrownTier(kv, kingNfts) {
+  const results = await Promise.all(kingNfts.map(async (nft) => {
+    const cacheKey = `crown:${nft.NFTokenID}`;
+    const cached = await kv.get(cacheKey);
+    if (cached !== null) return parseInt(cached, 10);
+    const idx = await fetchCrownTierIndexForNft(nft);
+    await kv.put(cacheKey, String(idx));
+    return idx;
+  }));
+
+  const found = results.filter(idx => idx >= 0);
+  if (found.length === 0) return { name: null, multiplier: NO_CROWN_MULTIPLIER };
+  const bestIdx = Math.min(...found); // lower index = rarer
+  return { name: CROWN_TIERS[bestIdx].value, multiplier: CROWN_TIERS[bestIdx].multiplier };
 }
