@@ -87,7 +87,12 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       <div class="post-status" id="postStatus"></div>
     </div>
   ` : (hasSession
-    ? `<div class="gate-note" id="pigeonWalletBoard">N0 P!GE0N DETECTED :: B!NARY 0NLY. Y0U CANN0T DEC0DE 0R WR!TE HERE.</div>`
+    ? `<div class="gate-note" id="pigeonWalletBoard">
+        N0 P!GE0N DETECTED :: B!NARY 0NLY. Y0U CANN0T DEC0DE 0R WR!TE HERE.
+        <div class="retry-line">TRY D!FFERENT KEY?</div>
+        <button class="connect-btn" id="connectBtn">C0NNECT T0 P!GE0N NETW0RK</button>
+        <div class="connect-status" id="connectStatus"></div>
+      </div>`
     : ''
   );
 
@@ -192,6 +197,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     .msg-avatar{
       flex:0 0 180px;
       width:180px;
+      filter:url(#pigeon-sharpen);
     }
     .msg-top{ min-height:180px; }
   }
@@ -333,6 +339,15 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     letter-spacing:0.05em;
     color:rgba(255,0,60,0.75);
   }
+  .retry-line{
+    margin-top:1.25rem;
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:rgba(232,232,232,0.5);
+  }
+  .gate-note .connect-btn{
+    margin-top:0.75rem;
+  }
   .connect-wrap{
     margin-bottom:2.5rem;
     text-align:center;
@@ -340,6 +355,11 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
 </style>
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute;">
+    <filter id="pigeon-sharpen">
+      <feConvolveMatrix order="3" kernelMatrix="0 -0.5 0 -0.5 3 -0.5 0 -0.5 0" preserveAlpha="true" />
+    </filter>
+  </svg>
   <div class="page">
     <h1>S!GNAL_NODE:://P!GΞON_RELAY</h1>
     ${connectSection}
@@ -433,7 +453,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       btn.disabled = false;
     }
   });
-  ` : (!hasSession ? `
+  ` : (!isPigeon ? `
   let xummAuth = null;
   function getAuth(){
     if(!xummAuth){
