@@ -101,6 +101,17 @@ export function findPigeon(nfts) {
   return nfts.find(n => n.Issuer === PIGEON_ISSUER && n.NFTokenTaxon === PIGEON_TAXON) || null;
 }
 
+export function findAllPigeons(nfts) {
+  return nfts.filter(n => n.Issuer === PIGEON_ISSUER && n.NFTokenTaxon === PIGEON_TAXON);
+}
+
+// Pigeon #1-1515 get the higher word limit, #1516+ get the lower one.
+// Numbers come from the NFT metadata's "name" field (e.g. "PIGEONS1180"
+// -> 1180), confirmed against real on-chain metadata.
+export const PIGEON_LOW_EDITION_MAX = 1515;
+export const PIGEON_WORD_LIMIT_LOW_EDITION = 75;
+export const PIGEON_WORD_LIMIT_HIGH_EDITION = 15;
+
 // Crown tiers, rarest first. "match" must equal the NFT metadata's
 // Headwear trait value exactly (confirmed against real on-chain metadata —
 // don't change these without re-verifying). "display" is the friendlier
@@ -163,4 +174,38 @@ export async function getBestCrownTier(kv, kingNfts) {
   if (found.length === 0) return { name: null, multiplier: NO_CROWN_MULTIPLIER, index: -1 };
   const bestIdx = Math.min(...found); // lower index = rarer
   return { name: CROWN_TIERS[bestIdx].display, multiplier: CROWN_TIERS[bestIdx].multiplier, index: bestIdx };
+}
+
+async function fetchPigeonNumber(nft) {
+  try {
+    const uri = resolveIpfsUri(hexToUtf8(nft.URI));
+    const res = await fetch(uri);
+    if (!res.ok) return null;
+    const meta = await res.json();
+    const name = meta && meta.name;
+    if (!name) return null;
+    const match = String(name).match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Checks every Pigeon NFT the wallet holds, caching each token's resolved
+// edition number in KV permanently, and returns the word limit for their
+// best (lowest-numbered / earliest) Pigeon. Unparseable/unknown numbers
+// are treated as high-edition (the restrictive limit) rather than trusted.
+export async function getBestPigeonWordLimit(kv, pigeonNfts) {
+  const numbers = await Promise.all(pigeonNfts.map(async (nft) => {
+    const cacheKey = `pigeon:${nft.NFTokenID}`;
+    const cached = await kv.get(cacheKey);
+    if (cached !== null) return parseInt(cached, 10);
+    const num = await fetchPigeonNumber(nft);
+    const stored = num === null ? PIGEON_LOW_EDITION_MAX + 1 : num;
+    await kv.put(cacheKey, String(stored));
+    return stored;
+  }));
+
+  const best = Math.min(...numbers);
+  return best <= PIGEON_LOW_EDITION_MAX ? PIGEON_WORD_LIMIT_LOW_EDITION : PIGEON_WORD_LIMIT_HIGH_EDITION;
 }

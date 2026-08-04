@@ -1,6 +1,6 @@
 import {
   COOKIE_NAME, getCookie, verifyToken,
-  fetchAllAccountNfts, findPigeon
+  fetchAllAccountNfts, findPigeon, findAllPigeons, getBestPigeonWordLimit
 } from './_shared.js';
 
 const BOARD_KEY = 'board_messages';
@@ -15,7 +15,8 @@ function escapeHtml(str) {
 
 function renderMessageRow(msg, canDecode) {
   const binary = escapeHtml(textToBinary(msg.text));
-  const signer = escapeHtml(msg.acct ? msg.acct.slice(0, 6) + '...' + msg.acct.slice(-4) : 'UNKN0WN');
+  const wallet = escapeHtml(msg.acct ? msg.acct.slice(0, 6) + '...' + msg.acct.slice(-4) : 'UNKN0WN');
+  const signer = msg.name ? `${escapeHtml(msg.name)} · ${wallet}` : wallet;
   return `
     <div class="msg-row">
       <div class="msg-binary">${binary}</div>
@@ -24,16 +25,19 @@ function renderMessageRow(msg, canDecode) {
     </div>`;
 }
 
-function renderPage({ messages, isPigeon, hasSession }) {
+function renderPage({ messages, isPigeon, hasSession, wordLimit }) {
   const messageRows = messages.length
     ? messages.map(m => renderMessageRow(m, isPigeon)).join('')
     : `<div class="empty">N0 MESSAGES YET.</div>`;
 
   const writeSection = isPigeon ? `
     <div class="write-box">
-      <div class="write-label">WR!TE A MESSAGE (P!GE0N S!GNATURE REQU!RED)</div>
-      <textarea id="msgInput" maxlength="240" placeholder="Type in English — it gets signed in binary."></textarea>
+      <div class="write-label">WR!TE A MESSAGE (P!GE0N S!GNATURE REQU!RED :: MAX ${wordLimit} W0RDS)</div>
+      <div class="sig-label">S!GNATURE ¿ (OPT!ONAL, max 15)</div>
+      <input id="nameInput" maxlength="15" placeholder="..." />
+      <textarea id="msgInput" maxlength="1500" placeholder="Type, (01010100 01111001 01110000 01100101)"></textarea>
       <div class="binary-preview" id="binaryPreview"></div>
+      <div class="word-count" id="wordCount"></div>
       <button class="post-btn" id="postBtn">S!GN & P0ST</button>
       <div class="post-status" id="postStatus"></div>
     </div>
@@ -98,7 +102,7 @@ function renderPage({ messages, isPigeon, hasSession }) {
     margin-top:0.6rem;
     font-size:10px;
     letter-spacing:0.05em;
-    color:rgba(232,232,232,0.4);
+    color:rgba(255,0,60,0.7);
   }
   .empty{
     text-align:center;
@@ -117,7 +121,7 @@ function renderPage({ messages, isPigeon, hasSession }) {
     color:#39ff14;
     margin-bottom:0.75rem;
   }
-  textarea{
+  textarea, input#nameInput{
     width:100%;
     background:#000;
     border:1px solid rgba(57,255,20,0.3);
@@ -125,9 +129,30 @@ function renderPage({ messages, isPigeon, hasSession }) {
     font-family:inherit;
     font-size:13px;
     padding:0.75em;
+  }
+  textarea{
     resize:vertical;
     min-height:4em;
+    margin-top:0.6rem;
   }
+  .sig-label{
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:#ff003c;
+    text-shadow:0 0 6px rgba(255,0,60,0.4);
+    margin-bottom:0.5rem;
+  }
+  input#nameInput{
+    border-color:rgba(255,0,60,0.4);
+    color:#ff6b8a;
+  }
+  .word-count{
+    margin-top:0.4rem;
+    font-size:10px;
+    letter-spacing:0.05em;
+    color:rgba(232,232,232,0.4);
+  }
+  .word-count.over{ color:#ff003c; }
   .binary-preview{
     margin-top:0.6rem;
     font-size:10px;
@@ -168,7 +193,7 @@ function renderPage({ messages, isPigeon, hasSession }) {
 <body>
   <div class="page">
     <div class="eyebrow">🕊 THE MESSAGE B0ARD</div>
-    <h1>SIGNAL FEED</h1>
+    <h1>S!GNAL FEED</h1>
     ${messageRows}
     ${writeSection}
   </div>
@@ -178,15 +203,30 @@ function renderPage({ messages, isPigeon, hasSession }) {
   const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
 
   ${isPigeon ? `
+  const WORD_LIMIT = ${wordLimit};
   const input = document.getElementById('msgInput');
   const preview = document.getElementById('binaryPreview');
+  const wordCountEl = document.getElementById('wordCount');
+  const postBtn = document.getElementById('postBtn');
+
+  function countWords(str){
+    const trimmed = str.trim();
+    return trimmed ? trimmed.split(/\\s+/).length : 0;
+  }
+
   input.addEventListener('input', () => {
     preview.textContent = input.value.split('').map(c => c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ');
+    const words = countWords(input.value);
+    const over = words > WORD_LIMIT;
+    wordCountEl.textContent = words + ' / ' + WORD_LIMIT + ' W0RDS';
+    wordCountEl.className = 'word-count' + (over ? ' over' : '');
+    postBtn.disabled = over || words === 0;
   });
 
   document.getElementById('postBtn').addEventListener('click', async () => {
     const text = input.value.trim();
-    if (!text) return;
+    if (!text || countWords(text) > WORD_LIMIT) return;
+    const name = document.getElementById('nameInput').value.trim().slice(0, 15);
     const btn = document.getElementById('postBtn');
     const status = document.getElementById('postStatus');
     btn.disabled = true;
@@ -195,7 +235,7 @@ function renderPage({ messages, isPigeon, hasSession }) {
       const res = await fetch('/api/board', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
+        body: JSON.stringify({ text, name })
       });
       const data = await res.json();
       if (data.ok) {
@@ -267,6 +307,7 @@ export async function onRequestGet(context) {
   const token = getCookie(request, COOKIE_NAME);
   let isPigeon = false;
   let hasSession = false;
+  let wordLimit = 0;
 
   if (token) {
     const payload = await verifyToken(token, env.Σκύλλα);
@@ -274,11 +315,14 @@ export async function onRequestGet(context) {
       hasSession = true;
       const nfts = await fetchAllAccountNfts(payload.acct);
       isPigeon = !!findPigeon(nfts);
+      if (isPigeon) {
+        wordLimit = await getBestPigeonWordLimit(env.coin, findAllPigeons(nfts));
+      }
     }
   }
 
   return new Response(
-    renderPage({ messages: messages.slice(-50).reverse(), isPigeon, hasSession }),
+    renderPage({ messages: messages.slice(-50).reverse(), isPigeon, hasSession, wordLimit }),
     { headers: { 'Content-Type': 'text/html' } }
   );
 }

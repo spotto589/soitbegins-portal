@@ -1,11 +1,17 @@
 import {
   COOKIE_NAME, getCookie, verifyToken,
-  fetchAllAccountNfts, findPigeon
+  fetchAllAccountNfts, findAllPigeons, getBestPigeonWordLimit
 } from '../_shared.js';
 
 const BOARD_KEY = 'board_messages';
 const MAX_STORED = 200;
-const MAX_LEN = 240;
+const MAX_LEN = 1500;
+const MAX_NAME_LEN = 15;
+
+function countWords(str) {
+  const trimmed = str.trim();
+  return trimmed ? trimmed.split(/\s+/).length : 0;
+}
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -25,7 +31,8 @@ export async function onRequestPost(context) {
   }
 
   const nfts = await fetchAllAccountNfts(payload.acct);
-  if (!findPigeon(nfts)) {
+  const pigeons = findAllPigeons(nfts);
+  if (!pigeons.length) {
     return new Response(JSON.stringify({ error: 'no_pigeon' }), { status: 403 });
   }
 
@@ -41,9 +48,16 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'empty_message' }), { status: 400 });
   }
 
+  const wordLimit = await getBestPigeonWordLimit(env.coin, pigeons);
+  if (countWords(text) > wordLimit) {
+    return new Response(JSON.stringify({ error: 'over_word_limit', wordLimit }), { status: 400 });
+  }
+
+  const name = (body && body.name || '').trim().slice(0, MAX_NAME_LEN);
+
   const raw = await env.coin.get(BOARD_KEY);
   const messages = raw ? JSON.parse(raw) : [];
-  messages.push({ text, acct: payload.acct, ts: Math.floor(Date.now() / 1000) });
+  messages.push({ text, name, acct: payload.acct, ts: Math.floor(Date.now() / 1000) });
   const trimmed = messages.slice(-MAX_STORED);
   await env.coin.put(BOARD_KEY, JSON.stringify(trimmed));
 
