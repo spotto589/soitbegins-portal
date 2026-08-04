@@ -28,14 +28,17 @@ function renderMessageRow(msg, canDecode) {
     ? `<img class="msg-avatar" src="${escapeHtml(msg.image)}" alt="" loading="lazy">`
     : `<div class="msg-avatar msg-avatar-blank"></div>`;
   const tierClass = getPigeonCountTier(msg.pigeonCount || 1);
+  const plain = canDecode
+    ? `<div class="msg-plain ${tierClass}">${escapeHtml(msg.text)}</div>`
+    : `<div class="msg-plain msg-locked">[ ENCRYPTED ]</div>`;
   return `
     <div class="msg-row">
-      ${avatar}
-      <div class="msg-body">
-        <div class="msg-binary">${binary}</div>
-        ${canDecode ? `<div class="msg-plain ${tierClass}">${escapeHtml(msg.text)}</div>` : ''}
-        <div class="msg-meta">S!GNED :: ${signer}</div>
+      <div class="msg-top">
+        ${avatar}
+        <div class="msg-plain-wrap">${plain}</div>
       </div>
+      <div class="msg-binary">${binary}</div>
+      <div class="msg-meta">S!GNED :: ${signer}</div>
     </div>`;
 }
 
@@ -66,19 +69,19 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     <div class="write-box" id="pigeonWalletBoard">
       <div class="write-label">WR!TE A MESSAGE (P!GE0N S!GNATURE REQU!RED :: MAX ${wordLimit} W0RDS)</div>
       ${thumbPicker}
-      <div class="sig-label">S!GNATURE ¿ (OPT!ONAL, max 15)</div>
-      <input id="nameInput" maxlength="15" placeholder="..." />
       <textarea id="msgInput" maxlength="1500" placeholder="Type, (01010100 01111001 01110000 01100101)"></textarea>
       <div class="word-count" id="wordCount"></div>
+      <input id="nameInput" maxlength="15" placeholder="..." />
+      <div class="sig-label-below">S!GNATURE ¿ (OPT!ONAL, max 15)</div>
       <div class="preview-label">PREV!EW</div>
       <div class="msg-row">
-        <img class="msg-avatar" id="previewAvatarImg" src="${initialAvatarSrc}" alt="" style="${hasThumbs ? '' : 'display:none;'}">
-        <div class="msg-avatar msg-avatar-blank" id="previewAvatarBlank" style="${hasThumbs ? 'display:none;' : ''}"></div>
-        <div class="msg-body">
-          <div class="msg-binary" id="binaryPreview"></div>
-          <div class="msg-plain ${previewTierClass}" id="plainPreview"></div>
-          <div class="msg-meta">S!GNED :: <span id="previewName"></span>${acctDisplay || 'Y0U'}</div>
+        <div class="msg-top">
+          <img class="msg-avatar" id="previewAvatarImg" src="${initialAvatarSrc}" alt="" style="${hasThumbs ? '' : 'display:none;'}">
+          <div class="msg-avatar msg-avatar-blank" id="previewAvatarBlank" style="${hasThumbs ? 'display:none;' : ''}"></div>
+          <div class="msg-plain-wrap"><div class="msg-plain ${previewTierClass}" id="plainPreview"></div></div>
         </div>
+        <div class="msg-binary" id="binaryPreview"></div>
+        <div class="msg-meta">S!GNED :: <span id="previewName"></span>${acctDisplay || 'Y0U'}</div>
       </div>
       <button class="post-btn" id="postBtn">S!GN & P0ST</button>
       <div class="post-status" id="postStatus"></div>
@@ -107,35 +110,47 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   .page{ max-width:640px; width:100%; }
   h1{
-    font-size:clamp(20px,3.6vw,30px);
-    letter-spacing:0.08em;
+    font-size:clamp(15px,4.6vw,30px);
+    letter-spacing:0.06em;
     color:#fff;
     text-shadow:0 0 10px rgba(57,255,20,0.25);
     margin-bottom:2rem;
     text-align:center;
+    word-break:break-word;
+    overflow-wrap:anywhere;
   }
   .msg-row{
-    display:flex;
-    align-items:stretch;
-    gap:0;
     border:1px solid rgba(57,255,20,0.25);
     margin-bottom:1rem;
     overflow:hidden;
   }
-  .msg-body{
+  .msg-top{
+    display:flex;
+    align-items:stretch;
+    min-height:84px;
+  }
+  .msg-plain-wrap{
     flex:1;
     min-width:0;
-    padding:1rem 1.25rem;
+    display:flex;
+    align-items:center;
+    padding:0.85rem 1.1rem;
   }
   .msg-binary{
+    padding:0.8rem 1.1rem;
+    border-top:1px solid rgba(57,255,20,0.15);
     font-size:11px;
     line-height:1.7;
     color:rgba(57,255,20,0.6);
     word-break:break-all;
   }
   .msg-plain{
-    margin-top:0.6rem;
     font-size:14px;
+  }
+  .msg-plain.msg-locked{
+    color:rgba(232,232,232,0.3);
+    font-style:italic;
+    font-size:12px;
   }
   .msg-plain.tier-green{
     color:#39ff14;
@@ -159,15 +174,15 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     50%{ text-shadow:0 0 18px rgba(255,215,0,1), 0 0 36px rgba(255,215,0,0.85); }
   }
   .msg-meta{
-    margin-top:0.6rem;
+    padding:0.6rem 1.1rem 0.85rem;
+    border-top:1px solid rgba(57,255,20,0.1);
     font-size:10px;
     letter-spacing:0.05em;
     color:rgba(255,0,60,0.7);
   }
   .msg-avatar{
-    flex:0 0 38%;
-    width:38%;
-    max-width:220px;
+    flex:0 0 84px;
+    width:84px;
     object-fit:cover;
     border:none;
     border-right:2px solid rgba(255,0,60,0.5);
@@ -246,7 +261,15 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     text-shadow:0 0 6px rgba(255,0,60,0.4);
     margin-bottom:0.5rem;
   }
+  .sig-label-below{
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:#ff003c;
+    text-shadow:0 0 6px rgba(255,0,60,0.4);
+    margin-top:0.5rem;
+  }
   input#nameInput{
+    margin-top:0.75rem;
     border-color:rgba(255,0,60,0.4);
     color:#ff6b8a;
   }
