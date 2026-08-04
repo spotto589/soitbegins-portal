@@ -67,7 +67,7 @@ export async function onRequestPost(context) {
 
   const raw = await env.coin.get(BOARD_KEY);
   const messages = raw ? JSON.parse(raw) : [];
-  messages.push({ text, name, image, acct: payload.acct, ts: Math.floor(Date.now() / 1000) });
+  messages.push({ text, name, image, acct: payload.acct, pigeonCount: pigeons.length, ts: Math.floor(Date.now() / 1000) });
   const trimmed = messages.slice(-MAX_STORED);
   await env.coin.put(BOARD_KEY, JSON.stringify(trimmed));
 
