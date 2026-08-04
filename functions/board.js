@@ -37,10 +37,9 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
     : `<div class="empty">N0 MESSAGES YET.</div>`;
 
   const thumbPicker = (isPigeon && pigeonThumbs && pigeonThumbs.length) ? `
-      <div class="sig-label">ATTACH A P!GE0N (0PT!0NAL)</div>
+      <div class="sig-label">ATTACH A P!GE0N</div>
       <div class="pigeon-picker" id="pigeonPicker">
-        <div class="pigeon-thumb" data-nft="">N0NE</div>
-        ${pigeonThumbs.map(p => `<img class="pigeon-thumb" src="${escapeHtml(p.image)}" data-nft="${escapeHtml(p.nftId)}" alt="">`).join('')}
+        ${pigeonThumbs.map((p, i) => `<img class="pigeon-thumb${i === 0 ? ' selected' : ''}" src="${escapeHtml(p.image)}" data-nft="${escapeHtml(p.nftId)}" alt="">`).join('')}
       </div>
   ` : '';
 
@@ -165,15 +164,6 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
     border-color:#39ff14;
     opacity:1;
   }
-  div.pigeon-thumb{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:11px;
-    color:rgba(232,232,232,0.5);
-    text-align:center;
-    background:#000;
-  }
   .empty{
     text-align:center;
     color:rgba(232,232,232,0.4);
@@ -282,6 +272,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
 
   const picker = document.getElementById('pigeonPicker');
   if (picker) {
+    const preselected = picker.querySelector('.pigeon-thumb.selected');
+    if (preselected) selectedNftId = preselected.dataset.nft || '';
     picker.querySelectorAll('.pigeon-thumb').forEach(el => {
       el.addEventListener('click', () => {
         picker.querySelectorAll('.pigeon-thumb').forEach(x => x.classList.remove('selected'));
