@@ -1,11 +1,12 @@
 import { COOKIE_NAME, getCookie, verifyToken } from './_shared.js';
 
-const VAULT_HTML = `<!DOCTYPE html>
+function renderVaultHtml() {
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>K!NG'S N0TES</title>
+<title>N0TES</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -117,42 +118,56 @@ const VAULT_HTML = `<!DOCTYPE html>
     letter-spacing:0.15em;
     color:rgba(232,232,232,0.6);
   }
+
+  .recovery-log{
+    border:1px solid rgba(57,255,20,0.25);
+    padding:1rem 1.25rem;
+    margin-bottom:2rem;
+    font-size:12px;
+    line-height:1.9;
+    color:rgba(57,255,20,0.85);
+  }
+  .recovery-log .dim{ color:rgba(232,232,232,0.45); }
 </style>
 </head>
 <body>
   <div class="page">
+    <div class="recovery-log">
+      <span class="dim">RECOVERED ARCHIVE</span><br>
+      KING_LOG_${String(Math.floor(Math.random() * 200)).padStart(3, '0')}<br>
+      Recovery Integrity: ${(85 + Math.random() * 14).toFixed(1)}%<br>
+      <span class="dim">Recovered after STATIC BREACH</span>
+    </div>
     <div class="eyebrow">CLASSIFIED :: RECOVERED FROM THE BREACH</div>
-    <h1>THE K!NG'S N0TES</h1>
-    <p class="intro">These are not written for another world. They are only what is true in mine.</p>
+    <h1>N0TES</h1>
 
-    <div class="section-label">THE DECREES</div>
+    <div class="section-label">T0 D0 L!ST</div>
     <ul class="decrees">
       <li>
         <h2>GL!TCH</h2>
-        <p>The keys were forged before the kingdom had walls. Those who carry one were listening before there was anything to hear.</p>
+        <p>Burn them, burn them all!</p>
       </li>
       <li>
         <h2>$CRWN</h2>
-        <p>The coin of the realm. Every kingdom needs one to trade in — mine is no different. <span class="placeholder">[$CRWN details go here]</span></p>
+        <p class="placeholder">[content goes here]</p>
         <a class="crwn-link" href="/crwn">SPEAK TO THE K!NG →</a>
       </li>
       <li>
         <h2>$HONEY</h2>
-        <p>Nothing grows here without it. The granaries run on $HONEY, and so does everyone in them. <span class="placeholder">[$HONEY details go here]</span></p>
+        <p class="placeholder">[content goes here]</p>
       </li>
     </ul>
 
     <div class="section-label">N0TES T0 H!MSELF</div>
     <div class="private-notes">
-      <p>Some nights I forget which parts of this are real and which parts I invented to make the real parts easier to build.</p>
-      <p>I keep telling them the walls are close to finished. They are not close. I don't know anymore if I'm lying to them or to myself.</p>
-      <p>The ones who found the gate already did the hard part. I just have to be worth finding.</p>
+      <p class="placeholder">[content goes here]</p>
     </div>
 
     <div class="sign-off">— THE K!NG</div>
   </div>
 </body>
 </html>`;
+}
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -171,5 +186,5 @@ export async function onRequestGet(context) {
     return Response.redirect(new URL('/', request.url).toString(), 302);
   }
 
-  return new Response(VAULT_HTML, { headers: { 'Content-Type': 'text/html' } });
+  return new Response(renderVaultHtml(), { headers: { 'Content-Type': 'text/html' } });
 }

@@ -17,10 +17,15 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_session' }), { status: 401 });
   }
 
-  // No persistent store wired up yet — this just acknowledges the request.
-  // Claims aren't recorded anywhere durable until a KV namespace (or similar)
-  // is bound and written to here.
-  console.log('CRWN claim requested by', payload.acct, 'at', new Date().toISOString());
+  let kind = 'unknown';
+  try {
+    const body = await request.json();
+    if (body && (body.kind === 'honey' || body.kind === 'crwn')) kind = body.kind;
+  } catch (e) {}
+
+  // Claim requests are only logged, not paid out — no persistent claims
+  // ledger is wired up yet beyond the KV holding-timer.
+  console.log(kind.toUpperCase(), 'claim requested by', payload.acct, 'at', new Date().toISOString());
 
   return new Response(JSON.stringify({ ok: true }), {
     headers: { 'Content-Type': 'application/json' }

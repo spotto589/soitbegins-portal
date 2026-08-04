@@ -403,7 +403,7 @@
     <h1 class="msg">STΔTUS: <span class="glitch-word" data-text="GL!TCH!NG">GL!TCH!NG</span></h1>
     <div class="sub">🚨 S!RΞN_0NLINE 🚨 :: SYS//UNSTΔBLΞ<span class="cursor"></span></div>
     <div class="illusion-flag">!LLUS!0N_LΔYER = ΞNΔBLΞD :: S!GNΔL_ASSESSMΞNT = 0FFL!NE</div>
-    <button class="enter-btn" id="enterBtn">PRESENT <span style="text-transform:none;">Σκύλλα</span> CARD TO BEGIN ASSESSMENT...</button>
+    <button class="enter-btn" id="enterBtn">ENTER KEY TO BEGIN ASSESSMENT</button>
     <div class="access-status" id="accessStatus"></div>
   </div>
 
@@ -595,6 +595,7 @@
         try{
           const state = await xummAuth.state();
           const jwt = state && state.jwt;
+          const account = state && state.me && state.me.account;
           if(!jwt){
             setStatus('ERR://NO_WALLET_DATA', 'denied');
             enterBtn.disabled = false;
@@ -606,8 +607,8 @@
             setStatus('ΔCCESS GRΔNTED :: Σκύλλα CARD VERIFIED — ENTERING...', 'granted');
             setTimeout(()=>{ window.location.href = '/vault'; }, 1200);
           } else {
-            setStatus('ΔCCESS DENIED :: NO Σκύλλα CARD DETECTED ON THIS WALLET', 'denied');
-            terminateConnection();
+            setStatus('N0 S!GNATURES F0UND — RED!RECT!NG...', 'checking');
+            setTimeout(()=>{ window.location.href = '/begin?addr=' + encodeURIComponent(account || ''); }, 1000);
           }
         } catch(e){
           console.error(e);
