@@ -108,7 +108,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     justify-content:center;
     padding:8vh 6vw 10vh;
   }
-  .page{ max-width:640px; width:100%; }
+  .page{ max-width:760px; width:100%; }
   h1{
     font-size:clamp(15px,4.6vw,30px);
     letter-spacing:0.06em;
