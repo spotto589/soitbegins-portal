@@ -6,6 +6,8 @@ export const SKYLLA_ISSUER = 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92';
 export const SKYLLA_TAXON = 777;
 export const KING_ISSUER = 'rKingAa11yp4eCuxVraesW2UAvz5THWNCy';
 export const KING_TAXON = 123;
+export const HONEYPOT_ISSUER = 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92';
+export const HONEYPOT_TAXON = 123589321;
 
 export function getCookie(request, name) {
   const cookie = request.headers.get('Cookie') || '';
@@ -83,4 +85,8 @@ export function hasAccessKey(nfts) {
 
 export function findKingNft(nfts) {
   return nfts.find(n => n.Issuer === KING_ISSUER && n.NFTokenTaxon === KING_TAXON) || null;
+}
+
+export function findHoneypot(nfts) {
+  return nfts.find(n => n.Issuer === HONEYPOT_ISSUER && n.NFTokenTaxon === HONEYPOT_TAXON) || null;
 }

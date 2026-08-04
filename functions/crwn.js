@@ -1,18 +1,18 @@
 import {
   COOKIE_NAME, getCookie, verifyToken,
-  fetchAllAccountNfts, hasAccessKey, findKingNft
+  fetchAllAccountNfts, hasAccessKey, findKingNft, findHoneypot
 } from './_shared.js';
 
 const CRWN_PER_DAY = 1; // placeholder rate — adjust to the real $CRWN emission rate
+const HONEY_PER_DAY = 2; // placeholder rate — adjust to the real $HONEY emission rate
 
 // XRPL has no fast way to look up "when did this wallet acquire this NFT" —
 // the only method is scanning tx history, which is too slow for a live page
 // (tested: 35s+ and still inconclusive on an active wallet). Instead we track
-// our own "first seen holding it" timestamp in KV, keyed per wallet+NFT, and
-// count from there. Returning visitors keep accumulating; the clock doesn't
-// retroactively credit time held before their first visit here.
-async function getOrStartTimer(kv, account, nftokenId) {
-  const key = `${account}:${nftokenId}`;
+// our own "first seen" timestamps in KV and count from there. Returning
+// visitors keep accumulating; the clock doesn't retroactively credit time
+// held before their first visit here.
+async function getOrStartTimer(kv, key) {
   let firstSeen = await kv.get(key);
   if (!firstSeen) {
     firstSeen = String(Math.floor(Date.now() / 1000));
@@ -21,40 +21,87 @@ async function getOrStartTimer(kv, account, nftokenId) {
   return parseInt(firstSeen, 10);
 }
 
-function renderPage({ granted, daysHeld, claimable, denyReason }) {
-  const body = granted
-    ? `
-    <div class="eyebrow">THR0NE R00M</div>
-    <h1>SPEAK TO THE K!NG</h1>
-    <p class="intro">Time is the only tribute I actually count.</p>
+function statBlock(label, value) {
+  return `
+      <div class="stat">
+        <div class="stat-label">${label}</div>
+        <div class="stat-value">${value}</div>
+      </div>`;
+}
 
+function renderPage({ state, daysHeld, crwnClaimable, honeyClaimable, denyReason }) {
+  let body;
+
+  if (state === 'full') {
+    body = `
+    <div class="eyebrow">THR0NE R00M</div>
+    <h1>TRUTH VER!F!ED</h1>
+    <p class="intro">King signature found. Honeypot signature found.</p>
+    <div class="stat-row">${statBlock('VER!F!ED F0R', daysHeld.toFixed(2) + ' DAYS')}</div>
     <div class="stat-row">
-      <div class="stat">
-        <div class="stat-label">TRACKED S!NCE F!RST AUD!ENCE</div>
-        <div class="stat-value">${daysHeld.toFixed(2)} DAYS</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">$CRWN CLA!MABLE</div>
-        <div class="stat-value">${claimable.toFixed(2)}</div>
-      </div>
+      ${statBlock('$HONEY CLA!MABLE', honeyClaimable.toFixed(2))}
+      ${statBlock('$CRWN CLA!MABLE', crwnClaimable.toFixed(2))}
     </div>
-
-    <button class="claim-btn" id="claimBtn">CLA!M $CRWN</button>
+    <button class="claim-btn" id="claimHoney">CLA!M $H0NEY</button>
+    <button class="claim-btn" id="claimCrwn">CLA!M $CRWN</button>
     <div class="claim-status" id="claimStatus"></div>
-    <p class="note">Rate: ${CRWN_PER_DAY} $CRWN / day held. Claims are logged, not yet paid out automatically.</p>
-    `
-    : `
-    <div class="eyebrow">THR0NE R00M</div>
-    <h1>N0 AUD!ENCE GRANTED</h1>
-    <p class="intro">${denyReason}</p>
+    <p class="note">Rates: ${HONEY_PER_DAY} $HONEY/day, ${CRWN_PER_DAY} $CRWN/day. Claims are logged, not yet paid out automatically.</p>
     `;
+  } else if (state === 'partial') {
+    body = `
+    <div class="eyebrow">THR0NE R00M</div>
+    <h1>H0NEYP0T DETECTED</h1>
+    <p class="intro">Honeypot signature found. No King signature — $CRWN stays locked until you carry both.</p>
+    <div class="stat-row">${statBlock('H0LD!NG F0R', daysHeld.toFixed(2) + ' DAYS')}</div>
+    <div class="stat-row">
+      ${statBlock('$HONEY CLA!MABLE', honeyClaimable.toFixed(2))}
+      ${statBlock('$CRWN', 'L0CKED')}
+    </div>
+    <button class="claim-btn" id="claimHoney">CLA!M $H0NEY</button>
+    <div class="claim-status" id="claimStatus"></div>
+    <p class="note">Rate: ${HONEY_PER_DAY} $HONEY/day held. Acquire a King NFT to unlock $CRWN too.</p>
+    `;
+  } else {
+    body = `
+    <div class="eyebrow">THR0NE R00M</div>
+    <h1>ACCESS DEN!ED</h1>
+    <p class="intro">Reason: ${denyReason}</p>
+    `;
+  }
+
+  const claimScript = (state === 'full' || state === 'partial') ? `<script>
+  const status = document.getElementById('claimStatus');
+  async function claim(kind, btn){
+    btn.disabled = true;
+    status.textContent = 'SUBMITTING CLA!M...';
+    try {
+      const res = await fetch('/api/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        status.textContent = kind.toUpperCase() + ' CLA!M L0GGED :: THE K!NG HAS NOTED YOUR PRESENCE';
+      } else {
+        status.textContent = 'ERR://CLA!M REJECTED';
+        btn.disabled = false;
+      }
+    } catch (e) {
+      status.textContent = 'ERR://SIGNAL_LOST';
+      btn.disabled = false;
+    }
+  }
+  document.getElementById('claimHoney').addEventListener('click', (e) => claim('honey', e.target));
+  ${state === 'full' ? "document.getElementById('claimCrwn').addEventListener('click', (e) => claim('crwn', e.target));" : ''}
+</script>` : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SPEAK TO THE K!NG</title>
+<title>${state === 'denied' ? 'ACCESS DEN!ED' : (state === 'full' ? 'TRUTH VER!F!ED' : 'H0NEYP0T DETECTED')}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -95,7 +142,7 @@ function renderPage({ granted, daysHeld, claimable, denyReason }) {
     display:flex;
     gap:1.5rem;
     justify-content:center;
-    margin-bottom:2.5rem;
+    margin-bottom:1.5rem;
   }
   .stat{
     border:1px solid rgba(57,255,20,0.3);
@@ -118,12 +165,13 @@ function renderPage({ granted, daysHeld, claimable, denyReason }) {
     border:1px solid rgba(57,255,20,0.6);
     color:#39ff14;
     font-family:inherit;
-    font-size:14px;
-    letter-spacing:0.15em;
-    padding:0.9em 1.8em;
+    font-size:13px;
+    letter-spacing:0.12em;
+    padding:0.8em 1.4em;
     cursor:pointer;
     text-transform:uppercase;
     text-shadow:0 0 6px rgba(57,255,20,0.6);
+    margin:0.5rem 0.4rem 0;
   }
   .claim-btn:hover{ background:rgba(57,255,20,0.12); }
   .claim-btn:disabled{ opacity:0.5; cursor:default; }
@@ -145,27 +193,7 @@ function renderPage({ granted, daysHeld, claimable, denyReason }) {
   <div class="page">
     ${body}
   </div>
-${granted ? `<script>
-  const btn = document.getElementById('claimBtn');
-  const status = document.getElementById('claimStatus');
-  btn.addEventListener('click', async () => {
-    btn.disabled = true;
-    status.textContent = 'SUBMITTING CLA!M...';
-    try {
-      const res = await fetch('/api/claim', { method: 'POST' });
-      const data = await res.json();
-      if (data.ok) {
-        status.textContent = 'CLA!M L0GGED :: THE K!NG HAS NOTED YOUR PRESENCE';
-      } else {
-        status.textContent = 'ERR://CLA!M REJECTED';
-        btn.disabled = false;
-      }
-    } catch (e) {
-      status.textContent = 'ERR://SIGNAL_LOST';
-      btn.disabled = false;
-    }
-  });
-</script>` : ''}
+${claimScript}
 </body>
 </html>`;
 }
@@ -193,19 +221,32 @@ export async function onRequestGet(context) {
   }
 
   const kingNft = findKingNft(nfts);
-  if (!kingNft) {
+  const honeypot = findHoneypot(nfts);
+
+  if (!honeypot) {
     return new Response(
-      renderPage({ granted: false, denyReason: 'N0 K!NG NFT DETECTED ON THIS WALLET' }),
+      renderPage({ state: 'denied', denyReason: 'R0YAL S!GNATURE M!SS!NG' }),
       { headers: { 'Content-Type': 'text/html' } }
     );
   }
 
-  const firstSeen = await getOrStartTimer(env.coin, payload.acct, kingNft.NFTokenID);
-  const daysHeld = Math.max(0, (Date.now() / 1000 - firstSeen) / 86400);
-  const claimable = daysHeld * CRWN_PER_DAY;
+  const honeyFirstSeen = await getOrStartTimer(env.coin, `${payload.acct}:honeypot`);
+  const honeyDays = Math.max(0, (Date.now() / 1000 - honeyFirstSeen) / 86400);
+  const honeyClaimable = honeyDays * HONEY_PER_DAY;
+
+  if (!kingNft) {
+    return new Response(
+      renderPage({ state: 'partial', daysHeld: honeyDays, honeyClaimable }),
+      { headers: { 'Content-Type': 'text/html' } }
+    );
+  }
+
+  const verifiedFirstSeen = await getOrStartTimer(env.coin, `${payload.acct}:verified`);
+  const daysHeld = Math.max(0, (Date.now() / 1000 - verifiedFirstSeen) / 86400);
+  const crwnClaimable = daysHeld * CRWN_PER_DAY;
 
   return new Response(
-    renderPage({ granted: true, daysHeld, claimable }),
+    renderPage({ state: 'full', daysHeld, crwnClaimable, honeyClaimable }),
     { headers: { 'Content-Type': 'text/html' } }
   );
 }
