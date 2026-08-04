@@ -8,6 +8,8 @@ export const KING_ISSUER = 'rKingAa11yp4eCuxVraesW2UAvz5THWNCy';
 export const KING_TAXON = 123;
 export const HONEYPOT_ISSUER = 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92';
 export const HONEYPOT_TAXON = 123589321;
+export const PIGEON_ISSUER = 'rpigeoNwEPTN5JGWGQ8MCoa7SpQpz1537v';
+export const PIGEON_TAXON = 1;
 
 export function getCookie(request, name) {
   const cookie = request.headers.get('Cookie') || '';
@@ -93,6 +95,10 @@ export function findAllKingNfts(nfts) {
 
 export function findHoneypot(nfts) {
   return nfts.find(n => n.Issuer === HONEYPOT_ISSUER && n.NFTokenTaxon === HONEYPOT_TAXON) || null;
+}
+
+export function findPigeon(nfts) {
+  return nfts.find(n => n.Issuer === PIGEON_ISSUER && n.NFTokenTaxon === PIGEON_TAXON) || null;
 }
 
 // Crown tiers, rarest first. "match" must equal the NFT metadata's
