@@ -95,17 +95,19 @@ export function findHoneypot(nfts) {
   return nfts.find(n => n.Issuer === HONEYPOT_ISSUER && n.NFTokenTaxon === HONEYPOT_TAXON) || null;
 }
 
-// Crown tiers, rarest first. "value" must match the NFT metadata's
-// Headwear trait value exactly. Multipliers are placeholders — adjust
-// to the real economy numbers.
+// Crown tiers, rarest first. "match" must equal the NFT metadata's
+// Headwear trait value exactly (confirmed against real on-chain metadata —
+// don't change these without re-verifying). "display" is the friendlier
+// label shown in the UI. Multipliers are placeholders — adjust to the
+// real economy numbers.
 export const CROWN_TIERS = [
-  { value: '9-Spike Total-Reign', multiplier: 3 },
-  { value: 'Invisible crown', multiplier: 2.5 },
-  { value: '8-Spike Broad-Reign', multiplier: 2 },
-  { value: 'Crown of Thorns', multiplier: 1.75 },
-  { value: 'Jewelled Silver Crown', multiplier: 1.6 },
-  { value: '5-Spike Falling-Reign', multiplier: 1.5 },
-  { value: '5-Spike Broken-Reign', multiplier: 1.25 },
+  { match: '9-Spike Total-Reign', display: '9 Spike KING', multiplier: 3 },
+  { match: 'Invisible crown', display: 'Invisible KING', multiplier: 2.5 },
+  { match: '8-Spike Broad-Reign', display: '8 Spike KING', multiplier: 2 },
+  { match: 'Crown of Thorns', display: 'Thorn KING', multiplier: 1.75 },
+  { match: 'Jewelled Silver Crown', display: 'Jewelled Silver KING', multiplier: 1.6 },
+  { match: '5-Spike Falling-Reign', display: '5 Spike KING', multiplier: 1.5 },
+  { match: '5-Spike Broken-Reign', display: '5 Spike (Broke) KING', multiplier: 1.25 },
 ];
 export const NO_CROWN_MULTIPLIER = 1;
 
@@ -130,7 +132,7 @@ async function fetchCrownTierIndexForNft(nft) {
     const attrs = (meta && meta.attributes) || [];
     const headwear = attrs.find(a => a.trait_type === 'Headwear');
     if (!headwear) return -1;
-    const idx = CROWN_TIERS.findIndex(t => t.value === headwear.value);
+    const idx = CROWN_TIERS.findIndex(t => t.match === headwear.value);
     return idx; // -1 if no match
   } catch (e) {
     return -1;
@@ -152,7 +154,7 @@ export async function getBestCrownTier(kv, kingNfts) {
   }));
 
   const found = results.filter(idx => idx >= 0);
-  if (found.length === 0) return { name: null, multiplier: NO_CROWN_MULTIPLIER };
+  if (found.length === 0) return { name: null, multiplier: NO_CROWN_MULTIPLIER, index: -1 };
   const bestIdx = Math.min(...found); // lower index = rarer
-  return { name: CROWN_TIERS[bestIdx].value, multiplier: CROWN_TIERS[bestIdx].multiplier };
+  return { name: CROWN_TIERS[bestIdx].display, multiplier: CROWN_TIERS[bestIdx].multiplier, index: bestIdx };
 }

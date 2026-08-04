@@ -1,7 +1,7 @@
 import {
   COOKIE_NAME, getCookie, verifyToken,
   fetchAllAccountNfts, hasAccessKey, findKingNft, findAllKingNfts, findHoneypot,
-  getBestCrownTier
+  getBestCrownTier, CROWN_TIERS
 } from './_shared.js';
 
 const CRWN_PER_DAY = 1; // placeholder rate — adjust to the real $CRWN emission rate
@@ -32,22 +32,52 @@ function statBlock(label, value, sub) {
       </div>`;
 }
 
+function glitchify(text) {
+  return text.toUpperCase().replace(/I/g, '!').replace(/O/g, '0');
+}
+
+function renderCrownStatusList(crownTier) {
+  const rows = CROWN_TIERS.map((t, i) => ({
+    label: glitchify(t.display),
+    multiplier: t.multiplier,
+    achieved: crownTier.index === i
+  }));
+  rows.push({
+    label: 'K!NG',
+    multiplier: 1,
+    achieved: crownTier.index === -1
+  });
+
+  const items = rows.map(r => `
+      <div class="crown-row${r.achieved ? ' achieved' : ''}">
+        <span>${r.achieved ? '▸ ' : '&nbsp;&nbsp;'}${r.label}</span>
+        <span>×${r.multiplier}</span>
+      </div>`).join('');
+
+  return `
+    <div class="crown-status">
+      <div class="crown-status-label">CR0WN STATUS:</div>
+      ${items}
+    </div>`;
+}
+
 function renderPage({ state, daysHeld, crwnClaimable, honeyClaimable, denyReason, crownTier }) {
   let body;
   let claimHoney = false;
   let claimCrwn = false;
-  const crownLine = crownTier
-    ? (crownTier.name
-        ? `<div class="crown-line">CR0WN: ${crownTier.name} (×${crownTier.multiplier})</div>`
-        : `<div class="crown-line">CR0WN: N0NE DETECTED (×${crownTier.multiplier})</div>`)
-    : '';
+  const crownLine = crownTier ? renderCrownStatusList(crownTier) : '';
+  // Their "status" is their rarest crown, not just generic "King" — pick
+  // the specific tier they've earned, falling back to plain K!NG only if
+  // they hold no NFT with a recognized crown trait.
+  const kingStatus = crownTier && crownTier.name ? glitchify(crownTier.name) : 'K!NG';
 
   if (state === 'both') {
     claimHoney = true;
     claimCrwn = true;
     const crwnTotalMult = BOTH_MULTIPLIER * crownTier.multiplier;
     body = `
-    <div class="eyebrow">THR0NE R00M</div>
+    <div class="eyebrow">👑 THR0NE R00M</div>
+    <div class="status-line">STATUS: ${kingStatus}</div>
     <h1>Y0U ARE A K!NG, TAKE Y0UR SHARE</h1>
     <p class="intro">King signature found. Honeypot signature found. $CRWN earnings multiplied ×${BOTH_MULTIPLIER}.</p>
     ${crownLine}
@@ -64,7 +94,8 @@ function renderPage({ state, daysHeld, crwnClaimable, honeyClaimable, denyReason
   } else if (state === 'honeypotOnly') {
     claimHoney = true;
     body = `
-    <div class="eyebrow">THR0NE R00M</div>
+    <div class="eyebrow">🍯 FARMER'S MARKET</div>
+    <div class="status-line">STATUS: FARMER</div>
     <h1>CLA!M SHARE 0F H0NEY F0R PR0TECT!NG VESSEL/S F0R THE CR0WN</h1>
     <p class="intro">Honeypot signature found. No King signature — $CRWN stays locked until you carry both.</p>
     <div class="stat-row">${statBlock('H0LD!NG F0R', daysHeld.toFixed(2) + ' DAYS')}</div>
@@ -79,7 +110,8 @@ function renderPage({ state, daysHeld, crwnClaimable, honeyClaimable, denyReason
   } else if (state === 'kingOnly') {
     claimCrwn = true;
     body = `
-    <div class="eyebrow">THR0NE R00M</div>
+    <div class="eyebrow">👑 THR0NE R00M</div>
+    <div class="status-line">STATUS: ${kingStatus}</div>
     <h1>EARN C0!NS F0R THE CT0 (CR0WN TAKE 0VER)</h1>
     <p class="intro">King signature found. No Honeypot signature — $HONEY stays locked until you carry both.</p>
     ${crownLine}
@@ -177,11 +209,38 @@ function renderPage({ state, daysHeld, crwnClaimable, honeyClaimable, denyReason
     font-style:italic;
     margin-bottom:1.25rem;
   }
-  .crown-line{
+  .crown-status{
+    text-align:left;
+    max-width:320px;
+    margin:0 auto 2rem;
+    border:1px solid rgba(255,176,0,0.25);
+    padding:1rem 1.25rem;
+  }
+  .crown-status-label{
+    font-size:11px;
+    letter-spacing:0.15em;
+    color:rgba(255,176,0,0.7);
+    margin-bottom:0.6rem;
+  }
+  .crown-row{
+    display:flex;
+    justify-content:space-between;
     font-size:12px;
-    letter-spacing:0.1em;
-    color:rgba(255,176,0,0.85);
-    margin-bottom:2rem;
+    letter-spacing:0.03em;
+    color:rgba(232,232,232,0.4);
+    padding:0.15rem 0;
+  }
+  .crown-row.achieved{
+    color:#ffb000;
+    text-shadow:0 0 6px rgba(255,176,0,0.5);
+    font-weight:700;
+  }
+  .status-line{
+    font-size:13px;
+    letter-spacing:0.2em;
+    color:#ffb000;
+    text-shadow:0 0 6px rgba(255,176,0,0.5);
+    margin-bottom:1rem;
   }
   .stat-row{
     display:flex;
