@@ -176,36 +176,52 @@ export async function getBestCrownTier(kv, kingNfts) {
   return { name: CROWN_TIERS[bestIdx].display, multiplier: CROWN_TIERS[bestIdx].multiplier, index: bestIdx };
 }
 
-async function fetchPigeonNumber(nft) {
+async function fetchPigeonMeta(nft) {
   try {
     const uri = resolveIpfsUri(hexToUtf8(nft.URI));
     const res = await fetch(uri);
-    if (!res.ok) return null;
+    if (!res.ok) return { number: null, image: null };
     const meta = await res.json();
     const name = meta && meta.name;
-    if (!name) return null;
-    const match = String(name).match(/(\d+)/);
-    return match ? parseInt(match[1], 10) : null;
+    const match = name ? String(name).match(/(\d+)/) : null;
+    const number = match ? parseInt(match[1], 10) : null;
+    const image = meta && meta.image ? resolveIpfsUri(meta.image) : null;
+    return { number, image };
   } catch (e) {
-    return null;
+    return { number: null, image: null };
   }
 }
 
-// Checks every Pigeon NFT the wallet holds, caching each token's resolved
-// edition number in KV permanently, and returns the word limit for their
-// best (lowest-numbered / earliest) Pigeon. Unparseable/unknown numbers
-// are treated as high-edition (the restrictive limit) rather than trusted.
-export async function getBestPigeonWordLimit(kv, pigeonNfts) {
-  const numbers = await Promise.all(pigeonNfts.map(async (nft) => {
-    const cacheKey = `pigeon:${nft.NFTokenID}`;
+// Fetches (and permanently KV-caches) { number, image } for every Pigeon
+// NFT in the list, keyed by NFTokenID so repeat lookups are instant.
+async function getPigeonMetaList(kv, pigeonNfts) {
+  return Promise.all(pigeonNfts.map(async (nft) => {
+    const cacheKey = `pigeonmeta:${nft.NFTokenID}`;
     const cached = await kv.get(cacheKey);
-    if (cached !== null) return parseInt(cached, 10);
-    const num = await fetchPigeonNumber(nft);
-    const stored = num === null ? PIGEON_LOW_EDITION_MAX + 1 : num;
-    await kv.put(cacheKey, String(stored));
-    return stored;
+    if (cached !== null) {
+      const parsed = JSON.parse(cached);
+      return { nftId: nft.NFTokenID, ...parsed };
+    }
+    const info = await fetchPigeonMeta(nft);
+    await kv.put(cacheKey, JSON.stringify(info));
+    return { nftId: nft.NFTokenID, ...info };
   }));
+}
 
+// Checks every Pigeon NFT the wallet holds and returns the word limit for
+// their best (lowest-numbered / earliest) Pigeon. Unparseable/unknown
+// numbers are treated as high-edition (the restrictive limit) rather than
+// trusted.
+export async function getBestPigeonWordLimit(kv, pigeonNfts) {
+  const metas = await getPigeonMetaList(kv, pigeonNfts);
+  const numbers = metas.map(m => m.number === null ? PIGEON_LOW_EDITION_MAX + 1 : m.number);
   const best = Math.min(...numbers);
   return best <= PIGEON_LOW_EDITION_MAX ? PIGEON_WORD_LIMIT_LOW_EDITION : PIGEON_WORD_LIMIT_HIGH_EDITION;
+}
+
+// Returns [{ nftId, number, image }] for every Pigeon NFT the wallet holds,
+// for building a picker UI. Entries with no resolvable image are dropped.
+export async function getPigeonThumbnails(kv, pigeonNfts) {
+  const metas = await getPigeonMetaList(kv, pigeonNfts);
+  return metas.filter(m => m.image);
 }

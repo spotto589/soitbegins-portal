@@ -1,6 +1,6 @@
 import {
   COOKIE_NAME, getCookie, verifyToken,
-  fetchAllAccountNfts, findAllPigeons, getBestPigeonWordLimit
+  fetchAllAccountNfts, findAllPigeons, getBestPigeonWordLimit, getPigeonThumbnails
 } from '../_shared.js';
 
 const BOARD_KEY = 'board_messages';
@@ -55,9 +55,19 @@ export async function onRequestPost(context) {
 
   const name = (body && body.name || '').trim().slice(0, MAX_NAME_LEN);
 
+  // Only allow attaching a Pigeon this wallet actually holds — never trust
+  // the client's claimed nftId or image URL directly.
+  let image = null;
+  const requestedNftId = body && body.nftId;
+  if (requestedNftId) {
+    const thumbs = await getPigeonThumbnails(env.coin, pigeons);
+    const match = thumbs.find(t => t.nftId === requestedNftId);
+    if (match) image = match.image;
+  }
+
   const raw = await env.coin.get(BOARD_KEY);
   const messages = raw ? JSON.parse(raw) : [];
-  messages.push({ text, name, acct: payload.acct, ts: Math.floor(Date.now() / 1000) });
+  messages.push({ text, name, image, acct: payload.acct, ts: Math.floor(Date.now() / 1000) });
   const trimmed = messages.slice(-MAX_STORED);
   await env.coin.put(BOARD_KEY, JSON.stringify(trimmed));
 

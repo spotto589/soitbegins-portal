@@ -1,6 +1,6 @@
 import {
   COOKIE_NAME, getCookie, verifyToken,
-  fetchAllAccountNfts, findPigeon, findAllPigeons, getBestPigeonWordLimit
+  fetchAllAccountNfts, findPigeon, findAllPigeons, getBestPigeonWordLimit, getPigeonThumbnails
 } from './_shared.js';
 
 const BOARD_KEY = 'board_messages';
@@ -17,22 +17,37 @@ function renderMessageRow(msg, canDecode) {
   const binary = escapeHtml(textToBinary(msg.text));
   const wallet = escapeHtml(msg.acct ? msg.acct.slice(0, 6) + '...' + msg.acct.slice(-4) : 'UNKN0WN');
   const signer = msg.name ? `${escapeHtml(msg.name)} · ${wallet}` : wallet;
+  const avatar = msg.image
+    ? `<img class="msg-avatar" src="${escapeHtml(msg.image)}" alt="" loading="lazy">`
+    : `<div class="msg-avatar msg-avatar-blank"></div>`;
   return `
     <div class="msg-row">
-      <div class="msg-binary">${binary}</div>
-      ${canDecode ? `<div class="msg-plain">${escapeHtml(msg.text)}</div>` : ''}
-      <div class="msg-meta">S!GNED :: ${signer}</div>
+      ${avatar}
+      <div class="msg-body">
+        <div class="msg-binary">${binary}</div>
+        ${canDecode ? `<div class="msg-plain">${escapeHtml(msg.text)}</div>` : ''}
+        <div class="msg-meta">S!GNED :: ${signer}</div>
+      </div>
     </div>`;
 }
 
-function renderPage({ messages, isPigeon, hasSession, wordLimit }) {
+function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs }) {
   const messageRows = messages.length
     ? messages.map(m => renderMessageRow(m, isPigeon)).join('')
     : `<div class="empty">N0 MESSAGES YET.</div>`;
 
+  const thumbPicker = (isPigeon && pigeonThumbs && pigeonThumbs.length) ? `
+      <div class="sig-label">ATTACH A P!GE0N (0PT!0NAL)</div>
+      <div class="pigeon-picker" id="pigeonPicker">
+        <div class="pigeon-thumb" data-nft="">N0NE</div>
+        ${pigeonThumbs.map(p => `<img class="pigeon-thumb" src="${escapeHtml(p.image)}" data-nft="${escapeHtml(p.nftId)}" alt="">`).join('')}
+      </div>
+  ` : '';
+
   const writeSection = isPigeon ? `
     <div class="write-box">
       <div class="write-label">WR!TE A MESSAGE (P!GE0N S!GNATURE REQU!RED :: MAX ${wordLimit} W0RDS)</div>
+      ${thumbPicker}
       <div class="sig-label">S!GNATURE ¿ (OPT!ONAL, max 15)</div>
       <input id="nameInput" maxlength="15" placeholder="..." />
       <textarea id="msgInput" maxlength="1500" placeholder="Type, (01010100 01111001 01110000 01100101)"></textarea>
@@ -83,9 +98,16 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit }) {
     text-align:center;
   }
   .msg-row{
+    display:flex;
+    align-items:flex-start;
+    gap:1rem;
     border:1px solid rgba(57,255,20,0.25);
     padding:1rem 1.25rem;
     margin-bottom:1rem;
+  }
+  .msg-body{
+    flex:1;
+    min-width:0;
   }
   .msg-binary{
     font-size:11px;
@@ -103,6 +125,54 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit }) {
     font-size:10px;
     letter-spacing:0.05em;
     color:rgba(255,0,60,0.7);
+  }
+  .msg-avatar{
+    flex-shrink:0;
+    width:72px;
+    height:72px;
+    object-fit:cover;
+    border:2px solid rgba(255,0,60,0.5);
+    border-radius:3px;
+  }
+  .msg-avatar-blank{
+    background:repeating-linear-gradient(
+      45deg,
+      rgba(57,255,20,0.04) 0px,
+      rgba(57,255,20,0.04) 6px,
+      transparent 6px,
+      transparent 12px
+    );
+    border-color:rgba(57,255,20,0.15);
+  }
+  .pigeon-picker{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.5rem;
+    margin-bottom:1rem;
+  }
+  .pigeon-thumb{
+    width:44px;
+    height:44px;
+    object-fit:cover;
+    border:2px solid rgba(57,255,20,0.25);
+    border-radius:3px;
+    cursor:pointer;
+    opacity:0.6;
+    transition:opacity 0.15s ease, border-color 0.15s ease;
+  }
+  .pigeon-thumb:hover{ opacity:0.9; }
+  .pigeon-thumb.selected{
+    border-color:#39ff14;
+    opacity:1;
+  }
+  div.pigeon-thumb{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:9px;
+    color:rgba(232,232,232,0.5);
+    text-align:center;
+    background:#000;
   }
   .empty{
     text-align:center;
@@ -208,6 +278,18 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit }) {
   const preview = document.getElementById('binaryPreview');
   const wordCountEl = document.getElementById('wordCount');
   const postBtn = document.getElementById('postBtn');
+  let selectedNftId = '';
+
+  const picker = document.getElementById('pigeonPicker');
+  if (picker) {
+    picker.querySelectorAll('.pigeon-thumb').forEach(el => {
+      el.addEventListener('click', () => {
+        picker.querySelectorAll('.pigeon-thumb').forEach(x => x.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedNftId = el.dataset.nft || '';
+      });
+    });
+  }
 
   function countWords(str){
     const trimmed = str.trim();
@@ -235,7 +317,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit }) {
       const res = await fetch('/api/board', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, name })
+        body: JSON.stringify({ text, name, nftId: selectedNftId })
       });
       const data = await res.json();
       if (data.ok) {
@@ -308,6 +390,7 @@ export async function onRequestGet(context) {
   let isPigeon = false;
   let hasSession = false;
   let wordLimit = 0;
+  let pigeonThumbs = [];
 
   if (token) {
     const payload = await verifyToken(token, env.Σκύλλα);
@@ -316,13 +399,15 @@ export async function onRequestGet(context) {
       const nfts = await fetchAllAccountNfts(payload.acct);
       isPigeon = !!findPigeon(nfts);
       if (isPigeon) {
-        wordLimit = await getBestPigeonWordLimit(env.coin, findAllPigeons(nfts));
+        const pigeons = findAllPigeons(nfts);
+        wordLimit = await getBestPigeonWordLimit(env.coin, pigeons);
+        pigeonThumbs = await getPigeonThumbnails(env.coin, pigeons);
       }
     }
   }
 
   return new Response(
-    renderPage({ messages: messages.slice(-50).reverse(), isPigeon, hasSession, wordLimit }),
+    renderPage({ messages: messages.slice(-50).reverse(), isPigeon, hasSession, wordLimit, pigeonThumbs }),
     { headers: { 'Content-Type': 'text/html' } }
   );
 }
