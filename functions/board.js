@@ -1,5 +1,5 @@
 import {
-  COOKIE_NAME, getCookie, verifyToken,
+  BOARD_COOKIE_NAME, getCookie, verifyToken,
   fetchAllAccountNfts, findPigeon, findAllPigeons, getBestPigeonWordLimit, getPigeonThumbnails
 } from './_shared.js';
 
@@ -39,7 +39,7 @@ function renderMessageRow(msg, canDecode) {
     </div>`;
 }
 
-function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs }) {
+function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount }) {
   const messageRows = messages.length
     ? messages.map(m => renderMessageRow(m, isPigeon)).join('')
     : `<div class="empty">N0 MESSAGES YET.</div>`;
@@ -51,21 +51,41 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
       </div>
   ` : '';
 
-  const writeSection = isPigeon ? `
-    <div class="write-box">
+  const connectSection = !hasSession ? `
+    <div class="connect-wrap">
+      <button class="connect-btn" id="connectBtn">C0NNECT T0 P!GE0N NETW0RK</button>
+      <div class="connect-status" id="connectStatus"></div>
+    </div>
+  ` : '';
+
+  const hasThumbs = !!(pigeonThumbs && pigeonThumbs.length);
+  const initialAvatarSrc = hasThumbs ? escapeHtml(pigeonThumbs[0].image) : '';
+  const previewTierClass = getPigeonCountTier(pigeonCount || 1);
+
+  const bottomSection = isPigeon ? `
+    <div class="write-box" id="pigeonWalletBoard">
       <div class="write-label">WR!TE A MESSAGE (P!GE0N S!GNATURE REQU!RED :: MAX ${wordLimit} W0RDS)</div>
       ${thumbPicker}
       <div class="sig-label">S!GNATURE ¿ (OPT!ONAL, max 15)</div>
       <input id="nameInput" maxlength="15" placeholder="..." />
       <textarea id="msgInput" maxlength="1500" placeholder="Type, (01010100 01111001 01110000 01100101)"></textarea>
-      <div class="binary-preview" id="binaryPreview"></div>
       <div class="word-count" id="wordCount"></div>
+      <div class="preview-label">PREV!EW</div>
+      <div class="msg-row">
+        <img class="msg-avatar" id="previewAvatarImg" src="${initialAvatarSrc}" alt="" style="${hasThumbs ? '' : 'display:none;'}">
+        <div class="msg-avatar msg-avatar-blank" id="previewAvatarBlank" style="${hasThumbs ? 'display:none;' : ''}"></div>
+        <div class="msg-body">
+          <div class="msg-binary" id="binaryPreview"></div>
+          <div class="msg-plain ${previewTierClass}" id="plainPreview"></div>
+          <div class="msg-meta">S!GNED :: <span id="previewName"></span>${acctDisplay || 'Y0U'}</div>
+        </div>
+      </div>
       <button class="post-btn" id="postBtn">S!GN & P0ST</button>
       <div class="post-status" id="postStatus"></div>
     </div>
   ` : (hasSession
-    ? `<div class="gate-note">N0 P!GE0N DETECTED :: B!NARY 0NLY. Y0U CANN0T DEC0DE 0R WR!TE HERE.</div>`
-    : `<div class="connect-wrap"><button class="connect-btn" id="connectBtn">C0NNECT T0 P!GE0N NETW0RK</button><div class="connect-status" id="connectStatus"></div></div>`
+    ? `<div class="gate-note" id="pigeonWalletBoard">N0 P!GE0N DETECTED :: B!NARY 0NLY. Y0U CANN0T DEC0DE 0R WR!TE HERE.</div>`
+    : ''
   );
 
   return `<!DOCTYPE html>
@@ -73,7 +93,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🕊 THE MESSAGE B0ARD</title>
+<title>S!GNAL_NODE:://P!GΞON_RELAY</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -86,18 +106,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
     padding:8vh 6vw 10vh;
   }
   .page{ max-width:640px; width:100%; }
-  .eyebrow{
-    font-size:12px;
-    letter-spacing:0.3em;
-    color:#39ff14;
-    text-transform:uppercase;
-    opacity:0.8;
-    text-shadow:0 0 6px rgba(57,255,20,0.5);
-    margin-bottom:0.75rem;
-    text-align:center;
-  }
   h1{
-    font-size:clamp(22px,4vw,32px);
+    font-size:clamp(20px,3.6vw,30px);
     letter-spacing:0.08em;
     color:#fff;
     text-shadow:0 0 10px rgba(57,255,20,0.25);
@@ -247,13 +257,23 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
     color:rgba(232,232,232,0.4);
   }
   .word-count.over{ color:#ff003c; }
-  .binary-preview{
-    margin-top:0.6rem;
-    font-size:10px;
-    line-height:1.6;
-    color:rgba(57,255,20,0.5);
-    word-break:break-all;
+  .preview-label{
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:#39ff14;
+    margin:1.25rem 0 0.6rem;
+  }
+  .write-box .msg-row{
+    text-align:left;
+    margin-top:0;
+    margin-bottom:0;
+  }
+  .write-box .msg-binary{
     min-height:1.4em;
+    transition:font-size 0.15s ease;
+  }
+  .write-box .msg-plain{
+    min-height:1.2em;
   }
   .post-btn, .connect-btn{
     margin-top:0.9rem;
@@ -283,17 +303,17 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
     color:rgba(255,0,60,0.75);
   }
   .connect-wrap{
-    margin-top:2rem;
+    margin-bottom:2.5rem;
     text-align:center;
   }
 </style>
 </head>
 <body>
   <div class="page">
-    <div class="eyebrow">🕊 THE MESSAGE B0ARD</div>
-    <h1>S!GNAL FEED</h1>
+    <h1>S!GNAL_NODE:://P!GΞON_RELAY</h1>
+    ${connectSection}
     ${messageRows}
-    ${writeSection}
+    ${bottomSection}
   </div>
 
 <script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
@@ -302,8 +322,15 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
 
   ${isPigeon ? `
   const WORD_LIMIT = ${wordLimit};
+  const MIN_BINARY_SIZE = 6.5;
+  const MAX_BINARY_SIZE = 11;
   const input = document.getElementById('msgInput');
   const preview = document.getElementById('binaryPreview');
+  const plainPreview = document.getElementById('plainPreview');
+  const previewName = document.getElementById('previewName');
+  const previewAvatarImg = document.getElementById('previewAvatarImg');
+  const previewAvatarBlank = document.getElementById('previewAvatarBlank');
+  const nameInput = document.getElementById('nameInput');
   const wordCountEl = document.getElementById('wordCount');
   const postBtn = document.getElementById('postBtn');
   let selectedNftId = '';
@@ -317,6 +344,9 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
         picker.querySelectorAll('.pigeon-thumb').forEach(x => x.classList.remove('selected'));
         el.classList.add('selected');
         selectedNftId = el.dataset.nft || '';
+        previewAvatarImg.src = el.src;
+        previewAvatarImg.style.display = '';
+        previewAvatarBlank.style.display = 'none';
       });
     });
   }
@@ -328,11 +358,21 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
 
   input.addEventListener('input', () => {
     preview.textContent = input.value.split('').map(c => c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ');
+    plainPreview.textContent = input.value;
     const words = countWords(input.value);
     const over = words > WORD_LIMIT;
     wordCountEl.textContent = words + ' / ' + WORD_LIMIT + ' W0RDS';
     wordCountEl.className = 'word-count' + (over ? ' over' : '');
     postBtn.disabled = over || words === 0;
+
+    const ratio = Math.min(words / WORD_LIMIT, 1);
+    const size = MAX_BINARY_SIZE - ratio * (MAX_BINARY_SIZE - MIN_BINARY_SIZE);
+    preview.style.fontSize = size.toFixed(1) + 'px';
+  });
+
+  nameInput.addEventListener('input', () => {
+    const name = nameInput.value.trim().slice(0, 15);
+    previewName.textContent = name ? name + ' · ' : '';
   });
 
   document.getElementById('postBtn').addEventListener('click', async () => {
@@ -369,7 +409,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
       xummAuth = new XummPkce(XAMAN_API_KEY, {
         implicit: true,
         rememberJwt: false,
-        redirectUrl: 'https://soitbegins.xyz/'
+        redirectUrl: 'https://soitbegins.xyz/board'
       });
       xummAuth.on('error', (err)=>{
         document.getElementById('connectStatus').textContent = 'ERR://LOGIN_ABORTED';
@@ -380,16 +420,23 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
         const jwt = state && state.jwt;
         if(!jwt){ document.getElementById('connectStatus').textContent = 'ERR://NO_WALLET_DATA'; return; }
         document.getElementById('connectStatus').textContent = 'VER!FY!NG...';
-        const res = await fetch('/api/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jwt })
-        });
-        const data = await res.json();
-        if (data.granted) {
-          location.reload();
-        } else {
-          document.getElementById('connectStatus').textContent = 'N0 ACCESS KEY 0N TH!S WALLET';
+        try {
+          const res = await fetch('/api/connect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jwt })
+          });
+          const data = await res.json();
+          if (data.ok) {
+            document.getElementById('connectStatus').textContent = 'C0NNECTED :: 0PEN!NG RELAY...';
+            window.location.href = window.location.pathname + '?connected=1#pigeonWalletBoard';
+          } else {
+            document.getElementById('connectStatus').textContent = 'ERR://C0NNECT!0N FA!LED';
+            document.getElementById('connectBtn').disabled = false;
+          }
+        } catch(e) {
+          document.getElementById('connectStatus').textContent = 'ERR://SIGNAL_LOST';
+          document.getElementById('connectBtn').disabled = false;
         }
       });
     }
@@ -398,6 +445,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs })
   document.getElementById('connectBtn').addEventListener('click', ()=>{
     document.getElementById('connectBtn').disabled = true;
     document.getElementById('connectStatus').textContent = 'OPEN!NG SECURE CHANNEL...';
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     getAuth().authorize();
   });
   ` : '')}
@@ -416,20 +464,24 @@ export async function onRequestGet(context) {
   const raw = await env.coin.get(BOARD_KEY);
   const messages = raw ? JSON.parse(raw) : [];
 
-  const token = getCookie(request, COOKIE_NAME);
+  const token = getCookie(request, BOARD_COOKIE_NAME);
   let isPigeon = false;
   let hasSession = false;
   let wordLimit = 0;
   let pigeonThumbs = [];
+  let acctDisplay = '';
+  let pigeonCount = 0;
 
   if (token) {
     const payload = await verifyToken(token, env.Σκύλλα);
     if (payload && payload.acct) {
       hasSession = true;
+      acctDisplay = payload.acct.slice(0, 6) + '...' + payload.acct.slice(-4);
       const nfts = await fetchAllAccountNfts(payload.acct);
       isPigeon = !!findPigeon(nfts);
       if (isPigeon) {
         const pigeons = findAllPigeons(nfts);
+        pigeonCount = pigeons.length;
         wordLimit = await getBestPigeonWordLimit(env.coin, pigeons);
         pigeonThumbs = await getPigeonThumbnails(env.coin, pigeons);
       }
@@ -437,7 +489,7 @@ export async function onRequestGet(context) {
   }
 
   return new Response(
-    renderPage({ messages: messages.slice(-50).reverse(), isPigeon, hasSession, wordLimit, pigeonThumbs }),
+    renderPage({ messages: messages.slice(-50).reverse(), isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount }),
     { headers: { 'Content-Type': 'text/html' } }
   );
 }

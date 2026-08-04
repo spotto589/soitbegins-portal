@@ -1,4 +1,5 @@
 export const COOKIE_NAME = 'glitch_access';
+export const BOARD_COOKIE_NAME = 'pigeon_session';
 
 export const GLITCH_ISSUER = 'rNRo76r8C6c1rMi28AR7CdArtK6r8Zptv7';
 export const GLITCH_TAXON = 1;

@@ -1,5 +1,5 @@
 import {
-  COOKIE_NAME, getCookie, verifyToken,
+  BOARD_COOKIE_NAME, getCookie, verifyToken,
   fetchAllAccountNfts, findAllPigeons, getBestPigeonWordLimit, getPigeonThumbnails
 } from '../_shared.js';
 
@@ -20,7 +20,7 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'server_misconfigured' }), { status: 500 });
   }
 
-  const token = getCookie(request, COOKIE_NAME);
+  const token = getCookie(request, BOARD_COOKIE_NAME);
   if (!token) {
     return new Response(JSON.stringify({ error: 'no_session' }), { status: 401 });
   }
