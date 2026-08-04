@@ -181,6 +181,7 @@ const SCYLLA_HTML = `<!DOCTYPE html>
         try{
           const state = await xummAuth.state();
           const jwt = state && state.jwt;
+          const account = state && state.me && state.me.account;
           if(!jwt){
             setStatus('ERR://NO_WALLET_DATA', 'denied');
             scanBtn.disabled = false;
@@ -192,8 +193,8 @@ const SCYLLA_HTML = `<!DOCTYPE html>
             await runScanAnimation();
             window.location.href = '/crwn';
           } else {
-            setStatus('ΔCCESS DENIED :: NO GL!TCH KEY OR Σκύλλα CARD DETECTED', 'denied');
-            scanBtn.disabled = false;
+            setStatus('N0 S!GNATURES F0UND — RED!RECT!NG...', '');
+            setTimeout(()=>{ window.location.href = '/begin?addr=' + encodeURIComponent(account || ''); }, 800);
           }
         } catch(e){
           console.error(e);
