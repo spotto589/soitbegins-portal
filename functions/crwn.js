@@ -173,7 +173,7 @@ ${granted ? `<script>
 export async function onRequestGet(context) {
   const { request, env } = context;
 
-  if (!env.Σκύλλα || !env.COIN) {
+  if (!env.Σκύλλα || !env.coin) {
     return new Response('server misconfigured', { status: 500 });
   }
 
@@ -200,7 +200,7 @@ export async function onRequestGet(context) {
     );
   }
 
-  const firstSeen = await getOrStartTimer(env.COIN, payload.acct, kingNft.NFTokenID);
+  const firstSeen = await getOrStartTimer(env.coin, payload.acct, kingNft.NFTokenID);
   const daysHeld = Math.max(0, (Date.now() / 1000 - firstSeen) / 86400);
   const claimable = daysHeld * CRWN_PER_DAY;
 

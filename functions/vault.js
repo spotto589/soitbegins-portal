@@ -45,19 +45,36 @@ const VAULT_HTML = `<!DOCTYPE html>
     margin-bottom:2.5rem;
     font-style:italic;
   }
-  .entry{
+  .section-label{
+    font-size:12px;
+    letter-spacing:0.3em;
+    color:#39ff14;
+    text-transform:uppercase;
+    opacity:0.7;
+    margin:2.75rem 0 1.25rem;
+  }
+  .section-label:first-of-type{
+    margin-top:0;
+  }
+
+  .decrees{
+    list-style:none;
+    padding:0;
+    margin:0;
+  }
+  .decrees li{
     border-left:2px solid rgba(57,255,20,0.35);
     padding:0.2rem 0 0.2rem 1.2rem;
-    margin-bottom:2rem;
+    margin-bottom:1.6rem;
   }
-  .entry h2{
+  .decrees h2{
     font-size:13px;
     letter-spacing:0.2em;
     color:#39ff14;
     text-transform:uppercase;
     margin-bottom:0.6rem;
   }
-  .entry p{
+  .decrees p{
     font-size:14px;
     line-height:1.8;
     color:rgba(232,232,232,0.85);
@@ -80,6 +97,19 @@ const VAULT_HTML = `<!DOCTYPE html>
   .crwn-link:hover{
     background:rgba(57,255,20,0.1);
   }
+
+  .private-notes{
+    border-top:1px dashed rgba(232,232,232,0.15);
+    padding-top:0.5rem;
+  }
+  .private-notes p{
+    font-size:13px;
+    line-height:1.85;
+    font-style:italic;
+    color:rgba(232,232,232,0.5);
+    margin-bottom:1.4rem;
+  }
+
   .sign-off{
     margin-top:3rem;
     text-align:right;
@@ -95,20 +125,28 @@ const VAULT_HTML = `<!DOCTYPE html>
     <h1>THE K!NG'S N0TES</h1>
     <p class="intro">These are not written for another world. They are only what is true in mine.</p>
 
-    <div class="entry">
-      <h2>GL!TCH</h2>
-      <p>The keys were forged before the kingdom had walls. Those who carry one were listening before there was anything to hear.</p>
-    </div>
+    <div class="section-label">THE DECREES</div>
+    <ul class="decrees">
+      <li>
+        <h2>GL!TCH</h2>
+        <p>The keys were forged before the kingdom had walls. Those who carry one were listening before there was anything to hear.</p>
+      </li>
+      <li>
+        <h2>$CRWN</h2>
+        <p>The coin of the realm. Every kingdom needs one to trade in — mine is no different. <span class="placeholder">[$CRWN details go here]</span></p>
+        <a class="crwn-link" href="/crwn">SPEAK TO THE K!NG →</a>
+      </li>
+      <li>
+        <h2>$HONEY</h2>
+        <p>Nothing grows here without it. The granaries run on $HONEY, and so does everyone in them. <span class="placeholder">[$HONEY details go here]</span></p>
+      </li>
+    </ul>
 
-    <div class="entry">
-      <h2>$CRWN</h2>
-      <p>The coin of the realm. Every kingdom needs one to trade in — mine is no different. <span class="placeholder">[$CRWN details go here]</span></p>
-      <a class="crwn-link" href="/crwn">SPEAK TO THE K!NG →</a>
-    </div>
-
-    <div class="entry">
-      <h2>$HONEY</h2>
-      <p>Nothing grows here without it. The granaries run on $HONEY, and so does everyone in them. <span class="placeholder">[$HONEY details go here]</span></p>
+    <div class="section-label">N0TES T0 H!MSELF</div>
+    <div class="private-notes">
+      <p>Some nights I forget which parts of this are real and which parts I invented to make the real parts easier to build.</p>
+      <p>I keep telling them the walls are close to finished. They are not close. I don't know anymore if I'm lying to them or to myself.</p>
+      <p>The ones who found the gate already did the hard part. I just have to be worth finding.</p>
     </div>
 
     <div class="sign-off">— THE K!NG</div>
