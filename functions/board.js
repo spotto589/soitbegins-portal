@@ -127,7 +127,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .msg-top{
     display:flex;
     align-items:stretch;
-    min-height:84px;
+    min-height:128px;
   }
   .msg-plain-wrap{
     flex:1;
@@ -181,9 +181,10 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     color:rgba(255,0,60,0.7);
   }
   .msg-avatar{
-    flex:0 0 84px;
-    width:84px;
+    flex:0 0 128px;
+    width:128px;
     object-fit:cover;
+    image-rendering:pixelated;
     border:none;
     border-right:2px solid rgba(255,0,60,0.5);
   }
@@ -208,6 +209,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     aspect-ratio:1;
     height:auto;
     object-fit:cover;
+    image-rendering:pixelated;
     border:2px solid rgba(57,255,20,0.25);
     border-radius:4px;
     cursor:pointer;
