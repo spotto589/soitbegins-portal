@@ -245,7 +245,6 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     .msg-avatar{
       flex:0 0 180px;
       width:180px;
-      filter:url(#pigeon-sharpen);
     }
     .msg-top{ min-height:180px; }
   }
@@ -493,11 +492,6 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
 </head>
 <body>
   <canvas id="staticBg"></canvas>
-  <svg width="0" height="0" style="position:absolute;">
-    <filter id="pigeon-sharpen">
-      <feConvolveMatrix order="3" kernelMatrix="0 -0.5 0 -0.5 3 -0.5 0 -0.5 0" preserveAlpha="true" />
-    </filter>
-  </svg>
   <div class="page">
     <h1>S!GNAL_NODE:://P!GΞON_RELAY</h1>
     ${connectSection}
