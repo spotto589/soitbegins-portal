@@ -113,8 +113,37 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     display:flex;
     justify-content:center;
     padding:8vh 6vw 10vh;
+    position:relative;
+    overflow-x:hidden;
   }
-  .page{ max-width:760px; width:100%; }
+  canvas#staticBg{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+    opacity:0.26;
+    filter:brightness(0.7) contrast(1.3);
+    mix-blend-mode:screen;
+    animation:static-shake 0.4s steps(2) infinite;
+  }
+  @keyframes static-shake{
+    0%{ transform:translate(0,0); }
+    10%{ transform:translate(-1px,1px); }
+    20%{ transform:translate(1px,-1px); }
+    30%{ transform:translate(-1px,-1px); }
+    40%{ transform:translate(1px,1px); }
+    50%{ transform:translate(-1px,0); }
+    60%{ transform:translate(1px,0); }
+    70%{ transform:translate(0,-1px); }
+    80%{ transform:translate(0,1px); }
+    90%{ transform:translate(-1px,1px); }
+    100%{ transform:translate(0,0); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    canvas#staticBg{ animation:none; }
+  }
+  .page{ max-width:760px; width:100%; position:relative; z-index:1; }
   h1{
     font-size:clamp(15px,4.6vw,30px);
     letter-spacing:0.06em;
@@ -126,6 +155,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     overflow-wrap:anywhere;
   }
   .msg-row{
+    background:#08080a;
     border:1px solid rgba(57,255,20,0.25);
     margin-bottom:1rem;
     overflow:hidden;
@@ -240,6 +270,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     padding:2rem 0;
   }
   .write-box{
+    background:#08080a;
     margin-top:2rem;
     border:1px dashed rgba(57,255,20,0.4);
     padding:1.25rem;
@@ -397,6 +428,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
 </style>
 </head>
 <body>
+  <canvas id="staticBg"></canvas>
   <svg width="0" height="0" style="position:absolute;">
     <filter id="pigeon-sharpen">
       <feConvolveMatrix order="3" kernelMatrix="0 -0.5 0 -0.5 3 -0.5 0 -0.5 0" preserveAlpha="true" />
@@ -420,6 +452,36 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
 <script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
 <script>
   const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
+
+  // TV static background, behind the page content
+  (function(){
+    const canvas = document.getElementById('staticBg');
+    const ctx = canvas.getContext('2d');
+    function resize(){
+      canvas.width = window.innerWidth / 3;
+      canvas.height = window.innerHeight / 3;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    function drawStatic(){
+      const w = canvas.width, h = canvas.height;
+      const imageData = ctx.createImageData(w, h);
+      const buffer = imageData.data;
+      for(let i=0; i<buffer.length; i+=4){
+        const shade = Math.random() * 255;
+        buffer[i] = shade;
+        buffer[i+1] = shade;
+        buffer[i+2] = shade;
+        buffer[i+3] = 255;
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+    function staticLoop(){
+      drawStatic();
+      requestAnimationFrame(staticLoop);
+    }
+    staticLoop();
+  })();
 
   ${isPigeon ? `
   const WORD_LIMIT = ${wordLimit};
@@ -524,7 +586,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       xummAuth = new XummPkce(XAMAN_API_KEY, {
         implicit: true,
         rememberJwt: false,
-        redirectUrl: 'https://soitbegins.xyz/'
+        redirectUrl: 'https://soitbegins.xyz/board'
       });
       xummAuth.on('error', (err)=>{
         overlay.classList.remove('active');
