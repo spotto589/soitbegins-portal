@@ -397,6 +397,17 @@
     display:flex;
   }
 
+  body.page-transition .eyebrow,
+  body.page-transition .sub,
+  body.page-transition .illusion-flag,
+  body.page-transition .enter-btn,
+  body.page-transition .access-status,
+  body.page-transition .board-btn{
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.35s ease;
+  }
+
   @media (prefers-reduced-motion: reduce){
     .scanlines, .glitch-word, .glitch-word::before, .glitch-word::after, .sub .cursor, .eyebrow .cursor, .eyebrow.err-flash, .ebs-overlay.hit{
       animation:none !important;
@@ -641,6 +652,16 @@
     enterBtn.disabled = true;
     setStatus('OPENING SECURE CHANNEL :: SIGN IN WITH XAMAN...', 'checking');
     getAuth().authorize();
+  });
+
+  // Board link: pause on the flickering STATUS: GL!TCH!NG title alone —
+  // everything else fades out — before actually navigating through.
+  document.querySelector('.board-btn').addEventListener('click', (e)=>{
+    e.preventDefault();
+    const href = e.currentTarget.href;
+    triggerEBS();
+    document.body.classList.add('page-transition');
+    setTimeout(()=>{ window.location.href = href; }, 1400);
   });
 </script>
 
