@@ -4,6 +4,7 @@ import {
 } from './_shared.js';
 
 const BOARD_KEY = 'board_messages';
+const USED_PIGEONS_KEY = 'used_pigeon_nfts';
 
 function textToBinary(str) {
   return str.split('').map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
@@ -42,16 +43,26 @@ function renderMessageRow(msg, canDecode) {
     </div>`;
 }
 
-function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount }) {
+function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts }) {
   const messageRows = messages.length
     ? messages.map(m => renderMessageRow(m, isPigeon)).join('')
     : `<div class="empty">N0 MESSAGES YET.</div>`;
 
+  const usedSet = new Set(usedPigeonNfts || []);
+  const availableThumbs = (pigeonThumbs || []).filter(p => !usedSet.has(p.nftId));
+  const allPigeonsUsed = isPigeon && !!(pigeonThumbs && pigeonThumbs.length) && availableThumbs.length === 0;
+  const firstAvailableNftId = availableThumbs.length ? availableThumbs[0].nftId : null;
+
   const thumbPicker = (isPigeon && pigeonThumbs && pigeonThumbs.length) ? `
       <div class="sig-label">ATTACH A P!GE0N</div>
       <div class="pigeon-picker" id="pigeonPicker">
-        ${pigeonThumbs.map((p, i) => `<img class="pigeon-thumb${i === 0 ? ' selected' : ''}" src="${escapeHtml(p.image)}" data-nft="${escapeHtml(p.nftId)}" alt="">`).join('')}
+        ${pigeonThumbs.map((p) => {
+          const used = usedSet.has(p.nftId);
+          const selected = !used && p.nftId === firstAvailableNftId;
+          return `<img class="pigeon-thumb${used ? ' used' : ''}${selected ? ' selected' : ''}" src="${escapeHtml(p.image)}" data-nft="${escapeHtml(p.nftId)}" data-used="${used ? '1' : '0'}" alt="">`;
+        }).join('')}
       </div>
+      ${allPigeonsUsed ? `<div class="all-used-note">ALL Y0UR P!GE0NS HAVE ALREADY S!GNED TH!S B0ARD :: 0NE P0ST PER P!GE0N (ALPHA)</div>` : ''}
   ` : '';
 
   const connectSection = !hasSession ? `
@@ -61,8 +72,14 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     </div>
   ` : '';
 
-  const hasThumbs = !!(pigeonThumbs && pigeonThumbs.length);
-  const initialAvatarSrc = hasThumbs ? escapeHtml(pigeonThumbs[0].image) : '';
+  const sessionControls = hasSession ? `
+    <div class="session-controls">
+      <button class="signout-btn" id="signOutBtn">S!GN 0UT / CHANGE KEY</button>
+    </div>
+  ` : '';
+
+  const hasAvailableThumbs = availableThumbs.length > 0;
+  const initialAvatarSrc = hasAvailableThumbs ? escapeHtml(availableThumbs[0].image) : '';
   const previewTierClass = getPigeonCountTier(pigeonCount || 1);
 
   const bottomSection = isPigeon ? `
@@ -76,14 +93,14 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       <div class="preview-label">PREV!EW</div>
       <div class="msg-row">
         <div class="msg-top">
-          <img class="msg-avatar" id="previewAvatarImg" src="${initialAvatarSrc}" alt="" style="${hasThumbs ? '' : 'display:none;'}">
-          <div class="msg-avatar msg-avatar-blank" id="previewAvatarBlank" style="${hasThumbs ? 'display:none;' : ''}"></div>
+          <img class="msg-avatar" id="previewAvatarImg" src="${initialAvatarSrc}" alt="" style="${hasAvailableThumbs ? '' : 'display:none;'}">
+          <div class="msg-avatar msg-avatar-blank" id="previewAvatarBlank" style="${hasAvailableThumbs ? 'display:none;' : ''}"></div>
           <div class="msg-plain-wrap"><div class="msg-plain ${previewTierClass}" id="plainPreview"></div></div>
         </div>
         <div class="msg-binary" id="binaryPreview"></div>
         <div class="msg-meta">S!GNED :: <span id="previewName"></span>${acctDisplay || 'Y0U'}</div>
       </div>
-      <button class="post-btn" id="postBtn">S!GN & P0ST</button>
+      <button class="post-btn" id="postBtn"${allPigeonsUsed ? ' disabled' : ''}>S!GN & P0ST</button>
       <div class="post-status" id="postStatus"></div>
     </div>
   ` : (hasSession
@@ -263,6 +280,19 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     border-color:#39ff14;
     opacity:1;
   }
+  .pigeon-thumb.used{
+    filter:grayscale(1);
+    opacity:0.25;
+    cursor:not-allowed;
+  }
+  .pigeon-thumb.used:hover{ opacity:0.25; }
+  .all-used-note{
+    margin-top:0.75rem;
+    font-size:11px;
+    letter-spacing:0.05em;
+    color:rgba(255,0,60,0.75);
+    text-align:center;
+  }
   .empty{
     text-align:center;
     color:rgba(232,232,232,0.4);
@@ -383,6 +413,23 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     margin-bottom:2.5rem;
     text-align:center;
   }
+  .session-controls{
+    text-align:center;
+    margin-bottom:1.5rem;
+  }
+  .signout-btn{
+    background:transparent;
+    border:1px solid rgba(232,232,232,0.25);
+    color:rgba(232,232,232,0.55);
+    font-family:inherit;
+    font-size:10px;
+    letter-spacing:0.1em;
+    padding:0.5em 1em;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .signout-btn:hover{ background:rgba(232,232,232,0.08); color:#e8e8e8; }
+  .signout-btn:disabled{ opacity:0.5; cursor:default; }
   .scan-overlay{
     position:fixed;
     inset:0;
@@ -437,6 +484,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   <div class="page">
     <h1>S!GNAL_NODE:://P!GΞON_RELAY</h1>
     ${connectSection}
+    ${sessionControls}
     ${messageRows}
     ${bottomSection}
   </div>
@@ -483,6 +531,17 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     staticLoop();
   })();
 
+  const signOutBtn = document.getElementById('signOutBtn');
+  if (signOutBtn) {
+    signOutBtn.addEventListener('click', async () => {
+      signOutBtn.disabled = true;
+      try {
+        await fetch('/api/disconnect', { method: 'POST' });
+      } catch (e) {}
+      window.location.href = window.location.pathname;
+    });
+  }
+
   ${isPigeon ? `
   const WORD_LIMIT = ${wordLimit};
   const MIN_BINARY_SIZE = 6.5;
@@ -504,12 +563,14 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     if (preselected) selectedNftId = preselected.dataset.nft || '';
     picker.querySelectorAll('.pigeon-thumb').forEach(el => {
       el.addEventListener('click', () => {
+        if (el.dataset.used === '1') return;
         picker.querySelectorAll('.pigeon-thumb').forEach(x => x.classList.remove('selected'));
         el.classList.add('selected');
         selectedNftId = el.dataset.nft || '';
         previewAvatarImg.src = el.src;
         previewAvatarImg.style.display = '';
         previewAvatarBlank.style.display = 'none';
+        input.dispatchEvent(new Event('input'));
       });
     });
   }
@@ -526,7 +587,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     const over = words > WORD_LIMIT;
     wordCountEl.textContent = words + ' / ' + WORD_LIMIT + ' W0RDS';
     wordCountEl.className = 'word-count' + (over ? ' over' : '');
-    postBtn.disabled = over || words === 0;
+    postBtn.disabled = over || words === 0 || !selectedNftId;
 
     const ratio = Math.min(words / WORD_LIMIT, 1);
     const size = MAX_BINARY_SIZE - ratio * (MAX_BINARY_SIZE - MIN_BINARY_SIZE);
@@ -540,7 +601,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
 
   document.getElementById('postBtn').addEventListener('click', async () => {
     const text = input.value.trim();
-    if (!text || countWords(text) > WORD_LIMIT) return;
+    if (!text || countWords(text) > WORD_LIMIT || !selectedNftId) return;
     const name = document.getElementById('nameInput').value.trim().slice(0, 15);
     const btn = document.getElementById('postBtn');
     const status = document.getElementById('postStatus');
@@ -556,6 +617,9 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       if (data.ok) {
         status.textContent = 'P0STED :: REFRESH!NG...';
         setTimeout(() => location.reload(), 800);
+      } else if (data.error === 'pigeon_already_posted') {
+        status.textContent = 'ERR://TH!S P!GE0N ALREADY S!GNED :: P!CK AN0THER';
+        btn.disabled = false;
       } else {
         status.textContent = 'ERR://P0ST REJECTED';
         btn.disabled = false;
@@ -660,6 +724,7 @@ export async function onRequestGet(context) {
   let pigeonThumbs = [];
   let acctDisplay = '';
   let pigeonCount = 0;
+  let usedPigeonNfts = [];
 
   if (token) {
     const payload = await verifyToken(token, env.Σκύλλα);
@@ -673,12 +738,14 @@ export async function onRequestGet(context) {
         pigeonCount = pigeons.length;
         wordLimit = await getBestPigeonWordLimit(env.coin, pigeons);
         pigeonThumbs = await getPigeonThumbnails(env.coin, pigeons);
+        const usedRaw = await env.coin.get(USED_PIGEONS_KEY);
+        usedPigeonNfts = usedRaw ? JSON.parse(usedRaw) : [];
       }
     }
   }
 
   return new Response(
-    renderPage({ messages: messages.slice(-50).reverse(), isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount }),
+    renderPage({ messages: messages.slice(-50).reverse(), isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts }),
     { headers: { 'Content-Type': 'text/html' } }
   );
 }
