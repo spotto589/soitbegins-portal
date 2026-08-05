@@ -4,7 +4,6 @@ import {
 } from '../_shared.js';
 
 const BOARD_KEY = 'board_messages';
-const USED_PIGEONS_KEY = 'used_pigeon_nfts';
 const MAX_STORED = 200;
 const MAX_LEN = 1500;
 const MAX_NAME_LEN = 15;
@@ -71,20 +70,41 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_pigeon' }), { status: 400 });
   }
 
-  const usedRaw = await env.coin.get(USED_PIGEONS_KEY);
-  const usedList = usedRaw ? JSON.parse(usedRaw) : [];
-  if (usedList.includes(requestedNftId)) {
+  // Each Pigeon gets its own KV key rather than one shared list — a shared
+  // list requires read-modify-write, and KV is only eventually consistent,
+  // so a concurrent write for a totally different pigeon could silently
+  // clobber the list and un-mark ones that had already posted. Independent
+  // per-token keys avoid that failure mode entirely.
+  const usedKey = `usedpigeon:${requestedNftId}`;
+  const alreadyUsed = await env.coin.get(usedKey);
+  if (alreadyUsed) {
     return new Response(JSON.stringify({ error: 'pigeon_already_posted' }), { status: 403 });
   }
 
   const raw = await env.coin.get(BOARD_KEY);
   const messages = raw ? JSON.parse(raw) : [];
-  messages.push({ text, name, image: match.image, acct: payload.acct, pigeonCount: pigeons.length, ts: Math.floor(Date.now() / 1000) });
+  messages.push({ text, name, image: match.image, nftId: requestedNftId, acct: payload.acct, pigeonCount: pigeons.length, ts: Math.floor(Date.now() / 1000) });
   const trimmed = messages.slice(-MAX_STORED);
   await env.coin.put(BOARD_KEY, JSON.stringify(trimmed));
 
-  usedList.push(requestedNftId);
-  await env.coin.put(USED_PIGEONS_KEY, JSON.stringify(usedList));
+  const nowTs = Math.floor(Date.now() / 1000);
+  await env.coin.put(usedKey, String(nowTs));
+
+  // Keystone: the moment this wallet's last available Pigeon gets used.
+  // Only set once — checks every other held Pigeon's used-state fresh
+  // rather than trusting anything cached from before this request.
+  const otherThumbs = thumbs.filter(t => t.nftId !== requestedNftId);
+  const otherUsedChecks = await Promise.all(
+    otherThumbs.map(t => env.coin.get(`usedpigeon:${t.nftId}`))
+  );
+  const allNowUsed = otherUsedChecks.every(v => v !== null);
+  if (allNowUsed) {
+    const keystoneKey = `keystone:${payload.acct}`;
+    const existingKeystone = await env.coin.get(keystoneKey);
+    if (!existingKeystone) {
+      await env.coin.put(keystoneKey, String(nowTs));
+    }
+  }
 
   return new Response(JSON.stringify({ ok: true }), {
     headers: { 'Content-Type': 'application/json' }

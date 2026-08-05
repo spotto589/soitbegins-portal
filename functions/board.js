@@ -4,7 +4,6 @@ import {
 } from './_shared.js';
 
 const BOARD_KEY = 'board_messages';
-const USED_PIGEONS_KEY = 'used_pigeon_nfts';
 
 function textToBinary(str) {
   return str.split('').map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
@@ -43,7 +42,7 @@ function renderMessageRow(msg, canDecode) {
     </div>`;
 }
 
-function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts }) {
+function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }) {
   const messageRows = messages.length
     ? messages.map(m => renderMessageRow(m, isPigeon)).join('')
     : `<div class="empty">N0 MESSAGES YET.</div>`;
@@ -62,7 +61,11 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
           return `<img class="pigeon-thumb${used ? ' used' : ''}${selected ? ' selected' : ''}" src="${escapeHtml(p.image)}" data-nft="${escapeHtml(p.nftId)}" data-used="${used ? '1' : '0'}" alt="">`;
         }).join('')}
       </div>
-      ${allPigeonsUsed ? `<div class="all-used-note">ALL Y0UR P!GE0NS HAVE ALREADY S!GNED TH!S B0ARD :: 0NE P0ST PER P!GE0N (ALPHA)</div>` : ''}
+      ${allPigeonsUsed ? `
+        <div class="all-used-note">ALL Y0UR P!GE0NS HAVE ALREADY S!GNED TH!S B0ARD :: 0NE P0ST PER P!GE0N (ALPHA)</div>
+        <div class="mainframe-teaser">T0 ACCESS THE STAT!C S!GNAL_N0DE MA!NFRAMΞ, S!GN W!TH 50 P!GE0NS.</div>
+        ${keystoneTs ? `<div class="keystone-note">KEYST0NE :: <span id="keystoneTime" data-ts="${keystoneTs}"></span></div>` : ''}
+      ` : ''}
   ` : '';
 
   const connectSection = !hasSession ? `
@@ -291,6 +294,22 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     font-size:11px;
     letter-spacing:0.05em;
     color:rgba(255,0,60,0.75);
+    text-align:center;
+  }
+  .mainframe-teaser{
+    margin-top:0.5rem;
+    font-size:11px;
+    letter-spacing:0.08em;
+    color:#00fff2;
+    text-shadow:0 0 8px rgba(0,255,242,0.5);
+    text-align:center;
+    font-style:italic;
+  }
+  .keystone-note{
+    margin-top:0.6rem;
+    font-size:10px;
+    letter-spacing:0.08em;
+    color:rgba(232,232,232,0.45);
     text-align:center;
   }
   .empty{
@@ -531,6 +550,14 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     staticLoop();
   })();
 
+  const keystoneEl = document.getElementById('keystoneTime');
+  if (keystoneEl) {
+    const ts = parseInt(keystoneEl.dataset.ts, 10);
+    if (ts) {
+      keystoneEl.textContent = new Date(ts * 1000).toLocaleString();
+    }
+  }
+
   const signOutBtn = document.getElementById('signOutBtn');
   if (signOutBtn) {
     signOutBtn.addEventListener('click', async () => {
@@ -725,6 +752,7 @@ export async function onRequestGet(context) {
   let acctDisplay = '';
   let pigeonCount = 0;
   let usedPigeonNfts = [];
+  let keystoneTs = null;
 
   if (token) {
     const payload = await verifyToken(token, env.Σκύλλα);
@@ -738,14 +766,21 @@ export async function onRequestGet(context) {
         pigeonCount = pigeons.length;
         wordLimit = await getBestPigeonWordLimit(env.coin, pigeons);
         pigeonThumbs = await getPigeonThumbnails(env.coin, pigeons);
-        const usedRaw = await env.coin.get(USED_PIGEONS_KEY);
-        usedPigeonNfts = usedRaw ? JSON.parse(usedRaw) : [];
+        const usedChecks = await Promise.all(
+          pigeonThumbs.map(p => env.coin.get(`usedpigeon:${p.nftId}`))
+        );
+        usedPigeonNfts = pigeonThumbs
+          .filter((p, i) => usedChecks[i] !== null)
+          .map(p => p.nftId);
+        if (pigeonThumbs.length && usedPigeonNfts.length === pigeonThumbs.length) {
+          keystoneTs = await env.coin.get(`keystone:${payload.acct}`);
+        }
       }
     }
   }
 
   return new Response(
-    renderPage({ messages: messages.slice(-50).reverse(), isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts }),
+    renderPage({ messages: messages.slice(-50).reverse(), isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }),
     { headers: { 'Content-Type': 'text/html' } }
   );
 }
