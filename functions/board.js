@@ -69,7 +69,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     <div class="write-box" id="pigeonWalletBoard">
       <div class="write-label">WR!TE A MESSAGE (P!GE0N S!GNATURE REQU!RED :: MAX ${wordLimit} W0RDS)</div>
       ${thumbPicker}
-      <textarea id="msgInput" maxlength="1500" placeholder="Type, (01010100 01111001 01110000 01100101)"></textarea>
+      <textarea id="msgInput" maxlength="1500" placeholder="Type your message here"></textarea>
       <div class="word-count" id="wordCount"></div>
       <input id="nameInput" maxlength="15" placeholder="..." />
       <div class="sig-label-below">S!GNATURE ¿ (OPT!ONAL, max 15)</div>
@@ -184,7 +184,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     border-top:1px solid rgba(57,255,20,0.1);
     font-size:10px;
     letter-spacing:0.05em;
-    color:rgba(255,0,60,0.7);
+    color:rgba(0,255,242,0.75);
   }
   .msg-avatar{
     flex:0 0 128px;
@@ -278,14 +278,14 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .sig-label-below{
     font-size:11px;
     letter-spacing:0.1em;
-    color:#ff003c;
-    text-shadow:0 0 6px rgba(255,0,60,0.4);
+    color:#00fff2;
+    text-shadow:0 0 6px rgba(0,255,242,0.4);
     margin-top:0.5rem;
   }
   input#nameInput{
     margin-top:0.75rem;
-    border-color:rgba(255,0,60,0.4);
-    color:#ff6b8a;
+    border-color:rgba(0,255,242,0.4);
+    color:#7fffef;
   }
   .word-count{
     margin-top:0.4rem;

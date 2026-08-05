@@ -197,7 +197,7 @@ async function fetchPigeonMeta(nft) {
 // NFT in the list, keyed by NFTokenID so repeat lookups are instant.
 async function getPigeonMetaList(kv, pigeonNfts) {
   return Promise.all(pigeonNfts.map(async (nft) => {
-    const cacheKey = `pigeonmeta:${nft.NFTokenID}`;
+    const cacheKey = `pigeonmeta:v2:${nft.NFTokenID}`;
     const cached = await kv.get(cacheKey);
     if (cached !== null) {
       const parsed = JSON.parse(cached);
