@@ -3,8 +3,6 @@ import {
   fetchAllAccountNfts, findPigeon, findAllPigeons, getBestPigeonWordLimit, getPigeonThumbnails
 } from './_shared.js';
 
-const BOARD_KEY = 'board_messages';
-
 function textToBinary(str) {
   return str.split('').map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
 }
@@ -741,8 +739,12 @@ export async function onRequestGet(context) {
     return new Response('server misconfigured', { status: 500 });
   }
 
-  const raw = await env.coin.get(BOARD_KEY);
-  const messages = raw ? JSON.parse(raw) : [];
+  const list = await env.coin.list({ prefix: 'pigeonpost:' });
+  const messageValues = await Promise.all(list.keys.map(k => env.coin.get(k.name)));
+  const messages = messageValues
+    .filter(v => v !== null)
+    .map(v => JSON.parse(v))
+    .sort((a, b) => a.ts - b.ts);
 
   const token = getCookie(request, BOARD_COOKIE_NAME);
   let isPigeon = false;
@@ -767,7 +769,7 @@ export async function onRequestGet(context) {
         wordLimit = await getBestPigeonWordLimit(env.coin, pigeons);
         pigeonThumbs = await getPigeonThumbnails(env.coin, pigeons);
         const usedChecks = await Promise.all(
-          pigeonThumbs.map(p => env.coin.get(`usedpigeon:${p.nftId}`))
+          pigeonThumbs.map(p => env.coin.get(`pigeonpost:${p.nftId}`))
         );
         usedPigeonNfts = pigeonThumbs
           .filter((p, i) => usedChecks[i] !== null)

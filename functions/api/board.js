@@ -3,8 +3,6 @@ import {
   fetchAllAccountNfts, findAllPigeons, getBestPigeonWordLimit, getPigeonThumbnails
 } from '../_shared.js';
 
-const BOARD_KEY = 'board_messages';
-const MAX_STORED = 200;
 const MAX_LEN = 1500;
 const MAX_NAME_LEN = 15;
 
@@ -70,32 +68,30 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_pigeon' }), { status: 400 });
   }
 
-  // Each Pigeon gets its own KV key rather than one shared list — a shared
-  // list requires read-modify-write, and KV is only eventually consistent,
-  // so a concurrent write for a totally different pigeon could silently
-  // clobber the list and un-mark ones that had already posted. Independent
-  // per-token keys avoid that failure mode entirely.
-  const usedKey = `usedpigeon:${requestedNftId}`;
-  const alreadyUsed = await env.coin.get(usedKey);
-  if (alreadyUsed) {
+  // Each Pigeon's post lives at its own KV key, keyed by nftId — never a
+  // shared list. A shared list needs read-modify-write, and KV is only
+  // eventually consistent, so a concurrent write for a totally different
+  // pigeon could silently clobber the whole list: either erasing a used-
+  // pigeon mark (letting it post twice) or dropping someone else's already-
+  // posted message entirely. Independent per-token keys make that
+  // impossible — one pigeon's write can never touch another's.
+  const postKey = `pigeonpost:${requestedNftId}`;
+  const alreadyPosted = await env.coin.get(postKey);
+  if (alreadyPosted) {
     return new Response(JSON.stringify({ error: 'pigeon_already_posted' }), { status: 403 });
   }
 
-  const raw = await env.coin.get(BOARD_KEY);
-  const messages = raw ? JSON.parse(raw) : [];
-  messages.push({ text, name, image: match.image, nftId: requestedNftId, acct: payload.acct, pigeonCount: pigeons.length, ts: Math.floor(Date.now() / 1000) });
-  const trimmed = messages.slice(-MAX_STORED);
-  await env.coin.put(BOARD_KEY, JSON.stringify(trimmed));
-
   const nowTs = Math.floor(Date.now() / 1000);
-  await env.coin.put(usedKey, String(nowTs));
+  await env.coin.put(postKey, JSON.stringify({
+    text, name, image: match.image, nftId: requestedNftId, acct: payload.acct, pigeonCount: pigeons.length, ts: nowTs
+  }));
 
   // Keystone: the moment this wallet's last available Pigeon gets used.
   // Only set once — checks every other held Pigeon's used-state fresh
   // rather than trusting anything cached from before this request.
   const otherThumbs = thumbs.filter(t => t.nftId !== requestedNftId);
   const otherUsedChecks = await Promise.all(
-    otherThumbs.map(t => env.coin.get(`usedpigeon:${t.nftId}`))
+    otherThumbs.map(t => env.coin.get(`pigeonpost:${t.nftId}`))
   );
   const allNowUsed = otherUsedChecks.every(v => v !== null);
   if (allNowUsed) {
