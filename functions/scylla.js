@@ -170,7 +170,7 @@ const SCYLLA_HTML = `<!DOCTYPE html>
       xummAuth = new XummPkce(XAMAN_API_KEY, {
         implicit: true,
         rememberJwt: false,
-        redirectUrl: 'https://soitbegins.xyz/'
+        redirectUrl: 'https://soitbegins.xyz/scylla'
       });
       xummAuth.on('error', (err)=>{
         console.error('Xaman auth error', err);
@@ -205,6 +205,10 @@ const SCYLLA_HTML = `<!DOCTYPE html>
     }
     return xummAuth;
   }
+  // Instantiate immediately so a page load that's actually a mobile
+  // return-from-Xaman redirect gets its pending auth state picked up
+  // automatically, instead of sitting inert until a second click.
+  getAuth();
 
   scanBtn.addEventListener('click', ()=>{
     scanBtn.disabled = true;
