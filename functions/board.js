@@ -352,6 +352,48 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     margin-bottom:2.5rem;
     text-align:center;
   }
+  .scan-overlay{
+    position:fixed;
+    inset:0;
+    z-index:50;
+    background:#08080a;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+  }
+  .scan-overlay.active{ display:flex; }
+  .scan-overlay-inner{ max-width:480px; padding:6vw; }
+  .scan-title{
+    font-size:clamp(20px,4vw,32px);
+    letter-spacing:0.12em;
+    color:#39ff14;
+    text-shadow:0 0 14px rgba(57,255,20,0.5);
+    margin-bottom:2rem;
+  }
+  .scan-line{
+    font-size:14px;
+    letter-spacing:0.1em;
+    color:rgba(232,232,232,0.5);
+    margin-bottom:0.9rem;
+    opacity:0;
+    transition:opacity 0.3s ease;
+  }
+  .scan-line.show{ opacity:1; }
+  .scan-result{ color:#39ff14; }
+  .scan-cursor{
+    display:inline-block;
+    width:8px;
+    height:1em;
+    background:#39ff14;
+    vertical-align:-2px;
+    margin-left:4px;
+    animation:blink 0.6s step-end infinite;
+  }
+  @keyframes blink{
+    0%, 50%{ opacity:1; }
+    51%, 100%{ opacity:0; }
+  }
 </style>
 </head>
 <body>
@@ -365,6 +407,14 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     ${connectSection}
     ${messageRows}
     ${bottomSection}
+  </div>
+
+  <div class="scan-overlay" id="scanOverlay">
+    <div class="scan-overlay-inner">
+      <div class="scan-title">C0NNECT!NG<span class="scan-cursor"></span></div>
+      <div class="scan-line" id="scanLine1">P!GE0N S!GNATURE........<span class="scan-result" id="scanResult1"></span></div>
+      <div class="scan-line" id="scanLine2">0PEN!NG RELAY...</div>
+    </div>
   </div>
 
 <script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
@@ -454,23 +504,42 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     }
   });
   ` : (!isPigeon ? `
+  const overlay = document.getElementById('scanOverlay');
+  function runScanAnimation(){
+    return new Promise(resolve => {
+      overlay.classList.add('active');
+      const l1 = document.getElementById('scanLine1');
+      const l2 = document.getElementById('scanLine2');
+      const r1 = document.getElementById('scanResult1');
+      setTimeout(()=>{ l1.classList.add('show'); r1.textContent = 'CHECK1NG'; }, 200);
+      setTimeout(()=>{ r1.textContent = 'FOUND'; }, 700);
+      setTimeout(()=>{ l2.classList.add('show'); }, 1000);
+      setTimeout(resolve, 1600);
+    });
+  }
+
   let xummAuth = null;
   function getAuth(){
     if(!xummAuth){
       xummAuth = new XummPkce(XAMAN_API_KEY, {
         implicit: true,
         rememberJwt: false,
-        redirectUrl: 'https://soitbegins.xyz/board'
+        redirectUrl: 'https://soitbegins.xyz/'
       });
       xummAuth.on('error', (err)=>{
+        overlay.classList.remove('active');
         document.getElementById('connectStatus').textContent = 'ERR://LOGIN_ABORTED';
         document.getElementById('connectBtn').disabled = false;
       });
       xummAuth.on('success', async ()=>{
         const state = await xummAuth.state();
         const jwt = state && state.jwt;
-        if(!jwt){ document.getElementById('connectStatus').textContent = 'ERR://NO_WALLET_DATA'; return; }
-        document.getElementById('connectStatus').textContent = 'VER!FY!NG...';
+        if(!jwt){
+          overlay.classList.remove('active');
+          document.getElementById('connectStatus').textContent = 'ERR://NO_WALLET_DATA';
+          document.getElementById('connectBtn').disabled = false;
+          return;
+        }
         try {
           const res = await fetch('/api/connect', {
             method: 'POST',
@@ -479,13 +548,15 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
           });
           const data = await res.json();
           if (data.ok) {
-            document.getElementById('connectStatus').textContent = 'C0NNECTED :: 0PEN!NG RELAY...';
+            await runScanAnimation();
             window.location.href = window.location.pathname + '?connected=1#pigeonWalletBoard';
           } else {
+            overlay.classList.remove('active');
             document.getElementById('connectStatus').textContent = 'ERR://C0NNECT!0N FA!LED';
             document.getElementById('connectBtn').disabled = false;
           }
         } catch(e) {
+          overlay.classList.remove('active');
           document.getElementById('connectStatus').textContent = 'ERR://SIGNAL_LOST';
           document.getElementById('connectBtn').disabled = false;
         }
@@ -495,8 +566,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   document.getElementById('connectBtn').addEventListener('click', ()=>{
     document.getElementById('connectBtn').disabled = true;
-    document.getElementById('connectStatus').textContent = 'OPEN!NG SECURE CHANNEL...';
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    document.getElementById('connectStatus').textContent = '';
+    overlay.classList.add('active');
     getAuth().authorize();
   });
   ` : '')}
