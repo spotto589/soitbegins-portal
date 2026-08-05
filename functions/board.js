@@ -180,7 +180,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   .msg-top{
     display:flex;
-    align-items:stretch;
+    align-items:flex-start;
     min-height:128px;
   }
   .msg-plain-wrap{
@@ -237,6 +237,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .msg-avatar{
     flex:0 0 128px;
     width:128px;
+    aspect-ratio:1;
+    height:auto;
     object-fit:cover;
     border:none;
     border-right:2px solid rgba(255,0,60,0.5);
