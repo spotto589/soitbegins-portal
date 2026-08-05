@@ -626,6 +626,11 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     }
     return xummAuth;
   }
+  // Instantiate immediately (not just on click) so a page load that's
+  // actually a mobile return-from-Xaman redirect gets its pending auth
+  // state picked up automatically, instead of sitting inert until the
+  // user clicks connect a second time.
+  getAuth();
   document.getElementById('connectBtn').addEventListener('click', ()=>{
     document.getElementById('connectBtn').disabled = true;
     document.getElementById('connectStatus').textContent = '';
