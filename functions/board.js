@@ -827,7 +827,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     </div>
     <div class="signal-panel">
       <details class="tier-legend">
-        <summary>P!GE0N T!ER LEGEND</summary>
+        <summary>// CHANGE S!GNATURE C0L0UR</summary>
         <div class="tier-legend-body">
           <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS</div></div>
           <div class="msg-row tl-row tier-pink"><div class="msg-plain tl-text tier-pink">5-12 P!GE0NS</div></div>
