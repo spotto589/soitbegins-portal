@@ -169,8 +169,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     font-size:clamp(16px,4vw,28px);
     font-weight:700;
     letter-spacing:0.14em;
-    color:#fff;
-    text-shadow:0 0 6px rgba(57,255,20,0.2);
+    color:#39ff14;
+    text-shadow:0 0 8px rgba(57,255,20,0.7), 0 0 18px rgba(57,255,20,0.35);
     margin-bottom:1.25rem;
     text-align:center;
     word-break:break-word;
@@ -232,11 +232,23 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     background:rgba(0,255,242,0.03);
     overflow:hidden;
   }
-  .collection-link-wrap{
-    text-align:center;
+  .btn-group{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:0.9rem;
     padding:1.25rem 1rem;
     border-bottom:1px solid rgba(0,255,242,0.18);
   }
+  .collection-link-wrap{
+    text-align:center;
+  }
+  .connect-wrap{
+    margin-bottom:0;
+    text-align:center;
+  }
+  .btn-group .connect-btn{ margin-top:0; }
   .tier-legend{
     border:none;
     background:transparent;
@@ -277,23 +289,25 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   .tl-text{ font-size:13px; }
   .collection-link{
-    display:inline-block;
-    font-size:13px;
+    display:inline-flex;
+    align-items:center;
+    background:#ffd500;
+    border:2px solid #000;
+    color:#000;
+    font-family:inherit;
     font-weight:700;
-    letter-spacing:0.12em;
+    font-size:15px;
+    letter-spacing:0.1em;
+    padding:0.9em 1.6em;
     text-transform:uppercase;
-    color:#00fff2;
-    text-shadow:0 0 8px rgba(0,255,242,0.5);
     text-decoration:none;
-    border:1px solid rgba(0,255,242,0.6);
-    background:rgba(0,255,242,0.06);
-    padding:0.85em 1.8em;
-    transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    box-shadow:0 0 18px rgba(255,213,0,0.55);
+    transition:transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
   }
   .collection-link:hover{
-    color:#7fffef;
-    border-color:#7fffef;
-    background:rgba(0,255,242,0.15);
+    background:#ffe14d;
+    box-shadow:0 0 26px rgba(255,213,0,0.8);
+    transform:translateY(-1px);
   }
   .msg-row{
     background:#08080a;
@@ -647,21 +661,21 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     display:inline-flex;
     align-items:center;
     gap:0.7em;
-    background:#ffb000;
+    background:#ffd500;
     border:2px solid #000;
     color:#000;
     font-family:inherit;
     font-weight:700;
-    font-size:16px;
+    font-size:15px;
     letter-spacing:0.1em;
-    padding:0.9em 1.8em;
+    padding:0.9em 1.6em;
     cursor:pointer;
     text-transform:uppercase;
-    box-shadow:0 0 18px rgba(255,176,0,0.55);
+    box-shadow:0 0 18px rgba(255,213,0,0.55);
     transition:transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
     overflow:hidden;
   }
-  .connect-btn:hover{ background:#ffc733; box-shadow:0 0 26px rgba(255,176,0,0.8); transform:translateY(-1px); }
+  .connect-btn:hover{ background:#ffe14d; box-shadow:0 0 26px rgba(255,213,0,0.8); transform:translateY(-1px); }
   .connect-btn:disabled{ opacity:0.5; cursor:default; transform:none; }
   .connect-btn .caution{ font-size:1.15em; }
   .cb-label{
@@ -725,10 +739,6 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   .gate-note .connect-btn{
     margin-top:0.75rem;
-  }
-  .connect-wrap{
-    margin-bottom:2.5rem;
-    text-align:center;
   }
   .session-controls{
     text-align:center;
@@ -794,6 +804,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
 <body>
   <canvas id="staticBg"></canvas>
   <div class="page">
+    <h1>S!GNAL_NODE:://P!GΞON_RELAY<span class="title-rule"></span></h1>
     <div class="construction-notice">
       <div class="cn-stripe"></div>
       <div class="cn-title">⚠️⚠️⚠️ UNDER CONSTRUCTION ⚠️⚠️⚠️</div>
@@ -806,10 +817,12 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       <div class="cn-footer">🚧⚠️ THE CROWN IS STILL BUILDING ⚠️🚧</div>
       <div class="cn-stripe bottom"></div>
     </div>
-    <h1>S!GNAL_NODE:://P!GΞON_RELAY<span class="title-rule"></span></h1>
     <div class="signal-panel">
-      <div class="collection-link-wrap">
-        <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">BEC0ME THE S!GNAL →</a>
+      <div class="btn-group">
+        ${connectSection}
+        <div class="collection-link-wrap">
+          <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">BEC0ME THE S!GNAL →</a>
+        </div>
       </div>
       <details class="tier-legend">
         <summary>P!GE0N T!ER LEGEND</summary>
@@ -823,7 +836,6 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
         </div>
       </details>
     </div>
-    ${connectSection}
     ${sessionControls}
     ${messageRows}
     ${bottomSection}
