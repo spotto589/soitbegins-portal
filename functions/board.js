@@ -384,13 +384,13 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     text-shadow:0 0 6px rgba(199,125,255,0.55);
   }
   .msg-plain.tier-gold{
-    color:#39ff14;
-    text-shadow:0 0 6px rgba(57,255,20,0.7);
+    color:#ffd700;
+    text-shadow:0 0 8px rgba(255,215,0,0.6);
     animation:golden-pulse 2.2s ease-in-out infinite;
   }
   @keyframes golden-pulse{
-    0%, 100%{ text-shadow:0 0 6px rgba(57,255,20,0.7); }
-    50%{ text-shadow:0 0 14px rgba(57,255,20,1), 0 0 26px rgba(57,255,20,0.6); }
+    0%, 100%{ text-shadow:0 0 8px rgba(255,215,0,0.6); }
+    50%{ text-shadow:0 0 16px rgba(255,215,0,0.9), 0 0 30px rgba(255,215,0,0.5); }
   }
   .msg-plain.tier-diamond{
     background:linear-gradient(90deg, #b9f2ff 0%, #ffffff 25%, #7fd8ff 50%, #ffffff 75%, #b9f2ff 100%);
@@ -409,9 +409,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .msg-row.tier-pink{ border-color:rgba(255,110,199,0.4); }
   .msg-row.tier-red{ border-color:rgba(255,59,59,0.4); }
   .msg-row.tier-purple{ border-color:rgba(199,125,255,0.4); }
-  .msg-row.tier-gold{ background:#ffd700; border-color:#000; }
-  .msg-row.tier-gold .msg-binary{ color:#c0c0c0; text-shadow:none; border-top-color:rgba(0,0,0,0.25); }
-  .msg-row.tier-gold .msg-meta{ border-top-color:rgba(0,0,0,0.25); }
+  .msg-row.tier-gold{ border-color:rgba(255,215,0,0.7); }
   .msg-row.tier-diamond{
     position:relative;
     overflow:hidden;
