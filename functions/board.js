@@ -491,14 +491,10 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     border:none;
   }
   @media (min-width:641px){
-    .msg-top{ align-items:stretch; min-height:180px; }
+    .msg-top{ min-height:180px; }
     .msg-avatar{
       flex:0 0 180px;
       width:180px;
-      aspect-ratio:auto;
-      height:auto;
-      align-self:stretch;
-      object-fit:cover;
     }
   }
   .msg-avatar-blank{
