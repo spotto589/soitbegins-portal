@@ -206,6 +206,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     overflow:hidden;
   }
   .msg-top{
+    position:relative;
     display:flex;
     align-items:flex-start;
     min-height:128px;
@@ -230,6 +231,10 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     font-size:14px;
   }
   .msg-plain.msg-locked{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
     width:100%;
     text-align:center;
     color:#ff003c;
@@ -238,6 +243,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     font-size:20px;
     letter-spacing:0.1em;
     text-shadow:0 0 10px rgba(255,0,60,0.6);
+    pointer-events:none;
+    z-index:2;
   }
   .msg-plain.tier-green{
     color:#39ff14;
@@ -263,13 +270,14 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .msg-meta{
     padding:0.6rem 1.1rem 0.85rem;
     border-top:1px solid rgba(57,255,20,0.1);
-    font-size:10px;
+    font-size:12px;
     letter-spacing:0.05em;
-    color:#ffd700;
-    text-shadow:0 0 4px rgba(255,215,0,0.35);
+    color:#ff003c;
+    text-shadow:0 0 4px rgba(255,0,60,0.4);
   }
   .msg-ts{
-    color:rgba(255,215,0,0.6);
+    color:rgba(255,0,60,0.7);
+    font-variant-numeric:tabular-nums;
   }
   .msg-avatar{
     flex:0 0 128px;
@@ -612,12 +620,14 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   // so everyone sees the same signing time.
   const ADELAIDE_TZ = 'Australia/Adelaide';
   function formatAdelaideDateTime(ts) {
-    const formatted = new Intl.DateTimeFormat('en-AU', {
+    const parts = new Intl.DateTimeFormat('en-AU', {
       timeZone: ADELAIDE_TZ,
-      day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', hour12: true
-    }).format(new Date(ts * 1000));
-    return formatted + ' KST';
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hourCycle: 'h23'
+    }).formatToParts(new Date(ts * 1000));
+    const get = (type) => parts.find(p => p.type === type).value;
+    return `${get('year')}.${get('month')}.${get('day')} :: ${get('hour')}:${get('minute')}:${get('second')} KST`;
   }
 
   const keystoneEl = document.getElementById('keystoneTime');
