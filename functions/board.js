@@ -318,7 +318,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     position:relative;
     display:flex;
     align-items:flex-start;
-    min-height:128px;
+    min-height:150px;
   }
   .msg-plain-wrap{
     position:relative;
@@ -327,6 +327,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     align-self:stretch;
     display:flex;
     align-items:center;
+    justify-content:center;
+    text-align:center;
     padding:0.85rem 1.1rem;
   }
   .msg-binary{
@@ -482,8 +484,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     font-variant-numeric:tabular-nums;
   }
   .msg-avatar{
-    flex:0 0 128px;
-    width:128px;
+    flex:0 0 150px;
+    width:150px;
     aspect-ratio:1;
     height:auto;
     object-fit:contain;
@@ -491,10 +493,10 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     border:none;
   }
   @media (min-width:641px){
-    .msg-top{ min-height:180px; }
+    .msg-top{ min-height:220px; }
     .msg-avatar{
-      flex:0 0 180px;
-      width:180px;
+      flex:0 0 220px;
+      width:220px;
     }
   }
   .msg-avatar-blank{
