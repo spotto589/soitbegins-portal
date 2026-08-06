@@ -344,7 +344,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
           <li>ver!f!ed ledger</li>
           <li>the real path</li>
         </ul>
-        <a class="mf-link" href="https://deeptide.co/king-thwncy" target="_blank" rel="noopener">V!EW C0LLECT!0N →</a>
+        <a class="mf-link" href="https://deeptide.co/king-thwncy" target="_blank" rel="noopener">BEC0ME THE S!GNAL →</a>
       </div>
     </div>
 

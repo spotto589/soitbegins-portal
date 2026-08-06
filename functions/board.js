@@ -212,6 +212,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     min-height:128px;
   }
   .msg-plain-wrap{
+    position:relative;
     flex:1;
     min-width:0;
     align-self:stretch;
@@ -235,6 +236,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   .msg-plain{
     font-size:14px;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
   }
   .msg-plain.msg-locked{
     position:absolute;

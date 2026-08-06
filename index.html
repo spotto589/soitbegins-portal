@@ -647,6 +647,11 @@
     return xummAuth;
   }
 
+  // Instantiate immediately (not just on click) so a page load that's
+  // actually a return-from-Xaman redirect gets its pending auth
+  // state picked up automatically, instead of sitting inert until the
+  // user clicks enter a second time.
+  getAuth();
   enterBtn.addEventListener('click', ()=>{
     if(!ENTRY_ENABLED) return;
     enterBtn.disabled = true;
