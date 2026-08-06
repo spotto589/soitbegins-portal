@@ -234,12 +234,11 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   .btn-group{
     display:flex;
-    flex-wrap:wrap;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
     gap:0.9rem;
-    padding:1.25rem 1rem;
-    border-bottom:1px solid rgba(255,213,0,0.25);
+    margin-bottom:1.5rem;
   }
   .collection-link-wrap{
     text-align:center;
@@ -820,13 +819,13 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       <div class="cn-footer">🚧⚠️ THE CROWN IS STILL BUILDING ⚠️🚧</div>
       <div class="cn-stripe bottom"></div>
     </div>
-    <div class="signal-panel">
-      <div class="btn-group">
-        ${connectSection}
-        <div class="collection-link-wrap">
-          <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener"><span class="cb-label" style="animation-delay:0.6s">BEC0ME THE S!GNAL →</span><span class="cb-binary" aria-hidden="true" style="animation-delay:0.6s">01010011 01001001 01000111 01001110 01000001 01001100</span></a>
-        </div>
+    <div class="btn-group">
+      ${connectSection}
+      <div class="collection-link-wrap">
+        <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener"><span class="cb-label" style="animation-delay:0.6s">BEC0ME THE S!GNAL →</span><span class="cb-binary" aria-hidden="true" style="animation-delay:0.6s">01010011 01001001 01000111 01001110 01000001 01001100</span></a>
       </div>
+    </div>
+    <div class="signal-panel">
       <details class="tier-legend">
         <summary>P!GE0N T!ER LEGEND</summary>
         <div class="tier-legend-body">
