@@ -410,6 +410,9 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .msg-row.tier-red{ border-color:rgba(255,59,59,0.4); }
   .msg-row.tier-purple{ border-color:rgba(199,125,255,0.4); }
   .msg-row.tier-gold{ border-color:rgba(255,215,0,0.7); }
+  .msg-row.tier-gold .msg-binary{ border-top-color:rgba(255,215,0,0.4); }
+  .msg-row.tier-gold .msg-meta{ border-top-color:rgba(255,215,0,0.35); }
+  .msg-row.tier-gold .msg-avatar{ border-right:1px solid rgba(255,215,0,0.4); }
   .msg-row.tier-diamond{
     position:relative;
     overflow:hidden;
