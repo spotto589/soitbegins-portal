@@ -172,6 +172,24 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     word-break:break-word;
     overflow-wrap:anywhere;
   }
+  .collection-link-wrap{
+    text-align:center;
+    margin-bottom:1.5rem;
+  }
+  .collection-link{
+    display:inline-block;
+    font-size:11px;
+    letter-spacing:0.08em;
+    color:#00fff2;
+    text-shadow:0 0 8px rgba(0,255,242,0.5);
+    text-decoration:none;
+    border-bottom:1px solid rgba(0,255,242,0.4);
+    padding-bottom:2px;
+  }
+  .collection-link:hover{
+    color:#7fffef;
+    border-bottom-color:#7fffef;
+  }
   .msg-row{
     background:#08080a;
     border:1px solid rgba(57,255,20,0.25);
@@ -239,7 +257,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     width:128px;
     aspect-ratio:1;
     height:auto;
-    object-fit:cover;
+    object-fit:contain;
+    background:#08080a;
     border:none;
     border-right:2px solid rgba(255,0,60,0.5);
   }
@@ -270,7 +289,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     width:100%;
     aspect-ratio:1;
     height:auto;
-    object-fit:cover;
+    object-fit:contain;
+    background:#08080a;
     border:2px solid rgba(57,255,20,0.25);
     border-radius:4px;
     cursor:pointer;
@@ -496,6 +516,9 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   <canvas id="staticBg"></canvas>
   <div class="page">
     <h1>S!GNAL_NODE:://P!GΞON_RELAY</h1>
+    <div class="collection-link-wrap">
+      <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">V!EW P!GΞ0NS 0N DEEPT!DE →</a>
+    </div>
     ${connectSection}
     ${sessionControls}
     ${messageRows}
