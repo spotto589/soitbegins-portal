@@ -37,7 +37,7 @@ function renderMessageRow(msg, canDecode) {
         <div class="msg-plain-wrap">${plain}</div>
       </div>
       <div class="msg-binary">${binary}</div>
-      <div class="msg-meta">S!GNED :: ${signer}${ts ? ` · ${ts}` : ''}</div>
+      <div class="msg-meta"><span class="msg-meta-left">S!GNED :: <span class="msg-signer">${signer}</span></span>${ts ? `<span class="msg-meta-right">${ts}</span>` : ''}</div>
     </div>`;
 }
 
@@ -100,7 +100,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
           <div class="msg-plain-wrap"><div class="msg-plain ${previewTierClass}" id="plainPreview"></div></div>
         </div>
         <div class="msg-binary" id="binaryPreview"></div>
-        <div class="msg-meta">S!GNED :: <span id="previewName"></span>${acctDisplay || 'Y0U'}</div>
+        <div class="msg-meta"><span class="msg-meta-left">S!GNED :: <span class="msg-signer"><span id="previewName"></span>${acctDisplay || 'Y0U'}</span></span></div>
       </div>
       <button class="post-btn" id="postBtn"${allPigeonsUsed ? ' disabled' : ''}>S!GN & P0ST</button>
       <div class="post-status" id="postStatus"></div>
@@ -268,12 +268,29 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     50%{ text-shadow:0 0 18px rgba(255,215,0,1), 0 0 36px rgba(255,215,0,0.85); }
   }
   .msg-meta{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:0.75rem;
     padding:0.6rem 1.1rem 0.85rem;
     border-top:1px solid rgba(57,255,20,0.1);
     font-size:12px;
     letter-spacing:0.05em;
     color:#ff003c;
     text-shadow:0 0 4px rgba(255,0,60,0.4);
+  }
+  .msg-meta-left{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .msg-meta-right{
+    flex:0 0 auto;
+  }
+  .msg-signer{
+    color:#ffd700;
+    text-shadow:0 0 4px rgba(255,215,0,0.4);
   }
   .msg-ts{
     color:rgba(255,0,60,0.7);
@@ -624,10 +641,11 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       timeZone: ADELAIDE_TZ,
       year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit', second: '2-digit',
-      hourCycle: 'h23'
+      hour12: true
     }).formatToParts(new Date(ts * 1000));
     const get = (type) => parts.find(p => p.type === type).value;
-    return get('year') + '.' + get('month') + '.' + get('day') + ' :: ' + get('hour') + ':' + get('minute') + ':' + get('second') + ' KST';
+    const ampm = get('dayPeriod').toUpperCase();
+    return get('year') + '.' + get('month') + '.' + get('day') + ' :: ' + get('hour') + ':' + get('minute') + ':' + get('second') + ' ' + ampm + ' KST';
   }
 
   const keystoneEl = document.getElementById('keystoneTime');
