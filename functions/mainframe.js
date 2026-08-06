@@ -216,6 +216,15 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
   }
   .mf-king-tag.false{ color:#ff003c; border-color:rgba(255,0,60,0.4); }
   .mf-king-tag.true{ color:#39ff14; border-color:rgba(57,255,20,0.4); }
+  .mf-king-img{
+    width:100%;
+    max-width:280px;
+    display:block;
+    margin-bottom:1rem;
+    border-radius:4px;
+  }
+  .mf-king.false .mf-king-img{ border:2px solid rgba(255,0,60,0.4); }
+  .mf-king.true .mf-king-img{ border:2px solid rgba(57,255,20,0.4); }
   .mf-king-name{
     font-size:16px;
     letter-spacing:0.08em;
@@ -314,7 +323,8 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
       <div class="mf-label">H!DDEN ARCH!VE :: DEC0DED</div>
       <div class="mf-heading">THE TW0 K!NGS</div>
 
-      <div class="mf-king">
+      <div class="mf-king false">
+        <img class="mf-king-img" src="https://ipfs.io/ipfs/bafybeib2kykxegfu3wllvngmbjl7igzyt5f5pnqi4k54lbwwlpryeermp4/297.png" alt="The False King" loading="lazy">
         <div class="mf-king-tag false">K!NG 0NE</div>
         <div class="mf-king-name">THE FALSE K!NG</div>
         <ul class="mf-list">
@@ -325,7 +335,8 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
         <a class="mf-link" href="https://xrp.cafe/collection/king" target="_blank" rel="noopener">V!EW C0LLECT!0N →</a>
       </div>
 
-      <div class="mf-king">
+      <div class="mf-king true">
+        <img class="mf-king-img" src="https://ipfs.io/ipfs/bafybeib2kykxegfu3wllvngmbjl7igzyt5f5pnqi4k54lbwwlpryeermp4/2394.png" alt="The True King" loading="lazy">
         <div class="mf-king-tag true">K!NG TW0</div>
         <div class="mf-king-name">THE TRUE K!NG</div>
         <ul class="mf-list">
