@@ -814,7 +814,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
         The path may change.<br>
         The board may shift.<br>
         The moment you arrived...<br>
-        will never be rewritten.
+        can never be rewritten.
       </div>
       <div class="cn-footer">🚧⚠️ THE CROWN IS STILL BUILDING ⚠️🚧</div>
       <div class="cn-stripe bottom"></div>
