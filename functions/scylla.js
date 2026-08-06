@@ -61,6 +61,15 @@ const SCYLLA_HTML = `<!DOCTYPE html>
     color:#39ff14;
   }
   .scan-status.denied{ color:#ff003c; }
+  .mf-entry-link{
+    display:inline-block;
+    margin-top:2.5rem;
+    font-size:10px;
+    letter-spacing:0.15em;
+    color:rgba(232,232,232,0.25);
+    text-decoration:none;
+  }
+  .mf-entry-link:hover{ color:rgba(232,232,232,0.5); }
 
   .scan-overlay{
     position:fixed;
@@ -114,6 +123,7 @@ const SCYLLA_HTML = `<!DOCTYPE html>
     <p class="intro">Present a GL!TCH key or Σκύλλα card to begin.</p>
     <button class="scan-btn" id="scanBtn">BEG!N SCAN</button>
     <div class="scan-status" id="scanStatus"></div>
+    <a class="mf-entry-link" href="/mainframe">[ DEEP SCAN PR0T0C0L ]</a>
   </div>
 
   <div class="scan-overlay" id="scanOverlay">

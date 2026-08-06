@@ -86,6 +86,13 @@ export function hasAccessKey(nfts) {
   );
 }
 
+// Mainframe gate: GL!TCH key specifically, not Scylla. The entry point is
+// framed as a normal Scylla scan — this is the check that quietly decides
+// whether that scan actually "hacks" through.
+export function hasGlitchKey(nfts) {
+  return nfts.some(n => n.Issuer === GLITCH_ISSUER && n.NFTokenTaxon === GLITCH_TAXON);
+}
+
 export function findKingNft(nfts) {
   return nfts.find(n => n.Issuer === KING_ISSUER && n.NFTokenTaxon === KING_TAXON) || null;
 }
