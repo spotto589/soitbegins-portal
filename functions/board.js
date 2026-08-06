@@ -278,11 +278,10 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   .msg-meta{
     display:flex;
-    flex-wrap:wrap;
-    align-items:baseline;
-    justify-content:space-between;
-    row-gap:0.25rem;
-    column-gap:0.75rem;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    row-gap:0.35rem;
     padding:0.6rem 1.1rem 0.85rem;
     border-top:1px solid rgba(57,255,20,0.1);
     font-size:12px;
@@ -291,17 +290,29 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     text-shadow:0 0 4px rgba(255,0,60,0.4);
   }
   .msg-meta-left{
-    flex:1 1 auto;
     min-width:0;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+    max-width:100%;
+    overflow-wrap:break-word;
   }
   .msg-meta-right{
     flex:0 0 auto;
     font-size:10px;
   }
-  @media (min-width:481px){
+  @media (min-width:641px){
+    .msg-meta{
+      flex-direction:row;
+      flex-wrap:wrap;
+      align-items:baseline;
+      justify-content:space-between;
+      column-gap:0.75rem;
+      text-align:left;
+    }
+    .msg-meta-left{
+      flex:1 1 auto;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
     .msg-meta-right{ font-size:12px; }
   }
   .msg-signer{
