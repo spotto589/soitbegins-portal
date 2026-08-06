@@ -334,7 +334,6 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     object-fit:contain;
     background:#08080a;
     border:none;
-    border-right:2px solid rgba(255,0,60,0.5);
   }
   @media (min-width:641px){
     .msg-avatar{
@@ -612,7 +611,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   <div class="page">
     <h1>S!GNAL_NODE:://P!GΞON_RELAY<span class="title-rule"></span></h1>
     <div class="collection-link-wrap">
-      <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">V!EW P!GΞ0NS 0N DEEPT!DE →</a>
+      <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">BEC0ME THE S!GNAL →</a>
     </div>
     ${connectSection}
     ${sessionControls}
