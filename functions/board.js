@@ -227,6 +227,12 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     color:rgba(57,255,20,0.6);
     word-break:break-all;
   }
+  .msg-binary a{
+    color:inherit;
+    text-decoration:none;
+    pointer-events:none;
+    cursor:default;
+  }
   .msg-plain{
     font-size:14px;
   }
@@ -236,12 +242,15 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     top:50%;
     transform:translate(-50%,-50%);
     width:100%;
+    box-sizing:border-box;
+    padding:0 1rem;
     text-align:center;
+    white-space:nowrap;
     color:#ff003c;
     font-weight:700;
     font-style:normal;
-    font-size:20px;
-    letter-spacing:0.1em;
+    font-size:clamp(14px, 4.2vw, 20px);
+    letter-spacing:0.08em;
     text-shadow:0 0 10px rgba(255,0,60,0.6);
     pointer-events:none;
     z-index:2;
@@ -269,9 +278,11 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   .msg-meta{
     display:flex;
+    flex-wrap:wrap;
     align-items:baseline;
     justify-content:space-between;
-    gap:0.75rem;
+    row-gap:0.25rem;
+    column-gap:0.75rem;
     padding:0.6rem 1.1rem 0.85rem;
     border-top:1px solid rgba(57,255,20,0.1);
     font-size:12px;
@@ -280,6 +291,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     text-shadow:0 0 4px rgba(255,0,60,0.4);
   }
   .msg-meta-left{
+    flex:1 1 auto;
     min-width:0;
     overflow:hidden;
     text-overflow:ellipsis;
@@ -287,6 +299,10 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   .msg-meta-right{
     flex:0 0 auto;
+    font-size:10px;
+  }
+  @media (min-width:481px){
+    .msg-meta-right{ font-size:12px; }
   }
   .msg-signer{
     color:#ffd700;
