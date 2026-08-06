@@ -226,14 +226,20 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     color:#ffd700;
     text-shadow:0 0 6px rgba(255,215,0,0.5);
   }
-  .collection-link-wrap{
-    text-align:center;
-    margin-bottom:1.5rem;
-  }
-  .tier-legend{
+  .signal-panel{
     margin-bottom:1.5rem;
     border:1px solid rgba(0,255,242,0.3);
     background:rgba(0,255,242,0.03);
+    overflow:hidden;
+  }
+  .collection-link-wrap{
+    text-align:center;
+    padding:1.25rem 1rem;
+    border-bottom:1px solid rgba(0,255,242,0.18);
+  }
+  .tier-legend{
+    border:none;
+    background:transparent;
   }
   .tier-legend summary{
     cursor:pointer;
@@ -272,17 +278,22 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .tl-text{ font-size:13px; }
   .collection-link{
     display:inline-block;
-    font-size:11px;
-    letter-spacing:0.08em;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
     color:#00fff2;
     text-shadow:0 0 8px rgba(0,255,242,0.5);
     text-decoration:none;
-    border-bottom:1px solid rgba(0,255,242,0.4);
-    padding-bottom:2px;
+    border:1px solid rgba(0,255,242,0.6);
+    background:rgba(0,255,242,0.06);
+    padding:0.85em 1.8em;
+    transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
   .collection-link:hover{
     color:#7fffef;
-    border-bottom-color:#7fffef;
+    border-color:#7fffef;
+    background:rgba(0,255,242,0.15);
   }
   .msg-row{
     background:#08080a;
@@ -647,9 +658,22 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     text-transform:uppercase;
     box-shadow:0 0 18px rgba(255,176,0,0.55);
     transition:transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    animation:connect-flash 1.15s ease-in-out infinite;
   }
-  .connect-btn:hover{ background:#ffc733; box-shadow:0 0 26px rgba(255,176,0,0.8); transform:translateY(-1px); }
-  .connect-btn:disabled{ opacity:0.5; cursor:default; transform:none; }
+  @keyframes connect-flash{
+    0%, 100%{
+      background:#ffb000;
+      box-shadow:0 0 18px rgba(255,176,0,0.55);
+      transform:scale(1);
+    }
+    50%{
+      background:#fff8e0;
+      box-shadow:0 0 34px rgba(255,255,255,0.9), 0 0 20px rgba(255,176,0,0.7);
+      transform:scale(1.035);
+    }
+  }
+  .connect-btn:hover{ animation-play-state:paused; background:#ffc733; box-shadow:0 0 26px rgba(255,176,0,0.8); transform:translateY(-1px); }
+  .connect-btn:disabled{ animation:none; opacity:0.5; cursor:default; transform:none; }
   .connect-btn .caution{ font-size:1.15em; }
   .post-status, .connect-status{
     margin-top:0.6rem;
@@ -754,20 +778,22 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       <div class="cn-stripe bottom"></div>
     </div>
     <h1>S!GNAL_NODE:://P!GΞON_RELAY<span class="title-rule"></span></h1>
-    <div class="collection-link-wrap">
-      <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">BEC0ME THE S!GNAL →</a>
-    </div>
-    <details class="tier-legend">
-      <summary>P!GE0N T!ER LEGEND</summary>
-      <div class="tier-legend-body">
-        <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS</div></div>
-        <div class="msg-row tl-row tier-pink"><div class="msg-plain tl-text tier-pink">5-12 P!GE0NS</div></div>
-        <div class="msg-row tl-row tier-red"><div class="msg-plain tl-text tier-red">13-32 P!GE0NS</div></div>
-        <div class="msg-row tl-row tier-purple"><div class="msg-plain tl-text tier-purple">33-49 P!GE0NS</div></div>
-        <div class="msg-row tl-row tier-gold"><div class="msg-plain tl-text tier-gold">50-98 P!GE0NS</div></div>
-        <div class="msg-row tl-row tier-diamond"><div class="msg-plain tl-text tier-diamond">99+ P!GE0NS</div></div>
+    <div class="signal-panel">
+      <div class="collection-link-wrap">
+        <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">BEC0ME THE S!GNAL →</a>
       </div>
-    </details>
+      <details class="tier-legend">
+        <summary>P!GE0N T!ER LEGEND</summary>
+        <div class="tier-legend-body">
+          <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS</div></div>
+          <div class="msg-row tl-row tier-pink"><div class="msg-plain tl-text tier-pink">5-12 P!GE0NS</div></div>
+          <div class="msg-row tl-row tier-red"><div class="msg-plain tl-text tier-red">13-32 P!GE0NS</div></div>
+          <div class="msg-row tl-row tier-purple"><div class="msg-plain tl-text tier-purple">33-49 P!GE0NS</div></div>
+          <div class="msg-row tl-row tier-gold"><div class="msg-plain tl-text tier-gold">50-98 P!GE0NS</div></div>
+          <div class="msg-row tl-row tier-diamond"><div class="msg-plain tl-text tier-diamond">99+ P!GE0NS</div></div>
+        </div>
+      </details>
+    </div>
     ${connectSection}
     ${sessionControls}
     ${messageRows}
