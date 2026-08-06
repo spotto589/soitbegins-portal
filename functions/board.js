@@ -71,7 +71,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
 
   const connectSection = !hasSession ? `
     <div class="connect-wrap">
-      <button class="connect-btn" id="connectBtn"><span class="caution">⚠</span> C0NNECT T0 P!GE0N NETW0RK <span class="caution">⚠</span></button>
+      <button class="connect-btn" id="connectBtn"><span class="cb-label"><span class="caution">⚠</span> C0NNECT T0 P!GE0N NETW0RK <span class="caution">⚠</span></span><span class="cb-binary" aria-hidden="true">01000011 01001111 01001110 01001110 01000101 01000011 01010100</span></button>
       <div class="connect-status" id="connectStatus"></div>
     </div>
   ` : '';
@@ -111,7 +111,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     ? `<div class="gate-note" id="pigeonWalletBoard">
         N0 P!GE0N DETECTED :: B!NARY 0NLY. Y0U CANN0T DEC0DE 0R WR!TE HERE.
         <div class="retry-line">TRY D!FFERENT KEY?</div>
-        <button class="connect-btn" id="connectBtn"><span class="caution">⚠</span> C0NNECT T0 P!GE0N NETW0RK <span class="caution">⚠</span></button>
+        <button class="connect-btn" id="connectBtn"><span class="cb-label"><span class="caution">⚠</span> C0NNECT T0 P!GE0N NETW0RK <span class="caution">⚠</span></span><span class="cb-binary" aria-hidden="true">01000011 01001111 01001110 01001110 01000101 01000011 01010100</span></button>
         <div class="connect-status" id="connectStatus"></div>
       </div>`
     : ''
@@ -642,6 +642,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .post-btn:hover{ background:rgba(57,255,20,0.1); }
   .post-btn:disabled{ opacity:0.5; cursor:default; }
   .connect-btn{
+    position:relative;
     margin-top:0.9rem;
     display:inline-flex;
     align-items:center;
@@ -658,23 +659,51 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     text-transform:uppercase;
     box-shadow:0 0 18px rgba(255,176,0,0.55);
     transition:transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
-    animation:connect-flash 1.15s ease-in-out infinite;
+    overflow:hidden;
   }
-  @keyframes connect-flash{
-    0%, 100%{
-      background:#ffb000;
-      box-shadow:0 0 18px rgba(255,176,0,0.55);
-      transform:scale(1);
-    }
-    50%{
-      background:#fff8e0;
-      box-shadow:0 0 34px rgba(255,255,255,0.9), 0 0 20px rgba(255,176,0,0.7);
-      transform:scale(1.035);
-    }
-  }
-  .connect-btn:hover{ animation-play-state:paused; background:#ffc733; box-shadow:0 0 26px rgba(255,176,0,0.8); transform:translateY(-1px); }
-  .connect-btn:disabled{ animation:none; opacity:0.5; cursor:default; transform:none; }
+  .connect-btn:hover{ background:#ffc733; box-shadow:0 0 26px rgba(255,176,0,0.8); transform:translateY(-1px); }
+  .connect-btn:disabled{ opacity:0.5; cursor:default; transform:none; }
   .connect-btn .caution{ font-size:1.15em; }
+  .cb-label{
+    display:inline-flex;
+    align-items:center;
+    gap:0.7em;
+    animation:cb-label-flicker 4s infinite;
+  }
+  .cb-binary{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#000;
+    color:#39ff14;
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-shadow:0 0 8px rgba(57,255,20,0.8);
+    white-space:nowrap;
+    overflow:hidden;
+    opacity:0;
+    animation:cb-binary-flicker 4s infinite;
+  }
+  @keyframes cb-label-flicker{
+    0%, 84%, 100%{ opacity:1; }
+    86%{ opacity:0; }
+    88%{ opacity:1; }
+    90%{ opacity:0; }
+    92%{ opacity:1; }
+    94%{ opacity:0.2; }
+    96%{ opacity:1; }
+  }
+  @keyframes cb-binary-flicker{
+    0%, 84%, 100%{ opacity:0; }
+    86%{ opacity:1; }
+    88%{ opacity:0; }
+    90%{ opacity:1; }
+    92%{ opacity:0; }
+    94%{ opacity:0.9; }
+    96%{ opacity:0; }
+  }
   .post-status, .connect-status{
     margin-top:0.6rem;
     font-size:12px;
