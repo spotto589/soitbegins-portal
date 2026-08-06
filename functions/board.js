@@ -228,8 +228,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   .signal-panel{
     margin-bottom:1.5rem;
-    border:1px solid rgba(0,255,242,0.3);
-    background:rgba(0,255,242,0.03);
+    border:1px solid rgba(255,213,0,0.35);
+    background:rgba(255,213,0,0.03);
     overflow:hidden;
   }
   .btn-group{
@@ -239,7 +239,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     justify-content:center;
     gap:0.9rem;
     padding:1.25rem 1rem;
-    border-bottom:1px solid rgba(0,255,242,0.18);
+    border-bottom:1px solid rgba(255,213,0,0.25);
   }
   .collection-link-wrap{
     text-align:center;
@@ -259,8 +259,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     padding:0.75rem 1rem;
     font-size:11px;
     letter-spacing:0.1em;
-    color:#00fff2;
-    text-shadow:0 0 6px rgba(0,255,242,0.4);
+    color:#ffd500;
+    text-shadow:0 0 6px rgba(255,213,0,0.4);
     text-transform:uppercase;
     display:flex;
     align-items:center;
@@ -289,6 +289,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   .tl-text{ font-size:13px; }
   .collection-link{
+    position:relative;
     display:inline-flex;
     align-items:center;
     background:#ffd500;
@@ -303,6 +304,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     text-decoration:none;
     box-shadow:0 0 18px rgba(255,213,0,0.55);
     transition:transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    overflow:hidden;
   }
   .collection-link:hover{
     background:#ffe14d;
@@ -821,7 +823,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       <div class="btn-group">
         ${connectSection}
         <div class="collection-link-wrap">
-          <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">BEC0ME THE S!GNAL →</a>
+          <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener"><span class="cb-label" style="animation-delay:1.3s">BEC0ME THE S!GNAL →</span><span class="cb-binary" aria-hidden="true" style="animation-delay:1.3s">01010011 01001001 01000111 01001110 01000001 01001100</span></a>
         </div>
       </div>
       <details class="tier-legend">
