@@ -230,6 +230,46 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     text-align:center;
     margin-bottom:1.5rem;
   }
+  .tier-legend{
+    margin-bottom:1.5rem;
+    border:1px solid rgba(0,255,242,0.3);
+    background:rgba(0,255,242,0.03);
+  }
+  .tier-legend summary{
+    cursor:pointer;
+    list-style:none;
+    padding:0.75rem 1rem;
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:#00fff2;
+    text-shadow:0 0 6px rgba(0,255,242,0.4);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .tier-legend summary::-webkit-details-marker{ display:none; }
+  .tier-legend summary::after{
+    content:'▾';
+    font-size:10px;
+    transition:transform 0.2s ease;
+  }
+  .tier-legend[open] summary::after{ transform:rotate(180deg); }
+  .tier-legend-body{
+    padding:0.25rem 1rem 1rem;
+    display:flex;
+    flex-direction:column;
+    gap:0.5rem;
+  }
+  .tl-row{
+    padding:0.7rem 0.9rem;
+    margin-bottom:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .tl-text{ font-size:13px; }
   .collection-link{
     display:inline-block;
     font-size:11px;
@@ -717,6 +757,17 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     <div class="collection-link-wrap">
       <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">BEC0ME THE S!GNAL →</a>
     </div>
+    <details class="tier-legend">
+      <summary>P!GE0N T!ER LEGEND</summary>
+      <div class="tier-legend-body">
+        <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS</div></div>
+        <div class="msg-row tl-row tier-pink"><div class="msg-plain tl-text tier-pink">5-12 P!GE0NS</div></div>
+        <div class="msg-row tl-row tier-red"><div class="msg-plain tl-text tier-red">13-32 P!GE0NS</div></div>
+        <div class="msg-row tl-row tier-purple"><div class="msg-plain tl-text tier-purple">33-49 P!GE0NS</div></div>
+        <div class="msg-row tl-row tier-gold"><div class="msg-plain tl-text tier-gold">50-98 P!GE0NS</div></div>
+        <div class="msg-row tl-row tier-diamond"><div class="msg-plain tl-text tier-diamond">99+ P!GE0NS</div></div>
+      </div>
+    </details>
     ${connectSection}
     ${sessionControls}
     ${messageRows}
