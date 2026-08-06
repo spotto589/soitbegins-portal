@@ -627,7 +627,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       hourCycle: 'h23'
     }).formatToParts(new Date(ts * 1000));
     const get = (type) => parts.find(p => p.type === type).value;
-    return `${get('year')}.${get('month')}.${get('day')} :: ${get('hour')}:${get('minute')}:${get('second')} KST`;
+    return get('year') + '.' + get('month') + '.' + get('day') + ' :: ' + get('hour') + ':' + get('minute') + ':' + get('second') + ' KST';
   }
 
   const keystoneEl = document.getElementById('keystoneTime');
