@@ -29,6 +29,7 @@ function renderMessageRow(msg, canDecode) {
   const plain = canDecode
     ? `<div class="msg-plain ${tierClass}">${escapeHtml(msg.text)}</div>`
     : `<div class="msg-plain msg-locked">[ ENCRYPTED ]</div>`;
+  const ts = msg.ts ? `<span class="msg-ts" data-ts="${msg.ts}"></span>` : '';
   return `
     <div class="msg-row">
       <div class="msg-top">
@@ -36,7 +37,7 @@ function renderMessageRow(msg, canDecode) {
         <div class="msg-plain-wrap">${plain}</div>
       </div>
       <div class="msg-binary">${binary}</div>
-      <div class="msg-meta">S!GNED :: ${signer}</div>
+      <div class="msg-meta">S!GNED :: ${signer}${ts ? ` · ${ts}` : ''}</div>
     </div>`;
 }
 
@@ -68,7 +69,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
 
   const connectSection = !hasSession ? `
     <div class="connect-wrap">
-      <button class="connect-btn" id="connectBtn">C0NNECT T0 P!GE0N NETW0RK</button>
+      <button class="connect-btn" id="connectBtn"><span class="caution">⚠</span> C0NNECT T0 P!GE0N NETW0RK <span class="caution">⚠</span></button>
       <div class="connect-status" id="connectStatus"></div>
     </div>
   ` : '';
@@ -108,7 +109,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     ? `<div class="gate-note" id="pigeonWalletBoard">
         N0 P!GE0N DETECTED :: B!NARY 0NLY. Y0U CANN0T DEC0DE 0R WR!TE HERE.
         <div class="retry-line">TRY D!FFERENT KEY?</div>
-        <button class="connect-btn" id="connectBtn">C0NNECT T0 P!GE0N NETW0RK</button>
+        <button class="connect-btn" id="connectBtn"><span class="caution">⚠</span> C0NNECT T0 P!GE0N NETW0RK <span class="caution">⚠</span></button>
         <div class="connect-status" id="connectStatus"></div>
       </div>`
     : ''
@@ -163,14 +164,22 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   .page{ max-width:760px; width:100%; position:relative; z-index:1; }
   h1{
-    font-size:clamp(15px,4.6vw,30px);
-    letter-spacing:0.06em;
+    font-size:clamp(16px,4vw,28px);
+    font-weight:700;
+    letter-spacing:0.14em;
     color:#fff;
-    text-shadow:0 0 10px rgba(57,255,20,0.25);
-    margin-bottom:2rem;
+    text-shadow:0 0 6px rgba(57,255,20,0.2);
+    margin-bottom:1.25rem;
     text-align:center;
     word-break:break-word;
     overflow-wrap:anywhere;
+  }
+  h1 .title-rule{
+    display:block;
+    width:min(220px, 60%);
+    height:1px;
+    margin:0.9rem auto 0;
+    background:linear-gradient(90deg, transparent, rgba(57,255,20,0.6), transparent);
   }
   .collection-link-wrap{
     text-align:center;
@@ -204,6 +213,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .msg-plain-wrap{
     flex:1;
     min-width:0;
+    align-self:stretch;
     display:flex;
     align-items:center;
     padding:0.85rem 1.1rem;
@@ -220,9 +230,14 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     font-size:14px;
   }
   .msg-plain.msg-locked{
-    color:rgba(232,232,232,0.3);
-    font-style:italic;
-    font-size:12px;
+    width:100%;
+    text-align:center;
+    color:#ff003c;
+    font-weight:700;
+    font-style:normal;
+    font-size:20px;
+    letter-spacing:0.1em;
+    text-shadow:0 0 10px rgba(255,0,60,0.6);
   }
   .msg-plain.tier-green{
     color:#39ff14;
@@ -250,7 +265,11 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     border-top:1px solid rgba(57,255,20,0.1);
     font-size:10px;
     letter-spacing:0.05em;
-    color:rgba(0,255,242,0.75);
+    color:#ffd700;
+    text-shadow:0 0 4px rgba(255,215,0,0.35);
+  }
+  .msg-ts{
+    color:rgba(255,215,0,0.6);
   }
   .msg-avatar{
     flex:0 0 128px;
@@ -411,7 +430,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .write-box .msg-plain{
     min-height:1.2em;
   }
-  .post-btn, .connect-btn{
+  .post-btn{
     margin-top:0.9rem;
     background:transparent;
     border:1px solid rgba(57,255,20,0.6);
@@ -423,8 +442,29 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     cursor:pointer;
     text-transform:uppercase;
   }
-  .post-btn:hover, .connect-btn:hover{ background:rgba(57,255,20,0.1); }
-  .post-btn:disabled, .connect-btn:disabled{ opacity:0.5; cursor:default; }
+  .post-btn:hover{ background:rgba(57,255,20,0.1); }
+  .post-btn:disabled{ opacity:0.5; cursor:default; }
+  .connect-btn{
+    margin-top:0.9rem;
+    display:inline-flex;
+    align-items:center;
+    gap:0.7em;
+    background:#ffb000;
+    border:2px solid #000;
+    color:#000;
+    font-family:inherit;
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:0.1em;
+    padding:0.9em 1.8em;
+    cursor:pointer;
+    text-transform:uppercase;
+    box-shadow:0 0 18px rgba(255,176,0,0.55);
+    transition:transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  }
+  .connect-btn:hover{ background:#ffc733; box-shadow:0 0 26px rgba(255,176,0,0.8); transform:translateY(-1px); }
+  .connect-btn:disabled{ opacity:0.5; cursor:default; transform:none; }
+  .connect-btn .caution{ font-size:1.15em; }
   .post-status, .connect-status{
     margin-top:0.6rem;
     font-size:12px;
@@ -515,7 +555,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
 <body>
   <canvas id="staticBg"></canvas>
   <div class="page">
-    <h1>S!GNAL_NODE:://P!GΞON_RELAY</h1>
+    <h1>S!GNAL_NODE:://P!GΞON_RELAY<span class="title-rule"></span></h1>
     <div class="collection-link-wrap">
       <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">V!EW P!GΞ0NS 0N DEEPT!DE →</a>
     </div>
@@ -567,13 +607,32 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     staticLoop();
   })();
 
+  // All timestamps on the board are shown in South Australia time (the
+  // site's home timezone) regardless of the visitor's own device/locale,
+  // so everyone sees the same signing time.
+  const ADELAIDE_TZ = 'Australia/Adelaide';
+  function formatAdelaideDateTime(ts) {
+    const formatted = new Intl.DateTimeFormat('en-AU', {
+      timeZone: ADELAIDE_TZ,
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true
+    }).format(new Date(ts * 1000));
+    return formatted + ' KST';
+  }
+
   const keystoneEl = document.getElementById('keystoneTime');
   if (keystoneEl) {
     const ts = parseInt(keystoneEl.dataset.ts, 10);
     if (ts) {
-      keystoneEl.textContent = new Date(ts * 1000).toLocaleString();
+      keystoneEl.textContent = formatAdelaideDateTime(ts);
     }
   }
+
+  document.querySelectorAll('.msg-ts').forEach(el => {
+    const ts = parseInt(el.dataset.ts, 10);
+    if (!ts) return;
+    el.textContent = formatAdelaideDateTime(ts);
+  });
 
   const signOutBtn = document.getElementById('signOutBtn');
   if (signOutBtn) {
