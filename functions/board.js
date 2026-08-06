@@ -302,13 +302,11 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     padding:0.9em 1.6em;
     text-transform:uppercase;
     text-decoration:none;
-    box-shadow:0 0 18px rgba(255,213,0,0.55);
-    transition:transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    transition:transform 0.12s ease, background 0.12s ease;
     overflow:hidden;
   }
   .collection-link:hover{
     background:#ffe14d;
-    box-shadow:0 0 26px rgba(255,213,0,0.8);
     transform:translateY(-1px);
   }
   .msg-row{
@@ -673,18 +671,17 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     padding:0.9em 1.6em;
     cursor:pointer;
     text-transform:uppercase;
-    box-shadow:0 0 18px rgba(255,213,0,0.55);
-    transition:transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    transition:transform 0.12s ease, background 0.12s ease;
     overflow:hidden;
   }
-  .connect-btn:hover{ background:#ffe14d; box-shadow:0 0 26px rgba(255,213,0,0.8); transform:translateY(-1px); }
+  .connect-btn:hover{ background:#ffe14d; transform:translateY(-1px); }
   .connect-btn:disabled{ opacity:0.5; cursor:default; transform:none; }
   .connect-btn .caution{ font-size:1.15em; }
   .cb-label{
     display:inline-flex;
     align-items:center;
     gap:0.7em;
-    animation:cb-label-flicker 4s infinite;
+    animation:cb-label-flicker 1.8s infinite;
   }
   .cb-binary{
     position:absolute;
@@ -700,7 +697,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     white-space:nowrap;
     overflow:hidden;
     opacity:0;
-    animation:cb-binary-flicker 4s infinite;
+    animation:cb-binary-flicker 1.8s infinite;
   }
   @keyframes cb-label-flicker{
     0%, 84%, 100%{ opacity:1; }
@@ -729,15 +726,19 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .gate-note{
     margin-top:2rem;
     text-align:center;
-    font-size:12px;
-    letter-spacing:0.05em;
-    color:rgba(255,0,60,0.75);
+    font-size:clamp(18px, 5vw, 26px);
+    font-weight:700;
+    letter-spacing:0.06em;
+    line-height:1.4;
+    color:#ff003c;
+    text-shadow:0 0 10px rgba(255,0,60,0.5);
   }
   .retry-line{
     margin-top:1.25rem;
-    font-size:11px;
+    font-size:13px;
     letter-spacing:0.1em;
-    color:rgba(232,232,232,0.5);
+    color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.4);
   }
   .gate-note .connect-btn{
     margin-top:0.75rem;
@@ -823,7 +824,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       <div class="btn-group">
         ${connectSection}
         <div class="collection-link-wrap">
-          <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener"><span class="cb-label" style="animation-delay:1.3s">BEC0ME THE S!GNAL →</span><span class="cb-binary" aria-hidden="true" style="animation-delay:1.3s">01010011 01001001 01000111 01001110 01000001 01001100</span></a>
+          <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener"><span class="cb-label" style="animation-delay:0.6s">BEC0ME THE S!GNAL →</span><span class="cb-binary" aria-hidden="true" style="animation-delay:0.6s">01010011 01001001 01000111 01001110 01000001 01001100</span></a>
         </div>
       </div>
       <details class="tier-legend">
