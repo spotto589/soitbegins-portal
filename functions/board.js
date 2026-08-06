@@ -12,9 +12,11 @@ function escapeHtml(str) {
 }
 
 function getPigeonCountTier(count) {
-  if (count >= 100) return 'tier-glow';
-  if (count >= 30) return 'tier-gold';
-  if (count >= 10) return 'tier-silver';
+  if (count >= 99) return 'tier-diamond';
+  if (count >= 50) return 'tier-gold';
+  if (count >= 33) return 'tier-purple';
+  if (count >= 13) return 'tier-red';
+  if (count >= 5) return 'tier-pink';
   return 'tier-green';
 }
 
@@ -31,7 +33,7 @@ function renderMessageRow(msg, canDecode) {
     : `<div class="msg-plain msg-locked">[ ENCRYPTED ]</div>`;
   const ts = msg.ts ? `<span class="msg-ts" data-ts="${msg.ts}"></span>` : '';
   return `
-    <div class="msg-row">
+    <div class="msg-row ${tierClass}">
       <div class="msg-top">
         ${avatar}
         <div class="msg-plain-wrap">${plain}</div>
@@ -93,7 +95,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       <input id="nameInput" maxlength="15" placeholder="..." />
       <div class="sig-label-below">S!GNATURE ¿ (OPT!ONAL, max 15)</div>
       <div class="preview-label">PREV!EW</div>
-      <div class="msg-row">
+      <div class="msg-row ${previewTierClass}" id="previewRow">
         <div class="msg-top">
           <img class="msg-avatar" id="previewAvatarImg" src="${initialAvatarSrc}" alt="" style="${hasAvailableThumbs ? '' : 'display:none;'}">
           <div class="msg-avatar msg-avatar-blank" id="previewAvatarBlank" style="${hasAvailableThumbs ? 'display:none;' : ''}"></div>
@@ -181,6 +183,49 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     margin:0.9rem auto 0;
     background:linear-gradient(90deg, transparent, rgba(57,255,20,0.6), transparent);
   }
+  .construction-notice{
+    margin-bottom:2rem;
+    border:1px solid rgba(255,0,60,0.4);
+    background:rgba(255,0,60,0.04);
+    padding:1.1rem 1.25rem;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .cn-stripe{
+    height:6px;
+    margin:-1.1rem -1.25rem 0.9rem;
+    background:repeating-linear-gradient(45deg, #ff003c 0px, #ff003c 10px, #08080a 10px, #08080a 20px);
+    opacity:0.7;
+  }
+  .cn-stripe.bottom{ margin:0.9rem -1.25rem -1.1rem; }
+  .cn-title{
+    font-size:clamp(13px,3.4vw,16px);
+    letter-spacing:0.1em;
+    color:#ff003c;
+    text-shadow:0 0 8px rgba(255,0,60,0.6);
+    font-weight:700;
+    margin-bottom:0.85rem;
+    animation:cn-flicker 2.4s ease-in-out infinite;
+  }
+  @keyframes cn-flicker{
+    0%, 100%{ opacity:1; }
+    50%{ opacity:0.7; }
+  }
+  .cn-body{
+    font-size:12px;
+    line-height:1.8;
+    color:#39ff14;
+    text-shadow:0 0 4px rgba(57,255,20,0.35);
+    letter-spacing:0.04em;
+    margin-bottom:0.9rem;
+  }
+  .cn-footer{
+    font-size:11px;
+    letter-spacing:0.08em;
+    color:#ffd700;
+    text-shadow:0 0 6px rgba(255,215,0,0.5);
+  }
   .collection-link-wrap{
     text-align:center;
     margin-bottom:1.5rem;
@@ -262,22 +307,65 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     color:#39ff14;
     text-shadow:0 0 4px rgba(57,255,20,0.35);
   }
-  .msg-plain.tier-silver{
-    color:#cdd6de;
-    text-shadow:0 0 5px rgba(205,214,222,0.45);
+  .msg-plain.tier-pink{
+    color:#ff6ec7;
+    text-shadow:0 0 5px rgba(255,110,199,0.5);
+  }
+  .msg-plain.tier-red{
+    color:#ff3b3b;
+    text-shadow:0 0 5px rgba(255,59,59,0.5);
+  }
+  .msg-plain.tier-purple{
+    color:#c77dff;
+    text-shadow:0 0 6px rgba(199,125,255,0.55);
   }
   .msg-plain.tier-gold{
     color:#ffd700;
-    text-shadow:0 0 6px rgba(255,215,0,0.5);
-  }
-  .msg-plain.tier-glow{
-    color:#ffd700;
-    text-shadow:0 0 10px rgba(255,215,0,0.9), 0 0 22px rgba(255,215,0,0.6);
+    text-shadow:0 0 8px rgba(255,215,0,0.6);
     animation:golden-pulse 2.2s ease-in-out infinite;
   }
   @keyframes golden-pulse{
-    0%, 100%{ text-shadow:0 0 10px rgba(255,215,0,0.9), 0 0 22px rgba(255,215,0,0.6); }
-    50%{ text-shadow:0 0 18px rgba(255,215,0,1), 0 0 36px rgba(255,215,0,0.85); }
+    0%, 100%{ text-shadow:0 0 8px rgba(255,215,0,0.6); }
+    50%{ text-shadow:0 0 16px rgba(255,215,0,0.9), 0 0 30px rgba(255,215,0,0.5); }
+  }
+  .msg-plain.tier-diamond{
+    background:linear-gradient(90deg, #b9f2ff 0%, #ffffff 25%, #7fd8ff 50%, #ffffff 75%, #b9f2ff 100%);
+    background-size:250% 100%;
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    font-weight:700;
+    letter-spacing:0.03em;
+    animation:diamond-text-shimmer 3.2s linear infinite;
+  }
+  @keyframes diamond-text-shimmer{
+    0%{ background-position:0% 50%; }
+    100%{ background-position:250% 50%; }
+  }
+  .msg-row.tier-pink{ border-color:rgba(255,110,199,0.4); }
+  .msg-row.tier-red{ border-color:rgba(255,59,59,0.4); }
+  .msg-row.tier-purple{ border-color:rgba(199,125,255,0.4); }
+  .msg-row.tier-gold{ border-color:rgba(255,215,0,0.45); }
+  .msg-row.tier-diamond{
+    position:relative;
+    overflow:hidden;
+    border-color:rgba(185,242,255,0.55);
+    box-shadow:0 0 14px rgba(185,242,255,0.25), inset 0 0 24px rgba(185,242,255,0.06);
+  }
+  .msg-row.tier-diamond::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.16) 45%, rgba(185,242,255,0.32) 50%, rgba(255,255,255,0.16) 55%, transparent 70%);
+    background-size:300% 300%;
+    animation:diamond-sweep 3.5s linear infinite;
+    mix-blend-mode:screen;
+  }
+  @keyframes diamond-sweep{
+    0%{ background-position:0% 0%; }
+    100%{ background-position:100% 100%; }
   }
   .msg-meta{
     display:flex;
@@ -336,11 +424,15 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     border:none;
   }
   @media (min-width:641px){
+    .msg-top{ align-items:stretch; min-height:180px; }
     .msg-avatar{
       flex:0 0 180px;
       width:180px;
+      aspect-ratio:auto;
+      height:auto;
+      align-self:stretch;
+      object-fit:cover;
     }
-    .msg-top{ min-height:180px; }
   }
   .msg-avatar-blank{
     background:repeating-linear-gradient(
@@ -609,6 +701,18 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
 <body>
   <canvas id="staticBg"></canvas>
   <div class="page">
+    <div class="construction-notice">
+      <div class="cn-stripe"></div>
+      <div class="cn-title">⚠️⚠️⚠️ UNDER CONSTRUCTION ⚠️⚠️⚠️</div>
+      <div class="cn-body">
+        The path may change.<br>
+        The board may shift.<br>
+        The moment you arrived...<br>
+        will never be rewritten.
+      </div>
+      <div class="cn-footer">🚧⚠️ THE CROWN IS STILL BUILDING ⚠️🚧</div>
+      <div class="cn-stripe bottom"></div>
+    </div>
     <h1>S!GNAL_NODE:://P!GΞON_RELAY<span class="title-rule"></span></h1>
     <div class="collection-link-wrap">
       <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">BEC0ME THE S!GNAL →</a>
