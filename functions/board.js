@@ -405,12 +405,17 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     text-shadow:0 0 5px rgba(63,199,255,0.5);
   }
   .msg-plain.tier-red{
-    color:#ff3b3b;
-    text-shadow:0 0 5px rgba(255,59,59,0.5);
+    color:#ff1414;
+    text-shadow:0 0 7px rgba(255,20,20,0.75);
   }
   .msg-plain.tier-purple{
-    color:#4fa8ff;
-    text-shadow:0 0 6px rgba(79,168,255,0.55);
+    color:#dbe4ea;
+    text-shadow:0 0 6px rgba(219,228,234,0.5);
+    animation:silver-shine 2.8s ease-in-out infinite;
+  }
+  @keyframes silver-shine{
+    0%, 100%{ text-shadow:0 0 6px rgba(219,228,234,0.5); }
+    50%{ text-shadow:0 0 12px rgba(255,255,255,0.8), 0 0 20px rgba(219,228,234,0.4); }
   }
   .msg-plain.tier-gold{
     color:#ffd700;
@@ -440,14 +445,39 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .msg-row.tier-pink .msg-binary{ border-width:1px; border-color:rgba(63,199,255,0.3); }
   .msg-row.tier-pink .msg-meta{ border-bottom-color:rgba(63,199,255,0.25); }
   .msg-row.tier-pink .msg-avatar{ border-width:1px; border-color:rgba(63,199,255,0.3); }
-  .msg-row.tier-red{ border-width:2px; border-color:rgba(255,59,59,0.45); }
-  .msg-row.tier-red .msg-binary{ border-width:2px; border-color:rgba(255,59,59,0.3); }
-  .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(255,59,59,0.25); }
-  .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(255,59,59,0.3); }
-  .msg-row.tier-purple{ border-width:2.5px; border-color:rgba(79,168,255,0.5); }
-  .msg-row.tier-purple .msg-binary{ border-width:2.5px; border-color:rgba(79,168,255,0.35); }
-  .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(79,168,255,0.3); }
-  .msg-row.tier-purple .msg-avatar{ border-width:2.5px; border-color:rgba(79,168,255,0.35); }
+  .msg-row.tier-red{ border-width:2px; border-color:rgba(255,20,20,0.65); }
+  .msg-row.tier-red .msg-binary{ border-width:2px; border-color:rgba(255,20,20,0.45); }
+  .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(255,20,20,0.35); }
+  .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(255,20,20,0.45); }
+  .msg-row.tier-purple{
+    position:relative;
+    overflow:hidden;
+    border-width:2.5px;
+    border-color:rgba(219,228,234,0.55);
+    animation:silver-glow-pulse 2.8s ease-in-out infinite;
+  }
+  @keyframes silver-glow-pulse{
+    0%, 100%{ box-shadow:0 0 6px rgba(219,228,234,0.2); }
+    50%{ box-shadow:0 0 14px rgba(255,255,255,0.4); }
+  }
+  .msg-row.tier-purple::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    background:linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.14) 48%, rgba(255,255,255,0.32) 50%, rgba(255,255,255,0.14) 52%, transparent 65%);
+    background-size:300% 300%;
+    animation:silver-sweep 4.2s linear infinite;
+    mix-blend-mode:screen;
+  }
+  @keyframes silver-sweep{
+    0%{ background-position:0% 0%; }
+    100%{ background-position:100% 100%; }
+  }
+  .msg-row.tier-purple .msg-binary{ border-width:2.5px; border-color:rgba(219,228,234,0.4); }
+  .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(219,228,234,0.35); }
+  .msg-row.tier-purple .msg-avatar{ border-width:2.5px; border-color:rgba(219,228,234,0.4); }
   .msg-row.tier-gold{
     position:relative;
     overflow:hidden;
