@@ -200,7 +200,12 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   }
   .cn-stripe.bottom{ margin:0.9rem -1.25rem -1.1rem; }
   .cn-title{
-    font-size:clamp(13px,3.4vw,16px);
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:0.4em;
+    font-size:clamp(12px,3.4vw,16px);
     letter-spacing:0.1em;
     color:#ff003c;
     text-shadow:0 0 8px rgba(255,0,60,0.6);
@@ -208,6 +213,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     margin-bottom:0.85rem;
     animation:cn-flicker 2.4s ease-in-out infinite;
   }
+  .cn-title span{ white-space:nowrap; }
   @keyframes cn-flicker{
     0%, 100%{ opacity:1; }
     50%{ opacity:0.7; }
@@ -218,14 +224,21 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     color:#39ff14;
     text-shadow:0 0 4px rgba(57,255,20,0.35);
     letter-spacing:0.04em;
+    text-transform:uppercase;
     margin-bottom:0.9rem;
   }
   .cn-footer{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:0.4em;
     font-size:11px;
     letter-spacing:0.08em;
     color:#ffd700;
     text-shadow:0 0 6px rgba(255,215,0,0.5);
   }
+  .cn-footer span{ white-space:nowrap; }
   .signal-panel{
     margin-bottom:1.5rem;
     border:1px solid rgba(255,213,0,0.35);
@@ -290,15 +303,18 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .collection-link{
     position:relative;
     display:inline-flex;
+    flex-wrap:wrap;
     align-items:center;
+    justify-content:center;
     background:#ffd500;
     border:2px solid #000;
     color:#000;
     font-family:inherit;
     font-weight:700;
-    font-size:15px;
+    font-size:clamp(12px, 3.6vw, 15px);
     letter-spacing:0.1em;
-    padding:0.9em 1.6em;
+    padding:0.9em 1.4em;
+    text-align:center;
     text-transform:uppercase;
     text-decoration:none;
     transition:transform 0.12s ease, background 0.12s ease;
@@ -395,31 +411,55 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     50%{ text-shadow:0 0 16px rgba(255,215,0,0.9), 0 0 30px rgba(255,215,0,0.5); }
   }
   .msg-plain.tier-diamond{
-    background:linear-gradient(90deg, #b9f2ff 0%, #ffffff 25%, #7fd8ff 50%, #ffffff 75%, #b9f2ff 100%);
-    background-size:250% 100%;
+    background:linear-gradient(90deg, #b9f2ff 0%, #ffffff 20%, #7fd8ff 40%, #ffffff 55%, #d9faff 70%, #ffffff 85%, #b9f2ff 100%);
+    background-size:300% 100%;
     -webkit-background-clip:text;
     background-clip:text;
     color:transparent;
-    font-weight:700;
-    letter-spacing:0.03em;
-    animation:diamond-text-shimmer 3.2s linear infinite;
+    font-weight:800;
+    letter-spacing:0.04em;
+    filter:drop-shadow(0 0 6px rgba(185,242,255,0.8));
+    animation:diamond-text-shimmer 1.8s linear infinite;
   }
   @keyframes diamond-text-shimmer{
     0%{ background-position:0% 50%; }
-    100%{ background-position:250% 50%; }
+    100%{ background-position:300% 50%; }
   }
-  .msg-row.tier-pink{ border-color:rgba(255,110,199,0.4); }
-  .msg-row.tier-red{ border-color:rgba(255,59,59,0.4); }
-  .msg-row.tier-purple{ border-color:rgba(199,125,255,0.4); }
-  .msg-row.tier-gold{ border-color:rgba(255,215,0,0.7); }
+  .msg-row.tier-pink{ border-width:1px; border-color:rgba(255,110,199,0.4); }
+  .msg-row.tier-red{ border-width:2px; border-color:rgba(255,59,59,0.45); }
+  .msg-row.tier-purple{ border-width:2.5px; border-color:rgba(199,125,255,0.45); }
+  .msg-row.tier-gold{ border-width:3px; border-color:rgba(255,215,0,0.7); }
   .msg-row.tier-gold .msg-binary{ border-top-color:rgba(255,215,0,0.4); }
   .msg-row.tier-gold .msg-meta{ border-top-color:rgba(255,215,0,0.35); }
   .msg-row.tier-gold .msg-avatar{ border-right:1px solid rgba(255,215,0,0.4); }
   .msg-row.tier-diamond{
     position:relative;
     overflow:hidden;
-    border-color:rgba(185,242,255,0.55);
-    box-shadow:0 0 14px rgba(185,242,255,0.25), inset 0 0 24px rgba(185,242,255,0.06);
+    border-width:4px;
+    border-color:#e8fbff;
+    animation:diamond-glow-pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes diamond-glow-pulse{
+    0%, 100%{ box-shadow:0 0 20px rgba(185,242,255,0.5), 0 0 42px rgba(185,242,255,0.25), inset 0 0 28px rgba(185,242,255,0.1); }
+    50%{ box-shadow:0 0 34px rgba(185,242,255,0.9), 0 0 68px rgba(185,242,255,0.45), inset 0 0 40px rgba(185,242,255,0.2); }
+  }
+  .msg-row.tier-diamond::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    background-image:
+      radial-gradient(circle at 15% 25%, rgba(255,255,255,0.95) 0%, transparent 2.5%),
+      radial-gradient(circle at 82% 18%, rgba(255,255,255,0.85) 0%, transparent 2%),
+      radial-gradient(circle at 62% 78%, rgba(255,255,255,0.95) 0%, transparent 2.5%),
+      radial-gradient(circle at 28% 82%, rgba(255,255,255,0.75) 0%, transparent 2%),
+      radial-gradient(circle at 92% 62%, rgba(255,255,255,0.9) 0%, transparent 2.2%);
+    animation:diamond-sparkle 1.4s ease-in-out infinite;
+  }
+  @keyframes diamond-sparkle{
+    0%, 100%{ opacity:0.25; }
+    50%{ opacity:1; }
   }
   .msg-row.tier-diamond::after{
     content:'';
@@ -427,9 +467,9 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     inset:0;
     pointer-events:none;
     z-index:1;
-    background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.16) 45%, rgba(185,242,255,0.32) 50%, rgba(255,255,255,0.16) 55%, transparent 70%);
+    background:linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.22) 42%, rgba(255,255,255,0.85) 50%, rgba(255,255,255,0.22) 58%, transparent 75%);
     background-size:300% 300%;
-    animation:diamond-sweep 3.5s linear infinite;
+    animation:diamond-sweep 2.1s linear infinite;
     mix-blend-mode:screen;
   }
   @keyframes diamond-sweep{
@@ -659,16 +699,19 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     position:relative;
     margin-top:0.9rem;
     display:inline-flex;
+    flex-wrap:wrap;
     align-items:center;
-    gap:0.7em;
+    justify-content:center;
+    gap:0.5em;
     background:#ffd500;
     border:2px solid #000;
     color:#000;
     font-family:inherit;
     font-weight:700;
-    font-size:15px;
+    font-size:clamp(12px, 3.6vw, 15px);
     letter-spacing:0.1em;
-    padding:0.9em 1.6em;
+    padding:0.9em 1.4em;
+    text-align:center;
     cursor:pointer;
     text-transform:uppercase;
     transition:transform 0.12s ease, background 0.12s ease;
@@ -679,8 +722,10 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .connect-btn .caution{ font-size:1.15em; }
   .cb-label{
     display:inline-flex;
+    flex-wrap:wrap;
     align-items:center;
-    gap:0.7em;
+    justify-content:center;
+    gap:0.5em;
     animation:cb-label-flicker 1.8s infinite;
   }
   .cb-binary{
@@ -810,14 +855,14 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     <h1>S!GNAL_NODE:://P!GΞON_RELAY<span class="title-rule"></span></h1>
     <div class="construction-notice">
       <div class="cn-stripe"></div>
-      <div class="cn-title">⚠️⚠️⚠️ UNDER CONSTRUCTION ⚠️⚠️⚠️</div>
+      <div class="cn-title"><span>⚠️</span><span>UNDER CONSTRUCTION</span><span>⚠️</span></div>
       <div class="cn-body">
         The path may change.<br>
         The board may shift.<br>
         But the moment you arrived...<br>
         can never be rewritten.
       </div>
-      <div class="cn-footer">🚧⚠️ THE CROWN IS STILL BUILDING ⚠️🚧</div>
+      <div class="cn-footer"><span>🚧⚠️</span><span>THE CROWN IS STILL BUILDING</span><span>⚠️🚧</span></div>
       <div class="cn-stripe bottom"></div>
     </div>
     <div class="btn-group">
