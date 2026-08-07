@@ -28,14 +28,14 @@ function isGlitchWallet(acct) {
   return !!acct && acct.slice(0, 6) === 'rJhJRk' && acct.slice(-4) === '1r9D';
 }
 
-function renderMessageRow(msg, canDecode) {
+function renderMessageRow(msg, canDecode, glitchTs) {
   const binary = escapeHtml(textToBinary(msg.text));
   const wallet = escapeHtml(msg.acct ? msg.acct.slice(0, 6) + '...' + msg.acct.slice(-4) : 'UNKN0WN');
   const signer = msg.name ? `${escapeHtml(msg.name)} · ${wallet}` : wallet;
   const avatar = msg.image
     ? `<img class="msg-avatar" src="${escapeHtml(msg.image)}" alt="" loading="lazy">`
     : `<div class="msg-avatar msg-avatar-blank"></div>`;
-  const isGlitch = isGlitchWallet(msg.acct);
+  const isGlitch = isGlitchWallet(msg.acct) && msg.ts === glitchTs;
   const tierClass = isGlitch ? 'tier-glitch' : getPigeonCountTier(msg.pigeonCount || 1);
   const plain = canDecode
     ? `<div class="msg-plain ${tierClass}">${escapeHtml(msg.text)}</div>`
@@ -57,8 +57,10 @@ function renderMessageRow(msg, canDecode) {
 const TOTAL_PIGEONS = 3016;
 
 function renderPage({ messages, signedCount, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }) {
+  const glitchWalletTs = messages.filter(m => isGlitchWallet(m.acct)).map(m => m.ts);
+  const glitchTs = glitchWalletTs.length ? Math.max(...glitchWalletTs) : null;
   const messageRows = messages.length
-    ? messages.map(m => renderMessageRow(m, isPigeon)).join('')
+    ? messages.map(m => renderMessageRow(m, isPigeon, glitchTs)).join('')
     : `<div class="empty">N0 MESSAGES YET.</div>`;
 
   const signedPct = Math.min(100, Math.round((signedCount / TOTAL_PIGEONS) * 1000) / 10);
