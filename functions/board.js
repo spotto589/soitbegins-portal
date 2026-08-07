@@ -65,7 +65,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
 
   const leaderboardRows = (leaderboard || []).map((entry, i) => {
     const w = escapeHtml(entry.acct.slice(0, 6) + '...' + entry.acct.slice(-4));
-    return `<div class="lb-row"><span class="lb-rank">#${i + 1}</span><span class="lb-wallet">${w}</span><span class="lb-count">${entry.count} S!GN${entry.count === 1 ? '' : 'S'}</span></div>`;
+    const lbTier = getPigeonCountTier(entry.pigeonCount || 1);
+    return `<div class="lb-row ${lbTier}"><span class="lb-rank">#${i + 1}</span><span class="lb-wallet">${w}</span><span class="lb-count">${entry.count} S!GN${entry.count === 1 ? '' : 'S'}</span></div>`;
   }).join('');
 
   const signedPct = Math.min(100, Math.round((signedCount / TOTAL_PIGEONS) * 1000) / 10);
@@ -273,7 +274,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .signed-counter-label{
     font-size:10px;
     letter-spacing:0.12em;
-    color:rgba(232,232,232,0.55);
+    color:#39ff14;
+    text-shadow:0 0 4px rgba(57,255,20,0.4);
     margin-bottom:0.4rem;
   }
   .signed-counter-value{
@@ -362,7 +364,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .tl-text{ font-size:13px; }
   .leaderboard{ border-top:1px solid rgba(57,255,20,0.15); }
-  .leaderboard summary{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); }
+  .leaderboard summary{ color:#ffd500; text-shadow:0 0 6px rgba(255,213,0,0.4); text-decoration:underline; text-underline-offset:3px; }
   .lb-row{
     display:flex;
     align-items:center;
@@ -396,6 +398,17 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     color:rgba(232,232,232,0.4);
     font-size:12px;
     padding:0.5rem 0;
+  }
+  .lb-row.tier-green{ border-width:1px; border-color:rgba(57,255,20,0.25); }
+  .lb-row.tier-pink{ border-width:1px; border-color:rgba(26,228,255,0.6); }
+  .lb-row.tier-red{ border-width:2px; border-color:rgba(255,20,20,0.65); }
+  .lb-row.tier-purple{ border-width:2.5px; border-color:rgba(219,228,234,0.55); }
+  .lb-row.tier-gold{ border-width:3px; border-color:rgba(255,215,0,0.7); }
+  .lb-row.tier-diamond{
+    border-style:solid;
+    border-width:4px;
+    border-color:#ff8ef0;
+    border-image:linear-gradient(90deg, #ff36e0, #ffe93f, #36e6ff, #ff36e0) 1;
   }
   .collection-link{
     position:relative;
@@ -1143,7 +1156,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     </div>
     <div class="signal-panel">
       <details class="tier-legend">
-        <summary>// CHANGE S!GNATURE C0L0UR</summary>
+        <summary>// B0RDER T!ERS</summary>
         <div class="tier-legend-body">
           <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS</div></div>
           <div class="msg-row tl-row tier-pink"><div class="msg-plain tl-text tier-pink">5-12 P!GE0NS</div></div>
@@ -1428,14 +1441,16 @@ export async function onRequestGet(context) {
     .sort((a, b) => a.ts - b.ts);
 
   const walletCounts = new Map();
+  const walletPigeonCounts = new Map();
   for (const m of messages) {
     if (!m.acct) continue;
     walletCounts.set(m.acct, (walletCounts.get(m.acct) || 0) + 1);
+    walletPigeonCounts.set(m.acct, Math.max(walletPigeonCounts.get(m.acct) || 0, m.pigeonCount || 1));
   }
   const leaderboard = [...walletCounts.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10)
-    .map(([acct, count]) => ({ acct, count }));
+    .map(([acct, count]) => ({ acct, count, pigeonCount: walletPigeonCounts.get(acct) || 1 }));
 
   const token = getCookie(request, BOARD_COOKIE_NAME);
   let isPigeon = false;
