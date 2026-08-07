@@ -56,12 +56,17 @@ function renderMessageRow(msg, canDecode, glitchTs) {
 
 const TOTAL_PIGEONS = 3016;
 
-function renderPage({ messages, signedCount, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }) {
+function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }) {
   const glitchWalletTs = messages.filter(m => isGlitchWallet(m.acct)).map(m => m.ts);
   const glitchTs = glitchWalletTs.length ? Math.max(...glitchWalletTs) : null;
   const messageRows = messages.length
     ? messages.map(m => renderMessageRow(m, isPigeon, glitchTs)).join('')
     : `<div class="empty">N0 MESSAGES YET.</div>`;
+
+  const leaderboardRows = (leaderboard || []).map((entry, i) => {
+    const w = escapeHtml(entry.acct.slice(0, 6) + '...' + entry.acct.slice(-4));
+    return `<div class="lb-row"><span class="lb-rank">#${i + 1}</span><span class="lb-wallet">${w}</span><span class="lb-count">${entry.count} S!GN${entry.count === 1 ? '' : 'S'}</span></div>`;
+  }).join('');
 
   const signedPct = Math.min(100, Math.round((signedCount / TOTAL_PIGEONS) * 1000) / 10);
 
@@ -356,13 +361,49 @@ function renderPage({ messages, signedCount, isPigeon, hasSession, wordLimit, pi
     justify-content:center;
   }
   .tl-text{ font-size:13px; }
+  .leaderboard{ border-top:1px solid rgba(57,255,20,0.15); }
+  .leaderboard summary{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); }
+  .lb-row{
+    display:flex;
+    align-items:center;
+    gap:0.75rem;
+    padding:0.55rem 0.9rem;
+    border:1px solid rgba(57,255,20,0.2);
+    background:#08080a;
+    font-size:12px;
+  }
+  .lb-rank{
+    flex:0 0 auto;
+    color:#ffd700;
+    font-weight:700;
+    min-width:2em;
+  }
+  .lb-wallet{
+    flex:1 1 auto;
+    color:#e8e8e8;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .lb-count{
+    flex:0 0 auto;
+    color:#39ff14;
+    text-shadow:0 0 4px rgba(57,255,20,0.4);
+    font-size:11px;
+  }
+  .lb-empty{
+    text-align:center;
+    color:rgba(232,232,232,0.4);
+    font-size:12px;
+    padding:0.5rem 0;
+  }
   .collection-link{
     position:relative;
     display:inline-flex;
     flex-wrap:wrap;
     align-items:center;
     justify-content:center;
-    background:#ffd500;
+    background:#ffee00;
     border:2px solid #000;
     color:#000;
     font-family:inherit;
@@ -377,7 +418,7 @@ function renderPage({ messages, signedCount, isPigeon, hasSession, wordLimit, pi
     overflow:hidden;
   }
   .collection-link:hover{
-    background:#ffe14d;
+    background:#fff65c;
     transform:translateY(-1px);
   }
   .msg-row{
@@ -451,8 +492,8 @@ function renderPage({ messages, signedCount, isPigeon, hasSession, wordLimit, pi
     text-shadow:0 0 4px rgba(57,255,20,0.35);
   }
   .msg-plain.tier-pink{
-    color:#3fc7ff;
-    text-shadow:0 0 5px rgba(63,199,255,0.5);
+    color:#1ae4ff;
+    text-shadow:0 0 7px rgba(26,228,255,0.75);
   }
   .msg-plain.tier-red{
     color:#ff1414;
@@ -491,10 +532,10 @@ function renderPage({ messages, signedCount, isPigeon, hasSession, wordLimit, pi
     0%{ background-position:0% 50%; }
     100%{ background-position:300% 50%; }
   }
-  .msg-row.tier-pink{ border-width:1px; border-color:rgba(63,199,255,0.4); }
-  .msg-row.tier-pink .msg-binary{ border-width:1px; border-color:rgba(63,199,255,0.3); }
-  .msg-row.tier-pink .msg-meta{ border-bottom-color:rgba(63,199,255,0.25); }
-  .msg-row.tier-pink .msg-avatar{ border-width:1px; border-color:rgba(63,199,255,0.3); }
+  .msg-row.tier-pink{ border-width:1px; border-color:rgba(26,228,255,0.6); }
+  .msg-row.tier-pink .msg-binary{ border-width:1px; border-color:rgba(26,228,255,0.45); }
+  .msg-row.tier-pink .msg-meta{ border-bottom-color:rgba(26,228,255,0.4); }
+  .msg-row.tier-pink .msg-avatar{ border-width:1px; border-color:rgba(26,228,255,0.45); }
   .msg-row.tier-red{ border-width:2px; border-color:rgba(255,20,20,0.65); }
   .msg-row.tier-red .msg-binary{ border-width:2px; border-color:rgba(255,20,20,0.45); }
   .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(255,20,20,0.35); }
@@ -927,7 +968,7 @@ function renderPage({ messages, signedCount, isPigeon, hasSession, wordLimit, pi
     align-items:center;
     justify-content:center;
     gap:0.5em;
-    background:#ffd500;
+    background:#ffee00;
     border:2px solid #000;
     color:#000;
     font-family:inherit;
@@ -941,7 +982,7 @@ function renderPage({ messages, signedCount, isPigeon, hasSession, wordLimit, pi
     transition:transform 0.12s ease, background 0.12s ease;
     overflow:hidden;
   }
-  .connect-btn:hover{ background:#ffe14d; transform:translateY(-1px); }
+  .connect-btn:hover{ background:#fff65c; transform:translateY(-1px); }
   .connect-btn:disabled{ opacity:0.5; cursor:default; transform:none; }
   .connect-btn .caution{ font-size:1.15em; }
   .cb-label{
@@ -1110,6 +1151,12 @@ function renderPage({ messages, signedCount, isPigeon, hasSession, wordLimit, pi
           <div class="msg-row tl-row tier-purple"><div class="msg-plain tl-text tier-purple">33-49 P!GE0NS</div></div>
           <div class="msg-row tl-row tier-gold"><div class="msg-plain tl-text tier-gold">50-98 P!GE0NS</div></div>
           <div class="msg-row tl-row tier-diamond"><div class="msg-plain tl-text tier-diamond">99+ P!GE0NS</div></div>
+        </div>
+      </details>
+      <details class="tier-legend leaderboard">
+        <summary>// T0P S!GNERS</summary>
+        <div class="tier-legend-body">
+          ${leaderboardRows || `<div class="lb-empty">N0 S!GNATURES YET.</div>`}
         </div>
       </details>
     </div>
@@ -1380,6 +1427,16 @@ export async function onRequestGet(context) {
     .map(v => JSON.parse(v))
     .sort((a, b) => a.ts - b.ts);
 
+  const walletCounts = new Map();
+  for (const m of messages) {
+    if (!m.acct) continue;
+    walletCounts.set(m.acct, (walletCounts.get(m.acct) || 0) + 1);
+  }
+  const leaderboard = [...walletCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([acct, count]) => ({ acct, count }));
+
   const token = getCookie(request, BOARD_COOKIE_NAME);
   let isPigeon = false;
   let hasSession = false;
@@ -1421,7 +1478,7 @@ export async function onRequestGet(context) {
   const signedCount = messages.length - Math.max(0, glitchDuplicateCount - 1);
 
   return new Response(
-    renderPage({ messages: messages.slice(-50).reverse(), signedCount, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }),
+    renderPage({ messages: messages.slice(-50).reverse(), signedCount, leaderboard, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }),
     { headers: { 'Content-Type': 'text/html' } }
   );
 }
