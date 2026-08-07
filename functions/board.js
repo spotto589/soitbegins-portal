@@ -405,12 +405,12 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     text-shadow:0 0 5px rgba(63,199,255,0.5);
   }
   .msg-plain.tier-red{
-    color:#cd7f32;
-    text-shadow:0 0 5px rgba(205,127,50,0.5);
+    color:#ff3b3b;
+    text-shadow:0 0 5px rgba(255,59,59,0.5);
   }
   .msg-plain.tier-purple{
-    color:#c8d0d6;
-    text-shadow:0 0 6px rgba(200,208,214,0.5);
+    color:#4fa8ff;
+    text-shadow:0 0 6px rgba(79,168,255,0.55);
   }
   .msg-plain.tier-gold{
     color:#ffd700;
@@ -440,14 +440,14 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .msg-row.tier-pink .msg-binary{ border-width:1px; border-color:rgba(63,199,255,0.3); }
   .msg-row.tier-pink .msg-meta{ border-bottom-color:rgba(63,199,255,0.25); }
   .msg-row.tier-pink .msg-avatar{ border-width:1px; border-color:rgba(63,199,255,0.3); }
-  .msg-row.tier-red{ border-width:2px; border-color:rgba(205,127,50,0.5); }
-  .msg-row.tier-red .msg-binary{ border-width:2px; border-color:rgba(205,127,50,0.35); }
-  .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(205,127,50,0.3); }
-  .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(205,127,50,0.35); }
-  .msg-row.tier-purple{ border-width:2.5px; border-color:rgba(200,208,214,0.55); }
-  .msg-row.tier-purple .msg-binary{ border-width:2.5px; border-color:rgba(200,208,214,0.4); }
-  .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(200,208,214,0.35); }
-  .msg-row.tier-purple .msg-avatar{ border-width:2.5px; border-color:rgba(200,208,214,0.4); }
+  .msg-row.tier-red{ border-width:2px; border-color:rgba(255,59,59,0.45); }
+  .msg-row.tier-red .msg-binary{ border-width:2px; border-color:rgba(255,59,59,0.3); }
+  .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(255,59,59,0.25); }
+  .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(255,59,59,0.3); }
+  .msg-row.tier-purple{ border-width:2.5px; border-color:rgba(79,168,255,0.5); }
+  .msg-row.tier-purple .msg-binary{ border-width:2.5px; border-color:rgba(79,168,255,0.35); }
+  .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(79,168,255,0.3); }
+  .msg-row.tier-purple .msg-avatar{ border-width:2.5px; border-color:rgba(79,168,255,0.35); }
   .msg-row.tier-gold{
     position:relative;
     overflow:hidden;
