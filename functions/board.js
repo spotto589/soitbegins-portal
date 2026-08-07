@@ -401,16 +401,16 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     text-shadow:0 0 4px rgba(57,255,20,0.35);
   }
   .msg-plain.tier-pink{
-    color:#ff6ec7;
-    text-shadow:0 0 5px rgba(255,110,199,0.5);
+    color:#3fc7ff;
+    text-shadow:0 0 5px rgba(63,199,255,0.5);
   }
   .msg-plain.tier-red{
-    color:#ff3b3b;
-    text-shadow:0 0 5px rgba(255,59,59,0.5);
+    color:#cd7f32;
+    text-shadow:0 0 5px rgba(205,127,50,0.5);
   }
   .msg-plain.tier-purple{
-    color:#c77dff;
-    text-shadow:0 0 6px rgba(199,125,255,0.55);
+    color:#c8d0d6;
+    text-shadow:0 0 6px rgba(200,208,214,0.5);
   }
   .msg-plain.tier-gold{
     color:#ffd700;
@@ -436,18 +436,18 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     0%{ background-position:0% 50%; }
     100%{ background-position:300% 50%; }
   }
-  .msg-row.tier-pink{ border-width:1px; border-color:rgba(255,110,199,0.4); }
-  .msg-row.tier-pink .msg-binary{ border-width:1px; border-color:rgba(255,110,199,0.3); }
-  .msg-row.tier-pink .msg-meta{ border-bottom-color:rgba(255,110,199,0.25); }
-  .msg-row.tier-pink .msg-avatar{ border-width:1px; border-color:rgba(255,110,199,0.3); }
-  .msg-row.tier-red{ border-width:2px; border-color:rgba(255,59,59,0.45); }
-  .msg-row.tier-red .msg-binary{ border-width:2px; border-color:rgba(255,59,59,0.3); }
-  .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(255,59,59,0.25); }
-  .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(255,59,59,0.3); }
-  .msg-row.tier-purple{ border-width:2.5px; border-color:rgba(199,125,255,0.45); }
-  .msg-row.tier-purple .msg-binary{ border-width:2.5px; border-color:rgba(199,125,255,0.3); }
-  .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(199,125,255,0.25); }
-  .msg-row.tier-purple .msg-avatar{ border-width:2.5px; border-color:rgba(199,125,255,0.3); }
+  .msg-row.tier-pink{ border-width:1px; border-color:rgba(63,199,255,0.4); }
+  .msg-row.tier-pink .msg-binary{ border-width:1px; border-color:rgba(63,199,255,0.3); }
+  .msg-row.tier-pink .msg-meta{ border-bottom-color:rgba(63,199,255,0.25); }
+  .msg-row.tier-pink .msg-avatar{ border-width:1px; border-color:rgba(63,199,255,0.3); }
+  .msg-row.tier-red{ border-width:2px; border-color:rgba(205,127,50,0.5); }
+  .msg-row.tier-red .msg-binary{ border-width:2px; border-color:rgba(205,127,50,0.35); }
+  .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(205,127,50,0.3); }
+  .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(205,127,50,0.35); }
+  .msg-row.tier-purple{ border-width:2.5px; border-color:rgba(200,208,214,0.55); }
+  .msg-row.tier-purple .msg-binary{ border-width:2.5px; border-color:rgba(200,208,214,0.4); }
+  .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(200,208,214,0.35); }
+  .msg-row.tier-purple .msg-avatar{ border-width:2.5px; border-color:rgba(200,208,214,0.4); }
   .msg-row.tier-gold{
     position:relative;
     overflow:hidden;
@@ -480,13 +480,25 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   .msg-row.tier-diamond{
     position:relative;
     overflow:hidden;
+    border-style:solid;
     border-width:4px;
     border-color:#ff8ef0;
+    border-image:linear-gradient(90deg, #ff36e0, #ffe93f, #36e6ff, #ff36e0) 1;
     animation:diamond-glow-pulse 2.2s ease-in-out infinite;
   }
-  .msg-row.tier-diamond .msg-binary{ border-width:4px; border-color:rgba(255,142,240,0.5); }
+  .msg-row.tier-diamond .msg-binary{
+    border-style:solid;
+    border-width:4px;
+    border-color:rgba(255,142,240,0.5);
+    border-image:linear-gradient(90deg, #ff36e0, #ffe93f, #36e6ff, #ff36e0) 1;
+  }
   .msg-row.tier-diamond .msg-meta{ border-bottom-color:rgba(255,142,240,0.4); }
-  .msg-row.tier-diamond .msg-avatar{ border-width:4px; border-color:rgba(255,142,240,0.5); }
+  .msg-row.tier-diamond .msg-avatar{
+    border-style:solid;
+    border-width:4px;
+    border-color:rgba(255,142,240,0.5);
+    border-image:linear-gradient(135deg, #ff36e0, #ffe93f, #36e6ff, #ff36e0) 1;
+  }
   @keyframes diamond-glow-pulse{
     0%, 100%{ box-shadow:0 0 18px rgba(255,54,224,0.4), 0 0 34px rgba(54,230,255,0.22), inset 0 0 24px rgba(255,54,224,0.08); }
     50%{ box-shadow:0 0 28px rgba(255,54,224,0.65), 0 0 52px rgba(54,230,255,0.38), inset 0 0 32px rgba(255,54,224,0.15); }
