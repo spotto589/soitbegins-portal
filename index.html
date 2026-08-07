@@ -346,19 +346,71 @@
   }
 
   .board-btn{
-    display:inline-block;
+    position:relative;
+    display:inline-flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:0.5em;
     margin-top:1.75rem;
-    border:1px solid rgba(57,255,20,0.5);
-    color:var(--green);
+    background:#ffd500;
+    border:2px solid #000;
+    color:#000;
+    font-family:inherit;
+    font-weight:700;
     text-decoration:none;
-    padding:0.8em 1.4em;
+    padding:0.9em 1.4em;
     font-size:calc(var(--fs) * 0.85);
     letter-spacing:0.1em;
+    text-align:center;
     text-transform:uppercase;
-    text-shadow:0 0 6px rgba(57,255,20,0.5);
-    transition:background 0.15s ease;
+    text-shadow:none;
+    transition:transform 0.12s ease, background 0.12s ease;
+    overflow:hidden;
   }
-  .board-btn:hover{ background:rgba(57,255,20,0.1); }
+  .board-btn:hover{ background:#ffe14d; transform:translateY(-1px); }
+  .bb-label{
+    display:inline-flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:0.5em;
+    animation:bb-label-flicker 1.8s infinite;
+  }
+  .bb-binary{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#000;
+    color:#39ff14;
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-shadow:0 0 8px rgba(57,255,20,0.8);
+    white-space:nowrap;
+    overflow:hidden;
+    opacity:0;
+    animation:bb-binary-flicker 1.8s infinite;
+  }
+  @keyframes bb-label-flicker{
+    0%, 84%, 100%{ opacity:1; }
+    86%{ opacity:0; }
+    88%{ opacity:1; }
+    90%{ opacity:0; }
+    92%{ opacity:1; }
+    94%{ opacity:0.2; }
+    96%{ opacity:1; }
+  }
+  @keyframes bb-binary-flicker{
+    0%, 84%, 100%{ opacity:0; }
+    86%{ opacity:1; }
+    88%{ opacity:0; }
+    90%{ opacity:1; }
+    92%{ opacity:0; }
+    94%{ opacity:0.9; }
+    96%{ opacity:0; }
+  }
 
   .stage.jump{
     animation:jump-cut 0.15s steps(1);
@@ -431,7 +483,7 @@
     <div class="illusion-flag">!LLUS!0N_LΔYER = ΞNΔBLΞD :: S!GNΔL_ASSESSMΞNT = 0FFL!NE</div>
     <button class="enter-btn" id="enterBtn">ENTER KEY TO BEGIN ASSESSMENT</button>
     <div class="access-status" id="accessStatus"></div>
-    <a class="board-btn" href="/board">S!GNAL_NODE:://P!GΞON_RELAY</a>
+    <a class="board-btn" href="/board"><span class="bb-label">S!GNAL_NODE:://P!GΞON_RELAY</span><span class="bb-binary" aria-hidden="true">01010011 01001001 01000111 01001110 01000001 01001100</span></a>
   </div>
 
   <div class="shutdown-msg" id="shutdownMsg">CONNECTION TERMINATED</div>
