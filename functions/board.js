@@ -422,14 +422,14 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     50%{ text-shadow:0 0 16px rgba(255,215,0,0.9), 0 0 30px rgba(255,215,0,0.5); }
   }
   .msg-plain.tier-diamond{
-    background:linear-gradient(90deg, #b9f2ff 0%, #ffffff 20%, #7fd8ff 40%, #ffffff 55%, #d9faff 70%, #ffffff 85%, #b9f2ff 100%);
+    background:linear-gradient(90deg, #ff36e0 0%, #ffe93f 22%, #36e6ff 45%, #ff36e0 68%, #ffe93f 88%, #36e6ff 100%);
     background-size:300% 100%;
     -webkit-background-clip:text;
     background-clip:text;
     color:transparent;
     font-weight:800;
     letter-spacing:0.04em;
-    filter:drop-shadow(0 0 6px rgba(185,242,255,0.8));
+    filter:drop-shadow(0 0 6px rgba(255,54,224,0.6));
     animation:diamond-text-shimmer 1.8s linear infinite;
   }
   @keyframes diamond-text-shimmer{
@@ -481,15 +481,15 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     position:relative;
     overflow:hidden;
     border-width:4px;
-    border-color:#e8fbff;
+    border-color:#ff8ef0;
     animation:diamond-glow-pulse 2.2s ease-in-out infinite;
   }
-  .msg-row.tier-diamond .msg-binary{ border-width:4px; border-color:rgba(185,242,255,0.5); }
-  .msg-row.tier-diamond .msg-meta{ border-bottom-color:rgba(185,242,255,0.4); }
-  .msg-row.tier-diamond .msg-avatar{ border-width:4px; border-color:rgba(185,242,255,0.5); }
+  .msg-row.tier-diamond .msg-binary{ border-width:4px; border-color:rgba(255,142,240,0.5); }
+  .msg-row.tier-diamond .msg-meta{ border-bottom-color:rgba(255,142,240,0.4); }
+  .msg-row.tier-diamond .msg-avatar{ border-width:4px; border-color:rgba(255,142,240,0.5); }
   @keyframes diamond-glow-pulse{
-    0%, 100%{ box-shadow:0 0 20px rgba(185,242,255,0.5), 0 0 42px rgba(185,242,255,0.25), inset 0 0 28px rgba(185,242,255,0.1); }
-    50%{ box-shadow:0 0 34px rgba(185,242,255,0.9), 0 0 68px rgba(185,242,255,0.45), inset 0 0 40px rgba(185,242,255,0.2); }
+    0%, 100%{ box-shadow:0 0 18px rgba(255,54,224,0.4), 0 0 34px rgba(54,230,255,0.22), inset 0 0 24px rgba(255,54,224,0.08); }
+    50%{ box-shadow:0 0 28px rgba(255,54,224,0.65), 0 0 52px rgba(54,230,255,0.38), inset 0 0 32px rgba(255,54,224,0.15); }
   }
   .diamond-sparkles{
     position:absolute;
@@ -518,9 +518,9 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     inset:0;
     pointer-events:none;
     z-index:1;
-    background:linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.22) 42%, rgba(255,255,255,0.85) 50%, rgba(255,255,255,0.22) 58%, transparent 75%);
+    background:linear-gradient(115deg, transparent 30%, rgba(255,111,235,0.14) 44%, rgba(255,255,255,0.32) 50%, rgba(111,230,255,0.14) 56%, transparent 70%);
     background-size:300% 300%;
-    animation:diamond-sweep 2.1s linear infinite;
+    animation:diamond-sweep 2.8s linear infinite;
     mix-blend-mode:screen;
   }
   @keyframes diamond-sweep{
