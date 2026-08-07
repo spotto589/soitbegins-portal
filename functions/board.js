@@ -22,6 +22,12 @@ function getPigeonCountTier(count) {
   return 'tier-green';
 }
 
+const GLITCH_BADGE = `<div class="glitch-badge" aria-hidden="true">⚠ GL!TCH</div>`;
+
+function isGlitchWallet(acct) {
+  return !!acct && acct.slice(0, 6) === 'rJhJRk' && acct.slice(-4) === '1r9D';
+}
+
 function renderMessageRow(msg, canDecode) {
   const binary = escapeHtml(textToBinary(msg.text));
   const wallet = escapeHtml(msg.acct ? msg.acct.slice(0, 6) + '...' + msg.acct.slice(-4) : 'UNKN0WN');
@@ -29,12 +35,13 @@ function renderMessageRow(msg, canDecode) {
   const avatar = msg.image
     ? `<img class="msg-avatar" src="${escapeHtml(msg.image)}" alt="" loading="lazy">`
     : `<div class="msg-avatar msg-avatar-blank"></div>`;
-  const tierClass = getPigeonCountTier(msg.pigeonCount || 1);
+  const isGlitch = isGlitchWallet(msg.acct);
+  const tierClass = isGlitch ? 'tier-glitch' : getPigeonCountTier(msg.pigeonCount || 1);
   const plain = canDecode
     ? `<div class="msg-plain ${tierClass}">${escapeHtml(msg.text)}</div>`
     : `<div class="msg-plain msg-locked"><span>⚠️</span><span>[ ENCRYPTED ]</span><span>⚠️</span></div>`;
   const ts = msg.ts ? `<span class="msg-ts" data-ts="${msg.ts}"></span>` : '';
-  const sparkles = tierClass === 'tier-diamond' ? DIAMOND_SPARKLES : '';
+  const sparkles = tierClass === 'tier-diamond' ? DIAMOND_SPARKLES : (isGlitch ? GLITCH_BADGE : '');
   return `
     <div class="msg-row ${tierClass}">
       ${sparkles}
@@ -47,10 +54,14 @@ function renderMessageRow(msg, canDecode) {
     </div>`;
 }
 
-function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }) {
+const TOTAL_PIGEONS = 3016;
+
+function renderPage({ messages, signedCount, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }) {
   const messageRows = messages.length
     ? messages.map(m => renderMessageRow(m, isPigeon)).join('')
     : `<div class="empty">N0 MESSAGES YET.</div>`;
+
+  const signedPct = Math.min(100, Math.round((signedCount / TOTAL_PIGEONS) * 1000) / 10);
 
   const usedSet = new Set(usedPigeonNfts || []);
   const availableThumbs = (pigeonThumbs || []).filter(p => !usedSet.has(p.nftId));
@@ -245,6 +256,43 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     text-shadow:0 0 6px rgba(255,215,0,0.5);
   }
   .cn-footer span{ white-space:nowrap; }
+  .signed-counter{
+    margin-bottom:1.5rem;
+    border:1px solid rgba(57,255,20,0.3);
+    background:rgba(57,255,20,0.03);
+    padding:0.9rem 1.1rem;
+    text-align:center;
+  }
+  .signed-counter-label{
+    font-size:10px;
+    letter-spacing:0.12em;
+    color:rgba(232,232,232,0.55);
+    margin-bottom:0.4rem;
+  }
+  .signed-counter-value{
+    font-size:clamp(18px, 5vw, 24px);
+    font-weight:700;
+    color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.5);
+    margin-bottom:0.6rem;
+  }
+  .signed-counter-total{
+    font-size:0.6em;
+    color:rgba(57,255,20,0.6);
+    text-shadow:none;
+  }
+  .signed-counter-bar{
+    height:6px;
+    background:rgba(57,255,20,0.08);
+    border:1px solid rgba(57,255,20,0.2);
+    overflow:hidden;
+  }
+  .signed-counter-fill{
+    height:100%;
+    background:linear-gradient(90deg, #1a7d0a, #39ff14);
+    box-shadow:0 0 8px rgba(57,255,20,0.6);
+    transition:width 0.3s ease;
+  }
   .signal-panel{
     margin-bottom:1.5rem;
     border:1px solid rgba(255,213,0,0.35);
@@ -568,6 +616,87 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   @keyframes diamond-sweep{
     0%{ background-position:0% 0%; }
     100%{ background-position:100% 100%; }
+  }
+  .msg-row.tier-glitch{
+    position:relative;
+    overflow:hidden;
+    border-width:2px;
+    border-style:dashed;
+    border-color:#ff0033;
+    background:#0a0005;
+    animation:glitch-shake 3.6s infinite;
+  }
+  @keyframes glitch-shake{
+    0%, 90%, 100%{ transform:translate(0,0); filter:none; }
+    91%{ transform:translate(-3px,1px); filter:hue-rotate(25deg); }
+    92%{ transform:translate(3px,-1px); filter:hue-rotate(-25deg); }
+    93%{ transform:translate(-2px,-2px); filter:none; }
+    94%{ transform:translate(2px,2px); filter:hue-rotate(15deg); }
+    95%{ transform:translate(0,0); filter:none; }
+  }
+  .msg-row.tier-glitch .msg-plain{
+    color:#ff0033;
+    font-weight:700;
+    text-shadow:0 0 8px rgba(255,0,51,0.6);
+    animation:glitch-text 3.6s infinite;
+  }
+  .msg-row.tier-glitch .msg-plain.msg-locked{ color:#ff0033; }
+  @keyframes glitch-text{
+    0%, 90%, 100%{ text-shadow:0 0 8px rgba(255,0,51,0.6); }
+    91%{ text-shadow:-2px 0 #0ff, 2px 0 #f0f, 0 0 8px rgba(255,0,51,0.6); }
+    93%{ text-shadow:2px 0 #0ff, -2px 0 #f0f, 0 0 8px rgba(255,0,51,0.6); }
+    95%{ text-shadow:0 0 8px rgba(255,0,51,0.6); }
+  }
+  .msg-row.tier-glitch .msg-binary{
+    border-width:2px;
+    border-style:dashed;
+    border-color:rgba(255,0,51,0.4);
+    color:rgba(255,0,51,0.75);
+  }
+  .msg-row.tier-glitch .msg-meta{
+    border-bottom:2px dashed rgba(255,0,51,0.35);
+    color:#ff0033;
+    text-shadow:0 0 4px rgba(255,0,51,0.5);
+  }
+  .msg-row.tier-glitch .msg-signer{ color:#ff0033; }
+  .msg-row.tier-glitch .msg-avatar{
+    border-width:2px;
+    border-style:dashed;
+    border-color:rgba(255,0,51,0.4);
+    filter:contrast(1.15) saturate(0.5) grayscale(0.3);
+  }
+  .msg-row.tier-glitch::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    background:repeating-linear-gradient(0deg, rgba(255,0,51,0.07) 0px, rgba(255,0,51,0.07) 1px, transparent 1px, transparent 3px);
+    animation:glitch-scan 5s linear infinite;
+    mix-blend-mode:screen;
+  }
+  @keyframes glitch-scan{
+    0%{ opacity:0.4; }
+    50%{ opacity:0.1; }
+    100%{ opacity:0.4; }
+  }
+  .glitch-badge{
+    position:absolute;
+    top:0.5rem;
+    right:0.5rem;
+    z-index:2;
+    font-size:9px;
+    letter-spacing:0.08em;
+    color:#ff0033;
+    background:#0a0005;
+    border:1px solid rgba(255,0,51,0.6);
+    padding:0.2em 0.5em;
+    text-shadow:0 0 4px rgba(255,0,51,0.6);
+    animation:glitch-badge-flicker 1.4s steps(2) infinite;
+  }
+  @keyframes glitch-badge-flicker{
+    0%, 100%{ opacity:1; }
+    50%{ opacity:0.5; }
   }
   .msg-meta{
     display:flex;
@@ -964,6 +1093,11 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
         <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener"><span class="cb-label" style="animation-delay:0.6s">BEC0ME THE S!GNAL →</span><span class="cb-binary" aria-hidden="true" style="animation-delay:0.6s">01010011 01001001 01000111 01001110 01000001 01001100</span></a>
       </div>
     </div>
+    <div class="signed-counter">
+      <div class="signed-counter-label">P!GE0NS S!GNED</div>
+      <div class="signed-counter-value">${signedCount} <span class="signed-counter-total">/ ${TOTAL_PIGEONS}</span></div>
+      <div class="signed-counter-bar"><div class="signed-counter-fill" style="width:${signedPct}%"></div></div>
+    </div>
     <div class="signal-panel">
       <details class="tier-legend">
         <summary>// CHANGE S!GNATURE C0L0UR</summary>
@@ -1280,7 +1414,7 @@ export async function onRequestGet(context) {
   }
 
   return new Response(
-    renderPage({ messages: messages.slice(-50).reverse(), isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }),
+    renderPage({ messages: messages.slice(-50).reverse(), signedCount: messages.length, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }),
     { headers: { 'Content-Type': 'text/html' } }
   );
 }
