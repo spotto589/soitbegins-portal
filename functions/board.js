@@ -11,6 +11,8 @@ function escapeHtml(str) {
   return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+const DIAMOND_SPARKLES = `<div class="diamond-sparkles" aria-hidden="true"><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span></div>`;
+
 function getPigeonCountTier(count) {
   if (count >= 99) return 'tier-diamond';
   if (count >= 50) return 'tier-gold';
@@ -30,16 +32,18 @@ function renderMessageRow(msg, canDecode) {
   const tierClass = getPigeonCountTier(msg.pigeonCount || 1);
   const plain = canDecode
     ? `<div class="msg-plain ${tierClass}">${escapeHtml(msg.text)}</div>`
-    : `<div class="msg-plain msg-locked">[ ENCRYPTED ]</div>`;
+    : `<div class="msg-plain msg-locked"><span>⚠️</span><span>[ ENCRYPTED ]</span><span>⚠️</span></div>`;
   const ts = msg.ts ? `<span class="msg-ts" data-ts="${msg.ts}"></span>` : '';
+  const sparkles = tierClass === 'tier-diamond' ? DIAMOND_SPARKLES : '';
   return `
     <div class="msg-row ${tierClass}">
+      ${sparkles}
+      <div class="msg-meta"><span class="msg-meta-left">S!GNED :: <span class="msg-signer">${signer}</span></span>${ts ? `<span class="msg-meta-right">${ts}</span>` : ''}</div>
       <div class="msg-top">
         ${avatar}
         <div class="msg-plain-wrap">${plain}</div>
       </div>
       <div class="msg-binary">${binary}</div>
-      <div class="msg-meta"><span class="msg-meta-left">S!GNED :: <span class="msg-signer">${signer}</span></span>${ts ? `<span class="msg-meta-right">${ts}</span>` : ''}</div>
     </div>`;
 }
 
@@ -85,6 +89,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
   const hasAvailableThumbs = availableThumbs.length > 0;
   const initialAvatarSrc = hasAvailableThumbs ? escapeHtml(availableThumbs[0].image) : '';
   const previewTierClass = getPigeonCountTier(pigeonCount || 1);
+  const previewSparkles = previewTierClass === 'tier-diamond' ? DIAMOND_SPARKLES : '';
 
   const bottomSection = isPigeon ? `
     <div class="write-box" id="pigeonWalletBoard">
@@ -96,13 +101,14 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       <div class="sig-label-below">S!GNATURE ¿ (OPT!ONAL, max 15)</div>
       <div class="preview-label">PREV!EW</div>
       <div class="msg-row ${previewTierClass}" id="previewRow">
+        ${previewSparkles}
+        <div class="msg-meta"><span class="msg-meta-left">S!GNED :: <span class="msg-signer"><span id="previewName"></span>${acctDisplay || 'Y0U'}</span></span></div>
         <div class="msg-top">
           <img class="msg-avatar" id="previewAvatarImg" src="${initialAvatarSrc}" alt="" style="${hasAvailableThumbs ? '' : 'display:none;'}">
           <div class="msg-avatar msg-avatar-blank" id="previewAvatarBlank" style="${hasAvailableThumbs ? 'display:none;' : ''}"></div>
           <div class="msg-plain-wrap"><div class="msg-plain ${previewTierClass}" id="plainPreview"></div></div>
         </div>
         <div class="msg-binary" id="binaryPreview"></div>
-        <div class="msg-meta"><span class="msg-meta-left">S!GNED :: <span class="msg-signer"><span id="previewName"></span>${acctDisplay || 'Y0U'}</span></span></div>
       </div>
       <button class="post-btn" id="postBtn"${allPigeonsUsed ? ' disabled' : ''}>S!GN & P0ST</button>
       <div class="post-status" id="postStatus"></div>
@@ -348,8 +354,9 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     padding:0.85rem 1.1rem;
   }
   .msg-binary{
-    padding:0.8rem 1.1rem;
-    border-top:1px solid rgba(57,255,20,0.15);
+    margin:0.8rem 1.1rem;
+    padding:0.7rem 0.9rem;
+    border:1px solid rgba(57,255,20,0.15);
     font-size:11px;
     line-height:1.7;
     color:rgba(57,255,20,0.6);
@@ -373,18 +380,22 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     transform:translate(-50%,-50%);
     width:100%;
     box-sizing:border-box;
-    padding:0 1rem;
-    text-align:center;
-    white-space:nowrap;
+    padding:0 0.75rem;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:0.3em;
     color:#ff003c;
     font-weight:700;
     font-style:normal;
-    font-size:clamp(14px, 4.2vw, 20px);
-    letter-spacing:0.08em;
+    font-size:clamp(11px, 3.4vw, 18px);
+    letter-spacing:0.06em;
     text-shadow:0 0 10px rgba(255,0,60,0.6);
     pointer-events:none;
     z-index:2;
   }
+  .msg-plain.msg-locked span{ white-space:nowrap; }
   .msg-plain.tier-green{
     color:#39ff14;
     text-shadow:0 0 4px rgba(57,255,20,0.35);
@@ -426,12 +437,46 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     100%{ background-position:300% 50%; }
   }
   .msg-row.tier-pink{ border-width:1px; border-color:rgba(255,110,199,0.4); }
+  .msg-row.tier-pink .msg-binary{ border-width:1px; border-color:rgba(255,110,199,0.3); }
+  .msg-row.tier-pink .msg-meta{ border-bottom-color:rgba(255,110,199,0.25); }
+  .msg-row.tier-pink .msg-avatar{ border-width:1px; border-color:rgba(255,110,199,0.3); }
   .msg-row.tier-red{ border-width:2px; border-color:rgba(255,59,59,0.45); }
+  .msg-row.tier-red .msg-binary{ border-width:2px; border-color:rgba(255,59,59,0.3); }
+  .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(255,59,59,0.25); }
+  .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(255,59,59,0.3); }
   .msg-row.tier-purple{ border-width:2.5px; border-color:rgba(199,125,255,0.45); }
-  .msg-row.tier-gold{ border-width:3px; border-color:rgba(255,215,0,0.7); }
-  .msg-row.tier-gold .msg-binary{ border-top-color:rgba(255,215,0,0.4); }
-  .msg-row.tier-gold .msg-meta{ border-top-color:rgba(255,215,0,0.35); }
-  .msg-row.tier-gold .msg-avatar{ border-right:1px solid rgba(255,215,0,0.4); }
+  .msg-row.tier-purple .msg-binary{ border-width:2.5px; border-color:rgba(199,125,255,0.3); }
+  .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(199,125,255,0.25); }
+  .msg-row.tier-purple .msg-avatar{ border-width:2.5px; border-color:rgba(199,125,255,0.3); }
+  .msg-row.tier-gold{
+    position:relative;
+    overflow:hidden;
+    border-width:3px;
+    border-color:rgba(255,215,0,0.7);
+    animation:gold-glow-pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes gold-glow-pulse{
+    0%, 100%{ box-shadow:0 0 10px rgba(255,215,0,0.3), inset 0 0 14px rgba(255,215,0,0.05); }
+    50%{ box-shadow:0 0 20px rgba(255,215,0,0.55), inset 0 0 22px rgba(255,215,0,0.12); }
+  }
+  .msg-row.tier-gold::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    background:linear-gradient(115deg, transparent 30%, rgba(255,215,0,0.22) 46%, rgba(255,246,200,0.55) 50%, rgba(255,215,0,0.22) 54%, transparent 70%);
+    background-size:300% 300%;
+    animation:gold-sweep 3.4s linear infinite;
+    mix-blend-mode:screen;
+  }
+  @keyframes gold-sweep{
+    0%{ background-position:0% 0%; }
+    100%{ background-position:100% 100%; }
+  }
+  .msg-row.tier-gold .msg-binary{ border-width:3px; border-color:rgba(255,215,0,0.4); }
+  .msg-row.tier-gold .msg-meta{ border-bottom-color:rgba(255,215,0,0.35); }
+  .msg-row.tier-gold .msg-avatar{ border-width:3px; border-color:rgba(255,215,0,0.4); }
   .msg-row.tier-diamond{
     position:relative;
     overflow:hidden;
@@ -439,27 +484,33 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     border-color:#e8fbff;
     animation:diamond-glow-pulse 2.2s ease-in-out infinite;
   }
+  .msg-row.tier-diamond .msg-binary{ border-width:4px; border-color:rgba(185,242,255,0.5); }
+  .msg-row.tier-diamond .msg-meta{ border-bottom-color:rgba(185,242,255,0.4); }
+  .msg-row.tier-diamond .msg-avatar{ border-width:4px; border-color:rgba(185,242,255,0.5); }
   @keyframes diamond-glow-pulse{
     0%, 100%{ box-shadow:0 0 20px rgba(185,242,255,0.5), 0 0 42px rgba(185,242,255,0.25), inset 0 0 28px rgba(185,242,255,0.1); }
     50%{ box-shadow:0 0 34px rgba(185,242,255,0.9), 0 0 68px rgba(185,242,255,0.45), inset 0 0 40px rgba(185,242,255,0.2); }
   }
-  .msg-row.tier-diamond::before{
-    content:'';
+  .diamond-sparkles{
     position:absolute;
     inset:0;
     pointer-events:none;
-    z-index:1;
-    background-image:
-      radial-gradient(circle at 15% 25%, rgba(255,255,255,0.95) 0%, transparent 2.5%),
-      radial-gradient(circle at 82% 18%, rgba(255,255,255,0.85) 0%, transparent 2%),
-      radial-gradient(circle at 62% 78%, rgba(255,255,255,0.95) 0%, transparent 2.5%),
-      radial-gradient(circle at 28% 82%, rgba(255,255,255,0.75) 0%, transparent 2%),
-      radial-gradient(circle at 92% 62%, rgba(255,255,255,0.9) 0%, transparent 2.2%);
-    animation:diamond-sparkle 1.4s ease-in-out infinite;
+    z-index:2;
   }
-  @keyframes diamond-sparkle{
-    0%, 100%{ opacity:0.25; }
-    50%{ opacity:1; }
+  .diamond-sparkles span{
+    position:absolute;
+    font-size:13px;
+    filter:drop-shadow(0 0 5px rgba(255,255,255,0.9));
+    animation:diamond-sparkle-twinkle 1.6s ease-in-out infinite;
+  }
+  .diamond-sparkles span:nth-child(1){ top:12%; left:10%; animation-delay:0s; }
+  .diamond-sparkles span:nth-child(2){ top:10%; left:82%; animation-delay:0.3s; }
+  .diamond-sparkles span:nth-child(3){ top:74%; left:58%; animation-delay:0.6s; }
+  .diamond-sparkles span:nth-child(4){ top:80%; left:20%; animation-delay:0.9s; }
+  .diamond-sparkles span:nth-child(5){ top:56%; left:90%; animation-delay:1.2s; }
+  @keyframes diamond-sparkle-twinkle{
+    0%, 100%{ opacity:0.15; transform:scale(0.65) rotate(-10deg); }
+    50%{ opacity:1; transform:scale(1.2) rotate(10deg); }
   }
   .msg-row.tier-diamond::after{
     content:'';
@@ -482,8 +533,8 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     align-items:center;
     text-align:center;
     row-gap:0.35rem;
-    padding:0.6rem 1.1rem 0.85rem;
-    border-top:1px solid rgba(57,255,20,0.1);
+    padding:0.85rem 1.1rem 0.6rem;
+    border-bottom:1px solid rgba(57,255,20,0.1);
     font-size:12px;
     letter-spacing:0.05em;
     color:#ff003c;
@@ -530,7 +581,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
     height:auto;
     object-fit:contain;
     background:#08080a;
-    border:none;
+    border:1px solid rgba(57,255,20,0.25);
   }
   @media (min-width:641px){
     .msg-top{ min-height:220px; }
@@ -547,7 +598,7 @@ function renderPage({ messages, isPigeon, hasSession, wordLimit, pigeonThumbs, a
       transparent 6px,
       transparent 12px
     );
-    border-right-color:rgba(57,255,20,0.15);
+    border-color:rgba(57,255,20,0.15);
   }
   .pigeon-picker{
     display:grid;
