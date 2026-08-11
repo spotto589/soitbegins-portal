@@ -1672,11 +1672,23 @@ export async function onRequestGet(context) {
   }
 
   // The glitch wallet's pre-restriction double-post left two KV entries for
-  // what is really one pigeon signing twice — dedupe it out of the count.
-  const glitchDuplicateCount = messages.filter(m => isGlitchWallet(m.acct)).length;
+  // what is really one pigeon signing twice — dedupe it out of the count and
+  // leave it out of the per-signature numbering too (the later of the two,
+  // same one the glitch visual treatment applies to).
+  const glitchWalletTsAll = messages.filter(m => isGlitchWallet(m.acct)).map(m => m.ts);
+  const glitchDupTs = glitchWalletTsAll.length > 1 ? Math.max(...glitchWalletTsAll) : null;
+  const glitchDuplicateCount = glitchWalletTsAll.length;
   const signedCount = messages.length - Math.max(0, glitchDuplicateCount - 1);
 
-  messages.forEach((m, i) => { m.order = i + 1; });
+  let orderCounter = 0;
+  messages.forEach((m) => {
+    if (isGlitchWallet(m.acct) && m.ts === glitchDupTs) {
+      m.order = null;
+    } else {
+      orderCounter++;
+      m.order = orderCounter;
+    }
+  });
 
   return new Response(
     renderPage({ messages: messages.slice(-50).reverse(), signedCount, leaderboard, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }),
