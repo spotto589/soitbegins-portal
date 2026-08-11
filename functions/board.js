@@ -56,7 +56,7 @@ function renderMessageRow(msg, canDecode, glitchTs) {
 
 const TOTAL_PIGEONS = 3016;
 
-function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }) {
+function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }) {
   const glitchWalletTs = messages.filter(m => isGlitchWallet(m.acct)).map(m => m.ts);
   const glitchTs = glitchWalletTs.length ? Math.max(...glitchWalletTs) : null;
   const messageRows = messages.length
@@ -70,6 +70,10 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }).join('');
 
   const signedPct = Math.min(100, Math.round((signedCount / TOTAL_PIGEONS) * 1000) / 10);
+
+  const signedPigeonsRow = (signedPigeons || []).map(p =>
+    `<a class="sp-thumb-link" href="https://bithomp.com/en/nft/${escapeHtml(p.nftId)}" target="_blank" rel="noopener"><img class="sp-thumb" src="${escapeHtml(p.image)}" alt="" loading="lazy"><span class="sp-thumb-label">${p.order}/${TOTAL_PIGEONS}</span></a>`
+  ).join('');
 
   const usedSet = new Set(usedPigeonNfts || []);
   const availableThumbs = (pigeonThumbs || []).filter(p => !usedSet.has(p.nftId));
@@ -268,9 +272,27 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     margin-bottom:1.5rem;
     border:1px solid rgba(57,255,20,0.3);
     background:rgba(57,255,20,0.03);
+    overflow:hidden;
+  }
+  .signed-counter-summary{
+    cursor:pointer;
+    list-style:none;
     padding:0.9rem 1.1rem;
     text-align:center;
+    -webkit-tap-highlight-color:transparent;
+    position:relative;
   }
+  .signed-counter-summary::-webkit-details-marker{ display:none; }
+  .signed-counter-summary::after{
+    content:'▾';
+    position:absolute;
+    top:0.9rem;
+    right:1rem;
+    font-size:10px;
+    color:#39ff14;
+    transition:transform 0.2s ease;
+  }
+  .signed-counter[open] .signed-counter-summary::after{ transform:rotate(180deg); }
   .signed-counter-label{
     font-size:10px;
     letter-spacing:0.12em;
@@ -301,6 +323,57 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     background:linear-gradient(90deg, #1a7d0a, #39ff14);
     box-shadow:0 0 8px rgba(57,255,20,0.6);
     transition:width 0.3s ease;
+  }
+  .sp-row{
+    display:flex;
+    gap:0.5rem;
+    overflow-x:auto;
+    padding:0 1.1rem 1rem;
+    border-top:1px solid rgba(57,255,20,0.15);
+    margin-top:-1px;
+    padding-top:0.85rem;
+  }
+  .sp-thumb-link{
+    position:relative;
+    flex:0 0 auto;
+    display:block;
+    width:56px;
+    height:56px;
+  }
+  .sp-thumb{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    border:1px solid rgba(57,255,20,0.3);
+    display:block;
+  }
+  .sp-thumb-link:hover .sp-thumb{ border-color:#39ff14; }
+  .sp-thumb-label{
+    position:absolute;
+    bottom:0;
+    left:0;
+    right:0;
+    font-size:8px;
+    letter-spacing:0.02em;
+    text-align:center;
+    background:rgba(0,0,0,0.75);
+    color:#39ff14;
+    padding:1px 0;
+    pointer-events:none;
+  }
+  .rules-item{
+    padding:0.7rem 0.9rem;
+    border:1px solid rgba(57,255,20,0.2);
+    background:#08080a;
+    font-size:11px;
+    line-height:1.6;
+    letter-spacing:0.03em;
+    color:#e8e8e8;
+  }
+  .rules-item.disclaimer{
+    color:#ff003c;
+    border-color:rgba(255,0,60,0.3);
+    text-shadow:0 0 4px rgba(255,0,60,0.3);
   }
   .signal-panel{
     margin-bottom:1.5rem;
@@ -433,6 +506,19 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .collection-link:hover{
     background:#fff65c;
     transform:translateY(-1px);
+  }
+  .collection-link.big{
+    gap:0.6em;
+    padding:1.1em 1.8em;
+    font-size:clamp(14px, 4.2vw, 18px);
+  }
+  .collection-link-logo{
+    flex:0 0 auto;
+    width:1.8em;
+    height:1.8em;
+    object-fit:cover;
+    border:1px solid #000;
+    border-radius:2px;
   }
   .msg-row{
     background:#08080a;
@@ -1146,14 +1232,23 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     <div class="btn-group">
       ${connectSection}
       <div class="collection-link-wrap">
-        <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener"><span class="cb-label" style="animation-delay:0.6s">BEC0ME THE S!GNAL →</span><span class="cb-binary" aria-hidden="true" style="animation-delay:0.6s">01010011 01001001 01000111 01001110 01000001 01001100</span></a>
+        <a class="collection-link big" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">
+          <img class="collection-link-logo" src="https://ipfs.io/ipfs/bafybeib2kykxegfu3wllvngmbjl7igzyt5f5pnqi4k54lbwwlpryeermp4/2394.png" alt="" aria-hidden="true">
+          <span class="cb-label" style="animation-delay:0.6s">BEC0ME THE S!GNAL →</span>
+          <span class="cb-binary" aria-hidden="true" style="animation-delay:0.6s">01010011 01001001 01000111 01001110 01000001 01001100</span>
+        </a>
       </div>
     </div>
-    <div class="signed-counter">
-      <div class="signed-counter-label">P!GE0NS S!GNED</div>
-      <div class="signed-counter-value">${signedCount} <span class="signed-counter-total">/ ${TOTAL_PIGEONS}</span></div>
-      <div class="signed-counter-bar"><div class="signed-counter-fill" style="width:${signedPct}%"></div></div>
-    </div>
+    <details class="signed-counter">
+      <summary class="signed-counter-summary">
+        <div class="signed-counter-label">P!GE0NS S!GNED</div>
+        <div class="signed-counter-value">${signedCount} <span class="signed-counter-total">/ ${TOTAL_PIGEONS}</span></div>
+        <div class="signed-counter-bar"><div class="signed-counter-fill" style="width:${signedPct}%"></div></div>
+      </summary>
+      <div class="sp-row">
+        ${signedPigeonsRow || `<div class="lb-empty">N0 P!GE0NS S!GNED YET.</div>`}
+      </div>
+    </details>
     <div class="signal-panel">
       <details class="tier-legend">
         <summary>// B0RDER T!ERS</summary>
@@ -1170,6 +1265,14 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         <summary>// T0P S!GNERS</summary>
         <div class="tier-legend-body">
           ${leaderboardRows || `<div class="lb-empty">N0 S!GNATURES YET.</div>`}
+        </div>
+      </details>
+      <details class="tier-legend rules-panel">
+        <summary>// RULES</summary>
+        <div class="tier-legend-body">
+          <div class="rules-item">EVERY P!GE0N CAN 0NLY S!GN THE B0ARD 0NCE, FR0M 0NE ADDRESS. USED P!GE0NS W!LL BE GREYED 0UT AS UNAVA!LABLE.</div>
+          <div class="rules-item">S!GNATURE W!LL BE C0L0URED B0RDER BASED 0N NUMBER 0F P!GE0NS HELD !N S!GNATURE WALLET AT THE T!ME 0F S!GN!NG.</div>
+          <div class="rules-item disclaimer">TH!S PR0JECT HAS N0 AFF!L!AT!0N W!TH P!GE0NS :: !T !S MERELY A FAN-MADE PR0JECT TO BR!NG UT!L!TY.</div>
         </div>
       </details>
     </div>
@@ -1492,8 +1595,12 @@ export async function onRequestGet(context) {
   const glitchDuplicateCount = messages.filter(m => isGlitchWallet(m.acct)).length;
   const signedCount = messages.length - Math.max(0, glitchDuplicateCount - 1);
 
+  const signedPigeons = messages
+    .filter(m => m.image && m.nftId)
+    .map((m, i) => ({ image: m.image, nftId: m.nftId, order: i + 1 }));
+
   return new Response(
-    renderPage({ messages: messages.slice(-50).reverse(), signedCount, leaderboard, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }),
+    renderPage({ messages: messages.slice(-50).reverse(), signedCount, signedPigeons, leaderboard, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }),
     { headers: { 'Content-Type': 'text/html' } }
   );
 }
