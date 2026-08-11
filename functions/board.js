@@ -30,7 +30,10 @@ function isGlitchWallet(acct) {
 
 function renderMessageRow(msg, canDecode, glitchTs) {
   const binary = escapeHtml(textToBinary(msg.text));
-  const wallet = escapeHtml(msg.acct ? msg.acct.slice(0, 6) + '...' + msg.acct.slice(-4) : 'UNKN0WN');
+  const walletText = escapeHtml(msg.acct ? msg.acct.slice(0, 6) + '...' + msg.acct.slice(-4) : 'UNKN0WN');
+  const wallet = msg.acct
+    ? `<a class="wallet-link" href="https://bithomp.com/explorer/${escapeHtml(msg.acct)}" target="_blank" rel="noopener">${walletText}</a>`
+    : walletText;
   const signer = msg.name ? `${escapeHtml(msg.name)} · ${wallet}` : wallet;
   const avatar = msg.image
     ? `<img class="msg-avatar" src="${escapeHtml(msg.image)}" alt="" loading="lazy">`
@@ -280,22 +283,27 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
   .signed-counter-summary{
     cursor:pointer;
     list-style:none;
-    padding:0.9rem 1.1rem;
+    padding:0.9rem 2.75rem;
     text-align:center;
     -webkit-tap-highlight-color:transparent;
     position:relative;
   }
   .signed-counter-summary::-webkit-details-marker{ display:none; }
+  .signed-counter-summary::before,
   .signed-counter-summary::after{
     content:'▾';
     position:absolute;
-    top:0.9rem;
-    right:1rem;
-    font-size:10px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:20px;
     color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.5);
     transition:transform 0.2s ease;
   }
-  .signed-counter[open] .signed-counter-summary::after{ transform:rotate(180deg); }
+  .signed-counter-summary::before{ left:1rem; }
+  .signed-counter-summary::after{ right:1rem; }
+  .signed-counter[open] .signed-counter-summary::before{ transform:translateY(-50%) rotate(180deg); }
+  .signed-counter[open] .signed-counter-summary::after{ transform:translateY(-50%) rotate(180deg); }
   .signed-counter-label{
     font-size:10px;
     letter-spacing:0.12em;
@@ -329,23 +337,29 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
   }
   .sp-row{
     display:flex;
+    flex-direction:column;
     gap:0.5rem;
-    overflow-x:auto;
-    padding:0 1.1rem 1rem;
+    max-height:360px;
+    overflow-y:auto;
+    padding:0.85rem 1.1rem 1rem;
     border-top:1px solid rgba(57,255,20,0.15);
     margin-top:-1px;
-    padding-top:0.85rem;
   }
   .sp-thumb-link{
     position:relative;
-    flex:0 0 auto;
-    display:block;
-    width:56px;
-    height:56px;
+    display:flex;
+    align-items:center;
+    gap:0.85rem;
+    padding:0.4rem 0.6rem;
+    border:1px solid rgba(57,255,20,0.15);
+    background:#08080a;
+    text-decoration:none;
   }
+  .sp-thumb-link:hover{ border-color:rgba(57,255,20,0.4); }
   .sp-thumb{
-    width:100%;
-    height:100%;
+    flex:0 0 auto;
+    width:72px;
+    height:72px;
     object-fit:cover;
     border:1px solid rgba(57,255,20,0.3);
     display:block;
@@ -361,17 +375,10 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
     );
   }
   .sp-thumb-label{
-    position:absolute;
-    bottom:0;
-    left:0;
-    right:0;
-    font-size:8px;
-    letter-spacing:0.02em;
-    text-align:center;
-    background:rgba(0,0,0,0.75);
+    font-size:11px;
+    letter-spacing:0.04em;
     color:#39ff14;
-    padding:1px 0;
-    pointer-events:none;
+    text-shadow:0 0 4px rgba(57,255,20,0.4);
   }
   .rules-item{
     padding:0.7rem 0.9rem;
@@ -402,8 +409,8 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
     font-size:13px;
     font-weight:700;
     letter-spacing:0.08em;
-    color:#ffd500;
-    text-shadow:0 0 6px rgba(255,213,0,0.4);
+    color:#c77dff;
+    text-shadow:0 0 6px rgba(199,125,255,0.5);
     margin-top:0.5rem;
   }
   .rules-subhead::before, .rules-subhead::after{
@@ -965,6 +972,13 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
     color:#ffd700;
     text-shadow:0 0 4px rgba(255,215,0,0.4);
   }
+  .wallet-link{
+    color:inherit;
+    text-shadow:inherit;
+    text-decoration:none;
+    border-bottom:1px dotted currentColor;
+  }
+  .wallet-link:hover{ opacity:0.8; }
   .msg-ts{
     color:rgba(255,0,60,0.7);
     font-variant-numeric:tabular-nums;
