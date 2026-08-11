@@ -1,11 +1,12 @@
 import {
   KINGDOM_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
-  findAllKingNfts, findAllHoneypots, findAllGreenNfts, findAllYellowNfts,
+  findAllKingNfts, findAllGreenNfts, findAllYellowNfts,
   KINGDOM_CLAIM_CONFIG
 } from '../_shared.js';
 
+// $HONEY is gated by King ownership for now, not Honeypot ownership.
 const ELIGIBILITY = {
-  honey: findAllHoneypots,
+  honey: findAllKingNfts,
   beta: findAllGreenNfts,
   rlusd: findAllYellowNfts,
   crwn: findAllKingNfts,

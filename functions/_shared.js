@@ -128,11 +128,11 @@ export function findAllYellowNfts(nfts) {
   return nfts.filter(n => n.Issuer === YELLOW_ISSUER && n.NFTokenTaxon === YELLOW_TAXON);
 }
 
-// Kingdom Phase 1 — token identifiers/amounts have not been provided yet.
-// "configured:false" keeps every claim button disabled with a clear label
-// until real values are filled in here.
+// Kingdom Phase 1 — only $HONEY is live so far (claimable by King holders).
+// The rest stay "configured:false" (coming soon) until real token
+// identifiers/amounts are provided.
 export const KINGDOM_CLAIM_CONFIG = {
-  honey: { label: '$HONEY', category: 'HONEYPOT', currency: null, issuer: null, amount: null, configured: false },
+  honey: { label: '$HONEY', category: 'K!NG H0LDERS', currency: 'HONEY', issuer: 'rNa4hZ4kfPwEdN5gSbbNr33aSpyF5ZjzDm', amount: null, configured: true },
   beta: { label: 'BETA TEST COIN', category: 'GREEN', currency: null, issuer: null, amount: null, configured: false },
   rlusd: { label: 'RLUSD', category: 'YELLOW', currency: null, issuer: null, amount: null, configured: false },
   crwn: { label: '$CRWN', category: 'KING', currency: null, issuer: null, amount: null, configured: false },

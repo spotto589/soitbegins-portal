@@ -1,7 +1,7 @@
 import {
   KINGDOM_COOKIE_NAME, getCookie, verifyToken,
   fetchAllAccountNfts, findAllKingNfts, getKingThumbnails,
-  findAllHoneypots, findAllGreenNfts, findAllYellowNfts,
+  findAllGreenNfts, findAllYellowNfts,
   KINGDOM_CLAIM_CONFIG, KINGDOM_CLAIMANTS
 } from './_shared.js';
 
@@ -35,9 +35,9 @@ function renderNoKing() {
 
 function renderClaimCard(kind, config, held) {
   const eligible = held.length > 0;
-  const statusLine = !eligible
-    ? 'N0T EL!G!BLE'
-    : (config.configured ? 'READY' : 'N0T C0NF!GURED YET');
+  const statusLine = !config.configured
+    ? 'C0M!NG S00N'
+    : (eligible ? 'READY' : 'N0T EL!G!BLE');
   return `
     <div class="kd-claim-card ${eligible ? 'kd-eligible' : 'kd-ineligible'}">
       <div class="kd-claim-label">${escapeHtml(config.label)}</div>
@@ -150,7 +150,7 @@ export async function onRequestGet(context) {
         const votes = Object.fromEntries(voteEntries.filter(([, v]) => v !== null));
 
         const claimHolds = {
-          honey: findAllHoneypots(nfts),
+          honey: kingNfts,
           beta: findAllGreenNfts(nfts),
           rlusd: findAllYellowNfts(nfts),
           crwn: kingNfts,
