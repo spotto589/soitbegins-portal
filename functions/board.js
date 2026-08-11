@@ -36,7 +36,9 @@ function renderMessageRow(msg, canDecode, glitchTs) {
     : walletText;
   const signer = msg.name ? `${escapeHtml(msg.name)} · ${wallet}` : wallet;
   const avatar = msg.image
-    ? `<img class="msg-avatar" src="${escapeHtml(msg.image)}" alt="" loading="lazy">`
+    ? (msg.nftId
+        ? `<a class="msg-avatar" href="https://deeptide.co/nft/${escapeHtml(msg.nftId)}" target="_blank" rel="noopener"><img class="msg-avatar-img" src="${escapeHtml(msg.image)}" alt="" loading="lazy"></a>`
+        : `<img class="msg-avatar" src="${escapeHtml(msg.image)}" alt="" loading="lazy">`)
     : `<div class="msg-avatar msg-avatar-blank"></div>`;
   const isGlitch = isGlitchWallet(msg.acct) && msg.ts === glitchTs;
   const tierClass = isGlitch ? 'tier-glitch' : getPigeonCountTier(msg.pigeonCount || 1);
@@ -78,7 +80,8 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
     const thumb = p.image
       ? `<img class="sp-thumb" src="${escapeHtml(p.image)}" alt="" loading="lazy">`
       : `<div class="sp-thumb sp-thumb-blank"></div>`;
-    return `<a class="sp-thumb-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">${thumb}<span class="sp-thumb-label">${p.order}/${TOTAL_PIGEONS}</span></a>`;
+    const href = p.nftId ? `https://deeptide.co/nft/${escapeHtml(p.nftId)}` : 'https://deeptide.co/xrpigeons';
+    return `<a class="sp-thumb-link" href="${href}" target="_blank" rel="noopener">${thumb}<span class="sp-thumb-label">${p.order}/${TOTAL_PIGEONS}</span></a>`;
   }).join('');
 
   const usedSet = new Set(usedPigeonNfts || []);
@@ -991,6 +994,13 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
     object-fit:contain;
     background:#08080a;
     border:1px solid rgba(57,255,20,0.25);
+    display:block;
+  }
+  .msg-avatar-img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:block;
   }
   @media (min-width:641px){
     .msg-top{ min-height:220px; }
@@ -1711,7 +1721,7 @@ export async function onRequestGet(context) {
   const glitchDuplicateCount = messages.filter(m => isGlitchWallet(m.acct)).length;
   const signedCount = messages.length - Math.max(0, glitchDuplicateCount - 1);
 
-  const signedPigeons = messages.map((m, i) => ({ image: m.image || '', order: i + 1 }));
+  const signedPigeons = messages.map((m, i) => ({ image: m.image || '', nftId: m.nftId || '', order: i + 1 }));
 
   return new Response(
     renderPage({ messages: messages.slice(-50).reverse(), signedCount, signedPigeons, leaderboard, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }),
