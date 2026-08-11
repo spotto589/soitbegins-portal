@@ -71,9 +71,12 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
 
   const signedPct = Math.min(100, Math.round((signedCount / TOTAL_PIGEONS) * 1000) / 10);
 
-  const signedPigeonsRow = (signedPigeons || []).map(p =>
-    `<a class="sp-thumb-link" href="https://bithomp.com/en/nft/${escapeHtml(p.nftId)}" target="_blank" rel="noopener"><img class="sp-thumb" src="${escapeHtml(p.image)}" alt="" loading="lazy"><span class="sp-thumb-label">${p.order}/${TOTAL_PIGEONS}</span></a>`
-  ).join('');
+  const signedPigeonsRow = (signedPigeons || []).map(p => {
+    const thumb = p.image
+      ? `<img class="sp-thumb" src="${escapeHtml(p.image)}" alt="" loading="lazy">`
+      : `<div class="sp-thumb sp-thumb-blank"></div>`;
+    return `<a class="sp-thumb-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">${thumb}<span class="sp-thumb-label">${p.order}/${TOTAL_PIGEONS}</span></a>`;
+  }).join('');
 
   const usedSet = new Set(usedPigeonNfts || []);
   const availableThumbs = (pigeonThumbs || []).filter(p => !usedSet.has(p.nftId));
@@ -348,6 +351,15 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
     display:block;
   }
   .sp-thumb-link:hover .sp-thumb{ border-color:#39ff14; }
+  .sp-thumb-blank{
+    background:repeating-linear-gradient(
+      45deg,
+      rgba(57,255,20,0.06) 0px,
+      rgba(57,255,20,0.06) 4px,
+      transparent 4px,
+      transparent 8px
+    );
+  }
   .sp-thumb-label{
     position:absolute;
     bottom:0;
@@ -384,23 +396,34 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
     margin-bottom:0.2rem;
   }
   .rules-subhead{
-    font-size:11px;
+    display:flex;
+    align-items:center;
+    gap:0.4em;
+    font-size:13px;
     font-weight:700;
     letter-spacing:0.08em;
     color:#ffd500;
-    margin-top:0.4rem;
+    text-shadow:0 0 6px rgba(255,213,0,0.4);
+    margin-top:0.5rem;
+  }
+  .rules-subhead::before, .rules-subhead::after{
+    content:'⚠️';
+    font-size:0.8em;
+    flex:0 0 auto;
   }
   .rules-body{
     font-size:11px;
     line-height:1.6;
-    color:rgba(232,232,232,0.8);
+    color:#39ff14;
+    text-shadow:0 0 3px rgba(57,255,20,0.3);
   }
   .rules-rule{
     display:flex;
     gap:0.6em;
     font-size:11px;
     line-height:1.5;
-    color:rgba(232,232,232,0.8);
+    color:#39ff14;
+    text-shadow:0 0 3px rgba(57,255,20,0.3);
   }
   .rules-num{
     flex:0 0 auto;
@@ -464,7 +487,7 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
   }
   .tl-text{ font-size:13px; }
   .leaderboard{ border-top:1px solid rgba(57,255,20,0.15); }
-  .leaderboard summary{ color:#ffd500; text-shadow:0 0 6px rgba(255,213,0,0.4); text-decoration:underline; text-underline-offset:3px; }
+  .leaderboard summary{ color:#ffd500; text-shadow:0 0 6px rgba(255,213,0,0.4); }
   .lb-row{
     display:flex;
     align-items:center;
@@ -1674,9 +1697,7 @@ export async function onRequestGet(context) {
   const glitchDuplicateCount = messages.filter(m => isGlitchWallet(m.acct)).length;
   const signedCount = messages.length - Math.max(0, glitchDuplicateCount - 1);
 
-  const signedPigeons = messages
-    .filter(m => m.image && m.nftId)
-    .map((m, i) => ({ image: m.image, nftId: m.nftId, order: i + 1 }));
+  const signedPigeons = messages.map((m, i) => ({ image: m.image || '', order: i + 1 }));
 
   return new Response(
     renderPage({ messages: messages.slice(-50).reverse(), signedCount, signedPigeons, leaderboard, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs }),
