@@ -375,11 +375,37 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
     border-color:rgba(255,0,60,0.3);
     text-shadow:0 0 4px rgba(255,0,60,0.3);
   }
-  .signal-panel{
-    margin-bottom:1.5rem;
-    border:1px solid rgba(255,213,0,0.35);
-    background:rgba(255,213,0,0.03);
-    overflow:hidden;
+  .rules-heading{
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.1em;
+    color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.5);
+    margin-bottom:0.2rem;
+  }
+  .rules-subhead{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    color:#ffd500;
+    margin-top:0.4rem;
+  }
+  .rules-body{
+    font-size:11px;
+    line-height:1.6;
+    color:rgba(232,232,232,0.8);
+  }
+  .rules-rule{
+    display:flex;
+    gap:0.6em;
+    font-size:11px;
+    line-height:1.5;
+    color:rgba(232,232,232,0.8);
+  }
+  .rules-num{
+    flex:0 0 auto;
+    color:#39ff14;
+    font-weight:700;
   }
   .btn-group{
     display:flex;
@@ -399,6 +425,7 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
   .btn-group .connect-btn{ margin-top:0; }
   .tier-legend{
     border:none;
+    border-top:1px solid rgba(57,255,20,0.15);
     background:transparent;
   }
   .tier-legend summary{
@@ -512,13 +539,45 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
     padding:1.1em 1.8em;
     font-size:clamp(14px, 4.2vw, 18px);
   }
-  .collection-link-logo{
+  .collection-link-logo-wrap{
+    position:relative;
     flex:0 0 auto;
-    width:1.8em;
-    height:1.8em;
-    object-fit:cover;
+    width:2.8em;
+    height:2.8em;
+    padding:3px;
+    box-sizing:border-box;
+    background:#000;
     border:1px solid #000;
-    border-radius:2px;
+    overflow:hidden;
+  }
+  .collection-link-logo-wrap::before{
+    content:'01010000 01001001 01000111 01000101 01001111 01001110 00100000 01001100 01000101 01000100 01000111 01000101 01010000 01001001 01000111';
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-wrap:wrap;
+    align-content:center;
+    justify-content:center;
+    font-size:4px;
+    line-height:1.3;
+    letter-spacing:0.02em;
+    color:#39ff14;
+    text-shadow:0 0 4px rgba(57,255,20,0.9);
+    padding:2px;
+    word-break:break-all;
+    animation:logo-binary-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes logo-binary-pulse{
+    0%, 100%{ opacity:0.55; }
+    50%{ opacity:1; }
+  }
+  .collection-link-logo{
+    position:relative;
+    z-index:1;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    filter:grayscale(1) brightness(0.35) contrast(1.6);
   }
   .msg-row{
     background:#08080a;
@@ -1233,7 +1292,7 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
       ${connectSection}
       <div class="collection-link-wrap">
         <a class="collection-link big" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">
-          <img class="collection-link-logo" src="https://ipfs.io/ipfs/bafybeib2kykxegfu3wllvngmbjl7igzyt5f5pnqi4k54lbwwlpryeermp4/2394.png" alt="" aria-hidden="true">
+          <span class="collection-link-logo-wrap" aria-hidden="true"><img class="collection-link-logo" src="https://ipfs.io/ipfs/bafybeib2kykxegfu3wllvngmbjl7igzyt5f5pnqi4k54lbwwlpryeermp4/2394.png" alt=""></span>
           <span class="cb-label" style="animation-delay:0.6s">BEC0ME THE S!GNAL →</span>
           <span class="cb-binary" aria-hidden="true" style="animation-delay:0.6s">01010011 01001001 01000111 01001110 01000001 01001100</span>
         </a>
@@ -1248,8 +1307,42 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
       <div class="sp-row">
         ${signedPigeonsRow || `<div class="lb-empty">N0 P!GE0NS S!GNED YET.</div>`}
       </div>
-    </details>
-    <div class="signal-panel">
+      <details class="tier-legend rules-panel">
+        <summary>// RULES</summary>
+        <div class="tier-legend-body">
+          <div class="rules-heading">P!GE0N S!GNATURE PR0T0C0L</div>
+
+          <div class="rules-subhead">0NE P!GE0N. 0NE S!GNATURE. 0NE ADDRESS.</div>
+          <div class="rules-body">Each P!GE0N may be used to sign the B0ard once only, and can only be signed from one wallet address.</div>
+          <div class="rules-body">Once a P!GE0N has been used, it becomes <strong>UNAVA!LABLE</strong> and will be visibly greyed out on the B0ard. It cannot be used again, even if the P!GE0N is transferred to another wallet.</div>
+
+          <div class="rules-subhead">S!GNATURE WALLET</div>
+          <div class="rules-body">A signature is permanently associated with the wallet address that submitted it.</div>
+          <div class="rules-body">The wallet must hold the P!GE0N at the time the signature is made. The number of P!GE0Ns held in that wallet at the moment of signing determines the colour of the signature border.</div>
+
+          <div class="rules-subhead">M0RE P!GE0NS = H!GHER S!GNATURE T!ER</div>
+          <div class="rules-body">The border reflects the holder's P!GE0N count at the exact time of signing. Transferring or acquiring additional P!GE0Ns afterward will not change an existing signature.</div>
+
+          <div class="rules-subhead">RULES</div>
+          <div class="rules-rule"><span class="rules-num">01</span><span>Each P!GE0N can sign the B0ard once.</span></div>
+          <div class="rules-rule"><span class="rules-num">02</span><span>Each P!GE0N can only sign from one wallet address.</span></div>
+          <div class="rules-rule"><span class="rules-num">03</span><span>A used P!GE0N becomes UNAVA!LABLE.</span></div>
+          <div class="rules-rule"><span class="rules-num">04</span><span>Unavailable P!GE0Ns are visibly greyed out.</span></div>
+          <div class="rules-rule"><span class="rules-num">05</span><span>The signing wallet must hold the P!GE0N when signing.</span></div>
+          <div class="rules-rule"><span class="rules-num">06</span><span>Signature border colour is determined by the number of P!GE0Ns held at the time of signing.</span></div>
+          <div class="rules-rule"><span class="rules-num">07</span><span>Moving P!GE0Ns after signing does not alter the signature tier.</span></div>
+
+          <div class="rules-subhead">!MP0RTANT</div>
+          <div class="rules-item disclaimer">This is a fan-made utility project and has no affiliation, endorsement, or connection with P!GE0NS or their creators.</div>
+          <div class="rules-item disclaimer">P!GE0N S!GNATURES exist solely as part of this community-built project, created to give P!GE0N holders an additional way to participate and add utility to their NFTs.</div>
+        </div>
+      </details>
+      <details class="tier-legend leaderboard">
+        <summary>// T0P S!GNERS</summary>
+        <div class="tier-legend-body">
+          ${leaderboardRows || `<div class="lb-empty">N0 S!GNATURES YET.</div>`}
+        </div>
+      </details>
       <details class="tier-legend">
         <summary>// B0RDER T!ERS</summary>
         <div class="tier-legend-body">
@@ -1261,21 +1354,7 @@ function renderPage({ messages, signedCount, signedPigeons, leaderboard, isPigeo
           <div class="msg-row tl-row tier-diamond"><div class="msg-plain tl-text tier-diamond">99+ P!GE0NS</div></div>
         </div>
       </details>
-      <details class="tier-legend leaderboard">
-        <summary>// T0P S!GNERS</summary>
-        <div class="tier-legend-body">
-          ${leaderboardRows || `<div class="lb-empty">N0 S!GNATURES YET.</div>`}
-        </div>
-      </details>
-      <details class="tier-legend rules-panel">
-        <summary>// RULES</summary>
-        <div class="tier-legend-body">
-          <div class="rules-item">EVERY P!GE0N CAN 0NLY S!GN THE B0ARD 0NCE, FR0M 0NE ADDRESS. USED P!GE0NS W!LL BE GREYED 0UT AS UNAVA!LABLE.</div>
-          <div class="rules-item">S!GNATURE W!LL BE C0L0URED B0RDER BASED 0N NUMBER 0F P!GE0NS HELD !N S!GNATURE WALLET AT THE T!ME 0F S!GN!NG.</div>
-          <div class="rules-item disclaimer">TH!S PR0JECT HAS N0 AFF!L!AT!0N W!TH P!GE0NS :: !T !S MERELY A FAN-MADE PR0JECT TO BR!NG UT!L!TY.</div>
-        </div>
-      </details>
-    </div>
+    </details>
     ${sessionControls}
     ${messageRows}
     ${bottomSection}
