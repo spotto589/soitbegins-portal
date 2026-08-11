@@ -1,5 +1,6 @@
 export const COOKIE_NAME = 'glitch_access';
 export const BOARD_COOKIE_NAME = 'pigeon_session';
+export const KINGDOM_COOKIE_NAME = 'kingdom_session';
 
 export const GLITCH_ISSUER = 'rNRo76r8C6c1rMi28AR7CdArtK6r8Zptv7';
 export const GLITCH_TAXON = 1;
@@ -101,9 +102,49 @@ export function findAllKingNfts(nfts) {
   return nfts.filter(n => n.Issuer === KING_ISSUER && n.NFTokenTaxon === KING_TAXON);
 }
 
+export function findAllHoneypots(nfts) {
+  return nfts.filter(n => n.Issuer === HONEYPOT_ISSUER && n.NFTokenTaxon === HONEYPOT_TAXON);
+}
+
 export function findHoneypot(nfts) {
   return nfts.find(n => n.Issuer === HONEYPOT_ISSUER && n.NFTokenTaxon === HONEYPOT_TAXON) || null;
 }
+
+// Kingdom Phase 1 — Green and Yellow NFT collections have not been provided
+// yet. Left null on purpose: findAll*() returns [] (never matches) until
+// real issuer/taxon values are filled in, so nothing breaks in the meantime.
+export const GREEN_ISSUER = null;
+export const GREEN_TAXON = null;
+export const YELLOW_ISSUER = null;
+export const YELLOW_TAXON = null;
+
+export function findAllGreenNfts(nfts) {
+  if (!GREEN_ISSUER) return [];
+  return nfts.filter(n => n.Issuer === GREEN_ISSUER && n.NFTokenTaxon === GREEN_TAXON);
+}
+
+export function findAllYellowNfts(nfts) {
+  if (!YELLOW_ISSUER) return [];
+  return nfts.filter(n => n.Issuer === YELLOW_ISSUER && n.NFTokenTaxon === YELLOW_TAXON);
+}
+
+// Kingdom Phase 1 — token identifiers/amounts have not been provided yet.
+// "configured:false" keeps every claim button disabled with a clear label
+// until real values are filled in here.
+export const KINGDOM_CLAIM_CONFIG = {
+  honey: { label: '$HONEY', category: 'HONEYPOT', currency: null, issuer: null, amount: null, configured: false },
+  beta: { label: 'BETA TEST COIN', category: 'GREEN', currency: null, issuer: null, amount: null, configured: false },
+  rlusd: { label: 'RLUSD', category: 'YELLOW', currency: null, issuer: null, amount: null, configured: false },
+  crwn: { label: '$CRWN', category: 'KING', currency: null, issuer: null, amount: null, configured: false },
+};
+
+// The two Council claimants. Reuses the same external listings already
+// established on the mainframe page's Two Kings section rather than
+// inventing new placeholder links.
+export const KINGDOM_CLAIMANTS = {
+  invisible: { id: 'invisible', name: 'THE INVISIBLE KING', marketplace: 'XRP Cafe', url: 'https://xrp.cafe/collection/king' },
+  knight: { id: 'knight', name: 'THE KNIGHT KING', marketplace: 'Deeptide', url: 'https://deeptide.co/king-thwncy' },
+};
 
 export function findPigeon(nfts) {
   return nfts.find(n => n.Issuer === PIGEON_ISSUER && n.NFTokenTaxon === PIGEON_TAXON) || null;
@@ -232,4 +273,41 @@ export async function getBestPigeonWordLimit(kv, pigeonNfts) {
 export async function getPigeonThumbnails(kv, pigeonNfts) {
   const metas = await getPigeonMetaList(kv, pigeonNfts);
   return metas.filter(m => m.image);
+}
+
+// Kingdom Phase 1 — every King NFT needs a stable friendly ID for display
+// (e.g. "KING #0013") and future per-King history. The NFTokenID itself is
+// the real permanent identifier (used for votes/claims); this is just a
+// human-readable label resolved from metadata, same pattern as Pigeons.
+async function fetchKingMeta(nft) {
+  try {
+    const uri = resolveIpfsUri(hexToUtf8(nft.URI));
+    const res = await fetch(uri);
+    if (!res.ok) return { number: null, image: null };
+    const meta = await res.json();
+    const name = meta && meta.name;
+    const match = name ? String(name).match(/(\d+)/) : null;
+    const number = match ? parseInt(match[1], 10) : null;
+    const image = meta && meta.image ? resolveIpfsUri(meta.image) : null;
+    return { number, image };
+  } catch (e) {
+    return { number: null, image: null };
+  }
+}
+
+// Returns [{ nftId, number, image, label }] for every King NFT held, caching
+// resolved metadata in KV permanently. "label" falls back to the last 4
+// characters of the NFTokenID when a number can't be resolved from metadata,
+// so every King always gets a stable, unique display ID either way.
+export async function getKingThumbnails(kv, kingNfts) {
+  return Promise.all(kingNfts.map(async (nft) => {
+    const cacheKey = `kingmeta:${nft.NFTokenID}`;
+    const cached = await kv.get(cacheKey);
+    const info = cached !== null ? JSON.parse(cached) : await fetchKingMeta(nft);
+    if (cached === null) await kv.put(cacheKey, JSON.stringify(info));
+    const label = info.number !== null
+      ? `KING #${String(info.number).padStart(4, '0')}`
+      : `KING #${nft.NFTokenID.slice(-4)}`;
+    return { nftId: nft.NFTokenID, number: info.number, image: info.image, label };
+  }));
 }
