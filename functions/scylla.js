@@ -118,7 +118,7 @@ const SCYLLA_HTML = `<!DOCTYPE html>
 <body>
 
   <div class="page" id="page">
-    <div class="eyebrow">SCYLLA :: SECURITY LAYER</div>
+    <div class="eyebrow">Σκύλλα :: SECURITY LAYER</div>
     <h1>SCAN YOUR WALLET</h1>
     <p class="intro">Present a GL!TCH key or Σκύλλα card to begin.</p>
     <button class="scan-btn" id="scanBtn">BEG!N SCAN</button>

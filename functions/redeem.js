@@ -22,7 +22,7 @@ function renderNoKeyBody() {
     <div class="rd-denied">
       <div class="rd-denied-title">⚠ SIGNAL UNCONFIRMED ⚠</div>
       <div class="rd-denied-sub">N0 STAT!C KEY DETECTED</div>
-      <div class="rd-denied-body">TH!S WALLET H0LDS N0 STAT!C VAN!TY C0LLECT0R'S KEY. SCYLLA D0ES N0T REC0GN!SE Y0U.</div>
+      <div class="rd-denied-body">TH!S WALLET H0LDS N0 STAT!C VAN!TY C0LLECT0R'S KEY. Σκύλλα D0ES N0T REC0GN!SE Y0U.</div>
     </div>`;
 }
 
@@ -65,7 +65,7 @@ function renderConfirmedBody(keyNumber, keyAddress) {
     <div class="rd-section">
       <div class="rd-warning">
         <p>The secret key is the private credential that provides control of the XRPL account. Treat it as highly sensitive information. Anyone who obtains it may be able to control the account.</p>
-        <p>The secret key must never be entered into the STAT!C website, submitted to Scylla, or shared with anyone.</p>
+        <p>The secret key must never be entered into the STAT!C website, submitted to Σκύλλα, or shared with anyone.</p>
       </div>
     </div>
 
@@ -100,7 +100,7 @@ function renderPage(bodyHtml) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-<title>SCYLLA :: SIGNAL ASSESSMENT</title>
+<title>Σκύλλα :: SIGNAL ASSESSMENT</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -234,7 +234,7 @@ function renderPage(bodyHtml) {
   <div class="scanlines"></div>
 
   <div class="page">
-    <div class="rd-eyebrow">SCYLLA // SIGNAL ASSESSMENT</div>
+    <div class="rd-eyebrow">Σκύλλα // SIGNAL ASSESSMENT</div>
     ${bodyHtml}
   </div>
 
@@ -300,7 +300,7 @@ function renderPage(bodyHtml) {
           return;
         }
 
-        confirmStatus.textContent = 'CONTACT!NG SCYLLA...';
+        confirmStatus.textContent = 'CONTACT!NG Σκύλλα...';
         const res = await fetch('/api/scylla-mock-redeem', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
