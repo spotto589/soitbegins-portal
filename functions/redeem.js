@@ -20,8 +20,7 @@ function escapeHtml(str) {
 function renderNoKeyBody() {
   return `
     <div class="rd-denied">
-      <div class="rd-denied-title">⚠ SIGNAL UNCONFIRMED ⚠</div>
-      <div class="rd-denied-sub">N0 STAT!C KEY DETECTED</div>
+      <div class="rd-denied-title">ACCΞSS DΞN!ΞD — N0 KΣY F0UND</div>
       <div class="rd-denied-body">TH!S WALLET H0LDS N0 STAT!C VAN!TY C0LLECT0R'S KEY. Σκύλλα D0ES N0T REC0GN!SE Y0U.</div>
     </div>`;
 }
@@ -66,7 +65,7 @@ function renderConfirmedBody(keyNumber, keyAddress) {
       <div class="rd-code-block">
         <div class="rd-code-line">// RΣVΣΛL THΣ SΣCRΣT KΣY ONCΣ</div>
         <div class="rd-code-line">// PΣRMΛNΣNTLY CONSUMΣ THΣ RΣDΣMPT!ON</div>
-        <div class="rd-code-line">// CONSUMΣ THΣ ΛSSOC!ΛTΣD STAT!C KΣY NFT</div>
+        <div class="rd-code-line">// CONSUMΣ THΣ ΛSSOC!ΛTΣD STAT!C KΣY</div>
         <div class="rd-code-line">// PRΣVΣNT TH!S KΣY FROM BΣ!NG RΣDΣΣMΣD ΛGΛ!N</div>
       </div>
       <p class="rd-warn-strong">THΣ RΣDΣMPT!ON CΛNNOT BΣ UNDONΣ.</p>
@@ -93,14 +92,12 @@ function renderConfirmedBody(keyNumber, keyAddress) {
       <div class="rd-code-block rd-confirm-status-block">
         <div class="rd-code-line">S!GNΛL :: CLΣΛRΣD</div>
         <div class="rd-code-line">SΣCRΣT :: W!LL BΣ RΣVΣΛLΣD</div>
-        <div class="rd-code-line">NFT :: W!LL BΣ CONSUMΣD</div>
+        <div class="rd-code-line">KΣY :: W!LL BΣ CONSUMΣD</div>
         <div class="rd-code-line">RΣDΣMPT!ON :: PΣRMΛNΣNT</div>
       </div>
       <div class="rd-final-warn">YOU ΛRΣ ΛBOUT TO RΣVΣΛL THΣ SΣCRΣT.</div>
-      <div class="rd-final-sub">THΣ SΣCRΣT !S RΣΛDY. THΣRΣ !S NO RΣTURN.</div>
-      <div class="rd-timer" id="rdTimer" data-seconds="780">13:00</div>
       <div class="rd-confirm-btns">
-        <button class="rd-proceed-btn" id="rdProceedBtn" disabled>[ RΣDΣΣM KΣY ]</button>
+        <button class="rd-proceed-btn" id="rdProceedBtn">[ RΣDΣΣM KΣY ]</button>
         <button class="rd-abort-btn" id="rdAbortBtn">[ ΛBORT ]</button>
       </div>
       <div class="rd-confirm-status" id="rdConfirmStatus"></div>
@@ -113,6 +110,7 @@ function renderConfirmedBody(keyNumber, keyAddress) {
         <div class="rd-reveal-secret" id="rdRevealSecret"></div>
       </div>
       <button class="rd-copy-btn" id="rdCopyBtn">COPY</button>
+      <div class="rd-timer" id="rdTimer" data-seconds="780">13:00</div>
       <div class="rd-reveal-footnote">MOCK REDEMPTION :: TEST MASTER, NOT A REAL XRPL SECRET.</div>
     </div>`;
 }
@@ -124,7 +122,7 @@ function renderPage(bodyHtml) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-<title>Σκύλλα :: S!GNΛL ΛSSΣSSMΣNT</title>
+<title>Σκύλλα :: KΣY ΛSSΣSSMΣNT</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -208,14 +206,6 @@ function renderPage(bodyHtml) {
     font-size:15px; font-weight:700; letter-spacing:0.08em; color:#ff003c;
     text-shadow:0 0 8px rgba(255,0,60,0.6); margin:1.4rem 0 0.5rem;
   }
-  .rd-final-sub{
-    font-size:12px; letter-spacing:0.05em; color:rgba(232,232,232,0.7); margin-bottom:1.5rem;
-  }
-  .rd-timer{
-    font-size:22px; font-weight:700; letter-spacing:0.1em; color:#ffd700;
-    text-shadow:0 0 10px rgba(255,215,0,0.5); margin-bottom:1.5rem;
-  }
-  .rd-timer.rd-timer-ready{ color:#39ff14; text-shadow:0 0 10px rgba(57,255,20,0.5); font-size:12px; }
   .rd-confirm-btns{ display:flex; flex-wrap:wrap; gap:0.9rem; justify-content:center; }
 
   .rd-proceed-btn{
@@ -257,6 +247,12 @@ function renderPage(bodyHtml) {
     font-size:11px; letter-spacing:0.1em; padding:0.6em 1.2em; cursor:pointer; text-transform:uppercase;
   }
   .rd-copy-btn:hover{ background:rgba(57,255,20,0.1); }
+  .rd-copy-btn:disabled{ opacity:0.35; cursor:default; }
+  .rd-timer{
+    margin-top:1.1rem; font-size:16px; font-weight:700; letter-spacing:0.1em; color:#ffd700;
+    text-shadow:0 0 8px rgba(255,215,0,0.5);
+  }
+  .rd-timer.rd-timer-ready{ color:#ff003c; text-shadow:0 0 8px rgba(255,0,60,0.6); font-size:12px; }
   .rd-reveal-footnote{
     margin-top:1.1rem; font-size:10.5px; letter-spacing:0.04em; color:rgba(232,232,232,0.4); line-height:1.7;
   }
@@ -267,7 +263,7 @@ function renderPage(bodyHtml) {
   <div class="scanlines"></div>
 
   <div class="page">
-    <div class="rd-eyebrow">Σκύλλα // S!GNΛL ΛSSΣSSMΣNT</div>
+    <div class="rd-eyebrow">Σκύλλα // KΣY ΛSSΣSSMΣNT</div>
     ${bodyHtml}
   </div>
 
@@ -295,36 +291,38 @@ function renderPage(bodyHtml) {
   const proceedBtn = document.getElementById('rdProceedBtn');
   const abortBtn = document.getElementById('rdAbortBtn');
 
-  // 13-minute cooldown before REDEEM KEY can be pressed — a forced pause
-  // before the irreversible action, not just decorative.
-  const timerEl = document.getElementById('rdTimer');
-  if (timerEl && proceedBtn) {
-    let secondsLeft = parseInt(timerEl.dataset.seconds, 10) || 0;
-    function renderTimer(){
-      const m = Math.floor(secondsLeft / 60);
-      const s = secondsLeft % 60;
-      timerEl.textContent = m + ':' + String(s).padStart(2, '0');
-    }
-    renderTimer();
-    const timerInterval = setInterval(() => {
-      secondsLeft--;
-      if (secondsLeft <= 0) {
-        clearInterval(timerInterval);
-        timerEl.textContent = 'RΣDΣΣMPT!ON W!ND0W 0PΣN';
-        timerEl.classList.add('rd-timer-ready');
-        proceedBtn.disabled = false;
-      } else {
-        renderTimer();
-      }
-    }, 1000);
-  }
-
   if (proceedBtn) {
     const confirmStatus = document.getElementById('rdConfirmStatus');
     const confirmBlock = document.getElementById('rdConfirm');
     const reveal = document.getElementById('rdReveal');
     const revealSecret = document.getElementById('rdRevealSecret');
     const copyBtn = document.getElementById('rdCopyBtn');
+    const timerEl = document.getElementById('rdTimer');
+
+    // 13-minute window after the secret is revealed — once it expires the
+    // secret is cleared from the page and can no longer be copied.
+    function startRevealTimer(){
+      if (!timerEl) return;
+      let secondsLeft = parseInt(timerEl.dataset.seconds, 10) || 0;
+      function renderTimer(){
+        const m = Math.floor(secondsLeft / 60);
+        const s = secondsLeft % 60;
+        timerEl.textContent = m + ':' + String(s).padStart(2, '0');
+      }
+      renderTimer();
+      const timerInterval = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft <= 0) {
+          clearInterval(timerInterval);
+          timerEl.textContent = 'W!ND0W ΞXP!RΞD';
+          timerEl.classList.add('rd-timer-ready');
+          revealSecret.textContent = 'ΞXP!RΞD';
+          copyBtn.disabled = true;
+        } else {
+          renderTimer();
+        }
+      }, 1000);
+    }
 
     abortBtn.addEventListener('click', () => {
       window.location.href = '/';
@@ -362,6 +360,7 @@ function renderPage(bodyHtml) {
           confirmBlock.style.display = 'none';
           revealSecret.textContent = data.master;
           reveal.classList.add('show');
+          startRevealTimer();
         } else {
           setDenied('VAN!TY KEY DEN!ED');
         }
