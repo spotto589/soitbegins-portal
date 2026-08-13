@@ -6,12 +6,12 @@
 // flow before wiring it to real NFT ownership verification.
 //
 // Flow:
-//   1. A fake AES-256-GCM encrypted master ("TEST_XRPL_MASTER_123456") is
+//   1. A fake AES-256-GCM encrypted master ("MY_SUPER_SECRET_123") is
 //      stored right here as server-side data (IV + ciphertext, base64).
 //      This file only ever runs on Cloudflare's servers — Pages Functions
 //      source is never sent to the browser — so this is safe to keep here.
 //   2. The AES-256 key that decrypts it is NOT in this file. It must be set
-//      as a Cloudflare Pages secret named MOCK_SCYLLA_AES_KEY (base64,
+//      as a Cloudflare Pages secret named vanitykey (base64,
 //      32 raw bytes). See setup note at the bottom of this file.
 //   3. Authorization is a MOCK condition (see isMockAuthorized) standing in
 //      for the future "does this wallet hold the STAT!C NFT" check.
@@ -21,10 +21,10 @@
 // ============================================================================
 
 // Server-side-only "encrypted vault" for the fake master. Produced offline
-// with the same key that must be set as the MOCK_SCYLLA_AES_KEY secret —
+// with the same key that must be set as the vanitykey secret —
 // regenerate both together if the mock master value ever changes.
-const MOCK_MASTER_IV_B64 = 'PZr0u1O/3t83kd6d';
-const MOCK_MASTER_CIPHERTEXT_B64 = '4RDdhMC75ktBhZIyLehZTnBzRHhizt7wrFUBWuJY9yuzm6wqjWB8';
+const MOCK_MASTER_IV_B64 = 'uCY3eDJo3na9ZxSu';
+const MOCK_MASTER_CIPHERTEXT_B64 = '6v1x14tGRCc0uj1VzvnNy3O/rueuVovcvmb8fN3M+8crLL8=';
 
 function fromBase64(b64) {
   const bin = atob(b64);
@@ -54,7 +54,7 @@ async function decryptMockMaster(aesKeyB64) {
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  if (!env.MOCK_SCYLLA_AES_KEY) {
+  if (!env.vanitykey) {
     return new Response(JSON.stringify({ error: 'server_misconfigured' }), { status: 500 });
   }
 
@@ -74,7 +74,7 @@ export async function onRequestPost(context) {
 
   let master;
   try {
-    master = await decryptMockMaster(env.MOCK_SCYLLA_AES_KEY);
+    master = await decryptMockMaster(env.vanitykey);
   } catch (e) {
     // Never log the key or any plaintext — decryption failures (e.g. a
     // misconfigured secret) surface only as an opaque error to the caller.
@@ -91,9 +91,9 @@ export async function onRequestPost(context) {
 // Setup (one-time): set the AES key as a Cloudflare Pages secret. It must
 // never be committed to source or pasted into frontend code.
 //
-//   npx wrangler pages secret put MOCK_SCYLLA_AES_KEY
+//   npx wrangler pages secret put vanitykey
 //
 // (or Cloudflare dashboard → Pages project → Settings → Environment
-// variables → add MOCK_SCYLLA_AES_KEY as an encrypted/secret variable).
+// variables → add vanitykey as an encrypted/secret variable).
 // The key value is provided separately, outside of this file.
 // ----------------------------------------------------------------------------
