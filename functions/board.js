@@ -494,42 +494,32 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .collection-link{
     position:relative;
-    display:inline-flex;
-    flex-wrap:wrap;
-    align-items:center;
-    justify-content:center;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    width:min(300px, 84vw);
     background:#ffee00;
     border:2px solid #000;
     color:#000;
     font-family:inherit;
-    font-weight:700;
-    font-size:clamp(12px, 3.6vw, 15px);
-    letter-spacing:0.1em;
-    padding:0.9em 1.4em;
     text-align:center;
-    text-transform:uppercase;
     text-decoration:none;
-    transition:transform 0.12s ease, background 0.12s ease;
     overflow:hidden;
+    box-shadow:5px 5px 0 #000;
+    transition:transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
   }
   .collection-link:hover{
     background:#fff65c;
-    transform:translateY(-1px);
-  }
-  .collection-link.big{
-    gap:0.6em;
-    padding:1.1em 1.8em;
-    font-size:clamp(14px, 4.2vw, 18px);
+    transform:translate(-2px,-2px);
+    box-shadow:7px 7px 0 #000;
   }
   .collection-link-logo-wrap{
     position:relative;
-    flex:0 0 auto;
-    width:2.8em;
-    height:2.8em;
-    padding:3px;
+    width:100%;
+    aspect-ratio:1;
     box-sizing:border-box;
     background:#000;
-    border:1px solid #000;
+    border-bottom:2px solid #000;
     overflow:hidden;
   }
   .collection-link-logo-wrap::before{
@@ -540,7 +530,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     flex-wrap:wrap;
     align-content:center;
     justify-content:center;
-    font-size:4px;
+    font-size:5px;
     line-height:1.3;
     letter-spacing:0.02em;
     color:#39ff14;
@@ -548,10 +538,11 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     padding:2px;
     word-break:break-all;
     animation:logo-binary-pulse 1.8s ease-in-out infinite;
+    opacity:0.25;
   }
   @keyframes logo-binary-pulse{
-    0%, 100%{ opacity:0.55; }
-    50%{ opacity:1; }
+    0%, 100%{ opacity:0.15; }
+    50%{ opacity:0.4; }
   }
   .collection-link-logo{
     position:relative;
@@ -559,7 +550,11 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     width:100%;
     height:100%;
     object-fit:cover;
-    filter:grayscale(1) brightness(0.35) contrast(1.6);
+  }
+  .collection-link-body{
+    position:relative;
+    display:block;
+    padding:0.9em 1.1em 1.15em;
   }
   .msg-row{
     background:#08080a;
@@ -1296,10 +1291,12 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     <div class="btn-group">
       ${connectSection}
       <div class="collection-link-wrap">
-        <a class="collection-link big" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">
-          <span class="collection-link-logo-wrap" aria-hidden="true"><img class="collection-link-logo" src="https://ipfs.io/ipfs/bafybeib2kykxegfu3wllvngmbjl7igzyt5f5pnqi4k54lbwwlpryeermp4/2394.png" alt=""></span>
-          <span class="cb-label" style="animation-delay:0.6s">BEC0ME THE S!GNAL →</span>
-          <span class="cb-binary" aria-hidden="true" style="animation-delay:0.6s">01010011 01001001 01000111 01001110 01000001 01001100</span>
+        <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">
+          <span class="collection-link-logo-wrap" aria-hidden="true"><img class="collection-link-logo" src="https://ipfs.io/ipfs/QmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="P!GE0N NFT"></span>
+          <span class="collection-link-body">
+            <span class="cb-label" style="animation-delay:0.6s">BEC0ME THE S!GNAL →</span>
+            <span class="cb-binary" aria-hidden="true" style="animation-delay:0.6s">01010011 01001001 01000111 01001110 01000001 01001100</span>
+          </span>
         </a>
       </div>
     </div>
