@@ -16,7 +16,7 @@ function escapeHtml(str) {
 // The "authorization" for redemption itself is still the Phase 1 mock
 // condition tested via /api/scylla-mock-redeem (untouched). The client
 // re-verifies card possession via /api/redeem-verify-card immediately
-// before calling it, so PROCEED isn't just trusting the page-load state.
+// before calling it, so REDEEM KEY isn't just trusting the page-load state.
 function renderNoKeyBody() {
   return `
     <div class="rd-denied">
@@ -30,54 +30,78 @@ function renderConfirmedBody(keyNumber, keyAddress) {
   const safeNumber = keyNumber !== null ? escapeHtml(String(keyNumber)) : '????';
   const safeAddress = escapeHtml(keyAddress || 'UNKN0WN');
   return `
+    <div class="rd-banner">▓▒░ S!GNΛL RΣCΣ!VΣD ░▒▓</div>
+
     <div class="rd-status-block">
-      <div class="rd-signal-confirmed">SIGNAL CONFIRMED</div>
-      <div class="rd-possession-label">YOU ARE IN POSSESSION OF:</div>
-      <div class="rd-key-box">
-        <div class="rd-key-label">STAT!C KEY #${safeNumber}</div>
-        <div class="rd-key-addr">${safeAddress}</div>
+      <div class="rd-code-line">Σκύλλα :: S!GNΛL LOCKΣD</div>
+      <div class="rd-code-line rd-key-line">STAT!C KΣY #${safeNumber}</div>
+      <div class="rd-status-lines">
+        <div class="rd-code-line">ΛDDRΣSS :: ${safeAddress}</div>
+        <div class="rd-code-line">S!GNΛL :: VΣR!F!ΣD</div>
+        <div class="rd-code-line">KΣY :: ΛUTHΣNT!C</div>
+        <div class="rd-code-line">RΣDΣΣM :: ΛVΛ!LΛBLΣ</div>
       </div>
     </div>
 
-    <div class="rd-section">
-      <p class="rd-verify-line">
-        THE SIGNAL HAS BEEN VERIFIED.<br>
-        <strong>ARE YOU HERE TO REDEEM YOUR KEY?</strong>
-      </p>
-      <p class="rd-irreversible-note">
-        This action is irreversible. Once the key is redeemed, the secret key will be released once
-        and the redemption will be permanently consumed.
-      </p>
-    </div>
+    <div class="rd-divider"></div>
 
     <div class="rd-section">
-      <div class="rd-heading">BEFORE YOU PROCEED</div>
-      <ul class="rd-steps">
-        <li>The secret key will be revealed.</li>
-        <li>Be prepared to securely import the secret key into an XRPL wallet.</li>
-        <li>Once the account is accessible, establish a Regular Key for the account.</li>
-        <li>Verify that the Regular Key provides the intended access.</li>
-        <li>Disable the master-key capability only after the Regular Key has been successfully established and verified.</li>
-        <li>The Regular Key can then be used as the account's ongoing access method.</li>
-      </ul>
+      <div class="rd-warn-heading">⚠ WΛRN!NG // SΣCRΣT KΣY</div>
+      <p class="rd-warn-strong">YOU ΛRΣ ΛBOUT TO RΣVΣΛL Λ SΣCRΣT KΣY.</p>
+      <p>THΣ SΣCRΣT KΣY !S THΣ PR!VΛTΣ CRΣDΣNT!ΛL THΛT PROVIDΣS CONTROL OF THΣ ΛSSOC!ΛTΣD XRPL ΛCCOUNT.</p>
+      <p class="rd-warn-strong">
+        DO NOT SHΛRΣ !T.<br>
+        DO NOT POST !T.<br>
+        DO NOT SΣND !T TO ΛNYONΣ.
+      </p>
+      <p>ΛNYONΣ WHO OBTΛ!NS THΣ SΣCRΣT KΣY MΛY BΣ ΛBLΣ TO CONTROL THΣ ΛCCOUNT ΛND !TS ΛSSΣTS.</p>
+      <p>Σκύλλα CΛNNOT RΣVOKΣ OR RΣCΛLL Λ SΣCRΣT KΣY ONCΣ !T HΛS BΣΣN RΣVΣΛLΣD.</p>
     </div>
 
+    <div class="rd-divider"></div>
+
     <div class="rd-section">
-      <div class="rd-warning">
-        <p>The secret key is the private credential that provides control of the XRPL account. Treat it as highly sensitive information. Anyone who obtains it may be able to control the account.</p>
-        <p>The secret key must never be entered into the STAT!C website, submitted to Σκύλλα, or shared with anyone.</p>
+      <div class="rd-warn-heading">⚠ PΣRMΛNΣNT RΣDΣMPT!ON</div>
+      <p>RΣDΣΣM!NG TH!S KΣY W!LL:</p>
+      <div class="rd-code-block">
+        <div class="rd-code-line">// RΣVΣΛL THΣ SΣCRΣT KΣY ONCΣ</div>
+        <div class="rd-code-line">// PΣRMΛNΣNTLY CONSUMΣ THΣ RΣDΣMPT!ON</div>
+        <div class="rd-code-line">// CONSUMΣ THΣ ΛSSOC!ΛTΣD STAT!C KΣY NFT</div>
+        <div class="rd-code-line">// PRΣVΣNT TH!S KΣY FROM BΣ!NG RΣDΣΣMΣD ΛGΛ!N</div>
       </div>
+      <p class="rd-warn-strong">THΣ RΣDΣMPT!ON CΛNNOT BΣ UNDONΣ.</p>
+      <p>ONCΣ THΣ SΣCRΣT KΣY !S RΣVΣΛLΣD, THΣRΣ !S NO SΣCOND RΣVΣΛL.</p>
     </div>
+
+    <div class="rd-divider"></div>
+
+    <div class="rd-section">
+      <div class="rd-heading2">ΛFTΣR RΣDΣMPT!ON</div>
+      <p>SΣCURΣLY !MPORT THΣ SΣCRΣT KΣY !NTO ΛN XRPL-COMPΛT!BLΣ WΛLLΣT.</p>
+      <p>THΣN:</p>
+      <div class="rd-code-block">
+        <div class="rd-code-line">01 :: ΣSTΛBL!SH RΣGULΛR KΣY</div>
+        <div class="rd-code-line">02 :: VΣR!FY RΣGULΛR KΣY ΛCCΣSS</div>
+        <div class="rd-code-line">03 :: ONLY ΛFTΣR VΣR!F!CΛT!ON, D!SΛBLΣ MΛSTΣR KΣY</div>
+      </div>
+      <p class="rd-warn-strong">NΣVΣR D!SΛBLΣ THΣ MΛSTΣR KΣY BΣFORΣ THΣ RΣGULΛR KΣY HΛS BΣΣN VΣR!F!ΣD.</p>
+    </div>
+
+    <div class="rd-divider"></div>
 
     <div class="rd-confirm" id="rdConfirm">
-      <div class="rd-confirm-title">⚠ IRREVERSIBLE ACTION</div>
-      <div class="rd-confirm-checkline">
-        <input type="checkbox" id="rdUnderstandCheck">
-        <label for="rdUnderstandCheck">I UNDERSTAND THAT REDEEMING THIS KEY WILL RELEASE THE SECRET KEY AND CONSUME THIS REDEMPTION.</label>
+      <div class="rd-code-block rd-confirm-status-block">
+        <div class="rd-code-line">S!GNΛL :: CLΣΛRΣD</div>
+        <div class="rd-code-line">SΣCRΣT :: W!LL BΣ RΣVΣΛLΣD</div>
+        <div class="rd-code-line">NFT :: W!LL BΣ CONSUMΣD</div>
+        <div class="rd-code-line">RΣDΣMPT!ON :: PΣRMΛNΣNT</div>
       </div>
+      <div class="rd-final-warn">YOU ΛRΣ ΛBOUT TO RΣVΣΛL THΣ SΣCRΣT.</div>
+      <div class="rd-final-sub">THΣ SΣCRΣT !S RΣΛDY. THΣRΣ !S NO RΣTURN.</div>
+      <div class="rd-timer" id="rdTimer" data-seconds="780">13:00</div>
       <div class="rd-confirm-btns">
-        <button class="rd-proceed-btn" id="rdProceedBtn" disabled>PROCEED TO REDEMPTION</button>
-        <button class="rd-abort-btn" id="rdAbortBtn">ABORT</button>
+        <button class="rd-proceed-btn" id="rdProceedBtn" disabled>[ RΣDΣΣM KΣY ]</button>
+        <button class="rd-abort-btn" id="rdAbortBtn">[ ΛBORT ]</button>
       </div>
       <div class="rd-confirm-status" id="rdConfirmStatus"></div>
     </div>
@@ -100,7 +124,7 @@ function renderPage(bodyHtml) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-<title>Σκύλλα :: SIGNAL ASSESSMENT</title>
+<title>Σκύλλα :: S!GNΛL ΛSSΣSSMΣNT</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -125,7 +149,7 @@ function renderPage(bodyHtml) {
   .page{ max-width:640px; width:100%; position:relative; z-index:2; }
 
   .rd-eyebrow{
-    font-size:11px; letter-spacing:0.3em; color:rgba(0,255,242,0.75); text-transform:uppercase;
+    font-size:11px; letter-spacing:0.3em; color:rgba(0,255,242,0.75);
     text-align:center; margin-bottom:2.5rem; text-shadow:0 0 6px rgba(0,255,242,0.4);
   }
 
@@ -134,68 +158,76 @@ function renderPage(bodyHtml) {
   .rd-denied-sub{ font-size:20px; letter-spacing:0.06em; color:#ff003c; font-weight:700; margin-bottom:1rem; }
   .rd-denied-body{ font-size:12px; color:rgba(232,232,232,0.7); line-height:1.7; }
 
-  .rd-status-block{ text-align:center; margin-bottom:2.5rem; }
-  .rd-signal-confirmed{
-    font-size:clamp(18px,3.6vw,24px); font-weight:700; letter-spacing:0.1em; color:#39ff14;
-    text-shadow:0 0 10px rgba(57,255,20,0.5); margin-bottom:1.5rem;
-  }
-  .rd-possession-label{ font-size:12px; letter-spacing:0.15em; color:rgba(232,232,232,0.55); margin-bottom:0.9rem; }
-  .rd-key-box{
-    display:inline-block; border:1px solid rgba(255,215,0,0.4); background:rgba(255,215,0,0.03);
-    padding:1rem 1.4rem; text-align:left;
-  }
-  .rd-key-label{ font-size:11px; letter-spacing:0.2em; color:#ffd700; margin-bottom:0.5rem; }
-  .rd-key-addr{ font-size:13px; letter-spacing:0.03em; color:#e8e8e8; word-break:break-all; }
-
-  .rd-section{ margin-bottom:2.25rem; }
-  .rd-verify-line{
-    text-align:center; font-size:13px; letter-spacing:0.08em; line-height:1.9; color:rgba(232,232,232,0.8);
-  }
-  .rd-verify-line strong{ color:#e8e8e8; }
-  .rd-irreversible-note{
-    text-align:center; font-size:12px; letter-spacing:0.05em; color:#ff6b6b; margin-top:0.9rem; line-height:1.7;
+  .rd-banner{
+    text-align:center; font-size:13px; letter-spacing:0.15em; color:#39ff14;
+    text-shadow:0 0 8px rgba(57,255,20,0.6); margin-bottom:1.75rem;
   }
 
-  .rd-heading{
+  .rd-status-block{ text-align:center; margin-bottom:2rem; }
+  .rd-code-line{
+    font-size:12.5px; letter-spacing:0.06em; color:rgba(232,232,232,0.85); line-height:1.9;
+  }
+  .rd-key-line{
+    font-size:15px; font-weight:700; letter-spacing:0.1em; color:#ffd700;
+    text-shadow:0 0 8px rgba(255,215,0,0.5); margin:0.5rem 0 1rem;
+  }
+  .rd-status-lines{ margin-top:0.5rem; }
+  .rd-status-lines .rd-code-line{ color:#39ff14; text-shadow:0 0 4px rgba(57,255,20,0.4); }
+
+  .rd-divider{
+    height:1px; background:rgba(232,232,232,0.15); margin:0 0 2rem;
+  }
+
+  .rd-section{ margin-bottom:0; }
+  .rd-section p{ font-size:12.5px; line-height:1.85; letter-spacing:0.03em; color:rgba(232,232,232,0.85); margin-bottom:0.9rem; }
+  .rd-section p:last-child{ margin-bottom:0; }
+
+  .rd-warn-heading{
+    font-size:13px; font-weight:700; letter-spacing:0.1em; color:#ff003c;
+    text-shadow:0 0 8px rgba(255,0,60,0.6); margin-bottom:1rem;
+  }
+  .rd-warn-strong{ color:#ff5a7a; font-weight:700; }
+
+  .rd-heading2{
     font-size:11px; letter-spacing:0.2em; color:rgba(232,232,232,0.5); text-transform:uppercase;
     margin-bottom:0.9rem;
   }
-  .rd-steps{ list-style:none; }
-  .rd-steps li{
-    font-size:12.5px; line-height:1.9; color:rgba(232,232,232,0.75); padding-left:1.4em; position:relative;
-  }
-  .rd-steps li::before{ content:"→"; position:absolute; left:0; color:rgba(0,255,242,0.6); }
 
-  .rd-warning{
-    border:1px solid rgba(255,0,60,0.4); background:rgba(255,0,60,0.04); padding:1.25rem 1.4rem;
+  .rd-code-block{
+    border:1px dashed rgba(232,232,232,0.25); background:rgba(232,232,232,0.03);
+    padding:0.9rem 1.1rem; margin:0.9rem 0;
   }
-  .rd-warning p{ font-size:12.5px; line-height:1.85; color:rgba(232,232,232,0.85); margin-bottom:0.9rem; }
-  .rd-warning p:last-child{ margin-bottom:0; font-weight:700; color:#ff5a7a; }
+  .rd-code-block .rd-code-line{ color:rgba(0,255,242,0.85); }
 
   .rd-confirm{
-    border:1px solid rgba(255,0,60,0.55); padding:1.5rem 1.4rem; text-align:center;
+    border:1px solid rgba(255,0,60,0.55); padding:1.75rem 1.4rem; text-align:center;
   }
-  .rd-confirm-title{
-    font-size:14px; font-weight:700; letter-spacing:0.15em; color:#ff003c;
-    text-shadow:0 0 8px rgba(255,0,60,0.6); margin-bottom:1.1rem;
+  .rd-confirm-status-block{ text-align:left; }
+  .rd-confirm-status-block .rd-code-line{ color:#ff5a7a; }
+  .rd-final-warn{
+    font-size:15px; font-weight:700; letter-spacing:0.08em; color:#ff003c;
+    text-shadow:0 0 8px rgba(255,0,60,0.6); margin:1.4rem 0 0.5rem;
   }
-  .rd-confirm-checkline{
-    display:flex; align-items:flex-start; gap:0.7em; text-align:left; margin-bottom:1.4rem;
+  .rd-final-sub{
+    font-size:12px; letter-spacing:0.05em; color:rgba(232,232,232,0.7); margin-bottom:1.5rem;
   }
-  .rd-confirm-checkline input{ margin-top:0.2em; flex:0 0 auto; }
-  .rd-confirm-checkline label{ font-size:12px; letter-spacing:0.04em; line-height:1.6; color:rgba(232,232,232,0.85); }
+  .rd-timer{
+    font-size:22px; font-weight:700; letter-spacing:0.1em; color:#ffd700;
+    text-shadow:0 0 10px rgba(255,215,0,0.5); margin-bottom:1.5rem;
+  }
+  .rd-timer.rd-timer-ready{ color:#39ff14; text-shadow:0 0 10px rgba(57,255,20,0.5); font-size:12px; }
   .rd-confirm-btns{ display:flex; flex-wrap:wrap; gap:0.9rem; justify-content:center; }
 
   .rd-proceed-btn{
     background:#ff003c; border:2px solid #000; color:#fff; font-family:inherit; font-weight:700;
-    font-size:13px; letter-spacing:0.14em; padding:1em 1.8em; cursor:pointer; text-transform:uppercase;
+    font-size:13px; letter-spacing:0.14em; padding:1em 1.8em; cursor:pointer;
     text-shadow:0 0 6px rgba(0,0,0,0.5); box-shadow:0 0 0 1px rgba(255,0,60,0.5);
   }
   .rd-proceed-btn:hover:not(:disabled){ background:#ff2a5c; }
   .rd-proceed-btn:disabled{ opacity:0.35; cursor:default; box-shadow:none; }
   .rd-abort-btn{
     background:transparent; border:1px solid rgba(232,232,232,0.3); color:rgba(232,232,232,0.75);
-    font-family:inherit; font-size:12px; letter-spacing:0.1em; padding:1em 1.6em; cursor:pointer; text-transform:uppercase;
+    font-family:inherit; font-size:12px; letter-spacing:0.1em; padding:1em 1.6em; cursor:pointer;
   }
   .rd-abort-btn:hover{ background:rgba(232,232,232,0.08); color:#e8e8e8; }
 
@@ -204,6 +236,7 @@ function renderPage(bodyHtml) {
 
   .rd-reveal{
     display:none; border:1px solid rgba(57,255,20,0.5); background:#08080a; padding:1.75rem 1.5rem; text-align:center;
+    margin-top:2rem;
   }
   .rd-reveal.show{ display:block; }
   .rd-reveal-ok{
@@ -234,7 +267,7 @@ function renderPage(bodyHtml) {
   <div class="scanlines"></div>
 
   <div class="page">
-    <div class="rd-eyebrow">Σκύλλα // SIGNAL ASSESSMENT</div>
+    <div class="rd-eyebrow">Σκύλλα // S!GNΛL ΛSSΣSSMΣNT</div>
     ${bodyHtml}
   </div>
 
@@ -259,9 +292,32 @@ function renderPage(bodyHtml) {
     loop();
   })();
 
-  const understandCheck = document.getElementById('rdUnderstandCheck');
   const proceedBtn = document.getElementById('rdProceedBtn');
   const abortBtn = document.getElementById('rdAbortBtn');
+
+  // 13-minute cooldown before REDEEM KEY can be pressed — a forced pause
+  // before the irreversible action, not just decorative.
+  const timerEl = document.getElementById('rdTimer');
+  if (timerEl && proceedBtn) {
+    let secondsLeft = parseInt(timerEl.dataset.seconds, 10) || 0;
+    function renderTimer(){
+      const m = Math.floor(secondsLeft / 60);
+      const s = secondsLeft % 60;
+      timerEl.textContent = m + ':' + String(s).padStart(2, '0');
+    }
+    renderTimer();
+    const timerInterval = setInterval(() => {
+      secondsLeft--;
+      if (secondsLeft <= 0) {
+        clearInterval(timerInterval);
+        timerEl.textContent = 'RΣDΣΣMPT!ON W!ND0W 0PΣN';
+        timerEl.classList.add('rd-timer-ready');
+        proceedBtn.disabled = false;
+      } else {
+        renderTimer();
+      }
+    }, 1000);
+  }
 
   if (proceedBtn) {
     const confirmStatus = document.getElementById('rdConfirmStatus');
@@ -269,10 +325,6 @@ function renderPage(bodyHtml) {
     const reveal = document.getElementById('rdReveal');
     const revealSecret = document.getElementById('rdRevealSecret');
     const copyBtn = document.getElementById('rdCopyBtn');
-
-    understandCheck.addEventListener('change', () => {
-      proceedBtn.disabled = !understandCheck.checked;
-    });
 
     abortBtn.addEventListener('click', () => {
       window.location.href = '/';
@@ -283,13 +335,11 @@ function renderPage(bodyHtml) {
       confirmStatus.textContent = text;
       proceedBtn.disabled = false;
       abortBtn.disabled = false;
-      understandCheck.disabled = false;
     }
 
     proceedBtn.addEventListener('click', async () => {
       proceedBtn.disabled = true;
       abortBtn.disabled = true;
-      understandCheck.disabled = true;
       confirmStatus.className = 'rd-confirm-status';
       confirmStatus.textContent = 'RE-CHECK!NG CARD...';
       try {

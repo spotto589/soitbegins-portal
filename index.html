@@ -321,7 +321,6 @@
     font-size:var(--fs);
     letter-spacing:0.08em;
     min-height:1.4em;
-    text-transform:uppercase;
   }
   .access-status.checking{
     color:var(--cyan);
@@ -624,16 +623,33 @@
     accessStatus.className = 'access-status' + (state ? ' ' + state : '');
   }
 
-  // Verification happens server-side (see /functions/api/verify.js) — the
-  // browser never decides access itself, it only relays the Xaman login jwt.
+  // Verification happens server-side (see /functions/api/verify-static.js) —
+  // the browser never decides access itself, it only relays the Xaman login
+  // jwt. Gates on STAT!C Vanity Collector's Key possession.
   async function verifyAccess(jwt){
-    const res = await fetch('/api/verify', {
+    const res = await fetch('/api/verify-static', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jwt })
     });
     if(!res.ok) throw new Error('verify_failed_' + res.status);
     return res.json();
+  }
+
+  // Dramatic access-sequence readout while the wallet's ledger is scanned
+  // for the key. Each line holds briefly before the next appears.
+  function runAccessSequence(){
+    const lines = [
+      'ATTEMPT!NG TO ACCESS Σκύλλα...',
+      'ESTABL!SH!NG S!GNAL...',
+      'SCANN!NG F0R KEYS...'
+    ];
+    return lines.reduce((chain, line, i) => {
+      return chain.then(() => new Promise(resolve => {
+        setStatus(line, 'checking');
+        setTimeout(resolve, i === lines.length - 1 ? 0 : 650);
+      }));
+    }, Promise.resolve());
   }
 
   function terminateConnection(){
@@ -663,7 +679,7 @@
       xummAuth = new XummPkce(XAMAN_API_KEY, {
         implicit: true,
         rememberJwt: false,
-        redirectUrl: 'https://soitbegins.xyz/'
+        redirectUrl: window.location.origin + '/'
       });
       xummAuth.on('error', (err)=>{
         console.error('Xaman auth error', err);
@@ -680,14 +696,14 @@
             enterBtn.disabled = false;
             return;
           }
-          setStatus('WALLET LINKED :: SCANNING LEDGER FOR Σκύλλα CARD...', 'checking');
+          await runAccessSequence();
           const result = await verifyAccess(jwt);
           if(result.granted){
-            setStatus('ΔCCESS GRΔNTED :: Σκύλλα CARD VERIFIED — ENTERING...', 'granted');
+            setStatus('STAT!C KEY DETECTED :: ΔCCESS GRΔNTED — ENTERING...', 'granted');
             setTimeout(()=>{ window.location.href = '/redeem'; }, 1200);
           } else {
-            setStatus('N0 S!GNATURES F0UND — RED!RECT!NG...', 'checking');
-            setTimeout(()=>{ window.location.href = '/begin?addr=' + encodeURIComponent(account || ''); }, 1000);
+            setStatus('STAT!C KEY DEN!ED — N0 S!GNATURE F0UND', 'denied');
+            enterBtn.disabled = false;
           }
         } catch(e){
           console.error(e);
@@ -707,7 +723,7 @@
   enterBtn.addEventListener('click', ()=>{
     if(!ENTRY_ENABLED) return;
     enterBtn.disabled = true;
-    setStatus('OPENING SECURE CHANNEL :: SIGN IN WITH XAMAN...', 'checking');
+    setStatus('ATTEMPT!NG TO ACCESS Σκύλλα :: AUTHENTICAT!NG KΣY...', 'checking');
     getAuth().authorize();
   });
 
