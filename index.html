@@ -281,20 +281,35 @@
     position:relative;
     margin-top:2.4rem;
     display:inline-block;
-    background:transparent;
-    border:1px solid rgba(57,255,20,0.55);
-    color:#39ff14;
+    background:repeating-linear-gradient(
+      45deg,
+      rgba(255,176,0,0.05) 0px,
+      rgba(255,176,0,0.05) 10px,
+      transparent 10px,
+      transparent 20px
+    );
+    border:1px dashed rgba(255,176,0,0.4);
+    color:#8a8a8a;
     font-family:inherit;
     font-size:var(--fs);
     letter-spacing:0.12em;
     padding:0.9em 1.6em;
-    cursor:pointer;
+    cursor:default;
     text-transform:uppercase;
-    text-shadow:0 0 6px rgba(57,255,20,0.5);
-    transition:background 0.15s ease;
+    text-shadow:none;
+    opacity:0.7;
+    pointer-events:none;
   }
-  .enter-btn:hover{
-    background:rgba(57,255,20,0.1);
+  .enter-btn::before{
+    content:"[ MΔLFUNCT!0N ]";
+    position:absolute;
+    top:-1.7em;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:0.5em;
+    letter-spacing:0.3em;
+    color:rgba(255,176,0,0.6);
+    white-space:nowrap;
   }
   .enter-btn:focus-visible{
     outline:2px solid rgba(255,176,0,0.6);
@@ -465,7 +480,7 @@
     <div class="eyebrow" id="eyebrow"><span id="eyebrowText"></span><span class="cursor"></span></div>
     <h1 class="msg">STΔTUS: <span class="glitch-word" data-text="GL!TCH!NG">GL!TCH!NG</span></h1>
     <div class="sub">🚨 S!RΞN_0NLINE 🚨 :: SYS//UNSTΔBLΞ<span class="cursor"></span></div>
-    <div class="illusion-flag">!LLUS!0N_LΔYER = ΞNΔBLΞD :: S!GNΔL_ASSESSMΞNT = 0NL!NE</div>
+    <div class="illusion-flag">!LLUS!0N_LΔYER = ΞNΔBLΞD :: S!GNΔL_ASSESSMΞNT = 0FFL!NE</div>
     <button class="enter-btn" id="enterBtn">ENTER KEY TO BEGIN ASSESSMENT</button>
     <div class="access-status" id="accessStatus"></div>
     <a class="board-btn" href="/board"><span class="bb-label">S!GNAL_NODE:://P!GΞON_RELAY</span><span class="bb-binary" aria-hidden="true">01010011 01001001 01000111 01001110 01000001 01001100</span></a>
@@ -599,7 +614,7 @@
 
   // --- Xaman (XUMM) NFT-gated access ---
   const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
-  const ENTRY_ENABLED = true;
+  const ENTRY_ENABLED = false; // flip to true to re-enable the access button
 
   const enterBtn = document.getElementById('enterBtn');
   const accessStatus = document.getElementById('accessStatus');
