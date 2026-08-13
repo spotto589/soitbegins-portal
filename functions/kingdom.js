@@ -284,6 +284,15 @@ function renderPage(bodyHtml, hasSession) {
   .kd-claim-btn:disabled{ opacity:0.4; cursor:default; }
   .kd-claim-status{ font-size:9px; letter-spacing:0.08em; color:rgba(232,232,232,0.5); margin-top:0.6rem; }
   .kd-claim-status-global{ text-align:center; font-size:11px; min-height:1.4em; color:#39ff14; margin-top:1rem; }
+  .test-vanity-wrap{ text-align:center; margin-top:2rem; }
+  .test-vanity-btn{
+    background:#ff0000; border:2px solid #000; color:#fff; font-family:inherit; font-weight:700;
+    font-size:clamp(12px,3.6vw,15px); letter-spacing:0.12em; padding:0.8em 1.4em;
+    cursor:pointer; text-transform:uppercase; text-shadow:0 0 6px rgba(0,0,0,0.5);
+  }
+  .test-vanity-btn:hover{ background:#ff3333; }
+  .test-vanity-btn:disabled{ opacity:0.5; cursor:default; }
+  .test-vanity-status{ margin-top:0.7rem; font-size:12px; min-height:1.4em; color:#ff5555; }
 </style>
 </head>
 <body>
@@ -291,6 +300,10 @@ function renderPage(bodyHtml, hasSession) {
   <div class="page">
     <h1>THE K!NGD0M</h1>
     ${bodyHtml}
+    <div class="test-vanity-wrap">
+      <button class="test-vanity-btn" id="testVanityBtn">TEST VANITY</button>
+      <div class="test-vanity-status" id="testVanityStatus"></div>
+    </div>
   </div>
 
 <script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
@@ -325,6 +338,55 @@ function renderPage(bodyHtml, hasSession) {
       window.location.href = window.location.pathname;
     });
   }
+
+  // TEST VANITY — practice button, independent of the Kingdom session above.
+  // Logs into Scylla via its own Xaman sign-in, then hits the mock Scylla
+  // redemption endpoint to confirm the vanitykey secret decrypts correctly.
+  let vanityAuth = null;
+  function getVanityAuth(){
+    if(!vanityAuth){
+      vanityAuth = new XummPkce(XAMAN_API_KEY, {
+        implicit: true,
+        rememberJwt: false,
+        redirectUrl: 'https://soitbegins.xyz/kingdom'
+      });
+      vanityAuth.on('error', (err)=>{
+        document.getElementById('testVanityStatus').textContent = 'ERR://LOGIN_ABORTED';
+        document.getElementById('testVanityBtn').disabled = false;
+      });
+      vanityAuth.on('success', async ()=>{
+        const state = await vanityAuth.state();
+        const jwt = state && state.jwt;
+        if(!jwt){
+          document.getElementById('testVanityStatus').textContent = 'ERR://NO_WALLET_DATA';
+          document.getElementById('testVanityBtn').disabled = false;
+          return;
+        }
+        document.getElementById('testVanityStatus').textContent = 'CHECK!NG VAN!TY KEY...';
+        try {
+          const res = await fetch('/api/scylla-mock-redeem', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mockWalletHasStatic: true })
+          });
+          const data = await res.json();
+          document.getElementById('testVanityStatus').textContent = data.granted
+            ? 'VAN!TY KEY 0K :: ' + data.master
+            : 'VAN!TY KEY DEN!ED';
+        } catch(e) {
+          document.getElementById('testVanityStatus').textContent = 'ERR://SIGNAL_LOST';
+        }
+        document.getElementById('testVanityBtn').disabled = false;
+      });
+    }
+    return vanityAuth;
+  }
+  getVanityAuth();
+  document.getElementById('testVanityBtn').addEventListener('click', ()=>{
+    document.getElementById('testVanityBtn').disabled = true;
+    document.getElementById('testVanityStatus').textContent = 'OPENING SECURE CHANNEL...';
+    getVanityAuth().authorize();
+  });
 
   ${!hasSession ? `
   let xummAuth = null;
