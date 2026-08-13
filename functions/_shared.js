@@ -13,6 +13,13 @@ export const HONEYPOT_TAXON = 123589321;
 export const PIGEON_ISSUER = 'rpigeoNwEPTN5JGWGQ8MCoa7SpQpz1537v';
 export const PIGEON_TAXON = 1;
 
+// STAT!C Vanity Collector's Key — the Deeptide "king" shop (confirmed a
+// distinct collection from Kingdom's King NFTs: different issuer, taxon 13
+// vs. KING_TAXON 123). Holding one of these is what the Signal Assessment /
+// redemption flow gates on.
+export const STATIC_VANITY_KEY_ISSUER = 'rKymSQrwRF8DcwEzyAgNLMaaSKYSMfJNDY';
+export const STATIC_VANITY_KEY_TAXON = 13;
+
 export function getCookie(request, name) {
   const cookie = request.headers.get('Cookie') || '';
   const match = cookie.match(new RegExp('(?:^|; )' + name + '=([^;]+)'));
@@ -145,6 +152,39 @@ export const KINGDOM_CLAIMANTS = {
   invisible: { id: 'invisible', name: 'THE INVISIBLE KING', marketplace: 'XRP Cafe', url: 'https://xrp.cafe/collection/king' },
   knight: { id: 'knight', name: 'THE KNIGHT KING', marketplace: 'Deeptide', url: 'https://deeptide.co/king-thwncy' },
 };
+
+export function findAllStaticVanityKeys(nfts) {
+  return nfts.filter(n => n.Issuer === STATIC_VANITY_KEY_ISSUER && n.NFTokenTaxon === STATIC_VANITY_KEY_TAXON);
+}
+
+export function findStaticVanityKey(nfts) {
+  return nfts.find(n => n.Issuer === STATIC_VANITY_KEY_ISSUER && n.NFTokenTaxon === STATIC_VANITY_KEY_TAXON) || null;
+}
+
+// Each STAT!C Vanity Collector's Key's on-chain metadata carries its own
+// key number ("STAT!C VANITY COLLECTOR'S KEY #1023") and, embedded in the
+// description, the specific vanity XRPL address that key redeems — e.g.
+// `preserved under the vanity static address "rfuzzy..."`. Both are read
+// directly from IPFS (same resolveIpfsUri/hexToUtf8 pattern used for King
+// metadata) rather than a third-party API, since this is the security-
+// relevant data the redemption page displays.
+export async function getStaticVanityKeyInfo(nft) {
+  try {
+    const uri = resolveIpfsUri(hexToUtf8(nft.URI));
+    const res = await fetch(uri);
+    if (!res.ok) return { number: null, address: null };
+    const meta = await res.json();
+    const name = meta && meta.name;
+    const numberMatch = name ? String(name).match(/#(\d+)/) : null;
+    const number = numberMatch ? parseInt(numberMatch[1], 10) : null;
+    const description = (meta && meta.description) || '';
+    const addressMatch = description.match(/"(r[1-9A-HJ-NP-Za-km-z]{25,34})"/);
+    const address = addressMatch ? addressMatch[1] : null;
+    return { number, address };
+  } catch (e) {
+    return { number: null, address: null };
+  }
+}
 
 export function findPigeon(nfts) {
   return nfts.find(n => n.Issuer === PIGEON_ISSUER && n.NFTokenTaxon === PIGEON_TAXON) || null;
