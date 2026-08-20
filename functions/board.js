@@ -480,9 +480,9 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     margin-bottom:0.6rem;
   }
   .signed-counter-total{
-    font-size:0.6em;
-    color:rgba(57,255,20,0.6);
-    text-shadow:none;
+    font-size:0.85em;
+    color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.5);
   }
   .signed-counter-bar{
     height:6px;
@@ -750,14 +750,15 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
      gradient) as the matching .msg-row.tier-* signature borders, so a
      leaderboard entry's box actually reads as that wallet's tier instead
      of just a thicker line. */
-  .lb-row.tier-green{ border-width:1px; border-color:rgba(var(--tier-green),0.25); }
-  .lb-row.tier-pink{ border-width:1px; border-color:rgba(var(--tier-pink),0.6); }
-  .lb-row.tier-red{ border-width:2px; border-color:rgba(var(--tier-red),0.65); }
+  .lb-row.tier-green{ border-width:1px; border-color:rgba(var(--tier-green),0.25); background:linear-gradient(rgba(var(--tier-green),0.06), rgba(var(--tier-green),0.06)), #08080a; }
+  .lb-row.tier-pink{ border-width:1px; border-color:rgba(var(--tier-pink),0.6); background:linear-gradient(rgba(var(--tier-pink),0.07), rgba(var(--tier-pink),0.07)), #08080a; }
+  .lb-row.tier-red{ border-width:2px; border-color:rgba(var(--tier-red),0.65); background:linear-gradient(rgba(var(--tier-red),0.07), rgba(var(--tier-red),0.07)), #08080a; }
   .lb-row.tier-purple{
     position:relative;
     overflow:hidden;
     border-width:2.5px;
     border-color:rgba(var(--tier-purple),0.55);
+    background:linear-gradient(rgba(var(--tier-purple),0.07), rgba(var(--tier-purple),0.07)), #08080a;
     animation:silver-glow-pulse 2.8s ease-in-out infinite;
   }
   .lb-row.tier-purple::after{
@@ -776,6 +777,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     overflow:hidden;
     border-width:4px;
     border-color:rgba(var(--tier-gold),0.9);
+    background:linear-gradient(rgba(var(--tier-gold),0.1), rgba(var(--tier-gold),0.1)), #08080a;
     animation:gold-glow-pulse 2.6s ease-in-out infinite;
   }
   .lb-row.tier-gold::after{
@@ -796,6 +798,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border-width:4px;
     border-color:rgba(var(--tier-diamond-1),0.7);
     border-image:linear-gradient(90deg, rgb(var(--tier-diamond-1)), rgb(var(--tier-diamond-2)), rgb(var(--tier-diamond-3)), rgb(var(--tier-diamond-1))) 1;
+    background:linear-gradient(135deg, rgba(var(--tier-diamond-1),0.08), rgba(var(--tier-diamond-3),0.08), rgba(var(--tier-diamond-2),0.08)), #08080a;
     animation:diamond-glow-pulse 2.2s ease-in-out infinite;
   }
   .collection-link{
@@ -1039,7 +1042,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border-top:1px dashed rgba(255,0,60,0.3);
     font-size:11px;
     letter-spacing:0.08em;
-    color:#39ff14;
+    color:#ff003c;
     text-transform:uppercase;
   }
   .ld-timer-count, .ld-timer-unit{
@@ -1096,11 +1099,21 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     0%{ background-position:0% 50%; }
     100%{ background-position:300% 50%; }
   }
-  .msg-row.tier-pink{ border-width:1.5px; border-color:rgba(var(--tier-pink),0.75); box-shadow:0 0 8px rgba(var(--tier-pink),0.3); }
+  .msg-row.tier-green{ background:linear-gradient(rgba(var(--tier-green),0.06), rgba(var(--tier-green),0.06)), #08080a; }
+  .msg-row.tier-pink{
+    border-width:1.5px;
+    border-color:rgba(var(--tier-pink),0.75);
+    box-shadow:0 0 8px rgba(var(--tier-pink),0.3);
+    background:linear-gradient(rgba(var(--tier-pink),0.07), rgba(var(--tier-pink),0.07)), #08080a;
+  }
   .msg-row.tier-pink .msg-binary{ border-width:1px; border-color:rgba(var(--tier-pink),0.45); }
   .msg-row.tier-pink .msg-meta{ border-bottom-color:rgba(var(--tier-pink),0.4); }
   .msg-row.tier-pink .msg-avatar{ border-width:1px; border-color:rgba(var(--tier-pink),0.45); }
-  .msg-row.tier-red{ border-width:2px; border-color:rgba(var(--tier-red),0.65); }
+  .msg-row.tier-red{
+    border-width:2px;
+    border-color:rgba(var(--tier-red),0.65);
+    background:linear-gradient(rgba(var(--tier-red),0.07), rgba(var(--tier-red),0.07)), #08080a;
+  }
   .msg-row.tier-red .msg-binary{ border-width:2px; border-color:rgba(var(--tier-red),0.45); }
   .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(var(--tier-red),0.35); }
   .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(var(--tier-red),0.45); }
@@ -1109,6 +1122,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     overflow:hidden;
     border-width:2.5px;
     border-color:rgba(var(--tier-purple),0.55);
+    background:linear-gradient(rgba(var(--tier-purple),0.07), rgba(var(--tier-purple),0.07)), #08080a;
     animation:silver-glow-pulse 2.8s ease-in-out infinite;
   }
   @keyframes silver-glow-pulse{
@@ -1138,6 +1152,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     overflow:hidden;
     border-width:4px;
     border-color:rgba(var(--tier-gold),0.9);
+    background:linear-gradient(rgba(var(--tier-gold),0.1), rgba(var(--tier-gold),0.1)), #08080a;
     animation:gold-glow-pulse 2.6s ease-in-out infinite;
   }
   @keyframes gold-glow-pulse{
@@ -1188,6 +1203,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border-width:4px;
     border-color:rgba(var(--tier-diamond-soft),1);
     border-image:linear-gradient(90deg, rgb(var(--tier-diamond-1)), rgb(var(--tier-diamond-2)), rgb(var(--tier-diamond-3)), rgb(var(--tier-diamond-1))) 1;
+    background:linear-gradient(135deg, rgba(var(--tier-diamond-1),0.08), rgba(var(--tier-diamond-3),0.08), rgba(var(--tier-diamond-2),0.08)), #08080a;
     animation:diamond-glow-pulse 2.2s ease-in-out infinite;
   }
   .msg-row.tier-diamond .msg-binary{
@@ -1800,7 +1816,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .ag-level-box-label{
     font-size:11px;
     letter-spacing:0.15em;
-    color:rgba(232,232,232,0.5);
+    color:rgba(57,255,20,0.75);
     text-transform:uppercase;
     margin-bottom:0.5rem;
   }
