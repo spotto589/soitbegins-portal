@@ -31,6 +31,19 @@ function isGlitchWallet(acct) {
 // rows must never touch msg.text at all.
 const LOCKED_SIGNAL_BINARY = '01111011 00001101 101000001 00001101 01111011 00001101 101000001';
 
+// Minimum Pigeon count for each non-Crown access level, matching the
+// brackets in getPigeonCountTier (_shared.js) — used to tell a locked
+// viewer exactly how many Pigeons the level they're missing requires.
+// Level 15 has no count of its own: it's Crown-only, so it's called out
+// separately in levelRequirementText below.
+const LEVEL_MIN_PIGEONS = { 1: 1, 3: 5, 6: 16, 9: 50, 12: 100 };
+
+function levelRequirementText(level) {
+  if (level === 15) return 'CR0WN REQU!RED';
+  const min = LEVEL_MIN_PIGEONS[level];
+  return `${min}+ P!GE0NS REQU!RED`;
+}
+
 function renderMessageRow(msg, canDecode, glitchTs, viewerAccessLevel) {
   // RANK AT SIGNING — permanently captured at post time (see
   // functions/api/board.js), never recomputed here. A wallet that has
@@ -46,8 +59,7 @@ function renderMessageRow(msg, canDecode, glitchTs, viewerAccessLevel) {
   const wallet = msg.acct
     ? `<a class="wallet-link" href="https://bithomp.com/explorer/${escapeHtml(msg.acct)}" target="_blank" rel="noopener">${walletText}</a>`
     : walletText;
-  const walletWithLevel = `${wallet} <span class="msg-lvl-inline">(LVL: ${signalLevelLabel})</span>`;
-  const signer = msg.name ? `${escapeHtml(msg.name)} · ${walletWithLevel}` : walletWithLevel;
+  const signer = msg.name ? `${escapeHtml(msg.name)} · ${wallet}` : wallet;
   const avatar = msg.image
     ? (msg.nftId
         ? `<a class="msg-avatar" href="https://deeptide.co/nft/${escapeHtml(msg.nftId)}" target="_blank" rel="noopener"><img class="msg-avatar-img" src="${escapeHtml(proxyIpfsImage(msg.image))}" alt="" loading="lazy"></a>`
@@ -61,20 +73,24 @@ function renderMessageRow(msg, canDecode, glitchTs, viewerAccessLevel) {
         <div class="msg-locked-front">
           <div class="msg-locked-head"><span>⚠️</span><span>[ ENCRYPTED S!GNAL ]</span><span>⚠️</span></div>
           <div class="msg-locked-bar" aria-hidden="true">${'█'.repeat(40)}</div>
-          <div class="msg-locked-note">P!GE0N REQU!RED T0 DEC0DE</div>
+          <div class="msg-locked-note">P!GE0NS REQU!RED T0 DEC0DE</div>
           <button class="msg-inspect-btn" type="button">// !NSPECT S!GNAL</button>
         </div>
         <div class="msg-lock-detail" hidden>
           <div class="ld-title">// S!GNAL L0CKED</div>
           <div class="ld-line">ACCESS LEVEL REQU!RED :: ${signalLevelLabel}</div>
           <div class="ld-line">Y0UR ACCESS LEVEL :: ${String(viewerAccessLevel || 0).padStart(2, '0')}</div>
-          <div class="ld-line ld-req">P!GE0N REQU!RED</div>
+          <div class="ld-line ld-req">${levelRequirementText(signalLevel)}</div>
           <div class="ld-timer">RETURN!NG !N <span class="ld-timer-count">13</span>s</div>
         </div>
       </div>`;
   const binary = canDecode
-    ? escapeHtml(textToBinary(msg.text))
-    : escapeHtml(LOCKED_SIGNAL_BINARY);
+    ? `<div class="msg-binary">${escapeHtml(textToBinary(msg.text))}</div>`
+    : `<div class="msg-binary msg-binary-locked">
+        <div class="mb-stripe"></div>
+        ${escapeHtml(LOCKED_SIGNAL_BINARY)}
+        <div class="mb-stripe bottom"></div>
+      </div>`;
   const ts = msg.ts ? `<span class="msg-ts" data-ts="${msg.ts}"></span>` : '';
   const sparkles = tierClass === 'tier-diamond' ? DIAMOND_SPARKLES : (isGlitch ? GLITCH_BADGE : '');
   const crownRankBadge = isCrownSignature
@@ -89,13 +105,13 @@ function renderMessageRow(msg, canDecode, glitchTs, viewerAccessLevel) {
     <div class="msg-row ${tierClass}${canDecode ? '' : ' msg-locked-row'}${isCrownSignature ? ' msg-crown-row' : ''}">
       ${sparkles}
       ${crownRankBadge}
-      <div class="msg-meta"><span class="msg-meta-left">S!GNED :: <span class="msg-signer">${signer}</span></span>${ts ? `<span class="msg-meta-right">${ts}</span>` : ''}</div>
+      <div class="msg-meta"><span class="msg-meta-left"><span class="msg-signed-label">S!GNED ::</span> <span class="msg-signer ${tierClass}">${signer}</span></span>${ts ? `<span class="msg-meta-right">${ts}</span>` : ''}</div>
       ${orderLevelLine}
       <div class="msg-top">
         ${avatar}
         <div class="msg-plain-wrap">${plain}</div>
       </div>
-      <div class="msg-binary">${binary}</div>
+      ${binary}
     </div>`;
 }
 
@@ -185,7 +201,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
       <div class="preview-label">PREV!EW</div>
       <div class="msg-row ${previewTierClass}" id="previewRow">
         ${previewSparkles}
-        <div class="msg-meta"><span class="msg-meta-left">S!GNED :: <span class="msg-signer"><span id="previewName"></span>${acctDisplay || 'Y0U'}</span></span></div>
+        <div class="msg-meta"><span class="msg-meta-left"><span class="msg-signed-label">S!GNED ::</span> <span class="msg-signer ${previewTierClass}"><span id="previewName"></span>${acctDisplay || 'Y0U'}</span></span></div>
         <div class="msg-top">
           <img class="msg-avatar" id="previewAvatarImg" src="${initialAvatarSrc}" alt="" style="${hasAvailableThumbs ? '' : 'display:none;'}">
           <div class="msg-avatar msg-avatar-blank" id="previewAvatarBlank" style="${hasAvailableThumbs ? 'display:none;' : ''}"></div>
@@ -745,6 +761,24 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     color:rgba(57,255,20,0.6);
     word-break:break-all;
   }
+  /* Same striped-box treatment as .construction-notice / .important-notice,
+     so every locked signal's binary placeholder reads as part of the same
+     warning-box visual language as the rest of the page. */
+  .msg-row.msg-locked-row .msg-binary.msg-binary-locked{
+    position:relative;
+    overflow:hidden;
+    border:1px solid rgba(255,0,60,0.4);
+    background:rgba(255,0,60,0.04);
+    color:rgba(255,0,60,0.55);
+    padding:1rem 0.9rem;
+  }
+  .mb-stripe{
+    height:6px;
+    margin:-1rem -0.9rem 0.7rem;
+    background:repeating-linear-gradient(45deg, #ff003c 0px, #ff003c 10px, #08080a 10px, #08080a 20px);
+    opacity:0.7;
+  }
+  .mb-stripe.bottom{ margin:0.7rem -0.9rem -1rem; }
   .msg-binary a{
     color:inherit;
     text-decoration:none;
@@ -822,10 +856,11 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .msg-lock-detail{
     width:100%;
     box-sizing:border-box;
-    padding:0.6rem 0.75rem;
+    padding:1.1rem 1.25rem;
     border:1px dashed rgba(255,0,60,0.4);
     background:#000;
-    font-size:11px;
+    font-size:13px;
+    line-height:1.7;
     text-align:left;
     cursor:pointer;
     white-space:normal;
@@ -833,20 +868,24 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .ld-title{
     color:#ff003c;
     font-weight:700;
-    letter-spacing:0.08em;
-    margin-bottom:0.4rem;
+    font-size:14px;
+    letter-spacing:0.1em;
+    margin-bottom:0.7rem;
+    padding-bottom:0.5rem;
+    border-bottom:1px dashed rgba(255,0,60,0.3);
+    text-shadow:0 0 6px rgba(255,0,60,0.5);
   }
   .ld-line{
     color:rgba(232,232,232,0.7);
     letter-spacing:0.05em;
-    margin-bottom:0.2rem;
+    margin-bottom:0.3rem;
   }
-  .ld-req{ color:#ff003c; }
+  .ld-req{ color:#ff003c; font-weight:700; }
   .ld-timer{
-    margin-top:0.5rem;
-    padding-top:0.4rem;
+    margin-top:0.6rem;
+    padding-top:0.5rem;
     border-top:1px dashed rgba(255,0,60,0.3);
-    font-size:10px;
+    font-size:11px;
     letter-spacing:0.08em;
     color:rgba(232,232,232,0.5);
     text-transform:uppercase;
@@ -1188,9 +1227,26 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     }
     .msg-meta-right{ font-size:12px; }
   }
+  .msg-signed-label{
+    color:#ff003c;
+    text-shadow:0 0 4px rgba(255,0,60,0.5);
+  }
   .msg-signer{
     color:#ffd700;
     text-shadow:0 0 4px rgba(255,215,0,0.4);
+  }
+  .msg-signer.tier-green{ color:#39ff14; text-shadow:0 0 4px rgba(57,255,20,0.4); }
+  .msg-signer.tier-pink{ color:#1ae4ff; text-shadow:0 0 6px rgba(26,228,255,0.6); }
+  .msg-signer.tier-red{ color:#ff1414; text-shadow:0 0 6px rgba(255,20,20,0.6); }
+  .msg-signer.tier-purple{ color:#dbe4ea; text-shadow:0 0 5px rgba(219,228,234,0.45); }
+  .msg-signer.tier-gold{ color:#ffd700; text-shadow:0 0 6px rgba(255,215,0,0.5); }
+  .msg-signer.tier-diamond{
+    background:linear-gradient(90deg, #ff36e0 0%, #ffe93f 22%, #36e6ff 45%, #ff36e0 68%, #ffe93f 88%, #36e6ff 100%);
+    background-size:300% 100%;
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    animation:diamond-text-shimmer 1.8s linear infinite;
   }
   .wallet-link{
     color:inherit;
@@ -1199,11 +1255,6 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-underline-offset:0.15em;
   }
   .wallet-link:hover{ opacity:0.8; }
-  .msg-lvl-inline{
-    color:#00fff2;
-    text-shadow:0 0 4px rgba(0,255,242,0.4);
-    font-size:0.9em;
-  }
   .msg-ts{
     color:rgba(57,255,20,0.7);
     font-variant-numeric:tabular-nums;
@@ -1654,7 +1705,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
       <div class="important-notice-body">
         <div class="important-notice-stripe"></div>
         <div class="important-notice-item">This is a fan-made utility project and has no affiliation, endorsement, or connection with $PIGEONS or their creators.</div>
-        <div class="important-notice-item">P!GE0N S!GNATURES exist solely as part of this community-built project, created to give $PIGE0NS holders an additional way to participate and add utility to their NFTs.</div>
+        <div class="important-notice-item">This S!GNAL_RELAY exists solely as part of this community-built project, created to give $PIGE0NS holders an additional way to participate and add utility to their NFTs.</div>
         <div class="important-notice-stripe bottom"></div>
       </div>
     </details>
