@@ -443,8 +443,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     gap:0.4em;
     font-size:clamp(12px,3.4vw,16px);
     letter-spacing:0.08em;
-    color:#ffd700;
-    text-shadow:0 0 6px rgba(255,215,0,0.5);
+    color:#ff003c;
+    text-shadow:0 0 6px rgba(255,0,60,0.5);
   }
   .cn-footer span{ white-space:nowrap; }
   .signed-counter{
@@ -475,8 +475,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .signed-counter-value{
     font-size:clamp(18px, 5vw, 24px);
     font-weight:700;
-    color:#39ff14;
-    text-shadow:0 0 6px rgba(57,255,20,0.5);
+    color:#ff003c;
+    text-shadow:0 0 6px rgba(255,0,60,0.5);
     margin-bottom:0.6rem;
   }
   .signed-counter-total{
@@ -558,20 +558,31 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     margin-bottom:0;
   }
   .collection-link-wrap .collection-link{ margin:0 auto; }
+  .cb-label-become{
+    font-size:1.3em;
+    font-weight:900;
+    letter-spacing:0.05em;
+  }
   .cb-market-row{
     display:flex;
-    justify-content:space-between;
-    gap:1em;
-    margin-top:0.4em;
+    gap:0.6em;
+    margin-top:0.7em;
   }
   .cb-market-link{
-    color:#000;
-    font-weight:800;
-    font-size:0.8em;
-    text-decoration:underline;
-    text-underline-offset:0.15em;
+    flex:1;
+    text-align:center;
+    padding:0.45em 0.4em;
+    background:#000;
+    color:#ffee00;
+    border:2px solid #000;
+    font-family:inherit;
+    font-weight:700;
+    font-size:0.72em;
+    letter-spacing:0.04em;
+    text-decoration:none;
+    transition:background 0.12s ease;
   }
-  .cb-market-link:hover{ opacity:0.65; }
+  .cb-market-link:hover{ background:#2a2a2a; }
   .important-notice{
     margin-bottom:1.5rem;
     border:1px solid rgba(255,0,60,0.4);
@@ -624,11 +635,11 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     padding:0.7rem 0.9rem;
     border:1px solid rgba(255,0,60,0.3);
     background:#08080a;
-    color:#ff003c;
+    color:#39ff14;
     font-size:11px;
     line-height:1.6;
     letter-spacing:0.03em;
-    text-shadow:0 0 3px rgba(255,0,60,0.3);
+    text-shadow:0 0 3px rgba(57,255,20,0.35);
   }
   .tier-legend{
     border:none;
@@ -808,7 +819,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     width:150px;
     aspect-ratio:1;
     box-sizing:border-box;
-    background:#000;
+    background:radial-gradient(circle, rgba(255,238,0,0.18) 0%, #000 72%);
     border-right:2px solid #000;
     overflow:hidden;
   }
@@ -1009,9 +1020,9 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     margin-bottom:0.3rem;
   }
   .ld-num{
-    color:#39ff14;
+    color:#ff003c;
     font-weight:700;
-    text-shadow:0 0 4px rgba(57,255,20,0.5);
+    text-shadow:0 0 5px rgba(255,0,60,0.7);
   }
   .ld-req{
     color:#ff003c;
@@ -1032,8 +1043,9 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-transform:uppercase;
   }
   .ld-timer-count{
-    color:#39ff14;
+    color:#ff003c;
     font-weight:700;
+    text-shadow:0 0 5px rgba(255,0,60,0.6);
   }
   .msg-inspect-btn:disabled{
     opacity:0.5;
@@ -1357,8 +1369,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border-bottom:1px solid rgba(57,255,20,0.1);
   }
   .msg-order-part{
-    color:#39ff14;
-    text-shadow:0 0 4px rgba(57,255,20,0.4);
+    color:#ff003c;
+    text-shadow:0 0 4px rgba(255,0,60,0.4);
   }
   .msg-row.msg-locked-row{ border-color:rgba(255,0,60,0.35); }
   @media (min-width:641px){
@@ -1407,7 +1419,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .wallet-link:hover{ opacity:0.8; }
   .msg-ts{
-    color:rgba(57,255,20,0.7);
+    color:rgba(255,0,60,0.75);
     font-variant-numeric:tabular-nums;
   }
   .msg-avatar{
@@ -1416,7 +1428,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     aspect-ratio:1;
     height:auto;
     object-fit:contain;
-    background:#08080a;
+    background:radial-gradient(circle, rgba(255,238,0,0.12) 0%, #08080a 72%);
     border:1px solid rgba(57,255,20,0.25);
     display:block;
   }
@@ -1490,7 +1502,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     aspect-ratio:1;
     height:auto;
     object-fit:contain;
-    background:#08080a;
+    background:radial-gradient(circle, rgba(255,238,0,0.12) 0%, #08080a 72%);
     border:2px solid rgba(57,255,20,0.25);
     border-radius:4px;
     cursor:pointer;
@@ -1750,7 +1762,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     color:#39ff14;
     text-shadow:0 0 6px rgba(57,255,20,0.5);
   }
-  .ag-level-granted{ color:#39ff14; text-shadow:0 0 12px rgba(57,255,20,0.6); }
+  .ag-level-granted{ color:#ff003c; text-shadow:0 0 12px rgba(255,0,60,0.6); }
   .ag-level-denied{ color:#ff003c; text-shadow:0 0 12px rgba(255,0,60,0.6); }
   .ag-crown{
     display:inline-block;
@@ -1767,7 +1779,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .ag-good{ color:#39ff14; }
   .ag-bad{ color:#ff003c; }
-  .ag-signals{ color:#00fff2; text-shadow:0 0 6px rgba(0,255,242,0.4); }
+  .ag-signals{ color:#ff003c; text-shadow:0 0 6px rgba(255,0,60,0.5); }
   .ag-level-box{
     margin-top:0.9rem;
     padding:0.9rem 1rem;
@@ -1907,11 +1919,11 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
       <div class="collection-link">
         <span class="collection-link-logo-wrap" aria-hidden="true"><img class="collection-link-logo" src="${proxyIpfsImage('https://ipfs.io/ipfs/QmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs')}" alt="P!GE0N NFT"></span>
         <span class="collection-link-body">
-          <span class="cb-label" style="animation-delay:0.6s">BEC0ME THE S!GNAL</span>
+          <span class="cb-label cb-label-become" style="animation-delay:0.6s">BEC0ME THE S!GNAL</span>
           <span class="cb-binary" aria-hidden="true" style="animation-delay:0.6s">01010011 01001001 01000111 01001110 01000001 01001100</span>
           <span class="cb-market-row">
-            <a class="cb-market-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">on DEEPT!DE</a>
-            <a class="cb-market-link" href="https://xrp.cafe/collection/xrpigeons" target="_blank" rel="noopener">on XRP.CAFE</a>
+            <a class="cb-market-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">DEEPT!DE →</a>
+            <a class="cb-market-link" href="https://xrp.cafe/collection/xrpigeons" target="_blank" rel="noopener">XRP CAFE →</a>
           </span>
         </span>
       </div>
