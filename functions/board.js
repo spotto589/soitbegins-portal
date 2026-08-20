@@ -14,6 +14,20 @@ function escapeHtml(str) {
   return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// A long message's plaintext sits next to a fixed-size (150-220px) avatar
+// square via flexbox — at the default 14px it can grow taller than the
+// avatar and spill past it, looking broken. Scale the font down as the
+// message gets longer so it stays roughly avatar-height instead. Mirrors
+// the same min/max-size-by-length shape already used for the composer's
+// live binary preview (see MIN_BINARY_SIZE/MAX_BINARY_SIZE client-side).
+const PLAIN_MAX_SIZE = 14;
+const PLAIN_MIN_SIZE = 9;
+const PLAIN_SCALE_CHARS = 220;
+function plainFontSize(text) {
+  const ratio = Math.min(text.length / PLAIN_SCALE_CHARS, 1);
+  return (PLAIN_MAX_SIZE - ratio * (PLAIN_MAX_SIZE - PLAIN_MIN_SIZE)).toFixed(1);
+}
+
 const DIAMOND_SPARKLES = `<div class="diamond-sparkles" aria-hidden="true"><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span></div>`;
 
 const GLITCH_BADGE = `<div class="glitch-badge" aria-hidden="true">⚠ GL!TCH</div>`;
@@ -68,7 +82,7 @@ function renderMessageRow(msg, canDecode, glitchTs, viewerAccessLevel) {
   const isGlitch = isGlitchWallet(msg.acct) && msg.ts === glitchTs;
   const tierClass = isGlitch ? 'tier-glitch' : getPigeonTierClass(msg.pigeonCount, isCrownSignature);
   const plain = canDecode
-    ? `<div class="msg-plain ${tierClass}">${escapeHtml(msg.text)}</div>`
+    ? `<div class="msg-plain ${tierClass}" style="font-size:${plainFontSize(msg.text)}px">${escapeHtml(msg.text)}</div>`
     : `<div class="msg-plain msg-locked">
         <div class="msg-locked-front">
           <div class="msg-locked-head"><span>⚠️</span><span>[ ENCRYPTED S!GNAL ]</span><span>⚠️</span></div>
@@ -1859,7 +1873,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         <div class="signed-counter-bar"><div class="signed-counter-fill" style="width:${signedPct}%"></div></div>
       </div>
       <details class="tier-legend rules-panel">
-        <summary><span class="legend-title"><span class="legend-emoji">⚠️</span> // ACCESS LEVELS <span class="legend-emoji">⚠️</span></span></summary>
+        <summary><span class="legend-title">// <span class="legend-emoji">⚠️</span> ACCESS LEVELS <span class="legend-emoji">⚠️</span></span></summary>
         <div class="tier-legend-body">
           <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS :: LEVEL 01</div></div>
           <div class="msg-row tl-row tier-pink"><div class="msg-plain tl-text tier-pink">5-15 P!GE0NS :: LEVEL 03</div></div>
@@ -1879,7 +1893,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         </div>
       </details>
       <details class="tier-legend protocol-panel">
-        <summary><span class="legend-title"><span class="legend-emoji">⚠️</span> // P!GE0N S!GNATURE PR0T0C0L <span class="legend-emoji">⚠️</span></span></summary>
+        <summary><span class="legend-title">// <span class="legend-emoji">⚠️</span> P!GE0N S!GNATURE PR0T0C0L <span class="legend-emoji">⚠️</span></span></summary>
         <div class="tier-legend-body">
           <div class="rules-subhead">0NE P!GE0N. 0NE S!GNATURE. 0NE ADDRESS.</div>
           <div class="rules-rule"><span class="rules-num">01 //</span><span>Each P!GE0N can be used to sign the B0ard once — and only by the wallet currently holding it.</span></div>
@@ -1891,7 +1905,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         </div>
       </details>
       <details class="tier-legend leaderboard">
-        <summary><span class="legend-title"><span class="legend-emoji">❗</span> // T0P S!GNERS <span class="legend-emoji">❗</span></span></summary>
+        <summary><span class="legend-title">// <span class="legend-emoji">❗</span> T0P S!GNERS <span class="legend-emoji">❗</span></span></summary>
         <div class="tier-legend-body">
           ${leaderboardRows || `<div class="lb-empty">N0 S!GNATURES YET.</div>`}
         </div>
@@ -2060,6 +2074,9 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   const WORD_LIMIT = ${wordLimit};
   const MIN_BINARY_SIZE = 6.5;
   const MAX_BINARY_SIZE = 11;
+  const PLAIN_MAX_SIZE = ${PLAIN_MAX_SIZE};
+  const PLAIN_MIN_SIZE = ${PLAIN_MIN_SIZE};
+  const PLAIN_SCALE_CHARS = ${PLAIN_SCALE_CHARS};
   const input = document.getElementById('msgInput');
   const preview = document.getElementById('binaryPreview');
   const plainPreview = document.getElementById('plainPreview');
@@ -2097,6 +2114,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   input.addEventListener('input', () => {
     preview.textContent = input.value.split('').map(c => c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ');
     plainPreview.textContent = input.value;
+    const plainRatio = Math.min(input.value.length / PLAIN_SCALE_CHARS, 1);
+    plainPreview.style.fontSize = (PLAIN_MAX_SIZE - plainRatio * (PLAIN_MAX_SIZE - PLAIN_MIN_SIZE)).toFixed(1) + 'px';
     const words = countWords(input.value);
     const over = words > WORD_LIMIT;
     wordCountEl.textContent = words + ' / ' + WORD_LIMIT + ' W0RDS';
