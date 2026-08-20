@@ -33,9 +33,9 @@ function plainFontSize(text) {
 // :root tier variables and each .msg-row.tier-* block for the matching
 // border/animation half of each identity.
 const CORE_SPARKLES = `<div class="tier-sparkles" aria-hidden="true"><span>👑</span><span>👑</span><span>👑</span><span>👑</span><span>👑</span></div>`;
-const ROOT_SPARKLES = `<div class="tier-sparkles" aria-hidden="true"><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span></div><div class="gold-stripe-bottom" aria-hidden="true"></div><div class="root-badge" aria-hidden="true">R00T</div>`;
+const ROOT_SPARKLES = `<div class="tier-sparkles" aria-hidden="true"><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span></div><div class="gold-stripe-bottom" aria-hidden="true"></div>`;
 const NETWORK_NODES = `<div class="network-nodes" aria-hidden="true"><span></span><span></span><span></span><span></span></div>`;
-const SYSTEM_NODES = `<div class="system-nodes" aria-hidden="true"><span></span><span></span><span></span></div>`;
+const SYSTEM_NODES = `<div class="system-nodes" aria-hidden="true"><span></span><span></span><span></span></div><div class="system-stripe-bottom" aria-hidden="true"></div>`;
 const ENCRYPTED_FRAGMENTS = `<div class="tier-sparkles encrypted-fragments" aria-hidden="true"><span>0xF3</span><span>A1C</span><span>#7D</span><span>E2#</span><span>9xB</span></div>`;
 const TIER_OVERLAY = {
   'tier-pink': NETWORK_NODES,
@@ -70,7 +70,7 @@ const LEVEL_MIN_PIGEONS = { 1: 1, 3: 5, 6: 16, 9: 50, 12: 100 };
 // Each level's network-identity name — TERMINAL/NETWORK/ENCRYPTED/SYSTEM/
 // ROOT/CORE — shown alongside the numeric level everywhere it appears so
 // the level reads as a distinct identity, not just a rank number.
-const LEVEL_NAMES = { 0: 'N0 S!GNAL', 1: 'TERM!NAL', 3: 'NETW0RK', 6: 'ENCRYPTED', 9: 'SYSTEM', 12: 'R00T', 15: 'C0RE' };
+const LEVEL_NAMES = { 0: 'N0 S!GNAL', 1: 'S!GNAL', 3: 'BEAC0N', 6: 'VECT0R', 9: 'RES0NANCE', 12: '0VERR!DE', 15: 'C0RE' };
 
 function levelRequirementText(level) {
   if (level === 15) return 'CR0WN REQU!RED';
@@ -284,7 +284,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
       </div>
       <div class="ag-readout">
         <div class="ag-row"><span class="ag-row-label">STATUS:</span><span class="ag-row-value ag-good">✅ C0NNECTED</span></div>
-        <div class="ag-row"><span class="ag-row-label">S!GNALS AVA!LABLE</span><span class="ag-row-value ag-signals ag-signals-big">${signalsAvailable}</span></div>
+        <div class="ag-row"><span class="ag-row-label">S!GNALS AVA!LABLE</span><span class="ag-row-value ag-signals">${signalsAvailable}</span></div>
       </div>
     </div>
   ` : (hasSession ? `
@@ -332,22 +332,23 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
   /* Single source of truth for the P!GE0N Access Level system. Each level
-     is its own network-penetration identity — TERMINAL (01), NETWORK
-     (03), ENCRYPTED (06), SYSTEM (09), ROOT (12), CORE/CROWN (15) — not
-     a bronze/silver/gold rarity ladder. Every surface that shows a tier
+     is its own network-penetration identity — SIGNAL (01), BEACON (03),
+     VECTOR (06), RESONANCE (09), OVERRIDE (12), CR0WN (15) — not a
+     bronze/silver/gold rarity ladder. Every surface that shows a tier
      (legend swatches, message borders, leaderboard) reads its color from
      these variables, so a level's identity only needs to change in one
      place to change everywhere. */
   :root{
-    --tier-terminal: 57,255,20;    /* 01 — phosphor green CRT */
-    --tier-network: 30,144,255;    /* 03 — electric blue */
-    --tier-encrypted: 139,60,255;  /* 06 — deep violet cipher */
-    --tier-system: 0,229,255;      /* 09 — cool cyan telemetry */
-    --tier-root: 255,23,23;        /* 12 — red alert / privileged */
-    --tier-core-1: 255,54,224;
-    --tier-core-2: 255,233,63;
-    --tier-core-3: 54,230,255;
-    --tier-core-soft: 255,142,240;
+    --tier-terminal: 57,255,20;       /* 01 — phosphor green CRT */
+    --tier-network: 40,110,255;       /* 03 — bright electric blue */
+    --tier-encrypted: 145,60,235;     /* 06 — bright purple */
+    --tier-system: 255,204,0;         /* 09 — yellow caution tape */
+    --tier-root: 255,0,20;            /* 12 — pure red */
+    --tier-root-stripe: 255,0,40;     /* 12 — the red hazard-stripe banner */
+    --tier-core-1: 255,20,180;        /* 15 — pink */
+    --tier-core-2: 0,229,255;         /* 15 — cyan */
+    --tier-core-3: 255,20,180;        /* 15 — pink (loops back for a smooth cycle) */
+    --tier-core-soft: 255,20,180;
   }
   *{ margin:0; padding:0; box-sizing:border-box; }
   html, body{ min-height:100%; background:#08080a; }
@@ -803,7 +804,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     inset:0;
     pointer-events:none;
     z-index:1;
-    background:linear-gradient(115deg, transparent 30%, rgba(var(--tier-root),0.3) 46%, rgba(255,220,220,0.6) 50%, rgba(var(--tier-root),0.3) 54%, transparent 70%);
+    background:linear-gradient(115deg, transparent 30%, rgba(var(--tier-root),0.3) 46%, rgba(255,210,180,0.65) 50%, rgba(var(--tier-root),0.3) 54%, transparent 70%);
     background-size:300% 300%;
     animation:root-sweep 3s linear infinite;
     mix-blend-mode:screen;
@@ -1076,13 +1077,16 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     color:rgb(var(--tier-terminal));
     text-shadow:0 0 4px rgba(var(--tier-terminal),0.35);
   }
+  /* Levels 01/03/06 keep green "writing" (the terminal phosphor color)
+     even though their borders are tier-colored — only the border/
+     decorations carry the level's own hue at this stage of the ladder. */
   .msg-plain.tier-pink{
-    color:rgb(var(--tier-network));
-    text-shadow:0 0 7px rgba(var(--tier-network),0.75);
+    color:rgb(var(--tier-terminal));
+    text-shadow:0 0 7px rgba(var(--tier-terminal),0.6);
   }
   .msg-plain.tier-red{
-    color:rgb(var(--tier-encrypted));
-    text-shadow:0 0 7px rgba(var(--tier-encrypted),0.75);
+    color:rgb(var(--tier-terminal));
+    text-shadow:0 0 7px rgba(var(--tier-terminal),0.6);
   }
   .msg-plain.tier-purple{
     color:rgb(var(--tier-system));
@@ -1220,21 +1224,36 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-shadow:0 0 4px rgba(var(--tier-encrypted),0.9);
     filter:none;
   }
-  /* Level 09 — SYSTEM: cool cyan diagnostic telemetry. A narrow scan-line
-     sweeps the row (not a soft metallic shine) and two indicator dots
-     blink out of phase like status LEDs, so it reads as "inside the
-     operating system" rather than a shinier version of level 06. */
+  /* Level 09 — RESONANCE: yellow/black caution-tape banner, top and
+     bottom, reading as an active hazard zone inside the machine — not
+     just another colored border. Three amber dots pulse out of phase
+     like a resonating signal. */
   .msg-row.tier-purple{
     position:relative;
     overflow:hidden;
-    border-width:2.5px;
-    border-color:rgba(var(--tier-system),0.6);
-    background:linear-gradient(rgba(var(--tier-system),0.24), rgba(var(--tier-system),0.24)), #08080a;
+    border-width:3px;
+    border-color:rgba(var(--tier-system),0.85);
+    background:linear-gradient(rgba(var(--tier-system),0.28), rgba(var(--tier-system),0.28)), #08080a;
     animation:system-pulse 2.4s ease-in-out infinite;
   }
   @keyframes system-pulse{
-    0%, 100%{ box-shadow:0 0 6px rgba(var(--tier-system),0.25), inset 0 0 10px rgba(var(--tier-system),0.05); }
-    50%{ box-shadow:0 0 16px rgba(var(--tier-system),0.55), inset 0 0 18px rgba(var(--tier-system),0.12); }
+    0%, 100%{ box-shadow:0 0 10px rgba(var(--tier-system),0.35), inset 0 0 12px rgba(var(--tier-system),0.08); }
+    50%{ box-shadow:0 0 22px rgba(var(--tier-system),0.65), inset 0 0 22px rgba(var(--tier-system),0.16); }
+  }
+  .msg-row.tier-purple::before{
+    content:'';
+    position:absolute;
+    top:0; left:0; right:0;
+    height:6px;
+    z-index:2;
+    background:repeating-linear-gradient(45deg, rgb(var(--tier-system)) 0px, rgb(var(--tier-system)) 10px, #08080a 10px, #08080a 20px);
+  }
+  .system-stripe-bottom{
+    position:absolute;
+    bottom:0; left:0; right:0;
+    height:6px;
+    z-index:2;
+    background:repeating-linear-gradient(45deg, rgb(var(--tier-system)) 0px, rgb(var(--tier-system)) 10px, #08080a 10px, #08080a 20px);
   }
   .msg-row.tier-purple::after{
     content:'';
@@ -1242,7 +1261,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     inset:0;
     pointer-events:none;
     z-index:1;
-    background:linear-gradient(100deg, transparent 46%, rgba(var(--tier-system),0.7) 49%, rgba(var(--tier-system),0.9) 50%, rgba(var(--tier-system),0.7) 51%, transparent 54%);
+    background:linear-gradient(100deg, transparent 46%, rgba(var(--tier-system),0.7) 49%, rgba(255,255,240,0.7) 50%, rgba(var(--tier-system),0.7) 51%, transparent 54%);
     background-size:340% 340%;
     animation:system-scan 3.2s linear infinite;
     mix-blend-mode:screen;
@@ -1253,8 +1272,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .system-nodes{
     position:absolute;
-    top:6px;
-    right:8px;
+    top:12px;
+    right:10px;
     z-index:2;
     display:flex;
     gap:5px;
@@ -1273,31 +1292,33 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     0%, 40%, 100%{ opacity:0.25; }
     20%{ opacity:1; }
   }
-  .msg-row.tier-purple .msg-binary{ border-width:2.5px; border-color:rgba(var(--tier-system),0.4); }
-  .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(var(--tier-system),0.35); }
-  .msg-row.tier-purple .msg-avatar{ border-width:2.5px; border-color:rgba(var(--tier-system),0.4); }
+  .msg-row.tier-purple .msg-binary{ border-width:3px; border-color:rgba(var(--tier-system),0.5); }
+  .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(var(--tier-system),0.4); }
+  .msg-row.tier-purple .msg-avatar{ border-width:3px; border-color:rgba(var(--tier-system),0.5); }
   /* Level 12 — ROOT: privileged/administrative red alert, not a "prize"
-     tier. Heavy border, alert-stripe banner top and bottom, a hot sweep,
-     and an occasional harder glitch-shake than level 06's — this is the
-     loudest, most imposing normal level. */
+     tier. Heavy border, alert-stripe banner top and bottom (actually
+     marching, not static), a hot sweep, and a harder, more frequent
+     glitch-shake than level 06's — this is the loudest, most imposing
+     normal level. */
   .msg-row.tier-gold{
     position:relative;
     overflow:hidden;
     border-width:4px;
     border-color:rgba(var(--tier-root),0.9);
     background:linear-gradient(rgba(var(--tier-root),0.32), rgba(var(--tier-root),0.32)), #08080a;
-    animation:root-alert-pulse 2.2s ease-in-out infinite, root-glitch 4s infinite;
+    animation:root-alert-pulse 2.2s ease-in-out infinite, root-glitch 2s infinite;
   }
   @keyframes root-alert-pulse{
     0%, 100%{ box-shadow:0 0 14px rgba(var(--tier-root),0.5), inset 0 0 16px rgba(var(--tier-root),0.1); }
     50%{ box-shadow:0 0 30px rgba(var(--tier-root),0.85), inset 0 0 30px rgba(var(--tier-root),0.2); }
   }
   @keyframes root-glitch{
-    0%, 90%, 100%{ transform:translate(0,0); }
-    91%{ transform:translate(-3px,1px); }
-    92%{ transform:translate(3px,-2px); }
-    93%{ transform:translate(-2px,2px); }
-    94%{ transform:translate(0,0); }
+    0%, 80%, 100%{ transform:translate(0,0); filter:none; }
+    82%{ transform:translate(-3px,1px); filter:hue-rotate(15deg); }
+    84%{ transform:translate(3px,-2px); filter:none; }
+    86%{ transform:translate(-2px,2px); filter:hue-rotate(-15deg); }
+    88%{ transform:translate(2px,-1px); filter:none; }
+    90%{ transform:translate(0,0); }
   }
   .msg-row.tier-gold::before{
     content:'';
@@ -1305,14 +1326,22 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     top:0; left:0; right:0;
     height:6px;
     z-index:2;
-    background:repeating-linear-gradient(45deg, rgb(var(--tier-root)) 0px, rgb(var(--tier-root)) 10px, #08080a 10px, #08080a 20px);
+    background:repeating-linear-gradient(45deg, rgb(var(--tier-root-stripe)) 0px, rgb(var(--tier-root-stripe)) 10px, #08080a 10px, #08080a 20px);
+    background-size:28px 28px;
+    animation:root-stripe-march 0.9s linear infinite;
   }
   .gold-stripe-bottom{
     position:absolute;
     bottom:0; left:0; right:0;
     height:6px;
     z-index:2;
-    background:repeating-linear-gradient(45deg, rgb(var(--tier-root)) 0px, rgb(var(--tier-root)) 10px, #08080a 10px, #08080a 20px);
+    background:repeating-linear-gradient(45deg, rgb(var(--tier-root-stripe)) 0px, rgb(var(--tier-root-stripe)) 10px, #08080a 10px, #08080a 20px);
+    background-size:28px 28px;
+    animation:root-stripe-march 0.9s linear infinite reverse;
+  }
+  @keyframes root-stripe-march{
+    0%{ background-position:0 0; }
+    100%{ background-position:28px 0; }
   }
   .msg-row.tier-gold::after{
     content:'';
@@ -1320,7 +1349,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     inset:0;
     pointer-events:none;
     z-index:1;
-    background:linear-gradient(115deg, transparent 30%, rgba(var(--tier-root),0.3) 46%, rgba(255,220,220,0.6) 50%, rgba(var(--tier-root),0.3) 54%, transparent 70%);
+    background:linear-gradient(115deg, transparent 30%, rgba(var(--tier-root),0.3) 46%, rgba(255,210,180,0.65) 50%, rgba(var(--tier-root),0.3) 54%, transparent 70%);
     background-size:300% 300%;
     animation:root-sweep 3s linear infinite;
     mix-blend-mode:screen;
@@ -1328,20 +1357,6 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   @keyframes root-sweep{
     0%{ background-position:0% 0%; }
     100%{ background-position:100% 100%; }
-  }
-  .root-badge{
-    position:absolute;
-    top:10px;
-    right:10px;
-    z-index:3;
-    padding:0.15em 0.5em;
-    background:#000;
-    border:1px solid rgb(var(--tier-root));
-    color:rgb(var(--tier-root));
-    font-size:9px;
-    font-weight:700;
-    letter-spacing:0.08em;
-    text-shadow:0 0 4px rgba(var(--tier-root),0.8);
   }
   .msg-row.tier-gold .msg-binary{ border-width:4px; border-color:rgba(var(--tier-root),0.5); }
   .msg-row.tier-gold .msg-meta{ border-bottom-color:rgba(var(--tier-root),0.4); }
@@ -1963,7 +1978,6 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .ag-good{ color:#39ff14; }
   .ag-bad{ color:#ff003c; }
   .ag-signals{ color:#ff003c; text-shadow:0 0 6px rgba(255,0,60,0.5); }
-  .ag-signals-big{ font-size:1.6em; }
   .ag-level-box{
     margin-top:0.9rem;
     padding:0.9rem 1rem;
@@ -1998,9 +2012,9 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     align-items:baseline;
     justify-content:space-between;
     gap:1em;
-    font-size:12px;
+    font-size:clamp(15px, 4vw, 19px);
     letter-spacing:0.06em;
-    padding:0.4rem 0;
+    padding:0.5rem 0;
     border-bottom:1px dashed rgba(57,255,20,0.15);
   }
   .ag-row:last-child{ border-bottom:none; }
@@ -2015,7 +2029,6 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-shadow:0 0 6px currentColor;
   }
   .ag-row-value.ag-good{
-    font-size:1.6em;
     text-shadow:0 0 2px rgba(57,255,20,0.3);
   }
   .session-watermark{
@@ -2203,12 +2216,12 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
       <details class="tier-legend rules-panel">
         <summary><span class="legend-title">// ACCESS LEVELS <span class="legend-emoji">⚠️</span></span></summary>
         <div class="tier-legend-body">
-          <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS :: LEVEL 01 :: TERM!NAL</div></div>
-          <div class="msg-row tl-row tier-pink">${NETWORK_NODES}<div class="msg-plain tl-text tier-pink">5-15 P!GE0NS :: LEVEL 03 :: NETW0RK</div></div>
-          <div class="msg-row tl-row tier-red">${ENCRYPTED_FRAGMENTS}<div class="msg-plain tl-text tier-red">16-49 P!GE0NS :: LEVEL 06 :: ENCRYPTED</div></div>
-          <div class="msg-row tl-row tier-purple">${SYSTEM_NODES}<div class="msg-plain tl-text tier-purple">50-99 P!GE0NS :: LEVEL 09 :: SYSTEM</div></div>
-          <div class="msg-row tl-row tier-gold">${ROOT_SPARKLES}<div class="msg-plain tl-text tier-gold">100+ P!GE0NS :: LEVEL 12 :: R00T</div></div>
-          <div class="msg-row tl-row tier-diamond">${CORE_SPARKLES}<div class="msg-plain tl-text tier-diamond">CR0WN H0LDER :: LEVEL 15 :: C0RE</div></div>
+          <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS :: LEVEL 01 :: S!GNAL</div></div>
+          <div class="msg-row tl-row tier-pink">${NETWORK_NODES}<div class="msg-plain tl-text tier-pink">5-15 P!GE0NS :: LEVEL 03 :: BEAC0N</div></div>
+          <div class="msg-row tl-row tier-red">${ENCRYPTED_FRAGMENTS}<div class="msg-plain tl-text tier-red">16-49 P!GE0NS :: LEVEL 06 :: VECT0R</div></div>
+          <div class="msg-row tl-row tier-purple">${SYSTEM_NODES}<div class="msg-plain tl-text tier-purple">50-99 P!GE0NS :: LEVEL 09 :: RES0NANCE</div></div>
+          <div class="msg-row tl-row tier-gold">${ROOT_SPARKLES}<div class="msg-plain tl-text tier-gold">100+ P!GE0NS :: LEVEL 12 :: 0VERR!DE</div></div>
+          <div class="msg-row tl-row tier-diamond">${CORE_SPARKLES}<div class="msg-plain tl-text tier-diamond">CR0WN :: LEVEL 15 :: C0RE</div></div>
 
           <div class="rules-body">Your ACCESS LEVEL determines your signature border and which signals you can read.</div>
           <div class="rules-body">You can read your ACCESS LEVEL and all levels below it.</div>
@@ -2279,11 +2292,11 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     sessionStorage.setItem(playedKey, '1');
 
     const SEQUENCES = {
-      1: { cls: 'll-terminal', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 01', 'TERM!NAL ACCESS :: GRANTED'] },
-      3: { cls: 'll-network', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 03', 'NETW0RK ACCESS :: GRANTED'] },
-      6: { cls: 'll-encrypted', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 06', 'ENCRYPTED ACCESS :: GRANTED'] },
-      9: { cls: 'll-system', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 09', 'SYSTEM ACCESS :: GRANTED'] },
-      12: { cls: 'll-root', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 12', 'R00T AUTHENT!CAT!0N', 'R00T ACCESS :: GRANTED'] },
+      1: { cls: 'll-terminal', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 01', 'S!GNAL ACCESS :: GRANTED'] },
+      3: { cls: 'll-network', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 03', 'BEAC0N ACCESS :: GRANTED'] },
+      6: { cls: 'll-encrypted', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 06', 'VECT0R ACCESS :: GRANTED'] },
+      9: { cls: 'll-system', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 09', 'RES0NANCE ACCESS :: GRANTED'] },
+      12: { cls: 'll-root', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 12', '0VERR!DE AUTHENT!CAT!0N', '0VERR!DE ACCESS :: GRANTED'] },
       15: { cls: 'll-core', lines: ['// S!GNAL DETECTED', 'CR0WN H0LDER', 'ACCESS LEVEL :: 15', 'C0RE ACCESS :: GRANTED'] },
     };
     const seq = SEQUENCES[ACCESS_LEVEL];
