@@ -535,6 +535,18 @@ function resolveIpfsUri(uri) {
   return uri;
 }
 
+// ipfs.io now challenge-blocks image requests carrying browser Fetch
+// Metadata headers (Sec-Fetch-Site: cross-site), which is exactly what a
+// hotlinked <img src="https://ipfs.io/..."> sends — so every pigeon/king
+// picture embedded directly broke even though the underlying content is
+// fine. Routing through our own /api/ipfs-image endpoint means the ipfs.io
+// fetch happens server-to-server (no Fetch Metadata headers, same as a
+// plain curl request) and the browser only ever loads same-origin image
+// URLs, which ipfs.io has no reason to challenge.
+export function proxyIpfsImage(url) {
+  return url ? `/api/ipfs-image?src=${encodeURIComponent(url)}` : url;
+}
+
 async function fetchCrownTierIndexForNft(nft) {
   try {
     const uri = resolveIpfsUri(hexToUtf8(nft.URI));
@@ -588,17 +600,20 @@ async function fetchPigeonMeta(nft) {
 }
 
 // Fetches (and permanently KV-caches) { number, image } for every Pigeon
-// NFT in the list, keyed by NFTokenID so repeat lookups are instant.
+// NFT in the list, keyed by NFTokenID so repeat lookups are instant. Only
+// successful resolutions (image found) are cached — a null image usually
+// means the IPFS gateway fetch failed transiently, and permanently caching
+// that would poison the pigeon forever even after the gateway recovers.
 async function getPigeonMetaList(kv, pigeonNfts) {
   return Promise.all(pigeonNfts.map(async (nft) => {
     const cacheKey = `pigeonmeta:v2:${nft.NFTokenID}`;
     const cached = await kv.get(cacheKey);
     if (cached !== null) {
       const parsed = JSON.parse(cached);
-      return { nftId: nft.NFTokenID, ...parsed };
+      if (parsed.image !== null) return { nftId: nft.NFTokenID, ...parsed };
     }
     const info = await fetchPigeonMeta(nft);
-    await kv.put(cacheKey, JSON.stringify(info));
+    if (info.image !== null) await kv.put(cacheKey, JSON.stringify(info));
     return { nftId: nft.NFTokenID, ...info };
   }));
 }
@@ -644,13 +659,16 @@ async function fetchKingMeta(nft) {
 // Returns [{ nftId, number, image, label }] for every King NFT held, caching
 // resolved metadata in KV permanently. "label" falls back to the last 4
 // characters of the NFTokenID when a number can't be resolved from metadata,
-// so every King always gets a stable, unique display ID either way.
+// so every King always gets a stable, unique display ID either way. Only
+// successful resolutions are cached — see getPigeonMetaList for why a null
+// image must not be cached permanently.
 export async function getKingThumbnails(kv, kingNfts) {
   return Promise.all(kingNfts.map(async (nft) => {
     const cacheKey = `kingmeta:${nft.NFTokenID}`;
-    const cached = await kv.get(cacheKey);
-    const info = cached !== null ? JSON.parse(cached) : await fetchKingMeta(nft);
-    if (cached === null) await kv.put(cacheKey, JSON.stringify(info));
+    const cachedRaw = await kv.get(cacheKey);
+    const cached = cachedRaw !== null ? JSON.parse(cachedRaw) : null;
+    const info = (cached !== null && cached.image !== null) ? cached : await fetchKingMeta(nft);
+    if ((cached === null || cached.image === null) && info.image !== null) await kv.put(cacheKey, JSON.stringify(info));
     const label = info.number !== null
       ? `KING #${String(info.number).padStart(4, '0')}`
       : `KING #${nft.NFTokenID.slice(-4)}`;

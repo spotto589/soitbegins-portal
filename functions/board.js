@@ -2,7 +2,8 @@ import {
   BOARD_COOKIE_NAME, getCookie, verifyToken,
   fetchAllAccountNfts, findPigeon, findAllPigeons, getBestPigeonWordLimit, getPigeonThumbnails,
   getPigeonCountTier, getPigeonTierClass, getPigeonAccessLevel, getRewardRates,
-  getCachedCrownHolder, recomputeCrownHolder, isCrownWallet, CROWN_SNAPSHOT_MAX_AGE_SECONDS
+  getCachedCrownHolder, recomputeCrownHolder, isCrownWallet, CROWN_SNAPSHOT_MAX_AGE_SECONDS,
+  proxyIpfsImage
 } from './_shared.js';
 
 function textToBinary(str) {
@@ -49,8 +50,8 @@ function renderMessageRow(msg, canDecode, glitchTs, viewerAccessLevel) {
   const signer = msg.name ? `${escapeHtml(msg.name)} · ${walletWithLevel}` : walletWithLevel;
   const avatar = msg.image
     ? (msg.nftId
-        ? `<a class="msg-avatar" href="https://deeptide.co/nft/${escapeHtml(msg.nftId)}" target="_blank" rel="noopener"><img class="msg-avatar-img" src="${escapeHtml(msg.image)}" alt="" loading="lazy"></a>`
-        : `<img class="msg-avatar" src="${escapeHtml(msg.image)}" alt="" loading="lazy">`)
+        ? `<a class="msg-avatar" href="https://deeptide.co/nft/${escapeHtml(msg.nftId)}" target="_blank" rel="noopener"><img class="msg-avatar-img" src="${escapeHtml(proxyIpfsImage(msg.image))}" alt="" loading="lazy"></a>`
+        : `<img class="msg-avatar" src="${escapeHtml(proxyIpfsImage(msg.image))}" alt="" loading="lazy">`)
     : `<div class="msg-avatar msg-avatar-blank"></div>`;
   const isGlitch = isGlitchWallet(msg.acct) && msg.ts === glitchTs;
   const tierClass = isGlitch ? 'tier-glitch' : getPigeonTierClass(msg.pigeonCount, isCrownSignature);
@@ -152,7 +153,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         ${pigeonThumbs.map((p) => {
           const used = usedSet.has(p.nftId);
           const selected = !used && p.nftId === firstAvailableNftId;
-          return `<img class="pigeon-thumb${used ? ' used' : ''}${selected ? ' selected' : ''}" src="${escapeHtml(p.image)}" data-nft="${escapeHtml(p.nftId)}" data-used="${used ? '1' : '0'}" alt="">`;
+          return `<img class="pigeon-thumb${used ? ' used' : ''}${selected ? ' selected' : ''}" src="${escapeHtml(proxyIpfsImage(p.image))}" data-nft="${escapeHtml(p.nftId)}" data-used="${used ? '1' : '0'}" alt="">`;
         }).join('')}
       </div>
       ${allPigeonsUsed ? `
@@ -169,7 +170,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   ` : '';
 
   const hasAvailableThumbs = availableThumbs.length > 0;
-  const initialAvatarSrc = hasAvailableThumbs ? escapeHtml(availableThumbs[0].image) : '';
+  const initialAvatarSrc = hasAvailableThumbs ? escapeHtml(proxyIpfsImage(availableThumbs[0].image)) : '';
   const previewTierClass = getPigeonCountTier(pigeonCount || 1);
   const previewSparkles = previewTierClass === 'tier-diamond' ? DIAMOND_SPARKLES : '';
 
@@ -1641,7 +1642,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     </div>
     <div class="collection-link-wrap">
       <a class="collection-link" href="https://deeptide.co/xrpigeons" target="_blank" rel="noopener">
-        <span class="collection-link-logo-wrap" aria-hidden="true"><img class="collection-link-logo" src="https://ipfs.io/ipfs/QmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="P!GE0N NFT"></span>
+        <span class="collection-link-logo-wrap" aria-hidden="true"><img class="collection-link-logo" src="${proxyIpfsImage('https://ipfs.io/ipfs/QmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs')}" alt="P!GE0N NFT"></span>
         <span class="collection-link-body">
           <span class="cb-label" style="animation-delay:0.6s">BEC0ME THE S!GNAL →</span>
           <span class="cb-binary" aria-hidden="true" style="animation-delay:0.6s">01010011 01001001 01000111 01001110 01000001 01001100</span>
