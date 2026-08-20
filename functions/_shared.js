@@ -661,6 +661,24 @@ export async function getPigeonThumbnails(kv, pigeonNfts) {
 // display only ("~3015 P!GE0NS"), never a live-counted total.
 export const PIGEON_COLLECTION_SIZE_APPROX = 3015;
 
+// Every write below is a caching/indexing optimization, never required
+// for a response to be correct — the real data already came from the
+// ledger/Deeptide/IPFS fetch that happened first. Cloudflare KV's free
+// plan has a hard daily write quota (1,000/day); once exhausted, every
+// kv.put() throws "KV put() limit exceeded for the day" until it resets
+// at UTC midnight. Swallowing that here means a quota exhaustion pauses
+// caching/indexing (search coverage stops growing until reset) instead of
+// breaking the actual browsing/search experience, which was the real bug:
+// an uncaught write failure was rejecting the whole per-owner resolution,
+// dropping otherwise-successfully-fetched Pigeons from the response.
+async function safeKvPut(kv, key, value, opts) {
+  try {
+    await kv.put(key, value, opts);
+  } catch (e) {
+    // Quota exhaustion or any other transient KV failure — not fatal.
+  }
+}
+
 // v2: bumped when Deeptide enrichment (rarityRank/rarityTotal) was added —
 // forces every pre-existing cache entry to be treated as a miss and
 // re-resolved through the new path, instead of silently serving
@@ -755,7 +773,7 @@ async function recordPigeonTraitIndex(kv, nftId, attributes) {
     const traitType = attr && attr.trait_type;
     const value = attr && attr.value;
     if (!traitType || value === undefined || value === null) continue;
-    writes.push(kv.put(`${PIGEON_TRAIT_MEMBER_PREFIX}${traitType}:${value}:${nftId}`, '1'));
+    writes.push(safeKvPut(kv, `${PIGEON_TRAIT_MEMBER_PREFIX}${traitType}:${value}:${nftId}`, '1'));
   }
   await Promise.all(writes);
 }
@@ -776,9 +794,9 @@ export async function getPigeonFullMeta(kv, nftId, uriHex, indexExtras = false) 
   const info = await fetchPigeonFullMeta(uriHex);
   if (!info || info.image === null) return info;
 
-  await kv.put(cacheKey, JSON.stringify(info));
+  await safeKvPut(kv, cacheKey, JSON.stringify(info));
   if (indexExtras) {
-    if (info.number !== null) await kv.put(PIGEON_NUMBER_INDEX_PREFIX + info.number, nftId);
+    if (info.number !== null) await safeKvPut(kv, PIGEON_NUMBER_INDEX_PREFIX + info.number, nftId);
     await recordPigeonTraitIndex(kv, nftId, info.attributes);
   }
   return info;
@@ -909,7 +927,7 @@ async function getOwnerPigeonsViaDeeptide(kv, address) {
   const cached = await kv.get(cacheKey);
   if (cached !== null) return JSON.parse(cached);
   const items = await fetchDeeptideOwnedPigeons(address);
-  await kv.put(cacheKey, JSON.stringify(items), { expirationTtl: DEEPTIDE_OWNER_CACHE_TTL_SECONDS });
+  await safeKvPut(kv, cacheKey, JSON.stringify(items), { expirationTtl: DEEPTIDE_OWNER_CACHE_TTL_SECONDS });
   return items;
 }
 
@@ -948,9 +966,9 @@ export async function resolvePigeonsForOwner(kv, owner, ledgerItems, opts = {}) 
         rarityRank: fromDeeptide.rarityRank,
         rarityTotal: fromDeeptide.rarityTotal,
       };
-      await kv.put(PIGEON_META_PREFIX + it.nftId, JSON.stringify(meta));
+      await safeKvPut(kv, PIGEON_META_PREFIX + it.nftId, JSON.stringify(meta));
       if (indexExtras) {
-        if (meta.number !== null) await kv.put(PIGEON_NUMBER_INDEX_PREFIX + meta.number, it.nftId);
+        if (meta.number !== null) await safeKvPut(kv, PIGEON_NUMBER_INDEX_PREFIX + meta.number, it.nftId);
         await recordPigeonTraitIndex(kv, it.nftId, meta.attributes);
       }
     } else {
@@ -1054,7 +1072,7 @@ export async function recomputePigeonIndex(kv, existing) {
     await Promise.all(Array.from(byOwner.entries()).map(([owner, items]) => resolvePigeonsForOwner(kv, owner, items, { indexExtras: true })));
     totalIndexed += page.items.length;
     marker = page.marker;
-    await kv.put(PIGEON_INDEX_STATS_KEY, JSON.stringify({
+    await safeKvPut(kv, PIGEON_INDEX_STATS_KEY, JSON.stringify({
       inProgress: !!marker, startedAt, marker, totalIndexed, updatedAt: Math.floor(Date.now() / 1000),
       computedAt: Math.floor(Date.now() / 1000),
     }));

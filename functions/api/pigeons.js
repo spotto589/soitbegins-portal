@@ -150,9 +150,8 @@ export async function onRequestGet(context) {
     Array.from(byOwner.entries()).map(([owner, items]) => resolvePigeonsForOwner(env.coin, owner, items).then(r => ({ owner, resolved: r })))
   );
   const items = [];
-  const debugErrors = [];
   for (const g of resolvedGroups) {
-    if (g.status !== 'fulfilled') { debugErrors.push(String(g.reason && g.reason.stack || g.reason)); continue; }
+    if (g.status !== 'fulfilled') continue;
     for (const r of g.value.resolved) {
       if (r.meta && r.meta.image) items.push(toItem(r.nftId, r.meta, g.value.owner, true));
     }
@@ -172,7 +171,6 @@ export async function onRequestGet(context) {
     items,
     marker: page.marker,
     failedCount,
-    debugErrors,
     collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
   });
 }
