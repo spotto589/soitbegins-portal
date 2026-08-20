@@ -1,6 +1,8 @@
 import {
   fetchPigeonCollectionPage, fetchNftInfo, getPigeonFullMeta, getPigeonMetaCached,
   getPigeonNumberIndex, getIndexedTraitCategories, getIndexedTraitValues, getPigeonsByTraitValue,
+  resolvePigeonsForOwner, getPigeonIndexStats, maybeRecomputePigeonIndex, getTraitValuePercent,
+  fetchAllAccountNfts, findAllPigeons,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX
 } from '../_shared.js';
 
@@ -8,8 +10,25 @@ function shortenAddr(addr) {
   return addr ? addr.slice(0, 9) + '...' + addr.slice(-4) : null;
 }
 
-function proxiedItem(base) {
-  return { ...base, image: base.image ? proxyIpfsImage(base.image) : null };
+// Deeptide's CDN images hotlink fine as-is; only ipfs.io URLs need the
+// same-origin proxy (see functions/api/ipfs-image.js for why).
+function displayImage(url) {
+  if (!url) return null;
+  return url.startsWith('https://ipfs.io/') ? proxyIpfsImage(url) : url;
+}
+
+function toItem(nftId, meta, owner, ownerIndexed) {
+  return {
+    nftId,
+    number: meta.number,
+    image: displayImage(meta.image),
+    attributes: meta.attributes,
+    rarityRank: meta.rarityRank || null,
+    rarityTotal: meta.rarityTotal || null,
+    owner: owner || null,
+    ownerShort: owner ? shortenAddr(owner) : null,
+    ownerIndexed: !!ownerIndexed
+  };
 }
 
 function json(body, status = 200) {
@@ -23,14 +42,39 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const params = url.searchParams;
 
-  // Trait category/value discovery, for the TRAITS filter panel.
+  // Trait category/value discovery + real percentages, for the TRAITS panel.
   if (params.get('traits') === '1') {
+    const stats = await getPigeonIndexStats(env.coin);
+    context.waitUntil(maybeRecomputePigeonIndex(env.coin));
     const categories = await getIndexedTraitCategories(env.coin);
     const values = {};
     await Promise.all(categories.map(async (cat) => {
-      values[cat] = await getIndexedTraitValues(env.coin, cat);
+      const vals = await getIndexedTraitValues(env.coin, cat);
+      values[cat] = await Promise.all(vals.map(async (v) => {
+        const pctInfo = await getTraitValuePercent(env.coin, cat, v, stats);
+        return { value: v, percent: pctInfo ? pctInfo.pct : null, partial: pctInfo ? pctInfo.partial : true };
+      }));
     }));
-    return json({ categories: values, collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX });
+    return json({
+      categories: values,
+      collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX,
+      indexStats: stats
+    });
+  }
+
+  // A wallet's full real holdings — one Deeptide batch call covers all of
+  // them (image+traits+rarity), IPFS is only the per-token fallback.
+  const wallet = params.get('wallet');
+  if (wallet) {
+    const nfts = await fetchAllAccountNfts(wallet);
+    const pigeons = findAllPigeons(nfts);
+    if (!pigeons.length) return json({ items: [], owner: wallet, ownerShort: shortenAddr(wallet) });
+    const ledgerItems = pigeons.map(n => ({ nftId: n.NFTokenID, uriHex: n.URI }));
+    const resolved = await resolvePigeonsForOwner(env.coin, wallet, ledgerItems);
+    const items = resolved
+      .map(r => toItem(r.nftId, r.meta, wallet, true))
+      .sort((a, b) => (a.number || 0) - (b.number || 0));
+    return json({ items, owner: wallet, ownerShort: shortenAddr(wallet) });
   }
 
   // Fresh single-token detail lookup by known NFTokenID (from a card already on screen).
@@ -40,17 +84,7 @@ export async function onRequestGet(context) {
     const cachedMeta = await getPigeonMetaCached(env.coin, detailId);
     const meta = cachedMeta || (fresh ? await getPigeonFullMeta(env.coin, detailId, fresh.uriHex) : null);
     if (!meta) return json({ item: null, notIndexed: true });
-    return json({
-      item: proxiedItem({
-        nftId: detailId,
-        number: meta.number,
-        image: meta.image,
-        attributes: meta.attributes,
-        owner: fresh ? fresh.owner : null,
-        ownerShort: fresh && fresh.owner ? shortenAddr(fresh.owner) : null,
-        ownerIndexed: !!fresh
-      })
-    });
+    return json({ item: toItem(detailId, meta, fresh ? fresh.owner : null, !!fresh) });
   }
 
   // Direct Pigeon-number search — only real if it's already been indexed.
@@ -63,17 +97,7 @@ export async function onRequestGet(context) {
     const fresh = await fetchNftInfo(nftId);
     const meta = await getPigeonMetaCached(env.coin, nftId);
     if (!meta) return json({ items: [], notIndexed: true, query: num });
-    return json({
-      items: [proxiedItem({
-        nftId,
-        number: meta.number,
-        image: meta.image,
-        attributes: meta.attributes,
-        owner: fresh ? fresh.owner : null,
-        ownerShort: fresh && fresh.owner ? shortenAddr(fresh.owner) : null,
-        ownerIndexed: !!fresh
-      })]
-    });
+    return json({ items: [toItem(nftId, meta, fresh ? fresh.owner : null, !!fresh)] });
   }
 
   // Trait/value search — real, but scoped to whatever's been indexed so far.
@@ -82,42 +106,36 @@ export async function onRequestGet(context) {
   if (trait && value) {
     const matches = await getPigeonsByTraitValue(env.coin, trait, value, 48);
     return json({
-      items: matches.map(m => proxiedItem({
-        nftId: m.nftId,
-        number: m.meta.number,
-        image: m.meta.image,
-        attributes: m.meta.attributes,
-        owner: null,
-        ownerShort: null,
-        ownerIndexed: false
-      })),
+      items: matches.map(m => toItem(m.nftId, m.meta, null, false)),
       indexedOnly: true
     });
   }
 
-  // Default: paginate the real collection straight off the ledger.
+  // Default: paginate the real collection straight off the ledger, batched
+  // per-owner through Deeptide (falls back to IPFS per-token as needed).
   const marker = params.get('marker') || undefined;
   const page = await fetchPigeonCollectionPage(marker, 48);
-  const results = await Promise.allSettled(
-    page.items.map(async (it) => {
-      const meta = await getPigeonFullMeta(env.coin, it.nftId, it.uriHex);
-      if (!meta || meta.image === null) return null;
-      return proxiedItem({
-        nftId: it.nftId,
-        number: meta.number,
-        image: meta.image,
-        attributes: meta.attributes,
-        owner: it.owner,
-        ownerShort: shortenAddr(it.owner),
-        ownerIndexed: true
-      });
-    })
+  const byOwner = new Map();
+  for (const it of page.items) {
+    if (!byOwner.has(it.owner)) byOwner.set(it.owner, []);
+    byOwner.get(it.owner).push(it);
+  }
+  const resolvedGroups = await Promise.allSettled(
+    Array.from(byOwner.entries()).map(([owner, items]) => resolvePigeonsForOwner(env.coin, owner, items).then(r => ({ owner, resolved: r })))
   );
-  const items = results
-    .map(r => (r.status === 'fulfilled' ? r.value : null))
-    .filter(Boolean)
-    .sort((a, b) => (a.number || 0) - (b.number || 0));
+  const items = [];
+  for (const g of resolvedGroups) {
+    if (g.status !== 'fulfilled') continue;
+    for (const r of g.value.resolved) {
+      if (r.meta && r.meta.image) items.push(toItem(r.nftId, r.meta, g.value.owner, true));
+    }
+  }
+  items.sort((a, b) => (a.number || 0) - (b.number || 0));
   const failedCount = page.items.length - items.length;
+
+  // Keep the background full-collection indexer moving forward without
+  // making this page render wait on it.
+  context.waitUntil(maybeRecomputePigeonIndex(env.coin));
 
   return json({
     items,
