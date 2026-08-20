@@ -210,7 +210,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
 
   const thumbPicker = (isPigeon && pigeonThumbs && pigeonThumbs.length) ? `
       <details class="pigeon-picker-wrap" id="pigeonPickerWrap"${allPigeonsUsed ? ' open' : ''}>
-        <summary class="pigeon-picker-btn">ATTACH A P!GE0N <span class="ppb-arrow" aria-hidden="true">▾</span></summary>
+        <summary class="pigeon-picker-btn">CHANGE P!GE0N <span class="ppb-arrow" aria-hidden="true">▾</span></summary>
         <div class="pigeon-picker" id="pigeonPicker">
           ${pigeonThumbs.map((p) => {
             const used = usedSet.has(p.nftId);
@@ -244,6 +244,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
       <div class="word-count" id="wordCount"></div>
       <input id="nameInput" maxlength="15" placeholder="..." />
       <div class="sig-label-below">S!GNATURE ¿ (OPT!ONAL, max 15)</div>
+      ${thumbPicker}
       <div class="preview-label">PREV!EW</div>
       <div class="msg-row ${previewTierClass}" id="previewRow">
         ${previewSparkles}
@@ -255,7 +256,6 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         </div>
         <div class="msg-binary" id="binaryPreview"></div>
       </div>
-      ${thumbPicker}
       <button class="post-btn" id="postBtn"${allPigeonsUsed ? ' disabled' : ''}>S!GN & P0ST</button>
       <div class="post-status" id="postStatus"></div>
     </div>
@@ -283,7 +283,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         <div class="ag-level-box-value ag-level-granted">${accessLevelLabel}</div>
       </div>
       <div class="ag-readout">
-        <div class="ag-row"><span class="ag-row-label">P!GE0N NETW0RK</span><span class="ag-row-value ag-good">✅ C0NNECTED</span></div>
+        <div class="ag-row"><span class="ag-row-label">STATUS:</span><span class="ag-row-value ag-good">✅ C0NNECTED</span></div>
         <div class="ag-row"><span class="ag-row-label">S!GNALS AVA!LABLE</span><span class="ag-row-value ag-signals ag-signals-big">${signalsAvailable}</span></div>
       </div>
     </div>
@@ -295,7 +295,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         <div class="ag-level-box-value ag-level-denied">${accessLevelLabel}</div>
       </div>
       <div class="ag-readout">
-        <div class="ag-row"><span class="ag-row-label">P!GE0N NETW0RK</span><span class="ag-row-value ag-bad">P!GE0N REQU!RED</span></div>
+        <div class="ag-row"><span class="ag-row-label">STATUS:</span><span class="ag-row-value ag-bad">P!GE0N REQU!RED</span></div>
       </div>
       <div class="retry-line">TRY D!FFERENT KEY?</div>
       ${connectBtnHtml}
@@ -308,7 +308,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         <div class="ag-level-box-value ag-level-denied">${accessLevelLabel}</div>
       </div>
       <div class="ag-readout">
-        <div class="ag-row"><span class="ag-row-label">P!GE0N NETW0RK</span><span class="ag-row-value ag-bad">⛔ N0T C0NNECTED</span></div>
+        <div class="ag-row"><span class="ag-row-label">STATUS:</span><span class="ag-row-value ag-bad">⛔ N0T C0NNECTED</span></div>
       </div>
       ${connectBtnHtml}
     </div>
@@ -1632,7 +1632,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border-color:rgba(57,255,20,0.15);
   }
   .pigeon-picker-wrap{
-    margin-top:1rem;
+    margin:0 0 1rem;
     text-align:left;
   }
   .pigeon-picker-btn{
@@ -1641,29 +1641,35 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     display:flex;
     align-items:center;
     justify-content:center;
-    gap:0.5em;
+    gap:0.6em;
     width:100%;
     box-sizing:border-box;
-    padding:0.65em 1em;
-    border:1px solid rgba(255,0,60,0.4);
-    background:#000;
+    padding:1em 1.2em;
+    border:2px solid rgba(255,0,60,0.7);
+    background:rgba(255,0,60,0.08);
     color:#ff003c;
     font-family:inherit;
-    font-size:11px;
-    letter-spacing:0.1em;
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:0.12em;
     text-transform:uppercase;
-    text-shadow:0 0 6px rgba(255,0,60,0.4);
+    text-shadow:0 0 8px rgba(255,0,60,0.6);
+    box-shadow:0 0 10px rgba(255,0,60,0.25);
     -webkit-tap-highlight-color:transparent;
     transition:background 0.15s ease;
   }
-  .pigeon-picker-btn:hover{ background:rgba(255,0,60,0.1); }
+  .pigeon-picker-btn:hover{ background:rgba(255,0,60,0.18); }
   .pigeon-picker-btn::-webkit-details-marker{ display:none; }
-  .ppb-arrow{ font-size:10px; transition:transform 0.2s ease; }
+  .ppb-arrow{ font-size:16px; transition:transform 0.2s ease; }
   .pigeon-picker-wrap[open] .ppb-arrow{ transform:rotate(180deg); }
+  .pigeon-picker-wrap[open] .pigeon-picker-btn{
+    border-bottom-left-radius:0;
+    border-bottom-right-radius:0;
+  }
   .pigeon-picker-wrap .pigeon-picker{
     margin:0;
-    padding:0.75rem;
-    border:1px solid rgba(255,0,60,0.25);
+    padding:0.9rem;
+    border:2px solid rgba(255,0,60,0.4);
     border-top:none;
   }
   .pigeon-picker{
@@ -2007,6 +2013,10 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     white-space:nowrap;
     text-align:right;
     text-shadow:0 0 6px currentColor;
+  }
+  .ag-row-value.ag-good{
+    font-size:1.6em;
+    text-shadow:0 0 2px rgba(57,255,20,0.3);
   }
   .session-watermark{
     position:fixed;
