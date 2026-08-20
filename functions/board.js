@@ -28,8 +28,22 @@ function plainFontSize(text) {
   return (PLAIN_MAX_SIZE - ratio * (PLAIN_MAX_SIZE - PLAIN_MIN_SIZE)).toFixed(1);
 }
 
-const DIAMOND_SPARKLES = `<div class="tier-sparkles" aria-hidden="true"><span>👑</span><span>👑</span><span>👑</span><span>👑</span><span>👑</span></div>`;
-const GOLD_SPARKLES = `<div class="tier-sparkles" aria-hidden="true"><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span></div><div class="gold-stripe-bottom" aria-hidden="true"></div>`;
+// Access Level decorative overlays — one distinct network-identity motif
+// per level, not a shared "sparkle" reused with different emoji. See the
+// :root tier variables and each .msg-row.tier-* block for the matching
+// border/animation half of each identity.
+const CORE_SPARKLES = `<div class="tier-sparkles" aria-hidden="true"><span>👑</span><span>👑</span><span>👑</span><span>👑</span><span>👑</span></div>`;
+const ROOT_SPARKLES = `<div class="tier-sparkles" aria-hidden="true"><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span></div><div class="gold-stripe-bottom" aria-hidden="true"></div><div class="root-badge" aria-hidden="true">R00T</div>`;
+const NETWORK_NODES = `<div class="network-nodes" aria-hidden="true"><span></span><span></span><span></span><span></span></div>`;
+const SYSTEM_NODES = `<div class="system-nodes" aria-hidden="true"><span></span><span></span><span></span></div>`;
+const ENCRYPTED_FRAGMENTS = `<div class="tier-sparkles encrypted-fragments" aria-hidden="true"><span>0xF3</span><span>A1C</span><span>#7D</span><span>E2#</span><span>9xB</span></div>`;
+const TIER_OVERLAY = {
+  'tier-pink': NETWORK_NODES,
+  'tier-red': ENCRYPTED_FRAGMENTS,
+  'tier-purple': SYSTEM_NODES,
+  'tier-gold': ROOT_SPARKLES,
+  'tier-diamond': CORE_SPARKLES,
+};
 
 const GLITCH_BADGE = `<div class="glitch-badge" aria-hidden="true">⚠ GL!TCH</div>`;
 
@@ -52,6 +66,11 @@ const LOCKED_SIGNAL_BINARY = '01111011 00001101 101000001 00001101 01111011 0000
 // Level 15 has no count of its own: it's Crown-only, so it's called out
 // separately in levelRequirementText below.
 const LEVEL_MIN_PIGEONS = { 1: 1, 3: 5, 6: 16, 9: 50, 12: 100 };
+
+// Each level's network-identity name — TERMINAL/NETWORK/ENCRYPTED/SYSTEM/
+// ROOT/CORE — shown alongside the numeric level everywhere it appears so
+// the level reads as a distinct identity, not just a rank number.
+const LEVEL_NAMES = { 0: 'N0 S!GNAL', 1: 'TERM!NAL', 3: 'NETW0RK', 6: 'ENCRYPTED', 9: 'SYSTEM', 12: 'R00T', 15: 'C0RE' };
 
 function levelRequirementText(level) {
   if (level === 15) return 'CR0WN REQU!RED';
@@ -93,8 +112,8 @@ function renderMessageRow(msg, canDecode, glitchTs, viewerAccessLevel) {
         </div>
         <div class="msg-lock-detail" hidden>
           <div class="ld-title">// S!GNAL L0CKED</div>
-          <div class="ld-line">ACCESS LEVEL REQU!RED :: <span class="ld-num">${signalLevelLabel}</span></div>
-          <div class="ld-line">Y0UR ACCESS LEVEL :: <span class="ld-num">${String(viewerAccessLevel || 0).padStart(2, '0')}</span></div>
+          <div class="ld-line">ACCESS LEVEL REQU!RED :: <span class="ld-num">${signalLevelLabel}</span> (${LEVEL_NAMES[signalLevel] || ''})</div>
+          <div class="ld-line">Y0UR ACCESS LEVEL :: <span class="ld-num">${String(viewerAccessLevel || 0).padStart(2, '0')}</span> (${LEVEL_NAMES[viewerAccessLevel || 0] || ''})</div>
           <div class="ld-line ld-req">${levelRequirementText(signalLevel)}</div>
           <div class="ld-timer">RETURN!NG !N <span class="ld-timer-count">13</span><span class="ld-timer-unit">s</span></div>
         </div>
@@ -107,9 +126,7 @@ function renderMessageRow(msg, canDecode, glitchTs, viewerAccessLevel) {
         <div class="mb-stripe bottom"></div>
       </div>`;
   const ts = msg.ts ? `<span class="msg-ts" data-ts="${msg.ts}"></span>` : '';
-  const sparkles = tierClass === 'tier-diamond' ? DIAMOND_SPARKLES
-    : tierClass === 'tier-gold' ? GOLD_SPARKLES
-    : (isGlitch ? GLITCH_BADGE : '');
+  const sparkles = TIER_OVERLAY[tierClass] || (isGlitch ? GLITCH_BADGE : '');
   const crownRankBadge = isCrownSignature
     ? `<div class="msg-crown-badge" aria-hidden="true">👑 CR0WN S!GNATURE</div>`
     : '';
@@ -218,9 +235,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   const hasAvailableThumbs = availableThumbs.length > 0;
   const initialAvatarSrc = hasAvailableThumbs ? escapeHtml(proxyIpfsImage(availableThumbs[0].image)) : '';
   const previewTierClass = getPigeonCountTier(pigeonCount || 1);
-  const previewSparkles = previewTierClass === 'tier-diamond' ? DIAMOND_SPARKLES
-    : previewTierClass === 'tier-gold' ? GOLD_SPARKLES
-    : '';
+  const previewSparkles = TIER_OVERLAY[previewTierClass] || '';
 
   const bottomSection = isPigeon ? `
     <div class="write-box" id="pigeonWalletBoard">
@@ -316,21 +331,23 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
 <title>STAT!C_N0DE:://S!GNAL_RELAY</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
-  /* Single source of truth for the Access Level / border-tier color
-     system. Every surface that shows a tier — the access-level legend
-     swatches, message board signature borders, and the leaderboard —
-     reads its color from these variables instead of its own hardcoded
-     copy, so changing a tier's color here changes it everywhere at once. */
+  /* Single source of truth for the P!GE0N Access Level system. Each level
+     is its own network-penetration identity — TERMINAL (01), NETWORK
+     (03), ENCRYPTED (06), SYSTEM (09), ROOT (12), CORE/CROWN (15) — not
+     a bronze/silver/gold rarity ladder. Every surface that shows a tier
+     (legend swatches, message borders, leaderboard) reads its color from
+     these variables, so a level's identity only needs to change in one
+     place to change everywhere. */
   :root{
-    --tier-green: 57,255,20;
-    --tier-pink: 26,228,255;
-    --tier-bronze: 205,127,50;
-    --tier-purple: 219,228,234;
-    --tier-gold: 255,238,0;
-    --tier-diamond-1: 255,54,224;
-    --tier-diamond-2: 255,233,63;
-    --tier-diamond-3: 54,230,255;
-    --tier-diamond-soft: 255,142,240;
+    --tier-terminal: 57,255,20;    /* 01 — phosphor green CRT */
+    --tier-network: 30,144,255;    /* 03 — electric blue */
+    --tier-encrypted: 139,60,255;  /* 06 — deep violet cipher */
+    --tier-system: 0,229,255;      /* 09 — cool cyan telemetry */
+    --tier-root: 255,23,23;        /* 12 — red alert / privileged */
+    --tier-core-1: 255,54,224;
+    --tier-core-2: 255,233,63;
+    --tier-core-3: 54,230,255;
+    --tier-core-soft: 255,142,240;
   }
   *{ margin:0; padding:0; box-sizing:border-box; }
   html, body{ min-height:100%; background:#08080a; }
@@ -750,16 +767,16 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
      gradient) as the matching .msg-row.tier-* signature borders, so a
      leaderboard entry's box actually reads as that wallet's tier instead
      of just a thicker line. */
-  .lb-row.tier-green{ border-width:1px; border-color:rgba(var(--tier-green),0.25); background:linear-gradient(rgba(var(--tier-green),0.06), rgba(var(--tier-green),0.06)), #08080a; }
-  .lb-row.tier-pink{ border-width:1px; border-color:rgba(var(--tier-pink),0.6); background:linear-gradient(rgba(var(--tier-pink),0.22), rgba(var(--tier-pink),0.22)), #08080a; }
-  .lb-row.tier-red{ border-width:2px; border-color:rgba(var(--tier-bronze),0.65); background:linear-gradient(rgba(var(--tier-bronze),0.22), rgba(var(--tier-bronze),0.22)), #08080a; }
+  .lb-row.tier-green{ border-width:1px; border-color:rgba(var(--tier-terminal),0.25); background:linear-gradient(rgba(var(--tier-terminal),0.06), rgba(var(--tier-terminal),0.06)), #08080a; }
+  .lb-row.tier-pink{ border-width:1px; border-color:rgba(var(--tier-network),0.6); background:linear-gradient(rgba(var(--tier-network),0.22), rgba(var(--tier-network),0.22)), #08080a; }
+  .lb-row.tier-red{ border-width:2px; border-color:rgba(var(--tier-encrypted),0.65); background:linear-gradient(rgba(var(--tier-encrypted),0.22), rgba(var(--tier-encrypted),0.22)), #08080a; }
   .lb-row.tier-purple{
     position:relative;
     overflow:hidden;
     border-width:2.5px;
-    border-color:rgba(var(--tier-purple),0.55);
-    background:linear-gradient(rgba(var(--tier-purple),0.24), rgba(var(--tier-purple),0.24)), #08080a;
-    animation:silver-glow-pulse 2.8s ease-in-out infinite;
+    border-color:rgba(var(--tier-system),0.6);
+    background:linear-gradient(rgba(var(--tier-system),0.24), rgba(var(--tier-system),0.24)), #08080a;
+    animation:system-pulse 2.4s ease-in-out infinite;
   }
   .lb-row.tier-purple::after{
     content:'';
@@ -767,18 +784,18 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     inset:0;
     pointer-events:none;
     z-index:1;
-    background:linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.14) 48%, rgba(255,255,255,0.32) 50%, rgba(255,255,255,0.14) 52%, transparent 65%);
-    background-size:300% 300%;
-    animation:silver-sweep 4.2s linear infinite;
+    background:linear-gradient(100deg, transparent 46%, rgba(var(--tier-system),0.7) 49%, rgba(var(--tier-system),0.9) 50%, rgba(var(--tier-system),0.7) 51%, transparent 54%);
+    background-size:340% 340%;
+    animation:system-scan 3.2s linear infinite;
     mix-blend-mode:screen;
   }
   .lb-row.tier-gold{
     position:relative;
     overflow:hidden;
     border-width:4px;
-    border-color:rgba(var(--tier-gold),0.9);
-    background:linear-gradient(rgba(var(--tier-gold),0.32), rgba(var(--tier-gold),0.32)), #08080a;
-    animation:gold-glow-pulse 2.6s ease-in-out infinite;
+    border-color:rgba(var(--tier-root),0.9);
+    background:linear-gradient(rgba(var(--tier-root),0.32), rgba(var(--tier-root),0.32)), #08080a;
+    animation:root-alert-pulse 2.2s ease-in-out infinite;
   }
   .lb-row.tier-gold::after{
     content:'';
@@ -786,9 +803,9 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     inset:0;
     pointer-events:none;
     z-index:1;
-    background:linear-gradient(115deg, transparent 30%, rgba(var(--tier-gold),0.25) 46%, rgba(255,252,200,0.6) 50%, rgba(var(--tier-gold),0.25) 54%, transparent 70%);
+    background:linear-gradient(115deg, transparent 30%, rgba(var(--tier-root),0.3) 46%, rgba(255,220,220,0.6) 50%, rgba(var(--tier-root),0.3) 54%, transparent 70%);
     background-size:300% 300%;
-    animation:gold-sweep 3.4s linear infinite;
+    animation:root-sweep 3s linear infinite;
     mix-blend-mode:screen;
   }
   .lb-row.tier-diamond{
@@ -796,9 +813,9 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     overflow:hidden;
     border-style:solid;
     border-width:4px;
-    border-color:rgba(var(--tier-diamond-1),0.7);
-    border-image:linear-gradient(90deg, rgb(var(--tier-diamond-1)), rgb(var(--tier-diamond-2)), rgb(var(--tier-diamond-3)), rgb(var(--tier-diamond-1))) 1;
-    background:linear-gradient(135deg, rgba(var(--tier-diamond-1),0.08), rgba(var(--tier-diamond-3),0.08), rgba(var(--tier-diamond-2),0.08)), #08080a;
+    border-color:rgba(var(--tier-core-1),0.7);
+    border-image:linear-gradient(90deg, rgb(var(--tier-core-1)), rgb(var(--tier-core-2)), rgb(var(--tier-core-3)), rgb(var(--tier-core-1))) 1;
+    background:linear-gradient(135deg, rgba(var(--tier-core-1),0.08), rgba(var(--tier-core-3),0.08), rgba(var(--tier-core-2),0.08)), #08080a;
     animation:diamond-glow-pulse 2.2s ease-in-out infinite;
   }
   .collection-link{
@@ -1056,79 +1073,168 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     cursor:default;
   }
   .msg-plain.tier-green{
-    color:rgb(var(--tier-green));
-    text-shadow:0 0 4px rgba(var(--tier-green),0.35);
+    color:rgb(var(--tier-terminal));
+    text-shadow:0 0 4px rgba(var(--tier-terminal),0.35);
   }
   .msg-plain.tier-pink{
-    color:rgb(var(--tier-pink));
-    text-shadow:0 0 7px rgba(var(--tier-pink),0.75);
+    color:rgb(var(--tier-network));
+    text-shadow:0 0 7px rgba(var(--tier-network),0.75);
   }
   .msg-plain.tier-red{
-    color:rgb(var(--tier-bronze));
-    text-shadow:0 0 7px rgba(var(--tier-bronze),0.75);
+    color:rgb(var(--tier-encrypted));
+    text-shadow:0 0 7px rgba(var(--tier-encrypted),0.75);
   }
   .msg-plain.tier-purple{
-    color:rgb(var(--tier-purple));
-    text-shadow:0 0 6px rgba(var(--tier-purple),0.5);
-    animation:silver-shine 2.8s ease-in-out infinite;
+    color:rgb(var(--tier-system));
+    text-shadow:0 0 6px rgba(var(--tier-system),0.5);
+    animation:system-telemetry 2.4s ease-in-out infinite;
   }
-  @keyframes silver-shine{
-    0%, 100%{ text-shadow:0 0 6px rgba(var(--tier-purple),0.5); }
-    50%{ text-shadow:0 0 12px rgba(255,255,255,0.8), 0 0 20px rgba(var(--tier-purple),0.4); }
+  @keyframes system-telemetry{
+    0%, 100%{ text-shadow:0 0 6px rgba(var(--tier-system),0.5); }
+    50%{ text-shadow:0 0 13px rgba(var(--tier-system),0.95), 0 0 22px rgba(var(--tier-system),0.5); }
   }
   .msg-plain.tier-gold{
-    color:rgb(var(--tier-gold));
-    text-shadow:0 0 8px rgba(var(--tier-gold),0.7);
+    color:rgb(var(--tier-root));
+    text-shadow:0 0 8px rgba(var(--tier-root),0.7);
     animation:golden-pulse 2.2s ease-in-out infinite;
   }
   @keyframes golden-pulse{
-    0%, 100%{ text-shadow:0 0 8px rgba(var(--tier-gold),0.7); }
-    50%{ text-shadow:0 0 16px rgba(var(--tier-gold),1), 0 0 30px rgba(var(--tier-gold),0.6); }
+    0%, 100%{ text-shadow:0 0 8px rgba(var(--tier-root),0.7); }
+    50%{ text-shadow:0 0 16px rgba(var(--tier-root),1), 0 0 30px rgba(var(--tier-root),0.6); }
   }
   .msg-plain.tier-diamond{
-    background:linear-gradient(90deg, rgb(var(--tier-diamond-1)) 0%, rgb(var(--tier-diamond-2)) 22%, rgb(var(--tier-diamond-3)) 45%, rgb(var(--tier-diamond-1)) 68%, rgb(var(--tier-diamond-2)) 88%, rgb(var(--tier-diamond-3)) 100%);
+    background:linear-gradient(90deg, rgb(var(--tier-core-1)) 0%, rgb(var(--tier-core-2)) 22%, rgb(var(--tier-core-3)) 45%, rgb(var(--tier-core-1)) 68%, rgb(var(--tier-core-2)) 88%, rgb(var(--tier-core-3)) 100%);
     background-size:300% 100%;
     -webkit-background-clip:text;
     background-clip:text;
     color:transparent;
     font-weight:800;
     letter-spacing:0.04em;
-    filter:drop-shadow(0 0 6px rgba(var(--tier-diamond-1),0.6));
+    filter:drop-shadow(0 0 6px rgba(var(--tier-core-1),0.6));
     animation:diamond-text-shimmer 1.8s linear infinite;
   }
   @keyframes diamond-text-shimmer{
     0%{ background-position:0% 50%; }
     100%{ background-position:300% 50%; }
   }
-  .msg-row.tier-green{ background:linear-gradient(rgba(var(--tier-green),0.06), rgba(var(--tier-green),0.06)), #08080a; }
+  /* Level 01 — TERMINAL: basic CRT entry point. Faint horizontal
+     scanlines sit over the row and the whole card flickers once in a
+     while, like an old phosphor monitor — deliberately the plainest,
+     lowest-effort treatment in the ladder. */
+  .msg-row.tier-green{
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(rgba(var(--tier-terminal),0.06), rgba(var(--tier-terminal),0.06)), #08080a;
+    animation:terminal-flicker 7s infinite;
+  }
+  .msg-row.tier-green::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    background:repeating-linear-gradient(0deg, rgba(var(--tier-terminal),0.07) 0px, rgba(var(--tier-terminal),0.07) 1px, transparent 1px, transparent 3px);
+  }
+  @keyframes terminal-flicker{
+    0%, 96%, 100%{ opacity:1; }
+    97%{ opacity:0.82; }
+    98%{ opacity:1; }
+    99%{ opacity:0.88; }
+  }
+  /* Level 03 — NETWORK: electric blue connectivity. A packet-like light
+     sweeps across the row and four corner nodes light up in sequence
+     (TL→TR→BR→BL) like a signal travelling the perimeter — reads as
+     "connected to something," distinct from level 01's plain terminal. */
   .msg-row.tier-pink{
+    position:relative;
+    overflow:hidden;
     border-width:1.5px;
-    border-color:rgba(var(--tier-pink),0.75);
-    box-shadow:0 0 8px rgba(var(--tier-pink),0.3);
-    background:linear-gradient(rgba(var(--tier-pink),0.22), rgba(var(--tier-pink),0.22)), #08080a;
+    border-color:rgba(var(--tier-network),0.8);
+    box-shadow:0 0 8px rgba(var(--tier-network),0.35);
+    background:linear-gradient(rgba(var(--tier-network),0.22), rgba(var(--tier-network),0.22)), #08080a;
   }
-  .msg-row.tier-pink .msg-binary{ border-width:1px; border-color:rgba(var(--tier-pink),0.45); }
-  .msg-row.tier-pink .msg-meta{ border-bottom-color:rgba(var(--tier-pink),0.4); }
-  .msg-row.tier-pink .msg-avatar{ border-width:1px; border-color:rgba(var(--tier-pink),0.45); }
+  .msg-row.tier-pink::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    background:linear-gradient(90deg, transparent 0%, rgba(var(--tier-network),0.85) 4%, transparent 9%);
+    background-size:220% 100%;
+    animation:network-packet 2.4s linear infinite;
+    mix-blend-mode:screen;
+  }
+  @keyframes network-packet{
+    0%{ background-position:-120% 0%; }
+    100%{ background-position:220% 0%; }
+  }
+  .network-nodes span{
+    position:absolute;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:rgb(var(--tier-network));
+    box-shadow:0 0 5px rgba(var(--tier-network),0.9);
+    animation:network-node-pulse 2.4s ease-in-out infinite;
+    z-index:2;
+  }
+  .network-nodes span:nth-child(1){ top:-3px; left:-3px; animation-delay:0s; }
+  .network-nodes span:nth-child(2){ top:-3px; right:-3px; animation-delay:0.6s; }
+  .network-nodes span:nth-child(3){ bottom:-3px; right:-3px; animation-delay:1.2s; }
+  .network-nodes span:nth-child(4){ bottom:-3px; left:-3px; animation-delay:1.8s; }
+  @keyframes network-node-pulse{
+    0%, 70%, 100%{ opacity:0.3; transform:scale(0.8); }
+    15%{ opacity:1; transform:scale(1.3); }
+  }
+  .msg-row.tier-pink .msg-binary{ border-width:1px; border-color:rgba(var(--tier-network),0.45); }
+  .msg-row.tier-pink .msg-meta{ border-bottom-color:rgba(var(--tier-network),0.4); }
+  .msg-row.tier-pink .msg-avatar{ border-width:1px; border-color:rgba(var(--tier-network),0.45); }
+  /* Level 06 — ENCRYPTED: deep violet cipher layer. The row itself
+     briefly glitches/fragments on a long random-feeling cycle (mirrors
+     the existing glitch-wallet treatment but themed violet, not red),
+     and tiny hex/cipher fragments hang around the border like leaked
+     ciphertext instead of decorative sparkles. */
   .msg-row.tier-red{
+    position:relative;
+    overflow:hidden;
     border-width:2px;
-    border-color:rgba(var(--tier-bronze),0.65);
-    background:linear-gradient(rgba(var(--tier-bronze),0.22), rgba(var(--tier-bronze),0.22)), #08080a;
+    border-color:rgba(var(--tier-encrypted),0.7);
+    background:linear-gradient(rgba(var(--tier-encrypted),0.22), rgba(var(--tier-encrypted),0.22)), #08080a;
+    animation:encrypted-glitch 5s infinite;
   }
-  .msg-row.tier-red .msg-binary{ border-width:2px; border-color:rgba(var(--tier-bronze),0.45); }
-  .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(var(--tier-bronze),0.35); }
-  .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(var(--tier-bronze),0.45); }
+  @keyframes encrypted-glitch{
+    0%, 92%, 100%{ transform:translate(0,0); filter:none; }
+    93%{ transform:translate(-2px,1px); filter:hue-rotate(20deg); }
+    94%{ transform:translate(2px,-1px); filter:none; }
+    95%{ transform:translate(-1px,0); filter:hue-rotate(-15deg); }
+    96%{ transform:translate(0,0); filter:none; }
+  }
+  .msg-row.tier-red .msg-binary{ border-width:2px; border-color:rgba(var(--tier-encrypted),0.45); }
+  .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(var(--tier-encrypted),0.35); }
+  .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(var(--tier-encrypted),0.45); }
+  .encrypted-fragments span{
+    font-size:9px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    color:rgba(var(--tier-encrypted),0.85);
+    text-shadow:0 0 4px rgba(var(--tier-encrypted),0.9);
+    filter:none;
+  }
+  /* Level 09 — SYSTEM: cool cyan diagnostic telemetry. A narrow scan-line
+     sweeps the row (not a soft metallic shine) and two indicator dots
+     blink out of phase like status LEDs, so it reads as "inside the
+     operating system" rather than a shinier version of level 06. */
   .msg-row.tier-purple{
     position:relative;
     overflow:hidden;
     border-width:2.5px;
-    border-color:rgba(var(--tier-purple),0.55);
-    background:linear-gradient(rgba(var(--tier-purple),0.24), rgba(var(--tier-purple),0.24)), #08080a;
-    animation:silver-glow-pulse 2.8s ease-in-out infinite;
+    border-color:rgba(var(--tier-system),0.6);
+    background:linear-gradient(rgba(var(--tier-system),0.24), rgba(var(--tier-system),0.24)), #08080a;
+    animation:system-pulse 2.4s ease-in-out infinite;
   }
-  @keyframes silver-glow-pulse{
-    0%, 100%{ box-shadow:0 0 6px rgba(var(--tier-purple),0.2); }
-    50%{ box-shadow:0 0 14px rgba(255,255,255,0.4); }
+  @keyframes system-pulse{
+    0%, 100%{ box-shadow:0 0 6px rgba(var(--tier-system),0.25), inset 0 0 10px rgba(var(--tier-system),0.05); }
+    50%{ box-shadow:0 0 16px rgba(var(--tier-system),0.55), inset 0 0 18px rgba(var(--tier-system),0.12); }
   }
   .msg-row.tier-purple::after{
     content:'';
@@ -1136,48 +1242,77 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     inset:0;
     pointer-events:none;
     z-index:1;
-    background:linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.14) 48%, rgba(255,255,255,0.32) 50%, rgba(255,255,255,0.14) 52%, transparent 65%);
-    background-size:300% 300%;
-    animation:silver-sweep 4.2s linear infinite;
+    background:linear-gradient(100deg, transparent 46%, rgba(var(--tier-system),0.7) 49%, rgba(var(--tier-system),0.9) 50%, rgba(var(--tier-system),0.7) 51%, transparent 54%);
+    background-size:340% 340%;
+    animation:system-scan 3.2s linear infinite;
     mix-blend-mode:screen;
   }
-  @keyframes silver-sweep{
+  @keyframes system-scan{
     0%{ background-position:0% 0%; }
     100%{ background-position:100% 100%; }
   }
-  .msg-row.tier-purple .msg-binary{ border-width:2.5px; border-color:rgba(var(--tier-purple),0.4); }
-  .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(var(--tier-purple),0.35); }
-  .msg-row.tier-purple .msg-avatar{ border-width:2.5px; border-color:rgba(var(--tier-purple),0.4); }
+  .system-nodes{
+    position:absolute;
+    top:6px;
+    right:8px;
+    z-index:2;
+    display:flex;
+    gap:5px;
+  }
+  .system-nodes span{
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:rgb(var(--tier-system));
+    box-shadow:0 0 4px rgba(var(--tier-system),0.9);
+    animation:system-blink 1.6s ease-in-out infinite;
+  }
+  .system-nodes span:nth-child(2){ animation-delay:0.5s; }
+  .system-nodes span:nth-child(3){ animation-delay:1s; }
+  @keyframes system-blink{
+    0%, 40%, 100%{ opacity:0.25; }
+    20%{ opacity:1; }
+  }
+  .msg-row.tier-purple .msg-binary{ border-width:2.5px; border-color:rgba(var(--tier-system),0.4); }
+  .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(var(--tier-system),0.35); }
+  .msg-row.tier-purple .msg-avatar{ border-width:2.5px; border-color:rgba(var(--tier-system),0.4); }
+  /* Level 12 — ROOT: privileged/administrative red alert, not a "prize"
+     tier. Heavy border, alert-stripe banner top and bottom, a hot sweep,
+     and an occasional harder glitch-shake than level 06's — this is the
+     loudest, most imposing normal level. */
   .msg-row.tier-gold{
     position:relative;
     overflow:hidden;
     border-width:4px;
-    border-color:rgba(var(--tier-gold),0.9);
-    background:linear-gradient(rgba(var(--tier-gold),0.32), rgba(var(--tier-gold),0.32)), #08080a;
-    animation:gold-glow-pulse 2.6s ease-in-out infinite;
+    border-color:rgba(var(--tier-root),0.9);
+    background:linear-gradient(rgba(var(--tier-root),0.32), rgba(var(--tier-root),0.32)), #08080a;
+    animation:root-alert-pulse 2.2s ease-in-out infinite, root-glitch 4s infinite;
   }
-  @keyframes gold-glow-pulse{
-    0%, 100%{ box-shadow:0 0 14px rgba(var(--tier-gold),0.45), inset 0 0 16px rgba(var(--tier-gold),0.08); }
-    50%{ box-shadow:0 0 28px rgba(var(--tier-gold),0.75), inset 0 0 28px rgba(var(--tier-gold),0.18); }
+  @keyframes root-alert-pulse{
+    0%, 100%{ box-shadow:0 0 14px rgba(var(--tier-root),0.5), inset 0 0 16px rgba(var(--tier-root),0.1); }
+    50%{ box-shadow:0 0 30px rgba(var(--tier-root),0.85), inset 0 0 30px rgba(var(--tier-root),0.2); }
   }
-  /* Hazard-stripe banner (top and bottom) instead of a soft golden sheen
-     — reads as caution yellow rather than a "prize" gold, and matches
-     the striped-box treatment used elsewhere (construction notice,
-     important notice), making level 12 read as clearly special. */
+  @keyframes root-glitch{
+    0%, 90%, 100%{ transform:translate(0,0); }
+    91%{ transform:translate(-3px,1px); }
+    92%{ transform:translate(3px,-2px); }
+    93%{ transform:translate(-2px,2px); }
+    94%{ transform:translate(0,0); }
+  }
   .msg-row.tier-gold::before{
     content:'';
     position:absolute;
     top:0; left:0; right:0;
     height:6px;
     z-index:2;
-    background:repeating-linear-gradient(45deg, rgb(var(--tier-gold)) 0px, rgb(var(--tier-gold)) 10px, #08080a 10px, #08080a 20px);
+    background:repeating-linear-gradient(45deg, rgb(var(--tier-root)) 0px, rgb(var(--tier-root)) 10px, #08080a 10px, #08080a 20px);
   }
   .gold-stripe-bottom{
     position:absolute;
     bottom:0; left:0; right:0;
     height:6px;
     z-index:2;
-    background:repeating-linear-gradient(45deg, rgb(var(--tier-gold)) 0px, rgb(var(--tier-gold)) 10px, #08080a 10px, #08080a 20px);
+    background:repeating-linear-gradient(45deg, rgb(var(--tier-root)) 0px, rgb(var(--tier-root)) 10px, #08080a 10px, #08080a 20px);
   }
   .msg-row.tier-gold::after{
     content:'';
@@ -1185,44 +1320,58 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     inset:0;
     pointer-events:none;
     z-index:1;
-    background:linear-gradient(115deg, transparent 30%, rgba(var(--tier-gold),0.25) 46%, rgba(255,252,200,0.6) 50%, rgba(var(--tier-gold),0.25) 54%, transparent 70%);
+    background:linear-gradient(115deg, transparent 30%, rgba(var(--tier-root),0.3) 46%, rgba(255,220,220,0.6) 50%, rgba(var(--tier-root),0.3) 54%, transparent 70%);
     background-size:300% 300%;
-    animation:gold-sweep 3.4s linear infinite;
+    animation:root-sweep 3s linear infinite;
     mix-blend-mode:screen;
   }
-  @keyframes gold-sweep{
+  @keyframes root-sweep{
     0%{ background-position:0% 0%; }
     100%{ background-position:100% 100%; }
   }
-  .msg-row.tier-gold .msg-binary{ border-width:4px; border-color:rgba(var(--tier-gold),0.5); }
-  .msg-row.tier-gold .msg-meta{ border-bottom-color:rgba(var(--tier-gold),0.4); }
-  .msg-row.tier-gold .msg-avatar{ border-width:4px; border-color:rgba(var(--tier-gold),0.5); }
+  .root-badge{
+    position:absolute;
+    top:10px;
+    right:10px;
+    z-index:3;
+    padding:0.15em 0.5em;
+    background:#000;
+    border:1px solid rgb(var(--tier-root));
+    color:rgb(var(--tier-root));
+    font-size:9px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    text-shadow:0 0 4px rgba(var(--tier-root),0.8);
+  }
+  .msg-row.tier-gold .msg-binary{ border-width:4px; border-color:rgba(var(--tier-root),0.5); }
+  .msg-row.tier-gold .msg-meta{ border-bottom-color:rgba(var(--tier-root),0.4); }
+  .msg-row.tier-gold .msg-avatar{ border-width:4px; border-color:rgba(var(--tier-root),0.5); }
   .msg-row.tier-diamond{
     position:relative;
     overflow:hidden;
     border-style:solid;
     border-width:4px;
-    border-color:rgba(var(--tier-diamond-soft),1);
-    border-image:linear-gradient(90deg, rgb(var(--tier-diamond-1)), rgb(var(--tier-diamond-2)), rgb(var(--tier-diamond-3)), rgb(var(--tier-diamond-1))) 1;
-    background:linear-gradient(135deg, rgba(var(--tier-diamond-1),0.08), rgba(var(--tier-diamond-3),0.08), rgba(var(--tier-diamond-2),0.08)), #08080a;
+    border-color:rgba(var(--tier-core-soft),1);
+    border-image:linear-gradient(90deg, rgb(var(--tier-core-1)), rgb(var(--tier-core-2)), rgb(var(--tier-core-3)), rgb(var(--tier-core-1))) 1;
+    background:linear-gradient(135deg, rgba(var(--tier-core-1),0.08), rgba(var(--tier-core-3),0.08), rgba(var(--tier-core-2),0.08)), #08080a;
     animation:diamond-glow-pulse 2.2s ease-in-out infinite;
   }
   .msg-row.tier-diamond .msg-binary{
     border-style:solid;
     border-width:4px;
-    border-color:rgba(var(--tier-diamond-soft),0.5);
-    border-image:linear-gradient(90deg, rgb(var(--tier-diamond-1)), rgb(var(--tier-diamond-2)), rgb(var(--tier-diamond-3)), rgb(var(--tier-diamond-1))) 1;
+    border-color:rgba(var(--tier-core-soft),0.5);
+    border-image:linear-gradient(90deg, rgb(var(--tier-core-1)), rgb(var(--tier-core-2)), rgb(var(--tier-core-3)), rgb(var(--tier-core-1))) 1;
   }
-  .msg-row.tier-diamond .msg-meta{ border-bottom-color:rgba(var(--tier-diamond-soft),0.4); }
+  .msg-row.tier-diamond .msg-meta{ border-bottom-color:rgba(var(--tier-core-soft),0.4); }
   .msg-row.tier-diamond .msg-avatar{
     border-style:solid;
     border-width:4px;
-    border-color:rgba(var(--tier-diamond-soft),0.5);
-    border-image:linear-gradient(135deg, rgb(var(--tier-diamond-1)), rgb(var(--tier-diamond-2)), rgb(var(--tier-diamond-3)), rgb(var(--tier-diamond-1))) 1;
+    border-color:rgba(var(--tier-core-soft),0.5);
+    border-image:linear-gradient(135deg, rgb(var(--tier-core-1)), rgb(var(--tier-core-2)), rgb(var(--tier-core-3)), rgb(var(--tier-core-1))) 1;
   }
   @keyframes diamond-glow-pulse{
-    0%, 100%{ box-shadow:0 0 18px rgba(var(--tier-diamond-1),0.4), 0 0 34px rgba(var(--tier-diamond-3),0.22), inset 0 0 24px rgba(var(--tier-diamond-1),0.08); }
-    50%{ box-shadow:0 0 28px rgba(var(--tier-diamond-1),0.65), 0 0 52px rgba(var(--tier-diamond-3),0.38), inset 0 0 32px rgba(var(--tier-diamond-1),0.15); }
+    0%, 100%{ box-shadow:0 0 18px rgba(var(--tier-core-1),0.4), 0 0 34px rgba(var(--tier-core-3),0.22), inset 0 0 24px rgba(var(--tier-core-1),0.08); }
+    50%{ box-shadow:0 0 28px rgba(var(--tier-core-1),0.65), 0 0 52px rgba(var(--tier-core-3),0.38), inset 0 0 32px rgba(var(--tier-core-1),0.15); }
   }
   .tier-sparkles{
     position:absolute;
@@ -1424,13 +1573,13 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     color:#ffd700;
     text-shadow:0 0 4px rgba(255,215,0,0.4);
   }
-  .msg-signer.tier-green{ color:rgb(var(--tier-green)); text-shadow:0 0 4px rgba(var(--tier-green),0.4); }
-  .msg-signer.tier-pink{ color:rgb(var(--tier-pink)); text-shadow:0 0 6px rgba(var(--tier-pink),0.6); }
-  .msg-signer.tier-red{ color:rgb(var(--tier-bronze)); text-shadow:0 0 6px rgba(var(--tier-bronze),0.6); }
-  .msg-signer.tier-purple{ color:rgb(var(--tier-purple)); text-shadow:0 0 5px rgba(var(--tier-purple),0.45); }
-  .msg-signer.tier-gold{ color:rgb(var(--tier-gold)); text-shadow:0 0 6px rgba(var(--tier-gold),0.6); }
+  .msg-signer.tier-green{ color:rgb(var(--tier-terminal)); text-shadow:0 0 4px rgba(var(--tier-terminal),0.4); }
+  .msg-signer.tier-pink{ color:rgb(var(--tier-network)); text-shadow:0 0 6px rgba(var(--tier-network),0.6); }
+  .msg-signer.tier-red{ color:rgb(var(--tier-encrypted)); text-shadow:0 0 6px rgba(var(--tier-encrypted),0.6); }
+  .msg-signer.tier-purple{ color:rgb(var(--tier-system)); text-shadow:0 0 5px rgba(var(--tier-system),0.45); }
+  .msg-signer.tier-gold{ color:rgb(var(--tier-root)); text-shadow:0 0 6px rgba(var(--tier-root),0.6); }
   .msg-signer.tier-diamond{
-    background:linear-gradient(90deg, rgb(var(--tier-diamond-1)) 0%, rgb(var(--tier-diamond-2)) 22%, rgb(var(--tier-diamond-3)) 45%, rgb(var(--tier-diamond-1)) 68%, rgb(var(--tier-diamond-2)) 88%, rgb(var(--tier-diamond-3)) 100%);
+    background:linear-gradient(90deg, rgb(var(--tier-core-1)) 0%, rgb(var(--tier-core-2)) 22%, rgb(var(--tier-core-3)) 45%, rgb(var(--tier-core-1)) 68%, rgb(var(--tier-core-2)) 88%, rgb(var(--tier-core-3)) 100%);
     background-size:300% 100%;
     -webkit-background-clip:text;
     background-clip:text;
@@ -1924,6 +2073,75 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     margin-left:4px;
     animation:blink 0.6s step-end infinite;
   }
+  /* Access Level login sequence — plays once, right after a fresh wallet
+     connect, themed to the level the viewer actually holds. Deliberately
+     short (line-reveal only, ~1.5-2s total): a system authenticating you,
+     not a cinematic. See TIER_OVERLAY / :root vars for the identity this
+     mirrors on the board itself. */
+  .level-login-overlay{
+    position:fixed;
+    inset:0;
+    z-index:60;
+    background:#08080a;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+  }
+  .level-login-overlay.active{ display:flex; }
+  .level-login-inner{
+    max-width:480px;
+    padding:6vw;
+    font-size:clamp(14px,3.4vw,19px);
+    letter-spacing:0.1em;
+    font-weight:700;
+  }
+  .ll-line{
+    margin-bottom:0.9rem;
+    opacity:0;
+    transform:translateY(4px);
+    transition:opacity 0.25s ease, transform 0.25s ease;
+  }
+  .ll-line.show{ opacity:1; transform:translateY(0); }
+  .ll-terminal .ll-line{ color:#39ff14; text-shadow:0 0 10px rgba(57,255,20,0.5); }
+  .ll-terminal{ animation:terminal-flicker 1.4s infinite; }
+  .ll-network .ll-line{ color:rgb(var(--tier-network)); text-shadow:0 0 10px rgba(var(--tier-network),0.6); }
+  .ll-network .ll-line.show::after{
+    content:'';
+    display:inline-block;
+    width:6px; height:6px;
+    border-radius:50%;
+    background:rgb(var(--tier-network));
+    box-shadow:0 0 6px rgba(var(--tier-network),0.9);
+    margin-left:8px;
+    vertical-align:middle;
+    animation:network-node-pulse 1s ease-in-out infinite;
+  }
+  .ll-encrypted .ll-line{ color:rgb(var(--tier-encrypted)); text-shadow:0 0 10px rgba(var(--tier-encrypted),0.6); }
+  .ll-encrypted{ animation:encrypted-glitch 1.1s infinite; }
+  .ll-system{ position:relative; overflow:hidden; }
+  .ll-system .ll-line{ color:rgb(var(--tier-system)); text-shadow:0 0 10px rgba(var(--tier-system),0.6); }
+  .ll-system::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:linear-gradient(100deg, transparent 46%, rgba(var(--tier-system),0.45) 50%, transparent 54%);
+    background-size:340% 340%;
+    animation:system-scan 0.9s linear infinite;
+    mix-blend-mode:screen;
+  }
+  .ll-root .ll-line{ color:rgb(var(--tier-root)); text-shadow:0 0 12px rgba(var(--tier-root),0.75); }
+  .ll-root{ animation:root-glitch 1s infinite; }
+  .ll-core .ll-line{
+    background:linear-gradient(90deg, rgb(var(--tier-core-1)) 0%, rgb(var(--tier-core-2)) 33%, rgb(var(--tier-core-3)) 66%, rgb(var(--tier-core-1)) 100%);
+    background-size:300% 100%;
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    animation:diamond-text-shimmer 0.9s linear infinite;
+    font-weight:800;
+  }
   @keyframes blink{
     0%, 50%{ opacity:1; }
     51%, 100%{ opacity:0; }
@@ -1974,12 +2192,12 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
       <details class="tier-legend rules-panel">
         <summary><span class="legend-title">// ACCESS LEVELS <span class="legend-emoji">⚠️</span></span></summary>
         <div class="tier-legend-body">
-          <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS :: LEVEL 01</div></div>
-          <div class="msg-row tl-row tier-pink"><div class="msg-plain tl-text tier-pink">5-15 P!GE0NS :: LEVEL 03</div></div>
-          <div class="msg-row tl-row tier-red"><div class="msg-plain tl-text tier-red">16-49 P!GE0NS :: LEVEL 06</div></div>
-          <div class="msg-row tl-row tier-purple"><div class="msg-plain tl-text tier-purple">50-99 P!GE0NS :: LEVEL 09</div></div>
-          <div class="msg-row tl-row tier-gold">${GOLD_SPARKLES}<div class="msg-plain tl-text tier-gold">100+ P!GE0NS :: LEVEL 12</div></div>
-          <div class="msg-row tl-row tier-diamond">${DIAMOND_SPARKLES}<div class="msg-plain tl-text tier-diamond">CR0WN H0LDER :: LEVEL 15</div></div>
+          <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS :: LEVEL 01 :: TERM!NAL</div></div>
+          <div class="msg-row tl-row tier-pink">${NETWORK_NODES}<div class="msg-plain tl-text tier-pink">5-15 P!GE0NS :: LEVEL 03 :: NETW0RK</div></div>
+          <div class="msg-row tl-row tier-red">${ENCRYPTED_FRAGMENTS}<div class="msg-plain tl-text tier-red">16-49 P!GE0NS :: LEVEL 06 :: ENCRYPTED</div></div>
+          <div class="msg-row tl-row tier-purple">${SYSTEM_NODES}<div class="msg-plain tl-text tier-purple">50-99 P!GE0NS :: LEVEL 09 :: SYSTEM</div></div>
+          <div class="msg-row tl-row tier-gold">${ROOT_SPARKLES}<div class="msg-plain tl-text tier-gold">100+ P!GE0NS :: LEVEL 12 :: R00T</div></div>
+          <div class="msg-row tl-row tier-diamond">${CORE_SPARKLES}<div class="msg-plain tl-text tier-diamond">CR0WN H0LDER :: LEVEL 15 :: C0RE</div></div>
 
           <div class="rules-body">Your ACCESS LEVEL determines your signature border and which signals you can read.</div>
           <div class="rules-body">You can read your ACCESS LEVEL and all levels below it.</div>
@@ -2025,9 +2243,54 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     </div>
   </div>
 
+  <div class="level-login-overlay" id="levelLoginOverlay">
+    <div class="level-login-inner" id="levelLoginInner"></div>
+  </div>
+
 <script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
 <script>
   const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
+
+  // Access Level login sequence — plays once, right after a fresh wallet
+  // connect (the OAuth redirect below lands on ?connected=1), now that
+  // the server actually knows the viewer's real access level. The URL
+  // param is stripped immediately either way so a manual refresh never
+  // replays it, and a sessionStorage flag guards it a second time.
+  (function(){
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('connected') !== '1') return;
+    const ACCESS_LEVEL = ${accessLevel};
+    const IS_PIGEON = ${isPigeon ? 'true' : 'false'};
+    history.replaceState(null, '', window.location.pathname + window.location.hash);
+    if (!IS_PIGEON || !ACCESS_LEVEL) return;
+    const playedKey = 'pigeonLoginPlayed:' + ACCESS_LEVEL;
+    if (sessionStorage.getItem(playedKey) === '1') return;
+    sessionStorage.setItem(playedKey, '1');
+
+    const SEQUENCES = {
+      1: { cls: 'll-terminal', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 01', 'TERM!NAL ACCESS :: GRANTED'] },
+      3: { cls: 'll-network', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 03', 'NETW0RK ACCESS :: GRANTED'] },
+      6: { cls: 'll-encrypted', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 06', 'ENCRYPTED ACCESS :: GRANTED'] },
+      9: { cls: 'll-system', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 09', 'SYSTEM ACCESS :: GRANTED'] },
+      12: { cls: 'll-root', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 12', 'R00T AUTHENT!CAT!0N', 'R00T ACCESS :: GRANTED'] },
+      15: { cls: 'll-core', lines: ['// S!GNAL DETECTED', 'CR0WN H0LDER', 'ACCESS LEVEL :: 15', 'C0RE ACCESS :: GRANTED'] },
+    };
+    const seq = SEQUENCES[ACCESS_LEVEL];
+    if (!seq) return;
+
+    const overlay = document.getElementById('levelLoginOverlay');
+    const inner = document.getElementById('levelLoginInner');
+    inner.className = 'level-login-inner ' + seq.cls;
+    inner.innerHTML = seq.lines.map(function(t){ return '<div class="ll-line">' + t + '</div>'; }).join('');
+    overlay.classList.add('active');
+
+    const lineEls = inner.querySelectorAll('.ll-line');
+    const STEP = 380;
+    lineEls.forEach(function(el, i){
+      setTimeout(function(){ el.classList.add('show'); }, 150 + i * STEP);
+    });
+    setTimeout(function(){ overlay.classList.remove('active'); }, 150 + lineEls.length * STEP + 500);
+  })();
 
   // TV static background, behind the page content
   (function(){
