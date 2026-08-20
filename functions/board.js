@@ -980,7 +980,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .msg-locked-note{
     font-size:10px;
     letter-spacing:0.08em;
-    color:rgba(232,232,232,0.5);
+    color:rgba(57,255,20,0.75);
     text-transform:uppercase;
   }
   .msg-inspect-btn{
