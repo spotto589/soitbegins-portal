@@ -132,7 +132,7 @@ function renderMessageRow(msg, canDecode, glitchTs, viewerAccessLevel) {
     </div>`;
 }
 
-const TOTAL_PIGEONS = 3016;
+const TOTAL_PIGEONS = 3015;
 
 function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs, accessLevel, isCurrentCrown, crownHolderCount }) {
   // accessLevel arrives already verified from onRequestGet (server-side:
@@ -324,7 +324,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   :root{
     --tier-green: 57,255,20;
     --tier-pink: 26,228,255;
-    --tier-red: 255,20,20;
+    --tier-bronze: 205,127,50;
     --tier-purple: 219,228,234;
     --tier-gold: 255,238,0;
     --tier-diamond-1: 255,54,224;
@@ -475,14 +475,14 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .signed-counter-value{
     font-size:clamp(18px, 5vw, 24px);
     font-weight:700;
-    color:#ff003c;
-    text-shadow:0 0 6px rgba(255,0,60,0.5);
+    color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.5);
     margin-bottom:0.6rem;
   }
   .signed-counter-total{
     font-size:0.85em;
-    color:#39ff14;
-    text-shadow:0 0 6px rgba(57,255,20,0.5);
+    color:#ff003c;
+    text-shadow:0 0 6px rgba(255,0,60,0.5);
   }
   .signed-counter-bar{
     height:6px;
@@ -751,14 +751,14 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
      leaderboard entry's box actually reads as that wallet's tier instead
      of just a thicker line. */
   .lb-row.tier-green{ border-width:1px; border-color:rgba(var(--tier-green),0.25); background:linear-gradient(rgba(var(--tier-green),0.06), rgba(var(--tier-green),0.06)), #08080a; }
-  .lb-row.tier-pink{ border-width:1px; border-color:rgba(var(--tier-pink),0.6); background:linear-gradient(rgba(var(--tier-pink),0.07), rgba(var(--tier-pink),0.07)), #08080a; }
-  .lb-row.tier-red{ border-width:2px; border-color:rgba(var(--tier-red),0.65); background:linear-gradient(rgba(var(--tier-red),0.07), rgba(var(--tier-red),0.07)), #08080a; }
+  .lb-row.tier-pink{ border-width:1px; border-color:rgba(var(--tier-pink),0.6); background:linear-gradient(rgba(var(--tier-pink),0.22), rgba(var(--tier-pink),0.22)), #08080a; }
+  .lb-row.tier-red{ border-width:2px; border-color:rgba(var(--tier-bronze),0.65); background:linear-gradient(rgba(var(--tier-bronze),0.22), rgba(var(--tier-bronze),0.22)), #08080a; }
   .lb-row.tier-purple{
     position:relative;
     overflow:hidden;
     border-width:2.5px;
     border-color:rgba(var(--tier-purple),0.55);
-    background:linear-gradient(rgba(var(--tier-purple),0.07), rgba(var(--tier-purple),0.07)), #08080a;
+    background:linear-gradient(rgba(var(--tier-purple),0.24), rgba(var(--tier-purple),0.24)), #08080a;
     animation:silver-glow-pulse 2.8s ease-in-out infinite;
   }
   .lb-row.tier-purple::after{
@@ -777,7 +777,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     overflow:hidden;
     border-width:4px;
     border-color:rgba(var(--tier-gold),0.9);
-    background:linear-gradient(rgba(var(--tier-gold),0.1), rgba(var(--tier-gold),0.1)), #08080a;
+    background:linear-gradient(rgba(var(--tier-gold),0.32), rgba(var(--tier-gold),0.32)), #08080a;
     animation:gold-glow-pulse 2.6s ease-in-out infinite;
   }
   .lb-row.tier-gold::after{
@@ -861,7 +861,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     min-width:0;
     display:flex;
     flex-direction:column;
-    justify-content:space-between;
+    justify-content:center;
+    gap:0.6em;
     padding:0.8em 1em;
   }
   @media (min-width:641px){
@@ -1063,8 +1064,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-shadow:0 0 7px rgba(var(--tier-pink),0.75);
   }
   .msg-plain.tier-red{
-    color:rgb(var(--tier-red));
-    text-shadow:0 0 7px rgba(var(--tier-red),0.75);
+    color:rgb(var(--tier-bronze));
+    text-shadow:0 0 7px rgba(var(--tier-bronze),0.75);
   }
   .msg-plain.tier-purple{
     color:rgb(var(--tier-purple));
@@ -1104,25 +1105,25 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border-width:1.5px;
     border-color:rgba(var(--tier-pink),0.75);
     box-shadow:0 0 8px rgba(var(--tier-pink),0.3);
-    background:linear-gradient(rgba(var(--tier-pink),0.07), rgba(var(--tier-pink),0.07)), #08080a;
+    background:linear-gradient(rgba(var(--tier-pink),0.22), rgba(var(--tier-pink),0.22)), #08080a;
   }
   .msg-row.tier-pink .msg-binary{ border-width:1px; border-color:rgba(var(--tier-pink),0.45); }
   .msg-row.tier-pink .msg-meta{ border-bottom-color:rgba(var(--tier-pink),0.4); }
   .msg-row.tier-pink .msg-avatar{ border-width:1px; border-color:rgba(var(--tier-pink),0.45); }
   .msg-row.tier-red{
     border-width:2px;
-    border-color:rgba(var(--tier-red),0.65);
-    background:linear-gradient(rgba(var(--tier-red),0.07), rgba(var(--tier-red),0.07)), #08080a;
+    border-color:rgba(var(--tier-bronze),0.65);
+    background:linear-gradient(rgba(var(--tier-bronze),0.22), rgba(var(--tier-bronze),0.22)), #08080a;
   }
-  .msg-row.tier-red .msg-binary{ border-width:2px; border-color:rgba(var(--tier-red),0.45); }
-  .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(var(--tier-red),0.35); }
-  .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(var(--tier-red),0.45); }
+  .msg-row.tier-red .msg-binary{ border-width:2px; border-color:rgba(var(--tier-bronze),0.45); }
+  .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(var(--tier-bronze),0.35); }
+  .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(var(--tier-bronze),0.45); }
   .msg-row.tier-purple{
     position:relative;
     overflow:hidden;
     border-width:2.5px;
     border-color:rgba(var(--tier-purple),0.55);
-    background:linear-gradient(rgba(var(--tier-purple),0.07), rgba(var(--tier-purple),0.07)), #08080a;
+    background:linear-gradient(rgba(var(--tier-purple),0.24), rgba(var(--tier-purple),0.24)), #08080a;
     animation:silver-glow-pulse 2.8s ease-in-out infinite;
   }
   @keyframes silver-glow-pulse{
@@ -1152,7 +1153,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     overflow:hidden;
     border-width:4px;
     border-color:rgba(var(--tier-gold),0.9);
-    background:linear-gradient(rgba(var(--tier-gold),0.1), rgba(var(--tier-gold),0.1)), #08080a;
+    background:linear-gradient(rgba(var(--tier-gold),0.32), rgba(var(--tier-gold),0.32)), #08080a;
     animation:gold-glow-pulse 2.6s ease-in-out infinite;
   }
   @keyframes gold-glow-pulse{
@@ -1425,7 +1426,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .msg-signer.tier-green{ color:rgb(var(--tier-green)); text-shadow:0 0 4px rgba(var(--tier-green),0.4); }
   .msg-signer.tier-pink{ color:rgb(var(--tier-pink)); text-shadow:0 0 6px rgba(var(--tier-pink),0.6); }
-  .msg-signer.tier-red{ color:rgb(var(--tier-red)); text-shadow:0 0 6px rgba(var(--tier-red),0.6); }
+  .msg-signer.tier-red{ color:rgb(var(--tier-bronze)); text-shadow:0 0 6px rgba(var(--tier-bronze),0.6); }
   .msg-signer.tier-purple{ color:rgb(var(--tier-purple)); text-shadow:0 0 5px rgba(var(--tier-purple),0.45); }
   .msg-signer.tier-gold{ color:rgb(var(--tier-gold)); text-shadow:0 0 6px rgba(var(--tier-gold),0.6); }
   .msg-signer.tier-diamond{
@@ -1444,7 +1445,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .wallet-link:hover{ opacity:0.8; }
   .msg-ts{
-    color:rgba(255,0,60,0.75);
+    color:#ff003c;
+    text-shadow:0 0 4px rgba(255,0,60,0.5);
     font-variant-numeric:tabular-nums;
   }
   .msg-avatar{
