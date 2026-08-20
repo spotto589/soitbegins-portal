@@ -1,33 +1,18 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Σκύλλα SWAP — Phase 1: Pigeon Search + Offer Builder.
+// Σκύλλα SWAP — Phase 1B: real Pigeon collection explorer.
 //
-// Flow: SEARCH -> IDENTIFY/INSPECT -> SELECT -> BUILD OFFER -> REVIEW ->
-// SCYLLA OFFER (mock). Nothing here connects a wallet, calls Xaman, signs
-// anything, or submits any transaction — every Pigeon, owner, and offer on
-// this page is fabricated client-side.
+// Every Pigeon shown here is real: real NFTokenID, real IPFS image, real
+// on-chain owner, real trait attributes — pulled live from the XRPL (via
+// Clio's nfts_by_issuer/nft_info) and the collection's own IPFS metadata,
+// through /api/pigeons (see functions/api/pigeons.js and the data-access
+// layer at the bottom of functions/_shared.js). There is no mock data left
+// in this file.
 //
-// DATA-ACCESS LAYER — the real future integration seam. Every read the UI
-// does about a Pigeon goes through exactly these five functions, never a
-// raw mock array directly. Swapping mock data for a real Pigeon database /
-// XRPL indexer later means rewriting only this block:
-//
-//   searchPigeons(query)
-//   getPigeon(id)
-//   getPigeonTraits(id)
-//   getPigeonOwner(id)
-//   getPigeonsByWallet(wallet)
-//
-// A second, SEPARATE set of functions represents the real wallet-connect /
-// signing / submission flow. These are NOT implemented and NOT called
-// anywhere in this file — wiring them up is the next development phase:
-//
-//   connectWallet(), createSwapRequest(), signSwap(), combineSignatures(),
-//   submitBatch()
+// Still, on purpose, nothing here connects a wallet, calls Xaman, signs
+// anything, transfers XRP, or submits any XRPL transaction. "OFFER FOR
+// THIS PIGEON" only sets a draft target — building and sending a real
+// offer is explicitly the next phase, not this one.
 // ─────────────────────────────────────────────────────────────────────────
-
-const TOTAL_PIGEONS_MOCK = 3015;
-const YOUR_WALLET_MOCK = 'rMOCKY0UPR0T0TYPE00000000000000W';
-const YOUR_PIGEON_NUMBERS = [456, 789, 1001, 1044];
 
 const SWAP_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -35,7 +20,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-<title>Σκύλλα SWAP :: P!GE0N SEARCH</title>
+<title>Σκύλλα SWAP :: P!GE0N DATABASE</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -55,7 +40,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     width:100%;
     height:100%;
     z-index:0;
-    opacity:0.22;
+    opacity:0.2;
     filter:brightness(0.7) contrast(1.3);
     mix-blend-mode:screen;
     animation:static-shake 0.4s steps(2) infinite;
@@ -73,10 +58,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     90%{ transform:translate(-1px,1px); }
     100%{ transform:translate(0,0); }
   }
-  @media (prefers-reduced-motion: reduce){
-    canvas#staticBg{ animation:none; }
-  }
-  .page{ max-width:820px; width:100%; position:relative; z-index:1; }
+  @media (prefers-reduced-motion: reduce){ canvas#staticBg{ animation:none; } }
+  .page{ max-width:960px; width:100%; position:relative; z-index:1; }
   a.back-link{
     display:inline-block;
     font-size:10px;
@@ -106,10 +89,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:1rem;
     text-transform:uppercase;
   }
-  .sw-eyebrow{
+  .sw-eyebrow-lines{
     text-align:center;
     font-size:11px;
-    letter-spacing:0.2em;
+    letter-spacing:0.15em;
+    line-height:1.8;
     color:#39ff14;
     text-shadow:0 0 6px rgba(57,255,20,0.4);
     margin-bottom:2rem;
@@ -122,21 +106,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:1.5rem;
     margin-bottom:1.75rem;
   }
-  .mock-note{
-    text-align:center;
-    font-size:9px;
-    letter-spacing:0.1em;
-    color:rgba(0,255,242,0.55);
-    margin-bottom:1.1rem;
-    text-transform:uppercase;
-  }
 
-  /* ---- search ---- */
+  /* ---- search / filter bar ---- */
   .search-row{
     display:flex;
     gap:0.6rem;
-    margin-bottom:0.5rem;
     flex-wrap:wrap;
+    margin-bottom:0.75rem;
   }
   input.search-input{
     flex:1 1 260px;
@@ -149,67 +125,154 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.75em 0.9em;
   }
   input.search-input::placeholder{ color:rgba(232,232,232,0.3); text-transform:uppercase; }
-  .search-btn{
+  .bar-btn{
     flex:0 0 auto;
     background:transparent;
-    border:1px solid rgba(57,255,20,0.6);
+    border:1px solid rgba(57,255,20,0.5);
     color:#39ff14;
     font-family:inherit;
-    font-size:12px;
-    letter-spacing:0.12em;
-    padding:0.75em 1.4em;
+    font-size:11px;
+    letter-spacing:0.1em;
+    padding:0.75em 1.1em;
     cursor:pointer;
     text-transform:uppercase;
   }
-  .search-btn:hover{ background:rgba(57,255,20,0.1); }
+  .bar-btn:hover{ background:rgba(57,255,20,0.1); }
+  .bar-btn.active{ background:rgba(57,255,20,0.15); color:#fff; }
+  select.sort-select{
+    flex:0 0 auto;
+    background:#000;
+    border:1px solid rgba(0,255,242,0.4);
+    color:#00fff2;
+    font-family:inherit;
+    font-size:11px;
+    letter-spacing:0.05em;
+    padding:0.75em 0.9em;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  select.sort-select option{ background:#08080a; color:#e8e8e8; }
   .search-hint{
     text-align:center;
     font-size:10px;
     letter-spacing:0.05em;
     color:rgba(232,232,232,0.3);
-    margin-bottom:1.25rem;
-    text-transform:uppercase;
-  }
-  .placeholder-note{
-    text-align:center;
-    font-size:12px;
-    letter-spacing:0.08em;
-    color:rgba(232,232,232,0.35);
-    padding:1.5rem 0;
-    text-transform:uppercase;
-  }
-  .results-note{
-    text-align:center;
-    font-size:10px;
-    letter-spacing:0.08em;
-    color:rgba(232,232,232,0.35);
-    margin-bottom:0.75rem;
+    margin-bottom:0.25rem;
     text-transform:uppercase;
   }
 
-  /* ---- pigeon image box (shared) ---- */
+  /* ---- traits filter panel ---- */
+  .traits-panel{
+    border-top:1px dashed rgba(57,255,20,0.25);
+    margin-top:1rem;
+    padding-top:1rem;
+    display:none;
+  }
+  .traits-panel.open{ display:block; }
+  .traits-cats{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.5rem;
+    margin-bottom:0.9rem;
+  }
+  .trait-cat-btn{
+    background:transparent;
+    border:1px solid rgba(57,255,20,0.3);
+    color:rgba(232,232,232,0.6);
+    font-family:inherit;
+    font-size:10px;
+    letter-spacing:0.1em;
+    padding:0.5em 0.9em;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .trait-cat-btn.selected{ border-color:#39ff14; color:#39ff14; }
+  .traits-values{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.5rem;
+  }
+  .trait-value-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:0.4em;
+    border:1px solid rgba(0,255,242,0.3);
+    color:rgba(232,232,232,0.7);
+    font-size:10px;
+    letter-spacing:0.06em;
+    padding:0.4em 0.7em;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .trait-value-chip:hover{ border-color:#00fff2; }
+  .trait-value-chip.selected{ border-color:#00fff2; color:#00fff2; background:rgba(0,255,242,0.08); }
+  .traits-empty-note{
+    font-size:10px;
+    letter-spacing:0.08em;
+    color:rgba(232,232,232,0.35);
+    text-transform:uppercase;
+  }
+
+  /* ---- results status line ---- */
+  .status-line{
+    text-align:center;
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:rgba(232,232,232,0.45);
+    margin:1.1rem 0 1rem;
+    text-transform:uppercase;
+  }
+  .status-line .hi{ color:#39ff14; text-shadow:0 0 5px rgba(57,255,20,0.4); }
+
+  /* ---- empty / no-match state ---- */
+  .empty-state{
+    text-align:center;
+    padding:2rem 0;
+  }
+  .empty-state .es-title{
+    font-size:13px;
+    letter-spacing:0.15em;
+    color:#ff003c;
+    text-shadow:0 0 6px rgba(255,0,60,0.4);
+    margin-bottom:1rem;
+    text-transform:uppercase;
+  }
+  .empty-state .es-line{
+    font-size:11px;
+    letter-spacing:0.08em;
+    color:rgba(232,232,232,0.5);
+    margin-bottom:0.5rem;
+    text-transform:uppercase;
+  }
+  .empty-state .es-note{
+    font-size:10px;
+    letter-spacing:0.05em;
+    color:rgba(232,232,232,0.35);
+    margin:0.75rem 0 1.25rem;
+    text-transform:uppercase;
+  }
+
+  /* ---- pigeon image box ---- */
   .pigeon-img-box{
     aspect-ratio:1;
     display:flex;
     align-items:center;
     justify-content:center;
+    overflow:hidden;
     background:repeating-linear-gradient(
-      45deg,
-      rgba(57,255,20,0.04) 0px,
-      rgba(57,255,20,0.04) 6px,
-      transparent 6px,
-      transparent 12px
+      45deg, rgba(57,255,20,0.04) 0px, rgba(57,255,20,0.04) 6px, transparent 6px, transparent 12px
     );
     border:1px dashed rgba(57,255,20,0.15);
     font-size:10px;
     letter-spacing:0.1em;
     color:rgba(232,232,232,0.3);
   }
+  .pigeon-img-box img{ width:100%; height:100%; object-fit:cover; display:block; }
 
-  /* ---- result cards ---- */
+  /* ---- collection grid / cards ---- */
   .result-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(170px, 1fr));
+    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
     gap:0.9rem;
   }
   .result-card{
@@ -217,24 +280,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     overflow:hidden;
   }
   .result-card .pigeon-img-box{ border:none; border-bottom:1px solid rgba(57,255,20,0.15); }
-  .result-card-body{ padding:0.7rem; }
-  .result-num{
-    font-size:12px;
-    letter-spacing:0.05em;
-    color:#e8e8e8;
-    margin-bottom:0.5rem;
-  }
+  .result-card-body{ padding:0.65rem; }
+  .result-num{ font-size:12px; letter-spacing:0.05em; color:#e8e8e8; margin-bottom:0.45rem; }
   .result-trait-line{
     font-size:10px;
-    letter-spacing:0.03em;
+    letter-spacing:0.02em;
     color:rgba(232,232,232,0.55);
     margin-bottom:0.2rem;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
   .result-trait-line .tl-label{ color:rgba(232,232,232,0.35); }
-  .view-btn{
+  .inspect-btn{
     display:block;
     width:100%;
-    margin-top:0.6rem;
+    margin-top:0.55rem;
     background:transparent;
     border:1px solid rgba(0,255,242,0.5);
     color:#00fff2;
@@ -245,9 +306,38 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     text-transform:uppercase;
   }
-  .view-btn:hover{ background:rgba(0,255,242,0.1); }
+  .inspect-btn:hover{ background:rgba(0,255,242,0.1); }
 
-  /* ---- detail / builder shared ---- */
+  /* ---- pagination ---- */
+  .pagination-row{
+    display:flex;
+    justify-content:center;
+    gap:0.75rem;
+    margin-top:1.5rem;
+  }
+  .page-btn{
+    background:transparent;
+    border:1px solid rgba(57,255,20,0.5);
+    color:#39ff14;
+    font-family:inherit;
+    font-size:11px;
+    letter-spacing:0.1em;
+    padding:0.65em 1.3em;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .page-btn:hover:not(:disabled){ background:rgba(57,255,20,0.1); }
+  .page-btn:disabled{ opacity:0.3; cursor:not-allowed; }
+  .loading-note{
+    text-align:center;
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:rgba(0,255,242,0.6);
+    padding:1.5rem 0;
+    text-transform:uppercase;
+  }
+
+  /* ---- detail / offer placeholder screens ---- */
   .detail-eyebrow{
     text-align:center;
     font-size:11px;
@@ -257,29 +347,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:0.75rem;
     text-transform:uppercase;
   }
-  .detail-num{
-    text-align:center;
-    font-size:22px;
-    letter-spacing:0.05em;
-    color:#fff;
-    margin-bottom:1.25rem;
-  }
-  .detail-img-large{
-    width:100%;
-    max-width:280px;
-    margin:0 auto 1.25rem;
-  }
-  .detail-img-large.small{ max-width:180px; }
+  .detail-num{ text-align:center; font-size:22px; letter-spacing:0.05em; color:#fff; margin-bottom:1.25rem; }
+  .detail-img-large{ width:100%; max-width:300px; margin:0 auto 1.25rem; }
   .detail-field{
     display:flex;
     justify-content:space-between;
-    max-width:420px;
+    max-width:460px;
     margin:0 auto 0.7rem;
     font-size:12px;
     letter-spacing:0.05em;
   }
   .df-label{ color:rgba(232,232,232,0.45); text-transform:uppercase; }
   .df-value{ color:#e8e8e8; text-align:right; word-break:break-all; }
+  .df-value.not-indexed{ color:#ff003c; text-shadow:0 0 4px rgba(255,0,60,0.3); }
   .detail-traits-title{
     text-align:center;
     font-size:11px;
@@ -292,27 +372,37 @@ const SWAP_HTML = `<!DOCTYPE html>
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
     gap:0.6rem;
-    max-width:520px;
+    max-width:560px;
     margin:0 auto 0.5rem;
   }
-  .trait-cell{
-    border:1px solid rgba(57,255,20,0.2);
-    padding:0.6rem 0.75rem;
-    text-align:center;
-  }
+  .trait-cell{ border:1px solid rgba(57,255,20,0.2); padding:0.6rem 0.75rem; text-align:center; }
   .trait-cell .tc-label{
-    font-size:9px;
-    letter-spacing:0.15em;
-    color:rgba(232,232,232,0.4);
-    margin-bottom:0.35rem;
+    font-size:9px; letter-spacing:0.15em; color:rgba(232,232,232,0.4); margin-bottom:0.35rem; text-transform:uppercase;
+  }
+  .trait-cell .tc-value{ font-size:13px; letter-spacing:0.03em; color:#39ff14; text-shadow:0 0 4px rgba(57,255,20,0.3); }
+  .tech-meta{
+    max-width:560px;
+    margin:1.25rem auto 0;
+    border-top:1px dashed rgba(232,232,232,0.15);
+    padding-top:1rem;
+  }
+  .tech-meta-title{
+    text-align:center;
+    font-size:10px;
+    letter-spacing:0.2em;
+    color:rgba(232,232,232,0.35);
+    margin-bottom:0.6rem;
     text-transform:uppercase;
   }
-  .trait-cell .tc-value{
-    font-size:13px;
-    letter-spacing:0.03em;
-    color:#39ff14;
-    text-shadow:0 0 4px rgba(57,255,20,0.3);
+  .tech-meta-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:10px;
+    letter-spacing:0.02em;
+    color:rgba(232,232,232,0.5);
+    margin-bottom:0.35rem;
   }
+  .tech-meta-row .value{ word-break:break-all; text-align:right; color:rgba(0,255,242,0.7); }
   .detail-actions{
     display:flex;
     justify-content:center;
@@ -344,157 +434,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
     text-shadow:0 0 6px rgba(57,255,20,0.4);
   }
-  .action-btn:hover:not(:disabled){ background:rgba(57,255,20,0.1); }
-  .action-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+  .action-btn:hover{ background:rgba(57,255,20,0.1); }
 
-  /* ---- offer builder ---- */
-  .section-divider{
-    text-align:center;
-    font-size:11px;
-    letter-spacing:0.25em;
-    color:#00fff2;
-    text-shadow:0 0 6px rgba(0,255,242,0.4);
-    margin:1.75rem 0 1rem;
-    padding-top:1.25rem;
-    border-top:1px dashed rgba(232,232,232,0.15);
-    text-transform:uppercase;
-  }
-  .checklist{
-    max-width:420px;
-    margin:0 auto 0.75rem;
-    display:flex;
-    flex-direction:column;
-    gap:0.5rem;
-  }
-  .checklist-item{
-    display:flex;
-    align-items:center;
-    gap:0.6em;
-    border:1px solid rgba(57,255,20,0.2);
-    padding:0.6em 0.9em;
-    cursor:pointer;
-    font-size:12px;
-    letter-spacing:0.05em;
-  }
-  .checklist-item:hover{ border-color:rgba(57,255,20,0.4); }
-  .checklist-item.checked{
-    border-color:#39ff14;
-    box-shadow:0 0 8px rgba(57,255,20,0.25) inset;
-  }
-  .checklist-item input{ accent-color:#39ff14; }
-  .selection-count{
-    text-align:center;
-    font-size:11px;
-    letter-spacing:0.12em;
-    color:#39ff14;
-    text-shadow:0 0 6px rgba(57,255,20,0.4);
-    text-transform:uppercase;
-    margin-bottom:0.5rem;
-  }
-  .xrp-amount-input{
-    display:block;
-    width:100%;
-    max-width:220px;
-    margin:0 auto;
-    background:#000;
-    border:1px solid rgba(57,255,20,0.35);
-    color:#39ff14;
-    text-align:center;
-    font-family:inherit;
-    font-size:15px;
-    letter-spacing:0.05em;
-    padding:0.6em;
-  }
-  .offer-preview-list{
-    text-align:center;
-    font-size:12px;
-    line-height:1.9;
-    color:#e8e8e8;
-    min-height:1.9em;
-  }
-  .offer-preview-list .empty-line{ color:rgba(232,232,232,0.3); }
-  .offer-preview-list .xrp-line{ color:#ffd700; text-shadow:0 0 5px rgba(255,215,0,0.4); }
-
-  /* ---- final summary card ---- */
-  .final-card{
+  .offer-draft-card{
     border:1px dashed rgba(57,255,20,0.45);
-    padding:1.5rem;
+    padding:1.75rem;
     text-align:center;
-    margin-top:1.75rem;
+    max-width:440px;
+    margin:0 auto;
   }
-  .final-card-title{
-    font-size:12px;
-    letter-spacing:0.25em;
-    color:#fff;
-    margin-bottom:1.1rem;
-    text-transform:uppercase;
-  }
-  .final-card-label{
-    font-size:10px;
-    letter-spacing:0.2em;
-    color:rgba(232,232,232,0.4);
-    margin:0.9rem 0 0.4rem;
-    text-transform:uppercase;
-  }
-  .final-card-value{
-    font-size:13px;
-    color:#e8e8e8;
-    line-height:1.7;
-  }
-  .final-card-status{
-    margin-top:1.1rem;
+  .offer-draft-title{ font-size:12px; letter-spacing:0.25em; color:#fff; margin-bottom:1.25rem; text-transform:uppercase; }
+  .offer-draft-label{ font-size:10px; letter-spacing:0.2em; color:rgba(232,232,232,0.4); margin:1rem 0 0.4rem; text-transform:uppercase; }
+  .offer-draft-label:first-of-type{ margin-top:0; }
+  .offer-draft-value{ font-size:14px; color:#e8e8e8; }
+  .offer-draft-status{
+    margin-top:1.25rem;
     font-size:11px;
     letter-spacing:0.15em;
     color:#ff003c;
     text-shadow:0 0 6px rgba(255,0,60,0.4);
-    text-transform:uppercase;
-  }
-
-  /* ---- review screen ---- */
-  .review-block{ max-width:460px; margin:0 auto; text-align:center; }
-  .review-label{
-    font-size:10px;
-    letter-spacing:0.2em;
-    color:rgba(232,232,232,0.4);
-    margin:1.1rem 0 0.4rem;
-    text-transform:uppercase;
-  }
-  .review-block .review-label:first-child{ margin-top:0; }
-  .review-value{
-    font-size:13px;
-    color:#e8e8e8;
-    line-height:1.7;
-  }
-
-  /* ---- offer confirmation ---- */
-  .confirm-panel{
-    border:1px solid rgba(57,255,20,0.5);
-    background:#000;
-    padding:1.5rem;
-    margin-top:1.75rem;
-    text-align:center;
-  }
-  .confirm-title{
-    font-size:13px;
-    letter-spacing:0.05em;
-    color:#39ff14;
-    text-shadow:0 0 6px rgba(57,255,20,0.5);
-    margin-bottom:1rem;
-  }
-  .confirm-status-row{
-    font-size:12px;
-    letter-spacing:0.1em;
-    color:#ffd700;
-    text-shadow:0 0 5px rgba(255,215,0,0.4);
-    margin-bottom:1.1rem;
-    text-transform:uppercase;
-  }
-  .offer-disclaimer{
-    font-size:11px;
-    line-height:2;
-    letter-spacing:0.08em;
-    color:#ff003c;
-    text-shadow:0 0 4px rgba(255,0,60,0.35);
     text-transform:uppercase;
   }
 
@@ -517,98 +475,70 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <h1>Σκύλλα</h1>
     <div class="sw-subtitle">SWAP PR0T0C0L</div>
-    <div class="sw-eyebrow" id="screenEyebrow">// P!GE0N SEARCH</div>
+    <div class="sw-eyebrow-lines">// P!GE0N DATABASE<br>// C0LLECT!0N :: P!GE0NS</div>
 
-    <!-- SCREEN 1: SEARCH -->
-    <div class="sw-panel" id="screenSearch">
-      <div class="search-row">
-        <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0NS...">
-        <button class="search-btn" id="searchBtn">[ SEARCH ]</button>
+    <!-- SCREEN 1: BROWSE / SEARCH -->
+    <div id="screenBrowse">
+      <div class="sw-panel">
+        <div class="search-row">
+          <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0NS (NUMBER, TRA!T, 0R VALUE)...">
+          <button class="bar-btn" id="searchBtn">[ SEARCH ]</button>
+          <button class="bar-btn" id="traitsBtn">[ TRA!TS ▼ ]</button>
+          <select class="sort-select" id="sortSelect">
+            <option value="NUM_ASC">[ S0RT ▼ ] NUMBER L0W → H!GH</option>
+            <option value="NUM_DESC">NUMBER H!GH → L0W</option>
+          </select>
+        </div>
+        <div class="search-hint">TRY A NUMBER (e.g. 123), A TRA!T CATEG0RY (e.g. background), 0R A VALUE (e.g. cyan)</div>
+
+        <div class="traits-panel" id="traitsPanel">
+          <div class="traits-cats" id="traitsCats"></div>
+          <div class="traits-values" id="traitsValues"></div>
+          <div class="traits-empty-note" id="traitsEmptyNote" style="display:none;">N0 TRA!TS !NDEXED YET — BR0WSE THE C0LLECT!0N T0 D!SC0VER CATEG0R!ES</div>
+        </div>
       </div>
-      <div class="search-hint">TRY A NUMBER, A TRA!T (e.g. PH0EN!X, BLUE), "BACKGR0UND: CYAN", 0R A WALLET ADDRESS</div>
-      <div class="mock-note">// M0CK DATA — S!MULATED P!GE0N DATABASE</div>
-      <div class="results-note" id="resultsNote" style="display:none;"></div>
-      <div class="result-grid" id="searchResultsGrid"></div>
-      <div class="placeholder-note" id="searchPlaceholder">ENTER A P!GE0N NUMBER, TRA!T, 0R WALLET T0 BEG!N</div>
+
+      <div class="sw-panel">
+        <div class="status-line" id="statusLine"></div>
+        <div id="resultsArea"></div>
+        <div class="pagination-row" id="paginationRow" style="display:none;">
+          <button class="page-btn" id="prevPageBtn" disabled>[ ← PREV PAGE ]</button>
+          <button class="page-btn" id="nextPageBtn">[ NEXT PAGE → ]</button>
+        </div>
+      </div>
     </div>
 
     <!-- SCREEN 2: DETAIL -->
     <div class="sw-panel" id="screenDetail" style="display:none;">
       <div class="detail-eyebrow">// P!GE0N !DENT!F!ED</div>
       <div class="detail-num" id="detailNum"></div>
-      <div class="detail-img-large pigeon-img-box">[ IMAGE ]</div>
-      <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
-      <div class="detail-traits-title">TRAITS</div>
+      <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
+      <div class="detail-field"><span class="df-label">CURRENT H0LDER</span><span class="df-value" id="detailOwner"></span></div>
+      <div class="detail-traits-title">TRA!TS</div>
       <div class="trait-grid" id="detailTraits"></div>
-      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value">HELD</span></div>
+      <div class="tech-meta">
+        <div class="tech-meta-title">TECHN!CAL METADATA</div>
+        <div class="tech-meta-row"><span>NFT0KEN !D</span><span class="value" id="detailNftId"></span></div>
+      </div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="backToSearchBtn">[ ← BACK T0 SEARCH ]</button>
+        <button class="secondary-btn" id="backToBrowseBtn">[ ← BACK T0 C0LLECT!0N ]</button>
         <button class="action-btn" id="offerForBtn">[ OFFER F0R TH!S P!GE0N ]</button>
       </div>
     </div>
 
-    <!-- SCREEN 3: OFFER BUILDER -->
-    <div class="sw-panel" id="screenBuilder" style="display:none;">
-      <div class="detail-eyebrow">OFFER BUILDER</div>
-      <div class="final-card-label" style="margin-top:0;">TARGET</div>
-      <div class="detail-num" id="builderTargetNum"></div>
-      <div class="detail-img-large small pigeon-img-box">[ IMAGE ]</div>
-      <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="builderTargetOwner"></span></div>
-
-      <div class="section-divider">YOU OFFER</div>
-      <div class="final-card-label" style="margin-top:0;">YOUR P!GE0NS</div>
-      <div class="checklist" id="yourPigeonChecklist"></div>
-      <div class="selection-count" id="builderSelectionCount">SELECTED :: 0 P!GE0NS</div>
-
-      <div class="section-divider">XRP OFFER</div>
-      <input class="xrp-amount-input" id="builderXrpInput" type="number" min="0" step="0.01" value="0.00">
-
-      <div class="section-divider">YOUR OFFER</div>
-      <div class="offer-preview-list" id="builderOfferPreview"></div>
-
-      <div class="final-card">
-        <div class="final-card-title">SCYLLA OFFER</div>
-        <div class="final-card-label">TARGET</div>
-        <div class="final-card-value" id="finalTarget"></div>
-        <div class="final-card-label">YOU OFFER</div>
-        <div class="final-card-value" id="finalOffer"></div>
-        <div class="final-card-status">STATUS :: DRAFT</div>
+    <!-- SCREEN 3: OFFER DRAFT PLACEHOLDER -->
+    <div class="sw-panel" id="screenOffer" style="display:none;">
+      <div class="detail-eyebrow">SCYLLA OFFER BUILDER</div>
+      <div class="offer-draft-card">
+        <div class="offer-draft-title">SCYLLA OFFER</div>
+        <div class="offer-draft-label">TARGET</div>
+        <div class="offer-draft-value" id="offerTargetNum"></div>
+        <div class="offer-draft-label">TARGET H0LDER</div>
+        <div class="offer-draft-value" id="offerTargetOwner"></div>
+        <div class="offer-draft-status">STATUS :: DRAFT</div>
       </div>
-
       <div class="detail-actions">
         <button class="secondary-btn" id="backToDetailBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="reviewOfferBtn" disabled>[ REVIEW OFFER ]</button>
-      </div>
-    </div>
-
-    <!-- SCREEN 4: REVIEW -->
-    <div class="sw-panel" id="screenReview" style="display:none;">
-      <div class="detail-eyebrow">// SCYLLA OFFER REVIEW</div>
-      <div class="review-block">
-        <div class="review-label">YOU ARE REQUESTING</div>
-        <div class="review-value" id="reviewTarget"></div>
-        <div class="review-label">FROM</div>
-        <div class="review-value" id="reviewOwner"></div>
-        <div class="review-label">YOU ARE OFFERING</div>
-        <div class="review-value" id="reviewOffering"></div>
-      </div>
-
-      <div class="detail-actions">
-        <button class="secondary-btn" id="backToBuilderBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="generateMockOfferBtn">[ GENERATE MOCK OFFER ]</button>
-      </div>
-
-      <div class="confirm-panel" id="offerConfirmPanel" style="display:none;">
-        <div class="confirm-title" id="offerConfirmTitle"></div>
-        <div class="confirm-status-row">STATUS :: DRAFT</div>
-        <div class="offer-disclaimer">
-          NO TRANSACTION CREATED<br>
-          NO WALLET CONNECTED<br>
-          NO ASSETS MOVED
-        </div>
-        <div class="detail-actions">
-          <button class="secondary-btn" id="newSearchBtn">[ NEW SEARCH ]</button>
-        </div>
       </div>
     </div>
 
@@ -618,189 +548,45 @@ const SWAP_HTML = `<!DOCTYPE html>
 <script>
 (function(){
 
-  // ---- Deterministic mock RNG so the same Pigeon number always has the
-  // same traits/owner every time it's looked up. ----
-  function mulberry32(seed){
-    return function(){
-      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
-      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-  function hashStr(str){
-    var h = 0;
-    for (var i = 0; i < str.length; i++){ h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
-    return h >>> 0;
-  }
-
-  var TOTAL_PIGEONS_MOCK = ${TOTAL_PIGEONS_MOCK};
-  var YOUR_WALLET_MOCK = ${JSON.stringify(YOUR_WALLET_MOCK)};
-  var YOUR_PIGEON_NUMBERS = ${JSON.stringify(YOUR_PIGEON_NUMBERS)};
-
-  var BACKGROUNDS = ['CYAN', 'MAGENTA', 'GREEN', 'BLACK', 'VOID', 'GOLD'];
-  var BODIES = ['STATIC', 'GLITCH', 'SOLID', 'CHROME', 'SHADOW'];
-  var EYES = ['RED', 'BLUE', 'GREEN', 'VOID', 'GOLD'];
-  var AURAS = ['NONE', 'NONE', 'NONE', 'NONE', 'PHOENIX', 'STORM'];
-
-  function pick(rnd, arr){ return arr[Math.floor(rnd() * arr.length)]; }
-
-  function pickAccessLevel(rnd){
-    var r = rnd();
-    if (r < 0.55) return 1;
-    if (r < 0.80) return 3;
-    if (r < 0.92) return 6;
-    if (r < 0.97) return 9;
-    if (r < 0.995) return 12;
-    return 15;
-  }
-
-  function mockOwnerForNumber(num){
-    var rnd = mulberry32(hashStr('owner:' + num));
-    var chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    var suffix = '';
-    for (var i = 0; i < 24; i++){ suffix += chars[Math.floor(rnd() * chars.length)]; }
-    return 'rMOCK' + suffix;
-  }
-
-  function shortenAddr(addr){
-    return addr.slice(0, 9) + '...' + addr.slice(-4);
-  }
-
-  // ---- The one place mock Pigeon records are built. Generated once for
-  // every number 1..TOTAL_PIGEONS_MOCK, deterministically, so repeated
-  // lookups of the same Pigeon always return identical data. ----
-  var PIGEON_LIBRARY = [];
-  (function buildLibrary(){
-    var yoursSet = {};
-    YOUR_PIGEON_NUMBERS.forEach(function(n){ yoursSet[n] = true; });
-    for (var num = 1; num <= TOTAL_PIGEONS_MOCK; num++){
-      var rnd = mulberry32(hashStr('pigeon:' + num));
-      var owner = yoursSet[num] ? YOUR_WALLET_MOCK : mockOwnerForNumber(num);
-      PIGEON_LIBRARY.push({
-        id: num,
-        number: num,
-        owner: owner,
-        attributes: [
-          { trait_type: 'Background', value: pick(rnd, BACKGROUNDS) },
-          { trait_type: 'Body', value: pick(rnd, BODIES) },
-          { trait_type: 'Eyes', value: pick(rnd, EYES) },
-          { trait_type: 'Aura', value: pick(rnd, AURAS) }
-        ],
-        accessLevel: pickAccessLevel(rnd)
-      });
-    }
-  })();
-
-  // ---- DATA-ACCESS LAYER (mock-backed today, real API/indexer later) ----
-  function getPigeon(id){
-    var num = parseInt(id, 10);
-    if (!num || num < 1 || num > TOTAL_PIGEONS_MOCK) return null;
-    return PIGEON_LIBRARY[num - 1];
-  }
-  function getPigeonTraits(id){
-    var p = getPigeon(id);
-    return p ? p.attributes : [];
-  }
-  function getPigeonOwner(id){
-    var p = getPigeon(id);
-    return p ? p.owner : null;
-  }
-  function getPigeonsByWallet(wallet){
-    var w = String(wallet).toUpperCase();
-    return PIGEON_LIBRARY.filter(function(p){ return p.owner.toUpperCase() === w; });
-  }
-  var MAX_RESULTS = 24;
-  function searchPigeons(query){
-    var q = String(query || '').trim();
-    if (!q) return [];
-
-    // Direct number / "#123" / "PIGEON #123" lookup.
-    var numMatch = q.match(/^#?\\s*(?:p!?ge?0?ns?\\s*#?)?\\s*(\\d+)$/i);
-    if (numMatch){
-      var p = getPigeon(parseInt(numMatch[1], 10));
-      return p ? [p] : [];
-    }
-
-    // Structured "TRAIT: VALUE" query.
-    var kv = q.match(/^([A-Za-z]+)\\s*:\\s*(.+)$/);
-    if (kv){
-      var key = kv[1].toUpperCase();
-      var val = kv[2].trim().toUpperCase();
-      return PIGEON_LIBRARY.filter(function(pg){
-        return pg.attributes.some(function(a){
-          return a.trait_type.toUpperCase() === key && a.value.toUpperCase().indexOf(val) !== -1;
-        });
-      }).slice(0, MAX_RESULTS);
-    }
-
-    // Wallet-address-shaped query.
-    if (/^r[a-z0-9]/i.test(q) && q.length >= 6){
-      var qUpper = q.toUpperCase();
-      return PIGEON_LIBRARY.filter(function(pg){
-        return pg.owner.toUpperCase().indexOf(qUpper) !== -1 || shortenAddr(pg.owner).toUpperCase().indexOf(qUpper) !== -1;
-      }).slice(0, MAX_RESULTS);
-    }
-
-    // Generic free-text: match any trait value.
-    var qUp = q.toUpperCase();
-    return PIGEON_LIBRARY.filter(function(pg){
-      return pg.attributes.some(function(a){ return a.value.toUpperCase().indexOf(qUp) !== -1; });
-    }).slice(0, MAX_RESULTS);
-  }
-
-  // ---- True future seams — intentionally unimplemented and unused here.
-  // The real wallet-connect / dual-sign / Batch-submit flow plugs in here
-  // in a later development phase, not this one. ----
-  var SwapProtocolStub = {
-    connectWallet: function(){ throw new Error('not implemented — prototype only'); },
-    createSwapRequest: function(_proposal){ throw new Error('not implemented — prototype only'); },
-    signSwap: function(_request){ throw new Error('not implemented — prototype only'); },
-    combineSignatures: function(_a, _b){ throw new Error('not implemented — prototype only'); },
-    submitBatch: function(_combined){ throw new Error('not implemented — prototype only'); }
-  };
-
-  // ---- Client-side state ----
   var state = {
-    currentTarget: null,
-    yourSelected: {},
-    xrpAmount: 0
+    mode: 'browse',           // 'browse' | 'search'
+    markerStack: [],          // markers visited so far, for PREV PAGE
+    currentMarker: null,      // marker used to fetch the CURRENT page (null = first page)
+    nextMarker: null,         // marker returned for the next page
+    items: [],
+    sort: 'NUM_ASC',
+    traitsData: null,         // { categories: {TraitType: [values...]} }
+    selectedTraitCat: null,
+    currentDetail: null       // the pigeon currently open in the detail screen
   };
 
   var el = {
-    eyebrow: document.getElementById('screenEyebrow'),
-    screenSearch: document.getElementById('screenSearch'),
-    screenDetail: document.getElementById('screenDetail'),
-    screenBuilder: document.getElementById('screenBuilder'),
-    screenReview: document.getElementById('screenReview'),
     searchInput: document.getElementById('searchInput'),
     searchBtn: document.getElementById('searchBtn'),
-    searchResultsGrid: document.getElementById('searchResultsGrid'),
-    searchPlaceholder: document.getElementById('searchPlaceholder'),
-    resultsNote: document.getElementById('resultsNote'),
+    traitsBtn: document.getElementById('traitsBtn'),
+    sortSelect: document.getElementById('sortSelect'),
+    traitsPanel: document.getElementById('traitsPanel'),
+    traitsCats: document.getElementById('traitsCats'),
+    traitsValues: document.getElementById('traitsValues'),
+    traitsEmptyNote: document.getElementById('traitsEmptyNote'),
+    statusLine: document.getElementById('statusLine'),
+    resultsArea: document.getElementById('resultsArea'),
+    paginationRow: document.getElementById('paginationRow'),
+    prevPageBtn: document.getElementById('prevPageBtn'),
+    nextPageBtn: document.getElementById('nextPageBtn'),
+    screenBrowse: document.getElementById('screenBrowse'),
+    screenDetail: document.getElementById('screenDetail'),
+    screenOffer: document.getElementById('screenOffer'),
     detailNum: document.getElementById('detailNum'),
+    detailImgBox: document.getElementById('detailImgBox'),
     detailOwner: document.getElementById('detailOwner'),
     detailTraits: document.getElementById('detailTraits'),
-    backToSearchBtn: document.getElementById('backToSearchBtn'),
+    detailNftId: document.getElementById('detailNftId'),
+    backToBrowseBtn: document.getElementById('backToBrowseBtn'),
     offerForBtn: document.getElementById('offerForBtn'),
-    builderTargetNum: document.getElementById('builderTargetNum'),
-    builderTargetOwner: document.getElementById('builderTargetOwner'),
-    yourPigeonChecklist: document.getElementById('yourPigeonChecklist'),
-    builderSelectionCount: document.getElementById('builderSelectionCount'),
-    builderXrpInput: document.getElementById('builderXrpInput'),
-    builderOfferPreview: document.getElementById('builderOfferPreview'),
-    finalTarget: document.getElementById('finalTarget'),
-    finalOffer: document.getElementById('finalOffer'),
-    backToDetailBtn: document.getElementById('backToDetailBtn'),
-    reviewOfferBtn: document.getElementById('reviewOfferBtn'),
-    reviewTarget: document.getElementById('reviewTarget'),
-    reviewOwner: document.getElementById('reviewOwner'),
-    reviewOffering: document.getElementById('reviewOffering'),
-    backToBuilderBtn: document.getElementById('backToBuilderBtn'),
-    generateMockOfferBtn: document.getElementById('generateMockOfferBtn'),
-    offerConfirmPanel: document.getElementById('offerConfirmPanel'),
-    offerConfirmTitle: document.getElementById('offerConfirmTitle'),
-    newSearchBtn: document.getElementById('newSearchBtn')
+    offerTargetNum: document.getElementById('offerTargetNum'),
+    offerTargetOwner: document.getElementById('offerTargetOwner'),
+    backToDetailBtn: document.getElementById('backToDetailBtn')
   };
 
   function escapeHtml(str){
@@ -810,174 +596,310 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showScreen(name){
-    el.screenSearch.style.display = name === 'search' ? '' : 'none';
+    el.screenBrowse.style.display = name === 'browse' ? '' : 'none';
     el.screenDetail.style.display = name === 'detail' ? '' : 'none';
-    el.screenBuilder.style.display = name === 'builder' ? '' : 'none';
-    el.screenReview.style.display = name === 'review' ? '' : 'none';
-    var eyebrows = {
-      search: '// P!GE0N SEARCH',
-      detail: '// P!GE0N !DENT!F!ED',
-      builder: '// OFFER BU!LDER',
-      review: '// SCYLLA OFFER REVIEW'
-    };
-    el.eyebrow.textContent = eyebrows[name] || '';
-    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+    el.screenOffer.style.display = name === 'offer' ? '' : 'none';
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
-  // ---- Search screen ----
+  function traitLine(attributes, wanted){
+    var found = attributes.filter(function(a){ return wanted.indexOf(a.trait_type) !== -1; });
+    return found;
+  }
+
   function resultCardHtml(p){
-    var bg = p.attributes[0], body = p.attributes[1], eyes = p.attributes[2];
-    return '<div class="result-card" data-id="' + p.id + '">' +
-      '<div class="pigeon-img-box">[ IMAGE ]</div>' +
+    var previewTraits = p.attributes.slice(0, 3);
+    var traitLines = previewTraits.map(function(a){
+      return '<div class="result-trait-line"><span class="tl-label">' + escapeHtml(a.trait_type.toUpperCase()) + ' ::</span> ' + escapeHtml(a.value) + '</div>';
+    }).join('');
+    var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
+    var num = p.number !== null ? '#' + p.number : '#????';
+    return '<div class="result-card" data-nftid="' + escapeHtml(p.nftId) + '">' +
+      '<div class="pigeon-img-box">' + img + '</div>' +
       '<div class="result-card-body">' +
-        '<div class="result-num">P!GE0N #' + p.number + '</div>' +
-        '<div class="result-trait-line"><span class="tl-label">' + escapeHtml(bg.trait_type.toUpperCase()) + ' ::</span> ' + escapeHtml(bg.value) + '</div>' +
-        '<div class="result-trait-line"><span class="tl-label">' + escapeHtml(body.trait_type.toUpperCase()) + ' ::</span> ' + escapeHtml(body.value) + '</div>' +
-        '<div class="result-trait-line"><span class="tl-label">' + escapeHtml(eyes.trait_type.toUpperCase()) + ' ::</span> ' + escapeHtml(eyes.value) + '</div>' +
-        '<div class="result-trait-line"><span class="tl-label">ACCESS ::</span> ' + String(p.accessLevel).padStart(2, '0') + '</div>' +
-        '<button class="view-btn" data-id="' + p.id + '">[ VIEW ]</button>' +
+        '<div class="result-num">P!GE0N ' + num + '</div>' +
+        traitLines +
+        '<button class="inspect-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ !NSPECT ]</button>' +
       '</div>' +
     '</div>';
   }
 
+  function sortItems(items){
+    var sorted = items.slice();
+    sorted.sort(function(a, b){
+      var an = a.number || 0, bn = b.number || 0;
+      return state.sort === 'NUM_DESC' ? bn - an : an - bn;
+    });
+    return sorted;
+  }
+
+  function renderResults(){
+    var sorted = sortItems(state.items);
+    if (!sorted.length) return; // empty state already rendered by caller
+    el.resultsArea.innerHTML = '<div class="result-grid">' + sorted.map(resultCardHtml).join('') + '</div>';
+  }
+
+  function emptyStateHtml(title, lines, showClear){
+    return '<div class="empty-state">' +
+      '<div class="es-title">' + escapeHtml(title) + '</div>' +
+      lines.map(function(l){ return '<div class="es-line">' + escapeHtml(l) + '</div>'; }).join('') +
+      (showClear ? '<button class="bar-btn" id="clearSearchBtn" style="margin-top:0.75rem;">[ CLEAR SEARCH ]</button>' : '') +
+    '</div>';
+  }
+
+  function api(params){
+    var qs = Object.keys(params).map(function(k){ return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); }).join('&');
+    return fetch('/api/pigeons?' + qs).then(function(r){ return r.json(); });
+  }
+
+  // ---- Browse (paginated real collection) ----
+  function loadBrowsePage(marker, pushCurrentToStack){
+    state.mode = 'browse';
+    el.paginationRow.style.display = 'none';
+    el.statusLine.textContent = '';
+    el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG REAL P!GE0N DATA FR0M THE LEDGER...</div>';
+    api(marker ? { marker: marker } : {}).then(function(data){
+      if (pushCurrentToStack) state.markerStack.push(state.currentMarker);
+      state.currentMarker = marker || null;
+      state.nextMarker = data.marker || null;
+      state.items = data.items || [];
+      var approx = data.collectionSizeApprox ? '~' + data.collectionSizeApprox : 'UNKN0WN';
+      var failedNote = data.failedCount ? (' :: ' + data.failedCount + ' UNAVA!LABLE (!PFS T!ME0UT)') : '';
+      el.statusLine.innerHTML = 'DISPLAYING :: <span class="hi">' + state.items.length + '</span> P!GE0NS TH!S PAGE :: ' + approx + ' !N C0LLECT!0N (APPR0X)' + failedNote;
+      if (!state.items.length){
+        el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['TH!S PAGE RETURNED N0 READABLE P!GE0NS.'], false);
+      } else {
+        renderResults();
+      }
+      el.paginationRow.style.display = '';
+      el.prevPageBtn.disabled = state.markerStack.length === 0 && !state.currentMarker;
+      el.nextPageBtn.disabled = !state.nextMarker;
+    }).catch(function(){
+      el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T REACH THE LEDGER. TRY AGA!N.'], false);
+    });
+  }
+
+  el.nextPageBtn.addEventListener('click', function(){
+    if (!state.nextMarker) return;
+    loadBrowsePage(state.nextMarker, true);
+  });
+  el.prevPageBtn.addEventListener('click', function(){
+    if (!state.markerStack.length){
+      loadBrowsePage(null, false);
+      return;
+    }
+    var prev = state.markerStack.pop();
+    loadBrowsePage(prev, false);
+  });
+
+  // ---- Search ----
   function runSearch(){
     var q = el.searchInput.value.trim();
-    if (!q){
-      el.searchResultsGrid.innerHTML = '';
-      el.searchPlaceholder.style.display = '';
-      el.resultsNote.style.display = 'none';
-      return;
+    if (!q){ loadBrowsePage(null, false); return; }
+    state.mode = 'search';
+    el.paginationRow.style.display = 'none';
+    el.resultsArea.innerHTML = '<div class="loading-note">SEARCH!NG...</div>';
+    el.statusLine.textContent = '';
+
+    var kv = q.match(/^([A-Za-z]+)\\s*:\\s*(.+)$/);
+    var isNumber = /^#?\\d+$/.test(q);
+
+    var req;
+    if (isNumber){
+      req = api({ number: q.replace('#', '') });
+    } else if (kv){
+      req = api({ trait: kv[1], value: kv[2].trim() });
+    } else {
+      // Free text: try as a trait CATEGORY name first (e.g. "background"),
+      // then fall back to treating it as a VALUE across every known category.
+      req = ensureTraitsLoaded().then(function(){
+        var catMatch = Object.keys(state.traitsData.categories).filter(function(c){ return c.toLowerCase() === q.toLowerCase(); })[0];
+        if (catMatch){
+          return api({ trait: catMatch, value: '' }).then(function(){
+            // A bare category name has no single value — union all its values.
+            var vals = state.traitsData.categories[catMatch] || [];
+            return Promise.all(vals.map(function(v){ return api({ trait: catMatch, value: v }); }))
+              .then(function(results){
+                var merged = [];
+                var seen = {};
+                results.forEach(function(r){
+                  (r.items || []).forEach(function(it){
+                    if (!seen[it.nftId]){ seen[it.nftId] = true; merged.push(it); }
+                  });
+                });
+                return { items: merged, indexedOnly: true };
+              });
+          });
+        }
+        // Treat as a value: check it against every known category.
+        var cats = Object.keys(state.traitsData.categories);
+        return Promise.all(cats.map(function(c){
+          var vals = state.traitsData.categories[c] || [];
+          var match = vals.filter(function(v){ return v.toLowerCase().indexOf(q.toLowerCase()) !== -1; });
+          return Promise.all(match.map(function(v){ return api({ trait: c, value: v }); }));
+        })).then(function(nested){
+          var merged = [];
+          var seen = {};
+          nested.forEach(function(group){
+            group.forEach(function(r){
+              (r.items || []).forEach(function(it){
+                if (!seen[it.nftId]){ seen[it.nftId] = true; merged.push(it); }
+              });
+            });
+          });
+          return { items: merged, indexedOnly: true };
+        });
+      });
     }
-    var results = searchPigeons(q);
-    el.searchPlaceholder.style.display = results.length ? 'none' : '';
-    if (!results.length){
-      el.searchPlaceholder.textContent = 'N0 P!GE0NS MATCH TH!S QUERY';
-      el.searchResultsGrid.innerHTML = '';
-      el.resultsNote.style.display = 'none';
-      return;
-    }
-    el.searchResultsGrid.innerHTML = results.map(resultCardHtml).join('');
-    el.resultsNote.style.display = '';
-    el.resultsNote.textContent = results.length >= MAX_RESULTS
-      ? 'SH0WING F!RST ' + MAX_RESULTS + ' MATCHES'
-      : results.length + ' MATCH' + (results.length === 1 ? '' : 'ES') + ' F0UND';
+
+    req.then(function(data){
+      state.items = data.items || [];
+      if (!state.items.length){
+        if (data.notIndexed){
+          el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
+          el.resultsArea.innerHTML = emptyStateHtml('// N0T YET !NDEXED', [
+            'QUERY :: "' + q + '"',
+            'TH!S P!GE0N HAS N0T BEEN SEEN YET.',
+            'BR0WSE THE C0LLECT!0N T0 D!SC0VER !T — !NDEX GR0WS AS Y0U BR0WSE.'
+          ], true);
+        } else {
+          el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
+          el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', [
+            'QUERY :: "' + q + '"',
+            data.indexedOnly ? 'SEARCHED !NDEXED P!GE0NS 0NLY (GR0WS AS Y0U BR0WSE).' : ''
+          ].filter(Boolean), true);
+        }
+        wireClearSearch();
+        return;
+      }
+      var note = data.indexedOnly ? ' :: SEARCHED !NDEXED P!GE0NS 0NLY' : '';
+      el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + state.items.length + '</span>' + note +
+        (state.items.length === 1 ? '<br>P!GE0N #' + state.items[0].number : '');
+      renderResults();
+    }).catch(function(){
+      el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['SEARCH FA!LED. TRY AGA!N.'], false);
+    });
+  }
+  function wireClearSearch(){
+    var btn = document.getElementById('clearSearchBtn');
+    if (btn) btn.addEventListener('click', function(){ el.searchInput.value = ''; loadBrowsePage(null, false); });
   }
   el.searchBtn.addEventListener('click', runSearch);
   el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearch(); });
-  el.searchResultsGrid.addEventListener('click', function(e){
-    var btn = e.target.closest('.view-btn');
-    if (!btn) return;
-    openDetail(parseInt(btn.getAttribute('data-id'), 10));
+
+  // ---- Sort (re-orders whatever's currently displayed) ----
+  el.sortSelect.addEventListener('change', function(){
+    state.sort = el.sortSelect.value;
+    if (state.items.length) renderResults();
   });
 
-  // ---- Detail screen ----
+  // ---- Traits filter panel ----
+  function ensureTraitsLoaded(){
+    if (state.traitsData) return Promise.resolve(state.traitsData);
+    return api({ traits: 1 }).then(function(data){
+      state.traitsData = data;
+      return data;
+    });
+  }
+  function renderTraitCats(){
+    var cats = Object.keys(state.traitsData.categories || {});
+    if (!cats.length){
+      el.traitsEmptyNote.style.display = '';
+      el.traitsCats.innerHTML = '';
+      el.traitsValues.innerHTML = '';
+      return;
+    }
+    el.traitsEmptyNote.style.display = 'none';
+    el.traitsCats.innerHTML = cats.map(function(c){
+      return '<button class="trait-cat-btn' + (state.selectedTraitCat === c ? ' selected' : '') + '" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c.toUpperCase()) + '</button>';
+    }).join('');
+    renderTraitValues();
+  }
+  function renderTraitValues(){
+    if (!state.selectedTraitCat){ el.traitsValues.innerHTML = ''; return; }
+    var vals = state.traitsData.categories[state.selectedTraitCat] || [];
+    el.traitsValues.innerHTML = vals.map(function(v){
+      return '<span class="trait-value-chip" data-cat="' + escapeHtml(state.selectedTraitCat) + '" data-val="' + escapeHtml(v) + '">' + escapeHtml(v.toUpperCase()) + '</span>';
+    }).join('');
+  }
+  el.traitsBtn.addEventListener('click', function(){
+    var opening = !el.traitsPanel.classList.contains('open');
+    el.traitsPanel.classList.toggle('open', opening);
+    el.traitsBtn.classList.toggle('active', opening);
+    if (opening) ensureTraitsLoaded().then(renderTraitCats);
+  });
+  el.traitsCats.addEventListener('click', function(e){
+    var btn = e.target.closest('.trait-cat-btn');
+    if (!btn) return;
+    state.selectedTraitCat = btn.getAttribute('data-cat');
+    renderTraitCats();
+  });
+  el.traitsValues.addEventListener('click', function(e){
+    var chip = e.target.closest('.trait-value-chip');
+    if (!chip) return;
+    var cat = chip.getAttribute('data-cat');
+    var val = chip.getAttribute('data-val');
+    el.searchInput.value = cat + ': ' + val;
+    runSearch();
+  });
+
+  // ---- Inspect / detail ----
+  el.resultsArea.addEventListener('click', function(e){
+    var btn = e.target.closest('.inspect-btn');
+    if (!btn) return;
+    openDetail(btn.getAttribute('data-nftid'));
+  });
+
   function traitCellHtml(a){
     return '<div class="trait-cell"><div class="tc-label">' + escapeHtml(a.trait_type) + '</div><div class="tc-value">' + escapeHtml(a.value) + '</div></div>';
   }
-  function openDetail(id){
-    var p = getPigeon(id);
-    if (!p) return;
-    state.currentTarget = p;
-    el.detailNum.textContent = 'P!GE0N #' + p.number;
-    el.detailOwner.textContent = shortenAddr(getPigeonOwner(id));
-    el.detailTraits.innerHTML = getPigeonTraits(id).map(traitCellHtml).join('') +
-      '<div class="trait-cell"><div class="tc-label">Access</div><div class="tc-value">' + String(p.accessLevel).padStart(2, '0') + '</div></div>';
+
+  function openDetail(nftId){
+    var known = state.items.filter(function(p){ return p.nftId === nftId; })[0];
+    el.detailNum.textContent = known && known.number !== null ? 'P!GE0N #' + known.number : 'P!GE0N ...';
+    el.detailImgBox.innerHTML = known && known.image ? '<img src="' + escapeHtml(known.image) + '" alt="">' : '[ IMAGE ]';
+    el.detailOwner.textContent = '...';
+    el.detailTraits.innerHTML = known ? known.attributes.map(traitCellHtml).join('') : '';
+    el.detailNftId.textContent = nftId;
     showScreen('detail');
-  }
-  el.backToSearchBtn.addEventListener('click', function(){ showScreen('search'); });
-  el.offerForBtn.addEventListener('click', function(){ openBuilder(); });
 
-  // ---- Offer builder screen ----
-  function checklistItemHtml(p, checked){
-    return '<label class="checklist-item' + (checked ? ' checked' : '') + '" data-id="' + p.id + '">' +
-      '<input type="checkbox" data-id="' + p.id + '"' + (checked ? ' checked' : '') + '> #' + p.number +
-    '</label>';
+    api({ detail: nftId }).then(function(data){
+      if (!data.item){
+        state.currentDetail = known ? { nftId: nftId, number: known.number, owner: null, ownerShort: null } : null;
+        el.detailOwner.textContent = 'N0T !NDEXED';
+        el.detailOwner.classList.add('not-indexed');
+        return;
+      }
+      var p = data.item;
+      state.currentDetail = p;
+      el.detailNum.textContent = p.number !== null ? 'P!GE0N #' + p.number : 'P!GE0N ...';
+      el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
+      el.detailTraits.innerHTML = p.attributes.map(traitCellHtml).join('');
+      if (p.ownerShort){
+        el.detailOwner.textContent = p.ownerShort;
+        el.detailOwner.classList.remove('not-indexed');
+      } else {
+        el.detailOwner.textContent = 'N0T !NDEXED';
+        el.detailOwner.classList.add('not-indexed');
+      }
+    }).catch(function(){
+      el.detailOwner.textContent = 'N0T !NDEXED';
+      el.detailOwner.classList.add('not-indexed');
+    });
   }
-  function openBuilder(){
-    if (!state.currentTarget) return;
-    state.yourSelected = {};
-    el.builderXrpInput.value = '0.00';
-    state.xrpAmount = 0;
-    var p = state.currentTarget;
-    el.builderTargetNum.textContent = 'P!GE0N #' + p.number;
-    el.builderTargetOwner.textContent = shortenAddr(p.owner);
-    var yours = getPigeonsByWallet(YOUR_WALLET_MOCK);
-    el.yourPigeonChecklist.innerHTML = yours.map(function(yp){ return checklistItemHtml(yp, false); }).join('');
-    renderBuilderState();
-    showScreen('builder');
-  }
-  el.yourPigeonChecklist.addEventListener('change', function(e){
-    var cb = e.target.closest('input[type="checkbox"]');
-    if (!cb) return;
-    var id = cb.getAttribute('data-id');
-    if (cb.checked) state.yourSelected[id] = true;
-    else delete state.yourSelected[id];
-    cb.closest('.checklist-item').classList.toggle('checked', cb.checked);
-    renderBuilderState();
+  el.backToBrowseBtn.addEventListener('click', function(){ showScreen('browse'); });
+
+  // ---- Offer draft placeholder ----
+  el.offerForBtn.addEventListener('click', function(){
+    var p = state.currentDetail;
+    el.offerTargetNum.textContent = p && p.number !== null ? 'P!GE0N #' + p.number : el.detailNum.textContent;
+    el.offerTargetOwner.textContent = (p && p.ownerShort) ? p.ownerShort : 'N0T !NDEXED';
+    showScreen('offer');
   });
-  el.builderXrpInput.addEventListener('input', function(){
-    var v = parseFloat(el.builderXrpInput.value);
-    state.xrpAmount = isNaN(v) || v < 0 ? 0 : v;
-    renderBuilderState();
-  });
-
-  function renderBuilderState(){
-    var ids = Object.keys(state.yourSelected);
-    el.builderSelectionCount.textContent = 'SELECTED :: ' + ids.length + ' P!GE0N' + (ids.length === 1 ? '' : 'S');
-
-    var lines = ids.map(function(id){ return '\\uD83D\\uDC26 P!GE0N #' + getPigeon(id).number; });
-    if (state.xrpAmount > 0) lines.push('<span class="xrp-line">+ ' + state.xrpAmount.toFixed(2) + ' XRP</span>');
-    el.builderOfferPreview.innerHTML = lines.length ? lines.join('<br>') : '<span class="empty-line">N0TH!NG SELECTED YET</span>';
-
-    el.finalTarget.textContent = '\\uD83D\\uDC26 P!GE0N #' + state.currentTarget.number;
-    el.finalOffer.innerHTML = ids.length
-      ? ids.map(function(id){ return '\\uD83D\\uDC26 #' + getPigeon(id).number; }).join('<br>') + (state.xrpAmount > 0 ? '<br>+ ' + state.xrpAmount.toFixed(2) + ' XRP' : '')
-      : (state.xrpAmount > 0 ? '+ ' + state.xrpAmount.toFixed(2) + ' XRP' : '<span class="empty-line">N0TH!NG SELECTED YET</span>');
-
-    el.reviewOfferBtn.disabled = ids.length === 0 && state.xrpAmount <= 0;
-  }
-
   el.backToDetailBtn.addEventListener('click', function(){ showScreen('detail'); });
-  el.reviewOfferBtn.addEventListener('click', function(){ openReview(); });
 
-  // ---- Review screen ----
-  function openReview(){
-    var p = state.currentTarget;
-    var ids = Object.keys(state.yourSelected);
-    el.reviewTarget.textContent = 'P!GE0N #' + p.number;
-    el.reviewOwner.textContent = shortenAddr(p.owner);
-    var lines = ids.map(function(id){ return 'P!GE0N #' + getPigeon(id).number; });
-    if (state.xrpAmount > 0) lines.push('+ ' + state.xrpAmount.toFixed(2) + ' XRP');
-    el.reviewOffering.innerHTML = lines.length ? lines.join('<br>') : '<span class="empty-line">N0TH!NG SELECTED</span>';
-    el.offerConfirmPanel.style.display = 'none';
-    el.generateMockOfferBtn.style.display = '';
-    showScreen('review');
-  }
-  el.backToBuilderBtn.addEventListener('click', function(){ showScreen('builder'); });
-
-  function mockOfferId(){
-    var chars = '0123456789ABCDEF';
-    var out = '';
-    for (var i = 0; i < 6; i++){ out += chars[Math.floor(Math.random() * chars.length)]; }
-    return 'MOCK-' + out;
-  }
-  el.generateMockOfferBtn.addEventListener('click', function(){
-    var id = mockOfferId();
-    el.offerConfirmTitle.textContent = 'SCYLLA OFFER :: ' + id;
-    el.offerConfirmPanel.style.display = '';
-    el.generateMockOfferBtn.style.display = 'none';
-  });
-  el.newSearchBtn.addEventListener('click', function(){
-    state.currentTarget = null;
-    state.yourSelected = {};
-    state.xrpAmount = 0;
-    el.searchInput.value = '';
-    el.searchResultsGrid.innerHTML = '';
-    el.searchPlaceholder.textContent = 'ENTER A P!GE0N NUMBER, TRA!T, 0R WALLET T0 BEG!N';
-    el.searchPlaceholder.style.display = '';
-    el.resultsNote.style.display = 'none';
-    showScreen('search');
-  });
+  // ---- Initial load ----
+  loadBrowsePage(null, false);
 
   // TV static background, purely atmospheric — matches the rest of the site.
   (function(){

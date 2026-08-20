@@ -636,6 +636,186 @@ export async function getPigeonThumbnails(kv, pigeonNfts) {
   return metas.filter(m => m.image);
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Σκύλλα SWAP :: Pigeon collection data-access layer (Phase 1B).
+//
+// Real data only — everything below reads from the actual XRPL ledger
+// (Clio's nfts_by_issuer/nft_info, the only methods that expose the whole
+// collection or a single token without already knowing an owning wallet)
+// and the actual per-NFT IPFS metadata (same hex-URI/resolveIpfsUri path
+// already used by fetchPigeonMeta above, just also keeping `attributes`
+// instead of discarding everything but number/image).
+//
+// Honest limitation: there is no ledger-side index from a Pigeon's display
+// number (parsed from its metadata "name", e.g. "PIGEONS1180" -> 1180) back
+// to its NFTokenID — that mapping only exists inside IPFS metadata itself,
+// which can't be scanned for all ~3015 tokens inside one request without
+// blowing past any reasonable page-load time. So this builds that index
+// incrementally in KV, one token at a time, every time a token is actually
+// looked at (collection browsing or a hit search) — coverage grows with
+// real use instead of ever being faked. A number search that isn't in the
+// index yet is reported as such, never guessed at.
+// ─────────────────────────────────────────────────────────────────────────
+
+// Matches board.js's own TOTAL_PIGEONS figure — an approximation for
+// display only ("~3015 P!GE0NS"), never a live-counted total.
+export const PIGEON_COLLECTION_SIZE_APPROX = 3015;
+
+const PIGEON_META_PREFIX = 'pswap:meta:';
+const PIGEON_NUMBER_INDEX_PREFIX = 'pswap:numidx:';
+const PIGEON_TRAIT_CATEGORY_PREFIX = 'pswap:traitcat:';
+const PIGEON_TRAIT_VALUE_PREFIX = 'pswap:traitvalset:';
+const PIGEON_TRAIT_MEMBER_PREFIX = 'pswap:traitmember:';
+
+// One page (default 48) of the real, live Pigeon collection straight off
+// the ledger — owner + NFTokenID + raw hex URI for each token, newest scan
+// state carried forward via `marker` exactly like fetchAllAccountNfts.
+export async function fetchPigeonCollectionPage(marker, limit = 48) {
+  const params = { issuer: PIGEON_ISSUER, nft_taxon: PIGEON_TAXON, limit };
+  if (marker) params.marker = marker;
+  const res = await fetch(CLIO_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ method: 'nfts_by_issuer', params: [params] }),
+  });
+  const data = await res.json();
+  const result = data && data.result;
+  if (!result || result.error) return { items: [], marker: null };
+  const items = (result.nfts || [])
+    .filter(n => !n.is_burned)
+    .map(n => ({ nftId: n.nft_id, owner: n.owner, uriHex: n.uri }));
+  return { items, marker: result.marker || null };
+}
+
+// Fresh single-token lookup (owner + URI) via Clio's nft_info — used when
+// inspecting one specific Pigeon so its owner is current at that moment,
+// rather than whatever it was the last time this token's page was scanned.
+export async function fetchNftInfo(nftId) {
+  try {
+    const res = await fetch(CLIO_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'nft_info', params: [{ nft_id: nftId }] }),
+    });
+    const data = await res.json();
+    const result = data && data.result;
+    if (!result || result.error || result.is_burned) return null;
+    return { owner: result.owner || null, uriHex: result.uri || null };
+  } catch (e) {
+    return null;
+  }
+}
+
+async function fetchWithTimeout(url, ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Full per-token metadata straight from IPFS — number, image, and the
+// complete `attributes` array (trait_type/value pairs), whatever shape the
+// collection's own metadata actually uses. Never invents a trait schema.
+async function fetchPigeonFullMeta(uriHex) {
+  try {
+    const uri = resolveIpfsUri(hexToUtf8(uriHex));
+    const res = await fetchWithTimeout(uri, 6000);
+    if (!res.ok) return null;
+    const meta = await res.json();
+    const name = meta && meta.name;
+    const match = name ? String(name).match(/(\d+)/) : null;
+    const number = match ? parseInt(match[1], 10) : null;
+    const image = meta && meta.image ? resolveIpfsUri(meta.image) : null;
+    const attributes = Array.isArray(meta && meta.attributes) ? meta.attributes : [];
+    return { number, image, attributes };
+  } catch (e) {
+    return null;
+  }
+}
+
+// Records a newly-seen token's traits into the (additive-only, never
+// overwritten) category/value/membership index, so the TRAITS filter panel
+// and trait search can discover real values instead of a hardcoded list.
+// Cheap after the first time any given token is indexed — callers only
+// invoke this once, on a cache miss.
+async function recordPigeonTraitIndex(kv, nftId, attributes) {
+  const writes = [];
+  for (const attr of attributes) {
+    const traitType = attr && attr.trait_type;
+    const value = attr && attr.value;
+    if (!traitType || value === undefined || value === null) continue;
+    writes.push(kv.put(PIGEON_TRAIT_CATEGORY_PREFIX + traitType, '1'));
+    writes.push(kv.put(`${PIGEON_TRAIT_VALUE_PREFIX}${traitType}:${value}`, '1'));
+    writes.push(kv.put(`${PIGEON_TRAIT_MEMBER_PREFIX}${traitType}:${value}:${nftId}`, '1'));
+  }
+  await Promise.all(writes);
+}
+
+// The one function that actually resolves a Pigeon's full metadata: KV
+// cache first (metadata is immutable once minted, so a hit is permanent),
+// otherwise a real IPFS fetch — and on a genuine miss, also opportunistically
+// writes the number->nftId and trait indexes so this token is discoverable
+// by search from now on. Returns null if IPFS couldn't be reached at all.
+export async function getPigeonFullMeta(kv, nftId, uriHex) {
+  const cacheKey = PIGEON_META_PREFIX + nftId;
+  const cached = await kv.get(cacheKey);
+  if (cached !== null) return JSON.parse(cached);
+
+  const info = await fetchPigeonFullMeta(uriHex);
+  if (!info || info.image === null) return info;
+
+  await kv.put(cacheKey, JSON.stringify(info));
+  if (info.number !== null) {
+    await kv.put(PIGEON_NUMBER_INDEX_PREFIX + info.number, nftId);
+  }
+  await recordPigeonTraitIndex(kv, nftId, info.attributes);
+  return info;
+}
+
+// Read-only — never fetches. Used when we already have an nftId from a
+// fresh ledger call and just want whatever's already indexed.
+export async function getPigeonMetaCached(kv, nftId) {
+  const cached = await kv.get(PIGEON_META_PREFIX + nftId);
+  return cached !== null ? JSON.parse(cached) : null;
+}
+
+// Real, but honestly incomplete: only returns a hit if this exact number
+// has been indexed already (via browsing or a prior search). A miss does
+// NOT mean the Pigeon doesn't exist — see the module comment above.
+export async function getPigeonNumberIndex(kv, number) {
+  return kv.get(PIGEON_NUMBER_INDEX_PREFIX + number);
+}
+
+// Every trait category actually observed so far, for the TRAITS filter
+// panel. Grows as more of the collection gets indexed — never a fixed list.
+export async function getIndexedTraitCategories(kv) {
+  const list = await kv.list({ prefix: PIGEON_TRAIT_CATEGORY_PREFIX });
+  return list.keys.map(k => k.name.slice(PIGEON_TRAIT_CATEGORY_PREFIX.length)).sort();
+}
+
+// Every value actually observed for one trait category so far.
+export async function getIndexedTraitValues(kv, traitType) {
+  const prefix = `${PIGEON_TRAIT_VALUE_PREFIX}${traitType}:`;
+  const list = await kv.list({ prefix });
+  return list.keys.map(k => k.name.slice(prefix.length)).sort();
+}
+
+// Every currently-indexed Pigeon matching an exact trait/value pair, with
+// its cached metadata attached. Only searches what's been indexed so far —
+// callers must surface that as a real, disclosed limitation, not silence it.
+export async function getPigeonsByTraitValue(kv, traitType, value, limit = 48) {
+  const prefix = `${PIGEON_TRAIT_MEMBER_PREFIX}${traitType}:${value}:`;
+  const list = await kv.list({ prefix, limit });
+  const nftIds = list.keys.map(k => k.name.slice(prefix.length));
+  const metas = await Promise.all(nftIds.map(id => getPigeonMetaCached(kv, id)));
+  return nftIds
+    .map((nftId, i) => ({ nftId, meta: metas[i] }))
+    .filter(entry => entry.meta !== null);
+}
+
 // Kingdom Phase 1 — every King NFT needs a stable friendly ID for display
 // (e.g. "KING #0013") and future per-King history. The NFTokenID itself is
 // the real permanent identifier (used for votes/claims); this is just a
