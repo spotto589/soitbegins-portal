@@ -1,50 +1,33 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Σκύλλα SWAP — interactive prototype UI, all data and state local/mock.
+// Σκύλλα SWAP — Phase 1: Pigeon Search + Offer Builder.
 //
-// Nothing on this page connects a wallet, calls Xaman, signs anything, or
-// submits any transaction. Every "wallet", "Pigeon", and "swap request" on
-// this page is fabricated client-side. See the seam functions below.
+// Flow: SEARCH -> IDENTIFY/INSPECT -> SELECT -> BUILD OFFER -> REVIEW ->
+// SCYLLA OFFER (mock). Nothing here connects a wallet, calls Xaman, signs
+// anything, or submits any transaction — every Pigeon, owner, and offer on
+// this page is fabricated client-side.
 //
-// FUTURE ARCHITECTURE NOTE — two distinct kinds of function live here:
+// DATA-ACCESS LAYER — the real future integration seam. Every read the UI
+// does about a Pigeon goes through exactly these five functions, never a
+// raw mock array directly. Swapping mock data for a real Pigeon database /
+// XRPL indexer later means rewriting only this block:
 //
-//  1. getWalletPigeons / getTop15Holders / getNFTMetadata — these ARE the
-//     live implementation the UI calls today, just backed by mock data
-//     instead of the XRPL. When the real protocol is ready, only these
-//     three need to start doing real ledger lookups; every UI function
-//     that reads Pigeon data already goes through them, never touching a
-//     mock array directly.
+//   searchPigeons(query)
+//   getPigeon(id)
+//   getPigeonTraits(id)
+//   getPigeonOwner(id)
+//   getPigeonsByWallet(wallet)
 //
-//  2. SwapProtocolStub.{connectWallet, createSwapRequest, signSwap,
-//     combineSignatures, submitBatch} — these are NOT implemented and NOT
-//     called anywhere in this file. They exist purely as the documented
-//     seam for the next development phase (real wallet connect, dual
-//     signing, XRPL Batch submission with ALLORNOTHING). Wiring these up
-//     is explicitly out of scope for this prototype.
+// A second, SEPARATE set of functions represents the real wallet-connect /
+// signing / submission flow. These are NOT implemented and NOT called
+// anywhere in this file — wiring them up is the next development phase:
+//
+//   connectWallet(), createSwapRequest(), signSwap(), combineSignatures(),
+//   submitBatch()
 // ─────────────────────────────────────────────────────────────────────────
 
 const TOTAL_PIGEONS_MOCK = 3015;
-const YOUR_MOCK_WALLET = 'rMOCKPROTOTYPE0000000000000000WNR';
-const YOUR_MOCK_PIGEON_COUNT = 13;
-
-// Clearly-fake mock leaderboard. Every address is stamped with MOCK right
-// after the leading "r" so it reads as fabricated even once shortened.
-const TOP15_HOLDERS_MOCK = [
-  { addr: 'rMOCKA9f3K7dE2pQ8xL4vB6nH1sT0yR5c', count: 487 },
-  { addr: 'rMOCKB7e1L8fG3qR9yM5wC7oI2tU1zS6d', count: 391 },
-  { addr: 'rMOCKC5d0M9gH4rS0zN6xD8pJ3uV2aT7e', count: 302 },
-  { addr: 'rMOCKD3c8N0hI5sT1aO7yE9qK4vW3bU8f', count: 276 },
-  { addr: 'rMOCKE1b7O1iJ6tU2bP8zF0rL5wX4cV9g', count: 254 },
-  { addr: 'rMOCKF9a6P2jK7uV3cQ9aG1sM6xY5dW0h', count: 229 },
-  { addr: 'rMOCKG7z5Q3kL8vW4dR0bH2tN7yZ6eX1i', count: 201 },
-  { addr: 'rMOCKH5y4R4lM9wX5eS1cI3uO8zA7fY2j', count: 188 },
-  { addr: 'rMOCKI3x3S5mN0xY6fT2dJ4vP9aB8gZ3k', count: 172 },
-  { addr: 'rMOCKJ1w2T6nO1yZ7gU3eK5wQ0bC9hA4l', count: 159 },
-  { addr: 'rMOCKK9v1U7oP2zA8hV4fL6xR1cD0iB5m', count: 143 },
-  { addr: 'rMOCKL7u0V8pQ3aB9iW5gM7yS2dE1jC6n', count: 131 },
-  { addr: 'rMOCKM5t9W9qR4bC0jX6hN8zT3eF2kD7o', count: 122 },
-  { addr: 'rMOCKN3s8X0rS5cD1kY7iO9aU4fG3lE8p', count: 111 },
-  { addr: 'rMOCKO1r7Y1sT6dE2lZ8jP0bV5gH4mF9q', count: 103 },
-];
+const YOUR_WALLET_MOCK = 'rMOCKY0UPR0T0TYPE00000000000000W';
+const YOUR_PIGEON_NUMBERS = [456, 789, 1001, 1044];
 
 const SWAP_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -52,7 +35,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-<title>Σκύλλα SWAP :: PR0T0TYPE</title>
+<title>Σκύλλα SWAP :: P!GE0N SEARCH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -93,7 +76,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (prefers-reduced-motion: reduce){
     canvas#staticBg{ animation:none; }
   }
-  .page{ max-width:900px; width:100%; position:relative; z-index:1; }
+  .page{ max-width:820px; width:100%; position:relative; z-index:1; }
   a.back-link{
     display:inline-block;
     font-size:10px;
@@ -120,21 +103,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#00fff2;
     text-shadow:0 0 8px rgba(0,255,242,0.4);
     text-align:center;
-    margin-bottom:1.5rem;
+    margin-bottom:1rem;
     text-transform:uppercase;
   }
-  .sw-status-lines{
+  .sw-eyebrow{
     text-align:center;
     font-size:11px;
-    letter-spacing:0.1em;
-    line-height:1.9;
-    color:rgba(232,232,232,0.45);
-    margin-bottom:2.5rem;
+    letter-spacing:0.2em;
+    color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.4);
+    margin-bottom:2rem;
     text-transform:uppercase;
-  }
-  .sw-status-lines .offline{
-    color:#ff003c;
-    text-shadow:0 0 6px rgba(255,0,60,0.4);
   }
 
   .sw-panel{
@@ -143,42 +122,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:1.5rem;
     margin-bottom:1.75rem;
   }
-  .sw-panel-title{
-    font-size:11px;
-    letter-spacing:0.25em;
-    color:#39ff14;
-    text-shadow:0 0 6px rgba(57,255,20,0.4);
-    text-align:center;
-    margin-bottom:0.25rem;
-    text-transform:uppercase;
-  }
-  .sw-panel-sub{
-    font-size:10px;
-    letter-spacing:0.1em;
-    color:rgba(232,232,232,0.3);
-    text-align:center;
-    margin-bottom:1.25rem;
-    text-transform:uppercase;
-  }
   .mock-note{
     text-align:center;
     font-size:9px;
     letter-spacing:0.1em;
     color:rgba(0,255,242,0.55);
-    margin-bottom:1rem;
+    margin-bottom:1.1rem;
     text-transform:uppercase;
   }
 
-  /* ---- Target node input ---- */
-  .target-input-row{
+  /* ---- search ---- */
+  .search-row{
     display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:0.75rem;
+    gap:0.6rem;
+    margin-bottom:0.5rem;
+    flex-wrap:wrap;
   }
-  input.wallet-input{
-    width:100%;
-    max-width:520px;
+  input.search-input{
+    flex:1 1 260px;
     background:#000;
     border:1px solid rgba(57,255,20,0.35);
     color:#e8e8e8;
@@ -186,56 +147,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-size:12px;
     letter-spacing:0.05em;
     padding:0.75em 0.9em;
-    text-transform:none;
   }
-  input.wallet-input::placeholder{ color:rgba(232,232,232,0.3); text-transform:uppercase; }
-  .or-divider{
-    font-size:10px;
-    letter-spacing:0.3em;
-    color:rgba(232,232,232,0.3);
-    margin:0.35rem 0;
-  }
-  select.mono-select{
-    width:100%;
-    max-width:520px;
-    background:#000;
-    border:1px solid rgba(0,255,242,0.35);
-    color:#00fff2;
+  input.search-input::placeholder{ color:rgba(232,232,232,0.3); text-transform:uppercase; }
+  .search-btn{
+    flex:0 0 auto;
+    background:transparent;
+    border:1px solid rgba(57,255,20,0.6);
+    color:#39ff14;
     font-family:inherit;
     font-size:12px;
-    letter-spacing:0.05em;
-    padding:0.7em 0.9em;
-    text-transform:uppercase;
+    letter-spacing:0.12em;
+    padding:0.75em 1.4em;
     cursor:pointer;
-  }
-  select.mono-select option{ background:#08080a; color:#e8e8e8; }
-
-  /* ---- Collection headers ---- */
-  .node-header{
-    text-align:center;
-    margin-bottom:1.1rem;
-  }
-  .node-header .nh-label{
-    font-size:11px;
-    letter-spacing:0.25em;
-    color:#39ff14;
-    text-shadow:0 0 6px rgba(57,255,20,0.4);
-    margin-bottom:0.4rem;
     text-transform:uppercase;
   }
-  .swap-side.theirs .node-header .nh-label,
-  #targetSection .node-header .nh-label{ color:#00fff2; text-shadow:0 0 6px rgba(0,255,242,0.4); }
-  .node-header .nh-addr{
-    font-size:13px;
-    letter-spacing:0.03em;
-    color:#e8e8e8;
-    margin-bottom:0.3rem;
-    word-break:break-all;
-  }
-  .node-header .nh-count{
-    font-size:11px;
-    letter-spacing:0.1em;
-    color:rgba(232,232,232,0.5);
+  .search-btn:hover{ background:rgba(57,255,20,0.1); }
+  .search-hint{
+    text-align:center;
+    font-size:10px;
+    letter-spacing:0.05em;
+    color:rgba(232,232,232,0.3);
+    margin-bottom:1.25rem;
     text-transform:uppercase;
   }
   .placeholder-note{
@@ -246,63 +178,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:1.5rem 0;
     text-transform:uppercase;
   }
-
-  /* ---- Search / filter / sort controls ---- */
-  .browse-controls{
-    display:flex;
-    flex-wrap:wrap;
-    gap:0.6rem;
-    margin-bottom:1.1rem;
-  }
-  input.search-input{
-    flex:1 1 200px;
-    background:#000;
-    border:1px solid rgba(57,255,20,0.3);
-    color:#e8e8e8;
-    font-family:inherit;
-    font-size:11px;
-    letter-spacing:0.05em;
-    padding:0.6em 0.8em;
-  }
-  input.search-input::placeholder{ color:rgba(232,232,232,0.3); text-transform:uppercase; }
-  select.filter-select, select.sort-select{
-    flex:0 0 auto;
-    background:#000;
-    border:1px solid rgba(57,255,20,0.3);
-    color:#39ff14;
-    font-family:inherit;
-    font-size:11px;
-    letter-spacing:0.05em;
-    padding:0.6em 0.8em;
-    text-transform:uppercase;
-    cursor:pointer;
-  }
-  select.filter-select option, select.sort-select option{ background:#08080a; color:#e8e8e8; }
-
-  /* ---- Pigeon card grid ---- */
-  .swap-pigeon-list{
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
-    gap:0.75rem;
-    margin-bottom:1rem;
-  }
-  .swap-pigeon-card{
-    border:1px solid rgba(57,255,20,0.25);
-    padding:0.6rem;
+  .results-note{
     text-align:center;
-    cursor:pointer;
-    transition:border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    font-size:10px;
+    letter-spacing:0.08em;
+    color:rgba(232,232,232,0.35);
+    margin-bottom:0.75rem;
+    text-transform:uppercase;
   }
-  #targetSection .swap-pigeon-card{ border-color:rgba(0,255,242,0.25); }
-  .swap-pigeon-card.selected{
-    border-color:#39ff14;
-    box-shadow:0 0 12px rgba(57,255,20,0.3) inset;
-  }
-  #targetSection .swap-pigeon-card.selected{
-    border-color:#00fff2;
-    box-shadow:0 0 12px rgba(0,255,242,0.3) inset;
-  }
-  .swap-pigeon-img{
+
+  /* ---- pigeon image box (shared) ---- */
+  .pigeon-img-box{
     aspect-ratio:1;
     display:flex;
     align-items:center;
@@ -315,50 +201,187 @@ const SWAP_HTML = `<!DOCTYPE html>
       transparent 12px
     );
     border:1px dashed rgba(57,255,20,0.15);
-    font-size:9px;
+    font-size:10px;
     letter-spacing:0.1em;
     color:rgba(232,232,232,0.3);
-    margin-bottom:0.5rem;
-    position:relative;
   }
-  .swap-pigeon-card.selected .swap-pigeon-img::after{
-    content:'✓ SELECTED';
-    position:absolute;
-    inset:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:rgba(57,255,20,0.15);
-    color:#39ff14;
-    font-size:9px;
-    letter-spacing:0.08em;
-    font-weight:700;
+
+  /* ---- result cards ---- */
+  .result-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(170px, 1fr));
+    gap:0.9rem;
   }
-  #targetSection .swap-pigeon-card.selected .swap-pigeon-img::after{
-    background:rgba(0,255,242,0.15);
-    color:#00fff2;
+  .result-card{
+    border:1px solid rgba(57,255,20,0.25);
+    overflow:hidden;
   }
-  .swap-pigeon-num{
-    font-size:11px;
+  .result-card .pigeon-img-box{ border:none; border-bottom:1px solid rgba(57,255,20,0.15); }
+  .result-card-body{ padding:0.7rem; }
+  .result-num{
+    font-size:12px;
     letter-spacing:0.05em;
     color:#e8e8e8;
-    margin-bottom:0.25rem;
-    text-transform:uppercase;
+    margin-bottom:0.5rem;
   }
-  .swap-pigeon-trait{
-    font-size:9px;
-    letter-spacing:0.05em;
-    color:rgba(232,232,232,0.4);
-    margin-bottom:0.3rem;
-    text-transform:uppercase;
+  .result-trait-line{
+    font-size:10px;
+    letter-spacing:0.03em;
+    color:rgba(232,232,232,0.55);
+    margin-bottom:0.2rem;
   }
-  .swap-pigeon-status{
-    font-size:9px;
+  .result-trait-line .tl-label{ color:rgba(232,232,232,0.35); }
+  .view-btn{
+    display:block;
+    width:100%;
+    margin-top:0.6rem;
+    background:transparent;
+    border:1px solid rgba(0,255,242,0.5);
+    color:#00fff2;
+    font-family:inherit;
+    font-size:10px;
     letter-spacing:0.1em;
-    color:rgba(57,255,20,0.6);
+    padding:0.5em;
+    cursor:pointer;
     text-transform:uppercase;
   }
-  #targetSection .swap-pigeon-status{ color:rgba(0,255,242,0.6); }
+  .view-btn:hover{ background:rgba(0,255,242,0.1); }
+
+  /* ---- detail / builder shared ---- */
+  .detail-eyebrow{
+    text-align:center;
+    font-size:11px;
+    letter-spacing:0.2em;
+    color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.4);
+    margin-bottom:0.75rem;
+    text-transform:uppercase;
+  }
+  .detail-num{
+    text-align:center;
+    font-size:22px;
+    letter-spacing:0.05em;
+    color:#fff;
+    margin-bottom:1.25rem;
+  }
+  .detail-img-large{
+    width:100%;
+    max-width:280px;
+    margin:0 auto 1.25rem;
+  }
+  .detail-img-large.small{ max-width:180px; }
+  .detail-field{
+    display:flex;
+    justify-content:space-between;
+    max-width:420px;
+    margin:0 auto 0.7rem;
+    font-size:12px;
+    letter-spacing:0.05em;
+  }
+  .df-label{ color:rgba(232,232,232,0.45); text-transform:uppercase; }
+  .df-value{ color:#e8e8e8; text-align:right; word-break:break-all; }
+  .detail-traits-title{
+    text-align:center;
+    font-size:11px;
+    letter-spacing:0.2em;
+    color:rgba(232,232,232,0.4);
+    margin:1.25rem 0 0.75rem;
+    text-transform:uppercase;
+  }
+  .trait-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+    gap:0.6rem;
+    max-width:520px;
+    margin:0 auto 0.5rem;
+  }
+  .trait-cell{
+    border:1px solid rgba(57,255,20,0.2);
+    padding:0.6rem 0.75rem;
+    text-align:center;
+  }
+  .trait-cell .tc-label{
+    font-size:9px;
+    letter-spacing:0.15em;
+    color:rgba(232,232,232,0.4);
+    margin-bottom:0.35rem;
+    text-transform:uppercase;
+  }
+  .trait-cell .tc-value{
+    font-size:13px;
+    letter-spacing:0.03em;
+    color:#39ff14;
+    text-shadow:0 0 4px rgba(57,255,20,0.3);
+  }
+  .detail-actions{
+    display:flex;
+    justify-content:center;
+    gap:0.75rem;
+    flex-wrap:wrap;
+    margin-top:1.5rem;
+  }
+  .secondary-btn{
+    background:transparent;
+    border:1px solid rgba(232,232,232,0.3);
+    color:rgba(232,232,232,0.6);
+    font-family:inherit;
+    font-size:12px;
+    letter-spacing:0.1em;
+    padding:0.75em 1.4em;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .secondary-btn:hover{ background:rgba(232,232,232,0.08); }
+  .action-btn{
+    background:transparent;
+    border:1px solid rgba(57,255,20,0.6);
+    color:#39ff14;
+    font-family:inherit;
+    font-size:12px;
+    letter-spacing:0.12em;
+    padding:0.75em 1.4em;
+    cursor:pointer;
+    text-transform:uppercase;
+    text-shadow:0 0 6px rgba(57,255,20,0.4);
+  }
+  .action-btn:hover:not(:disabled){ background:rgba(57,255,20,0.1); }
+  .action-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+
+  /* ---- offer builder ---- */
+  .section-divider{
+    text-align:center;
+    font-size:11px;
+    letter-spacing:0.25em;
+    color:#00fff2;
+    text-shadow:0 0 6px rgba(0,255,242,0.4);
+    margin:1.75rem 0 1rem;
+    padding-top:1.25rem;
+    border-top:1px dashed rgba(232,232,232,0.15);
+    text-transform:uppercase;
+  }
+  .checklist{
+    max-width:420px;
+    margin:0 auto 0.75rem;
+    display:flex;
+    flex-direction:column;
+    gap:0.5rem;
+  }
+  .checklist-item{
+    display:flex;
+    align-items:center;
+    gap:0.6em;
+    border:1px solid rgba(57,255,20,0.2);
+    padding:0.6em 0.9em;
+    cursor:pointer;
+    font-size:12px;
+    letter-spacing:0.05em;
+  }
+  .checklist-item:hover{ border-color:rgba(57,255,20,0.4); }
+  .checklist-item.checked{
+    border-color:#39ff14;
+    box-shadow:0 0 8px rgba(57,255,20,0.25) inset;
+  }
+  .checklist-item input{ accent-color:#39ff14; }
   .selection-count{
     text-align:center;
     font-size:11px;
@@ -366,133 +389,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#39ff14;
     text-shadow:0 0 6px rgba(57,255,20,0.4);
     text-transform:uppercase;
-  }
-  #targetSection .selection-count{ color:#00fff2; text-shadow:0 0 6px rgba(0,255,242,0.4); }
-  .empty-grid-note{
-    text-align:center;
-    font-size:11px;
-    letter-spacing:0.08em;
-    color:rgba(232,232,232,0.35);
-    padding:1.5rem 0;
-    text-transform:uppercase;
-  }
-
-  /* ---- Your node wallet-connect stub ---- */
-  .your-node-connect{
-    text-align:center;
-    margin-bottom:1.25rem;
-  }
-  .connect-btn-disabled{
-    display:inline-block;
-    background:transparent;
-    border:1px solid rgba(57,255,20,0.25);
-    color:rgba(232,232,232,0.3);
-    font-family:inherit;
-    font-size:11px;
-    letter-spacing:0.12em;
-    padding:0.6em 1.3em;
-    text-transform:uppercase;
-    cursor:not-allowed;
-    user-select:none;
-  }
-
-  /* ---- Exchange visual ---- */
-  .exchange-panel{
-    text-align:center;
-  }
-  .exchange-side-label{
-    font-size:11px;
-    letter-spacing:0.2em;
-    margin-bottom:0.6rem;
-    text-transform:uppercase;
-  }
-  .exchange-side-label.offer{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); }
-  .exchange-side-label.receive{ color:#00fff2; text-shadow:0 0 6px rgba(0,255,242,0.4); }
-  .exchange-chip-row{
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    gap:0.5rem;
-    min-height:2.2em;
-    margin-bottom:1.25rem;
-  }
-  .exchange-chip{
-    border:1px solid rgba(232,232,232,0.25);
-    padding:0.4em 0.75em;
-    font-size:11px;
-    letter-spacing:0.05em;
-    color:#e8e8e8;
-    text-transform:uppercase;
-  }
-  .exchange-chip.empty{
-    color:rgba(232,232,232,0.3);
-    border-style:dashed;
-    border-color:rgba(232,232,232,0.2);
-  }
-  .exchange-indicator{
-    font-size:26px;
-    letter-spacing:0.15em;
-    color:#fff;
-    text-shadow:0 0 12px rgba(57,255,20,0.35), 0 0 12px rgba(0,255,242,0.35);
-    margin:0.5rem 0 1rem;
-    text-transform:none;
-  }
-  .exchange-indicator .ei-word{
-    display:block;
-    font-size:11px;
-    letter-spacing:0.3em;
-    margin-top:0.35rem;
-    color:rgba(232,232,232,0.5);
-    text-transform:none;
-  }
-
-  /* ---- XRP adjustment ---- */
-  .xrp-toggle-row{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:0.9rem;
-    margin-bottom:1rem;
-  }
-  .xrp-toggle-label{
-    font-size:11px;
-    letter-spacing:0.1em;
-    color:rgba(232,232,232,0.5);
-    text-transform:uppercase;
-  }
-  .xrp-toggle-btn{
-    background:transparent;
-    border:1px solid rgba(57,255,20,0.4);
-    color:rgba(232,232,232,0.5);
-    font-family:inherit;
-    font-size:11px;
-    letter-spacing:0.15em;
-    padding:0.5em 1.1em;
-    cursor:pointer;
-    text-transform:uppercase;
-  }
-  .xrp-toggle-btn.on{
-    color:#39ff14;
-    border-color:#39ff14;
-    text-shadow:0 0 6px rgba(57,255,20,0.5);
-  }
-  .xrp-off-note, .xrp-on-block{ text-align:center; }
-  .xrp-off-note{
-    font-size:12px;
-    letter-spacing:0.1em;
-    color:rgba(232,232,232,0.35);
-    text-transform:uppercase;
-  }
-  .xrp-amount-label{
-    font-size:10px;
-    letter-spacing:0.15em;
-    color:rgba(232,232,232,0.4);
     margin-bottom:0.5rem;
-    text-transform:uppercase;
   }
-  input.xrp-amount-input{
+  .xrp-amount-input{
+    display:block;
     width:100%;
     max-width:220px;
+    margin:0 auto;
     background:#000;
     border:1px solid rgba(57,255,20,0.35);
     color:#39ff14;
@@ -501,156 +404,97 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-size:15px;
     letter-spacing:0.05em;
     padding:0.6em;
-    margin-bottom:1rem;
   }
-  .xrp-direction-row{
-    display:flex;
-    justify-content:center;
-    gap:0.6rem;
-  }
-  .xrp-dir-btn{
-    background:transparent;
-    border:1px solid rgba(232,232,232,0.3);
-    color:rgba(232,232,232,0.5);
-    font-family:inherit;
-    font-size:11px;
-    letter-spacing:0.1em;
-    padding:0.6em 1.1em;
-    cursor:pointer;
-    text-transform:uppercase;
-  }
-  .xrp-dir-btn.active-pay{
-    color:#ff003c;
-    border-color:#ff003c;
-    text-shadow:0 0 6px rgba(255,0,60,0.4);
-  }
-  .xrp-dir-btn.active-receive{
-    color:#39ff14;
-    border-color:#39ff14;
-    text-shadow:0 0 6px rgba(57,255,20,0.4);
-  }
-
-  /* ---- Live summary ---- */
-  .summary-box{
-    border:1px dashed rgba(57,255,20,0.4);
-    padding:1.5rem;
+  .offer-preview-list{
     text-align:center;
-    margin-bottom:1.75rem;
-  }
-  .summary-title{
-    font-size:12px;
-    letter-spacing:0.25em;
-    color:#fff;
-    margin-bottom:0.3rem;
-    text-transform:none;
-  }
-  .summary-subtitle{
-    font-size:11px;
-    letter-spacing:0.2em;
-    color:rgba(232,232,232,0.45);
-    margin-bottom:1.25rem;
-    text-transform:uppercase;
-  }
-  .summary-col-label{
-    font-size:10px;
-    letter-spacing:0.2em;
-    margin-bottom:0.5rem;
-    text-transform:uppercase;
-  }
-  .summary-col-label.give{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); }
-  .summary-col-label.receive{ color:#00fff2; text-shadow:0 0 6px rgba(0,255,242,0.4); }
-  .summary-list{
     font-size:12px;
     line-height:1.9;
     color:#e8e8e8;
-    margin-bottom:1.1rem;
     min-height:1.9em;
   }
-  .summary-list .empty-line{ color:rgba(232,232,232,0.3); }
-  .summary-xrp-line{ color:#ffd700; text-shadow:0 0 5px rgba(255,215,0,0.4); }
-  .summary-row{
-    display:flex;
-    justify-content:space-between;
-    max-width:340px;
-    margin:0 auto 0.65rem;
-    font-size:11px;
-    letter-spacing:0.1em;
+  .offer-preview-list .empty-line{ color:rgba(232,232,232,0.3); }
+  .offer-preview-list .xrp-line{ color:#ffd700; text-shadow:0 0 5px rgba(255,215,0,0.4); }
+
+  /* ---- final summary card ---- */
+  .final-card{
+    border:1px dashed rgba(57,255,20,0.45);
+    padding:1.5rem;
+    text-align:center;
+    margin-top:1.75rem;
+  }
+  .final-card-title{
+    font-size:12px;
+    letter-spacing:0.25em;
+    color:#fff;
+    margin-bottom:1.1rem;
     text-transform:uppercase;
   }
-  .summary-row .label{ color:rgba(232,232,232,0.4); }
-  .summary-row .value{ color:#e8e8e8; }
-  .summary-row .value.offline{ color:#ff003c; text-shadow:0 0 6px rgba(255,0,60,0.4); }
-  .summary-row .value.atomic{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); }
-
-  /* ---- Generate / confirmation ---- */
-  .generate-wrap{ text-align:center; margin-bottom:1.5rem; }
-  .generate-btn{
-    background:transparent;
-    border:1px solid rgba(57,255,20,0.6);
-    color:#39ff14;
-    font-family:inherit;
+  .final-card-label{
+    font-size:10px;
+    letter-spacing:0.2em;
+    color:rgba(232,232,232,0.4);
+    margin:0.9rem 0 0.4rem;
+    text-transform:uppercase;
+  }
+  .final-card-value{
     font-size:13px;
-    letter-spacing:0.15em;
-    padding:0.9em 1.8em;
-    cursor:pointer;
-    text-transform:uppercase;
-    text-shadow:0 0 6px rgba(57,255,20,0.5);
+    color:#e8e8e8;
+    line-height:1.7;
   }
-  .generate-btn:hover:not(:disabled){ background:rgba(57,255,20,0.1); }
-  .generate-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+  .final-card-status{
+    margin-top:1.1rem;
+    font-size:11px;
+    letter-spacing:0.15em;
+    color:#ff003c;
+    text-shadow:0 0 6px rgba(255,0,60,0.4);
+    text-transform:uppercase;
+  }
 
+  /* ---- review screen ---- */
+  .review-block{ max-width:460px; margin:0 auto; text-align:center; }
+  .review-label{
+    font-size:10px;
+    letter-spacing:0.2em;
+    color:rgba(232,232,232,0.4);
+    margin:1.1rem 0 0.4rem;
+    text-transform:uppercase;
+  }
+  .review-block .review-label:first-child{ margin-top:0; }
+  .review-value{
+    font-size:13px;
+    color:#e8e8e8;
+    line-height:1.7;
+  }
+
+  /* ---- offer confirmation ---- */
   .confirm-panel{
     border:1px solid rgba(57,255,20,0.5);
     background:#000;
     padding:1.5rem;
-    margin-bottom:1.75rem;
+    margin-top:1.75rem;
+    text-align:center;
   }
   .confirm-title{
-    text-align:center;
-    font-size:12px;
-    letter-spacing:0.15em;
+    font-size:13px;
+    letter-spacing:0.05em;
     color:#39ff14;
     text-shadow:0 0 6px rgba(57,255,20,0.5);
+    margin-bottom:1rem;
+  }
+  .confirm-status-row{
+    font-size:12px;
+    letter-spacing:0.1em;
+    color:#ffd700;
+    text-shadow:0 0 5px rgba(255,215,0,0.4);
     margin-bottom:1.1rem;
     text-transform:uppercase;
   }
-  .confirm-row{
-    display:flex;
-    justify-content:space-between;
-    max-width:420px;
-    margin:0 auto 0.6rem;
-    font-size:12px;
-    letter-spacing:0.05em;
-  }
-  .confirm-row .label{ color:rgba(232,232,232,0.45); text-transform:uppercase; }
-  .confirm-row .value{ color:#e8e8e8; word-break:break-all; text-align:right; }
-  .confirm-row .value.status{ color:#ffd700; text-shadow:0 0 5px rgba(255,215,0,0.4); text-transform:uppercase; }
-  .confirm-actions{
-    display:flex;
-    justify-content:center;
-    gap:0.75rem;
-    margin-top:1.25rem;
-  }
-  .confirm-btn{
-    background:transparent;
-    font-family:inherit;
+  .offer-disclaimer{
     font-size:11px;
-    letter-spacing:0.1em;
-    padding:0.6em 1.2em;
-    cursor:pointer;
-    text-transform:uppercase;
-  }
-  .confirm-btn.cancel{ border:1px solid rgba(255,0,60,0.5); color:#ff003c; }
-  .confirm-btn.cancel:hover{ background:rgba(255,0,60,0.08); }
-  .confirm-btn.copy{ border:1px solid rgba(0,255,242,0.5); color:#00fff2; }
-  .confirm-btn.copy:hover{ background:rgba(0,255,242,0.08); }
-  .copy-feedback{
-    text-align:center;
-    font-size:10px;
-    letter-spacing:0.1em;
-    color:#00fff2;
-    margin-top:0.6rem;
-    min-height:1.4em;
+    line-height:2;
+    letter-spacing:0.08em;
+    color:#ff003c;
+    text-shadow:0 0 4px rgba(255,0,60,0.35);
     text-transform:uppercase;
   }
 
@@ -661,10 +505,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:rgba(232,232,232,0.3);
     margin-top:2.5rem;
     text-transform:uppercase;
-  }
-
-  @media (min-width:700px){
-    .grid-2col{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
   }
 </style>
 </head>
@@ -677,129 +517,99 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <h1>Σκύλλα</h1>
     <div class="sw-subtitle">SWAP PR0T0C0L</div>
-    <div class="sw-status-lines">
-      // TRUSTLESS ASSET EXCHANGE<br>
-      // PR0T0C0L STATUS :: <span class="offline">0FFL!NE (PR0T0TYPE M0DE)</span>
+    <div class="sw-eyebrow" id="screenEyebrow">// P!GE0N SEARCH</div>
+
+    <!-- SCREEN 1: SEARCH -->
+    <div class="sw-panel" id="screenSearch">
+      <div class="search-row">
+        <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0NS...">
+        <button class="search-btn" id="searchBtn">[ SEARCH ]</button>
+      </div>
+      <div class="search-hint">TRY A NUMBER, A TRA!T (e.g. PH0EN!X, BLUE), "BACKGR0UND: CYAN", 0R A WALLET ADDRESS</div>
+      <div class="mock-note">// M0CK DATA — S!MULATED P!GE0N DATABASE</div>
+      <div class="results-note" id="resultsNote" style="display:none;"></div>
+      <div class="result-grid" id="searchResultsGrid"></div>
+      <div class="placeholder-note" id="searchPlaceholder">ENTER A P!GE0N NUMBER, TRA!T, 0R WALLET T0 BEG!N</div>
     </div>
 
-    <!-- TARGET NODE input -->
-    <div class="sw-panel" id="targetInputPanel">
-      <div class="sw-panel-title">// TARGET N0DE</div>
-      <div class="target-input-row">
-        <input class="wallet-input" id="targetWalletInput" maxlength="60" placeholder="ENTER WALLET ADDRESS...">
-        <div class="or-divider">0R</div>
-        <select class="mono-select" id="top15Select">
-          <option value="">[ T0P 15 P!GE0N H0LDERS ▼ ]</option>
-        </select>
+    <!-- SCREEN 2: DETAIL -->
+    <div class="sw-panel" id="screenDetail" style="display:none;">
+      <div class="detail-eyebrow">// P!GE0N !DENT!F!ED</div>
+      <div class="detail-num" id="detailNum"></div>
+      <div class="detail-img-large pigeon-img-box">[ IMAGE ]</div>
+      <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
+      <div class="detail-traits-title">TRAITS</div>
+      <div class="trait-grid" id="detailTraits"></div>
+      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value">HELD</span></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="backToSearchBtn">[ ← BACK T0 SEARCH ]</button>
+        <button class="action-btn" id="offerForBtn">[ OFFER F0R TH!S P!GE0N ]</button>
       </div>
     </div>
 
-    <!-- TARGET PIGEON COLLECTION -->
-    <div class="sw-panel" id="targetSection">
-      <div class="node-header">
-        <div class="nh-label">TARGET N0DE</div>
-        <div class="nh-addr" id="targetAddrLine">// AWA!T!NG !NPUT</div>
-        <div class="nh-count" id="targetCountLine"></div>
+    <!-- SCREEN 3: OFFER BUILDER -->
+    <div class="sw-panel" id="screenBuilder" style="display:none;">
+      <div class="detail-eyebrow">OFFER BUILDER</div>
+      <div class="final-card-label" style="margin-top:0;">TARGET</div>
+      <div class="detail-num" id="builderTargetNum"></div>
+      <div class="detail-img-large small pigeon-img-box">[ IMAGE ]</div>
+      <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="builderTargetOwner"></span></div>
+
+      <div class="section-divider">YOU OFFER</div>
+      <div class="final-card-label" style="margin-top:0;">YOUR P!GE0NS</div>
+      <div class="checklist" id="yourPigeonChecklist"></div>
+      <div class="selection-count" id="builderSelectionCount">SELECTED :: 0 P!GE0NS</div>
+
+      <div class="section-divider">XRP OFFER</div>
+      <input class="xrp-amount-input" id="builderXrpInput" type="number" min="0" step="0.01" value="0.00">
+
+      <div class="section-divider">YOUR OFFER</div>
+      <div class="offer-preview-list" id="builderOfferPreview"></div>
+
+      <div class="final-card">
+        <div class="final-card-title">SCYLLA OFFER</div>
+        <div class="final-card-label">TARGET</div>
+        <div class="final-card-value" id="finalTarget"></div>
+        <div class="final-card-label">YOU OFFER</div>
+        <div class="final-card-value" id="finalOffer"></div>
+        <div class="final-card-status">STATUS :: DRAFT</div>
       </div>
-      <div id="targetBrowseArea" style="display:none;">
-        <div class="mock-note">// M0CK DATA — S!MULATED H0LD!NGS, N0T A L!VE XRPL QUERY</div>
-        <div class="browse-controls">
-          <input class="search-input" id="targetSearchInput" placeholder="SEARCH P!GE0NS...">
-          <select class="filter-select" id="targetFilterSelect">
-            <option value="ALL">[ ALL ▼ ]</option>
-            <option value="SELECTED">SELECTED</option>
-            <option value="UNSELECTED">UNSELECTED</option>
-          </select>
-          <select class="sort-select" id="targetSortSelect">
-            <option value="NUM_ASC">[ S0RT ▼ ] NUMBER ▲</option>
-            <option value="NUM_DESC">NUMBER ▼</option>
-            <option value="STATIC_ASC">STAT!C ▲</option>
-            <option value="STATIC_DESC">STAT!C ▼</option>
-          </select>
+
+      <div class="detail-actions">
+        <button class="secondary-btn" id="backToDetailBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="reviewOfferBtn" disabled>[ REVIEW OFFER ]</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 4: REVIEW -->
+    <div class="sw-panel" id="screenReview" style="display:none;">
+      <div class="detail-eyebrow">// SCYLLA OFFER REVIEW</div>
+      <div class="review-block">
+        <div class="review-label">YOU ARE REQUESTING</div>
+        <div class="review-value" id="reviewTarget"></div>
+        <div class="review-label">FROM</div>
+        <div class="review-value" id="reviewOwner"></div>
+        <div class="review-label">YOU ARE OFFERING</div>
+        <div class="review-value" id="reviewOffering"></div>
+      </div>
+
+      <div class="detail-actions">
+        <button class="secondary-btn" id="backToBuilderBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="generateMockOfferBtn">[ GENERATE MOCK OFFER ]</button>
+      </div>
+
+      <div class="confirm-panel" id="offerConfirmPanel" style="display:none;">
+        <div class="confirm-title" id="offerConfirmTitle"></div>
+        <div class="confirm-status-row">STATUS :: DRAFT</div>
+        <div class="offer-disclaimer">
+          NO TRANSACTION CREATED<br>
+          NO WALLET CONNECTED<br>
+          NO ASSETS MOVED
         </div>
-        <div class="swap-pigeon-list" id="targetGrid"></div>
-        <div class="selection-count" id="targetSelectionCount">SELECTED :: 0 P!GE0NS</div>
-      </div>
-      <div class="placeholder-note" id="targetPlaceholder">ENTER A WALLET 0R SELECT A T0P 15 H0LDER T0 BEGIN</div>
-    </div>
-
-    <!-- YOUR PIGEONS -->
-    <div class="sw-panel" id="yourSection">
-      <div class="node-header">
-        <div class="nh-label">Y0UR N0DE</div>
-        <div class="nh-addr">WALLET :: PR0T0TYPE</div>
-        <div class="nh-count">P!GE0NS HELD :: ${YOUR_MOCK_PIGEON_COUNT}</div>
-      </div>
-      <div class="your-node-connect">
-        <button class="connect-btn-disabled" disabled aria-disabled="true" title="PR0T0C0L 0FFL!NE :: N0T YET ACT!VE">[ C0NNECT WALLET ]</button>
-      </div>
-      <div class="mock-note">// M0CK DATA — WALLET N0T C0NNECTED</div>
-      <div class="swap-pigeon-list" id="yourGrid"></div>
-      <div class="selection-count" id="yourSelectionCount">0FFER!NG :: 0 P!GE0NS</div>
-    </div>
-
-    <!-- EXCHANGE VISUAL -->
-    <div class="sw-panel exchange-panel">
-      <div class="exchange-side-label offer">Y0U 0FFER</div>
-      <div class="exchange-chip-row" id="offerChipRow"></div>
-      <div class="exchange-indicator">⇅<span class="ei-word">Σκύλλα EXCHANGE</span></div>
-      <div class="exchange-side-label receive">Y0U RECE!VE</div>
-      <div class="exchange-chip-row" id="receiveChipRow"></div>
-    </div>
-
-    <!-- XRP ADJUSTMENT -->
-    <div class="sw-panel">
-      <div class="sw-panel-title">XRP ADJUSTMENT</div>
-      <div class="xrp-toggle-row">
-        <span class="xrp-toggle-label">!NCLUDE XRP</span>
-        <button class="xrp-toggle-btn" id="xrpToggleBtn">0FF</button>
-      </div>
-      <div id="xrpOffNote" class="xrp-off-note">XRP :: N0T !NCLUDED</div>
-      <div id="xrpOnBlock" class="xrp-on-block" style="display:none;">
-        <div class="xrp-amount-label">AM0UNT</div>
-        <input class="xrp-amount-input" id="xrpAmountInput" type="number" min="0" step="0.01" value="0.00">
-        <div class="xrp-direction-row">
-          <button class="xrp-dir-btn" id="xrpPayBtn">[ Y0U PAY ]</button>
-          <button class="xrp-dir-btn" id="xrpReceiveBtn">[ Y0U RECE!VE ]</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- LIVE SWAP SUMMARY -->
-    <div class="summary-box">
-      <div class="summary-title">Σκύλλα</div>
-      <div class="summary-subtitle">SWAP PR0P0SAL</div>
-      <div class="grid-2col">
-        <div>
-          <div class="summary-col-label give">Y0U G!VE</div>
-          <div class="summary-list" id="summaryGiveList"></div>
-        </div>
-        <div>
-          <div class="summary-col-label receive">Y0U RECE!VE</div>
-          <div class="summary-list" id="summaryReceiveList"></div>
+        <div class="detail-actions">
+          <button class="secondary-btn" id="newSearchBtn">[ NEW SEARCH ]</button>
         </div>
       </div>
-      <div class="summary-row"><span class="label">AT0M!C!TY</span><span class="value atomic">ALL 0R N0TH!NG</span></div>
-      <div class="summary-row"><span class="label">PR0T0C0L</span><span class="value">SCYLLA SWAP</span></div>
-      <div class="summary-row"><span class="label">STATUS</span><span class="value offline">PR0T0TYPE</span></div>
-    </div>
-
-    <div class="generate-wrap">
-      <button class="generate-btn" id="generateBtn" disabled>[ GENERATE SWAP REQUEST ]</button>
-    </div>
-
-    <div class="confirm-panel" id="confirmPanel" style="display:none;">
-      <div class="confirm-title">// SCYLLA SWAP REQUEST GENERATED</div>
-      <div class="confirm-row"><span class="label">SWAP !D</span><span class="value" id="confirmSwapId"></span></div>
-      <div class="confirm-row"><span class="label">C0UNTERPARTY</span><span class="value" id="confirmCounterparty"></span></div>
-      <div class="confirm-row"><span class="label">ASSETS</span><span class="value" id="confirmAssets"></span></div>
-      <div class="confirm-row"><span class="label">XRP</span><span class="value" id="confirmXrp"></span></div>
-      <div class="confirm-row"><span class="label">STATUS</span><span class="value status" id="confirmStatus"></span></div>
-      <div class="confirm-actions">
-        <button class="confirm-btn cancel" id="cancelSwapBtn">[ CANCEL ]</button>
-        <button class="confirm-btn copy" id="copySwapIdBtn">[ C0PY SWAP !D ]</button>
-      </div>
-      <div class="copy-feedback" id="copyFeedback"></div>
     </div>
 
     <div class="protocol-footer">TH!S !S A PR0T0TYPE !NTERFACE. N0 ASSETS CAN BE M0VED, S!GNED, 0R TRANSFERRED.</div>
@@ -808,8 +618,8 @@ const SWAP_HTML = `<!DOCTYPE html>
 <script>
 (function(){
 
-  // ---- Deterministic mock RNG so the same wallet always shows the same
-  // Pigeons within a session, instead of reshuffling on every render. ----
+  // ---- Deterministic mock RNG so the same Pigeon number always has the
+  // same traits/owner every time it's looked up. ----
   function mulberry32(seed){
     return function(){
       seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
@@ -825,105 +635,172 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   var TOTAL_PIGEONS_MOCK = ${TOTAL_PIGEONS_MOCK};
-  var YOUR_MOCK_WALLET = ${JSON.stringify(YOUR_MOCK_WALLET)};
-  var TOP15_HOLDERS_MOCK = ${JSON.stringify(TOP15_HOLDERS_MOCK)};
+  var YOUR_WALLET_MOCK = ${JSON.stringify(YOUR_WALLET_MOCK)};
+  var YOUR_PIGEON_NUMBERS = ${JSON.stringify(YOUR_PIGEON_NUMBERS)};
 
-  // ---- Live (mock-backed) data functions — the real integration seam.
-  // Everything in the UI reads Pigeon/holder data through these three,
-  // never a raw array, so swapping in real XRPL calls later only touches
-  // this block. ----
-  function getNFTMetadata(nftId){
-    var rnd = mulberry32(hashStr(nftId));
-    return { id: nftId, staticLevel: 1 + Math.floor(rnd() * 15) };
-  }
-  function getWalletPigeons(wallet, count){
-    var rnd = mulberry32(hashStr(wallet));
-    var seen = {};
-    var pigeons = [];
-    var guard = 0;
-    while (pigeons.length < count && guard < count * 20){
-      guard++;
-      var num = 1 + Math.floor(rnd() * TOTAL_PIGEONS_MOCK);
-      var key = String(num).padStart(4, '0');
-      if (seen[key]) continue;
-      seen[key] = true;
-      var id = wallet + ':' + key;
-      var meta = getNFTMetadata(id);
-      pigeons.push({ id: id, number: key, staticLevel: meta.staticLevel });
-    }
-    return pigeons;
-  }
-  function getTop15Holders(){
-    return TOP15_HOLDERS_MOCK;
+  var BACKGROUNDS = ['CYAN', 'MAGENTA', 'GREEN', 'BLACK', 'VOID', 'GOLD'];
+  var BODIES = ['STATIC', 'GLITCH', 'SOLID', 'CHROME', 'SHADOW'];
+  var EYES = ['RED', 'BLUE', 'GREEN', 'VOID', 'GOLD'];
+  var AURAS = ['NONE', 'NONE', 'NONE', 'NONE', 'PHOENIX', 'STORM'];
+
+  function pick(rnd, arr){ return arr[Math.floor(rnd() * arr.length)]; }
+
+  function pickAccessLevel(rnd){
+    var r = rnd();
+    if (r < 0.55) return 1;
+    if (r < 0.80) return 3;
+    if (r < 0.92) return 6;
+    if (r < 0.97) return 9;
+    if (r < 0.995) return 12;
+    return 15;
   }
 
-  // ---- True future seams — intentionally unimplemented and unused here.
-  // The real wallet-connect / dual-sign / Batch-submit flow plugs in here
-  // in the next development phase, not this one. ----
-  var SwapProtocolStub = {
-    connectWallet: function(){ throw new Error('not implemented — prototype only'); },
-    createSwapRequest: function(_proposal){ throw new Error('not implemented — prototype only'); },
-    signSwap: function(_request){ throw new Error('not implemented — prototype only'); },
-    combineSignatures: function(_a, _b){ throw new Error('not implemented — prototype only'); },
-    submitBatch: function(_combined){ throw new Error('not implemented — prototype only'); },
-  };
+  function mockOwnerForNumber(num){
+    var rnd = mulberry32(hashStr('owner:' + num));
+    var chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    var suffix = '';
+    for (var i = 0; i < 24; i++){ suffix += chars[Math.floor(rnd() * chars.length)]; }
+    return 'rMOCK' + suffix;
+  }
 
   function shortenAddr(addr){
     return addr.slice(0, 9) + '...' + addr.slice(-4);
   }
 
-  // ---- Client-side state ----
-  var state = {
-    targetWallet: null,
-    targetLabel: '',
-    targetPigeons: [],
-    targetSelected: {},
-    targetSearch: '',
-    targetFilter: 'ALL',
-    targetSort: 'NUM_ASC',
-    yourPigeons: getWalletPigeons(YOUR_MOCK_WALLET, ${YOUR_MOCK_PIGEON_COUNT}),
-    yourSelected: {},
-    xrpEnabled: false,
-    xrpAmount: 0,
-    xrpDirection: 'PAY',
-    swapRequest: null
+  // ---- The one place mock Pigeon records are built. Generated once for
+  // every number 1..TOTAL_PIGEONS_MOCK, deterministically, so repeated
+  // lookups of the same Pigeon always return identical data. ----
+  var PIGEON_LIBRARY = [];
+  (function buildLibrary(){
+    var yoursSet = {};
+    YOUR_PIGEON_NUMBERS.forEach(function(n){ yoursSet[n] = true; });
+    for (var num = 1; num <= TOTAL_PIGEONS_MOCK; num++){
+      var rnd = mulberry32(hashStr('pigeon:' + num));
+      var owner = yoursSet[num] ? YOUR_WALLET_MOCK : mockOwnerForNumber(num);
+      PIGEON_LIBRARY.push({
+        id: num,
+        number: num,
+        owner: owner,
+        attributes: [
+          { trait_type: 'Background', value: pick(rnd, BACKGROUNDS) },
+          { trait_type: 'Body', value: pick(rnd, BODIES) },
+          { trait_type: 'Eyes', value: pick(rnd, EYES) },
+          { trait_type: 'Aura', value: pick(rnd, AURAS) }
+        ],
+        accessLevel: pickAccessLevel(rnd)
+      });
+    }
+  })();
+
+  // ---- DATA-ACCESS LAYER (mock-backed today, real API/indexer later) ----
+  function getPigeon(id){
+    var num = parseInt(id, 10);
+    if (!num || num < 1 || num > TOTAL_PIGEONS_MOCK) return null;
+    return PIGEON_LIBRARY[num - 1];
+  }
+  function getPigeonTraits(id){
+    var p = getPigeon(id);
+    return p ? p.attributes : [];
+  }
+  function getPigeonOwner(id){
+    var p = getPigeon(id);
+    return p ? p.owner : null;
+  }
+  function getPigeonsByWallet(wallet){
+    var w = String(wallet).toUpperCase();
+    return PIGEON_LIBRARY.filter(function(p){ return p.owner.toUpperCase() === w; });
+  }
+  var MAX_RESULTS = 24;
+  function searchPigeons(query){
+    var q = String(query || '').trim();
+    if (!q) return [];
+
+    // Direct number / "#123" / "PIGEON #123" lookup.
+    var numMatch = q.match(/^#?\\s*(?:p!?ge?0?ns?\\s*#?)?\\s*(\\d+)$/i);
+    if (numMatch){
+      var p = getPigeon(parseInt(numMatch[1], 10));
+      return p ? [p] : [];
+    }
+
+    // Structured "TRAIT: VALUE" query.
+    var kv = q.match(/^([A-Za-z]+)\\s*:\\s*(.+)$/);
+    if (kv){
+      var key = kv[1].toUpperCase();
+      var val = kv[2].trim().toUpperCase();
+      return PIGEON_LIBRARY.filter(function(pg){
+        return pg.attributes.some(function(a){
+          return a.trait_type.toUpperCase() === key && a.value.toUpperCase().indexOf(val) !== -1;
+        });
+      }).slice(0, MAX_RESULTS);
+    }
+
+    // Wallet-address-shaped query.
+    if (/^r[a-z0-9]/i.test(q) && q.length >= 6){
+      var qUpper = q.toUpperCase();
+      return PIGEON_LIBRARY.filter(function(pg){
+        return pg.owner.toUpperCase().indexOf(qUpper) !== -1 || shortenAddr(pg.owner).toUpperCase().indexOf(qUpper) !== -1;
+      }).slice(0, MAX_RESULTS);
+    }
+
+    // Generic free-text: match any trait value.
+    var qUp = q.toUpperCase();
+    return PIGEON_LIBRARY.filter(function(pg){
+      return pg.attributes.some(function(a){ return a.value.toUpperCase().indexOf(qUp) !== -1; });
+    }).slice(0, MAX_RESULTS);
+  }
+
+  // ---- True future seams — intentionally unimplemented and unused here.
+  // The real wallet-connect / dual-sign / Batch-submit flow plugs in here
+  // in a later development phase, not this one. ----
+  var SwapProtocolStub = {
+    connectWallet: function(){ throw new Error('not implemented — prototype only'); },
+    createSwapRequest: function(_proposal){ throw new Error('not implemented — prototype only'); },
+    signSwap: function(_request){ throw new Error('not implemented — prototype only'); },
+    combineSignatures: function(_a, _b){ throw new Error('not implemented — prototype only'); },
+    submitBatch: function(_combined){ throw new Error('not implemented — prototype only'); }
   };
 
-  // ---- DOM refs ----
+  // ---- Client-side state ----
+  var state = {
+    currentTarget: null,
+    yourSelected: {},
+    xrpAmount: 0
+  };
+
   var el = {
-    targetWalletInput: document.getElementById('targetWalletInput'),
-    top15Select: document.getElementById('top15Select'),
-    targetAddrLine: document.getElementById('targetAddrLine'),
-    targetCountLine: document.getElementById('targetCountLine'),
-    targetBrowseArea: document.getElementById('targetBrowseArea'),
-    targetPlaceholder: document.getElementById('targetPlaceholder'),
-    targetSearchInput: document.getElementById('targetSearchInput'),
-    targetFilterSelect: document.getElementById('targetFilterSelect'),
-    targetSortSelect: document.getElementById('targetSortSelect'),
-    targetGrid: document.getElementById('targetGrid'),
-    targetSelectionCount: document.getElementById('targetSelectionCount'),
-    yourGrid: document.getElementById('yourGrid'),
-    yourSelectionCount: document.getElementById('yourSelectionCount'),
-    offerChipRow: document.getElementById('offerChipRow'),
-    receiveChipRow: document.getElementById('receiveChipRow'),
-    xrpToggleBtn: document.getElementById('xrpToggleBtn'),
-    xrpOffNote: document.getElementById('xrpOffNote'),
-    xrpOnBlock: document.getElementById('xrpOnBlock'),
-    xrpAmountInput: document.getElementById('xrpAmountInput'),
-    xrpPayBtn: document.getElementById('xrpPayBtn'),
-    xrpReceiveBtn: document.getElementById('xrpReceiveBtn'),
-    summaryGiveList: document.getElementById('summaryGiveList'),
-    summaryReceiveList: document.getElementById('summaryReceiveList'),
-    generateBtn: document.getElementById('generateBtn'),
-    confirmPanel: document.getElementById('confirmPanel'),
-    confirmSwapId: document.getElementById('confirmSwapId'),
-    confirmCounterparty: document.getElementById('confirmCounterparty'),
-    confirmAssets: document.getElementById('confirmAssets'),
-    confirmXrp: document.getElementById('confirmXrp'),
-    confirmStatus: document.getElementById('confirmStatus'),
-    cancelSwapBtn: document.getElementById('cancelSwapBtn'),
-    copySwapIdBtn: document.getElementById('copySwapIdBtn'),
-    copyFeedback: document.getElementById('copyFeedback')
+    eyebrow: document.getElementById('screenEyebrow'),
+    screenSearch: document.getElementById('screenSearch'),
+    screenDetail: document.getElementById('screenDetail'),
+    screenBuilder: document.getElementById('screenBuilder'),
+    screenReview: document.getElementById('screenReview'),
+    searchInput: document.getElementById('searchInput'),
+    searchBtn: document.getElementById('searchBtn'),
+    searchResultsGrid: document.getElementById('searchResultsGrid'),
+    searchPlaceholder: document.getElementById('searchPlaceholder'),
+    resultsNote: document.getElementById('resultsNote'),
+    detailNum: document.getElementById('detailNum'),
+    detailOwner: document.getElementById('detailOwner'),
+    detailTraits: document.getElementById('detailTraits'),
+    backToSearchBtn: document.getElementById('backToSearchBtn'),
+    offerForBtn: document.getElementById('offerForBtn'),
+    builderTargetNum: document.getElementById('builderTargetNum'),
+    builderTargetOwner: document.getElementById('builderTargetOwner'),
+    yourPigeonChecklist: document.getElementById('yourPigeonChecklist'),
+    builderSelectionCount: document.getElementById('builderSelectionCount'),
+    builderXrpInput: document.getElementById('builderXrpInput'),
+    builderOfferPreview: document.getElementById('builderOfferPreview'),
+    finalTarget: document.getElementById('finalTarget'),
+    finalOffer: document.getElementById('finalOffer'),
+    backToDetailBtn: document.getElementById('backToDetailBtn'),
+    reviewOfferBtn: document.getElementById('reviewOfferBtn'),
+    reviewTarget: document.getElementById('reviewTarget'),
+    reviewOwner: document.getElementById('reviewOwner'),
+    reviewOffering: document.getElementById('reviewOffering'),
+    backToBuilderBtn: document.getElementById('backToBuilderBtn'),
+    generateMockOfferBtn: document.getElementById('generateMockOfferBtn'),
+    offerConfirmPanel: document.getElementById('offerConfirmPanel'),
+    offerConfirmTitle: document.getElementById('offerConfirmTitle'),
+    newSearchBtn: document.getElementById('newSearchBtn')
   };
 
   function escapeHtml(str){
@@ -932,241 +809,175 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
 
-  function pigeonCardHtml(p, selected){
-    return '<div class="swap-pigeon-card' + (selected ? ' selected' : '') + '" data-id="' + escapeHtml(p.id) + '">' +
-      '<div class="swap-pigeon-img">[ IMAGE ]</div>' +
-      '<div class="swap-pigeon-num">P!GE0N #' + escapeHtml(p.number) + '</div>' +
-      '<div class="swap-pigeon-trait">STAT!C :: ' + String(p.staticLevel).padStart(2, '0') + '</div>' +
-      '<div class="swap-pigeon-status">STATUS :: HELD</div>' +
+  function showScreen(name){
+    el.screenSearch.style.display = name === 'search' ? '' : 'none';
+    el.screenDetail.style.display = name === 'detail' ? '' : 'none';
+    el.screenBuilder.style.display = name === 'builder' ? '' : 'none';
+    el.screenReview.style.display = name === 'review' ? '' : 'none';
+    var eyebrows = {
+      search: '// P!GE0N SEARCH',
+      detail: '// P!GE0N !DENT!F!ED',
+      builder: '// OFFER BU!LDER',
+      review: '// SCYLLA OFFER REVIEW'
+    };
+    el.eyebrow.textContent = eyebrows[name] || '';
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+
+  // ---- Search screen ----
+  function resultCardHtml(p){
+    var bg = p.attributes[0], body = p.attributes[1], eyes = p.attributes[2];
+    return '<div class="result-card" data-id="' + p.id + '">' +
+      '<div class="pigeon-img-box">[ IMAGE ]</div>' +
+      '<div class="result-card-body">' +
+        '<div class="result-num">P!GE0N #' + p.number + '</div>' +
+        '<div class="result-trait-line"><span class="tl-label">' + escapeHtml(bg.trait_type.toUpperCase()) + ' ::</span> ' + escapeHtml(bg.value) + '</div>' +
+        '<div class="result-trait-line"><span class="tl-label">' + escapeHtml(body.trait_type.toUpperCase()) + ' ::</span> ' + escapeHtml(body.value) + '</div>' +
+        '<div class="result-trait-line"><span class="tl-label">' + escapeHtml(eyes.trait_type.toUpperCase()) + ' ::</span> ' + escapeHtml(eyes.value) + '</div>' +
+        '<div class="result-trait-line"><span class="tl-label">ACCESS ::</span> ' + String(p.accessLevel).padStart(2, '0') + '</div>' +
+        '<button class="view-btn" data-id="' + p.id + '">[ VIEW ]</button>' +
+      '</div>' +
     '</div>';
   }
 
-  // ---- TOP 15 dropdown population ----
-  getTop15Holders().forEach(function(h, i){
-    var opt = document.createElement('option');
-    opt.value = h.addr;
-    opt.textContent = String(i + 1).padStart(2, '0') + '  ' + shortenAddr(h.addr) + '    ' + h.count + ' P!GE0NS';
-    el.top15Select.appendChild(opt);
-  });
-
-  // ---- Target node loading ----
-  function loadTargetWallet(wallet, knownCount){
-    if (!wallet) return;
-    state.targetWallet = wallet;
-    state.targetLabel = shortenAddr(wallet);
-    var count = knownCount || (20 + Math.floor(mulberry32(hashStr(wallet + ':count'))() * 130));
-    state.targetPigeons = getWalletPigeons(wallet, count);
-    state.targetSelected = {};
-    state.targetSearch = '';
-    el.targetSearchInput.value = '';
-    state.targetFilter = 'ALL';
-    el.targetFilterSelect.value = 'ALL';
-    el.targetAddrLine.textContent = state.targetLabel;
-    el.targetCountLine.textContent = 'P!GE0NS HELD :: ' + count;
-    el.targetBrowseArea.style.display = '';
-    el.targetPlaceholder.style.display = 'none';
-    renderTargetGrid();
-    renderExchange();
-  }
-
-  function filteredSortedTarget(){
-    var list = state.targetPigeons.slice();
-    var q = state.targetSearch.trim();
-    if (q){ list = list.filter(function(p){ return p.number.indexOf(q) !== -1; }); }
-    if (state.targetFilter === 'SELECTED'){ list = list.filter(function(p){ return !!state.targetSelected[p.id]; }); }
-    if (state.targetFilter === 'UNSELECTED'){ list = list.filter(function(p){ return !state.targetSelected[p.id]; }); }
-    list.sort(function(a, b){
-      if (state.targetSort === 'NUM_ASC') return a.number.localeCompare(b.number);
-      if (state.targetSort === 'NUM_DESC') return b.number.localeCompare(a.number);
-      if (state.targetSort === 'STATIC_ASC') return a.staticLevel - b.staticLevel;
-      if (state.targetSort === 'STATIC_DESC') return b.staticLevel - a.staticLevel;
-      return 0;
-    });
-    return list;
-  }
-
-  function renderTargetGrid(){
-    var list = filteredSortedTarget();
-    if (!list.length){
-      el.targetGrid.innerHTML = '<div class="empty-grid-note" style="grid-column:1/-1;">N0 P!GE0NS MATCH TH!S QUERY</div>';
-    } else {
-      el.targetGrid.innerHTML = list.map(function(p){ return pigeonCardHtml(p, !!state.targetSelected[p.id]); }).join('');
+  function runSearch(){
+    var q = el.searchInput.value.trim();
+    if (!q){
+      el.searchResultsGrid.innerHTML = '';
+      el.searchPlaceholder.style.display = '';
+      el.resultsNote.style.display = 'none';
+      return;
     }
-    var selCount = Object.keys(state.targetSelected).length;
-    el.targetSelectionCount.textContent = 'SELECTED :: ' + selCount + ' P!GE0N' + (selCount === 1 ? '' : 'S');
-  }
-
-  function renderYourGrid(){
-    el.yourGrid.innerHTML = state.yourPigeons.map(function(p){ return pigeonCardHtml(p, !!state.yourSelected[p.id]); }).join('');
-    var selCount = Object.keys(state.yourSelected).length;
-    el.yourSelectionCount.textContent = '0FFER!NG :: ' + selCount + ' P!GE0N' + (selCount === 1 ? '' : 'S');
-  }
-
-  function chipRowHtml(pigeons){
-    if (!pigeons.length) return '<span class="exchange-chip empty">N0NE SELECTED</span>';
-    return pigeons.map(function(p){ return '<span class="exchange-chip">#' + escapeHtml(p.number) + '</span>'; }).join('');
-  }
-
-  function selectedPigeons(source, selectedMap){
-    return source.filter(function(p){ return !!selectedMap[p.id]; });
-  }
-
-  function renderExchange(){
-    var yours = selectedPigeons(state.yourPigeons, state.yourSelected);
-    var theirs = selectedPigeons(state.targetPigeons, state.targetSelected);
-    el.offerChipRow.innerHTML = chipRowHtml(yours);
-    el.receiveChipRow.innerHTML = chipRowHtml(theirs);
-    renderSummary(yours, theirs);
-  }
-
-  function renderSummary(yours, theirs){
-    var giveLines = yours.map(function(p){ return '\\uD83D\\uDC26 P!GE0N #' + escapeHtml(p.number); });
-    var receiveLines = theirs.map(function(p){ return '\\uD83D\\uDC26 P!GE0N #' + escapeHtml(p.number); });
-
-    if (state.xrpEnabled && state.xrpAmount > 0){
-      var xrpLine = '<span class="summary-xrp-line">+ ' + state.xrpAmount.toFixed(2) + ' XRP</span>';
-      if (state.xrpDirection === 'PAY') giveLines.push(xrpLine);
-      else receiveLines.push(xrpLine);
+    var results = searchPigeons(q);
+    el.searchPlaceholder.style.display = results.length ? 'none' : '';
+    if (!results.length){
+      el.searchPlaceholder.textContent = 'N0 P!GE0NS MATCH TH!S QUERY';
+      el.searchResultsGrid.innerHTML = '';
+      el.resultsNote.style.display = 'none';
+      return;
     }
-
-    el.summaryGiveList.innerHTML = giveLines.length ? giveLines.join('<br>') : '<span class="empty-line">N0TH!NG SELECTED</span>';
-    el.summaryReceiveList.innerHTML = receiveLines.length ? receiveLines.join('<br>') : '<span class="empty-line">N0TH!NG SELECTED</span>';
-
-    var totalAssets = yours.length + theirs.length;
-    var hasXrp = state.xrpEnabled && state.xrpAmount > 0;
-    el.generateBtn.disabled = !state.targetWallet || (totalAssets === 0 && !hasXrp);
+    el.searchResultsGrid.innerHTML = results.map(resultCardHtml).join('');
+    el.resultsNote.style.display = '';
+    el.resultsNote.textContent = results.length >= MAX_RESULTS
+      ? 'SH0WING F!RST ' + MAX_RESULTS + ' MATCHES'
+      : results.length + ' MATCH' + (results.length === 1 ? '' : 'ES') + ' F0UND';
   }
-
-  // ---- Event wiring: target wallet input / top15 select ----
-  el.targetWalletInput.addEventListener('keydown', function(e){
-    if (e.key === 'Enter'){
-      var val = el.targetWalletInput.value.trim();
-      if (val){ el.top15Select.value = ''; loadTargetWallet(val, null); }
-    }
-  });
-  el.targetWalletInput.addEventListener('blur', function(){
-    var val = el.targetWalletInput.value.trim();
-    if (val && val !== state.targetWallet){ el.top15Select.value = ''; loadTargetWallet(val, null); }
-  });
-  el.top15Select.addEventListener('change', function(){
-    var val = el.top15Select.value;
-    if (!val) return;
-    var holder = TOP15_HOLDERS_MOCK.filter(function(h){ return h.addr === val; })[0];
-    el.targetWalletInput.value = val;
-    loadTargetWallet(val, holder ? holder.count : null);
+  el.searchBtn.addEventListener('click', runSearch);
+  el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearch(); });
+  el.searchResultsGrid.addEventListener('click', function(e){
+    var btn = e.target.closest('.view-btn');
+    if (!btn) return;
+    openDetail(parseInt(btn.getAttribute('data-id'), 10));
   });
 
-  // ---- Event wiring: target browse controls ----
-  el.targetSearchInput.addEventListener('input', function(){
-    state.targetSearch = el.targetSearchInput.value;
-    renderTargetGrid();
-  });
-  el.targetFilterSelect.addEventListener('change', function(){
-    state.targetFilter = el.targetFilterSelect.value;
-    renderTargetGrid();
-  });
-  el.targetSortSelect.addEventListener('change', function(){
-    state.targetSort = el.targetSortSelect.value;
-    renderTargetGrid();
-  });
-  el.targetGrid.addEventListener('click', function(e){
-    var card = e.target.closest('.swap-pigeon-card');
-    if (!card) return;
-    var id = card.getAttribute('data-id');
-    if (state.targetSelected[id]) delete state.targetSelected[id];
-    else state.targetSelected[id] = true;
-    renderTargetGrid();
-    renderExchange();
-  });
+  // ---- Detail screen ----
+  function traitCellHtml(a){
+    return '<div class="trait-cell"><div class="tc-label">' + escapeHtml(a.trait_type) + '</div><div class="tc-value">' + escapeHtml(a.value) + '</div></div>';
+  }
+  function openDetail(id){
+    var p = getPigeon(id);
+    if (!p) return;
+    state.currentTarget = p;
+    el.detailNum.textContent = 'P!GE0N #' + p.number;
+    el.detailOwner.textContent = shortenAddr(getPigeonOwner(id));
+    el.detailTraits.innerHTML = getPigeonTraits(id).map(traitCellHtml).join('') +
+      '<div class="trait-cell"><div class="tc-label">Access</div><div class="tc-value">' + String(p.accessLevel).padStart(2, '0') + '</div></div>';
+    showScreen('detail');
+  }
+  el.backToSearchBtn.addEventListener('click', function(){ showScreen('search'); });
+  el.offerForBtn.addEventListener('click', function(){ openBuilder(); });
 
-  // ---- Event wiring: your pigeons grid ----
-  el.yourGrid.addEventListener('click', function(e){
-    var card = e.target.closest('.swap-pigeon-card');
-    if (!card) return;
-    var id = card.getAttribute('data-id');
-    if (state.yourSelected[id]) delete state.yourSelected[id];
-    else state.yourSelected[id] = true;
-    renderYourGrid();
-    renderExchange();
+  // ---- Offer builder screen ----
+  function checklistItemHtml(p, checked){
+    return '<label class="checklist-item' + (checked ? ' checked' : '') + '" data-id="' + p.id + '">' +
+      '<input type="checkbox" data-id="' + p.id + '"' + (checked ? ' checked' : '') + '> #' + p.number +
+    '</label>';
+  }
+  function openBuilder(){
+    if (!state.currentTarget) return;
+    state.yourSelected = {};
+    el.builderXrpInput.value = '0.00';
+    state.xrpAmount = 0;
+    var p = state.currentTarget;
+    el.builderTargetNum.textContent = 'P!GE0N #' + p.number;
+    el.builderTargetOwner.textContent = shortenAddr(p.owner);
+    var yours = getPigeonsByWallet(YOUR_WALLET_MOCK);
+    el.yourPigeonChecklist.innerHTML = yours.map(function(yp){ return checklistItemHtml(yp, false); }).join('');
+    renderBuilderState();
+    showScreen('builder');
+  }
+  el.yourPigeonChecklist.addEventListener('change', function(e){
+    var cb = e.target.closest('input[type="checkbox"]');
+    if (!cb) return;
+    var id = cb.getAttribute('data-id');
+    if (cb.checked) state.yourSelected[id] = true;
+    else delete state.yourSelected[id];
+    cb.closest('.checklist-item').classList.toggle('checked', cb.checked);
+    renderBuilderState();
   });
-
-  // ---- Event wiring: XRP adjustment ----
-  el.xrpToggleBtn.addEventListener('click', function(){
-    state.xrpEnabled = !state.xrpEnabled;
-    el.xrpToggleBtn.textContent = state.xrpEnabled ? 'ON' : '0FF';
-    el.xrpToggleBtn.classList.toggle('on', state.xrpEnabled);
-    el.xrpOffNote.style.display = state.xrpEnabled ? 'none' : '';
-    el.xrpOnBlock.style.display = state.xrpEnabled ? '' : 'none';
-    renderExchange();
-  });
-  el.xrpAmountInput.addEventListener('input', function(){
-    var v = parseFloat(el.xrpAmountInput.value);
+  el.builderXrpInput.addEventListener('input', function(){
+    var v = parseFloat(el.builderXrpInput.value);
     state.xrpAmount = isNaN(v) || v < 0 ? 0 : v;
-    renderExchange();
+    renderBuilderState();
   });
-  function setXrpDirection(dir){
-    state.xrpDirection = dir;
-    el.xrpPayBtn.classList.toggle('active-pay', dir === 'PAY');
-    el.xrpReceiveBtn.classList.toggle('active-receive', dir === 'RECEIVE');
-    renderExchange();
-  }
-  el.xrpPayBtn.addEventListener('click', function(){ setXrpDirection('PAY'); });
-  el.xrpReceiveBtn.addEventListener('click', function(){ setXrpDirection('RECEIVE'); });
-  setXrpDirection('PAY');
 
-  // ---- Generate / cancel / copy (all local/mock) ----
-  function mockSwapId(){
+  function renderBuilderState(){
+    var ids = Object.keys(state.yourSelected);
+    el.builderSelectionCount.textContent = 'SELECTED :: ' + ids.length + ' P!GE0N' + (ids.length === 1 ? '' : 'S');
+
+    var lines = ids.map(function(id){ return '\\uD83D\\uDC26 P!GE0N #' + getPigeon(id).number; });
+    if (state.xrpAmount > 0) lines.push('<span class="xrp-line">+ ' + state.xrpAmount.toFixed(2) + ' XRP</span>');
+    el.builderOfferPreview.innerHTML = lines.length ? lines.join('<br>') : '<span class="empty-line">N0TH!NG SELECTED YET</span>';
+
+    el.finalTarget.textContent = '\\uD83D\\uDC26 P!GE0N #' + state.currentTarget.number;
+    el.finalOffer.innerHTML = ids.length
+      ? ids.map(function(id){ return '\\uD83D\\uDC26 #' + getPigeon(id).number; }).join('<br>') + (state.xrpAmount > 0 ? '<br>+ ' + state.xrpAmount.toFixed(2) + ' XRP' : '')
+      : (state.xrpAmount > 0 ? '+ ' + state.xrpAmount.toFixed(2) + ' XRP' : '<span class="empty-line">N0TH!NG SELECTED YET</span>');
+
+    el.reviewOfferBtn.disabled = ids.length === 0 && state.xrpAmount <= 0;
+  }
+
+  el.backToDetailBtn.addEventListener('click', function(){ showScreen('detail'); });
+  el.reviewOfferBtn.addEventListener('click', function(){ openReview(); });
+
+  // ---- Review screen ----
+  function openReview(){
+    var p = state.currentTarget;
+    var ids = Object.keys(state.yourSelected);
+    el.reviewTarget.textContent = 'P!GE0N #' + p.number;
+    el.reviewOwner.textContent = shortenAddr(p.owner);
+    var lines = ids.map(function(id){ return 'P!GE0N #' + getPigeon(id).number; });
+    if (state.xrpAmount > 0) lines.push('+ ' + state.xrpAmount.toFixed(2) + ' XRP');
+    el.reviewOffering.innerHTML = lines.length ? lines.join('<br>') : '<span class="empty-line">N0TH!NG SELECTED</span>';
+    el.offerConfirmPanel.style.display = 'none';
+    el.generateMockOfferBtn.style.display = '';
+    showScreen('review');
+  }
+  el.backToBuilderBtn.addEventListener('click', function(){ showScreen('builder'); });
+
+  function mockOfferId(){
     var chars = '0123456789ABCDEF';
     var out = '';
     for (var i = 0; i < 6; i++){ out += chars[Math.floor(Math.random() * chars.length)]; }
     return 'MOCK-' + out;
   }
-
-  el.generateBtn.addEventListener('click', function(){
-    var yours = selectedPigeons(state.yourPigeons, state.yourSelected);
-    var theirs = selectedPigeons(state.targetPigeons, state.targetSelected);
-    var xrp = (state.xrpEnabled && state.xrpAmount > 0) ? state.xrpAmount : 0;
-    state.swapRequest = {
-      id: mockSwapId(),
-      counterparty: state.targetLabel || 'UNKN0WN',
-      assets: yours.length + theirs.length,
-      xrp: xrp,
-      status: 'AWA!T!NG C0UNTERPARTY'
-    };
-    el.confirmSwapId.textContent = state.swapRequest.id;
-    el.confirmCounterparty.textContent = state.swapRequest.counterparty;
-    el.confirmAssets.textContent = state.swapRequest.assets;
-    el.confirmXrp.textContent = state.swapRequest.xrp.toFixed(2);
-    el.confirmStatus.textContent = state.swapRequest.status;
-    el.confirmPanel.style.display = '';
-    el.generateBtn.disabled = true;
-    el.copyFeedback.textContent = '';
+  el.generateMockOfferBtn.addEventListener('click', function(){
+    var id = mockOfferId();
+    el.offerConfirmTitle.textContent = 'SCYLLA OFFER :: ' + id;
+    el.offerConfirmPanel.style.display = '';
+    el.generateMockOfferBtn.style.display = 'none';
   });
-
-  el.cancelSwapBtn.addEventListener('click', function(){
-    state.swapRequest = null;
-    el.confirmPanel.style.display = 'none';
-    el.copyFeedback.textContent = '';
-    renderExchange();
+  el.newSearchBtn.addEventListener('click', function(){
+    state.currentTarget = null;
+    state.yourSelected = {};
+    state.xrpAmount = 0;
+    el.searchInput.value = '';
+    el.searchResultsGrid.innerHTML = '';
+    el.searchPlaceholder.textContent = 'ENTER A P!GE0N NUMBER, TRA!T, 0R WALLET T0 BEG!N';
+    el.searchPlaceholder.style.display = '';
+    el.resultsNote.style.display = 'none';
+    showScreen('search');
   });
-
-  el.copySwapIdBtn.addEventListener('click', function(){
-    if (!state.swapRequest) return;
-    var id = state.swapRequest.id;
-    if (navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(id).then(function(){
-        el.copyFeedback.textContent = 'C0P!ED :: ' + id;
-      }).catch(function(){
-        el.copyFeedback.textContent = 'ERR:// C0PY FA!LED';
-      });
-    } else {
-      el.copyFeedback.textContent = 'ERR:// CL!PB0ARD UNAVA!LABLE';
-    }
-  });
-
-  // ---- Initial paint ----
-  renderYourGrid();
-  renderExchange();
 
   // TV static background, purely atmospheric — matches the rest of the site.
   (function(){
