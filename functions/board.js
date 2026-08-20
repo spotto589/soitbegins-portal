@@ -276,15 +276,15 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
 
   const accessGateSection = isPigeon ? `
     <div class="access-gate access-gate-granted" id="accessGate">
-      <div class="ag-scan">// S!GNAL DETECTED</div>
+      <div class="ag-scan ag-scan-active">// S!GNAL DETECTED</div>
       ${crownBadge}
       <div class="ag-level-box">
         <div class="ag-level-box-label">ACCESS LEVEL</div>
         <div class="ag-level-box-value ag-level-granted">${accessLevelLabel}</div>
       </div>
       <div class="ag-readout">
-        <div class="ag-row"><span class="ag-row-label">P!GE0N NETW0RK</span><span class="ag-row-value ag-good">C0NNECTED</span></div>
-        <div class="ag-row"><span class="ag-row-label">S!GNALS AVA!LABLE</span><span class="ag-row-value ag-signals">${signalsAvailable}</span></div>
+        <div class="ag-row"><span class="ag-row-label">P!GE0N NETW0RK</span><span class="ag-row-value ag-good">✅ C0NNECTED</span></div>
+        <div class="ag-row"><span class="ag-row-label">S!GNALS AVA!LABLE</span><span class="ag-row-value ag-signals ag-signals-big">${signalsAvailable}</span></div>
       </div>
     </div>
   ` : (hasSession ? `
@@ -1935,7 +1935,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     color:rgba(232,232,232,0.4);
     margin-bottom:0.9rem;
   }
-  .ag-scan-none{
+  .ag-scan-none, .ag-scan-active{
     color:#39ff14;
     text-shadow:0 0 6px rgba(57,255,20,0.5);
   }
@@ -1957,6 +1957,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .ag-good{ color:#39ff14; }
   .ag-bad{ color:#ff003c; }
   .ag-signals{ color:#ff003c; text-shadow:0 0 6px rgba(255,0,60,0.5); }
+  .ag-signals-big{ font-size:1.6em; }
   .ag-level-box{
     margin-top:0.9rem;
     padding:0.9rem 1rem;
@@ -2229,10 +2230,10 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
       </details>
     </div>
     ${accessGateSection}
+    ${bottomSection}
     ${sessionWatermark}
     ${sessionControls}
     ${messageRows}
-    ${bottomSection}
   </div>
 
   <div class="scan-overlay" id="scanOverlay">
