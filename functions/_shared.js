@@ -140,8 +140,6 @@ export function findAllYellowNfts(nfts) {
 // identifiers/amounts are provided.
 export const KINGDOM_CLAIM_CONFIG = {
   honey: { label: '$HONEY', category: 'K!NG H0LDERS', currency: 'HONEY', issuer: 'rNa4hZ4kfPwEdN5gSbbNr33aSpyF5ZjzDm', amount: null, configured: true },
-  beta: { label: 'BETA TEST COIN', category: 'GREEN', currency: null, issuer: null, amount: null, configured: false },
-  rlusd: { label: 'RLUSD', category: 'YELLOW', currency: null, issuer: null, amount: null, configured: false },
   crwn: { label: '$CRWN', category: 'KING', currency: null, issuer: null, amount: null, configured: false },
 };
 
@@ -186,12 +184,320 @@ export async function getStaticVanityKeyInfo(nft) {
   }
 }
 
+// Once a STAT!C Vanity Collector's Key has been redeemed, the redemption
+// is permanent — this is enforced by KV, not by NFT ownership, since the
+// wallet still holds the NFT afterward. Keyed by NFTokenID so it stays
+// tied to a specific key even if the NFT changes hands.
+const STATIC_REDEEMED_KEY_PREFIX = 'static_redeemed:';
+
+export async function isStaticKeyRedeemed(kv, nftId) {
+  const raw = await kv.get(STATIC_REDEEMED_KEY_PREFIX + nftId);
+  return !!raw;
+}
+
+export async function markStaticKeyRedeemed(kv, nftId, meta) {
+  await kv.put(STATIC_REDEEMED_KEY_PREFIX + nftId, JSON.stringify(meta));
+}
+
+// Fire-and-forget Discord notification for a completed redemption. Callers
+// should wrap this in context.waitUntil() so it doesn't block the response,
+// and it deliberately swallows its own errors — a failed notification must
+// never fail or delay the redemption itself.
+export async function notifyDiscordRedemption(webhookUrl, { acct, nftId, keyNumber }) {
+  if (!webhookUrl) return;
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content:
+          `🔑 **STAT!C key redeemed**\n` +
+          `Key #${keyNumber !== null && keyNumber !== undefined ? keyNumber : '????'} (\`${nftId}\`)\n` +
+          `Wallet: \`${acct}\`\n` +
+          `Time: ${new Date().toISOString()}`
+      })
+    });
+  } catch (e) {
+    // Never let a notification failure surface to the redemption flow.
+  }
+}
+
 export function findPigeon(nfts) {
   return nfts.find(n => n.Issuer === PIGEON_ISSUER && n.NFTokenTaxon === PIGEON_TAXON) || null;
 }
 
 export function findAllPigeons(nfts) {
   return nfts.filter(n => n.Issuer === PIGEON_ISSUER && n.NFTokenTaxon === PIGEON_TAXON);
+}
+
+// The Pigeon ACCESS LEVEL system. Levels are non-contiguous by design —
+// 01/03/06/09/12/15, with 00 reserved for "no Pigeon" — and unlike the
+// original 1(highest)-6(lowest) scheme this replaced, HIGHER holdings now
+// give a HIGHER level number: a wallet can read its own level and every
+// level below it, so 15 (Crown) sees everything and 01 sees only 01.
+//
+// Crown is folded directly into this scale as level 15, not layered on
+// top of a separate 1-6 scale — per direction, there is exactly one
+// access-level number per wallet, and Crown status is what produces it
+// when applicable. The remaining five count brackets reuse the project's
+// existing 6-bucket tier-color system (tier-green..tier-diamond, already
+// used for the signature border) — tier-diamond is now reserved
+// specifically for the Crown holder (level 15), so it also keeps the
+// existing diamond-sparkle visual treatment for whoever currently wears it.
+export function getPigeonCountTier(count) {
+  if (count >= 100) return 'tier-gold';
+  if (count >= 50) return 'tier-purple';
+  if (count >= 16) return 'tier-red';
+  if (count >= 5) return 'tier-pink';
+  return 'tier-green';
+}
+
+const TIER_ACCESS_LEVEL = {
+  'tier-green': 1, 'tier-pink': 3, 'tier-red': 6,
+  'tier-purple': 9, 'tier-gold': 12, 'tier-diamond': 15,
+};
+
+// (pigeonCount, isCrown) -> access level (0/1/3/6/9/12/15). isCrown must
+// come from a specific, deliberate source: the live cached Crown snapshot
+// for "what is this wallet's level right now" (board.js, via
+// isCrownWallet below), or the permanently-recorded rank at signing for a
+// historical signature (msg.rank === 'CROWN') — never recomputed for the
+// latter. This is the single trusted mapping every caller should go
+// through, so every surface (relay board, signal visibility, reward
+// rate, governance voting power) agrees on the same number.
+export function getPigeonAccessLevel(pigeonCount, isCrown) {
+  if (isCrown) return 15;
+  if (!pigeonCount) return 0;
+  return TIER_ACCESS_LEVEL[getPigeonCountTier(pigeonCount)] || 1;
+}
+
+// (pigeonCount, isCrown) -> the border-tier CSS class, following the same
+// Crown-overrides-count rule as getPigeonAccessLevel. Message rows should
+// use this instead of calling getPigeonCountTier directly whenever the
+// signer's Crown status (current or at-signing) is known, so the border
+// colour and the access level never disagree about who's wearing the Crown.
+export function getPigeonTierClass(pigeonCount, isCrown) {
+  if (isCrown) return 'tier-diamond';
+  return getPigeonCountTier(pigeonCount || 1);
+}
+
+// wallet's NFTs (from fetchAllAccountNfts — real XRPL data, never
+// client-supplied) -> verified { pigeonCount, accessLevel }. This is the
+// entry point routes should call to get a wallet's trusted access level:
+// wallet -> Pigeon ownership -> tier -> access level, computed server-side
+// every time, never trusted from the frontend. isCrown must be resolved
+// by the caller (e.g. via getCachedCrownHolder + isCrownWallet) and
+// passed in, since it isn't derivable from the NFT list alone.
+export function getWalletAccessLevel(nfts, isCrown) {
+  const pigeonCount = findAllPigeons(nfts).length;
+  return { pigeonCount, accessLevel: getPigeonAccessLevel(pigeonCount, isCrown) };
+}
+
+// Phase 4 — reward-RATE infrastructure. This is deliberately just the
+// pipeline (accessLevel -> multiplier -> CRWN/PIGEON rate), not finalized
+// economics: the numbers below are placeholders to be tuned once the
+// actual token economics are decided, per direction ("build the
+// infrastructure, not necessarily finalize the rates"). Changing a
+// level's reward later means editing one line here, not touching how
+// rates get calculated or displayed anywhere else.
+//
+// This also does NOT implement reward accrual, a balance ledger, or any
+// payout mechanism — none of that exists yet. It only computes the
+// *rate* a wallet would earn at, for display, given their (already
+// server-verified) access level. What actually triggers a reward
+// (participation-gated, not passive holding, per direction) is a later
+// decision this pipeline is ready for but doesn't yet enforce.
+export const REWARD_MULTIPLIER_BY_LEVEL = {
+  0: 0,  // no Pigeon
+  1: 1,  // entry
+  3: 2,
+  6: 3,
+  9: 4,
+  12: 5,
+  15: 6, // Crown
+};
+
+// Base per-signal rates the multiplier scales against. Separate tokens on
+// purpose (per direction): $CRWN as the economic/participation reward,
+// $PIGEON as network reputation/utility — kept as two independent base
+// rates so they can diverge later without changing the multiplier logic.
+export const CRWN_BASE_RATE = 1;
+export const PIGEON_BASE_RATE = 1;
+
+export function getRewardMultiplier(accessLevel) {
+  return REWARD_MULTIPLIER_BY_LEVEL[accessLevel] ?? 0;
+}
+
+// accessLevel -> { multiplier, crwnRate, pigeonRate }. The one function
+// callers should use to display (not distribute) a wallet's reward rate.
+export function getRewardRates(accessLevel) {
+  const multiplier = getRewardMultiplier(accessLevel);
+  return {
+    multiplier,
+    crwnRate: CRWN_BASE_RATE * multiplier,
+    pigeonRate: PIGEON_BASE_RATE * multiplier,
+  };
+}
+
+// --- Phase 4.5: the Crown, i.e. the CURRENT top Pigeon holder,
+// network-wide ---
+//
+// This answers a genuinely different question from everything above.
+// getWalletAccessLevel etc. all answer "how many Pigeons does THIS known
+// wallet hold" (fetchAllAccountNfts — one address at a time). Crown has
+// to answer "out of every wallet that holds any Pigeons, which one holds
+// the most right now" — which needs to see every Pigeon NFT's current
+// owner, not just one wallet's.
+//
+// Rule, exactly as specified: Crown = greatest current Pigeon holding,
+// used Pigeons included (unused/signature-count/board-activity/CRWN
+// balance/voting/reward balance are explicitly NOT inputs). Ties are
+// broken by whichever wallet reached that count first.
+//
+// This is unrelated to CROWN_TIERS below (that's King-NFT headwear
+// rarity, a completely different system) and to the $CRWN reward token —
+// "Crown" here means the single top-holder rank.
+//
+// The only way to see every current owner of a collection is XRPL's Clio
+// `nfts_by_issuer` method — confirmed xrplcluster.com (used everywhere
+// else in this file) does NOT support it ("Unknown method"); Ripple's own
+// public Clio server does. A full scan is ~31 paginated calls for the
+// ~3016-Pigeon collection (100/page) and takes 30+ seconds — far too slow
+// to run inline on a page request. So this is deliberately split in two:
+//   - recomputeCrownHolder() — the expensive full scan + tie-break bookkeeping.
+//     Meant to be triggered from outside a normal page render — either the
+//     background waitUntil() in board.js when the cache goes stale, or an
+//     external pinger hitting POST /api/crown-recompute on a schedule
+//     (Cloudflare Pages Functions have no cron trigger of their own).
+//   - getCachedCrownHolder() — a cheap KV read of the last computed
+//     result. Safe to call on every page render.
+// Deliberately no :51234 — Cloudflare Workers silently ignore custom
+// HTTPS ports on fetch() once deployed (confirmed via wrangler's own
+// deploy-time warning), which would break this in production while still
+// appearing to work in local dev. s2-clio.ripple.com serves the same
+// Clio API on the default port too — confirmed working.
+const CLIO_ENDPOINT = 'https://s2-clio.ripple.com';
+const CROWN_SNAPSHOT_KEY = 'crown:snapshot';
+const CROWN_HOLDINGS_HISTORY_KEY = 'crown:holdings-history';
+// board.js only bothers kicking off a background recompute once the
+// cached snapshot is at least this stale.
+export const CROWN_SNAPSHOT_MAX_AGE_SECONDS = 15 * 60;
+// Guards against back-to-back triggers (e.g. a misfiring external cron)
+// re-running the expensive scan more often than this.
+const CROWN_RECOMPUTE_MIN_INTERVAL_SECONDS = 60;
+
+// Every current Pigeon NFT's owner, tallied into a Map<wallet, count>.
+// Paginates the full collection via Clio's nfts_by_issuer — the only
+// XRPL method that can answer "who owns these right now" collection-wide
+// rather than per-address like fetchAllAccountNfts.
+async function fetchAllPigeonOwners() {
+  const counts = new Map();
+  let marker;
+  do {
+    const params = { issuer: PIGEON_ISSUER, nft_taxon: PIGEON_TAXON, limit: 100 };
+    if (marker) params.marker = marker;
+    const res = await fetch(CLIO_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'nfts_by_issuer', params: [params] }),
+    });
+    const data = await res.json();
+    const result = data && data.result;
+    if (!result || result.error) break;
+    for (const nft of result.nfts || []) {
+      if (nft.is_burned || !nft.owner) continue;
+      counts.set(nft.owner, (counts.get(nft.owner) || 0) + 1);
+    }
+    marker = result.marker;
+  } while (marker);
+  return counts;
+}
+
+// The expensive operation: live full scan -> current Crown holder,
+// persisted to KV along with the per-wallet holdings history the
+// tie-break rule needs. Self-rate-limited via
+// CROWN_RECOMPUTE_MIN_INTERVAL_SECONDS — safe to call opportunistically
+// without needing an external caller to also rate-limit itself.
+export async function recomputeCrownHolder(kv) {
+  const now = Math.floor(Date.now() / 1000);
+
+  const existingSnapshotRaw = await kv.get(CROWN_SNAPSHOT_KEY);
+  const existingSnapshot = existingSnapshotRaw ? JSON.parse(existingSnapshotRaw) : null;
+  if (existingSnapshot && now - existingSnapshot.computedAt < CROWN_RECOMPUTE_MIN_INTERVAL_SECONDS) {
+    return existingSnapshot;
+  }
+
+  const counts = await fetchAllPigeonOwners();
+
+  const historyRaw = await kv.get(CROWN_HOLDINGS_HISTORY_KEY);
+  const history = historyRaw ? JSON.parse(historyRaw) : {};
+
+  // Tie-break rule: among every wallet currently AT the max holding, the
+  // one that reached that count first (earliest recorded "since") keeps
+  // the Crown. "since" only resets when a wallet's count actually
+  // changes since the last recompute, so it survives repeated recomputes
+  // untouched otherwise. Honest limitation: for a wallet whose current
+  // count was already reached before this system started tracking,
+  // "since" is only as old as the first recompute that ever observed
+  // them — there's no way to know the true historical moment before that.
+  for (const [wallet, count] of counts.entries()) {
+    const prior = history[wallet];
+    if (!prior || prior.count !== count) {
+      history[wallet] = { count, since: now };
+    }
+  }
+  // Drop wallets that no longer hold any Pigeons, so this never just grows forever.
+  for (const wallet of Object.keys(history)) {
+    if (!counts.has(wallet)) delete history[wallet];
+  }
+
+  let maxCount = 0;
+  for (const count of counts.values()) {
+    if (count > maxCount) maxCount = count;
+  }
+
+  let crownWallet = null;
+  let crownSince = null;
+  if (maxCount > 0) {
+    for (const [wallet, count] of counts.entries()) {
+      if (count !== maxCount) continue;
+      const since = history[wallet].since;
+      if (crownWallet === null || since < crownSince) {
+        crownWallet = wallet;
+        crownSince = since;
+      }
+    }
+  }
+
+  const snapshot = {
+    wallet: crownWallet,
+    count: maxCount,
+    since: crownSince,
+    computedAt: now,
+    holderCount: counts.size,
+  };
+
+  await kv.put(CROWN_HOLDINGS_HISTORY_KEY, JSON.stringify(history));
+  await kv.put(CROWN_SNAPSHOT_KEY, JSON.stringify(snapshot));
+  return snapshot;
+}
+
+// Cheap read for normal page renders — never performs the live scan.
+// Returns null if a recompute has genuinely never run yet.
+export async function getCachedCrownHolder(kv) {
+  const raw = await kv.get(CROWN_SNAPSHOT_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+
+// wallet -> is this wallet the CURRENT Crown holder, per the cached
+// snapshot. This is the one function callers (current-rank display,
+// and later signature rank / voting power / reward multiplier) should
+// go through, so they all agree with each other. Note this only ever
+// answers "right now" — a signature's permanent RANK AT SIGNING is
+// captured separately, at post time, in functions/api/board.js, and
+// must never be recomputed from this later.
+export function isCrownWallet(snapshot, wallet) {
+  return !!(snapshot && snapshot.wallet && wallet && snapshot.wallet === wallet);
 }
 
 // Pigeon #1-1515 get the higher word limit, #1516+ get the lower one.
@@ -350,4 +656,40 @@ export async function getKingThumbnails(kv, kingNfts) {
       : `KING #${nft.NFTokenID.slice(-4)}`;
     return { nftId: nft.NFTokenID, number: info.number, image: info.image, label };
   }));
+}
+
+// King NFTs are minted through Deeptide's "king-thwncy" shop (same
+// issuer/taxon as xrp.cafe's listing — one collection, two marketplaces),
+// and Deeptide's API returns a rarityRank (1 = rarest) per token for
+// whatever address currently owns it. Used to surface "top rarity" at login.
+const DEEPTIDE_API_BASE = 'https://api.deeptide.co';
+const DEEPTIDE_KING_SHOP_SLUG = 'king-thwncy';
+
+// Returns the rarest-ranked King NFT this wallet holds (by Deeptide's
+// rarityRank, lower = rarer), or null if the lookup fails or none of the
+// wallet's King NFTokenIDs show up in Deeptide's data yet.
+export async function getTopKingRarity(address, kingNftIds) {
+  try {
+    const res = await fetch(`${DEEPTIDE_API_BASE}/api/mint/owned?address=${encodeURIComponent(address)}`);
+    if (!res.ok) return null;
+    const items = await res.json();
+    if (!Array.isArray(items)) return null;
+    const idSet = new Set(kingNftIds);
+    const kingItems = items.filter(it =>
+      it.shopSlug === DEEPTIDE_KING_SHOP_SLUG &&
+      idSet.has(it.nftTokenId) &&
+      typeof it.rarityRank === 'number'
+    );
+    if (!kingItems.length) return null;
+    const best = kingItems.reduce((a, b) => (a.rarityRank <= b.rarityRank ? a : b));
+    return {
+      nftId: best.nftTokenId,
+      name: best.name || null,
+      image: best.imageUrl || null,
+      rarityRank: best.rarityRank,
+      rarityTotal: typeof best.rarityTotal === 'number' ? best.rarityTotal : null,
+    };
+  } catch (e) {
+    return null;
+  }
 }

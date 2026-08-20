@@ -1,6 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken,
-  fetchAllAccountNfts, findAllPigeons, getBestPigeonWordLimit, getPigeonThumbnails
+  fetchAllAccountNfts, findAllPigeons, getBestPigeonWordLimit, getPigeonThumbnails,
+  getCachedCrownHolder, isCrownWallet
 } from '../_shared.js';
 
 const MAX_LEN = 1500;
@@ -82,8 +83,17 @@ export async function onRequestPost(context) {
   }
 
   const nowTs = Math.floor(Date.now() / 1000);
+  // Snapshot RANK AT SIGNING permanently, right now, from whatever the
+  // Crown cache currently says (a live full-collection scan is far too
+  // slow to run inline on a post — see _shared.js). This value is written
+  // once and must never be recomputed later: the whole point is that a
+  // signature keeps saying CROWN even after the Crown moves to someone
+  // else. CURRENT Crown status (dynamic, shown on the Access Gate) is a
+  // completely separate read, done fresh in board.js on every page view.
+  const crownSnapshot = await getCachedCrownHolder(env.coin);
+  const rank = isCrownWallet(crownSnapshot, payload.acct) ? 'CROWN' : 'STANDARD';
   await env.coin.put(postKey, JSON.stringify({
-    text, name, image: match.image, nftId: requestedNftId, acct: payload.acct, pigeonCount: pigeons.length, ts: nowTs
+    text, name, image: match.image, nftId: requestedNftId, acct: payload.acct, pigeonCount: pigeons.length, ts: nowTs, rank
   }));
 
   // Keystone: the moment this wallet's last available Pigeon gets used.
