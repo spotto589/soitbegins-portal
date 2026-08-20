@@ -1,17 +1,16 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Σκύλλα SWAP — Phase 1B: real Pigeon collection explorer.
+// Σκύλλα SWAP — collection explorer + target-selection flow.
 //
-// Every Pigeon shown here is real: real NFTokenID, real IPFS image, real
-// on-chain owner, real trait attributes — pulled live from the XRPL (via
-// Clio's nfts_by_issuer/nft_info) and the collection's own IPFS metadata,
-// through /api/pigeons (see functions/api/pigeons.js and the data-access
-// layer at the bottom of functions/_shared.js). There is no mock data left
-// in this file.
+// Real data throughout: real NFTokenIDs, real owners, real trait
+// attributes, real rarity (via Deeptide, falling back to IPFS) — pulled
+// through /api/pigeons (functions/api/pigeons.js) and the data-access
+// layer in functions/_shared.js. No mock data anywhere in this file.
 //
-// Still, on purpose, nothing here connects a wallet, calls Xaman, signs
-// anything, transfers XRP, or submits any XRPL transaction. "OFFER FOR
-// THIS PIGEON" only sets a draft target — building and sending a real
-// offer is explicitly the next phase, not this one.
+// Flow: DISCOVER -> SEARCH -> FILTER -> INSPECT -> SELECT TARGET ->
+// IDENTIFY OWNER -> BROWSE OWNER COLLECTION -> SELECT TARGET ASSETS.
+// Nothing past this connects a wallet, calls Xaman, signs anything, or
+// moves any asset — "CONTINUE TO OFFER" only reaches a placeholder;
+// building the real offer/XRP/signing stage is explicitly the next phase.
 // ─────────────────────────────────────────────────────────────────────────
 
 const SWAP_HTML = `<!DOCTYPE html>
@@ -106,8 +105,30 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:1.5rem;
     margin-bottom:1.75rem;
   }
+  .panel-title{
+    text-align:center;
+    font-size:13px;
+    letter-spacing:0.2em;
+    color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.4);
+    margin-bottom:1rem;
+    text-transform:uppercase;
+  }
 
-  /* ---- search / filter bar ---- */
+  /* ---- target node header (owner-scope) ---- */
+  .node-header{ text-align:center; margin-bottom:1.25rem; }
+  .node-header .nh-label{
+    font-size:11px;
+    letter-spacing:0.25em;
+    color:#00fff2;
+    text-shadow:0 0 6px rgba(0,255,242,0.4);
+    margin-bottom:0.4rem;
+    text-transform:uppercase;
+  }
+  .node-header .nh-addr{ font-size:14px; color:#e8e8e8; margin-bottom:0.3rem; word-break:break-all; }
+  .node-header .nh-count{ font-size:11px; letter-spacing:0.1em; color:rgba(232,232,232,0.5); text-transform:uppercase; }
+
+  /* ---- search / sort bar ---- */
   .search-row{
     display:flex;
     gap:0.6rem;
@@ -138,7 +159,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
   .bar-btn:hover{ background:rgba(57,255,20,0.1); }
-  .bar-btn.active{ background:rgba(57,255,20,0.15); color:#fff; }
   select.sort-select{
     flex:0 0 auto;
     background:#000;
@@ -160,67 +180,68 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:0.5rem;
     text-transform:uppercase;
   }
-  .search-hint{
-    text-align:center;
-    font-size:10px;
-    letter-spacing:0.05em;
-    color:rgba(232,232,232,0.3);
-    margin-bottom:0.25rem;
-    text-transform:uppercase;
-  }
 
-  /* ---- traits filter panel ---- */
-  .traits-panel{
+  /* ---- trait stack filter panel ---- */
+  .traits-block{
     border-top:1px dashed rgba(57,255,20,0.25);
     margin-top:1rem;
     padding-top:1rem;
-    display:none;
   }
-  .traits-panel.open{ display:block; }
-  .traits-cats{
-    display:flex;
-    flex-wrap:wrap;
-    gap:0.5rem;
-    margin-bottom:0.9rem;
-  }
-  .trait-cat-btn{
-    background:transparent;
-    border:1px solid rgba(57,255,20,0.3);
-    color:rgba(232,232,232,0.6);
-    font-family:inherit;
-    font-size:10px;
-    letter-spacing:0.1em;
-    padding:0.5em 0.9em;
-    cursor:pointer;
+  .traits-block-title{
+    font-size:11px;
+    letter-spacing:0.2em;
+    color:rgba(232,232,232,0.5);
+    margin-bottom:0.75rem;
     text-transform:uppercase;
   }
-  .trait-cat-btn.selected{ border-color:#39ff14; color:#39ff14; }
-  .traits-values{
+  .trait-row{
     display:flex;
-    flex-wrap:wrap;
-    gap:0.5rem;
-  }
-  .trait-value-chip{
-    display:inline-flex;
     align-items:center;
-    gap:0.4em;
-    border:1px solid rgba(0,255,242,0.3);
-    color:rgba(232,232,232,0.7);
-    font-size:10px;
-    letter-spacing:0.06em;
-    padding:0.4em 0.7em;
+    gap:0.5rem;
+    margin-bottom:0.6rem;
+    flex-wrap:wrap;
+  }
+  select.trait-cat-select, select.trait-val-select{
+    background:#000;
+    border:1px solid rgba(57,255,20,0.3);
+    color:#e8e8e8;
+    font-family:inherit;
+    font-size:11px;
+    letter-spacing:0.05em;
+    padding:0.55em 0.7em;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  select.trait-cat-select option, select.trait-val-select option{ background:#08080a; color:#e8e8e8; }
+  .trait-row-remove{
+    background:transparent;
+    border:1px solid rgba(255,0,60,0.5);
+    color:#ff003c;
+    font-family:inherit;
+    font-size:12px;
+    width:2em;
+    height:2em;
+    cursor:pointer;
+  }
+  .trait-row-remove:hover{ background:rgba(255,0,60,0.1); }
+  .traits-actions{
+    display:flex;
+    gap:0.6rem;
+    margin-top:0.5rem;
+    flex-wrap:wrap;
+  }
+  .clear-traits-btn{
+    background:transparent;
+    border:1px solid rgba(255,0,60,0.5);
+    color:#ff003c;
+    font-family:inherit;
+    font-size:11px;
+    letter-spacing:0.1em;
+    padding:0.6em 1.1em;
     cursor:pointer;
     text-transform:uppercase;
   }
-  .trait-value-chip:hover{ border-color:#00fff2; }
-  .trait-value-chip.selected{ border-color:#00fff2; color:#00fff2; background:rgba(0,255,242,0.08); }
-  .trait-value-chip .tv-pct{ color:rgba(232,232,232,0.4); }
-  .traits-empty-note{
-    font-size:10px;
-    letter-spacing:0.08em;
-    color:rgba(232,232,232,0.35);
-    text-transform:uppercase;
-  }
+  .clear-traits-btn:hover{ background:rgba(255,0,60,0.1); }
 
   /* ---- results status line ---- */
   .status-line{
@@ -233,11 +254,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .status-line .hi{ color:#39ff14; text-shadow:0 0 5px rgba(57,255,20,0.4); }
 
-  /* ---- empty / no-match state ---- */
-  .empty-state{
-    text-align:center;
-    padding:2rem 0;
-  }
+  /* ---- empty state ---- */
+  .empty-state{ text-align:center; padding:2rem 0; }
   .empty-state .es-title{
     font-size:13px;
     letter-spacing:0.15em;
@@ -253,31 +271,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:0.5rem;
     text-transform:uppercase;
   }
-  .empty-state .es-note{
-    font-size:10px;
-    letter-spacing:0.05em;
-    color:rgba(232,232,232,0.35);
-    margin:0.75rem 0 1.25rem;
-    text-transform:uppercase;
-  }
 
   /* ---- pigeon image box ---- */
   .pigeon-img-box{
     aspect-ratio:1;
+    position:relative;
+    cursor:pointer;
     display:flex;
     align-items:center;
     justify-content:center;
     overflow:hidden;
-    background:repeating-linear-gradient(
-      45deg, rgba(57,255,20,0.04) 0px, rgba(57,255,20,0.04) 6px, transparent 6px, transparent 12px
-    );
+    background:repeating-linear-gradient(45deg, rgba(57,255,20,0.04) 0px, rgba(57,255,20,0.04) 6px, transparent 6px, transparent 12px);
     border:1px dashed rgba(57,255,20,0.15);
     font-size:10px;
     letter-spacing:0.1em;
     color:rgba(232,232,232,0.3);
   }
   .pigeon-img-box img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .pigeon-img-box{ position:relative; cursor:pointer; }
   .card-select-toggle{
     position:absolute;
     top:0.3rem;
@@ -302,13 +312,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
     gap:0.9rem;
   }
-  .result-card{
-    border:1px solid rgba(57,255,20,0.25);
-    overflow:hidden;
-  }
+  .result-card{ border:1px solid rgba(57,255,20,0.25); overflow:hidden; }
   .result-card .pigeon-img-box{ border:none; border-bottom:1px solid rgba(57,255,20,0.15); }
+  .result-card.in-target{ border-color:#39ff14; box-shadow:0 0 10px rgba(57,255,20,0.25) inset; }
   .result-card-body{ padding:0.65rem; }
   .result-num{ font-size:12px; letter-spacing:0.05em; color:#e8e8e8; margin-bottom:0.45rem; }
+  .result-rarity-line{ font-size:10px; letter-spacing:0.05em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); margin-bottom:0.35rem; }
   .result-trait-line{
     font-size:10px;
     letter-spacing:0.02em;
@@ -319,13 +328,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-overflow:ellipsis;
   }
   .result-trait-line .tl-label{ color:rgba(232,232,232,0.35); }
-  .result-rarity-line{
-    font-size:10px;
-    letter-spacing:0.05em;
-    color:#ffd700;
-    text-shadow:0 0 3px rgba(255,215,0,0.3);
-    margin-bottom:0.35rem;
-  }
   .card-btn-row{ display:flex; gap:0.4rem; margin-top:0.55rem; }
   .inspect-btn, .select-btn{
     flex:1;
@@ -342,11 +344,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .inspect-btn:hover{ background:rgba(0,255,242,0.1); }
   .select-btn{ border:1px solid rgba(57,255,20,0.5); color:#39ff14; }
   .select-btn:hover{ background:rgba(57,255,20,0.1); }
-  .result-card.in-draft{ border-color:#39ff14; box-shadow:0 0 10px rgba(57,255,20,0.25) inset; }
   .select-btn.selected{ background:rgba(57,255,20,0.15); color:#fff; }
 
-  /* Dense mobile browsing: 6 large-image columns, chrome stripped back to
-     just the number + a corner select toggle — tap the image to inspect. */
   @media (max-width:700px){
     body{ padding:4vh 2.5vw 6vh; }
     .sw-panel{ padding:1rem 0.75rem; }
@@ -358,12 +357,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   /* ---- pagination ---- */
-  .pagination-row{
-    display:flex;
-    justify-content:center;
-    gap:0.75rem;
-    margin-top:1.5rem;
-  }
+  .pagination-row{ display:flex; justify-content:center; gap:0.75rem; margin-top:1.5rem; }
   .page-btn{
     background:transparent;
     border:1px solid rgba(57,255,20,0.5);
@@ -386,7 +380,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
 
-  /* ---- detail / offer placeholder screens ---- */
+  /* ---- detail screen ---- */
   .detail-eyebrow{
     text-align:center;
     font-size:11px;
@@ -410,20 +404,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .df-value{ color:#e8e8e8; text-align:right; word-break:break-all; }
   .df-value.not-indexed{ color:#ff003c; text-shadow:0 0 4px rgba(255,0,60,0.3); }
   .df-value.rarity{ color:#ffd700; text-shadow:0 0 4px rgba(255,215,0,0.3); }
-  .view-holder-link{
-    display:block;
-    margin:0.5rem auto 0;
-    background:transparent;
-    border:none;
-    color:#00fff2;
-    font-family:inherit;
-    font-size:10px;
-    letter-spacing:0.1em;
-    cursor:pointer;
-    text-transform:uppercase;
-    text-decoration:underline;
-  }
-  .view-holder-link:disabled{ color:rgba(232,232,232,0.25); text-decoration:none; cursor:not-allowed; }
   .detail-traits-title{
     text-align:center;
     font-size:11px;
@@ -440,40 +420,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin:0 auto 0.5rem;
   }
   .trait-cell{ border:1px solid rgba(57,255,20,0.2); padding:0.6rem 0.75rem; text-align:center; }
-  .trait-cell .tc-label{
-    font-size:9px; letter-spacing:0.15em; color:rgba(232,232,232,0.4); margin-bottom:0.35rem; text-transform:uppercase;
-  }
+  .trait-cell .tc-label{ font-size:9px; letter-spacing:0.15em; color:rgba(232,232,232,0.4); margin-bottom:0.35rem; text-transform:uppercase; }
   .trait-cell .tc-value{ font-size:13px; letter-spacing:0.03em; color:#39ff14; text-shadow:0 0 4px rgba(57,255,20,0.3); }
-  .tech-meta{
-    max-width:560px;
-    margin:1.25rem auto 0;
-    border-top:1px dashed rgba(232,232,232,0.15);
-    padding-top:1rem;
-  }
-  .tech-meta-title{
-    text-align:center;
-    font-size:10px;
-    letter-spacing:0.2em;
-    color:rgba(232,232,232,0.35);
-    margin-bottom:0.6rem;
-    text-transform:uppercase;
-  }
-  .tech-meta-row{
-    display:flex;
-    justify-content:space-between;
-    font-size:10px;
-    letter-spacing:0.02em;
-    color:rgba(232,232,232,0.5);
-    margin-bottom:0.35rem;
-  }
+  .tech-meta{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed rgba(232,232,232,0.15); padding-top:1rem; }
+  .tech-meta-title{ text-align:center; font-size:10px; letter-spacing:0.2em; color:rgba(232,232,232,0.35); margin-bottom:0.6rem; text-transform:uppercase; }
+  .tech-meta-row{ display:flex; justify-content:space-between; font-size:10px; letter-spacing:0.02em; color:rgba(232,232,232,0.5); margin-bottom:0.35rem; }
   .tech-meta-row .value{ word-break:break-all; text-align:right; color:rgba(0,255,242,0.7); }
-  .detail-actions{
-    display:flex;
-    justify-content:center;
-    gap:0.75rem;
-    flex-wrap:wrap;
-    margin-top:1.5rem;
-  }
+  .detail-actions{ display:flex; justify-content:center; gap:0.75rem; flex-wrap:wrap; margin-top:1.5rem; }
   .secondary-btn{
     background:transparent;
     border:1px solid rgba(232,232,232,0.3);
@@ -499,50 +452,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:0 0 6px rgba(57,255,20,0.4);
   }
   .action-btn:hover{ background:rgba(57,255,20,0.1); }
+  .action-btn.selected{ background:rgba(57,255,20,0.15); color:#fff; }
 
-  .offer-draft-card{
-    border:1px dashed rgba(57,255,20,0.45);
-    padding:1.75rem;
-    text-align:center;
-    max-width:440px;
-    margin:0 auto;
-  }
-  .offer-draft-title{ font-size:12px; letter-spacing:0.25em; color:#fff; margin-bottom:1.25rem; text-transform:uppercase; }
-  .offer-draft-label{ font-size:10px; letter-spacing:0.2em; color:rgba(232,232,232,0.4); margin:1rem 0 0.4rem; text-transform:uppercase; }
-  .offer-draft-label:first-of-type{ margin-top:0; }
-  .offer-draft-value{ font-size:14px; color:#e8e8e8; }
-  .offer-draft-status{
-    margin-top:1.25rem;
-    font-size:11px;
-    letter-spacing:0.15em;
-    color:#ff003c;
-    text-shadow:0 0 6px rgba(255,0,60,0.4);
-    text-transform:uppercase;
-  }
-
-  /* ---- holder collection screen ---- */
-  .holder-header{
-    text-align:center;
-    margin-bottom:1.25rem;
-  }
-  .holder-header .hh-label{
-    font-size:11px;
-    letter-spacing:0.2em;
-    color:#00fff2;
-    text-shadow:0 0 6px rgba(0,255,242,0.4);
-    margin-bottom:0.4rem;
-    text-transform:uppercase;
-  }
-  .holder-header .hh-addr{ font-size:14px; color:#e8e8e8; margin-bottom:0.3rem; word-break:break-all; }
-  .holder-header .hh-count{
-    font-size:11px;
-    letter-spacing:0.1em;
-    color:rgba(232,232,232,0.5);
-    text-transform:uppercase;
-  }
-
-  /* ---- draft offer bar/panel ---- */
-  .draft-offer-bar{
+  /* ---- target assets sticky bar ---- */
+  .target-bar{
     position:fixed;
     left:50%;
     bottom:0;
@@ -559,84 +472,31 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:1rem;
     cursor:pointer;
   }
-  .draft-offer-bar .dob-label{
+  .target-bar .tb-label{ font-size:12px; letter-spacing:0.1em; color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); text-transform:uppercase; }
+  .target-bar .tb-toggle{ font-size:11px; color:rgba(232,232,232,0.5); text-transform:uppercase; }
+
+  /* ---- target summary / offer placeholder ---- */
+  .target-summary-block{ max-width:480px; margin:0 auto; text-align:center; }
+  .ts-label{ font-size:10px; letter-spacing:0.2em; color:rgba(232,232,232,0.4); margin:1.1rem 0 0.4rem; text-transform:uppercase; }
+  .ts-label:first-child{ margin-top:0; }
+  .ts-value{ font-size:13px; color:#e8e8e8; line-height:1.7; }
+  .ts-count{
+    margin-top:1rem;
     font-size:12px;
-    letter-spacing:0.1em;
+    letter-spacing:0.15em;
     color:#39ff14;
     text-shadow:0 0 6px rgba(57,255,20,0.4);
     text-transform:uppercase;
   }
-  .draft-offer-bar .dob-toggle{ font-size:11px; color:rgba(232,232,232,0.5); text-transform:uppercase; }
-  .draft-offer-panel{
-    position:fixed;
-    left:50%;
-    bottom:0;
-    transform:translateX(-50%);
-    z-index:41;
-    width:min(960px, 100%);
-    max-height:60vh;
-    overflow-y:auto;
-    background:#08080a;
-    border-top:1px solid rgba(57,255,20,0.5);
-    box-shadow:0 -4px 24px rgba(0,0,0,0.6);
-    padding:1.25rem;
-    display:none;
-  }
-  .draft-offer-panel.open{ display:block; }
-  .dop-title{
+  .placeholder-card{
+    border:1px dashed rgba(255,0,60,0.4);
+    padding:1.75rem;
     text-align:center;
-    font-size:12px;
-    letter-spacing:0.2em;
-    color:#fff;
-    margin-bottom:1rem;
-    text-transform:uppercase;
+    max-width:440px;
+    margin:1.5rem auto 0;
   }
-  .dop-list{
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
-    gap:0.6rem;
-    margin-bottom:1rem;
-  }
-  .dop-item{
-    border:1px solid rgba(57,255,20,0.3);
-    padding:0.5rem;
-    text-align:center;
-    position:relative;
-  }
-  .dop-item .dop-num{ font-size:11px; color:#e8e8e8; margin-top:0.4rem; }
-  .dop-remove{
-    position:absolute;
-    top:0.3rem;
-    right:0.3rem;
-    background:rgba(255,0,60,0.8);
-    color:#fff;
-    border:none;
-    width:18px;
-    height:18px;
-    line-height:18px;
-    font-size:11px;
-    cursor:pointer;
-  }
-  .dop-empty{
-    text-align:center;
-    font-size:11px;
-    color:rgba(232,232,232,0.35);
-    text-transform:uppercase;
-    padding:1rem 0;
-  }
-  .dop-close{
-    display:block;
-    margin:0 auto;
-    background:transparent;
-    border:1px solid rgba(232,232,232,0.3);
-    color:rgba(232,232,232,0.6);
-    font-family:inherit;
-    font-size:11px;
-    letter-spacing:0.1em;
-    padding:0.6em 1.2em;
-    cursor:pointer;
-    text-transform:uppercase;
-  }
+  .placeholder-card .pc-title{ font-size:12px; letter-spacing:0.2em; color:#ff003c; text-shadow:0 0 6px rgba(255,0,60,0.4); margin-bottom:0.75rem; text-transform:uppercase; }
+  .placeholder-card .pc-body{ font-size:11px; letter-spacing:0.05em; color:rgba(232,232,232,0.6); line-height:1.7; text-transform:uppercase; }
 
   .protocol-footer{
     text-align:center;
@@ -658,15 +518,26 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <h1>Σκύλλα</h1>
     <div class="sw-subtitle">SWAP PR0T0C0L</div>
-    <div class="sw-eyebrow-lines">// P!GE0N DATABASE<br>// C0LLECT!0N :: P!GE0NS</div>
+    <div class="sw-eyebrow-lines">// P!GE0N DATABASE<br>// C0LLECT!0N :: 3015</div>
 
-    <!-- SCREEN 1: BROWSE / SEARCH -->
+    <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
     <div id="screenBrowse">
+      <div class="sw-panel" id="nodeHeaderPanel" style="display:none;">
+        <div class="node-header">
+          <div class="nh-label">TARGET N0DE</div>
+          <div class="nh-addr" id="nodeAddr"></div>
+          <div class="nh-count" id="nodeCount"></div>
+        </div>
+        <div style="text-align:center;">
+          <a class="back-link" href="#" id="backToFullCollectionLink" style="margin:0;">[ ← BACK T0 FULL C0LLECT!0N ]</a>
+        </div>
+      </div>
+
       <div class="sw-panel">
+        <div class="panel-title" id="searchPanelTitle">P!GE0N DATABASE</div>
         <div class="search-row">
           <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0NS (NUMBER, TRA!T, 0R VALUE)...">
           <button class="bar-btn" id="searchBtn">[ SEARCH ]</button>
-          <button class="bar-btn" id="traitsBtn">[ TRA!TS ▼ ]</button>
           <select class="sort-select" id="sortSelect">
             <option value="NUM_ASC">[ S0RT ▼ ] NUMBER L0W → H!GH</option>
             <option value="NUM_DESC">NUMBER H!GH → L0W</option>
@@ -674,13 +545,15 @@ const SWAP_HTML = `<!DOCTYPE html>
             <option value="RARITY_DESC">RAR!TY :: C0MM0N → RAREST</option>
           </select>
         </div>
-        <div class="search-hint">TRY A NUMBER (e.g. 123), A TRA!T CATEG0RY (e.g. background), 0R A VALUE (e.g. cyan)</div>
         <div class="index-line" id="indexLine"></div>
 
-        <div class="traits-panel" id="traitsPanel">
-          <div class="traits-cats" id="traitsCats"></div>
-          <div class="traits-values" id="traitsValues"></div>
-          <div class="traits-empty-note" id="traitsEmptyNote" style="display:none;">N0 TRA!TS !NDEXED YET — BR0WSE THE C0LLECT!0N T0 D!SC0VER CATEG0R!ES</div>
+        <div class="traits-block">
+          <div class="traits-block-title">TRA!TS</div>
+          <div id="traitRows"></div>
+          <div class="traits-actions">
+            <button class="bar-btn" id="addTraitBtn">[ + ADD TRA!T ]</button>
+            <button class="clear-traits-btn" id="clearTraitsBtn">[ CLEAR TRA!TS ]</button>
+          </div>
         </div>
       </div>
 
@@ -699,8 +572,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-eyebrow">// P!GE0N !DENT!F!ED</div>
       <div class="detail-num" id="detailNum"></div>
       <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
-      <div class="detail-field"><span class="df-label">CURRENT H0LDER</span><span class="df-value" id="detailOwner"></span></div>
-      <button class="view-holder-link" id="viewHolderBtn" disabled>[ V!EW H0LDER'S C0LLECT!0N ]</button>
+      <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
       <div class="detail-field" id="detailRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="detailRarity"></span></div>
       <div class="detail-traits-title">TRA!TS</div>
       <div class="trait-grid" id="detailTraits"></div>
@@ -709,114 +581,68 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="tech-meta-row"><span>NFT0KEN !D</span><span class="value" id="detailNftId"></span></div>
       </div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="backToBrowseBtn">[ ← BACK T0 C0LLECT!0N ]</button>
-        <button class="select-btn" id="detailSelectBtn" style="flex:0 0 auto; padding:0.75em 1.4em;">[ SELECT ]</button>
-        <button class="action-btn" id="offerForBtn">[ OFFER F0R TH!S P!GE0N ]</button>
+        <button class="secondary-btn" id="backToBrowseBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="detailSelectBtn">[ SELECT ]</button>
       </div>
     </div>
 
-    <!-- SCREEN 3: OFFER DRAFT PLACEHOLDER -->
-    <div class="sw-panel" id="screenOffer" style="display:none;">
-      <div class="detail-eyebrow">SCYLLA OFFER BUILDER</div>
-      <div class="offer-draft-card">
-        <div class="offer-draft-title">SCYLLA OFFER</div>
-        <div class="offer-draft-label">TARGET</div>
-        <div class="offer-draft-value" id="offerTargetNum"></div>
-        <div class="offer-draft-label">TARGET H0LDER</div>
-        <div class="offer-draft-value" id="offerTargetOwner"></div>
-        <div class="offer-draft-status">STATUS :: DRAFT</div>
+    <!-- SCREEN 3: TARGET SUMMARY -->
+    <div class="sw-panel" id="screenSummary" style="display:none;">
+      <div class="detail-eyebrow">SCYLLA TARGET</div>
+      <div class="target-summary-block">
+        <div class="ts-label">OWNER</div>
+        <div class="ts-value" id="summaryOwner"></div>
+        <div class="ts-label">REQUEST!NG</div>
+        <div class="ts-value" id="summaryList"></div>
+        <div class="ts-count" id="summaryCount"></div>
+      </div>
+      <div class="placeholder-card" id="offerPlaceholder" style="display:none;">
+        <div class="pc-title">// SCYLLA 0FFER BU!LDER</div>
+        <div class="pc-body">TH!S PR0T0TYPE ST0PS HERE.<br>N0 0FFER HAS BEEN CREATED.<br>N0 WALLET C0NNECTED. N0 ASSETS M0VED.<br>NEXT PHASE :: SELECT Y0UR P!GE0NS + XRP.</div>
       </div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="backToDetailBtn">[ ← BACK ]</button>
-      </div>
-    </div>
-
-    <!-- SCREEN 4: HOLDER'S COLLECTION -->
-    <div class="sw-panel" id="screenHolder" style="display:none;">
-      <div class="holder-header">
-        <div class="hh-label">// H0LDER C0LLECT!0N</div>
-        <div class="hh-addr" id="holderAddr"></div>
-        <div class="hh-count" id="holderCount"></div>
-      </div>
-      <div id="holderResultsArea"></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="backFromHolderBtn">[ ← BACK ]</button>
+        <button class="secondary-btn" id="backFromSummaryBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="continueToOfferBtn">[ C0NT!NUE T0 0FFER ]</button>
       </div>
     </div>
 
     <div class="protocol-footer">TH!S !S A PR0T0TYPE !NTERFACE. N0 ASSETS CAN BE M0VED, S!GNED, 0R TRANSFERRED.</div>
   </div>
 
-  <div class="draft-offer-bar" id="draftOfferBar">
-    <span class="dob-label" id="draftOfferLabel">DRAFT 0FFER :: 0 P!GE0NS</span>
-    <span class="dob-toggle">[ V!EW ▲ ]</span>
-  </div>
-  <div class="draft-offer-panel" id="draftOfferPanel">
-    <div class="dop-title">DRAFT 0FFER SELECT!0NS</div>
-    <div class="dop-list" id="dopList"></div>
-    <button class="dop-close" id="dopCloseBtn">[ CL0SE ]</button>
+  <div class="target-bar" id="targetBar" style="display:none;">
+    <span class="tb-label" id="targetBarLabel">TARGET ASSETS :: 0</span>
+    <span class="tb-toggle">[ V!EW ▲ ]</span>
   </div>
 
 <script>
 (function(){
 
+  // ---- Client-side state ----
   var state = {
-    mode: 'browse',           // 'browse' | 'search'
-    markerStack: [],          // markers visited so far, for PREV PAGE
-    currentMarker: null,      // marker used to fetch the CURRENT page (null = first page)
-    nextMarker: null,         // marker returned for the next page
-    items: [],
+    scope: null,              // null (whole collection) or { wallet, ownerShort }
+    markerStack: [],
+    currentMarker: null,
+    nextMarker: null,
+    items: [],                // currently displayed grid
+    scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
     sort: 'NUM_ASC',
-    traitsData: null,         // { categories: {TraitType: [{value,percent,partial}...]} }
-    selectedTraitCat: null,
-    currentDetail: null,      // the pigeon currently open in the detail screen
-    holderItems: [],          // pigeons currently shown in the holder-collection screen
-    draftOffer: {}            // nftId -> { nftId, number, image } — selections across every screen
+    traitFilters: [],         // [{ id, category, value }]
+    nextTraitRowId: 1,
+    traitsData: null,
+    currentDetail: null,
+    targetAssets: {}          // nftId -> { nftId, number, image } — only while scope is a wallet
   };
 
-  var el = {
-    searchInput: document.getElementById('searchInput'),
-    searchBtn: document.getElementById('searchBtn'),
-    traitsBtn: document.getElementById('traitsBtn'),
-    sortSelect: document.getElementById('sortSelect'),
-    traitsPanel: document.getElementById('traitsPanel'),
-    traitsCats: document.getElementById('traitsCats'),
-    traitsValues: document.getElementById('traitsValues'),
-    traitsEmptyNote: document.getElementById('traitsEmptyNote'),
-    indexLine: document.getElementById('indexLine'),
-    statusLine: document.getElementById('statusLine'),
-    resultsArea: document.getElementById('resultsArea'),
-    paginationRow: document.getElementById('paginationRow'),
-    prevPageBtn: document.getElementById('prevPageBtn'),
-    nextPageBtn: document.getElementById('nextPageBtn'),
-    screenBrowse: document.getElementById('screenBrowse'),
-    screenDetail: document.getElementById('screenDetail'),
-    screenOffer: document.getElementById('screenOffer'),
-    screenHolder: document.getElementById('screenHolder'),
-    detailNum: document.getElementById('detailNum'),
-    detailImgBox: document.getElementById('detailImgBox'),
-    detailOwner: document.getElementById('detailOwner'),
-    viewHolderBtn: document.getElementById('viewHolderBtn'),
-    detailRarityRow: document.getElementById('detailRarityRow'),
-    detailRarity: document.getElementById('detailRarity'),
-    detailTraits: document.getElementById('detailTraits'),
-    detailNftId: document.getElementById('detailNftId'),
-    detailSelectBtn: document.getElementById('detailSelectBtn'),
-    backToBrowseBtn: document.getElementById('backToBrowseBtn'),
-    offerForBtn: document.getElementById('offerForBtn'),
-    offerTargetNum: document.getElementById('offerTargetNum'),
-    offerTargetOwner: document.getElementById('offerTargetOwner'),
-    backToDetailBtn: document.getElementById('backToDetailBtn'),
-    holderAddr: document.getElementById('holderAddr'),
-    holderCount: document.getElementById('holderCount'),
-    holderResultsArea: document.getElementById('holderResultsArea'),
-    backFromHolderBtn: document.getElementById('backFromHolderBtn'),
-    draftOfferBar: document.getElementById('draftOfferBar'),
-    draftOfferLabel: document.getElementById('draftOfferLabel'),
-    draftOfferPanel: document.getElementById('draftOfferPanel'),
-    dopList: document.getElementById('dopList'),
-    dopCloseBtn: document.getElementById('dopCloseBtn')
-  };
+  var el = {};
+  ['searchInput','searchBtn','sortSelect','indexLine','traitRows','addTraitBtn','clearTraitsBtn',
+   'statusLine','resultsArea','paginationRow','prevPageBtn','nextPageBtn',
+   'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
+   'screenBrowse','screenDetail','screenSummary',
+   'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailTraits','detailNftId',
+   'backToBrowseBtn','detailSelectBtn',
+   'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
+   'targetBar','targetBarLabel'
+  ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   function escapeHtml(str){
     return String(str).replace(/[&<>"']/g, function(c){
@@ -827,74 +653,119 @@ const SWAP_HTML = `<!DOCTYPE html>
   function showScreen(name){
     el.screenBrowse.style.display = name === 'browse' ? '' : 'none';
     el.screenDetail.style.display = name === 'detail' ? '' : 'none';
-    el.screenOffer.style.display = name === 'offer' ? '' : 'none';
-    el.screenHolder.style.display = name === 'holder' ? '' : 'none';
+    el.screenSummary.style.display = name === 'summary' ? '' : 'none';
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
-  // ---- Draft offer (multi-select accumulator, independent of the single-
-  // target OFFER BUILDER placeholder above) ----
-  function draftCount(){ return Object.keys(state.draftOffer).length; }
-  function renderDraftOfferBar(){
-    var n = draftCount();
-    el.draftOfferLabel.textContent = 'DRAFT 0FFER :: ' + n + ' P!GE0N' + (n === 1 ? '' : 'S');
+  function api(params){
+    var qs = Object.keys(params).map(function(k){ return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); }).join('&');
+    return fetch('/api/pigeons?' + qs).then(function(r){ return r.json(); });
   }
-  function renderDraftOfferPanel(){
-    var items = Object.keys(state.draftOffer).map(function(k){ return state.draftOffer[k]; });
-    if (!items.length){
-      el.dopList.innerHTML = '<div class="dop-empty">N0 P!GE0NS SELECTED YET</div>';
-      return;
-    }
-    el.dopList.innerHTML = items.map(function(p){
-      var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;">' : '[ IMAGE ]';
-      return '<div class="dop-item" data-nftid="' + escapeHtml(p.nftId) + '">' +
-        '<button class="dop-remove" data-nftid="' + escapeHtml(p.nftId) + '">&times;</button>' +
-        img +
-        '<div class="dop-num">#' + (p.number !== null ? p.number : '????') + '</div>' +
-      '</div>';
-    }).join('');
+
+  // ---- Target assets (owner-scoped multi-select) ----
+  function targetCount(){ return Object.keys(state.targetAssets).length; }
+  function renderTargetBar(){
+    if (!state.scope){ el.targetBar.style.display = 'none'; return; }
+    el.targetBar.style.display = 'flex';
+    el.targetBarLabel.textContent = 'TARGET ASSETS :: ' + targetCount();
   }
-  function toggleDraftSelection(p){
-    if (state.draftOffer[p.nftId]) delete state.draftOffer[p.nftId];
-    else state.draftOffer[p.nftId] = { nftId: p.nftId, number: p.number, image: p.image };
-    renderDraftOfferBar();
-    refreshSelectButtons();
+  function toggleTargetAsset(p){
+    if (state.targetAssets[p.nftId]) delete state.targetAssets[p.nftId];
+    else state.targetAssets[p.nftId] = { nftId: p.nftId, number: p.number, image: p.image };
+    renderTargetBar();
+    refreshCardSelectionStates();
   }
-  function refreshSelectButtons(){
+  function refreshCardSelectionStates(){
     document.querySelectorAll('.result-card').forEach(function(card){
       var id = card.getAttribute('data-nftid');
-      var inDraft = !!state.draftOffer[id];
-      card.classList.toggle('in-draft', inDraft);
+      var inTarget = !!state.targetAssets[id];
+      card.classList.toggle('in-target', inTarget);
       var btn = card.querySelector('.select-btn');
-      if (btn){ btn.classList.toggle('selected', inDraft); btn.textContent = inDraft ? '[ SELECTED ]' : '[ SELECT ]'; }
+      if (btn){ btn.classList.toggle('selected', inTarget); btn.textContent = inTarget ? '[ SELECTED ]' : '[ SELECT ]'; }
       var toggle = card.querySelector('.card-select-toggle');
-      if (toggle){ toggle.classList.toggle('selected', inDraft); toggle.textContent = inDraft ? '✓' : '+'; }
+      if (toggle){ toggle.classList.toggle('selected', inTarget); toggle.textContent = inTarget ? '✓' : '+'; }
     });
-    if (el.detailSelectBtn && state.currentDetail){
-      var d = !!state.draftOffer[state.currentDetail.nftId];
+    if (el.detailSelectBtn && state.currentDetail && state.scope){
+      var d = !!state.targetAssets[state.currentDetail.nftId];
       el.detailSelectBtn.classList.toggle('selected', d);
       el.detailSelectBtn.textContent = d ? '[ SELECTED ]' : '[ SELECT ]';
     }
   }
-  el.draftOfferBar.addEventListener('click', function(){
-    renderDraftOfferPanel();
-    el.draftOfferPanel.classList.add('open');
-  });
-  el.dopCloseBtn.addEventListener('click', function(){ el.draftOfferPanel.classList.remove('open'); });
-  el.dopList.addEventListener('click', function(e){
-    var btn = e.target.closest('.dop-remove');
-    if (!btn) return;
-    delete state.draftOffer[btn.getAttribute('data-nftid')];
-    renderDraftOfferBar();
-    renderDraftOfferPanel();
-    refreshSelectButtons();
-  });
+  el.targetBar.addEventListener('click', function(){ openSummary(); });
 
-  function traitLine(attributes, wanted){
-    var found = attributes.filter(function(a){ return wanted.indexOf(a.trait_type) !== -1; });
-    return found;
+  function openSummary(){
+    var items = Object.keys(state.targetAssets).map(function(k){ return state.targetAssets[k]; });
+    el.summaryOwner.textContent = state.scope ? state.scope.ownerShort : '';
+    el.summaryList.innerHTML = items.length
+      ? items.map(function(p){ return '\\uD83D\\uDC26 P!GE0N #' + (p.number !== null ? p.number : '????'); }).join('<br>')
+      : '<span style="color:rgba(232,232,232,0.3);">N0THING SELECTED YET</span>';
+    el.summaryCount.textContent = 'TARGET ASSETS :: ' + items.length;
+    el.offerPlaceholder.style.display = 'none';
+    showScreen('summary');
+  }
+  el.backFromSummaryBtn.addEventListener('click', function(){ showScreen('browse'); });
+  el.continueToOfferBtn.addEventListener('click', function(){ el.offerPlaceholder.style.display = ''; });
+
+  // ---- SELECT behaviour: whole-collection scope picks a TARGET (auto
+  // owner lookup + transition); wallet scope toggles a TARGET ASSET. ----
+  function handleSelect(p){
+    if (!state.scope){
+      enterOwnerScope(p);
+    } else {
+      toggleTargetAsset(p);
+    }
   }
 
+  function enterOwnerScope(targetPigeon){
+    if (!targetPigeon.owner){
+      alert('OWNER N0T !NDEXED F0R TH!S P!GE0N YET — TRY ANOTHER, OR !NSPECT !T AGA!N SH0RTLY.');
+      return;
+    }
+    state.scope = { wallet: targetPigeon.owner, ownerShort: targetPigeon.ownerShort || targetPigeon.owner };
+    state.targetAssets = {};
+    state.targetAssets[targetPigeon.nftId] = { nftId: targetPigeon.nftId, number: targetPigeon.number, image: targetPigeon.image };
+    state.traitFilters = [];
+    renderTraitRows();
+    el.searchInput.value = '';
+    el.nodeHeaderPanel.style.display = '';
+    el.nodeAddr.textContent = state.scope.ownerShort;
+    el.searchPanelTitle.textContent = 'TARGET N0DE C0LLECT!0N';
+    el.paginationRow.style.display = 'none';
+    el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG H0LDER\\'S REAL P!GE0NS...</div>';
+    showScreen('browse');
+    renderTargetBar();
+    api({ wallet: targetPigeon.owner }).then(function(data){
+      state.scopeAllItems = data.items || [];
+      el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
+      runScopedQuery();
+    }).catch(function(){
+      el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T LOAD TH!S WALLET. TRY AGA!N.'], false);
+    });
+  }
+
+  el.backToFullCollectionLink.addEventListener('click', function(e){
+    e.preventDefault();
+    state.scope = null;
+    state.scopeAllItems = [];
+    state.targetAssets = {};
+    state.traitFilters = [];
+    renderTraitRows();
+    el.nodeHeaderPanel.style.display = 'none';
+    el.searchPanelTitle.textContent = 'P!GE0N DATABASE';
+    el.searchInput.value = '';
+    renderTargetBar();
+    loadBrowsePage(null, false);
+  });
+
+  function emptyStateHtml(title, lines, showClear){
+    return '<div class="empty-state">' +
+      '<div class="es-title">' + escapeHtml(title) + '</div>' +
+      lines.map(function(l){ return '<div class="es-line">' + escapeHtml(l) + '</div>'; }).join('') +
+      (showClear ? '<button class="bar-btn" id="clearSearchBtn" style="margin-top:0.75rem;">[ CLEAR SEARCH ]</button>' : '') +
+    '</div>';
+  }
+
+  // ---- Card rendering ----
   function resultCardHtml(p){
     var previewTraits = p.attributes.slice(0, 3);
     var traitLines = previewTraits.map(function(a){
@@ -903,11 +774,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY :: ' + p.rarityRank + (p.rarityTotal ? ' / ' + p.rarityTotal : '') + '</div>' : '';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
-    var inDraft = !!state.draftOffer[p.nftId];
-    return '<div class="result-card' + (inDraft ? ' in-draft' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
+    var inTarget = !!state.targetAssets[p.nftId];
+    return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         img +
-        '<button class="card-select-toggle' + (inDraft ? ' selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inDraft ? '✓' : '+') + '</button>' +
+        '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
       '</div>' +
       '<div class="result-card-body">' +
         '<div class="result-num">P!GE0N ' + num + '</div>' +
@@ -915,7 +786,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         traitLines +
         '<div class="card-btn-row">' +
           '<button class="inspect-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ !NSPECT ]</button>' +
-          '<button class="select-btn' + (inDraft ? ' selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">[ ' + (inDraft ? 'SELECTED' : 'SELECT') + ' ]</button>' +
+          '<button class="select-btn' + (inTarget ? ' selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">[ ' + (inTarget ? 'SELECTED' : 'SELECT') + ' ]</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -937,26 +808,51 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   function renderResults(){
     var sorted = sortItems(state.items);
-    if (!sorted.length) return; // empty state already rendered by caller
+    if (!sorted.length) return;
     el.resultsArea.innerHTML = '<div class="result-grid">' + sorted.map(resultCardHtml).join('') + '</div>';
   }
 
-  function emptyStateHtml(title, lines, showClear){
-    return '<div class="empty-state">' +
-      '<div class="es-title">' + escapeHtml(title) + '</div>' +
-      lines.map(function(l){ return '<div class="es-line">' + escapeHtml(l) + '</div>'; }).join('') +
-      (showClear ? '<button class="bar-btn" id="clearSearchBtn" style="margin-top:0.75rem;">[ CLEAR SEARCH ]</button>' : '') +
-    '</div>';
+  function wireResultClicks(container, source){
+    container.addEventListener('click', function(e){
+      var toggle = e.target.closest('.card-select-toggle');
+      if (toggle){
+        var tp = source().filter(function(x){ return x.nftId === toggle.getAttribute('data-nftid'); })[0];
+        if (tp) handleSelect(tp);
+        return;
+      }
+      var inspectBtn = e.target.closest('.inspect-btn');
+      var imgBox = e.target.closest('.pigeon-img-box');
+      if (inspectBtn || imgBox){ openDetail((inspectBtn || imgBox).getAttribute('data-nftid')); return; }
+      var selectBtn = e.target.closest('.select-btn');
+      if (selectBtn){
+        var p = source().filter(function(x){ return x.nftId === selectBtn.getAttribute('data-nftid'); })[0];
+        if (p) handleSelect(p);
+      }
+    });
+  }
+  wireResultClicks(el.resultsArea, function(){ return state.items; });
+
+  // ---- Background full-collection index progress ----
+  function refreshIndexLine(){
+    api({ traits: 1 }).then(function(data){
+      state.traitsData = data;
+      renderTraitRows();
+      var stats = data.indexStats;
+      if (!stats || !stats.totalIndexed){
+        el.indexLine.textContent = '!NDEX!NG :: JUST GETT!NG STARTED';
+        return;
+      }
+      var pct = Math.round((stats.totalIndexed / (data.collectionSizeApprox || 3015)) * 1000) / 10;
+      el.indexLine.textContent = '!NDEXED :: ' + stats.totalIndexed + ' / ~' + (data.collectionSizeApprox || 3015) + ' (' + pct + '%)' + (stats.marker ? ' :: ST!LL !NDEX!NG...' : ' :: C0MPLETE');
+    }).catch(function(){});
+  }
+  function ensureTraitsLoaded(){
+    if (state.traitsData) return Promise.resolve(state.traitsData);
+    return api({ traits: 1 }).then(function(data){ state.traitsData = data; return data; });
   }
 
-  function api(params){
-    var qs = Object.keys(params).map(function(k){ return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); }).join('&');
-    return fetch('/api/pigeons?' + qs).then(function(r){ return r.json(); });
-  }
-
-  // ---- Browse (paginated real collection) ----
+  // ---- Whole-collection browse (paginated real ledger) ----
   function loadBrowsePage(marker, pushCurrentToStack){
-    state.mode = 'browse';
     el.paginationRow.style.display = 'none';
     el.statusLine.textContent = '';
     el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG REAL P!GE0N DATA FR0M THE LEDGER...</div>';
@@ -965,9 +861,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       state.currentMarker = marker || null;
       state.nextMarker = data.marker || null;
       state.items = data.items || [];
-      var approx = data.collectionSizeApprox ? '~' + data.collectionSizeApprox : 'UNKN0WN';
-      var failedNote = data.failedCount ? (' :: ' + data.failedCount + ' UNAVA!LABLE (!PFS T!ME0UT)') : '';
-      el.statusLine.innerHTML = 'DISPLAYING :: <span class="hi">' + state.items.length + '</span> P!GE0NS TH!S PAGE :: ' + approx + ' !N C0LLECT!0N (APPR0X)' + failedNote;
+      var failedNote = data.failedCount ? (' :: ' + data.failedCount + ' UNAVA!LABLE') : '';
+      el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + (data.collectionSizeApprox || 3015) + '</span> :: SH0W!NG ' + state.items.length + ' TH!S PAGE' + failedNote;
       refreshIndexLine();
       if (!state.items.length){
         el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['TH!S PAGE RETURNED N0 READABLE P!GE0NS.'], false);
@@ -981,25 +876,119 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T REACH THE LEDGER. TRY AGA!N.'], false);
     });
   }
-
-  el.nextPageBtn.addEventListener('click', function(){
-    if (!state.nextMarker) return;
-    loadBrowsePage(state.nextMarker, true);
-  });
+  el.nextPageBtn.addEventListener('click', function(){ if (state.nextMarker) loadBrowsePage(state.nextMarker, true); });
   el.prevPageBtn.addEventListener('click', function(){
-    if (!state.markerStack.length){
-      loadBrowsePage(null, false);
+    if (!state.markerStack.length){ loadBrowsePage(null, false); return; }
+    loadBrowsePage(state.markerStack.pop(), false);
+  });
+
+  // ---- Trait stack (stackable AND filters) ----
+  function renderTraitRows(){
+    var cats = state.traitsData ? Object.keys(state.traitsData.categories) : [];
+    el.traitRows.innerHTML = state.traitFilters.map(function(row){
+      var catOptions = cats.map(function(c){
+        return '<option value="' + escapeHtml(c) + '"' + (row.category === c ? ' selected' : '') + '>' + escapeHtml(c.toUpperCase()) + '</option>';
+      }).join('');
+      var vals = (row.category && state.traitsData.categories[row.category]) || [];
+      var valOptions = vals.map(function(v){
+        var pct = v.percent !== null && v.percent !== undefined ? ' (' + v.percent + '%' + (v.partial ? '~' : '') + ')' : '';
+        return '<option value="' + escapeHtml(v.value) + '"' + (row.value === v.value ? ' selected' : '') + '>' + escapeHtml(v.value.toUpperCase()) + pct + '</option>';
+      }).join('');
+      return '<div class="trait-row" data-id="' + row.id + '">' +
+        '<select class="trait-cat-select" data-id="' + row.id + '"><option value="">[ CATEG0RY ▼ ]</option>' + catOptions + '</select>' +
+        '<select class="trait-val-select" data-id="' + row.id + '"' + (row.category ? '' : ' disabled') + '><option value="">[ VALUE ▼ ]</option>' + valOptions + '</select>' +
+        '<button class="trait-row-remove" data-id="' + row.id + '">&times;</button>' +
+      '</div>';
+    }).join('');
+  }
+  el.addTraitBtn.addEventListener('click', function(){
+    ensureTraitsLoaded().then(function(){
+      state.traitFilters.push({ id: state.nextTraitRowId++, category: '', value: '' });
+      renderTraitRows();
+    });
+  });
+  el.clearTraitsBtn.addEventListener('click', function(){
+    state.traitFilters = [];
+    renderTraitRows();
+    runQuery();
+  });
+  el.traitRows.addEventListener('change', function(e){
+    var id = parseInt(e.target.getAttribute('data-id'), 10);
+    var row = state.traitFilters.filter(function(r){ return r.id === id; })[0];
+    if (!row) return;
+    if (e.target.classList.contains('trait-cat-select')){ row.category = e.target.value; row.value = ''; }
+    else if (e.target.classList.contains('trait-val-select')){ row.value = e.target.value; }
+    renderTraitRows();
+    runQuery();
+  });
+  el.traitRows.addEventListener('click', function(e){
+    var btn = e.target.closest('.trait-row-remove');
+    if (!btn) return;
+    var id = parseInt(btn.getAttribute('data-id'), 10);
+    state.traitFilters = state.traitFilters.filter(function(r){ return r.id !== id; });
+    renderTraitRows();
+    runQuery();
+  });
+
+  function activeFilters(){
+    return state.traitFilters.filter(function(r){ return r.category && r.value; }).map(function(r){ return { trait: r.category, value: r.value }; });
+  }
+
+  // ---- Unified query dispatch: wallet-scope filters client-side over the
+  // full holder list; whole-collection scope searches/filters server-side. ----
+  function runQuery(){
+    if (state.scope) runScopedQuery();
+    else runGlobalQuery();
+  }
+
+  function runScopedQuery(){
+    var q = el.searchInput.value.trim().toLowerCase();
+    var filters = activeFilters();
+    var list = state.scopeAllItems.filter(function(p){
+      if (filters.length && !filters.every(function(f){
+        return p.attributes.some(function(a){ return a.trait_type === f.trait && a.value === f.value; });
+      })) return false;
+      if (q){
+        var numMatch = p.number !== null && String(p.number).indexOf(q.replace('#','')) !== -1;
+        var traitMatch = p.attributes.some(function(a){ return a.value.toLowerCase().indexOf(q) !== -1 || a.trait_type.toLowerCase().indexOf(q) !== -1; });
+        if (!numMatch && !traitMatch) return false;
+      }
+      return true;
+    });
+    state.items = list;
+    el.paginationRow.style.display = 'none';
+    el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + list.length + '</span>' + (list.length === 1 ? '<br>P!GE0N #' + list[0].number : '');
+    if (!list.length){
+      el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + (q || '(traits)') + '"'], true);
+      wireClearSearch();
+    } else {
+      renderResults();
+    }
+  }
+
+  function runGlobalQuery(){
+    var filters = activeFilters();
+    if (filters.length){
+      el.paginationRow.style.display = 'none';
+      el.resultsArea.innerHTML = '<div class="loading-note">F!LTER!NG...</div>';
+      api({ filters: JSON.stringify(filters) }).then(function(data){
+        state.items = data.items || [];
+        el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + state.items.length + '</span> :: SEARCHED !NDEXED P!GE0NS 0NLY';
+        if (!state.items.length){
+          el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['N0 !NDEXED P!GE0N MATCHES ALL SELECTED TRA!TS.'], true);
+          wireClearSearch();
+        } else renderResults();
+      }).catch(function(){
+        el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['F!LTER FA!LED. TRY AGA!N.'], false);
+      });
       return;
     }
-    var prev = state.markerStack.pop();
-    loadBrowsePage(prev, false);
-  });
-
-  // ---- Search ----
-  function runSearch(){
     var q = el.searchInput.value.trim();
     if (!q){ loadBrowsePage(null, false); return; }
-    state.mode = 'search';
+    runFreeTextSearch(q);
+  }
+
+  function runFreeTextSearch(q){
     el.paginationRow.style.display = 'none';
     el.resultsArea.innerHTML = '<div class="loading-note">SEARCH!NG...</div>';
     el.statusLine.textContent = '';
@@ -1011,45 +1000,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (isNumber){
       req = api({ number: q.replace('#', '') });
     } else if (kv){
-      req = api({ trait: kv[1], value: kv[2].trim() });
+      req = api({ filters: JSON.stringify([{ trait: kv[1], value: kv[2].trim() }]) });
     } else {
-      // Free text: try as a trait CATEGORY name first (e.g. "background"),
-      // then fall back to treating it as a VALUE across every known category.
       req = ensureTraitsLoaded().then(function(){
         var catMatch = Object.keys(state.traitsData.categories).filter(function(c){ return c.toLowerCase() === q.toLowerCase(); })[0];
         if (catMatch){
-          // A bare category name has no single value — union all its values.
           var vals = (state.traitsData.categories[catMatch] || []).map(function(v){ return v.value; });
-          return Promise.all(vals.map(function(v){ return api({ trait: catMatch, value: v }); }))
-            .then(function(results){
-              var merged = [];
-              var seen = {};
-              results.forEach(function(r){
-                (r.items || []).forEach(function(it){
-                  if (!seen[it.nftId]){ seen[it.nftId] = true; merged.push(it); }
-                });
-              });
-              return { items: merged, indexedOnly: true };
-            });
+          return Promise.all(vals.map(function(v){ return api({ filters: JSON.stringify([{ trait: catMatch, value: v }]) }); }))
+            .then(mergeResults);
         }
-        // Treat as a value: check it against every known category.
         var cats = Object.keys(state.traitsData.categories);
         return Promise.all(cats.map(function(c){
           var vals = (state.traitsData.categories[c] || []).map(function(v){ return v.value; });
           var match = vals.filter(function(v){ return v.toLowerCase().indexOf(q.toLowerCase()) !== -1; });
-          return Promise.all(match.map(function(v){ return api({ trait: c, value: v }); }));
-        })).then(function(nested){
-          var merged = [];
-          var seen = {};
-          nested.forEach(function(group){
-            group.forEach(function(r){
-              (r.items || []).forEach(function(it){
-                if (!seen[it.nftId]){ seen[it.nftId] = true; merged.push(it); }
-              });
-            });
-          });
-          return { items: merged, indexedOnly: true };
-        });
+          return Promise.all(match.map(function(v){ return api({ filters: JSON.stringify([{ trait: c, value: v }]) }); }));
+        })).then(function(nested){ return mergeResults(nested.reduce(function(a,b){ return a.concat(b); }, [])); });
       });
     }
 
@@ -1065,156 +1030,66 @@ const SWAP_HTML = `<!DOCTYPE html>
           ], true);
         } else {
           el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
-          el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', [
-            'QUERY :: "' + q + '"',
-            data.indexedOnly ? 'SEARCHED !NDEXED P!GE0NS 0NLY (GR0WS AS Y0U BR0WSE).' : ''
-          ].filter(Boolean), true);
+          el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + q + '"'], true);
         }
         wireClearSearch();
         return;
       }
-      var note = data.indexedOnly ? ' :: SEARCHED !NDEXED P!GE0NS 0NLY' : '';
-      el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + state.items.length + '</span>' + note +
+      el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + state.items.length + '</span>' +
         (state.items.length === 1 ? '<br>P!GE0N #' + state.items[0].number : '');
       renderResults();
     }).catch(function(){
       el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['SEARCH FA!LED. TRY AGA!N.'], false);
     });
   }
+  function mergeResults(results){
+    var merged = [], seen = {};
+    results.forEach(function(r){ (r.items || []).forEach(function(it){ if (!seen[it.nftId]){ seen[it.nftId]=true; merged.push(it); } }); });
+    return { items: merged, indexedOnly: true };
+  }
   function wireClearSearch(){
     var btn = document.getElementById('clearSearchBtn');
-    if (btn) btn.addEventListener('click', function(){ el.searchInput.value = ''; loadBrowsePage(null, false); });
+    if (btn) btn.addEventListener('click', function(){
+      el.searchInput.value = '';
+      if (state.scope) runScopedQuery(); else loadBrowsePage(null, false);
+    });
   }
-  el.searchBtn.addEventListener('click', runSearch);
-  el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearch(); });
 
-  // ---- Sort (re-orders whatever's currently displayed) ----
+  el.searchBtn.addEventListener('click', runQuery);
+  el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runQuery(); });
   el.sortSelect.addEventListener('change', function(){
     state.sort = el.sortSelect.value;
     if (state.items.length) renderResults();
   });
 
-  // ---- Background full-collection index progress (real, grows over time) ----
-  function refreshIndexLine(){
-    api({ traits: 1 }).then(function(data){
-      state.traitsData = data;
-      var stats = data.indexStats;
-      if (!stats || !stats.totalIndexed){
-        el.indexLine.textContent = '!NDEX!NG :: JUST GETT!NG STARTED';
-        return;
-      }
-      var pct = Math.round((stats.totalIndexed / (data.collectionSizeApprox || 3015)) * 1000) / 10;
-      el.indexLine.textContent = '!NDEXED :: ' + stats.totalIndexed + ' / ~' + (data.collectionSizeApprox || 3015) + ' (' + pct + '%)' + (stats.marker ? ' :: ST!LL !NDEX!NG...' : ' :: C0MPLETE');
-    }).catch(function(){});
-  }
-
-  // ---- Traits filter panel ----
-  function ensureTraitsLoaded(force){
-    if (state.traitsData && !force) return Promise.resolve(state.traitsData);
-    return api({ traits: 1 }).then(function(data){
-      state.traitsData = data;
-      return data;
-    });
-  }
-  function renderTraitCats(){
-    var cats = Object.keys(state.traitsData.categories || {});
-    if (!cats.length){
-      el.traitsEmptyNote.style.display = '';
-      el.traitsCats.innerHTML = '';
-      el.traitsValues.innerHTML = '';
-      return;
-    }
-    el.traitsEmptyNote.style.display = 'none';
-    el.traitsCats.innerHTML = cats.map(function(c){
-      return '<button class="trait-cat-btn' + (state.selectedTraitCat === c ? ' selected' : '') + '" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c.toUpperCase()) + '</button>';
-    }).join('');
-    renderTraitValues();
-  }
-  function renderTraitValues(){
-    if (!state.selectedTraitCat){ el.traitsValues.innerHTML = ''; return; }
-    var vals = state.traitsData.categories[state.selectedTraitCat] || [];
-    el.traitsValues.innerHTML = vals.map(function(v){
-      var pct = v.percent !== null && v.percent !== undefined
-        ? '<span class="tv-pct">(' + v.percent + '%' + (v.partial ? '~' : '') + ')</span>'
-        : '';
-      return '<span class="trait-value-chip" data-cat="' + escapeHtml(state.selectedTraitCat) + '" data-val="' + escapeHtml(v.value) + '">' + escapeHtml(v.value.toUpperCase()) + ' ' + pct + '</span>';
-    }).join('');
-  }
-  el.traitsBtn.addEventListener('click', function(){
-    var opening = !el.traitsPanel.classList.contains('open');
-    el.traitsPanel.classList.toggle('open', opening);
-    el.traitsBtn.classList.toggle('active', opening);
-    if (opening) ensureTraitsLoaded().then(renderTraitCats);
-  });
-  el.traitsCats.addEventListener('click', function(e){
-    var btn = e.target.closest('.trait-cat-btn');
-    if (!btn) return;
-    state.selectedTraitCat = btn.getAttribute('data-cat');
-    renderTraitCats();
-  });
-  el.traitsValues.addEventListener('click', function(e){
-    var chip = e.target.closest('.trait-value-chip');
-    if (!chip) return;
-    var cat = chip.getAttribute('data-cat');
-    var val = chip.getAttribute('data-val');
-    el.searchInput.value = cat + ': ' + val;
-    runSearch();
-  });
-
-  // ---- Inspect / select ---- (delegated so it works for browse, search,
-  // and holder-collection results alike via wireResultClicks below)
-  function wireResultClicks(container, source){
-    container.addEventListener('click', function(e){
-      var toggle = e.target.closest('.card-select-toggle');
-      if (toggle){
-        var tp = source().filter(function(x){ return x.nftId === toggle.getAttribute('data-nftid'); })[0];
-        if (tp) toggleDraftSelection(tp);
-        return;
-      }
-      var inspectBtn = e.target.closest('.inspect-btn');
-      var imgBox = e.target.closest('.pigeon-img-box');
-      if (inspectBtn || imgBox){ openDetail((inspectBtn || imgBox).getAttribute('data-nftid')); return; }
-      var selectBtn = e.target.closest('.select-btn');
-      if (selectBtn){
-        var p = source().filter(function(x){ return x.nftId === selectBtn.getAttribute('data-nftid'); })[0];
-        if (p) toggleDraftSelection(p);
-      }
-    });
-  }
-  wireResultClicks(el.resultsArea, function(){ return state.items; });
-
+  // ---- Inspect / detail ----
   function traitCellHtml(a){
     return '<div class="trait-cell"><div class="tc-label">' + escapeHtml(a.trait_type) + '</div><div class="tc-value">' + escapeHtml(a.value) + '</div></div>';
   }
-
   function updateDetailRarity(p){
-    if (p && p.rarityRank){
-      el.detailRarityRow.style.display = '';
-      el.detailRarity.textContent = p.rarityRank + (p.rarityTotal ? ' / ' + p.rarityTotal : '');
-    } else {
-      el.detailRarityRow.style.display = 'none';
-    }
+    if (p && p.rarityRank){ el.detailRarityRow.style.display = ''; el.detailRarity.textContent = p.rarityRank + (p.rarityTotal ? ' / ' + p.rarityTotal : ''); }
+    else el.detailRarityRow.style.display = 'none';
   }
-  function updateViewHolderBtn(p){
-    el.viewHolderBtn.disabled = !(p && p.owner);
+  function findKnown(nftId){
+    return state.items.filter(function(p){ return p.nftId === nftId; })[0] ||
+      state.scopeAllItems.filter(function(p){ return p.nftId === nftId; })[0];
   }
   function openDetail(nftId){
-    var known = state.items.filter(function(p){ return p.nftId === nftId; })[0] ||
-      state.holderItems.filter(function(p){ return p.nftId === nftId; })[0];
+    var known = findKnown(nftId);
     el.detailNum.textContent = known && known.number !== null ? 'P!GE0N #' + known.number : 'P!GE0N ...';
     el.detailImgBox.innerHTML = known && known.image ? '<img src="' + escapeHtml(known.image) + '" alt="">' : '[ IMAGE ]';
-    el.detailOwner.textContent = '...';
+    el.detailOwner.textContent = known && known.ownerShort ? known.ownerShort : '...';
+    el.detailOwner.classList.remove('not-indexed');
     el.detailTraits.innerHTML = known ? known.attributes.map(traitCellHtml).join('') : '';
     el.detailNftId.textContent = nftId;
     updateDetailRarity(known);
-    updateViewHolderBtn(null);
-    state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null };
+    state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null, attributes: [] };
     showScreen('detail');
-    refreshSelectButtons();
+    refreshCardSelectionStates();
 
     api({ detail: nftId }).then(function(data){
       if (!data.item){
-        state.currentDetail = known ? { nftId: nftId, number: known.number, owner: null, ownerShort: null } : { nftId: nftId, number: null, owner: null, ownerShort: null };
+        state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null, attributes: [] };
         el.detailOwner.textContent = 'N0T !NDEXED';
         el.detailOwner.classList.add('not-indexed');
         return;
@@ -1225,15 +1100,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
       el.detailTraits.innerHTML = p.attributes.map(traitCellHtml).join('');
       updateDetailRarity(p);
-      updateViewHolderBtn(p);
-      if (p.ownerShort){
-        el.detailOwner.textContent = p.ownerShort;
-        el.detailOwner.classList.remove('not-indexed');
-      } else {
-        el.detailOwner.textContent = 'N0T !NDEXED';
-        el.detailOwner.classList.add('not-indexed');
-      }
-      refreshSelectButtons();
+      if (p.ownerShort){ el.detailOwner.textContent = p.ownerShort; el.detailOwner.classList.remove('not-indexed'); }
+      else { el.detailOwner.textContent = 'N0T !NDEXED'; el.detailOwner.classList.add('not-indexed'); }
+      refreshCardSelectionStates();
     }).catch(function(){
       el.detailOwner.textContent = 'N0T !NDEXED';
       el.detailOwner.classList.add('not-indexed');
@@ -1241,41 +1110,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.backToBrowseBtn.addEventListener('click', function(){ showScreen('browse'); });
   el.detailSelectBtn.addEventListener('click', function(){
-    if (state.currentDetail) toggleDraftSelection(state.currentDetail);
+    if (state.currentDetail) handleSelect(state.currentDetail);
   });
-
-  // ---- Holder's collection (real, via /api/pigeons?wallet=) ----
-  function openHolderCollection(owner){
-    el.holderAddr.textContent = owner;
-    el.holderCount.textContent = 'L0AD!NG...';
-    el.holderResultsArea.innerHTML = '<div class="loading-note">L0AD!NG H0LDER\\'S REAL P!GE0NS...</div>';
-    showScreen('holder');
-    api({ wallet: owner }).then(function(data){
-      state.holderItems = data.items || [];
-      el.holderCount.textContent = 'P!GE0NS HELD :: ' + state.holderItems.length;
-      if (!state.holderItems.length){
-        el.holderResultsArea.innerHTML = emptyStateHtml('// N0 P!GE0NS F0UND', ['TH!S WALLET H0LDS N0 P!GE0NS R!GHT N0W.'], false);
-        return;
-      }
-      el.holderResultsArea.innerHTML = '<div class="result-grid">' + state.holderItems.map(resultCardHtml).join('') + '</div>';
-    }).catch(function(){
-      el.holderResultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T LOAD TH!S WALLET. TRY AGA!N.'], false);
-    });
-  }
-  el.viewHolderBtn.addEventListener('click', function(){
-    if (state.currentDetail && state.currentDetail.owner) openHolderCollection(state.currentDetail.owner);
-  });
-  wireResultClicks(el.holderResultsArea, function(){ return state.holderItems; });
-  el.backFromHolderBtn.addEventListener('click', function(){ showScreen('detail'); });
-
-  // ---- Offer draft placeholder ----
-  el.offerForBtn.addEventListener('click', function(){
-    var p = state.currentDetail;
-    el.offerTargetNum.textContent = p && p.number !== null ? 'P!GE0N #' + p.number : el.detailNum.textContent;
-    el.offerTargetOwner.textContent = (p && p.ownerShort) ? p.ownerShort : 'N0T !NDEXED';
-    showScreen('offer');
-  });
-  el.backToDetailBtn.addEventListener('click', function(){ showScreen('detail'); });
 
   // ---- Initial load ----
   loadBrowsePage(null, false);

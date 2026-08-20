@@ -1,8 +1,8 @@
 import {
   fetchPigeonCollectionPage, fetchNftInfo, getPigeonFullMeta, getPigeonMetaCached,
-  getPigeonNumberIndex, getIndexedTraitCategories, getIndexedTraitValues, getPigeonsByTraitValue,
-  resolvePigeonsForOwner, getPigeonIndexStats, maybeRecomputePigeonIndex, getTraitValuePercent,
-  fetchAllAccountNfts, findAllPigeons,
+  getPigeonNumberIndex, getIndexedTraitCategories, getIndexedTraitValues,
+  filterPigeonsByTraits, resolvePigeonsForOwner, getPigeonIndexStats, maybeRecomputePigeonIndex,
+  getTraitValuePercent, fetchAllAccountNfts, findAllPigeons,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX
 } from '../_shared.js';
 
@@ -42,7 +42,8 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const params = url.searchParams;
 
-  // Trait category/value discovery + real percentages, for the TRAITS panel.
+  // Trait category/value discovery + real percentages, for the TRAITS
+  // stack filter UI. categories -> [{value, percent, partial}].
   if (params.get('traits') === '1') {
     const stats = await getPigeonIndexStats(env.coin);
     context.waitUntil(maybeRecomputePigeonIndex(env.coin));
@@ -63,7 +64,9 @@ export async function onRequestGet(context) {
   }
 
   // A wallet's full real holdings — one Deeptide batch call covers all of
-  // them (image+traits+rarity), IPFS is only the per-token fallback.
+  // them (image+traits+rarity), IPFS is only the per-token fallback. The
+  // client then searches/filters/sorts this list entirely on its own,
+  // since a single wallet's collection is small enough to hand over whole.
   const wallet = params.get('wallet');
   if (wallet) {
     const nfts = await fetchAllAccountNfts(wallet);
@@ -100,11 +103,15 @@ export async function onRequestGet(context) {
     return json({ items: [toItem(nftId, meta, fresh ? fresh.owner : null, !!fresh)] });
   }
 
-  // Trait/value search — real, but scoped to whatever's been indexed so far.
-  const trait = params.get('trait');
-  const value = params.get('value');
-  if (trait && value) {
-    const matches = await getPigeonsByTraitValue(env.coin, trait, value, 48);
+  // Stackable trait filters — ALL must match (AND). filters is a JSON
+  // array like [{"trait":"Background","value":"Cyan"}, ...]. Real, but
+  // scoped to whatever's been indexed so far (see filterPigeonsByTraits).
+  const filtersRaw = params.get('filters');
+  if (filtersRaw) {
+    let filters;
+    try { filters = JSON.parse(filtersRaw); } catch (e) { filters = []; }
+    if (!Array.isArray(filters) || !filters.length) return json({ items: [], indexedOnly: true });
+    const matches = await filterPigeonsByTraits(env.coin, filters, 48);
     return json({
       items: matches.map(m => toItem(m.nftId, m.meta, null, false)),
       indexedOnly: true

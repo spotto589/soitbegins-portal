@@ -661,7 +661,11 @@ export async function getPigeonThumbnails(kv, pigeonNfts) {
 // display only ("~3015 P!GE0NS"), never a live-counted total.
 export const PIGEON_COLLECTION_SIZE_APPROX = 3015;
 
-const PIGEON_META_PREFIX = 'pswap:meta:';
+// v2: bumped when Deeptide enrichment (rarityRank/rarityTotal) was added —
+// forces every pre-existing cache entry to be treated as a miss and
+// re-resolved through the new path, instead of silently serving
+// old-schema data (no rarity, IPFS-only image) forever.
+const PIGEON_META_PREFIX = 'pswap:meta:v2:';
 const PIGEON_NUMBER_INDEX_PREFIX = 'pswap:numidx:';
 const PIGEON_TRAIT_CATEGORY_PREFIX = 'pswap:traitcat:';
 const PIGEON_TRAIT_VALUE_PREFIX = 'pswap:traitvalset:';
@@ -810,6 +814,29 @@ export async function getPigeonsByTraitValue(kv, traitType, value, limit = 48) {
   const prefix = `${PIGEON_TRAIT_MEMBER_PREFIX}${traitType}:${value}:`;
   const list = await kv.list({ prefix, limit });
   const nftIds = list.keys.map(k => k.name.slice(prefix.length));
+  const metas = await Promise.all(nftIds.map(id => getPigeonMetaCached(kv, id)));
+  return nftIds
+    .map((nftId, i) => ({ nftId, meta: metas[i] }))
+    .filter(entry => entry.meta !== null);
+}
+
+// Stackable trait filters, ALL of which must match (AND, never OR) — each
+// filter's membership set is read from the same real per-token trait index
+// above, then intersected in memory. Still only searches what's been
+// indexed so far; capped at 1000 members per individual filter before the
+// intersection, same honesty limit as getPigeonsByTraitValue.
+export async function filterPigeonsByTraits(kv, filters, limit = 48) {
+  if (!filters || !filters.length) return [];
+  const sets = await Promise.all(filters.map(async (f) => {
+    const prefix = `${PIGEON_TRAIT_MEMBER_PREFIX}${f.trait}:${f.value}:`;
+    const list = await kv.list({ prefix, limit: 1000 });
+    return new Set(list.keys.map(k => k.name.slice(prefix.length)));
+  }));
+  let intersection = sets[0];
+  for (let i = 1; i < sets.length; i++) {
+    intersection = new Set([...intersection].filter(id => sets[i].has(id)));
+  }
+  const nftIds = [...intersection].slice(0, limit);
   const metas = await Promise.all(nftIds.map(id => getPigeonMetaCached(kv, id)));
   return nftIds
     .map((nftId, i) => ({ nftId, meta: metas[i] }))
