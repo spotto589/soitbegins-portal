@@ -755,8 +755,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .lb-wallet.tier-green{ color:rgb(var(--tier-terminal)); text-shadow:0 0 4px rgba(var(--tier-terminal),0.4); }
   .lb-wallet.tier-pink{ color:rgb(var(--tier-terminal)); text-shadow:0 0 4px rgba(var(--tier-terminal),0.4); }
   .lb-wallet.tier-red{ color:rgb(var(--tier-terminal)); text-shadow:0 0 4px rgba(var(--tier-terminal),0.4); }
-  .lb-wallet.tier-purple{ color:rgb(var(--tier-system)); text-shadow:0 0 4px rgba(var(--tier-system),0.4); }
-  .lb-wallet.tier-gold{ color:rgb(var(--tier-root)); text-shadow:0 0 4px rgba(var(--tier-root),0.4); }
+  .lb-wallet.tier-purple{ color:#ff003c; text-shadow:0 0 4px rgba(255,0,60,0.4); }
+  .lb-wallet.tier-gold{ color:rgb(var(--tier-system)); text-shadow:0 0 4px rgba(var(--tier-system),0.4); }
   .lb-wallet.tier-diamond{ color:rgb(var(--tier-core-1)); text-shadow:0 0 4px rgba(var(--tier-core-1),0.4); }
   /* Compound selectors so a medal class reliably beats the tier color for
      the top 3 ranks, regardless of stylesheet order. */
@@ -1100,22 +1100,22 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-shadow:0 0 7px rgba(var(--tier-terminal),0.6);
   }
   .msg-plain.tier-purple{
-    color:rgb(var(--tier-system));
-    text-shadow:0 0 6px rgba(var(--tier-system),0.5);
+    color:#ff003c;
+    text-shadow:0 0 6px rgba(255,0,60,0.5);
     animation:system-telemetry 2.4s ease-in-out infinite;
   }
   @keyframes system-telemetry{
-    0%, 100%{ text-shadow:0 0 6px rgba(var(--tier-system),0.5); }
-    50%{ text-shadow:0 0 13px rgba(var(--tier-system),0.95), 0 0 22px rgba(var(--tier-system),0.5); }
+    0%, 100%{ text-shadow:0 0 6px rgba(255,0,60,0.5); }
+    50%{ text-shadow:0 0 13px rgba(255,0,60,0.95), 0 0 22px rgba(255,0,60,0.5); }
   }
   .msg-plain.tier-gold{
-    color:rgb(var(--tier-root));
-    text-shadow:0 0 8px rgba(var(--tier-root),0.7);
+    color:rgb(var(--tier-system));
+    text-shadow:0 0 8px rgba(var(--tier-system),0.7);
     animation:golden-pulse 2.2s ease-in-out infinite;
   }
   @keyframes golden-pulse{
-    0%, 100%{ text-shadow:0 0 8px rgba(var(--tier-root),0.7); }
-    50%{ text-shadow:0 0 16px rgba(var(--tier-root),1), 0 0 30px rgba(var(--tier-root),0.6); }
+    0%, 100%{ text-shadow:0 0 8px rgba(var(--tier-system),0.7); }
+    50%{ text-shadow:0 0 16px rgba(var(--tier-system),1), 0 0 30px rgba(var(--tier-system),0.6); }
   }
   .msg-plain.tier-diamond{
     background:linear-gradient(90deg, rgb(var(--tier-core-1)) 0%, rgb(var(--tier-core-2)) 22%, rgb(var(--tier-core-3)) 45%, rgb(var(--tier-core-1)) 68%, rgb(var(--tier-core-2)) 88%, rgb(var(--tier-core-3)) 100%);
@@ -1580,8 +1580,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .msg-signer.tier-green{ color:rgb(var(--tier-terminal)); text-shadow:0 0 4px rgba(var(--tier-terminal),0.4); }
   .msg-signer.tier-pink{ color:rgb(var(--tier-terminal)); text-shadow:0 0 6px rgba(var(--tier-terminal),0.5); }
   .msg-signer.tier-red{ color:rgb(var(--tier-terminal)); text-shadow:0 0 6px rgba(var(--tier-terminal),0.5); }
-  .msg-signer.tier-purple{ color:rgb(var(--tier-system)); text-shadow:0 0 5px rgba(var(--tier-system),0.45); }
-  .msg-signer.tier-gold{ color:rgb(var(--tier-root)); text-shadow:0 0 6px rgba(var(--tier-root),0.6); }
+  .msg-signer.tier-purple{ color:#ff003c; text-shadow:0 0 5px rgba(255,0,60,0.5); }
+  .msg-signer.tier-gold{ color:rgb(var(--tier-system)); text-shadow:0 0 6px rgba(var(--tier-system),0.6); }
   .msg-signer.tier-diamond{
     background:linear-gradient(90deg, rgb(var(--tier-core-1)) 0%, rgb(var(--tier-core-2)) 22%, rgb(var(--tier-core-3)) 45%, rgb(var(--tier-core-1)) 68%, rgb(var(--tier-core-2)) 88%, rgb(var(--tier-core-3)) 100%);
     background-size:300% 100%;
