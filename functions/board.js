@@ -70,7 +70,11 @@ const LEVEL_MIN_PIGEONS = { 1: 1, 3: 5, 6: 16, 9: 50, 12: 100 };
 // Each level's network-identity name — TERMINAL/NETWORK/ENCRYPTED/SYSTEM/
 // ROOT/CORE — shown alongside the numeric level everywhere it appears so
 // the level reads as a distinct identity, not just a rank number.
-const LEVEL_NAMES = { 0: 'N0 S!GNAL', 1: 'S!GNAL', 3: 'BEAC0N', 6: 'VECT0R', 9: 'RES0NANCE', 12: '0VERR!DE', 15: 'C0RE' };
+const LEVEL_NAMES = { 12: '0VERR!DE', 15: 'C0RE' };
+function levelNameSuffix(level) {
+  const name = LEVEL_NAMES[level];
+  return name ? ` (${name})` : '';
+}
 
 function levelRequirementText(level) {
   if (level === 15) return 'CR0WN REQU!RED';
@@ -112,8 +116,8 @@ function renderMessageRow(msg, canDecode, glitchTs, viewerAccessLevel) {
         </div>
         <div class="msg-lock-detail" hidden>
           <div class="ld-title">// S!GNAL L0CKED</div>
-          <div class="ld-line">ACCESS LEVEL REQU!RED :: <span class="ld-num">${signalLevelLabel}</span> (${LEVEL_NAMES[signalLevel] || ''})</div>
-          <div class="ld-line">Y0UR ACCESS LEVEL :: <span class="ld-num">${String(viewerAccessLevel || 0).padStart(2, '0')}</span> (${LEVEL_NAMES[viewerAccessLevel || 0] || ''})</div>
+          <div class="ld-line">ACCESS LEVEL REQU!RED :: <span class="ld-num">${signalLevelLabel}</span>${levelNameSuffix(signalLevel)}</div>
+          <div class="ld-line">Y0UR ACCESS LEVEL :: <span class="ld-num">${String(viewerAccessLevel || 0).padStart(2, '0')}</span>${levelNameSuffix(viewerAccessLevel || 0)}</div>
           <div class="ld-line ld-req">${levelRequirementText(signalLevel)}</div>
           <div class="ld-timer">RETURN!NG !N <span class="ld-timer-count">13</span><span class="ld-timer-unit">s</span></div>
         </div>
@@ -193,11 +197,13 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     const rank = i + 1;
     const medalClass = LB_MEDAL_CLASS[rank] || '';
     const lbTier = getPigeonCountTier(entry.pigeonCount || 1);
-    const acct = escapeHtml(entry.acct);
+    const acctFull = escapeHtml(entry.acct);
+    const acctShort = escapeHtml(entry.acct.slice(0, 6) + '...' + entry.acct.slice(-4));
     return `<div class="lb-row ${lbTier}">
+      ${TIER_OVERLAY[lbTier] || ''}
       <span class="lb-rank ${medalClass}">#${rank}</span>
-      <span class="lb-count">${entry.count} S!GN${entry.count === 1 ? '' : 'S'}</span>
-      <a class="lb-wallet ${medalClass}" href="https://bithomp.com/explorer/${acct}" target="_blank" rel="noopener">${acct}</a>
+      <span class="lb-count">${entry.count} S!GNATURE${entry.count === 1 ? '' : 'S'}</span>
+      <a class="lb-wallet ${medalClass}" href="https://bithomp.com/explorer/${acctFull}" target="_blank" rel="noopener">${acctShort}</a>
     </div>`;
   }).join('');
 
@@ -210,7 +216,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
 
   const thumbPicker = (isPigeon && pigeonThumbs && pigeonThumbs.length) ? `
       <details class="pigeon-picker-wrap" id="pigeonPickerWrap"${allPigeonsUsed ? ' open' : ''}>
-        <summary class="pigeon-picker-btn">CHANGE P!GE0N <span class="ppb-arrow" aria-hidden="true">▾</span></summary>
+        <summary class="pigeon-picker-btn"><span class="picker-btn-label">CHANGE P!GE0N</span><span class="dropdown-arrow" aria-hidden="true">▾</span></summary>
         <div class="pigeon-picker" id="pigeonPicker">
           ${pigeonThumbs.map((p) => {
             const used = usedSet.has(p.nftId);
@@ -453,18 +459,6 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-transform:uppercase;
     margin-bottom:0.9rem;
   }
-  .cn-footer{
-    display:flex;
-    flex-wrap:wrap;
-    align-items:center;
-    justify-content:center;
-    gap:0.4em;
-    font-size:clamp(12px,3.4vw,16px);
-    letter-spacing:0.08em;
-    color:#ff003c;
-    text-shadow:0 0 6px rgba(255,0,60,0.5);
-  }
-  .cn-footer span{ white-space:nowrap; }
   .signed-counter{
     margin-bottom:0;
     border:1px solid rgba(255,0,60,0.4);
@@ -602,9 +596,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .cb-market-link:hover{ background:#2a2a2a; }
   .important-notice{
-    margin-bottom:1.5rem;
+    margin:0 0 0.2rem;
     border:1px solid rgba(255,0,60,0.4);
-    border-top:none;
     background:rgba(255,0,60,0.04);
     overflow:hidden;
   }
@@ -614,7 +607,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     padding:0.7rem 0.9rem;
     display:flex;
     align-items:center;
-    justify-content:center;
+    justify-content:space-between;
     gap:0.5em;
     border:1px solid rgba(255,0,60,0.3);
     background:#08080a;
@@ -629,13 +622,13 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .important-notice-summary:hover{ background:rgba(255,0,60,0.12); }
   .important-notice-summary::-webkit-details-marker{ display:none; }
-  .important-notice-arrow{
-    font-size:14px;
-    color:#ff003c;
-    text-shadow:0 0 4px rgba(255,0,60,0.5);
-    transition:transform 0.2s ease;
+  .notice-title-group{
+    display:flex;
+    align-items:center;
+    gap:0.5em;
+    flex:1 1 auto;
+    justify-content:center;
   }
-  .important-notice[open] .important-notice-arrow{ transform:rotate(180deg); }
   .important-notice-stripe{
     height:6px;
     margin:-0.9rem -1rem 0.9rem;
@@ -653,11 +646,11 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     padding:0.7rem 0.9rem;
     border:1px solid rgba(255,0,60,0.3);
     background:#08080a;
-    color:#39ff14;
+    color:#ff003c;
     font-size:11px;
     line-height:1.6;
     letter-spacing:0.03em;
-    text-shadow:0 0 3px rgba(57,255,20,0.35);
+    text-shadow:0 0 3px rgba(255,0,60,0.35);
   }
   .tier-legend{
     border:none;
@@ -679,12 +672,18 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     -webkit-tap-highlight-color:transparent;
   }
   .tier-legend summary::-webkit-details-marker{ display:none; }
-  .tier-legend summary::after{
-    content:'▾';
-    font-size:10px;
+  /* Universal dropdown arrow — every collapsible box (legend sections,
+     IMPORTANT, the pigeon picker) uses this same right-aligned, bigger
+     arrow so a drop-down box is unmistakable at a glance. */
+  .dropdown-arrow{
+    flex:0 0 auto;
+    font-size:20px;
+    line-height:1;
     transition:transform 0.2s ease;
   }
-  .tier-legend[open] summary::after{ transform:rotate(180deg); }
+  details[open] .dropdown-arrow{
+    transform:rotate(180deg);
+  }
   .legend-title{
     display:flex;
     flex:1 1 auto;
@@ -717,10 +716,10 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .leaderboard{ border-top:1px solid rgba(255,0,60,0.25); }
   .leaderboard summary{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); }
   .lb-row{
+    position:relative;
     display:flex;
-    flex-wrap:wrap;
     align-items:center;
-    gap:0.4rem 0.75rem;
+    gap:0.75rem;
     padding:0.55rem 0.9rem;
     border:1px solid rgba(255,0,60,0.25);
     background:#08080a;
@@ -734,15 +733,15 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     min-width:2em;
   }
   .lb-wallet{
-    flex:1 1 100%;
-    order:3;
+    flex:1 1 auto;
     min-width:0;
     color:#39ff14;
     text-shadow:0 0 4px rgba(57,255,20,0.4);
     text-decoration:underline;
     text-underline-offset:0.15em;
-    overflow-wrap:anywhere;
-    word-break:break-all;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
   }
   .lb-wallet:hover{ opacity:0.8; }
   /* Compound selectors so a medal class reliably beats each element's own
@@ -752,8 +751,6 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .lb-rank.medal-bronze, .lb-wallet.medal-bronze{ color:#cd7f32; text-shadow:0 0 6px rgba(205,127,50,0.6); }
   .lb-count{
     flex:0 0 auto;
-    margin-left:auto;
-    order:2;
     color:#39ff14;
     text-shadow:0 0 4px rgba(57,255,20,0.4);
     font-size:11px;
@@ -1231,27 +1228,27 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .msg-row.tier-purple{
     position:relative;
     overflow:hidden;
-    border-width:3px;
-    border-color:rgba(var(--tier-system),0.85);
-    background:linear-gradient(rgba(var(--tier-system),0.28), rgba(var(--tier-system),0.28)), #08080a;
+    border-width:4px;
+    border-color:rgb(var(--tier-system));
+    background:linear-gradient(rgba(var(--tier-system),0.42), rgba(var(--tier-system),0.42)), #08080a;
     animation:system-pulse 2.4s ease-in-out infinite;
   }
   @keyframes system-pulse{
-    0%, 100%{ box-shadow:0 0 10px rgba(var(--tier-system),0.35), inset 0 0 12px rgba(var(--tier-system),0.08); }
-    50%{ box-shadow:0 0 22px rgba(var(--tier-system),0.65), inset 0 0 22px rgba(var(--tier-system),0.16); }
+    0%, 100%{ box-shadow:0 0 16px rgba(var(--tier-system),0.55), inset 0 0 18px rgba(var(--tier-system),0.15); }
+    50%{ box-shadow:0 0 32px rgba(var(--tier-system),0.9), inset 0 0 30px rgba(var(--tier-system),0.25); }
   }
   .msg-row.tier-purple::before{
     content:'';
     position:absolute;
     top:0; left:0; right:0;
-    height:6px;
+    height:8px;
     z-index:2;
     background:repeating-linear-gradient(45deg, rgb(var(--tier-system)) 0px, rgb(var(--tier-system)) 10px, #08080a 10px, #08080a 20px);
   }
   .system-stripe-bottom{
     position:absolute;
     bottom:0; left:0; right:0;
-    height:6px;
+    height:8px;
     z-index:2;
     background:repeating-linear-gradient(45deg, rgb(var(--tier-system)) 0px, rgb(var(--tier-system)) 10px, #08080a 10px, #08080a 20px);
   }
@@ -1261,7 +1258,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     inset:0;
     pointer-events:none;
     z-index:1;
-    background:linear-gradient(100deg, transparent 46%, rgba(var(--tier-system),0.7) 49%, rgba(255,255,240,0.7) 50%, rgba(var(--tier-system),0.7) 51%, transparent 54%);
+    background:linear-gradient(100deg, transparent 46%, rgba(var(--tier-system),0.8) 49%, rgba(255,255,240,0.8) 50%, rgba(var(--tier-system),0.8) 51%, transparent 54%);
     background-size:340% 340%;
     animation:system-scan 3.2s linear infinite;
     mix-blend-mode:screen;
@@ -1292,9 +1289,9 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     0%, 40%, 100%{ opacity:0.25; }
     20%{ opacity:1; }
   }
-  .msg-row.tier-purple .msg-binary{ border-width:3px; border-color:rgba(var(--tier-system),0.5); }
-  .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(var(--tier-system),0.4); }
-  .msg-row.tier-purple .msg-avatar{ border-width:3px; border-color:rgba(var(--tier-system),0.5); }
+  .msg-row.tier-purple .msg-binary{ border-width:4px; border-color:rgba(var(--tier-system),0.65); }
+  .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(var(--tier-system),0.55); }
+  .msg-row.tier-purple .msg-avatar{ border-width:4px; border-color:rgba(var(--tier-system),0.65); }
   /* Level 12 — ROOT: privileged/administrative red alert, not a "prize"
      tier. Heavy border, alert-stripe banner top and bottom (actually
      marching, not static), a hot sweep, and a harder, more frequent
@@ -1589,8 +1586,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-shadow:0 0 4px rgba(255,215,0,0.4);
   }
   .msg-signer.tier-green{ color:rgb(var(--tier-terminal)); text-shadow:0 0 4px rgba(var(--tier-terminal),0.4); }
-  .msg-signer.tier-pink{ color:rgb(var(--tier-network)); text-shadow:0 0 6px rgba(var(--tier-network),0.6); }
-  .msg-signer.tier-red{ color:rgb(var(--tier-encrypted)); text-shadow:0 0 6px rgba(var(--tier-encrypted),0.6); }
+  .msg-signer.tier-pink{ color:rgb(var(--tier-terminal)); text-shadow:0 0 6px rgba(var(--tier-terminal),0.5); }
+  .msg-signer.tier-red{ color:rgb(var(--tier-terminal)); text-shadow:0 0 6px rgba(var(--tier-terminal),0.5); }
   .msg-signer.tier-purple{ color:rgb(var(--tier-system)); text-shadow:0 0 5px rgba(var(--tier-system),0.45); }
   .msg-signer.tier-gold{ color:rgb(var(--tier-root)); text-shadow:0 0 6px rgba(var(--tier-root),0.6); }
   .msg-signer.tier-diamond{
@@ -1655,7 +1652,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     list-style:none;
     display:flex;
     align-items:center;
-    justify-content:center;
+    justify-content:space-between;
     gap:0.6em;
     width:100%;
     box-sizing:border-box;
@@ -1675,8 +1672,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .pigeon-picker-btn:hover{ background:rgba(255,0,60,0.18); }
   .pigeon-picker-btn::-webkit-details-marker{ display:none; }
-  .ppb-arrow{ font-size:16px; transition:transform 0.2s ease; }
-  .pigeon-picker-wrap[open] .ppb-arrow{ transform:rotate(180deg); }
+  .picker-btn-label{ flex:1 1 auto; text-align:center; }
   .pigeon-picker-wrap[open] .pigeon-picker-btn{
     border-bottom-left-radius:0;
     border-bottom-right-radius:0;
@@ -2182,7 +2178,15 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
       <div class="cn-body${accessLevel === 0 ? ' cn-body-binary' : ''}">
         ${cnBody}
       </div>
-      <div class="cn-footer"><span>🚧⚠️</span><span>NETW0RK UNDER C0NSTRUCTION</span><span>⚠️🚧</span></div>
+      <details class="important-notice">
+        <summary class="important-notice-summary"><span class="notice-title-group"><span>⚠️</span><span>!MP0RTANT</span><span>⚠️</span></span><span class="dropdown-arrow" aria-hidden="true">▾</span></summary>
+        <div class="important-notice-body">
+          <div class="important-notice-stripe"></div>
+          <div class="important-notice-item">This is a fan-made utility project and has no affiliation, endorsement, or connection with $PIGEONS or their creators.</div>
+          <div class="important-notice-item">This S!GNAL_RELAY exists solely as part of this community-built project, created to give $PIGE0NS holders an additional way to participate and add utility to their NFTs.</div>
+          <div class="important-notice-stripe bottom"></div>
+        </div>
+      </details>
       <div class="cn-stripe bottom"></div>
     </div>
     <div class="collection-link-wrap">
@@ -2198,15 +2202,6 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         </span>
       </div>
     </div>
-    <details class="important-notice">
-      <summary class="important-notice-summary"><span class="important-notice-arrow" aria-hidden="true">▾</span><span>⚠️</span><span>!MP0RTANT</span><span>⚠️</span><span class="important-notice-arrow" aria-hidden="true">▾</span></summary>
-      <div class="important-notice-body">
-        <div class="important-notice-stripe"></div>
-        <div class="important-notice-item">This is a fan-made utility project and has no affiliation, endorsement, or connection with $PIGEONS or their creators.</div>
-        <div class="important-notice-item">This S!GNAL_RELAY exists solely as part of this community-built project, created to give $PIGE0NS holders an additional way to participate and add utility to their NFTs.</div>
-        <div class="important-notice-stripe bottom"></div>
-      </div>
-    </details>
     <div class="signed-counter">
       <div class="signed-counter-header">
         <div class="signed-counter-label">P!GE0NS S!GNED</div>
@@ -2214,12 +2209,12 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         <div class="signed-counter-bar"><div class="signed-counter-fill" style="width:${signedPct}%"></div></div>
       </div>
       <details class="tier-legend rules-panel">
-        <summary><span class="legend-title">// ACCESS LEVELS <span class="legend-emoji">⚠️</span></span></summary>
+        <summary><span class="legend-title">// ACCESS LEVELS <span class="legend-emoji">⚠️</span></span><span class="dropdown-arrow" aria-hidden="true">▾</span></summary>
         <div class="tier-legend-body">
-          <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS :: LEVEL 01 :: S!GNAL</div></div>
-          <div class="msg-row tl-row tier-pink">${NETWORK_NODES}<div class="msg-plain tl-text tier-pink">5-15 P!GE0NS :: LEVEL 03 :: BEAC0N</div></div>
-          <div class="msg-row tl-row tier-red">${ENCRYPTED_FRAGMENTS}<div class="msg-plain tl-text tier-red">16-49 P!GE0NS :: LEVEL 06 :: VECT0R</div></div>
-          <div class="msg-row tl-row tier-purple">${SYSTEM_NODES}<div class="msg-plain tl-text tier-purple">50-99 P!GE0NS :: LEVEL 09 :: RES0NANCE</div></div>
+          <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS :: LEVEL 01</div></div>
+          <div class="msg-row tl-row tier-pink">${NETWORK_NODES}<div class="msg-plain tl-text tier-pink">5-15 P!GE0NS :: LEVEL 03</div></div>
+          <div class="msg-row tl-row tier-red">${ENCRYPTED_FRAGMENTS}<div class="msg-plain tl-text tier-red">16-49 P!GE0NS :: LEVEL 06</div></div>
+          <div class="msg-row tl-row tier-purple">${SYSTEM_NODES}<div class="msg-plain tl-text tier-purple">50-99 P!GE0NS :: LEVEL 09</div></div>
           <div class="msg-row tl-row tier-gold">${ROOT_SPARKLES}<div class="msg-plain tl-text tier-gold">100+ P!GE0NS :: LEVEL 12 :: 0VERR!DE</div></div>
           <div class="msg-row tl-row tier-diamond">${CORE_SPARKLES}<div class="msg-plain tl-text tier-diamond">CR0WN :: LEVEL 15 :: C0RE</div></div>
 
@@ -2234,7 +2229,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         </div>
       </details>
       <details class="tier-legend protocol-panel">
-        <summary><span class="legend-title">// S!GNATURE PR0T0C0L <span class="legend-emoji">⚠️</span></span></summary>
+        <summary><span class="legend-title">// S!GNATURE PR0T0C0L <span class="legend-emoji">⚠️</span></span><span class="dropdown-arrow" aria-hidden="true">▾</span></summary>
         <div class="tier-legend-body">
           <div class="rules-subhead">0NE P!GE0N. 0NE S!GNATURE. 0NE ADDRESS.</div>
           <div class="rules-rule"><span class="rules-num">01 //</span><span>Each P!GE0N can be used to sign the B0ard once — and only by the wallet currently holding it.</span></div>
@@ -2246,7 +2241,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         </div>
       </details>
       <details class="tier-legend leaderboard">
-        <summary><span class="legend-title">// T0P S!GNERS <span class="legend-emoji">❗</span></span></summary>
+        <summary><span class="legend-title">// T0P S!GNERS <span class="legend-emoji">❗</span></span><span class="dropdown-arrow" aria-hidden="true">▾</span></summary>
         <div class="tier-legend-body">
           ${leaderboardRows || `<div class="lb-empty">N0 S!GNATURES YET.</div>`}
         </div>
@@ -2292,10 +2287,10 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     sessionStorage.setItem(playedKey, '1');
 
     const SEQUENCES = {
-      1: { cls: 'll-terminal', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 01', 'S!GNAL ACCESS :: GRANTED'] },
-      3: { cls: 'll-network', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 03', 'BEAC0N ACCESS :: GRANTED'] },
-      6: { cls: 'll-encrypted', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 06', 'VECT0R ACCESS :: GRANTED'] },
-      9: { cls: 'll-system', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 09', 'RES0NANCE ACCESS :: GRANTED'] },
+      1: { cls: 'll-terminal', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 01', 'ACCESS :: GRANTED'] },
+      3: { cls: 'll-network', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 03', 'ACCESS :: GRANTED'] },
+      6: { cls: 'll-encrypted', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 06', 'ACCESS :: GRANTED'] },
+      9: { cls: 'll-system', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 09', 'ACCESS :: GRANTED'] },
       12: { cls: 'll-root', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 12', '0VERR!DE AUTHENT!CAT!0N', '0VERR!DE ACCESS :: GRANTED'] },
       15: { cls: 'll-core', lines: ['// S!GNAL DETECTED', 'CR0WN H0LDER', 'ACCESS LEVEL :: 15', 'C0RE ACCESS :: GRANTED'] },
     };
