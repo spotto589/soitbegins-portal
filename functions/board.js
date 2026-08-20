@@ -29,7 +29,7 @@ function plainFontSize(text) {
 }
 
 const DIAMOND_SPARKLES = `<div class="tier-sparkles" aria-hidden="true"><span>👑</span><span>👑</span><span>👑</span><span>👑</span><span>👑</span></div>`;
-const GOLD_SPARKLES = `<div class="tier-sparkles" aria-hidden="true"><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span></div>`;
+const GOLD_SPARKLES = `<div class="tier-sparkles" aria-hidden="true"><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span></div><div class="gold-stripe-bottom" aria-hidden="true"></div>`;
 
 const GLITCH_BADGE = `<div class="glitch-badge" aria-hidden="true">⚠ GL!TCH</div>`;
 
@@ -96,7 +96,7 @@ function renderMessageRow(msg, canDecode, glitchTs, viewerAccessLevel) {
           <div class="ld-line">ACCESS LEVEL REQU!RED :: <span class="ld-num">${signalLevelLabel}</span></div>
           <div class="ld-line">Y0UR ACCESS LEVEL :: <span class="ld-num">${String(viewerAccessLevel || 0).padStart(2, '0')}</span></div>
           <div class="ld-line ld-req">${levelRequirementText(signalLevel)}</div>
-          <div class="ld-timer">RETURN!NG !N <span class="ld-timer-count">13</span>s</div>
+          <div class="ld-timer">RETURN!NG !N <span class="ld-timer-count">13</span><span class="ld-timer-unit">s</span></div>
         </div>
       </div>`;
   const binary = canDecode
@@ -293,7 +293,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         <div class="ag-level-box-value ag-level-denied">${accessLevelLabel}</div>
       </div>
       <div class="ag-readout">
-        <div class="ag-row"><span class="ag-row-label">P!GE0N NETW0RK</span><span class="ag-row-value ag-bad">N0T C0NNECTED</span></div>
+        <div class="ag-row"><span class="ag-row-label">P!GE0N NETW0RK</span><span class="ag-row-value ag-bad">⛔ N0T C0NNECTED</span></div>
       </div>
       ${connectBtnHtml}
     </div>
@@ -774,8 +774,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .lb-row.tier-gold{
     position:relative;
     overflow:hidden;
-    border-width:3px;
-    border-color:rgba(var(--tier-gold),0.8);
+    border-width:4px;
+    border-color:rgba(var(--tier-gold),0.9);
     animation:gold-glow-pulse 2.6s ease-in-out infinite;
   }
   .lb-row.tier-gold::after{
@@ -858,8 +858,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     min-width:0;
     display:flex;
     flex-direction:column;
-    justify-content:center;
-    padding:0.6em 1em;
+    justify-content:space-between;
+    padding:0.8em 1em;
   }
   @media (min-width:641px){
     .collection-link-logo-wrap{
@@ -870,7 +870,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .msg-row{
     position:relative;
     background:#08080a;
-    border:1px solid rgba(57,255,20,0.25);
+    border:1px solid rgba(57,255,20,0.4);
     margin-bottom:1rem;
     overflow:hidden;
   }
@@ -1015,7 +1015,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-shadow:0 0 6px rgba(255,0,60,0.5);
   }
   .ld-line{
-    color:#ff003c;
+    color:#39ff14;
     letter-spacing:0.05em;
     margin-bottom:0.3rem;
   }
@@ -1039,10 +1039,10 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border-top:1px dashed rgba(255,0,60,0.3);
     font-size:11px;
     letter-spacing:0.08em;
-    color:#ff003c;
+    color:#39ff14;
     text-transform:uppercase;
   }
-  .ld-timer-count{
+  .ld-timer-count, .ld-timer-unit{
     color:#ff003c;
     font-weight:700;
     text-shadow:0 0 5px rgba(255,0,60,0.6);
@@ -1096,7 +1096,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     0%{ background-position:0% 50%; }
     100%{ background-position:300% 50%; }
   }
-  .msg-row.tier-pink{ border-width:1px; border-color:rgba(var(--tier-pink),0.6); }
+  .msg-row.tier-pink{ border-width:1.5px; border-color:rgba(var(--tier-pink),0.75); box-shadow:0 0 8px rgba(var(--tier-pink),0.3); }
   .msg-row.tier-pink .msg-binary{ border-width:1px; border-color:rgba(var(--tier-pink),0.45); }
   .msg-row.tier-pink .msg-meta{ border-bottom-color:rgba(var(--tier-pink),0.4); }
   .msg-row.tier-pink .msg-avatar{ border-width:1px; border-color:rgba(var(--tier-pink),0.45); }
@@ -1136,20 +1136,29 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .msg-row.tier-gold{
     position:relative;
     overflow:hidden;
-    border-width:3px;
-    border-color:rgba(var(--tier-gold),0.8);
+    border-width:4px;
+    border-color:rgba(var(--tier-gold),0.9);
     animation:gold-glow-pulse 2.6s ease-in-out infinite;
   }
   @keyframes gold-glow-pulse{
-    0%, 100%{ box-shadow:0 0 10px rgba(var(--tier-gold),0.35), inset 0 0 14px rgba(var(--tier-gold),0.06); }
-    50%{ box-shadow:0 0 22px rgba(var(--tier-gold),0.65), inset 0 0 24px rgba(var(--tier-gold),0.14); }
+    0%, 100%{ box-shadow:0 0 14px rgba(var(--tier-gold),0.45), inset 0 0 16px rgba(var(--tier-gold),0.08); }
+    50%{ box-shadow:0 0 28px rgba(var(--tier-gold),0.75), inset 0 0 28px rgba(var(--tier-gold),0.18); }
   }
-  /* Hazard-stripe banner instead of a soft golden sheen — reads as
-     caution yellow rather than a "prize" gold. */
+  /* Hazard-stripe banner (top and bottom) instead of a soft golden sheen
+     — reads as caution yellow rather than a "prize" gold, and matches
+     the striped-box treatment used elsewhere (construction notice,
+     important notice), making level 12 read as clearly special. */
   .msg-row.tier-gold::before{
     content:'';
     position:absolute;
     top:0; left:0; right:0;
+    height:6px;
+    z-index:2;
+    background:repeating-linear-gradient(45deg, rgb(var(--tier-gold)) 0px, rgb(var(--tier-gold)) 10px, #08080a 10px, #08080a 20px);
+  }
+  .gold-stripe-bottom{
+    position:absolute;
+    bottom:0; left:0; right:0;
     height:6px;
     z-index:2;
     background:repeating-linear-gradient(45deg, rgb(var(--tier-gold)) 0px, rgb(var(--tier-gold)) 10px, #08080a 10px, #08080a 20px);
@@ -1169,9 +1178,9 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     0%{ background-position:0% 0%; }
     100%{ background-position:100% 100%; }
   }
-  .msg-row.tier-gold .msg-binary{ border-width:3px; border-color:rgba(var(--tier-gold),0.45); }
+  .msg-row.tier-gold .msg-binary{ border-width:4px; border-color:rgba(var(--tier-gold),0.5); }
   .msg-row.tier-gold .msg-meta{ border-bottom-color:rgba(var(--tier-gold),0.4); }
-  .msg-row.tier-gold .msg-avatar{ border-width:3px; border-color:rgba(var(--tier-gold),0.45); }
+  .msg-row.tier-gold .msg-avatar{ border-width:4px; border-color:rgba(var(--tier-gold),0.5); }
   .msg-row.tier-diamond{
     position:relative;
     overflow:hidden;
@@ -1639,7 +1648,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .post-btn:disabled{ opacity:0.5; cursor:default; }
   .connect-btn{
     position:relative;
-    margin-top:0.9rem;
+    margin-top:1.6rem;
     display:inline-flex;
     flex-wrap:wrap;
     align-items:center;
@@ -1694,6 +1703,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     white-space:nowrap;
     overflow:hidden;
     opacity:0;
+    pointer-events:none;
     animation:cb-binary-flicker 1.8s infinite;
   }
   @keyframes cb-label-flicker{
@@ -1752,7 +1762,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .access-gate-granted{ border:1px dashed rgba(57,255,20,0.5); }
   .access-gate-denied{ border:1px dashed rgba(255,0,60,0.5); }
   .ag-scan{
-    font-size:10px;
+    font-size:clamp(13px, 4vw, 16px);
     letter-spacing:0.2em;
     text-transform:uppercase;
     color:rgba(232,232,232,0.4);
@@ -1821,7 +1831,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .ag-row:last-child{ border-bottom:none; }
   .ag-row-label{
-    color:rgba(232,232,232,0.55);
+    color:rgba(57,255,20,0.75);
     white-space:nowrap;
   }
   .ag-row-value{
@@ -1950,17 +1960,17 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
           <div class="msg-row tl-row tier-pink"><div class="msg-plain tl-text tier-pink">5-15 P!GE0NS :: LEVEL 03</div></div>
           <div class="msg-row tl-row tier-red"><div class="msg-plain tl-text tier-red">16-49 P!GE0NS :: LEVEL 06</div></div>
           <div class="msg-row tl-row tier-purple"><div class="msg-plain tl-text tier-purple">50-99 P!GE0NS :: LEVEL 09</div></div>
-          <div class="msg-row tl-row tier-gold"><div class="msg-plain tl-text tier-gold">100+ P!GE0NS :: LEVEL 12</div></div>
-          <div class="msg-row tl-row tier-diamond"><div class="msg-plain tl-text tier-diamond">CR0WN H0LDER :: LEVEL 15</div></div>
+          <div class="msg-row tl-row tier-gold">${GOLD_SPARKLES}<div class="msg-plain tl-text tier-gold">100+ P!GE0NS :: LEVEL 12</div></div>
+          <div class="msg-row tl-row tier-diamond">${DIAMOND_SPARKLES}<div class="msg-plain tl-text tier-diamond">CR0WN H0LDER :: LEVEL 15</div></div>
 
-          <div class="rules-body">Your Access Level determines your signature border and which signals you can read.</div>
-          <div class="rules-body">You can read your Access Level and all levels below it.</div>
+          <div class="rules-body">Your ACCESS LEVEL determines your signature border and which signals you can read.</div>
+          <div class="rules-body">You can read your ACCESS LEVEL and all levels below it.</div>
 
           <div class="rules-subhead">👑 CR0WN — LEVEL 15</div>
           <div class="rules-body">The CR0WN belongs to the wallet holding the most P!GE0NS across the network.</div>
           <div class="rules-body">THE CR0WN !S THE 0NLY ACCESS LEVEL THAT CAN READ THE ENT!RE B0ARD.</div>
           <div class="rules-body">The CR0WN has access to ALL S!GNAL LEVELS — 01, 03, 06, 09, 12 and 15.</div>
-          <div class="rules-body">When the CR0WN changes hands, the previous holder loses full-board access. Their historical signatures remain permanently recorded with the Access Level they held when they signed.</div>
+          <div class="rules-body">When the CR0WN changes hands, the previous holder loses full-board access. Their historical signatures remain permanently recorded with the ACCESS LEVEL they held when they signed.</div>
         </div>
       </details>
       <details class="tier-legend protocol-panel">
@@ -1969,8 +1979,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
           <div class="rules-subhead">0NE P!GE0N. 0NE S!GNATURE. 0NE ADDRESS.</div>
           <div class="rules-rule"><span class="rules-num">01 //</span><span>Each P!GE0N can be used to sign the B0ard once — and only by the wallet currently holding it.</span></div>
           <div class="rules-rule"><span class="rules-num">02 //</span><span>Once a P!GE0N is used, it becomes UNAVA!LABLE and is permanently greyed out on the B0ard.</span></div>
-          <div class="rules-rule"><span class="rules-num">03 //</span><span>The signature records the wallet address, P!GE0N, Access Level and timestamp at the exact moment it is created.</span></div>
-          <div class="rules-rule"><span class="rules-num">04 //</span><span>Your Access Level at signing determines the signature border and is permanently preserved with that signature.</span></div>
+          <div class="rules-rule"><span class="rules-num">03 //</span><span>The signature records the wallet address, P!GE0N, ACCESS LEVEL and timestamp at the exact moment it is created.</span></div>
+          <div class="rules-rule"><span class="rules-num">04 //</span><span>Your ACCESS LEVEL at signing determines the signature border and is permanently preserved with that signature.</span></div>
           <div class="rules-rule"><span class="rules-num">05 //</span><span>Your signature never changes. Transferring or acquiring P!GE0Ns later has no effect on signatures already made.</span></div>
           <div class="rules-rule"><span class="rules-num">06 //</span><span>A P!GE0N cannot be used again, even if it is transferred to another wallet.</span></div>
         </div>
