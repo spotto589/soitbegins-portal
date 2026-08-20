@@ -628,7 +628,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     sort: 'NUM_ASC',
     traitFilters: [],         // [{ id, category, value }]
     nextTraitRowId: 1,
-    traitsData: null,
+    traitCategories: null,     // [name, name, ...] — cheap, loaded once
+    traitValuesCache: {},      // category -> [{value, percent, partial}], fetched lazily per category
+    collectionSizeApprox: 3015,
     currentDetail: null,
     targetAssets: {}          // nftId -> { nftId, number, image } — only while scope is a wallet
   };
@@ -833,22 +835,38 @@ const SWAP_HTML = `<!DOCTYPE html>
   wireResultClicks(el.resultsArea, function(){ return state.items; });
 
   // ---- Background full-collection index progress ----
+  // Deliberately slow by design: full indexing is expensive per-token, so
+  // it advances a few Pigeons at a time on real page loads rather than all
+  // at once (see the PIGEON_INDEX_PAGE_SIZE comment in _shared.js) —
+  // search/filter coverage grows over time instead of ever being faked.
   function refreshIndexLine(){
     api({ traits: 1 }).then(function(data){
-      state.traitsData = data;
+      state.traitCategories = data.categories || [];
+      state.collectionSizeApprox = data.collectionSizeApprox || state.collectionSizeApprox;
       renderTraitRows();
       var stats = data.indexStats;
       if (!stats || !stats.totalIndexed){
         el.indexLine.textContent = '!NDEX!NG :: JUST GETT!NG STARTED';
         return;
       }
-      var pct = Math.round((stats.totalIndexed / (data.collectionSizeApprox || 3015)) * 1000) / 10;
-      el.indexLine.textContent = '!NDEXED :: ' + stats.totalIndexed + ' / ~' + (data.collectionSizeApprox || 3015) + ' (' + pct + '%)' + (stats.marker ? ' :: ST!LL !NDEX!NG...' : ' :: C0MPLETE');
+      var pct = Math.round((stats.totalIndexed / state.collectionSizeApprox) * 1000) / 10;
+      el.indexLine.textContent = '!NDEXED :: ' + stats.totalIndexed + ' / ~' + state.collectionSizeApprox + ' (' + pct + '%)' + (stats.marker ? ' :: ST!LL !NDEX!NG...' : ' :: C0MPLETE');
     }).catch(function(){});
   }
-  function ensureTraitsLoaded(){
-    if (state.traitsData) return Promise.resolve(state.traitsData);
-    return api({ traits: 1 }).then(function(data){ state.traitsData = data; return data; });
+  function ensureTraitCategoriesLoaded(){
+    if (state.traitCategories) return Promise.resolve(state.traitCategories);
+    return api({ traits: 1 }).then(function(data){
+      state.traitCategories = data.categories || [];
+      state.collectionSizeApprox = data.collectionSizeApprox || state.collectionSizeApprox;
+      return state.traitCategories;
+    });
+  }
+  function ensureTraitValuesLoaded(cat){
+    if (state.traitValuesCache[cat]) return Promise.resolve(state.traitValuesCache[cat]);
+    return api({ traitValues: cat }).then(function(data){
+      state.traitValuesCache[cat] = data.values || [];
+      return state.traitValuesCache[cat];
+    });
   }
 
   // ---- Whole-collection browse (paginated real ledger) ----
@@ -884,12 +902,12 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   // ---- Trait stack (stackable AND filters) ----
   function renderTraitRows(){
-    var cats = state.traitsData ? Object.keys(state.traitsData.categories) : [];
+    var cats = state.traitCategories || [];
     el.traitRows.innerHTML = state.traitFilters.map(function(row){
       var catOptions = cats.map(function(c){
         return '<option value="' + escapeHtml(c) + '"' + (row.category === c ? ' selected' : '') + '>' + escapeHtml(c.toUpperCase()) + '</option>';
       }).join('');
-      var vals = (row.category && state.traitsData.categories[row.category]) || [];
+      var vals = (row.category && state.traitValuesCache[row.category]) || [];
       var valOptions = vals.map(function(v){
         var pct = v.percent !== null && v.percent !== undefined ? ' (' + v.percent + '%' + (v.partial ? '~' : '') + ')' : '';
         return '<option value="' + escapeHtml(v.value) + '"' + (row.value === v.value ? ' selected' : '') + '>' + escapeHtml(v.value.toUpperCase()) + pct + '</option>';
@@ -902,7 +920,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).join('');
   }
   el.addTraitBtn.addEventListener('click', function(){
-    ensureTraitsLoaded().then(function(){
+    ensureTraitCategoriesLoaded().then(function(){
       state.traitFilters.push({ id: state.nextTraitRowId++, category: '', value: '' });
       renderTraitRows();
     });
@@ -916,8 +934,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     var id = parseInt(e.target.getAttribute('data-id'), 10);
     var row = state.traitFilters.filter(function(r){ return r.id === id; })[0];
     if (!row) return;
-    if (e.target.classList.contains('trait-cat-select')){ row.category = e.target.value; row.value = ''; }
-    else if (e.target.classList.contains('trait-val-select')){ row.value = e.target.value; }
+    if (e.target.classList.contains('trait-cat-select')){
+      row.category = e.target.value;
+      row.value = '';
+      renderTraitRows();
+      if (row.category) ensureTraitValuesLoaded(row.category).then(renderTraitRows);
+      runQuery();
+      return;
+    }
+    if (e.target.classList.contains('trait-val-select')){ row.value = e.target.value; }
     renderTraitRows();
     runQuery();
   });
@@ -1002,19 +1027,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else if (kv){
       req = api({ filters: JSON.stringify([{ trait: kv[1], value: kv[2].trim() }]) });
     } else {
-      req = ensureTraitsLoaded().then(function(){
-        var catMatch = Object.keys(state.traitsData.categories).filter(function(c){ return c.toLowerCase() === q.toLowerCase(); })[0];
+      req = ensureTraitCategoriesLoaded().then(function(cats){
+        var catMatch = cats.filter(function(c){ return c.toLowerCase() === q.toLowerCase(); })[0];
         if (catMatch){
-          var vals = (state.traitsData.categories[catMatch] || []).map(function(v){ return v.value; });
-          return Promise.all(vals.map(function(v){ return api({ filters: JSON.stringify([{ trait: catMatch, value: v }]) }); }))
-            .then(mergeResults);
+          return ensureTraitValuesLoaded(catMatch).then(function(vals){
+            var names = vals.map(function(v){ return v.value; });
+            return Promise.all(names.map(function(v){ return api({ filters: JSON.stringify([{ trait: catMatch, value: v }]) }); }))
+              .then(mergeResults);
+          });
         }
-        var cats = Object.keys(state.traitsData.categories);
-        return Promise.all(cats.map(function(c){
-          var vals = (state.traitsData.categories[c] || []).map(function(v){ return v.value; });
-          var match = vals.filter(function(v){ return v.toLowerCase().indexOf(q.toLowerCase()) !== -1; });
-          return Promise.all(match.map(function(v){ return api({ filters: JSON.stringify([{ trait: c, value: v }]) }); }));
-        })).then(function(nested){ return mergeResults(nested.reduce(function(a,b){ return a.concat(b); }, [])); });
+        return Promise.all(cats.map(function(c){ return ensureTraitValuesLoaded(c); })).then(function(allVals){
+          var calls = [];
+          cats.forEach(function(c, i){
+            allVals[i].forEach(function(v){
+              if (v.value.toLowerCase().indexOf(q.toLowerCase()) !== -1) calls.push(api({ filters: JSON.stringify([{ trait: c, value: v.value }]) }));
+            });
+          });
+          return Promise.all(calls).then(mergeResults);
+        });
       });
     }
 
