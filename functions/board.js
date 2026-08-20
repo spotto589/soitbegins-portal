@@ -35,7 +35,7 @@ function plainFontSize(text) {
 const CORE_SPARKLES = `<div class="tier-sparkles" aria-hidden="true"><span>👑</span><span>👑</span><span>👑</span><span>👑</span><span>👑</span></div>`;
 const ROOT_SPARKLES = `<div class="tier-sparkles" aria-hidden="true"><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span><span>⚠️</span></div><div class="gold-stripe-bottom" aria-hidden="true"></div>`;
 const NETWORK_NODES = `<div class="network-nodes" aria-hidden="true"><span></span><span></span><span></span><span></span></div>`;
-const SYSTEM_NODES = `<div class="system-nodes" aria-hidden="true"><span></span><span></span><span></span></div><div class="system-stripe-bottom" aria-hidden="true"></div>`;
+const SYSTEM_NODES = `<div class="system-stripe-bottom" aria-hidden="true"></div>`;
 const ENCRYPTED_FRAGMENTS = `<div class="tier-sparkles encrypted-fragments" aria-hidden="true"><span>0xF3</span><span>A1C</span><span>#7D</span><span>E2#</span><span>9xB</span></div>`;
 const TIER_OVERLAY = {
   'tier-pink': NETWORK_NODES,
@@ -202,8 +202,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     return `<div class="lb-row ${lbTier}">
       ${TIER_OVERLAY[lbTier] || ''}
       <span class="lb-rank ${medalClass}">#${rank}</span>
+      <a class="lb-wallet ${lbTier} ${medalClass}" href="https://bithomp.com/explorer/${acctFull}" target="_blank" rel="noopener">${acctShort}</a>
       <span class="lb-count">${entry.count} S!GNATURE${entry.count === 1 ? '' : 'S'}</span>
-      <a class="lb-wallet ${medalClass}" href="https://bithomp.com/explorer/${acctFull}" target="_blank" rel="noopener">${acctShort}</a>
     </div>`;
   }).join('');
 
@@ -557,14 +557,18 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     gap:0.6em;
     font-size:13px;
     line-height:1.5;
-    color:#ff003c;
-    text-shadow:0 0 3px rgba(255,0,60,0.3);
+    color:#39ff14;
+    text-shadow:0 0 3px rgba(57,255,20,0.3);
   }
   .rules-num{
     flex:0 0 auto;
-    color:#ff003c;
+    color:#39ff14;
     font-weight:700;
   }
+  /* Signature Protocol's own heading, scoped separately from the CROWN
+     heading in Access Levels (same .rules-subhead base) since only this
+     panel's writing should be green. */
+  .protocol-panel .rules-subhead{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.5); }
   .collection-link-wrap{
     text-align:center;
     margin-bottom:0;
@@ -652,6 +656,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     letter-spacing:0.03em;
     text-shadow:0 0 3px rgba(255,0,60,0.35);
   }
+  .notice-highlight{ color:#39ff14; text-shadow:0 0 3px rgba(57,255,20,0.35); }
   .tier-legend{
     border:none;
     border-top:1px solid rgba(255,0,60,0.25);
@@ -727,10 +732,11 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .lb-rank{
     flex:0 0 auto;
+    width:2.4em;
     color:#ff003c;
     text-shadow:0 0 4px rgba(255,0,60,0.4);
     font-weight:700;
-    min-width:2em;
+    font-variant-numeric:tabular-nums;
   }
   .lb-wallet{
     flex:1 1 auto;
@@ -744,8 +750,16 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     white-space:nowrap;
   }
   .lb-wallet:hover{ opacity:0.8; }
-  /* Compound selectors so a medal class reliably beats each element's own
-     base color rule regardless of stylesheet order. */
+  /* Wallet address colored to match that signer's own access-level tier
+     — same palette as .msg-signer.tier-*. */
+  .lb-wallet.tier-green{ color:rgb(var(--tier-terminal)); text-shadow:0 0 4px rgba(var(--tier-terminal),0.4); }
+  .lb-wallet.tier-pink{ color:rgb(var(--tier-terminal)); text-shadow:0 0 4px rgba(var(--tier-terminal),0.4); }
+  .lb-wallet.tier-red{ color:rgb(var(--tier-terminal)); text-shadow:0 0 4px rgba(var(--tier-terminal),0.4); }
+  .lb-wallet.tier-purple{ color:rgb(var(--tier-system)); text-shadow:0 0 4px rgba(var(--tier-system),0.4); }
+  .lb-wallet.tier-gold{ color:rgb(var(--tier-root)); text-shadow:0 0 4px rgba(var(--tier-root),0.4); }
+  .lb-wallet.tier-diamond{ color:rgb(var(--tier-core-1)); text-shadow:0 0 4px rgba(var(--tier-core-1),0.4); }
+  /* Compound selectors so a medal class reliably beats the tier color for
+     the top 3 ranks, regardless of stylesheet order. */
   .lb-rank.medal-gold, .lb-wallet.medal-gold{ color:#ffd700; text-shadow:0 0 6px rgba(255,215,0,0.6); }
   .lb-rank.medal-silver, .lb-wallet.medal-silver{ color:#c0c0c0; text-shadow:0 0 6px rgba(192,192,192,0.6); }
   .lb-rank.medal-bronze, .lb-wallet.medal-bronze{ color:#cd7f32; text-shadow:0 0 6px rgba(205,127,50,0.6); }
@@ -1266,28 +1280,6 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   @keyframes system-scan{
     0%{ background-position:0% 0%; }
     100%{ background-position:100% 100%; }
-  }
-  .system-nodes{
-    position:absolute;
-    top:12px;
-    right:10px;
-    z-index:2;
-    display:flex;
-    gap:5px;
-  }
-  .system-nodes span{
-    width:5px;
-    height:5px;
-    border-radius:50%;
-    background:rgb(var(--tier-system));
-    box-shadow:0 0 4px rgba(var(--tier-system),0.9);
-    animation:system-blink 1.6s ease-in-out infinite;
-  }
-  .system-nodes span:nth-child(2){ animation-delay:0.5s; }
-  .system-nodes span:nth-child(3){ animation-delay:1s; }
-  @keyframes system-blink{
-    0%, 40%, 100%{ opacity:0.25; }
-    20%{ opacity:1; }
   }
   .msg-row.tier-purple .msg-binary{ border-width:4px; border-color:rgba(var(--tier-system),0.65); }
   .msg-row.tier-purple .msg-meta{ border-bottom-color:rgba(var(--tier-system),0.55); }
@@ -2182,8 +2174,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         <summary class="important-notice-summary"><span class="notice-title-group"><span>⚠️</span><span>!MP0RTANT</span><span>⚠️</span></span><span class="dropdown-arrow" aria-hidden="true">▾</span></summary>
         <div class="important-notice-body">
           <div class="important-notice-stripe"></div>
-          <div class="important-notice-item">This is a fan-made utility project and has no affiliation, endorsement, or connection with $PIGEONS or their creators.</div>
-          <div class="important-notice-item">This S!GNAL_RELAY exists solely as part of this community-built project, created to give $PIGE0NS holders an additional way to participate and add utility to their NFTs.</div>
+          <div class="important-notice-item">This is a fan-made utility project and has no affiliation, endorsement, or connection with <span class="notice-highlight">$PIGEONS</span> or their creators.</div>
+          <div class="important-notice-item">This S!GNAL_RELAY exists solely as part of this community-built project, created to give <span class="notice-highlight">$PIGE0NS</span> holders an additional way to participate and add utility to their NFTs.</div>
           <div class="important-notice-stripe bottom"></div>
         </div>
       </details>
@@ -2211,13 +2203,6 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
       <details class="tier-legend rules-panel">
         <summary><span class="legend-title">// ACCESS LEVELS <span class="legend-emoji">⚠️</span></span><span class="dropdown-arrow" aria-hidden="true">▾</span></summary>
         <div class="tier-legend-body">
-          <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS :: LEVEL 01</div></div>
-          <div class="msg-row tl-row tier-pink">${NETWORK_NODES}<div class="msg-plain tl-text tier-pink">5-15 P!GE0NS :: LEVEL 03</div></div>
-          <div class="msg-row tl-row tier-red">${ENCRYPTED_FRAGMENTS}<div class="msg-plain tl-text tier-red">16-49 P!GE0NS :: LEVEL 06</div></div>
-          <div class="msg-row tl-row tier-purple">${SYSTEM_NODES}<div class="msg-plain tl-text tier-purple">50-99 P!GE0NS :: LEVEL 09</div></div>
-          <div class="msg-row tl-row tier-gold">${ROOT_SPARKLES}<div class="msg-plain tl-text tier-gold">100+ P!GE0NS :: LEVEL 12 :: 0VERR!DE</div></div>
-          <div class="msg-row tl-row tier-diamond">${CORE_SPARKLES}<div class="msg-plain tl-text tier-diamond">CR0WN :: LEVEL 15 :: C0RE</div></div>
-
           <div class="rules-body">Your ACCESS LEVEL determines your signature border and which signals you can read.</div>
           <div class="rules-body">You can read your ACCESS LEVEL and all levels below it.</div>
 
@@ -2226,18 +2211,25 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
           <div class="rules-body">THE CR0WN !S THE 0NLY ACCESS LEVEL THAT CAN READ THE ENT!RE B0ARD.</div>
           <div class="rules-body">The CR0WN has access to ALL S!GNAL LEVELS — 01, 03, 06, 09, 12 and 15.</div>
           <div class="rules-body">When the CR0WN changes hands, the previous holder loses full-board access. Their historical signatures remain permanently recorded with the ACCESS LEVEL they held when they signed.</div>
+
+          <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS :: LEVEL 01</div></div>
+          <div class="msg-row tl-row tier-pink">${NETWORK_NODES}<div class="msg-plain tl-text tier-pink">5-15 P!GE0NS :: LEVEL 03</div></div>
+          <div class="msg-row tl-row tier-red">${ENCRYPTED_FRAGMENTS}<div class="msg-plain tl-text tier-red">16-49 P!GE0NS :: LEVEL 06</div></div>
+          <div class="msg-row tl-row tier-purple">${SYSTEM_NODES}<div class="msg-plain tl-text tier-purple">50-99 P!GE0NS :: LEVEL 09</div></div>
+          <div class="msg-row tl-row tier-gold">${ROOT_SPARKLES}<div class="msg-plain tl-text tier-gold">100+ P!GE0NS :: LEVEL 12 :: 0VERR!DE</div></div>
+          <div class="msg-row tl-row tier-diamond">${CORE_SPARKLES}<div class="msg-plain tl-text tier-diamond">CR0WN :: LEVEL 15 :: C0RE</div></div>
         </div>
       </details>
       <details class="tier-legend protocol-panel">
         <summary><span class="legend-title">// S!GNATURE PR0T0C0L <span class="legend-emoji">⚠️</span></span><span class="dropdown-arrow" aria-hidden="true">▾</span></summary>
         <div class="tier-legend-body">
-          <div class="rules-subhead">0NE P!GE0N. 0NE S!GNATURE. 0NE ADDRESS.</div>
           <div class="rules-rule"><span class="rules-num">01 //</span><span>Each P!GE0N can be used to sign the B0ard once — and only by the wallet currently holding it.</span></div>
           <div class="rules-rule"><span class="rules-num">02 //</span><span>Once a P!GE0N is used, it becomes UNAVA!LABLE and is permanently greyed out on the B0ard.</span></div>
           <div class="rules-rule"><span class="rules-num">03 //</span><span>The signature records the wallet address, P!GE0N, ACCESS LEVEL and timestamp at the exact moment it is created.</span></div>
           <div class="rules-rule"><span class="rules-num">04 //</span><span>Your ACCESS LEVEL at signing determines the signature border and is permanently preserved with that signature.</span></div>
           <div class="rules-rule"><span class="rules-num">05 //</span><span>Your signature never changes. Transferring or acquiring P!GE0Ns later has no effect on signatures already made.</span></div>
           <div class="rules-rule"><span class="rules-num">06 //</span><span>A P!GE0N cannot be used again, even if it is transferred to another wallet.</span></div>
+          <div class="rules-subhead">0NE P!GE0N. 0NE S!GNATURE. 0NE ADDRESS.</div>
         </div>
       </details>
       <details class="tier-legend leaderboard">
