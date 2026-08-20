@@ -574,6 +574,32 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     margin-bottom:0;
   }
   .collection-link-wrap .collection-link{ margin:0 auto; }
+  .swap-proto-wrap{
+    text-align:center;
+    margin:0.9rem 0 0;
+  }
+  .swap-proto-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:0.6em;
+    background:transparent;
+    border:1px dashed rgba(57,255,20,0.3);
+    color:rgba(232,232,232,0.35);
+    font-family:inherit;
+    font-size:12px;
+    letter-spacing:0.1em;
+    padding:0.65em 1.2em;
+    text-transform:none;
+    cursor:not-allowed;
+    user-select:none;
+  }
+  .swap-proto-btn .swap-proto-tag{
+    font-size:9px;
+    letter-spacing:0.15em;
+    color:rgba(255,0,60,0.6);
+    border:1px solid rgba(255,0,60,0.35);
+    padding:0.2em 0.5em;
+  }
   .cb-label-become{
     font-size:1.3em;
     font-weight:900;
@@ -2192,6 +2218,9 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
             <a class="cb-market-link" href="https://xrp.cafe/collection/xrpigeons" target="_blank" rel="noopener">XRP CAFE →</a>
           </span>
         </span>
+      </div>
+      <div class="swap-proto-wrap">
+        <span class="swap-proto-btn" aria-disabled="true" title="PR0T0C0L 0FFL!NE :: N0T YET ACT!VE">[ Σκύλλα ] SWAP <span class="swap-proto-tag">0FFL!NE</span></span>
       </div>
     </div>
     <div class="signed-counter">
