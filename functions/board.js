@@ -1873,7 +1873,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         <div class="signed-counter-bar"><div class="signed-counter-fill" style="width:${signedPct}%"></div></div>
       </div>
       <details class="tier-legend rules-panel">
-        <summary><span class="legend-title">// <span class="legend-emoji">⚠️</span> ACCESS LEVELS <span class="legend-emoji">⚠️</span></span></summary>
+        <summary><span class="legend-title">// ACCESS LEVELS <span class="legend-emoji">⚠️</span></span></summary>
         <div class="tier-legend-body">
           <div class="msg-row tl-row tier-green"><div class="msg-plain tl-text tier-green">1-4 P!GE0NS :: LEVEL 01</div></div>
           <div class="msg-row tl-row tier-pink"><div class="msg-plain tl-text tier-pink">5-15 P!GE0NS :: LEVEL 03</div></div>
@@ -1893,7 +1893,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         </div>
       </details>
       <details class="tier-legend protocol-panel">
-        <summary><span class="legend-title">// <span class="legend-emoji">⚠️</span> P!GE0N S!GNATURE PR0T0C0L <span class="legend-emoji">⚠️</span></span></summary>
+        <summary><span class="legend-title">// S!GNATURE PR0T0C0L <span class="legend-emoji">⚠️</span></span></summary>
         <div class="tier-legend-body">
           <div class="rules-subhead">0NE P!GE0N. 0NE S!GNATURE. 0NE ADDRESS.</div>
           <div class="rules-rule"><span class="rules-num">01 //</span><span>Each P!GE0N can be used to sign the B0ard once — and only by the wallet currently holding it.</span></div>
@@ -1905,7 +1905,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         </div>
       </details>
       <details class="tier-legend leaderboard">
-        <summary><span class="legend-title">// <span class="legend-emoji">❗</span> T0P S!GNERS <span class="legend-emoji">❗</span></span></summary>
+        <summary><span class="legend-title">// T0P S!GNERS <span class="legend-emoji">❗</span></span></summary>
         <div class="tier-legend-body">
           ${leaderboardRows || `<div class="lb-empty">N0 S!GNATURES YET.</div>`}
         </div>
