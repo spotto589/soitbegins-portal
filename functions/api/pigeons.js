@@ -159,9 +159,13 @@ export async function onRequestGet(context) {
   items.sort((a, b) => (a.number || 0) - (b.number || 0));
   const failedCount = page.items.length - items.length;
 
-  // Keep the background full-collection indexer moving forward without
-  // making this page render wait on it.
-  context.waitUntil(maybeRecomputePigeonIndex(env.coin));
+  // Deliberately NOT triggering the background indexer here — the client
+  // already calls ?traits=1 right after every browse page (see
+  // refreshIndexLine in swap.js), which is a SEPARATE incoming request
+  // with its own subrequest budget. Triggering it here too would stack
+  // the indexer's own subrequests on top of this page's browse work
+  // within the same request's budget — exactly the kind of compounding
+  // that was blowing the limit before.
 
   return json({
     items,
