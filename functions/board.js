@@ -1,7 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken,
   fetchAllAccountNfts, findPigeon, findAllPigeons, getBestPigeonWordLimit, getPigeonThumbnails,
-  getPigeonCountTier, getPigeonTierClass, getPigeonAccessLevel, getRewardRates,
+  getPigeonCountTier, getPigeonTierClass, getPigeonAccessLevel,
   getCachedCrownHolder, recomputeCrownHolder, isCrownWallet, CROWN_SNAPSHOT_MAX_AGE_SECONDS,
   proxyIpfsImage
 } from './_shared.js';
@@ -120,10 +120,7 @@ const TOTAL_PIGEONS = 3016;
 function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, wordLimit, pigeonThumbs, acctDisplay, pigeonCount, usedPigeonNfts, keystoneTs, accessLevel, isCurrentCrown, crownHolderCount }) {
   // accessLevel arrives already verified from onRequestGet (server-side:
   // wallet -> Pigeon ownership -> tier -> level, via getPigeonAccessLevel
-  // in _shared.js). Never recomputed or trusted from anywhere else here —
-  // decode access is still the same isPigeon check it always was (this
-  // level is informational/display-only until per-level filtering is
-  // built on top of it).
+  // in _shared.js). Never recomputed or trusted from anywhere else here.
   const accessLevelLabel = String(accessLevel).padStart(2, '0');
 
   // At Level 0 the site's own flavour text reads as a locked signal too —
@@ -146,14 +143,28 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   // rendered for every visitor, holder or not. Only the actual plaintext
   // (and its real binary encoding) is withheld per-row via `canDecode`;
   // see renderMessageRow for how a locked row avoids leaking msg.text.
+  // A viewer can only decode signals at or below their own access level
+  // (the Crown's level 15 clears every comparison, matching "the Crown
+  // reads the entire board" from the access-level legend).
   const messageRows = messages.length
-    ? messages.map(m => renderMessageRow(m, isPigeon, glitchTs, accessLevel)).join('')
+    ? messages.map(m => {
+        const msgSignalLevel = getPigeonAccessLevel(m.pigeonCount, m.rank === 'CROWN');
+        const canDecode = isPigeon && accessLevel >= msgSignalLevel;
+        return renderMessageRow(m, canDecode, glitchTs, accessLevel);
+      }).join('')
     : `<div class="empty">N0 MESSAGES YET.</div>`;
 
+  const LB_RANK_CLASS = { 1: 'lb-rank-gold', 2: 'lb-rank-silver', 3: 'lb-rank-bronze' };
   const leaderboardRows = (leaderboard || []).map((entry, i) => {
-    const w = escapeHtml(entry.acct.slice(0, 6) + '...' + entry.acct.slice(-4));
+    const rank = i + 1;
+    const rankClass = LB_RANK_CLASS[rank] || '';
     const lbTier = getPigeonCountTier(entry.pigeonCount || 1);
-    return `<div class="lb-row ${lbTier}"><span class="lb-rank">#${i + 1}</span><span class="lb-wallet">${w}</span><span class="lb-count">${entry.count} S!GN${entry.count === 1 ? '' : 'S'}</span></div>`;
+    const acct = escapeHtml(entry.acct);
+    return `<div class="lb-row ${lbTier}">
+      <span class="lb-rank ${rankClass}">#${rank}</span>
+      <span class="lb-count">${entry.count} S!GN${entry.count === 1 ? '' : 'S'}</span>
+      <a class="lb-wallet" href="https://bithomp.com/explorer/${acct}" target="_blank" rel="noopener">${acct}</a>
+    </div>`;
   }).join('');
 
   const signedPct = Math.min(100, Math.round((signedCount / TOTAL_PIGEONS) * 1000) / 10);
@@ -164,19 +175,21 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   const firstAvailableNftId = availableThumbs.length ? availableThumbs[0].nftId : null;
 
   const thumbPicker = (isPigeon && pigeonThumbs && pigeonThumbs.length) ? `
-      <div class="sig-label">ATTACH A P!GE0N</div>
-      <div class="pigeon-picker" id="pigeonPicker">
-        ${pigeonThumbs.map((p) => {
-          const used = usedSet.has(p.nftId);
-          const selected = !used && p.nftId === firstAvailableNftId;
-          return `<img class="pigeon-thumb${used ? ' used' : ''}${selected ? ' selected' : ''}" src="${escapeHtml(proxyIpfsImage(p.image))}" data-nft="${escapeHtml(p.nftId)}" data-used="${used ? '1' : '0'}" alt="">`;
-        }).join('')}
-      </div>
-      ${allPigeonsUsed ? `
-        <div class="all-used-note">ALL Y0UR P!GE0NS HAVE ALREADY S!GNED TH!S B0ARD :: 0NE P0ST PER P!GE0N (ALPHA)</div>
-        <div class="mainframe-teaser">T0 ACCESS THE STAT!C S!GNAL_N0DE MA!NFRAMΞ, S!GN W!TH 50 P!GE0NS.</div>
-        ${keystoneTs ? `<div class="keystone-note">KEYST0NE :: <span id="keystoneTime" data-ts="${keystoneTs}"></span></div>` : ''}
-      ` : ''}
+      <details class="pigeon-picker-wrap" id="pigeonPickerWrap"${allPigeonsUsed ? ' open' : ''}>
+        <summary class="pigeon-picker-btn">ATTACH A P!GE0N <span class="ppb-arrow" aria-hidden="true">▾</span></summary>
+        <div class="pigeon-picker" id="pigeonPicker">
+          ${pigeonThumbs.map((p) => {
+            const used = usedSet.has(p.nftId);
+            const selected = !used && p.nftId === firstAvailableNftId;
+            return `<img class="pigeon-thumb${used ? ' used' : ''}${selected ? ' selected' : ''}" src="${escapeHtml(proxyIpfsImage(p.image))}" data-nft="${escapeHtml(p.nftId)}" data-used="${used ? '1' : '0'}" alt="">`;
+          }).join('')}
+        </div>
+        ${allPigeonsUsed ? `
+          <div class="all-used-note">ALL Y0UR P!GE0NS HAVE ALREADY S!GNED TH!S B0ARD :: 0NE P0ST PER P!GE0N (ALPHA)</div>
+          <div class="mainframe-teaser">T0 ACCESS THE STAT!C S!GNAL_N0DE MA!NFRAMΞ, S!GN W!TH 50 P!GE0NS.</div>
+          ${keystoneTs ? `<div class="keystone-note">KEYST0NE :: <span id="keystoneTime" data-ts="${keystoneTs}"></span></div>` : ''}
+        ` : ''}
+      </details>
   ` : '';
 
   const sessionControls = hasSession ? `
@@ -193,7 +206,6 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   const bottomSection = isPigeon ? `
     <div class="write-box" id="pigeonWalletBoard">
       <div class="write-label">WR!TE A MESSAGE (P!GE0N S!GNATURE REQU!RED :: MAX ${wordLimit} W0RDS)</div>
-      ${thumbPicker}
       <textarea id="msgInput" maxlength="1500" placeholder="Type your message here"></textarea>
       <div class="word-count" id="wordCount"></div>
       <input id="nameInput" maxlength="15" placeholder="..." />
@@ -209,6 +221,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         </div>
         <div class="msg-binary" id="binaryPreview"></div>
       </div>
+      ${thumbPicker}
       <button class="post-btn" id="postBtn"${allPigeonsUsed ? ' disabled' : ''}>S!GN & P0ST</button>
       <div class="post-status" id="postStatus"></div>
     </div>
@@ -223,12 +236,6 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   const connectBtnHtml = `<button class="connect-btn" id="connectBtn"><span class="cb-label"><span class="caution">⚠</span> C0NNECT T0 P!GE0N NETW0RK <span class="caution">⚠</span></span><span class="cb-binary" aria-hidden="true">01000011 01001111 01001110 01001110 01000101 01000011 01010100</span></button>
       <div class="connect-status" id="connectStatus"></div>`;
 
-  // Phase 4 — display only. Rates come straight from the trusted
-  // accessLevel above via getRewardRates in _shared.js; nothing here
-  // tracks or pays out an actual reward, it's just showing the holder
-  // what their tier is worth under the current (placeholder) rate table.
-  const { multiplier, crwnRate, pigeonRate } = getRewardRates(accessLevel);
-
   const crownBadge = isCurrentCrown
     ? `<div class="ag-crown">👑 CR0WN H0LDER :: T0P PIGE0N HOLDINGS${crownHolderCount ? ` (${crownHolderCount})` : ''}</div>`
     : '';
@@ -237,13 +244,13 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     <div class="access-gate access-gate-granted" id="accessGate">
       <div class="ag-scan">// S!GNAL DETECTED</div>
       ${crownBadge}
-      <div class="ag-level ag-level-granted">ACCESS LEVEL :: ${accessLevelLabel}</div>
-      <div class="ag-line ag-good">P!GE0N NETW0RK :: C0NNECTED</div>
-      <div class="ag-line ag-signals">S!GNALS AVA!LABLE :: ${signalsAvailable}</div>
-      <div class="ag-reward-block">
-        <div class="ag-line ag-reward">REWARD MULT!PLIER :: ${multiplier.toFixed(1)}×</div>
-        <div class="ag-line ag-reward">CRWN RATE :: ${crwnRate.toFixed(1)} / S!GNAL</div>
-        <div class="ag-line ag-reward">P!GE0N RATE :: ${pigeonRate.toFixed(1)} / S!GNAL</div>
+      <div class="ag-level-box">
+        <div class="ag-level-box-label">ACCESS LEVEL</div>
+        <div class="ag-level-box-value ag-level-granted">${accessLevelLabel}</div>
+      </div>
+      <div class="ag-readout">
+        <div class="ag-row"><span class="ag-row-label">P!GE0N NETW0RK</span><span class="ag-row-value ag-good">C0NNECTED</span></div>
+        <div class="ag-row"><span class="ag-row-label">S!GNALS AVA!LABLE</span><span class="ag-row-value ag-signals">${signalsAvailable}</span></div>
       </div>
     </div>
   ` : (hasSession ? `
@@ -533,6 +540,13 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .important-notice-summary:hover{ background:rgba(255,0,60,0.12); }
   .important-notice-summary::-webkit-details-marker{ display:none; }
+  .important-notice-arrow{
+    font-size:14px;
+    color:#ff003c;
+    text-shadow:0 0 4px rgba(255,0,60,0.5);
+    transition:transform 0.2s ease;
+  }
+  .important-notice[open] .important-notice-arrow{ transform:rotate(180deg); }
   .important-notice-stripe{
     height:6px;
     margin:-0.9rem -1rem 0.9rem;
@@ -584,13 +598,18 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .tier-legend[open] summary::after{ transform:rotate(180deg); }
   .legend-title{
     display:flex;
+    flex:1 1 auto;
     flex-wrap:nowrap;
     align-items:center;
     gap:0.4em;
+    min-width:0;
+    white-space:nowrap;
+    font-size:clamp(10px, 3.2vw, 13px);
   }
   .legend-emoji{
     font-size:1.6em;
     text-shadow:none;
+    flex:0 0 auto;
   }
   .tier-legend-body{
     padding:0.25rem 1rem 1rem;
@@ -610,8 +629,9 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .leaderboard summary{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); }
   .lb-row{
     display:flex;
+    flex-wrap:wrap;
     align-items:center;
-    gap:0.75rem;
+    gap:0.4rem 0.75rem;
     padding:0.55rem 0.9rem;
     border:1px solid rgba(255,0,60,0.25);
     background:#08080a;
@@ -619,19 +639,29 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .lb-rank{
     flex:0 0 auto;
-    color:#ffd700;
+    color:#ff003c;
+    text-shadow:0 0 4px rgba(255,0,60,0.4);
     font-weight:700;
     min-width:2em;
   }
+  .lb-rank-gold{ color:#ffd700; text-shadow:0 0 6px rgba(255,215,0,0.6); }
+  .lb-rank-silver{ color:#c0c0c0; text-shadow:0 0 6px rgba(192,192,192,0.6); }
+  .lb-rank-bronze{ color:#cd7f32; text-shadow:0 0 6px rgba(205,127,50,0.6); }
   .lb-wallet{
-    flex:1 1 auto;
+    flex:1 1 100%;
+    order:3;
+    min-width:0;
     color:#e8e8e8;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+    text-decoration:underline;
+    text-underline-offset:0.15em;
+    overflow-wrap:anywhere;
+    word-break:break-all;
   }
+  .lb-wallet:hover{ opacity:0.8; }
   .lb-count{
     flex:0 0 auto;
+    margin-left:auto;
+    order:2;
     color:#39ff14;
     text-shadow:0 0 4px rgba(57,255,20,0.4);
     font-size:11px;
@@ -642,16 +672,57 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     font-size:12px;
     padding:0.5rem 0;
   }
+  /* Same border treatment (width, glow-pulse, sweep overlay, animated
+     gradient) as the matching .msg-row.tier-* signature borders, so a
+     leaderboard entry's box actually reads as that wallet's tier instead
+     of just a thicker line. */
   .lb-row.tier-green{ border-width:1px; border-color:rgba(57,255,20,0.25); }
   .lb-row.tier-pink{ border-width:1px; border-color:rgba(26,228,255,0.6); }
   .lb-row.tier-red{ border-width:2px; border-color:rgba(255,20,20,0.65); }
-  .lb-row.tier-purple{ border-width:2.5px; border-color:rgba(219,228,234,0.55); }
-  .lb-row.tier-gold{ border-width:3px; border-color:rgba(255,215,0,0.7); }
+  .lb-row.tier-purple{
+    position:relative;
+    overflow:hidden;
+    border-width:2.5px;
+    border-color:rgba(219,228,234,0.55);
+    animation:silver-glow-pulse 2.8s ease-in-out infinite;
+  }
+  .lb-row.tier-purple::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    background:linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.14) 48%, rgba(255,255,255,0.32) 50%, rgba(255,255,255,0.14) 52%, transparent 65%);
+    background-size:300% 300%;
+    animation:silver-sweep 4.2s linear infinite;
+    mix-blend-mode:screen;
+  }
+  .lb-row.tier-gold{
+    position:relative;
+    overflow:hidden;
+    border-width:3px;
+    border-color:rgba(255,215,0,0.7);
+    animation:gold-glow-pulse 2.6s ease-in-out infinite;
+  }
+  .lb-row.tier-gold::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    background:linear-gradient(115deg, transparent 30%, rgba(255,215,0,0.22) 46%, rgba(255,246,200,0.55) 50%, rgba(255,215,0,0.22) 54%, transparent 70%);
+    background-size:300% 300%;
+    animation:gold-sweep 3.4s linear infinite;
+    mix-blend-mode:screen;
+  }
   .lb-row.tier-diamond{
+    position:relative;
+    overflow:hidden;
     border-style:solid;
     border-width:4px;
     border-color:#ff8ef0;
     border-image:linear-gradient(90deg, #ff36e0, #ffe93f, #36e6ff, #ff36e0) 1;
+    animation:diamond-glow-pulse 2.2s ease-in-out infinite;
   }
   .collection-link{
     position:relative;
@@ -1292,11 +1363,47 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     );
     border-color:rgba(57,255,20,0.15);
   }
+  .pigeon-picker-wrap{
+    margin-top:1rem;
+    text-align:left;
+  }
+  .pigeon-picker-btn{
+    cursor:pointer;
+    list-style:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.5em;
+    width:100%;
+    box-sizing:border-box;
+    padding:0.65em 1em;
+    border:1px solid rgba(255,0,60,0.4);
+    background:#000;
+    color:#ff003c;
+    font-family:inherit;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    text-shadow:0 0 6px rgba(255,0,60,0.4);
+    -webkit-tap-highlight-color:transparent;
+    transition:background 0.15s ease;
+  }
+  .pigeon-picker-btn:hover{ background:rgba(255,0,60,0.1); }
+  .pigeon-picker-btn::-webkit-details-marker{ display:none; }
+  .ppb-arrow{ font-size:10px; transition:transform 0.2s ease; }
+  .pigeon-picker-wrap[open] .ppb-arrow{ transform:rotate(180deg); }
+  .pigeon-picker-wrap .pigeon-picker{
+    margin:0;
+    padding:0.75rem;
+    border:1px solid rgba(255,0,60,0.25);
+    border-top:none;
+  }
   .pigeon-picker{
     display:grid;
     grid-template-columns:repeat(6, 1fr);
     gap:0.5rem;
     margin-bottom:1rem;
+    background:#08080a;
   }
   .pigeon-thumb{
     width:100%;
@@ -1591,20 +1698,56 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .ag-good{ color:#39ff14; }
   .ag-bad{ color:#ff003c; }
-  .ag-signals{
-    color:#00fff2;
-    text-shadow:0 0 6px rgba(0,255,242,0.4);
-    margin-bottom:1rem;
+  .ag-signals{ color:#00fff2; text-shadow:0 0 6px rgba(0,255,242,0.4); }
+  .ag-level-box{
+    margin-top:0.9rem;
+    padding:0.9rem 1rem;
+    border:1px dashed rgba(57,255,20,0.35);
+    background:#000;
+    text-align:center;
   }
-  .ag-reward-block{
-    margin-top:0.75rem;
-    padding-top:0.75rem;
-    border-top:1px dashed rgba(255,215,0,0.3);
-  }
-  .ag-reward{
-    color:#ffd700;
-    text-shadow:0 0 6px rgba(255,215,0,0.4);
+  .ag-level-box-label{
     font-size:11px;
+    letter-spacing:0.15em;
+    color:rgba(232,232,232,0.5);
+    text-transform:uppercase;
+    margin-bottom:0.5rem;
+  }
+  .ag-level-box-value{
+    font-size:clamp(24px, 7vw, 36px);
+    font-weight:700;
+    letter-spacing:0.1em;
+  }
+  /* Terminal-style readout for the granted access panel — left-aligned
+     label::value rows in a bordered box, instead of centered stacked
+     lines of varying sizes. */
+  .ag-readout{
+    margin-top:0.9rem;
+    border:1px dashed rgba(57,255,20,0.35);
+    background:#000;
+    padding:0.85rem 1rem;
+    text-align:left;
+  }
+  .ag-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:1em;
+    font-size:12px;
+    letter-spacing:0.06em;
+    padding:0.4rem 0;
+    border-bottom:1px dashed rgba(57,255,20,0.15);
+  }
+  .ag-row:last-child{ border-bottom:none; }
+  .ag-row-label{
+    color:rgba(232,232,232,0.55);
+    white-space:nowrap;
+  }
+  .ag-row-value{
+    font-weight:700;
+    white-space:nowrap;
+    text-align:right;
+    text-shadow:0 0 6px currentColor;
   }
   .session-watermark{
     position:fixed;
@@ -1701,7 +1844,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
       </a>
     </div>
     <details class="important-notice">
-      <summary class="important-notice-summary"><span>⚠️</span><span>!MP0RTANT</span><span>⚠️</span></summary>
+      <summary class="important-notice-summary"><span class="important-notice-arrow" aria-hidden="true">▾</span><span>⚠️</span><span>!MP0RTANT</span><span>⚠️</span><span class="important-notice-arrow" aria-hidden="true">▾</span></summary>
       <div class="important-notice-body">
         <div class="important-notice-stripe"></div>
         <div class="important-notice-item">This is a fan-made utility project and has no affiliation, endorsement, or connection with $PIGEONS or their creators.</div>
