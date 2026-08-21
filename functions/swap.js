@@ -192,27 +192,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
 
-  /* ---- reference-image texture, tiled at a fixed square size (never
-     percentage-sized — that scales independently per-axis against a
-     non-square panel and stretches the source image) so it repeats at
-     native aspect ratio, nearly blacked out by the scrim gradient so it
-     reads as faint noise under the panel, never competing with the text
-     on top ---- */
+  /* ---- reference-image texture: one non-repeating instance per panel,
+     cover-sized (preserves native aspect ratio, unlike percentage
+     sizing which stretches per-axis) and cropped toward one corner of
+     the source. Tiling this at a fixed size turned it into a regular
+     wallpaper grid, which reads as decorative pattern rather than
+     glitch — real static doesn't repeat periodically. Nearly blacked
+     out by the scrim gradient so it reads as faint noise, never
+     competing with the text on top. ---- */
   .sw-panel-signal{
     background-image:
-      linear-gradient(rgba(8,9,11,0.87), rgba(8,9,11,0.87)),
+      linear-gradient(rgba(8,9,11,0.85), rgba(8,9,11,0.85)),
       url('/assets/digitalglitchpattern.png');
-    background-size:100% 100%, 260px 260px;
+    background-size:100% 100%, cover;
     background-position:center, top left;
-    background-repeat:no-repeat, repeat;
+    background-repeat:no-repeat, no-repeat;
   }
   .sw-panel-target{
     background-image:
-      linear-gradient(rgba(8,9,11,0.84), rgba(8,9,11,0.84)),
+      linear-gradient(rgba(8,9,11,0.82), rgba(8,9,11,0.82)),
       url('/assets/digitalglitchpattern.png');
-    background-size:100% 100%, 260px 260px;
-    background-position:center, top left;
-    background-repeat:no-repeat, repeat;
+    background-size:100% 100%, cover;
+    background-position:center, bottom right;
+    background-repeat:no-repeat, no-repeat;
   }
 
   /* ---- database (multi-collection) selector ---- */
