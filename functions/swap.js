@@ -1089,7 +1089,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Shared by SELECT (auto-enters owner scope + auto-targets the pigeon
   // that got you there) and the plain "view this wallet's collection" click
   // on an owner address (no auto-targeting).
-  // `targetPigeon` is optional — set only when arriving here via SELECT on
+  // targetPigeon is optional — set only when arriving here via SELECT on
   // a specific Pigeon (owner-links, top holders, MY PIGEONS etc. browse a
   // wallet directly with no "target" pigeon that led here).
   function browseOwnerCollection(wallet, ownerShort, targetPigeon){
