@@ -1401,12 +1401,18 @@ export async function createXamanPayload(apiKey, apiSecret, txjson, options) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), XAMAN_FETCH_TIMEOUT_MS);
   try {
+    // Reverted the User-Agent/Accept headers added in the previous commit —
+    // confirmed live those coincided with the FIRST captured non-ok status
+    // (400, with cf-ray missing from the response, suggesting it may not
+    // even have reached xumm.app's actual origin), while an identical curl
+    // request WITH those same headers succeeded fine outside the Workers
+    // runtime. Testing whether Cloudflare Workers specifically restricts a
+    // custom User-Agent on outbound fetch by going back to the bare
+    // headers that were in place before that change.
     const res = await fetch('https://xumm.app/api/v1/platform/payload', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (compatible; ScyllaSwap/1.0)',
         'X-API-Key': apiKey,
         'X-API-Secret': apiSecret
       },
