@@ -525,6 +525,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-bottom:1px solid rgba(255,47,146,0.25);
   }
   .result-rarity-line{ font-size:14px; letter-spacing:0.03em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); text-align:center; }
+  .result-price-line{ font-size:12px; letter-spacing:0.03em; color:#00fff2; text-shadow:0 0 3px rgba(0,255,242,0.3); text-align:center; text-transform:uppercase; }
   .result-highsale-line{ display:block; font-size:13px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 3px rgba(255,47,146,0.3); text-align:center; text-transform:uppercase; text-decoration:none; }
   a.result-highsale-line{ cursor:pointer; }
   a.result-highsale-line:hover{ text-decoration:underline; }
@@ -1168,6 +1169,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
     var inTarget = !!state.targetAssets[p.nftId];
+    var bestListingLine = (p.bestListingXrp !== null && p.bestListingXrp !== undefined)
+      ? '<div class="result-price-line">' + p.bestListingXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP :: ' + (p.bestListingSource === 'xrpCafe' ? 'XRP.CAFE' : 'DEEPT!DE') + '</div>'
+      : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">P!GE0N ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -1176,6 +1180,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       '</div>' +
       '<div class="result-card-body">' +
         rarityLine +
+        bestListingLine +
         highSaleLine +
         '<button class="inspect-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ !NSPECT ]</button>' +
       '</div>' +
@@ -1252,11 +1257,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     var filters = activeFilters();
     var isEdition = state.edition === 'LOW' || state.edition === 'HIGH';
     var isSalesSort = state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW';
+    var isNumericSort = state.sort === 'NAME_ASC' || state.sort === 'NAME_DESC';
+    var isCrossListing = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC';
     var reqParams;
     if (isSalesSort){
       reqParams = { skip: state.skip, limit: PAGE_SIZE, highestSale: 1, dir: state.sort === 'SALES_LOW' ? 'asc' : 'desc' };
+    } else if (isCrossListing){
+      // Real lowest/highest across BOTH Deeptide and xrp.cafe, not just
+      // whichever platform happens to have the cheaper API.
+      reqParams = { skip: state.skip, limit: 20, crossListing: state.sort === 'PRICE_ASC' ? 'asc' : 'desc' };
+    } else if (isEdition && isNumericSort){
+      // Direct slice of the number map restricted to this range — no scan needed.
+      reqParams = { skip: state.skip, limit: PAGE_SIZE, numberRange: state.edition === 'LOW' ? 'low' : 'high', numericOrder: state.sort === 'NAME_DESC' ? 'desc' : 'asc' };
     } else if (isEdition){
       reqParams = { rawSkip: state.editionRawSkip, limit: PAGE_SIZE, numberRange: state.edition === 'LOW' ? 'low' : 'high', sort: state.sort };
+    } else if (isNumericSort){
+      // True numeric Pigeon-number order (1,2,3...), not Deeptide's own
+      // "name-asc" which sorts the string "PIGEONS10" before "PIGEONS2".
+      reqParams = { skip: state.skip, limit: PAGE_SIZE, numericOrder: state.sort === 'NAME_DESC' ? 'desc' : 'asc' };
     } else {
       reqParams = { skip: state.skip, limit: PAGE_SIZE, sort: state.sort, filters: filters.length ? JSON.stringify(filters) : undefined };
     }

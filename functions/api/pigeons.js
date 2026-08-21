@@ -269,6 +269,30 @@ export async function onRequestGet(context) {
   const numberRange = params.get('numberRange');
   if (numberRange === 'low' || numberRange === 'high') {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
+
+    // Numeric order within a range is just a direct slice of the (complete)
+    // number map restricted to that range — no scanning needed at all.
+    const numericOrder = params.get('numericOrder');
+    if (numericOrder === 'asc' || numericOrder === 'desc') {
+      const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
+      const map = await getPigeonNumberMap(env.coin);
+      const nums = Object.keys(map)
+        .map(n => parseInt(n, 10))
+        .filter(n => numberRange === 'low' ? n <= PIGEON_LOW_EDITION_MAX : n > PIGEON_LOW_EDITION_MAX)
+        .sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
+      const pageNums = nums.slice(skip, skip + limit);
+      const resolved = await Promise.all(pageNums.map(n => fetchDeeptideNftDetail(map[n])));
+      const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap));
+      return json({
+        items,
+        total: numberRange === 'low' ? PIGEON_LOW_EDITION_MAX : (PIGEON_COLLECTION_SIZE_APPROX - PIGEON_LOW_EDITION_MAX),
+        hasMore: skip + pageNums.length < nums.length,
+        skip: skip + pageNums.length,
+        limit,
+        collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
+      });
+    }
+
     const underlyingSort = SORT_MAP[params.get('sort')] || 'rarity-asc';
     let cursor = Math.max(0, parseInt(params.get('rawSkip') || '0', 10) || 0);
     const matched = [];
@@ -296,6 +320,78 @@ export async function onRequestGet(context) {
       hasMore: !exhausted,
       rawSkip: cursor,
       skip: cursor,
+      limit,
+      collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
+    });
+  }
+
+  // True numeric Pigeon-number order (1, 2, 3...) — Deeptide's own
+  // "name-asc"/"name-desc" sort the display NAME as a string ("PIGEONS1",
+  // "PIGEONS10", "PIGEONS100"... before "PIGEONS2" — confirmed live), not
+  // the number. Direct slice of the complete number map, no scan needed.
+  const numericOrder = params.get('numericOrder');
+  if (numericOrder === 'asc' || numericOrder === 'desc') {
+    const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
+    const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
+    const map = await getPigeonNumberMap(env.coin);
+    const nums = Object.keys(map).map(n => parseInt(n, 10)).sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
+    const pageNums = nums.slice(skip, skip + limit);
+    const resolved = await Promise.all(pageNums.map(n => fetchDeeptideNftDetail(map[n])));
+    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap));
+    return json({
+      items,
+      total: nums.length,
+      hasMore: skip + pageNums.length < nums.length,
+      skip: skip + pageNums.length,
+      limit,
+      collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
+    });
+  }
+
+  // Real lowest/highest listing across BOTH marketplaces — Deeptide's own
+  // price-asc/price-desc only reflects Deeptide's own offers, so a Pigeon
+  // priced lower on xrp.cafe would never surface. This scans Deeptide's
+  // price-sorted feed for candidates (cheap: one call), cross-checks each
+  // one's xrp.cafe price too, then re-sorts by whichever is actually
+  // better. Honest limitation: it can't discover a Pigeon listed ONLY on
+  // xrp.cafe and not at all on Deeptide, since xrp.cafe has no bulk
+  // sorted-by-price endpoint we could find (only a per-token lookup) — so
+  // this is "best of both markets among what Deeptide surfaces as listed",
+  // not a mathematically exhaustive global sort. Capped at 20/request
+  // (1 Deeptide call + up to 20 xrp.cafe calls) to stay well under the
+  // subrequest budget.
+  const crossListing = params.get('crossListing');
+  if (crossListing === 'asc' || crossListing === 'desc') {
+    const limit = Math.min(20, Math.max(1, parseInt(params.get('limit') || '20', 10) || 20));
+    const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
+    const deeptideSort = crossListing === 'asc' ? 'price-asc' : 'price-desc';
+    const page = await fetchDeeptideListings({ skip, limit, sort: deeptideSort });
+    const withCross = await Promise.all(page.items.map(async (it) => {
+      const xc = await fetchXrpCafeNftListing(it.nftId);
+      const dp = typeof it.priceDrops === 'number' ? it.priceDrops / 1000000 : null;
+      const xp = xc && xc.priceXrp !== null && xc.priceXrp !== undefined ? xc.priceXrp : null;
+      let effective = null, source = null;
+      if (dp !== null && (xp === null || (crossListing === 'asc' ? dp <= xp : dp >= xp))) { effective = dp; source = 'deeptide'; }
+      else if (xp !== null) { effective = xp; source = 'xrpCafe'; }
+      return { it, effective, source };
+    }));
+    withCross.sort((a, b) => {
+      if (a.effective === null && b.effective === null) return 0;
+      if (a.effective === null) return 1;
+      if (b.effective === null) return -1;
+      return crossListing === 'asc' ? a.effective - b.effective : b.effective - a.effective;
+    });
+    const items = withCross.map(({ it, effective, source }) => {
+      const built = toItem(it.nftId, it, undefined, highSaleMap);
+      built.bestListingXrp = effective;
+      built.bestListingSource = source;
+      return built;
+    });
+    return json({
+      items,
+      total: page.total,
+      hasMore: page.hasMore,
+      skip: skip + page.items.length,
       limit,
       collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
     });
