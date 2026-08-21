@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers,
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull,
   getXamanPayloadStatus, removeSwapListing
 } from '../_shared.js';
 
@@ -60,11 +60,17 @@ export async function onRequestGet(context) {
 
   const txHash = resp && resp.txid;
 
-  const remainingOffers = await fetchNftSellOffers(nftId);
-  const stillThere = remainingOffers.some(o => o.owner === seller);
+  // "Gone" here is a SINGLE signal for delisting — unlike BUY, there's no
+  // second independent check to fall back on. A lookup failure (e.g.
+  // xrplcluster.com rate-limiting) must never be treated as "confirmed
+  // gone," or a transient blip could wrongly declare DELISTED while the
+  // offer is still live. null means "couldn't verify" — keep polling,
+  // same as still finding the offer.
+  const remainingOffers = await fetchNftSellOffersOrNull(nftId);
+  const stillThere = remainingOffers === null || remainingOffers.some(o => o.owner === seller);
   if (stillThere) {
     // Signed successfully on Xaman's side but not yet reflected on ledger
-    // reads — caller should keep polling.
+    // reads (or the read itself failed) — caller should keep polling.
     return new Response(JSON.stringify({ status: 'signed_pending_ledger', txHash }), {
       headers: { 'Content-Type': 'application/json' }
     });

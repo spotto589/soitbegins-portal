@@ -1014,6 +1014,14 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="ci-value ci-value-big" id="myWalletAddr"></div>
         <div class="stat-value" id="myWalletCount" style="margin-top:0.5rem;"></div>
       </div>
+      <div class="search-row" id="myPigeonsSortRow" style="display:none; justify-content:center;">
+        <select class="sort-select" id="myPigeonsSortSelect">
+          <option value="RARITY_ASC" selected>RAR!TY H!GH</option>
+          <option value="RARITY_DESC">RAR!TY L0W</option>
+          <option value="NAME_ASC">A → Z</option>
+          <option value="NAME_DESC">Z → A</option>
+        </select>
+      </div>
       <div id="myPigeonsList"></div>
     </div>
 
@@ -1349,6 +1357,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
    'myPigeonsConnect','connectScyllaBtn','connectStatus','myWalletInfo','myWalletAddr','myWalletCount',
+   'myPigeonsSortRow','myPigeonsSortSelect',
    'screenListForm','listFormPigeonNum','listFormImg','listPriceInput','listFormError','listFormBackBtn','listFormSubmitBtn',
    'screenListConfirm','confTxType','confAccount','confNftId','confCurrency','confIssuer','confValue','confFlags','confirmStatus','listConfirmBackBtn','openXamanBtn',
    'screenListResult','listResultEyebrow','listResultPigeonNum','listResultPrice','listResultStatus','listResultOfferId','listResultTxLink','listResultDoneBtn',
@@ -1379,11 +1388,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       buttons[i].classList.toggle('active', buttons[i].getAttribute('data-tab') === tab);
     }
     // Nothing fetches until its tab is actually opened for the first time.
+    // Σ SCYLLA LISTED, highest price first, is the default landing view —
+    // the main attraction of the site, not the full 3015-item browse.
     if (tab === 'database' && !state.databaseLoaded){
       state.databaseLoaded = true;
       ensureTraitsLoaded();
       loadCollectionStats();
-      startCollectionBrowse();
+      setScyllaListedOnly(true);
     } else if (tab === 'mypigeons' && myPigeonsData === null){
       loadMyPigeons();
     } else if (tab === 'topholders' && topHoldersData === null){
@@ -1712,7 +1723,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       var note = filters.length ? ' :: TRA!T F!LTERED' : '';
       el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + (state.total !== null ? state.total : state.items.length) + '</span>' + note;
       if (!state.items.length){
-        el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', filters.length ? ['N0 P!GE0NS MATCH ALL SELECTED TRA!TS.'] : ['TRY AGA!N.'], filters.length > 0);
+        if (state.scyllaListedOnly){
+          el.resultsArea.innerHTML = emptyStateHtml('// N0 ACT!VE L!ST!NGS', ['N0THING !S CURRENTLY L!STED THR0UGH SCYLLA.', 'BE THE F!RST — L!ST A P!GE0N FR0M MY P!GE0NS.'], false);
+        } else {
+          el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', filters.length ? ['N0 P!GE0NS MATCH ALL SELECTED TRA!TS.'] : ['TRY AGA!N.'], filters.length > 0);
+        }
       } else if (!state.hasMore){
         el.endOfCollectionNote.style.display = '';
       }
@@ -1950,16 +1965,44 @@ const SWAP_HTML = `<!DOCTYPE html>
       '<div class="result-card-body">' + rarityLine + actionHtml + '</div>' +
     '</div>';
   }
+  // ---- MY PIGEONS ordering: pigeons you've listed through Scylla always
+  // come first, highest $PIGEONS price to lowest — the sort dropdown only
+  // governs the rest, same rarity/A-Z options DATABASE offers. ----
+  var myPigeonsSort = 'RARITY_ASC';
+  function sortedMyPigeons(){
+    var listed = [], rest = [];
+    (myPigeonsData || []).forEach(function(p){
+      if (myListedData[p.nftId]) listed.push(p); else rest.push(p);
+    });
+    listed.sort(function(a, b){
+      var av = parseFloat(myListedData[a.nftId].price) || 0;
+      var bv = parseFloat(myListedData[b.nftId].price) || 0;
+      return bv - av;
+    });
+    rest.sort(function(a, b){
+      if (myPigeonsSort === 'RARITY_DESC') return (b.rarityRank || 0) - (a.rarityRank || 0);
+      if (myPigeonsSort === 'NAME_ASC') return (a.number || 0) - (b.number || 0);
+      if (myPigeonsSort === 'NAME_DESC') return (b.number || 0) - (a.number || 0);
+      return (a.rarityRank || 999999) - (b.rarityRank || 999999); // RARITY_ASC default
+    });
+    return listed.concat(rest);
+  }
   function renderMyPigeonsList(){
     el.myPigeonsPanelTitle.textContent = 'MY P!GE0NS' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
     if (myPigeonsData === null){ el.myPigeonsList.innerHTML = '<div class="th-empty">L0AD!NG...</div>'; return; }
-    if (!myPigeonsData.length){ el.myPigeonsList.innerHTML = '<div class="th-empty">Y0U D0N\\'T H0LD ANY P!GE0NS YET.</div>'; return; }
-    el.myPigeonsList.innerHTML = '<div class="result-grid my-pigeons-grid">' + myPigeonsData.map(myPigeonCardHtml).join('') + '</div>';
+    if (!myPigeonsData.length){ el.myPigeonsSortRow.style.display = 'none'; el.myPigeonsList.innerHTML = '<div class="th-empty">Y0U D0N\\'T H0LD ANY P!GE0NS YET.</div>'; return; }
+    el.myPigeonsSortRow.style.display = '';
+    el.myPigeonsList.innerHTML = '<div class="result-grid my-pigeons-grid">' + sortedMyPigeons().map(myPigeonCardHtml).join('') + '</div>';
   }
+  el.myPigeonsSortSelect.addEventListener('change', function(){
+    myPigeonsSort = el.myPigeonsSortSelect.value;
+    renderMyPigeonsList();
+  });
   function loadMyPigeons(){
     if (!MY_WALLET){
       el.myPigeonsConnect.style.display = '';
       el.myWalletInfo.style.display = 'none';
+      el.myPigeonsSortRow.style.display = 'none';
       el.myPigeonsPanelTitle.textContent = 'MY P!GE0NS';
       el.myPigeonsList.innerHTML = '';
       return;
@@ -2760,8 +2803,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.statScyllaListedTile.classList.toggle('scylla-active', on);
     if (on){
       if (state.sort !== 'SCYLLA_PRICE_ASC' && state.sort !== 'SCYLLA_PRICE_DESC'){
-        state.sort = 'SCYLLA_PRICE_ASC';
-        el.sortSelect.value = 'SCYLLA_PRICE_ASC';
+        // Highest-first is the default entry into LISTED — the main
+        // attraction of the site, not a niche filter.
+        state.sort = 'SCYLLA_PRICE_DESC';
+        el.sortSelect.value = 'SCYLLA_PRICE_DESC';
       }
       if (state.scope){
         state.scope = null;

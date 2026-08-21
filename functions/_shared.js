@@ -74,12 +74,22 @@ export async function fetchAllAccountNfts(account) {
   do {
     const params = { account, limit: 400 };
     if (marker) params.marker = marker;
-    const res = await fetch('https://xrplcluster.com', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ method: 'account_nfts', params: [params] })
-    });
-    const data = await res.json();
+    let data;
+    try {
+      const res = await fetch('https://xrplcluster.com', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method: 'account_nfts', params: [params] })
+      });
+      data = await res.json();
+    } catch (e) {
+      // xrplcluster.com rate-limits under bursts (plain-text body, not
+      // JSON) — stop here with whatever's already been collected rather
+      // than throwing. Every caller treats an empty/short result as "owns
+      // nothing (here)," which fails toward refusing an action, never
+      // toward wrongly allowing or confirming one.
+      break;
+    }
     const nfts = (data.result && data.result.account_nfts) || [];
     all = all.concat(nfts);
     marker = data.result && data.result.marker;
@@ -261,17 +271,42 @@ export function isTransferable(nft) {
 }
 
 // Real on-ledger sell offers for one NFT — the authoritative "is this
-// actually listed, and for how much" source (used to confirm a listing
-// after signing, never a browser-stored flag).
+// actually listed, and for how much" source. xrplcluster.com rate-limits
+// (returns a plain-text "Rate limit..." body, not JSON) under bursts of
+// concurrent calls — confirmed live while testing the LISTED view's
+// per-item re-verification, which used to crash this on res.json().
+//
+// Two variants, deliberately different failure behavior:
+// - fetchNftSellOffersOrNull: returns null when the lookup itself failed
+//   (rate-limited, network error, bad response) vs [] for a confirmed-empty
+//   result. DELIST's "is the offer really gone" check is a SINGLE signal —
+//   if a transient failure were silently treated as "gone," a rate-limit
+//   blip could wrongly declare DELISTED while the offer is still live. Use
+//   this version anywhere "gone" must mean genuinely confirmed gone, not
+//   just "couldn't check."
+// - fetchNftSellOffers: the tolerant [] on any failure, for display/
+//   discovery paths (LISTED view, badges, prepare/payload lookups) where
+//   failing toward "not listed" is an acceptable, non-unsafe degradation —
+//   worst case a real listing doesn't show or a step needs retrying, never
+//   a false success.
+export async function fetchNftSellOffersOrNull(nftId) {
+  try {
+    const res = await fetch('https://xrplcluster.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'nft_sell_offers', params: [{ nft_id: nftId }] })
+    });
+    const data = await res.json();
+    if (!data.result || data.result.error) return [];
+    return data.result.offers || [];
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function fetchNftSellOffers(nftId) {
-  const res = await fetch('https://xrplcluster.com', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ method: 'nft_sell_offers', params: [{ nft_id: nftId }] })
-  });
-  const data = await res.json();
-  if (!data.result || data.result.error) return [];
-  return data.result.offers || [];
+  const result = await fetchNftSellOffersOrNull(nftId);
+  return result === null ? [] : result;
 }
 
 // The Pigeon ACCESS LEVEL system. Levels are non-contiguous by design —

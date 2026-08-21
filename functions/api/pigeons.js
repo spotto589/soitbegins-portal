@@ -269,13 +269,20 @@ export async function onRequestGet(context) {
   }
 
   // Σκύλλα SWAP LISTED filter — only Pigeons actually listed through this
-  // system (see getSwapListingsMap), sorted by real $PIGEONS price. Exact,
-  // not scanned/approximate, same shape as the highest-sale sort below —
-  // except this ALSO re-verifies each item on the requested page against
-  // real nft_sell_offers (one XRPL call per item, capped at the page
-  // limit, well under the subrequest budget) and prunes any entry that's
-  // no longer actually there, so a stale/cancelled/sold listing can't
-  // silently linger in this view.
+  // system (see getSwapListingsMap), sorted by real $PIGEONS price. Served
+  // directly from the KV index (fast, no XRPL calls on the request path) —
+  // an earlier version live-verified every item on every page load via a
+  // blocking Promise.all, which was hammering xrplcluster.com with up to
+  // 60 concurrent calls per page and triggering its rate limit (confirmed
+  // live: it returns a plain-text "Rate limit..." body under burst load,
+  // which briefly broke listings entirely). Real safety doesn't depend on
+  // this endpoint anyway — BUY and DELIST both re-verify fresh against
+  // nft_sell_offers at prepare AND payload time, right before anything is
+  // ever signed, so no money can move on stale display data here. This
+  // still self-heals: a small sample of the current page is re-checked in
+  // the background (non-blocking) and pruned if actually gone, on top of
+  // the sync that already happens whenever a listing's own owner views MY
+  // PIGEONS (swap-listing-owned.js).
   const scyllaListed = params.get('scyllaListed');
   if (scyllaListed === '1') {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
@@ -287,18 +294,20 @@ export async function onRequestGet(context) {
       return asc ? av - bv : bv - av;
     });
     const pageIds = sortedIds.slice(skip, skip + limit);
-    const verified = await Promise.all(pageIds.map(async (id) => {
-      const offers = await fetchNftSellOffers(id);
-      const stillListed = offers.some(o => o.owner === scyllaListingsMap[id].seller);
-      if (!stillListed) {
-        context.waitUntil(removeSwapListing(env.coin, id));
-        return null;
-      }
-      return id;
-    }));
-    const liveIds = verified.filter(Boolean);
-    const resolved = await Promise.all(liveIds.map(id => fetchDeeptideNftDetail(id)));
+    const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap));
+
+    const BACKGROUND_VERIFY_SAMPLE = 5;
+    context.waitUntil((async () => {
+      for (const id of pageIds.slice(0, BACKGROUND_VERIFY_SAMPLE)) {
+        const offers = await fetchNftSellOffers(id);
+        const entry = scyllaListingsMap[id];
+        if (entry && !offers.some(o => o.owner === entry.seller)) {
+          await removeSwapListing(env.coin, id);
+        }
+      }
+    })());
+
     return json({
       items,
       total: sortedIds.length,
