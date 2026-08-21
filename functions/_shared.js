@@ -1409,6 +1409,8 @@ export async function createXamanPayload(apiKey, apiSecret, txjson, options) {
     // runtime. Testing whether Cloudflare Workers specifically restricts a
     // custom User-Agent on outbound fetch by going back to the bare
     // headers that were in place before that change.
+    const requestBody = JSON.stringify({ txjson, options: options || { submit: true, expire: 5 } });
+    console.log('createXamanPayload REQUEST BODY:', requestBody);
     const res = await fetch('https://xumm.app/api/v1/platform/payload', {
       method: 'POST',
       headers: {
@@ -1416,12 +1418,13 @@ export async function createXamanPayload(apiKey, apiSecret, txjson, options) {
         'X-API-Key': apiKey,
         'X-API-Secret': apiSecret
       },
-      body: JSON.stringify({ txjson, options: options || { submit: true, expire: 5 } }),
+      body: requestBody,
       signal: controller.signal
     });
     if (!res.ok) {
-      const bodyText = await res.text().catch(() => '(unreadable)');
-      console.log('createXamanPayload not ok:', res.status, res.headers.get('cf-ray'), bodyText.slice(0, 300));
+      const bodyText = await res.text().catch((e) => '(unreadable: ' + e + ')');
+      const headersDump = [...res.headers.entries()].map(([k, v]) => k + '=' + v).join(' | ');
+      console.log('createXamanPayload NOT OK status=' + res.status + ' bodyLen=' + bodyText.length + ' body=[' + bodyText.slice(0, 500) + '] headers=[' + headersDump + ']');
       return null;
     }
     return await res.json();
