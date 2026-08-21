@@ -1000,6 +1000,15 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <div class="sw-panel" id="myPigeonsPanel" style="display:none;">
       <div class="panel-title" id="myPigeonsPanelTitle">MY P!GE0NS</div>
+      <div id="myPigeonsConnect" style="display:none; text-align:center;">
+        <button class="bar-btn" id="connectScyllaBtn">[ CONNECT Σκύλλα ]</button>
+        <div class="index-line" id="connectStatus"></div>
+      </div>
+      <div class="collection-info" id="myWalletInfo" style="display:none;">
+        <div class="ci-label">WALLET C0NNECTED</div>
+        <div class="ci-value ci-value-big" id="myWalletAddr"></div>
+        <div class="stat-value" id="myWalletCount" style="margin-top:0.5rem;"></div>
+      </div>
       <div id="myPigeonsList"></div>
     </div>
 
@@ -1163,6 +1172,50 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- SCREEN: LIST A PIGEON — first real listing test -->
+    <div class="sw-panel" id="screenListForm" style="display:none;">
+      <div class="detail-eyebrow">// SCYLLA L!ST!NG</div>
+      <div class="detail-num" id="listFormPigeonNum"></div>
+      <div class="detail-img-large pigeon-img-box" id="listFormImg">[ IMAGE ]</div>
+      <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value"><input class="search-input" id="listPriceInput" placeholder="0" inputmode="decimal" style="text-align:right; width:140px;"></span></div>
+      <div class="detail-field"><span class="df-label">CURRENCY</span><span class="df-value">$P!GE0NS</span></div>
+      <div class="index-line" id="listFormError" style="display:none;"></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="listFormBackBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="listFormSubmitBtn">[ CREATE L!ST!NG ]</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: LISTING CONFIRMATION — the exact txjson, before Xaman ever opens -->
+    <div class="sw-panel" id="screenListConfirm" style="display:none;">
+      <div class="node-eyebrow">// L!ST!NG C0NF!RMAT!0N</div>
+      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="confTxType"></span></div>
+      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="confAccount"></span></div>
+      <div class="detail-field"><span class="df-label">NFTokenID</span><span class="df-value" id="confNftId"></span></div>
+      <div class="detail-field"><span class="df-label">Amount.currency</span><span class="df-value" id="confCurrency"></span></div>
+      <div class="detail-field"><span class="df-label">Amount.issuer</span><span class="df-value" id="confIssuer"></span></div>
+      <div class="detail-field"><span class="df-label">Amount.value</span><span class="df-value" id="confValue"></span></div>
+      <div class="detail-field"><span class="df-label">Flags</span><span class="df-value" id="confFlags"></span></div>
+      <div class="index-line" id="confirmStatus" style="margin-top:1rem;"></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="listConfirmBackBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="openXamanBtn">[ 0PEN XAMAN ]</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: LISTING RESULT — verified against real on-ledger state, not a stored flag -->
+    <div class="sw-panel" id="screenListResult" style="display:none;">
+      <div class="detail-eyebrow" id="listResultEyebrow">// L!ST!NG CREATED</div>
+      <div class="detail-num" id="listResultPigeonNum"></div>
+      <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="listResultPrice"></span></div>
+      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="listResultStatus"></span></div>
+      <div class="detail-field"><span class="df-label">NFT 0FFER !D</span><span class="df-value" id="listResultOfferId"></span></div>
+      <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="listResultTxLink" target="_blank" rel="noopener"></a></span></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="listResultDoneBtn">[ ← BACK T0 MY P!GE0NS ]</button>
+      </div>
+    </div>
+
     <div class="protocol-footer">TH!S !S A PR0T0TYPE !NTERFACE. N0 ASSETS CAN BE M0VED, S!GNED, 0R TRANSFERRED.</div>
   </div>
 
@@ -1171,12 +1224,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     <span class="tb-toggle">[ V!EW ▲ ]</span>
   </div>
 
+<script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
 <script>
 (function(){
 
-  // Wallet of whoever is currently signed in via /board's connect flow
-  // (read from the shared pigeon_session cookie server-side) — null if no
-  // signature is on file. There is no login button here on purpose.
+  // Same public OAuth-login key every other page already hardcodes
+  // (board.js, scylla.js, kingdom.js, mainframe.js, glitch.js) — the
+  // client-facing half of the Xaman app, safe to be public.
+  var XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
+
+  // Wallet of whoever is currently signed in via the shared pigeon_session
+  // cookie (set by /board's connect flow, or by the CONNECT SCYLLA button
+  // below reusing the exact same login) — read server-side, null if no
+  // signature is on file.
   var MY_WALLET = "__SWAP_WALLET__";
 
   // ---- Client-side state ----
@@ -1224,7 +1284,11 @@ const SWAP_HTML = `<!DOCTYPE html>
    'listingDeeptidePrice','listingDeeptideBuy','listingXrpCafePrice','listingXrpCafeBuy',
    'backToBrowseBtn','detailSelectBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
-   'targetBar','targetBarLabel'
+   'targetBar','targetBarLabel',
+   'myPigeonsConnect','connectScyllaBtn','connectStatus','myWalletInfo','myWalletAddr','myWalletCount',
+   'screenListForm','listFormPigeonNum','listFormImg','listPriceInput','listFormError','listFormBackBtn','listFormSubmitBtn',
+   'screenListConfirm','confTxType','confAccount','confNftId','confCurrency','confIssuer','confValue','confFlags','confirmStatus','listConfirmBackBtn','openXamanBtn',
+   'screenListResult','listResultEyebrow','listResultPigeonNum','listResultPrice','listResultStatus','listResultOfferId','listResultTxLink','listResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   function escapeHtml(str){
@@ -1279,6 +1343,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     el.screenDetail.style.display = name === 'detail' ? '' : 'none';
     el.screenSummary.style.display = name === 'summary' ? '' : 'none';
+    el.screenListForm.style.display = name === 'listform' ? '' : 'none';
+    el.screenListConfirm.style.display = name === 'listconfirm' ? '' : 'none';
+    el.screenListResult.style.display = name === 'listresult' ? '' : 'none';
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
@@ -1771,26 +1838,281 @@ const SWAP_HTML = `<!DOCTYPE html>
     browseOwnerCollection(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
   });
 
-  // ---- MY PIGEONS — reuses the /board wallet session; no login flow here. ----
+  // ---- MY PIGEONS — CONNECT SCYLLA reuses the exact same XummPkce login
+  // /board already uses (same API key, same /api/connect, same
+  // pigeon_session cookie) rather than a second wallet-connect system. ----
   var myPigeonsData = null; // null = not fetched yet
+  var myListedData = {};    // nftId -> { price, currency, offerId } — real on-ledger sell offers, not a stored flag
+  function myPigeonCardHtml(p){
+    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
+    var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
+    var num = p.number !== null ? '#' + p.number : '#????';
+    var listedInfo = myListedData[p.nftId];
+    var actionHtml = listedInfo
+      ? '<div class="index-line" style="margin-top:0.5rem; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow);">L!STED :: ' + escapeHtml(listedInfo.price) + ' $P!GE0NS</div>'
+      : '<button class="bar-btn list-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.5rem;">[ L!ST ]</button>';
+    return '<div class="result-card" data-nftid="' + escapeHtml(p.nftId) + '">' +
+      '<div class="result-num">P!GE0N ' + num + '</div>' +
+      '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' + img + '</div>' +
+      '<div class="result-card-body">' + rarityLine + actionHtml + '</div>' +
+    '</div>';
+  }
   function renderMyPigeonsList(){
     el.myPigeonsPanelTitle.textContent = 'MY P!GE0NS' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
     if (myPigeonsData === null){ el.myPigeonsList.innerHTML = '<div class="th-empty">L0AD!NG...</div>'; return; }
     if (!myPigeonsData.length){ el.myPigeonsList.innerHTML = '<div class="th-empty">Y0U D0N\\'T H0LD ANY P!GE0NS YET.</div>'; return; }
-    el.myPigeonsList.innerHTML = '<div class="result-grid my-pigeons-grid">' + myPigeonsData.map(resultCardHtml).join('') + '</div>';
+    el.myPigeonsList.innerHTML = '<div class="result-grid my-pigeons-grid">' + myPigeonsData.map(myPigeonCardHtml).join('') + '</div>';
   }
   function loadMyPigeons(){
     if (!MY_WALLET){
-      el.myPigeonsList.innerHTML = '<div class="th-empty">N0 S!GNATURE DETECTED — C0NNECT Y0UR WALLET 0N /B0ARD F!RST.</div>';
+      el.myPigeonsConnect.style.display = '';
+      el.myWalletInfo.style.display = 'none';
+      el.myPigeonsPanelTitle.textContent = 'MY P!GE0NS';
+      el.myPigeonsList.innerHTML = '';
       return;
     }
+    el.myPigeonsConnect.style.display = 'none';
+    el.myWalletInfo.style.display = '';
+    el.myWalletAddr.textContent = MY_WALLET;
     renderMyPigeonsList();
     api({ wallet: MY_WALLET }).then(function(data){
       myPigeonsData = data.items || [];
+      el.myWalletCount.textContent = 'P!GE0NS :: ' + myPigeonsData.length;
+      renderMyPigeonsList();
+      return fetch('/api/swap-listing-owned?wallet=' + encodeURIComponent(MY_WALLET)).then(function(r){ return r.json(); });
+    }).then(function(listedRes){
+      myListedData = (listedRes && listedRes.listed) || {};
       renderMyPigeonsList();
     }).catch(function(){});
   }
   wireResultClicks(el.myPigeonsList, function(){ return myPigeonsData || []; });
+  el.myPigeonsList.addEventListener('click', function(e){
+    var btn = e.target.closest('.list-pigeon-btn');
+    if (!btn) return;
+    var nftId = btn.getAttribute('data-nftid');
+    var p = (myPigeonsData || []).filter(function(x){ return x.nftId === nftId; })[0];
+    if (p) openListForm(p);
+  });
+
+  // ---- CONNECT SCYLLA — same XummPkce OAuth login /board uses, redirected
+  // back to /swap instead. ----
+  var xummAuth = null;
+  function getXummAuth(){
+    if (!xummAuth){
+      xummAuth = new XummPkce(XAMAN_API_KEY, {
+        implicit: true,
+        rememberJwt: false,
+        redirectUrl: window.location.origin + '/swap'
+      });
+      xummAuth.on('error', function(){
+        el.connectStatus.textContent = 'ERR://L0G!N AB0RTED';
+        el.connectScyllaBtn.disabled = false;
+      });
+      xummAuth.on('success', function(){
+        xummAuth.state().then(function(authState){
+          var jwt = authState && authState.jwt;
+          if (!jwt){
+            el.connectStatus.textContent = 'ERR://N0 WALLET DATA';
+            el.connectScyllaBtn.disabled = false;
+            return;
+          }
+          fetch('/api/connect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jwt: jwt })
+          }).then(function(r){ return r.json(); }).then(function(data){
+            if (data.ok){
+              window.location.href = '/swap?connected=1';
+            } else {
+              el.connectStatus.textContent = 'ERR://C0NNECT!0N FA!LED';
+              el.connectScyllaBtn.disabled = false;
+            }
+          }).catch(function(){
+            el.connectStatus.textContent = 'ERR://S!GNAL_L0ST';
+            el.connectScyllaBtn.disabled = false;
+          });
+        });
+      });
+    }
+    return xummAuth;
+  }
+  if (el.connectScyllaBtn){
+    getXummAuth(); // picks up a pending mobile return-from-Xaman redirect automatically
+    el.connectScyllaBtn.addEventListener('click', function(){
+      el.connectScyllaBtn.disabled = true;
+      el.connectStatus.textContent = '';
+      getXummAuth().authorize();
+    });
+  }
+
+  // ---- LIST A PIGEON — first real Σκύλλα listing test: create-offer
+  // only. No buyer/acceptance flow, no Σκύλλα fee yet (see HANDOFF.md). ----
+  var listingTarget = null; // { nftId, number, image, priceValue } — the pigeon currently being listed
+  var listingUuid = null;
+  var listingPollTimer = null;
+
+  function listingErrorMessage(code){
+    var messages = {
+      not_configured: '$P!GE0NS L!ST!NGS ARE N0T C0NF!GURED YET.',
+      xaman_not_configured: 'XAMAN S!GN!NG !S N0T C0NF!GURED YET.',
+      not_owned: 'TH!S WALLET D0ES N0T 0WN TH!S P!GE0N.',
+      not_transferable: 'TH!S P!GE0N !S N0T TRANSFERABLE.',
+      not_a_pigeon: 'N0T A VAL!D P!GE0N NFT.',
+      invalid_price: 'ENTER A VAL!D PR!CE GREATER THAN 0.',
+      no_session: 'C0NNECT Y0UR WALLET F!RST.',
+      invalid_session: 'S!GNAL EXP!RED — REC0NNECT Y0UR WALLET.'
+    };
+    return (code && messages[code]) || 'ERR://C0ULD N0T PREPARE L!ST!NG.';
+  }
+
+  function openListForm(p){
+    listingTarget = p;
+    el.listFormPigeonNum.textContent = 'P!GE0N #' + (p.number !== null ? p.number : '????');
+    el.listFormImg.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
+    el.listPriceInput.value = '';
+    el.listFormError.style.display = 'none';
+    el.listFormSubmitBtn.disabled = false;
+    el.listFormSubmitBtn.textContent = '[ CREATE L!ST!NG ]';
+    showScreen('listform');
+  }
+  el.listFormBackBtn.addEventListener('click', function(){ showScreen('browse'); });
+
+  el.listFormSubmitBtn.addEventListener('click', function(){
+    if (!listingTarget) return;
+    var priceValue = el.listPriceInput.value.trim();
+    if (!priceValue || isNaN(Number(priceValue)) || Number(priceValue) <= 0){
+      el.listFormError.textContent = 'ENTER A VAL!D PR!CE GREATER THAN 0.';
+      el.listFormError.style.display = '';
+      return;
+    }
+    el.listFormError.style.display = 'none';
+    el.listFormSubmitBtn.disabled = true;
+    el.listFormSubmitBtn.textContent = '[ VAL!DAT!NG... ]';
+    fetch('/api/swap-listing-prepare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: listingTarget.nftId, priceValue: priceValue })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      el.listFormSubmitBtn.disabled = false;
+      el.listFormSubmitBtn.textContent = '[ CREATE L!ST!NG ]';
+      if (!res.ok || !res.data.ok){
+        el.listFormError.textContent = listingErrorMessage(res.data && res.data.error);
+        el.listFormError.style.display = '';
+        return;
+      }
+      listingTarget.priceValue = priceValue;
+      showListingConfirm(res.data.txjson);
+    }).catch(function(){
+      el.listFormSubmitBtn.disabled = false;
+      el.listFormSubmitBtn.textContent = '[ CREATE L!ST!NG ]';
+      el.listFormError.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+      el.listFormError.style.display = '';
+    });
+  });
+
+  function showListingConfirm(txjson){
+    el.confTxType.textContent = txjson.TransactionType;
+    el.confAccount.textContent = txjson.Account;
+    el.confNftId.textContent = txjson.NFTokenID;
+    el.confCurrency.textContent = txjson.Amount.currency;
+    el.confIssuer.textContent = txjson.Amount.issuer;
+    el.confValue.textContent = txjson.Amount.value;
+    el.confFlags.textContent = String(txjson.Flags);
+    el.confirmStatus.textContent = '';
+    el.openXamanBtn.disabled = false;
+    el.openXamanBtn.textContent = '[ 0PEN XAMAN ]';
+    showScreen('listconfirm');
+  }
+  el.listConfirmBackBtn.addEventListener('click', function(){ showScreen('listform'); });
+
+  el.openXamanBtn.addEventListener('click', function(){
+    if (!listingTarget) return;
+    el.openXamanBtn.disabled = true;
+    el.openXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.confirmStatus.textContent = '';
+    fetch('/api/swap-listing-payload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: listingTarget.nftId, priceValue: listingTarget.priceValue })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        el.openXamanBtn.disabled = false;
+        el.openXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.confirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      listingUuid = res.data.uuid;
+      window.open(res.data.next.always, '_blank', 'noopener');
+      el.openXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.confirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      pollListingStatus();
+    }).catch(function(){
+      el.openXamanBtn.disabled = false;
+      el.openXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.confirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+
+  function pollListingStatus(){
+    if (listingPollTimer) clearTimeout(listingPollTimer);
+    if (!listingUuid || !listingTarget) return;
+    fetch('/api/swap-listing-status?uuid=' + encodeURIComponent(listingUuid) + '&nftId=' + encodeURIComponent(listingTarget.nftId))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'listed'){
+          myListedData[listingTarget.nftId] = { price: data.price, currency: data.currency, offerId: data.offerId };
+          showListingResult(data);
+          return;
+        }
+        if (data.status === 'rejected'){
+          el.confirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
+          el.openXamanBtn.disabled = false;
+          el.openXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'expired'){
+          el.confirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
+          el.openXamanBtn.disabled = false;
+          el.openXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'failed'){
+          el.confirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
+          el.openXamanBtn.disabled = false;
+          el.openXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        // 'pending' or 'signed_pending_ledger' — keep polling.
+        listingPollTimer = setTimeout(pollListingStatus, 2000);
+      }).catch(function(){
+        listingPollTimer = setTimeout(pollListingStatus, 3000);
+      });
+  }
+
+  function showListingResult(data){
+    el.listResultPigeonNum.textContent = 'P!GE0N #' + (listingTarget.number !== null ? listingTarget.number : '????');
+    el.listResultPrice.textContent = data.price + ' $P!GE0NS';
+    el.listResultStatus.textContent = 'L!STED';
+    el.listResultOfferId.textContent = data.offerId || '—';
+    if (data.txHash){
+      el.listResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
+      el.listResultTxLink.textContent = data.txHash;
+    } else {
+      el.listResultTxLink.removeAttribute('href');
+      el.listResultTxLink.textContent = '—';
+    }
+    showScreen('listresult');
+  }
+  el.listResultDoneBtn.addEventListener('click', function(){
+    listingTarget = null;
+    listingUuid = null;
+    if (listingPollTimer) clearTimeout(listingPollTimer);
+    renderMyPigeonsList();
+    state.activeTab = 'mypigeons';
+    showScreen('browse');
+  });
 
   // ---- DATABASE selector — multi-collection groundwork; only PIGEONS is
   // live, FUZZY/PHNIX are inert placeholders. ----
@@ -2071,7 +2393,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   // ---- Initial load ----
-  // Nothing loads until a tab is chosen — see showTab().
+  // Nothing loads until a tab is chosen — see showTab() — except a return
+  // from the CONNECT SCYLLA redirect, which should land back on MY PIGEONS.
+  if (window.location.search.indexOf('connected=1') !== -1){
+    showTab('mypigeons');
+  }
 
   // TV static background, purely atmospheric — matches the rest of the site.
   (function(){

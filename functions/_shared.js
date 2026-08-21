@@ -230,6 +230,48 @@ export function findAllPigeons(nfts) {
   return nfts.filter(n => n.Issuer === PIGEON_ISSUER && n.NFTokenTaxon === PIGEON_TAXON);
 }
 
+// ── Σκύλλα SWAP: first real listing test ──────────────────────────────────
+// Same "build the real eligibility/validation machinery, stop short of the
+// real payout/transaction until real identifiers exist" pattern as
+// KINGDOM_CLAIM_CONFIG above. currency/issuer are NOT invented — listing
+// creation refuses to proceed (returns not_configured) until the real
+// $PIGEONS identifiers are filled in here.
+export const PIGEONS_TOKEN_CONFIG = { currency: null, issuer: null, configured: false };
+
+// XRPL currency codes are exactly 3 ASCII chars ("standard") or, for
+// anything else, a 40-hex-char string: the code's ASCII bytes, left-
+// justified and zero-padded to 20 bytes ("non-standard"/hex currency
+// codes). $PIGEONS is 7 chars, so it needs the hex form — this mirrors
+// that encoding exactly rather than requiring it be pre-encoded by hand.
+export function encodeCurrencyCode(code) {
+  if (!code) return code;
+  if (code.length === 3 && code.toUpperCase() !== 'XRP') return code;
+  const bytes = new Uint8Array(20);
+  bytes.set(new TextEncoder().encode(code).slice(0, 20));
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
+// tfTransferable (0x0008) — an NFT without this flag can never be sold to
+// anyone but its issuer, so a sell offer against it would only ever fail
+// on-ledger. Checked before a listing payload is ever built.
+export function isTransferable(nft) {
+  return !!(nft && typeof nft.Flags === 'number' && (nft.Flags & 0x0008) !== 0);
+}
+
+// Real on-ledger sell offers for one NFT — the authoritative "is this
+// actually listed, and for how much" source (used to confirm a listing
+// after signing, never a browser-stored flag).
+export async function fetchNftSellOffers(nftId) {
+  const res = await fetch('https://xrplcluster.com', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ method: 'nft_sell_offers', params: [{ nft_id: nftId }] })
+  });
+  const data = await res.json();
+  if (!data.result || data.result.error) return [];
+  return data.result.offers || [];
+}
+
 // The Pigeon ACCESS LEVEL system. Levels are non-contiguous by design —
 // 01/03/06/09/12/15, with 00 reserved for "no Pigeon" — and unlike the
 // original 1(highest)-6(lowest) scheme this replaced, HIGHER holdings now
