@@ -175,7 +175,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
   .sale-num{ flex:0 0 auto; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.35); cursor:pointer; min-width:5.5em; }
   .sale-price{ flex:0 0 auto; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); min-width:6em; }
-  .sale-parties{ flex:1 1 200px; color:rgba(232,232,232,0.55); text-transform:uppercase; }
+  .sale-parties{ flex:1 1 200px; color:rgba(232,232,232,0.55); text-transform:none; }
   .sale-parties a{ color:#00fff2; text-decoration:underline; cursor:pointer; }
   .sale-time{ flex:0 0 auto; color:rgba(232,232,232,0.3); text-transform:uppercase; }
 
