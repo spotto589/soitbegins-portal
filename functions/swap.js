@@ -716,8 +716,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="sw-panel">
         <div class="panel-title" id="searchPanelTitle">P!GE0N DATABASE</div>
         <div class="search-row">
-          <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0NS (NUMBER, TRA!T, 0R VALUE)..." style="display:none;">
-          <button class="bar-btn" id="searchBtn" style="display:none;">[ SEARCH ]</button>
+          <input class="search-input" id="searchInput" placeholder="SEARCH BY P!GE0N NUMBER (E.G. 1842)..." inputmode="numeric">
+          <button class="bar-btn" id="searchBtn">[ SEARCH ]</button>
           <select class="sort-select" id="editionSelect">
             <option value="">[ ED!T!0N ▼ ]</option>
             <option value="ALL">1-3015</option>
@@ -725,11 +725,12 @@ const SWAP_HTML = `<!DOCTYPE html>
             <option value="HIGH">1516-3015</option>
           </select>
           <select class="sort-select" id="sortSelect">
-            <option value="RARITY_ASC">[ S0RT ▼ ] RAR!TY H!GH</option>
+            <option value="">[ S0RT ▼ ]</option>
+            <option value="RARITY_ASC">RAR!TY H!GH</option>
             <option value="RARITY_DESC">RAR!TY L0W</option>
+            <option value="HIGHEST_SALE">H!GHEST SALE</option>
             <option value="NAME_ASC">A → Z</option>
             <option value="NAME_DESC">Z → A</option>
-            <option value="HIGHEST_SALE">H!GHEST SALE</option>
           </select>
         </div>
         <div class="index-line" id="indexLine"></div>
@@ -1245,55 +1246,35 @@ const SWAP_HTML = `<!DOCTYPE html>
   // other typed text is treated as a trait-value guess (matched against the
   // already-loaded real trait data, no extra round trips) and applied as a
   // filter through the same AND-filter mechanism as the TRAITS stack.
+  // Number-only search box — trait filtering already has its own dedicated
+  // UI (the TRAITS stack), so this just resolves "1842" -> that one Pigeon
+  // via the number->NFTokenID index.
   function runSearchBox(){
     var q = el.searchInput.value.trim();
     if (!q){ runQuery(); return; }
     var isNumber = /^#?\\d+$/.test(q);
-    if (isNumber){
-      el.resultsArea.innerHTML = '<div class="loading-note">SEARCH!NG...</div>';
-      el.statusLine.textContent = '';
-      api({ number: q.replace('#', '') }).then(function(data){
-        state.items = data.items || [];
-        if (!state.items.length){
-          el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
-          el.resultsArea.innerHTML = data.notIndexed
-            ? emptyStateHtml('// N0T YET !NDEXED', ['QUERY :: "' + q + '"', 'TH!S P!GE0N HAS N0T BEEN SEEN BY THE NUMBER !NDEX YET.', 'TRY AGA!N SH0RTLY — !T CRAWLS THE C0LLECT!0N !N THE BACKGR0UND.'], true)
-            : emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + q + '"'], true);
-          wireClearSearch();
-          return;
-        }
-        el.statusLine.innerHTML = 'RESULTS :: <span class="hi">1</span><br>P!GE0N #' + state.items[0].number;
-        renderResultsReplace(state.items);
-      }).catch(function(){
-        el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['SEARCH FA!LED. TRY AGA!N.'], false);
-      });
+    if (!isNumber){
+      el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
+      el.resultsArea.innerHTML = emptyStateHtml('// !NVAL!D QUERY', ['ENTER A P!GE0N NUMBER (E.G. 1842).'], true);
+      wireClearSearch();
       return;
     }
-    var kv = q.match(/^([A-Za-z]+)\\s*:\\s*(.+)$/);
-    ensureTraitsLoaded().then(function(cats){
-      var trait, value;
-      if (kv){
-        var catKey = Object.keys(cats).filter(function(c){ return c.toLowerCase() === kv[1].toLowerCase(); })[0];
-        if (catKey){
-          var exact = (cats[catKey] || []).filter(function(v){ return v.value.toLowerCase() === kv[2].trim().toLowerCase(); })[0];
-          trait = catKey; value = exact ? exact.value : kv[2].trim();
-        }
-      }
-      if (!trait){
-        for (var c in cats){
-          var hit = (cats[c] || []).filter(function(v){ return v.value.toLowerCase().indexOf(q.toLowerCase()) !== -1; })[0];
-          if (hit){ trait = c; value = hit.value; break; }
-        }
-      }
-      if (!trait){
+    el.resultsArea.innerHTML = '<div class="loading-note">SEARCH!NG...</div>';
+    el.statusLine.textContent = '';
+    api({ number: q.replace('#', '') }).then(function(data){
+      state.items = data.items || [];
+      if (!state.items.length){
         el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
-        el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + q + '"', 'N0 MATCH!NG TRA!T VALUE F0UND.'], true);
+        el.resultsArea.innerHTML = data.notIndexed
+          ? emptyStateHtml('// N0T YET !NDEXED', ['QUERY :: "' + q + '"', 'TH!S P!GE0N HAS N0T BEEN SEEN BY THE NUMBER !NDEX YET.', 'TRY AGA!N SH0RTLY — !T CRAWLS THE C0LLECT!0N !N THE BACKGR0UND.'], true)
+          : emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + q + '"'], true);
         wireClearSearch();
         return;
       }
-      state.traitFilters = [{ id: state.nextTraitRowId++, category: trait, value: value }];
-      renderTraitRows();
-      startCollectionBrowse();
+      el.statusLine.innerHTML = 'RESULTS :: <span class="hi">1</span><br>P!GE0N #' + state.items[0].number;
+      renderResultsReplace(state.items);
+    }).catch(function(){
+      el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['SEARCH FA!LED. TRY AGA!N.'], false);
     });
   }
 
