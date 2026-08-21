@@ -16,7 +16,33 @@ import { fetchAllAccountNfts, findAllPigeons, fetchNftSellOffers, recordSwapList
 //    holding 60+ Pigeons had its real listing silently skipped when this
 //    was the only pass and capped at 40, since slice() doesn't guarantee
 //    the listed one falls within the first 40.
-const DISCOVERY_CAP = 40;
+const DISCOVERY_CAP = 45;
+
+// Server-side helper shared by both the wallet-wide scan and the direct
+// nftId check below.
+async function verifyAndRecord(env, nftId, wallet, listed) {
+  const offers = await fetchNftSellOffers(nftId);
+  const ownOffer = offers.find(o => o.owner === wallet);
+  if (ownOffer && ownOffer.amount && typeof ownOffer.amount === 'object') {
+    listed[nftId] = {
+      price: ownOffer.amount.value,
+      currency: ownOffer.amount.currency,
+      offerId: ownOffer.nft_offer_index
+    };
+    if (env.coin) {
+      await recordSwapListing(env.coin, nftId, {
+        price: ownOffer.amount.value,
+        currency: ownOffer.amount.currency,
+        issuer: ownOffer.amount.issuer,
+        offerId: ownOffer.nft_offer_index,
+        seller: wallet,
+        listedAt: Math.floor(Date.now() / 1000)
+      });
+    }
+    return true;
+  }
+  return false;
+}
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -35,33 +61,20 @@ export async function onRequestGet(context) {
     }
   }
 
+  // A specific, already-known NFT (e.g. the one just listed, or the one
+  // MY PIGEONS is currently rendering a card for) — verified directly,
+  // bypassing the wallet-wide scan and its cap entirely. Reliable
+  // regardless of how many other Pigeons the wallet holds.
+  const directNftId = url.searchParams.get('nftId');
+  if (directNftId && /^[0-9A-Fa-f]{64}$/.test(directNftId) && !listed[directNftId]) {
+    await verifyAndRecord(env, directNftId, wallet, listed);
+  }
+
   const nfts = await fetchAllAccountNfts(wallet);
   const undiscovered = findAllPigeons(nfts).filter(nft => !listed[nft.NFTokenID]).slice(0, DISCOVERY_CAP);
 
   // Small batches, not one Promise.all blast — see mapWithConcurrency.
-  await mapWithConcurrency(undiscovered, 5, async (nft) => {
-    const offers = await fetchNftSellOffers(nft.NFTokenID);
-    const ownOffer = offers.find(o => o.owner === wallet);
-    if (ownOffer && ownOffer.amount && typeof ownOffer.amount === 'object') {
-      listed[nft.NFTokenID] = {
-        price: ownOffer.amount.value,
-        currency: ownOffer.amount.currency,
-        offerId: ownOffer.nft_offer_index
-      };
-      // Self-heal the index from real, just-verified ledger data — never
-      // invented, this is the exact live offer just read above.
-      if (env.coin) {
-        context.waitUntil(recordSwapListing(env.coin, nft.NFTokenID, {
-          price: ownOffer.amount.value,
-          currency: ownOffer.amount.currency,
-          issuer: ownOffer.amount.issuer,
-          offerId: ownOffer.nft_offer_index,
-          seller: wallet,
-          listedAt: Math.floor(Date.now() / 1000)
-        }));
-      }
-    }
-  });
+  await mapWithConcurrency(undiscovered, 5, (nft) => verifyAndRecord(env, nft.NFTokenID, wallet, listed));
 
   return new Response(JSON.stringify({ listed }), {
     headers: { 'Content-Type': 'application/json' }
