@@ -568,10 +568,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   .trait-cell .tc-label{ font-size:9px; letter-spacing:0.15em; color:rgba(232,232,232,0.4); margin-bottom:0.35rem; text-transform:uppercase; }
   .trait-cell .tc-value{ font-size:13px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.3); }
   .trait-cell .tc-sub{ font-size:9px; letter-spacing:0.08em; color:rgba(0,255,242,0.6); margin-top:0.3rem; text-transform:uppercase; }
-  .tech-meta{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed rgba(232,232,232,0.15); padding-top:1rem; }
   .tech-meta-title{ text-align:center; font-size:10px; letter-spacing:0.2em; color:rgba(232,232,232,0.35); margin-bottom:0.6rem; text-transform:uppercase; }
-  .tech-meta-row{ display:flex; justify-content:space-between; font-size:10px; letter-spacing:0.02em; color:rgba(232,232,232,0.5); margin-bottom:0.35rem; }
-  .tech-meta-row .value{ word-break:break-all; text-align:right; color:rgba(0,255,242,0.7); }
+  .detail-history{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed rgba(232,232,232,0.15); padding-top:1rem; }
+  .dh-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:0.6rem;
+    padding:0.5em 0.3em;
+    border-bottom:1px solid rgba(232,232,232,0.08);
+    font-size:11px;
+    letter-spacing:0.02em;
+    flex-wrap:wrap;
+  }
+  .dh-row:last-child{ border-bottom:none; }
+  .dh-type{ flex:0 0 auto; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.35); text-transform:uppercase; min-width:4.5em; }
+  .dh-price{ flex:0 0 auto; color:#ffd700; }
+  .dh-parties{ flex:1 1 160px; color:rgba(232,232,232,0.55); }
+  .dh-parties a{ color:#00fff2; text-decoration:underline; }
+  .dh-time{ flex:0 0 auto; color:rgba(232,232,232,0.3); font-size:10px; text-transform:uppercase; }
+  .view-elsewhere{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed rgba(232,232,232,0.15); padding-top:1rem; }
+  .view-links{ display:flex; justify-content:center; gap:0.6rem; flex-wrap:wrap; }
   .detail-actions{ display:flex; justify-content:center; gap:0.75rem; flex-wrap:wrap; margin-top:1.5rem; }
   .secondary-btn{
     background:transparent;
@@ -702,9 +719,10 @@ const SWAP_HTML = `<!DOCTYPE html>
           <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0NS (NUMBER, TRA!T, 0R VALUE)..." style="display:none;">
           <button class="bar-btn" id="searchBtn" style="display:none;">[ SEARCH ]</button>
           <select class="sort-select" id="editionSelect">
-            <option value="ALL">[ ED!T!0N ▼ ] N0. 1-3015</option>
-            <option value="LOW">N0. 1-1515</option>
-            <option value="HIGH">N0. 1516-3015</option>
+            <option value="">[ ED!T!0N ▼ ]</option>
+            <option value="ALL">1-3015</option>
+            <option value="LOW">1-1515</option>
+            <option value="HIGH">1516-3015</option>
           </select>
           <select class="sort-select" id="sortSelect">
             <option value="RARITY_ASC">[ S0RT ▼ ] RAR!TY H!GH</option>
@@ -746,9 +764,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">H!GH SALE</span><span class="df-value price" id="detailHighSale"></span></div>
       <div class="detail-traits-title">TRA!TS</div>
       <div class="trait-grid" id="detailTraits"></div>
-      <div class="tech-meta">
-        <div class="tech-meta-title">TECHN!CAL METADATA</div>
-        <div class="tech-meta-row"><span>NFT0KEN !D</span><span class="value" id="detailNftId"></span></div>
+      <div class="detail-history">
+        <div class="tech-meta-title">P!GE0N H!ST0RY</div>
+        <div id="detailHistoryList"></div>
+      </div>
+      <div class="view-elsewhere">
+        <div class="tech-meta-title">V!EW ELSEWHERE</div>
+        <div class="view-links">
+          <a class="secondary-btn" id="viewDeeptideLink" target="_blank" rel="noopener">[ DEEPT!DE ]</a>
+          <a class="secondary-btn" id="viewXrpCafeLink" target="_blank" rel="noopener">[ XRP.CAFE ]</a>
+          <a class="secondary-btn" id="viewBithompLink" target="_blank" rel="noopener">[ B!TH0MP ]</a>
+        </div>
       </div>
       <div class="detail-actions">
         <button class="secondary-btn" id="backToBrowseBtn">[ ← BACK ]</button>
@@ -823,7 +849,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'salesToggle','salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
    'screenBrowse','screenDetail','screenSummary',
-   'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailBuyBtn','detailTraits','detailNftId',
+   'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailBuyBtn','detailTraits',
+   'detailHistoryList','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
    'backToBrowseBtn','detailSelectBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel'
@@ -1400,10 +1427,9 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   // ---- Inspect / detail ----
   function traitCellHtml(a){
-    var subParts = [];
-    if (a.percent !== null && a.percent !== undefined) subParts.push(a.percent + '%');
-    if (a.count !== null && a.count !== undefined) subParts.push(a.count + ' P!GE0NS');
-    var sub = subParts.length ? '<div class="tc-sub">' + escapeHtml(subParts.join(' :: ')) + '</div>' : '';
+    var sub = (a.percent !== null && a.percent !== undefined)
+      ? '<div class="tc-sub">' + a.percent + '%' + (a.count !== null && a.count !== undefined ? '<br>(' + a.count + ')' : '') + '</div>'
+      : '';
     return '<div class="trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '" title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
       '<div class="tc-label">' + escapeHtml(a.trait_type) + '</div><div class="tc-value">' + escapeHtml(a.value) + '</div>' + sub +
     '</div>';
@@ -1466,6 +1492,45 @@ const SWAP_HTML = `<!DOCTYPE html>
     return state.items.filter(function(p){ return p.nftId === nftId; })[0] ||
       state.scopeAllItems.filter(function(p){ return p.nftId === nftId; })[0];
   }
+  // ---- Per-Pigeon history (mint/transfer/sale events, real, straight from
+  // Deeptide's per-token history endpoint) ----
+  function walletLinkHtml(full, short, prefix){
+    if (!full) return '';
+    return (prefix || '') + '<a data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '">' + escapeHtml(short || full) + '</a>';
+  }
+  function historyRowHtml(e){
+    var typeLabel = e.type === 'sale' ? 'SALE' : e.type === 'mint' ? 'M!NT' : 'TRANSFER';
+    var priceHtml = e.priceXrp !== null && e.priceXrp !== undefined
+      ? '<span class="dh-price">' + e.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</span>' : '';
+    var partiesParts = [];
+    if (e.account) partiesParts.push(walletLinkHtml(e.account, e.accountShort));
+    if (e.receiver) partiesParts.push(walletLinkHtml(e.receiver, e.receiverShort, '→ '));
+    if (e.buyer) partiesParts.push(walletLinkHtml(e.buyer, e.buyerShort, '→ '));
+    var when = e.date ? new Date(e.date).toLocaleDateString() : '';
+    var txLink = e.txUrl ? '<a class="dh-tx" href="' + escapeHtml(e.txUrl) + '" target="_blank" rel="noopener">[ TXN ]</a>' : '';
+    return '<div class="dh-row">' +
+      '<span class="dh-type">' + typeLabel + '</span>' +
+      priceHtml +
+      '<span class="dh-parties">' + partiesParts.join(' ') + ' ' + txLink + '</span>' +
+      '<span class="dh-time">' + escapeHtml(when) + '</span>' +
+    '</div>';
+  }
+  function loadDetailHistory(nftId){
+    api({ history: nftId }).then(function(data){
+      if (state.currentDetail && state.currentDetail.nftId !== nftId) return; // navigated away already
+      var events = data.events || [];
+      el.detailHistoryList.innerHTML = events.length
+        ? events.map(historyRowHtml).join('')
+        : '<div class="th-empty">N0 H!ST0RY YET.</div>';
+    }).catch(function(){
+      el.detailHistoryList.innerHTML = '<div class="th-empty">C0ULD N0T L0AD H!ST0RY.</div>';
+    });
+  }
+  el.detailHistoryList.addEventListener('click', function(e){
+    var walletLink = e.target.closest('.dh-parties a[data-wallet]');
+    if (walletLink) browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short'));
+  });
+
   function openDetail(nftId){
     var known = findKnown(nftId);
     el.detailNum.textContent = known && known.number !== null ? 'P!GE0N #' + known.number : 'P!GE0N ...';
@@ -1473,12 +1538,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (known && known.owner) renderOwnerLink(known.ownerShort, known.owner);
     else { el.detailOwner.textContent = '...'; el.detailOwner.classList.remove('not-indexed'); }
     el.detailTraits.innerHTML = known ? known.attributes.map(traitCellHtml).join('') : '';
-    el.detailNftId.textContent = nftId;
+    el.viewDeeptideLink.href = 'https://deeptide.co/nft/' + nftId;
+    el.viewXrpCafeLink.href = 'https://xrp.cafe/nft/' + nftId;
+    el.viewBithompLink.href = 'https://bithomp.com/explorer/' + nftId;
+    el.detailHistoryList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     updateDetailRarity(known);
     updateDetailPrice(known);
     state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null, attributes: [] };
     showScreen('detail');
     refreshCardSelectionStates();
+    loadDetailHistory(nftId);
 
     api({ detail: nftId }).then(function(data){
       if (!data.item){

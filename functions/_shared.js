@@ -877,6 +877,31 @@ export async function fetchDeeptideNftDetail(nftId) {
   }
 }
 
+// Full real event history for one token — mint, transfers, and sales, each
+// with its own txHash — straight from Deeptide's own per-item history
+// endpoint (confirmed via `/api/mint/nft/{id}/history`, distinct from the
+// shop/wallet-wide `/api/sales/recent` used elsewhere, which has no
+// per-token filter). No KV involved. Used for the INSPECT screen's
+// per-Pigeon sales history.
+export async function fetchDeeptideNftHistory(nftId) {
+  try {
+    const res = await fetch(`${DEEPTIDE_API_BASE}/api/mint/nft/${encodeURIComponent(nftId)}/history`);
+    if (!res.ok) return [];
+    const d = await res.json();
+    return (d.events || []).map(e => ({
+      type: e.type,
+      priceDrops: e.priceDrops !== undefined ? parseInt(e.priceDrops, 10) : null,
+      buyer: e.buyer || null,
+      account: e.account || null,
+      receiver: e.receiver || null,
+      date: e.date || null,
+      txHash: e.hash || null,
+    }));
+  } catch (e) {
+    return [];
+  }
+}
+
 // One page of "trait cards" — every distinct (category, value) combo in
 // the collection with its real, exact count. Powers the TRAITS filter
 // panel's category/value/percentage display.

@@ -1,5 +1,5 @@
 import {
-  fetchDeeptideListings, fetchDeeptideNftDetail, getTraitCategoriesWithPercent,
+  fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, getTraitCategoriesWithPercent,
   fetchDeeptideSalesHistory, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons,
@@ -139,6 +139,27 @@ export async function onRequestGet(context) {
       .map(r => toItem(r.nftId, r.meta, wallet, highSaleMap))
       .sort((a, b) => (a.number || 0) - (b.number || 0));
     return json({ items, owner: wallet, ownerShort: shortenAddr(wallet) });
+  }
+
+  // Full real per-token event history (mint/transfer/sale) — used by the
+  // INSPECT screen's "PIGEON HISTORY" section.
+  const historyId = params.get('history');
+  if (historyId) {
+    const events = await fetchDeeptideNftHistory(historyId);
+    return json({
+      events: events.map(e => ({
+        type: e.type,
+        priceXrp: e.priceDrops !== null ? e.priceDrops / 1000000 : null,
+        account: e.account,
+        accountShort: shortenAddr(e.account),
+        receiver: e.receiver,
+        receiverShort: shortenAddr(e.receiver),
+        buyer: e.buyer,
+        buyerShort: shortenAddr(e.buyer),
+        date: e.date,
+        txUrl: e.txHash ? bithompTxUrl(e.txHash) : null
+      }))
+    });
   }
 
   // Fresh single-token detail — real current owner, exact trait
