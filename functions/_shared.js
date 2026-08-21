@@ -1373,22 +1373,38 @@ export async function removeSwapListing(kv, nftId) {
 // fetch calls rather than being refactored, to avoid touching already-
 // tested code). apiSecret is only ever env.XAMAN_API_SECRET, passed in by
 // the caller — never stored or logged here.
+//
+// Both wrapped in try/catch, same as the XRPL fetch helpers above — an
+// uncaught network error/timeout here would otherwise propagate out of
+// the whole request handler as an unhandled exception, and Cloudflare
+// returns its own generic (non-JSON) error page for that. The client's
+// r.json() then throws, surfacing as "ERR://SIGNAL_LOST" with no
+// indication of what actually happened. null is already handled by every
+// call site as a clean xaman_request_failed/xaman_lookup_failed response.
 export async function createXamanPayload(apiKey, apiSecret, txjson, options) {
-  const res = await fetch('https://xumm.app/api/v1/platform/payload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey, 'X-API-Secret': apiSecret },
-    body: JSON.stringify({ txjson, options: options || { submit: true, expire: 5 } })
-  });
-  if (!res.ok) return null;
-  return res.json();
+  try {
+    const res = await fetch('https://xumm.app/api/v1/platform/payload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey, 'X-API-Secret': apiSecret },
+      body: JSON.stringify({ txjson, options: options || { submit: true, expire: 5 } })
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    return null;
+  }
 }
 
 export async function getXamanPayloadStatus(apiKey, apiSecret, uuid) {
-  const res = await fetch('https://xumm.app/api/v1/platform/payload/' + uuid, {
-    headers: { 'X-API-Key': apiKey, 'X-API-Secret': apiSecret }
-  });
-  if (!res.ok) return null;
-  return res.json();
+  try {
+    const res = await fetch('https://xumm.app/api/v1/platform/payload/' + uuid, {
+      headers: { 'X-API-Key': apiKey, 'X-API-Secret': apiSecret }
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    return null;
+  }
 }
 
 // Kingdom Phase 1 — every King NFT needs a stable friendly ID for display

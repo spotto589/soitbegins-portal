@@ -1,7 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
   PIGEON_ISSUER, PIGEON_TAXON, isTransferable,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, createXamanPayload
 } from '../_shared.js';
 
 // Same public OAuth-login key every other page on the site already hardcodes
@@ -88,27 +88,11 @@ export async function onRequestPost(context) {
     Flags: 1
   };
 
-  const xummRes = await fetch('https://xumm.app/api/v1/platform/payload', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-API-Key': XAMAN_API_KEY,
-      'X-API-Secret': env.XAMAN_API_SECRET
-    },
-    body: JSON.stringify({
-      txjson,
-      options: { submit: true, expire: 5 }
-    })
-  });
-
-  if (!xummRes.ok) {
-    return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });
-  }
-  const xummData = await xummRes.json();
+  const xummData = await createXamanPayload(XAMAN_API_KEY, env.XAMAN_API_SECRET, txjson);
   const uuid = xummData && xummData.uuid;
   const next = xummData && xummData.next;
   if (!uuid || !next) {
-    return new Response(JSON.stringify({ error: 'xaman_bad_response' }), { status: 502 });
+    return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });
   }
 
   console.log('SWAP listing payload created', uuid, 'for', seller, nftId, priceStr, 'at', new Date().toISOString());

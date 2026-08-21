@@ -1,5 +1,6 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, recordSwapListing, findPigeonsOffer
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, recordSwapListing, findPigeonsOffer,
+  getXamanPayloadStatus
 } from '../_shared.js';
 
 const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
@@ -35,15 +36,12 @@ export async function onRequestGet(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
-  const xummRes = await fetch('https://xumm.app/api/v1/platform/payload/' + uuid, {
-    headers: { 'X-API-Key': XAMAN_API_KEY, 'X-API-Secret': env.XAMAN_API_SECRET }
-  });
-  if (!xummRes.ok) {
+  const xummData = await getXamanPayloadStatus(XAMAN_API_KEY, env.XAMAN_API_SECRET, uuid);
+  if (!xummData) {
     return new Response(JSON.stringify({ error: 'xaman_lookup_failed' }), { status: 502 });
   }
-  const xummData = await xummRes.json();
-  const meta = xummData && xummData.meta;
-  const resp = xummData && xummData.response;
+  const meta = xummData.meta;
+  const resp = xummData.response;
 
   if (meta && meta.expired) {
     return new Response(JSON.stringify({ status: 'expired' }), { headers: { 'Content-Type': 'application/json' } });
