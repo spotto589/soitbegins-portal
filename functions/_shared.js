@@ -1397,20 +1397,23 @@ export async function removeSwapListing(kv, nftId) {
 // xaman_lookup_failed response.
 const XAMAN_FETCH_TIMEOUT_MS = 10000;
 
-export async function createXamanPayload(apiKey, apiSecret, txjson, options) {
+// Confirmed live, root cause: the "not ok" responses from this call weren't
+// real rejections from xumm.app at all — status 400, content-length 0, no
+// body, only `connection: close` + `date` headers (no `server: cloudflare`,
+// no `cf-ray`, which every genuine xumm.app response carries). That's
+// Cloudflare Workers' fetch() synthesizing a minimal response after the
+// underlying TCP connection to xumm.app failed/reset before any real HTTP
+// exchange happened — the same category of transient outbound-connection
+// failure already fought (and fixed with retry) for xrplcluster.com calls.
+// Retries once on that specific empty-body signature; a real API rejection
+// (a non-empty JSON error body) is NOT retried, since retrying wouldn't
+// change a genuine validation error.
+export async function createXamanPayload(apiKey, apiSecret, txjson, options, attempt) {
+  attempt = attempt || 0;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), XAMAN_FETCH_TIMEOUT_MS);
   try {
-    // Reverted the User-Agent/Accept headers added in the previous commit —
-    // confirmed live those coincided with the FIRST captured non-ok status
-    // (400, with cf-ray missing from the response, suggesting it may not
-    // even have reached xumm.app's actual origin), while an identical curl
-    // request WITH those same headers succeeded fine outside the Workers
-    // runtime. Testing whether Cloudflare Workers specifically restricts a
-    // custom User-Agent on outbound fetch by going back to the bare
-    // headers that were in place before that change.
     const requestBody = JSON.stringify({ txjson, options: options || { submit: true, expire: 5 } });
-    console.log('createXamanPayload REQUEST BODY:', requestBody);
     const res = await fetch('https://xumm.app/api/v1/platform/payload', {
       method: 'POST',
       headers: {
@@ -1422,13 +1425,24 @@ export async function createXamanPayload(apiKey, apiSecret, txjson, options) {
       signal: controller.signal
     });
     if (!res.ok) {
-      const bodyText = await res.text().catch((e) => '(unreadable: ' + e + ')');
-      const headersDump = [...res.headers.entries()].map(([k, v]) => k + '=' + v).join(' | ');
-      console.log('createXamanPayload NOT OK status=' + res.status + ' bodyLen=' + bodyText.length + ' body=[' + bodyText.slice(0, 500) + '] headers=[' + headersDump + ']');
+      const bodyText = await res.text().catch((e) => '');
+      clearTimeout(timer);
+      if (!bodyText && attempt < 2) {
+        console.log('createXamanPayload empty-body failure (status ' + res.status + '), retrying, attempt', attempt + 1);
+        await new Promise(resolve => setTimeout(resolve, 400));
+        return createXamanPayload(apiKey, apiSecret, txjson, options, attempt + 1);
+      }
+      console.log('createXamanPayload NOT OK status=' + res.status + ' body=[' + bodyText.slice(0, 500) + ']');
       return null;
     }
     return await res.json();
   } catch (e) {
+    if (attempt < 2) {
+      clearTimeout(timer);
+      console.log('createXamanPayload exception, retrying, attempt', attempt + 1, String(e));
+      await new Promise(resolve => setTimeout(resolve, 400));
+      return createXamanPayload(apiKey, apiSecret, txjson, options, attempt + 1);
+    }
     return null;
   } finally {
     clearTimeout(timer);
