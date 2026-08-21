@@ -2286,7 +2286,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       if (!res.ok || !res.data.ok){
-        alert(listingErrorMessage(res.data && res.data.error));
+        var rawCode = (res.data && res.data.error) || 'n0_b0dy';
+        alert(listingErrorMessage(res.data && res.data.error) + '\\n\\n[ D!AGN0ST!C :: HTTP ' + (res.ok ? 200 : 'ERR') + ' :: ' + rawCode + ' ]');
         buyTarget = null;
         return;
       }
@@ -2302,8 +2303,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buyOpenXamanBtn.disabled = false;
       el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
       showScreen('buyconfirm');
-    }).catch(function(){
-      alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
+    }).catch(function(e){
+      alert('ERR://S!GNAL_L0ST — TRY AGA!N.\\n\\n[ D!AGN0ST!C :: ' + (e && e.message ? e.message : String(e)) + ' ]');
       buyTarget = null;
     });
   }
@@ -2327,7 +2328,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!res.ok || !res.data.ok){
         el.buyOpenXamanBtn.disabled = false;
         el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
-        el.buyConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        var rawCode2 = (res.data && res.data.error) || 'n0_b0dy';
+        el.buyConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error) + ' [ ' + rawCode2 + ' ]';
         return;
       }
       buyUuid = res.data.uuid;
@@ -2335,10 +2337,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buyOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.buyConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
       pollBuyStatus();
-    }).catch(function(){
+    }).catch(function(e){
       el.buyOpenXamanBtn.disabled = false;
       el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
-      el.buyConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+      el.buyConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N. [ ' + (e && e.message ? e.message : String(e)) + ' ]';
     });
   }
   el.buyOpenXamanBtn.addEventListener('click', function(){
