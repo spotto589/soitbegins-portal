@@ -216,17 +216,54 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sale-time{ color:rgba(232,232,232,0.3); text-transform:uppercase; font-size:10px; }
 
   /* ---- target node header (owner-scope) ---- */
-  .node-header{ text-align:center; margin-bottom:1.25rem; }
-  .node-header .nh-label{
+  .node-eyebrow{
+    text-align:center;
     font-size:11px;
-    letter-spacing:0.25em;
+    letter-spacing:0.2em;
     color:#00fff2;
     text-shadow:0 0 6px rgba(0,255,242,0.4);
-    margin-bottom:0.4rem;
+    margin-bottom:1.25rem;
     text-transform:uppercase;
   }
-  .node-header .nh-addr{ font-size:14px; color:#e8e8e8; margin-bottom:0.3rem; word-break:break-all; }
-  .node-header .nh-count{ font-size:11px; letter-spacing:0.1em; color:rgba(232,232,232,0.5); text-transform:uppercase; }
+  .target-pigeon-card{
+    border:1px solid rgba(0,255,242,0.3);
+    padding:1rem;
+    margin:0 auto 1.25rem;
+    max-width:420px;
+  }
+  .tp-label{
+    text-align:center;
+    font-size:10px;
+    letter-spacing:0.2em;
+    color:rgba(232,232,232,0.4);
+    margin-bottom:0.75rem;
+    text-transform:uppercase;
+  }
+  .tp-body{ display:flex; align-items:center; gap:1rem; }
+  .tp-img{ flex:0 0 76px; width:76px; height:76px; border:1px solid rgba(0,255,242,0.3); }
+  .tp-info{ flex:1; min-width:0; }
+  .tp-num{ font-size:16px; color:#39ff14; text-shadow:0 0 5px rgba(57,255,20,0.4); margin-bottom:0.5rem; }
+  .tp-owner-label{ font-size:9px; letter-spacing:0.15em; color:rgba(232,232,232,0.4); text-transform:uppercase; }
+  .tp-owner{ font-size:12px; color:#00fff2; word-break:break-all; }
+  .wallet-box{
+    text-align:center;
+    border:2px solid #ff2f92;
+    box-shadow:0 0 16px rgba(255,47,146,0.25) inset, 0 0 10px rgba(255,47,146,0.2);
+    padding:1.5rem 1rem;
+    margin-bottom:1.25rem;
+  }
+  .wallet-box-title{
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:0.15em;
+    color:#ff2f92;
+    text-shadow:0 0 8px rgba(255,47,146,0.5);
+    margin-bottom:0.75rem;
+    text-transform:uppercase;
+  }
+  .wallet-box-sub{ font-size:10px; letter-spacing:0.2em; color:rgba(232,232,232,0.4); font-weight:400; }
+  .wallet-box-addr{ font-size:16px; color:#e8e8e8; margin-bottom:0.6rem; word-break:break-all; letter-spacing:0.02em; }
+  .wallet-box-count{ font-size:13px; letter-spacing:0.1em; color:#00fff2; text-shadow:0 0 5px rgba(0,255,242,0.35); text-transform:uppercase; }
 
   /* ---- search / sort bar ---- */
   .search-row{
@@ -755,13 +792,28 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
 
       <div class="sw-panel" id="nodeHeaderPanel" style="display:none;">
-        <div class="node-header">
-          <div class="nh-label">TARGET N0DE</div>
-          <div class="nh-addr" id="nodeAddr"></div>
-          <div class="nh-count" id="nodeCount"></div>
+        <div class="node-eyebrow">// TARGET N0DE !DENT!F!ED</div>
+
+        <div class="target-pigeon-card" id="targetPigeonCard" style="display:none;">
+          <div class="tp-label">TARGET P!GE0N</div>
+          <div class="tp-body">
+            <div class="pigeon-img-box tp-img" id="targetPigeonImg">[ IMAGE ]</div>
+            <div class="tp-info">
+              <div class="tp-num" id="targetPigeonNum"></div>
+              <div class="tp-owner-label">OWNER</div>
+              <div class="tp-owner" id="targetPigeonOwner"></div>
+            </div>
+          </div>
         </div>
+
+        <div class="wallet-box">
+          <div class="wallet-box-title">TARGET WALLET<br><span class="wallet-box-sub">// H0LDER N0DE</span></div>
+          <div class="wallet-box-addr" id="nodeAddr"></div>
+          <div class="wallet-box-count" id="nodeCount"></div>
+        </div>
+
         <div style="text-align:center;">
-          <a class="back-link" href="#" id="backToFullCollectionLink" style="margin:0;">[ ← BACK T0 FULL C0LLECT!0N ]</a>
+          <a class="back-link" href="#" id="backToFullCollectionLink" style="margin:0;">[ ← EX!T TARGET WALLET :: BACK T0 FULL C0LLECT!0N ]</a>
         </div>
       </div>
 
@@ -908,6 +960,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesToggle','salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
+   'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'screenBrowse','screenDetail','screenSummary',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailBuyBtn','detailTraits',
    'detailHistoryToggle','detailHistoryList','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
@@ -995,7 +1048,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Shared by SELECT (auto-enters owner scope + auto-targets the pigeon
   // that got you there) and the plain "view this wallet's collection" click
   // on an owner address (no auto-targeting).
-  function browseOwnerCollection(wallet, ownerShort){
+  // `targetPigeon` is optional — set only when arriving here via SELECT on
+  // a specific Pigeon (owner-links, top holders, MY PIGEONS etc. browse a
+  // wallet directly with no "target" pigeon that led here).
+  function browseOwnerCollection(wallet, ownerShort, targetPigeon){
     state.scope = { wallet: wallet, ownerShort: ownerShort || wallet };
     state.targetAssets = {};
     state.traitFilters = [];
@@ -1003,7 +1059,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.searchInput.value = '';
     el.nodeHeaderPanel.style.display = '';
     el.nodeAddr.textContent = state.scope.ownerShort;
-    el.searchPanelTitle.textContent = 'TARGET N0DE C0LLECT!0N';
+    el.searchPanelTitle.textContent = 'H0LDER P!GE0N DATABASE';
+    if (targetPigeon){
+      el.targetPigeonCard.style.display = '';
+      el.targetPigeonImg.innerHTML = targetPigeon.image ? '<img src="' + escapeHtml(targetPigeon.image) + '" alt="">' : '[ IMAGE ]';
+      el.targetPigeonNum.textContent = targetPigeon.number !== null ? 'P!GE0N #' + targetPigeon.number : 'P!GE0N ...';
+      el.targetPigeonOwner.textContent = state.scope.ownerShort;
+    } else {
+      el.targetPigeonCard.style.display = 'none';
+    }
     el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG H0LDER\\'S REAL P!GE0NS...</div>';
     showScreen('browse');
     renderTargetBar();
@@ -1021,7 +1085,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       alert('OWNER N0T !NDEXED F0R TH!S P!GE0N YET — TRY ANOTHER, OR !NSPECT !T AGA!N SH0RTLY.');
       return;
     }
-    browseOwnerCollection(targetPigeon.owner, targetPigeon.ownerShort);
+    browseOwnerCollection(targetPigeon.owner, targetPigeon.ownerShort, targetPigeon);
     state.targetAssets[targetPigeon.nftId] = { nftId: targetPigeon.nftId, number: targetPigeon.number, image: targetPigeon.image };
     renderTargetBar();
     refreshCardSelectionStates();
