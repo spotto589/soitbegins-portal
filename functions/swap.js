@@ -29,7 +29,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#e8e8e8;
     display:flex;
     justify-content:center;
-    padding:8vh 6vw 10vh;
+    padding:8vh 3vw 10vh;
     position:relative;
     overflow-x:hidden;
   }
@@ -58,7 +58,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     100%{ transform:translate(0,0); }
   }
   @media (prefers-reduced-motion: reduce){ canvas#staticBg{ animation:none; } }
-  .page{ max-width:960px; width:100%; position:relative; z-index:1; }
+  .page{ max-width:1500px; width:100%; position:relative; z-index:1; }
   a.back-link{
     display:inline-block;
     font-size:10px;
@@ -321,9 +321,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card{ border:1px solid rgba(57,255,20,0.25); overflow:hidden; }
   .result-card .pigeon-img-box{ border:none; }
   .result-card.in-target{ border-color:#39ff14; box-shadow:0 0 10px rgba(57,255,20,0.25) inset; }
-  .result-card-body{ padding:0.4rem 0.3rem; }
-  .result-num{ font-size:11px; letter-spacing:0.03em; color:#e8e8e8; text-align:center; }
-  .result-rarity-line{ font-size:9px; letter-spacing:0.03em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); text-align:center; }
+  .result-card-body{ padding:0.55rem 0.4rem; }
+  .result-num{ font-size:13px; letter-spacing:0.03em; color:#e8e8e8; text-align:center; }
+  .result-rarity-line{ font-size:11px; letter-spacing:0.03em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); text-align:center; }
+  .card-select-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
 
   @media (max-width:700px){
     body{ padding:4vh 2.5vw 6vh; }
