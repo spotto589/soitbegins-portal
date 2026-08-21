@@ -765,6 +765,28 @@ async function safeKvPut(kv, key, value, opts) {
   }
 }
 
+// Runs `fn` over `items` with at most `limit` in flight at once, rather
+// than Promise.all-ing everything simultaneously. xrplcluster.com
+// rate-limits under bursts of concurrent calls (confirmed live — a burst
+// of ~40 concurrent nft_sell_offers requests was enough to trip it,
+// silently returning empty results everywhere fetchNftSellOffers's own
+// tolerant fail-safe kicked in). Anywhere iterating XRPL calls per item
+// should use this instead of a bare Promise.all.
+export async function mapWithConcurrency(items, limit, fn) {
+  const results = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i], i);
+    }
+  }
+  const workers = [];
+  for (let w = 0; w < Math.min(limit, items.length); w++) workers.push(worker());
+  await Promise.all(workers);
+  return results;
+}
+
 async function fetchWithTimeout(url, ms) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);

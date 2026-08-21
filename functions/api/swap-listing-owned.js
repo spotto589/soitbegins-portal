@@ -1,4 +1,4 @@
-import { fetchAllAccountNfts, findAllPigeons, fetchNftSellOffers, recordSwapListing, getSwapListingsMap } from '../_shared.js';
+import { fetchAllAccountNfts, findAllPigeons, fetchNftSellOffers, recordSwapListing, getSwapListingsMap, mapWithConcurrency } from '../_shared.js';
 
 // Real on-ledger "which of my own Pigeons have an active sell offer I
 // created" check — powers the LISTED badge in MY PIGEONS. Never a
@@ -38,7 +38,8 @@ export async function onRequestGet(context) {
   const nfts = await fetchAllAccountNfts(wallet);
   const undiscovered = findAllPigeons(nfts).filter(nft => !listed[nft.NFTokenID]).slice(0, DISCOVERY_CAP);
 
-  await Promise.all(undiscovered.map(async (nft) => {
+  // Small batches, not one Promise.all blast — see mapWithConcurrency.
+  await mapWithConcurrency(undiscovered, 5, async (nft) => {
     const offers = await fetchNftSellOffers(nft.NFTokenID);
     const ownOffer = offers.find(o => o.owner === wallet);
     if (ownOffer && ownOffer.amount && typeof ownOffer.amount === 'object') {
@@ -60,7 +61,7 @@ export async function onRequestGet(context) {
         }));
       }
     }
-  }));
+  });
 
   return new Response(JSON.stringify({ listed }), {
     headers: { 'Content-Type': 'application/json' }
