@@ -814,7 +814,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
       <div class="detail-field" id="detailRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="detailRarity"></span></div>
       <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
-      <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">H!GH SALE</span><span class="df-value price" id="detailHighSale"></span></div>
+      <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
       <div class="listings-block">
         <div class="tech-meta-title">L!ST!NGS</div>
         <div class="listing-row"><span class="listing-market">DEEPT!DE</span><span class="listing-price" id="listingDeeptidePrice">N0T L!STED</span><a class="listing-buy" id="listingDeeptideBuy" style="display:none;" target="_blank" rel="noopener">[ BUY ]</a></div>
@@ -1055,7 +1055,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function resultCardHtml(p){
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY #' + p.rarityRank + '</div>' : '';
     var highSaleText = p.highSaleXrp !== null && p.highSaleXrp !== undefined
-      ? 'H!GH SALE :: ' + p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP'
+      ? 'REC0RD SALE :: ' + p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP'
       : 'F!RST 0WNER';
     var highSaleLine = p.highSaleTxUrl
       ? '<a class="result-highsale-line" href="' + escapeHtml(p.highSaleTxUrl) + '" target="_blank" rel="noopener" title="V!EW SALE TXN 0N B!TH0MP">' + highSaleText + '</a>'
