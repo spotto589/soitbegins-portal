@@ -595,6 +595,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     cursor:pointer;
   }
   .swap-proto-btn:hover{ background:rgba(57,255,20,0.1); }
+  .swap-proto-disabled{ opacity:0.5; cursor:default; color:rgba(232,232,232,0.4); text-shadow:none; border-color:rgba(232,232,232,0.25); }
+  .swap-proto-disabled:hover{ background:transparent; }
   .swap-proto-btn .swap-proto-tag{
     font-size:9px;
     letter-spacing:0.15em;
@@ -2223,7 +2225,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         </span>
       </div>
       <div class="swap-proto-wrap">
-        <a class="swap-proto-btn" href="/swap" title="Σκύλλα SWAP :: P!GE0N DATABASE">[ Σκύλλα ] SWAP <span class="swap-proto-tag">PR0T0TYPE</span></a>
+        <span class="swap-proto-btn swap-proto-disabled" title="N0T YET 0PEN T0 THE PUBL!C">[ Σκύλλα ] SWAP <span class="swap-proto-tag">0FFL!NE</span></span>
       </div>
     </div>
     <div class="signed-counter">
