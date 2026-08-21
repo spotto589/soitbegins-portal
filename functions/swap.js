@@ -160,24 +160,42 @@ const SWAP_HTML = `<!DOCTYPE html>
   .th-empty{ text-align:center; font-size:11px; letter-spacing:0.08em; color:rgba(232,232,232,0.4); padding:0.5rem 0; text-transform:uppercase; }
 
   /* ---- sales history ---- */
+  .sales-scrollbox{
+    margin-top:1rem;
+    border-top:1px dashed rgba(255,47,146,0.25);
+    padding-top:0.5rem;
+    max-height:820px;
+    overflow-y:auto;
+  }
   .sale-row{
     display:flex;
     align-items:center;
-    gap:0.75rem;
-    padding:0.6rem 0.3rem;
+    gap:1rem;
+    padding:0.9rem 0.4rem;
     border-bottom:1px solid rgba(232,232,232,0.08);
-    font-size:11px;
+    font-size:12px;
     letter-spacing:0.03em;
     flex-wrap:wrap;
   }
   .sale-row:last-child{ border-bottom:none; }
-  .sale-thumb{ flex:0 0 42px; width:42px; height:42px; cursor:pointer; }
+  .sale-thumb-wrap{ display:flex; flex-direction:column; align-items:center; gap:0.4rem; flex:0 0 auto; }
+  .sale-num-box{
+    font-size:11px;
+    letter-spacing:0.05em;
+    color:#ff2f92;
+    text-shadow:0 0 4px rgba(255,47,146,0.35);
+    border:1px solid rgba(255,47,146,0.4);
+    padding:0.3em 0.6em;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .sale-thumb{ flex:0 0 auto; width:96px; height:96px; cursor:pointer; }
   .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .sale-num{ flex:0 0 auto; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.35); cursor:pointer; min-width:5.5em; }
-  .sale-price{ flex:0 0 auto; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); min-width:6em; }
-  .sale-parties{ flex:1 1 200px; color:rgba(232,232,232,0.55); text-transform:none; }
+  .sale-info{ flex:1 1 200px; display:flex; flex-direction:column; gap:0.35rem; }
+  .sale-price{ font-size:14px; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); }
+  .sale-parties{ color:rgba(232,232,232,0.55); text-transform:none; }
   .sale-parties a{ color:#00fff2; text-decoration:underline; cursor:pointer; }
-  .sale-time{ flex:0 0 auto; color:rgba(232,232,232,0.3); text-transform:uppercase; }
+  .sale-time{ color:rgba(232,232,232,0.3); text-transform:uppercase; font-size:10px; }
 
   /* ---- target node header (owner-scope) ---- */
   .node-header{ text-align:center; margin-bottom:1.25rem; }
@@ -413,6 +431,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card-body{ padding:0.55rem 0.4rem; }
   .result-num{ font-size:13px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.35); text-align:center; }
   .result-rarity-line{ font-size:11px; letter-spacing:0.03em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); text-align:center; }
+  .result-price-line{ font-size:11px; letter-spacing:0.03em; color:#00fff2; text-shadow:0 0 3px rgba(0,255,242,0.3); text-align:center; }
+  .result-highsale-line{ font-size:10px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 3px rgba(255,47,146,0.3); text-align:center; text-transform:uppercase; }
+  .buy-btn{
+    display:block;
+    width:100%;
+    margin-top:0.3rem;
+    background:transparent;
+    border:1px solid rgba(255,215,0,0.5);
+    color:#ffd700;
+    font-family:inherit;
+    font-size:10px;
+    letter-spacing:0.1em;
+    padding:0.4em 0;
+    cursor:pointer;
+    text-transform:uppercase;
+    text-align:center;
+    text-decoration:none;
+  }
+  .buy-btn:hover{ background:rgba(255,215,0,0.1); }
   .card-select-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
   .inspect-btn{
     display:block;
@@ -437,8 +474,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     .result-card-body{ padding:0.3rem 0.15rem; }
     .result-num{ font-size:9px; }
     .result-rarity-line{ display:none; }
+    .result-price-line{ display:none; }
+    .result-highsale-line{ display:none; }
     .card-select-toggle{ width:1.4em; height:1.4em; line-height:1.4em; font-size:11px; }
     .inspect-btn{ font-size:8px; padding:0.3em 0; }
+    .buy-btn{ font-size:8px; padding:0.3em 0; }
   }
 
   /* ---- infinite scroll ---- */
@@ -509,6 +549,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .df-value{ color:#e8e8e8; text-align:right; word-break:break-all; }
   .df-value.not-indexed{ color:#ff003c; text-shadow:0 0 4px rgba(255,0,60,0.3); }
   .df-value.rarity{ color:#ffd700; text-shadow:0 0 4px rgba(255,215,0,0.3); }
+  .df-value.price{ color:#ffd700; text-shadow:0 0 4px rgba(255,215,0,0.3); }
   .df-value a.owner-link{ color:#00fff2; text-shadow:0 0 4px rgba(0,255,242,0.4); text-decoration:underline; }
   .df-value a.owner-link:hover{ color:#fff; }
   .detail-traits-title{
@@ -640,6 +681,16 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="th-list" id="topHoldersList" style="display:none;"></div>
       </div>
 
+      <div class="sw-panel" id="salesPanel">
+        <button class="th-toggle" id="salesToggle">[ SALES H!ST0RY ▼ ]</button>
+        <div class="sales-scrollbox" id="salesScrollBox" style="display:none;">
+          <div id="salesArea"></div>
+          <div class="scroll-sentinel" id="salesScrollSentinel"></div>
+          <div class="load-more-note" id="salesLoadMoreNote" style="display:none;">L0AD!NG M0RE SALES...</div>
+          <div class="end-of-collection-note" id="salesEndNote" style="display:none;">// END 0F SALES H!ST0RY</div>
+        </div>
+      </div>
+
       <div class="sw-panel" id="nodeHeaderPanel" style="display:none;">
         <div class="node-header">
           <div class="nh-label">TARGET N0DE</div>
@@ -656,11 +707,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="search-row">
           <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0NS (NUMBER, TRA!T, 0R VALUE)..." style="display:none;">
           <button class="bar-btn" id="searchBtn" style="display:none;">[ SEARCH ]</button>
+          <select class="sort-select" id="editionSelect">
+            <option value="ALL">[ ED!T!0N ▼ ] N0. 1-3015</option>
+            <option value="LOW">N0. 1-1515</option>
+            <option value="HIGH">N0. 1516-3015</option>
+          </select>
           <select class="sort-select" id="sortSelect">
-            <option value="RARITY_ASC">[ S0RT ▼ ] RAR!TY :: RAREST F!RST</option>
-            <option value="RARITY_DESC">RAR!TY :: C0MM0N F!RST</option>
-            <option value="NAME_ASC">NAME A → Z</option>
-            <option value="NAME_DESC">NAME Z → A</option>
+            <option value="RARITY_ASC">[ S0RT ▼ ] RAR!TY H!GH</option>
+            <option value="RARITY_DESC">RAR!TY L0W</option>
+            <option value="NAME_ASC">A → Z</option>
+            <option value="NAME_DESC">Z → A</option>
+            <option value="HIGHEST_SALE">H!GHEST SALE</option>
           </select>
         </div>
         <div class="index-line" id="indexLine"></div>
@@ -682,14 +739,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="load-more-note" id="loadMoreNote" style="display:none;">L0AD!NG M0RE P!GE0NS...</div>
         <div class="end-of-collection-note" id="endOfCollectionNote" style="display:none;">// END 0F C0LLECT!0N</div>
       </div>
-
-      <div class="sw-panel">
-        <div class="panel-title">SALES H!ST0RY</div>
-        <div id="salesArea"></div>
-        <div class="scroll-sentinel" id="salesScrollSentinel"></div>
-        <div class="load-more-note" id="salesLoadMoreNote" style="display:none;">L0AD!NG M0RE SALES...</div>
-        <div class="end-of-collection-note" id="salesEndNote" style="display:none;">// END 0F SALES H!ST0RY</div>
-      </div>
     </div>
 
     <!-- SCREEN 2: DETAIL -->
@@ -699,6 +748,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
       <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
       <div class="detail-field" id="detailRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="detailRarity"></span></div>
+      <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
+      <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">H!GH SALE</span><span class="df-value price" id="detailHighSale"></span></div>
       <div class="detail-traits-title">TRA!TS</div>
       <div class="trait-grid" id="detailTraits"></div>
       <div class="tech-meta">
@@ -708,6 +759,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-actions">
         <button class="secondary-btn" id="backToBrowseBtn">[ ← BACK ]</button>
         <button class="action-btn" id="detailSelectBtn">[ SELECT ]</button>
+        <a class="action-btn" id="detailBuyBtn" style="display:none;" target="_blank" rel="noopener">[ BUY 0N DEEPT!DE ]</a>
       </div>
     </div>
 
@@ -752,6 +804,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var state = {
     scope: null,              // null (whole collection) or { wallet, ownerShort }
     skip: 0,                  // how many items already loaded, for infinite scroll
+    editionRawSkip: 0,        // position in the underlying sorted collection, for edition LOW/HIGH scans
     hasMore: true,
     loading: false,
     total: null,
@@ -759,6 +812,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
     mode: 'browse',            // 'browse' | 'search' | 'scoped'
     sort: 'RARITY_ASC',
+    edition: 'ALL',            // 'ALL' | 'LOW' (1-1515) | 'HIGH' (1516-3015)
     traitFilters: [],         // [{ id, category, value }]
     nextTraitRowId: 1,
     traitCategories: null,     // [name, name, ...] — cheap, loaded once
@@ -770,12 +824,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','sortSelect','myPigeonsBtn','topHoldersToggle','topHoldersList','indexLine','traitRows','addTraitBtn','clearTraitsBtn',
+  ['searchInput','searchBtn','editionSelect','sortSelect','myPigeonsBtn','topHoldersToggle','topHoldersList','indexLine','traitRows','addTraitBtn','clearTraitsBtn',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
-   'salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
+   'salesToggle','salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
    'screenBrowse','screenDetail','screenSummary',
-   'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailTraits','detailNftId',
+   'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailBuyBtn','detailTraits','detailNftId',
    'backToBrowseBtn','detailSelectBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel'
@@ -918,9 +972,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   // image to INSPECT for the full trait set). ----
   function resultCardHtml(p){
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY #' + p.rarityRank + '</div>' : '';
+    var priceLine = p.priceXrp !== null && p.priceXrp !== undefined
+      ? '<div class="result-price-line">' + p.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</div>' : '';
+    var highSaleLine = p.highSaleXrp !== null && p.highSaleXrp !== undefined
+      ? '<div class="result-highsale-line">H!GH SALE :: ' + p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</div>' : '';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
     var inTarget = !!state.targetAssets[p.nftId];
+    var buyBtn = p.buyUrl ? '<a class="buy-btn" href="' + escapeHtml(p.buyUrl) + '" target="_blank" rel="noopener">[ BUY ]</a>' : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         img +
@@ -929,7 +988,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       '<div class="result-card-body">' +
         '<div class="result-num">P!GE0N ' + num + '</div>' +
         rarityLine +
+        priceLine +
+        highSaleLine +
         '<button class="inspect-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ !NSPECT ]</button>' +
+        buyBtn +
       '</div>' +
     '</div>';
   }
@@ -989,6 +1051,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function startCollectionBrowse(){
     state.mode = 'collection';
     state.skip = 0;
+    state.editionRawSkip = 0;
     state.items = [];
     state.hasMore = true;
     state.total = null;
@@ -1001,17 +1064,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.loading = true;
     el.loadMoreNote.style.display = '';
     var filters = activeFilters();
-    api({
-      skip: state.skip,
-      limit: PAGE_SIZE,
-      sort: state.sort,
-      filters: filters.length ? JSON.stringify(filters) : undefined
-    }).then(function(data){
+    var isEdition = state.edition === 'LOW' || state.edition === 'HIGH';
+    var isHighestSale = state.sort === 'HIGHEST_SALE';
+    var reqParams;
+    if (isHighestSale){
+      reqParams = { skip: state.skip, limit: PAGE_SIZE, highestSale: 1 };
+    } else if (isEdition){
+      reqParams = { rawSkip: state.editionRawSkip, limit: PAGE_SIZE, numberRange: state.edition === 'LOW' ? 'low' : 'high', sort: state.sort };
+    } else {
+      reqParams = { skip: state.skip, limit: PAGE_SIZE, sort: state.sort, filters: filters.length ? JSON.stringify(filters) : undefined };
+    }
+    api(reqParams).then(function(data){
       state.loading = false;
       el.loadMoreNote.style.display = 'none';
       var newItems = data.items || [];
       state.items = state.items.concat(newItems);
       state.skip += newItems.length;
+      if (isEdition && typeof data.rawSkip === 'number') state.editionRawSkip = data.rawSkip;
       state.total = typeof data.total === 'number' ? data.total : state.total;
       state.hasMore = !!data.hasMore && newItems.length > 0;
       appendResults(newItems);
@@ -1120,6 +1189,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (filters.length && !filters.every(function(f){
         return p.attributes.some(function(a){ return a.trait_type === f.trait && a.value === f.value; });
       })) return false;
+      if (state.edition === 'LOW' && !(p.number !== null && p.number <= 1515)) return false;
+      if (state.edition === 'HIGH' && !(p.number !== null && p.number > 1515)) return false;
       if (q){
         var numMatch = p.number !== null && String(p.number).indexOf(q.replace('#','')) !== -1;
         var traitMatch = p.attributes.some(function(a){ return a.value.toLowerCase().indexOf(q) !== -1 || a.trait_type.toLowerCase().indexOf(q) !== -1; });
@@ -1131,6 +1202,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       list = list.slice().sort(function(a, b){
         var ar = a.rarityRank === null ? Infinity : a.rarityRank, br = b.rarityRank === null ? Infinity : b.rarityRank;
         return state.sort === 'RARITY_DESC' ? br - ar : ar - br;
+      });
+    } else if (state.sort === 'NAME_ASC' || state.sort === 'NAME_DESC'){
+      list = list.slice().sort(function(a, b){ return state.sort === 'NAME_DESC' ? (b.number || 0) - (a.number || 0) : (a.number || 0) - (b.number || 0); });
+    } else if (state.sort === 'HIGHEST_SALE'){
+      list = list.slice().sort(function(a, b){
+        var av = a.highSaleXrp === null || a.highSaleXrp === undefined ? -1 : a.highSaleXrp, bv = b.highSaleXrp === null || b.highSaleXrp === undefined ? -1 : b.highSaleXrp;
+        return bv - av;
       });
     }
     state.items = list;
@@ -1265,22 +1343,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     var price = s.priceXrp !== null ? s.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?';
     var when = s.createdAt ? new Date(s.createdAt).toLocaleString() : '';
     return '<div class="sale-row">' +
-      '<span class="sale-thumb" data-nftid="' + escapeHtml(s.nftId) + '">' + thumb + '</span>' +
-      '<span class="sale-num" data-nftid="' + escapeHtml(s.nftId) + '">P!GE0N ' + num + '</span>' +
-      '<span class="sale-price">' + price + '</span>' +
-      '<span class="sale-parties">' +
-        (s.seller ? '<a data-wallet="' + escapeHtml(s.seller) + '" data-short="' + escapeHtml(s.sellerShort || s.seller) + '">' + escapeHtml(s.sellerShort || s.seller) + '</a>' : '?') +
-        ' → ' +
-        (s.buyer ? '<a data-wallet="' + escapeHtml(s.buyer) + '" data-short="' + escapeHtml(s.buyerShort || s.buyer) + '">' + escapeHtml(s.buyerShort || s.buyer) + '</a>' : '?') +
-      '</span>' +
-      '<span class="sale-time">' + escapeHtml(when) + '</span>' +
+      '<div class="sale-thumb-wrap">' +
+        '<div class="sale-num-box" data-nftid="' + escapeHtml(s.nftId) + '">P!GE0N ' + num + '</div>' +
+        '<div class="sale-thumb" data-nftid="' + escapeHtml(s.nftId) + '">' + thumb + '</div>' +
+      '</div>' +
+      '<div class="sale-info">' +
+        '<div class="sale-price">' + price + '</div>' +
+        '<div class="sale-parties">' +
+          (s.seller ? '<a data-wallet="' + escapeHtml(s.seller) + '" data-short="' + escapeHtml(s.sellerShort || s.seller) + '">' + escapeHtml(s.sellerShort || s.seller) + '</a>' : '?') +
+          ' → ' +
+          (s.buyer ? '<a data-wallet="' + escapeHtml(s.buyer) + '" data-short="' + escapeHtml(s.buyerShort || s.buyer) + '">' + escapeHtml(s.buyerShort || s.buyer) + '</a>' : '?') +
+        '</div>' +
+        '<div class="sale-time">' + escapeHtml(when) + '</div>' +
+      '</div>' +
     '</div>';
   }
   function loadMoreSales(){
     if (state.sales.loading || !state.sales.hasMore) return;
     state.sales.loading = true;
     el.salesLoadMoreNote.style.display = '';
-    api({ sales: 1, skip: state.sales.skip, limit: 20 }).then(function(data){
+    api({ sales: 1, skip: state.sales.skip, limit: 10 }).then(function(data){
       state.sales.loading = false;
       el.salesLoadMoreNote.style.display = 'none';
       var items = data.items || [];
@@ -1297,18 +1379,29 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.salesArea.addEventListener('click', function(e){
     var walletLink = e.target.closest('.sale-parties a');
     if (walletLink){ browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short')); return; }
-    var target = e.target.closest('.sale-thumb, .sale-num');
+    var target = e.target.closest('.sale-thumb, .sale-num-box');
     if (target) openDetail(target.getAttribute('data-nftid'));
   });
+  el.salesToggle.addEventListener('click', function(){
+    var opening = el.salesScrollBox.style.display === 'none';
+    el.salesScrollBox.style.display = opening ? '' : 'none';
+    el.salesToggle.textContent = opening ? '[ SALES H!ST0RY ▲ ]' : '[ SALES H!ST0RY ▼ ]';
+  });
+  // Rooted at the scrollbox itself (not the viewport) so it fires on
+  // scrolling *within* the box, not the page.
   var salesScrollObserver = new IntersectionObserver(function(entries){
     if (entries[0].isIntersecting) loadMoreSales();
-  }, { rootMargin: '600px' });
+  }, { root: el.salesScrollBox, rootMargin: '200px' });
   salesScrollObserver.observe(el.salesScrollSentinel);
 
   el.searchBtn.addEventListener('click', runSearchBox);
   el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearchBox(); });
   el.sortSelect.addEventListener('change', function(){
     state.sort = el.sortSelect.value;
+    runQuery();
+  });
+  el.editionSelect.addEventListener('change', function(){
+    state.edition = el.editionSelect.value;
     runQuery();
   });
 
@@ -1356,6 +1449,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (p && p.rarityRank){ el.detailRarityRow.style.display = ''; el.detailRarity.textContent = p.rarityRank + (p.rarityTotal ? ' / ' + p.rarityTotal : ''); }
     else el.detailRarityRow.style.display = 'none';
   }
+  function updateDetailPrice(p){
+    if (p && p.priceXrp !== null && p.priceXrp !== undefined){
+      el.detailPriceRow.style.display = '';
+      el.detailPrice.textContent = p.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+      el.detailBuyBtn.style.display = '';
+      el.detailBuyBtn.href = p.buyUrl || ('https://deeptide.co/nft/' + p.nftId);
+    } else {
+      el.detailPriceRow.style.display = 'none';
+      el.detailBuyBtn.style.display = 'none';
+    }
+    if (p && p.highSaleXrp !== null && p.highSaleXrp !== undefined){
+      el.detailHighSaleRow.style.display = '';
+      el.detailHighSale.textContent = p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+    } else {
+      el.detailHighSaleRow.style.display = 'none';
+    }
+  }
   function findKnown(nftId){
     return state.items.filter(function(p){ return p.nftId === nftId; })[0] ||
       state.scopeAllItems.filter(function(p){ return p.nftId === nftId; })[0];
@@ -1369,6 +1479,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.detailTraits.innerHTML = known ? known.attributes.map(traitCellHtml).join('') : '';
     el.detailNftId.textContent = nftId;
     updateDetailRarity(known);
+    updateDetailPrice(known);
     state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null, attributes: [] };
     showScreen('detail');
     refreshCardSelectionStates();
@@ -1385,6 +1496,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
       el.detailTraits.innerHTML = p.attributes.map(traitCellHtml).join('');
       updateDetailRarity(p);
+      updateDetailPrice(p);
       renderOwnerLink(p.ownerShort, p.owner);
       refreshCardSelectionStates();
     }).catch(function(){

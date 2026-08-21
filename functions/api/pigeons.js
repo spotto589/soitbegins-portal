@@ -1,10 +1,16 @@
 import {
   fetchDeeptideListings, fetchDeeptideNftDetail, getTraitCategoriesWithPercent,
   fetchDeeptideSalesHistory, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap,
+  getHighSaleMap, maybeRefreshHighSaleMap,
   resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons,
-  proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX,
+  proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX,
   getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
 } from '../_shared.js';
+
+// Deeptide's own item page — the real place to buy a listed Pigeon.
+function deeptideBuyUrl(nftId) {
+  return `https://deeptide.co/nft/${nftId}`;
+}
 
 // Client sort keys -> Deeptide's own sort values (same ones its own
 // marketplace UI offers — rarity-asc is "Rarest First").
@@ -28,8 +34,10 @@ function displayImage(url) {
   return url.startsWith('https://ipfs.io/') ? proxyIpfsImage(url) : url;
 }
 
-function toItem(nftId, meta, ownerOverride) {
+function toItem(nftId, meta, ownerOverride, highSaleMap) {
   const owner = ownerOverride !== undefined ? ownerOverride : meta.owner;
+  const priceDrops = typeof meta.priceDrops === 'number' ? meta.priceDrops : null;
+  const highSaleDrops = highSaleMap ? highSaleMap[nftId] : undefined;
   return {
     nftId,
     number: meta.number,
@@ -39,7 +47,10 @@ function toItem(nftId, meta, ownerOverride) {
     rarityTotal: meta.rarityTotal || null,
     owner: owner || null,
     ownerShort: owner ? shortenAddr(owner) : null,
-    ownerIndexed: !!owner
+    ownerIndexed: !!owner,
+    priceXrp: priceDrops !== null ? priceDrops / 1000000 : null,
+    buyUrl: priceDrops !== null ? deeptideBuyUrl(nftId) : null,
+    highSaleXrp: highSaleDrops !== undefined ? highSaleDrops / 1000000 : null
   };
 }
 
@@ -53,6 +64,10 @@ export async function onRequestGet(context) {
 
   const url = new URL(request.url);
   const params = url.searchParams;
+
+  // Highest-ever sale price per token — one cheap KV read, reused for
+  // every item below (cards' "HIGH SALE" line and the highest-sale sort).
+  const highSaleMap = await getHighSaleMap(env.coin);
 
   // Trait category/value/percentage discovery for the TRAITS stack filter
   // UI — real, exact counts straight from Deeptide, not sampled.
@@ -116,7 +131,7 @@ export async function onRequestGet(context) {
     const ledgerItems = pigeons.map(n => ({ nftId: n.NFTokenID, uriHex: n.URI }));
     const resolved = await resolveOwnerCollectionLive(env.coin, wallet, ledgerItems);
     const items = resolved
-      .map(r => toItem(r.nftId, r.meta, wallet))
+      .map(r => toItem(r.nftId, r.meta, wallet, highSaleMap))
       .sort((a, b) => (a.number || 0) - (b.number || 0));
     return json({ items, owner: wallet, ownerShort: shortenAddr(wallet) });
   }
@@ -135,7 +150,7 @@ export async function onRequestGet(context) {
       const match = (categories[a.trait_type] || []).find(v => v.value === a.value);
       return { trait_type: a.trait_type, value: a.value, percent: match ? match.percent : (a.percent != null ? a.percent : null), count: match ? match.count : null };
     });
-    return json({ item: toItem(item.nftId, item) });
+    return json({ item: toItem(item.nftId, item, undefined, highSaleMap) });
   }
 
   // Direct Pigeon-number search via the number->NFTokenID map (built by
@@ -152,7 +167,74 @@ export async function onRequestGet(context) {
     }
     const item = await fetchDeeptideNftDetail(nftId);
     if (!item) return json({ items: [], notIndexed: true, query: num });
-    return json({ items: [toItem(item.nftId, item)] });
+    return json({ items: [toItem(item.nftId, item, undefined, highSaleMap)] });
+  }
+
+  // Sort by highest-ever sale price — exact (not scanned/approximate),
+  // since the highSaleMap is already the complete authoritative index once
+  // built. One detail fetch per item on the requested page only (up to the
+  // page limit), same cost shape as the edition scan above.
+  if (params.get('highestSale') === '1') {
+    const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
+    const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
+    const sortedIds = Object.keys(highSaleMap).sort((a, b) => highSaleMap[b] - highSaleMap[a]);
+    const pageIds = sortedIds.slice(skip, skip + limit);
+    const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
+    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap));
+    return json({
+      items,
+      total: sortedIds.length,
+      hasMore: skip + pageIds.length < sortedIds.length,
+      skip,
+      limit,
+      collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
+    });
+  }
+
+  // Edition sort — "1-1515" / "1516-3015", ordered rarest-first WITHIN that
+  // range. Deeptide's API can't filter by number range directly, but it can
+  // already sort the whole collection by rarity — so this scans forward
+  // through that rarity-sorted feed (already-rarest-first) and keeps only
+  // the items whose number falls in the requested range, stopping as soon
+  // as it's collected a page's worth. No per-item detail fetch needed
+  // (listings already carry number/rarity/image/traits); `rawSkip` is the
+  // position in the underlying rarity-sorted feed to resume the scan from,
+  // so nothing scanned-but-unused this request gets skipped or repeated
+  // next request. Capped at 10 raw pages (~600 items) per request, which in
+  // practice is 1-2 pages since ~half the collection matches either range.
+  const numberRange = params.get('numberRange');
+  if (numberRange === 'low' || numberRange === 'high') {
+    const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
+    const underlyingSort = SORT_MAP[params.get('sort')] || 'rarity-asc';
+    let cursor = Math.max(0, parseInt(params.get('rawSkip') || '0', 10) || 0);
+    const matched = [];
+    let exhausted = false;
+    let rawPagesScanned = 0;
+    while (matched.length < limit && rawPagesScanned < 10) {
+      const page = await fetchDeeptideListings({ skip: cursor, limit: 60, sort: underlyingSort });
+      rawPagesScanned++;
+      if (!page.items.length) { exhausted = true; break; }
+      for (const it of page.items) {
+        cursor++;
+        const inRange = numberRange === 'low' ? (it.number !== null && it.number <= PIGEON_LOW_EDITION_MAX) : (it.number !== null && it.number > PIGEON_LOW_EDITION_MAX);
+        if (inRange) {
+          matched.push(it);
+          if (matched.length >= limit) break;
+        }
+      }
+      if (matched.length >= limit) break;
+      if (!page.hasMore) { exhausted = true; break; }
+    }
+    const items = matched.map(it => toItem(it.nftId, it, undefined, highSaleMap));
+    return json({
+      items,
+      total: numberRange === 'low' ? PIGEON_LOW_EDITION_MAX : (PIGEON_COLLECTION_SIZE_APPROX - PIGEON_LOW_EDITION_MAX),
+      hasMore: !exhausted,
+      rawSkip: cursor,
+      skip: cursor,
+      limit,
+      collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
+    });
   }
 
   // Default: the real, complete, live collection — paginated, sorted
@@ -168,9 +250,10 @@ export async function onRequestGet(context) {
   }
 
   const page = await fetchDeeptideListings({ skip, limit, sort, traits: filters });
-  const items = page.items.map(it => toItem(it.nftId, it));
+  const items = page.items.map(it => toItem(it.nftId, it, undefined, highSaleMap));
 
   context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
+  context.waitUntil(maybeRefreshHighSaleMap(env.coin));
 
   return json({
     items,

@@ -814,6 +814,9 @@ function deeptideListingToPigeon(it) {
     rarityRank: typeof it.rarityRank === 'number' ? it.rarityRank : null,
     rarityTotal: typeof it.rarityTotal === 'number' ? it.rarityTotal : null,
     owner: it.currentOwner || null,
+    // Real, current lowest sell-offer price, straight from Deeptide's own
+    // listing record (not a snapshot) — null when nobody's selling it.
+    priceDrops: typeof it.lowestSellDrops === 'number' ? it.lowestSellDrops : null,
   };
 }
 
@@ -858,6 +861,7 @@ export async function fetchDeeptideNftDetail(nftId) {
     const d = await res.json();
     const listing = d.listing || {};
     const match = listing.name ? String(listing.name).match(/(\d+)/) : null;
+    const sellAmounts = (d.sellOffers || []).map(o => parseInt(o.amount, 10)).filter(n => !isNaN(n));
     return {
       nftId: d.tokenId || nftId,
       number: match ? parseInt(match[1], 10) : null,
@@ -866,6 +870,7 @@ export async function fetchDeeptideNftDetail(nftId) {
       rarityRank: typeof listing.rarityRank === 'number' ? listing.rarityRank : null,
       rarityTotal: typeof listing.rarityTotal === 'number' ? listing.rarityTotal : null,
       owner: d.owner || null,
+      priceDrops: sellAmounts.length ? Math.min(...sellAmounts) : null,
     };
   } catch (e) {
     return null;
@@ -1018,6 +1023,62 @@ export async function maybeRefreshPigeonNumberMap(kv) {
   }
   await safeKvPut(kv, PIGEON_NUMBER_MAP_KEY, JSON.stringify(map));
   await safeKvPut(kv, PIGEON_NUMBER_MAP_STATS_KEY, JSON.stringify({
+    inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(map).length,
+  }));
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Highest-ever sale price per token — same self-resuming crawl pattern as
+// the number map above, but over `/api/sales/recent` (date-desc, so it
+// doesn't need to know the total up front) instead of listings. Keeps the
+// max priceDrops seen per nftId; a token not yet in the map just hasn't
+// been reached by the crawl (or has never sold) — callers show nothing in
+// that case rather than treating it as zero. Powers both the "HIGH SALE"
+// line on cards and the "H!GHEST SALE" sort.
+// ─────────────────────────────────────────────────────────────────────────
+const HIGH_SALE_MAP_KEY = 'pswap:highsale:v1';
+const HIGH_SALE_STATS_KEY = 'pswap:highsalestats:v1';
+const HIGH_SALE_REFRESH_STALE_SECONDS = 6 * 3600;
+const HIGH_SALE_CONCURRENT_GUARD_SECONDS = 10;
+const HIGH_SALE_PAGES_PER_RUN = 10;
+const HIGH_SALE_PAGE_LIMIT = 50; // server-enforced cap on /api/sales/recent
+
+export async function getHighSaleMap(kv) {
+  const raw = await kv.get(HIGH_SALE_MAP_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
+export async function maybeRefreshHighSaleMap(kv) {
+  const statsRaw = await kv.get(HIGH_SALE_STATS_KEY);
+  const stats = statsRaw ? JSON.parse(statsRaw) : null;
+  const now = Math.floor(Date.now() / 1000);
+  if (stats && stats.inProgress && now - stats.updatedAt < HIGH_SALE_CONCURRENT_GUARD_SECONDS) return;
+  if (stats && !stats.inProgress && now - stats.completedAt < HIGH_SALE_REFRESH_STALE_SECONDS) return;
+
+  let skip = stats && stats.inProgress ? stats.nextSkip : 0;
+  const map = stats && stats.inProgress ? await getHighSaleMap(kv) : {};
+  let lastTotal = Infinity;
+
+  for (let i = 0; i < HIGH_SALE_PAGES_PER_RUN; i++) {
+    const page = await fetchDeeptideSalesHistory({ skip, limit: HIGH_SALE_PAGE_LIMIT, sort: 'date-desc' });
+    if (page.error || !page.items.length) break;
+    for (const s of page.items) {
+      if (!s.nftId || typeof s.priceXrp !== 'number') continue;
+      const drops = Math.round(s.priceXrp * 1000000);
+      if (map[s.nftId] === undefined || drops > map[s.nftId]) map[s.nftId] = drops;
+    }
+    lastTotal = page.total || lastTotal;
+    skip += HIGH_SALE_PAGE_LIMIT;
+    if (!page.hasMore || skip >= lastTotal) {
+      await safeKvPut(kv, HIGH_SALE_MAP_KEY, JSON.stringify(map));
+      await safeKvPut(kv, HIGH_SALE_STATS_KEY, JSON.stringify({
+        inProgress: false, completedAt: now, updatedAt: now, count: Object.keys(map).length,
+      }));
+      return;
+    }
+  }
+  await safeKvPut(kv, HIGH_SALE_MAP_KEY, JSON.stringify(map));
+  await safeKvPut(kv, HIGH_SALE_STATS_KEY, JSON.stringify({
     inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(map).length,
   }));
 }
