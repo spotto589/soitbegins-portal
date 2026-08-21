@@ -140,6 +140,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     padding:0;
   }
+  .th-toggle.stacked-toggle{ margin-top:1.25rem; border-top:1px dashed rgba(255,47,146,0.25); padding-top:1.25rem; }
   .th-list{ margin-top:1rem; border-top:1px dashed rgba(255,47,146,0.25); padding-top:0.5rem; }
   .th-row{
     display:flex;
@@ -268,6 +269,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-top:1px dashed rgba(255,47,146,0.25);
     margin-top:1rem;
     padding-top:1rem;
+  }
+  .results-block{
+    border-top:1px dashed rgba(255,47,146,0.25);
+    margin-top:1.25rem;
+    padding-top:1.25rem;
   }
   .traits-block-title{
     font-size:11px;
@@ -416,10 +422,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* ---- collection grid / cards ---- */
   /* Fixed 6 columns at every width, on purpose (not auto-fill/minmax,
      which was producing inconsistent tile sizes depending on viewport) —
-     chrome is deliberately minimal (image + number + a corner select
-     toggle) since 6 columns doesn't leave room for trait lines or a
-     button row at any reasonable page width; tap/click the image to
-     INSPECT for full detail. */
+     chrome is deliberately minimal (number + image + rarity/high-sale +
+     an INSPECT button) since 6 columns doesn't leave room for anything
+     more at any reasonable page width; tap/click the image to INSPECT
+     for full detail. */
   .result-grid{
     display:grid;
     grid-template-columns:repeat(6, 1fr);
@@ -429,27 +435,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card .pigeon-img-box{ border:none; }
   .result-card.in-target{ border-color:#ff2f92; box-shadow:0 0 10px rgba(255,47,146,0.25) inset; }
   .result-card-body{ padding:0.55rem 0.4rem; }
-  .result-num{ font-size:13px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.35); text-align:center; }
-  .result-rarity-line{ font-size:11px; letter-spacing:0.03em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); text-align:center; }
-  .result-price-line{ font-size:11px; letter-spacing:0.03em; color:#00fff2; text-shadow:0 0 3px rgba(0,255,242,0.3); text-align:center; }
-  .result-highsale-line{ font-size:10px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 3px rgba(255,47,146,0.3); text-align:center; text-transform:uppercase; }
-  .buy-btn{
-    display:block;
-    width:100%;
-    margin-top:0.3rem;
-    background:transparent;
-    border:1px solid rgba(255,215,0,0.5);
-    color:#ffd700;
-    font-family:inherit;
-    font-size:10px;
-    letter-spacing:0.1em;
-    padding:0.4em 0;
-    cursor:pointer;
-    text-transform:uppercase;
+  .result-num{
+    font-size:13px;
+    letter-spacing:0.03em;
+    color:#ff2f92;
+    text-shadow:0 0 4px rgba(255,47,146,0.35);
     text-align:center;
-    text-decoration:none;
+    padding:0.4rem 0.3rem;
+    border-bottom:1px solid rgba(255,47,146,0.25);
   }
-  .buy-btn:hover{ background:rgba(255,215,0,0.1); }
+  .result-rarity-line{ font-size:11px; letter-spacing:0.03em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); text-align:center; }
+  .result-highsale-line{ font-size:10px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 3px rgba(255,47,146,0.3); text-align:center; text-transform:uppercase; }
   .card-select-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
   .inspect-btn{
     display:block;
@@ -472,13 +468,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     .sw-panel{ padding:1rem 0.75rem; }
     .result-grid{ gap:0.25rem; }
     .result-card-body{ padding:0.3rem 0.15rem; }
-    .result-num{ font-size:9px; }
+    .result-num{ font-size:9px; padding:0.3rem 0.15rem; }
     .result-rarity-line{ display:none; }
-    .result-price-line{ display:none; }
     .result-highsale-line{ display:none; }
     .card-select-toggle{ width:1.4em; height:1.4em; line-height:1.4em; font-size:11px; }
     .inspect-btn{ font-size:8px; padding:0.3em 0; }
-    .buy-btn{ font-size:8px; padding:0.3em 0; }
   }
 
   /* ---- infinite scroll ---- */
@@ -676,13 +670,11 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
     <div id="screenBrowse">
-      <div class="sw-panel" id="topHoldersPanel">
+      <div class="sw-panel" id="statsPanel">
         <button class="th-toggle" id="topHoldersToggle">[ T0P 10 H0LDERS ▼ ]</button>
         <div class="th-list" id="topHoldersList" style="display:none;"></div>
-      </div>
 
-      <div class="sw-panel" id="salesPanel">
-        <button class="th-toggle" id="salesToggle">[ SALES H!ST0RY ▼ ]</button>
+        <button class="th-toggle stacked-toggle" id="salesToggle">[ SALES H!ST0RY ▼ ]</button>
         <div class="sales-scrollbox" id="salesScrollBox" style="display:none;">
           <div id="salesArea"></div>
           <div class="scroll-sentinel" id="salesScrollSentinel"></div>
@@ -730,14 +722,14 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button class="clear-traits-btn" id="clearTraitsBtn">[ CLEAR TRA!TS ]</button>
           </div>
         </div>
-      </div>
 
-      <div class="sw-panel">
-        <div class="status-line" id="statusLine"></div>
-        <div id="resultsArea"></div>
-        <div class="scroll-sentinel" id="scrollSentinel"></div>
-        <div class="load-more-note" id="loadMoreNote" style="display:none;">L0AD!NG M0RE P!GE0NS...</div>
-        <div class="end-of-collection-note" id="endOfCollectionNote" style="display:none;">// END 0F C0LLECT!0N</div>
+        <div class="results-block">
+          <div class="status-line" id="statusLine"></div>
+          <div id="resultsArea"></div>
+          <div class="scroll-sentinel" id="scrollSentinel"></div>
+          <div class="load-more-note" id="loadMoreNote" style="display:none;">L0AD!NG M0RE P!GE0NS...</div>
+          <div class="end-of-collection-note" id="endOfCollectionNote" style="display:none;">// END 0F C0LLECT!0N</div>
+        </div>
       </div>
     </div>
 
@@ -972,26 +964,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   // image to INSPECT for the full trait set). ----
   function resultCardHtml(p){
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY #' + p.rarityRank + '</div>' : '';
-    var priceLine = p.priceXrp !== null && p.priceXrp !== undefined
-      ? '<div class="result-price-line">' + p.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</div>' : '';
     var highSaleLine = p.highSaleXrp !== null && p.highSaleXrp !== undefined
-      ? '<div class="result-highsale-line">H!GH SALE :: ' + p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</div>' : '';
+      ? '<div class="result-highsale-line">H!GH SALE :: ' + p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</div>'
+      : '<div class="result-highsale-line">F!RST 0WNER</div>';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
     var inTarget = !!state.targetAssets[p.nftId];
-    var buyBtn = p.buyUrl ? '<a class="buy-btn" href="' + escapeHtml(p.buyUrl) + '" target="_blank" rel="noopener">[ BUY ]</a>' : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
+      '<div class="result-num">P!GE0N ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         img +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
       '</div>' +
       '<div class="result-card-body">' +
-        '<div class="result-num">P!GE0N ' + num + '</div>' +
         rarityLine +
-        priceLine +
         highSaleLine +
         '<button class="inspect-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ !NSPECT ]</button>' +
-        buyBtn +
       '</div>' +
     '</div>';
   }
