@@ -307,56 +307,55 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-select-toggle.selected{ background:#39ff14; color:#08080a; }
 
   /* ---- collection grid / cards ---- */
+  /* Fixed 6 columns at every width, on purpose (not auto-fill/minmax,
+     which was producing inconsistent tile sizes depending on viewport) —
+     chrome is deliberately minimal (image + number + a corner select
+     toggle) since 6 columns doesn't leave room for trait lines or a
+     button row at any reasonable page width; tap/click the image to
+     INSPECT for full detail. */
   .result-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
-    gap:0.9rem;
+    grid-template-columns:repeat(6, 1fr);
+    gap:0.6rem;
   }
   .result-card{ border:1px solid rgba(57,255,20,0.25); overflow:hidden; }
-  .result-card .pigeon-img-box{ border:none; border-bottom:1px solid rgba(57,255,20,0.15); }
+  .result-card .pigeon-img-box{ border:none; }
   .result-card.in-target{ border-color:#39ff14; box-shadow:0 0 10px rgba(57,255,20,0.25) inset; }
-  .result-card-body{ padding:0.65rem; }
-  .result-num{ font-size:12px; letter-spacing:0.05em; color:#e8e8e8; margin-bottom:0.45rem; }
-  .result-rarity-line{ font-size:10px; letter-spacing:0.05em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); margin-bottom:0.35rem; }
-  .result-trait-line{
-    font-size:10px;
-    letter-spacing:0.02em;
-    color:rgba(232,232,232,0.55);
-    margin-bottom:0.2rem;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  .result-trait-line .tl-label{ color:rgba(232,232,232,0.35); }
-  .card-btn-row{ display:flex; gap:0.4rem; margin-top:0.55rem; }
-  .inspect-btn, .select-btn{
-    flex:1;
-    display:block;
-    background:transparent;
-    font-family:inherit;
-    font-size:10px;
-    letter-spacing:0.1em;
-    padding:0.5em;
-    cursor:pointer;
-    text-transform:uppercase;
-  }
-  .inspect-btn{ border:1px solid rgba(0,255,242,0.5); color:#00fff2; }
-  .inspect-btn:hover{ background:rgba(0,255,242,0.1); }
-  .select-btn{ border:1px solid rgba(57,255,20,0.5); color:#39ff14; }
-  .select-btn:hover{ background:rgba(57,255,20,0.1); }
-  .select-btn.selected{ background:rgba(57,255,20,0.15); color:#fff; }
+  .result-card-body{ padding:0.4rem 0.3rem; }
+  .result-num{ font-size:11px; letter-spacing:0.03em; color:#e8e8e8; text-align:center; }
+  .result-rarity-line{ font-size:9px; letter-spacing:0.03em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); text-align:center; }
 
   @media (max-width:700px){
     body{ padding:4vh 2.5vw 6vh; }
     .sw-panel{ padding:1rem 0.75rem; }
-    .result-grid{ grid-template-columns:repeat(6, 1fr); gap:0.25rem; }
+    .result-grid{ gap:0.25rem; }
     .result-card-body{ padding:0.3rem 0.15rem; }
-    .result-trait-line, .result-rarity-line, .card-btn-row{ display:none; }
-    .result-num{ font-size:9px; text-align:center; margin-bottom:0; letter-spacing:0.02em; }
+    .result-num{ font-size:9px; }
+    .result-rarity-line{ display:none; }
     .card-select-toggle{ width:1.4em; height:1.4em; line-height:1.4em; font-size:11px; }
   }
 
-  /* ---- pagination ---- */
+  /* ---- infinite scroll ---- */
+  .scroll-sentinel{ height:1px; }
+  .load-more-note{
+    text-align:center;
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:rgba(0,255,242,0.6);
+    padding:1.5rem 0;
+    text-transform:uppercase;
+  }
+  .end-of-collection-note{
+    text-align:center;
+    font-size:10px;
+    letter-spacing:0.1em;
+    color:rgba(232,232,232,0.3);
+    padding:1.5rem 0;
+    text-transform:uppercase;
+  }
+
+  /* ---- pagination (kept for detail-only contexts; browse now uses
+     infinite scroll instead) ---- */
   .pagination-row{ display:flex; justify-content:center; gap:0.75rem; margin-top:1.5rem; }
   .page-btn{
     background:transparent;
@@ -539,10 +538,10 @@ const SWAP_HTML = `<!DOCTYPE html>
           <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0NS (NUMBER, TRA!T, 0R VALUE)...">
           <button class="bar-btn" id="searchBtn">[ SEARCH ]</button>
           <select class="sort-select" id="sortSelect">
-            <option value="NUM_ASC">[ S0RT ▼ ] NUMBER L0W → H!GH</option>
-            <option value="NUM_DESC">NUMBER H!GH → L0W</option>
-            <option value="RARITY_ASC">RAR!TY :: RAREST → C0MM0N</option>
-            <option value="RARITY_DESC">RAR!TY :: C0MM0N → RAREST</option>
+            <option value="RARITY_ASC">[ S0RT ▼ ] RAR!TY :: RAREST F!RST</option>
+            <option value="RARITY_DESC">RAR!TY :: C0MM0N F!RST</option>
+            <option value="NAME_ASC">NAME A → Z</option>
+            <option value="NAME_DESC">NAME Z → A</option>
           </select>
         </div>
         <div class="index-line" id="indexLine"></div>
@@ -560,10 +559,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="sw-panel">
         <div class="status-line" id="statusLine"></div>
         <div id="resultsArea"></div>
-        <div class="pagination-row" id="paginationRow" style="display:none;">
-          <button class="page-btn" id="prevPageBtn" disabled>[ ← PREV PAGE ]</button>
-          <button class="page-btn" id="nextPageBtn">[ NEXT PAGE → ]</button>
-        </div>
+        <div class="scroll-sentinel" id="scrollSentinel"></div>
+        <div class="load-more-note" id="loadMoreNote" style="display:none;">L0AD!NG M0RE P!GE0NS...</div>
+        <div class="end-of-collection-note" id="endOfCollectionNote" style="display:none;">// END 0F C0LLECT!0N</div>
       </div>
     </div>
 
@@ -618,18 +616,21 @@ const SWAP_HTML = `<!DOCTYPE html>
 (function(){
 
   // ---- Client-side state ----
+  var PAGE_SIZE = 36;
   var state = {
     scope: null,              // null (whole collection) or { wallet, ownerShort }
-    markerStack: [],
-    currentMarker: null,
-    nextMarker: null,
-    items: [],                // currently displayed grid
+    skip: 0,                  // how many items already loaded, for infinite scroll
+    hasMore: true,
+    loading: false,
+    total: null,
+    items: [],                // everything loaded so far in the current browse/search mode
     scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
-    sort: 'NUM_ASC',
+    mode: 'browse',            // 'browse' | 'search' | 'scoped'
+    sort: 'RARITY_ASC',
     traitFilters: [],         // [{ id, category, value }]
     nextTraitRowId: 1,
     traitCategories: null,     // [name, name, ...] — cheap, loaded once
-    traitValuesCache: {},      // category -> [{value, percent, partial}], fetched lazily per category
+    traitValuesCache: {},      // category -> [{value, count, percent}], fetched lazily per category
     collectionSizeApprox: 3015,
     currentDetail: null,
     targetAssets: {}          // nftId -> { nftId, number, image } — only while scope is a wallet
@@ -637,7 +638,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   var el = {};
   ['searchInput','searchBtn','sortSelect','indexLine','traitRows','addTraitBtn','clearTraitsBtn',
-   'statusLine','resultsArea','paginationRow','prevPageBtn','nextPageBtn',
+   'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
    'screenBrowse','screenDetail','screenSummary',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailTraits','detailNftId',
@@ -660,7 +661,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function api(params){
-    var qs = Object.keys(params).map(function(k){ return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); }).join('&');
+    var qs = Object.keys(params)
+      .filter(function(k){ return params[k] !== undefined && params[k] !== null; })
+      .map(function(k){ return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
+      .join('&');
     return fetch('/api/pigeons?' + qs).then(function(r){ return r.json(); });
   }
 
@@ -732,7 +736,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.nodeHeaderPanel.style.display = '';
     el.nodeAddr.textContent = state.scope.ownerShort;
     el.searchPanelTitle.textContent = 'TARGET N0DE C0LLECT!0N';
-    el.paginationRow.style.display = 'none';
     el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG H0LDER\\'S REAL P!GE0NS...</div>';
     showScreen('browse');
     renderTargetBar();
@@ -756,7 +759,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.searchPanelTitle.textContent = 'P!GE0N DATABASE';
     el.searchInput.value = '';
     renderTargetBar();
-    loadBrowsePage(null, false);
+    startCollectionBrowse();
   });
 
   function emptyStateHtml(title, lines, showClear){
@@ -767,13 +770,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     '</div>';
   }
 
-  // ---- Card rendering ----
+  // ---- Card rendering (minimal chrome: image + number + rarity + a
+  // corner select toggle — 6 columns doesn't leave room for more; tap the
+  // image to INSPECT for the full trait set). ----
   function resultCardHtml(p){
-    var previewTraits = p.attributes.slice(0, 3);
-    var traitLines = previewTraits.map(function(a){
-      return '<div class="result-trait-line"><span class="tl-label">' + escapeHtml(a.trait_type.toUpperCase()) + ' ::</span> ' + escapeHtml(a.value) + '</div>';
-    }).join('');
-    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY :: ' + p.rarityRank + (p.rarityTotal ? ' / ' + p.rarityTotal : '') + '</div>' : '';
+    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">#' + p.rarityRank + '</div>' : '';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
     var inTarget = !!state.targetAssets[p.nftId];
@@ -785,33 +786,21 @@ const SWAP_HTML = `<!DOCTYPE html>
       '<div class="result-card-body">' +
         '<div class="result-num">P!GE0N ' + num + '</div>' +
         rarityLine +
-        traitLines +
-        '<div class="card-btn-row">' +
-          '<button class="inspect-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ !NSPECT ]</button>' +
-          '<button class="select-btn' + (inTarget ? ' selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">[ ' + (inTarget ? 'SELECTED' : 'SELECT') + ' ]</button>' +
-        '</div>' +
       '</div>' +
     '</div>';
   }
 
-  function sortItems(items){
-    var sorted = items.slice();
-    sorted.sort(function(a, b){
-      if (state.sort === 'RARITY_ASC' || state.sort === 'RARITY_DESC'){
-        var ar = a.rarityRank === null ? Infinity : a.rarityRank;
-        var br = b.rarityRank === null ? Infinity : b.rarityRank;
-        return state.sort === 'RARITY_DESC' ? br - ar : ar - br;
-      }
-      var an = a.number || 0, bn = b.number || 0;
-      return state.sort === 'NUM_DESC' ? bn - an : an - bn;
-    });
-    return sorted;
+  function appendResults(newItems){
+    if (!newItems.length) return;
+    var grid = el.resultsArea.querySelector('.result-grid');
+    if (!grid){
+      el.resultsArea.innerHTML = '<div class="result-grid"></div>';
+      grid = el.resultsArea.querySelector('.result-grid');
+    }
+    grid.insertAdjacentHTML('beforeend', newItems.map(resultCardHtml).join(''));
   }
-
-  function renderResults(){
-    var sorted = sortItems(state.items);
-    if (!sorted.length) return;
-    el.resultsArea.innerHTML = '<div class="result-grid">' + sorted.map(resultCardHtml).join('') + '</div>';
+  function renderResultsReplace(items){
+    el.resultsArea.innerHTML = items.length ? '<div class="result-grid">' + items.map(resultCardHtml).join('') + '</div>' : '';
   }
 
   function wireResultClicks(container, source){
@@ -822,94 +811,92 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (tp) handleSelect(tp);
         return;
       }
-      var inspectBtn = e.target.closest('.inspect-btn');
       var imgBox = e.target.closest('.pigeon-img-box');
-      if (inspectBtn || imgBox){ openDetail((inspectBtn || imgBox).getAttribute('data-nftid')); return; }
-      var selectBtn = e.target.closest('.select-btn');
-      if (selectBtn){
-        var p = source().filter(function(x){ return x.nftId === selectBtn.getAttribute('data-nftid'); })[0];
-        if (p) handleSelect(p);
-      }
+      if (imgBox){ openDetail(imgBox.getAttribute('data-nftid')); }
     });
   }
   wireResultClicks(el.resultsArea, function(){ return state.items; });
 
-  // ---- Background full-collection index progress ----
-  // Deliberately slow by design: full indexing is expensive per-token, so
-  // it advances a few Pigeons at a time on real page loads rather than all
-  // at once (see the PIGEON_INDEX_PAGE_SIZE comment in _shared.js) —
-  // search/filter coverage grows over time instead of ever being faked.
-  function refreshIndexLine(){
-    api({ traits: 1 }).then(function(data){
-      state.traitCategories = data.categories || [];
-      state.collectionSizeApprox = data.collectionSizeApprox || state.collectionSizeApprox;
-      renderTraitRows();
-      var stats = data.indexStats;
-      if (!stats || !stats.totalIndexed){
-        el.indexLine.textContent = '!NDEX!NG :: JUST GETT!NG STARTED';
-        return;
-      }
-      var pct = Math.round((stats.totalIndexed / state.collectionSizeApprox) * 1000) / 10;
-      el.indexLine.textContent = '!NDEXED :: ' + stats.totalIndexed + ' / ~' + state.collectionSizeApprox + ' (' + pct + '%)' + (stats.marker ? ' :: ST!LL !NDEX!NG...' : ' :: C0MPLETE');
-    }).catch(function(){});
-  }
-  function ensureTraitCategoriesLoaded(){
+  // ---- Trait data: fetched once, real categories/values/percentages
+  // straight from Deeptide's collection-wide trait-card counts (exact, not
+  // sampled) — no more lazy per-category round trips needed. ----
+  function ensureTraitsLoaded(){
     if (state.traitCategories) return Promise.resolve(state.traitCategories);
     return api({ traits: 1 }).then(function(data){
-      state.traitCategories = data.categories || [];
+      state.traitCategories = data.categories || {};
       state.collectionSizeApprox = data.collectionSizeApprox || state.collectionSizeApprox;
+      refreshIndexLine(data.numberMapStats);
       return state.traitCategories;
     });
   }
-  function ensureTraitValuesLoaded(cat){
-    if (state.traitValuesCache[cat]) return Promise.resolve(state.traitValuesCache[cat]);
-    return api({ traitValues: cat }).then(function(data){
-      state.traitValuesCache[cat] = data.values || [];
-      return state.traitValuesCache[cat];
-    });
+  function refreshIndexLine(stats){
+    if (!stats || !stats.count){
+      el.indexLine.textContent = '!NDEX!NG :: JUST GETT!NG STARTED';
+      return;
+    }
+    var pct = Math.round((stats.count / state.collectionSizeApprox) * 1000) / 10;
+    el.indexLine.textContent = 'NUMBER SEARCH !NDEX :: ' + stats.count + ' / ~' + state.collectionSizeApprox + ' (' + pct + '%)' + (stats.inProgress ? ' :: ST!LL !NDEX!NG...' : ' :: C0MPLETE');
   }
 
-  // ---- Whole-collection browse (paginated real ledger) ----
-  function loadBrowsePage(marker, pushCurrentToStack){
-    el.paginationRow.style.display = 'none';
-    el.statusLine.textContent = '';
-    el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG REAL P!GE0N DATA FR0M THE LEDGER...</div>';
-    api(marker ? { marker: marker } : {}).then(function(data){
-      if (pushCurrentToStack) state.markerStack.push(state.currentMarker);
-      state.currentMarker = marker || null;
-      state.nextMarker = data.marker || null;
-      state.items = data.items || [];
-      var failedNote = data.failedCount ? (' :: ' + data.failedCount + ' UNAVA!LABLE') : '';
-      el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + (data.collectionSizeApprox || 3015) + '</span> :: SH0W!NG ' + state.items.length + ' TH!S PAGE' + failedNote;
-      refreshIndexLine();
+  // ---- Infinite-scroll collection browse (real, live, always complete —
+  // Deeptide's own listings endpoint, no KV involved) ----
+  function startCollectionBrowse(){
+    state.mode = 'collection';
+    state.skip = 0;
+    state.items = [];
+    state.hasMore = true;
+    state.total = null;
+    el.endOfCollectionNote.style.display = 'none';
+    el.resultsArea.innerHTML = '';
+    loadMoreCollection();
+  }
+  function loadMoreCollection(){
+    if (state.loading || !state.hasMore || state.scope) return;
+    state.loading = true;
+    el.loadMoreNote.style.display = '';
+    var filters = activeFilters();
+    api({
+      skip: state.skip,
+      limit: PAGE_SIZE,
+      sort: state.sort,
+      filters: filters.length ? JSON.stringify(filters) : undefined
+    }).then(function(data){
+      state.loading = false;
+      el.loadMoreNote.style.display = 'none';
+      var newItems = data.items || [];
+      state.items = state.items.concat(newItems);
+      state.skip += newItems.length;
+      state.total = typeof data.total === 'number' ? data.total : state.total;
+      state.hasMore = !!data.hasMore && newItems.length > 0;
+      appendResults(newItems);
+      var note = filters.length ? ' :: TRA!T F!LTERED' : '';
+      el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + (state.total !== null ? state.total : state.items.length) + '</span>' + note;
       if (!state.items.length){
-        el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['TH!S PAGE RETURNED N0 READABLE P!GE0NS.'], false);
-      } else {
-        renderResults();
+        el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', filters.length ? ['N0 P!GE0NS MATCH ALL SELECTED TRA!TS.'] : ['TRY AGA!N.'], filters.length > 0);
+      } else if (!state.hasMore){
+        el.endOfCollectionNote.style.display = '';
       }
-      el.paginationRow.style.display = '';
-      el.prevPageBtn.disabled = state.markerStack.length === 0 && !state.currentMarker;
-      el.nextPageBtn.disabled = !state.nextMarker;
     }).catch(function(){
-      el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T REACH THE LEDGER. TRY AGA!N.'], false);
+      state.loading = false;
+      el.loadMoreNote.style.display = 'none';
+      if (!state.items.length) el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T REACH THE C0LLECT!0N. TRY AGA!N.'], false);
     });
   }
-  el.nextPageBtn.addEventListener('click', function(){ if (state.nextMarker) loadBrowsePage(state.nextMarker, true); });
-  el.prevPageBtn.addEventListener('click', function(){
-    if (!state.markerStack.length){ loadBrowsePage(null, false); return; }
-    loadBrowsePage(state.markerStack.pop(), false);
-  });
+  var scrollObserver = new IntersectionObserver(function(entries){
+    if (entries[0].isIntersecting) loadMoreCollection();
+  }, { rootMargin: '600px' });
+  scrollObserver.observe(el.scrollSentinel);
 
   // ---- Trait stack (stackable AND filters) ----
   function renderTraitRows(){
-    var cats = state.traitCategories || [];
+    var cats = state.traitCategories ? Object.keys(state.traitCategories) : [];
     el.traitRows.innerHTML = state.traitFilters.map(function(row){
       var catOptions = cats.map(function(c){
         return '<option value="' + escapeHtml(c) + '"' + (row.category === c ? ' selected' : '') + '>' + escapeHtml(c.toUpperCase()) + '</option>';
       }).join('');
-      var vals = (row.category && state.traitValuesCache[row.category]) || [];
+      var vals = (row.category && state.traitCategories[row.category]) || [];
       var valOptions = vals.map(function(v){
-        var pct = v.percent !== null && v.percent !== undefined ? ' (' + v.percent + '%' + (v.partial ? '~' : '') + ')' : '';
+        var pct = v.percent !== null && v.percent !== undefined ? ' (' + v.percent + '%)' : '';
         return '<option value="' + escapeHtml(v.value) + '"' + (row.value === v.value ? ' selected' : '') + '>' + escapeHtml(v.value.toUpperCase()) + pct + '</option>';
       }).join('');
       return '<div class="trait-row" data-id="' + row.id + '">' +
@@ -920,7 +907,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).join('');
   }
   el.addTraitBtn.addEventListener('click', function(){
-    ensureTraitCategoriesLoaded().then(function(){
+    ensureTraitsLoaded().then(function(){
       state.traitFilters.push({ id: state.nextTraitRowId++, category: '', value: '' });
       renderTraitRows();
     });
@@ -934,15 +921,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     var id = parseInt(e.target.getAttribute('data-id'), 10);
     var row = state.traitFilters.filter(function(r){ return r.id === id; })[0];
     if (!row) return;
-    if (e.target.classList.contains('trait-cat-select')){
-      row.category = e.target.value;
-      row.value = '';
-      renderTraitRows();
-      if (row.category) ensureTraitValuesLoaded(row.category).then(renderTraitRows);
-      runQuery();
-      return;
-    }
-    if (e.target.classList.contains('trait-val-select')){ row.value = e.target.value; }
+    if (e.target.classList.contains('trait-cat-select')){ row.category = e.target.value; row.value = ''; }
+    else if (e.target.classList.contains('trait-val-select')){ row.value = e.target.value; }
     renderTraitRows();
     runQuery();
   });
@@ -960,10 +940,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   // ---- Unified query dispatch: wallet-scope filters client-side over the
-  // full holder list; whole-collection scope searches/filters server-side. ----
+  // full holder list (already loaded whole); whole-collection scope always
+  // goes through the real, live, paginated collection endpoint. ----
   function runQuery(){
     if (state.scope) runScopedQuery();
-    else runGlobalQuery();
+    else startCollectionBrowse();
   }
 
   function runScopedQuery(){
@@ -980,116 +961,93 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       return true;
     });
+    if (state.sort === 'RARITY_ASC' || state.sort === 'RARITY_DESC'){
+      list = list.slice().sort(function(a, b){
+        var ar = a.rarityRank === null ? Infinity : a.rarityRank, br = b.rarityRank === null ? Infinity : b.rarityRank;
+        return state.sort === 'RARITY_DESC' ? br - ar : ar - br;
+      });
+    }
     state.items = list;
-    el.paginationRow.style.display = 'none';
     el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + list.length + '</span>' + (list.length === 1 ? '<br>P!GE0N #' + list[0].number : '');
     if (!list.length){
       el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + (q || '(traits)') + '"'], true);
       wireClearSearch();
     } else {
-      renderResults();
+      renderResultsReplace(list);
     }
   }
 
-  function runGlobalQuery(){
-    var filters = activeFilters();
-    if (filters.length){
-      el.paginationRow.style.display = 'none';
-      el.resultsArea.innerHTML = '<div class="loading-note">F!LTER!NG...</div>';
-      api({ filters: JSON.stringify(filters) }).then(function(data){
+  // Number search is exact and direct via the number->NFTokenID map; any
+  // other typed text is treated as a trait-value guess (matched against the
+  // already-loaded real trait data, no extra round trips) and applied as a
+  // filter through the same AND-filter mechanism as the TRAITS stack.
+  function runSearchBox(){
+    var q = el.searchInput.value.trim();
+    if (!q){ runQuery(); return; }
+    var isNumber = /^#?\\d+$/.test(q);
+    if (isNumber){
+      el.resultsArea.innerHTML = '<div class="loading-note">SEARCH!NG...</div>';
+      el.statusLine.textContent = '';
+      api({ number: q.replace('#', '') }).then(function(data){
         state.items = data.items || [];
-        el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + state.items.length + '</span> :: SEARCHED !NDEXED P!GE0NS 0NLY';
         if (!state.items.length){
-          el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['N0 !NDEXED P!GE0N MATCHES ALL SELECTED TRA!TS.'], true);
+          el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
+          el.resultsArea.innerHTML = data.notIndexed
+            ? emptyStateHtml('// N0T YET !NDEXED', ['QUERY :: "' + q + '"', 'TH!S P!GE0N HAS N0T BEEN SEEN BY THE NUMBER !NDEX YET.', 'TRY AGA!N SH0RTLY — !T CRAWLS THE C0LLECT!0N !N THE BACKGR0UND.'], true)
+            : emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + q + '"'], true);
           wireClearSearch();
-        } else renderResults();
+          return;
+        }
+        el.statusLine.innerHTML = 'RESULTS :: <span class="hi">1</span><br>P!GE0N #' + state.items[0].number;
+        renderResultsReplace(state.items);
       }).catch(function(){
-        el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['F!LTER FA!LED. TRY AGA!N.'], false);
+        el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['SEARCH FA!LED. TRY AGA!N.'], false);
       });
       return;
     }
-    var q = el.searchInput.value.trim();
-    if (!q){ loadBrowsePage(null, false); return; }
-    runFreeTextSearch(q);
-  }
-
-  function runFreeTextSearch(q){
-    el.paginationRow.style.display = 'none';
-    el.resultsArea.innerHTML = '<div class="loading-note">SEARCH!NG...</div>';
-    el.statusLine.textContent = '';
-
     var kv = q.match(/^([A-Za-z]+)\\s*:\\s*(.+)$/);
-    var isNumber = /^#?\\d+$/.test(q);
-
-    var req;
-    if (isNumber){
-      req = api({ number: q.replace('#', '') });
-    } else if (kv){
-      req = api({ filters: JSON.stringify([{ trait: kv[1], value: kv[2].trim() }]) });
-    } else {
-      req = ensureTraitCategoriesLoaded().then(function(cats){
-        var catMatch = cats.filter(function(c){ return c.toLowerCase() === q.toLowerCase(); })[0];
-        if (catMatch){
-          return ensureTraitValuesLoaded(catMatch).then(function(vals){
-            var names = vals.map(function(v){ return v.value; });
-            return Promise.all(names.map(function(v){ return api({ filters: JSON.stringify([{ trait: catMatch, value: v }]) }); }))
-              .then(mergeResults);
-          });
+    ensureTraitsLoaded().then(function(cats){
+      var trait, value;
+      if (kv){
+        var catKey = Object.keys(cats).filter(function(c){ return c.toLowerCase() === kv[1].toLowerCase(); })[0];
+        if (catKey){
+          var exact = (cats[catKey] || []).filter(function(v){ return v.value.toLowerCase() === kv[2].trim().toLowerCase(); })[0];
+          trait = catKey; value = exact ? exact.value : kv[2].trim();
         }
-        return Promise.all(cats.map(function(c){ return ensureTraitValuesLoaded(c); })).then(function(allVals){
-          var calls = [];
-          cats.forEach(function(c, i){
-            allVals[i].forEach(function(v){
-              if (v.value.toLowerCase().indexOf(q.toLowerCase()) !== -1) calls.push(api({ filters: JSON.stringify([{ trait: c, value: v.value }]) }));
-            });
-          });
-          return Promise.all(calls).then(mergeResults);
-        });
-      });
-    }
-
-    req.then(function(data){
-      state.items = data.items || [];
-      if (!state.items.length){
-        if (data.notIndexed){
-          el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
-          el.resultsArea.innerHTML = emptyStateHtml('// N0T YET !NDEXED', [
-            'QUERY :: "' + q + '"',
-            'TH!S P!GE0N HAS N0T BEEN SEEN YET.',
-            'BR0WSE THE C0LLECT!0N T0 D!SC0VER !T — !NDEX GR0WS AS Y0U BR0WSE.'
-          ], true);
-        } else {
-          el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
-          el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + q + '"'], true);
+      }
+      if (!trait){
+        for (var c in cats){
+          var hit = (cats[c] || []).filter(function(v){ return v.value.toLowerCase().indexOf(q.toLowerCase()) !== -1; })[0];
+          if (hit){ trait = c; value = hit.value; break; }
         }
+      }
+      if (!trait){
+        el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
+        el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + q + '"', 'N0 MATCH!NG TRA!T VALUE F0UND.'], true);
         wireClearSearch();
         return;
       }
-      el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + state.items.length + '</span>' +
-        (state.items.length === 1 ? '<br>P!GE0N #' + state.items[0].number : '');
-      renderResults();
-    }).catch(function(){
-      el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['SEARCH FA!LED. TRY AGA!N.'], false);
+      state.traitFilters = [{ id: state.nextTraitRowId++, category: trait, value: value }];
+      renderTraitRows();
+      startCollectionBrowse();
     });
   }
-  function mergeResults(results){
-    var merged = [], seen = {};
-    results.forEach(function(r){ (r.items || []).forEach(function(it){ if (!seen[it.nftId]){ seen[it.nftId]=true; merged.push(it); } }); });
-    return { items: merged, indexedOnly: true };
-  }
+
   function wireClearSearch(){
     var btn = document.getElementById('clearSearchBtn');
     if (btn) btn.addEventListener('click', function(){
       el.searchInput.value = '';
-      if (state.scope) runScopedQuery(); else loadBrowsePage(null, false);
+      state.traitFilters = [];
+      renderTraitRows();
+      if (state.scope) runScopedQuery(); else startCollectionBrowse();
     });
   }
 
-  el.searchBtn.addEventListener('click', runQuery);
-  el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runQuery(); });
+  el.searchBtn.addEventListener('click', runSearchBox);
+  el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearchBox(); });
   el.sortSelect.addEventListener('change', function(){
     state.sort = el.sortSelect.value;
-    if (state.items.length) renderResults();
+    runQuery();
   });
 
   // ---- Inspect / detail ----
@@ -1144,7 +1102,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
 
   // ---- Initial load ----
-  loadBrowsePage(null, false);
+  ensureTraitsLoaded();
+  startCollectionBrowse();
 
   // TV static background, purely atmospheric — matches the rest of the site.
   (function(){

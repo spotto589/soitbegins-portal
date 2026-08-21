@@ -1,31 +1,34 @@
 import {
-  fetchPigeonCollectionPage, fetchNftInfo, getPigeonFullMeta, getPigeonMetaCached,
-  getPigeonNumberIndex, getIndexedTraitCategories, getIndexedTraitValues,
-  filterPigeonsByTraits, resolvePigeonsForOwner, resolveOwnerCollectionLive,
-  getPigeonIndexStats, maybeRecomputePigeonIndex,
-  getTraitValuePercent, fetchAllAccountNfts, findAllPigeons,
+  fetchDeeptideListings, fetchDeeptideNftDetail, getTraitCategoriesWithPercent,
+  getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap,
+  resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX
 } from '../_shared.js';
 
-// Real per-request budget management: Cloudflare caps a single request to
-// roughly 50 subrequests (every fetch() AND every KV get/put/list counts).
-// These caps keep every branch below well below that, even in the
-// all-cache-miss worst case.
-const BROWSE_PAGE_SIZE = 8;
-const FILTER_RESULT_LIMIT = 12;
+// Client sort keys -> Deeptide's own sort values (same ones its own
+// marketplace UI offers — rarity-asc is "Rarest First").
+const SORT_MAP = {
+  RARITY_ASC: 'rarity-asc',
+  RARITY_DESC: 'rarity-desc',
+  NAME_ASC: 'name-asc',
+  NAME_DESC: 'name-desc',
+  PRICE_ASC: 'price-asc',
+  PRICE_DESC: 'price-desc',
+};
 
 function shortenAddr(addr) {
   return addr ? addr.slice(0, 9) + '...' + addr.slice(-4) : null;
 }
 
-// Deeptide's CDN images hotlink fine as-is; only ipfs.io URLs need the
-// same-origin proxy (see functions/api/ipfs-image.js for why).
+// Deeptide's CDN images hotlink fine as-is; only ipfs.io URLs (the wallet-
+// scope IPFS fallback) need the same-origin proxy (see ipfs-image.js).
 function displayImage(url) {
   if (!url) return null;
   return url.startsWith('https://ipfs.io/') ? proxyIpfsImage(url) : url;
 }
 
-function toItem(nftId, meta, owner, ownerIndexed) {
+function toItem(nftId, meta, ownerOverride) {
+  const owner = ownerOverride !== undefined ? ownerOverride : meta.owner;
   return {
     nftId,
     number: meta.number,
@@ -35,7 +38,7 @@ function toItem(nftId, meta, owner, ownerIndexed) {
     rarityTotal: meta.rarityTotal || null,
     owner: owner || null,
     ownerShort: owner ? shortenAddr(owner) : null,
-    ownerIndexed: !!ownerIndexed
+    ownerIndexed: !!owner
   };
 }
 
@@ -50,42 +53,21 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const params = url.searchParams;
 
-  // Trait category discovery ONLY — cheap (1 list() call), for the TRAITS
-  // stack filter UI's category dropdown. Values (and their percentages)
-  // are fetched lazily per-category via `traitValues=` below, once a row
-  // actually picks that category — eagerly computing percentages for
-  // every value across every category here would mean one list() call
-  // per value (some categories have 30+ values), easily blowing the
-  // subrequest budget on its own.
+  // Trait category/value/percentage discovery for the TRAITS stack filter
+  // UI — real, exact counts straight from Deeptide, not sampled.
   if (params.get('traits') === '1') {
-    const stats = await getPigeonIndexStats(env.coin);
-    context.waitUntil(maybeRecomputePigeonIndex(env.coin));
-    const categories = await getIndexedTraitCategories(env.coin);
+    const categories = await getTraitCategoriesWithPercent(env.coin);
+    const numberMapStats = await getPigeonNumberMapStats(env.coin);
+    context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
     return json({
       categories,
       collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX,
-      indexStats: stats
+      numberMapStats
     });
   }
 
-  // Values (+ real percentages) for ONE trait category — lazy, called when
-  // a trait-filter row actually selects that category.
-  const traitValuesFor = params.get('traitValues');
-  if (traitValuesFor) {
-    const stats = await getPigeonIndexStats(env.coin);
-    const vals = await getIndexedTraitValues(env.coin, traitValuesFor);
-    const values = await Promise.all(vals.map(async (v) => {
-      const pctInfo = await getTraitValuePercent(env.coin, traitValuesFor, v, stats);
-      return { value: v, percent: pctInfo ? pctInfo.pct : null, partial: pctInfo ? pctInfo.partial : true };
-    }));
-    return json({ values });
-  }
-
-  // A wallet's full real holdings — one Deeptide batch call covers all of
-  // them (image+traits+rarity), IPFS is only the per-token fallback. No KV
-  // writes here (see resolveOwnerCollectionLive) so this stays cheap no
-  // matter how many Pigeons the wallet holds. The client then
-  // searches/filters/sorts this list entirely on its own.
+  // A wallet's full real holdings — used by the SELECT -> owner's
+  // collection flow. No KV writes, cheap regardless of wallet size.
   const wallet = params.get('wallet');
   if (wallet) {
     const nfts = await fetchAllAccountNfts(wallet);
@@ -94,83 +76,60 @@ export async function onRequestGet(context) {
     const ledgerItems = pigeons.map(n => ({ nftId: n.NFTokenID, uriHex: n.URI }));
     const resolved = await resolveOwnerCollectionLive(env.coin, wallet, ledgerItems);
     const items = resolved
-      .map(r => toItem(r.nftId, r.meta, wallet, true))
+      .map(r => toItem(r.nftId, r.meta, wallet))
       .sort((a, b) => (a.number || 0) - (b.number || 0));
     return json({ items, owner: wallet, ownerShort: shortenAddr(wallet) });
   }
 
-  // Fresh single-token detail lookup by known NFTokenID (from a card already on screen).
+  // Fresh single-token detail — real current owner, exact trait
+  // percentages, rarity. Used by INSPECT and to resolve a number search.
   const detailId = params.get('detail');
   if (detailId) {
-    const fresh = await fetchNftInfo(detailId);
-    const cachedMeta = await getPigeonMetaCached(env.coin, detailId);
-    const meta = cachedMeta || (fresh ? await getPigeonFullMeta(env.coin, detailId, fresh.uriHex) : null);
-    if (!meta) return json({ item: null, notIndexed: true });
-    return json({ item: toItem(detailId, meta, fresh ? fresh.owner : null, !!fresh) });
+    const item = await fetchDeeptideNftDetail(detailId);
+    if (!item) return json({ item: null, notIndexed: true });
+    return json({ item: toItem(item.nftId, item) });
   }
 
-  // Direct Pigeon-number search — only real if it's already been indexed.
+  // Direct Pigeon-number search via the number->NFTokenID map (built by
+  // crawling Deeptide's cheap listings pages — see maybeRefreshPigeonNumberMap).
   const number = params.get('number');
   if (number) {
     const num = parseInt(number, 10);
     if (!num || num < 1) return json({ items: [], notIndexed: false, invalid: true });
-    const nftId = await getPigeonNumberIndex(env.coin, num);
-    if (!nftId) return json({ items: [], notIndexed: true, query: num });
-    const fresh = await fetchNftInfo(nftId);
-    const meta = await getPigeonMetaCached(env.coin, nftId);
-    if (!meta) return json({ items: [], notIndexed: true, query: num });
-    return json({ items: [toItem(nftId, meta, fresh ? fresh.owner : null, !!fresh)] });
-  }
-
-  // Stackable trait filters — ALL must match (AND). filters is a JSON
-  // array like [{"trait":"Background","value":"Cyan"}, ...]. Real, but
-  // scoped to whatever's been indexed so far (see filterPigeonsByTraits).
-  const filtersRaw = params.get('filters');
-  if (filtersRaw) {
-    let filters;
-    try { filters = JSON.parse(filtersRaw); } catch (e) { filters = []; }
-    if (!Array.isArray(filters) || !filters.length) return json({ items: [], indexedOnly: true });
-    const matches = await filterPigeonsByTraits(env.coin, filters, FILTER_RESULT_LIMIT);
-    return json({
-      items: matches.map(m => toItem(m.nftId, m.meta, null, false)),
-      indexedOnly: true
-    });
-  }
-
-  // Default: paginate the real collection straight off the ledger, batched
-  // per-owner through Deeptide (falls back to IPFS per-token as needed).
-  const marker = params.get('marker') || undefined;
-  const page = await fetchPigeonCollectionPage(marker, BROWSE_PAGE_SIZE);
-  const byOwner = new Map();
-  for (const it of page.items) {
-    if (!byOwner.has(it.owner)) byOwner.set(it.owner, []);
-    byOwner.get(it.owner).push(it);
-  }
-  const resolvedGroups = await Promise.allSettled(
-    Array.from(byOwner.entries()).map(([owner, items]) => resolvePigeonsForOwner(env.coin, owner, items).then(r => ({ owner, resolved: r })))
-  );
-  const items = [];
-  for (const g of resolvedGroups) {
-    if (g.status !== 'fulfilled') continue;
-    for (const r of g.value.resolved) {
-      if (r.meta && r.meta.image) items.push(toItem(r.nftId, r.meta, g.value.owner, true));
+    const map = await getPigeonNumberMap(env.coin);
+    const nftId = map[num];
+    if (!nftId) {
+      context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
+      return json({ items: [], notIndexed: true, query: num });
     }
+    const item = await fetchDeeptideNftDetail(nftId);
+    if (!item) return json({ items: [], notIndexed: true, query: num });
+    return json({ items: [toItem(item.nftId, item)] });
   }
-  items.sort((a, b) => (a.number || 0) - (b.number || 0));
-  const failedCount = page.items.length - items.length;
 
-  // Deliberately NOT triggering the background indexer here — the client
-  // already calls ?traits=1 right after every browse page (see
-  // refreshIndexLine in swap.js), which is a SEPARATE incoming request
-  // with its own subrequest budget. Triggering it here too would stack
-  // the indexer's own subrequests on top of this page's browse work
-  // within the same request's budget — exactly the kind of compounding
-  // that was blowing the limit before.
+  // Default: the real, complete, live collection — paginated, sorted
+  // (rarity by default), optionally AND-filtered by trait. No KV involved.
+  const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
+  const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
+  const sort = SORT_MAP[params.get('sort')] || 'rarity-asc';
+  const filtersRaw = params.get('filters');
+  let filters = [];
+  if (filtersRaw) {
+    try { filters = JSON.parse(filtersRaw); } catch (e) { filters = []; }
+    if (!Array.isArray(filters)) filters = [];
+  }
+
+  const page = await fetchDeeptideListings({ skip, limit, sort, traits: filters });
+  const items = page.items.map(it => toItem(it.nftId, it));
+
+  context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
 
   return json({
     items,
-    marker: page.marker,
-    failedCount,
+    total: page.total,
+    hasMore: page.hasMore,
+    skip,
+    limit,
     collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
   });
 }

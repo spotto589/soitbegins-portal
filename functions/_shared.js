@@ -637,92 +637,44 @@ export async function getPigeonThumbnails(kv, pigeonNfts) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Σκύλλα SWAP :: Pigeon collection data-access layer (Phase 1B).
+// Σκύλλα SWAP :: Pigeon collection data-access layer (Phase 2).
 //
-// Real data only — everything below reads from the actual XRPL ledger
-// (Clio's nfts_by_issuer/nft_info, the only methods that expose the whole
-// collection or a single token without already knowing an owning wallet)
-// and the actual per-NFT IPFS metadata (same hex-URI/resolveIpfsUri path
-// already used by fetchPigeonMeta above, just also keeping `attributes`
-// instead of discarding everything but number/image).
+// Real data throughout — and now sourced far more efficiently than the
+// original ledger-scan design. Deeptide (the same marketplace already
+// trusted for King rarity via getTopKingRarity below) turns out to run a
+// full collection-wide, paginated, sortable, trait-filterable listings API
+// for the xrpigeons shop — confirmed by watching soitbegins's own
+// marketplace frontend make these exact calls. That single API covers
+// browsing, sorting (including real rarity), AND-filtering by trait, and
+// single-token detail (with fresh owner + per-trait rarity percentages)
+// in a handful of cheap fetch() calls, with no per-token KV writes needed
+// at all for the core browsing experience. This replaces the earlier
+// ledger-scan-plus-custom-KV-index design (which was burning the KV
+// account's daily write quota and Cloudflare's per-request subrequest
+// budget just to reconstruct data Deeptide already serves directly).
 //
-// Honest limitation: there is no ledger-side index from a Pigeon's display
-// number (parsed from its metadata "name", e.g. "PIGEONS1180" -> 1180) back
-// to its NFTokenID — that mapping only exists inside IPFS metadata itself,
-// which can't be scanned for all ~3015 tokens inside one request without
-// blowing past any reasonable page-load time. So this builds that index
-// incrementally in KV, one token at a time, every time a token is actually
-// looked at (collection browsing or a hit search) — coverage grows with
-// real use instead of ever being faked. A number search that isn't in the
-// index yet is reported as such, never guessed at.
+// The only piece Deeptide's API doesn't cover is "look up a Pigeon by its
+// display number" (e.g. searching "1842") — so a lightweight number ->
+// NFTokenID map is still built and cached in KV, but now by crawling
+// Deeptide's own cheap listings pages (no ledger scan, no per-token
+// writes), not the old per-token indexing scheme.
 // ─────────────────────────────────────────────────────────────────────────
 
 // Matches board.js's own TOTAL_PIGEONS figure — an approximation for
 // display only ("~3015 P!GE0NS"), never a live-counted total.
 export const PIGEON_COLLECTION_SIZE_APPROX = 3015;
 
-// Every write below is a caching/indexing optimization, never required
-// for a response to be correct — the real data already came from the
-// ledger/Deeptide/IPFS fetch that happened first. Cloudflare KV's free
-// plan has a hard daily write quota (1,000/day); once exhausted, every
-// kv.put() throws "KV put() limit exceeded for the day" until it resets
+// Every write below is a caching optimization, never required for a
+// response to be correct. Cloudflare KV's free plan has a hard daily write
+// quota (1,000/day); once exhausted, every kv.put() throws until it resets
 // at UTC midnight. Swallowing that here means a quota exhaustion pauses
-// caching/indexing (search coverage stops growing until reset) instead of
-// breaking the actual browsing/search experience, which was the real bug:
-// an uncaught write failure was rejecting the whole per-owner resolution,
-// dropping otherwise-successfully-fetched Pigeons from the response.
+// caching (a little slower, re-fetches from Deeptide more often) instead
+// of breaking the actual browsing/search experience.
 async function safeKvPut(kv, key, value, opts) {
   try {
     await kv.put(key, value, opts);
   } catch (e) {
     // Quota exhaustion or any other transient KV failure — not fatal.
-  }
-}
-
-// v2: bumped when Deeptide enrichment (rarityRank/rarityTotal) was added —
-// forces every pre-existing cache entry to be treated as a miss and
-// re-resolved through the new path, instead of silently serving
-// old-schema data (no rarity, IPFS-only image) forever.
-const PIGEON_META_PREFIX = 'pswap:meta:v2:';
-const PIGEON_NUMBER_INDEX_PREFIX = 'pswap:numidx:';
-const PIGEON_TRAIT_MEMBER_PREFIX = 'pswap:traitmember:';
-
-// One page (default 48) of the real, live Pigeon collection straight off
-// the ledger — owner + NFTokenID + raw hex URI for each token, newest scan
-// state carried forward via `marker` exactly like fetchAllAccountNfts.
-export async function fetchPigeonCollectionPage(marker, limit = 48) {
-  const params = { issuer: PIGEON_ISSUER, nft_taxon: PIGEON_TAXON, limit };
-  if (marker) params.marker = marker;
-  const res = await fetch(CLIO_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ method: 'nfts_by_issuer', params: [params] }),
-  });
-  const data = await res.json();
-  const result = data && data.result;
-  if (!result || result.error) return { items: [], marker: null };
-  const items = (result.nfts || [])
-    .filter(n => !n.is_burned)
-    .map(n => ({ nftId: n.nft_id, owner: n.owner, uriHex: n.uri }));
-  return { items, marker: result.marker || null };
-}
-
-// Fresh single-token lookup (owner + URI) via Clio's nft_info — used when
-// inspecting one specific Pigeon so its owner is current at that moment,
-// rather than whatever it was the last time this token's page was scanned.
-export async function fetchNftInfo(nftId) {
-  try {
-    const res = await fetch(CLIO_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ method: 'nft_info', params: [{ nft_id: nftId }] }),
-    });
-    const data = await res.json();
-    const result = data && data.result;
-    if (!result || result.error || result.is_burned) return null;
-    return { owner: result.owner || null, uriHex: result.uri || null };
-  } catch (e) {
-    return null;
   }
 }
 
@@ -736,8 +688,8 @@ async function fetchWithTimeout(url, ms) {
   }
 }
 
-// Full per-token metadata straight from IPFS — number, image, and the
-// complete `attributes` array (trait_type/value pairs), whatever shape the
+// IPFS fallback for the rare token Deeptide hasn't synced yet — number,
+// image, and the complete `attributes` array, whatever shape the
 // collection's own metadata actually uses. Never invents a trait schema.
 async function fetchPigeonFullMeta(uriHex) {
   try {
@@ -756,144 +708,16 @@ async function fetchPigeonFullMeta(uriHex) {
   }
 }
 
-// Records a newly-seen token's traits into the membership index — ONE
-// write per attribute (down from three: category/value existence are now
-// derived by parsing membership key names via list(), never written as
-// their own keys). This matters because every kv.put/get/fetch counts
-// against Cloudflare's per-request subrequest budget (~50); the previous
-// 3-keys-per-attribute scheme could burn 20+ subrequests on a single
-// newly-seen token, which — combined with per-owner Deeptide calls and
-// meta caching — was blowing the budget and causing every request to fail
-// before anything ever got cached (a self-reinforcing "nothing ever warms
-// up" loop). Only called from the background indexer now, never from the
-// interactive browse/search path — see `indexExtras` below.
-async function recordPigeonTraitIndex(kv, nftId, attributes) {
-  const writes = [];
-  for (const attr of attributes) {
-    const traitType = attr && attr.trait_type;
-    const value = attr && attr.value;
-    if (!traitType || value === undefined || value === null) continue;
-    writes.push(safeKvPut(kv, `${PIGEON_TRAIT_MEMBER_PREFIX}${traitType}:${value}:${nftId}`, '1'));
-  }
-  await Promise.all(writes);
-}
-
-// The one function that actually resolves a Pigeon's full metadata via
-// IPFS (the Deeptide-covered path in resolvePigeonsForOwner below never
-// reaches this for tokens Deeptide already has). KV cache first (metadata
-// is immutable once minted, so a hit is permanent). `indexExtras` controls
-// whether the number/trait indexes also get written on a cache miss —
-// keep this OFF for anything in the interactive request path (browsing,
-// search, wallet lookups) and ON only for the small, deliberately-bounded
-// background indexer batches, to stay under the subrequest budget.
-export async function getPigeonFullMeta(kv, nftId, uriHex, indexExtras = false) {
-  const cacheKey = PIGEON_META_PREFIX + nftId;
-  const cached = await kv.get(cacheKey);
-  if (cached !== null) return JSON.parse(cached);
-
-  const info = await fetchPigeonFullMeta(uriHex);
-  if (!info || info.image === null) return info;
-
-  await safeKvPut(kv, cacheKey, JSON.stringify(info));
-  if (indexExtras) {
-    if (info.number !== null) await safeKvPut(kv, PIGEON_NUMBER_INDEX_PREFIX + info.number, nftId);
-    await recordPigeonTraitIndex(kv, nftId, info.attributes);
-  }
-  return info;
-}
-
-// Read-only — never fetches. Used when we already have an nftId from a
-// fresh ledger call and just want whatever's already indexed.
-export async function getPigeonMetaCached(kv, nftId) {
-  const cached = await kv.get(PIGEON_META_PREFIX + nftId);
-  return cached !== null ? JSON.parse(cached) : null;
-}
-
-// Real, but honestly incomplete: only returns a hit if this exact number
-// has been indexed already (via the background indexer). A miss does NOT
-// mean the Pigeon doesn't exist — see the module comment above.
-export async function getPigeonNumberIndex(kv, number) {
-  return kv.get(PIGEON_NUMBER_INDEX_PREFIX + number);
-}
-
-// Every trait category actually observed so far, derived from a sample of
-// membership keys (1 list() call — cheap regardless of collection size)
-// rather than a separately-written key family. Grows as more of the
-// collection gets indexed — never a fixed list.
-export async function getIndexedTraitCategories(kv) {
-  const list = await kv.list({ prefix: PIGEON_TRAIT_MEMBER_PREFIX, limit: 1000 });
-  const cats = new Set();
-  for (const k of list.keys) {
-    const rest = k.name.slice(PIGEON_TRAIT_MEMBER_PREFIX.length);
-    const type = rest.split(':')[0];
-    if (type) cats.add(type);
-  }
-  return [...cats].sort();
-}
-
-// Every value actually observed for one trait category so far, same
-// derive-from-membership-keys approach.
-export async function getIndexedTraitValues(kv, traitType) {
-  const prefix = `${PIGEON_TRAIT_MEMBER_PREFIX}${traitType}:`;
-  const list = await kv.list({ prefix, limit: 1000 });
-  const vals = new Set();
-  for (const k of list.keys) {
-    const rest = k.name.slice(prefix.length);
-    const value = rest.split(':')[0];
-    if (value) vals.add(value);
-  }
-  return [...vals].sort();
-}
-
-// Every currently-indexed Pigeon matching an exact trait/value pair, with
-// its cached metadata attached. Only searches what's been indexed so far —
-// callers must surface that as a real, disclosed limitation, not silence it.
-export async function getPigeonsByTraitValue(kv, traitType, value, limit = 48) {
-  const prefix = `${PIGEON_TRAIT_MEMBER_PREFIX}${traitType}:${value}:`;
-  const list = await kv.list({ prefix, limit });
-  const nftIds = list.keys.map(k => k.name.slice(prefix.length));
-  const metas = await Promise.all(nftIds.map(id => getPigeonMetaCached(kv, id)));
-  return nftIds
-    .map((nftId, i) => ({ nftId, meta: metas[i] }))
-    .filter(entry => entry.meta !== null);
-}
-
-// Stackable trait filters, ALL of which must match (AND, never OR) — each
-// filter's membership set is read from the same real per-token trait index
-// above, then intersected in memory. Still only searches what's been
-// indexed so far; capped at 1000 members per individual filter before the
-// intersection, same honesty limit as getPigeonsByTraitValue.
-export async function filterPigeonsByTraits(kv, filters, limit = 48) {
-  if (!filters || !filters.length) return [];
-  const sets = await Promise.all(filters.map(async (f) => {
-    const prefix = `${PIGEON_TRAIT_MEMBER_PREFIX}${f.trait}:${f.value}:`;
-    const list = await kv.list({ prefix, limit: 1000 });
-    return new Set(list.keys.map(k => k.name.slice(prefix.length)));
-  }));
-  let intersection = sets[0];
-  for (let i = 1; i < sets.length; i++) {
-    intersection = new Set([...intersection].filter(id => sets[i].has(id)));
-  }
-  const nftIds = [...intersection].slice(0, limit);
-  const metas = await Promise.all(nftIds.map(id => getPigeonMetaCached(kv, id)));
-  return nftIds
-    .map((nftId, i) => ({ nftId, meta: metas[i] }))
-    .filter(entry => entry.meta !== null);
-}
-
 // ─────────────────────────────────────────────────────────────────────────
-// Deeptide enrichment. Deeptide (the same marketplace already used for
-// King rarity via getTopKingRarity below) tracks the xrpigeons shop too —
-// its per-wallet "owned" endpoint returns, in one call, every Pigeon that
-// wallet holds complete with a fast CDN image, the real trait array, AND a
-// real rarityRank/rarityTotal — something raw IPFS metadata never carries.
-// This is real, reliable rarity data (same source/pattern already trusted
-// for Kings), not invented. IPFS remains the fallback for any token
-// Deeptide hasn't synced yet.
+// Deeptide: per-wallet holdings (used for the "SELECT -> load owner's
+// collection" flow) and the collection-wide listings/detail/trait-card
+// APIs (used for the main browse/search/filter/sort experience).
 // ─────────────────────────────────────────────────────────────────────────
 const DEEPTIDE_PIGEON_SHOP_SLUG = 'xrpigeons';
 const DEEPTIDE_OWNER_CACHE_PREFIX = 'pswap:deeptideowner:';
 const DEEPTIDE_OWNER_CACHE_TTL_SECONDS = 180;
+const DEEPTIDE_LISTINGS_URL = `${'https://api.deeptide.co'}/api/mint/listings/${DEEPTIDE_PIGEON_SHOP_SLUG}`;
+const DEEPTIDE_LISTINGS_MAX_LIMIT = 60; // server-enforced cap, confirmed empirically
 
 async function fetchDeeptideOwnedPigeons(address) {
   try {
@@ -921,7 +745,7 @@ async function fetchDeeptideOwnedPigeons(address) {
 
 // Short-lived cache (3 min) so repeatedly rendering pages that include a
 // popular wallet doesn't hammer Deeptide — deliberately much shorter than
-// the permanent per-token cache, since a wallet's holdings genuinely change.
+// any collection-wide cache, since a wallet's holdings genuinely change.
 async function getOwnerPigeonsViaDeeptide(kv, address) {
   const cacheKey = DEEPTIDE_OWNER_CACHE_PREFIX + address;
   const cached = await kv.get(cacheKey);
@@ -931,64 +755,11 @@ async function getOwnerPigeonsViaDeeptide(kv, address) {
   return items;
 }
 
-// Resolves full metadata for every ledger item belonging to ONE owner in a
-// single batch: one Deeptide call covers all of them (fast CDN images +
-// real traits + real rarity), falling back to a per-token IPFS fetch only
-// for whatever Deeptide doesn't have yet. Already-cached tokens are
-// returned straight from KV without calling Deeptide at all.
-//
-// `opts.indexExtras` (default false) — whether to also write the number
-// and trait indexes on a cache miss. Leave this off for anything in the
-// interactive request path; only the background indexer (small, bounded
-// batches) should turn it on, to stay under the subrequest budget.
-export async function resolvePigeonsForOwner(kv, owner, ledgerItems, opts = {}) {
-  const indexExtras = !!opts.indexExtras;
-  const results = [];
-  const uncached = [];
-  for (const it of ledgerItems) {
-    const cached = await getPigeonMetaCached(kv, it.nftId);
-    if (cached) results.push({ nftId: it.nftId, meta: cached });
-    else uncached.push(it);
-  }
-  if (!uncached.length) return results;
-
-  const deeptideItems = await getOwnerPigeonsViaDeeptide(kv, owner);
-  const byId = new Map(deeptideItems.map(d => [d.nftId, d]));
-
-  await Promise.all(uncached.map(async (it) => {
-    const fromDeeptide = byId.get(it.nftId);
-    let meta;
-    if (fromDeeptide && fromDeeptide.image) {
-      meta = {
-        number: fromDeeptide.number,
-        image: fromDeeptide.image,
-        attributes: fromDeeptide.attributes,
-        rarityRank: fromDeeptide.rarityRank,
-        rarityTotal: fromDeeptide.rarityTotal,
-      };
-      await safeKvPut(kv, PIGEON_META_PREFIX + it.nftId, JSON.stringify(meta));
-      if (indexExtras) {
-        if (meta.number !== null) await safeKvPut(kv, PIGEON_NUMBER_INDEX_PREFIX + meta.number, it.nftId);
-        await recordPigeonTraitIndex(kv, it.nftId, meta.attributes);
-      }
-    } else {
-      meta = await getPigeonFullMeta(kv, it.nftId, it.uriHex, indexExtras);
-    }
-    if (meta) results.push({ nftId: it.nftId, meta });
-  }));
-  return results;
-}
-
-// Live, uncached view of one wallet's real holdings — deliberately does NO
-// KV writes at all (beyond the existing short-lived owner-cache in
-// getOwnerPigeonsViaDeeptide), so this stays cheap regardless of how many
-// Pigeons the wallet holds. A single Deeptide call already returns every
-// token's image/traits/rarity in one shot; there is no need to also write
-// each one to the meta cache just to display THIS response — caching is
-// an optimization for future lookups, not a requirement for this one, and
-// a wallet holding 100+ Pigeons would otherwise burn 100+ subrequests on
-// cache-existence checks alone. Used for the "SELECT -> load owner's
-// collection" flow, where the wallet size isn't bounded by us.
+// Live, uncached view of one wallet's real holdings — a single Deeptide
+// call already returns every token's image/traits/rarity in one shot, so
+// there's no need to also write each one to a cache just to display this
+// response. Used for the "SELECT -> load owner's collection" flow, where
+// the wallet size isn't bounded by us (some hold 100+ Pigeons).
 export async function resolveOwnerCollectionLive(kv, owner, ledgerItems) {
   const deeptideItems = await getOwnerPigeonsViaDeeptide(kv, owner);
   const byId = new Map(deeptideItems.map(d => [d.nftId, d]));
@@ -1012,84 +783,179 @@ export async function resolveOwnerCollectionLive(kv, owner, ledgerItems) {
   return results.filter(Boolean);
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// Background full-collection indexer. Trait *percentages* (as opposed to
-// rarityRank, which Deeptide already gives per-token immediately) need the
-// true frequency of each value across the whole ~3015-token collection —
-// that requires having looked at all of it at least once. This scans the
-// full ledger in bounded batches (self-resuming via a saved marker) so one
-// invocation can never run away; it's meant to be kicked off opportunistically
-// via context.waitUntil() from a normal request, exactly like
-// recomputeCrownHolder() above, not awaited inline.
-// ─────────────────────────────────────────────────────────────────────────
-const PIGEON_INDEX_STATS_KEY = 'pswap:indexstats';
-const PIGEON_INDEX_STALE_SECONDS = 3600;
-// Deliberately tiny: full indexing (meta + number index + up to ~7
-// trait-membership writes) costs roughly 10-15 subrequests per NEW token,
-// plus a few more per distinct owner. Cloudflare caps a single request to
-// ~50 subrequests total, so this batch has to stay small enough that even
-// an all-cache-miss, all-distinct-owners run can't blow that budget in one
-// waitUntil invocation. Progress is saved after every page and resumes
-// from the last marker, so this is meant to make real (if slow) progress
-// across many real page loads, not finish in one shot.
-const PIGEON_INDEX_PAGES_PER_RUN = 1;
-const PIGEON_INDEX_PAGE_SIZE = 3;
+function deeptideListingToPigeon(it) {
+  const match = it.name ? String(it.name).match(/(\d+)/) : null;
+  return {
+    nftId: it.nftTokenId,
+    number: match ? parseInt(match[1], 10) : null,
+    image: it.imageUrl || null,
+    attributes: Array.isArray(it.traits) ? it.traits : [],
+    rarityRank: typeof it.rarityRank === 'number' ? it.rarityRank : null,
+    rarityTotal: typeof it.rarityTotal === 'number' ? it.rarityTotal : null,
+    owner: it.currentOwner || null,
+  };
+}
 
-export async function getPigeonIndexStats(kv) {
-  const raw = await kv.get(PIGEON_INDEX_STATS_KEY);
+// One page of the REAL, complete, live collection — sorted (rarity by
+// default; also price/name/date, matching what Deeptide's own marketplace
+// UI offers) and optionally AND-filtered by trait. No KV involved at all;
+// this is a direct pass-through, so it's always fully up to date and never
+// partial. `sort` uses Deeptide's own values: rarity-asc (rarest first),
+// rarity-desc, price-asc, price-desc, name-asc, name-desc, date-desc,
+// date-asc. `traits` is [{ trait, value }, ...] — ALL must match (AND).
+export async function fetchDeeptideListings({ skip = 0, limit = 36, sort = 'rarity-asc', traits } = {}) {
+  const params = new URLSearchParams({
+    skip: String(Math.max(0, skip)),
+    limit: String(Math.min(Math.max(1, limit), DEEPTIDE_LISTINGS_MAX_LIMIT)),
+    sort,
+  });
+  if (traits && traits.length) {
+    params.set('traits', JSON.stringify(traits.map(f => ({ trait_type: f.trait, value: f.value }))));
+  }
+  try {
+    const res = await fetch(`${DEEPTIDE_LISTINGS_URL}?${params.toString()}`);
+    if (!res.ok) return { items: [], total: 0, hasMore: false };
+    const data = await res.json();
+    return {
+      items: (data.items || []).map(deeptideListingToPigeon),
+      total: typeof data.total === 'number' ? data.total : 0,
+      hasMore: !!data.hasMore,
+    };
+  } catch (e) {
+    return { items: [], total: 0, hasMore: false, error: true };
+  }
+}
+
+// Fresh single-token detail — real current owner, full traits (each with
+// Deeptide's own collection-wide count/percentage, so trait rarity is
+// exact, not sampled), and rarity rank/total. Used for the INSPECT screen
+// and for resolving a number-search hit to current data.
+export async function fetchDeeptideNftDetail(nftId) {
+  try {
+    const res = await fetch(`${DEEPTIDE_API_BASE}/api/mint/nft/${encodeURIComponent(nftId)}`);
+    if (!res.ok) return null;
+    const d = await res.json();
+    const listing = d.listing || {};
+    const match = listing.name ? String(listing.name).match(/(\d+)/) : null;
+    return {
+      nftId: d.tokenId || nftId,
+      number: match ? parseInt(match[1], 10) : null,
+      image: listing.imageUrl || null,
+      attributes: (listing.traits || []).map(t => ({ trait_type: t.trait_type, value: t.value, percent: t.percentage })),
+      rarityRank: typeof listing.rarityRank === 'number' ? listing.rarityRank : null,
+      rarityTotal: typeof listing.rarityTotal === 'number' ? listing.rarityTotal : null,
+      owner: d.owner || null,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+// One page of "trait cards" — every distinct (category, value) combo in
+// the collection with its real, exact count. Powers the TRAITS filter
+// panel's category/value/percentage display.
+async function fetchDeeptideTraitCards(skip, limit) {
+  try {
+    const res = await fetch(`${DEEPTIDE_LISTINGS_URL}/trait-cards?skip=${skip}&limit=${limit}&sort=rarest`);
+    if (!res.ok) return { traits: [], total: 0 };
+    return await res.json();
+  } catch (e) {
+    return { traits: [], total: 0 };
+  }
+}
+
+// Real trait categories/values/percentages, grouped for the filter panel.
+// Cached for 10 minutes (collection-wide trait distribution barely moves)
+// so opening the TRAITS panel doesn't re-crawl every card on every click.
+const TRAIT_CARDS_CACHE_KEY = 'pswap:traitcards:v2';
+const TRAIT_CARDS_CACHE_TTL_SECONDS = 600;
+export async function getTraitCategoriesWithPercent(kv) {
+  const cached = await kv.get(TRAIT_CARDS_CACHE_KEY);
+  if (cached !== null) return JSON.parse(cached);
+
+  let skip = 0;
+  let total = Infinity;
+  const all = [];
+  while (skip < total && skip < 600) { // 600 is a generous ceiling well above the real ~242
+    const page = await fetchDeeptideTraitCards(skip, DEEPTIDE_LISTINGS_MAX_LIMIT);
+    total = page.total || 0;
+    if (!page.traits || !page.traits.length) break;
+    all.push(...page.traits);
+    skip += DEEPTIDE_LISTINGS_MAX_LIMIT;
+  }
+
+  const grouped = {};
+  for (const t of all) {
+    if (!t.trait_type || !t.value || t.value.startsWith('__')) continue; // Deeptide's internal "no trait" placeholder
+
+    if (!grouped[t.trait_type]) grouped[t.trait_type] = [];
+    grouped[t.trait_type].push({
+      value: t.value,
+      count: t.count,
+      percent: Math.round((t.count / PIGEON_COLLECTION_SIZE_APPROX) * 1000) / 10,
+    });
+  }
+  for (const cat of Object.keys(grouped)) grouped[cat].sort((a, b) => a.value.localeCompare(b.value));
+
+  await safeKvPut(kv, TRAIT_CARDS_CACHE_KEY, JSON.stringify(grouped), { expirationTtl: TRAIT_CARDS_CACHE_TTL_SECONDS });
+  return grouped;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Number -> NFTokenID map, so searching "1842" can resolve directly. Built
+// by crawling Deeptide's own cheap listings pages (no ledger scan, no
+// per-token KV writes) in bounded batches, self-resuming via a saved skip
+// cursor — a full crawl is only ~51 pages of 60, so this completes in a
+// handful of real page loads rather than weeks, unlike the old per-token
+// ledger-scan indexer it replaces.
+// ─────────────────────────────────────────────────────────────────────────
+const PIGEON_NUMBER_MAP_KEY = 'pswap:numbermap:v1';
+const PIGEON_NUMBER_MAP_STATS_KEY = 'pswap:numbermapstats:v1';
+const NUMBER_MAP_REFRESH_STALE_SECONDS = 6 * 3600;
+const NUMBER_MAP_CONCURRENT_GUARD_SECONDS = 10;
+const NUMBER_MAP_PAGES_PER_RUN = 15; // 15 * 60 = 900 tokens/run, ~15 fetches — safely under the subrequest budget
+
+export async function getPigeonNumberMap(kv) {
+  const raw = await kv.get(PIGEON_NUMBER_MAP_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
+export async function getPigeonNumberMapStats(kv) {
+  const raw = await kv.get(PIGEON_NUMBER_MAP_STATS_KEY);
   return raw ? JSON.parse(raw) : null;
 }
 
-// Safe to call opportunistically and often — it no-ops if a run is
-// genuinely still active (concurrent request) or a complete scan finished
-// recently. Each invocation runs to completion (processing just one tiny
-// page) in a couple of seconds, so the "still active" guard only needs to
-// catch true concurrent overlap, not block the next sequential page load
-// from making progress — a long cooldown here would mean the indexer only
-// ever advances once every N minutes regardless of how much real traffic
-// hits the site.
-const PIGEON_INDEX_CONCURRENT_GUARD_SECONDS = 10;
-export async function maybeRecomputePigeonIndex(kv) {
-  const stats = await getPigeonIndexStats(kv);
+export async function maybeRefreshPigeonNumberMap(kv) {
+  const statsRaw = await kv.get(PIGEON_NUMBER_MAP_STATS_KEY);
+  const stats = statsRaw ? JSON.parse(statsRaw) : null;
   const now = Math.floor(Date.now() / 1000);
-  if (stats && stats.inProgress && now - stats.updatedAt < PIGEON_INDEX_CONCURRENT_GUARD_SECONDS) return;
-  if (stats && !stats.inProgress && !stats.marker && now - stats.computedAt < PIGEON_INDEX_STALE_SECONDS) return; // fresh complete scan
-  await recomputePigeonIndex(kv, stats);
-}
+  if (stats && stats.inProgress && now - stats.updatedAt < NUMBER_MAP_CONCURRENT_GUARD_SECONDS) return;
+  if (stats && !stats.inProgress && now - stats.completedAt < NUMBER_MAP_REFRESH_STALE_SECONDS) return;
 
-export async function recomputePigeonIndex(kv, existing) {
-  let marker = existing && existing.marker ? existing.marker : null;
-  let totalIndexed = existing && existing.marker ? existing.totalIndexed : 0;
-  const startedAt = existing && existing.inProgress ? existing.startedAt : Math.floor(Date.now() / 1000);
+  let skip = stats && stats.inProgress ? stats.nextSkip : 0;
+  const map = stats && stats.inProgress ? await getPigeonNumberMap(kv) : {};
+  let lastTotal = 3015;
 
-  for (let i = 0; i < PIGEON_INDEX_PAGES_PER_RUN; i++) {
-    const page = await fetchPigeonCollectionPage(marker, PIGEON_INDEX_PAGE_SIZE);
-    const byOwner = new Map();
+  for (let i = 0; i < NUMBER_MAP_PAGES_PER_RUN; i++) {
+    const page = await fetchDeeptideListings({ skip, limit: DEEPTIDE_LISTINGS_MAX_LIMIT, sort: 'rarity-asc' });
+    if (page.error || !page.items.length) break;
     for (const it of page.items) {
-      if (!byOwner.has(it.owner)) byOwner.set(it.owner, []);
-      byOwner.get(it.owner).push(it);
+      if (it.number !== null) map[it.number] = it.nftId;
     }
-    await Promise.all(Array.from(byOwner.entries()).map(([owner, items]) => resolvePigeonsForOwner(kv, owner, items, { indexExtras: true })));
-    totalIndexed += page.items.length;
-    marker = page.marker;
-    await safeKvPut(kv, PIGEON_INDEX_STATS_KEY, JSON.stringify({
-      inProgress: !!marker, startedAt, marker, totalIndexed, updatedAt: Math.floor(Date.now() / 1000),
-      computedAt: Math.floor(Date.now() / 1000),
-    }));
-    if (!marker) break;
+    lastTotal = page.total || lastTotal;
+    skip += DEEPTIDE_LISTINGS_MAX_LIMIT;
+    if (skip >= lastTotal) {
+      await safeKvPut(kv, PIGEON_NUMBER_MAP_KEY, JSON.stringify(map));
+      await safeKvPut(kv, PIGEON_NUMBER_MAP_STATS_KEY, JSON.stringify({
+        inProgress: false, completedAt: now, updatedAt: now, count: Object.keys(map).length,
+      }));
+      return;
+    }
   }
-  return getPigeonIndexStats(kv);
-}
-
-// Percentage of the currently-indexed collection carrying one trait value —
-// honest about being partial until a full scan (marker === null) completes.
-export async function getTraitValuePercent(kv, traitType, value, stats) {
-  if (!stats || !stats.totalIndexed) return null;
-  const prefix = `${PIGEON_TRAIT_MEMBER_PREFIX}${traitType}:${value}:`;
-  const list = await kv.list({ prefix, limit: 1000 });
-  const count = list.keys.length;
-  const pct = Math.round((count / stats.totalIndexed) * 1000) / 10;
-  return { count, pct, truncated: !list.list_complete, partial: !!stats.marker };
+  await safeKvPut(kv, PIGEON_NUMBER_MAP_KEY, JSON.stringify(map));
+  await safeKvPut(kv, PIGEON_NUMBER_MAP_STATS_KEY, JSON.stringify({
+    inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(map).length,
+  }));
 }
 
 // Kingdom Phase 1 — every King NFT needs a stable friendly ID for display
