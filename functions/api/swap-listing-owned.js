@@ -1,4 +1,4 @@
-import { fetchAllAccountNfts, findAllPigeons, fetchNftSellOffers, recordSwapListing, getSwapListingsMap, mapWithConcurrency } from '../_shared.js';
+import { fetchAllAccountNfts, findAllPigeons, fetchNftSellOffers, recordSwapListing, getSwapListingsMap, mapWithConcurrency, findPigeonsOffer } from '../_shared.js';
 
 // Real on-ledger "which of my own Pigeons have an active sell offer I
 // created" check — powers the LISTED badge in MY PIGEONS. Never a
@@ -22,8 +22,11 @@ const DISCOVERY_CAP = 45;
 // nftId check below.
 async function verifyAndRecord(env, nftId, wallet, listed) {
   const offers = await fetchNftSellOffers(nftId);
-  const ownOffer = offers.find(o => o.owner === wallet);
-  if (ownOffer && ownOffer.amount && typeof ownOffer.amount === 'object') {
+  // Specifically the Σκύλλα $PIGEONS offer — a wallet's held Pigeon can
+  // also carry an unrelated (e.g. XRP/Deeptide) offer from the same
+  // owner at the same time.
+  const ownOffer = findPigeonsOffer(offers, wallet);
+  if (ownOffer) {
     listed[nftId] = {
       price: ownOffer.amount.value,
       currency: ownOffer.amount.currency,

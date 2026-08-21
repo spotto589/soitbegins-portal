@@ -302,7 +302,11 @@ export async function onRequestGet(context) {
       for (const id of pageIds.slice(0, BACKGROUND_VERIFY_SAMPLE)) {
         const offers = await fetchNftSellOffers(id);
         const entry = scyllaListingsMap[id];
-        if (entry && !offers.some(o => o.owner === entry.seller)) {
+        // Match the exact recorded offer, not just "any offer by this
+        // owner" — the same owner can have an unrelated (e.g. XRP) offer
+        // live on the same NFT, which would otherwise look like "still
+        // listed" even after the real $PIGEONS offer is gone.
+        if (entry && !offers.some(o => o.nft_offer_index === entry.offerId)) {
           await removeSwapListing(env.coin, id);
         }
       }

@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, fetchAllAccountNfts,
-  getXamanPayloadStatus, removeSwapListing
+  getXamanPayloadStatus, removeSwapListing, findPigeonsOffer
 } from '../_shared.js';
 
 const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
@@ -68,7 +68,11 @@ export async function onRequestGet(context) {
     fetchNftSellOffers(nftId)
   ]);
   const buyerOwnsIt = buyerNfts.some(n => n.NFTokenID === nftId);
-  const offerGone = !remainingOffers.length;
+  // Specifically the $PIGEONS offer being gone, not "zero offers total" —
+  // an unrelated (e.g. stale XRP/Deeptide) offer object can still exist
+  // in nft_sell_offers even after this NFT has changed hands, and
+  // checking total count would then never resolve.
+  const offerGone = !findPigeonsOffer(remainingOffers);
 
   if (!buyerOwnsIt || !offerGone) {
     // Signed successfully on Xaman's side but not yet fully reflected on

@@ -270,6 +270,26 @@ export function isTransferable(nft) {
   return !!(nft && typeof nft.Flags === 'number' && (nft.Flags & 0x0008) !== 0);
 }
 
+// The Σκύλλα $PIGEONS offer among a NFT's real sell offers — NEVER
+// `offers[0]` or `offers.find(o => o.owner === x)` alone. A single Pigeon
+// can carry multiple simultaneous sell offers from the same owner in
+// different currencies (confirmed live: one wallet had both a real 22.22
+// XRP Deeptide listing AND a real $PIGEONS Scylla listing on the same
+// NFT at once) — matching on owner alone silently grabs whichever offer
+// happens to come first, regardless of currency. This is what BUY,
+// DELIST, and the listings index must all match against; `owner` is
+// optional (omit to find the currency match regardless of who created
+// it, e.g. for BUY where the buyer isn't the offer's owner).
+export function findPigeonsOffer(offers, owner) {
+  const currency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
+  return offers.find(o =>
+    (owner === undefined || o.owner === owner) &&
+    o.amount && typeof o.amount === 'object' &&
+    o.amount.currency === currency &&
+    o.amount.issuer === PIGEONS_TOKEN_CONFIG.issuer
+  ) || null;
+}
+
 // Real on-ledger sell offers for one NFT — the authoritative "is this
 // actually listed, and for how much" source. xrplcluster.com rate-limits
 // (returns a plain-text "Rate limit..." body, not JSON) under bursts of

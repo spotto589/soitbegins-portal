@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, findPigeonsOffer
 } from '../_shared.js';
 
 // Σκύλλα SWAP — DELIST (phase 2). Builds and returns the exact
@@ -38,7 +38,11 @@ export async function onRequestPost(context) {
   }
 
   const offers = await fetchNftSellOffers(nftId);
-  const ownOffer = offers.find(o => o.owner === seller);
+  // Specifically the Σκύλλα $PIGEONS offer — the same wallet can also
+  // have an unrelated XRP (or other) sell offer live on the same NFT
+  // (e.g. an existing Deeptide listing); matching on owner alone would
+  // risk cancelling the wrong one.
+  const ownOffer = findPigeonsOffer(offers, seller);
   if (!ownOffer) {
     return new Response(JSON.stringify({ error: 'not_listed_by_you' }), { status: 403 });
   }

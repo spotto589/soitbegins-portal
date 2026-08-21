@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull,
-  getXamanPayloadStatus, removeSwapListing
+  getXamanPayloadStatus, removeSwapListing, findPigeonsOffer
 } from '../_shared.js';
 
 const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
@@ -65,9 +65,12 @@ export async function onRequestGet(context) {
   // xrplcluster.com rate-limiting) must never be treated as "confirmed
   // gone," or a transient blip could wrongly declare DELISTED while the
   // offer is still live. null means "couldn't verify" — keep polling,
-  // same as still finding the offer.
+  // same as still finding the offer. And it must be the $PIGEONS offer
+  // specifically gone, not just "no offers by this owner at all" — an
+  // unrelated (e.g. XRP) offer from the same seller must never block a
+  // real delist from ever resolving.
   const remainingOffers = await fetchNftSellOffersOrNull(nftId);
-  const stillThere = remainingOffers === null || remainingOffers.some(o => o.owner === seller);
+  const stillThere = remainingOffers === null || !!findPigeonsOffer(remainingOffers, seller);
   if (stillThere) {
     // Signed successfully on Xaman's side but not yet reflected on ledger
     // reads (or the read itself failed) — caller should keep polling.

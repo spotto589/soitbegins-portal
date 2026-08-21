@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, createXamanPayload
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, createXamanPayload, findPigeonsOffer
 } from '../_shared.js';
 
 const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
@@ -41,7 +41,7 @@ export async function onRequestPost(context) {
   }
 
   const offers = await fetchNftSellOffers(nftId);
-  const ownOffer = offers.find(o => o.owner === seller);
+  const ownOffer = findPigeonsOffer(offers, seller);
   if (!ownOffer) {
     return new Response(JSON.stringify({ error: 'not_listed_by_you' }), { status: 403 });
   }

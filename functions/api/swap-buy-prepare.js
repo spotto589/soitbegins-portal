@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, findPigeonsOffer
 } from '../_shared.js';
 
 // Σκύλλα SWAP — BUY (phase 2). Builds and returns the exact
@@ -38,11 +38,11 @@ export async function onRequestPost(context) {
   }
 
   const offers = await fetchNftSellOffers(nftId);
-  // Any real, live sell offer for this NFT — not filtered to "Scylla's own"
-  // seller, since the live offer itself is authoritative regardless of
-  // which flow originally created it.
-  const offer = offers[0] || null;
-  if (!offer || !offer.amount || typeof offer.amount !== 'object') {
+  // The Σκύλλα $PIGEONS offer specifically — a Pigeon can carry other
+  // currencies' sell offers simultaneously (e.g. a separate XRP listing
+  // on Deeptide); findPigeonsOffer never grabs the wrong one by accident.
+  const offer = findPigeonsOffer(offers);
+  if (!offer) {
     return new Response(JSON.stringify({ error: 'not_listed' }), { status: 404 });
   }
   if (offer.owner === buyer) {

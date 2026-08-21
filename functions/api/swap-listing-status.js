@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, recordSwapListing
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, recordSwapListing, findPigeonsOffer
 } from '../_shared.js';
 
 const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
@@ -62,12 +62,16 @@ export async function onRequestGet(context) {
 
   const txHash = resp && resp.txid;
 
-  // Confirm on real ledger state, not just Xaman's word — find the sell
-  // offer this seller's own account created for this exact NFT (`owner` on
-  // nft_sell_offers is the offer's creator).
+  // Confirm on real ledger state, not just Xaman's word — find the
+  // Σκύλλα $PIGEONS offer this seller's own account created for this
+  // exact NFT. Specifically the $PIGEONS one, not just any offer by this
+  // owner: confirmed live, a seller can have an unrelated pre-existing
+  // offer (e.g. XRP, from Deeptide) on the same NFT — matching on owner
+  // alone would grab that instead and either report the wrong price or
+  // declare "listed" before the real new offer even exists on ledger.
   const seller = payload.acct;
   const offers = await fetchNftSellOffers(nftId);
-  const ownOffer = offers.find(o => o.owner === seller) || null;
+  const ownOffer = findPigeonsOffer(offers, seller);
 
   if (!ownOffer) {
     // Signed successfully on Xaman's side but not yet visible via

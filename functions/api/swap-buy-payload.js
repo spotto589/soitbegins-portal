@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, createXamanPayload
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, createXamanPayload, findPigeonsOffer
 } from '../_shared.js';
 
 const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
@@ -43,8 +43,10 @@ export async function onRequestPost(context) {
   }
 
   const offers = await fetchNftSellOffers(nftId);
-  const offer = offers[0] || null;
-  if (!offer || !offer.amount || typeof offer.amount !== 'object') {
+  // The Σκύλλα $PIGEONS offer specifically — see findPigeonsOffer's own
+  // comment for why offers[0]/owner-only matching is wrong here.
+  const offer = findPigeonsOffer(offers);
+  if (!offer) {
     return new Response(JSON.stringify({ error: 'not_listed' }), { status: 404 });
   }
   if (offer.owner === buyer) {
