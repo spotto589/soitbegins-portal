@@ -192,6 +192,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
 
+  /* ---- reference-image texture, used as a sprite: same file, two crops,
+     nearly blacked out by the scrim gradient so it reads as faint noise
+     under the panel, never competes with the text on top ---- */
+  .sw-panel-signal{
+    background-image:
+      linear-gradient(rgba(8,9,11,0.87), rgba(8,9,11,0.87)),
+      url('/assets/digitalglitchpattern.png');
+    background-size:100% 100%, 240% 240%;
+    background-position:center, 0% 0%;
+    background-repeat:no-repeat, no-repeat;
+  }
+  .sw-panel-target{
+    background-image:
+      linear-gradient(rgba(8,9,11,0.84), rgba(8,9,11,0.84)),
+      url('/assets/digitalglitchpattern.png');
+    background-size:100% 100%, 240% 240%;
+    background-position:center, 100% 100%;
+    background-repeat:no-repeat, no-repeat;
+  }
+
   /* ---- database (multi-collection) selector ---- */
   .db-select-wrap{ text-align:center; position:relative; margin-bottom:1.75rem; }
   .db-select-toggle{
@@ -995,7 +1015,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
     <div id="screenBrowse" style="display:none;">
-      <div class="sw-panel" id="collectionDetailsPanel">
+      <div class="sw-panel sw-panel-signal" id="collectionDetailsPanel">
         <div class="panel-title">P!GE0NS</div>
         <div class="collection-info">
           <div class="ci-label">!SSUER / ADDRESS</div>
@@ -1015,7 +1035,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
       </div>
 
-      <div class="sw-panel" id="nodeHeaderPanel" style="display:none;">
+      <div class="sw-panel sw-panel-target" id="nodeHeaderPanel" style="display:none;">
         <div class="node-eyebrow">// TARGET N0DE !DENT!F!ED</div>
 
         <div class="target-pigeon-card" id="targetPigeonCard" style="display:none;">
