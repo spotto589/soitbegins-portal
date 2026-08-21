@@ -1507,7 +1507,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function renderMyPigeonsList(){
     if (myPigeonsData === null){ el.myPigeonsList.innerHTML = '<div class="th-empty">L0AD!NG...</div>'; return; }
-    if (!myPigeonsData.length){ el.myPigeonsList.innerHTML = '<div class="th-empty">Y0U D0N\'T H0LD ANY P!GE0NS YET.</div>'; return; }
+    if (!myPigeonsData.length){ el.myPigeonsList.innerHTML = '<div class="th-empty">Y0U D0N\\'T H0LD ANY P!GE0NS YET.</div>'; return; }
     el.myPigeonsList.innerHTML = '<div class="result-grid my-pigeons-grid">' + myPigeonsData.map(resultCardHtml).join('') + '</div>';
   }
   function loadMyPigeons(){
