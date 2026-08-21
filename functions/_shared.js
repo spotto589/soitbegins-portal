@@ -1403,11 +1403,21 @@ export async function createXamanPayload(apiKey, apiSecret, txjson, options) {
   try {
     const res = await fetch('https://xumm.app/api/v1/platform/payload', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey, 'X-API-Secret': apiSecret },
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; ScyllaSwap/1.0)',
+        'X-API-Key': apiKey,
+        'X-API-Secret': apiSecret
+      },
       body: JSON.stringify({ txjson, options: options || { submit: true, expire: 5 } }),
       signal: controller.signal
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const bodyText = await res.text().catch(() => '(unreadable)');
+      console.log('createXamanPayload not ok:', res.status, res.headers.get('cf-ray'), bodyText.slice(0, 300));
+      return null;
+    }
     return await res.json();
   } catch (e) {
     return null;
