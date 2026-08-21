@@ -201,7 +201,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:0.6rem;
     flex-wrap:wrap;
   }
-  select.trait-cat-select, select.trait-val-select{
+  select.trait-cat-select{
     background:#000;
     border:1px solid rgba(57,255,20,0.3);
     color:#e8e8e8;
@@ -212,7 +212,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
     cursor:pointer;
   }
-  select.trait-cat-select option, select.trait-val-select option{ background:#08080a; color:#e8e8e8; }
+  select.trait-cat-select option{ background:#08080a; color:#e8e8e8; }
+  .trait-value-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.4rem;
+    width:100%;
+    margin-top:0.5rem;
+  }
+  .trait-chip{
+    background:transparent;
+    border:1px solid rgba(57,255,20,0.3);
+    color:rgba(232,232,232,0.75);
+    font-family:inherit;
+    font-size:10px;
+    letter-spacing:0.05em;
+    padding:0.5em 0.75em;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .trait-chip:hover{ background:rgba(57,255,20,0.08); }
+  .trait-chip.selected{ background:#39ff14; color:#08080a; border-color:#39ff14; }
   .trait-row-remove{
     background:transparent;
     border:1px solid rgba(255,0,60,0.5);
@@ -322,9 +342,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card .pigeon-img-box{ border:none; }
   .result-card.in-target{ border-color:#39ff14; box-shadow:0 0 10px rgba(57,255,20,0.25) inset; }
   .result-card-body{ padding:0.55rem 0.4rem; }
-  .result-num{ font-size:13px; letter-spacing:0.03em; color:#e8e8e8; text-align:center; }
+  .result-num{ font-size:13px; letter-spacing:0.03em; color:#39ff14; text-shadow:0 0 4px rgba(57,255,20,0.35); text-align:center; }
   .result-rarity-line{ font-size:11px; letter-spacing:0.03em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); text-align:center; }
   .card-select-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
+  .inspect-btn{
+    display:block;
+    width:100%;
+    margin-top:0.4rem;
+    background:transparent;
+    border:1px solid rgba(0,255,242,0.4);
+    color:#00fff2;
+    font-family:inherit;
+    font-size:10px;
+    letter-spacing:0.1em;
+    padding:0.4em 0;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .inspect-btn:hover{ background:rgba(0,255,242,0.1); }
 
   @media (max-width:700px){
     body{ padding:4vh 2.5vw 6vh; }
@@ -334,6 +369,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     .result-num{ font-size:9px; }
     .result-rarity-line{ display:none; }
     .card-select-toggle{ width:1.4em; height:1.4em; line-height:1.4em; font-size:11px; }
+    .inspect-btn{ font-size:8px; padding:0.3em 0; }
   }
 
   /* ---- infinite scroll ---- */
@@ -404,6 +440,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .df-value{ color:#e8e8e8; text-align:right; word-break:break-all; }
   .df-value.not-indexed{ color:#ff003c; text-shadow:0 0 4px rgba(255,0,60,0.3); }
   .df-value.rarity{ color:#ffd700; text-shadow:0 0 4px rgba(255,215,0,0.3); }
+  .df-value a.owner-link{ color:#00fff2; text-shadow:0 0 4px rgba(0,255,242,0.4); text-decoration:underline; }
+  .df-value a.owner-link:hover{ color:#fff; }
   .detail-traits-title{
     text-align:center;
     font-size:11px;
@@ -422,6 +460,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .trait-cell{ border:1px solid rgba(57,255,20,0.2); padding:0.6rem 0.75rem; text-align:center; }
   .trait-cell .tc-label{ font-size:9px; letter-spacing:0.15em; color:rgba(232,232,232,0.4); margin-bottom:0.35rem; text-transform:uppercase; }
   .trait-cell .tc-value{ font-size:13px; letter-spacing:0.03em; color:#39ff14; text-shadow:0 0 4px rgba(57,255,20,0.3); }
+  .trait-cell .tc-sub{ font-size:9px; letter-spacing:0.08em; color:rgba(0,255,242,0.6); margin-top:0.3rem; text-transform:uppercase; }
   .tech-meta{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed rgba(232,232,232,0.15); padding-top:1rem; }
   .tech-meta-title{ text-align:center; font-size:10px; letter-spacing:0.2em; color:rgba(232,232,232,0.35); margin-bottom:0.6rem; text-transform:uppercase; }
   .tech-meta-row{ display:flex; justify-content:space-between; font-size:10px; letter-spacing:0.02em; color:rgba(232,232,232,0.5); margin-bottom:0.35rem; }
@@ -544,6 +583,9 @@ const SWAP_HTML = `<!DOCTYPE html>
             <option value="NAME_ASC">NAME A → Z</option>
             <option value="NAME_DESC">NAME Z → A</option>
           </select>
+          <select class="sort-select" id="topHoldersSelect">
+            <option value="">[ T0P 10 H0LDERS ▼ ]</option>
+          </select>
         </div>
         <div class="index-line" id="indexLine"></div>
 
@@ -638,7 +680,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','sortSelect','indexLine','traitRows','addTraitBtn','clearTraitsBtn',
+  ['searchInput','searchBtn','sortSelect','topHoldersSelect','indexLine','traitRows','addTraitBtn','clearTraitsBtn',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
    'screenBrowse','screenDetail','screenSummary',
@@ -775,7 +817,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // corner select toggle — 6 columns doesn't leave room for more; tap the
   // image to INSPECT for the full trait set). ----
   function resultCardHtml(p){
-    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">#' + p.rarityRank + '</div>' : '';
+    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY #' + p.rarityRank + '</div>' : '';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
     var inTarget = !!state.targetAssets[p.nftId];
@@ -787,6 +829,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       '<div class="result-card-body">' +
         '<div class="result-num">P!GE0N ' + num + '</div>' +
         rarityLine +
+        '<button class="inspect-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ !NSPECT ]</button>' +
       '</div>' +
     '</div>';
   }
@@ -812,6 +855,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (tp) handleSelect(tp);
         return;
       }
+      var inspectBtn = e.target.closest('.inspect-btn');
+      if (inspectBtn){ openDetail(inspectBtn.getAttribute('data-nftid')); return; }
       var imgBox = e.target.closest('.pigeon-img-box');
       if (imgBox){ openDetail(imgBox.getAttribute('data-nftid')); }
     });
@@ -889,21 +934,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   scrollObserver.observe(el.scrollSentinel);
 
   // ---- Trait stack (stackable AND filters) ----
+  // Pick a category from the dropdown; every value for that category then
+  // appears as a row of clickable chips (sorted rarest/highest % first, not
+  // A-Z) rather than a second dropdown — click one to filter, click again to
+  // clear it.
   function renderTraitRows(){
     var cats = state.traitCategories ? Object.keys(state.traitCategories) : [];
     el.traitRows.innerHTML = state.traitFilters.map(function(row){
       var catOptions = cats.map(function(c){
         return '<option value="' + escapeHtml(c) + '"' + (row.category === c ? ' selected' : '') + '>' + escapeHtml(c.toUpperCase()) + '</option>';
       }).join('');
-      var vals = (row.category && state.traitCategories[row.category]) || [];
-      var valOptions = vals.map(function(v){
+      var vals = ((row.category && state.traitCategories[row.category]) || []).slice().sort(function(a, b){
+        return (b.percent || 0) - (a.percent || 0);
+      });
+      var chips = vals.map(function(v){
         var pct = v.percent !== null && v.percent !== undefined ? ' (' + v.percent + '%)' : '';
-        return '<option value="' + escapeHtml(v.value) + '"' + (row.value === v.value ? ' selected' : '') + '>' + escapeHtml(v.value.toUpperCase()) + pct + '</option>';
+        return '<button type="button" class="trait-chip' + (row.value === v.value ? ' selected' : '') + '" data-id="' + row.id + '" data-value="' + escapeHtml(v.value) + '">' + escapeHtml(v.value.toUpperCase()) + pct + '</button>';
       }).join('');
       return '<div class="trait-row" data-id="' + row.id + '">' +
         '<select class="trait-cat-select" data-id="' + row.id + '"><option value="">[ CATEG0RY ▼ ]</option>' + catOptions + '</select>' +
-        '<select class="trait-val-select" data-id="' + row.id + '"' + (row.category ? '' : ' disabled') + '><option value="">[ VALUE ▼ ]</option>' + valOptions + '</select>' +
         '<button class="trait-row-remove" data-id="' + row.id + '">&times;</button>' +
+        (row.category ? '<div class="trait-value-chips" data-id="' + row.id + '">' + chips + '</div>' : '') +
       '</div>';
     }).join('');
   }
@@ -923,17 +974,28 @@ const SWAP_HTML = `<!DOCTYPE html>
     var row = state.traitFilters.filter(function(r){ return r.id === id; })[0];
     if (!row) return;
     if (e.target.classList.contains('trait-cat-select')){ row.category = e.target.value; row.value = ''; }
-    else if (e.target.classList.contains('trait-val-select')){ row.value = e.target.value; }
     renderTraitRows();
     runQuery();
   });
   el.traitRows.addEventListener('click', function(e){
-    var btn = e.target.closest('.trait-row-remove');
-    if (!btn) return;
-    var id = parseInt(btn.getAttribute('data-id'), 10);
-    state.traitFilters = state.traitFilters.filter(function(r){ return r.id !== id; });
-    renderTraitRows();
-    runQuery();
+    var removeBtn = e.target.closest('.trait-row-remove');
+    if (removeBtn){
+      var rid = parseInt(removeBtn.getAttribute('data-id'), 10);
+      state.traitFilters = state.traitFilters.filter(function(r){ return r.id !== rid; });
+      renderTraitRows();
+      runQuery();
+      return;
+    }
+    var chip = e.target.closest('.trait-chip');
+    if (chip){
+      var cid = parseInt(chip.getAttribute('data-id'), 10);
+      var row = state.traitFilters.filter(function(r){ return r.id === cid; })[0];
+      if (!row) return;
+      var value = chip.getAttribute('data-value');
+      row.value = row.value === value ? '' : value;
+      renderTraitRows();
+      runQuery();
+    }
   });
 
   function activeFilters(){
@@ -1044,6 +1106,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
 
+  // ---- Top 10 holders dropdown (network-wide, cached snapshot) ----
+  function loadTopHolders(){
+    api({ topHolders: 1 }).then(function(data){
+      var holders = data.holders || [];
+      if (!holders.length){
+        el.topHoldersSelect.innerHTML = '<option value="">[ T0P 10 H0LDERS ▼ ] N0T READY YET</option>';
+        return;
+      }
+      el.topHoldersSelect.innerHTML = '<option value="">[ T0P 10 H0LDERS ▼ ]</option>' +
+        holders.map(function(h, i){
+          return '<option value="' + escapeHtml(h.wallet) + '">#' + (i + 1) + ' :: ' + escapeHtml(h.ownerShort) + ' :: ' + h.count + ' HELD</option>';
+        }).join('');
+    }).catch(function(){});
+  }
+  el.topHoldersSelect.addEventListener('change', function(){
+    var wallet = el.topHoldersSelect.value;
+    el.topHoldersSelect.value = '';
+    if (wallet) window.open('https://bithomp.com/explorer/' + encodeURIComponent(wallet), '_blank', 'noopener');
+  });
+
   el.searchBtn.addEventListener('click', runSearchBox);
   el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearchBox(); });
   el.sortSelect.addEventListener('change', function(){
@@ -1053,7 +1135,16 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   // ---- Inspect / detail ----
   function traitCellHtml(a){
-    return '<div class="trait-cell"><div class="tc-label">' + escapeHtml(a.trait_type) + '</div><div class="tc-value">' + escapeHtml(a.value) + '</div></div>';
+    var subParts = [];
+    if (a.percent !== null && a.percent !== undefined) subParts.push(a.percent + '%');
+    if (a.count !== null && a.count !== undefined) subParts.push(a.count + ' P!GE0NS');
+    var sub = subParts.length ? '<div class="tc-sub">' + escapeHtml(subParts.join(' :: ')) + '</div>' : '';
+    return '<div class="trait-cell"><div class="tc-label">' + escapeHtml(a.trait_type) + '</div><div class="tc-value">' + escapeHtml(a.value) + '</div>' + sub + '</div>';
+  }
+  function renderOwnerLink(short, full){
+    if (!full){ el.detailOwner.textContent = 'N0T !NDEXED'; el.detailOwner.classList.add('not-indexed'); return; }
+    el.detailOwner.classList.remove('not-indexed');
+    el.detailOwner.innerHTML = '<a class="owner-link" href="https://bithomp.com/explorer/' + encodeURIComponent(full) + '" target="_blank" rel="noopener">' + escapeHtml(short || full) + '</a>';
   }
   function updateDetailRarity(p){
     if (p && p.rarityRank){ el.detailRarityRow.style.display = ''; el.detailRarity.textContent = p.rarityRank + (p.rarityTotal ? ' / ' + p.rarityTotal : ''); }
@@ -1067,8 +1158,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     var known = findKnown(nftId);
     el.detailNum.textContent = known && known.number !== null ? 'P!GE0N #' + known.number : 'P!GE0N ...';
     el.detailImgBox.innerHTML = known && known.image ? '<img src="' + escapeHtml(known.image) + '" alt="">' : '[ IMAGE ]';
-    el.detailOwner.textContent = known && known.ownerShort ? known.ownerShort : '...';
-    el.detailOwner.classList.remove('not-indexed');
+    if (known && known.owner) renderOwnerLink(known.ownerShort, known.owner);
+    else { el.detailOwner.textContent = '...'; el.detailOwner.classList.remove('not-indexed'); }
     el.detailTraits.innerHTML = known ? known.attributes.map(traitCellHtml).join('') : '';
     el.detailNftId.textContent = nftId;
     updateDetailRarity(known);
@@ -1079,8 +1170,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     api({ detail: nftId }).then(function(data){
       if (!data.item){
         state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null, attributes: [] };
-        el.detailOwner.textContent = 'N0T !NDEXED';
-        el.detailOwner.classList.add('not-indexed');
+        renderOwnerLink(null, null);
         return;
       }
       var p = data.item;
@@ -1089,12 +1179,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
       el.detailTraits.innerHTML = p.attributes.map(traitCellHtml).join('');
       updateDetailRarity(p);
-      if (p.ownerShort){ el.detailOwner.textContent = p.ownerShort; el.detailOwner.classList.remove('not-indexed'); }
-      else { el.detailOwner.textContent = 'N0T !NDEXED'; el.detailOwner.classList.add('not-indexed'); }
+      renderOwnerLink(p.ownerShort, p.owner);
       refreshCardSelectionStates();
     }).catch(function(){
-      el.detailOwner.textContent = 'N0T !NDEXED';
-      el.detailOwner.classList.add('not-indexed');
+      renderOwnerLink(null, null);
     });
   }
   el.backToBrowseBtn.addEventListener('click', function(){ showScreen('browse'); });
@@ -1104,6 +1192,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   // ---- Initial load ----
   ensureTraitsLoaded();
+  loadTopHolders();
   startCollectionBrowse();
 
   // TV static background, purely atmospheric — matches the rest of the site.

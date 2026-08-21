@@ -583,22 +583,25 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     align-items:center;
     gap:0.6em;
     background:transparent;
-    border:1px dashed rgba(57,255,20,0.3);
-    color:rgba(232,232,232,0.35);
+    border:1px solid rgba(57,255,20,0.5);
+    color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.4);
     font-family:inherit;
     font-size:12px;
     letter-spacing:0.1em;
     padding:0.65em 1.2em;
     text-transform:none;
-    cursor:not-allowed;
-    user-select:none;
+    text-decoration:none;
+    cursor:pointer;
   }
+  .swap-proto-btn:hover{ background:rgba(57,255,20,0.1); }
   .swap-proto-btn .swap-proto-tag{
     font-size:9px;
     letter-spacing:0.15em;
-    color:rgba(255,0,60,0.6);
-    border:1px solid rgba(255,0,60,0.35);
+    color:rgba(0,255,242,0.7);
+    border:1px solid rgba(0,255,242,0.35);
     padding:0.2em 0.5em;
+    text-shadow:none;
   }
   .cb-label-become{
     font-size:1.3em;
@@ -2220,7 +2223,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
         </span>
       </div>
       <div class="swap-proto-wrap">
-        <span class="swap-proto-btn" aria-disabled="true" title="PR0T0C0L 0FFL!NE :: N0T YET ACT!VE">[ Σκύλλα ] SWAP <span class="swap-proto-tag">0FFL!NE</span></span>
+        <a class="swap-proto-btn" href="/swap" title="Σκύλλα SWAP :: P!GE0N DATABASE">[ Σκύλλα ] SWAP <span class="swap-proto-tag">PR0T0TYPE</span></a>
       </div>
     </div>
     <div class="signed-counter">

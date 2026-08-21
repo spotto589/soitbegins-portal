@@ -2,7 +2,8 @@ import {
   fetchDeeptideListings, fetchDeeptideNftDetail, getTraitCategoriesWithPercent,
   getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap,
   resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons,
-  proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX
+  proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX,
+  getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
 } from '../_shared.js';
 
 // Client sort keys -> Deeptide's own sort values (same ones its own
@@ -66,6 +67,21 @@ export async function onRequestGet(context) {
     });
   }
 
+  // Top 10 current Pigeon holders, network-wide — piggybacks on the same
+  // cached full-scan snapshot the Crown feature already maintains (board.js),
+  // so this is a cheap KV read on every normal request; a stale/missing
+  // snapshot kicks off a background recompute via waitUntil, same pattern.
+  if (params.get('topHolders') === '1') {
+    const snapshot = await getCachedCrownHolder(env.coin);
+    const stale = !snapshot || (Math.floor(Date.now() / 1000) - snapshot.computedAt) > CROWN_SNAPSHOT_MAX_AGE_SECONDS;
+    if (stale) context.waitUntil(recomputeCrownHolder(env.coin).catch(() => {}));
+    const holders = (snapshot && snapshot.topHolders) || [];
+    return json({
+      holders: holders.map(h => ({ wallet: h.wallet, ownerShort: shortenAddr(h.wallet), count: h.count })),
+      computedAt: snapshot ? snapshot.computedAt : null
+    });
+  }
+
   // A wallet's full real holdings — used by the SELECT -> owner's
   // collection flow. No KV writes, cheap regardless of wallet size.
   const wallet = params.get('wallet');
@@ -87,6 +103,14 @@ export async function onRequestGet(context) {
   if (detailId) {
     const item = await fetchDeeptideNftDetail(detailId);
     if (!item) return json({ item: null, notIndexed: true });
+    // Deeptide's own detail response has each trait's percentage but not its
+    // raw count — cross-reference the (cached) collection-wide trait-card
+    // counts so INSPECT can show both "12.4%" and "374 PIGEONS".
+    const categories = await getTraitCategoriesWithPercent(env.coin);
+    item.attributes = item.attributes.map(a => {
+      const match = (categories[a.trait_type] || []).find(v => v.value === a.value);
+      return { trait_type: a.trait_type, value: a.value, percent: match ? match.percent : (a.percent != null ? a.percent : null), count: match ? match.count : null };
+    });
     return json({ item: toItem(item.nftId, item) });
   }
 

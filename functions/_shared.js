@@ -469,12 +469,20 @@ export async function recomputeCrownHolder(kv) {
     }
   }
 
+  // Piggybacks on the same full scan for the SWAP page's "top 10 holders"
+  // dropdown — no reason to run a second Clio scan just for this.
+  const topHolders = Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([wallet, count]) => ({ wallet, count }));
+
   const snapshot = {
     wallet: crownWallet,
     count: maxCount,
     since: crownSince,
     computedAt: now,
     holderCount: counts.size,
+    topHolders,
   };
 
   await kv.put(CROWN_HOLDINGS_HISTORY_KEY, JSON.stringify(history));
