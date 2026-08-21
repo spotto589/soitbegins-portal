@@ -1,5 +1,5 @@
 import {
-  fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, getTraitCategoriesWithPercent,
+  fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons,
@@ -94,18 +94,16 @@ export async function onRequestGet(context) {
   // public collection-stats API is the only one of the two that tracks
   // those particular figures.
   if (params.get('stats') === '1') {
-    const [deeptideFloorPage, xrpCafeStats, crownSnapshot] = await Promise.all([
-      fetchDeeptideListings({ skip: 0, limit: 1, sort: 'price-asc' }),
+    const [deeptideFloor, xrpCafeStats, crownSnapshot] = await Promise.all([
+      fetchDeeptideRealFloor(),
       fetchXrpCafeCollectionStats(env.coin),
       getCachedCrownHolder(env.coin)
     ]);
-    const deeptideFloorDrops = deeptideFloorPage.items[0] && typeof deeptideFloorPage.items[0].priceDrops === 'number'
-      ? deeptideFloorPage.items[0].priceDrops : null;
     return json({
       items: PIGEON_COLLECTION_SIZE_APPROX,
       holders: crownSnapshot ? crownSnapshot.holderCount : null,
-      deeptideFloorXrp: deeptideFloorDrops !== null ? deeptideFloorDrops / 1000000 : null,
-      deeptideBuyUrl: deeptideFloorPage.items[0] ? deeptideBuyUrl(deeptideFloorPage.items[0].nftId) : null,
+      deeptideFloorXrp: deeptideFloor ? deeptideFloor.priceDrops / 1000000 : null,
+      deeptideBuyUrl: deeptideFloor ? deeptideBuyUrl(deeptideFloor.nftId) : null,
       xrpCafeFloorXrp: xrpCafeStats && xrpCafeStats.floorDrops !== null ? xrpCafeStats.floorDrops / 1000000 : null,
       xrpCafeUrl: 'https://xrp.cafe/collection/xrpigeons',
       totalVolumeXrp: xrpCafeStats && xrpCafeStats.totalVolumeDrops !== null ? xrpCafeStats.totalVolumeDrops / 1000000 : null,

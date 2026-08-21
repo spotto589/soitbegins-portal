@@ -861,7 +861,16 @@ export async function fetchDeeptideNftDetail(nftId) {
     const d = await res.json();
     const listing = d.listing || {};
     const match = listing.name ? String(listing.name).match(/(\d+)/) : null;
-    const sellAmounts = (d.sellOffers || []).map(o => parseInt(o.amount, 10)).filter(n => !isNaN(n));
+    // `destination` on a sell offer is NOT a private targeted-buyer offer
+    // here — checked live, it's consistently Deeptide's own marketplace
+    // wallet across many real active listings, i.e. how their "Buy Now"
+    // flow routes the accept transaction. Still worth excluding
+    // `ownerMismatch` offers (Deeptide's own field) — the signer no longer
+    // holds the NFT, a stale/orphaned offer still sitting on-ledger.
+    const validSellAmounts = (d.sellOffers || [])
+      .filter(o => !o.ownerMismatch)
+      .map(o => parseInt(o.amount, 10))
+      .filter(n => !isNaN(n));
     return {
       nftId: d.tokenId || nftId,
       number: match ? parseInt(match[1], 10) : null,
@@ -870,11 +879,30 @@ export async function fetchDeeptideNftDetail(nftId) {
       rarityRank: typeof listing.rarityRank === 'number' ? listing.rarityRank : null,
       rarityTotal: typeof listing.rarityTotal === 'number' ? listing.rarityTotal : null,
       owner: d.owner || null,
-      priceDrops: sellAmounts.length ? Math.min(...sellAmounts) : null,
+      priceDrops: validSellAmounts.length ? Math.min(...validSellAmounts) : null,
     };
   } catch (e) {
     return null;
   }
+}
+
+// The real, buyable Deeptide floor — the listings feed's own cached
+// `lowestSellDrops` (used for card sort/price display) doesn't carry
+// enough per-offer detail to know if that cheapest offer is actually
+// public and current (see fetchDeeptideNftDetail's filtering above), so
+// this walks price-asc order and detail-fetches each candidate until it
+// finds one whose price survives that same validation. Usually 1-2 fetches
+// since invalid offers are the exception, not the rule; capped at 10.
+export async function fetchDeeptideRealFloor(shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG) {
+  const page = await fetchDeeptideListings({ skip: 0, limit: 10, sort: 'price-asc', shopSlug });
+  for (const it of page.items) {
+    if (it.priceDrops === null || it.priceDrops === undefined) continue;
+    const detail = await fetchDeeptideNftDetail(it.nftId);
+    if (detail && detail.priceDrops !== null) {
+      return { nftId: detail.nftId, priceDrops: detail.priceDrops };
+    }
+  }
+  return null;
 }
 
 // Full real event history for one token — mint, transfers, and sales, each
@@ -1049,8 +1077,17 @@ export async function fetchXrpCafeNftListing(nftId) {
     const d = await res.json();
     const n = d.nft;
     if (!n) return null;
+    // Same stale-offer guard as Deeptide: only trust the amount if the
+    // offer's own account still actually holds the NFT.
+    const validOffer = n.amount !== null && n.amount !== undefined
+      && n.offerowner && n.actualowner && n.offerowner === n.actualowner;
+    // `amount` here is in drops, NOT XRP — confirmed against real live
+    // listings (e.g. a genuine ~1589 XRP listing came back as
+    // "1589000000"); this API's own collection-level `floor_price` field
+    // is in XRP, so the two aren't unit-consistent with each other. Every
+    // xrp.cafe "listing" shown before this fix was off by 1,000,000x.
     return {
-      priceXrp: n.amount !== null && n.amount !== undefined ? parseFloat(n.amount) : null,
+      priceXrp: validOffer ? parseFloat(n.amount) / 1000000 : null,
     };
   } catch (e) {
     return null;
