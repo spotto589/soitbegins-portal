@@ -11,7 +11,14 @@
 // Nothing past this connects a wallet, calls Xaman, signs anything, or
 // moves any asset — "CONTINUE TO OFFER" only reaches a placeholder;
 // building the real offer/XRP/signing stage is explicitly the next phase.
+//
+// MY PIGEONS reuses the same wallet-identity mechanism as /board — the
+// `pigeon_session` cookie, set once a wallet has signed the connect
+// message there — rather than building a second, separate login flow. No
+// signature exists here to create one; /swap only ever reads the cookie.
 // ─────────────────────────────────────────────────────────────────────────
+
+import { BOARD_COOKIE_NAME, getCookie, verifyToken } from './_shared.js';
 
 const SWAP_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -74,7 +81,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-size:clamp(15px,4.6vw,30px);
     letter-spacing:0.06em;
     color:#fff;
-    text-shadow:0 0 10px rgba(57,255,20,0.25);
+    text-shadow:0 0 10px rgba(255,47,146,0.25);
     margin-bottom:0.4rem;
     text-align:center;
     text-transform:none;
@@ -93,14 +100,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-size:11px;
     letter-spacing:0.15em;
     line-height:1.8;
-    color:#39ff14;
-    text-shadow:0 0 6px rgba(57,255,20,0.4);
+    color:#ff2f92;
+    text-shadow:0 0 6px rgba(255,47,146,0.4);
     margin-bottom:2rem;
     text-transform:uppercase;
   }
 
   .sw-panel{
-    border:1px solid rgba(57,255,20,0.25);
+    border:1px solid rgba(255,47,146,0.25);
     background:#08080a;
     padding:1.5rem;
     margin-bottom:1.75rem;
@@ -109,11 +116,68 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     font-size:13px;
     letter-spacing:0.2em;
-    color:#39ff14;
-    text-shadow:0 0 6px rgba(57,255,20,0.4);
+    color:#ff2f92;
+    text-shadow:0 0 6px rgba(255,47,146,0.4);
     margin-bottom:1rem;
     text-transform:uppercase;
   }
+
+  .my-pigeons-row{ text-align:center; margin-bottom:1.75rem; }
+
+  /* ---- top 10 holders (expandable) ---- */
+  .th-toggle{
+    display:block;
+    width:100%;
+    text-align:center;
+    background:transparent;
+    border:none;
+    font-family:inherit;
+    font-size:13px;
+    letter-spacing:0.2em;
+    color:#ff2f92;
+    text-shadow:0 0 6px rgba(255,47,146,0.4);
+    text-transform:uppercase;
+    cursor:pointer;
+    padding:0;
+  }
+  .th-list{ margin-top:1rem; border-top:1px dashed rgba(255,47,146,0.25); padding-top:0.5rem; }
+  .th-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:0.75rem;
+    padding:0.6em 0.4em;
+    border-bottom:1px solid rgba(232,232,232,0.08);
+    cursor:pointer;
+    font-size:12px;
+    letter-spacing:0.03em;
+  }
+  .th-row:last-child{ border-bottom:none; }
+  .th-row:hover{ background:rgba(0,255,242,0.06); }
+  .th-rank{ flex:0 0 2.2em; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.4); }
+  .th-wallet{ flex:1; min-width:0; color:#00fff2; text-shadow:0 0 4px rgba(0,255,242,0.3); word-break:break-all; }
+  .th-count{ flex:0 0 auto; color:rgba(232,232,232,0.6); text-transform:uppercase; }
+  .th-empty{ text-align:center; font-size:11px; letter-spacing:0.08em; color:rgba(232,232,232,0.4); padding:0.5rem 0; text-transform:uppercase; }
+
+  /* ---- sales history ---- */
+  .sale-row{
+    display:flex;
+    align-items:center;
+    gap:0.75rem;
+    padding:0.6rem 0.3rem;
+    border-bottom:1px solid rgba(232,232,232,0.08);
+    font-size:11px;
+    letter-spacing:0.03em;
+    flex-wrap:wrap;
+  }
+  .sale-row:last-child{ border-bottom:none; }
+  .sale-thumb{ flex:0 0 42px; width:42px; height:42px; cursor:pointer; }
+  .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .sale-num{ flex:0 0 auto; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.35); cursor:pointer; min-width:5.5em; }
+  .sale-price{ flex:0 0 auto; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); min-width:6em; }
+  .sale-parties{ flex:1 1 200px; color:rgba(232,232,232,0.55); text-transform:uppercase; }
+  .sale-parties a{ color:#00fff2; text-decoration:underline; cursor:pointer; }
+  .sale-time{ flex:0 0 auto; color:rgba(232,232,232,0.3); text-transform:uppercase; }
 
   /* ---- target node header (owner-scope) ---- */
   .node-header{ text-align:center; margin-bottom:1.25rem; }
@@ -138,7 +202,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   input.search-input{
     flex:1 1 260px;
     background:#000;
-    border:1px solid rgba(57,255,20,0.35);
+    border:1px solid rgba(255,47,146,0.35);
     color:#e8e8e8;
     font-family:inherit;
     font-size:12px;
@@ -149,8 +213,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .bar-btn{
     flex:0 0 auto;
     background:transparent;
-    border:1px solid rgba(57,255,20,0.5);
-    color:#39ff14;
+    border:1px solid rgba(255,47,146,0.5);
+    color:#ff2f92;
     font-family:inherit;
     font-size:11px;
     letter-spacing:0.1em;
@@ -158,7 +222,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     text-transform:uppercase;
   }
-  .bar-btn:hover{ background:rgba(57,255,20,0.1); }
+  .bar-btn:hover{ background:rgba(255,47,146,0.1); }
   select.sort-select{
     flex:0 0 auto;
     background:#000;
@@ -183,7 +247,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   /* ---- trait stack filter panel ---- */
   .traits-block{
-    border-top:1px dashed rgba(57,255,20,0.25);
+    border-top:1px dashed rgba(255,47,146,0.25);
     margin-top:1rem;
     padding-top:1rem;
   }
@@ -203,7 +267,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   select.trait-cat-select{
     background:#000;
-    border:1px solid rgba(57,255,20,0.3);
+    border:1px solid rgba(255,47,146,0.3);
     color:#e8e8e8;
     font-family:inherit;
     font-size:11px;
@@ -216,13 +280,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   .trait-value-chips{
     display:flex;
     flex-wrap:wrap;
+    align-content:flex-start;
     gap:0.4rem;
     width:100%;
     margin-top:0.5rem;
+    max-height:190px;
+    overflow-y:auto;
+    padding:0.5rem;
+    border:1px dashed rgba(255,47,146,0.2);
   }
   .trait-chip{
     background:transparent;
-    border:1px solid rgba(57,255,20,0.3);
+    border:1px solid rgba(255,47,146,0.3);
     color:rgba(232,232,232,0.75);
     font-family:inherit;
     font-size:10px;
@@ -231,8 +300,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     text-transform:uppercase;
   }
-  .trait-chip:hover{ background:rgba(57,255,20,0.08); }
-  .trait-chip.selected{ background:#39ff14; color:#08080a; border-color:#39ff14; }
+  .trait-chip:hover{ background:rgba(255,47,146,0.08); }
+  .trait-chip.selected{ background:#ff2f92; color:#08080a; border-color:#ff2f92; }
   .trait-row-remove{
     background:transparent;
     border:1px solid rgba(255,0,60,0.5);
@@ -272,7 +341,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin:1.1rem 0 1rem;
     text-transform:uppercase;
   }
-  .status-line .hi{ color:#39ff14; text-shadow:0 0 5px rgba(57,255,20,0.4); }
+  .status-line .hi{ color:#ff2f92; text-shadow:0 0 5px rgba(255,47,146,0.4); }
 
   /* ---- empty state ---- */
   .empty-state{ text-align:center; padding:2rem 0; }
@@ -301,8 +370,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     justify-content:center;
     overflow:hidden;
-    background:repeating-linear-gradient(45deg, rgba(57,255,20,0.04) 0px, rgba(57,255,20,0.04) 6px, transparent 6px, transparent 12px);
-    border:1px dashed rgba(57,255,20,0.15);
+    background:repeating-linear-gradient(45deg, rgba(255,47,146,0.04) 0px, rgba(255,47,146,0.04) 6px, transparent 6px, transparent 12px);
+    border:1px dashed rgba(255,47,146,0.15);
     font-size:10px;
     letter-spacing:0.1em;
     color:rgba(232,232,232,0.3);
@@ -318,13 +387,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     line-height:1.6em;
     padding:0;
     background:rgba(8,8,10,0.75);
-    border:1px solid rgba(57,255,20,0.6);
-    color:#39ff14;
+    border:1px solid rgba(255,47,146,0.6);
+    color:#ff2f92;
     font-size:13px;
     cursor:pointer;
     text-align:center;
   }
-  .card-select-toggle.selected{ background:#39ff14; color:#08080a; }
+  .card-select-toggle.selected{ background:#ff2f92; color:#08080a; }
 
   /* ---- collection grid / cards ---- */
   /* Fixed 6 columns at every width, on purpose (not auto-fill/minmax,
@@ -338,11 +407,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     grid-template-columns:repeat(6, 1fr);
     gap:0.6rem;
   }
-  .result-card{ border:1px solid rgba(57,255,20,0.25); overflow:hidden; }
+  .result-card{ border:1px solid rgba(255,47,146,0.25); overflow:hidden; }
   .result-card .pigeon-img-box{ border:none; }
-  .result-card.in-target{ border-color:#39ff14; box-shadow:0 0 10px rgba(57,255,20,0.25) inset; }
+  .result-card.in-target{ border-color:#ff2f92; box-shadow:0 0 10px rgba(255,47,146,0.25) inset; }
   .result-card-body{ padding:0.55rem 0.4rem; }
-  .result-num{ font-size:13px; letter-spacing:0.03em; color:#39ff14; text-shadow:0 0 4px rgba(57,255,20,0.35); text-align:center; }
+  .result-num{ font-size:13px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.35); text-align:center; }
   .result-rarity-line{ font-size:11px; letter-spacing:0.03em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); text-align:center; }
   .card-select-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
   .inspect-btn{
@@ -396,8 +465,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pagination-row{ display:flex; justify-content:center; gap:0.75rem; margin-top:1.5rem; }
   .page-btn{
     background:transparent;
-    border:1px solid rgba(57,255,20,0.5);
-    color:#39ff14;
+    border:1px solid rgba(255,47,146,0.5);
+    color:#ff2f92;
     font-family:inherit;
     font-size:11px;
     letter-spacing:0.1em;
@@ -405,7 +474,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     text-transform:uppercase;
   }
-  .page-btn:hover:not(:disabled){ background:rgba(57,255,20,0.1); }
+  .page-btn:hover:not(:disabled){ background:rgba(255,47,146,0.1); }
   .page-btn:disabled{ opacity:0.3; cursor:not-allowed; }
   .loading-note{
     text-align:center;
@@ -421,8 +490,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     font-size:11px;
     letter-spacing:0.2em;
-    color:#39ff14;
-    text-shadow:0 0 6px rgba(57,255,20,0.4);
+    color:#ff2f92;
+    text-shadow:0 0 6px rgba(255,47,146,0.4);
     margin-bottom:0.75rem;
     text-transform:uppercase;
   }
@@ -457,9 +526,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     max-width:560px;
     margin:0 auto 0.5rem;
   }
-  .trait-cell{ border:1px solid rgba(57,255,20,0.2); padding:0.6rem 0.75rem; text-align:center; }
+  .trait-cell{ border:1px solid rgba(255,47,146,0.2); padding:0.6rem 0.75rem; text-align:center; cursor:pointer; }
+  .trait-cell:hover{ background:rgba(255,47,146,0.08); border-color:rgba(255,47,146,0.5); }
   .trait-cell .tc-label{ font-size:9px; letter-spacing:0.15em; color:rgba(232,232,232,0.4); margin-bottom:0.35rem; text-transform:uppercase; }
-  .trait-cell .tc-value{ font-size:13px; letter-spacing:0.03em; color:#39ff14; text-shadow:0 0 4px rgba(57,255,20,0.3); }
+  .trait-cell .tc-value{ font-size:13px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.3); }
   .trait-cell .tc-sub{ font-size:9px; letter-spacing:0.08em; color:rgba(0,255,242,0.6); margin-top:0.3rem; text-transform:uppercase; }
   .tech-meta{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed rgba(232,232,232,0.15); padding-top:1rem; }
   .tech-meta-title{ text-align:center; font-size:10px; letter-spacing:0.2em; color:rgba(232,232,232,0.35); margin-bottom:0.6rem; text-transform:uppercase; }
@@ -480,18 +550,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   .secondary-btn:hover{ background:rgba(232,232,232,0.08); }
   .action-btn{
     background:transparent;
-    border:1px solid rgba(57,255,20,0.6);
-    color:#39ff14;
+    border:1px solid rgba(255,47,146,0.6);
+    color:#ff2f92;
     font-family:inherit;
     font-size:12px;
     letter-spacing:0.12em;
     padding:0.75em 1.4em;
     cursor:pointer;
     text-transform:uppercase;
-    text-shadow:0 0 6px rgba(57,255,20,0.4);
+    text-shadow:0 0 6px rgba(255,47,146,0.4);
   }
-  .action-btn:hover{ background:rgba(57,255,20,0.1); }
-  .action-btn.selected{ background:rgba(57,255,20,0.15); color:#fff; }
+  .action-btn:hover{ background:rgba(255,47,146,0.1); }
+  .action-btn.selected{ background:rgba(255,47,146,0.15); color:#fff; }
 
   /* ---- target assets sticky bar ---- */
   .target-bar{
@@ -502,7 +572,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     z-index:40;
     width:min(960px, 100%);
     background:#08080a;
-    border-top:1px solid rgba(57,255,20,0.5);
+    border-top:1px solid rgba(255,47,146,0.5);
     box-shadow:0 -4px 20px rgba(0,0,0,0.5);
     padding:0.75rem 1.25rem;
     display:flex;
@@ -511,7 +581,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:1rem;
     cursor:pointer;
   }
-  .target-bar .tb-label{ font-size:12px; letter-spacing:0.1em; color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); text-transform:uppercase; }
+  .target-bar .tb-label{ font-size:12px; letter-spacing:0.1em; color:#ff2f92; text-shadow:0 0 6px rgba(255,47,146,0.4); text-transform:uppercase; }
   .target-bar .tb-toggle{ font-size:11px; color:rgba(232,232,232,0.5); text-transform:uppercase; }
 
   /* ---- target summary / offer placeholder ---- */
@@ -523,8 +593,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:1rem;
     font-size:12px;
     letter-spacing:0.15em;
-    color:#39ff14;
-    text-shadow:0 0 6px rgba(57,255,20,0.4);
+    color:#ff2f92;
+    text-shadow:0 0 6px rgba(255,47,146,0.4);
     text-transform:uppercase;
   }
   .placeholder-card{
@@ -559,8 +629,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="sw-subtitle">SWAP PR0T0C0L</div>
     <div class="sw-eyebrow-lines">// P!GE0N DATABASE<br>// C0LLECT!0N :: 3015</div>
 
+    <div class="my-pigeons-row">
+      <button class="bar-btn" id="myPigeonsBtn">[ MY P!GE0NS ]</button>
+    </div>
+
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
     <div id="screenBrowse">
+      <div class="sw-panel" id="topHoldersPanel">
+        <button class="th-toggle" id="topHoldersToggle">[ T0P 10 H0LDERS ▼ ]</button>
+        <div class="th-list" id="topHoldersList" style="display:none;"></div>
+      </div>
+
       <div class="sw-panel" id="nodeHeaderPanel" style="display:none;">
         <div class="node-header">
           <div class="nh-label">TARGET N0DE</div>
@@ -575,16 +654,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="sw-panel">
         <div class="panel-title" id="searchPanelTitle">P!GE0N DATABASE</div>
         <div class="search-row">
-          <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0NS (NUMBER, TRA!T, 0R VALUE)...">
-          <button class="bar-btn" id="searchBtn">[ SEARCH ]</button>
+          <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0NS (NUMBER, TRA!T, 0R VALUE)..." style="display:none;">
+          <button class="bar-btn" id="searchBtn" style="display:none;">[ SEARCH ]</button>
           <select class="sort-select" id="sortSelect">
             <option value="RARITY_ASC">[ S0RT ▼ ] RAR!TY :: RAREST F!RST</option>
             <option value="RARITY_DESC">RAR!TY :: C0MM0N F!RST</option>
             <option value="NAME_ASC">NAME A → Z</option>
             <option value="NAME_DESC">NAME Z → A</option>
-          </select>
-          <select class="sort-select" id="topHoldersSelect">
-            <option value="">[ T0P 10 H0LDERS ▼ ]</option>
           </select>
         </div>
         <div class="index-line" id="indexLine"></div>
@@ -605,6 +681,14 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="scroll-sentinel" id="scrollSentinel"></div>
         <div class="load-more-note" id="loadMoreNote" style="display:none;">L0AD!NG M0RE P!GE0NS...</div>
         <div class="end-of-collection-note" id="endOfCollectionNote" style="display:none;">// END 0F C0LLECT!0N</div>
+      </div>
+
+      <div class="sw-panel">
+        <div class="panel-title">SALES H!ST0RY</div>
+        <div id="salesArea"></div>
+        <div class="scroll-sentinel" id="salesScrollSentinel"></div>
+        <div class="load-more-note" id="salesLoadMoreNote" style="display:none;">L0AD!NG M0RE SALES...</div>
+        <div class="end-of-collection-note" id="salesEndNote" style="display:none;">// END 0F SALES H!ST0RY</div>
       </div>
     </div>
 
@@ -658,6 +742,11 @@ const SWAP_HTML = `<!DOCTYPE html>
 <script>
 (function(){
 
+  // Wallet of whoever is currently signed in via /board's connect flow
+  // (read from the shared pigeon_session cookie server-side) — null if no
+  // signature is on file. There is no login button here on purpose.
+  var MY_WALLET = "__SWAP_WALLET__";
+
   // ---- Client-side state ----
   var PAGE_SIZE = 36;
   var state = {
@@ -676,12 +765,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     traitValuesCache: {},      // category -> [{value, count, percent}], fetched lazily per category
     collectionSizeApprox: 3015,
     currentDetail: null,
-    targetAssets: {}          // nftId -> { nftId, number, image } — only while scope is a wallet
+    targetAssets: {},         // nftId -> { nftId, number, image } — only while scope is a wallet
+    sales: { skip: 0, hasMore: true, loading: false, opened: false }
   };
 
   var el = {};
-  ['searchInput','searchBtn','sortSelect','topHoldersSelect','indexLine','traitRows','addTraitBtn','clearTraitsBtn',
+  ['searchInput','searchBtn','sortSelect','myPigeonsBtn','topHoldersToggle','topHoldersList','indexLine','traitRows','addTraitBtn','clearTraitsBtn',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
+   'salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
    'screenBrowse','screenDetail','screenSummary',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailTraits','detailNftId',
@@ -765,14 +856,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
   }
 
-  function enterOwnerScope(targetPigeon){
-    if (!targetPigeon.owner){
-      alert('OWNER N0T !NDEXED F0R TH!S P!GE0N YET — TRY ANOTHER, OR !NSPECT !T AGA!N SH0RTLY.');
-      return;
-    }
-    state.scope = { wallet: targetPigeon.owner, ownerShort: targetPigeon.ownerShort || targetPigeon.owner };
+  // Shared by SELECT (auto-enters owner scope + auto-targets the pigeon
+  // that got you there) and the plain "view this wallet's collection" click
+  // on an owner address (no auto-targeting).
+  function browseOwnerCollection(wallet, ownerShort){
+    state.scope = { wallet: wallet, ownerShort: ownerShort || wallet };
     state.targetAssets = {};
-    state.targetAssets[targetPigeon.nftId] = { nftId: targetPigeon.nftId, number: targetPigeon.number, image: targetPigeon.image };
     state.traitFilters = [];
     renderTraitRows();
     el.searchInput.value = '';
@@ -782,13 +871,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG H0LDER\\'S REAL P!GE0NS...</div>';
     showScreen('browse');
     renderTargetBar();
-    api({ wallet: targetPigeon.owner }).then(function(data){
+    api({ wallet: wallet }).then(function(data){
       state.scopeAllItems = data.items || [];
       el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
       runScopedQuery();
     }).catch(function(){
       el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T LOAD TH!S WALLET. TRY AGA!N.'], false);
     });
+  }
+
+  function enterOwnerScope(targetPigeon){
+    if (!targetPigeon.owner){
+      alert('OWNER N0T !NDEXED F0R TH!S P!GE0N YET — TRY ANOTHER, OR !NSPECT !T AGA!N SH0RTLY.');
+      return;
+    }
+    browseOwnerCollection(targetPigeon.owner, targetPigeon.ownerShort);
+    state.targetAssets[targetPigeon.nftId] = { nftId: targetPigeon.nftId, number: targetPigeon.number, image: targetPigeon.image };
+    renderTargetBar();
+    refreshCardSelectionStates();
   }
 
   el.backToFullCollectionLink.addEventListener('click', function(e){
@@ -939,13 +1039,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   // A-Z) rather than a second dropdown — click one to filter, click again to
   // clear it.
   function renderTraitRows(){
-    var cats = state.traitCategories ? Object.keys(state.traitCategories) : [];
+    // Category list: A-Z, so the (native, already-scrollable) dropdown is
+    // predictable to scan. Values within a chosen category: rarest first
+    // (lowest %), not alphabetical — that's the whole point of showing %.
+    var cats = state.traitCategories ? Object.keys(state.traitCategories).sort(function(a, b){ return a.localeCompare(b); }) : [];
     el.traitRows.innerHTML = state.traitFilters.map(function(row){
       var catOptions = cats.map(function(c){
         return '<option value="' + escapeHtml(c) + '"' + (row.category === c ? ' selected' : '') + '>' + escapeHtml(c.toUpperCase()) + '</option>';
       }).join('');
       var vals = ((row.category && state.traitCategories[row.category]) || []).slice().sort(function(a, b){
-        return (b.percent || 0) - (a.percent || 0);
+        return (a.percent || 0) - (b.percent || 0);
       });
       var chips = vals.map(function(v){
         var pct = v.percent !== null && v.percent !== undefined ? ' (' + v.percent + '%)' : '';
@@ -1106,25 +1209,101 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
 
-  // ---- Top 10 holders dropdown (network-wide, cached snapshot) ----
+  // ---- Top 10 holders (network-wide, cached snapshot) — an expandable
+  // panel at the top of the page; clicking a wallet browses their real
+  // collection the same way the owner-link on INSPECT does. ----
+  var topHoldersData = null;
   function loadTopHolders(){
     api({ topHolders: 1 }).then(function(data){
-      var holders = data.holders || [];
-      if (!holders.length){
-        el.topHoldersSelect.innerHTML = '<option value="">[ T0P 10 H0LDERS ▼ ] N0T READY YET</option>';
-        return;
-      }
-      el.topHoldersSelect.innerHTML = '<option value="">[ T0P 10 H0LDERS ▼ ]</option>' +
-        holders.map(function(h, i){
-          return '<option value="' + escapeHtml(h.wallet) + '">#' + (i + 1) + ' :: ' + escapeHtml(h.ownerShort) + ' :: ' + h.count + ' HELD</option>';
-        }).join('');
-    }).catch(function(){});
+      topHoldersData = data.holders || [];
+      if (el.topHoldersList.style.display !== 'none') renderTopHoldersList();
+    }).catch(function(){ topHoldersData = []; });
   }
-  el.topHoldersSelect.addEventListener('change', function(){
-    var wallet = el.topHoldersSelect.value;
-    el.topHoldersSelect.value = '';
-    if (wallet) window.open('https://bithomp.com/explorer/' + encodeURIComponent(wallet), '_blank', 'noopener');
+  function renderTopHoldersList(){
+    if (topHoldersData === null){
+      el.topHoldersList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+      return;
+    }
+    if (!topHoldersData.length){
+      el.topHoldersList.innerHTML = '<div class="th-empty">N0T READY YET — TRY AGA!N SH0RTLY.</div>';
+      return;
+    }
+    el.topHoldersList.innerHTML = topHoldersData.map(function(h, i){
+      return '<div class="th-row" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
+        '<span class="th-rank">#' + (i + 1) + '</span>' +
+        '<span class="th-wallet">' + escapeHtml(h.ownerShort) + '</span>' +
+        '<span class="th-count">' + h.count + ' HELD</span>' +
+      '</div>';
+    }).join('');
+  }
+  el.topHoldersToggle.addEventListener('click', function(){
+    var opening = el.topHoldersList.style.display === 'none';
+    el.topHoldersList.style.display = opening ? '' : 'none';
+    el.topHoldersToggle.textContent = opening ? '[ T0P 10 H0LDERS ▲ ]' : '[ T0P 10 H0LDERS ▼ ]';
+    if (opening) renderTopHoldersList();
   });
+  el.topHoldersList.addEventListener('click', function(e){
+    var row = e.target.closest('.th-row');
+    if (!row) return;
+    browseOwnerCollection(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
+  });
+
+  // ---- MY PIGEONS — reuses the /board wallet session; no login flow here. ----
+  el.myPigeonsBtn.addEventListener('click', function(){
+    if (!MY_WALLET){
+      alert('N0 S!GNATURE DETECTED — C0NNECT Y0UR WALLET 0N /B0ARD F!RST.');
+      return;
+    }
+    var short = MY_WALLET.slice(0, 9) + '...' + MY_WALLET.slice(-4);
+    browseOwnerCollection(MY_WALLET, short);
+  });
+
+  // ---- Sales history (real, collection-wide, infinite scroll) ----
+  function saleRowHtml(s){
+    var thumb = s.image ? '<img src="' + escapeHtml(s.image) + '" alt="" loading="lazy">' : '';
+    var num = s.number !== null ? '#' + s.number : '#????';
+    var price = s.priceXrp !== null ? s.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?';
+    var when = s.createdAt ? new Date(s.createdAt).toLocaleString() : '';
+    return '<div class="sale-row">' +
+      '<span class="sale-thumb" data-nftid="' + escapeHtml(s.nftId) + '">' + thumb + '</span>' +
+      '<span class="sale-num" data-nftid="' + escapeHtml(s.nftId) + '">P!GE0N ' + num + '</span>' +
+      '<span class="sale-price">' + price + '</span>' +
+      '<span class="sale-parties">' +
+        (s.seller ? '<a data-wallet="' + escapeHtml(s.seller) + '" data-short="' + escapeHtml(s.sellerShort || s.seller) + '">' + escapeHtml(s.sellerShort || s.seller) + '</a>' : '?') +
+        ' → ' +
+        (s.buyer ? '<a data-wallet="' + escapeHtml(s.buyer) + '" data-short="' + escapeHtml(s.buyerShort || s.buyer) + '">' + escapeHtml(s.buyerShort || s.buyer) + '</a>' : '?') +
+      '</span>' +
+      '<span class="sale-time">' + escapeHtml(when) + '</span>' +
+    '</div>';
+  }
+  function loadMoreSales(){
+    if (state.sales.loading || !state.sales.hasMore) return;
+    state.sales.loading = true;
+    el.salesLoadMoreNote.style.display = '';
+    api({ sales: 1, skip: state.sales.skip, limit: 20 }).then(function(data){
+      state.sales.loading = false;
+      el.salesLoadMoreNote.style.display = 'none';
+      var items = data.items || [];
+      state.sales.skip += items.length;
+      state.sales.hasMore = !!data.hasMore && items.length > 0;
+      if (items.length) el.salesArea.insertAdjacentHTML('beforeend', items.map(saleRowHtml).join(''));
+      else if (state.sales.skip === 0) el.salesArea.innerHTML = '<div class="th-empty">N0 SALES YET.</div>';
+      if (!state.sales.hasMore) el.salesEndNote.style.display = '';
+    }).catch(function(){
+      state.sales.loading = false;
+      el.salesLoadMoreNote.style.display = 'none';
+    });
+  }
+  el.salesArea.addEventListener('click', function(e){
+    var walletLink = e.target.closest('.sale-parties a');
+    if (walletLink){ browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short')); return; }
+    var target = e.target.closest('.sale-thumb, .sale-num');
+    if (target) openDetail(target.getAttribute('data-nftid'));
+  });
+  var salesScrollObserver = new IntersectionObserver(function(entries){
+    if (entries[0].isIntersecting) loadMoreSales();
+  }, { rootMargin: '600px' });
+  salesScrollObserver.observe(el.salesScrollSentinel);
 
   el.searchBtn.addEventListener('click', runSearchBox);
   el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearchBox(); });
@@ -1139,13 +1318,40 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (a.percent !== null && a.percent !== undefined) subParts.push(a.percent + '%');
     if (a.count !== null && a.count !== undefined) subParts.push(a.count + ' P!GE0NS');
     var sub = subParts.length ? '<div class="tc-sub">' + escapeHtml(subParts.join(' :: ')) + '</div>' : '';
-    return '<div class="trait-cell"><div class="tc-label">' + escapeHtml(a.trait_type) + '</div><div class="tc-value">' + escapeHtml(a.value) + '</div>' + sub + '</div>';
+    return '<div class="trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '" title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
+      '<div class="tc-label">' + escapeHtml(a.trait_type) + '</div><div class="tc-value">' + escapeHtml(a.value) + '</div>' + sub +
+    '</div>';
   }
+  // Clicking a trait cell on the INSPECT screen filters the browse view down
+  // to every Pigeon sharing that exact trait/value.
+  el.detailTraits.addEventListener('click', function(e){
+    var cell = e.target.closest('.trait-cell');
+    if (!cell) return;
+    var trait = cell.getAttribute('data-trait');
+    var value = cell.getAttribute('data-value');
+    if (!trait || !value) return;
+    ensureTraitsLoaded().then(function(){
+      state.traitFilters = [{ id: state.nextTraitRowId++, category: trait, value: value }];
+      renderTraitRows();
+      el.searchInput.value = '';
+      showScreen('browse');
+      runQuery();
+    });
+  });
   function renderOwnerLink(short, full){
     if (!full){ el.detailOwner.textContent = 'N0T !NDEXED'; el.detailOwner.classList.add('not-indexed'); return; }
     el.detailOwner.classList.remove('not-indexed');
-    el.detailOwner.innerHTML = '<a class="owner-link" href="https://bithomp.com/explorer/' + encodeURIComponent(full) + '" target="_blank" rel="noopener">' + escapeHtml(short || full) + '</a>';
+    el.detailOwner.innerHTML = '<a class="owner-link" href="#" data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '" title="V!EW TH!S WALLET\\'S FULL P!GE0N C0LLECT!0N">' + escapeHtml(short || full) + '</a>';
   }
+  // Clicking the owner address on INSPECT jumps straight into that wallet's
+  // full real Pigeon collection (same browse UI as SELECT), not an external
+  // explorer.
+  el.detailOwner.addEventListener('click', function(e){
+    var link = e.target.closest('.owner-link');
+    if (!link) return;
+    e.preventDefault();
+    browseOwnerCollection(link.getAttribute('data-wallet'), link.getAttribute('data-short'));
+  });
   function updateDetailRarity(p){
     if (p && p.rarityRank){ el.detailRarityRow.style.display = ''; el.detailRarity.textContent = p.rarityRank + (p.rarityTotal ? ' / ' + p.rarityTotal : ''); }
     else el.detailRarityRow.style.display = 'none';
@@ -1194,6 +1400,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   ensureTraitsLoaded();
   loadTopHolders();
   startCollectionBrowse();
+  loadMoreSales();
 
   // TV static background, purely atmospheric — matches the rest of the site.
   (function(){
@@ -1224,6 +1431,16 @@ const SWAP_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
-export async function onRequestGet() {
-  return new Response(SWAP_HTML, { headers: { 'Content-Type': 'text/html' } });
+export async function onRequestGet(context) {
+  const { request, env } = context;
+  let wallet = null;
+  if (env.Σκύλλα) {
+    const token = getCookie(request, BOARD_COOKIE_NAME);
+    if (token) {
+      const payload = await verifyToken(token, env.Σκύλλα);
+      if (payload && payload.acct) wallet = payload.acct;
+    }
+  }
+  const html = SWAP_HTML.replace('"__SWAP_WALLET__"', JSON.stringify(wallet));
+  return new Response(html, { headers: { 'Content-Type': 'text/html' } });
 }

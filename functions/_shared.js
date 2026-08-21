@@ -718,23 +718,36 @@ async function fetchPigeonFullMeta(uriHex) {
 
 // ─────────────────────────────────────────────────────────────────────────
 // Deeptide: per-wallet holdings (used for the "SELECT -> load owner's
-// collection" flow) and the collection-wide listings/detail/trait-card
-// APIs (used for the main browse/search/filter/sort experience).
+// collection" flow) and the collection-wide listings/detail/trait-card/
+// sales APIs (used for the main browse/search/filter/sort/sales-history
+// experience).
+//
+// Every function below takes an explicit `shopSlug` (defaulting to the
+// Pigeons shop) rather than hardcoding it, and every KV cache key is
+// namespaced by slug — Pigeons is the only collection wired up today, but
+// this is deliberately the seam for importing another Deeptide-hosted
+// collection later: pass its shop slug through from a caller and the same
+// data-access layer works unchanged. Ledger-side pigeon detection
+// (findAllPigeons / PIGEON_ISSUER / PIGEON_TAXON below, and the Clio-based
+// top-holders scan) is still Pigeons-specific — genericizing that too is
+// future work, not needed until a second collection is actually added.
 // ─────────────────────────────────────────────────────────────────────────
-const DEEPTIDE_PIGEON_SHOP_SLUG = 'xrpigeons';
+export const DEEPTIDE_PIGEON_SHOP_SLUG = 'xrpigeons';
 const DEEPTIDE_OWNER_CACHE_PREFIX = 'pswap:deeptideowner:';
 const DEEPTIDE_OWNER_CACHE_TTL_SECONDS = 180;
-const DEEPTIDE_LISTINGS_URL = `${'https://api.deeptide.co'}/api/mint/listings/${DEEPTIDE_PIGEON_SHOP_SLUG}`;
 const DEEPTIDE_LISTINGS_MAX_LIMIT = 60; // server-enforced cap, confirmed empirically
+function deeptideListingsUrl(shopSlug) {
+  return `https://api.deeptide.co/api/mint/listings/${encodeURIComponent(shopSlug)}`;
+}
 
-async function fetchDeeptideOwnedPigeons(address) {
+async function fetchDeeptideOwnedPigeons(address, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG) {
   try {
     const res = await fetch(`${DEEPTIDE_API_BASE}/api/mint/owned?address=${encodeURIComponent(address)}`);
     if (!res.ok) return [];
     const items = await res.json();
     if (!Array.isArray(items)) return [];
     return items
-      .filter(it => it.shopSlug === DEEPTIDE_PIGEON_SHOP_SLUG)
+      .filter(it => it.shopSlug === shopSlug)
       .map(it => {
         const match = it.name ? String(it.name).match(/(\d+)/) : null;
         return {
@@ -754,11 +767,11 @@ async function fetchDeeptideOwnedPigeons(address) {
 // Short-lived cache (3 min) so repeatedly rendering pages that include a
 // popular wallet doesn't hammer Deeptide — deliberately much shorter than
 // any collection-wide cache, since a wallet's holdings genuinely change.
-async function getOwnerPigeonsViaDeeptide(kv, address) {
-  const cacheKey = DEEPTIDE_OWNER_CACHE_PREFIX + address;
+async function getOwnerPigeonsViaDeeptide(kv, address, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG) {
+  const cacheKey = DEEPTIDE_OWNER_CACHE_PREFIX + shopSlug + ':' + address;
   const cached = await kv.get(cacheKey);
   if (cached !== null) return JSON.parse(cached);
-  const items = await fetchDeeptideOwnedPigeons(address);
+  const items = await fetchDeeptideOwnedPigeons(address, shopSlug);
   await safeKvPut(kv, cacheKey, JSON.stringify(items), { expirationTtl: DEEPTIDE_OWNER_CACHE_TTL_SECONDS });
   return items;
 }
@@ -768,8 +781,8 @@ async function getOwnerPigeonsViaDeeptide(kv, address) {
 // there's no need to also write each one to a cache just to display this
 // response. Used for the "SELECT -> load owner's collection" flow, where
 // the wallet size isn't bounded by us (some hold 100+ Pigeons).
-export async function resolveOwnerCollectionLive(kv, owner, ledgerItems) {
-  const deeptideItems = await getOwnerPigeonsViaDeeptide(kv, owner);
+export async function resolveOwnerCollectionLive(kv, owner, ledgerItems, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG) {
+  const deeptideItems = await getOwnerPigeonsViaDeeptide(kv, owner, shopSlug);
   const byId = new Map(deeptideItems.map(d => [d.nftId, d]));
   const results = await Promise.all(ledgerItems.map(async (it) => {
     const fromDeeptide = byId.get(it.nftId);
@@ -811,7 +824,7 @@ function deeptideListingToPigeon(it) {
 // partial. `sort` uses Deeptide's own values: rarity-asc (rarest first),
 // rarity-desc, price-asc, price-desc, name-asc, name-desc, date-desc,
 // date-asc. `traits` is [{ trait, value }, ...] — ALL must match (AND).
-export async function fetchDeeptideListings({ skip = 0, limit = 36, sort = 'rarity-asc', traits } = {}) {
+export async function fetchDeeptideListings({ skip = 0, limit = 36, sort = 'rarity-asc', traits, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG } = {}) {
   const params = new URLSearchParams({
     skip: String(Math.max(0, skip)),
     limit: String(Math.min(Math.max(1, limit), DEEPTIDE_LISTINGS_MAX_LIMIT)),
@@ -821,7 +834,7 @@ export async function fetchDeeptideListings({ skip = 0, limit = 36, sort = 'rari
     params.set('traits', JSON.stringify(traits.map(f => ({ trait_type: f.trait, value: f.value }))));
   }
   try {
-    const res = await fetch(`${DEEPTIDE_LISTINGS_URL}?${params.toString()}`);
+    const res = await fetch(`${deeptideListingsUrl(shopSlug)}?${params.toString()}`);
     if (!res.ok) return { items: [], total: 0, hasMore: false };
     const data = await res.json();
     return {
@@ -862,9 +875,9 @@ export async function fetchDeeptideNftDetail(nftId) {
 // One page of "trait cards" — every distinct (category, value) combo in
 // the collection with its real, exact count. Powers the TRAITS filter
 // panel's category/value/percentage display.
-async function fetchDeeptideTraitCards(skip, limit) {
+async function fetchDeeptideTraitCards(skip, limit, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG) {
   try {
-    const res = await fetch(`${DEEPTIDE_LISTINGS_URL}/trait-cards?skip=${skip}&limit=${limit}&sort=rarest`);
+    const res = await fetch(`${deeptideListingsUrl(shopSlug)}/trait-cards?skip=${skip}&limit=${limit}&sort=rarest`);
     if (!res.ok) return { traits: [], total: 0 };
     return await res.json();
   } catch (e) {
@@ -875,17 +888,18 @@ async function fetchDeeptideTraitCards(skip, limit) {
 // Real trait categories/values/percentages, grouped for the filter panel.
 // Cached for 10 minutes (collection-wide trait distribution barely moves)
 // so opening the TRAITS panel doesn't re-crawl every card on every click.
-const TRAIT_CARDS_CACHE_KEY = 'pswap:traitcards:v2';
+const TRAIT_CARDS_CACHE_KEY_PREFIX = 'pswap:traitcards:v2:';
 const TRAIT_CARDS_CACHE_TTL_SECONDS = 600;
-export async function getTraitCategoriesWithPercent(kv) {
-  const cached = await kv.get(TRAIT_CARDS_CACHE_KEY);
+export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX) {
+  const cacheKey = TRAIT_CARDS_CACHE_KEY_PREFIX + shopSlug;
+  const cached = await kv.get(cacheKey);
   if (cached !== null) return JSON.parse(cached);
 
   let skip = 0;
   let total = Infinity;
   const all = [];
   while (skip < total && skip < 600) { // 600 is a generous ceiling well above the real ~242
-    const page = await fetchDeeptideTraitCards(skip, DEEPTIDE_LISTINGS_MAX_LIMIT);
+    const page = await fetchDeeptideTraitCards(skip, DEEPTIDE_LISTINGS_MAX_LIMIT, shopSlug);
     total = page.total || 0;
     if (!page.traits || !page.traits.length) break;
     all.push(...page.traits);
@@ -900,13 +914,55 @@ export async function getTraitCategoriesWithPercent(kv) {
     grouped[t.trait_type].push({
       value: t.value,
       count: t.count,
-      percent: Math.round((t.count / PIGEON_COLLECTION_SIZE_APPROX) * 1000) / 10,
+      percent: Math.round((t.count / collectionSizeApprox) * 1000) / 10,
     });
   }
   for (const cat of Object.keys(grouped)) grouped[cat].sort((a, b) => a.value.localeCompare(b.value));
 
-  await safeKvPut(kv, TRAIT_CARDS_CACHE_KEY, JSON.stringify(grouped), { expirationTtl: TRAIT_CARDS_CACHE_TTL_SECONDS });
+  await safeKvPut(kv, cacheKey, JSON.stringify(grouped), { expirationTtl: TRAIT_CARDS_CACHE_TTL_SECONDS });
   return grouped;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Sales history — Deeptide's own `/api/sales/recent` (confirmed by
+// watching the SalesFeed component on deeptide.co's own shop pages make
+// this exact call), real and collection-wide: txHash, both wallets, price
+// in drops, and the item itself. No KV involved — direct passthrough, same
+// as listings. Same `shopSlug` seam as everything else in this section, so
+// a future imported collection gets its own sales feed for free.
+// ─────────────────────────────────────────────────────────────────────────
+export async function fetchDeeptideSalesHistory({ skip = 0, limit = 20, sort = 'date-desc', shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG, wallet } = {}) {
+  const params = new URLSearchParams({
+    skip: String(Math.max(0, skip)),
+    limit: String(Math.min(Math.max(1, limit), 50)),
+    sort,
+    shopSlug,
+  });
+  if (wallet) params.set('address', wallet);
+  try {
+    const res = await fetch(`${DEEPTIDE_API_BASE}/api/sales/recent?${params.toString()}`);
+    if (!res.ok) return { items: [], total: 0, hasMore: false };
+    const data = await res.json();
+    return {
+      items: (data.items || []).map(it => {
+        const match = it.name ? String(it.name).match(/(\d+)/) : null;
+        return {
+          txHash: it.txHash,
+          nftId: it.nftTokenId,
+          number: match ? parseInt(match[1], 10) : null,
+          image: it.imageUrl || null,
+          priceXrp: typeof it.priceDrops === 'number' ? it.priceDrops / 1000000 : null,
+          buyer: it.buyerWallet || null,
+          seller: it.sellerWallet || null,
+          createdAt: it.createdAt || null,
+        };
+      }),
+      total: typeof data.total === 'number' ? data.total : 0,
+      hasMore: !!data.hasMore,
+    };
+  } catch (e) {
+    return { items: [], total: 0, hasMore: false, error: true };
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import {
   fetchDeeptideListings, fetchDeeptideNftDetail, getTraitCategoriesWithPercent,
-  getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap,
+  fetchDeeptideSalesHistory, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap,
   resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX,
   getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
@@ -80,6 +80,30 @@ export async function onRequestGet(context) {
       holders: holders.map(h => ({ wallet: h.wallet, ownerShort: shortenAddr(h.wallet), count: h.count })),
       computedAt: snapshot ? snapshot.computedAt : null
     });
+  }
+
+  // Real, collection-wide sales history straight from Deeptide's own
+  // `/api/sales/recent` — no KV involved, same direct-passthrough pattern
+  // as the main listings. Optionally scoped to one wallet (buyer or
+  // seller) via `wallet`.
+  if (params.get('sales') === '1') {
+    const salesSkip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
+    const salesLimit = Math.min(50, Math.max(1, parseInt(params.get('limit') || '20', 10) || 20));
+    const salesWallet = params.get('wallet') || undefined;
+    const page = await fetchDeeptideSalesHistory({ skip: salesSkip, limit: salesLimit, sort: 'date-desc', wallet: salesWallet });
+    const items = page.items.map(it => ({
+      txHash: it.txHash,
+      nftId: it.nftId,
+      number: it.number,
+      image: displayImage(it.image),
+      priceXrp: it.priceXrp,
+      buyer: it.buyer,
+      buyerShort: shortenAddr(it.buyer),
+      seller: it.seller,
+      sellerShort: shortenAddr(it.seller),
+      createdAt: it.createdAt
+    }));
+    return json({ items, total: page.total, hasMore: page.hasMore, skip: salesSkip, limit: salesLimit });
   }
 
   // A wallet's full real holdings — used by the SELECT -> owner's
