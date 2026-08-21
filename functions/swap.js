@@ -143,9 +143,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .ci-row{ display:flex; justify-content:space-between; gap:0.75rem; font-size:11px; letter-spacing:0.03em; margin-bottom:0.5rem; flex-wrap:wrap; }
   .ci-label{ color:rgba(232,232,232,0.45); text-transform:uppercase; flex:0 0 auto; }
   .ci-value{ color:#e8e8e8; text-align:right; word-break:break-all; }
-  .ci-note{ text-align:center; font-size:9px; letter-spacing:0.08em; color:rgba(232,232,232,0.3); text-transform:uppercase; margin-top:0.5rem; }
 
-  .my-pigeons-row{ text-align:center; margin-bottom:1.75rem; }
   .my-pigeons-grid{ margin-top:1rem; }
 
   /* ---- collection stats strip ---- */
@@ -181,8 +179,32 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     padding:0;
   }
-  .th-toggle.stacked-toggle{ margin-top:1.25rem; border-top:1px dashed rgba(255,47,146,0.25); padding-top:1.25rem; }
   .th-list{ margin-top:1rem; border-top:1px dashed rgba(255,47,146,0.25); padding-top:0.5rem; }
+
+  /* ---- horizontal top tabs (DATABASE / MY PIGEONS / TOP 10 / SALES DATA) ---- */
+  .top-tabs{
+    display:flex;
+    overflow-x:auto;
+    gap:0.4rem;
+    margin-bottom:1.75rem;
+    border-bottom:1px solid rgba(255,47,146,0.25);
+  }
+  .tab-btn{
+    flex:1 1 auto;
+    white-space:nowrap;
+    background:transparent;
+    border:none;
+    border-bottom:2px solid transparent;
+    font-family:inherit;
+    font-size:11px;
+    letter-spacing:0.12em;
+    color:rgba(232,232,232,0.45);
+    text-transform:uppercase;
+    cursor:pointer;
+    padding:0.85em 0.5em;
+  }
+  .tab-btn:hover{ color:rgba(232,232,232,0.75); }
+  .tab-btn.active{ color:#ff2f92; text-shadow:0 0 6px rgba(255,47,146,0.4); border-bottom-color:#ff2f92; }
   .th-row{
     display:flex;
     align-items:center;
@@ -526,36 +548,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .result-rarity-line{ font-size:14px; letter-spacing:0.03em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); text-align:center; }
   .result-price-line{ font-size:12px; letter-spacing:0.03em; color:#00fff2; text-shadow:0 0 3px rgba(0,255,242,0.3); text-align:center; text-transform:uppercase; }
-  .result-highsale-line{ display:block; font-size:13px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 3px rgba(255,47,146,0.3); text-align:center; text-transform:uppercase; text-decoration:none; }
-  a.result-highsale-line{ cursor:pointer; }
-  a.result-highsale-line:hover{ text-decoration:underline; }
   .card-select-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
-  .inspect-btn{
-    display:block;
-    width:100%;
-    margin-top:0.4rem;
-    background:transparent;
-    border:1px solid rgba(0,255,242,0.4);
-    color:#00fff2;
-    font-family:inherit;
-    font-size:10px;
-    letter-spacing:0.1em;
-    padding:0.4em 0;
-    cursor:pointer;
-    text-transform:uppercase;
-  }
-  .inspect-btn:hover{ background:rgba(0,255,242,0.1); }
 
   @media (max-width:700px){
     body{ padding:4vh 2.5vw 6vh; }
     .sw-panel{ padding:1rem 0.75rem; }
     /* 2-wide on mobile, not the desktop 6 — plenty of room per card now,
-       so rarity/high-sale stay visible instead of being dropped. */
+       so rarity stays visible instead of being dropped. */
     .result-grid{ grid-template-columns:repeat(2, 1fr); gap:0.6rem; }
     .result-card-body{ padding:0.5rem 0.4rem; }
     .result-num{ font-size:15px; padding:0.45rem 0.3rem; }
     .card-select-toggle{ width:1.7em; height:1.7em; line-height:1.7em; font-size:14px; }
-    .inspect-btn{ font-size:10px; padding:0.4em 0; }
   }
 
   /* ---- infinite scroll ---- */
@@ -794,28 +797,26 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <div class="sw-panel" id="collectionDetailsPanel">
-      <div class="panel-title">P!GE0NS</div>
-      <div class="collection-info">
-        <div class="ci-row"><span class="ci-label">T0KEN</span><span class="ci-value">P!GE0NS (NFT C0LLECT!0N)</span></div>
-        <div class="ci-row"><span class="ci-label">!SSUER / ADDRESS</span><span class="ci-value">rpigeoNwEPTN5JGWGQ8MCoa7SpQpz1537v</span></div>
-        <div class="ci-note">// NFTS D0 N0T REQU!RE A TRUST L!NE — N0NE NEEDED</div>
-      </div>
+    <div class="top-tabs" id="topTabs">
+      <button class="tab-btn" data-tab="database">DATABASE</button>
+      <button class="tab-btn" data-tab="mypigeons">MY P!GE0NS</button>
+      <button class="tab-btn" data-tab="topholders">T0P 10</button>
+      <button class="tab-btn" data-tab="sales">SALES DATA</button>
+    </div>
 
-      <div class="stats-strip" id="statsStrip">
-        <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value" id="statItems">…</div></div>
-        <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
-        <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
-        <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
-        <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
-        <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
-      </div>
+    <div class="sw-panel" id="myPigeonsPanel" style="display:none;">
+      <div class="panel-title" id="myPigeonsPanelTitle">MY P!GE0NS</div>
+      <div id="myPigeonsList"></div>
+    </div>
 
-      <button class="th-toggle stacked-toggle" id="topHoldersToggle">[ T0P 10 H0LDERS ▼ ]</button>
-      <div class="th-list" id="topHoldersList" style="display:none;"></div>
+    <div class="sw-panel" id="topHoldersPanelWrap" style="display:none;">
+      <div class="panel-title">T0P 10 H0LDERS</div>
+      <div id="topHoldersList"></div>
+    </div>
 
-      <button class="th-toggle stacked-toggle" id="salesToggle">[ SALES H!ST0RY ▼ ]</button>
-      <div class="sales-scrollbox" id="salesScrollBox" style="display:none;">
+    <div class="sw-panel" id="salesPanelWrap" style="display:none;">
+      <div class="panel-title">SALES H!ST0RY</div>
+      <div class="sales-scrollbox" id="salesScrollBox">
         <div id="salesArea"></div>
         <div class="scroll-sentinel" id="salesScrollSentinel"></div>
         <div class="load-more-note" id="salesLoadMoreNote" style="display:none;">L0AD!NG M0RE SALES...</div>
@@ -823,13 +824,27 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <div class="sw-panel" id="myPigeonsPanel">
-      <button class="th-toggle" id="myPigeonsToggle">[ MY P!GE0NS ▼ ]</button>
-      <div class="th-list" id="myPigeonsList" style="display:none;"></div>
-    </div>
-
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
-    <div id="screenBrowse">
+    <div id="screenBrowse" style="display:none;">
+      <div class="sw-panel" id="collectionDetailsPanel">
+        <div class="panel-title">P!GE0NS</div>
+        <div class="collection-info">
+          <div class="ci-row"><span class="ci-label">!SSUER / ADDRESS</span><span class="ci-value" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span></div>
+          <div style="text-align:center; margin-top:0.6rem;">
+            <button class="bar-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
+          </div>
+        </div>
+
+        <div class="stats-strip" id="statsStrip">
+          <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value" id="statItems">…</div></div>
+          <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
+          <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
+          <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
+          <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
+          <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
+        </div>
+      </div>
+
       <div class="sw-panel" id="nodeHeaderPanel" style="display:none;">
         <div class="node-eyebrow">// TARGET N0DE !DENT!F!ED</div>
 
@@ -983,6 +998,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     mode: 'browse',            // 'browse' | 'search' | 'scoped'
     sort: 'NAME_ASC',
     edition: 'ALL',            // 'ALL' | 'LOW' (1-1515) | 'HIGH' (1516-3015)
+    activeTab: null,           // null | 'database' | 'mypigeons' | 'topholders' | 'sales'
+    databaseLoaded: false,
+    salesLoaded: false,
     traitFilters: [],         // [{ id, category, value }]
     nextTraitRowId: 1,
     traitCategories: null,     // [name, name, ...] — cheap, loaded once
@@ -995,12 +1013,14 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   var el = {};
   ['searchInput','searchBtn','editionSelect','sortSelect',
-   'dbSelectToggle','dbSelectMenu',
-   'myPigeonsToggle','myPigeonsList',
+   'dbSelectToggle','dbSelectMenu','copyIssuerBtn','ciIssuerAddr',
+   'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
+   'topHoldersPanelWrap','topHoldersList',
+   'salesPanelWrap',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
-   'topHoldersToggle','topHoldersList','indexLine','traitRows','addTraitBtn','clearTraitsBtn',
+   'indexLine','traitRows','addTraitBtn','clearTraitsBtn',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
-   'salesToggle','salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
+   'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'screenBrowse','screenDetail','screenSummary',
@@ -1018,8 +1038,50 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
 
+  // ---- Top tab bar (DATABASE / MY PIGEONS / TOP 10 / SALES DATA) ----
+  // A peer navigation axis to the detail/summary screens below: only one
+  // of the four tab panels is ever visible, and only while on the browse
+  // screen (INSPECT/target-summary hide all four regardless of tab).
+  function showTab(tab){
+    state.activeTab = tab;
+    el.screenBrowse.style.display = tab === 'database' ? '' : 'none';
+    el.myPigeonsPanel.style.display = tab === 'mypigeons' ? '' : 'none';
+    el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
+    el.salesPanelWrap.style.display = tab === 'sales' ? '' : 'none';
+    var buttons = el.topTabs.querySelectorAll('.tab-btn');
+    for (var i = 0; i < buttons.length; i++){
+      buttons[i].classList.toggle('active', buttons[i].getAttribute('data-tab') === tab);
+    }
+    // Nothing fetches until its tab is actually opened for the first time.
+    if (tab === 'database' && !state.databaseLoaded){
+      state.databaseLoaded = true;
+      ensureTraitsLoaded();
+      loadCollectionStats();
+      startCollectionBrowse();
+    } else if (tab === 'mypigeons' && myPigeonsData === null){
+      loadMyPigeons();
+    } else if (tab === 'topholders' && topHoldersData === null){
+      loadTopHolders();
+    } else if (tab === 'sales' && !state.salesLoaded){
+      state.salesLoaded = true;
+      loadMoreSales();
+    }
+  }
+  el.topTabs.addEventListener('click', function(e){
+    var btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    showTab(btn.getAttribute('data-tab'));
+  });
+
   function showScreen(name){
-    el.screenBrowse.style.display = name === 'browse' ? '' : 'none';
+    if (name === 'browse'){
+      showTab(state.activeTab);
+    } else {
+      el.screenBrowse.style.display = 'none';
+      el.myPigeonsPanel.style.display = 'none';
+      el.topHoldersPanelWrap.style.display = 'none';
+      el.salesPanelWrap.style.display = 'none';
+    }
     el.screenDetail.style.display = name === 'detail' ? '' : 'none';
     el.screenSummary.style.display = name === 'summary' ? '' : 'none';
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -1111,7 +1173,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.targetPigeonCard.style.display = 'none';
     }
     el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG H0LDER\\'S REAL P!GE0NS...</div>';
-    showScreen('browse');
+    // Force the DATABASE tab regardless of which tab we were on (a wallet
+    // click from Top 10 / Sales Data should always land here) — and mark it
+    // loaded first so opening it doesn't ALSO kick off a full-collection
+    // fetch that would race this wallet-scoped one.
+    state.databaseLoaded = true;
+    showTab('database');
     renderTargetBar();
     api({ wallet: wallet }).then(function(data){
       state.scopeAllItems = data.items || [];
@@ -1159,13 +1226,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // corner select toggle — 6 columns doesn't leave room for more; tap the
   // image to INSPECT for the full trait set). ----
   function resultCardHtml(p){
-    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY #' + p.rarityRank + '</div>' : '';
-    var highSaleText = p.highSaleXrp !== null && p.highSaleXrp !== undefined
-      ? 'REC0RD SALE :: ' + p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP'
-      : 'F!RST 0WNER';
-    var highSaleLine = p.highSaleTxUrl
-      ? '<a class="result-highsale-line" href="' + escapeHtml(p.highSaleTxUrl) + '" target="_blank" rel="noopener" title="V!EW SALE TXN 0N B!TH0MP">' + highSaleText + '</a>'
-      : '<div class="result-highsale-line">' + highSaleText + '</div>';
+    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY #' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
     var inTarget = !!state.targetAssets[p.nftId];
@@ -1181,8 +1242,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       '<div class="result-card-body">' +
         rarityLine +
         bestListingLine +
-        highSaleLine +
-        '<button class="inspect-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ !NSPECT ]</button>' +
       '</div>' +
     '</div>';
   }
@@ -1208,8 +1267,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (tp) handleSelect(tp);
         return;
       }
-      var inspectBtn = e.target.closest('.inspect-btn');
-      if (inspectBtn){ openDetail(inspectBtn.getAttribute('data-nftid')); return; }
       var imgBox = e.target.closest('.pigeon-img-box');
       if (imgBox){ openDetail(imgBox.getAttribute('data-nftid')); }
     });
@@ -1483,8 +1540,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   function loadTopHolders(){
     api({ topHolders: 1 }).then(function(data){
       topHoldersData = data.holders || [];
-      if (el.topHoldersList.style.display !== 'none') renderTopHoldersList();
-    }).catch(function(){ topHoldersData = []; });
+      renderTopHoldersList();
+    }).catch(function(){ topHoldersData = []; renderTopHoldersList(); });
   }
   function renderTopHoldersList(){
     if (topHoldersData === null){
@@ -1503,12 +1560,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       '</div>';
     }).join('');
   }
-  el.topHoldersToggle.addEventListener('click', function(){
-    var opening = el.topHoldersList.style.display === 'none';
-    el.topHoldersList.style.display = opening ? '' : 'none';
-    el.topHoldersToggle.textContent = opening ? '[ T0P 10 H0LDERS ▲ ]' : '[ T0P 10 H0LDERS ▼ ]';
-    if (opening) renderTopHoldersList();
-  });
   el.topHoldersList.addEventListener('click', function(e){
     var row = e.target.closest('.th-row');
     if (!row) return;
@@ -1516,40 +1567,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
 
   // ---- MY PIGEONS — reuses the /board wallet session; no login flow here. ----
-  // ---- MY PIGEONS — collapsible, closed state shows the real held count
-  // once known; reuses the same wallet session as /board, no login here. ----
   var myPigeonsData = null; // null = not fetched yet
-  function myPigeonsToggleLabel(open){
-    var count = myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '';
-    return '[ MY P!GE0NS' + count + (open ? ' ▲ ]' : ' ▼ ]');
-  }
   function renderMyPigeonsList(){
+    el.myPigeonsPanelTitle.textContent = 'MY P!GE0NS' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
     if (myPigeonsData === null){ el.myPigeonsList.innerHTML = '<div class="th-empty">L0AD!NG...</div>'; return; }
     if (!myPigeonsData.length){ el.myPigeonsList.innerHTML = '<div class="th-empty">Y0U D0N\\'T H0LD ANY P!GE0NS YET.</div>'; return; }
     el.myPigeonsList.innerHTML = '<div class="result-grid my-pigeons-grid">' + myPigeonsData.map(resultCardHtml).join('') + '</div>';
   }
   function loadMyPigeons(){
-    if (!MY_WALLET) return;
-    api({ wallet: MY_WALLET }).then(function(data){
-      myPigeonsData = data.items || [];
-      var open = el.myPigeonsList.style.display !== 'none';
-      el.myPigeonsToggle.textContent = myPigeonsToggleLabel(open);
-      if (open) renderMyPigeonsList();
-    }).catch(function(){});
-  }
-  el.myPigeonsToggle.addEventListener('click', function(){
     if (!MY_WALLET){
-      alert('N0 S!GNATURE DETECTED — C0NNECT Y0UR WALLET 0N /B0ARD F!RST.');
+      el.myPigeonsList.innerHTML = '<div class="th-empty">N0 S!GNATURE DETECTED — C0NNECT Y0UR WALLET 0N /B0ARD F!RST.</div>';
       return;
     }
-    var opening = el.myPigeonsList.style.display === 'none';
-    el.myPigeonsList.style.display = opening ? '' : 'none';
-    el.myPigeonsToggle.textContent = myPigeonsToggleLabel(opening);
-    if (opening){
+    renderMyPigeonsList();
+    api({ wallet: MY_WALLET }).then(function(data){
+      myPigeonsData = data.items || [];
       renderMyPigeonsList();
-      if (myPigeonsData === null) loadMyPigeons();
-    }
-  });
+    }).catch(function(){});
+  }
   wireResultClicks(el.myPigeonsList, function(){ return myPigeonsData || []; });
 
   // ---- DATABASE selector — multi-collection groundwork; only PIGEONS is
@@ -1559,6 +1594,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.dbSelectMenu.addEventListener('click', function(){
     el.dbSelectMenu.style.display = 'none';
+  });
+
+  // Copy-to-clipboard, not a real TrustSet flow — this prototype doesn't
+  // connect a wallet or sign anything yet (same pattern already used for
+  // the CRWN trustline address elsewhere on the site).
+  el.copyIssuerBtn.addEventListener('click', function(){
+    var addr = el.ciIssuerAddr ? el.ciIssuerAddr.textContent : '';
+    var done = function(){
+      var original = el.copyIssuerBtn.textContent;
+      el.copyIssuerBtn.textContent = '[ C0P!ED ]';
+      setTimeout(function(){ el.copyIssuerBtn.textContent = original; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(done, done);
+    else done();
   });
 
   // ---- Sales history (real, collection-wide, infinite scroll) ----
@@ -1606,11 +1655,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (walletLink){ browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short')); return; }
     var target = e.target.closest('.sale-thumb, .sale-num-box');
     if (target) openDetail(target.getAttribute('data-nftid'));
-  });
-  el.salesToggle.addEventListener('click', function(){
-    var opening = el.salesScrollBox.style.display === 'none';
-    el.salesScrollBox.style.display = opening ? '' : 'none';
-    el.salesToggle.textContent = opening ? '[ SALES H!ST0RY ▲ ]' : '[ SALES H!ST0RY ▼ ]';
   });
   // Rooted at the scrollbox itself (not the viewport) so it fires on
   // scrolling *within* the box, not the page.
@@ -1822,12 +1866,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   // ---- Initial load ----
-  ensureTraitsLoaded();
-  loadTopHolders();
-  loadCollectionStats();
-  loadMyPigeons();
-  startCollectionBrowse();
-  loadMoreSales();
+  // Nothing loads until a tab is chosen — see showTab().
 
   // TV static background, purely atmospheric — matches the rest of the site.
   (function(){
