@@ -192,24 +192,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
 
-  /* ---- reference-image texture, used as a sprite: same file, two crops,
-     nearly blacked out by the scrim gradient so it reads as faint noise
-     under the panel, never competes with the text on top ---- */
+  /* ---- reference-image texture, tiled at a fixed square size (never
+     percentage-sized — that scales independently per-axis against a
+     non-square panel and stretches the source image) so it repeats at
+     native aspect ratio, nearly blacked out by the scrim gradient so it
+     reads as faint noise under the panel, never competing with the text
+     on top ---- */
   .sw-panel-signal{
     background-image:
       linear-gradient(rgba(8,9,11,0.87), rgba(8,9,11,0.87)),
       url('/assets/digitalglitchpattern.png');
-    background-size:100% 100%, 240% 240%;
-    background-position:center, 0% 0%;
-    background-repeat:no-repeat, no-repeat;
+    background-size:100% 100%, 260px 260px;
+    background-position:center, top left;
+    background-repeat:no-repeat, repeat;
   }
   .sw-panel-target{
     background-image:
       linear-gradient(rgba(8,9,11,0.84), rgba(8,9,11,0.84)),
       url('/assets/digitalglitchpattern.png');
-    background-size:100% 100%, 240% 240%;
-    background-position:center, 100% 100%;
-    background-repeat:no-repeat, no-repeat;
+    background-size:100% 100%, 260px 260px;
+    background-position:center, top left;
+    background-repeat:no-repeat, repeat;
   }
 
   /* ---- database (multi-collection) selector ---- */
