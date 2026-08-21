@@ -240,7 +240,8 @@ export async function onRequestGet(context) {
   if (params.get('highestSale') === '1') {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
-    const sortedIds = Object.keys(highSaleMap).sort((a, b) => highSaleMap[b].drops - highSaleMap[a].drops);
+    const asc = params.get('dir') === 'asc';
+    const sortedIds = Object.keys(highSaleMap).sort((a, b) => asc ? highSaleMap[a].drops - highSaleMap[b].drops : highSaleMap[b].drops - highSaleMap[a].drops);
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap));

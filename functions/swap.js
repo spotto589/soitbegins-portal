@@ -26,7 +26,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-<title>Σκύλλα SWAP :: P!GE0N DATABASE</title>
+<title>Σκύλλα :: SWAP</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -86,26 +86,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     text-transform:none;
   }
-  .sw-subtitle{
-    font-size:clamp(13px,2.4vw,16px);
-    letter-spacing:0.3em;
-    color:#00fff2;
-    text-shadow:0 0 8px rgba(0,255,242,0.4);
-    text-align:center;
-    margin-bottom:1rem;
-    text-transform:uppercase;
-  }
-  .sw-eyebrow-lines{
-    text-align:center;
-    font-size:11px;
-    letter-spacing:0.15em;
-    line-height:1.8;
-    color:#ff2f92;
-    text-shadow:0 0 6px rgba(255,47,146,0.4);
-    margin-bottom:2rem;
-    text-transform:uppercase;
-  }
-
   .sw-panel{
     border:1px solid rgba(255,47,146,0.25);
     background:#08080a;
@@ -122,7 +102,51 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
 
+  /* ---- database (multi-collection) selector ---- */
+  .db-select-wrap{ text-align:center; position:relative; margin-bottom:1.75rem; }
+  .db-select-toggle{
+    background:transparent;
+    border:none;
+    font-family:inherit;
+    font-size:12px;
+    letter-spacing:0.2em;
+    color:#00fff2;
+    text-shadow:0 0 6px rgba(0,255,242,0.4);
+    text-transform:uppercase;
+    cursor:pointer;
+    padding:0;
+  }
+  .db-select-menu{
+    margin:0.75rem auto 0;
+    max-width:260px;
+    border:1px solid rgba(0,255,242,0.3);
+    background:#08080a;
+  }
+  .db-option{
+    padding:0.65em 1em;
+    font-size:12px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    border-bottom:1px solid rgba(232,232,232,0.08);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.5em;
+  }
+  .db-option:last-child{ border-bottom:none; }
+  .db-option-active{ color:#39ff14; text-shadow:0 0 5px rgba(57,255,20,0.4); cursor:default; }
+  .db-option-disabled{ color:rgba(232,232,232,0.3); cursor:not-allowed; }
+  .db-soon{ font-size:9px; letter-spacing:0.1em; border:1px solid rgba(255,0,60,0.35); color:rgba(255,0,60,0.7); padding:0.2em 0.4em; }
+
+  /* ---- collection details: token/issuer info ---- */
+  .collection-info{ max-width:460px; margin:0 auto 1.25rem; }
+  .ci-row{ display:flex; justify-content:space-between; gap:0.75rem; font-size:11px; letter-spacing:0.03em; margin-bottom:0.5rem; flex-wrap:wrap; }
+  .ci-label{ color:rgba(232,232,232,0.45); text-transform:uppercase; flex:0 0 auto; }
+  .ci-value{ color:#e8e8e8; text-align:right; word-break:break-all; }
+  .ci-note{ text-align:center; font-size:9px; letter-spacing:0.08em; color:rgba(232,232,232,0.3); text-transform:uppercase; margin-top:0.5rem; }
+
   .my-pigeons-row{ text-align:center; margin-bottom:1.75rem; }
+  .my-pigeons-grid{ margin-top:1rem; }
 
   /* ---- collection stats strip ---- */
   .stats-strip{
@@ -273,16 +297,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:0.75rem;
   }
   input.search-input{
-    flex:1 1 260px;
+    flex:0 1 140px;
     background:#000;
     border:1px solid rgba(255,47,146,0.35);
     color:#e8e8e8;
     font-family:inherit;
-    font-size:12px;
+    font-size:11px;
     letter-spacing:0.05em;
-    padding:0.75em 0.9em;
+    padding:0.55em 0.6em;
   }
   input.search-input::placeholder{ color:rgba(232,232,232,0.3); text-transform:uppercase; }
+  .search-row .bar-btn{ padding:0.55em 0.8em; font-size:10px; }
   .bar-btn{
     flex:0 0 auto;
     background:transparent;
@@ -523,13 +548,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:700px){
     body{ padding:4vh 2.5vw 6vh; }
     .sw-panel{ padding:1rem 0.75rem; }
-    .result-grid{ gap:0.25rem; }
-    .result-card-body{ padding:0.3rem 0.15rem; }
-    .result-num{ font-size:11px; padding:0.35rem 0.15rem; }
-    .result-rarity-line{ display:none; }
-    .result-highsale-line{ display:none; }
-    .card-select-toggle{ width:1.4em; height:1.4em; line-height:1.4em; font-size:11px; }
-    .inspect-btn{ font-size:8px; padding:0.3em 0; }
+    /* 2-wide on mobile, not the desktop 6 — plenty of room per card now,
+       so rarity/high-sale stay visible instead of being dropped. */
+    .result-grid{ grid-template-columns:repeat(2, 1fr); gap:0.6rem; }
+    .result-card-body{ padding:0.5rem 0.4rem; }
+    .result-num{ font-size:15px; padding:0.45rem 0.3rem; }
+    .card-select-toggle{ width:1.7em; height:1.7em; line-height:1.7em; font-size:14px; }
+    .inspect-btn{ font-size:10px; padding:0.4em 0; }
   }
 
   /* ---- infinite scroll ---- */
@@ -757,11 +782,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   <div class="page">
     <a class="back-link" href="/board">&larr; RETURN T0 S!GNAL_RELAY</a>
 
-    <h1>Σκύλλα</h1>
-    <div class="sw-subtitle">SWAP PR0T0C0L</div>
-    <div class="sw-eyebrow-lines">// P!GE0N DATABASE<br>// C0LLECT!0N :: 3015</div>
+    <h1>Σκύλλα :: SWAP</h1>
 
-    <div class="sw-panel" id="collectionStatsPanel">
+    <div class="db-select-wrap">
+      <button class="db-select-toggle" id="dbSelectToggle">// DATABASE ▼</button>
+      <div class="db-select-menu" id="dbSelectMenu" style="display:none;">
+        <div class="db-option db-option-active">P!GE0NS</div>
+        <div class="db-option db-option-disabled">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
+        <div class="db-option db-option-disabled">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
+      </div>
+    </div>
+
+    <div class="sw-panel" id="collectionDetailsPanel">
+      <div class="panel-title">P!GE0NS</div>
+      <div class="collection-info">
+        <div class="ci-row"><span class="ci-label">T0KEN</span><span class="ci-value">P!GE0NS (NFT C0LLECT!0N)</span></div>
+        <div class="ci-row"><span class="ci-label">!SSUER / ADDRESS</span><span class="ci-value">rpigeoNwEPTN5JGWGQ8MCoa7SpQpz1537v</span></div>
+        <div class="ci-note">// NFTS D0 N0T REQU!RE A TRUST L!NE — N0NE NEEDED</div>
+      </div>
+
       <div class="stats-strip" id="statsStrip">
         <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value" id="statItems">…</div></div>
         <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
@@ -770,27 +809,26 @@ const SWAP_HTML = `<!DOCTYPE html>
         <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
         <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
       </div>
+
+      <button class="th-toggle stacked-toggle" id="topHoldersToggle">[ T0P 10 H0LDERS ▼ ]</button>
+      <div class="th-list" id="topHoldersList" style="display:none;"></div>
+
+      <button class="th-toggle stacked-toggle" id="salesToggle">[ SALES H!ST0RY ▼ ]</button>
+      <div class="sales-scrollbox" id="salesScrollBox" style="display:none;">
+        <div id="salesArea"></div>
+        <div class="scroll-sentinel" id="salesScrollSentinel"></div>
+        <div class="load-more-note" id="salesLoadMoreNote" style="display:none;">L0AD!NG M0RE SALES...</div>
+        <div class="end-of-collection-note" id="salesEndNote" style="display:none;">// END 0F SALES H!ST0RY</div>
+      </div>
     </div>
 
-    <div class="my-pigeons-row">
-      <button class="bar-btn" id="myPigeonsBtn">[ MY P!GE0NS ]</button>
+    <div class="sw-panel" id="myPigeonsPanel">
+      <button class="th-toggle" id="myPigeonsToggle">[ MY P!GE0NS ▼ ]</button>
+      <div class="th-list" id="myPigeonsList" style="display:none;"></div>
     </div>
 
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
     <div id="screenBrowse">
-      <div class="sw-panel" id="statsPanel">
-        <button class="th-toggle" id="topHoldersToggle">[ T0P 10 H0LDERS ▼ ]</button>
-        <div class="th-list" id="topHoldersList" style="display:none;"></div>
-
-        <button class="th-toggle stacked-toggle" id="salesToggle">[ SALES H!ST0RY ▼ ]</button>
-        <div class="sales-scrollbox" id="salesScrollBox" style="display:none;">
-          <div id="salesArea"></div>
-          <div class="scroll-sentinel" id="salesScrollSentinel"></div>
-          <div class="load-more-note" id="salesLoadMoreNote" style="display:none;">L0AD!NG M0RE SALES...</div>
-          <div class="end-of-collection-note" id="salesEndNote" style="display:none;">// END 0F SALES H!ST0RY</div>
-        </div>
-      </div>
-
       <div class="sw-panel" id="nodeHeaderPanel" style="display:none;">
         <div class="node-eyebrow">// TARGET N0DE !DENT!F!ED</div>
 
@@ -820,20 +858,21 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="sw-panel">
         <div class="panel-title" id="searchPanelTitle">P!GE0N DATABASE</div>
         <div class="search-row">
-          <input class="search-input" id="searchInput" placeholder="SEARCH BY P!GE0N NUMBER (E.G. 1842)..." inputmode="numeric">
-          <button class="bar-btn" id="searchBtn">[ SEARCH ]</button>
+          <input class="search-input" id="searchInput" placeholder="SEARCH #..." inputmode="numeric">
+          <button class="bar-btn" id="searchBtn">[ GO ]</button>
           <select class="sort-select" id="editionSelect">
-            <option value="">[ ED!T!0N ▼ ]</option>
-            <option value="ALL">1-3015</option>
-            <option value="LOW">1-1515</option>
-            <option value="HIGH">1516-3015</option>
+            <option value="ALL">ALL (1-3015)</option>
+            <option value="LOW">1ST ED!T!0N (1-1515)</option>
+            <option value="HIGH">2ND ED!T!0N (1516-3015)</option>
           </select>
           <select class="sort-select" id="sortSelect">
-            <option value="">[ S0RT ▼ ]</option>
+            <option value="NAME_ASC">A → Z</option>
+            <option value="PRICE_ASC">L0WEST L!ST!NG</option>
+            <option value="PRICE_DESC">H!GHEST L!ST!NG</option>
             <option value="RARITY_ASC">RAR!TY H!GH</option>
             <option value="RARITY_DESC">RAR!TY L0W</option>
-            <option value="HIGHEST_SALE">H!GHEST SALE</option>
-            <option value="NAME_ASC">A → Z</option>
+            <option value="HIGHEST_SALE">SALES (H!GHEST)</option>
+            <option value="SALES_LOW">SALES (L0WEST)</option>
             <option value="NAME_DESC">Z → A</option>
           </select>
         </div>
@@ -941,7 +980,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     items: [],                // everything loaded so far in the current browse/search mode
     scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
     mode: 'browse',            // 'browse' | 'search' | 'scoped'
-    sort: 'RARITY_ASC',
+    sort: 'NAME_ASC',
     edition: 'ALL',            // 'ALL' | 'LOW' (1-1515) | 'HIGH' (1516-3015)
     traitFilters: [],         // [{ id, category, value }]
     nextTraitRowId: 1,
@@ -954,7 +993,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','sortSelect','myPigeonsBtn',
+  ['searchInput','searchBtn','editionSelect','sortSelect',
+   'dbSelectToggle','dbSelectMenu',
+   'myPigeonsToggle','myPigeonsList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'topHoldersToggle','topHoldersList','indexLine','traitRows','addTraitBtn','clearTraitsBtn',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
@@ -1210,10 +1251,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.loadMoreNote.style.display = '';
     var filters = activeFilters();
     var isEdition = state.edition === 'LOW' || state.edition === 'HIGH';
-    var isHighestSale = state.sort === 'HIGHEST_SALE';
+    var isSalesSort = state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW';
     var reqParams;
-    if (isHighestSale){
-      reqParams = { skip: state.skip, limit: PAGE_SIZE, highestSale: 1 };
+    if (isSalesSort){
+      reqParams = { skip: state.skip, limit: PAGE_SIZE, highestSale: 1, dir: state.sort === 'SALES_LOW' ? 'asc' : 'desc' };
     } else if (isEdition){
       reqParams = { rawSkip: state.editionRawSkip, limit: PAGE_SIZE, numberRange: state.edition === 'LOW' ? 'low' : 'high', sort: state.sort };
     } else {
@@ -1350,10 +1391,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
     } else if (state.sort === 'NAME_ASC' || state.sort === 'NAME_DESC'){
       list = list.slice().sort(function(a, b){ return state.sort === 'NAME_DESC' ? (b.number || 0) - (a.number || 0) : (a.number || 0) - (b.number || 0); });
-    } else if (state.sort === 'HIGHEST_SALE'){
+    } else if (state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW'){
       list = list.slice().sort(function(a, b){
         var av = a.highSaleXrp === null || a.highSaleXrp === undefined ? -1 : a.highSaleXrp, bv = b.highSaleXrp === null || b.highSaleXrp === undefined ? -1 : b.highSaleXrp;
-        return bv - av;
+        return state.sort === 'SALES_LOW' ? av - bv : bv - av;
+      });
+    } else if (state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC'){
+      list = list.slice().sort(function(a, b){
+        var ap = a.priceXrp === null || a.priceXrp === undefined ? Infinity : a.priceXrp, bp = b.priceXrp === null || b.priceXrp === undefined ? Infinity : b.priceXrp;
+        return state.sort === 'PRICE_DESC' ? bp - ap : ap - bp;
       });
     }
     state.items = list;
@@ -1452,13 +1498,49 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
 
   // ---- MY PIGEONS — reuses the /board wallet session; no login flow here. ----
-  el.myPigeonsBtn.addEventListener('click', function(){
+  // ---- MY PIGEONS — collapsible, closed state shows the real held count
+  // once known; reuses the same wallet session as /board, no login here. ----
+  var myPigeonsData = null; // null = not fetched yet
+  function myPigeonsToggleLabel(open){
+    var count = myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '';
+    return '[ MY P!GE0NS' + count + (open ? ' ▲ ]' : ' ▼ ]');
+  }
+  function renderMyPigeonsList(){
+    if (myPigeonsData === null){ el.myPigeonsList.innerHTML = '<div class="th-empty">L0AD!NG...</div>'; return; }
+    if (!myPigeonsData.length){ el.myPigeonsList.innerHTML = '<div class="th-empty">Y0U D0N\'T H0LD ANY P!GE0NS YET.</div>'; return; }
+    el.myPigeonsList.innerHTML = '<div class="result-grid my-pigeons-grid">' + myPigeonsData.map(resultCardHtml).join('') + '</div>';
+  }
+  function loadMyPigeons(){
+    if (!MY_WALLET) return;
+    api({ wallet: MY_WALLET }).then(function(data){
+      myPigeonsData = data.items || [];
+      var open = el.myPigeonsList.style.display !== 'none';
+      el.myPigeonsToggle.textContent = myPigeonsToggleLabel(open);
+      if (open) renderMyPigeonsList();
+    }).catch(function(){});
+  }
+  el.myPigeonsToggle.addEventListener('click', function(){
     if (!MY_WALLET){
       alert('N0 S!GNATURE DETECTED — C0NNECT Y0UR WALLET 0N /B0ARD F!RST.');
       return;
     }
-    var short = MY_WALLET.slice(0, 9) + '...' + MY_WALLET.slice(-4);
-    browseOwnerCollection(MY_WALLET, short);
+    var opening = el.myPigeonsList.style.display === 'none';
+    el.myPigeonsList.style.display = opening ? '' : 'none';
+    el.myPigeonsToggle.textContent = myPigeonsToggleLabel(opening);
+    if (opening){
+      renderMyPigeonsList();
+      if (myPigeonsData === null) loadMyPigeons();
+    }
+  });
+  wireResultClicks(el.myPigeonsList, function(){ return myPigeonsData || []; });
+
+  // ---- DATABASE selector — multi-collection groundwork; only PIGEONS is
+  // live, FUZZY/PHNIX are inert placeholders. ----
+  el.dbSelectToggle.addEventListener('click', function(){
+    el.dbSelectMenu.style.display = el.dbSelectMenu.style.display === 'none' ? '' : 'none';
+  });
+  el.dbSelectMenu.addEventListener('click', function(){
+    el.dbSelectMenu.style.display = 'none';
   });
 
   // ---- Sales history (real, collection-wide, infinite scroll) ----
@@ -1725,6 +1807,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   ensureTraitsLoaded();
   loadTopHolders();
   loadCollectionStats();
+  loadMyPigeons();
   startCollectionBrowse();
   loadMoreSales();
 
