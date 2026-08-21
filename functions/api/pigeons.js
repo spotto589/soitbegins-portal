@@ -2,6 +2,7 @@ import {
   fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
+  getSwapListingsMap, removeSwapListing, fetchNftSellOffers,
   resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX,
   getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
@@ -38,10 +39,11 @@ function bithompTxUrl(txHash) {
   return `https://bithomp.com/explorer/${txHash}`;
 }
 
-function toItem(nftId, meta, ownerOverride, highSaleMap) {
+function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap) {
   const owner = ownerOverride !== undefined ? ownerOverride : meta.owner;
   const priceDrops = typeof meta.priceDrops === 'number' ? meta.priceDrops : null;
   const highSaleEntry = highSaleMap ? highSaleMap[nftId] : undefined;
+  const scyllaEntry = scyllaListingsMap ? scyllaListingsMap[nftId] : undefined;
   return {
     nftId,
     number: meta.number,
@@ -55,7 +57,8 @@ function toItem(nftId, meta, ownerOverride, highSaleMap) {
     priceXrp: priceDrops !== null ? priceDrops / 1000000 : null,
     buyUrl: priceDrops !== null ? deeptideBuyUrl(nftId) : null,
     highSaleXrp: highSaleEntry ? highSaleEntry.drops / 1000000 : null,
-    highSaleTxUrl: highSaleEntry && highSaleEntry.txHash ? bithompTxUrl(highSaleEntry.txHash) : null
+    highSaleTxUrl: highSaleEntry && highSaleEntry.txHash ? bithompTxUrl(highSaleEntry.txHash) : null,
+    scyllaListing: scyllaEntry ? { price: scyllaEntry.price, currency: 'PIGEONS' } : null
   };
 }
 
@@ -100,6 +103,11 @@ export async function onRequestGet(context) {
   // every item below (cards' "HIGH SALE" line and the highest-sale sort).
   const highSaleMap = await getHighSaleMap(env.coin);
 
+  // Σκύλλα SWAP listings — one cheap KV read, reused for every item below
+  // (the Σ LISTED badge on ordinary browse cards, and the LISTED filter's
+  // own $PIGEONS sort). No per-card cost beyond this single read.
+  const scyllaListingsMap = await getSwapListingsMap(env.coin);
+
   // Trait category/value/percentage discovery for the TRAITS stack filter
   // UI — real, exact counts straight from Deeptide, not sampled.
   if (params.get('traits') === '1') {
@@ -133,7 +141,8 @@ export async function onRequestGet(context) {
       xrpCafeFloorXrp: xrpCafeStats && xrpCafeStats.floorDrops !== null ? xrpCafeStats.floorDrops / 1000000 : null,
       xrpCafeUrl: 'https://xrp.cafe/collection/xrpigeons',
       totalVolumeXrp: xrpCafeStats && xrpCafeStats.totalVolumeDrops !== null ? xrpCafeStats.totalVolumeDrops / 1000000 : null,
-      listedPercent: xrpCafeStats ? xrpCafeStats.percentListed : null
+      listedPercent: xrpCafeStats ? xrpCafeStats.percentListed : null,
+      scyllaListedCount: Object.keys(scyllaListingsMap).length
     });
   }
 
@@ -186,7 +195,7 @@ export async function onRequestGet(context) {
     const ledgerItems = pigeons.map(n => ({ nftId: n.NFTokenID, uriHex: n.URI }));
     const resolved = await resolveOwnerCollectionLive(env.coin, wallet, ledgerItems);
     const items = resolved
-      .map(r => toItem(r.nftId, r.meta, wallet, highSaleMap))
+      .map(r => toItem(r.nftId, r.meta, wallet, highSaleMap, scyllaListingsMap))
       .sort((a, b) => (a.number || 0) - (b.number || 0));
     return json({ items, owner: wallet, ownerShort: shortenAddr(wallet) });
   }
@@ -229,7 +238,7 @@ export async function onRequestGet(context) {
       const match = (categories[a.trait_type] || []).find(v => v.value === a.value);
       return { trait_type: a.trait_type, value: a.value, percent: match ? match.percent : (a.percent != null ? a.percent : null), count: match ? match.count : null };
     });
-    const result = toItem(item.nftId, item, undefined, highSaleMap);
+    const result = toItem(item.nftId, item, undefined, highSaleMap, scyllaListingsMap);
     // Per-marketplace listings — each platform has its own separate sell
     // offers, so a Pigeon can be listed on one, both, or neither.
     result.listings = {
@@ -256,7 +265,48 @@ export async function onRequestGet(context) {
     }
     const item = await fetchDeeptideNftDetail(nftId);
     if (!item) return json({ items: [], notIndexed: true, query: num });
-    return json({ items: [toItem(item.nftId, item, undefined, highSaleMap)] });
+    return json({ items: [toItem(item.nftId, item, undefined, highSaleMap, scyllaListingsMap)] });
+  }
+
+  // Σκύλλα SWAP LISTED filter — only Pigeons actually listed through this
+  // system (see getSwapListingsMap), sorted by real $PIGEONS price. Exact,
+  // not scanned/approximate, same shape as the highest-sale sort below —
+  // except this ALSO re-verifies each item on the requested page against
+  // real nft_sell_offers (one XRPL call per item, capped at the page
+  // limit, well under the subrequest budget) and prunes any entry that's
+  // no longer actually there, so a stale/cancelled/sold listing can't
+  // silently linger in this view.
+  const scyllaListed = params.get('scyllaListed');
+  if (scyllaListed === '1') {
+    const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
+    const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
+    const asc = params.get('dir') !== 'desc';
+    const sortedIds = Object.keys(scyllaListingsMap).sort((a, b) => {
+      const av = parseFloat(scyllaListingsMap[a].price) || 0;
+      const bv = parseFloat(scyllaListingsMap[b].price) || 0;
+      return asc ? av - bv : bv - av;
+    });
+    const pageIds = sortedIds.slice(skip, skip + limit);
+    const verified = await Promise.all(pageIds.map(async (id) => {
+      const offers = await fetchNftSellOffers(id);
+      const stillListed = offers.some(o => o.owner === scyllaListingsMap[id].seller);
+      if (!stillListed) {
+        context.waitUntil(removeSwapListing(env.coin, id));
+        return null;
+      }
+      return id;
+    }));
+    const liveIds = verified.filter(Boolean);
+    const resolved = await Promise.all(liveIds.map(id => fetchDeeptideNftDetail(id)));
+    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap));
+    return json({
+      items,
+      total: sortedIds.length,
+      hasMore: skip + pageIds.length < sortedIds.length,
+      skip: skip + pageIds.length,
+      limit,
+      collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
+    });
   }
 
   // Sort by highest-ever sale price — exact (not scanned/approximate),
@@ -270,7 +320,7 @@ export async function onRequestGet(context) {
     const sortedIds = Object.keys(highSaleMap).sort((a, b) => asc ? highSaleMap[a].drops - highSaleMap[b].drops : highSaleMap[b].drops - highSaleMap[a].drops);
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
-    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap));
+    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap));
     await attachListings(items, LISTINGS_ENRICH_CAP_LOW);
     return json({
       items,
@@ -309,7 +359,7 @@ export async function onRequestGet(context) {
         .sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
       const pageNums = nums.slice(skip, skip + limit);
       const resolved = await Promise.all(pageNums.map(n => fetchDeeptideNftDetail(map[n])));
-      const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap));
+      const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap));
       await attachListings(items, LISTINGS_ENRICH_CAP_LOW);
       return json({
         items,
@@ -341,7 +391,7 @@ export async function onRequestGet(context) {
       if (matched.length >= limit) break;
       if (!page.hasMore) { exhausted = true; break; }
     }
-    const items = matched.map(it => toItem(it.nftId, it, undefined, highSaleMap));
+    const items = matched.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap));
     await attachListings(items);
     return json({
       items,
@@ -366,7 +416,7 @@ export async function onRequestGet(context) {
     const nums = Object.keys(map).map(n => parseInt(n, 10)).sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
     const pageNums = nums.slice(skip, skip + limit);
     const resolved = await Promise.all(pageNums.map(n => fetchDeeptideNftDetail(map[n])));
-    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap));
+    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap));
     await attachListings(items, LISTINGS_ENRICH_CAP_LOW);
     return json({
       items,
@@ -412,7 +462,7 @@ export async function onRequestGet(context) {
       return crossListing === 'asc' ? a.effective - b.effective : b.effective - a.effective;
     });
     const items = withCross.map(({ it, effective, source, xp }) => {
-      const built = toItem(it.nftId, it, undefined, highSaleMap);
+      const built = toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap);
       built.bestListingXrp = effective;
       built.bestListingSource = source;
       built.listings = {
@@ -444,7 +494,7 @@ export async function onRequestGet(context) {
   }
 
   const page = await fetchDeeptideListings({ skip, limit, sort, traits: filters });
-  const items = page.items.map(it => toItem(it.nftId, it, undefined, highSaleMap));
+  const items = page.items.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap));
   await attachListings(items);
 
   context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));

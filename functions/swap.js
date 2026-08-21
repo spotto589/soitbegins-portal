@@ -278,12 +278,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     border-radius:var(--radius);
   }
-  .stat-tile-link{ display:block; text-decoration:none; cursor:pointer; transition:border-color 0.15s ease, background 0.15s ease; }
+  .stat-tile-link{ display:block; width:100%; text-decoration:none; cursor:pointer; font:inherit; transition:border-color 0.15s ease, background 0.15s ease; }
   .stat-tile-link:hover{ background:var(--cyan-faint); border-color:var(--cyan-dim); }
   .stat-label{ font-size:9px; letter-spacing:0.15em; color:var(--grey-dim); margin-bottom:0.5rem; text-transform:uppercase; }
   .stat-value{ font-size:16px; letter-spacing:0.03em; color:var(--white); }
   .stat-tile-link .stat-value{ color:var(--grey); }
   .stat-tile-link:hover .stat-value{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
+  /* Σκύλλα-native listings — magenta, matching the SCYLLA/target colour language */
+  .stat-tile-link.scylla-active{ border-color:var(--magenta); background:var(--magenta-faint); }
+  .stat-tile-link.scylla-active:hover{ background:var(--magenta-faint); border-color:var(--magenta); }
+  .stat-tile-link.scylla-active .stat-value{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+  .card-scylla-listed{ margin-top:0.4rem; font-size:10px; letter-spacing:0.05em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); text-align:center; text-transform:uppercase; }
 
   /* ---- top 10 holders (expandable) ---- */
   .th-toggle{
@@ -1044,6 +1049,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
           <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
           <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
+          <button class="stat-tile stat-tile-link" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">Σ SCYLLA L!STED</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
           <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
           <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
         </div>
@@ -1093,6 +1099,8 @@ const SWAP_HTML = `<!DOCTYPE html>
             <option value="RARITY_DESC">RAR!TY L0W</option>
             <option value="HIGHEST_SALE">SALES (H!GHEST)</option>
             <option value="SALES_LOW">SALES (L0WEST)</option>
+            <option value="SCYLLA_PRICE_ASC">$P!GE0NS L0W → H!GH</option>
+            <option value="SCYLLA_PRICE_DESC">$P!GE0NS H!GH → L0W</option>
             <option value="NAME_DESC">Z → A</option>
           </select>
         </div>
@@ -1216,7 +1224,60 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <div class="protocol-footer">TH!S !S A PR0T0TYPE !NTERFACE. N0 ASSETS CAN BE M0VED, S!GNED, 0R TRANSFERRED.</div>
+    <!-- SCREEN: BUY CONFIRMATION — the exact NFTokenAcceptOffer txjson, before Xaman ever opens -->
+    <div class="sw-panel" id="screenBuyConfirm" style="display:none;">
+      <div class="node-eyebrow">// BUY C0NF!RMAT!0N</div>
+      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="buyConfTxType"></span></div>
+      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="buyConfAccount"></span></div>
+      <div class="detail-field"><span class="df-label">NFTokenSellOffer</span><span class="df-value" id="buyConfOfferId"></span></div>
+      <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="buyConfPigeon"></span></div>
+      <div class="detail-field"><span class="df-label">SELLER</span><span class="df-value" id="buyConfSeller"></span></div>
+      <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="buyConfPrice"></span></div>
+      <div class="index-line" id="buyConfirmStatus" style="margin-top:1rem;"></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="buyConfirmBackBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="buyOpenXamanBtn">[ 0PEN XAMAN ]</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: BUY RESULT — verified against real on-ledger state (buyer's account_nfts + offer gone) -->
+    <div class="sw-panel" id="screenBuyResult" style="display:none;">
+      <div class="detail-eyebrow">// SETTLED</div>
+      <div class="detail-num" id="buyResultPigeonNum"></div>
+      <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="buyResultPrice"></span></div>
+      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="buyResultStatus"></span></div>
+      <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="buyResultTxLink" target="_blank" rel="noopener"></a></span></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="buyResultDoneBtn">[ ← BACK T0 L!STED ]</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: DELIST CONFIRMATION — the exact NFTokenCancelOffer txjson, before Xaman ever opens -->
+    <div class="sw-panel" id="screenDelistConfirm" style="display:none;">
+      <div class="node-eyebrow">// DEL!ST C0NF!RMAT!0N</div>
+      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="delistConfTxType"></span></div>
+      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="delistConfAccount"></span></div>
+      <div class="detail-field"><span class="df-label">NFTokenOffers</span><span class="df-value" id="delistConfOfferId"></span></div>
+      <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="delistConfPigeon"></span></div>
+      <div class="index-line" id="delistConfirmStatus" style="margin-top:1rem;"></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="delistConfirmBackBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="delistOpenXamanBtn">[ 0PEN XAMAN ]</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: DELIST RESULT — verified against real on-ledger state (offer gone) -->
+    <div class="sw-panel" id="screenDelistResult" style="display:none;">
+      <div class="detail-eyebrow">// DEL!STED</div>
+      <div class="detail-num" id="delistResultPigeonNum"></div>
+      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="delistResultStatus"></span></div>
+      <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="delistResultTxLink" target="_blank" rel="noopener"></a></span></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="delistResultDoneBtn">[ ← BACK T0 MY P!GE0NS ]</button>
+      </div>
+    </div>
+
+    <div class="protocol-footer">Σκύλλα SWAP :: L!ST!NG, BUY!NG, AND DEL!ST!NG ARE REAL XRPL TRANSACT!0NS. N0 MARKETPLACE FEE, NEG0T!AT!0N, 0R MULT!-!TEM 0FFERS YET.</div>
   </div>
 
   <div class="target-bar" id="targetBar" style="display:none;">
@@ -1263,7 +1324,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     collectionSizeApprox: 3015,
     currentDetail: null,
     targetAssets: {},         // nftId -> { nftId, number, image } — only while scope is a wallet
-    sales: { skip: 0, hasMore: true, loading: false, opened: false }
+    sales: { skip: 0, hasMore: true, loading: false, opened: false },
+    scyllaListedOnly: false   // whole-collection LISTED filter — Pigeons listed through Scylla itself
   };
 
   var el = {};
@@ -1273,6 +1335,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'topHoldersPanelWrap','topHoldersList',
    'salesPanelWrap',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
+   'statScyllaListedTile','statScyllaListedCount',
    'indexLine','traitRows','addTraitBtn','clearTraitsBtn',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
@@ -1288,7 +1351,11 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myPigeonsConnect','connectScyllaBtn','connectStatus','myWalletInfo','myWalletAddr','myWalletCount',
    'screenListForm','listFormPigeonNum','listFormImg','listPriceInput','listFormError','listFormBackBtn','listFormSubmitBtn',
    'screenListConfirm','confTxType','confAccount','confNftId','confCurrency','confIssuer','confValue','confFlags','confirmStatus','listConfirmBackBtn','openXamanBtn',
-   'screenListResult','listResultEyebrow','listResultPigeonNum','listResultPrice','listResultStatus','listResultOfferId','listResultTxLink','listResultDoneBtn'
+   'screenListResult','listResultEyebrow','listResultPigeonNum','listResultPrice','listResultStatus','listResultOfferId','listResultTxLink','listResultDoneBtn',
+   'screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
+   'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
+   'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
+   'screenDelistResult','delistResultPigeonNum','delistResultStatus','delistResultTxLink','delistResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   function escapeHtml(str){
@@ -1346,6 +1413,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenListForm.style.display = name === 'listform' ? '' : 'none';
     el.screenListConfirm.style.display = name === 'listconfirm' ? '' : 'none';
     el.screenListResult.style.display = name === 'listresult' ? '' : 'none';
+    el.screenBuyConfirm.style.display = name === 'buyconfirm' ? '' : 'none';
+    el.screenBuyResult.style.display = name === 'buyresult' ? '' : 'none';
+    el.screenDelistConfirm.style.display = name === 'delistconfirm' ? '' : 'none';
+    el.screenDelistResult.style.display = name === 'delistresult' ? '' : 'none';
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
@@ -1505,6 +1576,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     var listingsHtml = p.listings
       ? '<div class="card-listings">' + listingBlockHtml('XRP.CAFE', p.listings.xrpCafe) + listingBlockHtml('DEEPT!DE', p.listings.deeptide) + '</div>'
       : '';
+    var scyllaListedHtml = p.scyllaListing
+      ? '<div class="card-scylla-listed">Σ L!STED :: ' + escapeHtml(p.scyllaListing.price) + ' $P!GE0NS</div>'
+      : '';
+    // BUY only in the LISTED view itself, and never for your own listing —
+    // server enforces the real "not your own" check regardless.
+    var buyHtml = (state.scyllaListedOnly && p.scyllaListing && p.owner !== MY_WALLET)
+      ? '<button class="bar-btn buy-scylla-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ BUY ]</button>'
+      : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">P!GE0N ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -1513,6 +1592,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       '</div>' +
       '<div class="result-card-body">' +
         rarityLine +
+        scyllaListedHtml +
+        buyHtml +
         listingsHtml +
       '</div>' +
     '</div>';
@@ -1533,6 +1614,12 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   function wireResultClicks(container, source){
     container.addEventListener('click', function(e){
+      var buyBtn = e.target.closest('.buy-scylla-btn');
+      if (buyBtn){
+        var bp = source().filter(function(x){ return x.nftId === buyBtn.getAttribute('data-nftid'); })[0];
+        if (bp) openBuyConfirm(bp);
+        return;
+      }
       var toggle = e.target.closest('.card-select-toggle');
       if (toggle){
         var tp = source().filter(function(x){ return x.nftId === toggle.getAttribute('data-nftid'); })[0];
@@ -1589,7 +1676,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     var isNumericSort = state.sort === 'NAME_ASC' || state.sort === 'NAME_DESC';
     var isCrossListing = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC';
     var reqParams;
-    if (isSalesSort){
+    if (state.scyllaListedOnly){
+      // Only Pigeons actually listed through Scylla itself, sorted by real
+      // $PIGEONS price — server re-verifies each item against real
+      // nft_sell_offers, so a stale/cancelled listing can't linger here.
+      reqParams = { skip: state.skip, limit: PAGE_SIZE, scyllaListed: 1, dir: state.sort === 'SCYLLA_PRICE_DESC' ? 'desc' : 'asc' };
+    } else if (isSalesSort){
       reqParams = { skip: state.skip, limit: PAGE_SIZE, highestSale: 1, dir: state.sort === 'SALES_LOW' ? 'asc' : 'desc' };
     } else if (isCrossListing){
       // Real lowest/highest across BOTH Deeptide and xrp.cafe, not just
@@ -1849,7 +1941,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     var num = p.number !== null ? '#' + p.number : '#????';
     var listedInfo = myListedData[p.nftId];
     var actionHtml = listedInfo
-      ? '<div class="index-line" style="margin-top:0.5rem; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow);">L!STED :: ' + escapeHtml(listedInfo.price) + ' $P!GE0NS</div>'
+      ? '<div class="index-line" style="margin-top:0.5rem; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow);">L!STED :: ' + escapeHtml(listedInfo.price) + ' $P!GE0NS</div>' +
+        '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ DEL!ST ]</button>'
       : '<button class="bar-btn list-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.5rem;">[ L!ST ]</button>';
     return '<div class="result-card" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">P!GE0N ' + num + '</div>' +
@@ -1887,11 +1980,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   wireResultClicks(el.myPigeonsList, function(){ return myPigeonsData || []; });
   el.myPigeonsList.addEventListener('click', function(e){
-    var btn = e.target.closest('.list-pigeon-btn');
-    if (!btn) return;
-    var nftId = btn.getAttribute('data-nftid');
-    var p = (myPigeonsData || []).filter(function(x){ return x.nftId === nftId; })[0];
-    if (p) openListForm(p);
+    var listBtn = e.target.closest('.list-pigeon-btn');
+    if (listBtn){
+      var nftId = listBtn.getAttribute('data-nftid');
+      var p = (myPigeonsData || []).filter(function(x){ return x.nftId === nftId; })[0];
+      if (p) openListForm(p);
+      return;
+    }
+    var delistBtn = e.target.closest('.delist-pigeon-btn');
+    if (delistBtn){
+      var dNftId = delistBtn.getAttribute('data-nftid');
+      var dp = (myPigeonsData || []).filter(function(x){ return x.nftId === dNftId; })[0];
+      if (dp) openDelistConfirm(dp);
+    }
   });
 
   // ---- CONNECT SCYLLA — same XummPkce OAuth login /board uses, redirected
@@ -1960,9 +2061,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       not_a_pigeon: 'N0T A VAL!D P!GE0N NFT.',
       invalid_price: 'ENTER A VAL!D PR!CE GREATER THAN 0.',
       no_session: 'C0NNECT Y0UR WALLET F!RST.',
-      invalid_session: 'S!GNAL EXP!RED — REC0NNECT Y0UR WALLET.'
+      invalid_session: 'S!GNAL EXP!RED — REC0NNECT Y0UR WALLET.',
+      not_listed: 'TH!S P!GE0N !S N0T CURRENTLY L!STED.',
+      cannot_buy_own_listing: 'Y0U CAN\\'T BUY Y0UR 0WN L!ST!NG.',
+      not_listed_by_you: 'TH!S P!GE0N !SN\\'T L!STED BY Y0UR WALLET.'
     };
-    return (code && messages[code]) || 'ERR://C0ULD N0T PREPARE L!ST!NG.';
+    return (code && messages[code]) || 'ERR://C0ULD N0T PREPARE THE TRANSACT!0N.';
   }
 
   function openListForm(p){
@@ -2114,6 +2218,249 @@ const SWAP_HTML = `<!DOCTYPE html>
     showScreen('browse');
   });
 
+  // ---- BUY — Σκύλλα SWAP phase 2: NFTokenAcceptOffer against a real,
+  // live sell offer. No fee, no negotiation — LIST -> BUY -> SETTLE only. ----
+  var buyTarget = null; // { nftId, number, image } — the pigeon currently being bought
+  var buyUuid = null;
+  var buyPollTimer = null;
+
+  function openBuyConfirm(p){
+    buyTarget = p;
+    fetch('/api/swap-buy-prepare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: p.nftId })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        alert(listingErrorMessage(res.data && res.data.error));
+        buyTarget = null;
+        return;
+      }
+      var txjson = res.data.txjson;
+      var display = res.data.display;
+      el.buyConfTxType.textContent = txjson.TransactionType;
+      el.buyConfAccount.textContent = txjson.Account;
+      el.buyConfOfferId.textContent = txjson.NFTokenSellOffer;
+      el.buyConfPigeon.textContent = 'P!GE0N #' + (p.number !== null ? p.number : '????');
+      el.buyConfSeller.textContent = display.seller;
+      el.buyConfPrice.textContent = display.price + ' $P!GE0NS';
+      el.buyConfirmStatus.textContent = '';
+      el.buyOpenXamanBtn.disabled = false;
+      el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      showScreen('buyconfirm');
+    }).catch(function(){
+      alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
+      buyTarget = null;
+    });
+  }
+  el.buyConfirmBackBtn.addEventListener('click', function(){
+    buyTarget = null;
+    showScreen('browse');
+  });
+
+  el.buyOpenXamanBtn.addEventListener('click', function(){
+    if (!buyTarget) return;
+    el.buyOpenXamanBtn.disabled = true;
+    el.buyOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.buyConfirmStatus.textContent = '';
+    fetch('/api/swap-buy-payload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: buyTarget.nftId })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        el.buyOpenXamanBtn.disabled = false;
+        el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.buyConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      buyUuid = res.data.uuid;
+      window.open(res.data.next.always, '_blank', 'noopener');
+      el.buyOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.buyConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      pollBuyStatus();
+    }).catch(function(){
+      el.buyOpenXamanBtn.disabled = false;
+      el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.buyConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+
+  function pollBuyStatus(){
+    if (buyPollTimer) clearTimeout(buyPollTimer);
+    if (!buyUuid || !buyTarget) return;
+    fetch('/api/swap-buy-status?uuid=' + encodeURIComponent(buyUuid) + '&nftId=' + encodeURIComponent(buyTarget.nftId))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'settled'){ showBuyResult(data); return; }
+        if (data.status === 'rejected'){
+          el.buyConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
+          el.buyOpenXamanBtn.disabled = false;
+          el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'expired'){
+          el.buyConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
+          el.buyOpenXamanBtn.disabled = false;
+          el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'failed'){
+          el.buyConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
+          el.buyOpenXamanBtn.disabled = false;
+          el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        buyPollTimer = setTimeout(pollBuyStatus, 2000);
+      }).catch(function(){
+        buyPollTimer = setTimeout(pollBuyStatus, 3000);
+      });
+  }
+
+  function showBuyResult(data){
+    el.buyResultPigeonNum.textContent = 'P!GE0N #' + (buyTarget.number !== null ? buyTarget.number : '????');
+    el.buyResultPrice.textContent = el.buyConfPrice.textContent;
+    el.buyResultStatus.textContent = 'SETTLED';
+    if (data.txHash){
+      el.buyResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
+      el.buyResultTxLink.textContent = data.txHash;
+    } else {
+      el.buyResultTxLink.removeAttribute('href');
+      el.buyResultTxLink.textContent = '—';
+    }
+    showScreen('buyresult');
+  }
+  el.buyResultDoneBtn.addEventListener('click', function(){
+    buyTarget = null;
+    buyUuid = null;
+    if (buyPollTimer) clearTimeout(buyPollTimer);
+    state.activeTab = 'database';
+    showScreen('browse');
+    runQuery(); // refreshes the LISTED grid so the now-sold Pigeon disappears
+  });
+
+  // ---- DELIST — Σκύλλα SWAP phase 2: NFTokenCancelOffer for the seller's
+  // own active offer. ----
+  var delistTarget = null; // { nftId, number, image }
+  var delistUuid = null;
+  var delistPollTimer = null;
+
+  function openDelistConfirm(p){
+    delistTarget = p;
+    fetch('/api/swap-delist-prepare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: p.nftId })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        alert(listingErrorMessage(res.data && res.data.error));
+        delistTarget = null;
+        return;
+      }
+      var txjson = res.data.txjson;
+      el.delistConfTxType.textContent = txjson.TransactionType;
+      el.delistConfAccount.textContent = txjson.Account;
+      el.delistConfOfferId.textContent = txjson.NFTokenOffers.join(', ');
+      el.delistConfPigeon.textContent = 'P!GE0N #' + (p.number !== null ? p.number : '????');
+      el.delistConfirmStatus.textContent = '';
+      el.delistOpenXamanBtn.disabled = false;
+      el.delistOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      showScreen('delistconfirm');
+    }).catch(function(){
+      alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
+      delistTarget = null;
+    });
+  }
+  el.delistConfirmBackBtn.addEventListener('click', function(){
+    delistTarget = null;
+    showScreen('browse');
+  });
+
+  el.delistOpenXamanBtn.addEventListener('click', function(){
+    if (!delistTarget) return;
+    el.delistOpenXamanBtn.disabled = true;
+    el.delistOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.delistConfirmStatus.textContent = '';
+    fetch('/api/swap-delist-payload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: delistTarget.nftId })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        el.delistOpenXamanBtn.disabled = false;
+        el.delistOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.delistConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      delistUuid = res.data.uuid;
+      window.open(res.data.next.always, '_blank', 'noopener');
+      el.delistOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.delistConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      pollDelistStatus();
+    }).catch(function(){
+      el.delistOpenXamanBtn.disabled = false;
+      el.delistOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.delistConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+
+  function pollDelistStatus(){
+    if (delistPollTimer) clearTimeout(delistPollTimer);
+    if (!delistUuid || !delistTarget) return;
+    fetch('/api/swap-delist-status?uuid=' + encodeURIComponent(delistUuid) + '&nftId=' + encodeURIComponent(delistTarget.nftId))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'delisted'){ showDelistResult(data); return; }
+        if (data.status === 'rejected'){
+          el.delistConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
+          el.delistOpenXamanBtn.disabled = false;
+          el.delistOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'expired'){
+          el.delistConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
+          el.delistOpenXamanBtn.disabled = false;
+          el.delistOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'failed'){
+          el.delistConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
+          el.delistOpenXamanBtn.disabled = false;
+          el.delistOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        delistPollTimer = setTimeout(pollDelistStatus, 2000);
+      }).catch(function(){
+        delistPollTimer = setTimeout(pollDelistStatus, 3000);
+      });
+  }
+
+  function showDelistResult(data){
+    el.delistResultPigeonNum.textContent = 'P!GE0N #' + (delistTarget.number !== null ? delistTarget.number : '????');
+    el.delistResultStatus.textContent = 'DEL!STED';
+    if (data.txHash){
+      el.delistResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
+      el.delistResultTxLink.textContent = data.txHash;
+    } else {
+      el.delistResultTxLink.removeAttribute('href');
+      el.delistResultTxLink.textContent = '—';
+    }
+    showScreen('delistresult');
+  }
+  el.delistResultDoneBtn.addEventListener('click', function(){
+    if (delistTarget) delete myListedData[delistTarget.nftId];
+    delistTarget = null;
+    delistUuid = null;
+    if (delistPollTimer) clearTimeout(delistPollTimer);
+    renderMyPigeonsList();
+    state.activeTab = 'mypigeons';
+    showScreen('browse');
+  });
+
   // ---- DATABASE selector — multi-collection groundwork; only PIGEONS is
   // live, FUZZY/PHNIX are inert placeholders. ----
   el.dbSelectToggle.addEventListener('click', function(){
@@ -2193,7 +2540,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.searchBtn.addEventListener('click', runSearchBox);
   el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearchBox(); });
   el.sortSelect.addEventListener('change', function(){
-    state.sort = el.sortSelect.value;
+    var value = el.sortSelect.value;
+    var isScyllaSort = value === 'SCYLLA_PRICE_ASC' || value === 'SCYLLA_PRICE_DESC';
+    if (isScyllaSort){
+      state.sort = value;
+      setScyllaListedOnly(true); // also runs the query
+      return;
+    }
+    state.sort = value;
+    if (state.scyllaListedOnly){
+      setScyllaListedOnly(false); // also runs the query
+      return;
+    }
     runQuery();
   });
   el.editionSelect.addEventListener('change', function(){
@@ -2389,8 +2747,39 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.statFloorXrpCafe.textContent = data.xrpCafeFloorXrp !== null && data.xrpCafeFloorXrp !== undefined ? fmtXrp(data.xrpCafeFloorXrp) + ' XRP' : '—';
       if (data.deeptideBuyUrl) el.statFloorDeeptideTile.href = data.deeptideBuyUrl;
       if (data.xrpCafeUrl) el.statFloorXrpCafeTile.href = data.xrpCafeUrl;
+      el.statScyllaListedCount.textContent = data.scyllaListedCount !== null && data.scyllaListedCount !== undefined ? data.scyllaListedCount.toLocaleString() : '—';
     }).catch(function(){});
   }
+
+  // ---- Σκύλλα LISTED filter — toggled from the stat tile, or implicitly
+  // by picking a $PIGEONS sort option (the only sort that means anything
+  // in this view). Whole-collection only, per its own scope — exits any
+  // target-wallet scope first. ----
+  function setScyllaListedOnly(on){
+    state.scyllaListedOnly = on;
+    el.statScyllaListedTile.classList.toggle('scylla-active', on);
+    if (on){
+      if (state.sort !== 'SCYLLA_PRICE_ASC' && state.sort !== 'SCYLLA_PRICE_DESC'){
+        state.sort = 'SCYLLA_PRICE_ASC';
+        el.sortSelect.value = 'SCYLLA_PRICE_ASC';
+      }
+      if (state.scope){
+        state.scope = null;
+        state.scopeAllItems = [];
+        state.targetAssets = {};
+        el.nodeHeaderPanel.style.display = 'none';
+        el.searchPanelTitle.textContent = 'P!GE0N DATABASE';
+        renderTargetBar();
+      }
+    } else if (state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC'){
+      state.sort = 'RARITY_ASC';
+      el.sortSelect.value = 'RARITY_ASC';
+    }
+    runQuery();
+  }
+  el.statScyllaListedTile.addEventListener('click', function(){
+    setScyllaListedOnly(!state.scyllaListedOnly);
+  });
 
   // ---- Initial load ----
   // Nothing loads until a tab is chosen — see showTab() — except a return

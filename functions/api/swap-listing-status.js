@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, recordSwapListing
 } from '../_shared.js';
 
 const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
@@ -12,7 +12,7 @@ const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
 export async function onRequestGet(context) {
   const { request, env } = context;
 
-  if (!env.Σκύλλα) {
+  if (!env.Σκύλλα || !env.coin) {
     return new Response(JSON.stringify({ error: 'server_misconfigured' }), { status: 500 });
   }
   if (!env.XAMAN_API_SECRET) {
@@ -76,6 +76,19 @@ export async function onRequestGet(context) {
       headers: { 'Content-Type': 'application/json' }
     });
   }
+
+  // Record it in the Σκύλλα listings index — this is what powers the
+  // LISTED browse filter and the badges on ordinary browse cards. Doesn't
+  // block the response; a KV write failure here shouldn't stop the user
+  // from seeing their own successful listing result.
+  context.waitUntil(recordSwapListing(env.coin, nftId, {
+    price: ownOffer.amount && ownOffer.amount.value,
+    currency: ownOffer.amount && ownOffer.amount.currency,
+    issuer: ownOffer.amount && ownOffer.amount.issuer,
+    offerId: ownOffer.nft_offer_index,
+    seller,
+    listedAt: Math.floor(Date.now() / 1000)
+  }));
 
   return new Response(JSON.stringify({
     status: 'listed',

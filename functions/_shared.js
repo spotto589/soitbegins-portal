@@ -231,12 +231,14 @@ export function findAllPigeons(nfts) {
 }
 
 // ── Σκύλλα SWAP: first real listing test ──────────────────────────────────
-// Same "build the real eligibility/validation machinery, stop short of the
-// real payout/transaction until real identifiers exist" pattern as
-// KINGDOM_CLAIM_CONFIG above. currency/issuer are NOT invented — listing
-// creation refuses to proceed (returns not_configured) until the real
-// $PIGEONS identifiers are filled in here.
-export const PIGEONS_TOKEN_CONFIG = { currency: null, issuer: null, configured: false };
+// Verified on-ledger before flipping configured:true (2026-08-21) — this
+// issuer genuinely holds 50+ real trust lines for currency code
+// 504947454F4E5300000000000000000000000000 (the exact hex encoding of
+// "PIGEONS"), with real non-zero balances, on a long-lived account
+// (Sequence 96294601). Not the same address as PIGEON_ISSUER above — that
+// one is the NFT collection issuer, this one is the fungible-token issuer,
+// intentionally different per the user's own instruction.
+export const PIGEONS_TOKEN_CONFIG = { currency: 'PIGEONS', issuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', configured: true };
 
 // XRPL currency codes are exactly 3 ASCII chars ("standard") or, for
 // anything else, a 40-hex-char string: the code's ASCII bytes, left-
@@ -1252,6 +1254,64 @@ export async function maybeRefreshHighSaleMap(kv) {
   await safeKvPut(kv, HIGH_SALE_STATS_KEY, JSON.stringify({
     inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(map).length,
   }));
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Σκύλλα SWAP listings index — nftId -> { price, currency, issuer, offerId,
+// seller, listedAt }, written the moment swap-listing-status.js confirms a
+// listing on-ledger. Unlike the number-search/highest-sale maps above, this
+// isn't a crawl of external data — it's the direct record of what THIS
+// system has listed, so it's complete and correct as soon as it's written
+// (no "still indexing" state). It can still go stale if a listing is later
+// cancelled or the NFT sells through some other route entirely outside
+// Σκύλλα SWAP — the LISTED browse view re-verifies against real
+// nft_sell_offers for whatever page it's showing and self-heals (removes)
+// any entry that's no longer actually there; badges shown elsewhere in the
+// normal browse grid are cheap (one KV read, no per-card XRPL calls) but
+// are only as fresh as the last time that NFT was re-verified.
+// ─────────────────────────────────────────────────────────────────────────
+const SWAP_LISTINGS_MAP_KEY = 'pswap:listings:v1';
+
+export async function getSwapListingsMap(kv) {
+  const raw = await kv.get(SWAP_LISTINGS_MAP_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
+export async function recordSwapListing(kv, nftId, entry) {
+  const map = await getSwapListingsMap(kv);
+  map[nftId] = entry;
+  await safeKvPut(kv, SWAP_LISTINGS_MAP_KEY, JSON.stringify(map));
+}
+
+export async function removeSwapListing(kv, nftId) {
+  const map = await getSwapListingsMap(kv);
+  if (!map[nftId]) return;
+  delete map[nftId];
+  await safeKvPut(kv, SWAP_LISTINGS_MAP_KEY, JSON.stringify(map));
+}
+
+// Shared Xaman Payload API calls — used by swap-buy-payload.js,
+// swap-buy-status.js, swap-delist-payload.js, swap-delist-status.js (the
+// original swap-listing-*.js files predate this and keep their own inline
+// fetch calls rather than being refactored, to avoid touching already-
+// tested code). apiSecret is only ever env.XAMAN_API_SECRET, passed in by
+// the caller — never stored or logged here.
+export async function createXamanPayload(apiKey, apiSecret, txjson, options) {
+  const res = await fetch('https://xumm.app/api/v1/platform/payload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey, 'X-API-Secret': apiSecret },
+    body: JSON.stringify({ txjson, options: options || { submit: true, expire: 5 } })
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function getXamanPayloadStatus(apiKey, apiSecret, uuid) {
+  const res = await fetch('https://xumm.app/api/v1/platform/payload/' + uuid, {
+    headers: { 'X-API-Key': apiKey, 'X-API-Secret': apiSecret }
+  });
+  if (!res.ok) return null;
+  return res.json();
 }
 
 // Kingdom Phase 1 — every King NFT needs a stable friendly ID for display
