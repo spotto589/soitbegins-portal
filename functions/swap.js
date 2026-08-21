@@ -445,7 +445,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-bottom:1px solid rgba(255,47,146,0.25);
   }
   .result-rarity-line{ font-size:11px; letter-spacing:0.03em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); text-align:center; }
-  .result-highsale-line{ font-size:10px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 3px rgba(255,47,146,0.3); text-align:center; text-transform:uppercase; }
+  .result-highsale-line{ display:block; font-size:10px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 3px rgba(255,47,146,0.3); text-align:center; text-transform:uppercase; text-decoration:none; }
+  a.result-highsale-line{ cursor:pointer; }
+  a.result-highsale-line:hover{ text-decoration:underline; }
   .card-select-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
   .inspect-btn{
     display:block;
@@ -964,9 +966,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // image to INSPECT for the full trait set). ----
   function resultCardHtml(p){
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY #' + p.rarityRank + '</div>' : '';
-    var highSaleLine = p.highSaleXrp !== null && p.highSaleXrp !== undefined
-      ? '<div class="result-highsale-line">H!GH SALE :: ' + p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</div>'
-      : '<div class="result-highsale-line">F!RST 0WNER</div>';
+    var highSaleText = p.highSaleXrp !== null && p.highSaleXrp !== undefined
+      ? 'H!GH SALE :: ' + p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP'
+      : 'F!RST 0WNER';
+    var highSaleLine = p.highSaleTxUrl
+      ? '<a class="result-highsale-line" href="' + escapeHtml(p.highSaleTxUrl) + '" target="_blank" rel="noopener" title="V!EW SALE TXN 0N B!TH0MP">' + highSaleText + '</a>'
+      : '<div class="result-highsale-line">' + highSaleText + '</div>';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
     var inTarget = !!state.targetAssets[p.nftId];
@@ -1449,7 +1454,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     if (p && p.highSaleXrp !== null && p.highSaleXrp !== undefined){
       el.detailHighSaleRow.style.display = '';
-      el.detailHighSale.textContent = p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+      var hsText = p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+      el.detailHighSale.innerHTML = p.highSaleTxUrl
+        ? '<a class="owner-link" href="' + escapeHtml(p.highSaleTxUrl) + '" target="_blank" rel="noopener">' + escapeHtml(hsText) + '</a>'
+        : escapeHtml(hsText);
     } else {
       el.detailHighSaleRow.style.display = 'none';
     }

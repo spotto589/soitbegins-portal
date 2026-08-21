@@ -1031,13 +1031,17 @@ export async function maybeRefreshPigeonNumberMap(kv) {
 // Highest-ever sale price per token — same self-resuming crawl pattern as
 // the number map above, but over `/api/sales/recent` (date-desc, so it
 // doesn't need to know the total up front) instead of listings. Keeps the
-// max priceDrops seen per nftId; a token not yet in the map just hasn't
-// been reached by the crawl (or has never sold) — callers show nothing in
-// that case rather than treating it as zero. Powers both the "HIGH SALE"
-// line on cards and the "H!GHEST SALE" sort.
+// max { drops, txHash } seen per nftId (the txHash is the specific sale
+// that set that record, for linking straight to it on bithomp) — a token
+// not yet in the map just hasn't been reached by the crawl (or has never
+// sold) — callers show nothing in that case rather than treating it as
+// zero. Powers the "HIGH SALE" line on cards, its bithomp link, and the
+// "H!GHEST SALE" sort.
+// v2: map values became { drops, txHash } instead of a bare drops number —
+// bump the key again if the shape changes further.
 // ─────────────────────────────────────────────────────────────────────────
-const HIGH_SALE_MAP_KEY = 'pswap:highsale:v1';
-const HIGH_SALE_STATS_KEY = 'pswap:highsalestats:v1';
+const HIGH_SALE_MAP_KEY = 'pswap:highsale:v2';
+const HIGH_SALE_STATS_KEY = 'pswap:highsalestats:v2';
 const HIGH_SALE_REFRESH_STALE_SECONDS = 6 * 3600;
 const HIGH_SALE_CONCURRENT_GUARD_SECONDS = 10;
 const HIGH_SALE_PAGES_PER_RUN = 10;
@@ -1065,7 +1069,8 @@ export async function maybeRefreshHighSaleMap(kv) {
     for (const s of page.items) {
       if (!s.nftId || typeof s.priceXrp !== 'number') continue;
       const drops = Math.round(s.priceXrp * 1000000);
-      if (map[s.nftId] === undefined || drops > map[s.nftId]) map[s.nftId] = drops;
+      const existing = map[s.nftId];
+      if (!existing || drops > existing.drops) map[s.nftId] = { drops, txHash: s.txHash || null };
     }
     lastTotal = page.total || lastTotal;
     skip += HIGH_SALE_PAGE_LIMIT;

@@ -34,10 +34,14 @@ function displayImage(url) {
   return url.startsWith('https://ipfs.io/') ? proxyIpfsImage(url) : url;
 }
 
+function bithompTxUrl(txHash) {
+  return `https://bithomp.com/explorer/${txHash}`;
+}
+
 function toItem(nftId, meta, ownerOverride, highSaleMap) {
   const owner = ownerOverride !== undefined ? ownerOverride : meta.owner;
   const priceDrops = typeof meta.priceDrops === 'number' ? meta.priceDrops : null;
-  const highSaleDrops = highSaleMap ? highSaleMap[nftId] : undefined;
+  const highSaleEntry = highSaleMap ? highSaleMap[nftId] : undefined;
   return {
     nftId,
     number: meta.number,
@@ -50,7 +54,8 @@ function toItem(nftId, meta, ownerOverride, highSaleMap) {
     ownerIndexed: !!owner,
     priceXrp: priceDrops !== null ? priceDrops / 1000000 : null,
     buyUrl: priceDrops !== null ? deeptideBuyUrl(nftId) : null,
-    highSaleXrp: highSaleDrops !== undefined ? highSaleDrops / 1000000 : null
+    highSaleXrp: highSaleEntry ? highSaleEntry.drops / 1000000 : null,
+    highSaleTxUrl: highSaleEntry && highSaleEntry.txHash ? bithompTxUrl(highSaleEntry.txHash) : null
   };
 }
 
@@ -177,7 +182,7 @@ export async function onRequestGet(context) {
   if (params.get('highestSale') === '1') {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
-    const sortedIds = Object.keys(highSaleMap).sort((a, b) => highSaleMap[b] - highSaleMap[a]);
+    const sortedIds = Object.keys(highSaleMap).sort((a, b) => highSaleMap[b].drops - highSaleMap[a].drops);
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap));
