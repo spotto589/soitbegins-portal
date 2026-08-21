@@ -1384,36 +1384,52 @@ export async function removeSwapListing(kv, nftId) {
 // tested code). apiSecret is only ever env.XAMAN_API_SECRET, passed in by
 // the caller — never stored or logged here.
 //
-// Both wrapped in try/catch, same as the XRPL fetch helpers above — an
-// uncaught network error/timeout here would otherwise propagate out of
-// the whole request handler as an unhandled exception, and Cloudflare
-// returns its own generic (non-JSON) error page for that. The client's
-// r.json() then throws, surfacing as "ERR://SIGNAL_LOST" with no
-// indication of what actually happened. null is already handled by every
-// call site as a clean xaman_request_failed/xaman_lookup_failed response.
+// Both wrapped in try/catch AND bounded by an explicit AbortController
+// timeout. try/catch alone isn't enough: if xumm.app is genuinely slow,
+// Cloudflare's own platform-level timeout can kill the whole request
+// from OUTSIDE this function before our try/catch ever gets a chance to
+// run, and Cloudflare's own timeout page isn't JSON — reported live as a
+// WebKit "SyntaxError: The string did not match the expected pattern"
+// (Safari's phrasing for "tried to JSON.parse a non-JSON body") on the
+// client. Aborting first, on our own terms, well before that external
+// kill, turns it into a normal caught rejection returning null — already
+// handled by every call site as a clean xaman_request_failed/
+// xaman_lookup_failed response.
+const XAMAN_FETCH_TIMEOUT_MS = 10000;
+
 export async function createXamanPayload(apiKey, apiSecret, txjson, options) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), XAMAN_FETCH_TIMEOUT_MS);
   try {
     const res = await fetch('https://xumm.app/api/v1/platform/payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey, 'X-API-Secret': apiSecret },
-      body: JSON.stringify({ txjson, options: options || { submit: true, expire: 5 } })
+      body: JSON.stringify({ txjson, options: options || { submit: true, expire: 5 } }),
+      signal: controller.signal
     });
     if (!res.ok) return null;
     return await res.json();
   } catch (e) {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
 export async function getXamanPayloadStatus(apiKey, apiSecret, uuid) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), XAMAN_FETCH_TIMEOUT_MS);
   try {
     const res = await fetch('https://xumm.app/api/v1/platform/payload/' + uuid, {
-      headers: { 'X-API-Key': apiKey, 'X-API-Secret': apiSecret }
+      headers: { 'X-API-Key': apiKey, 'X-API-Secret': apiSecret },
+      signal: controller.signal
     });
     if (!res.ok) return null;
     return await res.json();
   } catch (e) {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
