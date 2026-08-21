@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, findPigeonsOffer
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findPigeonsOffer
 } from '../_shared.js';
 
 // Σκύλλα SWAP — BUY (phase 2). Builds and returns the exact
@@ -37,7 +37,14 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_nft_id' }), { status: 400 });
   }
 
-  const offers = await fetchNftSellOffers(nftId);
+  // null (lookup itself failed, e.g. xrplcluster.com rate-limited) must
+  // never be reported as "not listed" — confirmed live, that intermittent
+  // mislabeling is exactly what made a genuinely-listed Pigeon randomly
+  // fail to open. lookup_failed is retryable; not_listed is not.
+  const offers = await fetchNftSellOffersOrNull(nftId);
+  if (offers === null) {
+    return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 503 });
+  }
   // The Σκύλλα $PIGEONS offer specifically — a Pigeon can carry other
   // currencies' sell offers simultaneously (e.g. a separate XRP listing
   // on Deeptide); findPigeonsOffer never grabs the wrong one by accident.

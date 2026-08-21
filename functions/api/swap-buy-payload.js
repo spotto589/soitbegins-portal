@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, createXamanPayload, findPigeonsOffer
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, findPigeonsOffer
 } from '../_shared.js';
 
 const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
@@ -42,7 +42,12 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_nft_id' }), { status: 400 });
   }
 
-  const offers = await fetchNftSellOffers(nftId);
+  // null (lookup itself failed) must never be reported as "not listed" —
+  // see swap-buy-prepare.js's identical comment.
+  const offers = await fetchNftSellOffersOrNull(nftId);
+  if (offers === null) {
+    return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 503 });
+  }
   // The Σκύλλα $PIGEONS offer specifically — see findPigeonsOffer's own
   // comment for why offers[0]/owner-only matching is wrong here.
   const offer = findPigeonsOffer(offers);

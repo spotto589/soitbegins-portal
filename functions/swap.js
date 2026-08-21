@@ -2107,7 +2107,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       invalid_session: 'S!GNAL EXP!RED — REC0NNECT Y0UR WALLET.',
       not_listed: 'TH!S P!GE0N !S N0T CURRENTLY L!STED.',
       cannot_buy_own_listing: 'Y0U CAN\\'T BUY Y0UR 0WN L!ST!NG.',
-      not_listed_by_you: 'TH!S P!GE0N !SN\\'T L!STED BY Y0UR WALLET.'
+      not_listed_by_you: 'TH!S P!GE0N !SN\\'T L!STED BY Y0UR WALLET.',
+      lookup_failed: 'S!GNAL !NTERFERENCE — C0ULDN\\'T VER!FY THE L!ST!NG. TRY AGA!N.'
     };
     return (code && messages[code]) || 'ERR://C0ULD N0T PREPARE THE TRANSACT!0N.';
   }
@@ -2267,14 +2268,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   var buyUuid = null;
   var buyPollTimer = null;
 
-  function openBuyConfirm(p){
+  function openBuyConfirm(p, retriesLeft){
     buyTarget = p;
+    if (retriesLeft === undefined) retriesLeft = 1;
     fetch('/api/swap-buy-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nftId: p.nftId })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
+      // lookup_failed means the XRPL check itself couldn't complete
+      // (e.g. rate-limited) — genuinely retryable, unlike "not listed"
+      // which is a real answer. One silent client-side retry before
+      // bothering the user.
+      if (!res.ok && res.data && res.data.error === 'lookup_failed' && retriesLeft > 0){
+        setTimeout(function(){ openBuyConfirm(p, retriesLeft - 1); }, 500);
+        return;
+      }
       if (!res.ok || !res.data.ok){
         alert(listingErrorMessage(res.data && res.data.error));
         buyTarget = null;
@@ -2302,17 +2312,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     showScreen('browse');
   });
 
-  el.buyOpenXamanBtn.addEventListener('click', function(){
-    if (!buyTarget) return;
-    el.buyOpenXamanBtn.disabled = true;
-    el.buyOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
-    el.buyConfirmStatus.textContent = '';
+  function submitBuyPayload(retriesLeft){
+    if (retriesLeft === undefined) retriesLeft = 1;
     fetch('/api/swap-buy-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nftId: buyTarget.nftId })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
+      if (!res.ok && res.data && res.data.error === 'lookup_failed' && retriesLeft > 0){
+        setTimeout(function(){ submitBuyPayload(retriesLeft - 1); }, 500);
+        return;
+      }
       if (!res.ok || !res.data.ok){
         el.buyOpenXamanBtn.disabled = false;
         el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
@@ -2329,6 +2340,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
       el.buyConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
+  }
+  el.buyOpenXamanBtn.addEventListener('click', function(){
+    if (!buyTarget) return;
+    el.buyOpenXamanBtn.disabled = true;
+    el.buyOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.buyConfirmStatus.textContent = '';
+    submitBuyPayload();
   });
 
   function pollBuyStatus(){

@@ -309,7 +309,13 @@ export function findPigeonsOffer(offers, owner) {
 //   failing toward "not listed" is an acceptable, non-unsafe degradation —
 //   worst case a real listing doesn't show or a step needs retrying, never
 //   a false success.
-export async function fetchNftSellOffersOrNull(nftId) {
+// Retries once with a short backoff before giving up — xrplcluster.com's
+// rate limit is bursty, not sustained, so a brief pause is often enough
+// to clear it. Confirmed live: BUY was intermittently reporting a
+// genuinely-listed Pigeon as "not listed" purely because a single failed
+// lookup attempt was being read as a definitive answer.
+export async function fetchNftSellOffersOrNull(nftId, attempt) {
+  attempt = attempt || 0;
   try {
     const res = await fetch('https://xrplcluster.com', {
       method: 'POST',
@@ -320,6 +326,10 @@ export async function fetchNftSellOffersOrNull(nftId) {
     if (!data.result || data.result.error) return [];
     return data.result.offers || [];
   } catch (e) {
+    if (attempt < 1) {
+      await new Promise(resolve => setTimeout(resolve, 350));
+      return fetchNftSellOffersOrNull(nftId, attempt + 1);
+    }
     return null;
   }
 }
