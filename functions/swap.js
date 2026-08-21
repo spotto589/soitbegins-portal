@@ -81,13 +81,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-size:clamp(15px,4.6vw,30px);
     letter-spacing:0.06em;
     color:#fff;
-    text-shadow:0 0 10px rgba(255,47,146,0.25);
+    text-shadow:0 0 10px rgba(57,255,20,0.25);
     margin-bottom:0.4rem;
     text-align:center;
     text-transform:none;
   }
   .sw-panel{
-    border:1px solid rgba(255,47,146,0.25);
+    border:1px solid rgba(255,204,0,0.25);
     background:#08080a;
     padding:1.5rem;
     margin-bottom:1.75rem;
@@ -96,8 +96,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     font-size:13px;
     letter-spacing:0.2em;
-    color:#ff2f92;
-    text-shadow:0 0 6px rgba(255,47,146,0.4);
+    color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.4);
     margin-bottom:1rem;
     text-transform:uppercase;
   }
@@ -108,18 +108,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:transparent;
     border:none;
     font-family:inherit;
-    font-size:12px;
-    letter-spacing:0.2em;
-    color:#00fff2;
-    text-shadow:0 0 6px rgba(0,255,242,0.4);
+    font-size:18px;
+    font-weight:700;
+    letter-spacing:0.15em;
+    color:#ff3b3b;
+    text-shadow:0 0 6px rgba(255,59,59,0.4);
     text-transform:uppercase;
     cursor:pointer;
     padding:0;
   }
+  .db-select-toggle .db-active-name{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); }
   .db-select-menu{
     margin:0.75rem auto 0;
     max-width:260px;
-    border:1px solid rgba(0,255,242,0.3);
+    border:1px solid rgba(255,204,0,0.3);
     background:#08080a;
   }
   .db-option{
@@ -139,10 +141,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   .db-soon{ font-size:9px; letter-spacing:0.1em; border:1px solid rgba(255,0,60,0.35); color:rgba(255,0,60,0.7); padding:0.2em 0.4em; }
 
   /* ---- collection details: token/issuer info ---- */
-  .collection-info{ max-width:460px; margin:0 auto 1.25rem; }
-  .ci-row{ display:flex; justify-content:space-between; gap:0.75rem; font-size:11px; letter-spacing:0.03em; margin-bottom:0.5rem; flex-wrap:wrap; }
-  .ci-label{ color:rgba(232,232,232,0.45); text-transform:uppercase; flex:0 0 auto; }
-  .ci-value{ color:#e8e8e8; text-align:right; word-break:break-all; }
+  .collection-info{ max-width:620px; margin:0 auto 1.25rem; text-align:center; }
+  .ci-label{ font-size:10px; letter-spacing:0.15em; color:rgba(232,232,232,0.45); text-transform:uppercase; margin-bottom:0.6rem; }
+  .ci-addr-row{ display:flex; align-items:center; justify-content:center; gap:1rem; flex-wrap:wrap; }
+  .ci-value{ color:#e8e8e8; word-break:break-all; }
+  .ci-value-big{ font-size:14px; letter-spacing:0.02em; }
+  .ci-copy-btn{ font-size:12px; padding:0.65em 1.1em; flex:0 0 auto; }
 
   .my-pigeons-grid{ margin-top:1rem; }
 
@@ -153,15 +157,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.75rem;
   }
   .stat-tile{
-    border:1px solid rgba(255,47,146,0.25);
+    border:1px solid rgba(255,204,0,0.25);
     padding:0.85rem 0.5rem;
     text-align:center;
   }
   .stat-tile-link{ display:block; text-decoration:none; cursor:pointer; }
-  .stat-tile-link:hover{ background:rgba(255,47,146,0.08); border-color:rgba(255,47,146,0.5); }
+  .stat-tile-link:hover{ background:rgba(255,204,0,0.08); border-color:rgba(255,204,0,0.5); }
   .stat-label{ font-size:9px; letter-spacing:0.15em; color:rgba(232,232,232,0.45); margin-bottom:0.5rem; text-transform:uppercase; }
   .stat-value{ font-size:16px; letter-spacing:0.03em; color:#39ff14; text-shadow:0 0 5px rgba(57,255,20,0.4); }
-  .stat-tile-link .stat-value{ color:#00fff2; text-shadow:0 0 5px rgba(0,255,242,0.4); }
+  .stat-tile-link .stat-value{ color:#ff3b3b; text-shadow:0 0 5px rgba(255,59,59,0.4); }
 
   /* ---- top 10 holders (expandable) ---- */
   .th-toggle{
@@ -173,13 +177,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-family:inherit;
     font-size:13px;
     letter-spacing:0.2em;
-    color:#ff2f92;
-    text-shadow:0 0 6px rgba(255,47,146,0.4);
+    color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.4);
     text-transform:uppercase;
     cursor:pointer;
     padding:0;
   }
-  .th-list{ margin-top:1rem; border-top:1px dashed rgba(255,47,146,0.25); padding-top:0.5rem; }
+  .th-list{ margin-top:1rem; border-top:1px dashed rgba(255,204,0,0.25); padding-top:0.5rem; }
 
   /* ---- horizontal top tabs (DATABASE / MY PIGEONS / TOP 10 / SALES DATA) ---- */
   .top-tabs{
@@ -187,7 +191,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     overflow-x:auto;
     gap:0.4rem;
     margin-bottom:1.75rem;
-    border-bottom:1px solid rgba(255,47,146,0.25);
+    border-bottom:1px solid rgba(255,204,0,0.25);
   }
   .tab-btn{
     flex:1 1 auto;
@@ -204,7 +208,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.85em 0.5em;
   }
   .tab-btn:hover{ color:rgba(232,232,232,0.75); }
-  .tab-btn.active{ color:#ff2f92; text-shadow:0 0 6px rgba(255,47,146,0.4); border-bottom-color:#ff2f92; }
+  .tab-btn.active{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); border-bottom-color:#ffcc00; }
   .th-row{
     display:flex;
     align-items:center;
@@ -217,16 +221,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     letter-spacing:0.03em;
   }
   .th-row:last-child{ border-bottom:none; }
-  .th-row:hover{ background:rgba(0,255,242,0.06); }
-  .th-rank{ flex:0 0 2.2em; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.4); }
-  .th-wallet{ flex:1; min-width:0; color:#00fff2; text-shadow:0 0 4px rgba(0,255,242,0.3); word-break:break-all; }
+  .th-row:hover{ background:rgba(255,204,0,0.06); }
+  .th-rank{ flex:0 0 2.2em; color:#39ff14; text-shadow:0 0 4px rgba(57,255,20,0.4); }
+  .th-wallet{ flex:1; min-width:0; color:#ff3b3b; text-shadow:0 0 4px rgba(255,59,59,0.3); word-break:break-all; }
   .th-count{ flex:0 0 auto; color:rgba(232,232,232,0.6); text-transform:uppercase; }
   .th-empty{ text-align:center; font-size:11px; letter-spacing:0.08em; color:rgba(232,232,232,0.4); padding:0.5rem 0; text-transform:uppercase; }
 
   /* ---- sales history ---- */
   .sales-scrollbox{
     margin-top:1rem;
-    border-top:1px dashed rgba(255,47,146,0.25);
+    border-top:1px dashed rgba(255,204,0,0.25);
     padding-top:0.5rem;
     max-height:820px;
     overflow-y:auto;
@@ -246,9 +250,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sale-num-box{
     font-size:11px;
     letter-spacing:0.05em;
-    color:#ff2f92;
-    text-shadow:0 0 4px rgba(255,47,146,0.35);
-    border:1px solid rgba(255,47,146,0.4);
+    color:#39ff14;
+    text-shadow:0 0 4px rgba(57,255,20,0.35);
+    border:1px solid rgba(255,204,0,0.4);
     padding:0.3em 0.6em;
     cursor:pointer;
     white-space:nowrap;
@@ -258,7 +262,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sale-info{ flex:1 1 200px; display:flex; flex-direction:column; gap:0.35rem; }
   .sale-price{ font-size:14px; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); }
   .sale-parties{ color:rgba(232,232,232,0.55); text-transform:none; }
-  .sale-parties a{ color:#00fff2; text-decoration:underline; cursor:pointer; }
+  .sale-parties a{ color:#ff3b3b; text-decoration:underline; cursor:pointer; }
   .sale-time{ color:rgba(232,232,232,0.3); text-transform:uppercase; font-size:10px; }
 
   /* ---- target node header (owner-scope) ---- */
@@ -266,13 +270,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     font-size:11px;
     letter-spacing:0.2em;
-    color:#00fff2;
-    text-shadow:0 0 6px rgba(0,255,242,0.4);
+    color:#ff3b3b;
+    text-shadow:0 0 6px rgba(255,59,59,0.4);
     margin-bottom:1.25rem;
     text-transform:uppercase;
   }
   .target-pigeon-card{
-    border:1px solid rgba(0,255,242,0.3);
+    border:1px solid rgba(255,204,0,0.3);
     padding:1rem;
     margin:0 auto 1.25rem;
     max-width:420px;
@@ -286,15 +290,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
   .tp-body{ display:flex; align-items:center; gap:1rem; }
-  .tp-img{ flex:0 0 76px; width:76px; height:76px; border:1px solid rgba(0,255,242,0.3); }
+  .tp-img{ flex:0 0 76px; width:76px; height:76px; border:1px solid rgba(255,204,0,0.3); }
   .tp-info{ flex:1; min-width:0; }
   .tp-num{ font-size:16px; color:#39ff14; text-shadow:0 0 5px rgba(57,255,20,0.4); margin-bottom:0.5rem; }
   .tp-owner-label{ font-size:9px; letter-spacing:0.15em; color:rgba(232,232,232,0.4); text-transform:uppercase; }
-  .tp-owner{ font-size:12px; color:#00fff2; word-break:break-all; }
+  .tp-owner{ font-size:12px; color:#ff3b3b; word-break:break-all; }
   .wallet-box{
     text-align:center;
-    border:2px solid #ff2f92;
-    box-shadow:0 0 16px rgba(255,47,146,0.25) inset, 0 0 10px rgba(255,47,146,0.2);
+    border:2px solid #ffcc00;
+    box-shadow:0 0 16px rgba(255,204,0,0.25) inset, 0 0 10px rgba(255,204,0,0.2);
     padding:1.5rem 1rem;
     margin-bottom:1.25rem;
   }
@@ -302,14 +306,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-size:15px;
     font-weight:700;
     letter-spacing:0.15em;
-    color:#ff2f92;
-    text-shadow:0 0 8px rgba(255,47,146,0.5);
+    color:#39ff14;
+    text-shadow:0 0 8px rgba(57,255,20,0.5);
     margin-bottom:0.75rem;
     text-transform:uppercase;
   }
   .wallet-box-sub{ font-size:10px; letter-spacing:0.2em; color:rgba(232,232,232,0.4); font-weight:400; }
   .wallet-box-addr{ font-size:16px; color:#e8e8e8; margin-bottom:0.6rem; word-break:break-all; letter-spacing:0.02em; }
-  .wallet-box-count{ font-size:13px; letter-spacing:0.1em; color:#00fff2; text-shadow:0 0 5px rgba(0,255,242,0.35); text-transform:uppercase; }
+  .wallet-box-count{ font-size:13px; letter-spacing:0.1em; color:#ff3b3b; text-shadow:0 0 5px rgba(255,59,59,0.35); text-transform:uppercase; }
 
   /* ---- search / sort bar ---- */
   .search-row{
@@ -321,7 +325,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   input.search-input{
     flex:0 1 140px;
     background:#000;
-    border:1px solid rgba(255,47,146,0.35);
+    border:1px solid rgba(255,204,0,0.35);
     color:#e8e8e8;
     font-family:inherit;
     font-size:11px;
@@ -333,8 +337,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .bar-btn{
     flex:0 0 auto;
     background:transparent;
-    border:1px solid rgba(255,47,146,0.5);
-    color:#ff2f92;
+    border:1px solid rgba(255,204,0,0.5);
+    color:#39ff14;
     font-family:inherit;
     font-size:11px;
     letter-spacing:0.1em;
@@ -342,12 +346,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     text-transform:uppercase;
   }
-  .bar-btn:hover{ background:rgba(255,47,146,0.1); }
+  .bar-btn:hover{ background:rgba(255,204,0,0.1); }
   select.sort-select{
     flex:0 0 auto;
     background:#000;
-    border:1px solid rgba(0,255,242,0.4);
-    color:#00fff2;
+    border:1px solid rgba(255,204,0,0.4);
+    color:#ff3b3b;
     font-family:inherit;
     font-size:11px;
     letter-spacing:0.05em;
@@ -360,19 +364,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     font-size:9px;
     letter-spacing:0.08em;
-    color:rgba(0,255,242,0.5);
+    color:rgba(255,59,59,0.5);
     margin-top:0.5rem;
     text-transform:uppercase;
   }
 
   /* ---- trait stack filter panel ---- */
   .traits-block{
-    border-top:1px dashed rgba(255,47,146,0.25);
+    border-top:1px dashed rgba(255,204,0,0.25);
     margin-top:1rem;
     padding-top:1rem;
   }
   .results-block{
-    border-top:1px dashed rgba(255,47,146,0.25);
+    border-top:1px dashed rgba(255,204,0,0.25);
     margin-top:1.25rem;
     padding-top:1.25rem;
   }
@@ -392,7 +396,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   select.trait-cat-select{
     background:#000;
-    border:1px solid rgba(255,47,146,0.3);
+    border:1px solid rgba(255,204,0,0.3);
     color:#e8e8e8;
     font-family:inherit;
     font-size:11px;
@@ -412,11 +416,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     max-height:190px;
     overflow-y:auto;
     padding:0.5rem;
-    border:1px dashed rgba(255,47,146,0.2);
+    border:1px dashed rgba(255,204,0,0.2);
   }
   .trait-chip{
     background:transparent;
-    border:1px solid rgba(255,47,146,0.3);
+    border:1px solid rgba(255,204,0,0.3);
     color:rgba(232,232,232,0.75);
     font-family:inherit;
     font-size:10px;
@@ -425,8 +429,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     text-transform:uppercase;
   }
-  .trait-chip:hover{ background:rgba(255,47,146,0.08); }
-  .trait-chip.selected{ background:#ff2f92; color:#08080a; border-color:#ff2f92; }
+  .trait-chip:hover{ background:rgba(255,204,0,0.08); }
+  .trait-chip.selected{ background:#39ff14; color:#08080a; border-color:#ffcc00; }
   .trait-row-remove{
     background:transparent;
     border:1px solid rgba(255,0,60,0.5);
@@ -466,7 +470,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin:1.1rem 0 1rem;
     text-transform:uppercase;
   }
-  .status-line .hi{ color:#ff2f92; text-shadow:0 0 5px rgba(255,47,146,0.4); }
+  .status-line .hi{ color:#39ff14; text-shadow:0 0 5px rgba(57,255,20,0.4); }
 
   /* ---- empty state ---- */
   .empty-state{ text-align:center; padding:2rem 0; }
@@ -495,8 +499,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     justify-content:center;
     overflow:hidden;
-    background:repeating-linear-gradient(45deg, rgba(255,47,146,0.04) 0px, rgba(255,47,146,0.04) 6px, transparent 6px, transparent 12px);
-    border:1px dashed rgba(255,47,146,0.15);
+    background:repeating-linear-gradient(45deg, rgba(57,255,20,0.04) 0px, rgba(57,255,20,0.04) 6px, transparent 6px, transparent 12px);
+    border:1px dashed rgba(255,204,0,0.15);
     font-size:10px;
     letter-spacing:0.1em;
     color:rgba(232,232,232,0.3);
@@ -512,13 +516,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     line-height:1.6em;
     padding:0;
     background:rgba(8,8,10,0.75);
-    border:1px solid rgba(255,47,146,0.6);
-    color:#ff2f92;
+    border:1px solid rgba(255,204,0,0.6);
+    color:#39ff14;
     font-size:13px;
     cursor:pointer;
     text-align:center;
   }
-  .card-select-toggle.selected{ background:#ff2f92; color:#08080a; }
+  .card-select-toggle.selected{ background:#39ff14; color:#08080a; }
 
   /* ---- collection grid / cards ---- */
   /* Fixed 6 columns at every width, on purpose (not auto-fill/minmax,
@@ -532,9 +536,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     grid-template-columns:repeat(6, 1fr);
     gap:0.6rem;
   }
-  .result-card{ border:1px solid rgba(255,47,146,0.25); overflow:hidden; }
+  .result-card{ border:1px solid rgba(255,204,0,0.25); overflow:hidden; }
   .result-card .pigeon-img-box{ border:none; }
-  .result-card.in-target{ border-color:#ff2f92; box-shadow:0 0 10px rgba(255,47,146,0.25) inset; }
+  .result-card.in-target{ border-color:#ffcc00; box-shadow:0 0 10px rgba(255,204,0,0.25) inset; }
   .result-card-body{ padding:0.55rem 0.4rem; }
   .result-num{
     font-size:17px;
@@ -544,10 +548,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:0 0 5px rgba(57,255,20,0.45);
     text-align:center;
     padding:0.5rem 0.3rem;
-    border-bottom:1px solid rgba(255,47,146,0.25);
+    border-bottom:1px solid rgba(255,204,0,0.25);
   }
   .result-rarity-line{ font-size:14px; letter-spacing:0.03em; color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); text-align:center; }
-  .result-price-line{ font-size:12px; letter-spacing:0.03em; color:#00fff2; text-shadow:0 0 3px rgba(0,255,242,0.3); text-align:center; text-transform:uppercase; }
+  .card-listings{ display:flex; gap:0.35rem; margin-top:0.4rem; }
+  .cl-block{ flex:1; min-width:0; border:1px solid rgba(255,204,0,0.25); padding:0.4rem 0.25rem; text-align:center; }
+  .cl-market{ font-size:8px; letter-spacing:0.08em; color:rgba(232,232,232,0.5); text-transform:uppercase; margin-bottom:0.3rem; }
+  .cl-price{ font-size:10px; letter-spacing:0.02em; color:#39ff14; }
+  .cl-price.cl-none{ color:#ff3b3b; font-size:9px; text-transform:uppercase; }
+  .cl-buy{
+    display:block;
+    margin-top:0.35rem;
+    font-size:9px;
+    letter-spacing:0.08em;
+    border:1px solid rgba(255,204,0,0.5);
+    color:#ffcc00;
+    padding:0.3em 0;
+    text-decoration:none;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .cl-buy:hover{ background:rgba(255,204,0,0.1); }
   .card-select-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
 
   @media (max-width:700px){
@@ -567,7 +588,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     font-size:11px;
     letter-spacing:0.1em;
-    color:rgba(0,255,242,0.6);
+    color:rgba(255,59,59,0.6);
     padding:1.5rem 0;
     text-transform:uppercase;
   }
@@ -585,8 +606,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pagination-row{ display:flex; justify-content:center; gap:0.75rem; margin-top:1.5rem; }
   .page-btn{
     background:transparent;
-    border:1px solid rgba(255,47,146,0.5);
-    color:#ff2f92;
+    border:1px solid rgba(255,204,0,0.5);
+    color:#39ff14;
     font-family:inherit;
     font-size:11px;
     letter-spacing:0.1em;
@@ -594,13 +615,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     text-transform:uppercase;
   }
-  .page-btn:hover:not(:disabled){ background:rgba(255,47,146,0.1); }
+  .page-btn:hover:not(:disabled){ background:rgba(255,204,0,0.1); }
   .page-btn:disabled{ opacity:0.3; cursor:not-allowed; }
   .loading-note{
     text-align:center;
     font-size:11px;
     letter-spacing:0.1em;
-    color:rgba(0,255,242,0.6);
+    color:rgba(255,59,59,0.6);
     padding:1.5rem 0;
     text-transform:uppercase;
   }
@@ -610,8 +631,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     font-size:11px;
     letter-spacing:0.2em;
-    color:#ff2f92;
-    text-shadow:0 0 6px rgba(255,47,146,0.4);
+    color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.4);
     margin-bottom:0.75rem;
     text-transform:uppercase;
   }
@@ -630,7 +651,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .df-value.not-indexed{ color:#ff003c; text-shadow:0 0 4px rgba(255,0,60,0.3); }
   .df-value.rarity{ color:#ffd700; text-shadow:0 0 4px rgba(255,215,0,0.3); }
   .df-value.price{ color:#ffd700; text-shadow:0 0 4px rgba(255,215,0,0.3); }
-  .df-value a.owner-link{ color:#00fff2; text-shadow:0 0 4px rgba(0,255,242,0.4); text-decoration:underline; }
+  .df-value a.owner-link{ color:#ff3b3b; text-shadow:0 0 4px rgba(255,59,59,0.4); text-decoration:underline; }
   .df-value a.owner-link:hover{ color:#fff; }
   .detail-traits-title{
     text-align:center;
@@ -647,11 +668,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     max-width:560px;
     margin:0 auto 0.5rem;
   }
-  .trait-cell{ border:1px solid rgba(255,47,146,0.2); padding:0.6rem 0.75rem; text-align:center; cursor:pointer; }
-  .trait-cell:hover{ background:rgba(255,47,146,0.08); border-color:rgba(255,47,146,0.5); }
+  .trait-cell{ border:1px solid rgba(255,204,0,0.2); padding:0.6rem 0.75rem; text-align:center; cursor:pointer; }
+  .trait-cell:hover{ background:rgba(255,204,0,0.08); border-color:rgba(255,204,0,0.5); }
   .trait-cell .tc-label{ font-size:9px; letter-spacing:0.15em; color:rgba(232,232,232,0.4); margin-bottom:0.35rem; text-transform:uppercase; }
-  .trait-cell .tc-value{ font-size:13px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.3); }
-  .trait-cell .tc-sub{ font-size:9px; letter-spacing:0.08em; color:rgba(0,255,242,0.6); margin-top:0.3rem; text-transform:uppercase; }
+  .trait-cell .tc-value{ font-size:13px; letter-spacing:0.03em; color:#39ff14; text-shadow:0 0 4px rgba(57,255,20,0.3); }
+  .trait-cell .tc-sub{ font-size:9px; letter-spacing:0.08em; color:rgba(255,59,59,0.6); margin-top:0.3rem; text-transform:uppercase; }
   .tech-meta-title{ text-align:center; font-size:10px; letter-spacing:0.2em; color:rgba(232,232,232,0.35); margin-bottom:0.6rem; text-transform:uppercase; }
   .listings-block{ max-width:460px; margin:1.25rem auto 0; }
   .listing-row{
@@ -687,12 +708,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .dh-row:last-child{ border-bottom:none; }
   .dh-line{ font-size:12px; letter-spacing:0.02em; color:rgba(232,232,232,0.75); margin-bottom:0.35em; }
-  .dh-verb{ color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.35); text-transform:uppercase; font-weight:700; }
+  .dh-verb{ color:#39ff14; text-shadow:0 0 4px rgba(57,255,20,0.35); text-transform:uppercase; font-weight:700; }
   .dh-price{ color:#ffd700; }
-  .dh-line a{ color:#00fff2; text-decoration:underline; }
+  .dh-line a{ color:#ff3b3b; text-decoration:underline; }
   .dh-meta{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; }
   .dh-time{ color:rgba(232,232,232,0.3); font-size:10px; letter-spacing:0.05em; text-transform:uppercase; }
-  .dh-tx{ color:rgba(0,255,242,0.6); font-size:10px; letter-spacing:0.08em; text-decoration:none; text-transform:uppercase; }
+  .dh-tx{ color:rgba(255,59,59,0.6); font-size:10px; letter-spacing:0.08em; text-decoration:none; text-transform:uppercase; }
   .dh-tx:hover{ text-decoration:underline; }
   .view-elsewhere{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed rgba(232,232,232,0.15); padding-top:1rem; }
   .view-links{ display:flex; justify-content:center; gap:0.6rem; flex-wrap:wrap; }
@@ -711,18 +732,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   .secondary-btn:hover{ background:rgba(232,232,232,0.08); }
   .action-btn{
     background:transparent;
-    border:1px solid rgba(255,47,146,0.6);
-    color:#ff2f92;
+    border:1px solid rgba(255,204,0,0.6);
+    color:#39ff14;
     font-family:inherit;
     font-size:12px;
     letter-spacing:0.12em;
     padding:0.75em 1.4em;
     cursor:pointer;
     text-transform:uppercase;
-    text-shadow:0 0 6px rgba(255,47,146,0.4);
+    text-shadow:0 0 6px rgba(57,255,20,0.4);
   }
-  .action-btn:hover{ background:rgba(255,47,146,0.1); }
-  .action-btn.selected{ background:rgba(255,47,146,0.15); color:#fff; }
+  .action-btn:hover{ background:rgba(255,204,0,0.1); }
+  .action-btn.selected{ background:rgba(57,255,20,0.15); color:#fff; }
 
   /* ---- target assets sticky bar ---- */
   .target-bar{
@@ -733,7 +754,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     z-index:40;
     width:min(960px, 100%);
     background:#08080a;
-    border-top:1px solid rgba(255,47,146,0.5);
+    border-top:1px solid rgba(255,204,0,0.5);
     box-shadow:0 -4px 20px rgba(0,0,0,0.5);
     padding:0.75rem 1.25rem;
     display:flex;
@@ -742,7 +763,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:1rem;
     cursor:pointer;
   }
-  .target-bar .tb-label{ font-size:12px; letter-spacing:0.1em; color:#ff2f92; text-shadow:0 0 6px rgba(255,47,146,0.4); text-transform:uppercase; }
+  .target-bar .tb-label{ font-size:12px; letter-spacing:0.1em; color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); text-transform:uppercase; }
   .target-bar .tb-toggle{ font-size:11px; color:rgba(232,232,232,0.5); text-transform:uppercase; }
 
   /* ---- target summary / offer placeholder ---- */
@@ -754,8 +775,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:1rem;
     font-size:12px;
     letter-spacing:0.15em;
-    color:#ff2f92;
-    text-shadow:0 0 6px rgba(255,47,146,0.4);
+    color:#39ff14;
+    text-shadow:0 0 6px rgba(57,255,20,0.4);
     text-transform:uppercase;
   }
   .placeholder-card{
@@ -789,7 +810,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <h1>Σκύλλα :: SWAP</h1>
 
     <div class="db-select-wrap">
-      <button class="db-select-toggle" id="dbSelectToggle">// DATABASE ▼</button>
+      <button class="db-select-toggle" id="dbSelectToggle">// DATABASE :: <span class="db-active-name">P!GE0NS</span> ▼</button>
       <div class="db-select-menu" id="dbSelectMenu" style="display:none;">
         <div class="db-option db-option-active">P!GE0NS</div>
         <div class="db-option db-option-disabled">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
@@ -829,9 +850,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="sw-panel" id="collectionDetailsPanel">
         <div class="panel-title">P!GE0NS</div>
         <div class="collection-info">
-          <div class="ci-row"><span class="ci-label">!SSUER / ADDRESS</span><span class="ci-value" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span></div>
-          <div style="text-align:center; margin-top:0.6rem;">
-            <button class="bar-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
+          <div class="ci-label">!SSUER / ADDRESS</div>
+          <div class="ci-addr-row">
+            <span class="ci-value ci-value-big" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span>
+            <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
           </div>
         </div>
 
@@ -877,7 +899,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <input class="search-input" id="searchInput" placeholder="SEARCH #..." inputmode="numeric">
           <button class="bar-btn" id="searchBtn">[ GO ]</button>
           <select class="sort-select" id="editionSelect">
-            <option value="ALL">ALL (1-3015)</option>
+            <option value="ALL" selected>ALL (1-3015)</option>
             <option value="LOW">1ST ED!T!0N (1-1515)</option>
             <option value="HIGH">2ND ED!T!0N (1516-3015)</option>
           </select>
@@ -885,7 +907,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <option value="NAME_ASC">A → Z</option>
             <option value="PRICE_ASC">L0WEST L!ST!NG</option>
             <option value="PRICE_DESC">H!GHEST L!ST!NG</option>
-            <option value="RARITY_ASC">RAR!TY H!GH</option>
+            <option value="RARITY_ASC" selected>RAR!TY H!GH</option>
             <option value="RARITY_DESC">RAR!TY L0W</option>
             <option value="HIGHEST_SALE">SALES (H!GHEST)</option>
             <option value="SALES_LOW">SALES (L0WEST)</option>
@@ -996,7 +1018,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     items: [],                // everything loaded so far in the current browse/search mode
     scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
     mode: 'browse',            // 'browse' | 'search' | 'scoped'
-    sort: 'NAME_ASC',
+    sort: 'RARITY_ASC',
     edition: 'ALL',            // 'ALL' | 'LOW' (1-1515) | 'HIGH' (1516-3015)
     activeTab: null,           // null | 'database' | 'mypigeons' | 'topholders' | 'sales'
     databaseLoaded: false,
@@ -1225,13 +1247,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   // ---- Card rendering (minimal chrome: image + number + rarity + a
   // corner select toggle — 6 columns doesn't leave room for more; tap the
   // image to INSPECT for the full trait set). ----
+  function listingBlockHtml(marketLabel, listing){
+    var hasPrice = listing && listing.priceXrp !== null && listing.priceXrp !== undefined;
+    var priceHtml = hasPrice
+      ? '<div class="cl-price">' + listing.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</div>'
+      : '<div class="cl-price cl-none">N0 L!ST!NG</div>';
+    var buyHtml = hasPrice && listing.buyUrl
+      ? '<a class="cl-buy" href="' + escapeHtml(listing.buyUrl) + '" target="_blank" rel="noopener">[ BUY ]</a>'
+      : '';
+    return '<div class="cl-block"><div class="cl-market">' + marketLabel + '</div>' + priceHtml + buyHtml + '</div>';
+  }
   function resultCardHtml(p){
-    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY #' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
+    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
     var inTarget = !!state.targetAssets[p.nftId];
-    var bestListingLine = (p.bestListingXrp !== null && p.bestListingXrp !== undefined)
-      ? '<div class="result-price-line">' + p.bestListingXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP :: ' + (p.bestListingSource === 'xrpCafe' ? 'XRP.CAFE' : 'DEEPT!DE') + '</div>'
+    var listingsHtml = p.listings
+      ? '<div class="card-listings">' + listingBlockHtml('XRP.CAFE', p.listings.xrpCafe) + listingBlockHtml('DEEPT!DE', p.listings.deeptide) + '</div>'
       : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">P!GE0N ' + num + '</div>' +
@@ -1241,7 +1273,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       '</div>' +
       '<div class="result-card-body">' +
         rarityLine +
-        bestListingLine +
+        listingsHtml +
       '</div>' +
     '</div>';
   }

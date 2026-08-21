@@ -63,6 +63,32 @@ function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
+// Attaches the same { deeptide, xrpCafe } breakdown the INSPECT screen
+// already shows to every card in a browse page, so the grid can show both
+// marketplaces (and a BUY link for each) without opening a Pigeon. One
+// xrp.cafe fetch per item, capped well under the subrequest budget (the
+// Deeptide side is already known from toItem's own priceXrp/buyUrl).
+// Two caps: branches that already spend one Deeptide fetch per item
+// (numeric/edition/highest-sale — real detail lookups, not the cheap
+// listings-summary path) need a smaller xrp.cafe cap on top so the
+// combined per-request subrequest count stays well under budget.
+const LISTINGS_ENRICH_CAP = 40;
+const LISTINGS_ENRICH_CAP_LOW = 10;
+async function attachListings(items, cap = LISTINGS_ENRICH_CAP) {
+  const capped = items.slice(0, cap);
+  await Promise.all(capped.map(async (it) => {
+    const xc = await fetchXrpCafeNftListing(it.nftId);
+    it.listings = {
+      deeptide: { priceXrp: it.priceXrp, buyUrl: it.buyUrl },
+      xrpCafe: {
+        priceXrp: xc && xc.priceXrp !== null && xc.priceXrp !== undefined ? xc.priceXrp : null,
+        buyUrl: xc && xc.priceXrp !== null && xc.priceXrp !== undefined ? `https://xrp.cafe/nft/${it.nftId}` : null
+      }
+    };
+  }));
+  return items;
+}
+
 export async function onRequestGet(context) {
   const { request, env } = context;
   if (!env.coin) return json({ error: 'server_misconfigured' }, 500);
@@ -245,6 +271,7 @@ export async function onRequestGet(context) {
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap));
+    await attachListings(items, LISTINGS_ENRICH_CAP_LOW);
     return json({
       items,
       total: sortedIds.length,
@@ -283,6 +310,7 @@ export async function onRequestGet(context) {
       const pageNums = nums.slice(skip, skip + limit);
       const resolved = await Promise.all(pageNums.map(n => fetchDeeptideNftDetail(map[n])));
       const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap));
+      await attachListings(items, LISTINGS_ENRICH_CAP_LOW);
       return json({
         items,
         total: numberRange === 'low' ? PIGEON_LOW_EDITION_MAX : (PIGEON_COLLECTION_SIZE_APPROX - PIGEON_LOW_EDITION_MAX),
@@ -314,6 +342,7 @@ export async function onRequestGet(context) {
       if (!page.hasMore) { exhausted = true; break; }
     }
     const items = matched.map(it => toItem(it.nftId, it, undefined, highSaleMap));
+    await attachListings(items);
     return json({
       items,
       total: numberRange === 'low' ? PIGEON_LOW_EDITION_MAX : (PIGEON_COLLECTION_SIZE_APPROX - PIGEON_LOW_EDITION_MAX),
@@ -338,6 +367,7 @@ export async function onRequestGet(context) {
     const pageNums = nums.slice(skip, skip + limit);
     const resolved = await Promise.all(pageNums.map(n => fetchDeeptideNftDetail(map[n])));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap));
+    await attachListings(items, LISTINGS_ENRICH_CAP_LOW);
     return json({
       items,
       total: nums.length,
@@ -373,7 +403,7 @@ export async function onRequestGet(context) {
       let effective = null, source = null;
       if (dp !== null && (xp === null || (crossListing === 'asc' ? dp <= xp : dp >= xp))) { effective = dp; source = 'deeptide'; }
       else if (xp !== null) { effective = xp; source = 'xrpCafe'; }
-      return { it, effective, source };
+      return { it, effective, source, xp };
     }));
     withCross.sort((a, b) => {
       if (a.effective === null && b.effective === null) return 0;
@@ -381,10 +411,14 @@ export async function onRequestGet(context) {
       if (b.effective === null) return -1;
       return crossListing === 'asc' ? a.effective - b.effective : b.effective - a.effective;
     });
-    const items = withCross.map(({ it, effective, source }) => {
+    const items = withCross.map(({ it, effective, source, xp }) => {
       const built = toItem(it.nftId, it, undefined, highSaleMap);
       built.bestListingXrp = effective;
       built.bestListingSource = source;
+      built.listings = {
+        deeptide: { priceXrp: built.priceXrp, buyUrl: built.buyUrl },
+        xrpCafe: { priceXrp: xp, buyUrl: xp !== null ? `https://xrp.cafe/nft/${it.nftId}` : null }
+      };
       return built;
     });
     return json({
@@ -411,6 +445,7 @@ export async function onRequestGet(context) {
 
   const page = await fetchDeeptideListings({ skip, limit, sort, traits: filters });
   const items = page.items.map(it => toItem(it.nftId, it, undefined, highSaleMap));
+  await attachListings(items);
 
   context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
   context.waitUntil(maybeRefreshHighSaleMap(env.coin));
