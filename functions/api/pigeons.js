@@ -2,7 +2,7 @@ import {
   fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
-  getSwapListingsMap, removeSwapListing, fetchNftSellOffers,
+  getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull,
   resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX,
   getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
@@ -300,13 +300,20 @@ export async function onRequestGet(context) {
     const BACKGROUND_VERIFY_SAMPLE = 5;
     context.waitUntil((async () => {
       for (const id of pageIds.slice(0, BACKGROUND_VERIFY_SAMPLE)) {
-        const offers = await fetchNftSellOffers(id);
         const entry = scyllaListingsMap[id];
-        // Match the exact recorded offer, not just "any offer by this
-        // owner" — the same owner can have an unrelated (e.g. XRP) offer
-        // live on the same NFT, which would otherwise look like "still
-        // listed" even after the real $PIGEONS offer is gone.
-        if (entry && !offers.some(o => o.nft_offer_index === entry.offerId)) {
+        if (!entry) continue;
+        // null means the lookup itself failed (rate-limited, network
+        // error) — must NOT be treated as "confirmed gone," or a
+        // transient blip wrongly deletes a real, still-live listing from
+        // the index. Confirmed live: this exact bug was silently pruning
+        // real listings every time this background check happened to
+        // hit xrplcluster.com's rate limit. Only an actual, successfully
+        // fetched offer list missing this offerId counts as genuinely
+        // delisted. Match the exact recorded offer, not just "any offer
+        // by this owner" — the same owner can have an unrelated (e.g.
+        // XRP) offer live on the same NFT.
+        const offers = await fetchNftSellOffersOrNull(id);
+        if (offers !== null && !offers.some(o => o.nft_offer_index === entry.offerId)) {
           await removeSwapListing(env.coin, id);
         }
       }
