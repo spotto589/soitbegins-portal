@@ -1,6 +1,6 @@
 import {
   fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, getTraitCategoriesWithPercent,
-  fetchDeeptideSalesHistory, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap,
+  fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX,
@@ -87,6 +87,32 @@ export async function onRequestGet(context) {
     });
   }
 
+  // Collection-wide stats strip — items/holders (real, our own Clio-based
+  // full scan, same snapshot as topHolders/Crown) plus floor price from
+  // BOTH marketplaces (each has its own separate liquidity, so a real
+  // floor differs by platform) and volume/listed% from xrp.cafe, whose
+  // public collection-stats API is the only one of the two that tracks
+  // those particular figures.
+  if (params.get('stats') === '1') {
+    const [deeptideFloorPage, xrpCafeStats, crownSnapshot] = await Promise.all([
+      fetchDeeptideListings({ skip: 0, limit: 1, sort: 'price-asc' }),
+      fetchXrpCafeCollectionStats(env.coin),
+      getCachedCrownHolder(env.coin)
+    ]);
+    const deeptideFloorDrops = deeptideFloorPage.items[0] && typeof deeptideFloorPage.items[0].priceDrops === 'number'
+      ? deeptideFloorPage.items[0].priceDrops : null;
+    return json({
+      items: PIGEON_COLLECTION_SIZE_APPROX,
+      holders: crownSnapshot ? crownSnapshot.holderCount : null,
+      deeptideFloorXrp: deeptideFloorDrops !== null ? deeptideFloorDrops / 1000000 : null,
+      deeptideBuyUrl: deeptideFloorPage.items[0] ? deeptideBuyUrl(deeptideFloorPage.items[0].nftId) : null,
+      xrpCafeFloorXrp: xrpCafeStats && xrpCafeStats.floorDrops !== null ? xrpCafeStats.floorDrops / 1000000 : null,
+      xrpCafeUrl: 'https://xrp.cafe/collection/xrpigeons',
+      totalVolumeXrp: xrpCafeStats && xrpCafeStats.totalVolumeDrops !== null ? xrpCafeStats.totalVolumeDrops / 1000000 : null,
+      listedPercent: xrpCafeStats ? xrpCafeStats.percentListed : null
+    });
+  }
+
   // Top 10 current Pigeon holders, network-wide — piggybacks on the same
   // cached full-scan snapshot the Crown feature already maintains (board.js),
   // so this is a cheap KV read on every normal request; a stale/missing
@@ -166,17 +192,30 @@ export async function onRequestGet(context) {
   // percentages, rarity. Used by INSPECT and to resolve a number search.
   const detailId = params.get('detail');
   if (detailId) {
-    const item = await fetchDeeptideNftDetail(detailId);
+    const [item, categories, xrpCafeListing] = await Promise.all([
+      fetchDeeptideNftDetail(detailId),
+      getTraitCategoriesWithPercent(env.coin),
+      fetchXrpCafeNftListing(detailId)
+    ]);
     if (!item) return json({ item: null, notIndexed: true });
     // Deeptide's own detail response has each trait's percentage but not its
     // raw count — cross-reference the (cached) collection-wide trait-card
     // counts so INSPECT can show both "12.4%" and "374 PIGEONS".
-    const categories = await getTraitCategoriesWithPercent(env.coin);
     item.attributes = item.attributes.map(a => {
       const match = (categories[a.trait_type] || []).find(v => v.value === a.value);
       return { trait_type: a.trait_type, value: a.value, percent: match ? match.percent : (a.percent != null ? a.percent : null), count: match ? match.count : null };
     });
-    return json({ item: toItem(item.nftId, item, undefined, highSaleMap) });
+    const result = toItem(item.nftId, item, undefined, highSaleMap);
+    // Per-marketplace listings — each platform has its own separate sell
+    // offers, so a Pigeon can be listed on one, both, or neither.
+    result.listings = {
+      deeptide: { priceXrp: result.priceXrp, buyUrl: result.buyUrl },
+      xrpCafe: {
+        priceXrp: xrpCafeListing ? xrpCafeListing.priceXrp : null,
+        buyUrl: xrpCafeListing && xrpCafeListing.priceXrp !== null ? `https://xrp.cafe/nft/${detailId}` : null
+      }
+    };
+    return json({ item: result });
   }
 
   // Direct Pigeon-number search via the number->NFTokenID map (built by

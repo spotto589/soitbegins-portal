@@ -996,6 +996,68 @@ export async function fetchDeeptideSalesHistory({ skip = 0, limit = 20, sort = '
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// xrp.cafe's own collection stats — a second real, independent source for
+// floor price (their own listings, separate liquidity from Deeptide's),
+// total volume, and listed %. xrp.cafe's *site* is behind a Cloudflare
+// bot-check page, but this is their own public JSON API their frontend
+// calls (confirmed via curl — plain 200, no challenge), same category as
+// Deeptide's API, not a scrape of the challenged HTML. Cached briefly
+// since it's a live external call on every /swap page load otherwise.
+// ─────────────────────────────────────────────────────────────────────────
+const XRP_CAFE_API_BASE = 'https://api.xrp.cafe';
+const XRP_CAFE_STATS_CACHE_KEY_PREFIX = 'pswap:xrpcafestats:v1:';
+const XRP_CAFE_STATS_CACHE_TTL_SECONDS = 300;
+
+export async function fetchXrpCafeCollectionStats(kv, vanitySlug = 'xrpigeons') {
+  const cacheKey = XRP_CAFE_STATS_CACHE_KEY_PREFIX + vanitySlug;
+  const cached = await kv.get(cacheKey);
+  if (cached !== null) return JSON.parse(cached);
+
+  let stats = null;
+  try {
+    const res = await fetch(`${XRP_CAFE_API_BASE}/api/collection/${encodeURIComponent(vanitySlug)}`);
+    if (res.ok) {
+      const arr = await res.json();
+      const c = Array.isArray(arr) ? arr[0] : null;
+      if (c) {
+        stats = {
+          floorDrops: typeof c.FloorPrice === 'number' ? c.FloorPrice : null,
+          totalVolumeDrops: c.totalCollectionVolume ? parseInt(c.totalCollectionVolume, 10) : null,
+          holders: typeof c.holders === 'number' ? c.holders : null,
+          nftCount: typeof c.nft_count === 'number' ? c.nft_count : null,
+          percentListed: c.percentListed ? parseFloat(c.percentListed) : null,
+        };
+      }
+    }
+  } catch (e) {
+    stats = null;
+  }
+
+  await safeKvPut(kv, cacheKey, JSON.stringify(stats), { expirationTtl: XRP_CAFE_STATS_CACHE_TTL_SECONDS });
+  return stats;
+}
+
+// Per-token listing on xrp.cafe — real-time, uncached (same cadence as
+// Deeptide's own per-token detail fetch), for the INSPECT screen's
+// LISTINGS section. `amount` is null when nobody's selling it there;
+// present in the same raw-XRP units as this API's own `floor_price`
+// field (unlike Deeptide, which uses drops for offer amounts).
+export async function fetchXrpCafeNftListing(nftId) {
+  try {
+    const res = await fetch(`${XRP_CAFE_API_BASE}/api/nft/${encodeURIComponent(nftId)}`);
+    if (!res.ok) return null;
+    const d = await res.json();
+    const n = d.nft;
+    if (!n) return null;
+    return {
+      priceXrp: n.amount !== null && n.amount !== undefined ? parseFloat(n.amount) : null,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Number -> NFTokenID map, so searching "1842" can resolve directly. Built
 // by crawling Deeptide's own cheap listings pages (no ledger scan, no
 // per-token KV writes) in bounded batches, self-resuming via a saved skip

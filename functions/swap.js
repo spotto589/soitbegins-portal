@@ -124,6 +124,23 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   .my-pigeons-row{ text-align:center; margin-bottom:1.75rem; }
 
+  /* ---- collection stats strip ---- */
+  .stats-strip{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));
+    gap:0.75rem;
+  }
+  .stat-tile{
+    border:1px solid rgba(255,47,146,0.25);
+    padding:0.85rem 0.5rem;
+    text-align:center;
+  }
+  .stat-tile-link{ display:block; text-decoration:none; cursor:pointer; }
+  .stat-tile-link:hover{ background:rgba(255,47,146,0.08); border-color:rgba(255,47,146,0.5); }
+  .stat-label{ font-size:9px; letter-spacing:0.15em; color:rgba(232,232,232,0.45); margin-bottom:0.5rem; text-transform:uppercase; }
+  .stat-value{ font-size:16px; letter-spacing:0.03em; color:#39ff14; text-shadow:0 0 5px rgba(57,255,20,0.4); }
+  .stat-tile-link .stat-value{ color:#00fff2; text-shadow:0 0 5px rgba(0,255,242,0.4); }
+
   /* ---- top 10 holders (expandable) ---- */
   .th-toggle{
     display:block;
@@ -570,24 +587,47 @@ const SWAP_HTML = `<!DOCTYPE html>
   .trait-cell .tc-value{ font-size:13px; letter-spacing:0.03em; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.3); }
   .trait-cell .tc-sub{ font-size:9px; letter-spacing:0.08em; color:rgba(0,255,242,0.6); margin-top:0.3rem; text-transform:uppercase; }
   .tech-meta-title{ text-align:center; font-size:10px; letter-spacing:0.2em; color:rgba(232,232,232,0.35); margin-bottom:0.6rem; text-transform:uppercase; }
-  .detail-history{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed rgba(232,232,232,0.15); padding-top:1rem; }
-  .dh-row{
+  .listings-block{ max-width:460px; margin:1.25rem auto 0; }
+  .listing-row{
     display:flex;
     align-items:center;
     justify-content:space-between;
     gap:0.6rem;
-    padding:0.5em 0.3em;
+    padding:0.5em 0.6em;
+    border:1px solid rgba(255,215,0,0.25);
+    margin-bottom:0.5rem;
+    font-size:12px;
+    letter-spacing:0.03em;
+  }
+  .listing-market{ color:rgba(232,232,232,0.5); text-transform:uppercase; letter-spacing:0.1em; font-size:10px; }
+  .listing-price{ color:#ffd700; text-shadow:0 0 3px rgba(255,215,0,0.3); }
+  .listing-buy{
+    background:transparent;
+    border:1px solid rgba(255,215,0,0.5);
+    color:#ffd700;
+    font-family:inherit;
+    font-size:10px;
+    letter-spacing:0.1em;
+    padding:0.35em 0.7em;
+    cursor:pointer;
+    text-transform:uppercase;
+    text-decoration:none;
+  }
+  .listing-buy:hover{ background:rgba(255,215,0,0.1); }
+  .detail-history{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed rgba(232,232,232,0.15); padding-top:1rem; }
+  .dh-row{
+    padding:0.7em 0.3em;
     border-bottom:1px solid rgba(232,232,232,0.08);
-    font-size:11px;
-    letter-spacing:0.02em;
-    flex-wrap:wrap;
   }
   .dh-row:last-child{ border-bottom:none; }
-  .dh-type{ flex:0 0 auto; color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.35); text-transform:uppercase; min-width:4.5em; }
-  .dh-price{ flex:0 0 auto; color:#ffd700; }
-  .dh-parties{ flex:1 1 160px; color:rgba(232,232,232,0.55); }
-  .dh-parties a{ color:#00fff2; text-decoration:underline; }
-  .dh-time{ flex:0 0 auto; color:rgba(232,232,232,0.3); font-size:10px; text-transform:uppercase; }
+  .dh-line{ font-size:12px; letter-spacing:0.02em; color:rgba(232,232,232,0.75); margin-bottom:0.35em; }
+  .dh-verb{ color:#ff2f92; text-shadow:0 0 4px rgba(255,47,146,0.35); text-transform:uppercase; font-weight:700; }
+  .dh-price{ color:#ffd700; }
+  .dh-line a{ color:#00fff2; text-decoration:underline; }
+  .dh-meta{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; }
+  .dh-time{ color:rgba(232,232,232,0.3); font-size:10px; letter-spacing:0.05em; text-transform:uppercase; }
+  .dh-tx{ color:rgba(0,255,242,0.6); font-size:10px; letter-spacing:0.08em; text-decoration:none; text-transform:uppercase; }
+  .dh-tx:hover{ text-decoration:underline; }
   .view-elsewhere{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed rgba(232,232,232,0.15); padding-top:1rem; }
   .view-links{ display:flex; justify-content:center; gap:0.6rem; flex-wrap:wrap; }
   .detail-actions{ display:flex; justify-content:center; gap:0.75rem; flex-wrap:wrap; margin-top:1.5rem; }
@@ -684,6 +724,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="sw-subtitle">SWAP PR0T0C0L</div>
     <div class="sw-eyebrow-lines">// P!GE0N DATABASE<br>// C0LLECT!0N :: 3015</div>
 
+    <div class="sw-panel" id="collectionStatsPanel">
+      <div class="stats-strip" id="statsStrip">
+        <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value" id="statItems">…</div></div>
+        <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
+        <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
+        <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
+        <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
+        <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
+      </div>
+    </div>
+
     <div class="my-pigeons-row">
       <button class="bar-btn" id="myPigeonsBtn">[ MY P!GE0NS ]</button>
     </div>
@@ -764,11 +815,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field" id="detailRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="detailRarity"></span></div>
       <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
       <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">H!GH SALE</span><span class="df-value price" id="detailHighSale"></span></div>
+      <div class="listings-block">
+        <div class="tech-meta-title">L!ST!NGS</div>
+        <div class="listing-row"><span class="listing-market">DEEPT!DE</span><span class="listing-price" id="listingDeeptidePrice">N0T L!STED</span><a class="listing-buy" id="listingDeeptideBuy" style="display:none;" target="_blank" rel="noopener">[ BUY ]</a></div>
+        <div class="listing-row"><span class="listing-market">XRP.CAFE</span><span class="listing-price" id="listingXrpCafePrice">N0T L!STED</span><a class="listing-buy" id="listingXrpCafeBuy" style="display:none;" target="_blank" rel="noopener">[ BUY ]</a></div>
+      </div>
       <div class="detail-traits-title">TRA!TS</div>
       <div class="trait-grid" id="detailTraits"></div>
       <div class="detail-history">
-        <div class="tech-meta-title">P!GE0N H!ST0RY</div>
-        <div id="detailHistoryList"></div>
+        <button class="th-toggle" id="detailHistoryToggle">[ P!GE0N H!ST0RY ▼ ]</button>
+        <div class="th-list" id="detailHistoryList" style="display:none;"></div>
       </div>
       <div class="view-elsewhere">
         <div class="tech-meta-title">V!EW ELSEWHERE</div>
@@ -846,13 +902,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','sortSelect','myPigeonsBtn','topHoldersToggle','topHoldersList','indexLine','traitRows','addTraitBtn','clearTraitsBtn',
+  ['searchInput','searchBtn','editionSelect','sortSelect','myPigeonsBtn',
+   'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
+   'topHoldersToggle','topHoldersList','indexLine','traitRows','addTraitBtn','clearTraitsBtn',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesToggle','salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
    'screenBrowse','screenDetail','screenSummary',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailBuyBtn','detailTraits',
-   'detailHistoryList','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
+   'detailHistoryToggle','detailHistoryList','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
+   'listingDeeptidePrice','listingDeeptideBuy','listingXrpCafePrice','listingXrpCafeBuy',
    'backToBrowseBtn','detailSelectBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel'
@@ -1470,31 +1529,50 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailHighSaleRow.style.display = 'none';
     }
   }
+  function updateDetailListing(priceEl, buyEl, listing){
+    if (listing && listing.priceXrp !== null && listing.priceXrp !== undefined){
+      priceEl.textContent = listing.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+      buyEl.style.display = '';
+      buyEl.href = listing.buyUrl;
+    } else {
+      priceEl.textContent = 'N0T L!STED';
+      buyEl.style.display = 'none';
+    }
+  }
+  function updateDetailListings(listings){
+    updateDetailListing(el.listingDeeptidePrice, el.listingDeeptideBuy, listings && listings.deeptide);
+    updateDetailListing(el.listingXrpCafePrice, el.listingXrpCafeBuy, listings && listings.xrpCafe);
+  }
   function findKnown(nftId){
     return state.items.filter(function(p){ return p.nftId === nftId; })[0] ||
       state.scopeAllItems.filter(function(p){ return p.nftId === nftId; })[0];
   }
   // ---- Per-Pigeon history (mint/transfer/sale events, real, straight from
   // Deeptide's per-token history endpoint) ----
-  function walletLinkHtml(full, short, prefix){
+  function walletLinkHtml(full, short){
     if (!full) return '';
-    return (prefix || '') + '<a data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '">' + escapeHtml(short || full) + '</a>';
+    return '<a data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '">' + escapeHtml(short || full) + '</a>';
   }
+  // Reads as a plain sentence per event — SOLD FOR x XRP TO wallet,
+  // TRANSFERRED TO wallet, MINTED BY wallet — instead of a cramped data
+  // table. Deeptide's history is newest-first, so MINTED BY naturally
+  // lands last without any re-sorting.
   function historyRowHtml(e){
-    var typeLabel = e.type === 'sale' ? 'SALE' : e.type === 'mint' ? 'M!NT' : 'TRANSFER';
-    var priceHtml = e.priceXrp !== null && e.priceXrp !== undefined
-      ? '<span class="dh-price">' + e.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</span>' : '';
-    var partiesParts = [];
-    if (e.account) partiesParts.push(walletLinkHtml(e.account, e.accountShort));
-    if (e.receiver) partiesParts.push(walletLinkHtml(e.receiver, e.receiverShort, '→ '));
-    if (e.buyer) partiesParts.push(walletLinkHtml(e.buyer, e.buyerShort, '→ '));
+    var line;
+    if (e.type === 'sale'){
+      var price = e.priceXrp !== null && e.priceXrp !== undefined
+        ? '<span class="dh-price">' + e.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</span>' : '?';
+      line = '<span class="dh-verb">S0LD</span> F0R ' + price + (e.buyer ? ' T0 ' + walletLinkHtml(e.buyer, e.buyerShort) : '');
+    } else if (e.type === 'mint'){
+      line = '<span class="dh-verb">M!NTED</span> BY ' + (e.account ? walletLinkHtml(e.account, e.accountShort) : '?');
+    } else {
+      line = '<span class="dh-verb">TRANSFERRED</span> T0 ' + (e.receiver ? walletLinkHtml(e.receiver, e.receiverShort) : '?');
+    }
     var when = e.date ? new Date(e.date).toLocaleDateString() : '';
     var txLink = e.txUrl ? '<a class="dh-tx" href="' + escapeHtml(e.txUrl) + '" target="_blank" rel="noopener">[ TXN ]</a>' : '';
     return '<div class="dh-row">' +
-      '<span class="dh-type">' + typeLabel + '</span>' +
-      priceHtml +
-      '<span class="dh-parties">' + partiesParts.join(' ') + ' ' + txLink + '</span>' +
-      '<span class="dh-time">' + escapeHtml(when) + '</span>' +
+      '<div class="dh-line">' + line + '</div>' +
+      '<div class="dh-meta"><span class="dh-time">' + escapeHtml(when) + '</span>' + txLink + '</div>' +
     '</div>';
   }
   function loadDetailHistory(nftId){
@@ -1526,6 +1604,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.detailHistoryList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     updateDetailRarity(known);
     updateDetailPrice(known);
+    updateDetailListings(known && known.listings);
     state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null, attributes: [] };
     showScreen('detail');
     refreshCardSelectionStates();
@@ -1544,20 +1623,44 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailTraits.innerHTML = p.attributes.map(traitCellHtml).join('');
       updateDetailRarity(p);
       updateDetailPrice(p);
+      updateDetailListings(p.listings);
       renderOwnerLink(p.ownerShort, p.owner);
       refreshCardSelectionStates();
     }).catch(function(){
       renderOwnerLink(null, null);
     });
   }
+  el.detailHistoryToggle.addEventListener('click', function(){
+    var opening = el.detailHistoryList.style.display === 'none';
+    el.detailHistoryList.style.display = opening ? '' : 'none';
+    el.detailHistoryToggle.textContent = opening ? '[ P!GE0N H!ST0RY ▲ ]' : '[ P!GE0N H!ST0RY ▼ ]';
+  });
   el.backToBrowseBtn.addEventListener('click', function(){ showScreen('browse'); });
   el.detailSelectBtn.addEventListener('click', function(){
     if (state.currentDetail) handleSelect(state.currentDetail);
   });
 
+  // ---- Collection-wide stats strip (items/holders real from our own
+  // ledger scan; floor from BOTH marketplaces separately since each has
+  // its own liquidity; volume/listed% from xrp.cafe's own stats API) ----
+  function fmtXrp(n){ return n === null || n === undefined ? '—' : n.toLocaleString(undefined, { maximumFractionDigits: n < 100 ? 2 : 0 }); }
+  function loadCollectionStats(){
+    api({ stats: 1 }).then(function(data){
+      el.statItems.textContent = data.items !== null && data.items !== undefined ? data.items.toLocaleString() : '—';
+      el.statHolders.textContent = data.holders !== null && data.holders !== undefined ? data.holders.toLocaleString() : '—';
+      el.statVolume.textContent = data.totalVolumeXrp !== null && data.totalVolumeXrp !== undefined ? fmtXrp(data.totalVolumeXrp) + ' XRP' : '—';
+      el.statListed.textContent = data.listedPercent !== null && data.listedPercent !== undefined ? data.listedPercent + '%' : '—';
+      el.statFloorDeeptide.textContent = data.deeptideFloorXrp !== null && data.deeptideFloorXrp !== undefined ? fmtXrp(data.deeptideFloorXrp) + ' XRP' : '—';
+      el.statFloorXrpCafe.textContent = data.xrpCafeFloorXrp !== null && data.xrpCafeFloorXrp !== undefined ? fmtXrp(data.xrpCafeFloorXrp) + ' XRP' : '—';
+      if (data.deeptideBuyUrl) el.statFloorDeeptideTile.href = data.deeptideBuyUrl;
+      if (data.xrpCafeUrl) el.statFloorXrpCafeTile.href = data.xrpCafeUrl;
+    }).catch(function(){});
+  }
+
   // ---- Initial load ----
   ensureTraitsLoaded();
   loadTopHolders();
+  loadCollectionStats();
   startCollectionBrowse();
   loadMoreSales();
 
