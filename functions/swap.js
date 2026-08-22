@@ -1033,6 +1033,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease;
   }
   .listing-buy:hover{ background:var(--cyan-faint); }
+  /* $PIGEONS marketplace listing — styled to read as a currency amount
+     (coin icon + number), distinct from the plain XRP listing rows above */
+  .scylla-listing-block{ max-width:460px; margin:1.25rem auto 0; }
+  .scylla-listing-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:0.6rem;
+    padding:0.5em 0.6em;
+    border:1px solid var(--magenta-dim);
+    margin-bottom:0.5rem;
+    border-radius:var(--radius);
+    background:rgba(255,63,208,0.05);
+  }
+  .scylla-coin-wrap{ display:flex; align-items:center; gap:0.5rem; }
+  .scylla-coin-icon{ width:22px; height:22px; border-radius:50%; object-fit:cover; border:1px solid var(--magenta-dim); box-shadow:0 0 6px var(--magenta-glow); }
+  .scylla-listing-price{ font-size:13px; font-weight:700; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
+  #detailScyllaBuyBtn{ border-color:var(--magenta-dim); color:var(--magenta); }
+  #detailScyllaBuyBtn:hover{ background:var(--magenta-faint); }
   .detail-history{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed var(--border-dim); padding-top:1rem; }
   .dh-row{
     padding:0.7em 0.3em;
@@ -1415,21 +1434,30 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-eyebrow">// P!GE0N !DENT!F!ED</div>
       <div class="detail-num" id="detailNum"></div>
       <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
-      <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
-      <div class="detail-field" id="detailRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="detailRarity"></span></div>
-      <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
-      <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
-      <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVG SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
       <div class="listings-block">
         <div class="tech-meta-title">L!ST!NGS</div>
         <div class="listing-row"><span class="listing-market">DEEPT!DE</span><span class="listing-price" id="listingDeeptidePrice">N0T L!STED</span><a class="listing-buy" id="listingDeeptideBuy" style="display:none;" target="_blank" rel="noopener">[ BUY ]</a></div>
         <div class="listing-row"><span class="listing-market">XRP.CAFE</span><span class="listing-price" id="listingXrpCafePrice">N0T L!STED</span><a class="listing-buy" id="listingXrpCafeBuy" style="display:none;" target="_blank" rel="noopener">[ BUY ]</a></div>
       </div>
+      <div class="scylla-listing-block">
+        <div class="tech-meta-title">$P!GE0NS L!ST!NGS</div>
+        <div class="scylla-listing-row">
+          <span class="scylla-coin-wrap">
+            <img class="scylla-coin-icon" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
+            <span class="scylla-listing-price" id="detailScyllaPrice">N0T L!STED</span>
+          </span>
+          <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">[ BUY ]</button>
+        </div>
+      </div>
+      <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
+      <div class="detail-field" id="detailRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="detailRarity"></span></div>
+      <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
+      <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
+      <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVG SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
       <div class="detail-traits-title">TRA!TS</div>
       <div class="trait-grid" id="detailTraits"></div>
       <div class="detail-history">
-        <button class="th-toggle" id="detailHistoryToggle">[ P!GE0N H!ST0RY ▼ ]</button>
-        <div class="th-list" id="detailHistoryList" style="display:none;"></div>
+        <button class="th-toggle" id="detailHistoryToggle">[ SALES H!ST0RY ]</button>
       </div>
       <div class="view-elsewhere">
         <div class="tech-meta-title">V!EW ELSEWHERE</div>
@@ -1443,6 +1471,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button class="secondary-btn" id="backToBrowseBtn">[ ← BACK ]</button>
         <button class="action-btn" id="detailSelectBtn">[ SELECT ]</button>
         <a class="action-btn" id="detailBuyBtn" style="display:none;" target="_blank" rel="noopener">[ BUY 0N DEEPT!DE ]</a>
+      </div>
+    </div>
+
+    <!-- SCREEN 2b: SALES HISTORY — a full swap of the DETAIL box, not an
+         inline expand, so the history list gets the whole panel to itself -->
+    <div class="sw-panel" id="screenHistory" style="display:none;">
+      <div class="detail-eyebrow">// SALES H!ST0RY</div>
+      <div class="detail-num" id="historyNum"></div>
+      <div class="th-list" id="detailHistoryList"></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="backToDetailBtn">[ ← BACK ]</button>
       </div>
     </div>
 
@@ -1737,9 +1776,10 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapOfferResult','swapResultNftId','swapResultToWallet','swapResultStatus','swapResultOfferId','swapResultTxLink','swapResultDoneBtn',
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
-   'screenBrowse','screenDetail','screenSummary',
+   'screenBrowse','screenDetail','screenSummary','screenHistory',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailAvgSaleRow','detailAvgSale','detailBuyBtn','detailTraits',
-   'detailHistoryToggle','detailHistoryList','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
+   'detailScyllaPrice','detailScyllaBuyBtn',
+   'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
    'listingDeeptidePrice','listingDeeptideBuy','listingXrpCafePrice','listingXrpCafeBuy',
    'backToBrowseBtn','detailSelectBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
@@ -1815,6 +1855,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.swapOffersPanelWrap.style.display = 'none';
     }
     el.screenDetail.style.display = name === 'detail' ? '' : 'none';
+    el.screenHistory.style.display = name === 'history' ? '' : 'none';
     el.screenSummary.style.display = name === 'summary' ? '' : 'none';
     el.screenSwapReview.style.display = name === 'swapreview' ? '' : 'none';
     el.screenSwapOfferConfirm.style.display = name === 'swapofferconfirm' ? '' : 'none';
@@ -3843,6 +3884,23 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailAvgSaleRow.style.display = 'none';
     }
   }
+  // The real $PIGEONS-denominated Σκύλλα marketplace listing (separate
+  // from the DEEPTIDE/XRP.CAFE rows above, which are always XRP) — never
+  // buyable via a plain link, so this is a button into the same
+  // openBuyConfirm flow the DATABASE cards' [ BUY ] button uses.
+  el.detailScyllaBuyBtn.addEventListener('click', function(){
+    if (state.currentDetail) openBuyConfirm(state.currentDetail);
+  });
+  function updateScyllaListing(p){
+    var listing = p && p.scyllaListing;
+    if (listing && listing.price !== null && listing.price !== undefined){
+      el.detailScyllaPrice.textContent = listing.price + ' $P!GE0NS';
+      el.detailScyllaBuyBtn.style.display = p.owner !== MY_WALLET ? '' : 'none';
+    } else {
+      el.detailScyllaPrice.textContent = 'N0T L!STED';
+      el.detailScyllaBuyBtn.style.display = 'none';
+    }
+  }
   function updateDetailListing(priceEl, buyEl, listing){
     if (listing && listing.priceXrp !== null && listing.priceXrp !== undefined){
       priceEl.textContent = listing.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
@@ -3919,6 +3977,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     updateDetailRarity(known);
     updateDetailPrice(known);
     updateDetailListings(known && known.listings);
+    updateScyllaListing(known);
     state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null, attributes: [] };
     showScreen('detail');
     refreshCardSelectionStates();
@@ -3938,17 +3997,22 @@ const SWAP_HTML = `<!DOCTYPE html>
       updateDetailRarity(p);
       updateDetailPrice(p);
       updateDetailListings(p.listings);
+      updateScyllaListing(p);
       renderOwnerLink(p.ownerShort, p.owner);
       refreshCardSelectionStates();
     }).catch(function(){
       renderOwnerLink(null, null);
     });
   }
+  // Sales history now swaps out the whole panel (SCREEN 2b) instead of
+  // expanding inline underneath the traits — detailHistoryList itself
+  // already lives inside screenHistory and is populated by openDetail's
+  // eager loadDetailHistory() call, so there's nothing left to fetch here.
   el.detailHistoryToggle.addEventListener('click', function(){
-    var opening = el.detailHistoryList.style.display === 'none';
-    el.detailHistoryList.style.display = opening ? '' : 'none';
-    el.detailHistoryToggle.textContent = opening ? '[ P!GE0N H!ST0RY ▲ ]' : '[ P!GE0N H!ST0RY ▼ ]';
+    el.historyNum.textContent = el.detailNum.textContent;
+    showScreen('history');
   });
+  el.backToDetailBtn.addEventListener('click', function(){ showScreen('detail'); });
   el.backToBrowseBtn.addEventListener('click', function(){ showScreen('browse'); });
   el.detailSelectBtn.addEventListener('click', function(){
     if (state.currentDetail) handleSelect(state.currentDetail);
