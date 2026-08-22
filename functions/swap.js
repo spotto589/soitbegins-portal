@@ -56,6 +56,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     --magenta-faint:rgba(255,51,204,0.12);
     --magenta-glow:rgba(255,51,204,0.4);
 
+    --green:#3dff8a;
+    --green-glow:rgba(61,255,138,0.35);
+
     --white:#f3f4f6;
     --grey:rgba(226,229,233,0.56);
     --grey-dim:rgba(226,229,233,0.34);
@@ -559,6 +562,72 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
     flex:0 0 auto;
   }
+  .traits-hover-wrap{ position:relative; display:inline-flex; }
+  .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.75em 0.4em; }
+  .traits-hover-wrap:hover .trait-row-label,
+  .traits-hover-wrap.open .trait-row-label{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  .traits-flyout{
+    position:absolute;
+    top:100%;
+    left:0;
+    z-index:60;
+    display:flex;
+    width:min(480px, 80vw);
+    max-height:280px;
+    background:var(--panel-bg-solid);
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    box-shadow:0 10px 30px rgba(0,0,0,0.6);
+  }
+  .traits-flyout-cats{
+    flex:0 0 40%;
+    overflow-y:auto;
+    border-right:1px solid var(--border-dim);
+  }
+  .traits-flyout-vals{
+    flex:1;
+    overflow-y:auto;
+    padding:0.4rem;
+  }
+  .traits-flyout-cat{
+    display:block;
+    width:100%;
+    text-align:left;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid var(--border-dim);
+    color:var(--grey);
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:0.06em;
+    padding:0.6em 0.7em;
+    cursor:pointer;
+    text-transform:uppercase;
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .traits-flyout-cat:hover, .traits-flyout-cat.active{ background:var(--cyan-faint); color:var(--cyan); }
+  .traits-flyout-val{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    gap:0.5rem;
+    background:transparent;
+    border:1px solid var(--border-dim);
+    color:var(--grey);
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:0.03em;
+    padding:0.5em 0.6em;
+    margin-bottom:0.3rem;
+    cursor:pointer;
+    text-align:left;
+    text-transform:uppercase;
+    border-radius:var(--radius);
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .traits-flyout-val:hover{ border-color:var(--cyan-dim); color:var(--white); }
+  .traits-flyout-val .tfv-count{ color:var(--grey-dim); font-size:9px; flex:0 0 auto; }
   select.trait-cat-select{
     background:#000;
     border:1px solid var(--border-mid);
@@ -715,8 +784,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      for full detail. */
   .result-grid{
     display:grid;
-    grid-template-columns:repeat(6, 1fr);
-    gap:0.6rem;
+    grid-template-columns:repeat(4, 1fr);
+    gap:0.9rem;
   }
   .result-card{
     position:relative;
@@ -732,48 +801,50 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card .pigeon-img-box{ border:none; }
   .result-card.in-target{ border-color:var(--magenta); box-shadow:0 0 0 1px var(--magenta-dim) inset, 0 0 14px rgba(255,63,208,0.22); }
   .result-card.in-target .result-num{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
-  .result-card-body{ padding:0.55rem 0.4rem; }
+  .result-card-body{ padding:0.75rem 0.6rem; }
   .result-num{
-    font-size:16px;
+    font-size:20px;
     font-weight:700;
     letter-spacing:0.03em;
     color:var(--white);
     text-align:center;
-    padding:0.5rem 0.3rem;
+    padding:0.65rem 0.4rem;
     border-bottom:1px solid var(--border-dim);
     transition:color 0.15s ease;
   }
-  .result-rarity-line{ font-size:13px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
-  .card-listings{ display:flex; gap:0.35rem; margin-top:0.4rem; }
-  .cl-block{ flex:1; min-width:0; border:1px solid var(--border-dim); padding:0.4rem 0.25rem; text-align:center; }
-  .cl-market{ font-size:8px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.3rem; }
-  .cl-price{ font-size:10px; letter-spacing:0.02em; color:var(--white); }
-  .cl-price.cl-none{ color:var(--grey-disabled); font-size:9px; text-transform:uppercase; }
+  .result-rarity-line{ font-size:16px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
+  .card-listings{ display:flex; gap:0.5rem; margin-top:0.6rem; }
+  .cl-block{ flex:1; min-width:0; border:1px solid var(--border-dim); padding:0.55rem 0.35rem; text-align:center; }
+  .cl-market{ font-size:10px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.4rem; }
+  .cl-price{ font-size:14px; font-weight:700; letter-spacing:0.02em; color:var(--green); text-shadow:0 0 6px var(--green-glow); }
+  .cl-price.cl-none{ color:var(--grey-disabled); font-size:11px; font-weight:400; text-shadow:none; text-transform:uppercase; }
   .cl-buy{
     display:block;
-    margin-top:0.35rem;
-    font-size:9px;
+    margin-top:0.45rem;
+    font-size:11px;
     letter-spacing:0.08em;
     border:1px solid var(--border-mid);
     color:var(--grey);
-    padding:0.3em 0;
+    padding:0.4em 0;
     text-decoration:none;
     text-transform:uppercase;
     cursor:pointer;
     transition:border-color 0.15s ease, color 0.15s ease;
   }
   .cl-buy:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
-  .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
+  .card-select-toggle, .my-pigeon-offer-toggle{ width:2.2em; height:2.2em; line-height:2.2em; font-size:18px; }
 
+  @media (max-width:900px){
+    .result-grid{ grid-template-columns:repeat(3, 1fr); }
+  }
   @media (max-width:700px){
     body{ padding:4vh 2.5vw 6vh; }
     .sw-panel{ padding:1rem 0.75rem; }
-    /* 2-wide on mobile, not the desktop 6 — plenty of room per card now,
-       so rarity stays visible instead of being dropped. */
-    .result-grid{ grid-template-columns:repeat(2, 1fr); gap:0.6rem; }
-    .result-card-body{ padding:0.5rem 0.4rem; }
-    .result-num{ font-size:15px; padding:0.45rem 0.3rem; }
-    .card-select-toggle, .my-pigeon-offer-toggle{ width:1.7em; height:1.7em; line-height:1.7em; font-size:14px; }
+    /* 2-wide on mobile, still bigger than the old cramped tiles. */
+    .result-grid{ grid-template-columns:repeat(2, 1fr); gap:0.7rem; }
+    .result-card-body{ padding:0.6rem 0.5rem; }
+    .result-num{ font-size:17px; padding:0.5rem 0.35rem; }
+    .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
   }
 
   /* ---- infinite scroll ---- */
@@ -1254,6 +1325,13 @@ const SWAP_HTML = `<!DOCTYPE html>
             <option value="SCYLLA_PRICE_DESC">$P!GE0NS H!GH → L0W</option>
             <option value="NAME_DESC">Z → A</option>
           </select>
+          <div class="traits-hover-wrap" id="traitsHoverWrap">
+            <span class="trait-row-label" id="traitsHoverLabel">TRA!TS ▾</span>
+            <div class="traits-flyout" id="traitsFlyout" style="display:none;">
+              <div class="traits-flyout-cats" id="traitsFlyoutCats"></div>
+              <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
+            </div>
+          </div>
         </div>
         <div class="index-line" id="indexLine"></div>
 
@@ -1582,6 +1660,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount',
    'indexLine','traitRows','addTraitBtn','clearTraitsBtn',
+   'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
@@ -2551,7 +2630,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         return '<button type="button" class="trait-chip' + (row.value === v.value ? ' selected' : '') + '" data-id="' + row.id + '" data-value="' + escapeHtml(v.value) + '">' + escapeHtml(v.value.toUpperCase()) + pct + '</button>';
       }).join('');
       return '<div class="trait-row" data-id="' + row.id + '">' +
-        '<span class="trait-row-label">TRA!TS</span>' +
         '<select class="trait-cat-select" data-id="' + row.id + '"><option value="">[ CATEG0RY ▼ ]</option>' + catOptions + '</select>' +
         '<button class="trait-row-remove" data-id="' + row.id + '">&times;</button>' +
         (row.category ? '<div class="trait-value-chips" data-id="' + row.id + '">' + chips + '</div>' : '') +
@@ -2596,6 +2674,80 @@ const SWAP_HTML = `<!DOCTYPE html>
       renderTraitRows();
       runQuery();
     }
+  });
+
+  // ---- TRAITS hover flyout — a faster path to the same traitFilters
+  // state renderTraitRows()/runQuery() above already drive: hover the
+  // category, see every value with its real count + %, click one to
+  // apply it immediately (adds a filter row exactly like the manual
+  // add-row -> pick category -> pick chip flow, just collapsed into one
+  // hover + click). ----
+  function renderTraitsFlyoutCats(){
+    var cats = state.traitCategories ? Object.keys(state.traitCategories).sort(function(a, b){ return a.localeCompare(b); }) : [];
+    el.traitsFlyoutCats.innerHTML = cats.map(function(c){
+      return '<button type="button" class="traits-flyout-cat" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c.toUpperCase()) + '</button>';
+    }).join('');
+  }
+  function renderTraitsFlyoutVals(category){
+    el.traitsFlyoutCats.querySelectorAll('.traits-flyout-cat').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-cat') === category);
+    });
+    var vals = ((category && state.traitCategories[category]) || []).slice().sort(function(a, b){
+      return (a.percent || 0) - (b.percent || 0);
+    });
+    el.traitsFlyoutVals.innerHTML = vals.map(function(v){
+      var pct = v.percent !== null && v.percent !== undefined ? v.percent + '%' : '—';
+      var count = v.count !== null && v.count !== undefined ? v.count : '—';
+      return '<button type="button" class="traits-flyout-val" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '">' +
+        '<span>' + escapeHtml(v.value.toUpperCase()) + '</span>' +
+        '<span class="tfv-count">' + count + ' :: ' + pct + '</span>' +
+      '</button>';
+    }).join('');
+  }
+  function openTraitsFlyout(){
+    ensureTraitsLoaded().then(function(){
+      renderTraitsFlyoutCats();
+      el.traitsFlyoutVals.innerHTML = '<div class="th-empty">H0VER A CATEG0RY</div>';
+      el.traitsFlyout.style.display = 'flex';
+      el.traitsHoverWrap.classList.add('open');
+    });
+  }
+  function closeTraitsFlyout(){
+    el.traitsFlyout.style.display = 'none';
+    el.traitsHoverWrap.classList.remove('open');
+  }
+  el.traitsHoverWrap.addEventListener('mouseenter', openTraitsFlyout);
+  el.traitsHoverWrap.addEventListener('mouseleave', closeTraitsFlyout);
+  el.traitsHoverLabel.addEventListener('click', function(){
+    // Touch devices have no hover — tap toggles the same flyout.
+    if (el.traitsFlyout.style.display === 'flex') closeTraitsFlyout();
+    else openTraitsFlyout();
+  });
+  el.traitsFlyoutCats.addEventListener('mouseover', function(e){
+    var catBtn = e.target.closest('.traits-flyout-cat');
+    if (catBtn) renderTraitsFlyoutVals(catBtn.getAttribute('data-cat'));
+  });
+  el.traitsFlyoutCats.addEventListener('click', function(e){
+    var catBtn = e.target.closest('.traits-flyout-cat');
+    if (catBtn) renderTraitsFlyoutVals(catBtn.getAttribute('data-cat'));
+  });
+  el.traitsFlyoutVals.addEventListener('click', function(e){
+    var valBtn = e.target.closest('.traits-flyout-val');
+    if (!valBtn) return;
+    var category = valBtn.getAttribute('data-cat');
+    var value = valBtn.getAttribute('data-value');
+    // Reuse an existing empty row if one's sitting there unused, same as
+    // clicking [+ ADD TRAIT] would give you — otherwise add a fresh one.
+    var target = state.traitFilters.filter(function(r){ return !r.category; })[0];
+    if (!target){
+      target = { id: state.nextTraitRowId++, category: '', value: '' };
+      state.traitFilters.push(target);
+    }
+    target.category = category;
+    target.value = value;
+    renderTraitRows();
+    closeTraitsFlyout();
+    runQuery();
   });
 
   function activeFilters(){

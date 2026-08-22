@@ -366,6 +366,8 @@ export async function onRequestGet(context) {
       }
     })());
 
+    await attachListings(items, LISTINGS_ENRICH_CAP_LOW);
+
     return json({
       items,
       total: sortedIds.length,
