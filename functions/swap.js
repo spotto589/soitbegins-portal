@@ -1013,14 +1013,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-rarity-line{ font-size:14px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
   .card-listings{ display:flex; gap:0.4rem; margin-top:0.45rem; }
   /* Neither marketplace has a real listing — one shared full-width bar
-     instead of two separate washed-out "N0 L!ST!NG" boxes. */
-  .card-no-listings{
-    font-size:10px;
-    font-weight:700;
-    letter-spacing:0.15em;
-    color:var(--cyan-dim);
-    text-transform:uppercase;
-  }
+     naming both markets, instead of two separate washed-out boxes. */
+  .card-no-listings .css-item{ color:var(--cyan-dim); }
+  .card-no-listings .css-label{ color:var(--grey-dim); }
   .cl-block{
     display:block;
     flex:1;
@@ -1076,7 +1071,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     grid-template-columns:repeat(3, 1fr);
     gap:0.5rem;
     margin-top:0.5rem;
-    max-height:216px;
+    /* Measured live: two real rows of cells run ~249px including gap —
+       216px was clipping exactly-6-trait Pigeons into an unwanted
+       scrollbar. 256px comfortably fits 2 full rows so only 7+ traits
+       (3 rows) actually scroll. */
+    max-height:256px;
     overflow-y:auto;
     padding-right:2px;
   }
@@ -2888,8 +2887,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       : '';
     // Neither marketplace has a real listing — one shared strip at the
     // BOTTOM of the card instead of two separate washed-out placeholders
-    // competing with the real listings/traits up top.
-    var noListingsHtml = (p.listings && !hasAnyListing) ? '<div class="card-bottom-bar card-no-listings">N0 L!ST!NGS</div>' : '';
+    // competing with the real listings/traits up top, but still naming
+    // both markets explicitly rather than a single flat "NO LISTINGS".
+    var noListingsHtml = (p.listings && !hasAnyListing)
+      ? '<div class="card-bottom-bar card-no-listings">' +
+          '<span class="css-item"><span class="css-label">XRP.CAFE</span>N0T L!STED</span>' +
+          '<span class="css-item"><span class="css-label">DEEPT!DE</span>N0T L!STED</span>' +
+        '</div>'
+      : '';
     var canBuyScylla = p.scyllaListing && p.owner !== MY_WALLET;
     var scyllaListedHtml = p.scyllaListing
       ? '<div class="card-scylla-row">' +
@@ -2900,12 +2905,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     var traitsHtml = cardTraitsHtml(p);
     // RARITY SCORE isn't computed yet — deliberately left as a placeholder
     // (real rank/total already exist, the score itself is a later system).
-    // A full-width horizontal bar across the bottom of the whole card, not
-    // stacked lines squeezed into the right column.
+    // PIGEON #, RARITY, and RARITY SCORE all on one aligned line — same
+    // .css-item size for all three, not the number set apart under the
+    // thumbnail on its own.
     var rarityStatsHtml = p.rarityRank
       ? '<div class="card-bottom-bar">' +
+          '<span class="css-item"><span class="css-label">P!GE0N</span>' + num + '</span>' +
           '<span class="css-item"><span class="css-label">RAR!TY</span>' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</span>' +
-          '<span class="css-item"><span class="css-label">RAR!TY SC0RE</span>—</span>' +
+          '<span class="css-item"><span class="css-label">RAR!TY SC0RE</span>[ C0M!NG S00N ]</span>' +
         '</div>'
       : '';
     var hasHigh = p.highSaleXrp !== null && p.highSaleXrp !== undefined;
