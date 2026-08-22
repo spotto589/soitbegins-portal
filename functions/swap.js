@@ -677,7 +677,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      the inline image — never apply to these. */
   #traitsFlyoutVals .traits-flyout-val.has-preview{
     background-size:cover;
-    background-position:center;
+    /* Pigeon portraits are head/beak-heavy near the top of the frame —
+       centering the crop cut off too much of it; biasing toward the top
+       keeps the beak in view. */
+    background-position:center 20%;
     color:#fff;
     text-shadow:0 1px 3px rgba(0,0,0,0.9);
   }
