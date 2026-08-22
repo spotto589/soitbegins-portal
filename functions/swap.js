@@ -3000,6 +3000,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       state.traitExamples = data.examples || {};
       state.collectionSizeApprox = data.collectionSizeApprox || state.collectionSizeApprox;
       refreshIndexLine(data.numberMapStats);
+      // ensureTraitsLoaded() and runQuery() fire concurrently on first
+      // DATABASE open (see showTab) — cards can finish rendering before
+      // this resolves, which would silently leave every trait cell's
+      // percent blank forever (cardTraitsHtml reads state.traitCategories
+      // synchronously). Re-render whatever's already on screen once real
+      // trait data arrives so the percent actually shows up.
+      if (state.items && state.items.length) renderResultsReplace(state.items);
       return state.traitCategories;
     });
   }
