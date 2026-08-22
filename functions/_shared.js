@@ -1399,7 +1399,7 @@ export async function removeSwapListing(kv, nftId) {
 // that, since it's the network path itself, not a transient blip. The
 // proxy re-homes just this one outbound call elsewhere; the real Xaman
 // API key/secret live only in the proxy's own env, never here — this side
-// authenticates with env.PROXY_SHARED_SECRET instead.
+// authenticates with env.XAMAN_PROXY_SHARED_SECRET instead.
 //
 // Wrapped in try/catch AND bounded by an explicit AbortController timeout,
 // longer than the proxy's own internal timeout so a slow xumm.app response
@@ -1422,7 +1422,7 @@ export async function createXamanPayload(env, txjson, options, attempt) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Proxy-Secret': env.PROXY_SHARED_SECRET
+        'X-Proxy-Secret': env.XAMAN_PROXY_SHARED_SECRET
       },
       body: requestBody,
       signal: controller.signal
@@ -1461,7 +1461,7 @@ export async function getXamanPayloadStatus(env, uuid) {
   const timer = setTimeout(() => controller.abort(), XAMAN_FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(env.XAMAN_PROXY_URL + '/payload/' + uuid, {
-      headers: { 'X-Proxy-Secret': env.PROXY_SHARED_SECRET },
+      headers: { 'X-Proxy-Secret': env.XAMAN_PROXY_SHARED_SECRET },
       signal: controller.signal
     });
     if (!res.ok) return null;

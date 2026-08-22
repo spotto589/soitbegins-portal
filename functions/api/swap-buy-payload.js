@@ -16,7 +16,7 @@ export async function onRequestPost(context) {
     console.log('BUY-PAYLOAD exit: server_misconfigured');
     return new Response(JSON.stringify({ error: 'server_misconfigured' }), { status: 500 });
   }
-  if (!env.XAMAN_PROXY_URL || !env.PROXY_SHARED_SECRET) {
+  if (!env.XAMAN_PROXY_URL || !env.XAMAN_PROXY_SHARED_SECRET) {
     console.log('BUY-PAYLOAD exit: xaman_not_configured');
     return new Response(JSON.stringify({ error: 'xaman_not_configured' }), { status: 501 });
   }
