@@ -824,7 +824,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     min-width:0;
     display:flex;
     flex-direction:column;
-    justify-content:center;
+    justify-content:flex-start;
     gap:0.5rem;
   }
   .result-row-right .card-listings{ margin-top:0; }
@@ -905,20 +905,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     justify-content:space-between;
     gap:0.6rem;
-    padding:0.4em 0.6em;
-    border:1px solid var(--magenta-dim);
+    padding:0.55em 0.75em;
+    border:1px solid var(--magenta);
     border-radius:var(--radius);
-    background:rgba(255,63,208,0.05);
+    background:linear-gradient(90deg, rgba(255,51,204,0.85), rgba(180,30,150,0.85));
+    box-shadow:0 0 12px var(--magenta-glow);
     margin-top:0.45rem;
   }
-  .card-scylla-coin-wrap{ display:flex; align-items:center; gap:0.45rem; }
-  .card-scylla-coin{ width:18px; height:18px; border-radius:50%; object-fit:cover; border:1px solid var(--magenta-dim); box-shadow:0 0 5px var(--magenta-glow); }
-  .card-scylla-price{ font-size:12px; font-weight:700; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
-  .card-buy-scylla-btn{ background:transparent; border:1px solid var(--magenta-dim); color:var(--magenta); font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; padding:0.35em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:background 0.15s ease; }
-  .card-buy-scylla-btn:hover{ background:var(--magenta-faint); }
-  .card-traits{ display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.5rem; }
-  .card-trait-chip{ font-size:10px; letter-spacing:0.03em; color:var(--grey); border:1px solid var(--border-dim); border-radius:var(--radius); padding:0.25em 0.55em; white-space:nowrap; }
-  .card-trait-chip b{ color:var(--grey-dim); font-weight:600; text-transform:uppercase; letter-spacing:0.06em; font-size:9px; margin-right:0.35em; }
+  .card-scylla-coin-wrap{ display:flex; align-items:center; gap:0.5rem; }
+  .card-scylla-coin{ width:22px; height:22px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.6); }
+  .card-scylla-price{ font-size:13px; font-weight:700; letter-spacing:0.02em; color:#fff; text-shadow:0 0 6px rgba(0,0,0,0.4); }
+  .card-buy-scylla-btn{ background:rgba(8,9,11,0.35); border:1px solid rgba(255,255,255,0.7); color:#fff; font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; padding:0.35em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:background 0.15s ease; }
+  .card-buy-scylla-btn:hover{ background:rgba(8,9,11,0.55); }
+  .card-trait-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.4rem; margin-top:0.5rem; }
+  .card-trait-cell{ border:1px solid var(--border-dim); border-radius:var(--radius); padding:0.4rem 0.3rem; text-align:center; }
+  .card-tc-label{ font-size:8px; letter-spacing:0.1em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.2rem; }
+  .card-tc-value{ font-size:11px; letter-spacing:0.02em; color:var(--white); }
+  .card-tc-sub{ font-size:8px; letter-spacing:0.04em; color:var(--grey); margin-top:0.2rem; text-transform:uppercase; }
+  @media (max-width:500px){
+    .card-trait-grid{ grid-template-columns:repeat(2, 1fr); }
+  }
   .card-history-toggle{
     display:block;
     width:100%;
@@ -2604,10 +2610,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   // .result-row is purely the new visual layout on top of that, so MY
   // PIGEONS' own tile cards (myPigeonCardHtml, .result-card only, no
   // .result-row) are completely unaffected.
+  // Percent/count aren't part of the bulk /api/pigeons item shape (only the
+  // single-item "detail" fetch merges those in server-side) — looked up
+  // here from state.traitCategories instead, the same collection-wide
+  // trait-card data the TRAITS flyout already fetches once and caches, so
+  // this costs zero extra requests even across thousands of cards.
   function cardTraitsHtml(p){
     if (!p.attributes || !p.attributes.length) return '';
-    return '<div class="card-traits">' + p.attributes.map(function(a){
-      return '<span class="card-trait-chip"><b>' + escapeHtml(a.trait_type) + '</b>' + escapeHtml(a.value) + '</span>';
+    return '<div class="card-trait-grid">' + p.attributes.map(function(a){
+      var catValues = state.traitCategories && state.traitCategories[a.trait_type];
+      var match = catValues ? catValues.filter(function(v){ return v.value === a.value; })[0] : null;
+      var sub = match
+        ? '<div class="card-tc-sub">' + match.percent.toFixed(3) + '%' + (match.count !== null && match.count !== undefined ? ' (' + match.count + ')' : '') + '</div>'
+        : '';
+      return '<div class="card-trait-cell"><div class="card-tc-label">' + escapeHtml(a.trait_type) + '</div><div class="card-tc-value">' + escapeHtml(a.value) + '</div>' + sub + '</div>';
     }).join('') + '</div>';
   }
   function resultCardHtml(p){
