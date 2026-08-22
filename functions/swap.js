@@ -545,19 +545,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:1.25rem;
     padding-top:1.25rem;
   }
-  .traits-block-title{
-    font-size:11px;
-    letter-spacing:0.2em;
-    color:var(--grey);
-    margin-bottom:0.75rem;
-    text-transform:uppercase;
-  }
   .trait-row{
     display:flex;
     align-items:center;
     gap:0.5rem;
     margin-bottom:0.6rem;
     flex-wrap:wrap;
+  }
+  .trait-row-label{
+    font-size:11px;
+    letter-spacing:0.2em;
+    color:var(--grey);
+    text-transform:uppercase;
+    flex:0 0 auto;
   }
   select.trait-cat-select{
     background:#000;
@@ -1258,7 +1258,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="index-line" id="indexLine"></div>
 
         <div class="traits-block">
-          <div class="traits-block-title">TRA!TS</div>
           <div id="traitRows"></div>
           <div class="traits-actions">
             <button class="bar-btn" id="addTraitBtn">[ + ADD TRA!T ]</button>
@@ -2552,6 +2551,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return '<button type="button" class="trait-chip' + (row.value === v.value ? ' selected' : '') + '" data-id="' + row.id + '" data-value="' + escapeHtml(v.value) + '">' + escapeHtml(v.value.toUpperCase()) + pct + '</button>';
       }).join('');
       return '<div class="trait-row" data-id="' + row.id + '">' +
+        '<span class="trait-row-label">TRA!TS</span>' +
         '<select class="trait-cat-select" data-id="' + row.id + '"><option value="">[ CATEG0RY ▼ ]</option>' + catOptions + '</select>' +
         '<button class="trait-row-remove" data-id="' + row.id + '">&times;</button>' +
         (row.category ? '<div class="trait-value-chips" data-id="' + row.id + '">' + chips + '</div>' : '') +
