@@ -893,6 +893,63 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-sale-stats{ display:flex; flex-direction:column; gap:0.25rem; margin-top:0.45rem; padding-top:0.45rem; border-top:1px dashed var(--border-dim); }
   .css-item{ font-size:13px; letter-spacing:0.02em; color:var(--white); text-align:center; font-weight:600; }
   .css-label{ display:inline-block; min-width:110px; color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.05em; margin-right:0.4em; font-size:10px; font-weight:400; }
+
+  /* ---- DATABASE row card: $PIGEONS listing (styled as a currency —
+     coin icon + amount), traits, and an in-card sales-history toggle that
+     replaces the whole right-hand box while open ---- */
+  .card-scylla-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:0.6rem;
+    padding:0.4em 0.6em;
+    border:1px solid var(--magenta-dim);
+    border-radius:var(--radius);
+    background:rgba(255,63,208,0.05);
+    margin-top:0.45rem;
+  }
+  .card-scylla-coin-wrap{ display:flex; align-items:center; gap:0.45rem; }
+  .card-scylla-coin{ width:18px; height:18px; border-radius:50%; object-fit:cover; border:1px solid var(--magenta-dim); box-shadow:0 0 5px var(--magenta-glow); }
+  .card-scylla-price{ font-size:12px; font-weight:700; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
+  .card-buy-scylla-btn{ background:transparent; border:1px solid var(--magenta-dim); color:var(--magenta); font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; padding:0.35em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:background 0.15s ease; }
+  .card-buy-scylla-btn:hover{ background:var(--magenta-faint); }
+  .card-traits{ display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.5rem; }
+  .card-trait-chip{ font-size:10px; letter-spacing:0.03em; color:var(--grey); border:1px solid var(--border-dim); border-radius:var(--radius); padding:0.25em 0.55em; white-space:nowrap; }
+  .card-trait-chip b{ color:var(--grey-dim); font-weight:600; text-transform:uppercase; letter-spacing:0.06em; font-size:9px; margin-right:0.35em; }
+  .card-history-toggle{
+    display:block;
+    width:100%;
+    margin-top:0.55rem;
+    padding-top:0.5rem;
+    border-top:1px dashed var(--border-dim);
+    background:transparent;
+    border-left:none; border-right:none; border-bottom:none;
+    color:var(--cyan-dim);
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    cursor:pointer;
+    text-align:center;
+  }
+  .card-history-toggle:hover{ color:var(--cyan); }
+  .card-history-box{ margin-top:0.5rem; }
+  .card-history-back{
+    background:transparent;
+    border:1px solid var(--border-mid);
+    color:var(--grey);
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:0.1em;
+    padding:0.35em 0.7em;
+    cursor:pointer;
+    text-transform:uppercase;
+    border-radius:var(--radius);
+    margin-bottom:0.5rem;
+  }
+  .card-history-back:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  .card-history-list .dh-row{ padding:0.5em 0; }
+  .card-history-list .dh-line{ font-size:11px; }
   .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
 
   @media (max-width:900px){
@@ -2546,6 +2603,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // .result-row is purely the new visual layout on top of that, so MY
   // PIGEONS' own tile cards (myPigeonCardHtml, .result-card only, no
   // .result-row) are completely unaffected.
+  function cardTraitsHtml(p){
+    if (!p.attributes || !p.attributes.length) return '';
+    return '<div class="card-traits">' + p.attributes.map(function(a){
+      return '<span class="card-trait-chip"><b>' + escapeHtml(a.trait_type) + '</b>' + escapeHtml(a.value) + '</span>';
+    }).join('') + '</div>';
+  }
   function resultCardHtml(p){
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
@@ -2555,9 +2618,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     var atCap = offerCtxCard
       ? (!inTarget && offerCount() >= OFFER_MAX)
       : (!inTarget && targetCount() >= OFFER_MAX);
+    // Order: marketplace listings, then the $PIGEONS listing (styled like
+    // a currency — coin icon + amount), then traits, then a history toggle
+    // that swaps this whole box for the sales-history list.
     var listingsHtml = p.listings
       ? '<div class="card-listings">' + listingBlockHtml('XRP.CAFE', p.listings.xrpCafe) + listingBlockHtml('DEEPT!DE', p.listings.deeptide) + '</div>'
       : '';
+    var canBuyScylla = p.scyllaListing && p.owner !== MY_WALLET;
+    var scyllaListedHtml = p.scyllaListing
+      ? '<div class="card-scylla-row">' +
+          '<span class="card-scylla-coin-wrap"><img class="card-scylla-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS"><span class="card-scylla-price">' + escapeHtml(p.scyllaListing.price) + ' $P!GE0NS</span></span>' +
+          (canBuyScylla ? '<button class="card-buy-scylla-btn buy-scylla-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY ]</button>' : '') +
+        '</div>'
+      : '';
+    var traitsHtml = cardTraitsHtml(p);
     var hasHigh = p.highSaleXrp !== null && p.highSaleXrp !== undefined;
     var hasAvg = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
     var saleStatsHtml = (hasHigh || hasAvg)
@@ -2565,14 +2639,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           (hasHigh ? '<span class="css-item"><span class="css-label">H!GHEST REC0RDED</span>' + fmtXrp(p.highSaleXrp) + ' XRP</span>' : '') +
           (hasAvg ? '<span class="css-item"><span class="css-label">AVG SALE</span>' + fmtXrp(p.avgSaleXrp) + ' XRP</span>' : '') +
         '</div>'
-      : '';
-    var scyllaListedHtml = p.scyllaListing
-      ? '<div class="card-scylla-listed">Σ L!STED :: ' + escapeHtml(p.scyllaListing.price) + ' $P!GE0NS</div>'
-      : '';
-    // BUY only in the LISTED view itself, and never for your own listing —
-    // server enforces the real "not your own" check regardless.
-    var buyHtml = (state.scyllaListedOnly && p.scyllaListing && p.owner !== MY_WALLET)
-      ? '<button class="bar-btn buy-scylla-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ BUY ]</button>'
       : '';
     return '<div class="result-card result-row' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-row-left">' +
@@ -2584,10 +2650,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         rarityLine +
       '</div>' +
       '<div class="result-row-right">' +
-        scyllaListedHtml +
-        buyHtml +
-        listingsHtml +
-        saleStatsHtml +
+        '<div class="result-row-right-body">' +
+          listingsHtml +
+          scyllaListedHtml +
+          traitsHtml +
+          saleStatsHtml +
+          '<button class="card-history-toggle" data-nftid="' + escapeHtml(p.nftId) + '">[ SALES H!ST0RY ▼ ]</button>' +
+        '</div>' +
+        '<div class="card-history-box" data-nftid="' + escapeHtml(p.nftId) + '" style="display:none;">' +
+          '<button class="card-history-back">[ ← BACK ]</button>' +
+          '<div class="card-history-list"><div class="th-empty">L0AD!NG...</div></div>' +
+        '</div>' +
       '</div>' +
     '</div>';
   }
@@ -2605,8 +2678,45 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.resultsArea.innerHTML = items.length ? '<div class="result-list">' + items.map(resultCardHtml).join('') + '</div>' : '';
   }
 
+  // Per-card sales history is never bulk-fetched (that's 20-36 extra
+  // Deeptide calls just for cards the user may never expand) — fetched
+  // once on first expand and cached here so re-opening the same card is
+  // instant and never re-hits the API.
+  var cardHistoryCache = {};
+  function loadCardHistoryInto(nftId, listEl){
+    if (cardHistoryCache[nftId]){
+      listEl.innerHTML = cardHistoryCache[nftId];
+      return;
+    }
+    listEl.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+    api({ history: nftId }).then(function(data){
+      var events = data.events || [];
+      var html = events.length ? events.map(historyRowHtml).join('') : '<div class="th-empty">N0 H!ST0RY YET.</div>';
+      cardHistoryCache[nftId] = html;
+      listEl.innerHTML = html;
+    }).catch(function(){
+      listEl.innerHTML = '<div class="th-empty">C0ULD N0T L0AD H!ST0RY.</div>';
+    });
+  }
   function wireResultClicks(container, source){
     container.addEventListener('click', function(e){
+      var historyToggle = e.target.closest('.card-history-toggle');
+      if (historyToggle){
+        var card = historyToggle.closest('.result-card');
+        var body = card.querySelector('.result-row-right-body');
+        var box = card.querySelector('.card-history-box');
+        body.style.display = 'none';
+        box.style.display = '';
+        loadCardHistoryInto(historyToggle.getAttribute('data-nftid'), box.querySelector('.card-history-list'));
+        return;
+      }
+      var historyBack = e.target.closest('.card-history-back');
+      if (historyBack){
+        var card2 = historyBack.closest('.result-card');
+        card2.querySelector('.result-row-right-body').style.display = '';
+        card2.querySelector('.card-history-box').style.display = 'none';
+        return;
+      }
       var buyBtn = e.target.closest('.buy-scylla-btn');
       if (buyBtn){
         var bp = source().filter(function(x){ return x.nftId === buyBtn.getAttribute('data-nftid'); })[0];
