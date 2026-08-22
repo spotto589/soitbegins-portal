@@ -195,6 +195,10 @@ export async function onRequestGet(context) {
       totalVolumeXrp: xrpCafeStats && xrpCafeStats.totalVolumeDrops !== null ? xrpCafeStats.totalVolumeDrops / 1000000 : null,
       listedPercent: xrpCafeStats ? xrpCafeStats.percentListed : null,
       scyllaListedCount: Object.keys(scyllaListingsMap).length,
+      scyllaFloorPigeons: (() => {
+        const prices = Object.values(scyllaListingsMap).map(l => parseFloat(l.price)).filter(n => isFinite(n));
+        return prices.length ? Math.min(...prices) : null;
+      })(),
       sales24hCount: sales24h.length,
       traded24hCount: traded24h.size,
       buyers24hCount: buyers24h.size,

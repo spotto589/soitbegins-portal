@@ -291,6 +291,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   .stat-tile-link.scylla-active{ border-color:var(--magenta); background:var(--magenta-faint); }
   .stat-tile-link.scylla-active:hover{ background:var(--magenta-faint); border-color:var(--magenta); }
   .stat-tile-link.scylla-active .stat-value{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+  /* $PIGEONS FLOOR — always purple/filled, like a currency tile, not just
+     when the LISTED filter happens to be active. */
+  .stat-tile-pigeons{
+    border-color:var(--magenta);
+    background:linear-gradient(160deg, rgba(255,51,204,0.18), rgba(180,30,150,0.1));
+  }
+  .stat-tile-pigeons:hover{ background:linear-gradient(160deg, rgba(255,51,204,0.28), rgba(180,30,150,0.16)); border-color:var(--magenta); }
+  .stat-tile-pigeons .stat-label{ color:var(--magenta); opacity:0.85; }
+  .stat-tile-pigeons .stat-value{ color:var(--magenta) !important; text-shadow:0 0 6px var(--magenta-glow); font-weight:700; }
+  .stat-tile-coin{ width:20px; height:20px; border-radius:50%; object-fit:cover; border:1px solid var(--magenta-dim); margin-bottom:0.4rem; }
   /* BURNS — a deliberate placeholder tile, real tracking is a later system */
   .stat-tile-soon{ opacity:0.55; border-style:dashed; }
   .stat-tile-soon:hover{ opacity:0.85; }
@@ -861,33 +871,31 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-row-left .pigeon-img-box{ width:100%; }
   .result-row-left .result-num{ border-bottom:none; padding:0; font-size:22px; }
   /* Full-width strip along the bottom of the WHOLE card (both columns),
-     not confined to the left column — click to reveal an inline price
-     entry right there, no separate screen until the confirm step. */
+     not confined to the left column — the price input and SEND sit right
+     next to the label, always visible, no click-to-reveal step. */
   .make-offer-strip{
+    display:flex;
+    align-items:center;
+    gap:0.6rem;
     border-top:1px solid var(--magenta-dim);
     background:rgba(255,51,204,0.06);
     padding:0.7em 1rem;
   }
-  .make-offer-toggle{
+  .make-offer-label{
     display:flex;
     align-items:center;
-    justify-content:center;
     gap:0.5rem;
-    width:100%;
-    background:transparent;
-    border:none;
+    flex:0 0 auto;
     color:var(--magenta);
     text-shadow:0 0 5px var(--magenta-glow);
     font-family:var(--font-mono);
     font-size:13px;
     font-weight:700;
-    letter-spacing:0.08em;
-    cursor:pointer;
+    letter-spacing:0.06em;
     text-transform:uppercase;
+    white-space:nowrap;
   }
-  .make-offer-toggle:hover{ color:#fff; }
   .make-offer-coin{ width:20px; height:20px; border-radius:50%; object-fit:cover; flex:0 0 auto; }
-  .make-offer-inline{ display:flex; align-items:center; gap:0.5rem; }
   .make-offer-input{
     flex:1;
     min-width:0;
@@ -900,7 +908,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
   }
   .make-offer-input:focus{ outline:none; border-color:var(--magenta); }
-  .make-offer-send, .make-offer-cancel{
+  .make-offer-send{
+    flex:0 0 auto;
     background:var(--magenta);
     border:1px solid var(--magenta);
     color:#08090b;
@@ -913,8 +922,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
     border-radius:var(--radius);
   }
-  .make-offer-cancel{ background:transparent; color:var(--grey); border-color:var(--border-mid); padding:0.6em 0.7em; }
-  .make-offer-cancel:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
+  @media (max-width:700px){
+    .make-offer-strip{ flex-wrap:wrap; }
+    .make-offer-label{ width:100%; justify-content:center; }
+    .make-offer-input{ flex:1 1 auto; }
+  }
   .result-row-right{
     flex:1;
     min-width:0;
@@ -1029,11 +1041,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-buy-scylla-btn{ background:rgba(8,9,11,0.35); border:1px solid rgba(255,255,255,0.7); color:#fff; font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; padding:0.35em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:background 0.15s ease; }
   .card-buy-scylla-btn:hover{ background:rgba(8,9,11,0.55); }
   .card-trait-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.5rem; margin-top:0.5rem; }
-  .card-trait-cell{ background:rgba(61,243,236,0.05); border:1px solid var(--cyan-dim); border-radius:var(--radius); padding:0.65rem 0.5rem; text-align:center; cursor:pointer; transition:background 0.15s ease, border-color 0.15s ease; }
+  .card-trait-cell{ background:rgba(61,243,236,0.05); border:1px solid var(--cyan-dim); border-radius:var(--radius); padding:0.7rem 0.5rem; text-align:center; cursor:pointer; transition:background 0.15s ease, border-color 0.15s ease; }
   .card-trait-cell:hover{ background:rgba(61,243,236,0.14); border-color:var(--cyan); }
   .card-tc-label{ font-size:10px; font-weight:700; letter-spacing:0.1em; color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; margin-bottom:0.3rem; }
-  .card-tc-value{ font-size:14px; font-weight:700; letter-spacing:0.02em; color:var(--white); }
-  .card-tc-sub{ font-size:10px; letter-spacing:0.04em; color:var(--grey); margin-top:0.3rem; text-transform:uppercase; }
+  .card-tc-value{ font-size:14px; font-weight:700; letter-spacing:0.02em; color:#e8fbfa; }
+  /* The percent is the important number here — same visual weight as the
+     value itself, not a tiny grey afterthought. */
+  .card-tc-pct{ font-size:17px; font-weight:800; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); margin-top:0.4rem; padding-top:0.4rem; border-top:1px dashed var(--border-dim); }
+  .card-tc-count{ display:block; font-size:10px; font-weight:400; letter-spacing:0.06em; color:var(--grey); margin-top:0.15rem; text-transform:uppercase; }
   @media (max-width:500px){
     .card-trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
@@ -1493,7 +1508,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
           <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
           <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
-          <button class="stat-tile stat-tile-link" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">Σ SCYLLA L!STED</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+          <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><img class="stat-tile-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt=""><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
           <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
           <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
           <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
@@ -2806,10 +2821,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     return '<div class="card-trait-grid">' + p.attributes.map(function(a){
       var catValues = state.traitCategories && state.traitCategories[a.trait_type];
       var match = catValues ? catValues.filter(function(v){ return v.value === a.value; })[0] : null;
-      var sub = match
-        ? '<div class="card-tc-sub">' + match.percent.toFixed(3) + '%' + (match.count !== null && match.count !== undefined ? ' (' + match.count + ')' : '') + '</div>'
+      // Percent is the whole point of browsing traits — it gets equal
+      // billing with the value itself, not a tiny afterthought line.
+      var pctHtml = match
+        ? '<div class="card-tc-pct">' + match.percent.toFixed(3) + '%' + (match.count !== null && match.count !== undefined ? '<span class="card-tc-count">(' + match.count + ')</span>' : '') + '</div>'
         : '';
-      return '<div class="card-trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '" title="SH0W 0NLY P!GE0NS W!TH TH!S TRA!T, RAREST F!RST"><div class="card-tc-label">' + escapeHtml(a.trait_type) + '</div><div class="card-tc-value">' + escapeHtml(a.value) + '</div>' + sub + '</div>';
+      return '<div class="card-trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '" title="SH0W 0NLY P!GE0NS W!TH TH!S TRA!T, RAREST F!RST"><div class="card-tc-label">' + escapeHtml(a.trait_type) + '</div><div class="card-tc-value">' + escapeHtml(a.value) + '</div>' + pctHtml + '</div>';
     }).join('') + '</div>';
   }
   function resultCardHtml(p){
@@ -2862,12 +2879,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       : '';
     var makeOfferHtml = p.owner !== MY_WALLET
       ? '<div class="make-offer-strip" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<button class="make-offer-toggle" data-nftid="' + escapeHtml(p.nftId) + '"><img class="make-offer-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">MAKE AN 0FFER !N $P!GE0NS</button>' +
-          '<div class="make-offer-inline" style="display:none;">' +
-            '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="ENTER $P!GE0NS AM0UNT">' +
-            '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
-            '<button class="make-offer-cancel">[ ✕ ]</button>' +
-          '</div>' +
+          '<span class="make-offer-label"><img class="make-offer-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">MAKE AN 0FFER !N $P!GE0NS</span>' +
+          '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="AM0UNT">' +
+          '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
         '</div>'
       : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -2930,24 +2944,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         showScreen('history');
         return;
       }
-      var offerToggle = e.target.closest('.make-offer-toggle');
-      if (offerToggle){
-        var strip = offerToggle.closest('.make-offer-strip');
-        offerToggle.style.display = 'none';
-        var inline = strip.querySelector('.make-offer-inline');
-        inline.style.display = 'flex';
-        var inputEl = inline.querySelector('.make-offer-input');
-        inputEl.value = '';
-        inputEl.focus();
-        return;
-      }
-      var offerCancel = e.target.closest('.make-offer-cancel');
-      if (offerCancel){
-        var strip2 = offerCancel.closest('.make-offer-strip');
-        strip2.querySelector('.make-offer-inline').style.display = 'none';
-        strip2.querySelector('.make-offer-toggle').style.display = '';
-        return;
-      }
       var offerSend = e.target.closest('.make-offer-send');
       if (offerSend){
         var op2 = source().filter(function(x){ return x.nftId === offerSend.getAttribute('data-nftid'); })[0];
@@ -2980,6 +2976,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       var imgBox = e.target.closest('.pigeon-img-box');
       if (imgBox){ openDetail(imgBox.getAttribute('data-nftid')); }
+    });
+    // Enter in the inline MAKE AN OFFER input submits, same as clicking SEND.
+    container.addEventListener('keydown', function(e){
+      if (e.key !== 'Enter') return;
+      var input = e.target.closest('.make-offer-input');
+      if (!input) return;
+      var strip4 = input.closest('.make-offer-strip');
+      var sendBtn2 = strip4.querySelector('.make-offer-send');
+      var op3 = source().filter(function(x){ return x.nftId === sendBtn2.getAttribute('data-nftid'); })[0];
+      if (op3) submitMakeOffer(op3, input.value.trim(), strip4);
     });
   }
   wireResultClicks(el.resultsArea, function(){ return state.items; });
@@ -4688,7 +4694,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.statFloorXrpCafe.textContent = data.xrpCafeFloorXrp !== null && data.xrpCafeFloorXrp !== undefined ? fmtXrp(data.xrpCafeFloorXrp) + ' XRP' : '—';
       if (data.deeptideBuyUrl) el.statFloorDeeptideTile.href = data.deeptideBuyUrl;
       if (data.xrpCafeUrl) el.statFloorXrpCafeTile.href = data.xrpCafeUrl;
-      el.statScyllaListedCount.textContent = data.scyllaListedCount !== null && data.scyllaListedCount !== undefined ? data.scyllaListedCount.toLocaleString() : '—';
+      el.statScyllaListedCount.textContent = data.scyllaFloorPigeons !== null && data.scyllaFloorPigeons !== undefined ? data.scyllaFloorPigeons.toLocaleString() + ' $P!GE0NS' : 'N0T L!STED';
       el.statTraded24h.textContent = data.traded24hCount !== null && data.traded24hCount !== undefined ? data.traded24hCount.toLocaleString() : '—';
       el.statBuyers24h.textContent = data.buyers24hCount !== null && data.buyers24hCount !== undefined ? data.buyers24hCount.toLocaleString() : '—';
       el.statVolume24h.textContent = data.volume24hXrp !== null && data.volume24hXrp !== undefined ? fmtXrp(data.volume24hXrp) + ' XRP' : '—';
