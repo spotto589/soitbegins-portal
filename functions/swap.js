@@ -998,6 +998,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .ob-submit:disabled:hover{ background:transparent; border-color:var(--cyan-dim); }
   .card-select-toggle.at-cap{ opacity:0.35; cursor:not-allowed; }
 
+  /* ---- CREATE AN OFFER — persistent trade builder on DATABASE ---- */
+  .trade-box{ text-align:center; padding:0.9rem 0; }
+  .trade-box + .swap-review-divider{ margin:0; }
+
   /* ---- SWAP REVIEW — both sides, reusing the same pile look ---- */
   .swap-review-side{ max-width:420px; margin:1.1rem auto 0; text-align:center; }
   .swap-review-side .ob-pile{ margin-top:0.75rem; }
@@ -1077,7 +1081,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="ci-label">WALLET C0NNECTED</div>
         <div class="ci-value ci-value-big" id="myWalletAddr"></div>
         <div class="stat-value" id="myWalletCount" style="margin-top:0.5rem;"></div>
-        <button class="bar-btn" id="buildSwapOfferBtn" style="width:100%; margin-top:0.75rem;">[ BU!LD SWAP 0FFER ]</button>
       </div>
       <div class="search-row" id="myPigeonsSortRow" style="display:none; justify-content:center;">
         <select class="sort-select" id="myPigeonsSortSelect">
@@ -1128,15 +1131,30 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
       </div>
 
-      <!-- YOU WANT, before a target wallet has been identified yet — the
-           moment offerMode hands off to wantMode; nodeHeaderPanel (below)
-           takes over once a target Pigeon's owner is looked up via the
-           existing SELECT -> enterOwnerScope path. -->
-      <div class="sw-panel sw-panel-target" id="wantPromptPanel" style="display:none;">
-        <div class="node-eyebrow">Y0U WANT</div>
-        <div class="index-line">SELECT A P!GE0N FR0M THE WALLET Y0U WANT T0 SWAP W!TH T0 BEG!N.</div>
-        <div style="text-align:center; margin-top:0.75rem;">
-          <a class="back-link" href="#" id="backToOfferFromWantLink" style="margin:0;">[ ← BACK T0 Y0UR 0FFER ]</a>
+      <!-- Persistent trade builder, always visible on DATABASE — this is
+           the single place that starts/continues a trade now (no more
+           separate stage-screens). Clicking an empty OFFER slot browses
+           your own wallet (below); clicking ADD on a card either fills
+           OFFER (browsing your own wallet) or fills FOR/WANT (browsing
+           anyone else's, or the full collection), which for the very
+           first want pick also auto-identifies that pigeon's owner as the
+           target wallet via the existing enterOwnerScope. Neither box
+           touches the other's contents. -->
+      <div class="sw-panel sw-panel-target" id="tradeBuilderPanel">
+        <div class="panel-title">CREATE AN 0FFER</div>
+        <div class="trade-box" id="offerBox">
+          <div class="ob-eyebrow">Y0UR 0FFER</div>
+          <div class="ob-pile" id="offerPile"></div>
+          <div class="ob-count" id="offerCount">0 / 4 ASSETS SELECTED</div>
+        </div>
+        <div class="swap-review-divider">F0R</div>
+        <div class="trade-box" id="wantBox">
+          <div class="ob-eyebrow">THE!R 0FFER</div>
+          <div class="ob-pile" id="wantPile"></div>
+          <div class="ob-count" id="wantCount">0 / 4 ASSETS SELECTED</div>
+        </div>
+        <div style="text-align:center; margin-top:1rem;">
+          <button class="action-btn" id="completeTradeBtn" disabled>[ C0MPLETE TRADE 0FFER ]</button>
         </div>
       </div>
 
@@ -1159,30 +1177,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="wallet-box-title"><span id="walletBoxTitleMain">TARGET WALLET</span><br><span class="wallet-box-sub" id="walletBoxTitleSub">// H0LDER N0DE</span></div>
           <div class="wallet-box-addr" id="nodeAddr"></div>
           <div class="wallet-box-count" id="nodeCount"></div>
-        </div>
-
-        <!-- Compact "bundle builder" for the YOUR OFFER stage — only ever
-             shown while state.offerMode is true (see renderOfferBar()); the
-             existing TARGET WALLET identity above is reused as-is, just
-             relabeled, so browsing your own wallet works through the exact
-             same load path as browsing anyone else's. -->
-        <div class="offer-builder-bar" id="offerBuilderBar" style="display:none;">
-          <div class="ob-eyebrow">Y0UR 0FFER</div>
-          <div class="ob-pile" id="offerPile"></div>
-          <div class="ob-count" id="offerCount">0 / 4 ASSETS SELECTED</div>
-          <button class="action-btn ob-submit" id="offerSubmitBtn" disabled>[ 0FFER THESE ASSETS ]</button>
-        </div>
-
-        <!-- Same bundle builder, reused for stage 2 (YOU WANT) — reads
-             state.targetAssets, the SAME bucket the pre-existing
-             target-select flow already uses, so nothing new is loaded;
-             only shown while state.wantMode is true (see renderWantBar()). -->
-        <div class="offer-builder-bar" id="wantBuilderBar" style="display:none;">
-          <div class="ob-eyebrow">Y0U WANT</div>
-          <div class="ob-pile" id="wantPile"></div>
-          <div class="ob-count" id="wantCount">0 / 4 ASSETS SELECTED</div>
-          <button class="action-btn ob-submit" id="wantSubmitBtn" disabled>[ CREATE SWAP 0FFER ]</button>
-          <div style="margin-top:0.6rem;"><a class="back-link" href="#" id="backToOfferFromWantBarLink" style="margin:0; font-size:10px;">[ ← BACK T0 Y0UR 0FFER ]</a></div>
         </div>
 
         <div style="text-align:center;">
@@ -1458,9 +1452,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     targetAssets: {},         // nftId -> { nftId, number, image } — only while scope is a wallet
     sales: { skip: 0, hasMore: true, loading: false, opened: false },
     scyllaListedOnly: false,  // whole-collection LISTED filter — Pigeons listed through Scylla itself
-    offerMode: false,        // true while the YOUR OFFER bundle builder is active (browsing own wallet)
-    offerAssets: {},         // nftId -> { nftId, number, image } — up to 4, separate from targetAssets on purpose
-    wantMode: false          // true while the YOU WANT bundle builder is active — reuses targetAssets/the existing target-select machinery, not a new bucket
+    offerAssets: {}           // nftId -> { nftId, number, image } — up to 4, YOUR pigeons in the persistent trade builder
   };
 
   var el = {};
@@ -1477,9 +1469,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
-   'offerBuilderBar','offerPile','offerCount','offerSubmitBtn','buildSwapOfferBtn',
-   'wantPromptPanel','backToOfferFromWantLink',
-   'wantBuilderBar','wantPile','wantCount','wantSubmitBtn','backToOfferFromWantBarLink',
+   'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn',
    'screenSwapReview','reviewOfferPile','reviewOfferCount','reviewWantPile','reviewWantCount','reviewBackBtn','reviewCreateBtn','reviewResult',
    'screenBrowse','screenDetail','screenSummary',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailBuyBtn','detailTraits',
@@ -1572,38 +1562,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     return fetch('/api/pigeons?' + qs).then(function(r){ return r.json(); });
   }
 
-  // ---- Target assets (owner-scoped multi-select) ----
-  function targetCount(){ return Object.keys(state.targetAssets).length; }
-  function renderTargetBar(){
-    // Suppressed while the YOUR OFFER bundle builder is active — offerBuilderBar
-    // takes over the same "how many have I picked" job for that stage, and
-    // showing both at once would be exactly the competing-navigation
-    // confusion this redesign is meant to remove. The target/summary flow
-    // itself is untouched — this only gates the bar's visibility.
-    if (!state.scope || state.offerMode || state.wantMode){ el.targetBar.style.display = 'none'; return; }
-    el.targetBar.style.display = 'flex';
-    el.targetBarLabel.textContent = 'TARGET ASSETS :: ' + targetCount();
-  }
-  function toggleTargetAsset(p){
-    if (state.targetAssets[p.nftId]){
-      delete state.targetAssets[p.nftId];
-    } else {
-      // Cap only applies while building the YOU WANT bundle — the
-      // pre-existing, unrelated target-select flow stays uncapped exactly
-      // as it always was.
-      if (state.wantMode && targetCount() >= OFFER_MAX) return;
-      state.targetAssets[p.nftId] = { nftId: p.nftId, number: p.number, image: p.image };
-    }
-    renderTargetBar();
-    renderWantBar();
-    refreshCardSelectionStates();
-  }
-
-  // ---- YOUR OFFER bundle (own wallet, capped at 4) — deliberately its own
-  // state bucket, never shares storage with targetAssets/the target-select
-  // flow above. ----
+  // ---- CREATE AN OFFER — persistent trade builder, always visible on
+  // DATABASE. Two independent piles: offerAssets (yours) and targetAssets
+  // (theirs — the SAME bucket the pre-existing target-select machinery
+  // already wrote to; enterOwnerScope/browseOwnerCollection are reused
+  // completely unchanged for identifying + browsing the target wallet).
+  // Which pile a card's + button fills is derived purely from what wallet
+  // is currently in scope, not from a separate mode flag: your own wallet
+  // fills OFFER, anything else fills WANT/FOR. Neither pile is ever
+  // touched just by browsing — only by explicitly adding/removing a
+  // Pigeon — so switching between boxes never loses progress. ----
   var OFFER_MAX = 4;
   function offerCount(){ return Object.keys(state.offerAssets).length; }
+  function targetCount(){ return Object.keys(state.targetAssets).length; }
+  function isOwnWalletScope(){ return !!(state.scope && MY_WALLET && state.scope.wallet === MY_WALLET); }
+
   function toggleOfferAsset(p){
     if (state.offerAssets[p.nftId]){
       delete state.offerAssets[p.nftId];
@@ -1611,151 +1584,131 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (offerCount() >= OFFER_MAX) return;
       state.offerAssets[p.nftId] = { nftId: p.nftId, number: p.number, image: p.image };
     }
-    renderOfferBar();
+    renderTradeBuilder();
     refreshCardSelectionStates();
   }
-  function renderOfferBar(){
-    if (!state.offerMode){ el.offerBuilderBar.style.display = 'none'; return; }
-    el.offerBuilderBar.style.display = '';
-    var items = Object.keys(state.offerAssets).map(function(k){ return state.offerAssets[k]; });
+  function toggleTargetAsset(p){
+    if (state.targetAssets[p.nftId]){
+      delete state.targetAssets[p.nftId];
+    } else {
+      if (targetCount() >= OFFER_MAX) return;
+      state.targetAssets[p.nftId] = { nftId: p.nftId, number: p.number, image: p.image };
+    }
+    renderTradeBuilder();
+    refreshCardSelectionStates();
+  }
+
+  function pileSlotsHtml(items, removeTitle){
     var html = items.map(function(p){
       var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '';
-      return '<div class="ob-slot filled" data-nftid="' + escapeHtml(p.nftId) + '" title="REM0VE FR0M 0FFER">' + img + '<span class="ob-slot-remove">×</span></div>';
+      return '<div class="ob-slot filled" data-nftid="' + escapeHtml(p.nftId) + '" title="' + removeTitle + '">' + img + '<span class="ob-slot-remove">×</span></div>';
     }).join('');
     for (var i = items.length; i < OFFER_MAX; i++){
       html += '<div class="ob-slot empty" title="ADD A P!GE0N">+</div>';
     }
-    el.offerPile.innerHTML = html;
-    el.offerCount.textContent = items.length + ' / ' + OFFER_MAX + ' ASSETS SELECTED';
-    el.offerSubmitBtn.disabled = items.length === 0;
+    return html;
   }
+  function updateScopeLabels(){
+    if (!state.scope) return;
+    if (isOwnWalletScope()){
+      el.nodeEyebrowText.textContent = '// Y0UR WALLET !DENT!F!ED';
+      el.walletBoxTitleMain.textContent = 'Y0UR WALLET';
+      el.walletBoxTitleSub.textContent = '// BU!LD!NG Y0UR 0FFER';
+      el.backToFullCollectionLink.textContent = '[ ← BACK T0 FULL C0LLECT!0N ]';
+    } else {
+      el.nodeEyebrowText.textContent = '// TARGET N0DE !DENT!F!ED';
+      el.walletBoxTitleMain.textContent = 'TARGET WALLET';
+      el.walletBoxTitleSub.textContent = '// H0LDER N0DE';
+      el.backToFullCollectionLink.textContent = '[ ← EX!T TARGET WALLET :: BACK T0 FULL C0LLECT!0N ]';
+    }
+  }
+  function renderTradeBuilder(){
+    var offerItems = Object.keys(state.offerAssets).map(function(k){ return state.offerAssets[k]; });
+    var wantItems = Object.keys(state.targetAssets).map(function(k){ return state.targetAssets[k]; });
+    el.offerPile.innerHTML = pileSlotsHtml(offerItems, 'REM0VE FR0M 0FFER');
+    el.offerCount.textContent = offerItems.length + ' / ' + OFFER_MAX + ' ASSETS SELECTED';
+    el.wantPile.innerHTML = pileSlotsHtml(wantItems, 'REM0VE FR0M 0FFER');
+    el.wantCount.textContent = wantItems.length + ' / ' + OFFER_MAX + ' ASSETS SELECTED';
+    el.completeTradeBtn.disabled = offerItems.length === 0 || wantItems.length === 0;
+    updateScopeLabels();
+  }
+
   el.offerPile.addEventListener('click', function(e){
     var slot = e.target.closest('.ob-slot');
     if (!slot) return;
-    if (slot.classList.contains('empty')){
-      // Adding happens via the existing + buttons on the grid below —
-      // this just gets the user there, same collection-loading path.
-      el.resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (slot.classList.contains('filled')){
+      var nftId = slot.getAttribute('data-nftid');
+      delete state.offerAssets[nftId];
+      renderTradeBuilder();
+      refreshCardSelectionStates();
       return;
     }
-    var nftId = slot.getAttribute('data-nftid');
-    delete state.offerAssets[nftId];
-    renderOfferBar();
-    refreshCardSelectionStates();
-  });
-  function startOfferSelection(){
-    state.offerMode = true;
-    state.wantMode = false;
-    // offerAssets is deliberately NOT cleared here — this function also
-    // runs when coming BACK from the YOU WANT stage (goBackToOfferStage),
-    // where the whole point is to preserve what was already picked. Only
-    // a genuine fresh start (buildSwapOfferBtn below) clears it.
-    browseOwnerCollection(MY_WALLET, 'Y0U');
-    el.nodeEyebrowText.textContent = '// Y0UR WALLET !DENT!F!ED';
-    el.walletBoxTitleMain.textContent = 'Y0UR WALLET';
-    el.walletBoxTitleSub.textContent = '// 0FFER SELECT!0N';
-    el.backToFullCollectionLink.textContent = '[ ← EX!T 0FFER SELECT!0N ]';
-    renderOfferBar();
-    renderWantBar();
-    renderWantPromptPanel();
-  }
-  el.buildSwapOfferBtn.addEventListener('click', function(){
-    state.offerAssets = {};
-    state.targetAssets = {};
-    startOfferSelection();
+    // Empty OFFER slot — browse your own wallet to fill it. If a target
+    // wallet is already being browsed for WANT, save/restore its picks
+    // around the scope change, since browseOwnerCollection always starts
+    // a fresh targetAssets for whatever wallet it's pointed at (correct
+    // for its normal job — entering a brand new wallet — but not what we
+    // want here, where OFFER and WANT are meant to stay independent).
+    if (!MY_WALLET){
+      alert('C0NNECT Σκύλλα F!RST (SEE MY P!GE0NS) T0 ADD Y0UR P!GE0NS.');
+      return;
+    }
+    if (!isOwnWalletScope()){
+      var keepWant = state.targetAssets;
+      browseOwnerCollection(MY_WALLET, 'Y0U');
+      state.targetAssets = keepWant;
+    }
+    renderTradeBuilder();
+    showScreen('browse');
   });
 
-  // ---- YOU WANT (stage 2) — reuses targetAssets, the SAME bucket the
-  // pre-existing target-select flow already writes to via toggleTargetAsset
-  // / enterOwnerScope, so identifying + browsing the target wallet is
-  // 100% the existing mechanism. wantMode only changes which bundle-builder
-  // bar shows and caps the count at 4. ----
-  function renderWantPromptPanel(){
-    el.wantPromptPanel.style.display = (state.wantMode && !state.scope) ? '' : 'none';
-  }
-  function renderWantBar(){
-    if (!state.wantMode || !state.scope){ el.wantBuilderBar.style.display = 'none'; return; }
-    el.nodeEyebrowText.textContent = 'Y0U WANT :: TARGET N0DE !DENT!F!ED';
-    el.walletBoxTitleMain.textContent = 'TARGET WALLET';
-    el.walletBoxTitleSub.textContent = '// H0LDER N0DE';
-    el.backToFullCollectionLink.textContent = '[ ← CHANGE TARGET WALLET ]';
-    el.wantBuilderBar.style.display = '';
-    var items = Object.keys(state.targetAssets).map(function(k){ return state.targetAssets[k]; });
-    var html = items.map(function(p){
-      var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '';
-      return '<div class="ob-slot filled" data-nftid="' + escapeHtml(p.nftId) + '" title="REM0VE FR0M WANT">' + img + '<span class="ob-slot-remove">×</span></div>';
-    }).join('');
-    for (var i = items.length; i < OFFER_MAX; i++){
-      html += '<div class="ob-slot empty" title="ADD A P!GE0N">+</div>';
-    }
-    el.wantPile.innerHTML = html;
-    el.wantCount.textContent = items.length + ' / ' + OFFER_MAX + ' ASSETS SELECTED';
-    el.wantSubmitBtn.disabled = items.length === 0;
-  }
   el.wantPile.addEventListener('click', function(e){
     var slot = e.target.closest('.ob-slot');
     if (!slot) return;
-    if (slot.classList.contains('empty')){
-      el.resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (slot.classList.contains('filled')){
+      var nftId = slot.getAttribute('data-nftid');
+      delete state.targetAssets[nftId];
+      renderTradeBuilder();
+      refreshCardSelectionStates();
       return;
     }
-    var nftId = slot.getAttribute('data-nftid');
-    delete state.targetAssets[nftId];
-    renderTargetBar();
-    renderWantBar();
-    refreshCardSelectionStates();
-  });
-  function startWantSelection(){
-    state.offerMode = false;
-    state.wantMode = true;
-    state.scope = null;
-    state.scopeAllItems = [];
-    state.targetAssets = {};
-    el.nodeHeaderPanel.style.display = 'none';
-    el.searchPanelTitle.textContent = 'P!GE0N DATABASE';
-    renderTargetBar();
-    renderOfferBar();
-    renderWantBar();
-    renderWantPromptPanel();
-    showTab('database');
-    showScreen('browse');
-  }
-  function goBackToOfferStage(){
-    state.wantMode = false;
-    state.scope = null;
-    state.scopeAllItems = [];
-    state.targetAssets = {};
-    renderTargetBar();
-    renderWantBar();
-    renderWantPromptPanel();
-    el.nodeHeaderPanel.style.display = 'none';
-    startOfferSelection();
-  }
-  el.backToOfferFromWantLink.addEventListener('click', function(e){ e.preventDefault(); goBackToOfferStage(); });
-  el.backToOfferFromWantBarLink.addEventListener('click', function(e){ e.preventDefault(); goBackToOfferStage(); });
-
-  el.offerSubmitBtn.addEventListener('click', function(){
-    if (offerCount() === 0) return;
-    startWantSelection();
+    // Empty WANT/FOR slot — picking itself happens via ADD on a Pigeon
+    // card below (see handleSelect), not here. An offer has to exist
+    // first, since there's nothing to trade for otherwise.
+    if (offerCount() === 0){
+      alert('PLEASE SELECT A P!GE0N T0 0FFER F0R.');
+      return;
+    }
+    if (isOwnWalletScope()){
+      // Currently browsing your own wallet — step back to the full
+      // collection so a target Pigeon (and its owner) can be picked,
+      // without clearing either pile.
+      state.scope = null;
+      state.scopeAllItems = [];
+      state.traitFilters = [];
+      renderTraitRows();
+      el.nodeHeaderPanel.style.display = 'none';
+      el.searchPanelTitle.textContent = 'P!GE0N DATABASE';
+      el.searchInput.value = '';
+      startCollectionBrowse();
+    }
+    el.resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
-  function pileThumbsHtml(items){
-    return items.map(function(p){
-      var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '';
-      return '<div class="ob-slot filled">' + img + '</div>';
-    }).join('');
-  }
-  el.wantSubmitBtn.addEventListener('click', function(){
-    if (targetCount() === 0) return;
+  function showSwapReview(){
     var offerItems = Object.keys(state.offerAssets).map(function(k){ return state.offerAssets[k]; });
     var wantItems = Object.keys(state.targetAssets).map(function(k){ return state.targetAssets[k]; });
-    el.reviewOfferPile.innerHTML = pileThumbsHtml(offerItems);
+    el.reviewOfferPile.innerHTML = pileSlotsHtml(offerItems, '');
     el.reviewOfferCount.textContent = offerItems.length + ' / ' + OFFER_MAX + ' ASSETS';
-    el.reviewWantPile.innerHTML = pileThumbsHtml(wantItems);
+    el.reviewWantPile.innerHTML = pileSlotsHtml(wantItems, '');
     el.reviewWantCount.textContent = wantItems.length + ' / ' + OFFER_MAX + ' ASSETS';
     el.reviewResult.style.display = 'none';
     el.reviewResult.innerHTML = '';
     showScreen('swapreview');
+  }
+  el.completeTradeBtn.addEventListener('click', function(){
+    if (offerCount() === 0 || targetCount() === 0) return;
+    showSwapReview();
   });
   el.reviewBackBtn.addEventListener('click', function(){ showScreen('browse'); });
   el.reviewCreateBtn.addEventListener('click', function(){
@@ -1779,7 +1732,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   function refreshCardSelectionStates(){
     document.querySelectorAll('.result-card').forEach(function(card){
       var id = card.getAttribute('data-nftid');
-      var inTarget = state.offerMode ? !!state.offerAssets[id] : !!state.targetAssets[id];
+      var offerCtx = isOwnWalletScope();
+      var inTarget = offerCtx ? !!state.offerAssets[id] : !!state.targetAssets[id];
       card.classList.toggle('in-target', inTarget);
       var btn = card.querySelector('.select-btn');
       if (btn){ btn.classList.toggle('selected', inTarget); btn.textContent = inTarget ? '[ SELECTED ]' : '[ SELECT ]'; }
@@ -1787,39 +1741,33 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (toggle){
         toggle.classList.toggle('selected', inTarget);
         toggle.textContent = inTarget ? '✓' : '+';
-        var atCapNow = state.offerMode
+        var atCapNow = offerCtx
           ? (!inTarget && offerCount() >= OFFER_MAX)
-          : (state.wantMode && !inTarget && targetCount() >= OFFER_MAX);
+          : (!inTarget && targetCount() >= OFFER_MAX);
         toggle.classList.toggle('at-cap', atCapNow);
       }
     });
     if (el.detailSelectBtn && state.currentDetail && state.scope){
-      var d = state.offerMode ? !!state.offerAssets[state.currentDetail.nftId] : !!state.targetAssets[state.currentDetail.nftId];
+      var d = isOwnWalletScope() ? !!state.offerAssets[state.currentDetail.nftId] : !!state.targetAssets[state.currentDetail.nftId];
       el.detailSelectBtn.classList.toggle('selected', d);
       el.detailSelectBtn.textContent = d ? '[ SELECTED ]' : '[ SELECT ]';
     }
   }
-  el.targetBar.addEventListener('click', function(){ openSummary(); });
 
-  function openSummary(){
-    var items = Object.keys(state.targetAssets).map(function(k){ return state.targetAssets[k]; });
-    el.summaryOwner.textContent = state.scope ? state.scope.ownerShort : '';
-    el.summaryList.innerHTML = items.length
-      ? items.map(function(p){ return '\\uD83D\\uDC26 P!GE0N #' + (p.number !== null ? p.number : '????'); }).join('<br>')
-      : '<span style="color:rgba(232,232,232,0.3);">N0THING SELECTED YET</span>';
-    el.summaryCount.textContent = 'TARGET ASSETS :: ' + items.length;
-    el.offerPlaceholder.style.display = 'none';
-    showScreen('summary');
-  }
-  el.backFromSummaryBtn.addEventListener('click', function(){ showScreen('browse'); });
-  el.continueToOfferBtn.addEventListener('click', function(){ el.offerPlaceholder.style.display = ''; });
-
-  // ---- SELECT behaviour: whole-collection scope picks a TARGET (auto
-  // owner lookup + transition); wallet scope toggles a TARGET ASSET. ----
+  // ---- SELECT/ADD behaviour: your own wallet in scope fills OFFER;
+  // anything else fills WANT/FOR (an offer must exist first), and the
+  // first WANT pick auto-identifies + browses that Pigeon's owner via the
+  // pre-existing enterOwnerScope/browseOwnerCollection. ----
   function handleSelect(p){
-    if (state.offerMode){
+    if (isOwnWalletScope()){
       toggleOfferAsset(p);
-    } else if (!state.scope){
+      return;
+    }
+    if (offerCount() === 0){
+      alert('PLEASE SELECT A P!GE0N T0 0FFER F0R.');
+      return;
+    }
+    if (!state.scope){
       enterOwnerScope(p);
     } else {
       toggleTargetAsset(p);
@@ -1856,7 +1804,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // fetch that would race this wallet-scoped one.
     state.databaseLoaded = true;
     showTab('database');
-    renderTargetBar();
+    renderTradeBuilder();
     api({ wallet: wallet }).then(function(data){
       state.scopeAllItems = data.items || [];
       el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
@@ -1873,37 +1821,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     browseOwnerCollection(targetPigeon.owner, targetPigeon.ownerShort, targetPigeon);
     state.targetAssets[targetPigeon.nftId] = { nftId: targetPigeon.nftId, number: targetPigeon.number, image: targetPigeon.image };
-    renderTargetBar();
-    renderWantBar();
-    renderWantPromptPanel();
+    renderTradeBuilder();
     refreshCardSelectionStates();
   }
 
   el.backToFullCollectionLink.addEventListener('click', function(e){
     e.preventDefault();
+    // Exiting a scope never touches either pile — OFFER and WANT are
+    // independent of whatever's currently being browsed, so you can freely
+    // step back to the full collection without losing progress on either
+    // side.
     state.scope = null;
     state.scopeAllItems = [];
-    state.targetAssets = {};
     state.traitFilters = [];
     renderTraitRows();
     el.nodeHeaderPanel.style.display = 'none';
     el.searchPanelTitle.textContent = 'P!GE0N DATABASE';
     el.searchInput.value = '';
-    renderTargetBar();
-    // Leaving via this link always exits the YOUR OFFER builder, and
-    // restores the TARGET WALLET labels it borrowed for its own use. While
-    // building YOU WANT, this link means "pick a different target wallet"
-    // instead — wantMode itself stays on, renderWantBar/renderWantPromptPanel
-    // below put the right UI back once scope is null again.
-    state.offerMode = false;
-    state.offerAssets = state.wantMode ? state.offerAssets : {};
-    renderOfferBar();
-    renderWantBar();
-    renderWantPromptPanel();
-    el.nodeEyebrowText.textContent = '// TARGET N0DE !DENT!F!ED';
-    el.walletBoxTitleMain.textContent = 'TARGET WALLET';
-    el.walletBoxTitleSub.textContent = '// H0LDER N0DE';
-    el.backToFullCollectionLink.textContent = '[ ← EX!T TARGET WALLET :: BACK T0 FULL C0LLECT!0N ]';
+    renderTradeBuilder();
     startCollectionBrowse();
   });
 
@@ -1932,10 +1867,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
-    var inTarget = state.offerMode ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
-    var atCap = state.offerMode
+    var offerCtxCard = isOwnWalletScope();
+    var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
+    var atCap = offerCtxCard
       ? (!inTarget && offerCount() >= OFFER_MAX)
-      : (state.wantMode && !inTarget && targetCount() >= OFFER_MAX);
+      : (!inTarget && targetCount() >= OFFER_MAX);
     var listingsHtml = p.listings
       ? '<div class="card-listings">' + listingBlockHtml('XRP.CAFE', p.listings.xrpCafe) + listingBlockHtml('DEEPT!DE', p.listings.deeptide) + '</div>'
       : '';
