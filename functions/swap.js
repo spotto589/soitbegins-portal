@@ -856,29 +856,61 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .result-row-left .pigeon-img-box{ width:100%; }
   .result-row-left .result-num{ border-bottom:none; padding:0; font-size:22px; }
-  .result-row-left .result-rarity-line{ font-size:16px; }
-  .make-offer-btn{
+  /* Full-width strip along the bottom of the WHOLE card (both columns),
+     not confined to the left column — click to reveal an inline price
+     entry right there, no separate screen until the confirm step. */
+  .make-offer-strip{
+    border-top:1px solid var(--magenta-dim);
+    background:rgba(255,51,204,0.06);
+    padding:0.7em 1rem;
+  }
+  .make-offer-toggle{
     display:flex;
     align-items:center;
     justify-content:center;
-    gap:0.4rem;
+    gap:0.5rem;
     width:100%;
     background:transparent;
-    border:1px solid var(--magenta);
+    border:none;
     color:var(--magenta);
     text-shadow:0 0 5px var(--magenta-glow);
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:13px;
     font-weight:700;
+    letter-spacing:0.08em;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .make-offer-toggle:hover{ color:#fff; }
+  .make-offer-coin{ width:20px; height:20px; border-radius:50%; object-fit:cover; flex:0 0 auto; }
+  .make-offer-inline{ display:flex; align-items:center; gap:0.5rem; }
+  .make-offer-input{
+    flex:1;
+    min-width:0;
+    background:rgba(8,9,11,0.6);
+    border:1px solid var(--magenta-dim);
+    color:var(--white);
+    font-family:var(--font-mono);
+    font-size:13px;
+    padding:0.6em 0.7em;
+    border-radius:var(--radius);
+  }
+  .make-offer-input:focus{ outline:none; border-color:var(--magenta); }
+  .make-offer-send, .make-offer-cancel{
+    background:var(--magenta);
+    border:1px solid var(--magenta);
+    color:#08090b;
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:12px;
     letter-spacing:0.05em;
-    padding:0.6em 0.5em;
+    padding:0.6em 0.9em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
-    transition:background 0.15s ease;
   }
-  .make-offer-btn:hover{ background:var(--magenta-faint); }
-  .make-offer-coin{ width:16px; height:16px; border-radius:50%; object-fit:cover; flex:0 0 auto; }
+  .make-offer-cancel{ background:transparent; color:var(--grey); border-color:var(--border-mid); padding:0.6em 0.7em; }
+  .make-offer-cancel:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
   .result-row-right{
     flex:1;
     min-width:0;
@@ -992,15 +1024,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-scylla-price{ font-size:13px; font-weight:700; letter-spacing:0.02em; color:#fff; text-shadow:0 0 6px rgba(0,0,0,0.4); }
   .card-buy-scylla-btn{ background:rgba(8,9,11,0.35); border:1px solid rgba(255,255,255,0.7); color:#fff; font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; padding:0.35em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:background 0.15s ease; }
   .card-buy-scylla-btn:hover{ background:rgba(8,9,11,0.55); }
-  .card-trait-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.4rem; margin-top:0.5rem; }
-  .card-trait-cell{ background:rgba(61,243,236,0.05); border:1px solid var(--cyan-dim); border-radius:var(--radius); padding:0.45rem 0.35rem; text-align:center; }
-  .card-tc-label{ font-size:9px; font-weight:700; letter-spacing:0.1em; color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; margin-bottom:0.25rem; }
-  .card-tc-value{ font-size:12px; font-weight:600; letter-spacing:0.02em; color:var(--white); }
-  .card-tc-sub{ font-size:9px; letter-spacing:0.04em; color:var(--grey); margin-top:0.25rem; text-transform:uppercase; }
+  .card-trait-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.5rem; margin-top:0.5rem; }
+  .card-trait-cell{ background:rgba(61,243,236,0.05); border:1px solid var(--cyan-dim); border-radius:var(--radius); padding:0.65rem 0.5rem; text-align:center; cursor:pointer; transition:background 0.15s ease, border-color 0.15s ease; }
+  .card-trait-cell:hover{ background:rgba(61,243,236,0.14); border-color:var(--cyan); }
+  .card-tc-label{ font-size:10px; font-weight:700; letter-spacing:0.1em; color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; margin-bottom:0.3rem; }
+  .card-tc-value{ font-size:14px; font-weight:700; letter-spacing:0.02em; color:var(--white); }
+  .card-tc-sub{ font-size:10px; letter-spacing:0.04em; color:var(--grey); margin-top:0.3rem; text-transform:uppercase; }
   @media (max-width:500px){
     .card-trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
-  .card-history-toggle{
+  .card-rarity-stats{ display:flex; flex-direction:column; gap:0.25rem; margin-top:0.45rem; padding-top:0.45rem; border-top:1px dashed var(--border-dim); }
+  .card-history-link{
     display:block;
     width:100%;
     margin-top:0.55rem;
@@ -1016,24 +1050,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     text-align:center;
   }
-  .card-history-toggle:hover{ color:var(--cyan); }
-  .card-history-box{ margin-top:0.5rem; }
-  .card-history-back{
-    background:transparent;
-    border:1px solid var(--border-mid);
-    color:var(--grey);
-    font-family:var(--font-mono);
-    font-size:10px;
-    letter-spacing:0.1em;
-    padding:0.35em 0.7em;
-    cursor:pointer;
-    text-transform:uppercase;
-    border-radius:var(--radius);
-    margin-bottom:0.5rem;
-  }
-  .card-history-back:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
-  .card-history-list .dh-row{ padding:0.5em 0; }
-  .card-history-list .dh-line{ font-size:11px; }
+  .card-history-link:hover{ color:var(--cyan); }
   .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
 
   @media (max-width:900px){
@@ -1839,22 +1856,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- SCREEN: MAKE AN OFFER — a real NFTokenCreateOffer BUY-offer (the
-         reverse of LIST), which only the current owner can accept -->
-    <div class="sw-panel" id="screenOfferForm" style="display:none;">
-      <div class="detail-eyebrow">// MAKE AN 0FFER</div>
-      <div class="detail-num" id="offerFormPigeonNum"></div>
-      <div class="detail-img-large pigeon-img-box" id="offerFormImg">[ IMAGE ]</div>
-      <div class="detail-field"><span class="df-label">Y0UR 0FFER</span><span class="df-value"><input class="search-input" id="offerPriceInput" placeholder="0" inputmode="decimal" style="text-align:right; width:140px;"></span></div>
-      <div class="detail-field"><span class="df-label">CURRENCY</span><span class="df-value">$P!GE0NS</span></div>
-      <div class="index-line" id="offerFormError" style="display:none;"></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="offerFormBackBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="offerFormSubmitBtn">[ SEND 0FFER ]</button>
-      </div>
-    </div>
-
-    <!-- SCREEN: OFFER CONFIRMATION — the exact txjson, before Xaman ever opens -->
+    <!-- SCREEN: OFFER CONFIRMATION — a real NFTokenCreateOffer BUY-offer
+         (the reverse of LIST, which only the current owner can accept),
+         entered inline in the card's own MAKE AN OFFER strip — the exact
+         txjson, before Xaman ever opens -->
     <div class="sw-panel" id="screenOfferConfirm" style="display:none;">
       <div class="node-eyebrow">// 0FFER C0NF!RMAT!0N</div>
       <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="offerConfTxType"></span></div>
@@ -2009,7 +2014,6 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
    'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
    'screenDelistResult','delistResultPigeonNum','delistResultStatus','delistResultTxLink','delistResultDoneBtn',
-   'screenOfferForm','offerFormPigeonNum','offerFormImg','offerPriceInput','offerFormError','offerFormBackBtn','offerFormSubmitBtn',
    'screenOfferConfirm','offerConfTxType','offerConfAccount','offerConfOwner','offerConfNftId','offerConfCurrency','offerConfIssuer','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
    'offersReceivedBlock','offersReceivedList',
@@ -2098,7 +2102,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenBuyResult.style.display = name === 'buyresult' ? '' : 'none';
     el.screenDelistConfirm.style.display = name === 'delistconfirm' ? '' : 'none';
     el.screenDelistResult.style.display = name === 'delistresult' ? '' : 'none';
-    el.screenOfferForm.style.display = name === 'offerform' ? '' : 'none';
     el.screenOfferConfirm.style.display = name === 'offerconfirm' ? '' : 'none';
     el.screenOfferResult.style.display = name === 'offerresult' ? '' : 'none';
     el.screenAcceptOfferConfirm.style.display = name === 'acceptofferconfirm' ? '' : 'none';
@@ -2785,6 +2788,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // here from state.traitCategories instead, the same collection-wide
   // trait-card data the TRAITS flyout already fetches once and caches, so
   // this costs zero extra requests even across thousands of cards.
+  // trait_type/value on each cell so a click can filter the browse view
+  // down to exactly that trait (see wireResultClicks' .card-trait-cell
+  // handler) — same real percent/count lookup as before.
   function cardTraitsHtml(p){
     if (!p.attributes || !p.attributes.length) return '';
     return '<div class="card-trait-grid">' + p.attributes.map(function(a){
@@ -2793,11 +2799,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       var sub = match
         ? '<div class="card-tc-sub">' + match.percent.toFixed(3) + '%' + (match.count !== null && match.count !== undefined ? ' (' + match.count + ')' : '') + '</div>'
         : '';
-      return '<div class="card-trait-cell"><div class="card-tc-label">' + escapeHtml(a.trait_type) + '</div><div class="card-tc-value">' + escapeHtml(a.value) + '</div>' + sub + '</div>';
+      return '<div class="card-trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '" title="SH0W 0NLY P!GE0NS W!TH TH!S TRA!T, RAREST F!RST"><div class="card-tc-label">' + escapeHtml(a.trait_type) + '</div><div class="card-tc-value">' + escapeHtml(a.value) + '</div>' + sub + '</div>';
     }).join('') + '</div>';
   }
   function resultCardHtml(p){
-    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
     var offerCtxCard = isOwnWalletScope();
@@ -2806,19 +2811,21 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? (!inTarget && offerCount() >= OFFER_MAX)
       : (!inTarget && targetCount() >= OFFER_MAX);
     // Order: marketplace listings, then the $PIGEONS listing (styled like
-    // a currency — coin icon + amount), then traits, then a history toggle
-    // that swaps this whole box for the sales-history list.
+    // a currency — coin icon + amount), then traits, then a rarity-score
+    // placeholder, then a link through to the full sales history page,
+    // then (if unlisted) the NO LISTINGS strip pushed to the bottom.
     var xcListing = p.listings && p.listings.xrpCafe;
     var dtListing = p.listings && p.listings.deeptide;
     var hasXcListing = xcListing && xcListing.priceXrp !== null && xcListing.priceXrp !== undefined;
     var hasDtListing = dtListing && dtListing.priceXrp !== null && dtListing.priceXrp !== undefined;
-    // Neither marketplace has a real listing — one shared "N0 L!ST!NGS"
-    // strip instead of two separate washed-out per-market placeholders.
-    var listingsHtml = !p.listings
-      ? ''
-      : (!hasXcListing && !hasDtListing)
-        ? '<div class="card-no-listings">N0 L!ST!NGS</div>'
-        : '<div class="card-listings">' + listingBlockHtml('XRP.CAFE', xcListing) + listingBlockHtml('DEEPT!DE', dtListing) + '</div>';
+    var hasAnyListing = hasXcListing || hasDtListing;
+    var listingsHtml = (p.listings && hasAnyListing)
+      ? '<div class="card-listings">' + listingBlockHtml('XRP.CAFE', xcListing) + listingBlockHtml('DEEPT!DE', dtListing) + '</div>'
+      : '';
+    // Neither marketplace has a real listing — one shared strip at the
+    // BOTTOM of the card instead of two separate washed-out placeholders
+    // competing with the real listings/traits up top.
+    var noListingsHtml = (p.listings && !hasAnyListing) ? '<div class="card-no-listings">N0 L!ST!NGS</div>' : '';
     var canBuyScylla = p.scyllaListing && p.owner !== MY_WALLET;
     var scyllaListedHtml = p.scyllaListing
       ? '<div class="card-scylla-row">' +
@@ -2827,6 +2834,14 @@ const SWAP_HTML = `<!DOCTYPE html>
         '</div>'
       : '';
     var traitsHtml = cardTraitsHtml(p);
+    // RARITY SCORE isn't computed yet — deliberately left as a placeholder
+    // (real rank/total already exist, the score itself is a later system).
+    var rarityStatsHtml = p.rarityRank
+      ? '<div class="card-rarity-stats">' +
+          '<span class="css-item"><span class="css-label">RAR!TY</span>' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</span>' +
+          '<span class="css-item"><span class="css-label">RAR!TY SC0RE</span>—</span>' +
+        '</div>'
+      : '';
     var hasHigh = p.highSaleXrp !== null && p.highSaleXrp !== undefined;
     var hasAvg = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
     var saleStatsHtml = (hasHigh || hasAvg)
@@ -2835,31 +2850,36 @@ const SWAP_HTML = `<!DOCTYPE html>
           (hasAvg ? '<span class="css-item"><span class="css-label">AVG SALE</span>' + fmtXrp(p.avgSaleXrp) + ' XRP / ' + fmtPigeons(p.avgSalePigeons) + '</span>' : '') +
         '</div>'
       : '';
-    return '<div class="result-card result-row' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      '<div class="result-row-left">' +
-        '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          img +
-          '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
+    var makeOfferHtml = p.owner !== MY_WALLET
+      ? '<div class="make-offer-strip" data-nftid="' + escapeHtml(p.nftId) + '">' +
+          '<button class="make-offer-toggle" data-nftid="' + escapeHtml(p.nftId) + '"><img class="make-offer-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">MAKE AN 0FFER !N $P!GE0NS</button>' +
+          '<div class="make-offer-inline" style="display:none;">' +
+            '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="ENTER $P!GE0NS AM0UNT">' +
+            '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
+            '<button class="make-offer-cancel">[ ✕ ]</button>' +
+          '</div>' +
+        '</div>'
+      : '';
+    return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
+      '<div class="result-row">' +
+        '<div class="result-row-left">' +
+          '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
+            img +
+            '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
+          '</div>' +
+          '<div class="result-num">P!GE0N ' + num + '</div>' +
         '</div>' +
-        '<div class="result-num">P!GE0N ' + num + '</div>' +
-        rarityLine +
-        (p.owner !== MY_WALLET
-          ? '<button class="make-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '"><img class="make-offer-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">MAKE AN 0FFER !N $P!GE0NS</button>'
-          : '') +
-      '</div>' +
-      '<div class="result-row-right">' +
-        '<div class="result-row-right-body">' +
+        '<div class="result-row-right">' +
           listingsHtml +
           scyllaListedHtml +
           traitsHtml +
-          '<button class="card-history-toggle" data-nftid="' + escapeHtml(p.nftId) + '">[ SALES H!ST0RY ▼ ]</button>' +
-        '</div>' +
-        '<div class="card-history-box" data-nftid="' + escapeHtml(p.nftId) + '" style="display:none;">' +
-          '<button class="card-history-back">[ ← BACK ]</button>' +
+          rarityStatsHtml +
           saleStatsHtml +
-          '<div class="card-history-list"><div class="th-empty">L0AD!NG...</div></div>' +
+          '<button class="card-history-link" data-nftid="' + escapeHtml(p.nftId) + '">[ SALES H!ST0RY → ]</button>' +
+          noListingsHtml +
         '</div>' +
       '</div>' +
+      makeOfferHtml +
     '</div>';
   }
 
@@ -2876,55 +2896,60 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.resultsArea.innerHTML = items.length ? '<div class="result-list">' + items.map(resultCardHtml).join('') + '</div>' : '';
   }
 
-  // Per-card sales history is never bulk-fetched (that's 20-36 extra
-  // Deeptide calls just for cards the user may never expand) — fetched
-  // once on first expand and cached here so re-opening the same card is
-  // instant and never re-hits the API.
-  var cardHistoryCache = {};
-  function loadCardHistoryInto(nftId, listEl){
-    if (cardHistoryCache[nftId]){
-      listEl.innerHTML = cardHistoryCache[nftId];
-      return;
-    }
-    listEl.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
-    api({ history: nftId }).then(function(data){
-      var events = data.events || [];
-      var html = events.length ? events.map(historyRowHtml).join('') : '<div class="th-empty">N0 H!ST0RY YET.</div>';
-      cardHistoryCache[nftId] = html;
-      listEl.innerHTML = html;
-    }).catch(function(){
-      listEl.innerHTML = '<div class="th-empty">C0ULD N0T L0AD H!ST0RY.</div>';
-    });
-  }
   function wireResultClicks(container, source){
     container.addEventListener('click', function(e){
-      var historyToggle = e.target.closest('.card-history-toggle');
-      if (historyToggle){
-        var card = historyToggle.closest('.result-card');
-        var body = card.querySelector('.result-row-right-body');
-        var box = card.querySelector('.card-history-box');
-        body.style.display = 'none';
-        box.style.display = '';
-        loadCardHistoryInto(historyToggle.getAttribute('data-nftid'), box.querySelector('.card-history-list'));
+      var traitCell = e.target.closest('.card-trait-cell');
+      if (traitCell){
+        var trait = traitCell.getAttribute('data-trait');
+        var value = traitCell.getAttribute('data-value');
+        ensureTraitsLoaded().then(function(){
+          state.traitFilters = [{ id: state.nextTraitRowId++, category: trait, value: value }];
+          renderTraitRows();
+          state.sort = 'RARITY_ASC';
+          renderSortDropLabel();
+          el.searchInput.value = '';
+          showScreen('browse');
+          runQuery();
+        });
         return;
       }
-      var historyBack = e.target.closest('.card-history-back');
-      if (historyBack){
-        var card2 = historyBack.closest('.result-card');
-        card2.querySelector('.result-row-right-body').style.display = '';
-        card2.querySelector('.card-history-box').style.display = 'none';
+      var historyLink = e.target.closest('.card-history-link');
+      if (historyLink){
+        openDetail(historyLink.getAttribute('data-nftid'));
+        el.historyNum.textContent = el.detailNum.textContent;
+        showScreen('history');
+        return;
+      }
+      var offerToggle = e.target.closest('.make-offer-toggle');
+      if (offerToggle){
+        var strip = offerToggle.closest('.make-offer-strip');
+        offerToggle.style.display = 'none';
+        var inline = strip.querySelector('.make-offer-inline');
+        inline.style.display = 'flex';
+        var inputEl = inline.querySelector('.make-offer-input');
+        inputEl.value = '';
+        inputEl.focus();
+        return;
+      }
+      var offerCancel = e.target.closest('.make-offer-cancel');
+      if (offerCancel){
+        var strip2 = offerCancel.closest('.make-offer-strip');
+        strip2.querySelector('.make-offer-inline').style.display = 'none';
+        strip2.querySelector('.make-offer-toggle').style.display = '';
+        return;
+      }
+      var offerSend = e.target.closest('.make-offer-send');
+      if (offerSend){
+        var op2 = source().filter(function(x){ return x.nftId === offerSend.getAttribute('data-nftid'); })[0];
+        var strip3 = offerSend.closest('.make-offer-strip');
+        var priceValue = strip3.querySelector('.make-offer-input').value.trim();
+        if (op2) submitMakeOffer(op2, priceValue, strip3);
         return;
       }
       var buyBtn = e.target.closest('.buy-scylla-btn');
       if (buyBtn){
         var bp = source().filter(function(x){ return x.nftId === buyBtn.getAttribute('data-nftid'); })[0];
         if (bp) openBuyConfirm(bp);
-        return;
-      }
-      var makeOfferBtn = e.target.closest('.make-offer-btn');
-      if (makeOfferBtn){
-        var op = source().filter(function(x){ return x.nftId === makeOfferBtn.getAttribute('data-nftid'); })[0];
-        if (op) openOfferForm(op);
         return;
       }
       var toggle = e.target.closest('.card-select-toggle');
@@ -3951,51 +3976,38 @@ const SWAP_HTML = `<!DOCTYPE html>
   var offerUuid = null;
   var offerPollTimer = null;
 
-  function openOfferForm(p){
-    offerTarget = p;
-    el.offerFormPigeonNum.textContent = 'P!GE0N #' + (p.number !== null ? p.number : '????');
-    el.offerFormImg.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
-    el.offerPriceInput.value = '';
-    el.offerFormError.style.display = 'none';
-    el.offerFormSubmitBtn.disabled = false;
-    el.offerFormSubmitBtn.textContent = '[ SEND 0FFER ]';
-    showScreen('offerform');
-  }
-  el.offerFormBackBtn.addEventListener('click', function(){ showScreen('browse'); });
-
-  el.offerFormSubmitBtn.addEventListener('click', function(){
-    if (!offerTarget) return;
-    var priceValue = el.offerPriceInput.value.trim();
+  // Entered right in the DATABASE card's own MAKE AN OFFER strip (see
+  // wireResultClicks' .make-offer-send handler) — no separate form screen,
+  // straight from the inline number to the confirm screen below.
+  function submitMakeOffer(p, priceValue, stripEl){
     if (!priceValue || isNaN(Number(priceValue)) || Number(priceValue) <= 0){
-      el.offerFormError.textContent = 'ENTER A VAL!D PR!CE GREATER THAN 0.';
-      el.offerFormError.style.display = '';
+      alert('ENTER A VAL!D PR!CE GREATER THAN 0.');
       return;
     }
-    el.offerFormError.style.display = 'none';
-    el.offerFormSubmitBtn.disabled = true;
-    el.offerFormSubmitBtn.textContent = '[ VAL!DAT!NG... ]';
+    var sendBtn = stripEl.querySelector('.make-offer-send');
+    sendBtn.disabled = true;
+    sendBtn.textContent = '[ VAL!DAT!NG... ]';
     fetch('/api/swap-makeoffer-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: offerTarget.nftId, priceValue: priceValue })
+      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
-      el.offerFormSubmitBtn.disabled = false;
-      el.offerFormSubmitBtn.textContent = '[ SEND 0FFER ]';
+      sendBtn.disabled = false;
+      sendBtn.textContent = '[ SEND ]';
       if (!res.ok || !res.data.ok){
-        el.offerFormError.textContent = listingErrorMessage(res.data && res.data.error);
-        el.offerFormError.style.display = '';
+        alert(listingErrorMessage(res.data && res.data.error));
         return;
       }
+      offerTarget = p;
       offerTarget.priceValue = priceValue;
       showOfferConfirm(res.data.txjson);
     }).catch(function(){
-      el.offerFormSubmitBtn.disabled = false;
-      el.offerFormSubmitBtn.textContent = '[ SEND 0FFER ]';
-      el.offerFormError.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
-      el.offerFormError.style.display = '';
+      sendBtn.disabled = false;
+      sendBtn.textContent = '[ SEND ]';
+      alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
     });
-  });
+  }
 
   function showOfferConfirm(txjson){
     el.offerConfTxType.textContent = txjson.TransactionType;
@@ -4010,7 +4022,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
     showScreen('offerconfirm');
   }
-  el.offerConfirmBackBtn.addEventListener('click', function(){ showScreen('offerform'); });
+  el.offerConfirmBackBtn.addEventListener('click', function(){
+    offerTarget = null;
+    showScreen('browse');
+  });
 
   el.offerOpenXamanBtn.addEventListener('click', function(){
     if (!offerTarget) return;
