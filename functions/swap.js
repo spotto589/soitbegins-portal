@@ -274,6 +274,35 @@ const SWAP_HTML = `<!DOCTYPE html>
     grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));
     gap:0.75rem;
   }
+  /* Exactly 4 across — ITEMS/HOLDERS/TOTAL VOLUME/LISTED, the headline
+     figures — everything else (floor prices, 24h activity) is a step down
+     in prominence below it. */
+  .stats-strip-main{ grid-template-columns:repeat(4, 1fr); }
+  .stats-strip-floor{ grid-template-columns:repeat(3, 1fr); margin-top:0.75rem; }
+  .stats-strip-activity{ margin-top:0.75rem; }
+  @media (max-width:700px){
+    .stats-strip-main{ grid-template-columns:repeat(2, 1fr); }
+    .stats-strip-floor{ grid-template-columns:repeat(1, 1fr); }
+  }
+  .floor-toggle-btn{
+    display:block;
+    width:100%;
+    margin-top:0.6rem;
+    background:transparent;
+    border:1px dashed var(--border-mid);
+    color:var(--cyan-dim);
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.1em;
+    padding:0.55em 0.7em;
+    cursor:pointer;
+    text-transform:uppercase;
+    border-radius:var(--radius);
+    text-align:center;
+    transition:color 0.15s ease, border-color 0.15s ease;
+  }
+  .floor-toggle-btn:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
+  .floor-toggle-btn.open{ color:var(--magenta); border-color:var(--magenta-dim); }
   .stat-tile{
     border:1px solid var(--border-dim);
     background:rgba(255,255,255,0.015);
@@ -1517,14 +1546,19 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
 
-        <div class="stats-strip" id="statsStrip">
+        <div class="stats-strip stats-strip-main" id="statsStrip">
           <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value" id="statItems">…</div></div>
           <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
           <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
           <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
+        </div>
+        <button class="floor-toggle-btn" id="floorToggleBtn">[ › FL00R PR!CES ]</button>
+        <div class="stats-strip stats-strip-floor" id="statsStripFloor" style="display:none;">
           <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><img class="stat-tile-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt=""><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
-          <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
           <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
+          <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
+        </div>
+        <div class="stats-strip stats-strip-activity">
           <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
           <div class="stat-tile"><div class="stat-label">24H BUYERS</div><div class="stat-value" id="statBuyers24h">…</div></div>
           <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
@@ -2022,7 +2056,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'salesPanelWrap',
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
-   'statScyllaListedTile','statScyllaListedCount',
+   'statScyllaListedTile','statScyllaListedCount','floorToggleBtn','statsStripFloor',
    'statTraded24h','statBuyers24h','statVolume24h','statSalesTile','statSales24h','statBurnsTile',
    'indexLine','traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals',
@@ -4774,6 +4808,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // broken link.
   el.statBurnsTile.addEventListener('click', function(){
     alert('BURNS TRACK!NG :: C0M!NG S00N.');
+  });
+  el.floorToggleBtn.addEventListener('click', function(){
+    var opening = el.statsStripFloor.style.display === 'none';
+    el.statsStripFloor.style.display = opening ? '' : 'none';
+    el.floorToggleBtn.textContent = opening ? '[ ▾ FL00R PR!CES ]' : '[ › FL00R PR!CES ]';
+    el.floorToggleBtn.classList.toggle('open', opening);
   });
 
   // ---- Σκύλλα LISTED filter — toggled from the stat tile, or implicitly
