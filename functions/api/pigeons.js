@@ -513,36 +513,43 @@ export async function onRequestGet(context) {
   // Real lowest/highest listing across BOTH marketplaces — Deeptide's own
   // price-asc/price-desc only reflects Deeptide's own offers, so a Pigeon
   // priced lower on xrp.cafe would never surface. This scans Deeptide's
-  // price-sorted feed for candidates (cheap: one call), cross-checks each
-  // one's xrp.cafe price too, then re-sorts by whichever is actually
-  // better. Honest limitation: it can't discover a Pigeon listed ONLY on
-  // xrp.cafe and not at all on Deeptide, since xrp.cafe has no bulk
-  // sorted-by-price endpoint we could find (only a per-token lookup) — so
-  // this is "best of both markets among what Deeptide surfaces as listed",
-  // not a mathematically exhaustive global sort. Capped at 20/request
-  // (1 Deeptide call + up to 20 xrp.cafe calls) to stay well under the
-  // subrequest budget.
+  // price-sorted feed for candidates, cross-checks each one's xrp.cafe
+  // price too, then re-sorts by whichever is actually better. Honest
+  // limitation: it can't discover a Pigeon listed ONLY on xrp.cafe and
+  // not at all on Deeptide, since xrp.cafe has no bulk sorted-by-price
+  // endpoint we could find (only a per-token lookup) — so this is "best
+  // of both markets among what Deeptide surfaces as listed", not a
+  // mathematically exhaustive global sort.
+  //
+  // Confirmed live: Deeptide's OWN price-asc feed only carries a real
+  // price for a small handful of items (12, in one snapshot) before
+  // falling back to null-priced items in no particular order. Naively
+  // paginating that with skip/limit (the previous version of this code)
+  // meant "page 2" could show items with a null Deeptide price whose
+  // xrp.cafe price happened to be LOWER than everything on "page 1" -
+  // sorted per-page, but not globally, so scrolling could show cheaper
+  // items after more expensive ones. Fixed by pulling one bounded batch
+  // (the full DEEPTIDE_LISTINGS_MAX_LIMIT), dropping the null-priced
+  // noise, and returning it as a single non-paginated result — small
+  // and correctly sorted beats large and wrongly sorted here.
   const crossListing = params.get('crossListing');
   if (crossListing === 'asc' || crossListing === 'desc') {
-    const limit = Math.min(20, Math.max(1, parseInt(params.get('limit') || '20', 10) || 20));
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
     const deeptideSort = crossListing === 'asc' ? 'price-asc' : 'price-desc';
-    const page = await fetchDeeptideListings({ skip, limit, sort: deeptideSort });
-    const withCross = await Promise.all(page.items.map(async (it) => {
+    if (skip > 0) {
+      // Already exhausted the bounded, correctly-sorted set below.
+      return json({ items: [], total: 0, hasMore: false, skip, limit: 0, collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX });
+    }
+    const page = await fetchDeeptideListings({ skip: 0, limit: 60, sort: deeptideSort });
+    const realCandidates = page.items.filter(it => typeof it.priceDrops === 'number');
+    const withCross = await Promise.all(realCandidates.map(async (it) => {
       const xc = await fetchXrpCafeNftListing(it.nftId);
-      const dp = typeof it.priceDrops === 'number' ? it.priceDrops / 1000000 : null;
+      const dp = it.priceDrops / 1000000;
       const xp = xc && xc.priceXrp !== null && xc.priceXrp !== undefined ? xc.priceXrp : null;
-      let effective = null, source = null;
-      if (dp !== null && (xp === null || (crossListing === 'asc' ? dp <= xp : dp >= xp))) { effective = dp; source = 'deeptide'; }
-      else if (xp !== null) { effective = xp; source = 'xrpCafe'; }
-      return { it, effective, source, xp };
+      const useXrpCafe = xp !== null && (crossListing === 'asc' ? xp < dp : xp > dp);
+      return { it, effective: useXrpCafe ? xp : dp, source: useXrpCafe ? 'xrpCafe' : 'deeptide', xp };
     }));
-    withCross.sort((a, b) => {
-      if (a.effective === null && b.effective === null) return 0;
-      if (a.effective === null) return 1;
-      if (b.effective === null) return -1;
-      return crossListing === 'asc' ? a.effective - b.effective : b.effective - a.effective;
-    });
+    withCross.sort((a, b) => crossListing === 'asc' ? a.effective - b.effective : b.effective - a.effective);
     const items = withCross.map(({ it, effective, source, xp }) => {
       const built = toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap);
       built.bestListingXrp = effective;
@@ -555,10 +562,10 @@ export async function onRequestGet(context) {
     });
     return json({
       items,
-      total: page.total,
-      hasMore: page.hasMore,
-      skip: skip + page.items.length,
-      limit,
+      total: items.length,
+      hasMore: false,
+      skip: items.length,
+      limit: items.length,
       collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
     });
   }
