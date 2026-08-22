@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, findSwapOffer,
-  getXamanPayloadStatus
+  getXamanPayloadStatus, getSwapOfferPairs, recordSwapOfferPair
 } from '../_shared.js';
 
 const XRPL_ADDRESS_RE = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
@@ -15,7 +15,7 @@ const XRPL_ADDRESS_RE = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
 export async function onRequestGet(context) {
   const { request, env } = context;
 
-  if (!env.Σκύλλα) {
+  if (!env.Σκύλλα || !env.coin) {
     return new Response(JSON.stringify({ error: 'server_misconfigured' }), { status: 500 });
   }
   if (!env.XAMAN_PROXY_URL || !env.XAMAN_PROXY_SHARED_SECRET) {
@@ -36,10 +36,18 @@ export async function onRequestGet(context) {
   const uuid = url.searchParams.get('uuid');
   const nftId = url.searchParams.get('nftId');
   const toWallet = url.searchParams.get('toWallet');
+  // Exactly one of these identifies which half of the pair this offer is:
+  // wantNftId starts a brand-new pair (this is the FIRST offer, the
+  // offerer's own), swapId attaches this offer as the SECOND half onto a
+  // pair that already exists (the counterparty reciprocating).
+  const wantNftId = url.searchParams.get('wantNftId');
+  const swapId = url.searchParams.get('swapId');
   if (
     !uuid || !/^[0-9a-fA-F-]{10,60}$/.test(uuid) ||
     !nftId || !/^[0-9A-Fa-f]{64}$/.test(nftId) ||
-    !toWallet || !XRPL_ADDRESS_RE.test(toWallet)
+    !toWallet || !XRPL_ADDRESS_RE.test(toWallet) ||
+    (wantNftId && !/^[0-9A-Fa-f]{64}$/.test(wantNftId)) ||
+    (swapId && !/^[0-9a-fA-F-]{10,60}$/.test(swapId))
   ) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
@@ -79,10 +87,39 @@ export async function onRequestGet(context) {
     });
   }
 
+  // Record/update the swap pair so the counterparty can discover this
+  // offer, and so either side can later find the other's offerId to
+  // accept once both halves exist. A KV write failure here shouldn't stop
+  // the offerer from seeing their own successful offer creation — the
+  // offer really is on-ledger regardless — so this never blocks the
+  // response.
+  let resultSwapId = swapId || null;
+  if (swapId) {
+    const pairs = await getSwapOfferPairs(env.coin);
+    const pair = pairs[swapId];
+    // Only attach if this really is the expected reciprocal half — the
+    // counterparty offering the exact NFT the offerer asked for, back to
+    // the offerer's own wallet. Anything else is left alone rather than
+    // silently overwriting a pair with mismatched data.
+    if (pair && pair.counterparty.wallet === offerer && pair.counterparty.nftId === nftId && pair.offerer.wallet === toWallet) {
+      pair.counterparty.offerId = ownOffer.nft_offer_index;
+      context.waitUntil(recordSwapOfferPair(env.coin, swapId, pair));
+    }
+  } else if (wantNftId) {
+    resultSwapId = crypto.randomUUID();
+    context.waitUntil(recordSwapOfferPair(env.coin, resultSwapId, {
+      swapId: resultSwapId,
+      createdAt: Date.now(),
+      offerer: { wallet: offerer, nftId, offerId: ownOffer.nft_offer_index, accepted: false },
+      counterparty: { wallet: toWallet, nftId: wantNftId, offerId: null, accepted: false }
+    }));
+  }
+
   return new Response(JSON.stringify({
     status: 'offer_created',
     txHash,
     offerId: ownOffer.nft_offer_index,
-    toWallet
+    toWallet,
+    swapId: resultSwapId
   }), { headers: { 'Content-Type': 'application/json' } });
 }

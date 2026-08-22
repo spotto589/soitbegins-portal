@@ -1104,6 +1104,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button class="tab-btn" data-tab="mypigeons">MY P!GE0NS</button>
       <button class="tab-btn" data-tab="topholders">T0P 10</button>
       <button class="tab-btn" data-tab="sales">SALES DATA</button>
+      <button class="tab-btn" data-tab="swapoffers">SWAP 0FFERS</button>
+    </div>
+
+    <div class="sw-panel" id="swapOffersPanelWrap" style="display:none;">
+      <div class="panel-title">SWAP 0FFERS</div>
+      <div class="swap-nonatomic-note">EACH R0W !S 0NE PEND!NG SWAP. B0TH S!DES MUST 0FFER, THEN B0TH S!DES MUST ACCEPT — N0TH!NG M0VES UNT!L B0TH ACCEPTS ARE D0NE.</div>
+      <div id="swapOffersList"></div>
     </div>
 
     <div class="sw-panel" id="myPigeonsPanel" style="display:none;">
@@ -1380,6 +1387,38 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- SCREEN: ACCEPT SWAP CONFIRMATION — the exact NFTokenAcceptOffer
+         txjson for accepting the OTHER side's offer, before Xaman ever
+         opens. Accepting this really transfers their Pigeon to you and
+         yours to them completes only once BOTH sides have each accepted
+         the other's offer. -->
+    <div class="sw-panel" id="screenSwapAcceptConfirm" style="display:none;">
+      <div class="node-eyebrow">// ACCEPT SWAP C0NF!RMAT!0N</div>
+      <div class="index-line swap-nonatomic-note">TH!S ACCEPTS THE!R 0FFER T0 Y0U. Y0UR 0WN P!GE0N 0NLY M0VES !F THEY (0R Y0U ALREADY D!D) SEPARATELY ACCEPT Y0UR 0FFER T00.</div>
+      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="acceptConfTxType"></span></div>
+      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="acceptConfAccount"></span></div>
+      <div class="detail-field"><span class="df-label">NFTokenSellOffer</span><span class="df-value" id="acceptConfOfferId"></span></div>
+      <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="acceptConfNftId"></span></div>
+      <div class="detail-field"><span class="df-label">FR0M WALLET</span><span class="df-value" id="acceptConfFromWallet"></span></div>
+      <div class="index-line" id="acceptConfirmStatus" style="margin-top:1rem;"></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="swapAcceptConfirmBackBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="swapAcceptOpenXamanBtn">[ 0PEN XAMAN ]</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: ACCEPT SWAP RESULT — verified against real on-ledger state
+         (the Pigeon now in your account_nfts, the offer gone). -->
+    <div class="sw-panel" id="screenSwapAcceptResult" style="display:none;">
+      <div class="detail-eyebrow">// ACCEPTED</div>
+      <div class="detail-field"><span class="df-label">P!GE0N RECE!VED</span><span class="df-value" id="acceptResultNftId"></span></div>
+      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="acceptResultStatus"></span></div>
+      <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="acceptResultTxLink" target="_blank" rel="noopener"></a></span></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="acceptResultDoneBtn">[ ← BACK T0 SWAP 0FFERS ]</button>
+      </div>
+    </div>
+
     <!-- SCREEN: LIST A PIGEON — first real listing test -->
     <div class="sw-panel" id="screenListForm" style="display:none;">
       <div class="detail-eyebrow">// SCYLLA L!ST!NG</div>
@@ -1535,6 +1574,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
    'salesPanelWrap',
+   'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount',
    'indexLine','traitRows','addTraitBtn','clearTraitsBtn',
@@ -1547,6 +1587,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapReview','reviewOfferPile','reviewOfferCount','reviewWantPile','reviewWantCount','reviewBackBtn','reviewCreateBtn','reviewResult',
    'screenSwapOfferConfirm','swapConfTxType','swapConfAccount','swapConfNftId','swapConfAmount','swapConfDestination','swapConfFlags','swapConfirmStatus','swapOfferConfirmBackBtn','swapOfferOpenXamanBtn',
    'screenSwapOfferResult','swapResultNftId','swapResultToWallet','swapResultStatus','swapResultOfferId','swapResultTxLink','swapResultDoneBtn',
+   'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
+   'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'screenBrowse','screenDetail','screenSummary',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailBuyBtn','detailTraits',
    'detailHistoryToggle','detailHistoryList','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
@@ -1581,6 +1623,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.myPigeonsPanel.style.display = tab === 'mypigeons' ? '' : 'none';
     el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
     el.salesPanelWrap.style.display = tab === 'sales' ? '' : 'none';
+    el.swapOffersPanelWrap.style.display = tab === 'swapoffers' ? '' : 'none';
     var buttons = el.topTabs.querySelectorAll('.tab-btn');
     for (var i = 0; i < buttons.length; i++){
       buttons[i].classList.toggle('active', buttons[i].getAttribute('data-tab') === tab);
@@ -1600,6 +1643,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else if (tab === 'sales' && !state.salesLoaded){
       state.salesLoaded = true;
       loadMoreSales();
+    } else if (tab === 'swapoffers'){
+      // Always refetches (no "loaded once" guard like the others) — this
+      // list changes as soon as the other side of a pending swap acts, so
+      // a stale cached view would hide real progress.
+      loadSwapOffersMine();
     }
   }
   el.topTabs.addEventListener('click', function(e){
@@ -1616,12 +1664,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.myPigeonsPanel.style.display = 'none';
       el.topHoldersPanelWrap.style.display = 'none';
       el.salesPanelWrap.style.display = 'none';
+      el.swapOffersPanelWrap.style.display = 'none';
     }
     el.screenDetail.style.display = name === 'detail' ? '' : 'none';
     el.screenSummary.style.display = name === 'summary' ? '' : 'none';
     el.screenSwapReview.style.display = name === 'swapreview' ? '' : 'none';
     el.screenSwapOfferConfirm.style.display = name === 'swapofferconfirm' ? '' : 'none';
     el.screenSwapOfferResult.style.display = name === 'swapofferresult' ? '' : 'none';
+    el.screenSwapAcceptConfirm.style.display = name === 'swapacceptconfirm' ? '' : 'none';
+    el.screenSwapAcceptResult.style.display = name === 'swapacceptresult' ? '' : 'none';
     el.screenListForm.style.display = name === 'listform' ? '' : 'none';
     el.screenListConfirm.style.display = name === 'listconfirm' ? '' : 'none';
     el.screenListResult.style.display = name === 'listresult' ? '' : 'none';
@@ -1798,28 +1849,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   // touched. Structured to expand to 2-4 per side later (swapOfferState
   // and the poll/confirm functions don't assume 1 item, only this button's
   // guard does). ----
-  var swapOfferState = null; // { nftId, toWallet, uuid }
+  var swapOfferState = null; // { nftId, toWallet, uuid, wantNftId | swapId }
   var swapOfferPollTimer = null;
 
-  el.reviewCreateBtn.addEventListener('click', function(){
-    var offerIds = Object.keys(state.offerAssets);
-    var wantIds = Object.keys(state.targetAssets);
-    if (offerIds.length !== 1 || wantIds.length !== 1){
-      alert('F0R N0W, REAL SWAPS ARE L!M!TED T0 1 P!GE0N EACH S!DE F0R TEST!NG — REM0VE EXTRA P!GE0NS T0 C0NT!NUE. (2-4 PER S!DE C0MES NEXT, 0NCE 1-F0R-1 !S C0NF!RMED W0RK!NG.)');
-      return;
-    }
-    if (!state.scope || !state.scope.wallet){
-      alert('N0 TARGET WALLET !DENT!F!ED — G0 BACK AND P!CK A WANT P!GE0N AGA!N.');
-      return;
-    }
-    swapOfferState = { nftId: offerIds[0], toWallet: state.scope.wallet, uuid: null };
+  // Shared by both entry points: the original offerer (from SWAP REVIEW,
+  // wantNftId starting a brand-new pair) and the counterparty reciprocating
+  // an existing pair from the SWAP OFFERS tab (swapId attaching onto it).
+  function startSwapOffer(nftId, toWallet, extra){
+    swapOfferState = Object.assign({ nftId: nftId, toWallet: toWallet, uuid: null }, extra);
     el.swapConfirmStatus.textContent = 'VAL!DAT!NG...';
     el.swapOfferOpenXamanBtn.disabled = true;
     showScreen('swapofferconfirm');
     fetch('/api/swap-offer-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: swapOfferState.nftId, toWallet: swapOfferState.toWallet })
+      body: JSON.stringify({ nftId: nftId, toWallet: toWallet })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
@@ -1832,6 +1876,20 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.swapConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
       el.swapOfferOpenXamanBtn.disabled = true;
     });
+  }
+
+  el.reviewCreateBtn.addEventListener('click', function(){
+    var offerIds = Object.keys(state.offerAssets);
+    var wantIds = Object.keys(state.targetAssets);
+    if (offerIds.length !== 1 || wantIds.length !== 1){
+      alert('F0R N0W, REAL SWAPS ARE L!M!TED T0 1 P!GE0N EACH S!DE F0R TEST!NG — REM0VE EXTRA P!GE0NS T0 C0NT!NUE. (2-4 PER S!DE C0MES NEXT, 0NCE 1-F0R-1 !S C0NF!RMED W0RK!NG.)');
+      return;
+    }
+    if (!state.scope || !state.scope.wallet){
+      alert('N0 TARGET WALLET !DENT!F!ED — G0 BACK AND P!CK A WANT P!GE0N AGA!N.');
+      return;
+    }
+    startSwapOffer(offerIds[0], state.scope.wallet, { wantNftId: wantIds[0] });
   });
 
   function showSwapOfferConfirm(txjson){
@@ -1845,7 +1903,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.swapOfferOpenXamanBtn.disabled = false;
     el.swapOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
   }
-  el.swapOfferConfirmBackBtn.addEventListener('click', function(){ showScreen('swapreview'); });
+  el.swapOfferConfirmBackBtn.addEventListener('click', function(){
+    showScreen(swapOfferState && swapOfferState.swapId ? 'swapoffers' : 'swapreview');
+  });
 
   el.swapOfferOpenXamanBtn.addEventListener('click', function(){
     if (!swapOfferState) return;
@@ -1893,6 +1953,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     var qs = 'uuid=' + encodeURIComponent(swapOfferState.uuid) +
       '&nftId=' + encodeURIComponent(swapOfferState.nftId) +
       '&toWallet=' + encodeURIComponent(swapOfferState.toWallet);
+    if (swapOfferState.swapId) qs += '&swapId=' + encodeURIComponent(swapOfferState.swapId);
+    else if (swapOfferState.wantNftId) qs += '&wantNftId=' + encodeURIComponent(swapOfferState.wantNftId);
     fetch('/api/swap-offer-status?' + qs)
       .then(function(r){ return r.json(); })
       .then(function(data){
@@ -1939,7 +2001,200 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     showScreen('swapofferresult');
   }
-  el.swapResultDoneBtn.addEventListener('click', function(){ showScreen('browse'); });
+  el.swapResultDoneBtn.addEventListener('click', function(){
+    if (swapOfferState && swapOfferState.swapId){
+      showTab('swapoffers');
+      loadSwapOffersMine();
+    } else {
+      showScreen('browse');
+    }
+  });
+
+  // ---- SWAP OFFERS tab — every pending pair involving MY_WALLET, on
+  // either side. Discovering an incoming offer, reciprocating it (reuses
+  // startSwapOffer above unchanged), and accepting both live here. ----
+  var swapOffersData = null;
+  function swapOfferRowHtml(row){
+    var myImg = row.myImage ? '<img src="' + escapeHtml(row.myImage) + '" alt="">' : '[ IMAGE ]';
+    var otherImg = row.otherImage ? '<img src="' + escapeHtml(row.otherImage) + '" alt="">' : '[ IMAGE ]';
+    var actionHtml;
+    if (row.action === 'need_to_offer'){
+      actionHtml = '<button class="bar-btn swap-offer-reciprocate-btn" data-swapid="' + escapeHtml(row.swapId) + '" style="width:100%; margin-top:0.5rem;">[ CREATE MATCH!NG 0FFER ]</button>';
+    } else if (row.action === 'waiting_for_other_offer'){
+      actionHtml = '<div class="index-line" style="margin-top:0.5rem;">WA!T!NG F0R THE 0THER WALLET T0 0FFER</div>';
+    } else if (row.action === 'ready_to_accept'){
+      actionHtml = '<button class="bar-btn swap-offer-accept-btn" data-swapid="' + escapeHtml(row.swapId) + '" style="width:100%; margin-top:0.5rem;">[ ACCEPT SWAP ]</button>';
+    } else {
+      actionHtml = '<div class="index-line" style="margin-top:0.5rem;">WA!T!NG F0R THE 0THER WALLET T0 ACCEPT</div>';
+    }
+    return '<div class="result-card" style="display:flex; gap:0.75rem; padding:0.75rem; align-items:center;">' +
+      '<div class="pigeon-img-box" style="width:64px; height:64px; flex:0 0 auto;">' + myImg + '</div>' +
+      '<div style="flex:0 0 auto; font-size:16px; color:var(--magenta);">⇄</div>' +
+      '<div class="pigeon-img-box" style="width:64px; height:64px; flex:0 0 auto;">' + otherImg + '</div>' +
+      '<div style="flex:1; min-width:0;">' +
+        '<div class="index-line" style="margin:0;">Y0U 0FFER #' + (row.myNumber !== null && row.myNumber !== undefined ? row.myNumber : '????') +
+        ' :: THEY 0FFER #' + (row.otherNumber !== null && row.otherNumber !== undefined ? row.otherNumber : '????') + '</div>' +
+        '<div class="index-line" style="margin:0.25rem 0 0;">WALLET :: ' + escapeHtml(row.otherWallet) + '</div>' +
+        actionHtml +
+      '</div>' +
+    '</div>';
+  }
+  function renderSwapOffersList(){
+    if (swapOffersData === null){
+      el.swapOffersList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+      return;
+    }
+    if (!swapOffersData.length){
+      el.swapOffersList.innerHTML = '<div class="th-empty">N0 PEND!NG SWAP 0FFERS.</div>';
+      return;
+    }
+    el.swapOffersList.innerHTML = swapOffersData.map(swapOfferRowHtml).join('');
+  }
+  function loadSwapOffersMine(){
+    swapOffersData = null;
+    renderSwapOffersList();
+    fetch('/api/swap-offers-mine')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        swapOffersData = (data && data.offers) || [];
+        renderSwapOffersList();
+      }).catch(function(){
+        swapOffersData = [];
+        el.swapOffersList.innerHTML = '<div class="th-empty">// S!GNAL_L0ST — C0ULD N0T L0AD SWAP 0FFERS.</div>';
+      });
+  }
+  el.swapOffersList.addEventListener('click', function(e){
+    var reciprocateBtn = e.target.closest('.swap-offer-reciprocate-btn');
+    if (reciprocateBtn){
+      var swapId = reciprocateBtn.getAttribute('data-swapid');
+      var row = (swapOffersData || []).filter(function(r){ return r.swapId === swapId; })[0];
+      if (row) startSwapOffer(row.myNftId, row.otherWallet, { swapId: swapId });
+      return;
+    }
+    var acceptBtn = e.target.closest('.swap-offer-accept-btn');
+    if (acceptBtn){
+      var acceptSwapId = acceptBtn.getAttribute('data-swapid');
+      openSwapAcceptConfirm(acceptSwapId);
+    }
+  });
+
+  // ---- ACCEPT SWAP — accepts the OTHER side's offer. Same prepare ->
+  // confirm -> payload -> poll-status shape as everything else here, but
+  // keyed by swapId only (the server looks up which offer that means). ----
+  var swapAcceptState = null; // { swapId, uuid }
+  function openSwapAcceptConfirm(swapId){
+    swapAcceptState = { swapId: swapId, uuid: null };
+    el.acceptConfirmStatus.textContent = 'VAL!DAT!NG...';
+    el.swapAcceptOpenXamanBtn.disabled = true;
+    showScreen('swapacceptconfirm');
+    fetch('/api/swap-accept-prepare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ swapId: swapId })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        el.acceptConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        el.swapAcceptOpenXamanBtn.disabled = true;
+        return;
+      }
+      var txjson = res.data.txjson;
+      el.acceptConfTxType.textContent = txjson.TransactionType;
+      el.acceptConfAccount.textContent = txjson.Account;
+      el.acceptConfOfferId.textContent = txjson.NFTokenSellOffer;
+      el.acceptConfNftId.textContent = res.data.display && res.data.display.nftId;
+      el.acceptConfFromWallet.textContent = res.data.display && res.data.display.fromWallet;
+      el.acceptConfirmStatus.textContent = '';
+      el.swapAcceptOpenXamanBtn.disabled = false;
+      el.swapAcceptOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+    }).catch(function(){
+      el.acceptConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+      el.swapAcceptOpenXamanBtn.disabled = true;
+    });
+  }
+  el.swapAcceptConfirmBackBtn.addEventListener('click', function(){ showScreen('swapoffers'); });
+
+  el.swapAcceptOpenXamanBtn.addEventListener('click', function(){
+    if (!swapAcceptState) return;
+    el.swapAcceptOpenXamanBtn.disabled = true;
+    el.swapAcceptOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.acceptConfirmStatus.textContent = '';
+    var xamanTab = window.open('', '_blank', 'noopener');
+    fetch('/api/swap-accept-payload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ swapId: swapAcceptState.swapId })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        if (xamanTab) xamanTab.close();
+        el.swapAcceptOpenXamanBtn.disabled = false;
+        el.swapAcceptOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.acceptConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      swapAcceptState.uuid = res.data.uuid;
+      if (xamanTab) xamanTab.location.href = res.data.next.always;
+      else window.open(res.data.next.always, '_blank', 'noopener');
+      el.swapAcceptOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.acceptConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      pollSwapAcceptStatus();
+    }).catch(function(){
+      if (xamanTab) xamanTab.close();
+      el.swapAcceptOpenXamanBtn.disabled = false;
+      el.swapAcceptOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.acceptConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+
+  var swapAcceptPollTimer = null;
+  function pollSwapAcceptStatus(){
+    if (swapAcceptPollTimer) clearTimeout(swapAcceptPollTimer);
+    if (!swapAcceptState || !swapAcceptState.uuid) return;
+    var qs = 'uuid=' + encodeURIComponent(swapAcceptState.uuid) + '&swapId=' + encodeURIComponent(swapAcceptState.swapId);
+    fetch('/api/swap-accept-status?' + qs)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'settled'){
+          el.acceptResultNftId.textContent = data.nftReceived || '—';
+          el.acceptResultStatus.textContent = data.swapComplete ? 'SWAP C0MPLETE — B0TH S!DES SETTLED' : 'ACCEPTED — WA!T!NG 0N THE 0THER S!DE T0 ACCEPT Y0URS';
+          if (data.txHash){
+            el.acceptResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
+            el.acceptResultTxLink.textContent = data.txHash;
+          } else {
+            el.acceptResultTxLink.removeAttribute('href');
+            el.acceptResultTxLink.textContent = '—';
+          }
+          showScreen('swapacceptresult');
+          return;
+        }
+        if (data.status === 'rejected'){
+          el.acceptConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
+          el.swapAcceptOpenXamanBtn.disabled = false;
+          el.swapAcceptOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'expired'){
+          el.acceptConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
+          el.swapAcceptOpenXamanBtn.disabled = false;
+          el.swapAcceptOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'failed'){
+          el.acceptConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
+          el.swapAcceptOpenXamanBtn.disabled = false;
+          el.swapAcceptOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        swapAcceptPollTimer = setTimeout(pollSwapAcceptStatus, 2000);
+      }).catch(function(){
+        swapAcceptPollTimer = setTimeout(pollSwapAcceptStatus, 3000);
+      });
+  }
+  el.acceptResultDoneBtn.addEventListener('click', function(){
+    showTab('swapoffers');
+    loadSwapOffersMine();
+  });
 
   function refreshCardSelectionStates(){
     document.querySelectorAll('.result-card').forEach(function(card){

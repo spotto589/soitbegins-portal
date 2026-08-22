@@ -1400,6 +1400,38 @@ export async function removeSwapListing(kv, nftId) {
   await safeKvPut(kv, SWAP_LISTINGS_MAP_KEY, JSON.stringify(map));
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Σκύλλα SWAP — NFT-for-NFT offer PAIRS. XRPL has no atomic swap, so a real
+// trade is two independent NFTokenCreateOffer objects (one per side, each
+// Amount "0" and Destination-restricted to the other wallet) plus two
+// independent NFTokenAcceptOffer transactions. This is the record tying
+// those two halves together as one logical swap, so the counterparty can
+// discover an incoming offer and both sides can see whether the other has
+// reciprocated/accepted yet. Same single-JSON-map-in-one-key pattern as
+// the listings map above; keyed by a random swapId, not either NFT's ID,
+// since either side's own offerId can independently change over the
+// pair's lifetime (created, then later accepted-and-gone).
+// ─────────────────────────────────────────────────────────────────────────
+const SWAP_OFFER_PAIRS_KEY = 'pswap:offerpairs:v1';
+
+export async function getSwapOfferPairs(kv) {
+  const raw = await kv.get(SWAP_OFFER_PAIRS_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
+export async function recordSwapOfferPair(kv, swapId, entry) {
+  const map = await getSwapOfferPairs(kv);
+  map[swapId] = entry;
+  await safeKvPut(kv, SWAP_OFFER_PAIRS_KEY, JSON.stringify(map));
+}
+
+export async function removeSwapOfferPair(kv, swapId) {
+  const map = await getSwapOfferPairs(kv);
+  if (!map[swapId]) return;
+  delete map[swapId];
+  await safeKvPut(kv, SWAP_OFFER_PAIRS_KEY, JSON.stringify(map));
+}
+
 // Bridges swap-buy-payload.js (which knows the seller + price, right as it
 // builds the accept-offer txjson) to swap-buy-status.js (which only sees
 // "is the offer gone yet" — by settlement time the offer itself, and its
