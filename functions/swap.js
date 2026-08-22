@@ -1048,7 +1048,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-scylla-price{ font-size:13px; font-weight:700; letter-spacing:0.02em; color:#fff; text-shadow:0 0 6px rgba(0,0,0,0.4); }
   .card-buy-scylla-btn{ background:rgba(8,9,11,0.35); border:1px solid rgba(255,255,255,0.7); color:#fff; font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; padding:0.35em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:background 0.15s ease; }
   .card-buy-scylla-btn:hover{ background:rgba(8,9,11,0.55); }
-  .card-trait-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.5rem; margin-top:0.5rem; }
+  /* Capped to ~2 rows (6 cells) so the trait grid stays on par with the
+     220px thumbnail's own height instead of a 7th-trait Pigeon quietly
+     making the right column taller than the left — anything past 6
+     scrolls inside the grid rather than growing the card. */
+  .card-trait-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:0.5rem;
+    margin-top:0.5rem;
+    max-height:216px;
+    overflow-y:auto;
+    padding-right:2px;
+  }
   .card-trait-cell{ background:rgba(61,243,236,0.05); border:1px solid var(--cyan-dim); border-radius:var(--radius); padding:0.7rem 0.5rem; text-align:center; cursor:pointer; transition:background 0.15s ease, border-color 0.15s ease; }
   .card-trait-cell:hover{ background:rgba(61,243,236,0.14); border-color:var(--cyan); }
   .card-tc-label{ font-size:10px; font-weight:700; letter-spacing:0.1em; color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; margin-bottom:0.3rem; }
@@ -2875,10 +2887,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       : '';
     var hasHigh = p.highSaleXrp !== null && p.highSaleXrp !== undefined;
     var hasAvg = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
-    var saleStatsHtml = (hasHigh || hasAvg)
+    var hasSaleCount = p.saleCount !== null && p.saleCount !== undefined;
+    var hasRecent = p.recentSaleXrp !== null && p.recentSaleXrp !== undefined;
+    var saleStatsHtml = (hasHigh || hasAvg || hasSaleCount || hasRecent)
       ? '<div class="card-bottom-bar">' +
           (hasHigh ? '<span class="css-item"><span class="css-label">H!GHEST REC0RDED</span>' + fmtXrp(p.highSaleXrp) + ' XRP / ' + fmtPigeons(p.highSalePigeons) + '</span>' : '') +
           (hasAvg ? '<span class="css-item"><span class="css-label">AVG SALE</span>' + fmtXrp(p.avgSaleXrp) + ' XRP / ' + fmtPigeons(p.avgSalePigeons) + '</span>' : '') +
+          (hasRecent ? '<span class="css-item"><span class="css-label">RECENT SALE</span>' + fmtXrp(p.recentSaleXrp) + ' XRP</span>' : '') +
+          (hasSaleCount ? '<span class="css-item"><span class="css-label">T0TAL SALES</span>' + p.saleCount.toLocaleString() + '</span>' : '') +
         '</div>'
       : '';
     // Sits at the very TOP of the card, above the thumbnail and traits —

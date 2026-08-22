@@ -61,6 +61,8 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pige
     highSaleTxUrl: highSaleEntry && highSaleEntry.txHash ? bithompTxUrl(highSaleEntry.txHash) : null,
     avgSaleXrp: highSaleEntry && highSaleEntry.count ? (highSaleEntry.totalDrops / highSaleEntry.count) / 1000000 : null,
     saleCount: highSaleEntry ? (highSaleEntry.count || null) : null,
+    recentSaleXrp: highSaleEntry && typeof highSaleEntry.recentDrops === 'number' ? highSaleEntry.recentDrops / 1000000 : null,
+    recentSaleTxUrl: highSaleEntry && highSaleEntry.recentTxHash ? bithompTxUrl(highSaleEntry.recentTxHash) : null,
     // Real $PIGEONS sales through Σκύλλα's own marketplace — 0 until a
     // Pigeon has actually sold for $PIGEONS, then the real figure.
     highSalePigeons: pigeonsSaleEntry ? pigeonsSaleEntry.highest : 0,
