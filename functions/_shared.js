@@ -1437,12 +1437,23 @@ export async function createXamanPayload(apiKey, apiSecret, txjson, options, att
     if (!res.ok) {
       const bodyText = await res.text().catch((e) => '');
       clearTimeout(timer);
+      // Distinguish a real xumm.app rejection (has cf-ray/server headers,
+      // came from their actual origin) from a synthesized empty response
+      // (a dropped outbound connection, never reached xumm.app at all) -
+      // logged every time, not just inferred from body emptiness, since a
+      // deterministic (not just occasional) empty-body 400 would mean the
+      // retry-on-empty-body theory is wrong and something else is rejecting
+      // every single request outright.
+      console.log('createXamanPayload NOT OK status=' + res.status
+        + ' cf-ray=[' + (res.headers.get('cf-ray') || '') + ']'
+        + ' server=[' + (res.headers.get('server') || '') + ']'
+        + ' content-length=[' + (res.headers.get('content-length') || '') + ']'
+        + ' body=[' + bodyText.slice(0, 500) + ']');
       if (!bodyText && attempt < 2) {
         console.log('createXamanPayload empty-body failure (status ' + res.status + '), retrying, attempt', attempt + 1);
         await new Promise(resolve => setTimeout(resolve, 400));
         return createXamanPayload(apiKey, apiSecret, txjson, options, attempt + 1);
       }
-      console.log('createXamanPayload NOT OK status=' + res.status + ' body=[' + bodyText.slice(0, 500) + ']');
       return null;
     }
     return await res.json();
