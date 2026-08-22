@@ -572,6 +572,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   .traits-hover-wrap{ position:relative; display:inline-flex; }
   .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.9em 0.6em; }
   #traitsHoverLabel{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  /* SORT gets the same bordered-box treatment as the edition-toggle group
+     sitting right next to it in the search row, instead of bare hover
+     text. */
+  #sortDropWrap{ border:1px solid var(--border-mid); border-radius:var(--radius); transition:border-color 0.15s ease; }
+  #sortDropWrap:hover, #sortDropWrap.open{ border-color:var(--cyan-dim); }
+  #sortDropLabel{ font-size:11px; }
   .traits-hover-wrap:hover .trait-row-label,
   .traits-hover-wrap.open .trait-row-label{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   .traits-flyout{
@@ -636,7 +642,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .traits-flyout-val:hover{ border-color:var(--cyan-dim); color:var(--white); }
   .traits-flyout-val.selected{ background:var(--cyan-faint); border-color:var(--cyan); color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
-  .traits-flyout-val .tfv-count{ color:var(--grey-dim); font-size:11px; flex:0 0 auto; }
+  .traits-flyout-val .tfv-count{ color:var(--grey-dim); font-size:13px; flex:0 0 auto; }
+
+  /* ---- ADD TRAITS flyout only: cyan by default, pink outline on hover,
+     filled pink when selected/active — scoped by id so SORT's flyout
+     (same shared .traits-flyout-cat/.traits-flyout-val classes) is
+     untouched. ---- */
+  #traitsFlyoutVals .th-empty{ font-size:16px; color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
+  #traitsFlyoutCats .traits-flyout-cat{ color:var(--cyan); box-shadow:inset 0 0 0 1px transparent; }
+  #traitsFlyoutCats .traits-flyout-cat:hover{ background:transparent; color:var(--cyan); box-shadow:inset 0 0 0 1px var(--magenta); }
+  #traitsFlyoutCats .traits-flyout-cat.active{ background:var(--magenta-faint); color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); box-shadow:none; }
+  #traitsFlyoutVals .traits-flyout-val{ color:var(--cyan); }
+  #traitsFlyoutVals .traits-flyout-val:hover{ border-color:var(--magenta); color:var(--cyan); background:transparent; }
+  #traitsFlyoutVals .traits-flyout-val.selected{ background:var(--magenta-faint); border-color:var(--magenta); color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
   select.trait-cat-select{
     background:#000;
     border:1px solid var(--border-mid);
@@ -3832,8 +3850,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // just presented the same way TRAITS is instead of a native <select>.
   var SORT_CATEGORIES = {
     'ALPHABET!CAL': [
-      { value: 'NAME_ASC', label: 'A → Z' },
-      { value: 'NAME_DESC', label: 'Z → A' }
+      { value: 'NAME_ASC', label: 'A-Z' },
+      { value: 'NAME_DESC', label: 'Z-A' }
     ],
     'L!ST!NGS': [
       { value: 'PRICE_ASC', label: 'L0WEST' },
@@ -3860,10 +3878,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     var cat = sortCategoryOf(value);
     if (!cat) return value;
     var found = SORT_CATEGORIES[cat].filter(function(o){ return o.value === value; })[0];
-    return cat + ' :: ' + (found ? found.label : value);
+    return cat + ' ' + (found ? found.label : value);
   }
   function renderSortDropLabel(){
-    el.sortDropLabel.textContent = 'S0RT :: ' + sortLabelOf(state.sort) + ' ▾';
+    el.sortDropLabel.textContent = 'S0RT!NG BY: ' + sortLabelOf(state.sort) + ' ▾';
   }
   function renderSortFlyoutCats(){
     el.sortFlyoutCats.innerHTML = Object.keys(SORT_CATEGORIES).map(function(c){
