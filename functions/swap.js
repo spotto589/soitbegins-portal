@@ -1241,7 +1241,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button class="tab-btn" data-tab="mypigeons">MY P!GE0NS</button>
       <button class="tab-btn" data-tab="topholders">T0P 10</button>
       <button class="tab-btn" data-tab="sales">SALES DATA</button>
-      <button class="tab-btn" data-tab="swapoffers">SWAP 0FFERS</button>
+      <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
     </div>
 
     <div class="sw-panel" id="swapOffersPanelWrap" style="display:none;">
@@ -1679,6 +1679,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // signature is on file.
   var MY_WALLET = "__SWAP_WALLET__";
 
+  // BETA — the NFT-for-NFT swap builder (CREATE AN OFFER box, MY PIGEONS'
+  // + toggle, SWAP OFFERS tab) is fully built and working, just hidden for
+  // now. Nothing behind it was removed or changed — flip this back to
+  // true to bring it all back exactly as it was. This is the ONLY switch;
+  // every entry point below checks it.
+  var SWAP_BUILDER_ENABLED = false;
+
   // ---- Client-side state ----
   var PAGE_SIZE = 36;
   var state = {
@@ -1724,7 +1731,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
-   'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn',
+   'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn','swapOffersTabBtn',
    'screenSwapReview','reviewOfferPile','reviewOfferCount','reviewWantPile','reviewWantCount','reviewBackBtn','reviewCreateBtn','reviewResult',
    'screenSwapOfferConfirm','swapConfTxType','swapConfAccount','swapConfNftId','swapConfAmount','swapConfDestination','swapConfFlags','swapConfirmStatus','swapOfferConfirmBackBtn','swapOfferOpenXamanBtn',
    'screenSwapOfferResult','swapResultNftId','swapResultToWallet','swapResultStatus','swapResultOfferId','swapResultTxLink','swapResultDoneBtn',
@@ -3002,11 +3009,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // list) never sees this click; toggleOfferAsset is called directly.
     var inOffer = !!state.offerAssets[p.nftId];
     var atCap = !inOffer && offerCount() >= OFFER_MAX;
+    var offerToggleHtml = SWAP_BUILDER_ENABLED
+      ? '<button class="my-pigeon-offer-toggle' + (inOffer ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="ADD T0 SWAP 0FFER">' + (inOffer ? '✓' : '+') + '</button>'
+      : '';
     return '<div class="result-card' + (inOffer ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">P!GE0N ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         img +
-        '<button class="my-pigeon-offer-toggle' + (inOffer ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="ADD T0 SWAP 0FFER">' + (inOffer ? '✓' : '+') + '</button>' +
+        offerToggleHtml +
       '</div>' +
       '<div class="result-card-body">' + rarityLine + actionHtml + '</div>' +
     '</div>';
@@ -4001,6 +4011,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   // on a fresh page load none of those have fired yet, so without this
   // call the piles start out completely empty instead of showing slots.
   renderTradeBuilder();
+
+  if (!SWAP_BUILDER_ENABLED){
+    el.tradeBuilderPanel.style.display = 'none';
+    el.swapOffersTabBtn.style.display = 'none';
+  }
 
   // Nothing loads until a tab is chosen — see showTab() — except a return
   // from the CONNECT SCYLLA redirect, which should land back on MY PIGEONS.
