@@ -942,6 +942,61 @@ const SWAP_HTML = `<!DOCTYPE html>
   .target-bar .tb-label{ font-size:12px; letter-spacing:0.1em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); text-transform:uppercase; }
   .target-bar .tb-toggle{ font-size:11px; color:var(--grey); text-transform:uppercase; }
 
+  /* ---- YOUR OFFER bundle builder — compact, lives inside the existing
+     wallet-identity panel rather than as its own large panel ---- */
+  .offer-builder-bar{
+    margin-top:1.1rem;
+    padding-top:1.1rem;
+    border-top:1px dashed var(--border-mid);
+    text-align:center;
+  }
+  .ob-eyebrow{ font-size:11px; letter-spacing:0.2em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); text-transform:uppercase; margin-bottom:0.75rem; }
+  .ob-pile{ display:flex; justify-content:center; align-items:center; }
+  .ob-slot{
+    position:relative;
+    width:3.4em;
+    height:3.4em;
+    border-radius:var(--radius);
+    overflow:hidden;
+    flex-shrink:0;
+    box-shadow:0 2px 8px rgba(0,0,0,0.5);
+    transition:transform 0.15s ease, z-index 0s;
+  }
+  .ob-slot + .ob-slot{ margin-left:-1.1em; }
+  .ob-pile:hover .ob-slot{ transform:translateX(0); }
+  .ob-slot img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .ob-slot.filled{ border:2px solid var(--magenta); cursor:pointer; }
+  .ob-slot.filled:hover{ transform:translateY(-0.25em); z-index:5; box-shadow:0 6px 14px rgba(0,0,0,0.6), 0 0 12px rgba(255,63,208,0.3); }
+  .ob-slot.filled:hover .ob-slot-remove{ opacity:1; }
+  .ob-slot-remove{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(8,9,11,0.72);
+    color:var(--white);
+    font-size:18px;
+    opacity:0;
+    transition:opacity 0.15s ease;
+  }
+  .ob-slot.empty{
+    border:1px dashed var(--border-mid);
+    background:rgba(255,255,255,0.02);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--grey-dim);
+    font-size:16px;
+    cursor:pointer;
+  }
+  .ob-slot.empty:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  .ob-count{ margin-top:0.75rem; font-size:11px; letter-spacing:0.15em; color:var(--grey); text-transform:uppercase; }
+  .ob-submit{ margin-top:0.9rem; }
+  .ob-submit:disabled{ opacity:0.35; cursor:not-allowed; }
+  .ob-submit:disabled:hover{ background:transparent; border-color:var(--cyan-dim); }
+  .card-select-toggle.at-cap{ opacity:0.35; cursor:not-allowed; }
+
   /* ---- target summary / offer placeholder ---- */
   .target-summary-block{ max-width:480px; margin:0 auto; text-align:center; }
   .ts-label{ font-size:10px; letter-spacing:0.2em; color:var(--grey-dim); margin:1.1rem 0 0.4rem; text-transform:uppercase; }
@@ -1013,6 +1068,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="ci-label">WALLET C0NNECTED</div>
         <div class="ci-value ci-value-big" id="myWalletAddr"></div>
         <div class="stat-value" id="myWalletCount" style="margin-top:0.5rem;"></div>
+        <button class="bar-btn" id="buildSwapOfferBtn" style="width:100%; margin-top:0.75rem;">[ BU!LD SWAP 0FFER ]</button>
       </div>
       <div class="search-row" id="myPigeonsSortRow" style="display:none; justify-content:center;">
         <select class="sort-select" id="myPigeonsSortSelect">
@@ -1064,7 +1120,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
 
       <div class="sw-panel sw-panel-target" id="nodeHeaderPanel" style="display:none;">
-        <div class="node-eyebrow">// TARGET N0DE !DENT!F!ED</div>
+        <div class="node-eyebrow" id="nodeEyebrowText">// TARGET N0DE !DENT!F!ED</div>
 
         <div class="target-pigeon-card" id="targetPigeonCard" style="display:none;">
           <div class="tp-label">TARGET P!GE0N</div>
@@ -1079,9 +1135,21 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
 
         <div class="wallet-box">
-          <div class="wallet-box-title">TARGET WALLET<br><span class="wallet-box-sub">// H0LDER N0DE</span></div>
+          <div class="wallet-box-title"><span id="walletBoxTitleMain">TARGET WALLET</span><br><span class="wallet-box-sub" id="walletBoxTitleSub">// H0LDER N0DE</span></div>
           <div class="wallet-box-addr" id="nodeAddr"></div>
           <div class="wallet-box-count" id="nodeCount"></div>
+        </div>
+
+        <!-- Compact "bundle builder" for the YOUR OFFER stage — only ever
+             shown while state.offerMode is true (see renderOfferBar()); the
+             existing TARGET WALLET identity above is reused as-is, just
+             relabeled, so browsing your own wallet works through the exact
+             same load path as browsing anyone else's. -->
+        <div class="offer-builder-bar" id="offerBuilderBar" style="display:none;">
+          <div class="ob-eyebrow">Y0UR 0FFER</div>
+          <div class="ob-pile" id="offerPile"></div>
+          <div class="ob-count" id="offerCount">0 / 4 ASSETS SELECTED</div>
+          <button class="action-btn ob-submit" id="offerSubmitBtn" disabled>[ 0FFER THESE ASSETS ]</button>
         </div>
 
         <div style="text-align:center;">
@@ -1185,6 +1253,25 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-actions">
         <button class="secondary-btn" id="backFromSummaryBtn">[ ← BACK ]</button>
         <button class="action-btn" id="continueToOfferBtn">[ C0NT!NUE T0 0FFER ]</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: YOUR OFFER submitted — stub for the next phase (picking
+         the other side, YOU WANT). No XRPL/settlement logic here at all;
+         this only confirms what got bundled and lets you keep editing. -->
+    <div class="sw-panel" id="screenOfferNext" style="display:none;">
+      <div class="detail-eyebrow">SCYLLA SWAP</div>
+      <div class="target-summary-block">
+        <div class="ts-label">Y0UR 0FFER</div>
+        <div class="ts-value" id="offerNextList"></div>
+        <div class="ts-count" id="offerNextCount"></div>
+      </div>
+      <div class="placeholder-card">
+        <div class="pc-title">// SCYLLA 0FFER BU!LDER</div>
+        <div class="pc-body">Y0U WANT :: SELECT!NG THE 0THER S!DE C0MES NEXT.<br>N0 0FFER HAS BEEN CREATED. N0 WALLET C0NNECTED FOR S!GN!NG. N0 ASSETS M0VED.</div>
+      </div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="offerNextBackBtn">[ ← BACK T0 ED!T ]</button>
       </div>
     </div>
 
@@ -1333,7 +1420,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     currentDetail: null,
     targetAssets: {},         // nftId -> { nftId, number, image } — only while scope is a wallet
     sales: { skip: 0, hasMore: true, loading: false, opened: false },
-    scyllaListedOnly: false   // whole-collection LISTED filter — Pigeons listed through Scylla itself
+    scyllaListedOnly: false,  // whole-collection LISTED filter — Pigeons listed through Scylla itself
+    offerMode: false,        // true while the YOUR OFFER bundle builder is active (browsing own wallet)
+    offerAssets: {}          // nftId -> { nftId, number, image } — up to 4, separate from targetAssets on purpose
   };
 
   var el = {};
@@ -1348,7 +1437,10 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
+   'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
+   'offerBuilderBar','offerPile','offerCount','offerSubmitBtn','buildSwapOfferBtn',
+   'screenOfferNext','offerNextList','offerNextCount','offerNextBackBtn',
    'screenBrowse','screenDetail','screenSummary',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailBuyBtn','detailTraits',
    'detailHistoryToggle','detailHistoryList','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
@@ -1421,6 +1513,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     el.screenDetail.style.display = name === 'detail' ? '' : 'none';
     el.screenSummary.style.display = name === 'summary' ? '' : 'none';
+    el.screenOfferNext.style.display = name === 'offernext' ? '' : 'none';
     el.screenListForm.style.display = name === 'listform' ? '' : 'none';
     el.screenListConfirm.style.display = name === 'listconfirm' ? '' : 'none';
     el.screenListResult.style.display = name === 'listresult' ? '' : 'none';
@@ -1442,7 +1535,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // ---- Target assets (owner-scoped multi-select) ----
   function targetCount(){ return Object.keys(state.targetAssets).length; }
   function renderTargetBar(){
-    if (!state.scope){ el.targetBar.style.display = 'none'; return; }
+    // Suppressed while the YOUR OFFER bundle builder is active — offerBuilderBar
+    // takes over the same "how many have I picked" job for that stage, and
+    // showing both at once would be exactly the competing-navigation
+    // confusion this redesign is meant to remove. The target/summary flow
+    // itself is untouched — this only gates the bar's visibility.
+    if (!state.scope || state.offerMode){ el.targetBar.style.display = 'none'; return; }
     el.targetBar.style.display = 'flex';
     el.targetBarLabel.textContent = 'TARGET ASSETS :: ' + targetCount();
   }
@@ -1452,18 +1550,87 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderTargetBar();
     refreshCardSelectionStates();
   }
+
+  // ---- YOUR OFFER bundle (own wallet, capped at 4) — deliberately its own
+  // state bucket, never shares storage with targetAssets/the target-select
+  // flow above. ----
+  var OFFER_MAX = 4;
+  function offerCount(){ return Object.keys(state.offerAssets).length; }
+  function toggleOfferAsset(p){
+    if (state.offerAssets[p.nftId]){
+      delete state.offerAssets[p.nftId];
+    } else {
+      if (offerCount() >= OFFER_MAX) return;
+      state.offerAssets[p.nftId] = { nftId: p.nftId, number: p.number, image: p.image };
+    }
+    renderOfferBar();
+    refreshCardSelectionStates();
+  }
+  function renderOfferBar(){
+    if (!state.offerMode){ el.offerBuilderBar.style.display = 'none'; return; }
+    el.offerBuilderBar.style.display = '';
+    var items = Object.keys(state.offerAssets).map(function(k){ return state.offerAssets[k]; });
+    var html = items.map(function(p){
+      var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '';
+      return '<div class="ob-slot filled" data-nftid="' + escapeHtml(p.nftId) + '" title="REM0VE FR0M 0FFER">' + img + '<span class="ob-slot-remove">×</span></div>';
+    }).join('');
+    for (var i = items.length; i < OFFER_MAX; i++){
+      html += '<div class="ob-slot empty" title="ADD A P!GE0N">+</div>';
+    }
+    el.offerPile.innerHTML = html;
+    el.offerCount.textContent = items.length + ' / ' + OFFER_MAX + ' ASSETS SELECTED';
+    el.offerSubmitBtn.disabled = items.length === 0;
+  }
+  el.offerPile.addEventListener('click', function(e){
+    var slot = e.target.closest('.ob-slot');
+    if (!slot) return;
+    if (slot.classList.contains('empty')){
+      // Adding happens via the existing + buttons on the grid below —
+      // this just gets the user there, same collection-loading path.
+      el.resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    var nftId = slot.getAttribute('data-nftid');
+    delete state.offerAssets[nftId];
+    renderOfferBar();
+    refreshCardSelectionStates();
+  });
+  function startOfferSelection(){
+    state.offerMode = true;
+    state.offerAssets = {};
+    browseOwnerCollection(MY_WALLET, 'Y0U');
+    el.nodeEyebrowText.textContent = '// Y0UR WALLET !DENT!F!ED';
+    el.walletBoxTitleMain.textContent = 'Y0UR WALLET';
+    el.walletBoxTitleSub.textContent = '// 0FFER SELECT!0N';
+    el.backToFullCollectionLink.textContent = '[ ← EX!T 0FFER SELECT!0N ]';
+    renderOfferBar();
+  }
+  el.buildSwapOfferBtn.addEventListener('click', function(){ startOfferSelection(); });
+  el.offerSubmitBtn.addEventListener('click', function(){
+    if (offerCount() === 0) return;
+    var items = Object.keys(state.offerAssets).map(function(k){ return state.offerAssets[k]; });
+    el.offerNextList.innerHTML = items.map(function(p){ return '🐦 P!GE0N #' + (p.number !== null ? p.number : '????'); }).join('<br>');
+    el.offerNextCount.textContent = items.length + ' / ' + OFFER_MAX + ' ASSETS 0FFERED';
+    showScreen('offernext');
+  });
+  el.offerNextBackBtn.addEventListener('click', function(){ showScreen('browse'); });
+
   function refreshCardSelectionStates(){
     document.querySelectorAll('.result-card').forEach(function(card){
       var id = card.getAttribute('data-nftid');
-      var inTarget = !!state.targetAssets[id];
+      var inTarget = state.offerMode ? !!state.offerAssets[id] : !!state.targetAssets[id];
       card.classList.toggle('in-target', inTarget);
       var btn = card.querySelector('.select-btn');
       if (btn){ btn.classList.toggle('selected', inTarget); btn.textContent = inTarget ? '[ SELECTED ]' : '[ SELECT ]'; }
       var toggle = card.querySelector('.card-select-toggle');
-      if (toggle){ toggle.classList.toggle('selected', inTarget); toggle.textContent = inTarget ? '✓' : '+'; }
+      if (toggle){
+        toggle.classList.toggle('selected', inTarget);
+        toggle.textContent = inTarget ? '✓' : '+';
+        toggle.classList.toggle('at-cap', state.offerMode && !inTarget && offerCount() >= OFFER_MAX);
+      }
     });
     if (el.detailSelectBtn && state.currentDetail && state.scope){
-      var d = !!state.targetAssets[state.currentDetail.nftId];
+      var d = state.offerMode ? !!state.offerAssets[state.currentDetail.nftId] : !!state.targetAssets[state.currentDetail.nftId];
       el.detailSelectBtn.classList.toggle('selected', d);
       el.detailSelectBtn.textContent = d ? '[ SELECTED ]' : '[ SELECT ]';
     }
@@ -1486,7 +1653,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // ---- SELECT behaviour: whole-collection scope picks a TARGET (auto
   // owner lookup + transition); wallet scope toggles a TARGET ASSET. ----
   function handleSelect(p){
-    if (!state.scope){
+    if (state.offerMode){
+      toggleOfferAsset(p);
+    } else if (!state.scope){
       enterOwnerScope(p);
     } else {
       toggleTargetAsset(p);
@@ -1555,6 +1724,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.searchPanelTitle.textContent = 'P!GE0N DATABASE';
     el.searchInput.value = '';
     renderTargetBar();
+    // Leaving via this link always exits the YOUR OFFER builder too, and
+    // restores the TARGET WALLET labels it borrowed for its own use.
+    state.offerMode = false;
+    state.offerAssets = {};
+    renderOfferBar();
+    el.nodeEyebrowText.textContent = '// TARGET N0DE !DENT!F!ED';
+    el.walletBoxTitleMain.textContent = 'TARGET WALLET';
+    el.walletBoxTitleSub.textContent = '// H0LDER N0DE';
+    el.backToFullCollectionLink.textContent = '[ ← EX!T TARGET WALLET :: BACK T0 FULL C0LLECT!0N ]';
     startCollectionBrowse();
   });
 
@@ -1583,7 +1761,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
-    var inTarget = !!state.targetAssets[p.nftId];
+    var inTarget = state.offerMode ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
+    var atCap = state.offerMode && !inTarget && offerCount() >= OFFER_MAX;
     var listingsHtml = p.listings
       ? '<div class="card-listings">' + listingBlockHtml('XRP.CAFE', p.listings.xrpCafe) + listingBlockHtml('DEEPT!DE', p.listings.deeptide) + '</div>'
       : '';
@@ -1599,7 +1778,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       '<div class="result-num">P!GE0N ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         img +
-        '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
+        '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
       '</div>' +
       '<div class="result-card-body">' +
         rarityLine +
