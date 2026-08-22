@@ -790,13 +790,47 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-select-toggle.selected, .my-pigeon-offer-toggle.selected{ background:var(--magenta); color:#08090b; border-color:var(--magenta); animation:flicker-in 0.3s ease-out; }
   .my-pigeon-offer-toggle.at-cap{ opacity:0.35; cursor:not-allowed; }
 
-  /* ---- collection grid / cards ---- */
-  /* Fixed 6 columns at every width, on purpose (not auto-fill/minmax,
-     which was producing inconsistent tile sizes depending on viewport) —
-     chrome is deliberately minimal (number + image + rarity/high-sale +
-     an INSPECT button) since 6 columns doesn't leave room for anything
-     more at any reasonable page width; tap/click the image to INSPECT
-     for full detail. */
+  /* ---- DATABASE results: a vertical list of wide rows, not a grid of
+     tiles — thumbnail/number/rarity fixed on the left, every other
+     detail (both marketplaces' listings, highest/average sale) laid out
+     on the right where there's actually room for it. ---- */
+  .result-list{
+    display:flex;
+    flex-direction:column;
+    gap:0.6rem;
+  }
+  .result-row{
+    display:flex;
+    align-items:stretch;
+    gap:1rem;
+    padding:0.75rem;
+  }
+  .result-row-left{
+    flex:0 0 auto;
+    width:130px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0.4rem;
+  }
+  .result-row-left .pigeon-img-box{ width:100%; }
+  .result-row-left .result-num{ border-bottom:none; padding:0; }
+  .result-row-right{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:0.5rem;
+  }
+  .result-row-right .card-listings{ margin-top:0; }
+  .result-row-right .card-sale-stats{ margin-top:0; padding-top:0.5rem; }
+  @media (max-width:700px){
+    .result-row{ flex-direction:column; align-items:center; text-align:center; }
+    .result-row-left{ width:100%; max-width:200px; }
+  }
+
+  /* ---- old grid-tile card, still used by MY PIGEONS (myPigeonCardHtml) ---- */
   .result-grid{
     display:grid;
     grid-template-columns:repeat(6, 1fr);
@@ -2453,6 +2487,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? '<a class="cl-block cl-block-buy" href="' + escapeHtml(listing.buyUrl) + '" target="_blank" rel="noopener" title="BUY 0N ' + escapeHtml(marketLabel) + '">' + inner + '</a>'
       : '<div class="cl-block">' + inner + '</div>';
   }
+  // DATABASE cards: a wide row (thumbnail/number/rarity on the left,
+  // every other detail on the right) instead of a grid tile — reuses
+  // .result-card for all the existing selection-state/click-handling
+  // hooks (in-target, .pigeon-img-box, .card-select-toggle) unchanged;
+  // .result-row is purely the new visual layout on top of that, so MY
+  // PIGEONS' own tile cards (myPigeonCardHtml, .result-card only, no
+  // .result-row) are completely unaffected.
   function resultCardHtml(p){
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
@@ -2481,14 +2522,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     var buyHtml = (state.scyllaListedOnly && p.scyllaListing && p.owner !== MY_WALLET)
       ? '<button class="bar-btn buy-scylla-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ BUY ]</button>'
       : '';
-    return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      '<div class="result-num">P!GE0N ' + num + '</div>' +
-      '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
-        img +
-        '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
-      '</div>' +
-      '<div class="result-card-body">' +
+    return '<div class="result-card result-row' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
+      '<div class="result-row-left">' +
+        '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
+          img +
+          '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
+        '</div>' +
+        '<div class="result-num">P!GE0N ' + num + '</div>' +
         rarityLine +
+      '</div>' +
+      '<div class="result-row-right">' +
         scyllaListedHtml +
         buyHtml +
         listingsHtml +
@@ -2499,15 +2542,15 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   function appendResults(newItems){
     if (!newItems.length) return;
-    var grid = el.resultsArea.querySelector('.result-grid');
-    if (!grid){
-      el.resultsArea.innerHTML = '<div class="result-grid"></div>';
-      grid = el.resultsArea.querySelector('.result-grid');
+    var list = el.resultsArea.querySelector('.result-list');
+    if (!list){
+      el.resultsArea.innerHTML = '<div class="result-list"></div>';
+      list = el.resultsArea.querySelector('.result-list');
     }
-    grid.insertAdjacentHTML('beforeend', newItems.map(resultCardHtml).join(''));
+    list.insertAdjacentHTML('beforeend', newItems.map(resultCardHtml).join(''));
   }
   function renderResultsReplace(items){
-    el.resultsArea.innerHTML = items.length ? '<div class="result-grid">' + items.map(resultCardHtml).join('') + '</div>' : '';
+    el.resultsArea.innerHTML = items.length ? '<div class="result-list">' + items.map(resultCardHtml).join('') + '</div>' : '';
   }
 
   function wireResultClicks(container, source){
