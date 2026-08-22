@@ -886,17 +886,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.5rem;
   }
   .result-row-left .pigeon-img-box{ width:100%; }
-  .result-row-left .result-num{ border-bottom:none; padding:0; font-size:22px; }
-  /* Small — tucked under the Pigeon number, under the thumbnail, not a
-     full-width bar across the whole card. Click to reveal the inline
-     input+SEND stacked right below it in the same narrow column. */
-  .make-offer-mini{ width:100%; }
+  .result-row-left .result-num{ border-bottom:none; padding:0; font-size:20px; }
+  /* Pigeon number and the small OFFER button share one line — number on
+     the left, offer button on the right, not stacked. */
+  .result-num-row{ display:flex; align-items:center; justify-content:space-between; gap:0.5rem; width:100%; }
+  .result-row-left-rarity{ font-size:13px; letter-spacing:0.03em; color:var(--white); text-align:center; }
+  .result-row-left-rarity .css-label{ color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.06em; margin-right:0.4em; font-size:10px; }
+  /* Small, next to the Pigeon number, not a full-width bar. Click reveals
+     the inline input+SEND stacked below it in the same narrow column. */
+  .make-offer-mini{ flex:0 0 auto; }
   .make-offer-mini-toggle{
     display:flex;
     align-items:center;
-    justify-content:center;
-    gap:0.4rem;
-    width:100%;
+    gap:0.3rem;
     background:rgba(255,51,204,0.08);
     border:1px solid var(--magenta-dim);
     border-radius:var(--radius);
@@ -907,14 +909,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-weight:700;
     letter-spacing:0.04em;
     text-transform:uppercase;
-    padding:0.5em 0.4em;
+    padding:0.4em 0.55em;
     cursor:pointer;
+    white-space:nowrap;
   }
   .make-offer-mini-toggle:hover{ background:rgba(255,51,204,0.16); border-color:var(--magenta); }
   /* The actual Pigeon's own thumbnail, not a generic coin mark — makes it
      obvious at a glance which Pigeon the offer belongs to. */
-  .make-offer-coin{ width:16px; height:16px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--magenta-dim); }
-  .make-offer-mini-inline{ display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.4rem; }
+  .make-offer-coin{ width:14px; height:14px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--magenta-dim); }
+  .make-offer-mini-inline{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
   .make-offer-input{
     flex:1 1 auto;
     min-width:0;
@@ -963,6 +966,49 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-top:1px dashed var(--border-dim);
     padding:0.55em 1rem;
   }
+  /* Flick-through pages — TRAITS, then RARITY, then sale stats, then a
+     link to the full history page — one visible at a time instead of
+     every section stacked as its own bar. */
+  .card-pages{ margin-top:0.5rem; }
+  .card-page-rarity, .card-page-sales{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:1.5rem;
+    flex-wrap:wrap;
+    min-height:80px;
+  }
+  .card-page-history{ display:flex; align-items:center; justify-content:center; min-height:80px; }
+  .card-page-history .card-history-link{
+    background:transparent;
+    border:1px solid var(--cyan-dim);
+    border-radius:var(--radius);
+    color:var(--cyan-dim);
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    cursor:pointer;
+    padding:0.6em 1rem;
+  }
+  .card-page-history .card-history-link:hover{ color:var(--cyan); border-color:var(--cyan); }
+  .card-page-next{
+    display:block;
+    width:100%;
+    margin-top:0.5rem;
+    background:transparent;
+    border:1px dashed var(--border-dim);
+    border-radius:var(--radius);
+    color:var(--cyan-dim);
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    cursor:pointer;
+    text-align:center;
+    padding:0.4em 0.6em;
+  }
+  .card-page-next:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
   @media (max-width:1100px){
     .result-list{ grid-template-columns:1fr; }
   }
@@ -2935,41 +2981,56 @@ const SWAP_HTML = `<!DOCTYPE html>
           (canBuyScylla ? '<button class="card-buy-scylla-btn buy-scylla-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY ]</button>' : '') +
         '</div>'
       : '';
-    var traitsHtml = cardTraitsHtml(p);
     // RARITY SCORE isn't computed yet — deliberately left as a placeholder
     // (real rank/total already exist, the score itself is a later system).
-    // PIGEON #, RARITY, and RARITY SCORE all on one aligned line — same
-    // .css-item size for all three, not the number set apart under the
-    // thumbnail on its own.
-    var rarityStatsHtml = p.rarityRank
-      ? '<div class="card-bottom-bar">' +
-          '<span class="css-item"><span class="css-label">P!GE0N</span>' + num + '</span>' +
-          '<span class="css-item"><span class="css-label">RAR!TY</span>' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</span>' +
-          '<span class="css-item"><span class="css-label">RAR!TY SC0RE</span>[ C0M!NG S00N ]</span>' +
-        '</div>'
+    var rarityLine = p.rarityRank ? p.rarityRank + '/' + (p.rarityTotal || 3015) : null;
+    // Short summary under the Pigeon number, in the left column.
+    var rarityLeftHtml = rarityLine
+      ? '<div class="result-row-left-rarity"><span class="css-label">RAR!TY</span>' + rarityLine + '</div>'
       : '';
+    // Flick-through pages in the right column — TRAITS, then RARITY, then
+    // sale stats, then a link to the full history page — one at a time
+    // instead of every section stacked as its own bar.
+    var rarityPageHtml = '<div class="card-page card-page-rarity" style="display:none;">' +
+      (rarityLine
+        ? '<span class="css-item"><span class="css-label">RAR!TY</span>' + rarityLine + '</span>' +
+          '<span class="css-item"><span class="css-label">RAR!TY SC0RE</span>[ C0M!NG S00N ]</span>'
+        : '<div class="th-empty">N0 RAR!TY DATA</div>') +
+      '</div>';
     var hasHigh = p.highSaleXrp !== null && p.highSaleXrp !== undefined;
     var hasAvg = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
     var hasSaleCount = p.saleCount !== null && p.saleCount !== undefined;
     var hasRecent = p.recentSaleXrp !== null && p.recentSaleXrp !== undefined;
-    var saleStatsHtml = (hasHigh || hasAvg || hasSaleCount || hasRecent)
-      ? '<div class="card-bottom-bar">' +
-          (hasHigh ? '<span class="css-item"><span class="css-label">H!GHEST REC0RDED</span>' + fmtXrp(p.highSaleXrp) + ' XRP / ' + fmtPigeons(p.highSalePigeons) + '</span>' : '') +
+    var salesPageHtml = '<div class="card-page card-page-sales" style="display:none;">' +
+      ((hasHigh || hasAvg || hasSaleCount || hasRecent)
+        ? (hasHigh ? '<span class="css-item"><span class="css-label">H!GHEST REC0RDED</span>' + fmtXrp(p.highSaleXrp) + ' XRP / ' + fmtPigeons(p.highSalePigeons) + '</span>' : '') +
           (hasAvg ? '<span class="css-item"><span class="css-label">AVG SALE</span>' + fmtXrp(p.avgSaleXrp) + ' XRP / ' + fmtPigeons(p.avgSalePigeons) + '</span>' : '') +
           (hasRecent ? '<span class="css-item"><span class="css-label">RECENT SALE</span>' + fmtXrp(p.recentSaleXrp) + ' XRP</span>' : '') +
-          (hasSaleCount ? '<span class="css-item"><span class="css-label">T0TAL SALES</span>' + p.saleCount.toLocaleString() + '</span>' : '') +
-        '</div>'
-      : '';
-    // Small, tucked under the thumbnail's own Pigeon number — not a
-    // full-width strip across the whole card. Click reveals the inline
-    // input+SEND right there in the same narrow left column.
+          (hasSaleCount ? '<span class="css-item"><span class="css-label">T0TAL SALES</span>' + p.saleCount.toLocaleString() + '</span>' : '')
+        : '<div class="th-empty">N0 SALES YET</div>') +
+      '</div>';
+    var historyPageHtml = '<div class="card-page card-page-history" style="display:none;">' +
+        '<button class="card-history-link" data-nftid="' + escapeHtml(p.nftId) + '">[ SALES H!ST0RY → ]</button>' +
+      '</div>';
+    var carouselHtml =
+      '<div class="card-pages" data-page="0">' +
+        '<div class="card-page card-page-traits">' + cardTraitsHtml(p) + '</div>' +
+        rarityPageHtml +
+        salesPageHtml +
+        historyPageHtml +
+      '</div>' +
+      '<button class="card-page-next" data-nftid="' + escapeHtml(p.nftId) + '">[ NEXT ▸ ]</button>';
+    // Small, next to the Pigeon number, not a full-width strip. Click
+    // reveals the inline input+SEND stacked below it in the left column.
     var makeOfferHtml = p.owner !== MY_WALLET
       ? '<div class="make-offer-mini" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<button class="make-offer-mini-toggle" data-nftid="' + escapeHtml(p.nftId) + '"><img class="make-offer-coin" src="' + escapeHtml(p.image || '') + '" alt="">0FFER !N $P!GE0NS</button>' +
-          '<div class="make-offer-mini-inline" style="display:none;">' +
-            '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="AM0UNT">' +
-            '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
-          '</div>' +
+          '<button class="make-offer-mini-toggle" data-nftid="' + escapeHtml(p.nftId) + '"><img class="make-offer-coin" src="' + escapeHtml(p.image || '') + '" alt="">0FFER</button>' +
+        '</div>'
+      : '';
+    var makeOfferInlineHtml = p.owner !== MY_WALLET
+      ? '<div class="make-offer-mini-inline" style="display:none;">' +
+          '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="AM0UNT">' +
+          '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
         '</div>'
       : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -2979,18 +3040,19 @@ const SWAP_HTML = `<!DOCTYPE html>
             img +
             '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
           '</div>' +
-          '<div class="result-num">P!GE0N ' + num + '</div>' +
-          makeOfferHtml +
+          '<div class="result-num-row">' +
+            '<div class="result-num">P!GE0N ' + num + '</div>' +
+            makeOfferHtml +
+          '</div>' +
+          makeOfferInlineHtml +
+          rarityLeftHtml +
         '</div>' +
         '<div class="result-row-right">' +
           listingsHtml +
           scyllaListedHtml +
-          traitsHtml +
+          carouselHtml +
         '</div>' +
       '</div>' +
-      rarityStatsHtml +
-      saleStatsHtml +
-      '<button class="card-bottom-bar card-history-link" data-nftid="' + escapeHtml(p.nftId) + '">[ SALES H!ST0RY → ]</button>' +
       noListingsHtml +
     '</div>';
   }
@@ -3034,17 +3096,29 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       var offerToggle = e.target.closest('.make-offer-mini-toggle');
       if (offerToggle){
-        var mini = offerToggle.closest('.make-offer-mini');
-        var inline = mini.querySelector('.make-offer-mini-inline');
+        var leftCol = offerToggle.closest('.result-row-left');
+        var inline = leftCol.querySelector('.make-offer-mini-inline');
         var opening = inline.style.display === 'none';
         inline.style.display = opening ? 'flex' : 'none';
-        if (opening) mini.querySelector('.make-offer-input').focus();
+        if (opening) inline.querySelector('.make-offer-input').focus();
+        return;
+      }
+      var nextBtn = e.target.closest('.card-page-next');
+      if (nextBtn){
+        var cardEl = nextBtn.closest('.result-card');
+        var pagesEl = cardEl.querySelector('.card-pages');
+        var pages = pagesEl.querySelectorAll('.card-page');
+        var current = parseInt(pagesEl.getAttribute('data-page'), 10) || 0;
+        pages[current].style.display = 'none';
+        current = (current + 1) % pages.length;
+        pages[current].style.display = '';
+        pagesEl.setAttribute('data-page', String(current));
         return;
       }
       var offerSend = e.target.closest('.make-offer-send');
       if (offerSend){
         var op2 = source().filter(function(x){ return x.nftId === offerSend.getAttribute('data-nftid'); })[0];
-        var strip3 = offerSend.closest('.make-offer-mini');
+        var strip3 = offerSend.closest('.result-row-left');
         var priceValue = strip3.querySelector('.make-offer-input').value.trim();
         if (op2) submitMakeOffer(op2, priceValue, strip3);
         return;
@@ -3079,7 +3153,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (e.key !== 'Enter') return;
       var input = e.target.closest('.make-offer-input');
       if (!input) return;
-      var strip4 = input.closest('.make-offer-mini');
+      var strip4 = input.closest('.result-row-left');
       var sendBtn2 = strip4.querySelector('.make-offer-send');
       var op3 = source().filter(function(x){ return x.nftId === sendBtn2.getAttribute('data-nftid'); })[0];
       if (op3) submitMakeOffer(op3, input.value.trim(), strip4);
