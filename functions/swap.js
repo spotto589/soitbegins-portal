@@ -571,6 +571,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .traits-hover-wrap{ position:relative; display:inline-flex; }
   .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.9em 0.6em; }
+  #traitsHoverLabel{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   .traits-hover-wrap:hover .trait-row-label,
   .traits-hover-wrap.open .trait-row-label{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   .traits-flyout{
@@ -708,18 +709,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .clear-traits-btn{
     background:transparent;
-    border:1px solid var(--magenta-dim);
-    color:var(--magenta);
+    border:1px solid rgba(255,61,61,0.5);
+    color:#ff3d3d;
+    text-shadow:0 0 5px rgba(255,61,61,0.5);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:14px;
+    font-weight:700;
     letter-spacing:0.1em;
-    padding:0.6em 1.1em;
+    padding:0.7em 1.3em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
     transition:background 0.15s ease;
   }
-  .clear-traits-btn:hover{ background:var(--magenta-faint); }
+  .clear-traits-btn:hover{ background:rgba(255,61,61,0.12); }
 
   /* ---- results status line ---- */
   .status-line{
@@ -1463,7 +1466,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
         <div class="sort-stack-row">
           <div class="traits-hover-wrap" id="traitsHoverWrap">
-            <span class="trait-row-label" id="traitsHoverLabel">TRA!TS ▾</span>
+            <span class="trait-row-label" id="traitsHoverLabel">ADD TRA!TS ▾</span>
             <div class="traits-flyout" id="traitsFlyout" style="display:none;">
               <div class="traits-flyout-cats" id="traitsFlyoutCats"></div>
               <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
@@ -1475,7 +1478,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="traits-block">
           <div id="traitRows"></div>
           <div class="traits-actions">
-            <button class="bar-btn" id="addTraitBtn">[ + ADD TRA!T ]</button>
             <button class="clear-traits-btn" id="clearTraitsBtn">[ CLEAR TRA!TS ]</button>
           </div>
         </div>
@@ -1820,7 +1822,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount',
-   'indexLine','traitRows','addTraitBtn','clearTraitsBtn',
+   'indexLine','traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
@@ -2884,12 +2886,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       '</div>';
     }).join('');
   }
-  el.addTraitBtn.addEventListener('click', function(){
-    ensureTraitsLoaded().then(function(){
-      state.traitFilters.push({ id: state.nextTraitRowId++, category: '', value: '' });
-      renderTraitRows();
-    });
-  });
   el.clearTraitsBtn.addEventListener('click', function(){
     state.traitFilters = [];
     renderTraitRows();
