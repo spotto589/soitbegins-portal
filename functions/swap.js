@@ -2653,8 +2653,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     var hasAvg = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
     var saleStatsHtml = (hasHigh || hasAvg)
       ? '<div class="card-sale-stats">' +
-          (hasHigh ? '<span class="css-item"><span class="css-label">H!GHEST REC0RDED</span>' + fmtXrp(p.highSaleXrp) + ' XRP</span>' : '') +
-          (hasAvg ? '<span class="css-item"><span class="css-label">AVG SALE</span>' + fmtXrp(p.avgSaleXrp) + ' XRP</span>' : '') +
+          (hasHigh ? '<span class="css-item"><span class="css-label">H!GHEST REC0RDED</span>' + fmtXrp(p.highSaleXrp) + ' XRP / ' + fmtPigeons(p.highSalePigeons) + '</span>' : '') +
+          (hasAvg ? '<span class="css-item"><span class="css-label">AVG SALE</span>' + fmtXrp(p.avgSaleXrp) + ' XRP / ' + fmtPigeons(p.avgSalePigeons) + '</span>' : '') +
         '</div>'
       : '';
     return '<div class="result-card result-row' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -3991,7 +3991,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     if (p && p.highSaleXrp !== null && p.highSaleXrp !== undefined){
       el.detailHighSaleRow.style.display = '';
-      var hsText = p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+      var hsText = p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP / ' + fmtPigeons(p.highSalePigeons);
       el.detailHighSale.innerHTML = p.highSaleTxUrl
         ? '<a class="owner-link" href="' + escapeHtml(p.highSaleTxUrl) + '" target="_blank" rel="noopener">' + escapeHtml(hsText) + '</a>'
         : escapeHtml(hsText);
@@ -4000,7 +4000,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     if (p && p.avgSaleXrp !== null && p.avgSaleXrp !== undefined){
       el.detailAvgSaleRow.style.display = '';
-      el.detailAvgSale.textContent = p.avgSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' + (p.saleCount ? ' (' + p.saleCount + ' SALES)' : '');
+      el.detailAvgSale.textContent = p.avgSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP / ' + fmtPigeons(p.avgSalePigeons) + (p.saleCount ? ' (' + p.saleCount + ' SALES)' : '');
     } else {
       el.detailAvgSaleRow.style.display = 'none';
     }
@@ -4135,6 +4135,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // ledger scan; floor from BOTH marketplaces separately since each has
   // its own liquidity; volume/listed% from xrp.cafe's own stats API) ----
   function fmtXrp(n){ return n === null || n === undefined ? '—' : n.toLocaleString(undefined, { maximumFractionDigits: n < 100 ? 2 : 0 }); }
+  // Real $PIGEONS sale figures default to 0 (never hidden) — a Pigeon that
+  // has never sold through Σκύλλα's own marketplace genuinely has a 0
+  // $PIGEONS sale history, distinct from "no data available."
+  function fmtPigeons(n){ return (n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS'; }
   function loadCollectionStats(){
     api({ stats: 1 }).then(function(data){
       el.statItems.textContent = data.items !== null && data.items !== undefined ? data.items.toLocaleString() : '—';
