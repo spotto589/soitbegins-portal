@@ -300,6 +300,19 @@ export function findPigeonsOffer(offers, owner) {
   ) || null;
 }
 
+// The Σκύλλα SWAP offer among a NFT's real sell offers — a free
+// (Amount "0" XRP, not a $PIGEONS/issued-currency object) transfer offer
+// restricted to a specific Destination wallet. Same "never match on owner
+// alone" reasoning as findPigeonsOffer: a Pigeon can carry an unrelated
+// $PIGEONS or XRP listing at the same time as a swap offer.
+export function findSwapOffer(offers, owner, destination) {
+  return offers.find(o =>
+    (owner === undefined || o.owner === owner) &&
+    (destination === undefined || o.destination === destination) &&
+    typeof o.amount === 'string' && o.amount === '0'
+  ) || null;
+}
+
 // Real on-ledger sell offers for one NFT — the authoritative "is this
 // actually listed, and for how much" source. xrplcluster.com rate-limits
 // (returns a plain-text "Rate limit..." body, not JSON) under bursts of
