@@ -315,10 +315,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   .stat-tile-pigeons:hover{ background-image:linear-gradient(160deg, rgba(255,51,204,0.65), rgba(120,20,100,0.75)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs"); border-color:var(--magenta); }
   .stat-tile-pigeons .stat-label{ color:#fff; opacity:0.9; }
   .stat-tile-pigeons .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.8); font-weight:700; }
-  /* BURNS — a deliberate placeholder tile, real tracking is a later system */
+  /* Deliberate placeholder tile/link, real tracking is a later system */
   .stat-tile-soon{ opacity:0.55; border-style:dashed; }
   .stat-tile-soon:hover{ opacity:0.85; }
   .stat-tile-soon .stat-value{ letter-spacing:0.1em; }
+  /* BURNT count — folded into the ITEMS tile instead of its own tile; the
+     burn list itself doesn't exist yet (later system), so this is a
+     placeholder link, styled quieter than the number it sits next to. */
+  .stat-burnt-link{
+    background:transparent;
+    border:none;
+    font:inherit;
+    font-size:11px;
+    letter-spacing:0.03em;
+    color:var(--grey-dim);
+    cursor:pointer;
+    text-decoration:none;
+    padding:0;
+  }
+  .stat-burnt-link:hover{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
   .card-scylla-listed{ margin-top:0.4rem; font-size:10px; letter-spacing:0.05em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); text-align:center; text-transform:uppercase; }
 
   /* ---- top 10 holders (expandable) ---- */
@@ -871,6 +886,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     grid-template-columns:repeat(2, 1fr);
     gap:0.9rem;
   }
+  /* THUMBNAILS view — 5 across, reuses the compact .result-card tile
+     (image + number + rarity only) instead of the wide detail row. */
+  .result-list.view-thumbnails{
+    grid-template-columns:repeat(5, 1fr);
+    gap:0.7rem;
+  }
   .result-row{
     display:flex;
     align-items:stretch;
@@ -1011,10 +1032,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-page-next:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
   @media (max-width:1100px){
     .result-list{ grid-template-columns:1fr; }
+    .result-list.view-thumbnails{ grid-template-columns:repeat(3, 1fr); }
   }
   @media (max-width:700px){
     .result-row{ flex-direction:column; align-items:center; text-align:center; }
     .result-row-left{ width:100%; max-width:200px; }
+    .result-list.view-thumbnails{ grid-template-columns:repeat(2, 1fr); gap:0.5rem; }
   }
 
   /* ---- old grid-tile card, still used by MY PIGEONS (myPigeonCardHtml) ---- */
@@ -1609,7 +1632,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
         </div>
         <div class="stats-strip stats-strip-main" id="statsStrip">
-          <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value" id="statItems">…</div></div>
+          <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
           <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
           <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
           <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
@@ -1619,7 +1642,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="stat-tile"><div class="stat-label">24H BUYERS</div><div class="stat-value" id="statBuyers24h">…</div></div>
           <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
           <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES DATA"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
-          <button class="stat-tile stat-tile-link stat-tile-soon" id="statBurnsTile" title="N0T L!VE-TRACKED YET"><div class="stat-label">BURNS</div><div class="stat-value">15</div></button>
         </div>
       </div>
 
@@ -1693,6 +1715,10 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
             <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
           </div>
+          <select class="sort-select" id="dbViewSelect">
+            <option value="boxed" selected>B0XED V!EW</option>
+            <option value="thumbnails">THUMBNA!LS</option>
+          </select>
         </div>
         <div class="sort-stack-row">
           <div class="traits-hover-wrap" id="traitsHoverWrap">
@@ -2122,11 +2148,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     targetAssets: {},         // nftId -> { nftId, number, image } — only while scope is a wallet
     sales: { skip: 0, hasMore: true, loading: false, opened: false },
     scyllaListedOnly: false,  // whole-collection LISTED filter — Pigeons listed through Scylla itself
-    offerAssets: {}           // nftId -> { nftId, number, image } — up to 4, YOUR pigeons in the persistent trade builder
+    offerAssets: {},          // nftId -> { nftId, number, image } — up to 4, YOUR pigeons in the persistent trade builder
+    dbView: 'boxed'           // 'boxed' (full detail row) | 'thumbnails' (5-across, # + rarity only) — DATABASE grid only
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
+  ['searchInput','searchBtn','editionSelect','dbViewSelect','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectToggle','dbSelectMenu','copyIssuerBtn','ciIssuerAddr',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
@@ -2134,7 +2161,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount',
-   'statTraded24h','statBuyers24h','statVolume24h','statSalesTile','statSales24h','statBurnsTile',
+   'statTraded24h','statBuyers24h','statVolume24h','statSalesTile','statSales24h','statBurntLink',
    'indexLine','traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
@@ -3065,17 +3092,41 @@ const SWAP_HTML = `<!DOCTYPE html>
     '</div>';
   }
 
+  // THUMBNAILS view — 5-across, image + Pigeon # + rarity only, same
+  // select-toggle/detail-open hooks as the boxed view (.card-select-toggle,
+  // .pigeon-img-box) so wireResultClicks needs no view-specific branching.
+  function thumbnailCardHtml(p){
+    var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
+    var num = p.number !== null ? '#' + p.number : '#????';
+    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
+    var offerCtxCard = isOwnWalletScope();
+    var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
+    var atCap = offerCtxCard
+      ? (!inTarget && offerCount() >= OFFER_MAX)
+      : (!inTarget && targetCount() >= OFFER_MAX);
+    return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
+      '<div class="result-num">P!GE0N ' + num + '</div>' +
+      '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
+        img +
+        '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
+      '</div>' +
+      '<div class="result-card-body">' + rarityLine + '</div>' +
+    '</div>';
+  }
+  function cardHtmlForView(p){
+    return state.dbView === 'thumbnails' ? thumbnailCardHtml(p) : resultCardHtml(p);
+  }
   function appendResults(newItems){
     if (!newItems.length) return;
     var list = el.resultsArea.querySelector('.result-list');
     if (!list){
-      el.resultsArea.innerHTML = '<div class="result-list"></div>';
+      el.resultsArea.innerHTML = '<div class="result-list' + (state.dbView === 'thumbnails' ? ' view-thumbnails' : '') + '"></div>';
       list = el.resultsArea.querySelector('.result-list');
     }
-    list.insertAdjacentHTML('beforeend', newItems.map(resultCardHtml).join(''));
+    list.insertAdjacentHTML('beforeend', newItems.map(cardHtmlForView).join(''));
   }
   function renderResultsReplace(items){
-    el.resultsArea.innerHTML = items.length ? '<div class="result-list">' + items.map(resultCardHtml).join('') + '</div>' : '';
+    el.resultsArea.innerHTML = items.length ? '<div class="result-list' + (state.dbView === 'thumbnails' ? ' view-thumbnails' : '') + '">' + items.map(cardHtmlForView).join('') + '</div>' : '';
   }
 
   function wireResultClicks(container, source){
@@ -4782,6 +4833,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
     runQuery();
   });
+  // Pure re-render, no refetch — swapping views doesn't change the result
+  // set, just how each card in it is drawn.
+  el.dbViewSelect.addEventListener('change', function(){
+    state.dbView = el.dbViewSelect.value;
+    if (state.items && state.items.length) renderResultsReplace(state.items);
+  });
 
   // ---- Inspect / detail ----
   function traitCellHtml(a){
@@ -5014,11 +5071,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     showScreen('browse');
   });
   // BURNS aren't live-tracked anywhere in this codebase yet — the count
-  // shown is a manually-set figure, not a real crawl (that's a later
-  // system); this click note makes that honest instead of implying a
-  // broken link.
-  el.statBurnsTile.addEventListener('click', function(){
-    alert('BURN C0UNT !S MANUALLY SET F0R N0W — L!VE TRACK!NG C0M!NG S00N.');
+  // shown is a manually-set figure, not a real crawl. The burn LIST this
+  // links to doesn't exist yet either (a later system) — this click note
+  // makes that honest instead of implying a broken link.
+  el.statBurntLink.addEventListener('click', function(){
+    alert('BURN L!ST C0M!NG S00N — C0UNT !S MANUALLY SET F0R N0W.');
   });
 
   // ---- Σκύλλα LISTED filter — toggled from the stat tile, or implicitly
