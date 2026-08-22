@@ -1437,11 +1437,21 @@ export async function createXamanPayload(apiKey, apiSecret, txjson, options, att
     }
     return await res.json();
   } catch (e) {
-    if (attempt < 2) {
+    // A real AbortError means xumm.app itself was still slow after the
+    // full 10s budget — not a fast dead-connection blip. Retrying that
+    // spends another full 10s timeout, and across 3 attempts that's up to
+    // ~30s wall time, long enough to hit Cloudflare's own platform-level
+    // request kill (an HTML error page instead of JSON) — the exact
+    // failure this timeout was added to prevent in the first place. Only
+    // retry genuine fast connection failures, never our own timeout.
+    if (attempt < 2 && e && e.name !== 'AbortError') {
       clearTimeout(timer);
       console.log('createXamanPayload exception, retrying, attempt', attempt + 1, String(e));
       await new Promise(resolve => setTimeout(resolve, 400));
       return createXamanPayload(apiKey, apiSecret, txjson, options, attempt + 1);
+    }
+    if (e && e.name === 'AbortError') {
+      console.log('createXamanPayload timed out after', XAMAN_FETCH_TIMEOUT_MS, 'ms, attempt', attempt + 1, '- not retrying');
     }
     return null;
   } finally {
