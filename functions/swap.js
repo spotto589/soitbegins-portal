@@ -873,14 +873,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .result-row-left .pigeon-img-box{ width:100%; }
   .result-row-left .result-num{ border-bottom:none; padding:0; font-size:22px; }
-  /* Full-width strip along the bottom of the WHOLE card (both columns),
-     not confined to the left column — the price input and SEND sit right
-     next to the label, always visible, no click-to-reveal step. */
+  /* Full-width strip along the TOP of the WHOLE card (both columns), above
+     the thumbnail and traits — the price input and SEND sit right next to
+     the label, always visible, no click-to-reveal step. */
   .make-offer-strip{
     display:flex;
     align-items:center;
     gap:0.6rem;
-    border-top:1px solid var(--magenta-dim);
+    border-bottom:1px solid var(--magenta-dim);
     background:rgba(255,51,204,0.06);
     padding:0.7em 1rem;
   }
@@ -939,7 +939,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.5rem;
   }
   .result-row-right .card-listings{ margin-top:0; }
-  .result-row-right .card-sale-stats{ margin-top:0; padding-top:0.5rem; }
+  /* Full-width bars stacked below the thumbnail/traits row — RARITY,
+     sale stats, the SALES HISTORY link, and (when unlisted) NO LISTINGS
+     all share this same horizontal-bar layout instead of being squeezed
+     as stacked lines into the narrow right column. */
+  .card-bottom-bar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:1.5rem;
+    flex-wrap:wrap;
+    border-top:1px dashed var(--border-dim);
+    padding:0.55em 1rem;
+  }
   @media (max-width:1100px){
     .result-list{ grid-template-columns:1fr; }
   }
@@ -981,21 +993,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .result-rarity-line{ font-size:14px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
   .card-listings{ display:flex; gap:0.4rem; margin-top:0.45rem; }
-  /* Neither marketplace has a real listing — one shared strip instead of
-     two separate washed-out "N0 L!ST!NG" boxes. */
+  /* Neither marketplace has a real listing — one shared full-width bar
+     instead of two separate washed-out "N0 L!ST!NG" boxes. */
   .card-no-listings{
-    text-align:center;
     font-size:10px;
     font-weight:700;
     letter-spacing:0.15em;
     color:var(--cyan-dim);
-    border:1px dashed var(--border-mid);
-    border-radius:var(--radius);
-    padding:0.6em 0.5em;
     text-transform:uppercase;
-    margin-top:0.45rem;
   }
-  .result-row-right .card-no-listings{ margin-top:0; }
   .cl-block{
     display:block;
     flex:1;
@@ -1019,7 +1025,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .cl-block-buy:hover{ background:rgba(61,255,138,0.28); box-shadow:0 0 14px var(--green-glow); }
   .cl-block-buy .cl-price{ color:var(--bg); text-shadow:none; }
   .cl-block-buy .cl-market{ color:rgba(8,9,11,0.65); }
-  .card-sale-stats{ display:flex; flex-direction:column; gap:0.25rem; margin-top:0.45rem; padding-top:0.45rem; border-top:1px dashed var(--border-dim); }
   .css-item{ font-size:13px; letter-spacing:0.02em; color:var(--white); text-align:center; font-weight:600; }
   .css-label{ display:inline-block; min-width:110px; color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.05em; margin-right:0.4em; font-size:10px; font-weight:400; }
 
@@ -1055,13 +1060,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:500px){
     .card-trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
-  .card-rarity-stats{ display:flex; flex-direction:column; gap:0.25rem; margin-top:0.45rem; padding-top:0.45rem; border-top:1px dashed var(--border-dim); }
   .card-history-link{
-    display:block;
-    width:100%;
-    margin-top:0.55rem;
-    padding-top:0.5rem;
-    border-top:1px dashed var(--border-dim);
     background:transparent;
     border-left:none; border-right:none; border-bottom:none;
     color:var(--cyan-dim);
@@ -1070,7 +1069,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     letter-spacing:0.12em;
     text-transform:uppercase;
     cursor:pointer;
-    text-align:center;
+    width:100%;
   }
   .card-history-link:hover{ color:var(--cyan); }
   .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
@@ -2855,7 +2854,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Neither marketplace has a real listing — one shared strip at the
     // BOTTOM of the card instead of two separate washed-out placeholders
     // competing with the real listings/traits up top.
-    var noListingsHtml = (p.listings && !hasAnyListing) ? '<div class="card-no-listings">N0 L!ST!NGS</div>' : '';
+    var noListingsHtml = (p.listings && !hasAnyListing) ? '<div class="card-bottom-bar card-no-listings">N0 L!ST!NGS</div>' : '';
     var canBuyScylla = p.scyllaListing && p.owner !== MY_WALLET;
     var scyllaListedHtml = p.scyllaListing
       ? '<div class="card-scylla-row">' +
@@ -2866,8 +2865,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     var traitsHtml = cardTraitsHtml(p);
     // RARITY SCORE isn't computed yet — deliberately left as a placeholder
     // (real rank/total already exist, the score itself is a later system).
+    // A full-width horizontal bar across the bottom of the whole card, not
+    // stacked lines squeezed into the right column.
     var rarityStatsHtml = p.rarityRank
-      ? '<div class="card-rarity-stats">' +
+      ? '<div class="card-bottom-bar">' +
           '<span class="css-item"><span class="css-label">RAR!TY</span>' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</span>' +
           '<span class="css-item"><span class="css-label">RAR!TY SC0RE</span>—</span>' +
         '</div>'
@@ -2875,11 +2876,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     var hasHigh = p.highSaleXrp !== null && p.highSaleXrp !== undefined;
     var hasAvg = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
     var saleStatsHtml = (hasHigh || hasAvg)
-      ? '<div class="card-sale-stats">' +
+      ? '<div class="card-bottom-bar">' +
           (hasHigh ? '<span class="css-item"><span class="css-label">H!GHEST REC0RDED</span>' + fmtXrp(p.highSaleXrp) + ' XRP / ' + fmtPigeons(p.highSalePigeons) + '</span>' : '') +
           (hasAvg ? '<span class="css-item"><span class="css-label">AVG SALE</span>' + fmtXrp(p.avgSaleXrp) + ' XRP / ' + fmtPigeons(p.avgSalePigeons) + '</span>' : '') +
         '</div>'
       : '';
+    // Sits at the very TOP of the card, above the thumbnail and traits —
+    // the first thing you see, not a footnote at the bottom.
     var makeOfferHtml = p.owner !== MY_WALLET
       ? '<div class="make-offer-strip" data-nftid="' + escapeHtml(p.nftId) + '">' +
           '<span class="make-offer-label"><img class="make-offer-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">MAKE AN 0FFER !N $P!GE0NS</span>' +
@@ -2888,6 +2891,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '</div>'
       : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
+      makeOfferHtml +
       '<div class="result-row">' +
         '<div class="result-row-left">' +
           '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -2900,13 +2904,12 @@ const SWAP_HTML = `<!DOCTYPE html>
           listingsHtml +
           scyllaListedHtml +
           traitsHtml +
-          rarityStatsHtml +
-          saleStatsHtml +
-          '<button class="card-history-link" data-nftid="' + escapeHtml(p.nftId) + '">[ SALES H!ST0RY → ]</button>' +
-          noListingsHtml +
         '</div>' +
       '</div>' +
-      makeOfferHtml +
+      rarityStatsHtml +
+      saleStatsHtml +
+      '<button class="card-bottom-bar card-history-link" data-nftid="' + escapeHtml(p.nftId) + '">[ SALES H!ST0RY → ]</button>' +
+      noListingsHtml +
     '</div>';
   }
 
