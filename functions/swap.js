@@ -1791,6 +1791,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       alert('PLEASE SELECT A P!GE0N T0 0FFER F0R.');
       return;
     }
+    // A trade needs two different wallets — a Pigeon you already own can't
+    // go on the WANT side (mirrors the same "not your own" rule BUY
+    // enforces server-side for the $PIGEONS marketplace).
+    if (MY_WALLET && p.owner === MY_WALLET){
+      alert('THAT\\'S ALREADY Y0UR P!GE0N — P!CK 0NE FR0M AN0THER WALLET F0R THE TRADE.');
+      return;
+    }
     if (!state.scope){
       enterOwnerScope(p);
     } else {
