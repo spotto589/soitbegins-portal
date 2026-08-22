@@ -879,7 +879,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .result-row-left{
     flex:0 0 auto;
-    width:220px;
+    width:280px;
     display:flex;
     flex-direction:column;
     align-items:center;
@@ -1075,30 +1075,29 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-scylla-price{ font-size:13px; font-weight:700; letter-spacing:0.02em; color:#fff; text-shadow:0 0 6px rgba(0,0,0,0.4); }
   .card-buy-scylla-btn{ background:rgba(8,9,11,0.35); border:1px solid rgba(255,255,255,0.7); color:#fff; font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; padding:0.35em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:background 0.15s ease; }
   .card-buy-scylla-btn:hover{ background:rgba(8,9,11,0.55); }
-  /* Boxes sized to match the 220px thumbnail's own footprint — 2 columns,
-     bigger padding/text, so only 2 ROWS (4 cells) fit in the same
-     vertical space the thumbnail occupies; anything past that scrolls
-     inside the grid instead of growing the card taller than its own
-     thumbnail. */
+  /* 3 across, sized to roughly match the (now bigger, 280px) thumbnail's
+     own footprint — 2 rows fit in that same vertical space, anything past
+     that scrolls inside the grid instead of growing the card taller than
+     its own thumbnail. */
   .card-trait-grid{
     display:grid;
-    grid-template-columns:repeat(2, 1fr);
-    gap:0.6rem;
+    grid-template-columns:repeat(3, 1fr);
+    gap:0.5rem;
     margin-top:0.5rem;
-    max-height:290px;
+    max-height:330px;
     overflow-y:auto;
     padding-right:2px;
   }
-  .card-trait-cell{ background:rgba(61,243,236,0.05); border:1px solid var(--cyan-dim); border-radius:var(--radius); padding:1rem 0.6rem; text-align:center; cursor:pointer; transition:background 0.15s ease, border-color 0.15s ease; }
+  .card-trait-cell{ background:rgba(61,243,236,0.05); border:1px solid var(--cyan-dim); border-radius:var(--radius); padding:0.85rem 0.5rem; text-align:center; cursor:pointer; transition:background 0.15s ease, border-color 0.15s ease; }
   .card-trait-cell:hover{ background:rgba(61,243,236,0.14); border-color:var(--cyan); }
-  .card-tc-label{ font-size:11px; font-weight:700; letter-spacing:0.1em; color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; margin-bottom:0.35rem; }
-  .card-tc-value{ font-size:16px; font-weight:700; letter-spacing:0.02em; color:#e8fbfa; }
+  .card-tc-label{ font-size:10px; font-weight:700; letter-spacing:0.1em; color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; margin-bottom:0.3rem; }
+  .card-tc-value{ font-size:14px; font-weight:700; letter-spacing:0.02em; color:#e8fbfa; }
   /* The percent is the important number here — same visual weight as the
      value itself, not a tiny grey afterthought. */
-  .card-tc-pct{ font-size:19px; font-weight:800; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); margin-top:0.5rem; padding-top:0.5rem; border-top:1px dashed var(--border-dim); }
-  .card-tc-count{ display:block; font-size:11px; font-weight:400; letter-spacing:0.06em; color:var(--grey); margin-top:0.2rem; text-transform:uppercase; }
+  .card-tc-pct{ font-size:17px; font-weight:800; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); margin-top:0.45rem; padding-top:0.45rem; border-top:1px dashed var(--border-dim); }
+  .card-tc-count{ display:block; font-size:10px; font-weight:400; letter-spacing:0.06em; color:var(--grey); margin-top:0.15rem; text-transform:uppercase; }
   @media (max-width:500px){
-    .card-trait-grid{ grid-template-columns:repeat(1, 1fr); }
+    .card-trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
   .card-history-link{
     background:transparent;
