@@ -1054,6 +1054,16 @@ const SWAP_HTML = `<!DOCTYPE html>
      naming both markets, instead of two separate washed-out boxes. */
   .card-no-listings .css-item{ color:var(--cyan-dim); }
   .card-no-listings .css-label{ color:var(--grey-dim); }
+  /* Real marketplace listing on the bottom bar — a clickable buy link,
+     styled to stand out like the other bottom-bar css-items but green
+     to signal "this one's live and buyable". */
+  a.css-item.css-item-link{
+    color:var(--green);
+    text-shadow:0 0 6px var(--green-glow);
+    text-decoration:none;
+    cursor:pointer;
+  }
+  a.css-item.css-item-link:hover{ text-decoration:underline; }
   .cl-block{
     display:block;
     flex:1;
@@ -2961,18 +2971,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     var hasXcListing = xcListing && xcListing.priceXrp !== null && xcListing.priceXrp !== undefined;
     var hasDtListing = dtListing && dtListing.priceXrp !== null && dtListing.priceXrp !== undefined;
     var hasAnyListing = hasXcListing || hasDtListing;
-    var listingsHtml = (p.listings && hasAnyListing)
-      ? '<div class="card-listings">' + listingBlockHtml('XRP.CAFE', xcListing) + listingBlockHtml('DEEPT!DE', dtListing) + '</div>'
-      : '';
-    // Neither marketplace has a real listing — one shared strip at the
-    // BOTTOM of the card instead of two separate washed-out placeholders
-    // competing with the real listings/traits up top, but still naming
-    // both markets explicitly rather than a single flat "NO LISTINGS".
-    var noListingsHtml = (p.listings && !hasAnyListing)
-      ? '<div class="card-bottom-bar card-no-listings">' +
-          '<span class="css-item"><span class="css-label">XRP.CAFE</span>N0T L!STED</span>' +
-          '<span class="css-item"><span class="css-label">DEEPT!DE</span>N0T L!STED</span>' +
-        '</div>'
+    // Marketplace listings live in one shared strip at the BOTTOM of the
+    // card (real price + buy link when listed, "NOT LISTED" otherwise) —
+    // not competing with traits/rarity up top.
+    var xcBottomHtml = hasXcListing
+      ? '<a class="css-item css-item-link" href="' + escapeHtml(xcListing.buyUrl || '#') + '" target="_blank" rel="noopener"><span class="css-label">XRP.CAFE</span>' + xcListing.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</a>'
+      : '<span class="css-item"><span class="css-label">XRP.CAFE</span>N0T L!STED</span>';
+    var dtBottomHtml = hasDtListing
+      ? '<a class="css-item css-item-link" href="' + escapeHtml(dtListing.buyUrl || '#') + '" target="_blank" rel="noopener"><span class="css-label">DEEPT!DE</span>' + dtListing.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</a>'
+      : '<span class="css-item"><span class="css-label">DEEPT!DE</span>N0T L!STED</span>';
+    var bottomListingsHtml = p.listings
+      ? '<div class="card-bottom-bar card-listings-bottom' + (hasAnyListing ? '' : ' card-no-listings') + '">' + xcBottomHtml + dtBottomHtml + '</div>'
       : '';
     var canBuyScylla = p.scyllaListing && p.owner !== MY_WALLET;
     var scyllaListedHtml = p.scyllaListing
@@ -3048,12 +3057,11 @@ const SWAP_HTML = `<!DOCTYPE html>
           rarityLeftHtml +
         '</div>' +
         '<div class="result-row-right">' +
-          listingsHtml +
           scyllaListedHtml +
           carouselHtml +
         '</div>' +
       '</div>' +
-      noListingsHtml +
+      bottomListingsHtml +
     '</div>';
   }
 
