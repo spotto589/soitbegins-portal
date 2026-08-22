@@ -1042,6 +1042,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   .css-item{ font-size:13px; letter-spacing:0.02em; color:var(--white); text-align:center; font-weight:600; }
   .css-label{ display:inline-block; min-width:110px; color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.05em; margin-right:0.4em; font-size:10px; font-weight:400; }
 
+  /* ---- Universal $PIGEONS statement bar — a big bold purple bar with
+     the collection coin icon, for any "here's the real $PIGEONS number"
+     moment (currently: the LIST confirmation summary). One shared class
+     instead of a bespoke style per screen. ---- */
+  .pigeons-bar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.75rem;
+    padding:1em 1.25rem;
+    border:1px solid var(--magenta);
+    border-radius:var(--radius);
+    background:linear-gradient(90deg, rgba(255,51,204,0.85), rgba(180,30,150,0.85));
+    box-shadow:0 0 16px var(--magenta-glow);
+  }
+  .pigeons-bar-coin{ width:32px; height:32px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.6); flex:0 0 auto; }
+  .pigeons-bar-text{ font-size:16px; font-weight:700; letter-spacing:0.02em; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-align:center; text-transform:uppercase; }
+  @media (max-width:500px){
+    .pigeons-bar-text{ font-size:13px; }
+  }
+
   /* ---- DATABASE row card: $PIGEONS listing (styled as a currency —
      coin icon + amount), traits, and an in-card sales-history toggle that
      replaces the whole right-hand box while open ---- */
@@ -1840,10 +1861,15 @@ const SWAP_HTML = `<!DOCTYPE html>
          most people need to check before signing. -->
     <div class="sw-panel" id="screenListConfirm" style="display:none;">
       <div class="node-eyebrow">// L!ST!NG C0NF!RMAT!0N</div>
-      <div class="detail-num" id="confPigeonNum"></div>
       <div class="detail-img-large pigeon-img-box" id="confPigeonImg">[ IMAGE ]</div>
-      <div class="detail-field" id="confRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="confPigeonRarity"></span></div>
-      <div class="index-line" id="confSummaryLine" style="margin-top:0.75rem;"></div>
+      <div class="index-line" style="display:flex; justify-content:center; gap:1.5rem; margin-top:0.5rem;">
+        <span class="css-item"><span class="css-label">P!GE0N</span><span id="confPigeonNum"></span></span>
+        <span class="css-item" id="confRarityRow" style="display:none;"><span class="css-label">RAR!TY</span><span id="confPigeonRarity"></span></span>
+      </div>
+      <div class="pigeons-bar" style="margin-top:0.9rem;">
+        <img class="pigeons-bar-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
+        <span class="pigeons-bar-text" id="confSummaryLine"></span>
+      </div>
       <div class="detail-history">
         <button class="th-toggle" id="fancyDetailsToggle">[ FANCY DETA!LS ▼ ]</button>
         <div class="th-list" id="fancyDetailsList" style="display:none;">
