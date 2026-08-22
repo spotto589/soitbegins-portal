@@ -887,67 +887,59 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .result-row-left .pigeon-img-box{ width:100%; }
   .result-row-left .result-num{ border-bottom:none; padding:0; font-size:22px; }
-  /* A real inset box at the TOP of the WHOLE card (both columns), above
-     the thumbnail and traits — same bordered/rounded/tinted box language
-     as the trait cells, not a full-bleed edge-to-edge bar. Price input and
-     SEND sit right next to the label, always visible, no click-to-reveal. */
-  .make-offer-strip{
+  /* Small — tucked under the Pigeon number, under the thumbnail, not a
+     full-width bar across the whole card. Click to reveal the inline
+     input+SEND stacked right below it in the same narrow column. */
+  .make-offer-mini{ width:100%; }
+  .make-offer-mini-toggle{
     display:flex;
     align-items:center;
-    gap:0.6rem;
-    margin:0.75rem 0.75rem 0;
+    justify-content:center;
+    gap:0.4rem;
+    width:100%;
+    background:rgba(255,51,204,0.08);
     border:1px solid var(--magenta-dim);
     border-radius:var(--radius);
-    background:rgba(255,51,204,0.08);
-    padding:0.65rem 0.75rem;
-  }
-  .make-offer-label{
-    display:flex;
-    align-items:center;
-    gap:0.5rem;
-    flex:0 0 auto;
     color:var(--magenta);
-    text-shadow:0 0 5px var(--magenta-glow);
+    text-shadow:0 0 4px var(--magenta-glow);
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:10px;
     font-weight:700;
-    letter-spacing:0.06em;
+    letter-spacing:0.04em;
     text-transform:uppercase;
-    white-space:nowrap;
+    padding:0.5em 0.4em;
+    cursor:pointer;
   }
+  .make-offer-mini-toggle:hover{ background:rgba(255,51,204,0.16); border-color:var(--magenta); }
   /* The actual Pigeon's own thumbnail, not a generic coin mark — makes it
-     obvious at a glance which Pigeon the offer strip belongs to. */
-  .make-offer-coin{ width:28px; height:28px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--magenta-dim); }
+     obvious at a glance which Pigeon the offer belongs to. */
+  .make-offer-coin{ width:16px; height:16px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--magenta-dim); }
+  .make-offer-mini-inline{ display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.4rem; }
   .make-offer-input{
-    flex:1;
+    flex:1 1 auto;
     min-width:0;
     background:rgba(8,9,11,0.6);
     border:1px solid var(--magenta-dim);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:13px;
-    padding:0.6em 0.7em;
+    font-size:12px;
+    padding:0.5em 0.6em;
     border-radius:var(--radius);
   }
   .make-offer-input:focus{ outline:none; border-color:var(--magenta); }
   .make-offer-send{
-    flex:0 0 auto;
+    flex:1 1 auto;
     background:var(--magenta);
     border:1px solid var(--magenta);
     color:#08090b;
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:12px;
+    font-size:11px;
     letter-spacing:0.05em;
-    padding:0.6em 0.9em;
+    padding:0.5em 0.6em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
-  }
-  @media (max-width:700px){
-    .make-offer-strip{ flex-wrap:wrap; }
-    .make-offer-label{ width:100%; justify-content:center; }
-    .make-offer-input{ flex:1 1 auto; }
   }
   .result-row-right{
     flex:1;
@@ -1083,33 +1075,30 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-scylla-price{ font-size:13px; font-weight:700; letter-spacing:0.02em; color:#fff; text-shadow:0 0 6px rgba(0,0,0,0.4); }
   .card-buy-scylla-btn{ background:rgba(8,9,11,0.35); border:1px solid rgba(255,255,255,0.7); color:#fff; font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; padding:0.35em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:background 0.15s ease; }
   .card-buy-scylla-btn:hover{ background:rgba(8,9,11,0.55); }
-  /* Capped to ~2 rows (6 cells) so the trait grid stays on par with the
-     220px thumbnail's own height instead of a 7th-trait Pigeon quietly
-     making the right column taller than the left — anything past 6
-     scrolls inside the grid rather than growing the card. */
+  /* Boxes sized to match the 220px thumbnail's own footprint — 2 columns,
+     bigger padding/text, so only 2 ROWS (4 cells) fit in the same
+     vertical space the thumbnail occupies; anything past that scrolls
+     inside the grid instead of growing the card taller than its own
+     thumbnail. */
   .card-trait-grid{
     display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:0.5rem;
+    grid-template-columns:repeat(2, 1fr);
+    gap:0.6rem;
     margin-top:0.5rem;
-    /* Measured live: two real rows of cells run ~249px including gap —
-       216px was clipping exactly-6-trait Pigeons into an unwanted
-       scrollbar. 256px comfortably fits 2 full rows so only 7+ traits
-       (3 rows) actually scroll. */
-    max-height:256px;
+    max-height:290px;
     overflow-y:auto;
     padding-right:2px;
   }
-  .card-trait-cell{ background:rgba(61,243,236,0.05); border:1px solid var(--cyan-dim); border-radius:var(--radius); padding:0.7rem 0.5rem; text-align:center; cursor:pointer; transition:background 0.15s ease, border-color 0.15s ease; }
+  .card-trait-cell{ background:rgba(61,243,236,0.05); border:1px solid var(--cyan-dim); border-radius:var(--radius); padding:1rem 0.6rem; text-align:center; cursor:pointer; transition:background 0.15s ease, border-color 0.15s ease; }
   .card-trait-cell:hover{ background:rgba(61,243,236,0.14); border-color:var(--cyan); }
-  .card-tc-label{ font-size:10px; font-weight:700; letter-spacing:0.1em; color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; margin-bottom:0.3rem; }
-  .card-tc-value{ font-size:14px; font-weight:700; letter-spacing:0.02em; color:#e8fbfa; }
+  .card-tc-label{ font-size:11px; font-weight:700; letter-spacing:0.1em; color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; margin-bottom:0.35rem; }
+  .card-tc-value{ font-size:16px; font-weight:700; letter-spacing:0.02em; color:#e8fbfa; }
   /* The percent is the important number here — same visual weight as the
      value itself, not a tiny grey afterthought. */
-  .card-tc-pct{ font-size:17px; font-weight:800; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); margin-top:0.4rem; padding-top:0.4rem; border-top:1px dashed var(--border-dim); }
-  .card-tc-count{ display:block; font-size:10px; font-weight:400; letter-spacing:0.06em; color:var(--grey); margin-top:0.15rem; text-transform:uppercase; }
+  .card-tc-pct{ font-size:19px; font-weight:800; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); margin-top:0.5rem; padding-top:0.5rem; border-top:1px dashed var(--border-dim); }
+  .card-tc-count{ display:block; font-size:11px; font-weight:400; letter-spacing:0.06em; color:var(--grey); margin-top:0.2rem; text-transform:uppercase; }
   @media (max-width:500px){
-    .card-trait-grid{ grid-template-columns:repeat(2, 1fr); }
+    .card-trait-grid{ grid-template-columns:repeat(1, 1fr); }
   }
   .card-history-link{
     background:transparent;
@@ -2972,17 +2961,19 @@ const SWAP_HTML = `<!DOCTYPE html>
           (hasSaleCount ? '<span class="css-item"><span class="css-label">T0TAL SALES</span>' + p.saleCount.toLocaleString() + '</span>' : '') +
         '</div>'
       : '';
-    // Sits at the very TOP of the card, above the thumbnail and traits —
-    // the first thing you see, not a footnote at the bottom.
+    // Small, tucked under the thumbnail's own Pigeon number — not a
+    // full-width strip across the whole card. Click reveals the inline
+    // input+SEND right there in the same narrow left column.
     var makeOfferHtml = p.owner !== MY_WALLET
-      ? '<div class="make-offer-strip" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<span class="make-offer-label"><img class="make-offer-coin" src="' + escapeHtml(p.image || '') + '" alt="">MAKE AN 0FFER !N $P!GE0NS</span>' +
-          '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="AM0UNT">' +
-          '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
+      ? '<div class="make-offer-mini" data-nftid="' + escapeHtml(p.nftId) + '">' +
+          '<button class="make-offer-mini-toggle" data-nftid="' + escapeHtml(p.nftId) + '"><img class="make-offer-coin" src="' + escapeHtml(p.image || '') + '" alt="">0FFER !N $P!GE0NS</button>' +
+          '<div class="make-offer-mini-inline" style="display:none;">' +
+            '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="AM0UNT">' +
+            '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
+          '</div>' +
         '</div>'
       : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      makeOfferHtml +
       '<div class="result-row">' +
         '<div class="result-row-left">' +
           '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -2990,6 +2981,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
           '</div>' +
           '<div class="result-num">P!GE0N ' + num + '</div>' +
+          makeOfferHtml +
         '</div>' +
         '<div class="result-row-right">' +
           listingsHtml +
@@ -3041,10 +3033,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         showScreen('history');
         return;
       }
+      var offerToggle = e.target.closest('.make-offer-mini-toggle');
+      if (offerToggle){
+        var mini = offerToggle.closest('.make-offer-mini');
+        var inline = mini.querySelector('.make-offer-mini-inline');
+        var opening = inline.style.display === 'none';
+        inline.style.display = opening ? 'flex' : 'none';
+        if (opening) mini.querySelector('.make-offer-input').focus();
+        return;
+      }
       var offerSend = e.target.closest('.make-offer-send');
       if (offerSend){
         var op2 = source().filter(function(x){ return x.nftId === offerSend.getAttribute('data-nftid'); })[0];
-        var strip3 = offerSend.closest('.make-offer-strip');
+        var strip3 = offerSend.closest('.make-offer-mini');
         var priceValue = strip3.querySelector('.make-offer-input').value.trim();
         if (op2) submitMakeOffer(op2, priceValue, strip3);
         return;
@@ -3079,7 +3080,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (e.key !== 'Enter') return;
       var input = e.target.closest('.make-offer-input');
       if (!input) return;
-      var strip4 = input.closest('.make-offer-strip');
+      var strip4 = input.closest('.make-offer-mini');
       var sendBtn2 = strip4.querySelector('.make-offer-send');
       var op3 = source().filter(function(x){ return x.nftId === sendBtn2.getAttribute('data-nftid'); })[0];
       if (op3) submitMakeOffer(op3, input.value.trim(), strip4);
