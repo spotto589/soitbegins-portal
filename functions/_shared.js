@@ -1315,11 +1315,14 @@ export async function maybeRefreshPigeonNumberMap(kv) {
 // sold) — callers show nothing in that case rather than treating it as
 // zero. Powers the "HIGH SALE" line on cards, its bithomp link, and the
 // "H!GHEST SALE" sort.
-// v2: map values became { drops, txHash } instead of a bare drops number —
-// bump the key again if the shape changes further.
+// v2: map values became { drops, txHash } instead of a bare drops number.
+// v3: added totalDrops/count (every sale seen, not just the max) so a real
+// per-NFT average sale price can be derived (totalDrops / count) alongside
+// the existing highest-sale record, from the exact same crawl — no second
+// system needed. Bump the key again if the shape changes further.
 // ─────────────────────────────────────────────────────────────────────────
-const HIGH_SALE_MAP_KEY = 'pswap:highsale:v2';
-const HIGH_SALE_STATS_KEY = 'pswap:highsalestats:v2';
+const HIGH_SALE_MAP_KEY = 'pswap:highsale:v3';
+const HIGH_SALE_STATS_KEY = 'pswap:highsalestats:v3';
 const HIGH_SALE_REFRESH_STALE_SECONDS = 6 * 3600;
 const HIGH_SALE_CONCURRENT_GUARD_SECONDS = 10;
 const HIGH_SALE_PAGES_PER_RUN = 10;
@@ -1348,7 +1351,13 @@ export async function maybeRefreshHighSaleMap(kv) {
       if (!s.nftId || typeof s.priceXrp !== 'number') continue;
       const drops = Math.round(s.priceXrp * 1000000);
       const existing = map[s.nftId];
-      if (!existing || drops > existing.drops) map[s.nftId] = { drops, txHash: s.txHash || null };
+      if (!existing) {
+        map[s.nftId] = { drops, txHash: s.txHash || null, totalDrops: drops, count: 1 };
+      } else {
+        if (drops > existing.drops) { existing.drops = drops; existing.txHash = s.txHash || null; }
+        existing.totalDrops += drops;
+        existing.count += 1;
+      }
     }
     lastTotal = page.total || lastTotal;
     skip += HIGH_SALE_PAGE_LIMIT;

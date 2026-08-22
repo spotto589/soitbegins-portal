@@ -58,6 +58,8 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap) {
     buyUrl: priceDrops !== null ? deeptideBuyUrl(nftId) : null,
     highSaleXrp: highSaleEntry ? highSaleEntry.drops / 1000000 : null,
     highSaleTxUrl: highSaleEntry && highSaleEntry.txHash ? bithompTxUrl(highSaleEntry.txHash) : null,
+    avgSaleXrp: highSaleEntry && highSaleEntry.count ? (highSaleEntry.totalDrops / highSaleEntry.count) / 1000000 : null,
+    saleCount: highSaleEntry ? (highSaleEntry.count || null) : null,
     scyllaListing: scyllaEntry ? { price: scyllaEntry.price, currency: 'PIGEONS' } : null
   };
 }

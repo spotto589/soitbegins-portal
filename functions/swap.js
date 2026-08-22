@@ -876,6 +876,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, color 0.15s ease;
   }
   .cl-buy:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  .card-sale-stats{ display:flex; flex-direction:column; gap:0.3rem; margin-top:0.5rem; padding-top:0.5rem; border-top:1px dashed var(--border-dim); }
+  .css-item{ font-size:11px; letter-spacing:0.02em; color:var(--grey); text-align:center; }
+  .css-label{ display:inline-block; min-width:80px; color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.06em; margin-right:0.4em; font-size:9px; }
   .card-select-toggle, .my-pigeon-offer-toggle{ width:2.2em; height:2.2em; line-height:2.2em; font-size:18px; }
 
   @media (max-width:900px){
@@ -1399,6 +1402,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field" id="detailRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="detailRarity"></span></div>
       <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
       <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
+      <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVG SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
       <div class="listings-block">
         <div class="tech-meta-title">L!ST!NGS</div>
         <div class="listing-row"><span class="listing-market">DEEPT!DE</span><span class="listing-price" id="listingDeeptidePrice">N0T L!STED</span><a class="listing-buy" id="listingDeeptideBuy" style="display:none;" target="_blank" rel="noopener">[ BUY ]</a></div>
@@ -1711,7 +1715,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'screenBrowse','screenDetail','screenSummary',
-   'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailBuyBtn','detailTraits',
+   'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailAvgSaleRow','detailAvgSale','detailBuyBtn','detailTraits',
    'detailHistoryToggle','detailHistoryList','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
    'listingDeeptidePrice','listingDeeptideBuy','listingXrpCafePrice','listingXrpCafeBuy',
    'backToBrowseBtn','detailSelectBtn',
@@ -2481,6 +2485,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     var listingsHtml = p.listings
       ? '<div class="card-listings">' + listingBlockHtml('XRP.CAFE', p.listings.xrpCafe) + listingBlockHtml('DEEPT!DE', p.listings.deeptide) + '</div>'
       : '';
+    var hasHigh = p.highSaleXrp !== null && p.highSaleXrp !== undefined;
+    var hasAvg = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
+    var saleStatsHtml = (hasHigh || hasAvg)
+      ? '<div class="card-sale-stats">' +
+          (hasHigh ? '<span class="css-item"><span class="css-label">H!GH SALE</span>' + fmtXrp(p.highSaleXrp) + ' XRP</span>' : '') +
+          (hasAvg ? '<span class="css-item"><span class="css-label">AVG SALE</span>' + fmtXrp(p.avgSaleXrp) + ' XRP</span>' : '') +
+        '</div>'
+      : '';
     var scyllaListedHtml = p.scyllaListing
       ? '<div class="card-scylla-listed">Σ L!STED :: ' + escapeHtml(p.scyllaListing.price) + ' $P!GE0NS</div>'
       : '';
@@ -2500,6 +2512,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         scyllaListedHtml +
         buyHtml +
         listingsHtml +
+        saleStatsHtml +
       '</div>' +
     '</div>';
   }
@@ -3839,6 +3852,12 @@ const SWAP_HTML = `<!DOCTYPE html>
         : escapeHtml(hsText);
     } else {
       el.detailHighSaleRow.style.display = 'none';
+    }
+    if (p && p.avgSaleXrp !== null && p.avgSaleXrp !== undefined){
+      el.detailAvgSaleRow.style.display = '';
+      el.detailAvgSale.textContent = p.avgSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' + (p.saleCount ? ' (' + p.saleCount + ' SALES)' : '');
+    } else {
+      el.detailAvgSaleRow.style.display = 'none';
     }
   }
   function updateDetailListing(priceEl, buyEl, listing){
