@@ -3187,6 +3187,30 @@ const SWAP_HTML = `<!DOCTYPE html>
       return '<button type="button" class="traits-flyout-cat" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c.toUpperCase()) + '</button>';
     }).join('');
   }
+  // Background trait values are literal colour names for most of the
+  // collection (a handful, like the Haring/Takashi art-style ones, aren't
+  // — those fall back to the normal photo preview below since there's no
+  // sensible flat colour for them).
+  var BACKGROUND_COLOR_MAP = {
+    blue: '#3d7dff', green: '#3dff8a', orange: '#ff8a3d', pink: '#ff6fc7',
+    purple: '#a259ff', yellow: '#ffd93d', red: '#ff4d4d', cyan: '#3df3ec',
+    grey: '#9a9a9a', gray: '#9a9a9a', white: '#f2f2f2', black: '#1a1a1a',
+    brown: '#8a5a3d', teal: '#2fd6c4'
+  };
+  // Different trait categories sit at different heights on the portrait —
+  // Beak/Headwear are near the very top, Eyewear sits lower on the face —
+  // so one fixed crop doesn't work for all of them. Default (20% from top)
+  // suits head/beak-level traits; per-category overrides below for ones
+  // that read wrong at that default.
+  var TRAIT_PREVIEW_POSITION = {
+    Eyewear: 'center 32%',
+    // Feather colour reads clearest on the belly, lower on the frame than
+    // the default head/beak-biased crop.
+    Feathers: 'center 55%',
+    // Aura is a glow/halo effect above the head — the very top edge of
+    // the frame, not the head-biased default.
+    Aura: 'center top'
+  };
   function renderTraitsFlyoutVals(category){
     el.traitsFlyoutCats.querySelectorAll('.traits-flyout-cat').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-cat') === category);
@@ -3195,16 +3219,21 @@ const SWAP_HTML = `<!DOCTYPE html>
       return (a.percent || 0) - (b.percent || 0);
     });
     var exampleImages = (state.traitExamples && state.traitExamples[category]) || {};
+    var isBackgroundCat = category === 'Background';
     el.traitsFlyoutVals.innerHTML = vals.map(function(v){
       var pct = v.percent !== null && v.percent !== undefined ? v.percent.toFixed(3) + '%' : '—';
       var count = v.count !== null && v.count !== undefined ? v.count : '—';
+      var flatColor = isBackgroundCat ? BACKGROUND_COLOR_MAP[v.value.toLowerCase()] : null;
       var exampleImg = exampleImages[v.value];
-      // Dark gradient layered UNDER the image (declared first, painted on
-      // top) so the label/count text stays readable over any photo.
-      var style = exampleImg
-        ? ' style="background-image:linear-gradient(rgba(8,9,11,0.55),rgba(8,9,11,0.8)),url(&quot;' + escapeHtml(exampleImg) + '&quot;);"'
-        : '';
-      return '<button type="button" class="traits-flyout-val' + (exampleImg ? ' has-preview' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
+      var previewPos = TRAIT_PREVIEW_POSITION[category];
+      // Dark gradient layered UNDER the image/colour (declared first,
+      // painted on top) so the label/count text stays readable either way.
+      var style = flatColor
+        ? ' style="background-color:' + flatColor + '; background-image:linear-gradient(rgba(8,9,11,0.35),rgba(8,9,11,0.55));"'
+        : exampleImg
+          ? ' style="background-image:linear-gradient(rgba(8,9,11,0.55),rgba(8,9,11,0.8)),url(&quot;' + escapeHtml(exampleImg) + '&quot;);' + (previewPos ? 'background-position:' + previewPos + ';' : '') + '"'
+          : '';
+      return '<button type="button" class="traits-flyout-val' + ((flatColor || exampleImg) ? ' has-preview' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
         '<span>' + escapeHtml(v.value.toUpperCase()) + '</span>' +
         '<span class="tfv-count">' + count + ' :: ' + pct + '</span>' +
       '</button>';
