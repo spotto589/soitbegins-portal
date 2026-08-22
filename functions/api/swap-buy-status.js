@@ -1,9 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, fetchAllAccountNfts,
-  getXamanPayloadStatus, removeSwapListing, findPigeonsOffer
+  getXamanPayloadStatus, removeSwapListing, findPigeonsOffer, takePendingBuy, recordSwapSale
 } from '../_shared.js';
-
-const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
 
 // Polled by the browser after [ OPEN XAMAN ] while the buyer is signing.
 // Never trusts Xaman's word alone for "purchase settled" — once Xaman
@@ -18,7 +16,7 @@ export async function onRequestGet(context) {
   if (!env.Σκύλλα || !env.coin) {
     return new Response(JSON.stringify({ error: 'server_misconfigured' }), { status: 500 });
   }
-  if (!env.XAMAN_API_SECRET) {
+  if (!env.XAMAN_PROXY_URL || !env.XAMAN_PROXY_SHARED_SECRET) {
     return new Response(JSON.stringify({ error: 'xaman_not_configured' }), { status: 501 });
   }
 
@@ -39,7 +37,7 @@ export async function onRequestGet(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
-  const xummData = await getXamanPayloadStatus(XAMAN_API_KEY, env.XAMAN_API_SECRET, uuid);
+  const xummData = await getXamanPayloadStatus(env, uuid);
   if (!xummData) {
     return new Response(JSON.stringify({ error: 'xaman_lookup_failed' }), { status: 502 });
   }
@@ -83,6 +81,18 @@ export async function onRequestGet(context) {
   }
 
   context.waitUntil(removeSwapListing(env.coin, nftId));
+  context.waitUntil((async () => {
+    const pending = await takePendingBuy(env.coin, uuid);
+    if (!pending) return; // stash missing/expired — sale still settled, just no SALES DATA row
+    await recordSwapSale(env.coin, {
+      txHash,
+      nftId,
+      seller: pending.seller,
+      buyer,
+      priceValue: pending.priceValue,
+      createdAt: new Date().toISOString()
+    });
+  })());
 
   return new Response(JSON.stringify({ status: 'settled', txHash }), {
     headers: { 'Content-Type': 'application/json' }

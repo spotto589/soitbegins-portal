@@ -52,20 +52,30 @@ export async function signToken(payloadObj, secret) {
 }
 
 export async function verifyToken(token, secret) {
-  const parts = token.split('.');
-  if (parts.length !== 2) return null;
-  const [payloadB64, sigB64] = parts;
-  const key = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']
-  );
-  const valid = await crypto.subtle.verify(
-    'HMAC', key, fromBase64Url(sigB64), new TextEncoder().encode(payloadB64)
-  );
-  if (!valid) return null;
-  const payload = JSON.parse(new TextDecoder().decode(fromBase64Url(payloadB64)));
-  if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000)) return null;
-  return payload;
+  // A malformed cookie (stale format, truncated, tampered) makes atob()
+  // throw inside fromBase64Url, or JSON.parse throw on the decoded
+  // payload — uncaught, that's an unhandled exception in the Function,
+  // which Cloudflare turns into its own HTML error page instead of our
+  // JSON response. Every call site expects null for "not signed in," not
+  // a crash, so any malformed-token failure is treated the same way.
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 2) return null;
+    const [payloadB64, sigB64] = parts;
+    const key = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']
+    );
+    const valid = await crypto.subtle.verify(
+      'HMAC', key, fromBase64Url(sigB64), new TextEncoder().encode(payloadB64)
+    );
+    if (!valid) return null;
+    const payload = JSON.parse(new TextDecoder().decode(fromBase64Url(payloadB64)));
+    if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch (e) {
+    return null;
+  }
 }
 
 export async function fetchAllAccountNfts(account) {
@@ -1377,71 +1387,114 @@ export async function removeSwapListing(kv, nftId) {
   await safeKvPut(kv, SWAP_LISTINGS_MAP_KEY, JSON.stringify(map));
 }
 
-// Shared Xaman Payload API calls — used by swap-buy-payload.js,
-// swap-buy-status.js, swap-delist-payload.js, swap-delist-status.js (the
-// original swap-listing-*.js files predate this and keep their own inline
-// fetch calls rather than being refactored, to avoid touching already-
-// tested code). apiSecret is only ever env.XAMAN_API_SECRET, passed in by
-// the caller — never stored or logged here.
-//
-// Both wrapped in try/catch AND bounded by an explicit AbortController
-// timeout. try/catch alone isn't enough: if xumm.app is genuinely slow,
-// Cloudflare's own platform-level timeout can kill the whole request
-// from OUTSIDE this function before our try/catch ever gets a chance to
-// run, and Cloudflare's own timeout page isn't JSON — reported live as a
-// WebKit "SyntaxError: The string did not match the expected pattern"
-// (Safari's phrasing for "tried to JSON.parse a non-JSON body") on the
-// client. Aborting first, on our own terms, well before that external
-// kill, turns it into a normal caught rejection returning null — already
-// handled by every call site as a clean xaman_request_failed/
-// xaman_lookup_failed response.
-const XAMAN_FETCH_TIMEOUT_MS = 10000;
+// Bridges swap-buy-payload.js (which knows the seller + price, right as it
+// builds the accept-offer txjson) to swap-buy-status.js (which only sees
+// "is the offer gone yet" — by settlement time the offer itself, and its
+// price/seller, no longer exist on-ledger to look up). Keyed by the Xaman
+// payload uuid so status polling can retrieve exactly the pending buy it's
+// tracking; short TTL since a real buy settles or expires within minutes.
+const PENDING_BUY_KEY_PREFIX = 'pswap:pendingbuy:';
+const PENDING_BUY_TTL_SECONDS = 900;
 
-// Confirmed live, root cause: the "not ok" responses from this call weren't
-// real rejections from xumm.app at all — status 400, content-length 0, no
-// body, only `connection: close` + `date` headers (no `server: cloudflare`,
-// no `cf-ray`, which every genuine xumm.app response carries). That's
-// Cloudflare Workers' fetch() synthesizing a minimal response after the
-// underlying TCP connection to xumm.app failed/reset before any real HTTP
-// exchange happened — the same category of transient outbound-connection
-// failure already fought (and fixed with retry) for xrplcluster.com calls.
-// Retries once on that specific empty-body signature; a real API rejection
-// (a non-empty JSON error body) is NOT retried, since retrying wouldn't
-// change a genuine validation error.
-export async function createXamanPayload(apiKey, apiSecret, txjson, options, attempt) {
+export async function recordPendingBuy(kv, uuid, entry) {
+  await safeKvPut(kv, PENDING_BUY_KEY_PREFIX + uuid, JSON.stringify(entry), { expirationTtl: PENDING_BUY_TTL_SECONDS });
+}
+
+export async function takePendingBuy(kv, uuid) {
+  const raw = await kv.get(PENDING_BUY_KEY_PREFIX + uuid);
+  if (!raw) return null;
+  await kv.delete(PENDING_BUY_KEY_PREFIX + uuid).catch(() => {});
+  return JSON.parse(raw);
+}
+
+// Σκύλλα's own recorded sales — BUY completions confirmed on-ledger by
+// swap-buy-status.js, priced in $PIGEONS (not XRP, unlike Deeptide's feed),
+// merged into the SALES DATA tab alongside Deeptide's real, collection-wide
+// history so a trade made directly through Σκύλλα (never touching
+// Deeptide's own platform) still shows up there. A simple capped
+// newest-first list, not a full index — good enough for "did my trade show
+// up," not meant to replace a real ledger scan. Read-modify-write on a
+// single KV key means two settlements landing at the exact same moment
+// could race and one overwrite the other's append; acceptable at current
+// volume, worth revisiting if trading picks up.
+const SWAP_SALES_LOG_KEY = 'pswap:saleslog:v1';
+const SWAP_SALES_LOG_MAX = 300;
+
+export async function recordSwapSale(kv, entry) {
+  const raw = await kv.get(SWAP_SALES_LOG_KEY);
+  const list = raw ? JSON.parse(raw) : [];
+  list.unshift(entry);
+  if (list.length > SWAP_SALES_LOG_MAX) list.length = SWAP_SALES_LOG_MAX;
+  await safeKvPut(kv, SWAP_SALES_LOG_KEY, JSON.stringify(list));
+}
+
+export async function getSwapSalesLog(kv) {
+  const raw = await kv.get(SWAP_SALES_LOG_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+
+// Shared Xaman Payload API calls — used by every swap-*-payload.js and
+// swap-*-status.js endpoint. Routed through a small proxy (a separate
+// Render service, not on Cloudflare) instead of calling xumm.app directly:
+// confirmed live via Xaman's own request logs that calls from inside
+// Cloudflare (Workers/Pages Functions) never arrive at xumm.app at all —
+// status 400, content-length 0, no `server`/`cf-ray` headers, i.e.
+// something between Cloudflare's network and xumm.app drops it before any
+// real HTTP exchange happens — while an identical request from a normal
+// connection succeeds every time. Retrying from the same Worker can't fix
+// that, since it's the network path itself, not a transient blip. The
+// proxy re-homes just this one outbound call elsewhere; the real Xaman
+// API key/secret live only in the proxy's own env, never here — this side
+// authenticates with env.XAMAN_PROXY_SHARED_SECRET instead.
+//
+// Wrapped in try/catch AND bounded by an explicit AbortController timeout,
+// longer than the proxy's own internal timeout so a slow xumm.app response
+// surfaces as the proxy's own clean JSON error rather than us aborting the
+// proxy call first. try/catch alone isn't enough regardless: if the proxy
+// itself were slow, Cloudflare's own platform-level timeout could kill the
+// whole request from OUTSIDE this function before our try/catch runs, and
+// Cloudflare's own timeout page isn't JSON — reported live as a WebKit
+// "SyntaxError: The string did not match the expected pattern" (Safari's
+// phrasing for "tried to JSON.parse a non-JSON body") on the client.
+const XAMAN_FETCH_TIMEOUT_MS = 18000;
+
+export async function createXamanPayload(env, txjson, options, attempt) {
   attempt = attempt || 0;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), XAMAN_FETCH_TIMEOUT_MS);
   try {
     const requestBody = JSON.stringify({ txjson, options: options || { submit: true, expire: 5 } });
-    const res = await fetch('https://xumm.app/api/v1/platform/payload', {
+    const res = await fetch(env.XAMAN_PROXY_URL + '/payload', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': apiKey,
-        'X-API-Secret': apiSecret
+        'X-Proxy-Secret': env.XAMAN_PROXY_SHARED_SECRET
       },
       body: requestBody,
       signal: controller.signal
     });
-    if (!res.ok) {
-      const bodyText = await res.text().catch((e) => '');
-      clearTimeout(timer);
-      if (!bodyText && attempt < 2) {
-        console.log('createXamanPayload empty-body failure (status ' + res.status + '), retrying, attempt', attempt + 1);
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data) {
+      console.log('createXamanPayload proxy NOT OK status=' + res.status + ' body=[' + JSON.stringify(data).slice(0, 500) + ']');
+      if (attempt < 1) {
         await new Promise(resolve => setTimeout(resolve, 400));
-        return createXamanPayload(apiKey, apiSecret, txjson, options, attempt + 1);
+        return createXamanPayload(env, txjson, options, attempt + 1);
       }
-      console.log('createXamanPayload NOT OK status=' + res.status + ' body=[' + bodyText.slice(0, 500) + ']');
       return null;
     }
-    return await res.json();
+    return data;
   } catch (e) {
-    if (attempt < 2) {
-      clearTimeout(timer);
+    // A real AbortError means the proxy (or xumm.app behind it) was still
+    // slow after the full timeout budget — not a fast connection blip.
+    // Retrying that just compounds the wait, risking Cloudflare's own
+    // platform-level kill. Only retry genuine fast connection failures.
+    if (attempt < 1 && e && e.name !== 'AbortError') {
       console.log('createXamanPayload exception, retrying, attempt', attempt + 1, String(e));
       await new Promise(resolve => setTimeout(resolve, 400));
-      return createXamanPayload(apiKey, apiSecret, txjson, options, attempt + 1);
+      return createXamanPayload(env, txjson, options, attempt + 1);
+    }
+    if (e && e.name === 'AbortError') {
+      console.log('createXamanPayload timed out after', XAMAN_FETCH_TIMEOUT_MS, 'ms, attempt', attempt + 1, '- not retrying');
     }
     return null;
   } finally {
@@ -1449,12 +1502,12 @@ export async function createXamanPayload(apiKey, apiSecret, txjson, options, att
   }
 }
 
-export async function getXamanPayloadStatus(apiKey, apiSecret, uuid) {
+export async function getXamanPayloadStatus(env, uuid) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), XAMAN_FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch('https://xumm.app/api/v1/platform/payload/' + uuid, {
-      headers: { 'X-API-Key': apiKey, 'X-API-Secret': apiSecret },
+    const res = await fetch(env.XAMAN_PROXY_URL + '/payload/' + uuid, {
+      headers: { 'X-Proxy-Secret': env.XAMAN_PROXY_SHARED_SECRET },
       signal: controller.signal
     });
     if (!res.ok) return null;

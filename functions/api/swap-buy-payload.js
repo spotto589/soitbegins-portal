@@ -1,8 +1,7 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, findPigeonsOffer
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, findPigeonsOffer,
+  recordPendingBuy
 } from '../_shared.js';
-
-const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
 
 // Re-derives and re-validates the exact same txjson swap-buy-prepare.js
 // already showed on the confirmation screen (never trusts a txjson the
@@ -18,7 +17,7 @@ export async function onRequestPost(context) {
     console.log('BUY-PAYLOAD exit: server_misconfigured');
     return new Response(JSON.stringify({ error: 'server_misconfigured' }), { status: 500 });
   }
-  if (!env.XAMAN_API_SECRET) {
+  if (!env.XAMAN_PROXY_URL || !env.XAMAN_PROXY_SHARED_SECRET) {
     console.log('BUY-PAYLOAD exit: xaman_not_configured');
     return new Response(JSON.stringify({ error: 'xaman_not_configured' }), { status: 501 });
   }
@@ -77,13 +76,27 @@ export async function onRequestPost(context) {
     NFTokenSellOffer: offer.nft_offer_index
   };
 
-  const xummData = await createXamanPayload(XAMAN_API_KEY, env.XAMAN_API_SECRET, txjson);
+  const xummData = await createXamanPayload(env, txjson);
   if (!xummData || !xummData.uuid || !xummData.next) {
     console.log('BUY-PAYLOAD exit: xaman_request_failed, xummData was', JSON.stringify(xummData));
     return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });
   }
 
   console.log('BUY-PAYLOAD SUCCESS', xummData.uuid, 'for', buyer, nftId, 'at', new Date().toISOString());
+
+  // Stash seller/price now, while the offer still exists — by the time
+  // swap-buy-status.js confirms settlement, the accepted offer is gone
+  // from the ledger and this is no longer derivable. Best-effort: a lost
+  // write here means the sale still completes fine, just without a SALES
+  // DATA row.
+  if (env.coin) {
+    context.waitUntil(recordPendingBuy(env.coin, xummData.uuid, {
+      nftId,
+      seller: offer.owner,
+      buyer,
+      priceValue: offer.amount.value
+    }));
+  }
 
   return new Response(JSON.stringify({ ok: true, uuid: xummData.uuid, next: xummData.next }), {
     headers: { 'Content-Type': 'application/json' }

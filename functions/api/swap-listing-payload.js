@@ -4,14 +4,6 @@ import {
   PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, createXamanPayload
 } from '../_shared.js';
 
-// Same public OAuth-login key every other page on the site already hardcodes
-// (board.js, scylla.js, kingdom.js, mainframe.js, glitch.js) — it's the
-// client-facing half of the Xaman app, safe to be public. The Payload API
-// call below additionally needs the API *secret*, which is never put in
-// source — it only ever comes from env.XAMAN_API_SECRET (a Cloudflare
-// secret, configured the same way env.Σκύλλα already is).
-const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
-
 // Σκύλλα SWAP — first real listing test. Re-derives and re-validates the
 // exact same txjson swap-listing-prepare.js already showed on the
 // confirmation screen (never trusts a txjson the client might send back —
@@ -25,7 +17,7 @@ export async function onRequestPost(context) {
   if (!env.Σκύλλα) {
     return new Response(JSON.stringify({ error: 'server_misconfigured' }), { status: 500 });
   }
-  if (!env.XAMAN_API_SECRET) {
+  if (!env.XAMAN_PROXY_URL || !env.XAMAN_PROXY_SHARED_SECRET) {
     return new Response(JSON.stringify({ error: 'xaman_not_configured' }), { status: 501 });
   }
 
@@ -88,7 +80,7 @@ export async function onRequestPost(context) {
     Flags: 1
   };
 
-  const xummData = await createXamanPayload(XAMAN_API_KEY, env.XAMAN_API_SECRET, txjson);
+  const xummData = await createXamanPayload(env, txjson);
   const uuid = xummData && xummData.uuid;
   const next = xummData && xummData.next;
   if (!uuid || !next) {

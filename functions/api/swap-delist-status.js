@@ -3,8 +3,6 @@ import {
   getXamanPayloadStatus, removeSwapListing, findPigeonsOffer
 } from '../_shared.js';
 
-const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
-
 // Polled by the browser after [ OPEN XAMAN ] while the seller is signing.
 // Never trusts Xaman's word alone for "delisted" — once Xaman reports the
 // transaction as signed+dispatched, this requires the offer to actually be
@@ -15,7 +13,7 @@ export async function onRequestGet(context) {
   if (!env.Σκύλλα || !env.coin) {
     return new Response(JSON.stringify({ error: 'server_misconfigured' }), { status: 500 });
   }
-  if (!env.XAMAN_API_SECRET) {
+  if (!env.XAMAN_PROXY_URL || !env.XAMAN_PROXY_SHARED_SECRET) {
     return new Response(JSON.stringify({ error: 'xaman_not_configured' }), { status: 501 });
   }
 
@@ -36,7 +34,7 @@ export async function onRequestGet(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
-  const xummData = await getXamanPayloadStatus(XAMAN_API_KEY, env.XAMAN_API_SECRET, uuid);
+  const xummData = await getXamanPayloadStatus(env, uuid);
   if (!xummData) {
     return new Response(JSON.stringify({ error: 'xaman_lookup_failed' }), { status: 502 });
   }
