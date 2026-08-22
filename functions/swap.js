@@ -465,12 +465,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex-wrap:wrap;
     margin-bottom:0.75rem;
   }
+  .sort-flyout{ display:block; width:min(280px, 80vw); max-height:320px; padding:0.5rem; overflow-y:auto; }
   .sort-stack{
     display:flex;
     flex-direction:column;
     gap:0.35rem;
-    flex:1 1 260px;
-    min-width:220px;
   }
   .sort-stack-item{
     display:flex;
@@ -487,21 +486,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sort-stack-handle{ color:var(--grey-dim); font-size:12px; flex:0 0 auto; }
   .sort-stack-rank{ color:var(--cyan); font-size:10px; letter-spacing:0.05em; flex:0 0 auto; text-shadow:0 0 5px var(--cyan-glow); }
   .sort-stack-label{ color:var(--white); font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; text-transform:uppercase; flex:1; }
-  .sort-stack-remove{
-    background:transparent;
-    border:1px solid var(--magenta-dim);
-    color:var(--magenta);
-    font-family:var(--font-mono);
-    font-size:11px;
-    width:1.8em;
-    height:1.8em;
-    flex:0 0 auto;
-    cursor:pointer;
-    border-radius:var(--radius);
-    transition:background 0.15s ease;
-  }
-  .sort-stack-remove:hover{ background:var(--magenta-faint); }
-  .sort-stack-remove:disabled{ opacity:0.3; cursor:not-allowed; }
   input.search-input{
     flex:0 1 140px;
     background:#000;
@@ -716,6 +700,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .trait-chip:hover{ border-color:var(--cyan-dim); color:var(--white); }
   .trait-chip.selected{ background:var(--cyan-faint); color:var(--cyan); border-color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  .trait-row-tag{
+    background:var(--cyan-faint);
+    border:1px solid var(--cyan-dim);
+    border-radius:var(--radius);
+    padding:0.4em 0.6em;
+  }
+  .trait-tag-label{ color:var(--cyan); font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; text-shadow:0 0 5px var(--cyan-glow); flex:1; }
   .trait-row-remove{
     background:transparent;
     border:1px solid var(--magenta-dim);
@@ -828,8 +819,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      for full detail. */
   .result-grid{
     display:grid;
-    grid-template-columns:repeat(4, 1fr);
-    gap:0.9rem;
+    grid-template-columns:repeat(6, 1fr);
+    gap:0.7rem;
   }
   .result-card{
     position:relative;
@@ -845,41 +836,41 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card .pigeon-img-box{ border:none; }
   .result-card.in-target{ border-color:var(--magenta); box-shadow:0 0 0 1px var(--magenta-dim) inset, 0 0 14px rgba(255,63,208,0.22); }
   .result-card.in-target .result-num{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
-  .result-card-body{ padding:0.75rem 0.6rem; }
+  .result-card-body{ padding:0.6rem 0.45rem; }
   .result-num{
-    font-size:20px;
+    font-size:17px;
     font-weight:700;
     letter-spacing:0.03em;
     color:var(--white);
     text-align:center;
-    padding:0.65rem 0.4rem;
+    padding:0.55rem 0.35rem;
     border-bottom:1px solid var(--border-dim);
     transition:color 0.15s ease;
   }
-  .result-rarity-line{ font-size:16px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
-  .card-listings{ display:flex; gap:0.5rem; margin-top:0.6rem; }
-  .cl-block{ flex:1; min-width:0; border:1px solid var(--border-dim); padding:0.55rem 0.35rem; text-align:center; }
-  .cl-market{ font-size:10px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.4rem; }
-  .cl-price{ font-size:14px; font-weight:700; letter-spacing:0.02em; color:var(--green); text-shadow:0 0 6px var(--green-glow); }
-  .cl-price.cl-none{ color:var(--grey-disabled); font-size:11px; font-weight:400; text-shadow:none; text-transform:uppercase; }
+  .result-rarity-line{ font-size:14px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
+  .card-listings{ display:flex; gap:0.4rem; margin-top:0.45rem; }
+  .cl-block{ flex:1; min-width:0; border:1px solid var(--border-dim); padding:0.45rem 0.3rem; text-align:center; }
+  .cl-market{ font-size:9px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.35rem; }
+  .cl-price{ font-size:12px; font-weight:700; letter-spacing:0.02em; color:var(--green); text-shadow:0 0 6px var(--green-glow); }
+  .cl-price.cl-none{ color:var(--grey-disabled); font-size:10px; font-weight:400; text-shadow:none; text-transform:uppercase; }
   .cl-buy{
     display:block;
-    margin-top:0.45rem;
-    font-size:11px;
+    margin-top:0.4rem;
+    font-size:10px;
     letter-spacing:0.08em;
     border:1px solid var(--border-mid);
     color:var(--grey);
-    padding:0.4em 0;
+    padding:0.35em 0;
     text-decoration:none;
     text-transform:uppercase;
     cursor:pointer;
     transition:border-color 0.15s ease, color 0.15s ease;
   }
   .cl-buy:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
-  .card-sale-stats{ display:flex; flex-direction:column; gap:0.3rem; margin-top:0.5rem; padding-top:0.5rem; border-top:1px dashed var(--border-dim); }
-  .css-item{ font-size:11px; letter-spacing:0.02em; color:var(--grey); text-align:center; }
-  .css-label{ display:inline-block; min-width:80px; color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.06em; margin-right:0.4em; font-size:9px; }
-  .card-select-toggle, .my-pigeon-offer-toggle{ width:2.2em; height:2.2em; line-height:2.2em; font-size:18px; }
+  .card-sale-stats{ display:flex; flex-direction:column; gap:0.25rem; margin-top:0.45rem; padding-top:0.45rem; border-top:1px dashed var(--border-dim); }
+  .css-item{ font-size:10px; letter-spacing:0.02em; color:var(--grey); text-align:center; }
+  .css-label{ display:inline-block; min-width:70px; color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.06em; margin-right:0.4em; font-size:8px; }
+  .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
 
   @media (max-width:900px){
     .result-grid{ grid-template-columns:repeat(3, 1fr); }
@@ -891,7 +882,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     .result-grid{ grid-template-columns:repeat(2, 1fr); gap:0.7rem; }
     .result-card-body{ padding:0.6rem 0.5rem; }
     .result-num{ font-size:17px; padding:0.5rem 0.35rem; }
-    .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
+    .card-select-toggle, .my-pigeon-offer-toggle{ width:1.7em; height:1.7em; line-height:1.7em; font-size:14px; }
   }
 
   /* ---- infinite scroll ---- */
@@ -1361,15 +1352,17 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
         <div class="sort-stack-row">
-          <div class="sort-stack" id="sortStackList"></div>
-          <select class="sort-select" id="sortAddSelect">
-            <option value="" selected>[ SELECT ]</option>
-          </select>
           <div class="traits-hover-wrap" id="traitsHoverWrap">
             <span class="trait-row-label" id="traitsHoverLabel">TRA!TS ▾</span>
             <div class="traits-flyout" id="traitsFlyout" style="display:none;">
               <div class="traits-flyout-cats" id="traitsFlyoutCats"></div>
               <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
+            </div>
+          </div>
+          <div class="traits-hover-wrap" id="sortDropWrap">
+            <span class="trait-row-label" id="sortDropLabel">S0RT ▾</span>
+            <div class="traits-flyout sort-flyout" id="sortFlyout" style="display:none;">
+              <div class="sort-stack" id="sortStackList"></div>
             </div>
           </div>
         </div>
@@ -1675,7 +1668,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
     mode: 'browse',            // 'browse' | 'search' | 'scoped'
     sort: 'RARITY_ASC',        // always kept equal to sortStack[0] — the primary key, drives the real fetch
-    sortStack: ['RARITY_ASC'], // priority order for tie-breaking already-loaded items; drag to reorder
+    // Every sort criterion, all always present — drag to reorder priority.
+    // Top entry drives the real fetch; the rest tie-break what's loaded.
+    sortStack: ['RARITY_ASC', 'RARITY_DESC', 'NAME_ASC', 'NAME_DESC', 'PRICE_ASC', 'PRICE_DESC', 'HIGHEST_SALE', 'SALES_LOW', 'SCYLLA_PRICE_ASC', 'SCYLLA_PRICE_DESC'],
     edition: 'ALL',            // 'ALL' | 'LOW' (1-1515) | 'HIGH' (1516-3015)
     activeTab: null,           // null | 'database' | 'mypigeons' | 'topholders' | 'sales'
     databaseLoaded: false,
@@ -1693,7 +1688,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','sortStackList','sortAddSelect',
+  ['searchInput','searchBtn','editionSelect','sortStackList','sortDropWrap','sortDropLabel','sortFlyout',
    'dbSelectToggle','dbSelectMenu','copyIssuerBtn','ciIssuerAddr',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
@@ -2679,6 +2674,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     // (lowest %), not alphabetical — that's the whole point of showing %.
     var cats = state.traitCategories ? Object.keys(state.traitCategories).sort(function(a, b){ return a.localeCompare(b); }) : [];
     el.traitRows.innerHTML = state.traitFilters.map(function(row){
+      // Once a value's actually picked (whichever way — the manual chips
+      // below, or the TRAITS hover flyout), collapse straight down to a
+      // compact applied tag — not the value list again.
+      if (row.category && row.value){
+        return '<div class="trait-row trait-row-tag" data-id="' + row.id + '">' +
+          '<span class="trait-tag-label">' + escapeHtml(row.category.toUpperCase()) + ' :: ' + escapeHtml(row.value.toUpperCase()) + '</span>' +
+          '<button class="trait-row-remove" data-id="' + row.id + '">&times;</button>' +
+        '</div>';
+      }
       var catOptions = cats.map(function(c){
         return '<option value="' + escapeHtml(c) + '"' + (row.category === c ? ' selected' : '') + '>' + escapeHtml(c.toUpperCase()) + '</option>';
       }).join('');
@@ -3639,7 +3643,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     SCYLLA_PRICE_ASC: '$P!GE0NS L0W → H!GH',
     SCYLLA_PRICE_DESC: '$P!GE0NS H!GH → L0W'
   };
-  var SORT_VALUE_ORDER = ['RARITY_ASC', 'RARITY_DESC', 'NAME_ASC', 'NAME_DESC', 'PRICE_ASC', 'PRICE_DESC', 'HIGHEST_SALE', 'SALES_LOW', 'SCYLLA_PRICE_ASC', 'SCYLLA_PRICE_DESC'];
 
   function bestListingPriceOf(p){
     var d = p.listings && p.listings.deeptide ? p.listings.deeptide.priceXrp : p.priceXrp;
@@ -3696,19 +3699,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.items = multiSortItems(state.items, state.sortStack);
     renderResultsReplace(state.items);
   }
+  function promoteToTopOfSortStack(value){
+    state.sortStack = [value].concat(state.sortStack.filter(function(v){ return v !== value; }));
+  }
+  // Every sort criterion is always present in the stack — no separate
+  // "add" step. Just drag to reorder priority.
   function renderSortStack(){
+    el.sortDropLabel.textContent = 'S0RT :: ' + (SORT_VALUE_LABELS[state.sortStack[0]] || state.sortStack[0]) + ' ▾';
     el.sortStackList.innerHTML = state.sortStack.map(function(value, i){
       return '<div class="sort-stack-item" draggable="true" data-value="' + value + '">' +
         '<span class="sort-stack-handle">⠿</span>' +
         '<span class="sort-stack-rank">' + (i + 1) + '</span>' +
         '<span class="sort-stack-label">' + escapeHtml(SORT_VALUE_LABELS[value] || value) + '</span>' +
-        '<button type="button" class="sort-stack-remove" data-value="' + value + '"' + (state.sortStack.length <= 1 ? ' disabled' : '') + '>&times;</button>' +
       '</div>';
     }).join('');
-    var used = state.sortStack;
-    var addOptions = SORT_VALUE_ORDER.filter(function(v){ return used.indexOf(v) === -1; })
-      .map(function(v){ return '<option value="' + v + '">' + escapeHtml(SORT_VALUE_LABELS[v]) + '</option>'; }).join('');
-    el.sortAddSelect.innerHTML = '<option value="" selected>[ SELECT ]</option>' + addOptions;
   }
   function applySortStackTop(){
     var value = state.sortStack[0];
@@ -3724,22 +3728,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     runQuery();
   }
-  el.sortAddSelect.addEventListener('change', function(){
-    var value = el.sortAddSelect.value;
-    if (!value || state.sortStack.indexOf(value) !== -1) return;
-    state.sortStack.push(value);
-    renderSortStack();
-    resortLoadedItems();
-  });
-  el.sortStackList.addEventListener('click', function(e){
-    var removeBtn = e.target.closest('.sort-stack-remove');
-    if (!removeBtn || state.sortStack.length <= 1) return;
-    var value = removeBtn.getAttribute('data-value');
-    var wasTop = state.sortStack[0] === value;
-    state.sortStack = state.sortStack.filter(function(v){ return v !== value; });
-    renderSortStack();
-    if (wasTop) applySortStackTop();
-    else resortLoadedItems();
+  function openSortFlyout(){
+    el.sortFlyout.style.display = 'block';
+    el.sortDropWrap.classList.add('open');
+  }
+  function closeSortFlyout(){
+    el.sortFlyout.style.display = 'none';
+    el.sortDropWrap.classList.remove('open');
+  }
+  el.sortDropWrap.addEventListener('mouseenter', openSortFlyout);
+  el.sortDropWrap.addEventListener('mouseleave', closeSortFlyout);
+  el.sortDropLabel.addEventListener('click', function(){
+    if (el.sortFlyout.style.display === 'block') closeSortFlyout();
+    else openSortFlyout();
   });
   // Drag-to-reorder — plain HTML5 DnD, no library. Reordering above the
   // current top promotes a new primary key (real re-fetch); reordering
@@ -4001,7 +4002,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         // Highest-first is the default entry into LISTED — the main
         // attraction of the site, not a niche filter.
         state.sort = 'SCYLLA_PRICE_DESC';
-        state.sortStack = ['SCYLLA_PRICE_DESC'];
+        promoteToTopOfSortStack('SCYLLA_PRICE_DESC');
         renderSortStack();
       }
       if (state.scope){
@@ -4014,7 +4015,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
     } else if (state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC'){
       state.sort = 'RARITY_ASC';
-      state.sortStack = ['RARITY_ASC'];
+      promoteToTopOfSortStack('RARITY_ASC');
       renderSortStack();
     }
     runQuery();
