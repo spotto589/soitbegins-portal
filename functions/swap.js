@@ -501,6 +501,29 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   select.sort-select:focus{ outline:none; border-color:var(--cyan); }
   select.sort-select option{ background:var(--panel-bg-solid); color:var(--white); }
+  .edition-toggle{
+    flex:0 0 auto;
+    display:flex;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .edition-btn{
+    background:transparent;
+    border:none;
+    border-right:1px solid var(--border-mid);
+    color:var(--grey);
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.05em;
+    padding:0.75em 0.9em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .edition-btn:last-child{ border-right:none; }
+  .edition-btn:hover{ color:var(--cyan); background:var(--cyan-faint); }
+  .edition-btn.active{ background:var(--magenta-faint); color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
   .index-line{
     text-align:center;
     font-family:var(--font-body);
@@ -1189,16 +1212,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="search-row">
           <input class="search-input" id="searchInput" placeholder="SEARCH #..." inputmode="numeric">
           <button class="bar-btn" id="searchBtn">[ GO ]</button>
-          <select class="sort-select" id="editionSelect">
-            <option value="ALL" selected>ALL (1-3015)</option>
-            <option value="LOW">1ST ED!T!0N (1-1515)</option>
-            <option value="HIGH">2ND ED!T!0N (1516-3015)</option>
-          </select>
+          <div class="edition-toggle" id="editionSelect">
+            <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
+            <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
+            <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
+          </div>
           <select class="sort-select" id="sortSelect">
+            <option value="" selected>[ SELECT ]</option>
             <option value="NAME_ASC">A → Z</option>
             <option value="PRICE_ASC">L0WEST L!ST!NG</option>
             <option value="PRICE_DESC">H!GHEST L!ST!NG</option>
-            <option value="RARITY_ASC" selected>RAR!TY H!GH</option>
+            <option value="RARITY_ASC">RAR!TY H!GH</option>
             <option value="RARITY_DESC">RAR!TY L0W</option>
             <option value="HIGHEST_SALE">SALES (H!GHEST)</option>
             <option value="SALES_LOW">SALES (L0WEST)</option>
@@ -1510,13 +1534,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       buttons[i].classList.toggle('active', buttons[i].getAttribute('data-tab') === tab);
     }
     // Nothing fetches until its tab is actually opened for the first time.
-    // Σ SCYLLA LISTED, highest price first, is the default landing view —
-    // the main attraction of the site, not the full 3015-item browse.
+    // Default landing view is the full collection, rarity-high first
+    // (state.sort's own default) — not the Σ SCYLLA LISTED filter.
     if (tab === 'database' && !state.databaseLoaded){
       state.databaseLoaded = true;
       ensureTraitsLoaded();
       loadCollectionStats();
-      setScyllaListedOnly(true);
+      runQuery();
     } else if (tab === 'mypigeons' && myPigeonsData === null){
       loadMyPigeons();
     } else if (tab === 'topholders' && topHoldersData === null){
@@ -2895,6 +2919,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearchBox(); });
   el.sortSelect.addEventListener('change', function(){
     var value = el.sortSelect.value;
+    if (!value) return; // the "[ SELECT ]" placeholder itself — not a real sort
     var isScyllaSort = value === 'SCYLLA_PRICE_ASC' || value === 'SCYLLA_PRICE_DESC';
     if (isScyllaSort){
       state.sort = value;
@@ -2908,8 +2933,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     runQuery();
   });
-  el.editionSelect.addEventListener('change', function(){
-    state.edition = el.editionSelect.value;
+  el.editionSelect.addEventListener('click', function(e){
+    var btn = e.target.closest('.edition-btn');
+    if (!btn) return;
+    state.edition = btn.getAttribute('data-value');
+    el.editionSelect.querySelectorAll('.edition-btn').forEach(function(b){
+      b.classList.toggle('active', b === btn);
+    });
     runQuery();
   });
 
@@ -3125,7 +3155,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         state.targetAssets = {};
         el.nodeHeaderPanel.style.display = 'none';
         el.searchPanelTitle.textContent = 'P!GE0N DATABASE';
-        renderTargetBar();
+        renderTradeBuilder();
       }
     } else if (state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC'){
       state.sort = 'RARITY_ASC';
@@ -3138,6 +3168,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
 
   // ---- Initial load ----
+  // The trade builder's 4+4 empty slots are only ever drawn by
+  // renderTradeBuilder(), which every other call site reaches through a
+  // state change (adding/removing a Pigeon, entering/exiting a scope) —
+  // on a fresh page load none of those have fired yet, so without this
+  // call the piles start out completely empty instead of showing slots.
+  renderTradeBuilder();
+
   // Nothing loads until a tab is chosen — see showTab() — except a return
   // from the CONNECT SCYLLA redirect, which should land back on MY PIGEONS.
   if (window.location.search.indexOf('connected=1') !== -1){
