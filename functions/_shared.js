@@ -1387,89 +1387,65 @@ export async function removeSwapListing(kv, nftId) {
   await safeKvPut(kv, SWAP_LISTINGS_MAP_KEY, JSON.stringify(map));
 }
 
-// Shared Xaman Payload API calls — used by swap-buy-payload.js,
-// swap-buy-status.js, swap-delist-payload.js, swap-delist-status.js (the
-// original swap-listing-*.js files predate this and keep their own inline
-// fetch calls rather than being refactored, to avoid touching already-
-// tested code). apiSecret is only ever env.XAMAN_API_SECRET, passed in by
-// the caller — never stored or logged here.
+// Shared Xaman Payload API calls — used by every swap-*-payload.js and
+// swap-*-status.js endpoint. Routed through a small proxy (a separate
+// Render service, not on Cloudflare) instead of calling xumm.app directly:
+// confirmed live via Xaman's own request logs that calls from inside
+// Cloudflare (Workers/Pages Functions) never arrive at xumm.app at all —
+// status 400, content-length 0, no `server`/`cf-ray` headers, i.e.
+// something between Cloudflare's network and xumm.app drops it before any
+// real HTTP exchange happens — while an identical request from a normal
+// connection succeeds every time. Retrying from the same Worker can't fix
+// that, since it's the network path itself, not a transient blip. The
+// proxy re-homes just this one outbound call elsewhere; the real Xaman
+// API key/secret live only in the proxy's own env, never here — this side
+// authenticates with env.PROXY_SHARED_SECRET instead.
 //
-// Both wrapped in try/catch AND bounded by an explicit AbortController
-// timeout. try/catch alone isn't enough: if xumm.app is genuinely slow,
-// Cloudflare's own platform-level timeout can kill the whole request
-// from OUTSIDE this function before our try/catch ever gets a chance to
-// run, and Cloudflare's own timeout page isn't JSON — reported live as a
-// WebKit "SyntaxError: The string did not match the expected pattern"
-// (Safari's phrasing for "tried to JSON.parse a non-JSON body") on the
-// client. Aborting first, on our own terms, well before that external
-// kill, turns it into a normal caught rejection returning null — already
-// handled by every call site as a clean xaman_request_failed/
-// xaman_lookup_failed response.
-const XAMAN_FETCH_TIMEOUT_MS = 10000;
+// Wrapped in try/catch AND bounded by an explicit AbortController timeout,
+// longer than the proxy's own internal timeout so a slow xumm.app response
+// surfaces as the proxy's own clean JSON error rather than us aborting the
+// proxy call first. try/catch alone isn't enough regardless: if the proxy
+// itself were slow, Cloudflare's own platform-level timeout could kill the
+// whole request from OUTSIDE this function before our try/catch runs, and
+// Cloudflare's own timeout page isn't JSON — reported live as a WebKit
+// "SyntaxError: The string did not match the expected pattern" (Safari's
+// phrasing for "tried to JSON.parse a non-JSON body") on the client.
+const XAMAN_FETCH_TIMEOUT_MS = 18000;
 
-// Confirmed live, root cause: the "not ok" responses from this call weren't
-// real rejections from xumm.app at all — status 400, content-length 0, no
-// body, only `connection: close` + `date` headers (no `server: cloudflare`,
-// no `cf-ray`, which every genuine xumm.app response carries). That's
-// Cloudflare Workers' fetch() synthesizing a minimal response after the
-// underlying TCP connection to xumm.app failed/reset before any real HTTP
-// exchange happened — the same category of transient outbound-connection
-// failure already fought (and fixed with retry) for xrplcluster.com calls.
-// Retries once on that specific empty-body signature; a real API rejection
-// (a non-empty JSON error body) is NOT retried, since retrying wouldn't
-// change a genuine validation error.
-export async function createXamanPayload(apiKey, apiSecret, txjson, options, attempt) {
+export async function createXamanPayload(env, txjson, options, attempt) {
   attempt = attempt || 0;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), XAMAN_FETCH_TIMEOUT_MS);
   try {
     const requestBody = JSON.stringify({ txjson, options: options || { submit: true, expire: 5 } });
-    const res = await fetch('https://xumm.app/api/v1/platform/payload', {
+    const res = await fetch(env.XAMAN_PROXY_URL + '/payload', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': apiKey,
-        'X-API-Secret': apiSecret
+        'X-Proxy-Secret': env.PROXY_SHARED_SECRET
       },
       body: requestBody,
       signal: controller.signal
     });
-    if (!res.ok) {
-      const bodyText = await res.text().catch((e) => '');
-      clearTimeout(timer);
-      // Distinguish a real xumm.app rejection (has cf-ray/server headers,
-      // came from their actual origin) from a synthesized empty response
-      // (a dropped outbound connection, never reached xumm.app at all) -
-      // logged every time, not just inferred from body emptiness, since a
-      // deterministic (not just occasional) empty-body 400 would mean the
-      // retry-on-empty-body theory is wrong and something else is rejecting
-      // every single request outright.
-      console.log('createXamanPayload NOT OK status=' + res.status
-        + ' cf-ray=[' + (res.headers.get('cf-ray') || '') + ']'
-        + ' server=[' + (res.headers.get('server') || '') + ']'
-        + ' content-length=[' + (res.headers.get('content-length') || '') + ']'
-        + ' body=[' + bodyText.slice(0, 500) + ']');
-      if (!bodyText && attempt < 2) {
-        console.log('createXamanPayload empty-body failure (status ' + res.status + '), retrying, attempt', attempt + 1);
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data) {
+      console.log('createXamanPayload proxy NOT OK status=' + res.status + ' body=[' + JSON.stringify(data).slice(0, 500) + ']');
+      if (attempt < 1) {
         await new Promise(resolve => setTimeout(resolve, 400));
-        return createXamanPayload(apiKey, apiSecret, txjson, options, attempt + 1);
+        return createXamanPayload(env, txjson, options, attempt + 1);
       }
       return null;
     }
-    return await res.json();
+    return data;
   } catch (e) {
-    // A real AbortError means xumm.app itself was still slow after the
-    // full 10s budget — not a fast dead-connection blip. Retrying that
-    // spends another full 10s timeout, and across 3 attempts that's up to
-    // ~30s wall time, long enough to hit Cloudflare's own platform-level
-    // request kill (an HTML error page instead of JSON) — the exact
-    // failure this timeout was added to prevent in the first place. Only
-    // retry genuine fast connection failures, never our own timeout.
-    if (attempt < 2 && e && e.name !== 'AbortError') {
-      clearTimeout(timer);
+    // A real AbortError means the proxy (or xumm.app behind it) was still
+    // slow after the full timeout budget — not a fast connection blip.
+    // Retrying that just compounds the wait, risking Cloudflare's own
+    // platform-level kill. Only retry genuine fast connection failures.
+    if (attempt < 1 && e && e.name !== 'AbortError') {
       console.log('createXamanPayload exception, retrying, attempt', attempt + 1, String(e));
       await new Promise(resolve => setTimeout(resolve, 400));
-      return createXamanPayload(apiKey, apiSecret, txjson, options, attempt + 1);
+      return createXamanPayload(env, txjson, options, attempt + 1);
     }
     if (e && e.name === 'AbortError') {
       console.log('createXamanPayload timed out after', XAMAN_FETCH_TIMEOUT_MS, 'ms, attempt', attempt + 1, '- not retrying');
@@ -1480,12 +1456,12 @@ export async function createXamanPayload(apiKey, apiSecret, txjson, options, att
   }
 }
 
-export async function getXamanPayloadStatus(apiKey, apiSecret, uuid) {
+export async function getXamanPayloadStatus(env, uuid) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), XAMAN_FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch('https://xumm.app/api/v1/platform/payload/' + uuid, {
-      headers: { 'X-API-Key': apiKey, 'X-API-Secret': apiSecret },
+    const res = await fetch(env.XAMAN_PROXY_URL + '/payload/' + uuid, {
+      headers: { 'X-Proxy-Secret': env.PROXY_SHARED_SECRET },
       signal: controller.signal
     });
     if (!res.ok) return null;

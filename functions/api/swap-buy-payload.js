@@ -2,8 +2,6 @@ import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, findPigeonsOffer
 } from '../_shared.js';
 
-const XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
-
 // Re-derives and re-validates the exact same txjson swap-buy-prepare.js
 // already showed on the confirmation screen (never trusts a txjson the
 // client might send back — only nftId), then asks Xaman to create a real
@@ -18,7 +16,7 @@ export async function onRequestPost(context) {
     console.log('BUY-PAYLOAD exit: server_misconfigured');
     return new Response(JSON.stringify({ error: 'server_misconfigured' }), { status: 500 });
   }
-  if (!env.XAMAN_API_SECRET) {
+  if (!env.XAMAN_PROXY_URL || !env.PROXY_SHARED_SECRET) {
     console.log('BUY-PAYLOAD exit: xaman_not_configured');
     return new Response(JSON.stringify({ error: 'xaman_not_configured' }), { status: 501 });
   }
@@ -77,7 +75,7 @@ export async function onRequestPost(context) {
     NFTokenSellOffer: offer.nft_offer_index
   };
 
-  const xummData = await createXamanPayload(XAMAN_API_KEY, env.XAMAN_API_SECRET, txjson);
+  const xummData = await createXamanPayload(env, txjson);
   if (!xummData || !xummData.uuid || !xummData.next) {
     console.log('BUY-PAYLOAD exit: xaman_request_failed, xummData was', JSON.stringify(xummData));
     return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });
