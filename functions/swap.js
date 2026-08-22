@@ -458,6 +458,50 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex-wrap:wrap;
     margin-bottom:0.75rem;
   }
+  .sort-stack-row{
+    display:flex;
+    align-items:flex-start;
+    gap:0.6rem;
+    flex-wrap:wrap;
+    margin-bottom:0.75rem;
+  }
+  .sort-stack{
+    display:flex;
+    flex-direction:column;
+    gap:0.35rem;
+    flex:1 1 260px;
+    min-width:220px;
+  }
+  .sort-stack-item{
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+    background:#000;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    padding:0.5em 0.6em;
+    cursor:grab;
+  }
+  .sort-stack-item.dragging{ opacity:0.4; }
+  .sort-stack-item.drag-over{ border-color:var(--cyan); box-shadow:0 0 0 1px var(--cyan-dim); }
+  .sort-stack-handle{ color:var(--grey-dim); font-size:12px; flex:0 0 auto; }
+  .sort-stack-rank{ color:var(--cyan); font-size:10px; letter-spacing:0.05em; flex:0 0 auto; text-shadow:0 0 5px var(--cyan-glow); }
+  .sort-stack-label{ color:var(--white); font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; text-transform:uppercase; flex:1; }
+  .sort-stack-remove{
+    background:transparent;
+    border:1px solid var(--magenta-dim);
+    color:var(--magenta);
+    font-family:var(--font-mono);
+    font-size:11px;
+    width:1.8em;
+    height:1.8em;
+    flex:0 0 auto;
+    cursor:pointer;
+    border-radius:var(--radius);
+    transition:background 0.15s ease;
+  }
+  .sort-stack-remove:hover{ background:var(--magenta-faint); }
+  .sort-stack-remove:disabled{ opacity:0.3; cursor:not-allowed; }
   input.search-input{
     flex:0 1 140px;
     background:#000;
@@ -1312,18 +1356,11 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
             <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
           </div>
-          <select class="sort-select" id="sortSelect">
+        </div>
+        <div class="sort-stack-row">
+          <div class="sort-stack" id="sortStackList"></div>
+          <select class="sort-select" id="sortAddSelect">
             <option value="" selected>[ SELECT ]</option>
-            <option value="NAME_ASC">A → Z</option>
-            <option value="PRICE_ASC">L0WEST L!ST!NG</option>
-            <option value="PRICE_DESC">H!GHEST L!ST!NG</option>
-            <option value="RARITY_ASC">RAR!TY H!GH</option>
-            <option value="RARITY_DESC">RAR!TY L0W</option>
-            <option value="HIGHEST_SALE">SALES (H!GHEST)</option>
-            <option value="SALES_LOW">SALES (L0WEST)</option>
-            <option value="SCYLLA_PRICE_ASC">$P!GE0NS L0W → H!GH</option>
-            <option value="SCYLLA_PRICE_DESC">$P!GE0NS H!GH → L0W</option>
-            <option value="NAME_DESC">Z → A</option>
           </select>
           <div class="traits-hover-wrap" id="traitsHoverWrap">
             <span class="trait-row-label" id="traitsHoverLabel">TRA!TS ▾</span>
@@ -1633,7 +1670,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     items: [],                // everything loaded so far in the current browse/search mode
     scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
     mode: 'browse',            // 'browse' | 'search' | 'scoped'
-    sort: 'RARITY_ASC',
+    sort: 'RARITY_ASC',        // always kept equal to sortStack[0] — the primary key, drives the real fetch
+    sortStack: ['RARITY_ASC'], // priority order for tie-breaking already-loaded items; drag to reorder
     edition: 'ALL',            // 'ALL' | 'LOW' (1-1515) | 'HIGH' (1516-3015)
     activeTab: null,           // null | 'database' | 'mypigeons' | 'topholders' | 'sales'
     databaseLoaded: false,
@@ -1651,7 +1689,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','sortSelect',
+  ['searchInput','searchBtn','editionSelect','sortStackList','sortAddSelect',
    'dbSelectToggle','dbSelectMenu','copyIssuerBtn','ciIssuerAddr',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
@@ -2585,7 +2623,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (isEdition && typeof data.rawSkip === 'number') state.editionRawSkip = data.rawSkip;
       state.total = typeof data.total === 'number' ? data.total : state.total;
       state.hasMore = !!data.hasMore && newItems.length > 0;
-      appendResults(newItems);
+      // With more than one sort axis stacked, keep refining tie-break order
+      // as each page comes in (a full re-sort + re-render — only pays that
+      // cost when a stack is actually in use). A single-axis stack (the
+      // default) keeps the original cheap append, unchanged.
+      if (state.sortStack.length > 1){
+        state.items = multiSortItems(state.items, state.sortStack);
+        renderResultsReplace(state.items);
+      } else {
+        appendResults(newItems);
+      }
       var note = filters.length ? ' :: TRA!T F!LTERED' : '';
       el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + (state.total !== null ? state.total : state.items.length) + '</span>' + note;
       if (!state.items.length){
@@ -3558,22 +3605,169 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   el.searchBtn.addEventListener('click', runSearchBox);
   el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearchBox(); });
-  el.sortSelect.addEventListener('change', function(){
-    var value = el.sortSelect.value;
-    if (!value) return; // the "[ SELECT ]" placeholder itself — not a real sort
+  // ---- Sort stack — the DATABASE grid's sort is now a reorderable
+  // priority list, not a single pick. The backend still only fetches by
+  // ONE key at a time (state.sort, always kept equal to sortStack[0]) —
+  // rewriting every fetch branch in pigeons.js for a true global multi-key
+  // sort is a much bigger job. This is the lighter version: dragging
+  // reorders priority; if the TOP entry changes, that's a real re-fetch
+  // (same as picking a different sort used to be); reordering/adding/
+  // removing anything else just re-sorts what's already loaded, refining
+  // further as more pages come in (see loadMoreCollection). ----
+  var SORT_VALUE_LABELS = {
+    NAME_ASC: 'A → Z',
+    NAME_DESC: 'Z → A',
+    PRICE_ASC: 'L0WEST L!ST!NG',
+    PRICE_DESC: 'H!GHEST L!ST!NG',
+    RARITY_ASC: 'RAR!TY H!GH',
+    RARITY_DESC: 'RAR!TY L0W',
+    HIGHEST_SALE: 'SALES (H!GHEST)',
+    SALES_LOW: 'SALES (L0WEST)',
+    SCYLLA_PRICE_ASC: '$P!GE0NS L0W → H!GH',
+    SCYLLA_PRICE_DESC: '$P!GE0NS H!GH → L0W'
+  };
+  var SORT_VALUE_ORDER = ['RARITY_ASC', 'RARITY_DESC', 'NAME_ASC', 'NAME_DESC', 'PRICE_ASC', 'PRICE_DESC', 'HIGHEST_SALE', 'SALES_LOW', 'SCYLLA_PRICE_ASC', 'SCYLLA_PRICE_DESC'];
+
+  function bestListingPriceOf(p){
+    var d = p.listings && p.listings.deeptide ? p.listings.deeptide.priceXrp : p.priceXrp;
+    var x = p.listings && p.listings.xrpCafe ? p.listings.xrpCafe.priceXrp : null;
+    if ((d === null || d === undefined) && (x === null || x === undefined)) return null;
+    if (d === null || d === undefined) return x;
+    if (x === null || x === undefined) return d;
+    return Math.min(d, x);
+  }
+  // Same single-key comparisons runScopedQuery already uses for wallet-
+  // scoped browsing — duplicated rather than shared, so this can be
+  // extended freely (new axes, tweaks) without risking that existing,
+  // already-working path.
+  function compareBySortValue(value, a, b){
+    switch (value){
+      case 'RARITY_ASC': case 'RARITY_DESC': {
+        var ar = a.rarityRank === null || a.rarityRank === undefined ? Infinity : a.rarityRank;
+        var br = b.rarityRank === null || b.rarityRank === undefined ? Infinity : b.rarityRank;
+        return value === 'RARITY_DESC' ? br - ar : ar - br;
+      }
+      case 'NAME_ASC': case 'NAME_DESC':
+        return value === 'NAME_DESC' ? (b.number || 0) - (a.number || 0) : (a.number || 0) - (b.number || 0);
+      case 'HIGHEST_SALE': case 'SALES_LOW': {
+        var av = a.highSaleXrp === null || a.highSaleXrp === undefined ? -1 : a.highSaleXrp;
+        var bv = b.highSaleXrp === null || b.highSaleXrp === undefined ? -1 : b.highSaleXrp;
+        return value === 'SALES_LOW' ? av - bv : bv - av;
+      }
+      case 'PRICE_ASC': case 'PRICE_DESC': {
+        var ap = bestListingPriceOf(a), bp = bestListingPriceOf(b);
+        if (ap === null && bp === null) return 0;
+        if (ap === null) return 1;
+        if (bp === null) return -1;
+        return value === 'PRICE_DESC' ? bp - ap : ap - bp;
+      }
+      case 'SCYLLA_PRICE_ASC': case 'SCYLLA_PRICE_DESC': {
+        var asv = a.scyllaListing ? (parseFloat(a.scyllaListing.price) || 0) : -1;
+        var bsv = b.scyllaListing ? (parseFloat(b.scyllaListing.price) || 0) : -1;
+        return value === 'SCYLLA_PRICE_DESC' ? bsv - asv : asv - bsv;
+      }
+      default: return 0;
+    }
+  }
+  function multiSortItems(items, stack){
+    return items.slice().sort(function(a, b){
+      for (var i = 0; i < stack.length; i++){
+        var r = compareBySortValue(stack[i], a, b);
+        if (r) return r;
+      }
+      return 0;
+    });
+  }
+  function resortLoadedItems(){
+    if (state.scope) return; // wallet-scoped browsing keeps its own single-key sort, untouched
+    state.items = multiSortItems(state.items, state.sortStack);
+    renderResultsReplace(state.items);
+  }
+  function renderSortStack(){
+    el.sortStackList.innerHTML = state.sortStack.map(function(value, i){
+      return '<div class="sort-stack-item" draggable="true" data-value="' + value + '">' +
+        '<span class="sort-stack-handle">⠿</span>' +
+        '<span class="sort-stack-rank">' + (i + 1) + '</span>' +
+        '<span class="sort-stack-label">' + escapeHtml(SORT_VALUE_LABELS[value] || value) + '</span>' +
+        '<button type="button" class="sort-stack-remove" data-value="' + value + '"' + (state.sortStack.length <= 1 ? ' disabled' : '') + '>&times;</button>' +
+      '</div>';
+    }).join('');
+    var used = state.sortStack;
+    var addOptions = SORT_VALUE_ORDER.filter(function(v){ return used.indexOf(v) === -1; })
+      .map(function(v){ return '<option value="' + v + '">' + escapeHtml(SORT_VALUE_LABELS[v]) + '</option>'; }).join('');
+    el.sortAddSelect.innerHTML = '<option value="" selected>[ SELECT ]</option>' + addOptions;
+  }
+  function applySortStackTop(){
+    var value = state.sortStack[0];
+    state.sort = value;
     var isScyllaSort = value === 'SCYLLA_PRICE_ASC' || value === 'SCYLLA_PRICE_DESC';
     if (isScyllaSort){
-      state.sort = value;
       setScyllaListedOnly(true); // also runs the query
       return;
     }
-    state.sort = value;
     if (state.scyllaListedOnly){
       setScyllaListedOnly(false); // also runs the query
       return;
     }
     runQuery();
+  }
+  el.sortAddSelect.addEventListener('change', function(){
+    var value = el.sortAddSelect.value;
+    if (!value || state.sortStack.indexOf(value) !== -1) return;
+    state.sortStack.push(value);
+    renderSortStack();
+    resortLoadedItems();
   });
+  el.sortStackList.addEventListener('click', function(e){
+    var removeBtn = e.target.closest('.sort-stack-remove');
+    if (!removeBtn || state.sortStack.length <= 1) return;
+    var value = removeBtn.getAttribute('data-value');
+    var wasTop = state.sortStack[0] === value;
+    state.sortStack = state.sortStack.filter(function(v){ return v !== value; });
+    renderSortStack();
+    if (wasTop) applySortStackTop();
+    else resortLoadedItems();
+  });
+  // Drag-to-reorder — plain HTML5 DnD, no library. Reordering above the
+  // current top promotes a new primary key (real re-fetch); reordering
+  // that leaves the top entry alone just re-sorts what's already loaded.
+  var sortDragValue = null;
+  el.sortStackList.addEventListener('dragstart', function(e){
+    var item = e.target.closest('.sort-stack-item');
+    if (!item) return;
+    sortDragValue = item.getAttribute('data-value');
+    item.classList.add('dragging');
+  });
+  el.sortStackList.addEventListener('dragend', function(e){
+    var item = e.target.closest('.sort-stack-item');
+    if (item) item.classList.remove('dragging');
+    el.sortStackList.querySelectorAll('.drag-over').forEach(function(el2){ el2.classList.remove('drag-over'); });
+  });
+  el.sortStackList.addEventListener('dragover', function(e){
+    var item = e.target.closest('.sort-stack-item');
+    if (!item || item.getAttribute('data-value') === sortDragValue) return;
+    e.preventDefault();
+    el.sortStackList.querySelectorAll('.drag-over').forEach(function(el2){ el2.classList.remove('drag-over'); });
+    item.classList.add('drag-over');
+  });
+  el.sortStackList.addEventListener('drop', function(e){
+    var item = e.target.closest('.sort-stack-item');
+    if (!item || !sortDragValue) return;
+    e.preventDefault();
+    var targetValue = item.getAttribute('data-value');
+    if (targetValue === sortDragValue) return;
+    var wasTop = state.sortStack[0];
+    var fromIdx = state.sortStack.indexOf(sortDragValue);
+    var toIdx = state.sortStack.indexOf(targetValue);
+    if (fromIdx === -1 || toIdx === -1) return;
+    state.sortStack.splice(fromIdx, 1);
+    state.sortStack.splice(toIdx, 0, sortDragValue);
+    sortDragValue = null;
+    renderSortStack();
+    if (state.sortStack[0] !== wasTop) applySortStackTop();
+    else resortLoadedItems();
+  });
+  renderSortStack();
   el.editionSelect.addEventListener('click', function(e){
     var btn = e.target.closest('.edition-btn');
     if (!btn) return;
@@ -3788,7 +3982,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         // Highest-first is the default entry into LISTED — the main
         // attraction of the site, not a niche filter.
         state.sort = 'SCYLLA_PRICE_DESC';
-        el.sortSelect.value = 'SCYLLA_PRICE_DESC';
+        state.sortStack = ['SCYLLA_PRICE_DESC'];
+        renderSortStack();
       }
       if (state.scope){
         state.scope = null;
@@ -3800,7 +3995,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
     } else if (state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC'){
       state.sort = 'RARITY_ASC';
-      el.sortSelect.value = 'RARITY_ASC';
+      state.sortStack = ['RARITY_ASC'];
+      renderSortStack();
     }
     runQuery();
   }
