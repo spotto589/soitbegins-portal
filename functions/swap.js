@@ -1551,7 +1551,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="stat-tile"><div class="stat-label">24H BUYERS</div><div class="stat-value" id="statBuyers24h">…</div></div>
           <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
           <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES DATA"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
-          <button class="stat-tile stat-tile-link stat-tile-soon" id="statBurnsTile" title="C0M!NG S00N — NOT TRACKED YET"><div class="stat-label">BURNS</div><div class="stat-value">S00N</div></button>
+          <button class="stat-tile stat-tile-link stat-tile-soon" id="statBurnsTile" title="N0T L!VE-TRACKED YET"><div class="stat-label">BURNS</div><div class="stat-value">15</div></button>
         </div>
       </div>
 
@@ -4799,11 +4799,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.activeTab = 'sales';
     showScreen('browse');
   });
-  // BURNS aren't tracked anywhere in this codebase yet — this tile is a
-  // deliberate placeholder (real burn tracking is a future system), not a
+  // BURNS aren't live-tracked anywhere in this codebase yet — the count
+  // shown is a manually-set figure, not a real crawl (that's a later
+  // system); this click note makes that honest instead of implying a
   // broken link.
   el.statBurnsTile.addEventListener('click', function(){
-    alert('BURNS TRACK!NG :: C0M!NG S00N.');
+    alert('BURN C0UNT !S MANUALLY SET F0R N0W — L!VE TRACK!NG C0M!NG S00N.');
   });
 
   // ---- Σκύλλα LISTED filter — toggled from the stat tile, or implicitly
