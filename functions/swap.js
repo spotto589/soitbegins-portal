@@ -1023,7 +1023,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
   .detail-num{ text-align:center; font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:0.04em; color:var(--white); margin-bottom:1.25rem; }
-  .detail-img-large{ width:100%; max-width:300px; margin:0 auto 1.25rem; border:1px solid var(--border-mid); }
+  .detail-img-large{ width:100%; max-width:460px; margin:0 auto 0.75rem; border:1px solid var(--border-mid); }
+  .detail-listings-row{ max-width:460px; margin:0 auto 1.25rem; }
+  .detail-listings-row .cl-block{ padding:0.65rem 0.5rem; }
+  .detail-listings-row .cl-market{ font-size:10px; margin-bottom:0.45rem; }
+  .detail-listings-row .cl-price{ font-size:14px; }
   .detail-field{
     display:flex;
     justify-content:space-between;
@@ -1491,11 +1495,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-eyebrow">// P!GE0N !DENT!F!ED</div>
       <div class="detail-num" id="detailNum"></div>
       <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
-      <div class="listings-block">
-        <div class="tech-meta-title">L!ST!NGS</div>
-        <div class="listing-row"><span class="listing-market">DEEPT!DE</span><span class="listing-price" id="listingDeeptidePrice">N0T L!STED</span><a class="listing-buy" id="listingDeeptideBuy" style="display:none;" target="_blank" rel="noopener">[ BUY ]</a></div>
-        <div class="listing-row"><span class="listing-market">XRP.CAFE</span><span class="listing-price" id="listingXrpCafePrice">N0T L!STED</span><a class="listing-buy" id="listingXrpCafeBuy" style="display:none;" target="_blank" rel="noopener">[ BUY ]</a></div>
-      </div>
+      <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
       <div class="scylla-listing-block">
         <div class="tech-meta-title">$P!GE0NS L!ST!NGS</div>
         <div class="scylla-listing-row">
@@ -1506,13 +1506,13 @@ const SWAP_HTML = `<!DOCTYPE html>
           <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">[ BUY ]</button>
         </div>
       </div>
+      <div class="detail-traits-title">TRA!TS</div>
+      <div class="trait-grid" id="detailTraits"></div>
       <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
       <div class="detail-field" id="detailRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="detailRarity"></span></div>
       <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
       <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
       <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVG SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
-      <div class="detail-traits-title">TRA!TS</div>
-      <div class="trait-grid" id="detailTraits"></div>
       <div class="detail-history">
         <button class="th-toggle" id="detailHistoryToggle">[ SALES H!ST0RY ]</button>
       </div>
@@ -1835,9 +1835,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'screenBrowse','screenDetail','screenSummary','screenHistory',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailAvgSaleRow','detailAvgSale','detailBuyBtn','detailTraits',
-   'detailScyllaPrice','detailScyllaBuyBtn',
+   'detailScyllaPrice','detailScyllaBuyBtn','detailListingsRow',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
-   'listingDeeptidePrice','listingDeeptideBuy','listingXrpCafePrice','listingXrpCafeBuy',
    'backToBrowseBtn','detailSelectBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
@@ -4011,19 +4010,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailScyllaBuyBtn.style.display = 'none';
     }
   }
-  function updateDetailListing(priceEl, buyEl, listing){
-    if (listing && listing.priceXrp !== null && listing.priceXrp !== undefined){
-      priceEl.textContent = listing.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
-      buyEl.style.display = '';
-      buyEl.href = listing.buyUrl;
-    } else {
-      priceEl.textContent = 'N0T L!STED';
-      buyEl.style.display = 'none';
-    }
-  }
+  // Same DEEPTIDE/XRP.CAFE clickable-box component the DATABASE cards use
+  // (listingBlockHtml), side by side directly under the big image —
+  // instead of the old stacked market/price/buy-link rows.
   function updateDetailListings(listings){
-    updateDetailListing(el.listingDeeptidePrice, el.listingDeeptideBuy, listings && listings.deeptide);
-    updateDetailListing(el.listingXrpCafePrice, el.listingXrpCafeBuy, listings && listings.xrpCafe);
+    el.detailListingsRow.innerHTML = listingBlockHtml('XRP.CAFE', listings && listings.xrpCafe) + listingBlockHtml('DEEPT!DE', listings && listings.deeptide);
   }
   function findKnown(nftId){
     return state.items.filter(function(p){ return p.nftId === nftId; })[0] ||
