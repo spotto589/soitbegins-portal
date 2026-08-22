@@ -291,6 +291,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .stat-tile-link.scylla-active{ border-color:var(--magenta); background:var(--magenta-faint); }
   .stat-tile-link.scylla-active:hover{ background:var(--magenta-faint); border-color:var(--magenta); }
   .stat-tile-link.scylla-active .stat-value{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+  /* BURNS — a deliberate placeholder tile, real tracking is a later system */
+  .stat-tile-soon{ opacity:0.55; border-style:dashed; }
+  .stat-tile-soon:hover{ opacity:0.85; }
+  .stat-tile-soon .stat-value{ letter-spacing:0.1em; }
   .card-scylla-listed{ margin-top:0.4rem; font-size:10px; letter-spacing:0.05em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); text-align:center; text-transform:uppercase; }
 
   /* ---- top 10 holders (expandable) ---- */
@@ -1492,6 +1496,11 @@ const SWAP_HTML = `<!DOCTYPE html>
           <button class="stat-tile stat-tile-link" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">Σ SCYLLA L!STED</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
           <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
           <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
+          <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
+          <div class="stat-tile"><div class="stat-label">24H BUYERS</div><div class="stat-value" id="statBuyers24h">…</div></div>
+          <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
+          <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES DATA"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
+          <button class="stat-tile stat-tile-link stat-tile-soon" id="statBurnsTile" title="C0M!NG S00N — NOT TRACKED YET"><div class="stat-label">BURNS</div><div class="stat-value">S00N</div></button>
         </div>
       </div>
 
@@ -1985,6 +1994,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount',
+   'statTraded24h','statBuyers24h','statVolume24h','statSalesTile','statSales24h','statBurnsTile',
    'indexLine','traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
@@ -4679,8 +4689,22 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (data.deeptideBuyUrl) el.statFloorDeeptideTile.href = data.deeptideBuyUrl;
       if (data.xrpCafeUrl) el.statFloorXrpCafeTile.href = data.xrpCafeUrl;
       el.statScyllaListedCount.textContent = data.scyllaListedCount !== null && data.scyllaListedCount !== undefined ? data.scyllaListedCount.toLocaleString() : '—';
+      el.statTraded24h.textContent = data.traded24hCount !== null && data.traded24hCount !== undefined ? data.traded24hCount.toLocaleString() : '—';
+      el.statBuyers24h.textContent = data.buyers24hCount !== null && data.buyers24hCount !== undefined ? data.buyers24hCount.toLocaleString() : '—';
+      el.statVolume24h.textContent = data.volume24hXrp !== null && data.volume24hXrp !== undefined ? fmtXrp(data.volume24hXrp) + ' XRP' : '—';
+      el.statSales24h.textContent = data.sales24hCount !== null && data.sales24hCount !== undefined ? data.sales24hCount.toLocaleString() : '—';
     }).catch(function(){});
   }
+  el.statSalesTile.addEventListener('click', function(){
+    state.activeTab = 'sales';
+    showScreen('browse');
+  });
+  // BURNS aren't tracked anywhere in this codebase yet — this tile is a
+  // deliberate placeholder (real burn tracking is a future system), not a
+  // broken link.
+  el.statBurnsTile.addEventListener('click', function(){
+    alert('BURNS TRACK!NG :: C0M!NG S00N.');
+  });
 
   // ---- Σκύλλα LISTED filter — toggled from the stat tile, or implicitly
   // by picking a $PIGEONS sort option (the only sort that means anything

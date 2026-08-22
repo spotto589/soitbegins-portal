@@ -171,11 +171,20 @@ export async function onRequestGet(context) {
   // public collection-stats API is the only one of the two that tracks
   // those particular figures.
   if (params.get('stats') === '1') {
-    const [deeptideFloor, xrpCafeStats, crownSnapshot] = await Promise.all([
+    const [deeptideFloor, xrpCafeStats, crownSnapshot, recentSales] = await Promise.all([
       fetchDeeptideRealFloor(),
       fetchXrpCafeCollectionStats(env.coin),
-      getCachedCrownHolder(env.coin)
+      getCachedCrownHolder(env.coin),
+      fetchDeeptideSalesHistory({ limit: 50, sort: 'date-desc' })
     ]);
+    // 24h activity — real, computed from Deeptide's own sales feed (xrp.cafe's
+    // collection API has no 24h-scoped fields of its own, just lifetime
+    // totals) rather than a separate, less reliable source.
+    const dayAgo = Date.now() - 24 * 3600 * 1000;
+    const sales24h = (recentSales.items || []).filter(s => s.createdAt && new Date(s.createdAt).getTime() >= dayAgo);
+    const buyers24h = new Set(sales24h.map(s => s.buyer).filter(Boolean));
+    const traded24h = new Set(sales24h.map(s => s.nftId).filter(Boolean));
+    const volume24hXrp = sales24h.reduce((sum, s) => sum + (s.priceXrp || 0), 0);
     return json({
       items: PIGEON_COLLECTION_SIZE_APPROX,
       holders: crownSnapshot ? crownSnapshot.holderCount : null,
@@ -185,7 +194,11 @@ export async function onRequestGet(context) {
       xrpCafeUrl: 'https://xrp.cafe/collection/xrpigeons',
       totalVolumeXrp: xrpCafeStats && xrpCafeStats.totalVolumeDrops !== null ? xrpCafeStats.totalVolumeDrops / 1000000 : null,
       listedPercent: xrpCafeStats ? xrpCafeStats.percentListed : null,
-      scyllaListedCount: Object.keys(scyllaListingsMap).length
+      scyllaListedCount: Object.keys(scyllaListingsMap).length,
+      sales24hCount: sales24h.length,
+      traded24hCount: traded24h.size,
+      buyers24hCount: buyers24h.size,
+      volume24hXrp: volume24hXrp
     });
   }
 
