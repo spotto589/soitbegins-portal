@@ -574,25 +574,29 @@ const SWAP_HTML = `<!DOCTYPE html>
   select.trait-cat-select option{ background:var(--panel-bg-solid); color:var(--white); }
   .trait-value-chips{
     display:flex;
-    flex-wrap:wrap;
-    align-content:flex-start;
-    gap:0.4rem;
+    flex-direction:column;
+    gap:0.35rem;
     width:100%;
     margin-top:0.5rem;
-    max-height:190px;
+    max-height:220px;
     overflow-y:auto;
     padding:0.5rem;
     border:1px dashed var(--border-dim);
   }
   .trait-chip{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
     background:transparent;
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:11px;
     letter-spacing:0.05em;
-    padding:0.5em 0.75em;
+    padding:0.55em 0.8em;
     cursor:pointer;
+    text-align:left;
     text-transform:uppercase;
     border-radius:var(--radius);
     transition:border-color 0.15s ease, color 0.15s ease;
