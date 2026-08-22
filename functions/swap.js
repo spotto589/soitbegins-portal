@@ -1833,16 +1833,29 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- SCREEN: LISTING CONFIRMATION — the exact txjson, before Xaman ever opens -->
+    <!-- SCREEN: LISTING CONFIRMATION — the real txjson is still built and
+         sent exactly as before; the raw fields are just tucked behind
+         FANCY DETAILS now instead of being the main event. Plain-language
+         summary (thumbnail, number, rarity, the actual price) is what
+         most people need to check before signing. -->
     <div class="sw-panel" id="screenListConfirm" style="display:none;">
       <div class="node-eyebrow">// L!ST!NG C0NF!RMAT!0N</div>
-      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="confTxType"></span></div>
-      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="confAccount"></span></div>
-      <div class="detail-field"><span class="df-label">NFTokenID</span><span class="df-value" id="confNftId"></span></div>
-      <div class="detail-field"><span class="df-label">Amount.currency</span><span class="df-value" id="confCurrency"></span></div>
-      <div class="detail-field"><span class="df-label">Amount.issuer</span><span class="df-value" id="confIssuer"></span></div>
-      <div class="detail-field"><span class="df-label">Amount.value</span><span class="df-value" id="confValue"></span></div>
-      <div class="detail-field"><span class="df-label">Flags</span><span class="df-value" id="confFlags"></span></div>
+      <div class="detail-num" id="confPigeonNum"></div>
+      <div class="detail-img-large pigeon-img-box" id="confPigeonImg">[ IMAGE ]</div>
+      <div class="detail-field" id="confRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="confPigeonRarity"></span></div>
+      <div class="index-line" id="confSummaryLine" style="margin-top:0.75rem;"></div>
+      <div class="detail-history">
+        <button class="th-toggle" id="fancyDetailsToggle">[ FANCY DETA!LS ▼ ]</button>
+        <div class="th-list" id="fancyDetailsList" style="display:none;">
+          <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="confTxType"></span></div>
+          <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="confAccount"></span></div>
+          <div class="detail-field"><span class="df-label">NFTokenID</span><span class="df-value" id="confNftId"></span></div>
+          <div class="detail-field"><span class="df-label">Amount.currency</span><span class="df-value" id="confCurrency"></span></div>
+          <div class="detail-field"><span class="df-label">Amount.issuer</span><span class="df-value" id="confIssuer"></span></div>
+          <div class="detail-field"><span class="df-label">Amount.value</span><span class="df-value" id="confValue"></span></div>
+          <div class="detail-field"><span class="df-label">Flags</span><span class="df-value" id="confFlags"></span></div>
+        </div>
+      </div>
       <div class="index-line" id="confirmStatus" style="margin-top:1rem;"></div>
       <div class="detail-actions">
         <button class="secondary-btn" id="listConfirmBackBtn">[ ← BACK ]</button>
@@ -2069,7 +2082,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myPigeonsConnect','connectScyllaBtn','connectStatus','myWalletInfo','myWalletAddr','myWalletCount',
    'myPigeonsSortRow','myPigeonsSortSelect',
    'screenListForm','listFormPigeonNum','listFormImg','listPriceInput','listFormError','listFormBackBtn','listFormSubmitBtn',
-   'screenListConfirm','confTxType','confAccount','confNftId','confCurrency','confIssuer','confValue','confFlags','confirmStatus','listConfirmBackBtn','openXamanBtn',
+   'screenListConfirm','confPigeonNum','confPigeonImg','confRarityRow','confPigeonRarity','confSummaryLine','fancyDetailsToggle','fancyDetailsList','confTxType','confAccount','confNftId','confCurrency','confIssuer','confValue','confFlags','confirmStatus','listConfirmBackBtn','openXamanBtn',
    'screenListResult','listResultEyebrow','listResultPigeonNum','listResultPrice','listResultStatus','listResultOfferId','listResultTxLink','listResultDoneBtn',
    'screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
@@ -3714,6 +3727,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
 
   function showListingConfirm(txjson){
+    el.confPigeonNum.textContent = 'P!GE0N #' + (listingTarget && listingTarget.number !== null ? listingTarget.number : '????');
+    el.confPigeonImg.innerHTML = listingTarget && listingTarget.image ? '<img src="' + escapeHtml(listingTarget.image) + '" alt="">' : '[ IMAGE ]';
+    if (listingTarget && listingTarget.rarityRank){
+      el.confRarityRow.style.display = '';
+      el.confPigeonRarity.textContent = listingTarget.rarityRank + (listingTarget.rarityTotal ? ' / ' + listingTarget.rarityTotal : '');
+    } else {
+      el.confRarityRow.style.display = 'none';
+    }
+    el.confSummaryLine.textContent = 'Y0U ARE L!ST!NG TH!S P!GE0N F0R ' + txjson.Amount.value + ' $P!GE0NS.';
+    el.fancyDetailsList.style.display = 'none';
+    el.fancyDetailsToggle.textContent = '[ FANCY DETA!LS ▼ ]';
     el.confTxType.textContent = txjson.TransactionType;
     el.confAccount.textContent = txjson.Account;
     el.confNftId.textContent = txjson.NFTokenID;
@@ -3727,6 +3751,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     showScreen('listconfirm');
   }
   el.listConfirmBackBtn.addEventListener('click', function(){ showScreen('listform'); });
+  el.fancyDetailsToggle.addEventListener('click', function(){
+    var opening = el.fancyDetailsList.style.display === 'none';
+    el.fancyDetailsList.style.display = opening ? '' : 'none';
+    el.fancyDetailsToggle.textContent = opening ? '[ FANCY DETA!LS ▲ ]' : '[ FANCY DETA!LS ▼ ]';
+  });
 
   el.openXamanBtn.addEventListener('click', function(){
     if (!listingTarget) return;
