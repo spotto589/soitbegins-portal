@@ -1126,7 +1126,7 @@ export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGE
     grouped[t.trait_type].push({
       value: t.value,
       count: t.count,
-      percent: Math.round((t.count / collectionSizeApprox) * 1000) / 10,
+      percent: Math.round((t.count / collectionSizeApprox) * 100000) / 1000,
     });
   }
   for (const cat of Object.keys(grouped)) grouped[cat].sort((a, b) => a.value.localeCompare(b.value));

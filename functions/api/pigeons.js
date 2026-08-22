@@ -384,15 +384,22 @@ export async function onRequestGet(context) {
     });
   }
 
-  // Sort by highest-ever sale price — exact (not scanned/approximate),
-  // since the highSaleMap is already the complete authoritative index once
-  // built. One detail fetch per item on the requested page only (up to the
-  // page limit), same cost shape as the edition scan above.
+  // Sort by highest-ever OR average sale price — exact (not scanned/
+  // approximate), since the highSaleMap is already the complete
+  // authoritative index once built, and (as of the totalDrops/count
+  // fields added alongside the max) already has everything needed for a
+  // real average too, from the same crawl. One detail fetch per item on
+  // the requested page only (up to the page limit), same cost shape as
+  // the edition scan above.
   if (params.get('highestSale') === '1') {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
     const asc = params.get('dir') === 'asc';
-    const sortedIds = Object.keys(highSaleMap).sort((a, b) => asc ? highSaleMap[a].drops - highSaleMap[b].drops : highSaleMap[b].drops - highSaleMap[a].drops);
+    const byAverage = params.get('metric') === 'avg';
+    const metricOf = id => byAverage
+      ? (highSaleMap[id].count ? highSaleMap[id].totalDrops / highSaleMap[id].count : highSaleMap[id].drops)
+      : highSaleMap[id].drops;
+    const sortedIds = Object.keys(highSaleMap).sort((a, b) => asc ? metricOf(a) - metricOf(b) : metricOf(b) - metricOf(a));
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap));

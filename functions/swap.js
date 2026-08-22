@@ -829,27 +829,32 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .result-rarity-line{ font-size:14px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
   .card-listings{ display:flex; gap:0.4rem; margin-top:0.45rem; }
-  .cl-block{ flex:1; min-width:0; border:1px solid var(--border-dim); padding:0.45rem 0.3rem; text-align:center; }
+  .cl-block{
+    display:block;
+    flex:1;
+    min-width:0;
+    border:1px solid var(--border-dim);
+    padding:0.45rem 0.3rem;
+    text-align:center;
+    text-decoration:none;
+  }
   .cl-market{ font-size:9px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.35rem; }
   .cl-price{ font-size:12px; font-weight:700; letter-spacing:0.02em; color:var(--green); text-shadow:0 0 6px var(--green-glow); }
   .cl-price.cl-none{ color:var(--grey-disabled); font-size:10px; font-weight:400; text-shadow:none; text-transform:uppercase; }
-  .cl-buy{
-    display:block;
-    margin-top:0.4rem;
-    font-size:10px;
-    letter-spacing:0.08em;
-    border:1px solid var(--border-mid);
-    color:var(--grey);
-    padding:0.35em 0;
-    text-decoration:none;
-    text-transform:uppercase;
+  /* The whole box IS the buy action when a real listing exists — filled
+     green, not just a border, so it reads as clickable at a glance. */
+  .cl-block-buy{
     cursor:pointer;
-    transition:border-color 0.15s ease, color 0.15s ease;
+    background:var(--green-glow);
+    border-color:var(--green);
+    transition:background 0.15s ease, box-shadow 0.15s ease;
   }
-  .cl-buy:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  .cl-block-buy:hover{ background:rgba(61,255,138,0.28); box-shadow:0 0 14px var(--green-glow); }
+  .cl-block-buy .cl-price{ color:var(--bg); text-shadow:none; }
+  .cl-block-buy .cl-market{ color:rgba(8,9,11,0.65); }
   .card-sale-stats{ display:flex; flex-direction:column; gap:0.25rem; margin-top:0.45rem; padding-top:0.45rem; border-top:1px dashed var(--border-dim); }
-  .css-item{ font-size:10px; letter-spacing:0.02em; color:var(--grey); text-align:center; }
-  .css-label{ display:inline-block; min-width:70px; color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.06em; margin-right:0.4em; font-size:8px; }
+  .css-item{ font-size:13px; letter-spacing:0.02em; color:var(--white); text-align:center; font-weight:600; }
+  .css-label{ display:inline-block; min-width:110px; color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.05em; margin-right:0.4em; font-size:10px; font-weight:400; }
   .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
 
   @media (max-width:900px){
@@ -1325,6 +1330,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="search-row">
           <input class="search-input" id="searchInput" placeholder="SEARCH #..." inputmode="numeric">
           <button class="bar-btn" id="searchBtn">[ GO ]</button>
+          <div class="traits-hover-wrap" id="sortDropWrap">
+            <span class="trait-row-label" id="sortDropLabel">S0RT ▾</span>
+            <div class="traits-flyout" id="sortFlyout" style="display:none;">
+              <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
+              <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
+            </div>
+          </div>
           <div class="edition-toggle" id="editionSelect">
             <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
             <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
@@ -1337,13 +1349,6 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="traits-flyout" id="traitsFlyout" style="display:none;">
               <div class="traits-flyout-cats" id="traitsFlyoutCats"></div>
               <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
-            </div>
-          </div>
-          <div class="traits-hover-wrap" id="sortDropWrap">
-            <span class="trait-row-label" id="sortDropLabel">S0RT ▾</span>
-            <div class="traits-flyout" id="sortFlyout" style="display:none;">
-              <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
-              <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
             </div>
           </div>
         </div>
@@ -2441,10 +2446,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     var priceHtml = hasPrice
       ? '<div class="cl-price">' + listing.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</div>'
       : '<div class="cl-price cl-none">N0 L!ST!NG</div>';
-    var buyHtml = hasPrice && listing.buyUrl
-      ? '<a class="cl-buy" href="' + escapeHtml(listing.buyUrl) + '" target="_blank" rel="noopener">[ BUY ]</a>'
-      : '';
-    return '<div class="cl-block"><div class="cl-market">' + marketLabel + '</div>' + priceHtml + buyHtml + '</div>';
+    var inner = '<div class="cl-market">' + marketLabel + '</div>' + priceHtml;
+    // The whole box is the buy link when there's a real listing — no
+    // separate [ BUY ] button, just a colored/clickable box.
+    return (hasPrice && listing.buyUrl)
+      ? '<a class="cl-block cl-block-buy" href="' + escapeHtml(listing.buyUrl) + '" target="_blank" rel="noopener" title="BUY 0N ' + escapeHtml(marketLabel) + '">' + inner + '</a>'
+      : '<div class="cl-block">' + inner + '</div>';
   }
   function resultCardHtml(p){
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
@@ -2462,7 +2469,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var hasAvg = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
     var saleStatsHtml = (hasHigh || hasAvg)
       ? '<div class="card-sale-stats">' +
-          (hasHigh ? '<span class="css-item"><span class="css-label">H!GH SALE</span>' + fmtXrp(p.highSaleXrp) + ' XRP</span>' : '') +
+          (hasHigh ? '<span class="css-item"><span class="css-label">H!GHEST REC0RDED</span>' + fmtXrp(p.highSaleXrp) + ' XRP</span>' : '') +
           (hasAvg ? '<span class="css-item"><span class="css-label">AVG SALE</span>' + fmtXrp(p.avgSaleXrp) + ' XRP</span>' : '') +
         '</div>'
       : '';
@@ -2573,7 +2580,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.loadMoreNote.style.display = '';
     var filters = activeFilters();
     var isEdition = state.edition === 'LOW' || state.edition === 'HIGH';
-    var isSalesSort = state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW';
+    var isSalesSort = state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_ASC';
     var isNumericSort = state.sort === 'NAME_ASC' || state.sort === 'NAME_DESC';
     var isCrossListing = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC';
     var reqParams;
@@ -2583,7 +2590,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       // nft_sell_offers, so a stale/cancelled listing can't linger here.
       reqParams = { skip: state.skip, limit: PAGE_SIZE, scyllaListed: 1, dir: state.sort === 'SCYLLA_PRICE_DESC' ? 'desc' : 'asc' };
     } else if (isSalesSort){
-      reqParams = { skip: state.skip, limit: PAGE_SIZE, highestSale: 1, dir: state.sort === 'SALES_LOW' ? 'asc' : 'desc' };
+      reqParams = {
+        skip: state.skip, limit: PAGE_SIZE, highestSale: 1,
+        dir: (state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_ASC') ? 'asc' : 'desc',
+        metric: state.sort === 'AVG_SALE_ASC' ? 'avg' : 'max'
+      };
     } else if (isCrossListing){
       // Real lowest/highest across BOTH Deeptide and xrp.cafe, not just
       // whichever platform happens to have the cheaper API.
@@ -2659,7 +2670,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return (a.percent || 0) - (b.percent || 0);
       });
       var chips = vals.map(function(v){
-        var pct = v.percent !== null && v.percent !== undefined ? ' (' + v.percent + '%)' : '';
+        var pct = v.percent !== null && v.percent !== undefined ? ' (' + v.percent.toFixed(3) + '%)' : '';
         return '<button type="button" class="trait-chip' + (row.value === v.value ? ' selected' : '') + '" data-id="' + row.id + '" data-value="' + escapeHtml(v.value) + '">' + escapeHtml(v.value.toUpperCase()) + pct + '</button>';
       }).join('');
       return '<div class="trait-row" data-id="' + row.id + '">' +
@@ -2729,7 +2740,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return (a.percent || 0) - (b.percent || 0);
     });
     el.traitsFlyoutVals.innerHTML = vals.map(function(v){
-      var pct = v.percent !== null && v.percent !== undefined ? v.percent + '%' : '—';
+      var pct = v.percent !== null && v.percent !== undefined ? v.percent.toFixed(3) + '%' : '—';
       var count = v.count !== null && v.count !== undefined ? v.count : '—';
       return '<button type="button" class="traits-flyout-val" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '">' +
         '<span>' + escapeHtml(v.value.toUpperCase()) + '</span>' +
@@ -2822,6 +2833,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       list = list.slice().sort(function(a, b){
         var av = a.highSaleXrp === null || a.highSaleXrp === undefined ? -1 : a.highSaleXrp, bv = b.highSaleXrp === null || b.highSaleXrp === undefined ? -1 : b.highSaleXrp;
         return state.sort === 'SALES_LOW' ? av - bv : bv - av;
+      });
+    } else if (state.sort === 'AVG_SALE_ASC'){
+      list = list.slice().sort(function(a, b){
+        var av = a.avgSaleXrp === null || a.avgSaleXrp === undefined ? Infinity : a.avgSaleXrp, bv = b.avgSaleXrp === null || b.avgSaleXrp === undefined ? Infinity : b.avgSaleXrp;
+        return av - bv;
       });
     } else if (state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC'){
       list = list.slice().sort(function(a, b){
@@ -3606,9 +3622,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'SCYLLA_PRICE_ASC', label: '$P!GE0NS L0WEST' },
       { value: 'SCYLLA_PRICE_DESC', label: '$P!GE0NS H!GHEST' }
     ],
-    'SALES': [
-      { value: 'HIGHEST_SALE', label: 'H!GHEST' },
-      { value: 'SALES_LOW', label: 'L0WEST' }
+    'H!ST0R!CAL SALES': [
+      { value: 'HIGHEST_SALE', label: 'H!GHEST REC0RDED SALES' },
+      { value: 'AVG_SALE_ASC', label: 'L0WEST (AVERAGE)' }
     ],
     'RAR!TY': [
       { value: 'RARITY_ASC', label: 'H!GHEST' },
@@ -3704,7 +3720,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // ---- Inspect / detail ----
   function traitCellHtml(a){
     var sub = (a.percent !== null && a.percent !== undefined)
-      ? '<div class="tc-sub">' + a.percent + '%' + (a.count !== null && a.count !== undefined ? '<br>(' + a.count + ')' : '') + '</div>'
+      ? '<div class="tc-sub">' + (typeof a.percent === 'number' ? a.percent.toFixed(3) : a.percent) + '%' + (a.count !== null && a.count !== undefined ? '<br>(' + a.count + ')' : '') + '</div>'
       : '';
     return '<div class="trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '" title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
       '<div class="tc-label">' + escapeHtml(a.trait_type) + '</div><div class="tc-value">' + escapeHtml(a.value) + '</div>' + sub +
