@@ -52,20 +52,30 @@ export async function signToken(payloadObj, secret) {
 }
 
 export async function verifyToken(token, secret) {
-  const parts = token.split('.');
-  if (parts.length !== 2) return null;
-  const [payloadB64, sigB64] = parts;
-  const key = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']
-  );
-  const valid = await crypto.subtle.verify(
-    'HMAC', key, fromBase64Url(sigB64), new TextEncoder().encode(payloadB64)
-  );
-  if (!valid) return null;
-  const payload = JSON.parse(new TextDecoder().decode(fromBase64Url(payloadB64)));
-  if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000)) return null;
-  return payload;
+  // A malformed cookie (stale format, truncated, tampered) makes atob()
+  // throw inside fromBase64Url, or JSON.parse throw on the decoded
+  // payload — uncaught, that's an unhandled exception in the Function,
+  // which Cloudflare turns into its own HTML error page instead of our
+  // JSON response. Every call site expects null for "not signed in," not
+  // a crash, so any malformed-token failure is treated the same way.
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 2) return null;
+    const [payloadB64, sigB64] = parts;
+    const key = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']
+    );
+    const valid = await crypto.subtle.verify(
+      'HMAC', key, fromBase64Url(sigB64), new TextEncoder().encode(payloadB64)
+    );
+    if (!valid) return null;
+    const payload = JSON.parse(new TextDecoder().decode(fromBase64Url(payloadB64)));
+    if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch (e) {
+    return null;
+  }
 }
 
 export async function fetchAllAccountNfts(account) {
