@@ -1843,10 +1843,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- SCREEN: LIST A PIGEON — first real listing test -->
     <div class="sw-panel" id="screenListForm" style="display:none;">
       <div class="detail-eyebrow">// SCYLLA L!ST!NG</div>
-      <div class="detail-num" id="listFormPigeonNum"></div>
+      <div class="index-line" style="display:flex; justify-content:center; gap:1.5rem;">
+        <span class="css-item" id="listFormPigeonNum"></span>
+        <span class="css-item" id="listFormXrpEquiv" style="display:none;"><span class="css-label">≈</span><span id="listFormXrpEquivValue"></span></span>
+      </div>
       <div class="detail-img-large pigeon-img-box" id="listFormImg">[ IMAGE ]</div>
       <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value"><input class="search-input" id="listPriceInput" placeholder="0" inputmode="decimal" style="text-align:right; width:140px;"></span></div>
       <div class="detail-field"><span class="df-label">CURRENCY</span><span class="df-value">$P!GE0NS</span></div>
+      <div class="index-line" id="listFormRateLine" style="margin-top:0.4rem; display:none;"></div>
       <div class="index-line" id="listFormError" style="display:none;"></div>
       <div class="detail-actions">
         <button class="secondary-btn" id="listFormBackBtn">[ ← BACK ]</button>
@@ -2107,7 +2111,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'targetBar','targetBarLabel',
    'myPigeonsConnect','connectScyllaBtn','connectStatus','myWalletInfo','myWalletAddr','myWalletCount',
    'myPigeonsSortRow','myPigeonsSortSelect',
-   'screenListForm','listFormPigeonNum','listFormImg','listPriceInput','listFormError','listFormBackBtn','listFormSubmitBtn',
+   'screenListForm','listFormPigeonNum','listFormXrpEquiv','listFormXrpEquivValue','listFormRateLine','listFormImg','listPriceInput','listFormError','listFormBackBtn','listFormSubmitBtn',
    'screenListConfirm','confPigeonNum','confPigeonImg','confRarityRow','confPigeonRarity','confSummaryLine','fancyDetailsToggle','fancyDetailsList','confTxType','confAccount','confNftId','confCurrency','confIssuer','confValue','confFlags','confirmStatus','listConfirmBackBtn','openXamanBtn',
    'screenListResult','listResultEyebrow','listResultPigeonNum','listResultPrice','listResultStatus','listResultOfferId','listResultTxLink','listResultDoneBtn',
    'screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
@@ -2937,7 +2941,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var canBuyScylla = p.scyllaListing && p.owner !== MY_WALLET;
     var scyllaListedHtml = p.scyllaListing
       ? '<div class="card-scylla-row">' +
-          '<span class="card-scylla-coin-wrap"><img class="card-scylla-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS"><span class="card-scylla-price">' + escapeHtml(p.scyllaListing.price) + ' $P!GE0NS</span></span>' +
+          '<span class="card-scylla-coin-wrap"><img class="card-scylla-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS"><span class="card-scylla-price">' + escapeHtml(fmtPigeons(p.scyllaListing.price)) + '</span></span>' +
           (canBuyScylla ? '<button class="card-buy-scylla-btn buy-scylla-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY ]</button>' : '') +
         '</div>'
       : '';
@@ -3681,6 +3685,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   var listingTarget = null; // { nftId, number, image, priceValue } — the pigeon currently being listed
   var listingUuid = null;
   var listingPollTimer = null;
+  var listingXamanTab = null;
+
+  // Once a poll confirms a sign request actually settled, the Xaman tab
+  // has done its job — close it and bring focus back to this tab instead
+  // of leaving the user staring at Xaman's own "signed" page.
+  function closeXamanTabAndFocus(tabRef){
+    if (tabRef){ try { tabRef.close(); } catch (e){} }
+    window.focus();
+  }
 
   function listingErrorMessage(code){
     var messages = {
@@ -3706,6 +3719,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     return (code && messages[code]) || 'ERR://C0ULD N0T PREPARE THE TRANSACT!0N.';
   }
 
+  // Real live $PIGEONS/XRP rate from the XRPL DEX order book — fetched
+  // once per form open (60s server-side cache anyway), not on every
+  // keystroke; the "≈ X XRP" readout recomputes instantly client-side
+  // against that one snapshot as the price input changes.
+  var pigeonsXrpRate = null; // XRP per 1 $PIGEONS, or null if unavailable
+  function updateListFormXrpEquiv(){
+    var priceValue = Number(el.listPriceInput.value);
+    if (pigeonsXrpRate === null || !priceValue || !isFinite(priceValue) || priceValue <= 0){
+      el.listFormXrpEquiv.style.display = 'none';
+      return;
+    }
+    el.listFormXrpEquiv.style.display = '';
+    el.listFormXrpEquivValue.textContent = (priceValue * pigeonsXrpRate).toLocaleString(undefined, { maximumFractionDigits: 6 }) + ' XRP';
+  }
+  el.listPriceInput.addEventListener('input', updateListFormXrpEquiv);
+
   function openListForm(p){
     listingTarget = p;
     el.listFormPigeonNum.textContent = 'P!GE0N #' + (p.number !== null ? p.number : '????');
@@ -3714,6 +3743,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.listFormError.style.display = 'none';
     el.listFormSubmitBtn.disabled = false;
     el.listFormSubmitBtn.textContent = '[ CREATE L!ST!NG ]';
+    el.listFormXrpEquiv.style.display = 'none';
+    el.listFormRateLine.style.display = 'none';
+    pigeonsXrpRate = null;
+    api({ pigeonsRate: 1 }).then(function(data){
+      pigeonsXrpRate = (data && typeof data.xrpPerPigeon === 'number') ? data.xrpPerPigeon : null;
+      if (pigeonsXrpRate !== null){
+        el.listFormRateLine.style.display = '';
+        el.listFormRateLine.textContent = '1 $P!GE0NS = ' + pigeonsXrpRate.toLocaleString(undefined, { maximumFractionDigits: 8 }) + ' XRP';
+      }
+      updateListFormXrpEquiv();
+    }).catch(function(){});
     showScreen('listform');
   }
   el.listFormBackBtn.addEventListener('click', function(){ showScreen('browse'); });
@@ -3761,7 +3801,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else {
       el.confRarityRow.style.display = 'none';
     }
-    el.confSummaryLine.textContent = 'Y0U ARE L!ST!NG TH!S P!GE0N F0R ' + txjson.Amount.value + ' $P!GE0NS.';
+    el.confSummaryLine.textContent = 'Y0U ARE L!ST!NG TH!S P!GE0N F0R ' + fmtPigeons(txjson.Amount.value) + '.';
     el.fancyDetailsList.style.display = 'none';
     el.fancyDetailsToggle.textContent = '[ FANCY DETA!LS ▼ ]';
     el.confTxType.textContent = txjson.TransactionType;
@@ -3801,7 +3841,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       listingUuid = res.data.uuid;
-      window.open(res.data.next.always, '_blank', 'noopener');
+      listingXamanTab = window.open(res.data.next.always, '_blank');
       el.openXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.confirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
       pollListingStatus();
@@ -3820,6 +3860,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       .then(function(data){
         if (data.status === 'listed'){
           myListedData[listingTarget.nftId] = { price: data.price, currency: data.currency, offerId: data.offerId };
+          closeXamanTabAndFocus(listingXamanTab);
+          listingXamanTab = null;
           showListingResult(data);
           return;
         }
@@ -3850,7 +3892,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   function showListingResult(data){
     el.listResultPigeonNum.textContent = 'P!GE0N #' + (listingTarget.number !== null ? listingTarget.number : '????');
-    el.listResultPrice.textContent = data.price + ' $P!GE0NS';
+    el.listResultPrice.textContent = fmtPigeons(data.price);
     el.listResultStatus.textContent = 'L!STED';
     el.listResultOfferId.textContent = data.offerId || '—';
     if (data.txHash){
@@ -3876,6 +3918,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var buyTarget = null; // { nftId, number, image } — the pigeon currently being bought
   var buyUuid = null;
   var buyPollTimer = null;
+  var buyXamanTab = null;
 
   function openBuyConfirm(p, retriesLeft){
     buyTarget = p;
@@ -3907,7 +3950,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buyConfOfferId.textContent = txjson.NFTokenSellOffer;
       el.buyConfPigeon.textContent = 'P!GE0N #' + (p.number !== null ? p.number : '????');
       el.buyConfSeller.textContent = display.seller;
-      el.buyConfPrice.textContent = display.price + ' $P!GE0NS';
+      el.buyConfPrice.textContent = fmtPigeons(display.price);
       el.buyConfirmStatus.textContent = '';
       el.buyOpenXamanBtn.disabled = false;
       el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
@@ -3942,7 +3985,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       buyUuid = res.data.uuid;
-      window.open(res.data.next.always, '_blank', 'noopener');
+      buyXamanTab = window.open(res.data.next.always, '_blank');
       el.buyOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.buyConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
       pollBuyStatus();
@@ -3966,7 +4009,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-buy-status?uuid=' + encodeURIComponent(buyUuid) + '&nftId=' + encodeURIComponent(buyTarget.nftId))
       .then(function(r){ return r.json(); })
       .then(function(data){
-        if (data.status === 'settled'){ showBuyResult(data); return; }
+        if (data.status === 'settled'){
+          closeXamanTabAndFocus(buyXamanTab);
+          buyXamanTab = null;
+          showBuyResult(data);
+          return;
+        }
         if (data.status === 'rejected'){
           el.buyConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.buyOpenXamanBtn.disabled = false;
@@ -4018,6 +4066,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var delistTarget = null; // { nftId, number, image }
   var delistUuid = null;
   var delistPollTimer = null;
+  var delistXamanTab = null;
 
   function openDelistConfirm(p){
     delistTarget = p;
@@ -4069,7 +4118,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       delistUuid = res.data.uuid;
-      window.open(res.data.next.always, '_blank', 'noopener');
+      delistXamanTab = window.open(res.data.next.always, '_blank');
       el.delistOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.delistConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
       pollDelistStatus();
@@ -4086,7 +4135,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-delist-status?uuid=' + encodeURIComponent(delistUuid) + '&nftId=' + encodeURIComponent(delistTarget.nftId))
       .then(function(r){ return r.json(); })
       .then(function(data){
-        if (data.status === 'delisted'){ showDelistResult(data); return; }
+        if (data.status === 'delisted'){
+          closeXamanTabAndFocus(delistXamanTab);
+          delistXamanTab = null;
+          showDelistResult(data);
+          return;
+        }
         if (data.status === 'rejected'){
           el.delistConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.delistOpenXamanBtn.disabled = false;
@@ -4140,6 +4194,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var offerTarget = null; // { nftId, number, image }
   var offerUuid = null;
   var offerPollTimer = null;
+  var offerXamanTab = null;
 
   // Entered right in the DATABASE card's own MAKE AN OFFER strip (see
   // wireResultClicks' .make-offer-send handler) — no separate form screen,
@@ -4200,7 +4255,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Open a blank tab synchronously in this click handler, then navigate
     // it once the fetch resolves — window.open() called inside the async
     // .then() below gets silently popup-blocked in most browsers.
-    var xamanTab = window.open('', '_blank');
+    offerXamanTab = window.open('', '_blank');
     fetch('/api/swap-makeoffer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -4208,19 +4263,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
-        if (xamanTab) xamanTab.close();
+        closeXamanTabAndFocus(offerXamanTab);
+        offerXamanTab = null;
         el.offerOpenXamanBtn.disabled = false;
         el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
         el.offerConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
       offerUuid = res.data.uuid;
-      if (xamanTab) xamanTab.location.href = res.data.next.always;
+      if (offerXamanTab) offerXamanTab.location.href = res.data.next.always;
       el.offerOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.offerConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
       pollOfferStatus();
     }).catch(function(){
-      if (xamanTab) xamanTab.close();
+      closeXamanTabAndFocus(offerXamanTab);
+      offerXamanTab = null;
       el.offerOpenXamanBtn.disabled = false;
       el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
       el.offerConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
@@ -4233,7 +4290,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-makeoffer-status?uuid=' + encodeURIComponent(offerUuid) + '&nftId=' + encodeURIComponent(offerTarget.nftId) + '&priceValue=' + encodeURIComponent(offerTarget.priceValue))
       .then(function(r){ return r.json(); })
       .then(function(data){
-        if (data.status === 'offered'){ showOfferResult(data); return; }
+        if (data.status === 'offered'){
+          closeXamanTabAndFocus(offerXamanTab);
+          offerXamanTab = null;
+          showOfferResult(data);
+          return;
+        }
         if (data.status === 'rejected'){
           el.offerConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.offerOpenXamanBtn.disabled = false;
@@ -4260,7 +4322,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   function showOfferResult(data){
     el.offerResultPigeonNum.textContent = 'P!GE0N #' + (offerTarget.number !== null ? offerTarget.number : '????');
-    el.offerResultPrice.textContent = data.price + ' $P!GE0NS';
+    el.offerResultPrice.textContent = fmtPigeons(data.price);
     el.offerResultStatus.textContent = 'SENT';
     if (data.txHash){
       el.offerResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
@@ -4286,6 +4348,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var acceptOfferTarget = null; // { nftId, offerId, number, image, price, buyer }
   var acceptOfferUuid = null;
   var acceptOfferPollTimer = null;
+  var acceptOfferXamanTab = null;
 
   function offerReceivedRowHtml(item){
     return '<div class="th-row" style="flex-direction:column; align-items:stretch; gap:0.5rem;">' +
@@ -4337,7 +4400,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.acceptOfferConfOfferId.textContent = txjson.NFTokenBuyOffer;
       el.acceptOfferConfPigeon.textContent = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + acceptOfferTarget.number : '#????');
       el.acceptOfferConfBuyer.textContent = res.data.display.buyer;
-      el.acceptOfferConfPrice.textContent = res.data.display.price + ' $P!GE0NS';
+      el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.price);
       el.acceptOfferConfirmStatus.textContent = '';
       el.acceptOfferOpenXamanBtn.disabled = false;
       el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
@@ -4358,7 +4421,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.acceptOfferOpenXamanBtn.disabled = true;
     el.acceptOfferOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
     el.acceptOfferConfirmStatus.textContent = '';
-    var xamanTab = window.open('', '_blank');
+    acceptOfferXamanTab = window.open('', '_blank');
     fetch('/api/swap-acceptoffer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -4366,19 +4429,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
-        if (xamanTab) xamanTab.close();
+        closeXamanTabAndFocus(acceptOfferXamanTab);
+        acceptOfferXamanTab = null;
         el.acceptOfferOpenXamanBtn.disabled = false;
         el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
         el.acceptOfferConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
       acceptOfferUuid = res.data.uuid;
-      if (xamanTab) xamanTab.location.href = res.data.next.always;
+      if (acceptOfferXamanTab) acceptOfferXamanTab.location.href = res.data.next.always;
       el.acceptOfferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.acceptOfferConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
       pollAcceptOfferStatus();
     }).catch(function(){
-      if (xamanTab) xamanTab.close();
+      closeXamanTabAndFocus(acceptOfferXamanTab);
+      acceptOfferXamanTab = null;
       el.acceptOfferOpenXamanBtn.disabled = false;
       el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
       el.acceptOfferConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
@@ -4391,7 +4456,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-acceptoffer-status?uuid=' + encodeURIComponent(acceptOfferUuid) + '&nftId=' + encodeURIComponent(acceptOfferTarget.nftId) + '&offerId=' + encodeURIComponent(acceptOfferTarget.offerId))
       .then(function(r){ return r.json(); })
       .then(function(data){
-        if (data.status === 'settled'){ showAcceptOfferResult(data); return; }
+        if (data.status === 'settled'){
+          closeXamanTabAndFocus(acceptOfferXamanTab);
+          acceptOfferXamanTab = null;
+          showAcceptOfferResult(data);
+          return;
+        }
         if (data.status === 'rejected'){
           el.acceptOfferConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.acceptOfferOpenXamanBtn.disabled = false;
@@ -4418,7 +4488,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   function showAcceptOfferResult(data){
     el.acceptOfferResultPigeonNum.textContent = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + acceptOfferTarget.number : '#????');
-    el.acceptOfferResultPrice.textContent = acceptOfferTarget.price + ' $P!GE0NS';
+    el.acceptOfferResultPrice.textContent = fmtPigeons(acceptOfferTarget.price);
     el.acceptOfferResultStatus.textContent = 'SETTLED';
     if (data.txHash){
       el.acceptOfferResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
@@ -4709,7 +4779,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function updateScyllaListing(p){
     var listing = p && p.scyllaListing;
     if (listing && listing.price !== null && listing.price !== undefined){
-      el.detailScyllaPrice.textContent = listing.price + ' $P!GE0NS';
+      el.detailScyllaPrice.textContent = fmtPigeons(listing.price);
       el.detailScyllaBuyBtn.style.display = p.owner !== MY_WALLET ? '' : 'none';
     } else {
       el.detailScyllaPrice.textContent = 'N0T L!STED';
@@ -4831,8 +4901,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   function fmtXrp(n){ return n === null || n === undefined ? '—' : n.toLocaleString(undefined, { maximumFractionDigits: n < 100 ? 2 : 0 }); }
   // Real $PIGEONS sale figures default to 0 (never hidden) — a Pigeon that
   // has never sold through Σκύλλα's own marketplace genuinely has a 0
-  // $PIGEONS sale history, distinct from "no data available."
-  function fmtPigeons(n){ return (n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS'; }
+  // $PIGEONS sale history, distinct from "no data available." Accepts a
+  // string too (listing/offer prices come back from the API as issued-
+  // currency value strings, not numbers) so every $PIGEONS amount in the
+  // app gets the same comma-grouped formatting, not just the sale stats.
+  function fmtPigeons(n){
+    var num = typeof n === 'string' ? Number(n) : n;
+    return (num || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
+  }
   function loadCollectionStats(){
     api({ stats: 1 }).then(function(data){
       el.statItems.textContent = data.items !== null && data.items !== undefined ? data.items.toLocaleString() : '—';

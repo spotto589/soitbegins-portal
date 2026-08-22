@@ -273,6 +273,51 @@ export function encodeCurrencyCode(code) {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
 }
 
+// Real live $PIGEONS/XRP rate straight from the XRPL DEX order book (the
+// same xrplcluster.com RPC endpoint used everywhere else in this file) —
+// confirmed live there's real depth on this pair. Reads the best (highest-
+// quality) PIGEONS-for-XRP offer and returns XRP per 1 $PIGEONS; null if
+// the book is empty or the lookup fails, never a fabricated/guessed rate.
+// Cached briefly since it's a live external call — good enough for a
+// "roughly what this listing is worth in XRP right now" indicator, not
+// used for anything that moves funds.
+const PIGEONS_RATE_CACHE_KEY = 'pswap:pigeonsrate:v1';
+const PIGEONS_RATE_CACHE_TTL_SECONDS = 60;
+
+export async function fetchPigeonsXrpRate(kv) {
+  if (kv) {
+    const cached = await kv.get(PIGEONS_RATE_CACHE_KEY);
+    if (cached !== null) return JSON.parse(cached);
+  }
+  let xrpPerPigeon = null;
+  try {
+    const res = await fetch('https://xrplcluster.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        method: 'book_offers',
+        params: [{
+          taker_gets: { currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency), issuer: PIGEONS_TOKEN_CONFIG.issuer },
+          taker_pays: { currency: 'XRP' },
+          limit: 5
+        }]
+      })
+    });
+    const data = await res.json();
+    const offers = (data.result && data.result.offers) || [];
+    const best = offers.find(o => typeof o.TakerGets === 'object' && typeof o.TakerPays === 'string' && parseFloat(o.TakerGets.value) > 0);
+    if (best) {
+      const pigeonsOut = parseFloat(best.TakerGets.value);
+      const dropsIn = parseFloat(best.TakerPays);
+      if (pigeonsOut > 0 && dropsIn > 0) xrpPerPigeon = (dropsIn / 1000000) / pigeonsOut;
+    }
+  } catch (e) {
+    xrpPerPigeon = null;
+  }
+  if (kv) await safeKvPut(kv, PIGEONS_RATE_CACHE_KEY, JSON.stringify(xrpPerPigeon), { expirationTtl: PIGEONS_RATE_CACHE_TTL_SECONDS });
+  return xrpPerPigeon;
+}
+
 // tfTransferable (0x0008) — an NFT without this flag can never be sold to
 // anyone but its issuer, so a sell offer against it would only ever fail
 // on-ledger. Checked before a listing payload is ever built.

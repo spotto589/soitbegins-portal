@@ -3,7 +3,7 @@ import {
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog,
-  resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons,
+  resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons, fetchPigeonsXrpRate,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX,
   getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
 } from '../_shared.js';
@@ -164,6 +164,14 @@ export async function onRequestGet(context) {
       collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX,
       numberMapStats
     });
+  }
+
+  // Real live $PIGEONS/XRP rate, straight from the XRPL DEX order book —
+  // used for the "1 $PIGEONS = X XRP" indicator shown while listing (a
+  // convenience readout only, never used to set/validate a price).
+  if (params.get('pigeonsRate') === '1') {
+    const xrpPerPigeon = await fetchPigeonsXrpRate(env.coin);
+    return json({ xrpPerPigeon });
   }
 
   // Collection-wide stats strip — items/holders (real, our own Clio-based
