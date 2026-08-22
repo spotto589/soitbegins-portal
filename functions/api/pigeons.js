@@ -1,6 +1,6 @@
 import {
   fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent,
-  fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap,
+  fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog,
   resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons,
@@ -140,11 +140,25 @@ export async function onRequestGet(context) {
   // Trait category/value/percentage discovery for the TRAITS stack filter
   // UI — real, exact counts straight from Deeptide, not sampled.
   if (params.get('traits') === '1') {
-    const categories = await getTraitCategoriesWithPercent(env.coin);
+    const [categories, rawExamples] = await Promise.all([
+      getTraitCategoriesWithPercent(env.coin),
+      getTraitExampleMap(env.coin)
+    ]);
+    // Same ipfs.io same-origin proxy every other image on this page goes
+    // through (displayImage) — raw ipfs.io URLs get Fetch-Metadata-blocked
+    // when hotlinked directly from the browser.
+    const examples = {};
+    for (const cat of Object.keys(rawExamples)) {
+      examples[cat] = {};
+      for (const val of Object.keys(rawExamples[cat])) {
+        examples[cat][val] = displayImage(rawExamples[cat][val]);
+      }
+    }
     const numberMapStats = await getPigeonNumberMapStats(env.coin);
     context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
     return json({
       categories,
+      examples,
       collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX,
       numberMapStats
     });

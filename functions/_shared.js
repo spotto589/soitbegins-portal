@@ -1302,10 +1302,24 @@ export async function fetchXrpCafeNftListing(nftId, attempt) {
 // ledger-scan indexer it replaces.
 // ─────────────────────────────────────────────────────────────────────────
 const PIGEON_NUMBER_MAP_KEY = 'pswap:numbermap:v1';
-const PIGEON_NUMBER_MAP_STATS_KEY = 'pswap:numbermapstats:v1';
+// Bumped v1 -> v2: the crawl this stats key gates now also builds the
+// trait-example map below as a side effect. A v1 "completed" stats entry
+// would otherwise block a fresh crawl for NUMBER_MAP_REFRESH_STALE_SECONDS
+// (6h) and trait examples would stay empty that whole time — bumping the
+// key makes it start a real crawl on next call, same one-time-cost
+// pattern as every other KV shape change in this file.
+const PIGEON_NUMBER_MAP_STATS_KEY = 'pswap:numbermapstats:v2';
 const NUMBER_MAP_REFRESH_STALE_SECONDS = 6 * 3600;
 const NUMBER_MAP_CONCURRENT_GUARD_SECONDS = 10;
 const NUMBER_MAP_PAGES_PER_RUN = 15; // 15 * 60 = 900 tokens/run, ~15 fetches — safely under the subrequest budget
+
+// One representative Pigeon image per trait value ("Background: Yellow" ->
+// some real image of a yellow-background Pigeon), for the ADD TRAITS
+// flyout's background-preview request. Piggybacks entirely on the number-
+// map crawl above — every page it already fetches carries `image` and
+// `attributes` per item, so this costs zero extra requests; just keep the
+// first image seen for each trait_type/value pair as the crawl runs.
+const TRAIT_EXAMPLE_MAP_KEY = 'pswap:traitexamples:v1';
 
 export async function getPigeonNumberMap(kv) {
   const raw = await kv.get(PIGEON_NUMBER_MAP_KEY);
@@ -1317,6 +1331,11 @@ export async function getPigeonNumberMapStats(kv) {
   return raw ? JSON.parse(raw) : null;
 }
 
+export async function getTraitExampleMap(kv) {
+  const raw = await kv.get(TRAIT_EXAMPLE_MAP_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
 export async function maybeRefreshPigeonNumberMap(kv) {
   const statsRaw = await kv.get(PIGEON_NUMBER_MAP_STATS_KEY);
   const stats = statsRaw ? JSON.parse(statsRaw) : null;
@@ -1326,6 +1345,7 @@ export async function maybeRefreshPigeonNumberMap(kv) {
 
   let skip = stats && stats.inProgress ? stats.nextSkip : 0;
   const map = stats && stats.inProgress ? await getPigeonNumberMap(kv) : {};
+  const traitExamples = stats && stats.inProgress ? await getTraitExampleMap(kv) : {};
   let lastTotal = 3015;
 
   for (let i = 0; i < NUMBER_MAP_PAGES_PER_RUN; i++) {
@@ -1333,11 +1353,19 @@ export async function maybeRefreshPigeonNumberMap(kv) {
     if (page.error || !page.items.length) break;
     for (const it of page.items) {
       if (it.number !== null) map[it.number] = it.nftId;
+      if (it.image && Array.isArray(it.attributes)) {
+        for (const a of it.attributes) {
+          if (!a.trait_type || !a.value) continue;
+          if (!traitExamples[a.trait_type]) traitExamples[a.trait_type] = {};
+          if (!traitExamples[a.trait_type][a.value]) traitExamples[a.trait_type][a.value] = it.image;
+        }
+      }
     }
     lastTotal = page.total || lastTotal;
     skip += DEEPTIDE_LISTINGS_MAX_LIMIT;
     if (skip >= lastTotal) {
       await safeKvPut(kv, PIGEON_NUMBER_MAP_KEY, JSON.stringify(map));
+      await safeKvPut(kv, TRAIT_EXAMPLE_MAP_KEY, JSON.stringify(traitExamples));
       await safeKvPut(kv, PIGEON_NUMBER_MAP_STATS_KEY, JSON.stringify({
         inProgress: false, completedAt: now, updatedAt: now, count: Object.keys(map).length,
       }));
@@ -1345,6 +1373,7 @@ export async function maybeRefreshPigeonNumberMap(kv) {
     }
   }
   await safeKvPut(kv, PIGEON_NUMBER_MAP_KEY, JSON.stringify(map));
+  await safeKvPut(kv, TRAIT_EXAMPLE_MAP_KEY, JSON.stringify(traitExamples));
   await safeKvPut(kv, PIGEON_NUMBER_MAP_STATS_KEY, JSON.stringify({
     inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(map).length,
   }));

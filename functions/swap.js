@@ -655,6 +655,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   #traitsFlyoutVals .traits-flyout-val{ color:var(--cyan); }
   #traitsFlyoutVals .traits-flyout-val:hover{ border-color:var(--magenta); color:var(--cyan); background:transparent; }
   #traitsFlyoutVals .traits-flyout-val.selected{ background:var(--magenta-faint); border-color:var(--magenta); color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
+  /* A real Pigeon preview as the button's own background (see
+     renderTraitsFlyoutVals — the dark gradient is baked into the same
+     inline background-image so it always covers the actual photo
+     underneath). Own color/border rules so the plain :hover/.selected
+     rules above — which use the background shorthand and would erase
+     the inline image — never apply to these. */
+  #traitsFlyoutVals .traits-flyout-val.has-preview{
+    background-size:cover;
+    background-position:center;
+    color:#fff;
+    text-shadow:0 1px 3px rgba(0,0,0,0.9);
+  }
+  #traitsFlyoutVals .traits-flyout-val.has-preview .tfv-count{ color:#e8e8e8; }
+  #traitsFlyoutVals .traits-flyout-val.has-preview:hover{ border-color:var(--magenta); color:#fff; }
+  #traitsFlyoutVals .traits-flyout-val.has-preview.selected{
+    border-color:var(--magenta);
+    box-shadow:inset 0 0 0 2px var(--magenta);
+    color:#fff;
+    text-shadow:0 0 6px var(--magenta-glow), 0 1px 3px rgba(0,0,0,0.9);
+  }
   select.trait-cat-select{
     background:#000;
     border:1px solid var(--border-mid);
@@ -2832,11 +2852,11 @@ const SWAP_HTML = `<!DOCTYPE html>
           listingsHtml +
           scyllaListedHtml +
           traitsHtml +
-          saleStatsHtml +
           '<button class="card-history-toggle" data-nftid="' + escapeHtml(p.nftId) + '">[ SALES H!ST0RY ▼ ]</button>' +
         '</div>' +
         '<div class="card-history-box" data-nftid="' + escapeHtml(p.nftId) + '" style="display:none;">' +
           '<button class="card-history-back">[ ← BACK ]</button>' +
+          saleStatsHtml +
           '<div class="card-history-list"><div class="th-empty">L0AD!NG...</div></div>' +
         '</div>' +
       '</div>' +
@@ -2936,6 +2956,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (state.traitCategories) return Promise.resolve(state.traitCategories);
     return api({ traits: 1 }).then(function(data){
       state.traitCategories = data.categories || {};
+      state.traitExamples = data.examples || {};
       state.collectionSizeApprox = data.collectionSizeApprox || state.collectionSizeApprox;
       refreshIndexLine(data.numberMapStats);
       return state.traitCategories;
@@ -3122,10 +3143,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     var vals = ((category && state.traitCategories[category]) || []).slice().sort(function(a, b){
       return (a.percent || 0) - (b.percent || 0);
     });
+    var exampleImages = (state.traitExamples && state.traitExamples[category]) || {};
     el.traitsFlyoutVals.innerHTML = vals.map(function(v){
       var pct = v.percent !== null && v.percent !== undefined ? v.percent.toFixed(3) + '%' : '—';
       var count = v.count !== null && v.count !== undefined ? v.count : '—';
-      return '<button type="button" class="traits-flyout-val" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '">' +
+      var exampleImg = exampleImages[v.value];
+      // Dark gradient layered UNDER the image (declared first, painted on
+      // top) so the label/count text stays readable over any photo.
+      var style = exampleImg
+        ? ' style="background-image:linear-gradient(rgba(8,9,11,0.55),rgba(8,9,11,0.8)),url(&quot;' + escapeHtml(exampleImg) + '&quot;);"'
+        : '';
+      return '<button type="button" class="traits-flyout-val' + (exampleImg ? ' has-preview' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
         '<span>' + escapeHtml(v.value.toUpperCase()) + '</span>' +
         '<span class="tfv-count">' + count + ' :: ' + pct + '</span>' +
       '</button>';
