@@ -465,27 +465,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex-wrap:wrap;
     margin-bottom:0.75rem;
   }
-  .sort-flyout{ display:block; width:min(280px, 80vw); max-height:320px; padding:0.5rem; overflow-y:auto; }
-  .sort-stack{
-    display:flex;
-    flex-direction:column;
-    gap:0.35rem;
-  }
-  .sort-stack-item{
-    display:flex;
-    align-items:center;
-    gap:0.5rem;
-    background:#000;
-    border:1px solid var(--border-mid);
-    border-radius:var(--radius);
-    padding:0.5em 0.6em;
-    cursor:grab;
-  }
-  .sort-stack-item.dragging{ opacity:0.4; }
-  .sort-stack-item.drag-over{ border-color:var(--cyan); box-shadow:0 0 0 1px var(--cyan-dim); }
-  .sort-stack-handle{ color:var(--grey-dim); font-size:12px; flex:0 0 auto; }
-  .sort-stack-rank{ color:var(--cyan); font-size:10px; letter-spacing:0.05em; flex:0 0 auto; text-shadow:0 0 5px var(--cyan-glow); }
-  .sort-stack-label{ color:var(--white); font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; text-transform:uppercase; flex:1; }
   input.search-input{
     flex:0 1 140px;
     background:#000;
@@ -584,14 +563,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex-wrap:wrap;
   }
   .trait-row-label{
-    font-size:11px;
+    font-size:13px;
     letter-spacing:0.2em;
     color:var(--grey);
     text-transform:uppercase;
     flex:0 0 auto;
   }
   .traits-hover-wrap{ position:relative; display:inline-flex; }
-  .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.75em 0.4em; }
+  .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.9em 0.6em; }
   .traits-hover-wrap:hover .trait-row-label,
   .traits-hover-wrap.open .trait-row-label{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   .traits-flyout{
@@ -600,22 +579,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     left:0;
     z-index:60;
     display:flex;
-    width:min(480px, 80vw);
-    max-height:280px;
+    width:min(620px, 90vw);
+    max-height:420px;
     background:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
     box-shadow:0 10px 30px rgba(0,0,0,0.6);
   }
   .traits-flyout-cats{
-    flex:0 0 40%;
+    flex:0 0 42%;
     overflow-y:auto;
     border-right:1px solid var(--border-dim);
   }
   .traits-flyout-vals{
     flex:1;
     overflow-y:auto;
-    padding:0.4rem;
+    padding:0.6rem;
   }
   .traits-flyout-cat{
     display:block;
@@ -626,9 +605,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-bottom:1px solid var(--border-dim);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:13px;
     letter-spacing:0.06em;
-    padding:0.6em 0.7em;
+    padding:0.9em 1em;
     cursor:pointer;
     text-transform:uppercase;
     transition:background 0.15s ease, color 0.15s ease;
@@ -644,18 +623,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-dim);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:13px;
     letter-spacing:0.03em;
-    padding:0.5em 0.6em;
-    margin-bottom:0.3rem;
+    padding:0.75em 0.9em;
+    margin-bottom:0.4rem;
     cursor:pointer;
     text-align:left;
     text-transform:uppercase;
     border-radius:var(--radius);
-    transition:border-color 0.15s ease, color 0.15s ease;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
   }
   .traits-flyout-val:hover{ border-color:var(--cyan-dim); color:var(--white); }
-  .traits-flyout-val .tfv-count{ color:var(--grey-dim); font-size:9px; flex:0 0 auto; }
+  .traits-flyout-val.selected{ background:var(--cyan-faint); border-color:var(--cyan); color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  .traits-flyout-val .tfv-count{ color:var(--grey-dim); font-size:11px; flex:0 0 auto; }
   select.trait-cat-select{
     background:#000;
     border:1px solid var(--border-mid);
@@ -1361,8 +1341,9 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div class="traits-hover-wrap" id="sortDropWrap">
             <span class="trait-row-label" id="sortDropLabel">S0RT ▾</span>
-            <div class="traits-flyout sort-flyout" id="sortFlyout" style="display:none;">
-              <div class="sort-stack" id="sortStackList"></div>
+            <div class="traits-flyout" id="sortFlyout" style="display:none;">
+              <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
+              <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
             </div>
           </div>
         </div>
@@ -1667,10 +1648,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     items: [],                // everything loaded so far in the current browse/search mode
     scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
     mode: 'browse',            // 'browse' | 'search' | 'scoped'
-    sort: 'RARITY_ASC',        // always kept equal to sortStack[0] — the primary key, drives the real fetch
-    // Every sort criterion, all always present — drag to reorder priority.
-    // Top entry drives the real fetch; the rest tie-break what's loaded.
-    sortStack: ['RARITY_ASC', 'RARITY_DESC', 'NAME_ASC', 'NAME_DESC', 'PRICE_ASC', 'PRICE_DESC', 'HIGHEST_SALE', 'SALES_LOW', 'SCYLLA_PRICE_ASC', 'SCYLLA_PRICE_DESC'],
+    sort: 'RARITY_ASC',
     edition: 'ALL',            // 'ALL' | 'LOW' (1-1515) | 'HIGH' (1516-3015)
     activeTab: null,           // null | 'database' | 'mypigeons' | 'topholders' | 'sales'
     databaseLoaded: false,
@@ -1688,7 +1666,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','sortStackList','sortDropWrap','sortDropLabel','sortFlyout',
+  ['searchInput','searchBtn','editionSelect','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectToggle','dbSelectMenu','copyIssuerBtn','ciIssuerAddr',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
@@ -2631,16 +2609,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (isEdition && typeof data.rawSkip === 'number') state.editionRawSkip = data.rawSkip;
       state.total = typeof data.total === 'number' ? data.total : state.total;
       state.hasMore = !!data.hasMore && newItems.length > 0;
-      // With more than one sort axis stacked, keep refining tie-break order
-      // as each page comes in (a full re-sort + re-render — only pays that
-      // cost when a stack is actually in use). A single-axis stack (the
-      // default) keeps the original cheap append, unchanged.
-      if (state.sortStack.length > 1){
-        state.items = multiSortItems(state.items, state.sortStack);
-        renderResultsReplace(state.items);
-      } else {
-        appendResults(newItems);
-      }
+      appendResults(newItems);
       var note = filters.length ? ' :: TRA!T F!LTERED' : '';
       el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + (state.total !== null ? state.total : state.items.length) + '</span>' + note;
       if (!state.items.length){
@@ -3622,101 +3591,74 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   el.searchBtn.addEventListener('click', runSearchBox);
   el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearchBox(); });
-  // ---- Sort stack — the DATABASE grid's sort is now a reorderable
-  // priority list, not a single pick. The backend still only fetches by
-  // ONE key at a time (state.sort, always kept equal to sortStack[0]) —
-  // rewriting every fetch branch in pigeons.js for a true global multi-key
-  // sort is a much bigger job. This is the lighter version: dragging
-  // reorders priority; if the TOP entry changes, that's a real re-fetch
-  // (same as picking a different sort used to be); reordering/adding/
-  // removing anything else just re-sorts what's already loaded, refining
-  // further as more pages come in (see loadMoreCollection). ----
-  var SORT_VALUE_LABELS = {
-    NAME_ASC: 'A → Z',
-    NAME_DESC: 'Z → A',
-    PRICE_ASC: 'L0WEST L!ST!NG',
-    PRICE_DESC: 'H!GHEST L!ST!NG',
-    RARITY_ASC: 'RAR!TY H!GH',
-    RARITY_DESC: 'RAR!TY L0W',
-    HIGHEST_SALE: 'SALES (H!GHEST)',
-    SALES_LOW: 'SALES (L0WEST)',
-    SCYLLA_PRICE_ASC: '$P!GE0NS L0W → H!GH',
-    SCYLLA_PRICE_DESC: '$P!GE0NS H!GH → L0W'
+  // ---- SORT — same two-level hover flyout as TRAITS: hover a category
+  // (Alphabetical / Listings / Sales / Rarity), scroll its value list,
+  // click one to sort by it. Single pick, same as the original dropdown —
+  // just presented the same way TRAITS is instead of a native <select>.
+  var SORT_CATEGORIES = {
+    'ALPHABET!CAL': [
+      { value: 'NAME_ASC', label: 'A → Z' },
+      { value: 'NAME_DESC', label: 'Z → A' }
+    ],
+    'L!ST!NGS': [
+      { value: 'PRICE_ASC', label: 'L0WEST' },
+      { value: 'PRICE_DESC', label: 'H!GHEST' },
+      { value: 'SCYLLA_PRICE_ASC', label: '$P!GE0NS L0WEST' },
+      { value: 'SCYLLA_PRICE_DESC', label: '$P!GE0NS H!GHEST' }
+    ],
+    'SALES': [
+      { value: 'HIGHEST_SALE', label: 'H!GHEST' },
+      { value: 'SALES_LOW', label: 'L0WEST' }
+    ],
+    'RAR!TY': [
+      { value: 'RARITY_ASC', label: 'H!GHEST' },
+      { value: 'RARITY_DESC', label: 'L0WEST' }
+    ]
   };
-
-  function bestListingPriceOf(p){
-    var d = p.listings && p.listings.deeptide ? p.listings.deeptide.priceXrp : p.priceXrp;
-    var x = p.listings && p.listings.xrpCafe ? p.listings.xrpCafe.priceXrp : null;
-    if ((d === null || d === undefined) && (x === null || x === undefined)) return null;
-    if (d === null || d === undefined) return x;
-    if (x === null || x === undefined) return d;
-    return Math.min(d, x);
-  }
-  // Same single-key comparisons runScopedQuery already uses for wallet-
-  // scoped browsing — duplicated rather than shared, so this can be
-  // extended freely (new axes, tweaks) without risking that existing,
-  // already-working path.
-  function compareBySortValue(value, a, b){
-    switch (value){
-      case 'RARITY_ASC': case 'RARITY_DESC': {
-        var ar = a.rarityRank === null || a.rarityRank === undefined ? Infinity : a.rarityRank;
-        var br = b.rarityRank === null || b.rarityRank === undefined ? Infinity : b.rarityRank;
-        return value === 'RARITY_DESC' ? br - ar : ar - br;
-      }
-      case 'NAME_ASC': case 'NAME_DESC':
-        return value === 'NAME_DESC' ? (b.number || 0) - (a.number || 0) : (a.number || 0) - (b.number || 0);
-      case 'HIGHEST_SALE': case 'SALES_LOW': {
-        var av = a.highSaleXrp === null || a.highSaleXrp === undefined ? -1 : a.highSaleXrp;
-        var bv = b.highSaleXrp === null || b.highSaleXrp === undefined ? -1 : b.highSaleXrp;
-        return value === 'SALES_LOW' ? av - bv : bv - av;
-      }
-      case 'PRICE_ASC': case 'PRICE_DESC': {
-        var ap = bestListingPriceOf(a), bp = bestListingPriceOf(b);
-        if (ap === null && bp === null) return 0;
-        if (ap === null) return 1;
-        if (bp === null) return -1;
-        return value === 'PRICE_DESC' ? bp - ap : ap - bp;
-      }
-      case 'SCYLLA_PRICE_ASC': case 'SCYLLA_PRICE_DESC': {
-        var asv = a.scyllaListing ? (parseFloat(a.scyllaListing.price) || 0) : -1;
-        var bsv = b.scyllaListing ? (parseFloat(b.scyllaListing.price) || 0) : -1;
-        return value === 'SCYLLA_PRICE_DESC' ? bsv - asv : asv - bsv;
-      }
-      default: return 0;
+  function sortCategoryOf(value){
+    for (var cat in SORT_CATEGORIES){
+      if (SORT_CATEGORIES[cat].some(function(o){ return o.value === value; })) return cat;
     }
+    return null;
   }
-  function multiSortItems(items, stack){
-    return items.slice().sort(function(a, b){
-      for (var i = 0; i < stack.length; i++){
-        var r = compareBySortValue(stack[i], a, b);
-        if (r) return r;
-      }
-      return 0;
-    });
+  function sortLabelOf(value){
+    var cat = sortCategoryOf(value);
+    if (!cat) return value;
+    var found = SORT_CATEGORIES[cat].filter(function(o){ return o.value === value; })[0];
+    return cat + ' :: ' + (found ? found.label : value);
   }
-  function resortLoadedItems(){
-    if (state.scope) return; // wallet-scoped browsing keeps its own single-key sort, untouched
-    state.items = multiSortItems(state.items, state.sortStack);
-    renderResultsReplace(state.items);
+  function renderSortDropLabel(){
+    el.sortDropLabel.textContent = 'S0RT :: ' + sortLabelOf(state.sort) + ' ▾';
   }
-  function promoteToTopOfSortStack(value){
-    state.sortStack = [value].concat(state.sortStack.filter(function(v){ return v !== value; }));
-  }
-  // Every sort criterion is always present in the stack — no separate
-  // "add" step. Just drag to reorder priority.
-  function renderSortStack(){
-    el.sortDropLabel.textContent = 'S0RT :: ' + (SORT_VALUE_LABELS[state.sortStack[0]] || state.sortStack[0]) + ' ▾';
-    el.sortStackList.innerHTML = state.sortStack.map(function(value, i){
-      return '<div class="sort-stack-item" draggable="true" data-value="' + value + '">' +
-        '<span class="sort-stack-handle">⠿</span>' +
-        '<span class="sort-stack-rank">' + (i + 1) + '</span>' +
-        '<span class="sort-stack-label">' + escapeHtml(SORT_VALUE_LABELS[value] || value) + '</span>' +
-      '</div>';
+  function renderSortFlyoutCats(){
+    el.sortFlyoutCats.innerHTML = Object.keys(SORT_CATEGORIES).map(function(c){
+      return '<button type="button" class="traits-flyout-cat" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c) + '</button>';
     }).join('');
   }
-  function applySortStackTop(){
-    var value = state.sortStack[0];
+  function renderSortFlyoutVals(category){
+    el.sortFlyoutCats.querySelectorAll('.traits-flyout-cat').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-cat') === category);
+    });
+    var opts = SORT_CATEGORIES[category] || [];
+    el.sortFlyoutVals.innerHTML = opts.map(function(o){
+      return '<button type="button" class="traits-flyout-val' + (state.sort === o.value ? ' selected' : '') + '" data-value="' + o.value + '">' +
+        '<span>' + escapeHtml(o.label) + '</span>' +
+      '</button>';
+    }).join('');
+  }
+  function openSortFlyout(){
+    renderSortFlyoutCats();
+    renderSortFlyoutVals(sortCategoryOf(state.sort) || Object.keys(SORT_CATEGORIES)[0]);
+    el.sortFlyout.style.display = 'flex';
+    el.sortDropWrap.classList.add('open');
+  }
+  function closeSortFlyout(){
+    el.sortFlyout.style.display = 'none';
+    el.sortDropWrap.classList.remove('open');
+  }
+  function applySort(value){
     state.sort = value;
+    renderSortDropLabel();
     var isScyllaSort = value === 'SCYLLA_PRICE_ASC' || value === 'SCYLLA_PRICE_DESC';
     if (isScyllaSort){
       setScyllaListedOnly(true); // also runs the query
@@ -3728,60 +3670,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     runQuery();
   }
-  function openSortFlyout(){
-    el.sortFlyout.style.display = 'block';
-    el.sortDropWrap.classList.add('open');
-  }
-  function closeSortFlyout(){
-    el.sortFlyout.style.display = 'none';
-    el.sortDropWrap.classList.remove('open');
-  }
   el.sortDropWrap.addEventListener('mouseenter', openSortFlyout);
   el.sortDropWrap.addEventListener('mouseleave', closeSortFlyout);
   el.sortDropLabel.addEventListener('click', function(){
-    if (el.sortFlyout.style.display === 'block') closeSortFlyout();
+    if (el.sortFlyout.style.display === 'flex') closeSortFlyout();
     else openSortFlyout();
   });
-  // Drag-to-reorder — plain HTML5 DnD, no library. Reordering above the
-  // current top promotes a new primary key (real re-fetch); reordering
-  // that leaves the top entry alone just re-sorts what's already loaded.
-  var sortDragValue = null;
-  el.sortStackList.addEventListener('dragstart', function(e){
-    var item = e.target.closest('.sort-stack-item');
-    if (!item) return;
-    sortDragValue = item.getAttribute('data-value');
-    item.classList.add('dragging');
+  el.sortFlyoutCats.addEventListener('mouseover', function(e){
+    var catBtn = e.target.closest('.traits-flyout-cat');
+    if (catBtn) renderSortFlyoutVals(catBtn.getAttribute('data-cat'));
   });
-  el.sortStackList.addEventListener('dragend', function(e){
-    var item = e.target.closest('.sort-stack-item');
-    if (item) item.classList.remove('dragging');
-    el.sortStackList.querySelectorAll('.drag-over').forEach(function(el2){ el2.classList.remove('drag-over'); });
+  el.sortFlyoutCats.addEventListener('click', function(e){
+    var catBtn = e.target.closest('.traits-flyout-cat');
+    if (catBtn) renderSortFlyoutVals(catBtn.getAttribute('data-cat'));
   });
-  el.sortStackList.addEventListener('dragover', function(e){
-    var item = e.target.closest('.sort-stack-item');
-    if (!item || item.getAttribute('data-value') === sortDragValue) return;
-    e.preventDefault();
-    el.sortStackList.querySelectorAll('.drag-over').forEach(function(el2){ el2.classList.remove('drag-over'); });
-    item.classList.add('drag-over');
+  el.sortFlyoutVals.addEventListener('click', function(e){
+    var valBtn = e.target.closest('.traits-flyout-val');
+    if (!valBtn) return;
+    applySort(valBtn.getAttribute('data-value'));
+    closeSortFlyout();
   });
-  el.sortStackList.addEventListener('drop', function(e){
-    var item = e.target.closest('.sort-stack-item');
-    if (!item || !sortDragValue) return;
-    e.preventDefault();
-    var targetValue = item.getAttribute('data-value');
-    if (targetValue === sortDragValue) return;
-    var wasTop = state.sortStack[0];
-    var fromIdx = state.sortStack.indexOf(sortDragValue);
-    var toIdx = state.sortStack.indexOf(targetValue);
-    if (fromIdx === -1 || toIdx === -1) return;
-    state.sortStack.splice(fromIdx, 1);
-    state.sortStack.splice(toIdx, 0, sortDragValue);
-    sortDragValue = null;
-    renderSortStack();
-    if (state.sortStack[0] !== wasTop) applySortStackTop();
-    else resortLoadedItems();
-  });
-  renderSortStack();
+  renderSortDropLabel();
   el.editionSelect.addEventListener('click', function(e){
     var btn = e.target.closest('.edition-btn');
     if (!btn) return;
@@ -4002,8 +3911,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         // Highest-first is the default entry into LISTED — the main
         // attraction of the site, not a niche filter.
         state.sort = 'SCYLLA_PRICE_DESC';
-        promoteToTopOfSortStack('SCYLLA_PRICE_DESC');
-        renderSortStack();
+        renderSortDropLabel();
       }
       if (state.scope){
         state.scope = null;
@@ -4015,8 +3923,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
     } else if (state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC'){
       state.sort = 'RARITY_ASC';
-      promoteToTopOfSortStack('RARITY_ASC');
-      renderSortStack();
+      renderSortDropLabel();
     }
     runQuery();
   }
