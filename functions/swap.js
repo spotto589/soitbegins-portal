@@ -680,7 +680,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--grey-disabled);
   }
   .pigeon-img-box img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.25s ease; }
-  .card-select-toggle{
+  .card-select-toggle, .my-pigeon-offer-toggle{
     position:absolute;
     top:0.3rem;
     right:0.3rem;
@@ -698,8 +698,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     transition:border-color 0.15s ease, color 0.15s ease;
   }
-  .card-select-toggle:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
-  .card-select-toggle.selected{ background:var(--magenta); color:#08090b; border-color:var(--magenta); animation:flicker-in 0.3s ease-out; }
+  .card-select-toggle:hover, .my-pigeon-offer-toggle:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  .card-select-toggle.selected, .my-pigeon-offer-toggle.selected{ background:var(--magenta); color:#08090b; border-color:var(--magenta); animation:flicker-in 0.3s ease-out; }
+  .my-pigeon-offer-toggle.at-cap{ opacity:0.35; cursor:not-allowed; }
 
   /* ---- collection grid / cards ---- */
   /* Fixed 6 columns at every width, on purpose (not auto-fill/minmax,
@@ -758,7 +759,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, color 0.15s ease;
   }
   .cl-buy:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
-  .card-select-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
+  .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
 
   @media (max-width:700px){
     body{ padding:4vh 2.5vw 6vh; }
@@ -768,7 +769,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     .result-grid{ grid-template-columns:repeat(2, 1fr); gap:0.6rem; }
     .result-card-body{ padding:0.5rem 0.4rem; }
     .result-num{ font-size:15px; padding:0.45rem 0.3rem; }
-    .card-select-toggle{ width:1.7em; height:1.7em; line-height:1.7em; font-size:14px; }
+    .card-select-toggle, .my-pigeon-offer-toggle{ width:1.7em; height:1.7em; line-height:1.7em; font-size:14px; }
   }
 
   /* ---- infinite scroll ---- */
@@ -1715,6 +1716,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     renderTradeBuilder();
     refreshCardSelectionStates();
+    // MY PIGEONS renders its own toggle state from scratch each time
+    // (cheap — a wallet's own collection, not the full 3015-item
+    // database) rather than patching it into refreshCardSelectionStates,
+    // which only knows about .card-select-toggle. No-ops harmlessly if
+    // MY PIGEONS was never opened (myPigeonsData still null).
+    if (myPigeonsData !== null) renderMyPigeonsList();
   }
   function toggleTargetAsset(p){
     if (state.targetAssets[p.nftId]){
@@ -2404,6 +2411,16 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (tp) handleSelect(tp);
         return;
       }
+      // MY PIGEONS' own toggle — always adds to the OFFER pile directly,
+      // never through handleSelect's scope-based branching (this list is
+      // never "scoped" the way the DATABASE grid is, so that branching
+      // would misfire here).
+      var myToggle = e.target.closest('.my-pigeon-offer-toggle');
+      if (myToggle){
+        var mp = source().filter(function(x){ return x.nftId === myToggle.getAttribute('data-nftid'); })[0];
+        if (mp) toggleOfferAsset(mp);
+        return;
+      }
       var imgBox = e.target.closest('.pigeon-img-box');
       if (imgBox){ openDetail(imgBox.getAttribute('data-nftid')); }
     });
@@ -2726,9 +2743,19 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? '<div class="index-line" style="margin-top:0.5rem; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow);">L!STED :: ' + escapeHtml(listedInfo.price) + ' $P!GE0NS</div>' +
         '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ DEL!ST ]</button>'
       : '<button class="bar-btn list-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.5rem;">[ L!ST ]</button>';
-    return '<div class="result-card" data-nftid="' + escapeHtml(p.nftId) + '">' +
+    // Own, separate toggle class from the DATABASE grid's .card-select-toggle
+    // (same look, via shared CSS selectors) — deliberately NOT the same
+    // class, so wireResultClicks' generic handler (which routes through
+    // handleSelect's scope-based branching, wrong for this always-unscoped
+    // list) never sees this click; toggleOfferAsset is called directly.
+    var inOffer = !!state.offerAssets[p.nftId];
+    var atCap = !inOffer && offerCount() >= OFFER_MAX;
+    return '<div class="result-card' + (inOffer ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">P!GE0N ' + num + '</div>' +
-      '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' + img + '</div>' +
+      '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
+        img +
+        '<button class="my-pigeon-offer-toggle' + (inOffer ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="ADD T0 SWAP 0FFER">' + (inOffer ? '✓' : '+') + '</button>' +
+      '</div>' +
       '<div class="result-card-body">' + rarityLine + actionHtml + '</div>' +
     '</div>';
   }
