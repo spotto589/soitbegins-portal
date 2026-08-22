@@ -910,6 +910,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .result-rarity-line{ font-size:14px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
   .card-listings{ display:flex; gap:0.4rem; margin-top:0.45rem; }
+  /* Neither marketplace has a real listing — one shared strip instead of
+     two separate washed-out "N0 L!ST!NG" boxes. */
+  .card-no-listings{
+    text-align:center;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.15em;
+    color:var(--cyan-dim);
+    border:1px dashed var(--border-mid);
+    border-radius:var(--radius);
+    padding:0.6em 0.5em;
+    text-transform:uppercase;
+    margin-top:0.45rem;
+  }
+  .result-row-right .card-no-listings{ margin-top:0; }
   .cl-block{
     display:block;
     flex:1;
@@ -958,10 +973,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-buy-scylla-btn{ background:rgba(8,9,11,0.35); border:1px solid rgba(255,255,255,0.7); color:#fff; font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; padding:0.35em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:background 0.15s ease; }
   .card-buy-scylla-btn:hover{ background:rgba(8,9,11,0.55); }
   .card-trait-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.4rem; margin-top:0.5rem; }
-  .card-trait-cell{ border:1px solid var(--border-dim); border-radius:var(--radius); padding:0.4rem 0.3rem; text-align:center; }
-  .card-tc-label{ font-size:8px; letter-spacing:0.1em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.2rem; }
-  .card-tc-value{ font-size:11px; letter-spacing:0.02em; color:var(--white); }
-  .card-tc-sub{ font-size:8px; letter-spacing:0.04em; color:var(--grey); margin-top:0.2rem; text-transform:uppercase; }
+  .card-trait-cell{ background:rgba(61,243,236,0.05); border:1px solid var(--cyan-dim); border-radius:var(--radius); padding:0.45rem 0.35rem; text-align:center; }
+  .card-tc-label{ font-size:9px; font-weight:700; letter-spacing:0.1em; color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; margin-bottom:0.25rem; }
+  .card-tc-value{ font-size:12px; font-weight:600; letter-spacing:0.02em; color:var(--white); }
+  .card-tc-sub{ font-size:9px; letter-spacing:0.04em; color:var(--grey); margin-top:0.25rem; text-transform:uppercase; }
   @media (max-width:500px){
     .card-trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
@@ -2773,9 +2788,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Order: marketplace listings, then the $PIGEONS listing (styled like
     // a currency — coin icon + amount), then traits, then a history toggle
     // that swaps this whole box for the sales-history list.
-    var listingsHtml = p.listings
-      ? '<div class="card-listings">' + listingBlockHtml('XRP.CAFE', p.listings.xrpCafe) + listingBlockHtml('DEEPT!DE', p.listings.deeptide) + '</div>'
-      : '';
+    var xcListing = p.listings && p.listings.xrpCafe;
+    var dtListing = p.listings && p.listings.deeptide;
+    var hasXcListing = xcListing && xcListing.priceXrp !== null && xcListing.priceXrp !== undefined;
+    var hasDtListing = dtListing && dtListing.priceXrp !== null && dtListing.priceXrp !== undefined;
+    // Neither marketplace has a real listing — one shared "N0 L!ST!NGS"
+    // strip instead of two separate washed-out per-market placeholders.
+    var listingsHtml = !p.listings
+      ? ''
+      : (!hasXcListing && !hasDtListing)
+        ? '<div class="card-no-listings">N0 L!ST!NGS</div>'
+        : '<div class="card-listings">' + listingBlockHtml('XRP.CAFE', xcListing) + listingBlockHtml('DEEPT!DE', dtListing) + '</div>';
     var canBuyScylla = p.scyllaListing && p.owner !== MY_WALLET;
     var scyllaListedHtml = p.scyllaListing
       ? '<div class="card-scylla-row">' +
