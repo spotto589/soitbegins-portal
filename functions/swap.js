@@ -837,6 +837,28 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-row-left .pigeon-img-box{ width:100%; }
   .result-row-left .result-num{ border-bottom:none; padding:0; font-size:22px; }
   .result-row-left .result-rarity-line{ font-size:16px; }
+  .make-offer-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.4rem;
+    width:100%;
+    background:transparent;
+    border:1px solid var(--magenta);
+    color:var(--magenta);
+    text-shadow:0 0 5px var(--magenta-glow);
+    font-family:var(--font-mono);
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.05em;
+    padding:0.6em 0.5em;
+    cursor:pointer;
+    text-transform:uppercase;
+    border-radius:var(--radius);
+    transition:background 0.15s ease;
+  }
+  .make-offer-btn:hover{ background:var(--magenta-faint); }
+  .make-offer-coin{ width:16px; height:16px; border-radius:50%; object-fit:cover; flex:0 0 auto; }
   .result-row-right{
     flex:1;
     min-width:0;
@@ -1368,6 +1390,10 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="ci-value ci-value-big" id="myWalletAddr"></div>
         <div class="stat-value" id="myWalletCount" style="margin-top:0.5rem;"></div>
       </div>
+      <div id="offersReceivedBlock" style="display:none;">
+        <div class="detail-traits-title">0FFERS RECE!VED</div>
+        <div id="offersReceivedList"></div>
+      </div>
       <div class="search-row" id="myPigeonsSortRow" style="display:none; justify-content:center;">
         <select class="sort-select" id="myPigeonsSortSelect">
           <option value="RARITY_ASC" selected>RAR!TY H!GH</option>
@@ -1778,6 +1804,79 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- SCREEN: MAKE AN OFFER — a real NFTokenCreateOffer BUY-offer (the
+         reverse of LIST), which only the current owner can accept -->
+    <div class="sw-panel" id="screenOfferForm" style="display:none;">
+      <div class="detail-eyebrow">// MAKE AN 0FFER</div>
+      <div class="detail-num" id="offerFormPigeonNum"></div>
+      <div class="detail-img-large pigeon-img-box" id="offerFormImg">[ IMAGE ]</div>
+      <div class="detail-field"><span class="df-label">Y0UR 0FFER</span><span class="df-value"><input class="search-input" id="offerPriceInput" placeholder="0" inputmode="decimal" style="text-align:right; width:140px;"></span></div>
+      <div class="detail-field"><span class="df-label">CURRENCY</span><span class="df-value">$P!GE0NS</span></div>
+      <div class="index-line" id="offerFormError" style="display:none;"></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="offerFormBackBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="offerFormSubmitBtn">[ SEND 0FFER ]</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: OFFER CONFIRMATION — the exact txjson, before Xaman ever opens -->
+    <div class="sw-panel" id="screenOfferConfirm" style="display:none;">
+      <div class="node-eyebrow">// 0FFER C0NF!RMAT!0N</div>
+      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="offerConfTxType"></span></div>
+      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="offerConfAccount"></span></div>
+      <div class="detail-field"><span class="df-label">Owner</span><span class="df-value" id="offerConfOwner"></span></div>
+      <div class="detail-field"><span class="df-label">NFTokenID</span><span class="df-value" id="offerConfNftId"></span></div>
+      <div class="detail-field"><span class="df-label">Amount.currency</span><span class="df-value" id="offerConfCurrency"></span></div>
+      <div class="detail-field"><span class="df-label">Amount.issuer</span><span class="df-value" id="offerConfIssuer"></span></div>
+      <div class="detail-field"><span class="df-label">Amount.value</span><span class="df-value" id="offerConfValue"></span></div>
+      <div class="index-line" id="offerConfirmStatus" style="margin-top:1rem;"></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="offerConfirmBackBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="offerOpenXamanBtn">[ 0PEN XAMAN ]</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: OFFER RESULT — verified against real on-ledger state (nft_buy_offers), not just Xaman's word -->
+    <div class="sw-panel" id="screenOfferResult" style="display:none;">
+      <div class="detail-eyebrow">// 0FFER SENT</div>
+      <div class="index-line swap-nonatomic-note">THE 0WNER ST!LL NEEDS T0 ACCEPT TH!S 0FFER F0R THE TRADE T0 SETTLE.</div>
+      <div class="detail-num" id="offerResultPigeonNum"></div>
+      <div class="detail-field"><span class="df-label">Y0UR 0FFER</span><span class="df-value" id="offerResultPrice"></span></div>
+      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="offerResultStatus"></span></div>
+      <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="offerResultTxLink" target="_blank" rel="noopener"></a></span></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="offerResultDoneBtn">[ ← BACK T0 DATABASE ]</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: ACCEPT OFFER CONFIRMATION (owner side) — the exact NFTokenAcceptOffer txjson, before Xaman ever opens -->
+    <div class="sw-panel" id="screenAcceptOfferConfirm" style="display:none;">
+      <div class="node-eyebrow">// ACCEPT 0FFER C0NF!RMAT!0N</div>
+      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="acceptOfferConfTxType"></span></div>
+      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="acceptOfferConfAccount"></span></div>
+      <div class="detail-field"><span class="df-label">NFTokenBuyOffer</span><span class="df-value" id="acceptOfferConfOfferId"></span></div>
+      <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="acceptOfferConfPigeon"></span></div>
+      <div class="detail-field"><span class="df-label">BUYER</span><span class="df-value" id="acceptOfferConfBuyer"></span></div>
+      <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="acceptOfferConfPrice"></span></div>
+      <div class="index-line" id="acceptOfferConfirmStatus" style="margin-top:1rem;"></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="acceptOfferConfirmBackBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="acceptOfferOpenXamanBtn">[ 0PEN XAMAN ]</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: ACCEPT OFFER RESULT — verified against real on-ledger state (offer gone, NFT no longer owner's) -->
+    <div class="sw-panel" id="screenAcceptOfferResult" style="display:none;">
+      <div class="detail-eyebrow">// SETTLED</div>
+      <div class="detail-num" id="acceptOfferResultPigeonNum"></div>
+      <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="acceptOfferResultPrice"></span></div>
+      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="acceptOfferResultStatus"></span></div>
+      <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="acceptOfferResultTxLink" target="_blank" rel="noopener"></a></span></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="acceptOfferResultDoneBtn">[ ← BACK T0 MY P!GE0NS ]</button>
+      </div>
+    </div>
+
     <div class="protocol-footer">Σκύλλα SWAP :: L!ST!NG, BUY!NG, AND DEL!ST!NG ARE REAL XRPL TRANSACT!0NS. N0 MARKETPLACE FEE, NEG0T!AT!0N, 0R MULT!-!TEM 0FFERS YET.</div>
   </div>
 
@@ -1874,7 +1973,13 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
    'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
-   'screenDelistResult','delistResultPigeonNum','delistResultStatus','delistResultTxLink','delistResultDoneBtn'
+   'screenDelistResult','delistResultPigeonNum','delistResultStatus','delistResultTxLink','delistResultDoneBtn',
+   'screenOfferForm','offerFormPigeonNum','offerFormImg','offerPriceInput','offerFormError','offerFormBackBtn','offerFormSubmitBtn',
+   'screenOfferConfirm','offerConfTxType','offerConfAccount','offerConfOwner','offerConfNftId','offerConfCurrency','offerConfIssuer','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
+   'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
+   'offersReceivedBlock','offersReceivedList',
+   'screenAcceptOfferConfirm','acceptOfferConfTxType','acceptOfferConfAccount','acceptOfferConfOfferId','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
+   'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   function escapeHtml(str){
@@ -1908,7 +2013,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       runQuery();
     } else if (tab === 'mypigeons' && myPigeonsData === null){
       loadMyPigeons();
-    } else if (tab === 'topholders' && topHoldersData === null){
+    }
+    if (tab === 'mypigeons'){
+      // Always refetches, not gated like myPigeonsData above — an incoming
+      // offer can arrive at any time, so a stale cached view would hide a
+      // real pending offer.
+      loadOffersReceived();
+    }
+    if (tab === 'topholders' && topHoldersData === null){
       loadTopHolders();
     } else if (tab === 'sales' && !state.salesLoaded){
       state.salesLoaded = true;
@@ -1951,6 +2063,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenBuyResult.style.display = name === 'buyresult' ? '' : 'none';
     el.screenDelistConfirm.style.display = name === 'delistconfirm' ? '' : 'none';
     el.screenDelistResult.style.display = name === 'delistresult' ? '' : 'none';
+    el.screenOfferForm.style.display = name === 'offerform' ? '' : 'none';
+    el.screenOfferConfirm.style.display = name === 'offerconfirm' ? '' : 'none';
+    el.screenOfferResult.style.display = name === 'offerresult' ? '' : 'none';
+    el.screenAcceptOfferConfirm.style.display = name === 'acceptofferconfirm' ? '' : 'none';
+    el.screenAcceptOfferResult.style.display = name === 'acceptofferresult' ? '' : 'none';
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
@@ -2683,6 +2800,9 @@ const SWAP_HTML = `<!DOCTYPE html>
         '</div>' +
         '<div class="result-num">P!GE0N ' + num + '</div>' +
         rarityLine +
+        (p.owner !== MY_WALLET
+          ? '<button class="make-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '"><img class="make-offer-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">MAKE AN 0FFER !N $P!GE0NS</button>'
+          : '') +
       '</div>' +
       '<div class="result-row-right">' +
         '<div class="result-row-right-body">' +
@@ -2756,6 +2876,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (buyBtn){
         var bp = source().filter(function(x){ return x.nftId === buyBtn.getAttribute('data-nftid'); })[0];
         if (bp) openBuyConfirm(bp);
+        return;
+      }
+      var makeOfferBtn = e.target.closest('.make-offer-btn');
+      if (makeOfferBtn){
+        var op = source().filter(function(x){ return x.nftId === makeOfferBtn.getAttribute('data-nftid'); })[0];
+        if (op) openOfferForm(op);
         return;
       }
       var toggle = e.target.closest('.card-select-toggle');
@@ -3347,7 +3473,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       lookup_failed: 'S!GNAL !NTERFERENCE — C0ULDN\\'T VER!FY THE L!ST!NG. TRY AGA!N.',
       invalid_to_wallet: 'TARGET WALLET ADDRESS !S!NVAL!D.',
       cannot_swap_with_self: 'Y0U CAN\\'T SWAP W!TH Y0UR 0WN WALLET.',
-      xaman_request_failed: 'C0ULDN\\'T REACH XAMAN — TRY AGA!N.'
+      xaman_request_failed: 'C0ULDN\\'T REACH XAMAN — TRY AGA!N.',
+      not_indexed: 'C0ULDN\\'T L00K UP TH!S P!GE0N — TRY AGA!N.',
+      cannot_offer_own_pigeon: 'Y0U CAN\\'T MAKE AN 0FFER 0N Y0UR 0WN P!GE0N.',
+      offer_not_found: 'TH!S 0FFER N0 L0NGER EX!STS 0N-LEDGER.'
     };
     return (code && messages[code]) || 'ERR://C0ULD N0T PREPARE THE TRANSACT!0N.';
   }
@@ -3761,6 +3890,322 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderMyPigeonsList();
     state.activeTab = 'mypigeons';
     showScreen('browse');
+  });
+
+  // ---- MAKE AN OFFER — the reverse of LIST: a real NFTokenCreateOffer
+  // BUY-offer (no tfSellNFToken flag), which only the Pigeon's current
+  // owner can accept. Same prepare -> confirm -> Xaman -> poll shape as
+  // LIST, just Account = offerer instead of seller. ----
+  var offerTarget = null; // { nftId, number, image }
+  var offerUuid = null;
+  var offerPollTimer = null;
+
+  function openOfferForm(p){
+    offerTarget = p;
+    el.offerFormPigeonNum.textContent = 'P!GE0N #' + (p.number !== null ? p.number : '????');
+    el.offerFormImg.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
+    el.offerPriceInput.value = '';
+    el.offerFormError.style.display = 'none';
+    el.offerFormSubmitBtn.disabled = false;
+    el.offerFormSubmitBtn.textContent = '[ SEND 0FFER ]';
+    showScreen('offerform');
+  }
+  el.offerFormBackBtn.addEventListener('click', function(){ showScreen('browse'); });
+
+  el.offerFormSubmitBtn.addEventListener('click', function(){
+    if (!offerTarget) return;
+    var priceValue = el.offerPriceInput.value.trim();
+    if (!priceValue || isNaN(Number(priceValue)) || Number(priceValue) <= 0){
+      el.offerFormError.textContent = 'ENTER A VAL!D PR!CE GREATER THAN 0.';
+      el.offerFormError.style.display = '';
+      return;
+    }
+    el.offerFormError.style.display = 'none';
+    el.offerFormSubmitBtn.disabled = true;
+    el.offerFormSubmitBtn.textContent = '[ VAL!DAT!NG... ]';
+    fetch('/api/swap-makeoffer-prepare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: offerTarget.nftId, priceValue: priceValue })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      el.offerFormSubmitBtn.disabled = false;
+      el.offerFormSubmitBtn.textContent = '[ SEND 0FFER ]';
+      if (!res.ok || !res.data.ok){
+        el.offerFormError.textContent = listingErrorMessage(res.data && res.data.error);
+        el.offerFormError.style.display = '';
+        return;
+      }
+      offerTarget.priceValue = priceValue;
+      showOfferConfirm(res.data.txjson);
+    }).catch(function(){
+      el.offerFormSubmitBtn.disabled = false;
+      el.offerFormSubmitBtn.textContent = '[ SEND 0FFER ]';
+      el.offerFormError.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+      el.offerFormError.style.display = '';
+    });
+  });
+
+  function showOfferConfirm(txjson){
+    el.offerConfTxType.textContent = txjson.TransactionType;
+    el.offerConfAccount.textContent = txjson.Account;
+    el.offerConfOwner.textContent = txjson.Owner;
+    el.offerConfNftId.textContent = txjson.NFTokenID;
+    el.offerConfCurrency.textContent = txjson.Amount.currency;
+    el.offerConfIssuer.textContent = txjson.Amount.issuer;
+    el.offerConfValue.textContent = txjson.Amount.value;
+    el.offerConfirmStatus.textContent = '';
+    el.offerOpenXamanBtn.disabled = false;
+    el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+    showScreen('offerconfirm');
+  }
+  el.offerConfirmBackBtn.addEventListener('click', function(){ showScreen('offerform'); });
+
+  el.offerOpenXamanBtn.addEventListener('click', function(){
+    if (!offerTarget) return;
+    el.offerOpenXamanBtn.disabled = true;
+    el.offerOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.offerConfirmStatus.textContent = '';
+    // Open a blank tab synchronously in this click handler, then navigate
+    // it once the fetch resolves — window.open() called inside the async
+    // .then() below gets silently popup-blocked in most browsers.
+    var xamanTab = window.open('', '_blank');
+    fetch('/api/swap-makeoffer-payload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: offerTarget.nftId, priceValue: offerTarget.priceValue })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        if (xamanTab) xamanTab.close();
+        el.offerOpenXamanBtn.disabled = false;
+        el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.offerConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      offerUuid = res.data.uuid;
+      if (xamanTab) xamanTab.location.href = res.data.next.always;
+      el.offerOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.offerConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      pollOfferStatus();
+    }).catch(function(){
+      if (xamanTab) xamanTab.close();
+      el.offerOpenXamanBtn.disabled = false;
+      el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.offerConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+
+  function pollOfferStatus(){
+    if (offerPollTimer) clearTimeout(offerPollTimer);
+    if (!offerUuid || !offerTarget) return;
+    fetch('/api/swap-makeoffer-status?uuid=' + encodeURIComponent(offerUuid) + '&nftId=' + encodeURIComponent(offerTarget.nftId) + '&priceValue=' + encodeURIComponent(offerTarget.priceValue))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'offered'){ showOfferResult(data); return; }
+        if (data.status === 'rejected'){
+          el.offerConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
+          el.offerOpenXamanBtn.disabled = false;
+          el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'expired'){
+          el.offerConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
+          el.offerOpenXamanBtn.disabled = false;
+          el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'failed'){
+          el.offerConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
+          el.offerOpenXamanBtn.disabled = false;
+          el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        offerPollTimer = setTimeout(pollOfferStatus, 2000);
+      }).catch(function(){
+        offerPollTimer = setTimeout(pollOfferStatus, 3000);
+      });
+  }
+
+  function showOfferResult(data){
+    el.offerResultPigeonNum.textContent = 'P!GE0N #' + (offerTarget.number !== null ? offerTarget.number : '????');
+    el.offerResultPrice.textContent = data.price + ' $P!GE0NS';
+    el.offerResultStatus.textContent = 'SENT';
+    if (data.txHash){
+      el.offerResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
+      el.offerResultTxLink.textContent = data.txHash;
+    } else {
+      el.offerResultTxLink.removeAttribute('href');
+      el.offerResultTxLink.textContent = '—';
+    }
+    showScreen('offerresult');
+  }
+  el.offerResultDoneBtn.addEventListener('click', function(){
+    offerTarget = null;
+    offerUuid = null;
+    if (offerPollTimer) clearTimeout(offerPollTimer);
+    state.activeTab = 'database';
+    showScreen('browse');
+  });
+
+  // ---- OFFERS RECEIVED (owner side) — every real $PIGEONS buy-offer
+  // sitting on a Pigeon this wallet currently owns, with a real
+  // NFTokenAcceptOffer to settle one. ----
+  var offersReceivedData = null;
+  var acceptOfferTarget = null; // { nftId, offerId, number, image, price, buyer }
+  var acceptOfferUuid = null;
+  var acceptOfferPollTimer = null;
+
+  function offerReceivedRowHtml(item){
+    return '<div class="th-row" style="flex-direction:column; align-items:stretch; gap:0.5rem;">' +
+      '<div style="display:flex; align-items:center; gap:0.6rem;">' +
+        (item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" style="width:48px; height:48px; object-fit:cover; border:1px solid var(--border-mid);">' : '') +
+        '<div class="result-num" style="border-bottom:none; padding:0;">P!GE0N ' + (item.number !== null ? '#' + item.number : '#????') + '</div>' +
+      '</div>' +
+      item.offers.map(function(o){
+        return '<div class="listing-row"><span class="listing-market">' + escapeHtml(o.buyerShort || o.buyer) + '</span><span class="listing-price">' + escapeHtml(o.price) + ' $P!GE0NS</span>' +
+          '<button class="listing-buy accept-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(o.offerId) + '" data-price="' + escapeHtml(o.price) + '" data-buyer="' + escapeHtml(o.buyer) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '">[ ACCEPT ]</button>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+  }
+  function loadOffersReceived(){
+    el.offersReceivedBlock.style.display = 'none';
+    fetch('/api/swap-offers-received').then(function(r){ return r.json(); }).then(function(data){
+      offersReceivedData = data.items || [];
+      if (!offersReceivedData.length) return;
+      el.offersReceivedBlock.style.display = '';
+      el.offersReceivedList.innerHTML = offersReceivedData.map(offerReceivedRowHtml).join('');
+    }).catch(function(){});
+  }
+  el.offersReceivedList.addEventListener('click', function(e){
+    var btn = e.target.closest('.accept-offer-btn');
+    if (!btn) return;
+    acceptOfferTarget = {
+      nftId: btn.getAttribute('data-nftid'),
+      offerId: btn.getAttribute('data-offerid'),
+      price: btn.getAttribute('data-price'),
+      buyer: btn.getAttribute('data-buyer'),
+      number: btn.getAttribute('data-num') ? parseInt(btn.getAttribute('data-num'), 10) : null,
+      image: btn.getAttribute('data-image') || null
+    };
+    fetch('/api/swap-acceptoffer-prepare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: acceptOfferTarget.nftId, offerId: acceptOfferTarget.offerId })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        alert(listingErrorMessage(res.data && res.data.error));
+        acceptOfferTarget = null;
+        return;
+      }
+      var txjson = res.data.txjson;
+      el.acceptOfferConfTxType.textContent = txjson.TransactionType;
+      el.acceptOfferConfAccount.textContent = txjson.Account;
+      el.acceptOfferConfOfferId.textContent = txjson.NFTokenBuyOffer;
+      el.acceptOfferConfPigeon.textContent = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + acceptOfferTarget.number : '#????');
+      el.acceptOfferConfBuyer.textContent = res.data.display.buyer;
+      el.acceptOfferConfPrice.textContent = res.data.display.price + ' $P!GE0NS';
+      el.acceptOfferConfirmStatus.textContent = '';
+      el.acceptOfferOpenXamanBtn.disabled = false;
+      el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      showScreen('acceptofferconfirm');
+    }).catch(function(){
+      alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
+      acceptOfferTarget = null;
+    });
+  });
+  el.acceptOfferConfirmBackBtn.addEventListener('click', function(){
+    acceptOfferTarget = null;
+    state.activeTab = 'mypigeons';
+    showScreen('browse');
+  });
+
+  el.acceptOfferOpenXamanBtn.addEventListener('click', function(){
+    if (!acceptOfferTarget) return;
+    el.acceptOfferOpenXamanBtn.disabled = true;
+    el.acceptOfferOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.acceptOfferConfirmStatus.textContent = '';
+    var xamanTab = window.open('', '_blank');
+    fetch('/api/swap-acceptoffer-payload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: acceptOfferTarget.nftId, offerId: acceptOfferTarget.offerId })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        if (xamanTab) xamanTab.close();
+        el.acceptOfferOpenXamanBtn.disabled = false;
+        el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.acceptOfferConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      acceptOfferUuid = res.data.uuid;
+      if (xamanTab) xamanTab.location.href = res.data.next.always;
+      el.acceptOfferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.acceptOfferConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      pollAcceptOfferStatus();
+    }).catch(function(){
+      if (xamanTab) xamanTab.close();
+      el.acceptOfferOpenXamanBtn.disabled = false;
+      el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.acceptOfferConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+
+  function pollAcceptOfferStatus(){
+    if (acceptOfferPollTimer) clearTimeout(acceptOfferPollTimer);
+    if (!acceptOfferUuid || !acceptOfferTarget) return;
+    fetch('/api/swap-acceptoffer-status?uuid=' + encodeURIComponent(acceptOfferUuid) + '&nftId=' + encodeURIComponent(acceptOfferTarget.nftId) + '&offerId=' + encodeURIComponent(acceptOfferTarget.offerId))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'settled'){ showAcceptOfferResult(data); return; }
+        if (data.status === 'rejected'){
+          el.acceptOfferConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
+          el.acceptOfferOpenXamanBtn.disabled = false;
+          el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'expired'){
+          el.acceptOfferConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
+          el.acceptOfferOpenXamanBtn.disabled = false;
+          el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'failed'){
+          el.acceptOfferConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
+          el.acceptOfferOpenXamanBtn.disabled = false;
+          el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        acceptOfferPollTimer = setTimeout(pollAcceptOfferStatus, 2000);
+      }).catch(function(){
+        acceptOfferPollTimer = setTimeout(pollAcceptOfferStatus, 3000);
+      });
+  }
+
+  function showAcceptOfferResult(data){
+    el.acceptOfferResultPigeonNum.textContent = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + acceptOfferTarget.number : '#????');
+    el.acceptOfferResultPrice.textContent = acceptOfferTarget.price + ' $P!GE0NS';
+    el.acceptOfferResultStatus.textContent = 'SETTLED';
+    if (data.txHash){
+      el.acceptOfferResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
+      el.acceptOfferResultTxLink.textContent = data.txHash;
+    } else {
+      el.acceptOfferResultTxLink.removeAttribute('href');
+      el.acceptOfferResultTxLink.textContent = '—';
+    }
+    showScreen('acceptofferresult');
+  }
+  el.acceptOfferResultDoneBtn.addEventListener('click', function(){
+    acceptOfferTarget = null;
+    acceptOfferUuid = null;
+    if (acceptOfferPollTimer) clearTimeout(acceptOfferPollTimer);
+    state.activeTab = 'mypigeons';
+    showScreen('browse');
+    loadOffersReceived();
+    renderMyPigeonsList();
   });
 
   // ---- DATABASE selector — multi-collection groundwork; only PIGEONS is

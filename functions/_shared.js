@@ -362,6 +362,36 @@ export async function fetchNftSellOffers(nftId) {
   return result === null ? [] : result;
 }
 
+// Buy offers — the MAKE AN OFFER counterpart to the sell-offer functions
+// above. Same RPC shape (nft_buy_offers instead of nft_sell_offers), same
+// tolerant-on-failure behavior: a lookup failure degrades to "no offers
+// found" rather than a hard error, since every caller here is a display or
+// discovery path, never a single go/no-go safety signal.
+export async function fetchNftBuyOffersOrNull(nftId, attempt) {
+  attempt = attempt || 0;
+  try {
+    const res = await fetch('https://xrplcluster.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'nft_buy_offers', params: [{ nft_id: nftId }] })
+    });
+    const data = await res.json();
+    if (!data.result || data.result.error) return [];
+    return data.result.offers || [];
+  } catch (e) {
+    if (attempt < 1) {
+      await new Promise(resolve => setTimeout(resolve, 350));
+      return fetchNftBuyOffersOrNull(nftId, attempt + 1);
+    }
+    return null;
+  }
+}
+
+export async function fetchNftBuyOffers(nftId) {
+  const result = await fetchNftBuyOffersOrNull(nftId);
+  return result === null ? [] : result;
+}
+
 // The Pigeon ACCESS LEVEL system. Levels are non-contiguous by design —
 // 01/03/06/09/12/15, with 00 reserved for "no Pigeon" — and unlike the
 // original 1(highest)-6(lowest) scheme this replaced, HIGHER holdings now
@@ -1422,6 +1452,40 @@ export async function removeSwapListing(kv, nftId) {
   if (!map[nftId]) return;
   delete map[nftId];
   await safeKvPut(kv, SWAP_LISTINGS_MAP_KEY, JSON.stringify(map));
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// MAKE AN OFFER — the reverse of a listing: a non-owner proposes a
+// $PIGEONS price for a Pigeon (listed or not) via a real NFTokenCreateOffer
+// buy-offer (no tfSellNFToken flag), which only the current owner can
+// accept. nftId -> array of entries (a Pigeon can carry several open offers
+// from different wallets at once, unlike a listing which is one-per-NFT).
+// Same "record on our own confirmed success, self-heal against live
+// nft_buy_offers everywhere it's actually read" pattern as the listings
+// map above.
+// ─────────────────────────────────────────────────────────────────────────
+const SWAP_BUY_OFFERS_MAP_KEY = 'pswap:buyoffers:v1';
+
+export async function getSwapBuyOffersMap(kv) {
+  const raw = await kv.get(SWAP_BUY_OFFERS_MAP_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
+export async function addSwapBuyOffer(kv, nftId, entry) {
+  const map = await getSwapBuyOffersMap(kv);
+  const list = map[nftId] || (map[nftId] = []);
+  const existingIdx = list.findIndex(o => o.offerId === entry.offerId);
+  if (existingIdx !== -1) list[existingIdx] = entry;
+  else list.push(entry);
+  await safeKvPut(kv, SWAP_BUY_OFFERS_MAP_KEY, JSON.stringify(map));
+}
+
+export async function removeSwapBuyOffer(kv, nftId, offerId) {
+  const map = await getSwapBuyOffersMap(kv);
+  if (!map[nftId]) return;
+  map[nftId] = map[nftId].filter(o => o.offerId !== offerId);
+  if (!map[nftId].length) delete map[nftId];
+  await safeKvPut(kv, SWAP_BUY_OFFERS_MAP_KEY, JSON.stringify(map));
 }
 
 // ─────────────────────────────────────────────────────────────────────────
