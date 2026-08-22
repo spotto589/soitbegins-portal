@@ -1214,6 +1214,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   .df-value.not-indexed{ color:var(--magenta); text-shadow:0 0 4px var(--magenta-glow); }
   .df-value.rarity{ color:var(--white); }
   .df-value.price{ color:var(--white); }
+  /* A settled/confirmed status reads as unambiguously good — green, not
+     plain white like every other field. */
+  .df-value.status-ok{ color:var(--green); text-shadow:0 0 6px var(--green-glow); font-weight:700; }
   .df-value a.owner-link{ color:var(--grey); text-decoration:underline; }
   .df-value a.owner-link:hover{ color:var(--cyan); }
   .detail-traits-title{
@@ -1898,9 +1901,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-eyebrow" id="listResultEyebrow">// L!ST!NG CREATED</div>
       <div class="detail-num" id="listResultPigeonNum"></div>
       <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="listResultPrice"></span></div>
-      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="listResultStatus"></span></div>
-      <div class="detail-field"><span class="df-label">NFT 0FFER !D</span><span class="df-value" id="listResultOfferId"></span></div>
-      <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="listResultTxLink" target="_blank" rel="noopener"></a></span></div>
+      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value status-ok" id="listResultStatus"></span></div>
+      <div class="detail-field"><span class="df-label">B!TH0MP TRANSACT!0N</span><span class="df-value"><a id="listResultTxLink" target="_blank" rel="noopener"></a></span></div>
       <div class="detail-actions">
         <button class="secondary-btn" id="listResultDoneBtn">[ ← BACK T0 MY P!GE0NS ]</button>
       </div>
@@ -2113,7 +2115,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myPigeonsSortRow','myPigeonsSortSelect',
    'screenListForm','listFormPigeonNum','listFormXrpEquiv','listFormXrpEquivValue','listFormRateLine','listFormImg','listPriceInput','listFormError','listFormBackBtn','listFormSubmitBtn',
    'screenListConfirm','confPigeonNum','confPigeonImg','confRarityRow','confPigeonRarity','confSummaryLine','fancyDetailsToggle','fancyDetailsList','confTxType','confAccount','confNftId','confCurrency','confIssuer','confValue','confFlags','confirmStatus','listConfirmBackBtn','openXamanBtn',
-   'screenListResult','listResultEyebrow','listResultPigeonNum','listResultPrice','listResultStatus','listResultOfferId','listResultTxLink','listResultDoneBtn',
+   'screenListResult','listResultEyebrow','listResultPigeonNum','listResultPrice','listResultStatus','listResultTxLink','listResultDoneBtn',
    'screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
    'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
@@ -3894,7 +3896,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.listResultPigeonNum.textContent = 'P!GE0N #' + (listingTarget.number !== null ? listingTarget.number : '????');
     el.listResultPrice.textContent = fmtPigeons(data.price);
     el.listResultStatus.textContent = 'L!STED';
-    el.listResultOfferId.textContent = data.offerId || '—';
     if (data.txHash){
       el.listResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
       el.listResultTxLink.textContent = data.txHash;
