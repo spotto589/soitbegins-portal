@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, fetchAllAccountNfts,
-  getXamanPayloadStatus, removeSwapListing, findPigeonsOffer
+  getXamanPayloadStatus, removeSwapListing, findPigeonsOffer, takePendingBuy, recordSwapSale
 } from '../_shared.js';
 
 // Polled by the browser after [ OPEN XAMAN ] while the buyer is signing.
@@ -81,6 +81,18 @@ export async function onRequestGet(context) {
   }
 
   context.waitUntil(removeSwapListing(env.coin, nftId));
+  context.waitUntil((async () => {
+    const pending = await takePendingBuy(env.coin, uuid);
+    if (!pending) return; // stash missing/expired — sale still settled, just no SALES DATA row
+    await recordSwapSale(env.coin, {
+      txHash,
+      nftId,
+      seller: pending.seller,
+      buyer,
+      priceValue: pending.priceValue,
+      createdAt: new Date().toISOString()
+    });
+  })());
 
   return new Response(JSON.stringify({ status: 'settled', txHash }), {
     headers: { 'Content-Type': 'application/json' }

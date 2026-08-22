@@ -2,7 +2,7 @@ import {
   fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
-  getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull,
+  getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog,
   resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX,
   getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
@@ -162,27 +162,74 @@ export async function onRequestGet(context) {
   }
 
   // Real, collection-wide sales history straight from Deeptide's own
-  // `/api/sales/recent` — no KV involved, same direct-passthrough pattern
-  // as the main listings. Optionally scoped to one wallet (buyer or
-  // seller) via `wallet`.
+  // `/api/sales/recent`, merged with Σκύλλα's own recorded sales (BUY
+  // completions confirmed on-ledger by swap-buy-status.js) so a trade made
+  // directly through Σκύλλα — never touching Deeptide's platform, priced
+  // in $PIGEONS rather than XRP — still shows up here. Optionally scoped
+  // to one wallet (buyer or seller) via `wallet`.
+  //
+  // Σκύλλα's own log is placed ahead of Deeptide's entire feed rather than
+  // true chronologically interleaved: it's small and newest-first, and in
+  // practice every entry in it is more recent than Deeptide's already-
+  // indexed history, so this holds up without needing to pull Deeptide's
+  // full remote history just to sort against it.
   if (params.get('sales') === '1') {
     const salesSkip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
     const salesLimit = Math.min(50, Math.max(1, parseInt(params.get('limit') || '20', 10) || 20));
     const salesWallet = params.get('wallet') || undefined;
-    const page = await fetchDeeptideSalesHistory({ skip: salesSkip, limit: salesLimit, sort: 'date-desc', wallet: salesWallet });
-    const items = page.items.map(it => ({
+
+    const mapDeeptideItem = it => ({
       txHash: it.txHash,
       nftId: it.nftId,
       number: it.number,
       image: displayImage(it.image),
       priceXrp: it.priceXrp,
+      currency: 'XRP',
       buyer: it.buyer,
       buyerShort: shortenAddr(it.buyer),
       seller: it.seller,
       sellerShort: shortenAddr(it.seller),
-      createdAt: it.createdAt
-    }));
-    return json({ items, total: page.total, hasMore: page.hasMore, skip: salesSkip, limit: salesLimit });
+      createdAt: it.createdAt,
+      via: 'deeptide'
+    });
+
+    let ownSales = env.coin ? await getSwapSalesLog(env.coin) : [];
+    if (salesWallet) {
+      ownSales = ownSales.filter(s => s.buyer === salesWallet || s.seller === salesWallet);
+    }
+    const ownTotal = ownSales.length;
+
+    let items, deeptideTotal, deeptideHasMore;
+    if (salesSkip < ownTotal) {
+      const ownItems = ownSales.slice(salesSkip, salesSkip + salesLimit).map(s => ({
+        txHash: s.txHash,
+        nftId: s.nftId,
+        number: null,
+        image: null,
+        priceXrp: null,
+        pigeonsPrice: typeof s.priceValue === 'string' ? Number(s.priceValue) : s.priceValue,
+        currency: 'PIGEONS',
+        buyer: s.buyer,
+        buyerShort: shortenAddr(s.buyer),
+        seller: s.seller,
+        sellerShort: shortenAddr(s.seller),
+        createdAt: s.createdAt,
+        via: 'scylla'
+      }));
+      const remaining = salesLimit - ownItems.length;
+      const page = await fetchDeeptideSalesHistory({ skip: 0, limit: Math.max(remaining, 1), sort: 'date-desc', wallet: salesWallet });
+      deeptideTotal = page.total;
+      deeptideHasMore = page.hasMore;
+      items = ownItems.concat(remaining > 0 ? page.items.slice(0, remaining).map(mapDeeptideItem) : []);
+    } else {
+      const page = await fetchDeeptideSalesHistory({ skip: salesSkip - ownTotal, limit: salesLimit, sort: 'date-desc', wallet: salesWallet });
+      deeptideTotal = page.total;
+      deeptideHasMore = page.hasMore;
+      items = page.items.map(mapDeeptideItem);
+    }
+
+    const total = ownTotal + deeptideTotal;
+    return json({ items, total, hasMore: (salesSkip + items.length) < total, skip: salesSkip, limit: salesLimit });
   }
 
   // A wallet's full real holdings — used by the SELECT -> owner's

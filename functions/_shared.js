@@ -1387,6 +1387,52 @@ export async function removeSwapListing(kv, nftId) {
   await safeKvPut(kv, SWAP_LISTINGS_MAP_KEY, JSON.stringify(map));
 }
 
+// Bridges swap-buy-payload.js (which knows the seller + price, right as it
+// builds the accept-offer txjson) to swap-buy-status.js (which only sees
+// "is the offer gone yet" — by settlement time the offer itself, and its
+// price/seller, no longer exist on-ledger to look up). Keyed by the Xaman
+// payload uuid so status polling can retrieve exactly the pending buy it's
+// tracking; short TTL since a real buy settles or expires within minutes.
+const PENDING_BUY_KEY_PREFIX = 'pswap:pendingbuy:';
+const PENDING_BUY_TTL_SECONDS = 900;
+
+export async function recordPendingBuy(kv, uuid, entry) {
+  await safeKvPut(kv, PENDING_BUY_KEY_PREFIX + uuid, JSON.stringify(entry), { expirationTtl: PENDING_BUY_TTL_SECONDS });
+}
+
+export async function takePendingBuy(kv, uuid) {
+  const raw = await kv.get(PENDING_BUY_KEY_PREFIX + uuid);
+  if (!raw) return null;
+  await kv.delete(PENDING_BUY_KEY_PREFIX + uuid).catch(() => {});
+  return JSON.parse(raw);
+}
+
+// Σκύλλα's own recorded sales — BUY completions confirmed on-ledger by
+// swap-buy-status.js, priced in $PIGEONS (not XRP, unlike Deeptide's feed),
+// merged into the SALES DATA tab alongside Deeptide's real, collection-wide
+// history so a trade made directly through Σκύλλα (never touching
+// Deeptide's own platform) still shows up there. A simple capped
+// newest-first list, not a full index — good enough for "did my trade show
+// up," not meant to replace a real ledger scan. Read-modify-write on a
+// single KV key means two settlements landing at the exact same moment
+// could race and one overwrite the other's append; acceptable at current
+// volume, worth revisiting if trading picks up.
+const SWAP_SALES_LOG_KEY = 'pswap:saleslog:v1';
+const SWAP_SALES_LOG_MAX = 300;
+
+export async function recordSwapSale(kv, entry) {
+  const raw = await kv.get(SWAP_SALES_LOG_KEY);
+  const list = raw ? JSON.parse(raw) : [];
+  list.unshift(entry);
+  if (list.length > SWAP_SALES_LOG_MAX) list.length = SWAP_SALES_LOG_MAX;
+  await safeKvPut(kv, SWAP_SALES_LOG_KEY, JSON.stringify(list));
+}
+
+export async function getSwapSalesLog(kv) {
+  const raw = await kv.get(SWAP_SALES_LOG_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+
 // Shared Xaman Payload API calls — used by every swap-*-payload.js and
 // swap-*-status.js endpoint. Routed through a small proxy (a separate
 // Render service, not on Cloudflare) instead of calling xumm.app directly:

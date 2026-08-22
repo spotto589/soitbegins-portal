@@ -1,5 +1,6 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, findPigeonsOffer
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, findPigeonsOffer,
+  recordPendingBuy
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same txjson swap-buy-prepare.js
@@ -82,6 +83,20 @@ export async function onRequestPost(context) {
   }
 
   console.log('BUY-PAYLOAD SUCCESS', xummData.uuid, 'for', buyer, nftId, 'at', new Date().toISOString());
+
+  // Stash seller/price now, while the offer still exists — by the time
+  // swap-buy-status.js confirms settlement, the accepted offer is gone
+  // from the ledger and this is no longer derivable. Best-effort: a lost
+  // write here means the sale still completes fine, just without a SALES
+  // DATA row.
+  if (env.coin) {
+    context.waitUntil(recordPendingBuy(env.coin, xummData.uuid, {
+      nftId,
+      seller: offer.owner,
+      buyer,
+      priceValue: offer.amount.value
+    }));
+  }
 
   return new Response(JSON.stringify({ ok: true, uuid: xummData.uuid, next: xummData.next }), {
     headers: { 'Content-Type': 'application/json' }

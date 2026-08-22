@@ -386,6 +386,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
   .sale-info{ flex:1 1 200px; display:flex; flex-direction:column; gap:0.35rem; }
   .sale-price{ font-family:var(--font-mono); font-size:14px; color:var(--white); }
+  .sale-via{ font-family:var(--font-body); font-size:10px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; }
   .sale-parties{ font-family:var(--font-body); color:var(--grey); text-transform:none; }
   .sale-parties a{ color:var(--white); text-decoration:underline; cursor:pointer; }
   .sale-parties a:hover{ color:var(--cyan); }
@@ -2551,7 +2552,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   function saleRowHtml(s){
     var thumb = s.image ? '<img src="' + escapeHtml(s.image) + '" alt="" loading="lazy">' : '';
     var num = s.number !== null ? '#' + s.number : '#????';
-    var price = s.priceXrp !== null ? s.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?';
+    var price = s.currency === 'PIGEONS'
+      ? (s.pigeonsPrice !== null && s.pigeonsPrice !== undefined ? s.pigeonsPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS' : '?')
+      : (s.priceXrp !== null ? s.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?');
+    var via = s.via === 'scylla' ? 'Σ SWAP' : (s.via === 'deeptide' ? 'DEEPT!DE' : '');
     var when = s.createdAt ? new Date(s.createdAt).toLocaleString() : '';
     return '<div class="sale-row">' +
       '<div class="sale-thumb-wrap">' +
@@ -2559,7 +2563,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="sale-thumb" data-nftid="' + escapeHtml(s.nftId) + '">' + thumb + '</div>' +
       '</div>' +
       '<div class="sale-info">' +
-        '<div class="sale-price">' + price + '</div>' +
+        '<div class="sale-price">' + price + (via ? ' <span class="sale-via">· ' + via + '</span>' : '') + '</div>' +
         '<div class="sale-parties">' +
           (s.seller ? '<a data-wallet="' + escapeHtml(s.seller) + '" data-short="' + escapeHtml(s.sellerShort || s.seller) + '">' + escapeHtml(s.sellerShort || s.seller) + '</a>' : '?') +
           ' → ' +
