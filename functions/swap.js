@@ -1918,8 +1918,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     // arrives) is exactly what browsers treat as an untrusted popup and
     // silently block, since it's no longer directly tied to the click.
     // Confirmed live: swapOfferState.uuid was set (payload really was
-    // created), but nothing ever opened.
-    var xamanTab = window.open('', '_blank', 'noopener');
+    // created), but nothing ever opened. 'noopener' deliberately dropped
+    // here too — confirmed live it makes window.open() return null in
+    // some browsers, which broke this exact "navigate it later" trick
+    // (the tab opened but stayed on about:blank forever). Not needed for
+    // safety anyway since the destination is our own trusted API response,
+    // not user-supplied content.
+    var xamanTab = window.open('', '_blank');
     fetch('/api/swap-offer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1935,7 +1940,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       swapOfferState.uuid = res.data.uuid;
       if (xamanTab) xamanTab.location.href = res.data.next.always;
-      else window.open(res.data.next.always, '_blank', 'noopener');
+      else window.open(res.data.next.always, '_blank');
       el.swapOfferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.swapConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
       pollSwapOfferStatus();
@@ -2119,7 +2124,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.swapAcceptOpenXamanBtn.disabled = true;
     el.swapAcceptOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
     el.acceptConfirmStatus.textContent = '';
-    var xamanTab = window.open('', '_blank', 'noopener');
+    var xamanTab = window.open('', '_blank');
     fetch('/api/swap-accept-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2135,7 +2140,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       swapAcceptState.uuid = res.data.uuid;
       if (xamanTab) xamanTab.location.href = res.data.next.always;
-      else window.open(res.data.next.always, '_blank', 'noopener');
+      else window.open(res.data.next.always, '_blank');
       el.swapAcceptOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.acceptConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
       pollSwapAcceptStatus();
