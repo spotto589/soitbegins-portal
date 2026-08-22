@@ -28,7 +28,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
 <title>Σκύλλα :: SWAP</title>
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');
 
   /* ==========================================================================
      Σκύλλα SWAP — colour + type system
@@ -64,9 +64,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     --grey-dim:rgba(226,229,233,0.34);
     --grey-disabled:rgba(226,229,233,0.22);
 
-    --font-display:'Space Grotesk','JetBrains Mono',sans-serif;
-    --font-mono:'JetBrains Mono','Courier New',monospace;
-    --font-body:'Inter','JetBrains Mono',sans-serif;
+    --font-display:'Chakra Petch',sans-serif;
+    --font-mono:'Chakra Petch',sans-serif;
+    --font-body:'Chakra Petch',sans-serif;
 
     --radius:2px;
   }

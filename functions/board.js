@@ -336,7 +336,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
 <title>STAT!C_N0DE:://S!GNAL_RELAY</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');
   /* Single source of truth for the P!GE0N Access Level system. Each level
      is its own network-penetration identity — SIGNAL (01), BEACON (03),
      VECTOR (06), RESONANCE (09), OVERRIDE (12), CR0WN (15) — not a
@@ -359,7 +359,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   *{ margin:0; padding:0; box-sizing:border-box; }
   html, body{ min-height:100%; background:#08080a; }
   body{
-    font-family:'JetBrains Mono','Courier New',monospace;
+    font-family:'Chakra Petch',sans-serif;
     color:#e8e8e8;
     display:flex;
     justify-content:center;
@@ -1260,7 +1260,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(var(--tier-encrypted),0.45); }
   .encrypted-fragments span{
     font-size:9px;
-    font-family:'JetBrains Mono', monospace;
+    font-family:'Chakra Petch',sans-serif;
     font-weight:700;
     color:rgba(var(--tier-encrypted),0.85);
     text-shadow:0 0 4px rgba(var(--tier-encrypted),0.9);

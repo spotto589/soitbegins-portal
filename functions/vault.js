@@ -8,11 +8,11 @@ function renderVaultHtml() {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>N0TES</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
   html, body{ min-height:100%; background:#08080a; }
   body{
-    font-family:'JetBrains Mono','Courier New',monospace;
+    font-family:'Chakra Petch',sans-serif;
     color:#e8e8e8;
     display:flex;
     justify-content:center;

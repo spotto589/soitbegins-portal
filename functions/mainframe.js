@@ -6,11 +6,11 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
 <title>UNKN0WN ACCESS P0!NT</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
   html, body{ min-height:100%; background:#050506; }
   body{
-    font-family:'JetBrains Mono','Courier New',monospace;
+    font-family:'Chakra Petch',sans-serif;
     color:#e8e8e8;
     display:flex;
     justify-content:center;
