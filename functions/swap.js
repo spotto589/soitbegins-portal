@@ -4984,10 +4984,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.swapOffersTabBtn.style.display = 'none';
   }
 
-  // Nothing loads until a tab is chosen — see showTab() — except a return
-  // from the CONNECT SCYLLA redirect, which should land back on MY PIGEONS.
+  // A return from the CONNECT SCYLLA redirect lands back on MY PIGEONS;
+  // any other fresh page load (a plain refresh) now defaults to DATABASE
+  // instead of sitting on a blank screen until a tab is clicked.
   if (window.location.search.indexOf('connected=1') !== -1){
     showTab('mypigeons');
+  } else {
+    showTab('database');
   }
 
   // TV static background, purely atmospheric — matches the rest of the site.
