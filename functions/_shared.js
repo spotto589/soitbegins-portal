@@ -1224,10 +1224,21 @@ export async function fetchXrpCafeCollectionStats(kv, vanitySlug = 'xrpigeons') 
 // LISTINGS section. `amount` is null when nobody's selling it there;
 // present in the same raw-XRP units as this API's own `floor_price`
 // field (unlike Deeptide, which uses drops for offer amounts).
-export async function fetchXrpCafeNftListing(nftId) {
+export async function fetchXrpCafeNftListing(nftId, attempt) {
+  attempt = attempt || 0;
   try {
     const res = await fetch(`${XRP_CAFE_API_BASE}/api/nft/${encodeURIComponent(nftId)}`);
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Same "don't let a failed lookup look identical to a confirmed
+      // negative" reasoning as fetchNftSellOffersOrNull — a real listing
+      // could otherwise vanish from display purely because this one call
+      // got rate-limited or hiccuped under a full-page burst.
+      if (attempt < 1) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return fetchXrpCafeNftListing(nftId, attempt + 1);
+      }
+      return null;
+    }
     const d = await res.json();
     const n = d.nft;
     if (!n) return null;
@@ -1244,6 +1255,10 @@ export async function fetchXrpCafeNftListing(nftId) {
       priceXrp: validOffer ? parseFloat(n.amount) / 1000000 : null,
     };
   } catch (e) {
+    if (attempt < 1) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return fetchXrpCafeNftListing(nftId, attempt + 1);
+    }
     return null;
   }
 }

@@ -75,10 +75,14 @@ function json(body, status = 200) {
 // Deeptide side is already known from toItem's own priceXrp/buyUrl).
 // Two caps: branches that already spend one Deeptide fetch per item
 // (numeric/edition/highest-sale — real detail lookups, not the cheap
-// listings-summary path) need a smaller xrp.cafe cap on top so the
-// combined per-request subrequest count stays well under budget.
+// listings-summary path) used to cap xrp.cafe much lower (10) on top of
+// that, so most of a page never got checked at all — not "not listed,"
+// just never looked up, which read as xrp.cafe listings silently missing.
+// swap-listing-owned.js already fires up to 45 concurrent XRPL calls in a
+// single request elsewhere in this same app without issue, so there's
+// real headroom above 10+36; raised to cover a full page.
 const LISTINGS_ENRICH_CAP = 40;
-const LISTINGS_ENRICH_CAP_LOW = 10;
+const LISTINGS_ENRICH_CAP_LOW = 36;
 async function attachListings(items, cap = LISTINGS_ENRICH_CAP) {
   const capped = items.slice(0, cap);
   await Promise.all(capped.map(async (it) => {
