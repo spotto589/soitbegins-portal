@@ -1852,6 +1852,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.swapOfferOpenXamanBtn.disabled = true;
     el.swapOfferOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
     el.swapConfirmStatus.textContent = '';
+    // Opening the tab HERE, synchronously inside the click handler, and
+    // only pointing it at the real URL once the fetch resolves — opening
+    // it inside the .then() callback instead (as the async response
+    // arrives) is exactly what browsers treat as an untrusted popup and
+    // silently block, since it's no longer directly tied to the click.
+    // Confirmed live: swapOfferState.uuid was set (payload really was
+    // created), but nothing ever opened.
+    var xamanTab = window.open('', '_blank', 'noopener');
     fetch('/api/swap-offer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1859,17 +1867,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
+        if (xamanTab) xamanTab.close();
         el.swapOfferOpenXamanBtn.disabled = false;
         el.swapOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
         el.swapConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
       swapOfferState.uuid = res.data.uuid;
-      window.open(res.data.next.always, '_blank', 'noopener');
+      if (xamanTab) xamanTab.location.href = res.data.next.always;
+      else window.open(res.data.next.always, '_blank', 'noopener');
       el.swapOfferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.swapConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
       pollSwapOfferStatus();
     }).catch(function(){
+      if (xamanTab) xamanTab.close();
       el.swapOfferOpenXamanBtn.disabled = false;
       el.swapOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
       el.swapConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
