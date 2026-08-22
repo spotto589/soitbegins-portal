@@ -790,31 +790,32 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-select-toggle.selected, .my-pigeon-offer-toggle.selected{ background:var(--magenta); color:#08090b; border-color:var(--magenta); animation:flicker-in 0.3s ease-out; }
   .my-pigeon-offer-toggle.at-cap{ opacity:0.35; cursor:not-allowed; }
 
-  /* ---- DATABASE results: a vertical list of wide rows, not a grid of
-     tiles — thumbnail/number/rarity fixed on the left, every other
-     detail (both marketplaces' listings, highest/average sale) laid out
-     on the right where there's actually room for it. ---- */
+  /* ---- DATABASE results: two wide rows side by side, not a 6-up grid
+     of tiles — a much bigger thumbnail/number/rarity on the left, every
+     other detail (both marketplaces' listings, highest/average sale)
+     laid out on the right where there's actually room for it. ---- */
   .result-list{
-    display:flex;
-    flex-direction:column;
-    gap:0.6rem;
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:0.9rem;
   }
   .result-row{
     display:flex;
     align-items:stretch;
-    gap:1rem;
-    padding:0.75rem;
+    gap:1.2rem;
+    padding:1rem;
   }
   .result-row-left{
     flex:0 0 auto;
-    width:130px;
+    width:220px;
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:0.4rem;
+    gap:0.5rem;
   }
   .result-row-left .pigeon-img-box{ width:100%; }
-  .result-row-left .result-num{ border-bottom:none; padding:0; }
+  .result-row-left .result-num{ border-bottom:none; padding:0; font-size:22px; }
+  .result-row-left .result-rarity-line{ font-size:16px; }
   .result-row-right{
     flex:1;
     min-width:0;
@@ -825,6 +826,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .result-row-right .card-listings{ margin-top:0; }
   .result-row-right .card-sale-stats{ margin-top:0; padding-top:0.5rem; }
+  @media (max-width:1100px){
+    .result-list{ grid-template-columns:1fr; }
+  }
   @media (max-width:700px){
     .result-row{ flex-direction:column; align-items:center; text-align:center; }
     .result-row-left{ width:100%; max-width:200px; }
