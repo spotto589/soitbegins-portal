@@ -756,10 +756,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      edition-toggle group sitting next to them in the search row, instead
      of bare hover text — makes it read as a box, not just a label, so
      it's obvious it's a hover dropdown like the others. */
-  #sortDropWrap, #traitsHoverWrap{ border:1px solid var(--border-mid); border-radius:var(--radius); transition:border-color 0.15s ease; }
+  #sortDropWrap, #traitsHoverWrap{ border:1px solid var(--border-mid); border-radius:var(--radius); transition:border-color 0.15s ease, background 0.15s ease; }
   #sortDropWrap:hover, #sortDropWrap.open,
   #traitsHoverWrap:hover, #traitsHoverWrap.open{ border-color:var(--cyan-dim); }
-  #sortDropLabel{ font-size:11px; }
+  /* SORTING BY always has an active pick — pin it the same way a selected
+     COLLECTION SELECTION button (.edition-btn.active) reads: filled
+     magenta, not just plain hover text. */
+  #sortDropWrap{ background:var(--magenta-faint); border-color:var(--magenta-dim); }
+  #sortDropWrap:hover, #sortDropWrap.open{ border-color:var(--magenta); }
+  #sortDropLabel{ font-size:11px; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
   .traits-hover-wrap:hover .trait-row-label,
   .traits-hover-wrap.open .trait-row-label{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   .traits-flyout{
@@ -948,6 +953,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .clear-traits-btn:hover{ background:rgba(255,61,61,0.12); }
 
+  /* SEARCH box pinned to the far left, on the same line as the results
+     status text — same left-pin/centered-body trick as the trustline
+     strip's thumbnail. */
+  .results-header-row{ position:relative; min-height:2.6rem; }
+  .results-header-row .search-row{
+    position:absolute;
+    left:0;
+    top:50%;
+    transform:translateY(-50%);
+    margin-bottom:0;
+  }
+  @media (max-width:600px){
+    .results-header-row{ min-height:0; }
+    .results-header-row .search-row{ position:static; transform:none; margin-bottom:0.75rem; justify-content:center; }
+  }
   /* ---- results status line ---- */
   .status-line{
     text-align:center;
@@ -1943,10 +1963,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="sw-panel">
         <div class="panel-title search-panel-title" id="searchPanelTitle">SEARCH!NG $P!GE0NS DATABASE</div>
         <div class="search-panel-subtitle" id="searchPanelSubtitle">DATABASE V!EW</div>
-        <div class="search-row">
-          <input class="search-input" id="searchInput" placeholder="SEARCH #..." inputmode="numeric">
-          <button class="bar-btn" id="searchBtn">[ GO ]</button>
-        </div>
         <div class="db-config-group">
           <div class="sort-field db-config-row">
             <span class="sort-field-label">V!EW</span>
@@ -1990,7 +2006,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
 
         <div class="results-block">
-          <div class="status-line" id="statusLine"></div>
+          <div class="results-header-row">
+            <div class="search-row">
+              <input class="search-input" id="searchInput" placeholder="SEARCH #..." inputmode="numeric">
+              <button class="bar-btn" id="searchBtn">[ GO ]</button>
+            </div>
+            <div class="status-line" id="statusLine"></div>
+          </div>
           <div id="resultsArea"></div>
           <div class="scroll-sentinel" id="scrollSentinel"></div>
           <div class="load-more-note" id="loadMoreNote" style="display:none;">L0AD!NG M0RE P!GE0NS...</div>
@@ -5008,9 +5030,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // click one to sort by it. Single pick, same as the original dropdown —
   // just presented the same way TRAITS is instead of a native <select>.
   var SORT_CATEGORIES = {
-    'ALPHABET!CAL': [
-      { value: 'NAME_ASC', label: 'A-Z' },
-      { value: 'NAME_DESC', label: 'Z-A' }
+    'RAR!TY': [
+      { value: 'RARITY_ASC', label: 'H!GHEST' },
+      { value: 'RARITY_DESC', label: 'L0WEST' }
     ],
     'PR!CE': [
       { value: 'AVG_SALE_ASC', label: 'FL00R (AVERAGE)' },
@@ -5019,12 +5041,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'PRICE_DESC', label: 'CE!L!NG XRP' },
       { value: 'SCYLLA_PRICE_DESC', label: 'CE!L!NG $P!GE0NS' }
     ],
+    'ALPHABET!CAL': [
+      { value: 'NAME_ASC', label: 'A-Z' },
+      { value: 'NAME_DESC', label: 'Z-A' }
+    ],
     'H!ST0R!CAL SALES': [
       { value: 'HIGHEST_SALE', label: 'H!GHEST REC0RDED SALES' }
-    ],
-    'RAR!TY': [
-      { value: 'RARITY_ASC', label: 'H!GHEST' },
-      { value: 'RARITY_DESC', label: 'L0WEST' }
     ]
   };
   function sortCategoryOf(value){
