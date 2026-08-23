@@ -1700,31 +1700,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
 
-  /* ---- detail screen — picture on the left, everything else (number,
-     traits, fields, links) on the right, both bigger/easier to read than
-     the old single centered column. Scoped to #screenDetail specifically
-     — .detail-field/.trait-grid/.df-label etc are shared with several
+  /* ---- detail screen — one column: the picture as big as the panel
+     allows, TRAITS right below it in a fixed 3-across grid, then the
+     sale/ownership detail fields, then listings/view-elsewhere. Bigger
+     text throughout too. Scoped to #screenDetail specifically —
+     .detail-field/.trait-grid/.df-label etc are shared with several
      other narrow centered confirm/result screens elsewhere in this file,
      which must stay exactly as they are. ---- */
-  .detail-two-col{ display:grid; grid-template-columns:minmax(280px, 440px) 1fr; gap:2rem; align-items:start; }
-  .detail-col-left{ display:flex; flex-direction:column; }
-  @media (max-width:760px){
-    .detail-two-col{ grid-template-columns:1fr; gap:1rem; }
-  }
-  #screenDetail .detail-img-large{ width:100%; max-width:100%; margin:0 0 0.75rem; }
+  .detail-single-col{ width:100%; }
+  #screenDetail .detail-img-large{ width:100%; max-width:100%; margin:0 0 1.25rem; }
   #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 1.25rem; }
-  #screenDetail .detail-eyebrow{ text-align:left; }
-  #screenDetail .detail-num{ text-align:left; font-size:32px; margin-bottom:1.5rem; }
-  #screenDetail .detail-traits-title{ text-align:left; font-size:14px; }
-  #screenDetail .trait-grid{ max-width:100%; margin:0 0 0.75rem; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:0.85rem; }
+  #screenDetail .detail-num{ font-size:32px; margin-bottom:1.25rem; }
+  #screenDetail .detail-traits-title{ font-size:14px; margin-top:0; }
+  #screenDetail .trait-grid{ max-width:100%; margin:0 0 1.5rem; grid-template-columns:repeat(3, 1fr); gap:0.85rem; }
+  @media (max-width:640px){
+    #screenDetail .trait-grid{ grid-template-columns:repeat(2, 1fr); }
+  }
   #screenDetail .trait-cell{ padding:0.85rem 1rem; }
   #screenDetail .trait-cell .tc-label{ font-size:11px; }
   #screenDetail .trait-cell .tc-value{ font-size:16px; }
   #screenDetail .trait-cell .tc-sub{ font-size:11px; }
   #screenDetail .detail-field{ max-width:100%; margin:0 0 1rem; font-size:16px; }
-  #screenDetail .tech-meta-title{ text-align:left; font-size:12px; }
+  #screenDetail .tech-meta-title{ font-size:12px; }
   #screenDetail .scylla-listing-price{ font-size:17px; }
-  #screenDetail .view-links{ justify-content:flex-start; }
   .detail-eyebrow{
     text-align:center;
     font-size:11px;
@@ -2303,9 +2301,20 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <!-- SCREEN 2: DETAIL -->
     <div class="sw-panel" id="screenDetail" style="display:none;">
-      <div class="detail-two-col">
-        <div class="detail-col-left">
+      <div class="detail-single-col">
+          <div class="detail-eyebrow">// P!GE0N !DENT!F!ED</div>
+          <div class="detail-num" id="detailNum"></div>
           <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
+          <div class="detail-traits-title">TRA!TS</div>
+          <div class="trait-grid" id="detailTraits"></div>
+          <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
+          <div class="detail-field" id="detailRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="detailRarity"></span></div>
+          <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
+          <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
+          <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVG SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
+          <div class="detail-history">
+            <button class="th-toggle" id="detailHistoryToggle">[ SALES H!ST0RY ]</button>
+          </div>
           <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
           <div class="scylla-listing-block">
             <div class="tech-meta-title">$P!GE0NS L!ST!NGS</div>
@@ -2317,20 +2326,6 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">[ BUY ]</button>
             </div>
           </div>
-        </div>
-        <div class="detail-col-right">
-          <div class="detail-eyebrow">// P!GE0N !DENT!F!ED</div>
-          <div class="detail-num" id="detailNum"></div>
-          <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
-          <div class="detail-field" id="detailRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="detailRarity"></span></div>
-          <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
-          <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
-          <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVG SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
-          <div class="detail-traits-title">TRA!TS</div>
-          <div class="trait-grid" id="detailTraits"></div>
-          <div class="detail-history">
-            <button class="th-toggle" id="detailHistoryToggle">[ SALES H!ST0RY ]</button>
-          </div>
           <div class="view-elsewhere">
             <div class="tech-meta-title">V!EW ELSEWHERE</div>
             <div class="view-links">
@@ -2339,7 +2334,6 @@ const SWAP_HTML = `<!DOCTYPE html>
               <a class="secondary-btn" id="viewBithompLink" target="_blank" rel="noopener">[ B!TH0MP ]</a>
             </div>
           </div>
-        </div>
       </div>
       <div class="detail-actions">
         <button class="secondary-btn" id="backToBrowseBtn">[ ← BACK ]</button>
