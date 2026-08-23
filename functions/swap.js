@@ -1359,22 +1359,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     background-size:cover;
     background-position:center;
   }
+  /* Rate line on top, calculator stacked directly underneath it — one
+     column, not side-by-side. */
+  .pigeons-bar-rate-calc-col{ flex:0 0 auto; display:flex; flex-direction:column; gap:0.45rem; align-items:flex-start; }
   /* Live "1 PIGEON = X XRP" rate, real book_offers data (fetchPigeonsXrpRate),
-     not a fabricated/guessed figure — hidden until the fetch resolves. */
+     periodically re-fetched (see refreshTrustlineRate) so it never goes
+     stale on a long-open tab — hidden until the first fetch resolves. */
   .pigeons-bar-rate{
-    flex:0 0 auto;
     display:flex;
-    flex-direction:column;
-    align-items:center;
+    align-items:baseline;
+    gap:0.4rem;
     color:#fff;
     text-shadow:0 1px 4px rgba(0,0,0,0.5);
     font-family:var(--font-mono);
     text-transform:uppercase;
-    line-height:1.35;
     white-space:nowrap;
   }
   .pigeons-bar-rate-line{ font-size:11px; letter-spacing:0.1em; opacity:0.85; }
-  .pigeons-bar-rate-eq{ font-size:11px; opacity:0.7; }
   .pigeons-bar-rate-value{ font-size:15px; font-weight:700; }
   /* XRP -> $PIGEONS calculator — type an XRP amount, see the real
      $PIGEONS equivalent at the same live rate as the line above. */
@@ -1865,15 +1866,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="pigeons-bar pigeons-bar-issuer">
       <div class="pigeons-bar-left-cluster">
         <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
-        <div class="pigeons-bar-rate" id="pigeonsBarRate" style="display:none;">
-          <span class="pigeons-bar-rate-line">1 P!GE0N</span>
-          <span class="pigeons-bar-rate-eq">=</span>
-          <span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span>
-        </div>
-        <div class="pigeons-bar-calc" id="pigeonsBarCalc" style="display:none;">
-          <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="XRP">
-          <span class="pigeons-bar-calc-eq">=</span>
-          <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
+        <div class="pigeons-bar-rate-calc-col">
+          <div class="pigeons-bar-rate" id="pigeonsBarRate" style="display:none;">
+            <span class="pigeons-bar-rate-line">1 P!GE0N =</span>
+            <span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span>
+          </div>
+          <div class="pigeons-bar-calc" id="pigeonsBarCalc" style="display:none;">
+            <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="XRP">
+            <span class="pigeons-bar-calc-eq">=</span>
+            <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
+          </div>
         </div>
       </div>
       <div class="pigeons-bar-body">
@@ -5057,19 +5059,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
 
   // Live "1 PIGEON = X XRP" rate on the trustline banner + an XRP ->
-  // $PIGEONS calculator next to it, both driven by the same real
-  // book_offers rate the LIST form already uses (fetchPigeonsXrpRate),
-  // never a fabricated figure.
+  // $PIGEONS calculator underneath it, both driven by the same real
+  // book_offers rate the LIST form already uses (fetchPigeonsXrpRate).
+  // Re-fetched on the same 60s cadence as the server's own KV cache TTL
+  // (PIGEONS_RATE_CACHE_TTL_SECONDS in _shared.js) so a tab left open
+  // never keeps showing a stale rate — never a fabricated figure.
   var trustlineXrpPerPigeon = null;
-  api({ pigeonsRate: 1 }).then(function(data){
-    trustlineXrpPerPigeon = (data && typeof data.xrpPerPigeon === 'number') ? data.xrpPerPigeon : null;
-    if (trustlineXrpPerPigeon !== null){
-      el.pigeonsBarRateValue.textContent = trustlineXrpPerPigeon.toFixed(7) + ' XRP';
-      el.pigeonsBarRate.style.display = '';
-      el.pigeonsBarCalc.style.display = '';
-      updatePigeonsCalc();
-    }
-  }).catch(function(){});
+  function refreshTrustlineRate(){
+    api({ pigeonsRate: 1 }).then(function(data){
+      trustlineXrpPerPigeon = (data && typeof data.xrpPerPigeon === 'number') ? data.xrpPerPigeon : null;
+      if (trustlineXrpPerPigeon !== null){
+        el.pigeonsBarRateValue.textContent = trustlineXrpPerPigeon.toFixed(7) + ' XRP';
+        el.pigeonsBarRate.style.display = '';
+        el.pigeonsBarCalc.style.display = '';
+        updatePigeonsCalc();
+      }
+    }).catch(function(){});
+  }
+  refreshTrustlineRate();
+  setInterval(refreshTrustlineRate, 60000);
   function updatePigeonsCalc(){
     var xrpValue = Number(el.pigeonsCalcXrpInput.value);
     if (trustlineXrpPerPigeon === null || !el.pigeonsCalcXrpInput.value.trim() || !isFinite(xrpValue) || xrpValue <= 0){
