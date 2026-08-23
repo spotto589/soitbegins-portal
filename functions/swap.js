@@ -243,15 +243,6 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   /* ---- database (multi-collection) selector ---- */
   .db-select-wrap{ text-align:center; position:relative; margin-bottom:1.75rem; }
-  .db-static-label{
-    font-family:var(--font-mono);
-    font-size:17px;
-    font-weight:700;
-    letter-spacing:0.14em;
-    color:var(--grey);
-    text-transform:uppercase;
-    margin-bottom:0.6rem;
-  }
   .db-collection-row{ position:relative; display:flex; align-items:center; justify-content:center; gap:0.6rem; width:100%; }
   /* Placeholder for now — the onboarding section itself doesn't exist
      yet, same "real link, not-yet-built destination" pattern as BURNT.
@@ -842,6 +833,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   #sortDropLabel{ font-size:11px; color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); }
   .traits-hover-wrap:hover .trait-row-label,
   .traits-hover-wrap.open .trait-row-label{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  /* C0LLECT!0N SELECT!0N always has an active pick too (currently
+     PIGEONS) — same filled-with-the-collection's-own-colour treatment as
+     SORTING BY above, instead of plain hover text. */
+  #dbSelectWrap{ background:var(--pigeon-purple-faint); border-color:var(--pigeon-purple-dim); }
+  #dbSelectWrap:hover, #dbSelectWrap.open{ border-color:var(--pigeon-purple); }
+  #dbSelectLabel{ color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); }
+  #dbSelectWrap:hover #dbSelectLabel,
+  #dbSelectWrap.open #dbSelectLabel{ color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); }
   .traits-flyout{
     position:absolute;
     top:100%;
@@ -1961,9 +1960,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     <h1>STAT!C :: DATABASE<br>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></h1>
 
     <div class="db-select-wrap">
-      <div class="db-static-label">STAT!C DATABASE</div>
       <div class="db-collection-row">
-        <span class="sort-field-label">C0LLECT!0N ::</span>
+        <span class="sort-field-label">C0LLECT!0N SELECT!0N ::</span>
         <div class="traits-hover-wrap" id="dbSelectWrap">
           <span class="trait-row-label" id="dbSelectLabel">P!GE0NS ▾</span>
           <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
