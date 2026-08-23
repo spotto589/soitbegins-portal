@@ -1423,7 +1423,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      dexUrl, falling back to the known pair URL until that resolves) —
      .bar-btn's own white-on-purple styling already applies via
      .pigeons-bar-issuer .bar-btn, just needs sizing/no-underline here. */
-  .pigeons-bar-dex-link{ display:inline-flex; align-items:center; justify-content:center; gap:0.4rem; font-size:11px; padding:0.5em 0.7em; text-decoration:none; align-self:stretch; }
+  .pigeons-bar-dex-link{ display:inline-flex; align-items:center; justify-content:center; gap:0.4rem; font-size:11px; padding:0.5em 0.7em; text-decoration:none; align-self:stretch; background:#000; border-color:rgba(255,255,255,0.6); }
+  .pigeons-bar-dex-link:hover{ background:#000; border-color:#fff; }
   .pigeons-bar-dex-icon{ width:22px; height:22px; border-radius:4px; flex:0 0 auto; }
   /* Stacked, centered on the FULL bar width (not just the space left
      over between the thumb and the onboarding link) — lines up with the
@@ -1898,7 +1899,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
           </div>
           <a class="bar-btn pigeons-bar-dex-link" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">
-            <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">[ V!EW 0N ]
+            <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">V!EW 0N DEXSCREENER
           </a>
         </div>
       </div>
@@ -2065,6 +2066,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="sw-panel">
         <div class="panel-title search-panel-title" id="searchPanelTitle">SEARCH!NG $P!GE0NS DATABASE</div>
         <div class="search-panel-subtitle" id="searchPanelSubtitle">DATABASE V!EW</div>
+        <div class="search-row wallet-search-row">
+          <input class="search-input" id="walletSearchInput" placeholder="SEARCH WALLET ADDRESS...">
+          <button class="bar-btn" id="walletSearchBtn">[ GO ]</button>
+        </div>
         <div class="db-config-group">
           <div class="sort-field db-config-row">
             <span class="sort-field-label">V!EW</span>
@@ -2110,7 +2115,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="results-block">
           <div class="results-header-row">
             <div class="search-row">
-              <input class="search-input" id="searchInput" placeholder="SEARCH #..." inputmode="numeric">
+              <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0N NUMBER" inputmode="numeric">
               <button class="bar-btn" id="searchBtn">[ GO ]</button>
             </div>
             <div class="status-line" id="statusLine"></div>
@@ -2529,7 +2534,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
+  ['searchInput','searchBtn','walletSearchInput','walletSearchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
@@ -3288,6 +3293,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     api({ wallet: wallet }).then(function(data){
       state.scopeAllItems = data.items || [];
       el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
+      if (!state.scopeAllItems.length){
+        el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
+        el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0NS F0UND', ['TH!S WALLET 0WNS N0 P!GE0NS.'], false);
+        return;
+      }
       runScopedQuery();
     }).catch(function(){
       el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T LOAD TH!S WALLET. TRY AGA!N.'], false);
@@ -4017,6 +4027,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).catch(function(){
       el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['SEARCH FA!LED. TRY AGA!N.'], false);
     });
+  }
+
+  // Wallet address search — resolves a typed XRPL address straight to
+  // that wallet's real held Pigeons via the same browseOwnerCollection
+  // path a Top 10 / sales-history wallet click already uses. A wallet
+  // with zero Pigeons is a valid, real result (not an error) — handled
+  // inside browseOwnerCollection itself with an explicit "owns no
+  // Pigeons" message, not the generic no-match empty state.
+  function runWalletSearchBox(){
+    var addr = el.walletSearchInput.value.trim();
+    if (!addr) return;
+    if (!/^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(addr)){
+      alert('ENTER A VAL!D XRPL WALLET ADDRESS (STARTS W!TH "r").');
+      return;
+    }
+    browseOwnerCollection(addr, addr.slice(0, 9) + '...' + addr.slice(-4));
   }
 
   function wireClearSearch(){
@@ -5179,6 +5205,8 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   el.searchBtn.addEventListener('click', runSearchBox);
   el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearchBox(); });
+  el.walletSearchBtn.addEventListener('click', runWalletSearchBox);
+  el.walletSearchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runWalletSearchBox(); });
   // ---- SORT — same two-level hover flyout as TRAITS: hover a category
   // (Alphabetical / Listings / Sales / Rarity), scroll its value list,
   // click one to sort by it. Single pick, same as the original dropdown —
