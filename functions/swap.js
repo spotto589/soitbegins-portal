@@ -1409,7 +1409,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      dexUrl, falling back to the known pair URL until that resolves) —
      .bar-btn's own white-on-purple styling already applies via
      .pigeons-bar-issuer .bar-btn, just needs sizing/no-underline here. */
-  .pigeons-bar-dex-link{ font-size:11px; padding:0.5em 0.7em; text-decoration:none; text-align:center; align-self:stretch; }
+  .pigeons-bar-dex-link{ display:inline-flex; align-items:center; justify-content:center; gap:0.4rem; font-size:11px; padding:0.5em 0.7em; text-decoration:none; align-self:stretch; }
+  .pigeons-bar-dex-icon{ width:14px; height:14px; border-radius:3px; flex:0 0 auto; }
   /* Stacked, centered on the FULL bar width (not just the space left
      over between the thumb and the onboarding link) — lines up with the
      page's own centered h1 and DATABASE VIEW selector above it. */
@@ -1874,15 +1875,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
         <div class="pigeons-bar-rate-calc-col">
           <div class="pigeons-bar-rate" id="pigeonsBarRate" style="display:none;">
-            <span class="pigeons-bar-rate-line">1 P!GE0N =</span>
+            <span class="pigeons-bar-rate-line">1 $P!GE0NS =</span>
             <span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span>
           </div>
           <div class="pigeons-bar-calc" id="pigeonsBarCalc" style="display:none;">
-            <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="XRP">
+            <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="ENTER XRP">
             <span class="pigeons-bar-calc-eq">=</span>
             <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
           </div>
-          <a class="bar-btn pigeons-bar-dex-link" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">[ V!EW 0N DEXSCREENER ]</a>
+          <a class="bar-btn pigeons-bar-dex-link" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">
+            <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">[ V!EW 0N DEXSCREENER ]
+          </a>
         </div>
       </div>
       <div class="pigeons-bar-body">
