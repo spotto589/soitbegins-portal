@@ -1705,32 +1705,58 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
 
-  /* ---- detail screen — picture sized to fit its own column on the left
-     (not blown up edge-to-edge), everything else (number, traits, sale
-     fields, listings, view-elsewhere) on the right in a fixed 3-across
-     trait grid with big, easy-to-read boxes. Scoped to #screenDetail
-     specifically — .detail-field/.trait-grid/.df-label etc are shared
-     with several other narrow centered confirm/result screens elsewhere
-     in this file, which must stay exactly as they are. ---- */
-  .detail-two-col{ display:grid; grid-template-columns:minmax(260px, 400px) 1fr; gap:2rem; align-items:start; }
+  /* ---- detail screen — picture sized to fit its own (now bigger) column
+     on the left, with the marketplace listings and the $PIGEONS listing/
+     offer box directly underneath it; number/traits/sale fields on the
+     right in a fixed 3-across trait grid, sized down a little from the
+     first pass so the picture reads as the bigger of the two. Scoped to
+     #screenDetail specifically — .detail-field/.trait-grid/.df-label etc
+     are shared with several other narrow centered confirm/result screens
+     elsewhere in this file, which must stay exactly as they are. ---- */
+  .detail-two-col{ display:grid; grid-template-columns:minmax(320px, 480px) 1fr; gap:2rem; align-items:start; }
   @media (max-width:760px){
     .detail-two-col{ grid-template-columns:1fr; gap:1.25rem; }
   }
-  #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0; }
+  #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0 0 1.25rem; }
   #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 1.25rem; }
-  #screenDetail .detail-num{ font-size:32px; margin-bottom:1.25rem; }
-  #screenDetail .detail-traits-title{ font-size:14px; margin-top:0; }
-  #screenDetail .trait-grid{ max-width:100%; margin:0 0 1.5rem; grid-template-columns:repeat(3, 1fr); gap:1rem; }
+  /* $PIGEONS listing — the collection's own purple, matching the DATABASE
+     card's OFFER AMOUNT box (.thumb-offer) instead of a plain grey block —
+     and now also offers MAKE OFFER (detailMakeOfferRow) when not listed,
+     same as that same DATABASE box does. */
+  #screenDetail .scylla-listing-block{
+    max-width:100%;
+    margin:0;
+    background:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
+    border:1px solid var(--pigeon-purple);
+    border-radius:var(--radius);
+    box-shadow:0 0 16px var(--pigeon-purple-glow);
+    padding:0.9rem 1rem;
+  }
+  #screenDetail .scylla-listing-block .tech-meta-title{ color:#fff; opacity:0.9; }
+  #screenDetail .scylla-listing-price{ font-size:17px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
+  #screenDetail #detailMakeOfferRow{ margin-top:0.75rem; }
+  #screenDetail .detail-num{ font-size:28px; text-align:left; margin-bottom:0.75rem; }
+  #screenDetail .detail-traits-title{ font-size:13px; margin-top:0; }
+  #screenDetail .trait-grid{ max-width:100%; margin:0 0 1.5rem; grid-template-columns:repeat(3, 1fr); gap:0.7rem; }
   @media (max-width:520px){
     #screenDetail .trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
-  #screenDetail .trait-cell{ padding:1.1rem 1.2rem; }
-  #screenDetail .trait-cell .tc-label{ font-size:12px; }
-  #screenDetail .trait-cell .tc-value{ font-size:19px; }
-  #screenDetail .trait-cell .tc-sub{ font-size:12px; }
-  #screenDetail .detail-field{ max-width:100%; margin:0 0 1rem; font-size:16px; }
+  #screenDetail .trait-cell{ padding:0.7rem 0.8rem; }
+  #screenDetail .trait-cell .tc-label{ font-size:10px; }
+  #screenDetail .trait-cell .tc-value{ font-size:15px; }
+  #screenDetail .trait-cell .tc-sub{ font-size:10px; }
+  /* Constrained instead of stretching the field's label/value across the
+     whole (wide) right column — that gap made label and value feel
+     unrelated, like you had to hunt across the screen to match them up. */
+  #screenDetail .detail-field{ max-width:320px; margin:0 0 1rem; font-size:15px; }
+  /* RARITY — RARITY SCORE as the section title above it (the actual score
+     isn't computed yet, see rarityAboveTraitsHtml elsewhere), the rank/
+     total sitting under a RARITY label like a trait box, not a plain
+     label:value row. Not clickable (unlike real trait cells). */
+  #screenDetail .detail-rarity-block{ max-width:320px; margin:0 0 1rem; }
+  #screenDetail .detail-rarity-block .trait-cell{ cursor:default; text-align:left; max-width:200px; }
+  #screenDetail .detail-rarity-block .trait-cell:hover{ background:transparent; border-color:var(--border-dim); }
   #screenDetail .tech-meta-title{ font-size:12px; }
-  #screenDetail .scylla-listing-price{ font-size:17px; }
   .detail-eyebrow{
     text-align:center;
     font-size:11px;
@@ -2315,23 +2341,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="sw-panel" id="screenDetail" style="display:none;">
       <div class="detail-two-col">
         <div class="detail-col-left">
-          <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
-        </div>
-        <div class="detail-col-right">
           <div class="detail-num" id="detailNum"></div>
-          <div class="detail-traits-title">TRA!TS</div>
-          <div class="trait-grid" id="detailTraits"></div>
-          <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
-          <div class="detail-field" id="detailRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="detailRarity"></span></div>
-          <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
-          <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
-          <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVG SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
-          <div class="detail-history">
-            <button class="th-toggle" id="detailHistoryToggle">[ SALES H!ST0RY ]</button>
-          </div>
+          <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
           <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
           <div class="scylla-listing-block">
-            <div class="tech-meta-title">$P!GE0NS L!ST!NGS</div>
+            <div class="tech-meta-title">$P!GE0NS L!ST!NG</div>
             <div class="scylla-listing-row">
               <span class="scylla-coin-wrap">
                 <img class="scylla-coin-icon" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
@@ -2339,6 +2353,31 @@ const SWAP_HTML = `<!DOCTYPE html>
               </span>
               <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">[ BUY ]</button>
             </div>
+            <div class="thumb-offer-row" id="detailMakeOfferRow" style="display:none;">
+              <div class="make-offer-input-wrap">
+                <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
+                <input class="make-offer-input" id="detailMakeOfferInput" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">
+              </div>
+              <button class="make-offer-send" id="detailMakeOfferSend">[ SEND ]</button>
+            </div>
+          </div>
+        </div>
+        <div class="detail-col-right">
+          <div class="detail-traits-title">TRA!TS</div>
+          <div class="trait-grid" id="detailTraits"></div>
+          <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
+          <div class="detail-rarity-block" id="detailRarityRow" style="display:none;">
+            <div class="detail-traits-title">RAR!TY SC0RE</div>
+            <div class="trait-cell">
+              <div class="tc-label">RAR!TY</div>
+              <div class="tc-value" id="detailRarity"></div>
+            </div>
+          </div>
+          <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
+          <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
+          <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVG SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
+          <div class="detail-history">
+            <button class="th-toggle" id="detailHistoryToggle">[ SALES H!ST0RY ]</button>
           </div>
           <div class="view-elsewhere">
             <div class="tech-meta-title">V!EW ELSEWHERE</div>
@@ -2700,7 +2739,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailAvgSaleRow','detailAvgSale','detailBuyBtn','detailTraits',
-   'detailScyllaPrice','detailScyllaBuyBtn','detailListingsRow',
+   'detailScyllaPrice','detailScyllaBuyBtn','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
    'backToBrowseBtn','detailSelectBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
@@ -2808,6 +2847,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // A peer navigation axis to the detail/summary screens below: only one
   // of the four tab panels is ever visible, and only while on the browse
   // screen (INSPECT/target-summary hide all four regardless of tab).
+  // Scrolls to bring the DATABASE/MY PIGEONS/etc tab strip flush with the
+  // top of the viewport — not literal page position 0, which sits above
+  // the trustline banner/stats carousel and left you having to scroll
+  // back down manually every time a tab or screen opened. Smooth, not an
+  // instant jump. Shared by showTab (clicking DATABASE/MY PIGEONS/etc
+  // directly) and showScreen (detail/confirm/result screens).
+  function scrollTabStripIntoView(){
+    window.scrollTo({ top: window.scrollY + el.topTabs.getBoundingClientRect().top, behavior: 'smooth' });
+  }
   function showTab(tab){
     state.activeTab = tab;
     // Universal across every tab now — only what's underneath it swaps.
@@ -2855,6 +2903,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // a stale cached view would hide real progress.
       loadSwapOffersMine();
     }
+    scrollTabStripIntoView();
   }
   el.topTabs.addEventListener('click', function(e){
     var btn = e.target.closest('.tab-btn');
@@ -2866,6 +2915,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (tab === 'database' && state.scope){
       exitWalletScope();
       startCollectionBrowse();
+      scrollTabStripIntoView();
       return;
     }
     showTab(tab);
@@ -2898,12 +2948,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenOfferResult.style.display = name === 'offerresult' ? '' : 'none';
     el.screenAcceptOfferConfirm.style.display = name === 'acceptofferconfirm' ? '' : 'none';
     el.screenAcceptOfferResult.style.display = name === 'acceptofferresult' ? '' : 'none';
-    // Scrolls to bring the DATABASE/MY PIGEONS/etc tab strip flush with the
-    // top of the viewport — not literal page position 0, which sits above
-    // the trustline banner/stats carousel and left you having to scroll
-    // back down manually every time a screen opened. Smooth, not an
-    // instant jump.
-    window.scrollTo({ top: window.scrollY + el.topTabs.getBoundingClientRect().top, behavior: 'smooth' });
+    scrollTabStripIntoView();
   }
 
   function api(params){
@@ -5909,14 +5954,32 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   function updateScyllaListing(p){
     var listing = p && p.scyllaListing;
+    var notOwn = !!(p && p.owner && p.owner !== MY_WALLET);
     if (listing && listing.price !== null && listing.price !== undefined){
       el.detailScyllaPrice.textContent = fmtPigeons(listing.price);
-      el.detailScyllaBuyBtn.style.display = p.owner !== MY_WALLET ? '' : 'none';
+      el.detailScyllaBuyBtn.style.display = notOwn ? '' : 'none';
     } else {
       el.detailScyllaPrice.textContent = 'N0T L!STED';
       el.detailScyllaBuyBtn.style.display = 'none';
     }
+    // MAKE OFFER — same option the DATABASE grid's own OFFER AMOUNT box
+    // offers (submitMakeOffer), available regardless of whether it's
+    // actively listed, just not on your own Pigeon.
+    el.detailMakeOfferRow.style.display = notOwn ? '' : 'none';
+    if (notOwn) el.detailMakeOfferInput.value = '';
   }
+  // detailMakeOfferRow isn't inside el.resultsArea/el.myPigeonsList, so
+  // wireResultClicks' delegated .make-offer-send/-input handling never
+  // sees it — wired directly here instead, same submitMakeOffer/
+  // formatThousandsInput helpers everywhere else uses.
+  function sendDetailMakeOffer(){
+    if (!state.currentDetail) return;
+    var priceValue = el.detailMakeOfferInput.value.trim().replace(/,/g, '');
+    submitMakeOffer(state.currentDetail, priceValue, el.detailMakeOfferRow);
+  }
+  el.detailMakeOfferSend.addEventListener('click', sendDetailMakeOffer);
+  el.detailMakeOfferInput.addEventListener('input', function(){ formatThousandsInput(el.detailMakeOfferInput); });
+  el.detailMakeOfferInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') sendDetailMakeOffer(); });
   // Same DEEPTIDE/XRP.CAFE clickable-box component the DATABASE cards use
   // (listingBlockHtml), side by side directly under the big image —
   // instead of the old stacked market/price/buy-link rows.
