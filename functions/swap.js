@@ -2168,20 +2168,10 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div id="traitRows"></div>
         </div>
 
-        <!-- Sits where the applied trait chips used to render alone —
-             below ADD TRAITS (which now shows its chips inline with
-             itself, see .sort-stack-row above), above SEARCH P!GE0N NUMBER. -->
-        <div class="traits-block">
-          <div class="search-row wallet-search-row">
-            <input class="search-input" id="walletSearchInput" placeholder="SEARCH WALLET ADDRESS...">
-            <button class="bar-btn" id="walletSearchBtn">[ GO ]</button>
-          </div>
-        </div>
-
         <div class="results-block">
           <div class="results-header-row">
             <div class="search-row">
-              <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0N NUMBER" inputmode="numeric">
+              <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0N # 0R WALLET">
               <button class="bar-btn" id="searchBtn">[ GO ]</button>
             </div>
             <div class="status-line" id="statusLine"></div>
@@ -2600,7 +2590,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','walletSearchInput','walletSearchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
+  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
@@ -3360,7 +3350,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       state.scopeAllItems = data.items || [];
       el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
       if (!state.scopeAllItems.length){
-        el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
+        el.statusLine.innerHTML = 'SH0W!NG RESULTS F0R :: WALLET: ' + escapeHtml(state.scope.ownerShort) + ' :: <span class="hi">0</span> P!GE0NS';
         el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0NS F0UND', ['TH!S WALLET 0WNS N0 P!GE0NS.'], false);
         return;
       }
@@ -4050,7 +4040,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
     }
     state.items = list;
-    el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + list.length + '</span>' + (list.length === 1 ? '<br>P!GE0N #' + list[0].number : '');
+    el.statusLine.innerHTML = 'SH0W!NG RESULTS F0R :: WALLET: ' + escapeHtml(state.scope.ownerShort) + ' :: <span class="hi">' + list.length + '</span> P!GE0NS' +
+      (list.length === 1 ? '<br>P!GE0N #' + list[0].number : '');
     if (!list.length){
       el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + (q || '(traits)') + '"'], true);
       wireClearSearch();
@@ -4063,16 +4054,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   // other typed text is treated as a trait-value guess (matched against the
   // already-loaded real trait data, no extra round trips) and applied as a
   // filter through the same AND-filter mechanism as the TRAITS stack.
-  // Number-only search box — trait filtering already has its own dedicated
-  // UI (the TRAITS stack), so this just resolves "1842" -> that one Pigeon
-  // via the number->NFTokenID index.
+  // One combined search box — a value that looks like an XRPL wallet
+  // address (starts with "r", right length) resolves via the same
+  // browseOwnerCollection path a Top 10/sales-history wallet click
+  // already uses (a wallet with zero Pigeons is a valid, real result,
+  // handled inside browseOwnerCollection with an explicit "owns no
+  // Pigeons" message, not the generic no-match state below); otherwise
+  // it's treated as a Pigeon number and resolved via the number->NFTokenID
+  // index. Trait filtering already has its own dedicated UI (the TRAITS
+  // stack), so this box only ever does one of these two lookups.
   function runSearchBox(){
     var q = el.searchInput.value.trim();
     if (!q){ runQuery(); return; }
+    if (/^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(q)){
+      browseOwnerCollection(q, q.slice(0, 9) + '...' + q.slice(-4));
+      return;
+    }
     var isNumber = /^#?\\d+$/.test(q);
     if (!isNumber){
       el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
-      el.resultsArea.innerHTML = emptyStateHtml('// !NVAL!D QUERY', ['ENTER A P!GE0N NUMBER (E.G. 1842).'], true);
+      el.resultsArea.innerHTML = emptyStateHtml('// !NVAL!D QUERY', ['ENTER A P!GE0N NUMBER (E.G. 1842) 0R A WALLET ADDRESS.'], true);
       wireClearSearch();
       return;
     }
@@ -4093,22 +4094,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).catch(function(){
       el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['SEARCH FA!LED. TRY AGA!N.'], false);
     });
-  }
-
-  // Wallet address search — resolves a typed XRPL address straight to
-  // that wallet's real held Pigeons via the same browseOwnerCollection
-  // path a Top 10 / sales-history wallet click already uses. A wallet
-  // with zero Pigeons is a valid, real result (not an error) — handled
-  // inside browseOwnerCollection itself with an explicit "owns no
-  // Pigeons" message, not the generic no-match empty state.
-  function runWalletSearchBox(){
-    var addr = el.walletSearchInput.value.trim();
-    if (!addr) return;
-    if (!/^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(addr)){
-      alert('ENTER A VAL!D XRPL WALLET ADDRESS (STARTS W!TH "r").');
-      return;
-    }
-    browseOwnerCollection(addr, addr.slice(0, 9) + '...' + addr.slice(-4));
   }
 
   function wireClearSearch(){
@@ -5271,8 +5256,6 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   el.searchBtn.addEventListener('click', runSearchBox);
   el.searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearchBox(); });
-  el.walletSearchBtn.addEventListener('click', runWalletSearchBox);
-  el.walletSearchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runWalletSearchBox(); });
   // ---- SORT — same two-level hover flyout as TRAITS: hover a category
   // (Alphabetical / Listings / Sales / Rarity), scroll its value list,
   // click one to sort by it. Single pick, same as the original dropdown —
