@@ -2178,7 +2178,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="sort-field db-config-row">
             <span class="sort-field-label">V!EW</span>
             <select class="sort-select" id="dbViewSelect">
-              <option value="boxed">B0XED V!EW</option>
+              <option value="boxed" disabled>B0XED V!EW (C0M!NG S00N)</option>
               <option value="thumbnails" selected>THUMBNA!LS</option>
             </select>
           </div>
@@ -4050,11 +4050,18 @@ const SWAP_HTML = `<!DOCTYPE html>
           (previewSize ? 'background-size:' + previewSize + ';' : '') +
           (previewPos ? 'background-position:' + previewPos + ';' : '') + '"'
         : '';
-      return '<button type="button" class="traits-flyout-val' + (exampleImg ? ' has-preview' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
-        '<span>' + escapeHtml(v.value.toUpperCase()) + '</span>' +
+      var isSelected = isTraitSelected(category, v.value);
+      return '<button type="button" class="traits-flyout-val' + (exampleImg ? ' has-preview' : '') + (isSelected ? ' selected' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
+        '<span>' + (isSelected ? '✓ ' : '') + escapeHtml(v.value.toUpperCase()) + '</span>' +
         '<span class="tfv-count">' + count + ' :: ' + pct + '</span>' +
       '</button>';
     }).join('');
+  }
+  // Whether a trait value is currently an active filter — drives the
+  // ✓/selected state in the flyout so ticked traits stay visibly ticked
+  // while you keep browsing other categories in the same open menu.
+  function isTraitSelected(category, value){
+    return state.traitFilters.some(function(r){ return r.category === category && r.value === value; });
   }
   function openTraitsFlyout(){
     ensureTraitsLoaded().then(function(){
@@ -4068,10 +4075,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.traitsFlyout.style.display = 'none';
     el.traitsHoverWrap.classList.remove('open');
   }
-  el.traitsHoverWrap.addEventListener('mouseenter', openTraitsFlyout);
-  el.traitsHoverWrap.addEventListener('mouseleave', closeTraitsFlyout);
+  // Click to open/close (not hover) — closes on an outside click, see
+  // the shared document-level listener further down. Stays open across
+  // multiple trait picks (see traitsFlyoutVals' click handler below), so
+  // you can tick several traits in one sitting.
   el.traitsHoverLabel.addEventListener('click', function(){
-    // Touch devices have no hover — tap toggles the same flyout.
     if (el.traitsFlyout.style.display === 'flex') closeTraitsFlyout();
     else openTraitsFlyout();
   });
@@ -4088,17 +4096,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!valBtn) return;
     var category = valBtn.getAttribute('data-cat');
     var value = valBtn.getAttribute('data-value');
-    // Reuse an existing empty row if one's sitting there unused, same as
-    // clicking [+ ADD TRAIT] would give you — otherwise add a fresh one.
-    var target = state.traitFilters.filter(function(r){ return !r.category; })[0];
-    if (!target){
-      target = { id: state.nextTraitRowId++, category: '', value: '' };
-      state.traitFilters.push(target);
+    // Ticking a value that's already selected removes it (toggle); the
+    // menu stays open either way so you can keep picking other traits —
+    // no close-on-select any more.
+    if (isTraitSelected(category, value)){
+      state.traitFilters = state.traitFilters.filter(function(r){ return !(r.category === category && r.value === value); });
+    } else {
+      // Reuse an existing empty row if one's sitting there unused, same as
+      // clicking [+ ADD TRAIT] would give you — otherwise add a fresh one.
+      var target = state.traitFilters.filter(function(r){ return !r.category; })[0];
+      if (!target){
+        target = { id: state.nextTraitRowId++, category: '', value: '' };
+        state.traitFilters.push(target);
+      }
+      target.category = category;
+      target.value = value;
     }
-    target.category = category;
-    target.value = value;
     renderTraitRows();
-    closeTraitsFlyout();
+    renderTraitsFlyoutVals(category);
     runQuery();
   });
 
@@ -4982,6 +4997,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // wireResultClicks' .make-offer-send handler) — no separate form screen,
   // straight from the inline number to the confirm screen below.
   function submitMakeOffer(p, priceValue, stripEl){
+    // The server-side prepare endpoint requires a real logged-in session
+    // (it derives the offering wallet from the pigeon_session cookie) —
+    // rather than let that fail with a confusing auth error, send an
+    // unauthenticated SEND straight into the real Σκύλλα login flow.
+    if (!MY_WALLET){
+      loginRedirectTab = 'database';
+      getXummAuth().authorize();
+      return;
+    }
     if (!priceValue || isNaN(Number(priceValue)) || Number(priceValue) <= 0){
       alert('ENTER A VAL!D PR!CE GREATER THAN 0.');
       return;
@@ -5503,8 +5527,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     runQuery();
   }
-  el.sortDropWrap.addEventListener('mouseenter', openSortFlyout);
-  el.sortDropWrap.addEventListener('mouseleave', closeSortFlyout);
+  // Click to open/close (not hover) — closes on an outside click, see
+  // the shared document-level listener further down.
   el.sortDropLabel.addEventListener('click', function(){
     if (el.sortFlyout.style.display === 'flex') closeSortFlyout();
     else openSortFlyout();
@@ -5524,6 +5548,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     closeSortFlyout();
   });
   renderSortDropLabel();
+  // SORTING BY / ADD TRAITS are click-to-open now (not hover) — close
+  // whichever is open on a click anywhere outside its own box.
+  document.addEventListener('click', function(e){
+    if (el.sortFlyout.style.display === 'flex' && !el.sortDropWrap.contains(e.target)) closeSortFlyout();
+    if (el.traitsFlyout.style.display === 'flex' && !el.traitsHoverWrap.contains(e.target)) closeTraitsFlyout();
+  });
   el.editionSelect.addEventListener('click', function(e){
     var btn = e.target.closest('.edition-btn');
     if (!btn) return;
