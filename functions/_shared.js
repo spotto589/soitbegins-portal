@@ -1294,13 +1294,29 @@ export async function fetchXrpCafeCollectionStats(kv, vanitySlug = 'xrpigeons') 
   return stats;
 }
 
-// Per-token listing on xrp.cafe — real-time, uncached (same cadence as
-// Deeptide's own per-token detail fetch), for the INSPECT screen's
-// LISTINGS section. `amount` is null when nobody's selling it there;
-// present in the same raw-XRP units as this API's own `floor_price`
-// field (unlike Deeptide, which uses drops for offer amounts).
-export async function fetchXrpCafeNftListing(nftId, attempt) {
-  attempt = attempt || 0;
+// Per-token listing on xrp.cafe, for both the INSPECT screen's LISTINGS
+// section and the DATABASE grid's bottom-bar listing (one call per item,
+// up to ~40 concurrent per page load). `amount` is null when nobody's
+// selling it there; present in the same raw-XRP units as this API's own
+// `floor_price` field (unlike Deeptide, which uses drops for offer
+// amounts).
+//
+// KV-cached briefly (60s) — a burst of ~40 concurrent calls to xrp.cafe's
+// own API on every page load/reload was a real source of intermittent
+// rate-limiting, which a failed call then showed as a false "NOT LISTED"
+// (see the retry logic below). Caching cuts that burst down to once per
+// NFT per 60s across all visitors, not per page load.
+//
+// Only a genuine result (listed or confirmed not-listed) gets cached — a
+// failed lookup (both retries exhausted) is never cached, so the very
+// next request tries again fresh instead of baking in a transient
+// rate-limit as a permanent false negative.
+const XRP_CAFE_NFT_CACHE_KEY_PREFIX = 'pswap:xrpcafenft:v1:';
+const XRP_CAFE_NFT_CACHE_TTL_SECONDS = 60;
+const XRP_CAFE_NFT_MAX_ATTEMPTS = 3;
+const XRP_CAFE_NFT_RETRY_DELAYS_MS = [300, 700];
+
+async function fetchXrpCafeNftListingLive(nftId, attempt = 0) {
   try {
     const res = await fetch(`${XRP_CAFE_API_BASE}/api/nft/${encodeURIComponent(nftId)}`);
     if (!res.ok) {
@@ -1308,15 +1324,15 @@ export async function fetchXrpCafeNftListing(nftId, attempt) {
       // negative" reasoning as fetchNftSellOffersOrNull — a real listing
       // could otherwise vanish from display purely because this one call
       // got rate-limited or hiccuped under a full-page burst.
-      if (attempt < 1) {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        return fetchXrpCafeNftListing(nftId, attempt + 1);
+      if (attempt < XRP_CAFE_NFT_MAX_ATTEMPTS - 1) {
+        await new Promise(resolve => setTimeout(resolve, XRP_CAFE_NFT_RETRY_DELAYS_MS[attempt]));
+        return fetchXrpCafeNftListingLive(nftId, attempt + 1);
       }
-      return null;
+      return undefined; // exhausted — caller must not cache this
     }
     const d = await res.json();
     const n = d.nft;
-    if (!n) return null;
+    if (!n) return null; // genuine "no listing" — cacheable
     // Same stale-offer guard as Deeptide: only trust the amount if the
     // offer's own account still actually holds the NFT.
     const validOffer = n.amount !== null && n.amount !== undefined
@@ -1330,12 +1346,24 @@ export async function fetchXrpCafeNftListing(nftId, attempt) {
       priceXrp: validOffer ? parseFloat(n.amount) / 1000000 : null,
     };
   } catch (e) {
-    if (attempt < 1) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return fetchXrpCafeNftListing(nftId, attempt + 1);
+    if (attempt < XRP_CAFE_NFT_MAX_ATTEMPTS - 1) {
+      await new Promise(resolve => setTimeout(resolve, XRP_CAFE_NFT_RETRY_DELAYS_MS[attempt]));
+      return fetchXrpCafeNftListingLive(nftId, attempt + 1);
     }
-    return null;
+    return undefined;
   }
+}
+
+export async function fetchXrpCafeNftListing(kv, nftId) {
+  const cacheKey = XRP_CAFE_NFT_CACHE_KEY_PREFIX + nftId;
+  if (kv) {
+    const cached = await kv.get(cacheKey);
+    if (cached !== null) return JSON.parse(cached);
+  }
+  const result = await fetchXrpCafeNftListingLive(nftId);
+  if (result === undefined) return null; // failed lookup — not cached, not shown as a false negative to callers below
+  if (kv) await safeKvPut(kv, cacheKey, JSON.stringify(result), { expirationTtl: XRP_CAFE_NFT_CACHE_TTL_SECONDS });
+  return result;
 }
 
 // ─────────────────────────────────────────────────────────────────────────

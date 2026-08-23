@@ -90,10 +90,10 @@ function json(body, status = 200) {
 // real headroom above 10+36; raised to cover a full page.
 const LISTINGS_ENRICH_CAP = 40;
 const LISTINGS_ENRICH_CAP_LOW = 36;
-async function attachListings(items, cap = LISTINGS_ENRICH_CAP) {
+async function attachListings(kv, items, cap = LISTINGS_ENRICH_CAP) {
   const capped = items.slice(0, cap);
   await Promise.all(capped.map(async (it) => {
-    const xc = await fetchXrpCafeNftListing(it.nftId);
+    const xc = await fetchXrpCafeNftListing(kv, it.nftId);
     it.listings = {
       deeptide: { priceXrp: it.priceXrp, buyUrl: it.buyUrl },
       xrpCafe: {
@@ -345,7 +345,7 @@ export async function onRequestGet(context) {
     const [item, categories, xrpCafeListing] = await Promise.all([
       fetchDeeptideNftDetail(detailId),
       getTraitCategoriesWithPercent(env.coin),
-      fetchXrpCafeNftListing(detailId)
+      fetchXrpCafeNftListing(env.coin, detailId)
     ]);
     if (!item) return json({ item: null, notIndexed: true });
     // Deeptide's own detail response has each trait's percentage but not its
@@ -436,7 +436,7 @@ export async function onRequestGet(context) {
       }
     })());
 
-    await attachListings(items, LISTINGS_ENRICH_CAP_LOW);
+    await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
 
     return json({
       items,
@@ -467,7 +467,7 @@ export async function onRequestGet(context) {
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
-    await attachListings(items, LISTINGS_ENRICH_CAP_LOW);
+    await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
     return json({
       items,
       total: sortedIds.length,
@@ -506,7 +506,7 @@ export async function onRequestGet(context) {
       const pageNums = nums.slice(skip, skip + limit);
       const resolved = await Promise.all(pageNums.map(n => fetchDeeptideNftDetail(map[n])));
       const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
-      await attachListings(items, LISTINGS_ENRICH_CAP_LOW);
+      await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
       return json({
         items,
         total: numberRange === 'low' ? PIGEON_LOW_EDITION_MAX : (PIGEON_COLLECTION_SIZE_APPROX - PIGEON_LOW_EDITION_MAX),
@@ -538,7 +538,7 @@ export async function onRequestGet(context) {
       if (!page.hasMore) { exhausted = true; break; }
     }
     const items = matched.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
-    await attachListings(items);
+    await attachListings(env.coin, items);
     return json({
       items,
       total: numberRange === 'low' ? PIGEON_LOW_EDITION_MAX : (PIGEON_COLLECTION_SIZE_APPROX - PIGEON_LOW_EDITION_MAX),
@@ -563,7 +563,7 @@ export async function onRequestGet(context) {
     const pageNums = nums.slice(skip, skip + limit);
     const resolved = await Promise.all(pageNums.map(n => fetchDeeptideNftDetail(map[n])));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
-    await attachListings(items, LISTINGS_ENRICH_CAP_LOW);
+    await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
     return json({
       items,
       total: nums.length,
@@ -607,7 +607,7 @@ export async function onRequestGet(context) {
     const page = await fetchDeeptideListings({ skip: 0, limit: 60, sort: deeptideSort });
     const realCandidates = page.items.filter(it => typeof it.priceDrops === 'number');
     const withCross = await Promise.all(realCandidates.map(async (it) => {
-      const xc = await fetchXrpCafeNftListing(it.nftId);
+      const xc = await fetchXrpCafeNftListing(env.coin, it.nftId);
       const dp = it.priceDrops / 1000000;
       const xp = xc && xc.priceXrp !== null && xc.priceXrp !== undefined ? xc.priceXrp : null;
       const useXrpCafe = xp !== null && (crossListing === 'asc' ? xp < dp : xp > dp);
@@ -648,7 +648,7 @@ export async function onRequestGet(context) {
 
   const page = await fetchDeeptideListings({ skip, limit, sort, traits: filters });
   const items = page.items.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
-  await attachListings(items);
+  await attachListings(env.coin, items);
 
   context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
   context.waitUntil(maybeRefreshHighSaleMap(env.coin));
