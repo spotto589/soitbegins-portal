@@ -201,6 +201,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:1rem;
     text-transform:uppercase;
   }
+  /* Way bigger than a regular panel-title — this is the headline of the
+     whole DATABASE screen, not a section label. */
+  .search-panel-title{ font-size:24px; font-weight:700; margin-bottom:0.4rem; text-shadow:0 0 10px var(--cyan-glow); }
+  .search-panel-subtitle{
+    text-align:center;
+    font-size:12px;
+    letter-spacing:0.15em;
+    color:var(--cyan);
+    text-shadow:0 0 6px var(--cyan-glow);
+    text-transform:uppercase;
+    margin-bottom:1rem;
+  }
 
   /* ---- reference-image texture: one non-repeating instance per panel,
      cover-sized (preserves native aspect ratio, unlike percentage
@@ -1889,7 +1901,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
 
       <div class="sw-panel">
-        <div class="panel-title" id="searchPanelTitle">$P!GE0NS DATABASE</div>
+        <div class="panel-title search-panel-title" id="searchPanelTitle">SEARCH!NG $P!GE0NS DATABASE</div>
+        <div class="search-panel-subtitle" id="searchPanelSubtitle">DATABASE V!EW</div>
         <div class="search-row">
           <input class="search-input" id="searchInput" placeholder="SEARCH #..." inputmode="numeric">
           <button class="bar-btn" id="searchBtn">[ GO ]</button>
@@ -2361,7 +2374,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
-   'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle',
+   'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn','swapOffersTabBtn',
@@ -2629,7 +2642,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       state.traitFilters = [];
       renderTraitRows();
       el.nodeHeaderPanel.style.display = 'none';
-      el.searchPanelTitle.textContent = '$P!GE0NS DATABASE';
+      refreshSearchPanelSubtitle();
       el.searchInput.value = '';
       startCollectionBrowse();
     }
@@ -3065,6 +3078,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
   }
 
+  // Title stays constant ("SEARCHING $PIGEONS DATABASE") regardless of
+  // scope — this subtitle underneath is what actually communicates
+  // whether you're looking at the full collection or one wallet.
+  function refreshSearchPanelSubtitle(){
+    el.searchPanelSubtitle.textContent = state.scope ? 'V!EW!NG WALLET: ' + state.scope.ownerShort : 'DATABASE V!EW';
+  }
   // Shared by SELECT (auto-enters owner scope + auto-targets the pigeon
   // that got you there) and the plain "view this wallet's collection" click
   // on an owner address (no auto-targeting).
@@ -3079,7 +3098,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.searchInput.value = '';
     el.nodeHeaderPanel.style.display = '';
     el.nodeAddr.textContent = state.scope.ownerShort;
-    el.searchPanelTitle.textContent = 'H0LDER $P!GE0NS DATABASE';
+    refreshSearchPanelSubtitle();
     if (targetPigeon){
       el.targetPigeonCard.style.display = '';
       el.targetPigeonImg.innerHTML = targetPigeon.image ? '<img src="' + escapeHtml(targetPigeon.image) + '" alt="">' : '[ IMAGE ]';
@@ -3127,7 +3146,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.traitFilters = [];
     renderTraitRows();
     el.nodeHeaderPanel.style.display = 'none';
-    el.searchPanelTitle.textContent = '$P!GE0NS DATABASE';
+    refreshSearchPanelSubtitle();
     el.searchInput.value = '';
     renderTradeBuilder();
     startCollectionBrowse();
@@ -5347,7 +5366,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         state.scopeAllItems = [];
         state.targetAssets = {};
         el.nodeHeaderPanel.style.display = 'none';
-        el.searchPanelTitle.textContent = '$P!GE0NS DATABASE';
+        refreshSearchPanelSubtitle();
         renderTradeBuilder();
       }
     } else if (state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC'){
