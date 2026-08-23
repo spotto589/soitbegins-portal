@@ -228,7 +228,7 @@ export async function onRequestGet(context) {
     });
   }
 
-  // Top 10 current Pigeon holders, network-wide — piggybacks on the same
+  // Top 100 current Pigeon holders, network-wide — piggybacks on the same
   // cached full-scan snapshot the Crown feature already maintains (board.js),
   // so this is a cheap KV read on every normal request; a stale/missing
   // snapshot kicks off a background recompute via waitUntil, same pattern.
@@ -238,7 +238,12 @@ export async function onRequestGet(context) {
     if (stale) context.waitUntil(recomputeCrownHolder(env.coin).catch(() => {}));
     const holders = (snapshot && snapshot.topHolders) || [];
     return json({
-      holders: holders.map(h => ({ wallet: h.wallet, ownerShort: shortenAddr(h.wallet), count: h.count })),
+      holders: holders.map(h => ({
+        wallet: h.wallet,
+        ownerShort: shortenAddr(h.wallet),
+        count: h.count,
+        percent: PIGEON_COLLECTION_SIZE_APPROX > 0 ? (h.count / PIGEON_COLLECTION_SIZE_APPROX) * 100 : null,
+      })),
       computedAt: snapshot ? snapshot.computedAt : null
     });
   }

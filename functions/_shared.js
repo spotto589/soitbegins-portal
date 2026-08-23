@@ -944,11 +944,11 @@ export async function recomputeCrownHolder(kv) {
     }
   }
 
-  // Piggybacks on the same full scan for the SWAP page's "top 10 holders"
-  // dropdown — no reason to run a second Clio scan just for this.
+  // Piggybacks on the same full scan for the SWAP page's "top 100 holders"
+  // list — no reason to run a second Clio scan just for this.
   const topHolders = Array.from(counts.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
+    .slice(0, 100)
     .map(([wallet, count]) => ({ wallet, count }));
 
   const snapshot = {

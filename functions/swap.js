@@ -539,16 +539,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     justify-content:space-between;
     gap:0.75rem;
-    padding:0.6em 0.4em;
+    padding:0.9em 0.6em;
     border-bottom:1px solid var(--border-dim);
     cursor:pointer;
-    font-size:12px;
+    font-size:17px;
     letter-spacing:0.03em;
     transition:background 0.15s ease;
   }
   .th-row:last-child{ border-bottom:none; }
   .th-row:hover{ background:var(--cyan-faint); }
-  .th-rank{ flex:0 0 2.2em; color:var(--cyan); }
+  .th-rank{ flex:0 0 3em; color:var(--cyan); }
   .th-wallet{ flex:1; min-width:0; color:var(--white); word-break:break-all; }
   .th-count{ flex:0 0 auto; color:var(--grey); text-transform:uppercase; }
   .th-empty{ text-align:center; font-size:11px; letter-spacing:0.08em; color:var(--grey-dim); padding:0.5rem 0; text-transform:uppercase; }
@@ -2211,7 +2211,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="top-tabs" id="topTabs">
       <button class="tab-btn" data-tab="database">DATABASE</button>
       <button class="tab-btn" data-tab="mypigeons">MY P!GE0NS</button>
-      <button class="tab-btn" data-tab="topholders">T0P 10</button>
+      <button class="tab-btn" data-tab="topholders">T0P 100</button>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
     </div>
@@ -2250,7 +2250,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
 
     <div class="sw-panel" id="topHoldersPanelWrap" style="display:none;">
-      <div class="panel-title">T0P 10 H0LDERS</div>
+      <div class="panel-title">T0P 100 H0LDERS</div>
       <div id="topHoldersList"></div>
     </div>
 
@@ -4572,10 +4572,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     el.topHoldersList.innerHTML = topHoldersData.map(function(h, i){
+      var percentStr = h.percent !== null && h.percent !== undefined
+        ? h.percent.toLocaleString(undefined, { maximumFractionDigits: h.percent < 1 ? 2 : 1 })
+        : null;
       return '<div class="th-row" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
-        '<span class="th-rank">#' + (i + 1) + '</span>' +
+        '<span class="th-rank">#' + greenNum(i + 1) + '</span>' +
         '<span class="th-wallet">' + escapeHtml(h.ownerShort) + '</span>' +
-        '<span class="th-count">' + h.count + ' HELD</span>' +
+        '<span class="th-count">' + greenNum(h.count) + ' HELD' + (percentStr ? '  ::  ' + greenNum(percentStr) + '%' : '') + '</span>' +
       '</div>';
     }).join('');
   }
