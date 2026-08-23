@@ -1761,11 +1761,26 @@ const SWAP_HTML = `<!DOCTYPE html>
      #screenDetail specifically — .detail-field/.trait-grid/.df-label etc
      are shared with several other narrow centered confirm/result screens
      elsewhere in this file, which must stay exactly as they are. ---- */
-  .detail-two-col{ display:grid; grid-template-columns:minmax(320px, 480px) 1fr; gap:2rem; align-items:start; }
-  @media (max-width:760px){
-    .detail-two-col{ grid-template-columns:1fr; gap:1.25rem; }
+  /* Named grid areas so PIGEON #N sits in its own row above just the
+     picture's column, while TRAITS (the right column's first row) starts
+     level with the picture's own top — not pushed down by the number,
+     since the right column never occupies the "num" row at all. */
+  .detail-two-col{
+    display:grid;
+    grid-template-columns:minmax(320px, 480px) 1fr;
+    grid-template-areas:
+      "num  empty"
+      "left right";
+    gap:0.75rem 2rem;
+    align-items:start;
   }
-  #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0 0 1.25rem; }
+  #screenDetail .detail-two-col > .detail-num{ grid-area:num; text-align:center; margin:0; }
+  .detail-col-left{ grid-area:left; }
+  .detail-col-right{ grid-area:right; }
+  @media (max-width:760px){
+    .detail-two-col{ grid-template-columns:1fr; grid-template-areas:"num" "left" "right"; gap:0.75rem; }
+  }
+  #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0 0 1.25rem; cursor:pointer; }
   #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 1.25rem; }
   /* $PIGEONS listing — the collection's own purple, matching the DATABASE
      card's OFFER AMOUNT box (.thumb-offer) instead of a plain grey block —
@@ -1783,7 +1798,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .scylla-listing-block .tech-meta-title{ color:#fff; opacity:0.9; }
   #screenDetail .scylla-listing-price{ font-size:17px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
   #screenDetail #detailMakeOfferRow{ margin-top:0.75rem; }
-  #screenDetail .detail-num{ font-size:28px; text-align:left; margin-bottom:0.75rem; }
+  #screenDetail .detail-num{ font-size:28px; }
   #screenDetail .detail-traits-title{ font-size:13px; margin-top:0; }
   #screenDetail .trait-grid{ max-width:100%; margin:0 0 1.5rem; grid-template-columns:repeat(3, 1fr); gap:0.7rem; }
   @media (max-width:520px){
@@ -1797,14 +1812,30 @@ const SWAP_HTML = `<!DOCTYPE html>
      whole (wide) right column — that gap made label and value feel
      unrelated, like you had to hunt across the screen to match them up. */
   #screenDetail .detail-field{ max-width:320px; margin:0 0 1rem; font-size:15px; }
-  /* RARITY — RARITY SCORE as the section title above it (the actual score
-     isn't computed yet, see rarityAboveTraitsHtml elsewhere), the rank/
-     total sitting under a RARITY label like a trait box, not a plain
-     label:value row. Not clickable (unlike real trait cells). */
-  #screenDetail .detail-rarity-block{ max-width:320px; margin:0 0 1rem; }
-  #screenDetail .detail-rarity-block .trait-cell{ cursor:default; text-align:left; max-width:200px; }
-  #screenDetail .detail-rarity-block .trait-cell:hover{ background:transparent; border-color:var(--border-dim); }
+  /* RARITY and RARITY SCORE side by side, same trait-cell box treatment
+     (label above value) — the actual score isn't computed yet, so that
+     box just reads COMING SOON. Neither is clickable (unlike real trait
+     cells in the grid above). */
+  #screenDetail .detail-rarity-row{ display:flex; gap:1rem; margin:0 0 1rem; max-width:420px; }
+  #screenDetail .detail-rarity-row .trait-cell{ cursor:default; text-align:left; flex:1; min-width:0; }
+  #screenDetail .detail-rarity-row .trait-cell:hover{ background:transparent; border-color:var(--border-dim); }
+  /* RECORD SALE / AVG SALE side by side instead of stacked rows. */
+  #screenDetail .detail-sales-row{ display:flex; gap:1.5rem; flex-wrap:wrap; }
+  #screenDetail .detail-sales-row .detail-field{ flex:1 1 180px; max-width:none; margin-bottom:1rem; }
   #screenDetail .tech-meta-title{ font-size:12px; }
+  /* Fullscreen picture lightbox. */
+  #detailLightbox{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    background:rgba(0,0,0,0.94);
+    align-items:center;
+    justify-content:center;
+    padding:2rem;
+    cursor:zoom-out;
+  }
+  #detailLightbox img{ max-width:100%; max-height:100%; object-fit:contain; }
   .detail-eyebrow{
     text-align:center;
     font-size:11px;
@@ -2389,9 +2420,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- SCREEN 2: DETAIL -->
     <div class="sw-panel" id="screenDetail" style="display:none;">
       <div class="detail-two-col">
+        <div class="detail-num" id="detailNum"></div>
         <div class="detail-col-left">
-          <div class="detail-num" id="detailNum"></div>
-          <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
+          <div class="detail-img-large pigeon-img-box" id="detailImgBox" title="VIEW FULLSCREEN">[ IMAGE ]</div>
           <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
           <div class="scylla-listing-block">
             <div class="tech-meta-title">$P!GE0NS L!ST!NG</div>
@@ -2415,18 +2446,23 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="detail-traits-title">TRA!TS</div>
           <div class="trait-grid" id="detailTraits"></div>
           <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
-          <div class="detail-rarity-block" id="detailRarityRow" style="display:none;">
-            <div class="detail-traits-title">RAR!TY SC0RE</div>
+          <div class="detail-rarity-row" id="detailRarityRow" style="display:none;">
             <div class="trait-cell">
               <div class="tc-label">RAR!TY</div>
               <div class="tc-value" id="detailRarity"></div>
             </div>
+            <div class="trait-cell">
+              <div class="tc-label">RAR!TY SC0RE</div>
+              <div class="tc-value">C0M!NG S00N</div>
+            </div>
           </div>
           <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
-          <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
-          <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVG SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
+          <div class="detail-sales-row">
+            <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
+            <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVG SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
+          </div>
           <div class="detail-history">
-            <button class="th-toggle" id="detailHistoryToggle">[ SALES H!ST0RY ]</button>
+            <button class="th-toggle" id="detailHistoryToggle">[ TRANSACT!0N H!ST0RY ]</button>
           </div>
           <div class="view-elsewhere">
             <div class="tech-meta-title">V!EW ELSEWHERE</div>
@@ -2445,10 +2481,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- SCREEN 2b: SALES HISTORY — a full swap of the DETAIL box, not an
+    <!-- Fullscreen picture lightbox — click the detail picture to open,
+         click anywhere to close back to the detail screen underneath. -->
+    <div id="detailLightbox" style="display:none;">
+      <img id="detailLightboxImg" src="" alt="">
+    </div>
+
+    <!-- SCREEN 2b: TRANSACTION HISTORY — a full swap of the DETAIL box, not an
          inline expand, so the history list gets the whole panel to itself -->
     <div class="sw-panel" id="screenHistory" style="display:none;">
-      <div class="detail-eyebrow">// SALES H!ST0RY</div>
+      <div class="detail-eyebrow">// TRANSACT!0N H!ST0RY</div>
       <div class="detail-num" id="historyNum"></div>
       <div class="th-list" id="detailHistoryList"></div>
       <div class="detail-actions">
@@ -2788,7 +2830,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailAvgSaleRow','detailAvgSale','detailBuyBtn','detailTraits',
-   'detailScyllaPrice','detailScyllaBuyBtn','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend',
+   'detailScyllaPrice','detailScyllaBuyBtn','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
    'backToBrowseBtn','detailSelectBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
@@ -6164,7 +6206,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     showScreen('history');
   });
   el.backToDetailBtn.addEventListener('click', function(){ showScreen('detail'); });
-  el.backToBrowseBtn.addEventListener('click', function(){
+  function goBackFromDetail(){
     showScreen('browse');
     // Overrides showScreen's own tab-strip-aligned scroll with the exact
     // card position remembered in openDetail — going back should land you
@@ -6173,6 +6215,19 @@ const SWAP_HTML = `<!DOCTYPE html>
       window.scrollTo({ top: scrollBeforeDetail, behavior: 'smooth' });
       scrollBeforeDetail = null;
     }
+  }
+  el.backToBrowseBtn.addEventListener('click', goBackFromDetail);
+  // Picture click opens a fullscreen lightbox (see #detailLightbox) —
+  // click it again (anywhere) to close back to the detail screen.
+  el.detailImgBox.addEventListener('click', function(){
+    var img = el.detailImgBox.querySelector('img');
+    if (!img) return;
+    el.detailLightboxImg.src = img.src;
+    el.detailLightbox.style.display = 'flex';
+  });
+  el.detailLightbox.addEventListener('click', function(){
+    el.detailLightbox.style.display = 'none';
+    el.detailLightboxImg.src = '';
   });
   el.detailSelectBtn.addEventListener('click', function(){
     if (state.currentDetail) handleSelect(state.currentDetail);
