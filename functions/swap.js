@@ -5254,10 +5254,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   // A return from the CONNECT SCYLLA redirect lands back on MY PIGEONS;
-  // any other fresh page load (a plain refresh) now defaults to DATABASE
+  // any other fresh page load (a plain refresh) defaults to DATABASE
   // instead of sitting on a blank screen until a tab is clicked.
   if (window.location.search.indexOf('connected=1') !== -1){
     showTab('mypigeons');
+    // Strip the query param right after using it once — otherwise it
+    // stays in the address bar and every later refresh keeps landing on
+    // MY PIGEONS instead of the real default.
+    window.history.replaceState({}, '', window.location.pathname);
   } else {
     showTab('database');
   }
