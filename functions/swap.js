@@ -1355,6 +1355,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:0;
     box-shadow:none;
     margin-bottom:0;
+    /* Overrides .pigeons-bar's own justify-content:center — left-cluster
+       (now normal flow, see above) sits left, body (flex:1) fills and
+       centers itself in whatever space is left, onboard-link stays
+       pinned right via its own position:absolute. align-items stays
+       center (inherited from .pigeons-bar) so body still centers
+       vertically against the now-taller left-cluster. */
+    justify-content:space-between;
   }
   /* Wraps the trustline strip + the stats info panel as one unified,
      purple-themed box. */
@@ -1386,10 +1393,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      thumb itself) so it never throws off the body's own centering below
      — same trick used for the onboarding link on the right. */
   .pigeons-bar-left-cluster{
-    position:absolute;
-    left:1.25rem;
-    top:50%;
-    transform:translateY(-50%);
+    /* Normal flow now (not pinned/absolute) — with the floor-price boxes
+       added underneath the calculator/dex link, this column got much
+       taller and variable-height; position:absolute would take it out of
+       flow entirely, leaving .pigeons-bar-issuer's own height sized only
+       to .pigeons-bar-body and clipping the floor boxes against
+       .pigeons-merged-panel's overflow:hidden. See .pigeons-bar-issuer's
+       justify-content:space-between + .pigeons-bar-body's flex:1 below
+       for how the body still reads as centered despite this. */
     display:flex;
     align-items:center;
     gap:1rem;
@@ -1461,10 +1472,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-dex-link{ display:inline-flex; align-items:center; justify-content:center; gap:0.4rem; font-size:11px; padding:0.5em 0.7em; text-decoration:none; align-self:stretch; background:#000; border-color:rgba(255,255,255,0.6); }
   .pigeons-bar-dex-link:hover{ background:#000; border-color:#fff; }
   .pigeons-bar-dex-icon{ width:22px; height:22px; border-radius:4px; flex:0 0 auto; }
+  /* Floor prices, relocated here from the stats carousel — XRP.CAFE and
+     DEEPTIDE side by side, $PIGEONS FLOOR underneath at the same box
+     size as those two (not the carousel's 25%-of-row math, which no
+     longer applies once these live outside .stats-strip). */
+  .pigeons-bar-floor{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; margin-top:0.5rem; }
+  .pigeons-bar-floor-row{ display:flex; gap:0.5rem; }
+  .pigeons-bar-floor .stat-tile{ width:118px; flex:0 0 auto; padding:0.7rem 0.4rem; }
   /* Stacked, centered on the FULL bar width (not just the space left
      over between the thumb and the onboarding link) — lines up with the
      page's own centered h1 and DATABASE VIEW selector above it. */
-  .pigeons-bar-body{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; width:100%; text-align:center; }
+  .pigeons-bar-body{ display:flex; flex:1; flex-direction:column; align-items:center; gap:0.5rem; text-align:center; }
   .pigeons-bar-addr-stack{ display:flex; flex-direction:column; align-items:center; gap:0.2rem; }
   .pigeons-bar-sublabel{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-addr{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); font-size:15px; }
@@ -1493,7 +1511,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .pigeons-bar-onboard-link:hover{ opacity:1; }
   @media (max-width:900px){
-    .pigeons-bar-left-cluster, .pigeons-bar-onboard-link{ position:static; transform:none; margin:0 auto; }
+    /* Left-cluster is normal flow at all widths now (see above) — only
+       the onboard-link (still pinned via position:absolute at desktop
+       width) needs un-pinning here. */
+    .pigeons-bar-onboard-link{ position:static; transform:none; margin:0 auto; }
     .pigeons-bar-left-cluster{ flex-wrap:wrap; justify-content:center; }
     .pigeons-bar-issuer{ flex-direction:column; gap:0.75rem; text-align:center; }
     .pigeons-bar-onboard-link{ white-space:normal; }
@@ -1937,6 +1958,16 @@ const SWAP_HTML = `<!DOCTYPE html>
           <a class="bar-btn pigeons-bar-dex-link" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">
             <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">V!EW 0N DEXSCREENER
           </a>
+          <!-- Floor prices, moved out of the stats carousel to live here
+               instead — XRP.CAFE/DEEPTIDE side by side, $PIGEONS FLOOR
+               underneath at the same box size as those two. -->
+          <div class="pigeons-bar-floor">
+            <div class="pigeons-bar-floor-row">
+              <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
+              <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
+            </div>
+            <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+          </div>
         </div>
       </div>
       <div class="pigeons-bar-body">
@@ -1962,12 +1993,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="stats-carousel-row">
       <button class="stats-carousel-arrow" id="statsPrevBtn" aria-label="PREV!0US">◂</button>
       <div class="stats-carousel-viewport">
-      <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
-        <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
-        <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
-        <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
-      </div>
-      <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
+      <div class="stats-strip stats-strip-main stats-page stats-page-active" id="statsStrip">
         <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
         <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
         <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
@@ -1983,7 +2009,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
       <div class="stats-carousel-dots" id="statsCarouselDots">
         <span class="stats-dot active"></span>
-        <span class="stats-dot"></span>
         <span class="stats-dot"></span>
       </div>
       </div>
