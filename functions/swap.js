@@ -1045,11 +1045,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-bottom:1px dashed var(--border-dim);
     padding:0.55em 1rem;
   }
-  /* Flick-through pages — TRAITS, then RARITY, then sale stats, then a
-     link to the full history page — one visible at a time instead of
-     every section stacked as its own bar. */
+  /* Flick-through pages — TRAITS, then sale stats, then the sales
+     history itself — one visible at a time instead of every section
+     stacked as its own bar. */
   .card-pages{ margin-top:0.5rem; }
-  .card-page-rarity, .card-page-sales{
+  .card-page-sales{
     display:flex;
     align-items:center;
     justify-content:center;
@@ -1057,20 +1057,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex-wrap:wrap;
     min-height:80px;
   }
-  .card-page-history{ display:flex; align-items:center; justify-content:center; min-height:80px; }
-  .card-page-history .card-history-link{
-    background:transparent;
-    border:1px solid var(--cyan-dim);
-    border-radius:var(--radius);
-    color:var(--cyan-dim);
-    font-family:var(--font-mono);
-    font-size:11px;
-    letter-spacing:0.12em;
-    text-transform:uppercase;
-    cursor:pointer;
-    padding:0.6em 1rem;
-  }
-  .card-page-history .card-history-link:hover{ color:var(--cyan); border-color:var(--cyan); }
+  /* Sales history renders right in this page (not a link to another
+     screen) — scrolls internally so a long history doesn't blow out the
+     card's height. */
+  .card-page-history{ min-height:80px; max-height:220px; overflow-y:auto; }
   .card-page-next{
     display:block;
     width:100%;
@@ -1262,18 +1252,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:500px){
     .card-trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
-  .card-history-link{
-    background:transparent;
-    border-left:none; border-right:none; border-bottom:none;
-    color:var(--cyan-dim);
-    font-family:var(--font-mono);
-    font-size:10px;
-    letter-spacing:0.12em;
-    text-transform:uppercase;
-    cursor:pointer;
-    width:100%;
-  }
-  .card-history-link:hover{ color:var(--cyan); }
   .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
 
   @media (max-width:900px){
@@ -3133,15 +3111,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // RARITY SCORE isn't computed yet — deliberately left as a placeholder
     // (real rank/total already exist, the score itself is a later system).
     var rarityLine = p.rarityRank ? p.rarityRank + '/' + (p.rarityTotal || 3015) : null;
-    // Flick-through pages in the right column — TRAITS, then RARITY, then
-    // sale stats, then a link to the full history page — one at a time
-    // instead of every section stacked as its own bar.
-    var rarityPageHtml = '<div class="card-page card-page-rarity" style="display:none;">' +
-      (rarityLine
-        ? '<span class="css-item"><span class="css-label">RAR!TY</span>' + rarityLine + '</span>' +
-          '<span class="css-item"><span class="css-label">RAR!TY SC0RE</span>[ C0M!NG S00N ]</span>'
-        : '<div class="th-empty">N0 RAR!TY DATA</div>') +
-      '</div>';
+    // Flick-through pages in the right column — TRAITS, then sale stats,
+    // then the sales history itself (fetched lazily once this page is
+    // reached — see the .card-page-next handler) — one at a time instead
+    // of every section stacked as its own bar. RARITY isn't a page here
+    // any more — it's the always-visible summary above the traits box.
     var hasHigh = p.highSaleXrp !== null && p.highSaleXrp !== undefined;
     var hasAvg = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
     var hasSaleCount = p.saleCount !== null && p.saleCount !== undefined;
@@ -3155,12 +3129,11 @@ const SWAP_HTML = `<!DOCTYPE html>
         : '<div class="th-empty">N0 SALES YET</div>') +
       '</div>';
     var historyPageHtml = '<div class="card-page card-page-history" style="display:none;">' +
-        '<button class="card-history-link" data-nftid="' + escapeHtml(p.nftId) + '">[ SALES H!ST0RY → ]</button>' +
+        '<div class="card-history-list" data-nftid="' + escapeHtml(p.nftId) + '"><div class="th-empty">N0 H!ST0RY YET.</div></div>' +
       '</div>';
     var carouselHtml =
       '<div class="card-pages" data-page="0">' +
         '<div class="card-page card-page-traits">' + cardTraitsHtml(p) + '</div>' +
-        rarityPageHtml +
         salesPageHtml +
         historyPageHtml +
       '</div>' +
@@ -3247,13 +3220,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         });
         return;
       }
-      var historyLink = e.target.closest('.card-history-link');
-      if (historyLink){
-        openDetail(historyLink.getAttribute('data-nftid'));
-        el.historyNum.textContent = el.detailNum.textContent;
-        showScreen('history');
-        return;
-      }
       var nextBtn = e.target.closest('.card-page-next');
       if (nextBtn){
         var cardEl = nextBtn.closest('.result-card');
@@ -3262,8 +3228,29 @@ const SWAP_HTML = `<!DOCTYPE html>
         var current = parseInt(pagesEl.getAttribute('data-page'), 10) || 0;
         pages[current].style.display = 'none';
         current = (current + 1) % pages.length;
-        pages[current].style.display = '';
+        var newPage = pages[current];
+        newPage.style.display = '';
         pagesEl.setAttribute('data-page', String(current));
+        // Sales history is fetched lazily, once this page is actually
+        // reached — not for every card in the list up front.
+        var historyList = newPage.querySelector('.card-history-list');
+        if (historyList && !historyList.getAttribute('data-loaded')){
+          historyList.setAttribute('data-loaded', '1');
+          var histNftId = historyList.getAttribute('data-nftid');
+          api({ history: histNftId }).then(function(data){
+            var events = data.events || [];
+            historyList.innerHTML = events.length
+              ? events.map(historyRowHtml).join('')
+              : '<div class="th-empty">N0 H!ST0RY YET.</div>';
+          }).catch(function(){
+            historyList.innerHTML = '<div class="th-empty">C0ULD N0T L0AD H!ST0RY.</div>';
+          });
+        }
+        return;
+      }
+      var histWalletLink = e.target.closest('.card-history-list a[data-wallet]');
+      if (histWalletLink){
+        browseOwnerCollection(histWalletLink.getAttribute('data-wallet'), histWalletLink.getAttribute('data-short'));
         return;
       }
       var offerSend = e.target.closest('.make-offer-send');
