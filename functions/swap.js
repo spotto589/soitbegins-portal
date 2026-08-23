@@ -817,34 +817,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex:0 0 auto;
   }
   .traits-hover-wrap{ position:relative; display:inline-flex; }
-  .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.75em 1em; }
-  #traitsHoverLabel{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); font-size:15px; letter-spacing:0.1em; }
+  .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.75em 1em; font-size:15px; }
+  #traitsHoverLabel{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); letter-spacing:0.1em; }
   #traitsHoverWrap .trait-row-label{ padding:0.9em 1.3em; }
-  /* SORT and ADD TRAITS get the same bordered-box treatment as the
-     edition-toggle group sitting next to them in the search row, instead
-     of bare hover text — makes it read as a box, not just a label, so
-     it's obvious it's a hover dropdown like the others. */
+  /* SORT, ADD TRAITS, and C0LLECT!0N SELECT!0N (the top P!GE0NS ▾ picker)
+     all get the same bordered-box treatment and cyan-on-hover/open text —
+     plain until you actually interact with it, not permanently filled —
+     same size text throughout too (see the shared font-size above). */
   #sortDropWrap, #traitsHoverWrap, #dbSelectWrap{ border:1px solid var(--border-mid); border-radius:var(--radius); transition:border-color 0.15s ease, background 0.15s ease; }
   #sortDropWrap:hover, #sortDropWrap.open,
   #traitsHoverWrap:hover, #traitsHoverWrap.open,
   #dbSelectWrap:hover, #dbSelectWrap.open{ border-color:var(--cyan-dim); }
-  /* SORTING BY always has an active pick — pin it the same way a selected
-     COLLECTION SELECTION button (.edition-btn.active) reads: filled with
-     the collection's own colour (purple for Pigeons), not just plain
-     hover text. */
-  #sortDropWrap{ background:var(--pigeon-purple-faint); border-color:var(--pigeon-purple-dim); }
-  #sortDropWrap:hover, #sortDropWrap.open{ border-color:var(--pigeon-purple); }
-  #sortDropLabel{ font-size:11px; color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); }
   .traits-hover-wrap:hover .trait-row-label,
   .traits-hover-wrap.open .trait-row-label{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
-  /* C0LLECT!0N SELECT!0N always has an active pick too (currently
-     PIGEONS) — same filled-with-the-collection's-own-colour treatment as
-     SORTING BY above, instead of plain hover text. */
-  #dbSelectWrap{ background:var(--pigeon-purple-faint); border-color:var(--pigeon-purple-dim); }
-  #dbSelectWrap:hover, #dbSelectWrap.open{ border-color:var(--pigeon-purple); }
-  #dbSelectLabel{ color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); }
-  #dbSelectWrap:hover #dbSelectLabel,
-  #dbSelectWrap.open #dbSelectLabel{ color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); }
   .traits-flyout{
     position:absolute;
     top:100%;
@@ -2207,7 +2192,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
       <div class="sw-panel">
         <div class="panel-title search-panel-title" id="searchPanelTitle">SEARCH!NG $P!GE0NS DATABASE</div>
-        <div class="search-panel-subtitle" id="searchPanelSubtitle">DATABASE V!EW</div>
+        <div class="search-panel-subtitle" id="searchPanelSubtitle" style="display:none;"></div>
         <div class="db-config-group">
           <div class="sort-field db-config-row">
             <span class="sort-field-label">V!EW</span>
@@ -3426,10 +3411,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   // Title stays constant ("SEARCHING $PIGEONS DATABASE") regardless of
-  // scope — this subtitle underneath is what actually communicates
-  // whether you're looking at the full collection or one wallet.
+  // scope — this subtitle underneath only shows up when actually scoped to
+  // a wallet ("DATABASE VIEW" as the default-state label was redundant
+  // noise and got dropped).
   function refreshSearchPanelSubtitle(){
-    el.searchPanelSubtitle.textContent = state.scope ? 'V!EW!NG WALLET: ' + state.scope.ownerShort : 'DATABASE V!EW';
+    if (state.scope){
+      el.searchPanelSubtitle.style.display = '';
+      el.searchPanelSubtitle.textContent = 'V!EW!NG WALLET: ' + state.scope.ownerShort;
+    } else {
+      el.searchPanelSubtitle.style.display = 'none';
+      el.searchPanelSubtitle.textContent = '';
+    }
   }
   // Shared by SELECT (auto-enters owner scope + auto-targets the pigeon
   // that got you there) and the plain "view this wallet's collection" click
