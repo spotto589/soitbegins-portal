@@ -2309,7 +2309,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
         </div>
         <div class="detail-col-right">
-          <div class="detail-eyebrow">// P!GE0N !DENT!F!ED</div>
           <div class="detail-num" id="detailNum"></div>
           <div class="detail-traits-title">TRA!TS</div>
           <div class="trait-grid" id="detailTraits"></div>
