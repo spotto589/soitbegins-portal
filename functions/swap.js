@@ -341,20 +341,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Prev/next arrows flank the viewport; the row itself is the flex
      container that lays out [arrow][viewport][arrow]. */
   .stats-carousel-row{ display:flex; align-items:center; gap:0.5rem; }
+  /* Darker purple fill (not transparent) so these read as real buttons
+     against the panel's own mid-purple gradient background, instead of
+     nearly disappearing into it. */
   .stats-carousel-arrow{
     flex:0 0 auto;
-    background:transparent;
-    border:1px solid var(--border-mid);
-    color:var(--cyan-dim);
-    font-size:16px;
+    background:rgba(40,10,95,0.6);
+    border:1px solid rgba(255,255,255,0.4);
+    color:#fff;
+    font-size:18px;
     line-height:1;
-    width:2em;
-    height:2em;
+    width:2.2em;
+    height:2.2em;
     cursor:pointer;
     border-radius:var(--radius);
-    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    transition:border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
   }
-  .stats-carousel-arrow:hover{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
+  .stats-carousel-arrow:hover{ border-color:#fff; background:rgba(25,5,70,0.85); transform:scale(1.06); }
+  .stats-carousel-arrow:active{ transform:scale(0.96); }
   /* Viewport clips the slide; height is fixed to the tallest page's real
      height (the FLOOR page, which carries a coin thumbnail the other
      two don't) so nothing resizes as pages swap. Every .stats-page is
@@ -422,7 +426,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .stat-tile-link{ width:100%; text-decoration:none; cursor:pointer; font:inherit; transition:border-color 0.15s ease, background 0.15s ease; }
   .stat-tile-link:hover{ background:var(--cyan-faint); border-color:var(--cyan-dim); }
-  .stat-label{ font-size:9px; letter-spacing:0.15em; color:var(--grey-dim); margin-bottom:0.5rem; text-transform:uppercase; }
+  .stat-label{ font-size:11.5px; letter-spacing:0.1em; color:var(--grey-dim); margin-bottom:0.5rem; text-transform:uppercase; }
   .stat-value{ font-size:16px; letter-spacing:0.03em; color:var(--white); }
   .stat-tile-link .stat-value{ color:var(--grey); }
   .stat-tile-link:hover .stat-value{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
@@ -1944,8 +1948,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="stats-carousel-viewport">
       <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
         <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
-        <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
         <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+        <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
       </div>
       <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
         <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
@@ -1986,7 +1990,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">V!EW 0N DEXSCREENER
         </a>
         <div class="pigeons-bar-rate" id="pigeonsBarRate" style="display:none;">
-          <span class="pigeons-bar-rate-line">1 $P!GE0NS = </span><span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span>
+          <span class="pigeons-bar-rate-line">1 XRP = </span><span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span>
         </div>
         <div class="pigeons-bar-calc-col" id="pigeonsBarCalc" style="display:none;">
           <div class="pigeons-bar-calc-title">EXCHANGE RATE</div>
@@ -5156,7 +5160,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     api({ pigeonsRate: 1 }).then(function(data){
       trustlineXrpPerPigeon = (data && typeof data.xrpPerPigeon === 'number') ? data.xrpPerPigeon : null;
       if (trustlineXrpPerPigeon !== null){
-        el.pigeonsBarRateValue.textContent = trustlineXrpPerPigeon.toFixed(7) + ' XRP';
+        el.pigeonsBarRateValue.textContent = (1 / trustlineXrpPerPigeon).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
         el.pigeonsBarRate.style.display = '';
         el.pigeonsBarCalc.style.display = '';
         updatePigeonsCalc();
