@@ -304,12 +304,33 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:700px){
     .stats-strip .stat-tile{ flex:0 0 calc(50% - 0.375rem); }
   }
+  /* Prev/next arrows flank the viewport; the row itself is the flex
+     container that lays out [arrow][viewport][arrow]. */
+  .stats-carousel-row{ display:flex; align-items:center; gap:0.5rem; }
+  .stats-carousel-arrow{
+    flex:0 0 auto;
+    background:transparent;
+    border:1px solid var(--border-mid);
+    color:var(--cyan-dim);
+    font-size:16px;
+    line-height:1;
+    width:2em;
+    height:2em;
+    cursor:pointer;
+    border-radius:var(--radius);
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .stats-carousel-arrow:hover{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
   /* Viewport clips the slide; height is fixed to the tallest page's real
      height (the FLOOR page, which carries a coin thumbnail the other
      two don't) so nothing resizes as pages swap. Every .stats-page is
      absolutely positioned inside it and slides via transform — a real
-     swipe, not an instant cut. */
-  .stats-carousel-viewport{ position:relative; min-height:108px; overflow:hidden; }
+     swipe, not an instant cut. Genuinely bidirectional: .stats-page-prev
+     exits left (forward nav), .stats-page-exit-right exits right
+     (backward nav), .stats-page-park-left instantly repositions a page
+     off-screen left with no transition, right before it's animated in
+     from that side. */
+  .stats-carousel-viewport{ position:relative; min-height:108px; overflow:hidden; flex:1; min-width:0; }
   .stats-page{
     position:absolute;
     top:0; left:0; width:100%;
@@ -320,12 +341,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .stats-page.stats-page-active{ transform:translateX(0); opacity:1; pointer-events:auto; }
   .stats-page.stats-page-prev{ transform:translateX(-100%); opacity:0; }
+  .stats-page.stats-page-exit-right{ transform:translateX(100%); opacity:0; }
+  .stats-page.stats-page-park-left{ transition:none; transform:translateX(-100%); opacity:0; }
   @media (prefers-reduced-motion: reduce){
     .stats-page{ transition:opacity 0.3s ease; }
     .stats-page:not(.stats-page-active){ transform:none; }
   }
-  /* Dots + a nudging "SWIPE" hint under the auto-rotating strip, so it
-     reads as a carousel rather than a bar that mysteriously changes. */
+  /* Dots under the auto-rotating strip, so it reads as a carousel rather
+     than a bar that mysteriously changes. */
   .stats-carousel-dots{
     display:flex;
     align-items:center;
@@ -341,21 +364,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.2s ease, transform 0.2s ease;
   }
   .stats-dot.active{ background:var(--cyan); box-shadow:0 0 6px var(--cyan-glow); transform:scale(1.3); }
-  .stats-carousel-hint{
-    font-size:9px;
-    letter-spacing:0.12em;
-    color:var(--grey-dim);
-    text-transform:uppercase;
-    margin-left:0.5rem;
-    animation:stats-hint-nudge 1.6s ease-in-out infinite;
-  }
-  @keyframes stats-hint-nudge{
-    0%, 100%{ transform:translateX(0); opacity:0.7; }
-    50%{ transform:translateX(3px); opacity:1; }
-  }
-  @media (prefers-reduced-motion: reduce){
-    .stats-carousel-hint{ animation:none; }
-  }
   .stat-tile{
     border:1px solid var(--border-dim);
     background:rgba(255,255,255,0.015);
@@ -645,6 +653,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
   }
   .bar-btn:hover{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
+  /* Red, same accent as CLEAR TRAITS — resetting every filter is a
+     destructive-feeling action, worth calling out differently from the
+     neutral GO/RESET-adjacent buttons around it. */
+  .reset-db-btn{ border-color:rgba(255,61,61,0.5); color:#ff3d3d; text-shadow:0 0 5px rgba(255,61,61,0.5); }
+  .reset-db-btn:hover{ border-color:#ff3d3d; color:#ff3d3d; background:rgba(255,61,61,0.12); }
+  .edition-toggle-row{ margin-bottom:0.75rem; }
   select.sort-select{
     flex:0 0 auto;
     background:#000;
@@ -1763,6 +1777,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <!-- Auto-rotating strip — one page visible at a time, cycling on a
            timer instead of three stacked bars, to keep this area compact. -->
       <div class="stats-carousel" id="statsCarousel">
+      <div class="stats-carousel-row">
+      <button class="stats-carousel-arrow" id="statsPrevBtn" aria-label="PREV!0US">◂</button>
       <div class="stats-carousel-viewport">
       <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
         <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
@@ -1781,11 +1797,12 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES H!ST0RY"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
       </div>
       </div>
+      <button class="stats-carousel-arrow" id="statsNextBtn" aria-label="NEXT">▸</button>
+      </div>
       <div class="stats-carousel-dots" id="statsCarouselDots">
         <span class="stats-dot active"></span>
         <span class="stats-dot"></span>
         <span class="stats-dot"></span>
-        <span class="stats-carousel-hint">SW!PE ▸</span>
       </div>
       </div>
     </div>
@@ -1903,6 +1920,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="sw-panel">
         <div class="panel-title search-panel-title" id="searchPanelTitle">SEARCH!NG $P!GE0NS DATABASE</div>
         <div class="search-panel-subtitle" id="searchPanelSubtitle">DATABASE V!EW</div>
+        <div class="edition-toggle-row">
+          <div class="edition-toggle" id="editionSelect">
+            <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
+            <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
+            <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
+          </div>
+        </div>
         <div class="search-row">
           <input class="search-input" id="searchInput" placeholder="SEARCH #..." inputmode="numeric">
           <button class="bar-btn" id="searchBtn">[ GO ]</button>
@@ -1924,11 +1948,6 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
           </div>
           <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, B0XED V!EW, N0 TRA!TS">[ RESET ]</button>
-          <div class="edition-toggle" id="editionSelect">
-            <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
-            <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
-            <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
-          </div>
         </div>
         <div class="sort-stack-row">
           <div class="traits-hover-wrap" id="traitsHoverWrap">
@@ -2368,7 +2387,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount',
-   'statsCarousel','statsCarouselDots',
+   'statsCarousel','statsCarouselDots','statsPrevBtn','statsNextBtn',
    'statTraded24h','statVolume24h','statSalesTile','statSales24h','statBurntLink',
    'traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals',
@@ -5318,22 +5337,50 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Auto-rotating stats strip — FLOOR PRICES, then ITEMS/HOLDERS/VOLUME/
   // LISTED, then 24H ACTIVITY, cycling on a timer so this area stays one
   // compact strip instead of three stacked bars. Real slide transition
-  // (not an instant display swap) — the outgoing page slides out left
-  // while the incoming page slides in from the right.
+  // (not an instant display swap), and now genuinely bidirectional — the
+  // ◂ / ▸ arrows step manually in either direction, sliding from the
+  // correct side, and reset the auto-rotate timer so a manual click
+  // isn't immediately undone by the next tick.
   (function(){
     var pages = el.statsCarousel.querySelectorAll('.stats-page');
     var dots = el.statsCarouselDots.querySelectorAll('.stats-dot');
     var current = 0;
-    setInterval(function(){
-      var prev = current;
+    var autoTimer = null;
+    function gotoStatsPage(newIndex, direction){
+      if (newIndex === current) return;
+      var outgoing = pages[current];
+      var incoming = pages[newIndex];
       dots[current].classList.remove('active');
-      current = (current + 1) % pages.length;
-      dots[current].classList.add('active');
-      pages[prev].classList.remove('stats-page-active');
-      pages[prev].classList.add('stats-page-prev');
-      pages[current].classList.add('stats-page-active');
-      setTimeout(function(){ pages[prev].classList.remove('stats-page-prev'); }, 500);
-    }, 10000);
+      dots[newIndex].classList.add('active');
+      if (direction === -1){
+        // Instantly park the incoming page off to the left (no transition)
+        // before animating it in, so it enters from the correct side.
+        incoming.classList.add('stats-page-park-left');
+        void incoming.offsetWidth; // force reflow so the park actually applies before it's removed
+        incoming.classList.remove('stats-page-park-left');
+      }
+      outgoing.classList.remove('stats-page-active');
+      outgoing.classList.add(direction === 1 ? 'stats-page-prev' : 'stats-page-exit-right');
+      incoming.classList.add('stats-page-active');
+      current = newIndex;
+      setTimeout(function(){
+        outgoing.classList.remove('stats-page-prev', 'stats-page-exit-right');
+      }, 500);
+    }
+    function startAutoRotate(){
+      autoTimer = setInterval(function(){ gotoStatsPage((current + 1) % pages.length, 1); }, 10000);
+    }
+    el.statsNextBtn.addEventListener('click', function(){
+      gotoStatsPage((current + 1) % pages.length, 1);
+      clearInterval(autoTimer);
+      startAutoRotate();
+    });
+    el.statsPrevBtn.addEventListener('click', function(){
+      gotoStatsPage((current - 1 + pages.length) % pages.length, -1);
+      clearInterval(autoTimer);
+      startAutoRotate();
+    });
+    startAutoRotate();
   })();
   el.statSalesTile.addEventListener('click', function(){
     state.activeTab = 'sales';
