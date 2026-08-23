@@ -1064,12 +1064,16 @@ const SWAP_HTML = `<!DOCTYPE html>
      collection's own sampled colour), not the site's magenta accent —
      this represents the $PIGEONS coin, same as everywhere else it shows
      up (FLOOR tile, trustline bar). */
+  /* Same solid gradient + glow treatment as the trustline strip at the
+     top of the site (.pigeons-bar-issuer), not a faint tint — this box
+     represents the same $PIGEONS currency and should read the same way. */
   .thumb-offer{
     width:100%;
     margin-top:0.5rem;
-    background:rgba(136,72,248,0.1);
-    border:1px solid var(--pigeon-purple-dim);
+    background:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
+    border:1px solid var(--pigeon-purple);
     border-radius:var(--radius);
+    box-shadow:0 0 16px var(--pigeon-purple-glow);
     padding:0.6em 0.7em;
   }
   .thumb-offer-label{
@@ -1077,8 +1081,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     justify-content:center;
     gap:0.5rem;
-    color:var(--pigeon-purple);
-    text-shadow:0 0 4px var(--pigeon-purple-glow);
+    color:#fff;
+    text-shadow:0 1px 4px rgba(0,0,0,0.5);
     font-family:var(--font-mono);
     font-size:15px;
     font-weight:700;
@@ -1087,25 +1091,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:0.6em;
   }
   /* The collection's own $PIGEONS coin, not the individual Pigeon's own
-     thumbnail — this is a currency, not a per-item mark. */
-  .make-offer-coin{ width:34px; height:34px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--pigeon-purple-dim); }
+     thumbnail — this is a currency, not a per-item mark. Bigger now so it
+     actually reads as a thumbnail against the solid purple box. */
+  .make-offer-coin{ width:52px; height:52px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid rgba(255,255,255,0.6); }
   .thumb-offer-row{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
   .make-offer-input{
     flex:1 1 auto;
     min-width:0;
     background:rgba(8,9,11,0.6);
-    border:1px solid var(--pigeon-purple-dim);
+    border:1px solid rgba(255,255,255,0.6);
     color:var(--white);
     font-family:var(--font-mono);
     font-size:13px;
     padding:0.6em 0.65em;
     border-radius:var(--radius);
   }
-  .make-offer-input:focus{ outline:none; border-color:var(--pigeon-purple); }
+  .make-offer-input:focus{ outline:none; border-color:#fff; }
+  .make-offer-input::placeholder{ color:rgba(255,255,255,0.5); }
   .make-offer-send{
     flex:1 1 auto;
-    background:var(--pigeon-purple);
-    border:1px solid var(--pigeon-purple);
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.6);
     color:#fff;
     font-family:var(--font-mono);
     font-weight:700;
@@ -1115,7 +1121,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
+    transition:border-color 0.15s ease, background 0.15s ease;
   }
+  .make-offer-send:hover{ border-color:#fff; background:rgba(0,0,0,0.3); }
   .result-row-right{
     flex:1;
     min-width:0;
