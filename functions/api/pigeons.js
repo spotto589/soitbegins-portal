@@ -3,7 +3,7 @@ import {
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog,
-  resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons, fetchPigeonsXrpRate,
+  resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX,
   getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
 } from '../_shared.js';
@@ -174,6 +174,16 @@ export async function onRequestGet(context) {
   if (params.get('pigeonsRate') === '1') {
     const rate = await fetchPigeonsXrpRate(env.coin);
     return json({ xrpPerPigeon: rate.xrpPerPigeon, usdPerPigeon: rate.usdPerPigeon, dexUrl: rate.dexUrl });
+  }
+
+  // Real $PIGEONS trustline + balance for the logged-in wallet (LOGIN
+  // button on the trustline banner) — straight from account_lines, never
+  // a fabricated/cached figure.
+  if (params.get('pigeonsAccountLine') === '1') {
+    const wallet = params.get('wallet');
+    if (!wallet) return json({ error: 'missing_wallet' }, 400);
+    const line = await fetchPigeonsAccountLine(wallet);
+    return json(line);
   }
 
   // Collection-wide stats strip — items/holders (real, our own Clio-based

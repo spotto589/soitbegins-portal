@@ -339,6 +339,36 @@ export async function fetchPigeonsXrpRate(kv) {
   return result;
 }
 
+// Real $PIGEONS trustline + balance for one wallet, straight from the
+// XRPL DEX itself (account_lines, peer-filtered to the PIGEONS issuer so
+// this is one cheap targeted call, not a full account_lines scan).
+// account_lines returns the currency field as the raw on-ledger hex code
+// (confirmed live), never the decoded "PIGEONS" ASCII — compared against
+// encodeCurrencyCode(...) here, not a literal string match. No trust line
+// entry at all means no trustline (never a fabricated 0); a lookup
+// failure returns nulls so callers can tell "no trustline" from
+// "couldn't check" and not conflate the two.
+export async function fetchPigeonsAccountLine(account) {
+  try {
+    const res = await fetch('https://xrplcluster.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        method: 'account_lines',
+        params: [{ account, peer: PIGEONS_TOKEN_CONFIG.issuer }]
+      })
+    });
+    const data = await res.json();
+    const lines = (data.result && data.result.lines) || [];
+    const wantCurrency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
+    const line = lines.find(l => l.currency === wantCurrency);
+    if (!line) return { hasTrustline: false, balance: 0 };
+    return { hasTrustline: true, balance: parseFloat(line.balance) || 0 };
+  } catch (e) {
+    return { hasTrustline: null, balance: null };
+  }
+}
+
 // tfTransferable (0x0008) — an NFT without this flag can never be sold to
 // anyone but its issuer, so a sell offer against it would only ever fail
 // on-ledger. Checked before a listing payload is ever built.

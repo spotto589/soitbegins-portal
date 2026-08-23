@@ -1984,7 +1984,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="pigeons-bar pigeons-bar-issuer">
       <div class="pigeons-bar-identity-row">
         <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
-        <div class="pigeons-bar-body">
+        <div class="pigeons-bar-body" id="pigeonsBarLoggedOut">
           <span class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</span>
           <div class="pigeons-bar-addr-stack">
             <span class="pigeons-bar-sublabel">!SSUER ADDRESS</span>
@@ -1993,6 +1993,21 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="pigeons-bar-identity-actions">
             <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
             <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">[ L0G!N ]</button>
+          </div>
+        </div>
+        <!-- Shown instead of the block above once MY_WALLET is set (real
+             server-verified session, see onRequestGet/__SWAP_WALLET__) —
+             real held-Pigeons count + $PIGEONS balance/trustline status
+             from account_lines (fetchPigeonsAccountLine), never
+             fabricated placeholders. -->
+        <div class="pigeons-bar-body" id="pigeonsBarLoggedIn" style="display:none;">
+          <span class="pigeons-bar-text">L0GGED !N :: <span id="pigeonsLoggedInWallet"></span></span>
+          <div class="pigeons-bar-addr-stack">
+            <span class="pigeons-bar-sublabel">P!GE0NS HELD :: $P!GE0NS BALANCE :: TRUSTL!NE</span>
+            <span class="ci-value ci-value-big pigeons-bar-addr" id="pigeonsLoggedInSummary">…</span>
+          </div>
+          <div class="pigeons-bar-identity-actions">
+            <button class="bar-btn ci-copy-btn" id="showMyPigeonsBtn">[ SH0W MY P!GE0NS ]</button>
           </div>
         </div>
       </div>
@@ -2592,6 +2607,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
+   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInSummary','showMyPigeonsBtn',
    'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
@@ -4246,8 +4262,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
 
   // ---- CONNECT SCYLLA — same XummPkce OAuth login /board uses, redirected
-  // back to /swap instead. ----
+  // back to /swap instead. Two entry points share this one flow: the MY
+  // PIGEONS tab's own CONNECT Σκύλλα button (lands back on MY PIGEONS),
+  // and the trustline banner's LOGIN button (lands back on DATABASE,
+  // since that's where it lives) — loginRedirectTab tracks which. ----
   var xummAuth = null;
+  var loginRedirectTab = 'mypigeons';
+  function resetLoginButtons(){
+    el.connectScyllaBtn.disabled = false;
+    el.pigeonsLoginBtn.disabled = false;
+    el.pigeonsLoginBtn.textContent = '[ L0G!N ]';
+  }
   function getXummAuth(){
     if (!xummAuth){
       xummAuth = new XummPkce(XAMAN_API_KEY, {
@@ -4257,14 +4282,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
       xummAuth.on('error', function(){
         el.connectStatus.textContent = 'ERR://L0G!N AB0RTED';
-        el.connectScyllaBtn.disabled = false;
+        resetLoginButtons();
       });
       xummAuth.on('success', function(){
         xummAuth.state().then(function(authState){
           var jwt = authState && authState.jwt;
           if (!jwt){
             el.connectStatus.textContent = 'ERR://N0 WALLET DATA';
-            el.connectScyllaBtn.disabled = false;
+            resetLoginButtons();
             return;
           }
           fetch('/api/connect', {
@@ -4273,14 +4298,14 @@ const SWAP_HTML = `<!DOCTYPE html>
             body: JSON.stringify({ jwt: jwt })
           }).then(function(r){ return r.json(); }).then(function(data){
             if (data.ok){
-              window.location.href = '/swap?connected=1';
+              window.location.href = '/swap?connected=1&tab=' + loginRedirectTab;
             } else {
               el.connectStatus.textContent = 'ERR://C0NNECT!0N FA!LED';
-              el.connectScyllaBtn.disabled = false;
+              resetLoginButtons();
             }
           }).catch(function(){
             el.connectStatus.textContent = 'ERR://S!GNAL_L0ST';
-            el.connectScyllaBtn.disabled = false;
+            resetLoginButtons();
           });
         });
       });
@@ -4290,11 +4315,50 @@ const SWAP_HTML = `<!DOCTYPE html>
   if (el.connectScyllaBtn){
     getXummAuth(); // picks up a pending mobile return-from-Xaman redirect automatically
     el.connectScyllaBtn.addEventListener('click', function(){
+      loginRedirectTab = 'mypigeons';
       el.connectScyllaBtn.disabled = true;
       el.connectStatus.textContent = '';
       getXummAuth().authorize();
     });
   }
+  el.pigeonsLoginBtn.addEventListener('click', function(){
+    loginRedirectTab = 'database';
+    el.pigeonsLoginBtn.disabled = true;
+    el.pigeonsLoginBtn.textContent = '[ C0NNECT!NG... ]';
+    getXummAuth().authorize();
+  });
+
+  // ---- Trustline banner LOGIN state — real held-Pigeons count + real
+  // $PIGEONS trustline/balance from account_lines (fetchPigeonsAccountLine
+  // via pigeonsAccountLine=1), shown in place of SET TRUSTLINE/COPY
+  // ADDRESS/LOGIN once MY_WALLET is a real server-verified session. ----
+  function loadTrustlineLoginState(){
+    if (!MY_WALLET){
+      el.pigeonsBarLoggedOut.style.display = '';
+      el.pigeonsBarLoggedIn.style.display = 'none';
+      return;
+    }
+    el.pigeonsBarLoggedOut.style.display = 'none';
+    el.pigeonsBarLoggedIn.style.display = '';
+    el.pigeonsLoggedInWallet.textContent = MY_WALLET.slice(0, 9) + '...' + MY_WALLET.slice(-4);
+    el.pigeonsLoggedInSummary.textContent = '…';
+    api({ wallet: MY_WALLET }).then(function(data){
+      var count = (data.items || []).length;
+      el.pigeonsLoggedInSummary.textContent = count.toLocaleString() + ' P!GE0NS';
+      return api({ pigeonsAccountLine: 1, wallet: MY_WALLET });
+    }).then(function(line){
+      var count = el.pigeonsLoggedInSummary.textContent.split(' ')[0];
+      var balanceText = line && line.hasTrustline
+        ? (line.balance || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS'
+        : '0 $P!GE0NS';
+      var trustlineText = line && line.hasTrustline === true ? 'TRUSTL!NE SET' : (line && line.hasTrustline === false ? 'TRUSTL!NE N0T SET' : 'TRUSTL!NE ??');
+      el.pigeonsLoggedInSummary.textContent = count + ' P!GE0NS  ::  ' + balanceText + '  ::  ' + trustlineText;
+    }).catch(function(){});
+  }
+  loadTrustlineLoginState();
+  el.showMyPigeonsBtn.addEventListener('click', function(){
+    if (MY_WALLET) browseOwnerCollection(MY_WALLET, 'Y0U');
+  });
 
   // ---- LIST A PIGEON — first real Σκύλλα listing test: create-offer
   // only. No buyer/acceptance flow, no Σκύλλα fee yet (see HANDOFF.md). ----
@@ -5159,13 +5223,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     else done();
   });
 
-  // Real button, destination doesn't exist yet — same "coming soon"
-  // pattern as the BURNT link/onboarding link elsewhere on this page.
-  // A login system is planned but not built yet.
-  el.pigeonsLoginBtn.addEventListener('click', function(){
-    alert('L0G!N C0M!NG S00N.');
-  });
-
   // Live "1 PIGEON = X XRP" rate on the trustline banner + an XRP ->
   // $PIGEONS calculator underneath it, both driven by fetchPigeonsXrpRate
   // (DexScreener's real trade-derived price, same number dexscreener.com's
@@ -5742,14 +5799,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.swapOffersTabBtn.style.display = 'none';
   }
 
-  // A return from the CONNECT SCYLLA redirect lands back on MY PIGEONS;
-  // any other fresh page load (a plain refresh) defaults to DATABASE
-  // instead of sitting on a blank screen until a tab is clicked.
+  // A return from the CONNECT SCYLLA redirect lands back on whichever tab
+  // triggered the login (?tab=mypigeons from the MY PIGEONS button,
+  // ?tab=database from the trustline banner's LOGIN button — see
+  // loginRedirectTab); any other fresh page load (a plain refresh)
+  // defaults to DATABASE instead of sitting on a blank screen until a
+  // tab is clicked.
   if (window.location.search.indexOf('connected=1') !== -1){
-    showTab('mypigeons');
+    var connectedParams = new URLSearchParams(window.location.search);
+    showTab(connectedParams.get('tab') === 'database' ? 'database' : 'mypigeons');
     // Strip the query param right after using it once — otherwise it
     // stays in the address bar and every later refresh keeps landing on
-    // MY PIGEONS instead of the real default.
+    // this same tab instead of the real default.
     window.history.replaceState({}, '', window.location.pathname);
   } else {
     showTab('database');
