@@ -1111,17 +1111,29 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:600px){
     .results-header-row{ min-height:0; }
     .results-header-row .search-row{ position:static; transform:none; margin-bottom:0.75rem; justify-content:center; }
+    .status-line-row{ flex-direction:column; gap:0.6rem; }
   }
   /* ---- results status line ---- */
+  /* RESET sits directly beside whatever's being shown here — full
+     collection, a trait search, or a wallet scope — so there's always a
+     reset within reach of the results themselves, not just up in the
+     COLLECTION AND SORT box. */
+  .status-line-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.9rem;
+    margin:1.1rem 0 1rem;
+  }
   .status-line{
     text-align:center;
     font-family:var(--font-body);
     font-size:11px;
     letter-spacing:0.08em;
     color:var(--grey-dim);
-    margin:1.1rem 0 1rem;
     text-transform:uppercase;
   }
+  .status-line:empty ~ .reset-db-btn{ display:none; }
   .status-line .hi{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   /* Bigger, more prominent than the plain RESULTS :: N line — this is the
      headline of the search, not a status footnote. */
@@ -2413,7 +2425,6 @@ const SWAP_HTML = `<!DOCTYPE html>
                   </div>
                 </div>
               </div>
-              <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
             </div>
           </div>
           <div class="db-config-traits-section">
@@ -2435,7 +2446,10 @@ const SWAP_HTML = `<!DOCTYPE html>
               <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0N # 0R WALLET">
               <button class="bar-btn" id="searchBtn">[ GO ]</button>
             </div>
-            <div class="status-line" id="statusLine"></div>
+            <div class="status-line-row">
+              <div class="status-line" id="statusLine"></div>
+              <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
+            </div>
           </div>
           <div id="resultsArea"></div>
           <div class="scroll-sentinel" id="scrollSentinel"></div>
