@@ -376,9 +376,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.2s ease, transform 0.2s ease;
   }
   .stats-dot.active{ background:var(--cyan); box-shadow:0 0 6px var(--cyan-glow); transform:scale(1.3); }
+  /* Same grey box treatment as the DATABASE panel (.sw-panel's own
+     --panel-bg + --border-dim) — reads as a distinct card against the
+     purple gradient behind it instead of nearly disappearing into it.
+     The FLOOR page's own tiles (.stat-tile-pigeons/-xrpcafe/-deeptide)
+     override this with their own colours below, untouched. */
   .stat-tile{
     border:1px solid var(--border-dim);
-    background:rgba(255,255,255,0.015);
+    background:var(--panel-bg);
     padding:0.85rem 0.5rem;
     text-align:center;
     border-radius:var(--radius);
@@ -1364,15 +1369,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      under the trustline strip — same purple gradient theme (not the
      usual dark digital-glitch .sw-panel-signal background), own
      border/radius/shadow/margin removed since the outer wrapper already
-     supplies those, and a dashed divider (instead of a gap) marking
-     where the trustline section ends and the stats begin. */
+     supplies those. No divider between this and the trustline strip
+     above it — one continuous purple panel, not two sections. */
   #collectionDetailsPanel{
     background-image:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
     background-size:100% 100%;
     background-position:center;
     background-repeat:no-repeat;
     border:none;
-    border-top:1px dashed rgba(255,255,255,0.3);
     border-radius:0;
     box-shadow:none;
     margin-bottom:0;
