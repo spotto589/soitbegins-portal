@@ -340,18 +340,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   .stat-tile-link.scylla-active:hover{ background:var(--magenta-faint); border-color:var(--magenta); }
   .stat-tile-link.scylla-active .stat-value{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
   /* $PIGEONS FLOOR — the collection's own artwork fills the whole tile as
-     a background (not a small corner icon), with a purple wash over it so
-     the label/value stay readable — reads as a currency tile, not just a
-     filter toggle, and always purple even when the LISTED filter isn't
-     active. */
+     a background, with the same purple wash as the issuer/trustline strip
+     (not the site's magenta accent — this represents the $PIGEONS coin
+     itself), plus a distinct round coin thumbnail so it reads clearly as
+     a currency tile, not just a filter toggle. */
   .stat-tile-pigeons{
     position:relative;
-    border-color:var(--magenta);
-    background-image:linear-gradient(160deg, rgba(255,51,204,0.55), rgba(120,20,100,0.65)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs");
+    border-color:var(--pigeon-purple);
+    background-image:linear-gradient(160deg, rgba(136,72,248,0.55), rgba(120,72,216,0.65)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs");
     background-size:cover;
     background-position:center;
   }
-  .stat-tile-pigeons:hover{ background-image:linear-gradient(160deg, rgba(255,51,204,0.65), rgba(120,20,100,0.75)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs"); border-color:var(--magenta); }
+  .stat-tile-pigeons:hover{ background-image:linear-gradient(160deg, rgba(136,72,248,0.65), rgba(120,72,216,0.75)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs"); border-color:var(--pigeon-purple); }
+  .stat-tile-pigeons-coin{ width:26px; height:26px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.6); margin-bottom:0.4rem; }
   .stat-tile-pigeons .stat-label{ color:#fff; opacity:0.9; }
   .stat-tile-pigeons .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.8); font-weight:700; }
   /* Deliberate placeholder tile/link, real tracking is a later system */
@@ -1193,17 +1194,33 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-shadow:0 0 16px var(--pigeon-purple-glow);
   }
   .pigeons-bar-issuer .pigeons-bar-coin{ width:72px; height:72px; }
-  /* Everything runs in one horizontal line — label, address, COPY, and
-     the trustline CTA side by side, not stacked. */
-  .pigeons-bar-body{ display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; gap:0.75rem 1.5rem; flex:1; min-width:0; }
+  /* Two rows, each running horizontally — issuer/address/COPY on top,
+     trustline CTA + onboarding link underneath. */
+  .pigeons-bar-body{ display:flex; flex-direction:column; gap:0.6rem; flex:1; min-width:0; }
+  .pigeons-bar-issuer-row, .pigeons-bar-trustline-row{ display:flex; align-items:center; flex-wrap:wrap; gap:0.75rem; }
   .pigeons-bar-sublabel{ font-size:10px; letter-spacing:0.15em; color:rgba(255,255,255,0.75); text-transform:uppercase; white-space:nowrap; }
-  .pigeons-bar-issuer .ci-addr-row{ gap:0.75rem; flex-wrap:nowrap; }
   .pigeons-bar-addr{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); white-space:nowrap; }
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
-  .pigeons-bar-issuer .pigeons-bar-text{ font-size:13px; }
+  .pigeons-bar-issuer .pigeons-bar-text{ font-size:13px; text-align:left; }
+  /* Placeholder for now — the onboarding section itself doesn't exist
+     yet, same "real link, not-yet-built destination" pattern as BURNT. */
+  .pigeons-bar-onboard-link{
+    background:transparent;
+    border:none;
+    color:#fff;
+    text-decoration:underline;
+    cursor:pointer;
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:0.01em;
+    text-transform:none;
+    opacity:0.85;
+  }
+  .pigeons-bar-onboard-link:hover{ opacity:1; }
   @media (max-width:500px){
     .pigeons-bar-issuer{ flex-direction:column; text-align:center; }
+    .pigeons-bar-issuer-row, .pigeons-bar-trustline-row{ justify-content:center; }
   }
 
   /* ---- DATABASE row card: $PIGEONS listing (styled as a currency —
@@ -1676,25 +1693,32 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
     <div id="screenBrowse" style="display:none;">
-      <div class="sw-panel sw-panel-signal" id="collectionDetailsPanel">
-        <div class="panel-title">$P!GE0NS</div>
+      <!-- Own strip, detached from the information bar below it — issuer
+           address on top, trustline CTA + onboarding link underneath. -->
+      <div class="sw-panel sw-panel-signal" id="issuerPanel">
         <div class="pigeons-bar pigeons-bar-issuer">
           <img class="pigeons-bar-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
           <div class="pigeons-bar-body">
-            <div class="pigeons-bar-sublabel">!SSUER / ADDRESS</div>
-            <div class="ci-addr-row">
+            <div class="pigeons-bar-issuer-row">
+              <span class="pigeons-bar-sublabel">!SSUER ADDRESS</span>
               <span class="ci-value ci-value-big pigeons-bar-addr" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span>
               <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
             </div>
-            <div class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</div>
+            <div class="pigeons-bar-trustline-row">
+              <span class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</span>
+              <button class="pigeons-bar-onboard-link" id="onboardLink">New to the XRPL, NFTs, memes? Click here.</button>
+            </div>
           </div>
         </div>
+      </div>
 
+      <div class="sw-panel sw-panel-signal" id="collectionDetailsPanel">
+        <div class="panel-title">$P!GE0NS</div>
         <!-- Auto-rotating strip — one page visible at a time, cycling on a
              timer instead of three stacked bars, to keep this area compact. -->
         <div class="stats-carousel" id="statsCarousel">
         <div class="stats-strip stats-strip-floor stats-page" id="statsStripFloor">
-          <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+          <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><img class="stat-tile-pigeons-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
           <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
           <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
         </div>
@@ -2225,7 +2249,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
-   'dbSelectToggle','dbSelectMenu','copyIssuerBtn','ciIssuerAddr',
+   'dbSelectToggle','dbSelectMenu','copyIssuerBtn','ciIssuerAddr','onboardLink',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
    'salesPanelWrap',
@@ -4746,6 +4770,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(done, done);
     else done();
+  });
+  // Real link, destination doesn't exist yet — same "coming soon"
+  // pattern as the BURNT link, honest about what's actually built.
+  el.onboardLink.addEventListener('click', function(){
+    alert('0NB0ARD!NG SECT!0N C0M!NG S00N.');
   });
 
   // ---- Sales history (real, collection-wide, infinite scroll) ----
