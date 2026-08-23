@@ -652,13 +652,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex:0 0 auto;
   }
   .traits-hover-wrap{ position:relative; display:inline-flex; }
-  .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.9em 0.6em; }
-  #traitsHoverLabel{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
-  /* SORT gets the same bordered-box treatment as the edition-toggle group
-     sitting right next to it in the search row, instead of bare hover
-     text. */
-  #sortDropWrap{ border:1px solid var(--border-mid); border-radius:var(--radius); transition:border-color 0.15s ease; }
-  #sortDropWrap:hover, #sortDropWrap.open{ border-color:var(--cyan-dim); }
+  .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.75em 1em; }
+  #traitsHoverLabel{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); font-size:12px; letter-spacing:0.1em; }
+  /* SORT and ADD TRAITS get the same bordered-box treatment as the
+     edition-toggle group sitting next to them in the search row, instead
+     of bare hover text — makes it read as a box, not just a label, so
+     it's obvious it's a hover dropdown like the others. */
+  #sortDropWrap, #traitsHoverWrap{ border:1px solid var(--border-mid); border-radius:var(--radius); transition:border-color 0.15s ease; }
+  #sortDropWrap:hover, #sortDropWrap.open,
+  #traitsHoverWrap:hover, #traitsHoverWrap.open{ border-color:var(--cyan-dim); }
   #sortDropLabel{ font-size:11px; }
   .traits-hover-wrap:hover .trait-row-label,
   .traits-hover-wrap.open .trait-row-label{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
@@ -824,22 +826,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease;
   }
   .trait-row-remove:hover{ background:var(--magenta-faint); }
-  .traits-actions{
-    display:flex;
-    gap:0.6rem;
-    margin-top:0.5rem;
-    flex-wrap:wrap;
-  }
+  /* Same box dimensions as ADD TRAITS (#traitsHoverWrap) — sits right
+     next to it in the search row, not off in its own block below. */
   .clear-traits-btn{
     background:transparent;
     border:1px solid rgba(255,61,61,0.5);
     color:#ff3d3d;
     text-shadow:0 0 5px rgba(255,61,61,0.5);
     font-family:var(--font-mono);
-    font-size:14px;
+    font-size:12px;
     font-weight:700;
     letter-spacing:0.1em;
-    padding:0.7em 1.3em;
+    padding:0.75em 1em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
@@ -1803,14 +1801,12 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
             </div>
           </div>
+          <button class="clear-traits-btn" id="clearTraitsBtn">[ CLEAR TRA!TS ]</button>
         </div>
         <div class="index-line" id="indexLine"></div>
 
         <div class="traits-block">
           <div id="traitRows"></div>
-          <div class="traits-actions">
-            <button class="clear-traits-btn" id="clearTraitsBtn">[ CLEAR TRA!TS ]</button>
-          </div>
         </div>
 
         <div class="results-block">
