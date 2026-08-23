@@ -64,6 +64,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        $PIGEONS logo itself needs to be represented, e.g. the trustline bar. */
     --pigeon-purple:#8848f8;
     --pigeon-purple-dim:rgba(136,72,248,0.4);
+    --pigeon-purple-faint:rgba(136,72,248,0.12);
     --pigeon-purple-glow:rgba(136,72,248,0.4);
 
     --white:#f3f4f6;
@@ -722,7 +723,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .edition-btn:last-child{ border-right:none; }
   .edition-btn:hover{ color:var(--cyan); background:var(--cyan-faint); }
-  .edition-btn.active{ background:var(--magenta-faint); color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+  /* Purple, not magenta — this reflects the currently-viewed collection's
+     own theme colour (Pigeons = purple), same as the thumb/trustline
+     strip/FLOOR tile elsewhere. Magenta stays reserved for the site's own
+     static UI (SCYLLA/target/selection), cyan for general hover/active
+     chrome — collection-specific controls like this one and SORTING BY
+     (#sortDropWrap below) use the collection's colour instead. */
+  .edition-btn.active{ background:var(--pigeon-purple-faint); color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); }
   .index-line{
     text-align:center;
     font-family:var(--font-body);
@@ -772,11 +779,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   #traitsHoverWrap:hover, #traitsHoverWrap.open,
   #dbSelectWrap:hover, #dbSelectWrap.open{ border-color:var(--cyan-dim); }
   /* SORTING BY always has an active pick — pin it the same way a selected
-     COLLECTION SELECTION button (.edition-btn.active) reads: filled
-     magenta, not just plain hover text. */
-  #sortDropWrap{ background:var(--magenta-faint); border-color:var(--magenta-dim); }
-  #sortDropWrap:hover, #sortDropWrap.open{ border-color:var(--magenta); }
-  #sortDropLabel{ font-size:11px; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+     COLLECTION SELECTION button (.edition-btn.active) reads: filled with
+     the collection's own colour (purple for Pigeons), not just plain
+     hover text. */
+  #sortDropWrap{ background:var(--pigeon-purple-faint); border-color:var(--pigeon-purple-dim); }
+  #sortDropWrap:hover, #sortDropWrap.open{ border-color:var(--pigeon-purple); }
+  #sortDropLabel{ font-size:11px; color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); }
   .traits-hover-wrap:hover .trait-row-label,
   .traits-hover-wrap.open .trait-row-label{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   .traits-flyout{
@@ -2082,7 +2090,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
               </div>
             </div>
-            <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, B0XED V!EW, N0 TRA!TS">[ RESET ]</button>
+            <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
           </div>
         </div>
         <div class="sort-stack-row">
@@ -5287,15 +5295,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.dbView = el.dbViewSelect.value;
     if (state.items && state.items.length) renderResultsReplace(state.items);
   });
-  // ALL editions, RARITY highest, BOXED VIEW, no traits — one click back
-  // to the default browse state.
+  // ALL editions, RARITY highest, THUMBNAILS view, no traits — one click
+  // back to the default browse state.
   el.resetDbBtn.addEventListener('click', function(){
     state.edition = 'ALL';
     el.editionSelect.querySelectorAll('.edition-btn').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-value') === 'ALL');
     });
-    el.dbViewSelect.value = 'boxed';
-    state.dbView = 'boxed';
+    el.dbViewSelect.value = 'thumbnails';
+    state.dbView = 'thumbnails';
     state.traitFilters = [];
     renderTraitRows();
     state.sort = 'RARITY_ASC';
