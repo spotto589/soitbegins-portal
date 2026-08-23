@@ -850,6 +850,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:1.25rem;
     padding-top:1.25rem;
   }
+  /* A fresh query clears #resultsArea synchronously before the new page's
+     results arrive (see startCollectionBrowse) — with no min-height, the
+     whole page collapses for that gap and snaps back once results land,
+     which threw off any scroll-into-view (e.g. picking a trait) and just
+     generally felt like nothing lined up flush. Reserving roughly a page
+     of results' worth of height keeps the document height stable through
+     that gap instead. */
+  #resultsArea{ min-height:70vh; }
   /* Applied trait filters as a horizontal, wrapping list of chips —
      not stacked one per line. */
   #traitRows{ display:flex; flex-wrap:wrap; gap:0.5rem; }
@@ -1799,7 +1807,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     display:grid;
     grid-template-columns:minmax(320px, 480px) 1fr;
     grid-template-areas:
-      "num  empty"
+      "num  owner"
       "left right";
     gap:0.75rem 2rem;
     align-items:start;
@@ -1807,8 +1815,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-two-col > .detail-num{ grid-area:num; text-align:center; margin:0; }
   .detail-col-left{ grid-area:left; }
   .detail-col-right{ grid-area:right; }
+  /* Owner address sits flush with P!GE0N #N — same row, same text weight —
+     instead of buried as a small label further down the right column. */
+  .detail-owner-top{ grid-area:owner; text-align:center; font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:0.04em; margin:0; }
+  #screenDetail .detail-owner-top{ font-size:28px; }
+  .detail-owner-top .owner-link{ color:var(--cyan); text-decoration:none; }
+  .detail-owner-top .owner-link:hover{ text-decoration:underline; }
   @media (max-width:760px){
-    .detail-two-col{ grid-template-columns:1fr; grid-template-areas:"num" "left" "right"; gap:0.75rem; }
+    .detail-two-col{ grid-template-columns:1fr; grid-template-areas:"num" "owner" "left" "right"; gap:0.75rem; }
   }
   #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0 0 1.25rem; cursor:pointer; }
   #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 1.25rem; }
@@ -1838,6 +1852,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .trait-cell .tc-label{ font-size:14px; }
   #screenDetail .trait-cell .tc-value{ font-size:19px; }
   #screenDetail .trait-cell .tc-sub{ font-size:14px; }
+  /* Real Pigeon-photo background (see traitCellHtml), same as ADD TRAITS'
+     own .has-preview boxes — white text + shadow so labels/values stay
+     readable over the photo instead of the plain grey-on-dark default. */
+  #screenDetail .trait-cell.has-preview{ background-size:cover; background-position:center 20%; }
+  #screenDetail .trait-cell.has-preview .tc-label{ color:#e8e8e8; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+  #screenDetail .trait-cell.has-preview .tc-value{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+  #screenDetail .trait-cell.has-preview .tc-sub{ text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+  #screenDetail .trait-cell.has-preview:hover{ border-color:var(--cyan); }
   /* Constrained instead of stretching the field's label/value across the
      whole (wide) right column — that gap made label and value feel
      unrelated, like you had to hunt across the screen to match them up. */
@@ -1847,11 +1869,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      box just reads COMING SOON. Neither is clickable (unlike real trait
      cells in the grid above). */
   #screenDetail .detail-rarity-row{ display:flex; gap:1rem; margin:0 0 1rem; max-width:420px; }
-  #screenDetail .detail-rarity-row .trait-cell{ cursor:default; text-align:left; flex:1; min-width:0; }
+  #screenDetail .detail-rarity-row .trait-cell{ cursor:default; text-align:center; flex:1; min-width:0; }
   #screenDetail .detail-rarity-row .trait-cell:hover{ background:transparent; border-color:var(--border-dim); }
-  /* RECORD SALE / AVG SALE side by side instead of stacked rows. */
-  #screenDetail .detail-sales-row{ display:flex; gap:1.5rem; flex-wrap:wrap; }
-  #screenDetail .detail-sales-row .detail-field{ flex:1 1 180px; max-width:none; margin-bottom:1rem; }
+  /* RECORD SALE / AVERAGE SALE stacked, same label/value row style as
+     every other .detail-field (OWNER, PRICE, etc). */
   #screenDetail .tech-meta-title{ font-size:12px; }
   /* Fullscreen picture lightbox. */
   #detailLightbox{
@@ -1891,7 +1912,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .df-label{ color:var(--grey-dim); text-transform:uppercase; }
   .df-value{ color:var(--white); text-align:right; word-break:break-all; }
-  .df-value.not-indexed{ color:var(--magenta); text-shadow:0 0 4px var(--magenta-glow); }
+  .df-value.not-indexed, .detail-owner-top.not-indexed{ color:var(--magenta); text-shadow:0 0 4px var(--magenta-glow); }
   .df-value.rarity{ color:var(--white); }
   .df-value.price{ color:var(--white); }
   /* A settled/confirmed status reads as unambiguously good — green, not
@@ -2467,6 +2488,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="sw-panel" id="screenDetail" style="display:none;">
       <div class="detail-two-col">
         <div class="detail-num" id="detailNum"></div>
+        <div class="detail-owner-top" id="detailOwner"></div>
         <div class="detail-col-left">
           <div class="detail-img-large pigeon-img-box" id="detailImgBox" title="VIEW FULLSCREEN">[ IMAGE ]</div>
           <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
@@ -2491,7 +2513,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="detail-col-right">
           <div class="detail-traits-title">TRA!TS</div>
           <div class="trait-grid" id="detailTraits"></div>
-          <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
           <div class="detail-rarity-row" id="detailRarityRow" style="display:none;">
             <div class="trait-cell">
               <div class="tc-label">RAR!TY</div>
@@ -2505,7 +2526,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
           <div class="detail-sales-row">
             <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
-            <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVG SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
+            <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVERAGE SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
           </div>
           <div class="detail-history">
             <button class="th-toggle" id="detailHistoryToggle">[ TRANSACT!0N H!ST0RY ]</button>
@@ -2999,6 +3020,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   function scrollResultsIntoView(){
     window.scrollTo({ top: window.scrollY + el.resultsBlock.getBoundingClientRect().top, behavior: 'smooth' });
   }
+  // Set right before a trait click's runQuery() — a fresh collection query
+  // clears #resultsArea synchronously (see startCollectionBrowse), which
+  // collapses the page height and would race/cancel a scroll started
+  // immediately. Consumed once results actually land (loadMoreCollection's
+  // first page, or runScopedQuery's synchronous filter) instead.
+  var pendingTraitScroll = false;
   function showTab(tab){
     state.activeTab = tab;
     // Universal across every tab now — only what's underneath it swaps.
@@ -4311,10 +4338,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       } else if (!state.hasMore){
         el.endOfCollectionNote.style.display = '';
       }
+      if (pendingTraitScroll){ pendingTraitScroll = false; scrollResultsIntoView(); }
     }).catch(function(){
       state.loading = false;
       el.loadMoreNote.style.display = 'none';
       if (!state.items.length) el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T REACH THE C0LLECT!0N. TRY AGA!N.'], false);
+      pendingTraitScroll = false;
     });
   }
   var scrollObserver = new IntersectionObserver(function(entries){
@@ -4527,8 +4556,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     renderTraitRows();
     renderTraitsFlyoutVals(category);
+    pendingTraitScroll = true;
     runQuery();
-    scrollResultsIntoView();
   });
 
   function activeFilters(){
@@ -4596,6 +4625,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else {
       renderResultsReplace(list);
     }
+    if (pendingTraitScroll){ pendingTraitScroll = false; scrollResultsIntoView(); }
   }
 
   // Number search is exact and direct via the number->NFTokenID map; any
@@ -6002,7 +6032,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderTraitRows();
     state.sort = 'RARITY_ASC';
     renderSortDropLabel();
+    // A wallet search (or a Top 100/sales-history wallet click) scopes the
+    // whole DATABASE view to that wallet — RESET should drop back to the
+    // full collection too, not just reset sort/traits within that scope.
+    var wasScoped = !!state.scope;
+    if (wasScoped) exitWalletScope();
     if (state.scyllaListedOnly) setScyllaListedOnly(false); // also runs the query
+    else if (wasScoped) startCollectionBrowse();
     else runQuery();
   });
 
@@ -6011,65 +6047,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     var sub = (a.percent !== null && a.percent !== undefined)
       ? '<div class="tc-sub">' + greenNum((typeof a.percent === 'number' ? a.percent.toFixed(3) : a.percent) + '%') + (a.count !== null && a.count !== undefined ? '<br>' + greenNum('(' + a.count + ')') : '') + '</div>'
       : '';
-    // The same example image ADD TRAITS' flyout uses as its own background
-    // (state.traitExamples, populated once by ensureTraitsLoaded) — carried
-    // as a data attribute so colorizeTraitCells can sample its dominant
-    // colour into this cell's own border/background after render.
+    // Same real-photo-as-background treatment as the ADD TRAITS flyout's
+    // own trait boxes (renderTraitsFlyoutVals) — same example image
+    // source, same per-category crop position/size/overlay.
     var exampleImg = (state.traitExamples && state.traitExamples[a.trait_type] && state.traitExamples[a.trait_type][a.value]) || null;
-    return '<div class="trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' +
-      (exampleImg ? ' data-example="' + escapeHtml(exampleImg) + '"' : '') +
+    var previewPos = TRAIT_PREVIEW_CORNER_POSITION[a.trait_type] || TRAIT_PREVIEW_POSITION[a.trait_type];
+    var previewSize = TRAIT_PREVIEW_SIZE[a.trait_type];
+    var overlay = previewSize
+      ? 'rgba(8,9,11,0.3),rgba(8,9,11,0.45)'
+      : 'rgba(8,9,11,0.55),rgba(8,9,11,0.8)';
+    var style = exampleImg
+      ? ' style="background-image:linear-gradient(' + overlay + '),url(&quot;' + escapeHtml(exampleImg) + '&quot;);' +
+        (previewSize ? 'background-size:' + previewSize + ';' : '') +
+        (previewPos ? 'background-position:' + previewPos + ';' : '') + '"'
+      : '';
+    return '<div class="trait-cell' + (exampleImg ? ' has-preview' : '') + '" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' + style +
       ' title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
       '<div class="tc-label">' + escapeHtml(a.trait_type) + '</div><div class="tc-value">' + escapeHtml(a.value) + '</div>' + sub +
     '</div>';
-  }
-  // Samples each trait cell's own example photo for its dominant/average
-  // colour and tints that cell's border+background with it — e.g. an
-  // orange background trait gets an orange-tinted box. cdn.deeptide.co
-  // doesn't send CORS headers, which taints the canvas and blocks reading
-  // it entirely — same-origin proxy (deeptide-image.js, same trick
-  // ipfs-image.js already uses for ipfs.io) sidesteps that. Still
-  // best-effort: on any failure (proxy down, decode error) that one cell
-  // just silently keeps its default border instead of erroring.
-  var traitColorCache = {}; // example image URL -> 'r,g,b' string, or null once confirmed unreadable
-  function sampleImageColor(imgUrl){
-    if (Object.prototype.hasOwnProperty.call(traitColorCache, imgUrl)) return Promise.resolve(traitColorCache[imgUrl]);
-    var proxiedUrl = imgUrl.indexOf('https://cdn.deeptide.co/') === 0
-      ? '/api/deeptide-image?src=' + encodeURIComponent(imgUrl)
-      : imgUrl;
-    return new Promise(function(resolve){
-      var img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = function(){
-        var rgb = null;
-        try {
-          var size = 16;
-          var canvas = document.createElement('canvas');
-          canvas.width = size; canvas.height = size;
-          var ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, size, size);
-          var data = ctx.getImageData(0, 0, size, size).data;
-          var r = 0, g = 0, b = 0, n = 0;
-          for (var i = 0; i < data.length; i += 4){
-            r += data[i]; g += data[i + 1]; b += data[i + 2]; n++;
-          }
-          if (n) rgb = Math.round(r / n) + ',' + Math.round(g / n) + ',' + Math.round(b / n);
-        } catch (e){ rgb = null; }
-        traitColorCache[imgUrl] = rgb;
-        resolve(rgb);
-      };
-      img.onerror = function(){ traitColorCache[imgUrl] = null; resolve(null); };
-      img.src = proxiedUrl;
-    });
-  }
-  function colorizeTraitCells(){
-    el.detailTraits.querySelectorAll('.trait-cell[data-example]').forEach(function(cell){
-      sampleImageColor(cell.getAttribute('data-example')).then(function(rgb){
-        if (!rgb) return;
-        cell.style.borderColor = 'rgb(' + rgb + ')';
-        cell.style.background = 'rgba(' + rgb + ',0.16)';
-        cell.style.boxShadow = 'inset 0 0 0 1px rgba(' + rgb + ',0.5)';
-      });
-    });
   }
   // Clicking a trait cell on the INSPECT screen filters the browse view down
   // to every Pigeon sharing that exact trait/value.
@@ -6234,7 +6229,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (known && known.owner) renderOwnerLink(known.ownerShort, known.owner);
     else { el.detailOwner.textContent = '...'; el.detailOwner.classList.remove('not-indexed'); }
     el.detailTraits.innerHTML = known ? known.attributes.map(traitCellHtml).join('') : '';
-    colorizeTraitCells();
     el.viewDeeptideLink.href = 'https://deeptide.co/nft/' + nftId;
     el.viewXrpCafeLink.href = 'https://xrp.cafe/nft/' + nftId;
     el.viewBithompLink.href = 'https://bithomp.com/explorer/' + nftId;
@@ -6263,7 +6257,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailNum.innerHTML = p.number !== null ? 'P!GE0N #' + greenNum(p.number) : 'P!GE0N ...';
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
       el.detailTraits.innerHTML = p.attributes.map(traitCellHtml).join('');
-      colorizeTraitCells();
       updateDetailRarity(p);
       updateDetailPrice(p);
       updateDetailListings(p.listings);
