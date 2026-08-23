@@ -728,7 +728,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.85rem 1rem;
     margin-bottom:0.75rem;
   }
-  .db-config-row{ margin-bottom:0.75rem; }
+  .db-config-row{ margin-bottom:0.75rem; flex-wrap:wrap; }
   .db-config-row:last-child{ margin-bottom:0; }
   .db-config-row .sort-field-label{ flex:0 0 175px; }
   select.sort-select{
@@ -1005,15 +1005,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease;
   }
   .trait-row-remove:hover{ background:var(--magenta-faint); }
-  /* Same box dimensions as ADD TRAITS (#traitsHoverWrap) — sits right
-     next to it in the search row, not off in its own block below. */
+  /* Same box dimensions/text size as ADD TRAITS (#traitsHoverWrap) — and
+     always pinned to the right edge of the row (margin-left:auto), even
+     once trait chips (#traitRows, which now sits before it in the DOM)
+     have pushed it further along the line — never drifts back to sitting
+     in the middle between ADD TRAITS and the chips. */
   .clear-traits-btn{
     background:transparent;
     border:1px solid rgba(255,61,61,0.5);
     color:#ff3d3d;
     text-shadow:0 0 5px rgba(255,61,61,0.5);
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:15px;
     font-weight:700;
     letter-spacing:0.1em;
     padding:0.75em 1em;
@@ -1021,6 +1024,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
     border-radius:var(--radius);
     transition:background 0.15s ease;
+    margin-left:auto;
   }
   .clear-traits-btn:hover{ background:rgba(255,61,61,0.12); }
 
@@ -1523,9 +1527,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      "::"-joined string: NFT count on top, balance below. */
   .pigeons-loggedin-line{ line-height:1.4; }
   .pigeons-loggedin-line + .pigeons-loggedin-line{ font-size:15px; font-weight:400; }
-  /* Bottom row — VIEW ON DEXSCREENER far left, the rate line centered in
-     the middle, the calculator (with its own EXCHANGE RATE title) on the
-     right — three flat siblings spread across one line, not stacked. */
+  /* Bottom row — VIEW ON DEXSCREENER far left, the calculator (with its own
+     EXCHANGE RATE title) centered in the middle, the rate line on the
+     right — three flat siblings spread across one line, not stacked. No
+     divider above it any more — the carousel/identity/bottom row all read
+     as one continuous box now, not three stacked sections. */
   .pigeons-bar-bottom-row{
     display:flex;
     align-items:center;
@@ -1534,7 +1540,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:1rem;
     margin-top:1.25rem;
     padding-top:1rem;
-    border-top:1px dashed rgba(255,255,255,0.25);
     width:100%;
   }
   /* Live "1 $PIGEONS = X XRP" rate, DexScreener's trade-derived price via
@@ -1542,10 +1547,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      periodically re-fetched (see refreshTrustlineRate) so it never goes
      stale on a long-open tab — hidden until the first fetch resolves. */
   .pigeons-bar-rate{
-    flex:1;
+    flex:0 0 auto;
     display:flex;
     align-items:baseline;
-    justify-content:center;
+    justify-content:flex-end;
     gap:0.4rem;
     color:#fff;
     text-shadow:0 1px 4px rgba(0,0,0,0.5);
@@ -1555,8 +1560,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .pigeons-bar-rate-line{ font-size:13px; letter-spacing:0.05em; opacity:0.9; }
   .pigeons-bar-rate-value{ font-size:15px; font-weight:700; }
-  /* XRP -> $PIGEONS calculator, with its own EXCHANGE RATE title above it. */
-  .pigeons-bar-calc-col{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:0.4rem; }
+  /* XRP -> $PIGEONS calculator, with its own EXCHANGE RATE title above it —
+     flex:1 + centered children so it's the one that takes the middle slot
+     (DEXSCREENER and the rate line are both fixed-width, at the two
+     edges) — and so the input growing as you type (see
+     .pigeons-bar-calc-input) expands this whole box from its own center
+     rather than pinned to one side. */
+  .pigeons-bar-calc-col{ flex:1; display:flex; flex-direction:column; align-items:center; gap:0.4rem; min-width:0; }
   .pigeons-bar-calc-title{ font-size:10px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-calc{
     display:flex;
@@ -1568,7 +1578,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.5em 0.7em;
   }
   .pigeons-bar-calc-input{
-    width:100px;
+    /* Base/minimum width — grown dynamically via updatePigeonsCalc's
+       resizeCalcInput as you type (ch units, monospace font, so 1ch really
+       is one typed character's width). Centered text + the whole box
+       being centered in its flex:1 slot means it grows evenly from both
+       sides, not anchored to one edge. */
+    width:8ch;
+    min-width:8ch;
     background:transparent;
     border:none;
     border-bottom:1px solid rgba(255,255,255,0.5);
@@ -1577,6 +1593,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-size:13px;
     text-align:center;
     padding:0.2em 0;
+    transition:width 0.1s ease;
   }
   .pigeons-bar-calc-input:focus{ outline:none; border-bottom-color:#fff; }
   .pigeons-bar-calc-input::placeholder{ color:rgba(255,255,255,0.6); text-transform:uppercase; }
@@ -1683,7 +1700,31 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
 
-  /* ---- detail screen ---- */
+  /* ---- detail screen — picture on the left, everything else (number,
+     traits, fields, links) on the right, both bigger/easier to read than
+     the old single centered column. Scoped to #screenDetail specifically
+     — .detail-field/.trait-grid/.df-label etc are shared with several
+     other narrow centered confirm/result screens elsewhere in this file,
+     which must stay exactly as they are. ---- */
+  .detail-two-col{ display:grid; grid-template-columns:minmax(280px, 440px) 1fr; gap:2rem; align-items:start; }
+  .detail-col-left{ display:flex; flex-direction:column; }
+  @media (max-width:760px){
+    .detail-two-col{ grid-template-columns:1fr; gap:1rem; }
+  }
+  #screenDetail .detail-img-large{ width:100%; max-width:100%; margin:0 0 0.75rem; }
+  #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 1.25rem; }
+  #screenDetail .detail-eyebrow{ text-align:left; }
+  #screenDetail .detail-num{ text-align:left; font-size:32px; margin-bottom:1.5rem; }
+  #screenDetail .detail-traits-title{ text-align:left; font-size:14px; }
+  #screenDetail .trait-grid{ max-width:100%; margin:0 0 0.75rem; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:0.85rem; }
+  #screenDetail .trait-cell{ padding:0.85rem 1rem; }
+  #screenDetail .trait-cell .tc-label{ font-size:11px; }
+  #screenDetail .trait-cell .tc-value{ font-size:16px; }
+  #screenDetail .trait-cell .tc-sub{ font-size:11px; }
+  #screenDetail .detail-field{ max-width:100%; margin:0 0 1rem; font-size:16px; }
+  #screenDetail .tech-meta-title{ text-align:left; font-size:12px; }
+  #screenDetail .scylla-listing-price{ font-size:17px; }
+  #screenDetail .view-links{ justify-content:flex-start; }
   .detail-eyebrow{
     text-align:center;
     font-size:11px;
@@ -2076,9 +2117,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <a class="bar-btn pigeons-bar-dex-link" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">
           <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">V!EW 0N DEXSCREENER
         </a>
-        <div class="pigeons-bar-rate" id="pigeonsBarRate" style="display:none;">
-          <span class="pigeons-bar-rate-line">1 XRP = </span><span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span>
-        </div>
         <div class="pigeons-bar-calc-col" id="pigeonsBarCalc" style="display:none;">
           <div class="pigeons-bar-calc-title">EXCHANGE RATE</div>
           <div class="pigeons-bar-calc">
@@ -2086,6 +2124,9 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="pigeons-bar-calc-eq">=</span>
             <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
           </div>
+        </div>
+        <div class="pigeons-bar-rate" id="pigeonsBarRate" style="display:none;">
+          <span class="pigeons-bar-rate-line">1 XRP = </span><span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span>
         </div>
       </div>
     </div>
@@ -2216,15 +2257,12 @@ const SWAP_HTML = `<!DOCTYPE html>
             </select>
           </div>
           <div class="sort-field db-config-row">
-            <span class="sort-field-label">C0LLECT!0N SELECT!0N:</span>
+            <span class="sort-field-label">C0LLECT!0N AND S0RT ::</span>
             <div class="edition-toggle" id="editionSelect">
               <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
               <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
               <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
             </div>
-          </div>
-          <div class="sort-field db-config-row">
-            <span class="sort-field-label">S0RT!NG BY:</span>
             <div class="traits-hover-wrap" id="sortDropWrap">
               <span class="trait-row-label" id="sortDropLabel"></span>
               <div class="traits-flyout" id="sortFlyout" style="display:none;">
@@ -2243,8 +2281,8 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
             </div>
           </div>
-          <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">[ CLEAR TRA!TS ]</button>
           <div id="traitRows"></div>
+          <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">[ CLEAR TRA!TS ]</button>
         </div>
 
         <div class="results-block">
@@ -2265,36 +2303,42 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <!-- SCREEN 2: DETAIL -->
     <div class="sw-panel" id="screenDetail" style="display:none;">
-      <div class="detail-eyebrow">// P!GE0N !DENT!F!ED</div>
-      <div class="detail-num" id="detailNum"></div>
-      <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
-      <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
-      <div class="scylla-listing-block">
-        <div class="tech-meta-title">$P!GE0NS L!ST!NGS</div>
-        <div class="scylla-listing-row">
-          <span class="scylla-coin-wrap">
-            <img class="scylla-coin-icon" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
-            <span class="scylla-listing-price" id="detailScyllaPrice">N0T L!STED</span>
-          </span>
-          <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">[ BUY ]</button>
+      <div class="detail-two-col">
+        <div class="detail-col-left">
+          <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
+          <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
+          <div class="scylla-listing-block">
+            <div class="tech-meta-title">$P!GE0NS L!ST!NGS</div>
+            <div class="scylla-listing-row">
+              <span class="scylla-coin-wrap">
+                <img class="scylla-coin-icon" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
+                <span class="scylla-listing-price" id="detailScyllaPrice">N0T L!STED</span>
+              </span>
+              <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">[ BUY ]</button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="detail-traits-title">TRA!TS</div>
-      <div class="trait-grid" id="detailTraits"></div>
-      <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
-      <div class="detail-field" id="detailRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="detailRarity"></span></div>
-      <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
-      <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
-      <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVG SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
-      <div class="detail-history">
-        <button class="th-toggle" id="detailHistoryToggle">[ SALES H!ST0RY ]</button>
-      </div>
-      <div class="view-elsewhere">
-        <div class="tech-meta-title">V!EW ELSEWHERE</div>
-        <div class="view-links">
-          <a class="secondary-btn" id="viewDeeptideLink" target="_blank" rel="noopener">[ DEEPT!DE ]</a>
-          <a class="secondary-btn" id="viewXrpCafeLink" target="_blank" rel="noopener">[ XRP.CAFE ]</a>
-          <a class="secondary-btn" id="viewBithompLink" target="_blank" rel="noopener">[ B!TH0MP ]</a>
+        <div class="detail-col-right">
+          <div class="detail-eyebrow">// P!GE0N !DENT!F!ED</div>
+          <div class="detail-num" id="detailNum"></div>
+          <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
+          <div class="detail-field" id="detailRarityRow" style="display:none;"><span class="df-label">RAR!TY</span><span class="df-value rarity" id="detailRarity"></span></div>
+          <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
+          <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
+          <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVG SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
+          <div class="detail-traits-title">TRA!TS</div>
+          <div class="trait-grid" id="detailTraits"></div>
+          <div class="detail-history">
+            <button class="th-toggle" id="detailHistoryToggle">[ SALES H!ST0RY ]</button>
+          </div>
+          <div class="view-elsewhere">
+            <div class="tech-meta-title">V!EW ELSEWHERE</div>
+            <div class="view-links">
+              <a class="secondary-btn" id="viewDeeptideLink" target="_blank" rel="noopener">[ DEEPT!DE ]</a>
+              <a class="secondary-btn" id="viewXrpCafeLink" target="_blank" rel="noopener">[ XRP.CAFE ]</a>
+              <a class="secondary-btn" id="viewBithompLink" target="_blank" rel="noopener">[ B!TH0MP ]</a>
+            </div>
+          </div>
         </div>
       </div>
       <div class="detail-actions">
@@ -2854,6 +2898,32 @@ const SWAP_HTML = `<!DOCTYPE html>
       .map(function(k){ return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
       .join('&');
     return fetch('/api/pigeons?' + qs).then(function(r){ return r.json(); });
+  }
+  // The wallet-list lookup (fetchAllAccountNfts -> real XRPL pagination,
+  // no caching by design) genuinely takes several seconds for a wallet
+  // holding a lot of NFTs, and under that load a transient failure on one
+  // of the underlying calls (XRPL node, Deeptide) is a real, observed
+  // possibility — silently swallowed by a plain .catch(), it left that
+  // one piece of UI stuck forever while an unrelated, faster call (e.g.
+  // the balance lookup running in parallel) succeeded fine, reading as
+  // "sometimes one shows and not the other." One retry before giving up.
+  function apiWithRetry(params, retriesLeft){
+    if (retriesLeft === undefined) retriesLeft = 1;
+    var qs = Object.keys(params)
+      .filter(function(k){ return params[k] !== undefined && params[k] !== null; })
+      .map(function(k){ return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
+      .join('&');
+    return fetch('/api/pigeons?' + qs).then(function(r){
+      if (!r.ok) throw new Error('http_' + r.status);
+      return r.json();
+    }).catch(function(err){
+      if (retriesLeft > 0){
+        return new Promise(function(resolve){ setTimeout(resolve, 700); }).then(function(){
+          return apiWithRetry(params, retriesLeft - 1);
+        });
+      }
+      throw err;
+    });
   }
 
   // ---- CREATE AN OFFER — persistent trade builder, always visible on
@@ -3490,7 +3560,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.databaseLoaded = true;
     showTab('database');
     renderTradeBuilder();
-    api({ wallet: wallet }).then(function(data){
+    apiWithRetry({ wallet: wallet }).then(function(data){
       state.scopeAllItems = data.items || [];
       if (isSelf) myOwnPigeonsCache = state.scopeAllItems;
       el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
@@ -4526,7 +4596,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.myWalletInfo.style.display = '';
     el.myWalletAddr.textContent = MY_WALLET;
     renderMyPigeonsList();
-    api({ wallet: MY_WALLET }).then(function(data){
+    apiWithRetry({ wallet: MY_WALLET }).then(function(data){
       myPigeonsData = data.items || [];
       el.myWalletCount.textContent = 'P!GE0NS :: ' + myPigeonsData.length;
       renderMyPigeonsList();
@@ -4656,12 +4726,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     // run them in parallel instead of one waiting on the other, so each
     // paints as soon as it's ready instead of the slower of the two
     // gating both.
-    api({ wallet: MY_WALLET }).then(function(data){
+    apiWithRetry({ wallet: MY_WALLET }).then(function(data){
       myOwnPigeonsCache = data.items || [];
       trustlinePigeonCount = myOwnPigeonsCache.length;
       renderTrustlineSummary();
     }).catch(function(){});
-    api({ pigeonsAccountLine: 1, wallet: MY_WALLET }).then(function(line){
+    apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET }).then(function(line){
       var balanceNum = (line && line.hasTrustline) ? (line.balance || 0) : 0;
       var balanceStr = balanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 });
       trustlineBalanceHtml = 'BALANCE :: ' + greenNum(balanceStr) + ' $P!GE0NS';
@@ -5468,7 +5538,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   refreshTrustlineRate();
   setInterval(refreshTrustlineRate, 60000);
+  // Grows the input to fit what's typed (ch units against the monospace
+  // font) instead of staying a fixed width — since the whole calc box is
+  // centered in its flex:1 slot (see .pigeons-bar-calc-col), this reads as
+  // growing outward from the center in both directions, not anchored left.
+  function resizeCalcInput(){
+    var len = el.pigeonsCalcXrpInput.value.length;
+    el.pigeonsCalcXrpInput.style.width = Math.max(8, len + 2) + 'ch';
+  }
   function updatePigeonsCalc(){
+    resizeCalcInput();
     var xrpValue = Number(el.pigeonsCalcXrpInput.value);
     if (trustlineXrpPerPigeon === null || !el.pigeonsCalcXrpInput.value.trim() || !isFinite(xrpValue) || xrpValue <= 0){
       el.pigeonsCalcOut.innerHTML = greenNum('0') + ' $P!GE0NS';
@@ -5839,6 +5918,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     updateScyllaListing(known);
     state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null, attributes: [] };
     showScreen('detail');
+    // A thumbnail click deep in a long (up to 3015-item) grid leaves the
+    // page scrolled to wherever that thumbnail was — since the detail
+    // screen swaps in at the same spot in the DOM, without this the
+    // viewport would land mid-way down the new detail content instead of
+    // its top, looking like it opened "misaligned" with the DATABASE/MY
+    // PIGEONS/etc tabs above it.
+    window.scrollTo({ top: 0, behavior: 'instant' });
     refreshCardSelectionStates();
     loadDetailHistory(nftId);
 
