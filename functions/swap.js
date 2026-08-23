@@ -2440,7 +2440,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
 
-        <div class="results-block">
+        <div class="results-block" id="resultsBlock">
           <div class="results-header-row">
             <div class="search-row">
               <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0N # 0R WALLET">
@@ -2858,7 +2858,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statTraded24h','statVolume24h','statSalesTile','statSales24h','statBurntLink',
    'traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals',
-   'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
+   'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
@@ -2987,6 +2987,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // directly) and showScreen (detail/confirm/result screens).
   function scrollTabStripIntoView(){
     window.scrollTo({ top: window.scrollY + el.topTabs.getBoundingClientRect().top, behavior: 'smooth' });
+  }
+  // Same flush-to-top feel as scrollTabStripIntoView, but for the results
+  // list itself — picking a trait should feel like you've actually
+  // selected something, not just silently re-filter a list you have to
+  // scroll down to see.
+  function scrollResultsIntoView(){
+    window.scrollTo({ top: window.scrollY + el.resultsBlock.getBoundingClientRect().top, behavior: 'smooth' });
   }
   function showTab(tab){
     state.activeTab = tab;
@@ -4517,6 +4524,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderTraitRows();
     renderTraitsFlyoutVals(category);
     runQuery();
+    scrollResultsIntoView();
   });
 
   function activeFilters(){
