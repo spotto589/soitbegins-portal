@@ -1202,8 +1202,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     left:0.5em;
     top:50%;
     transform:translateY(-50%);
-    width:26px;
-    height:26px;
+    width:30px;
+    height:30px;
     border-radius:50%;
     object-fit:cover;
     border:1px solid rgba(255,255,255,0.6);
@@ -1234,9 +1234,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid rgba(255,255,255,0.6);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:20px;
+    font-weight:700;
     text-align:center;
-    padding:0.6em 0.65em 0.6em 2.5em;
+    padding:0.5em 0.65em 0.5em 2.6em;
     border-radius:var(--radius);
   }
   .make-offer-input:focus{ outline:none; border-color:#fff; }
