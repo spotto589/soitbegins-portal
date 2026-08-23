@@ -241,19 +241,24 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   /* ---- database (multi-collection) selector ---- */
   .db-select-wrap{ text-align:center; position:relative; margin-bottom:1.75rem; }
-  .db-select-toggle{
-    background:transparent;
-    border:none;
+  .db-static-label{
     font-family:var(--font-mono);
     font-size:17px;
     font-weight:700;
     letter-spacing:0.14em;
     color:var(--grey);
     text-transform:uppercase;
-    cursor:pointer;
-    padding:0;
+    margin-bottom:0.6rem;
   }
-  .db-select-toggle .db-active-name{ color:var(--cyan); text-shadow:0 0 8px var(--cyan-glow); }
+  .db-collection-row{ display:inline-flex; align-items:center; gap:0.6rem; }
+  /* COLLECTION :: is the same hover-flyout component as SORTING BY —
+     hover to reveal, not a click-toggle full-width menu. */
+  #dbSelectWrap{ font-size:13px; }
+  .db-select-flyout{
+    display:block;
+    width:220px;
+    max-height:none;
+  }
   .db-select-menu{
     margin:0.75rem auto 0;
     max-width:260px;
@@ -756,9 +761,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      edition-toggle group sitting next to them in the search row, instead
      of bare hover text — makes it read as a box, not just a label, so
      it's obvious it's a hover dropdown like the others. */
-  #sortDropWrap, #traitsHoverWrap{ border:1px solid var(--border-mid); border-radius:var(--radius); transition:border-color 0.15s ease, background 0.15s ease; }
+  #sortDropWrap, #traitsHoverWrap, #dbSelectWrap{ border:1px solid var(--border-mid); border-radius:var(--radius); transition:border-color 0.15s ease, background 0.15s ease; }
   #sortDropWrap:hover, #sortDropWrap.open,
-  #traitsHoverWrap:hover, #traitsHoverWrap.open{ border-color:var(--cyan-dim); }
+  #traitsHoverWrap:hover, #traitsHoverWrap.open,
+  #dbSelectWrap:hover, #dbSelectWrap.open{ border-color:var(--cyan-dim); }
   /* SORTING BY always has an active pick — pin it the same way a selected
      COLLECTION SELECTION button (.edition-btn.active) reads: filled
      magenta, not just plain hover text. */
@@ -956,7 +962,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* SEARCH box pinned to the far left, on the same line as the results
      status text — same left-pin/centered-body trick as the trustline
      strip's thumbnail. */
-  .results-header-row{ position:relative; min-height:2.6rem; }
+  .results-header-row{ position:relative; min-height:2.6rem; margin-bottom:0.85rem; }
   .results-header-row .search-row{
     position:absolute;
     left:0;
@@ -1786,11 +1792,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     <h1>Σκύλλα :: SWAP</h1>
 
     <div class="db-select-wrap">
-      <button class="db-select-toggle" id="dbSelectToggle">DATABASE V!EW :: <span class="db-active-name">P!GE0NS</span> ▼</button>
-      <div class="db-select-menu" id="dbSelectMenu" style="display:none;">
-        <div class="db-option db-option-active">P!GE0NS</div>
-        <div class="db-option db-option-disabled">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
-        <div class="db-option db-option-disabled">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
+      <div class="db-static-label">STAT!C DATABASE</div>
+      <div class="db-collection-row">
+        <span class="sort-field-label">C0LLECT!0N ::</span>
+        <div class="traits-hover-wrap" id="dbSelectWrap">
+          <span class="trait-row-label" id="dbSelectLabel">P!GE0NS ▾</span>
+          <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
+            <div class="db-option db-option-active">P!GE0NS</div>
+            <div class="db-option db-option-disabled">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
+            <div class="db-option db-option-disabled">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2428,7 +2440,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
-   'dbSelectToggle','dbSelectMenu','copyIssuerBtn','ciIssuerAddr','onboardLink',
+   'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','ciIssuerAddr','onboardLink',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
    'salesPanelWrap',
@@ -4945,12 +4957,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
 
   // ---- DATABASE selector — multi-collection groundwork; only PIGEONS is
-  // live, FUZZY/PHNIX are inert placeholders. ----
-  el.dbSelectToggle.addEventListener('click', function(){
-    el.dbSelectMenu.style.display = el.dbSelectMenu.style.display === 'none' ? '' : 'none';
+  // live, FUZZY/PHNIX are inert placeholders. Same hover-flyout behavior
+  // as SORTING BY (#sortDropWrap) — hover to reveal, click closes. ----
+  function openDbSelectFlyout(){
+    el.dbSelectFlyout.style.display = 'block';
+    el.dbSelectWrap.classList.add('open');
+  }
+  function closeDbSelectFlyout(){
+    el.dbSelectFlyout.style.display = 'none';
+    el.dbSelectWrap.classList.remove('open');
+  }
+  el.dbSelectWrap.addEventListener('mouseenter', openDbSelectFlyout);
+  el.dbSelectWrap.addEventListener('mouseleave', closeDbSelectFlyout);
+  el.dbSelectLabel.addEventListener('click', function(){
+    if (el.dbSelectFlyout.style.display === 'block') closeDbSelectFlyout();
+    else openDbSelectFlyout();
   });
-  el.dbSelectMenu.addEventListener('click', function(){
-    el.dbSelectMenu.style.display = 'none';
+  el.dbSelectFlyout.addEventListener('click', function(){
+    closeDbSelectFlyout();
   });
 
   // Copy-to-clipboard, not a real TrustSet flow — this prototype doesn't
