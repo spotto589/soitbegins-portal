@@ -5766,9 +5766,60 @@ const SWAP_HTML = `<!DOCTYPE html>
     var sub = (a.percent !== null && a.percent !== undefined)
       ? '<div class="tc-sub">' + (typeof a.percent === 'number' ? a.percent.toFixed(3) : a.percent) + '%' + (a.count !== null && a.count !== undefined ? '<br>(' + a.count + ')' : '') + '</div>'
       : '';
-    return '<div class="trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '" title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
+    // The same example image ADD TRAITS' flyout uses as its own background
+    // (state.traitExamples, populated once by ensureTraitsLoaded) — carried
+    // as a data attribute so colorizeTraitCells can sample its dominant
+    // colour into this cell's own border/background after render.
+    var exampleImg = (state.traitExamples && state.traitExamples[a.trait_type] && state.traitExamples[a.trait_type][a.value]) || null;
+    return '<div class="trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' +
+      (exampleImg ? ' data-example="' + escapeHtml(exampleImg) + '"' : '') +
+      ' title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
       '<div class="tc-label">' + escapeHtml(a.trait_type) + '</div><div class="tc-value">' + escapeHtml(a.value) + '</div>' + sub +
     '</div>';
+  }
+  // Samples each trait cell's own example photo for its dominant/average
+  // colour and tints that cell's border+background with it — e.g. an
+  // orange background trait gets an orange-tinted box. Best-effort: a
+  // cross-origin image without CORS headers taints the canvas and throws
+  // on read, in which case that one cell just silently keeps its default
+  // border instead of erroring.
+  var traitColorCache = {}; // example image URL -> 'r,g,b' string, or null once confirmed unreadable
+  function sampleImageColor(imgUrl){
+    if (Object.prototype.hasOwnProperty.call(traitColorCache, imgUrl)) return Promise.resolve(traitColorCache[imgUrl]);
+    return new Promise(function(resolve){
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function(){
+        var rgb = null;
+        try {
+          var size = 16;
+          var canvas = document.createElement('canvas');
+          canvas.width = size; canvas.height = size;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, size, size);
+          var data = ctx.getImageData(0, 0, size, size).data;
+          var r = 0, g = 0, b = 0, n = 0;
+          for (var i = 0; i < data.length; i += 4){
+            r += data[i]; g += data[i + 1]; b += data[i + 2]; n++;
+          }
+          if (n) rgb = Math.round(r / n) + ',' + Math.round(g / n) + ',' + Math.round(b / n);
+        } catch (e){ rgb = null; }
+        traitColorCache[imgUrl] = rgb;
+        resolve(rgb);
+      };
+      img.onerror = function(){ traitColorCache[imgUrl] = null; resolve(null); };
+      img.src = imgUrl;
+    });
+  }
+  function colorizeTraitCells(){
+    el.detailTraits.querySelectorAll('.trait-cell[data-example]').forEach(function(cell){
+      sampleImageColor(cell.getAttribute('data-example')).then(function(rgb){
+        if (!rgb) return;
+        cell.style.borderColor = 'rgb(' + rgb + ')';
+        cell.style.background = 'rgba(' + rgb + ',0.16)';
+        cell.style.boxShadow = 'inset 0 0 0 1px rgba(' + rgb + ',0.5)';
+      });
+    });
   }
   // Clicking a trait cell on the INSPECT screen filters the browse view down
   // to every Pigeon sharing that exact trait/value.
@@ -5913,6 +5964,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (known && known.owner) renderOwnerLink(known.ownerShort, known.owner);
     else { el.detailOwner.textContent = '...'; el.detailOwner.classList.remove('not-indexed'); }
     el.detailTraits.innerHTML = known ? known.attributes.map(traitCellHtml).join('') : '';
+    colorizeTraitCells();
     el.viewDeeptideLink.href = 'https://deeptide.co/nft/' + nftId;
     el.viewXrpCafeLink.href = 'https://xrp.cafe/nft/' + nftId;
     el.viewBithompLink.href = 'https://bithomp.com/explorer/' + nftId;
@@ -5944,6 +5996,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailNum.innerHTML = p.number !== null ? 'P!GE0N #' + greenNum(p.number) : 'P!GE0N ...';
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
       el.detailTraits.innerHTML = p.attributes.map(traitCellHtml).join('');
+      colorizeTraitCells();
       updateDetailRarity(p);
       updateDetailPrice(p);
       updateDetailListings(p.listings);
