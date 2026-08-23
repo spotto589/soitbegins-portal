@@ -1506,6 +1506,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
   .pigeons-bar-issuer .pigeons-bar-text{ font-size:16px; }
+  /* SIGN OUT — a real, destructive-feeling action (ends the session), so
+     it gets its own red instead of the plain white every other bar-btn
+     in this box uses. */
+  #swapSignOutBtn{ color:#ff4d4d; border-color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
+  #swapSignOutBtn:hover{ background:#ff4d4d; color:#000; text-shadow:none; }
+  /* LOGGED IN summary — two clean centered lines instead of one long
+     "::"-joined string: NFT count on top, balance below. */
+  .pigeons-loggedin-line{ line-height:1.4; }
+  .pigeons-loggedin-line + .pigeons-loggedin-line{ font-size:15px; font-weight:400; }
   /* Bottom row — VIEW ON DEXSCREENER far left, the rate line centered in
      the middle, the calculator (with its own EXCHANGE RATE title) on the
      right — three flat siblings spread across one line, not stacked. */
@@ -2046,7 +2055,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="pigeons-bar-body" id="pigeonsBarLoggedIn" style="display:none;">
           <span class="pigeons-bar-text pigeons-bar-text-lg">L0GGED !N :: <span id="pigeonsLoggedInWallet"></span></span>
           <div class="pigeons-bar-addr-stack">
-            <span class="ci-value ci-value-big pigeons-bar-addr pigeons-bar-summary-lg" id="pigeonsLoggedInSummary">…</span>
+            <div class="ci-value ci-value-big pigeons-bar-addr pigeons-bar-summary-lg" id="pigeonsLoggedInSummary">…</div>
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
           </div>
           <div class="pigeons-bar-identity-actions">
@@ -2653,6 +2662,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     return String(str).replace(/[&<>"']/g, function(c){
       return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
     });
+  }
+
+  // Wraps just a bare number in the same green the header's ONLINE uses
+  // (.pigeons-green-num) — used for Pigeon numbers and rarity RANKS
+  // specifically (never the rarity TOTAL, e.g. RARITY 330/3015 only
+  // greens the 330). Callers build the surrounding text (prefixes, #,
+  // fallback strings for a null number) themselves.
+  function greenNum(n){
+    return '<span class="pigeons-green-num">' + n + '</span>';
   }
 
   // Live thousands-separator formatting for a plain-number input (1000
@@ -3427,7 +3445,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (targetPigeon){
       el.targetPigeonCard.style.display = '';
       el.targetPigeonImg.innerHTML = targetPigeon.image ? '<img src="' + escapeHtml(targetPigeon.image) + '" alt="">' : '[ IMAGE ]';
-      el.targetPigeonNum.textContent = targetPigeon.number !== null ? 'P!GE0N #' + targetPigeon.number : 'P!GE0N ...';
+      el.targetPigeonNum.innerHTML = targetPigeon.number !== null ? 'P!GE0N #' + greenNum(targetPigeon.number) : 'P!GE0N ...';
       el.targetPigeonOwner.textContent = state.scope.ownerShort;
     } else {
       el.targetPigeonCard.style.display = 'none';
@@ -3452,6 +3470,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).catch(function(){
       el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T LOAD TH!S WALLET. TRY AGA!N.'], false);
     });
+    // Scoped to your own wallet — ownedPigeonActionHtml (via
+    // pigeonsActionBoxHtml) needs the same real listing/offers data the MY
+    // PIGEONS tab fetches, so it can show L!STED+DEL!ST or a real received
+    // offer instead of always defaulting to "unlisted". Re-renders the
+    // scoped grid once each lands (guarded against having since exited
+    // this scope).
+    if (MY_WALLET && wallet === MY_WALLET){
+      fetch('/api/swap-listing-owned?wallet=' + encodeURIComponent(wallet)).then(function(r){ return r.json(); }).then(function(listedRes){
+        myListedData = (listedRes && listedRes.listed) || {};
+        if (isOwnWalletScope()) runScopedQuery();
+      }).catch(function(){});
+      loadOffersReceived();
+    }
   }
 
   function enterOwnerScope(targetPigeon){
@@ -3547,7 +3578,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   // above a purple OFFER strip). No coin thumbnail — the box's own
   // purple theme already reads as $PIGEONS without repeating the icon.
   function pigeonsActionBoxHtml(p){
-    if (p.owner === MY_WALLET) return '';
+    if (p.owner === MY_WALLET){
+      // Full unscoped DATABASE browsing still shows nothing special for a
+      // pigeon that happens to be yours (myListedData/offersByNftId aren't
+      // necessarily loaded there) — only the SH0W MY P!GE0NS scope (which
+      // explicitly fetches both, see browseOwnerCollection) gets the real
+      // LIST/DELIST/OFFERS box, same as the MY PIGEONS tab.
+      return isOwnWalletScope() ? ownedPigeonActionHtml(p) : '';
+    }
     var canBuy = !!p.scyllaListing && p.owner !== MY_WALLET;
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
       (canBuy
@@ -3564,7 +3602,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function resultCardHtml(p){
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
-    var num = p.number !== null ? '#' + p.number : '#????';
+    var num = p.number !== null ? '#' + greenNum(p.number) : '#????';
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
     var atCap = offerCtxCard
@@ -3593,7 +3631,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       : '';
     // RARITY SCORE isn't computed yet — deliberately left as a placeholder
     // (real rank/total already exist, the score itself is a later system).
-    var rarityLine = p.rarityRank ? p.rarityRank + '/' + (p.rarityTotal || 3015) : null;
+    var rarityLine = p.rarityRank ? greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) : null;
     // Flick-through pages in the right column — TRAITS, then sale stats,
     // then the sales history itself (fetched lazily once this page is
     // reached — see the .card-page-next handler) — one at a time instead
@@ -3652,8 +3690,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // .pigeon-img-box) so wireResultClicks needs no view-specific branching.
   function thumbnailCardHtml(p){
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
-    var num = p.number !== null ? '#' + p.number : '#????';
-    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
+    var num = p.number !== null ? '#' + greenNum(p.number) : '#????';
+    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
     var atCap = offerCtxCard
@@ -3766,22 +3804,89 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       var imgBox = e.target.closest('.pigeon-img-box');
-      if (imgBox){ openDetail(imgBox.getAttribute('data-nftid')); }
+      if (imgBox){ openDetail(imgBox.getAttribute('data-nftid')); return; }
+      // LIST/DELIST/ACCEPT OFFER — rendered by pigeonsActionBoxHtml (own-
+      // wallet DATABASE scope) or myPigeonCardHtml (MY PIGEONS tab), shared
+      // here so both containers behave identically instead of duplicating
+      // this logic per-container.
+      var listBtn = e.target.closest('.list-inline-btn');
+      if (listBtn){
+        var lp = source().filter(function(x){ return x.nftId === listBtn.getAttribute('data-nftid'); })[0];
+        var listCardEl = listBtn.closest('.thumb-offer');
+        var priceInput = listCardEl && listCardEl.querySelector('.list-price-input');
+        if (lp && priceInput) submitInlineListing(lp, priceInput.value.trim().replace(/,/g, ''), listCardEl);
+        return;
+      }
+      var delistBtn = e.target.closest('.delist-pigeon-btn');
+      if (delistBtn){
+        var dp = source().filter(function(x){ return x.nftId === delistBtn.getAttribute('data-nftid'); })[0];
+        if (dp) openDelistConfirm(dp);
+        return;
+      }
+      var acceptBtn = e.target.closest('.accept-offer-btn');
+      if (acceptBtn){
+        acceptOfferTarget = {
+          nftId: acceptBtn.getAttribute('data-nftid'),
+          offerId: acceptBtn.getAttribute('data-offerid'),
+          price: acceptBtn.getAttribute('data-price'),
+          buyer: acceptBtn.getAttribute('data-buyer'),
+          number: acceptBtn.getAttribute('data-num') ? parseInt(acceptBtn.getAttribute('data-num'), 10) : null,
+          image: acceptBtn.getAttribute('data-image') || null
+        };
+        fetch('/api/swap-acceptoffer-prepare', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nftId: acceptOfferTarget.nftId, offerId: acceptOfferTarget.offerId })
+        }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+        .then(function(res){
+          if (!res.ok || !res.data.ok){
+            alert(listingErrorMessage(res.data && res.data.error));
+            acceptOfferTarget = null;
+            return;
+          }
+          var txjson = res.data.txjson;
+          el.acceptOfferConfTxType.textContent = txjson.TransactionType;
+          el.acceptOfferConfAccount.textContent = txjson.Account;
+          el.acceptOfferConfOfferId.textContent = acceptOfferTarget.offerId;
+          el.acceptOfferConfPigeon.innerHTML = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
+          el.acceptOfferConfBuyer.textContent = res.data.display.buyer;
+          el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
+          el.acceptOfferConfFee.textContent = fmtPigeons(res.data.display.feeValue);
+          el.acceptOfferConfSellerAmount.textContent = fmtPigeons(res.data.display.sellerValue);
+          el.acceptOfferConfirmStatus.textContent = '';
+          el.acceptOfferOpenXamanBtn.disabled = false;
+          el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          showScreen('acceptofferconfirm');
+        }).catch(function(){
+          acceptOfferTarget = null;
+          alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
+        });
+      }
     });
     // Enter in the inline MAKE AN OFFER input submits, same as clicking SEND.
     container.addEventListener('keydown', function(e){
       if (e.key !== 'Enter') return;
       var input = e.target.closest('.make-offer-input');
-      if (!input) return;
-      var strip4 = input.closest('.result-card');
-      var sendBtn2 = strip4.querySelector('.make-offer-send');
-      var op3 = source().filter(function(x){ return x.nftId === sendBtn2.getAttribute('data-nftid'); })[0];
-      if (op3) submitMakeOffer(op3, input.value.trim().replace(/,/g, ''), strip4);
+      if (input){
+        var strip4 = input.closest('.result-card');
+        var sendBtn2 = strip4.querySelector('.make-offer-send');
+        var op3 = source().filter(function(x){ return x.nftId === sendBtn2.getAttribute('data-nftid'); })[0];
+        if (op3) submitMakeOffer(op3, input.value.trim().replace(/,/g, ''), strip4);
+        return;
+      }
+      var listInput = e.target.closest('.list-price-input');
+      if (listInput){
+        var listCardEl2 = listInput.closest('.thumb-offer');
+        var listBtn2 = listCardEl2 && listCardEl2.querySelector('.list-inline-btn');
+        if (!listBtn2) return;
+        var lp2 = source().filter(function(x){ return x.nftId === listBtn2.getAttribute('data-nftid'); })[0];
+        if (lp2) submitInlineListing(lp2, listInput.value.trim().replace(/,/g, ''), listCardEl2);
+      }
     });
     // Live thousands-separator formatting as you type (1000 -> 1,000 ->
     // 10,000 ...), same helper the other amount inputs use.
     container.addEventListener('input', function(e){
-      if (e.target.classList.contains('make-offer-input')) formatThousandsInput(e.target);
+      if (e.target.classList.contains('make-offer-input') || e.target.classList.contains('list-price-input')) formatThousandsInput(e.target);
     });
   }
   wireResultClicks(el.resultsArea, function(){ return state.items; });
@@ -4279,10 +4384,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       '</div>';
     }).join('') + '</div>';
   }
-  function myPigeonCardHtml(p){
-    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
-    var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
-    var num = p.number !== null ? '#' + p.number : '#????';
+  // The LIST/DELIST/OFFERS-RECEIVED box for a pigeon YOU own — shared by
+  // myPigeonCardHtml (MY PIGEONS tab) and pigeonsActionBoxHtml (DATABASE,
+  // when scoped to your own wallet via SH0W MY P!GE0NS) so both render
+  // identically instead of DATABASE showing nothing for your own pigeons.
+  function ownedPigeonActionHtml(p){
     var listedInfo = myListedData[p.nftId];
     var offers = offersByNftId[p.nftId] || [];
     var offersHtml = offers.length ? myPigeonOffersHtml(p, offers) : '';
@@ -4303,6 +4409,13 @@ const SWAP_HTML = `<!DOCTYPE html>
           '</div>' +
           '<div class="index-line list-inline-status" style="display:none;"></div>' +
         '</div>';
+    return offersHtml + actionHtml;
+  }
+  function myPigeonCardHtml(p){
+    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) + '</div>' : '';
+    var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
+    var num = p.number !== null ? '#' + greenNum(p.number) : '#????';
+    var ownedActionHtml = ownedPigeonActionHtml(p);
     // Own, separate toggle class from the DATABASE grid's .card-select-toggle
     // (same look, via shared CSS selectors) — deliberately NOT the same
     // class, so wireResultClicks' generic handler (which routes through
@@ -4319,7 +4432,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         img +
         offerToggleHtml +
       '</div>' +
-      '<div class="result-card-body">' + rarityLine + offersHtml + actionHtml + '</div>' +
+      '<div class="result-card-body">' + rarityLine + ownedActionHtml + '</div>' +
     '</div>';
   }
   // ---- MY PIGEONS ordering: pigeons with a received offer always come
@@ -4388,85 +4501,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       renderMyPigeonsList();
     }).catch(function(){});
   }
+  // LIST/DELIST/ACCEPT OFFER click + input handling for this container is
+  // shared with the DATABASE grid inside wireResultClicks now (own-wallet
+  // DATABASE scope shows the exact same action box — see
+  // pigeonsActionBoxHtml/ownedPigeonActionHtml) — nothing container-
+  // specific left to wire here.
   wireResultClicks(el.myPigeonsList, function(){ return myPigeonsData || []; });
-  el.myPigeonsList.addEventListener('click', function(e){
-    var listBtn = e.target.closest('.list-inline-btn');
-    if (listBtn){
-      var nftId = listBtn.getAttribute('data-nftid');
-      var p = (myPigeonsData || []).filter(function(x){ return x.nftId === nftId; })[0];
-      var listCardEl = listBtn.closest('.thumb-offer');
-      var priceInput = listCardEl && listCardEl.querySelector('.list-price-input');
-      if (p && priceInput) submitInlineListing(p, priceInput.value.trim().replace(/,/g, ''), listCardEl);
-      return;
-    }
-    var delistBtn = e.target.closest('.delist-pigeon-btn');
-    if (delistBtn){
-      var dNftId = delistBtn.getAttribute('data-nftid');
-      var dp = (myPigeonsData || []).filter(function(x){ return x.nftId === dNftId; })[0];
-      if (dp) openDelistConfirm(dp);
-      return;
-    }
-    // ACCEPT OFFER — the received-offer row now lives directly on the
-    // pigeon's own card (see myPigeonOffersHtml) instead of a separate
-    // combined list; still goes through the real brokered-accept confirm
-    // screen below, same as before.
-    var acceptBtn = e.target.closest('.accept-offer-btn');
-    if (acceptBtn){
-      acceptOfferTarget = {
-        nftId: acceptBtn.getAttribute('data-nftid'),
-        offerId: acceptBtn.getAttribute('data-offerid'),
-        price: acceptBtn.getAttribute('data-price'),
-        buyer: acceptBtn.getAttribute('data-buyer'),
-        number: acceptBtn.getAttribute('data-num') ? parseInt(acceptBtn.getAttribute('data-num'), 10) : null,
-        image: acceptBtn.getAttribute('data-image') || null
-      };
-      fetch('/api/swap-acceptoffer-prepare', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nftId: acceptOfferTarget.nftId, offerId: acceptOfferTarget.offerId })
-      }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
-      .then(function(res){
-        if (!res.ok || !res.data.ok){
-          alert(listingErrorMessage(res.data && res.data.error));
-          acceptOfferTarget = null;
-          return;
-        }
-        var txjson = res.data.txjson;
-        el.acceptOfferConfTxType.textContent = txjson.TransactionType;
-        el.acceptOfferConfAccount.textContent = txjson.Account;
-        el.acceptOfferConfOfferId.textContent = acceptOfferTarget.offerId;
-        el.acceptOfferConfPigeon.textContent = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + acceptOfferTarget.number : '#????');
-        el.acceptOfferConfBuyer.textContent = res.data.display.buyer;
-        el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
-        el.acceptOfferConfFee.textContent = fmtPigeons(res.data.display.feeValue);
-        el.acceptOfferConfSellerAmount.textContent = fmtPigeons(res.data.display.sellerValue);
-        el.acceptOfferConfirmStatus.textContent = '';
-        el.acceptOfferOpenXamanBtn.disabled = false;
-        el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
-        showScreen('acceptofferconfirm');
-      }).catch(function(){
-        acceptOfferTarget = null;
-        alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
-      });
-    }
-  });
-  // Live thousands-separator formatting on the inline LIST price input,
-  // same helper the DATABASE offer box uses (see formatThousandsInput) —
-  // a distinct class/listener from wireResultClicks' own make-offer-input
-  // handling so a LIST click can never be misrouted into submitMakeOffer.
-  el.myPigeonsList.addEventListener('input', function(e){
-    if (e.target.classList.contains('list-price-input')) formatThousandsInput(e.target);
-  });
-  el.myPigeonsList.addEventListener('keydown', function(e){
-    if (e.key !== 'Enter') return;
-    var input = e.target.closest('.list-price-input');
-    if (!input) return;
-    var cardEl = input.closest('.thumb-offer');
-    var btn = cardEl && cardEl.querySelector('.list-inline-btn');
-    if (!btn) return;
-    var p = (myPigeonsData || []).filter(function(x){ return x.nftId === btn.getAttribute('data-nftid'); })[0];
-    if (p) submitInlineListing(p, input.value.trim().replace(/,/g, ''), cardEl);
-  });
 
   // ---- CONNECT SCYLLA — same XummPkce OAuth login /board uses, redirected
   // back to /swap instead. Several entry points share this one flow (the MY
@@ -4566,8 +4606,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       var balanceNum = (line && line.hasTrustline) ? (line.balance || 0) : 0;
       var balanceText = balanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
       el.pigeonsLoggedInSummary.innerHTML =
-        '<span class="pigeons-green-num">' + pigeonCount.toLocaleString() + '</span> P!GE0NS  ::  ' +
-        '<span class="pigeons-green-num">' + balanceText + '</span>';
+        '<div class="pigeons-loggedin-line"><span class="pigeons-green-num">' + pigeonCount.toLocaleString() + '</span> P!GE0NS 0WNED</div>' +
+        '<div class="pigeons-loggedin-line">BALANCE :: <span class="pigeons-green-num">' + balanceText + '</span></div>';
       // Redundant to spell out "TRUSTLINE SET" — owning pigeons or holding
       // a real $PIGEONS balance already proves that. Only worth surfacing
       // when it's NOT set, since that's the one case actually actionable.
@@ -4707,7 +4747,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showListingResult(data){
-    el.listResultPigeonNum.textContent = 'P!GE0N #' + (listingTarget.number !== null ? listingTarget.number : '????');
+    el.listResultPigeonNum.innerHTML = 'P!GE0N #' + (listingTarget.number !== null ? greenNum(listingTarget.number) : '????');
     el.listResultPrice.textContent = fmtPigeons(data.price);
     el.listResultStatus.textContent = 'L!STED';
     if (data.txHash){
@@ -4765,7 +4805,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buyConfTxType.textContent = txjson.TransactionType;
       el.buyConfAccount.textContent = txjson.Account;
       el.buyConfOfferId.textContent = txjson.NFTokenSellOffer;
-      el.buyConfPigeon.textContent = 'P!GE0N #' + (p.number !== null ? p.number : '????');
+      el.buyConfPigeon.innerHTML = 'P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????');
       el.buyConfSeller.textContent = display.seller;
       el.buyConfPrice.textContent = fmtPigeons(display.price);
       el.buyConfirmStatus.textContent = '';
@@ -4857,7 +4897,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showBuyResult(data){
-    el.buyResultPigeonNum.textContent = 'P!GE0N #' + (buyTarget.number !== null ? buyTarget.number : '????');
+    el.buyResultPigeonNum.innerHTML = 'P!GE0N #' + (buyTarget.number !== null ? greenNum(buyTarget.number) : '????');
     el.buyResultPrice.textContent = el.buyConfPrice.textContent;
     el.buyResultStatus.textContent = 'SETTLED';
     if (data.txHash){
@@ -4902,7 +4942,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.delistConfTxType.textContent = txjson.TransactionType;
       el.delistConfAccount.textContent = txjson.Account;
       el.delistConfOfferId.textContent = txjson.NFTokenOffers.join(', ');
-      el.delistConfPigeon.textContent = 'P!GE0N #' + (p.number !== null ? p.number : '????');
+      el.delistConfPigeon.innerHTML = 'P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????');
       el.delistConfirmStatus.textContent = '';
       el.delistOpenXamanBtn.disabled = false;
       el.delistOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
@@ -4983,7 +5023,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showDelistResult(data){
-    el.delistResultPigeonNum.textContent = 'P!GE0N #' + (delistTarget.number !== null ? delistTarget.number : '????');
+    el.delistResultPigeonNum.innerHTML = 'P!GE0N #' + (delistTarget.number !== null ? greenNum(delistTarget.number) : '????');
     el.delistResultStatus.textContent = 'DEL!STED';
     if (data.txHash){
       el.delistResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
@@ -5146,7 +5186,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showOfferResult(data){
-    el.offerResultPigeonNum.textContent = 'P!GE0N #' + (offerTarget.number !== null ? offerTarget.number : '????');
+    el.offerResultPigeonNum.innerHTML = 'P!GE0N #' + (offerTarget.number !== null ? greenNum(offerTarget.number) : '????');
     el.offerResultPrice.textContent = fmtPigeons(data.price);
     el.offerResultStatus.textContent = 'SENT';
     if (data.txHash){
@@ -5193,6 +5233,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.offersReceivedBlock.style.display = '';
       el.offersReceivedSummary.textContent = totalOffers ? '0FFERS RECE!VED (' + totalOffers + ')' : 'N0 0FFERS';
       renderMyPigeonsList();
+      // Also refresh the DATABASE grid when SH0W MY P!GE0NS is what's
+      // showing (ownedPigeonActionHtml reads offersByNftId there too).
+      if (isOwnWalletScope()) runScopedQuery();
     }).catch(function(){});
   }
   el.acceptOfferConfirmBackBtn.addEventListener('click', function(){
@@ -5285,7 +5328,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showAcceptOfferResult(data){
-    el.acceptOfferResultPigeonNum.textContent = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + acceptOfferTarget.number : '#????');
+    el.acceptOfferResultPigeonNum.innerHTML = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
     el.acceptOfferResultPrice.textContent = fmtPigeons(data.totalValue !== undefined ? data.totalValue : acceptOfferTarget.price);
     el.acceptOfferResultFee.textContent = data.feeValue !== undefined ? fmtPigeons(data.feeValue) : '—';
     el.acceptOfferResultSellerAmount.textContent = data.sellerValue !== undefined ? fmtPigeons(data.sellerValue) : '—';
@@ -5386,7 +5429,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // ---- Sales history (real, collection-wide, infinite scroll) ----
   function saleRowHtml(s){
     var thumb = s.image ? '<img src="' + escapeHtml(s.image) + '" alt="" loading="lazy">' : '';
-    var num = s.number !== null ? '#' + s.number : '#????';
+    var num = s.number !== null ? '#' + greenNum(s.number) : '#????';
     var price = s.currency === 'PIGEONS'
       ? (s.pigeonsPrice !== null && s.pigeonsPrice !== undefined ? s.pigeonsPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS' : '?')
       : (s.priceXrp !== null ? s.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?');
@@ -5620,7 +5663,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     browseOwnerCollection(link.getAttribute('data-wallet'), link.getAttribute('data-short'));
   });
   function updateDetailRarity(p){
-    if (p && p.rarityRank){ el.detailRarityRow.style.display = ''; el.detailRarity.textContent = p.rarityRank + (p.rarityTotal ? ' / ' + p.rarityTotal : ''); }
+    if (p && p.rarityRank){ el.detailRarityRow.style.display = ''; el.detailRarity.innerHTML = greenNum(p.rarityRank) + (p.rarityTotal ? ' / ' + p.rarityTotal : ''); }
     else el.detailRarityRow.style.display = 'none';
   }
   function updateDetailPrice(p){
@@ -5722,7 +5765,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   function openDetail(nftId){
     var known = findKnown(nftId);
-    el.detailNum.textContent = known && known.number !== null ? 'P!GE0N #' + known.number : 'P!GE0N ...';
+    el.detailNum.innerHTML = known && known.number !== null ? 'P!GE0N #' + greenNum(known.number) : 'P!GE0N ...';
     el.detailImgBox.innerHTML = known && known.image ? '<img src="' + escapeHtml(known.image) + '" alt="">' : '[ IMAGE ]';
     if (known && known.owner) renderOwnerLink(known.ownerShort, known.owner);
     else { el.detailOwner.textContent = '...'; el.detailOwner.classList.remove('not-indexed'); }
@@ -5748,7 +5791,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       var p = data.item;
       state.currentDetail = p;
-      el.detailNum.textContent = p.number !== null ? 'P!GE0N #' + p.number : 'P!GE0N ...';
+      el.detailNum.innerHTML = p.number !== null ? 'P!GE0N #' + greenNum(p.number) : 'P!GE0N ...';
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
       el.detailTraits.innerHTML = p.attributes.map(traitCellHtml).join('');
       updateDetailRarity(p);
@@ -5766,7 +5809,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // already lives inside screenHistory and is populated by openDetail's
   // eager loadDetailHistory() call, so there's nothing left to fetch here.
   el.detailHistoryToggle.addEventListener('click', function(){
-    el.historyNum.textContent = el.detailNum.textContent;
+    el.historyNum.innerHTML = el.detailNum.innerHTML;
     showScreen('history');
   });
   el.backToDetailBtn.addEventListener('click', function(){ showScreen('detail'); });
