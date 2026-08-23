@@ -1700,26 +1700,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
 
-  /* ---- detail screen — one column: the picture as big as the panel
-     allows, TRAITS right below it in a fixed 3-across grid, then the
-     sale/ownership detail fields, then listings/view-elsewhere. Bigger
-     text throughout too. Scoped to #screenDetail specifically —
-     .detail-field/.trait-grid/.df-label etc are shared with several
-     other narrow centered confirm/result screens elsewhere in this file,
-     which must stay exactly as they are. ---- */
-  .detail-single-col{ width:100%; }
-  #screenDetail .detail-img-large{ width:100%; max-width:100%; margin:0 0 1.25rem; }
+  /* ---- detail screen — picture sized to fit its own column on the left
+     (not blown up edge-to-edge), everything else (number, traits, sale
+     fields, listings, view-elsewhere) on the right in a fixed 3-across
+     trait grid with big, easy-to-read boxes. Scoped to #screenDetail
+     specifically — .detail-field/.trait-grid/.df-label etc are shared
+     with several other narrow centered confirm/result screens elsewhere
+     in this file, which must stay exactly as they are. ---- */
+  .detail-two-col{ display:grid; grid-template-columns:minmax(260px, 400px) 1fr; gap:2rem; align-items:start; }
+  @media (max-width:760px){
+    .detail-two-col{ grid-template-columns:1fr; gap:1.25rem; }
+  }
+  #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0; }
   #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 1.25rem; }
   #screenDetail .detail-num{ font-size:32px; margin-bottom:1.25rem; }
   #screenDetail .detail-traits-title{ font-size:14px; margin-top:0; }
-  #screenDetail .trait-grid{ max-width:100%; margin:0 0 1.5rem; grid-template-columns:repeat(3, 1fr); gap:0.85rem; }
-  @media (max-width:640px){
+  #screenDetail .trait-grid{ max-width:100%; margin:0 0 1.5rem; grid-template-columns:repeat(3, 1fr); gap:1rem; }
+  @media (max-width:520px){
     #screenDetail .trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
-  #screenDetail .trait-cell{ padding:0.85rem 1rem; }
-  #screenDetail .trait-cell .tc-label{ font-size:11px; }
-  #screenDetail .trait-cell .tc-value{ font-size:16px; }
-  #screenDetail .trait-cell .tc-sub{ font-size:11px; }
+  #screenDetail .trait-cell{ padding:1.1rem 1.2rem; }
+  #screenDetail .trait-cell .tc-label{ font-size:12px; }
+  #screenDetail .trait-cell .tc-value{ font-size:19px; }
+  #screenDetail .trait-cell .tc-sub{ font-size:12px; }
   #screenDetail .detail-field{ max-width:100%; margin:0 0 1rem; font-size:16px; }
   #screenDetail .tech-meta-title{ font-size:12px; }
   #screenDetail .scylla-listing-price{ font-size:17px; }
@@ -2301,10 +2304,13 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <!-- SCREEN 2: DETAIL -->
     <div class="sw-panel" id="screenDetail" style="display:none;">
-      <div class="detail-single-col">
+      <div class="detail-two-col">
+        <div class="detail-col-left">
+          <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
+        </div>
+        <div class="detail-col-right">
           <div class="detail-eyebrow">// P!GE0N !DENT!F!ED</div>
           <div class="detail-num" id="detailNum"></div>
-          <div class="detail-img-large pigeon-img-box" id="detailImgBox">[ IMAGE ]</div>
           <div class="detail-traits-title">TRA!TS</div>
           <div class="trait-grid" id="detailTraits"></div>
           <div class="detail-field"><span class="df-label">OWNER</span><span class="df-value" id="detailOwner"></span></div>
@@ -2334,6 +2340,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <a class="secondary-btn" id="viewBithompLink" target="_blank" rel="noopener">[ B!TH0MP ]</a>
             </div>
           </div>
+        </div>
       </div>
       <div class="detail-actions">
         <button class="secondary-btn" id="backToBrowseBtn">[ ← BACK ]</button>
