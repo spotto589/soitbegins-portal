@@ -1724,6 +1724,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .listing-market{ color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.1em; font-size:10px; }
   .listing-price{ color:var(--white); }
+  .offer-fee-breakdown{ font-size:9.5px; letter-spacing:0.05em; color:var(--grey-dim); text-transform:uppercase; }
   .listing-buy{
     background:transparent;
     border:1px solid var(--cyan-dim);
@@ -2554,7 +2555,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field"><span class="df-label">NFTokenBuyOffer</span><span class="df-value" id="acceptOfferConfOfferId"></span></div>
       <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="acceptOfferConfPigeon"></span></div>
       <div class="detail-field"><span class="df-label">BUYER</span><span class="df-value" id="acceptOfferConfBuyer"></span></div>
-      <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="acceptOfferConfPrice"></span></div>
+      <div class="detail-field"><span class="df-label">0FFER</span><span class="df-value" id="acceptOfferConfPrice"></span></div>
+      <div class="detail-field"><span class="df-label">MARKETPLACE FEE</span><span class="df-value" id="acceptOfferConfFee"></span></div>
+      <div class="detail-field"><span class="df-label">Y0U RECE!VE</span><span class="df-value" id="acceptOfferConfSellerAmount"></span></div>
       <div class="index-line" id="acceptOfferConfirmStatus" style="margin-top:1rem;"></div>
       <div class="detail-actions">
         <button class="secondary-btn" id="acceptOfferConfirmBackBtn">[ ← BACK ]</button>
@@ -2567,6 +2570,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-eyebrow">// SETTLED</div>
       <div class="detail-num" id="acceptOfferResultPigeonNum"></div>
       <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="acceptOfferResultPrice"></span></div>
+      <div class="detail-field"><span class="df-label">MARKETPLACE FEE</span><span class="df-value" id="acceptOfferResultFee"></span></div>
+      <div class="detail-field"><span class="df-label">SELLER RECE!VED</span><span class="df-value" id="acceptOfferResultSellerAmount"></span></div>
       <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="acceptOfferResultStatus"></span></div>
       <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="acceptOfferResultTxLink" target="_blank" rel="noopener"></a></span></div>
       <div class="detail-actions">
@@ -2574,7 +2579,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <div class="protocol-footer">Σκύλλα SWAP :: L!ST!NG, BUY!NG, AND DEL!ST!NG ARE REAL XRPL TRANSACT!0NS. N0 MARKETPLACE FEE, NEG0T!AT!0N, 0R MULT!-!TEM 0FFERS YET.</div>
+    <div class="protocol-footer">Σκύλλα SWAP :: L!ST!NG, BUY!NG, AND DEL!ST!NG ARE REAL XRPL TRANSACT!0NS. ACCEPT!NG AN 0FFER TAKES A 0.589% MARKETPLACE FEE, SETTLED AT0M!CALLY V!A BR0KERED NFT0KENACCEPT0FFER. N0 NEG0T!AT!0N 0R MULT!-!TEM 0FFERS YET.</div>
   </div>
 
   <div class="target-bar" id="targetBar" style="display:none;">
@@ -2680,8 +2685,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenOfferConfirm','offerConfTxType','offerConfAccount','offerConfOwner','offerConfNftId','offerConfCurrency','offerConfIssuer','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
    'offersReceivedBlock','offersReceivedList',
-   'screenAcceptOfferConfirm','acceptOfferConfTxType','acceptOfferConfAccount','acceptOfferConfOfferId','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
-   'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
+   'screenAcceptOfferConfirm','acceptOfferConfTxType','acceptOfferConfAccount','acceptOfferConfOfferId','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
+   'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   function escapeHtml(str){
@@ -5163,8 +5168,16 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="result-num" style="border-bottom:none; padding:0;">P!GE0N ' + (item.number !== null ? '#' + item.number : '#????') + '</div>' +
       '</div>' +
       item.offers.map(function(o){
-        return '<div class="listing-row"><span class="listing-market">' + escapeHtml(o.buyerShort || o.buyer) + '</span><span class="listing-price">' + escapeHtml(o.price) + ' $P!GE0NS</span>' +
-          '<button class="listing-buy accept-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(o.offerId) + '" data-price="' + escapeHtml(o.price) + '" data-buyer="' + escapeHtml(o.buyer) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '">[ ACCEPT ]</button>' +
+        var fee = clientMarketplaceFee(o.price);
+        var feeLine = fee
+          ? '<div class="offer-fee-breakdown">MARKETPLACE FEE :: ' + fmtPigeons(fee.feeValue) + '  ::  Y0U RECE!VE :: ' + fmtPigeons(fee.sellerValue) + '</div>'
+          : '';
+        return '<div class="listing-row" style="flex-direction:column; align-items:stretch; gap:0.3rem;">' +
+          '<div style="display:flex; align-items:center; justify-content:space-between; gap:0.6rem;">' +
+            '<span class="listing-market">' + escapeHtml(o.buyerShort || o.buyer) + '</span><span class="listing-price">' + escapeHtml(o.price) + ' $P!GE0NS</span>' +
+            '<button class="listing-buy accept-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(o.offerId) + '" data-price="' + escapeHtml(o.price) + '" data-buyer="' + escapeHtml(o.buyer) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '">[ ACCEPT 0FFER ]</button>' +
+          '</div>' +
+          feeLine +
         '</div>';
       }).join('') +
     '</div>';
@@ -5206,7 +5219,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.acceptOfferConfOfferId.textContent = txjson.NFTokenBuyOffer;
       el.acceptOfferConfPigeon.textContent = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + acceptOfferTarget.number : '#????');
       el.acceptOfferConfBuyer.textContent = res.data.display.buyer;
-      el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.price);
+      el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
+      el.acceptOfferConfFee.textContent = fmtPigeons(res.data.display.feeValue);
+      el.acceptOfferConfSellerAmount.textContent = fmtPigeons(res.data.display.sellerValue);
       el.acceptOfferConfirmStatus.textContent = '';
       el.acceptOfferOpenXamanBtn.disabled = false;
       el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
@@ -5280,11 +5295,24 @@ const SWAP_HTML = `<!DOCTYPE html>
           el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
           return;
         }
-        if (data.status === 'failed'){
-          el.acceptOfferConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
+        if (data.status === 'failed' || data.status === 'buy_offer_gone' || data.status === 'offer_amount_mismatch'){
+          var reason = data.status === 'buy_offer_gone' ? 'BUYER\\'S 0FFER N0 L0NGER EX!STS (CANCELLED 0R ALREADY ACCEPTED).'
+            : data.status === 'offer_amount_mismatch' ? 'OFFER AM0UNT CHANGED — TRY AGA!N.'
+            : 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
+          el.acceptOfferConfirmStatus.textContent = reason;
           el.acceptOfferOpenXamanBtn.disabled = false;
           el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
           return;
+        }
+        // 'signed_pending_ledger' (seller's sell offer not yet visible) and
+        // 'brokering_in_progress' (sell offer confirmed, broker wallet is
+        // now building/submitting the actual brokered accept) both just
+        // keep polling with a status line that reflects which stage this
+        // actually is, instead of a generic "waiting".
+        if (data.status === 'brokering_in_progress'){
+          el.acceptOfferConfirmStatus.textContent = 'SELL 0FFER C0NF!RMED — SETTL!NG BR0KERED SALE...';
+        } else if (data.status === 'signed_pending_ledger'){
+          el.acceptOfferConfirmStatus.textContent = 'S!GNED — WA!T!NG F0R LEDGER C0NF!RMAT!0N...';
         }
         acceptOfferPollTimer = setTimeout(pollAcceptOfferStatus, 2000);
       }).catch(function(){
@@ -5294,7 +5322,9 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   function showAcceptOfferResult(data){
     el.acceptOfferResultPigeonNum.textContent = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + acceptOfferTarget.number : '#????');
-    el.acceptOfferResultPrice.textContent = fmtPigeons(acceptOfferTarget.price);
+    el.acceptOfferResultPrice.textContent = fmtPigeons(data.totalValue !== undefined ? data.totalValue : acceptOfferTarget.price);
+    el.acceptOfferResultFee.textContent = data.feeValue !== undefined ? fmtPigeons(data.feeValue) : '—';
+    el.acceptOfferResultSellerAmount.textContent = data.sellerValue !== undefined ? fmtPigeons(data.sellerValue) : '—';
     el.acceptOfferResultStatus.textContent = 'SETTLED';
     if (data.txHash){
       el.acceptOfferResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
@@ -5794,6 +5824,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   function fmtPigeons(n){
     var num = typeof n === 'string' ? Number(n) : n;
     return (num || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
+  }
+  // Display-only mirror of computeMarketplaceFee() in _shared.js (0.589%)
+  // — purely so OFFERS RECEIVED can show "you'll get X" before the seller
+  // even clicks ACCEPT. Never authoritative: the server independently
+  // recomputes this from the real on-ledger offer amount before building
+  // any transaction, and rejects anything that doesn't match.
+  function clientMarketplaceFee(totalValueStr){
+    var total = Number(totalValueStr);
+    if (!isFinite(total) || total <= 0) return null;
+    var feeValue = Math.floor(total * 1e6 * 589 / 100000) / 1e6;
+    return { totalValue: total, feeValue: feeValue, sellerValue: total - feeValue };
   }
   function loadCollectionStats(){
     api({ stats: 1 }).then(function(data){

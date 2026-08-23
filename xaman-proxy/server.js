@@ -14,6 +14,7 @@
 // anyone else to create arbitrary sign requests on your app's behalf.
 
 const http = require('http');
+const xrpl = require('xrpl');
 
 const PORT = process.env.PORT || 3000;
 const XAMAN_API_KEY = process.env.XAMAN_API_KEY;
@@ -21,6 +22,51 @@ const XAMAN_API_SECRET = process.env.XAMAN_API_SECRET;
 const PROXY_SHARED_SECRET = process.env.PROXY_SHARED_SECRET;
 const XUMM_BASE = 'https://xumm.app/api/v1/platform/payload';
 const FETCH_TIMEOUT_MS = 15000;
+
+// Broker/marketplace wallet — the ONLY place this seed is ever held. Used
+// to sign+submit transactions where the marketplace itself is a party
+// (the brokered NFTokenAcceptOffer leg of a Pigeon sale, and the $CRWN
+// reward Payments sent afterward), never for anything a user's own Xaman
+// wallet should sign instead. If this is unset, /broker-submit simply
+// refuses to do anything — the rest of the proxy (Xaman payloads) keeps
+// working regardless.
+const BROKER_WALLET_SEED = process.env.BROKER_WALLET_SEED;
+const XRPL_WS_ENDPOINT = process.env.XRPL_WS_ENDPOINT || 'wss://xrplcluster.com';
+// Allowlist of what this proxy will ever sign as the broker — deliberately
+// narrow (not "sign anything you send me") since a bug or compromise on
+// the caller side shouldn't be able to turn this into an arbitrary
+// signing oracle for a wallet that holds real funds.
+const BROKER_ALLOWED_TX_TYPES = new Set(['NFTokenAcceptOffer', 'Payment']);
+
+async function submitAsBroker(txjson) {
+  if (!BROKER_WALLET_SEED) {
+    return { ok: false, error: 'broker_wallet_not_configured' };
+  }
+  if (!txjson || typeof txjson !== 'object' || !BROKER_ALLOWED_TX_TYPES.has(txjson.TransactionType)) {
+    return { ok: false, error: 'transaction_type_not_allowed' };
+  }
+  const client = new xrpl.Client(XRPL_WS_ENDPOINT);
+  try {
+    await client.connect();
+    const wallet = xrpl.Wallet.fromSeed(BROKER_WALLET_SEED);
+    const prepared = await client.autofill({ ...txjson, Account: wallet.address });
+    const signed = wallet.sign(prepared);
+    const result = await client.submitAndWait(signed.tx_blob);
+    const meta = result && result.result && result.result.meta;
+    const engineResult = meta && meta.TransactionResult;
+    return {
+      ok: engineResult === 'tesSUCCESS',
+      hash: signed.hash,
+      engineResult: engineResult || null,
+      meta: meta || null,
+      brokerAddress: wallet.address
+    };
+  } catch (e) {
+    return { ok: false, error: (e && e.message) || 'submit_failed' };
+  } finally {
+    try { await client.disconnect(); } catch (e) { /* already disconnected */ }
+  }
+}
 
 function send(res, status, body) {
   const text = JSON.stringify(body);
@@ -86,6 +132,18 @@ const server = http.createServer(async (req, res) => {
       const uuid = statusMatch[1];
       const result = await xummFetch(XUMM_BASE + '/' + uuid, { method: 'GET', headers: xummHeaders });
       return send(res, result.status, result.json === null ? { error: 'upstream_non_json', status: result.status } : result.json);
+    }
+
+    // Broker/marketplace self-signed submission — used for the brokered
+    // NFTokenAcceptOffer leg of a Pigeon sale and for the $CRWN reward
+    // Payments sent afterward. Never touches Xaman at all (this wallet
+    // signs for itself); same X-Proxy-Secret auth as everything else here.
+    if (req.method === 'POST' && req.url === '/broker-submit') {
+      const bodyText = await readBody(req);
+      let body;
+      try { body = JSON.parse(bodyText); } catch (e) { return send(res, 400, { error: 'bad_request' }); }
+      const result = await submitAsBroker(body && body.txjson);
+      return send(res, result.ok ? 200 : 502, result);
     }
 
     return send(res, 404, { error: 'not_found' });

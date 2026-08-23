@@ -1,14 +1,18 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts, fetchNftBuyOffers,
-  createXamanPayload, recordPendingBuy
+  fetchDeeptideNftDetail, createXamanPayload,
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET,
+  acquireBrokerAcceptLock, recordPendingBrokerAccept
 } from '../_shared.js';
 
-// Re-derives and re-validates the exact same txjson swap-acceptoffer-
-// prepare.js already showed (never trusts a txjson the client might send
-// back — only nftId + offerId), then asks Xaman to create a real sign
-// request for it. Stashes buyer/price now (reusing the same pendingbuy KV
-// helper the BUY flow uses) — by settlement time the accepted offer is
-// gone from the ledger and no longer derivable.
+// Re-derives and re-validates the exact same seller sell-offer txjson
+// swap-acceptoffer-prepare.js already showed (never trusts a txjson the
+// client might send back — only nftId + offerId), then asks Xaman to
+// create a real sign request for it. Stashes the fee breakdown + buyer +
+// buy-offer id now (by settlement time the accepted buy offer is gone
+// from the ledger and no longer derivable) — swap-acceptoffer-status.js
+// picks this up once the seller's sell offer confirms, to build and
+// submit the actual brokered NFTokenAcceptOffer.
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -43,6 +47,13 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
+  if (env.coin) {
+    const gotLock = await acquireBrokerAcceptLock(env.coin, offerId);
+    if (!gotLock) {
+      return new Response(JSON.stringify({ error: 'already_processing' }), { status: 409 });
+    }
+  }
+
   const nfts = await fetchAllAccountNfts(owner);
   if (!nfts.some(n => n.NFTokenID === nftId)) {
     return new Response(JSON.stringify({ error: 'not_owned' }), { status: 403 });
@@ -53,11 +64,31 @@ export async function onRequestPost(context) {
   if (!offer) {
     return new Response(JSON.stringify({ error: 'offer_not_found' }), { status: 404 });
   }
+  if (offer.owner === owner) {
+    return new Response(JSON.stringify({ error: 'cannot_accept_own_offer' }), { status: 400 });
+  }
+  if (!offer.amount || typeof offer.amount !== 'object' ||
+      offer.amount.currency !== encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency) ||
+      offer.amount.issuer !== PIGEONS_TOKEN_CONFIG.issuer) {
+    return new Response(JSON.stringify({ error: 'unexpected_offer_currency' }), { status: 400 });
+  }
+
+  const fee = computeMarketplaceFee(offer.amount.value);
+  if (!fee) {
+    return new Response(JSON.stringify({ error: 'invalid_offer_amount' }), { status: 400 });
+  }
 
   const txjson = {
-    TransactionType: 'NFTokenAcceptOffer',
+    TransactionType: 'NFTokenCreateOffer',
     Account: owner,
-    NFTokenBuyOffer: offerId
+    NFTokenID: nftId,
+    Amount: {
+      currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency),
+      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      value: fee.sellerValue
+    },
+    Destination: MARKETPLACE_BROKER_WALLET,
+    Flags: 1
   };
 
   const xummData = await createXamanPayload(env, txjson);
@@ -66,11 +97,16 @@ export async function onRequestPost(context) {
   }
 
   if (env.coin) {
-    context.waitUntil(recordPendingBuy(env.coin, xummData.uuid, {
+    const item = await fetchDeeptideNftDetail(nftId).catch(() => null);
+    context.waitUntil(recordPendingBrokerAccept(env.coin, xummData.uuid, {
       nftId,
+      offerId,
       seller: owner,
       buyer: offer.owner,
-      priceValue: offer.amount.value
+      totalValue: fee.totalValue,
+      feeValue: fee.feeValue,
+      sellerValue: fee.sellerValue,
+      pigeonNumber: (item && item.number) || null
     }));
   }
 

@@ -293,6 +293,203 @@ export function swapOfferSourceMemo() {
   }];
 }
 
+// ---- Brokered $PIGEONS sale — accepting a received MAKE AN OFFER buy
+// offer settles through XRPL brokered NFTokenAcceptOffer instead of a
+// direct accept, so the marketplace fee is taken atomically in the same
+// transaction (NFTokenBrokerFee), never a second Payment. See
+// swap-acceptoffer-prepare/-payload/-status.js for the full flow. ----
+
+// The marketplace/developer wallet — signs the brokered accept itself
+// (via the xaman-proxy's /broker-submit, not Xaman) and is the
+// Destination the seller's own sell-offer must be restricted to.
+export const MARKETPLACE_BROKER_WALLET = 'rpigEoNV9KYjK6P9kzFmTqesbpqv7dpnzK';
+
+// 0.589% = 589 / 100000, kept as an integer basis-point ratio (not 0.00589
+// as a float) so the fee math below never has to multiply by a repeating
+// binary fraction.
+export const MARKETPLACE_FEE_BASIS_POINTS = 589;
+
+function decimalToMicroUnits(valueStr) {
+  const n = Number(valueStr);
+  return isFinite(n) ? Math.round(n * 1e6) : NaN;
+}
+function microUnitsToDecimalStr(micro) {
+  const sign = micro < 0 ? '-' : '';
+  const abs = Math.abs(micro);
+  const intPart = Math.floor(abs / 1e6).toString();
+  const fracPart = (abs % 1e6).toString().padStart(6, '0').replace(/0+$/, '');
+  return sign + intPart + (fracPart ? '.' + fracPart : '');
+}
+
+// Centralized $PIGEONS marketplace fee math. Works in integer "micro-unit"
+// (6-decimal-place) arithmetic rather than naive `total * 0.00589`
+// floating point, so feeValue + sellerValue always sums back to exactly
+// totalValue — the same reasoning a drops-based integer fee calc uses for
+// XRP, adapted here for a $PIGEONS decimal-string amount instead of
+// integer drops. Returns null for a non-finite/non-positive amount.
+export function computeMarketplaceFee(totalValueStr) {
+  const totalMicro = decimalToMicroUnits(totalValueStr);
+  if (!isFinite(totalMicro) || totalMicro <= 0) return null;
+  const feeMicro = Math.floor(totalMicro * MARKETPLACE_FEE_BASIS_POINTS / 100000);
+  const sellerMicro = totalMicro - feeMicro;
+  return {
+    totalValue: microUnitsToDecimalStr(totalMicro),
+    feeValue: microUnitsToDecimalStr(feeMicro),
+    sellerValue: microUnitsToDecimalStr(sellerMicro)
+  };
+}
+
+// Identifies the marketplace + which Pigeon on-ledger, alongside the
+// generic swapOfferSourceMemo() (both ride in the same Memos array —
+// XRPL allows multiple Memo entries per transaction).
+export function brokeredSaleMemo(pigeonNumber) {
+  const label = 'SOITBEGINS | PIGEON SALE' + (pigeonNumber !== null && pigeonNumber !== undefined ? ' | #' + pigeonNumber : '');
+  return {
+    Memo: {
+      MemoType: stringToHex('SaleInfo'),
+      MemoFormat: stringToHex('text/plain'),
+      MemoData: stringToHex(label)
+    }
+  };
+}
+
+// $CRWN reward token, paid to both sides of a settled brokered sale as a
+// thank-you for trading through Σκύλλα — a real currency/issuer (confirmed
+// live by the user), but a DIFFERENT, purpose-specific config from
+// KINGDOM_CLAIM_CONFIG.crwn above (that one is the unrelated Kingdom
+// King-holder claim feature and stays untouched/unconfigured). TEST-PHASE
+// only: a small flat amount per recipient while the real "percentage of
+// sale price" reward math gets worked out later.
+export const SWAP_REWARD_TOKEN_CONFIG = { currency: 'CRWN', issuer: 'r99LZRNxxss7eSJqKTSEvp1Xd48JGh5Vp5', configured: true };
+export const SWAP_REWARD_TEST_AMOUNT = '1';
+
+function rewardMemo(label) {
+  return {
+    Memo: {
+      MemoType: stringToHex('RewardInfo'),
+      MemoFormat: stringToHex('text/plain'),
+      MemoData: stringToHex(label)
+    }
+  };
+}
+
+// Posts to the xaman-proxy's /broker-submit — the broker wallet signs and
+// submits the given txjson itself (no Xaman involved, since the
+// marketplace is a party to the transaction, not a user). Longer timeout
+// than the Xaman payload calls: this does a full connect+autofill+sign+
+// submitAndWait round trip against the XRPL network, not just a proxy
+// hop.
+const BROKER_SUBMIT_TIMEOUT_MS = 25000;
+export async function submitAsBroker(env, txjson) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), BROKER_SUBMIT_TIMEOUT_MS);
+  try {
+    const res = await fetch(env.XAMAN_PROXY_URL + '/broker-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Proxy-Secret': env.XAMAN_PROXY_SHARED_SECRET },
+      body: JSON.stringify({ txjson }),
+      signal: controller.signal
+    });
+    const data = await res.json().catch(() => null);
+    return data || { ok: false, error: 'proxy_non_json_response' };
+  } catch (e) {
+    return { ok: false, error: 'proxy_unreachable' };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Sends the $CRWN reward as its own Payment, signed by the broker wallet —
+// deliberately a SEPARATE transaction from the brokered sale (XRPL's
+// NFTokenAcceptOffer has no field for an arbitrary third-currency payout;
+// this is the closest practical approximation to "at the same time,"
+// fired immediately after the sale settles, not a real atomic guarantee).
+// Failure here is non-fatal to the sale itself — logged, never allowed to
+// undo or block a already-settled trade.
+export async function payBrokerReward(env, destination, memoLabel) {
+  if (!SWAP_REWARD_TOKEN_CONFIG.configured) return { ok: false, error: 'reward_not_configured' };
+  const txjson = {
+    TransactionType: 'Payment',
+    Destination: destination,
+    Amount: {
+      currency: encodeCurrencyCode(SWAP_REWARD_TOKEN_CONFIG.currency),
+      issuer: SWAP_REWARD_TOKEN_CONFIG.issuer,
+      value: SWAP_REWARD_TEST_AMOUNT
+    },
+    Memos: [rewardMemo(memoLabel)]
+  };
+  return submitAsBroker(env, txjson);
+}
+
+// Confirms the broker wallet's $PIGEONS trust line actually moved by
+// exactly the expected fee, straight from the settling transaction's OWN
+// metadata (not a before/after wallet-balance snapshot, which a concurrent
+// unrelated transfer could pollute). RippleState.Balance is signed from
+// the LOW account's perspective, so the sign is flipped when the broker
+// is the HIGH side, to always mean "the broker's real holding increased".
+export function verifyBrokerFeeFromMeta(meta, brokerWallet, issuer, currencyCode, expectedFeeValue) {
+  if (!meta || !Array.isArray(meta.AffectedNodes)) return { ok: false, reason: 'no_meta' };
+  for (const node of meta.AffectedNodes) {
+    const entry = node.ModifiedNode || node.CreatedNode;
+    if (!entry || entry.LedgerEntryType !== 'RippleState') continue;
+    const fields = entry.FinalFields || entry.NewFields;
+    if (!fields || !fields.Balance || fields.Balance.currency !== currencyCode) continue;
+    const lowLimit = fields.LowLimit, highLimit = fields.HighLimit;
+    if (!lowLimit || !highLimit) continue;
+    const brokerIsLow = lowLimit.issuer === brokerWallet;
+    const brokerIsHigh = highLimit.issuer === brokerWallet;
+    if (!brokerIsLow && !brokerIsHigh) continue;
+    const otherIssuer = brokerIsLow ? highLimit.issuer : lowLimit.issuer;
+    if (otherIssuer !== issuer) continue;
+    const prevValue = entry.PreviousFields && entry.PreviousFields.Balance ? Number(entry.PreviousFields.Balance.value) : 0;
+    const finalValue = Number(fields.Balance.value);
+    const sign = brokerIsLow ? 1 : -1;
+    const delta = (finalValue - prevValue) * sign;
+    const expected = Number(expectedFeeValue);
+    return { ok: Math.abs(delta - expected) < 1e-6, delta, expected };
+  }
+  return { ok: false, reason: 'broker_trustline_not_found_in_meta' };
+}
+
+// Bridges swap-acceptoffer-payload.js (which knows the buyer/fee/pigeon
+// number right as it builds the seller's destination sell-offer txjson) to
+// swap-acceptoffer-status.js (which only sees "did the seller's sell offer
+// land yet" — by settlement time the original buy offer may already be
+// gone). Same pattern as recordPendingBuy/takePendingBuy, kept separate
+// since this flow needs more fields (fee breakdown, buy-offer id).
+const PENDING_BROKER_ACCEPT_PREFIX = 'pswap:pendingbrokeraccept:';
+const PENDING_BROKER_ACCEPT_TTL_SECONDS = 900;
+
+export async function recordPendingBrokerAccept(kv, uuid, entry) {
+  await safeKvPut(kv, PENDING_BROKER_ACCEPT_PREFIX + uuid, JSON.stringify(entry), { expirationTtl: PENDING_BROKER_ACCEPT_TTL_SECONDS });
+}
+export async function takePendingBrokerAccept(kv, uuid) {
+  const raw = await kv.get(PENDING_BROKER_ACCEPT_PREFIX + uuid);
+  if (!raw) return null;
+  await kv.delete(PENDING_BROKER_ACCEPT_PREFIX + uuid).catch(() => {});
+  return JSON.parse(raw);
+}
+
+// Best-effort guard against the same buy offer being committed to accept
+// twice at once (two browser tabs, a double click before the button
+// disables). Not a true atomic lock — Cloudflare KV has no compare-and-
+// swap — but the ledger itself is the real backstop: only one brokered
+// accept can ever succeed against a given NFTokenBuyOffer, since accepting
+// it removes it. This just avoids wasted Xaman round-trips on the loser.
+const BROKER_ACCEPT_LOCK_PREFIX = 'pswap:brokeracceptlock:';
+const BROKER_ACCEPT_LOCK_TTL_SECONDS = 600;
+
+export async function acquireBrokerAcceptLock(kv, offerId) {
+  const key = BROKER_ACCEPT_LOCK_PREFIX + offerId;
+  const existing = await kv.get(key);
+  if (existing) return false;
+  await safeKvPut(kv, key, '1', { expirationTtl: BROKER_ACCEPT_LOCK_TTL_SECONDS });
+  return true;
+}
+export async function releaseBrokerAcceptLock(kv, offerId) {
+  await kv.delete(BROKER_ACCEPT_LOCK_PREFIX + offerId).catch(() => {});
+}
+
 // Real live $PIGEONS/XRP rate. DexScreener's public API is the primary
 // source — it derives price from actual recent trades (not just whatever
 // the thinnest open order happens to quote), and is the same number
