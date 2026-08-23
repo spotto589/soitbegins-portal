@@ -281,14 +281,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));
     gap:0.75rem;
   }
-  /* Floor prices lead at the very top; ITEMS/HOLDERS/TOTAL VOLUME/LISTED
-     (exactly 4 across) and 24h activity follow below it. */
-  .stats-strip-floor{ grid-template-columns:repeat(3, 1fr); margin-bottom:0.75rem; }
-  .stats-strip-main{ grid-template-columns:repeat(4, 1fr); }
-  .stats-strip-activity{ margin-top:0.75rem; }
+  /* All three pages of the carousel share the same fixed column count
+     (4) regardless of how many tiles that page actually has — a 3-tile
+     page just leaves one empty cell instead of its tiles stretching
+     wider, so nothing visibly resizes as the carousel swaps pages. */
+  .stats-strip-floor, .stats-strip-main, .stats-strip-activity{ grid-template-columns:repeat(4, 1fr); }
   @media (max-width:700px){
-    .stats-strip-main{ grid-template-columns:repeat(2, 1fr); }
-    .stats-strip-floor{ grid-template-columns:repeat(1, 1fr); }
+    .stats-strip-floor, .stats-strip-main, .stats-strip-activity{ grid-template-columns:repeat(2, 1fr); }
   }
   /* Dots + a nudging "SWIPE" hint under the auto-rotating strip, so it
      reads as a carousel rather than a bar that mysteriously changes. */
@@ -1711,7 +1710,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
     <div id="screenBrowse" style="display:none;">
       <div class="sw-panel sw-panel-signal" id="collectionDetailsPanel">
-        <div class="panel-title">$P!GE0NS</div>
         <!-- Auto-rotating strip — one page visible at a time, cycling on a
              timer instead of three stacked bars, to keep this area compact. -->
         <div class="stats-carousel" id="statsCarousel">
@@ -5193,7 +5191,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       current = (current + 1) % pages.length;
       pages[current].style.display = '';
       dots[current].classList.add('active');
-    }, 5000);
+    }, 10000);
   })();
   el.statSalesTile.addEventListener('click', function(){
     state.activeTab = 'sales';
