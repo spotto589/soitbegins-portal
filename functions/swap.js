@@ -3465,7 +3465,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else {
       el.targetPigeonCard.style.display = 'none';
     }
-    el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG H0LDER\\'S REAL P!GE0NS...</div>';
+    // SH0W MY P!GE0NS reuses the exact list already fetched once at login
+    // (see loadTrustlineLoginState's myOwnPigeonsCache) — paints instantly
+    // from memory instead of waiting on a second identical fetch. Still
+    // kicks off a fresh fetch below regardless, to self-heal against
+    // anything that changed since login (bought/sold/received a pigeon).
+    var isSelf = MY_WALLET && wallet === MY_WALLET;
+    if (isSelf && myOwnPigeonsCache !== null){
+      state.scopeAllItems = myOwnPigeonsCache;
+      el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
+      if (state.scopeAllItems.length){
+        runScopedQuery();
+      } else {
+        el.statusLine.innerHTML = 'SH0W!NG RESULTS F0R :: WALLET: ' + escapeHtml(state.scope.ownerShort) + ' :: <span class="hi">0</span> P!GE0NS';
+        el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0NS F0UND', ['TH!S WALLET 0WNS N0 P!GE0NS.'], false);
+      }
+    } else {
+      el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG H0LDER\\'S REAL P!GE0NS...</div>';
+    }
     // Force the DATABASE tab regardless of which tab we were on (a wallet
     // click from Top 10 / Sales Data should always land here) — and mark it
     // loaded first so opening it doesn't ALSO kick off a full-collection
@@ -3475,6 +3492,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderTradeBuilder();
     api({ wallet: wallet }).then(function(data){
       state.scopeAllItems = data.items || [];
+      if (isSelf) myOwnPigeonsCache = state.scopeAllItems;
       el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
       if (!state.scopeAllItems.length){
         el.statusLine.innerHTML = 'SH0W!NG RESULTS F0R :: WALLET: ' + escapeHtml(state.scope.ownerShort) + ' :: <span class="hi">0</span> P!GE0NS';
@@ -3483,7 +3501,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       runScopedQuery();
     }).catch(function(){
-      el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T LOAD TH!S WALLET. TRY AGA!N.'], false);
+      if (!isSelf || myOwnPigeonsCache === null){
+        el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T LOAD TH!S WALLET. TRY AGA!N.'], false);
+      }
     });
     // Scoped to your own wallet — ownedPigeonActionHtml (via
     // pigeonsActionBoxHtml) needs the same real listing/offers data the MY
@@ -3491,7 +3511,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // offer instead of always defaulting to "unlisted". Re-renders the
     // scoped grid once each lands (guarded against having since exited
     // this scope).
-    if (MY_WALLET && wallet === MY_WALLET){
+    if (isSelf){
       fetch('/api/swap-listing-owned?wallet=' + encodeURIComponent(wallet)).then(function(r){ return r.json(); }).then(function(listedRes){
         myListedData = (listedRes && listedRes.listed) || {};
         if (isOwnWalletScope()) runScopedQuery();
@@ -4601,6 +4621,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   // $PIGEONS trustline/balance from account_lines (fetchPigeonsAccountLine
   // via pigeonsAccountLine=1), shown in place of SET TRUSTLINE/COPY
   // ADDRESS/LOGIN once MY_WALLET is a real server-verified session. ----
+  // Own-wallet pigeon list, cached the moment it's first fetched (right
+  // here at login) so SH0W MY P!GE0NS can paint instantly from memory
+  // instead of waiting on a second identical fetch — see browseOwnerCollection.
+  // null = not fetched yet.
+  var myOwnPigeonsCache = null;
+  // Count and balance are fetched in parallel (independent endpoints) and
+  // can resolve in either order — each just updates its own piece of state
+  // and calls this shared render, instead of one write clobbering the
+  // other's already-painted result.
+  var trustlinePigeonCount = null; // null = not loaded yet
+  var trustlineBalanceHtml = null; // null = not loaded yet
+  function renderTrustlineSummary(){
+    var countLine = trustlinePigeonCount === null
+      ? '<div class="pigeons-loggedin-line">…</div>'
+      : '<div class="pigeons-loggedin-line">' + greenNum(trustlinePigeonCount.toLocaleString()) + ' P!GE0NS 0WNED</div>';
+    var balanceLine = '<div class="pigeons-loggedin-line">' + (trustlineBalanceHtml !== null ? trustlineBalanceHtml : 'BALANCE :: …') + '</div>';
+    el.pigeonsLoggedInSummary.innerHTML = countLine + balanceLine;
+  }
   function loadTrustlineLoginState(){
     if (!MY_WALLET){
       el.pigeonsBarLoggedOut.style.display = '';
@@ -4610,19 +4648,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.pigeonsBarLoggedOut.style.display = 'none';
     el.pigeonsBarLoggedIn.style.display = '';
     el.pigeonsLoggedInWallet.textContent = MY_WALLET.slice(0, 9) + '...' + MY_WALLET.slice(-4);
-    el.pigeonsLoggedInSummary.textContent = '…';
+    trustlinePigeonCount = null;
+    trustlineBalanceHtml = null;
+    renderTrustlineSummary();
     el.pigeonsLoggedInTrustline.textContent = '';
-    var pigeonCount = 0;
+    // Both fetches are independent (item count vs. account_line balance) —
+    // run them in parallel instead of one waiting on the other, so each
+    // paints as soon as it's ready instead of the slower of the two
+    // gating both.
     api({ wallet: MY_WALLET }).then(function(data){
-      pigeonCount = (data.items || []).length;
-      el.pigeonsLoggedInSummary.textContent = pigeonCount.toLocaleString() + ' P!GE0NS';
-      return api({ pigeonsAccountLine: 1, wallet: MY_WALLET });
-    }).then(function(line){
+      myOwnPigeonsCache = data.items || [];
+      trustlinePigeonCount = myOwnPigeonsCache.length;
+      renderTrustlineSummary();
+    }).catch(function(){});
+    api({ pigeonsAccountLine: 1, wallet: MY_WALLET }).then(function(line){
       var balanceNum = (line && line.hasTrustline) ? (line.balance || 0) : 0;
       var balanceStr = balanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 });
-      el.pigeonsLoggedInSummary.innerHTML =
-        '<div class="pigeons-loggedin-line">' + greenNum(pigeonCount.toLocaleString()) + ' P!GE0NS 0WNED</div>' +
-        '<div class="pigeons-loggedin-line">BALANCE :: ' + greenNum(balanceStr) + ' $P!GE0NS</div>';
+      trustlineBalanceHtml = 'BALANCE :: ' + greenNum(balanceStr) + ' $P!GE0NS';
+      renderTrustlineSummary();
       // Redundant to spell out "TRUSTLINE SET" — owning pigeons or holding
       // a real $PIGEONS balance already proves that. Only worth surfacing
       // when it's NOT set, since that's the one case actually actionable.
