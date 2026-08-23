@@ -2883,7 +2883,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenOfferResult.style.display = name === 'offerresult' ? '' : 'none';
     el.screenAcceptOfferConfirm.style.display = name === 'acceptofferconfirm' ? '' : 'none';
     el.screenAcceptOfferResult.style.display = name === 'acceptofferresult' ? '' : 'none';
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    // Scrolls to bring the DATABASE/MY PIGEONS/etc tab strip flush with the
+    // top of the viewport — not literal page position 0, which sits above
+    // the trustline banner/stats carousel and left you having to scroll
+    // back down manually every time a screen opened. Smooth, not an
+    // instant jump.
+    window.scrollTo({ top: window.scrollY + el.topTabs.getBoundingClientRect().top, behavior: 'smooth' });
   }
 
   function api(params){
@@ -5973,14 +5978,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     updateDetailListings(known && known.listings);
     updateScyllaListing(known);
     state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null, attributes: [] };
+    // showScreen itself smooth-scrolls the tab strip back into view (see
+    // its own comment) — a thumbnail click deep in a long (up to
+    // 3015-item) grid would otherwise leave the detail screen opening
+    // wherever the page happened to be scrolled.
     showScreen('detail');
-    // A thumbnail click deep in a long (up to 3015-item) grid leaves the
-    // page scrolled to wherever that thumbnail was — since the detail
-    // screen swaps in at the same spot in the DOM, without this the
-    // viewport would land mid-way down the new detail content instead of
-    // its top, looking like it opened "misaligned" with the DATABASE/MY
-    // PIGEONS/etc tabs above it.
-    window.scrollTo({ top: 0, behavior: 'instant' });
     refreshCardSelectionStates();
     loadDetailHistory(nftId);
 
@@ -6017,8 +6019,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.backToDetailBtn.addEventListener('click', function(){ showScreen('detail'); });
   el.backToBrowseBtn.addEventListener('click', function(){
     showScreen('browse');
+    // Overrides showScreen's own tab-strip-aligned scroll with the exact
+    // card position remembered in openDetail — going back should land you
+    // back on the specific Pigeon you clicked, not just near the top.
     if (scrollBeforeDetail !== null){
-      window.scrollTo({ top: scrollBeforeDetail, behavior: 'instant' });
+      window.scrollTo({ top: scrollBeforeDetail, behavior: 'smooth' });
       scrollBeforeDetail = null;
     }
   });
