@@ -750,10 +750,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .db-config-group{
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    padding:0.85rem 1rem;
+    padding:1.1rem 1.25rem;
     margin-bottom:0.75rem;
   }
-  .db-config-row{ margin-bottom:0.75rem; flex-wrap:wrap; }
+  .db-config-row{ margin-bottom:1rem; flex-wrap:wrap; row-gap:0.5rem; }
   .db-config-row:last-child{ margin-bottom:0; }
   .db-config-row .sort-field-label{ flex:0 0 175px; }
   /* SORT row — dropdown box, then RESET on its own line underneath it. */
