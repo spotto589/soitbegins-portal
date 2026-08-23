@@ -169,6 +169,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:none;
   }
   .title-online{ color:var(--green); text-shadow:0 0 6px var(--green-glow); }
+  /* $PIGEONS numbers — same green as the header's ONLINE, wherever a real
+     $PIGEONS-denominated figure is shown (NFT count, balance, rate,
+     calculator, floor). */
+  .pigeons-green-num{ color:var(--green); text-shadow:0 0 6px var(--green-glow); }
   .sw-panel{
     position:relative;
     border:1px solid var(--border-dim);
@@ -443,7 +447,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .stat-tile-pigeons:hover{ background:linear-gradient(160deg, rgba(136,72,248,0.7), rgba(120,72,216,0.8)); border-color:var(--pigeon-purple); }
   .stat-tile-pigeons .stat-label{ color:#fff; opacity:0.9; }
-  .stat-tile-pigeons .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.8); font-weight:700; }
+  .stat-tile-pigeons .stat-value{ color:var(--green) !important; text-shadow:0 0 6px var(--green-glow); font-weight:700; }
   /* Marketplace floor tiles — a colour each, so FLOOR :: XRP.CAFE and
      FLOOR :: DEEPTIDE read as two distinct sources at a glance. */
   .stat-tile-xrpcafe{
@@ -1533,7 +1537,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     white-space:nowrap;
   }
   .pigeons-bar-rate-line{ font-size:13px; letter-spacing:0.05em; opacity:0.9; }
-  .pigeons-bar-rate-value{ font-size:15px; font-weight:700; }
+  .pigeons-bar-rate-value{ font-size:15px; font-weight:700; color:var(--green); text-shadow:0 0 6px var(--green-glow); }
   /* XRP -> $PIGEONS calculator, with its own EXCHANGE RATE title above it. */
   .pigeons-bar-calc-col{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:0.4rem; }
   .pigeons-bar-calc-title{ font-size:10px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
@@ -1560,7 +1564,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-calc-input:focus{ outline:none; border-bottom-color:#fff; }
   .pigeons-bar-calc-input::placeholder{ color:rgba(255,255,255,0.6); text-transform:uppercase; }
   .pigeons-bar-calc-eq{ color:#fff; font-size:12px; opacity:0.8; }
-  .pigeons-bar-calc-out{ color:#fff; font-weight:700; font-size:13px; white-space:nowrap; }
+  .pigeons-bar-calc-out{ color:var(--green); text-shadow:0 0 6px var(--green-glow); font-weight:700; font-size:13px; white-space:nowrap; }
   /* Real DexScreener pair link (returned live in the rate fetch as
      dexUrl, falling back to the known pair URL until that resolves) —
      .bar-btn's own white-on-purple styling already applies via
@@ -4536,18 +4540,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.pigeonsLoggedInWallet.textContent = MY_WALLET.slice(0, 9) + '...' + MY_WALLET.slice(-4);
     el.pigeonsLoggedInSummary.textContent = '…';
     el.pigeonsLoggedInTrustline.textContent = '';
+    var pigeonCount = 0;
     api({ wallet: MY_WALLET }).then(function(data){
-      var count = (data.items || []).length;
-      el.pigeonsLoggedInSummary.textContent = count.toLocaleString() + ' P!GE0NS';
+      pigeonCount = (data.items || []).length;
+      el.pigeonsLoggedInSummary.textContent = pigeonCount.toLocaleString() + ' P!GE0NS';
       return api({ pigeonsAccountLine: 1, wallet: MY_WALLET });
     }).then(function(line){
-      var count = el.pigeonsLoggedInSummary.textContent.split(' ')[0];
-      var balanceText = line && line.hasTrustline
-        ? (line.balance || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS'
-        : '0 $P!GE0NS';
-      var trustlineText = line && line.hasTrustline === true ? 'TRUSTL!NE SET' : (line && line.hasTrustline === false ? 'TRUSTL!NE N0T SET' : 'TRUSTL!NE ??');
-      el.pigeonsLoggedInSummary.textContent = count + ' P!GE0NS  ::  ' + balanceText;
-      el.pigeonsLoggedInTrustline.textContent = trustlineText;
+      var balanceNum = (line && line.hasTrustline) ? (line.balance || 0) : 0;
+      var balanceText = balanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
+      el.pigeonsLoggedInSummary.innerHTML =
+        '<span class="pigeons-green-num">' + pigeonCount.toLocaleString() + '</span> P!GE0NS  ::  ' +
+        '<span class="pigeons-green-num">' + balanceText + '</span>';
+      // Redundant to spell out "TRUSTLINE SET" — owning pigeons or holding
+      // a real $PIGEONS balance already proves that. Only worth surfacing
+      // when it's NOT set, since that's the one case actually actionable.
+      el.pigeonsLoggedInTrustline.textContent = (line && line.hasTrustline === false) ? 'TRUSTL!NE N0T SET' : '';
     }).catch(function(){});
   }
   loadTrustlineLoginState();
