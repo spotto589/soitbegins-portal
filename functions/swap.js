@@ -335,7 +335,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      (backward nav), .stats-page-park-left instantly repositions a page
      off-screen left with no transition, right before it's animated in
      from that side. */
-  .stats-carousel-viewport{ position:relative; min-height:108px; overflow:hidden; flex:1; min-width:0; }
+  /* Height is synced to whichever page is actually showing (see
+     syncStatsViewportHeight) instead of a fixed guess sized to the
+     tallest page — the shorter ITEMS/HOLDERS/24H ACTIVITY pages were
+     leaving a dead-space gap between the tiles and the dots below when
+     a fixed height assumed FLOOR's own (taller) content. min-height here
+     is only a same-paint-frame fallback before JS runs. */
+  .stats-carousel-viewport{ position:relative; min-height:72px; overflow:hidden; flex:1; min-width:0; transition:height 0.3s ease; }
   .stats-page{
     position:absolute;
     top:0; left:0; width:100%;
@@ -5521,6 +5527,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.statTraded24h.textContent = data.traded24hCount !== null && data.traded24hCount !== undefined ? data.traded24hCount.toLocaleString() : '—';
       el.statVolume24h.textContent = data.volume24hXrp !== null && data.volume24hXrp !== undefined ? fmtXrp(data.volume24hXrp) + ' XRP' : '—';
       el.statSales24h.textContent = data.sales24hCount !== null && data.sales24hCount !== undefined ? data.sales24hCount.toLocaleString() : '—';
+      // Real numbers can wrap/size slightly differently than the "…"
+      // placeholders — resync the viewport height (see
+      // syncStatsViewportHeight in the carousel IIFE below) now that the
+      // active page's real content is in.
+      var activeStatsPage = el.statsCarousel.querySelector('.stats-page-active');
+      var statsViewportEl = el.statsCarousel.querySelector('.stats-carousel-viewport');
+      if (activeStatsPage && statsViewportEl) statsViewportEl.style.height = activeStatsPage.scrollHeight + 'px';
     }).catch(function(){});
   }
   // Auto-rotating stats strip — FLOOR PRICES, then ITEMS/HOLDERS/VOLUME/
@@ -5533,8 +5546,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   (function(){
     var pages = el.statsCarousel.querySelectorAll('.stats-page');
     var dots = el.statsCarouselDots.querySelectorAll('.stats-dot');
+    var viewport = el.statsCarousel.querySelector('.stats-carousel-viewport');
     var current = 0;
     var autoTimer = null;
+    // Sized to whatever page is actually active, not a fixed guess — no
+    // dead space between the tiles and the dots on the shorter pages.
+    function syncStatsViewportHeight(){
+      viewport.style.height = pages[current].scrollHeight + 'px';
+    }
+    syncStatsViewportHeight();
+    window.addEventListener('resize', syncStatsViewportHeight);
     function gotoStatsPage(newIndex, direction){
       if (newIndex === current) return;
       var outgoing = pages[current];
@@ -5552,6 +5573,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       outgoing.classList.add(direction === 1 ? 'stats-page-prev' : 'stats-page-exit-right');
       incoming.classList.add('stats-page-active');
       current = newIndex;
+      syncStatsViewportHeight();
       setTimeout(function(){
         outgoing.classList.remove('stats-page-prev', 'stats-page-exit-right');
       }, 500);
