@@ -1411,7 +1411,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* ---- old grid-tile card, still used by MY PIGEONS (myPigeonCardHtml) ---- */
   .result-grid{
     display:grid;
-    grid-template-columns:repeat(6, 1fr);
+    grid-template-columns:repeat(5, 1fr);
     gap:0.7rem;
   }
   .result-card{
@@ -2285,7 +2285,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="sw-panel" id="myPigeonsPanel" style="display:none;">
       <div class="panel-title" id="myPigeonsPanelTitle">MY P!GE0NS</div>
       <div id="myPigeonsConnect" style="display:none; text-align:center;">
-        <button class="bar-btn" id="connectScyllaBtn">[ CONNECT Σκύλλα ]</button>
+        <button class="bar-btn" id="connectScyllaBtn">[ CONNECT <span style="text-transform:none;">Σκύλλα</span> ]</button>
         <div class="index-line" id="connectStatus"></div>
       </div>
       <!-- No separate "WALLET CONNECTED" box here any more — the trustline
@@ -2765,7 +2765,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <div class="protocol-footer">Σκύλλα SWAP :: L!ST!NG, BUY!NG, AND DEL!ST!NG ARE REAL XRPL TRANSACT!0NS. ACCEPT!NG AN 0FFER TAKES A 0.589% MARKETPLACE FEE, SETTLED AT0M!CALLY V!A BR0KERED NFT0KENACCEPT0FFER. N0 NEG0T!AT!0N 0R MULT!-!TEM 0FFERS YET.</div>
+    <div class="protocol-footer"><span style="text-transform:none;">Σκύλλα</span> SWAP :: L!ST!NG, BUY!NG, AND DEL!ST!NG ARE REAL XRPL TRANSACT!0NS. ACCEPT!NG AN 0FFER TAKES A 0.589% MARKETPLACE FEE, SETTLED AT0M!CALLY V!A BR0KERED NFT0KENACCEPT0FFER. N0 NEG0T!AT!0N 0R MULT!-!TEM 0FFERS YET.</div>
   </div>
 
   <div class="target-bar" id="targetBar" style="display:none;">
