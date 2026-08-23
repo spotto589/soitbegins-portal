@@ -275,25 +275,42 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   .my-pigeons-grid{ margin-top:1rem; }
 
-  /* ---- collection stats strip (global system data — cyan accent) ---- */
+  /* ---- collection stats strip (global system data — cyan accent) ----
+     Flex, not grid — a grid with a fixed 4-column template still
+     reserves an empty trailing track for a 3-tile page, so those tiles
+     read as stuck to the left instead of centered. Flex-basis expressed
+     as a % of the row (minus proportional gap) gives every tile the
+     exact same width a 4-column grid would, in any tile count, and
+     justify-content:center centers the actual row of tiles as a group. */
   .stats-strip{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
     gap:0.75rem;
-    /* Fixed to the tallest page's real height (the FLOOR page, which
-       carries a coin thumbnail the other two pages don't) — every page
-       renders at the same height so swapping pages never resizes the
-       box. */
-    min-height:108px;
-    align-items:stretch;
   }
-  /* All three pages of the carousel share the same fixed column count
-     (4) regardless of how many tiles that page actually has — a 3-tile
-     page just leaves one empty cell instead of its tiles stretching
-     wider, so nothing visibly resizes as the carousel swaps pages. */
-  .stats-strip-floor, .stats-strip-main, .stats-strip-activity{ grid-template-columns:repeat(4, 1fr); }
+  .stats-strip .stat-tile{ flex:0 0 calc(25% - 0.5625rem); }
   @media (max-width:700px){
-    .stats-strip-floor, .stats-strip-main, .stats-strip-activity{ grid-template-columns:repeat(2, 1fr); }
+    .stats-strip .stat-tile{ flex:0 0 calc(50% - 0.375rem); }
+  }
+  /* Viewport clips the slide; height is fixed to the tallest page's real
+     height (the FLOOR page, which carries a coin thumbnail the other
+     two don't) so nothing resizes as pages swap. Every .stats-page is
+     absolutely positioned inside it and slides via transform — a real
+     swipe, not an instant cut. */
+  .stats-carousel-viewport{ position:relative; min-height:108px; overflow:hidden; }
+  .stats-page{
+    position:absolute;
+    top:0; left:0; width:100%;
+    transform:translateX(100%);
+    opacity:0;
+    pointer-events:none;
+    transition:transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.45s ease;
+  }
+  .stats-page.stats-page-active{ transform:translateX(0); opacity:1; pointer-events:auto; }
+  .stats-page.stats-page-prev{ transform:translateX(-100%); opacity:0; }
+  @media (prefers-reduced-motion: reduce){
+    .stats-page{ transition:opacity 0.3s ease; }
+    .stats-page:not(.stats-page-active){ transform:none; }
   }
   /* Dots + a nudging "SWIPE" hint under the auto-rotating strip, so it
      reads as a carousel rather than a bar that mysteriously changes. */
@@ -1701,21 +1718,23 @@ const SWAP_HTML = `<!DOCTYPE html>
       <!-- Auto-rotating strip — one page visible at a time, cycling on a
            timer instead of three stacked bars, to keep this area compact. -->
       <div class="stats-carousel" id="statsCarousel">
-      <div class="stats-strip stats-strip-floor stats-page" id="statsStripFloor">
+      <div class="stats-carousel-viewport">
+      <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
         <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><img class="stat-tile-pigeons-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
         <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
         <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
       </div>
-      <div class="stats-strip stats-strip-main stats-page" id="statsStrip" style="display:none;">
+      <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
         <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
         <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
         <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
         <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
       </div>
-      <div class="stats-strip stats-strip-activity stats-page" id="statsStripActivity" style="display:none;">
+      <div class="stats-strip stats-strip-activity stats-page" id="statsStripActivity">
         <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
         <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
         <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES H!ST0RY"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
+      </div>
       </div>
       <div class="stats-carousel-dots" id="statsCarouselDots">
         <span class="stats-dot active"></span>
@@ -5248,17 +5267,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   // Auto-rotating stats strip — FLOOR PRICES, then ITEMS/HOLDERS/VOLUME/
   // LISTED, then 24H ACTIVITY, cycling on a timer so this area stays one
-  // compact strip instead of three stacked bars.
+  // compact strip instead of three stacked bars. Real slide transition
+  // (not an instant display swap) — the outgoing page slides out left
+  // while the incoming page slides in from the right.
   (function(){
     var pages = el.statsCarousel.querySelectorAll('.stats-page');
     var dots = el.statsCarouselDots.querySelectorAll('.stats-dot');
     var current = 0;
     setInterval(function(){
-      pages[current].style.display = 'none';
+      var prev = current;
       dots[current].classList.remove('active');
       current = (current + 1) % pages.length;
-      pages[current].style.display = '';
       dots[current].classList.add('active');
+      pages[prev].classList.remove('stats-page-active');
+      pages[prev].classList.add('stats-page-prev');
+      pages[current].classList.add('stats-page-active');
+      setTimeout(function(){ pages[prev].classList.remove('stats-page-prev'); }, 500);
     }, 10000);
   })();
   el.statSalesTile.addEventListener('click', function(){
