@@ -1348,36 +1348,37 @@ const SWAP_HTML = `<!DOCTYPE html>
        the site's magenta accent (that stays reserved for SCYLLA/target). */
     background:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
     /* Border/radius/shadow/margin now live on the outer .pigeons-merged-panel
-       wrapper, which also contains #collectionDetailsPanel directly below
+       wrapper, which also contains #collectionDetailsPanel directly above
        this — the two read as one continuous purple-themed panel instead
        of two separate boxes with a gap between them. */
     border:none;
     border-radius:0;
     box-shadow:none;
     margin-bottom:0;
-    /* Overrides .pigeons-bar's own justify-content:center — left-cluster
-       (now normal flow, see above) sits left, body (flex:1) fills and
-       centers itself in whatever space is left, onboard-link stays
-       pinned right via its own position:absolute. align-items stays
-       center (inherited from .pigeons-bar) so body still centers
-       vertically against the now-taller left-cluster. */
-    justify-content:space-between;
+    /* Body (SET TRUSTLINE/address/COPY) on top, thumb+rate+calc+dex-
+       link+floor prices (.pigeons-bar-bottom-row) stacked underneath —
+       overrides .pigeons-bar's own row layout. */
+    flex-direction:column;
+    align-items:center;
   }
   /* Wraps the trustline strip + the stats info panel as one unified,
-     purple-themed box. */
+     purple-themed box. position:relative so the onboarding link (a
+     direct child, see below) can pin to this box's own top-right corner
+     regardless of which section happens to render at the top. */
   .pigeons-merged-panel{
+    position:relative;
     border:1px solid var(--pigeon-purple);
     border-radius:var(--radius);
     box-shadow:0 0 16px var(--pigeon-purple-glow);
     margin-bottom:1.25rem;
     overflow:hidden;
   }
-  /* The stats info panel, nested inside .pigeons-merged-panel directly
-     under the trustline strip — same purple gradient theme (not the
-     usual dark digital-glitch .sw-panel-signal background), own
-     border/radius/shadow/margin removed since the outer wrapper already
-     supplies those. No divider between this and the trustline strip
-     above it — one continuous purple panel, not two sections. */
+  /* The stats info panel, nested inside .pigeons-merged-panel ABOVE the
+     trustline strip — same purple gradient theme (not the usual dark
+     digital-glitch .sw-panel-signal background), own border/radius/
+     shadow/margin removed since the outer wrapper already supplies
+     those. No divider between this and the trustline strip below it —
+     one continuous purple panel, not two sections. */
   #collectionDetailsPanel{
     background-image:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
     background-size:100% 100%;
@@ -1388,22 +1389,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-shadow:none;
     margin-bottom:0;
   }
-  /* Thumbnail + live exchange rate + XRP->PIGEONS calculator, pinned to
-     the left edge as one unit (position:absolute on the wrapper, not the
-     thumb itself) so it never throws off the body's own centering below
-     — same trick used for the onboarding link on the right. */
-  .pigeons-bar-left-cluster{
-    /* Normal flow now (not pinned/absolute) — with the floor-price boxes
-       added underneath the calculator/dex link, this column got much
-       taller and variable-height; position:absolute would take it out of
-       flow entirely, leaving .pigeons-bar-issuer's own height sized only
-       to .pigeons-bar-body and clipping the floor boxes against
-       .pigeons-merged-panel's overflow:hidden. See .pigeons-bar-issuer's
-       justify-content:space-between + .pigeons-bar-body's flex:1 below
-       for how the body still reads as centered despite this. */
+  /* Thumbnail + live exchange rate + XRP->PIGEONS calculator + dex link +
+     floor prices, centered as a clean row underneath .pigeons-bar-body. */
+  .pigeons-bar-bottom-row{
     display:flex;
     align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
     gap:1rem;
+    margin-top:1rem;
+    width:100%;
   }
   /* Real artwork filling a big square, same technique as the $PIGEONS
      FLOOR tile (cover-sized background + purple wash) instead of a
@@ -1421,7 +1416,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* Rate line on top, calculator stacked directly underneath it — one
      column, not side-by-side. */
-  .pigeons-bar-rate-calc-col{ flex:0 0 auto; display:flex; flex-direction:column; gap:0.45rem; align-items:flex-start; }
+  .pigeons-bar-rate-calc-col{ flex:0 0 auto; display:flex; flex-direction:column; gap:0.45rem; align-items:center; }
   /* Live "1 PIGEON = X XRP" rate, DexScreener's trade-derived price via
      fetchPigeonsXrpRate (real XRPL book_offers as fallback only),
      periodically re-fetched (see refreshTrustlineRate) so it never goes
@@ -1482,7 +1477,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Stacked, centered on the FULL bar width (not just the space left
      over between the thumb and the onboarding link) — lines up with the
      page's own centered h1 and DATABASE VIEW selector above it. */
-  .pigeons-bar-body{ display:flex; flex:1; flex-direction:column; align-items:center; gap:0.5rem; text-align:center; }
+  .pigeons-bar-body{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; width:100%; text-align:center; }
   .pigeons-bar-addr-stack{ display:flex; flex-direction:column; align-items:center; gap:0.2rem; }
   .pigeons-bar-sublabel{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-addr{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); font-size:15px; }
@@ -1491,12 +1486,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-issuer .pigeons-bar-text{ font-size:16px; }
   /* Placeholder for now — the onboarding section itself doesn't exist
      yet, same "real link, not-yet-built destination" pattern as BURNT.
-     Pinned to the right edge, same reasoning as the thumb on the left. */
+     Pinned to .pigeons-merged-panel's own top-right corner (a direct
+     child of that wrapper now, not of .pigeons-bar-issuer) so it stays
+     in the top right regardless of which section renders at the top. */
   .pigeons-bar-onboard-link{
     position:absolute;
     right:1.25rem;
-    top:50%;
-    transform:translateY(-50%);
+    top:1rem;
     background:transparent;
     border:none;
     color:#fff;
@@ -1511,13 +1507,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .pigeons-bar-onboard-link:hover{ opacity:1; }
   @media (max-width:900px){
-    /* Left-cluster is normal flow at all widths now (see above) — only
-       the onboard-link (still pinned via position:absolute at desktop
-       width) needs un-pinning here. */
-    .pigeons-bar-onboard-link{ position:static; transform:none; margin:0 auto; }
-    .pigeons-bar-left-cluster{ flex-wrap:wrap; justify-content:center; }
-    .pigeons-bar-issuer{ flex-direction:column; gap:0.75rem; text-align:center; }
-    .pigeons-bar-onboard-link{ white-space:normal; }
+    /* Onboard-link (still pinned via position:absolute at desktop width)
+       needs un-pinning on narrow screens; .pigeons-bar-issuer/-bottom-row
+       are already normal flow + wrapping at every width. */
+    .pigeons-bar-onboard-link{ position:static; transform:none; margin:0.5rem auto 0; white-space:normal; }
   }
 
   /* ---- DATABASE row card: $PIGEONS listing (styled as a currency —
@@ -1940,52 +1933,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- Trustline strip + the stats info panel merged into one unified,
          purple-themed box (.pigeons-merged-panel) — sitting under the
          // DATABASE :: P!GE0NS ▼ selector, above the DATABASE/MY PIGEONS/
-         etc tabs. -->
+         etc tabs. Stats carousel on top, trustline strip underneath,
+         onboarding link pinned to the whole box's top-right corner. -->
     <div class="pigeons-merged-panel">
-    <div class="pigeons-bar pigeons-bar-issuer">
-      <div class="pigeons-bar-left-cluster">
-        <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
-        <div class="pigeons-bar-rate-calc-col">
-          <div class="pigeons-bar-rate" id="pigeonsBarRate" style="display:none;">
-            <span class="pigeons-bar-rate-line">1 $P!GE0NS =</span>
-            <span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span>
-          </div>
-          <div class="pigeons-bar-calc" id="pigeonsBarCalc" style="display:none;">
-            <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="ENTER XRP">
-            <span class="pigeons-bar-calc-eq">=</span>
-            <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
-          </div>
-          <a class="bar-btn pigeons-bar-dex-link" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">
-            <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">V!EW 0N DEXSCREENER
-          </a>
-          <!-- Floor prices, moved out of the stats carousel to live here
-               instead — XRP.CAFE/DEEPTIDE side by side, $PIGEONS FLOOR
-               underneath at the same box size as those two. -->
-          <div class="pigeons-bar-floor">
-            <div class="pigeons-bar-floor-row">
-              <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
-              <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
-            </div>
-            <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
-          </div>
-        </div>
-      </div>
-      <div class="pigeons-bar-body">
-        <span class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</span>
-        <div class="pigeons-bar-addr-stack">
-          <span class="pigeons-bar-sublabel">!SSUER ADDRESS</span>
-          <span class="ci-value ci-value-big pigeons-bar-addr" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span>
-        </div>
-        <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
-      </div>
-      <button class="pigeons-bar-onboard-link" id="onboardLink">New to the XRPL, NFTs, memes? Click here.</button>
-    </div>
-
-    <!-- DATABASE-only info box — lives outside #screenBrowse (and above
-         #topTabs in the DOM) purely so the tab bar can sit visually right
-         under it while still being the one always-visible element that
-         controls every tab, including this one. Shown/hidden by showTab()
-         exactly like every other tab's own panel. -->
+    <!-- DATABASE-only info box — lives outside #screenBrowse purely so
+         the tab bar can sit visually right under the whole merged panel
+         while still being the one always-visible element that controls
+         every tab, including this one. Shown/hidden by showTab() exactly
+         like every other tab's own panel. -->
     <div class="sw-panel sw-panel-signal" id="collectionDetailsPanel" style="display:none;">
       <!-- Auto-rotating strip — one page visible at a time, cycling on a
            timer instead of three stacked bars, to keep this area compact. -->
@@ -2013,6 +1968,44 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
       </div>
     </div>
+
+    <div class="pigeons-bar pigeons-bar-issuer">
+      <div class="pigeons-bar-body">
+        <span class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</span>
+        <div class="pigeons-bar-addr-stack">
+          <span class="pigeons-bar-sublabel">!SSUER ADDRESS</span>
+          <span class="ci-value ci-value-big pigeons-bar-addr" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span>
+        </div>
+        <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
+      </div>
+      <div class="pigeons-bar-bottom-row">
+        <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
+        <div class="pigeons-bar-rate-calc-col">
+          <div class="pigeons-bar-rate" id="pigeonsBarRate" style="display:none;">
+            <span class="pigeons-bar-rate-line">1 $P!GE0NS =</span>
+            <span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span>
+          </div>
+          <div class="pigeons-bar-calc" id="pigeonsBarCalc" style="display:none;">
+            <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="ENTER XRP">
+            <span class="pigeons-bar-calc-eq">=</span>
+            <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
+          </div>
+          <a class="bar-btn pigeons-bar-dex-link" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">
+            <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">V!EW 0N DEXSCREENER
+          </a>
+          <!-- Floor prices — XRP.CAFE/DEEPTIDE side by side, $PIGEONS
+               FLOOR underneath at the same box size as those two. -->
+          <div class="pigeons-bar-floor">
+            <div class="pigeons-bar-floor-row">
+              <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
+              <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
+            </div>
+            <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="pigeons-bar-onboard-link" id="onboardLink">New to the XRPL, NFTs, memes? Click here.</button>
     </div>
 
     <div class="top-tabs" id="topTabs">
