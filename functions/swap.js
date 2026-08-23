@@ -1051,11 +1051,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Full-width strip below the thumbnail — the AMOUNT field is always
      visible and typeable, no click-to-reveal step. Same strip in both
      the boxed and THUMBNAILS card layouts. */
+  /* Same purple as the trustline strip at the top of the site (the
+     collection's own sampled colour), not the site's magenta accent —
+     this represents the $PIGEONS coin, same as everywhere else it shows
+     up (FLOOR tile, trustline bar). */
   .thumb-offer{
     width:100%;
     margin-top:0.5rem;
-    background:rgba(255,51,204,0.08);
-    border:1px solid var(--magenta-dim);
+    background:rgba(136,72,248,0.1);
+    border:1px solid var(--pigeon-purple-dim);
     border-radius:var(--radius);
     padding:0.6em 0.7em;
   }
@@ -1064,8 +1068,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     justify-content:center;
     gap:0.5rem;
-    color:var(--magenta);
-    text-shadow:0 0 4px var(--magenta-glow);
+    color:var(--pigeon-purple);
+    text-shadow:0 0 4px var(--pigeon-purple-glow);
     font-family:var(--font-mono);
     font-size:15px;
     font-weight:700;
@@ -1075,25 +1079,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* The collection's own $PIGEONS coin, not the individual Pigeon's own
      thumbnail — this is a currency, not a per-item mark. */
-  .make-offer-coin{ width:34px; height:34px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--magenta-dim); }
+  .make-offer-coin{ width:34px; height:34px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--pigeon-purple-dim); }
   .thumb-offer-row{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
   .make-offer-input{
     flex:1 1 auto;
     min-width:0;
     background:rgba(8,9,11,0.6);
-    border:1px solid var(--magenta-dim);
+    border:1px solid var(--pigeon-purple-dim);
     color:var(--white);
     font-family:var(--font-mono);
     font-size:13px;
     padding:0.6em 0.65em;
     border-radius:var(--radius);
   }
-  .make-offer-input:focus{ outline:none; border-color:var(--magenta); }
+  .make-offer-input:focus{ outline:none; border-color:var(--pigeon-purple); }
   .make-offer-send{
     flex:1 1 auto;
-    background:var(--magenta);
-    border:1px solid var(--magenta);
-    color:#08090b;
+    background:var(--pigeon-purple);
+    border:1px solid var(--pigeon-purple);
+    color:#fff;
     font-family:var(--font-mono);
     font-weight:700;
     font-size:12px;
