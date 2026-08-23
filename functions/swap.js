@@ -5901,7 +5901,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (walletLink) browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short'));
   });
 
+  // Where the grid was scrolled to right before opening a Pigeon's detail
+  // screen — restored on BACK so you land back on the exact card you
+  // clicked, not the top of the whole list.
+  var scrollBeforeDetail = null;
   function openDetail(nftId){
+    scrollBeforeDetail = window.scrollY;
     var known = findKnown(nftId);
     el.detailNum.innerHTML = known && known.number !== null ? 'P!GE0N #' + greenNum(known.number) : 'P!GE0N ...';
     el.detailImgBox.innerHTML = known && known.image ? '<img src="' + escapeHtml(known.image) + '" alt="">' : '[ IMAGE ]';
@@ -5958,7 +5963,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     showScreen('history');
   });
   el.backToDetailBtn.addEventListener('click', function(){ showScreen('detail'); });
-  el.backToBrowseBtn.addEventListener('click', function(){ showScreen('browse'); });
+  el.backToBrowseBtn.addEventListener('click', function(){
+    showScreen('browse');
+    if (scrollBeforeDetail !== null){
+      window.scrollTo({ top: scrollBeforeDetail, behavior: 'instant' });
+      scrollBeforeDetail = null;
+    }
+  });
   el.detailSelectBtn.addEventListener('click', function(){
     if (state.currentDetail) handleSelect(state.currentDetail);
   });
