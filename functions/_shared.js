@@ -1975,12 +1975,21 @@ export async function getSwapSalesLog(kv) {
 // phrasing for "tried to JSON.parse a non-JSON body") on the client.
 const XAMAN_FETCH_TIMEOUT_MS = 18000;
 
-export async function createXamanPayload(env, txjson, options, attempt) {
+// userToken (optional): a previously-captured Xaman push token for the
+// signing wallet (see getXamanUserToken/xaman-webhook.js below) — when
+// present, the payload is created with push:true and Xaman delivers it
+// straight to that wallet's device as a real notification/Event, no
+// browser tab needed. Omitted (undefined) on a wallet's first-ever
+// payload, since there's no token to reuse yet; the existing "OPEN
+// XAMAN" browser-tab flow is what earns the token in the first place
+// (see the webhook comment for exactly how).
+export async function createXamanPayload(env, txjson, options, userToken, attempt) {
   attempt = attempt || 0;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), XAMAN_FETCH_TIMEOUT_MS);
   try {
-    const requestBody = JSON.stringify({ txjson, options: options || { submit: true, expire: 5 } });
+    const mergedOptions = Object.assign({ submit: true, expire: 5 }, options || {}, userToken ? { push: true } : {});
+    const requestBody = JSON.stringify(Object.assign({ txjson, options: mergedOptions }, userToken ? { user_token: userToken } : {}));
     const res = await fetch(env.XAMAN_PROXY_URL + '/payload', {
       method: 'POST',
       headers: {
@@ -1995,7 +2004,7 @@ export async function createXamanPayload(env, txjson, options, attempt) {
       console.log('createXamanPayload proxy NOT OK status=' + res.status + ' body=[' + JSON.stringify(data).slice(0, 500) + ']');
       if (attempt < 1) {
         await new Promise(resolve => setTimeout(resolve, 400));
-        return createXamanPayload(env, txjson, options, attempt + 1);
+        return createXamanPayload(env, txjson, options, userToken, attempt + 1);
       }
       return null;
     }
@@ -2008,7 +2017,7 @@ export async function createXamanPayload(env, txjson, options, attempt) {
     if (attempt < 1 && e && e.name !== 'AbortError') {
       console.log('createXamanPayload exception, retrying, attempt', attempt + 1, String(e));
       await new Promise(resolve => setTimeout(resolve, 400));
-      return createXamanPayload(env, txjson, options, attempt + 1);
+      return createXamanPayload(env, txjson, options, userToken, attempt + 1);
     }
     if (e && e.name === 'AbortError') {
       console.log('createXamanPayload timed out after', XAMAN_FETCH_TIMEOUT_MS, 'ms, attempt', attempt + 1, '- not retrying');
@@ -2034,6 +2043,28 @@ export async function getXamanPayloadStatus(env, uuid) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+// Xaman push tokens — captured via xaman-webhook.js once a wallet resolves
+// a payload with push requested and their app grants it, reused on every
+// LATER payload for that same wallet (see createXamanPayload's userToken
+// param) so a sign request can arrive as a real notification/Event on
+// their phone instead of requiring the "OPEN XAMAN" browser-tab flow.
+// Durable (no TTL) — cleared only if Xaman itself reports the token
+// invalid/revoked on some later attempt.
+const XAMAN_USER_TOKEN_PREFIX = 'pswap:xamanusertoken:';
+
+export async function getXamanUserToken(kv, wallet) {
+  if (!kv || !wallet) return null;
+  return kv.get(XAMAN_USER_TOKEN_PREFIX + wallet);
+}
+export async function storeXamanUserToken(kv, wallet, token) {
+  if (!kv || !wallet || !token) return;
+  await safeKvPut(kv, XAMAN_USER_TOKEN_PREFIX + wallet, token);
+}
+export async function clearXamanUserToken(kv, wallet) {
+  if (!kv || !wallet) return;
+  await kv.delete(XAMAN_USER_TOKEN_PREFIX + wallet).catch(() => {});
 }
 
 // Kingdom Phase 1 — every King NFT needs a stable friendly ID for display

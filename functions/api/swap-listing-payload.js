@@ -1,7 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
   PIGEON_ISSUER, PIGEON_TAXON, isTransferable,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, createXamanPayload, swapOfferSourceMemo
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, createXamanPayload, getXamanUserToken, swapOfferSourceMemo
 } from '../_shared.js';
 
 // Σκύλλα SWAP — first real listing test. Re-derives and re-validates the
@@ -81,7 +81,8 @@ export async function onRequestPost(context) {
     Memos: swapOfferSourceMemo()
   };
 
-  const xummData = await createXamanPayload(env, txjson);
+  const pushToken = await getXamanUserToken(env.coin, seller);
+  const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   const uuid = xummData && xummData.uuid;
   const next = xummData && xummData.next;
   if (!uuid || !next) {

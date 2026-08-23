@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, getSwapOfferPairs, fetchNftSellOffers, findSwapOffer,
-  createXamanPayload
+  createXamanPayload, getXamanUserToken
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same txjson swap-accept-prepare.js
@@ -65,7 +65,8 @@ export async function onRequestPost(context) {
     NFTokenSellOffer: liveOffer.nft_offer_index
   };
 
-  const xummData = await createXamanPayload(env, txjson);
+  const pushToken = await getXamanUserToken(env.coin, acceptor);
+  const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   const uuid = xummData && xummData.uuid;
   const next = xummData && xummData.next;
   if (!uuid || !next) {

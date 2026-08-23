@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts, fetchNftBuyOffers,
-  fetchDeeptideNftDetail, createXamanPayload,
+  fetchDeeptideNftDetail, createXamanPayload, getXamanUserToken,
   PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET,
   acquireBrokerAcceptLock, recordPendingBrokerAccept
 } from '../_shared.js';
@@ -91,7 +91,8 @@ export async function onRequestPost(context) {
     Flags: 1
   };
 
-  const xummData = await createXamanPayload(env, txjson);
+  const pushToken = await getXamanUserToken(env.coin, owner);
+  const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   if (!xummData || !xummData.uuid || !xummData.next) {
     return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });
   }

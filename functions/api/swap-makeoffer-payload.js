@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchDeeptideNftDetail,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, createXamanPayload, swapOfferSourceMemo
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, createXamanPayload, getXamanUserToken, swapOfferSourceMemo
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same txjson swap-makeoffer-prepare.js
@@ -72,7 +72,8 @@ export async function onRequestPost(context) {
     Memos: swapOfferSourceMemo()
   };
 
-  const xummData = await createXamanPayload(env, txjson);
+  const pushToken = await getXamanUserToken(env.coin, buyer);
+  const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   const uuid = xummData && xummData.uuid;
   const next = xummData && xummData.next;
   if (!uuid || !next) {

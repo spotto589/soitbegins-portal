@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, createXamanPayload, findPigeonsOffer
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, createXamanPayload, getXamanUserToken, findPigeonsOffer
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same txjson swap-delist-prepare.js
@@ -50,7 +50,8 @@ export async function onRequestPost(context) {
     NFTokenOffers: [ownOffer.nft_offer_index]
   };
 
-  const xummData = await createXamanPayload(env, txjson);
+  const pushToken = await getXamanUserToken(env.coin, seller);
+  const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   if (!xummData || !xummData.uuid || !xummData.next) {
     return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });
   }

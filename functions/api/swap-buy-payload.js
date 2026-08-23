@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, findPigeonsOffer,
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, getXamanUserToken, findPigeonsOffer,
   recordPendingBuy
 } from '../_shared.js';
 
@@ -76,7 +76,8 @@ export async function onRequestPost(context) {
     NFTokenSellOffer: offer.nft_offer_index
   };
 
-  const xummData = await createXamanPayload(env, txjson);
+  const pushToken = await getXamanUserToken(env.coin, buyer);
+  const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   if (!xummData || !xummData.uuid || !xummData.next) {
     console.log('BUY-PAYLOAD exit: xaman_request_failed, xummData was', JSON.stringify(xummData));
     return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });
