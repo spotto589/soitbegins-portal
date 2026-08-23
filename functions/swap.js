@@ -935,6 +935,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     white-space:nowrap;
   }
   .make-offer-mini-toggle:hover{ background:rgba(255,51,204,0.16); border-color:var(--magenta); }
+  /* THUMBNAILS view — full-width bar at the bottom of the tile instead
+     of a small pill next to the number (there's no number-row to sit
+     beside here). */
+  .thumb-offer{ width:100%; margin-top:0.5rem; }
+  .thumb-offer .make-offer-mini-toggle{ width:100%; justify-content:center; }
   /* The actual Pigeon's own thumbnail, not a generic coin mark — makes it
      obvious at a glance which Pigeon the offer belongs to. */
   .make-offer-coin{ width:14px; height:14px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--magenta-dim); }
@@ -1723,8 +1728,8 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
           </div>
           <select class="sort-select" id="dbViewSelect">
-            <option value="boxed" selected>B0XED V!EW</option>
-            <option value="thumbnails">THUMBNA!LS</option>
+            <option value="boxed">B0XED V!EW</option>
+            <option value="thumbnails" selected>THUMBNA!LS</option>
           </select>
         </div>
         <div class="sort-stack-row">
@@ -2156,7 +2161,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     sales: { skip: 0, hasMore: true, loading: false, opened: false },
     scyllaListedOnly: false,  // whole-collection LISTED filter — Pigeons listed through Scylla itself
     offerAssets: {},          // nftId -> { nftId, number, image } — up to 4, YOUR pigeons in the persistent trade builder
-    dbView: 'boxed'           // 'boxed' (full detail row) | 'thumbnails' (5-across, # + rarity only) — DATABASE grid only
+    dbView: 'thumbnails'      // 'boxed' (full detail row) | 'thumbnails' (5-across, # + rarity only, default) — DATABASE grid only
   };
 
   var el = {};
@@ -3112,13 +3117,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     var atCap = offerCtxCard
       ? (!inTarget && offerCount() >= OFFER_MAX)
       : (!inTarget && targetCount() >= OFFER_MAX);
+    // Full-width OFFER button at the bottom of the tile — same toggle+
+    // inline-input pattern as the boxed view (handlers key off the
+    // shared .result-card ancestor, not the boxed view's own layout).
+    var makeOfferHtml = p.owner !== MY_WALLET
+      ? '<div class="make-offer-mini thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
+          '<button class="make-offer-mini-toggle" data-nftid="' + escapeHtml(p.nftId) + '"><img class="make-offer-coin" src="' + escapeHtml(p.image || '') + '" alt="">0FFER $P!GE0NS</button>' +
+        '</div>'
+      : '';
+    var makeOfferInlineHtml = p.owner !== MY_WALLET
+      ? '<div class="make-offer-mini-inline" style="display:none;">' +
+          '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="AM0UNT">' +
+          '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
+        '</div>'
+      : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">P!GE0N ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         img +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
       '</div>' +
-      '<div class="result-card-body">' + rarityLine + '</div>' +
+      '<div class="result-card-body">' + rarityLine + makeOfferHtml + makeOfferInlineHtml + '</div>' +
     '</div>';
   }
   function cardHtmlForView(p){
@@ -3163,7 +3182,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       var offerToggle = e.target.closest('.make-offer-mini-toggle');
       if (offerToggle){
-        var leftCol = offerToggle.closest('.result-row-left');
+        var leftCol = offerToggle.closest('.result-card');
         var inline = leftCol.querySelector('.make-offer-mini-inline');
         var opening = inline.style.display === 'none';
         inline.style.display = opening ? 'flex' : 'none';
@@ -3185,7 +3204,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       var offerSend = e.target.closest('.make-offer-send');
       if (offerSend){
         var op2 = source().filter(function(x){ return x.nftId === offerSend.getAttribute('data-nftid'); })[0];
-        var strip3 = offerSend.closest('.result-row-left');
+        var strip3 = offerSend.closest('.result-card');
         var priceValue = strip3.querySelector('.make-offer-input').value.trim();
         if (op2) submitMakeOffer(op2, priceValue, strip3);
         return;
@@ -3220,7 +3239,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (e.key !== 'Enter') return;
       var input = e.target.closest('.make-offer-input');
       if (!input) return;
-      var strip4 = input.closest('.result-row-left');
+      var strip4 = input.closest('.result-card');
       var sendBtn2 = strip4.querySelector('.make-offer-send');
       var op3 = source().filter(function(x){ return x.nftId === sendBtn2.getAttribute('data-nftid'); })[0];
       if (op3) submitMakeOffer(op3, input.value.trim(), strip4);
