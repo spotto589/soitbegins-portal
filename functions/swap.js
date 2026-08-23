@@ -365,22 +365,32 @@ const SWAP_HTML = `<!DOCTYPE html>
   .stat-tile-link.scylla-active{ border-color:var(--magenta); background:var(--magenta-faint); }
   .stat-tile-link.scylla-active:hover{ background:var(--magenta-faint); border-color:var(--magenta); }
   .stat-tile-link.scylla-active .stat-value{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
-  /* $PIGEONS FLOOR — the collection's own artwork fills the whole tile as
-     a background, with the same purple wash as the issuer/trustline strip
-     (not the site's magenta accent — this represents the $PIGEONS coin
-     itself), plus a distinct round coin thumbnail so it reads clearly as
-     a currency tile, not just a filter toggle. */
+  /* $PIGEONS FLOOR — flat purple (the collection's own sampled purple,
+     not the site's magenta accent), no artwork/thumbnail — a plain
+     currency-colored tile, not a mini poster. */
   .stat-tile-pigeons{
-    position:relative;
     border-color:var(--pigeon-purple);
-    background-image:linear-gradient(160deg, rgba(136,72,248,0.55), rgba(120,72,216,0.65)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs");
-    background-size:cover;
-    background-position:center;
+    background:linear-gradient(160deg, rgba(136,72,248,0.55), rgba(120,72,216,0.65));
   }
-  .stat-tile-pigeons:hover{ background-image:linear-gradient(160deg, rgba(136,72,248,0.65), rgba(120,72,216,0.75)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs"); border-color:var(--pigeon-purple); }
-  .stat-tile-pigeons-coin{ width:26px; height:26px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.6); margin-bottom:0.4rem; }
+  .stat-tile-pigeons:hover{ background:linear-gradient(160deg, rgba(136,72,248,0.7), rgba(120,72,216,0.8)); border-color:var(--pigeon-purple); }
   .stat-tile-pigeons .stat-label{ color:#fff; opacity:0.9; }
   .stat-tile-pigeons .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.8); font-weight:700; }
+  /* Marketplace floor tiles — a colour each, so FLOOR :: XRP.CAFE and
+     FLOOR :: DEEPTIDE read as two distinct sources at a glance. */
+  .stat-tile-xrpcafe{
+    border-color:#1a3a6e;
+    background:linear-gradient(160deg, rgba(26,58,110,0.7), rgba(15,35,70,0.8));
+  }
+  .stat-tile-xrpcafe:hover{ background:linear-gradient(160deg, rgba(26,58,110,0.85), rgba(15,35,70,0.9)); border-color:#2a5ca0; }
+  .stat-tile-xrpcafe .stat-label{ color:#fff; opacity:0.9; }
+  .stat-tile-xrpcafe .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.6); font-weight:700; }
+  .stat-tile-deeptide{
+    border-color:#7fc4e8;
+    background:linear-gradient(160deg, rgba(127,196,232,0.5), rgba(90,170,215,0.6));
+  }
+  .stat-tile-deeptide:hover{ background:linear-gradient(160deg, rgba(127,196,232,0.65), rgba(90,170,215,0.75)); border-color:#a5d8f2; }
+  .stat-tile-deeptide .stat-label{ color:#08131a; opacity:0.85; }
+  .stat-tile-deeptide .stat-value{ color:#08131a !important; font-weight:700; }
   /* Deliberate placeholder tile/link, real tracking is a later system */
   .stat-tile-soon{ opacity:0.55; border-style:dashed; }
   .stat-tile-soon:hover{ opacity:0.85; }
@@ -1240,9 +1250,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      purple strip — no panel box around it — sitting above the DATABASE/
      MY PIGEONS/etc tabs, not tucked inside any screen. */
   .pigeons-bar-issuer{
-    align-items:center;
+    position:relative;
     margin-bottom:1.25rem;
-    gap:1rem;
     /* The collection's own purple, sampled from the coin artwork — not
        the site's magenta accent (that stays reserved for SCYLLA/target). */
     border-color:var(--pigeon-purple);
@@ -1252,21 +1261,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Real artwork filling a big square, same technique as the $PIGEONS
      FLOOR tile (cover-sized background + purple wash) instead of a
      small round coin icon — sized to the banner's own height so it
-     actually reads as a thumbnail, not a favicon. */
+     actually reads as a thumbnail, not a favicon. Pinned to the left
+     edge (position:absolute) so it never throws off the body's own
+     centering below — same trick used for the onboarding link on the
+     right. */
   .pigeons-bar-thumb{
-    flex:0 0 auto;
-    width:96px;
-    height:96px;
+    position:absolute;
+    left:1.25rem;
+    top:50%;
+    transform:translateY(-50%);
+    width:128px;
+    height:128px;
     border-radius:var(--radius);
     border:1px solid rgba(255,255,255,0.5);
     background-image:linear-gradient(160deg, rgba(136,72,248,0.35), rgba(120,72,216,0.45)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs");
     background-size:cover;
     background-position:center;
   }
-  /* Stacked, centered — trustline headline, then ISSUER ADDRESS label
-     directly above the address value, then COPY. Onboarding link sits
-     outside this block entirely, pushed to the far right of the bar. */
-  .pigeons-bar-body{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; flex:1; min-width:0; text-align:center; }
+  /* Stacked, centered on the FULL bar width (not just the space left
+     over between the thumb and the onboarding link) — lines up with the
+     page's own centered h1 and DATABASE VIEW selector above it. */
+  .pigeons-bar-body{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; width:100%; text-align:center; }
   .pigeons-bar-addr-stack{ display:flex; flex-direction:column; align-items:center; gap:0.2rem; }
   .pigeons-bar-sublabel{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-addr{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); font-size:15px; }
@@ -1275,9 +1290,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-issuer .pigeons-bar-text{ font-size:16px; }
   /* Placeholder for now — the onboarding section itself doesn't exist
      yet, same "real link, not-yet-built destination" pattern as BURNT.
-     Pushed to the far right of the bar (margin-left:auto on the flex
-     row), not stacked with the issuer/trustline content. */
+     Pinned to the right edge, same reasoning as the thumb on the left. */
   .pigeons-bar-onboard-link{
+    position:absolute;
+    right:1.25rem;
+    top:50%;
+    transform:translateY(-50%);
     background:transparent;
     border:none;
     color:#fff;
@@ -1289,14 +1307,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:none;
     opacity:0.85;
     white-space:nowrap;
-    margin-left:auto;
-    flex:0 0 auto;
-    align-self:center;
   }
   .pigeons-bar-onboard-link:hover{ opacity:1; }
-  @media (max-width:500px){
-    .pigeons-bar-issuer{ flex-direction:column; text-align:center; }
-    .pigeons-bar-onboard-link{ margin-left:0; white-space:normal; }
+  @media (max-width:900px){
+    .pigeons-bar-thumb, .pigeons-bar-onboard-link{ position:static; transform:none; margin:0 auto; }
+    .pigeons-bar-issuer{ flex-direction:column; gap:0.75rem; text-align:center; }
+    .pigeons-bar-onboard-link{ white-space:normal; }
   }
 
   /* ---- DATABASE row card: $PIGEONS listing (styled as a currency —
@@ -1738,9 +1754,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="stats-carousel" id="statsCarousel">
       <div class="stats-carousel-viewport">
       <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
-        <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><img class="stat-tile-pigeons-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
-        <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
-        <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
+        <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+        <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
+        <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
       </div>
       <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
         <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
