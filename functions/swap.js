@@ -576,10 +576,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   .wallet-box-addr{ font-size:16px; color:var(--white); margin-bottom:0.6rem; word-break:break-all; letter-spacing:0.02em; }
   .wallet-box-count{ font-size:12.5px; letter-spacing:0.1em; color:var(--grey); text-transform:uppercase; }
 
-  /* ---- search / sort bar ---- */
+  /* ---- search / sort bar — VIEW and SORTING BY now sit right in this
+     row next to SEARCH, and everything here (input, GO, VIEW, SORT,
+     RESET, edition buttons) shares one bigger size and the same
+     border/hover/active colour language as the ALL / 1ST EDITION /
+     2ND EDITION buttons. ---- */
   .search-row{
     display:flex;
-    gap:0.6rem;
+    align-items:center;
+    gap:0.75rem;
     flex-wrap:wrap;
     margin-bottom:0.75rem;
   }
@@ -590,47 +595,38 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex-wrap:wrap;
     margin-bottom:0.75rem;
   }
-  /* VIEW then SORTING BY — a plain label sitting next to its own control,
-     not baked into the clickable box's own text. VIEW sits to the left. */
-  .sort-view-row{
-    display:flex;
-    align-items:center;
-    gap:1.5rem;
-    flex-wrap:wrap;
-    margin-bottom:0.75rem;
-  }
-  .sort-field{ display:flex; align-items:center; gap:0.5rem; }
+  .sort-field{ display:flex; align-items:center; gap:0.6rem; }
   .sort-field-label{
-    font-size:11px;
+    font-size:12px;
     letter-spacing:0.1em;
     color:var(--grey-dim);
     text-transform:uppercase;
     white-space:nowrap;
   }
   input.search-input{
-    flex:0 1 140px;
+    flex:0 1 150px;
     background:#000;
     border:1px solid var(--border-mid);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:13px;
     letter-spacing:0.05em;
-    padding:0.55em 0.6em;
+    padding:0.75em 0.8em;
     border-radius:var(--radius);
     transition:border-color 0.15s ease;
   }
   input.search-input:focus{ outline:none; border-color:var(--cyan); box-shadow:0 0 0 1px var(--cyan-dim); }
   input.search-input::placeholder{ color:var(--grey-disabled); text-transform:uppercase; }
-  .search-row .bar-btn{ padding:0.55em 0.8em; font-size:10px; }
+  .search-row .bar-btn{ padding:0.75em 1em; font-size:12px; }
   .bar-btn{
     flex:0 0 auto;
     background:transparent;
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:13px;
     letter-spacing:0.1em;
-    padding:0.75em 1.1em;
+    padding:0.85em 1.2em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
@@ -641,18 +637,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex:0 0 auto;
     background:#000;
     border:1px solid var(--border-mid);
-    color:var(--white);
+    color:var(--grey);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:13px;
     letter-spacing:0.05em;
-    padding:0.75em 0.9em;
+    padding:0.85em 1em;
     text-transform:uppercase;
     cursor:pointer;
     border-radius:var(--radius);
-    transition:border-color 0.15s ease;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
   }
+  select.sort-select:hover{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
   select.sort-select:focus{ outline:none; border-color:var(--cyan); }
   select.sort-select option{ background:var(--panel-bg-solid); color:var(--white); }
+  #sortDropWrap{ padding:0; }
+  #sortDropWrap .trait-row-label{ padding:0.85em 1em; font-size:13px; }
   .edition-toggle{
     flex:0 0 auto;
     display:flex;
@@ -666,9 +665,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-right:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:13px;
     letter-spacing:0.05em;
-    padding:0.75em 0.9em;
+    padding:0.85em 1.1em;
     text-transform:uppercase;
     cursor:pointer;
     transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
@@ -1894,14 +1893,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="search-row">
           <input class="search-input" id="searchInput" placeholder="SEARCH #..." inputmode="numeric">
           <button class="bar-btn" id="searchBtn">[ GO ]</button>
-          <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, B0XED V!EW, N0 TRA!TS">[ RESET ]</button>
-          <div class="edition-toggle" id="editionSelect">
-            <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
-            <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
-            <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
-          </div>
-        </div>
-        <div class="sort-view-row">
           <div class="sort-field">
             <span class="sort-field-label">V!EW</span>
             <select class="sort-select" id="dbViewSelect">
@@ -1918,6 +1909,12 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
               </div>
             </div>
+          </div>
+          <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, B0XED V!EW, N0 TRA!TS">[ RESET ]</button>
+          <div class="edition-toggle" id="editionSelect">
+            <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
+            <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
+            <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
           </div>
         </div>
         <div class="sort-stack-row">
