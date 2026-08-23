@@ -1629,9 +1629,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   <div class="page">
     <h1>Σκύλλα :: SWAP</h1>
 
+    <div class="db-select-wrap">
+      <button class="db-select-toggle" id="dbSelectToggle">// DATABASE :: <span class="db-active-name">P!GE0NS</span> ▼</button>
+      <div class="db-select-menu" id="dbSelectMenu" style="display:none;">
+        <div class="db-option db-option-active">P!GE0NS</div>
+        <div class="db-option db-option-disabled">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
+        <div class="db-option db-option-disabled">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
+      </div>
+    </div>
+
     <!-- Its own strip — no panel box around it, just the purple bar,
-         sitting above the DATABASE/MY PIGEONS/etc tabs. Everything runs
-         in one horizontal line. -->
+         sitting under the // DATABASE :: P!GE0NS ▼ selector, above the
+         DATABASE/MY PIGEONS/etc tabs. Everything runs in one horizontal
+         line. -->
     <div class="pigeons-bar pigeons-bar-issuer">
       <img class="pigeons-bar-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
       <div class="pigeons-bar-body">
@@ -1640,15 +1650,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
         <span class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</span>
         <button class="pigeons-bar-onboard-link" id="onboardLink">New to the XRPL, NFTs, memes? Click here.</button>
-      </div>
-    </div>
-
-    <div class="db-select-wrap">
-      <button class="db-select-toggle" id="dbSelectToggle">// DATABASE :: <span class="db-active-name">P!GE0NS</span> ▼</button>
-      <div class="db-select-menu" id="dbSelectMenu" style="display:none;">
-        <div class="db-option db-option-active">P!GE0NS</div>
-        <div class="db-option db-option-disabled">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
-        <div class="db-option db-option-disabled">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
       </div>
     </div>
 
