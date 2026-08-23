@@ -669,9 +669,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:0.75rem;
   }
   /* ADD TRAITS now lives inside the same db-config-group box as VIEW/
-     COLLECTION/SORT, on the right side of its own row instead of below
-     the box in its own separate block. */
-  .db-config-row-right{ justify-content:flex-end; }
+     COLLECTION/SORT, as its own distinct section on the right — a
+     vertical divider separates it, and it's vertically centered against
+     the whole height of the left column's stacked rows. */
+  .db-config-group-split{ display:flex; align-items:center; gap:1.5rem; }
+  .db-config-main{ flex:1; min-width:0; }
+  .db-config-main .db-config-row:last-child{ margin-bottom:0; }
+  .db-config-traits-section{
+    flex:0 0 auto;
+    align-self:stretch;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:0.5rem;
+    border-left:1px solid var(--border-mid);
+    padding-left:1.5rem;
+  }
+  @media (max-width:700px){
+    .db-config-group-split{ flex-direction:column; align-items:stretch; gap:0.75rem; }
+    .db-config-traits-section{ border-left:none; border-top:1px solid var(--border-mid); padding-left:0; padding-top:0.75rem; }
+  }
   .sort-field{ display:flex; align-items:center; gap:0.6rem; }
   .sort-field-label{
     font-size:12px;
@@ -2302,36 +2319,38 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="sw-panel">
         <div class="panel-title search-panel-title" id="searchPanelTitle">SEARCH!NG $P!GE0NS DATABASE</div>
         <div class="search-panel-subtitle" id="searchPanelSubtitle" style="display:none;"></div>
-        <div class="db-config-group">
-          <div class="sort-field db-config-row">
-            <span class="sort-field-label">V!EW</span>
-            <select class="sort-select" id="dbViewSelect">
-              <option value="boxed" disabled>B0XED V!EW (C0M!NG S00N)</option>
-              <option value="thumbnails" selected>THUMBNA!LS</option>
-            </select>
-          </div>
-          <div class="sort-field db-config-row">
-            <span class="sort-field-label">C0LLECT!0N</span>
-            <div class="edition-toggle" id="editionSelect">
-              <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
-              <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
-              <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
+        <div class="db-config-group db-config-group-split">
+          <div class="db-config-main">
+            <div class="sort-field db-config-row">
+              <span class="sort-field-label">V!EW</span>
+              <select class="sort-select" id="dbViewSelect">
+                <option value="boxed" disabled>B0XED V!EW (C0M!NG S00N)</option>
+                <option value="thumbnails" selected>THUMBNA!LS</option>
+              </select>
             </div>
-          </div>
-          <div class="db-config-row db-config-row-stacked">
-            <div class="sort-field">
-              <span class="sort-field-label">S0RT</span>
-              <div class="traits-hover-wrap" id="sortDropWrap">
-                <span class="trait-row-label" id="sortDropLabel"></span>
-                <div class="traits-flyout" id="sortFlyout" style="display:none;">
-                  <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
-                  <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
-                </div>
+            <div class="sort-field db-config-row">
+              <span class="sort-field-label">C0LLECT!0N</span>
+              <div class="edition-toggle" id="editionSelect">
+                <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
+                <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
+                <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
               </div>
             </div>
-            <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
+            <div class="db-config-row db-config-row-stacked">
+              <div class="sort-field">
+                <span class="sort-field-label">S0RT</span>
+                <div class="traits-hover-wrap" id="sortDropWrap">
+                  <span class="trait-row-label" id="sortDropLabel"></span>
+                  <div class="traits-flyout" id="sortFlyout" style="display:none;">
+                    <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
+                    <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
+                  </div>
+                </div>
+              </div>
+              <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
+            </div>
           </div>
-          <div class="sort-stack-row db-config-row db-config-row-right">
+          <div class="db-config-traits-section">
             <div class="traits-hover-wrap" id="traitsHoverWrap">
               <span class="trait-row-label" id="traitsHoverLabel">ADD TRA!TS ▾</span>
               <div class="traits-flyout" id="traitsFlyout" style="display:none;">
