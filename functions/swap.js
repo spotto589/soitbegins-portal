@@ -1632,7 +1632,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      .pigeons-bar-calc-input) expands this whole box from its own center
      rather than pinned to one side. */
   .pigeons-bar-calc-col{ flex:1; display:flex; flex-direction:column; align-items:center; gap:0.4rem; min-width:0; }
-  .pigeons-bar-calc-title{ font-size:10px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
+  .pigeons-bar-calc-title{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-calc{
     display:flex;
     align-items:center;
@@ -1640,30 +1640,32 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:rgba(0,0,0,0.18);
     border:1px solid rgba(255,255,255,0.6);
     border-radius:var(--radius);
-    padding:0.5em 0.7em;
+    padding:0.6em 0.9em;
   }
   .pigeons-bar-calc-input{
     /* Base/minimum width — grown dynamically via updatePigeonsCalc's
        resizeCalcInput as you type (ch units, monospace font, so 1ch really
        is one typed character's width). Centered text + the whole box
        being centered in its flex:1 slot means it grows evenly from both
-       sides, not anchored to one edge. */
-    width:8ch;
-    min-width:8ch;
+       sides, not anchored to one edge. Base width fits the full "ENTER
+       XRP" placeholder (10ch) so it's never clipped. */
+    width:10ch;
+    min-width:10ch;
     background:transparent;
     border:none;
     border-bottom:1px solid rgba(255,255,255,0.5);
     color:#fff;
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:17px;
     text-align:center;
     padding:0.2em 0;
     transition:width 0.1s ease;
   }
   .pigeons-bar-calc-input:focus{ outline:none; border-bottom-color:#fff; }
   .pigeons-bar-calc-input::placeholder{ color:rgba(255,255,255,0.6); text-transform:uppercase; }
-  .pigeons-bar-calc-eq{ color:#fff; font-size:12px; opacity:0.8; }
-  .pigeons-bar-calc-out{ color:#fff; font-weight:700; font-size:13px; white-space:nowrap; }
+  .pigeons-bar-calc-unit{ color:rgba(255,255,255,0.7); font-size:14px; letter-spacing:0.05em; }
+  .pigeons-bar-calc-eq{ color:#fff; font-size:15px; opacity:0.8; }
+  .pigeons-bar-calc-out{ color:#fff; font-weight:700; font-size:17px; white-space:nowrap; }
   /* Real DexScreener pair link (returned live in the rate fetch as
      dexUrl, falling back to the known pair URL until that resolves) —
      .bar-btn's own white-on-purple styling already applies via
@@ -2257,6 +2259,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="pigeons-bar-calc-title">EXCHANGE RATE</div>
           <div class="pigeons-bar-calc">
             <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="ENTER XRP">
+            <span class="pigeons-bar-calc-unit">XRP</span>
             <span class="pigeons-bar-calc-eq">=</span>
             <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
           </div>
@@ -3686,13 +3689,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // a wallet ("DATABASE VIEW" as the default-state label was redundant
   // noise and got dropped).
   function refreshSearchPanelSubtitle(){
-    if (state.scope){
-      el.searchPanelSubtitle.style.display = '';
-      el.searchPanelSubtitle.textContent = 'V!EW!NG WALLET: ' + state.scope.ownerShort;
-    } else {
-      el.searchPanelSubtitle.style.display = 'none';
-      el.searchPanelSubtitle.textContent = '';
-    }
+    // Redundant with the "SH0W!NG RESULTS F0R :: WALLET: ..." status line
+    // and the node header's own wallet address below — never shown now.
+    el.searchPanelSubtitle.style.display = 'none';
+    el.searchPanelSubtitle.textContent = '';
   }
   // Shared by SELECT (auto-enters owner scope + auto-targets the pigeon
   // that got you there) and the plain "view this wallet's collection" click
@@ -3735,7 +3735,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (state.scopeAllItems.length){
         runScopedQuery();
       } else {
-        el.statusLine.innerHTML = 'SH0W!NG RESULTS F0R :: WALLET: ' + escapeHtml(state.scope.ownerShort) + ' :: <span class="hi">0</span> P!GE0NS';
+        el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R :: WALLET: ' + escapeHtml(state.scope.ownerShort) + ' :: <span class="hi">0</span> P!GE0NS</div>';
         el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0NS F0UND', ['TH!S WALLET 0WNS N0 P!GE0NS.'], false);
       }
     } else {
@@ -3753,7 +3753,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (isSelf) myOwnPigeonsCache = state.scopeAllItems;
       el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
       if (!state.scopeAllItems.length){
-        el.statusLine.innerHTML = 'SH0W!NG RESULTS F0R :: WALLET: ' + escapeHtml(state.scope.ownerShort) + ' :: <span class="hi">0</span> P!GE0NS';
+        el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R :: WALLET: ' + escapeHtml(state.scope.ownerShort) + ' :: <span class="hi">0</span> P!GE0NS</div>';
         el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0NS F0UND', ['TH!S WALLET 0WNS N0 P!GE0NS.'], false);
         return;
       }
@@ -4562,8 +4562,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
     }
     state.items = list;
-    el.statusLine.innerHTML = 'SH0W!NG RESULTS F0R :: WALLET: ' + escapeHtml(state.scope.ownerShort) + ' :: <span class="hi">' + list.length + '</span> P!GE0NS' +
-      (list.length === 1 ? '<br>P!GE0N #' + list[0].number : '');
+    el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R :: WALLET: ' + escapeHtml(state.scope.ownerShort) + ' :: <span class="hi">' + list.length + '</span> P!GE0NS' +
+      (list.length === 1 ? '<br>P!GE0N #' + list[0].number : '') + '</div>';
     if (!list.length){
       el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + (q || '(traits)') + '"'], true);
       wireClearSearch();
@@ -4785,10 +4785,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   function loadMyPigeons(){
     if (!MY_WALLET){
-      // Reachable as a fallback (e.g. the topTabs click handler's own
-      // auto-login didn't fire for some reason) — CONNECT SCYLLA still
-      // works as a manual way in.
-      el.myPigeonsConnect.style.display = '';
+      // The CONNECT box itself stays hidden here now — auto-login already
+      // fires from the topTabs click handler, so there's nothing for a
+      // manual CONNECT button to add on a normal open. It only reappears
+      // if that login attempt actually fails (see getXummAuth's error
+      // paths below), as a manual retry.
       el.offersReceivedBlock.style.display = 'none';
       el.myPigeonsSortRow.style.display = 'none';
       el.myPigeonsPanelTitle.textContent = 'MY P!GE0NS';
@@ -4824,6 +4825,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.connectScyllaBtn.disabled = false;
     el.pigeonsLoginBtn.disabled = false;
     el.pigeonsLoginBtn.textContent = '[ L0G!N ]';
+    // Every caller of this is a login failure — pop the CONNECT box back
+    // up (it stays hidden otherwise, see loadMyPigeons) so there's a
+    // manual retry next to the error text in el.connectStatus.
+    if (!MY_WALLET) el.myPigeonsConnect.style.display = '';
   }
   function getXummAuth(){
     if (!xummAuth){
@@ -5744,7 +5749,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // growing outward from the center in both directions, not anchored left.
   function resizeCalcInput(){
     var len = el.pigeonsCalcXrpInput.value.length;
-    el.pigeonsCalcXrpInput.style.width = Math.max(8, len + 2) + 'ch';
+    el.pigeonsCalcXrpInput.style.width = Math.max(10, len + 2) + 'ch';
   }
   function updatePigeonsCalc(){
     resizeCalcInput();
