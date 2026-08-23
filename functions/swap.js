@@ -1249,17 +1249,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
     box-shadow:0 0 16px var(--pigeon-purple-glow);
   }
-  .pigeons-bar-issuer .pigeons-bar-coin{ width:56px; height:56px; }
-  /* Everything — label, address, COPY, trustline CTA, onboarding link —
-     runs in one flat horizontal line, wrapping only if it truly has to. */
-  .pigeons-bar-body{ display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; gap:0.6rem 1.1rem; flex:1; min-width:0; }
-  .pigeons-bar-sublabel{ font-size:10px; letter-spacing:0.15em; color:rgba(255,255,255,0.75); text-transform:uppercase; white-space:nowrap; }
-  .pigeons-bar-addr{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); white-space:nowrap; }
+  /* Bigger, clearly-readable coin — was easy to miss at 56px. */
+  .pigeons-bar-issuer .pigeons-bar-coin{ width:76px; height:76px; }
+  /* Two rows: trustline headline + ISSUER ADDRESS label on top, the
+     actual address + COPY underneath. Onboarding link sits outside this
+     block entirely, pushed to the far right of the bar. */
+  .pigeons-bar-body{ display:flex; flex-direction:column; gap:0.4rem; flex:1; min-width:0; }
+  .pigeons-bar-main-row{ display:flex; align-items:baseline; flex-wrap:wrap; gap:0.75rem; }
+  .pigeons-bar-addr-row{ display:flex; align-items:center; flex-wrap:wrap; gap:0.75rem; }
+  .pigeons-bar-sublabel{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; white-space:nowrap; }
+  .pigeons-bar-addr{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); white-space:nowrap; font-size:15px; }
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
-  .pigeons-bar-issuer .pigeons-bar-text{ font-size:13px; text-align:left; white-space:nowrap; }
+  .pigeons-bar-issuer .pigeons-bar-text{ font-size:16px; text-align:left; white-space:nowrap; }
   /* Placeholder for now — the onboarding section itself doesn't exist
-     yet, same "real link, not-yet-built destination" pattern as BURNT. */
+     yet, same "real link, not-yet-built destination" pattern as BURNT.
+     Pushed to the far right of the bar (margin-left:auto on the flex
+     row), not stacked with the issuer/trustline content. */
   .pigeons-bar-onboard-link{
     background:transparent;
     border:none;
@@ -1267,20 +1273,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-decoration:underline;
     cursor:pointer;
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:13px;
     letter-spacing:0.01em;
     text-transform:none;
     opacity:0.85;
     white-space:nowrap;
+    margin-left:auto;
+    flex:0 0 auto;
+    align-self:center;
   }
   .pigeons-bar-onboard-link:hover{ opacity:1; }
   @media (max-width:700px){
-    .pigeons-bar-body{ justify-content:center; }
+    .pigeons-bar-main-row, .pigeons-bar-addr-row{ justify-content:center; }
     .pigeons-bar-sublabel, .pigeons-bar-addr, .pigeons-bar-issuer .pigeons-bar-text, .pigeons-bar-onboard-link{ white-space:normal; }
   }
   @media (max-width:500px){
     .pigeons-bar-issuer{ flex-direction:column; text-align:center; }
-    .pigeons-bar-body{ justify-content:center; }
+    .pigeons-bar-main-row, .pigeons-bar-addr-row{ justify-content:center; }
+    .pigeons-bar-onboard-link{ margin-left:0; }
   }
 
   /* ---- DATABASE row card: $PIGEONS listing (styled as a currency —
@@ -1701,12 +1711,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="pigeons-bar pigeons-bar-issuer">
       <img class="pigeons-bar-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
       <div class="pigeons-bar-body">
-        <span class="pigeons-bar-sublabel">!SSUER ADDRESS</span>
-        <span class="ci-value ci-value-big pigeons-bar-addr" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span>
-        <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
-        <span class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</span>
-        <button class="pigeons-bar-onboard-link" id="onboardLink">New to the XRPL, NFTs, memes? Click here.</button>
+        <div class="pigeons-bar-main-row">
+          <span class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</span>
+          <span class="pigeons-bar-sublabel">!SSUER ADDRESS</span>
+        </div>
+        <div class="pigeons-bar-addr-row">
+          <span class="ci-value ci-value-big pigeons-bar-addr" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span>
+          <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
+        </div>
       </div>
+      <button class="pigeons-bar-onboard-link" id="onboardLink">New to the XRPL, NFTs, memes? Click here.</button>
     </div>
 
     <!-- DATABASE-only info box — lives outside #screenBrowse (and above
