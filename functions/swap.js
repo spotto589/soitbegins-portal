@@ -1180,9 +1180,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:500px){
     .pigeons-bar-text{ font-size:13px; }
   }
-  /* Issuer/address + trustline CTA combined into one bar — the coin sits
-     bigger and to the left, the address/trustline stack to its right,
-     detached from the stats strip below by real margin (not touching). */
+  /* Issuer/address + trustline CTA + onboarding link, all in one flat
+     purple strip — no panel box around it — sitting above the DATABASE/
+     MY PIGEONS/etc tabs, not tucked inside any screen. */
   .pigeons-bar-issuer{
     align-items:center;
     margin-bottom:1.25rem;
@@ -1193,16 +1193,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
     box-shadow:0 0 16px var(--pigeon-purple-glow);
   }
-  .pigeons-bar-issuer .pigeons-bar-coin{ width:72px; height:72px; }
-  /* Two rows, each running horizontally — issuer/address/COPY on top,
-     trustline CTA + onboarding link underneath. */
-  .pigeons-bar-body{ display:flex; flex-direction:column; gap:0.6rem; flex:1; min-width:0; }
-  .pigeons-bar-issuer-row, .pigeons-bar-trustline-row{ display:flex; align-items:center; flex-wrap:wrap; gap:0.75rem; }
+  .pigeons-bar-issuer .pigeons-bar-coin{ width:56px; height:56px; }
+  /* Everything — label, address, COPY, trustline CTA, onboarding link —
+     runs in one flat horizontal line, wrapping only if it truly has to. */
+  .pigeons-bar-body{ display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; gap:0.6rem 1.1rem; flex:1; min-width:0; }
   .pigeons-bar-sublabel{ font-size:10px; letter-spacing:0.15em; color:rgba(255,255,255,0.75); text-transform:uppercase; white-space:nowrap; }
   .pigeons-bar-addr{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); white-space:nowrap; }
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
-  .pigeons-bar-issuer .pigeons-bar-text{ font-size:13px; text-align:left; }
+  .pigeons-bar-issuer .pigeons-bar-text{ font-size:13px; text-align:left; white-space:nowrap; }
   /* Placeholder for now — the onboarding section itself doesn't exist
      yet, same "real link, not-yet-built destination" pattern as BURNT. */
   .pigeons-bar-onboard-link{
@@ -1216,11 +1215,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     letter-spacing:0.01em;
     text-transform:none;
     opacity:0.85;
+    white-space:nowrap;
   }
   .pigeons-bar-onboard-link:hover{ opacity:1; }
+  @media (max-width:700px){
+    .pigeons-bar-body{ justify-content:center; }
+    .pigeons-bar-sublabel, .pigeons-bar-addr, .pigeons-bar-issuer .pigeons-bar-text, .pigeons-bar-onboard-link{ white-space:normal; }
+  }
   @media (max-width:500px){
     .pigeons-bar-issuer{ flex-direction:column; text-align:center; }
-    .pigeons-bar-issuer-row, .pigeons-bar-trustline-row{ justify-content:center; }
+    .pigeons-bar-body{ justify-content:center; }
   }
 
   /* ---- DATABASE row card: $PIGEONS listing (styled as a currency —
@@ -1623,9 +1627,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   <canvas id="staticBg"></canvas>
 
   <div class="page">
-    <a class="back-link" href="/board">&larr; RETURN T0 S!GNAL_RELAY</a>
-
     <h1>Σκύλλα :: SWAP</h1>
+
+    <!-- Its own strip — no panel box around it, just the purple bar,
+         sitting above the DATABASE/MY PIGEONS/etc tabs. Everything runs
+         in one horizontal line. -->
+    <div class="pigeons-bar pigeons-bar-issuer">
+      <img class="pigeons-bar-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
+      <div class="pigeons-bar-body">
+        <span class="pigeons-bar-sublabel">!SSUER ADDRESS</span>
+        <span class="ci-value ci-value-big pigeons-bar-addr" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span>
+        <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
+        <span class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</span>
+        <button class="pigeons-bar-onboard-link" id="onboardLink">New to the XRPL, NFTs, memes? Click here.</button>
+      </div>
+    </div>
 
     <div class="db-select-wrap">
       <button class="db-select-toggle" id="dbSelectToggle">// DATABASE :: <span class="db-active-name">P!GE0NS</span> ▼</button>
@@ -1693,25 +1709,6 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
     <div id="screenBrowse" style="display:none;">
-      <!-- Own strip, detached from the information bar below it — issuer
-           address on top, trustline CTA + onboarding link underneath. -->
-      <div class="sw-panel sw-panel-signal" id="issuerPanel">
-        <div class="pigeons-bar pigeons-bar-issuer">
-          <img class="pigeons-bar-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
-          <div class="pigeons-bar-body">
-            <div class="pigeons-bar-issuer-row">
-              <span class="pigeons-bar-sublabel">!SSUER ADDRESS</span>
-              <span class="ci-value ci-value-big pigeons-bar-addr" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span>
-              <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
-            </div>
-            <div class="pigeons-bar-trustline-row">
-              <span class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</span>
-              <button class="pigeons-bar-onboard-link" id="onboardLink">New to the XRPL, NFTs, memes? Click here.</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div class="sw-panel sw-panel-signal" id="collectionDetailsPanel">
         <div class="panel-title">$P!GE0NS</div>
         <!-- Auto-rotating strip — one page visible at a time, cycling on a
@@ -3092,6 +3089,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       '</div>' +
     '</div>';
   }
+  // $PIGEONS BUY NOW row — a real Σκύλλα listing, shared by both card
+  // layouts. Shown above the OFFER strip: buy now at the listed price,
+  // or make an offer instead.
+  function scyllaListedHtml(p){
+    if (!p.scyllaListing) return '';
+    var canBuy = p.owner !== MY_WALLET;
+    return '<div class="card-scylla-row">' +
+        '<span class="card-scylla-coin-wrap"><img class="card-scylla-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS"><span class="card-scylla-price">' + escapeHtml(fmtPigeons(p.scyllaListing.price)) + '</span></span>' +
+        (canBuy ? '<button class="card-buy-scylla-btn buy-scylla-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W ]</button>' : '') +
+      '</div>';
+  }
   function resultCardHtml(p){
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
@@ -3121,13 +3129,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var bottomListingsHtml = p.listings
       ? '<div class="card-bottom-bar card-listings-bottom' + (hasAnyListing ? '' : ' card-no-listings') + '">' + xcBottomHtml + dtBottomHtml + '</div>'
       : '';
-    var canBuyScylla = p.scyllaListing && p.owner !== MY_WALLET;
-    var scyllaListedHtml = p.scyllaListing
-      ? '<div class="card-scylla-row">' +
-          '<span class="card-scylla-coin-wrap"><img class="card-scylla-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS"><span class="card-scylla-price">' + escapeHtml(fmtPigeons(p.scyllaListing.price)) + '</span></span>' +
-          (canBuyScylla ? '<button class="card-buy-scylla-btn buy-scylla-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY ]</button>' : '') +
-        '</div>'
-      : '';
+    var scyllaListedBlock = scyllaListedHtml(p);
     // RARITY SCORE isn't computed yet — deliberately left as a placeholder
     // (real rank/total already exist, the score itself is a later system).
     var rarityLine = p.rarityRank ? p.rarityRank + '/' + (p.rarityTotal || 3015) : null;
@@ -3177,7 +3179,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '</div>' +
         '<div class="result-row-right">' +
           rarityAboveTraitsHtml +
-          scyllaListedHtml +
+          scyllaListedBlock +
           carouselHtml +
         '</div>' +
       '</div>' +
@@ -3198,13 +3200,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? (!inTarget && offerCount() >= OFFER_MAX)
       : (!inTarget && targetCount() >= OFFER_MAX);
     var makeOfferHtml = offerStripHtml(p);
+    var scyllaListedBlock = scyllaListedHtml(p);
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">P!GE0N ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         img +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
       '</div>' +
-      '<div class="result-card-body">' + rarityLine + makeOfferHtml + '</div>' +
+      '<div class="result-card-body">' + rarityLine + scyllaListedBlock + makeOfferHtml + '</div>' +
     '</div>';
   }
   function cardHtmlForView(p){
