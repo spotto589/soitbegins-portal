@@ -658,9 +658,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      neutral GO/RESET-adjacent buttons around it. */
   .reset-db-btn{ border-color:rgba(255,61,61,0.5); color:#ff3d3d; text-shadow:0 0 5px rgba(255,61,61,0.5); }
   .reset-db-btn:hover{ border-color:#ff3d3d; color:#ff3d3d; background:rgba(255,61,61,0.12); }
-  /* VIEW, then COLLECTION SELECTION, then SORTING BY + RESET — each its
-     own row, stacked, instead of crammed into one wrapping line. */
+  /* VIEW, then COLLECTION SELECTION, then SORTING BY + RESET — grouped
+     together in one bordered box, each its own row, with a fixed-width
+     label column so every selection control lines up under the next. */
+  .db-config-group{
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    padding:0.85rem 1rem;
+    margin-bottom:0.75rem;
+  }
   .db-config-row{ margin-bottom:0.75rem; }
+  .db-config-row:last-child{ margin-bottom:0; }
+  .db-config-row .sort-field-label{ flex:0 0 175px; }
   select.sort-select{
     flex:0 0 auto;
     background:#000;
@@ -1930,31 +1939,33 @@ const SWAP_HTML = `<!DOCTYPE html>
           <input class="search-input" id="searchInput" placeholder="SEARCH #..." inputmode="numeric">
           <button class="bar-btn" id="searchBtn">[ GO ]</button>
         </div>
-        <div class="sort-field db-config-row">
-          <span class="sort-field-label">V!EW</span>
-          <select class="sort-select" id="dbViewSelect">
-            <option value="boxed">B0XED V!EW</option>
-            <option value="thumbnails" selected>THUMBNA!LS</option>
-          </select>
-        </div>
-        <div class="sort-field db-config-row">
-          <span class="sort-field-label">C0LLECT!0N SELECT!0N:</span>
-          <div class="edition-toggle" id="editionSelect">
-            <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
-            <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
-            <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
+        <div class="db-config-group">
+          <div class="sort-field db-config-row">
+            <span class="sort-field-label">V!EW</span>
+            <select class="sort-select" id="dbViewSelect">
+              <option value="boxed">B0XED V!EW</option>
+              <option value="thumbnails" selected>THUMBNA!LS</option>
+            </select>
           </div>
-        </div>
-        <div class="sort-field db-config-row">
-          <span class="sort-field-label">S0RT!NG BY:</span>
-          <div class="traits-hover-wrap" id="sortDropWrap">
-            <span class="trait-row-label" id="sortDropLabel"></span>
-            <div class="traits-flyout" id="sortFlyout" style="display:none;">
-              <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
-              <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
+          <div class="sort-field db-config-row">
+            <span class="sort-field-label">C0LLECT!0N SELECT!0N:</span>
+            <div class="edition-toggle" id="editionSelect">
+              <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
+              <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
+              <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
             </div>
           </div>
-          <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, B0XED V!EW, N0 TRA!TS">[ RESET ]</button>
+          <div class="sort-field db-config-row">
+            <span class="sort-field-label">S0RT!NG BY:</span>
+            <div class="traits-hover-wrap" id="sortDropWrap">
+              <span class="trait-row-label" id="sortDropLabel"></span>
+              <div class="traits-flyout" id="sortFlyout" style="display:none;">
+                <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
+                <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
+              </div>
+            </div>
+            <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, B0XED V!EW, N0 TRA!TS">[ RESET ]</button>
+          </div>
         </div>
         <div class="sort-stack-row">
           <div class="traits-hover-wrap" id="traitsHoverWrap">
