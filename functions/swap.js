@@ -325,6 +325,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .ci-value{ color:var(--white); word-break:break-all; }
   .ci-value-big{ font-size:14px; letter-spacing:0.02em; }
   .ci-copy-btn{ font-size:12px; padding:0.65em 1.1em; flex:0 0 auto; }
+  .pigeons-bar-identity-actions{ display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; justify-content:center; }
 
   .my-pigeons-grid{ margin-top:1rem; }
 
@@ -1989,7 +1990,10 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="pigeons-bar-sublabel">!SSUER ADDRESS</span>
             <span class="ci-value ci-value-big pigeons-bar-addr" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span>
           </div>
-          <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
+          <div class="pigeons-bar-identity-actions">
+            <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
+            <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">[ L0G!N ]</button>
+          </div>
         </div>
       </div>
       <div class="pigeons-bar-bottom-row">
@@ -2587,7 +2591,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
-   'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','ciIssuerAddr','onboardLink',
+   'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
@@ -5153,6 +5157,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(done, done);
     else done();
+  });
+
+  // Real button, destination doesn't exist yet — same "coming soon"
+  // pattern as the BURNT link/onboarding link elsewhere on this page.
+  // A login system is planned but not built yet.
+  el.pigeonsLoginBtn.addEventListener('click', function(){
+    alert('L0G!N C0M!NG S00N.');
   });
 
   // Live "1 PIGEON = X XRP" rate on the trustline banner + an XRP ->
