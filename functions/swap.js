@@ -1184,15 +1184,28 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .thumb-buy-btn:hover{ background:var(--green); color:#000; text-shadow:none; }
   .thumb-offer-row{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
+  /* $PIGEONS coin sits inside the input itself (not just the placeholder)
+     so it stays put once you start typing a number, instead of
+     disappearing along with the placeholder text. */
+  .make-offer-input-wrap{ position:relative; flex:1 1 auto; min-width:0; display:flex; align-items:center; }
+  .make-offer-input-coin{
+    position:absolute;
+    left:0.55em;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    object-fit:cover;
+    border:1px solid rgba(255,255,255,0.6);
+    pointer-events:none;
+  }
   .make-offer-input{
-    flex:1 1 auto;
-    min-width:0;
+    width:100%;
     background:rgba(8,9,11,0.6);
     border:1px solid rgba(255,255,255,0.6);
     color:var(--white);
     font-family:var(--font-mono);
     font-size:13px;
-    padding:0.6em 0.65em;
+    padding:0.6em 0.65em 0.6em 2.1em;
     border-radius:var(--radius);
   }
   .make-offer-input:focus{ outline:none; border-color:#fff; }
@@ -2645,6 +2658,40 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
 
+  // Live thousands-separator formatting for a plain-number input (1000
+  // becomes 1,000 as you type, not just once submitted) — strips
+  // anything that isn't a digit or the first decimal point, re-inserts
+  // commas, and repositions the cursor by counting digits rather than
+  // raw characters so typing mid-string doesn't jump the caret to the
+  // end. Callers reading the value back out for submission (e.g.
+  // submitMakeOffer) still need to strip commas themselves — this only
+  // affects what's shown in the field.
+  function formatThousandsInput(input){
+    var raw = input.value;
+    var cursorPos = input.selectionStart === null ? raw.length : input.selectionStart;
+    var digitsBeforeCursor = raw.slice(0, cursorPos).replace(/[^0-9]/g, '').length;
+    var cleaned = raw.replace(/[^0-9.]/g, '');
+    var firstDot = cleaned.indexOf('.');
+    if (firstDot !== -1){
+      cleaned = cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\\./g, '');
+    }
+    var parts = cleaned.split('.');
+    var intPart = parts[0].replace(/^0+(?=\\d)/, '');
+    intPart = intPart.replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',');
+    var formatted = parts.length > 1 ? intPart + '.' + parts[1] : intPart;
+    input.value = formatted;
+    if (digitsBeforeCursor === 0){
+      input.setSelectionRange(0, 0);
+      return;
+    }
+    var count = 0, newPos = formatted.length;
+    for (var i = 0; i < formatted.length; i++){
+      if (/[0-9]/.test(formatted[i])) count++;
+      if (count === digitsBeforeCursor){ newPos = i + 1; break; }
+    }
+    input.setSelectionRange(newPos, newPos);
+  }
+
   // ---- Top tab bar (DATABASE / MY PIGEONS / TOP 10 / SALES HISTORY) ----
   // A peer navigation axis to the detail/summary screens below: only one
   // of the four tab panels is ever visible, and only while on the browse
@@ -3459,7 +3506,10 @@ const SWAP_HTML = `<!DOCTYPE html>
         ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W :: ' + escapeHtml(fmtPigeons(p.scyllaListing.price)) + ' ]</button>'
         : '') +
       '<div class="thumb-offer-row">' +
-        '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">' +
+        '<div class="make-offer-input-wrap">' +
+          '<img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">' +
+          '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">' +
+        '</div>' +
         '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
       '</div>' +
     '</div>';
@@ -3641,7 +3691,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (offerSend){
         var op2 = source().filter(function(x){ return x.nftId === offerSend.getAttribute('data-nftid'); })[0];
         var strip3 = offerSend.closest('.result-card');
-        var priceValue = strip3.querySelector('.make-offer-input').value.trim();
+        var priceValue = strip3.querySelector('.make-offer-input').value.trim().replace(/,/g, '');
         if (op2) submitMakeOffer(op2, priceValue, strip3);
         return;
       }
@@ -3678,7 +3728,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       var strip4 = input.closest('.result-card');
       var sendBtn2 = strip4.querySelector('.make-offer-send');
       var op3 = source().filter(function(x){ return x.nftId === sendBtn2.getAttribute('data-nftid'); })[0];
-      if (op3) submitMakeOffer(op3, input.value.trim(), strip4);
+      if (op3) submitMakeOffer(op3, input.value.trim().replace(/,/g, ''), strip4);
+    });
+    // Live thousands-separator formatting as you type (1000 -> 1,000 ->
+    // 10,000 ...), same helper the other amount inputs use.
+    container.addEventListener('input', function(e){
+      if (e.target.classList.contains('make-offer-input')) formatThousandsInput(e.target);
     });
   }
   wireResultClicks(el.resultsArea, function(){ return state.items; });
