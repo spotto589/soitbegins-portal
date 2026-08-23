@@ -640,11 +640,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:1.25rem;
     padding-top:1.25rem;
   }
+  /* Applied trait filters as a horizontal, wrapping list of chips —
+     not stacked one per line. */
+  #traitRows{ display:flex; flex-wrap:wrap; gap:0.5rem; }
   .trait-row{
     display:flex;
     align-items:center;
     gap:0.5rem;
-    margin-bottom:0.6rem;
     flex-wrap:wrap;
   }
   .trait-row-label{
@@ -809,13 +811,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .trait-chip:hover{ border-color:var(--cyan-dim); color:var(--white); }
   .trait-chip.selected{ background:var(--cyan-faint); color:var(--cyan); border-color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  /* Same box treatment as ADD TRAITS (#traitsHoverWrap) — border, radius,
+     padding, font-size all matched, so an applied filter reads as the
+     same kind of control instead of a differently-styled one-off tag. */
   .trait-row-tag{
-    background:var(--cyan-faint);
-    border:1px solid var(--cyan-dim);
+    background:transparent;
+    border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    padding:0.4em 0.6em;
+    padding:0.75em 1em;
+    transition:border-color 0.15s ease;
   }
-  .trait-tag-label{ color:var(--cyan); font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; text-shadow:0 0 5px var(--cyan-glow); flex:1; }
+  .trait-row-tag:hover{ border-color:var(--cyan-dim); }
+  .trait-tag-label{ color:var(--cyan); font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; text-shadow:0 0 5px var(--cyan-glow); }
   .trait-row-remove{
     background:transparent;
     border:1px solid var(--magenta-dim);
@@ -1795,7 +1802,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
 
       <div class="sw-panel">
-        <div class="panel-title" id="searchPanelTitle">P!GE0N DATABASE</div>
+        <div class="panel-title" id="searchPanelTitle">$P!GE0NS DATABASE</div>
         <div class="search-row">
           <input class="search-input" id="searchInput" placeholder="SEARCH #..." inputmode="numeric">
           <button class="bar-btn" id="searchBtn">[ GO ]</button>
@@ -1824,11 +1831,11 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
             </div>
           </div>
-          <button class="clear-traits-btn" id="clearTraitsBtn">[ CLEAR TRA!TS ]</button>
         </div>
         <div class="index-line" id="indexLine"></div>
 
         <div class="traits-block">
+          <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none; margin-bottom:0.6rem;">[ CLEAR TRA!TS ]</button>
           <div id="traitRows"></div>
         </div>
 
@@ -2521,7 +2528,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       state.traitFilters = [];
       renderTraitRows();
       el.nodeHeaderPanel.style.display = 'none';
-      el.searchPanelTitle.textContent = 'P!GE0N DATABASE';
+      el.searchPanelTitle.textContent = '$P!GE0NS DATABASE';
       el.searchInput.value = '';
       startCollectionBrowse();
     }
@@ -2971,7 +2978,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.searchInput.value = '';
     el.nodeHeaderPanel.style.display = '';
     el.nodeAddr.textContent = state.scope.ownerShort;
-    el.searchPanelTitle.textContent = 'H0LDER P!GE0N DATABASE';
+    el.searchPanelTitle.textContent = 'H0LDER $P!GE0NS DATABASE';
     if (targetPigeon){
       el.targetPigeonCard.style.display = '';
       el.targetPigeonImg.innerHTML = targetPigeon.image ? '<img src="' + escapeHtml(targetPigeon.image) + '" alt="">' : '[ IMAGE ]';
@@ -3019,7 +3026,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.traitFilters = [];
     renderTraitRows();
     el.nodeHeaderPanel.style.display = 'none';
-    el.searchPanelTitle.textContent = 'P!GE0N DATABASE';
+    el.searchPanelTitle.textContent = '$P!GE0NS DATABASE';
     el.searchInput.value = '';
     renderTradeBuilder();
     startCollectionBrowse();
@@ -3478,6 +3485,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         (row.category ? '<div class="trait-value-chips" data-id="' + row.id + '">' + chips + '</div>' : '') +
       '</div>';
     }).join('');
+    el.clearTraitsBtn.style.display = state.traitFilters.length ? '' : 'none';
   }
   el.clearTraitsBtn.addEventListener('click', function(){
     state.traitFilters = [];
@@ -5227,7 +5235,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         state.scopeAllItems = [];
         state.targetAssets = {};
         el.nodeHeaderPanel.style.display = 'none';
-        el.searchPanelTitle.textContent = 'P!GE0N DATABASE';
+        el.searchPanelTitle.textContent = '$P!GE0NS DATABASE';
         renderTradeBuilder();
       }
     } else if (state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC'){
