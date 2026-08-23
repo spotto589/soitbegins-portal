@@ -858,6 +858,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
   .status-line .hi{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  /* Bigger, more prominent than the plain RESULTS :: N line — this is the
+     headline of the search, not a status footnote. */
+  .results-trait-note{
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    color:var(--white);
+  }
+  .results-trait-note .hi{ font-size:20px; }
 
   /* ---- empty state (attention = magenta) ---- */
   .empty-state{ text-align:center; padding:2rem 0; }
@@ -3397,8 +3406,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       state.total = typeof data.total === 'number' ? data.total : state.total;
       state.hasMore = !!data.hasMore && newItems.length > 0;
       appendResults(newItems);
-      var note = filters.length ? ' :: TRA!T F!LTERED' : '';
-      el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + (state.total !== null ? state.total : state.items.length) + '</span>' + note;
+      var resultCount = state.total !== null ? state.total : state.items.length;
+      if (filters.length === 0){
+        el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + resultCount + '</span>';
+      } else if (filters.length === 1){
+        el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R <span class="hi">' + resultCount + '</span> ' +
+          escapeHtml(filters[0].trait.toUpperCase()) + ': ' + escapeHtml(filters[0].value.toUpperCase()) + '</div>';
+      } else {
+        el.statusLine.innerHTML = '<div class="results-trait-note"><span class="hi">' + resultCount + '</span> C0MB!NAT!0NS 0F THESE TRA!TS EX!ST</div>';
+      }
       if (!state.items.length){
         if (state.scyllaListedOnly){
           el.resultsArea.innerHTML = emptyStateHtml('// N0 ACT!VE L!ST!NGS', ['N0THING !S CURRENTLY L!STED THR0UGH SCYLLA.', 'BE THE F!RST — L!ST A P!GE0N FR0M MY P!GE0NS.'], false);
