@@ -908,6 +908,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   .traits-flyout-val:hover{ border-color:var(--cyan-dim); color:var(--white); }
   .traits-flyout-val.selected{ background:var(--cyan-faint); border-color:var(--cyan); color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   .traits-flyout-val .tfv-count{ color:var(--grey-dim); font-size:13px; flex:0 0 auto; }
+  /* Not-yet-built sort options — same disabled/"C0M!NG S00N" treatment as
+     FUZZY/PHN!X in the C0LLECT!0N SELECT!0N list (.db-option-disabled/
+     .db-soon), just on a .traits-flyout-val instead of a .db-option. */
+  .traits-flyout-val.tfv-disabled{ cursor:not-allowed; opacity:0.6; }
+  .traits-flyout-val.tfv-disabled:hover{ border-color:var(--border-dim); color:var(--grey); }
 
   /* ---- ADD TRAITS flyout only: cyan by default, pink outline on hover,
      filled pink when selected/active — scoped by id so SORT's flyout
@@ -1041,7 +1046,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     top:50%;
     transform:translateY(-50%);
     margin-bottom:0;
+    /* GO must always sit to the right of the input, never wrap onto its
+       own line below it — the input shrinks first instead. */
+    flex-wrap:nowrap;
   }
+  #searchInput{ min-width:110px; }
   @media (max-width:600px){
     .results-header-row{ min-height:0; }
     .results-header-row .search-row{ position:static; transform:none; margin-bottom:0.75rem; justify-content:center; }
@@ -5494,12 +5503,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'RARITY_DESC', label: 'L0WEST' }
     ],
     'PR!CE': [
-      { value: 'AVG_SALE_XRP_ASC', label: 'FL00R AVERAGE (XRP)' },
-      { value: 'AVG_SALE_PIGEONS_ASC', label: 'FL00R AVERAGE ($P!GE0NS)' },
-      { value: 'PRICE_ASC', label: 'FL00R XRP' },
       { value: 'SCYLLA_PRICE_ASC', label: 'FL00R $P!GE0NS' },
-      { value: 'PRICE_DESC', label: 'CE!L!NG XRP' },
-      { value: 'SCYLLA_PRICE_DESC', label: 'CE!L!NG $P!GE0NS' }
+      { value: 'AVG_SALE_XRP_ASC', label: 'FL00R AVERAGE (XRP)', disabled: true },
+      { value: 'AVG_SALE_PIGEONS_ASC', label: 'FL00R AVERAGE ($P!GE0NS)', disabled: true },
+      { value: 'PRICE_ASC', label: 'FL00R XRP', disabled: true },
+      { value: 'PRICE_DESC', label: 'CE!L!NG XRP', disabled: true },
+      { value: 'SCYLLA_PRICE_DESC', label: 'CE!L!NG $P!GE0NS', disabled: true }
     ],
     'ALPHABET!CAL': [
       { value: 'NAME_ASC', label: 'A-Z' },
@@ -5535,8 +5544,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
     var opts = SORT_CATEGORIES[category] || [];
     el.sortFlyoutVals.innerHTML = opts.map(function(o){
-      return '<button type="button" class="traits-flyout-val' + (state.sort === o.value ? ' selected' : '') + '" data-value="' + o.value + '">' +
+      return '<button type="button" class="traits-flyout-val' + (state.sort === o.value ? ' selected' : '') + (o.disabled ? ' tfv-disabled' : '') + '" data-value="' + o.value + '"' + (o.disabled ? ' disabled' : '') + '>' +
         '<span>' + escapeHtml(o.label) + '</span>' +
+        (o.disabled ? '<span class="db-soon">C0M!NG S00N</span>' : '') +
       '</button>';
     }).join('');
   }
@@ -5580,7 +5590,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.sortFlyoutVals.addEventListener('click', function(e){
     var valBtn = e.target.closest('.traits-flyout-val');
-    if (!valBtn) return;
+    if (!valBtn || valBtn.hasAttribute('disabled')) return;
     applySort(valBtn.getAttribute('data-value'));
     closeSortFlyout();
   });
