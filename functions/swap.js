@@ -1632,7 +1632,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <h1>Σκύλλα :: SWAP</h1>
 
     <div class="db-select-wrap">
-      <button class="db-select-toggle" id="dbSelectToggle">// DATABASE :: <span class="db-active-name">P!GE0NS</span> ▼</button>
+      <button class="db-select-toggle" id="dbSelectToggle">DATABASE V!EW :: <span class="db-active-name">P!GE0NS</span> ▼</button>
       <div class="db-select-menu" id="dbSelectMenu" style="display:none;">
         <div class="db-option db-option-active">P!GE0NS</div>
         <div class="db-option db-option-disabled">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
