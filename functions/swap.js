@@ -907,9 +907,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   #traitsFlyoutCats .traits-flyout-cat{ color:var(--cyan); box-shadow:inset 0 0 0 1px transparent; }
   #traitsFlyoutCats .traits-flyout-cat:hover{ background:transparent; color:var(--cyan); box-shadow:inset 0 0 0 1px var(--magenta); }
   #traitsFlyoutCats .traits-flyout-cat.active{ background:var(--magenta-faint); color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); box-shadow:none; }
-  #traitsFlyoutVals .traits-flyout-val{ color:var(--cyan); }
+  #traitsFlyoutVals .traits-flyout-val{ color:var(--cyan); font-size:16px; }
   #traitsFlyoutVals .traits-flyout-val:hover{ border-color:var(--magenta); color:var(--cyan); background:transparent; }
-  #traitsFlyoutVals .traits-flyout-val.selected{ background:var(--magenta-faint); border-color:var(--magenta); color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
+  /* Ticked stays cyan, not magenta — magenta here read as a totally
+     different state (SCYLLA/target) than "you selected a trait filter". */
+  #traitsFlyoutVals .traits-flyout-val.selected{ background:var(--cyan-faint); border-color:var(--cyan); color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  #traitsFlyoutVals .tfv-count{ font-size:15px; }
   /* A real Pigeon preview as the button's own background (see
      renderTraitsFlyoutVals — the dark gradient is baked into the same
      inline background-image so it always covers the actual photo
@@ -926,12 +929,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:0 1px 3px rgba(0,0,0,0.9);
   }
   #traitsFlyoutVals .traits-flyout-val.has-preview .tfv-count{ color:#e8e8e8; }
-  #traitsFlyoutVals .traits-flyout-val.has-preview:hover{ border-color:var(--magenta); color:#fff; }
+  #traitsFlyoutVals .traits-flyout-val.has-preview:hover{ border-color:var(--cyan); color:#fff; }
   #traitsFlyoutVals .traits-flyout-val.has-preview.selected{
-    border-color:var(--magenta);
-    box-shadow:inset 0 0 0 2px var(--magenta);
+    border-color:var(--cyan);
+    box-shadow:inset 0 0 0 2px var(--cyan);
     color:#fff;
-    text-shadow:0 0 6px var(--magenta-glow), 0 1px 3px rgba(0,0,0,0.9);
+    text-shadow:0 0 6px var(--cyan-glow), 0 1px 3px rgba(0,0,0,0.9);
   }
   select.trait-cat-select{
     background:#000;
