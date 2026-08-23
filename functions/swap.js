@@ -973,19 +973,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     display:flex;
     align-items:center;
     justify-content:center;
-    gap:0.4rem;
+    gap:0.5rem;
     color:var(--magenta);
     text-shadow:0 0 4px var(--magenta-glow);
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:15px;
     font-weight:700;
     letter-spacing:0.05em;
     text-transform:uppercase;
-    margin-bottom:0.5em;
+    margin-bottom:0.6em;
   }
   /* The collection's own $PIGEONS coin, not the individual Pigeon's own
      thumbnail — this is a currency, not a per-item mark. */
-  .make-offer-coin{ width:22px; height:22px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--magenta-dim); }
+  .make-offer-coin{ width:34px; height:34px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--magenta-dim); }
   .thumb-offer-row{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
   .make-offer-input{
     flex:1 1 auto;
@@ -1206,11 +1206,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
     box-shadow:0 0 16px var(--pigeon-purple-glow);
   }
-  .pigeons-bar-issuer .pigeons-bar-coin{ width:44px; height:44px; }
-  .pigeons-bar-body{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; flex:1; min-width:0; }
-  .pigeons-bar-sublabel{ font-size:10px; letter-spacing:0.15em; color:rgba(255,255,255,0.75); text-transform:uppercase; }
-  .pigeons-bar-issuer .ci-addr-row{ gap:0.75rem; }
-  .pigeons-bar-addr{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
+  .pigeons-bar-issuer .pigeons-bar-coin{ width:72px; height:72px; }
+  /* Everything runs in one horizontal line — label, address, COPY, and
+     the trustline CTA side by side, not stacked. */
+  .pigeons-bar-body{ display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; gap:0.75rem 1.5rem; flex:1; min-width:0; }
+  .pigeons-bar-sublabel{ font-size:10px; letter-spacing:0.15em; color:rgba(255,255,255,0.75); text-transform:uppercase; white-space:nowrap; }
+  .pigeons-bar-issuer .ci-addr-row{ gap:0.75rem; flex-wrap:nowrap; }
+  .pigeons-bar-addr{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); white-space:nowrap; }
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
   .pigeons-bar-issuer .pigeons-bar-text{ font-size:13px; }
