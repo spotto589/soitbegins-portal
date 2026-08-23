@@ -393,12 +393,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .th-list{ margin-top:1rem; border-top:1px dashed var(--border-dim); padding-top:0.5rem; }
 
-  /* ---- horizontal top tabs (DATABASE / MY PIGEONS / TOP 10 / SALES DATA) ---- */
+  /* ---- horizontal top tabs (DATABASE / MY PIGEONS / TOP 10 / SALES DATA)
+     — attached directly to the top of whichever panel is showing below
+     it (no gap), so tabs + panel read as one connected unit. ---- */
   .top-tabs{
     display:flex;
     overflow-x:auto;
     gap:0.4rem;
-    margin-bottom:1.75rem;
+    margin-bottom:0;
     border-bottom:1px solid var(--border-dim);
   }
   .tab-btn{
@@ -408,8 +410,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:none;
     border-bottom:2px solid transparent;
     font-family:var(--font-mono);
-    font-size:11px;
-    letter-spacing:0.12em;
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:0.08em;
     color:var(--grey-dim);
     text-transform:uppercase;
     cursor:pointer;
