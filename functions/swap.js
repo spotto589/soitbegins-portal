@@ -4993,15 +4993,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'NAME_ASC', label: 'A-Z' },
       { value: 'NAME_DESC', label: 'Z-A' }
     ],
-    'L!ST!NGS': [
-      { value: 'PRICE_ASC', label: 'L0WEST' },
-      { value: 'PRICE_DESC', label: 'H!GHEST' },
-      { value: 'SCYLLA_PRICE_ASC', label: '$P!GE0NS L0WEST' },
-      { value: 'SCYLLA_PRICE_DESC', label: '$P!GE0NS H!GHEST' }
+    'PR!CE': [
+      { value: 'AVG_SALE_ASC', label: 'FL00R (AVERAGE)' },
+      { value: 'PRICE_ASC', label: 'FL00R XRP' },
+      { value: 'SCYLLA_PRICE_ASC', label: 'FL00R $P!GE0NS' },
+      { value: 'PRICE_DESC', label: 'CE!L!NG XRP' },
+      { value: 'SCYLLA_PRICE_DESC', label: 'CE!L!NG $P!GE0NS' }
     ],
     'H!ST0R!CAL SALES': [
-      { value: 'HIGHEST_SALE', label: 'H!GHEST REC0RDED SALES' },
-      { value: 'AVG_SALE_ASC', label: 'L0WEST (AVERAGE)' }
+      { value: 'HIGHEST_SALE', label: 'H!GHEST REC0RDED SALES' }
     ],
     'RAR!TY': [
       { value: 'RARITY_ASC', label: 'H!GHEST' },
