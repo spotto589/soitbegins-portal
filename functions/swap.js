@@ -833,6 +833,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--cyan);
     text-shadow:0 0 6px var(--cyan-glow);
     margin-top:1.25rem;
+    /* Overrides the inherited .index-line text-transform:uppercase — this
+       text is already hand-typed in the site's own glitch-caps, and
+       forcing it upper broke "Σκύλλα" into all-caps Greek. */
+    text-transform:none;
   }
 
   /* ---- trait stack filter panel (active filter = cyan) ---- */
@@ -2299,9 +2303,9 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <div class="sw-panel" id="myPigeonsPanel" style="display:none;">
       <div class="panel-title" id="myPigeonsPanelTitle">MY P!GE0NS</div>
+      <div class="index-line" id="connectStatus" style="text-align:center;"></div>
       <div id="myPigeonsConnect" style="display:none; text-align:center;">
         <button class="bar-btn" id="connectScyllaBtn">[ CONNECT <span style="text-transform:none;">Σκύλλα</span> ]</button>
-        <div class="index-line" id="connectStatus"></div>
       </div>
       <!-- No separate "WALLET CONNECTED" box here any more — the trustline
            banner above already shows the connected wallet/balance; this
