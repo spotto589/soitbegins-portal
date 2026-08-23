@@ -280,6 +280,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));
     gap:0.75rem;
+    /* Fixed to the tallest page's real height (the FLOOR page, which
+       carries a coin thumbnail the other two pages don't) — every page
+       renders at the same height so swapping pages never resizes the
+       box. */
+    min-height:108px;
+    align-items:stretch;
   }
   /* All three pages of the carousel share the same fixed column count
      (4) regardless of how many tiles that page actually has — a 3-tile
@@ -327,8 +333,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.85rem 0.5rem;
     text-align:center;
     border-radius:var(--radius);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
   }
-  .stat-tile-link{ display:block; width:100%; text-decoration:none; cursor:pointer; font:inherit; transition:border-color 0.15s ease, background 0.15s ease; }
+  .stat-tile-link{ width:100%; text-decoration:none; cursor:pointer; font:inherit; transition:border-color 0.15s ease, background 0.15s ease; }
   .stat-tile-link:hover{ background:var(--cyan-faint); border-color:var(--cyan-dim); }
   .stat-label{ font-size:9px; letter-spacing:0.15em; color:var(--grey-dim); margin-bottom:0.5rem; text-transform:uppercase; }
   .stat-value{ font-size:16px; letter-spacing:0.03em; color:var(--white); }
@@ -552,6 +562,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.6rem;
     flex-wrap:wrap;
     margin-bottom:0.75rem;
+  }
+  /* VIEW then SORTING BY — a plain label sitting next to its own control,
+     not baked into the clickable box's own text. VIEW sits to the left. */
+  .sort-view-row{
+    display:flex;
+    align-items:center;
+    gap:1.5rem;
+    flex-wrap:wrap;
+    margin-bottom:0.75rem;
+  }
+  .sort-field{ display:flex; align-items:center; gap:0.5rem; }
+  .sort-field-label{
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:var(--grey-dim);
+    text-transform:uppercase;
+    white-space:nowrap;
   }
   input.search-input{
     flex:0 1 140px;
@@ -1814,23 +1841,31 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="search-row">
           <input class="search-input" id="searchInput" placeholder="SEARCH #..." inputmode="numeric">
           <button class="bar-btn" id="searchBtn">[ GO ]</button>
-          <div class="traits-hover-wrap" id="sortDropWrap">
-            <span class="trait-row-label" id="sortDropLabel">S0RT ▾</span>
-            <div class="traits-flyout" id="sortFlyout" style="display:none;">
-              <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
-              <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
-            </div>
-          </div>
           <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, B0XED V!EW, N0 TRA!TS">[ RESET ]</button>
           <div class="edition-toggle" id="editionSelect">
             <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
             <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
             <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
           </div>
-          <select class="sort-select" id="dbViewSelect">
-            <option value="boxed">B0XED V!EW</option>
-            <option value="thumbnails" selected>THUMBNA!LS</option>
-          </select>
+        </div>
+        <div class="sort-view-row">
+          <div class="sort-field">
+            <span class="sort-field-label">V!EW</span>
+            <select class="sort-select" id="dbViewSelect">
+              <option value="boxed">B0XED V!EW</option>
+              <option value="thumbnails" selected>THUMBNA!LS</option>
+            </select>
+          </div>
+          <div class="sort-field">
+            <span class="sort-field-label">S0RT!NG BY:</span>
+            <div class="traits-hover-wrap" id="sortDropWrap">
+              <span class="trait-row-label" id="sortDropLabel"></span>
+              <div class="traits-flyout" id="sortFlyout" style="display:none;">
+                <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
+                <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="sort-stack-row">
           <div class="traits-hover-wrap" id="traitsHoverWrap">
@@ -4903,7 +4938,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     return cat + ' ' + (found ? found.label : value);
   }
   function renderSortDropLabel(){
-    el.sortDropLabel.textContent = 'S0RT!NG BY: ' + sortLabelOf(state.sort) + ' ▾';
+    el.sortDropLabel.textContent = sortLabelOf(state.sort) + ' ▾';
   }
   function renderSortFlyoutCats(){
     el.sortFlyoutCats.innerHTML = Object.keys(SORT_CATEGORIES).map(function(c){
