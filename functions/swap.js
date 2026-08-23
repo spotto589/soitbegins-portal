@@ -693,7 +693,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .search-row .bar-btn{ padding:0.75em 1em; font-size:12px; }
   /* Wide enough for the full "SEARCH P!GE0N # 0R WALLET" placeholder to
      show without clipping. */
-  #searchInput{ flex:0 1 260px; }
+  #searchInput{ flex:0 1 340px; }
   /* GO button for the combined pigeon-number/wallet search — purple,
      matching the collection's own theme colour, not the neutral grey
      .bar-btn default. */
@@ -731,11 +731,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .db-config-row{ margin-bottom:0.75rem; flex-wrap:wrap; }
   .db-config-row:last-child{ margin-bottom:0; }
   .db-config-row .sort-field-label{ flex:0 0 175px; }
-  /* C0LLECT!0N AND S0RT — label on its own line, edition-toggle above,
-     SORT (dropdown + RESET) below it, instead of everything crammed onto
-     one wrapping horizontal line. */
+  /* SORT row — dropdown box, then RESET on its own line underneath it. */
   .db-config-row-stacked{ display:flex; flex-direction:column; align-items:flex-start; gap:0.6rem; }
-  .collection-and-sort-stack{ display:flex; flex-direction:column; gap:0.6rem; width:100%; }
   select.sort-select{
     flex:0 0 auto;
     background:#000;
@@ -1047,7 +1044,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        own line below it — the input shrinks first instead. */
     flex-wrap:nowrap;
   }
-  #searchInput{ min-width:110px; }
+  #searchInput{ min-width:200px; }
   @media (max-width:600px){
     .results-header-row{ min-height:0; }
     .results-header-row .search-row{ position:static; transform:none; margin-bottom:0.75rem; justify-content:center; }
@@ -2288,25 +2285,26 @@ const SWAP_HTML = `<!DOCTYPE html>
               <option value="thumbnails" selected>THUMBNA!LS</option>
             </select>
           </div>
+          <div class="sort-field db-config-row">
+            <span class="sort-field-label">C0LLECT!0N</span>
+            <div class="edition-toggle" id="editionSelect">
+              <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
+              <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
+              <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
+            </div>
+          </div>
           <div class="db-config-row db-config-row-stacked">
-            <span class="sort-field-label">C0LLECT!0N AND S0RT ::</span>
-            <div class="collection-and-sort-stack">
-              <div class="edition-toggle" id="editionSelect">
-                <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
-                <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
-                <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
-              </div>
-              <div class="sort-field">
-                <div class="traits-hover-wrap" id="sortDropWrap">
-                  <span class="trait-row-label" id="sortDropLabel"></span>
-                  <div class="traits-flyout" id="sortFlyout" style="display:none;">
-                    <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
-                    <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
-                  </div>
+            <div class="sort-field">
+              <span class="sort-field-label">S0RT</span>
+              <div class="traits-hover-wrap" id="sortDropWrap">
+                <span class="trait-row-label" id="sortDropLabel"></span>
+                <div class="traits-flyout" id="sortFlyout" style="display:none;">
+                  <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
+                  <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
                 </div>
-                <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
               </div>
             </div>
+            <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
           </div>
         </div>
         <div class="sort-stack-row">
