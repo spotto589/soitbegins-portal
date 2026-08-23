@@ -1625,23 +1625,31 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
           </div>
         </div>
+        <div class="pigeons-bar" style="margin-top:0.75rem;">
+          <img class="pigeons-bar-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
+          <span class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</span>
+        </div>
 
-        <div class="stats-strip stats-strip-floor" id="statsStripFloor">
+        <!-- Auto-rotating strip — one page visible at a time, cycling on a
+             timer instead of three stacked bars, to keep this area compact. -->
+        <div class="stats-carousel" id="statsCarousel">
+        <div class="stats-strip stats-strip-floor stats-page" id="statsStripFloor">
           <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
           <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
           <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
         </div>
-        <div class="stats-strip stats-strip-main" id="statsStrip">
+        <div class="stats-strip stats-strip-main stats-page" id="statsStrip" style="display:none;">
           <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
           <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
           <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
           <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
         </div>
-        <div class="stats-strip stats-strip-activity">
+        <div class="stats-strip stats-strip-activity stats-page" id="statsStripActivity" style="display:none;">
           <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
           <div class="stat-tile"><div class="stat-label">24H BUYERS</div><div class="stat-value" id="statBuyers24h">…</div></div>
           <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
           <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES DATA"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
+        </div>
         </div>
       </div>
 
@@ -2161,6 +2169,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount',
+   'statsCarousel',
    'statTraded24h','statBuyers24h','statVolume24h','statSalesTile','statSales24h','statBurntLink',
    'indexLine','traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals',
@@ -5066,6 +5075,18 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.statSales24h.textContent = data.sales24hCount !== null && data.sales24hCount !== undefined ? data.sales24hCount.toLocaleString() : '—';
     }).catch(function(){});
   }
+  // Auto-rotating stats strip — FLOOR PRICES, then ITEMS/HOLDERS/VOLUME/
+  // LISTED, then 24H ACTIVITY, cycling on a timer so this area stays one
+  // compact strip instead of three stacked bars.
+  (function(){
+    var pages = el.statsCarousel.querySelectorAll('.stats-page');
+    var current = 0;
+    setInterval(function(){
+      pages[current].style.display = 'none';
+      current = (current + 1) % pages.length;
+      pages[current].style.display = '';
+    }, 5000);
+  })();
   el.statSalesTile.addEventListener('click', function(){
     state.activeTab = 'sales';
     showScreen('browse');
