@@ -2780,7 +2780,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.topTabs.addEventListener('click', function(e){
     var btn = e.target.closest('.tab-btn');
     if (!btn) return;
-    showTab(btn.getAttribute('data-tab'));
+    var tab = btn.getAttribute('data-tab');
+    // With the node-header BACK link hidden (SH0W MY P!GE0NS' own scope —
+    // see browseOwnerCollection's hideNodeHeader), clicking DATABASE again
+    // is the only way back to the full collection — make that work.
+    if (tab === 'database' && state.scope){
+      exitWalletScope();
+      startCollectionBrowse();
+      return;
+    }
+    showTab(tab);
   });
 
   function showScreen(name){
@@ -3401,13 +3410,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   // targetPigeon is optional — set only when arriving here via SELECT on
   // a specific Pigeon (owner-links, top holders, MY PIGEONS etc. browse a
   // wallet directly with no "target" pigeon that led here).
-  function browseOwnerCollection(wallet, ownerShort, targetPigeon){
+  function browseOwnerCollection(wallet, ownerShort, targetPigeon, hideNodeHeader){
     state.scope = { wallet: wallet, ownerShort: ownerShort || wallet };
     state.targetAssets = {};
     state.traitFilters = [];
     renderTraitRows();
     el.searchInput.value = '';
-    el.nodeHeaderPanel.style.display = '';
+    // SH0W MY P!GE0NS skips the "WALLET !DENT!F!ED" node-header chrome
+    // entirely (hideNodeHeader) — it's your own pigeons, in the normal
+    // DATABASE grid, nothing to "identify". The DATABASE tab itself is the
+    // way back to the full collection in that case (see exitWalletScope /
+    // the topTabs click handler) since there's no BACK link to click.
+    el.nodeHeaderPanel.style.display = hideNodeHeader ? 'none' : '';
     el.nodeAddr.textContent = state.scope.ownerShort;
     refreshSearchPanelSubtitle();
     if (targetPigeon){
@@ -3451,12 +3465,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     refreshCardSelectionStates();
   }
 
-  el.backToFullCollectionLink.addEventListener('click', function(e){
-    e.preventDefault();
-    // Exiting a scope never touches either pile — OFFER and WANT are
-    // independent of whatever's currently being browsed, so you can freely
-    // step back to the full collection without losing progress on either
-    // side.
+  // Exiting a scope never touches either pile — OFFER and WANT are
+  // independent of whatever's currently being browsed, so you can freely
+  // step back to the full collection without losing progress on either
+  // side.
+  function exitWalletScope(){
     state.scope = null;
     state.scopeAllItems = [];
     state.traitFilters = [];
@@ -3465,6 +3478,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     refreshSearchPanelSubtitle();
     el.searchInput.value = '';
     renderTradeBuilder();
+  }
+  el.backToFullCollectionLink.addEventListener('click', function(e){
+    e.preventDefault();
+    exitWalletScope();
     startCollectionBrowse();
   });
 
@@ -4559,7 +4576,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   loadTrustlineLoginState();
   el.showMyPigeonsBtn.addEventListener('click', function(){
-    if (MY_WALLET) browseOwnerCollection(MY_WALLET, 'Y0U');
+    if (MY_WALLET) browseOwnerCollection(MY_WALLET, 'Y0U', null, true);
   });
 
   // ---- LIST A PIGEON — first real Σκύλλα listing test: create-offer
