@@ -89,6 +89,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:8vh 3vw 10vh;
     position:relative;
     overflow-x:hidden;
+    /* A fresh query clears and repopulates #resultsArea, and images below
+       the fold keep resizing their boxes as they decode — the browser's
+       own scroll anchoring kept "helpfully" yanking scrollY back to
+       compensate for that shifting content, fighting (and outright
+       overriding) any of our own smooth scrollTo calls. Our own explicit
+       scrolls (scrollTabStripIntoView, scrollResultsIntoView, etc.)
+       should be the only thing moving the page. */
+    overflow-anchor:none;
   }
   canvas#staticBg{
     position:fixed;
