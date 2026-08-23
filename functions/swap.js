@@ -168,6 +168,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     text-transform:none;
   }
+  .title-online{ color:var(--green); text-shadow:0 0 6px var(--green-glow); }
   .sw-panel{
     position:relative;
     border:1px solid var(--border-dim);
@@ -1227,8 +1228,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     35%{ box-shadow:0 0 16px 2px var(--green-glow); border-color:var(--green); }
     100%{ box-shadow:0 0 0 rgba(61,255,138,0); border-color:rgba(255,255,255,0.6); }
   }
-  .make-offer-input.pulse{ animation:offerValuePulse 0.4s ease; }
-  .make-offer-input{
+  .make-offer-input.pulse, .list-price-input.pulse{ animation:offerValuePulse 0.4s ease; }
+  .make-offer-input, .list-price-input{
     width:100%;
     background:rgba(8,9,11,0.6);
     border:1px solid rgba(255,255,255,0.6);
@@ -1240,9 +1241,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.5em 0.65em 0.5em 2.6em;
     border-radius:var(--radius);
   }
-  .make-offer-input:focus{ outline:none; border-color:#fff; }
-  .make-offer-input::placeholder{ color:rgba(255,255,255,0.5); }
-  .make-offer-send{
+  .make-offer-input:focus, .list-price-input:focus{ outline:none; border-color:#fff; }
+  .make-offer-input::placeholder, .list-price-input::placeholder{ color:rgba(255,255,255,0.5); }
+  .make-offer-send, .list-inline-btn{
     flex:1 1 auto;
     background:rgba(0,0,0,0.18);
     border:1px solid rgba(255,255,255,0.6);
@@ -1257,7 +1258,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     transition:border-color 0.15s ease, background 0.15s ease;
   }
-  .make-offer-send:hover{ border-color:#fff; background:rgba(0,0,0,0.3); }
+  .make-offer-send:hover, .list-inline-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); }
+  /* Offers received, embedded directly on the pigeon's own card (see
+     myPigeonOffersHtml) — sits above the LIST/DELIST action box. */
+  .my-pigeon-offers{ display:flex; flex-direction:column; gap:0.4rem; margin-top:0.5rem; }
   .result-row-right{
     flex:1;
     min-width:0;
@@ -1491,6 +1495,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-addr-stack{ display:flex; flex-direction:column; align-items:center; gap:0.2rem; }
   .pigeons-bar-sublabel{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-addr{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); font-size:15px; }
+  /* LOGGED IN state — bigger, bolder than the logged-out block's plain
+     labels, since this is now the primary readout once a real wallet is
+     connected (see pigeonsLoggedIn* below). */
+  .pigeons-bar-text-lg{ font-size:19px; }
+  .pigeons-bar-summary-lg{ font-size:19px; font-weight:700; }
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
   .pigeons-bar-issuer .pigeons-bar-text{ font-size:16px; }
@@ -1949,7 +1958,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   <canvas id="staticBg"></canvas>
 
   <div class="page">
-    <h1>Σκύλλα :: SWAP</h1>
+    <h1>STAT!C :: DATABASE<br>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></h1>
 
     <div class="db-select-wrap">
       <div class="db-static-label">STAT!C DATABASE</div>
@@ -2033,10 +2042,10 @@ const SWAP_HTML = `<!DOCTYPE html>
              from account_lines (fetchPigeonsAccountLine), never
              fabricated placeholders. -->
         <div class="pigeons-bar-body" id="pigeonsBarLoggedIn" style="display:none;">
-          <span class="pigeons-bar-text">L0GGED !N :: <span id="pigeonsLoggedInWallet"></span></span>
+          <span class="pigeons-bar-text pigeons-bar-text-lg">L0GGED !N :: <span id="pigeonsLoggedInWallet"></span></span>
           <div class="pigeons-bar-addr-stack">
-            <span class="pigeons-bar-sublabel">P!GE0NS HELD :: $P!GE0NS BALANCE :: TRUSTL!NE</span>
-            <span class="ci-value ci-value-big pigeons-bar-addr" id="pigeonsLoggedInSummary">…</span>
+            <span class="ci-value ci-value-big pigeons-bar-addr pigeons-bar-summary-lg" id="pigeonsLoggedInSummary">…</span>
+            <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
           </div>
           <div class="pigeons-bar-identity-actions">
             <button class="bar-btn ci-copy-btn" id="showMyPigeonsBtn">[ SH0W MY P!GE0NS ]</button>
@@ -2088,9 +2097,12 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="ci-value ci-value-big" id="myWalletAddr"></div>
         <div class="stat-value" id="myWalletCount" style="margin-top:0.5rem;"></div>
       </div>
+      <!-- Simple, obvious summary line — the actual offers now live
+           directly on each pigeon's own card (see myPigeonOffersHtml),
+           sorted to the top; this is just "how many, at a glance" above
+           the full listing. -->
       <div id="offersReceivedBlock" style="display:none;">
-        <div class="detail-traits-title">0FFERS RECE!VED</div>
-        <div id="offersReceivedList"></div>
+        <div class="detail-traits-title" id="offersReceivedSummary">N0 0FFERS</div>
       </div>
       <div class="search-row" id="myPigeonsSortRow" style="display:none; justify-content:center;">
         <select class="sort-select" id="myPigeonsSortSelect">
@@ -2397,59 +2409,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- SCREEN: LIST A PIGEON — first real listing test -->
-    <div class="sw-panel" id="screenListForm" style="display:none;">
-      <div class="detail-eyebrow">// SCYLLA L!ST!NG</div>
-      <div class="index-line" style="display:flex; justify-content:center; gap:1.5rem;">
-        <span class="css-item" id="listFormPigeonNum"></span>
-        <span class="css-item" id="listFormXrpEquiv" style="display:none;"><span class="css-label">≈</span><span id="listFormXrpEquivValue"></span></span>
-      </div>
-      <div class="detail-img-large pigeon-img-box" id="listFormImg">[ IMAGE ]</div>
-      <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value"><input class="search-input" id="listPriceInput" placeholder="0" inputmode="decimal" style="text-align:right; width:140px;"></span></div>
-      <div class="detail-field"><span class="df-label">CURRENCY</span><span class="df-value">$P!GE0NS</span></div>
-      <div class="index-line" id="listFormRateLine" style="margin-top:0.4rem; display:none;"></div>
-      <div class="index-line" id="listFormError" style="display:none;"></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="listFormBackBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="listFormSubmitBtn">[ CREATE L!ST!NG ]</button>
-      </div>
-    </div>
-
-    <!-- SCREEN: LISTING CONFIRMATION — the real txjson is still built and
-         sent exactly as before; the raw fields are just tucked behind
-         FANCY DETAILS now instead of being the main event. Plain-language
-         summary (thumbnail, number, rarity, the actual price) is what
-         most people need to check before signing. -->
-    <div class="sw-panel" id="screenListConfirm" style="display:none;">
-      <div class="node-eyebrow">// L!ST!NG C0NF!RMAT!0N</div>
-      <div class="detail-img-large pigeon-img-box" id="confPigeonImg">[ IMAGE ]</div>
-      <div class="index-line" style="display:flex; justify-content:center; gap:1.5rem; margin-top:0.5rem;">
-        <span class="css-item"><span class="css-label">P!GE0N</span><span id="confPigeonNum"></span></span>
-        <span class="css-item" id="confRarityRow" style="display:none;"><span class="css-label">RAR!TY</span><span id="confPigeonRarity"></span></span>
-      </div>
-      <div class="pigeons-bar" style="margin-top:0.9rem;">
-        <img class="pigeons-bar-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
-        <span class="pigeons-bar-text" id="confSummaryLine"></span>
-      </div>
-      <div class="detail-history">
-        <button class="th-toggle" id="fancyDetailsToggle">[ FANCY DETA!LS ▼ ]</button>
-        <div class="th-list" id="fancyDetailsList" style="display:none;">
-          <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="confTxType"></span></div>
-          <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="confAccount"></span></div>
-          <div class="detail-field"><span class="df-label">NFTokenID</span><span class="df-value" id="confNftId"></span></div>
-          <div class="detail-field"><span class="df-label">Amount.currency</span><span class="df-value" id="confCurrency"></span></div>
-          <div class="detail-field"><span class="df-label">Amount.issuer</span><span class="df-value" id="confIssuer"></span></div>
-          <div class="detail-field"><span class="df-label">Amount.value</span><span class="df-value" id="confValue"></span></div>
-          <div class="detail-field"><span class="df-label">Flags</span><span class="df-value" id="confFlags"></span></div>
-        </div>
-      </div>
-      <div class="index-line" id="confirmStatus" style="margin-top:1rem;"></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="listConfirmBackBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="openXamanBtn">[ 0PEN XAMAN ]</button>
-      </div>
-    </div>
-
     <!-- SCREEN: LISTING RESULT — verified against real on-ledger state, not a stored flag -->
     <div class="sw-panel" id="screenListResult" style="display:none;">
       <div class="detail-eyebrow" id="listResultEyebrow">// L!ST!NG CREATED</div>
@@ -2644,7 +2603,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
-   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInSummary','showMyPigeonsBtn','swapSignOutBtn',
+   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInSummary','pigeonsLoggedInTrustline','showMyPigeonsBtn','swapSignOutBtn',
    'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
@@ -2676,8 +2635,6 @@ const SWAP_HTML = `<!DOCTYPE html>
    'targetBar','targetBarLabel',
    'myPigeonsConnect','connectScyllaBtn','connectStatus','myWalletInfo','myWalletAddr','myWalletCount',
    'myPigeonsSortRow','myPigeonsSortSelect',
-   'screenListForm','listFormPigeonNum','listFormXrpEquiv','listFormXrpEquivValue','listFormRateLine','listFormImg','listPriceInput','listFormError','listFormBackBtn','listFormSubmitBtn',
-   'screenListConfirm','confPigeonNum','confPigeonImg','confRarityRow','confPigeonRarity','confSummaryLine','fancyDetailsToggle','fancyDetailsList','confTxType','confAccount','confNftId','confCurrency','confIssuer','confValue','confFlags','confirmStatus','listConfirmBackBtn','openXamanBtn',
    'screenListResult','listResultEyebrow','listResultPigeonNum','listResultPrice','listResultStatus','listResultTxLink','listResultDoneBtn',
    'screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
@@ -2685,7 +2642,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenDelistResult','delistResultPigeonNum','delistResultStatus','delistResultTxLink','delistResultDoneBtn',
    'screenOfferConfirm','offerConfTxType','offerConfAccount','offerConfOwner','offerConfNftId','offerConfCurrency','offerConfIssuer','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
-   'offersReceivedBlock','offersReceivedList',
+   'offersReceivedBlock','offersReceivedSummary',
    'screenAcceptOfferConfirm','acceptOfferConfTxType','acceptOfferConfAccount','acceptOfferConfOfferId','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
    'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
@@ -2842,8 +2799,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenSwapOfferResult.style.display = name === 'swapofferresult' ? '' : 'none';
     el.screenSwapAcceptConfirm.style.display = name === 'swapacceptconfirm' ? '' : 'none';
     el.screenSwapAcceptResult.style.display = name === 'swapacceptresult' ? '' : 'none';
-    el.screenListForm.style.display = name === 'listform' ? '' : 'none';
-    el.screenListConfirm.style.display = name === 'listconfirm' ? '' : 'none';
     el.screenListResult.style.display = name === 'listresult' ? '' : 'none';
     el.screenBuyConfirm.style.display = name === 'buyconfirm' ? '' : 'none';
     el.screenBuyResult.style.display = name === 'buyresult' ? '' : 'none';
@@ -4284,15 +4239,51 @@ const SWAP_HTML = `<!DOCTYPE html>
   // pigeon_session cookie) rather than a second wallet-connect system. ----
   var myPigeonsData = null; // null = not fetched yet
   var myListedData = {};    // nftId -> { price, currency, offerId } — real on-ledger sell offers, not a stored flag
+  var offersByNftId = {};   // nftId -> [{ offerId, buyer, buyerShort, price, createdAt }] — real on-ledger buy offers received
+  // Offers received on THIS pigeon, shown directly on its own card — same
+  // ACCEPT OFFER button/fee breakdown the old combined offersReceivedList
+  // used, just embedded per-card instead of in one separate block (see
+  // myPigeonCardHtml). Most recent offer first.
+  function myPigeonOffersHtml(p, offers){
+    var sorted = offers.slice().sort(function(a, b){ return (b.createdAt || 0) - (a.createdAt || 0); });
+    return '<div class="my-pigeon-offers">' + sorted.map(function(o){
+      var fee = clientMarketplaceFee(o.price);
+      var feeLine = fee
+        ? '<div class="offer-fee-breakdown">MARKETPLACE FEE :: ' + fmtPigeons(fee.feeValue) + '  ::  Y0U RECE!VE :: ' + fmtPigeons(fee.sellerValue) + '</div>'
+        : '';
+      return '<div class="listing-row" style="flex-direction:column; align-items:stretch; gap:0.3rem;">' +
+        '<div style="display:flex; align-items:center; justify-content:space-between; gap:0.6rem;">' +
+          '<span class="listing-market">' + escapeHtml(o.buyerShort || o.buyer) + '</span><span class="listing-price">' + escapeHtml(o.price) + ' $P!GE0NS</span>' +
+          '<button class="listing-buy accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(o.offerId) + '" data-price="' + escapeHtml(o.price) + '" data-buyer="' + escapeHtml(o.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '">[ ACCEPT 0FFER ]</button>' +
+        '</div>' +
+        feeLine +
+      '</div>';
+    }).join('') + '</div>';
+  }
   function myPigeonCardHtml(p){
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
     var listedInfo = myListedData[p.nftId];
+    var offers = offersByNftId[p.nftId] || [];
+    var offersHtml = offers.length ? myPigeonOffersHtml(p, offers) : '';
     var actionHtml = listedInfo
       ? '<div class="index-line" style="margin-top:0.5rem; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow);">L!STED :: ' + escapeHtml(listedInfo.price) + ' $P!GE0NS</div>' +
         '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ DEL!ST ]</button>'
-      : '<button class="bar-btn list-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.5rem;">[ L!ST ]</button>';
+      // Fast inline LIST — price input + button directly on the card, same
+      // look as DATABASE's OFFER AMOUNT box (.thumb-offer et al, shared
+      // CSS) — clicking LIST goes straight to Xaman, no separate form/
+      // confirm screen (see submitInlineListing).
+      : '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
+          '<div class="thumb-offer-row">' +
+            '<div class="make-offer-input-wrap">' +
+              '<img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">' +
+              '<input class="list-price-input" type="text" inputmode="decimal" placeholder="L!ST PR!CE">' +
+            '</div>' +
+            '<button class="list-inline-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ L!ST ]</button>' +
+          '</div>' +
+          '<div class="index-line list-inline-status" style="display:none;"></div>' +
+        '</div>';
     // Own, separate toggle class from the DATABASE grid's .card-select-toggle
     // (same look, via shared CSS selectors) — deliberately NOT the same
     // class, so wireResultClicks' generic handler (which routes through
@@ -4309,17 +4300,26 @@ const SWAP_HTML = `<!DOCTYPE html>
         img +
         offerToggleHtml +
       '</div>' +
-      '<div class="result-card-body">' + rarityLine + actionHtml + '</div>' +
+      '<div class="result-card-body">' + rarityLine + offersHtml + actionHtml + '</div>' +
     '</div>';
   }
-  // ---- MY PIGEONS ordering: pigeons you've listed through Scylla always
-  // come first, highest $PIGEONS price to lowest — the sort dropdown only
-  // governs the rest, same rarity/A-Z options DATABASE offers. ----
+  // ---- MY PIGEONS ordering: pigeons with a received offer always come
+  // first (most recent offer first — that's actionable money waiting), then
+  // pigeons you've listed through Scylla (highest $PIGEONS price to lowest)
+  // — the sort dropdown only governs the rest, same rarity/A-Z options
+  // DATABASE offers. ----
   var myPigeonsSort = 'RARITY_ASC';
   function sortedMyPigeons(){
-    var listed = [], rest = [];
+    var withOffers = [], listed = [], rest = [];
     (myPigeonsData || []).forEach(function(p){
-      if (myListedData[p.nftId]) listed.push(p); else rest.push(p);
+      if (offersByNftId[p.nftId] && offersByNftId[p.nftId].length) withOffers.push(p);
+      else if (myListedData[p.nftId]) listed.push(p);
+      else rest.push(p);
+    });
+    withOffers.sort(function(a, b){
+      var aRecent = Math.max.apply(null, offersByNftId[a.nftId].map(function(o){ return o.createdAt || 0; }));
+      var bRecent = Math.max.apply(null, offersByNftId[b.nftId].map(function(o){ return o.createdAt || 0; }));
+      return bRecent - aRecent;
     });
     listed.sort(function(a, b){
       var av = parseFloat(myListedData[a.nftId].price) || 0;
@@ -4332,7 +4332,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (myPigeonsSort === 'NAME_DESC') return (b.number || 0) - (a.number || 0);
       return (a.rarityRank || 999999) - (b.rarityRank || 999999); // RARITY_ASC default
     });
-    return listed.concat(rest);
+    return withOffers.concat(listed, rest);
   }
   function renderMyPigeonsList(){
     el.myPigeonsPanelTitle.textContent = 'MY P!GE0NS' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
@@ -4349,6 +4349,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!MY_WALLET){
       el.myPigeonsConnect.style.display = '';
       el.myWalletInfo.style.display = 'none';
+      el.offersReceivedBlock.style.display = 'none';
       el.myPigeonsSortRow.style.display = 'none';
       el.myPigeonsPanelTitle.textContent = 'MY P!GE0NS';
       el.myPigeonsList.innerHTML = '';
@@ -4370,11 +4371,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   wireResultClicks(el.myPigeonsList, function(){ return myPigeonsData || []; });
   el.myPigeonsList.addEventListener('click', function(e){
-    var listBtn = e.target.closest('.list-pigeon-btn');
+    var listBtn = e.target.closest('.list-inline-btn');
     if (listBtn){
       var nftId = listBtn.getAttribute('data-nftid');
       var p = (myPigeonsData || []).filter(function(x){ return x.nftId === nftId; })[0];
-      if (p) openListForm(p);
+      var listCardEl = listBtn.closest('.thumb-offer');
+      var priceInput = listCardEl && listCardEl.querySelector('.list-price-input');
+      if (p && priceInput) submitInlineListing(p, priceInput.value.trim().replace(/,/g, ''), listCardEl);
       return;
     }
     var delistBtn = e.target.closest('.delist-pigeon-btn');
@@ -4382,16 +4385,77 @@ const SWAP_HTML = `<!DOCTYPE html>
       var dNftId = delistBtn.getAttribute('data-nftid');
       var dp = (myPigeonsData || []).filter(function(x){ return x.nftId === dNftId; })[0];
       if (dp) openDelistConfirm(dp);
+      return;
     }
+    // ACCEPT OFFER — the received-offer row now lives directly on the
+    // pigeon's own card (see myPigeonOffersHtml) instead of a separate
+    // combined list; still goes through the real brokered-accept confirm
+    // screen below, same as before.
+    var acceptBtn = e.target.closest('.accept-offer-btn');
+    if (acceptBtn){
+      acceptOfferTarget = {
+        nftId: acceptBtn.getAttribute('data-nftid'),
+        offerId: acceptBtn.getAttribute('data-offerid'),
+        price: acceptBtn.getAttribute('data-price'),
+        buyer: acceptBtn.getAttribute('data-buyer'),
+        number: acceptBtn.getAttribute('data-num') ? parseInt(acceptBtn.getAttribute('data-num'), 10) : null,
+        image: acceptBtn.getAttribute('data-image') || null
+      };
+      fetch('/api/swap-acceptoffer-prepare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nftId: acceptOfferTarget.nftId, offerId: acceptOfferTarget.offerId })
+      }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+      .then(function(res){
+        if (!res.ok || !res.data.ok){
+          alert(listingErrorMessage(res.data && res.data.error));
+          acceptOfferTarget = null;
+          return;
+        }
+        var txjson = res.data.txjson;
+        el.acceptOfferConfTxType.textContent = txjson.TransactionType;
+        el.acceptOfferConfAccount.textContent = txjson.Account;
+        el.acceptOfferConfOfferId.textContent = acceptOfferTarget.offerId;
+        el.acceptOfferConfPigeon.textContent = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + acceptOfferTarget.number : '#????');
+        el.acceptOfferConfBuyer.textContent = res.data.display.buyer;
+        el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
+        el.acceptOfferConfFee.textContent = fmtPigeons(res.data.display.feeValue);
+        el.acceptOfferConfSellerAmount.textContent = fmtPigeons(res.data.display.sellerValue);
+        el.acceptOfferConfirmStatus.textContent = '';
+        el.acceptOfferOpenXamanBtn.disabled = false;
+        el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        showScreen('acceptofferconfirm');
+      }).catch(function(){
+        acceptOfferTarget = null;
+        alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
+      });
+    }
+  });
+  // Live thousands-separator formatting on the inline LIST price input,
+  // same helper the DATABASE offer box uses (see formatThousandsInput) —
+  // a distinct class/listener from wireResultClicks' own make-offer-input
+  // handling so a LIST click can never be misrouted into submitMakeOffer.
+  el.myPigeonsList.addEventListener('input', function(e){
+    if (e.target.classList.contains('list-price-input')) formatThousandsInput(e.target);
+  });
+  el.myPigeonsList.addEventListener('keydown', function(e){
+    if (e.key !== 'Enter') return;
+    var input = e.target.closest('.list-price-input');
+    if (!input) return;
+    var cardEl = input.closest('.thumb-offer');
+    var btn = cardEl && cardEl.querySelector('.list-inline-btn');
+    if (!btn) return;
+    var p = (myPigeonsData || []).filter(function(x){ return x.nftId === btn.getAttribute('data-nftid'); })[0];
+    if (p) submitInlineListing(p, input.value.trim().replace(/,/g, ''), cardEl);
   });
 
   // ---- CONNECT SCYLLA — same XummPkce OAuth login /board uses, redirected
-  // back to /swap instead. Two entry points share this one flow: the MY
-  // PIGEONS tab's own CONNECT Σκύλλα button (lands back on MY PIGEONS),
-  // and the trustline banner's LOGIN button (lands back on DATABASE,
-  // since that's where it lives) — loginRedirectTab tracks which. ----
+  // back to /swap instead. Several entry points share this one flow (the MY
+  // PIGEONS tab's own CONNECT Σκύλλα button, the trustline banner's LOGIN
+  // button, an unauthenticated SEND on DATABASE) — signing in always lands
+  // on MY PIGEONS afterward, since that's where your pigeons AND your
+  // received offers are. ----
   var xummAuth = null;
-  var loginRedirectTab = 'mypigeons';
   function resetLoginButtons(){
     el.connectScyllaBtn.disabled = false;
     el.pigeonsLoginBtn.disabled = false;
@@ -4422,7 +4486,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             body: JSON.stringify({ jwt: jwt })
           }).then(function(r){ return r.json(); }).then(function(data){
             if (data.ok){
-              window.location.href = '/swap?connected=1&tab=' + loginRedirectTab;
+              window.location.href = '/swap?connected=1&tab=mypigeons';
             } else {
               el.connectStatus.textContent = 'ERR://C0NNECT!0N FA!LED';
               resetLoginButtons();
@@ -4439,14 +4503,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   if (el.connectScyllaBtn){
     getXummAuth(); // picks up a pending mobile return-from-Xaman redirect automatically
     el.connectScyllaBtn.addEventListener('click', function(){
-      loginRedirectTab = 'mypigeons';
       el.connectScyllaBtn.disabled = true;
       el.connectStatus.textContent = '';
       getXummAuth().authorize();
     });
   }
   el.pigeonsLoginBtn.addEventListener('click', function(){
-    loginRedirectTab = 'database';
     el.pigeonsLoginBtn.disabled = true;
     el.pigeonsLoginBtn.textContent = '[ C0NNECT!NG... ]';
     getXummAuth().authorize();
@@ -4475,6 +4537,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.pigeonsBarLoggedIn.style.display = '';
     el.pigeonsLoggedInWallet.textContent = MY_WALLET.slice(0, 9) + '...' + MY_WALLET.slice(-4);
     el.pigeonsLoggedInSummary.textContent = '…';
+    el.pigeonsLoggedInTrustline.textContent = '';
     api({ wallet: MY_WALLET }).then(function(data){
       var count = (data.items || []).length;
       el.pigeonsLoggedInSummary.textContent = count.toLocaleString() + ' P!GE0NS';
@@ -4485,7 +4548,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         ? (line.balance || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS'
         : '0 $P!GE0NS';
       var trustlineText = line && line.hasTrustline === true ? 'TRUSTL!NE SET' : (line && line.hasTrustline === false ? 'TRUSTL!NE N0T SET' : 'TRUSTL!NE ??');
-      el.pigeonsLoggedInSummary.textContent = count + ' P!GE0NS  ::  ' + balanceText + '  ::  ' + trustlineText;
+      el.pigeonsLoggedInSummary.textContent = count + ' P!GE0NS  ::  ' + balanceText;
+      el.pigeonsLoggedInTrustline.textContent = trustlineText;
     }).catch(function(){});
   }
   loadTrustlineLoginState();
@@ -4532,138 +4596,58 @@ const SWAP_HTML = `<!DOCTYPE html>
     return (code && messages[code]) || 'ERR://C0ULD N0T PREPARE THE TRANSACT!0N.';
   }
 
-  // Real live $PIGEONS/XRP rate from the XRPL DEX order book — fetched
-  // once per form open (60s server-side cache anyway), not on every
-  // keystroke; the "≈ X XRP" readout recomputes instantly client-side
-  // against that one snapshot as the price input changes.
-  var pigeonsXrpRate = null; // XRP per 1 $PIGEONS, or null if unavailable
-  function updateListFormXrpEquiv(){
-    var priceValue = Number(el.listPriceInput.value);
-    if (pigeonsXrpRate === null || !priceValue || !isFinite(priceValue) || priceValue <= 0){
-      el.listFormXrpEquiv.style.display = 'none';
-      return;
-    }
-    el.listFormXrpEquiv.style.display = '';
-    el.listFormXrpEquivValue.textContent = (priceValue * pigeonsXrpRate).toLocaleString(undefined, { maximumFractionDigits: 6 }) + ' XRP';
-  }
-  el.listPriceInput.addEventListener('input', updateListFormXrpEquiv);
-
-  function openListForm(p){
-    listingTarget = p;
-    el.listFormPigeonNum.textContent = 'P!GE0N #' + (p.number !== null ? p.number : '????');
-    el.listFormImg.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
-    el.listPriceInput.value = '';
-    el.listFormError.style.display = 'none';
-    el.listFormSubmitBtn.disabled = false;
-    el.listFormSubmitBtn.textContent = '[ CREATE L!ST!NG ]';
-    el.listFormXrpEquiv.style.display = 'none';
-    el.listFormRateLine.style.display = 'none';
-    pigeonsXrpRate = null;
-    api({ pigeonsRate: 1 }).then(function(data){
-      pigeonsXrpRate = (data && typeof data.xrpPerPigeon === 'number') ? data.xrpPerPigeon : null;
-      if (pigeonsXrpRate !== null){
-        el.listFormRateLine.style.display = '';
-        el.listFormRateLine.textContent = '1 $P!GE0NS = ' + pigeonsXrpRate.toLocaleString(undefined, { maximumFractionDigits: 8 }) + ' XRP';
-      }
-      updateListFormXrpEquiv();
-    }).catch(function(){});
-    showScreen('listform');
-  }
-  el.listFormBackBtn.addEventListener('click', function(){ showScreen('browse'); });
-
-  el.listFormSubmitBtn.addEventListener('click', function(){
-    if (!listingTarget) return;
-    var priceValue = el.listPriceInput.value.trim();
+  // Fast inline LIST — price input + button live directly on the pigeon's
+  // own card (myPigeonCardHtml), same as DATABASE's OFFER AMOUNT box.
+  // Clicking LIST goes straight to Xaman: swap-listing-payload.js already
+  // re-derives and re-validates the whole txjson from just nftId+priceValue
+  // (never trusts a client txjson), so there's nothing a separate prepare/
+  // confirm screen would add here except an extra click. The final result
+  // still gets the full screenListResult screen (tx hash link etc).
+  var listingBtnEl = null;
+  var listingStatusEl = null;
+  function submitInlineListing(p, priceValue, cardEl){
     if (!priceValue || isNaN(Number(priceValue)) || Number(priceValue) <= 0){
-      el.listFormError.textContent = 'ENTER A VAL!D PR!CE GREATER THAN 0.';
-      el.listFormError.style.display = '';
+      alert('ENTER A VAL!D PR!CE GREATER THAN 0.');
       return;
     }
-    el.listFormError.style.display = 'none';
-    el.listFormSubmitBtn.disabled = true;
-    el.listFormSubmitBtn.textContent = '[ VAL!DAT!NG... ]';
-    fetch('/api/swap-listing-prepare', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: listingTarget.nftId, priceValue: priceValue })
-    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
-    .then(function(res){
-      el.listFormSubmitBtn.disabled = false;
-      el.listFormSubmitBtn.textContent = '[ CREATE L!ST!NG ]';
-      if (!res.ok || !res.data.ok){
-        el.listFormError.textContent = listingErrorMessage(res.data && res.data.error);
-        el.listFormError.style.display = '';
-        return;
-      }
-      listingTarget.priceValue = priceValue;
-      showListingConfirm(res.data.txjson);
-    }).catch(function(){
-      el.listFormSubmitBtn.disabled = false;
-      el.listFormSubmitBtn.textContent = '[ CREATE L!ST!NG ]';
-      el.listFormError.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
-      el.listFormError.style.display = '';
-    });
-  });
-
-  function showListingConfirm(txjson){
-    el.confPigeonNum.textContent = 'P!GE0N #' + (listingTarget && listingTarget.number !== null ? listingTarget.number : '????');
-    el.confPigeonImg.innerHTML = listingTarget && listingTarget.image ? '<img src="' + escapeHtml(listingTarget.image) + '" alt="">' : '[ IMAGE ]';
-    if (listingTarget && listingTarget.rarityRank){
-      el.confRarityRow.style.display = '';
-      el.confPigeonRarity.textContent = listingTarget.rarityRank + (listingTarget.rarityTotal ? ' / ' + listingTarget.rarityTotal : '');
-    } else {
-      el.confRarityRow.style.display = 'none';
-    }
-    el.confSummaryLine.textContent = 'Y0U ARE L!ST!NG TH!S P!GE0N F0R ' + fmtPigeons(txjson.Amount.value) + '.';
-    el.fancyDetailsList.style.display = 'none';
-    el.fancyDetailsToggle.textContent = '[ FANCY DETA!LS ▼ ]';
-    el.confTxType.textContent = txjson.TransactionType;
-    el.confAccount.textContent = txjson.Account;
-    el.confNftId.textContent = txjson.NFTokenID;
-    el.confCurrency.textContent = txjson.Amount.currency;
-    el.confIssuer.textContent = txjson.Amount.issuer;
-    el.confValue.textContent = txjson.Amount.value;
-    el.confFlags.textContent = String(txjson.Flags);
-    el.confirmStatus.textContent = '';
-    el.openXamanBtn.disabled = false;
-    el.openXamanBtn.textContent = '[ 0PEN XAMAN ]';
-    showScreen('listconfirm');
-  }
-  el.listConfirmBackBtn.addEventListener('click', function(){ showScreen('listform'); });
-  el.fancyDetailsToggle.addEventListener('click', function(){
-    var opening = el.fancyDetailsList.style.display === 'none';
-    el.fancyDetailsList.style.display = opening ? '' : 'none';
-    el.fancyDetailsToggle.textContent = opening ? '[ FANCY DETA!LS ▲ ]' : '[ FANCY DETA!LS ▼ ]';
-  });
-
-  el.openXamanBtn.addEventListener('click', function(){
-    if (!listingTarget) return;
-    el.openXamanBtn.disabled = true;
-    el.openXamanBtn.textContent = '[ REQUEST!NG... ]';
-    el.confirmStatus.textContent = '';
+    listingTarget = p;
+    listingTarget.priceValue = priceValue;
+    listingBtnEl = cardEl.querySelector('.list-inline-btn');
+    listingStatusEl = cardEl.querySelector('.list-inline-status');
+    listingBtnEl.disabled = true;
+    listingBtnEl.textContent = '[ L!ST!NG... ]';
+    if (listingStatusEl){ listingStatusEl.style.display = 'none'; listingStatusEl.textContent = ''; }
+    // Open a blank tab synchronously in this click handler, then navigate
+    // it once the fetch resolves — window.open() called inside the async
+    // .then() below gets silently popup-blocked in most browsers.
+    listingXamanTab = window.open('', '_blank');
     fetch('/api/swap-listing-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: listingTarget.nftId, priceValue: listingTarget.priceValue })
+      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
-        el.openXamanBtn.disabled = false;
-        el.openXamanBtn.textContent = '[ 0PEN XAMAN ]';
-        el.confirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        closeXamanTabAndFocus(listingXamanTab);
+        listingXamanTab = null;
+        listingBtnEl.disabled = false;
+        listingBtnEl.textContent = '[ L!ST ]';
+        if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = listingErrorMessage(res.data && res.data.error); }
         return;
       }
       listingUuid = res.data.uuid;
-      listingXamanTab = window.open(res.data.next.always, '_blank');
-      el.openXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
-      el.confirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      if (listingXamanTab) listingXamanTab.location.href = res.data.next.always;
+      listingBtnEl.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.'; }
       pollListingStatus();
     }).catch(function(){
-      el.openXamanBtn.disabled = false;
-      el.openXamanBtn.textContent = '[ 0PEN XAMAN ]';
-      el.confirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+      closeXamanTabAndFocus(listingXamanTab);
+      listingXamanTab = null;
+      listingBtnEl.disabled = false;
+      listingBtnEl.textContent = '[ L!ST ]';
+      if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.'; }
     });
-  });
+  }
 
   function pollListingStatus(){
     if (listingPollTimer) clearTimeout(listingPollTimer);
@@ -4679,21 +4663,18 @@ const SWAP_HTML = `<!DOCTYPE html>
           return;
         }
         if (data.status === 'rejected'){
-          el.confirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
-          el.openXamanBtn.disabled = false;
-          el.openXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'S!GNATURE REJECTED !N XAMAN.'; }
+          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = '[ L!ST ]'; }
           return;
         }
         if (data.status === 'expired'){
-          el.confirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
-          el.openXamanBtn.disabled = false;
-          el.openXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.'; }
+          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = '[ L!ST ]'; }
           return;
         }
         if (data.status === 'failed'){
-          el.confirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
-          el.openXamanBtn.disabled = false;
-          el.openXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').'; }
+          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = '[ L!ST ]'; }
           return;
         }
         // 'pending' or 'signed_pending_ledger' — keep polling.
@@ -4719,6 +4700,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.listResultDoneBtn.addEventListener('click', function(){
     listingTarget = null;
     listingUuid = null;
+    listingBtnEl = null;
+    listingStatusEl = null;
     if (listingPollTimer) clearTimeout(listingPollTimer);
     renderMyPigeonsList();
     state.activeTab = 'mypigeons';
@@ -5017,7 +5000,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     // rather than let that fail with a confusing auth error, send an
     // unauthenticated SEND straight into the real Σκύλλα login flow.
     if (!MY_WALLET){
-      loginRedirectTab = 'database';
       getXummAuth().authorize();
       return;
     }
@@ -5171,76 +5153,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   var acceptOfferPollTimer = null;
   var acceptOfferXamanTab = null;
 
-  function offerReceivedRowHtml(item){
-    return '<div class="th-row" style="flex-direction:column; align-items:stretch; gap:0.5rem;">' +
-      '<div style="display:flex; align-items:center; gap:0.6rem;">' +
-        (item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" style="width:48px; height:48px; object-fit:cover; border:1px solid var(--border-mid);">' : '') +
-        '<div class="result-num" style="border-bottom:none; padding:0;">P!GE0N ' + (item.number !== null ? '#' + item.number : '#????') + '</div>' +
-      '</div>' +
-      item.offers.map(function(o){
-        var fee = clientMarketplaceFee(o.price);
-        var feeLine = fee
-          ? '<div class="offer-fee-breakdown">MARKETPLACE FEE :: ' + fmtPigeons(fee.feeValue) + '  ::  Y0U RECE!VE :: ' + fmtPigeons(fee.sellerValue) + '</div>'
-          : '';
-        return '<div class="listing-row" style="flex-direction:column; align-items:stretch; gap:0.3rem;">' +
-          '<div style="display:flex; align-items:center; justify-content:space-between; gap:0.6rem;">' +
-            '<span class="listing-market">' + escapeHtml(o.buyerShort || o.buyer) + '</span><span class="listing-price">' + escapeHtml(o.price) + ' $P!GE0NS</span>' +
-            '<button class="listing-buy accept-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(o.offerId) + '" data-price="' + escapeHtml(o.price) + '" data-buyer="' + escapeHtml(o.buyer) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '">[ ACCEPT 0FFER ]</button>' +
-          '</div>' +
-          feeLine +
-        '</div>';
-      }).join('') +
-    '</div>';
-  }
+  // Offers received now render directly on each pigeon's own card (see
+  // myPigeonOffersHtml + the accept-offer-btn branch in el.myPigeonsList's
+  // click listener) — this just fetches the data, builds offersByNftId for
+  // sortedMyPigeons/myPigeonCardHtml, and updates the simple summary line
+  // above the grid ("0FFERS RECE!VED (N)" / "N0 0FFERS").
   function loadOffersReceived(){
-    el.offersReceivedBlock.style.display = 'none';
     fetch('/api/swap-offers-received').then(function(r){ return r.json(); }).then(function(data){
       offersReceivedData = data.items || [];
-      if (!offersReceivedData.length) return;
-      el.offersReceivedBlock.style.display = '';
-      el.offersReceivedList.innerHTML = offersReceivedData.map(offerReceivedRowHtml).join('');
+      offersByNftId = {};
+      var totalOffers = 0;
+      offersReceivedData.forEach(function(item){
+        offersByNftId[item.nftId] = item.offers;
+        totalOffers += item.offers.length;
+      });
+      if (MY_WALLET){
+        el.offersReceivedBlock.style.display = '';
+        el.offersReceivedSummary.textContent = totalOffers ? '0FFERS RECE!VED (' + totalOffers + ')' : 'N0 0FFERS';
+      }
+      renderMyPigeonsList();
     }).catch(function(){});
   }
-  el.offersReceivedList.addEventListener('click', function(e){
-    var btn = e.target.closest('.accept-offer-btn');
-    if (!btn) return;
-    acceptOfferTarget = {
-      nftId: btn.getAttribute('data-nftid'),
-      offerId: btn.getAttribute('data-offerid'),
-      price: btn.getAttribute('data-price'),
-      buyer: btn.getAttribute('data-buyer'),
-      number: btn.getAttribute('data-num') ? parseInt(btn.getAttribute('data-num'), 10) : null,
-      image: btn.getAttribute('data-image') || null
-    };
-    fetch('/api/swap-acceptoffer-prepare', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: acceptOfferTarget.nftId, offerId: acceptOfferTarget.offerId })
-    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
-    .then(function(res){
-      if (!res.ok || !res.data.ok){
-        alert(listingErrorMessage(res.data && res.data.error));
-        acceptOfferTarget = null;
-        return;
-      }
-      var txjson = res.data.txjson;
-      el.acceptOfferConfTxType.textContent = txjson.TransactionType;
-      el.acceptOfferConfAccount.textContent = txjson.Account;
-      el.acceptOfferConfOfferId.textContent = acceptOfferTarget.offerId;
-      el.acceptOfferConfPigeon.textContent = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + acceptOfferTarget.number : '#????');
-      el.acceptOfferConfBuyer.textContent = res.data.display.buyer;
-      el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
-      el.acceptOfferConfFee.textContent = fmtPigeons(res.data.display.feeValue);
-      el.acceptOfferConfSellerAmount.textContent = fmtPigeons(res.data.display.sellerValue);
-      el.acceptOfferConfirmStatus.textContent = '';
-      el.acceptOfferOpenXamanBtn.disabled = false;
-      el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
-      showScreen('acceptofferconfirm');
-    }).catch(function(){
-      alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
-      acceptOfferTarget = null;
-    });
-  });
   el.acceptOfferConfirmBackBtn.addEventListener('click', function(){
     acceptOfferTarget = null;
     state.activeTab = 'mypigeons';
@@ -5983,15 +5916,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.swapOffersTabBtn.style.display = 'none';
   }
 
-  // A return from the CONNECT SCYLLA redirect lands back on whichever tab
-  // triggered the login (?tab=mypigeons from the MY PIGEONS button,
-  // ?tab=database from the trustline banner's LOGIN button — see
-  // loginRedirectTab); any other fresh page load (a plain refresh)
-  // defaults to DATABASE instead of sitting on a blank screen until a
-  // tab is clicked.
+  // A return from the CONNECT SCYLLA redirect always lands on MY PIGEONS —
+  // that's where your pigeons and any received offers actually are; any
+  // other fresh page load (a plain refresh) defaults to DATABASE instead
+  // of sitting on a blank screen until a tab is clicked.
   if (window.location.search.indexOf('connected=1') !== -1){
-    var connectedParams = new URLSearchParams(window.location.search);
-    showTab(connectedParams.get('tab') === 'database' ? 'database' : 'mypigeons');
+    showTab('mypigeons');
     // Strip the query param right after using it once — otherwise it
     // stays in the address bar and every later refresh keeps landing on
     // this same tab instead of the real default.

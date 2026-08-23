@@ -64,6 +64,8 @@ export async function onRequestGet(context) {
       fetchDeeptideNftDetail(nftId)
     ]);
     const stored = buyOffersMap[nftId] || [];
+    const storedByOfferId = {};
+    stored.forEach(s => { storedByOfferId[s.offerId] = s; });
     const live = liveOffers.filter(o =>
       o.amount && typeof o.amount === 'object' &&
       o.amount.currency === currency &&
@@ -96,7 +98,12 @@ export async function onRequestGet(context) {
         offerId: o.nft_offer_index,
         buyer: o.owner,
         buyerShort: shortenAddr(o.owner),
-        price: o.amount.value
+        price: o.amount.value,
+        // Best-effort recency for "most recent first" sorting — the first
+        // time we ever noticed this offer, not its true on-ledger creation
+        // time (nft_buy_offers doesn't expose that). Missing for an entry
+        // that predates this field; sorts as oldest.
+        createdAt: (storedByOfferId[o.nft_offer_index] && storedByOfferId[o.nft_offer_index].createdAt) || null
       }))
     };
   }));
