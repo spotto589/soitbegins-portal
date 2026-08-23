@@ -394,13 +394,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   .th-list{ margin-top:1rem; border-top:1px dashed var(--border-dim); padding-top:0.5rem; }
 
   /* ---- horizontal top tabs (DATABASE / MY PIGEONS / TOP 10 / SALES DATA)
-     — attached directly to the top of whichever panel is showing below
-     it (no gap), so tabs + panel read as one connected unit. ---- */
+     — sits directly under #collectionDetailsPanel (that info box lives
+     right above it in the DOM, shown/hidden by showTab() same as any
+     other tab's panel), and stays the one always-visible element that
+     switches between every tab, including on tabs with no info box. ---- */
   .top-tabs{
     display:flex;
     overflow-x:auto;
     gap:0.4rem;
-    margin-bottom:0;
+    margin-top:1.25rem;
+    margin-bottom:1.75rem;
     border-bottom:1px solid var(--border-dim);
   }
   .tab-btn{
@@ -1662,6 +1665,40 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- DATABASE-only info box — lives outside #screenBrowse (and above
+         #topTabs in the DOM) purely so the tab bar can sit visually right
+         under it while still being the one always-visible element that
+         controls every tab, including this one. Shown/hidden by showTab()
+         exactly like every other tab's own panel. -->
+    <div class="sw-panel sw-panel-signal" id="collectionDetailsPanel" style="display:none;">
+      <!-- Auto-rotating strip — one page visible at a time, cycling on a
+           timer instead of three stacked bars, to keep this area compact. -->
+      <div class="stats-carousel" id="statsCarousel">
+      <div class="stats-strip stats-strip-floor stats-page" id="statsStripFloor">
+        <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><img class="stat-tile-pigeons-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+        <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
+        <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
+      </div>
+      <div class="stats-strip stats-strip-main stats-page" id="statsStrip" style="display:none;">
+        <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
+        <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
+        <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
+        <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
+      </div>
+      <div class="stats-strip stats-strip-activity stats-page" id="statsStripActivity" style="display:none;">
+        <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
+        <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
+        <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES DATA"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
+      </div>
+      <div class="stats-carousel-dots" id="statsCarouselDots">
+        <span class="stats-dot active"></span>
+        <span class="stats-dot"></span>
+        <span class="stats-dot"></span>
+        <span class="stats-carousel-hint">SW!PE ▸</span>
+      </div>
+      </div>
+    </div>
+
     <div class="top-tabs" id="topTabs">
       <button class="tab-btn" data-tab="database">DATABASE</button>
       <button class="tab-btn" data-tab="mypigeons">MY P!GE0NS</button>
@@ -1719,35 +1756,6 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
     <div id="screenBrowse" style="display:none;">
-      <div class="sw-panel sw-panel-signal" id="collectionDetailsPanel">
-        <!-- Auto-rotating strip — one page visible at a time, cycling on a
-             timer instead of three stacked bars, to keep this area compact. -->
-        <div class="stats-carousel" id="statsCarousel">
-        <div class="stats-strip stats-strip-floor stats-page" id="statsStripFloor">
-          <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><img class="stat-tile-pigeons-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
-          <a class="stat-tile stat-tile-link" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
-          <a class="stat-tile stat-tile-link" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
-        </div>
-        <div class="stats-strip stats-strip-main stats-page" id="statsStrip" style="display:none;">
-          <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
-          <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
-          <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
-          <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
-        </div>
-        <div class="stats-strip stats-strip-activity stats-page" id="statsStripActivity" style="display:none;">
-          <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
-          <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
-          <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES DATA"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
-        </div>
-        <div class="stats-carousel-dots" id="statsCarouselDots">
-          <span class="stats-dot active"></span>
-          <span class="stats-dot"></span>
-          <span class="stats-dot"></span>
-          <span class="stats-carousel-hint">SW!PE ▸</span>
-        </div>
-        </div>
-      </div>
-
       <!-- Persistent trade builder, always visible on DATABASE — this is
            the single place that starts/continues a trade now (no more
            separate stage-screens). Clicking an empty OFFER slot browses
@@ -2277,7 +2285,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapOfferResult','swapResultNftId','swapResultToWallet','swapResultStatus','swapResultOfferId','swapResultTxLink','swapResultDoneBtn',
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
-   'screenBrowse','screenDetail','screenSummary','screenHistory',
+   'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailAvgSaleRow','detailAvgSale','detailBuyBtn','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailListingsRow',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
@@ -2312,6 +2320,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // screen (INSPECT/target-summary hide all four regardless of tab).
   function showTab(tab){
     state.activeTab = tab;
+    el.collectionDetailsPanel.style.display = tab === 'database' ? '' : 'none';
     el.screenBrowse.style.display = tab === 'database' ? '' : 'none';
     el.myPigeonsPanel.style.display = tab === 'mypigeons' ? '' : 'none';
     el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
