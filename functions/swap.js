@@ -4176,6 +4176,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!state.items.length){
         if (state.scyllaListedOnly){
           el.resultsArea.innerHTML = emptyStateHtml('// N0 ACT!VE L!ST!NGS', ['N0THING !S CURRENTLY L!STED THR0UGH SCYLLA.', 'BE THE F!RST — L!ST A P!GE0N FR0M MY P!GE0NS.'], false);
+        } else if (filters.length && state.edition !== 'ALL'){
+          // A trait can be real for the full collection but genuinely
+          // absent from just the 1ST/2ND EDITION slice currently selected
+          // — say so specifically instead of the generic "no match".
+          el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['TRA!T D0ES N0T EX!ST !N TH!S C0LLECT!0N.'], true);
         } else {
           el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', filters.length ? ['N0 P!GE0NS MATCH ALL SELECTED TRA!TS.'] : ['TRY AGA!N.'], filters.length > 0);
         }

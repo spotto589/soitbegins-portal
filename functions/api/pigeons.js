@@ -512,6 +512,16 @@ export async function onRequestGet(context) {
   const numberRange = params.get('numberRange');
   if (numberRange === 'low' || numberRange === 'high') {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
+    // Trait filters were previously ignored entirely in this branch —
+    // clicking a trait while 1ST/2ND EDITION was selected silently showed
+    // every Pigeon in that range instead of actually filtering. Same
+    // JSON-parse as the default (unfiltered-by-edition) path below.
+    const editionFiltersRaw = params.get('filters');
+    let editionFilters = [];
+    if (editionFiltersRaw) {
+      try { editionFilters = JSON.parse(editionFiltersRaw); } catch (e) { editionFilters = []; }
+      if (!Array.isArray(editionFilters)) editionFilters = [];
+    }
 
     // Numeric order within a range is just a direct slice of the (complete)
     // number map restricted to that range — no scanning needed at all.
@@ -543,7 +553,7 @@ export async function onRequestGet(context) {
     let exhausted = false;
     let rawPagesScanned = 0;
     while (matched.length < limit && rawPagesScanned < 10) {
-      const page = await fetchDeeptideListings({ skip: cursor, limit: 60, sort: underlyingSort });
+      const page = await fetchDeeptideListings({ skip: cursor, limit: 60, sort: underlyingSort, traits: editionFilters });
       rawPagesScanned++;
       if (!page.items.length) { exhausted = true; break; }
       for (const it of page.items) {
