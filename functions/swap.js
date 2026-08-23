@@ -695,6 +695,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   input.search-input:focus{ outline:none; border-color:var(--cyan); box-shadow:0 0 0 1px var(--cyan-dim); }
   input.search-input::placeholder{ color:var(--grey-disabled); text-transform:uppercase; }
   .search-row .bar-btn{ padding:0.75em 1em; font-size:12px; }
+  /* Wide enough for the full "SEARCH P!GE0N # 0R WALLET" placeholder to
+     show without clipping. */
+  #searchInput{ flex:0 1 260px; }
+  /* GO button for the combined pigeon-number/wallet search — purple,
+     matching the collection's own theme colour, not the neutral grey
+     .bar-btn default. */
+  #searchBtn{ border-color:var(--pigeon-purple-dim); color:var(--pigeon-purple); }
+  #searchBtn:hover{ border-color:var(--pigeon-purple); background:var(--pigeon-purple-faint); color:var(--pigeon-purple); }
   .bar-btn{
     flex:0 0 auto;
     background:transparent;
@@ -814,7 +822,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .traits-hover-wrap{ position:relative; display:inline-flex; }
   .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.75em 1em; }
-  #traitsHoverLabel{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); font-size:12px; letter-spacing:0.1em; }
+  #traitsHoverLabel{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); font-size:15px; letter-spacing:0.1em; }
+  #traitsHoverWrap .trait-row-label{ padding:0.9em 1.3em; }
   /* SORT and ADD TRAITS get the same bordered-box treatment as the
      edition-toggle group sitting next to them in the search row, instead
      of bare hover text — makes it read as a box, not just a label, so
@@ -1190,9 +1199,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   .make-offer-input-wrap{ position:relative; flex:1 1 auto; min-width:0; display:flex; align-items:center; }
   .make-offer-input-coin{
     position:absolute;
-    left:0.55em;
-    width:18px;
-    height:18px;
+    left:0.5em;
+    width:26px;
+    height:26px;
     border-radius:50%;
     object-fit:cover;
     border:1px solid rgba(255,255,255,0.6);
@@ -1205,7 +1214,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--white);
     font-family:var(--font-mono);
     font-size:13px;
-    padding:0.6em 0.65em 0.6em 2.1em;
+    text-align:center;
+    padding:0.6em 0.65em 0.6em 2.5em;
     border-radius:var(--radius);
   }
   .make-offer-input:focus{ outline:none; border-color:#fff; }
