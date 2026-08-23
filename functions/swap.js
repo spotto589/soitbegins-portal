@@ -307,8 +307,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.5em;
   }
   .db-option:last-child{ border-bottom:none; }
-  .db-option-active{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); cursor:default; }
-  .db-option-disabled{ color:var(--grey-disabled); cursor:not-allowed; }
+  /* Each collection gets its own theme colour in this list, not one
+     shared active/disabled palette — Pigeons purple (matching the
+     trustline strip/floor tile elsewhere), Fuzzy dark brown, Phoenix
+     red-orange. Still cursor:not-allowed/default per active-vs-disabled,
+     just via .db-option-disabled layered on top, not colour. */
+  .db-option-active{ color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); cursor:default; }
+  .db-option-disabled{ cursor:not-allowed; opacity:0.75; }
+  .db-option-fuzzy{ color:#8a5a34; text-shadow:0 0 5px rgba(138,90,52,0.4); }
+  .db-option-phnix{ color:#ff5a2e; text-shadow:0 0 6px rgba(255,90,46,0.5); }
   .db-soon{ font-size:9px; letter-spacing:0.1em; border:1px solid var(--border-mid); color:var(--grey-dim); padding:0.2em 0.4em; }
 
   /* ---- collection details: token/issuer info ---- */
@@ -1919,8 +1926,8 @@ const SWAP_HTML = `<!DOCTYPE html>
           <span class="trait-row-label" id="dbSelectLabel">P!GE0NS ▾</span>
           <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
             <div class="db-option db-option-active">P!GE0NS</div>
-            <div class="db-option db-option-disabled">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
-            <div class="db-option db-option-disabled">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
+            <div class="db-option db-option-disabled db-option-fuzzy">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
+            <div class="db-option db-option-disabled db-option-phnix">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
           </div>
         </div>
         <button class="pigeons-bar-onboard-link" id="onboardLink">New to the XRPL, NFTs, memes? Click here.</button>
