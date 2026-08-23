@@ -908,9 +908,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .result-row-left .pigeon-img-box{ width:100%; }
   .result-row-left .result-num{ border-bottom:none; padding:0; font-size:20px; }
-  /* Pigeon number and the small OFFER button share one line — number on
-     the left, offer button on the right, not stacked. */
-  .result-num-row{ display:flex; align-items:center; justify-content:space-between; gap:0.5rem; width:100%; }
   .result-row-left-rarity{ font-size:13px; letter-spacing:0.03em; color:var(--white); text-align:center; }
   .result-row-left-rarity .css-label{ color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.06em; margin-right:0.4em; font-size:10px; }
   /* Small, next to the Pigeon number, not a full-width bar. Click reveals
@@ -990,6 +987,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:1.5rem;
     flex-wrap:wrap;
     border-top:1px dashed var(--border-dim);
+    padding:0.55em 1rem;
+  }
+  /* RARITY / RARITY SCORE, visible above the traits carousel without a
+     NEXT click — same horizontal-bar look as .card-bottom-bar, just
+     sitting above the content instead of below it. */
+  .card-rarity-summary{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:1.5rem;
+    flex-wrap:wrap;
+    border-bottom:1px dashed var(--border-dim);
     padding:0.55em 1rem;
   }
   /* Flick-through pages — TRAITS, then RARITY, then sale stats, then a
@@ -3069,11 +3078,11 @@ const SWAP_HTML = `<!DOCTYPE html>
         historyPageHtml +
       '</div>' +
       '<button class="card-page-next" data-nftid="' + escapeHtml(p.nftId) + '">[ NEXT ▸ ]</button>';
-    // Small, next to the Pigeon number, not a full-width strip. Click
-    // reveals the inline input+SEND stacked below it in the left column.
+    // A full-width strip below the thumbnail, not a small pill next to
+    // the number. Click reveals the inline AMOUNT+SEND stacked below it.
     var makeOfferHtml = p.owner !== MY_WALLET
-      ? '<div class="make-offer-mini" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<button class="make-offer-mini-toggle" data-nftid="' + escapeHtml(p.nftId) + '"><img class="make-offer-coin" src="' + escapeHtml(p.image || '') + '" alt="">0FFER</button>' +
+      ? '<div class="make-offer-mini thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
+          '<button class="make-offer-mini-toggle" data-nftid="' + escapeHtml(p.nftId) + '"><img class="make-offer-coin" src="' + escapeHtml(p.image || '') + '" alt="">0FFER $P!GE0NS</button>' +
         '</div>'
       : '';
     var makeOfferInlineHtml = p.owner !== MY_WALLET
@@ -3082,22 +3091,27 @@ const SWAP_HTML = `<!DOCTYPE html>
           '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
         '</div>'
       : '';
+    // Above the traits boxes (not inside the carousel's own rarity page,
+    // which stays as-is for the flick-through) — rarity is visible
+    // immediately without a NEXT click.
+    var rarityAboveTraitsHtml = rarityLine
+      ? '<div class="card-rarity-summary"><span class="css-item"><span class="css-label">RAR!TY</span>' + rarityLine + '</span><span class="css-item"><span class="css-label">RAR!TY SC0RE</span>C0M!NG S00N</span></div>'
+      : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-row">' +
         '<div class="result-row-left">' +
+          '<div class="result-num">P!GE0N ' + num + '</div>' +
           '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
             img +
             '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
           '</div>' +
-          '<div class="result-num-row">' +
-            '<div class="result-num">P!GE0N ' + num + '</div>' +
-            makeOfferHtml +
-          '</div>' +
+          makeOfferHtml +
           makeOfferInlineHtml +
           rarityLeftHtml +
         '</div>' +
         '<div class="result-row-right">' +
           scyllaListedHtml +
+          rarityAboveTraitsHtml +
           carouselHtml +
         '</div>' +
       '</div>' +
