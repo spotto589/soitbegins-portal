@@ -956,8 +956,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .result-row-left .pigeon-img-box{ width:100%; }
   .result-row-left .result-num{ border-bottom:none; padding:0; font-size:20px; }
-  .result-row-left-rarity{ font-size:13px; letter-spacing:0.03em; color:var(--white); text-align:center; }
-  .result-row-left-rarity .css-label{ color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.06em; margin-right:0.4em; font-size:10px; }
   /* Full-width strip below the thumbnail — the AMOUNT field is always
      visible and typeable, no click-to-reveal step. Same strip in both
      the boxed and THUMBNAILS card layouts. */
@@ -3135,10 +3133,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     // RARITY SCORE isn't computed yet — deliberately left as a placeholder
     // (real rank/total already exist, the score itself is a later system).
     var rarityLine = p.rarityRank ? p.rarityRank + '/' + (p.rarityTotal || 3015) : null;
-    // Short summary under the Pigeon number, in the left column.
-    var rarityLeftHtml = rarityLine
-      ? '<div class="result-row-left-rarity"><span class="css-label">RAR!TY</span>' + rarityLine + '</div>'
-      : '';
     // Flick-through pages in the right column — TRAITS, then RARITY, then
     // sale stats, then a link to the full history page — one at a time
     // instead of every section stacked as its own bar.
@@ -3187,11 +3181,10 @@ const SWAP_HTML = `<!DOCTYPE html>
             '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
           '</div>' +
           makeOfferHtml +
-          rarityLeftHtml +
         '</div>' +
         '<div class="result-row-right">' +
-          scyllaListedHtml +
           rarityAboveTraitsHtml +
+          scyllaListedHtml +
           carouselHtml +
         '</div>' +
       '</div>' +
