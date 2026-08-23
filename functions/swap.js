@@ -1161,24 +1161,28 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-shadow:0 0 16px var(--pigeon-purple-glow);
     padding:0.6em 0.7em;
   }
-  .thumb-offer-label{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:0.5rem;
-    color:#fff;
-    text-shadow:0 1px 4px rgba(0,0,0,0.5);
+  /* BUY N0W — green, matching the site's "real, clickable buy action"
+     colour language (distinct from cyan/magenta elsewhere), full width,
+     sitting above the offer row within the same box. Only rendered when
+     the Pigeon actually carries a real Σκύλλα listing. */
+  .thumb-buy-btn{
+    width:100%;
+    background:rgba(0,0,0,0.25);
+    border:1px solid var(--green);
+    color:var(--green);
+    text-shadow:0 0 5px var(--green-glow);
     font-family:var(--font-mono);
-    font-size:15px;
     font-weight:700;
+    font-size:13px;
     letter-spacing:0.05em;
+    padding:0.6em 0.7em;
+    cursor:pointer;
     text-transform:uppercase;
-    margin-bottom:0.6em;
+    border-radius:var(--radius);
+    margin-bottom:0.5rem;
+    transition:background 0.15s ease, color 0.15s ease;
   }
-  /* The collection's own $PIGEONS coin, not the individual Pigeon's own
-     thumbnail — this is a currency, not a per-item mark. Bigger now so it
-     actually reads as a thumbnail against the solid purple box. */
-  .make-offer-coin{ width:52px; height:52px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid rgba(255,255,255,0.6); }
+  .thumb-buy-btn:hover{ background:var(--green); color:#000; text-shadow:none; }
   .thumb-offer-row{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
   .make-offer-input{
     flex:1 1 auto;
@@ -1517,26 +1521,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     .pigeons-bar-rate{ order:-1; }
   }
 
-  /* ---- DATABASE row card: $PIGEONS listing (styled as a currency —
-     coin icon + amount), traits, and an in-card sales-history toggle that
-     replaces the whole right-hand box while open ---- */
-  .card-scylla-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:0.6rem;
-    padding:0.55em 0.75em;
-    border:1px solid var(--magenta);
-    border-radius:var(--radius);
-    background:linear-gradient(90deg, rgba(255,51,204,0.85), rgba(180,30,150,0.85));
-    box-shadow:0 0 12px var(--magenta-glow);
-    margin-top:0.45rem;
-  }
-  .card-scylla-coin-wrap{ display:flex; align-items:center; gap:0.5rem; }
-  .card-scylla-coin{ width:22px; height:22px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.6); }
-  .card-scylla-price{ font-size:13px; font-weight:700; letter-spacing:0.02em; color:#fff; text-shadow:0 0 6px rgba(0,0,0,0.4); }
-  .card-buy-scylla-btn{ background:rgba(8,9,11,0.35); border:1px solid rgba(255,255,255,0.7); color:#fff; font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; padding:0.35em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:background 0.15s ease; }
-  .card-buy-scylla-btn:hover{ background:rgba(8,9,11,0.55); }
+  /* ---- DATABASE row card: traits, and an in-card sales-history toggle
+     that replaces the whole right-hand box while open ---- */
   /* 3 across, sized to roughly match the (now bigger, 280px) thumbnail's
      own footprint — 2 rows fit in that same vertical space, anything past
      that scrolls inside the grid instead of growing the card taller than
@@ -3460,26 +3446,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   // individual Pigeon's thumbnail), amount input always visible, no
   // click-to-reveal step. Handlers key off the shared .result-card
   // ancestor, so this works identically in both views.
-  function offerStripHtml(p){
+  // One unified action box — BUY N0W (only if this Pigeon carries a real
+  // Σκύλλα $PIGEONS listing) stacked above MAKE AN OFFER, sharing one
+  // purple box instead of two separate strips (a magenta BUY NOW bar
+  // above a purple OFFER strip). No coin thumbnail — the box's own
+  // purple theme already reads as $PIGEONS without repeating the icon.
+  function pigeonsActionBoxHtml(p){
     if (p.owner === MY_WALLET) return '';
+    var canBuy = !!p.scyllaListing && p.owner !== MY_WALLET;
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      '<div class="thumb-offer-label"><img class="make-offer-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">0FFER $P!GE0NS</div>' +
+      (canBuy
+        ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W :: ' + escapeHtml(fmtPigeons(p.scyllaListing.price)) + ' ]</button>'
+        : '') +
       '<div class="thumb-offer-row">' +
-        '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="AM0UNT">' +
+        '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">' +
         '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
       '</div>' +
     '</div>';
-  }
-  // $PIGEONS BUY NOW row — a real Σκύλλα listing, shared by both card
-  // layouts. Shown above the OFFER strip: buy now at the listed price,
-  // or make an offer instead.
-  function scyllaListedHtml(p){
-    if (!p.scyllaListing) return '';
-    var canBuy = p.owner !== MY_WALLET;
-    return '<div class="card-scylla-row">' +
-        '<span class="card-scylla-coin-wrap"><img class="card-scylla-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS"><span class="card-scylla-price">' + escapeHtml(fmtPigeons(p.scyllaListing.price)) + '</span></span>' +
-        (canBuy ? '<button class="card-buy-scylla-btn buy-scylla-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W ]</button>' : '') +
-      '</div>';
   }
   function resultCardHtml(p){
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
@@ -3510,7 +3493,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     var bottomListingsHtml = p.listings
       ? '<div class="card-bottom-bar card-listings-bottom' + (hasAnyListing ? '' : ' card-no-listings') + '">' + xcBottomHtml + dtBottomHtml + '</div>'
       : '';
-    var scyllaListedBlock = scyllaListedHtml(p);
     // RARITY SCORE isn't computed yet — deliberately left as a placeholder
     // (real rank/total already exist, the score itself is a later system).
     var rarityLine = p.rarityRank ? p.rarityRank + '/' + (p.rarityTotal || 3015) : null;
@@ -3541,7 +3523,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         historyPageHtml +
       '</div>' +
       '<button class="card-page-next" data-nftid="' + escapeHtml(p.nftId) + '">[ NEXT ▸ ]</button>';
-    var makeOfferHtml = offerStripHtml(p);
+    var pigeonsActionHtml = pigeonsActionBoxHtml(p);
     // Above the traits boxes (not inside the carousel's own rarity page,
     // which stays as-is for the flick-through) — rarity is visible
     // immediately without a NEXT click.
@@ -3556,11 +3538,10 @@ const SWAP_HTML = `<!DOCTYPE html>
             img +
             '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
           '</div>' +
-          makeOfferHtml +
+          pigeonsActionHtml +
         '</div>' +
         '<div class="result-row-right">' +
           rarityAboveTraitsHtml +
-          scyllaListedBlock +
           carouselHtml +
         '</div>' +
       '</div>' +
@@ -3580,15 +3561,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     var atCap = offerCtxCard
       ? (!inTarget && offerCount() >= OFFER_MAX)
       : (!inTarget && targetCount() >= OFFER_MAX);
-    var makeOfferHtml = offerStripHtml(p);
-    var scyllaListedBlock = scyllaListedHtml(p);
+    var pigeonsActionHtml = pigeonsActionBoxHtml(p);
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">P!GE0N ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         img +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
       '</div>' +
-      '<div class="result-card-body">' + rarityLine + scyllaListedBlock + makeOfferHtml + '</div>' +
+      '<div class="result-card-body">' + rarityLine + pigeonsActionHtml + '</div>' +
     '</div>';
   }
   function cardHtmlForView(p){
