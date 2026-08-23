@@ -5159,6 +5159,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // sortedMyPigeons/myPigeonCardHtml, and updates the simple summary line
   // above the grid ("0FFERS RECE!VED (N)" / "N0 0FFERS").
   function loadOffersReceived(){
+    if (!MY_WALLET) return; // the endpoint requires a real session anyway
     fetch('/api/swap-offers-received').then(function(r){ return r.json(); }).then(function(data){
       offersReceivedData = data.items || [];
       offersByNftId = {};
@@ -5167,10 +5168,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         offersByNftId[item.nftId] = item.offers;
         totalOffers += item.offers.length;
       });
-      if (MY_WALLET){
-        el.offersReceivedBlock.style.display = '';
-        el.offersReceivedSummary.textContent = totalOffers ? '0FFERS RECE!VED (' + totalOffers + ')' : 'N0 0FFERS';
-      }
+      el.offersReceivedBlock.style.display = '';
+      el.offersReceivedSummary.textContent = totalOffers ? '0FFERS RECE!VED (' + totalOffers + ')' : 'N0 0FFERS';
       renderMyPigeonsList();
     }).catch(function(){});
   }
