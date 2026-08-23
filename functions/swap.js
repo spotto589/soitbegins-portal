@@ -59,6 +59,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     --green:#3dff8a;
     --green-glow:rgba(61,255,138,0.35);
 
+    /* Sampled straight from the collection's own coin artwork (dominant
+       pixel colour), not the site's magenta accent — used only where the
+       $PIGEONS logo itself needs to be represented, e.g. the trustline bar. */
+    --pigeon-purple:#8848f8;
+    --pigeon-purple-dim:rgba(136,72,248,0.4);
+    --pigeon-purple-glow:rgba(136,72,248,0.4);
+
     --white:#f3f4f6;
     --grey:rgba(226,229,233,0.56);
     --grey-dim:rgba(226,229,233,0.34);
@@ -282,6 +289,38 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:700px){
     .stats-strip-main{ grid-template-columns:repeat(2, 1fr); }
     .stats-strip-floor{ grid-template-columns:repeat(1, 1fr); }
+  }
+  /* Dots + a nudging "SWIPE" hint under the auto-rotating strip, so it
+     reads as a carousel rather than a bar that mysteriously changes. */
+  .stats-carousel-dots{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.4rem;
+    margin-top:0.65rem;
+  }
+  .stats-dot{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:var(--border-mid);
+    transition:background 0.2s ease, transform 0.2s ease;
+  }
+  .stats-dot.active{ background:var(--cyan); box-shadow:0 0 6px var(--cyan-glow); transform:scale(1.3); }
+  .stats-carousel-hint{
+    font-size:9px;
+    letter-spacing:0.12em;
+    color:var(--grey-dim);
+    text-transform:uppercase;
+    margin-left:0.5rem;
+    animation:stats-hint-nudge 1.6s ease-in-out infinite;
+  }
+  @keyframes stats-hint-nudge{
+    0%, 100%{ transform:translateX(0); opacity:0.7; }
+    50%{ transform:translateX(3px); opacity:1; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .stats-carousel-hint{ animation:none; }
   }
   .stat-tile{
     border:1px solid var(--border-dim);
@@ -910,37 +949,35 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-row-left .result-num{ border-bottom:none; padding:0; font-size:20px; }
   .result-row-left-rarity{ font-size:13px; letter-spacing:0.03em; color:var(--white); text-align:center; }
   .result-row-left-rarity .css-label{ color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.06em; margin-right:0.4em; font-size:10px; }
-  /* Small, next to the Pigeon number, not a full-width bar. Click reveals
-     the inline input+SEND stacked below it in the same narrow column. */
-  .make-offer-mini{ flex:0 0 auto; }
-  .make-offer-mini-toggle{
-    display:flex;
-    align-items:center;
-    gap:0.3rem;
+  /* Full-width strip below the thumbnail — the AMOUNT field is always
+     visible and typeable, no click-to-reveal step. Same strip in both
+     the boxed and THUMBNAILS card layouts. */
+  .thumb-offer{
+    width:100%;
+    margin-top:0.5rem;
     background:rgba(255,51,204,0.08);
     border:1px solid var(--magenta-dim);
     border-radius:var(--radius);
+    padding:0.6em 0.7em;
+  }
+  .thumb-offer-label{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.4rem;
     color:var(--magenta);
     text-shadow:0 0 4px var(--magenta-glow);
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:12px;
     font-weight:700;
-    letter-spacing:0.04em;
+    letter-spacing:0.05em;
     text-transform:uppercase;
-    padding:0.4em 0.55em;
-    cursor:pointer;
-    white-space:nowrap;
+    margin-bottom:0.5em;
   }
-  .make-offer-mini-toggle:hover{ background:rgba(255,51,204,0.16); border-color:var(--magenta); }
-  /* THUMBNAILS view — full-width bar at the bottom of the tile instead
-     of a small pill next to the number (there's no number-row to sit
-     beside here). */
-  .thumb-offer{ width:100%; margin-top:0.5rem; }
-  .thumb-offer .make-offer-mini-toggle{ width:100%; justify-content:center; }
-  /* The actual Pigeon's own thumbnail, not a generic coin mark — makes it
-     obvious at a glance which Pigeon the offer belongs to. */
-  .make-offer-coin{ width:14px; height:14px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--magenta-dim); }
-  .make-offer-mini-inline{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
+  /* The collection's own $PIGEONS coin, not the individual Pigeon's own
+     thumbnail — this is a currency, not a per-item mark. */
+  .make-offer-coin{ width:22px; height:22px; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--magenta-dim); }
+  .thumb-offer-row{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
   .make-offer-input{
     flex:1 1 auto;
     min-width:0;
@@ -948,8 +985,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--magenta-dim);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:12px;
-    padding:0.5em 0.6em;
+    font-size:13px;
+    padding:0.6em 0.65em;
     border-radius:var(--radius);
   }
   .make-offer-input:focus{ outline:none; border-color:var(--magenta); }
@@ -960,9 +997,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#08090b;
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:11px;
+    font-size:12px;
     letter-spacing:0.05em;
-    padding:0.5em 0.6em;
+    padding:0.6em 0.65em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
@@ -1146,6 +1183,30 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-text{ font-size:16px; font-weight:700; letter-spacing:0.02em; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-align:center; text-transform:uppercase; }
   @media (max-width:500px){
     .pigeons-bar-text{ font-size:13px; }
+  }
+  /* Issuer/address + trustline CTA combined into one bar — the coin sits
+     bigger and to the left, the address/trustline stack to its right,
+     detached from the stats strip below by real margin (not touching). */
+  .pigeons-bar-issuer{
+    align-items:center;
+    margin-bottom:1.25rem;
+    gap:1rem;
+    /* The collection's own purple, sampled from the coin artwork — not
+       the site's magenta accent (that stays reserved for SCYLLA/target). */
+    border-color:var(--pigeon-purple);
+    background:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
+    box-shadow:0 0 16px var(--pigeon-purple-glow);
+  }
+  .pigeons-bar-issuer .pigeons-bar-coin{ width:44px; height:44px; }
+  .pigeons-bar-body{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; flex:1; min-width:0; }
+  .pigeons-bar-sublabel{ font-size:10px; letter-spacing:0.15em; color:rgba(255,255,255,0.75); text-transform:uppercase; }
+  .pigeons-bar-issuer .ci-addr-row{ gap:0.75rem; }
+  .pigeons-bar-addr{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
+  .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
+  .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
+  .pigeons-bar-issuer .pigeons-bar-text{ font-size:13px; }
+  @media (max-width:500px){
+    .pigeons-bar-issuer{ flex-direction:column; text-align:center; }
   }
 
   /* ---- DATABASE row card: $PIGEONS listing (styled as a currency —
@@ -1631,17 +1692,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
     <div id="screenBrowse" style="display:none;">
       <div class="sw-panel sw-panel-signal" id="collectionDetailsPanel">
-        <div class="panel-title">P!GE0NS</div>
-        <div class="collection-info">
-          <div class="ci-label">!SSUER / ADDRESS</div>
-          <div class="ci-addr-row">
-            <span class="ci-value ci-value-big" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span>
-            <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
-          </div>
-        </div>
-        <div class="pigeons-bar" style="margin-top:0.75rem;">
+        <div class="panel-title">$P!GE0NS</div>
+        <div class="pigeons-bar pigeons-bar-issuer">
           <img class="pigeons-bar-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
-          <span class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</span>
+          <div class="pigeons-bar-body">
+            <div class="pigeons-bar-sublabel">!SSUER / ADDRESS</div>
+            <div class="ci-addr-row">
+              <span class="ci-value ci-value-big pigeons-bar-addr" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span>
+              <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
+            </div>
+            <div class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</div>
+          </div>
         </div>
 
         <!-- Auto-rotating strip — one page visible at a time, cycling on a
@@ -1662,6 +1723,12 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
           <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
           <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES DATA"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
+        </div>
+        <div class="stats-carousel-dots" id="statsCarouselDots">
+          <span class="stats-dot active"></span>
+          <span class="stats-dot"></span>
+          <span class="stats-dot"></span>
+          <span class="stats-carousel-hint">SW!PE ▸</span>
         </div>
         </div>
       </div>
@@ -2182,7 +2249,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount',
-   'statsCarousel',
+   'statsCarousel','statsCarouselDots',
    'statTraded24h','statVolume24h','statSalesTile','statSales24h','statBurntLink',
    'indexLine','traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals',
@@ -3003,6 +3070,21 @@ const SWAP_HTML = `<!DOCTYPE html>
       return '<div class="card-trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '" title="SH0W 0NLY P!GE0NS W!TH TH!S TRA!T, RAREST F!RST"><div class="card-tc-label">' + escapeHtml(a.trait_type) + '</div><div class="card-tc-value">' + escapeHtml(a.value) + '</div>' + pctHtml + '</div>';
     }).join('') + '</div>';
   }
+  // Full-width OFFER $PIGEONS strip, shared by both the boxed and
+  // THUMBNAILS card layouts — the collection's own coin icon (not the
+  // individual Pigeon's thumbnail), amount input always visible, no
+  // click-to-reveal step. Handlers key off the shared .result-card
+  // ancestor, so this works identically in both views.
+  function offerStripHtml(p){
+    if (p.owner === MY_WALLET) return '';
+    return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
+      '<div class="thumb-offer-label"><img class="make-offer-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">0FFER $P!GE0NS</div>' +
+      '<div class="thumb-offer-row">' +
+        '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="AM0UNT">' +
+        '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
+      '</div>' +
+    '</div>';
+  }
   function resultCardHtml(p){
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + p.number : '#????';
@@ -3078,19 +3160,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         historyPageHtml +
       '</div>' +
       '<button class="card-page-next" data-nftid="' + escapeHtml(p.nftId) + '">[ NEXT ▸ ]</button>';
-    // A full-width strip below the thumbnail, not a small pill next to
-    // the number. Click reveals the inline AMOUNT+SEND stacked below it.
-    var makeOfferHtml = p.owner !== MY_WALLET
-      ? '<div class="make-offer-mini thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<button class="make-offer-mini-toggle" data-nftid="' + escapeHtml(p.nftId) + '"><img class="make-offer-coin" src="' + escapeHtml(p.image || '') + '" alt="">0FFER $P!GE0NS</button>' +
-        '</div>'
-      : '';
-    var makeOfferInlineHtml = p.owner !== MY_WALLET
-      ? '<div class="make-offer-mini-inline" style="display:none;">' +
-          '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="AM0UNT">' +
-          '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
-        '</div>'
-      : '';
+    var makeOfferHtml = offerStripHtml(p);
     // Above the traits boxes (not inside the carousel's own rarity page,
     // which stays as-is for the flick-through) — rarity is visible
     // immediately without a NEXT click.
@@ -3106,7 +3176,6 @@ const SWAP_HTML = `<!DOCTYPE html>
             '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
           '</div>' +
           makeOfferHtml +
-          makeOfferInlineHtml +
           rarityLeftHtml +
         '</div>' +
         '<div class="result-row-right">' +
@@ -3131,27 +3200,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     var atCap = offerCtxCard
       ? (!inTarget && offerCount() >= OFFER_MAX)
       : (!inTarget && targetCount() >= OFFER_MAX);
-    // Full-width OFFER button at the bottom of the tile — same toggle+
-    // inline-input pattern as the boxed view (handlers key off the
-    // shared .result-card ancestor, not the boxed view's own layout).
-    var makeOfferHtml = p.owner !== MY_WALLET
-      ? '<div class="make-offer-mini thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<button class="make-offer-mini-toggle" data-nftid="' + escapeHtml(p.nftId) + '"><img class="make-offer-coin" src="' + escapeHtml(p.image || '') + '" alt="">0FFER $P!GE0NS</button>' +
-        '</div>'
-      : '';
-    var makeOfferInlineHtml = p.owner !== MY_WALLET
-      ? '<div class="make-offer-mini-inline" style="display:none;">' +
-          '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="AM0UNT">' +
-          '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
-        '</div>'
-      : '';
+    var makeOfferHtml = offerStripHtml(p);
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">P!GE0N ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         img +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
       '</div>' +
-      '<div class="result-card-body">' + rarityLine + makeOfferHtml + makeOfferInlineHtml + '</div>' +
+      '<div class="result-card-body">' + rarityLine + makeOfferHtml + '</div>' +
     '</div>';
   }
   function cardHtmlForView(p){
@@ -3192,15 +3248,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         openDetail(historyLink.getAttribute('data-nftid'));
         el.historyNum.textContent = el.detailNum.textContent;
         showScreen('history');
-        return;
-      }
-      var offerToggle = e.target.closest('.make-offer-mini-toggle');
-      if (offerToggle){
-        var leftCol = offerToggle.closest('.result-card');
-        var inline = leftCol.querySelector('.make-offer-mini-inline');
-        var opening = inline.style.display === 'none';
-        inline.style.display = opening ? 'flex' : 'none';
-        if (opening) inline.querySelector('.make-offer-input').focus();
         return;
       }
       var nextBtn = e.target.closest('.card-page-next');
@@ -5111,11 +5158,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   // compact strip instead of three stacked bars.
   (function(){
     var pages = el.statsCarousel.querySelectorAll('.stats-page');
+    var dots = el.statsCarouselDots.querySelectorAll('.stats-dot');
     var current = 0;
     setInterval(function(){
       pages[current].style.display = 'none';
+      dots[current].classList.remove('active');
       current = (current + 1) % pages.length;
       pages[current].style.display = '';
+      dots[current].classList.add('active');
     }, 5000);
   })();
   el.statSalesTile.addEventListener('click', function(){
