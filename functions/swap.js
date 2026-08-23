@@ -5216,7 +5216,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       var txjson = res.data.txjson;
       el.acceptOfferConfTxType.textContent = txjson.TransactionType;
       el.acceptOfferConfAccount.textContent = txjson.Account;
-      el.acceptOfferConfOfferId.textContent = txjson.NFTokenBuyOffer;
+      el.acceptOfferConfOfferId.textContent = acceptOfferTarget.offerId;
       el.acceptOfferConfPigeon.textContent = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + acceptOfferTarget.number : '#????');
       el.acceptOfferConfBuyer.textContent = res.data.display.buyer;
       el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
