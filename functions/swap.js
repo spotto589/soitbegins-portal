@@ -5779,13 +5779,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   // Samples each trait cell's own example photo for its dominant/average
   // colour and tints that cell's border+background with it — e.g. an
-  // orange background trait gets an orange-tinted box. Best-effort: a
-  // cross-origin image without CORS headers taints the canvas and throws
-  // on read, in which case that one cell just silently keeps its default
-  // border instead of erroring.
+  // orange background trait gets an orange-tinted box. cdn.deeptide.co
+  // doesn't send CORS headers, which taints the canvas and blocks reading
+  // it entirely — same-origin proxy (deeptide-image.js, same trick
+  // ipfs-image.js already uses for ipfs.io) sidesteps that. Still
+  // best-effort: on any failure (proxy down, decode error) that one cell
+  // just silently keeps its default border instead of erroring.
   var traitColorCache = {}; // example image URL -> 'r,g,b' string, or null once confirmed unreadable
   function sampleImageColor(imgUrl){
     if (Object.prototype.hasOwnProperty.call(traitColorCache, imgUrl)) return Promise.resolve(traitColorCache[imgUrl]);
+    var proxiedUrl = imgUrl.indexOf('https://cdn.deeptide.co/') === 0
+      ? '/api/deeptide-image?src=' + encodeURIComponent(imgUrl)
+      : imgUrl;
     return new Promise(function(resolve){
       var img = new Image();
       img.crossOrigin = 'anonymous';
@@ -5808,7 +5813,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         resolve(rgb);
       };
       img.onerror = function(){ traitColorCache[imgUrl] = null; resolve(null); };
-      img.src = imgUrl;
+      img.src = proxiedUrl;
     });
   }
   function colorizeTraitCells(){
