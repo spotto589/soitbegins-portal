@@ -822,6 +822,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:0.5rem;
     text-transform:uppercase;
   }
+  /* MY PIGEONS' own "CONNECTING TO Σκύλλα..." status — big and centered,
+     not the plain small .index-line every other status message uses,
+     since this is the whole tab's content while Xaman loads. */
+  #connectStatus{
+    font-family:var(--font-mono);
+    font-size:18px;
+    font-weight:700;
+    letter-spacing:0.05em;
+    color:var(--cyan);
+    text-shadow:0 0 6px var(--cyan-glow);
+    margin-top:1.25rem;
+  }
 
   /* ---- trait stack filter panel (active filter = cyan) ---- */
   .traits-block{
@@ -3001,9 +3013,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!btn) return;
     var tab = btn.getAttribute('data-tab');
     // MY PIGEONS with no active session goes straight into the real
-    // Σκύλλα/Xaman login instead of landing on a tab whose only content is
-    // a CONNECT button — one click gets you logged in, not two.
+    // Σκύλλα/Xaman login instead of requiring a second click on a CONNECT
+    // button — but the tab itself still opens right away (flush-scrolled
+    // same as any other tab) showing a real "connecting" status, instead
+    // of the screen just sitting there doing nothing while Xaman loads.
     if (tab === 'mypigeons' && !MY_WALLET){
+      showTab('mypigeons');
+      el.connectStatus.textContent = 'C0NNECT!NG T0 Σκύλλα...';
       getXummAuth().authorize();
       return;
     }
