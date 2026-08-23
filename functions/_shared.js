@@ -1301,18 +1301,24 @@ export async function fetchXrpCafeCollectionStats(kv, vanitySlug = 'xrpigeons') 
 // `floor_price` field (unlike Deeptide, which uses drops for offer
 // amounts).
 //
-// KV-cached briefly (60s) — a burst of ~40 concurrent calls to xrp.cafe's
-// own API on every page load/reload was a real source of intermittent
-// rate-limiting, which a failed call then showed as a false "NOT LISTED"
-// (see the retry logic below). Caching cuts that burst down to once per
-// NFT per 60s across all visitors, not per page load.
+// KV-cached (10 min) — a burst of ~40 concurrent calls to xrp.cafe's own
+// API on every page load/reload was a real source of intermittent rate-
+// limiting, which a failed call then showed as a false "NOT LISTED" (see
+// the retry logic below). Caching cuts that burst down to once per NFT
+// per TTL across all visitors, not per page load.
+//
+// TTL was originally 60s, which is far too short: every miss costs a KV
+// read + a KV write, and Cloudflare's free tier caps out at 1,000 writes/
+// day — a handful of page loads at 60s was enough to exhaust it. Listing
+// prices don't actually move minute-to-minute, so 10 minutes cuts write
+// volume ~10x while staying reasonably fresh.
 //
 // Only a genuine result (listed or confirmed not-listed) gets cached — a
 // failed lookup (both retries exhausted) is never cached, so the very
 // next request tries again fresh instead of baking in a transient
 // rate-limit as a permanent false negative.
 const XRP_CAFE_NFT_CACHE_KEY_PREFIX = 'pswap:xrpcafenft:v1:';
-const XRP_CAFE_NFT_CACHE_TTL_SECONDS = 60;
+const XRP_CAFE_NFT_CACHE_TTL_SECONDS = 600;
 const XRP_CAFE_NFT_MAX_ATTEMPTS = 3;
 const XRP_CAFE_NFT_RETRY_DELAYS_MS = [300, 700];
 
