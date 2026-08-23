@@ -166,12 +166,14 @@ export async function onRequestGet(context) {
     });
   }
 
-  // Real live $PIGEONS/XRP rate, straight from the XRPL DEX order book —
-  // used for the "1 $PIGEONS = X XRP" indicator shown while listing (a
-  // convenience readout only, never used to set/validate a price).
+  // Real live $PIGEONS/XRP rate (DexScreener trade-derived price, falling
+  // back to the XRPL DEX order book) — used for the "1 $PIGEONS = X XRP"
+  // indicator shown while listing and the trustline banner's rate/
+  // calculator (a convenience readout only, never used to set/validate a
+  // price).
   if (params.get('pigeonsRate') === '1') {
-    const xrpPerPigeon = await fetchPigeonsXrpRate(env.coin);
-    return json({ xrpPerPigeon });
+    const rate = await fetchPigeonsXrpRate(env.coin);
+    return json({ xrpPerPigeon: rate.xrpPerPigeon, usdPerPigeon: rate.usdPerPigeon, dexUrl: rate.dexUrl });
   }
 
   // Collection-wide stats strip — items/holders (real, our own Clio-based

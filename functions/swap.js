@@ -1362,7 +1362,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Rate line on top, calculator stacked directly underneath it — one
      column, not side-by-side. */
   .pigeons-bar-rate-calc-col{ flex:0 0 auto; display:flex; flex-direction:column; gap:0.45rem; align-items:flex-start; }
-  /* Live "1 PIGEON = X XRP" rate, real book_offers data (fetchPigeonsXrpRate),
+  /* Live "1 PIGEON = X XRP" rate, DexScreener's trade-derived price via
+     fetchPigeonsXrpRate (real XRPL book_offers as fallback only),
      periodically re-fetched (see refreshTrustlineRate) so it never goes
      stale on a long-open tab — hidden until the first fetch resolves. */
   .pigeons-bar-rate{
@@ -1404,6 +1405,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-calc-input::placeholder{ color:rgba(255,255,255,0.6); text-transform:uppercase; }
   .pigeons-bar-calc-eq{ color:#fff; font-size:12px; opacity:0.8; }
   .pigeons-bar-calc-out{ color:#fff; font-weight:700; font-size:13px; white-space:nowrap; }
+  /* Real DexScreener pair link (returned live in the rate fetch as
+     dexUrl, falling back to the known pair URL until that resolves) —
+     .bar-btn's own white-on-purple styling already applies via
+     .pigeons-bar-issuer .bar-btn, just needs sizing/no-underline here. */
+  .pigeons-bar-dex-link{ font-size:11px; padding:0.5em 0.7em; text-decoration:none; text-align:center; align-self:stretch; }
   /* Stacked, centered on the FULL bar width (not just the space left
      over between the thumb and the onboarding link) — lines up with the
      page's own centered h1 and DATABASE VIEW selector above it. */
@@ -1876,6 +1882,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="pigeons-bar-calc-eq">=</span>
             <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
           </div>
+          <a class="bar-btn pigeons-bar-dex-link" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">[ V!EW 0N DEXSCREENER ]</a>
         </div>
       </div>
       <div class="pigeons-bar-body">
@@ -2507,7 +2514,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','ciIssuerAddr','onboardLink',
-   'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut',
+   'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
    'salesPanelWrap',
@@ -5059,11 +5066,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
 
   // Live "1 PIGEON = X XRP" rate on the trustline banner + an XRP ->
-  // $PIGEONS calculator underneath it, both driven by the same real
-  // book_offers rate the LIST form already uses (fetchPigeonsXrpRate).
-  // Re-fetched on the same 60s cadence as the server's own KV cache TTL
-  // (PIGEONS_RATE_CACHE_TTL_SECONDS in _shared.js) so a tab left open
-  // never keeps showing a stale rate — never a fabricated figure.
+  // $PIGEONS calculator underneath it, both driven by fetchPigeonsXrpRate
+  // (DexScreener's real trade-derived price, same number dexscreener.com's
+  // own UI shows, falling back to the XRPL order book's best live offer
+  // only if DexScreener is unreachable). Re-fetched on the same 60s
+  // cadence as the server's own KV cache TTL (PIGEONS_RATE_CACHE_TTL_SECONDS
+  // in _shared.js) so a tab left open never keeps showing a stale rate.
   var trustlineXrpPerPigeon = null;
   function refreshTrustlineRate(){
     api({ pigeonsRate: 1 }).then(function(data){
@@ -5074,6 +5082,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         el.pigeonsBarCalc.style.display = '';
         updatePigeonsCalc();
       }
+      if (data && data.dexUrl) el.pigeonsDexLink.href = data.dexUrl;
+      el.pigeonsDexLink.style.display = '';
     }).catch(function(){});
   }
   refreshTrustlineRate();

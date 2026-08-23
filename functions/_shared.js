@@ -273,23 +273,21 @@ export function encodeCurrencyCode(code) {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
 }
 
-// Real live $PIGEONS/XRP rate straight from the XRPL DEX order book (the
-// same xrplcluster.com RPC endpoint used everywhere else in this file) —
-// confirmed live there's real depth on this pair. Reads the best (highest-
-// quality) PIGEONS-for-XRP offer and returns XRP per 1 $PIGEONS; null if
-// the book is empty or the lookup fails, never a fabricated/guessed rate.
-// Cached briefly since it's a live external call — good enough for a
-// "roughly what this listing is worth in XRP right now" indicator, not
-// used for anything that moves funds.
-const PIGEONS_RATE_CACHE_KEY = 'pswap:pigeonsrate:v1';
+// Real live $PIGEONS/XRP rate. DexScreener's public API is the primary
+// source — it derives price from actual recent trades (not just whatever
+// the thinnest open order happens to quote), and is the same number
+// dexscreener.com's own UI shows, so it matches what anyone checking the
+// pair there already sees. Falls back to the XRPL DEX order book's own
+// best live sell offer (real on-ledger data, never fabricated/guessed)
+// only if DexScreener itself is unreachable.
+const PIGEONS_DEXSCREENER_PAIR = '504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp';
+// v2: switched from top-of-book best-ask to DexScreener's trade-derived
+// price, and the cached shape grew (usdPerPigeon, dexUrl alongside
+// xrpPerPigeon) — bump the key again if the shape changes further.
+const PIGEONS_RATE_CACHE_KEY = 'pswap:pigeonsrate:v2';
 const PIGEONS_RATE_CACHE_TTL_SECONDS = 60;
 
-export async function fetchPigeonsXrpRate(kv) {
-  if (kv) {
-    const cached = await kv.get(PIGEONS_RATE_CACHE_KEY);
-    if (cached !== null) return JSON.parse(cached);
-  }
-  let xrpPerPigeon = null;
+async function fetchPigeonsXrpRateFromBookOffers() {
   try {
     const res = await fetch('https://xrplcluster.com', {
       method: 'POST',
@@ -309,13 +307,36 @@ export async function fetchPigeonsXrpRate(kv) {
     if (best) {
       const pigeonsOut = parseFloat(best.TakerGets.value);
       const dropsIn = parseFloat(best.TakerPays);
-      if (pigeonsOut > 0 && dropsIn > 0) xrpPerPigeon = (dropsIn / 1000000) / pigeonsOut;
+      if (pigeonsOut > 0 && dropsIn > 0) return (dropsIn / 1000000) / pigeonsOut;
     }
-  } catch (e) {
-    xrpPerPigeon = null;
+  } catch (e) { /* fall through to null */ }
+  return null;
+}
+
+export async function fetchPigeonsXrpRate(kv) {
+  if (kv) {
+    const cached = await kv.get(PIGEONS_RATE_CACHE_KEY);
+    if (cached !== null) return JSON.parse(cached);
   }
-  if (kv) await safeKvPut(kv, PIGEONS_RATE_CACHE_KEY, JSON.stringify(xrpPerPigeon), { expirationTtl: PIGEONS_RATE_CACHE_TTL_SECONDS });
-  return xrpPerPigeon;
+  const dexUrl = 'https://dexscreener.com/xrpl/' + PIGEONS_DEXSCREENER_PAIR;
+  let result = { xrpPerPigeon: null, usdPerPigeon: null, dexUrl };
+  try {
+    const res = await fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + PIGEONS_DEXSCREENER_PAIR);
+    const data = await res.json();
+    const pair = data && data.pairs && data.pairs[0];
+    if (pair) {
+      const nativeVal = parseFloat(pair.priceNative);
+      if (nativeVal > 0) result.xrpPerPigeon = nativeVal;
+      const usdVal = parseFloat(pair.priceUsd);
+      if (usdVal > 0) result.usdPerPigeon = usdVal;
+      if (pair.url) result.dexUrl = pair.url;
+    }
+  } catch (e) { /* fall through to book-offers fallback below */ }
+  if (result.xrpPerPigeon === null) {
+    result.xrpPerPigeon = await fetchPigeonsXrpRateFromBookOffers();
+  }
+  if (kv) await safeKvPut(kv, PIGEONS_RATE_CACHE_KEY, JSON.stringify(result), { expirationTtl: PIGEONS_RATE_CACHE_TTL_SECONDS });
+  return result;
 }
 
 // tfTransferable (0x0008) — an NFT without this flag can never be sold to
