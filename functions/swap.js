@@ -393,7 +393,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .th-list{ margin-top:1rem; border-top:1px dashed var(--border-dim); padding-top:0.5rem; }
 
-  /* ---- horizontal top tabs (DATABASE / MY PIGEONS / TOP 10 / SALES DATA)
+  /* ---- horizontal top tabs (DATABASE / MY PIGEONS / TOP 10 / SALES HISTORY)
      — sits directly under #collectionDetailsPanel (that info box lives
      right above it in the DOM, shown/hidden by showTab() same as any
      other tab's panel), and stays the one always-visible element that
@@ -1688,7 +1688,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="stats-strip stats-strip-activity stats-page" id="statsStripActivity" style="display:none;">
         <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
         <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
-        <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES DATA"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
+        <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES H!ST0RY"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
       </div>
       <div class="stats-carousel-dots" id="statsCarouselDots">
         <span class="stats-dot active"></span>
@@ -1703,7 +1703,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button class="tab-btn" data-tab="database">DATABASE</button>
       <button class="tab-btn" data-tab="mypigeons">MY P!GE0NS</button>
       <button class="tab-btn" data-tab="topholders">T0P 10</button>
-      <button class="tab-btn" data-tab="sales">SALES DATA</button>
+      <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
     </div>
 
@@ -2248,6 +2248,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     edition: 'ALL',            // 'ALL' | 'LOW' (1-1515) | 'HIGH' (1516-3015)
     activeTab: null,           // null | 'database' | 'mypigeons' | 'topholders' | 'sales'
     databaseLoaded: false,
+    statsLoaded: false,       // universal info box — loads once, on the first tab opened, regardless of which
     salesLoaded: false,
     traitFilters: [],         // [{ id, category, value }]
     nextTraitRowId: 1,
@@ -2315,13 +2316,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
 
-  // ---- Top tab bar (DATABASE / MY PIGEONS / TOP 10 / SALES DATA) ----
+  // ---- Top tab bar (DATABASE / MY PIGEONS / TOP 10 / SALES HISTORY) ----
   // A peer navigation axis to the detail/summary screens below: only one
   // of the four tab panels is ever visible, and only while on the browse
   // screen (INSPECT/target-summary hide all four regardless of tab).
   function showTab(tab){
     state.activeTab = tab;
-    el.collectionDetailsPanel.style.display = tab === 'database' ? '' : 'none';
+    // Universal across every tab now — only what's underneath it swaps.
+    el.collectionDetailsPanel.style.display = '';
     el.screenBrowse.style.display = tab === 'database' ? '' : 'none';
     el.myPigeonsPanel.style.display = tab === 'mypigeons' ? '' : 'none';
     el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
@@ -2331,13 +2333,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     for (var i = 0; i < buttons.length; i++){
       buttons[i].classList.toggle('active', buttons[i].getAttribute('data-tab') === tab);
     }
-    // Nothing fetches until its tab is actually opened for the first time.
-    // Default landing view is the full collection, rarity-high first
-    // (state.sort's own default) — not the Σ SCYLLA LISTED filter.
+    // The universal info box loads once, the very first time any tab is
+    // opened — not gated to DATABASE any more, since it's visible on all
+    // of them now.
+    if (!state.statsLoaded){
+      state.statsLoaded = true;
+      loadCollectionStats();
+    }
+    // Nothing else fetches until its own tab is actually opened for the
+    // first time. Default landing view is the full collection, rarity-
+    // high first (state.sort's own default) — not the Σ SCYLLA LISTED filter.
     if (tab === 'database' && !state.databaseLoaded){
       state.databaseLoaded = true;
       ensureTraitsLoaded();
-      loadCollectionStats();
       runQuery();
     } else if (tab === 'mypigeons' && myPigeonsData === null){
       loadMyPigeons();
