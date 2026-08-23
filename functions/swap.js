@@ -672,11 +672,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      COLLECTION/SORT, as its own distinct section on the right — a
      vertical divider separates it, and it's vertically centered against
      the whole height of the left column's stacked rows. */
+  /* Even 50/50 split — the divider sits at the exact middle of the whole
+     box, not wherever the left column's content happens to end. */
   .db-config-group-split{ display:flex; align-items:center; gap:1.5rem; }
-  .db-config-main{ flex:1; min-width:0; }
+  .db-config-main{ flex:1 1 0; min-width:0; }
   .db-config-main .db-config-row:last-child{ margin-bottom:0; }
   .db-config-traits-section{
-    flex:0 0 auto;
+    flex:1 1 0;
+    min-width:0;
     align-self:stretch;
     display:flex;
     flex-direction:column;
@@ -3621,18 +3624,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   // targetPigeon is optional — set only when arriving here via SELECT on
   // a specific Pigeon (owner-links, top holders, MY PIGEONS etc. browse a
   // wallet directly with no "target" pigeon that led here).
-  function browseOwnerCollection(wallet, ownerShort, targetPigeon, hideNodeHeader){
+  function browseOwnerCollection(wallet, ownerShort, targetPigeon){
     state.scope = { wallet: wallet, ownerShort: ownerShort || wallet };
     state.targetAssets = {};
     state.traitFilters = [];
     renderTraitRows();
     el.searchInput.value = '';
-    // SH0W MY P!GE0NS skips the "WALLET !DENT!F!ED" node-header chrome
-    // entirely (hideNodeHeader) — it's your own pigeons, in the normal
-    // DATABASE grid, nothing to "identify". The DATABASE tab itself is the
-    // way back to the full collection in that case (see exitWalletScope /
-    // the topTabs click handler) since there's no BACK link to click.
-    el.nodeHeaderPanel.style.display = hideNodeHeader ? 'none' : '';
+    // The "WALLET !DENT!F!ED"/TARGET WALLET node-header chrome belongs to
+    // the trade-target-selection system (SWAP_BUILDER_ENABLED, currently
+    // off) — never shown any more regardless of how this wallet got
+    // browsed to. The DATABASE tab itself is the way back to the full
+    // collection (see exitWalletScope / the topTabs click handler), same
+    // as SH0W MY P!GE0NS already worked.
+    el.nodeHeaderPanel.style.display = 'none';
     el.nodeAddr.textContent = state.scope.ownerShort;
     refreshSearchPanelSubtitle();
     if (targetPigeon){
@@ -4861,7 +4865,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   loadTrustlineLoginState();
   el.showMyPigeonsBtn.addEventListener('click', function(){
-    if (MY_WALLET) browseOwnerCollection(MY_WALLET, 'Y0U', null, true);
+    if (MY_WALLET) browseOwnerCollection(MY_WALLET, 'Y0U');
   });
 
   // ---- LIST A PIGEON — first real Σκύλλα listing test: create-offer
