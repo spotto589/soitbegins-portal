@@ -1200,13 +1200,34 @@ const SWAP_HTML = `<!DOCTYPE html>
   .make-offer-input-coin{
     position:absolute;
     left:0.5em;
+    top:50%;
+    transform:translateY(-50%);
     width:26px;
     height:26px;
     border-radius:50%;
     object-fit:cover;
     border:1px solid rgba(255,255,255,0.6);
     pointer-events:none;
+    transition:left 0.12s ease;
   }
+  /* A quick coin-flip bump every time the typed number changes (see
+     repositionOfferCoin), so the coin reads as "attached" to the number,
+     not just a static icon — the point being to make this feel like
+     real currency moving, not a plain text field. */
+  @keyframes offerCoinPulse{
+    0%{ transform:translateY(-50%) scale(1) rotate(0deg); }
+    45%{ transform:translateY(-50%) scale(1.4) rotate(10deg); }
+    100%{ transform:translateY(-50%) scale(1) rotate(0deg); }
+  }
+  .make-offer-input-coin.pulse{ animation:offerCoinPulse 0.32s ease; }
+  /* Green flash on the field itself each time the number changes —
+     "juicy," not just a static grey box. */
+  @keyframes offerValuePulse{
+    0%{ box-shadow:0 0 0 rgba(61,255,138,0); border-color:rgba(255,255,255,0.6); }
+    35%{ box-shadow:0 0 16px 2px var(--green-glow); border-color:var(--green); }
+    100%{ box-shadow:0 0 0 rgba(61,255,138,0); border-color:rgba(255,255,255,0.6); }
+  }
+  .make-offer-input.pulse{ animation:offerValuePulse 0.4s ease; }
   .make-offer-input{
     width:100%;
     background:rgba(8,9,11,0.6);
@@ -2690,6 +2711,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     intPart = intPart.replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',');
     var formatted = parts.length > 1 ? intPart + '.' + parts[1] : intPart;
     input.value = formatted;
+    animateOfferCoin(input);
     if (digitsBeforeCursor === 0){
       input.setSelectionRange(0, 0);
       return;
@@ -2700,6 +2722,41 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (count === digitsBeforeCursor){ newPos = i + 1; break; }
     }
     input.setSelectionRange(newPos, newPos);
+  }
+
+  // Repositions the $PIGEONS coin so it sits right against the left edge
+  // of the (centered) typed number — like it's physically stuck to the
+  // digits, not a fixed decoration — and gives both the coin and the
+  // field a quick pulse each time the number actually changes, so typing
+  // a real offer feels alive instead of just filling a plain box.
+  var offerAmountMeasureCanvas = null;
+  function measureTextWidth(text, font){
+    if (!offerAmountMeasureCanvas) offerAmountMeasureCanvas = document.createElement('canvas');
+    var ctx = offerAmountMeasureCanvas.getContext('2d');
+    ctx.font = font;
+    return ctx.measureText(text).width;
+  }
+  function animateOfferCoin(input){
+    var wrap = input.closest('.make-offer-input-wrap');
+    var coin = wrap && wrap.querySelector('.make-offer-input-coin');
+    if (!coin) return;
+    var display = input.value || input.placeholder || '';
+    var style = window.getComputedStyle(input);
+    var font = style.fontWeight + ' ' + style.fontSize + ' ' + style.fontFamily;
+    var textWidth = measureTextWidth(display, font);
+    var paddingLeft = parseFloat(style.paddingLeft) || 0;
+    var paddingRight = parseFloat(style.paddingRight) || 0;
+    var contentWidth = input.clientWidth - paddingLeft - paddingRight;
+    var textLeft = paddingLeft + Math.max(0, (contentWidth - textWidth) / 2);
+    var coinWidth = coin.offsetWidth || 26;
+    coin.style.left = Math.max(6, textLeft - coinWidth - 6) + 'px';
+    if (!input.value) return;
+    coin.classList.remove('pulse');
+    input.classList.remove('pulse');
+    void coin.offsetWidth; // restart the animation even if it's already mid-run
+    coin.classList.add('pulse');
+    input.classList.add('pulse');
+    setTimeout(function(){ coin.classList.remove('pulse'); input.classList.remove('pulse'); }, 420);
   }
 
   // ---- Top tab bar (DATABASE / MY PIGEONS / TOP 10 / SALES HISTORY) ----
