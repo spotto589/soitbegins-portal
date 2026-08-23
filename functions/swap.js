@@ -1332,18 +1332,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
     box-shadow:0 0 16px var(--pigeon-purple-glow);
   }
-  /* Real artwork filling a big square, same technique as the $PIGEONS
-     FLOOR tile (cover-sized background + purple wash) instead of a
-     small round coin icon — sized to the banner's own height so it
-     actually reads as a thumbnail, not a favicon. Pinned to the left
-     edge (position:absolute) so it never throws off the body's own
-     centering below — same trick used for the onboarding link on the
-     right. */
-  .pigeons-bar-thumb{
+  /* Thumbnail + live exchange rate + XRP->PIGEONS calculator, pinned to
+     the left edge as one unit (position:absolute on the wrapper, not the
+     thumb itself) so it never throws off the body's own centering below
+     — same trick used for the onboarding link on the right. */
+  .pigeons-bar-left-cluster{
     position:absolute;
     left:1.25rem;
     top:50%;
     transform:translateY(-50%);
+    display:flex;
+    align-items:center;
+    gap:1rem;
+  }
+  /* Real artwork filling a big square, same technique as the $PIGEONS
+     FLOOR tile (cover-sized background + purple wash) instead of a
+     small round coin icon — sized to the banner's own height so it
+     actually reads as a thumbnail, not a favicon. */
+  .pigeons-bar-thumb{
+    flex:0 0 auto;
     width:128px;
     height:128px;
     border-radius:var(--radius);
@@ -1352,6 +1359,50 @@ const SWAP_HTML = `<!DOCTYPE html>
     background-size:cover;
     background-position:center;
   }
+  /* Live "1 PIGEON = X XRP" rate, real book_offers data (fetchPigeonsXrpRate),
+     not a fabricated/guessed figure — hidden until the fetch resolves. */
+  .pigeons-bar-rate{
+    flex:0 0 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    color:#fff;
+    text-shadow:0 1px 4px rgba(0,0,0,0.5);
+    font-family:var(--font-mono);
+    text-transform:uppercase;
+    line-height:1.35;
+    white-space:nowrap;
+  }
+  .pigeons-bar-rate-line{ font-size:11px; letter-spacing:0.1em; opacity:0.85; }
+  .pigeons-bar-rate-eq{ font-size:11px; opacity:0.7; }
+  .pigeons-bar-rate-value{ font-size:15px; font-weight:700; }
+  /* XRP -> $PIGEONS calculator — type an XRP amount, see the real
+     $PIGEONS equivalent at the same live rate as the line above. */
+  .pigeons-bar-calc{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.6);
+    border-radius:var(--radius);
+    padding:0.5em 0.7em;
+  }
+  .pigeons-bar-calc-input{
+    width:64px;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid rgba(255,255,255,0.5);
+    color:#fff;
+    font-family:var(--font-mono);
+    font-size:13px;
+    text-align:center;
+    padding:0.2em 0;
+  }
+  .pigeons-bar-calc-input:focus{ outline:none; border-bottom-color:#fff; }
+  .pigeons-bar-calc-input::placeholder{ color:rgba(255,255,255,0.6); text-transform:uppercase; }
+  .pigeons-bar-calc-eq{ color:#fff; font-size:12px; opacity:0.8; }
+  .pigeons-bar-calc-out{ color:#fff; font-weight:700; font-size:13px; white-space:nowrap; }
   /* Stacked, centered on the FULL bar width (not just the space left
      over between the thumb and the onboarding link) — lines up with the
      page's own centered h1 and DATABASE VIEW selector above it. */
@@ -1384,7 +1435,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .pigeons-bar-onboard-link:hover{ opacity:1; }
   @media (max-width:900px){
-    .pigeons-bar-thumb, .pigeons-bar-onboard-link{ position:static; transform:none; margin:0 auto; }
+    .pigeons-bar-left-cluster, .pigeons-bar-onboard-link{ position:static; transform:none; margin:0 auto; }
+    .pigeons-bar-left-cluster{ flex-wrap:wrap; justify-content:center; }
     .pigeons-bar-issuer{ flex-direction:column; gap:0.75rem; text-align:center; }
     .pigeons-bar-onboard-link{ white-space:normal; }
   }
@@ -1811,7 +1863,19 @@ const SWAP_HTML = `<!DOCTYPE html>
          DATABASE/MY PIGEONS/etc tabs. Everything runs in one horizontal
          line. -->
     <div class="pigeons-bar pigeons-bar-issuer">
-      <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
+      <div class="pigeons-bar-left-cluster">
+        <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
+        <div class="pigeons-bar-rate" id="pigeonsBarRate" style="display:none;">
+          <span class="pigeons-bar-rate-line">1 P!GE0N</span>
+          <span class="pigeons-bar-rate-eq">=</span>
+          <span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span>
+        </div>
+        <div class="pigeons-bar-calc" id="pigeonsBarCalc" style="display:none;">
+          <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="XRP">
+          <span class="pigeons-bar-calc-eq">=</span>
+          <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
+        </div>
+      </div>
       <div class="pigeons-bar-body">
         <span class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</span>
         <div class="pigeons-bar-addr-stack">
@@ -2441,6 +2505,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','ciIssuerAddr','onboardLink',
+   'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
    'salesPanelWrap',
@@ -4990,6 +5055,31 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(done, done);
     else done();
   });
+
+  // Live "1 PIGEON = X XRP" rate on the trustline banner + an XRP ->
+  // $PIGEONS calculator next to it, both driven by the same real
+  // book_offers rate the LIST form already uses (fetchPigeonsXrpRate),
+  // never a fabricated figure.
+  var trustlineXrpPerPigeon = null;
+  api({ pigeonsRate: 1 }).then(function(data){
+    trustlineXrpPerPigeon = (data && typeof data.xrpPerPigeon === 'number') ? data.xrpPerPigeon : null;
+    if (trustlineXrpPerPigeon !== null){
+      el.pigeonsBarRateValue.textContent = trustlineXrpPerPigeon.toFixed(7) + ' XRP';
+      el.pigeonsBarRate.style.display = '';
+      el.pigeonsBarCalc.style.display = '';
+      updatePigeonsCalc();
+    }
+  }).catch(function(){});
+  function updatePigeonsCalc(){
+    var xrpValue = Number(el.pigeonsCalcXrpInput.value);
+    if (trustlineXrpPerPigeon === null || !el.pigeonsCalcXrpInput.value.trim() || !isFinite(xrpValue) || xrpValue <= 0){
+      el.pigeonsCalcOut.textContent = '0 $P!GE0NS';
+      return;
+    }
+    var pigeonsOut = xrpValue / trustlineXrpPerPigeon;
+    el.pigeonsCalcOut.textContent = pigeonsOut.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
+  }
+  el.pigeonsCalcXrpInput.addEventListener('input', updatePigeonsCalc);
   // Real link, destination doesn't exist yet — same "coming soon"
   // pattern as the BURNT link, honest about what's actually built.
   el.onboardLink.addEventListener('click', function(){
