@@ -459,11 +459,19 @@ export async function onRequestGet(context) {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
     const asc = params.get('dir') === 'asc';
-    const byAverage = params.get('metric') === 'avg';
-    const metricOf = id => byAverage
-      ? (highSaleMap[id].count ? highSaleMap[id].totalDrops / highSaleMap[id].count : highSaleMap[id].drops)
-      : highSaleMap[id].drops;
-    const sortedIds = Object.keys(highSaleMap).sort((a, b) => asc ? metricOf(a) - metricOf(b) : metricOf(b) - metricOf(a));
+    const metricParam = params.get('metric');
+    // 'avg_pigeons' sorts Σκύλλα's own real $PIGEONS sale log
+    // (pigeonsSalesMap) instead of the XRP highSaleMap crawl — a genuinely
+    // separate figure, not a currency conversion of the XRP average.
+    const usePigeons = metricParam === 'avg_pigeons';
+    const sourceMap = usePigeons ? pigeonsSalesMap : highSaleMap;
+    const byAverage = metricParam === 'avg' || usePigeons;
+    const metricOf = id => usePigeons
+      ? (sourceMap[id].count ? sourceMap[id].total / sourceMap[id].count : sourceMap[id].highest)
+      : (byAverage
+          ? (sourceMap[id].count ? sourceMap[id].totalDrops / sourceMap[id].count : sourceMap[id].drops)
+          : sourceMap[id].drops);
+    const sortedIds = Object.keys(sourceMap).sort((a, b) => asc ? metricOf(a) - metricOf(b) : metricOf(b) - metricOf(a));
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));

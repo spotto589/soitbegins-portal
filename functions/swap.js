@@ -3556,7 +3556,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.loadMoreNote.style.display = '';
     var filters = activeFilters();
     var isEdition = state.edition === 'LOW' || state.edition === 'HIGH';
-    var isSalesSort = state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_ASC';
+    var isSalesSort = state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_XRP_ASC' || state.sort === 'AVG_SALE_PIGEONS_ASC';
     var isNumericSort = state.sort === 'NAME_ASC' || state.sort === 'NAME_DESC';
     var isCrossListing = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC';
     var reqParams;
@@ -3568,8 +3568,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else if (isSalesSort){
       reqParams = {
         skip: state.skip, limit: PAGE_SIZE, highestSale: 1,
-        dir: (state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_ASC') ? 'asc' : 'desc',
-        metric: state.sort === 'AVG_SALE_ASC' ? 'avg' : 'max'
+        dir: (state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_XRP_ASC' || state.sort === 'AVG_SALE_PIGEONS_ASC') ? 'asc' : 'desc',
+        metric: state.sort === 'AVG_SALE_PIGEONS_ASC' ? 'avg_pigeons' : (state.sort === 'AVG_SALE_XRP_ASC' ? 'avg' : 'max')
       };
     } else if (isCrossListing){
       // Real lowest/highest across BOTH Deeptide and xrp.cafe, not just
@@ -3854,9 +3854,14 @@ const SWAP_HTML = `<!DOCTYPE html>
         var av = a.highSaleXrp === null || a.highSaleXrp === undefined ? -1 : a.highSaleXrp, bv = b.highSaleXrp === null || b.highSaleXrp === undefined ? -1 : b.highSaleXrp;
         return state.sort === 'SALES_LOW' ? av - bv : bv - av;
       });
-    } else if (state.sort === 'AVG_SALE_ASC'){
+    } else if (state.sort === 'AVG_SALE_XRP_ASC'){
       list = list.slice().sort(function(a, b){
         var av = a.avgSaleXrp === null || a.avgSaleXrp === undefined ? Infinity : a.avgSaleXrp, bv = b.avgSaleXrp === null || b.avgSaleXrp === undefined ? Infinity : b.avgSaleXrp;
+        return av - bv;
+      });
+    } else if (state.sort === 'AVG_SALE_PIGEONS_ASC'){
+      list = list.slice().sort(function(a, b){
+        var av = !a.avgSalePigeons ? Infinity : a.avgSalePigeons, bv = !b.avgSalePigeons ? Infinity : b.avgSalePigeons;
         return av - bv;
       });
     } else if (state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC'){
@@ -5035,7 +5040,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'RARITY_DESC', label: 'L0WEST' }
     ],
     'PR!CE': [
-      { value: 'AVG_SALE_ASC', label: 'FL00R (AVERAGE)' },
+      { value: 'AVG_SALE_XRP_ASC', label: 'FL00R AVERAGE (XRP)' },
+      { value: 'AVG_SALE_PIGEONS_ASC', label: 'FL00R AVERAGE ($P!GE0NS)' },
       { value: 'PRICE_ASC', label: 'FL00R XRP' },
       { value: 'SCYLLA_PRICE_ASC', label: 'FL00R $P!GE0NS' },
       { value: 'PRICE_DESC', label: 'CE!L!NG XRP' },
