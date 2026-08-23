@@ -1391,7 +1391,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.5em 0.7em;
   }
   .pigeons-bar-calc-input{
-    width:64px;
+    width:120px;
     background:transparent;
     border:none;
     border-bottom:1px solid rgba(255,255,255,0.5);
@@ -1410,7 +1410,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      .bar-btn's own white-on-purple styling already applies via
      .pigeons-bar-issuer .bar-btn, just needs sizing/no-underline here. */
   .pigeons-bar-dex-link{ display:inline-flex; align-items:center; justify-content:center; gap:0.4rem; font-size:11px; padding:0.5em 0.7em; text-decoration:none; align-self:stretch; }
-  .pigeons-bar-dex-icon{ width:14px; height:14px; border-radius:3px; flex:0 0 auto; }
+  .pigeons-bar-dex-icon{ width:22px; height:22px; border-radius:4px; flex:0 0 auto; }
   /* Stacked, centered on the FULL bar width (not just the space left
      over between the thumb and the onboarding link) — lines up with the
      page's own centered h1 and DATABASE VIEW selector above it. */
@@ -1884,7 +1884,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
           </div>
           <a class="bar-btn pigeons-bar-dex-link" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">
-            <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">[ V!EW 0N DEXSCREENER ]
+            <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">[ V!EW 0N ]
           </a>
         </div>
       </div>
