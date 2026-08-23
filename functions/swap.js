@@ -683,7 +683,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-self:stretch;
     display:flex;
     flex-direction:column;
-    justify-content:center;
+    /* Top-aligned, and ADD TRAITS itself only as wide as its own text —
+       column flex's default align-items:stretch was forcing the
+       inline-flex box to fill the whole section width. */
+    justify-content:flex-start;
+    align-items:flex-start;
     gap:0.5rem;
     border-left:1px solid var(--border-mid);
     padding-left:1.5rem;
