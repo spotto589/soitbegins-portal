@@ -5934,8 +5934,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     // whatever else you clicked. The lightbox is a sibling overlay, not a
     // child of screenDetail, so it needs its own explicit exclusion —
     // otherwise opening/closing it would also trigger this and exit the
-    // detail screen entirely.
-    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target)){
+    // detail screen entirely. A click on a .pigeon-img-box is also
+    // excluded — that's the same click that just opened (or is opening)
+    // this screen via wireResultClicks' own delegated handler earlier in
+    // the same bubble phase, so treating it as "outside" would instantly
+    // close the screen it was supposed to open.
+    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !e.target.closest('.pigeon-img-box')){
       goBackFromDetail();
     }
   });
