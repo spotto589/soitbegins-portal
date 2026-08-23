@@ -668,6 +668,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex-wrap:wrap;
     margin-bottom:0.75rem;
   }
+  /* ADD TRAITS now lives inside the same db-config-group box as VIEW/
+     COLLECTION/SORT, on the right side of its own row instead of below
+     the box in its own separate block. */
+  .db-config-row-right{ justify-content:flex-end; }
   .sort-field{ display:flex; align-items:center; gap:0.6rem; }
   .sort-field-label{
     font-size:12px;
@@ -877,6 +881,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .traits-flyout-cat:hover, .traits-flyout-cat.active{ background:var(--cyan-faint); color:var(--cyan); }
   .traits-flyout-val{
+    position:relative;
     display:flex;
     align-items:center;
     justify-content:space-between;
@@ -941,6 +946,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-shadow:inset 0 0 0 2px var(--cyan);
     color:#fff;
     text-shadow:0 0 6px var(--cyan-glow), 0 1px 3px rgba(0,0,0,0.9);
+  }
+  /* Same corner checkmark badge a selected Pigeon thumbnail gets
+     (.card-select-toggle.selected) — same size, same magenta fill, same
+     position — so a selected photo-backed trait reads identically. */
+  .tfv-select-badge{
+    position:absolute;
+    top:0.3rem;
+    right:0.3rem;
+    z-index:2;
+    width:1.6em;
+    height:1.6em;
+    line-height:1.6em;
+    background:var(--magenta);
+    color:#08090b;
+    border:1px solid var(--magenta);
+    font-size:13px;
+    text-align:center;
+    border-radius:var(--radius);
+    animation:flicker-in 0.3s ease-out;
   }
   select.trait-cat-select{
     background:#000;
@@ -2307,17 +2331,17 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
             <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
           </div>
-        </div>
-        <div class="sort-stack-row">
-          <div class="traits-hover-wrap" id="traitsHoverWrap">
-            <span class="trait-row-label" id="traitsHoverLabel">ADD TRA!TS ▾</span>
-            <div class="traits-flyout" id="traitsFlyout" style="display:none;">
-              <div class="traits-flyout-cats" id="traitsFlyoutCats"></div>
-              <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
+          <div class="sort-stack-row db-config-row db-config-row-right">
+            <div class="traits-hover-wrap" id="traitsHoverWrap">
+              <span class="trait-row-label" id="traitsHoverLabel">ADD TRA!TS ▾</span>
+              <div class="traits-flyout" id="traitsFlyout" style="display:none;">
+                <div class="traits-flyout-cats" id="traitsFlyoutCats"></div>
+                <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
+              </div>
             </div>
+            <div id="traitRows"></div>
+            <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">[ CLEAR TRA!TS ]</button>
           </div>
-          <div id="traitRows"></div>
-          <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">[ CLEAR TRA!TS ]</button>
         </div>
 
         <div class="results-block">
@@ -4306,8 +4330,13 @@ const SWAP_HTML = `<!DOCTYPE html>
           (previewPos ? 'background-position:' + previewPos + ';' : '') + '"'
         : '';
       var isSelected = isTraitSelected(category, v.value);
+      // Photo-backed cells get the exact same corner checkmark badge a
+      // selected Pigeon thumbnail does (.card-select-toggle.selected) —
+      // plain-text cells keep the inline ✓ prefix since there's no photo
+      // corner to badge.
       return '<button type="button" class="traits-flyout-val' + (exampleImg ? ' has-preview' : '') + (isSelected ? ' selected' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
-        '<span>' + (isSelected ? '✓ ' : '') + escapeHtml(v.value.toUpperCase()) + '</span>' +
+        (exampleImg && isSelected ? '<span class="tfv-select-badge">✓</span>' : '') +
+        '<span>' + (!exampleImg && isSelected ? '✓ ' : '') + escapeHtml(v.value.toUpperCase()) + '</span>' +
         '<span class="tfv-count">' + count + ' :: ' + pct + '</span>' +
       '</button>';
     }).join('');
