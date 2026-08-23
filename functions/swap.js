@@ -1876,8 +1876,6 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
           </div>
         </div>
-        <div class="index-line" id="indexLine"></div>
-
         <div class="traits-block">
           <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none; margin-bottom:0.6rem;">[ CLEAR TRA!TS ]</button>
           <div id="traitRows"></div>
@@ -2309,7 +2307,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statScyllaListedTile','statScyllaListedCount',
    'statsCarousel','statsCarouselDots',
    'statTraded24h','statVolume24h','statSalesTile','statSales24h','statBurntLink',
-   'indexLine','traitRows','clearTraitsBtn',
+   'traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
@@ -3393,7 +3391,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       state.traitCategories = data.categories || {};
       state.traitExamples = data.examples || {};
       state.collectionSizeApprox = data.collectionSizeApprox || state.collectionSizeApprox;
-      refreshIndexLine(data.numberMapStats);
       // ensureTraitsLoaded() and runQuery() fire concurrently on first
       // DATABASE open (see showTab) — cards can finish rendering before
       // this resolves, which would silently leave every trait cell's
@@ -3404,15 +3401,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       return state.traitCategories;
     });
   }
-  function refreshIndexLine(stats){
-    if (!stats || !stats.count){
-      el.indexLine.textContent = '!NDEX!NG :: JUST GETT!NG STARTED';
-      return;
-    }
-    var pct = Math.round((stats.count / state.collectionSizeApprox) * 1000) / 10;
-    el.indexLine.textContent = 'NUMBER SEARCH !NDEX :: ' + stats.count + ' / ~' + state.collectionSizeApprox + ' (' + pct + '%)' + (stats.inProgress ? ' :: ST!LL !NDEX!NG...' : ' :: C0MPLETE');
-  }
-
   // ---- Infinite-scroll collection browse (real, live, always complete —
   // Deeptide's own listings endpoint, no KV involved) ----
   function startCollectionBrowse(){
@@ -3475,7 +3463,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       appendResults(newItems);
       var resultCount = state.total !== null ? state.total : state.items.length;
       if (filters.length === 0){
-        el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + resultCount + '</span>';
+        el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R :: <span class="hi">' + resultCount + '</span> P!GE0NS</div>';
       } else if (filters.length === 1){
         el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R <span class="hi">' + resultCount + '</span> ' +
           escapeHtml(filters[0].trait.toUpperCase()) + ': ' + escapeHtml(filters[0].value.toUpperCase()) + '</div>';
