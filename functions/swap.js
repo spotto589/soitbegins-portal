@@ -693,7 +693,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   .search-row .bar-btn{ padding:0.75em 1em; font-size:12px; }
   /* Wide enough for the full "SEARCH P!GE0N # 0R WALLET" placeholder to
      show without clipping. */
-  #searchInput{ flex:0 1 340px; }
+  /* Fixed width, not just a flex-basis — inside .search-row's absolutely-
+     positioned shrink-to-fit box, a flex-basis alone wasn't actually being
+     honored (the row sized itself to the input's min-width instead),
+     leaving the full "SEARCH PIGEON # OR WALLET" placeholder clipped. */
+  #searchInput{ flex:0 0 auto; width:300px; }
   /* GO button for the combined pigeon-number/wallet search — purple,
      matching the collection's own theme colour, not the neutral grey
      .bar-btn default. */
@@ -1044,7 +1048,6 @@ const SWAP_HTML = `<!DOCTYPE html>
        own line below it — the input shrinks first instead. */
     flex-wrap:nowrap;
   }
-  #searchInput{ min-width:200px; }
   @media (max-width:600px){
     .results-header-row{ min-height:0; }
     .results-header-row .search-row{ position:static; transform:none; margin-bottom:0.75rem; justify-content:center; }
@@ -2181,11 +2184,9 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button class="bar-btn" id="connectScyllaBtn">[ CONNECT Σκύλλα ]</button>
         <div class="index-line" id="connectStatus"></div>
       </div>
-      <div class="collection-info" id="myWalletInfo" style="display:none;">
-        <div class="ci-label">WALLET C0NNECTED</div>
-        <div class="ci-value ci-value-big" id="myWalletAddr"></div>
-        <div class="stat-value" id="myWalletCount" style="margin-top:0.5rem;"></div>
-      </div>
+      <!-- No separate "WALLET CONNECTED" box here any more — the trustline
+           banner above already shows the connected wallet/balance; this
+           tab is just your pigeons, sort, and offers. -->
       <!-- Simple, obvious summary line — the actual offers now live
            directly on each pigeon's own card (see myPigeonOffersHtml),
            sorted to the top; this is just "how many, at a glance" above
@@ -2742,7 +2743,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'backToBrowseBtn','detailSelectBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
-   'myPigeonsConnect','connectScyllaBtn','connectStatus','myWalletInfo','myWalletAddr','myWalletCount',
+   'myPigeonsConnect','connectScyllaBtn','connectStatus',
    'myPigeonsSortRow','myPigeonsSortSelect',
    'screenListResult','listResultEyebrow','listResultPigeonNum','listResultPrice','listResultStatus','listResultTxLink','listResultDoneBtn',
    'screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
@@ -2907,6 +2908,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     var btn = e.target.closest('.tab-btn');
     if (!btn) return;
     var tab = btn.getAttribute('data-tab');
+    // MY PIGEONS with no active session goes straight into the real
+    // Σκύλλα/Xaman login instead of landing on a tab whose only content is
+    // a CONNECT button — one click gets you logged in, not two.
+    if (tab === 'mypigeons' && !MY_WALLET){
+      getXummAuth().authorize();
+      return;
+    }
     // With the node-header BACK link hidden (SH0W MY P!GE0NS' own scope —
     // see browseOwnerCollection's hideNodeHeader), clicking DATABASE again
     // is the only way back to the full collection — make that work.
@@ -4641,8 +4649,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   function loadMyPigeons(){
     if (!MY_WALLET){
+      // Reachable as a fallback (e.g. the topTabs click handler's own
+      // auto-login didn't fire for some reason) — CONNECT SCYLLA still
+      // works as a manual way in.
       el.myPigeonsConnect.style.display = '';
-      el.myWalletInfo.style.display = 'none';
       el.offersReceivedBlock.style.display = 'none';
       el.myPigeonsSortRow.style.display = 'none';
       el.myPigeonsPanelTitle.textContent = 'MY P!GE0NS';
@@ -4650,12 +4660,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     el.myPigeonsConnect.style.display = 'none';
-    el.myWalletInfo.style.display = '';
-    el.myWalletAddr.textContent = MY_WALLET;
     renderMyPigeonsList();
     apiWithRetry({ wallet: MY_WALLET }).then(function(data){
       myPigeonsData = data.items || [];
-      el.myWalletCount.textContent = 'P!GE0NS :: ' + myPigeonsData.length;
       renderMyPigeonsList();
       return fetch('/api/swap-listing-owned?wallet=' + encodeURIComponent(MY_WALLET)).then(function(r){ return r.json(); });
     }).then(function(listedRes){
