@@ -1821,6 +1821,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
             </div>
           </div>
+          <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, B0XED V!EW, N0 TRA!TS">[ RESET ]</button>
           <div class="edition-toggle" id="editionSelect">
             <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
             <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
@@ -2262,7 +2263,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','dbViewSelect','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
+  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectToggle','dbSelectMenu','copyIssuerBtn','ciIssuerAddr','onboardLink',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
@@ -4971,6 +4972,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.dbViewSelect.addEventListener('change', function(){
     state.dbView = el.dbViewSelect.value;
     if (state.items && state.items.length) renderResultsReplace(state.items);
+  });
+  // ALL editions, RARITY highest, BOXED VIEW, no traits — one click back
+  // to the default browse state.
+  el.resetDbBtn.addEventListener('click', function(){
+    state.edition = 'ALL';
+    el.editionSelect.querySelectorAll('.edition-btn').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-value') === 'ALL');
+    });
+    el.dbViewSelect.value = 'boxed';
+    state.dbView = 'boxed';
+    state.traitFilters = [];
+    renderTraitRows();
+    state.sort = 'RARITY_ASC';
+    renderSortDropLabel();
+    if (state.scyllaListedOnly) setScyllaListedOnly(false); // also runs the query
+    else runQuery();
   });
 
   // ---- Inspect / detail ----
