@@ -2040,6 +2040,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div class="pigeons-bar-identity-actions">
             <button class="bar-btn ci-copy-btn" id="showMyPigeonsBtn">[ SH0W MY P!GE0NS ]</button>
+            <button class="bar-btn ci-copy-btn" id="swapSignOutBtn">[ S!GN 0UT ]</button>
           </div>
         </div>
       </div>
@@ -2643,7 +2644,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
-   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInSummary','showMyPigeonsBtn',
+   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInSummary','showMyPigeonsBtn','swapSignOutBtn',
    'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
@@ -4449,6 +4450,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.pigeonsLoginBtn.disabled = true;
     el.pigeonsLoginBtn.textContent = '[ C0NNECT!NG... ]';
     getXummAuth().authorize();
+  });
+  el.swapSignOutBtn.addEventListener('click', function(){
+    el.swapSignOutBtn.disabled = true;
+    el.swapSignOutBtn.textContent = '[ S!GN!NG 0UT... ]';
+    fetch('/api/disconnect', { method: 'POST' }).then(function(){
+      window.location.href = '/swap';
+    }).catch(function(){
+      window.location.href = '/swap';
+    });
   });
 
   // ---- Trustline banner LOGIN state — real held-Pigeons count + real
