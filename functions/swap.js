@@ -548,9 +548,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .th-row:last-child{ border-bottom:none; }
   .th-row:hover{ background:var(--cyan-faint); }
-  .th-rank{ flex:0 0 3em; color:var(--cyan); }
+  .th-rank{ flex:0 0 3.4em; color:var(--cyan); }
   .th-wallet{ flex:1; min-width:0; color:var(--white); word-break:break-all; }
-  .th-count{ flex:0 0 auto; color:var(--grey); text-transform:uppercase; }
+  .th-count{ flex:0 0 auto; color:var(--white); text-transform:uppercase; }
   .th-empty{ text-align:center; font-size:11px; letter-spacing:0.08em; color:var(--grey-dim); padding:0.5rem 0; text-transform:uppercase; }
 
   /* ---- sales history ---- */
@@ -1816,10 +1816,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:520px){
     #screenDetail .trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
-  #screenDetail .trait-cell{ padding:0.7rem 0.8rem; }
-  #screenDetail .trait-cell .tc-label{ font-size:10px; }
-  #screenDetail .trait-cell .tc-value{ font-size:15px; }
-  #screenDetail .trait-cell .tc-sub{ font-size:10px; }
+  #screenDetail .trait-cell{ padding:0.8rem 0.9rem; }
+  #screenDetail .trait-cell .tc-label{ font-size:14px; }
+  #screenDetail .trait-cell .tc-value{ font-size:19px; }
+  #screenDetail .trait-cell .tc-sub{ font-size:14px; }
   /* Constrained instead of stretching the field's label/value across the
      whole (wide) right column — that gap made label and value feel
      unrelated, like you had to hunt across the screen to match them up. */
@@ -1947,6 +1947,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     background:rgba(255,63,208,0.05);
   }
+  /* Not-listed state has no icon/price/buy-button pairing to justify the
+     boxed currency-amount look — just plain centred text instead. */
+  .scylla-listing-row.not-listed{ border:none; background:none; justify-content:center; padding:0.5em 0.6em; }
   .scylla-coin-wrap{ display:flex; align-items:center; gap:0.5rem; }
   .scylla-coin-icon{ width:22px; height:22px; border-radius:50%; object-fit:cover; border:1px solid var(--magenta-dim); box-shadow:0 0 6px var(--magenta-glow); }
   .scylla-listing-price{ font-size:13px; font-weight:700; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
@@ -1984,6 +1987,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, color 0.15s ease;
   }
   .secondary-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  /* Detail screen's own BACK — moved down under VIEW ELSEWHERE, and much
+     bigger than the plain .secondary-btn everywhere else since it's now
+     the main way out of this screen (SELECT is gone). */
+  .detail-back-btn{
+    display:block;
+    width:100%;
+    margin-top:1.5rem;
+    font-size:18px;
+    padding:0.9em 1.4em;
+  }
   .action-btn{
     background:transparent;
     border:1px solid var(--cyan-dim);
@@ -2438,7 +2451,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
           <div class="scylla-listing-block">
             <div class="tech-meta-title">$P!GE0NS L!ST!NG</div>
-            <div class="scylla-listing-row">
+            <div class="scylla-listing-row" id="detailScyllaListingRow">
               <span class="scylla-coin-wrap">
                 <img class="scylla-coin-icon" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
                 <span class="scylla-listing-price" id="detailScyllaPrice">N0T L!STED</span>
@@ -2484,11 +2497,10 @@ const SWAP_HTML = `<!DOCTYPE html>
               <a class="secondary-btn" id="viewBithompLink" target="_blank" rel="noopener">[ B!TH0MP ]</a>
             </div>
           </div>
+          <button class="secondary-btn detail-back-btn" id="backToBrowseBtn">[ ← BACK ]</button>
         </div>
       </div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="backToBrowseBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="detailSelectBtn">[ SELECT ]</button>
         <a class="action-btn" id="detailBuyBtn" style="display:none;" target="_blank" rel="noopener">[ BUY 0N DEEPT!DE ]</a>
       </div>
     </div>
@@ -2842,9 +2854,9 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailAvgSaleRow','detailAvgSale','detailBuyBtn','detailTraits',
-   'detailScyllaPrice','detailScyllaBuyBtn','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg',
+   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
-   'backToBrowseBtn','detailSelectBtn',
+   'backToBrowseBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
    'myPigeonsConnect','connectScyllaBtn','connectStatus',
@@ -2968,6 +2980,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
     el.salesPanelWrap.style.display = tab === 'sales' ? '' : 'none';
     el.swapOffersPanelWrap.style.display = tab === 'swapoffers' ? '' : 'none';
+    // A tab click can happen while the pigeon DETAIL (or its TRANSACTION
+    // HISTORY) screen is open — those are normally only ever hidden by
+    // showScreen, which a direct tab click bypasses, so without this the
+    // detail screen stayed stuck visible underneath whatever tab you just
+    // switched to instead of actually closing.
+    el.screenDetail.style.display = 'none';
+    el.screenHistory.style.display = 'none';
     var buttons = el.topTabs.querySelectorAll('.tab-btn');
     for (var i = 0; i < buttons.length; i++){
       buttons[i].classList.toggle('active', buttons[i].getAttribute('data-tab') === tab);
@@ -3633,11 +3652,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         toggle.classList.toggle('at-cap', atCapNow);
       }
     });
-    if (el.detailSelectBtn && state.currentDetail && state.scope){
-      var d = isOwnWalletScope() ? !!state.offerAssets[state.currentDetail.nftId] : !!state.targetAssets[state.currentDetail.nftId];
-      el.detailSelectBtn.classList.toggle('selected', d);
-      el.detailSelectBtn.textContent = d ? '[ SELECTED ]' : '[ SELECT ]';
-    }
   }
 
   // ---- SELECT/ADD behaviour: your own wallet in scope fills OFFER;
@@ -4640,7 +4654,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return '<div class="th-row" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
         '<span class="th-rank">#' + greenNum(i + 1) + '</span>' +
         '<span class="th-wallet">' + escapeHtml(h.ownerShort) + '</span>' +
-        '<span class="th-count">' + greenNum(h.count) + ' HELD' + (percentStr ? '  ::  ' + greenNum(percentStr) + '%' : '') + '</span>' +
+        '<span class="th-count">' + greenNum(h.count) + ' P!GE0NS' + (percentStr ? '  ::  ' + greenNum(percentStr + '%') : '') + '</span>' +
       '</div>';
     }).join('');
   }
@@ -5914,6 +5928,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   document.addEventListener('click', function(e){
     if (el.sortFlyout.style.display === 'flex' && !el.sortDropWrap.contains(e.target)) closeSortFlyout();
     if (el.traitsFlyout.style.display === 'flex' && !el.traitsHoverWrap.contains(e.target)) closeTraitsFlyout();
+    // Same pattern for the pigeon DETAIL screen itself — a click anywhere
+    // outside it (a different tab, the trustline banner, anywhere) closes
+    // it back to the grid, instead of it staying stuck open underneath
+    // whatever else you clicked. The lightbox is a sibling overlay, not a
+    // child of screenDetail, so it needs its own explicit exclusion —
+    // otherwise opening/closing it would also trigger this and exit the
+    // detail screen entirely.
+    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target)){
+      goBackFromDetail();
+    }
   });
   el.editionSelect.addEventListener('click', function(e){
     var btn = e.target.closest('.edition-btn');
@@ -5950,7 +5974,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // ---- Inspect / detail ----
   function traitCellHtml(a){
     var sub = (a.percent !== null && a.percent !== undefined)
-      ? '<div class="tc-sub">' + (typeof a.percent === 'number' ? a.percent.toFixed(3) : a.percent) + '%' + (a.count !== null && a.count !== undefined ? '<br>(' + a.count + ')' : '') + '</div>'
+      ? '<div class="tc-sub">' + greenNum((typeof a.percent === 'number' ? a.percent.toFixed(3) : a.percent) + '%') + (a.count !== null && a.count !== undefined ? '<br>' + greenNum('(' + a.count + ')') : '') + '</div>'
       : '';
     // The same example image ADD TRAITS' flyout uses as its own background
     // (state.traitExamples, populated once by ensureTraitsLoaded) — carried
@@ -6085,9 +6109,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (listing && listing.price !== null && listing.price !== undefined){
       el.detailScyllaPrice.textContent = fmtPigeons(listing.price);
       el.detailScyllaBuyBtn.style.display = notOwn ? '' : 'none';
+      el.detailScyllaListingRow.classList.remove('not-listed');
     } else {
       el.detailScyllaPrice.textContent = 'N0T L!STED';
       el.detailScyllaBuyBtn.style.display = 'none';
+      el.detailScyllaListingRow.classList.add('not-listed');
     }
     // MAKE OFFER — same option the DATABASE grid's own OFFER AMOUNT box
     // offers (submitMakeOffer), available regardless of whether it's
@@ -6245,10 +6271,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.detailLightbox.style.display = 'none';
     el.detailLightboxImg.src = '';
   });
-  el.detailSelectBtn.addEventListener('click', function(){
-    if (state.currentDetail) handleSelect(state.currentDetail);
-  });
-
   // ---- Collection-wide stats strip (items/holders real from our own
   // ledger scan; floor from BOTH marketplaces separately since each has
   // its own liquidity; volume/listed% from xrp.cafe's own stats API) ----
