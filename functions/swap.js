@@ -1646,7 +1646,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
         <div class="stats-strip stats-strip-activity stats-page" id="statsStripActivity" style="display:none;">
           <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
-          <div class="stat-tile"><div class="stat-label">24H BUYERS</div><div class="stat-value" id="statBuyers24h">…</div></div>
           <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
           <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES DATA"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
         </div>
@@ -2170,7 +2169,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount',
    'statsCarousel',
-   'statTraded24h','statBuyers24h','statVolume24h','statSalesTile','statSales24h','statBurntLink',
+   'statTraded24h','statVolume24h','statSalesTile','statSales24h','statBurntLink',
    'indexLine','traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals',
    'statusLine','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
@@ -5070,7 +5069,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (data.xrpCafeUrl) el.statFloorXrpCafeTile.href = data.xrpCafeUrl;
       el.statScyllaListedCount.textContent = data.scyllaFloorPigeons !== null && data.scyllaFloorPigeons !== undefined ? data.scyllaFloorPigeons.toLocaleString() + ' $P!GE0NS' : 'N0T L!STED';
       el.statTraded24h.textContent = data.traded24hCount !== null && data.traded24hCount !== undefined ? data.traded24hCount.toLocaleString() : '—';
-      el.statBuyers24h.textContent = data.buyers24hCount !== null && data.buyers24hCount !== undefined ? data.buyers24hCount.toLocaleString() : '—';
       el.statVolume24h.textContent = data.volume24hXrp !== null && data.volume24hXrp !== undefined ? fmtXrp(data.volume24hXrp) + ' XRP' : '—';
       el.statSales24h.textContent = data.sales24hCount !== null && data.sales24hCount !== undefined ? data.sales24hCount.toLocaleString() : '—';
     }).catch(function(){});
