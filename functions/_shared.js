@@ -273,6 +273,26 @@ export function encodeCurrencyCode(code) {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
 }
 
+function stringToHex(str) {
+  return Array.from(new TextEncoder().encode(str)).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
+// Attached to every real NFTokenCreateOffer this app builds (LIST, MAKE
+// AN OFFER, the swap builder's own offer) so any offer created through
+// Σκύλλα identifies its source and exact origin page on-ledger, visible
+// to anyone inspecting the transaction (Bithomp, xrpscan, etc) — not
+// just in this app's own UI. Standard XRPL Memo fields, hex-encoded per
+// the ledger's own requirement (plain ASCII/UTF-8 isn't valid here).
+export function swapOfferSourceMemo() {
+  return [{
+    Memo: {
+      MemoType: stringToHex('Source'),
+      MemoFormat: stringToHex('text/plain'),
+      MemoData: stringToHex('https://soitbegins.xyz/swap')
+    }
+  }];
+}
+
 // Real live $PIGEONS/XRP rate. DexScreener's public API is the primary
 // source — it derives price from actual recent trades (not just whatever
 // the thinnest open order happens to quote), and is the same number

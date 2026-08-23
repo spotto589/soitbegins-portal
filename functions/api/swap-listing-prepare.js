@@ -1,7 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
   PIGEON_ISSUER, PIGEON_TAXON, isTransferable,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo
 } from '../_shared.js';
 
 // Σκύλλα SWAP — first real listing test. This endpoint only builds and
@@ -75,7 +75,8 @@ export async function onRequestPost(context) {
       issuer: PIGEONS_TOKEN_CONFIG.issuer,
       value: priceStr
     },
-    Flags: 1
+    Flags: 1,
+    Memos: swapOfferSourceMemo()
   };
 
   return new Response(JSON.stringify({ ok: true, txjson }), {

@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
-  PIGEON_ISSUER, PIGEON_TAXON, isTransferable
+  PIGEON_ISSUER, PIGEON_TAXON, isTransferable, swapOfferSourceMemo
 } from '../_shared.js';
 
 const XRPL_ADDRESS_RE = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
@@ -68,7 +68,8 @@ export async function onRequestPost(context) {
     NFTokenID: nftId,
     Amount: '0',
     Destination: toWallet,
-    Flags: 1
+    Flags: 1,
+    Memos: swapOfferSourceMemo()
   };
 
   return new Response(JSON.stringify({ ok: true, txjson }), {

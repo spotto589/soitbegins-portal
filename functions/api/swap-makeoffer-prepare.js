@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchDeeptideNftDetail,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo
 } from '../_shared.js';
 
 // MAKE AN OFFER — the reverse of LIST. Builds and returns the exact
@@ -68,7 +68,8 @@ export async function onRequestPost(context) {
       currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency),
       issuer: PIGEONS_TOKEN_CONFIG.issuer,
       value: priceStr
-    }
+    },
+    Memos: swapOfferSourceMemo()
   };
 
   return new Response(JSON.stringify({

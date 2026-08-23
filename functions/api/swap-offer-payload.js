@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
-  PIGEON_ISSUER, PIGEON_TAXON, isTransferable, createXamanPayload
+  PIGEON_ISSUER, PIGEON_TAXON, isTransferable, createXamanPayload, swapOfferSourceMemo
 } from '../_shared.js';
 
 const XRPL_ADDRESS_RE = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
@@ -66,7 +66,8 @@ export async function onRequestPost(context) {
     NFTokenID: nftId,
     Amount: '0',
     Destination: toWallet,
-    Flags: 1
+    Flags: 1,
+    Memos: swapOfferSourceMemo()
   };
 
   const xummData = await createXamanPayload(env, txjson);
