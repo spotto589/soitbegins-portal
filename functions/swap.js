@@ -1339,12 +1339,43 @@ const SWAP_HTML = `<!DOCTYPE html>
      MY PIGEONS/etc tabs, not tucked inside any screen. */
   .pigeons-bar-issuer{
     position:relative;
-    margin-bottom:1.25rem;
     /* The collection's own purple, sampled from the coin artwork — not
        the site's magenta accent (that stays reserved for SCYLLA/target). */
-    border-color:var(--pigeon-purple);
     background:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
+    /* Border/radius/shadow/margin now live on the outer .pigeons-merged-panel
+       wrapper, which also contains #collectionDetailsPanel directly below
+       this — the two read as one continuous purple-themed panel instead
+       of two separate boxes with a gap between them. */
+    border:none;
+    border-radius:0;
+    box-shadow:none;
+    margin-bottom:0;
+  }
+  /* Wraps the trustline strip + the stats info panel as one unified,
+     purple-themed box. */
+  .pigeons-merged-panel{
+    border:1px solid var(--pigeon-purple);
+    border-radius:var(--radius);
     box-shadow:0 0 16px var(--pigeon-purple-glow);
+    margin-bottom:1.25rem;
+    overflow:hidden;
+  }
+  /* The stats info panel, nested inside .pigeons-merged-panel directly
+     under the trustline strip — same purple gradient theme (not the
+     usual dark digital-glitch .sw-panel-signal background), own
+     border/radius/shadow/margin removed since the outer wrapper already
+     supplies those, and a dashed divider (instead of a gap) marking
+     where the trustline section ends and the stats begin. */
+  #collectionDetailsPanel{
+    background-image:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
+    background-size:100% 100%;
+    background-position:center;
+    background-repeat:no-repeat;
+    border:none;
+    border-top:1px dashed rgba(255,255,255,0.3);
+    border-radius:0;
+    box-shadow:none;
+    margin-bottom:0;
   }
   /* Thumbnail + live exchange rate + XRP->PIGEONS calculator, pinned to
      the left edge as one unit (position:absolute on the wrapper, not the
@@ -1881,10 +1912,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- Its own strip — no panel box around it, just the purple bar,
-         sitting under the // DATABASE :: P!GE0NS ▼ selector, above the
-         DATABASE/MY PIGEONS/etc tabs. Everything runs in one horizontal
-         line. -->
+    <!-- Trustline strip + the stats info panel merged into one unified,
+         purple-themed box (.pigeons-merged-panel) — sitting under the
+         // DATABASE :: P!GE0NS ▼ selector, above the DATABASE/MY PIGEONS/
+         etc tabs. -->
+    <div class="pigeons-merged-panel">
     <div class="pigeons-bar pigeons-bar-issuer">
       <div class="pigeons-bar-left-cluster">
         <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
@@ -1951,6 +1983,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <span class="stats-dot"></span>
       </div>
       </div>
+    </div>
     </div>
 
     <div class="top-tabs" id="topTabs">
@@ -2066,10 +2099,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="sw-panel">
         <div class="panel-title search-panel-title" id="searchPanelTitle">SEARCH!NG $P!GE0NS DATABASE</div>
         <div class="search-panel-subtitle" id="searchPanelSubtitle">DATABASE V!EW</div>
-        <div class="search-row wallet-search-row">
-          <input class="search-input" id="walletSearchInput" placeholder="SEARCH WALLET ADDRESS...">
-          <button class="bar-btn" id="walletSearchBtn">[ GO ]</button>
-        </div>
         <div class="db-config-group">
           <div class="sort-field db-config-row">
             <span class="sort-field-label">V!EW</span>
@@ -2106,10 +2135,18 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
             </div>
           </div>
-        </div>
-        <div class="traits-block">
-          <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none; margin-bottom:0.6rem;">[ CLEAR TRA!TS ]</button>
+          <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">[ CLEAR TRA!TS ]</button>
           <div id="traitRows"></div>
+        </div>
+
+        <!-- Sits where the applied trait chips used to render alone —
+             below ADD TRAITS (which now shows its chips inline with
+             itself, see .sort-stack-row above), above SEARCH P!GE0N NUMBER. -->
+        <div class="traits-block">
+          <div class="search-row wallet-search-row">
+            <input class="search-input" id="walletSearchInput" placeholder="SEARCH WALLET ADDRESS...">
+            <button class="bar-btn" id="walletSearchBtn">[ GO ]</button>
+          </div>
         </div>
 
         <div class="results-block">
