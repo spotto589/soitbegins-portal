@@ -447,7 +447,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .stat-tile-pigeons:hover{ background:linear-gradient(160deg, rgba(136,72,248,0.7), rgba(120,72,216,0.8)); border-color:var(--pigeon-purple); }
   .stat-tile-pigeons .stat-label{ color:#fff; opacity:0.9; }
-  .stat-tile-pigeons .stat-value{ color:var(--green) !important; text-shadow:0 0 6px var(--green-glow); font-weight:700; }
+  .stat-tile-pigeons .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.8); font-weight:700; }
   /* Marketplace floor tiles — a colour each, so FLOOR :: XRP.CAFE and
      FLOOR :: DEEPTIDE read as two distinct sources at a glance. */
   .stat-tile-xrpcafe{
@@ -1476,7 +1476,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Thumb + SET TRUSTLINE/address/COPY, centered as one group — big,
      clear thumbnail right next to the address block, not pinned to a
      far edge. */
-  .pigeons-bar-identity-row{ display:flex; align-items:center; justify-content:center; gap:1.5rem; flex-wrap:wrap; width:100%; }
+  /* Nudged left of dead-center — the bottom row's rate line isn't quite
+     centered either (VIEW ON DEXSCREENER is narrower than the calculator
+     beside it, pulling the rate line's true center left), so this lines
+     up with it instead of the panel's literal midpoint. */
+  .pigeons-bar-identity-row{ display:flex; align-items:center; justify-content:center; gap:1.5rem; flex-wrap:wrap; width:100%; transform:translateX(-18px); }
   /* Real artwork filling a big square, same technique as the $PIGEONS
      FLOOR tile (cover-sized background + purple wash) instead of a
      small round coin icon — big and clear so it reads as an inviting,
@@ -1508,6 +1512,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      in this box uses. */
   #swapSignOutBtn{ color:#ff4d4d; border-color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
   #swapSignOutBtn:hover{ background:#ff4d4d; color:#000; text-shadow:none; }
+  /* LOGIN (green — the real, positive action here) and COPY ADDRESS
+     (cyan — the site's general/static-chrome colour) instead of plain
+     white like every other .bar-btn in this box. */
+  #pigeonsLoginBtn{ color:var(--green); border-color:var(--green); text-shadow:0 0 6px var(--green-glow); }
+  #pigeonsLoginBtn:hover{ background:var(--green); color:#000; text-shadow:none; }
+  #copyIssuerBtn{ color:var(--cyan); border-color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  #copyIssuerBtn:hover{ background:var(--cyan); color:#000; text-shadow:none; }
   /* LOGGED IN summary — two clean centered lines instead of one long
      "::"-joined string: NFT count on top, balance below. */
   .pigeons-loggedin-line{ line-height:1.4; }
@@ -1543,7 +1554,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     white-space:nowrap;
   }
   .pigeons-bar-rate-line{ font-size:13px; letter-spacing:0.05em; opacity:0.9; }
-  .pigeons-bar-rate-value{ font-size:15px; font-weight:700; color:var(--green); text-shadow:0 0 6px var(--green-glow); }
+  .pigeons-bar-rate-value{ font-size:15px; font-weight:700; }
   /* XRP -> $PIGEONS calculator, with its own EXCHANGE RATE title above it. */
   .pigeons-bar-calc-col{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:0.4rem; }
   .pigeons-bar-calc-title{ font-size:10px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
@@ -1570,7 +1581,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-calc-input:focus{ outline:none; border-bottom-color:#fff; }
   .pigeons-bar-calc-input::placeholder{ color:rgba(255,255,255,0.6); text-transform:uppercase; }
   .pigeons-bar-calc-eq{ color:#fff; font-size:12px; opacity:0.8; }
-  .pigeons-bar-calc-out{ color:var(--green); text-shadow:0 0 6px var(--green-glow); font-weight:700; font-size:13px; white-space:nowrap; }
+  .pigeons-bar-calc-out{ color:#fff; font-weight:700; font-size:13px; white-space:nowrap; }
   /* Real DexScreener pair link (returned live in the rate fetch as
      dexUrl, falling back to the known pair URL until that resolves) —
      .bar-btn's own white-on-purple styling already applies via
@@ -1579,7 +1590,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-dex-link:hover{ background:#000; border-color:#fff; }
   .pigeons-bar-dex-icon{ width:22px; height:22px; border-radius:4px; flex:0 0 auto; }
   @media (max-width:700px){
-    .pigeons-bar-identity-row{ flex-direction:column; text-align:center; }
+    .pigeons-bar-identity-row{ flex-direction:column; text-align:center; transform:none; }
     .pigeons-bar-bottom-row{ flex-direction:column; }
     .pigeons-bar-rate{ order:-1; }
   }
@@ -4608,10 +4619,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       return api({ pigeonsAccountLine: 1, wallet: MY_WALLET });
     }).then(function(line){
       var balanceNum = (line && line.hasTrustline) ? (line.balance || 0) : 0;
-      var balanceText = balanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
+      var balanceStr = balanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 });
       el.pigeonsLoggedInSummary.innerHTML =
-        '<div class="pigeons-loggedin-line"><span class="pigeons-green-num">' + pigeonCount.toLocaleString() + '</span> P!GE0NS 0WNED</div>' +
-        '<div class="pigeons-loggedin-line">BALANCE :: <span class="pigeons-green-num">' + balanceText + '</span></div>';
+        '<div class="pigeons-loggedin-line">' + greenNum(pigeonCount.toLocaleString()) + ' P!GE0NS 0WNED</div>' +
+        '<div class="pigeons-loggedin-line">BALANCE :: ' + greenNum(balanceStr) + ' $P!GE0NS</div>';
       // Redundant to spell out "TRUSTLINE SET" — owning pigeons or holding
       // a real $PIGEONS balance already proves that. Only worth surfacing
       // when it's NOT set, since that's the one case actually actionable.
@@ -5403,7 +5414,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     api({ pigeonsRate: 1 }).then(function(data){
       trustlineXrpPerPigeon = (data && typeof data.xrpPerPigeon === 'number') ? data.xrpPerPigeon : null;
       if (trustlineXrpPerPigeon !== null){
-        el.pigeonsBarRateValue.textContent = (1 / trustlineXrpPerPigeon).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
+        el.pigeonsBarRateValue.innerHTML = greenNum((1 / trustlineXrpPerPigeon).toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' $P!GE0NS';
         el.pigeonsBarRate.style.display = '';
         el.pigeonsBarCalc.style.display = '';
         updatePigeonsCalc();
@@ -5417,11 +5428,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   function updatePigeonsCalc(){
     var xrpValue = Number(el.pigeonsCalcXrpInput.value);
     if (trustlineXrpPerPigeon === null || !el.pigeonsCalcXrpInput.value.trim() || !isFinite(xrpValue) || xrpValue <= 0){
-      el.pigeonsCalcOut.textContent = '0 $P!GE0NS';
+      el.pigeonsCalcOut.innerHTML = greenNum('0') + ' $P!GE0NS';
       return;
     }
     var pigeonsOut = xrpValue / trustlineXrpPerPigeon;
-    el.pigeonsCalcOut.textContent = pigeonsOut.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
+    el.pigeonsCalcOut.innerHTML = greenNum(pigeonsOut.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' $P!GE0NS';
   }
   el.pigeonsCalcXrpInput.addEventListener('input', updatePigeonsCalc);
   // Real link, destination doesn't exist yet — same "coming soon"
@@ -5858,7 +5869,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.statFloorXrpCafe.textContent = data.xrpCafeFloorXrp !== null && data.xrpCafeFloorXrp !== undefined ? fmtXrp(data.xrpCafeFloorXrp) + ' XRP' : '—';
       if (data.deeptideBuyUrl) el.statFloorDeeptideTile.href = data.deeptideBuyUrl;
       if (data.xrpCafeUrl) el.statFloorXrpCafeTile.href = data.xrpCafeUrl;
-      el.statScyllaListedCount.textContent = data.scyllaFloorPigeons !== null && data.scyllaFloorPigeons !== undefined ? data.scyllaFloorPigeons.toLocaleString() + ' $P!GE0NS' : 'N0T L!STED';
+      el.statScyllaListedCount.innerHTML = data.scyllaFloorPigeons !== null && data.scyllaFloorPigeons !== undefined ? greenNum(data.scyllaFloorPigeons.toLocaleString()) + ' $P!GE0NS' : 'N0T L!STED';
       el.statTraded24h.textContent = data.traded24hCount !== null && data.traded24hCount !== undefined ? data.traded24hCount.toLocaleString() : '—';
       el.statVolume24h.textContent = data.volume24hXrp !== null && data.volume24hXrp !== undefined ? fmtXrp(data.volume24hXrp) + ' XRP' : '—';
       el.statSales24h.textContent = data.sales24hCount !== null && data.sales24hCount !== undefined ? data.sales24hCount.toLocaleString() : '—';
