@@ -572,6 +572,88 @@ async function fetchPigeonsXrpRateFromBookOffers() {
   return null;
 }
 
+// ---- BUY $PIGEONS swap — Stage 3: live quote only, no txjson/signing.
+// Walks the REAL XRPL order book (taker_gets PIGEONS / taker_pays XRP,
+// same book fetchPigeonsXrpRateFromBookOffers samples the top of) depth-
+// first, consuming offers in the exact price-priority order rippled
+// already returns them in, until the requested XRP is spent or the book
+// runs out — this reflects real available depth/slippage, not just a
+// single top-of-book price assumed to hold for the whole amount. Not an
+// AMM-aware quote (no confirmed AMM pool for this pair) and not a
+// ripple_path_find (which would also cover cross-currency bridging paths)
+// — a direct order-book walk is the closest match to "actual available
+// XRPL liquidity" for a same-book swap, and is honest about running out
+// of depth rather than extrapolating a price past what's really there. ----
+const PIGEONS_QUOTE_BOOK_DEPTH = 60;
+
+async function fetchPigeonsBookOffers(limit) {
+  const res = await fetch('https://xrplcluster.com', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      method: 'book_offers',
+      params: [{
+        taker_gets: { currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency), issuer: PIGEONS_TOKEN_CONFIG.issuer },
+        taker_pays: { currency: 'XRP' },
+        limit: limit
+      }]
+    })
+  });
+  const data = await res.json();
+  return (data.result && data.result.offers) || [];
+}
+
+// xrpDropsStr: exact integer drops (string) the user is spending — never a
+// parsed float. Returns:
+//   { ok:true, receivePigeons, rate, spentDrops }        — fully quotable
+//   { ok:false, insufficientLiquidity:true, ... }         — book ran dry
+//   { ok:false, error:'...' }                              — lookup failed
+// receivePigeons/rate are Numbers — this is a live ESTIMATE shown to the
+// user, not a value written into a transaction (Stage 5 will re-derive
+// and re-validate everything server-side from scratch before anything is
+// ever signed, same as every other transaction this app builds).
+export async function quotePigeonsForXrpDrops(xrpDropsStr) {
+  let remainingDrops;
+  try { remainingDrops = BigInt(xrpDropsStr); } catch (e) { return { ok: false, error: 'bad_amount' }; }
+  if (remainingDrops <= 0n) return { ok: false, error: 'bad_amount' };
+
+  let offers;
+  try { offers = await fetchPigeonsBookOffers(PIGEONS_QUOTE_BOOK_DEPTH); } catch (e) { return { ok: false, error: 'lookup_failed' }; }
+  if (!Array.isArray(offers) || !offers.length) return { ok: false, insufficientLiquidity: true };
+
+  const totalDrops = remainingDrops;
+  let totalPigeons = 0;
+
+  for (const o of offers) {
+    if (remainingDrops <= 0n) break;
+    if (typeof o.TakerGets !== 'object' || typeof o.TakerPays !== 'string') continue; // wrong side / malformed
+    // Prefer the *_funded fields when present — rippled includes them only
+    // when the offer owner can't actually back the full nominal size, i.e.
+    // this is the real available amount, not just what the offer claims.
+    const availPigeons = parseFloat(o.taker_gets_funded !== undefined ? o.taker_gets_funded : o.TakerGets.value);
+    const availDropsStr = o.taker_pays_funded !== undefined ? o.taker_pays_funded : o.TakerPays;
+    let availDrops;
+    try { availDrops = BigInt(availDropsStr); } catch (e) { continue; }
+    if (!(availPigeons > 0) || availDrops <= 0n) continue;
+
+    if (remainingDrops >= availDrops) {
+      totalPigeons += availPigeons;
+      remainingDrops -= availDrops;
+    } else {
+      // Partial fill of this price level — Number-precision fraction is
+      // fine here (display estimate, not a drops value going on-ledger).
+      totalPigeons += availPigeons * (Number(remainingDrops) / Number(availDrops));
+      remainingDrops = 0n;
+    }
+  }
+
+  if (remainingDrops > 0n) return { ok: false, insufficientLiquidity: true };
+  if (!(totalPigeons > 0)) return { ok: false, insufficientLiquidity: true };
+
+  const xrpIn = Number(totalDrops) / 1000000;
+  return { ok: true, receivePigeons: totalPigeons, rate: totalPigeons / xrpIn, spentDrops: totalDrops.toString() };
+}
+
 export async function fetchPigeonsXrpRate(kv) {
   if (kv) {
     const cached = await kv.get(PIGEONS_RATE_CACHE_KEY);

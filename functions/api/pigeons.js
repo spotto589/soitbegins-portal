@@ -3,7 +3,7 @@ import {
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue,
-  resolveOwnerCollectionLive, fetchAllAccountNftsChecked, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops,
+  resolveOwnerCollectionLive, fetchAllAccountNftsChecked, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, quotePigeonsForXrpDrops,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX,
   getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
 } from '../_shared.js';
@@ -195,6 +195,16 @@ export async function onRequestGet(context) {
     if (!wallet) return json({ error: 'missing_wallet' }, 400);
     const drops = await fetchXrpBalanceDrops(wallet);
     return json({ drops });
+  }
+
+  // BUY $PIGEONS swap — Stage 3 live quote (walks the real order book, see
+  // quotePigeonsForXrpDrops in _shared.js). No KV, no caching — a quote is
+  // meant to reflect the book right now, not a minute-old snapshot.
+  if (params.get('pigeonsQuote') === '1') {
+    const drops = params.get('xrpDrops');
+    if (!drops || !/^[1-9][0-9]*$/.test(drops)) return json({ error: 'bad_amount' }, 400);
+    const quote = await quotePigeonsForXrpDrops(drops);
+    return json(Object.assign({ quotedAt: Date.now() }, quote));
   }
 
   // Collection-wide stats strip — items/holders (real, our own Clio-based

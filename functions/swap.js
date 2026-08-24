@@ -5777,10 +5777,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
 
   // ---- BUY $P!GE0NS swap panel (trustline banner's BUY $P!GE0NS button —
-  // was a plain external DexScreener link). STAGE 2 ONLY: panel UI +
-  // validated XRP input, capped against the connected wallet's real XRP
-  // balance. No live quote, no txjson, no Xaman — YOU RECE!VE/RATE/M!N!MUM
-  // RECE!VED stay "—" and SIGN & BUY stays disabled until Stage 3+. ----
+  // was a plain external DexScreener link). STAGE 3: real live quote,
+  // walking the actual XRPL order book (quotePigeonsForXrpDrops in
+  // _shared.js) — still no txjson, no Xaman, SIGN & BUY stays disabled
+  // through this stage regardless of quote validity (nothing built yet to
+  // actually submit). ----
   var buySwapMaxDrops = null; // null = no cap known yet (not logged in, or balance fetch pending/failed)
   // Same base+owner reserve reasoning as any XRPL wallet UI — leaving a
   // wallet with less than its reserve makes every future transaction fail,
@@ -5808,10 +5809,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Returns the entered amount as exact integer drops (BigInt), or null if
   // the field is empty/invalid/negative/zero/over the known max — never
   // trusts parseFloat for anything that could end up in a transaction
-  // later. Always leaves SIGN & BUY disabled regardless of the result
-  // (Stage 2 — no quote exists yet to sign against).
+  // later.
   function validateBuySwapInput(){
-    el.buySwapSignBtn.disabled = true;
     var raw = el.buySwapXrpInput.value.trim();
     if (!raw){ clearBuySwapInputError(); return null; }
     var drops = dropsFromXrpString(raw);
@@ -5830,14 +5829,108 @@ const SWAP_HTML = `<!DOCTYPE html>
     clearBuySwapInputError();
     return drops;
   }
-  function openBuySwapPanel(){
-    el.buySwapXrpInput.value = '';
-    clearBuySwapInputError();
+
+  // 0.5% — matches the SL!PPAGE figure shown in the panel itself. Applied
+  // to the live quote's estimated PIGEONS to compute M!N!MUM RECE!VED;
+  // basis-point integer math, not a float multiply.
+  var BUYSWAP_SLIPPAGE_BPS = 50;
+  var buySwapQuote = null;        // last successful quote's raw result, or null
+  var buySwapQuoteForRaw = null;  // the exact input string that quote was for
+  var buySwapReqId = 0;           // ignore a stale in-flight response that resolves after the input changed again
+  var buySwapDebounceTimer = null;
+  var buySwapRefreshInterval = null;
+  var buySwapAgeInterval = null;
+  var BUYSWAP_DEBOUNCE_MS = 450;
+  var BUYSWAP_REFRESH_MS = 20000; // re-quote periodically so an open panel never sits on a stale price for long
+
+  function stopBuySwapTimers(){
+    if (buySwapDebounceTimer){ clearTimeout(buySwapDebounceTimer); buySwapDebounceTimer = null; }
+    if (buySwapRefreshInterval){ clearInterval(buySwapRefreshInterval); buySwapRefreshInterval = null; }
+    if (buySwapAgeInterval){ clearInterval(buySwapAgeInterval); buySwapAgeInterval = null; }
+  }
+  function clearBuySwapQuote(statusText){
+    buySwapQuote = null;
+    buySwapQuoteForRaw = null;
     el.buySwapReceiveValue.textContent = '—';
     el.buySwapRate.textContent = '—';
     el.buySwapMinReceived.textContent = '—';
-    el.buySwapStatus.textContent = 'QU0TE C0M!NG S00N — SWAP N0T YET L!VE.';
     el.buySwapSignBtn.disabled = true;
+    if (buySwapAgeInterval){ clearInterval(buySwapAgeInterval); buySwapAgeInterval = null; }
+    el.buySwapStatus.textContent = statusText || 'ENTER AN AM0UNT T0 GET A L!VE QU0TE.';
+  }
+  function startBuySwapAgeTicker(){
+    if (buySwapAgeInterval) clearInterval(buySwapAgeInterval);
+    var startedAt = Date.now();
+    function tick(){
+      var secs = Math.floor((Date.now() - startedAt) / 1000);
+      el.buySwapStatus.textContent = secs < 2 ? 'QU0TE UPDATED :: JUST N0W' : 'QU0TE UPDATED :: ' + secs + 'S AG0';
+    }
+    tick();
+    buySwapAgeInterval = setInterval(tick, 1000);
+  }
+  // Fires on input (debounced) and on the periodic refresh timer alike —
+  // always re-validates against the CURRENT input value rather than
+  // trusting whatever drops amount it was originally scheduled for, so a
+  // fast edit right before a debounce/refresh fires can't apply an old
+  // quote to a since-changed amount.
+  function fetchBuySwapQuote(){
+    var drops = validateBuySwapInput();
+    if (drops === null){ clearBuySwapQuote(); return; }
+    var raw = el.buySwapXrpInput.value.trim();
+    var myReq = ++buySwapReqId;
+    el.buySwapSignBtn.disabled = true;
+    el.buySwapStatus.textContent = 'GETT!NG QU0TE...';
+    apiWithRetry({ pigeonsQuote: 1, xrpDrops: drops.toString() }).then(function(data){
+      if (myReq !== buySwapReqId) return; // superseded by a newer request
+      if (el.buySwapXrpInput.value.trim() !== raw) return; // input changed while this was in flight
+      if (!data || !data.ok){
+        buySwapQuote = null;
+        buySwapQuoteForRaw = null;
+        el.buySwapReceiveValue.textContent = '—';
+        el.buySwapRate.textContent = '—';
+        el.buySwapMinReceived.textContent = '—';
+        el.buySwapSignBtn.disabled = true;
+        if (buySwapAgeInterval){ clearInterval(buySwapAgeInterval); buySwapAgeInterval = null; }
+        el.buySwapStatus.textContent = (data && data.insufficientLiquidity)
+          ? 'N0T EN0UGH L!QU!D!TY 0N THE B00K F0R TH!S AM0UNT — TRY A SMALLER AM0UNT.'
+          : 'QU0TE UNAVA!LABLE — TRY AGA!N.';
+        return;
+      }
+      buySwapQuote = data;
+      buySwapQuoteForRaw = raw;
+      el.buySwapReceiveValue.textContent = data.receivePigeons.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      el.buySwapRate.textContent = data.rate.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' P!GE0NS / XRP';
+      var minReceived = data.receivePigeons * (10000 - BUYSWAP_SLIPPAGE_BPS) / 10000;
+      el.buySwapMinReceived.textContent = minReceived.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' P!GE0NS';
+      // Still disabled — Stage 3 is quote-only, nothing built yet to
+      // actually submit. A visible price is not the same as a safe,
+      // reviewed transaction.
+      el.buySwapSignBtn.disabled = true;
+      startBuySwapAgeTicker();
+    }).catch(function(){
+      if (myReq !== buySwapReqId) return;
+      buySwapQuote = null;
+      buySwapQuoteForRaw = null;
+      el.buySwapSignBtn.disabled = true;
+      if (buySwapAgeInterval){ clearInterval(buySwapAgeInterval); buySwapAgeInterval = null; }
+      el.buySwapStatus.textContent = 'QU0TE UNAVA!LABLE — TRY AGA!N.';
+    });
+  }
+  function scheduleBuySwapQuote(){
+    if (buySwapDebounceTimer) clearTimeout(buySwapDebounceTimer);
+    var drops = validateBuySwapInput();
+    if (drops === null){
+      clearBuySwapQuote();
+      return;
+    }
+    el.buySwapStatus.textContent = 'GETT!NG QU0TE...';
+    buySwapDebounceTimer = setTimeout(fetchBuySwapQuote, BUYSWAP_DEBOUNCE_MS);
+  }
+  function openBuySwapPanel(){
+    el.buySwapXrpInput.value = '';
+    clearBuySwapInputError();
+    stopBuySwapTimers();
+    clearBuySwapQuote('ENTER AN AM0UNT T0 GET A L!VE QU0TE.');
     buySwapMaxDrops = null;
     updateBuySwapMaxLine();
     showScreen('buyswap');
@@ -5851,10 +5944,18 @@ const SWAP_HTML = `<!DOCTYPE html>
         validateBuySwapInput();
       }).catch(function(){});
     }
+    // Keeps an open panel's quote from sitting stale for minutes — only
+    // re-quotes when there's actually a valid amount entered.
+    buySwapRefreshInterval = setInterval(function(){
+      if (validateBuySwapInput() !== null) fetchBuySwapQuote();
+    }, BUYSWAP_REFRESH_MS);
   }
   el.pigeonsBalanceBuyBtn.addEventListener('click', openBuySwapPanel);
-  el.buySwapXrpInput.addEventListener('input', validateBuySwapInput);
-  el.buySwapBackBtn.addEventListener('click', function(){ showScreen('browse'); });
+  el.buySwapXrpInput.addEventListener('input', scheduleBuySwapQuote);
+  el.buySwapBackBtn.addEventListener('click', function(){
+    stopBuySwapTimers();
+    showScreen('browse');
+  });
 
   function submitBuyPayload(retriesLeft){
     if (retriesLeft === undefined) retriesLeft = 1;
