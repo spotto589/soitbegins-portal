@@ -5516,9 +5516,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   var trustlinePigeonCount = null; // null = not loaded yet
   var trustlineBalanceNum = null; // null = not loaded yet
   // BALANCE is the banner's main feature — the big centered $PIGEONS
-  // number people should actually look at. An empty balance shows a BUY
-  // link in the same spot instead, so this always reads as "here's your
-  // balance" or "here's how to get one", never a dead zero.
+  // number people should actually look at. BUY $P!GE0NS now shows
+  // underneath it regardless of the balance's value (was previously
+  // hidden once you held any amount, on the assumption an empty balance
+  // was the only time anyone would want to buy — real feedback: someone
+  // already holding a real balance still wants a quick way to buy more).
   function renderTrustlineSummary(){
     el.pigeonsLoggedInCount.textContent = trustlinePigeonCount === null
       ? '…'
@@ -5528,7 +5530,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.pigeonsBalanceBuyBtn.style.display = 'none';
     } else {
       el.pigeonsBalanceValue.innerHTML = greenNum(trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' $P!GE0NS';
-      el.pigeonsBalanceBuyBtn.style.display = trustlineBalanceNum === 0 ? '' : 'none';
+      el.pigeonsBalanceBuyBtn.style.display = '';
     }
   }
   function loadTrustlineLoginState(){
