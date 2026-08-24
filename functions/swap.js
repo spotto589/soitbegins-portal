@@ -1401,6 +1401,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease, color 0.15s ease;
   }
   .thumb-buy-btn:hover{ background:var(--green); color:#000; text-shadow:none; }
+  /* A Pigeon that's YOUR OWN active Σκύλλα listing, seen while browsing
+     the general/unscoped collection (e.g. sorted by FL00R $P!GE0NS
+     alongside everyone else's listings) — no BUY N0W (can't buy your
+     own) and no MAKE 0FFER (offering to yourself doesn't mean anything),
+     just a plain readout so the box isn't blank. */
+  .thumb-offer-own{ text-align:center; }
+  .own-listing-note{ color:#fff; font-weight:700; font-size:13px; letter-spacing:0.05em; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-transform:uppercase; }
   .thumb-offer-row{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
   /* $PIGEONS coin sits inside the input itself (not just the placeholder)
      so it stays put once you start typing a number, instead of
@@ -4538,12 +4545,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   // purple theme already reads as $PIGEONS without repeating the icon.
   function pigeonsActionBoxHtml(p){
     if (p.owner === MY_WALLET){
-      // Full unscoped DATABASE browsing still shows nothing special for a
-      // pigeon that happens to be yours (myListedData/offersByNftId aren't
-      // necessarily loaded there) — only the SH0W MY P!GE0NS scope (which
-      // explicitly fetches both, see browseOwnerCollection) gets the real
-      // LIST/DELIST/OFFERS box, same as the MY PIGEONS tab.
-      return isOwnWalletScope() ? ownedPigeonActionHtml(p) : '';
+      // Full unscoped DATABASE browsing doesn't have myListedData/
+      // offersByNftId loaded (only the SH0W MY P!GE0NS scope explicitly
+      // fetches both, see browseOwnerCollection), so the real LIST/
+      // DELIST/OFFERS box isn't available here — but a Pigeon that
+      // carries a real Σκύλλα listing (e.g. showing up while browsing
+      // FL00R $P!GE0NS, sorted alongside everyone else's real listings)
+      // still needs SOMETHING here, not a blank box where the price/
+      // action area is for every other card — confirmed live, that read
+      // as a broken/empty card rather than "this one's yours."
+      if (isOwnWalletScope()) return ownedPigeonActionHtml(p);
+      if (p.scyllaListing){
+        return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
+          '<div class="own-listing-note">Y0UR L!ST!NG :: ' + escapeHtml(fmtPigeons(p.scyllaListing.price)) + '</div>' +
+        '</div>';
+      }
+      return '';
     }
     var canBuy = !!p.scyllaListing && p.owner !== MY_WALLET;
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
