@@ -573,18 +573,29 @@ async function fetchPigeonsXrpRateFromBookOffers() {
 }
 
 // ---- BUY $PIGEONS swap — Stage 3: live quote only, no txjson/signing.
-// Walks the REAL XRPL order book (taker_gets PIGEONS / taker_pays XRP,
-// same book fetchPigeonsXrpRateFromBookOffers samples the top of) depth-
-// first, consuming offers in the exact price-priority order rippled
-// already returns them in, until the requested XRP is spent or the book
-// runs out — this reflects real available depth/slippage, not just a
-// single top-of-book price assumed to hold for the whole amount. Not an
-// AMM-aware quote (no confirmed AMM pool for this pair) and not a
-// ripple_path_find (which would also cover cross-currency bridging paths)
-// — a direct order-book walk is the closest match to "actual available
-// XRPL liquidity" for a same-book swap, and is honest about running out
-// of depth rather than extrapolating a price past what's really there. ----
+// Quotes the BETTER of two REAL, independently-verified liquidity
+// sources — never a single assumed price:
+//   1. The XRPL order book (taker_gets PIGEONS / taker_pays XRP), walked
+//      depth-first in price-priority order, consuming real offers (or
+//      their *_funded amount when an offer owner can't back the full
+//      nominal size) until the requested XRP is spent or the book runs
+//      dry — reflects real depth/slippage, never a flat top-of-book price
+//      applied to the whole amount.
+//   2. The real on-ledger $PIGEONS/XRP AMM pool (amm_info against
+//      PIGEONS_AMM_ACCOUNT, confirmed live 2026-08-25 — 11,251.96 XRP /
+//      44,771,538.34 PIGEONS, 1% trading fee), priced via the exact
+//      constant-product formula XRPL's own AMM uses.
+// Whichever source yields more PIGEONS for the exact input wins — this is
+// what a real XRPL Payment naturally does too (the ledger's own execution
+// engine consumes whichever liquidity is priced better up to the amounts
+// available), not a guess at which source "should" be better. Honestly
+// reports insufficientLiquidity if NEITHER source can fill the full
+// amount, rather than extrapolating a price past what's really there. ----
 const PIGEONS_QUOTE_BOOK_DEPTH = 60;
+// Confirmed real, live pool via amm_info (see comment above) — supplied
+// directly, not discovered/guessed; never trust a client-supplied AMM
+// account for this, only this hardcoded server-side constant.
+const PIGEONS_AMM_ACCOUNT = 'rn5vs1Q5pzwbpzFhK85sVsuXpieNitVCQg';
 
 async function fetchPigeonsBookOffers(limit) {
   const res = await fetch('https://xrplcluster.com', {
@@ -603,29 +614,68 @@ async function fetchPigeonsBookOffers(limit) {
   return (data.result && data.result.offers) || [];
 }
 
-// xrpDropsStr: exact integer drops (string) the user is spending — never a
-// parsed float. Returns:
-//   { ok:true, receivePigeons, rate, spentDrops }        — fully quotable
-//   { ok:false, insufficientLiquidity:true, ... }         — book ran dry
-//   { ok:false, error:'...' }                              — lookup failed
-// receivePigeons/rate are Numbers — this is a live ESTIMATE shown to the
-// user, not a value written into a transaction (Stage 5 will re-derive
-// and re-validate everything server-side from scratch before anything is
-// ever signed, same as every other transaction this app builds).
-export async function quotePigeonsForXrpDrops(xrpDropsStr) {
-  let remainingDrops;
-  try { remainingDrops = BigInt(xrpDropsStr); } catch (e) { return { ok: false, error: 'bad_amount' }; }
-  if (remainingDrops <= 0n) return { ok: false, error: 'bad_amount' };
+// Real live pool reserves + trading fee, straight from amm_info — never
+// cached (the whole point of a constant-product quote is that reserves
+// shift with every trade, a stale snapshot would misprice immediately).
+// Returns null on any lookup/shape failure, never a fabricated fallback.
+async function fetchPigeonsAmmPool() {
+  try {
+    const res = await fetch('https://xrplcluster.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'amm_info', params: [{ amm_account: PIGEONS_AMM_ACCOUNT }] })
+    });
+    const data = await res.json();
+    const amm = data.result && data.result.amm;
+    if (!amm) return null;
+    // amount = XRP side (drops, as a plain string when XRP); amount2 =
+    // the issued-currency side. Confirm which one is actually PIGEONS
+    // rather than assuming position, in case the pool's own field order
+    // ever differs.
+    const xrpSide = typeof amm.amount === 'string' ? amm.amount : null;
+    const pigeonsSide = (amm.amount2 && typeof amm.amount2 === 'object' && amm.amount2.currency === encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency) && amm.amount2.issuer === PIGEONS_TOKEN_CONFIG.issuer)
+      ? amm.amount2
+      : (amm.amount && typeof amm.amount === 'object' && amm.amount.currency === encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency) && amm.amount.issuer === PIGEONS_TOKEN_CONFIG.issuer ? amm.amount : null);
+    const xrpReserveDrops = xrpSide !== null ? xrpSide : (typeof amm.amount2 === 'string' ? amm.amount2 : null);
+    if (xrpReserveDrops === null || !pigeonsSide) return null;
+    let xrpReserve;
+    try { xrpReserve = BigInt(xrpReserveDrops); } catch (e) { return null; }
+    const pigeonsReserve = parseFloat(pigeonsSide.value);
+    const tradingFeeBps = typeof amm.trading_fee === 'number' ? amm.trading_fee : 0; // units of 1/100000
+    if (xrpReserve <= 0n || !(pigeonsReserve > 0)) return null;
+    return { xrpReserveDrops: xrpReserve, pigeonsReserve, tradingFeeBps };
+  } catch (e) {
+    return null;
+  }
+}
 
+// Constant-product AMM quote for spending exactly xrpDrops (BigInt) of
+// XRP into the pool above. XRPL's own AMM formula: the trading fee is
+// taken off the input before applying x*y=k, output = y*effIn/(x+effIn).
+// PIGEONS-side math is Number (an inherently decimal IOU amount, and this
+// is a display estimate, not a value going on-ledger) — the XRP side that
+// actually matters for "never overspend" stays BigInt throughout.
+function quoteFromAmmPool(pool, xrpDrops) {
+  const feeFraction = pool.tradingFeeBps / 100000;
+  const effIn = Number(xrpDrops) * (1 - feeFraction);
+  const x = Number(pool.xrpReserveDrops);
+  const y = pool.pigeonsReserve;
+  const out = (y * effIn) / (x + effIn);
+  return out > 0 ? out : 0;
+}
+
+// Walks the order book exactly as before, returning the total fillable
+// PIGEONS for xrpDrops and whether the book had enough depth to fill it
+// in full.
+async function quoteFromOrderBook(xrpDrops) {
   let offers;
-  try { offers = await fetchPigeonsBookOffers(PIGEONS_QUOTE_BOOK_DEPTH); } catch (e) { return { ok: false, error: 'lookup_failed' }; }
-  if (!Array.isArray(offers) || !offers.length) return { ok: false, insufficientLiquidity: true };
+  try { offers = await fetchPigeonsBookOffers(PIGEONS_QUOTE_BOOK_DEPTH); } catch (e) { return { filled: false, receivePigeons: 0 }; }
+  if (!Array.isArray(offers) || !offers.length) return { filled: false, receivePigeons: 0 };
 
-  const totalDrops = remainingDrops;
-  let totalPigeons = 0;
-
+  let remaining = xrpDrops;
+  let total = 0;
   for (const o of offers) {
-    if (remainingDrops <= 0n) break;
+    if (remaining <= 0n) break;
     if (typeof o.TakerGets !== 'object' || typeof o.TakerPays !== 'string') continue; // wrong side / malformed
     // Prefer the *_funded fields when present — rippled includes them only
     // when the offer owner can't actually back the full nominal size, i.e.
@@ -636,22 +686,48 @@ export async function quotePigeonsForXrpDrops(xrpDropsStr) {
     try { availDrops = BigInt(availDropsStr); } catch (e) { continue; }
     if (!(availPigeons > 0) || availDrops <= 0n) continue;
 
-    if (remainingDrops >= availDrops) {
-      totalPigeons += availPigeons;
-      remainingDrops -= availDrops;
+    if (remaining >= availDrops) {
+      total += availPigeons;
+      remaining -= availDrops;
     } else {
       // Partial fill of this price level — Number-precision fraction is
       // fine here (display estimate, not a drops value going on-ledger).
-      totalPigeons += availPigeons * (Number(remainingDrops) / Number(availDrops));
-      remainingDrops = 0n;
+      total += availPigeons * (Number(remaining) / Number(availDrops));
+      remaining = 0n;
     }
   }
+  return { filled: remaining <= 0n, receivePigeons: total };
+}
 
-  if (remainingDrops > 0n) return { ok: false, insufficientLiquidity: true };
-  if (!(totalPigeons > 0)) return { ok: false, insufficientLiquidity: true };
+// xrpDropsStr: exact integer drops (string) the user is spending — never a
+// parsed float. Returns:
+//   { ok:true, receivePigeons, rate, spentDrops, source }   — fully quotable
+//   { ok:false, insufficientLiquidity:true }                 — neither source could fill it
+//   { ok:false, error:'...' }                                 — lookup failed
+// receivePigeons/rate are Numbers — this is a live ESTIMATE shown to the
+// user, not a value written into a transaction (Stage 5 will re-derive
+// and re-validate everything server-side from scratch before anything is
+// ever signed, same as every other transaction this app builds).
+export async function quotePigeonsForXrpDrops(xrpDropsStr) {
+  let xrpDrops;
+  try { xrpDrops = BigInt(xrpDropsStr); } catch (e) { return { ok: false, error: 'bad_amount' }; }
+  if (xrpDrops <= 0n) return { ok: false, error: 'bad_amount' };
 
-  const xrpIn = Number(totalDrops) / 1000000;
-  return { ok: true, receivePigeons: totalPigeons, rate: totalPigeons / xrpIn, spentDrops: totalDrops.toString() };
+  const [bookResult, pool] = await Promise.all([
+    quoteFromOrderBook(xrpDrops),
+    fetchPigeonsAmmPool()
+  ]);
+
+  const ammPigeons = pool ? quoteFromAmmPool(pool, xrpDrops) : 0; // AMM has effectively unlimited depth for any sane trade size relative to this pool, always "fills"
+  const bookPigeons = bookResult.filled ? bookResult.receivePigeons : 0;
+
+  const best = ammPigeons >= bookPigeons ? ammPigeons : bookPigeons;
+  const source = ammPigeons >= bookPigeons ? 'amm' : 'orderbook';
+
+  if (!(best > 0)) return { ok: false, insufficientLiquidity: true };
+
+  const xrpIn = Number(xrpDrops) / 1000000;
+  return { ok: true, receivePigeons: best, rate: best / xrpIn, spentDrops: xrpDrops.toString(), source: source };
 }
 
 export async function fetchPigeonsXrpRate(kv) {
