@@ -2914,7 +2914,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 </div>
               </div>
               <div id="traitRows"></div>
-              <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">[ CLEAR TRA!TS ]</button>
+              <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">[ CLEAR ]</button>
             </div>
           </div>
 
