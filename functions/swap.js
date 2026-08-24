@@ -1615,6 +1615,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     background-position:center;
   }
   .pigeons-bar-left-body{ display:flex; flex-direction:column; align-items:flex-start; gap:0.35rem; text-align:left; }
+  /* Logged-out row: the two text lines stacked on the left, COPY sitting
+     to their right, vertically centred against both lines together. */
+  .pigeons-bar-left-body-row{ flex-direction:row; align-items:center; gap:0.9rem; }
+  .pigeons-bar-left-lines{ display:flex; flex-direction:column; gap:0.2rem; align-items:flex-start; }
   .pigeons-bar-sublabel{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
@@ -1759,6 +1763,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     .pigeons-bar-main-row{ flex-direction:column; text-align:center; }
     .pigeons-bar-left{ flex-direction:column; text-align:center; }
     .pigeons-bar-left-body{ align-items:center; text-align:center; }
+    .pigeons-bar-left-body-row{ flex-direction:column; }
+    .pigeons-bar-left-lines{ align-items:center; }
     /* Absolute-centering only works with room to spare either side —
        drop back into normal document flow once the row itself stacks. */
     .pigeons-bar-balance{ position:static; transform:none; flex-direction:column; margin:0.75rem 0; }
@@ -2466,14 +2472,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="pigeons-bar pigeons-bar-issuer">
       <div class="pigeons-bar-main-row">
         <div class="pigeons-bar-left" id="pigeonsBarLoggedOut">
-          <div class="pigeons-bar-left-body">
-            <span class="pigeons-bar-text pigeons-bar-text-lg">SET TRUSTL!NE T0 TRADE !N $P!GE0NS <button class="pigeons-bar-copy-btn" id="copyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="copyIssuerLabel">[ C0PY ]</span></button></span>
-            <!-- Shortened for display only — the copy handler reads
-                 data-full, never this shortened text, so the clipboard
-                 always gets the real address regardless. Not worth
-                 spelling out in full up here: anyone who needs it just
-                 clicks COPY. -->
-            <span class="pigeons-bar-sublabel">!SSUER :: <span id="ciIssuerAddr" data-full="rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf">rfQVVT7X5F...QcQSf</span></span>
+          <div class="pigeons-bar-left-body pigeons-bar-left-body-row">
+            <div class="pigeons-bar-left-lines">
+              <span class="pigeons-bar-text pigeons-bar-text-lg">SET $P!GE0NS TRUSTL!NE</span>
+              <!-- Shortened for display only — the copy handler reads
+                   data-full, never this shortened text, so the clipboard
+                   always gets the real address regardless. Not worth
+                   spelling out in full: anyone who needs it just clicks
+                   COPY, right there next to it. -->
+              <span class="pigeons-bar-sublabel pigeons-bar-text-lg">!SSUER :: <span id="ciIssuerAddr" data-full="rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf">rfQVVT7X5F...QcQSf</span></span>
+            </div>
+            <button class="pigeons-bar-copy-btn" id="copyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="copyIssuerLabel">[ C0PY ]</span></button>
           </div>
         </div>
         <!-- Shown instead of the block above once MY_WALLET is set (real
