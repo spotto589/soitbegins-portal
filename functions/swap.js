@@ -2107,6 +2107,42 @@ const SWAP_HTML = `<!DOCTYPE html>
     );
     mix-blend-mode:overlay;
   }
+  /* PREV/NEXT — fixed to the screen's own left/right edges (position:fixed,
+     same containing block as #screenDetail itself since that's also
+     fixed), vertically centered, so they stay put regardless of scroll
+     position or how tall this particular Pigeon's content happens to be. */
+  .detail-nav-btn{
+    position:fixed;
+    top:50%;
+    transform:translateY(-50%);
+    z-index:75;
+    width:44px;
+    height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(8,9,11,0.7);
+    border:1px solid var(--cyan-dim);
+    border-radius:50%;
+    color:var(--cyan);
+    font-size:20px;
+    text-shadow:0 0 6px var(--cyan-glow);
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+  }
+  .detail-nav-btn:hover:not(:disabled){ border-color:var(--cyan); background:var(--cyan-faint); }
+  .detail-nav-btn:disabled{ opacity:0.25; cursor:not-allowed; }
+  .detail-nav-prev{ left:clamp(0.5rem, 2vw, 1.5rem); }
+  .detail-nav-next{ right:clamp(0.5rem, 2vw, 1.5rem); }
+  @media (max-width:760px){
+    /* Same edges as the two-column layout's own mobile breakpoint —
+       small screens are tight enough that a 44px circle overlapping the
+       picture is more in-the-way than useful; shrink and pull to the
+       very edge instead of removing them outright. */
+    .detail-nav-btn{ width:36px; height:36px; font-size:16px; }
+    .detail-nav-prev{ left:0.25rem; }
+    .detail-nav-next{ right:0.25rem; }
+  }
   /* Local copy of canvas#staticBg's own look (see the drawStatic loop —
      both canvases run the identical draw function) — negative z-index so
      it paints behind the screen's real (non-positioned, normal-flow)
@@ -3000,6 +3036,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- SCREEN 2: DETAIL -->
     <div class="sw-panel" id="screenDetail" style="display:none;">
       <canvas class="local-static-bg" id="detailStaticBg"></canvas>
+      <!-- PREV/NEXT — walks the exact list this Pigeon was opened from
+           (state.items for the whole-collection browse, state.scopeAllItems
+           for a wallet scope), in whatever order it was sorted/filtered at
+           the time — not a fixed collection-wide sequence. -->
+      <button class="detail-nav-btn detail-nav-prev" id="detailPrevBtn" title="PREV!0US P!GE0N (◂)">◂</button>
+      <button class="detail-nav-btn detail-nav-next" id="detailNextBtn" title="NEXT P!GE0N (▸)">▸</button>
       <div class="detail-two-col">
         <div class="detail-num" id="detailNum"></div>
         <div class="detail-owner-top" id="detailOwner"></div>
@@ -3486,7 +3528,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapOfferResult','swapResultNftId','swapResultToWallet','swapResultStatus','swapResultOfferId','swapResultTxLink','swapResultDoneBtn',
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
-   'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory',
+   'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn',
@@ -4944,8 +4986,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.resultsArea.innerHTML = '';
     loadMoreCollection();
   }
-  function loadMoreCollection(){
-    if (state.loading || !state.hasMore || state.scope) return;
+  function loadMoreCollection(onDone){
+    // onDone (optional) — used by detail-screen NEXT to continue past the
+    // currently-loaded page: fires once this call's own fetch settles
+    // (success or failure) either way, never left hanging.
+    if (state.loading || !state.hasMore || state.scope){ if (onDone) onDone(); return; }
     state.loading = true;
     el.loadMoreNote.style.display = '';
     var filters = activeFilters();
@@ -5015,11 +5060,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         el.endOfCollectionNote.style.display = '';
       }
       if (pendingTraitScroll){ pendingTraitScroll = false; scrollResultsIntoView(); }
+      if (onDone) onDone();
     }).catch(function(){
       state.loading = false;
       el.loadMoreNote.style.display = 'none';
       if (!state.items.length) el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T REACH THE C0LLECT!0N. TRY AGA!N.'], false);
       pendingTraitScroll = false;
+      if (onDone) onDone();
     });
   }
   var scrollObserver = new IntersectionObserver(function(entries){
@@ -7470,6 +7517,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     showScreen('detail');
     refreshCardSelectionStates();
     loadDetailHistory(nftId);
+    updateDetailNavButtons();
 
     api({ detail: nftId }).then(function(data){
       if (!data.item){
@@ -7492,6 +7540,63 @@ const SWAP_HTML = `<!DOCTYPE html>
       renderOwnerLink(null, null);
     });
   }
+
+  // ---- PREV/NEXT — walks whichever list this Pigeon was opened from, in
+  // whatever order/filter it currently has: the whole-collection
+  // infinite-scroll browse (state.items) normally, or a wallet's full
+  // held collection (state.scopeAllItems) when scoped to one (SH0W MY
+  // P!GE0NS, a search-box wallet hit, a Top 100/owner-link click) — never
+  // a separate, fixed collection-wide sequence of its own. ----
+  function currentBrowseList(){
+    return (state.scope ? state.scopeAllItems : state.items) || [];
+  }
+  function updateDetailNavButtons(){
+    var list = currentBrowseList();
+    var currentId = state.currentDetail && state.currentDetail.nftId;
+    var idx = list.findIndex(function(p){ return p.nftId === currentId; });
+    el.detailPrevBtn.disabled = idx <= 0;
+    // Wallet scopes are always fully loaded already; the whole-collection
+    // browse is paginated, so "is there a next one" also has to account
+    // for a next PAGE that just hasn't loaded yet, not only what's
+    // already in memory.
+    var hasNext = idx !== -1 && (idx < list.length - 1 || (!state.scope && state.hasMore));
+    el.detailNextBtn.disabled = idx === -1 || !hasNext;
+  }
+  function navigateDetail(direction){
+    var list = currentBrowseList();
+    var currentId = state.currentDetail && state.currentDetail.nftId;
+    var idx = list.findIndex(function(p){ return p.nftId === currentId; });
+    if (idx === -1) return;
+    var targetIdx = idx + direction;
+    if (targetIdx < 0) return;
+    if (targetIdx < list.length){
+      openDetail(list[targetIdx].nftId);
+      return;
+    }
+    // Ran off the end of what's currently loaded — only the unscoped
+    // infinite-scroll browse can still have more to fetch; a wallet scope
+    // reaching its own end really is the end.
+    if (direction > 0 && !state.scope && state.hasMore && !state.loading){
+      el.detailNextBtn.disabled = true;
+      loadMoreCollection(function(){
+        var freshList = currentBrowseList();
+        if (targetIdx < freshList.length) openDetail(freshList[targetIdx].nftId);
+        else updateDetailNavButtons();
+      });
+    }
+  }
+  el.detailPrevBtn.addEventListener('click', function(){ navigateDetail(-1); });
+  el.detailNextBtn.addEventListener('click', function(){ navigateDetail(1); });
+  // Left/Right arrow keys as a shortcut for the same click — ignored
+  // while actually typing in a field (the detail screen's own MAKE
+  // OFFER input included) so this never hijacks normal text editing.
+  document.addEventListener('keydown', function(e){
+    if (el.screenDetail.style.display === 'none') return;
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    if (e.key === 'ArrowLeft') navigateDetail(-1);
+    else if (e.key === 'ArrowRight') navigateDetail(1);
+  });
+
   // Sales history now swaps out the whole panel (SCREEN 2b) instead of
   // expanding inline underneath the traits — detailHistoryList itself
   // already lives inside screenHistory and is populated by openDetail's
