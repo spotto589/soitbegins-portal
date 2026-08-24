@@ -1976,9 +1976,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Clicking into a Pigeon now opens its own full-viewport box instead of
      just being another panel in the scrolling page — fixed, edge to edge,
      with body.detail-open (see body{} above) freezing the page underneath
-     it. Only this box itself scrolls internally when its content runs
-     tall (trait count varies per Pigeon); BACK stays reachable regardless
-     since it's pinned to the box's own corner, not part of that flow. */
+     it. Sized and padded tight enough (see the compacted spacing
+     throughout this screen below) that a typical Pigeon's full detail —
+     image, traits, listings, sales, BACK — fits one screen with nothing
+     to scroll; only a Pigeon at the collection's max trait count (7), on
+     a short viewport, still needs to scroll this box internally. */
   #screenDetail{
     position:fixed;
     inset:0;
@@ -2000,7 +2002,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:var(--bg);
     backdrop-filter:none;
     -webkit-backdrop-filter:none;
-    padding:clamp(1.25rem, 4vh, 3rem) clamp(1rem, 4vw, 3rem);
+    padding:clamp(0.5rem, 1.8vh, 1.25rem) clamp(1rem, 4vw, 3rem);
   }
   #screenDetail::before{
     content:'';
@@ -2047,11 +2049,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      against the picture's own typical height for that 3-row case). */
   .detail-two-col{
     display:grid;
-    grid-template-columns:minmax(320px, 480px) 1fr;
+    /* Smaller max than before (was 480px) — the picture isn't the
+       constraint on whether this screen fits one page, the right column's
+       traits+sales stack is, so a smaller left column just wastes width
+       without buying back any height. */
+    grid-template-columns:minmax(260px, 380px) 1fr;
     grid-template-areas:
       "num  owner"
       "left right";
-    gap:0.75rem 2rem;
+    gap:0.5rem 2rem;
     align-items:start;
   }
   #screenDetail .detail-two-col > .detail-num{ grid-area:num; text-align:center; margin:0; }
@@ -2069,12 +2075,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:760px){
     .detail-two-col{ grid-template-columns:1fr; grid-template-areas:"num" "owner" "left" "right"; gap:0.75rem; }
   }
-  #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0 0 1.25rem; cursor:zoom-in; }
+  #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0 0 0.75rem; cursor:zoom-in; }
   /* Plain wrapper for RAR!TY/RAR!TY SC0RE + the $PIGEONS LISTING block,
      sitting directly underneath the picture — no decorative frame, just
      spacing between the two. */
-  .detail-under-pic-box{ margin-top:0.85rem; }
-  #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 1.25rem; }
+  .detail-under-pic-box{ margin-top:0.5rem; }
+  #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 0.6rem; }
   /* $PIGEONS listing — the collection's own purple, matching the DATABASE
      card's OFFER AMOUNT box (.thumb-offer) instead of a plain grey block —
      and now also offers MAKE OFFER (detailMakeOfferRow) when not listed,
@@ -2092,14 +2098,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .scylla-listing-price{ font-size:17px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
   #screenDetail #detailMakeOfferRow{ margin-top:0.75rem; }
   #screenDetail .detail-num{ font-size:28px; }
-  #screenDetail .trait-grid{ max-width:100%; margin:0.7rem 0 0; grid-template-columns:repeat(3, 1fr); gap:0.7rem; }
+  #screenDetail .trait-grid{ max-width:100%; margin:0.4rem 0 0; grid-template-columns:repeat(3, 1fr); gap:0.4rem; }
   @media (max-width:520px){
     #screenDetail .trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
-  /* Vertical padding tuned so a full 3-row grid (7 traits, the collection's
-     max) lands its own bottom edge flush with the picture's — checked
-     against the picture at its default/max size (480px square column). */
-  #screenDetail .trait-cell{ padding:1rem 0.9rem; }
+  /* Compact enough that a full 3-row grid (7 traits, the collection's max)
+     doesn't push the whole detail screen into needing to scroll — this
+     was the single tallest section on the page at the old, roomier
+     padding. */
+  #screenDetail .trait-cell{ padding:0.45rem 0.6rem; }
   #screenDetail .trait-cell .tc-label{ font-size:14px; }
   #screenDetail .trait-cell .tc-value{ font-size:19px; }
   #screenDetail .trait-cell .tc-sub{ font-size:14px; }
@@ -2130,14 +2137,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Constrained instead of stretching the field's label/value across the
      whole (wide) right column — that gap made label and value feel
      unrelated, like you had to hunt across the screen to match them up. */
-  #screenDetail .detail-field{ max-width:320px; margin:0 0 1rem; font-size:15px; }
+  #screenDetail .detail-field{ max-width:320px; margin:0 0 0.6rem; font-size:15px; }
   /* RARITY and RARITY SCORE, above the trait grid (not among the real
      trait cells below), same box treatment (label above value) — the
      actual score isn't computed yet, so that box just reads COMING SOON.
      Neither is clickable. Spread across the full column width with a
      wider gap than the trait grid's own — reads as its own row, not just
      the first two cells of a 3-across grid. */
-  #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(2, 1fr); gap:1.5rem; margin:0 0 1rem; max-width:100%; }
+  #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(2, 1fr); gap:1rem; margin:0 0 0.6rem; max-width:100%; }
   #screenDetail .detail-rarity-row .trait-cell{ cursor:default; text-align:center; min-width:0; }
   #screenDetail .detail-rarity-row .trait-cell:hover{ background:transparent; border-color:var(--border-dim); }
   /* PRICE / RECORD SALE / RECENT SALE / AVERAGE SALE — stacked directly
@@ -2149,20 +2156,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-sales-section{
     display:flex;
     flex-direction:column;
-    gap:0.85rem;
+    gap:0.5rem;
     width:100%;
     max-width:100%;
-    margin:1.25rem 0 0;
-    padding-top:1rem;
+    margin:0.6rem 0 0;
+    padding-top:0.6rem;
     border-top:1px dashed var(--border-dim);
   }
+  /* The listings row already carries its own bottom margin for the DATABASE
+     card context it's shared with — inside this flex column the gap above
+     already spaces it from what follows, so that margin would just double
+     up the same gap twice. */
+  #screenDetail .detail-sales-section .detail-listings-row{ margin:0; }
   /* Centered, label above value — easier to read at a glance than a
      left/right split row, especially now they're stacked one after
      another rather than spread across a wider area. */
-  #screenDetail .detail-sales-section .detail-field{ display:flex; flex-direction:column; align-items:center; gap:0.25rem; margin:0; max-width:100%; font-size:19px; text-align:center; }
-  #screenDetail .detail-sales-section .df-label{ font-size:13px; }
+  #screenDetail .detail-sales-section .detail-field{ display:flex; flex-direction:column; align-items:center; gap:0.2rem; margin:0; max-width:100%; font-size:17px; text-align:center; }
+  #screenDetail .detail-sales-section .df-label{ font-size:12px; }
   #screenDetail .detail-sales-section .df-value{ font-weight:700; text-align:center; }
-  #screenDetail .detail-history{ margin-top:1.25rem; max-width:100%; }
+  #screenDetail .detail-history{ margin-top:0.75rem; max-width:100%; }
   #screenDetail .detail-history .th-toggle{ font-size:14px; }
   /* RECORD SALE / AVERAGE SALE stacked, same label/value row style as
      every other .detail-field (OWNER, PRICE, etc). */
@@ -2334,17 +2346,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .secondary-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
   /* Detail screen's own BACK — a full-width strip, the very last thing on
-     the page (after BUY 0N DEEPT!DE), not a trait-grid cell any more.
-     Full width of the same content column the $PIGEONS L!ST!NG/N0T
-     L!STED box sits in, so its left/right edges line up with that box's
-     instead of just filling whatever room a trait grid cell left over. */
+     the page, not a trait-grid cell any more. Full width of the same
+     content column the $PIGEONS L!ST!NG/N0T L!STED box sits in, so its
+     left/right edges line up with that box's instead of just filling
+     whatever room a trait grid cell left over. */
   #screenDetail .detail-back-btn{
     display:flex;
     align-items:center;
     justify-content:center;
     width:100%;
-    margin:1.5rem 0 0;
-    padding:1em 1.4em;
+    margin:0.85rem 0 0;
+    padding:0.75em 1.4em;
     font-family:var(--font-mono);
     font-size:16px;
     font-weight:700;
@@ -2886,9 +2898,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </div>
-      <div class="detail-actions">
-        <a class="action-btn" id="detailBuyBtn" style="display:none;" target="_blank" rel="noopener">[ BUY 0N DEEPT!DE ]</a>
-      </div>
       <button class="detail-back-btn" id="backToBrowseBtn">← BACK</button>
     </div>
 
@@ -3242,7 +3251,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory',
-   'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailBuyBtn','detailTraits',
+   'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn',
    'backToBrowseBtn',
@@ -6575,11 +6584,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (p && p.priceXrp !== null && p.priceXrp !== undefined){
       el.detailPriceRow.style.display = '';
       el.detailPrice.textContent = p.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
-      el.detailBuyBtn.style.display = '';
-      el.detailBuyBtn.href = p.buyUrl || ('https://deeptide.co/nft/' + p.nftId);
     } else {
       el.detailPriceRow.style.display = 'none';
-      el.detailBuyBtn.style.display = 'none';
     }
     // REC0RD SALE / RECENT SALE always show a value now, never hide the
     // row — a Pigeon that's never changed hands isn't "missing sale
