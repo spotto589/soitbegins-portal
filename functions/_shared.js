@@ -730,6 +730,121 @@ export async function quotePigeonsForXrpDrops(xrpDropsStr) {
   return { ok: true, receivePigeons: best, rate: best / xrpIn, spentDrops: xrpDrops.toString(), source: source };
 }
 
+const BUYSWAP_SLIPPAGE_BPS = 50; // 0.5% — matches the panel's own SL!PPAGE figure
+const BUYSWAP_RESERVE_BUFFER_DROPS = 2000000n;
+
+// The single source of truth for the BUY $PIGEONS swap's txjson — used by
+// BOTH buyswap-prepare.js (review screen, no signing) and
+// buyswap-payload.js (the real Xaman request), so the transaction a user
+// reviews is built by the exact same code path as the one actually sent
+// for signing, not two independently-maintained copies that could drift.
+// Re-derives EVERYTHING from live state (quote, trustline, XRP balance)
+// every single call — never trusts a client-supplied amount beyond the
+// XRP figure itself, and never reuses a previous call's result.
+//
+// Mechanism: a same-account "currency conversion" Payment (Account ===
+// Destination === the buyer) — XRPL's own documented pattern for
+// converting one currency to another on-ledger, not OfferCreate (never
+// guaranteed to execute fully/immediately) and not a hand-built Paths
+// array (rippled's own default pathfinding already auto-routes through
+// both the order book and the AMM pool since the AMM amendment — the same
+// combined liquidity quotePigeonsForXrpDrops already checks).
+//
+// Slippage protection is atomic, not a post-hoc check: Amount is the
+// slippage-adjusted MINIMUM PIGEONS (floored, never rounded up), SendMax
+// is the EXACT XRP requested (never more), and tfPartialPayment is
+// deliberately omitted — that combination means the transaction either
+// delivers AT LEAST the full Amount for AT MOST SendMax, or fails
+// atomically with no funds moved, never a partial fill.
+export async function buildBuySwapTxjson(buyer, xrpDrops) {
+  if (typeof xrpDrops !== 'string' || !/^[1-9][0-9]*$/.test(xrpDrops)) {
+    return { ok: false, error: 'bad_amount' };
+  }
+
+  const line = await fetchPigeonsAccountLine(buyer);
+  if (!line || line.hasTrustline !== true) {
+    return { ok: false, error: 'no_trustline' };
+  }
+
+  const balanceDrops = await fetchXrpBalanceDrops(buyer);
+  if (balanceDrops === null) {
+    return { ok: false, error: 'balance_lookup_failed' };
+  }
+  let xrpDropsBig, balanceBig;
+  try { xrpDropsBig = BigInt(xrpDrops); balanceBig = BigInt(balanceDrops); } catch (e) {
+    return { ok: false, error: 'bad_amount' };
+  }
+  if (xrpDropsBig > balanceBig - BUYSWAP_RESERVE_BUFFER_DROPS) {
+    return { ok: false, error: 'exceeds_balance' };
+  }
+
+  const quote = await quotePigeonsForXrpDrops(xrpDrops);
+  if (!quote.ok) {
+    return { ok: false, error: quote.insufficientLiquidity ? 'insufficient_liquidity' : 'quote_failed' };
+  }
+
+  const minReceivePigeons = Math.floor(quote.receivePigeons * (10000 - BUYSWAP_SLIPPAGE_BPS) / 10000 * 1e6) / 1e6;
+  if (!(minReceivePigeons > 0)) {
+    return { ok: false, error: 'quote_failed' };
+  }
+  const minReceiveStr = minReceivePigeons.toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
+
+  const txjson = {
+    TransactionType: 'Payment',
+    Account: buyer,
+    Destination: buyer,
+    Amount: {
+      currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency),
+      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      value: minReceiveStr
+    },
+    SendMax: xrpDrops,
+    Memos: swapOfferSourceMemo()
+  };
+
+  return {
+    ok: true,
+    txjson,
+    display: {
+      xrpDrops,
+      minReceivePigeons: minReceiveStr,
+      estimateReceivePigeons: quote.receivePigeons,
+      rate: quote.rate,
+      source: quote.source
+    }
+  };
+}
+
+// Real, validated on-ledger transaction result — the only thing Stage 6's
+// "only show success after real XRPL validation" requirement can honestly
+// rest on. Xaman's own dispatched_result is the network's immediate
+// submission response, not a guarantee the transaction reached a
+// validated ledger; this is a direct `tx` lookup, checked for
+// result.validated === true before trusting TransactionResult at all.
+// Returns null if the transaction isn't found/validated yet (caller
+// should keep polling), never a fabricated "still pending" guess.
+export async function fetchValidatedTxResult(txHash) {
+  try {
+    const res = await fetch('https://xrplcluster.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'tx', params: [{ transaction: txHash }] })
+    });
+    const data = await res.json();
+    const result = data.result;
+    if (!result || !result.validated) return null;
+    const meta = result.meta || result.metaData;
+    if (!meta) return null;
+    return {
+      validated: true,
+      transactionResult: meta.TransactionResult,
+      deliveredAmount: meta.delivered_amount || null
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function fetchPigeonsXrpRate(kv) {
   if (kv) {
     const cached = await kv.get(PIGEONS_RATE_CACHE_KEY);
