@@ -6066,8 +6066,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
 
   // ---- DATABASE selector — multi-collection groundwork; only PIGEONS is
-  // live, FUZZY/PHNIX are inert placeholders. Same hover-flyout behavior
-  // as SORTING BY (#sortDropWrap) — hover to reveal, click closes. ----
+  // live, FUZZY/PHNIX are inert placeholders. Click-to-open now (not
+  // hover) since it lives inline inside the DATABASE tab button itself —
+  // clicking the collection name opens the picker; clicking anywhere
+  // else on the button still does the normal DATABASE tab switch. Every
+  // handler here stops propagation so picking/opening/closing the
+  // dropdown never also fires that tab switch. ----
   function openDbSelectFlyout(){
     el.dbSelectFlyout.style.display = 'block';
     el.dbSelectWrap.classList.add('open');
@@ -6076,13 +6080,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.dbSelectFlyout.style.display = 'none';
     el.dbSelectWrap.classList.remove('open');
   }
-  el.dbSelectWrap.addEventListener('mouseenter', openDbSelectFlyout);
-  el.dbSelectWrap.addEventListener('mouseleave', closeDbSelectFlyout);
-  el.dbSelectLabel.addEventListener('click', function(){
+  el.dbSelectLabel.addEventListener('click', function(e){
+    e.stopPropagation();
     if (el.dbSelectFlyout.style.display === 'block') closeDbSelectFlyout();
     else openDbSelectFlyout();
   });
-  el.dbSelectFlyout.addEventListener('click', function(){
+  el.dbSelectFlyout.addEventListener('click', function(e){
+    e.stopPropagation();
     closeDbSelectFlyout();
   });
 
@@ -6320,6 +6324,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   document.addEventListener('click', function(e){
     if (el.sortFlyout.style.display === 'flex' && !el.sortDropWrap.contains(e.target)) closeSortFlyout();
     if (el.traitsFlyout.style.display === 'flex' && !el.traitsHoverWrap.contains(e.target)) closeTraitsFlyout();
+    if (el.dbSelectFlyout.style.display === 'block' && !el.dbSelectWrap.contains(e.target)) closeDbSelectFlyout();
     // Same pattern for the pigeon DETAIL screen itself — a click anywhere
     // outside it (a different tab, the trustline banner, anywhere) closes
     // it back to the grid, instead of it staying stuck open underneath
