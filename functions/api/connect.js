@@ -1,6 +1,14 @@
 import { BOARD_COOKIE_NAME, signToken } from '../_shared.js';
 
-const TOKEN_TTL_SECONDS = 60 * 30;
+// Was 30 minutes — far too short for a wallet-ownership session that
+// doesn't hold any funds/keys itself (every real signing action still
+// requires a fresh Xaman approval regardless of how old this session is,
+// so a long-lived session doesn't widen what a stolen cookie could
+// actually do). Now 90 days — reads as "stays logged in until you
+// actually click SIGN OUT" for any realistic session, without being a
+// literal forever-token. Sign out (disconnect.js) clears the cookie
+// immediately regardless of how much of this window is left.
+const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 90;
 
 // Establishes a board-only session (separate cookie from the vault/crwn
 // access-key gate) for any wallet that completes Xaman login — proving
