@@ -183,6 +183,16 @@ export async function onRequestGet(context) {
     const wallet = params.get('wallet');
     if (!wallet) return json({ error: 'missing_wallet' }, 400);
     const line = await fetchPigeonsAccountLine(wallet);
+    // hasTrustline === null means the live lookup itself failed (even
+    // after fetchPigeonsAccountLine's own retries) — never a fabricated
+    // "no trustline"/"0 balance". This used to always return 200 either
+    // way, so the client's `line.hasTrustline ? balance : 0` treated a
+    // failed lookup exactly like a confirmed-empty one, silently showing
+    // 0 $PIGEONS on the trustline banner for a wallet that actually holds
+    // a real balance. A real error status here lets the client's existing
+    // retry-on-failure logic (apiWithRetry) actually retry instead of
+    // accepting the false negative as final.
+    if (line.hasTrustline === null) return json({ error: 'ledger_lookup_failed' }, 502);
     return json(line);
   }
 
