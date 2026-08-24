@@ -2137,11 +2137,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      against the picture's own typical height for that 3-row case). */
   .detail-two-col{
     display:grid;
-    /* Smaller max than before (was 480px) — the picture isn't the
-       constraint on whether this screen fits one page, the right column's
-       traits+sales stack is, so a smaller left column just wastes width
-       without buying back any height. */
-    grid-template-columns:minmax(260px, 380px) 1fr;
+    /* Bigger picture, explicitly requested over the earlier compaction
+       pass's smaller cap — the right column (1fr) automatically gets
+       pushed across/narrower as this grows, no separate change needed
+       there, and everything under the picture (.detail-under-pic-box,
+       the RARITY row, the $PIGEONS listing block) is already max-width:
+       100% of this column, so it all scales up with it for free. */
+    grid-template-columns:minmax(340px, 560px) 1fr;
     grid-template-areas:
       "num  owner"
       "left right";
