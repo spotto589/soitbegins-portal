@@ -1827,17 +1827,54 @@ const SWAP_HTML = `<!DOCTYPE html>
     -webkit-overflow-scrolling:touch;
     /* .sw-panel's own background+blur (background:var(--panel-bg),
        backdrop-filter:blur(7px)) is tuned for a small card floating over
-       the page — stretched edge to edge here, that wash+blur combo
-       flattened the TV-static canvas underneath (canvas#staticBg, fixed
-       behind everything at z-index:0) into an indistinct grey instead of
-       the same live animated grain the rest of the site shows. Lighter,
-       unblurred, so that same canvas reads through clearly. */
-    background:rgba(9,10,13,0.42);
+       the page — stretched edge to edge here at a low enough alpha to
+       let anything show through, it just revealed whatever page content
+       sat behind it (the real page is still there, only display:none'd
+       screens are actually removed) rather than reading as its own
+       background. Opaque instead, with its own TV-static canvas + CRT
+       scanline layer below (#detailStaticBg / ::before) — an exact copy
+       of the page's own recipe (canvas#staticBg / body::before), not a
+       window into it. */
+    background:var(--bg);
     backdrop-filter:none;
     -webkit-backdrop-filter:none;
     /* Extra bottom padding — room for the fixed BACK button (see
        .detail-back-btn below) so it never overlaps VIEW ELSEWHERE. */
     padding:clamp(1.25rem, 4vh, 3rem) clamp(1rem, 4vw, 3rem) clamp(5rem, 12vh, 6rem);
+  }
+  #screenDetail::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.018) 0px,
+      rgba(255,255,255,0.018) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode:overlay;
+  }
+  /* Local copy of canvas#staticBg's own look (see the drawStatic loop —
+     both canvases run the identical draw function) — negative z-index so
+     it paints behind the screen's real (non-positioned, normal-flow)
+     content automatically, same layering canvas#staticBg gets from
+     sitting behind the whole page. */
+  .local-static-bg{
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    width:100%;
+    height:100%;
+    opacity:0.2;
+    filter:brightness(0.7) contrast(1.3);
+    mix-blend-mode:screen;
+    pointer-events:none;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .local-static-bg{ display:none; }
   }
   /* Named grid areas so PIGEON #N sits in its own row above just the
      picture's column, while RARITY/RARITY SCORE (the right column's first
@@ -1941,19 +1978,33 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* RECORD SALE / AVERAGE SALE stacked, same label/value row style as
      every other .detail-field (OWNER, PRICE, etc). */
   #screenDetail .tech-meta-title{ font-size:12px; }
-  /* Fullscreen picture lightbox — same lighter, unblurred wash as
-     #screenDetail (see above) instead of near-solid black, so the same
-     TV-static canvas behind everything shows through here too. */
+  /* Fullscreen picture lightbox — same opaque bg + local static-canvas
+     layer as #screenDetail (see above), instead of near-solid black. */
   #detailLightbox{
     display:none;
     position:fixed;
     inset:0;
     z-index:1000;
-    background:rgba(9,10,13,0.55);
+    background:var(--bg);
     align-items:center;
     justify-content:center;
     padding:2rem;
     cursor:zoom-out;
+  }
+  #detailLightbox::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.018) 0px,
+      rgba(255,255,255,0.018) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode:overlay;
   }
   #detailLightbox img{ max-width:100%; max-height:100%; object-fit:contain; }
   .detail-eyebrow{
@@ -2571,6 +2622,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <!-- SCREEN 2: DETAIL -->
     <div class="sw-panel" id="screenDetail" style="display:none;">
+      <canvas class="local-static-bg" id="detailStaticBg"></canvas>
       <div class="detail-two-col">
         <div class="detail-num" id="detailNum"></div>
         <div class="detail-owner-top" id="detailOwner"></div>
@@ -2634,6 +2686,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- Fullscreen picture lightbox — click the detail picture to open,
          click anywhere to close back to the detail screen underneath. -->
     <div id="detailLightbox" style="display:none;">
+      <canvas class="local-static-bg" id="lightboxStaticBg"></canvas>
       <img id="detailLightboxImg" src="" alt="">
     </div>
 
@@ -4543,14 +4596,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     Feathers: 'center 75%',
     // Aura is a glow/halo effect above the head — the very top edge of
     // the frame, not the head-biased default.
-    Aura: 'center top'
+    Aura: 'center top',
+    Beak: 'center 38%',
+    Headwear: 'center 5%',
+    Clothing: 'center 68%'
   };
+  // Every category zoomed in tight enough that the box reads as "a crop
+  // of exactly this trait", not "a whole tiny Pigeon photo, which trait
+  // is that again". Left at plain cover (no zoom), a crop still shows
+  // the whole character — zoomed sizes tuned per category below, same
+  // treatment Background/Feathers already got.
   var TRAIT_PREVIEW_SIZE = {
     Background: '350%',
-    // Left at plain cover (no zoom), the belly crop still reads as "a
-    // whole tiny Pigeon" rather than a colour swatch — zoomed in tight
-    // so the feather colour itself is what actually fills the box.
-    Feathers: '300%'
+    Feathers: '300%',
+    Eyewear: '260%',
+    Beak: '280%',
+    Headwear: '240%',
+    Clothing: '220%',
+    Aura: '200%'
   };
   var TRAIT_PREVIEW_CORNER_POSITION = {
     Background: 'top left'
@@ -6570,9 +6633,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     showTab('database');
   }
 
-  // TV static background, purely atmospheric — matches the rest of the site.
-  (function(){
-    var canvas = document.getElementById('staticBg');
+  // TV static background, purely atmospheric — matches the rest of the
+  // site. Same draw loop run three times: the permanent page-level
+  // canvas, plus one each for the detail screen and fullscreen lightbox
+  // (see .local-static-bg) — those two are their own opaque full-
+  // viewport boxes now, so each needs this drawn locally rather than
+  // relying on seeing the page's own copy through transparency (that
+  // just revealed the real page underneath, not a background texture).
+  // isVisible is skipped (and the pixel buffer work with it) while that
+  // screen is hidden — checked live against the real element each frame
+  // rather than cached, since display gets toggled from many places.
+  function startStaticCanvas(canvas, isVisible){
     var ctx = canvas.getContext('2d');
     function resize(){
       canvas.width = Math.max(1, Math.floor(window.innerWidth / 3));
@@ -6590,9 +6661,19 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       ctx.putImageData(imageData, 0, 0);
     }
-    function loop(){ drawStatic(); requestAnimationFrame(loop); }
+    function loop(){
+      if (!isVisible || isVisible()) drawStatic();
+      requestAnimationFrame(loop);
+    }
     loop();
-  })();
+  }
+  startStaticCanvas(document.getElementById('staticBg'));
+  startStaticCanvas(document.getElementById('detailStaticBg'), function(){
+    return document.getElementById('screenDetail').style.display !== 'none';
+  });
+  startStaticCanvas(document.getElementById('lightboxStaticBg'), function(){
+    return document.getElementById('detailLightbox').style.display !== 'none';
+  });
 
 })();
 </script>
