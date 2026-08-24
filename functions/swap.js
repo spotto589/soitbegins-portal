@@ -1809,27 +1809,36 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-balance-info{ display:flex; flex-direction:column; align-items:flex-start; gap:0.3rem; text-align:left; }
   .pigeons-bar-balance-label{ font-size:13px; letter-spacing:0.25em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-balance-value{ font-size:28px; font-weight:700; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-transform:uppercase; letter-spacing:0.02em; }
+  /* Bigger, filled (not just outlined) and gently pulsing at rest — this
+     is the site's actual real-money call-to-action, worth standing out
+     rather than blending in with every other plain outline .bar-btn. */
+  @keyframes pigeons-buy-pulse{
+    0%, 100%{ box-shadow:0 0 10px var(--green-glow), inset 0 0 0 1px rgba(61,255,138,0.15); }
+    50%{ box-shadow:0 0 22px var(--green-glow), inset 0 0 0 1px rgba(61,255,138,0.3); }
+  }
   .pigeons-bar-balance-buy{
     display:inline-block;
-    margin-top:0.15rem;
-    padding:0.4em 1em;
+    margin-top:0.4rem;
+    padding:0.65em 1.6em;
     border:1px solid var(--green);
     border-radius:var(--radius);
+    background:var(--green-faint, rgba(61,255,138,0.12));
     color:var(--green);
     text-shadow:0 0 6px var(--green-glow);
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:16px;
     font-weight:700;
-    letter-spacing:0.05em;
+    letter-spacing:0.08em;
     text-decoration:none;
+    animation:pigeons-buy-pulse 2.2s ease-in-out infinite;
+    transition:background 0.15s ease, color 0.15s ease, transform 0.1s ease;
     /* Now a <button> (used to be an <a> straight out to DexScreener) —
        opens the in-site swap panel instead. Reset button-only defaults so
        it renders identically to the old link. */
-    background:transparent;
     appearance:none;
     cursor:pointer;
   }
-  .pigeons-bar-balance-buy:hover{ background:var(--green); color:#000; text-shadow:none; }
+  .pigeons-bar-balance-buy:hover{ background:var(--green); color:#000; text-shadow:none; transform:scale(1.04); animation-play-state:paused; box-shadow:0 0 26px var(--green-glow); }
   /* XRP -> $PIGEONS calculator, with its own EXCHANGE RATE title above it —
      the right-hand side of the main row now, not centered between two
      other things. */
