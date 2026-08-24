@@ -1825,6 +1825,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:0;
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
+    /* .sw-panel's own background+blur (background:var(--panel-bg),
+       backdrop-filter:blur(7px)) is tuned for a small card floating over
+       the page — stretched edge to edge here, that wash+blur combo
+       flattened the TV-static canvas underneath (canvas#staticBg, fixed
+       behind everything at z-index:0) into an indistinct grey instead of
+       the same live animated grain the rest of the site shows. Lighter,
+       unblurred, so that same canvas reads through clearly. */
+    background:rgba(9,10,13,0.42);
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
     /* Extra bottom padding — room for the fixed BACK button (see
        .detail-back-btn below) so it never overlaps VIEW ELSEWHERE. */
     padding:clamp(1.25rem, 4vh, 3rem) clamp(1rem, 4vw, 3rem) clamp(5rem, 12vh, 6rem);
@@ -1931,13 +1941,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* RECORD SALE / AVERAGE SALE stacked, same label/value row style as
      every other .detail-field (OWNER, PRICE, etc). */
   #screenDetail .tech-meta-title{ font-size:12px; }
-  /* Fullscreen picture lightbox. */
+  /* Fullscreen picture lightbox — same lighter, unblurred wash as
+     #screenDetail (see above) instead of near-solid black, so the same
+     TV-static canvas behind everything shows through here too. */
   #detailLightbox{
     display:none;
     position:fixed;
     inset:0;
     z-index:1000;
-    background:rgba(0,0,0,0.94);
+    background:rgba(9,10,13,0.55);
     align-items:center;
     justify-content:center;
     padding:2rem;
