@@ -1137,34 +1137,63 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* One single bar: SEARCH + GO + VIEW on the left, the results status
      text taking up the middle, SORT BY + RESET on the right — all one
      row, bordered as one unit, instead of stacked/separate pieces. */
+  /* RESET on its own, between the COLLECTION/ADD TRAITS box above and
+     the search/results bar below. */
+  .results-reset-row{ text-align:center; margin-bottom:0.85rem; }
+  /* SEARCH box, and VIEW connected directly underneath it as one joined
+     unit (shared border, dashed divider, no gap) — same "VIEW :: value"
+     label format SORT BY uses. */
   .results-header-row{
-    position:relative;
     display:flex;
     align-items:center;
     flex-wrap:wrap;
-    gap:0.9rem 1.25rem;
-    margin-bottom:0.85rem;
+    gap:0.75rem;
     border:1px solid var(--border-mid);
-    border-radius:var(--radius);
+    border-bottom:none;
+    border-radius:var(--radius) var(--radius) 0 0;
     padding:0.85em 1em;
   }
   .results-header-row .search-row{
     margin-bottom:0;
+    width:100%;
     /* GO must always sit to the right of the input, never wrap onto its
        own line below it — the input shrinks first instead. */
     flex-wrap:nowrap;
   }
   @media (max-width:700px){
     .results-header-row{ justify-content:center; }
+    .status-line-row{ flex-direction:column; }
     .status-line{ position:static !important; left:auto !important; top:auto !important; transform:none !important; }
   }
+  .view-select-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.6rem;
+    border:1px solid var(--border-mid);
+    border-top:1px dashed var(--border-dim);
+    border-radius:0;
+    padding:0.7em 1em;
+  }
   /* ---- results status line ---- */
-  /* RESET (and SORT BY) sit on the right side of whatever's being shown
-     here — full collection, a trait search, or a wallet scope — so
-     there's always a reset/sort within reach of the results themselves.
-     Absolute-centred on the bar's own midpoint (not flex-centred in
-     whatever space search/sort leave over) so it reads as truly centred
-     regardless of how wide either side ends up. */
+  .status-line-row{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    flex-wrap:wrap;
+    gap:0.9rem;
+    border:1px solid var(--border-mid);
+    border-top:none;
+    border-radius:0 0 var(--radius) var(--radius);
+    padding:0.85em 1em;
+    margin-bottom:0.85rem;
+  }
+  /* SORT BY sits on the right side of whatever's being shown here — full
+     collection, a trait search, or a wallet scope. Status text itself is
+     absolute-centred on the row's own midpoint (not flex-centred in
+     whatever space SORT leaves over) so it reads as truly centred
+     regardless of how wide that side ends up. */
   .status-line{
     position:absolute;
     left:50%;
@@ -2735,23 +2764,31 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
 
+        <!-- RESET sits between the COLLECTION/ADD TRAITS config box above
+             and the search/results bar below — its own row, not bundled
+             into either. -->
+        <div class="results-reset-row">
+          <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
+        </div>
+
         <div class="results-block" id="resultsBlock">
-          <!-- One single bar now: SEARCH + VIEW on the left, the results
-               status text in the middle, SORT BY + RESET on the right.
-               COLLECTION and ADD TRAITS are the only things left in the
-               config box above this. -->
           <div class="results-header-row">
             <div class="search-row">
               <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0N # 0R WALLET">
               <button class="bar-btn" id="searchBtn">[ GO ]</button>
             </div>
-            <div class="sort-field">
-              <span class="sort-field-label">V!EW</span>
-              <select class="sort-select" id="dbViewSelect">
-                <option value="boxed" disabled>B0XED V!EW (C0M!NG S00N)</option>
-                <option value="thumbnails" selected>THUMBNA!LS</option>
-              </select>
-            </div>
+          </div>
+          <!-- VIEW — one connected dropdown box directly underneath the
+               search bar, label + value combined the same way SORT BY
+               reads. -->
+          <div class="view-select-row">
+            <span class="sort-field-label">V!EW ::</span>
+            <select class="sort-select" id="dbViewSelect">
+              <option value="thumbnails" selected>THUMBNA!LS</option>
+              <option value="boxed" disabled>B0XED V!EW (C0M!NG S00N)</option>
+            </select>
+          </div>
+          <div class="status-line-row">
             <div class="status-line" id="statusLine"></div>
             <div class="status-line-actions">
               <div class="sort-field sort-field-inline">
@@ -2764,7 +2801,6 @@ const SWAP_HTML = `<!DOCTYPE html>
                   </div>
                 </div>
               </div>
-              <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
             </div>
           </div>
           <div id="resultsArea"></div>
