@@ -1526,7 +1526,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     justify-content:center;
     gap:0.75rem;
-    padding:1em 1.25rem;
+    padding:0.7em 1.25rem;
     border:1px solid var(--magenta);
     border-radius:var(--radius);
     background:linear-gradient(90deg, rgba(255,51,204,0.85), rgba(180,30,150,0.85));
@@ -1565,6 +1565,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:0;
     box-shadow:none;
     margin-bottom:0;
+    padding:0.85rem 1.5rem;
   }
   .pigeons-bar-issuer{
     position:relative;
@@ -1585,22 +1586,22 @@ const SWAP_HTML = `<!DOCTYPE html>
      centered either (VIEW ON DEXSCREENER is narrower than the calculator
      beside it, pulling the rate line's true center left), so this lines
      up with it instead of the panel's literal midpoint. */
-  .pigeons-bar-identity-row{ display:flex; align-items:center; justify-content:center; gap:1.5rem; flex-wrap:wrap; width:100%; transform:translateX(-18px); }
-  /* Real artwork filling a big square, same technique as the $PIGEONS
-     FLOOR tile (cover-sized background + purple wash) instead of a
-     small round coin icon — big and clear so it reads as an inviting,
-     clickable-feeling piece of art next to the trustline CTA. */
+  .pigeons-bar-identity-row{ display:flex; align-items:center; justify-content:center; gap:1rem; flex-wrap:wrap; width:100%; }
+  /* This is a banner, not a hero panel — a small piece of the real
+     artwork next to the CTA is plenty; the same 140px square this used
+     to be was most of why the whole thing read as an oversized block
+     instead of a compact strip. */
   .pigeons-bar-thumb{
     flex:0 0 auto;
-    width:140px;
-    height:140px;
+    width:48px;
+    height:48px;
     border-radius:var(--radius);
     border:1px solid rgba(255,255,255,0.5);
     background-image:linear-gradient(160deg, rgba(136,72,248,0.35), rgba(120,72,216,0.45)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs");
     background-size:cover;
     background-position:center;
   }
-  .pigeons-bar-body{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; text-align:center; }
+  .pigeons-bar-body{ display:flex; flex-direction:column; align-items:center; gap:0.3rem; text-align:center; }
   .pigeons-bar-addr-stack{ display:flex; flex-direction:column; align-items:center; gap:0.2rem; }
   .pigeons-bar-sublabel{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-addr{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); font-size:15px; }
@@ -1639,8 +1640,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:space-between;
     flex-wrap:wrap;
     gap:1rem;
-    margin-top:1.25rem;
-    padding-top:1rem;
+    margin-top:0.6rem;
+    padding-top:0.6rem;
     width:100%;
   }
   /* Live "1 $PIGEONS = X XRP" rate, DexScreener's trade-derived price via
