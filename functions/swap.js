@@ -1170,18 +1170,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   .results-trait-note .hi{ font-size:20px; }
 
   /* ---- empty state (attention = magenta) ---- */
-  .empty-state{ text-align:center; padding:2rem 0; }
+  /* Fills the results area (see #resultsArea's own min-height) instead of
+     just sitting as a couple of small lines at the top of a lot of empty
+     space — a zero-result query should be unmistakable, not something
+     you have to notice. */
+  .empty-state{ text-align:center; min-height:60vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem 1rem; }
   .empty-state .es-title{
-    font-size:13px;
-    letter-spacing:0.15em;
+    font-size:22px;
+    letter-spacing:0.12em;
     color:var(--magenta);
-    text-shadow:0 0 6px var(--magenta-glow);
+    text-shadow:0 0 8px var(--magenta-glow);
     margin-bottom:1rem;
     text-transform:uppercase;
   }
   .empty-state .es-line{
     font-family:var(--font-body);
-    font-size:11px;
+    font-size:15px;
     letter-spacing:0.03em;
     color:var(--grey);
     margin-bottom:0.5rem;
@@ -1591,15 +1595,19 @@ const SWAP_HTML = `<!DOCTYPE html>
      calculator (right). Rate line + DEXSCREENER link now live up in the
      carousel instead (see the RATE page there), which is what frees this
      row up to make BALANCE the thing people actually look at. */
-  .pigeons-bar-main-row{ display:flex; align-items:center; justify-content:space-between; gap:1.25rem; flex-wrap:wrap; width:100%; }
+  /* position:relative so BALANCE can be pinned to the row's exact
+     horizontal centre below, regardless of how wide the left/calc
+     columns end up — that centre line lines up with the carousel's own
+     centered dots directly above it. */
+  .pigeons-bar-main-row{ position:relative; display:flex; align-items:center; justify-content:space-between; gap:1.25rem; flex-wrap:wrap; width:100%; }
   .pigeons-bar-left{ display:flex; align-items:center; gap:0.75rem; flex:0 1 auto; min-width:0; }
-  /* Decent-sized (not the original 140px hero square, not the too-small
-     48px banner-icon either) — sits right beside BALANCE as the other
-     half of the banner's actual main feature. */
+  /* Way bigger — this is the collection's own artwork, the one thing
+     that actually says which collection you're looking at, so it needs
+     to read clearly at a glance, not as a small decorative icon. */
   .pigeons-bar-thumb{
     flex:0 0 auto;
-    width:64px;
-    height:64px;
+    width:96px;
+    height:96px;
     border-radius:var(--radius);
     border:1px solid rgba(255,255,255,0.5);
     background-image:linear-gradient(160deg, rgba(136,72,248,0.35), rgba(120,72,216,0.45)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs");
@@ -1621,11 +1629,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-copy-btn{
     display:inline-block;
     background:transparent;
-    border:1px solid rgba(255,255,255,0.5);
+    border:1px solid var(--cyan);
     border-radius:var(--radius);
     padding:0.15em 0.6em;
     margin-left:0.3rem;
-    color:rgba(255,255,255,0.85);
+    color:var(--cyan);
+    text-shadow:0 0 5px var(--cyan-glow);
     font-family:var(--font-mono);
     font-size:13px;
     letter-spacing:0.05em;
@@ -1633,7 +1642,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     vertical-align:middle;
   }
-  .pigeons-bar-copy-btn:hover{ border-color:#fff; color:#fff; }
+  .pigeons-bar-copy-btn:hover{ background:var(--cyan); color:#000; text-shadow:none; }
   /* SIGN OUT — a real, destructive-feeling action (ends the session), so
      it gets its own red instead of the plain white every other bar-btn
      in this box uses. */
@@ -1648,7 +1657,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      $PIGEONS number to be proud of, or a BUY link in the exact same spot
      if it's empty — either way, the token itself is what this banner is
      actually about. */
-  .pigeons-bar-balance{ flex:1 1 auto; display:flex; flex-direction:row; align-items:center; justify-content:center; gap:1rem; min-width:220px; }
+  .pigeons-bar-balance{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%, -50%);
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    justify-content:center;
+    gap:1rem;
+    min-width:220px;
+  }
   .pigeons-bar-balance-info{ display:flex; flex-direction:column; align-items:flex-start; gap:0.3rem; text-align:left; }
   .pigeons-bar-balance-label{ font-size:13px; letter-spacing:0.25em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-balance-value{ font-size:28px; font-weight:700; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-transform:uppercase; letter-spacing:0.02em; }
@@ -1739,7 +1759,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     .pigeons-bar-main-row{ flex-direction:column; text-align:center; }
     .pigeons-bar-left{ flex-direction:column; text-align:center; }
     .pigeons-bar-left-body{ align-items:center; text-align:center; }
-    .pigeons-bar-balance{ flex-direction:column; }
+    /* Absolute-centering only works with room to spare either side —
+       drop back into normal document flow once the row itself stacks. */
+    .pigeons-bar-balance{ position:static; transform:none; flex-direction:column; margin:0.75rem 0; }
     .pigeons-bar-balance-info{ align-items:center; text-align:center; }
   }
 
@@ -4063,11 +4085,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     startCollectionBrowse();
   });
 
-  function emptyStateHtml(title, lines, showClear){
+  function emptyStateHtml(title, lines, showClear, clearLabel){
     return '<div class="empty-state">' +
       '<div class="es-title">' + escapeHtml(title) + '</div>' +
       lines.map(function(l){ return '<div class="es-line">' + escapeHtml(l) + '</div>'; }).join('') +
-      (showClear ? '<button class="bar-btn" id="clearSearchBtn" style="margin-top:0.75rem;">[ CLEAR SEARCH ]</button>' : '') +
+      (showClear ? '<button class="bar-btn" id="clearSearchBtn" style="margin-top:1.25rem;">[ ' + escapeHtml(clearLabel || 'CLEAR SEARCH') + ' ]</button>' : '') +
     '</div>';
   }
 
@@ -4535,7 +4557,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           // — say so specifically instead of the generic "no match".
           el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['TRA!T D0ES N0T EX!ST !N TH!S C0LLECT!0N.'], true);
         } else {
-          el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', filters.length ? ['N0 P!GE0NS MATCH ALL SELECTED TRA!TS.'] : ['TRY AGA!N.'], filters.length > 0);
+          el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', filters.length ? ['0 C0MB!NAT!0NS 0F THESE TRA!TS EX!ST.'] : ['TRY AGA!N.'], filters.length > 0, 'RESET');
         }
       } else if (!state.hasMore){
         el.endOfCollectionNote.style.display = '';
