@@ -1830,14 +1830,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:clamp(1.25rem, 4vh, 3rem) clamp(1rem, 4vw, 3rem) clamp(5rem, 12vh, 6rem);
   }
   /* Named grid areas so PIGEON #N sits in its own row above just the
-     picture's column, while the trait grid (the right column's first
+     picture's column, while RARITY/RARITY SCORE (the right column's first
      row) starts level with the picture's own top — not pushed down by
      the number, since the right column never occupies the "num" row at
-     all. The "left right" row itself stretches both columns to the same
-     height (tallest of the two, normally the picture's column), which is
-     what lets the right column pin its trait grid to the top and its
-     RARITY/RARITY SCORE row to the bottom — flush with the picture's own
-     top and bottom edges — via the flex rule on .detail-col-right below. */
+     all. RARITY/RARITY SCORE spread across the full column width, then
+     the trait grid packs directly underneath — with a Pigeon that has
+     exactly a full 3x3 of traits, that grid's own bottom edge lands
+     flush with the picture's bottom (see .trait-cell sizing below, tuned
+     against the picture's own typical height for that 3-row case). */
   .detail-two-col{
     display:grid;
     grid-template-columns:minmax(320px, 480px) 1fr;
@@ -1845,11 +1845,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       "num  owner"
       "left right";
     gap:0.75rem 2rem;
-    align-items:stretch;
+    align-items:start;
   }
   #screenDetail .detail-two-col > .detail-num{ grid-area:num; text-align:center; margin:0; }
   .detail-col-left{ grid-area:left; }
-  .detail-col-right{ grid-area:right; display:flex; flex-direction:column; justify-content:space-between; }
+  .detail-col-right{ grid-area:right; }
   /* Owner address sits flush with P!GE0N #N — same row, same text weight —
      instead of buried as a small label further down the right column. */
   .detail-owner-top{ grid-area:owner; text-align:center; font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:0.04em; margin:0; }
@@ -1878,7 +1878,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .scylla-listing-price{ font-size:17px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
   #screenDetail #detailMakeOfferRow{ margin-top:0.75rem; }
   #screenDetail .detail-num{ font-size:28px; }
-  #screenDetail .trait-grid{ max-width:100%; margin:0; grid-template-columns:repeat(3, 1fr); gap:0.7rem; }
+  #screenDetail .trait-grid{ max-width:100%; margin:0.7rem 0 0; grid-template-columns:repeat(3, 1fr); gap:0.7rem; }
   @media (max-width:520px){
     #screenDetail .trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
@@ -1898,14 +1898,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      whole (wide) right column — that gap made label and value feel
      unrelated, like you had to hunt across the screen to match them up. */
   #screenDetail .detail-field{ max-width:320px; margin:0 0 1rem; font-size:15px; }
-  /* RARITY and RARITY SCORE side by side, same trait-cell box treatment
-     (label above value) — the actual score isn't computed yet, so that
-     box just reads COMING SOON. Neither is clickable (unlike real trait
-     cells in the grid above). */
-  #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.7rem; margin:0; max-width:100%; }
-  @media (max-width:520px){
-    #screenDetail .detail-rarity-row{ grid-template-columns:repeat(2, 1fr); }
-  }
+  /* RARITY and RARITY SCORE, above the trait grid (not among the real
+     trait cells below), same box treatment (label above value) — the
+     actual score isn't computed yet, so that box just reads COMING SOON.
+     Neither is clickable. Spread across the full column width with a
+     wider gap than the trait grid's own — reads as its own row, not just
+     the first two cells of a 3-across grid. */
+  #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(2, 1fr); gap:1.5rem; margin:0; max-width:100%; }
   #screenDetail .detail-rarity-row .trait-cell{ cursor:default; text-align:center; min-width:0; }
   #screenDetail .detail-rarity-row .trait-cell:hover{ background:transparent; border-color:var(--border-dim); }
   /* PRICE / RECORD SALE / AVERAGE SALE — a full-width section of its own
@@ -2579,7 +2578,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
         <div class="detail-col-right">
-          <div class="trait-grid" id="detailTraits"></div>
           <div class="detail-rarity-row" id="detailRarityRow" style="display:none;">
             <div class="trait-cell">
               <div class="tc-label">RAR!TY</div>
@@ -2590,6 +2588,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="tc-value">C0M!NG S00N</div>
             </div>
           </div>
+          <div class="trait-grid" id="detailTraits"></div>
         </div>
       </div>
       <div class="detail-sales-section">
