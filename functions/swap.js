@@ -1795,6 +1795,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-weight:700;
     letter-spacing:0.05em;
     text-decoration:none;
+    /* Now a <button> (used to be an <a> straight out to DexScreener) —
+       opens the in-site swap panel instead. Reset button-only defaults so
+       it renders identically to the old link. */
+    background:transparent;
+    appearance:none;
+    cursor:pointer;
   }
   .pigeons-bar-balance-buy:hover{ background:var(--green); color:#000; text-shadow:none; }
   /* XRP -> $PIGEONS calculator, with its own EXCHANGE RATE title above it —
@@ -2241,6 +2247,45 @@ const SWAP_HTML = `<!DOCTYPE html>
   .df-value.status-ok{ color:var(--green); text-shadow:0 0 6px var(--green-glow); font-weight:700; }
   .df-value a.owner-link{ color:var(--grey); text-decoration:underline; }
   .df-value a.owner-link:hover{ color:var(--cyan); }
+  /* ---- BUY $P!GE0NS swap panel — a transaction window, not a generic
+     trading widget: same purple $PIGEONS theme as the trustline banner/
+     detail-screen listing box, same .sw-panel card + .detail-field/
+     .node-eyebrow conventions every other confirm screen already uses. */
+  .buyswap-panel{ max-width:460px; margin-left:auto; margin-right:auto; }
+  .buyswap-row{ max-width:100%; margin:0 auto; }
+  .buyswap-label{ display:block; text-align:center; font-size:11px; letter-spacing:0.2em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.5rem; }
+  .buyswap-input-wrap{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.6rem;
+    background:#000;
+    border:1px solid var(--pigeon-purple-dim);
+    border-radius:var(--radius);
+    padding:0.9rem 1rem;
+  }
+  .buyswap-input{
+    flex:1 1 auto;
+    min-width:0;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--white);
+    font-family:var(--font-mono);
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:0.02em;
+    text-align:right;
+  }
+  .buyswap-input::placeholder{ color:var(--grey-disabled); }
+  .buyswap-input-wrap:focus-within{ border-color:var(--pigeon-purple); box-shadow:0 0 0 1px var(--pigeon-purple-dim); }
+  .buyswap-unit{ flex:0 0 auto; font-size:13px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; }
+  .buyswap-max-line{ text-align:center; font-size:11px; letter-spacing:0.05em; color:var(--grey-dim); margin-top:0.5rem; text-transform:uppercase; }
+  .buyswap-input-error{ text-align:center; font-size:11px; letter-spacing:0.03em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); margin-top:0.5rem; }
+  .buyswap-arrow{ text-align:center; font-size:22px; color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); margin:0.9rem 0; }
+  .buyswap-receive-wrap{ border-color:var(--border-mid); }
+  .buyswap-receive-value{ flex:1 1 auto; min-width:0; font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:0.02em; color:var(--grey-dim); text-align:right; }
+  .buyswap-divider{ border-top:1px dashed var(--border-dim); margin:1.25rem 0; }
   .detail-traits-title{
     text-align:center;
     font-size:11px;
@@ -2386,6 +2431,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .action-btn:hover{ background:var(--cyan-faint); border-color:var(--cyan); }
   .action-btn.selected{ background:var(--magenta-faint); color:var(--magenta); border-color:var(--magenta); text-shadow:0 0 7px var(--magenta-glow); animation:flicker-in 0.3s ease-out; }
+  /* Clearly unavailable, not just a plain button that happens to do
+     nothing — dimmed, no hover reaction, no-drop cursor. */
+  .action-btn:disabled{ opacity:0.4; cursor:not-allowed; text-shadow:none; }
+  .action-btn:disabled:hover{ background:transparent; border-color:var(--cyan-dim); }
 
   /* ---- target assets sticky bar — SCYLLA / MAGENTA ---- */
   .target-bar{
@@ -2645,7 +2694,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="pigeons-bar-balance-login" id="pigeonsBalanceLoginWrap">
               <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">[ L0G!N T0 V!EW BALANCE ]</button>
             </div>
-            <a class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">[ BUY $P!GE0NS ]</a>
+            <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;">[ BUY $P!GE0NS ]</button>
           </div>
         </div>
 
@@ -3072,6 +3121,42 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- SCREEN: BUY $P!GE0NS SWAP — opened from the trustline banner's own
+         BUY $P!GE0NS button (was an external DexScreener link). STAGE 2
+         ONLY: panel UI + validated XRP input, no live quote, no txjson, no
+         Xaman. YOU RECEIVE/RATE/MIN!MUM RECEIVED stay "—" until Stage 3
+         wires in a real quote; SIGN & BUY stays disabled until then. -->
+    <div class="sw-panel buyswap-panel" id="screenBuySwap" style="display:none;">
+      <div class="node-eyebrow">// BUY $P!GE0NS</div>
+      <div class="buyswap-row">
+        <span class="buyswap-label">Y0U PAY</span>
+        <div class="buyswap-input-wrap">
+          <input class="buyswap-input" id="buySwapXrpInput" type="text" inputmode="decimal" placeholder="0.00" autocomplete="off">
+          <span class="buyswap-unit">XRP</span>
+        </div>
+        <div class="buyswap-max-line" id="buySwapMaxLine" style="display:none;"></div>
+        <div class="buyswap-input-error" id="buySwapInputError" style="display:none;"></div>
+      </div>
+      <div class="buyswap-arrow" aria-hidden="true">↓</div>
+      <div class="buyswap-row">
+        <span class="buyswap-label">Y0U RECE!VE</span>
+        <div class="buyswap-input-wrap buyswap-receive-wrap">
+          <span class="buyswap-receive-value" id="buySwapReceiveValue">—</span>
+          <span class="buyswap-unit">P!GE0NS</span>
+        </div>
+      </div>
+      <div class="buyswap-divider"></div>
+      <div class="detail-field"><span class="df-label">RATE</span><span class="df-value" id="buySwapRate">—</span></div>
+      <div class="detail-field"><span class="df-label">M!N!MUM RECE!VED</span><span class="df-value" id="buySwapMinReceived">—</span></div>
+      <div class="detail-field"><span class="df-label">SL!PPAGE</span><span class="df-value" id="buySwapSlippage">0.5%</span></div>
+      <div class="buyswap-divider"></div>
+      <div class="index-line" id="buySwapStatus">QU0TE C0M!NG S00N — SWAP N0T YET L!VE.</div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="buySwapBackBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="buySwapSignBtn" disabled title="QU0TE N0T YET AVA!LABLE">[ S!GN & BUY ]</button>
+      </div>
+    </div>
+
     <!-- SCREEN: DELIST CONFIRMATION — the exact NFTokenCancelOffer txjson, before Xaman ever opens -->
     <div class="sw-panel" id="screenDelistConfirm" style="display:none;">
       <div class="node-eyebrow">// DEL!ST C0NF!RMAT!0N</div>
@@ -3262,6 +3347,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenListResult','listResultEyebrow','listResultPigeonNum','listResultPrice','listResultStatus','listResultTxLink','listResultDoneBtn',
    'screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
+   'screenBuySwap','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
    'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
    'screenDelistResult','delistResultPigeonNum','delistResultStatus','delistResultTxLink','delistResultDoneBtn',
    'screenOfferConfirm','offerConfTxType','offerConfAccount','offerConfOwner','offerConfNftId','offerConfCurrency','offerConfIssuer','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
@@ -3284,6 +3370,29 @@ const SWAP_HTML = `<!DOCTYPE html>
   // fallback strings for a null number) themselves.
   function greenNum(n){
     return '<span class="pigeons-green-num">' + n + '</span>';
+  }
+
+  // XRP amount <-> exact integer drops, via string splitting/BigInt only —
+  // never a float multiplication (0.1 * 1000000 style drift is exactly
+  // what XRP's own 6-decimal-place drops unit exists to avoid). Used by
+  // the BUY $PIGEONS panel's YOU PAY input. Returns null for anything that
+  // isn't a plain non-negative decimal with at most 6 fractional digits.
+  function dropsFromXrpString(str){
+    if (typeof str !== 'string') return null;
+    var s = str.trim();
+    if (!/^\\d+(\\.\\d{1,6})?$/.test(s) && !/^\\.\\d{1,6}$/.test(s)) return null;
+    var parts = s.split('.');
+    var intPart = parts[0] || '0';
+    var fracPart = (parts[1] || '').padEnd(6, '0');
+    try { return BigInt(intPart) * 1000000n + BigInt(fracPart); } catch (e) { return null; }
+  }
+  function dropsToXrpString(drops){
+    var neg = drops < 0n;
+    var abs = neg ? -drops : drops;
+    var s = abs.toString().padStart(7, '0');
+    var intPart = s.slice(0, -6);
+    var fracPart = s.slice(-6).replace(/0+$/, '');
+    return (neg ? '-' : '') + intPart + (fracPart ? '.' + fracPart : '');
   }
 
   // Live thousands-separator formatting for a plain-number input (1000
@@ -3516,6 +3625,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenListResult.style.display = name === 'listresult' ? '' : 'none';
     el.screenBuyConfirm.style.display = name === 'buyconfirm' ? '' : 'none';
     el.screenBuyResult.style.display = name === 'buyresult' ? '' : 'none';
+    el.screenBuySwap.style.display = name === 'buyswap' ? '' : 'none';
     el.screenDelistConfirm.style.display = name === 'delistconfirm' ? '' : 'none';
     el.screenDelistResult.style.display = name === 'delistresult' ? '' : 'none';
     el.screenOfferConfirm.style.display = name === 'offerconfirm' ? '' : 'none';
@@ -5664,6 +5774,86 @@ const SWAP_HTML = `<!DOCTYPE html>
     showScreen('browse');
   });
 
+  // ---- BUY $P!GE0NS swap panel (trustline banner's BUY $P!GE0NS button —
+  // was a plain external DexScreener link). STAGE 2 ONLY: panel UI +
+  // validated XRP input, capped against the connected wallet's real XRP
+  // balance. No live quote, no txjson, no Xaman — YOU RECE!VE/RATE/M!N!MUM
+  // RECE!VED stay "—" and SIGN & BUY stays disabled until Stage 3+. ----
+  var buySwapMaxDrops = null; // null = no cap known yet (not logged in, or balance fetch pending/failed)
+  // Same base+owner reserve reasoning as any XRPL wallet UI — leaving a
+  // wallet with less than its reserve makes every future transaction fail,
+  // not just this one. 2 XRP is a conservative buffer, not the exact
+  // reserve (which depends on owned objects) — Stage 5's real transaction
+  // prep will re-check the actual reserve server-side before ever signing
+  // anything; this is just a sane UI-level cap.
+  var BUYSWAP_RESERVE_BUFFER_DROPS = 2000000n;
+  function updateBuySwapMaxLine(){
+    if (buySwapMaxDrops === null){
+      el.buySwapMaxLine.style.display = 'none';
+      return;
+    }
+    el.buySwapMaxLine.style.display = '';
+    el.buySwapMaxLine.textContent = 'MAX :: ' + dropsToXrpString(buySwapMaxDrops) + ' XRP AVA!LABLE';
+  }
+  function showBuySwapInputError(msg){
+    el.buySwapInputError.textContent = msg;
+    el.buySwapInputError.style.display = '';
+  }
+  function clearBuySwapInputError(){
+    el.buySwapInputError.textContent = '';
+    el.buySwapInputError.style.display = 'none';
+  }
+  // Returns the entered amount as exact integer drops (BigInt), or null if
+  // the field is empty/invalid/negative/zero/over the known max — never
+  // trusts parseFloat for anything that could end up in a transaction
+  // later. Always leaves SIGN & BUY disabled regardless of the result
+  // (Stage 2 — no quote exists yet to sign against).
+  function validateBuySwapInput(){
+    el.buySwapSignBtn.disabled = true;
+    var raw = el.buySwapXrpInput.value.trim();
+    if (!raw){ clearBuySwapInputError(); return null; }
+    var drops = dropsFromXrpString(raw);
+    if (drops === null){
+      showBuySwapInputError('ENTER A VAL!D XRP AM0UNT (UP T0 6 DEC!MAL PLACES, N0 NEGAT!VES).');
+      return null;
+    }
+    if (drops <= 0n){
+      showBuySwapInputError('ENTER AN AM0UNT GREATER THAN 0.');
+      return null;
+    }
+    if (buySwapMaxDrops !== null && drops > buySwapMaxDrops){
+      showBuySwapInputError('EXCEEDS YOUR AVA!LABLE XRP BALANCE.');
+      return null;
+    }
+    clearBuySwapInputError();
+    return drops;
+  }
+  function openBuySwapPanel(){
+    el.buySwapXrpInput.value = '';
+    clearBuySwapInputError();
+    el.buySwapReceiveValue.textContent = '—';
+    el.buySwapRate.textContent = '—';
+    el.buySwapMinReceived.textContent = '—';
+    el.buySwapStatus.textContent = 'QU0TE C0M!NG S00N — SWAP N0T YET L!VE.';
+    el.buySwapSignBtn.disabled = true;
+    buySwapMaxDrops = null;
+    updateBuySwapMaxLine();
+    showScreen('buyswap');
+    if (MY_WALLET){
+      apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).then(function(data){
+        if (!data || typeof data.drops !== 'string' || !/^\\d+$/.test(data.drops)) return;
+        var bal = BigInt(data.drops);
+        var max = bal - BUYSWAP_RESERVE_BUFFER_DROPS;
+        buySwapMaxDrops = max > 0n ? max : 0n;
+        updateBuySwapMaxLine();
+        validateBuySwapInput();
+      }).catch(function(){});
+    }
+  }
+  el.pigeonsBalanceBuyBtn.addEventListener('click', openBuySwapPanel);
+  el.buySwapXrpInput.addEventListener('input', validateBuySwapInput);
+  el.buySwapBackBtn.addEventListener('click', function(){ showScreen('browse'); });
+
   function submitBuyPayload(retriesLeft){
     if (retriesLeft === undefined) retriesLeft = 1;
     fetch('/api/swap-buy-payload', {
@@ -6256,7 +6446,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       if (data && data.dexUrl){
         el.pigeonsDexLink.href = data.dexUrl;
-        el.pigeonsBalanceBuyBtn.href = data.dexUrl;
       }
       el.pigeonsDexLink.style.display = '';
     }).catch(function(){});

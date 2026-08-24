@@ -3,7 +3,7 @@ import {
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue,
-  resolveOwnerCollectionLive, fetchAllAccountNftsChecked, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine,
+  resolveOwnerCollectionLive, fetchAllAccountNftsChecked, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX,
   getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
 } from '../_shared.js';
@@ -184,6 +184,17 @@ export async function onRequestGet(context) {
     if (!wallet) return json({ error: 'missing_wallet' }, 400);
     const line = await fetchPigeonsAccountLine(wallet);
     return json(line);
+  }
+
+  // Native XRP balance (exact drops string) — used by the BUY $PIGEONS
+  // swap panel to cap the YOU PAY input at what the wallet can actually
+  // afford. Read-only ledger data, same trust level as pigeonsAccountLine
+  // above.
+  if (params.get('xrpBalance') === '1') {
+    const wallet = params.get('wallet');
+    if (!wallet) return json({ error: 'missing_wallet' }, 400);
+    const drops = await fetchXrpBalanceDrops(wallet);
+    return json({ drops });
   }
 
   // Collection-wide stats strip — items/holders (real, our own Clio-based

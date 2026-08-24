@@ -628,6 +628,32 @@ export async function fetchPigeonsAccountLine(account) {
   }
 }
 
+// Native XRP balance for one wallet, in exact integer drops (never a
+// parsed float) — account_info's own Balance field is already a drops
+// string, so this is a straight pass-through, no unit conversion done
+// here at all. Used by the BUY $PIGEONS swap panel to cap the XRP input
+// at something the wallet can actually afford; null means "couldn't
+// check" (network/parse failure), not "zero balance" — callers must not
+// conflate the two.
+export async function fetchXrpBalanceDrops(account) {
+  try {
+    const res = await fetch('https://xrplcluster.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        method: 'account_info',
+        params: [{ account }]
+      })
+    });
+    const data = await res.json();
+    const drops = data.result && data.result.account_data && data.result.account_data.Balance;
+    if (typeof drops !== 'string' || !/^\d+$/.test(drops)) return null;
+    return drops;
+  } catch (e) {
+    return null;
+  }
+}
+
 // tfTransferable (0x0008) — an NFT without this flag can never be sold to
 // anyone but its issuer, so a sell offer against it would only ever fail
 // on-ledger. Checked before a listing payload is ever built.
