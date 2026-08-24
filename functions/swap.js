@@ -260,34 +260,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* ---- database (multi-collection) selector ---- */
   .db-select-wrap{ text-align:center; position:relative; margin-bottom:1.75rem; }
   .db-collection-row{ position:relative; display:flex; align-items:center; justify-content:center; gap:0.6rem; width:100%; }
-  /* Placeholder for now — the onboarding section itself doesn't exist
-     yet, same "real link, not-yet-built destination" pattern as BURNT.
-     Lives here now — outside the trustline box, on the plain page
-     background — pinned to this row's own right edge so it lines up
-     with C0LLECT!0N :: P!GE0NS ▾ instead of sitting inside the purple box. */
-  .pigeons-bar-onboard-link{
-    background:transparent;
-    border:none;
-    color:var(--grey);
-    text-decoration:underline;
-    cursor:pointer;
-    font-family:var(--font-mono);
-    font-size:12px;
-    letter-spacing:0.01em;
-    text-transform:none;
-    white-space:nowrap;
-    transition:color 0.15s ease;
-  }
-  .pigeons-bar-onboard-link:hover{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
-  .db-collection-row .pigeons-bar-onboard-link{
-    position:absolute;
-    right:0;
-    top:50%;
-    transform:translateY(-50%);
-  }
-  @media (max-width:700px){
-    .db-collection-row .pigeons-bar-onboard-link{ position:static; transform:none; display:block; margin:0.5rem auto 0; }
-  }
   /* COLLECTION :: is the same hover-flyout component as SORTING BY —
      hover to reveal, not a click-toggle full-width menu. */
   #dbSelectWrap{ font-size:13px; }
@@ -1600,7 +1572,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      columns end up — that centre line lines up with the carousel's own
      centered dots directly above it. */
   .pigeons-bar-main-row{ position:relative; display:flex; align-items:center; justify-content:space-between; gap:1.25rem; flex-wrap:wrap; width:100%; }
-  .pigeons-bar-left{ display:flex; align-items:center; gap:0.75rem; flex:0 1 auto; min-width:0; }
+  .pigeons-bar-left{ display:flex; flex-direction:column; align-items:flex-start; gap:0.6rem; flex:0 1 auto; min-width:0; }
   /* Way bigger — this is the collection's own artwork, the one thing
      that actually says which collection you're looking at, so it needs
      to read clearly at a glance, not as a small decorative icon. */
@@ -1619,6 +1591,40 @@ const SWAP_HTML = `<!DOCTYPE html>
      to their right, vertically centred against both lines together. */
   .pigeons-bar-left-body-row{ flex-direction:row; align-items:center; gap:0.9rem; }
   .pigeons-bar-left-lines{ display:flex; flex-direction:column; gap:0.2rem; align-items:flex-start; }
+  /* Small help box under the issuer line — the onboarding section itself
+     doesn't exist yet (same "real link, not-yet-built destination"
+     pattern as BURNT), so this stays simple and low-key rather than
+     competing with SET TRUSTLINE/BALANCE for attention. */
+  .pigeons-bar-help-box{
+    display:inline-flex;
+    align-items:center;
+    gap:0.4rem;
+    background:rgba(0,0,0,0.15);
+    border:1px dashed rgba(255,255,255,0.35);
+    border-radius:var(--radius);
+    padding:0.3em 0.6em;
+    color:rgba(255,255,255,0.7);
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.01em;
+    text-transform:none;
+    cursor:pointer;
+    text-align:left;
+    transition:color 0.15s ease, border-color 0.15s ease;
+  }
+  .pigeons-bar-help-box:hover{ color:#fff; border-color:rgba(255,255,255,0.7); }
+  .pigeons-bar-help-mark{
+    flex:0 0 auto;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:1.3em;
+    height:1.3em;
+    border-radius:50%;
+    border:1px solid currentColor;
+    font-size:10px;
+    font-weight:700;
+  }
   .pigeons-bar-sublabel{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
@@ -2408,7 +2414,6 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="db-option db-option-disabled db-option-phnix">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
           </div>
         </div>
-        <button class="pigeons-bar-onboard-link" id="onboardLink">New to the XRPL, NFTs, memes? Click here.</button>
       </div>
     </div>
 
@@ -2484,6 +2489,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
             <button class="pigeons-bar-copy-btn" id="copyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="copyIssuerLabel">[ C0PY ]</span></button>
           </div>
+          <button class="pigeons-bar-help-box" id="onboardLink"><span class="pigeons-bar-help-mark">?</span> New to the XRPL, NFTs, memes? Click here.</button>
         </div>
         <!-- Shown instead of the block above once MY_WALLET is set (real
              server-verified session, see onRequestGet/__SWAP_WALLET__) —
