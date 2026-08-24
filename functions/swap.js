@@ -2575,7 +2575,7 @@ const SWAP_HTML = `<!DOCTYPE html>
              so this reads as "come trade the token" rather than a
              wallet-status readout. -->
         <div class="pigeons-bar-balance">
-          <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
+          <div class="pigeons-bar-thumb" id="pigeonsBarThumb" title="$P!GE0NS"></div>
           <div class="pigeons-bar-balance-info">
             <div class="pigeons-bar-balance-label">BALANCE:</div>
             <div class="pigeons-bar-balance-value" id="pigeonsBalanceValue" style="display:none;">…</div>
@@ -3176,7 +3176,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInCount','pigeonsLoggedInTrustline','showMyPigeonsBtn','swapSignOutBtn',
-   'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap',
+   'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
@@ -3333,14 +3333,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       swapoffers: el.swapOffersPanelWrap
     }[tab];
     if (!panel) return;
-    // Deferred one tick — the other tabs' panels just got hidden in this
-    // same call stack (showTab's own display:none toggles), which can
-    // shrink the page shorter than the scroll target for a moment; a
-    // smooth scrollTo started against that undersized document silently
-    // no-ops instead of animating once the page grows back. Waiting for
-    // the reflow to settle first keeps the target valid throughout.
+    // Instant, not smooth — should land at the top of the tab's content
+    // immediately, not animate there. Still deferred one tick: the other
+    // tabs' panels just got hidden in this same call stack (showTab's own
+    // display:none toggles), which can shrink the page shorter than the
+    // scroll target for a moment — reading the position before that
+    // reflow settles would jump to the wrong place.
     requestAnimationFrame(function(){
-      window.scrollTo({ top: window.scrollY + panel.getBoundingClientRect().top, behavior: 'smooth' });
+      window.scrollTo({ top: window.scrollY + panel.getBoundingClientRect().top, behavior: 'auto' });
     });
   }
   // Same flush-to-top feel as scrollTabStripIntoView, but for the results
@@ -3365,6 +3365,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
     el.salesPanelWrap.style.display = tab === 'sales' ? '' : 'none';
     el.swapOffersPanelWrap.style.display = tab === 'swapoffers' ? '' : 'none';
+    // The trustline banner itself stays up across every tab, but the
+    // $PIGEONS thumbnail is DATABASE-only — it's collection artwork, not
+    // relevant chrome on Σκύλλα/TOP 100/SALES/SWAP OFFERS.
+    el.pigeonsBarThumb.style.display = tab === 'database' ? '' : 'none';
     // A tab click can happen while the pigeon DETAIL (or its TRANSACTION
     // HISTORY) screen is open — those are normally only ever hidden by
     // showScreen, which a direct tab click bypasses, so without this the
