@@ -6,8 +6,16 @@ const TOKEN_TTL_SECONDS = 60 * 30;
 // access-key gate and the board's pigeon session) for any wallet that
 // completes Xaman login — proving wallet ownership, not King ownership.
 // kingdom.js checks King ownership itself once a session exists.
+// See KINGDOM_PAGE_PAUSED in ../kingdom.js — same pause, mirrored here so
+// this endpoint can't be hit directly while the page itself is offline.
+const KINGDOM_PAUSED = true;
+
 export async function onRequestPost(context) {
   const { request, env } = context;
+
+  if (KINGDOM_PAUSED) {
+    return new Response(JSON.stringify({ error: 'kingdom_paused' }), { status: 503 });
+  }
 
   if (!env.Σκύλλα) {
     return new Response(JSON.stringify({ error: 'server_misconfigured' }), { status: 500 });

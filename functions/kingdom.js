@@ -1,8 +1,7 @@
 import {
   KINGDOM_COOKIE_NAME, getCookie, verifyToken,
-  fetchAllAccountNfts, findAllKingNfts, getKingThumbnails,
-  findAllGreenNfts, findAllYellowNfts,
-  KINGDOM_CLAIM_CONFIG, KINGDOM_CLAIMANTS
+  fetchAllAccountNfts, findAllKingNfts, getTopKingRarity,
+  KINGDOM_CLAIM_CONFIG
 } from './_shared.js';
 
 function escapeHtml(str) {
@@ -11,12 +10,6 @@ function escapeHtml(str) {
 
 function renderLocked() {
   return `
-    <div class="kd-story">
-      <p>THE K!NG HAS LEFT TO SEEK THE CR0WN.</p>
-      <p>A FALSE K!NGD0M CLA!MS T0 BE #1.</p>
-      <p>THE KN!GHTS REFUSE TO REC0GN!SE !T.</p>
-      <p>THE C0UNC!L MUST DEC!DE WH0 THE TRUE K!NG !S.</p>
-    </div>
     <div class="kd-actions">
       <button class="connect-btn" id="kdConnectBtn"><span class="cb-label"><span class="caution">⚠</span> C0NNECT WALLET <span class="caution">⚠</span></span><span class="cb-binary" aria-hidden="true">01001011 01001001 01001110 01000111 01000100 01001111 01001101</span></button>
       <div class="kd-status" id="kdConnectStatus"></div>
@@ -47,45 +40,26 @@ function renderClaimCard(kind, config, held) {
     </div>`;
 }
 
-function renderKingdom({ kingThumbs, votes, claimHolds }) {
-  const claimantCards = Object.values(KINGDOM_CLAIMANTS).map(c => `
-    <div class="kd-claimant-card">
-      <div class="kd-claimant-status">CLA!MANT</div>
-      <div class="kd-claimant-name">${escapeHtml(c.name)}</div>
-      <div class="kd-claimant-market">MARKETPLACE :: ${escapeHtml(c.marketplace)}</div>
-      <a class="kd-claimant-link" href="${escapeHtml(c.url)}" target="_blank" rel="noopener">V!EW L!ST!NG →</a>
-    </div>`).join('');
+function renderRarity(topRarity) {
+  if (!topRarity) return '';
+  const avatar = topRarity.image
+    ? `<img class="kd-rarity-thumb" src="${escapeHtml(topRarity.image)}" alt="" loading="lazy">`
+    : `<div class="kd-rarity-thumb kd-rarity-thumb-blank"></div>`;
+  const rankLine = topRarity.rarityTotal
+    ? `RANK ${topRarity.rarityRank} / ${topRarity.rarityTotal}`
+    : `RANK ${topRarity.rarityRank}`;
+  return `
+    <div class="kd-rarity">
+      ${avatar}
+      <div class="kd-rarity-body">
+        <div class="kd-rarity-label">T0P RAR!TY</div>
+        <div class="kd-rarity-name">${escapeHtml(topRarity.name || 'K!NG')}</div>
+        <div class="kd-rarity-rank">${escapeHtml(rankLine)}</div>
+      </div>
+    </div>`;
+}
 
-  const voteRows = kingThumbs.map(k => {
-    const v = votes[k.nftId];
-    const avatar = k.image
-      ? `<img class="kd-king-thumb" src="${escapeHtml(k.image)}" alt="" loading="lazy">`
-      : `<div class="kd-king-thumb kd-king-thumb-blank"></div>`;
-    if (v) {
-      const claimant = KINGDOM_CLAIMANTS[v.candidate];
-      return `
-        <div class="kd-vote-row">
-          ${avatar}
-          <div class="kd-vote-body">
-            <div class="kd-vote-id">${escapeHtml(k.label)}</div>
-            <div class="kd-verdict">Y0UR VERD!CT HAS BEEN REC0RDED</div>
-            <div class="kd-verdict-sub">VOTED :: ${escapeHtml(claimant ? claimant.name : v.candidate)} :: CANN0T BE CHANGED</div>
-          </div>
-        </div>`;
-    }
-    return `
-      <div class="kd-vote-row">
-        ${avatar}
-        <div class="kd-vote-body">
-          <div class="kd-vote-id">${escapeHtml(k.label)}</div>
-          <div class="kd-vote-btns">
-            <button class="kd-vote-btn" data-nft="${escapeHtml(k.nftId)}" data-candidate="invisible">THE !NV!S!BLE K!NG</button>
-            <button class="kd-vote-btn" data-nft="${escapeHtml(k.nftId)}" data-candidate="knight">THE KN!GHT K!NG</button>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-
+function renderKingdom({ claimHolds, topRarity }) {
   const claimCards = Object.entries(KINGDOM_CLAIM_CONFIG)
     .map(([kind, config]) => renderClaimCard(kind, config, claimHolds[kind]))
     .join('');
@@ -95,21 +69,10 @@ function renderKingdom({ kingThumbs, votes, claimHolds }) {
       <div class="kd-king-detected-title">K!NG DETECTED</div>
       <div class="kd-king-detected-sub">Y0UR CLA!M HAS BEEN REC0GN!SED</div>
     </div>
+    ${renderRarity(topRarity)}
     <details class="kd-chamber" open>
       <summary class="kd-chamber-summary">ENTER THE K!NGD0M</summary>
       <div class="kd-chamber-body">
-        <div class="kd-story kd-story-chamber">
-          <p>THE K!NG HAS LEFT TO SEEK THE CR0WN.</p>
-          <p>THE FALSE K!NGD0M CLA!MS #1.</p>
-          <p>THE KN!GHTS REFUSE TO REC0GN!SE !T.</p>
-          <p>THE C0UNC!L MUST DEC!DE WH0 !S THE TRUE K!NG.</p>
-        </div>
-        <div class="kd-claimants">${claimantCards}</div>
-        <div class="kd-vote-section">
-          <div class="kd-vote-heading">WH0 !S THE TRUE K!NG?</div>
-          ${voteRows}
-        </div>
-        <div class="kd-vote-status" id="kdVoteStatus"></div>
         <details class="kd-claiming">
           <summary>// START CLA!M!NG</summary>
           <div class="kd-claim-grid">${claimCards}</div>
@@ -119,10 +82,21 @@ function renderKingdom({ kingThumbs, votes, claimHolds }) {
     </details>`;
 }
 
+// Paused — not deleted. /kingdom never really launched and isn't one of
+// the 4 pages actually in use (main, /board, /swap, /redeem's key login),
+// so this is switched off at the door rather than kept live and pulling
+// on KV for something nobody's using. Flip this back to false to restore
+// it exactly as it was; nothing below this gate was touched.
+const KINGDOM_PAGE_PAUSED = true;
+
 export async function onRequestGet(context) {
   const { request, env } = context;
 
-  if (!env.Σκύλλα || !env.coin) {
+  if (KINGDOM_PAGE_PAUSED) {
+    return new Response('THE K!NGD0M !S CURRENTLY 0FFL!NE.', { status: 503 });
+  }
+
+  if (!env.Σκύλλα) {
     return new Response('server misconfigured', { status: 500 });
   }
 
@@ -140,23 +114,14 @@ export async function onRequestGet(context) {
       if (!kingNfts.length) {
         bodyHtml = renderNoKing();
       } else {
-        const kingThumbs = await getKingThumbnails(env.coin, kingNfts);
-        const voteEntries = await Promise.all(
-          kingThumbs.map(async (k) => {
-            const raw = await env.coin.get(`vote:${k.nftId}`);
-            return [k.nftId, raw ? JSON.parse(raw) : null];
-          })
-        );
-        const votes = Object.fromEntries(voteEntries.filter(([, v]) => v !== null));
+        const topRarity = await getTopKingRarity(payload.acct, kingNfts.map(n => n.NFTokenID));
 
         const claimHolds = {
           honey: kingNfts,
-          beta: findAllGreenNfts(nfts),
-          rlusd: findAllYellowNfts(nfts),
           crwn: kingNfts,
         };
 
-        bodyHtml = renderKingdom({ kingThumbs, votes, claimHolds });
+        bodyHtml = renderKingdom({ claimHolds, topRarity });
       }
     }
   }
@@ -195,12 +160,6 @@ function renderPage(bodyHtml, hasSession) {
     letter-spacing:0.08em; color:#ffd700; text-shadow:0 0 10px rgba(255,215,0,0.4);
     margin-bottom:2rem; text-align:center; word-break:break-word; overflow-wrap:anywhere;
   }
-  .kd-story{ text-align:center; margin-bottom:2rem; }
-  .kd-story p{
-    font-size:13px; letter-spacing:0.04em; line-height:1.9; color:#39ff14;
-    text-shadow:0 0 4px rgba(57,255,20,0.35);
-  }
-  .kd-story-chamber{ margin-bottom:1.75rem; }
   .kd-actions{ text-align:center; }
   .kd-status{ margin-top:0.8rem; font-size:12px; min-height:1.4em; color:#39ff14; }
   .connect-btn{
@@ -243,30 +202,13 @@ function renderPage(bodyHtml, hasSession) {
   }
   .kd-chamber-summary::-webkit-details-marker{ display:none; }
   .kd-chamber-body{ padding:0 1.1rem 1.25rem; border-top:1px solid rgba(57,255,20,0.15); padding-top:1.25rem; }
-  .kd-claimants{ display:grid; grid-template-columns:1fr; gap:1rem; margin-bottom:1.75rem; }
-  @media (min-width:641px){ .kd-claimants{ grid-template-columns:1fr 1fr; } }
-  .kd-claimant-card{ border:1px solid rgba(255,215,0,0.4); background:#08080a; padding:1.1rem; text-align:center; }
-  .kd-claimant-status{ font-size:10px; letter-spacing:0.12em; color:#ff003c; margin-bottom:0.5rem; }
-  .kd-claimant-name{ font-size:14px; font-weight:700; letter-spacing:0.06em; color:#ffd700; text-shadow:0 0 6px rgba(255,215,0,0.4); margin-bottom:0.4rem; }
-  .kd-claimant-market{ font-size:10px; letter-spacing:0.05em; color:rgba(232,232,232,0.55); margin-bottom:0.8rem; }
-  .kd-claimant-link{ display:inline-block; font-size:11px; letter-spacing:0.06em; color:#00fff2; text-shadow:0 0 6px rgba(0,255,242,0.4); text-decoration:none; border-bottom:1px solid rgba(0,255,242,0.4); }
-  .kd-claimant-link:hover{ color:#7fffef; border-color:#7fffef; }
-  .kd-vote-heading{ text-align:center; font-size:14px; font-weight:700; letter-spacing:0.06em; color:#e8e8e8; margin-bottom:1rem; }
-  .kd-vote-row{ display:flex; align-items:center; gap:0.9rem; border:1px solid rgba(57,255,20,0.2); background:#08080a; padding:0.75rem; margin-bottom:0.6rem; }
-  .kd-king-thumb{ flex:0 0 56px; width:56px; height:56px; object-fit:cover; border:1px solid rgba(255,215,0,0.4); }
-  .kd-king-thumb-blank{ background:repeating-linear-gradient(45deg, rgba(57,255,20,0.06) 0px, rgba(57,255,20,0.06) 4px, transparent 4px, transparent 8px); }
-  .kd-vote-body{ flex:1; min-width:0; }
-  .kd-vote-id{ font-size:11px; letter-spacing:0.06em; color:#ffd700; margin-bottom:0.5rem; }
-  .kd-vote-btns{ display:flex; flex-wrap:wrap; gap:0.5rem; }
-  .kd-vote-btn{
-    background:transparent; border:1px solid rgba(57,255,20,0.5); color:#39ff14; font-family:inherit;
-    font-size:10px; letter-spacing:0.06em; padding:0.6em 0.9em; cursor:pointer; text-transform:uppercase;
-  }
-  .kd-vote-btn:hover{ background:rgba(57,255,20,0.1); }
-  .kd-vote-btn:disabled{ opacity:0.5; cursor:default; }
-  .kd-verdict{ font-size:11px; letter-spacing:0.05em; color:#ff003c; text-shadow:0 0 4px rgba(255,0,60,0.4); }
-  .kd-verdict-sub{ font-size:10px; letter-spacing:0.04em; color:rgba(232,232,232,0.55); margin-top:0.2rem; }
-  .kd-vote-status{ text-align:center; font-size:11px; min-height:1.4em; color:#39ff14; margin:0.5rem 0 1.5rem; }
+  .kd-rarity{ display:flex; align-items:center; gap:0.9rem; border:1px solid rgba(255,215,0,0.4); background:rgba(255,215,0,0.03); padding:1rem 1.1rem; margin-bottom:1.5rem; }
+  .kd-rarity-thumb{ flex:0 0 64px; width:64px; height:64px; object-fit:cover; border:1px solid rgba(255,215,0,0.4); }
+  .kd-rarity-thumb-blank{ background:repeating-linear-gradient(45deg, rgba(255,215,0,0.08) 0px, rgba(255,215,0,0.08) 4px, transparent 4px, transparent 8px); }
+  .kd-rarity-body{ flex:1; min-width:0; }
+  .kd-rarity-label{ font-size:10px; letter-spacing:0.15em; color:rgba(232,232,232,0.5); margin-bottom:0.3rem; }
+  .kd-rarity-name{ font-size:14px; font-weight:700; letter-spacing:0.06em; color:#ffd700; text-shadow:0 0 6px rgba(255,215,0,0.4); }
+  .kd-rarity-rank{ font-size:12px; letter-spacing:0.05em; color:#39ff14; margin-top:0.2rem; }
   .kd-claiming{ border-top:1px solid rgba(57,255,20,0.15); padding-top:1rem; }
   .kd-claiming summary{ cursor:pointer; list-style:none; font-size:12px; letter-spacing:0.08em; color:#ffd500; text-shadow:0 0 6px rgba(255,213,0,0.4); text-transform:uppercase; margin-bottom:1rem; }
   .kd-claiming summary::-webkit-details-marker{ display:none; }
@@ -339,56 +281,15 @@ function renderPage(bodyHtml, hasSession) {
     });
   }
 
-  // TEST VANITY — practice button, independent of the Kingdom session above.
-  // Logs into Scylla via its own Xaman sign-in, then hits the mock Scylla
-  // redemption endpoint to confirm the vanitykey secret decrypts correctly.
-  let vanityAuth = null;
-  function getVanityAuth(){
-    if(!vanityAuth){
-      vanityAuth = new XummPkce(XAMAN_API_KEY, {
-        implicit: true,
-        rememberJwt: false,
-        redirectUrl: 'https://soitbegins.xyz/kingdom'
-      });
-      vanityAuth.on('error', (err)=>{
-        document.getElementById('testVanityStatus').textContent = 'ERR://LOGIN_ABORTED';
-        document.getElementById('testVanityBtn').disabled = false;
-      });
-      vanityAuth.on('success', async ()=>{
-        const state = await vanityAuth.state();
-        const jwt = state && state.jwt;
-        if(!jwt){
-          document.getElementById('testVanityStatus').textContent = 'ERR://NO_WALLET_DATA';
-          document.getElementById('testVanityBtn').disabled = false;
-          return;
-        }
-        document.getElementById('testVanityStatus').textContent = 'CHECK!NG VAN!TY KEY...';
-        try {
-          const res = await fetch('/api/scylla-mock-redeem', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mockWalletHasStatic: true })
-          });
-          const data = await res.json();
-          document.getElementById('testVanityStatus').textContent = data.granted
-            ? 'VAN!TY KEY 0K :: ' + data.master
-            : 'VAN!TY KEY DEN!ED';
-        } catch(e) {
-          document.getElementById('testVanityStatus').textContent = 'ERR://SIGNAL_LOST';
-        }
-        document.getElementById('testVanityBtn').disabled = false;
-      });
-    }
-    return vanityAuth;
-  }
-  getVanityAuth();
-  document.getElementById('testVanityBtn').addEventListener('click', ()=>{
-    document.getElementById('testVanityBtn').disabled = true;
-    document.getElementById('testVanityStatus').textContent = 'OPENING SECURE CHANNEL...';
-    getVanityAuth().authorize();
-  });
-
-  ${!hasSession ? `
+  // Single shared Xaman/Scylla login flow for this page. The underlying SDK
+  // persists PKCE state under fixed storage keys (not per-instance — see
+  // xumm-oauth2-pkce's internal use of the literal keys "pkce_code_verifier"
+  // / "pkce_state"), so two separate XummPkce objects on the same
+  // page silently clobber each other's in-flight login. CONNECT WALLET and
+  // TEST VANITY now share one instance; PENDING_ACTION_KEY (our own storage
+  // key, unrelated to the SDK's) remembers which button was pressed across
+  // the redirect/reload so the single success handler knows which flow to run.
+  const PENDING_ACTION_KEY = 'kdPendingAuthAction';
   let xummAuth = null;
   function getAuth(){
     if(!xummAuth){
@@ -398,15 +299,55 @@ function renderPage(bodyHtml, hasSession) {
         redirectUrl: 'https://soitbegins.xyz/kingdom'
       });
       xummAuth.on('error', (err)=>{
-        document.getElementById('kdConnectStatus').textContent = 'ERR://LOGIN_ABORTED';
-        document.getElementById('kdConnectBtn').disabled = false;
+        const action = localStorage.getItem(PENDING_ACTION_KEY);
+        localStorage.removeItem(PENDING_ACTION_KEY);
+        if (action === 'vanity') {
+          const btn = document.getElementById('testVanityBtn');
+          document.getElementById('testVanityStatus').textContent = 'ERR://LOGIN_ABORTED';
+          if (btn) btn.disabled = false;
+        } else {
+          const btn = document.getElementById('kdConnectBtn');
+          const status = document.getElementById('kdConnectStatus');
+          if (status) status.textContent = 'ERR://LOGIN_ABORTED';
+          if (btn) btn.disabled = false;
+        }
       });
       xummAuth.on('success', async ()=>{
+        const action = localStorage.getItem(PENDING_ACTION_KEY);
+        localStorage.removeItem(PENDING_ACTION_KEY);
         const state = await xummAuth.state();
         const jwt = state && state.jwt;
+
+        if (action === 'vanity') {
+          const btn = document.getElementById('testVanityBtn');
+          const status = document.getElementById('testVanityStatus');
+          if(!jwt){
+            status.textContent = 'ERR://NO_WALLET_DATA';
+            if (btn) btn.disabled = false;
+            return;
+          }
+          status.textContent = 'CHECK!NG VAN!TY KEY...';
+          try {
+            const res = await fetch('/api/scylla-mock-redeem', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ mockWalletHasStatic: true })
+            });
+            const data = await res.json();
+            status.textContent = data.granted ? 'VAN!TY KEY 0K :: ' + data.master : 'VAN!TY KEY DEN!ED';
+          } catch(e) {
+            status.textContent = 'ERR://SIGNAL_LOST';
+          }
+          if (btn) btn.disabled = false;
+          return;
+        }
+
+        const btn = document.getElementById('kdConnectBtn');
+        const status = document.getElementById('kdConnectStatus');
+        if (!btn || !status) return;
         if(!jwt){
-          document.getElementById('kdConnectStatus').textContent = 'ERR://NO_WALLET_DATA';
-          document.getElementById('kdConnectBtn').disabled = false;
+          status.textContent = 'ERR://NO_WALLET_DATA';
+          btn.disabled = false;
           return;
         }
         try {
@@ -419,52 +360,40 @@ function renderPage(bodyHtml, hasSession) {
           if (data.ok) {
             window.location.reload();
           } else {
-            document.getElementById('kdConnectStatus').textContent = 'ERR://C0NNECT!0N FA!LED';
-            document.getElementById('kdConnectBtn').disabled = false;
+            status.textContent = 'ERR://C0NNECT!0N FA!LED';
+            btn.disabled = false;
           }
         } catch(e) {
-          document.getElementById('kdConnectStatus').textContent = 'ERR://SIGNAL_LOST';
-          document.getElementById('kdConnectBtn').disabled = false;
+          status.textContent = 'ERR://SIGNAL_LOST';
+          btn.disabled = false;
         }
       });
     }
     return xummAuth;
   }
   getAuth();
-  document.getElementById('kdConnectBtn').addEventListener('click', ()=>{
-    document.getElementById('kdConnectBtn').disabled = true;
-    document.getElementById('kdConnectStatus').textContent = 'OPENING SECURE CHANNEL...';
-    getAuth().authorize();
-  });
-  ` : `
-  document.querySelectorAll('.kd-vote-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const nftId = btn.dataset.nft;
-      const candidate = btn.dataset.candidate;
-      const status = document.getElementById('kdVoteStatus');
-      document.querySelectorAll('.kd-vote-btn[data-nft="' + nftId + '"]').forEach(b => b.disabled = true);
-      status.textContent = 'REC0RD!NG VERD!CT...';
-      try {
-        const res = await fetch('/api/kingdom-vote', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nftId, candidate })
-        });
-        const data = await res.json();
-        if (data.ok) {
-          status.textContent = 'Y0UR VERD!CT HAS BEEN REC0RDED';
-          setTimeout(() => location.reload(), 700);
-        } else {
-          status.textContent = 'ERR://VOTE REJECTED';
-          document.querySelectorAll('.kd-vote-btn[data-nft="' + nftId + '"]').forEach(b => b.disabled = false);
-        }
-      } catch (e) {
-        status.textContent = 'ERR://SIGNAL_LOST';
-        document.querySelectorAll('.kd-vote-btn[data-nft="' + nftId + '"]').forEach(b => b.disabled = false);
-      }
-    });
-  });
 
+  const testVanityBtn = document.getElementById('testVanityBtn');
+  if (testVanityBtn) {
+    testVanityBtn.addEventListener('click', ()=>{
+      testVanityBtn.disabled = true;
+      document.getElementById('testVanityStatus').textContent = 'OPENING SECURE CHANNEL...';
+      localStorage.setItem(PENDING_ACTION_KEY, 'vanity');
+      getAuth().authorize();
+    });
+  }
+
+  const kdConnectBtn = document.getElementById('kdConnectBtn');
+  if (kdConnectBtn) {
+    kdConnectBtn.addEventListener('click', ()=>{
+      kdConnectBtn.disabled = true;
+      document.getElementById('kdConnectStatus').textContent = 'OPENING SECURE CHANNEL...';
+      localStorage.setItem(PENDING_ACTION_KEY, 'connect');
+      getAuth().authorize();
+    });
+  }
+
+  ${hasSession ? `
   document.querySelectorAll('.kd-claim-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const kind = btn.dataset.kind;
@@ -492,7 +421,7 @@ function renderPage(bodyHtml, hasSession) {
       }
     });
   });
-  `}
+  ` : ''}
 </script>
 </body>
 </html>`;

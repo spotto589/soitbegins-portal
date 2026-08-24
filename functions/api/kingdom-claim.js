@@ -1,14 +1,12 @@
 import {
   KINGDOM_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
-  findAllKingNfts, findAllGreenNfts, findAllYellowNfts,
+  findAllKingNfts,
   KINGDOM_CLAIM_CONFIG
 } from '../_shared.js';
 
 // $HONEY is gated by King ownership for now, not Honeypot ownership.
 const ELIGIBILITY = {
   honey: findAllKingNfts,
-  beta: findAllGreenNfts,
-  rlusd: findAllYellowNfts,
   crwn: findAllKingNfts,
 };
 
@@ -16,8 +14,16 @@ const ELIGIBILITY = {
 // haven't been provided yet (see KINGDOM_CLAIM_CONFIG). This endpoint
 // verifies session + real NFT eligibility now, so the eligibility framework
 // is solid; it stops short of an actual payout until those values exist.
+// See KINGDOM_PAGE_PAUSED in ../kingdom.js — same pause, mirrored here so
+// this endpoint can't be hit directly while the page itself is offline.
+const KINGDOM_PAUSED = true;
+
 export async function onRequestPost(context) {
   const { request, env } = context;
+
+  if (KINGDOM_PAUSED) {
+    return new Response(JSON.stringify({ error: 'kingdom_paused' }), { status: 503 });
+  }
 
   if (!env.Σκύλλα) {
     return new Response(JSON.stringify({ error: 'server_misconfigured' }), { status: 500 });
