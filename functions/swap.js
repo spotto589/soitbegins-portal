@@ -1998,21 +1998,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(2, 1fr); gap:1.5rem; margin:0; max-width:100%; }
   #screenDetail .detail-rarity-row .trait-cell{ cursor:default; text-align:center; min-width:0; }
   #screenDetail .detail-rarity-row .trait-cell:hover{ background:transparent; border-color:var(--border-dim); }
-  /* PRICE / RECORD SALE / AVERAGE SALE — a full-width section of its own
-     underneath the picture+traits row (not squeezed into the right
-     column), same dashed-divider treatment as TRANSACT!0N H!ST0RY and
-     V!EW ELSEWHERE right below it. */
+  /* PRICE / RECORD SALE / RECENT SALE / AVERAGE SALE — stacked directly
+     underneath the trait grid (including its own BACK cell), inside the
+     right column, not off in a separate full-width section — keeps the
+     traits themselves the ones flush with the picture's bottom, this
+     just extends the column further down below that. Bigger + a real
+     label/value size split (not identical sizes) so it reads cleaner. */
   #screenDetail .detail-sales-section{
     display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    gap:0.5rem 2.5rem;
-    max-width:640px;
-    margin:1.5rem auto 0;
+    flex-direction:column;
+    gap:0.85rem;
+    width:100%;
+    max-width:100%;
+    margin:1.25rem 0 0;
     padding-top:1rem;
     border-top:1px dashed var(--border-dim);
   }
-  #screenDetail .detail-sales-section .detail-field{ margin:0; }
+  #screenDetail .detail-sales-section .detail-field{ margin:0; max-width:100%; font-size:19px; }
+  #screenDetail .detail-sales-section .df-label{ font-size:13px; }
+  #screenDetail .detail-sales-section .df-value{ font-weight:700; }
+  #screenDetail .detail-history{ margin-top:1.25rem; max-width:100%; }
+  #screenDetail .detail-history .th-toggle{ font-size:14px; }
   /* RECORD SALE / AVERAGE SALE stacked, same label/value row style as
      every other .detail-field (OWNER, PRICE, etc). */
   #screenDetail .tech-meta-title{ font-size:12px; }
@@ -2709,16 +2715,16 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
           </div>
           <div class="trait-grid" id="detailTraits"></div>
+          <div class="detail-sales-section">
+            <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
+            <div class="detail-field" id="detailHighSaleRow"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
+            <div class="detail-field" id="detailRecentSaleRow"><span class="df-label">RECENT SALE</span><span class="df-value price" id="detailRecentSale"></span></div>
+            <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVERAGE SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
+          </div>
+          <div class="detail-history">
+            <button class="th-toggle" id="detailHistoryToggle">[ TRANSACT!0N H!ST0RY ]</button>
+          </div>
         </div>
-      </div>
-      <div class="detail-sales-section">
-        <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
-        <div class="detail-field" id="detailHighSaleRow"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
-        <div class="detail-field" id="detailRecentSaleRow"><span class="df-label">RECENT SALE</span><span class="df-value price" id="detailRecentSale"></span></div>
-        <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVERAGE SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
-      </div>
-      <div class="detail-history">
-        <button class="th-toggle" id="detailHistoryToggle">[ TRANSACT!0N H!ST0RY ]</button>
       </div>
       <div class="view-elsewhere">
         <div class="tech-meta-title">V!EW ELSEWHERE</div>
