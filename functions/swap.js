@@ -1593,14 +1593,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      row up to make BALANCE the thing people actually look at. */
   .pigeons-bar-main-row{ display:flex; align-items:center; justify-content:space-between; gap:1.25rem; flex-wrap:wrap; width:100%; }
   .pigeons-bar-left{ display:flex; align-items:center; gap:0.75rem; flex:0 1 auto; min-width:0; }
-  /* This is a banner, not a hero panel — a small piece of the real
-     artwork next to the CTA is plenty; the same 140px square this used
-     to be was most of why the whole thing read as an oversized block
-     instead of a compact strip. */
+  /* Decent-sized (not the original 140px hero square, not the too-small
+     48px banner-icon either) — sits right beside BALANCE as the other
+     half of the banner's actual main feature. */
   .pigeons-bar-thumb{
     flex:0 0 auto;
-    width:48px;
-    height:48px;
+    width:64px;
+    height:64px;
     border-radius:var(--radius);
     border:1px solid rgba(255,255,255,0.5);
     background-image:linear-gradient(160deg, rgba(136,72,248,0.35), rgba(120,72,216,0.45)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs");
@@ -1612,6 +1611,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
   .pigeons-bar-issuer .pigeons-bar-text{ font-size:14px; text-align:left; }
+  /* SET TRUSTLINE TO TRADE — the real headline of the logged-out left
+     column, so it (and its COPY button) get bumped noticeably bigger
+     than the plain .pigeons-bar-text default. */
+  .pigeons-bar-issuer .pigeons-bar-text-lg{ font-size:18px; }
   /* Small inline [ COPY ] button sitting right next to SET TRUSTLINE TO
      TRADE — the actual issuer address is now just plain reference text
      underneath (.pigeons-bar-sublabel), not the click target itself. */
@@ -1620,11 +1623,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:transparent;
     border:1px solid rgba(255,255,255,0.5);
     border-radius:var(--radius);
-    padding:0.1em 0.5em;
+    padding:0.15em 0.6em;
     margin-left:0.3rem;
     color:rgba(255,255,255,0.85);
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:13px;
     letter-spacing:0.05em;
     text-transform:uppercase;
     cursor:pointer;
@@ -1640,18 +1643,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      white like every other .bar-btn in this box. */
   #pigeonsLoginBtn{ color:var(--green); border-color:var(--green); text-shadow:0 0 6px var(--green-glow); }
   #pigeonsLoginBtn:hover{ background:var(--green); color:#000; text-shadow:none; }
-  /* BALANCE — the main feature of the whole banner. Biggest, boldest,
-     dead centre: either a real $PIGEONS number to be proud of, or a BUY
-     link in the exact same spot if it's empty — either way, the token
-     itself is what this banner is actually about. */
-  .pigeons-bar-balance{ flex:1 1 auto; display:flex; flex-direction:column; align-items:center; gap:0.3rem; text-align:center; min-width:160px; }
-  .pigeons-bar-balance-label{ font-size:13px; letter-spacing:0.25em; color:rgba(255,255,255,0.8); text-transform:uppercase; margin-top:0.2rem; }
+  /* BALANCE — the main feature of the whole banner, thumbnail beside it
+     as the other half. Biggest, boldest, dead centre: either a real
+     $PIGEONS number to be proud of, or a BUY link in the exact same spot
+     if it's empty — either way, the token itself is what this banner is
+     actually about. */
+  .pigeons-bar-balance{ flex:1 1 auto; display:flex; flex-direction:row; align-items:center; justify-content:center; gap:1rem; min-width:220px; }
+  .pigeons-bar-balance-info{ display:flex; flex-direction:column; align-items:flex-start; gap:0.3rem; text-align:left; }
+  .pigeons-bar-balance-label{ font-size:13px; letter-spacing:0.25em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-balance-value{ font-size:28px; font-weight:700; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-transform:uppercase; letter-spacing:0.02em; }
-  /* Logged-out state: LOGIN is the real call to action right under
-     BALANCE, with the plain explainer text underneath it — not the other
-     way round, so the button (not a wall of text) is what draws the eye. */
-  .pigeons-bar-balance-login{ display:flex; flex-direction:column; align-items:center; gap:0.35rem; }
-  .pigeons-bar-balance-hint{ font-size:11px; letter-spacing:0.05em; color:rgba(255,255,255,0.65); text-transform:uppercase; }
   .pigeons-bar-balance-buy{
     display:inline-block;
     margin-top:0.15rem;
@@ -1739,6 +1739,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     .pigeons-bar-main-row{ flex-direction:column; text-align:center; }
     .pigeons-bar-left{ flex-direction:column; text-align:center; }
     .pigeons-bar-left-body{ align-items:center; text-align:center; }
+    .pigeons-bar-balance{ flex-direction:column; }
+    .pigeons-bar-balance-info{ align-items:center; text-align:center; }
   }
 
   /* ---- DATABASE row card: traits, and an in-card sales-history toggle
@@ -2437,8 +2439,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="pigeons-bar-main-row">
         <div class="pigeons-bar-left" id="pigeonsBarLoggedOut">
           <div class="pigeons-bar-left-body">
-            <span class="pigeons-bar-text">SET TRUSTL!NE T0 TRADE <button class="pigeons-bar-copy-btn" id="copyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="copyIssuerLabel">[ C0PY ]</span></button></span>
-            <span class="pigeons-bar-sublabel">!SSUER :: <span id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span></span>
+            <span class="pigeons-bar-text pigeons-bar-text-lg">SET TRUSTL!NE T0 TRADE !N $P!GE0NS <button class="pigeons-bar-copy-btn" id="copyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="copyIssuerLabel">[ C0PY ]</span></button></span>
+            <!-- Shortened for display only — the copy handler reads
+                 data-full, never this shortened text, so the clipboard
+                 always gets the real address regardless. Not worth
+                 spelling out in full up here: anyone who needs it just
+                 clicks COPY. -->
+            <span class="pigeons-bar-sublabel">!SSUER :: <span id="ciIssuerAddr" data-full="rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf">rfQVVT7X5F...QcQSf</span></span>
           </div>
         </div>
         <!-- Shown instead of the block above once MY_WALLET is set (real
@@ -2464,13 +2471,14 @@ const SWAP_HTML = `<!DOCTYPE html>
              wallet-status readout. -->
         <div class="pigeons-bar-balance">
           <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
-          <div class="pigeons-bar-balance-label">BALANCE</div>
-          <div class="pigeons-bar-balance-value" id="pigeonsBalanceValue" style="display:none;">…</div>
-          <div class="pigeons-bar-balance-login" id="pigeonsBalanceLoginWrap">
-            <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">[ L0G!N ]</button>
-            <span class="pigeons-bar-balance-hint">L0G !N T0 V!EW BALANCE</span>
+          <div class="pigeons-bar-balance-info">
+            <div class="pigeons-bar-balance-label">BALANCE:</div>
+            <div class="pigeons-bar-balance-value" id="pigeonsBalanceValue" style="display:none;">…</div>
+            <div class="pigeons-bar-balance-login" id="pigeonsBalanceLoginWrap">
+              <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">[ L0G!N T0 V!EW BALANCE ]</button>
+            </div>
+            <a class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">[ BUY $P!GE0NS ]</a>
           </div>
-          <a class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">[ BUY $P!GE0NS ]</a>
         </div>
 
         <div class="pigeons-bar-calc-col" id="pigeonsBarCalc" style="display:none;">
@@ -6001,13 +6009,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // connect a wallet or sign anything yet (same pattern already used for
   // the CRWN trustline address elsewhere on the site).
   el.copyIssuerBtn.addEventListener('click', function(){
-    var addr = el.ciIssuerAddr ? el.ciIssuerAddr.textContent : '';
+    // The visible address is shortened for display — always copy the
+    // real one from data-full, never the shortened text.
+    var addr = el.ciIssuerAddr ? el.ciIssuerAddr.getAttribute('data-full') : '';
     var done = function(){
       // Swap just the label, not the whole button — el.ciIssuerAddr is a
       // real child element (registered separately), and overwriting the
       // button's own textContent would silently destroy that node.
       el.copyIssuerLabel.textContent = '[ C0P!ED ]';
-      setTimeout(function(){ el.copyIssuerLabel.textContent = '!SSUER ::'; }, 1500);
+      setTimeout(function(){ el.copyIssuerLabel.textContent = '[ C0PY ]'; }, 1500);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(done, done);
     else done();
