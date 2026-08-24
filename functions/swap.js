@@ -4897,7 +4897,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       appendResults(newItems);
       var resultCount = state.total !== null ? state.total : state.items.length;
       if (filters.length === 0){
-        el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R :: <span class="hi">' + resultCount + '</span> P!GE0NS</div>';
+        el.statusLine.innerHTML = '<div class="results-trait-note">STAT!C://QUERY :: <span class="hi">' + resultCount + '</span> P!GE0NS F0UND</div>';
       } else if (filters.length === 1){
         el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R <span class="hi">' + resultCount + '</span> ' +
           escapeHtml(filters[0].trait.toUpperCase()) + ': ' + escapeHtml(filters[0].value.toUpperCase()) + '</div>';
