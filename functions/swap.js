@@ -1876,8 +1876,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      (label above value) — the actual score isn't computed yet, so that
      box just reads COMING SOON. Neither is clickable (unlike real trait
      cells in the grid above). */
-  #screenDetail .detail-rarity-row{ display:flex; gap:1rem; margin:0 0 1rem; max-width:420px; }
-  #screenDetail .detail-rarity-row .trait-cell{ cursor:default; text-align:center; flex:1; min-width:0; }
+  #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.7rem; margin:0 0 1rem; max-width:100%; }
+  @media (max-width:520px){
+    #screenDetail .detail-rarity-row{ grid-template-columns:repeat(2, 1fr); }
+  }
+  #screenDetail .detail-rarity-row .trait-cell{ cursor:default; text-align:center; min-width:0; }
   #screenDetail .detail-rarity-row .trait-cell:hover{ background:transparent; border-color:var(--border-dim); }
   /* RECORD SALE / AVERAGE SALE stacked, same label/value row style as
      every other .detail-field (OWNER, PRICE, etc). */
@@ -6120,7 +6123,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     if (p && p.highSaleXrp !== null && p.highSaleXrp !== undefined){
       el.detailHighSaleRow.style.display = '';
-      var hsText = p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP / ' + fmtPigeons(p.highSalePigeons);
+      var hsText = p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
       el.detailHighSale.innerHTML = p.highSaleTxUrl
         ? '<a class="owner-link" href="' + escapeHtml(p.highSaleTxUrl) + '" target="_blank" rel="noopener">' + escapeHtml(hsText) + '</a>'
         : escapeHtml(hsText);
@@ -6129,7 +6132,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     if (p && p.avgSaleXrp !== null && p.avgSaleXrp !== undefined){
       el.detailAvgSaleRow.style.display = '';
-      el.detailAvgSale.textContent = p.avgSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP / ' + fmtPigeons(p.avgSalePigeons) + (p.saleCount ? ' (' + p.saleCount + ' SALES)' : '');
+      el.detailAvgSale.textContent = p.avgSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' + (p.saleCount ? ' (' + p.saleCount + ' SALES)' : '');
     } else {
       el.detailAvgSaleRow.style.display = 'none';
     }
