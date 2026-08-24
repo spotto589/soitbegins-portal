@@ -1988,6 +1988,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     .detail-two-col{ grid-template-columns:1fr; grid-template-areas:"num" "owner" "left" "right"; gap:0.75rem; }
   }
   #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0 0 1.25rem; cursor:zoom-in; }
+  /* Corner-bracket HUD frame around the DEEPTIDE/XRP.CAFE tiles + the
+     $PIGEONS LISTING block together — just the four corner marks, no
+     solid border, so it reads as a targeting/HUD frame rather than a
+     plain box. */
+  .bracket-frame{ position:relative; padding:0.85rem 0.6rem; }
+  .bf-corner{ position:absolute; width:16px; height:16px; pointer-events:none; }
+  .bf-tl{ top:0; left:0; border-top:2px solid var(--cyan); border-left:2px solid var(--cyan); }
+  .bf-tr{ top:0; right:0; border-top:2px solid var(--cyan); border-right:2px solid var(--cyan); }
+  .bf-bl{ bottom:0; left:0; border-bottom:2px solid var(--cyan); border-left:2px solid var(--cyan); }
+  .bf-br{ bottom:0; right:0; border-bottom:2px solid var(--cyan); border-right:2px solid var(--cyan); }
   #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 1.25rem; }
   /* $PIGEONS listing — the collection's own purple, matching the DATABASE
      card's OFFER AMOUNT box (.thumb-offer) instead of a plain grey block —
@@ -2066,9 +2076,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding-top:1rem;
     border-top:1px dashed var(--border-dim);
   }
-  #screenDetail .detail-sales-section .detail-field{ margin:0; max-width:100%; font-size:19px; }
+  /* Centered, label above value — easier to read at a glance than a
+     left/right split row, especially now they're stacked one after
+     another rather than spread across a wider area. */
+  #screenDetail .detail-sales-section .detail-field{ display:flex; flex-direction:column; align-items:center; gap:0.25rem; margin:0; max-width:100%; font-size:19px; text-align:center; }
   #screenDetail .detail-sales-section .df-label{ font-size:13px; }
-  #screenDetail .detail-sales-section .df-value{ font-weight:700; }
+  #screenDetail .detail-sales-section .df-value{ font-weight:700; text-align:center; }
   #screenDetail .detail-history{ margin-top:1.25rem; max-width:100%; }
   #screenDetail .detail-history .th-toggle{ font-size:14px; }
   /* RECORD SALE / AVERAGE SALE stacked, same label/value row style as
@@ -2737,22 +2750,32 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="detail-owner-top" id="detailOwner"></div>
         <div class="detail-col-left">
           <div class="detail-img-large pigeon-img-box" id="detailImgBox" title="VIEW FULLSCREEN">[ IMAGE ]</div>
-          <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
-          <div class="scylla-listing-block">
-            <div class="tech-meta-title">$P!GE0NS L!ST!NG</div>
-            <div class="scylla-listing-row" id="detailScyllaListingRow">
-              <span class="scylla-coin-wrap">
-                <img class="scylla-coin-icon" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
-                <span class="scylla-listing-price" id="detailScyllaPrice">N0T L!STED</span>
-              </span>
-              <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">[ BUY ]</button>
-            </div>
-            <div class="thumb-offer-row" id="detailMakeOfferRow" style="display:none;">
-              <div class="make-offer-input-wrap">
-                <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
-                <input class="make-offer-input" id="detailMakeOfferInput" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">
+          <!-- Corner-bracket HUD frame — no solid border, just the four
+               corner marks — spanning from the top of the DEEPTIDE/XRP.CAFE
+               listing tiles down to the bottom of the $PIGEONS LISTING
+               block, framing both as one region. -->
+          <div class="bracket-frame">
+            <span class="bf-corner bf-tl"></span>
+            <span class="bf-corner bf-tr"></span>
+            <span class="bf-corner bf-bl"></span>
+            <span class="bf-corner bf-br"></span>
+            <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
+            <div class="scylla-listing-block">
+              <div class="tech-meta-title">$P!GE0NS L!ST!NG</div>
+              <div class="scylla-listing-row" id="detailScyllaListingRow">
+                <span class="scylla-coin-wrap">
+                  <img class="scylla-coin-icon" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
+                  <span class="scylla-listing-price" id="detailScyllaPrice">N0T L!STED</span>
+                </span>
+                <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">[ BUY ]</button>
               </div>
-              <button class="make-offer-send" id="detailMakeOfferSend">[ SEND ]</button>
+              <div class="thumb-offer-row" id="detailMakeOfferRow" style="display:none;">
+                <div class="make-offer-input-wrap">
+                  <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
+                  <input class="make-offer-input" id="detailMakeOfferInput" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">
+                </div>
+                <button class="make-offer-send" id="detailMakeOfferSend">[ SEND ]</button>
+              </div>
             </div>
           </div>
         </div>
@@ -2784,7 +2807,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="view-links">
           <a class="secondary-btn" id="viewDeeptideLink" target="_blank" rel="noopener">[ DEEPT!DE ]</a>
           <a class="secondary-btn" id="viewXrpCafeLink" target="_blank" rel="noopener">[ XRP.CAFE ]</a>
-          <a class="secondary-btn" id="viewBithompLink" target="_blank" rel="noopener">[ B!TH0MP ]</a>
         </div>
       </div>
       <button class="trait-cell detail-back-btn" id="backToBrowseBtn">← BACK</button>
@@ -3145,7 +3167,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailBuyBtn','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg',
-   'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
+   'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn','viewDeeptideLink','viewXrpCafeLink',
    'backToBrowseBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
@@ -6558,7 +6580,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.detailTraits.appendChild(el.backToBrowseBtn);
     el.viewDeeptideLink.href = 'https://deeptide.co/nft/' + nftId;
     el.viewXrpCafeLink.href = 'https://xrp.cafe/nft/' + nftId;
-    el.viewBithompLink.href = 'https://bithomp.com/explorer/' + nftId;
     el.detailHistoryList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     updateDetailRarity(known);
     updateDetailPrice(known);
