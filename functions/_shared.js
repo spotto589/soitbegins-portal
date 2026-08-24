@@ -123,6 +123,32 @@ export async function fetchAllAccountNfts(account) {
   return all;
 }
 
+// Same live pagination as fetchAllAccountNfts, but also reports whether
+// every page genuinely succeeded — fetchAllAccountNfts alone can't tell a
+// caller "this wallet really owns 0 Pigeons" apart from "the scan gave up
+// early after xrplcluster.com stayed rate-limited through all 3 retries on
+// some page," both return the same empty array either way. That
+// ambiguity is exactly what caused the SWAP page's wallet search to
+// sometimes show "N0 P!GE0N MATCH" for a wallet that was never actually
+// empty — a plain HTTP 200 with items:[] looks identical to a real empty
+// result, so the client's own retry-on-failure logic never even saw a
+// failure to retry. Deliberately a SEPARATE function rather than changing
+// fetchAllAccountNfts's return shape — that one is used across ~15 files
+// including auth/signing paths that all expect a plain array back.
+export async function fetchAllAccountNftsChecked(account) {
+  let all = [];
+  let marker;
+  let ok = true;
+  do {
+    const data = await fetchAccountNftsPage(account, marker);
+    if (!data) { ok = false; break; }
+    const nfts = (data.result && data.result.account_nfts) || [];
+    all = all.concat(nfts);
+    marker = data.result && data.result.marker;
+  } while (marker);
+  return { nfts: all, ok };
+}
+
 export function hasAccessKey(nfts) {
   return nfts.some(n =>
     (n.Issuer === GLITCH_ISSUER && n.NFTokenTaxon === GLITCH_TAXON) ||

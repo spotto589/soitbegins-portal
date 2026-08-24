@@ -3,7 +3,7 @@ import {
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue,
-  resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine,
+  resolveOwnerCollectionLive, fetchAllAccountNftsChecked, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX,
   getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
 } from '../_shared.js';
@@ -340,7 +340,15 @@ export async function onRequestGet(context) {
   // collection flow. No KV writes, cheap regardless of wallet size.
   const wallet = params.get('wallet');
   if (wallet) {
-    const nfts = await fetchAllAccountNfts(wallet);
+    // fetchAllAccountNftsChecked (not the plain fetchAllAccountNfts) so a
+    // failed/incomplete live scan (xrplcluster.com still rate-limited
+    // after all 3 retries) returns a real error status instead of a 200
+    // with items:[] — indistinguishable from a genuinely empty wallet,
+    // which is exactly what was making wallet search intermittently show
+    // "N0 P!GE0N MATCH" for wallets that actually own Pigeons. A non-200
+    // here lets the client's existing apiWithRetry actually retry.
+    const { nfts, ok } = await fetchAllAccountNftsChecked(wallet);
+    if (!ok) return json({ error: 'ledger_lookup_failed' }, 502);
     const pigeons = findAllPigeons(nfts);
     if (!pigeons.length) return json({ items: [], owner: wallet, ownerShort: shortenAddr(wallet) });
     const ledgerItems = pigeons.map(n => ({ nftId: n.NFTokenID, uriHex: n.URI }));
