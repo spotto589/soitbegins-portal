@@ -354,6 +354,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:700px){
     .stats-strip .stat-tile{ flex:0 0 calc(50% - 0.375rem); }
   }
+  /* Just 2 tiles on this page (rate + dexscreener) — wider than the
+     4-across default so they still read as a pair, not two narrow
+     islands with dead space between them. */
+  .stats-strip-rate .stat-tile{ flex:0 0 calc(42% - 0.375rem); }
+  .stats-strip-rate .stat-value{ display:flex; align-items:center; justify-content:center; gap:0.4rem; }
   /* Prev/next arrows flank the viewport; the row itself is the flex
      container that lays out [arrow][viewport][arrow]. */
   .stats-carousel-row{ display:flex; align-items:center; gap:0.5rem; }
@@ -1586,7 +1591,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      centered either (VIEW ON DEXSCREENER is narrower than the calculator
      beside it, pulling the rate line's true center left), so this lines
      up with it instead of the panel's literal midpoint. */
-  .pigeons-bar-identity-row{ display:flex; align-items:center; justify-content:center; gap:1rem; flex-wrap:wrap; width:100%; }
+  /* The banner's real content row — LEFT (login/identity, compact) |
+     BALANCE (the main feature, centered and biggest) | EXCHANGE RATE
+     calculator (right). Rate line + DEXSCREENER link now live up in the
+     carousel instead (see the RATE page there), which is what frees this
+     row up to make BALANCE the thing people actually look at. */
+  .pigeons-bar-main-row{ display:flex; align-items:center; justify-content:space-between; gap:1.25rem; flex-wrap:wrap; width:100%; }
+  .pigeons-bar-left{ display:flex; align-items:center; gap:0.75rem; flex:0 1 auto; min-width:0; }
   /* This is a banner, not a hero panel — a small piece of the real
      artwork next to the CTA is plenty; the same 140px square this used
      to be was most of why the whole thing read as an oversized block
@@ -1601,74 +1612,63 @@ const SWAP_HTML = `<!DOCTYPE html>
     background-size:cover;
     background-position:center;
   }
-  .pigeons-bar-body{ display:flex; flex-direction:column; align-items:center; gap:0.3rem; text-align:center; }
-  .pigeons-bar-addr-stack{ display:flex; flex-direction:column; align-items:center; gap:0.2rem; }
+  .pigeons-bar-left-body{ display:flex; flex-direction:column; align-items:flex-start; gap:0.35rem; text-align:left; }
   .pigeons-bar-sublabel{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
-  .pigeons-bar-addr{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); font-size:15px; }
-  /* LOGGED IN state — bigger, bolder than the logged-out block's plain
-     labels, since this is now the primary readout once a real wallet is
-     connected (see pigeonsLoggedIn* below). */
-  .pigeons-bar-text-lg{ font-size:19px; }
-  .pigeons-bar-summary-lg{ font-size:19px; font-weight:700; }
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
-  .pigeons-bar-issuer .pigeons-bar-text{ font-size:16px; }
+  .pigeons-bar-issuer .pigeons-bar-text{ font-size:14px; text-align:left; }
+  /* Compact "issuer address" link — a plain small text button now, not a
+     boxed .bar-btn, since it's a secondary/advanced action next to LOGIN,
+     not a co-equal one. */
+  .pigeons-bar-issuer-link{
+    background:transparent;
+    border:none;
+    padding:0;
+    color:rgba(255,255,255,0.7);
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    cursor:pointer;
+    word-break:break-all;
+    text-align:left;
+  }
+  .pigeons-bar-issuer-link:hover{ color:#fff; }
   /* SIGN OUT — a real, destructive-feeling action (ends the session), so
      it gets its own red instead of the plain white every other bar-btn
      in this box uses. */
   #swapSignOutBtn{ color:#ff4d4d; border-color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
   #swapSignOutBtn:hover{ background:#ff4d4d; color:#000; text-shadow:none; }
-  /* LOGIN (green — the real, positive action here) and COPY ADDRESS
-     (cyan — the site's general/static-chrome colour) instead of plain
+  /* LOGIN — green (the real, positive action here) instead of plain
      white like every other .bar-btn in this box. */
   #pigeonsLoginBtn{ color:var(--green); border-color:var(--green); text-shadow:0 0 6px var(--green-glow); }
   #pigeonsLoginBtn:hover{ background:var(--green); color:#000; text-shadow:none; }
-  #copyIssuerBtn{ color:var(--cyan); border-color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
-  #copyIssuerBtn:hover{ background:var(--cyan); color:#000; text-shadow:none; }
-  /* LOGGED IN summary — two clean centered lines instead of one long
-     "::"-joined string: NFT count on top, balance below. */
-  .pigeons-loggedin-line{ line-height:1.4; }
-  .pigeons-loggedin-line + .pigeons-loggedin-line{ font-size:15px; font-weight:400; }
-  /* Bottom row — VIEW ON DEXSCREENER far left, the calculator (with its own
-     EXCHANGE RATE title) centered in the middle, the rate line on the
-     right — three flat siblings spread across one line, not stacked. No
-     divider above it any more — the carousel/identity/bottom row all read
-     as one continuous box now, not three stacked sections. */
-  .pigeons-bar-bottom-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    gap:1rem;
-    margin-top:0.6rem;
-    padding-top:0.6rem;
-    width:100%;
-  }
-  /* Live "1 $PIGEONS = X XRP" rate, DexScreener's trade-derived price via
-     fetchPigeonsXrpRate (real XRPL book_offers as fallback only),
-     periodically re-fetched (see refreshTrustlineRate) so it never goes
-     stale on a long-open tab — hidden until the first fetch resolves. */
-  .pigeons-bar-rate{
-    flex:0 0 auto;
-    display:flex;
-    align-items:baseline;
-    justify-content:flex-end;
-    gap:0.4rem;
-    color:#fff;
-    text-shadow:0 1px 4px rgba(0,0,0,0.5);
+  /* BALANCE — the main feature of the whole banner. Biggest, boldest,
+     dead centre: either a real $PIGEONS number to be proud of, or a BUY
+     link in the exact same spot if it's empty — either way, the token
+     itself is what this banner is actually about. */
+  .pigeons-bar-balance{ flex:1 1 auto; display:flex; flex-direction:column; align-items:center; gap:0.3rem; text-align:center; min-width:160px; }
+  .pigeons-bar-balance-label{ font-size:13px; letter-spacing:0.25em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
+  .pigeons-bar-balance-value{ font-size:28px; font-weight:700; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-transform:uppercase; letter-spacing:0.02em; }
+  .pigeons-bar-balance-buy{
+    display:inline-block;
+    margin-top:0.15rem;
+    padding:0.4em 1em;
+    border:1px solid var(--green);
+    border-radius:var(--radius);
+    color:var(--green);
+    text-shadow:0 0 6px var(--green-glow);
     font-family:var(--font-mono);
-    text-transform:uppercase;
-    white-space:nowrap;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.05em;
+    text-decoration:none;
   }
-  .pigeons-bar-rate-line{ font-size:13px; letter-spacing:0.05em; opacity:0.9; }
-  .pigeons-bar-rate-value{ font-size:15px; font-weight:700; }
+  .pigeons-bar-balance-buy:hover{ background:var(--green); color:#000; text-shadow:none; }
   /* XRP -> $PIGEONS calculator, with its own EXCHANGE RATE title above it —
-     flex:1 + centered children so it's the one that takes the middle slot
-     (DEXSCREENER and the rate line are both fixed-width, at the two
-     edges) — and so the input growing as you type (see
-     .pigeons-bar-calc-input) expands this whole box from its own center
-     rather than pinned to one side. */
-  .pigeons-bar-calc-col{ flex:1; display:flex; flex-direction:column; align-items:center; gap:0.4rem; min-width:0; }
+     the right-hand side of the main row now, not centered between two
+     other things. */
+  .pigeons-bar-calc-col{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:0.4rem; min-width:0; }
   .pigeons-bar-calc-title{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-calc{
     display:flex;
@@ -1703,17 +1703,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-calc-unit{ color:rgba(255,255,255,0.7); font-size:14px; letter-spacing:0.05em; }
   .pigeons-bar-calc-eq{ color:#fff; font-size:15px; opacity:0.8; }
   .pigeons-bar-calc-out{ color:#fff; font-weight:700; font-size:17px; white-space:nowrap; }
-  /* Real DexScreener pair link (returned live in the rate fetch as
-     dexUrl, falling back to the known pair URL until that resolves) —
-     .bar-btn's own white-on-purple styling already applies via
-     .pigeons-bar-issuer .bar-btn, just needs sizing/no-underline here. */
-  .pigeons-bar-dex-link{ flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; gap:0.4rem; font-size:11px; padding:0.5em 0.7em; text-decoration:none; background:#000; border-color:rgba(255,255,255,0.6); }
-  .pigeons-bar-dex-link:hover{ background:#000; border-color:#fff; }
+  /* DEXSCREENER icon inside its stat-tile up in the carousel now (see
+     the RATE page) — sizing only, the tile/link styling comes from
+     .stat-tile/.stat-tile-link. */
   .pigeons-bar-dex-icon{ width:22px; height:22px; border-radius:4px; flex:0 0 auto; }
   @media (max-width:700px){
-    .pigeons-bar-identity-row{ flex-direction:column; text-align:center; transform:none; }
-    .pigeons-bar-bottom-row{ flex-direction:column; }
-    .pigeons-bar-rate{ order:-1; }
+    .pigeons-bar-main-row{ flex-direction:column; text-align:center; }
+    .pigeons-bar-left{ flex-direction:column; text-align:center; }
+    .pigeons-bar-left-body{ align-items:center; text-align:center; }
   }
 
   /* ---- DATABASE row card: traits, and an in-card sales-history toggle
@@ -2397,6 +2394,16 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
         <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES H!ST0RY"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
       </div>
+      <div class="stats-strip stats-strip-rate stats-page" id="statsStripRate">
+        <div class="stat-tile" id="pigeonsBarRate" style="display:none;">
+          <div class="stat-label">EXCHANGE RATE</div>
+          <div class="stat-value"><span class="pigeons-bar-rate-line">1 XRP = </span><span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span></div>
+        </div>
+        <a class="stat-tile stat-tile-link" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">
+          <div class="stat-label">TRACK L!VE PR!CE</div>
+          <div class="stat-value pigeons-bar-dex-value"><img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">V!EW 0N DEXSCREENER</div>
+        </a>
+      </div>
       </div>
       <button class="stats-carousel-arrow" id="statsNextBtn" aria-label="NEXT">▸</button>
       </div>
@@ -2404,22 +2411,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         <span class="stats-dot active"></span>
         <span class="stats-dot"></span>
         <span class="stats-dot"></span>
+        <span class="stats-dot"></span>
       </div>
       </div>
     </div>
 
     <div class="pigeons-bar pigeons-bar-issuer">
-      <div class="pigeons-bar-identity-row">
-        <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
-        <div class="pigeons-bar-body" id="pigeonsBarLoggedOut">
-          <span class="pigeons-bar-text">SET TRUSTL!NE T0 $P!GE0NS T0 BEG!N TRAD!NG</span>
-          <div class="pigeons-bar-addr-stack">
-            <span class="pigeons-bar-sublabel">!SSUER ADDRESS</span>
-            <span class="ci-value ci-value-big pigeons-bar-addr" id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span>
-          </div>
-          <div class="pigeons-bar-identity-actions">
-            <button class="bar-btn ci-copy-btn" id="copyIssuerBtn">[ C0PY ADDRESS ]</button>
+      <div class="pigeons-bar-main-row">
+        <div class="pigeons-bar-left" id="pigeonsBarLoggedOut">
+          <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
+          <div class="pigeons-bar-left-body">
+            <span class="pigeons-bar-text">SET TRUSTL!NE T0 TRADE</span>
             <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">[ L0G!N ]</button>
+            <button class="pigeons-bar-issuer-link" id="copyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="copyIssuerLabel">!SSUER ::</span> <span id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span></button>
           </div>
         </div>
         <!-- Shown instead of the block above once MY_WALLET is set (real
@@ -2427,22 +2431,28 @@ const SWAP_HTML = `<!DOCTYPE html>
              real held-Pigeons count + $PIGEONS balance/trustline status
              from account_lines (fetchPigeonsAccountLine), never
              fabricated placeholders. -->
-        <div class="pigeons-bar-body" id="pigeonsBarLoggedIn" style="display:none;">
-          <span class="pigeons-bar-text pigeons-bar-text-lg">L0GGED !N :: <span id="pigeonsLoggedInWallet"></span></span>
-          <div class="pigeons-bar-addr-stack">
-            <div class="ci-value ci-value-big pigeons-bar-addr pigeons-bar-summary-lg" id="pigeonsLoggedInSummary">…</div>
+        <div class="pigeons-bar-left" id="pigeonsBarLoggedIn" style="display:none;">
+          <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
+          <div class="pigeons-bar-left-body">
+            <span class="pigeons-bar-text" id="pigeonsLoggedInWallet"></span>
+            <span class="pigeons-bar-sublabel" id="pigeonsLoggedInCount">…</span>
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
-          </div>
-          <div class="pigeons-bar-identity-actions">
-            <button class="bar-btn ci-copy-btn" id="showMyPigeonsBtn">[ SH0W MY P!GE0NS ]</button>
-            <button class="bar-btn ci-copy-btn" id="swapSignOutBtn">[ S!GN 0UT ]</button>
+            <div class="pigeons-bar-identity-actions">
+              <button class="bar-btn ci-copy-btn" id="showMyPigeonsBtn">[ SH0W MY P!GE0NS ]</button>
+              <button class="bar-btn ci-copy-btn" id="swapSignOutBtn">[ S!GN 0UT ]</button>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="pigeons-bar-bottom-row">
-        <a class="bar-btn pigeons-bar-dex-link" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">
-          <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">V!EW 0N DEXSCREENER
-        </a>
+
+        <!-- BALANCE — the main feature of the whole banner: the real
+             $PIGEONS token balance, front and centre, so this reads as
+             "come trade the token" rather than a wallet-status readout. -->
+        <div class="pigeons-bar-balance">
+          <div class="pigeons-bar-balance-label">BALANCE</div>
+          <div class="pigeons-bar-balance-value" id="pigeonsBalanceValue">L0G !N T0 V!EW BALANCE</div>
+          <a class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">[ BUY $P!GE0NS ]</a>
+        </div>
+
         <div class="pigeons-bar-calc-col" id="pigeonsBarCalc" style="display:none;">
           <div class="pigeons-bar-calc-title">EXCHANGE RATE</div>
           <div class="pigeons-bar-calc">
@@ -2451,9 +2461,6 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="pigeons-bar-calc-eq">=</span>
             <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
           </div>
-        </div>
-        <div class="pigeons-bar-rate" id="pigeonsBarRate" style="display:none;">
-          <span class="pigeons-bar-rate-line">1 XRP = </span><span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span>
         </div>
       </div>
     </div>
@@ -3015,8 +3022,9 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
-   'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
-   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInSummary','pigeonsLoggedInTrustline','showMyPigeonsBtn','swapSignOutBtn',
+   'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
+   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInCount','pigeonsLoggedInTrustline','showMyPigeonsBtn','swapSignOutBtn',
+   'pigeonsBalanceValue','pigeonsBalanceBuyBtn',
    'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
@@ -5150,13 +5158,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   // and calls this shared render, instead of one write clobbering the
   // other's already-painted result.
   var trustlinePigeonCount = null; // null = not loaded yet
-  var trustlineBalanceHtml = null; // null = not loaded yet
+  var trustlineBalanceNum = null; // null = not loaded yet
+  // BALANCE is the banner's main feature — the big centered $PIGEONS
+  // number people should actually look at. An empty balance shows a BUY
+  // link in the same spot instead, so this always reads as "here's your
+  // balance" or "here's how to get one", never a dead zero.
   function renderTrustlineSummary(){
-    var countLine = trustlinePigeonCount === null
-      ? '<div class="pigeons-loggedin-line">…</div>'
-      : '<div class="pigeons-loggedin-line">' + greenNum(trustlinePigeonCount.toLocaleString()) + ' P!GE0NS 0WNED</div>';
-    var balanceLine = '<div class="pigeons-loggedin-line">' + (trustlineBalanceHtml !== null ? trustlineBalanceHtml : 'BALANCE :: …') + '</div>';
-    el.pigeonsLoggedInSummary.innerHTML = countLine + balanceLine;
+    el.pigeonsLoggedInCount.textContent = trustlinePigeonCount === null
+      ? '…'
+      : trustlinePigeonCount.toLocaleString() + ' P!GE0NS 0WNED';
+    if (trustlineBalanceNum === null){
+      el.pigeonsBalanceValue.innerHTML = '…';
+      el.pigeonsBalanceBuyBtn.style.display = 'none';
+    } else {
+      el.pigeonsBalanceValue.innerHTML = greenNum(trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' $P!GE0NS';
+      el.pigeonsBalanceBuyBtn.style.display = trustlineBalanceNum === 0 ? '' : 'none';
+    }
   }
   function loadTrustlineLoginState(){
     if (!MY_WALLET){
@@ -5168,7 +5185,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.pigeonsBarLoggedIn.style.display = '';
     el.pigeonsLoggedInWallet.textContent = MY_WALLET.slice(0, 9) + '...' + MY_WALLET.slice(-4);
     trustlinePigeonCount = null;
-    trustlineBalanceHtml = null;
+    trustlineBalanceNum = null;
     renderTrustlineSummary();
     el.pigeonsLoggedInTrustline.textContent = '';
     // Both fetches are independent (item count vs. account_line balance) —
@@ -5181,9 +5198,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       renderTrustlineSummary();
     }).catch(function(){});
     apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET }).then(function(line){
-      var balanceNum = (line && line.hasTrustline) ? (line.balance || 0) : 0;
-      var balanceStr = balanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 });
-      trustlineBalanceHtml = 'BALANCE :: ' + greenNum(balanceStr) + ' $P!GE0NS';
+      trustlineBalanceNum = (line && line.hasTrustline) ? (line.balance || 0) : 0;
       renderTrustlineSummary();
       // Redundant to spell out "TRUSTLINE SET" — owning pigeons or holding
       // a real $PIGEONS balance already proves that. Only worth surfacing
@@ -5956,9 +5971,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.copyIssuerBtn.addEventListener('click', function(){
     var addr = el.ciIssuerAddr ? el.ciIssuerAddr.textContent : '';
     var done = function(){
-      var original = el.copyIssuerBtn.textContent;
-      el.copyIssuerBtn.textContent = '[ C0P!ED ]';
-      setTimeout(function(){ el.copyIssuerBtn.textContent = original; }, 1500);
+      // Swap just the label, not the whole button — el.ciIssuerAddr is a
+      // real child element (registered separately), and overwriting the
+      // button's own textContent would silently destroy that node.
+      el.copyIssuerLabel.textContent = '[ C0P!ED ]';
+      setTimeout(function(){ el.copyIssuerLabel.textContent = '!SSUER ::'; }, 1500);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(done, done);
     else done();
@@ -5981,7 +5998,10 @@ const SWAP_HTML = `<!DOCTYPE html>
         el.pigeonsBarCalc.style.display = '';
         updatePigeonsCalc();
       }
-      if (data && data.dexUrl) el.pigeonsDexLink.href = data.dexUrl;
+      if (data && data.dexUrl){
+        el.pigeonsDexLink.href = data.dexUrl;
+        el.pigeonsBalanceBuyBtn.href = data.dexUrl;
+      }
       el.pigeonsDexLink.style.display = '';
     }).catch(function(){});
   }
