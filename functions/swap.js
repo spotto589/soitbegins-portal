@@ -938,6 +938,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     box-shadow:0 10px 30px rgba(0,0,0,0.6);
   }
+  /* ADD TRA!TS sits in the right-hand column of the config box — opening
+     this wide (620px) flyout from its own left edge like SORT BY does
+     ran it straight off the right edge of the viewport. Anchor it to its
+     own right edge instead so it opens leftward, staying on-screen. */
+  #traitsFlyout{ left:auto; right:0; }
   .traits-flyout-cats{
     flex:0 0 42%;
     overflow-y:auto;
@@ -1025,6 +1030,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:0 1px 3px rgba(0,0,0,0.9);
   }
   #traitsFlyoutVals .traits-flyout-val.has-preview .tfv-count{ color:#fff; font-size:16px; }
+  /* Static solid box behind the value + count together — the crop
+     underneath is often busy/light enough that text-shadow alone still
+     clashed and was hard to read at a glance. */
+  #traitsFlyoutVals .traits-flyout-val.has-preview .tfv-text{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:0.5rem;
+    width:100%;
+    background:rgba(8,9,11,0.68);
+    border-radius:calc(var(--radius) - 2px);
+    padding:0.4rem 0.6rem;
+  }
   #traitsFlyoutVals .traits-flyout-val.has-preview:hover{ border-color:var(--cyan); color:#fff; }
   #traitsFlyoutVals .traits-flyout-val.has-preview.selected{
     border-color:var(--cyan);
@@ -2073,6 +2091,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .trait-cell.has-preview .tc-label{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
   #screenDetail .trait-cell.has-preview .tc-value{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
   #screenDetail .trait-cell.has-preview .tc-sub{ color:#fff; font-size:16px; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+  /* Static solid box behind value/label/sub together — text-shadow alone
+     still clashed against a busy/light crop, this reads reliably over
+     any of them. */
+  #screenDetail .trait-cell.has-preview .tc-text{ background:rgba(8,9,11,0.68); border-radius:calc(var(--radius) - 2px); padding:0.5rem 0.4rem; }
   #screenDetail .trait-cell.has-preview:hover{ border-color:var(--cyan); }
   /* Constrained instead of stretching the field's label/value across the
      whole (wide) right column — that gap made label and value feel
@@ -4853,10 +4875,18 @@ const SWAP_HTML = `<!DOCTYPE html>
       // selected Pigeon thumbnail does (.card-select-toggle.selected) —
       // plain-text cells keep the inline ✓ prefix since there's no photo
       // corner to badge.
+      // Photo-backed values get their label+count wrapped in a solid
+      // static box (.tfv-text) instead of just a text-shadow floating
+      // over the crop — the crop underneath is often busy/light enough
+      // that shadow alone still clashed and was hard to read.
+      var textOpen = exampleImg ? '<span class="tfv-text">' : '';
+      var textClose = exampleImg ? '</span>' : '';
       return '<button type="button" class="traits-flyout-val' + (exampleImg ? ' has-preview' : '') + (isSelected ? ' selected' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
         (exampleImg && isSelected ? '<span class="tfv-select-badge">✓</span>' : '') +
+        textOpen +
         '<span>' + (!exampleImg && isSelected ? '✓ ' : '') + escapeHtml(v.value.toUpperCase()) + '</span>' +
         '<span class="tfv-count">' + count + ' :: ' + pct + '</span>' +
+        textClose +
       '</button>';
     }).join('');
   }
@@ -6445,11 +6475,18 @@ const SWAP_HTML = `<!DOCTYPE html>
         (previewSize ? 'background-size:' + previewSize + ';' : '') +
         (previewPos ? 'background-position:' + previewPos + ';' : '') + '"'
       : '';
+    // Photo-backed cells wrap value/label/sub in a static box (.tc-text)
+    // instead of relying on text-shadow alone — a busy/light crop still
+    // clashed with plain shadowed text.
+    var textOpen = exampleImg ? '<div class="tc-text">' : '';
+    var textClose = exampleImg ? '</div>' : '';
     return '<div class="trait-cell' + (exampleImg ? ' has-preview' : '') + '" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' + style +
       ' title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
+      textOpen +
       // Value first, category second — "G0LDEN FEATHERS" reads as one
       // phrase describing the trait, not a label/value form field.
       '<div class="tc-value">' + escapeHtml(a.value) + '</div><div class="tc-label">' + escapeHtml(a.trait_type) + '</div>' + sub +
+      textClose +
     '</div>';
   }
   // Clicking a trait cell on the INSPECT screen filters the browse view down
