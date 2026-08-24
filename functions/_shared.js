@@ -982,6 +982,24 @@ async function doRecomputeCrownHolder(kv, now) {
     .slice(0, 123)
     .map(([wallet, count]) => ({ wallet, count }));
 
+  // Rarest-held-Pigeon thumbnail for the top 15 rows only — deliberately
+  // NOT a live per-request lookup (that'd mean 15 extra Deeptide calls on
+  // every normal page load). Computed once here, alongside the Clio scan
+  // this function already runs on its own rate-limited/locked schedule
+  // (see recomputeCrownHolder above), then cached straight into the
+  // snapshot topHolders already lives in — normal reads (getCachedCrownHolder)
+  // stay a plain KV read either way. One Deeptide call per wallet (already
+  // returns every held token's image + rarityRank in one shot, no XRPL
+  // pagination needed), 15 wallets, run in parallel, at most once every
+  // CROWN_RECOMPUTE_MIN_INTERVAL_SECONDS.
+  await Promise.all(topHolders.slice(0, 15).map(async (h) => {
+    const owned = await getOwnerPigeonsViaDeeptide(kv, h.wallet);
+    const ranked = owned.filter(it => typeof it.rarityRank === 'number' && it.image);
+    if (!ranked.length) return;
+    const rarest = ranked.reduce((a, b) => (a.rarityRank <= b.rarityRank ? a : b));
+    h.rarestPigeon = { number: rarest.number, image: rarest.image, rarityRank: rarest.rarityRank };
+  }));
+
   const snapshot = {
     wallet: crownWallet,
     count: maxCount,

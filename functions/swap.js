@@ -585,7 +585,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Top 15 read as a cut above the rest of the list — same layout, just
      a step up in size. */
   .th-row-top{ font-size:19px; padding:1.1em 0.6em; }
-  .th-rank{ color:var(--cyan); text-align:right; }
+  .th-rank{ color:var(--cyan); text-align:right; display:flex; align-items:center; justify-content:flex-end; gap:0.5rem; }
+  /* Rarest-held-Pigeon thumbnail, top 15 rows only. */
+  .th-thumb{ width:34px; height:34px; border-radius:var(--radius); object-fit:cover; flex:0 0 auto; border:1px solid var(--border-mid); }
   .th-wallet{ min-width:0; color:var(--white); word-break:break-all; text-align:center; }
   .th-count{ color:var(--white); text-transform:uppercase; text-align:left; }
   .th-empty{ text-align:center; font-size:11px; letter-spacing:0.08em; color:var(--grey-dim); padding:0.5rem 0; text-transform:uppercase; }
@@ -5126,8 +5128,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       var percentStr = h.percent !== null && h.percent !== undefined
         ? h.percent.toLocaleString(undefined, { maximumFractionDigits: h.percent < 1 ? 2 : 1 })
         : null;
+      // Rarest-held-Pigeon thumbnail — only ever populated for the top 15
+      // (see doRecomputeCrownHolder in _shared.js), computed once during
+      // the periodic background Crown recompute, not per page load.
+      var thumb = (i < 15 && h.rarestPigeon && h.rarestPigeon.image)
+        ? '<img class="th-thumb" src="' + escapeHtml(h.rarestPigeon.image) + '" alt="" loading="lazy" title="RAREST P!GE0N HELD :: RAR!TY #' + escapeHtml(h.rarestPigeon.rarityRank) + '">'
+        : '';
       return '<div class="th-row' + (i < 15 ? ' th-row-top' : '') + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
-        '<span class="th-rank">#' + greenNum(i + 1) + '</span>' +
+        '<span class="th-rank">' + thumb + '<span>#' + greenNum(i + 1) + '</span></span>' +
         '<span class="th-wallet">' + escapeHtml(h.ownerShort) + '</span>' +
         '<span class="th-count">' + greenNum(h.count) + ' P!GE0NS' + (percentStr ? '  ::  ' + greenNum(percentStr + '%') : '') + '</span>' +
       '</div>';

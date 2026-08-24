@@ -243,6 +243,9 @@ export async function onRequestGet(context) {
         ownerShort: shortenAddr(h.wallet),
         count: h.count,
         percent: PIGEON_COLLECTION_SIZE_APPROX > 0 ? (h.count / PIGEON_COLLECTION_SIZE_APPROX) * 100 : null,
+        // Only ever populated for the top 15 (see doRecomputeCrownHolder) —
+        // computed once per Crown recompute, not per request.
+        rarestPigeon: h.rarestPigeon || null,
       })),
       computedAt: snapshot ? snapshot.computedAt : null
     });
