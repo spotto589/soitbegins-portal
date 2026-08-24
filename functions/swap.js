@@ -2271,8 +2271,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .dh-time{ color:var(--grey-dim); font-size:10px; letter-spacing:0.05em; text-transform:uppercase; }
   .dh-tx{ color:var(--grey-dim); font-size:10px; letter-spacing:0.06em; text-decoration:none; text-transform:uppercase; }
   .dh-tx:hover{ color:var(--cyan); text-decoration:underline; }
-  .view-elsewhere{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed var(--border-dim); padding-top:1rem; }
-  .view-links{ display:flex; justify-content:center; gap:0.6rem; flex-wrap:wrap; }
   .detail-actions{ display:flex; justify-content:center; gap:0.75rem; flex-wrap:wrap; margin-top:1.5rem; }
   .secondary-btn{
     background:transparent;
@@ -2837,13 +2835,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </div>
-      <div class="view-elsewhere">
-        <div class="tech-meta-title">V!EW ELSEWHERE</div>
-        <div class="view-links">
-          <a class="secondary-btn" id="viewDeeptideLink" target="_blank" rel="noopener">[ DEEPT!DE ]</a>
-          <a class="secondary-btn" id="viewXrpCafeLink" target="_blank" rel="noopener">[ XRP.CAFE ]</a>
-        </div>
-      </div>
       <button class="trait-cell detail-back-btn" id="backToBrowseBtn">← BACK</button>
       <div class="detail-actions">
         <a class="action-btn" id="detailBuyBtn" style="display:none;" target="_blank" rel="noopener">[ BUY 0N DEEPT!DE ]</a>
@@ -3202,7 +3193,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailBuyBtn','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg',
-   'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn','viewDeeptideLink','viewXrpCafeLink',
+   'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn',
    'backToBrowseBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
@@ -6647,8 +6638,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     // dropping into whatever room the last row has left instead of a
     // fixed corner.
     el.detailTraits.appendChild(el.backToBrowseBtn);
-    el.viewDeeptideLink.href = 'https://deeptide.co/nft/' + nftId;
-    el.viewXrpCafeLink.href = 'https://xrp.cafe/nft/' + nftId;
     el.detailHistoryList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     updateDetailRarity(known);
     updateDetailPrice(known);
