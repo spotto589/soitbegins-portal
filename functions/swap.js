@@ -3325,9 +3325,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="sw-panel" id="screenDelistResult" style="display:none;">
       <div class="detail-eyebrow">// DEL!STED</div>
       <div class="detail-num" id="delistResultPigeonNum"></div>
-      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="delistResultStatus"></span></div>
-      <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="delistResultTxLink" target="_blank" rel="noopener"></a></span></div>
       <div class="detail-actions">
+        <a class="secondary-btn" id="delistResultWalletLink" target="_blank" rel="noopener">[ V!EW Y0UR WALLET ACT!V!TY ]</a>
         <button class="secondary-btn" id="delistResultDoneBtn">[ ← BACK T0 MY P!GE0NS ]</button>
       </div>
     </div>
@@ -3502,7 +3501,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenBuySwapConfirm','buySwapConfTxType','buySwapConfAccount','buySwapConfDestination','buySwapConfSendMax','buySwapConfAmount','buySwapConfEstimate','buySwapConfRate','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
    'screenBuySwapResult','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
    'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
-   'screenDelistResult','delistResultPigeonNum','delistResultStatus','delistResultTxLink','delistResultDoneBtn',
+   'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
    'screenOfferConfirm','offerConfTxType','offerConfAccount','offerConfOwner','offerConfNftId','offerConfCurrency','offerConfIssuer','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
    'offersReceivedBlock','offersReceivedSummary',
@@ -6588,15 +6587,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showDelistResult(data){
-    el.delistResultPigeonNum.innerHTML = 'P!GE0N #' + (delistTarget.number !== null ? greenNum(delistTarget.number) : '????');
-    el.delistResultStatus.textContent = 'DEL!STED';
-    if (data.txHash){
-      el.delistResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
-      el.delistResultTxLink.textContent = data.txHash;
-    } else {
-      el.delistResultTxLink.removeAttribute('href');
-      el.delistResultTxLink.textContent = '—';
-    }
+    el.delistResultPigeonNum.innerHTML = 'P!GE0N #' + (delistTarget.number !== null ? greenNum(delistTarget.number) : '????') + ' WAS DEL!STED.';
+    // Wallet activity, not the raw tx hash — MY_WALLET is the seller who
+    // just delisted, same account this whole flow ran as.
+    if (MY_WALLET) el.delistResultWalletLink.href = 'https://bithomp.com/explorer/' + MY_WALLET;
     showScreen('delistresult');
   }
   el.delistResultDoneBtn.addEventListener('click', function(){
