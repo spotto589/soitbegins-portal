@@ -6509,7 +6509,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         ? '<a class="owner-link" href="' + escapeHtml(p.highSaleTxUrl) + '" target="_blank" rel="noopener">' + escapeHtml(hsText) + '</a>'
         : escapeHtml(hsText);
     } else {
-      el.detailHighSale.textContent = 'F!RST 0WNER';
+      el.detailHighSale.textContent = 'M!NT C0ND!T!0N';
     }
     if (p && p.recentSaleXrp !== null && p.recentSaleXrp !== undefined){
       var rsText = p.recentSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
@@ -6517,7 +6517,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         ? '<a class="owner-link" href="' + escapeHtml(p.recentSaleTxUrl) + '" target="_blank" rel="noopener">' + escapeHtml(rsText) + '</a>'
         : escapeHtml(rsText);
     } else {
-      el.detailRecentSale.textContent = 'F!RST 0WNER';
+      el.detailRecentSale.textContent = 'M!NT C0ND!T!0N';
     }
     if (p && p.avgSaleXrp !== null && p.avgSaleXrp !== undefined){
       el.detailAvgSaleRow.style.display = '';
