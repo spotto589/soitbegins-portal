@@ -1431,6 +1431,34 @@ const SWAP_HTML = `<!DOCTYPE html>
     pointer-events:none;
     transition:left 0.12s ease;
   }
+  /* Small × clear button on every text input you can type a number
+     into (search, offer amount, list price, the two XRP calculator
+     inputs) — shown only once there's actually something to clear via
+     :placeholder-shown (a live CSS state, not JS-managed), so this
+     works automatically for every current and future input matching
+     the pattern without extra wiring. Must sit as the input's own next
+     sibling in markup for the selector below to match; the click itself
+     is handled by one delegated document-level listener (see
+     el.body/document click handler further down), not per-instance. */
+  .input-clear-btn{
+    flex:0 0 auto;
+    background:transparent;
+    border:none;
+    color:var(--grey-dim);
+    font-family:var(--font-mono);
+    font-size:18px;
+    line-height:1;
+    padding:0 0.3em;
+    cursor:pointer;
+    transition:color 0.15s ease;
+  }
+  .input-clear-btn:hover{ color:var(--magenta); }
+  input:placeholder-shown + .input-clear-btn{ display:none; }
+  /* Lighter default color for inputs sitting on the trustline banner's
+     purple gradient, where the plain grey-dim default would be nearly
+     invisible. */
+  .input-clear-btn-light{ color:rgba(255,255,255,0.7); }
+  .input-clear-btn-light:hover{ color:#fff; }
   /* A quick coin-flip bump every time the typed number changes (see
      repositionOfferCoin), so the coin reads as "attached" to the number,
      not just a static icon — the point being to make this feel like
@@ -2779,6 +2807,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div class="pigeons-bar-calc">
             <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="ENTER XRP">
+            <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
             <span class="pigeons-bar-calc-unit">XRP</span>
             <span class="pigeons-bar-calc-eq">=</span>
             <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
@@ -2899,6 +2928,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="results-header-row">
             <div class="search-row">
               <input class="search-input" id="searchInput" placeholder="# 0R WALLET">
+              <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
               <button class="bar-btn" id="searchBtn">[ GO ]</button>
             </div>
             <div class="sort-field sort-field-inline">
@@ -2996,6 +3026,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <div class="make-offer-input-wrap">
                   <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
                   <input class="make-offer-input" id="detailMakeOfferInput" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">
+                  <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
                 </div>
                 <button class="make-offer-send" id="detailMakeOfferSend">[ SEND ]</button>
               </div>
@@ -3212,6 +3243,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <span class="buyswap-label">Y0U PAY</span>
         <div class="buyswap-input-wrap">
           <input class="buyswap-input" id="buySwapXrpInput" type="text" inputmode="decimal" placeholder="0.00" autocomplete="off">
+          <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
           <span class="buyswap-unit">XRP</span>
         </div>
         <div class="buyswap-max-line" id="buySwapMaxLine" style="display:none;"></div>
@@ -4582,6 +4614,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="make-offer-input-wrap">' +
           '<img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">' +
           '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">' +
+          '<button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">&times;</button>' +
         '</div>' +
         '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
       '</div>' +
@@ -5458,6 +5491,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             '<div class="make-offer-input-wrap">' +
               '<img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">' +
               '<input class="list-price-input" type="text" inputmode="decimal" placeholder="L!ST PR!CE">' +
+              '<button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">&times;</button>' +
             '</div>' +
             '<button class="list-inline-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ L!ST ]</button>' +
           '</div>' +
@@ -7136,6 +7170,28 @@ const SWAP_HTML = `<!DOCTYPE html>
     closeSortFlyout();
   });
   renderSortDropLabel();
+  // One delegated handler for every .input-clear-btn on the page (search,
+  // offer amount, list price, both XRP calculator inputs) — see its own
+  // CSS comment for why it must sit as the input's next sibling in
+  // markup. Clears the value, refocuses the input, and dispatches a real
+  // 'input' event so whatever that specific input's own listener already
+  // does (re-validate, re-query, reformat, recompute a quote) fires
+  // exactly as if the user had deleted the text themselves — no
+  // per-input clear logic needed anywhere else.
+  document.addEventListener('click', function(e){
+    var clearBtn = e.target.closest('.input-clear-btn');
+    if (!clearBtn) return;
+    var input = clearBtn.previousElementSibling;
+    if (!input || (input.tagName !== 'INPUT' && input.tagName !== 'TEXTAREA')) return;
+    input.value = '';
+    input.focus();
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    // #searchInput has no 'input' listener of its own (only Enter/GO) —
+    // an empty query needs the same reset-to-unfiltered-browse behavior
+    // GO already gives it, not just a visually-cleared box that's still
+    // silently filtering on the old query underneath.
+    if (input === el.searchInput) runSearchBox();
+  });
   // SORTING BY / ADD TRAITS are click-to-open now (not hover) — close
   // whichever is open on a click anywhere outside its own box.
   document.addEventListener('click', function(e){
