@@ -3430,6 +3430,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
 
+  // "V!EW!NG WALLET <short>" reads oddly for your own wallet (ownerShort
+  // is literally 'Y0U' there, from SH0W MY P!GE0NS' own
+  // browseOwnerCollection(MY_WALLET, 'Y0U') call) — "Y0UR WALLET" instead
+  // of "WALLET Y0U" for that one case only; every other wallet keeps the
+  // plain "WALLET <short>" form.
+  function walletViewingLabel(ownerShort){
+    return ownerShort === 'Y0U' ? 'Y0UR WALLET' : 'WALLET ' + escapeHtml(ownerShort);
+  }
+
   // Wraps just a bare number in the same green the header's ONLINE uses
   // (.pigeons-green-num) — used for Pigeon numbers and rarity RANKS
   // specifically (never the rarity TOTAL, e.g. RARITY 330/3015 only
@@ -4352,7 +4361,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (state.scopeAllItems.length){
         runScopedQuery();
       } else {
-        el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG WALLET ' + escapeHtml(state.scope.ownerShort) + ' (<span class="hi">0</span> P!GE0NS)</div>';
+        el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG ' + walletViewingLabel(state.scope.ownerShort) + ' (<span class="hi">0</span> P!GE0NS)</div>';
         el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0NS F0UND', ['TH!S WALLET 0WNS N0 P!GE0NS.'], false);
       }
     } else {
@@ -4376,7 +4385,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (isSelf) myOwnPigeonsCache = state.scopeAllItems;
       el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
       if (!state.scopeAllItems.length){
-        el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG WALLET ' + escapeHtml(state.scope.ownerShort) + ' (<span class="hi">0</span> P!GE0NS)</div>';
+        el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG ' + walletViewingLabel(state.scope.ownerShort) + ' (<span class="hi">0</span> P!GE0NS)</div>';
         el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0NS F0UND', ['TH!S WALLET 0WNS N0 P!GE0NS.'], false);
         return;
       }
@@ -5232,7 +5241,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
     }
     state.items = list;
-    el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG WALLET ' + escapeHtml(state.scope.ownerShort) + ' (<span class="hi">' + list.length + '</span> P!GE0NS)' +
+    el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG ' + walletViewingLabel(state.scope.ownerShort) + ' (<span class="hi">' + list.length + '</span> P!GE0NS)' +
       (list.length === 1 ? '<br>P!GE0N #' + list[0].number : '') + '</div>';
     if (!list.length){
       el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + (q || '(traits)') + '"'], true);
