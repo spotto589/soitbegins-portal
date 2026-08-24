@@ -1882,7 +1882,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:520px){
     #screenDetail .trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
-  #screenDetail .trait-cell{ padding:0.8rem 0.9rem; }
+  /* Vertical padding tuned so a full 3-row grid (7 traits, the collection's
+     max) lands its own bottom edge flush with the picture's — checked
+     against the picture at its default/max size (480px square column). */
+  #screenDetail .trait-cell{ padding:1rem 0.9rem; }
   #screenDetail .trait-cell .tc-label{ font-size:14px; }
   #screenDetail .trait-cell .tc-value{ font-size:19px; }
   #screenDetail .trait-cell .tc-sub{ font-size:14px; }
