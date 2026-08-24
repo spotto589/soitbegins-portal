@@ -1617,23 +1617,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
   .pigeons-bar-issuer .pigeons-bar-text{ font-size:14px; text-align:left; }
-  /* Compact "issuer address" link — a plain small text button now, not a
-     boxed .bar-btn, since it's a secondary/advanced action next to LOGIN,
-     not a co-equal one. */
-  .pigeons-bar-issuer-link{
+  /* Small inline [ COPY ] button sitting right next to SET TRUSTLINE TO
+     TRADE — the actual issuer address is now just plain reference text
+     underneath (.pigeons-bar-sublabel), not the click target itself. */
+  .pigeons-bar-copy-btn{
+    display:inline-block;
     background:transparent;
-    border:none;
-    padding:0;
-    color:rgba(255,255,255,0.7);
+    border:1px solid rgba(255,255,255,0.5);
+    border-radius:var(--radius);
+    padding:0.1em 0.5em;
+    margin-left:0.3rem;
+    color:rgba(255,255,255,0.85);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:10px;
     letter-spacing:0.05em;
     text-transform:uppercase;
     cursor:pointer;
-    word-break:break-all;
-    text-align:left;
+    vertical-align:middle;
   }
-  .pigeons-bar-issuer-link:hover{ color:#fff; }
+  .pigeons-bar-copy-btn:hover{ border-color:#fff; color:#fff; }
   /* SIGN OUT — a real, destructive-feeling action (ends the session), so
      it gets its own red instead of the plain white every other bar-btn
      in this box uses. */
@@ -1648,8 +1650,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      link in the exact same spot if it's empty — either way, the token
      itself is what this banner is actually about. */
   .pigeons-bar-balance{ flex:1 1 auto; display:flex; flex-direction:column; align-items:center; gap:0.3rem; text-align:center; min-width:160px; }
-  .pigeons-bar-balance-label{ font-size:13px; letter-spacing:0.25em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
+  .pigeons-bar-balance-label{ font-size:13px; letter-spacing:0.25em; color:rgba(255,255,255,0.8); text-transform:uppercase; margin-top:0.2rem; }
   .pigeons-bar-balance-value{ font-size:28px; font-weight:700; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-transform:uppercase; letter-spacing:0.02em; }
+  /* Logged-out state: LOGIN is the real call to action right under
+     BALANCE, with the plain explainer text underneath it — not the other
+     way round, so the button (not a wall of text) is what draws the eye. */
+  .pigeons-bar-balance-login{ display:flex; flex-direction:column; align-items:center; gap:0.35rem; }
+  .pigeons-bar-balance-hint{ font-size:11px; letter-spacing:0.05em; color:rgba(255,255,255,0.65); text-transform:uppercase; }
   .pigeons-bar-balance-buy{
     display:inline-block;
     margin-top:0.15rem;
@@ -2419,11 +2426,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="pigeons-bar pigeons-bar-issuer">
       <div class="pigeons-bar-main-row">
         <div class="pigeons-bar-left" id="pigeonsBarLoggedOut">
-          <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
           <div class="pigeons-bar-left-body">
-            <span class="pigeons-bar-text">SET TRUSTL!NE T0 TRADE</span>
-            <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">[ L0G!N ]</button>
-            <button class="pigeons-bar-issuer-link" id="copyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="copyIssuerLabel">!SSUER ::</span> <span id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span></button>
+            <span class="pigeons-bar-text">SET TRUSTL!NE T0 TRADE <button class="pigeons-bar-copy-btn" id="copyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="copyIssuerLabel">[ C0PY ]</span></button></span>
+            <span class="pigeons-bar-sublabel">!SSUER :: <span id="ciIssuerAddr">rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf</span></span>
           </div>
         </div>
         <!-- Shown instead of the block above once MY_WALLET is set (real
@@ -2432,7 +2437,6 @@ const SWAP_HTML = `<!DOCTYPE html>
              from account_lines (fetchPigeonsAccountLine), never
              fabricated placeholders. -->
         <div class="pigeons-bar-left" id="pigeonsBarLoggedIn" style="display:none;">
-          <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
           <div class="pigeons-bar-left-body">
             <span class="pigeons-bar-text" id="pigeonsLoggedInWallet"></span>
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInCount">…</span>
@@ -2444,12 +2448,18 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
 
-        <!-- BALANCE — the main feature of the whole banner: the real
-             $PIGEONS token balance, front and centre, so this reads as
-             "come trade the token" rather than a wallet-status readout. -->
+        <!-- BALANCE — the main feature of the whole banner, along with the
+             thumbnail: the real $PIGEONS token balance, front and centre,
+             so this reads as "come trade the token" rather than a
+             wallet-status readout. -->
         <div class="pigeons-bar-balance">
+          <div class="pigeons-bar-thumb" title="$P!GE0NS"></div>
           <div class="pigeons-bar-balance-label">BALANCE</div>
-          <div class="pigeons-bar-balance-value" id="pigeonsBalanceValue">L0G !N T0 V!EW BALANCE</div>
+          <div class="pigeons-bar-balance-value" id="pigeonsBalanceValue" style="display:none;">…</div>
+          <div class="pigeons-bar-balance-login" id="pigeonsBalanceLoginWrap">
+            <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">[ L0G!N ]</button>
+            <span class="pigeons-bar-balance-hint">L0G !N T0 V!EW BALANCE</span>
+          </div>
           <a class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">[ BUY $P!GE0NS ]</a>
         </div>
 
@@ -3024,7 +3034,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInCount','pigeonsLoggedInTrustline','showMyPigeonsBtn','swapSignOutBtn',
-   'pigeonsBalanceValue','pigeonsBalanceBuyBtn',
+   'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap',
    'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
    'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
@@ -5179,10 +5189,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!MY_WALLET){
       el.pigeonsBarLoggedOut.style.display = '';
       el.pigeonsBarLoggedIn.style.display = 'none';
+      el.pigeonsBalanceLoginWrap.style.display = '';
+      el.pigeonsBalanceValue.style.display = 'none';
       return;
     }
     el.pigeonsBarLoggedOut.style.display = 'none';
     el.pigeonsBarLoggedIn.style.display = '';
+    el.pigeonsBalanceLoginWrap.style.display = 'none';
+    el.pigeonsBalanceValue.style.display = '';
     el.pigeonsLoggedInWallet.textContent = MY_WALLET.slice(0, 9) + '...' + MY_WALLET.slice(-4);
     trustlinePigeonCount = null;
     trustlineBalanceNum = null;
