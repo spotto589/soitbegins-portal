@@ -2351,6 +2351,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- DATABASE/MY PIGEONS/TOP 100/SALES HISTORY/SWAP OFFERS — the real
+         top bar of the page now, directly under COLLECTION SELECTION;
+         the trustline banner + whatever tab is active both sit below it. -->
+    <div class="top-tabs" id="topTabs">
+      <button class="tab-btn" data-tab="database">DATABASE</button>
+      <button class="tab-btn" data-tab="mypigeons">MY P!GE0NS</button>
+      <button class="tab-btn" data-tab="topholders">T0P 100</button>
+      <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
+      <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
+    </div>
+
     <!-- Trustline banner + stats carousel, merged into one unified
          purple-themed box (.pigeons-merged-panel) — sitting above the
          DATABASE/MY PIGEONS/etc tabs. Carousel first (FLOOR page shown
@@ -2446,14 +2457,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
       </div>
     </div>
-    </div>
-
-    <div class="top-tabs" id="topTabs">
-      <button class="tab-btn" data-tab="database">DATABASE</button>
-      <button class="tab-btn" data-tab="mypigeons">MY P!GE0NS</button>
-      <button class="tab-btn" data-tab="topholders">T0P 100</button>
-      <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
-      <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
     </div>
 
     <div class="sw-panel" id="swapOffersPanelWrap" style="display:none;">
