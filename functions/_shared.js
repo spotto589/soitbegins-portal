@@ -1950,6 +1950,46 @@ export async function getSwapSalesLog(kv) {
   return raw ? JSON.parse(raw) : [];
 }
 
+// Real venue attribution for a Deeptide-fed sale — confirmed live, that
+// feed is collection-wide and NOT proof a trade went through Deeptide's
+// own marketplace specifically; sampled real transactions it returned
+// turned out to be xrp.cafe brokered trades. The one actually verifiable
+// signal is the completed NFTokenAcceptOffer's own initiating `Account`:
+// xrp.cafe brokers every trade through the same fixed account (confirmed
+// against multiple real transactions, each also carrying an on-chain memo
+// literally reading "xrp.cafe - sale"); Deeptide's currently active
+// listings all carry this same fixed Destination-restricted address on
+// their sell offer, so a completed Deeptide-brokered accept should match
+// it too. Cached forever per txHash once resolved — a settled
+// transaction's own broker never changes.
+const XRP_CAFE_BROKER_ACCOUNT = 'rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC';
+const DEEPTIDE_BROKER_ACCOUNT = 'rLGHuf125sJV9d6g2hcK2HzKrDH2j45dPQ';
+const SALE_VENUE_CACHE_PREFIX = 'pswap:venue:v1:';
+
+export async function identifySaleVenue(kv, txHash) {
+  const cacheKey = SALE_VENUE_CACHE_PREFIX + txHash;
+  if (kv) {
+    const cached = await kv.get(cacheKey);
+    if (cached !== null) return cached || null;
+  }
+  let venue = null;
+  try {
+    const res = await fetch('https://xrplcluster.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'tx', params: [{ transaction: txHash, binary: false }] })
+    });
+    const data = await res.json();
+    const account = data.result && data.result.Account;
+    if (account === XRP_CAFE_BROKER_ACCOUNT) venue = 'xrpcafe';
+    else if (account === DEEPTIDE_BROKER_ACCOUNT) venue = 'deeptide';
+  } catch (e) {
+    return null; // lookup failure - not cached, worth retrying next time
+  }
+  if (kv) await safeKvPut(kv, cacheKey, venue || '');
+  return venue;
+}
+
 // Shared Xaman Payload API calls — used by every swap-*-payload.js and
 // swap-*-status.js endpoint. Routed through a small proxy (a separate
 // Render service, not on Cloudflare) instead of calling xumm.app directly:

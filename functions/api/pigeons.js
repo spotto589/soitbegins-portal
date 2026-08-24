@@ -2,7 +2,7 @@ import {
   fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
-  getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog,
+  getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue,
   resolveOwnerCollectionLive, fetchAllAccountNfts, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX,
   getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
@@ -265,7 +265,14 @@ export async function onRequestGet(context) {
     const salesLimit = Math.min(50, Math.max(1, parseInt(params.get('limit') || '20', 10) || 20));
     const salesWallet = params.get('wallet') || undefined;
 
-    const mapDeeptideItem = it => ({
+    // This feed is a collection-wide sales index Deeptide happens to
+    // operate, not proof a trade was actually brokered through Deeptide's
+    // own marketplace UI - confirmed live, most of what it returns turns
+    // out to be xrp.cafe trades on inspection. `via` here comes from
+    // identifySaleVenue's real on-ledger check (the accept transaction's
+    // own broker account), not from which feed the item came from -
+    // unresolved (private/direct trade, or a lookup failure) means no tag.
+    const mapDeeptideItem = async it => ({
       txHash: it.txHash,
       nftId: it.nftId,
       number: it.number,
@@ -277,7 +284,7 @@ export async function onRequestGet(context) {
       seller: it.seller,
       sellerShort: shortenAddr(it.seller),
       createdAt: it.createdAt,
-      via: 'deeptide'
+      via: it.txHash ? await identifySaleVenue(env.coin, it.txHash).catch(() => null) : null
     });
 
     let ownSales = env.coin ? await getSwapSalesLog(env.coin) : [];
@@ -288,11 +295,17 @@ export async function onRequestGet(context) {
 
     let items, deeptideTotal, deeptideHasMore;
     if (salesSkip < ownTotal) {
-      const ownItems = ownSales.slice(salesSkip, salesSkip + salesLimit).map(s => ({
+      const ownSlice = ownSales.slice(salesSkip, salesSkip + salesLimit);
+      // recordSwapSale only stores what's needed to identify the trade
+      // (nftId, parties, price) - number/image come from the same
+      // per-token metadata lookup Deeptide items already use, so a Σκύλλα
+      // row looks the same as any other instead of showing a blank thumb.
+      const details = await Promise.all(ownSlice.map(s => fetchDeeptideNftDetail(s.nftId).catch(() => null)));
+      const ownItems = ownSlice.map((s, i) => ({
         txHash: s.txHash,
         nftId: s.nftId,
-        number: null,
-        image: null,
+        number: details[i] ? details[i].number : null,
+        image: details[i] ? displayImage(details[i].image) : null,
         priceXrp: null,
         pigeonsPrice: typeof s.priceValue === 'string' ? Number(s.priceValue) : s.priceValue,
         currency: 'PIGEONS',
@@ -307,12 +320,13 @@ export async function onRequestGet(context) {
       const page = await fetchDeeptideSalesHistory({ skip: 0, limit: Math.max(remaining, 1), sort: 'date-desc', wallet: salesWallet });
       deeptideTotal = page.total;
       deeptideHasMore = page.hasMore;
-      items = ownItems.concat(remaining > 0 ? page.items.slice(0, remaining).map(mapDeeptideItem) : []);
+      const deepItems = remaining > 0 ? await Promise.all(page.items.slice(0, remaining).map(mapDeeptideItem)) : [];
+      items = ownItems.concat(deepItems);
     } else {
       const page = await fetchDeeptideSalesHistory({ skip: salesSkip - ownTotal, limit: salesLimit, sort: 'date-desc', wallet: salesWallet });
       deeptideTotal = page.total;
       deeptideHasMore = page.hasMore;
-      items = page.items.map(mapDeeptideItem);
+      items = await Promise.all(page.items.map(mapDeeptideItem));
     }
 
     const total = ownTotal + deeptideTotal;

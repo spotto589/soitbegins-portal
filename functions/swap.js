@@ -5839,7 +5839,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var price = s.currency === 'PIGEONS'
       ? (s.pigeonsPrice !== null && s.pigeonsPrice !== undefined ? s.pigeonsPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS' : '?')
       : (s.priceXrp !== null ? s.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?');
-    var via = s.via === 'scylla' ? 'Σ SWAP' : (s.via === 'deeptide' ? 'DEEPT!DE' : '');
+    var via = s.via === 'scylla' ? 'Σ SWAP' : (s.via === 'xrpcafe' ? 'XRP.CAFE' : (s.via === 'deeptide' ? 'DEEPT!DE' : ''));
     var when = s.createdAt ? new Date(s.createdAt).toLocaleString() : '';
     return '<div class="sale-row">' +
       '<div class="sale-thumb-wrap">' +
