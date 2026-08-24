@@ -219,6 +219,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:1rem;
     text-transform:uppercase;
   }
+  /* Σκύλλα must never render all-caps — text-transform:uppercase above
+     would otherwise force it to ΣΚΎΛΛΑ. The " :: N" count suffix is
+     already correctly cased either way (just digits/punctuation). */
+  #myPigeonsPanelTitle{ text-transform:none; }
   /* Way bigger than a regular panel-title — this is the headline of the
      whole DATABASE screen, not a section label. */
   .search-panel-title{ font-size:24px; font-weight:700; margin-bottom:0.4rem; text-shadow:0 0 10px var(--cyan-glow); }
@@ -2462,7 +2466,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </button>
-      <button class="tab-btn" data-tab="mypigeons">MY P!GE0NS</button>
+      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;">Σκύλλα</span></button>
       <button class="tab-btn" data-tab="topholders">T0P 100</button>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
@@ -2592,7 +2596,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
 
     <div class="sw-panel" id="myPigeonsPanel" style="display:none;">
-      <div class="panel-title" id="myPigeonsPanelTitle">MY P!GE0NS</div>
+      <div class="panel-title" id="myPigeonsPanelTitle">Σκύλλα</div>
       <div class="index-line" id="connectStatus" style="text-align:center;"></div>
       <div id="myPigeonsConnect" style="display:none; text-align:center;">
         <button class="bar-btn" id="connectScyllaBtn">[ CONNECT <span style="text-transform:none;">Σκύλλα</span> ]</button>
@@ -5184,7 +5188,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     return withOffers.concat(listed, rest);
   }
   function renderMyPigeonsList(){
-    el.myPigeonsPanelTitle.textContent = 'MY P!GE0NS' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
+    el.myPigeonsPanelTitle.textContent = 'Σκύλλα' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
     if (myPigeonsData === null){ el.myPigeonsList.innerHTML = '<div class="th-empty">L0AD!NG...</div>'; return; }
     if (!myPigeonsData.length){ el.myPigeonsSortRow.style.display = 'none'; el.myPigeonsList.innerHTML = '<div class="th-empty">Y0U D0N\\'T H0LD ANY P!GE0NS YET.</div>'; return; }
     el.myPigeonsSortRow.style.display = '';
@@ -5203,7 +5207,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // paths below), as a manual retry.
       el.offersReceivedBlock.style.display = 'none';
       el.myPigeonsSortRow.style.display = 'none';
-      el.myPigeonsPanelTitle.textContent = 'MY P!GE0NS';
+      el.myPigeonsPanelTitle.textContent = 'Σκύλλα';
       el.myPigeonsList.innerHTML = '';
       return;
     }
