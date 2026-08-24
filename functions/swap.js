@@ -3183,6 +3183,28 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- SCREEN: BUY $P!GE0NS SWAP REVIEW — STAGE 5: the exact prepared
+         Payment txjson (buyswap-prepare.js), re-derived server-side from
+         a fresh quote/trustline/balance check, for inspection. No Xaman
+         call anywhere yet — 0PEN XAMAN stays disabled until Stage 6. -->
+    <div class="sw-panel buyswap-panel" id="screenBuySwapConfirm" style="display:none;">
+      <div class="node-eyebrow">// BUY $P!GE0NS — REV!EW</div>
+      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="buySwapConfTxType"></span></div>
+      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="buySwapConfAccount"></span></div>
+      <div class="detail-field"><span class="df-label">Destination</span><span class="df-value" id="buySwapConfDestination"></span></div>
+      <div class="detail-field"><span class="df-label">MAX XRP SPEND (SendMax)</span><span class="df-value" id="buySwapConfSendMax"></span></div>
+      <div class="detail-field"><span class="df-label">M!N!MUM P!GE0NS RECE!VED (Amount)</span><span class="df-value" id="buySwapConfAmount"></span></div>
+      <div class="buyswap-divider"></div>
+      <div class="detail-field"><span class="df-label">EST!MATED RECE!VE</span><span class="df-value" id="buySwapConfEstimate"></span></div>
+      <div class="detail-field"><span class="df-label">RATE</span><span class="df-value" id="buySwapConfRate"></span></div>
+      <div class="detail-field"><span class="df-label">L!QU!D!TY S0URCE</span><span class="df-value" id="buySwapConfSource"></span></div>
+      <div class="index-line" id="buySwapConfirmStatus" style="margin-top:1rem;"></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="buySwapConfirmBackBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="buySwapOpenXamanBtn" disabled title="C0M!NG !N A LATER STAGE — N0T YET C0NNECTED T0 XAMAN">[ 0PEN XAMAN ]</button>
+      </div>
+    </div>
+
     <!-- SCREEN: DELIST CONFIRMATION — the exact NFTokenCancelOffer txjson, before Xaman ever opens -->
     <div class="sw-panel" id="screenDelistConfirm" style="display:none;">
       <div class="node-eyebrow">// DEL!ST C0NF!RMAT!0N</div>
@@ -3375,6 +3397,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
    'screenBuySwap','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapPayRow',
+   'screenBuySwapConfirm','buySwapConfTxType','buySwapConfAccount','buySwapConfDestination','buySwapConfSendMax','buySwapConfAmount','buySwapConfEstimate','buySwapConfRate','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
    'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
    'screenDelistResult','delistResultPigeonNum','delistResultStatus','delistResultTxLink','delistResultDoneBtn',
    'screenOfferConfirm','offerConfTxType','offerConfAccount','offerConfOwner','offerConfNftId','offerConfCurrency','offerConfIssuer','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
@@ -3653,6 +3676,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenBuyConfirm.style.display = name === 'buyconfirm' ? '' : 'none';
     el.screenBuyResult.style.display = name === 'buyresult' ? '' : 'none';
     el.screenBuySwap.style.display = name === 'buyswap' ? '' : 'none';
+    el.screenBuySwapConfirm.style.display = name === 'buyswapconfirm' ? '' : 'none';
     el.screenDelistConfirm.style.display = name === 'delistconfirm' ? '' : 'none';
     el.screenDelistResult.style.display = name === 'delistresult' ? '' : 'none';
     el.screenOfferConfirm.style.display = name === 'offerconfirm' ? '' : 'none';
@@ -5882,6 +5906,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.buySwapRate.textContent = '—';
     el.buySwapMinReceived.textContent = '—';
     el.buySwapSignBtn.disabled = true;
+    el.buySwapSignBtn.title = 'QU0TE N0T YET AVA!LABLE';
     if (buySwapAgeInterval){ clearInterval(buySwapAgeInterval); buySwapAgeInterval = null; }
     el.buySwapStatus.textContent = statusText || 'ENTER AN AM0UNT T0 GET A L!VE QU0TE.';
   }
@@ -5933,10 +5958,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buySwapRate.textContent = data.rate.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' P!GE0NS / XRP';
       var minReceived = data.receivePigeons * (10000 - BUYSWAP_SLIPPAGE_BPS) / 10000;
       el.buySwapMinReceived.textContent = minReceived.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' P!GE0NS';
-      // Still disabled — Stage 3 is quote-only, nothing built yet to
-      // actually submit. A visible price is not the same as a safe,
-      // reviewed transaction.
-      el.buySwapSignBtn.disabled = true;
+      // STAGE 5: a valid, live, trustline-confirmed quote is finally
+      // enough to let SIGN & BUY actually be clicked — but clicking it
+      // only opens the REVIEW screen (buyswap-prepare.js re-derives
+      // everything from scratch server-side); it still doesn't sign or
+      // call Xaman anywhere.
+      el.buySwapSignBtn.disabled = false;
+      el.buySwapSignBtn.title = 'REV!EW THE EXACT TRANSACT!0N BEF0RE ANYTH!NG !S S!GNED';
       startBuySwapAgeTicker();
     }).catch(function(){
       if (myReq !== buySwapReqId) return;
@@ -6044,6 +6072,58 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.buySwapBackBtn.addEventListener('click', function(){
     stopBuySwapTimers();
     showScreen('browse');
+  });
+
+  // STAGE 5: SIGN & BUY only opens the REVIEW screen — the actual prepare
+  // call re-derives the quote/trustline/balance from scratch server-side
+  // (buyswap-prepare.js), same "never trust the client's own numbers"
+  // rule every other transaction-prep endpoint in this app follows. No
+  // Xaman payload is created here; 0PEN XAMAN on the review screen stays
+  // disabled until a later stage actually wires it up.
+  el.buySwapSignBtn.addEventListener('click', function(){
+    if (el.buySwapSignBtn.disabled) return;
+    var raw = el.buySwapXrpInput.value.trim();
+    var drops = dropsFromXrpString(raw);
+    if (drops === null) return; // shouldn't happen — button is only enabled after a valid quote
+    el.buySwapSignBtn.disabled = true;
+    el.buySwapSignBtn.textContent = '[ PREPAR!NG... ]';
+    fetch('/api/buyswap-prepare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ xrpDrops: drops.toString() })
+    }).then(function(r){ return r.json().then(function(data){ return { status: r.status, data: data }; }); }).then(function(res){
+      el.buySwapSignBtn.disabled = false;
+      el.buySwapSignBtn.textContent = '[ S!GN & BUY ]';
+      if (res.status !== 200 || !res.data || !res.data.ok){
+        var msg = (res.data && res.data.error) || 'unknown_error';
+        alert('C0ULD N0T PREPARE THE SWAP — [ ' + msg + ' ]. TRY AGA!N.');
+        // The exact state that failed (quote moved, trustline lost, balance
+        // changed) may no longer be valid — re-run the live checks instead
+        // of leaving a stale enabled button up.
+        validateBuySwapInput();
+        fetchBuySwapQuote();
+        return;
+      }
+      var txjson = res.data.txjson;
+      var display = res.data.display;
+      el.buySwapConfTxType.textContent = txjson.TransactionType;
+      el.buySwapConfAccount.textContent = txjson.Account;
+      el.buySwapConfDestination.textContent = txjson.Destination;
+      el.buySwapConfSendMax.textContent = dropsToXrpString(BigInt(txjson.SendMax)) + ' XRP';
+      el.buySwapConfAmount.textContent = txjson.Amount.value + ' $P!GE0NS';
+      el.buySwapConfEstimate.textContent = display.estimateReceivePigeons.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
+      el.buySwapConfRate.textContent = display.rate.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' P!GE0NS / XRP';
+      el.buySwapConfSource.textContent = display.source === 'amm' ? 'AMM P00L' : '0RDER B00K';
+      el.buySwapConfirmStatus.textContent = 'REV!EW C0MPLETE — S!GN!NG !S N0T YET C0NNECTED (C0M!NG !N A LATER STAGE).';
+      showScreen('buyswapconfirm');
+    }).catch(function(){
+      el.buySwapSignBtn.disabled = false;
+      el.buySwapSignBtn.textContent = '[ S!GN & BUY ]';
+      alert('C0ULD N0T REACH THE SERVER — TRY AGA!N.');
+    });
+  });
+  el.buySwapConfirmBackBtn.addEventListener('click', function(){
+    showScreen('buyswap');
   });
 
   function submitBuyPayload(retriesLeft){
