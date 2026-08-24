@@ -77,6 +77,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     --font-body:'Chakra Petch',sans-serif;
 
     --radius:2px;
+
+    /* Shared width every DATABASE config control (ADD TRA!TS, SORT BY,
+       VIEW, each C0LLECT!0N edition button, SEARCH) is pinned to, so the
+       whole config area reads as one row of uniform boxes instead of
+       each control sizing to its own content. */
+    --ctrl-w:190px;
   }
 
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -704,12 +710,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     min-width:0;
     align-self:stretch;
     display:flex;
-    flex-direction:column;
-    /* Top-aligned, and ADD TRAITS itself only as wide as its own text —
-       column flex's default align-items:stretch was forcing the
-       inline-flex box to fill the whole section width. */
+    /* Row, not column — selected trait chips (#traitRows) list to the
+       right of the fixed-width ADD TRA!TS box instead of stacking
+       underneath it, wrapping to a new line only once they run out of
+       room. ADD TRA!TS itself never resizes since its width is pinned
+       (see #traitsHoverWrap) and #traitRows is a separate sibling. */
+    flex-direction:row;
+    flex-wrap:wrap;
     justify-content:flex-start;
-    align-items:flex-start;
+    align-items:center;
     gap:0.5rem;
     border-left:1px solid var(--border-mid);
     padding-left:1.5rem;
@@ -741,13 +750,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   input.search-input:focus{ outline:none; border-color:var(--cyan); box-shadow:0 0 0 1px var(--cyan-dim); }
   input.search-input::placeholder{ color:var(--grey-disabled); text-transform:uppercase; }
   .search-row .bar-btn{ padding:0.75em 1em; font-size:12px; }
-  /* Wide enough for the full "SEARCH P!GE0N # 0R WALLET" placeholder to
-     show without clipping. */
-  /* Fixed width, not just a flex-basis — inside .search-row's absolutely-
-     positioned shrink-to-fit box, a flex-basis alone wasn't actually being
-     honored (the row sized itself to the input's min-width instead),
-     leaving the full "SEARCH PIGEON # OR WALLET" placeholder clipped. */
-  #searchInput{ flex:0 0 auto; width:300px; }
+  /* Same fixed width as every other config control (var(--ctrl-w)) —
+     shorter placeholder below so it still reads at this width instead of
+     clipping mid-word. */
+  #searchInput{ flex:0 0 auto; width:var(--ctrl-w); }
   /* GO button for the combined pigeon-number/wallet search — purple,
      matching the collection's own theme colour, not the neutral grey
      .bar-btn default. */
@@ -804,8 +810,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   select.sort-select:hover{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
   select.sort-select:focus{ outline:none; border-color:var(--cyan); }
   select.sort-select option{ background:var(--panel-bg-solid); color:var(--white); }
-  #sortDropWrap{ padding:0; }
-  #sortDropWrap .trait-row-label{ padding:0.85em 1em; font-size:13px; }
+  /* Same fixed width as ADD TRA!TS (var(--ctrl-w)) so every config
+     control reads as one uniform row of boxes. */
+  #sortDropWrap{ padding:0; width:var(--ctrl-w); flex:0 0 auto; }
+  #sortDropWrap .trait-row-label{ padding:0.85em 1em; font-size:13px; width:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #dbViewSelect{ width:var(--ctrl-w); text-align:center; text-align-last:center; }
   .edition-toggle{
     flex:0 0 auto;
     display:flex;
@@ -825,6 +834,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
     cursor:pointer;
     transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    /* Same width as ADD TRA!TS/SORT BY/VIEW/SEARCH — the longer edition
+       labels wrap to a second line at this width rather than forcing the
+       button wider. */
+    width:var(--ctrl-w);
+    text-align:center;
+    white-space:normal;
   }
   .edition-btn:last-child{ border-right:none; }
   .edition-btn:hover{ color:var(--cyan); background:var(--cyan-faint); }
@@ -909,7 +924,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      dropdown uses — always-on, not just hover/open, same reasoning as
      .tab-db-select above. */
   #traitsHoverLabel{ color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); letter-spacing:0.1em; }
-  #traitsHoverWrap .trait-row-label{ padding:0.9em 1.3em; }
+  /* Fixed width (var(--ctrl-w)) so this box never resizes when traits get
+     selected — #traitRows renders as a separate sibling to its right
+     (see .db-config-traits-section below), not inside this wrap. */
+  #traitsHoverWrap{ width:var(--ctrl-w); flex:0 0 auto; }
+  #traitsHoverWrap .trait-row-label{ padding:0.9em 1.3em; width:100%; text-align:center; }
   /* SORT, ADD TRAITS, and C0LLECT!0N SELECT!0N (the top P!GE0NS ▾ picker)
      all get the same bordered-box treatment and cyan-on-hover/open text —
      plain until you actually interact with it, not permanently filled —
@@ -938,11 +957,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     box-shadow:0 10px 30px rgba(0,0,0,0.6);
   }
-  /* ADD TRA!TS sits in the right-hand column of the config box — opening
-     this wide (620px) flyout from its own left edge like SORT BY does
-     ran it straight off the right edge of the viewport. Anchor it to its
-     own right edge instead so it opens leftward, staying on-screen. */
-  #traitsFlyout{ left:auto; right:0; }
   .traits-flyout-cats{
     flex:0 0 42%;
     overflow-y:auto;
@@ -1044,6 +1058,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.4rem 0.6rem;
   }
   #traitsFlyoutVals .traits-flyout-val.has-preview:hover{ border-color:var(--cyan); color:#fff; }
+  /* ADD TRA!TS category buttons match the ADD TRA!TS button's own width
+     instead of stretching to fill a 42%-of-620px column — scoped by id
+     so SORT's flyout (shares the same .traits-flyout-cats/-cat classes)
+     keeps its own wider, left-aligned list untouched. */
+  #traitsFlyoutCats{ flex:0 0 var(--ctrl-w); }
+  #traitsFlyoutCats .traits-flyout-cat{ width:var(--ctrl-w); text-align:center; }
   #traitsFlyoutVals .traits-flyout-val.has-preview.selected{
     border-color:var(--cyan);
     box-shadow:inset 0 0 0 2px var(--cyan);
@@ -2498,7 +2518,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </button>
-      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;">Σκύλλα</span></button>
+      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;">Σκύλλα :: PλWS</span></button>
       <button class="tab-btn" data-tab="topholders">T0P 100</button>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
@@ -2628,7 +2648,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
 
     <div class="sw-panel" id="myPigeonsPanel" style="display:none;">
-      <div class="panel-title" id="myPigeonsPanelTitle">Σκύλλα</div>
+      <div class="panel-title" id="myPigeonsPanelTitle">Σκύλλα :: PλWS</div>
       <div class="skylla-signal" id="connectStatus"></div>
       <div id="myPigeonsConnect" style="display:none; text-align:center;">
         <button class="bar-btn" id="connectScyllaBtn">[ CONNECT <span style="text-transform:none;">Σκύλλα</span> ]</button>
@@ -2731,7 +2751,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <!-- One line: SEARCH (left), SORT BY (middle), VIEW (right). -->
           <div class="results-header-row">
             <div class="search-row">
-              <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0N # 0R WALLET">
+              <input class="search-input" id="searchInput" placeholder="# 0R WALLET">
               <button class="bar-btn" id="searchBtn">[ GO ]</button>
             </div>
             <div class="sort-field sort-field-inline">
@@ -2758,7 +2778,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="db-config-group db-config-group-split">
             <div class="db-config-main">
               <div class="sort-field db-config-row">
-                <span class="sort-field-label">C0LLECT!0N</span>
                 <div class="edition-toggle" id="editionSelect">
                   <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
                   <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
@@ -5220,7 +5239,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     return withOffers.concat(listed, rest);
   }
   function renderMyPigeonsList(){
-    el.myPigeonsPanelTitle.textContent = 'Σκύλλα' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
+    el.myPigeonsPanelTitle.textContent = 'Σκύλλα :: PλWS' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
     if (myPigeonsData === null){ el.myPigeonsList.innerHTML = '<div class="skylla-signal">Σκύλλα://S!GNAL :: L0AD!NG</div>'; return; }
     if (!myPigeonsData.length){ el.myPigeonsSortRow.style.display = 'none'; el.myPigeonsList.innerHTML = '<div class="th-empty">Y0U D0N\\'T H0LD ANY P!GE0NS YET.</div>'; return; }
     el.myPigeonsSortRow.style.display = '';
@@ -5239,7 +5258,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // paths below), as a manual retry.
       el.offersReceivedBlock.style.display = 'none';
       el.myPigeonsSortRow.style.display = 'none';
-      el.myPigeonsPanelTitle.textContent = 'Σκύλλα';
+      el.myPigeonsPanelTitle.textContent = 'Σκύλλα :: PλWS';
       el.myPigeonsList.innerHTML = '';
       return;
     }
