@@ -597,21 +597,43 @@ const PIGEONS_QUOTE_BOOK_DEPTH = 60;
 // account for this, only this hardcoded server-side constant.
 const PIGEONS_AMM_ACCOUNT = 'rn5vs1Q5pzwbpzFhK85sVsuXpieNitVCQg';
 
+// Both lookups below hit xrplcluster.com directly, which rate-limits
+// under bursts (a plain-text body instead of JSON, so res.json() throws)
+// — confirmed live: this is exactly what made the BUY $PIGEONS quote
+// intermittently report "N0T EN0UGH L!QU!D!TY" for perfectly normal
+// amounts (a transient blip failing BOTH the order-book AND AMM lookups
+// at once, since they run concurrently in quotePigeonsForXrpDrops), the
+// same root cause as two other bugs fixed earlier this session
+// (fetchAllAccountNfts, the wallet-search 0-result bug). Same fix: a
+// couple of short retries per lookup before giving up for real.
+async function fetchXrplClusterJson(body) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, 350));
+    try {
+      const res = await fetch('https://xrplcluster.com', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      return await res.json();
+    } catch (e) {
+      // Non-JSON (rate-limit) body, or the fetch itself failed — try again
+      // if attempts remain.
+    }
+  }
+  return null;
+}
+
 async function fetchPigeonsBookOffers(limit) {
-  const res = await fetch('https://xrplcluster.com', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      method: 'book_offers',
-      params: [{
-        taker_gets: { currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency), issuer: PIGEONS_TOKEN_CONFIG.issuer },
-        taker_pays: { currency: 'XRP' },
-        limit: limit
-      }]
-    })
+  const data = await fetchXrplClusterJson({
+    method: 'book_offers',
+    params: [{
+      taker_gets: { currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency), issuer: PIGEONS_TOKEN_CONFIG.issuer },
+      taker_pays: { currency: 'XRP' },
+      limit: limit
+    }]
   });
-  const data = await res.json();
-  return (data.result && data.result.offers) || [];
+  return (data && data.result && data.result.offers) || [];
 }
 
 // Real live pool reserves + trading fee, straight from amm_info — never
@@ -620,13 +642,8 @@ async function fetchPigeonsBookOffers(limit) {
 // Returns null on any lookup/shape failure, never a fabricated fallback.
 async function fetchPigeonsAmmPool() {
   try {
-    const res = await fetch('https://xrplcluster.com', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ method: 'amm_info', params: [{ amm_account: PIGEONS_AMM_ACCOUNT }] })
-    });
-    const data = await res.json();
-    const amm = data.result && data.result.amm;
+    const data = await fetchXrplClusterJson({ method: 'amm_info', params: [{ amm_account: PIGEONS_AMM_ACCOUNT }] });
+    const amm = data && data.result && data.result.amm;
     if (!amm) return null;
     // amount = XRP side (drops, as a plain string when XRP); amount2 =
     // the issued-currency side. Confirm which one is actually PIGEONS
