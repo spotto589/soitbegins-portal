@@ -82,19 +82,21 @@ export async function verifyToken(token, secret) {
 // confirmed the actual cause of the SWAP page's "click a wallet, get 0
 // Pigeons back" reports: this hit most often on the very FIRST page (no
 // marker yet), so a single rate-limited request was enough to make an
-// otherwise-real wallet look completely empty. 2 short retries per page
-// before giving up on it — cheap (a rate-limit burst is typically a
-// few-hundred-ms blip) and doesn't change the function's contract: it
-// still never throws, still returns whatever's been collected so far if
-// every attempt on a page fails. Every caller (including the write/auth
-// paths — verify, redeem, swap sign flows) still treats a short/empty
-// result as "owns nothing here," same fail-toward-refusing behavior as
-// before, just less likely to trip on a transient blip.
+// otherwise-real wallet look completely empty. Several short retries per
+// page before giving up on it (bumped from 3 to 5 attempts, growing
+// backoff — confirmed live via production log tail that 3 wasn't always
+// enough under real load) — cheap and doesn't change the function's
+// contract: it still never throws, still returns whatever's been
+// collected so far if every attempt on a page fails. Every caller
+// (including the write/auth paths — verify, redeem, swap sign flows)
+// still treats a short/empty result as "owns nothing here," same
+// fail-toward-refusing behavior as before, just less likely to trip on a
+// transient blip.
 async function fetchAccountNftsPage(account, marker) {
   const params = { account, limit: 400 };
   if (marker) params.marker = marker;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    if (attempt > 0) await new Promise(r => setTimeout(r, 350));
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, 300 + attempt * 150));
     try {
       const res = await fetch('https://xrplcluster.com', {
         method: 'POST',
@@ -599,10 +601,14 @@ const PIGEONS_AMM_ACCOUNT = 'rn5vs1Q5pzwbpzFhK85sVsuXpieNitVCQg';
 // at once, since they run concurrently in quotePigeonsForXrpDrops), the
 // same root cause as two other bugs fixed earlier this session
 // (fetchAllAccountNfts, the wallet-search 0-result bug). Same fix: a
-// couple of short retries per lookup before giving up for real.
+// few short retries per lookup before giving up for real — bumped from 3
+// to 5 attempts after confirmed-live evidence (production log tail during
+// a real user report) that 3 wasn't always enough under real load; the
+// backoff between attempts also grows slightly each time rather than a
+// flat delay, giving a longer rate-limit window more room to clear.
 async function fetchXrplClusterJson(body) {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    if (attempt > 0) await new Promise(r => setTimeout(r, 350));
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, 300 + attempt * 150));
     try {
       const res = await fetch('https://xrplcluster.com', {
         method: 'POST',
@@ -772,8 +778,18 @@ export async function buildBuySwapTxjson(buyer, xrpDrops) {
     return { ok: false, error: 'bad_amount' };
   }
 
+  // hasTrustline === null means the live lookup itself failed (even
+  // after fetchPigeonsAccountLine's own retries) — genuinely different
+  // from a confirmed-absent trustline (false), and must never be reported
+  // as "no_trustline" (which reads to the user as "you need to set up a
+  // trustline" when the real issue is a transient ledger-read failure —
+  // confirmed live as the actual cause of repeated false no_trustline
+  // reports for a wallet that has one set).
   const line = await fetchPigeonsAccountLine(buyer);
-  if (!line || line.hasTrustline !== true) {
+  if (!line || line.hasTrustline === null) {
+    return { ok: false, error: 'trustline_lookup_failed' };
+  }
+  if (line.hasTrustline !== true) {
     return { ok: false, error: 'no_trustline' };
   }
 
