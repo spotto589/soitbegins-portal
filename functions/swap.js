@@ -5625,9 +5625,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // was the only time anyone would want to buy — real feedback: someone
   // already holding a real balance still wants a quick way to buy more).
   function renderTrustlineSummary(){
-    el.pigeonsLoggedInCount.textContent = trustlinePigeonCount === null
+    el.pigeonsLoggedInCount.innerHTML = trustlinePigeonCount === null
       ? '…'
-      : trustlinePigeonCount.toLocaleString() + ' P!GE0NS 0WNED';
+      : greenNum(trustlinePigeonCount.toLocaleString()) + ' P!GE0NS 0WNED';
     if (trustlineBalanceNum === null){
       el.pigeonsBalanceValue.innerHTML = '…';
       el.pigeonsBalanceBuyBtn.style.display = 'none';
