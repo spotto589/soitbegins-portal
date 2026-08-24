@@ -4525,7 +4525,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     Aura: 'center top'
   };
   var TRAIT_PREVIEW_SIZE = {
-    Background: '350%'
+    Background: '350%',
+    // Left at plain `cover` (no zoom), the belly crop still reads as "a
+    // whole tiny Pigeon" rather than a colour swatch — zoomed in tight
+    // so the feather colour itself is what actually fills the box.
+    Feathers: '300%'
   };
   var TRAIT_PREVIEW_CORNER_POSITION = {
     Background: 'top left'
