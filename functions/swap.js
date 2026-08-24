@@ -3298,7 +3298,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       swapoffers: el.swapOffersPanelWrap
     }[tab];
     if (!panel) return;
-    window.scrollTo({ top: window.scrollY + panel.getBoundingClientRect().top, behavior: 'smooth' });
+    // Deferred one tick — the other tabs' panels just got hidden in this
+    // same call stack (showTab's own display:none toggles), which can
+    // shrink the page shorter than the scroll target for a moment; a
+    // smooth scrollTo started against that undersized document silently
+    // no-ops instead of animating once the page grows back. Waiting for
+    // the reflow to settle first keeps the target valid throughout.
+    requestAnimationFrame(function(){
+      window.scrollTo({ top: window.scrollY + panel.getBoundingClientRect().top, behavior: 'smooth' });
+    });
   }
   // Same flush-to-top feel as scrollTabStripIntoView, but for the results
   // list itself — picking a trait should feel like you've actually
