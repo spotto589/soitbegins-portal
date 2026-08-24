@@ -854,12 +854,22 @@ export function getRewardRates(accessLevel) {
 const CLIO_ENDPOINT = 'https://s2-clio.ripple.com';
 const CROWN_SNAPSHOT_KEY = 'crown:snapshot';
 const CROWN_HOLDINGS_HISTORY_KEY = 'crown:holdings-history';
+const CROWN_RECOMPUTE_LOCK_KEY = 'crown:recompute:lock';
 // board.js only bothers kicking off a background recompute once the
 // cached snapshot is at least this stale.
 export const CROWN_SNAPSHOT_MAX_AGE_SECONDS = 15 * 60;
 // Guards against back-to-back triggers (e.g. a misfiring external cron)
 // re-running the expensive scan more often than this.
 const CROWN_RECOMPUTE_MIN_INTERVAL_SECONDS = 60;
+// board.js and pigeons.js both opportunistically fire this off in the
+// background whenever the cached snapshot goes stale — under real
+// concurrent traffic that means every one of those requests independently
+// starts its own full ~31-call sequential Clio scan at once, none of
+// which finish fast enough to stop the next request from also seeing a
+// stale snapshot and piling on another. The lock below caps that at one
+// in-flight scan; the TTL just means a crashed/timed-out attempt can't
+// wedge it shut forever.
+const CROWN_RECOMPUTE_LOCK_TTL_SECONDS = 120;
 
 // Every current Pigeon NFT's owner, tallied into a Map<wallet, count>.
 // Paginates the full collection via Clio's nfts_by_issuer — the only
@@ -902,6 +912,27 @@ export async function recomputeCrownHolder(kv) {
     return existingSnapshot;
   }
 
+  // Claim the lock before doing any expensive work — if another request
+  // got here first and is still scanning, bail out now instead of also
+  // burning a full Clio scan (and another two KV writes) on the same
+  // stale snapshot everyone else already saw.
+  const lockRaw = await kv.get(CROWN_RECOMPUTE_LOCK_KEY);
+  if (lockRaw && now - Number(lockRaw) < CROWN_RECOMPUTE_LOCK_TTL_SECONDS) {
+    return existingSnapshot;
+  }
+  await safeKvPut(kv, CROWN_RECOMPUTE_LOCK_KEY, String(now), { expirationTtl: CROWN_RECOMPUTE_LOCK_TTL_SECONDS });
+
+  try {
+    return await doRecomputeCrownHolder(kv, now);
+  } finally {
+    // Release promptly on both success and failure — the lock's own TTL
+    // is just a backstop for a hard crash that skips this entirely, not
+    // meant to make every other caller wait out the full 120s normally.
+    await safeKvPut(kv, CROWN_RECOMPUTE_LOCK_KEY, '0');
+  }
+}
+
+async function doRecomputeCrownHolder(kv, now) {
   const counts = await fetchAllPigeonOwners();
 
   const historyRaw = await kv.get(CROWN_HOLDINGS_HISTORY_KEY);
@@ -960,8 +991,8 @@ export async function recomputeCrownHolder(kv) {
     topHolders,
   };
 
-  await kv.put(CROWN_HOLDINGS_HISTORY_KEY, JSON.stringify(history));
-  await kv.put(CROWN_SNAPSHOT_KEY, JSON.stringify(snapshot));
+  await safeKvPut(kv, CROWN_HOLDINGS_HISTORY_KEY, JSON.stringify(history));
+  await safeKvPut(kv, CROWN_SNAPSHOT_KEY, JSON.stringify(snapshot));
   return snapshot;
 }
 
@@ -1056,7 +1087,7 @@ export async function getBestCrownTier(kv, kingNfts) {
     const cached = await kv.get(cacheKey);
     if (cached !== null) return parseInt(cached, 10);
     const idx = await fetchCrownTierIndexForNft(nft);
-    await kv.put(cacheKey, String(idx));
+    await safeKvPut(kv, cacheKey, String(idx));
     return idx;
   }));
 
@@ -1096,7 +1127,7 @@ async function getPigeonMetaList(kv, pigeonNfts) {
       if (parsed.image !== null) return { nftId: nft.NFTokenID, ...parsed };
     }
     const info = await fetchPigeonMeta(nft);
-    if (info.image !== null) await kv.put(cacheKey, JSON.stringify(info));
+    if (info.image !== null) await safeKvPut(kv, cacheKey, JSON.stringify(info));
     return { nftId: nft.NFTokenID, ...info };
   }));
 }
@@ -2139,7 +2170,7 @@ export async function getKingThumbnails(kv, kingNfts) {
     const cachedRaw = await kv.get(cacheKey);
     const cached = cachedRaw !== null ? JSON.parse(cachedRaw) : null;
     const info = (cached !== null && cached.image !== null) ? cached : await fetchKingMeta(nft);
-    if ((cached === null || cached.image === null) && info.image !== null) await kv.put(cacheKey, JSON.stringify(info));
+    if ((cached === null || cached.image === null) && info.image !== null) await safeKvPut(kv, cacheKey, JSON.stringify(info));
     const label = info.number !== null
       ? `KING #${String(info.number).padStart(4, '0')}`
       : `KING #${nft.NFTokenID.slice(-4)}`;
