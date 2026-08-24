@@ -547,28 +547,22 @@ const PIGEONS_RATE_CACHE_KEY = 'pswap:pigeonsrate:v2';
 const PIGEONS_RATE_CACHE_TTL_SECONDS = 60;
 
 async function fetchPigeonsXrpRateFromBookOffers() {
-  try {
-    const res = await fetch('https://xrplcluster.com', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        method: 'book_offers',
-        params: [{
-          taker_gets: { currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency), issuer: PIGEONS_TOKEN_CONFIG.issuer },
-          taker_pays: { currency: 'XRP' },
-          limit: 5
-        }]
-      })
-    });
-    const data = await res.json();
-    const offers = (data.result && data.result.offers) || [];
-    const best = offers.find(o => typeof o.TakerGets === 'object' && typeof o.TakerPays === 'string' && parseFloat(o.TakerGets.value) > 0);
-    if (best) {
-      const pigeonsOut = parseFloat(best.TakerGets.value);
-      const dropsIn = parseFloat(best.TakerPays);
-      if (pigeonsOut > 0 && dropsIn > 0) return (dropsIn / 1000000) / pigeonsOut;
-    }
-  } catch (e) { /* fall through to null */ }
+  const data = await fetchXrplClusterJson({
+    method: 'book_offers',
+    params: [{
+      taker_gets: { currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency), issuer: PIGEONS_TOKEN_CONFIG.issuer },
+      taker_pays: { currency: 'XRP' },
+      limit: 5
+    }]
+  });
+  if (!data) return null;
+  const offers = (data.result && data.result.offers) || [];
+  const best = offers.find(o => typeof o.TakerGets === 'object' && typeof o.TakerPays === 'string' && parseFloat(o.TakerGets.value) > 0);
+  if (best) {
+    const pigeonsOut = parseFloat(best.TakerGets.value);
+    const dropsIn = parseFloat(best.TakerPays);
+    if (pigeonsOut > 0 && dropsIn > 0) return (dropsIn / 1000000) / pigeonsOut;
+  }
   return null;
 }
 
@@ -841,25 +835,17 @@ export async function buildBuySwapTxjson(buyer, xrpDrops) {
 // Returns null if the transaction isn't found/validated yet (caller
 // should keep polling), never a fabricated "still pending" guess.
 export async function fetchValidatedTxResult(txHash) {
-  try {
-    const res = await fetch('https://xrplcluster.com', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ method: 'tx', params: [{ transaction: txHash }] })
-    });
-    const data = await res.json();
-    const result = data.result;
-    if (!result || !result.validated) return null;
-    const meta = result.meta || result.metaData;
-    if (!meta) return null;
-    return {
-      validated: true,
-      transactionResult: meta.TransactionResult,
-      deliveredAmount: meta.delivered_amount || null
-    };
-  } catch (e) {
-    return null;
-  }
+  const data = await fetchXrplClusterJson({ method: 'tx', params: [{ transaction: txHash }] });
+  if (!data) return null;
+  const result = data.result;
+  if (!result || !result.validated) return null;
+  const meta = result.meta || result.metaData;
+  if (!meta) return null;
+  return {
+    validated: true,
+    transactionResult: meta.TransactionResult,
+    deliveredAmount: meta.delivered_amount || null
+  };
 }
 
 export async function fetchPigeonsXrpRate(kv) {
@@ -898,24 +884,22 @@ export async function fetchPigeonsXrpRate(kv) {
 // failure returns nulls so callers can tell "no trustline" from
 // "couldn't check" and not conflate the two.
 export async function fetchPigeonsAccountLine(account) {
-  try {
-    const res = await fetch('https://xrplcluster.com', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        method: 'account_lines',
-        params: [{ account, peer: PIGEONS_TOKEN_CONFIG.issuer }]
-      })
-    });
-    const data = await res.json();
-    const lines = (data.result && data.result.lines) || [];
-    const wantCurrency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
-    const line = lines.find(l => l.currency === wantCurrency);
-    if (!line) return { hasTrustline: false, balance: 0 };
-    return { hasTrustline: true, balance: parseFloat(line.balance) || 0 };
-  } catch (e) {
-    return { hasTrustline: null, balance: null };
-  }
+  // Routed through the same retrying fetchXrplClusterJson every other
+  // xrplcluster.com call in the BUY $PIGEONS path now uses — this one had
+  // zero retry until confirmed live as the direct cause of "N0 TRUSTL!NE"
+  // intermittently showing for a wallet that genuinely has one set,
+  // including inside buildBuySwapTxjson (server-side prepare/payload),
+  // which made it a hard block on buying, not just a display glitch.
+  const data = await fetchXrplClusterJson({
+    method: 'account_lines',
+    params: [{ account, peer: PIGEONS_TOKEN_CONFIG.issuer }]
+  });
+  if (!data) return { hasTrustline: null, balance: null };
+  const lines = (data.result && data.result.lines) || [];
+  const wantCurrency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
+  const line = lines.find(l => l.currency === wantCurrency);
+  if (!line) return { hasTrustline: false, balance: 0 };
+  return { hasTrustline: true, balance: parseFloat(line.balance) || 0 };
 }
 
 // Native XRP balance for one wallet, in exact integer drops (never a
@@ -926,22 +910,15 @@ export async function fetchPigeonsAccountLine(account) {
 // check" (network/parse failure), not "zero balance" — callers must not
 // conflate the two.
 export async function fetchXrpBalanceDrops(account) {
-  try {
-    const res = await fetch('https://xrplcluster.com', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        method: 'account_info',
-        params: [{ account }]
-      })
-    });
-    const data = await res.json();
-    const drops = data.result && data.result.account_data && data.result.account_data.Balance;
-    if (typeof drops !== 'string' || !/^\d+$/.test(drops)) return null;
-    return drops;
-  } catch (e) {
-    return null;
-  }
+  // Same retry-hardening as fetchPigeonsAccountLine just above — this was
+  // the direct cause of buildBuySwapTxjson's "balance_lookup_failed"
+  // blocking real purchases on nothing more than a transient
+  // xrplcluster.com blip.
+  const data = await fetchXrplClusterJson({ method: 'account_info', params: [{ account }] });
+  if (!data) return null;
+  const drops = data.result && data.result.account_data && data.result.account_data.Balance;
+  if (typeof drops !== 'string' || !/^\d+$/.test(drops)) return null;
+  return drops;
 }
 
 // tfTransferable (0x0008) — an NFT without this flag can never be sold to
