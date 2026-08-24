@@ -78,28 +78,44 @@ export async function verifyToken(token, secret) {
   }
 }
 
-export async function fetchAllAccountNfts(account) {
-  let all = [];
-  let marker;
-  do {
-    const params = { account, limit: 400 };
-    if (marker) params.marker = marker;
-    let data;
+// xrplcluster.com rate-limits under bursts (plain-text body, not JSON) —
+// confirmed the actual cause of the SWAP page's "click a wallet, get 0
+// Pigeons back" reports: this hit most often on the very FIRST page (no
+// marker yet), so a single rate-limited request was enough to make an
+// otherwise-real wallet look completely empty. 2 short retries per page
+// before giving up on it — cheap (a rate-limit burst is typically a
+// few-hundred-ms blip) and doesn't change the function's contract: it
+// still never throws, still returns whatever's been collected so far if
+// every attempt on a page fails. Every caller (including the write/auth
+// paths — verify, redeem, swap sign flows) still treats a short/empty
+// result as "owns nothing here," same fail-toward-refusing behavior as
+// before, just less likely to trip on a transient blip.
+async function fetchAccountNftsPage(account, marker) {
+  const params = { account, limit: 400 };
+  if (marker) params.marker = marker;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, 350));
     try {
       const res = await fetch('https://xrplcluster.com', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ method: 'account_nfts', params: [params] })
       });
-      data = await res.json();
+      return await res.json();
     } catch (e) {
-      // xrplcluster.com rate-limits under bursts (plain-text body, not
-      // JSON) — stop here with whatever's already been collected rather
-      // than throwing. Every caller treats an empty/short result as "owns
-      // nothing (here)," which fails toward refusing an action, never
-      // toward wrongly allowing or confirming one.
-      break;
+      // Non-JSON (rate-limit) body, or the fetch itself failed — try again
+      // if attempts remain, otherwise fall through and give up on this page.
     }
+  }
+  return null;
+}
+
+export async function fetchAllAccountNfts(account) {
+  let all = [];
+  let marker;
+  do {
+    const data = await fetchAccountNftsPage(account, marker);
+    if (!data) break;
     const nfts = (data.result && data.result.account_nfts) || [];
     all = all.concat(nfts);
     marker = data.result && data.result.marker;
