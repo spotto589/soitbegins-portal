@@ -1939,6 +1939,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .trait-cell .tc-label{ font-size:14px; }
   #screenDetail .trait-cell .tc-value{ font-size:19px; }
   #screenDetail .trait-cell .tc-sub{ font-size:14px; }
+  /* Real trait cells (not RARITY/RARITY SCORE, which keeps label-then-
+     value) now render value-then-label — .tc-label's own margin-bottom
+     (spacing meant for when it came first) would leave no gap here, so
+     flip it to margin-top instead, scoped to just .trait-grid's own
+     cells. */
+  #screenDetail .trait-grid .tc-label{ margin-bottom:0; margin-top:0.35rem; }
   /* Real Pigeon-photo background (see traitCellHtml), same as ADD TRAITS'
      own .has-preview boxes — white text + shadow so labels/values stay
      readable over the photo instead of the plain grey-on-dark default. */
@@ -4589,40 +4595,46 @@ const SWAP_HTML = `<!DOCTYPE html>
   // only — the Pigeon character is always centered, corners never are)
   // instead of a synthetic colour guess, per explicit correction: it must
   // be the exact background from the real image, not an approximation.
-  // Positions measured directly off real renders (downloaded and eyeballed
-  // pixel-by-pixel against the 1024x1024 source, not guessed) — every
-  // Pigeon shares the same head-and-shoulders composition, so these hold
-  // across the whole collection regardless of which specific trait value
-  // is showing.
+  // Positions + sizes verified against real renders, not guessed: three
+  // reference images downloaded and cropped locally with the exact same
+  // background-size/background-position math the browser uses (including
+  // that a bare percentage on background-size scales BOTH axes off the
+  // box's WIDTH, so a wide-short trait-cell box amplifies the effective
+  // vertical zoom well past the raw percentage — missed on the first
+  // pass, which is why the numbers here look larger than you'd expect
+  // from the percentage alone), then eyeballed to confirm each one
+  // actually lands on the right trait. Every Pigeon shares the same
+  // head-and-shoulders composition, so these hold across the whole
+  // collection regardless of which specific trait value is showing.
   var TRAIT_PREVIEW_POSITION = {
-    Eyewear: 'center 42%',
-    // Feather colour reads clearest on the belly, well below the
-    // head/beak area — pushed further down after the first pass at 55%
-    // was still catching the beak.
-    Feathers: 'center 75%',
+    // Between the beak/mouth (~50-60%) and the clothing collar
+    // (~63%+) — feather colour+texture visible with the least other-
+    // trait overlap of any band on the portrait.
+    Eyewear: 'center 38%',
+    Feathers: 'center 40%',
     // Aura is a glow/halo effect around the whole character — the very
     // top edge of the frame, not the head-biased default.
     Aura: 'center top',
-    Beak: 'center 52%',
+    // Low enough to fill the box with the mouth/teeth, not just catch
+    // the very top of the beak with teeth cut off at the bottom edge.
+    Beak: 'center 62%',
     Headwear: 'center 15%',
-    Clothing: 'center 80%'
+    // Bottom-anchored — chest-level clothing pattern, not the collar/
+    // neckline that a mid-value position mostly showed instead.
+    Clothing: 'center 100%'
   };
   // Every category zoomed in tight enough that the box reads as "a crop
   // of exactly this trait", not "a whole tiny Pigeon photo, which trait
   // is that again". Left at plain cover (no zoom), a crop still shows
   // the whole character — zoomed sizes tuned per category below, same
-  // treatment Background/Feathers already got. Kept moderate (not as
-  // tight as Background/Feathers) for categories whose actual graphic
-  // size varies a lot between values (a small pair of glasses vs a huge
-  // headdress) — too tight and a bigger value's own art gets cropped off
-  // rather than framed.
+  // treatment Background/Feathers already got.
   var TRAIT_PREVIEW_SIZE = {
     Background: '350%',
-    Feathers: '300%',
-    Eyewear: '230%',
-    Beak: '240%',
+    Feathers: '280%',
+    Eyewear: '280%',
+    Beak: '280%',
     Headwear: '220%',
-    Clothing: '190%',
+    Clothing: '200%',
     Aura: '200%'
   };
   var TRAIT_PREVIEW_CORNER_POSITION = {
@@ -6231,7 +6243,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       : '';
     return '<div class="trait-cell' + (exampleImg ? ' has-preview' : '') + '" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' + style +
       ' title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
-      '<div class="tc-label">' + escapeHtml(a.trait_type) + '</div><div class="tc-value">' + escapeHtml(a.value) + '</div>' + sub +
+      // Value first, category second — "G0LDEN FEATHERS" reads as one
+      // phrase describing the trait, not a label/value form field.
+      '<div class="tc-value">' + escapeHtml(a.value) + '</div><div class="tc-label">' + escapeHtml(a.trait_type) + '</div>' + sub +
     '</div>';
   }
   // Clicking a trait cell on the INSPECT screen filters the browse view down
