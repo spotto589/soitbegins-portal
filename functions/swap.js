@@ -3986,7 +3986,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // (the tab opened but stayed on about:blank forever). Not needed for
     // safety anyway since the destination is our own trusted API response,
     // not user-supplied content.
-    var xamanTab = window.open('', '_blank');
+    var xamanTab = openXamanPopup();
     fetch('/api/swap-offer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -4001,8 +4001,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       swapOfferState.uuid = res.data.uuid;
-      if (xamanTab) xamanTab.location.href = res.data.next.always;
-      else window.open(res.data.next.always, '_blank');
+      navigateXamanPopup(xamanTab, res.data.next.always);
       el.swapOfferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.swapConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
       pollSwapOfferStatus();
@@ -4186,7 +4185,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.swapAcceptOpenXamanBtn.disabled = true;
     el.swapAcceptOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
     el.acceptConfirmStatus.textContent = '';
-    var xamanTab = window.open('', '_blank');
+    var xamanTab = openXamanPopup();
     fetch('/api/swap-accept-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -4201,8 +4200,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       swapAcceptState.uuid = res.data.uuid;
-      if (xamanTab) xamanTab.location.href = res.data.next.always;
-      else window.open(res.data.next.always, '_blank');
+      navigateXamanPopup(xamanTab, res.data.next.always);
       el.swapAcceptOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.acceptConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
       pollSwapAcceptStatus();
@@ -5658,6 +5656,30 @@ const SWAP_HTML = `<!DOCTYPE html>
   var listingPollTimer = null;
   var listingXamanTab = null;
 
+  // A real sized popup window (chrome-less: no menubar/toolbar/address
+  // bar) instead of a full new browser tab — reads as an actual app
+  // dialog for the Xaman handoff instead of a stray abandoned tab. Same
+  // named target ('xamanSign') every time, so a second sign request
+  // reuses/replaces the same popup rather than spawning more of them.
+  // Note: the popup itself still shows a blank moment while xumm.app's
+  // own hosted sign page loads — that load time is Xaman's, not
+  // something this site controls; this only changes the window's shape.
+  var XAMAN_POPUP_FEATURES = 'width=420,height=760,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
+  function openXamanPopup(){
+    return window.open('', 'xamanSign', XAMAN_POPUP_FEATURES);
+  }
+  // tabRef is whatever openXamanPopup() returned when this whole flow
+  // started (called synchronously in the click handler, before any async
+  // gap — window.open() from inside a .then() callback gets silently
+  // popup-blocked in most browsers). Navigate that same reference now
+  // that the real URL is known; only fall back to a fresh window.open()
+  // call if the original one somehow failed to open at all (e.g. was
+  // blocked despite the synchronous call).
+  function navigateXamanPopup(tabRef, url){
+    if (tabRef) tabRef.location.href = url;
+    else window.open(url, 'xamanSign', XAMAN_POPUP_FEATURES);
+  }
+
   // Once a poll confirms a sign request actually settled, the Xaman tab
   // has done its job — close it and bring focus back to this tab instead
   // of leaving the user staring at Xaman's own "signed" page.
@@ -5714,7 +5736,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Open a blank tab synchronously in this click handler, then navigate
     // it once the fetch resolves — window.open() called inside the async
     // .then() below gets silently popup-blocked in most browsers.
-    listingXamanTab = window.open('', '_blank');
+    listingXamanTab = openXamanPopup();
     fetch('/api/swap-listing-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -6170,7 +6192,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.buySwapOpenXamanBtn.disabled = true;
     el.buySwapOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
     el.buySwapConfirmStatus.textContent = '';
-    var xamanTab = window.open('', '_blank');
+    var xamanTab = openXamanPopup();
     fetch('/api/buyswap-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -6185,8 +6207,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       buySwapUuid = res.data.uuid;
-      if (xamanTab) xamanTab.location.href = res.data.next.always;
-      else window.open(res.data.next.always, '_blank');
+      navigateXamanPopup(xamanTab, res.data.next.always);
       buySwapXamanTab = xamanTab;
       el.buySwapOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.buySwapConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
@@ -6282,7 +6303,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       buyUuid = res.data.uuid;
-      buyXamanTab = window.open(res.data.next.always, '_blank');
+      buyXamanTab = window.open(res.data.next.always, 'xamanSign', XAMAN_POPUP_FEATURES);
       el.buyOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.buyConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
       pollBuyStatus();
@@ -6415,7 +6436,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       delistUuid = res.data.uuid;
-      delistXamanTab = window.open(res.data.next.always, '_blank');
+      delistXamanTab = window.open(res.data.next.always, 'xamanSign', XAMAN_POPUP_FEATURES);
       el.delistOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
       el.delistConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
       pollDelistStatus();
@@ -6560,7 +6581,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Open a blank tab synchronously in this click handler, then navigate
     // it once the fetch resolves — window.open() called inside the async
     // .then() below gets silently popup-blocked in most browsers.
-    offerXamanTab = window.open('', '_blank');
+    offerXamanTab = openXamanPopup();
     fetch('/api/swap-makeoffer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -6689,7 +6710,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.acceptOfferOpenXamanBtn.disabled = true;
     el.acceptOfferOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
     el.acceptOfferConfirmStatus.textContent = '';
-    acceptOfferXamanTab = window.open('', '_blank');
+    acceptOfferXamanTab = openXamanPopup();
     fetch('/api/swap-acceptoffer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
