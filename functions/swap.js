@@ -2663,7 +2663,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
       <div class="detail-sales-section">
         <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
-        <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
+        <div class="detail-field" id="detailHighSaleRow"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
+        <div class="detail-field" id="detailRecentSaleRow"><span class="df-label">RECENT SALE</span><span class="df-value price" id="detailRecentSale"></span></div>
         <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVERAGE SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
       </div>
       <div class="detail-history">
@@ -3032,7 +3033,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory',
-   'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailAvgSaleRow','detailAvgSale','detailBuyBtn','detailTraits',
+   'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailBuyBtn','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn','viewDeeptideLink','viewXrpCafeLink','viewBithompLink',
    'backToBrowseBtn',
@@ -4588,31 +4589,40 @@ const SWAP_HTML = `<!DOCTYPE html>
   // only — the Pigeon character is always centered, corners never are)
   // instead of a synthetic colour guess, per explicit correction: it must
   // be the exact background from the real image, not an approximation.
+  // Positions measured directly off real renders (downloaded and eyeballed
+  // pixel-by-pixel against the 1024x1024 source, not guessed) — every
+  // Pigeon shares the same head-and-shoulders composition, so these hold
+  // across the whole collection regardless of which specific trait value
+  // is showing.
   var TRAIT_PREVIEW_POSITION = {
-    Eyewear: 'center 32%',
+    Eyewear: 'center 42%',
     // Feather colour reads clearest on the belly, well below the
     // head/beak area — pushed further down after the first pass at 55%
     // was still catching the beak.
     Feathers: 'center 75%',
-    // Aura is a glow/halo effect above the head — the very top edge of
-    // the frame, not the head-biased default.
+    // Aura is a glow/halo effect around the whole character — the very
+    // top edge of the frame, not the head-biased default.
     Aura: 'center top',
-    Beak: 'center 38%',
-    Headwear: 'center 5%',
-    Clothing: 'center 68%'
+    Beak: 'center 52%',
+    Headwear: 'center 15%',
+    Clothing: 'center 80%'
   };
   // Every category zoomed in tight enough that the box reads as "a crop
   // of exactly this trait", not "a whole tiny Pigeon photo, which trait
   // is that again". Left at plain cover (no zoom), a crop still shows
   // the whole character — zoomed sizes tuned per category below, same
-  // treatment Background/Feathers already got.
+  // treatment Background/Feathers already got. Kept moderate (not as
+  // tight as Background/Feathers) for categories whose actual graphic
+  // size varies a lot between values (a small pair of glasses vs a huge
+  // headdress) — too tight and a bigger value's own art gets cropped off
+  // rather than framed.
   var TRAIT_PREVIEW_SIZE = {
     Background: '350%',
     Feathers: '300%',
-    Eyewear: '260%',
-    Beak: '280%',
-    Headwear: '240%',
-    Clothing: '220%',
+    Eyewear: '230%',
+    Beak: '240%',
+    Headwear: '220%',
+    Clothing: '190%',
     Aura: '200%'
   };
   var TRAIT_PREVIEW_CORNER_POSITION = {
@@ -6268,14 +6278,25 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailPriceRow.style.display = 'none';
       el.detailBuyBtn.style.display = 'none';
     }
+    // REC0RD SALE / RECENT SALE always show a value now, never hide the
+    // row — a Pigeon that's never changed hands isn't "missing sale
+    // data", it just has none yet, so it says so instead of leaving a
+    // gap where those two fields would otherwise be.
     if (p && p.highSaleXrp !== null && p.highSaleXrp !== undefined){
-      el.detailHighSaleRow.style.display = '';
       var hsText = p.highSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
       el.detailHighSale.innerHTML = p.highSaleTxUrl
         ? '<a class="owner-link" href="' + escapeHtml(p.highSaleTxUrl) + '" target="_blank" rel="noopener">' + escapeHtml(hsText) + '</a>'
         : escapeHtml(hsText);
     } else {
-      el.detailHighSaleRow.style.display = 'none';
+      el.detailHighSale.textContent = 'F!RST 0WNER';
+    }
+    if (p && p.recentSaleXrp !== null && p.recentSaleXrp !== undefined){
+      var rsText = p.recentSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+      el.detailRecentSale.innerHTML = p.recentSaleTxUrl
+        ? '<a class="owner-link" href="' + escapeHtml(p.recentSaleTxUrl) + '" target="_blank" rel="noopener">' + escapeHtml(rsText) + '</a>'
+        : escapeHtml(rsText);
+    } else {
+      el.detailRecentSale.textContent = 'F!RST 0WNER';
     }
     if (p && p.avgSaleXrp !== null && p.avgSaleXrp !== undefined){
       el.detailAvgSaleRow.style.display = '';
