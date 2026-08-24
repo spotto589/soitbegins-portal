@@ -738,7 +738,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     .db-config-group-split{ flex-direction:column; align-items:stretch; gap:0.75rem; }
     .db-config-traits-section{ border-left:none; border-top:1px solid var(--border-mid); padding-left:0; padding-top:0.75rem; }
   }
-  .sort-field{ display:flex; align-items:center; gap:0.6rem; }
+  /* justify-content:center + wrap so this stays centered as a group
+     whether it fits on one line or (narrower widths) the label and the
+     dropdown box wrap to their own lines — previously only the whole
+     .sort-field-inline group was centered within the results-header-row
+     grid, not its own two pieces relative to each other once wrapped. */
+  .sort-field{ display:flex; align-items:center; justify-content:center; gap:0.6rem; flex-wrap:wrap; }
   .sort-field-label{
     font-size:12px;
     letter-spacing:0.1em;
