@@ -996,11 +996,15 @@ const SWAP_HTML = `<!DOCTYPE html>
        centering the crop cut off too much of it; biasing toward the top
        keeps the beak in view. */
     background-position:center 20%;
-    color:#fff;
-    text-shadow:0 1px 3px rgba(0,0,0,0.9);
+    /* Plain white read as washed-out against a busy photo — cyan (with
+       the same dark shadow, plus real weight) holds up much better. */
+    color:var(--cyan);
+    font-weight:700;
+    font-size:17px;
+    text-shadow:0 0 4px var(--cyan-glow), 0 1px 3px rgba(0,0,0,0.9);
   }
-  #traitsFlyoutVals .traits-flyout-val.has-preview .tfv-count{ color:#e8e8e8; }
-  #traitsFlyoutVals .traits-flyout-val.has-preview:hover{ border-color:var(--cyan); color:#fff; }
+  #traitsFlyoutVals .traits-flyout-val.has-preview .tfv-count{ color:var(--cyan); font-size:16px; }
+  #traitsFlyoutVals .traits-flyout-val.has-preview:hover{ border-color:var(--cyan); color:var(--cyan); }
   #traitsFlyoutVals .traits-flyout-val.has-preview.selected{
     border-color:var(--cyan);
     box-shadow:inset 0 0 0 2px var(--cyan);
@@ -1947,12 +1951,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      cells. */
   #screenDetail .trait-grid .tc-label{ margin-bottom:0; margin-top:0.35rem; }
   /* Real Pigeon-photo background (see traitCellHtml), same as ADD TRAITS'
-     own .has-preview boxes — white text + shadow so labels/values stay
-     readable over the photo instead of the plain grey-on-dark default. */
+     own .has-preview boxes — plain white read as washed-out against a
+     busy photo, cyan (with weight + its own glow on top of the dark
+     shadow) holds up much better. */
   #screenDetail .trait-cell.has-preview{ background-size:cover; background-position:center 20%; }
-  #screenDetail .trait-cell.has-preview .tc-label{ color:#e8e8e8; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
-  #screenDetail .trait-cell.has-preview .tc-value{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
-  #screenDetail .trait-cell.has-preview .tc-sub{ text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+  #screenDetail .trait-cell.has-preview .tc-label{ color:var(--cyan); font-weight:700; font-size:15px; text-shadow:0 0 4px var(--cyan-glow), 0 1px 3px rgba(0,0,0,0.9); }
+  #screenDetail .trait-cell.has-preview .tc-value{ color:var(--cyan); font-weight:700; font-size:20px; text-shadow:0 0 4px var(--cyan-glow), 0 1px 3px rgba(0,0,0,0.9); }
+  #screenDetail .trait-cell.has-preview .tc-sub{ color:var(--cyan); font-weight:700; text-shadow:0 0 4px var(--cyan-glow), 0 1px 3px rgba(0,0,0,0.9); }
   #screenDetail .trait-cell.has-preview:hover{ border-color:var(--cyan); }
   /* Constrained instead of stretching the field's label/value across the
      whole (wide) right column — that gap made label and value feel
@@ -4650,9 +4655,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
     var exampleImages = (state.traitExamples && state.traitExamples[category]) || {};
     el.traitsFlyoutVals.innerHTML = vals.map(function(v){
-      var pct = v.percent !== null && v.percent !== undefined ? v.percent.toFixed(3) + '%' : '—';
-      var count = v.count !== null && v.count !== undefined ? v.count : '—';
       var exampleImg = exampleImages[v.value];
+      // Photo-backed boxes get their numbers greened (see .has-preview CSS
+      // for the cyan label colour) — only the digits, not the % or the
+      // surrounding "::" — plain boxes keep the original plain-grey count.
+      var pct = v.percent !== null && v.percent !== undefined
+        ? (exampleImg ? greenNum(v.percent.toFixed(3)) + '%' : v.percent.toFixed(3) + '%')
+        : '—';
+      var count = v.count !== null && v.count !== undefined
+        ? (exampleImg ? greenNum(v.count) : v.count)
+        : '—';
       var previewPos = TRAIT_PREVIEW_CORNER_POSITION[category] || TRAIT_PREVIEW_POSITION[category];
       var previewSize = TRAIT_PREVIEW_SIZE[category];
       // A zoomed background-only corner crop is already a plain patch of
@@ -6226,7 +6238,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // ---- Inspect / detail ----
   function traitCellHtml(a){
     var sub = (a.percent !== null && a.percent !== undefined)
-      ? '<div class="tc-sub">' + greenNum((typeof a.percent === 'number' ? a.percent.toFixed(3) : a.percent) + '%') + (a.count !== null && a.count !== undefined ? '<br>' + greenNum('(' + a.count + ')') : '') + '</div>'
+      ? '<div class="tc-sub">' + greenNum(typeof a.percent === 'number' ? a.percent.toFixed(3) : a.percent) + '%' + (a.count !== null && a.count !== undefined ? '<br>(' + greenNum(a.count) + ')' : '') + '</div>'
       : '';
     // Same real-photo-as-background treatment as the ADD TRAITS flyout's
     // own trait boxes (renderTraitsFlyoutVals) — same example image
