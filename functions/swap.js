@@ -570,9 +570,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .th-row:last-child{ border-bottom:none; }
   .th-row:hover{ background:var(--cyan-faint); }
-  .th-rank{ flex:0 0 3.4em; color:var(--cyan); }
-  .th-wallet{ flex:1; min-width:0; color:var(--white); word-break:break-all; }
-  .th-count{ flex:0 0 auto; color:var(--white); text-transform:uppercase; }
+  .th-rank{ flex:0 0 3.4em; color:var(--cyan); text-align:center; }
+  .th-wallet{ flex:1; min-width:0; color:var(--white); word-break:break-all; text-align:center; }
+  .th-count{ flex:0 0 auto; color:var(--white); text-transform:uppercase; text-align:center; }
   .th-empty{ text-align:center; font-size:11px; letter-spacing:0.08em; color:var(--grey-dim); padding:0.5rem 0; text-transform:uppercase; }
 
   /* ---- sales history ---- */
