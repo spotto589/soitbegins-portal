@@ -1825,12 +1825,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:0;
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
-    padding:clamp(1.25rem, 4vh, 3rem) clamp(1rem, 4vw, 3rem);
+    /* Extra bottom padding — room for the fixed BACK button (see
+       .detail-back-btn below) so it never overlaps VIEW ELSEWHERE. */
+    padding:clamp(1.25rem, 4vh, 3rem) clamp(1rem, 4vw, 3rem) clamp(5rem, 12vh, 6rem);
   }
   /* Named grid areas so PIGEON #N sits in its own row above just the
-     picture's column, while TRAITS (the right column's first row) starts
-     level with the picture's own top — not pushed down by the number,
-     since the right column never occupies the "num" row at all. */
+     picture's column, while the trait grid (the right column's first
+     row) starts level with the picture's own top — not pushed down by
+     the number, since the right column never occupies the "num" row at
+     all. The "left right" row itself stretches both columns to the same
+     height (tallest of the two, normally the picture's column), which is
+     what lets the right column pin its trait grid to the top and its
+     RARITY/RARITY SCORE row to the bottom — flush with the picture's own
+     top and bottom edges — via the flex rule on .detail-col-right below. */
   .detail-two-col{
     display:grid;
     grid-template-columns:minmax(320px, 480px) 1fr;
@@ -1838,11 +1845,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       "num  owner"
       "left right";
     gap:0.75rem 2rem;
-    align-items:start;
+    align-items:stretch;
   }
   #screenDetail .detail-two-col > .detail-num{ grid-area:num; text-align:center; margin:0; }
   .detail-col-left{ grid-area:left; }
-  .detail-col-right{ grid-area:right; }
+  .detail-col-right{ grid-area:right; display:flex; flex-direction:column; justify-content:space-between; }
   /* Owner address sits flush with P!GE0N #N — same row, same text weight —
      instead of buried as a small label further down the right column. */
   .detail-owner-top{ grid-area:owner; text-align:center; font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:0.04em; margin:0; }
@@ -1852,7 +1859,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:760px){
     .detail-two-col{ grid-template-columns:1fr; grid-template-areas:"num" "owner" "left" "right"; gap:0.75rem; }
   }
-  #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0 0 1.25rem; cursor:pointer; }
+  #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0 0 1.25rem; cursor:zoom-in; }
   #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 1.25rem; }
   /* $PIGEONS listing — the collection's own purple, matching the DATABASE
      card's OFFER AMOUNT box (.thumb-offer) instead of a plain grey block —
@@ -1871,8 +1878,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .scylla-listing-price{ font-size:17px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
   #screenDetail #detailMakeOfferRow{ margin-top:0.75rem; }
   #screenDetail .detail-num{ font-size:28px; }
-  #screenDetail .detail-traits-title{ font-size:13px; margin-top:0; }
-  #screenDetail .trait-grid{ max-width:100%; margin:0 0 1.5rem; grid-template-columns:repeat(3, 1fr); gap:0.7rem; }
+  #screenDetail .trait-grid{ max-width:100%; margin:0; grid-template-columns:repeat(3, 1fr); gap:0.7rem; }
   @media (max-width:520px){
     #screenDetail .trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
@@ -1896,12 +1902,27 @@ const SWAP_HTML = `<!DOCTYPE html>
      (label above value) — the actual score isn't computed yet, so that
      box just reads COMING SOON. Neither is clickable (unlike real trait
      cells in the grid above). */
-  #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.7rem; margin:0 0 1rem; max-width:100%; }
+  #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.7rem; margin:0; max-width:100%; }
   @media (max-width:520px){
     #screenDetail .detail-rarity-row{ grid-template-columns:repeat(2, 1fr); }
   }
   #screenDetail .detail-rarity-row .trait-cell{ cursor:default; text-align:center; min-width:0; }
   #screenDetail .detail-rarity-row .trait-cell:hover{ background:transparent; border-color:var(--border-dim); }
+  /* PRICE / RECORD SALE / AVERAGE SALE — a full-width section of its own
+     underneath the picture+traits row (not squeezed into the right
+     column), same dashed-divider treatment as TRANSACT!0N H!ST0RY and
+     V!EW ELSEWHERE right below it. */
+  #screenDetail .detail-sales-section{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:0.5rem 2.5rem;
+    max-width:640px;
+    margin:1.5rem auto 0;
+    padding-top:1rem;
+    border-top:1px dashed var(--border-dim);
+  }
+  #screenDetail .detail-sales-section .detail-field{ margin:0; }
   /* RECORD SALE / AVERAGE SALE stacked, same label/value row style as
      every other .detail-field (OWNER, PRICE, etc). */
   #screenDetail .tech-meta-title{ font-size:12px; }
@@ -2080,9 +2101,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-shadow:0 4px 18px rgba(0,0,0,0.55), 0 0 14px var(--cyan-glow);
   }
   #screenDetail .detail-back-btn:hover{ background:var(--cyan-faint); }
-  /* Room at the bottom of the scrollable content so the fixed BACK button
-     never overlaps VIEW ELSEWHERE's links. */
-  #screenDetail .detail-col-right{ padding-bottom:5rem; }
   @media (max-width:760px){
     #screenDetail .detail-back-btn{ font-size:15px; padding:0.8em 1.3em; }
   }
@@ -2561,7 +2579,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
         <div class="detail-col-right">
-          <div class="detail-traits-title">TRA!TS</div>
           <div class="trait-grid" id="detailTraits"></div>
           <div class="detail-rarity-row" id="detailRarityRow" style="display:none;">
             <div class="trait-cell">
@@ -2573,25 +2590,25 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="tc-value">C0M!NG S00N</div>
             </div>
           </div>
-          <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
-          <div class="detail-sales-row">
-            <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
-            <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVERAGE SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
-          </div>
-          <div class="detail-history">
-            <button class="th-toggle" id="detailHistoryToggle">[ TRANSACT!0N H!ST0RY ]</button>
-          </div>
-          <div class="view-elsewhere">
-            <div class="tech-meta-title">V!EW ELSEWHERE</div>
-            <div class="view-links">
-              <a class="secondary-btn" id="viewDeeptideLink" target="_blank" rel="noopener">[ DEEPT!DE ]</a>
-              <a class="secondary-btn" id="viewXrpCafeLink" target="_blank" rel="noopener">[ XRP.CAFE ]</a>
-              <a class="secondary-btn" id="viewBithompLink" target="_blank" rel="noopener">[ B!TH0MP ]</a>
-            </div>
-          </div>
-          <button class="secondary-btn detail-back-btn" id="backToBrowseBtn">[ ← BACK ]</button>
         </div>
       </div>
+      <div class="detail-sales-section">
+        <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
+        <div class="detail-field" id="detailHighSaleRow" style="display:none;"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
+        <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVERAGE SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
+      </div>
+      <div class="detail-history">
+        <button class="th-toggle" id="detailHistoryToggle">[ TRANSACT!0N H!ST0RY ]</button>
+      </div>
+      <div class="view-elsewhere">
+        <div class="tech-meta-title">V!EW ELSEWHERE</div>
+        <div class="view-links">
+          <a class="secondary-btn" id="viewDeeptideLink" target="_blank" rel="noopener">[ DEEPT!DE ]</a>
+          <a class="secondary-btn" id="viewXrpCafeLink" target="_blank" rel="noopener">[ XRP.CAFE ]</a>
+          <a class="secondary-btn" id="viewBithompLink" target="_blank" rel="noopener">[ B!TH0MP ]</a>
+        </div>
+      </div>
+      <button class="secondary-btn detail-back-btn" id="backToBrowseBtn">[ ← BACK ]</button>
       <div class="detail-actions">
         <a class="action-btn" id="detailBuyBtn" style="display:none;" target="_blank" rel="noopener">[ BUY 0N DEEPT!DE ]</a>
       </div>
