@@ -562,10 +562,16 @@ const SWAP_HTML = `<!DOCTYPE html>
      still bubbles up and switches to DATABASE (harmless — that's the tab
      you were already interacting with either way). */
   .tab-db-select .traits-flyout{ text-align:left; }
+  /* Grid, not flex — RANK and COUNT sit in equal (1fr) side columns, so
+     the middle WALLET column always lands on the row's true center
+     regardless of how wide the rank/count text on either side happens to
+     be (a fixed-width rank column next to an auto-width count column,
+     the old flex setup, only centered the wallet within its own leftover
+     space — not the same thing once count's text got wider than rank's). */
   .th-row{
-    display:flex;
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
     align-items:center;
-    justify-content:space-between;
     gap:0.75rem;
     padding:0.9em 0.6em;
     border-bottom:1px solid var(--border-dim);
@@ -576,9 +582,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .th-row:last-child{ border-bottom:none; }
   .th-row:hover{ background:var(--cyan-faint); }
-  .th-rank{ flex:0 0 3.4em; color:var(--cyan); text-align:center; }
-  .th-wallet{ flex:1; min-width:0; color:var(--white); word-break:break-all; text-align:center; }
-  .th-count{ flex:0 0 auto; color:var(--white); text-transform:uppercase; text-align:center; }
+  /* Top 15 read as a cut above the rest of the list — same layout, just
+     a step up in size. */
+  .th-row-top{ font-size:19px; padding:1.1em 0.6em; }
+  .th-rank{ color:var(--cyan); text-align:right; }
+  .th-wallet{ min-width:0; color:var(--white); word-break:break-all; text-align:center; }
+  .th-count{ color:var(--white); text-transform:uppercase; text-align:left; }
   .th-empty{ text-align:center; font-size:11px; letter-spacing:0.08em; color:var(--grey-dim); padding:0.5rem 0; text-transform:uppercase; }
 
   /* ---- sales history ---- */
@@ -5117,7 +5126,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       var percentStr = h.percent !== null && h.percent !== undefined
         ? h.percent.toLocaleString(undefined, { maximumFractionDigits: h.percent < 1 ? 2 : 1 })
         : null;
-      return '<div class="th-row" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
+      return '<div class="th-row' + (i < 15 ? ' th-row-top' : '') + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
         '<span class="th-rank">#' + greenNum(i + 1) + '</span>' +
         '<span class="th-wallet">' + escapeHtml(h.ownerShort) + '</span>' +
         '<span class="th-count">' + greenNum(h.count) + ' P!GE0NS' + (percentStr ? '  ::  ' + greenNum(percentStr + '%') : '') + '</span>' +
