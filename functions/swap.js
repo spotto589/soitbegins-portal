@@ -331,6 +331,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   .ci-value-big{ font-size:14px; letter-spacing:0.02em; }
   .ci-copy-btn{ font-size:12px; padding:0.65em 1.1em; flex:0 0 auto; }
   .pigeons-bar-identity-actions{ display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; justify-content:center; }
+  /* SH0W MY P!GE0NS reuses BUY $P!GE0NS's own styling (same juicy green
+     treatment) — its margin-top was meant for sitting under the balance
+     value in that other context, not needed (and visually misaligning
+     against S!GN 0UT) in this already-centered flex row. */
+  .pigeons-bar-identity-actions .pigeons-bar-balance-buy{ margin-top:0; }
 
   .my-pigeons-grid{ margin-top:1rem; }
 
@@ -1760,6 +1765,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-weight:700;
   }
   .pigeons-bar-sublabel{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
+  /* "N P!GE0NS 0WNED" is the actual headline stat of the logged-in
+     identity block, not a fine-print label like the issuer address/
+     trustline status sharing the same base class — bumped up. */
+  #pigeonsLoggedInCount{ font-size:16px; font-weight:700; color:#fff; }
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
   .pigeons-bar-issuer .pigeons-bar-text{ font-size:14px; text-align:left; }
@@ -1813,7 +1822,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:1rem;
     min-width:220px;
   }
-  .pigeons-bar-balance-info{ display:flex; flex-direction:column; align-items:flex-start; gap:0.3rem; text-align:left; }
+  /* Centered, not left-aligned — BUY $P!GE0NS is narrower than the
+     balance number above it, and flex-start left both edges flush
+     instead of the button actually sitting centered underneath it. */
+  .pigeons-bar-balance-info{ display:flex; flex-direction:column; align-items:center; gap:0.3rem; text-align:center; }
   .pigeons-bar-balance-label{ font-size:13px; letter-spacing:0.25em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-balance-value{ font-size:28px; font-weight:700; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-transform:uppercase; letter-spacing:0.02em; }
   /* Bigger, filled (not just outlined) and gently pulsing at rest — this
@@ -1897,7 +1909,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     min-width:10ch;
     background:transparent;
     border:none;
-    border-bottom:1px solid rgba(255,255,255,0.5);
     color:#fff;
     font-family:var(--font-mono);
     font-size:17px;
@@ -1905,7 +1916,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.2em 0;
     transition:width 0.1s ease;
   }
-  .pigeons-bar-calc-input:focus{ outline:none; border-bottom-color:#fff; }
+  .pigeons-bar-calc-input:focus{ outline:none; }
   .pigeons-bar-calc-input::placeholder{ color:rgba(255,255,255,0.6); text-transform:uppercase; }
   .pigeons-bar-calc-unit{ color:rgba(255,255,255,0.7); font-size:14px; letter-spacing:0.05em; }
   .pigeons-bar-calc-eq{ color:#fff; font-size:15px; opacity:0.8; }
@@ -2734,7 +2745,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInCount">…</span>
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
             <div class="pigeons-bar-identity-actions">
-              <button class="bar-btn ci-copy-btn" id="showMyPigeonsBtn">[ SH0W MY P!GE0NS ]</button>
+              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">[ SH0W MY P!GE0NS ]</button>
               <button class="bar-btn ci-copy-btn" id="swapSignOutBtn">[ S!GN 0UT ]</button>
             </div>
           </div>
