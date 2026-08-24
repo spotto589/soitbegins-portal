@@ -222,7 +222,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Σκύλλα must never render all-caps — text-transform:uppercase above
      would otherwise force it to ΣΚΎΛΛΑ. The " :: N" count suffix is
      already correctly cased either way (just digits/punctuation). */
-  #myPigeonsPanelTitle{ text-transform:none; }
+  #myPigeonsPanelTitle{ text-transform:none; color:var(--magenta); text-shadow:0 0 8px var(--magenta-glow); }
+  /* Σκύλλα is her own entity, own theme — she's the security/login layer,
+     the one who brokers swaps, not just another DATABASE-style screen.
+     Redefining the cyan custom properties inside her own panel cascades
+     that neon pink through every shared component that lives in here
+     (buttons, result cards, hover/selected states) without having to
+     rewrite each one individually. */
+  #myPigeonsPanel{
+    --cyan:var(--magenta);
+    --cyan-dim:var(--magenta-dim);
+    --cyan-faint:var(--magenta-faint);
+    --cyan-glow:var(--magenta-glow);
+  }
+  /* Her actual button, not just whatever it turns into on hover — always
+     neon pink, not plain grey-until-touched like every other .bar-btn. */
+  #connectScyllaBtn{ border-color:var(--magenta); color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+  #connectScyllaBtn:hover{ background:var(--magenta); color:#000; text-shadow:none; }
   /* Way bigger than a regular panel-title — this is the headline of the
      whole DATABASE screen, not a section label. */
   .search-panel-title{ font-size:24px; font-weight:700; margin-bottom:0.4rem; text-shadow:0 0 10px var(--cyan-glow); }
@@ -831,17 +847,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* MY PIGEONS' own "CONNECTING TO Σκύλλα..." status — big and centered,
      not the plain small .index-line every other status message uses,
      since this is the whole tab's content while Xaman loads. */
-  #connectStatus{
-    font-family:var(--font-mono);
-    font-size:18px;
+  /* Σκύλλα's own "S!GNAL" line — reused any time something is actively
+     happening on her page (connecting, loading), not just the initial
+     Xaman handshake, so it reads as "she's doing this" every time. Same
+     glitch dual-shadow treatment as the site's own <h1>, just her colour
+     (neon pink/magenta) instead of cyan-dominant. */
+  .skylla-signal{
+    font-family:var(--font-display);
     font-weight:700;
+    font-size:clamp(20px, 4vw, 30px);
     letter-spacing:0.05em;
-    color:var(--cyan);
-    text-shadow:0 0 6px var(--cyan-glow);
+    color:var(--white);
+    text-shadow:
+      -1.5px 0 rgba(61,243,236,0.35),
+      1.5px 0 var(--magenta-glow),
+      0 0 12px var(--magenta-glow);
+    text-align:center;
     margin-top:1.25rem;
-    /* Overrides the inherited .index-line text-transform:uppercase — this
-       text is already hand-typed in the site's own glitch-caps, and
-       forcing it upper broke "Σκύλλα" into all-caps Greek. */
     text-transform:none;
   }
 
@@ -1116,6 +1138,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      text taking up the middle, SORT BY + RESET on the right — all one
      row, bordered as one unit, instead of stacked/separate pieces. */
   .results-header-row{
+    position:relative;
     display:flex;
     align-items:center;
     flex-wrap:wrap;
@@ -1133,20 +1156,28 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   @media (max-width:700px){
     .results-header-row{ justify-content:center; }
+    .status-line{ position:static !important; left:auto !important; top:auto !important; transform:none !important; }
   }
   /* ---- results status line ---- */
   /* RESET (and SORT BY) sit on the right side of whatever's being shown
      here — full collection, a trait search, or a wallet scope — so
-     there's always a reset/sort within reach of the results themselves,
-     not just up in the COLLECTION box. */
+     there's always a reset/sort within reach of the results themselves.
+     Absolute-centred on the bar's own midpoint (not flex-centred in
+     whatever space search/sort leave over) so it reads as truly centred
+     regardless of how wide either side ends up. */
   .status-line{
-    flex:1 1 auto;
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%, -50%);
+    max-width:min(60%, 480px);
     text-align:center;
     font-family:var(--font-body);
     font-size:11px;
     letter-spacing:0.08em;
     color:var(--grey-dim);
     text-transform:uppercase;
+    pointer-events:none;
   }
   .status-line-actions{ display:flex; align-items:center; gap:0.9rem; flex:0 0 auto; }
   .status-line:empty ~ .status-line-actions{ display:none; }
@@ -2584,7 +2615,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <div class="sw-panel" id="myPigeonsPanel" style="display:none;">
       <div class="panel-title" id="myPigeonsPanelTitle">Σκύλλα</div>
-      <div class="index-line" id="connectStatus" style="text-align:center;"></div>
+      <div class="skylla-signal" id="connectStatus"></div>
       <div id="myPigeonsConnect" style="display:none; text-align:center;">
         <button class="bar-btn" id="connectScyllaBtn">[ CONNECT <span style="text-transform:none;">Σκύλλα</span> ]</button>
       </div>
@@ -3392,7 +3423,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // of the screen just sitting there doing nothing while Xaman loads.
     if (tab === 'mypigeons' && !MY_WALLET){
       showTab('mypigeons');
-      el.connectStatus.textContent = 'C0NNECT!NG T0 Σκύλλα...';
+      el.connectStatus.textContent = 'Σκύλλα://S!GNAL :: C0NNECT!NG';
       getXummAuth().authorize();
       return;
     }
@@ -5172,7 +5203,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function renderMyPigeonsList(){
     el.myPigeonsPanelTitle.textContent = 'Σκύλλα' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
-    if (myPigeonsData === null){ el.myPigeonsList.innerHTML = '<div class="th-empty">L0AD!NG...</div>'; return; }
+    if (myPigeonsData === null){ el.myPigeonsList.innerHTML = '<div class="skylla-signal">Σκύλλα://S!GNAL :: L0AD!NG</div>'; return; }
     if (!myPigeonsData.length){ el.myPigeonsSortRow.style.display = 'none'; el.myPigeonsList.innerHTML = '<div class="th-empty">Y0U D0N\\'T H0LD ANY P!GE0NS YET.</div>'; return; }
     el.myPigeonsSortRow.style.display = '';
     el.myPigeonsList.innerHTML = '<div class="result-grid my-pigeons-grid">' + sortedMyPigeons().map(myPigeonCardHtml).join('') + '</div>';
