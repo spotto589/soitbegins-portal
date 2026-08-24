@@ -6094,6 +6094,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.buySwapPayRow.style.display = '';
     el.buySwapTrustlineWarning.style.display = 'none';
     el.buySwapXrpInput.disabled = false;
+    // Without this, the status line just kept showing whichever message
+    // the null/false branches above last left it on (usually "CHECK!NG
+    // Y0UR $P!GE0NS TRUSTL!NE..." forever) even once the trustline was
+    // actually confirmed — nothing updated it until the user typed an
+    // amount and triggered a quote fetch.
+    clearBuySwapQuote('TRUSTL!NE SET ✓');
   }
   function openBuySwapPanel(){
     el.buySwapXrpInput.value = '';
