@@ -2797,7 +2797,6 @@ const SWAP_HTML = `<!DOCTYPE html>
               </div>
             </div>
             <div class="scylla-listing-block">
-              <div class="tech-meta-title">$P!GE0NS L!ST!NG</div>
               <div class="scylla-listing-row" id="detailScyllaListingRow">
                 <span class="scylla-coin-wrap">
                   <img class="scylla-coin-icon" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
