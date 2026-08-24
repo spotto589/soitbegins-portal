@@ -1140,72 +1140,38 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* RESET on its own, between the COLLECTION/ADD TRAITS box above and
      the search/results bar below. */
   .results-reset-row{ text-align:center; margin-bottom:0.85rem; }
-  /* SEARCH always stays in line with SHOWING RESULTS FOR — one bar, not
-     stacked — with SORT BY on the right. VIEW connects directly
-     underneath as its own simple dropdown (see .view-select-connected). */
+  /* One line: SEARCH (left), SORT BY (dead centre — a 3-column grid so
+     it's truly centred regardless of how wide SEARCH/VIEW end up, not
+     just flex-centred in whatever space happens to be left over), VIEW
+     (right). */
   .results-header-row{
-    position:relative;
-    display:flex;
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
     align-items:center;
-    flex-wrap:wrap;
     gap:0.9rem 1.25rem;
     border:1px solid var(--border-mid);
-    border-bottom:none;
-    border-radius:var(--radius) var(--radius) 0 0;
+    border-radius:var(--radius);
     padding:0.85em 1em;
+    margin-bottom:0.85rem;
   }
-  .results-header-row .search-row{
-    margin-bottom:0;
-    /* GO must always sit to the right of the input, never wrap onto its
-       own line below it — the input shrinks first instead. */
-    flex-wrap:nowrap;
-  }
+  .results-header-row .search-row{ margin-bottom:0; justify-self:start; flex-wrap:nowrap; }
+  .results-header-row .sort-field-inline{ justify-self:center; }
+  .results-header-row .sort-field:last-child{ justify-self:end; }
   @media (max-width:700px){
-    .results-header-row{ justify-content:center; }
-    .status-line{ position:static !important; left:auto !important; top:auto !important; transform:none !important; }
+    .results-header-row{ grid-template-columns:1fr; justify-items:center; }
   }
-  /* Just the dropdown — a real <select>, so its options popup is already
-     a native overlay that isn't clipped by this box's own border, no
-     custom flyout needed. Attached flush to the bar above (shared
-     border, no gap). */
-  .view-select-connected{
-    display:block;
-    width:100%;
-    margin:0 0 0.85rem;
-    border:1px solid var(--border-mid);
-    border-top:1px dashed var(--border-dim);
-    border-radius:0 0 var(--radius) var(--radius);
-    background:transparent;
-    color:var(--white);
-    font-family:var(--font-mono);
-    font-size:13px;
-    letter-spacing:0.05em;
-    text-transform:uppercase;
-    padding:0.75em 1em;
-    cursor:pointer;
-  }
-  /* ---- results status line ---- */
-  /* SORT BY sits on the right side of whatever's being shown here — full
-     collection, a trait search, or a wallet scope. Status text itself is
-     absolute-centred on the row's own midpoint (not flex-centred in
-     whatever space SORT leaves over) so it reads as truly centred
-     regardless of how wide that side ends up. */
+  /* ---- results status line — its own line, directly above the pigeons
+     list. ---- */
+  .status-line-standalone-row{ text-align:center; margin-bottom:0.85rem; }
   .status-line{
-    position:absolute;
-    left:50%;
-    top:50%;
-    transform:translate(-50%, -50%);
-    max-width:min(60%, 480px);
+    display:inline-block;
     text-align:center;
     font-family:var(--font-body);
     font-size:11px;
     letter-spacing:0.08em;
     color:var(--grey-dim);
     text-transform:uppercase;
-    pointer-events:none;
   }
-  .status-line-actions{ display:flex; align-items:center; gap:0.9rem; flex:0 0 auto; }
-  .status-line:empty ~ .status-line-actions{ display:none; }
   .status-line .hi{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   /* Bigger, more prominent than the plain RESULTS :: N line — this is the
      headline of the search, not a status footnote. */
@@ -2768,35 +2734,35 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
 
         <div class="results-block" id="resultsBlock">
-          <!-- SEARCH always stays in line with SHOWING RESULTS FOR — one
-               row, not stacked. -->
+          <!-- One line: SEARCH (left), SORT BY (middle), VIEW (right). -->
           <div class="results-header-row">
             <div class="search-row">
               <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0N # 0R WALLET">
               <button class="bar-btn" id="searchBtn">[ GO ]</button>
             </div>
-            <div class="status-line" id="statusLine"></div>
-            <div class="status-line-actions">
-              <div class="sort-field sort-field-inline">
-                <span class="sort-field-label">S0RT BY ::</span>
-                <div class="traits-hover-wrap" id="sortDropWrap">
-                  <span class="trait-row-label" id="sortDropLabel"></span>
-                  <div class="traits-flyout" id="sortFlyout" style="display:none;">
-                    <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
-                    <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
-                  </div>
+            <div class="sort-field sort-field-inline">
+              <span class="sort-field-label">S0RT BY ::</span>
+              <div class="traits-hover-wrap" id="sortDropWrap">
+                <span class="trait-row-label" id="sortDropLabel"></span>
+                <div class="traits-flyout" id="sortFlyout" style="display:none;">
+                  <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
+                  <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
                 </div>
               </div>
             </div>
+            <div class="sort-field">
+              <span class="sort-field-label">V!EW ::</span>
+              <select class="sort-select" id="dbViewSelect">
+                <option value="thumbnails" selected>THUMBNA!LS</option>
+                <option value="boxed" disabled>B0XED V!EW (C0M!NG S00N)</option>
+              </select>
+            </div>
           </div>
-          <!-- VIEW — just the dropdown itself, attached to the bottom of
-               the bar above. A real <select>, so its options popup is
-               already a native overlay that isn't clipped by the box's
-               own border — simple by default, no custom flyout needed. -->
-          <select class="view-select-connected" id="dbViewSelect">
-            <option value="thumbnails" selected>THUMBNA!LS</option>
-            <option value="boxed" disabled>B0XED V!EW (C0M!NG S00N)</option>
-          </select>
+          <!-- SHOWING RESULTS FOR — its own line, directly above the
+               pigeons list itself. -->
+          <div class="status-line-standalone-row">
+            <div class="status-line" id="statusLine"></div>
+          </div>
           <div id="resultsArea"></div>
           <div class="scroll-sentinel" id="scrollSentinel"></div>
           <div class="load-more-note" id="loadMoreNote" style="display:none;">L0AD!NG M0RE P!GE0NS...</div>
