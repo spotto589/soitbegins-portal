@@ -3283,6 +3283,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   function scrollTabStripIntoView(){
     window.scrollTo({ top: window.scrollY + el.topTabs.getBoundingClientRect().top, behavior: 'smooth' });
   }
+  // Clicking a tab on the row (DATABASE/MY PIGEONS/TOP 100/SALES
+  // HISTORY/SWAP OFFERS) should land you at the top of THAT tab's own
+  // content, not just at the tab strip — the trustline banner still sits
+  // between the strip and the content now that the strip moved above it,
+  // so aligning to the strip alone left the actual section scrolled
+  // halfway off-screen.
+  function scrollActiveTabPanelIntoView(tab){
+    var panel = {
+      database: el.screenBrowse,
+      mypigeons: el.myPigeonsPanel,
+      topholders: el.topHoldersPanelWrap,
+      sales: el.salesPanelWrap,
+      swapoffers: el.swapOffersPanelWrap
+    }[tab];
+    if (!panel) return;
+    window.scrollTo({ top: window.scrollY + panel.getBoundingClientRect().top, behavior: 'smooth' });
+  }
   // Same flush-to-top feel as scrollTabStripIntoView, but for the results
   // list itself — picking a trait should feel like you've actually
   // selected something, not just silently re-filter a list you have to
@@ -3350,7 +3367,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // a stale cached view would hide real progress.
       loadSwapOffersMine();
     }
-    scrollTabStripIntoView();
+    scrollActiveTabPanelIntoView(tab);
   }
   el.topTabs.addEventListener('click', function(e){
     var btn = e.target.closest('.tab-btn');
@@ -3373,7 +3390,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (tab === 'database' && state.scope){
       exitWalletScope();
       startCollectionBrowse();
-      scrollTabStripIntoView();
+      scrollActiveTabPanelIntoView('database');
       return;
     }
     showTab(tab);
