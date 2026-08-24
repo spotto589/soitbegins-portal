@@ -1149,18 +1149,35 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .trait-chip:hover{ border-color:var(--cyan-dim); color:var(--white); }
   .trait-chip.selected{ background:var(--cyan-faint); color:var(--cyan); border-color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
-  /* Same box treatment as ADD TRAITS (#traitsHoverWrap) — border, radius,
-     padding, font-size all matched, so an applied filter reads as the
-     same kind of control instead of a differently-styled one-off tag. */
+  /* Same box treatment as F!LTER BY TRA!TS (#traitsHoverWrap) — width
+     (var(--ctrl-w)), border, radius, padding all matched, so an applied
+     filter reads as the same kind of control instead of a smaller,
+     differently-styled one-off tag. Text is green — a selected/active
+     filter, not just another neutral option. */
   .trait-row-tag{
+    width:var(--ctrl-w);
+    box-sizing:border-box;
+    justify-content:space-between;
     background:transparent;
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    padding:0.75em 1em;
+    padding:0.9em 1.3em;
     transition:border-color 0.15s ease;
   }
-  .trait-row-tag:hover{ border-color:var(--cyan-dim); }
-  .trait-tag-label{ color:var(--cyan); font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; text-shadow:0 0 5px var(--cyan-glow); }
+  .trait-row-tag:hover{ border-color:var(--green); }
+  .trait-tag-label{
+    color:var(--green);
+    font-family:var(--font-mono);
+    font-size:13px;
+    letter-spacing:0.04em;
+    text-shadow:0 0 5px var(--green-glow);
+    /* A long CATEGORY :: VALUE combo shouldn't blow out the fixed box
+       width — clip with an ellipsis instead. */
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
   .trait-row-remove{
     background:transparent;
     border:1px solid var(--magenta-dim);
