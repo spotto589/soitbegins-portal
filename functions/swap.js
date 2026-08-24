@@ -98,6 +98,10 @@ const SWAP_HTML = `<!DOCTYPE html>
        should be the only thing moving the page. */
     overflow-anchor:none;
   }
+  /* Pigeon detail opens as its own full-viewport box (see #screenDetail) —
+     the underlying page must stop scrolling while it's up, or you'd be
+     able to drag the page behind it around while the fixed box sits still. */
+  body.detail-open{ overflow:hidden; }
   canvas#staticBg{
     position:fixed;
     inset:0;
@@ -1807,6 +1811,22 @@ const SWAP_HTML = `<!DOCTYPE html>
      #screenDetail specifically — .detail-field/.trait-grid/.df-label etc
      are shared with several other narrow centered confirm/result screens
      elsewhere in this file, which must stay exactly as they are. ---- */
+  /* Clicking into a Pigeon now opens its own full-viewport box instead of
+     just being another panel in the scrolling page — fixed, edge to edge,
+     with body.detail-open (see body{} above) freezing the page underneath
+     it. Only this box itself scrolls internally when its content runs
+     tall (trait count varies per Pigeon); BACK stays reachable regardless
+     since it's pinned to the box's own corner, not part of that flow. */
+  #screenDetail{
+    position:fixed;
+    inset:0;
+    z-index:70;
+    margin:0;
+    border-radius:0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:clamp(1.25rem, 4vh, 3rem) clamp(1rem, 4vw, 3rem);
+  }
   /* Named grid areas so PIGEON #N sits in its own row above just the
      picture's column, while TRAITS (the right column's first row) starts
      level with the picture's own top — not pushed down by the number,
@@ -2037,15 +2057,34 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, color 0.15s ease;
   }
   .secondary-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
-  /* Detail screen's own BACK — moved down under VIEW ELSEWHERE, and much
-     bigger than the plain .secondary-btn everywhere else since it's now
-     the main way out of this screen (SELECT is gone). */
-  .detail-back-btn{
-    display:block;
-    width:100%;
-    margin-top:1.5rem;
+  /* Detail screen's own BACK — pinned to the bottom-right corner of the
+     full-viewport box (see #screenDetail above) instead of sitting inline
+     at the end of the content, so it's always in the same place and
+     reachable without hunting for it, no matter how tall a given Pigeon's
+     content runs. Bigger and higher-contrast than the plain .secondary-btn
+     everywhere else since it's now the main way out of this screen
+     (SELECT is gone). */
+  #screenDetail .detail-back-btn{
+    position:fixed;
+    right:clamp(1rem, 3vw, 2.5rem);
+    bottom:clamp(1rem, 3vh, 2.5rem);
+    z-index:75;
+    display:inline-block;
+    width:auto;
+    margin:0;
     font-size:18px;
-    padding:0.9em 1.4em;
+    font-weight:700;
+    padding:0.9em 1.6em;
+    background:var(--panel-bg-solid, #101114);
+    border-width:2px;
+    box-shadow:0 4px 18px rgba(0,0,0,0.55), 0 0 14px var(--cyan-glow);
+  }
+  #screenDetail .detail-back-btn:hover{ background:var(--cyan-faint); }
+  /* Room at the bottom of the scrollable content so the fixed BACK button
+     never overlaps VIEW ELSEWHERE's links. */
+  #screenDetail .detail-col-right{ padding-bottom:5rem; }
+  @media (max-width:760px){
+    #screenDetail .detail-back-btn{ font-size:15px; padding:0.8em 1.3em; }
   }
   .action-btn{
     background:transparent;
@@ -3131,6 +3170,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.swapOffersPanelWrap.style.display = 'none';
     }
     el.screenDetail.style.display = name === 'detail' ? '' : 'none';
+    document.body.classList.toggle('detail-open', name === 'detail');
     el.screenHistory.style.display = name === 'history' ? '' : 'none';
     el.screenSummary.style.display = name === 'summary' ? '' : 'none';
     el.screenSwapReview.style.display = name === 'swapreview' ? '' : 'none';
