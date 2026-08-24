@@ -934,7 +934,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      and the GO button) instead of the generic cyan every other hover
      dropdown uses — always-on, not just hover/open, same reasoning as
      .tab-db-select above. */
-  #traitsHoverLabel{ color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); letter-spacing:0.1em; }
+  #traitsHoverLabel{ color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); letter-spacing:0.1em; font-size:13px; }
+  /* Bigger than the surrounding text, not just inline with it — the
+     clickable ▾ was easy to miss at the same size as the label. em-based
+     so it scales with #traitsHoverLabel's own font-size above rather
+     than needing its own fixed px value kept in sync. */
+  .thl-arrow{ display:inline-block; font-size:1.5em; line-height:1; vertical-align:middle; margin-left:0.1em; }
   /* Fixed width (var(--ctrl-w)) so this box never resizes when traits get
      selected — #traitRows renders as a separate sibling to its right
      (see .db-config-traits-section below), not inside this wrap. */
@@ -2880,7 +2885,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
             <div class="db-config-traits-section">
               <div class="traits-hover-wrap" id="traitsHoverWrap">
-                <span class="trait-row-label" id="traitsHoverLabel">ADD TRA!TS ▾</span>
+                <span class="trait-row-label" id="traitsHoverLabel">F!LTER BY TRA!TS <span class="thl-arrow">▾</span></span>
                 <div class="traits-flyout" id="traitsFlyout" style="display:none;">
                   <div class="traits-flyout-cats" id="traitsFlyoutCats"></div>
                   <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
