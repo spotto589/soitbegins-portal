@@ -257,11 +257,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     background-repeat:no-repeat, no-repeat;
   }
 
-  /* ---- database (multi-collection) selector ---- */
-  .db-select-wrap{ text-align:center; position:relative; margin-bottom:1.75rem; }
-  .db-collection-row{ position:relative; display:flex; align-items:center; justify-content:center; gap:0.6rem; width:100%; }
-  /* COLLECTION :: is the same hover-flyout component as SORTING BY —
-     hover to reveal, not a click-toggle full-width menu. */
+  /* ---- database (multi-collection) selector — now inline inside the
+     DATABASE tab button itself (see .tab-db-select above). COLLECTION ::
+     is the same hover-flyout component as SORTING BY — hover to reveal,
+     not a click-toggle full-width menu. ---- */
   #dbSelectWrap{ font-size:13px; }
   .db-select-flyout{
     display:block;
@@ -518,6 +517,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .tab-btn:hover{ color:var(--grey); }
   .tab-btn.active{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); border-bottom-color:var(--cyan); }
+  /* DATABASE carries the collection picker inline now, instead of that
+     living as its own row above the whole tab strip. */
+  .tab-btn-database{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; }
+  .tab-db-select{ font-size:13px; }
+  .tab-db-select .trait-row-label{ padding:0.3em 0.6em; font-size:13px; letter-spacing:0.05em; }
+  /* Flyout options are plain text, not links/buttons, so a click on them
+     still bubbles up and switches to DATABASE (harmless — that's the tab
+     you were already interacting with either way). */
+  .tab-db-select .traits-flyout{ text-align:left; }
   .th-row{
     display:flex;
     align-items:center;
@@ -1578,8 +1586,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      to read clearly at a glance, not as a small decorative icon. */
   .pigeons-bar-thumb{
     flex:0 0 auto;
-    width:96px;
-    height:96px;
+    width:120px;
+    height:120px;
     border-radius:var(--radius);
     border:1px solid rgba(255,255,255,0.5);
     background-image:linear-gradient(160deg, rgba(136,72,248,0.35), rgba(120,72,216,0.45)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs");
@@ -2403,10 +2411,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   <div class="page">
     <h1>STAT!C :: DATABASE<br>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></h1>
 
-    <div class="db-select-wrap">
-      <div class="db-collection-row">
-        <span class="sort-field-label">C0LLECT!0N SELECT!0N ::</span>
-        <div class="traits-hover-wrap" id="dbSelectWrap">
+    <!-- DATABASE/MY PIGEONS/TOP 100/SALES HISTORY/SWAP OFFERS — the real
+         top bar of the page; the trustline banner + whatever tab is
+         active both sit below it. DATABASE itself now carries the
+         collection picker (see .tab-db-select / dbSelectWrap) instead of
+         that living as its own separate row above the strip. -->
+    <div class="top-tabs" id="topTabs">
+      <button class="tab-btn tab-btn-database" data-tab="database">
+        DATABASE
+        <div class="traits-hover-wrap tab-db-select" id="dbSelectWrap">
           <span class="trait-row-label" id="dbSelectLabel">P!GE0NS ▾</span>
           <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
             <div class="db-option db-option-active">P!GE0NS</div>
@@ -2414,14 +2427,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="db-option db-option-disabled db-option-phnix">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- DATABASE/MY PIGEONS/TOP 100/SALES HISTORY/SWAP OFFERS — the real
-         top bar of the page now, directly under COLLECTION SELECTION;
-         the trustline banner + whatever tab is active both sit below it. -->
-    <div class="top-tabs" id="topTabs">
-      <button class="tab-btn" data-tab="database">DATABASE</button>
+      </button>
       <button class="tab-btn" data-tab="mypigeons">MY P!GE0NS</button>
       <button class="tab-btn" data-tab="topholders">T0P 100</button>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
