@@ -2480,7 +2480,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                    always gets the real address regardless. Not worth
                    spelling out in full: anyone who needs it just clicks
                    COPY, right there next to it. -->
-              <span class="pigeons-bar-sublabel pigeons-bar-text-lg">!SSUER :: <span id="ciIssuerAddr" data-full="rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf">rfQVVT7X5F...QcQSf</span></span>
+              <span class="pigeons-bar-sublabel pigeons-bar-text-lg">!SSUER :: <span id="ciIssuerAddr" data-full="rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf">rfQVV...QSf</span></span>
             </div>
             <button class="pigeons-bar-copy-btn" id="copyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="copyIssuerLabel">[ C0PY ]</span></button>
           </div>
