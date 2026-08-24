@@ -521,7 +521,17 @@ const SWAP_HTML = `<!DOCTYPE html>
      living as its own row above the whole tab strip. */
   .tab-btn-database{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; }
   .tab-db-select{ font-size:13px; }
-  .tab-db-select .trait-row-label{ padding:0.3em 0.6em; font-size:13px; letter-spacing:0.05em; }
+  /* Plain text, no boxed-dropdown look — just the label itself, coloured
+     to match whichever collection is actually selected (same colours as
+     the flyout's own .db-option-active/-fuzzy/-phnix). */
+  #dbSelectWrap{ border:none !important; background:none !important; }
+  .tab-db-select .trait-row-label{ padding:0.3em 0.2em; font-size:13px; letter-spacing:0.05em; color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); }
+  /* !important: the generic .traits-hover-wrap:hover/.open rule (shared
+     with SORT/ADD TRAITS) comes later in the cascade and would otherwise
+     override this back to plain cyan on hover — this stays the
+     collection's own colour regardless of hover/open state. */
+  .tab-db-select.open .trait-row-label,
+  .tab-db-select:hover .trait-row-label{ color:var(--pigeon-purple) !important; text-shadow:0 0 6px var(--pigeon-purple-glow) !important; }
   /* Flyout options are plain text, not links/buttons, so a click on them
      still bubbles up and switches to DATABASE (harmless — that's the tab
      you were already interacting with either way). */
@@ -2418,7 +2428,7 @@ const SWAP_HTML = `<!DOCTYPE html>
          that living as its own separate row above the strip. -->
     <div class="top-tabs" id="topTabs">
       <button class="tab-btn tab-btn-database" data-tab="database">
-        DATABASE
+        DATABASE ::
         <div class="traits-hover-wrap tab-db-select" id="dbSelectWrap">
           <span class="trait-row-label" id="dbSelectLabel">P!GE0NS ▾</span>
           <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
