@@ -593,32 +593,43 @@ const PIGEONS_QUOTE_BOOK_DEPTH = 60;
 // account for this, only this hardcoded server-side constant.
 const PIGEONS_AMM_ACCOUNT = 'rn5vs1Q5pzwbpzFhK85sVsuXpieNitVCQg';
 
-// Both lookups below hit xrplcluster.com directly, which rate-limits
-// under bursts (a plain-text body instead of JSON, so res.json() throws)
-// — confirmed live: this is exactly what made the BUY $PIGEONS quote
-// intermittently report "N0T EN0UGH L!QU!D!TY" for perfectly normal
-// amounts (a transient blip failing BOTH the order-book AND AMM lookups
-// at once, since they run concurrently in quotePigeonsForXrpDrops), the
-// same root cause as two other bugs fixed earlier this session
-// (fetchAllAccountNfts, the wallet-search 0-result bug). Same fix: a
-// few short retries per lookup before giving up for real — bumped from 3
-// to 5 attempts after confirmed-live evidence (production log tail during
-// a real user report) that 3 wasn't always enough under real load; the
-// backoff between attempts also grows slightly each time rather than a
-// flat delay, giving a longer rate-limit window more room to clear.
+// Both lookups below used to hit xrplcluster.com directly, which
+// rate-limits under bursts (a plain-text body instead of JSON, so
+// res.json() throws) — confirmed live: this is exactly what made the BUY
+// $PIGEONS quote intermittently report "N0T EN0UGH L!QU!D!TY" for
+// perfectly normal amounts (a transient blip failing BOTH the order-book
+// AND AMM lookups at once, since they run concurrently in
+// quotePigeonsForXrpDrops), and — worse — silently degraded a REAL
+// transaction's Amount when the AMM lookup alone failed but the (much
+// worse-priced) order book still succeeded, so buildBuySwapTxjson quietly
+// built a txjson worth roughly half the real market rate instead of
+// erroring. Retries alone (bumped 3 -> 5 earlier) weren't consistently
+// enough under real production load, confirmed via live log tailing
+// during actual user reports — a single endpoint being degraded is a
+// single endpoint being degraded no matter how many times you ask it
+// again. Real endpoint diversity instead: try xrplcluster.com first (a
+// couple of quick retries in case it's just a blip), then fail over to
+// Ripple's own public full-history nodes (s1/s2.ripple.com — both
+// verified independently healthy when xrplcluster.com wasn't) before
+// giving up for real. console.log on each failed endpoint so a future
+// production issue shows up directly in `wrangler pages deployment tail`
+// instead of only being inferable from symptoms.
+const XRPL_ENDPOINTS = ['https://xrplcluster.com', 'https://s1.ripple.com:51234', 'https://s2.ripple.com:51234'];
 async function fetchXrplClusterJson(body) {
-  for (let attempt = 0; attempt < 5; attempt++) {
-    if (attempt > 0) await new Promise(r => setTimeout(r, 300 + attempt * 150));
-    try {
-      const res = await fetch('https://xrplcluster.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      return await res.json();
-    } catch (e) {
-      // Non-JSON (rate-limit) body, or the fetch itself failed — try again
-      // if attempts remain.
+  for (const endpoint of XRPL_ENDPOINTS) {
+    const attempts = endpoint === XRPL_ENDPOINTS[0] ? 3 : 1; // a couple of retries on the primary, one shot on each fallback
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 300 + attempt * 150));
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        return await res.json();
+      } catch (e) {
+        console.log('fetchXrplClusterJson failed', endpoint, 'attempt', attempt, String(e && e.message || e), 'method:', body && body.method);
+      }
     }
   }
   return null;
@@ -643,8 +654,9 @@ async function fetchPigeonsBookOffers(limit) {
 async function fetchPigeonsAmmPool() {
   try {
     const data = await fetchXrplClusterJson({ method: 'amm_info', params: [{ amm_account: PIGEONS_AMM_ACCOUNT }] });
+    if (!data) { console.log('fetchPigeonsAmmPool: all endpoints failed'); return null; }
     const amm = data && data.result && data.result.amm;
-    if (!amm) return null;
+    if (!amm) { console.log('fetchPigeonsAmmPool: no amm in response', JSON.stringify(data).slice(0, 300)); return null; }
     // amount = XRP side (drops, as a plain string when XRP); amount2 =
     // the issued-currency side. Confirm which one is actually PIGEONS
     // rather than assuming position, in case the pool's own field order
@@ -654,14 +666,15 @@ async function fetchPigeonsAmmPool() {
       ? amm.amount2
       : (amm.amount && typeof amm.amount === 'object' && amm.amount.currency === encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency) && amm.amount.issuer === PIGEONS_TOKEN_CONFIG.issuer ? amm.amount : null);
     const xrpReserveDrops = xrpSide !== null ? xrpSide : (typeof amm.amount2 === 'string' ? amm.amount2 : null);
-    if (xrpReserveDrops === null || !pigeonsSide) return null;
+    if (xrpReserveDrops === null || !pigeonsSide) { console.log('fetchPigeonsAmmPool: unexpected shape', JSON.stringify(amm).slice(0, 300)); return null; }
     let xrpReserve;
-    try { xrpReserve = BigInt(xrpReserveDrops); } catch (e) { return null; }
+    try { xrpReserve = BigInt(xrpReserveDrops); } catch (e) { console.log('fetchPigeonsAmmPool: bad drops value', xrpReserveDrops); return null; }
     const pigeonsReserve = parseFloat(pigeonsSide.value);
     const tradingFeeBps = typeof amm.trading_fee === 'number' ? amm.trading_fee : 0; // units of 1/100000
-    if (xrpReserve <= 0n || !(pigeonsReserve > 0)) return null;
+    if (xrpReserve <= 0n || !(pigeonsReserve > 0)) { console.log('fetchPigeonsAmmPool: non-positive reserve', xrpReserve.toString(), pigeonsReserve); return null; }
     return { xrpReserveDrops: xrpReserve, pigeonsReserve, tradingFeeBps };
   } catch (e) {
+    console.log('fetchPigeonsAmmPool: exception', String(e && e.message || e));
     return null;
   }
 }
@@ -735,7 +748,22 @@ export async function quotePigeonsForXrpDrops(xrpDropsStr) {
     fetchPigeonsAmmPool()
   ]);
 
-  const ammPigeons = pool ? quoteFromAmmPool(pool, xrpDrops) : 0; // AMM has effectively unlimited depth for any sane trade size relative to this pool, always "fills"
+  // If the AMM lookup itself failed (pool === null, not "AMM genuinely
+  // has less liquidity"), this must NOT silently fall through to
+  // whatever the order book offers — the AMM is this pair's dominant,
+  // far-better-priced liquidity (confirmed live: ~3900 PIGEONS/XRP vs the
+  // thin book's ~1700-2000), so treating a failed AMM lookup as "AMM
+  // offers 0" let the much worse order-book price win the comparison by
+  // default. Confirmed live: this is exactly what got baked into a real
+  // signable transaction worth roughly HALF fair value. A failed AMM
+  // lookup now fails the whole quote instead — an honest "try again" beats
+  // a silently bad price on something the user is about to sign.
+  if (!pool) {
+    console.log('quotePigeonsForXrpDrops: AMM pool unreachable, refusing to fall back to order-book-only pricing');
+    return { ok: false, error: 'quote_failed' };
+  }
+
+  const ammPigeons = quoteFromAmmPool(pool, xrpDrops); // AMM has effectively unlimited depth for any sane trade size relative to this pool, always "fills"
   const bookPigeons = bookResult.filled ? bookResult.receivePigeons : 0;
 
   const best = ammPigeons >= bookPigeons ? ammPigeons : bookPigeons;
