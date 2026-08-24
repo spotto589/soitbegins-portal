@@ -904,7 +904,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .traits-hover-wrap{ position:relative; display:inline-flex; }
   .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.75em 1em; font-size:15px; }
-  #traitsHoverLabel{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); letter-spacing:0.1em; }
+  /* ADD TRA!TS matches the collection's own purple (same as ALL (1-3015)
+     and the GO button) instead of the generic cyan every other hover
+     dropdown uses — always-on, not just hover/open, same reasoning as
+     .tab-db-select above. */
+  #traitsHoverLabel{ color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); letter-spacing:0.1em; }
   #traitsHoverWrap .trait-row-label{ padding:0.9em 1.3em; }
   /* SORT, ADD TRAITS, and C0LLECT!0N SELECT!0N (the top P!GE0NS ▾ picker)
      all get the same bordered-box treatment and cyan-on-hover/open text —
@@ -916,6 +920,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   #dbSelectWrap:hover, #dbSelectWrap.open{ border-color:var(--cyan-dim); }
   .traits-hover-wrap:hover .trait-row-label,
   .traits-hover-wrap.open .trait-row-label{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  /* !important: same reasoning as .tab-db-select above — ADD TRA!TS stays
+     purple regardless of hover/open state instead of the generic cyan the
+     shared rule directly above would otherwise apply. */
+  #traitsHoverWrap:hover .trait-row-label,
+  #traitsHoverWrap.open .trait-row-label{ color:var(--pigeon-purple) !important; text-shadow:0 0 5px var(--pigeon-purple-glow) !important; }
   .traits-flyout{
     position:absolute;
     top:100%;
@@ -1138,7 +1147,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      text taking up the middle, SORT BY + RESET on the right — all one
      row, bordered as one unit, instead of stacked/separate pieces. */
   /* RESET on its own, between the COLLECTION/ADD TRAITS box above and
-     the search/results bar below. */
+     the results status line below. */
   .results-reset-row{ text-align:center; margin-bottom:0.85rem; }
   /* One line: SEARCH (left), SORT BY (dead centre — a 3-column grid so
      it's truly centred regardless of how wide SEARCH/VIEW end up, not
@@ -2012,16 +2021,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     .detail-two-col{ grid-template-columns:1fr; grid-template-areas:"num" "owner" "left" "right"; gap:0.75rem; }
   }
   #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0 0 1.25rem; cursor:zoom-in; }
-  /* Corner-bracket HUD frame around the DEEPTIDE/XRP.CAFE tiles + the
-     $PIGEONS LISTING block together — just the four corner marks, no
-     solid border, so it reads as a targeting/HUD frame rather than a
-     plain box. */
-  .bracket-frame{ position:relative; padding:0.85rem 0.6rem; }
-  .bf-corner{ position:absolute; width:16px; height:16px; pointer-events:none; }
-  .bf-tl{ top:0; left:0; border-top:2px solid var(--cyan); border-left:2px solid var(--cyan); }
-  .bf-tr{ top:0; right:0; border-top:2px solid var(--cyan); border-right:2px solid var(--cyan); }
-  .bf-bl{ bottom:0; left:0; border-bottom:2px solid var(--cyan); border-left:2px solid var(--cyan); }
-  .bf-br{ bottom:0; right:0; border-bottom:2px solid var(--cyan); border-right:2px solid var(--cyan); }
+  /* Plain wrapper for RAR!TY/RAR!TY SC0RE + the $PIGEONS LISTING block,
+     sitting directly underneath the picture — no decorative frame, just
+     spacing between the two. */
+  .detail-under-pic-box{ margin-top:0.85rem; }
   #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 1.25rem; }
   /* $PIGEONS listing — the collection's own purple, matching the DATABASE
      card's OFFER AMOUNT box (.thumb-offer) instead of a plain grey block —
@@ -2081,7 +2084,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      Neither is clickable. Spread across the full column width with a
      wider gap than the trait grid's own — reads as its own row, not just
      the first two cells of a 3-across grid. */
-  #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(2, 1fr); gap:1.5rem; margin:0; max-width:100%; }
+  #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(2, 1fr); gap:1.5rem; margin:0 0 1rem; max-width:100%; }
   #screenDetail .detail-rarity-row .trait-cell{ cursor:default; text-align:center; min-width:0; }
   #screenDetail .detail-rarity-row .trait-cell:hover{ background:transparent; border-color:var(--border-dim); }
   /* PRICE / RECORD SALE / RECENT SALE / AVERAGE SALE — stacked directly
@@ -2702,37 +2705,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="sw-panel">
         <div class="panel-title search-panel-title" id="searchPanelTitle">SEARCH!NG $P!GE0NS DATABASE</div>
         <div class="search-panel-subtitle" id="searchPanelSubtitle" style="display:none;"></div>
-        <div class="db-config-group db-config-group-split">
-          <div class="db-config-main">
-            <div class="sort-field db-config-row">
-              <span class="sort-field-label">C0LLECT!0N</span>
-              <div class="edition-toggle" id="editionSelect">
-                <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
-                <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
-                <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
-              </div>
-            </div>
-          </div>
-          <div class="db-config-traits-section">
-            <div class="traits-hover-wrap" id="traitsHoverWrap">
-              <span class="trait-row-label" id="traitsHoverLabel">ADD TRA!TS ▾</span>
-              <div class="traits-flyout" id="traitsFlyout" style="display:none;">
-                <div class="traits-flyout-cats" id="traitsFlyoutCats"></div>
-                <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
-              </div>
-            </div>
-            <div id="traitRows"></div>
-            <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">[ CLEAR TRA!TS ]</button>
-          </div>
-        </div>
-
-        <!-- RESET sits between the COLLECTION/ADD TRAITS config box above
-             and the search/results bar below — its own row, not bundled
-             into either. -->
-        <div class="results-reset-row">
-          <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
-        </div>
-
         <div class="results-block" id="resultsBlock">
           <!-- One line: SEARCH (left), SORT BY (middle), VIEW (right). -->
           <div class="results-header-row">
@@ -2758,6 +2730,40 @@ const SWAP_HTML = `<!DOCTYPE html>
               </select>
             </div>
           </div>
+
+          <!-- COLLECTION / ADD TRAITS sits directly underneath the search +
+               sort-by line now, not above it. -->
+          <div class="db-config-group db-config-group-split">
+            <div class="db-config-main">
+              <div class="sort-field db-config-row">
+                <span class="sort-field-label">C0LLECT!0N</span>
+                <div class="edition-toggle" id="editionSelect">
+                  <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
+                  <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
+                  <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
+                </div>
+              </div>
+            </div>
+            <div class="db-config-traits-section">
+              <div class="traits-hover-wrap" id="traitsHoverWrap">
+                <span class="trait-row-label" id="traitsHoverLabel">ADD TRA!TS ▾</span>
+                <div class="traits-flyout" id="traitsFlyout" style="display:none;">
+                  <div class="traits-flyout-cats" id="traitsFlyoutCats"></div>
+                  <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
+                </div>
+              </div>
+              <div id="traitRows"></div>
+              <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">[ CLEAR TRA!TS ]</button>
+            </div>
+          </div>
+
+          <!-- RESET sits between the COLLECTION/ADD TRAITS config box above
+               and the results status line below — its own row, not bundled
+               into either. -->
+          <div class="results-reset-row">
+            <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
+          </div>
+
           <!-- SHOWING RESULTS FOR — its own line, directly above the
                pigeons list itself. -->
           <div class="status-line-standalone-row">
@@ -2779,16 +2785,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="detail-owner-top" id="detailOwner"></div>
         <div class="detail-col-left">
           <div class="detail-img-large pigeon-img-box" id="detailImgBox" title="VIEW FULLSCREEN">[ IMAGE ]</div>
-          <!-- Corner-bracket HUD frame — no solid border, just the four
-               corner marks — spanning from the top of the DEEPTIDE/XRP.CAFE
-               listing tiles down to the bottom of the $PIGEONS LISTING
-               block, framing both as one region. -->
-          <div class="bracket-frame">
-            <span class="bf-corner bf-tl"></span>
-            <span class="bf-corner bf-tr"></span>
-            <span class="bf-corner bf-bl"></span>
-            <span class="bf-corner bf-br"></span>
-            <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
+          <div class="detail-under-pic-box">
+            <div class="detail-rarity-row" id="detailRarityRow" style="display:none;">
+              <div class="trait-cell">
+                <div class="tc-label">RAR!TY</div>
+                <div class="tc-value" id="detailRarity"></div>
+              </div>
+              <div class="trait-cell">
+                <div class="tc-label">RAR!TY SC0RE</div>
+                <div class="tc-value">C0M!NG S00N</div>
+              </div>
+            </div>
             <div class="scylla-listing-block">
               <div class="tech-meta-title">$P!GE0NS L!ST!NG</div>
               <div class="scylla-listing-row" id="detailScyllaListingRow">
@@ -2809,18 +2816,9 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
         <div class="detail-col-right">
-          <div class="detail-rarity-row" id="detailRarityRow" style="display:none;">
-            <div class="trait-cell">
-              <div class="tc-label">RAR!TY</div>
-              <div class="tc-value" id="detailRarity"></div>
-            </div>
-            <div class="trait-cell">
-              <div class="tc-label">RAR!TY SC0RE</div>
-              <div class="tc-value">C0M!NG S00N</div>
-            </div>
-          </div>
           <div class="trait-grid" id="detailTraits"></div>
           <div class="detail-sales-section">
+            <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
             <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
             <div class="detail-field" id="detailHighSaleRow"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
             <div class="detail-field" id="detailRecentSaleRow"><span class="df-label">RECENT SALE</span><span class="df-value price" id="detailRecentSale"></span></div>
