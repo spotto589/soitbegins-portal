@@ -2286,6 +2286,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-receive-wrap{ border-color:var(--border-mid); }
   .buyswap-receive-value{ flex:1 1 auto; min-width:0; font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:0.02em; color:var(--grey-dim); text-align:right; }
   .buyswap-divider{ border-top:1px dashed var(--border-dim); margin:1.25rem 0; }
+  /* Trustline gate (STAGE 4) — reuses the trustline banner's own issuer+
+     COPY treatment (.pigeons-bar-sublabel/.pigeons-bar-copy-btn), just
+     recentered for this card instead of the banner's own left-aligned
+     row, plus a magenta alert title since this is blocking, not neutral
+     info. */
+  .buyswap-trustline-warning{
+    border:1px solid var(--magenta-dim);
+    border-radius:var(--radius);
+    background:var(--magenta-faint);
+    padding:1rem;
+    margin-bottom:1.25rem;
+    text-align:center;
+  }
+  .buyswap-trustline-warning-title{ font-size:13px; letter-spacing:0.1em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); text-transform:uppercase; margin-bottom:0.6rem; }
+  .buyswap-trustline-issuer-row{ justify-content:center; gap:0; }
   .detail-traits-title{
     text-align:center;
     font-size:11px;
@@ -3122,13 +3137,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
 
     <!-- SCREEN: BUY $P!GE0NS SWAP — opened from the trustline banner's own
-         BUY $P!GE0NS button (was an external DexScreener link). STAGE 2
-         ONLY: panel UI + validated XRP input, no live quote, no txjson, no
-         Xaman. YOU RECEIVE/RATE/MIN!MUM RECEIVED stay "—" until Stage 3
-         wires in a real quote; SIGN & BUY stays disabled until then. -->
+         BUY $P!GE0NS button (was an external DexScreener link). STAGE 4:
+         real live quote (Stage 3) PLUS a real live trustline check before
+         the input is even usable — a wallet that can't receive $PIGEONS
+         yet gets the SAME issuer+COPY setup UI the trustline banner
+         already uses (this app has no real TrustSet-signing flow built
+         anywhere yet — see copyIssuerBtn's own comment — so this reuses
+         that exact existing pattern rather than inventing a new one).
+         Still no txjson, no Xaman, SIGN & BUY stays disabled regardless. -->
     <div class="sw-panel buyswap-panel" id="screenBuySwap" style="display:none;">
       <div class="node-eyebrow">// BUY $P!GE0NS</div>
-      <div class="buyswap-row">
+      <div class="buyswap-trustline-warning" id="buySwapTrustlineWarning" style="display:none;">
+        <div class="buyswap-trustline-warning-title" id="buySwapTrustlineWarningTitle"></div>
+        <div class="pigeons-bar-left-body-row buyswap-trustline-issuer-row">
+          <span class="pigeons-bar-sublabel">!SSUER :: <span id="buySwapIssuerAddr" data-full="rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf">rfQVV...QSf</span></span>
+          <button class="pigeons-bar-copy-btn" id="buySwapCopyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="buySwapCopyIssuerLabel">[ C0PY ]</span></button>
+        </div>
+      </div>
+      <div class="buyswap-row" id="buySwapPayRow">
         <span class="buyswap-label">Y0U PAY</span>
         <div class="buyswap-input-wrap">
           <input class="buyswap-input" id="buySwapXrpInput" type="text" inputmode="decimal" placeholder="0.00" autocomplete="off">
@@ -3348,6 +3374,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
    'screenBuySwap','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
+   'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapPayRow',
    'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
    'screenDelistResult','delistResultPigeonNum','delistResultStatus','delistResultTxLink','delistResultDoneBtn',
    'screenOfferConfirm','offerConfTxType','offerConfAccount','offerConfOwner','offerConfNftId','offerConfCurrency','offerConfIssuer','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
@@ -5874,6 +5901,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // fast edit right before a debounce/refresh fires can't apply an old
   // quote to a since-changed amount.
   function fetchBuySwapQuote(){
+    // Defense in depth — the input is already disabled whenever this isn't
+    // true (applyBuySwapGate), so a user can't normally get here, but the
+    // periodic refresh timer calls this directly too.
+    if (buySwapHasTrustline !== true) return;
     var drops = validateBuySwapInput();
     if (drops === null){ clearBuySwapQuote(); return; }
     var raw = el.buySwapXrpInput.value.trim();
@@ -5917,6 +5948,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
   function scheduleBuySwapQuote(){
+    if (buySwapHasTrustline !== true) return;
     if (buySwapDebounceTimer) clearTimeout(buySwapDebounceTimer);
     var drops = validateBuySwapInput();
     if (drops === null){
@@ -5926,13 +5958,47 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.buySwapStatus.textContent = 'GETT!NG QU0TE...';
     buySwapDebounceTimer = setTimeout(fetchBuySwapQuote, BUYSWAP_DEBOUNCE_MS);
   }
+
+  // ---- STAGE 4: real live trustline check, before the input is even
+  // usable. null = not checked yet this time the panel was opened
+  // (fails closed — input stays disabled until we positively confirm
+  // true, never assumed true by default or on a failed check). ----
+  var buySwapHasTrustline = null;
+  function applyBuySwapGate(){
+    if (!MY_WALLET){
+      el.buySwapPayRow.style.display = 'none';
+      el.buySwapTrustlineWarning.style.display = 'none';
+      el.buySwapXrpInput.disabled = true;
+      clearBuySwapQuote('L0G !N T0 BUY $P!GE0NS.');
+      return;
+    }
+    if (buySwapHasTrustline === null){
+      el.buySwapPayRow.style.display = 'none';
+      el.buySwapTrustlineWarning.style.display = 'none';
+      el.buySwapXrpInput.disabled = true;
+      clearBuySwapQuote('CHECK!NG Y0UR $P!GE0NS TRUSTL!NE...');
+      return;
+    }
+    if (buySwapHasTrustline === false){
+      el.buySwapPayRow.style.display = 'none';
+      el.buySwapTrustlineWarningTitle.textContent = '⚠ TRUSTL!NE REQU!RED';
+      el.buySwapTrustlineWarning.style.display = '';
+      el.buySwapXrpInput.disabled = true;
+      clearBuySwapQuote('Y0UR WALLET CAN\\'T RECE!VE $P!GE0NS YET — SET THE TRUSTL!NE AB0VE F!RST.');
+      return;
+    }
+    el.buySwapPayRow.style.display = '';
+    el.buySwapTrustlineWarning.style.display = 'none';
+    el.buySwapXrpInput.disabled = false;
+  }
   function openBuySwapPanel(){
     el.buySwapXrpInput.value = '';
     clearBuySwapInputError();
     stopBuySwapTimers();
-    clearBuySwapQuote('ENTER AN AM0UNT T0 GET A L!VE QU0TE.');
     buySwapMaxDrops = null;
     updateBuySwapMaxLine();
+    buySwapHasTrustline = null;
+    applyBuySwapGate();
     showScreen('buyswap');
     if (MY_WALLET){
       apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).then(function(data){
@@ -5943,15 +6009,38 @@ const SWAP_HTML = `<!DOCTYPE html>
         updateBuySwapMaxLine();
         validateBuySwapInput();
       }).catch(function(){});
+      // Real live account_lines check, same source the trustline banner's
+      // own LOGIN state uses (fetchPigeonsAccountLine) — never assumed
+      // from cached state, this panel can open right after a fresh login
+      // before that banner state has even settled.
+      apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET }).then(function(data){
+        buySwapHasTrustline = !!(data && data.hasTrustline);
+        applyBuySwapGate();
+      }).catch(function(){
+        // Lookup failed — fail closed, never let an unknown result read as
+        // "trustline confirmed present."
+        buySwapHasTrustline = false;
+        applyBuySwapGate();
+      });
     }
     // Keeps an open panel's quote from sitting stale for minutes — only
-    // re-quotes when there's actually a valid amount entered.
+    // re-quotes when there's actually a valid amount entered AND the
+    // trustline is confirmed (see fetchBuySwapQuote's own guard too).
     buySwapRefreshInterval = setInterval(function(){
-      if (validateBuySwapInput() !== null) fetchBuySwapQuote();
+      if (buySwapHasTrustline === true && validateBuySwapInput() !== null) fetchBuySwapQuote();
     }, BUYSWAP_REFRESH_MS);
   }
   el.pigeonsBalanceBuyBtn.addEventListener('click', openBuySwapPanel);
   el.buySwapXrpInput.addEventListener('input', scheduleBuySwapQuote);
+  el.buySwapCopyIssuerBtn.addEventListener('click', function(){
+    var addr = el.buySwapIssuerAddr ? el.buySwapIssuerAddr.getAttribute('data-full') : '';
+    var done = function(){
+      el.buySwapCopyIssuerLabel.textContent = '[ C0P!ED ]';
+      setTimeout(function(){ el.buySwapCopyIssuerLabel.textContent = '[ C0PY ]'; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(done, done);
+    else done();
+  });
   el.buySwapBackBtn.addEventListener('click', function(){
     stopBuySwapTimers();
     showScreen('browse');
