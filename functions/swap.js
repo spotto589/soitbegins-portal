@@ -996,15 +996,11 @@ const SWAP_HTML = `<!DOCTYPE html>
        centering the crop cut off too much of it; biasing toward the top
        keeps the beak in view. */
     background-position:center 20%;
-    /* Plain white read as washed-out against a busy photo — cyan (with
-       the same dark shadow, plus real weight) holds up much better. */
-    color:var(--cyan);
-    font-weight:700;
-    font-size:17px;
-    text-shadow:0 0 4px var(--cyan-glow), 0 1px 3px rgba(0,0,0,0.9);
+    color:#fff;
+    text-shadow:0 1px 3px rgba(0,0,0,0.9);
   }
-  #traitsFlyoutVals .traits-flyout-val.has-preview .tfv-count{ color:var(--cyan); font-size:16px; }
-  #traitsFlyoutVals .traits-flyout-val.has-preview:hover{ border-color:var(--cyan); color:var(--cyan); }
+  #traitsFlyoutVals .traits-flyout-val.has-preview .tfv-count{ color:#fff; font-size:16px; }
+  #traitsFlyoutVals .traits-flyout-val.has-preview:hover{ border-color:var(--cyan); color:#fff; }
   #traitsFlyoutVals .traits-flyout-val.has-preview.selected{
     border-color:var(--cyan);
     box-shadow:inset 0 0 0 2px var(--cyan);
@@ -1843,9 +1839,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:var(--bg);
     backdrop-filter:none;
     -webkit-backdrop-filter:none;
-    /* Extra bottom padding — room for the fixed BACK button (see
-       .detail-back-btn below) so it never overlaps VIEW ELSEWHERE. */
-    padding:clamp(1.25rem, 4vh, 3rem) clamp(1rem, 4vw, 3rem) clamp(5rem, 12vh, 6rem);
+    padding:clamp(1.25rem, 4vh, 3rem) clamp(1rem, 4vw, 3rem);
   }
   #screenDetail::before{
     content:'';
@@ -1950,14 +1944,19 @@ const SWAP_HTML = `<!DOCTYPE html>
      flip it to margin-top instead, scoped to just .trait-grid's own
      cells. */
   #screenDetail .trait-grid .tc-label{ margin-bottom:0; margin-top:0.35rem; }
-  /* Real Pigeon-photo background (see traitCellHtml), same as ADD TRAITS'
-     own .has-preview boxes — plain white read as washed-out against a
-     busy photo, cyan (with weight + its own glow on top of the dark
-     shadow) holds up much better. */
+  /* The category name (e.g. "FEATHERS") reads as a caption under the
+     actual value — italic sets it apart from the value itself without
+     changing its size/weight, which would throw off the trait grid's
+     flush-with-the-picture bottom edge (see the sizing note above). */
+  #screenDetail .trait-grid .tc-label{ font-style:italic; }
+  /* Real Pigeon-photo background (see traitCellHtml) — bright white reads
+     far more reliably over a busy photo than the site's default grey/cyan
+     text, same font-size as plain cells (again, the flush-bottom sizing)
+     except the percent/count line, which stays bigger as its own thing. */
   #screenDetail .trait-cell.has-preview{ background-size:cover; background-position:center 20%; }
-  #screenDetail .trait-cell.has-preview .tc-label{ color:var(--cyan); font-weight:700; font-size:15px; text-shadow:0 0 4px var(--cyan-glow), 0 1px 3px rgba(0,0,0,0.9); }
-  #screenDetail .trait-cell.has-preview .tc-value{ color:var(--cyan); font-weight:700; font-size:20px; text-shadow:0 0 4px var(--cyan-glow), 0 1px 3px rgba(0,0,0,0.9); }
-  #screenDetail .trait-cell.has-preview .tc-sub{ color:var(--cyan); font-weight:700; text-shadow:0 0 4px var(--cyan-glow), 0 1px 3px rgba(0,0,0,0.9); }
+  #screenDetail .trait-cell.has-preview .tc-label{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+  #screenDetail .trait-cell.has-preview .tc-value{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+  #screenDetail .trait-cell.has-preview .tc-sub{ color:#fff; font-size:16px; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
   #screenDetail .trait-cell.has-preview:hover{ border-color:var(--cyan); }
   /* Constrained instead of stretching the field's label/value across the
      whole (wide) right column — that gap made label and value feel
@@ -2158,32 +2157,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, color 0.15s ease;
   }
   .secondary-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
-  /* Detail screen's own BACK — pinned to the bottom-right corner of the
-     full-viewport box (see #screenDetail above) instead of sitting inline
-     at the end of the content, so it's always in the same place and
-     reachable without hunting for it, no matter how tall a given Pigeon's
-     content runs. Bigger and higher-contrast than the plain .secondary-btn
-     everywhere else since it's now the main way out of this screen
-     (SELECT is gone). */
+  /* Detail screen's own BACK — appended as the trait grid's own last item
+     (see openDetail's el.detailTraits.appendChild(el.backToBrowseBtn)) so
+     it just drops into whatever room is left in the last row, same box
+     as every other trait cell, instead of sitting apart from it. */
   #screenDetail .detail-back-btn{
-    position:fixed;
-    right:clamp(1rem, 3vw, 2.5rem);
-    bottom:clamp(1rem, 3vh, 2.5rem);
-    z-index:75;
-    display:inline-block;
-    width:auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
     margin:0;
-    font-size:18px;
+    font-family:var(--font-mono);
+    font-size:16px;
     font-weight:700;
-    padding:0.9em 1.6em;
-    background:var(--panel-bg-solid, #101114);
-    border-width:2px;
-    box-shadow:0 4px 18px rgba(0,0,0,0.55), 0 0 14px var(--cyan-glow);
+    letter-spacing:0.05em;
+    color:var(--cyan);
+    background:transparent;
+    appearance:none;
   }
-  #screenDetail .detail-back-btn:hover{ background:var(--cyan-faint); }
-  @media (max-width:760px){
-    #screenDetail .detail-back-btn{ font-size:15px; padding:0.8em 1.3em; }
-  }
+  #screenDetail .detail-back-btn:hover{ background:var(--cyan-faint); border-color:var(--cyan-dim); }
   .action-btn{
     background:transparent;
     border:1px solid var(--cyan-dim);
@@ -2690,7 +2682,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <a class="secondary-btn" id="viewBithompLink" target="_blank" rel="noopener">[ B!TH0MP ]</a>
         </div>
       </div>
-      <button class="secondary-btn detail-back-btn" id="backToBrowseBtn">[ ← BACK ]</button>
+      <button class="trait-cell detail-back-btn" id="backToBrowseBtn">← BACK</button>
       <div class="detail-actions">
         <a class="action-btn" id="detailBuyBtn" style="display:none;" target="_blank" rel="noopener">[ BUY 0N DEEPT!DE ]</a>
       </div>
@@ -6435,6 +6427,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (known && known.owner) renderOwnerLink(known.ownerShort, known.owner);
     else { el.detailOwner.textContent = '...'; el.detailOwner.classList.remove('not-indexed'); }
     el.detailTraits.innerHTML = known ? known.attributes.map(traitCellHtml).join('') : '';
+    // BACK moves with the traits it belongs to — always the grid's own
+    // last item (appendChild moves the real node, keeping its listener),
+    // dropping into whatever room the last row has left instead of a
+    // fixed corner.
+    el.detailTraits.appendChild(el.backToBrowseBtn);
     el.viewDeeptideLink.href = 'https://deeptide.co/nft/' + nftId;
     el.viewXrpCafeLink.href = 'https://xrp.cafe/nft/' + nftId;
     el.viewBithompLink.href = 'https://bithomp.com/explorer/' + nftId;
@@ -6463,6 +6460,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailNum.innerHTML = p.number !== null ? 'P!GE0N #' + greenNum(p.number) : 'P!GE0N ...';
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
       el.detailTraits.innerHTML = p.attributes.map(traitCellHtml).join('');
+      el.detailTraits.appendChild(el.backToBrowseBtn);
       updateDetailRarity(p);
       updateDetailPrice(p);
       updateDetailListings(p.listings);
