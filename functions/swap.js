@@ -1140,14 +1140,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* RESET on its own, between the COLLECTION/ADD TRAITS box above and
      the search/results bar below. */
   .results-reset-row{ text-align:center; margin-bottom:0.85rem; }
-  /* SEARCH box, and VIEW connected directly underneath it as one joined
-     unit (shared border, dashed divider, no gap) — same "VIEW :: value"
-     label format SORT BY uses. */
+  /* SEARCH always stays in line with SHOWING RESULTS FOR — one bar, not
+     stacked — with SORT BY on the right. VIEW connects directly
+     underneath as its own simple dropdown (see .view-select-connected). */
   .results-header-row{
+    position:relative;
     display:flex;
     align-items:center;
     flex-wrap:wrap;
-    gap:0.75rem;
+    gap:0.9rem 1.25rem;
     border:1px solid var(--border-mid);
     border-bottom:none;
     border-radius:var(--radius) var(--radius) 0 0;
@@ -1155,40 +1156,35 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .results-header-row .search-row{
     margin-bottom:0;
-    width:100%;
     /* GO must always sit to the right of the input, never wrap onto its
        own line below it — the input shrinks first instead. */
     flex-wrap:nowrap;
   }
   @media (max-width:700px){
     .results-header-row{ justify-content:center; }
-    .status-line-row{ flex-direction:column; }
     .status-line{ position:static !important; left:auto !important; top:auto !important; transform:none !important; }
   }
-  .view-select-row{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:0.6rem;
+  /* Just the dropdown — a real <select>, so its options popup is already
+     a native overlay that isn't clipped by this box's own border, no
+     custom flyout needed. Attached flush to the bar above (shared
+     border, no gap). */
+  .view-select-connected{
+    display:block;
+    width:100%;
+    margin:0 0 0.85rem;
     border:1px solid var(--border-mid);
     border-top:1px dashed var(--border-dim);
-    border-radius:0;
-    padding:0.7em 1em;
+    border-radius:0 0 var(--radius) var(--radius);
+    background:transparent;
+    color:var(--white);
+    font-family:var(--font-mono);
+    font-size:13px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    padding:0.75em 1em;
+    cursor:pointer;
   }
   /* ---- results status line ---- */
-  .status-line-row{
-    position:relative;
-    display:flex;
-    align-items:center;
-    justify-content:flex-end;
-    flex-wrap:wrap;
-    gap:0.9rem;
-    border:1px solid var(--border-mid);
-    border-top:none;
-    border-radius:0 0 var(--radius) var(--radius);
-    padding:0.85em 1em;
-    margin-bottom:0.85rem;
-  }
   /* SORT BY sits on the right side of whatever's being shown here — full
      collection, a trait search, or a wallet scope. Status text itself is
      absolute-centred on the row's own midpoint (not flex-centred in
@@ -2772,23 +2768,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
 
         <div class="results-block" id="resultsBlock">
+          <!-- SEARCH always stays in line with SHOWING RESULTS FOR — one
+               row, not stacked. -->
           <div class="results-header-row">
             <div class="search-row">
               <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0N # 0R WALLET">
               <button class="bar-btn" id="searchBtn">[ GO ]</button>
             </div>
-          </div>
-          <!-- VIEW — one connected dropdown box directly underneath the
-               search bar, label + value combined the same way SORT BY
-               reads. -->
-          <div class="view-select-row">
-            <span class="sort-field-label">V!EW ::</span>
-            <select class="sort-select" id="dbViewSelect">
-              <option value="thumbnails" selected>THUMBNA!LS</option>
-              <option value="boxed" disabled>B0XED V!EW (C0M!NG S00N)</option>
-            </select>
-          </div>
-          <div class="status-line-row">
             <div class="status-line" id="statusLine"></div>
             <div class="status-line-actions">
               <div class="sort-field sort-field-inline">
@@ -2803,6 +2789,14 @@ const SWAP_HTML = `<!DOCTYPE html>
               </div>
             </div>
           </div>
+          <!-- VIEW — just the dropdown itself, attached to the bottom of
+               the bar above. A real <select>, so its options popup is
+               already a native overlay that isn't clipped by the box's
+               own border — simple by default, no custom flyout needed. -->
+          <select class="view-select-connected" id="dbViewSelect">
+            <option value="thumbnails" selected>THUMBNA!LS</option>
+            <option value="boxed" disabled>B0XED V!EW (C0M!NG S00N)</option>
+          </select>
           <div id="resultsArea"></div>
           <div class="scroll-sentinel" id="scrollSentinel"></div>
           <div class="load-more-note" id="loadMoreNote" style="display:none;">L0AD!NG M0RE P!GE0NS...</div>
