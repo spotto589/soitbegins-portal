@@ -2519,7 +2519,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
       </button>
       <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;">Σκύλλα :: PλWS</span></button>
-      <button class="tab-btn" data-tab="topholders">T0P 100</button>
+      <button class="tab-btn" data-tab="topholders">T0P 123</button>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
     </div>
@@ -2675,7 +2675,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
 
     <div class="sw-panel" id="topHoldersPanelWrap" style="display:none;">
-      <div class="panel-title">T0P 100 H0LDERS</div>
+      <div class="panel-title">T0P 123 H0LDERS</div>
       <div id="topHoldersList"></div>
     </div>
 
