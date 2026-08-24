@@ -2333,23 +2333,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, color 0.15s ease;
   }
   .secondary-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
-  /* Detail screen's own BACK — appended as the trait grid's own last item
-     (see openDetail's el.detailTraits.appendChild(el.backToBrowseBtn)) so
-     it just drops into whatever room is left in the last row, same box
-     as every other trait cell, instead of sitting apart from it. */
+  /* Detail screen's own BACK — a full-width strip, the very last thing on
+     the page (after BUY 0N DEEPT!DE), not a trait-grid cell any more.
+     Full width of the same content column the $PIGEONS L!ST!NG/N0T
+     L!STED box sits in, so its left/right edges line up with that box's
+     instead of just filling whatever room a trait grid cell left over. */
   #screenDetail .detail-back-btn{
     display:flex;
     align-items:center;
     justify-content:center;
     width:100%;
-    margin:0;
+    margin:1.5rem 0 0;
+    padding:1em 1.4em;
     font-family:var(--font-mono);
     font-size:16px;
     font-weight:700;
-    letter-spacing:0.05em;
+    letter-spacing:0.08em;
     color:var(--cyan);
     background:transparent;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    cursor:pointer;
     appearance:none;
+    transition:border-color 0.15s ease, background 0.15s ease;
   }
   #screenDetail .detail-back-btn:hover{ background:var(--cyan-faint); border-color:var(--cyan-dim); }
   .action-btn{
@@ -2880,10 +2886,10 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </div>
-      <button class="trait-cell detail-back-btn" id="backToBrowseBtn">← BACK</button>
       <div class="detail-actions">
         <a class="action-btn" id="detailBuyBtn" style="display:none;" target="_blank" rel="noopener">[ BUY 0N DEEPT!DE ]</a>
       </div>
+      <button class="detail-back-btn" id="backToBrowseBtn">← BACK</button>
     </div>
 
     <!-- Fullscreen picture lightbox — click the detail picture to open,
@@ -6705,11 +6711,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (known && known.owner) renderOwnerLink(known.ownerShort, known.owner);
     else { el.detailOwner.textContent = '...'; el.detailOwner.classList.remove('not-indexed'); }
     el.detailTraits.innerHTML = known ? known.attributes.map(traitCellHtml).join('') : '';
-    // BACK moves with the traits it belongs to — always the grid's own
-    // last item (appendChild moves the real node, keeping its listener),
-    // dropping into whatever room the last row has left instead of a
-    // fixed corner.
-    el.detailTraits.appendChild(el.backToBrowseBtn);
     el.detailHistoryList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     updateDetailRarity(known);
     updateDetailPrice(known);
@@ -6735,7 +6736,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailNum.innerHTML = p.number !== null ? 'P!GE0N #' + greenNum(p.number) : 'P!GE0N ...';
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
       el.detailTraits.innerHTML = p.attributes.map(traitCellHtml).join('');
-      el.detailTraits.appendChild(el.backToBrowseBtn);
       updateDetailRarity(p);
       updateDetailPrice(p);
       updateDetailListings(p.listings);
