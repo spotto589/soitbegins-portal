@@ -1112,49 +1112,35 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .clear-traits-btn:hover{ background:rgba(255,61,61,0.12); }
 
-  .results-header-row{ margin-bottom:0.85rem; }
-  /* SEARCH + VIEW as one connected box — shared border, VIEW sits
-     directly underneath the search row with no gap between them, joined
-     by a thin divider rather than reading as two separate floating
-     controls. VIEW itself keeps the exact same look (plain label +
-     select) it always had. */
-  .search-view-box{
+  /* One single bar: SEARCH + GO + VIEW on the left, the results status
+     text taking up the middle, SORT BY + RESET on the right — all one
+     row, bordered as one unit, instead of stacked/separate pieces. */
+  .results-header-row{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:0.9rem 1.25rem;
+    margin-bottom:0.85rem;
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
     padding:0.85em 1em;
   }
-  .search-view-box .search-row{
+  .results-header-row .search-row{
     margin-bottom:0;
     /* GO must always sit to the right of the input, never wrap onto its
        own line below it — the input shrinks first instead. */
     flex-wrap:nowrap;
   }
-  .view-row-connected{
-    margin-top:0.75rem;
-    padding-top:0.75rem;
-    border-top:1px dashed var(--border-dim);
-  }
-  @media (max-width:600px){
-    .search-view-box .search-row{ justify-content:center; flex-wrap:wrap; }
-    .status-line-row{ flex-direction:column; gap:0.6rem; }
-    .status-line-actions{ justify-content:center; flex-wrap:wrap; }
+  @media (max-width:700px){
+    .results-header-row{ justify-content:center; }
   }
   /* ---- results status line ---- */
-  /* RESET (and now SORT BY) sit on the right side of whatever's being
-     shown here — full collection, a trait search, or a wallet scope —
-     so there's always a reset/sort within reach of the results
-     themselves, not just up in the COLLECTION box. */
-  .status-line-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:0.9rem;
-    margin:1.1rem 0 1rem;
-    flex-wrap:wrap;
-  }
-  .status-line-row .status-line{ flex:1 1 auto; }
-  .status-line-actions{ display:flex; align-items:center; gap:0.9rem; flex:0 0 auto; }
+  /* RESET (and SORT BY) sit on the right side of whatever's being shown
+     here — full collection, a trait search, or a wallet scope — so
+     there's always a reset/sort within reach of the results themselves,
+     not just up in the COLLECTION box. */
   .status-line{
+    flex:1 1 auto;
     text-align:center;
     font-family:var(--font-body);
     font-size:11px;
@@ -1162,6 +1148,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--grey-dim);
     text-transform:uppercase;
   }
+  .status-line-actions{ display:flex; align-items:center; gap:0.9rem; flex:0 0 auto; }
   .status-line:empty ~ .status-line-actions{ display:none; }
   .status-line .hi{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   /* Bigger, more prominent than the plain RESULTS :: N line — this is the
@@ -2720,39 +2707,35 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
 
         <div class="results-block" id="resultsBlock">
+          <!-- One single bar now: SEARCH + VIEW on the left, the results
+               status text in the middle, SORT BY + RESET on the right.
+               COLLECTION and ADD TRAITS are the only things left in the
+               config box above this. -->
           <div class="results-header-row">
-            <!-- VIEW connected directly underneath the search box — one
-                 joined unit (shared border, no gap) instead of a loose
-                 dropdown floating separately up in the config box. Same
-                 THUMBNAILS/BOXED VIEW select as before, just relocated. -->
-            <div class="search-view-box">
-              <div class="search-row">
-                <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0N # 0R WALLET">
-                <button class="bar-btn" id="searchBtn">[ GO ]</button>
-              </div>
-              <div class="sort-field view-row-connected">
-                <span class="sort-field-label">V!EW</span>
-                <select class="sort-select" id="dbViewSelect">
-                  <option value="boxed" disabled>B0XED V!EW (C0M!NG S00N)</option>
-                  <option value="thumbnails" selected>THUMBNA!LS</option>
-                </select>
-              </div>
+            <div class="search-row">
+              <input class="search-input" id="searchInput" placeholder="SEARCH P!GE0N # 0R WALLET">
+              <button class="bar-btn" id="searchBtn">[ GO ]</button>
             </div>
-            <div class="status-line-row">
-              <div class="status-line" id="statusLine"></div>
-              <div class="status-line-actions">
-                <div class="sort-field sort-field-inline">
-                  <span class="sort-field-label">S0RT BY ::</span>
-                  <div class="traits-hover-wrap" id="sortDropWrap">
-                    <span class="trait-row-label" id="sortDropLabel"></span>
-                    <div class="traits-flyout" id="sortFlyout" style="display:none;">
-                      <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
-                      <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
-                    </div>
+            <div class="sort-field">
+              <span class="sort-field-label">V!EW</span>
+              <select class="sort-select" id="dbViewSelect">
+                <option value="boxed" disabled>B0XED V!EW (C0M!NG S00N)</option>
+                <option value="thumbnails" selected>THUMBNA!LS</option>
+              </select>
+            </div>
+            <div class="status-line" id="statusLine"></div>
+            <div class="status-line-actions">
+              <div class="sort-field sort-field-inline">
+                <span class="sort-field-label">S0RT BY ::</span>
+                <div class="traits-hover-wrap" id="sortDropWrap">
+                  <span class="trait-row-label" id="sortDropLabel"></span>
+                  <div class="traits-flyout" id="sortFlyout" style="display:none;">
+                    <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
+                    <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
                   </div>
                 </div>
-                <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
               </div>
+              <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
             </div>
           </div>
           <div id="resultsArea"></div>
