@@ -1856,6 +1856,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-owner-top{ font-size:28px; }
   .detail-owner-top .owner-link{ color:var(--cyan); text-decoration:none; }
   .detail-owner-top .owner-link:hover{ text-decoration:underline; }
+  /* Small label above the address itself — otherwise a bare wallet
+     string up top read as an ID, not an ownership statement. */
+  .detail-owner-top .do-label{ display:block; font-family:var(--font-mono); font-weight:400; font-size:11px; letter-spacing:0.18em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.3rem; }
   @media (max-width:760px){
     .detail-two-col{ grid-template-columns:1fr; grid-template-areas:"num" "owner" "left" "right"; gap:0.75rem; }
   }
@@ -3811,8 +3814,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // a wallet ("DATABASE VIEW" as the default-state label was redundant
   // noise and got dropped).
   function refreshSearchPanelSubtitle(){
-    // Redundant with the "SH0W!NG RESULTS F0R :: WALLET: ..." status line
-    // and the node header's own wallet address below — never shown now.
+    // Redundant with the "V!EW!NG WALLET ..." status line and the node
+    // header's own wallet address below — never shown now.
     el.searchPanelSubtitle.style.display = 'none';
     el.searchPanelSubtitle.textContent = '';
   }
@@ -3857,10 +3860,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (state.scopeAllItems.length){
         runScopedQuery();
       } else {
-        el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R :: WALLET: ' + escapeHtml(state.scope.ownerShort) + ' :: <span class="hi">0</span> P!GE0NS</div>';
+        el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG WALLET ' + escapeHtml(state.scope.ownerShort) + ' (<span class="hi">0</span> P!GE0NS)</div>';
         el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0NS F0UND', ['TH!S WALLET 0WNS N0 P!GE0NS.'], false);
       }
     } else {
+      // Old status line (still showing whatever query was active before this
+      // click, e.g. "SH0W!NG RESULTS F0R :: 3015 P!GE0NS") stayed up
+      // through the whole fetch — looked like nothing had happened yet.
+      // Now replaced immediately so it's clear a wallet lookup is in
+      // flight, not just a slow re-render of the same list.
+      el.statusLine.innerHTML = '<div class="results-trait-note">L0AD!NG WALLET ' + escapeHtml(state.scope.ownerShort) + '...</div>';
       el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG H0LDER\\'S REAL P!GE0NS...</div>';
     }
     // Force the DATABASE tab regardless of which tab we were on (a wallet
@@ -3875,7 +3884,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (isSelf) myOwnPigeonsCache = state.scopeAllItems;
       el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
       if (!state.scopeAllItems.length){
-        el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R :: WALLET: ' + escapeHtml(state.scope.ownerShort) + ' :: <span class="hi">0</span> P!GE0NS</div>';
+        el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG WALLET ' + escapeHtml(state.scope.ownerShort) + ' (<span class="hi">0</span> P!GE0NS)</div>';
         el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0NS F0UND', ['TH!S WALLET 0WNS N0 P!GE0NS.'], false);
         return;
       }
@@ -4691,7 +4700,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
     }
     state.items = list;
-    el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R :: WALLET: ' + escapeHtml(state.scope.ownerShort) + ' :: <span class="hi">' + list.length + '</span> P!GE0NS' +
+    el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG WALLET ' + escapeHtml(state.scope.ownerShort) + ' (<span class="hi">' + list.length + '</span> P!GE0NS)' +
       (list.length === 1 ? '<br>P!GE0N #' + list[0].number : '') + '</div>';
     if (!list.length){
       el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + (q || '(traits)') + '"'], true);
@@ -6159,7 +6168,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderOwnerLink(short, full){
     if (!full){ el.detailOwner.textContent = 'N0T !NDEXED'; el.detailOwner.classList.add('not-indexed'); return; }
     el.detailOwner.classList.remove('not-indexed');
-    el.detailOwner.innerHTML = '<a class="owner-link" href="#" data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '" title="V!EW TH!S WALLET\\'S FULL P!GE0N C0LLECT!0N">' + escapeHtml(short || full) + '</a>';
+    el.detailOwner.innerHTML = '<span class="do-label">0WNED BY</span><a class="owner-link" href="#" data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '" title="V!EW TH!S WALLET\\'S FULL P!GE0N C0LLECT!0N">' + escapeHtml(short || full) + '</a>';
   }
   // Clicking the owner address on INSPECT jumps straight into that wallet's
   // full real Pigeon collection (same browse UI as SELECT), not an external
