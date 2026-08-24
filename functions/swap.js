@@ -354,11 +354,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:700px){
     .stats-strip .stat-tile{ flex:0 0 calc(50% - 0.375rem); }
   }
-  /* Just 2 tiles on this page (rate + dexscreener) — wider than the
-     4-across default so they still read as a pair, not two narrow
-     islands with dead space between them. */
-  .stats-strip-rate .stat-tile{ flex:0 0 calc(42% - 0.375rem); }
-  .stats-strip-rate .stat-value{ display:flex; align-items:center; justify-content:center; gap:0.4rem; }
   /* Prev/next arrows flank the viewport; the row itself is the flex
      container that lays out [arrow][viewport][arrow]. */
   .stats-carousel-row{ display:flex; align-items:center; gap:0.5rem; }
@@ -1677,6 +1672,32 @@ const SWAP_HTML = `<!DOCTYPE html>
      other things. */
   .pigeons-bar-calc-col{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:0.4rem; min-width:0; }
   .pigeons-bar-calc-title{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
+  /* Live "1 XRP = X $PIGEONS" rate + a small DEXSCREENER icon-link right
+     beside it — sits between the EXCHANGE RATE title and the calculator
+     itself, same right-hand column, not off in the carousel any more. */
+  .pigeons-bar-rate-row{ display:flex; align-items:center; gap:0.5rem; }
+  .pigeons-bar-rate{
+    color:#fff;
+    text-shadow:0 1px 4px rgba(0,0,0,0.5);
+    font-family:var(--font-mono);
+    text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .pigeons-bar-rate-line{ font-size:13px; letter-spacing:0.05em; opacity:0.9; }
+  .pigeons-bar-rate-value{ font-size:15px; font-weight:700; }
+  .pigeons-bar-dex-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:24px;
+    height:24px;
+    padding:2px;
+    border:1px solid rgba(255,255,255,0.6);
+    border-radius:var(--radius);
+    background:#000;
+    flex:0 0 auto;
+  }
+  .pigeons-bar-dex-btn:hover{ border-color:#fff; }
   .pigeons-bar-calc{
     display:flex;
     align-items:center;
@@ -2401,22 +2422,11 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
         <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES H!ST0RY"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
       </div>
-      <div class="stats-strip stats-strip-rate stats-page" id="statsStripRate">
-        <div class="stat-tile" id="pigeonsBarRate" style="display:none;">
-          <div class="stat-label">EXCHANGE RATE</div>
-          <div class="stat-value"><span class="pigeons-bar-rate-line">1 XRP = </span><span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span></div>
-        </div>
-        <a class="stat-tile stat-tile-link" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">
-          <div class="stat-label">TRACK L!VE PR!CE</div>
-          <div class="stat-value pigeons-bar-dex-value"><img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">V!EW 0N DEXSCREENER</div>
-        </a>
-      </div>
       </div>
       <button class="stats-carousel-arrow" id="statsNextBtn" aria-label="NEXT">▸</button>
       </div>
       <div class="stats-carousel-dots" id="statsCarouselDots">
         <span class="stats-dot active"></span>
-        <span class="stats-dot"></span>
         <span class="stats-dot"></span>
         <span class="stats-dot"></span>
       </div>
@@ -2465,6 +2475,14 @@ const SWAP_HTML = `<!DOCTYPE html>
 
         <div class="pigeons-bar-calc-col" id="pigeonsBarCalc" style="display:none;">
           <div class="pigeons-bar-calc-title">EXCHANGE RATE</div>
+          <div class="pigeons-bar-rate-row">
+            <span class="pigeons-bar-rate" id="pigeonsBarRate" style="display:none;">
+              <span class="pigeons-bar-rate-line">1 XRP = </span><span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span>
+            </span>
+            <a class="pigeons-bar-dex-btn" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+              <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+            </a>
+          </div>
           <div class="pigeons-bar-calc">
             <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="ENTER XRP">
             <span class="pigeons-bar-calc-unit">XRP</span>
