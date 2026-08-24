@@ -6473,6 +6473,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (state.scyllaListedOnly) setScyllaListedOnly(false); // also runs the query
     else if (wasScoped) startCollectionBrowse();
     else runQuery();
+    // Same "land at the top of this tab's own content" feel as clicking
+    // the DATABASE tab itself (scrollActiveTabPanelIntoView) — RESET can
+    // get clicked after scrolling deep into the results list, and should
+    // bring you back to the top of the DATABASE box, not leave you
+    // scrolled down looking at a list that just changed under you.
+    scrollActiveTabPanelIntoView('database');
   });
 
   // ---- Inspect / detail ----
