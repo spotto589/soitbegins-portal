@@ -2678,7 +2678,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     from{ transform:scale(0.9); opacity:0; }
     to{ transform:scale(1); opacity:1; }
   }
-  #offerConfirmModal{
+  #offerConfirmModal, #transferConfirmModal{
     display:none;
     position:fixed;
     inset:0;
