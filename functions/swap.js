@@ -801,6 +801,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     letter-spacing:0.05em;
   }
   .delist-pigeon-btn, #detailScyllaDelistBtn{ border-color:#ff4d4d; color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
+  /* ownedPigeonActionHtml's own CANCEL/L!ST + TRANSFER pair — side by
+     side, not each stacked full-width, so a listed Pigeon (CANCEL +
+     TRANSFER) and an unlisted one (L!ST + TRANSFER) take up the exact
+     same one-row shape instead of the listed state ending up visibly
+     taller than its neighbor. */
+  .owned-action-row{ display:flex; gap:0.5rem; }
+  .owned-action-row .bar-btn{ flex:1 1 0; min-width:0; }
   .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:#ff4d4d; background:#ff4d4d; color:#000; text-shadow:none; }
   /* Red, same accent as CLEAR TRAITS — resetting every filter is a
      destructive-feeling action, worth calling out differently from the
@@ -1679,6 +1686,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     .result-row{ flex-direction:column; align-items:center; text-align:center; }
     .result-row-left{ width:100%; max-width:200px; }
     .result-list.view-thumbnails{ grid-template-columns:repeat(2, 1fr); gap:0.5rem; }
+    /* CANCEL/L!ST + TRANSFER side by side get tight in a narrow 2-across
+       mobile card at the full 15px size — same shrink other card
+       controls already get at this breakpoint. */
+    .owned-action-row .bar-btn{ font-size:11px; padding:0.7em 0.4em; }
   }
 
   /* ---- old grid-tile card, still used by MY PIGEONS (myPigeonCardHtml) ---- */
@@ -6421,12 +6432,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     // modal-btn in wireResultClicks) instead of an inline price input
     // sitting directly on the card — same popup submitInlineListing/
     // submitTransfer both submit through.
-    var actionHtml = listedInfo
-      ? '<div class="own-listing-note" style="margin-top:0.5rem;">L!STED :: ' + escapeHtml(compactPigeonsNumber(listedInfo.price)) + ' $P!GE0NS</div>' +
-        '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ CANCEL ]</button>'
-      : '<button class="bar-btn list-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%;">[ L!ST ]</button>';
-    var transferHtml = '<button class="bar-btn transfer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ TRANSFER ]</button>';
-    return offersHtml + actionHtml + transferHtml;
+    // CANCEL/L!ST paired side-by-side with TRANSFER (.owned-action-row)
+    // instead of each stacked full-width — a listed Pigeon (CANCEL +
+    // TRANSFER) and an unlisted one (L!ST + TRANSFER) now take up the
+    // exact same one-row shape, instead of the listed state being
+    // visibly taller. Centered explicitly (this card has no .thumb-
+    // offer-own ancestor supplying that the way the general-browse
+    // card's own version does).
+    var listedNote = listedInfo
+      ? '<div class="own-listing-note" style="text-align:center; margin-bottom:0.5rem;">L!STED :: ' + escapeHtml(compactPigeonsNumber(listedInfo.price)) + ' $P!GE0NS</div>'
+      : '';
+    var primaryBtn = listedInfo
+      ? '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ CANCEL ]</button>'
+      : '<button class="bar-btn list-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ L!ST ]</button>';
+    var transferBtn = '<button class="bar-btn transfer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ TRANSFER ]</button>';
+    return offersHtml + listedNote + '<div class="owned-action-row">' + primaryBtn + transferBtn + '</div>';
   }
   // The actual pigeon grid for PλWS is the shared DATABASE view itself
   // (screenBrowse, scoped to your own wallet via browseOwnerCollection —
