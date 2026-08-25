@@ -1449,6 +1449,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     box-shadow:0 0 16px var(--pigeon-purple-glow);
     padding:0.6em 0.7em;
+    /* Every purple box in a row is this same height regardless of what's
+       actually inside it — a listed card (price + countdown + BUY N0W +
+       MAKE AN 0FFER, the tallest real case) sits next to an unlisted one
+       (just MAKE AN 0FFER) or an own-Pigeon one (Y0UR L!ST!NG + CANCEL, or
+       just !N Y0UR FL0CK) and all three still line up edge to edge.
+       min-height covers the tallest case; flex centers whatever's actually
+       in the shorter ones instead of leaving it stuck at the top. */
+    min-height:168px;
+    box-sizing:border-box;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
   }
   /* Plain price line, own row above BUY N0W — the button itself now just
      says BUY N0W, price isn't baked into the label any more. */
@@ -6275,7 +6287,12 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       var resultCount = state.total !== null ? state.total : state.items.length;
-      if (filters.length === 0){
+      // Zero results: the empty-state box below (emptyStateHtml) is the
+      // one place that says so — this line stays blank instead of saying
+      // the exact same "0 C0MB!NAT!0NS 0F THESE TRA!TS EX!ST" thing twice.
+      if (!state.items.length){
+        el.statusLine.innerHTML = '';
+      } else if (filters.length === 0){
         el.statusLine.innerHTML = '<div class="results-trait-note">STAT!C://QUERY :: <span class="hi">' + resultCount + '</span> P!GE0NS F0UND</div>';
       } else if (filters.length === 1){
         el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R <span class="hi">' + resultCount + '</span> ' +
