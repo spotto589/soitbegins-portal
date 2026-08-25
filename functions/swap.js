@@ -1545,6 +1545,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, background 0.15s ease;
   }
   .make-offer-send:hover, .list-inline-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); }
+  /* OFFER button — just the word plus the $PIGEONS coin to its right,
+     instead of plain "[ SEND ]" text (see submitMakeOffer for the
+     temporary "[ VAL!DAT!NG... ]" state, restored back to this same
+     markup afterward via makeOfferSendBtnHtml). */
+  .make-offer-send{ display:inline-flex; align-items:center; justify-content:center; gap:0.4em; }
+  .make-offer-send-coin{ width:16px; height:16px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.6); }
   /* Offers received, embedded directly on the pigeon's own card (see
      myPigeonOffersHtml) — sits above the LIST/DELIST action box. */
   .my-pigeon-offers{ display:flex; flex-direction:column; gap:0.4rem; margin-top:0.5rem; }
@@ -3384,7 +3390,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                   <input class="make-offer-input" id="detailMakeOfferInput" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">
                   <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
                 </div>
-                <button class="make-offer-send" id="detailMakeOfferSend">[ SEND ]</button>
+                <button class="make-offer-send" id="detailMakeOfferSend">0FFER<img class="make-offer-send-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt=""></button>
               </div>
             </div>
           </div>
@@ -5127,7 +5133,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var canBuy = !!p.scyllaListing && p.owner !== MY_WALLET;
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
       (canBuy
-        ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W :: ' + escapeHtml(fmtPigeons(p.scyllaListing.price)) + ' ]</button>'
+        ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W :: ' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + ' ]</button>'
         : '') +
       '<div class="thumb-offer-row">' +
         '<div class="make-offer-input-wrap">' +
@@ -5135,7 +5141,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">' +
           '<button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">&times;</button>' +
         '</div>' +
-        '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">[ SEND ]</button>' +
+        '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">0FFER<img class="make-offer-send-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt=""></button>' +
       '</div>' +
     '</div>';
   }
@@ -5517,7 +5523,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Only Pigeons actually listed through Scylla itself, sorted by real
       // $PIGEONS price — server re-verifies each item against real
       // nft_sell_offers, so a stale/cancelled listing can't linger here.
-      reqParams = { skip: state.skip, limit: PAGE_SIZE, scyllaListed: 1, dir: state.sort === 'SCYLLA_PRICE_DESC' ? 'desc' : 'asc' };
+      // filters was previously dropped here too — picking a trait while
+      // FL00R $P!GE0NS was active silently showed every listed Pigeon
+      // instead of restricting to ones that actually carry that trait
+      // (or nothing at all, if none of the current listings do).
+      reqParams = { skip: state.skip, limit: PAGE_SIZE, scyllaListed: 1, dir: state.sort === 'SCYLLA_PRICE_DESC' ? 'desc' : 'asc', filters: filters.length ? JSON.stringify(filters) : undefined };
     } else if (isSalesSort){
       // filters was previously dropped here — picking a trait while a
       // H!ST0R!CAL SALES sort was active silently showed every Pigeon's
@@ -7287,6 +7297,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   var offerPollTimer = null;
   var offerXamanTab = null;
 
+  // Resting-state markup for .make-offer-send (both the DATABASE card
+  // strip and the detail screen's own copy) — just the word plus the
+  // $PIGEONS coin to its right, restored via innerHTML after a submit
+  // attempt finishes (see submitMakeOffer).
+  var MAKE_OFFER_SEND_HTML = '0FFER<img class="make-offer-send-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">';
+
   // Entered right in the DATABASE card's own MAKE AN OFFER strip (see
   // wireResultClicks' .make-offer-send handler) — no separate form screen,
   // straight from the inline number to the confirm screen below.
@@ -7304,6 +7320,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     var sendBtn = stripEl.querySelector('.make-offer-send');
+    // Restored via innerHTML (not textContent) once done — the button's
+    // real resting state is "0FFER" plus the $PIGEONS coin icon, not
+    // plain text (see MAKE_OFFER_SEND_HTML).
     sendBtn.disabled = true;
     sendBtn.textContent = '[ VAL!DAT!NG... ]';
     fetch('/api/swap-makeoffer-prepare', {
@@ -7313,7 +7332,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       sendBtn.disabled = false;
-      sendBtn.textContent = '[ SEND ]';
+      sendBtn.innerHTML = MAKE_OFFER_SEND_HTML;
       if (!res.ok || !res.data.ok){
         alert(listingErrorMessage(res.data && res.data.error));
         return;
@@ -7323,7 +7342,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       showOfferConfirm(res.data.txjson);
     }).catch(function(){
       sendBtn.disabled = false;
-      sendBtn.textContent = '[ SEND ]';
+      sendBtn.innerHTML = MAKE_OFFER_SEND_HTML;
       alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
     });
   }
@@ -8368,6 +8387,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   function fmtPigeons(n){
     var num = typeof n === 'string' ? Number(n) : n;
     return (num || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
+  }
+  // Compact K/M form, BUY N0W button only — every OTHER $PIGEONS amount
+  // on the site (confirm/result screens, fee breakdowns, sale stats)
+  // still needs its exact full value via fmtPigeons above; this is
+  // purely a display cleanup for the one place a long comma-grouped
+  // number was cluttering a small button ("BUY N0W :: 123K $P!GE0NS").
+  function fmtPigeonsCompact(n){
+    var num = typeof n === 'string' ? Number(n) : n;
+    num = num || 0;
+    var abs = Math.abs(num);
+    var str;
+    if (abs >= 1000000) str = (num / 1000000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'M';
+    else if (abs >= 1000) str = (num / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'K';
+    else str = num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    return str + ' $P!GE0NS';
   }
   // Display-only mirror of computeMarketplaceFee() in _shared.js (0.589%)
   // — purely so OFFERS RECEIVED can show "you'll get X" before the seller

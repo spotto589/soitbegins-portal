@@ -515,7 +515,19 @@ export async function onRequestGet(context) {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
     const asc = params.get('dir') !== 'desc';
-    const sortedIds = Object.keys(scyllaListingsMap).sort((a, b) => {
+    // scyllaListingsMap carries no trait data of its own — a trait filter
+    // (previously ignored entirely here) means first learning the real
+    // set of matching nftIds, then restricting to that. If none of the
+    // currently-listed Pigeons carry the trait, idPool ends up empty and
+    // this correctly returns zero results instead of silently showing
+    // every listing.
+    let idPool = Object.keys(scyllaListingsMap);
+    if (filters.length) {
+      const scan = await scanFilteredCandidates(filters);
+      const matchSet = new Set(scan.items.map(it => it.nftId));
+      idPool = idPool.filter(id => matchSet.has(id));
+    }
+    const sortedIds = idPool.sort((a, b) => {
       const av = parseFloat(scyllaListingsMap[a].price) || 0;
       const bv = parseFloat(scyllaListingsMap[b].price) || 0;
       return asc ? av - bv : bv - av;
