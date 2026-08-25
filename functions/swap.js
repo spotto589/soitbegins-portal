@@ -5670,10 +5670,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Every Pigeon, not just ones with real Σκύλλα $PIGEONS sales — real
     // XRP sale history (highSaleEntry, see toItem in api/pigeons.js) is
     // null (not 0) when a Pigeon genuinely has no recorded sale, distinct
-    // from an actual free/near-free past sale, so that case reads "N0
-    // SALES" instead of a misleading "0 XRP".
+    // from an actual free/near-free past sale, so that case reads "M!NT
+    // C0ND!T!0N" instead of a misleading "0 XRP".
     var avgSaleLine = '<div class="result-rarity-line">AVERAGE SALE PR!CE :: ' +
-      (p.avgSaleXrp !== null && p.avgSaleXrp !== undefined ? escapeHtml(fmtXrp(p.avgSaleXrp)) + ' XRP' : 'N0 SALES') +
+      (p.avgSaleXrp !== null && p.avgSaleXrp !== undefined ? escapeHtml(fmtXrp(p.avgSaleXrp)) + ' XRP' : 'M!NT C0ND!T!0N') +
       '</div>';
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
@@ -6027,7 +6027,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.loadMoreNote.style.display = '';
     var filters = activeFilters();
     var isEdition = state.edition === 'LOW' || state.edition === 'HIGH';
-    var isSalesSort = state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_XRP_ASC' || state.sort === 'AVG_SALE_PIGEONS_ASC';
+    var isSalesSort = state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_XRP_ASC' || state.sort === 'AVG_SALE_XRP_DESC' || state.sort === 'AVG_SALE_PIGEONS_ASC';
     var isNumericSort = state.sort === 'NAME_ASC' || state.sort === 'NAME_DESC';
     var isCrossListing = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC';
     var reqParams;
@@ -6047,7 +6047,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       reqParams = {
         skip: state.skip, limit: PAGE_SIZE, highestSale: 1,
         dir: (state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_XRP_ASC' || state.sort === 'AVG_SALE_PIGEONS_ASC') ? 'asc' : 'desc',
-        metric: state.sort === 'AVG_SALE_PIGEONS_ASC' ? 'avg_pigeons' : (state.sort === 'AVG_SALE_XRP_ASC' ? 'avg' : 'max'),
+        metric: state.sort === 'AVG_SALE_PIGEONS_ASC' ? 'avg_pigeons' : ((state.sort === 'AVG_SALE_XRP_ASC' || state.sort === 'AVG_SALE_XRP_DESC') ? 'avg' : 'max'),
         filters: filters.length ? JSON.stringify(filters) : undefined
       };
     } else if (isCrossListing){
@@ -8515,12 +8515,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'RARITY_DESC', label: 'L0WEST' }
     ],
     'PR!CE': [
-      { value: 'SCYLLA_PRICE_ASC', label: 'FL00R $P!GE0NS' },
+      { value: 'SCYLLA_PRICE_ASC', label: 'L0WEST $P!GE0NS' },
+      { value: 'SCYLLA_PRICE_DESC', label: 'H!GHEST $P!GE0NS' },
       { value: 'AVG_SALE_XRP_ASC', label: 'L0WEST AVERAGE SALE PR!CE XRP' },
+      { value: 'AVG_SALE_XRP_DESC', label: 'H!GHEST AVERAGE SALE PR!CE XRP' },
       { value: 'AVG_SALE_PIGEONS_ASC', label: 'L0WEST AVERAGE SALE PR!CE $P!GE0NS' },
-      { value: 'PRICE_ASC', label: 'FL00R XRP', disabled: true },
-      { value: 'PRICE_DESC', label: 'CE!L!NG XRP', disabled: true },
-      { value: 'SCYLLA_PRICE_DESC', label: 'CE!L!NG $P!GE0NS', disabled: true }
+      { value: 'PRICE_ASC', label: 'L0WEST (XRP)', disabled: true }
     ],
     'ALPHABET!CAL': [
       { value: 'NAME_ASC', label: 'A-Z' },
@@ -8565,11 +8565,11 @@ const SWAP_HTML = `<!DOCTYPE html>
         return value === 'SALES_LOW' ? av - bv : bv - av;
       };
     }
-    if (value === 'AVG_SALE_XRP_ASC'){
+    if (value === 'AVG_SALE_XRP_ASC' || value === 'AVG_SALE_XRP_DESC'){
       return function(a, b){
         var av = a.avgSaleXrp === null || a.avgSaleXrp === undefined ? Infinity : a.avgSaleXrp;
         var bv = b.avgSaleXrp === null || b.avgSaleXrp === undefined ? Infinity : b.avgSaleXrp;
-        return av - bv;
+        return value === 'AVG_SALE_XRP_DESC' ? bv - av : av - bv;
       };
     }
     if (value === 'AVG_SALE_PIGEONS_ASC'){
