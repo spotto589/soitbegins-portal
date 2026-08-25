@@ -2050,15 +2050,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
   }
   .pigeons-bar-balance-buy:hover{ background:var(--green); color:#000; text-shadow:none; transform:scale(1.04); animation-play-state:paused; box-shadow:0 0 26px var(--green-glow); }
-  /* XRP -> $PIGEONS calculator, with its own EXCHANGE RATE title above it —
-     the right-hand side of the main row now, not centered between two
-     other things. */
+  /* XRP <-> $PIGEONS calculator — title, DEXSCREENER link, and the live
+     price all sit on one line above the calculator itself; the calculator
+     row underneath is deliberately bare — two type-in boxes and a swap
+     arrow between them, no unit labels or "=" sign cluttering it up. */
   .pigeons-bar-calc-col{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:0.4rem; min-width:0; }
-  .pigeons-bar-calc-title{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
-  /* A small DEXSCREENER icon-link — sits between the EXCHANGE CALCULAT0R
-     title and the calculator itself, same right-hand column, not off in
-     the carousel any more. */
+  .pigeons-bar-calc-title{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; white-space:nowrap; }
   .pigeons-bar-rate-row{ display:flex; align-items:center; gap:0.5rem; }
+  .pigeons-bar-rate-value{ font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--green); text-shadow:0 0 6px var(--green-glow); white-space:nowrap; }
   .pigeons-bar-dex-btn{
     display:inline-flex;
     align-items:center;
@@ -2086,8 +2085,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        resizeCalcInput as you type (ch units, monospace font, so 1ch really
        is one typed character's width). Centered text + the whole box
        being centered in its flex:1 slot means it grows evenly from both
-       sides, not anchored to one edge. Base width fits the full "ENTER
-       XRP" placeholder (10ch) so it's never clipped. */
+       sides, not anchored to one edge. */
     width:10ch;
     min-width:10ch;
     background:transparent;
@@ -2101,12 +2099,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .pigeons-bar-calc-input:focus{ outline:none; }
   /* $P!GE0NS side of the calculator — same input, just a wider base/
-     minimum width to fit "ENTER $P!GE0NS" (14ch) without clipping. */
+     minimum width so a typed number doesn't clip. */
   .pigeons-bar-calc-input-wide{ width:14ch; min-width:14ch; }
   .pigeons-bar-calc-input::placeholder{ color:rgba(255,255,255,0.6); text-transform:uppercase; }
-  .pigeons-bar-calc-unit{ color:rgba(255,255,255,0.7); font-size:14px; letter-spacing:0.05em; }
-  .pigeons-bar-calc-eq{ color:#fff; font-size:15px; opacity:0.8; }
-  .pigeons-bar-calc-out{ color:#fff; font-weight:700; font-size:17px; white-space:nowrap; }
+  .pigeons-bar-calc-arrow{ color:rgba(255,255,255,0.7); font-size:18px; }
   /* DEXSCREENER icon inside its stat-tile up in the carousel now (see
      the RATE page) — sizing only, the tile/link styling comes from
      .stat-tile/.stat-tile-link. */
@@ -3390,20 +3386,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
 
         <div class="pigeons-bar-calc-col" id="pigeonsBarCalc" style="display:none;">
-          <div class="pigeons-bar-calc-title">EXCHANGE CALCULAT0R</div>
           <div class="pigeons-bar-rate-row">
+            <span class="pigeons-bar-calc-title">EXCHANGE CALCULAT0R</span>
             <a class="pigeons-bar-dex-btn" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
               <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
             </a>
+            <span class="pigeons-bar-rate-value" id="pigeonsBarRateValue" style="display:none;"></span>
           </div>
           <div class="pigeons-bar-calc">
-            <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="ENTER XRP">
+            <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="XRP">
             <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
-            <span class="pigeons-bar-calc-unit">XRP</span>
-            <span class="pigeons-bar-calc-eq">=</span>
-            <input class="pigeons-bar-calc-input pigeons-bar-calc-input-wide" id="pigeonsCalcPigeonsInput" type="text" inputmode="decimal" placeholder="ENTER $P!GE0NS">
+            <span class="pigeons-bar-calc-arrow">⇄</span>
+            <input class="pigeons-bar-calc-input pigeons-bar-calc-input-wide" id="pigeonsCalcPigeonsInput" type="text" inputmode="decimal" placeholder="$P!GE0NS">
             <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
-            <span class="pigeons-bar-calc-unit">$P!GE0NS</span>
           </div>
         </div>
       </div>
@@ -4264,7 +4259,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
-   'pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
+   'pigeonsBarCalc','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'topTabs','flockTabLabel','myPigeonsPanel','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
    'salesPanelWrap',
@@ -8401,13 +8396,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   // only if DexScreener is unreachable). Re-fetched on the same 60s
   // cadence as the server's own KV cache TTL (PIGEONS_RATE_CACHE_TTL_SECONDS
   // in _shared.js) so a tab left open never keeps showing a stale rate.
-  // The standalone "1 XRP = N $PIGEONS" readout that used to sit above
-  // the calculator is gone — the calculator itself is the rate display now.
+  // The rate readout is now just the raw per-1-$PIGEON XRP price (e.g.
+  // "0.00024"), inline on the title row next to the DEXSCREENER link —
+  // not a spelled-out "1 XRP = N $PIGEONS" sentence any more.
   var trustlineXrpPerPigeon = null;
   function refreshTrustlineRate(){
     api({ pigeonsRate: 1 }).then(function(data){
       trustlineXrpPerPigeon = (data && typeof data.xrpPerPigeon === 'number') ? data.xrpPerPigeon : null;
       if (trustlineXrpPerPigeon !== null){
+        el.pigeonsBarRateValue.textContent = trustlineXrpPerPigeon.toLocaleString(undefined, { maximumFractionDigits: 6 }) + ' XRP';
+        el.pigeonsBarRateValue.style.display = '';
         el.pigeonsBarCalc.style.display = '';
         // Re-derive whichever side the rate refresh shouldn't silently
         // overwrite what's mid-typing — XRP wins ties (matches its
