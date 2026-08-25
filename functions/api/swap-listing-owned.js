@@ -1,4 +1,4 @@
-import { fetchAllAccountNfts, findAllPigeons, fetchNftSellOffers, recordSwapListing, getSwapListingsMap, mapWithConcurrency, findPigeonsOffer } from '../_shared.js';
+import { fetchAllAccountNfts, findAllPigeons, fetchNftSellOffers, recordSwapListingsBatch, getSwapListingsMap, mapWithConcurrency, findPigeonsOffer } from '../_shared.js';
 
 // Real on-ledger "which of my own Pigeons have an active sell offer I
 // created" check — powers the LISTED badge in MY PIGEONS. Never a
@@ -19,8 +19,12 @@ import { fetchAllAccountNfts, findAllPigeons, fetchNftSellOffers, recordSwapList
 const DISCOVERY_CAP = 45;
 
 // Server-side helper shared by both the wallet-wide scan and the direct
-// nftId check below.
-async function verifyAndRecord(env, nftId, wallet, listed) {
+// nftId check below. Does NOT write to KV itself any more — see
+// recordSwapListingsBatch's own comment for why per-call writes here were
+// silently losing entries under concurrency. Just returns what it found;
+// the caller collects everything and writes it in one batched call once
+// every check (direct + the concurrent discovery scan) has settled.
+async function verifyAndRecord(env, nftId, wallet, listed, toRecord) {
   const offers = await fetchNftSellOffers(nftId);
   // Specifically the Σκύλλα $PIGEONS offer — a wallet's held Pigeon can
   // also carry an unrelated (e.g. XRP/Deeptide) offer from the same
@@ -33,17 +37,15 @@ async function verifyAndRecord(env, nftId, wallet, listed) {
       offerId: ownOffer.nft_offer_index,
       expiration: ownOffer.expiration || null
     };
-    if (env.coin) {
-      await recordSwapListing(env.coin, nftId, {
-        price: ownOffer.amount.value,
-        currency: ownOffer.amount.currency,
-        issuer: ownOffer.amount.issuer,
-        offerId: ownOffer.nft_offer_index,
-        expiration: ownOffer.expiration || null,
-        seller: wallet,
-        listedAt: Math.floor(Date.now() / 1000)
-      });
-    }
+    toRecord[nftId] = {
+      price: ownOffer.amount.value,
+      currency: ownOffer.amount.currency,
+      issuer: ownOffer.amount.issuer,
+      offerId: ownOffer.nft_offer_index,
+      expiration: ownOffer.expiration || null,
+      seller: wallet,
+      listedAt: Math.floor(Date.now() / 1000)
+    };
     return true;
   }
   return false;
@@ -58,6 +60,11 @@ export async function onRequestGet(context) {
   }
 
   const listed = {};
+  // Collected across every verifyAndRecord call below (the direct nftId
+  // check AND the concurrent discovery scan), then written to KV exactly
+  // once at the end — see recordSwapListingsBatch's own comment for why
+  // that matters here specifically.
+  const toRecord = {};
 
   const listingsMap = env.coin ? await getSwapListingsMap(env.coin) : {};
   for (const nftId of Object.keys(listingsMap)) {
@@ -72,14 +79,16 @@ export async function onRequestGet(context) {
   // regardless of how many other Pigeons the wallet holds.
   const directNftId = url.searchParams.get('nftId');
   if (directNftId && /^[0-9A-Fa-f]{64}$/.test(directNftId) && !listed[directNftId]) {
-    await verifyAndRecord(env, directNftId, wallet, listed);
+    await verifyAndRecord(env, directNftId, wallet, listed, toRecord);
   }
 
   const nfts = await fetchAllAccountNfts(wallet);
   const undiscovered = findAllPigeons(nfts).filter(nft => !listed[nft.NFTokenID]).slice(0, DISCOVERY_CAP);
 
   // Small batches, not one Promise.all blast — see mapWithConcurrency.
-  await mapWithConcurrency(undiscovered, 5, (nft) => verifyAndRecord(env, nft.NFTokenID, wallet, listed));
+  await mapWithConcurrency(undiscovered, 5, (nft) => verifyAndRecord(env, nft.NFTokenID, wallet, listed, toRecord));
+
+  if (env.coin) context.waitUntil(recordSwapListingsBatch(env.coin, toRecord));
 
   return new Response(JSON.stringify({ listed }), {
     headers: { 'Content-Type': 'application/json' }

@@ -2281,6 +2281,24 @@ export async function recordSwapListing(kv, nftId, entry) {
   await safeKvPut(kv, SWAP_LISTINGS_MAP_KEY, JSON.stringify(map));
 }
 
+// Merges multiple entries in ONE read-modify-write instead of one per
+// entry — recordSwapListing's own read-then-write is a real race when
+// several calls run concurrently against the same key (confirmed live:
+// swap-listing-owned.js's own discovery scan checks up to 5 Pigeons at
+// once via mapWithConcurrency, and when more than one of those turned out
+// to be genuinely listed, all but the LAST write to finish silently lost
+// its entry — a real listing that briefly existed in the response never
+// actually made it into the persisted map, so it just never showed up in
+// L!STED/FL00R $P!GE0NS). Callers that discover multiple entries in the
+// same pass should collect them and call this once at the end rather than
+// calling recordSwapListing per entry in a loop/Promise.all.
+export async function recordSwapListingsBatch(kv, entries) {
+  if (!entries || !Object.keys(entries).length) return;
+  const map = await getSwapListingsMap(kv);
+  Object.assign(map, entries);
+  await safeKvPut(kv, SWAP_LISTINGS_MAP_KEY, JSON.stringify(map));
+}
+
 export async function removeSwapListing(kv, nftId) {
   const map = await getSwapListingsMap(kv);
   if (!map[nftId]) return;
