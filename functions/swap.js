@@ -3990,10 +3990,30 @@ const SWAP_HTML = `<!DOCTYPE html>
   // first page, or runScopedQuery's synchronous filter) instead.
   var pendingTraitScroll = false;
   function showTab(tab){
+    // PλWS shows the exact same DATABASE grid/detail view — not a
+    // separate look — just scoped to your own wallet. Delegates straight
+    // to browseOwnerCollection (same call SH0W MY P!GE0NS already makes),
+    // which sets state.scope then calls back into showTab('mypigeons')
+    // itself once scoped — guarded by the isOwnWalletScope() check below
+    // so that second call falls through to the normal body instead of
+    // looping back here again.
+    if (tab === 'mypigeons' && MY_WALLET && !isOwnWalletScope()){
+      if (myPigeonsData === null) loadMyPigeons();
+      browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
+      return;
+    }
     state.activeTab = tab;
     // Universal across every tab now — only what's underneath it swaps.
     el.collectionDetailsPanel.style.display = '';
-    el.screenBrowse.style.display = tab === 'database' ? '' : 'none';
+    // screenBrowse (search/sort/filter row, results grid, detail overlay)
+    // is shared by DATABASE and PλWS now — myPigeonsPanel above it still
+    // renders (title, connect status, CREATE OFFER), just without its own
+    // competing pigeon grid underneath (see renderMyPigeonsList). Only
+    // shown for 'mypigeons' once actually scoped to your own wallet —
+    // before that (no session yet, still connecting), staying hidden
+    // avoids briefly showing a stale/unrelated grid underneath the
+    // CONNECTING status.
+    el.screenBrowse.style.display = (tab === 'database' || (tab === 'mypigeons' && isOwnWalletScope())) ? '' : 'none';
     el.myPigeonsPanel.style.display = tab === 'mypigeons' ? '' : 'none';
     el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
     el.salesPanelWrap.style.display = tab === 'sales' ? '' : 'none';
@@ -4069,6 +4089,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // is the only way back to the full collection — make that work.
     if (tab === 'database' && state.scope){
       exitWalletScope();
+      // Scoping can now happen from PλWS too (own-wallet scope, see
+      // showTab), not just from already being on DATABASE — activeTab/
+      // the tab-button highlight/panel visibility need an explicit
+      // showTab here now, not just the data-side startCollectionBrowse.
+      // databaseLoaded is already true by this point (set the first time
+      // any scope was entered), so this only updates tab chrome, never
+      // re-triggers a redundant full-collection fetch of its own.
+      showTab('database');
       startCollectionBrowse();
       scrollActiveTabPanelIntoView('database');
       return;
@@ -4721,7 +4749,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // targetPigeon is optional — set only when arriving here via SELECT on
   // a specific Pigeon (owner-links, top holders, MY PIGEONS etc. browse a
   // wallet directly with no "target" pigeon that led here).
-  function browseOwnerCollection(wallet, ownerShort, targetPigeon){
+  function browseOwnerCollection(wallet, ownerShort, targetPigeon, landOnTab){
     state.scope = { wallet: wallet, ownerShort: ownerShort || wallet };
     state.targetAssets = {};
     state.traitFilters = [];
@@ -4773,7 +4801,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // loaded first so opening it doesn't ALSO kick off a full-collection
     // fetch that would race this wallet-scoped one.
     state.databaseLoaded = true;
-    showTab('database');
+    showTab(landOnTab || 'database');
     renderTradeBuilder();
     apiWithRetry({ wallet: wallet }).then(function(data){
       state.scopeAllItems = data.items || [];
@@ -5811,72 +5839,16 @@ const SWAP_HTML = `<!DOCTYPE html>
         '</div>';
     return offersHtml + actionHtml;
   }
-  function myPigeonCardHtml(p){
-    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) + '</div>' : '';
-    var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
-    var num = p.number !== null ? '#' + greenNum(p.number) : '#????';
-    var ownedActionHtml = ownedPigeonActionHtml(p);
-    // Own, separate toggle class from the DATABASE grid's .card-select-toggle
-    // (same look, via shared CSS selectors) — deliberately NOT the same
-    // class, so wireResultClicks' generic handler (which routes through
-    // handleSelect's scope-based branching, wrong for this always-unscoped
-    // list) never sees this click; toggleOfferAsset is called directly.
-    var inOffer = !!state.offerAssets[p.nftId];
-    var atCap = !inOffer && offerCount() >= OFFER_MAX;
-    var offerToggleHtml = SWAP_BUILDER_ENABLED
-      ? '<button class="my-pigeon-offer-toggle' + (inOffer ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="ADD T0 SWAP 0FFER">' + (inOffer ? '✓' : '+') + '</button>'
-      : '';
-    return '<div class="result-card' + (inOffer ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      '<div class="result-num">P!GE0N ' + num + '</div>' +
-      '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
-        img +
-        offerToggleHtml +
-      '</div>' +
-      '<div class="result-card-body">' + rarityLine + ownedActionHtml + '</div>' +
-    '</div>';
-  }
-  // ---- MY PIGEONS ordering: pigeons with a received offer always come
-  // first (most recent offer first — that's actionable money waiting), then
-  // pigeons you've listed through Scylla (highest $PIGEONS price to lowest)
-  // — the sort dropdown only governs the rest, same rarity/A-Z options
-  // DATABASE offers. ----
-  var myPigeonsSort = 'RARITY_ASC';
-  function sortedMyPigeons(){
-    var withOffers = [], listed = [], rest = [];
-    (myPigeonsData || []).forEach(function(p){
-      if (offersByNftId[p.nftId] && offersByNftId[p.nftId].length) withOffers.push(p);
-      else if (myListedData[p.nftId]) listed.push(p);
-      else rest.push(p);
-    });
-    withOffers.sort(function(a, b){
-      var aRecent = Math.max.apply(null, offersByNftId[a.nftId].map(function(o){ return o.createdAt || 0; }));
-      var bRecent = Math.max.apply(null, offersByNftId[b.nftId].map(function(o){ return o.createdAt || 0; }));
-      return bRecent - aRecent;
-    });
-    listed.sort(function(a, b){
-      var av = parseFloat(myListedData[a.nftId].price) || 0;
-      var bv = parseFloat(myListedData[b.nftId].price) || 0;
-      return bv - av;
-    });
-    rest.sort(function(a, b){
-      if (myPigeonsSort === 'RARITY_DESC') return (b.rarityRank || 0) - (a.rarityRank || 0);
-      if (myPigeonsSort === 'NAME_ASC') return (a.number || 0) - (b.number || 0);
-      if (myPigeonsSort === 'NAME_DESC') return (b.number || 0) - (a.number || 0);
-      return (a.rarityRank || 999999) - (b.rarityRank || 999999); // RARITY_ASC default
-    });
-    return withOffers.concat(listed, rest);
-  }
+  // The actual pigeon grid for PλWS is the shared DATABASE view itself
+  // (screenBrowse, scoped to your own wallet via browseOwnerCollection —
+  // see showTab) now, not a separate look — this just keeps the title
+  // count current. myPigeonsSortRow/myPigeonsList stay in the markup but
+  // permanently empty/hidden.
   function renderMyPigeonsList(){
     el.myPigeonsPanelTitle.textContent = 'Σκύλλα :: PλWS' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
-    if (myPigeonsData === null){ el.myPigeonsList.innerHTML = '<div class="skylla-signal">Σκύλλα://S!GNAL :: L0AD!NG</div>'; return; }
-    if (!myPigeonsData.length){ el.myPigeonsSortRow.style.display = 'none'; el.myPigeonsList.innerHTML = '<div class="th-empty">Y0U D0N\\'T H0LD ANY P!GE0NS YET.</div>'; return; }
-    el.myPigeonsSortRow.style.display = '';
-    el.myPigeonsList.innerHTML = '<div class="result-grid my-pigeons-grid">' + sortedMyPigeons().map(myPigeonCardHtml).join('') + '</div>';
+    el.myPigeonsSortRow.style.display = 'none';
+    el.myPigeonsList.innerHTML = '';
   }
-  el.myPigeonsSortSelect.addEventListener('change', function(){
-    myPigeonsSort = el.myPigeonsSortSelect.value;
-    renderMyPigeonsList();
-  });
   function loadMyPigeons(){
     if (!MY_WALLET){
       // The CONNECT box itself stays hidden here now — auto-login already
@@ -5885,9 +5857,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // if that login attempt actually fails (see getXummAuth's error
       // paths below), as a manual retry.
       el.offersReceivedBlock.style.display = 'none';
-      el.myPigeonsSortRow.style.display = 'none';
       el.myPigeonsPanelTitle.textContent = 'Σκύλλα :: PλWS';
-      el.myPigeonsList.innerHTML = '';
       return;
     }
     el.myPigeonsConnect.style.display = 'none';
