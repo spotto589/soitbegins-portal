@@ -4297,6 +4297,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   // submitMakeOffer) still need to strip commas themselves — this only
   // affects what's shown in the field.
   function formatThousandsInput(input){
+    // Shorthand — a trailing k/m (case-insensitive) multiplies whatever
+    // number came before it by a thousand/million: "123k" -> "123000",
+    // "1.5m" -> "1500000" — then falls straight through to the normal
+    // comma-formatting below exactly as if that expanded number had
+    // been typed directly. Checked first since the plain digit-only
+    // cleanup below would otherwise just silently discard the letter
+    // and leave the number un-expanded.
+    var shorthandMatch = input.value.match(/^([0-9]*\\.?[0-9]+)\\s*([kKmM])$/);
+    if (shorthandMatch){
+      var multiplier = shorthandMatch[2].toLowerCase() === 'k' ? 1000 : 1000000;
+      input.value = String(Math.round(parseFloat(shorthandMatch[1]) * multiplier));
+    }
     var raw = input.value;
     var cursorPos = input.selectionStart === null ? raw.length : input.selectionStart;
     var digitsBeforeCursor = raw.slice(0, cursorPos).replace(/[^0-9]/g, '').length;
