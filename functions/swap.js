@@ -1451,6 +1451,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      just a plain readout so the box isn't blank. */
   .thumb-offer-own{ text-align:center; }
   .own-listing-note{ color:#fff; font-weight:700; font-size:13px; letter-spacing:0.05em; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-transform:uppercase; }
+  /* Real, live, actionable own-listing readout (there's a real CANCEL
+     button right underneath) — same red as the FL0CK tab's own pending-
+     offer count (.flock-tab-offers-pending), not the plain white
+     "!N Y0UR FL0CK" info-only note. Shared by the general-browse card
+     (own-listing-note), the FL0CK card's own L!STED line (ownedPigeon-
+     ActionHtml), and the detail screen's own copy. */
+  .own-listing-red{ color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
   .thumb-offer-row{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
   /* $PIGEONS coin sits inside the input itself (not just the placeholder)
      so it stays put once you start typing a number, instead of
@@ -2306,6 +2313,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   #screenDetail .scylla-listing-block .tech-meta-title{ color:#fff; opacity:0.9; }
   #screenDetail .scylla-listing-price{ font-size:17px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
+  /* Same red as the card grid's own-listing readout — needs to out-
+     specificity the #screenDetail rule right above, plain .own-listing-
+     red alone would lose to it. */
+  #screenDetail .scylla-listing-price.own-listing-red{ color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
   #screenDetail #detailMakeOfferRow{ margin-top:0.75rem; }
   #screenDetail .detail-num{ font-size:28px; }
   #screenDetail .trait-grid{ max-width:100%; margin:0.4rem 0 0; grid-template-columns:repeat(3, 1fr); gap:0.4rem; }
@@ -5247,7 +5258,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // "!N Y0UR FL0CK"/"L!ST!NG :: 444K" note instead, never a blank box.
       if (p.scyllaListing){
         return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<div class="own-listing-note">Y0UR L!ST!NG :: ' + escapeHtml(compactPigeonsNumber(p.scyllaListing.price)) + '</div>' +
+          '<div class="own-listing-note own-listing-red">Y0UR L!ST!NG :: ' + escapeHtml(compactPigeonsNumber(p.scyllaListing.price)) + '</div>' +
           // Same .delist-pigeon-btn class/handling ownedPigeonActionHtml's
           // own DELIST button uses (wireResultClicks' delegated listener
           // already covers el.resultsArea too) — no separate wiring needed.
@@ -6221,8 +6232,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // sitting directly on the card — same popup submitInlineListing/
     // submitTransfer both submit through.
     var actionHtml = listedInfo
-      ? '<div class="index-line" style="margin-top:0.5rem; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow);">L!STED :: ' + escapeHtml(listedInfo.price) + ' $P!GE0NS</div>' +
-        '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ DEL!ST ]</button>'
+      ? '<div class="index-line own-listing-red" style="margin-top:0.5rem;">L!STED :: ' + escapeHtml(compactPigeonsNumber(listedInfo.price)) + ' $P!GE0NS</div>' +
+        '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ CANCEL ]</button>'
       : '<button class="bar-btn list-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%;">[ L!ST ]</button>';
     var transferHtml = '<button class="bar-btn transfer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ TRANSFER ]</button>';
     return offersHtml + actionHtml + transferHtml;
@@ -8489,11 +8500,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       // never the raw fmtPigeons price there, since there's no BUY button
       // next to it to buy your own listing anyway.
       el.detailScyllaPrice.textContent = isOwn ? 'Y0UR L!ST!NG :: ' + compactPigeonsNumber(listing.price) : fmtPigeons(listing.price);
+      // Same red as the card grid's own-listing readout (.own-listing-red)
+      // — real, actionable (CANCEL sits right next to it), not the plain
+      // color every other price in this row uses.
+      el.detailScyllaPrice.classList.toggle('own-listing-red', isOwn);
       el.detailScyllaBuyBtn.style.display = notOwn ? '' : 'none';
       el.detailScyllaDelistBtn.style.display = isOwn ? '' : 'none';
       el.detailScyllaListingRow.classList.remove('not-listed');
     } else {
       el.detailScyllaPrice.textContent = isOwn ? '!N Y0UR FL0CK' : 'N0T L!STED';
+      el.detailScyllaPrice.classList.remove('own-listing-red');
       el.detailScyllaBuyBtn.style.display = 'none';
       el.detailScyllaDelistBtn.style.display = 'none';
       el.detailScyllaListingRow.classList.add('not-listed');

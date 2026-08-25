@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, findPigeonsOffer
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findPigeonsOffer
 } from '../_shared.js';
 
 // Σκύλλα SWAP — DELIST (phase 2). Builds and returns the exact
@@ -37,7 +37,18 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_nft_id' }), { status: 400 });
   }
 
-  const offers = await fetchNftSellOffers(nftId);
+  // null specifically means the live nft_sell_offers lookup itself failed
+  // (xrplcluster.com rate-limited, network blip) — must NOT be treated as
+  // "genuinely not listed," or a transient blip wrongly tells a real
+  // seller their own live listing doesn't exist (confirmed: this exact
+  // mistake, using the tolerant empty-array-on-failure fetchNftSellOffers
+  // instead of this null-on-failure variant, was DELIST's actual bug —
+  // same class of bug the scyllaListed background-verify comment already
+  // warns about elsewhere in this file).
+  const offers = await fetchNftSellOffersOrNull(nftId);
+  if (offers === null) {
+    return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 502 });
+  }
   // Specifically the Σκύλλα $PIGEONS offer — the same wallet can also
   // have an unrelated XRP (or other) sell offer live on the same NFT
   // (e.g. an existing Deeptide listing); matching on owner alone would
