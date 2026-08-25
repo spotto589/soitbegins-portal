@@ -2216,22 +2216,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     top:clamp(0.5rem, 2vw, 1.5rem);
     right:clamp(0.5rem, 2vw, 1.5rem);
     z-index:75;
-    padding:0.5em 1em;
+    /* Same colors/shape as .detail-back-btn (the bottom strip) — just
+       sized up a bit since this one stands alone instead of filling the
+       column's full width. */
+    padding:0.9em 1.7em;
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:18px;
     font-weight:700;
-    letter-spacing:0.06em;
+    letter-spacing:0.08em;
     color:var(--cyan);
-    background:rgba(8,9,11,0.7);
-    border:1px solid var(--cyan-dim);
+    background:transparent;
+    border:1px solid var(--border-mid);
     border-radius:var(--radius);
     cursor:pointer;
     appearance:none;
     transition:border-color 0.15s ease, background 0.15s ease;
   }
-  .detail-back-btn-top:hover{ border-color:var(--cyan); background:var(--cyan-faint); }
+  .detail-back-btn-top:hover{ background:var(--cyan-faint); border-color:var(--cyan-dim); }
   @media (max-width:760px){
-    .detail-back-btn-top{ font-size:12px; padding:0.45em 0.8em; }
+    .detail-back-btn-top{ font-size:15px; padding:0.7em 1.3em; }
   }
   /* Local copy of canvas#staticBg's own look (see the drawStatic loop —
      both canvases run the identical draw function) — negative z-index so
