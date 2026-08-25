@@ -1956,11 +1956,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-weight:700;
   }
   .pigeons-bar-sublabel{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
-  /* The pigeon count (just the number, see renderTrustlineSummary) is
-     the actual headline stat of the logged-in identity block, not a
-     fine-print label like the issuer address/trustline status sharing
-     the same base class — bumped up. */
-  #pigeonsLoggedInCount{ font-size:16px; font-weight:700; color:#fff; }
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
   .pigeons-bar-issuer .pigeons-bar-text{ font-size:14px; text-align:left; }
@@ -3332,7 +3327,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="pigeons-bar-left" id="pigeonsBarLoggedIn" style="display:none;">
           <div class="pigeons-bar-left-body">
             <span class="pigeons-bar-text" id="pigeonsLoggedInWallet"></span>
-            <span class="pigeons-bar-sublabel" id="pigeonsLoggedInCount">…</span>
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
             <div class="pigeons-bar-identity-actions">
               <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">[ SH0W MY FL0CK<span id="showMyPigeonsCount"></span> ]</button>
@@ -4214,7 +4208,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
-   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInCount','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
+   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
    'topTabs','flockTabLabel','myPigeonsPanel','myPigeonsList',
@@ -6811,12 +6805,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // was the only time anyone would want to buy — real feedback: someone
   // already holding a real balance still wants a quick way to buy more).
   function renderTrustlineSummary(){
-    // Just the number now — no "P!GE0NS 0WNED" label (explicit request:
-    // keep this headline stat to the number alone).
-    el.pigeonsLoggedInCount.innerHTML = trustlinePigeonCount === null
-      ? '…'
-      : greenNum(trustlinePigeonCount.toLocaleString());
-    // Same count, echoed inside SH0W MY FL0CK itself — left blank rather
+    // The pigeon count only ever shows once now, inside SH0W MY FL0CK
+    // itself — used to also have its own standalone "58" line right
+    // above it (pigeonsLoggedInCount), showing the exact same number
+    // twice in the same small identity block. Left blank rather
     // than showing a placeholder while still loading, since the button
     // reads fine on its own either way ("[ SH0W MY FL0CK ]").
     el.showMyPigeonsCount.textContent = trustlinePigeonCount === null ? '' : ' :: ' + trustlinePigeonCount.toLocaleString();
