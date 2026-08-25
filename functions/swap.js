@@ -1749,6 +1749,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-decoration:underline;
     text-underline-offset:0.2em;
   }
+  /* This page only ever shows your own Pigeons — no searching for anyone
+     else's from here (see updateSearchPanelTitleForPaws). The search box
+     (# 0R WALLET) is DATABASE-only functionality once scoped this way. */
+  body.paws-view .results-header-row .search-row{
+    display:none !important;
+  }
   /* Same purple gradient as the trustline strip below it (not the usual
      dark digital-glitch .sw-panel-signal background) — own border/
      radius/shadow/margin removed since the outer wrapper supplies those,
@@ -2832,8 +2838,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:2rem 1rem;
   }
   .simple-picker-panel{
-    width:min(720px, 100%);
-    max-height:85vh;
+    width:min(800px, 100%);
+    max-height:88vh;
     display:flex;
     flex-direction:column;
     background:var(--panel-bg-solid);
@@ -2857,27 +2863,46 @@ const SWAP_HTML = `<!DOCTYPE html>
   .simple-picker-close:hover{ border-color:var(--magenta-dim); color:var(--magenta); }
   .simple-picker-search-row{ display:flex; gap:0.6rem; margin-bottom:1rem; }
   .simple-picker-search-row .search-input{ flex:1 1 auto; width:auto; }
+  /* Fixed scroll height (not just overflow:auto with no bound) — 4 across,
+     tall enough to read each thumbnail clearly, scrolling down through
+     the rest rather than the whole modal growing past the viewport. */
   .simple-picker-grid{
     overflow-y:auto;
+    max-height:min(58vh, 640px);
     display:grid;
     grid-template-columns:repeat(4, 1fr);
-    gap:0.75rem;
+    gap:1rem;
+    padding-right:0.4rem;
   }
-  @media (max-width:640px){ .simple-picker-grid{ grid-template-columns:repeat(3, 1fr); } }
+  @media (max-width:640px){ .simple-picker-grid{ grid-template-columns:repeat(2, 1fr); } }
   .simple-picker-card{
     background:transparent;
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
     overflow:hidden;
-    cursor:pointer;
     padding:0;
     text-align:center;
     transition:border-color 0.15s ease;
   }
   .simple-picker-card:hover{ border-color:var(--cyan-dim); }
-  .simple-picker-card-img{ aspect-ratio:1; background:#000; }
+  .simple-picker-card-img{ aspect-ratio:1; background:#000; cursor:pointer; }
   .simple-picker-card-img img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .simple-picker-card-num{ padding:0.4em 0.2em; font-size:10px; letter-spacing:0.03em; color:var(--grey); }
+  .simple-picker-card-num{ padding:0.5em 0.2em 0.3em; font-size:12px; letter-spacing:0.03em; color:var(--white); }
+  .simple-picker-view-btn{
+    display:block;
+    width:100%;
+    background:transparent;
+    border:none;
+    border-top:1px solid var(--border-dim);
+    color:var(--grey-dim);
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:0.08em;
+    padding:0.5em 0;
+    cursor:pointer;
+    transition:color 0.15s ease, background 0.15s ease;
+  }
+  .simple-picker-view-btn:hover{ color:var(--cyan); background:var(--cyan-faint); }
   .swap-nonatomic-note{
     max-width:520px;
     margin:0 auto 1.25rem;
@@ -4033,6 +4058,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     // writes (balance/buy-button visibility, which know nothing about
     // which tab is active) running after this.
     document.body.classList.toggle('paws-view', tab === 'mypigeons');
+    // Covers every path that can leave/re-enter PλWS, including the
+    // DATABASE tab click while scoped (exitWalletScope + startCollection-
+    // Browse never call browseOwnerCollection, so its own call to this
+    // wouldn't fire) — this title must never stay stuck once you're
+    // actually looking at real DATABASE again.
+    updateSearchPanelTitleForPaws();
     // Universal across every tab now — only what's underneath it swaps.
     el.collectionDetailsPanel.style.display = '';
     // screenBrowse (search/sort/filter row, results grid, detail overlay)
@@ -4773,6 +4804,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.searchPanelSubtitle.style.display = 'none';
     el.searchPanelSubtitle.textContent = '';
   }
+  // PλWS reuses this same panel/grid (see showTab) but only ever shows
+  // your own Pigeons, search box hidden entirely (.paws-view CSS) — the
+  // static "SEARCH!NG $P!GE0NS DATABASE" title reads wrong there, so it
+  // becomes a real held-count instead whenever actually on that tab,
+  // scoped to yourself. Reverts the instant any other tab (or DATABASE
+  // itself) is active — this must never bleed into the real DATABASE view.
+  function updateSearchPanelTitleForPaws(){
+    el.searchPanelTitle.textContent = (state.activeTab === 'mypigeons' && isOwnWalletScope())
+      ? 'SH0W!NG Y0UR P!GE0NS ' + state.scopeAllItems.length
+      : 'SEARCH!NG $P!GE0NS DATABASE';
+  }
   // Shared by SELECT (auto-enters owner scope + auto-targets the pigeon
   // that got you there) and the plain "view this wallet's collection" click
   // on an owner address (no auto-targeting).
@@ -4831,12 +4873,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     // loaded first so opening it doesn't ALSO kick off a full-collection
     // fetch that would race this wallet-scoped one.
     state.databaseLoaded = true;
+    // showTab's own "if (tab === 'database' && !state.databaseLoaded)"
+    // branch is what normally fires ensureTraitsLoaded() — with
+    // databaseLoaded already forced true just above, that branch never
+    // runs, which (since PλWS/SH0W MY P!GE0NS can now be the very first
+    // scope entered in a session — see showTab) left state.traitExamples
+    // permanently empty and every detail-screen trait cell's real Pigeon-
+    // photo background (traitCellHtml's has-preview) silently missing for
+    // the rest of the session. Called directly here instead so it fires
+    // regardless of entry path; harmless/no-op if it already loaded.
+    ensureTraitsLoaded();
     showTab(landOnTab || 'database');
+    // state.activeTab (set by showTab just above) is what this checks —
+    // must run after, not before, or it'd still see the previous tab.
+    updateSearchPanelTitleForPaws();
     renderTradeBuilder();
     apiWithRetry({ wallet: wallet }).then(function(data){
       state.scopeAllItems = data.items || [];
       if (isSelf) myOwnPigeonsCache = state.scopeAllItems;
       el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
+      updateSearchPanelTitleForPaws();
       if (!state.scopeAllItems.length){
         el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG ' + walletViewingLabel(state.scope.ownerShort) + ' (<span class="hi">0</span> P!GE0NS)</div>';
         el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0NS F0UND', ['TH!S WALLET 0WNS N0 P!GE0NS.'], false);
@@ -5878,6 +5934,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.myPigeonsPanelTitle.textContent = 'Σκύλλα :: PλWS' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
     el.myPigeonsSortRow.style.display = 'none';
     el.myPigeonsList.innerHTML = '';
+    // The Y0UR P!GE0N picker (openSimpleOfferPicker) shows nothing rather
+    // than a "L0AD!NG..." message while myPigeonsData is still in flight —
+    // this is what actually fills it in the instant real data lands, if
+    // it's still open on that side.
+    if (myPigeonsData !== null && el.simpleOfferPickerModal.style.display === 'flex' && simpleOfferPickerSide === 'mine'){
+      simpleOfferPickerItems = myPigeonsData;
+      renderSimpleOfferPickerGrid('Y0U D0N T 0WN ANY P!GE0NS YET.');
+    }
   }
   function loadMyPigeons(){
     if (!MY_WALLET){
@@ -5933,13 +5997,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.simpleOfferCreateBtn.disabled = !(state.simpleOffer.mine && state.simpleOffer.theirs);
     el.simpleOfferStatus.textContent = '';
   }
+  // Each card is a plain div (not a button — it holds a real nested
+  // button, VIEW, so it can't be one itself) with two separate click
+  // targets: the thumbnail selects the Pigeon into CREATE OFFER, VIEW
+  // opens the exact same full detail screen DATABASE uses (openDetail) —
+  // real trait backgrounds, sales history, everything, not a re-built
+  // summary.
   function simplePickerCardHtml(p){
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null && p.number !== undefined ? '#' + greenNum(p.number) : '#????';
-    return '<button type="button" class="simple-picker-card" data-nftid="' + escapeHtml(p.nftId) + '">' +
-        '<div class="simple-picker-card-img">' + img + '</div>' +
+    return '<div class="simple-picker-card" data-nftid="' + escapeHtml(p.nftId) + '">' +
+        '<div class="simple-picker-card-img" data-nftid="' + escapeHtml(p.nftId) + '">' + img + '</div>' +
         '<div class="simple-picker-card-num">P!GE0N ' + num + '</div>' +
-      '</button>';
+        '<button type="button" class="simple-picker-view-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ VIEW ]</button>' +
+      '</div>';
   }
   var simpleOfferPickerSide = null; // 'mine' | 'theirs'
   var simpleOfferPickerItems = [];
@@ -5957,9 +6028,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!MY_WALLET){
         simpleOfferPickerItems = [];
         renderSimpleOfferPickerGrid('C0NNECT Σκύλλα F!RST — SEE THE TRUSTL!NE BANNER AB0VE.');
+      } else if (myPigeonsData !== null){
+        simpleOfferPickerItems = myPigeonsData;
+        renderSimpleOfferPickerGrid('Y0U D0N T 0WN ANY P!GE0NS YET.');
       } else {
-        simpleOfferPickerItems = myPigeonsData || [];
-        renderSimpleOfferPickerGrid(myPigeonsData === null ? 'L0AD!NG Y0UR P!GE0NS...' : 'Y0U D0N T 0WN ANY P!GE0NS YET.');
+        // No "L0AD!NG..." placeholder text — myPigeonsData is already
+        // being fetched (kicked off the moment this tab opened), so this
+        // is normally empty for a moment at most; renderMyPigeonsList
+        // (called once that fetch resolves) fills the grid in for real
+        // the instant it's ready, same as everywhere else on this page.
+        simpleOfferPickerItems = [];
+        el.simpleOfferPickerGrid.innerHTML = '';
       }
     } else {
       el.simpleOfferPickerTitle.textContent = 'SELECT A P!GE0N T0 0FFER F0R';
@@ -5988,6 +6067,23 @@ const SWAP_HTML = `<!DOCTYPE html>
       renderSimpleOfferPickerGrid('S!GNAL_L0ST — TRY AGA!N.');
     });
   }
+  el.simpleOfferPickerGrid.addEventListener('click', function(e){
+    var viewBtn = e.target.closest('.simple-picker-view-btn');
+    if (viewBtn){
+      closeSimpleOfferPicker();
+      openDetail(viewBtn.getAttribute('data-nftid'));
+      return;
+    }
+    var card = e.target.closest('.simple-picker-card');
+    if (!card || !simpleOfferPickerSide) return;
+    var nftId = card.getAttribute('data-nftid');
+    var p = simpleOfferPickerItems.filter(function(x){ return x.nftId === nftId; })[0];
+    if (!p) return;
+    state.simpleOffer[simpleOfferPickerSide] = { nftId: p.nftId, number: p.number, image: p.image };
+    renderSimpleOffer();
+    closeSimpleOfferPicker();
+  });
+  el.simpleOfferPickerClose.addEventListener('click', closeSimpleOfferPicker);
   el.simpleOfferPanel.addEventListener('click', function(e){
     var clearBtn = e.target.closest('.simple-offer-clear');
     if (clearBtn){
@@ -6000,17 +6096,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     var filled = e.target.closest('.simple-offer-filled');
     if (filled){ openSimpleOfferPicker(filled.getAttribute('data-side')); return; }
   });
-  el.simpleOfferPickerGrid.addEventListener('click', function(e){
-    var card = e.target.closest('.simple-picker-card');
-    if (!card || !simpleOfferPickerSide) return;
-    var nftId = card.getAttribute('data-nftid');
-    var p = simpleOfferPickerItems.filter(function(x){ return x.nftId === nftId; })[0];
-    if (!p) return;
-    state.simpleOffer[simpleOfferPickerSide] = { nftId: p.nftId, number: p.number, image: p.image };
-    renderSimpleOffer();
-    closeSimpleOfferPicker();
-  });
-  el.simpleOfferPickerClose.addEventListener('click', closeSimpleOfferPicker);
   el.simpleOfferPickerModal.addEventListener('click', function(e){
     if (e.target === el.simpleOfferPickerModal) closeSimpleOfferPicker();
   });
@@ -7700,8 +7785,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     // excluded — that's the same click that just opened (or is opening)
     // this screen via wireResultClicks' own delegated handler earlier in
     // the same bubble phase, so treating it as "outside" would instantly
-    // close the screen it was supposed to open.
-    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !e.target.closest('.pigeon-img-box')){
+    // close the screen it was supposed to open. Same reasoning for the
+    // CREATE OFFER picker's own [ VIEW ] button — it also opens this
+    // screen (closing the picker modal first), from a click that started
+    // outside #screenDetail by definition since the screen didn't exist
+    // yet when the click landed.
+    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !e.target.closest('.pigeon-img-box') && !e.target.closest('.simple-picker-view-btn')){
       goBackFromDetail();
     }
   });
