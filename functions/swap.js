@@ -1751,8 +1751,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* This page only ever shows your own Pigeons — no searching for anyone
      else's from here (see updateSearchPanelTitleForPaws). The search box
-     (# 0R WALLET) is DATABASE-only functionality once scoped this way. */
-  body.paws-view .results-header-row .search-row{
+     (# 0R WALLET) is DATABASE-only functionality once scoped this way —
+     EXCEPT while picking 0FFER F0R (.picking-theirs, see
+     enterTheirsPickMode), which is exactly the one moment a real search
+     across the whole collection is the point. */
+  body.paws-view:not(.picking-theirs) .results-header-row .search-row{
     display:none !important;
   }
   /* Same purple gradient as the trustline strip below it (not the usual
@@ -2861,8 +2864,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
   }
   .simple-picker-close:hover{ border-color:var(--magenta-dim); color:var(--magenta); }
-  .simple-picker-search-row{ display:flex; gap:0.6rem; margin-bottom:1rem; }
-  .simple-picker-search-row .search-input{ flex:1 1 auto; width:auto; }
   /* Fixed scroll height (not just overflow:auto with no bound) — 4 across,
      tall enough to read each thumbnail clearly, scrolling down through
      the rest rather than the whole modal growing past the viewport. */
@@ -2976,7 +2977,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </button>
-      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;">Σκύλλα :: PλWS</span></button>
+      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;">Σκύλλα :: $WλP</span></button>
       <button class="tab-btn" data-tab="topholders">T0P 123</button>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
@@ -3107,7 +3108,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
 
     <div class="sw-panel" id="myPigeonsPanel" style="display:none;">
-      <div class="panel-title" id="myPigeonsPanelTitle">Σκύλλα :: PλWS</div>
+      <div class="panel-title" id="myPigeonsPanelTitle">Σκύλλα :: $WλP</div>
       <div class="skylla-signal" id="connectStatus"></div>
       <div id="myPigeonsConnect" style="display:none; text-align:center;">
         <button class="bar-btn" id="connectScyllaBtn">[ CONNECT <span style="text-transform:none;">Σκύλλα</span> ]</button>
@@ -3116,30 +3117,40 @@ const SWAP_HTML = `<!DOCTYPE html>
            banner above already shows the connected wallet/balance; this
            tab is just your pigeons, sort, and offers. -->
 
-      <!-- CREATE OFFER — V1, UI/selection only, no XRPL submission yet.
-           Shown immediately when this tab opens. Reuses the trade-box/
-           ob-eyebrow look from the (currently hidden, SWAP_BUILDER_ENABLED)
-           multi-item trade builder above, single-slot instead of a pile,
-           and its own state (state.simpleOffer) — kept separate from
-           offerAssets/targetAssets so it doesn't interfere with that
-           system once it's re-enabled later. -->
+      <!-- CREATE OFFER — real, working, wired to the real swap-offer-*
+           backend (startSwapOffer) — gated behind CREATE_OFFER_ENABLED
+           (currently false) rather than removed, same pattern as
+           SWAP_BUILDER_ENABLED above: paused for launch since a real
+           NFT-for-NFT swap has no atomic guarantee on XRPL yet (whoever's
+           offer gets accepted first is trusting the other side to
+           reciprocate — see CREATE_OFFER_ENABLED's own comment for the
+           planned brokered-escrow fix). Reuses the trade-box/ob-eyebrow
+           look from the (also hidden) multi-item trade builder above,
+           single-slot instead of a pile, and its own state
+           (state.simpleOffer) — kept separate from offerAssets/
+           targetAssets so it doesn't interfere with that system either. -->
       <div class="sw-panel-target simple-offer-panel" id="simpleOfferPanel">
-        <div class="panel-title">CREATE 0FFER</div>
-        <div class="simple-offer-row">
-          <div class="trade-box simple-offer-box">
-            <div class="ob-eyebrow">Y0UR P!GE0N</div>
-            <div id="simpleOfferMineSlot"></div>
-          </div>
-          <div class="swap-review-divider">F0R</div>
-          <div class="trade-box simple-offer-box">
-            <div class="ob-eyebrow">0FFER F0R</div>
-            <div id="simpleOfferTheirsSlot"></div>
-          </div>
+        <div class="panel-title">SWAP NFT TRADE DETA!LS</div>
+        <div id="simpleOfferComingSoon" style="display:none;">
+          <div class="index-line" style="margin-top:0.5rem;">C0M!NG S00N — REAL NFT-F0R-NFT SWAPP!NG !S BE!NG BU!LT PR0PERLY BEF0RE LAUNCH.</div>
         </div>
-        <div class="simple-offer-actions">
-          <button type="button" class="action-btn" id="simpleOfferCreateBtn" disabled>[ CREATE 0FFER ]</button>
+        <div id="simpleOfferLive">
+          <div class="simple-offer-row">
+            <div class="trade-box simple-offer-box">
+              <div class="ob-eyebrow">Y0UR P!GE0N</div>
+              <div id="simpleOfferMineSlot"></div>
+            </div>
+            <div class="swap-review-divider">F0R</div>
+            <div class="trade-box simple-offer-box">
+              <div class="ob-eyebrow">0FFER F0R</div>
+              <div id="simpleOfferTheirsSlot"></div>
+            </div>
+          </div>
+          <div class="simple-offer-actions">
+            <button type="button" class="action-btn" id="simpleOfferCreateBtn" disabled>[ CREATE 0FFER ]</button>
+          </div>
+          <div class="index-line" id="simpleOfferStatus"></div>
         </div>
-        <div class="index-line" id="simpleOfferStatus"></div>
       </div>
       <!-- Simple, obvious summary line — the actual offers now live
            directly on each pigeon's own card (see myPigeonOffersHtml),
@@ -3379,21 +3390,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       <img id="detailLightboxImg" src="" alt="">
     </div>
 
-    <!-- CREATE OFFER's Pigeon picker — same modal for both sides (Y0UR
-         P!GE0N: your own wallet's Pigeons, myPigeonsData already loaded
-         for the PλWS tab; 0FFER F0R: wallet-address OR Pigeon-#, the same
-         two-mode search runSearchBox already does, hitting the same
-         /api/pigeons endpoint directly). Click the dimmed backdrop or ✕
-         to close without picking. -->
+    <!-- CREATE OFFER's Y0UR P!GE0N picker — myPigeonsData already loaded
+         for the PλWS tab. 0FFER F0R picks directly off the real, full
+         DATABASE instead now (see enterTheirsPickMode), not this modal —
+         it only ever handles this one side. Click the dimmed backdrop or
+         ✕ to close without picking. -->
     <div id="simpleOfferPickerModal" style="display:none;">
       <div class="simple-picker-panel">
         <div class="simple-picker-header">
-          <div class="simple-picker-title" id="simpleOfferPickerTitle"></div>
+          <div class="simple-picker-title">SELECT Y0UR P!GE0N</div>
           <button type="button" class="simple-picker-close" id="simpleOfferPickerClose" title="CL0SE">&times;</button>
-        </div>
-        <div class="simple-picker-search-row" id="simpleOfferPickerSearchRow" style="display:none;">
-          <input class="search-input" id="simpleOfferPickerSearchInput" placeholder="WALLET ADDRESS 0R P!GE0N #">
-          <button type="button" class="bar-btn" id="simpleOfferPickerSearchBtn">[ GO ]</button>
         </div>
         <div class="simple-picker-grid" id="simpleOfferPickerGrid"></div>
       </div>
@@ -3769,6 +3775,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   // every entry point below checks it.
   var SWAP_BUILDER_ENABLED = false;
 
+  // V1 CREATE OFFER (the PλWS "SWAP NFT TRADE DETAILS" box, real
+  // startSwapOffer wiring, and the SWAP OFFERS tab that goes with it) is
+  // ALSO fully built and working — wired to the same real swap-offer-*
+  // backend as SWAP_BUILDER_ENABLED above, tested end-to-end once on the
+  // real ledger. Paused deliberately for launch: a real NFT-for-NFT swap
+  // has no atomic guarantee on XRPL (no Batch amendment live on mainnet —
+  // see the swap builder's own gotcha notes), so whoever's offer gets
+  // accepted first is trusting the other side to reciprocate. The
+  // intended fix is a brokered escrow version (both offers destination-
+  // restricted to a broker wallet instead of each other, broker forwards
+  // both once it holds both) — not yet built, needs its own careful
+  // design (recovery path if the broker ends up holding one NFT and the
+  // second leg fails) before this goes live for real users. Flip this
+  // back to true once that's ready, or to resume testing sooner. Nothing
+  // behind it was removed — same "one switch, every entry point checks
+  // it" pattern as SWAP_BUILDER_ENABLED above.
+  var CREATE_OFFER_ENABLED = false;
+
   // ---- Client-side state ----
   var PAGE_SIZE = 36;
   var state = {
@@ -3798,7 +3822,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     scyllaListedOnly: false,  // whole-collection LISTED filter — Pigeons listed through Scylla itself
     offerAssets: {},          // nftId -> { nftId, number, image } — up to 4, YOUR pigeons in the persistent trade builder
     dbView: 'thumbnails',     // 'boxed' (full detail row) | 'thumbnails' (5-across, # + rarity only, default) — DATABASE grid only
-    simpleOffer: { mine: null, theirs: null } // V1 CREATE OFFER (PλWS tab) — { nftId, number, image } or null per side, single pick each, separate from offerAssets/targetAssets above
+    simpleOffer: { mine: null, theirs: null }, // V1 CREATE OFFER (PλWS tab) — { nftId, number, image, owner } or null per side, single pick each, separate from offerAssets/targetAssets above
+    simpleOfferPickingTheirs: false // true while 0FFER F0R is being picked directly off the real, full DATABASE — see enterTheirsPickMode
   };
 
   var el = {};
@@ -3823,8 +3848,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn','swapOffersTabBtn',
-   'simpleOfferPanel','simpleOfferMineSlot','simpleOfferTheirsSlot','simpleOfferCreateBtn','simpleOfferStatus',
-   'simpleOfferPickerModal','simpleOfferPickerTitle','simpleOfferPickerClose','simpleOfferPickerSearchRow','simpleOfferPickerSearchInput','simpleOfferPickerSearchBtn','simpleOfferPickerGrid',
+   'simpleOfferPanel','simpleOfferComingSoon','simpleOfferLive','simpleOfferMineSlot','simpleOfferTheirsSlot','simpleOfferCreateBtn','simpleOfferStatus',
+   'simpleOfferPickerModal','simpleOfferPickerClose','simpleOfferPickerGrid',
    'screenSwapReview','reviewOfferPile','reviewOfferCount','reviewWantPile','reviewWantCount','reviewBackBtn','reviewCreateBtn','reviewResult',
    'screenSwapOfferConfirm','swapConfTxType','swapConfAccount','swapConfNftId','swapConfAmount','swapConfDestination','swapConfFlags','swapConfirmStatus','swapOfferConfirmBackBtn','swapOfferOpenXamanBtn',
    'screenSwapOfferResult','swapResultNftId','swapResultToWallet','swapResultStatus','swapResultOfferId','swapResultTxLink','swapResultDoneBtn',
@@ -4037,6 +4062,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // first page, or runScopedQuery's synchronous filter) instead.
   var pendingTraitScroll = false;
   function showTab(tab){
+    // 0FFER F0R picking mode (enterTheirsPickMode) legitimately visits
+    // DATABASE mid-search, and comes back to PλWS itself once a pick is
+    // made — cancel it only when heading somewhere unrelated (T0P 123,
+    // SALES, etc.), so it doesn't keep hijacking pigeon-card clicks on a
+    // tab that has nothing to do with CREATE OFFER any more.
+    if (state.simpleOfferPickingTheirs && tab !== 'database' && tab !== 'mypigeons'){
+      state.simpleOfferPickingTheirs = false;
+      document.body.classList.remove('picking-theirs');
+    }
     // PλWS shows the exact same DATABASE grid/detail view — not a
     // separate look — just scoped to your own wallet. Delegates straight
     // to browseOwnerCollection (same call SH0W MY P!GE0NS already makes),
@@ -4045,7 +4079,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // so that second call falls through to the normal body instead of
     // looping back here again.
     if (tab === 'mypigeons' && MY_WALLET && !isOwnWalletScope()){
-      if (myPigeonsData === null) loadMyPigeons();
+      // No separate loadMyPigeons() call here any more — browseOwner-
+      // Collection's own fetch below is the exact same data (your own
+      // wallet's Pigeons) and mirrors it into myPigeonsData itself once
+      // it lands (see its isSelf branches). A second independent fetch
+      // racing it was what made this feel slow/glitchy on open.
       browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
       return;
     }
@@ -4108,7 +4146,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       state.databaseLoaded = true;
       ensureTraitsLoaded();
       runQuery();
-    } else if (tab === 'mypigeons' && myPigeonsData === null){
+    } else if (tab === 'mypigeons' && !MY_WALLET){
+      // Only reached with no session (the delegation above only fires
+      // with MY_WALLET set) — resets the panel to its logged-out state,
+      // no fetch of its own.
       loadMyPigeons();
     }
     if (tab === 'mypigeons'){
@@ -4859,6 +4900,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (isSelf && myOwnPigeonsCache !== null){
       state.scopeAllItems = myOwnPigeonsCache;
       el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
+      // Mirrors into myPigeonsData (CREATE OFFER's Y0UR P!GE0N picker
+      // source) instead of that picker triggering its own separate
+      // apiWithRetry({wallet}) fetch — this scoped fetch is already the
+      // exact same data. A second independent fetch of the same slow,
+      // uncached, real-XRPL-backed wallet-NFT lookup (see loadMyPigeons'
+      // own comment on how slow this genuinely is for a big wallet) was
+      // what made opening PλWS feel like it was "glitching": two fetches
+      // racing, two separate re-renders landing at different times.
+      myPigeonsData = state.scopeAllItems;
+      renderMyPigeonsList();
       if (state.scopeAllItems.length){
         runScopedQuery();
       } else {
@@ -4896,7 +4947,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderTradeBuilder();
     apiWithRetry({ wallet: wallet }).then(function(data){
       state.scopeAllItems = data.items || [];
-      if (isSelf) myOwnPigeonsCache = state.scopeAllItems;
+      if (isSelf){
+        myOwnPigeonsCache = state.scopeAllItems;
+        myPigeonsData = state.scopeAllItems;
+        renderMyPigeonsList();
+      }
       el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
       updateSearchPanelTitleForPaws();
       if (!state.scopeAllItems.length){
@@ -5176,6 +5231,28 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   function wireResultClicks(container, source){
     container.addEventListener('click', function(e){
+      // 0FFER F0R picking mode (see enterTheirsPickMode) — a click on the
+      // image or the "+" toggle selects that Pigeon straight into CREATE
+      // OFFER instead of opening the detail screen or the old trade
+      // builder. Trait-cell clicks below still filter normally, so you
+      // can narrow down the collection while picking.
+      if (state.simpleOfferPickingTheirs){
+        var pickTarget = e.target.closest('.pigeon-img-box') || e.target.closest('.card-select-toggle');
+        if (pickTarget){
+          var pickedNftId = pickTarget.getAttribute('data-nftid');
+          var pickedP = source().filter(function(x){ return x.nftId === pickedNftId; })[0];
+          if (pickedP){
+            if (MY_WALLET && pickedP.owner === MY_WALLET){
+              alert('THAT S Y0UR 0WN P!GE0N — P!CK 0NE FR0M AN0THER WALLET F0R THE SWAP.');
+            } else {
+              state.simpleOffer.theirs = { nftId: pickedP.nftId, number: pickedP.number, image: pickedP.image, owner: pickedP.owner || null };
+              renderSimpleOffer();
+              exitTheirsPickMode();
+            }
+          }
+          return;
+        }
+      }
       var traitCell = e.target.closest('.card-trait-cell');
       if (traitCell){
         var trait = traitCell.getAttribute('data-trait');
@@ -5244,7 +5321,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (tp){
           if (SWAP_BUILDER_ENABLED){
             handleSelect(tp);
-          } else {
+          } else if (CREATE_OFFER_ENABLED){
             // The old multi-item trade builder this toggle used to feed is
             // hidden (SWAP_BUILDER_ENABLED false) — its own panel is
             // display:none, so handleSelect's alerts/state changes would
@@ -5254,6 +5331,8 @@ const SWAP_HTML = `<!DOCTYPE html>
               '&offerForNum=' + encodeURIComponent(tp.number) +
               '&offerForImg=' + encodeURIComponent(tp.image || '') +
               '&offerForOwner=' + encodeURIComponent(tp.owner || '');
+          } else {
+            alert('SWAP TRAD!NG :: C0M!NG S00N.');
           }
         }
         return;
@@ -5938,39 +6017,32 @@ const SWAP_HTML = `<!DOCTYPE html>
   // count current. myPigeonsSortRow/myPigeonsList stay in the markup but
   // permanently empty/hidden.
   function renderMyPigeonsList(){
-    el.myPigeonsPanelTitle.textContent = 'Σκύλλα :: PλWS' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
+    el.myPigeonsPanelTitle.textContent = 'Σκύλλα :: $WλP' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
     el.myPigeonsSortRow.style.display = 'none';
     el.myPigeonsList.innerHTML = '';
     // The Y0UR P!GE0N picker (openSimpleOfferPicker) shows nothing rather
     // than a "L0AD!NG..." message while myPigeonsData is still in flight —
     // this is what actually fills it in the instant real data lands, if
-    // it's still open on that side.
-    if (myPigeonsData !== null && el.simpleOfferPickerModal.style.display === 'flex' && simpleOfferPickerSide === 'mine'){
+    // it's still open (it only ever handles this one side now).
+    if (myPigeonsData !== null && el.simpleOfferPickerModal.style.display === 'flex'){
       simpleOfferPickerItems = myPigeonsData;
       renderSimpleOfferPickerGrid('Y0U D0N T 0WN ANY P!GE0NS YET.');
     }
   }
+  // Only ever called with no session now (see showTab) — the logged-in
+  // case used to also fetch here independently, racing browseOwner-
+  // Collection's own identical wallet-NFT fetch (which now mirrors its
+  // result into myPigeonsData/myListedData itself, isSelf branches) and
+  // making PλWS feel slow/glitchy on open from two fetches landing at
+  // different times. Resets the panel to its logged-out state only.
   function loadMyPigeons(){
-    if (!MY_WALLET){
-      // The CONNECT box itself stays hidden here now — auto-login already
-      // fires from the topTabs click handler, so there's nothing for a
-      // manual CONNECT button to add on a normal open. It only reappears
-      // if that login attempt actually fails (see getXummAuth's error
-      // paths below), as a manual retry.
-      el.offersReceivedBlock.style.display = 'none';
-      el.myPigeonsPanelTitle.textContent = 'Σκύλλα :: PλWS';
-      return;
-    }
-    el.myPigeonsConnect.style.display = 'none';
-    renderMyPigeonsList();
-    apiWithRetry({ wallet: MY_WALLET }).then(function(data){
-      myPigeonsData = data.items || [];
-      renderMyPigeonsList();
-      return fetch('/api/swap-listing-owned?wallet=' + encodeURIComponent(MY_WALLET)).then(function(r){ return r.json(); });
-    }).then(function(listedRes){
-      myListedData = (listedRes && listedRes.listed) || {};
-      renderMyPigeonsList();
-    }).catch(function(){});
+    // The CONNECT box itself stays hidden here now — auto-login already
+    // fires from the topTabs click handler, so there's nothing for a
+    // manual CONNECT button to add on a normal open. It only reappears
+    // if that login attempt actually fails (see getXummAuth's error
+    // paths below), as a manual retry.
+    el.offersReceivedBlock.style.display = 'none';
+    el.myPigeonsPanelTitle.textContent = 'Σκύλλα :: $WλP';
   }
   // LIST/DELIST/ACCEPT OFFER click + input handling for this container is
   // shared with the DATABASE grid inside wireResultClicks now (own-wallet
@@ -6019,60 +6091,35 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<button type="button" class="simple-picker-view-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ VIEW ]</button>' +
       '</div>';
   }
-  var simpleOfferPickerSide = null; // 'mine' | 'theirs'
+  // Y0UR P!GE0N only now — 0FFER F0R picks directly off the real, full
+  // DATABASE instead (see enterTheirsPickMode below), search bar and all,
+  // rather than this modal's own separate, narrower wallet/# search.
   var simpleOfferPickerItems = [];
   function renderSimpleOfferPickerGrid(emptyMsg){
     el.simpleOfferPickerGrid.innerHTML = simpleOfferPickerItems.length
       ? simpleOfferPickerItems.map(simplePickerCardHtml).join('')
       : '<div class="th-empty">' + (emptyMsg || 'N0 P!GE0NS F0UND.') + '</div>';
   }
-  function openSimpleOfferPicker(side){
-    simpleOfferPickerSide = side;
-    el.simpleOfferPickerSearchInput.value = '';
-    if (side === 'mine'){
-      el.simpleOfferPickerTitle.textContent = 'SELECT Y0UR P!GE0N';
-      el.simpleOfferPickerSearchRow.style.display = 'none';
-      if (!MY_WALLET){
-        simpleOfferPickerItems = [];
-        renderSimpleOfferPickerGrid('C0NNECT Σκύλλα F!RST — SEE THE TRUSTL!NE BANNER AB0VE.');
-      } else if (myPigeonsData !== null){
-        simpleOfferPickerItems = myPigeonsData;
-        renderSimpleOfferPickerGrid('Y0U D0N T 0WN ANY P!GE0NS YET.');
-      } else {
-        // No "L0AD!NG..." placeholder text — myPigeonsData is already
-        // being fetched (kicked off the moment this tab opened), so this
-        // is normally empty for a moment at most; renderMyPigeonsList
-        // (called once that fetch resolves) fills the grid in for real
-        // the instant it's ready, same as everywhere else on this page.
-        simpleOfferPickerItems = [];
-        el.simpleOfferPickerGrid.innerHTML = '';
-      }
-    } else {
-      el.simpleOfferPickerTitle.textContent = 'SELECT A P!GE0N T0 0FFER F0R';
-      el.simpleOfferPickerSearchRow.style.display = '';
+  function openSimpleOfferPicker(){
+    if (!MY_WALLET){
       simpleOfferPickerItems = [];
-      renderSimpleOfferPickerGrid('ENTER A WALLET ADDRESS 0R P!GE0N # AB0VE.');
+      renderSimpleOfferPickerGrid('C0NNECT Σκύλλα F!RST — SEE THE TRUSTL!NE BANNER AB0VE.');
+    } else if (myPigeonsData !== null){
+      simpleOfferPickerItems = myPigeonsData;
+      renderSimpleOfferPickerGrid('Y0U D0N T 0WN ANY P!GE0NS YET.');
+    } else {
+      // No "L0AD!NG..." placeholder text — myPigeonsData is already
+      // being fetched (kicked off the moment this tab opened), so this
+      // is normally empty for a moment at most; renderMyPigeonsList
+      // (called once that fetch resolves) fills the grid in for real
+      // the instant it's ready, same as everywhere else on this page.
+      simpleOfferPickerItems = [];
+      el.simpleOfferPickerGrid.innerHTML = '';
     }
     el.simpleOfferPickerModal.style.display = 'flex';
   }
   function closeSimpleOfferPicker(){
     el.simpleOfferPickerModal.style.display = 'none';
-    simpleOfferPickerSide = null;
-  }
-  function runSimpleOfferPickerSearch(){
-    var q = el.simpleOfferPickerSearchInput.value.trim();
-    if (!q) return;
-    el.simpleOfferPickerGrid.innerHTML = '<div class="loading-note">SEARCH!NG...</div>';
-    var lookup = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(q)
-      ? api({ wallet: q })
-      : api({ number: q.replace('#', '') });
-    lookup.then(function(data){
-      simpleOfferPickerItems = data.items || [];
-      renderSimpleOfferPickerGrid();
-    }).catch(function(){
-      simpleOfferPickerItems = [];
-      renderSimpleOfferPickerGrid('S!GNAL_L0ST — TRY AGA!N.');
-    });
   }
   el.simpleOfferPickerGrid.addEventListener('click', function(e){
     var viewBtn = e.target.closest('.simple-picker-view-btn');
@@ -6082,15 +6129,38 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     var card = e.target.closest('.simple-picker-card');
-    if (!card || !simpleOfferPickerSide) return;
+    if (!card) return;
     var nftId = card.getAttribute('data-nftid');
     var p = simpleOfferPickerItems.filter(function(x){ return x.nftId === nftId; })[0];
     if (!p) return;
-    state.simpleOffer[simpleOfferPickerSide] = { nftId: p.nftId, number: p.number, image: p.image, owner: p.owner || null };
+    state.simpleOffer.mine = { nftId: p.nftId, number: p.number, image: p.image, owner: p.owner || null };
     renderSimpleOffer();
     closeSimpleOfferPicker();
   });
   el.simpleOfferPickerClose.addEventListener('click', closeSimpleOfferPicker);
+  el.simpleOfferPickerModal.addEventListener('click', function(e){
+    if (e.target === el.simpleOfferPickerModal) closeSimpleOfferPicker();
+  });
+  // ---- 0FFER F0R picking mode — exits your own scope and shows the
+  // real, full DATABASE (search bar included, wallet-or-# search works
+  // exactly as it always does there) instead of a separate modal.
+  // Clicking a card selects it into the RIGHT slot and returns straight
+  // back to PλWS's own self-scoped view. ----
+  function enterTheirsPickMode(){
+    state.simpleOfferPickingTheirs = true;
+    document.body.classList.add('picking-theirs');
+    el.searchPanelTitle.textContent = 'P!CK A P!GE0N T0 0FFER F0R';
+    if (state.scope) exitWalletScope();
+    startCollectionBrowse();
+    scrollActiveTabPanelIntoView('mypigeons');
+  }
+  function exitTheirsPickMode(){
+    state.simpleOfferPickingTheirs = false;
+    document.body.classList.remove('picking-theirs');
+    // Back to PλWS's own self-scoped view regardless of which wallet was
+    // being searched when the pick happened.
+    browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
+  }
   el.simpleOfferPanel.addEventListener('click', function(e){
     var clearBtn = e.target.closest('.simple-offer-clear');
     if (clearBtn){
@@ -6099,15 +6169,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     var selectBtn = e.target.closest('.simple-offer-select-btn');
-    if (selectBtn){ openSimpleOfferPicker(selectBtn.getAttribute('data-side')); return; }
     var filled = e.target.closest('.simple-offer-filled');
-    if (filled){ openSimpleOfferPicker(filled.getAttribute('data-side')); return; }
+    var target = selectBtn || filled;
+    if (!target) return;
+    if (target.getAttribute('data-side') === 'mine') openSimpleOfferPicker();
+    else enterTheirsPickMode();
   });
-  el.simpleOfferPickerModal.addEventListener('click', function(e){
-    if (e.target === el.simpleOfferPickerModal) closeSimpleOfferPicker();
-  });
-  el.simpleOfferPickerSearchBtn.addEventListener('click', runSimpleOfferPickerSearch);
-  el.simpleOfferPickerSearchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSimpleOfferPickerSearch(); });
   el.simpleOfferCreateBtn.addEventListener('click', function(){
     if (!state.simpleOffer.mine || !state.simpleOffer.theirs) return;
     if (!state.simpleOffer.theirs.owner){
@@ -8346,11 +8413,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   if (!SWAP_BUILDER_ENABLED){
     el.tradeBuilderPanel.style.display = 'none';
   }
-  // SWAP OFFERS stays visible regardless of SWAP_BUILDER_ENABLED — it's
-  // the only place to see/reciprocate/accept a real offer CREATE OFFER
-  // (V1) sends via startSwapOffer, unlike tradeBuilderPanel/the per-card
-  // offer-toggle above, which still belong to the old, still-hidden
-  // multi-item builder.
+  // SWAP NFT TRADE DETAILS (V1 CREATE OFFER) — real, working, wired to
+  // the real swap-offer-* backend, paused for launch — see
+  // CREATE_OFFER_ENABLED's own comment for why. SWAP OFFERS is this
+  // feature's own tab (reciprocate/accept a real pending swap), so it's
+  // gated the same way, separately from SWAP_BUILDER_ENABLED's own
+  // tradeBuilderPanel/per-card offer-toggle above.
+  if (!CREATE_OFFER_ENABLED){
+    el.simpleOfferLive.style.display = 'none';
+    el.simpleOfferComingSoon.style.display = '';
+    el.swapOffersTabBtn.style.display = 'none';
+  }
 
   // DATABASE's own + toggle (SWAP_BUILDER_ENABLED false) redirects here
   // with ?offerFor=<nftId>&offerForNum=&offerForImg=&offerForOwner= —

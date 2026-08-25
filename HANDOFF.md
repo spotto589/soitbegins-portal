@@ -2,12 +2,10 @@
 
 This file is stale the moment nobody updates it after a session — if you're
 picking this up, skim it, then check `git log -30 --oneline` for what's
-actually landed since it was last edited. Real money/assets move through
-this page now, AND (new this session) a real marketplace fee + a second
-service (`xaman-proxy`) now holds a live signing seed. Read the new
-"Brokered accept-offer" section below before touching any of that.
+actually landed since it was last edited.
 
 ## Repo
+
 The LIVE repo (deploys to soitbegins.xyz via Cloudflare Pages on push to `main`):
 `C:\Users\Admin\OneDrive\Desktop\soitbegins-portal-clone`
 GitHub: `github.com/spotto589/soitbegins-portal`
@@ -16,435 +14,329 @@ GitHub: `github.com/spotto589/soitbegins-portal`
 `C:\Users\Admin\OneDrive\Desktop\Soitbegins.xyz` — don't confuse them. All real
 work happens in `soitbegins-portal-clone`.
 
-Other uncommitted changes sit in this working tree from earlier sessions
-(`kingdom.js`, `redeem.js`, `scylla.js`, `index.html`, some `api/*.js` files) —
-untouched by the /swap work below. Don't assume they're yours to commit;
-check with the user before touching them.
+Other uncommitted changes have been sitting in this working tree across
+several sessions now (`functions/api/redeem-verify-card.js`,
+`functions/api/scylla-mock-redeem.js`, `functions/redeem.js`, `index.html`)
+— every session so far has deliberately left these alone and committed only
+`functions/swap.js` (and once `functions/_shared.js`, see below). Don't
+assume they're yours to commit; check with the user before touching them.
 
-There's also a second real service in this repo now: **`xaman-proxy/`**
+There's also a second real service in this repo: **`xaman-proxy/`**
 (deployed separately on Render, `https://xaman-proxy.onrender.com`) — a
-plain Node.js app, not a Cloudflare Worker. It originally existed just to
-relay Xaman payload API calls (see "Xaman signing" below); this session it
-grew a second job (see "Brokered accept-offer" below) and now **holds a
-real XRPL wallet seed** as an env var (`BROKER_WALLET_SEED`) and the `xrpl`
-npm package. Treat that env var like a password to real funds — never log
-it, never echo it back in any response.
+plain Node.js app, not a Cloudflare Worker, that relays Xaman payload API
+calls AND holds a real XRPL wallet seed (`BROKER_WALLET_SEED`) for the
+brokered $PIGEONS marketplace fee (see its own section below). Untouched
+this session.
 
-## Current status, at a glance
+## Current status, at a glance (this session)
 
-- **The $PIGEONS marketplace (LIST / BUY / DELIST) is real and live**, and
-  unchanged this session — see its own section below.
-- **Accepting a received MAKE AN OFFER buy-offer now goes through XRPL
-  BROKERED `NFTokenAcceptOffer`** (built this session) — takes a real
-  0.589% marketplace fee atomically in the same transaction, then fires a
-  $CRWN reward (test-phase, flat amount) to both sides as a separate
-  follow-up Payment. **Not yet confirmed working end-to-end** — the one
-  live test so far actually executed a stale pre-brokered direct accept
-  (confirmed via the real tx on-ledger), not the new brokered path. A
-  clean retest is the next thing anyone picking this up should do. See
-  "Brokered accept-offer" below in full before touching this again.
-- **Xaman push notifications** (built this session, alongside the above) —
-  infrastructure is in place (webhook receiver, per-wallet token storage,
-  every `*-payload.js` endpoint wired to use a stored token when present)
-  but **needs the webhook URL set in the Xaman Developer Console**
-  (`https://soitbegins.xyz/api/xaman-webhook`) before any of it does
-  anything — nothing registers that automatically. The webhook body field
-  names were written from memory of Xaman's documented format, not
-  verified against a live event — the handler logs the raw body
-  (truncated) so the first real one can confirm/correct them.
-- **A second feature — NFT-for-NFT swaps (barter, no $PIGEONS involved) — is
-  fully built and working, but currently HIDDEN.** See "The swap builder"
-  section below before assuming it doesn't exist just because you don't see
-  it on the page.
-- Xaman signing for **everything a user signs** goes through the
-  off-Cloudflare relay (`xaman-proxy/`), not directly from the Cloudflare
-  Worker to xumm.app — see "Xaman signing" below. This is load-bearing
-  infrastructure; don't "simplify" it back to a direct fetch.
-- **DATABASE tab's trustline banner was substantially redesigned this
-  session** — see "Current page structure" below, the old description no
-  longer matches.
+This session's work was almost entirely about **Σκύλλα :: $WλP** (formerly
+labeled PλWS — renamed this session), the `mypigeons` tab:
 
-## Brokered accept-offer (0.589% marketplace fee + $CRWN reward) — NEW, UNCONFIRMED
+- **PλWS now reuses the real DATABASE grid/detail screen, scoped to your own
+  wallet**, instead of its own separate (and visually different, and
+  buggier) card list. See "PλWS/DATABASE unification" below — this was the
+  single biggest architectural change and several other fixes this session
+  exist because of it.
+- **A real, working V1 "SWAP NFT TRADE DETAILS" box** (`state.simpleOffer`,
+  `CREATE_OFFER_ENABLED`) lets you pick one of your own Pigeons + a target
+  Pigeon and actually send a real `NFTokenCreateOffer` via the existing
+  swap-offer-\* backend (the same one `SWAP_BUILDER_ENABLED`'s old trade
+  builder already used) — tested once, successfully, end-to-end on the real
+  ledger with the user.
+- **Deliberately paused for launch, right after that successful test.**
+  `CREATE_OFFER_ENABLED = false` (new flag, top of `functions/swap.js`,
+  same one-switch pattern as `SWAP_BUILDER_ENABLED`). The box now shows
+  "C0M!NG S00N" instead of the real picker, and the SWAP OFFERS tab is
+  hidden again. Reasoning below — **read this before flipping it back on**.
+  Nothing was removed; flipping the flag brings the whole real flow back
+  exactly as tested.
+
+### Why CREATE_OFFER_ENABLED got turned back off
+
+A real NFT-for-NFT swap here is two independent `NFTokenCreateOffer`s (one
+per side, `Amount:"0"`, `Destination` restricted to the counterparty) plus
+two independent `NFTokenAcceptOffer`s — **never atomic**. XRPL has no native
+"both or neither" primitive for this (Batch/XLS-56 isn't live on mainnet —
+see "XRPL Batch amendment" below, unchanged from before). Concretely: once
+both sides have created their offers, whichever side's offer gets **accepted
+first** is exposed — the other side can just cancel their own still-open
+offer afterward and keep both. Whoever accepts second is safe (they only act
+once they've already received). This was walked through in detail with the
+user; they understood and agreed it's real, not a bug to silently ship.
+
+**The planned fix, not yet built:** a brokered escrow version. Both offers
+get `Destination`-restricted to a broker wallet instead of each other
+(reusing the SAME broker wallet + `xaman-proxy` `/broker-submit` signing
+infrastructure the $PIGEONS marketplace fee already uses — see "Brokered
+accept-offer" below). Once the server verifies (real ledger read) that both
+offers exist, the broker accepts both — briefly holding both NFTs — then
+immediately forwards each to the correct final owner via its own
+`Destination`-restricted zero-cost offer, which each user then accepts (same
+familiar "OPEN XAMAN → accept" pattern as everywhere else on the site).
+
+This removes the "who goes first" risk (neither party ever deals directly
+with the other), but shifts trust to the broker wallet/site operator
+instead, and introduces a real custodial window: **if the broker
+successfully takes NFT A but fails to take NFT B (crash, dead xaman-proxy,
+a canceled offer, whatever), it's left holding one real NFT with no
+automatic way out.** That needs deliberate state-machine + recovery logic
+(detect stuck, retry, alert) designed on purpose before this goes live to
+real users — not bolted on after the first time it happens. **Not started.**
+User's own words: wants to test this pattern a lot before trusting it with
+real users, and is deliberately deferring this "until I've perfected the
+rest of the website" — i.e. this is intentionally NOT on the critical path
+for the current launch push. Don't build the escrow version without the
+user explicitly asking to pick this back up.
+
+## PλWS/DATABASE unification (this session)
+
+**The core change:** `showTab('mypigeons')` now delegates straight to
+`browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons')` — the
+exact same function the trustline banner's own `[ SH0W MY P!GE0NS ]` button
+already called — instead of rendering a separate `myPigeonCardHtml`/
+`sortedMyPigeons` grid. `browseOwnerCollection` gained a 4th `landOnTab`
+param (default `'database'`, unchanged for every other call site) so it can
+land back on `mypigeons` instead. Guarded against infinite recursion via an
+`isOwnWalletScope()` check — `browseOwnerCollection` calls `showTab`
+internally too.
+
+This means clicking into a Pigeon from PλWS now opens the exact real
+`screenDetail` screen (real trait backgrounds, real sales history,
+everything) instead of a separate, thinner view — this was a direct, explicit
+user request ("it should be one database, built like this universal").
+
+**What's gated behind `body.paws-view`** (class toggled in `showTab`, CSS
+`!important` since `renderTrustlineSummary`'s own async writes run after and
+know nothing about which tab is active):
+- Trustline banner: stats carousel, `[ SH0W MY P!GE0NS ]` (redundant, already
+  there), `[ BUY $P!GE0NS ]` button all hidden — the BALANCE amount itself
+  becomes the buy entry point (underlined, same `openBuySwapPanel` click
+  target).
+- `#searchPanelTitle` reads "SH0W!NG Y0UR P!GE0NS `<count>`" instead of
+  "SEARCH!NG $P!GE0NS DATABASE" (`updateSearchPanelTitleForPaws()`, called
+  from both `showTab` and `browseOwnerCollection`'s two count-set points).
+- The `# 0R WALLET` search box is hidden — this page only ever shows your
+  own Pigeons, no searching anyone else's, **except** while actively picking
+  0FFER F0R (see below), where it's the whole point.
+
+**Old `myPigeonsData`/`myPigeonsList` system:** trimmed, not removed.
+`myPigeonCardHtml`/`sortedMyPigeons`/the sort dropdown are deleted (genuinely
+dead once the grid moved to DATABASE's own). `myPigeonsData` itself is kept
+— it's what "SWAP NFT TRADE DETAILS"'s Y0UR P!GE0N picker reads — but it's
+now just **mirrored** from `state.scopeAllItems` inside
+`browseOwnerCollection`'s own `isSelf` branches (both the instant-cache path
+and the async-resolved path), not independently fetched. `loadMyPigeons()`
+is now only ever called with no session (resets the panel to logged-out
+state) — see the redundant-fetch bug below for why.
+
+### Bugs found and fixed along the way
+
+1. **Missing trait-photo backgrounds on the detail screen.**
+   `browseOwnerCollection` sets `state.databaseLoaded = true` before
+   `showTab` runs — this is what stops `SH0W MY P!GE0NS` from ALSO kicking
+   off a redundant full-collection fetch. But `showTab`'s own
+   `if (tab==='database' && !state.databaseLoaded)` branch is what normally
+   calls `ensureTraitsLoaded()` (populates `state.traitExamples`, which
+   `traitCellHtml`'s `.has-preview` real-photo-background trait cells read).
+   Since PλWS can now be the very first scope entered in a session,
+   `state.traitExamples` stayed permanently empty. Fixed: `browseOwner-
+   Collection` now calls `ensureTraitsLoaded()` directly (idempotent, safe
+   to call from anywhere).
+
+2. **PλWS felt slow/glitchy to open.** Up to 3 separate, redundant, real-
+   XRPL-backed wallet-NFT fetches were firing in parallel on open (the old
+   `loadMyPigeons()` called from two different points in `showTab`, PLUS
+   `browseOwnerCollection`'s own identical fetch). Fixed by the mirroring
+   described above — confirmed via a `fetch` spy that it's exactly 1 fetch
+   now, was 2-3.
+
+3. **Opening a Pigeon's detail screen from inside the Y0UR P!GE0N picker
+   modal immediately closed it again.** A global "click outside closes
+   `#screenDetail`" listener (`el.screenDetail.style.display !== 'none' &&
+   !el.screenDetail.contains(e.target) && ...`) fired because the click that
+   opened the detail screen (the picker's own `[ VIEW ]` button) originated
+   outside `#screenDetail` by definition — same class of bug the existing
+   `.pigeon-img-box` exclusion was already there to prevent, just for a new
+   click target. Fixed by adding `.simple-picker-view-btn` to that
+   exclusion list. **If you add any other new way to open the detail screen
+   from an overlay/modal, check this listener.**
+
+### 0FFER F0R picking — reuses the real DATABASE, not a modal
+
+Originally built as a second, separate search-modal (own wallet/# input,
+own thinner card renderer). Explicit user feedback: should show the real
+DATABASE instead, search bar included. Now: clicking `[ + SELECT ]` on
+0FFER F0R calls `enterTheirsPickMode()` — exits your own scope
+(`exitWalletScope()`), shows the full collection (`startCollectionBrowse()`),
+reveals the search box (`body.paws-view.picking-theirs` CSS override),
+retitles the panel. A new early-branch in `wireResultClicks` (checked before
+every other click type, so trait-cell filtering still works while picking)
+intercepts a click on `.pigeon-img-box`/`.card-select-toggle` while
+`state.simpleOfferPickingTheirs` is true, selects that Pigeon (captures
+`owner` too — needed for the real `Destination` field), and calls
+`exitTheirsPickMode()` (`browseOwnerCollection(MY_WALLET, 'Y0U', undefined,
+'mypigeons')` — back to PλWS regardless of which wallet was being searched
+when the pick happened). `showTab` also cancels picking mode if you navigate
+to an unrelated tab (T0P 123, SALES, etc.) mid-search, so it can't keep
+hijacking clicks somewhere that has nothing to do with CREATE OFFER.
+
+The Y0UR P!GE0N side kept its modal (explicit user request — "this should
+stay") but got upgraded: 4-across, bigger thumbnails, fixed scrollable
+height, and every card now has a `[ VIEW ]` button opening the real detail
+screen (see bug #3 above).
+
+## KV write cap (fixed this session, `functions/_shared.js`)
+
+User reported KV operations nearing the daily 1,000-write cap again.
+Root cause (same one gotcha 5a below already flagged once):
+`fetchXrpCafeNftListing`'s cache TTL was raised from 60s → 600s once
+already, still weeks-out too short under real traffic (up to 40 items/page,
+every page load, re-missing and rewriting every 10 minutes). Raised again to
+`XRP_CAFE_NFT_CACHE_TTL_SECONDS = 3600` (1 hour). If this keeps recurring,
+the real fix is probably batching or a longer-lived shared cache, not just
+raising the number again.
+
+## Brokered accept-offer (0.589% marketplace fee + $CRWN reward) — unchanged this session, still UNCONFIRMED
 
 Accepting a received $PIGEONS buy-offer (OFFERS RECEIVED → ACCEPT OFFER)
-used to be a plain direct `NFTokenAcceptOffer` (seller signs, no fee). It's
-now XRPL **brokered** mode, so the marketplace fee is taken atomically in
-the SAME settling transaction as the NFT transfer — never a second
-Payment for the fee itself.
+is XRPL **brokered** mode — the marketplace fee is taken atomically in the
+SAME settling transaction as the NFT transfer.
 
 **The broker/developer wallet**: `rpigEoNV9KYjK6P9kzFmTqesbpqv7dpnzK` —
 `MARKETPLACE_BROKER_WALLET` in `_shared.js`. Its seed lives ONLY as
 `BROKER_WALLET_SEED` on the `xaman-proxy` Render service's env vars —
-never in this repo.
+never in this repo. This is the SAME wallet/signing path the planned
+NFT-for-NFT escrow swap above would reuse.
 
 **Fee math** — `computeMarketplaceFee(totalValueStr)` in `_shared.js`.
-0.589% = 589/100000, done in integer "micro-unit" (6-decimal) arithmetic
-so `feeValue + sellerValue` always sums to exactly `totalValue` — no
-floating-point drift. Verified directly: `computeMarketplaceFee('100')` →
-`{ totalValue: '100', feeValue: '0.589', sellerValue: '99.411' }`.
+0.589% = 589/100000, integer "micro-unit" arithmetic, no floating-point
+drift. Verified: `computeMarketplaceFee('100')` → `{ totalValue: '100',
+feeValue: '0.589', sellerValue: '99.411' }`.
 
-**The flow** (all three files: `swap-acceptoffer-prepare.js`,
-`-payload.js`, `-status.js`):
-1. Seller clicks ACCEPT OFFER → prepare/payload build the SELLER's own
-   `NFTokenCreateOffer` (a real sell offer, `Destination` restricted to
-   the broker wallet, `Amount` = the buy-offer total minus the fee) — the
-   seller signs THIS via Xaman, not the final accept. Fee is computed
-   server-side from the REAL on-ledger buy-offer amount, never trusted
-   from the client.
-2. `swap-acceptoffer-status.js` polls the seller's signature same as
-   before. Once their sell offer is confirmed via a real
-   `fetchNftSellOffers` read (never trusting Xaman's `dispatched_result`
-   alone), THIS endpoint — not the browser — builds the actual brokered
-   `NFTokenAcceptOffer` (`NFTokenBuyOffer` + `NFTokenSellOffer` +
-   `NFTokenBrokerFee` + memos) and submits it via the broker wallet
-   itself, through `xaman-proxy`'s new `/broker-submit` route (the
-   marketplace is a party to this transaction, so it signs for itself —
-   no Xaman involved for this leg at all).
-3. `takePendingBrokerAccept` (single-consume KV read, `_shared.js`) means
-   only the FIRST status poll to see the sell offer confirmed actually
-   submits the broker transaction; a concurrent/retried poll instead
-   re-reads real ledger state instead of resubmitting.
-4. After the brokered accept validates, `verifyBrokerFeeFromMeta`
-   (`_shared.js`) parses the settling transaction's OWN metadata (a
-   RippleState/trust-line delta on the broker's own $PIGEONS line) to
-   confirm the exact fee actually landed — not just trusting a
-   `tesSUCCESS` result.
-5. `payBrokerReward` then fires two separate broker-signed Payments (one
-   to buyer, one to seller) of `SWAP_REWARD_TEST_AMOUNT` (currently a
-   flat `'1'`) in `$CRWN` (`SWAP_REWARD_TOKEN_CONFIG`, currency `CRWN`,
-   issuer `r99LZRNxxss7eSJqKTSEvp1Xd48JGh5Vp5` — confirmed real by the
-   user, distinct from the unrelated `KINGDOM_CLAIM_CONFIG.crwn` entry
-   used by the Kingdom King-holder claim feature, which stays untouched).
-   **XRPL has no field for a third-party token payout inside
-   `NFTokenAcceptOffer`** — this is a deliberate, acknowledged
-   non-atomic follow-up, the closest practical approximation to "at the
-   same time." Reward math is explicitly TEST-PHASE ("we'll run some
-   maths later" — the user's words) — don't treat the flat `'1'` as a
-   real production number.
+**Status as of last real check:** the one live test so far did NOT exercise
+the new brokered code path — it hit a stale pre-brokered direct accept
+instead (confirmed via direct ledger lookup). A clean retest through the
+site's own ACCEPT OFFER → OPEN XAMAN flow, watching
+`wrangler pages deployment tail` live, is still the next thing anyone
+picking this specific piece up should do. Nothing about this changed this
+session.
 
-**Double-accept protection**: `acquireBrokerAcceptLock`/
-`releaseBrokerAcceptLock` (KV, per offerId) plus the single-consume
-pending-state pattern above. Not a true atomic lock (Cloudflare KV has no
-compare-and-swap) — the real backstop is the ledger itself, since
-accepting a buy offer consumes it; a second brokered accept against the
-same offer simply can't succeed regardless.
+## Xaman push notifications — unchanged this session, still NEEDS WEBHOOK URL SET
 
-**Xaman-proxy side** (`xaman-proxy/server.js`, `package.json`): added the
-`xrpl` npm dependency and a new `/broker-submit` route, allowlisted to
-only ever sign `NFTokenAcceptOffer` or `Payment` (never an arbitrary
-txjson) as the broker wallet. `BROKER_WALLET_SEED` must be set on Render
-and the service redeployed to pick up `xrpl` — confirmed done this
-session (user reported "its live").
-
-**⚠️ Status: the one real test so far did NOT exercise this new code.**
-The transaction hash the user checked
-(`262AB38A91A48DD0CB5D2C82C53CCB2D3E773CF5547DA88AA64AFC75A46EEE06`) was
-confirmed via direct ledger lookup (`tx` RPC method) to be a plain direct
-`NFTokenAcceptOffer` — only `NFTokenBuyOffer`, no `NFTokenSellOffer`, no
-`NFTokenBrokerFee` — almost certainly a stale Xaman request signed
-directly through the Xaman app (found "hidden in Requests, N/A") rather
-than through the site's own OPEN XAMAN button, likely from the small
-window before this session's deploy had fully propagated. **A clean
-retest through the site's own ACCEPT OFFER → OPEN XAMAN flow is the very
-next thing to do** — watch `wrangler pages deployment tail` live while it
-runs, and independently verify the resulting tx hash on Bithomp shows the
-`NFTokenBrokerFee` field and a real balance change on the broker wallet.
-
-## Xaman push notifications — NEW, NEEDS WEBHOOK URL SET
-
-New `functions/api/xaman-webhook.js` — receives Xaman's server-to-server
-callback when a payload created with `push:true` resolves and the user's
-app grants push. It re-fetches the full payload via the already-existing
-`getXamanPayloadStatus()` to reliably learn which wallet resolved it
-(`response.account`) rather than trusting the webhook body's own claim,
-then stores that wallet's reusable push token via
-`getXamanUserToken`/`storeXamanUserToken`/`clearXamanUserToken` in
-`_shared.js` (KV, durable, no TTL).
-
-`createXamanPayload(env, txjson, options, userToken, attempt)` — now
-takes a `userToken` 4th param (shifted `attempt` to 5th — check for any
-NEW call site that might still be passing `attempt` positionally as the
-4th arg, there shouldn't be any as of this write-up but verify). When a
-stored token exists for the signing wallet, the payload is created with
-`push:true` and `user_token` forwarded so Xaman can push straight to
-their phone; wired into **every** `*-payload.js` endpoint (LIST, BUY,
-MAKE OFFER, ACCEPT OFFER, DELIST, ACCEPT, the swap builder's OFFER) —
-each now does `const pushToken = await getXamanUserToken(env.coin, <wallet var>);`
-right before `createXamanPayload`.
+`functions/api/xaman-webhook.js` receives Xaman's server-to-server callback
+when a payload created with `push:true` resolves. Re-fetches the full
+payload via `getXamanPayloadStatus()` rather than trusting the webhook
+body's own claim, then stores the wallet's reusable push token via
+`getXamanUserToken`/`storeXamanUserToken`/`clearXamanUserToken` (KV,
+durable, no TTL). Wired into every `*-payload.js` endpoint.
 
 **Needs before this does anything**: the webhook/callback URL
-(`https://soitbegins.xyz/api/xaman-webhook`) must be set in the **Xaman
-Developer Console** (apps.xumm.dev) for this app — nothing registers it
-automatically, and as of this write-up it's unconfirmed whether the user
-has done this yet.
+(`https://soitbegins.xyz/api/xaman-webhook`) set in the **Xaman Developer
+Console** (apps.xumm.dev) — nothing registers it automatically, unconfirmed
+whether done yet. Webhook body field names were written from memory of
+Xaman's documented format, not verified against a live event — check
+`wrangler pages deployment tail` after the first real one fires.
 
-**Honest caveat**: the exact webhook body field names
-(`body.userToken.user_token` vs `body.user_token`, `body.meta.payload_uuidv4`
-vs `body.payloadResponse.payload_uuidv4` vs top-level `body.payload_uuidv4`)
-were written from memory of Xaman's documented format, not verified
-against a live event. The handler logs the raw body (truncated to 1000
-chars) via `console.log('xaman-webhook received:', ...)` — check
-`wrangler pages deployment tail` (or the Cloudflare Pages Functions log
-viewer) after the first real webhook fires, and adjust the extraction in
-`xaman-webhook.js` if the real shape differs from the guess.
+## The swap builder (NFT-for-NFT, non-atomic, currently hidden) — unchanged this session
 
-## The swap builder (NFT-for-NFT, non-atomic, currently hidden)
+The OLDER multi-item (up to 4 per side) trade builder — `CREATE AN 0FFER`
+box on DATABASE, MY PIGEONS' own per-card `+` toggle, SWAP OFFERS tab.
+Gated behind `SWAP_BUILDER_ENABLED = false`, same as always. **This
+session's V1 "SWAP NFT TRADE DETAILS" (`CREATE_OFFER_ENABLED`) reuses this
+system's real backend** (`swap-offer-prepare/-payload/-status.js`,
+`startSwapOffer` and friends) but is a separate, simpler, single-item-per-
+side UI with its own state (`state.simpleOffer`) and its own flag — the two
+systems don't interfere with each other, and the SWAP OFFERS tab is shared
+by both (gated behind EITHER flag being on, see the "Initial load" section
+near the bottom of `functions/swap.js`).
 
-XRPL has no native NFT-for-NFT offer — `NFTokenCreateOffer`'s `Amount` is
-always XRP or an issued currency, never another NFT. So this is built as two
-independent `NFTokenCreateOffer`s (each `Amount: "0"`, `Destination`-
-restricted to the counterparty), tracked as a linked "pair" in KV, plus two
-independent `NFTokenAcceptOffer`s once both sides have offered. **This is
-never atomic** — nothing stops one side from accepting and the other never
-following through. That's a real, permanent XRPL limitation, not a bug to
-fix later.
+Same non-atomicity limitation applies to both — see "Why CREATE_OFFER_ENABLED
+got turned back off" above, which is the fuller, more current writeup of
+the same underlying XRPL limitation this section used to describe alone.
 
-**Everything is gated behind one flag** in `functions/swap.js`, near the top
-of the client script (search for `SWAP_BUILDER_ENABLED`):
-
-```js
-var SWAP_BUILDER_ENABLED = false;
-```
-
-Flip it to `true` to bring back:
-- The **CREATE AN OFFER** box on DATABASE (persistent, always visible when on)
-- MY PIGEONS' own `+` "add to offer" toggle on each card
-- The **SWAP OFFERS** tab (discover/reciprocate/accept pending pairs)
-
-Nothing behind the flag was removed — it's a pure display gate (three
-`display:none` / conditional-render sites, all reading the same flag).
-Server-side endpoints, KV data, and everything else keep working regardless
-of the flag's state.
-
-Server files for this feature (all additive, none of them touch BUY/LIST/
-DELIST): `swap-offer-prepare/-payload/-status.js`, `swap-offers-mine.js`,
-`swap-accept-prepare/-payload/-status.js` (this is a DIFFERENT
-`swap-accept-*` set than the brokered `swap-acceptoffer-*` above — don't
-confuse the two; `swap-accept-*` is the swap builder's own free-transfer
-NFT-for-NFT accept, `swap-acceptoffer-*` is the $PIGEONS buy-offer
-brokered accept). `_shared.js`: `findSwapOffer(offers, owner, destination)`
-matches the `Amount: "0"` string shape, separate from `findPigeonsOffer`
-(issued-currency object shape) — never conflate the two.
-
-**Tested live, once, successfully:** one side creating their offer
-(`NFTokenCreateOffer`) and the destination wallet accepting it manually via
-Bithomp (proving the on-ledger mechanics work). **Not yet tested live:**
-the in-app reciprocate flow (SWAP OFFERS tab → CREATE MATCHING OFFER) or the
-in-app accept flow (ACCEPT SWAP button).
-
-Explicitly out of scope until asked: expanding past 1-for-1, fees,
-negotiation, a true atomic mechanism (would require the XRPL Batch
-amendment, not live on mainnet — see "XRPL Batch" note below).
-
-## The $PIGEONS marketplace (LIST / BUY / DELIST) — real, not gated
+## The $PIGEONS marketplace (LIST / BUY / DELIST) — real, not gated, unchanged this session
 
 Listing a Pigeon for $PIGEONS, buying a listed one, and delisting are all
-real XRPL transactions, live on the page at all times (not behind any flag),
-unchanged this session.
-- `PIGEONS_TOKEN_CONFIG` in `_shared.js`: `currency: 'PIGEONS'`,
-  `issuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf'` — verified on-ledger.
-- `findPigeonsOffer(offers, owner)` in `_shared.js` — the ONLY correct way
-  to find "the $PIGEONS offer" among an NFT's real sell offers. Never use
-  `offers[0]` or match on owner alone.
-- Server files: `swap-listing-prepare/payload/status.js` (LIST),
-  `swap-buy-prepare/payload/status.js` (BUY), `swap-delist-prepare/payload/
-  status.js` (DELIST). Every one re-derives and re-validates its txjson
-  server-side from just an nftId (never trusts a txjson the client sends
-  back), and every status endpoint re-verifies on real ledger state before
-  declaring success.
-- BUY sales get recorded into `pswap:saleslog:v1` (`recordSwapSale`) and
-  merged into the SALES HISTORY tab alongside Deeptide's own feed.
-- **Every real `NFTokenCreateOffer` this app builds** (LIST, MAKE OFFER,
-  the swap builder's OFFER, and the brokered accept's seller sell-offer)
-  now carries `swapOfferSourceMemo()` — a hex-encoded XRPL Memo
-  identifying `https://soitbegins.xyz/swap` as the source, visible on any
-  block explorer.
+real XRPL transactions, live on the page at all times.
+- `PIGEONS_TOKEN_CONFIG` in `_shared.js`: `currency: 'PIGEONS'`, `issuer:
+  'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf'` — verified on-ledger.
+- `findPigeonsOffer(offers, owner)` — the ONLY correct way to find "the
+  $PIGEONS offer" among an NFT's real sell offers.
+- Every real `NFTokenCreateOffer` this app builds carries
+  `swapOfferSourceMemo()` — a hex-encoded Memo identifying
+  `https://soitbegins.xyz/swap` as the source, visible on any block
+  explorer.
 
-**Do not modify these three flows without explicit instruction** — they
-were built with heavy back-and-forth verification against official XRPL
-docs and real live testing; the exact txjson shapes are load-bearing.
+**Do not modify these three flows without explicit instruction** — heavy
+back-and-forth verification against official XRPL docs and real live
+testing; the exact txjson shapes are load-bearing.
 
-## Xaman signing — goes through an off-Cloudflare relay (now also does broker signing)
+## Xaman signing — off-Cloudflare relay, unchanged this session
 
-`createXamanPayload(env, txjson, options, userToken, attempt)` /
-`getXamanPayloadStatus(env, uuid)` in `_shared.js` call
-`env.XAMAN_PROXY_URL` + `env.XAMAN_PROXY_SHARED_SECRET` — **not** xumm.app
-directly. This exists because Cloudflare Workers calling xumm.app directly
-gets silently blocked (confirmed live: status 400, empty body, missing
-`cf-ray`/`server: cloudflare` headers — a Cloudflare-to-Cloudflare
-network-path failure, not an application-level rejection). The proxy
-(`xaman-proxy/`, deployed separately on Render) re-homes that one outbound
-call elsewhere. The real Xaman API key/secret live ONLY in the proxy's own
-env; this side authenticates with `XAMAN_PROXY_SHARED_SECRET`.
+`createXamanPayload`/`getXamanPayloadStatus` in `_shared.js` call
+`env.XAMAN_PROXY_URL` + `env.XAMAN_PROXY_SHARED_SECRET` — not xumm.app
+directly (Cloudflare-to-Cloudflare calls to xumm.app are silently blocked).
+The proxy also signs the marketplace's own transactions via
+`/broker-submit` (`submitAsBroker` in `_shared.js`) — a separate code path
+from the Xaman relay.
 
-**New this session**: the same proxy ALSO now holds `BROKER_WALLET_SEED`
-and uses the `xrpl` npm package to sign+submit the marketplace's OWN
-transactions (brokered accept, $CRWN rewards) via `/broker-submit` — a
-completely separate code path from the Xaman relay (`submitAsBroker` in
-`_shared.js`, not `createXamanPayload`). If Xaman-signed flows (LIST/BUY/
-MAKE OFFER/etc) suddenly break, check the proxy is up; if only the
-BROKERED accept step fails, check `BROKER_WALLET_SEED` is actually set and
-the proxy redeployed with the `xrpl` dependency before assuming a code
-regression.
+`window.open()` for the Xaman tab must be called **synchronously** inside
+the click handler, pointed at the real URL only once the fetch resolves —
+every "OPEN XAMAN" button (including the new CREATE OFFER one this session)
+follows this pattern; copy it exactly for any new one.
 
-Also: `window.open()` for the Xaman tab must be called **synchronously**
-inside the click handler (open a blank tab immediately, set `.location.href`
-once the async fetch resolves) — doing it inside the `.then()` callback gets
-silently popup-blocked by the browser. Every "OPEN XAMAN" button in this
-file follows this pattern now; copy it exactly for any new one.
+## Theme — unchanged this session
 
-## Theme
+Cyan/magenta/purple "digital glitch" system. Cyan = general site chrome,
+magenta = Scylla/target/selection/warning, green = a real clickable buy
+action, purple (`--pigeon-purple`, `#8848f8`) = the currently-viewed
+collection's own theme colour.
 
-Cyan/magenta/purple "digital glitch" system. Cyan = general site
-static/hover chrome not tied to a specific collection, magenta = Scylla/
-target/selection/warning, green = a real, clickable buy action
-specifically, **purple (`--pigeon-purple`, `#8848f8`) = the currently-
-viewed collection's own theme colour** (Pigeons specifically — sampled
-live from the coin artwork). This session extended the "collection gets
-its own colour" idea to the COLLECTION :: picker list itself: PIGEONS
-purple, FUZZY dark brown, PHNIX red-orange (all placeholders except
-Pigeons, but each now visually distinct instead of a shared cyan-active/
-grey-disabled palette).
-
-## Current page structure — SUBSTANTIALLY REWORKED this session, old
-descriptions of this area no longer apply
-
-Top to bottom, in DOM/visual order:
-1. `<h1>Σκύλλα :: SWAP</h1>`.
-2. **`.db-select-wrap`** — "STAT!C DATABASE" static label, then
-   `.db-collection-row`: `C0LLECT!0N ::` + the `#dbSelectWrap` hover
-   flyout (PIGEONS/FUZZY/PHNIX, each its own colour per Theme above) +
-   the **"New to the XRPL..." onboard link**, pinned to this row's own
-   right edge (moved out of the trustline box entirely this session —
-   restyled for the plain page background: grey text, cyan hover,
-   instead of its old white-on-purple treatment).
-3. **`.pigeons-merged-panel`** — the trustline banner and the stats info
-   box are ONE unified purple box now (not two separate elements with a
-   gap), containing, top to bottom:
-   - **`#collectionDetailsPanel`** (the stats carousel) — same purple
-     gradient theme as the rest of the panel now (not its own dark
-     digital-glitch background). **3 pages, FLOOR shown FIRST**: FLOOR::
-     XRP.CAFE, **$PIGEONS FLOOR in the MIDDLE**, FLOOR::DEEPTIDE, then
-     auto-rotates to ITEMS/HOLDERS/VOLUME/LISTED, then 24H ACTIVITY.
-     Prev/next arrows (`#statsPrevBtn`/`#statsNextBtn`) are a solid
-     darker-purple fill with white icons now (were transparent/cyan-dim
-     — read as real buttons against the purple background). `.stat-label`
-     text bumped 9px → 11.5px across every stat tile for readability.
-   - **`.pigeons-bar-identity-row`** — big (140px) thumbnail next to SET
-     TRUSTLINE TO $PIGEONS / ISSUER ADDRESS / address / **`[ C0PY
-     ADDRESS ]` + `[ L0G!N ]` side by side** (`.pigeons-bar-identity-actions`).
-     LOGIN reuses the EXACT SAME `XummPkce` OAuth flow the MY PIGEONS
-     tab's own CONNECT SCYLLA button uses (`loginRedirectTab` tracks
-     which button triggered it, so it lands back on DATABASE vs MY
-     PIGEONS afterward). Once `MY_WALLET` is a real server-verified
-     session, this whole block is replaced by `#pigeonsBarLoggedIn`:
-     wallet address, real held-Pigeons count, real $PIGEONS
-     balance/trustline status (new `fetchPigeonsAccountLine()` —
-     `account_lines` XRPL call, peer-filtered to the PIGEONS issuer,
-     comparing the raw HEX currency code since `account_lines` never
-     returns the decoded ASCII), and a **`[ SH0W MY P!GE0NS ]`** button
-     that reuses the existing `browseOwnerCollection(MY_WALLET, 'Y0U')`
-     path to switch DATABASE to the user's own held Pigeons.
-   - **`.pigeons-bar-bottom-row`** — `VIEW ON DEXSCREENER` far left
-     (real pair URL + favicon icon, black background), **"1 XRP = N
-     $PIGEONS"** centered (flipped this session from "1 PIGEONS = X
-     XRP" — same underlying rate, `fetchPigeonsXrpRate`/DexScreener's
-     trade-derived price, `refreshTrustlineRate()` polls every 60s),
-     the **calculator** on the right with its own "EXCHANGE RATE" title
-     above it (XRP in → $PIGEONS out, live coin icon that tracks the
-     typed number's position and pulses on change —
-     `animateOfferCoin`/`formatThousandsInput` pattern, see below).
-4. `#topTabs` — DATABASE / MY PIGEONS / TOP 10 / SALES H!ST0RY.
-5. Whichever tab's own panel is active. **DATABASE tab** (`#screenBrowse`):
-   - `.db-config-group` — VIEW (BOXED VIEW is now **disabled**, marked
-     "(C0M!NG S00N)" — THUMBNAILS is the only selectable/default view;
-     see the `project_boxed_view_paused` memory for exactly where to
-     resume that later), `C0LLECT!0N SELECT!0N:` (edition toggle, now
-     PURPLE when active, not magenta), `S0RT!NG BY:` — **reordered to
-     RARITY → PRICE → ALPHABETICAL → HISTORICAL SALES**, and now
-     **click-to-open, not hover** (see below), always shows the filled-
-     purple "active pick" look.
-   - `.sort-stack-row` — ADD TRAITS (bigger label/padding this session)
-     is ALSO click-to-open now, not hover, and **ticking a value no
-     longer closes the menu** — click adds a ✓/`.selected` state and
-     keeps the flyout open so you can pick several traits across
-     categories in one sitting; clicking an already-ticked value
-     un-ticks it. Applied trait chips (`#traitRows`) render INLINE in
-     this same row now (stacking horizontally next to ADD TRAITS),
-     not in their own section below it. A shared `document`-level
-     click-outside listener closes whichever of SORTING BY/ADD TRAITS
-     is open (needed now that hover-to-close no longer applies).
-   - `.results-header-row` — **one combined search box** (`#searchInput`,
-     widened, purple GO button) that detects whether you typed a Pigeon
-     number OR a wallet address and routes accordingly
-     (`browseOwnerCollection` for a wallet match) — the old separate
-     SEARCH WALLET ADDRESS box was removed/merged into this one.
-     Wallet-scoped results show `"SH0W!NG RESULTS F0R :: WALLET: <short>
-     :: N PIGEONS"` instead of the generic `"RESULTS :: N"` line.
-   - Card layout: **`pigeonsActionBoxHtml(p)`** (`swap.js`) replaced the
-     old separate `scyllaListedHtml`/`offerStripHtml` pair — BUY NOW
-     (green, only if a real Σκύλλα listing exists) and the OFFER AMOUNT
-     input+SEND now share ONE purple box, no more separate magenta BUY
-     NOW bar. No coin thumbnail on the box itself any more (redundant
-     once merged). The OFFER AMOUNT input: text centered, bigger/bolder
-     (20px), live thousands-separator formatting as you type
-     (`formatThousandsInput`), and the $PIGEONS coin icon inside the
-     field dynamically tracks the typed number's rendered left edge
-     (canvas `measureText` against the input's own computed font) with
-     a quick "coin flip" + green glow pulse on every change
-     (`animateOfferCoin`) — purely cosmetic, `submitMakeOffer`'s two
-     call sites strip the commas back out before hitting the API.
-
-## Data sources — the two real marketplaces
-
-Unchanged this session — see prior notes on Deeptide/xrp.cafe if working
-in that area; nothing here was touched.
+## Data sources — unchanged this session
 
 **Deeptide** (`api.deeptide.co`): listings/detail/history/sales-recent/
-owned/trait-cards, `crossListing` special-cased for `price-asc/desc`'s
-sparse real pricing.
+owned/trait-cards. **xrp.cafe** (`api.xrp.cafe`): collection-stats + per-NFT
+only, no bulk sorted-listings endpoint (re-confirmed, don't re-probe without
+a new reason). `fetchXrpCafeNftListing` now caches 1 hour (was 10 min — see
+"KV write cap" above).
 
-**xrp.cafe** (`api.xrp.cafe`): collection-stats + per-NFT only, no bulk
-sorted-listings endpoint exists (re-confirmed, don't re-probe without a
-new reason). `fetchXrpCafeNftListing` caches 10 min (was 60s — that
-shorter TTL blew through Cloudflare's 1,000 writes/day KV cap once
-already, see gotcha 5a).
+## What KV is used for
 
-## What KV is used for (all wrapped in `safeKvPut`, silently no-ops on quota
-exhaustion so browsing never breaks even if the daily write cap is hit)
-- **Number search index** (`pswap:numbermap:v1`).
-- **Highest/average-sale index** (`pswap:highsale:v3`).
-- **Σκύλλα listings index** (`pswap:listings:v1`).
-- **Swap-offer pairs** (`pswap:offerpairs:v1`) — swap builder.
-- **Sales log** (`pswap:saleslog:v1`).
-- **NEW: Xaman push tokens** (`pswap:xamanusertoken:<wallet>`) — durable,
-  no TTL, see "Xaman push notifications" above.
-- **NEW: Brokered-accept pending state** (`pswap:pendingbrokeraccept:<uuid>`,
-  15 min TTL) and **lock** (`pswap:brokeracceptlock:<offerId>`, 10 min TTL)
-  — see "Brokered accept-offer" above.
-- Short-lived per-wallet Deeptide cache; xrp.cafe stats cache (5 min);
-  trait-cards cache; Crown/top-holders snapshot (shared with `board.js`).
+All wrapped in `safeKvPut` (silently no-ops on quota exhaustion). Unchanged
+list from before this session — number search index, highest/average-sale
+index, Σκύλλα listings index, swap-offer pairs, sales log, Xaman push
+tokens, brokered-accept pending state/lock, short-lived per-wallet/stats
+caches. See gotcha 5a below — this is the recurring failure mode to watch.
 
-## XRPL Batch amendment — checked, not usable
+## XRPL Batch amendment — checked, not usable, more relevant than ever
 
 The one XRPL feature that would make a true atomic multi-transaction
-settlement possible (XLS-56/BatchV1_1) is **not live on mainnet** — this
-is also exactly why the $CRWN reward above is a separate follow-up
-Payment instead of one atomic transaction alongside the brokered accept.
-Don't assume Batch is available without checking current status first.
+settlement possible (XLS-56/BatchV1_1) is **not live on mainnet**. This is
+now the direct reason `CREATE_OFFER_ENABLED` is off (see above), not just a
+footnote about the $CRWN reward anymore. Don't assume Batch is available
+without checking current status first — if it ever lands, it may be a much
+cleaner fix for the swap-atomicity problem than the planned broker-escrow
+version.
 
 ## Gotchas — read before touching swap.js again
 
 1. **Never write a literal backtick anywhere inside the `SWAP_HTML` template
    literal** — not even in a comment. `node --check` on the outer file will
-   NOT catch this reliably. A failed Pages Functions build means
-   **Cloudflare silently keeps serving the previous successful deploy** —
-   no error surfaces anywhere except the Pages dashboard's build log.
+   NOT catch this reliably — it parses fine as an outer script, but the
+   INNER client `<script>` silently corrupts (confirmed hit this exact
+   mistake again this session, writing `` sets `top` `` in a comment —
+   caught only by the render-and-check-the-inner-script step below, not by
+   plain `node --check`). A failed Pages Functions build means **Cloudflare
+   silently keeps serving the previous successful deploy** — no error
+   surfaces anywhere except the Pages dashboard's build log.
 
 2. **Escape sequences inside the client script need to survive TWO rounds**
    of interpretation. Any backslash meant to reach the browser as a real
-   escape (regex `\d`, an escaped `'` inside a single-quoted string) must
-   be written **doubled** in the source (`\\d`, `\\'`).
+   escape must be written **doubled** in the source (`\\d`, `\\'`). Simplest
+   safe practice: just avoid apostrophes/contractions in any new user-facing
+   string entirely ("D0N T", "!SN T") rather than escaping — every string
+   added this session did this deliberately.
 
    **Run this before every push that touches swap.js**, not just
    `node --check functions/swap.js`:
@@ -485,53 +377,56 @@ Don't assume Batch is available without checking current status first.
    console.log('backtick count:', bt);
    "
    ```
-   Backtick count should be exactly 4.
+   Backtick count should be exactly 4. (`missing: ["body",
+   "getBoundingClientRect"]` is a known false positive from the regex
+   matching `el.body`/`el.getBoundingClientRect` usage patterns that aren't
+   actual `el.*` element references — safe to ignore, confirmed harmless
+   across this whole session.)
 
    Before every push: also scan the diff for anything secret-looking
    (`git diff <file> | grep -iE "secret|api_key|apikey|seed"`) and confirm
-   `git fetch && git log --oneline HEAD..origin/main` is empty. **This
-   matters even more now** — `_shared.js`/`xaman-proxy/server.js` reference
-   `BROKER_WALLET_SEED` as an env-var NAME, never a real value, but
-   double-check that stays true on every future diff involving those files.
+   `git fetch && git log --oneline HEAD..origin/main` is empty.
 
 3. `Σκύλλα` must render mixed-case everywhere — check `text-transform` on
    every ancestor, not just the string casing. Site-wide recurring bug.
 
 4. Cloudflare's per-request subrequest budget is real and hard — do the
-   arithmetic before adding any new per-item enrichment call
-   (`LISTINGS_ENRICH_CAP`/`LISTINGS_ENRICH_CAP_LOW` in `pigeons.js`,
-   `OFFERS_RECEIVED_SCAN_CAP=45` in the new blind-scan fallback in
-   `swap-offers-received.js`, same reasoning).
+   arithmetic before adding any new per-item enrichment call.
 
 5. KV cache keys are versioned (`pswap:highsale:v3`, etc.) — bump the
    suffix again if you ever change a cached value's shape.
 
 5a. **Cloudflare's free-tier KV cap is 1,000 writes/day and easy to blow
-   through by accident.** Do the arithmetic (fan-out × misses/hour) before
-   picking a TTL, not after.
+   through by accident** — hit this AGAIN this session (see "KV write cap"
+   above), third time this specific cache has needed its TTL raised. If it
+   recurs a fourth time, stop raising the number and actually redesign the
+   caching strategy instead.
 
 6. `NEVER trust a txjson the client sends back` — every `*-prepare.js` and
    `*-payload.js` endpoint re-derives the transaction from scratch
-   server-side, re-checking ownership and live ledger state. This is
-   deliberate, load-bearing defense.
+   server-side, re-checking ownership and live ledger state.
 
-7. **NEW: `swap-offers-received.js` only used to trust its own KV index**
-   of tracked buy-offers (populated only once the BUYER's own MAKE OFFER
-   confirm screen polls all the way through) — if a buyer closed their
-   tab early, a real live offer could stay invisible to the seller
-   forever. Fixed this session by also blind-scanning every OTHER Pigeon
-   the seller owns (bounded, `OFFERS_RECEIVED_SCAN_CAP=45`) and
-   backfilling the index — but if offers still don't show up, this
-   scan-cap is the first thing to check (a wallet holding more than ~45
-   untracked Pigeons could still miss one).
+7. `swap-offers-received.js` blind-scans every OTHER Pigeon the seller owns
+   (bounded, `OFFERS_RECEIVED_SCAN_CAP=45`) as a backfill in case a buyer
+   closed their tab early — a wallet holding more than ~45 untracked
+   Pigeons could still miss a real offer. First thing to check if offers
+   ever don't show up.
 
-8. **NEW: `xaman-proxy` is no longer "just a relay."** It now signs real
-   transactions autonomously as the broker wallet. Before touching
-   `xaman-proxy/server.js`: the `/payload` and `/payload/:uuid` routes are
-   the ORIGINAL Xaman relay (untouched); `/broker-submit` is the NEW
-   self-signing route, allowlisted to `NFTokenAcceptOffer`/`Payment` only
-   — don't widen that allowlist without a specific reason, this wallet
-   holds real funds.
+8. `xaman-proxy` signs real transactions autonomously as the broker wallet
+   now (`/broker-submit`, allowlisted to `NFTokenAcceptOffer`/`Payment`
+   only). This wallet holds real funds — don't widen that allowlist without
+   a specific reason. **This is the exact wallet/proxy the planned
+   NFT-for-NFT escrow swap would also use** — any change here affects both
+   features.
+
+9. **NEW: when adding a new way to open `#screenDetail` from inside an
+   overlay/modal** (a picker, a lightbox, anything layered on top), check
+   the global "click outside closes detail" listener near the bottom of the
+   click-wiring code — it excludes specific click targets
+   (`.pigeon-img-box`, `#detailLightbox`, now `.simple-picker-view-btn`) by
+   name, not by any general "was this inside an overlay" logic. A new entry
+   point needs its own explicit exclusion or it'll open and instantly
+   close itself (see bug #3 in the PλWS section above).
 
 ## Deploy
 
@@ -542,11 +437,8 @@ one exception — see gotcha #1). To watch live server-side logs while
 testing: `npx wrangler pages deployment tail --project-name
 soitbegins-portal` — reconnect it (Ctrl+C, rerun) after every new push.
 
-`xaman-proxy` deploys separately on **Render** — a git push to `main`
-alone does NOT redeploy it unless Render's auto-deploy is watching this
-repo/subfolder; when `xaman-proxy/server.js` or `package.json` changes
-(like this session's `xrpl` dependency + `/broker-submit` route), a
+`xaman-proxy` deploys separately on **Render** — a git push to `main` alone
+does NOT redeploy it unless Render's auto-deploy is watching this
+repo/subfolder; when `xaman-proxy/server.js` or `package.json` changes, a
 Render redeploy needs to happen too (Render dashboard → the service →
-Manual Deploy, or confirm auto-deploy picked it up) — confirmed done once
-this session ("its live" — `xaman-proxy listening on port 10000`), but
-verify again on any FUTURE `xaman-proxy/` change.
+Manual Deploy). Untouched this session.
