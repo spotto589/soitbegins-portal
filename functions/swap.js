@@ -3383,6 +3383,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                   <span class="scylla-listing-price" id="detailScyllaPrice">N0T L!STED</span>
                 </span>
                 <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">[ BUY ]</button>
+                <button class="bar-btn" id="detailScyllaDelistBtn" style="display:none;">[ CANCEL ]</button>
               </div>
               <div class="thumb-offer-row" id="detailMakeOfferRow" style="display:none;">
                 <div class="make-offer-input-wrap">
@@ -3888,7 +3889,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
-   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
+   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn',
    'backToBrowseBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
@@ -5128,7 +5129,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       // "!N Y0UR FL0CK"/"L!ST!NG :: 444K" note instead, never a blank box.
       if (p.scyllaListing){
         return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<div class="own-listing-note">L!ST!NG :: ' + escapeHtml(compactPigeonsNumber(p.scyllaListing.price)) + '</div>' +
+          '<div class="own-listing-note">Y0UR L!ST!NG :: ' + escapeHtml(compactPigeonsNumber(p.scyllaListing.price)) + '</div>' +
+          // Same .delist-pigeon-btn class/handling ownedPigeonActionHtml's
+          // own DELIST button uses (wireResultClicks' delegated listener
+          // already covers el.resultsArea too) — no separate wiring needed.
+          '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ CANCEL ]</button>' +
         '</div>';
       }
       return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -8141,21 +8146,30 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.detailScyllaBuyBtn.addEventListener('click', function(){
     if (state.currentDetail) openBuyConfirm(state.currentDetail);
   });
+  // Same openDelistConfirm the card grid's own [ CANCEL ]/DELIST buttons
+  // use (see wireResultClicks' .delist-pigeon-btn handler) — wired
+  // directly here since this button lives outside el.resultsArea/
+  // el.myPigeonsList, same reasoning as detailMakeOfferSend above.
+  el.detailScyllaDelistBtn.addEventListener('click', function(){
+    if (state.currentDetail) openDelistConfirm(state.currentDetail);
+  });
   function updateScyllaListing(p){
     var listing = p && p.scyllaListing;
     var notOwn = !!(p && p.owner && p.owner !== MY_WALLET);
     var isOwn = !!(p && p.owner) && !notOwn;
     if (listing && listing.price !== null && listing.price !== undefined){
-      // Same "L!ST!NG :: 444K" compact note as the card grid's own
-      // pigeonsActionBoxHtml on your own listed Pigeon — never the raw
-      // fmtPigeons price there, since there's no BUY button next to it
-      // to buy your own listing anyway.
-      el.detailScyllaPrice.textContent = isOwn ? 'L!ST!NG :: ' + compactPigeonsNumber(listing.price) : fmtPigeons(listing.price);
+      // Same "Y0UR L!ST!NG :: 444K" compact note (+ CANCEL button) as the
+      // card grid's own pigeonsActionBoxHtml on your own listed Pigeon —
+      // never the raw fmtPigeons price there, since there's no BUY button
+      // next to it to buy your own listing anyway.
+      el.detailScyllaPrice.textContent = isOwn ? 'Y0UR L!ST!NG :: ' + compactPigeonsNumber(listing.price) : fmtPigeons(listing.price);
       el.detailScyllaBuyBtn.style.display = notOwn ? '' : 'none';
+      el.detailScyllaDelistBtn.style.display = isOwn ? '' : 'none';
       el.detailScyllaListingRow.classList.remove('not-listed');
     } else {
       el.detailScyllaPrice.textContent = isOwn ? '!N Y0UR FL0CK' : 'N0T L!STED';
       el.detailScyllaBuyBtn.style.display = 'none';
+      el.detailScyllaDelistBtn.style.display = 'none';
       el.detailScyllaListingRow.classList.add('not-listed');
     }
     // MAKE OFFER — same option the DATABASE grid's own OFFER AMOUNT box
