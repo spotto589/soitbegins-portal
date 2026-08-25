@@ -2207,6 +2207,32 @@ const SWAP_HTML = `<!DOCTYPE html>
     .detail-nav-prev{ left:0.25rem; }
     .detail-nav-next{ right:0.25rem; }
   }
+  /* Second BACK entry point, fixed to the top-right corner (same
+     containing block as #screenDetail, same reasoning as .detail-nav-btn
+     above) — the full-width strip at the bottom of the traits/listings
+     column is still there too, this just saves a scroll back down. */
+  .detail-back-btn-top{
+    position:fixed;
+    top:clamp(0.5rem, 2vw, 1.5rem);
+    right:clamp(0.5rem, 2vw, 1.5rem);
+    z-index:75;
+    padding:0.5em 1em;
+    font-family:var(--font-mono);
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    color:var(--cyan);
+    background:rgba(8,9,11,0.7);
+    border:1px solid var(--cyan-dim);
+    border-radius:var(--radius);
+    cursor:pointer;
+    appearance:none;
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .detail-back-btn-top:hover{ border-color:var(--cyan); background:var(--cyan-faint); }
+  @media (max-width:760px){
+    .detail-back-btn-top{ font-size:12px; padding:0.45em 0.8em; }
+  }
   /* Local copy of canvas#staticBg's own look (see the drawStatic loop —
      both canvases run the identical draw function) — negative z-index so
      it paints behind the screen's real (non-positioned, normal-flow)
@@ -3336,6 +3362,11 @@ const SWAP_HTML = `<!DOCTYPE html>
            the time — not a fixed collection-wide sequence. -->
       <button class="detail-nav-btn detail-nav-prev" id="detailPrevBtn" title="PREV!0US P!GE0N (◂)">◂</button>
       <button class="detail-nav-btn detail-nav-next" id="detailNextBtn" title="NEXT P!GE0N (▸)">▸</button>
+      <!-- Same goBackFromDetail() as the full-width BACK strip at the
+           bottom — just a second, closer-to-hand entry point fixed to the
+           top-right corner so you do not have to scroll back down past
+           the traits/listings to leave. -->
+      <button class="detail-back-btn-top" id="backToBrowseBtnTop">← BACK</button>
       <div class="detail-two-col">
         <div class="detail-num" id="detailNum"></div>
         <div class="detail-owner-top" id="detailOwner"></div>
@@ -3862,7 +3893,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapOfferResult','swapResultNftId','swapResultToWallet','swapResultStatus','swapResultOfferId','swapResultTxLink','swapResultDoneBtn',
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
-   'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn',
+   'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn',
@@ -8273,6 +8304,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
   }
   el.backToBrowseBtn.addEventListener('click', goBackFromDetail);
+  el.backToBrowseBtnTop.addEventListener('click', goBackFromDetail);
   // Picture click opens a fullscreen lightbox (see #detailLightbox) —
   // click it again (anywhere) to close back to the detail screen.
   el.detailImgBox.addEventListener('click', function(){
