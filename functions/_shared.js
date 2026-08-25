@@ -317,7 +317,7 @@ export function encodeCurrencyCode(code) {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
 }
 
-function stringToHex(str) {
+export function stringToHex(str) {
   return Array.from(new TextEncoder().encode(str)).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
 }
 
@@ -2612,6 +2612,66 @@ export async function storeXamanUserToken(kv, wallet, token) {
 export async function clearXamanUserToken(kv, wallet) {
   if (!kv || !wallet) return;
   await kv.delete(XAMAN_USER_TOKEN_PREFIX + wallet).catch(() => {});
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// ΣΚΥΛΛΑ://S!GNAL — a wallet that has never done anything real on this site
+// (no sale, no listing, no offer, no incoming transfer, never even
+// connected via Σκύλλα) gets an OPTIONAL 123-drop XRP payment alongside a
+// new MAKE AN OFFER, so a genuinely new recipient has some real, visible
+// signal that something happened for them, before they ever open Xaman.
+// "Has activity" is a proxy, not a dedicated login/session log this site
+// doesn't otherwise keep — checked against every wallet-linked KV record
+// already maintained elsewhere (sales, listings, buy offers, incoming
+// transfers) plus whether they've ever connected through Σκύλλα at all
+// (a stored Xaman push token only exists after a real login). Each of
+// these reads is already a single KV get (no new XRPL calls), so this is
+// cheap even though it touches several maps.
+export async function hasWalletActivity(env, wallet) {
+  if (!env.coin || !wallet) return true; // fail toward NOT sending an unsolicited payment
+  const [sales, listings, buyOffers, incoming, xamanToken] = await Promise.all([
+    getSwapSalesLog(env.coin),
+    getSwapListingsMap(env.coin),
+    getSwapBuyOffersMap(env.coin),
+    getIncomingTransfersMap(env.coin),
+    getXamanUserToken(env.coin, wallet)
+  ]);
+  if (xamanToken) return true;
+  if (sales.some(s => s.buyer === wallet || s.seller === wallet)) return true;
+  if (Object.values(listings).some(l => l.seller === wallet)) return true;
+  if (Object.values(buyOffers).some(list => list.some(o => o.buyer === wallet))) return true;
+  if (incoming[wallet] && incoming[wallet].length) return true;
+  if (Object.values(incoming).some(list => list.some(t => t.fromWallet === wallet))) return true;
+  return false;
+}
+
+// Keyed by offerId (the MAKE AN OFFER buy-offer this signal is attached
+// to) — one signal per offer, overwritten wholesale on retry rather than
+// appended, since only the latest attempt's outcome matters. Deliberately
+// includes crwnEligible/crwnCredited even though nothing reads them yet
+// (see swap-signal-status.js's own comment) — the shape exists now so a
+// later CRWN reward engine has a real, already-populated field to query
+// instead of needing a backfill migration across every signal sent before
+// it existed. crwnCredited must only ever be flipped true by that future
+// engine itself; nothing in this file (or anywhere else right now) ever
+// sets it, and there is no withdrawal path — CRWN stays internal/
+// account-based only.
+const SWAP_SIGNALS_KEY = 'pswap:signals:v1';
+
+export async function getSwapSignalsMap(kv) {
+  const raw = await kv.get(SWAP_SIGNALS_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
+export async function getSwapSignal(kv, offerId) {
+  const map = await getSwapSignalsMap(kv);
+  return map[offerId] || null;
+}
+
+export async function recordSwapSignal(kv, offerId, entry) {
+  const map = await getSwapSignalsMap(kv);
+  map[offerId] = entry;
+  await safeKvPut(kv, SWAP_SIGNALS_KEY, JSON.stringify(map));
 }
 
 // Kingdom Phase 1 — every King NFT needs a stable friendly ID for display

@@ -4284,6 +4284,40 @@ const SWAP_HTML = `<!DOCTYPE html>
           <a class="receipt-tx-link" id="offerResultTxLink" target="_blank" rel="noopener">V!EW TRANSACT!0N</a>
           <div class="index-line swap-nonatomic-note" style="margin-top:1.25rem; margin-bottom:0;">THE 0WNER ST!LL NEEDS T0 ACCEPT TH!S 0FFER F0R THE TRADE T0 SETTLE.</div>
         </div>
+        <!-- ΣΚΥΛΛΑ://S!GNAL — an OPTIONAL 123-drop XRP payment offered only
+             when swap-signal-check.js reports the recipient has no
+             existing activity on the site (see checkAndMaybeShowSignal).
+             Never sent automatically — SEND S!GNAL is the only thing that
+             ever triggers the real payment (submitOfferSignal). Same
+             third-sub-state pattern as offerConfirmForm/-Receipt above,
+             with its own two inner toggled views (ask / sent). -->
+        <div id="offerSignalState" style="display:none;">
+          <div id="offerSignalPrompt">
+            <div class="node-eyebrow">// ΣΚΥΛΛΑ://S!GNAL</div>
+            <div class="confirm-field-value" id="offerSignalWallet" style="font-family:var(--font-mono); margin-bottom:0.75rem;"></div>
+            <div class="index-line">HAS N0 ACT!V!TY 0N SO!TBEG!NS.XYZ</div>
+            <div class="index-line" style="margin-top:0.75rem;">D0 Y0U WANT T0 SEND A 123-DR0P S!GNAL?</div>
+            <div class="index-line" style="margin-top:0.5rem; opacity:0.8;">A 123-DR0P XRP PAYMENT W!LL BE SENT T0 TH!S WALLET W!TH A MEM0 !DENT!FY!NG TH!S 0FFER.</div>
+            <div class="receipt-price-row" style="margin-top:1rem;">
+              <div class="receipt-price-label">C0ST</div>
+              <div class="receipt-price-value" style="font-size:20px;">0.000123 XRP</div>
+            </div>
+            <div class="index-line" id="offerSignalStatus" style="margin-top:0.75rem;"></div>
+            <div class="detail-actions">
+              <button class="secondary-btn" id="offerSignalSkipBtn">[ SK!P ]</button>
+              <button class="action-btn offer-confirm-xaman-btn" id="offerSignalSendBtn">[ SEND S!GNAL ]</button>
+            </div>
+          </div>
+          <div id="offerSignalSentConfirm" style="display:none;">
+            <div class="receipt-badge">✓</div>
+            <div class="receipt-status-line">ΣΚΥΛΛΑ://S!GNAL :: SENT</div>
+            <div class="index-line" style="margin-top:0.5rem;">123 DR0PS DEL!VERED</div>
+            <a class="receipt-tx-link" id="offerSignalTxLink" target="_blank" rel="noopener">V!EW TRANSACT!0N</a>
+            <div class="detail-actions">
+              <button class="action-btn" id="offerSignalDoneBtn">[ D0NE ]</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -4534,6 +4568,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
    'offerConfirmModal','offerConfPigeonImg','offerConfPigeonNum','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'offerConfirmForm','offerConfirmReceipt','offerReceiptPigeonNum','offerReceiptPrice','offerResultTxLink','offerResultDoneBtn',
+   'offerSignalState','offerSignalPrompt','offerSignalWallet','offerSignalStatus','offerSignalSkipBtn','offerSignalSendBtn',
+   'offerSignalSentConfirm','offerSignalTxLink','offerSignalDoneBtn',
    'transferConfirmModal','transferConfAccount','transferConfPigeonNum','transferConfDestination','transferConfirmStatus','transferConfirmBackBtn','transferOpenXamanBtn',
    'incomingTransfersBox','incomingTransfersList','acceptTransferConfirmModal','acceptTransferConfirmForm','acceptTransferConfPigeonNum','acceptTransferConfFrom','acceptTransferConfirmStatus','acceptTransferConfirmBackBtn','acceptTransferOpenXamanBtn',
    'acceptTransferConfirmReceipt','acceptTransferReceiptPigeonNum','acceptTransferResultDoneBtn',
@@ -8255,6 +8291,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // re-derived server-side in swap-makeoffer-payload.js, never trusted
     // from the client) doesn't need to be spelled out on screen for that
     // to be true.
+    // Recipient of the actual offer (the Pigeon's current owner) — needed
+    // later for the optional ΣΚΥΛΛΑ://S!GNAL step (checkAndMaybeShowSignal),
+    // not shown anywhere in this form itself any more (see the redesign
+    // that dropped the 0WNED BY line).
+    offerTarget.recipientWallet = txjson.Owner;
     el.offerConfPigeonNum.innerHTML = 'P!GE0N #' + (offerTarget.number !== null ? greenNum(offerTarget.number) : '????');
     el.offerConfPigeonImg.src = offerTarget.image || '';
     el.offerConfPigeonImg.style.display = offerTarget.image ? '' : 'none';
@@ -8264,11 +8305,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.offerOpenXamanBtn.innerHTML = OFFER_CONFIRM_BTN_HTML;
     el.offerConfirmForm.style.display = '';
     el.offerConfirmReceipt.style.display = 'none';
+    el.offerSignalState.style.display = 'none';
     el.offerConfirmModal.style.display = 'flex';
   }
   function closeOfferConfirmModal(){
     el.offerConfirmModal.style.display = 'none';
     offerTarget = null;
+    if (offerSignalPollTimer) clearTimeout(offerSignalPollTimer);
+    offerSignalUuid = null;
   }
   el.offerConfirmBackBtn.addEventListener('click', closeOfferConfirmModal);
   el.offerConfirmModal.addEventListener('click', function(e){ if (e.target === el.offerConfirmModal) closeOfferConfirmModal(); });
@@ -8361,6 +8405,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function showOfferResult(data){
     // Same popup, not a screen navigation — swap to the receipt sub-state
     // in place (offerTarget stays set, still needs .number below).
+    offerTarget.offerId = data.offerId;
     el.offerReceiptPigeonNum.innerHTML = 'P!GE0N #' + (offerTarget.number !== null ? greenNum(offerTarget.number) : '????');
     el.offerReceiptPrice.textContent = fmtPigeons(data.price);
     if (data.txHash){
@@ -8372,8 +8417,125 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     el.offerConfirmForm.style.display = 'none';
     el.offerConfirmReceipt.style.display = '';
+    checkAndMaybeShowSignal();
   }
   el.offerResultDoneBtn.addEventListener('click', function(){
+    closeOfferConfirmModal();
+    if (isOwnWalletScope()) runScopedQuery();
+  });
+
+  // ---- ΣΚΥΛΛΑ://S!GNAL — optional 123-drop XRP payment offered right
+  // after a real OFFER SENT, only when the recipient (the Pigeon's owner)
+  // has no existing activity on the site at all (swap-signal-check.js).
+  // Entirely separate from the NFTokenCreateOffer itself — skipping this
+  // leaves the real offer completely untouched either way. ----
+  var offerSignalUuid = null;
+  var offerSignalPollTimer = null;
+  function checkAndMaybeShowSignal(){
+    var target = offerTarget; // captured now — offerTarget could change if the popup closes before this resolves
+    if (!target || !target.recipientWallet) return;
+    fetch('/api/swap-signal-check?wallet=' + encodeURIComponent(target.recipientWallet))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        // The popup may have been closed (or a new offer started) by the
+        // time this resolves — only act if it's still showing the exact
+        // same offer's receipt.
+        if (offerTarget !== target || el.offerConfirmModal.style.display === 'none') return;
+        if (!data || data.hasActivity !== false) return; // has activity, or the check itself failed — stay quiet either way
+        el.offerSignalWallet.textContent = data.walletShort || target.recipientWallet;
+        el.offerSignalStatus.textContent = '';
+        el.offerSignalSkipBtn.disabled = false;
+        el.offerSignalSendBtn.disabled = false;
+        el.offerSignalSendBtn.innerHTML = '[ SEND S!GNAL ]';
+        el.offerSignalPrompt.style.display = '';
+        el.offerSignalSentConfirm.style.display = 'none';
+        el.offerConfirmReceipt.style.display = 'none';
+        el.offerSignalState.style.display = '';
+      }).catch(function(){}); // silent — a failed check just means no S!GNAL offer this time, never blocks the real offer
+  }
+  el.offerSignalSkipBtn.addEventListener('click', function(){
+    // Leaves the real offer completely untouched — this only ever
+    // controls the separate notification payment.
+    closeOfferConfirmModal();
+    if (isOwnWalletScope()) runScopedQuery();
+  });
+  el.offerSignalSendBtn.addEventListener('click', function(){
+    if (!offerTarget) return;
+    var target = offerTarget;
+    el.offerSignalSkipBtn.disabled = true;
+    el.offerSignalSendBtn.disabled = true;
+    el.offerSignalSendBtn.textContent = '[ REQUEST!NG... ]';
+    el.offerSignalStatus.textContent = '';
+    var signalXamanTab = openXamanPopup();
+    fetch('/api/swap-signal-payload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: target.nftId, offerId: target.offerId, toWallet: target.recipientWallet, pigeonNumber: target.number })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        closeXamanTabAndFocus(signalXamanTab);
+        el.offerSignalSkipBtn.disabled = false;
+        el.offerSignalSendBtn.disabled = false;
+        el.offerSignalSendBtn.innerHTML = '[ SEND S!GNAL ]';
+        el.offerSignalStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      offerSignalUuid = res.data.uuid;
+      if (signalXamanTab) signalXamanTab.location.href = res.data.next.always;
+      el.offerSignalSendBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      pollOfferSignalStatus(target, signalXamanTab);
+    }).catch(function(){
+      closeXamanTabAndFocus(signalXamanTab);
+      el.offerSignalSkipBtn.disabled = false;
+      el.offerSignalSendBtn.disabled = false;
+      el.offerSignalSendBtn.innerHTML = '[ SEND S!GNAL ]';
+      el.offerSignalStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+  function pollOfferSignalStatus(target, signalXamanTab){
+    if (offerSignalPollTimer) clearTimeout(offerSignalPollTimer);
+    if (!offerSignalUuid || !target || !target.offerId) return;
+    fetch('/api/swap-signal-status?uuid=' + encodeURIComponent(offerSignalUuid) + '&offerId=' + encodeURIComponent(target.offerId))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'sent'){
+          closeXamanTabAndFocus(signalXamanTab);
+          offerSignalUuid = null;
+          if (data.txHash){
+            el.offerSignalTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
+            el.offerSignalTxLink.style.display = '';
+          } else {
+            el.offerSignalTxLink.removeAttribute('href');
+            el.offerSignalTxLink.style.display = 'none';
+          }
+          el.offerSignalPrompt.style.display = 'none';
+          el.offerSignalSentConfirm.style.display = '';
+          return;
+        }
+        // rejected/expired/failed — never marked as sent (see swap-signal-
+        // status.js's own comment); re-enable SEND S!GNAL/SK!P so the user
+        // can retry or back out, same as every other Xaman flow's own
+        // failure handling on this site.
+        if (data.status === 'rejected' || data.status === 'expired' || data.status === 'failed'){
+          closeXamanTabAndFocus(signalXamanTab);
+          offerSignalUuid = null;
+          el.offerSignalSkipBtn.disabled = false;
+          el.offerSignalSendBtn.disabled = false;
+          el.offerSignalSendBtn.innerHTML = '[ SEND S!GNAL ]';
+          el.offerSignalStatus.textContent = data.status === 'rejected' ? 'S!GNATURE REJECTED !N XAMAN.'
+            : data.status === 'expired' ? 'S!GN REQUEST EXP!RED. TRY AGA!N.'
+            : 'TRANSACT!0N FA!LED 0N-LEDGER.';
+          return;
+        }
+        offerSignalPollTimer = setTimeout(function(){ pollOfferSignalStatus(target, signalXamanTab); }, 2000);
+      }).catch(function(){
+        offerSignalPollTimer = setTimeout(function(){ pollOfferSignalStatus(target, signalXamanTab); }, 3000);
+      });
+  }
+  el.offerSignalDoneBtn.addEventListener('click', function(){
+    if (offerSignalPollTimer) clearTimeout(offerSignalPollTimer);
+    offerSignalUuid = null;
     closeOfferConfirmModal();
     if (isOwnWalletScope()) runScopedQuery();
   });
