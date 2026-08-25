@@ -1757,7 +1757,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      (or how little) sits above it. */
   .card-action-box{ margin-top:auto; }
   .result-num{
-    font-size:17px;
+    /* Same 15px as .offer-open-modal-btn/every other card action button
+       — one consistent text size across a card instead of the number
+       being its own bigger size. */
+    font-size:15px;
     font-weight:700;
     letter-spacing:0.03em;
     color:var(--white);
@@ -1766,7 +1769,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-bottom:1px solid var(--border-dim);
     transition:color 0.15s ease;
   }
-  .result-rarity-line{ font-size:14px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
+  .result-rarity-line{ font-size:15px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
   .card-listings{ display:flex; gap:0.4rem; margin-top:0.45rem; }
   /* Neither marketplace has a real listing — one shared full-width bar
      naming both markets, instead of two separate washed-out boxes. */
@@ -2163,7 +2166,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     /* 2-wide on mobile, still bigger than the old cramped tiles. */
     .result-grid{ grid-template-columns:repeat(2, 1fr); gap:0.7rem; }
     .result-card-body{ padding:0.6rem 0.5rem; }
-    .result-num{ font-size:17px; padding:0.5rem 0.35rem; }
+    .result-num{ padding:0.5rem 0.35rem; }
     .card-select-toggle, .my-pigeon-offer-toggle{ width:1.7em; height:1.7em; line-height:1.7em; font-size:14px; }
   }
 
@@ -5618,6 +5621,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + greenNum(p.number) : '#????';
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) + '</div>' : '';
+    // Real $PIGEONS sales through Σκύλλα's own marketplace only — 0
+    // until a Pigeon has actually sold this way (see toItem in
+    // api/pigeons.js), so nothing shows for one that never has.
+    var avgSaleLine = p.avgSalePigeons > 0 ? '<div class="result-rarity-line">AVERAGE SALE PR!CE :: ' + escapeHtml(compactPigeonsNumber(p.avgSalePigeons)) + ' $P!GE0NS</div>' : '';
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
     var atCap = offerCtxCard
@@ -5630,7 +5637,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         img +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
       '</div>' +
-      '<div class="result-card-body">' + rarityLine + '<div class="card-action-box">' + pigeonsActionHtml + '</div></div>' +
+      '<div class="result-card-body">' + rarityLine + avgSaleLine + '<div class="card-action-box">' + pigeonsActionHtml + '</div></div>' +
     '</div>';
   }
   function cardHtmlForView(p){
