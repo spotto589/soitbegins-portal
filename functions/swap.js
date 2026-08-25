@@ -5123,12 +5123,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       // action area is for every other card — confirmed live, that read
       // as a broken/empty card rather than "this one's yours."
       if (isOwnWalletScope()) return ownedPigeonActionHtml(p);
+      // No BUY N0W/OFFER on your own Pigeon here (this box is for the
+      // general unscoped browse, not the SH0W MY FL0CK grid) — a clear
+      // "!N Y0UR FL0CK"/"L!ST!NG :: 444K" note instead, never a blank box.
       if (p.scyllaListing){
         return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<div class="own-listing-note">Y0UR L!ST!NG :: ' + escapeHtml(fmtPigeons(p.scyllaListing.price)) + '</div>' +
+          '<div class="own-listing-note">L!ST!NG :: ' + escapeHtml(compactPigeonsNumber(p.scyllaListing.price)) + '</div>' +
         '</div>';
       }
-      return '';
+      return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
+        '<div class="own-listing-note">!N Y0UR FL0CK</div>' +
+      '</div>';
     }
     var canBuy = !!p.scyllaListing && p.owner !== MY_WALLET;
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -8139,12 +8144,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   function updateScyllaListing(p){
     var listing = p && p.scyllaListing;
     var notOwn = !!(p && p.owner && p.owner !== MY_WALLET);
+    var isOwn = !!(p && p.owner) && !notOwn;
     if (listing && listing.price !== null && listing.price !== undefined){
-      el.detailScyllaPrice.textContent = fmtPigeons(listing.price);
+      // Same "L!ST!NG :: 444K" compact note as the card grid's own
+      // pigeonsActionBoxHtml on your own listed Pigeon — never the raw
+      // fmtPigeons price there, since there's no BUY button next to it
+      // to buy your own listing anyway.
+      el.detailScyllaPrice.textContent = isOwn ? 'L!ST!NG :: ' + compactPigeonsNumber(listing.price) : fmtPigeons(listing.price);
       el.detailScyllaBuyBtn.style.display = notOwn ? '' : 'none';
       el.detailScyllaListingRow.classList.remove('not-listed');
     } else {
-      el.detailScyllaPrice.textContent = 'N0T L!STED';
+      el.detailScyllaPrice.textContent = isOwn ? '!N Y0UR FL0CK' : 'N0T L!STED';
       el.detailScyllaBuyBtn.style.display = 'none';
       el.detailScyllaListingRow.classList.add('not-listed');
     }
@@ -8388,20 +8398,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     var num = typeof n === 'string' ? Number(n) : n;
     return (num || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
   }
+  // Bare K/M-compacted number, no unit — shared by fmtPigeonsCompact below
+  // (BUY N0W) and the "L!ST!NG :: 444K" own-listing labels (pigeonsAction-
+  // BoxHtml/updateScyllaListing), which don't want the "$P!GE0NS" suffix
+  // repeated since those boxes are already purple-themed as $PIGEONS.
+  function compactPigeonsNumber(n){
+    var num = typeof n === 'string' ? Number(n) : n;
+    num = num || 0;
+    var abs = Math.abs(num);
+    if (abs >= 1000000) return (num / 1000000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'M';
+    if (abs >= 1000) return (num / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'K';
+    return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
   // Compact K/M form, BUY N0W button only — every OTHER $PIGEONS amount
   // on the site (confirm/result screens, fee breakdowns, sale stats)
   // still needs its exact full value via fmtPigeons above; this is
   // purely a display cleanup for the one place a long comma-grouped
   // number was cluttering a small button ("BUY N0W :: 123K $P!GE0NS").
   function fmtPigeonsCompact(n){
-    var num = typeof n === 'string' ? Number(n) : n;
-    num = num || 0;
-    var abs = Math.abs(num);
-    var str;
-    if (abs >= 1000000) str = (num / 1000000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'M';
-    else if (abs >= 1000) str = (num / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'K';
-    else str = num.toLocaleString(undefined, { maximumFractionDigits: 2 });
-    return str + ' $P!GE0NS';
+    return compactPigeonsNumber(n) + ' $P!GE0NS';
   }
   // Display-only mirror of computeMarketplaceFee() in _shared.js (0.589%)
   // — purely so OFFERS RECEIVED can show "you'll get X" before the seller
