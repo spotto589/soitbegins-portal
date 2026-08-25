@@ -4540,6 +4540,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showSwapOfferResult(data){
+    // Harmless no-op for the OLD SWAP REVIEW/reciprocate entry points
+    // (already null there) — clears CREATE OFFER's (V1) own box once its
+    // real offer actually lands on-ledger, since that Pigeon pair now
+    // lives in the SWAP OFFERS tab instead.
+    state.simpleOffer = { mine: null, theirs: null };
+    renderSimpleOffer();
     el.swapResultNftId.textContent = swapOfferState.nftId;
     el.swapResultToWallet.textContent = swapOfferState.toWallet;
     el.swapResultStatus.textContent = 'YOUR 0FFER !S 0N-LEDGER';
@@ -5246,7 +5252,8 @@ const SWAP_HTML = `<!DOCTYPE html>
             // instead, with this Pigeon pre-filled as 0FFER F0R.
             window.location.href = '/swap?tab=mypigeons&offerFor=' + encodeURIComponent(tp.nftId) +
               '&offerForNum=' + encodeURIComponent(tp.number) +
-              '&offerForImg=' + encodeURIComponent(tp.image || '');
+              '&offerForImg=' + encodeURIComponent(tp.image || '') +
+              '&offerForOwner=' + encodeURIComponent(tp.owner || '');
           }
         }
         return;
@@ -6079,7 +6086,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var nftId = card.getAttribute('data-nftid');
     var p = simpleOfferPickerItems.filter(function(x){ return x.nftId === nftId; })[0];
     if (!p) return;
-    state.simpleOffer[simpleOfferPickerSide] = { nftId: p.nftId, number: p.number, image: p.image };
+    state.simpleOffer[simpleOfferPickerSide] = { nftId: p.nftId, number: p.number, image: p.image, owner: p.owner || null };
     renderSimpleOffer();
     closeSimpleOfferPicker();
   });
@@ -6102,9 +6109,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.simpleOfferPickerSearchBtn.addEventListener('click', runSimpleOfferPickerSearch);
   el.simpleOfferPickerSearchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSimpleOfferPickerSearch(); });
   el.simpleOfferCreateBtn.addEventListener('click', function(){
-    // V1 — selection only. The real XRPL offer/swap transaction is a
-    // later system; this just confirms both sides are picked.
-    el.simpleOfferStatus.textContent = 'C0M!NG S00N — 0FFER SUBM!SS!0N !SN T BU!LT YET.';
+    if (!state.simpleOffer.mine || !state.simpleOffer.theirs) return;
+    if (!state.simpleOffer.theirs.owner){
+      el.simpleOfferStatus.textContent = 'OWNER N0T !NDEXED F0R TH!S P!GE0N YET — P!CK !T AGA!N, 0R TRY ANOTHER.';
+      return;
+    }
+    if (MY_WALLET && state.simpleOffer.theirs.owner === MY_WALLET){
+      el.simpleOfferStatus.textContent = 'THAT S ALREADY Y0UR P!GE0N — P!CK 0NE FR0M AN0THER WALLET F0R THE SWAP.';
+      return;
+    }
+    // Reuses the exact same real signing flow (startSwapOffer, prepare ->
+    // Xaman -> payload -> poll status -> result) that the old SWAP REVIEW
+    // screen and the SWAP OFFERS tab's own reciprocate button already
+    // use — sends YOUR offer (real NFTokenCreateOffer). The other wallet
+    // then reciprocates and either side accepts from the SWAP OFFERS tab.
+    startSwapOffer(state.simpleOffer.mine.nftId, state.simpleOffer.theirs.owner, { wantNftId: state.simpleOffer.theirs.nftId });
   });
   renderSimpleOffer();
 
@@ -8326,22 +8345,29 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   if (!SWAP_BUILDER_ENABLED){
     el.tradeBuilderPanel.style.display = 'none';
-    el.swapOffersTabBtn.style.display = 'none';
   }
+  // SWAP OFFERS stays visible regardless of SWAP_BUILDER_ENABLED — it's
+  // the only place to see/reciprocate/accept a real offer CREATE OFFER
+  // (V1) sends via startSwapOffer, unlike tradeBuilderPanel/the per-card
+  // offer-toggle above, which still belong to the old, still-hidden
+  // multi-item builder.
 
   // DATABASE's own + toggle (SWAP_BUILDER_ENABLED false) redirects here
-  // with ?offerFor=<nftId>&offerForNum=&offerForImg= — pre-fill CREATE
-  // OFFER's 0FFER F0R slot with that Pigeon before MY PIGEONS/PλWS is
-  // shown, same simple regex param read as the connected=1 check below
-  // (no URLSearchParams elsewhere in this file, kept consistent).
+  // with ?offerFor=<nftId>&offerForNum=&offerForImg=&offerForOwner= —
+  // pre-fill CREATE OFFER's 0FFER F0R slot with that Pigeon before MY
+  // PIGEONS/PλWS is shown, same simple regex param read as the
+  // connected=1 check below (no URLSearchParams elsewhere in this file,
+  // kept consistent).
   var offerForMatch = window.location.search.match(/[?&]offerFor=([^&]+)/);
   if (offerForMatch){
     var offerForNumMatch = window.location.search.match(/[?&]offerForNum=([^&]+)/);
     var offerForImgMatch = window.location.search.match(/[?&]offerForImg=([^&]+)/);
+    var offerForOwnerMatch = window.location.search.match(/[?&]offerForOwner=([^&]+)/);
     state.simpleOffer.theirs = {
       nftId: decodeURIComponent(offerForMatch[1]),
       number: offerForNumMatch ? parseInt(decodeURIComponent(offerForNumMatch[1]), 10) : null,
-      image: offerForImgMatch && offerForImgMatch[1] ? decodeURIComponent(offerForImgMatch[1]) : null
+      image: offerForImgMatch && offerForImgMatch[1] ? decodeURIComponent(offerForImgMatch[1]) : null,
+      owner: offerForOwnerMatch && offerForOwnerMatch[1] ? decodeURIComponent(offerForOwnerMatch[1]) : null
     };
     renderSimpleOffer();
   }
