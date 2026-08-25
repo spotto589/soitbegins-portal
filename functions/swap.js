@@ -2663,6 +2663,44 @@ const SWAP_HTML = `<!DOCTYPE html>
     .confirm-pigeon-num{ font-size:24px; }
     .confirm-field-value{ font-size:14px; }
   }
+  /* ---- 0FFER CONFIRMATION — a real second popup (stacked on top of the
+     amount-entry one, see showOfferConfirm), not a showScreen navigation
+     away from the grid. Purple/collection-themed and a little louder
+     than .amount-entry-panel's own plain dark box — meant to feel like a
+     real, exciting moment ("you're about to make a real offer"), not
+     just another quiet form. ---- */
+  @keyframes offer-confirm-pop{
+    from{ transform:scale(0.9); opacity:0; }
+    to{ transform:scale(1); opacity:1; }
+  }
+  #offerConfirmModal{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    background:rgba(5,5,6,0.88);
+    align-items:center;
+    justify-content:center;
+    padding:2rem 1rem;
+  }
+  .offer-confirm-panel{
+    width:min(440px, 100%);
+    text-align:center;
+    background:linear-gradient(160deg, rgba(136,72,248,0.16), var(--panel-bg-solid) 55%);
+    border:1px solid var(--pigeon-purple);
+    border-radius:var(--radius);
+    box-shadow:0 0 50px var(--pigeon-purple-glow), 0 10px 30px rgba(0,0,0,0.6);
+    padding:1.75rem 1.5rem;
+    animation:offer-confirm-pop 0.2s ease;
+  }
+  .offer-confirm-panel .node-eyebrow{ color:var(--pigeon-purple); text-shadow:0 0 8px var(--pigeon-purple-glow); font-size:15px; margin-bottom:1.5rem; }
+  .offer-confirm-panel .confirm-pigeon-num{ color:var(--pigeon-purple); text-shadow:0 0 12px var(--pigeon-purple-glow); }
+  /* Combined selector, not .offer-confirm-xaman-btn alone — needs to
+     out-specificity .action-btn's own background/border/color, which is
+     declared later in the file and would otherwise win on source order
+     despite equal specificity. */
+  .action-btn.offer-confirm-xaman-btn{ background:var(--pigeon-purple); border-color:var(--pigeon-purple); color:#fff; text-shadow:none; }
+  .action-btn.offer-confirm-xaman-btn:hover{ background:#7638e8; border-color:#7638e8; }
   /* ---- BUY $P!GE0NS swap panel — a transaction window, not a generic
      trading widget: same purple $PIGEONS theme as the trustline banner/
      detail-screen listing box, same .sw-panel card + .detail-field/
@@ -4018,28 +4056,34 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- SCREEN: OFFER CONFIRMATION — a real NFTokenCreateOffer BUY-offer
-         (the reverse of LIST, which only the current owner can accept),
+    <!-- 0FFER CONFIRMATION — a real NFTokenCreateOffer BUY-offer (the
+         reverse of LIST, which only the current owner can accept),
          entered via the shared amount-entry popup's 0FFER mode or the
          detail screen's own copy — the exact txjson, before Xaman ever
-         opens. Plain-English sentence instead of raw txjson fields (tx-
-         type badge, NFTokenID hex, Amount.currency/issuer hex/address —
-         same "just what matters" cleanup as TRANSFER's own confirm
-         screen, see .confirm-clean). -->
-    <div class="sw-panel confirm-clean" id="screenOfferConfirm" style="display:none;">
-      <div class="node-eyebrow">// 0FFER C0NF!RMAT!0N</div>
-      <div class="confirm-field-label">Y0U</div>
-      <div class="confirm-field-value" id="offerConfAccount"></div>
-      <div class="confirm-field-label">ARE 0FFER!NG</div>
-      <div class="confirm-field-value" id="offerConfValue"></div>
-      <div class="confirm-field-label">F0R</div>
-      <div class="confirm-pigeon-num" id="offerConfPigeonNum"></div>
-      <div class="confirm-field-label">0WNED BY</div>
-      <div class="confirm-field-value" id="offerConfOwner"></div>
-      <div class="index-line" id="offerConfirmStatus" style="margin-top:1rem;"></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="offerConfirmBackBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="offerOpenXamanBtn">[ 0PEN XAMAN ]</button>
+         opens. A second popup stacked right on top of the amount-entry
+         one (closeAmountEntryModal fires the instant this opens) rather
+         than navigating away from the grid to a whole different screen
+         — same reasoning the amount-entry popup itself was built on.
+         Purple, not the neutral dark every other confirm screen uses —
+         this is Σκύλλα's own $PIGEONS colour (same as the trustline
+         banner/SORT BY/ADD TRAITS), meant to feel like a real, exciting
+         moment, not just another form. -->
+    <div id="offerConfirmModal" style="display:none;">
+      <div class="offer-confirm-panel">
+        <div class="node-eyebrow">// 0FFER C0NF!RMAT!0N</div>
+        <div class="confirm-field-label">Y0U</div>
+        <div class="confirm-field-value" id="offerConfAccount"></div>
+        <div class="confirm-field-label">ARE 0FFER!NG</div>
+        <div class="confirm-field-value" id="offerConfValue"></div>
+        <div class="confirm-field-label">F0R</div>
+        <div class="confirm-pigeon-num" id="offerConfPigeonNum"></div>
+        <div class="confirm-field-label">0WNED BY</div>
+        <div class="confirm-field-value" id="offerConfOwner"></div>
+        <div class="index-line" id="offerConfirmStatus" style="margin-top:1rem;"></div>
+        <div class="detail-actions">
+          <button class="secondary-btn" id="offerConfirmBackBtn">[ ← BACK ]</button>
+          <button class="action-btn offer-confirm-xaman-btn" id="offerOpenXamanBtn">[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]</button>
+        </div>
       </div>
     </div>
 
@@ -4252,7 +4296,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenBuySwapResult','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
    'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
    'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
-   'screenOfferConfirm','offerConfAccount','offerConfOwner','offerConfPigeonNum','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
+   'offerConfirmModal','offerConfAccount','offerConfOwner','offerConfPigeonNum','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
    'screenTransferConfirm','transferConfAccount','transferConfPigeonNum','transferConfDestination','transferConfirmStatus','transferConfirmBackBtn','transferOpenXamanBtn',
    'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultStatus','transferResultTxLink','transferResultDoneBtn',
@@ -4637,7 +4681,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenBuySwapResult.style.display = name === 'buyswapresult' ? '' : 'none';
     el.screenDelistConfirm.style.display = name === 'delistconfirm' ? '' : 'none';
     el.screenDelistResult.style.display = name === 'delistresult' ? '' : 'none';
-    el.screenOfferConfirm.style.display = name === 'offerconfirm' ? '' : 'none';
     el.screenOfferResult.style.display = name === 'offerresult' ? '' : 'none';
     el.screenTransferConfirm.style.display = name === 'transferconfirm' ? '' : 'none';
     el.screenTransferResult.style.display = name === 'transferresult' ? '' : 'none';
@@ -7807,12 +7850,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
 
+  // Resting-state markup for offerOpenXamanBtn — restored via innerHTML
+  // (never plain textContent, needs the Σκύλλα span) at every point this
+  // button resets after an attempt.
+  var OFFER_CONFIRM_BTN_HTML = '[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]';
   function showOfferConfirm(txjson){
     // 0FFER can now start from the amount-entry popup on a card thumbnail
     // (see openAmountEntryModal) as well as the detail screen's own copy
     // — close it here unconditionally (a harmless no-op when it was
-    // never open, e.g. the detail-screen path) the moment this real
-    // confirm screen takes over.
+    // never open, e.g. the detail-screen path) the instant this second
+    // popup takes over. A real second popup stacked on top, not a
+    // showScreen navigation away from the grid — see #offerConfirmModal.
     closeAmountEntryModal();
     // No raw tx-type badge/NFTokenID/Amount.currency/Amount.issuer hex —
     // just the plain-English sentence: who, how much, for which Pigeon,
@@ -7826,13 +7874,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.offerConfValue.textContent = fmtPigeons(txjson.Amount.value);
     el.offerConfirmStatus.textContent = '';
     el.offerOpenXamanBtn.disabled = false;
-    el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
-    showScreen('offerconfirm');
+    el.offerOpenXamanBtn.innerHTML = OFFER_CONFIRM_BTN_HTML;
+    el.offerConfirmModal.style.display = 'flex';
   }
-  el.offerConfirmBackBtn.addEventListener('click', function(){
+  function closeOfferConfirmModal(){
+    el.offerConfirmModal.style.display = 'none';
     offerTarget = null;
-    showScreen('browse');
-  });
+  }
+  el.offerConfirmBackBtn.addEventListener('click', closeOfferConfirmModal);
+  el.offerConfirmModal.addEventListener('click', function(e){ if (e.target === el.offerConfirmModal) closeOfferConfirmModal(); });
 
   el.offerOpenXamanBtn.addEventListener('click', function(){
     if (!offerTarget) return;
@@ -7853,7 +7903,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         closeXamanTabAndFocus(offerXamanTab);
         offerXamanTab = null;
         el.offerOpenXamanBtn.disabled = false;
-        el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.offerOpenXamanBtn.innerHTML = OFFER_CONFIRM_BTN_HTML;
         el.offerConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
@@ -7866,7 +7916,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       closeXamanTabAndFocus(offerXamanTab);
       offerXamanTab = null;
       el.offerOpenXamanBtn.disabled = false;
-      el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.offerOpenXamanBtn.innerHTML = OFFER_CONFIRM_BTN_HTML;
       el.offerConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
@@ -7886,19 +7936,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (data.status === 'rejected'){
           el.offerConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.offerOpenXamanBtn.disabled = false;
-          el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.offerOpenXamanBtn.innerHTML = OFFER_CONFIRM_BTN_HTML;
           return;
         }
         if (data.status === 'expired'){
           el.offerConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           el.offerOpenXamanBtn.disabled = false;
-          el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.offerOpenXamanBtn.innerHTML = OFFER_CONFIRM_BTN_HTML;
           return;
         }
         if (data.status === 'failed'){
           el.offerConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           el.offerOpenXamanBtn.disabled = false;
-          el.offerOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.offerOpenXamanBtn.innerHTML = OFFER_CONFIRM_BTN_HTML;
           return;
         }
         offerPollTimer = setTimeout(pollOfferStatus, 2000);
@@ -7908,6 +7958,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showOfferResult(data){
+    // Second popup closes the instant the real full-screen result takes
+    // over — offerTarget itself stays set (not closeOfferConfirmModal,
+    // which also clears it) since this still needs .number below.
+    el.offerConfirmModal.style.display = 'none';
     el.offerResultPigeonNum.innerHTML = 'P!GE0N #' + (offerTarget.number !== null ? greenNum(offerTarget.number) : '????');
     el.offerResultPrice.textContent = fmtPigeons(data.price);
     el.offerResultStatus.textContent = 'SENT';
