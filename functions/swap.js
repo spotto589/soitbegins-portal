@@ -786,6 +786,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
   }
   .bar-btn:hover{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
+  /* C0UNTER (myPigeonOffersHtml) — clearly unavailable, not just a
+     plain button that happens to do nothing, same treatment
+     .action-btn:disabled already gets elsewhere. */
+  .bar-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  .bar-btn:disabled:hover{ border-color:var(--border-mid); color:var(--grey); background:transparent; }
   /* CANCEL/DEL!ST — red, not the neutral grey .bar-btn default, since
      this is the one action here that actually removes something real.
      Shared by both card variants (.delist-pigeon-btn) and the detail
@@ -5961,6 +5966,17 @@ const SWAP_HTML = `<!DOCTYPE html>
           acceptOfferTarget = null;
           alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
         });
+        return;
+      }
+      // Session-only local dismiss (see declinedOfferIds) — nothing
+      // on-ledger to cancel from the seller's side, just hides it from
+      // this view. Re-runs the current scoped query so the card
+      // re-renders without the declined offer immediately.
+      var declineBtn = e.target.closest('.decline-offer-btn');
+      if (declineBtn){
+        declinedOfferIds[declineBtn.getAttribute('data-offerid')] = true;
+        if (isOwnWalletScope()) runScopedQuery();
+        return;
       }
     });
     // No more inline MAKE AN OFFER/LIST PRICE inputs living directly on a
@@ -6524,23 +6540,36 @@ const SWAP_HTML = `<!DOCTYPE html>
   var myPigeonsData = null; // null = not fetched yet
   var myListedData = {};    // nftId -> { price, currency, offerId, expiration } — real on-ledger sell offers, not a stored flag
   var offersByNftId = {};   // nftId -> [{ offerId, buyer, buyerShort, price, createdAt }] — real on-ledger buy offers received
+  // DECL!NE — XRPL has no seller-side "reject" for an incoming NFT buy
+  // offer (only the buyer can cancel their own), so this is a real but
+  // session-only local dismiss: hides the offer from view here without
+  // touching anything on-ledger. Not persisted server-side — a fresh
+  // page load (or the buyer's own offer still being live) brings it
+  // back. offerId -> true.
+  var declinedOfferIds = {};
   // Offers received on THIS pigeon, shown directly on its own card — same
   // ACCEPT OFFER button/fee breakdown the old combined offersReceivedList
   // used, just embedded per-card instead of in one separate block (see
   // myPigeonCardHtml). Most recent offer first.
   function myPigeonOffersHtml(p, offers){
-    var sorted = offers.slice().sort(function(a, b){ return (b.createdAt || 0) - (a.createdAt || 0); });
+    var sorted = offers.slice()
+      .filter(function(o){ return !declinedOfferIds[o.offerId]; })
+      .sort(function(a, b){ return (b.createdAt || 0) - (a.createdAt || 0); });
     return '<div class="my-pigeon-offers">' + sorted.map(function(o){
-      var fee = clientMarketplaceFee(o.price);
-      var feeLine = fee
-        ? '<div class="offer-fee-breakdown">MARKETPLACE FEE :: ' + fmtPigeons(fee.feeValue) + '  ::  Y0U RECE!VE :: ' + fmtPigeons(fee.sellerValue) + '</div>'
-        : '';
+      // No fee breakdown line here for now (was MARKETPLACE FEE :: X ::
+      // Y0U RECE!VE :: Y) — still computed and shown on the real
+      // ACCEPT 0FFER confirm screen right before signing, just not
+      // repeated on every card.
       return '<div class="listing-row" style="flex-direction:column; align-items:stretch; gap:0.3rem;">' +
+        '<span class="listing-market">' + escapeHtml(o.buyerShort || o.buyer) + '</span>' +
         '<div style="display:flex; align-items:center; justify-content:space-between; gap:0.6rem;">' +
-          '<span class="listing-market">' + escapeHtml(o.buyerShort || o.buyer) + '</span><span class="listing-price">' + escapeHtml(o.price) + ' $P!GE0NS</span>' +
-          '<button class="listing-buy accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(o.offerId) + '" data-price="' + escapeHtml(o.price) + '" data-buyer="' + escapeHtml(o.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '">[ ACCEPT 0FFER ]</button>' +
+          '<span class="listing-price">' + escapeHtml(o.price) + ' $P!GE0NS</span>' +
+          '<button class="listing-buy accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(o.offerId) + '" data-price="' + escapeHtml(o.price) + '" data-buyer="' + escapeHtml(o.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '">[ ACCEPT ]</button>' +
         '</div>' +
-        feeLine +
+        '<div class="owned-action-row">' +
+          '<button class="bar-btn decline-offer-btn" data-offerid="' + escapeHtml(o.offerId) + '">[ DECL!NE ]</button>' +
+          '<button class="bar-btn" disabled title="C0M!NG S00N">[ C0UNTER ]</button>' +
+        '</div>' +
       '</div>';
     }).join('') + '</div>';
   }
@@ -9182,10 +9211,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     return compactPigeonsNumber(n) + ' $P!GE0NS';
   }
   // Display-only mirror of computeMarketplaceFee() in _shared.js (0.589%)
-  // — purely so OFFERS RECEIVED can show "you'll get X" before the seller
-  // even clicks ACCEPT. Never authoritative: the server independently
-  // recomputes this from the real on-ledger offer amount before building
-  // any transaction, and rejects anything that doesn't match.
+  // — no active caller right now (myPigeonOffersHtml's own fee-breakdown
+  // line was dropped, "for now" per an explicit request — the real
+  // ACCEPT 0FFER confirm screen still shows this exact math right before
+  // signing, via the server's own computeMarketplaceFee independently,
+  // not this function). Left in place rather than deleted in case the
+  // per-card line comes back. Never authoritative even when used: the
+  // server independently recomputes this from the real on-ledger offer
+  // amount before building any transaction, and rejects anything that
+  // doesn't match.
   function clientMarketplaceFee(totalValueStr){
     var total = Number(totalValueStr);
     if (!isFinite(total) || total <= 0) return null;
