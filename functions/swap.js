@@ -712,19 +712,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex-wrap:wrap;
     margin-bottom:0.75rem;
   }
-  /* ADD TRAITS now lives inside the same db-config-group box as VIEW/
-     COLLECTION/SORT, as its own distinct section on the right — a
-     vertical divider separates it, and it's vertically centered against
-     the whole height of the left column's stacked rows. */
-  /* Even 50/50 split — the divider sits at the exact middle of the whole
-     box, not wherever the left column's content happens to end. */
-  .db-config-group-split{ display:flex; align-items:center; gap:1.5rem; }
-  .db-config-main{ flex:1 1 0; min-width:0; }
-  .db-config-main .db-config-row:last-child{ margin-bottom:0; }
+  /* ADD TRAITS now lives in its own db-config-group box, directly under
+     the COLLECTION box — left-aligned (not centered like COLLECTION) so
+     its content starts flush with the search bar above it. */
+  .db-config-traits-group{ text-align:left; }
   .db-config-traits-section{
-    flex:1 1 0;
-    min-width:0;
-    align-self:stretch;
     display:flex;
     /* Row, not column — selected trait chips (#traitRows) list to the
        right of the fixed-width ADD TRA!TS box instead of stacking
@@ -736,12 +728,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:flex-start;
     align-items:center;
     gap:0.5rem;
-    border-left:1px solid var(--border-mid);
-    padding-left:1.5rem;
-  }
-  @media (max-width:700px){
-    .db-config-group-split{ flex-direction:column; align-items:stretch; gap:0.75rem; }
-    .db-config-traits-section{ border-left:none; border-top:1px solid var(--border-mid); padding-left:0; padding-top:0.75rem; }
   }
   /* justify-content:center + wrap so this stays centered as a group
      whether it fits on one line or (narrower widths) the label and the
@@ -2406,6 +2392,52 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-receive-wrap{ border-color:var(--border-mid); }
   .buyswap-receive-value{ flex:1 1 auto; min-width:0; font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:0.02em; color:var(--grey-dim); text-align:right; }
   .buyswap-divider{ border-top:1px dashed var(--border-dim); margin:1.25rem 0; }
+  /* ---- transaction-review title + plain-English summary — every
+     confirm screen shows the raw XRPL TransactionType up top now
+     (.tx-type-badge under the existing descriptive eyebrow, or as the
+     full title on BUY $P!GE0NS's own review screen), so what's about to
+     be signed is legible before Xaman ever opens. */
+  .tx-type-badge{
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:0.15em;
+    color:var(--grey-dim);
+    text-transform:uppercase;
+    margin:-0.9rem 0 1.1rem;
+  }
+  .tx-review-title{
+    text-align:center;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:19px;
+    letter-spacing:0.05em;
+    color:var(--white);
+    text-shadow:0 0 8px var(--pigeon-purple-glow);
+    margin-bottom:1.4rem;
+    text-transform:uppercase;
+  }
+  .tx-summary{
+    font-family:var(--font-body);
+    font-size:14px;
+    line-height:1.75;
+    letter-spacing:0.01em;
+    color:var(--grey);
+    text-align:center;
+    text-transform:none;
+    max-width:420px;
+    margin:0 auto 1.4rem;
+  }
+  .tx-summary .tx-val{
+    color:var(--white);
+    font-weight:700;
+  }
+  .tx-summary .tx-val-addr{
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:400;
+    word-break:break-all;
+  }
   /* Trustline gate (STAGE 4) — reuses the trustline banner's own issuer+
      COPY treatment (.pigeons-bar-sublabel/.pigeons-bar-copy-btn), just
      recentered for this card instead of the banner's own left-aligned
@@ -2988,18 +3020,21 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- COLLECTION / ADD TRAITS sits directly underneath the search +
-               sort-by line now, not above it. -->
-          <div class="db-config-group db-config-group-split">
-            <div class="db-config-main">
-              <div class="sort-field db-config-row">
-                <div class="edition-toggle" id="editionSelect">
-                  <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
-                  <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
-                  <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
-                </div>
+          <!-- COLLECTION sits directly underneath the search + sort-by
+               line now, not above it — centered, its own box. -->
+          <div class="db-config-group">
+            <div class="sort-field db-config-row">
+              <div class="edition-toggle" id="editionSelect">
+                <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
+                <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
+                <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
               </div>
             </div>
+          </div>
+
+          <!-- ADD TRAITS — its own box underneath COLLECTION, left-aligned
+               to line up with the search bar above (#searchInput). -->
+          <div class="db-config-group db-config-traits-group">
             <div class="db-config-traits-section">
               <div class="traits-hover-wrap" id="traitsHoverWrap">
                 <span class="trait-row-label" id="traitsHoverLabel">F!LTER BY TRA!TS <span class="thl-arrow">▾</span></span>
@@ -3164,8 +3199,8 @@ const SWAP_HTML = `<!DOCTYPE html>
          visible through both this screen and the result screen. -->
     <div class="sw-panel" id="screenSwapOfferConfirm" style="display:none;">
       <div class="node-eyebrow">// SWAP 0FFER C0NF!RMAT!0N</div>
+      <div class="tx-type-badge" id="swapConfTxType"></div>
       <div class="index-line swap-nonatomic-note">⚠ N0N-AT0M!C :: TH!S 0NLY SENDS Y0UR P!GE0N'S 0FFER. THE 0THER WALLET MUST SEPARATELY 0FFER THE!RS, THEN B0TH S!DES ACCEPT.</div>
-      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="swapConfTxType"></span></div>
       <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="swapConfAccount"></span></div>
       <div class="detail-field"><span class="df-label">NFTokenID</span><span class="df-value" id="swapConfNftId"></span></div>
       <div class="detail-field"><span class="df-label">Amount</span><span class="df-value" id="swapConfAmount"></span></div>
@@ -3200,8 +3235,8 @@ const SWAP_HTML = `<!DOCTYPE html>
          the other's offer. -->
     <div class="sw-panel" id="screenSwapAcceptConfirm" style="display:none;">
       <div class="node-eyebrow">// ACCEPT SWAP C0NF!RMAT!0N</div>
+      <div class="tx-type-badge" id="acceptConfTxType"></div>
       <div class="index-line swap-nonatomic-note">TH!S ACCEPTS THE!R 0FFER T0 Y0U. Y0UR 0WN P!GE0N 0NLY M0VES !F THEY (0R Y0U ALREADY D!D) SEPARATELY ACCEPT Y0UR 0FFER T00.</div>
-      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="acceptConfTxType"></span></div>
       <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="acceptConfAccount"></span></div>
       <div class="detail-field"><span class="df-label">NFTokenSellOffer</span><span class="df-value" id="acceptConfOfferId"></span></div>
       <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="acceptConfNftId"></span></div>
@@ -3240,7 +3275,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- SCREEN: BUY CONFIRMATION — the exact NFTokenAcceptOffer txjson, before Xaman ever opens -->
     <div class="sw-panel" id="screenBuyConfirm" style="display:none;">
       <div class="node-eyebrow">// BUY C0NF!RMAT!0N</div>
-      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="buyConfTxType"></span></div>
+      <div class="tx-type-badge" id="buyConfTxType"></div>
       <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="buyConfAccount"></span></div>
       <div class="detail-field"><span class="df-label">NFTokenSellOffer</span><span class="df-value" id="buyConfOfferId"></span></div>
       <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="buyConfPigeon"></span></div>
@@ -3319,15 +3354,16 @@ const SWAP_HTML = `<!DOCTYPE html>
          quote/trustline/balance check, for inspection before Xaman ever
          opens. -->
     <div class="sw-panel buyswap-panel" id="screenBuySwapConfirm" style="display:none;">
-      <div class="node-eyebrow">// BUY $P!GE0NS — REV!EW</div>
-      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="buySwapConfTxType"></span></div>
-      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="buySwapConfAccount"></span></div>
-      <div class="detail-field"><span class="df-label">Destination</span><span class="df-value" id="buySwapConfDestination"></span></div>
-      <div class="detail-field"><span class="df-label">MAX XRP SPEND (SendMax)</span><span class="df-value" id="buySwapConfSendMax"></span></div>
-      <div class="detail-field"><span class="df-label">M!N!MUM P!GE0NS RECE!VED (Amount)</span><span class="df-value" id="buySwapConfAmount"></span></div>
+      <div class="tx-review-title" id="buySwapConfTxType"></div>
+      <p class="tx-summary">
+        Account <span class="tx-val tx-val-addr" id="buySwapConfAccount"></span> is spending
+        <span class="tx-val" id="buySwapConfSendMax"></span> to receive a minimum of
+        <span class="tx-val" id="buySwapConfAmount"></span>.
+      </p>
+      <div class="detail-field"><span class="df-label">DEST!NAT!0N</span><span class="df-value" id="buySwapConfDestination"></span></div>
       <div class="buyswap-divider"></div>
       <div class="detail-field"><span class="df-label">EST!MATED RECE!VE</span><span class="df-value" id="buySwapConfEstimate"></span></div>
-      <div class="detail-field"><span class="df-label">RATE</span><span class="df-value" id="buySwapConfRate"></span></div>
+      <div class="detail-field"><span class="df-label">EXCHANGE RATE</span><span class="df-value" id="buySwapConfRate"></span></div>
       <div class="detail-field"><span class="df-label">L!QU!D!TY S0URCE</span><span class="df-value" id="buySwapConfSource"></span></div>
       <div class="index-line" id="buySwapConfirmStatus" style="margin-top:1rem;"></div>
       <div class="detail-actions">
@@ -3354,7 +3390,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- SCREEN: DELIST CONFIRMATION — the exact NFTokenCancelOffer txjson, before Xaman ever opens -->
     <div class="sw-panel" id="screenDelistConfirm" style="display:none;">
       <div class="node-eyebrow">// DEL!ST C0NF!RMAT!0N</div>
-      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="delistConfTxType"></span></div>
+      <div class="tx-type-badge" id="delistConfTxType"></div>
       <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="delistConfAccount"></span></div>
       <div class="detail-field"><span class="df-label">NFTokenOffers</span><span class="df-value" id="delistConfOfferId"></span></div>
       <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="delistConfPigeon"></span></div>
@@ -3381,7 +3417,7 @@ const SWAP_HTML = `<!DOCTYPE html>
          txjson, before Xaman ever opens -->
     <div class="sw-panel" id="screenOfferConfirm" style="display:none;">
       <div class="node-eyebrow">// 0FFER C0NF!RMAT!0N</div>
-      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="offerConfTxType"></span></div>
+      <div class="tx-type-badge" id="offerConfTxType"></div>
       <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="offerConfAccount"></span></div>
       <div class="detail-field"><span class="df-label">Owner</span><span class="df-value" id="offerConfOwner"></span></div>
       <div class="detail-field"><span class="df-label">NFTokenID</span><span class="df-value" id="offerConfNftId"></span></div>
@@ -3411,7 +3447,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- SCREEN: ACCEPT OFFER CONFIRMATION (owner side) — the exact NFTokenAcceptOffer txjson, before Xaman ever opens -->
     <div class="sw-panel" id="screenAcceptOfferConfirm" style="display:none;">
       <div class="node-eyebrow">// ACCEPT 0FFER C0NF!RMAT!0N</div>
-      <div class="detail-field"><span class="df-label">TransactionType</span><span class="df-value" id="acceptOfferConfTxType"></span></div>
+      <div class="tx-type-badge" id="acceptOfferConfTxType"></div>
       <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="acceptOfferConfAccount"></span></div>
       <div class="detail-field"><span class="df-label">NFTokenBuyOffer</span><span class="df-value" id="acceptOfferConfOfferId"></span></div>
       <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="acceptOfferConfPigeon"></span></div>
