@@ -2398,6 +2398,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     mix-blend-mode:overlay;
   }
   #detailLightbox img{ max-width:100%; max-height:100%; object-fit:contain; }
+  /* Lightbox's own PREV/NEXT reuse .detail-nav-btn's look — bumped above
+     the lightbox's own z-index:1000 (the base .detail-nav-btn z-index:75
+     is only enough to sit above #screenDetail) and given cursor:pointer
+     since the lightbox itself sets cursor:zoom-out. */
+  #detailLightbox .detail-nav-btn{ z-index:1001; cursor:pointer; }
   .detail-eyebrow{
     text-align:center;
     font-size:11px;
@@ -3387,7 +3392,9 @@ const SWAP_HTML = `<!DOCTYPE html>
          click anywhere to close back to the detail screen underneath. -->
     <div id="detailLightbox" style="display:none;">
       <canvas class="local-static-bg" id="lightboxStaticBg"></canvas>
+      <button class="detail-nav-btn detail-nav-prev" id="lightboxPrevBtn" title="PREV!0US P!GE0N (◂)">◂</button>
       <img id="detailLightboxImg" src="" alt="">
+      <button class="detail-nav-btn detail-nav-next" id="lightboxNextBtn" title="NEXT P!GE0N (▸)">▸</button>
     </div>
 
     <!-- CREATE OFFER's Y0UR P!GE0N picker — myPigeonsData already loaded
@@ -3857,7 +3864,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
-   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg',
+   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn',
    'backToBrowseBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
@@ -7925,6 +7932,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
 
   // ---- Inspect / detail ----
+  // Rarest trait (lowest real-collection percent) first — a.percent is
+  // only ever missing before ensureTraitsLoaded() has resolved once, in
+  // which case original attribute order is kept (no comparison possible
+  // yet), same as the un-sorted state before this existed.
+  function sortTraitsByRarity(attrs){
+    return attrs.slice().sort(function(a, b){
+      var ap = (a.percent === null || a.percent === undefined) ? null : a.percent;
+      var bp = (b.percent === null || b.percent === undefined) ? null : b.percent;
+      if (ap === null && bp === null) return 0;
+      if (ap === null) return 1;
+      if (bp === null) return -1;
+      return ap - bp;
+    });
+  }
   function traitCellHtml(a){
     var sub = (a.percent !== null && a.percent !== undefined)
       ? '<div class="tc-sub">' + greenNum(typeof a.percent === 'number' ? a.percent.toFixed(3) : a.percent) + '%' + (a.count !== null && a.count !== undefined ? '<br>(' + greenNum(a.count) + ')' : '') + '</div>'
@@ -8125,9 +8146,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     var known = findKnown(nftId);
     el.detailNum.innerHTML = known && known.number !== null ? 'P!GE0N #' + greenNum(known.number) : 'P!GE0N ...';
     el.detailImgBox.innerHTML = known && known.image ? '<img src="' + escapeHtml(known.image) + '" alt="">' : '[ IMAGE ]';
+    // Keep the fullscreen lightbox's own picture in sync when PREV/NEXT is
+    // used from inside it (see navigateDetail's lightbox branch below) —
+    // it has its own <img>, independent of #detailImgBox's.
+    if (el.detailLightbox.style.display !== 'none'){
+      el.detailLightboxImg.src = known && known.image ? known.image : '';
+    }
     if (known && known.owner) renderOwnerLink(known.ownerShort, known.owner);
     else { el.detailOwner.textContent = '...'; el.detailOwner.classList.remove('not-indexed'); }
-    el.detailTraits.innerHTML = known ? known.attributes.map(traitCellHtml).join('') : '';
+    el.detailTraits.innerHTML = known ? sortTraitsByRarity(known.attributes).map(traitCellHtml).join('') : '';
     el.detailHistoryList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     updateDetailRarity(known);
     updateDetailPrice(known);
@@ -8153,7 +8180,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       state.currentDetail = p;
       el.detailNum.innerHTML = p.number !== null ? 'P!GE0N #' + greenNum(p.number) : 'P!GE0N ...';
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
-      el.detailTraits.innerHTML = p.attributes.map(traitCellHtml).join('');
+      el.detailTraits.innerHTML = sortTraitsByRarity(p.attributes).map(traitCellHtml).join('');
       updateDetailRarity(p);
       updateDetailPrice(p);
       updateDetailListings(p.listings);
@@ -8185,6 +8212,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // already in memory.
     var hasNext = idx !== -1 && (idx < list.length - 1 || (!state.scope && state.hasMore));
     el.detailNextBtn.disabled = idx === -1 || !hasNext;
+    // Lightbox has its own PREV/NEXT pair (separate elements, same list) —
+    // keep them in lockstep with the detail screen's own.
+    el.lightboxPrevBtn.disabled = el.detailPrevBtn.disabled;
+    el.lightboxNextBtn.disabled = el.detailNextBtn.disabled;
   }
   function navigateDetail(direction){
     var list = currentBrowseList();
@@ -8202,6 +8233,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // reaching its own end really is the end.
     if (direction > 0 && !state.scope && state.hasMore && !state.loading){
       el.detailNextBtn.disabled = true;
+      el.lightboxNextBtn.disabled = true;
       loadMoreCollection(function(){
         var freshList = currentBrowseList();
         if (targetIdx < freshList.length) openDetail(freshList[targetIdx].nftId);
@@ -8253,6 +8285,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.detailLightbox.style.display = 'none';
     el.detailLightboxImg.src = '';
   });
+  // Lightbox's own PREV/NEXT — same navigateDetail walk as the detail
+  // screen's buttons, just stopped from bubbling up to the lightbox's own
+  // click-anywhere-to-close handler above.
+  el.lightboxPrevBtn.addEventListener('click', function(e){ e.stopPropagation(); navigateDetail(-1); });
+  el.lightboxNextBtn.addEventListener('click', function(e){ e.stopPropagation(); navigateDetail(1); });
   // ---- Collection-wide stats strip (items/holders real from our own
   // ledger scan; floor from BOTH marketplaces separately since each has
   // its own liquidity; volume/listed% from xrp.cafe's own stats API) ----
