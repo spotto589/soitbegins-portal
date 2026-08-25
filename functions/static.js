@@ -1890,13 +1890,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:500px){
     .pigeons-bar-text{ font-size:13px; }
   }
-  /* Trustline banner + stats carousel, merged into one purple-themed box
-     (.pigeons-merged-panel) — sitting above the DATABASE/MY PIGEONS/etc
-     tabs. Carousel on top (FLOOR page first, then scrolls through
-     ITEMS/HOLDERS/VOLUME/LISTED and 24H ACTIVITY), then the identity row
-     (thumb + SET TRUSTLINE/address/COPY), then a bottom row (VIEW ON
-     DEXSCREENER / rate / calculator) — three clean sections, not one
-     giant stack. */
+  /* Trustline banner (.pigeons-merged-panel) — sitting above the
+     DATABASE/MY PIGEONS/etc tabs: the identity row (thumb + SET
+     TRUSTLINE/address/COPY), then a bottom row (VIEW ON DEXSCREENER /
+     rate / calculator). The stats carousel that used to merge into the
+     top of this same box now lives on its own, DATABASE-only, right
+     above SEARCH!NG $P!GE0NS DATABASE (see #collectionDetailsPanel). */
   .pigeons-merged-panel{
     border:1px solid var(--pigeon-purple);
     border-radius:var(--radius);
@@ -1915,22 +1914,6 @@ const SWAP_HTML = `<!DOCTYPE html>
      across the whole collection is the point. */
   body.paws-view:not(.picking-theirs) .results-header-row .search-row{
     display:none !important;
-  }
-  /* Same purple gradient as the trustline strip below it (not the usual
-     dark digital-glitch .sw-panel-signal background) — own border/
-     radius/shadow/margin removed since the outer wrapper supplies those,
-     and no divider between this and the strip below — one continuous
-     panel. */
-  #collectionDetailsPanel{
-    background-image:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
-    background-size:100% 100%;
-    background-position:center;
-    background-repeat:no-repeat;
-    border:none;
-    border-radius:0;
-    box-shadow:none;
-    margin-bottom:0;
-    padding:0.85rem 1.5rem;
   }
   .pigeons-bar-issuer{
     position:relative;
@@ -3404,51 +3387,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
     </div>
 
-    <!-- Trustline banner + stats carousel, merged into one unified
-         purple-themed box (.pigeons-merged-panel) — sitting above the
-         DATABASE/MY PIGEONS/etc tabs. Carousel first (FLOOR page shown
-         first, then scrolls through), then the identity row (thumb +
-         SET TRUSTLINE/address/COPY), then the bottom row (VIEW ON
-         DEXSCREENER / rate / calculator). -->
+    <!-- Trustline banner, on its own now — the stats carousel that used to
+         merge into this same box moved to DATABASE itself, right above
+         SEARCH!NG $P!GE0NS DATABASE (see #collectionDetailsPanel further
+         down), since the carousel's own FL00R/!TEMS/H0LDERS/24H stats are
+         DATABASE-specific numbers, not something every tab needs above it. -->
     <div class="pigeons-merged-panel">
-    <!-- DATABASE-only info box — lives outside #screenBrowse purely so
-         the tab bar can sit visually right under the whole merged panel
-         while still being the one always-visible element that controls
-         every tab, including this one. Shown/hidden by showTab() exactly
-         like every other tab's own panel. -->
-    <div class="sw-panel sw-panel-signal" id="collectionDetailsPanel" style="display:none;">
-      <!-- Auto-rotating strip — one page visible at a time, cycling on a
-           timer instead of three stacked bars, to keep this area compact. -->
-      <div class="stats-carousel" id="statsCarousel">
-      <div class="stats-carousel-row">
-      <button class="stats-carousel-arrow" id="statsPrevBtn" aria-label="PREV!0US">◂</button>
-      <div class="stats-carousel-viewport">
-      <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
-        <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
-        <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
-        <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
-      </div>
-      <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
-        <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
-        <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
-        <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
-        <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
-      </div>
-      <div class="stats-strip stats-strip-activity stats-page" id="statsStripActivity">
-        <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
-        <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
-        <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES H!ST0RY"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
-      </div>
-      </div>
-      <button class="stats-carousel-arrow" id="statsNextBtn" aria-label="NEXT">▸</button>
-      </div>
-      <div class="stats-carousel-dots" id="statsCarouselDots">
-        <span class="stats-dot active"></span>
-        <span class="stats-dot"></span>
-        <span class="stats-dot"></span>
-      </div>
-      </div>
-    </div>
 
     <div class="pigeons-bar pigeons-bar-issuer">
       <div class="pigeons-bar-main-row">
@@ -3706,6 +3650,47 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-soon">
           <div class="flock-account-box-row"><span class="flock-account-box-label">$CRWN REWARDS</span><span class="db-soon">C0M!NG S00N</span></div>
+        </div>
+      </div>
+
+      <!-- DATABASE-only stats carousel — used to merge into the trustline
+           banner above the tab bar (shown on every tab); moved here, right
+           above SEARCH!NG $P!GE0NS DATABASE, since these FL00R/!TEMS/
+           H0LDERS/24H numbers are DATABASE-specific, not relevant chrome
+           on FL0CK/T0P H0LDERS/SALES/CR0WN. Shown/hidden by showTab()
+           exactly like every other tab's own panel now (see its own
+           dbOnly condition there) instead of unconditionally. -->
+      <div class="sw-panel sw-panel-signal" id="collectionDetailsPanel" style="display:none;">
+        <!-- Auto-rotating strip — one page visible at a time, cycling on a
+             timer instead of three stacked bars, to keep this area compact. -->
+        <div class="stats-carousel" id="statsCarousel">
+        <div class="stats-carousel-row">
+        <button class="stats-carousel-arrow" id="statsPrevBtn" aria-label="PREV!0US">◂</button>
+        <div class="stats-carousel-viewport">
+        <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
+          <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
+          <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+          <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
+        </div>
+        <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
+          <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
+          <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
+          <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
+          <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
+        </div>
+        <div class="stats-strip stats-strip-activity stats-page" id="statsStripActivity">
+          <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
+          <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
+          <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES H!ST0RY"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
+        </div>
+        </div>
+        <button class="stats-carousel-arrow" id="statsNextBtn" aria-label="NEXT">▸</button>
+        </div>
+        <div class="stats-carousel-dots" id="statsCarouselDots">
+          <span class="stats-dot active"></span>
+          <span class="stats-dot"></span>
+          <span class="stats-dot"></span>
+        </div>
         </div>
       </div>
 
@@ -4822,8 +4807,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // wouldn't fire) — this title must never stay stuck once you're
     // actually looking at real DATABASE again.
     updateSearchPanelTitleForPaws();
-    // Universal across every tab now — only what's underneath it swaps.
-    el.collectionDetailsPanel.style.display = '';
+    // DATABASE-only now — these FL00R/!TEMS/H0LDERS/24H numbers used to
+    // sit above the trustline banner on every tab; moved to just above
+    // SEARCH!NG $P!GE0NS DATABASE, so only DATABASE itself shows it.
+    el.collectionDetailsPanel.style.display = tab === 'database' ? '' : 'none';
     // screenBrowse (search/sort/filter row, results grid, detail overlay)
     // is shared by DATABASE and PλWS now — only shown for 'mypigeons' once
     // actually scoped to your own wallet; before that (no session yet,
