@@ -369,6 +369,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* Prev/next arrows flank the viewport; the row itself is the flex
      container that lays out [arrow][viewport][arrow]. */
+  /* Attached to the top of #flockGridPanel now (not its own separate
+     panel) — a divider + spacing below it is what actually separates it
+     from SEARCH!NG $P!GE0NS DATABASE underneath. */
+  #collectionDetailsPanel{ margin-bottom:1.25rem; padding-bottom:1.25rem; border-bottom:1px solid var(--border-dim); }
   .stats-carousel-row{ display:flex; align-items:center; gap:0.5rem; }
   /* Darker purple fill (not transparent) so these read as real buttons
      against the panel's own mid-purple gradient background, instead of
@@ -826,14 +830,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      TRANSFER) and an unlisted one (L!ST + TRANSFER) take up the exact
      same one-row shape instead of the listed state ending up visibly
      taller than its neighbor. */
-  .owned-action-row{ display:flex; gap:0.5rem; }
-  .owned-action-row .bar-btn{ flex:1 1 0; min-width:0; }
-  /* BUY N0W + 0FFER side by side (same row pairing as CANCEL/TRANSFER
-     above) — both buttons normally go full-width on their own line
-     (.thumb-buy-btn/.offer-open-modal-btn), overridden here since they're
-     sharing a row now instead of stacking. */
+  .owned-action-row{ display:flex; gap:0.4rem; }
+  /* A slim strip, not a tall block — two buttons genuinely fit side by
+     side in a 5-across thumbnail card at this size (11px/tight padding),
+     the 15px/0.85em default every one of these buttons normally uses on
+     its own full-width line is too big once it's sharing a row. */
+  .owned-action-row .bar-btn,
   .owned-action-row .thumb-buy-btn,
-  .owned-action-row .offer-open-modal-btn{ width:auto; flex:1 1 0; min-width:0; margin-bottom:0; }
+  .owned-action-row .offer-open-modal-btn{ flex:1 1 0; min-width:0; width:auto; margin-bottom:0; font-size:11px; letter-spacing:0.02em; padding:0.55em 0.3em; }
   .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:#ff4d4d; background:#ff4d4d; color:#000; text-shadow:none; }
   /* Red, same accent as CLEAR TRAITS — resetting every filter is a
      destructive-feeling action, worth calling out differently from the
@@ -1018,8 +1022,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   #sortDropWrap.open .trait-row-label{ color:var(--pigeon-purple) !important; text-shadow:0 0 5px var(--pigeon-purple-glow) !important; }
   .traits-flyout{
     position:absolute;
-    top:100%;
-    left:0;
+    /* Opens sideways to the right of whatever triggered it (S0RT BY,
+       F!LTER BY TRA!TS), not straight down underneath — top:0 keeps it
+       level with the trigger's own top edge instead of dropping below it. */
+    top:0;
+    left:calc(100% + 0.5rem);
     z-index:60;
     /* NOT display:flex — .traits-flyout-vals below is position:absolute
        and needs its top offset measured from this element's own padding
@@ -1033,6 +1040,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
     box-shadow:0 10px 30px rgba(0,0,0,0.6);
+  }
+  /* Not enough room to the right on a narrow screen — back to opening
+     straight down underneath the trigger instead of off the edge. */
+  @media (max-width:700px){
+    .traits-flyout{ top:100%; left:0; }
   }
   .traits-flyout-cats{
     width:42%;
@@ -1469,15 +1481,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--pigeon-purple);
     border-radius:var(--radius);
     box-shadow:0 0 16px var(--pigeon-purple-glow);
-    padding:0.6em 0.7em;
-    /* Every purple box in a row is this same height regardless of what's
-       actually inside it — a listed card (price + countdown + BUY N0W/
-       0FFER side by side, the tallest real case) sits next to an unlisted
-       one (just 0FFER) or an own-Pigeon one (Y0UR L!ST!NG + CANCEL, or
-       just !N Y0UR FL0CK) and all three still line up edge to edge.
-       min-height covers the tallest case; flex centers whatever's actually
-       in the shorter ones instead of leaving it stuck at the top. */
-    min-height:132px;
+    padding:0.4em 0.5em;
+    /* A slim strip across the bottom of the card, not a tall block — every
+       purple box in a row is this same height regardless of what's
+       actually inside it (a listed card's price + countdown + BUY N0W/
+       0FFER row is the tallest real case; an unlisted card's bare 0FFER,
+       or an own-Pigeon Y0UR L!ST!NG + CANCEL, are shorter). min-height
+       covers the tallest case; flex centers whatever's actually in the
+       shorter ones instead of leaving it stuck at the top. */
+    min-height:76px;
     box-sizing:border-box;
     display:flex;
     flex-direction:column;
@@ -1489,12 +1501,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:15px;
+    font-size:13px;
     letter-spacing:0.05em;
     color:#fff;
     text-shadow:0 1px 4px rgba(0,0,0,0.5);
     text-transform:uppercase;
-    margin-bottom:0.4rem;
+    margin-bottom:0.25rem;
   }
   /* BUY N0W — green, matching the site's "real, clickable buy action"
      colour language (distinct from cyan/magenta elsewhere), full width,
@@ -2042,7 +2054,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-balance{
     position:absolute;
     left:50%;
-    top:50%;
+    top:56%;
     transform:translate(-50%, -50%);
     display:flex;
     flex-direction:row;
@@ -3653,48 +3665,47 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
       </div>
 
-      <!-- DATABASE-only stats carousel — used to merge into the trustline
-           banner above the tab bar (shown on every tab); moved here, right
-           above SEARCH!NG $P!GE0NS DATABASE, since these FL00R/!TEMS/
-           H0LDERS/24H numbers are DATABASE-specific, not relevant chrome
-           on FL0CK/T0P H0LDERS/SALES/CR0WN. Shown/hidden by showTab()
-           exactly like every other tab's own panel now (see its own
-           dbOnly condition there) instead of unconditionally. -->
-      <div class="sw-panel sw-panel-signal" id="collectionDetailsPanel" style="display:none;">
-        <!-- Auto-rotating strip — one page visible at a time, cycling on a
-             timer instead of three stacked bars, to keep this area compact. -->
-        <div class="stats-carousel" id="statsCarousel">
-        <div class="stats-carousel-row">
-        <button class="stats-carousel-arrow" id="statsPrevBtn" aria-label="PREV!0US">◂</button>
-        <div class="stats-carousel-viewport">
-        <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
-          <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
-          <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
-          <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
-        </div>
-        <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
-          <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
-          <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
-          <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
-          <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
-        </div>
-        <div class="stats-strip stats-strip-activity stats-page" id="statsStripActivity">
-          <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
-          <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
-          <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES H!ST0RY"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
-        </div>
-        </div>
-        <button class="stats-carousel-arrow" id="statsNextBtn" aria-label="NEXT">▸</button>
-        </div>
-        <div class="stats-carousel-dots" id="statsCarouselDots">
-          <span class="stats-dot active"></span>
-          <span class="stats-dot"></span>
-          <span class="stats-dot"></span>
-        </div>
-        </div>
-      </div>
-
       <div class="sw-panel" id="flockGridPanel">
+        <!-- DATABASE-only stats carousel, attached to the top of this same
+             box (not its own separate panel) — these FL00R/!TEMS/H0LDERS/
+             24H numbers are DATABASE-specific, not relevant chrome on
+             FL0CK/T0P H0LDERS/SALES/CR0WN, so it's hidden there via
+             showTab()'s own dbOnly condition (same id, same JS, just
+             nested here now instead of sitting above as a sibling). -->
+        <div id="collectionDetailsPanel" style="display:none;">
+          <!-- Auto-rotating strip — one page visible at a time, cycling on
+               a timer instead of three stacked bars, to keep this area
+               compact. -->
+          <div class="stats-carousel" id="statsCarousel">
+          <div class="stats-carousel-row">
+          <button class="stats-carousel-arrow" id="statsPrevBtn" aria-label="PREV!0US">◂</button>
+          <div class="stats-carousel-viewport">
+          <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
+            <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
+            <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+            <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
+          </div>
+          <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
+            <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
+            <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
+            <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
+            <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
+          </div>
+          <div class="stats-strip stats-strip-activity stats-page" id="statsStripActivity">
+            <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
+            <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
+            <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES H!ST0RY"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
+          </div>
+          </div>
+          <button class="stats-carousel-arrow" id="statsNextBtn" aria-label="NEXT">▸</button>
+          </div>
+          <div class="stats-carousel-dots" id="statsCarouselDots">
+            <span class="stats-dot active"></span>
+            <span class="stats-dot"></span>
+            <span class="stats-dot"></span>
+          </div>
+          </div>
+        </div>
         <div class="panel-title search-panel-title" id="searchPanelTitle">SEARCH!NG $P!GE0NS DATABASE</div>
         <div class="search-panel-subtitle" id="searchPanelSubtitle" style="display:none;"></div>
         <div class="results-block" id="resultsBlock">
@@ -4467,7 +4478,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var PAGE_SIZE = 36;
   var state = {
     scope: null,              // null (whole collection) or { wallet, ownerShort }
-    flockCollapsed: false,    // MY FL0CK account-box start expanded — click toggles (see updateSearchPanelTitleForPaws)
+    flockCollapsed: true,     // MY FL0CK account-box starts minimised on FL0CK — click toggles (see updateSearchPanelTitleForPaws)
     skip: 0,                  // how many items already loaded, for infinite scroll
     editionRawSkip: 0,        // position in the underlying sorted collection, for edition LOW/HIGH scans
     hasMore: true,
