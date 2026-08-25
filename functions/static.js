@@ -2704,7 +2704,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     from{ transform:scale(0.9); opacity:0; }
     to{ transform:scale(1); opacity:1; }
   }
-  #offerConfirmModal, #transferConfirmModal, #acceptTransferConfirmModal{
+  #offerConfirmModal, #transferConfirmModal, #acceptTransferConfirmModal, #buySwapModal{
     display:none;
     position:fixed;
     inset:0;
@@ -2736,7 +2736,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      trading widget: same purple $PIGEONS theme as the trustline banner/
      detail-screen listing box, same .sw-panel card + .detail-field/
      .node-eyebrow conventions every other confirm screen already uses. */
-  .buyswap-panel{ max-width:460px; margin-left:auto; margin-right:auto; }
+  /* BUY $P!GE0NS popup's own panel — a bit wider than the default
+     .offer-confirm-panel (440px) since it carries a real quote's worth of
+     fields, not just a one-line amount. */
+  .buyswap-modal-panel{ width:min(460px, 100%); text-align:left; }
+  .buyswap-modal-panel .node-eyebrow{ text-align:center; }
+  .buyswap-modal-panel .receipt-badge,
+  .buyswap-modal-panel .receipt-status-line{ text-align:center; }
+  .buyswap-modal-panel .tx-review-title{ text-align:center; }
+  .buyswap-modal-panel .detail-actions{ justify-content:center; }
   .buyswap-row{ max-width:100%; margin:0 auto; }
   .buyswap-label{ display:block; text-align:center; font-size:11px; letter-spacing:0.2em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.5rem; }
   .buyswap-input-wrap{
@@ -4002,90 +4010,96 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- SCREEN: BUY $P!GE0NS SWAP — opened from the trustline banner's own
-         BUY $P!GE0NS button (was an external DexScreener link). STAGE 4:
-         real live quote (Stage 3) PLUS a real live trustline check before
-         the input is even usable — a wallet that can't receive $PIGEONS
-         yet gets the SAME issuer+COPY setup UI the trustline banner
-         already uses (this app has no real TrustSet-signing flow built
-         anywhere yet — see copyIssuerBtn's own comment — so this reuses
-         that exact existing pattern rather than inventing a new one).
-         Still no txjson, no Xaman, SIGN & BUY stays disabled regardless. -->
-    <div class="sw-panel buyswap-panel" id="screenBuySwap" style="display:none;">
-      <div class="node-eyebrow">// BUY $P!GE0NS</div>
-      <div class="buyswap-trustline-warning" id="buySwapTrustlineWarning" style="display:none;">
-        <div class="buyswap-trustline-warning-title" id="buySwapTrustlineWarningTitle"></div>
-        <div class="pigeons-bar-left-body-row buyswap-trustline-issuer-row">
-          <span class="pigeons-bar-sublabel">!SSUER :: <span id="buySwapIssuerAddr" data-full="rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf">rfQVV...QSf</span></span>
-          <button class="pigeons-bar-copy-btn" id="buySwapCopyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="buySwapCopyIssuerLabel">[ C0PY ]</span></button>
+    <!-- BUY $P!GE0NS — a real popup now (#buySwapModal), same purple/clean
+         treatment as OFFER CONFIRMATION, not a showScreen navigation away
+         from the grid. Three static sub-states toggled by display (never
+         an innerHTML rebuild — see openAcceptTransferConfirm's own comment
+         for why), same underlying quote/trustline/sign logic as before,
+         untouched — only the container changed. STAGE 4: real live quote
+         PLUS a real live trustline check before the input is even usable —
+         a wallet that can't receive $PIGEONS yet gets the SAME issuer+COPY
+         setup UI the trustline banner already uses (this app has no real
+         TrustSet-signing flow built anywhere yet — see copyIssuerBtn's own
+         comment — so this reuses that exact existing pattern). -->
+    <div id="buySwapModal" style="display:none;">
+      <div class="offer-confirm-panel buyswap-modal-panel">
+        <div id="buySwapEntryState">
+          <div class="node-eyebrow">// BUY $P!GE0NS</div>
+          <div class="buyswap-trustline-warning" id="buySwapTrustlineWarning" style="display:none;">
+            <div class="buyswap-trustline-warning-title" id="buySwapTrustlineWarningTitle"></div>
+            <div class="pigeons-bar-left-body-row buyswap-trustline-issuer-row">
+              <span class="pigeons-bar-sublabel">!SSUER :: <span id="buySwapIssuerAddr" data-full="rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf">rfQVV...QSf</span></span>
+              <button class="pigeons-bar-copy-btn" id="buySwapCopyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="buySwapCopyIssuerLabel">[ C0PY ]</span></button>
+            </div>
+          </div>
+          <div class="buyswap-row" id="buySwapPayRow">
+            <span class="buyswap-label">Y0U PAY</span>
+            <div class="buyswap-input-wrap">
+              <input class="buyswap-input" id="buySwapXrpInput" type="text" inputmode="decimal" placeholder="0.00" autocomplete="off">
+              <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
+              <span class="buyswap-unit">XRP</span>
+            </div>
+            <div class="buyswap-max-line" id="buySwapMaxLine" style="display:none;"></div>
+            <div class="buyswap-input-error" id="buySwapInputError" style="display:none;"></div>
+          </div>
+          <div class="buyswap-arrow" aria-hidden="true">↓</div>
+          <div class="buyswap-row">
+            <span class="buyswap-label">Y0U RECE!VE</span>
+            <div class="buyswap-input-wrap buyswap-receive-wrap">
+              <span class="buyswap-receive-value" id="buySwapReceiveValue">—</span>
+              <span class="buyswap-unit">P!GE0NS</span>
+            </div>
+          </div>
+          <div class="buyswap-divider"></div>
+          <div class="detail-field"><span class="df-label">RATE</span><span class="df-value" id="buySwapRate">—</span></div>
+          <div class="detail-field"><span class="df-label">M!N!MUM RECE!VED</span><span class="df-value" id="buySwapMinReceived">—</span></div>
+          <div class="detail-field"><span class="df-label">SL!PPAGE</span><span class="df-value" id="buySwapSlippage">0.5%</span></div>
+          <div class="buyswap-divider"></div>
+          <div class="index-line" id="buySwapStatus">QU0TE C0M!NG S00N — SWAP N0T YET L!VE.</div>
+          <div class="detail-actions">
+            <button class="secondary-btn" id="buySwapBackBtn">[ ← BACK ]</button>
+            <button class="action-btn" id="buySwapSignBtn" disabled title="QU0TE N0T YET AVA!LABLE">[ S!GN & BUY ]</button>
+          </div>
         </div>
-      </div>
-      <div class="buyswap-row" id="buySwapPayRow">
-        <span class="buyswap-label">Y0U PAY</span>
-        <div class="buyswap-input-wrap">
-          <input class="buyswap-input" id="buySwapXrpInput" type="text" inputmode="decimal" placeholder="0.00" autocomplete="off">
-          <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
-          <span class="buyswap-unit">XRP</span>
-        </div>
-        <div class="buyswap-max-line" id="buySwapMaxLine" style="display:none;"></div>
-        <div class="buyswap-input-error" id="buySwapInputError" style="display:none;"></div>
-      </div>
-      <div class="buyswap-arrow" aria-hidden="true">↓</div>
-      <div class="buyswap-row">
-        <span class="buyswap-label">Y0U RECE!VE</span>
-        <div class="buyswap-input-wrap buyswap-receive-wrap">
-          <span class="buyswap-receive-value" id="buySwapReceiveValue">—</span>
-          <span class="buyswap-unit">P!GE0NS</span>
-        </div>
-      </div>
-      <div class="buyswap-divider"></div>
-      <div class="detail-field"><span class="df-label">RATE</span><span class="df-value" id="buySwapRate">—</span></div>
-      <div class="detail-field"><span class="df-label">M!N!MUM RECE!VED</span><span class="df-value" id="buySwapMinReceived">—</span></div>
-      <div class="detail-field"><span class="df-label">SL!PPAGE</span><span class="df-value" id="buySwapSlippage">0.5%</span></div>
-      <div class="buyswap-divider"></div>
-      <div class="index-line" id="buySwapStatus">QU0TE C0M!NG S00N — SWAP N0T YET L!VE.</div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="buySwapBackBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="buySwapSignBtn" disabled title="QU0TE N0T YET AVA!LABLE">[ S!GN & BUY ]</button>
-      </div>
-    </div>
 
-    <!-- SCREEN: BUY $P!GE0NS SWAP REVIEW — the exact prepared Payment
-         txjson (buyswap-prepare.js/buyswap-payload.js, same shared
-         buildBuySwapTxjson), re-derived server-side from a fresh
-         quote/trustline/balance check, for inspection before Xaman ever
-         opens. -->
-    <div class="sw-panel buyswap-panel" id="screenBuySwapConfirm" style="display:none;">
-      <div class="tx-review-title" id="buySwapConfTxType"></div>
-      <p class="tx-summary">
-        Account <span class="tx-val tx-val-addr" id="buySwapConfAccount"></span> is spending
-        <span class="tx-val" id="buySwapConfSendMax"></span> to receive a minimum of
-        <span class="tx-val" id="buySwapConfAmount"></span>.
-      </p>
-      <div class="detail-field"><span class="df-label">DEST!NAT!0N</span><span class="df-value" id="buySwapConfDestination"></span></div>
-      <div class="buyswap-divider"></div>
-      <div class="detail-field"><span class="df-label">EST!MATED RECE!VE</span><span class="df-value" id="buySwapConfEstimate"></span></div>
-      <div class="detail-field"><span class="df-label">EXCHANGE RATE</span><span class="df-value" id="buySwapConfRate"></span></div>
-      <div class="detail-field"><span class="df-label">L!QU!D!TY S0URCE</span><span class="df-value" id="buySwapConfSource"></span></div>
-      <div class="index-line" id="buySwapConfirmStatus" style="margin-top:1rem;"></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="buySwapConfirmBackBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="buySwapOpenXamanBtn">[ 0PEN XAMAN ]</button>
-      </div>
-    </div>
+        <!-- REVIEW — the exact prepared Payment txjson (buyswap-prepare.js/
+             buyswap-payload.js, same shared buildBuySwapTxjson), re-derived
+             server-side from a fresh quote/trustline/balance check, for
+             inspection before Xaman ever opens. -->
+        <div id="buySwapConfirmState" style="display:none;">
+          <div class="tx-review-title" id="buySwapConfTxType"></div>
+          <p class="tx-summary">
+            Account <span class="tx-val tx-val-addr" id="buySwapConfAccount"></span> is spending
+            <span class="tx-val" id="buySwapConfSendMax"></span> to receive a minimum of
+            <span class="tx-val" id="buySwapConfAmount"></span>.
+          </p>
+          <div class="detail-field"><span class="df-label">DEST!NAT!0N</span><span class="df-value" id="buySwapConfDestination"></span></div>
+          <div class="buyswap-divider"></div>
+          <div class="detail-field"><span class="df-label">EST!MATED RECE!VE</span><span class="df-value" id="buySwapConfEstimate"></span></div>
+          <div class="detail-field"><span class="df-label">EXCHANGE RATE</span><span class="df-value" id="buySwapConfRate"></span></div>
+          <div class="detail-field"><span class="df-label">L!QU!D!TY S0URCE</span><span class="df-value" id="buySwapConfSource"></span></div>
+          <div class="index-line" id="buySwapConfirmStatus" style="margin-top:1rem;"></div>
+          <div class="detail-actions">
+            <button class="secondary-btn" id="buySwapConfirmBackBtn">[ ← BACK ]</button>
+            <button class="action-btn offer-confirm-xaman-btn" id="buySwapOpenXamanBtn">[ 0PEN XAMAN ]</button>
+          </div>
+        </div>
 
-    <!-- SCREEN: BUY $P!GE0NS RESULT — never shown just because Xaman
-         accepted the signing request; buyswap-status.js only reports
-         'settled' after a real, independently-validated on-ledger
-         transaction result (fetchValidatedTxResult), and RECE!VED below
-         is the transaction's own real delivered_amount, never the
-         earlier estimate. -->
-    <div class="sw-panel" id="screenBuySwapResult" style="display:none;">
-      <div class="detail-eyebrow">// $P!GE0NS ACQU!RED</div>
-      <div class="detail-field"><span class="df-label">RECE!VED</span><span class="df-value" id="buySwapResultReceived"></span></div>
-      <div class="detail-field"><span class="df-label">TX</span><span class="df-value"><a id="buySwapResultTxLink" target="_blank" rel="noopener"></a></span></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="buySwapResultDoneBtn">[ ← BACK T0 DATABASE ]</button>
+        <!-- RESULT — never shown just because Xaman accepted the signing
+             request; buyswap-status.js only reports 'settled' after a
+             real, independently-validated on-ledger transaction result
+             (fetchValidatedTxResult), and RECE!VED below is the
+             transaction's own real delivered_amount, never the earlier
+             estimate. -->
+        <div id="buySwapResultState" style="display:none;">
+          <div class="receipt-badge">✓</div>
+          <div class="receipt-status-line">$P!GE0NS ACQU!RED</div>
+          <div class="detail-field"><span class="df-label">RECE!VED</span><span class="df-value" id="buySwapResultReceived"></span></div>
+          <div class="detail-field"><span class="df-label">TX</span><span class="df-value"><a id="buySwapResultTxLink" target="_blank" rel="noopener"></a></span></div>
+          <div class="detail-actions">
+            <button class="action-btn" id="buySwapResultDoneBtn">[ D0NE ]</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -4394,10 +4408,10 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenListResult','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
    'screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
-   'screenBuySwap','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
+   'buySwapModal','buySwapEntryState','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapPayRow',
-   'screenBuySwapConfirm','buySwapConfTxType','buySwapConfAccount','buySwapConfDestination','buySwapConfSendMax','buySwapConfAmount','buySwapConfEstimate','buySwapConfRate','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
-   'screenBuySwapResult','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
+   'buySwapConfirmState','buySwapConfTxType','buySwapConfAccount','buySwapConfDestination','buySwapConfSendMax','buySwapConfAmount','buySwapConfEstimate','buySwapConfRate','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
+   'buySwapResultState','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
    'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
    'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
    'offerConfirmModal','offerConfPigeonImg','offerConfPigeonNum','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
@@ -4787,9 +4801,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenListResult.style.display = name === 'listresult' ? '' : 'none';
     el.screenBuyConfirm.style.display = name === 'buyconfirm' ? '' : 'none';
     el.screenBuyResult.style.display = name === 'buyresult' ? '' : 'none';
-    el.screenBuySwap.style.display = name === 'buyswap' ? '' : 'none';
-    el.screenBuySwapConfirm.style.display = name === 'buyswapconfirm' ? '' : 'none';
-    el.screenBuySwapResult.style.display = name === 'buyswapresult' ? '' : 'none';
+    // BUY $P!GE0NS (screenBuySwap/-Confirm/-Result) is a real popup now
+    // (#buySwapModal), not part of this showScreen chain — see
+    // openBuySwapPanel/showBuySwapState, which fully own those three
+    // sub-divs' display instead.
     el.screenDelistConfirm.style.display = name === 'delistconfirm' ? '' : 'none';
     el.screenDelistResult.style.display = name === 'delistresult' ? '' : 'none';
     el.screenOfferResult.style.display = name === 'offerresult' ? '' : 'none';
@@ -7545,6 +7560,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     // amount and triggered a quote fetch.
     clearBuySwapQuote('TRUSTL!NE SET ✓');
   }
+  // Three static sub-states inside #buySwapModal, exactly one visible at a
+  // time — same pattern as acceptTransferConfirmModal's own form/receipt
+  // toggle, just three states instead of two.
+  function showBuySwapState(name){
+    el.buySwapEntryState.style.display = name === 'entry' ? '' : 'none';
+    el.buySwapConfirmState.style.display = name === 'confirm' ? '' : 'none';
+    el.buySwapResultState.style.display = name === 'result' ? '' : 'none';
+  }
+  function closeBuySwapModal(){
+    el.buySwapModal.style.display = 'none';
+    stopBuySwapTimers();
+  }
+  el.buySwapModal.addEventListener('click', function(e){ if (e.target === el.buySwapModal) closeBuySwapModal(); });
   function openBuySwapPanel(){
     el.buySwapXrpInput.value = '';
     clearBuySwapInputError();
@@ -7553,7 +7581,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     updateBuySwapMaxLine();
     buySwapHasTrustline = null;
     applyBuySwapGate();
-    showScreen('buyswap');
+    showBuySwapState('entry');
+    el.buySwapModal.style.display = 'flex';
     if (MY_WALLET){
       apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).then(function(data){
         if (!data || typeof data.drops !== 'string' || !/^\\d+$/.test(data.drops)) return;
@@ -7598,10 +7627,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(done, done);
     else done();
   });
-  el.buySwapBackBtn.addEventListener('click', function(){
-    stopBuySwapTimers();
-    showScreen('browse');
-  });
+  el.buySwapBackBtn.addEventListener('click', closeBuySwapModal);
 
   // SIGN & BUY opens the REVIEW screen — the actual prepare call
   // re-derives the quote/trustline/balance from scratch server-side
@@ -7649,8 +7675,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buySwapConfSource.textContent = display.source === 'amm' ? 'AMM P00L' : '0RDER B00K';
       el.buySwapConfirmStatus.textContent = '';
       el.buySwapOpenXamanBtn.disabled = false;
-      el.buySwapOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
-      showScreen('buyswapconfirm');
+      el.buySwapOpenXamanBtn.innerHTML = '[ 0PEN XAMAN ]';
+      showBuySwapState('confirm');
     }).catch(function(){
       el.buySwapSignBtn.disabled = false;
       el.buySwapSignBtn.textContent = '[ S!GN & BUY ]';
@@ -7659,7 +7685,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.buySwapConfirmBackBtn.addEventListener('click', function(){
     if (buySwapPollTimer){ clearTimeout(buySwapPollTimer); buySwapPollTimer = null; }
-    showScreen('buyswap');
+    showBuySwapState('entry');
   });
 
   // STAGE 6: the tab is opened HERE, synchronously inside the click
@@ -7752,14 +7778,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buySwapResultTxLink.removeAttribute('href');
       el.buySwapResultTxLink.textContent = '—';
     }
-    showScreen('buyswapresult');
+    showBuySwapState('result');
   }
   el.buySwapResultDoneBtn.addEventListener('click', function(){
     buySwapUuid = null;
     buySwapReviewDrops = null;
     if (buySwapPollTimer){ clearTimeout(buySwapPollTimer); buySwapPollTimer = null; }
-    state.activeTab = 'database';
-    showScreen('browse');
+    closeBuySwapModal();
     loadTrustlineLoginState(); // refreshes the trustline banner's $PIGEONS balance now that it just changed
   });
 
