@@ -2737,6 +2737,125 @@ const SWAP_HTML = `<!DOCTYPE html>
   .review-pile .ob-slot{ cursor:default; }
   .review-pile .ob-slot.filled:hover{ transform:none; box-shadow:0 2px 8px rgba(0,0,0,0.5); }
   .review-pile .ob-slot-remove{ display:none; }
+
+  /* ---- CREATE OFFER (V1, PλWS tab) — single-slot version of the
+     trade-box/ob-eyebrow look above, own markup since a real thumbnail +
+     number needs more room than the small stacked .ob-slot circles were
+     built for. ---- */
+  .simple-offer-row{ display:flex; align-items:center; justify-content:center; gap:1.25rem; flex-wrap:wrap; }
+  .simple-offer-box{ flex:0 0 auto; width:150px; padding:0; }
+  .simple-offer-select-btn{
+    width:100%;
+    aspect-ratio:1;
+    background:rgba(255,255,255,0.02);
+    border:1px dashed var(--border-mid);
+    border-radius:var(--radius);
+    color:var(--grey-dim);
+    font-family:var(--font-mono);
+    font-size:13px;
+    letter-spacing:0.05em;
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .simple-offer-select-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  .simple-offer-filled{
+    position:relative;
+    cursor:pointer;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    overflow:hidden;
+    transition:border-color 0.15s ease;
+  }
+  .simple-offer-filled:hover{ border-color:var(--magenta-dim); }
+  .simple-offer-thumb{ aspect-ratio:1; background:#000; }
+  .simple-offer-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .simple-offer-num{
+    padding:0.5em 0.3em;
+    font-size:11px;
+    letter-spacing:0.04em;
+    color:var(--white);
+    text-align:center;
+    background:var(--panel-bg-solid);
+  }
+  .simple-offer-clear{
+    position:absolute;
+    top:0.35em;
+    right:0.35em;
+    width:1.7em;
+    height:1.7em;
+    line-height:1.7em;
+    padding:0;
+    background:rgba(8,9,11,0.75);
+    border:1px solid var(--magenta-dim);
+    color:var(--magenta);
+    font-size:13px;
+    border-radius:var(--radius);
+    cursor:pointer;
+  }
+  .simple-offer-clear:hover{ background:var(--magenta-faint); }
+  .simple-offer-actions{ text-align:center; margin-top:1.25rem; }
+  #simpleOfferPanel .index-line{ margin-top:0.6rem; }
+
+  /* ---- CREATE OFFER's Pigeon picker modal — same fixed/inset overlay
+     pattern as #detailLightbox, with a bordered content panel + thumbnail
+     grid instead of a single fullscreen image. ---- */
+  #simpleOfferPickerModal{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    background:rgba(5,5,6,0.88);
+    align-items:center;
+    justify-content:center;
+    padding:2rem 1rem;
+  }
+  .simple-picker-panel{
+    width:min(720px, 100%);
+    max-height:85vh;
+    display:flex;
+    flex-direction:column;
+    background:var(--panel-bg-solid);
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    box-shadow:0 10px 30px rgba(0,0,0,0.6);
+    padding:1.25rem;
+  }
+  .simple-picker-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+  .simple-picker-title{ font-size:13px; letter-spacing:0.15em; color:var(--white); text-transform:uppercase; }
+  .simple-picker-close{
+    width:2em;
+    height:2em;
+    background:transparent;
+    border:1px solid var(--border-mid);
+    color:var(--grey);
+    font-size:16px;
+    border-radius:var(--radius);
+    cursor:pointer;
+  }
+  .simple-picker-close:hover{ border-color:var(--magenta-dim); color:var(--magenta); }
+  .simple-picker-search-row{ display:flex; gap:0.6rem; margin-bottom:1rem; }
+  .simple-picker-search-row .search-input{ flex:1 1 auto; width:auto; }
+  .simple-picker-grid{
+    overflow-y:auto;
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:0.75rem;
+  }
+  @media (max-width:640px){ .simple-picker-grid{ grid-template-columns:repeat(3, 1fr); } }
+  .simple-picker-card{
+    background:transparent;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    overflow:hidden;
+    cursor:pointer;
+    padding:0;
+    text-align:center;
+    transition:border-color 0.15s ease;
+  }
+  .simple-picker-card:hover{ border-color:var(--cyan-dim); }
+  .simple-picker-card-img{ aspect-ratio:1; background:#000; }
+  .simple-picker-card-img img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .simple-picker-card-num{ padding:0.4em 0.2em; font-size:10px; letter-spacing:0.03em; color:var(--grey); }
   .swap-nonatomic-note{
     max-width:520px;
     margin:0 auto 1.25rem;
@@ -2949,6 +3068,32 @@ const SWAP_HTML = `<!DOCTYPE html>
       <!-- No separate "WALLET CONNECTED" box here any more — the trustline
            banner above already shows the connected wallet/balance; this
            tab is just your pigeons, sort, and offers. -->
+
+      <!-- CREATE OFFER — V1, UI/selection only, no XRPL submission yet.
+           Shown immediately when this tab opens. Reuses the trade-box/
+           ob-eyebrow look from the (currently hidden, SWAP_BUILDER_ENABLED)
+           multi-item trade builder above, single-slot instead of a pile,
+           and its own state (state.simpleOffer) — kept separate from
+           offerAssets/targetAssets so it doesn't interfere with that
+           system once it's re-enabled later. -->
+      <div class="sw-panel-target simple-offer-panel" id="simpleOfferPanel">
+        <div class="panel-title">CREATE 0FFER</div>
+        <div class="simple-offer-row">
+          <div class="trade-box simple-offer-box">
+            <div class="ob-eyebrow">Y0UR P!GE0N</div>
+            <div id="simpleOfferMineSlot"></div>
+          </div>
+          <div class="swap-review-divider">F0R</div>
+          <div class="trade-box simple-offer-box">
+            <div class="ob-eyebrow">0FFER F0R</div>
+            <div id="simpleOfferTheirsSlot"></div>
+          </div>
+        </div>
+        <div class="simple-offer-actions">
+          <button type="button" class="action-btn" id="simpleOfferCreateBtn" disabled>[ CREATE 0FFER ]</button>
+        </div>
+        <div class="index-line" id="simpleOfferStatus"></div>
+      </div>
       <!-- Simple, obvious summary line — the actual offers now live
            directly on each pigeon's own card (see myPigeonOffersHtml),
            sorted to the top; this is just "how many, at a glance" above
@@ -3185,6 +3330,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div id="detailLightbox" style="display:none;">
       <canvas class="local-static-bg" id="lightboxStaticBg"></canvas>
       <img id="detailLightboxImg" src="" alt="">
+    </div>
+
+    <!-- CREATE OFFER's Pigeon picker — same modal for both sides (Y0UR
+         P!GE0N: your own wallet's Pigeons, myPigeonsData already loaded
+         for the PλWS tab; 0FFER F0R: wallet-address OR Pigeon-#, the same
+         two-mode search runSearchBox already does, hitting the same
+         /api/pigeons endpoint directly). Click the dimmed backdrop or ✕
+         to close without picking. -->
+    <div id="simpleOfferPickerModal" style="display:none;">
+      <div class="simple-picker-panel">
+        <div class="simple-picker-header">
+          <div class="simple-picker-title" id="simpleOfferPickerTitle"></div>
+          <button type="button" class="simple-picker-close" id="simpleOfferPickerClose" title="CL0SE">&times;</button>
+        </div>
+        <div class="simple-picker-search-row" id="simpleOfferPickerSearchRow" style="display:none;">
+          <input class="search-input" id="simpleOfferPickerSearchInput" placeholder="WALLET ADDRESS 0R P!GE0N #">
+          <button type="button" class="bar-btn" id="simpleOfferPickerSearchBtn">[ GO ]</button>
+        </div>
+        <div class="simple-picker-grid" id="simpleOfferPickerGrid"></div>
+      </div>
     </div>
 
     <!-- SCREEN 2b: TRANSACTION HISTORY — a full swap of the DETAIL box, not an
@@ -3585,7 +3750,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     sales: { skip: 0, hasMore: true, loading: false, opened: false },
     scyllaListedOnly: false,  // whole-collection LISTED filter — Pigeons listed through Scylla itself
     offerAssets: {},          // nftId -> { nftId, number, image } — up to 4, YOUR pigeons in the persistent trade builder
-    dbView: 'thumbnails'      // 'boxed' (full detail row) | 'thumbnails' (5-across, # + rarity only, default) — DATABASE grid only
+    dbView: 'thumbnails',     // 'boxed' (full detail row) | 'thumbnails' (5-across, # + rarity only, default) — DATABASE grid only
+    simpleOffer: { mine: null, theirs: null } // V1 CREATE OFFER (PλWS tab) — { nftId, number, image } or null per side, single pick each, separate from offerAssets/targetAssets above
   };
 
   var el = {};
@@ -3610,6 +3776,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn','swapOffersTabBtn',
+   'simpleOfferPanel','simpleOfferMineSlot','simpleOfferTheirsSlot','simpleOfferCreateBtn','simpleOfferStatus',
+   'simpleOfferPickerModal','simpleOfferPickerTitle','simpleOfferPickerClose','simpleOfferPickerSearchRow','simpleOfferPickerSearchInput','simpleOfferPickerSearchBtn','simpleOfferPickerGrid',
    'screenSwapReview','reviewOfferPile','reviewOfferCount','reviewWantPile','reviewWantCount','reviewBackBtn','reviewCreateBtn','reviewResult',
    'screenSwapOfferConfirm','swapConfTxType','swapConfAccount','swapConfNftId','swapConfAmount','swapConfDestination','swapConfFlags','swapConfirmStatus','swapOfferConfirmBackBtn','swapOfferOpenXamanBtn',
    'screenSwapOfferResult','swapResultNftId','swapResultToWallet','swapResultStatus','swapResultOfferId','swapResultTxLink','swapResultDoneBtn',
@@ -4953,7 +5121,20 @@ const SWAP_HTML = `<!DOCTYPE html>
       var toggle = e.target.closest('.card-select-toggle');
       if (toggle){
         var tp = source().filter(function(x){ return x.nftId === toggle.getAttribute('data-nftid'); })[0];
-        if (tp) handleSelect(tp);
+        if (tp){
+          if (SWAP_BUILDER_ENABLED){
+            handleSelect(tp);
+          } else {
+            // The old multi-item trade builder this toggle used to feed is
+            // hidden (SWAP_BUILDER_ENABLED false) — its own panel is
+            // display:none, so handleSelect's alerts/state changes would
+            // land nowhere visible. Routes to CREATE OFFER (V1) on PλWS
+            // instead, with this Pigeon pre-filled as 0FFER F0R.
+            window.location.href = '/swap?tab=mypigeons&offerFor=' + encodeURIComponent(tp.nftId) +
+              '&offerForNum=' + encodeURIComponent(tp.number) +
+              '&offerForImg=' + encodeURIComponent(tp.image || '');
+          }
+        }
         return;
       }
       // MY PIGEONS' own toggle — always adds to the OFFER pile directly,
@@ -5726,6 +5907,121 @@ const SWAP_HTML = `<!DOCTYPE html>
   // pigeonsActionBoxHtml/ownedPigeonActionHtml) — nothing container-
   // specific left to wire here.
   wireResultClicks(el.myPigeonsList, function(){ return myPigeonsData || []; });
+
+  // ---- CREATE OFFER (V1) — UI/selection only. No XRPL offer/swap
+  // transaction is built or submitted here; CREATE 0FFER just confirms
+  // both sides are picked. Picking reuses existing data sources only:
+  // myPigeonsData (already fetched for this tab's own list) for Y0UR
+  // P!GE0N, and the same wallet-address/Pigeon-# two-mode lookup
+  // runSearchBox already does (hitting /api/pigeons directly) for
+  // 0FFER F0R. ----
+  function simpleOfferSlotHtml(item, side){
+    if (!item){
+      return '<button type="button" class="simple-offer-select-btn" data-side="' + side + '">[ + SELECT ]</button>';
+    }
+    var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
+    var num = item.number !== null && item.number !== undefined ? '#' + greenNum(item.number) : '#????';
+    return '<div class="simple-offer-filled" data-side="' + side + '">' +
+        '<div class="simple-offer-thumb">' + img + '</div>' +
+        '<div class="simple-offer-num">P!GE0N ' + num + '</div>' +
+        '<button type="button" class="simple-offer-clear" data-side="' + side + '" title="CLEAR">&times;</button>' +
+      '</div>';
+  }
+  function renderSimpleOffer(){
+    el.simpleOfferMineSlot.innerHTML = simpleOfferSlotHtml(state.simpleOffer.mine, 'mine');
+    el.simpleOfferTheirsSlot.innerHTML = simpleOfferSlotHtml(state.simpleOffer.theirs, 'theirs');
+    el.simpleOfferCreateBtn.disabled = !(state.simpleOffer.mine && state.simpleOffer.theirs);
+    el.simpleOfferStatus.textContent = '';
+  }
+  function simplePickerCardHtml(p){
+    var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
+    var num = p.number !== null && p.number !== undefined ? '#' + greenNum(p.number) : '#????';
+    return '<button type="button" class="simple-picker-card" data-nftid="' + escapeHtml(p.nftId) + '">' +
+        '<div class="simple-picker-card-img">' + img + '</div>' +
+        '<div class="simple-picker-card-num">P!GE0N ' + num + '</div>' +
+      '</button>';
+  }
+  var simpleOfferPickerSide = null; // 'mine' | 'theirs'
+  var simpleOfferPickerItems = [];
+  function renderSimpleOfferPickerGrid(emptyMsg){
+    el.simpleOfferPickerGrid.innerHTML = simpleOfferPickerItems.length
+      ? simpleOfferPickerItems.map(simplePickerCardHtml).join('')
+      : '<div class="th-empty">' + (emptyMsg || 'N0 P!GE0NS F0UND.') + '</div>';
+  }
+  function openSimpleOfferPicker(side){
+    simpleOfferPickerSide = side;
+    el.simpleOfferPickerSearchInput.value = '';
+    if (side === 'mine'){
+      el.simpleOfferPickerTitle.textContent = 'SELECT Y0UR P!GE0N';
+      el.simpleOfferPickerSearchRow.style.display = 'none';
+      if (!MY_WALLET){
+        simpleOfferPickerItems = [];
+        renderSimpleOfferPickerGrid('C0NNECT Σκύλλα F!RST — SEE THE TRUSTL!NE BANNER AB0VE.');
+      } else {
+        simpleOfferPickerItems = myPigeonsData || [];
+        renderSimpleOfferPickerGrid(myPigeonsData === null ? 'L0AD!NG Y0UR P!GE0NS...' : 'Y0U D0N T 0WN ANY P!GE0NS YET.');
+      }
+    } else {
+      el.simpleOfferPickerTitle.textContent = 'SELECT A P!GE0N T0 0FFER F0R';
+      el.simpleOfferPickerSearchRow.style.display = '';
+      simpleOfferPickerItems = [];
+      renderSimpleOfferPickerGrid('ENTER A WALLET ADDRESS 0R P!GE0N # AB0VE.');
+    }
+    el.simpleOfferPickerModal.style.display = 'flex';
+  }
+  function closeSimpleOfferPicker(){
+    el.simpleOfferPickerModal.style.display = 'none';
+    simpleOfferPickerSide = null;
+  }
+  function runSimpleOfferPickerSearch(){
+    var q = el.simpleOfferPickerSearchInput.value.trim();
+    if (!q) return;
+    el.simpleOfferPickerGrid.innerHTML = '<div class="loading-note">SEARCH!NG...</div>';
+    var lookup = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(q)
+      ? api({ wallet: q })
+      : api({ number: q.replace('#', '') });
+    lookup.then(function(data){
+      simpleOfferPickerItems = data.items || [];
+      renderSimpleOfferPickerGrid();
+    }).catch(function(){
+      simpleOfferPickerItems = [];
+      renderSimpleOfferPickerGrid('S!GNAL_L0ST — TRY AGA!N.');
+    });
+  }
+  el.simpleOfferPanel.addEventListener('click', function(e){
+    var clearBtn = e.target.closest('.simple-offer-clear');
+    if (clearBtn){
+      state.simpleOffer[clearBtn.getAttribute('data-side')] = null;
+      renderSimpleOffer();
+      return;
+    }
+    var selectBtn = e.target.closest('.simple-offer-select-btn');
+    if (selectBtn){ openSimpleOfferPicker(selectBtn.getAttribute('data-side')); return; }
+    var filled = e.target.closest('.simple-offer-filled');
+    if (filled){ openSimpleOfferPicker(filled.getAttribute('data-side')); return; }
+  });
+  el.simpleOfferPickerGrid.addEventListener('click', function(e){
+    var card = e.target.closest('.simple-picker-card');
+    if (!card || !simpleOfferPickerSide) return;
+    var nftId = card.getAttribute('data-nftid');
+    var p = simpleOfferPickerItems.filter(function(x){ return x.nftId === nftId; })[0];
+    if (!p) return;
+    state.simpleOffer[simpleOfferPickerSide] = { nftId: p.nftId, number: p.number, image: p.image };
+    renderSimpleOffer();
+    closeSimpleOfferPicker();
+  });
+  el.simpleOfferPickerClose.addEventListener('click', closeSimpleOfferPicker);
+  el.simpleOfferPickerModal.addEventListener('click', function(e){
+    if (e.target === el.simpleOfferPickerModal) closeSimpleOfferPicker();
+  });
+  el.simpleOfferPickerSearchBtn.addEventListener('click', runSimpleOfferPickerSearch);
+  el.simpleOfferPickerSearchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runSimpleOfferPickerSearch(); });
+  el.simpleOfferCreateBtn.addEventListener('click', function(){
+    // V1 — selection only. The real XRPL offer/swap transaction is a
+    // later system; this just confirms both sides are picked.
+    el.simpleOfferStatus.textContent = 'C0M!NG S00N — 0FFER SUBM!SS!0N !SN T BU!LT YET.';
+  });
+  renderSimpleOffer();
 
   // ---- CONNECT SCYLLA — same XummPkce OAuth login /board uses, redirected
   // back to /swap instead. Several entry points share this one flow (the MY
@@ -7936,15 +8232,33 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.swapOffersTabBtn.style.display = 'none';
   }
 
+  // DATABASE's own + toggle (SWAP_BUILDER_ENABLED false) redirects here
+  // with ?offerFor=<nftId>&offerForNum=&offerForImg= — pre-fill CREATE
+  // OFFER's 0FFER F0R slot with that Pigeon before MY PIGEONS/PλWS is
+  // shown, same simple regex param read as the connected=1 check below
+  // (no URLSearchParams elsewhere in this file, kept consistent).
+  var offerForMatch = window.location.search.match(/[?&]offerFor=([^&]+)/);
+  if (offerForMatch){
+    var offerForNumMatch = window.location.search.match(/[?&]offerForNum=([^&]+)/);
+    var offerForImgMatch = window.location.search.match(/[?&]offerForImg=([^&]+)/);
+    state.simpleOffer.theirs = {
+      nftId: decodeURIComponent(offerForMatch[1]),
+      number: offerForNumMatch ? parseInt(decodeURIComponent(offerForNumMatch[1]), 10) : null,
+      image: offerForImgMatch && offerForImgMatch[1] ? decodeURIComponent(offerForImgMatch[1]) : null
+    };
+    renderSimpleOffer();
+  }
+
   // A return from the CONNECT SCYLLA redirect always lands on MY PIGEONS —
   // that's where your pigeons and any received offers actually are; any
   // other fresh page load (a plain refresh) defaults to DATABASE instead
   // of sitting on a blank screen until a tab is clicked.
-  if (window.location.search.indexOf('connected=1') !== -1){
+  if (window.location.search.indexOf('connected=1') !== -1 || offerForMatch){
     showTab('mypigeons');
     // Strip the query param right after using it once — otherwise it
     // stays in the address bar and every later refresh keeps landing on
-    // this same tab instead of the real default.
+    // this same tab (or re-applying a stale 0FFER F0R pick) instead of
+    // the real default.
     window.history.replaceState({}, '', window.location.pathname);
   } else {
     showTab('database');
