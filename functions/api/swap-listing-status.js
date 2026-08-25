@@ -86,6 +86,7 @@ export async function onRequestGet(context) {
     currency: ownOffer.amount && ownOffer.amount.currency,
     issuer: ownOffer.amount && ownOffer.amount.issuer,
     offerId: ownOffer.nft_offer_index,
+    expiration: ownOffer.expiration || null,
     seller,
     listedAt: Math.floor(Date.now() / 1000)
   }));
@@ -96,6 +97,7 @@ export async function onRequestGet(context) {
     offerId: ownOffer.nft_offer_index,
     price: ownOffer.amount && ownOffer.amount.value,
     currency: ownOffer.amount && ownOffer.amount.currency,
-    issuer: ownOffer.amount && ownOffer.amount.issuer
+    issuer: ownOffer.amount && ownOffer.amount.issuer,
+    expiration: ownOffer.expiration || null
   }), { headers: { 'Content-Type': 'application/json' } });
 }

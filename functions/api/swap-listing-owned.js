@@ -30,7 +30,8 @@ async function verifyAndRecord(env, nftId, wallet, listed) {
     listed[nftId] = {
       price: ownOffer.amount.value,
       currency: ownOffer.amount.currency,
-      offerId: ownOffer.nft_offer_index
+      offerId: ownOffer.nft_offer_index,
+      expiration: ownOffer.expiration || null
     };
     if (env.coin) {
       await recordSwapListing(env.coin, nftId, {
@@ -38,6 +39,7 @@ async function verifyAndRecord(env, nftId, wallet, listed) {
         currency: ownOffer.amount.currency,
         issuer: ownOffer.amount.issuer,
         offerId: ownOffer.nft_offer_index,
+        expiration: ownOffer.expiration || null,
         seller: wallet,
         listedAt: Math.floor(Date.now() / 1000)
       });
@@ -60,7 +62,7 @@ export async function onRequestGet(context) {
   const listingsMap = env.coin ? await getSwapListingsMap(env.coin) : {};
   for (const nftId of Object.keys(listingsMap)) {
     if (listingsMap[nftId].seller === wallet) {
-      listed[nftId] = { price: listingsMap[nftId].price, currency: listingsMap[nftId].currency, offerId: listingsMap[nftId].offerId };
+      listed[nftId] = { price: listingsMap[nftId].price, currency: listingsMap[nftId].currency, offerId: listingsMap[nftId].offerId, expiration: listingsMap[nftId].expiration || null };
     }
   }
 

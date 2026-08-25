@@ -67,7 +67,7 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pige
     // Pigeon has actually sold for $PIGEONS, then the real figure.
     highSalePigeons: pigeonsSaleEntry ? pigeonsSaleEntry.highest : 0,
     avgSalePigeons: pigeonsSaleEntry ? pigeonsSaleEntry.total / pigeonsSaleEntry.count : 0,
-    scyllaListing: scyllaEntry ? { price: scyllaEntry.price, currency: 'PIGEONS' } : null
+    scyllaListing: scyllaEntry ? { price: scyllaEntry.price, currency: 'PIGEONS', expiration: scyllaEntry.expiration || null } : null
   };
 }
 

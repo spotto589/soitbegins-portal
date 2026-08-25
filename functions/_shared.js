@@ -337,6 +337,24 @@ export function swapOfferSourceMemo() {
   }];
 }
 
+// ---- $PIGEONS listing duration — a real XRPL NFTokenCreateOffer
+// Expiration, not app-side enforcement; the ledger itself refuses to
+// accept (or even keep showing via nft_sell_offers, once something
+// touches it) an expired offer. Only these four presets are ever
+// accepted server-side (swap-listing-prepare.js/-payload.js both
+// re-validate independently, same "never trust the client" pattern as
+// price) — an out-of-range or missing value quietly falls back to the
+// default rather than erroring, since this is a preference, not
+// something that can create an unsafe transaction. ----
+export const LISTING_DURATION_DAYS_ALLOWED = [1, 3, 7, 30];
+export const DEFAULT_LISTING_DURATION_DAYS = 7;
+const RIPPLE_EPOCH_OFFSET_SECONDS = 946684800; // 2000-01-01T00:00:00Z, vs. Unix's 1970 epoch
+
+export function listingExpirationRippleSeconds(durationDays) {
+  const days = LISTING_DURATION_DAYS_ALLOWED.includes(durationDays) ? durationDays : DEFAULT_LISTING_DURATION_DAYS;
+  return Math.floor(Date.now() / 1000) - RIPPLE_EPOCH_OFFSET_SECONDS + days * 86400;
+}
+
 // ---- Brokered $PIGEONS sale — accepting a received MAKE AN OFFER buy
 // offer settles through XRPL brokered NFTokenAcceptOffer instead of a
 // direct accept, so the marketplace fee is taken atomically in the same

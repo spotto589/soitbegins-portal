@@ -1514,7 +1514,35 @@ const SWAP_HTML = `<!DOCTYPE html>
      just a plain readout so the box isn't blank. */
   .thumb-offer-own{ text-align:center; }
   .own-listing-note{ color:#fff; font-weight:700; font-size:13px; letter-spacing:0.05em; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-transform:uppercase; }
+  /* Real XRPL NFTokenCreateOffer Expiration countdown (see
+     listingCountdownText) — fine print under the price, not competing
+     with it, same fine-print grey used for the issuer address/trustline
+     status elsewhere. */
+  .listing-countdown{ color:var(--grey-dim); font-size:10px; letter-spacing:0.08em; text-transform:uppercase; margin-top:0.15rem; }
   .thumb-offer-row{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
+  /* L!ST duration — same collection-purple active state as .edition-btn,
+     just a compact 4-across row sized for the amount-entry popup rather
+     than .edition-btn's own fixed var(--ctrl-w) (built for the full-page
+     3-button toggle, too wide to fit four of these here). */
+  .list-duration-row{ display:flex; gap:0.4rem; width:100%; margin:0.5rem 0; }
+  .list-duration-btn{
+    flex:1 1 0;
+    min-width:0;
+    background:transparent;
+    border:1px solid var(--border-mid);
+    color:var(--grey);
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.05em;
+    padding:0.6em 0.3em;
+    text-transform:uppercase;
+    cursor:pointer;
+    border-radius:var(--radius);
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .list-duration-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  .list-duration-btn.active{ background:var(--pigeon-purple-faint); border-color:var(--pigeon-purple); color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); }
   /* $PIGEONS coin sits inside the input itself (not just the placeholder)
      so it stays put once you start typing a number, instead of
      disappearing along with the placeholder text. */
@@ -3606,6 +3634,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">[ BUY ]</button>
                 <button class="bar-btn" id="detailScyllaDelistBtn" style="display:none;">[ CANCEL ]</button>
               </div>
+              <div class="listing-countdown" id="detailScyllaCountdown" style="display:none;"></div>
               <div class="thumb-offer-row" id="detailMakeOfferRow" style="display:none;">
                 <div class="make-offer-input-wrap">
                   <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
@@ -3679,6 +3708,15 @@ const SWAP_HTML = `<!DOCTYPE html>
               <input class="list-price-input" id="amountEntryListInput" type="text" inputmode="decimal" placeholder="L!ST PR!CE">
             </div>
             <button class="list-inline-btn" id="amountEntryListBtn">[ L!ST ]</button>
+          </div>
+          <!-- Real XRPL NFTokenCreateOffer Expiration, not app-side
+               enforcement — see listingExpirationRippleSeconds in
+               _shared.js. Single pick, 7D default. -->
+          <div class="list-duration-row" id="amountEntryListDuration">
+            <button type="button" class="list-duration-btn" data-days="1">1D</button>
+            <button type="button" class="list-duration-btn" data-days="3">3D</button>
+            <button type="button" class="list-duration-btn active" data-days="7">7D</button>
+            <button type="button" class="list-duration-btn" data-days="30">30D</button>
           </div>
           <div class="index-line list-inline-status" id="amountEntryListStatus" style="display:none;"></div>
         </div>
@@ -4201,7 +4239,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
    'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
-   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
+   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn',
    'backToBrowseBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
@@ -4221,7 +4259,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
    'screenTransferConfirm','transferConfAccount','transferConfPigeonNum','transferConfDestination','transferConfirmStatus','transferConfirmBackBtn','transferOpenXamanBtn',
    'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultStatus','transferResultTxLink','transferResultDoneBtn',
-   'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus',
+   'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
    'amountEntryOfferMode','amountEntryOfferInput','amountEntryOfferBtn',
    'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferBtn','amountEntryTransferStatus',
    'screenAcceptOfferConfirm','acceptOfferConfTxType','acceptOfferConfAccount','acceptOfferConfOfferId','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
@@ -5458,8 +5496,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       // general unscoped browse, not the SH0W MY FL0CK grid) — a clear
       // "!N Y0UR FL0CK"/"L!ST!NG :: 444K" note instead, never a blank box.
       if (p.scyllaListing){
+        var listingCountdown = listingCountdownText(p.scyllaListing.expiration);
         return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
           '<div class="own-listing-note">Y0UR L!ST!NG :: ' + escapeHtml(compactPigeonsNumber(p.scyllaListing.price)) + '</div>' +
+          (listingCountdown ? '<div class="listing-countdown">' + escapeHtml(listingCountdown) + '</div>' : '') +
           // Same .delist-pigeon-btn class/handling ownedPigeonActionHtml's
           // own DELIST button uses (wireResultClicks' delegated listener
           // already covers el.resultsArea too) — no separate wiring needed.
@@ -5476,9 +5516,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // and .offer-open-modal-btn in wireResultClicks) to actually type
     // the number. Price is now its own plain line above BUY N0W, not
     // baked into the button label.
+    var buyCountdown = canBuy ? listingCountdownText(p.scyllaListing.expiration) : '';
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
       (canBuy
         ? '<div class="thumb-buy-price">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>' +
+          (buyCountdown ? '<div class="listing-countdown">' + escapeHtml(buyCountdown) + '</div>' : '') +
           '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W ]</button>'
         : '') +
       '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%;">[ 0FFER ]</button>' +
@@ -5616,6 +5658,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // send) so neither function needed to change — only TRANSFER is new
   // (see submitTransfer below). ----
   var amountEntryPigeon = null; // the Pigeon the currently-open popup is acting on
+  var amountEntryListDurationDays = 7; // real NFTokenCreateOffer Expiration — see listingExpirationRippleSeconds in _shared.js
   function openAmountEntryModal(mode, p){
     amountEntryPigeon = p;
     el.amountEntryListMode.style.display = mode === 'list' ? '' : 'none';
@@ -5628,6 +5671,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.amountEntryListBtn.textContent = '[ L!ST ]';
       el.amountEntryListStatus.style.display = 'none';
       el.amountEntryListStatus.textContent = '';
+      amountEntryListDurationDays = 7;
+      el.amountEntryListDuration.querySelectorAll('.list-duration-btn').forEach(function(b){
+        b.classList.toggle('active', b.getAttribute('data-days') === '7');
+      });
     } else if (mode === 'offer'){
       el.amountEntryTitle.textContent = '0FFER AM0UNT';
       el.amountEntryOfferInput.value = '';
@@ -5650,8 +5697,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.amountEntryClose.addEventListener('click', closeAmountEntryModal);
   el.amountEntryModal.addEventListener('click', function(e){ if (e.target === el.amountEntryModal) closeAmountEntryModal(); });
+  el.amountEntryListDuration.addEventListener('click', function(e){
+    var btn = e.target.closest('.list-duration-btn');
+    if (!btn) return;
+    amountEntryListDurationDays = parseInt(btn.getAttribute('data-days'), 10);
+    el.amountEntryListDuration.querySelectorAll('.list-duration-btn').forEach(function(b){
+      b.classList.toggle('active', b === btn);
+    });
+  });
   el.amountEntryListBtn.addEventListener('click', function(){
-    if (amountEntryPigeon) submitInlineListing(amountEntryPigeon, el.amountEntryListInput.value.trim().replace(/,/g, ''), el.amountEntryListMode);
+    if (amountEntryPigeon) submitInlineListing(amountEntryPigeon, el.amountEntryListInput.value.trim().replace(/,/g, ''), el.amountEntryListMode, amountEntryListDurationDays);
   });
   el.amountEntryOfferBtn.addEventListener('click', function(){
     if (amountEntryPigeon) submitMakeOffer(amountEntryPigeon, el.amountEntryOfferInput.value.trim().replace(/,/g, ''), el.amountEntryOfferMode);
@@ -6415,7 +6470,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // /board already uses (same API key, same /api/connect, same
   // pigeon_session cookie) rather than a second wallet-connect system. ----
   var myPigeonsData = null; // null = not fetched yet
-  var myListedData = {};    // nftId -> { price, currency, offerId } — real on-ledger sell offers, not a stored flag
+  var myListedData = {};    // nftId -> { price, currency, offerId, expiration } — real on-ledger sell offers, not a stored flag
   var offersByNftId = {};   // nftId -> [{ offerId, buyer, buyerShort, price, createdAt }] — real on-ledger buy offers received
   // Offers received on THIS pigeon, shown directly on its own card — same
   // ACCEPT OFFER button/fee breakdown the old combined offersReceivedList
@@ -6457,8 +6512,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // visibly taller. Centered explicitly (this card has no .thumb-
     // offer-own ancestor supplying that the way the general-browse
     // card's own version does).
+    var ownedListingCountdown = listedInfo ? listingCountdownText(listedInfo.expiration) : '';
     var listedNote = listedInfo
-      ? '<div class="own-listing-note" style="text-align:center; margin-bottom:0.5rem;">L!STED :: ' + escapeHtml(compactPigeonsNumber(listedInfo.price)) + ' $P!GE0NS</div>'
+      ? '<div class="own-listing-note" style="text-align:center; margin-bottom:0.5rem;">L!STED :: ' + escapeHtml(compactPigeonsNumber(listedInfo.price)) + ' $P!GE0NS</div>' +
+        (ownedListingCountdown ? '<div class="listing-countdown" style="text-align:center;">' + escapeHtml(ownedListingCountdown) + '</div>' : '')
       : '';
     var primaryBtn = listedInfo
       ? '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ CANCEL ]</button>'
@@ -6906,7 +6963,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // still gets the full screenListResult screen (tx hash link etc).
   var listingBtnEl = null;
   var listingStatusEl = null;
-  function submitInlineListing(p, priceValue, cardEl){
+  function submitInlineListing(p, priceValue, cardEl, durationDays){
     if (!priceValue || isNaN(Number(priceValue)) || Number(priceValue) <= 0){
       alert('ENTER A VAL!D PR!CE GREATER THAN 0.');
       return;
@@ -6925,7 +6982,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-listing-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue })
+      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
@@ -6957,7 +7014,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.status === 'listed'){
-          myListedData[listingTarget.nftId] = { price: data.price, currency: data.currency, offerId: data.offerId };
+          myListedData[listingTarget.nftId] = { price: data.price, currency: data.currency, offerId: data.offerId, expiration: data.expiration || null };
           closeXamanTabAndFocus(listingXamanTab);
           listingXamanTab = null;
           showListingResult(data);
@@ -8762,11 +8819,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailScyllaBuyBtn.style.display = notOwn ? '' : 'none';
       el.detailScyllaDelistBtn.style.display = isOwn ? '' : 'none';
       el.detailScyllaListingRow.classList.remove('not-listed');
+      var detailCountdown = listingCountdownText(listing.expiration);
+      el.detailScyllaCountdown.textContent = detailCountdown;
+      el.detailScyllaCountdown.style.display = detailCountdown ? '' : 'none';
     } else {
       el.detailScyllaPrice.textContent = isOwn ? '!N Y0UR FL0CK' : 'N0T L!STED';
       el.detailScyllaBuyBtn.style.display = 'none';
       el.detailScyllaDelistBtn.style.display = 'none';
       el.detailScyllaListingRow.classList.add('not-listed');
+      el.detailScyllaCountdown.style.display = 'none';
     }
     // MAKE OFFER — same option the DATABASE grid's own OFFER AMOUNT box
     // offers (submitMakeOffer), available regardless of whether it's
@@ -9019,6 +9080,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (abs >= 1000000) return (num / 1000000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + ' M!LL!0N';
     if (abs >= 1000) return (num / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'K';
     return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
+  // Real XRPL NFTokenCreateOffer Expiration (ripple-epoch seconds, see
+  // listingExpirationRippleSeconds in _shared.js) rendered as a plain
+  // countdown — computed fresh at render time (card HTML is rebuilt on
+  // every query/scroll-append anyway), not a live per-card ticking
+  // timer. '' for a listing with no expiration (shouldn't happen for
+  // anything listed through this flow any more, but old pre-this-
+  // feature listings can still be missing one).
+  var RIPPLE_EPOCH_OFFSET_SECONDS = 946684800;
+  function listingCountdownText(expiration){
+    if (!expiration) return '';
+    var msLeft = (expiration + RIPPLE_EPOCH_OFFSET_SECONDS) * 1000 - Date.now();
+    if (msLeft <= 0) return 'EXP!RED';
+    var days = Math.floor(msLeft / 86400000);
+    if (days > 0) return 'EXP!RES !N ' + days + 'D ' + Math.floor((msLeft % 86400000) / 3600000) + 'H';
+    var hours = Math.floor(msLeft / 3600000);
+    if (hours > 0) return 'EXP!RES !N ' + hours + 'H ' + Math.floor((msLeft % 3600000) / 60000) + 'M';
+    return 'EXP!RES !N ' + Math.max(1, Math.floor(msLeft / 60000)) + 'M';
   }
   // Compact K/M form, BUY N0W button only — every OTHER $PIGEONS amount
   // on the site (confirm/result screens, fee breakdowns, sale stats)

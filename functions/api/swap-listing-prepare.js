@@ -1,7 +1,8 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
   PIGEON_ISSUER, PIGEON_TAXON, isTransferable,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo,
+  LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds
 } from '../_shared.js';
 
 // Σκύλλα SWAP — first real listing test. This endpoint only builds and
@@ -66,6 +67,7 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'not_transferable' }), { status: 400 });
   }
 
+  const durationDays = LISTING_DURATION_DAYS_ALLOWED.includes(body && body.durationDays) ? body.durationDays : DEFAULT_LISTING_DURATION_DAYS;
   const txjson = {
     TransactionType: 'NFTokenCreateOffer',
     Account: seller,
@@ -76,10 +78,11 @@ export async function onRequestPost(context) {
       value: priceStr
     },
     Flags: 1,
+    Expiration: listingExpirationRippleSeconds(durationDays),
     Memos: swapOfferSourceMemo()
   };
 
-  return new Response(JSON.stringify({ ok: true, txjson }), {
+  return new Response(JSON.stringify({ ok: true, txjson, durationDays }), {
     headers: { 'Content-Type': 'application/json' }
   });
 }
