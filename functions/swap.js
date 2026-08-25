@@ -3447,19 +3447,20 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
 
           <!-- S0RT BY sits directly underneath now, in COLLECTION's old
-               spot — left-aligned, same box treatment as F!LTER BY TRA!TS
-               below it. Single pick, automatically RARITY H!GHEST until
-               changed — picking a new value replaces the current one,
-               same as the original dropdown. -->
+               spot — same static-label + stacked-applied-tag treatment as
+               F!LTER BY TRA!TS below it (#sortRows is #traitRows' own
+               pattern, just always exactly one tag — picking a new value
+               replaces it instead of adding a second one). -->
           <div class="db-config-group db-config-traits-group">
             <div class="db-config-traits-section">
               <div class="traits-hover-wrap" id="sortDropWrap">
-                <span class="trait-row-label" id="sortDropLabel"></span>
+                <span class="trait-row-label" id="sortDropLabel">S0RT BY <span class="thl-arrow">▾</span></span>
                 <div class="traits-flyout" id="sortFlyout" style="display:none;">
                   <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
                   <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
                 </div>
               </div>
+              <div id="sortRows"></div>
             </div>
           </div>
 
@@ -4070,7 +4071,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     items: [],                // everything loaded so far in the current browse/search mode
     scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
     mode: 'browse',            // 'browse' | 'search' | 'scoped'
-    sort: 'RARITY_ASC',        // single pick, automatically RARITY H!GHEST until the user picks something else
+    // Default landing sort is FL00R $P!GE0NS (lowest listed price first),
+    // not RAR!TY — see scyllaListedOnly below and loadMoreCollection's own
+    // chain-to-average-sale-price once the floor listings run out.
+    // RESET still goes back to RARITY_ASC specifically (its own hardcoded
+    // value, not this one) — this only governs the very first page load.
+    sort: 'SCYLLA_PRICE_ASC',
     edition: 'ALL',            // 'ALL' | 'LOW' (1-1515) | 'HIGH' (1516-3015)
     activeTab: null,           // null | 'database' | 'mypigeons' | 'topholders' | 'sales'
     databaseLoaded: false,
@@ -4084,7 +4090,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     currentDetail: null,
     targetAssets: {},         // nftId -> { nftId, number, image } — only while scope is a wallet
     sales: { skip: 0, hasMore: true, loading: false, opened: false },
-    scyllaListedOnly: false,  // whole-collection LISTED filter — Pigeons listed through Scylla itself
+    scyllaListedOnly: true,   // whole-collection LISTED filter — Pigeons listed through Scylla itself; starts true to match the default FL00R $P!GE0NS landing sort above
     offerAssets: {},          // nftId -> { nftId, number, image } — up to 4, YOUR pigeons in the persistent trade builder
     dbView: 'thumbnails',     // 'boxed' (full detail row) | 'thumbnails' (5-across, # + rarity only, default) — DATABASE grid only
     simpleOffer: { mine: null, theirs: null }, // V1 CREATE OFFER (PλWS tab) — { nftId, number, image, owner } or null per side, single pick each, separate from offerAssets/targetAssets above
@@ -4092,7 +4098,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
+  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInCount','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
@@ -5612,7 +5618,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           state.traitFilters = [{ id: state.nextTraitRowId++, category: trait, value: value }];
           renderTraitRows();
           state.sort = 'RARITY_ASC';
-          renderSortDropLabel();
+          renderSortTag();
           el.searchInput.value = '';
           showScreen('browse');
           runQuery();
@@ -5864,6 +5870,22 @@ const SWAP_HTML = `<!DOCTYPE html>
       state.total = typeof data.total === 'number' ? data.total : state.total;
       state.hasMore = !!data.hasMore && newItems.length > 0;
       appendResults(newItems);
+      // Floor listings exhausted — seamlessly continue the same infinite
+      // scroll sorted by lowest average sale price instead of just
+      // stopping (whatever floor items already showed above stay put;
+      // this appends more underneath). Only ever fires once per landing
+      // here: the recursive call below runs with scyllaListedOnly false,
+      // so this exact condition can't refire on it.
+      if (state.scyllaListedOnly && !state.hasMore){
+        state.scyllaListedOnly = false;
+        state.sort = 'AVG_SALE_PIGEONS_ASC';
+        renderSortTag();
+        el.statScyllaListedTile.classList.remove('scylla-active');
+        state.skip = 0;
+        state.hasMore = true;
+        loadMoreCollection(onDone);
+        return;
+      }
       var resultCount = state.total !== null ? state.total : state.items.length;
       if (filters.length === 0){
         el.statusLine.innerHTML = '<div class="results-trait-note">STAT!C://QUERY :: <span class="hi">' + resultCount + '</span> P!GE0NS F0UND</div>';
@@ -8232,8 +8254,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     ],
     'PR!CE': [
       { value: 'SCYLLA_PRICE_ASC', label: 'FL00R $P!GE0NS' },
-      { value: 'AVG_SALE_XRP_ASC', label: 'FL00R AVERAGE (XRP)', disabled: true },
-      { value: 'AVG_SALE_PIGEONS_ASC', label: 'FL00R AVERAGE ($P!GE0NS)', disabled: true },
+      { value: 'AVG_SALE_XRP_ASC', label: 'L0WEST AVERAGE SALE PR!CE XRP' },
+      { value: 'AVG_SALE_PIGEONS_ASC', label: 'L0WEST AVERAGE SALE PR!CE $P!GE0NS' },
       { value: 'PRICE_ASC', label: 'FL00R XRP', disabled: true },
       { value: 'PRICE_DESC', label: 'CE!L!NG XRP', disabled: true },
       { value: 'SCYLLA_PRICE_DESC', label: 'CE!L!NG $P!GE0NS', disabled: true }
@@ -8256,7 +8278,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     var cat = sortCategoryOf(value);
     if (!cat) return value;
     var found = SORT_CATEGORIES[cat].filter(function(o){ return o.value === value; })[0];
-    return cat + ' ' + (found ? found.label : value);
+    // Same "CATEG0RY :: VALUE" shape as an applied trait tag, since this
+    // is now shown as one (see renderSortTag).
+    return cat + ' :: ' + (found ? found.label : value);
   }
   // Single-key comparator for one sort value — used for the client-side
   // wallet-scope sort (whole list already in memory). Every enabled
@@ -8309,10 +8333,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     return null;
   }
-  // Single pick only — automatically RARITY H!GHEST until the user picks
-  // something else, same as the original dropdown.
-  function renderSortDropLabel(){
-    el.sortDropLabel.textContent = sortLabelOf(state.sort) + ' ▾';
+  // S0RT BY's own label stays static now (see the HTML) — this renders
+  // the current pick as a single applied tag underneath it instead,
+  // #traitRows' own pattern (trait-row-tag/trait-tag-label), just always
+  // exactly one: picking a new sort replaces state.sort outright (see
+  // applySort), so there's never a previous tag to remove first.
+  function renderSortTag(){
+    el.sortRows.innerHTML = '<div class="trait-row trait-row-tag"><span class="trait-tag-label">' + escapeHtml(sortLabelOf(state.sort).toUpperCase()) + '</span></div>';
   }
   function renderSortFlyoutCats(){
     el.sortFlyoutCats.innerHTML = Object.keys(SORT_CATEGORIES).map(function(c){
@@ -8346,7 +8373,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function applySort(value){
     state.sort = value;
-    renderSortDropLabel();
+    renderSortTag();
     var isScyllaSort = value === 'SCYLLA_PRICE_ASC' || value === 'SCYLLA_PRICE_DESC';
     if (isScyllaSort){
       setScyllaListedOnly(true); // also runs the query
@@ -8384,7 +8411,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     applySort(valBtn.getAttribute('data-value'));
     closeSortFlyout();
   });
-  renderSortDropLabel();
+  renderSortTag();
+  // Reflects the default scyllaListedOnly:true landing state — every
+  // other place this class gets toggled goes through setScyllaListedOnly
+  // itself, but that's never actually called for the initial default.
+  el.statScyllaListedTile.classList.toggle('scylla-active', state.scyllaListedOnly);
   // One delegated handler for every .input-clear-btn on the page (search,
   // offer amount, list price, both XRP calculator inputs) — see its own
   // CSS comment for why it must sit as the input's next sibling in
@@ -8459,7 +8490,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.traitFilters = [];
     renderTraitRows();
     state.sort = 'RARITY_ASC';
-    renderSortDropLabel();
+    renderSortTag();
     if (state.activeTab === 'mypigeons'){
       // FL0CK only ever shows your own Pigeons, no exceptions — RESET
       // here must never exit that scope into the full collection (the
@@ -9016,7 +9047,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         // Highest-first is the default entry into LISTED — the main
         // attraction of the site, not a niche filter.
         state.sort = 'SCYLLA_PRICE_DESC';
-        renderSortDropLabel();
+        renderSortTag();
       }
       if (state.scope){
         state.scope = null;
@@ -9028,7 +9059,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
     } else if (state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC'){
       state.sort = 'RARITY_ASC';
-      renderSortDropLabel();
+      renderSortTag();
     }
     runQuery();
   }
