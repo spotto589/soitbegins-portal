@@ -5662,10 +5662,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + greenNum(p.number) : '#????';
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) + '</div>' : '';
-    // Real $PIGEONS sales through Σκύλλα's own marketplace only — 0
-    // until a Pigeon has actually sold this way (see toItem in
-    // api/pigeons.js), so nothing shows for one that never has.
-    var avgSaleLine = p.avgSalePigeons > 0 ? '<div class="result-rarity-line">AVERAGE SALE PR!CE :: ' + escapeHtml(compactPigeonsNumber(p.avgSalePigeons)) + ' $P!GE0NS</div>' : '';
+    // Every Pigeon, not just ones with real Σκύλλα $PIGEONS sales — real
+    // XRP sale history (highSaleEntry, see toItem in api/pigeons.js) is
+    // null (not 0) when a Pigeon genuinely has no recorded sale, distinct
+    // from an actual free/near-free past sale, so that case reads "N0
+    // SALES" instead of a misleading "0 XRP".
+    var avgSaleLine = '<div class="result-rarity-line">AVERAGE SALE PR!CE :: ' +
+      (p.avgSaleXrp !== null && p.avgSaleXrp !== undefined ? escapeHtml(fmtXrp(p.avgSaleXrp)) + ' XRP' : 'N0 SALES') +
+      '</div>';
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
     var atCap = offerCtxCard
