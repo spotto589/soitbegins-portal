@@ -225,10 +225,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:1rem;
     text-transform:uppercase;
   }
-  /* Σκύλλα must never render all-caps — text-transform:uppercase above
-     would otherwise force it to ΣΚΎΛΛΑ. The " :: N" count suffix is
-     already correctly cased either way (just digits/punctuation). */
-  #myPigeonsPanelTitle{ text-transform:none; color:var(--magenta); text-shadow:0 0 8px var(--magenta-glow); }
   /* Σκύλλα is her own entity, own theme — she's the security/login layer,
      the one who brokers swaps, not just another DATABASE-style screen.
      Redefining the cyan custom properties inside her own panel cascades
@@ -1736,28 +1732,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:1.25rem;
     overflow:hidden;
   }
-  /* PλWS-only slimmed banner — carousel, SH0W MY P!GE0NS (redundant,
-     already showing your Pigeons here), the BUY $P!GE0NS button, and the
-     EXCHANGE RATE/calculator column all drop out, leaving just identity +
-     BALANCE. DATABASE and every other tab are untouched — this only ever
-     applies while document.body carries .paws-view (see showTab).
-     !important since renderTrustlineSummary's own async display writes
-     (balance/buy-button visibility — it has no notion of which tab is
-     active) run after showTab and would otherwise win a plain rule. */
-  body.paws-view #collectionDetailsPanel,
-  body.paws-view #showMyPigeonsBtn,
-  body.paws-view #pigeonsBalanceBuyBtn,
-  body.paws-view #pigeonsBarCalc{
-    display:none !important;
-  }
-  /* BALANCE amount itself takes over BUY $P!GE0NS' job here — underlined
-     to read as clickable, same click target (openBuySwapPanel) as the
-     button it replaces. */
-  body.paws-view #pigeonsBalanceValue{
-    cursor:pointer;
-    text-decoration:underline;
-    text-underline-offset:0.2em;
-  }
+  /* FL0CK used to show a slimmed-down version of this banner (carousel/
+     SH0W MY P!GE0NS/BUY $P!GE0NS/calculator all dropped) — now shows the
+     exact same full banner as DATABASE, no .paws-view overrides left. */
   /* This page only ever shows your own Pigeons — no searching for anyone
      else's from here (see updateSearchPanelTitleForPaws). The search box
      (# 0R WALLET) is DATABASE-only functionality once scoped this way —
@@ -1866,9 +1843,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-weight:700;
   }
   .pigeons-bar-sublabel{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
-  /* "N P!GE0NS 0WNED" is the actual headline stat of the logged-in
-     identity block, not a fine-print label like the issuer address/
-     trustline status sharing the same base class — bumped up. */
+  /* The pigeon count (just the number, see renderTrustlineSummary) is
+     the actual headline stat of the logged-in identity block, not a
+     fine-print label like the issuer address/trustline status sharing
+     the same base class — bumped up. */
   #pigeonsLoggedInCount{ font-size:16px; font-weight:700; color:#fff; }
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
@@ -3151,7 +3129,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
 
     <div class="sw-panel" id="myPigeonsPanel" style="display:none;">
-      <div class="panel-title" id="myPigeonsPanelTitle">Σκύλλα://FL0CK</div>
       <div class="skylla-signal" id="connectStatus"></div>
       <div id="myPigeonsConnect" style="display:none; text-align:center;">
         <button class="bar-btn" id="connectScyllaBtn">[ CONNECT <span style="text-transform:none;">Σκύλλα</span> ]</button>
@@ -3195,13 +3172,11 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="index-line" id="simpleOfferStatus"></div>
         </div>
       </div>
-      <!-- Simple, obvious summary line — the actual offers now live
-           directly on each pigeon's own card (see myPigeonOffersHtml),
-           sorted to the top; this is just "how many, at a glance" above
-           the full listing. -->
-      <div id="offersReceivedBlock" style="display:none;">
-        <div class="detail-traits-title" id="offersReceivedSummary">N0 0FFERS</div>
-      </div>
+      <!-- No more "N0 0FFERS"/"0FFERS RECE!VED (N)" summary line here —
+           that job now belongs to the FL0CK tab label itself (see
+           updateFlockTabLabel). Offers still render per-card exactly as
+           before (myPigeonOffersHtml), this just drops the redundant
+           header line above the grid. -->
       <div class="search-row" id="myPigeonsSortRow" style="display:none; justify-content:center;">
         <select class="sort-select" id="myPigeonsSortSelect">
           <option value="RARITY_ASC" selected>RAR!TY H!GH</option>
@@ -3882,7 +3857,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInCount','pigeonsLoggedInTrustline','showMyPigeonsBtn','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
-   'topTabs','flockTabLabel','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
+   'topTabs','flockTabLabel','myPigeonsPanel','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
    'salesPanelWrap',
    'swapOffersPanelWrap','swapOffersList',
@@ -3925,7 +3900,6 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
    'screenOfferConfirm','offerConfTxType','offerConfAccount','offerConfOwner','offerConfNftId','offerConfCurrency','offerConfIssuer','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
-   'offersReceivedBlock','offersReceivedSummary',
    'screenAcceptOfferConfirm','acceptOfferConfTxType','acceptOfferConfAccount','acceptOfferConfOfferId','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
    'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
@@ -4138,13 +4112,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     state.activeTab = tab;
-    // PλWS-only slimmed-down trustline banner (carousel/SH0W MY P!GE0NS/
-    // BUY $P!GE0NS button/calculator all hidden via CSS — see .paws-view
-    // rules) — DATABASE and every other tab keep the full banner
-    // unchanged. A body class, not per-element JS toggles here, so it
-    // can't be fought by renderTrustlineSummary's own async display
-    // writes (balance/buy-button visibility, which know nothing about
-    // which tab is active) running after this.
+    // FL0CK shows the exact same trustline banner as every other tab now
+    // (no more slimmed-down version) — .paws-view still exists purely to
+    // hide the # 0R WALLET search box here (this page only ever shows
+    // your own Pigeons, see the .paws-view CSS rule near the top of the
+    // file). A body class, not a per-element JS toggle, so it can't be
+    // fought by anything else's own async display writes running after
+    // this.
     document.body.classList.toggle('paws-view', tab === 'mypigeons');
     // Covers every path that can leave/re-enter PλWS, including the
     // DATABASE tab click while scoped (exitWalletScope + startCollection-
@@ -6063,11 +6037,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   // The actual pigeon grid for PλWS is the shared DATABASE view itself
   // (screenBrowse, scoped to your own wallet via browseOwnerCollection —
-  // see showTab) now, not a separate look — this just keeps the title
-  // count current. myPigeonsSortRow/myPigeonsList stay in the markup but
-  // permanently empty/hidden.
+  // see showTab) now, not a separate look. myPigeonsSortRow/myPigeonsList
+  // stay in the markup but permanently empty/hidden. No more panel-title
+  // count to keep current here — the FL0CK tab label owns that now (see
+  // updateFlockTabLabel).
   function renderMyPigeonsList(){
-    el.myPigeonsPanelTitle.textContent = 'Σκύλλα://FL0CK' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
     el.myPigeonsSortRow.style.display = 'none';
     el.myPigeonsList.innerHTML = '';
     // The Y0UR P!GE0N picker (openSimpleOfferPicker) shows nothing rather
@@ -6091,8 +6065,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     // manual CONNECT button to add on a normal open. It only reappears
     // if that login attempt actually fails (see getXummAuth's error
     // paths below), as a manual retry.
-    el.offersReceivedBlock.style.display = 'none';
-    el.myPigeonsPanelTitle.textContent = 'Σκύλλα://FL0CK';
   }
   // LIST/DELIST/ACCEPT OFFER click + input handling for this container is
   // shared with the DATABASE grid inside wireResultClicks now (own-wallet
@@ -6344,9 +6316,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   // was the only time anyone would want to buy — real feedback: someone
   // already holding a real balance still wants a quick way to buy more).
   function renderTrustlineSummary(){
+    // Just the number now — no "P!GE0NS 0WNED" label (explicit request:
+    // keep this headline stat to the number alone).
     el.pigeonsLoggedInCount.innerHTML = trustlinePigeonCount === null
       ? '…'
-      : greenNum(trustlinePigeonCount.toLocaleString()) + ' P!GE0NS 0WNED';
+      : greenNum(trustlinePigeonCount.toLocaleString());
     if (trustlineBalanceNum === null){
       el.pigeonsBalanceValue.innerHTML = '…';
       el.pigeonsBalanceBuyBtn.style.display = 'none';
@@ -6887,14 +6861,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     }, BUYSWAP_REFRESH_MS);
   }
   el.pigeonsBalanceBuyBtn.addEventListener('click', openBuySwapPanel);
-  // PλWS-only — the BALANCE amount itself is the buy entry point there
-  // (BUY $P!GE0NS is hidden, see .paws-view). Guarded to this tab
-  // specifically rather than just relying on the underline styling, so
-  // clicking the same element on DATABASE (plain there, no underline)
-  // never unexpectedly opens the buy panel.
-  el.pigeonsBalanceValue.addEventListener('click', function(){
-    if (state.activeTab === 'mypigeons') openBuySwapPanel();
-  });
+  // BUY $P!GE0NS is the one entry point everywhere now (FL0CK shows the
+  // exact same banner as DATABASE, no more BALANCE-amount-as-buy-button
+  // substitution — that only existed while FL0CK's banner was slimmed).
   el.buySwapXrpInput.addEventListener('input', scheduleBuySwapQuote);
   el.buySwapCopyIssuerBtn.addEventListener('click', function(){
     var addr = el.buySwapIssuerAddr ? el.buySwapIssuerAddr.getAttribute('data-full') : '';
@@ -7462,8 +7431,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Offers received now render directly on each pigeon's own card (see
   // myPigeonOffersHtml + the accept-offer-btn branch in el.myPigeonsList's
   // click listener) — this just fetches the data, builds offersByNftId for
-  // sortedMyPigeons/myPigeonCardHtml, and updates the simple summary line
-  // above the grid ("0FFERS RECE!VED (N)" / "N0 0FFERS").
+  // sortedMyPigeons/myPigeonCardHtml, and updates offersReceivedTotal —
+  // read by updateFlockTabLabel, which is now the only place a pending-
+  // offer count shows (the "N0 0FFERS"/"0FFERS RECE!VED (N)" summary line
+  // that used to sit above the grid is gone, redundant with that).
   function loadOffersReceived(){
     if (!MY_WALLET) return; // the endpoint requires a real session anyway
     fetch('/api/swap-offers-received').then(function(r){ return r.json(); }).then(function(data){
@@ -7474,8 +7445,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         offersByNftId[item.nftId] = item.offers;
         totalOffers += item.offers.length;
       });
-      el.offersReceivedBlock.style.display = '';
-      el.offersReceivedSummary.textContent = totalOffers ? '0FFERS RECE!VED (' + totalOffers + ')' : 'N0 0FFERS';
       offersReceivedTotal = totalOffers;
       updateFlockTabLabel();
       renderMyPigeonsList();
