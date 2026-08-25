@@ -2323,6 +2323,45 @@ export async function removeSwapBuyOffer(kv, nftId, offerId) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// TRANSFER — incoming side. TRANSFER creates a real free (Amount "0")
+// NFTokenCreateOffer restricted via Destination to the recipient's wallet
+// (see swap-offer-prepare/-payload.js), but that offer sits on an NFT the
+// SENDER still owns — fetchAllAccountNfts(recipient) can never find it, so
+// unlike every other "what's happening on MY Pigeons" view on this site,
+// there's no way to discover it just by looking at what the recipient
+// owns. This index is the only record that it was ever sent: written once
+// by swap-offer-status.js the moment the sender's own offer is confirmed
+// on-ledger (a pure transfer — no wantNftId/swapId — is what tells that
+// endpoint to write here instead of into the swap-offer-pairs index).
+// toWallet -> array of entries, self-healed the same way as the listings/
+// buy-offers maps above: the stored entry only says "worth checking," a
+// live nft_sell_offers lookup at read time is what's actually trusted.
+// ─────────────────────────────────────────────────────────────────────────
+const INCOMING_TRANSFERS_MAP_KEY = 'pswap:incomingtransfers:v1';
+
+export async function getIncomingTransfersMap(kv) {
+  const raw = await kv.get(INCOMING_TRANSFERS_MAP_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
+export async function addIncomingTransfer(kv, toWallet, entry) {
+  const map = await getIncomingTransfersMap(kv);
+  const list = map[toWallet] || (map[toWallet] = []);
+  const existingIdx = list.findIndex(o => o.offerId === entry.offerId);
+  if (existingIdx !== -1) list[existingIdx] = entry;
+  else list.push(entry);
+  await safeKvPut(kv, INCOMING_TRANSFERS_MAP_KEY, JSON.stringify(map));
+}
+
+export async function removeIncomingTransfer(kv, toWallet, offerId) {
+  const map = await getIncomingTransfersMap(kv);
+  if (!map[toWallet]) return;
+  map[toWallet] = map[toWallet].filter(o => o.offerId !== offerId);
+  if (!map[toWallet].length) delete map[toWallet];
+  await safeKvPut(kv, INCOMING_TRANSFERS_MAP_KEY, JSON.stringify(map));
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Σκύλλα SWAP — NFT-for-NFT offer PAIRS. XRPL has no atomic swap, so a real
 // trade is two independent NFTokenCreateOffer objects (one per side, each
 // Amount "0" and Destination-restricted to the other wallet) plus two

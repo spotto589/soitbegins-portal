@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, findSwapOffer,
-  getXamanPayloadStatus, getSwapOfferPairs, recordSwapOfferPair
+  getXamanPayloadStatus, getSwapOfferPairs, recordSwapOfferPair, addIncomingTransfer
 } from '../_shared.js';
 
 const XRPL_ADDRESS_RE = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
@@ -112,6 +112,20 @@ export async function onRequestGet(context) {
       createdAt: Date.now(),
       offerer: { wallet: offerer, nftId, offerId: ownOffer.nft_offer_index, accepted: false },
       counterparty: { wallet: toWallet, nftId: wantNftId, offerId: null, accepted: false }
+    }));
+  } else if (env.coin) {
+    // Neither wantNftId (new pair) nor swapId (reciprocal half) — this is
+    // a pure one-way TRANSFER, not a swap-builder offer. Nothing else on
+    // this site ever records that one exists (it sits on an NFT the
+    // recipient doesn't own, so it can't be discovered just by looking at
+    // their own account_nfts) — this is the only place that happens, and
+    // it's the sole source the recipient's own FL0CK "NFT 0FFERED T0 Y0U"
+    // box reads from (see swap-incoming-transfers.js).
+    context.waitUntil(addIncomingTransfer(env.coin, toWallet, {
+      nftId,
+      offerId: ownOffer.nft_offer_index,
+      fromWallet: offerer,
+      createdAt: Math.floor(Date.now() / 1000)
     }));
   }
 

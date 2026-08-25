@@ -1525,6 +1525,27 @@ const SWAP_HTML = `<!DOCTYPE html>
      status elsewhere. */
   .listing-countdown{ color:var(--grey-dim); font-size:10px; letter-spacing:0.08em; text-transform:uppercase; margin-top:0.15rem; }
   .thumb-offer-row{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
+  /* NFT 0FFERED T0 Y0U (FL0CK) — purple like every other real TRANSFER
+     surface on this site, since it IS the recipient half of that same
+     feature. A plain horizontal row, not a full grid card — this list is
+     almost always 0-1 items long. */
+  #incomingTransfersBox{ margin-bottom:1.25rem; }
+  .incoming-transfer-row{
+    display:flex;
+    align-items:center;
+    gap:0.75rem;
+    padding:0.65em 0.9em;
+    border:1px solid var(--pigeon-purple);
+    border-radius:var(--radius);
+    background:linear-gradient(160deg, rgba(136,72,248,0.14), var(--panel-bg-solid) 60%);
+    margin-bottom:0.6rem;
+  }
+  .incoming-transfer-thumb{ width:52px; height:52px; border-radius:6px; object-fit:cover; flex:0 0 auto; background:rgba(255,255,255,0.06); }
+  .incoming-transfer-info{ flex:1 1 auto; min-width:0; }
+  .incoming-transfer-num{ font-family:var(--font-display); font-weight:700; font-size:15px; color:#fff; }
+  .incoming-transfer-from{ font-size:11px; color:var(--grey-dim); letter-spacing:0.05em; margin-top:0.2rem; text-transform:uppercase; }
+  .incoming-transfer-accept-btn{ flex:0 0 auto; background:var(--pigeon-purple); border-color:var(--pigeon-purple); color:#fff; text-shadow:none; }
+  .incoming-transfer-accept-btn:hover{ background:#7638e8; border-color:#7638e8; }
   /* L!ST duration — same collection-purple active state as .edition-btn,
      just a compact 4-across row sized for the amount-entry popup rather
      than .edition-btn's own fixed var(--ctrl-w) (built for the full-page
@@ -2668,7 +2689,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     from{ transform:scale(0.9); opacity:0; }
     to{ transform:scale(1); opacity:1; }
   }
-  #offerConfirmModal, #transferConfirmModal{
+  #offerConfirmModal, #transferConfirmModal, #acceptTransferConfirmModal{
     display:none;
     position:fixed;
     inset:0;
@@ -3460,6 +3481,16 @@ const SWAP_HTML = `<!DOCTYPE html>
            updateFlockTabLabel). Offers still render per-card exactly as
            before (myPigeonOffersHtml), this just drops the redundant
            header line above the grid. -->
+      <!-- NFT 0FFERED T0 Y0U — real TRANSFER sell-offers sent to this
+           wallet, sitting on a Pigeon someone ELSE still owns (see
+           swap-incoming-transfers.js's own comment for why MY PIGEONS'
+           usual "look at what I own" approach can't find these). Its own
+           box, above the grid, not mixed into it — the Pigeon shown here
+           isn't actually yours yet. -->
+      <div id="incomingTransfersBox" style="display:none;">
+        <div class="panel-title" style="font-size:13px;">NFT 0FFERED T0 Y0U</div>
+        <div id="incomingTransfersList"></div>
+      </div>
       <div class="search-row" id="myPigeonsSortRow" style="display:none; justify-content:center;">
         <select class="sort-select" id="myPigeonsSortSelect">
           <option value="RARITY_ASC" selected>RAR!TY H!GH</option>
@@ -4136,6 +4167,41 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="index-line swap-nonatomic-note" style="margin-top:1.25rem; margin-bottom:0;">THE REC!P!ENT ST!LL NEEDS T0 ACCEPT TH!S 0FFER F0R THE P!GE0N T0 M0VE.</div>
     </div>
 
+    <!-- ACCEPT!NG AN !NC0M!NG TRANSFER (recipient side) — real second popup,
+         same purple/exciting treatment as 0FFER/TRANSFER's own confirm
+         screens (see #offerConfirmModal's own comment). Swaps its own inner
+         content to a small receipt in place on success instead of
+         navigating anywhere — this box isn't part of the DATABASE grid's
+         showScreen chain, it lives entirely inside FL0CK. -->
+    <div id="acceptTransferConfirmModal" style="display:none;">
+      <div class="offer-confirm-panel" id="acceptTransferConfirmPanel">
+        <!-- Two static sub-states toggled by display (not an innerHTML
+             rebuild) — same reasoning every other confirm/result pair on
+             this page already follows: fixed element ids, populated in
+             place, never re-created. -->
+        <div id="acceptTransferConfirmForm">
+          <div class="node-eyebrow">// ACCEPT TRANSFER</div>
+          <div class="confirm-field-label">P!GE0N</div>
+          <div class="confirm-pigeon-num" id="acceptTransferConfPigeonNum"></div>
+          <div class="confirm-field-label">FR0M</div>
+          <div class="confirm-field-value" id="acceptTransferConfFrom"></div>
+          <div class="index-line" id="acceptTransferConfirmStatus" style="margin-top:1rem;"></div>
+          <div class="detail-actions">
+            <button class="secondary-btn" id="acceptTransferConfirmBackBtn">[ ← BACK ]</button>
+            <button class="action-btn offer-confirm-xaman-btn" id="acceptTransferOpenXamanBtn">[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]</button>
+          </div>
+        </div>
+        <div id="acceptTransferConfirmReceipt" style="display:none;">
+          <div class="receipt-badge">✓</div>
+          <div class="receipt-pigeon-num" id="acceptTransferReceiptPigeonNum"></div>
+          <div class="receipt-status-line">!S N0W Y0URS</div>
+          <div class="detail-actions">
+            <button class="action-btn" id="acceptTransferResultDoneBtn">[ D0NE ]</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- SCREEN: ACCEPT OFFER CONFIRMATION (owner side) — the exact NFTokenAcceptOffer txjson, before Xaman ever opens -->
     <div class="sw-panel" id="screenAcceptOfferConfirm" style="display:none;">
       <div class="node-eyebrow">// ACCEPT 0FFER C0NF!RMAT!0N</div>
@@ -4304,6 +4370,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'offerConfirmModal','offerConfAccount','offerConfOwner','offerConfPigeonNum','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
    'transferConfirmModal','transferConfAccount','transferConfPigeonNum','transferConfDestination','transferConfirmStatus','transferConfirmBackBtn','transferOpenXamanBtn',
+   'incomingTransfersBox','incomingTransfersList','acceptTransferConfirmModal','acceptTransferConfirmForm','acceptTransferConfPigeonNum','acceptTransferConfFrom','acceptTransferConfirmStatus','acceptTransferConfirmBackBtn','acceptTransferOpenXamanBtn',
+   'acceptTransferConfirmReceipt','acceptTransferReceiptPigeonNum','acceptTransferResultDoneBtn',
    'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultTxLink','transferResultDoneBtn',
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
    'amountEntryOfferMode','amountEntryOfferInput','amountEntryOfferBtn',
@@ -4610,6 +4678,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // offer can arrive at any time, so a stale cached view would hide a
       // real pending offer.
       loadOffersReceived();
+      loadIncomingTransfers();
     }
     if (tab === 'topholders' && topHoldersData === null){
       loadTopHolders();
@@ -5429,6 +5498,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (isOwnWalletScope()) runScopedQuery();
       }).catch(function(){});
       loadOffersReceived();
+      loadIncomingTransfers();
     }
   }
 
@@ -6957,6 +7027,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // see updateFlockTabLabel above. loadOffersReceived already no-ops
   // with no session.
   loadOffersReceived();
+  loadIncomingTransfers();
   // Lands on FL0CK now (was: DATABASE, self-scoped) — "SH0W MY FL0CK"
   // should actually take you to the FL0CK tab, not just filter DATABASE
   // down to your own wallet while leaving you on it.
@@ -8233,6 +8304,154 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (isOwnWalletScope()) runScopedQuery();
     }).catch(function(){});
   }
+
+  // ---- NFT 0FFERED T0 Y0U (FL0CK) — real TRANSFER sell-offers sent to
+  // this wallet. See swap-incoming-transfers.js's own comment for why this
+  // needs its own tracked KV index instead of just looking at what the
+  // wallet owns (the Pigeon shown here isn't owned by this wallet yet). ----
+  var incomingTransfersData = [];
+  var acceptTransferTarget = null; // { nftId, offerId, number, image, fromWallet, fromWalletShort }
+  var acceptTransferUuid = null;
+  var acceptTransferPollTimer = null;
+  var acceptTransferXamanTab = null;
+
+  function loadIncomingTransfers(){
+    if (!MY_WALLET){ el.incomingTransfersBox.style.display = 'none'; return; }
+    fetch('/api/swap-incoming-transfers').then(function(r){ return r.json(); }).then(function(data){
+      incomingTransfersData = data.items || [];
+      renderIncomingTransfers();
+    }).catch(function(){});
+  }
+  function renderIncomingTransfers(){
+    if (!incomingTransfersData.length){
+      el.incomingTransfersBox.style.display = 'none';
+      return;
+    }
+    el.incomingTransfersBox.style.display = '';
+    el.incomingTransfersList.innerHTML = incomingTransfersData.map(function(t){
+      return '<div class="incoming-transfer-row">' +
+        (t.image ? '<img class="incoming-transfer-thumb" src="' + escapeHtml(t.image) + '" alt="" loading="lazy">' : '<div class="incoming-transfer-thumb"></div>') +
+        '<div class="incoming-transfer-info">' +
+          '<div class="incoming-transfer-num">P!GE0N #' + (t.number !== null ? greenNum(t.number) : '????') + '</div>' +
+          '<div class="incoming-transfer-from">FR0M :: ' + escapeHtml(t.fromWalletShort || t.fromWallet) + '</div>' +
+        '</div>' +
+        '<button class="action-btn incoming-transfer-accept-btn" data-nftid="' + escapeHtml(t.nftId) + '" data-offerid="' + escapeHtml(t.offerId) + '">[ ACCEPT ]</button>' +
+      '</div>';
+    }).join('');
+  }
+  el.incomingTransfersList.addEventListener('click', function(e){
+    var btn = e.target.closest('.incoming-transfer-accept-btn');
+    if (!btn) return;
+    var nftId = btn.getAttribute('data-nftid');
+    var entry = incomingTransfersData.find(function(t){ return t.nftId === nftId; });
+    if (!entry) return;
+    openAcceptTransferConfirm(entry);
+  });
+  function openAcceptTransferConfirm(entry){
+    acceptTransferTarget = entry;
+    el.acceptTransferConfPigeonNum.innerHTML = 'P!GE0N #' + (entry.number !== null ? greenNum(entry.number) : '????');
+    el.acceptTransferConfFrom.textContent = entry.fromWallet;
+    el.acceptTransferConfirmStatus.textContent = '';
+    el.acceptTransferOpenXamanBtn.disabled = false;
+    el.acceptTransferOpenXamanBtn.innerHTML = '[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]';
+    el.acceptTransferConfirmForm.style.display = '';
+    el.acceptTransferConfirmReceipt.style.display = 'none';
+    el.acceptTransferConfirmModal.style.display = 'flex';
+  }
+  function closeAcceptTransferConfirm(){
+    el.acceptTransferConfirmModal.style.display = 'none';
+    acceptTransferTarget = null;
+    acceptTransferUuid = null;
+    if (acceptTransferPollTimer) clearTimeout(acceptTransferPollTimer);
+  }
+  el.acceptTransferConfirmModal.addEventListener('click', function(e){ if (e.target === el.acceptTransferConfirmModal) closeAcceptTransferConfirm(); });
+  el.acceptTransferConfirmBackBtn.addEventListener('click', closeAcceptTransferConfirm);
+  el.acceptTransferOpenXamanBtn.addEventListener('click', submitAcceptTransfer);
+  function submitAcceptTransfer(){
+    if (!acceptTransferTarget) return;
+    el.acceptTransferOpenXamanBtn.disabled = true;
+    el.acceptTransferOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.acceptTransferConfirmStatus.textContent = '';
+    acceptTransferXamanTab = openXamanPopup();
+    fetch('/api/swap-transfer-accept-payload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: acceptTransferTarget.nftId, offerId: acceptTransferTarget.offerId })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        closeXamanTabAndFocus(acceptTransferXamanTab);
+        acceptTransferXamanTab = null;
+        el.acceptTransferOpenXamanBtn.disabled = false;
+        el.acceptTransferOpenXamanBtn.textContent = '[ C0NF!RM W!TH Σκύλλα ]';
+        el.acceptTransferConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      acceptTransferUuid = res.data.uuid;
+      if (acceptTransferXamanTab) acceptTransferXamanTab.location.href = res.data.next.always;
+      el.acceptTransferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.acceptTransferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
+      pollAcceptTransferStatus();
+    }).catch(function(){
+      closeXamanTabAndFocus(acceptTransferXamanTab);
+      acceptTransferXamanTab = null;
+      el.acceptTransferOpenXamanBtn.disabled = false;
+      el.acceptTransferOpenXamanBtn.textContent = '[ C0NF!RM W!TH Σκύλλα ]';
+      el.acceptTransferConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  }
+  function pollAcceptTransferStatus(){
+    if (acceptTransferPollTimer) clearTimeout(acceptTransferPollTimer);
+    if (!acceptTransferUuid || !acceptTransferTarget) return;
+    fetch('/api/swap-transfer-accept-status?uuid=' + encodeURIComponent(acceptTransferUuid) + '&nftId=' + encodeURIComponent(acceptTransferTarget.nftId) + '&offerId=' + encodeURIComponent(acceptTransferTarget.offerId))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'settled'){
+          closeXamanTabAndFocus(acceptTransferXamanTab);
+          acceptTransferXamanTab = null;
+          showAcceptTransferResult();
+          return;
+        }
+        if (data.status === 'rejected'){
+          el.acceptTransferConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
+          el.acceptTransferOpenXamanBtn.disabled = false;
+          el.acceptTransferOpenXamanBtn.textContent = '[ C0NF!RM W!TH Σκύλλα ]';
+          return;
+        }
+        if (data.status === 'expired'){
+          el.acceptTransferConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
+          el.acceptTransferOpenXamanBtn.disabled = false;
+          el.acceptTransferOpenXamanBtn.textContent = '[ C0NF!RM W!TH Σκύλλα ]';
+          return;
+        }
+        if (data.status === 'failed'){
+          el.acceptTransferConfirmStatus.textContent = 'TRANSACT!0N FA!LED 0N-LEDGER.';
+          el.acceptTransferOpenXamanBtn.disabled = false;
+          el.acceptTransferOpenXamanBtn.textContent = '[ C0NF!RM W!TH Σκύλλα ]';
+          return;
+        }
+        acceptTransferPollTimer = setTimeout(pollAcceptTransferStatus, 2000);
+      }).catch(function(){
+        acceptTransferPollTimer = setTimeout(pollAcceptTransferStatus, 2000);
+      });
+  }
+  // Swaps the popup to its static receipt sub-state in place — this flow
+  // lives entirely inside FL0CK, not the DATABASE grid's showScreen chain,
+  // so there's no separate result screen to navigate to.
+  function showAcceptTransferResult(){
+    var num = acceptTransferTarget && acceptTransferTarget.number !== null ? greenNum(acceptTransferTarget.number) : '????';
+    el.acceptTransferReceiptPigeonNum.innerHTML = 'P!GE0N #' + num;
+    el.acceptTransferConfirmForm.style.display = 'none';
+    el.acceptTransferConfirmReceipt.style.display = '';
+  }
+  el.acceptTransferResultDoneBtn.addEventListener('click', function(){
+    closeAcceptTransferConfirm();
+    loadIncomingTransfers();
+    loadOffersReceived();
+    renderMyPigeonsList();
+    if (isOwnWalletScope()) runScopedQuery();
+  });
+
   el.acceptOfferConfirmBackBtn.addEventListener('click', function(){
     acceptOfferTarget = null;
     state.activeTab = 'mypigeons';
