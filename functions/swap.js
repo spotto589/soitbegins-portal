@@ -3011,7 +3011,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </button>
-      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;">Σκύλλα :: $WλP</span></button>
+      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;">Σκύλλα://FL0CK</span></button>
       <button class="tab-btn" data-tab="topholders">T0P 123</button>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
@@ -3142,7 +3142,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
 
     <div class="sw-panel" id="myPigeonsPanel" style="display:none;">
-      <div class="panel-title" id="myPigeonsPanelTitle">Σκύλλα :: $WλP</div>
+      <div class="panel-title" id="myPigeonsPanelTitle">Σκύλλα://FL0CK</div>
       <div class="skylla-signal" id="connectStatus"></div>
       <div id="myPigeonsConnect" style="display:none; text-align:center;">
         <button class="bar-btn" id="connectScyllaBtn">[ CONNECT <span style="text-transform:none;">Σκύλλα</span> ]</button>
@@ -6058,7 +6058,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // count current. myPigeonsSortRow/myPigeonsList stay in the markup but
   // permanently empty/hidden.
   function renderMyPigeonsList(){
-    el.myPigeonsPanelTitle.textContent = 'Σκύλλα :: $WλP' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
+    el.myPigeonsPanelTitle.textContent = 'Σκύλλα://FL0CK' + (myPigeonsData !== null ? ' :: ' + myPigeonsData.length : '');
     el.myPigeonsSortRow.style.display = 'none';
     el.myPigeonsList.innerHTML = '';
     // The Y0UR P!GE0N picker (openSimpleOfferPicker) shows nothing rather
@@ -6083,7 +6083,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // if that login attempt actually fails (see getXummAuth's error
     // paths below), as a manual retry.
     el.offersReceivedBlock.style.display = 'none';
-    el.myPigeonsPanelTitle.textContent = 'Σκύλλα :: $WλP';
+    el.myPigeonsPanelTitle.textContent = 'Σκύλλα://FL0CK';
   }
   // LIST/DELIST/ACCEPT OFFER click + input handling for this container is
   // shared with the DATABASE grid inside wireResultClicks now (own-wallet
@@ -8492,8 +8492,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // gated the same way, separately from SWAP_BUILDER_ENABLED's own
   // tradeBuilderPanel/per-card offer-toggle above.
   if (!CREATE_OFFER_ENABLED){
-    el.simpleOfferLive.style.display = 'none';
-    el.simpleOfferComingSoon.style.display = '';
+    // Whole box hidden now (was: stay visible showing a C0M!NG S00N
+    // message) — same full-hide treatment as SWAP_BUILDER_ENABLED's own
+    // tradeBuilderPanel above. Nothing removed, just gated; flip
+    // CREATE_OFFER_ENABLED back to true to bring the real box back
+    // exactly as it was (simpleOfferLive/simpleOfferComingSoon still both
+    // exist and still work, this just stops showing either one).
+    el.simpleOfferPanel.style.display = 'none';
     el.swapOffersTabBtn.style.display = 'none';
   }
 
