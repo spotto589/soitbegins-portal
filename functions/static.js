@@ -3876,7 +3876,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="make-offer-balance-line" id="amountEntryOfferBalanceLine" style="display:none;"></div>
           <div class="thumb-offer-row">
             <div class="make-offer-input-wrap">
-              <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
               <input class="make-offer-input" id="amountEntryOfferInput" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">
             </div>
             <button class="make-offer-send" id="amountEntryOfferBtn">SUBM!T</button>
@@ -4195,35 +4194,47 @@ const SWAP_HTML = `<!DOCTYPE html>
          this is Σκύλλα's own $PIGEONS colour (same as the trustline
          banner/SORT BY/ADD TRAITS), meant to feel like a real, exciting
          moment, not just another form. -->
+    <!-- OFFER CONFIRMATION — two static sub-states toggled by display
+         (never an innerHTML rebuild, same reasoning acceptTransferConfirm-
+         Modal's own comment gives), not a showScreen navigation away from
+         the grid. Submitting keeps this exact same popup open and just
+         swaps to the receipt state instead of jumping to a separate full
+         page. -->
     <div id="offerConfirmModal" style="display:none;">
       <div class="offer-confirm-panel">
-        <div class="node-eyebrow">// 0FFER C0NF!RMAT!0N</div>
-        <div class="confirm-field-label">Y0U ARE 0FFER!NG</div>
-        <div class="confirm-field-value confirm-field-value-big" id="offerConfValue"></div>
-        <div class="confirm-field-label">F0R</div>
-        <!-- Real picture, clickable straight into the full detail view —
-             closes this popup first (openDetail is a showScreen navigation,
-             not another stacked popup, see gotcha #10 in HANDOFF.md). -->
-        <img class="confirm-pigeon-thumb" id="offerConfPigeonImg" src="" alt="" title="V!EW P!GE0N">
-        <div class="confirm-pigeon-num confirm-pigeon-num-clickable" id="offerConfPigeonNum"></div>
-        <div class="index-line" id="offerConfirmStatus" style="margin-top:1rem;"></div>
-        <div class="detail-actions">
-          <button class="secondary-btn" id="offerConfirmBackBtn">[ ← BACK ]</button>
-          <button class="action-btn offer-confirm-xaman-btn" id="offerOpenXamanBtn">[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]</button>
+        <div id="offerConfirmForm">
+          <div class="node-eyebrow">// 0FFER C0NF!RMAT!0N</div>
+          <div class="confirm-field-label">Y0U ARE 0FFER!NG</div>
+          <div class="confirm-field-value confirm-field-value-big" id="offerConfValue"></div>
+          <div class="confirm-field-label">F0R</div>
+          <!-- Real picture, clickable straight into the full detail view —
+               closes this popup first (openDetail is a showScreen
+               navigation, not another stacked popup, see gotcha #10 in
+               HANDOFF.md). -->
+          <img class="confirm-pigeon-thumb" id="offerConfPigeonImg" src="" alt="" title="V!EW P!GE0N">
+          <div class="confirm-pigeon-num confirm-pigeon-num-clickable" id="offerConfPigeonNum"></div>
+          <div class="index-line" id="offerConfirmStatus" style="margin-top:1rem;"></div>
+          <div class="detail-actions">
+            <button class="secondary-btn" id="offerConfirmBackBtn">[ ← BACK ]</button>
+            <button class="action-btn offer-confirm-xaman-btn" id="offerOpenXamanBtn">[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]</button>
+          </div>
         </div>
-      </div>
-    </div>
-
-    <!-- SCREEN: OFFER RESULT — verified against real on-ledger state (nft_buy_offers), not just Xaman's word -->
-    <div class="sw-panel" id="screenOfferResult" style="display:none;">
-      <div class="detail-eyebrow">// 0FFER SENT</div>
-      <div class="index-line swap-nonatomic-note">THE 0WNER ST!LL NEEDS T0 ACCEPT TH!S 0FFER F0R THE TRADE T0 SETTLE.</div>
-      <div class="detail-num" id="offerResultPigeonNum"></div>
-      <div class="detail-field"><span class="df-label">Y0UR 0FFER</span><span class="df-value" id="offerResultPrice"></span></div>
-      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="offerResultStatus"></span></div>
-      <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="offerResultTxLink" target="_blank" rel="noopener"></a></span></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="offerResultDoneBtn">[ ← BACK T0 DATABASE ]</button>
+        <!-- Verified against real on-ledger state (nft_buy_offers), not
+             just Xaman's word. -->
+        <div id="offerConfirmReceipt" style="display:none;">
+          <div class="receipt-badge">✓</div>
+          <div class="receipt-status-line">0FFER SENT</div>
+          <div class="receipt-pigeon-num" id="offerReceiptPigeonNum"></div>
+          <div class="receipt-price-row">
+            <div class="receipt-price-label">Y0UR 0FFER</div>
+            <div class="receipt-price-value" id="offerReceiptPrice"></div>
+          </div>
+          <div class="detail-actions">
+            <button class="action-btn" id="offerResultDoneBtn">[ D0NE ]</button>
+          </div>
+          <a class="receipt-tx-link" id="offerResultTxLink" target="_blank" rel="noopener">V!EW TRANSACT!0N</a>
+          <div class="index-line swap-nonatomic-note" style="margin-top:1.25rem; margin-bottom:0;">THE 0WNER ST!LL NEEDS T0 ACCEPT TH!S 0FFER F0R THE TRADE T0 SETTLE.</div>
+        </div>
       </div>
     </div>
 
@@ -4471,7 +4482,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
    'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
    'offerConfirmModal','offerConfPigeonImg','offerConfPigeonNum','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
-   'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
+   'offerConfirmForm','offerConfirmReceipt','offerReceiptPigeonNum','offerReceiptPrice','offerResultTxLink','offerResultDoneBtn',
    'transferConfirmModal','transferConfAccount','transferConfPigeonNum','transferConfDestination','transferConfirmStatus','transferConfirmBackBtn','transferOpenXamanBtn',
    'incomingTransfersBox','incomingTransfersList','acceptTransferConfirmModal','acceptTransferConfirmForm','acceptTransferConfPigeonNum','acceptTransferConfFrom','acceptTransferConfirmStatus','acceptTransferConfirmBackBtn','acceptTransferOpenXamanBtn',
    'acceptTransferConfirmReceipt','acceptTransferReceiptPigeonNum','acceptTransferResultDoneBtn',
@@ -4863,7 +4874,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // sub-divs' display instead.
     el.screenDelistConfirm.style.display = name === 'delistconfirm' ? '' : 'none';
     el.screenDelistResult.style.display = name === 'delistresult' ? '' : 'none';
-    el.screenOfferResult.style.display = name === 'offerresult' ? '' : 'none';
+    // 0FFER's own result is a receipt sub-state inside #offerConfirmModal
+    // now (see showOfferResult), not a showScreen name.
     el.screenTransferResult.style.display = name === 'transferresult' ? '' : 'none';
     el.screenAcceptOfferConfirm.style.display = name === 'acceptofferconfirm' ? '' : 'none';
     el.screenAcceptOfferResult.style.display = name === 'acceptofferresult' ? '' : 'none';
@@ -8172,6 +8184,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.offerConfirmStatus.textContent = '';
     el.offerOpenXamanBtn.disabled = false;
     el.offerOpenXamanBtn.innerHTML = OFFER_CONFIRM_BTN_HTML;
+    el.offerConfirmForm.style.display = '';
+    el.offerConfirmReceipt.style.display = 'none';
     el.offerConfirmModal.style.display = 'flex';
   }
   function closeOfferConfirmModal(){
@@ -8267,28 +8281,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showOfferResult(data){
-    // Second popup closes the instant the real full-screen result takes
-    // over — offerTarget itself stays set (not closeOfferConfirmModal,
-    // which also clears it) since this still needs .number below.
-    el.offerConfirmModal.style.display = 'none';
-    el.offerResultPigeonNum.innerHTML = 'P!GE0N #' + (offerTarget.number !== null ? greenNum(offerTarget.number) : '????');
-    el.offerResultPrice.textContent = fmtPigeons(data.price);
-    el.offerResultStatus.textContent = 'SENT';
+    // Same popup, not a screen navigation — swap to the receipt sub-state
+    // in place (offerTarget stays set, still needs .number below).
+    el.offerReceiptPigeonNum.innerHTML = 'P!GE0N #' + (offerTarget.number !== null ? greenNum(offerTarget.number) : '????');
+    el.offerReceiptPrice.textContent = fmtPigeons(data.price);
     if (data.txHash){
       el.offerResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
-      el.offerResultTxLink.textContent = data.txHash;
+      el.offerResultTxLink.style.display = '';
     } else {
       el.offerResultTxLink.removeAttribute('href');
-      el.offerResultTxLink.textContent = '—';
+      el.offerResultTxLink.style.display = 'none';
     }
-    showScreen('offerresult');
+    el.offerConfirmForm.style.display = 'none';
+    el.offerConfirmReceipt.style.display = '';
   }
   el.offerResultDoneBtn.addEventListener('click', function(){
-    offerTarget = null;
-    offerUuid = null;
-    if (offerPollTimer) clearTimeout(offerPollTimer);
-    state.activeTab = 'database';
-    showScreen('browse');
+    closeOfferConfirmModal();
+    if (isOwnWalletScope()) runScopedQuery();
   });
 
   // ---- TRANSFER — give one of your own Pigeons directly to another
