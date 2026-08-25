@@ -3821,6 +3821,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="index-line list-inline-status" id="amountEntryListStatus" style="display:none;"></div>
         </div>
         <div class="thumb-offer amount-entry-mode" id="amountEntryOfferMode" style="display:none;">
+          <div class="index-line make-offer-balance-line" id="amountEntryOfferBalanceLine" style="display:none;"></div>
           <div class="thumb-offer-row">
             <div class="make-offer-input-wrap">
               <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
@@ -4421,7 +4422,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'acceptTransferConfirmReceipt','acceptTransferReceiptPigeonNum','acceptTransferResultDoneBtn',
    'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultTxLink','transferResultDoneBtn',
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
-   'amountEntryOfferMode','amountEntryOfferInput','amountEntryOfferBtn',
+   'amountEntryOfferMode','amountEntryOfferBalanceLine','amountEntryOfferInput','amountEntryOfferBtn',
    'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferBtn','amountEntryTransferStatus',
    'screenAcceptOfferConfirm','acceptOfferConfTxType','acceptOfferConfAccount','acceptOfferConfOfferId','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
    'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
@@ -5853,6 +5854,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.amountEntryOfferInput.value = '';
       el.amountEntryOfferBtn.disabled = false;
       el.amountEntryOfferBtn.textContent = 'SUBM!T';
+      // trustlineBalanceNum is the same live $PIGEONS balance the
+      // trustline banner itself shows (loadTrustlineLoginState) — null
+      // means it hasn't loaded yet (or there's no session), in which case
+      // this stays hidden rather than showing a stale/wrong 0.
+      if (trustlineBalanceNum !== null){
+        el.amountEntryOfferBalanceLine.innerHTML = 'Y0UR BALANCE :: ' + greenNum(trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' $P!GE0NS';
+        el.amountEntryOfferBalanceLine.style.display = '';
+      } else {
+        el.amountEntryOfferBalanceLine.style.display = 'none';
+      }
     } else {
       el.amountEntryTitle.textContent = 'TRANSFER T0 WALLET';
       el.amountEntryTransferInput.value = '';
@@ -8030,6 +8041,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       alert('ENTER A VAL!D PR!CE GREATER THAN 0.');
       return;
     }
+    // Same live balance the popup's own BALANCE line (and the trustline
+    // banner) reads — null means it hasn't loaded, in which case this
+    // can't block (fails open rather than wrongly refusing a real offer
+    // just because the balance fetch hasn't settled yet); the real prepare
+    // endpoint has no balance check of its own since a $PIGEONS buy-offer
+    // doesn't require the offerer to hold anything until it's accepted —
+    // this is purely a "don't let you promise more than you have" UI guard.
+    if (trustlineBalanceNum !== null && Number(priceValue) > trustlineBalanceNum){
+      alert('Y0U D0N\\'T HAVE EN0UGH $P!GE0NS F0R TH!S 0FFER — BALANCE :: ' + trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS.');
+      return;
+    }
     var sendBtn = stripEl.querySelector('.make-offer-send');
     sendBtn.disabled = true;
     sendBtn.textContent = '[ VAL!DAT!NG... ]';
@@ -8127,7 +8149,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       offerUuid = res.data.uuid;
       if (offerXamanTab) offerXamanTab.location.href = res.data.next.always;
       el.offerOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
-      el.offerConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
+      el.offerConfirmStatus.textContent = '';
       pollOfferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(offerXamanTab);
