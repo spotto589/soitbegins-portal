@@ -2194,14 +2194,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     .detail-nav-prev{ left:0.25rem; }
     .detail-nav-next{ right:0.25rem; }
   }
-  /* Second BACK entry point, fixed to the top-right corner (same
+  /* Second BACK entry point, fixed to the top-left corner (same
      containing block as #screenDetail, same reasoning as .detail-nav-btn
      above) — the full-width strip at the bottom of the traits/listings
-     column is still there too, this just saves a scroll back down. */
+     column is still there too, this just saves a scroll back down.
+     left matches #screenDetail's own horizontal padding exactly
+     (clamp(1rem, 4vw, 3rem)), not .detail-nav-btn's smaller clamp, so
+     this lines up flush with the picture's own left edge (.detail-col-
+     left has no padding/offset of its own beyond the screen's). */
   .detail-back-btn-top{
     position:fixed;
     top:clamp(0.5rem, 2vw, 1.5rem);
-    right:clamp(0.5rem, 2vw, 1.5rem);
+    left:clamp(1rem, 4vw, 3rem);
     z-index:75;
     /* Same colors/shape as .detail-back-btn (the bottom strip) — just
        sized up a bit since this one stands alone instead of filling the
@@ -4685,7 +4689,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       swapOfferState.uuid = res.data.uuid;
       navigateXamanPopup(xamanTab, res.data.next.always);
       el.swapOfferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
-      el.swapConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      el.swapConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollSwapOfferStatus();
     }).catch(function(){
       if (xamanTab) xamanTab.close();
@@ -4890,7 +4894,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       swapAcceptState.uuid = res.data.uuid;
       navigateXamanPopup(xamanTab, res.data.next.always);
       el.swapAcceptOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
-      el.acceptConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      el.acceptConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollSwapAcceptStatus();
     }).catch(function(){
       if (xamanTab) xamanTab.close();
@@ -5078,7 +5082,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Now replaced immediately so it's clear a wallet lookup is in
       // flight, not just a slow re-render of the same list.
       el.statusLine.innerHTML = '<div class="results-trait-note">L0AD!NG WALLET ' + escapeHtml(state.scope.ownerShort) + '...</div>';
-      el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG H0LDER\\'S REAL P!GE0NS...</div>';
     }
     // Force the DATABASE tab regardless of which tab we were on (a wallet
     // click from Top 10 / Sales Data should always land here) — and mark it
@@ -6697,7 +6700,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       listingUuid = res.data.uuid;
       if (listingXamanTab) listingXamanTab.location.href = res.data.next.always;
       listingBtnEl.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
-      if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.'; }
+      if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.'; }
       pollListingStatus();
     }).catch(function(){
       closeXamanTabAndFocus(listingXamanTab);
@@ -7166,7 +7169,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       navigateXamanPopup(xamanTab, res.data.next.always);
       buySwapXamanTab = xamanTab;
       el.buySwapOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
-      el.buySwapConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      el.buySwapConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollBuySwapStatus();
     }).catch(function(){
       if (xamanTab) xamanTab.close();
@@ -7261,7 +7264,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       buyUuid = res.data.uuid;
       buyXamanTab = window.open(res.data.next.always, 'xamanSign', XAMAN_POPUP_FEATURES);
       el.buyOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
-      el.buyConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      el.buyConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollBuyStatus();
     }).catch(function(e){
       el.buyOpenXamanBtn.disabled = false;
@@ -7394,7 +7397,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       delistUuid = res.data.uuid;
       delistXamanTab = window.open(res.data.next.always, 'xamanSign', XAMAN_POPUP_FEATURES);
       el.delistOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
-      el.delistConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      el.delistConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollDelistStatus();
     }).catch(function(){
       el.delistOpenXamanBtn.disabled = false;
@@ -7556,7 +7559,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       offerUuid = res.data.uuid;
       if (offerXamanTab) offerXamanTab.location.href = res.data.next.always;
       el.offerOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
-      el.offerConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      el.offerConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollOfferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(offerXamanTab);
@@ -7724,7 +7727,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       transferUuid = res.data.uuid;
       if (transferXamanTab) transferXamanTab.location.href = res.data.next.always;
       el.transferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
-      el.transferConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      el.transferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollTransferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(transferXamanTab);
@@ -7856,7 +7859,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       acceptOfferUuid = res.data.uuid;
       if (acceptOfferXamanTab) acceptOfferXamanTab.location.href = res.data.next.always;
       el.acceptOfferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
-      el.acceptOfferConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      el.acceptOfferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollAcceptOfferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(acceptOfferXamanTab);
