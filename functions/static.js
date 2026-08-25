@@ -828,6 +828,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      taller than its neighbor. */
   .owned-action-row{ display:flex; gap:0.5rem; }
   .owned-action-row .bar-btn{ flex:1 1 0; min-width:0; }
+  /* BUY N0W + 0FFER side by side (same row pairing as CANCEL/TRANSFER
+     above) — both buttons normally go full-width on their own line
+     (.thumb-buy-btn/.offer-open-modal-btn), overridden here since they're
+     sharing a row now instead of stacking. */
+  .owned-action-row .thumb-buy-btn,
+  .owned-action-row .offer-open-modal-btn{ width:auto; flex:1 1 0; min-width:0; margin-bottom:0; }
   .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:#ff4d4d; background:#ff4d4d; color:#000; text-shadow:none; }
   /* Red, same accent as CLEAR TRAITS — resetting every filter is a
      destructive-feeling action, worth calling out differently from the
@@ -1465,13 +1471,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-shadow:0 0 16px var(--pigeon-purple-glow);
     padding:0.6em 0.7em;
     /* Every purple box in a row is this same height regardless of what's
-       actually inside it — a listed card (price + countdown + BUY N0W +
-       MAKE AN 0FFER, the tallest real case) sits next to an unlisted one
-       (just MAKE AN 0FFER) or an own-Pigeon one (Y0UR L!ST!NG + CANCEL, or
+       actually inside it — a listed card (price + countdown + BUY N0W/
+       0FFER side by side, the tallest real case) sits next to an unlisted
+       one (just 0FFER) or an own-Pigeon one (Y0UR L!ST!NG + CANCEL, or
        just !N Y0UR FL0CK) and all three still line up edge to edge.
        min-height covers the tallest case; flex centers whatever's actually
        in the shorter ones instead of leaving it stuck at the top. */
-    min-height:168px;
+    min-height:132px;
     box-sizing:border-box;
     display:flex;
     flex-direction:column;
@@ -5812,13 +5818,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     // the number. Price is now its own plain line above BUY N0W, not
     // baked into the button label.
     var buyCountdown = canBuy ? listingCountdownText(p.scyllaListing.expiration) : '';
+    // BUY N0W + 0FFER sit side by side (.owned-action-row, same pairing
+    // CANCEL/TRANSFER already uses) instead of stacked — when there's no
+    // real listing (canBuy false) 0FFER is still wrapped in the same row
+    // alone, so its width behaves identically either way.
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
       (canBuy
         ? '<div class="thumb-buy-price">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>' +
-          (buyCountdown ? '<div class="listing-countdown">' + escapeHtml(buyCountdown) + '</div>' : '') +
-          '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W ]</button>'
+          (buyCountdown ? '<div class="listing-countdown">' + escapeHtml(buyCountdown) + '</div>' : '')
         : '') +
-      '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%;">[ MAKE AN 0FFER ]</button>' +
+      '<div class="owned-action-row">' +
+        (canBuy ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W ]</button>' : '') +
+        '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ 0FFER ]</button>' +
+      '</div>' +
     '</div>';
   }
   function resultCardHtml(p){
