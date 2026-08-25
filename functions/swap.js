@@ -1434,9 +1434,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:0 0 5px var(--green-glow);
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.05em;
-    padding:0.6em 0.7em;
+    padding:0.85em 0.7em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
@@ -2885,6 +2885,47 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
   }
   .simple-picker-close:hover{ border-color:var(--magenta-dim); color:var(--magenta); }
+
+  /* ---- Shared L!ST/0FFER/TRANSFER popup — same overlay/panel pattern
+     as #simpleOfferPickerModal above, just a single input+button instead
+     of a thumbnail grid. One instance, re-labelled per use (see
+     openAmountEntryModal) instead of three separate inline forms — the
+     inline number/wallet boxes that used to sit directly on every card
+     are gone; this is the one place that number now gets typed. ---- */
+  #amountEntryModal{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    background:rgba(5,5,6,0.88);
+    align-items:center;
+    justify-content:center;
+    padding:2rem 1rem;
+  }
+  .amount-entry-panel{
+    width:min(360px, 100%);
+    background:var(--panel-bg-solid);
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    box-shadow:0 10px 30px rgba(0,0,0,0.6);
+    padding:1.25rem;
+  }
+  .amount-entry-mode .thumb-offer-row{ align-items:stretch; }
+  .amount-entry-mode .make-offer-input-wrap{ margin-bottom:0; }
+  .transfer-wallet-input{
+    flex:1 1 auto;
+    min-width:0;
+    background:rgba(8,9,11,0.6);
+    border:1px solid rgba(255,255,255,0.6);
+    color:var(--white);
+    font-family:var(--font-mono);
+    font-size:13px;
+    font-weight:700;
+    padding:0.65em 0.75em;
+    border-radius:var(--radius);
+  }
+  .transfer-wallet-input:focus{ outline:none; border-color:#fff; }
+  .transfer-wallet-input::placeholder{ color:rgba(255,255,255,0.5); }
   /* Fixed scroll height (not just overflow:auto with no bound) — 4 across,
      tall enough to read each thumbnail clearly, scrolling down through
      the rest rather than the whole modal growing past the viewport. */
@@ -3431,6 +3472,49 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- Shared L!ST/0FFER/TRANSFER popup — one instance, re-labelled per
+         use (openAmountEntryModal). Cards across DATABASE only ever show
+         a button now ([ L!ST ]/[ 0FFER ]/[ TRANSFER ]); this is the one
+         place left to actually type a number or wallet address. Each
+         mode reuses the exact input/button classes its own existing
+         submit logic already expects (list-price-input/list-inline-btn
+         for L!ST, make-offer-input/make-offer-send for 0FFER), so
+         submitInlineListing/submitMakeOffer work completely unchanged. -->
+    <div id="amountEntryModal" style="display:none;">
+      <div class="amount-entry-panel">
+        <div class="simple-picker-header">
+          <span class="simple-picker-title" id="amountEntryTitle"></span>
+          <button type="button" class="simple-picker-close" id="amountEntryClose" title="CL0SE">&times;</button>
+        </div>
+        <div class="thumb-offer amount-entry-mode" id="amountEntryListMode" style="display:none;">
+          <div class="thumb-offer-row">
+            <div class="make-offer-input-wrap">
+              <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
+              <input class="list-price-input" id="amountEntryListInput" type="text" inputmode="decimal" placeholder="L!ST PR!CE">
+            </div>
+            <button class="list-inline-btn" id="amountEntryListBtn">[ L!ST ]</button>
+          </div>
+          <div class="index-line list-inline-status" id="amountEntryListStatus" style="display:none;"></div>
+        </div>
+        <div class="thumb-offer amount-entry-mode" id="amountEntryOfferMode" style="display:none;">
+          <div class="thumb-offer-row">
+            <div class="make-offer-input-wrap">
+              <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
+              <input class="make-offer-input" id="amountEntryOfferInput" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">
+            </div>
+            <button class="make-offer-send" id="amountEntryOfferBtn">SUBM!T</button>
+          </div>
+        </div>
+        <div class="thumb-offer amount-entry-mode" id="amountEntryTransferMode" style="display:none;">
+          <div class="thumb-offer-row">
+            <input class="transfer-wallet-input" id="amountEntryTransferInput" type="text" placeholder="DEST!NAT!0N WALLET (r...)">
+            <button class="list-inline-btn" id="amountEntryTransferBtn">[ TRANSFER ]</button>
+          </div>
+          <div class="index-line" id="amountEntryTransferStatus" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- SCREEN 2b: TRANSACTION HISTORY — a full swap of the DETAIL box, not an
          inline expand, so the history list gets the whole panel to itself -->
     <div class="sw-panel" id="screenHistory" style="display:none;">
@@ -3739,6 +3823,36 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- SCREEN: TRANSFER CONFIRMATION — a real free (Amount "0") NFTokenCreateOffer
+         restricted to the destination wallet, entered via the shared amount-entry
+         popup's TRANSFER mode — the exact txjson, before Xaman ever opens -->
+    <div class="sw-panel" id="screenTransferConfirm" style="display:none;">
+      <div class="node-eyebrow">// TRANSFER C0NF!RMAT!0N</div>
+      <div class="tx-type-badge" id="transferConfTxType"></div>
+      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="transferConfAccount"></span></div>
+      <div class="detail-field"><span class="df-label">NFTokenID</span><span class="df-value" id="transferConfNftId"></span></div>
+      <div class="detail-field"><span class="df-label">Destination</span><span class="df-value" id="transferConfDestination"></span></div>
+      <div class="index-line swap-nonatomic-note">TH!S 0NLY CREATES THE 0FFER — THE REC!P!ENT ST!LL NEEDS T0 ACCEPT !T (E.G. FR0M THE!R 0WN XAMAN WALLET) BEF0RE THE P!GE0N ACTUALLY M0VES.</div>
+      <div class="index-line" id="transferConfirmStatus" style="margin-top:1rem;"></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="transferConfirmBackBtn">[ ← BACK ]</button>
+        <button class="action-btn" id="transferOpenXamanBtn">[ 0PEN XAMAN ]</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: TRANSFER RESULT — verified against real on-ledger state (nft_sell_offers), not just Xaman's word -->
+    <div class="sw-panel" id="screenTransferResult" style="display:none;">
+      <div class="detail-eyebrow">// TRANSFER 0FFER SENT</div>
+      <div class="index-line swap-nonatomic-note">THE REC!P!ENT ST!LL NEEDS T0 ACCEPT TH!S 0FFER F0R THE P!GE0N T0 M0VE.</div>
+      <div class="detail-num" id="transferResultPigeonNum"></div>
+      <div class="detail-field"><span class="df-label">TRANSFERR!NG T0</span><span class="df-value" id="transferResultDestination"></span></div>
+      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="transferResultStatus"></span></div>
+      <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="transferResultTxLink" target="_blank" rel="noopener"></a></span></div>
+      <div class="detail-actions">
+        <button class="secondary-btn" id="transferResultDoneBtn">[ ← BACK T0 MY FL0CK ]</button>
+      </div>
+    </div>
+
     <!-- SCREEN: ACCEPT OFFER CONFIRMATION (owner side) — the exact NFTokenAcceptOffer txjson, before Xaman ever opens -->
     <div class="sw-panel" id="screenAcceptOfferConfirm" style="display:none;">
       <div class="node-eyebrow">// ACCEPT 0FFER C0NF!RMAT!0N</div>
@@ -3901,6 +4015,11 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
    'screenOfferConfirm','offerConfTxType','offerConfAccount','offerConfOwner','offerConfNftId','offerConfCurrency','offerConfIssuer','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
+   'screenTransferConfirm','transferConfTxType','transferConfAccount','transferConfNftId','transferConfDestination','transferConfirmStatus','transferConfirmBackBtn','transferOpenXamanBtn',
+   'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultStatus','transferResultTxLink','transferResultDoneBtn',
+   'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus',
+   'amountEntryOfferMode','amountEntryOfferInput','amountEntryOfferBtn',
+   'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferBtn','amountEntryTransferStatus',
    'screenAcceptOfferConfirm','acceptOfferConfTxType','acceptOfferConfAccount','acceptOfferConfOfferId','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
    'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
@@ -4269,6 +4388,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenDelistResult.style.display = name === 'delistresult' ? '' : 'none';
     el.screenOfferConfirm.style.display = name === 'offerconfirm' ? '' : 'none';
     el.screenOfferResult.style.display = name === 'offerresult' ? '' : 'none';
+    el.screenTransferConfirm.style.display = name === 'transferconfirm' ? '' : 'none';
+    el.screenTransferResult.style.display = name === 'transferresult' ? '' : 'none';
     el.screenAcceptOfferConfirm.style.display = name === 'acceptofferconfirm' ? '' : 'none';
     el.screenAcceptOfferResult.style.display = name === 'acceptofferresult' ? '' : 'none';
     scrollTabStripIntoView();
@@ -5135,18 +5256,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       '</div>';
     }
     var canBuy = !!p.scyllaListing && p.owner !== MY_WALLET;
+    // No inline OFFER AMOUNT input on the card any more — just a button
+    // that opens the shared amount-entry popup (see openAmountEntryModal
+    // and .offer-open-modal-btn in wireResultClicks) to actually type
+    // the number.
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
       (canBuy
         ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W :: ' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + ' ]</button>'
         : '') +
-      '<div class="thumb-offer-row">' +
-        '<div class="make-offer-input-wrap">' +
-          '<img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">' +
-          '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">' +
-          '<button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">&times;</button>' +
-        '</div>' +
-        '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">SUBM!T</button>' +
-      '</div>' +
+      '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%;">[ 0FFER ]</button>' +
     '</div>';
   }
   function resultCardHtml(p){
@@ -5272,6 +5390,70 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.resultsArea.innerHTML = items.length ? '<div class="result-list' + (state.dbView === 'thumbnails' ? ' view-thumbnails' : '') + '">' + items.map(cardHtmlForView).join('') + '</div>' : '';
   }
 
+  // ---- Shared L!ST/0FFER/TRANSFER popup (#amountEntryModal) — cards
+  // across DATABASE only ever show a button now; this is the one place
+  // that still asks for a typed number/wallet. Each mode is its own
+  // fully-formed mini strip inside the modal (see the HTML), reusing the
+  // exact classes submitInlineListing/submitMakeOffer already look for
+  // (.list-price-input/.list-inline-btn, .make-offer-input/.make-offer-
+  // send) so neither function needed to change — only TRANSFER is new
+  // (see submitTransfer below). ----
+  var amountEntryPigeon = null; // the Pigeon the currently-open popup is acting on
+  function openAmountEntryModal(mode, p){
+    amountEntryPigeon = p;
+    el.amountEntryListMode.style.display = mode === 'list' ? '' : 'none';
+    el.amountEntryOfferMode.style.display = mode === 'offer' ? '' : 'none';
+    el.amountEntryTransferMode.style.display = mode === 'transfer' ? '' : 'none';
+    if (mode === 'list'){
+      el.amountEntryTitle.textContent = 'L!ST PR!CE';
+      el.amountEntryListInput.value = '';
+      el.amountEntryListBtn.disabled = false;
+      el.amountEntryListBtn.textContent = '[ L!ST ]';
+      el.amountEntryListStatus.style.display = 'none';
+      el.amountEntryListStatus.textContent = '';
+    } else if (mode === 'offer'){
+      el.amountEntryTitle.textContent = '0FFER AM0UNT';
+      el.amountEntryOfferInput.value = '';
+      el.amountEntryOfferBtn.disabled = false;
+      el.amountEntryOfferBtn.textContent = 'SUBM!T';
+    } else {
+      el.amountEntryTitle.textContent = 'TRANSFER T0 WALLET';
+      el.amountEntryTransferInput.value = '';
+      el.amountEntryTransferBtn.disabled = false;
+      el.amountEntryTransferBtn.textContent = '[ TRANSFER ]';
+      el.amountEntryTransferStatus.style.display = 'none';
+      el.amountEntryTransferStatus.textContent = '';
+    }
+    el.amountEntryModal.style.display = 'flex';
+    (mode === 'list' ? el.amountEntryListInput : mode === 'offer' ? el.amountEntryOfferInput : el.amountEntryTransferInput).focus();
+  }
+  function closeAmountEntryModal(){
+    el.amountEntryModal.style.display = 'none';
+    amountEntryPigeon = null;
+  }
+  el.amountEntryClose.addEventListener('click', closeAmountEntryModal);
+  el.amountEntryModal.addEventListener('click', function(e){ if (e.target === el.amountEntryModal) closeAmountEntryModal(); });
+  el.amountEntryListBtn.addEventListener('click', function(){
+    if (amountEntryPigeon) submitInlineListing(amountEntryPigeon, el.amountEntryListInput.value.trim().replace(/,/g, ''), el.amountEntryListMode);
+  });
+  el.amountEntryOfferBtn.addEventListener('click', function(){
+    if (amountEntryPigeon) submitMakeOffer(amountEntryPigeon, el.amountEntryOfferInput.value.trim().replace(/,/g, ''), el.amountEntryOfferMode);
+  });
+  el.amountEntryTransferBtn.addEventListener('click', function(){
+    if (amountEntryPigeon) submitTransfer(amountEntryPigeon, el.amountEntryTransferInput.value.trim(), el.amountEntryTransferMode);
+  });
+  el.amountEntryModal.addEventListener('keydown', function(e){
+    if (e.key !== 'Enter') return;
+    if (e.target === el.amountEntryListInput) el.amountEntryListBtn.click();
+    else if (e.target === el.amountEntryOfferInput) el.amountEntryOfferBtn.click();
+    else if (e.target === el.amountEntryTransferInput) el.amountEntryTransferBtn.click();
+  });
+  // Live thousands-separator formatting as you type, same helper the
+  // other amount inputs use.
+  el.amountEntryModal.addEventListener('input', function(e){
+    if (e.target === el.amountEntryListInput || e.target === el.amountEntryOfferInput) formatThousandsInput(e.target);
+  });
+
   function wireResultClicks(container, source){
     container.addEventListener('click', function(e){
       // 0FFER F0R picking mode (see enterTheirsPickMode) — a click on the
@@ -5344,12 +5526,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         browseOwnerCollection(histWalletLink.getAttribute('data-wallet'), histWalletLink.getAttribute('data-short'));
         return;
       }
-      var offerSend = e.target.closest('.make-offer-send');
-      if (offerSend){
-        var op2 = source().filter(function(x){ return x.nftId === offerSend.getAttribute('data-nftid'); })[0];
-        var strip3 = offerSend.closest('.result-card');
-        var priceValue = strip3.querySelector('.make-offer-input').value.trim().replace(/,/g, '');
-        if (op2) submitMakeOffer(op2, priceValue, strip3);
+      // 0FFER — just a button now, no inline amount input on the card
+      // (see pigeonsActionBoxHtml) — opens the shared amount-entry popup
+      // to actually type it.
+      var offerOpenBtn = e.target.closest('.offer-open-modal-btn');
+      if (offerOpenBtn){
+        var op2 = source().filter(function(x){ return x.nftId === offerOpenBtn.getAttribute('data-nftid'); })[0];
+        if (op2) openAmountEntryModal('offer', op2);
         return;
       }
       var buyBtn = e.target.closest('.buy-scylla-btn');
@@ -5392,16 +5575,22 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       var imgBox = e.target.closest('.pigeon-img-box');
       if (imgBox){ openDetail(imgBox.getAttribute('data-nftid')); return; }
-      // LIST/DELIST/ACCEPT OFFER — rendered by pigeonsActionBoxHtml (own-
-      // wallet DATABASE scope) or myPigeonCardHtml (MY PIGEONS tab), shared
-      // here so both containers behave identically instead of duplicating
-      // this logic per-container.
-      var listBtn = e.target.closest('.list-inline-btn');
-      if (listBtn){
-        var lp = source().filter(function(x){ return x.nftId === listBtn.getAttribute('data-nftid'); })[0];
-        var listCardEl = listBtn.closest('.thumb-offer');
-        var priceInput = listCardEl && listCardEl.querySelector('.list-price-input');
-        if (lp && priceInput) submitInlineListing(lp, priceInput.value.trim().replace(/,/g, ''), listCardEl);
+      // LIST/TRANSFER/DELIST/ACCEPT OFFER — rendered by ownedPigeonAction-
+      // Html (own-wallet scope, shared by pigeonsActionBoxHtml/DATABASE
+      // and the FL0CK tab so both containers behave identically). LIST
+      // and TRANSFER are just buttons now, no inline input on the card —
+      // both open the shared amount-entry popup to actually type the
+      // number/wallet.
+      var listOpenBtn = e.target.closest('.list-open-modal-btn');
+      if (listOpenBtn){
+        var lp = source().filter(function(x){ return x.nftId === listOpenBtn.getAttribute('data-nftid'); })[0];
+        if (lp) openAmountEntryModal('list', lp);
+        return;
+      }
+      var transferOpenBtn = e.target.closest('.transfer-open-modal-btn');
+      if (transferOpenBtn){
+        var trp = source().filter(function(x){ return x.nftId === transferOpenBtn.getAttribute('data-nftid'); })[0];
+        if (trp) openAmountEntryModal('transfer', trp);
         return;
       }
       var delistBtn = e.target.closest('.delist-pigeon-btn');
@@ -5450,31 +5639,10 @@ const SWAP_HTML = `<!DOCTYPE html>
         });
       }
     });
-    // Enter in the inline MAKE AN OFFER input submits, same as clicking SEND.
-    container.addEventListener('keydown', function(e){
-      if (e.key !== 'Enter') return;
-      var input = e.target.closest('.make-offer-input');
-      if (input){
-        var strip4 = input.closest('.result-card');
-        var sendBtn2 = strip4.querySelector('.make-offer-send');
-        var op3 = source().filter(function(x){ return x.nftId === sendBtn2.getAttribute('data-nftid'); })[0];
-        if (op3) submitMakeOffer(op3, input.value.trim().replace(/,/g, ''), strip4);
-        return;
-      }
-      var listInput = e.target.closest('.list-price-input');
-      if (listInput){
-        var listCardEl2 = listInput.closest('.thumb-offer');
-        var listBtn2 = listCardEl2 && listCardEl2.querySelector('.list-inline-btn');
-        if (!listBtn2) return;
-        var lp2 = source().filter(function(x){ return x.nftId === listBtn2.getAttribute('data-nftid'); })[0];
-        if (lp2) submitInlineListing(lp2, listInput.value.trim().replace(/,/g, ''), listCardEl2);
-      }
-    });
-    // Live thousands-separator formatting as you type (1000 -> 1,000 ->
-    // 10,000 ...), same helper the other amount inputs use.
-    container.addEventListener('input', function(e){
-      if (e.target.classList.contains('make-offer-input') || e.target.classList.contains('list-price-input')) formatThousandsInput(e.target);
-    });
+    // No more inline MAKE AN OFFER/LIST PRICE inputs living directly on a
+    // card (see openAmountEntryModal) — their own Enter-to-submit and
+    // live thousands-formatting now live with the popup itself (see the
+    // el.amountEntryModal keydown/input listeners near its own wiring).
   }
   wireResultClicks(el.resultsArea, function(){ return state.items; });
 
@@ -6044,25 +6212,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     var listedInfo = myListedData[p.nftId];
     var offers = offersByNftId[p.nftId] || [];
     var offersHtml = offers.length ? myPigeonOffersHtml(p, offers) : '';
+    // LIST/TRANSFER both just open the shared amount-entry popup now
+    // (see openAmountEntryModal and .list-open-modal-btn/.transfer-open-
+    // modal-btn in wireResultClicks) instead of an inline price input
+    // sitting directly on the card — same popup submitInlineListing/
+    // submitTransfer both submit through.
     var actionHtml = listedInfo
       ? '<div class="index-line" style="margin-top:0.5rem; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow);">L!STED :: ' + escapeHtml(listedInfo.price) + ' $P!GE0NS</div>' +
         '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ DEL!ST ]</button>'
-      // Fast inline LIST — price input + button directly on the card, same
-      // look as DATABASE's OFFER AMOUNT box (.thumb-offer et al, shared
-      // CSS) — clicking LIST goes straight to Xaman, no separate form/
-      // confirm screen (see submitInlineListing).
-      : '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<div class="thumb-offer-row">' +
-            '<div class="make-offer-input-wrap">' +
-              '<img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">' +
-              '<input class="list-price-input" type="text" inputmode="decimal" placeholder="L!ST PR!CE">' +
-              '<button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">&times;</button>' +
-            '</div>' +
-            '<button class="list-inline-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ L!ST ]</button>' +
-          '</div>' +
-          '<div class="index-line list-inline-status" style="display:none;"></div>' +
-        '</div>';
-    return offersHtml + actionHtml;
+      : '<button class="bar-btn list-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%;">[ L!ST ]</button>';
+    var transferHtml = '<button class="bar-btn transfer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ TRANSFER ]</button>';
+    return offersHtml + actionHtml + transferHtml;
   }
   // The actual pigeon grid for PλWS is the shared DATABASE view itself
   // (screenBrowse, scoped to your own wallet via browseOwnerCollection —
@@ -6584,6 +6744,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showListingResult(data){
+    // Every LIST now enters through the amount-entry popup (see
+    // openAmountEntryModal) — close it here, the moment the full LISTED
+    // result screen takes over, rather than leaving it sitting on top.
+    closeAmountEntryModal();
     el.listResultPigeonNum.innerHTML = 'P!GE0N #' + (listingTarget.number !== null ? greenNum(listingTarget.number) : '????');
     el.listResultPrice.textContent = fmtPigeons(data.price);
     el.listResultStatus.textContent = 'L!STED';
@@ -7343,6 +7507,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showOfferConfirm(txjson){
+    // 0FFER can now start from the amount-entry popup on a card thumbnail
+    // (see openAmountEntryModal) as well as the detail screen's own copy
+    // — close it here unconditionally (a harmless no-op when it was
+    // never open, e.g. the detail-screen path) the moment this real
+    // confirm screen takes over.
+    closeAmountEntryModal();
     el.offerConfTxType.textContent = txjson.TransactionType;
     el.offerConfAccount.textContent = txjson.Account;
     el.offerConfOwner.textContent = txjson.Owner;
@@ -7451,6 +7621,174 @@ const SWAP_HTML = `<!DOCTYPE html>
     offerUuid = null;
     if (offerPollTimer) clearTimeout(offerPollTimer);
     state.activeTab = 'database';
+    showScreen('browse');
+  });
+
+  // ---- TRANSFER — give one of your own Pigeons directly to another
+  // wallet, no payment involved. Reuses the exact same real backend as
+  // the (currently paused) NFT-for-NFT swap builder's own single-leg
+  // offer (swap-offer-prepare/-payload/-status: a free, Amount "0"
+  // NFTokenCreateOffer restricted to Destination) — nftId + toWallet
+  // only, no wantNftId/swapId, so nothing gets written into the swap-
+  // offer-pairs index this creates. Entered via the shared amount-entry
+  // popup's TRANSFER mode (see openAmountEntryModal), same confirm-
+  // screen-before-signing pattern as 0FFER/DELIST/ACCEPT 0FFER. The
+  // recipient still has to separately accept the real offer this
+  // creates (from their own wallet app) before the Pigeon actually
+  // moves — nothing here is atomic or reversible-by-us once accepted.
+  var transferTarget = null; // { nftId, number, image, toWallet }
+  var transferUuid = null;
+  var transferPollTimer = null;
+  var transferXamanTab = null;
+  var XRPL_ADDRESS_RE = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
+
+  function submitTransfer(p, toWallet, formEl){
+    if (!toWallet || !XRPL_ADDRESS_RE.test(toWallet)){
+      alert('ENTER A VAL!D XRPL WALLET ADDRESS (STARTS W!TH r).');
+      return;
+    }
+    if (MY_WALLET && toWallet === MY_WALLET){
+      alert('CAN N0T TRANSFER T0 Y0UR 0WN WALLET.');
+      return;
+    }
+    if (!window.confirm('TRANSFER P!GE0N ' + (p.number !== null ? '#' + p.number : '') + ' T0 ' + toWallet + '? TH!S G!VES !T AWAY — 0NLY THE REC!P!ENT W!LL BE ABLE T0 ACCEPT !T.')){
+      return;
+    }
+    var sendBtn = el.amountEntryTransferBtn;
+    var statusEl = el.amountEntryTransferStatus;
+    sendBtn.disabled = true;
+    sendBtn.textContent = '[ VAL!DAT!NG... ]';
+    if (statusEl){ statusEl.style.display = 'none'; statusEl.textContent = ''; }
+    fetch('/api/swap-offer-prepare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: p.nftId, toWallet: toWallet })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      sendBtn.disabled = false;
+      sendBtn.textContent = '[ TRANSFER ]';
+      if (!res.ok || !res.data.ok){
+        if (statusEl){ statusEl.style.display = ''; statusEl.textContent = listingErrorMessage(res.data && res.data.error); }
+        else alert(listingErrorMessage(res.data && res.data.error));
+        return;
+      }
+      transferTarget = p;
+      transferTarget.toWallet = toWallet;
+      showTransferConfirm(res.data.txjson);
+    }).catch(function(){
+      sendBtn.disabled = false;
+      sendBtn.textContent = '[ TRANSFER ]';
+      if (statusEl){ statusEl.style.display = ''; statusEl.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.'; }
+    });
+  }
+
+  function showTransferConfirm(txjson){
+    // TRANSFER only ever starts from the amount-entry popup — close it
+    // the moment this real confirm screen takes over.
+    closeAmountEntryModal();
+    el.transferConfTxType.textContent = txjson.TransactionType;
+    el.transferConfAccount.textContent = txjson.Account;
+    el.transferConfNftId.textContent = txjson.NFTokenID;
+    el.transferConfDestination.textContent = txjson.Destination;
+    el.transferConfirmStatus.textContent = '';
+    el.transferOpenXamanBtn.disabled = false;
+    el.transferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+    showScreen('transferconfirm');
+  }
+  el.transferConfirmBackBtn.addEventListener('click', function(){
+    transferTarget = null;
+    state.activeTab = 'mypigeons';
+    showScreen('browse');
+  });
+
+  el.transferOpenXamanBtn.addEventListener('click', function(){
+    if (!transferTarget) return;
+    el.transferOpenXamanBtn.disabled = true;
+    el.transferOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.transferConfirmStatus.textContent = '';
+    transferXamanTab = openXamanPopup();
+    fetch('/api/swap-offer-payload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: transferTarget.nftId, toWallet: transferTarget.toWallet })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        closeXamanTabAndFocus(transferXamanTab);
+        transferXamanTab = null;
+        el.transferOpenXamanBtn.disabled = false;
+        el.transferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.transferConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      transferUuid = res.data.uuid;
+      if (transferXamanTab) transferXamanTab.location.href = res.data.next.always;
+      el.transferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.transferConfirmStatus.textContent = 'S!GN !N XAMAN, THEN RETURN HERE.';
+      pollTransferStatus();
+    }).catch(function(){
+      closeXamanTabAndFocus(transferXamanTab);
+      transferXamanTab = null;
+      el.transferOpenXamanBtn.disabled = false;
+      el.transferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.transferConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+
+  function pollTransferStatus(){
+    if (transferPollTimer) clearTimeout(transferPollTimer);
+    if (!transferUuid || !transferTarget) return;
+    fetch('/api/swap-offer-status?uuid=' + encodeURIComponent(transferUuid) + '&nftId=' + encodeURIComponent(transferTarget.nftId) + '&toWallet=' + encodeURIComponent(transferTarget.toWallet))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'offer_created'){
+          closeXamanTabAndFocus(transferXamanTab);
+          transferXamanTab = null;
+          showTransferResult(data);
+          return;
+        }
+        if (data.status === 'rejected'){
+          el.transferConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
+          el.transferOpenXamanBtn.disabled = false;
+          el.transferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'expired'){
+          el.transferConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
+          el.transferOpenXamanBtn.disabled = false;
+          el.transferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        if (data.status === 'failed'){
+          el.transferConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
+          el.transferOpenXamanBtn.disabled = false;
+          el.transferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          return;
+        }
+        transferPollTimer = setTimeout(pollTransferStatus, 2000);
+      }).catch(function(){
+        transferPollTimer = setTimeout(pollTransferStatus, 3000);
+      });
+  }
+
+  function showTransferResult(data){
+    el.transferResultPigeonNum.innerHTML = 'P!GE0N #' + (transferTarget.number !== null ? greenNum(transferTarget.number) : '????');
+    el.transferResultDestination.textContent = transferTarget.toWallet;
+    el.transferResultStatus.textContent = 'OFFER CREATED';
+    if (data.txHash){
+      el.transferResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
+      el.transferResultTxLink.textContent = data.txHash;
+    } else {
+      el.transferResultTxLink.removeAttribute('href');
+      el.transferResultTxLink.textContent = '—';
+    }
+    showScreen('transferresult');
+  }
+  el.transferResultDoneBtn.addEventListener('click', function(){
+    transferTarget = null;
+    transferUuid = null;
+    if (transferPollTimer) clearTimeout(transferPollTimer);
+    state.activeTab = 'mypigeons';
     showScreen('browse');
   });
 
