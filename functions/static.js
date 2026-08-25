@@ -2679,6 +2679,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     .confirm-pigeon-num{ font-size:24px; }
     .confirm-field-value{ font-size:14px; }
   }
+  /* 0FFER CONFIRMATION's own big amount line + real clickable picture —
+     "___ $PIGEONS / FOR / [picture] / PIGEON #N", nothing else. */
+  .confirm-field-value-big{ font-family:var(--font-display); font-size:26px; font-weight:700; }
+  .confirm-pigeon-thumb{
+    display:block;
+    width:140px;
+    height:140px;
+    object-fit:cover;
+    border-radius:var(--radius);
+    margin:0 auto 0.75rem;
+    cursor:pointer;
+    border:1px solid var(--border-mid);
+  }
+  .confirm-pigeon-num-clickable{ cursor:pointer; }
+  .confirm-pigeon-num-clickable:hover{ text-decoration:underline; }
   /* ---- 0FFER CONFIRMATION — a real second popup (stacked on top of the
      amount-entry one, see showOfferConfirm), not a showScreen navigation
      away from the grid. Purple/collection-themed and a little louder
@@ -4113,14 +4128,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div id="offerConfirmModal" style="display:none;">
       <div class="offer-confirm-panel">
         <div class="node-eyebrow">// 0FFER C0NF!RMAT!0N</div>
-        <div class="confirm-field-label">Y0U</div>
-        <div class="confirm-field-value" id="offerConfAccount"></div>
-        <div class="confirm-field-label">ARE 0FFER!NG</div>
-        <div class="confirm-field-value" id="offerConfValue"></div>
+        <div class="confirm-field-label">Y0U ARE 0FFER!NG</div>
+        <div class="confirm-field-value confirm-field-value-big" id="offerConfValue"></div>
         <div class="confirm-field-label">F0R</div>
-        <div class="confirm-pigeon-num" id="offerConfPigeonNum"></div>
-        <div class="confirm-field-label">0WNED BY</div>
-        <div class="confirm-field-value" id="offerConfOwner"></div>
+        <!-- Real picture, clickable straight into the full detail view —
+             closes this popup first (openDetail is a showScreen navigation,
+             not another stacked popup, see gotcha #10 in HANDOFF.md). -->
+        <img class="confirm-pigeon-thumb" id="offerConfPigeonImg" src="" alt="" title="V!EW P!GE0N">
+        <div class="confirm-pigeon-num confirm-pigeon-num-clickable" id="offerConfPigeonNum"></div>
         <div class="index-line" id="offerConfirmStatus" style="margin-top:1rem;"></div>
         <div class="detail-actions">
           <button class="secondary-btn" id="offerConfirmBackBtn">[ ← BACK ]</button>
@@ -4385,7 +4400,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenBuySwapResult','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
    'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
    'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
-   'offerConfirmModal','offerConfAccount','offerConfOwner','offerConfPigeonNum','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
+   'offerConfirmModal','offerConfPigeonImg','offerConfPigeonNum','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
    'transferConfirmModal','transferConfAccount','transferConfPigeonNum','transferConfDestination','transferConfirmStatus','transferConfirmBackBtn','transferOpenXamanBtn',
    'incomingTransfersBox','incomingTransfersList','acceptTransferConfirmModal','acceptTransferConfirmForm','acceptTransferConfPigeonNum','acceptTransferConfFrom','acceptTransferConfirmStatus','acceptTransferConfirmBackBtn','acceptTransferOpenXamanBtn',
@@ -8033,9 +8048,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     // re-derived server-side in swap-makeoffer-payload.js, never trusted
     // from the client) doesn't need to be spelled out on screen for that
     // to be true.
-    el.offerConfAccount.textContent = txjson.Account;
-    el.offerConfOwner.textContent = txjson.Owner;
     el.offerConfPigeonNum.innerHTML = 'P!GE0N #' + (offerTarget.number !== null ? greenNum(offerTarget.number) : '????');
+    el.offerConfPigeonImg.src = offerTarget.image || '';
+    el.offerConfPigeonImg.style.display = offerTarget.image ? '' : 'none';
     el.offerConfValue.textContent = fmtPigeons(txjson.Amount.value);
     el.offerConfirmStatus.textContent = '';
     el.offerOpenXamanBtn.disabled = false;
@@ -8048,6 +8063,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.offerConfirmBackBtn.addEventListener('click', closeOfferConfirmModal);
   el.offerConfirmModal.addEventListener('click', function(e){ if (e.target === el.offerConfirmModal) closeOfferConfirmModal(); });
+  // Picture/number both jump straight into the real detail view — this
+  // closes the popup first (openDetail is a showScreen navigation, not
+  // another stacked popup — see gotcha #10 in HANDOFF.md, popups don't
+  // nest CSS-wise) rather than leaving it open underneath.
+  function openOfferConfirmPigeonDetail(){
+    if (!offerTarget) return;
+    var nftId = offerTarget.nftId;
+    closeOfferConfirmModal();
+    openDetail(nftId);
+  }
+  el.offerConfPigeonImg.addEventListener('click', openOfferConfirmPigeonDetail);
+  el.offerConfPigeonNum.addEventListener('click', openOfferConfirmPigeonDetail);
 
   el.offerOpenXamanBtn.addEventListener('click', function(){
     if (!offerTarget) return;
