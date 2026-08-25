@@ -2739,12 +2739,31 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* BUY $P!GE0NS popup's own panel — a bit wider than the default
      .offer-confirm-panel (440px) since it carries a real quote's worth of
      fields, not just a one-line amount. */
-  .buyswap-modal-panel{ width:min(460px, 100%); text-align:left; }
+  .buyswap-modal-panel{ width:min(540px, 100%); padding:2.25rem 2rem; text-align:left; }
   .buyswap-modal-panel .node-eyebrow{ text-align:center; }
   .buyswap-modal-panel .receipt-badge,
   .buyswap-modal-panel .receipt-status-line{ text-align:center; }
   .buyswap-modal-panel .tx-review-title{ text-align:center; }
   .buyswap-modal-panel .detail-actions{ justify-content:center; }
+  .buyswap-modal-panel .receipt-price-row{ text-align:center; }
+  /* RESULT state — the exciting "you just bought $PIGEONS" receipt, not a
+     dense field list. Big green number (matches every other real $PIGEONS
+     amount on the site — greenNum), a plain-english unit underneath it
+     instead of baked into the same line, and V!EW TRANSACT!0N as its own
+     small dark-blue link instead of a raw 64-char tx hash. */
+  .buyswap-received-value{ font-size:40px; }
+  .buyswap-received-unit{ display:block; font-size:13px; font-weight:400; letter-spacing:0.15em; color:var(--grey-dim); text-transform:uppercase; margin-top:0.35rem; }
+  .buyswap-tx-link{
+    display:block;
+    text-align:center;
+    margin-top:1.25rem;
+    font-size:12px;
+    letter-spacing:0.1em;
+    color:#4d8dff;
+    text-decoration:underline;
+    text-transform:uppercase;
+  }
+  .buyswap-tx-link:hover{ color:#7bb0ff; }
   .buyswap-row{ max-width:100%; margin:0 auto; }
   .buyswap-label{ display:block; text-align:center; font-size:11px; letter-spacing:0.2em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.5rem; }
   .buyswap-input-wrap{
@@ -4116,11 +4135,14 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div id="buySwapResultState" style="display:none;">
           <div class="receipt-badge">✓</div>
           <div class="receipt-status-line">$P!GE0NS ACQU!RED</div>
-          <div class="detail-field"><span class="df-label">RECE!VED</span><span class="df-value" id="buySwapResultReceived"></span></div>
-          <div class="detail-field"><span class="df-label">TX</span><span class="df-value"><a id="buySwapResultTxLink" target="_blank" rel="noopener"></a></span></div>
+          <div class="receipt-price-row">
+            <div class="receipt-price-label">RECE!VED</div>
+            <div class="receipt-price-value buyswap-received-value" id="buySwapResultReceived"></div>
+          </div>
           <div class="detail-actions">
             <button class="action-btn" id="buySwapResultDoneBtn">[ D0NE ]</button>
           </div>
+          <a class="buyswap-tx-link" id="buySwapResultTxLink" target="_blank" rel="noopener">V!EW TRANSACT!0N</a>
         </div>
       </div>
     </div>
@@ -7810,15 +7832,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showBuySwapResult(data){
-    el.buySwapResultReceived.textContent = data.receivedPigeons !== null && data.receivedPigeons !== undefined
-      ? Number(data.receivedPigeons).toLocaleString(undefined, { maximumFractionDigits: 6 }) + ' $P!GE0NS'
-      : '$P!GE0NS RECE!VED (EXACT AM0UNT UNAVA!LABLE)';
+    el.buySwapResultReceived.innerHTML = data.receivedPigeons !== null && data.receivedPigeons !== undefined
+      ? greenNum(Number(data.receivedPigeons).toLocaleString(undefined, { maximumFractionDigits: 6 })) + ' <span class="buyswap-received-unit">$P!GE0NS</span>'
+      : 'EXACT AM0UNT UNAVA!LABLE';
     if (data.txHash){
       el.buySwapResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
-      el.buySwapResultTxLink.textContent = data.txHash;
+      el.buySwapResultTxLink.style.display = '';
     } else {
       el.buySwapResultTxLink.removeAttribute('href');
-      el.buySwapResultTxLink.textContent = '—';
+      el.buySwapResultTxLink.style.display = 'none';
     }
     showBuySwapState('result');
   }
