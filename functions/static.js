@@ -982,12 +982,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      all get the same bordered-box treatment and cyan-on-hover/open text —
      plain until you actually interact with it, not permanently filled —
      same size text throughout too (see the shared font-size above). */
-  #sortDropWrap, #traitsHoverWrap, #dbSelectWrap{ border:1px solid var(--border-mid); border-radius:var(--radius); transition:border-color 0.15s ease, background 0.15s ease; }
+  #sortDropWrap, #traitsHoverWrap, #dbSelectWrap, .flock-view-select{ border:1px solid var(--border-mid); border-radius:var(--radius); transition:border-color 0.15s ease, background 0.15s ease; }
   #sortDropWrap:hover, #sortDropWrap.open,
   #traitsHoverWrap:hover, #traitsHoverWrap.open,
   #dbSelectWrap:hover, #dbSelectWrap.open{ border-color:var(--cyan-dim); }
   .traits-hover-wrap:hover .trait-row-label,
   .traits-hover-wrap.open .trait-row-label{ color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  /* FL0CK's own section picker (replaces "SH0W!NG Y0UR P!GE0NS N") —
+     purple, not the generic cyan every other dropdown gets, same
+     collection-colour reasoning ADD TRA!TS/S0RT BY already follow. */
+  .panel-title-center-wrap{ display:flex; justify-content:center; margin-bottom:1rem; }
+  #flockViewSelectWrap .trait-row-label{ color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); }
+  .flock-view-select:hover, .flock-view-select.open{ border-color:var(--pigeon-purple); }
   /* !important: same reasoning as .tab-db-select above — ADD TRA!TS stays
      purple regardless of hover/open state instead of the generic cyan the
      shared rule directly above would otherwise apply. */
@@ -3662,6 +3668,24 @@ const SWAP_HTML = `<!DOCTYPE html>
 
       <div class="sw-panel">
         <div class="panel-title search-panel-title" id="searchPanelTitle">SEARCH!NG $P!GE0NS DATABASE</div>
+        <!-- FL0CK's own section picker — replaces the plain "SH0W!NG Y0UR
+             P!GE0NS N" title with a dropdown, since FL0CK is growing more
+             sections than just the pigeon grid (see updateSearchPanelTitle
+             ForPaws). Same .tab-db-select/.db-select-flyout pattern
+             DATABASE's own "P!GE0NS ▾" collection picker already uses. -->
+        <div class="panel-title-center-wrap" id="flockViewSelectWrap" style="display:none;">
+          <div class="traits-hover-wrap tab-db-select flock-view-select" id="flockViewSelectBtn">
+            <span class="trait-row-label" id="flockViewSelectLabel">FL0CK ▾</span>
+            <div class="traits-flyout db-select-flyout flock-view-select-flyout" id="flockViewSelectFlyout" style="display:none;">
+              <div class="db-option db-option-active" data-view="flock">FL0CK</div>
+              <div class="db-option db-option-disabled">MESSAGE !NB0X <span class="db-soon">C0M!NG S00N</span></div>
+              <div class="db-option db-option-disabled">0FFERS <span class="db-soon">C0M!NG S00N</span></div>
+              <div class="db-option" data-view="buy">BUY $P!GE0NS</div>
+              <div class="db-option db-option-disabled">TRANSACT!0N H!ST0RY <span class="db-soon">C0M!NG S00N</span></div>
+              <div class="db-option db-option-disabled">$CRWN REWARDS <span class="db-soon">C0M!NG S00N</span></div>
+            </div>
+          </div>
+        </div>
         <div class="search-panel-subtitle" id="searchPanelSubtitle" style="display:none;"></div>
         <div class="results-block" id="resultsBlock">
           <!-- One line: SEARCH (left), SORT BY (middle), VIEW (right). -->
@@ -4453,6 +4477,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
+   'flockViewSelectWrap','flockViewSelectBtn','flockViewSelectLabel','flockViewSelectFlyout',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn','swapOffersTabBtn',
@@ -5507,9 +5532,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   // scoped to yourself. Reverts the instant any other tab (or DATABASE
   // itself) is active — this must never bleed into the real DATABASE view.
   function updateSearchPanelTitleForPaws(){
-    el.searchPanelTitle.textContent = (state.activeTab === 'mypigeons' && isOwnWalletScope())
-      ? 'SH0W!NG Y0UR P!GE0NS ' + state.scopeAllItems.length
-      : 'SEARCH!NG $P!GE0NS DATABASE';
+    var onFlock = state.activeTab === 'mypigeons' && isOwnWalletScope();
+    el.searchPanelTitle.style.display = onFlock ? 'none' : '';
+    el.flockViewSelectWrap.style.display = onFlock ? '' : 'none';
+    if (onFlock){
+      el.flockViewSelectLabel.textContent = 'FL0CK :: ' + state.scopeAllItems.length + ' ▾';
+    } else {
+      el.searchPanelTitle.textContent = 'SEARCH!NG $P!GE0NS DATABASE';
+    }
   }
   // Shared by SELECT (auto-enters owner scope + auto-targets the pigeon
   // that got you there) and the plain "view this wallet's collection" click
@@ -8814,6 +8844,35 @@ const SWAP_HTML = `<!DOCTYPE html>
     closeDbSelectFlyout();
   });
 
+  // ---- FL0CK's own section picker — same open/close pattern as
+  // dbSelectFlyout above, just its own separate flyout since it lives in a
+  // different spot (replacing the "SH0W!NG Y0UR P!GE0NS N" title, not
+  // tucked inside a tab button). FL0CK itself is the only real destination
+  // right now; BUY $P!GE0NS opens the existing popup; everything else is
+  // C0M!NG S00N (.db-option-disabled, same as FUZZY/PHN!X on the DATABASE
+  // picker) until those sections actually exist. ----
+  function openFlockViewSelectFlyout(){
+    el.flockViewSelectFlyout.style.display = 'block';
+    el.flockViewSelectBtn.classList.add('open');
+  }
+  function closeFlockViewSelectFlyout(){
+    el.flockViewSelectFlyout.style.display = 'none';
+    el.flockViewSelectBtn.classList.remove('open');
+  }
+  el.flockViewSelectLabel.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (el.flockViewSelectFlyout.style.display === 'block') closeFlockViewSelectFlyout();
+    else openFlockViewSelectFlyout();
+  });
+  el.flockViewSelectFlyout.addEventListener('click', function(e){
+    e.stopPropagation();
+    var opt = e.target.closest('.db-option');
+    closeFlockViewSelectFlyout();
+    if (!opt || opt.classList.contains('db-option-disabled')) return;
+    if (opt.getAttribute('data-view') === 'buy') openBuySwapPanel();
+    // 'flock' — already what's showing, nothing to do.
+  });
+
   // Copy-to-clipboard, not a real TrustSet flow — this prototype doesn't
   // connect a wallet or sign anything yet (same pattern already used for
   // the CRWN trustline address elsewhere on the site).
@@ -9232,6 +9291,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (el.sortFlyout.style.display === 'block' && !el.sortDropWrap.contains(e.target)) closeSortFlyout();
     if (el.traitsFlyout.style.display === 'block' && !el.traitsHoverWrap.contains(e.target)) closeTraitsFlyout();
     if (el.dbSelectFlyout.style.display === 'block' && !el.dbSelectWrap.contains(e.target)) closeDbSelectFlyout();
+    if (el.flockViewSelectFlyout.style.display === 'block' && !el.flockViewSelectBtn.contains(e.target)) closeFlockViewSelectFlyout();
     // Same pattern for the pigeon DETAIL screen itself — a click anywhere
     // outside it (a different tab, the trustline banner, anywhere) closes
     // it back to the grid, instead of it staying stuck open underneath
