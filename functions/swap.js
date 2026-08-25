@@ -3078,7 +3078,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInCount">…</span>
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
             <div class="pigeons-bar-identity-actions">
-              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">[ SH0W MY P!GE0NS ]</button>
+              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">[ SH0W MY FL0CK<span id="showMyPigeonsCount"></span> ]</button>
               <button class="bar-btn ci-copy-btn" id="swapSignOutBtn">[ S!GN 0UT ]</button>
             </div>
           </div>
@@ -3854,7 +3854,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
-   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInCount','pigeonsLoggedInTrustline','showMyPigeonsBtn','swapSignOutBtn',
+   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInCount','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
    'topTabs','flockTabLabel','myPigeonsPanel','myPigeonsList',
@@ -4054,9 +4054,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // so aligning to the strip alone left the actual section scrolled
   // halfway off-screen.
   function scrollActiveTabPanelIntoView(tab){
+    // mypigeons picks whichever of its two panels is actually visible
+    // (see showTab) — myPigeonsPanel only while still connecting/not yet
+    // scoped, screenBrowse (the real grid) once scoped to your own
+    // wallet. A hidden (display:none) element's getBoundingClientRect is
+    // always all-zero, so scrolling to the wrong one of the pair here
+    // would silently no-op instead of landing at the top of the content.
     var panel = {
       database: el.screenBrowse,
-      mypigeons: el.myPigeonsPanel,
+      mypigeons: isOwnWalletScope() ? el.screenBrowse : el.myPigeonsPanel,
       topholders: el.topHoldersPanelWrap,
       sales: el.salesPanelWrap,
       swapoffers: el.swapOffersPanelWrap
@@ -4129,15 +4135,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Universal across every tab now — only what's underneath it swaps.
     el.collectionDetailsPanel.style.display = '';
     // screenBrowse (search/sort/filter row, results grid, detail overlay)
-    // is shared by DATABASE and PλWS now — myPigeonsPanel above it still
-    // renders (title, connect status, CREATE OFFER), just without its own
-    // competing pigeon grid underneath (see renderMyPigeonsList). Only
-    // shown for 'mypigeons' once actually scoped to your own wallet —
-    // before that (no session yet, still connecting), staying hidden
-    // avoids briefly showing a stale/unrelated grid underneath the
-    // CONNECTING status.
+    // is shared by DATABASE and PλWS now — only shown for 'mypigeons' once
+    // actually scoped to your own wallet; before that (no session yet,
+    // still connecting), staying hidden avoids briefly showing a stale/
+    // unrelated grid underneath the CONNECTING status.
     el.screenBrowse.style.display = (tab === 'database' || (tab === 'mypigeons' && isOwnWalletScope())) ? '' : 'none';
-    el.myPigeonsPanel.style.display = tab === 'mypigeons' ? '' : 'none';
+    // myPigeonsPanel only has real content left (connect status, CONNECT
+    // button) while not yet scoped — title/offers-summary/pigeon-grid all
+    // moved out (see renderMyPigeonsList/showTab history), so leaving it
+    // visible once actually scoped left a genuinely empty bordered box
+    // sitting above screenBrowse. Hidden the instant screenBrowse itself
+    // takes over, same condition as its own visibility above.
+    el.myPigeonsPanel.style.display = (tab === 'mypigeons' && !isOwnWalletScope()) ? '' : 'none';
     el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
     el.salesPanelWrap.style.display = tab === 'sales' ? '' : 'none';
     el.swapOffersPanelWrap.style.display = tab === 'swapoffers' ? '' : 'none';
@@ -6321,6 +6330,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.pigeonsLoggedInCount.innerHTML = trustlinePigeonCount === null
       ? '…'
       : greenNum(trustlinePigeonCount.toLocaleString());
+    // Same count, echoed inside SH0W MY FL0CK itself — left blank rather
+    // than showing a placeholder while still loading, since the button
+    // reads fine on its own either way ("[ SH0W MY FL0CK ]").
+    el.showMyPigeonsCount.textContent = trustlinePigeonCount === null ? '' : ' :: ' + trustlinePigeonCount.toLocaleString();
     if (trustlineBalanceNum === null){
       el.pigeonsBalanceValue.innerHTML = '…';
       el.pigeonsBalanceBuyBtn.style.display = 'none';
@@ -6392,8 +6405,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   // see updateFlockTabLabel above. loadOffersReceived already no-ops
   // with no session.
   loadOffersReceived();
+  // Lands on FL0CK now (was: DATABASE, self-scoped) — "SH0W MY FL0CK"
+  // should actually take you to the FL0CK tab, not just filter DATABASE
+  // down to your own wallet while leaving you on it.
   el.showMyPigeonsBtn.addEventListener('click', function(){
-    if (MY_WALLET) browseOwnerCollection(MY_WALLET, 'Y0U');
+    if (MY_WALLET) browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
   });
 
   // ---- LIST A PIGEON — first real Σκύλλα listing test: create-offer
