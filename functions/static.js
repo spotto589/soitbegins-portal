@@ -4762,9 +4762,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     // HISTORY) screen is open — those are normally only ever hidden by
     // showScreen, which a direct tab click bypasses, so without this the
     // detail screen stayed stuck visible underneath whatever tab you just
-    // switched to instead of actually closing.
+    // switched to instead of actually closing. Also has to clear the
+    // body's own 'detail-open' class (overflow:hidden while the detail
+    // screen is up) for the exact same reason — showScreen('detail')
+    // is what sets it, and a tab click bypasses that too. Confirmed live:
+    // clicking a wallet link from the detail/traits view (browseOwner-
+    // Collection -> showTab, never touching showScreen) left the class
+    // stuck forever, permanently scroll-locking the whole page.
     el.screenDetail.style.display = 'none';
     el.screenHistory.style.display = 'none';
+    document.body.classList.remove('detail-open');
     var buttons = el.topTabs.querySelectorAll('.tab-btn');
     for (var i = 0; i < buttons.length; i++){
       buttons[i].classList.toggle('active', buttons[i].getAttribute('data-tab') === tab);
