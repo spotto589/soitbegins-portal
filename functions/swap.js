@@ -4100,21 +4100,26 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- SCREEN: TRANSFER CONFIRMATION — a real free (Amount "0") NFTokenCreateOffer
-         restricted to the destination wallet, entered via the shared amount-entry
-         popup's TRANSFER mode — the exact txjson, before Xaman ever opens -->
-    <div class="sw-panel confirm-clean" id="screenTransferConfirm" style="display:none;">
-      <div class="node-eyebrow">// TRANSFER C0NF!RMAT!0N</div>
-      <div class="confirm-field-label">TRANSFERR!NG FR0M</div>
-      <div class="confirm-field-value" id="transferConfAccount"></div>
-      <div class="confirm-pigeon-num" id="transferConfPigeonNum"></div>
-      <div class="confirm-field-label">DEST!NAT!0N</div>
-      <div class="confirm-field-value" id="transferConfDestination"></div>
-      <div class="index-line swap-nonatomic-note">TH!S 0NLY CREATES THE 0FFER — THE REC!P!ENT ST!LL NEEDS T0 ACCEPT !T (E.G. FR0M THE!R 0WN XAMAN WALLET) BEF0RE THE P!GE0N ACTUALLY M0VES.</div>
-      <div class="index-line" id="transferConfirmStatus" style="margin-top:1rem;"></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="transferConfirmBackBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="transferOpenXamanBtn">[ 0PEN XAMAN ]</button>
+    <!-- TRANSFER CONFIRMATION — a real free (Amount "0") NFTokenCreateOffer
+         restricted to the destination wallet, entered via the shared
+         amount-entry popup's TRANSFER mode — the exact txjson, before
+         Xaman ever opens. Same real second-popup + purple treatment as
+         0FFER's own confirm screen (see #offerConfirmModal's own comment)
+         instead of a showScreen navigation away from the grid. -->
+    <div id="transferConfirmModal" style="display:none;">
+      <div class="offer-confirm-panel">
+        <div class="node-eyebrow">// TRANSFER C0NF!RMAT!0N</div>
+        <div class="confirm-field-label">TRANSFERR!NG FR0M</div>
+        <div class="confirm-field-value" id="transferConfAccount"></div>
+        <div class="confirm-pigeon-num" id="transferConfPigeonNum"></div>
+        <div class="confirm-field-label">DEST!NAT!0N</div>
+        <div class="confirm-field-value" id="transferConfDestination"></div>
+        <div class="index-line swap-nonatomic-note">TH!S 0NLY CREATES THE 0FFER — THE REC!P!ENT ST!LL NEEDS T0 ACCEPT !T (E.G. FR0M THE!R 0WN XAMAN WALLET) BEF0RE THE P!GE0N ACTUALLY M0VES.</div>
+        <div class="index-line" id="transferConfirmStatus" style="margin-top:1rem;"></div>
+        <div class="detail-actions">
+          <button class="secondary-btn" id="transferConfirmBackBtn">[ ← BACK ]</button>
+          <button class="action-btn offer-confirm-xaman-btn" id="transferOpenXamanBtn">[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]</button>
+        </div>
       </div>
     </div>
 
@@ -4298,7 +4303,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
    'offerConfirmModal','offerConfAccount','offerConfOwner','offerConfPigeonNum','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
-   'screenTransferConfirm','transferConfAccount','transferConfPigeonNum','transferConfDestination','transferConfirmStatus','transferConfirmBackBtn','transferOpenXamanBtn',
+   'transferConfirmModal','transferConfAccount','transferConfPigeonNum','transferConfDestination','transferConfirmStatus','transferConfirmBackBtn','transferOpenXamanBtn',
    'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultStatus','transferResultTxLink','transferResultDoneBtn',
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
    'amountEntryOfferMode','amountEntryOfferInput','amountEntryOfferBtn',
@@ -4682,7 +4687,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenDelistConfirm.style.display = name === 'delistconfirm' ? '' : 'none';
     el.screenDelistResult.style.display = name === 'delistresult' ? '' : 'none';
     el.screenOfferResult.style.display = name === 'offerresult' ? '' : 'none';
-    el.screenTransferConfirm.style.display = name === 'transferconfirm' ? '' : 'none';
     el.screenTransferResult.style.display = name === 'transferresult' ? '' : 'none';
     el.screenAcceptOfferConfirm.style.display = name === 'acceptofferconfirm' ? '' : 'none';
     el.screenAcceptOfferResult.style.display = name === 'acceptofferresult' ? '' : 'none';
@@ -8009,9 +8013,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       alert('CAN N0T TRANSFER T0 Y0UR 0WN WALLET.');
       return;
     }
-    if (!window.confirm('TRANSFER P!GE0N ' + (p.number !== null ? '#' + p.number : '') + ' T0 ' + toWallet + '? TH!S G!VES !T AWAY — 0NLY THE REC!P!ENT W!LL BE ABLE T0 ACCEPT !T.')){
-      return;
-    }
+    // No native confirm() dialog here any more — the real popup this
+    // leads to (showTransferConfirm) already shows exactly this same
+    // info (destination wallet, which Pigeon) before Xaman ever opens,
+    // making a second "are you sure" redundant.
     var sendBtn = el.amountEntryTransferBtn;
     var statusEl = el.amountEntryTransferStatus;
     sendBtn.disabled = true;
@@ -8040,9 +8045,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
 
+  // Resting-state markup for transferOpenXamanBtn — same as 0FFER's own
+  // OFFER_CONFIRM_BTN_HTML, restored via innerHTML (needs the Σκύλλα
+  // span) at every point this button resets after an attempt.
+  var TRANSFER_CONFIRM_BTN_HTML = '[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]';
   function showTransferConfirm(txjson){
     // TRANSFER only ever starts from the amount-entry popup — close it
-    // the moment this real confirm screen takes over.
+    // the instant this second popup takes over (#transferConfirmModal,
+    // same real-popup-not-a-page-navigation treatment as 0FFER's own
+    // confirm screen).
     closeAmountEntryModal();
     // No raw tx-type badge/NFTokenID hex here — just the three things
     // that actually matter at a glance: whose wallet, which Pigeon,
@@ -8055,14 +8066,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.transferConfDestination.textContent = txjson.Destination;
     el.transferConfirmStatus.textContent = '';
     el.transferOpenXamanBtn.disabled = false;
-    el.transferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
-    showScreen('transferconfirm');
+    el.transferOpenXamanBtn.innerHTML = TRANSFER_CONFIRM_BTN_HTML;
+    el.transferConfirmModal.style.display = 'flex';
   }
-  el.transferConfirmBackBtn.addEventListener('click', function(){
+  function closeTransferConfirmModal(){
+    el.transferConfirmModal.style.display = 'none';
     transferTarget = null;
-    state.activeTab = 'mypigeons';
-    showScreen('browse');
-  });
+  }
+  el.transferConfirmBackBtn.addEventListener('click', closeTransferConfirmModal);
+  el.transferConfirmModal.addEventListener('click', function(e){ if (e.target === el.transferConfirmModal) closeTransferConfirmModal(); });
 
   el.transferOpenXamanBtn.addEventListener('click', function(){
     if (!transferTarget) return;
@@ -8080,7 +8092,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         closeXamanTabAndFocus(transferXamanTab);
         transferXamanTab = null;
         el.transferOpenXamanBtn.disabled = false;
-        el.transferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.transferOpenXamanBtn.innerHTML = TRANSFER_CONFIRM_BTN_HTML;
         el.transferConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
@@ -8093,7 +8105,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       closeXamanTabAndFocus(transferXamanTab);
       transferXamanTab = null;
       el.transferOpenXamanBtn.disabled = false;
-      el.transferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.transferOpenXamanBtn.innerHTML = TRANSFER_CONFIRM_BTN_HTML;
       el.transferConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
@@ -8113,19 +8125,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (data.status === 'rejected'){
           el.transferConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.transferOpenXamanBtn.disabled = false;
-          el.transferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.transferOpenXamanBtn.innerHTML = TRANSFER_CONFIRM_BTN_HTML;
           return;
         }
         if (data.status === 'expired'){
           el.transferConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           el.transferOpenXamanBtn.disabled = false;
-          el.transferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.transferOpenXamanBtn.innerHTML = TRANSFER_CONFIRM_BTN_HTML;
           return;
         }
         if (data.status === 'failed'){
           el.transferConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           el.transferOpenXamanBtn.disabled = false;
-          el.transferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.transferOpenXamanBtn.innerHTML = TRANSFER_CONFIRM_BTN_HTML;
           return;
         }
         transferPollTimer = setTimeout(pollTransferStatus, 2000);
@@ -8135,6 +8147,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showTransferResult(data){
+    // Popup closes the instant the real full-screen result takes over —
+    // transferTarget itself stays set (not closeTransferConfirmModal,
+    // which also clears it) since this still needs .number/.toWallet
+    // below.
+    el.transferConfirmModal.style.display = 'none';
     el.transferResultPigeonNum.innerHTML = 'P!GE0N #' + (transferTarget.number !== null ? greenNum(transferTarget.number) : '????');
     el.transferResultDestination.textContent = transferTarget.toWallet;
     el.transferResultStatus.textContent = 'OFFER CREATED';
