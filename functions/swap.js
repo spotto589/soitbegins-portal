@@ -1727,6 +1727,28 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:1.25rem;
     overflow:hidden;
   }
+  /* PλWS-only slimmed banner — carousel, SH0W MY P!GE0NS (redundant,
+     already showing your Pigeons here), the BUY $P!GE0NS button, and the
+     EXCHANGE RATE/calculator column all drop out, leaving just identity +
+     BALANCE. DATABASE and every other tab are untouched — this only ever
+     applies while document.body carries .paws-view (see showTab).
+     !important since renderTrustlineSummary's own async display writes
+     (balance/buy-button visibility — it has no notion of which tab is
+     active) run after showTab and would otherwise win a plain rule. */
+  body.paws-view #collectionDetailsPanel,
+  body.paws-view #showMyPigeonsBtn,
+  body.paws-view #pigeonsBalanceBuyBtn,
+  body.paws-view #pigeonsBarCalc{
+    display:none !important;
+  }
+  /* BALANCE amount itself takes over BUY $P!GE0NS' job here — underlined
+     to read as clickable, same click target (openBuySwapPanel) as the
+     button it replaces. */
+  body.paws-view #pigeonsBalanceValue{
+    cursor:pointer;
+    text-decoration:underline;
+    text-underline-offset:0.2em;
+  }
   /* Same purple gradient as the trustline strip below it (not the usual
      dark digital-glitch .sw-panel-signal background) — own border/
      radius/shadow/margin removed since the outer wrapper supplies those,
@@ -4003,6 +4025,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     state.activeTab = tab;
+    // PλWS-only slimmed-down trustline banner (carousel/SH0W MY P!GE0NS/
+    // BUY $P!GE0NS button/calculator all hidden via CSS — see .paws-view
+    // rules) — DATABASE and every other tab keep the full banner
+    // unchanged. A body class, not per-element JS toggles here, so it
+    // can't be fought by renderTrustlineSummary's own async display
+    // writes (balance/buy-button visibility, which know nothing about
+    // which tab is active) running after this.
+    document.body.classList.toggle('paws-view', tab === 'mypigeons');
     // Universal across every tab now — only what's underneath it swaps.
     el.collectionDetailsPanel.style.display = '';
     // screenBrowse (search/sort/filter row, results grid, detail overlay)
@@ -6609,6 +6639,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     }, BUYSWAP_REFRESH_MS);
   }
   el.pigeonsBalanceBuyBtn.addEventListener('click', openBuySwapPanel);
+  // PλWS-only — the BALANCE amount itself is the buy entry point there
+  // (BUY $P!GE0NS is hidden, see .paws-view). Guarded to this tab
+  // specifically rather than just relying on the underline styling, so
+  // clicking the same element on DATABASE (plain there, no underline)
+  // never unexpectedly opens the buy panel.
+  el.pigeonsBalanceValue.addEventListener('click', function(){
+    if (state.activeTab === 'mypigeons') openBuySwapPanel();
+  });
   el.buySwapXrpInput.addEventListener('input', scheduleBuySwapQuote);
   el.buySwapCopyIssuerBtn.addEventListener('click', function(){
     var addr = el.buySwapIssuerAddr ? el.buySwapIssuerAddr.getAttribute('data-full') : '';
