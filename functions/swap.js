@@ -910,7 +910,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   #resultsArea{ min-height:70vh; }
   /* Applied trait filters as a horizontal, wrapping list of chips —
      not stacked one per line. */
-  #traitRows, #sortRows{ display:flex; flex-wrap:wrap; gap:0.5rem; }
+  #traitRows{ display:flex; flex-wrap:wrap; gap:0.5rem; }
   .trait-row{
     display:flex;
     align-items:center;
@@ -931,6 +931,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      dropdown uses — always-on, not just hover/open, same reasoning as
      .tab-db-select above. */
   #traitsHoverLabel{ color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); letter-spacing:0.1em; font-size:13px; }
+  /* S0RT BY matches F!LTER BY TRA!TS' own always-on purple, not the
+     generic cyan hover every other dropdown gets — same collection-colour
+     reasoning as ADD TRA!TS above. */
+  #sortDropLabel{ color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); }
   /* Bigger than the surrounding text, not just inline with it — the
      clickable ▾ was easy to miss at the same size as the label. em-based
      so it scales with #traitsHoverLabel's own font-size above rather
@@ -956,12 +960,19 @@ const SWAP_HTML = `<!DOCTYPE html>
      shared rule directly above would otherwise apply. */
   #traitsHoverWrap:hover .trait-row-label,
   #traitsHoverWrap.open .trait-row-label{ color:var(--pigeon-purple) !important; text-shadow:0 0 5px var(--pigeon-purple-glow) !important; }
+  #sortDropWrap:hover .trait-row-label,
+  #sortDropWrap.open .trait-row-label{ color:var(--pigeon-purple) !important; text-shadow:0 0 5px var(--pigeon-purple-glow) !important; }
   .traits-flyout{
     position:absolute;
     top:100%;
     left:0;
     z-index:60;
-    display:flex;
+    /* NOT display:flex — .traits-flyout-vals below is position:absolute
+       and needs its top offset measured from this element's own padding
+       box; a flex container was overriding that offset (a real, observed
+       browser quirk with abs-positioned flex children, not just a stray
+       rule) so plain block flow is used instead. .traits-flyout-cats
+       gets an explicit width instead of a flex-basis to match. */
     width:min(620px, 90vw);
     max-height:420px;
     background:var(--panel-bg-solid);
@@ -970,14 +981,30 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-shadow:0 10px 30px rgba(0,0,0,0.6);
   }
   .traits-flyout-cats{
-    flex:0 0 42%;
+    width:42%;
     overflow-y:auto;
     border-right:1px solid var(--border-dim);
   }
+  /* Absolutely positioned (relative to .traits-flyout, already the
+     positioned ancestor) instead of a plain flex column sharing the
+     row's height. A shared column pinned to the top meant hovering a
+     category near the BOTTOM of a short list (e.g. H!ST0R!CAL SALES)
+     put its one value at the TOP of this pane — reaching it meant
+     dragging the mouse diagonally up-and-right, which is easy to
+     overshoot out of both hover zones. positionFlyoutVals() sets top
+     to match the hovered category button's own vertical position on
+     every hover/click, so the value list always starts directly
+     horizontal from wherever you're pointing and only lists downward
+     from there. */
   .traits-flyout-vals{
-    flex:1;
+    position:absolute;
+    top:0;
+    left:42%;
+    width:58%;
+    max-height:100%;
     overflow-y:auto;
     padding:0.6rem;
+    box-sizing:border-box;
   }
   .traits-flyout-cat{
     display:block;
@@ -3040,12 +3067,10 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
 
           <!-- S0RT BY sits directly underneath now, in COLLECTION's old
-               spot — left-aligned, same stacked-tag box treatment as
-               F!LTER BY TRA!TS below it: click S0RT BY to add a criterion,
-               each applied one renders as its own removable tag, and
-               criteria stack as tie-breaks in the order they were added
-               (e.g. PR!CE F!LTER first, then RAR!TY H!GHEST breaks ties
-               within that price order — not a replacement). -->
+               spot — left-aligned, same box treatment as F!LTER BY TRA!TS
+               below it. Single pick, automatically RARITY H!GHEST until
+               changed — picking a new value replaces the current one,
+               same as the original dropdown. -->
           <div class="db-config-group db-config-traits-group">
             <div class="db-config-traits-section">
               <div class="traits-hover-wrap" id="sortDropWrap">
@@ -3055,8 +3080,6 @@ const SWAP_HTML = `<!DOCTYPE html>
                   <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
                 </div>
               </div>
-              <div id="sortRows"></div>
-              <button class="clear-traits-btn" id="clearSortBtn" style="display:none;">[ CLEAR ]</button>
             </div>
           </div>
 
@@ -3546,9 +3569,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     items: [],                // everything loaded so far in the current browse/search mode
     scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
     mode: 'browse',            // 'browse' | 'search' | 'scoped'
-    sort: 'RARITY_ASC',        // primary — always sortStack[0], kept in sync wherever sortStack changes
-    sortStack: ['RARITY_ASC'], // stacked sort criteria, priority order — [0] drives the server fetch, [1+] are client-side tie-breaks
-    sortStackTouched: false,   // false until the user's own first pick — see applySort
+    sort: 'RARITY_ASC',        // single pick, automatically RARITY H!GHEST until the user picks something else
     edition: 'ALL',            // 'ALL' | 'LOW' (1-1515) | 'HIGH' (1516-3015)
     activeTab: null,           // null | 'database' | 'mypigeons' | 'topholders' | 'sales'
     databaseLoaded: false,
@@ -3568,7 +3589,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals','sortRows','clearSortBtn',
+  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInCount','pigeonsLoggedInTrustline','showMyPigeonsBtn','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
@@ -3623,6 +3644,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     return String(str).replace(/[&<>"']/g, function(c){
       return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
     });
+  }
+
+  // Shared by the S0RT BY and F!LTER BY TRA!TS flyouts (both use the same
+  // .traits-flyout-cats/.traits-flyout-vals structure): aligns the value
+  // pane's top with the hovered/clicked category button's own position, so
+  // the mouse can travel straight sideways into it instead of diagonally
+  // up-and-right to reach a pane pinned at the top of a tall panel. Clamped
+  // so a category near the bottom of its list still keeps the value pane
+  // fully inside the flyout instead of running off past its bottom edge.
+  function positionFlyoutVals(flyoutEl, valsEl, catBtn){
+    if (!catBtn){ valsEl.style.top = '0px'; return; }
+    var maxTop = Math.max(0, flyoutEl.clientHeight - valsEl.scrollHeight);
+    valsEl.style.top = Math.min(catBtn.offsetTop, maxTop) + 'px';
   }
 
   // "V!EW!NG WALLET <short>" reads oddly for your own wallet (ownerShort
@@ -4861,11 +4895,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         ensureTraitsLoaded().then(function(){
           state.traitFilters = [{ id: state.nextTraitRowId++, category: trait, value: value }];
           renderTraitRows();
-          state.sortStack = ['RARITY_ASC'];
-          state.sortStackTouched = false;
           state.sort = 'RARITY_ASC';
           renderSortDropLabel();
-          renderSortRows();
           el.searchInput.value = '';
           showScreen('browse');
           runQuery();
@@ -5104,17 +5135,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (isEdition && typeof data.rawSkip === 'number') state.editionRawSkip = data.rawSkip;
       state.total = typeof data.total === 'number' ? data.total : state.total;
       state.hasMore = !!data.hasMore && newItems.length > 0;
-      // The server already returns state.sort's (the primary/stack[0])
-      // own order — only when a secondary+ criterion is stacked on top do
-      // we need to re-sort what's loaded so far as a client-side tie-break
-      // and re-render the whole list; the common single-sort case keeps
-      // the cheap incremental append untouched.
-      if (state.sortStack.length > 1){
-        state.items = applyStackedSort(state.items);
-        renderResultsReplace(state.items);
-      } else {
-        appendResults(newItems);
-      }
+      appendResults(newItems);
       var resultCount = state.total !== null ? state.total : state.items.length;
       if (filters.length === 0){
         el.statusLine.innerHTML = '<div class="results-trait-note">STAT!C://QUERY :: <span class="hi">' + resultCount + '</span> P!GE0NS F0UND</div>';
@@ -5355,7 +5376,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     ensureTraitsLoaded().then(function(){
       renderTraitsFlyoutCats();
       el.traitsFlyoutVals.innerHTML = '<div class="th-empty">H0VER A CATEG0RY</div>';
-      el.traitsFlyout.style.display = 'flex';
+      el.traitsFlyoutVals.style.top = '0px';
+      el.traitsFlyout.style.display = 'block';
       el.traitsHoverWrap.classList.add('open');
     });
   }
@@ -5368,16 +5390,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   // multiple trait picks (see traitsFlyoutVals' click handler below), so
   // you can tick several traits in one sitting.
   el.traitsHoverLabel.addEventListener('click', function(){
-    if (el.traitsFlyout.style.display === 'flex') closeTraitsFlyout();
+    if (el.traitsFlyout.style.display === 'block') closeTraitsFlyout();
     else openTraitsFlyout();
   });
   el.traitsFlyoutCats.addEventListener('mouseover', function(e){
     var catBtn = e.target.closest('.traits-flyout-cat');
-    if (catBtn) renderTraitsFlyoutVals(catBtn.getAttribute('data-cat'));
+    if (catBtn){
+      renderTraitsFlyoutVals(catBtn.getAttribute('data-cat'));
+      positionFlyoutVals(el.traitsFlyout, el.traitsFlyoutVals, catBtn);
+    }
   });
   el.traitsFlyoutCats.addEventListener('click', function(e){
     var catBtn = e.target.closest('.traits-flyout-cat');
-    if (catBtn) renderTraitsFlyoutVals(catBtn.getAttribute('data-cat'));
+    if (catBtn){
+      renderTraitsFlyoutVals(catBtn.getAttribute('data-cat'));
+      positionFlyoutVals(el.traitsFlyout, el.traitsFlyoutVals, catBtn);
+    }
   });
   el.traitsFlyoutVals.addEventListener('click', function(e){
     var valBtn = e.target.closest('.traits-flyout-val');
@@ -5434,10 +5462,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       return true;
     });
-    // Whole list is already in memory here (a wallet scope), so the full
-    // stacked comparator chain (see sortComparatorFor/applyStackedSort
-    // below) applies directly — no separate per-key branches needed.
-    list = applyStackedSort(list);
+    // Whole list is already in memory here (a wallet scope) — a single
+    // client-side comparator is all that's needed (see sortComparatorFor).
+    var cmp = sortComparatorFor(state.sort);
+    if (cmp) list = list.slice().sort(cmp);
     state.items = list;
     el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG ' + walletViewingLabel(state.scope.ownerShort) + ' (<span class="hi">' + list.length + '</span> P!GE0NS)' +
       (list.length === 1 ? '<br>P!GE0N #' + list[0].number : '') + '</div>';
@@ -5822,7 +5850,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.pigeonsBarLoggedIn.style.display = '';
     el.pigeonsBalanceLoginWrap.style.display = 'none';
     el.pigeonsBalanceValue.style.display = '';
-    el.pigeonsLoggedInWallet.textContent = MY_WALLET.slice(0, 9) + '...' + MY_WALLET.slice(-4);
+    el.pigeonsLoggedInWallet.textContent = 'S!GNED !N AS :: ' + MY_WALLET.slice(0, 9) + '...' + MY_WALLET.slice(-4);
     trustlinePigeonCount = null;
     trustlineBalanceNum = null;
     renderTrustlineSummary();
@@ -7203,11 +7231,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     var found = SORT_CATEGORIES[cat].filter(function(o){ return o.value === value; })[0];
     return cat + ' ' + (found ? found.label : value);
   }
-  // Single-key comparator for one sort value — used both for the
-  // client-side wallet-scope sort (whole list already in memory) and as a
-  // tie-break layer over the server's own primary order for stacked
-  // (secondary+) sort criteria in the main collection browse. Every
-  // enabled SORT_CATEGORIES option has one; returns null for anything else.
+  // Single-key comparator for one sort value — used for the client-side
+  // wallet-scope sort (whole list already in memory). Every enabled
+  // SORT_CATEGORIES option has one; returns null for anything else.
   function sortComparatorFor(value){
     if (value === 'RARITY_ASC' || value === 'RARITY_DESC'){
       return function(a, b){
@@ -7256,42 +7282,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     return null;
   }
-  // Chains every stacked criterion in priority order — the first
-  // (primary) decides first, each next one only settles pairs the ones
-  // before it left tied, original index as the final stable fallback.
-  function stackedSortComparator(stack){
-    var comparators = stack.map(sortComparatorFor).filter(Boolean);
-    return function(a, b){
-      for (var i = 0; i < comparators.length; i++){
-        var r = comparators[i](a, b);
-        if (r) return r;
-      }
-      return 0;
-    };
-  }
-  function applyStackedSort(list){
-    var cmp = stackedSortComparator(state.sortStack);
-    return list.map(function(item, i){ return { item: item, i: i }; })
-      .sort(function(a, b){ var r = cmp(a.item, b.item); return r || (a.i - b.i); })
-      .map(function(x){ return x.item; });
-  }
-  // Static trigger now — the applied criteria themselves render as their
-  // own stacked tags below (renderSortRows), same as F!LTER BY TRA!TS.
+  // Single pick only — automatically RARITY H!GHEST until the user picks
+  // something else, same as the original dropdown.
   function renderSortDropLabel(){
-    el.sortDropLabel.innerHTML = 'S0RT BY <span class="thl-arrow">▾</span>';
-  }
-  // One tag per stacked criterion, in priority order — identical markup/
-  // classes to the applied-trait tags (.trait-row-tag) so it reads as the
-  // same kind of control. The first tag (primary) has no remove button —
-  // there's always at least one active sort; CLEAR drops back to just it.
-  function renderSortRows(){
-    el.sortRows.innerHTML = state.sortStack.map(function(value, idx){
-      return '<div class="trait-row trait-row-tag" data-idx="' + idx + '">' +
-        '<span class="trait-tag-label">' + escapeHtml(sortLabelOf(value)) + '</span>' +
-        (idx > 0 ? '<button class="trait-row-remove" data-idx="' + idx + '">&times;</button>' : '') +
-      '</div>';
-    }).join('');
-    el.clearSortBtn.style.display = state.sortStack.length > 1 ? '' : 'none';
+    el.sortDropLabel.textContent = sortLabelOf(state.sort) + ' ▾';
   }
   function renderSortFlyoutCats(){
     el.sortFlyoutCats.innerHTML = Object.keys(SORT_CATEGORIES).map(function(c){
@@ -7304,7 +7298,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
     var opts = SORT_CATEGORIES[category] || [];
     el.sortFlyoutVals.innerHTML = opts.map(function(o){
-      return '<button type="button" class="traits-flyout-val' + (state.sortStack.indexOf(o.value) !== -1 ? ' selected' : '') + (o.disabled ? ' tfv-disabled' : '') + '" data-value="' + o.value + '"' + (o.disabled ? ' disabled' : '') + '>' +
+      return '<button type="button" class="traits-flyout-val' + (state.sort === o.value ? ' selected' : '') + (o.disabled ? ' tfv-disabled' : '') + '" data-value="' + o.value + '"' + (o.disabled ? ' disabled' : '') + '>' +
         '<span>' + escapeHtml(o.label) + '</span>' +
         (o.disabled ? '<span class="db-soon">C0M!NG S00N</span>' : '') +
       '</button>';
@@ -7313,36 +7307,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   function openSortFlyout(){
     renderSortFlyoutCats();
     renderSortFlyoutVals(sortCategoryOf(state.sort) || Object.keys(SORT_CATEGORIES)[0]);
-    el.sortFlyout.style.display = 'flex';
+    // display must be set before measuring clientHeight/scrollHeight for
+    // positioning — a display:none element measures zero.
+    el.sortFlyout.style.display = 'block';
     el.sortDropWrap.classList.add('open');
+    positionFlyoutVals(el.sortFlyout, el.sortFlyoutVals, el.sortFlyoutCats.querySelector('.traits-flyout-cat.active'));
   }
   function closeSortFlyout(){
     el.sortFlyout.style.display = 'none';
     el.sortDropWrap.classList.remove('open');
   }
-  // Adds a criterion to the stack, or — if its own category (RAR!TY,
-  // PR!CE, etc.) is already stacked — updates that entry in place rather
-  // than duplicating it. Never reorders existing entries, so "click PR!CE
-  // FL00R, then click RAR!TY H!GHEST" keeps PRICE primary and adds RARITY
-  // as a tie-break, exactly the stacking behaviour asked for. The very
-  // first deliberate pick REPLACES the untouched RARITY_ASC default
-  // (state.sortStackTouched) instead of stacking after it — otherwise
-  // "click PR!CE FL00R first" would land as a tie-break behind a default
-  // the user never actually chose, not as the primary it should be.
   function applySort(value){
-    if (!state.sortStackTouched){
-      state.sortStack = [value];
-      state.sortStackTouched = true;
-    } else {
-      var cat = sortCategoryOf(value);
-      var idx = state.sortStack.findIndex(function(v){ return sortCategoryOf(v) === cat; });
-      if (idx !== -1) state.sortStack[idx] = value;
-      else state.sortStack.push(value);
-    }
-    state.sort = state.sortStack[0];
+    state.sort = value;
     renderSortDropLabel();
-    renderSortRows();
-    var isScyllaSort = state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC';
+    var isScyllaSort = value === 'SCYLLA_PRICE_ASC' || value === 'SCYLLA_PRICE_DESC';
     if (isScyllaSort){
       setScyllaListedOnly(true); // also runs the query
       return;
@@ -7353,27 +7331,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     runQuery();
   }
-  function removeSortEntry(idx){
-    if (idx <= 0 || idx >= state.sortStack.length) return; // primary (0) can't be removed, only replaced
-    state.sortStack.splice(idx, 1);
-    state.sort = state.sortStack[0];
-    renderSortDropLabel();
-    renderSortRows();
-    runQuery();
-  }
   // Click to open/close (not hover) — closes on an outside click, see
   // the shared document-level listener further down.
   el.sortDropLabel.addEventListener('click', function(){
-    if (el.sortFlyout.style.display === 'flex') closeSortFlyout();
+    if (el.sortFlyout.style.display === 'block') closeSortFlyout();
     else openSortFlyout();
   });
   el.sortFlyoutCats.addEventListener('mouseover', function(e){
     var catBtn = e.target.closest('.traits-flyout-cat');
-    if (catBtn) renderSortFlyoutVals(catBtn.getAttribute('data-cat'));
+    if (catBtn){
+      renderSortFlyoutVals(catBtn.getAttribute('data-cat'));
+      positionFlyoutVals(el.sortFlyout, el.sortFlyoutVals, catBtn);
+    }
   });
   el.sortFlyoutCats.addEventListener('click', function(e){
     var catBtn = e.target.closest('.traits-flyout-cat');
-    if (catBtn) renderSortFlyoutVals(catBtn.getAttribute('data-cat'));
+    if (catBtn){
+      renderSortFlyoutVals(catBtn.getAttribute('data-cat'));
+      positionFlyoutVals(el.sortFlyout, el.sortFlyoutVals, catBtn);
+    }
   });
   el.sortFlyoutVals.addEventListener('click', function(e){
     var valBtn = e.target.closest('.traits-flyout-val');
@@ -7381,17 +7357,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     applySort(valBtn.getAttribute('data-value'));
     closeSortFlyout();
   });
-  el.sortRows.addEventListener('click', function(e){
-    var removeBtn = e.target.closest('.trait-row-remove');
-    if (removeBtn) removeSortEntry(parseInt(removeBtn.getAttribute('data-idx'), 10));
-  });
-  el.clearSortBtn.addEventListener('click', function(){
-    state.sortStack = [state.sortStack[0]];
-    renderSortRows();
-    runQuery();
-  });
   renderSortDropLabel();
-  renderSortRows();
   // One delegated handler for every .input-clear-btn on the page (search,
   // offer amount, list price, both XRP calculator inputs) — see its own
   // CSS comment for why it must sit as the input's next sibling in
@@ -7417,8 +7383,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // SORTING BY / ADD TRAITS are click-to-open now (not hover) — close
   // whichever is open on a click anywhere outside its own box.
   document.addEventListener('click', function(e){
-    if (el.sortFlyout.style.display === 'flex' && !el.sortDropWrap.contains(e.target)) closeSortFlyout();
-    if (el.traitsFlyout.style.display === 'flex' && !el.traitsHoverWrap.contains(e.target)) closeTraitsFlyout();
+    if (el.sortFlyout.style.display === 'block' && !el.sortDropWrap.contains(e.target)) closeSortFlyout();
+    if (el.traitsFlyout.style.display === 'block' && !el.traitsHoverWrap.contains(e.target)) closeTraitsFlyout();
     if (el.dbSelectFlyout.style.display === 'block' && !el.dbSelectWrap.contains(e.target)) closeDbSelectFlyout();
     // Same pattern for the pigeon DETAIL screen itself — a click anywhere
     // outside it (a different tab, the trustline banner, anywhere) closes
@@ -7461,11 +7427,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.dbView = 'thumbnails';
     state.traitFilters = [];
     renderTraitRows();
-    state.sortStack = ['RARITY_ASC'];
-    state.sortStackTouched = false;
     state.sort = 'RARITY_ASC';
     renderSortDropLabel();
-    renderSortRows();
     // A wallet search (or a Top 100/sales-history wallet click) scopes the
     // whole DATABASE view to that wallet — RESET should drop back to the
     // full collection too, not just reset sort/traits within that scope.
@@ -7938,12 +7901,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (on){
       if (state.sort !== 'SCYLLA_PRICE_ASC' && state.sort !== 'SCYLLA_PRICE_DESC'){
         // Highest-first is the default entry into LISTED — the main
-        // attraction of the site, not a niche filter. Direct tile click,
-        // not the S0RT BY stack — replaces it entirely, same as before.
-        state.sortStack = ['SCYLLA_PRICE_DESC'];
+        // attraction of the site, not a niche filter.
         state.sort = 'SCYLLA_PRICE_DESC';
         renderSortDropLabel();
-        renderSortRows();
       }
       if (state.scope){
         state.scope = null;
@@ -7954,10 +7914,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         renderTradeBuilder();
       }
     } else if (state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC'){
-      state.sortStack = ['RARITY_ASC'];
       state.sort = 'RARITY_ASC';
       renderSortDropLabel();
-      renderSortRows();
     }
     runQuery();
   }
