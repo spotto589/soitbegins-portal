@@ -332,7 +332,7 @@ export function swapOfferSourceMemo() {
     Memo: {
       MemoType: stringToHex('Source'),
       MemoFormat: stringToHex('text/plain'),
-      MemoData: stringToHex('https://soitbegins.xyz/swap')
+      MemoData: stringToHex('https://soitbegins.xyz/static')
     }
   }];
 }
@@ -1973,7 +1973,7 @@ export async function fetchDeeptideSalesHistory({ skip = 0, limit = 20, sort = '
 // bot-check page, but this is their own public JSON API their frontend
 // calls (confirmed via curl — plain 200, no challenge), same category as
 // Deeptide's API, not a scrape of the challenged HTML. Cached briefly
-// since it's a live external call on every /swap page load otherwise.
+// since it's a live external call on every /static page load otherwise.
 // ─────────────────────────────────────────────────────────────────────────
 const XRP_CAFE_API_BASE = 'https://api.xrp.cafe';
 const XRP_CAFE_STATS_CACHE_KEY_PREFIX = 'pswap:xrpcafestats:v1:';

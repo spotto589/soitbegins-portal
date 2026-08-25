@@ -15,7 +15,7 @@
 // MY PIGEONS reuses the same wallet-identity mechanism as /board — the
 // `pigeon_session` cookie, set once a wallet has signed the connect
 // message there — rather than building a second, separate login flow. No
-// signature exists here to create one; /swap only ever reads the cookie.
+// signature exists here to create one; /static only ever reads the cookie.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { BOARD_COOKIE_NAME, getCookie, verifyToken } from './_shared.js';
@@ -5882,7 +5882,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             // display:none, so handleSelect's alerts/state changes would
             // land nowhere visible. Routes to CREATE OFFER (V1) on PλWS
             // instead, with this Pigeon pre-filled as 0FFER F0R.
-            window.location.href = '/swap?tab=mypigeons&offerFor=' + encodeURIComponent(tp.nftId) +
+            window.location.href = '/static?tab=mypigeons&offerFor=' + encodeURIComponent(tp.nftId) +
               '&offerForNum=' + encodeURIComponent(tp.number) +
               '&offerForImg=' + encodeURIComponent(tp.image || '') +
               '&offerForOwner=' + encodeURIComponent(tp.owner || '');
@@ -6786,7 +6786,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   renderSimpleOffer();
 
   // ---- CONNECT SCYLLA — same XummPkce OAuth login /board uses, redirected
-  // back to /swap instead. Several entry points share this one flow (the MY
+  // back to /static instead. Several entry points share this one flow (the MY
   // PIGEONS tab's own CONNECT Σκύλλα button, the trustline banner's LOGIN
   // button, an unauthenticated SEND on DATABASE) — signing in always lands
   // on MY PIGEONS afterward, since that's where your pigeons AND your
@@ -6806,7 +6806,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       xummAuth = new XummPkce(XAMAN_API_KEY, {
         implicit: true,
         rememberJwt: false,
-        redirectUrl: window.location.origin + '/swap'
+        redirectUrl: window.location.origin + '/static'
       });
       xummAuth.on('error', function(){
         el.connectStatus.textContent = 'ERR://L0G!N AB0RTED';
@@ -6826,7 +6826,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             body: JSON.stringify({ jwt: jwt })
           }).then(function(r){ return r.json(); }).then(function(data){
             if (data.ok){
-              window.location.href = '/swap?connected=1&tab=mypigeons';
+              window.location.href = '/static?connected=1&tab=mypigeons';
             } else {
               el.connectStatus.textContent = 'ERR://C0NNECT!0N FA!LED';
               resetLoginButtons();
@@ -6857,9 +6857,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.swapSignOutBtn.disabled = true;
     el.swapSignOutBtn.textContent = '[ S!GN!NG 0UT... ]';
     fetch('/api/disconnect', { method: 'POST' }).then(function(){
-      window.location.href = '/swap';
+      window.location.href = '/static';
     }).catch(function(){
-      window.location.href = '/swap';
+      window.location.href = '/static';
     });
   });
 
