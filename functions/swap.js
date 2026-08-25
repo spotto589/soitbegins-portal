@@ -786,6 +786,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
   }
   .bar-btn:hover{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
+  /* CANCEL/DEL!ST — red, not the neutral grey .bar-btn default, since
+     this is the one action here that actually removes something real.
+     Shared by both card variants (.delist-pigeon-btn) and the detail
+     screen's own copy (#detailScyllaDelistBtn). */
+  .delist-pigeon-btn, #detailScyllaDelistBtn{ border-color:#ff4d4d; color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
+  .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:#ff4d4d; background:#ff4d4d; color:#000; text-shadow:none; }
   /* Red, same accent as CLEAR TRAITS — resetting every filter is a
      destructive-feeling action, worth calling out differently from the
      neutral GO/RESET-adjacent buttons around it. */
@@ -1422,6 +1428,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-shadow:0 0 16px var(--pigeon-purple-glow);
     padding:0.6em 0.7em;
   }
+  /* Plain price line, own row above BUY N0W — the button itself now just
+     says BUY N0W, price isn't baked into the label any more. */
+  .thumb-buy-price{
+    text-align:center;
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.05em;
+    color:#fff;
+    text-shadow:0 1px 4px rgba(0,0,0,0.5);
+    text-transform:uppercase;
+    margin-bottom:0.4rem;
+  }
   /* BUY N0W — green, matching the site's "real, clickable buy action"
      colour language (distinct from cyan/magenta elsewhere), full width,
      sitting above the offer row within the same box. Only rendered when
@@ -1478,13 +1497,6 @@ const SWAP_HTML = `<!DOCTYPE html>
      just a plain readout so the box isn't blank. */
   .thumb-offer-own{ text-align:center; }
   .own-listing-note{ color:#fff; font-weight:700; font-size:13px; letter-spacing:0.05em; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-transform:uppercase; }
-  /* Real, live, actionable own-listing readout (there's a real CANCEL
-     button right underneath) — same red as the FL0CK tab's own pending-
-     offer count (.flock-tab-offers-pending), not the plain white
-     "!N Y0UR FL0CK" info-only note. Shared by the general-browse card
-     (own-listing-note), the FL0CK card's own L!STED line (ownedPigeon-
-     ActionHtml), and the detail screen's own copy. */
-  .own-listing-red{ color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
   .thumb-offer-row{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
   /* $PIGEONS coin sits inside the input itself (not just the placeholder)
      so it stays put once you start typing a number, instead of
@@ -2340,10 +2352,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   #screenDetail .scylla-listing-block .tech-meta-title{ color:#fff; opacity:0.9; }
   #screenDetail .scylla-listing-price{ font-size:17px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
-  /* Same red as the card grid's own-listing readout — needs to out-
-     specificity the #screenDetail rule right above, plain .own-listing-
-     red alone would lose to it. */
-  #screenDetail .scylla-listing-price.own-listing-red{ color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
   #screenDetail #detailMakeOfferRow{ margin-top:0.75rem; }
   #screenDetail .detail-num{ font-size:28px; }
   #screenDetail .trait-grid{ max-width:100%; margin:0.4rem 0 0; grid-template-columns:repeat(3, 1fr); gap:0.4rem; }
@@ -5360,7 +5368,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // "!N Y0UR FL0CK"/"L!ST!NG :: 444K" note instead, never a blank box.
       if (p.scyllaListing){
         return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<div class="own-listing-note own-listing-red">Y0UR L!ST!NG :: ' + escapeHtml(compactPigeonsNumber(p.scyllaListing.price)) + '</div>' +
+          '<div class="own-listing-note">Y0UR L!ST!NG :: ' + escapeHtml(compactPigeonsNumber(p.scyllaListing.price)) + '</div>' +
           // Same .delist-pigeon-btn class/handling ownedPigeonActionHtml's
           // own DELIST button uses (wireResultClicks' delegated listener
           // already covers el.resultsArea too) — no separate wiring needed.
@@ -5375,10 +5383,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     // No inline OFFER AMOUNT input on the card any more — just a button
     // that opens the shared amount-entry popup (see openAmountEntryModal
     // and .offer-open-modal-btn in wireResultClicks) to actually type
-    // the number.
+    // the number. Price is now its own plain line above BUY N0W, not
+    // baked into the button label.
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
       (canBuy
-        ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W :: ' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + ' ]</button>'
+        ? '<div class="thumb-buy-price">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>' +
+          '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W ]</button>'
         : '') +
       '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%;">[ 0FFER ]</button>' +
     '</div>';
@@ -6334,7 +6344,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // sitting directly on the card — same popup submitInlineListing/
     // submitTransfer both submit through.
     var actionHtml = listedInfo
-      ? '<div class="index-line own-listing-red" style="margin-top:0.5rem;">L!STED :: ' + escapeHtml(compactPigeonsNumber(listedInfo.price)) + ' $P!GE0NS</div>' +
+      ? '<div class="own-listing-note" style="margin-top:0.5rem;">L!STED :: ' + escapeHtml(compactPigeonsNumber(listedInfo.price)) + ' $P!GE0NS</div>' +
         '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ CANCEL ]</button>'
       : '<button class="bar-btn list-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%;">[ L!ST ]</button>';
     var transferHtml = '<button class="bar-btn transfer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ TRANSFER ]</button>';
@@ -8613,17 +8623,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       // card grid's own pigeonsActionBoxHtml on your own listed Pigeon —
       // never the raw fmtPigeons price there, since there's no BUY button
       // next to it to buy your own listing anyway.
+      // Plain white (#screenDetail .scylla-listing-price's own default) —
+      // the CANCEL button next to it is what's red now, not this text.
       el.detailScyllaPrice.textContent = isOwn ? 'Y0UR L!ST!NG :: ' + compactPigeonsNumber(listing.price) : fmtPigeons(listing.price);
-      // Same red as the card grid's own-listing readout (.own-listing-red)
-      // — real, actionable (CANCEL sits right next to it), not the plain
-      // color every other price in this row uses.
-      el.detailScyllaPrice.classList.toggle('own-listing-red', isOwn);
       el.detailScyllaBuyBtn.style.display = notOwn ? '' : 'none';
       el.detailScyllaDelistBtn.style.display = isOwn ? '' : 'none';
       el.detailScyllaListingRow.classList.remove('not-listed');
     } else {
       el.detailScyllaPrice.textContent = isOwn ? '!N Y0UR FL0CK' : 'N0T L!STED';
-      el.detailScyllaPrice.classList.remove('own-listing-red');
       el.detailScyllaBuyBtn.style.display = 'none';
       el.detailScyllaDelistBtn.style.display = 'none';
       el.detailScyllaListingRow.classList.add('not-listed');
@@ -8876,7 +8883,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var num = typeof n === 'string' ? Number(n) : n;
     num = num || 0;
     var abs = Math.abs(num);
-    if (abs >= 1000000) return (num / 1000000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'M';
+    if (abs >= 1000000) return (num / 1000000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + ' M!LL!0N';
     if (abs >= 1000) return (num / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'K';
     return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
   }
