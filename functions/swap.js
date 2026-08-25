@@ -910,7 +910,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   #resultsArea{ min-height:70vh; }
   /* Applied trait filters as a horizontal, wrapping list of chips —
      not stacked one per line. */
-  #traitRows{ display:flex; flex-wrap:wrap; gap:0.5rem; }
+  #traitRows, #sortRows{ display:flex; flex-wrap:wrap; gap:0.5rem; }
   .trait-row{
     display:flex;
     align-items:center;
@@ -1153,10 +1153,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   .trait-row-tag{
     width:var(--ctrl-w);
     box-sizing:border-box;
+    /* Override .trait-row's flex-wrap:wrap — with it on, the label and
+       the remove button wrap onto separate lines the moment they don't
+       both fit unshrunk, making this box roughly double the height of
+       F!LTER BY TRA!TS instead of matching it. nowrap forces them onto
+       one line so the label's own ellipsis (not a line wrap) absorbs
+       the overflow. */
+    flex-wrap:nowrap;
     justify-content:space-between;
     background:transparent;
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
+    /* Same 13px font-size #traitsHoverWrap's own label uses — its em
+       padding is computed against that 13px, not this box's inherited
+       16px body size, so without matching it here the two boxes' padding
+       (and therefore height) don't actually come out equal despite using
+       the same em values. */
+    font-size:13px;
     padding:0.9em 1.3em;
     transition:border-color 0.15s ease;
   }
@@ -1187,6 +1200,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease;
   }
   .trait-row-remove:hover{ background:var(--magenta-faint); }
+  /* Inside an applied tag (.trait-row-tag — traits AND stacked sort
+     criteria alike), the default 2em/24px button is taller than the
+     label's own line box, which was stretching the tag noticeably past
+     F!LTER BY TRA!TS'/S0RT BY's own trigger-box height despite matching
+     padding/font-size everywhere else. Sized to the label's actual line
+     height instead so the two match. */
+  .trait-row-tag .trait-row-remove{ width:19px; height:19px; }
   /* Same box dimensions/text size as ADD TRAITS (#traitsHoverWrap) — and
      always pinned to the right edge of the row (margin-left:auto), even
      once trait chips (#traitRows, which now sits before it in the DOM)
@@ -3001,14 +3021,13 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
               <button class="bar-btn" id="searchBtn">[ GO ]</button>
             </div>
+            <!-- COLLECTION sits where S0RT BY used to (centered, top row)
+                 — swapped with it, see below. -->
             <div class="sort-field sort-field-inline">
-              <span class="sort-field-label">S0RT BY ::</span>
-              <div class="traits-hover-wrap" id="sortDropWrap">
-                <span class="trait-row-label" id="sortDropLabel"></span>
-                <div class="traits-flyout" id="sortFlyout" style="display:none;">
-                  <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
-                  <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
-                </div>
+              <div class="edition-toggle" id="editionSelect">
+                <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
+                <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
+                <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
               </div>
             </div>
             <div class="sort-field">
@@ -3020,19 +3039,28 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- COLLECTION sits directly underneath the search + sort-by
-               line now, not above it — centered, its own box. -->
-          <div class="db-config-group">
-            <div class="sort-field db-config-row">
-              <div class="edition-toggle" id="editionSelect">
-                <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
-                <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
-                <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
+          <!-- S0RT BY sits directly underneath now, in COLLECTION's old
+               spot — left-aligned, same stacked-tag box treatment as
+               F!LTER BY TRA!TS below it: click S0RT BY to add a criterion,
+               each applied one renders as its own removable tag, and
+               criteria stack as tie-breaks in the order they were added
+               (e.g. PR!CE F!LTER first, then RAR!TY H!GHEST breaks ties
+               within that price order — not a replacement). -->
+          <div class="db-config-group db-config-traits-group">
+            <div class="db-config-traits-section">
+              <div class="traits-hover-wrap" id="sortDropWrap">
+                <span class="trait-row-label" id="sortDropLabel"></span>
+                <div class="traits-flyout" id="sortFlyout" style="display:none;">
+                  <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
+                  <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
+                </div>
               </div>
+              <div id="sortRows"></div>
+              <button class="clear-traits-btn" id="clearSortBtn" style="display:none;">[ CLEAR ]</button>
             </div>
           </div>
 
-          <!-- ADD TRAITS — its own box underneath COLLECTION, left-aligned
+          <!-- ADD TRAITS — its own box underneath S0RT BY, left-aligned
                to line up with the search bar above (#searchInput). -->
           <div class="db-config-group db-config-traits-group">
             <div class="db-config-traits-section">
@@ -3518,7 +3546,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     items: [],                // everything loaded so far in the current browse/search mode
     scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
     mode: 'browse',            // 'browse' | 'search' | 'scoped'
-    sort: 'RARITY_ASC',
+    sort: 'RARITY_ASC',        // primary — always sortStack[0], kept in sync wherever sortStack changes
+    sortStack: ['RARITY_ASC'], // stacked sort criteria, priority order — [0] drives the server fetch, [1+] are client-side tie-breaks
+    sortStackTouched: false,   // false until the user's own first pick — see applySort
     edition: 'ALL',            // 'ALL' | 'LOW' (1-1515) | 'HIGH' (1516-3015)
     activeTab: null,           // null | 'database' | 'mypigeons' | 'topholders' | 'sales'
     databaseLoaded: false,
@@ -3538,7 +3568,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals',
+  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortFlyout','sortFlyoutCats','sortFlyoutVals','sortRows','clearSortBtn',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInCount','pigeonsLoggedInTrustline','showMyPigeonsBtn','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
@@ -4831,8 +4861,11 @@ const SWAP_HTML = `<!DOCTYPE html>
         ensureTraitsLoaded().then(function(){
           state.traitFilters = [{ id: state.nextTraitRowId++, category: trait, value: value }];
           renderTraitRows();
+          state.sortStack = ['RARITY_ASC'];
+          state.sortStackTouched = false;
           state.sort = 'RARITY_ASC';
           renderSortDropLabel();
+          renderSortRows();
           el.searchInput.value = '';
           showScreen('browse');
           runQuery();
@@ -5071,7 +5104,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (isEdition && typeof data.rawSkip === 'number') state.editionRawSkip = data.rawSkip;
       state.total = typeof data.total === 'number' ? data.total : state.total;
       state.hasMore = !!data.hasMore && newItems.length > 0;
-      appendResults(newItems);
+      // The server already returns state.sort's (the primary/stack[0])
+      // own order — only when a secondary+ criterion is stacked on top do
+      // we need to re-sort what's loaded so far as a client-side tie-break
+      // and re-render the whole list; the common single-sort case keeps
+      // the cheap incremental append untouched.
+      if (state.sortStack.length > 1){
+        state.items = applyStackedSort(state.items);
+        renderResultsReplace(state.items);
+      } else {
+        appendResults(newItems);
+      }
       var resultCount = state.total !== null ? state.total : state.items.length;
       if (filters.length === 0){
         el.statusLine.innerHTML = '<div class="results-trait-note">STAT!C://QUERY :: <span class="hi">' + resultCount + '</span> P!GE0NS F0UND</div>';
@@ -5391,34 +5434,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       return true;
     });
-    if (state.sort === 'RARITY_ASC' || state.sort === 'RARITY_DESC'){
-      list = list.slice().sort(function(a, b){
-        var ar = a.rarityRank === null ? Infinity : a.rarityRank, br = b.rarityRank === null ? Infinity : b.rarityRank;
-        return state.sort === 'RARITY_DESC' ? br - ar : ar - br;
-      });
-    } else if (state.sort === 'NAME_ASC' || state.sort === 'NAME_DESC'){
-      list = list.slice().sort(function(a, b){ return state.sort === 'NAME_DESC' ? (b.number || 0) - (a.number || 0) : (a.number || 0) - (b.number || 0); });
-    } else if (state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW'){
-      list = list.slice().sort(function(a, b){
-        var av = a.highSaleXrp === null || a.highSaleXrp === undefined ? -1 : a.highSaleXrp, bv = b.highSaleXrp === null || b.highSaleXrp === undefined ? -1 : b.highSaleXrp;
-        return state.sort === 'SALES_LOW' ? av - bv : bv - av;
-      });
-    } else if (state.sort === 'AVG_SALE_XRP_ASC'){
-      list = list.slice().sort(function(a, b){
-        var av = a.avgSaleXrp === null || a.avgSaleXrp === undefined ? Infinity : a.avgSaleXrp, bv = b.avgSaleXrp === null || b.avgSaleXrp === undefined ? Infinity : b.avgSaleXrp;
-        return av - bv;
-      });
-    } else if (state.sort === 'AVG_SALE_PIGEONS_ASC'){
-      list = list.slice().sort(function(a, b){
-        var av = !a.avgSalePigeons ? Infinity : a.avgSalePigeons, bv = !b.avgSalePigeons ? Infinity : b.avgSalePigeons;
-        return av - bv;
-      });
-    } else if (state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC'){
-      list = list.slice().sort(function(a, b){
-        var ap = a.priceXrp === null || a.priceXrp === undefined ? Infinity : a.priceXrp, bp = b.priceXrp === null || b.priceXrp === undefined ? Infinity : b.priceXrp;
-        return state.sort === 'PRICE_DESC' ? bp - ap : ap - bp;
-      });
-    }
+    // Whole list is already in memory here (a wallet scope), so the full
+    // stacked comparator chain (see sortComparatorFor/applyStackedSort
+    // below) applies directly — no separate per-key branches needed.
+    list = applyStackedSort(list);
     state.items = list;
     el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG ' + walletViewingLabel(state.scope.ownerShort) + ' (<span class="hi">' + list.length + '</span> P!GE0NS)' +
       (list.length === 1 ? '<br>P!GE0N #' + list[0].number : '') + '</div>';
@@ -7184,8 +7203,95 @@ const SWAP_HTML = `<!DOCTYPE html>
     var found = SORT_CATEGORIES[cat].filter(function(o){ return o.value === value; })[0];
     return cat + ' ' + (found ? found.label : value);
   }
+  // Single-key comparator for one sort value — used both for the
+  // client-side wallet-scope sort (whole list already in memory) and as a
+  // tie-break layer over the server's own primary order for stacked
+  // (secondary+) sort criteria in the main collection browse. Every
+  // enabled SORT_CATEGORIES option has one; returns null for anything else.
+  function sortComparatorFor(value){
+    if (value === 'RARITY_ASC' || value === 'RARITY_DESC'){
+      return function(a, b){
+        var ar = a.rarityRank === null || a.rarityRank === undefined ? Infinity : a.rarityRank;
+        var br = b.rarityRank === null || b.rarityRank === undefined ? Infinity : b.rarityRank;
+        return value === 'RARITY_DESC' ? br - ar : ar - br;
+      };
+    }
+    if (value === 'NAME_ASC' || value === 'NAME_DESC'){
+      return function(a, b){ return value === 'NAME_DESC' ? (b.number || 0) - (a.number || 0) : (a.number || 0) - (b.number || 0); };
+    }
+    if (value === 'HIGHEST_SALE' || value === 'SALES_LOW'){
+      return function(a, b){
+        var av = a.highSaleXrp === null || a.highSaleXrp === undefined ? -1 : a.highSaleXrp;
+        var bv = b.highSaleXrp === null || b.highSaleXrp === undefined ? -1 : b.highSaleXrp;
+        return value === 'SALES_LOW' ? av - bv : bv - av;
+      };
+    }
+    if (value === 'AVG_SALE_XRP_ASC'){
+      return function(a, b){
+        var av = a.avgSaleXrp === null || a.avgSaleXrp === undefined ? Infinity : a.avgSaleXrp;
+        var bv = b.avgSaleXrp === null || b.avgSaleXrp === undefined ? Infinity : b.avgSaleXrp;
+        return av - bv;
+      };
+    }
+    if (value === 'AVG_SALE_PIGEONS_ASC'){
+      return function(a, b){
+        var av = !a.avgSalePigeons ? Infinity : a.avgSalePigeons;
+        var bv = !b.avgSalePigeons ? Infinity : b.avgSalePigeons;
+        return av - bv;
+      };
+    }
+    if (value === 'PRICE_ASC' || value === 'PRICE_DESC'){
+      return function(a, b){
+        var ap = a.priceXrp === null || a.priceXrp === undefined ? Infinity : a.priceXrp;
+        var bp = b.priceXrp === null || b.priceXrp === undefined ? Infinity : b.priceXrp;
+        return value === 'PRICE_DESC' ? bp - ap : ap - bp;
+      };
+    }
+    if (value === 'SCYLLA_PRICE_ASC' || value === 'SCYLLA_PRICE_DESC'){
+      return function(a, b){
+        var ap = a.scyllaListing && a.scyllaListing.price !== null && a.scyllaListing.price !== undefined ? parseFloat(a.scyllaListing.price) : Infinity;
+        var bp = b.scyllaListing && b.scyllaListing.price !== null && b.scyllaListing.price !== undefined ? parseFloat(b.scyllaListing.price) : Infinity;
+        return value === 'SCYLLA_PRICE_DESC' ? bp - ap : ap - bp;
+      };
+    }
+    return null;
+  }
+  // Chains every stacked criterion in priority order — the first
+  // (primary) decides first, each next one only settles pairs the ones
+  // before it left tied, original index as the final stable fallback.
+  function stackedSortComparator(stack){
+    var comparators = stack.map(sortComparatorFor).filter(Boolean);
+    return function(a, b){
+      for (var i = 0; i < comparators.length; i++){
+        var r = comparators[i](a, b);
+        if (r) return r;
+      }
+      return 0;
+    };
+  }
+  function applyStackedSort(list){
+    var cmp = stackedSortComparator(state.sortStack);
+    return list.map(function(item, i){ return { item: item, i: i }; })
+      .sort(function(a, b){ var r = cmp(a.item, b.item); return r || (a.i - b.i); })
+      .map(function(x){ return x.item; });
+  }
+  // Static trigger now — the applied criteria themselves render as their
+  // own stacked tags below (renderSortRows), same as F!LTER BY TRA!TS.
   function renderSortDropLabel(){
-    el.sortDropLabel.textContent = sortLabelOf(state.sort) + ' ▾';
+    el.sortDropLabel.innerHTML = 'S0RT BY <span class="thl-arrow">▾</span>';
+  }
+  // One tag per stacked criterion, in priority order — identical markup/
+  // classes to the applied-trait tags (.trait-row-tag) so it reads as the
+  // same kind of control. The first tag (primary) has no remove button —
+  // there's always at least one active sort; CLEAR drops back to just it.
+  function renderSortRows(){
+    el.sortRows.innerHTML = state.sortStack.map(function(value, idx){
+      return '<div class="trait-row trait-row-tag" data-idx="' + idx + '">' +
+        '<span class="trait-tag-label">' + escapeHtml(sortLabelOf(value)) + '</span>' +
+        (idx > 0 ? '<button class="trait-row-remove" data-idx="' + idx + '">&times;</button>' : '') +
+      '</div>';
+    }).join('');
+    el.clearSortBtn.style.display = state.sortStack.length > 1 ? '' : 'none';
   }
   function renderSortFlyoutCats(){
     el.sortFlyoutCats.innerHTML = Object.keys(SORT_CATEGORIES).map(function(c){
@@ -7198,7 +7304,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
     var opts = SORT_CATEGORIES[category] || [];
     el.sortFlyoutVals.innerHTML = opts.map(function(o){
-      return '<button type="button" class="traits-flyout-val' + (state.sort === o.value ? ' selected' : '') + (o.disabled ? ' tfv-disabled' : '') + '" data-value="' + o.value + '"' + (o.disabled ? ' disabled' : '') + '>' +
+      return '<button type="button" class="traits-flyout-val' + (state.sortStack.indexOf(o.value) !== -1 ? ' selected' : '') + (o.disabled ? ' tfv-disabled' : '') + '" data-value="' + o.value + '"' + (o.disabled ? ' disabled' : '') + '>' +
         '<span>' + escapeHtml(o.label) + '</span>' +
         (o.disabled ? '<span class="db-soon">C0M!NG S00N</span>' : '') +
       '</button>';
@@ -7214,10 +7320,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.sortFlyout.style.display = 'none';
     el.sortDropWrap.classList.remove('open');
   }
+  // Adds a criterion to the stack, or — if its own category (RAR!TY,
+  // PR!CE, etc.) is already stacked — updates that entry in place rather
+  // than duplicating it. Never reorders existing entries, so "click PR!CE
+  // FL00R, then click RAR!TY H!GHEST" keeps PRICE primary and adds RARITY
+  // as a tie-break, exactly the stacking behaviour asked for. The very
+  // first deliberate pick REPLACES the untouched RARITY_ASC default
+  // (state.sortStackTouched) instead of stacking after it — otherwise
+  // "click PR!CE FL00R first" would land as a tie-break behind a default
+  // the user never actually chose, not as the primary it should be.
   function applySort(value){
-    state.sort = value;
+    if (!state.sortStackTouched){
+      state.sortStack = [value];
+      state.sortStackTouched = true;
+    } else {
+      var cat = sortCategoryOf(value);
+      var idx = state.sortStack.findIndex(function(v){ return sortCategoryOf(v) === cat; });
+      if (idx !== -1) state.sortStack[idx] = value;
+      else state.sortStack.push(value);
+    }
+    state.sort = state.sortStack[0];
     renderSortDropLabel();
-    var isScyllaSort = value === 'SCYLLA_PRICE_ASC' || value === 'SCYLLA_PRICE_DESC';
+    renderSortRows();
+    var isScyllaSort = state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC';
     if (isScyllaSort){
       setScyllaListedOnly(true); // also runs the query
       return;
@@ -7226,6 +7351,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       setScyllaListedOnly(false); // also runs the query
       return;
     }
+    runQuery();
+  }
+  function removeSortEntry(idx){
+    if (idx <= 0 || idx >= state.sortStack.length) return; // primary (0) can't be removed, only replaced
+    state.sortStack.splice(idx, 1);
+    state.sort = state.sortStack[0];
+    renderSortDropLabel();
+    renderSortRows();
     runQuery();
   }
   // Click to open/close (not hover) — closes on an outside click, see
@@ -7248,7 +7381,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     applySort(valBtn.getAttribute('data-value'));
     closeSortFlyout();
   });
+  el.sortRows.addEventListener('click', function(e){
+    var removeBtn = e.target.closest('.trait-row-remove');
+    if (removeBtn) removeSortEntry(parseInt(removeBtn.getAttribute('data-idx'), 10));
+  });
+  el.clearSortBtn.addEventListener('click', function(){
+    state.sortStack = [state.sortStack[0]];
+    renderSortRows();
+    runQuery();
+  });
   renderSortDropLabel();
+  renderSortRows();
   // One delegated handler for every .input-clear-btn on the page (search,
   // offer amount, list price, both XRP calculator inputs) — see its own
   // CSS comment for why it must sit as the input's next sibling in
@@ -7318,8 +7461,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.dbView = 'thumbnails';
     state.traitFilters = [];
     renderTraitRows();
+    state.sortStack = ['RARITY_ASC'];
+    state.sortStackTouched = false;
     state.sort = 'RARITY_ASC';
     renderSortDropLabel();
+    renderSortRows();
     // A wallet search (or a Top 100/sales-history wallet click) scopes the
     // whole DATABASE view to that wallet — RESET should drop back to the
     // full collection too, not just reset sort/traits within that scope.
@@ -7792,9 +7938,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (on){
       if (state.sort !== 'SCYLLA_PRICE_ASC' && state.sort !== 'SCYLLA_PRICE_DESC'){
         // Highest-first is the default entry into LISTED — the main
-        // attraction of the site, not a niche filter.
+        // attraction of the site, not a niche filter. Direct tile click,
+        // not the S0RT BY stack — replaces it entirely, same as before.
+        state.sortStack = ['SCYLLA_PRICE_DESC'];
         state.sort = 'SCYLLA_PRICE_DESC';
         renderSortDropLabel();
+        renderSortRows();
       }
       if (state.scope){
         state.scope = null;
@@ -7805,8 +7954,10 @@ const SWAP_HTML = `<!DOCTYPE html>
         renderTradeBuilder();
       }
     } else if (state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC'){
+      state.sortStack = ['RARITY_ASC'];
       state.sort = 'RARITY_ASC';
       renderSortDropLabel();
+      renderSortRows();
     }
     runQuery();
   }
