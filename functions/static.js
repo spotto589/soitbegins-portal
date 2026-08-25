@@ -2109,6 +2109,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:width 0.1s ease;
   }
   .pigeons-bar-calc-input:focus{ outline:none; }
+  /* $P!GE0NS side of the calculator — same input, just a wider base/
+     minimum width to fit "ENTER $P!GE0NS" (14ch) without clipping. */
+  .pigeons-bar-calc-input-wide{ width:14ch; min-width:14ch; }
   .pigeons-bar-calc-input::placeholder{ color:rgba(255,255,255,0.6); text-transform:uppercase; }
   .pigeons-bar-calc-unit{ color:rgba(255,255,255,0.7); font-size:14px; letter-spacing:0.05em; }
   .pigeons-bar-calc-eq{ color:#fff; font-size:15px; opacity:0.8; }
@@ -3157,12 +3160,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:2rem 1rem;
   }
   .amount-entry-panel{
-    width:min(360px, 100%);
+    width:min(460px, 100%);
     background:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
     box-shadow:0 10px 30px rgba(0,0,0,0.6);
-    padding:1.25rem;
+    padding:1.75rem;
+    font-size:1.08em;
   }
   .amount-entry-mode .thumb-offer-row{ align-items:stretch; }
   .amount-entry-mode .make-offer-input-wrap{ margin-bottom:0; }
@@ -3409,7 +3413,9 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
             <span class="pigeons-bar-calc-unit">XRP</span>
             <span class="pigeons-bar-calc-eq">=</span>
-            <span class="pigeons-bar-calc-out" id="pigeonsCalcOut">0 $P!GE0NS</span>
+            <input class="pigeons-bar-calc-input pigeons-bar-calc-input-wide" id="pigeonsCalcPigeonsInput" type="text" inputmode="decimal" placeholder="ENTER $P!GE0NS">
+            <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
+            <span class="pigeons-bar-calc-unit">$P!GE0NS</span>
           </div>
         </div>
       </div>
@@ -4128,17 +4134,23 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- SCREEN: TRANSFER RESULT — verified against real on-ledger state (nft_sell_offers), not just Xaman's word -->
-    <div class="sw-panel" id="screenTransferResult" style="display:none;">
-      <div class="detail-eyebrow">// TRANSFER 0FFER SENT</div>
-      <div class="index-line swap-nonatomic-note">THE REC!P!ENT ST!LL NEEDS T0 ACCEPT TH!S 0FFER F0R THE P!GE0N T0 M0VE.</div>
-      <div class="detail-num" id="transferResultPigeonNum"></div>
-      <div class="detail-field"><span class="df-label">TRANSFERR!NG T0</span><span class="df-value" id="transferResultDestination"></span></div>
-      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="transferResultStatus"></span></div>
-      <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="transferResultTxLink" target="_blank" rel="noopener"></a></span></div>
+    <!-- SCREEN: TRANSFER RESULT — verified against real on-ledger state (nft_sell_offers), not just Xaman's word.
+         Receipt-style like LIST/DELIST's own result screens (see .result-receipt) — one glance tells you which
+         Pigeon and where it's headed; the non-atomic warning is real but secondary, so it sits at the bottom
+         instead of stealing the top of the screen. -->
+    <div class="sw-panel result-receipt" id="screenTransferResult" style="display:none;">
+      <div class="receipt-badge">✓</div>
+      <div class="receipt-pigeon-num" id="transferResultPigeonNum"></div>
+      <div class="receipt-status-line">TRANSFER 0FFER SENT</div>
+      <div class="receipt-price-row">
+        <div class="receipt-price-label">TRANSFERR!NG T0</div>
+        <div class="receipt-price-value" id="transferResultDestination" style="font-family:var(--font-mono); font-size:16px; word-break:break-all;"></div>
+      </div>
       <div class="detail-actions">
         <button class="secondary-btn" id="transferResultDoneBtn">[ ← BACK T0 MY FL0CK ]</button>
       </div>
+      <a class="receipt-tx-link" id="transferResultTxLink" target="_blank" rel="noopener">V!EW TRANSACT!0N</a>
+      <div class="index-line swap-nonatomic-note" style="margin-top:1.25rem; margin-bottom:0;">THE REC!P!ENT ST!LL NEEDS T0 ACCEPT TH!S 0FFER F0R THE P!GE0N T0 M0VE.</div>
     </div>
 
     <!-- SCREEN: ACCEPT OFFER CONFIRMATION (owner side) — the exact NFTokenAcceptOffer txjson, before Xaman ever opens -->
@@ -4264,7 +4276,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
-   'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
+   'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'topTabs','flockTabLabel','myPigeonsPanel','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
    'salesPanelWrap',
@@ -4309,7 +4321,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'offerConfirmModal','offerConfAccount','offerConfOwner','offerConfPigeonNum','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
    'transferConfirmModal','transferConfAccount','transferConfPigeonNum','transferConfDestination','transferConfirmStatus','transferConfirmBackBtn','transferOpenXamanBtn',
-   'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultStatus','transferResultTxLink','transferResultDoneBtn',
+   'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultTxLink','transferResultDoneBtn',
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
    'amountEntryOfferMode','amountEntryOfferInput','amountEntryOfferBtn',
    'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferBtn','amountEntryTransferStatus',
@@ -5572,7 +5584,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           (buyCountdown ? '<div class="listing-countdown">' + escapeHtml(buyCountdown) + '</div>' : '') +
           '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W ]</button>'
         : '') +
-      '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%;">[ 0FFER ]</button>' +
+      '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%;">[ MAKE AN 0FFER ]</button>' +
     '</div>';
   }
   function resultCardHtml(p){
@@ -5667,14 +5679,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
     var num = p.number !== null ? '#' + greenNum(p.number) : '#????';
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) + '</div>' : '';
-    // Every Pigeon, not just ones with real Σκύλλα $PIGEONS sales — real
-    // XRP sale history (highSaleEntry, see toItem in api/pigeons.js) is
-    // null (not 0) when a Pigeon genuinely has no recorded sale, distinct
-    // from an actual free/near-free past sale, so that case reads "M!NT
-    // C0ND!T!0N" instead of a misleading "0 XRP".
-    var avgSaleLine = '<div class="result-rarity-line">AVERAGE SALE PR!CE :: ' +
-      (p.avgSaleXrp !== null && p.avgSaleXrp !== undefined ? escapeHtml(fmtXrp(p.avgSaleXrp)) + ' XRP' : 'M!NT C0ND!T!0N') +
-      '</div>';
+    // Real XRP sale history (highSaleEntry, see toItem in api/pigeons.js)
+    // is null (not 0) when a Pigeon genuinely has no recorded sale, distinct
+    // from an actual free/near-free past sale — that case shows no line at
+    // all instead of a misleading "0 XRP" or a label with nothing behind it.
+    var avgSaleLine = (p.avgSaleXrp !== null && p.avgSaleXrp !== undefined)
+      ? '<div class="result-rarity-line">AVERAGE SALE PR!CE :: ' + greenNum(fmtXrp(p.avgSaleXrp)) + ' XRP</div>'
+      : '';
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
     var atCap = offerCtxCard
@@ -6079,14 +6090,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       state.hasMore = !!data.hasMore && newItems.length > 0;
       appendResults(newItems);
       // Floor listings exhausted — seamlessly continue the same infinite
-      // scroll sorted by lowest average sale price instead of just
+      // scroll sorted by lowest average sale price in XRP instead of just
       // stopping (whatever floor items already showed above stay put;
       // this appends more underneath). Only ever fires once per landing
       // here: the recursive call below runs with scyllaListedOnly false,
       // so this exact condition can't refire on it.
       if (state.scyllaListedOnly && !state.hasMore){
         state.scyllaListedOnly = false;
-        state.sort = 'AVG_SALE_PIGEONS_ASC';
+        state.sort = 'AVG_SALE_XRP_ASC';
         renderSortTag();
         el.statScyllaListedTile.classList.remove('scylla-active');
         state.skip = 0;
@@ -8187,7 +8198,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.transferConfirmModal.style.display = 'none';
     el.transferResultPigeonNum.innerHTML = 'P!GE0N #' + (transferTarget.number !== null ? greenNum(transferTarget.number) : '????');
     el.transferResultDestination.textContent = transferTarget.toWallet;
-    el.transferResultStatus.textContent = 'OFFER CREATED';
     if (data.txHash){
       el.transferResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
       el.transferResultTxLink.textContent = data.txHash;
@@ -8412,7 +8422,15 @@ const SWAP_HTML = `<!DOCTYPE html>
         el.pigeonsBarRateValue.innerHTML = greenNum((1 / trustlineXrpPerPigeon).toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' $P!GE0NS';
         el.pigeonsBarRate.style.display = '';
         el.pigeonsBarCalc.style.display = '';
-        updatePigeonsCalc();
+        // Re-derive whichever side the rate refresh shouldn't silently
+        // overwrite what's mid-typing — XRP wins ties (matches its
+        // longstanding role as the "primary" side), unless only the
+        // $P!GE0NS side actually has something in it.
+        if (el.pigeonsCalcPigeonsInput.value.trim() && !el.pigeonsCalcXrpInput.value.trim()){
+          updateXrpCalcFromPigeons();
+        } else {
+          updatePigeonsCalcFromXrp();
+        }
       }
       if (data && data.dexUrl){
         el.pigeonsDexLink.href = data.dexUrl;
@@ -8422,25 +8440,47 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   refreshTrustlineRate();
   setInterval(refreshTrustlineRate, 60000);
-  // Grows the input to fit what's typed (ch units against the monospace
+  // Grows an input to fit what's typed (ch units against the monospace
   // font) instead of staying a fixed width — since the whole calc box is
   // centered in its flex:1 slot (see .pigeons-bar-calc-col), this reads as
   // growing outward from the center in both directions, not anchored left.
-  function resizeCalcInput(){
-    var len = el.pigeonsCalcXrpInput.value.length;
-    el.pigeonsCalcXrpInput.style.width = Math.max(10, len + 2) + 'ch';
+  function resizeCalcInput(inputEl, baseCh){
+    var len = inputEl.value.length;
+    inputEl.style.width = Math.max(baseCh, len + 2) + 'ch';
   }
-  function updatePigeonsCalc(){
-    resizeCalcInput();
-    var xrpValue = Number(el.pigeonsCalcXrpInput.value);
+  // Two-way: typing XRP fills in $P!GE0NS, typing $P!GE0NS fills in XRP.
+  // Setting .value programmatically (as both functions below do to the
+  // OTHER field) never fires that field's own 'input' listener, so there's
+  // no risk of these two calling each other back and forth — no sync flag
+  // needed. Commas are stripped on read (the $P!GE0NS side may hold one
+  // from a previous computed result) but never written back into the box
+  // the user is actively typing in, only into the one being computed.
+  function updatePigeonsCalcFromXrp(){
+    resizeCalcInput(el.pigeonsCalcXrpInput, 10);
+    var xrpValue = Number(el.pigeonsCalcXrpInput.value.replace(/,/g, ''));
     if (trustlineXrpPerPigeon === null || !el.pigeonsCalcXrpInput.value.trim() || !isFinite(xrpValue) || xrpValue <= 0){
-      el.pigeonsCalcOut.innerHTML = greenNum('0') + ' $P!GE0NS';
+      el.pigeonsCalcPigeonsInput.value = '';
+      resizeCalcInput(el.pigeonsCalcPigeonsInput, 14);
       return;
     }
     var pigeonsOut = xrpValue / trustlineXrpPerPigeon;
-    el.pigeonsCalcOut.innerHTML = greenNum(pigeonsOut.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' $P!GE0NS';
+    el.pigeonsCalcPigeonsInput.value = pigeonsOut.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    resizeCalcInput(el.pigeonsCalcPigeonsInput, 14);
   }
-  el.pigeonsCalcXrpInput.addEventListener('input', updatePigeonsCalc);
+  function updateXrpCalcFromPigeons(){
+    resizeCalcInput(el.pigeonsCalcPigeonsInput, 14);
+    var pigeonsValue = Number(el.pigeonsCalcPigeonsInput.value.replace(/,/g, ''));
+    if (trustlineXrpPerPigeon === null || !el.pigeonsCalcPigeonsInput.value.trim() || !isFinite(pigeonsValue) || pigeonsValue <= 0){
+      el.pigeonsCalcXrpInput.value = '';
+      resizeCalcInput(el.pigeonsCalcXrpInput, 10);
+      return;
+    }
+    var xrpOut = pigeonsValue * trustlineXrpPerPigeon;
+    el.pigeonsCalcXrpInput.value = xrpOut.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    resizeCalcInput(el.pigeonsCalcXrpInput, 10);
+  }
+  el.pigeonsCalcXrpInput.addEventListener('input', updatePigeonsCalcFromXrp);
+  el.pigeonsCalcPigeonsInput.addEventListener('input', updateXrpCalcFromPigeons);
   // Real link, destination doesn't exist yet — same "coming soon"
   // pattern as the BURNT link, honest about what's actually built.
   el.onboardLink.addEventListener('click', function(){
@@ -8888,7 +8928,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     if (p && p.avgSaleXrp !== null && p.avgSaleXrp !== undefined){
       el.detailAvgSaleRow.style.display = '';
-      el.detailAvgSale.textContent = p.avgSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' + (p.saleCount ? ' (' + p.saleCount + ' SALES)' : '');
+      el.detailAvgSale.innerHTML = greenNum(p.avgSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' XRP' + (p.saleCount ? ' (' + p.saleCount + ' SALES)' : '');
     } else {
       el.detailAvgSaleRow.style.display = 'none';
     }
