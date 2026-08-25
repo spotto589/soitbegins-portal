@@ -458,6 +458,43 @@ export async function onRequestGet(context) {
     return json({ items: [toItem(item.nftId, item, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap)] });
   }
 
+  // Trait filters (# 0R WALLET's own F!LTER BY TRA!TS) — parsed once here
+  // so every sort mode below can honor them, not just the plain default
+  // rarity path. Sort modes built from a separate pre-computed index
+  // (highSaleMap for H!GHEST REC0RDED SALES, the number map for A-Z/Z-A)
+  // carry no trait data of their own, so filtering them means first
+  // learning which nftIds actually match via scanFilteredCandidates below,
+  // then intersecting — see each branch's own comment.
+  const filtersRaw = params.get('filters');
+  let filters = [];
+  if (filtersRaw) {
+    try { filters = JSON.parse(filtersRaw); } catch (e) { filters = []; }
+    if (!Array.isArray(filters)) filters = [];
+  }
+  // Deeptide already filters server-side once a `traits` param is passed,
+  // so this just scans its own listings feed collecting every matching
+  // item — no per-item guessing needed. Bounded the same way the edition-
+  // range scan below already is (10 pages of 60 = 600 items): an honest
+  // limitation for a trait combo with more real matches than that, same
+  // trade-off already accepted elsewhere in this file (see crossListing's
+  // own comment) — a correct sort over a bounded set beats an incorrect
+  // one over the whole collection.
+  const FILTERED_SCAN_CAP_ITEMS = 600;
+  async function scanFilteredCandidates(traitFilters) {
+    const perPage = 60;
+    let skip = 0;
+    const items = [];
+    let exhausted = false;
+    while (items.length < FILTERED_SCAN_CAP_ITEMS) {
+      const page = await fetchDeeptideListings({ skip, limit: perPage, sort: 'rarity-asc', traits: traitFilters });
+      if (!page.items.length) { exhausted = true; break; }
+      items.push(...page.items);
+      skip += page.items.length;
+      if (!page.hasMore) { exhausted = true; break; }
+    }
+    return { items, exhausted };
+  }
+
   // Σκύλλα SWAP LISTED filter — only Pigeons actually listed through this
   // system (see getSwapListingsMap), sorted by real $PIGEONS price. Served
   // directly from the KV index (fast, no XRPL calls on the request path) —
@@ -544,7 +581,16 @@ export async function onRequestGet(context) {
       : (byAverage
           ? (sourceMap[id].count ? sourceMap[id].totalDrops / sourceMap[id].count : sourceMap[id].drops)
           : sourceMap[id].drops);
-    const sortedIds = Object.keys(sourceMap).sort((a, b) => asc ? metricOf(a) - metricOf(b) : metricOf(b) - metricOf(a));
+    // highSaleMap/pigeonsSalesMap carry no trait data of their own — a
+    // trait filter here means first learning the real set of matching
+    // nftIds (scanFilteredCandidates), then restricting to that.
+    let idPool = Object.keys(sourceMap);
+    if (filters.length) {
+      const scan = await scanFilteredCandidates(filters);
+      const matchSet = new Set(scan.items.map(it => it.nftId));
+      idPool = idPool.filter(id => matchSet.has(id));
+    }
+    const sortedIds = idPool.sort((a, b) => asc ? metricOf(a) - metricOf(b) : metricOf(b) - metricOf(a));
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
@@ -573,34 +619,33 @@ export async function onRequestGet(context) {
   const numberRange = params.get('numberRange');
   if (numberRange === 'low' || numberRange === 'high') {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
-    // Trait filters were previously ignored entirely in this branch —
-    // clicking a trait while 1ST/2ND EDITION was selected silently showed
-    // every Pigeon in that range instead of actually filtering. Same
-    // JSON-parse as the default (unfiltered-by-edition) path below.
-    const editionFiltersRaw = params.get('filters');
-    let editionFilters = [];
-    if (editionFiltersRaw) {
-      try { editionFilters = JSON.parse(editionFiltersRaw); } catch (e) { editionFilters = []; }
-      if (!Array.isArray(editionFilters)) editionFilters = [];
-    }
 
-    // Numeric order within a range is just a direct slice of the (complete)
-    // number map restricted to that range — no scanning needed at all.
+    // Numeric order within a range starts from a direct slice of the
+    // (complete) number map restricted to that range — trait filters
+    // (previously ignored here entirely, same bug as the plain numericOrder
+    // branch above) restrict it further via the shared scan/intersect.
     const numericOrder = params.get('numericOrder');
     if (numericOrder === 'asc' || numericOrder === 'desc') {
       const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
       const map = await getPigeonNumberMap(env.coin);
-      const nums = Object.keys(map)
+      let nums = Object.keys(map)
         .map(n => parseInt(n, 10))
-        .filter(n => numberRange === 'low' ? n <= PIGEON_LOW_EDITION_MAX : n > PIGEON_LOW_EDITION_MAX)
-        .sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
+        .filter(n => numberRange === 'low' ? n <= PIGEON_LOW_EDITION_MAX : n > PIGEON_LOW_EDITION_MAX);
+      let total = numberRange === 'low' ? PIGEON_LOW_EDITION_MAX : (PIGEON_COLLECTION_SIZE_APPROX - PIGEON_LOW_EDITION_MAX);
+      if (filters.length) {
+        const scan = await scanFilteredCandidates(filters);
+        const matchSet = new Set(scan.items.map(it => it.nftId));
+        nums = nums.filter(n => matchSet.has(map[n]));
+        total = nums.length; // real total beyond the scan cap unknown — same honest limitation as scanFilteredCandidates itself
+      }
+      nums.sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
       const pageNums = nums.slice(skip, skip + limit);
       const resolved = await Promise.all(pageNums.map(n => fetchDeeptideNftDetail(map[n])));
       const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
       await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
       return json({
         items,
-        total: numberRange === 'low' ? PIGEON_LOW_EDITION_MAX : (PIGEON_COLLECTION_SIZE_APPROX - PIGEON_LOW_EDITION_MAX),
+        total,
         hasMore: skip + pageNums.length < nums.length,
         skip: skip + pageNums.length,
         limit,
@@ -614,7 +659,7 @@ export async function onRequestGet(context) {
     let exhausted = false;
     let rawPagesScanned = 0;
     while (matched.length < limit && rawPagesScanned < 10) {
-      const page = await fetchDeeptideListings({ skip: cursor, limit: 60, sort: underlyingSort, traits: editionFilters });
+      const page = await fetchDeeptideListings({ skip: cursor, limit: 60, sort: underlyingSort, traits: filters });
       rawPagesScanned++;
       if (!page.items.length) { exhausted = true; break; }
       for (const it of page.items) {
@@ -650,14 +695,25 @@ export async function onRequestGet(context) {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
     const map = await getPigeonNumberMap(env.coin);
-    const nums = Object.keys(map).map(n => parseInt(n, 10)).sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
+    let nums = Object.keys(map).map(n => parseInt(n, 10));
+    let total = nums.length;
+    // The number map carries no trait data — a trait filter (previously
+    // ignored entirely here) means first learning the real set of
+    // matching nftIds via the shared scan, then restricting to that.
+    if (filters.length) {
+      const scan = await scanFilteredCandidates(filters);
+      const matchSet = new Set(scan.items.map(it => it.nftId));
+      nums = nums.filter(n => matchSet.has(map[n]));
+      total = nums.length; // real total beyond the scan cap unknown — same honest limitation as scanFilteredCandidates itself
+    }
+    nums.sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
     const pageNums = nums.slice(skip, skip + limit);
     const resolved = await Promise.all(pageNums.map(n => fetchDeeptideNftDetail(map[n])));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
     await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
     return json({
       items,
-      total: nums.length,
+      total,
       hasMore: skip + pageNums.length < nums.length,
       skip: skip + pageNums.length,
       limit,
@@ -695,7 +751,7 @@ export async function onRequestGet(context) {
       // Already exhausted the bounded, correctly-sorted set below.
       return json({ items: [], total: 0, hasMore: false, skip, limit: 0, collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX });
     }
-    const page = await fetchDeeptideListings({ skip: 0, limit: 60, sort: deeptideSort });
+    const page = await fetchDeeptideListings({ skip: 0, limit: 60, sort: deeptideSort, traits: filters });
     const realCandidates = page.items.filter(it => typeof it.priceDrops === 'number');
     const withCross = await Promise.all(realCandidates.map(async (it) => {
       const xc = await fetchXrpCafeNftListing(env.coin, it.nftId);
@@ -730,12 +786,6 @@ export async function onRequestGet(context) {
   const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
   const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
   const sort = SORT_MAP[params.get('sort')] || 'rarity-asc';
-  const filtersRaw = params.get('filters');
-  let filters = [];
-  if (filtersRaw) {
-    try { filters = JSON.parse(filtersRaw); } catch (e) { filters = []; }
-    if (!Array.isArray(filters)) filters = [];
-  }
 
   const page = await fetchDeeptideListings({ skip, limit, sort, traits: filters });
   const items = page.items.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));

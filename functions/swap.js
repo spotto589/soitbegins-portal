@@ -5519,24 +5519,30 @@ const SWAP_HTML = `<!DOCTYPE html>
       // nft_sell_offers, so a stale/cancelled listing can't linger here.
       reqParams = { skip: state.skip, limit: PAGE_SIZE, scyllaListed: 1, dir: state.sort === 'SCYLLA_PRICE_DESC' ? 'desc' : 'asc' };
     } else if (isSalesSort){
+      // filters was previously dropped here — picking a trait while a
+      // H!ST0R!CAL SALES sort was active silently showed every Pigeon's
+      // sale data instead of just the filtered ones (see filters below).
       reqParams = {
         skip: state.skip, limit: PAGE_SIZE, highestSale: 1,
         dir: (state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_XRP_ASC' || state.sort === 'AVG_SALE_PIGEONS_ASC') ? 'asc' : 'desc',
-        metric: state.sort === 'AVG_SALE_PIGEONS_ASC' ? 'avg_pigeons' : (state.sort === 'AVG_SALE_XRP_ASC' ? 'avg' : 'max')
+        metric: state.sort === 'AVG_SALE_PIGEONS_ASC' ? 'avg_pigeons' : (state.sort === 'AVG_SALE_XRP_ASC' ? 'avg' : 'max'),
+        filters: filters.length ? JSON.stringify(filters) : undefined
       };
     } else if (isCrossListing){
       // Real lowest/highest across BOTH Deeptide and xrp.cafe, not just
       // whichever platform happens to have the cheaper API.
-      reqParams = { skip: state.skip, limit: 20, crossListing: state.sort === 'PRICE_ASC' ? 'asc' : 'desc' };
+      reqParams = { skip: state.skip, limit: 20, crossListing: state.sort === 'PRICE_ASC' ? 'asc' : 'desc', filters: filters.length ? JSON.stringify(filters) : undefined };
     } else if (isEdition && isNumericSort){
       // Direct slice of the number map restricted to this range — no scan needed.
-      reqParams = { skip: state.skip, limit: PAGE_SIZE, numberRange: state.edition === 'LOW' ? 'low' : 'high', numericOrder: state.sort === 'NAME_DESC' ? 'desc' : 'asc' };
+      reqParams = { skip: state.skip, limit: PAGE_SIZE, numberRange: state.edition === 'LOW' ? 'low' : 'high', numericOrder: state.sort === 'NAME_DESC' ? 'desc' : 'asc', filters: filters.length ? JSON.stringify(filters) : undefined };
     } else if (isEdition){
-      reqParams = { rawSkip: state.editionRawSkip, limit: PAGE_SIZE, numberRange: state.edition === 'LOW' ? 'low' : 'high', sort: state.sort };
+      reqParams = { rawSkip: state.editionRawSkip, limit: PAGE_SIZE, numberRange: state.edition === 'LOW' ? 'low' : 'high', sort: state.sort, filters: filters.length ? JSON.stringify(filters) : undefined };
     } else if (isNumericSort){
       // True numeric Pigeon-number order (1,2,3...), not Deeptide's own
       // "name-asc" which sorts the string "PIGEONS10" before "PIGEONS2".
-      reqParams = { skip: state.skip, limit: PAGE_SIZE, numericOrder: state.sort === 'NAME_DESC' ? 'desc' : 'asc' };
+      // filters was previously dropped here too — this was the exact bug
+      // reported: A-Z/Z-A ignored whatever trait was picked.
+      reqParams = { skip: state.skip, limit: PAGE_SIZE, numericOrder: state.sort === 'NAME_DESC' ? 'desc' : 'asc', filters: filters.length ? JSON.stringify(filters) : undefined };
     } else {
       reqParams = { skip: state.skip, limit: PAGE_SIZE, sort: state.sort, filters: filters.length ? JSON.stringify(filters) : undefined };
     }
