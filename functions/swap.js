@@ -1545,12 +1545,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, background 0.15s ease;
   }
   .make-offer-send:hover, .list-inline-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); }
-  /* OFFER button — just the word plus the $PIGEONS coin to its right,
-     instead of plain "[ SEND ]" text (see submitMakeOffer for the
-     temporary "[ VAL!DAT!NG... ]" state, restored back to this same
-     markup afterward via makeOfferSendBtnHtml). */
-  .make-offer-send{ display:inline-flex; align-items:center; justify-content:center; gap:0.4em; }
-  .make-offer-send-coin{ width:16px; height:16px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.6); }
   /* Offers received, embedded directly on the pigeon's own card (see
      myPigeonOffersHtml) — sits above the LIST/DELIST action box. */
   .my-pigeon-offers{ display:flex; flex-direction:column; gap:0.4rem; margin-top:0.5rem; }
@@ -3391,7 +3385,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                   <input class="make-offer-input" id="detailMakeOfferInput" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">
                   <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
                 </div>
-                <button class="make-offer-send" id="detailMakeOfferSend">0FFER<img class="make-offer-send-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt=""></button>
+                <button class="make-offer-send" id="detailMakeOfferSend">SUBM!T</button>
               </div>
             </div>
           </div>
@@ -5151,7 +5145,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           '<input class="make-offer-input" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">' +
           '<button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">&times;</button>' +
         '</div>' +
-        '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">0FFER<img class="make-offer-send-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt=""></button>' +
+        '<button class="make-offer-send" data-nftid="' + escapeHtml(p.nftId) + '">SUBM!T</button>' +
       '</div>' +
     '</div>';
   }
@@ -7307,12 +7301,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   var offerPollTimer = null;
   var offerXamanTab = null;
 
-  // Resting-state markup for .make-offer-send (both the DATABASE card
-  // strip and the detail screen's own copy) — just the word plus the
-  // $PIGEONS coin to its right, restored via innerHTML after a submit
-  // attempt finishes (see submitMakeOffer).
-  var MAKE_OFFER_SEND_HTML = '0FFER<img class="make-offer-send-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">';
-
   // Entered right in the DATABASE card's own MAKE AN OFFER strip (see
   // wireResultClicks' .make-offer-send handler) — no separate form screen,
   // straight from the inline number to the confirm screen below.
@@ -7330,9 +7318,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     var sendBtn = stripEl.querySelector('.make-offer-send');
-    // Restored via innerHTML (not textContent) once done — the button's
-    // real resting state is "0FFER" plus the $PIGEONS coin icon, not
-    // plain text (see MAKE_OFFER_SEND_HTML).
     sendBtn.disabled = true;
     sendBtn.textContent = '[ VAL!DAT!NG... ]';
     fetch('/api/swap-makeoffer-prepare', {
@@ -7342,7 +7327,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       sendBtn.disabled = false;
-      sendBtn.innerHTML = MAKE_OFFER_SEND_HTML;
+      sendBtn.textContent = 'SUBM!T';
       if (!res.ok || !res.data.ok){
         alert(listingErrorMessage(res.data && res.data.error));
         return;
@@ -7352,7 +7337,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       showOfferConfirm(res.data.txjson);
     }).catch(function(){
       sendBtn.disabled = false;
-      sendBtn.innerHTML = MAKE_OFFER_SEND_HTML;
+      sendBtn.textContent = 'SUBM!T';
       alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
     });
   }
