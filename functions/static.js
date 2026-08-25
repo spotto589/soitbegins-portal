@@ -5789,7 +5789,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // from an actual free/near-free past sale — that case shows no line at
     // all instead of a misleading "0 XRP" or a label with nothing behind it.
     var avgSaleLine = (p.avgSaleXrp !== null && p.avgSaleXrp !== undefined)
-      ? '<div class="result-rarity-line">AVERAGE SALE PR!CE :: ' + greenNum(fmtXrp(p.avgSaleXrp)) + ' XRP</div>'
+      ? '<div class="result-rarity-line">AVG SALE PR!CE :: ' + greenNum(fmtXrp(p.avgSaleXrp)) + ' XRP</div>'
       : '';
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
@@ -8935,9 +8935,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     'PR!CE': [
       { value: 'SCYLLA_PRICE_ASC', label: 'L0WEST $P!GE0NS' },
       { value: 'SCYLLA_PRICE_DESC', label: 'H!GHEST $P!GE0NS' },
-      { value: 'AVG_SALE_XRP_ASC', label: 'L0WEST AVERAGE SALE PR!CE XRP' },
-      { value: 'AVG_SALE_XRP_DESC', label: 'H!GHEST AVERAGE SALE PR!CE XRP' },
-      { value: 'AVG_SALE_PIGEONS_ASC', label: 'L0WEST AVERAGE SALE PR!CE $P!GE0NS' },
+      { value: 'AVG_SALE_XRP_ASC', label: 'L0WEST AVG SALE PR!CE XRP' },
+      { value: 'AVG_SALE_XRP_DESC', label: 'H!GHEST AVG SALE PR!CE XRP' },
+      { value: 'AVG_SALE_PIGEONS_ASC', label: 'L0WEST AVG SALE PR!CE $P!GE0NS' },
       { value: 'PRICE_ASC', label: 'L0WEST (XRP)', disabled: true }
     ],
     'ALPHABET!CAL': [
