@@ -789,7 +789,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* CANCEL/DEL!ST — red, not the neutral grey .bar-btn default, since
      this is the one action here that actually removes something real.
      Shared by both card variants (.delist-pigeon-btn) and the detail
-     screen's own copy (#detailScyllaDelistBtn). */
+     screen's own copy (#detailScyllaDelistBtn). Same font-size/padding
+     as BUY N0W/0FFER (.thumb-buy-btn/.offer-open-modal-btn) below,
+     not .bar-btn's smaller 13px/tighter default — so every action
+     button on a card is the same size regardless of which ones a given
+     card happens to show, and a grid of them lines up cleanly. */
+  .delist-pigeon-btn, #detailScyllaDelistBtn, .list-open-modal-btn, .transfer-open-modal-btn{
+    font-size:15px;
+    padding:0.85em 0.7em;
+    font-weight:700;
+    letter-spacing:0.05em;
+  }
   .delist-pigeon-btn, #detailScyllaDelistBtn{ border-color:#ff4d4d; color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
   .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:#ff4d4d; background:#ff4d4d; color:#000; text-shadow:none; }
   /* Red, same accent as CLEAR TRAITS — resetting every filter is a
@@ -1684,6 +1694,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     overflow:hidden;
     transition:border-color 0.15s ease, box-shadow 0.15s ease;
+    /* Grid items already stretch to the tallest card in their row
+       (.result-grid's own display:grid default) — flex column here (+
+       .result-card-body/.card-action-box below) is what actually uses
+       that extra height, instead of just leaving blank space under a
+       shorter card's content while its neighbor's buttons sit lower. */
+    display:flex;
+    flex-direction:column;
   }
   .result-card:hover{ border-color:var(--cyan-dim); box-shadow:0 0 0 1px var(--cyan-faint), 0 0 16px rgba(63,231,255,0.1); }
   .result-card:hover .pigeon-img-box img{ transform:scale(1.04); }
@@ -1691,7 +1708,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card .pigeon-img-box{ border:none; }
   .result-card.in-target{ border-color:var(--magenta); box-shadow:0 0 0 1px var(--magenta-dim) inset, 0 0 14px rgba(255,63,208,0.22); }
   .result-card.in-target .result-num{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
-  .result-card-body{ padding:0.6rem 0.45rem; }
+  .result-card-body{ padding:0.6rem 0.45rem; flex:1 1 auto; display:flex; flex-direction:column; }
+  /* Wraps whatever pigeonsActionBoxHtml/ownedPigeonActionHtml actually
+     returned (BUY N0W+0FFER, just 0FFER, Y0UR L!ST!NG+CANCEL, !N Y0UR
+     FL0CK, L!ST+TRANSFER, offers-received+L!STED+CANCEL+TRANSFER — every
+     card in a row can be a different one of these) — margin-top:auto
+     pins it flush to the bottom of the card every time, so every
+     button/tag in a row lands on the same line regardless of how much
+     (or how little) sits above it. */
+  .card-action-box{ margin-top:auto; }
   .result-num{
     font-size:17px;
     font-weight:700;
@@ -5503,7 +5528,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         img +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
       '</div>' +
-      '<div class="result-card-body">' + rarityLine + pigeonsActionHtml + '</div>' +
+      '<div class="result-card-body">' + rarityLine + '<div class="card-action-box">' + pigeonsActionHtml + '</div></div>' +
     '</div>';
   }
   function cardHtmlForView(p){
