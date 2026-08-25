@@ -1591,7 +1591,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Lighter default color for inputs sitting on the trustline banner's
      purple gradient, where the plain grey-dim default would be nearly
      invisible. */
-  .input-clear-btn-light{ color:rgba(255,255,255,0.7); }
+  .input-clear-btn-light{ color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
   .input-clear-btn-light:hover{ color:#fff; }
   /* A quick coin-flip bump every time the typed number changes (see
      repositionOfferCoin), so the coin reads as "attached" to the number,
@@ -2055,19 +2055,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      other things. */
   .pigeons-bar-calc-col{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:0.4rem; min-width:0; }
   .pigeons-bar-calc-title{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
-  /* Live "1 XRP = X $PIGEONS" rate + a small DEXSCREENER icon-link right
-     beside it — sits between the EXCHANGE RATE title and the calculator
-     itself, same right-hand column, not off in the carousel any more. */
+  /* A small DEXSCREENER icon-link — sits between the EXCHANGE CALCULAT0R
+     title and the calculator itself, same right-hand column, not off in
+     the carousel any more. */
   .pigeons-bar-rate-row{ display:flex; align-items:center; gap:0.5rem; }
-  .pigeons-bar-rate{
-    color:#fff;
-    text-shadow:0 1px 4px rgba(0,0,0,0.5);
-    font-family:var(--font-mono);
-    text-transform:uppercase;
-    white-space:nowrap;
-  }
-  .pigeons-bar-rate-line{ font-size:13px; letter-spacing:0.05em; opacity:0.9; }
-  .pigeons-bar-rate-value{ font-size:15px; font-weight:700; }
   .pigeons-bar-dex-btn{
     display:inline-flex;
     align-items:center;
@@ -3399,11 +3390,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
 
         <div class="pigeons-bar-calc-col" id="pigeonsBarCalc" style="display:none;">
-          <div class="pigeons-bar-calc-title">EXCHANGE RATE</div>
+          <div class="pigeons-bar-calc-title">EXCHANGE CALCULAT0R</div>
           <div class="pigeons-bar-rate-row">
-            <span class="pigeons-bar-rate" id="pigeonsBarRate" style="display:none;">
-              <span class="pigeons-bar-rate-line">1 XRP = </span><span class="pigeons-bar-rate-value" id="pigeonsBarRateValue">…</span>
-            </span>
             <a class="pigeons-bar-dex-btn" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
               <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
             </a>
@@ -4276,7 +4264,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
-   'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
+   'pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'topTabs','flockTabLabel','myPigeonsPanel','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
    'salesPanelWrap',
@@ -8407,20 +8395,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     else done();
   });
 
-  // Live "1 PIGEON = X XRP" rate on the trustline banner + an XRP ->
-  // $PIGEONS calculator underneath it, both driven by fetchPigeonsXrpRate
+  // XRP <-> $PIGEONS EXCHANGE CALCULAT0R, driven by fetchPigeonsXrpRate
   // (DexScreener's real trade-derived price, same number dexscreener.com's
   // own UI shows, falling back to the XRPL order book's best live offer
   // only if DexScreener is unreachable). Re-fetched on the same 60s
   // cadence as the server's own KV cache TTL (PIGEONS_RATE_CACHE_TTL_SECONDS
   // in _shared.js) so a tab left open never keeps showing a stale rate.
+  // The standalone "1 XRP = N $PIGEONS" readout that used to sit above
+  // the calculator is gone — the calculator itself is the rate display now.
   var trustlineXrpPerPigeon = null;
   function refreshTrustlineRate(){
     api({ pigeonsRate: 1 }).then(function(data){
       trustlineXrpPerPigeon = (data && typeof data.xrpPerPigeon === 'number') ? data.xrpPerPigeon : null;
       if (trustlineXrpPerPigeon !== null){
-        el.pigeonsBarRateValue.innerHTML = greenNum((1 / trustlineXrpPerPigeon).toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' $P!GE0NS';
-        el.pigeonsBarRate.style.display = '';
         el.pigeonsBarCalc.style.display = '';
         // Re-derive whichever side the rate refresh shouldn't silently
         // overwrite what's mid-typing — XRP wins ties (matches its
@@ -8448,34 +8435,93 @@ const SWAP_HTML = `<!DOCTYPE html>
     var len = inputEl.value.length;
     inputEl.style.width = Math.max(baseCh, len + 2) + 'ch';
   }
+  // Hard cap on the XRP side — matches whatever's actually reasonable to
+  // type into a quick calculator, and doubles as the ceiling every
+  // computed (pigeons -> XRP) result gets clamped to as well, so the box
+  // never shows something bigger than you could've typed directly.
+  var CALC_MAX_XRP = 100000;
+  // Past this many $PIGEONS, the box shows a rounded-down "Nk" instead of
+  // the full digit string (234596 -> "234k") — same threshold a k-shorthand
+  // entry naturally lands on too, see formatPigeonsCalcValue below.
+  var CALC_PIGEONS_COMPACT_THRESHOLD = 100000;
+  // $PIGEONS side accepts k/m shorthand, each handled differently:
+  // trailing k/K expands to the full comma-grouped number ("123k" ->
+  // "123,000") exactly like formatThousandsInput elsewhere on this page;
+  // trailing m/M stays typed as-is ("123m" never expands — spelling out
+  // a nine-digit number doesn't make a $PIGEONS amount easier to read).
+  // Whatever the box currently shows, this pulls out the real underlying
+  // number for the XRP conversion — including re-parsing a "Nk" the box
+  // itself put there via the compacting rule below.
+  function parsePigeonsCalcValue(raw){
+    var s = raw.trim();
+    var shorthand = s.match(/^([0-9]*\.?[0-9]+)[kKmM]$/);
+    if (shorthand){
+      var mult = /[mM]$/.test(s) ? 1000000 : 1000;
+      return parseFloat(shorthand[1]) * mult;
+    }
+    return Number(s.replace(/,/g, ''));
+  }
+  // Reformats the $PIGEONS box in place: k always expands, m always stays
+  // put, and any plain number past CALC_PIGEONS_COMPACT_THRESHOLD collapses
+  // to a rounded-down "Nk" instead of a long digit string. A k-shorthand
+  // entry that itself expands past the threshold (e.g. "123k" -> 123,000)
+  // immediately re-collapses to the same "123k" it started as — stable,
+  // not a back-and-forth toggle — since floor(123000 / 1000) is exactly 123.
+  function formatPigeonsCalcValue(raw){
+    var s = raw.trim();
+    var mMatch = s.match(/^([0-9]*\.?[0-9]+)[mM]$/);
+    if (mMatch) return mMatch[1] + 'm';
+    var kMatch = s.match(/^([0-9]*\.?[0-9]+)[kK]$/);
+    var value = kMatch ? parseFloat(kMatch[1]) * 1000 : Number(s.replace(/,/g, ''));
+    if (!isFinite(value)) value = 0;
+    if (value > CALC_PIGEONS_COMPACT_THRESHOLD) return Math.floor(value / 1000) + 'k';
+    // A k-shorthand entry under the threshold expands to the real
+    // multiplied number ("5k" -> "5,000"), not the raw typed text.
+    if (kMatch) return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    // Plain typed digits — comma-group the raw string in place (not a
+    // round-trip through Number/toLocaleString) so an in-progress decimal
+    // like "123." isn't mangled mid-type.
+    var cleaned = s.replace(/[^0-9.]/g, '');
+    var firstDot = cleaned.indexOf('.');
+    if (firstDot !== -1) cleaned = cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, '');
+    var parts = cleaned.split('.');
+    var intPart = parts[0].replace(/^0+(?=\d)/, '');
+    intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.length > 1 ? intPart + '.' + parts[1] : intPart;
+  }
   // Two-way: typing XRP fills in $P!GE0NS, typing $P!GE0NS fills in XRP.
   // Setting .value programmatically (as both functions below do to the
   // OTHER field) never fires that field's own 'input' listener, so there's
   // no risk of these two calling each other back and forth — no sync flag
-  // needed. Commas are stripped on read (the $P!GE0NS side may hold one
-  // from a previous computed result) but never written back into the box
-  // the user is actively typing in, only into the one being computed.
+  // needed.
   function updatePigeonsCalcFromXrp(){
-    resizeCalcInput(el.pigeonsCalcXrpInput, 10);
     var xrpValue = Number(el.pigeonsCalcXrpInput.value.replace(/,/g, ''));
+    if (isFinite(xrpValue) && xrpValue > CALC_MAX_XRP){
+      xrpValue = CALC_MAX_XRP;
+      el.pigeonsCalcXrpInput.value = CALC_MAX_XRP.toLocaleString();
+    }
+    resizeCalcInput(el.pigeonsCalcXrpInput, 10);
     if (trustlineXrpPerPigeon === null || !el.pigeonsCalcXrpInput.value.trim() || !isFinite(xrpValue) || xrpValue <= 0){
       el.pigeonsCalcPigeonsInput.value = '';
       resizeCalcInput(el.pigeonsCalcPigeonsInput, 14);
       return;
     }
     var pigeonsOut = xrpValue / trustlineXrpPerPigeon;
-    el.pigeonsCalcPigeonsInput.value = pigeonsOut.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    el.pigeonsCalcPigeonsInput.value = pigeonsOut > CALC_PIGEONS_COMPACT_THRESHOLD
+      ? Math.floor(pigeonsOut / 1000) + 'k'
+      : pigeonsOut.toLocaleString(undefined, { maximumFractionDigits: 2 });
     resizeCalcInput(el.pigeonsCalcPigeonsInput, 14);
   }
   function updateXrpCalcFromPigeons(){
+    el.pigeonsCalcPigeonsInput.value = formatPigeonsCalcValue(el.pigeonsCalcPigeonsInput.value);
     resizeCalcInput(el.pigeonsCalcPigeonsInput, 14);
-    var pigeonsValue = Number(el.pigeonsCalcPigeonsInput.value.replace(/,/g, ''));
+    var pigeonsValue = parsePigeonsCalcValue(el.pigeonsCalcPigeonsInput.value);
     if (trustlineXrpPerPigeon === null || !el.pigeonsCalcPigeonsInput.value.trim() || !isFinite(pigeonsValue) || pigeonsValue <= 0){
       el.pigeonsCalcXrpInput.value = '';
       resizeCalcInput(el.pigeonsCalcXrpInput, 10);
       return;
     }
-    var xrpOut = pigeonsValue * trustlineXrpPerPigeon;
+    var xrpOut = Math.min(CALC_MAX_XRP, pigeonsValue * trustlineXrpPerPigeon);
     el.pigeonsCalcXrpInput.value = xrpOut.toLocaleString(undefined, { maximumFractionDigits: 2 });
     resizeCalcInput(el.pigeonsCalcXrpInput, 10);
   }
