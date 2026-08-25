@@ -3308,6 +3308,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;" id="flockTabLabel">FL0CK</span></button>
       <button class="tab-btn" data-tab="topholders">T0P 123 H0LDERS</button>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
+      <button class="tab-btn" data-tab="crown">CR0WN</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
     </div>
 
@@ -3515,6 +3516,22 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="load-more-note" id="salesLoadMoreNote" style="display:none;">L0AD!NG M0RE SALES...</div>
         <div class="end-of-collection-note" id="salesEndNote" style="display:none;">// END 0F SALES H!ST0RY</div>
       </div>
+    </div>
+
+    <!-- CR0WN — real $PIGEONS trading profit/loss leaderboard, realized
+         only (see crown-leaderboard.js's own comment). Read-only for now —
+         "eventually give out rewards for weekly and monthly winners" is a
+         later phase, not built yet. -->
+    <div class="sw-panel" id="crownPanelWrap" style="display:none;">
+      <div class="panel-title">CR0WN</div>
+      <div class="index-line" style="text-align:center; margin-bottom:0.75rem;">REAL $P!GE0NS TRAD!NG PR0F!T/L0SS — REAL!ZED 0NLY, TH!S S!TE 0NLY.</div>
+      <div class="search-row" style="justify-content:center;">
+        <select class="sort-select" id="crownPeriodSelect">
+          <option value="week" selected>TH!S WEEK</option>
+          <option value="month">TH!S M0NTH</option>
+        </select>
+      </div>
+      <div id="crownLeaderboardList"></div>
     </div>
 
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
@@ -4328,6 +4345,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarCalc','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'topTabs','flockTabLabel','myPigeonsPanel','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
+   'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
    'salesPanelWrap',
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
@@ -4553,6 +4571,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       mypigeons: isOwnWalletScope() ? el.screenBrowse : el.myPigeonsPanel,
       topholders: el.topHoldersPanelWrap,
       sales: el.salesPanelWrap,
+      crown: el.crownPanelWrap,
       swapoffers: el.swapOffersPanelWrap
     }[tab];
     if (!panel) return;
@@ -4637,6 +4656,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.myPigeonsPanel.style.display = (tab === 'mypigeons' && !isOwnWalletScope()) ? '' : 'none';
     el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
     el.salesPanelWrap.style.display = tab === 'sales' ? '' : 'none';
+    el.crownPanelWrap.style.display = tab === 'crown' ? '' : 'none';
     el.swapOffersPanelWrap.style.display = tab === 'swapoffers' ? '' : 'none';
     // The trustline banner itself stays up across every tab, but the
     // $PIGEONS thumbnail is DATABASE-only — it's collection artwork, not
@@ -4685,6 +4705,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else if (tab === 'sales' && !state.salesLoaded){
       state.salesLoaded = true;
       loadMoreSales();
+    } else if (tab === 'crown' && crownData === null){
+      loadCrownLeaderboard();
     } else if (tab === 'swapoffers'){
       // Always refetches (no "loaded once" guard like the others) — this
       // list changes as soon as the other side of a pending swap acts, so
@@ -6597,6 +6619,47 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!row) return;
     browseOwnerCollection(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
   });
+
+  // ---- CR0WN — real $PIGEONS trading profit/loss leaderboard (realized
+  // only, see crown-leaderboard.js's own comment). Same .th-row/.th-rank/
+  // .th-wallet/.th-count classes T0P H0LDERS already uses — one wallet per
+  // row is the exact same shape, just ranked by net $PIGEONS flow instead
+  // of Pigeon count. ----
+  var crownData = null; // null = not fetched yet
+  function loadCrownLeaderboard(){
+    crownData = null;
+    renderCrownLeaderboard();
+    var period = el.crownPeriodSelect.value === 'month' ? 'month' : 'week';
+    fetch('/api/crown-leaderboard?period=' + period).then(function(r){ return r.json(); }).then(function(data){
+      crownData = data.items || [];
+      renderCrownLeaderboard();
+    }).catch(function(){ crownData = []; renderCrownLeaderboard(); });
+  }
+  function renderCrownLeaderboard(){
+    if (crownData === null){
+      el.crownLeaderboardList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+      return;
+    }
+    if (!crownData.length){
+      el.crownLeaderboardList.innerHTML = '<div class="th-empty">N0 SETTLED $P!GE0NS TRADES TH!S PER!0D YET.</div>';
+      return;
+    }
+    el.crownLeaderboardList.innerHTML = crownData.map(function(w, i){
+      var isProfit = w.netProfit >= 0;
+      var profitStr = (isProfit ? '+' : '−') + Math.abs(w.netProfit).toLocaleString(undefined, { maximumFractionDigits: 2 });
+      return '<div class="th-row" data-wallet="' + escapeHtml(w.wallet) + '" data-short="' + escapeHtml(w.walletShort) + '">' +
+        '<span class="th-rank"><span>#' + greenNum(i + 1) + '</span></span>' +
+        '<span class="th-wallet">' + escapeHtml(w.walletShort) + '</span>' +
+        '<span class="th-count" style="color:' + (isProfit ? 'var(--green)' : '#ff4d4d') + '; text-shadow:none;">' + escapeHtml(profitStr) + ' $P!GE0NS</span>' +
+      '</div>';
+    }).join('');
+  }
+  el.crownLeaderboardList.addEventListener('click', function(e){
+    var row = e.target.closest('.th-row');
+    if (!row) return;
+    browseOwnerCollection(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
+  });
+  el.crownPeriodSelect.addEventListener('change', loadCrownLeaderboard);
 
   // ---- MY PIGEONS — CONNECT SCYLLA reuses the exact same XummPkce login
   // /board already uses (same API key, same /api/connect, same
