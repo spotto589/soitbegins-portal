@@ -548,6 +548,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .tab-btn:hover{ color:var(--grey); }
   .tab-btn.active{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); border-bottom-color:var(--cyan); }
+  /* FL0CK tab doubles as the login entry point (see topTabs' click
+     handler — clicking it with no session goes straight into a real
+     Σκύλλα/Xaman login) — logged-out state spells that out directly on
+     the tab instead of making you click in to discover a CONNECT
+     button. Logged-in state instead shows pigeon/offer counts, same
+     magenta Σκύλλα theme either way. */
+  .flock-tab-login{ color:var(--magenta); }
+  .flock-tab-count{ color:var(--grey-dim); }
+  .flock-tab-offers-pending{ color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
   /* DATABASE carries the collection picker inline now, instead of that
      living as its own row above the whole tab strip. */
   .tab-btn-database{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; }
@@ -3011,7 +3020,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </button>
-      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;">Σκύλλα://FL0CK</span></button>
+      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;" id="flockTabLabel">FL0CK</span></button>
       <button class="tab-btn" data-tab="topholders">T0P 123</button>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
@@ -3873,7 +3882,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInCount','pigeonsLoggedInTrustline','showMyPigeonsBtn','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarRate','pigeonsBarRateValue','pigeonsBarCalc','pigeonsCalcXrpInput','pigeonsCalcOut','pigeonsDexLink',
-   'topTabs','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
+   'topTabs','flockTabLabel','myPigeonsPanel','myPigeonsPanelTitle','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
    'salesPanelWrap',
    'swapOffersPanelWrap','swapOffersList',
@@ -6345,6 +6354,27 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.pigeonsBalanceValue.innerHTML = greenNum(trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' $P!GE0NS';
       el.pigeonsBalanceBuyBtn.style.display = '';
     }
+    updateFlockTabLabel();
+  }
+  // FL0CK doubles as the login entry point (see topTabs' click handler) —
+  // logged-out state spells that out right on the tab itself instead of
+  // making you click in to discover a CONNECT button. Logged-in state
+  // shows the same real pigeon count as the trustline banner's own "N
+  // P!GE0NS 0WNED" (trustlinePigeonCount, already fetched eagerly at
+  // login — see loadTrustlineLoginState below) plus a real pending-offer
+  // count (offersReceivedTotal, also now fetched eagerly — see
+  // loadOffersReceived's own call near the bottom of this script) in red
+  // whenever it's above zero. null counts (still loading) are simply
+  // left out rather than shown as a misleading 0.
+  function updateFlockTabLabel(){
+    if (!MY_WALLET){
+      el.flockTabLabel.innerHTML = 'FL0CK <span class="flock-tab-login">[ L0G !N W!TH Σκύλλα ]</span>';
+      return;
+    }
+    var parts = ['FL0CK'];
+    if (trustlinePigeonCount !== null) parts.push('<span class="flock-tab-count">' + trustlinePigeonCount + ' P!GE0NS</span>');
+    if (offersReceivedTotal > 0) parts.push('<span class="flock-tab-offers-pending">' + offersReceivedTotal + ' 0FFERS</span>');
+    el.flockTabLabel.innerHTML = parts.join(' :: ');
   }
   function loadTrustlineLoginState(){
     if (!MY_WALLET){
@@ -6352,6 +6382,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.pigeonsBarLoggedIn.style.display = 'none';
       el.pigeonsBalanceLoginWrap.style.display = '';
       el.pigeonsBalanceValue.style.display = 'none';
+      updateFlockTabLabel();
       return;
     }
     el.pigeonsBarLoggedOut.style.display = 'none';
@@ -6382,6 +6413,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).catch(function(){});
   }
   loadTrustlineLoginState();
+  // Fetched eagerly (not just on FL0CK tab open, see showTab) so a real
+  // pending offer shows up on the tab itself the moment the page loads —
+  // see updateFlockTabLabel above. loadOffersReceived already no-ops
+  // with no session.
+  loadOffersReceived();
   el.showMyPigeonsBtn.addEventListener('click', function(){
     if (MY_WALLET) browseOwnerCollection(MY_WALLET, 'Y0U');
   });
@@ -7417,6 +7453,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // sitting on a Pigeon this wallet currently owns, with a real
   // NFTokenAcceptOffer to settle one. ----
   var offersReceivedData = null;
+  var offersReceivedTotal = 0; // mirrors the sum of offersReceivedData's own offers.length — read by updateFlockTabLabel
   var acceptOfferTarget = null; // { nftId, offerId, number, image, price, buyer }
   var acceptOfferUuid = null;
   var acceptOfferPollTimer = null;
@@ -7439,6 +7476,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
       el.offersReceivedBlock.style.display = '';
       el.offersReceivedSummary.textContent = totalOffers ? '0FFERS RECE!VED (' + totalOffers + ')' : 'N0 0FFERS';
+      offersReceivedTotal = totalOffers;
+      updateFlockTabLabel();
       renderMyPigeonsList();
       // Also refresh the DATABASE grid when SH0W MY P!GE0NS is what's
       // showing (ownedPigeonActionHtml reads offersByNftId there too).
