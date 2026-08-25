@@ -1444,6 +1444,33 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease, color 0.15s ease;
   }
   .thumb-buy-btn:hover{ background:var(--green); color:#000; text-shadow:none; }
+  /* 0FFER — same green "real, clickable buy action" language as BUY N0W,
+     plus a gentle pulse (same recipe as .pigeons-bar-balance-buy, the
+     site's other real-money call-to-action) so it reads as an inviting
+     juicy button, not just another plain .bar-btn outline. Overrides
+     .bar-btn on specificity-tied-but-later source order. */
+  @keyframes offer-btn-pulse{
+    0%, 100%{ box-shadow:0 0 10px var(--green-glow), inset 0 0 0 1px rgba(61,255,138,0.15); }
+    50%{ box-shadow:0 0 22px var(--green-glow), inset 0 0 0 1px rgba(61,255,138,0.3); }
+  }
+  .offer-open-modal-btn{
+    width:100%;
+    background:var(--green-faint, rgba(61,255,138,0.12));
+    border:1px solid var(--green);
+    color:var(--green);
+    text-shadow:0 0 6px var(--green-glow);
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.05em;
+    padding:0.85em 0.7em;
+    cursor:pointer;
+    text-transform:uppercase;
+    border-radius:var(--radius);
+    animation:offer-btn-pulse 2.2s ease-in-out infinite;
+    transition:background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  }
+  .offer-open-modal-btn:hover{ background:var(--green); color:#000; text-shadow:none; transform:scale(1.02); animation-play-state:paused; }
   /* A Pigeon that's YOUR OWN active Σκύλλα listing, seen while browsing
      the general/unscoped collection (e.g. sorted by FL00R $P!GE0NS
      alongside everyone else's listings) — no BUY N0W (can't buy your
@@ -2467,6 +2494,74 @@ const SWAP_HTML = `<!DOCTYPE html>
   .df-value.status-ok{ color:var(--green); text-shadow:0 0 6px var(--green-glow); font-weight:700; }
   .df-value a.owner-link{ color:var(--grey); text-decoration:underline; }
   .df-value a.owner-link:hover{ color:var(--cyan); }
+  /* ---- "Receipt" result screen — LIST result's own big/clean layout
+     (screenListResult), a deliberately different shape from the compact
+     .detail-field row-list every other confirm/result screen uses. One
+     glance, three things: which Pigeon, that it went through, what it
+     cost — nothing else competing for attention. Large by design, not
+     just a bigger font on the same cramped layout. */
+  .result-receipt{
+    max-width:420px;
+    margin:0 auto;
+    text-align:center;
+    padding-top:2rem;
+    padding-bottom:2rem;
+  }
+  .receipt-badge{
+    width:64px;
+    height:64px;
+    margin:0 auto 1.25rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:2px solid var(--green);
+    border-radius:50%;
+    color:var(--green);
+    font-size:32px;
+    text-shadow:0 0 10px var(--green-glow);
+    box-shadow:0 0 22px var(--green-glow);
+  }
+  .receipt-pigeon-num{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:32px;
+    letter-spacing:0.03em;
+    color:var(--white);
+  }
+  .receipt-status-line{
+    margin-top:0.4rem;
+    font-size:13px;
+    letter-spacing:0.2em;
+    color:var(--green);
+    text-shadow:0 0 6px var(--green-glow);
+    text-transform:uppercase;
+  }
+  .receipt-price-row{
+    margin:2rem 0;
+    padding:1.25rem 1rem;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    background:rgba(255,255,255,0.03);
+  }
+  .receipt-price-label{ font-size:11px; letter-spacing:0.2em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.5rem; }
+  .receipt-price-value{ font-family:var(--font-display); font-weight:700; font-size:34px; letter-spacing:0.02em; color:var(--white); }
+  .result-receipt .detail-actions{ margin-top:0.5rem; justify-content:center; }
+  /* Real proof, one click away — small and out of the way instead of a
+     raw hash competing with the price for attention. */
+  .receipt-tx-link{
+    display:inline-block;
+    margin-top:1rem;
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:var(--grey-dim);
+    text-decoration:underline;
+    text-transform:uppercase;
+  }
+  .receipt-tx-link:hover{ color:var(--cyan); }
+  @media (max-width:480px){
+    .receipt-pigeon-num{ font-size:26px; }
+    .receipt-price-value{ font-size:28px; }
+  }
   /* ---- BUY $P!GE0NS swap panel — a transaction window, not a generic
      trading widget: same purple $PIGEONS theme as the trustline banner/
      detail-screen listing box, same .sw-panel card + .detail-field/
@@ -3055,7 +3150,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
       </button>
       <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;" id="flockTabLabel">FL0CK</span></button>
-      <button class="tab-btn" data-tab="topholders">T0P 123</button>
+      <button class="tab-btn" data-tab="topholders">T0P 123 H0LDERS</button>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
     </div>
@@ -3654,16 +3749,23 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- SCREEN: LISTING RESULT — verified against real on-ledger state, not a stored flag -->
-    <div class="sw-panel" id="screenListResult" style="display:none;">
-      <div class="detail-eyebrow" id="listResultEyebrow">// L!ST!NG CREATED</div>
-      <div class="detail-num" id="listResultPigeonNum"></div>
-      <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="listResultPrice"></span></div>
-      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value status-ok" id="listResultStatus"></span></div>
-      <div class="detail-field"><span class="df-label">B!TH0MP TRANSACT!0N</span><span class="df-value"><a id="listResultTxLink" target="_blank" rel="noopener"></a></span></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="listResultDoneBtn">[ ← BACK T0 MY P!GE0NS ]</button>
+    <!-- SCREEN: LISTING RESULT — verified against real on-ledger state, not
+         a stored flag. Big, clean, receipt-style — one glance tells you
+         which Pigeon, that it's real, and what it's listed for; the raw
+         tx hash is still there (real proof, one click away) but doesn't
+         compete with the three things that actually matter. -->
+    <div class="sw-panel result-receipt" id="screenListResult" style="display:none;">
+      <div class="receipt-badge">✓</div>
+      <div class="receipt-pigeon-num" id="listResultPigeonNum"></div>
+      <div class="receipt-status-line">TRANSACT!0N C0NF!RMED</div>
+      <div class="receipt-price-row">
+        <div class="receipt-price-label">L!STED PR!CE</div>
+        <div class="receipt-price-value" id="listResultPrice"></div>
       </div>
+      <div class="detail-actions">
+        <button class="action-btn" id="listResultDoneBtn">[ ← BACK T0 MY P!GE0NS ]</button>
+      </div>
+      <a class="receipt-tx-link" id="listResultTxLink" target="_blank" rel="noopener">V!EW TRANSACT!0N</a>
     </div>
 
     <!-- SCREEN: BUY CONFIRMATION — the exact NFTokenAcceptOffer txjson, before Xaman ever opens -->
@@ -4019,7 +4121,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'targetBar','targetBarLabel',
    'myPigeonsConnect','connectScyllaBtn','connectStatus',
    'myPigeonsSortRow','myPigeonsSortSelect',
-   'screenListResult','listResultEyebrow','listResultPigeonNum','listResultPrice','listResultStatus','listResultTxLink','listResultDoneBtn',
+   'screenListResult','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
    'screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
    'screenBuySwap','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
@@ -6763,14 +6865,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     // result screen takes over, rather than leaving it sitting on top.
     closeAmountEntryModal();
     el.listResultPigeonNum.innerHTML = 'P!GE0N #' + (listingTarget.number !== null ? greenNum(listingTarget.number) : '????');
-    el.listResultPrice.textContent = fmtPigeons(data.price);
-    el.listResultStatus.textContent = 'L!STED';
+    // Compact (123M), same as BUY N0W/the own-listing readouts elsewhere —
+    // this is the one big number on the receipt, not a small field value,
+    // so it gets the same treatment as everywhere else a price needs to
+    // read at a glance instead of being counted out digit by digit.
+    el.listResultPrice.textContent = fmtPigeonsCompact(data.price);
     if (data.txHash){
       el.listResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
-      el.listResultTxLink.textContent = data.txHash;
+      el.listResultTxLink.style.display = '';
     } else {
       el.listResultTxLink.removeAttribute('href');
-      el.listResultTxLink.textContent = '—';
+      el.listResultTxLink.style.display = 'none';
     }
     showScreen('listresult');
   }
@@ -8345,20 +8450,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderTraitRows();
     state.sort = 'RARITY_ASC';
     renderSortDropLabel();
-    // A wallet search (or a Top 100/sales-history wallet click) scopes the
-    // whole DATABASE view to that wallet — RESET should drop back to the
-    // full collection too, not just reset sort/traits within that scope.
-    var wasScoped = !!state.scope;
-    if (wasScoped) exitWalletScope();
-    if (state.scyllaListedOnly) setScyllaListedOnly(false); // also runs the query
-    else if (wasScoped) startCollectionBrowse();
-    else runQuery();
+    if (state.activeTab === 'mypigeons'){
+      // FL0CK only ever shows your own Pigeons, no exceptions — RESET
+      // here must never exit that scope into the full collection (the
+      // DATABASE-only branch below does exactly that on purpose), only
+      // clear sort/traits/edition within it.
+      runScopedQuery();
+    } else {
+      // A wallet search (or a Top 100/sales-history wallet click) scopes
+      // the whole DATABASE view to that wallet — RESET should drop back
+      // to the full collection too, not just reset sort/traits within
+      // that scope.
+      var wasScoped = !!state.scope;
+      if (wasScoped) exitWalletScope();
+      if (state.scyllaListedOnly) setScyllaListedOnly(false); // also runs the query
+      else if (wasScoped) startCollectionBrowse();
+      else runQuery();
+    }
     // Same "land at the top of this tab's own content" feel as clicking
-    // the DATABASE tab itself (scrollActiveTabPanelIntoView) — RESET can
-    // get clicked after scrolling deep into the results list, and should
-    // bring you back to the top of the DATABASE box, not leave you
+    // the tab itself (scrollActiveTabPanelIntoView) — RESET can get
+    // clicked after scrolling deep into the results list, and should
+    // bring you back to the top of the tab's own box, not leave you
     // scrolled down looking at a list that just changed under you.
-    scrollActiveTabPanelIntoView('database');
+    scrollActiveTabPanelIntoView(state.activeTab === 'mypigeons' ? 'mypigeons' : 'database');
   });
 
   // ---- Inspect / detail ----
@@ -8882,6 +8996,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // in this view). Whole-collection only, per its own scope — exits any
   // target-wallet scope first. ----
   function setScyllaListedOnly(on){
+    // FL0CK only ever shows your own Pigeons, no exceptions — this is a
+    // whole-COLLECTION filter (see the comment above), reachable from
+    // FL0CK too now that the stats carousel/SORT BY panel are shown on
+    // every tab. Land on DATABASE first instead of quietly leaking the
+    // full collection into what's still nominally the FL0CK tab.
+    if (on && state.activeTab === 'mypigeons') showTab('database');
     state.scyllaListedOnly = on;
     el.statScyllaListedTile.classList.toggle('scylla-active', on);
     if (on){
