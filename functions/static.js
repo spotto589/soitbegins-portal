@@ -3191,16 +3191,33 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:2rem 1rem;
   }
   .amount-entry-panel{
-    width:min(460px, 100%);
+    width:min(540px, 100%);
     background:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
     box-shadow:0 10px 30px rgba(0,0,0,0.6);
-    padding:1.75rem;
+    padding:2.25rem;
     font-size:1.08em;
   }
   .amount-entry-mode .thumb-offer-row{ align-items:stretch; }
   .amount-entry-mode .make-offer-input-wrap{ margin-bottom:0; }
+  /* Which Pigeon 0FFER AM0UNT is actually for, and the wallet's own live
+     $PIGEONS balance — both easy to lose track of once the card underneath
+     the popup isn't visible any more, so both are big, not fine print. */
+  .amount-entry-pigeon-row{ display:flex; align-items:center; justify-content:center; gap:0.75rem; margin-bottom:1.25rem; }
+  .amount-entry-pigeon-thumb{ width:56px; height:56px; border-radius:6px; object-fit:cover; flex:0 0 auto; }
+  .amount-entry-pigeon-num{ font-family:var(--font-display); font-weight:700; font-size:20px; color:#fff; }
+  .make-offer-balance-line{
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--grey-dim);
+    text-transform:uppercase;
+    margin-bottom:1.25rem;
+    line-height:1.6;
+  }
+  .make-offer-balance-line .pigeons-green-num{ font-size:24px; font-weight:700; }
   .transfer-wallet-input{
     flex:1 1 auto;
     min-width:0;
@@ -3821,7 +3838,11 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="index-line list-inline-status" id="amountEntryListStatus" style="display:none;"></div>
         </div>
         <div class="thumb-offer amount-entry-mode" id="amountEntryOfferMode" style="display:none;">
-          <div class="index-line make-offer-balance-line" id="amountEntryOfferBalanceLine" style="display:none;"></div>
+          <div class="amount-entry-pigeon-row" id="amountEntryOfferPigeonRow" style="display:none;">
+            <img class="amount-entry-pigeon-thumb" id="amountEntryOfferPigeonImg" src="" alt="">
+            <div class="amount-entry-pigeon-num" id="amountEntryOfferPigeonNum"></div>
+          </div>
+          <div class="make-offer-balance-line" id="amountEntryOfferBalanceLine" style="display:none;"></div>
           <div class="thumb-offer-row">
             <div class="make-offer-input-wrap">
               <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
@@ -4422,7 +4443,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'acceptTransferConfirmReceipt','acceptTransferReceiptPigeonNum','acceptTransferResultDoneBtn',
    'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultTxLink','transferResultDoneBtn',
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
-   'amountEntryOfferMode','amountEntryOfferBalanceLine','amountEntryOfferInput','amountEntryOfferBtn',
+   'amountEntryOfferMode','amountEntryOfferPigeonRow','amountEntryOfferPigeonImg','amountEntryOfferPigeonNum','amountEntryOfferBalanceLine','amountEntryOfferInput','amountEntryOfferBtn',
    'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferBtn','amountEntryTransferStatus',
    'screenAcceptOfferConfirm','acceptOfferConfTxType','acceptOfferConfAccount','acceptOfferConfOfferId','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
    'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
@@ -5854,12 +5875,22 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.amountEntryOfferInput.value = '';
       el.amountEntryOfferBtn.disabled = false;
       el.amountEntryOfferBtn.textContent = 'SUBM!T';
+      // Which Pigeon this offer is actually for — easy to lose track of
+      // once the popup is open and the card underneath isn't visible.
+      if (p && p.number !== null){
+        el.amountEntryOfferPigeonImg.src = p.image || '';
+        el.amountEntryOfferPigeonImg.style.display = p.image ? '' : 'none';
+        el.amountEntryOfferPigeonNum.innerHTML = 'P!GE0N #' + greenNum(p.number);
+        el.amountEntryOfferPigeonRow.style.display = '';
+      } else {
+        el.amountEntryOfferPigeonRow.style.display = 'none';
+      }
       // trustlineBalanceNum is the same live $PIGEONS balance the
       // trustline banner itself shows (loadTrustlineLoginState) — null
       // means it hasn't loaded yet (or there's no session), in which case
       // this stays hidden rather than showing a stale/wrong 0.
       if (trustlineBalanceNum !== null){
-        el.amountEntryOfferBalanceLine.innerHTML = 'Y0UR BALANCE :: ' + greenNum(trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' $P!GE0NS';
+        el.amountEntryOfferBalanceLine.innerHTML = 'Y0UR BALANCE<br>' + greenNum(trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' $P!GE0NS';
         el.amountEntryOfferBalanceLine.style.display = '';
       } else {
         el.amountEntryOfferBalanceLine.style.display = 'none';
