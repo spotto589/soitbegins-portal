@@ -2595,6 +2595,36 @@ const SWAP_HTML = `<!DOCTYPE html>
     .receipt-pigeon-num{ font-size:26px; }
     .receipt-price-value{ font-size:28px; }
   }
+  /* ---- TRANSFER CONFIRMATION — same "big, clean, three things that
+     matter" spirit as .result-receipt above, adapted for a confirm
+     screen (still needs BACK/0PEN XAMAN + a signing-status line) rather
+     than a final result. No raw txjson fields (Account/NFTokenID as a
+     tx-type badge + hex strings) — just who it's from, which Pigeon,
+     and where it's going, each large enough to read at a glance. ---- */
+  .transfer-confirm{ max-width:440px; margin:0 auto; text-align:center; }
+  .transfer-confirm .node-eyebrow{ font-size:15px; margin-bottom:1.75rem; }
+  .transfer-field-label{ font-size:11px; letter-spacing:0.2em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.5rem; }
+  .transfer-field-value{
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:0.02em;
+    color:var(--white);
+    word-break:break-all;
+    margin-bottom:1.75rem;
+  }
+  .transfer-pigeon-num{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:30px;
+    letter-spacing:0.03em;
+    color:var(--white);
+    margin-bottom:1.75rem;
+  }
+  @media (max-width:480px){
+    .transfer-pigeon-num{ font-size:24px; }
+    .transfer-field-value{ font-size:14px; }
+  }
   /* ---- BUY $P!GE0NS swap panel — a transaction window, not a generic
      trading widget: same purple $PIGEONS theme as the trustline banner/
      detail-screen listing box, same .sw-panel card + .detail-field/
@@ -3977,12 +4007,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- SCREEN: TRANSFER CONFIRMATION — a real free (Amount "0") NFTokenCreateOffer
          restricted to the destination wallet, entered via the shared amount-entry
          popup's TRANSFER mode — the exact txjson, before Xaman ever opens -->
-    <div class="sw-panel" id="screenTransferConfirm" style="display:none;">
+    <div class="sw-panel transfer-confirm" id="screenTransferConfirm" style="display:none;">
       <div class="node-eyebrow">// TRANSFER C0NF!RMAT!0N</div>
-      <div class="tx-type-badge" id="transferConfTxType"></div>
-      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="transferConfAccount"></span></div>
-      <div class="detail-field"><span class="df-label">NFTokenID</span><span class="df-value" id="transferConfNftId"></span></div>
-      <div class="detail-field"><span class="df-label">Destination</span><span class="df-value" id="transferConfDestination"></span></div>
+      <div class="transfer-field-label">TRANSFERR!NG FR0M</div>
+      <div class="transfer-field-value" id="transferConfAccount"></div>
+      <div class="transfer-pigeon-num" id="transferConfPigeonNum"></div>
+      <div class="transfer-field-label">DEST!NAT!0N</div>
+      <div class="transfer-field-value" id="transferConfDestination"></div>
       <div class="index-line swap-nonatomic-note">TH!S 0NLY CREATES THE 0FFER — THE REC!P!ENT ST!LL NEEDS T0 ACCEPT !T (E.G. FR0M THE!R 0WN XAMAN WALLET) BEF0RE THE P!GE0N ACTUALLY M0VES.</div>
       <div class="index-line" id="transferConfirmStatus" style="margin-top:1rem;"></div>
       <div class="detail-actions">
@@ -4171,7 +4202,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
    'screenOfferConfirm','offerConfTxType','offerConfAccount','offerConfOwner','offerConfNftId','offerConfCurrency','offerConfIssuer','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'screenOfferResult','offerResultPigeonNum','offerResultPrice','offerResultStatus','offerResultTxLink','offerResultDoneBtn',
-   'screenTransferConfirm','transferConfTxType','transferConfAccount','transferConfNftId','transferConfDestination','transferConfirmStatus','transferConfirmBackBtn','transferOpenXamanBtn',
+   'screenTransferConfirm','transferConfAccount','transferConfPigeonNum','transferConfDestination','transferConfirmStatus','transferConfirmBackBtn','transferOpenXamanBtn',
    'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultStatus','transferResultTxLink','transferResultDoneBtn',
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus',
    'amountEntryOfferMode','amountEntryOfferInput','amountEntryOfferBtn',
@@ -7862,9 +7893,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // TRANSFER only ever starts from the amount-entry popup — close it
     // the moment this real confirm screen takes over.
     closeAmountEntryModal();
-    el.transferConfTxType.textContent = txjson.TransactionType;
+    // No raw tx-type badge/NFTokenID hex here — just the three things
+    // that actually matter at a glance: whose wallet, which Pigeon,
+    // where it's going. The real txjson (still exactly what gets signed,
+    // re-derived server-side in swap-offer-payload.js, never trusted
+    // from the client) doesn't need to be spelled out on screen for that
+    // to be true.
     el.transferConfAccount.textContent = txjson.Account;
-    el.transferConfNftId.textContent = txjson.NFTokenID;
+    el.transferConfPigeonNum.innerHTML = 'P!GE0N #' + (transferTarget.number !== null ? greenNum(transferTarget.number) : '????');
     el.transferConfDestination.textContent = txjson.Destination;
     el.transferConfirmStatus.textContent = '';
     el.transferOpenXamanBtn.disabled = false;
