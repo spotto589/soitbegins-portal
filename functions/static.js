@@ -317,6 +317,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .db-option-disabled{ cursor:not-allowed; opacity:0.75; }
   .db-option-fuzzy{ color:#8a5a34; text-shadow:0 0 5px rgba(138,90,52,0.4); }
   .db-option-phnix{ color:#ff5a2e; text-shadow:0 0 6px rgba(255,90,46,0.5); }
+  .db-option-teddy{ color:#d4a24e; text-shadow:0 0 5px rgba(212,162,78,0.4); }
   .db-soon{ font-size:9px; letter-spacing:0.1em; border:1px solid var(--border-mid); color:var(--grey-dim); padding:0.2em 0.4em; }
 
   /* ---- FL0CK account-page boxes — a stack of separate .sw-panel cards
@@ -3389,6 +3390,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="db-option db-option-active">P!GE0NS</div>
             <div class="db-option db-option-disabled db-option-fuzzy">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
             <div class="db-option db-option-disabled db-option-phnix">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
+            <div class="db-option db-option-disabled db-option-teddy">TEDDY <span class="db-soon">C0M!NG S00N</span></div>
           </div>
         </div>
       </button>
@@ -3643,10 +3645,7 @@ const SWAP_HTML = `<!DOCTYPE html>
            updateSearchPanelTitleForPaws). -->
       <div id="flockAccountBoxes" style="display:none;">
         <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockMyFlockBox">
-          <div class="flock-account-box-row">
-            <span class="flock-account-box-label" id="flockMyFlockLabel">MY FL0CK :: 0</span>
-            <span class="flock-account-box-arrow" id="flockMyFlockArrow">▾</span>
-          </div>
+          <div class="flock-account-box-row"><span class="flock-account-box-label" id="flockMyFlockLabel">MY FL0CK :: 0</span></div>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" data-flockbox="inbox">
           <div class="flock-account-box-row"><span class="flock-account-box-label">MESSAGE !NB0X</span></div>
@@ -4533,7 +4532,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
-   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockMyFlockArrow','flockBuyPigeonsBox','flockGridPanel',
+   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockBuyPigeonsBox','flockGridPanel',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn','swapOffersTabBtn',
@@ -5599,7 +5598,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.flockAccountBoxes.style.display = onFlock ? '' : 'none';
     if (onFlock){
       el.flockMyFlockLabel.textContent = 'MY FL0CK :: ' + state.scopeAllItems.length;
-      el.flockMyFlockArrow.textContent = state.flockCollapsed ? '▸' : '▾';
     }
     // DATABASE's own grid panel never collapses — only MY FL0CK's copy of
     // it does, and only while actually on FL0CK.
