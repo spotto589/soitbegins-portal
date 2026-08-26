@@ -348,3 +348,41 @@ quota and are real.
 
 `xaman-proxy` deploys separately on **Render** — a git push to `main`
 alone does NOT redeploy it. Untouched this session.
+
+## `cron-worker/` — third deployable in this repo, deploys separately too
+
+New this session. A standalone Cloudflare Worker (not a Pages Function —
+Pages can't run scheduled triggers), on a `*/15 * * * *` Cron Trigger,
+bound to the SAME `coin` KV namespace as the Pages site
+(`9169a9a4d1ae42bd9c020a4077bc643c`). It just calls
+`maybeRefreshPigeonNumberMap`/`maybeRefreshHighSaleMap` from
+`functions/_shared.js` (imported directly via a relative path — those two
+functions are self-contained, no other env/bindings needed) on every tick.
+
+**Why it exists**: those two refreshes used to only run as a side effect of
+some visitor's own request noticing the cached data was stale — so
+freshness depended on random traffic; a quiet period could sit stale past
+the 6h window, and a pigeon number the crawl hadn't reached yet showed as
+"not indexed" to whoever searched for it first. This worker keeps both
+indexes warm independent of site traffic. The opportunistic refresh calls
+still in `functions/api/pigeons.js` are now redundant in the common case
+(the functions no-op if already fresh) but harmless — left in place, not
+worth removing for the marginal edge case where the cron worker itself is
+ever paused/deleted.
+
+**Deploys independently** — `git push origin main` does NOT touch it. To
+redeploy after editing `cron-worker/index.js`:
+```
+cd cron-worker
+npx wrangler deploy
+```
+Live at `https://soitbegins-cron.connor-quinn.workers.dev` (the URL is
+irrelevant — nothing calls it, it only runs on its own schedule). Check
+`npx wrangler tail soitbegins-cron` to watch it fire live, or
+`npx wrangler deployments list --name soitbegins-cron` for deploy history.
+
+**If this repo ever migrates the listings/sales/etc. maps off KV onto D1**
+(discussed but not started as of this session — see git log / conversation
+history around "KV write races" if picking this up cold), this worker's KV
+binding needs to become a D1 binding too, and the two refresh functions it
+calls will need to be the D1-backed versions once those exist.
