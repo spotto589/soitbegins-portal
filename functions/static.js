@@ -776,6 +776,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     gap:0.5rem;
   }
+  /* Left-aligned (to line up with the search bar above) makes sense on
+     desktop, but on a phone the search bar above it is itself centered
+     (see .results-header-row's own max-width:700px override) — left-
+     aligning just this box underneath it reads as randomly off-center.
+     Center SORT BY / FILTER BY TRAITS (and their applied-tag rows) to
+     match everything else in this column on narrow screens. */
+  @media (max-width:700px){
+    .db-config-traits-group{ text-align:center; }
+    .db-config-traits-section{ justify-content:center; }
+    /* #sortRows has no CSS of its own elsewhere (it's a plain block div —
+       #traitRows is the one with display:flex, at line 1003) — its single
+       .trait-row child is itself display:flex (block-level), so the
+       ancestor's text-align:center above does nothing for it without
+       becoming a flex container in its own right here too. */
+    #sortRows{ display:flex; justify-content:center; }
+    #traitRows{ justify-content:center; }
+  }
   /* justify-content:center + wrap so this stays centered as a group
      whether it fits on one line or (narrower widths) the label and the
      dropdown box wrap to their own lines — previously only the whole
