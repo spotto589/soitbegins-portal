@@ -1090,10 +1090,45 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     box-shadow:0 10px 30px rgba(0,0,0,0.6);
   }
+  /* Hidden on desktop — only shown (see the max-width:700px block below)
+     once a category's been tapped on mobile, to get back to the category
+     list. Always in the markup (see sortFlyoutBack/traitsFlyoutBack) so
+     it doesn't need building/tearing down on resize. */
+  .flyout-back-btn{
+    display:none;
+    width:100%;
+    text-align:left;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid var(--border-dim);
+    color:var(--cyan);
+    font-family:var(--font-mono);
+    font-size:13px;
+    letter-spacing:0.06em;
+    padding:0.9em 1em;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .flyout-back-btn:hover{ background:var(--cyan-faint); }
   /* Not enough room to the right on a narrow screen — back to opening
      straight down underneath the trigger instead of off the edge. */
   @media (max-width:700px){
     .traits-flyout{ top:100%; left:0; }
+    /* The 42%/58% cats+vals side-by-side split below reads fine at
+       desktop widths but crams both category names ("H!ST0R!CAL SALES")
+       and value labels ("L0WEST AVG SALE PR!CE $P!GE0NS") into ~140-190px
+       columns on a phone — unreadable. Below 700px this becomes a real
+       drill-down instead: categories full-width, tap one to swap in just
+       its values full-width (JS toggles .flyout-drilled on the flyout
+       root — see openSortFlyout/openTraitsFlyout, the *FlyoutCats click
+       handlers, and the back-button handlers further down), with the
+       back button above to return. Desktop's hover-preview side-by-side
+       layout is untouched — none of this fires above 700px. */
+    .traits-flyout-cats{ width:100%; border-right:none; }
+    .traits-flyout-vals{ position:static; width:100%; padding:0.6rem 0.9rem; }
+    .traits-flyout:not(.flyout-drilled) .traits-flyout-vals{ display:none; }
+    .traits-flyout.flyout-drilled .traits-flyout-cats{ display:none; }
+    .traits-flyout.flyout-drilled .flyout-back-btn{ display:block; }
   }
   .traits-flyout-cats{
     width:42%;
@@ -3799,6 +3834,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="traits-hover-wrap" id="sortDropWrap">
                 <span class="trait-row-label" id="sortDropLabel">S0RT BY <span class="thl-arrow">▾</span></span>
                 <div class="traits-flyout" id="sortFlyout" style="display:none;">
+                  <button type="button" class="flyout-back-btn" id="sortFlyoutBack">◂ CATEG0R!ES</button>
                   <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
                   <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
                 </div>
@@ -3814,6 +3850,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="traits-hover-wrap" id="traitsHoverWrap">
                 <span class="trait-row-label" id="traitsHoverLabel">F!LTER BY TRA!TS <span class="thl-arrow">▾</span></span>
                 <div class="traits-flyout" id="traitsFlyout" style="display:none;">
+                  <button type="button" class="flyout-back-btn" id="traitsFlyoutBack">◂ CATEG0R!ES</button>
                   <div class="traits-flyout-cats" id="traitsFlyoutCats"></div>
                   <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
                 </div>
@@ -4569,7 +4606,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutCats','sortFlyoutVals',
+  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutCats','sortFlyoutVals','sortFlyoutBack',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
@@ -4584,7 +4621,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statsCarousel','statsCarouselDots','statsPrevBtn','statsNextBtn',
    'statTraded24h','statVolume24h','statSalesTile','statSales24h','statBurntLink',
    'traitRows','clearTraitsBtn',
-   'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals',
+   'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals','traitsFlyoutBack',
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
@@ -4649,6 +4686,31 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!catBtn){ valsEl.style.top = '0px'; return; }
     var maxTop = Math.max(0, flyoutEl.clientHeight - valsEl.scrollHeight);
     valsEl.style.top = Math.min(catBtn.offsetTop, maxTop) + 'px';
+  }
+  // Below 700px, .traits-flyout{ left:0 } (see its CSS) anchors the box to
+  // its OWN trigger's left edge, not the viewport's — fine when the
+  // trigger sits near x=0, but SORT BY/ADD TRAITS are centered boxes on
+  // mobile (see .db-config-traits-group's own mobile override), so left:0
+  // plus the flyout's own min(620px,90vw) width pushed it well past the
+  // right edge of the screen (confirmed live: right edge at 427px on a
+  // 375px viewport). Same fix as openDbSelectFlyout uses for the same
+  // underlying problem: switch to position:fixed with a JS-clamped left
+  // so it can never be anchored off-screen, computed fresh every open.
+  // No-ops above 700px — desktop's sideways hover-preview layout (plain
+  // CSS position:absolute) is untouched.
+  function clampFlyoutToViewport(triggerWrap, flyoutEl){
+    if (window.innerWidth > 700){
+      flyoutEl.style.position = '';
+      flyoutEl.style.top = '';
+      flyoutEl.style.left = '';
+      return;
+    }
+    var rect = triggerWrap.getBoundingClientRect();
+    var flyoutW = flyoutEl.getBoundingClientRect().width || rect.width;
+    var left = Math.min(rect.left, window.innerWidth - flyoutW - 8);
+    flyoutEl.style.position = 'fixed';
+    flyoutEl.style.top = rect.bottom + 'px';
+    flyoutEl.style.left = Math.max(8, left) + 'px';
   }
 
   // "V!EW!NG WALLET <short>" reads oddly for your own wallet (ownerShort
@@ -6707,6 +6769,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.traitsFlyoutVals.style.top = '0px';
       el.traitsFlyout.style.display = 'block';
       el.traitsHoverWrap.classList.add('open');
+      // Always reopens on the category list — see the matching comment on
+      // openSortFlyout for why this is unconditional and harmless above
+      // the 700px width where .flyout-drilled has no visual effect.
+      el.traitsFlyout.classList.remove('flyout-drilled');
+      clampFlyoutToViewport(el.traitsHoverWrap, el.traitsFlyout);
     });
   }
   function closeTraitsFlyout(){
@@ -6733,7 +6800,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (catBtn){
       renderTraitsFlyoutVals(catBtn.getAttribute('data-cat'));
       positionFlyoutVals(el.traitsFlyout, el.traitsFlyoutVals, catBtn);
+      // Only visually a "drill in" below 700px (see the CSS) — clicking a
+      // category to preview its values on desktop is unaffected.
+      el.traitsFlyout.classList.add('flyout-drilled');
     }
+  });
+  el.traitsFlyoutBack.addEventListener('click', function(){
+    el.traitsFlyout.classList.remove('flyout-drilled');
   });
   el.traitsFlyoutVals.addEventListener('click', function(e){
     var valBtn = e.target.closest('.traits-flyout-val');
@@ -9452,6 +9525,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     // positioning — a display:none element measures zero.
     el.sortFlyout.style.display = 'block';
     el.sortDropWrap.classList.add('open');
+    // Always reopens on the category list, not wherever it was left last
+    // time — mobile's drill-down view (see .flyout-drilled CSS) only
+    // matters below 700px, but resetting it unconditionally here is
+    // harmless above that width since desktop never reads this class.
+    el.sortFlyout.classList.remove('flyout-drilled');
+    clampFlyoutToViewport(el.sortDropWrap, el.sortFlyout);
     positionFlyoutVals(el.sortFlyout, el.sortFlyoutVals, el.sortFlyoutCats.querySelector('.traits-flyout-cat.active'));
   }
   function closeSortFlyout(){
@@ -9490,7 +9569,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (catBtn){
       renderSortFlyoutVals(catBtn.getAttribute('data-cat'));
       positionFlyoutVals(el.sortFlyout, el.sortFlyoutVals, catBtn);
+      // Only visually a "drill in" below 700px (see the CSS) — clicking a
+      // category to preview its values on desktop is unaffected.
+      el.sortFlyout.classList.add('flyout-drilled');
     }
+  });
+  el.sortFlyoutBack.addEventListener('click', function(){
+    el.sortFlyout.classList.remove('flyout-drilled');
   });
   el.sortFlyoutVals.addEventListener('click', function(e){
     var valBtn = e.target.closest('.traits-flyout-val');
