@@ -592,6 +592,21 @@ const SWAP_HTML = `<!DOCTYPE html>
      still bubbles up and switches to DATABASE (harmless — that's the tab
      you were already interacting with either way). */
   .tab-db-select .traits-flyout{ text-align:left; }
+  /* This trigger lives inside a DATABASE tab button, inside #topTabs,
+     which is overflow-x:auto for horizontal tab-bar scrolling — that
+     implicitly clips the y-axis too (any non-"visible" overflow-x forces
+     overflow-y to "auto" as well, per the real CSS overflow spec — an
+     explicit overflow-y:visible on #topTabs does NOT override this,
+     confirmed live: the computed value stayed "auto" regardless).
+     position:absolute (the base .traits-flyout rule) is still a
+     descendant of that clipping box no matter which direction it opens,
+     so PHN!X/TEDDY were rendering but invisible, painted over by the
+     trustline banner underneath. position:fixed escapes ALL ancestor
+     overflow clipping since it's placed relative to the viewport instead
+     — openDbSelectFlyout() sets its own top/left from the trigger's real
+     on-screen position every time it opens, since fixed positioning has
+     no CSS-only way to anchor to a specific element. */
+  .tab-db-select .db-select-flyout{ position:fixed; top:0; left:0; }
   /* Grid, not flex — RANK and COUNT sit in equal (1fr) side columns, so
      the middle WALLET column always lands on the row's true center
      regardless of how wide the rank/count text on either side happens to
@@ -9026,6 +9041,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // handler here stops propagation so picking/opening/closing the
   // dropdown never also fires that tab switch. ----
   function openDbSelectFlyout(){
+    // position:fixed (see its own CSS comment for why) has no CSS-only way
+    // to anchor to the trigger — computed fresh every open from its real
+    // on-screen position instead, same as any other JS-positioned overlay.
+    var rect = el.dbSelectWrap.getBoundingClientRect();
+    el.dbSelectFlyout.style.top = rect.bottom + 'px';
+    el.dbSelectFlyout.style.left = rect.left + 'px';
     el.dbSelectFlyout.style.display = 'block';
     el.dbSelectWrap.classList.add('open');
   }
