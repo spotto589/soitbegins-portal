@@ -606,7 +606,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      — openDbSelectFlyout() sets its own top/left from the trigger's real
      on-screen position every time it opens, since fixed positioning has
      no CSS-only way to anchor to a specific element. */
-  .tab-db-select .db-select-flyout{ position:fixed; top:0; left:0; }
+  /* width:220px here too, not just on .db-select-flyout above — that rule
+     and the generic .traits-flyout{ width:min(620px,90vw) } rule below
+     (shared with the much wider SORT BY/FILTER BY TRAITS panels) are equal
+     specificity (one class each), so the later one in the cascade was
+     winning and silently blowing this compact 3-4-item picker out to 90vw
+     (337px on a 375px phone) — confirmed live, that's what pushed its
+     right edge off-screen. Two classes here outranks both. */
+  .tab-db-select .db-select-flyout{ position:fixed; top:0; left:0; width:220px; }
   /* Grid, not flex — RANK and COUNT sit in equal (1fr) side columns, so
      the middle WALLET column always lands on the row's true center
      regardless of how wide the rank/count text on either side happens to
@@ -931,6 +938,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      chrome — collection-specific controls like this one and SORTING BY
      (#sortDropWrap below) use the collection's colour instead. */
   .edition-btn.active{ background:var(--pigeon-purple-faint); color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); }
+  /* Three buttons at the fixed var(--ctrl-w) (190px) each never wrapped
+     (.edition-toggle is flex:0 0 auto with no wrap) — ~572px total,
+     forcing the whole page to scroll horizontally on any phone-width
+     screen. Below 700px they share the available width equally instead;
+     white-space:normal (already set above) lets the longer labels wrap
+     to a second line rather than forcing the button wider. */
+  @media (max-width:700px){
+    .edition-btn{ width:auto; flex:1 1 0; padding:0.7em 0.3em; font-size:11px; }
+  }
   .index-line{
     text-align:center;
     font-family:var(--font-body);
@@ -1351,7 +1367,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      (right). */
   .results-header-row{
     display:grid;
-    grid-template-columns:1fr auto 1fr;
+    /* minmax(0, 1fr), not bare 1fr — a bare 1fr track still sizes to fit
+       non-shrinking content (e.g. .search-row's flex-wrap:nowrap below),
+       which was blowing this row wider than the viewport on mobile and
+       dragging the VIEW field (justify-self:end) off the right edge,
+       forcing the whole page to scroll horizontally. minmax(0, ...)
+       caps the track at the container width no matter what's inside. */
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
     align-items:center;
     gap:0.9rem 1.25rem;
     border:1px solid var(--border-mid);
@@ -1363,7 +1385,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   .results-header-row .sort-field-inline{ justify-self:center; }
   .results-header-row .sort-field:last-child{ justify-self:end; }
   @media (max-width:700px){
-    .results-header-row{ grid-template-columns:1fr; justify-items:center; }
+    .results-header-row{ grid-template-columns:minmax(0,1fr); justify-items:center; }
+    .results-header-row .search-row{ justify-self:center; flex-wrap:wrap; }
+    .results-header-row .sort-field:last-child{ justify-self:center; }
   }
   /* ---- results status line — its own line, directly above the pigeons
      list. ---- */
@@ -9045,8 +9069,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     // to anchor to the trigger — computed fresh every open from its real
     // on-screen position instead, same as any other JS-positioned overlay.
     var rect = el.dbSelectWrap.getBoundingClientRect();
+    var flyoutW = el.dbSelectFlyout.getBoundingClientRect().width || 220;
+    // Clamp so the flyout can never be anchored past the right edge of a
+    // narrow (phone-width) viewport — confirmed live on a 375px screen the
+    // unclamped left (== trigger's own left, ~123px) plus the flyout's
+    // width pushed its right edge to ~460px, off-screen with no way to
+    // reach FUZZY/PHN!X/TEDDY below the fold of the viewport itself.
+    var left = Math.min(rect.left, window.innerWidth - flyoutW - 8);
     el.dbSelectFlyout.style.top = rect.bottom + 'px';
-    el.dbSelectFlyout.style.left = rect.left + 'px';
+    el.dbSelectFlyout.style.left = Math.max(8, left) + 'px';
     el.dbSelectFlyout.style.display = 'block';
     el.dbSelectWrap.classList.add('open');
   }
