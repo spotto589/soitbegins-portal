@@ -1187,29 +1187,47 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
   .flyout-back-btn:hover{ background:var(--cyan-faint); }
-  /* Not enough room to the right on a narrow screen — back to opening
-     straight down underneath the trigger instead of off the edge. */
   @media (max-width:700px){
-    .traits-flyout{ top:100%; left:0; }
-    /* The 42%/58% cats+vals side-by-side split below reads fine at
-       desktop widths but crams both category names ("H!ST0R!CAL SALES")
-       and value labels ("L0WEST AVG SALE PR!CE $P!GE0NS") into ~140-190px
-       columns on a phone — unreadable. Below 700px this becomes a real
-       drill-down instead: categories full-width, tap one to swap in just
-       its values full-width (JS toggles .flyout-drilled on the flyout
-       root — see openSortFlyout/openTraitsFlyout, the *FlyoutCats click
-       handlers, and the back-button handlers further down), with the
-       back button above to return. Desktop's hover-preview side-by-side
-       layout is untouched — none of this fires above 700px. */
+    /* S0RT BY's flat list, and F!LTER BY TRA!TS' own category list, both
+       list down inline below their trigger now instead of floating as an
+       overlay popup on top of the page — a plain accordion instead of a
+       box fighting for room on a phone screen. #sortDropWrap/
+       #traitsHoverWrap switch from their fixed 190px pill to full width
+       and column layout so the label sits above the expanded list rather
+       than squeezed beside it; the existing shared border on those two
+       wraps (see their base rule) naturally grows to frame the open list
+       too, reading as one control. F!LTER BY TRA!TS' VALUES step is the
+       one exception — see #traitsFlyout.flyout-drilled below, which pops
+       up as a real centered overlay instead, since a full value list
+       (with photo previews on many entries) is too long to want sitting
+       inline in the page flow. */
+    #sortDropWrap, #traitsHoverWrap{ display:flex; flex-direction:column; width:100%; }
+    #sortFlyout, #traitsFlyout{ position:static; width:100%; max-height:none; box-shadow:none; margin-top:0.4rem; }
     .traits-flyout-cats{ width:100%; border-right:none; }
     .traits-flyout-vals{ position:static; width:100%; padding:0.6rem 0.9rem; }
     /* :not(.flyout-flat) — S0RT BY (see the class above) has no category
-       list to drill in FROM, so its single flat list must stay visible by
+       list of its own, so its single flat list must stay visible by
        default here instead of starting hidden like F!LTER BY TRA!TS' vals
        pane does before a category's been tapped. */
     .traits-flyout:not(.flyout-flat):not(.flyout-drilled) .traits-flyout-vals{ display:none; }
     .traits-flyout.flyout-drilled .traits-flyout-cats{ display:none; }
     .traits-flyout.flyout-drilled .flyout-back-btn{ display:block; }
+    /* The actual "pops up" — not anchored to the trigger's own position
+       at all (unlike the inline category list above, which is a normal
+       document-flow child), so no JS positioning is needed here: fixed +
+       centered is the whole story. */
+    #traitsFlyout.flyout-drilled{
+      position:fixed;
+      top:50%;
+      left:50%;
+      transform:translate(-50%, -50%);
+      width:min(340px, 90vw);
+      max-height:70vh;
+      overflow-y:auto;
+      box-shadow:0 10px 30px rgba(0,0,0,0.6);
+      z-index:1000;
+      margin-top:0;
+    }
   }
   .traits-flyout-cats{
     width:42%;
@@ -1962,6 +1980,17 @@ const SWAP_HTML = `<!DOCTYPE html>
        mobile card at the full 15px size — same shrink other card
        controls already get at this breakpoint. */
     .owned-action-row .bar-btn{ font-size:11px; padding:0.7em 0.4em; }
+    /* BUY N0W/0FFER specifically were left at their tiny 11px/0.55em/0.3em
+       desktop size (tuned for fitting two buttons in a dense 5-across
+       grid — see that rule's own comment) even after the mobile grid
+       dropped to 2-across, where there's real room to spare. Sitting
+       inside the full-width purple .thumb-offer box at that tiny size
+       read as undersized/messy against it — bigger here so the button(s)
+       actually match the box's own visual weight. Most cards only show
+       0FFER alone (BUY N0W only renders on a real listing), where this
+       fills the full purple box width via flex:1 1 0 either way. */
+    .owned-action-row .thumb-buy-btn,
+    .owned-action-row .offer-open-modal-btn{ font-size:13px; padding:0.75em 0.5em; }
   }
 
   /* ---- old grid-tile card, still used by MY PIGEONS (myPigeonCardHtml) ---- */
@@ -2014,6 +2043,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:color 0.15s ease;
   }
   .result-rarity-line{ font-size:15px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
+  /* AVG SALE PR!CE / COND!T!ON label above its own value, not side by
+     side on one line — same stacked shape as .stat-label/.stat-value
+     elsewhere on the page, just sized down to fit a thumbnail card. */
+  .result-stat-stack{ display:flex; flex-direction:column; align-items:center; gap:0.1rem; }
+  .result-stat-stack .stat-label{ font-size:10px; margin-bottom:0; color:var(--grey-dim); }
+  .result-stat-stack .stat-value{ font-size:14px; color:var(--grey); }
   .card-listings{ display:flex; gap:0.4rem; margin-top:0.45rem; }
   /* Neither marketplace has a real listing — one shared full-width bar
      naming both markets, instead of two separate washed-out boxes. */
@@ -2519,6 +2554,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     .detail-nav-prev{ left:0.25rem; }
     .detail-nav-next{ right:0.25rem; }
   }
+  /* Lightbox only (see #detailLightbox's own comment above) — re-anchored
+     from vertically-centered-on-the-side-edges to a row below the
+     picture: still position:fixed like the base rule, just measured from
+     the bottom of the viewport and offset left/right of dead-center
+     instead of top/left-right, so the two buttons land side by side
+     under the image without needing any wrapper element. left:50% + a
+     margin (36px button + 8px gap) is simpler and more reliable here
+     than trying to get flex/grid to group two position:fixed elements
+     that already live outside the lightbox's own flex flow. */
+  @media (max-width:760px){
+    #detailLightbox .detail-nav-btn{ top:auto; bottom:1rem; transform:none; left:50%; right:auto; }
+    #detailLightbox .detail-nav-prev{ margin-left:-44px; }
+    #detailLightbox .detail-nav-next{ margin-left:8px; }
+  }
   /* Second BACK entry point, fixed to the top-left corner (same
      containing block as #screenDetail, same reasoning as .detail-nav-btn
      above) — the full-width strip at the bottom of the traits/listings
@@ -2743,6 +2792,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     mix-blend-mode:overlay;
   }
   #detailLightbox img{ max-width:100%; max-height:100%; object-fit:contain; }
+  /* Mobile: the 2rem padding above plus PREV/NEXT floating over the
+     picture's own left/right edges (see .detail-nav-btn below) both ate
+     into how big the "fullscreen" zoom actually looked on a phone —
+     confirmed live, it read as barely bigger than the detail screen's
+     own inline picture, not a real zoom in. Shrink the padding down to
+     almost nothing so the picture genuinely fills the screen, and move
+     PREV/NEXT off the picture's edges to a row underneath it instead —
+     both still position:fixed (unchanged from desktop), just re-anchored
+     to the bottom-center instead of vertically centered on the sides, so
+     no wrapper markup is needed to group them into one row. */
+  @media (max-width:760px){
+    #detailLightbox{ padding:0.5rem 0.5rem 4.5rem; }
+  }
   /* Lightbox's own PREV/NEXT reuse .detail-nav-btn's look — bumped above
      the lightbox's own z-index:1000 (the base .detail-nav-btn z-index:75
      is only enough to sit above #screenDetail) and given cursor:pointer
@@ -4768,32 +4830,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     var maxTop = Math.max(0, flyoutEl.clientHeight - valsEl.scrollHeight);
     valsEl.style.top = Math.min(catBtn.offsetTop, maxTop) + 'px';
   }
-  // Below 700px, .traits-flyout{ left:0 } (see its CSS) anchors the box to
-  // its OWN trigger's left edge, not the viewport's — fine when the
-  // trigger sits near x=0, but SORT BY/ADD TRAITS are centered boxes on
-  // mobile (see .db-config-traits-group's own mobile override), so left:0
-  // plus the flyout's own min(620px,90vw) width pushed it well past the
-  // right edge of the screen (confirmed live: right edge at 427px on a
-  // 375px viewport). Same fix as openDbSelectFlyout uses for the same
-  // underlying problem: switch to position:fixed with a JS-clamped left
-  // so it can never be anchored off-screen, computed fresh every open.
-  // No-ops above 700px — desktop's sideways hover-preview layout (plain
-  // CSS position:absolute) is untouched.
-  function clampFlyoutToViewport(triggerWrap, flyoutEl){
-    if (window.innerWidth > 700){
-      flyoutEl.style.position = '';
-      flyoutEl.style.top = '';
-      flyoutEl.style.left = '';
-      return;
-    }
-    var rect = triggerWrap.getBoundingClientRect();
-    var flyoutW = flyoutEl.getBoundingClientRect().width || rect.width;
-    var left = Math.min(rect.left, window.innerWidth - flyoutW - 8);
-    flyoutEl.style.position = 'fixed';
-    flyoutEl.style.top = rect.bottom + 'px';
-    flyoutEl.style.left = Math.max(8, left) + 'px';
-  }
-
   // "V!EW!NG WALLET <short>" reads oddly for your own wallet (ownerShort
   // is literally 'Y0U' there, from SH0W MY P!GE0NS' own
   // browseOwnerCollection(MY_WALLET, 'Y0U') call) — "Y0UR WALLET" instead
@@ -6179,11 +6215,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     // Real XRP sale history (highSaleEntry, see toItem in api/pigeons.js)
     // is null (not 0) when a Pigeon genuinely has no recorded sale, distinct
-    // from an actual free/near-free past sale — that case shows no line at
-    // all instead of a misleading "0 XRP" or a label with nothing behind it.
-    var avgSaleLine = (p.avgSaleXrp !== null && p.avgSaleXrp !== undefined)
-      ? '<div class="result-rarity-line">AVG SALE PR!CE :: ' + greenNum(fmtXrp(p.avgSaleXrp)) + ' XRP</div>'
-      : '';
+    // from an actual free/near-free past sale — that's the "never resold
+    // since mint" case, shown as COND!T!ON :: M!NT instead of a blank line
+    // (per explicit confirmation — no separate "mint" data field exists,
+    // this reuses the exact same avgSaleXrp null-check already driving
+    // whether AVG SALE PR!CE shows at all). Both lines render label/value
+    // stacked (.result-stat-stack), not side by side on one line.
+    var hasAvgSale = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
+    var avgSaleLine = hasAvgSale
+      ? '<div class="result-rarity-line result-stat-stack"><span class="stat-label">AVG SALE PR!CE ::</span><span class="stat-value">' + greenNum(fmtXrp(p.avgSaleXrp)) + ' XRP</span></div>'
+      : '<div class="result-rarity-line result-stat-stack"><span class="stat-label">COND!T!ON ::</span><span class="stat-value">M!NT</span></div>';
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
     var atCap = offerCtxCard
@@ -6864,8 +6905,28 @@ const SWAP_HTML = `<!DOCTYPE html>
   function isTraitSelected(category, value){
     return state.traitFilters.some(function(r){ return r.category === category && r.value === value; });
   }
+  // Below 700px, tapping a category (see the *FlyoutCats click handler
+  // below) turns #traitsFlyout from an inline "list down" child of
+  // #traitsHoverWrap into a fixed, centered popup (.flyout-drilled — see
+  // its CSS). position:fixed is supposed to anchor to the viewport
+  // regardless of where in the DOM it lives, but #flockGridPanel (an
+  // ancestor of #traitsHoverWrap) has backdrop-filter:blur(...) on it —
+  // per the CSS Containing Block spec, transform/filter/backdrop-filter/
+  // perspective on an ancestor makes THAT element the containing block
+  // for a position:fixed descendant instead of the viewport. Confirmed
+  // live: top:50% was resolving against the document's full scroll
+  // height (top landed past 4000px), not the actual screen. Moving the
+  // flyout to be a direct child of <body> for the popup step sidesteps
+  // this entirely (body itself has no transform/filter of its own);
+  // restoreTraitsFlyout moves it back into #traitsHoverWrap afterward so
+  // desktop's position:absolute (anchored to that wrap) keeps working
+  // next time it opens.
+  function restoreTraitsFlyout(){
+    if (el.traitsFlyout.parentElement !== el.traitsHoverWrap) el.traitsHoverWrap.appendChild(el.traitsFlyout);
+  }
   function openTraitsFlyout(){
     ensureTraitsLoaded().then(function(){
+      restoreTraitsFlyout();
       renderTraitsFlyoutCats();
       el.traitsFlyoutVals.innerHTML = '<div class="th-empty">H0VER A CATEG0RY</div>';
       el.traitsFlyoutVals.style.top = '0px';
@@ -6875,12 +6936,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       // openSortFlyout for why this is unconditional and harmless above
       // the 700px width where .flyout-drilled has no visual effect.
       el.traitsFlyout.classList.remove('flyout-drilled');
-      clampFlyoutToViewport(el.traitsHoverWrap, el.traitsFlyout);
     });
   }
   function closeTraitsFlyout(){
     el.traitsFlyout.style.display = 'none';
     el.traitsHoverWrap.classList.remove('open');
+    restoreTraitsFlyout();
   }
   // Click to open/close (not hover) — closes on an outside click, see
   // the shared document-level listener further down. Stays open across
@@ -6905,10 +6966,18 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Only visually a "drill in" below 700px (see the CSS) — clicking a
       // category to preview its values on desktop is unaffected.
       el.traitsFlyout.classList.add('flyout-drilled');
+      // See restoreTraitsFlyout's own comment — escapes #flockGridPanel's
+      // backdrop-filter so the popup's position:fixed actually anchors to
+      // the viewport. No-op above 700px (desktop never adds .flyout-
+      // drilled's fixed-popup CSS, so being reparented has no visual
+      // effect there, but skip the DOM move anyway — no reason to disturb
+      // desktop's layout for a change that only matters on mobile).
+      if (window.innerWidth <= 700) document.body.appendChild(el.traitsFlyout);
     }
   });
   el.traitsFlyoutBack.addEventListener('click', function(){
     el.traitsFlyout.classList.remove('flyout-drilled');
+    restoreTraitsFlyout();
   });
   el.traitsFlyoutVals.addEventListener('click', function(e){
     var valBtn = e.target.closest('.traits-flyout-val');
@@ -9628,7 +9697,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderSortFlyoutList();
     el.sortFlyout.style.display = 'block';
     el.sortDropWrap.classList.add('open');
-    clampFlyoutToViewport(el.sortDropWrap, el.sortFlyout);
   }
   function closeSortFlyout(){
     el.sortFlyout.style.display = 'none';
@@ -9691,7 +9759,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   // whichever is open on a click anywhere outside its own box.
   document.addEventListener('click', function(e){
     if (el.sortFlyout.style.display === 'block' && !el.sortDropWrap.contains(e.target)) closeSortFlyout();
-    if (el.traitsFlyout.style.display === 'block' && !el.traitsHoverWrap.contains(e.target)) closeTraitsFlyout();
+    // e.composedPath() instead of e.target — picking a trait VALUE
+    // rebuilds #traitsFlyoutVals' innerHTML (renderTraitsFlyoutVals,
+    // called synchronously inside that click's own handler, which runs
+    // and fires BEFORE this bubbles up here) — the actual clicked button
+    // is a detached node by the time this check runs, so any .contains()
+    // check keyed off e.target goes stale and reads as "outside" even
+    // though the click plainly wasn't.
+    // composedPath() is captured at dispatch time, before any of that
+    // mutation, so it still lists the real ancestor chain. Also checking
+    // el.traitsFlyout itself, not just traitsHoverWrap — the mobile popup
+    // step (.flyout-drilled) reparents #traitsFlyout to <body> (see
+    // restoreTraitsFlyout's comment), so a click inside the popup is no
+    // longer inside traitsHoverWrap at all once that's happened.
+    var clickPath = e.composedPath();
+    if (el.traitsFlyout.style.display === 'block' && !clickPath.includes(el.traitsHoverWrap) && !clickPath.includes(el.traitsFlyout)) closeTraitsFlyout();
     if (el.dbSelectFlyout.style.display === 'block' && !el.dbSelectWrap.contains(e.target)) closeDbSelectFlyout();
     // Same pattern for the pigeon DETAIL screen itself — a click anywhere
     // outside it (a different tab, the trustline banner, anywhere) closes
