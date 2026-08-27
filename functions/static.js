@@ -7651,10 +7651,31 @@ const SWAP_HTML = `<!DOCTYPE html>
   // popup-blocked in most browsers). Navigate that same reference now
   // that the real URL is known; only fall back to a fresh window.open()
   // call if the original one somehow failed to open at all (e.g. was
-  // blocked despite the synchronous call).
+  // blocked despite the synchronous call, or — confirmed the real cause
+  // of "MAKE AN OFFER does nothing on mobile, never confirms" — mobile
+  // Safari/Chrome frequently return null from window.open('', name,
+  // <fixed-size popup features>) even when called synchronously, since
+  // they don't support windowed popups the way desktop does. Several
+  // flows (MAKE AN OFFER, LIST, ΣΚΥΛΛΑ://S!GNAL, TRANSFER, ACCEPT
+  // TRANSFER, ACCEPT OFFER) used to skip this fallback entirely — a bare
+  // if(tabRef) tabRef.location.href = url with no else branch — so on a
+  // device where openXamanPopup() came back null, Xaman never actually
+  // opened and the button sat on "WA!T!NG F0R S!GNATURE..." forever with
+  // no error, no signature possible, nothing to confirm. BUY/DELIST had
+  // a different flavor of the same root issue: they called
+  // window.open(realUrl, ...) directly from inside their own async
+  // fetch().then() instead of pre-opening synchronously at all, the
+  // exact anti-pattern warned about two paragraphs up. All of these now
+  // go through this one shared function.
   function navigateXamanPopup(tabRef, url){
     if (tabRef) tabRef.location.href = url;
-    else window.open(url, 'xamanSign', XAMAN_POPUP_FEATURES);
+    // Not XAMAN_POPUP_FEATURES again here — a fixed-size windowed-chrome
+    // request (width=420,height=760,resizable=yes,...) is plausibly why
+    // mobile browsers refused the original openXamanPopup() call in the
+    // first place, being asked for a desktop-style popup window that
+    // mobile has no real equivalent of. A plain window.open(url,'_blank')
+    // is just a normal new tab, which mobile browsers reliably honor.
+    else window.open(url, '_blank');
   }
 
   // Once a poll confirms a sign request actually settled, the Xaman tab
@@ -7729,7 +7750,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       listingUuid = res.data.uuid;
-      if (listingXamanTab) listingXamanTab.location.href = res.data.next.always;
+      navigateXamanPopup(listingXamanTab, res.data.next.always);
       listingBtnEl.textContent = 'WA!T!NG F0R S!GNATURE...';
       if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.'; }
       pollListingStatus();
@@ -8311,7 +8332,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       buyUuid = res.data.uuid;
-      buyXamanTab = window.open(res.data.next.always, 'xamanSign', XAMAN_POPUP_FEATURES);
+      navigateXamanPopup(buyXamanTab, res.data.next.always);
       el.buyOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.buyConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollBuyStatus();
@@ -8326,6 +8347,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.buyOpenXamanBtn.disabled = true;
     el.buyOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.buyConfirmStatus.textContent = '';
+    // Opened here, synchronously inside the real click — see
+    // navigateXamanPopup's own comment for why submitBuyPayload's
+    // window.open(realUrl, ...) call used to happen from inside its own
+    // async fetch().then() instead (sometimes two .then()s and a retry
+    // setTimeout away from this click by the time it ran), which mobile
+    // browsers in particular treat as no longer a trusted user gesture
+    // and silently refuse.
+    buyXamanTab = openXamanPopup();
     submitBuyPayload();
   });
 
@@ -8431,6 +8460,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.delistOpenXamanBtn.disabled = true;
     el.delistOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.delistConfirmStatus.textContent = '';
+    // Opened here, synchronously inside the real click — see
+    // navigateXamanPopup's own comment; the window.open(realUrl, ...)
+    // call below used to happen from inside the async fetch().then()
+    // instead, which mobile browsers in particular treat as no longer a
+    // trusted user gesture and silently refuse.
+    delistXamanTab = openXamanPopup();
     fetch('/api/swap-delist-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -8444,7 +8479,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       delistUuid = res.data.uuid;
-      delistXamanTab = window.open(res.data.next.always, 'xamanSign', XAMAN_POPUP_FEATURES);
+      navigateXamanPopup(delistXamanTab, res.data.next.always);
       el.delistOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.delistConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollDelistStatus();
@@ -8649,7 +8684,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       offerUuid = res.data.uuid;
-      if (offerXamanTab) offerXamanTab.location.href = res.data.next.always;
+      navigateXamanPopup(offerXamanTab, res.data.next.always);
       el.offerOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.offerConfirmStatus.textContent = '';
       pollOfferStatus();
@@ -8778,7 +8813,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       offerSignalUuid = res.data.uuid;
-      if (signalXamanTab) signalXamanTab.location.href = res.data.next.always;
+      navigateXamanPopup(signalXamanTab, res.data.next.always);
       el.offerSignalSendBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       pollOfferSignalStatus(target, signalXamanTab);
     }).catch(function(){
@@ -8947,7 +8982,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       transferUuid = res.data.uuid;
-      if (transferXamanTab) transferXamanTab.location.href = res.data.next.always;
+      navigateXamanPopup(transferXamanTab, res.data.next.always);
       el.transferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.transferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollTransferStatus();
@@ -9140,7 +9175,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       acceptTransferUuid = res.data.uuid;
-      if (acceptTransferXamanTab) acceptTransferXamanTab.location.href = res.data.next.always;
+      navigateXamanPopup(acceptTransferXamanTab, res.data.next.always);
       el.acceptTransferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.acceptTransferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollAcceptTransferStatus();
@@ -9231,7 +9266,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       acceptOfferUuid = res.data.uuid;
-      if (acceptOfferXamanTab) acceptOfferXamanTab.location.href = res.data.next.always;
+      navigateXamanPopup(acceptOfferXamanTab, res.data.next.always);
       el.acceptOfferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.acceptOfferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollAcceptOfferStatus();
