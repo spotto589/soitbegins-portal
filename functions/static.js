@@ -1090,10 +1090,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     box-shadow:0 10px 30px rgba(0,0,0,0.6);
   }
+  /* S0RT BY only (see #sortFlyout's own class in the HTML) — it has no
+     categories any more (just one flat list of every option, built by
+     renderSortFlyoutList), so it never needs the cats+vals split below,
+     at any width: a plain single-column list, narrower than the two-pane
+     layout since there's no second column to leave room for. */
+  .traits-flyout.flyout-flat{ width:260px; }
+  .flyout-flat .traits-flyout-vals{ position:static; width:100%; max-height:380px; overflow-y:auto; padding:0.4rem; }
   /* Hidden on desktop — only shown (see the max-width:700px block below)
      once a category's been tapped on mobile, to get back to the category
-     list. Always in the markup (see sortFlyoutBack/traitsFlyoutBack) so
-     it doesn't need building/tearing down on resize. */
+     list. F!LTER BY TRA!TS only (see traitsFlyoutBack) — S0RT BY has no
+     categories to drill from any more, see .flyout-flat above. Always in
+     the markup so it doesn't need building/tearing down on resize. */
   .flyout-back-btn{
     display:none;
     width:100%;
@@ -1126,7 +1134,11 @@ const SWAP_HTML = `<!DOCTYPE html>
        layout is untouched — none of this fires above 700px. */
     .traits-flyout-cats{ width:100%; border-right:none; }
     .traits-flyout-vals{ position:static; width:100%; padding:0.6rem 0.9rem; }
-    .traits-flyout:not(.flyout-drilled) .traits-flyout-vals{ display:none; }
+    /* :not(.flyout-flat) — S0RT BY (see the class above) has no category
+       list to drill in FROM, so its single flat list must stay visible by
+       default here instead of starting hidden like F!LTER BY TRA!TS' vals
+       pane does before a category's been tapped. */
+    .traits-flyout:not(.flyout-flat):not(.flyout-drilled) .traits-flyout-vals{ display:none; }
     .traits-flyout.flyout-drilled .traits-flyout-cats{ display:none; }
     .traits-flyout.flyout-drilled .flyout-back-btn{ display:block; }
   }
@@ -3833,10 +3845,8 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="db-config-traits-section">
               <div class="traits-hover-wrap" id="sortDropWrap">
                 <span class="trait-row-label" id="sortDropLabel">S0RT BY <span class="thl-arrow">▾</span></span>
-                <div class="traits-flyout" id="sortFlyout" style="display:none;">
-                  <button type="button" class="flyout-back-btn" id="sortFlyoutBack">◂ CATEG0R!ES</button>
-                  <div class="traits-flyout-cats" id="sortFlyoutCats"></div>
-                  <div class="traits-flyout-vals" id="sortFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
+                <div class="traits-flyout flyout-flat" id="sortFlyout" style="display:none;">
+                  <div class="traits-flyout-vals" id="sortFlyoutVals"></div>
                 </div>
               </div>
               <div id="sortRows"></div>
@@ -4606,7 +4616,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutCats','sortFlyoutVals','sortFlyoutBack',
+  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
@@ -9501,37 +9511,32 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderSortTag(){
     el.sortRows.innerHTML = '<div class="trait-row trait-row-tag"><span class="trait-tag-label">' + escapeHtml(sortLabelOf(state.sort).toUpperCase()) + '</span></div>';
   }
-  function renderSortFlyoutCats(){
-    el.sortFlyoutCats.innerHTML = Object.keys(SORT_CATEGORIES).map(function(c){
-      return '<button type="button" class="traits-flyout-cat" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c) + '</button>';
-    }).join('');
-  }
-  function renderSortFlyoutVals(category){
-    el.sortFlyoutCats.querySelectorAll('.traits-flyout-cat').forEach(function(b){
-      b.classList.toggle('active', b.getAttribute('data-cat') === category);
+  // SORT BY used to be a two-level category -> values flyout (same shape
+  // as F!LTER BY TRA!TS), but with only 4 categories and ~10 options total
+  // that extra navigation step was pure overhead — one flat list of every
+  // option (still labelled "CATEG0RY :: VALUE" via sortLabelOf so context
+  // isn't lost without the category heading) is simpler to scan and pick
+  // from directly. See #sortFlyout's own "flyout-flat" class in the CSS
+  // for the single-column layout this renders into.
+  function renderSortFlyoutList(){
+    var rows = [];
+    Object.keys(SORT_CATEGORIES).forEach(function(cat){
+      SORT_CATEGORIES[cat].forEach(function(o){
+        rows.push({ cat: cat, value: o.value, label: o.label, disabled: o.disabled });
+      });
     });
-    var opts = SORT_CATEGORIES[category] || [];
-    el.sortFlyoutVals.innerHTML = opts.map(function(o){
+    el.sortFlyoutVals.innerHTML = rows.map(function(o){
       return '<button type="button" class="traits-flyout-val' + (state.sort === o.value ? ' selected' : '') + (o.disabled ? ' tfv-disabled' : '') + '" data-value="' + o.value + '"' + (o.disabled ? ' disabled' : '') + '>' +
-        '<span>' + escapeHtml(o.label) + '</span>' +
+        '<span>' + escapeHtml(o.cat + ' :: ' + o.label) + '</span>' +
         (o.disabled ? '<span class="db-soon">C0M!NG S00N</span>' : '') +
       '</button>';
     }).join('');
   }
   function openSortFlyout(){
-    renderSortFlyoutCats();
-    renderSortFlyoutVals(sortCategoryOf(state.sort) || Object.keys(SORT_CATEGORIES)[0]);
-    // display must be set before measuring clientHeight/scrollHeight for
-    // positioning — a display:none element measures zero.
+    renderSortFlyoutList();
     el.sortFlyout.style.display = 'block';
     el.sortDropWrap.classList.add('open');
-    // Always reopens on the category list, not wherever it was left last
-    // time — mobile's drill-down view (see .flyout-drilled CSS) only
-    // matters below 700px, but resetting it unconditionally here is
-    // harmless above that width since desktop never reads this class.
-    el.sortFlyout.classList.remove('flyout-drilled');
     clampFlyoutToViewport(el.sortDropWrap, el.sortFlyout);
-    positionFlyoutVals(el.sortFlyout, el.sortFlyoutVals, el.sortFlyoutCats.querySelector('.traits-flyout-cat.active'));
   }
   function closeSortFlyout(){
     el.sortFlyout.style.display = 'none';
@@ -9556,26 +9561,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.sortDropLabel.addEventListener('click', function(){
     if (el.sortFlyout.style.display === 'block') closeSortFlyout();
     else openSortFlyout();
-  });
-  el.sortFlyoutCats.addEventListener('mouseover', function(e){
-    var catBtn = e.target.closest('.traits-flyout-cat');
-    if (catBtn){
-      renderSortFlyoutVals(catBtn.getAttribute('data-cat'));
-      positionFlyoutVals(el.sortFlyout, el.sortFlyoutVals, catBtn);
-    }
-  });
-  el.sortFlyoutCats.addEventListener('click', function(e){
-    var catBtn = e.target.closest('.traits-flyout-cat');
-    if (catBtn){
-      renderSortFlyoutVals(catBtn.getAttribute('data-cat'));
-      positionFlyoutVals(el.sortFlyout, el.sortFlyoutVals, catBtn);
-      // Only visually a "drill in" below 700px (see the CSS) — clicking a
-      // category to preview its values on desktop is unaffected.
-      el.sortFlyout.classList.add('flyout-drilled');
-    }
-  });
-  el.sortFlyoutBack.addEventListener('click', function(){
-    el.sortFlyout.classList.remove('flyout-drilled');
   });
   el.sortFlyoutVals.addEventListener('click', function(e){
     var valBtn = e.target.closest('.traits-flyout-val');
