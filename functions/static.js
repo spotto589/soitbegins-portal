@@ -538,6 +538,34 @@ const SWAP_HTML = `<!DOCTYPE html>
      right above it in the DOM, shown/hidden by showTab() same as any
      other tab's panel), and stays the one always-visible element that
      switches between every tab, including on tabs with no info box. ---- */
+  /* Wrap exists purely to pin the left/right scroll-hint fades to the
+     visible edge of the tab strip regardless of scroll position — a
+     pseudo-element living inside #topTabs itself would scroll away with
+     the content since #topTabs is the overflow-x:auto element. Fades are
+     hidden by default (JS toggles .has-more-left/.has-more-right on the
+     wrap once it can measure real overflow) so they never flash on a
+     screen wide enough to show every tab at once. */
+  /* overflow:hidden isn't for clipping here (the fades never extend past
+     these bounds) — it's to stop #topTabs' own margin-top/bottom from
+     collapsing straight through this wrap, which would otherwise leave
+     the wrap's rendered box shorter than the actual visible tab strip and
+     throw off where top:0/bottom:1.75rem below land. */
+  .top-tabs-wrap{ position:relative; overflow:hidden; }
+  .top-tabs-wrap::before, .top-tabs-wrap::after{
+    content:'';
+    position:absolute;
+    top:0;
+    bottom:1.75rem; /* stop above the tab strip's own margin-bottom, not the page below it */
+    width:28px;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity 0.15s ease;
+    z-index:1;
+  }
+  .top-tabs-wrap::before{ left:0; background:linear-gradient(to right, var(--bg), transparent); }
+  .top-tabs-wrap::after{ right:0; background:linear-gradient(to left, var(--bg), transparent); }
+  .top-tabs-wrap.has-more-left::before{ opacity:1; }
+  .top-tabs-wrap.has-more-right::after{ opacity:1; }
   .top-tabs{
     display:flex;
     overflow-x:auto;
@@ -3420,6 +3448,7 @@ const SWAP_HTML = `<!DOCTYPE html>
          active both sit below it. DATABASE itself now carries the
          collection picker (see .tab-db-select / dbSelectWrap) instead of
          that living as its own separate row above the strip. -->
+    <div class="top-tabs-wrap" id="topTabsWrap">
     <div class="top-tabs" id="topTabs">
       <button class="tab-btn tab-btn-database" data-tab="database">
         DATABASE ::
@@ -3438,6 +3467,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
       <button class="tab-btn" data-tab="crown">CR0WN</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
+    </div>
     </div>
 
     <!-- Trustline banner, on its own now — the stats carousel that used to
@@ -4557,7 +4587,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
-   'topTabs','flockTabLabel','myPigeonsPanel','myPigeonsList',
+   'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
    'salesPanelWrap',
@@ -4897,7 +4927,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     document.body.classList.remove('detail-open');
     var buttons = el.topTabs.querySelectorAll('.tab-btn');
     for (var i = 0; i < buttons.length; i++){
-      buttons[i].classList.toggle('active', buttons[i].getAttribute('data-tab') === tab);
+      var isActiveBtn = buttons[i].getAttribute('data-tab') === tab;
+      buttons[i].classList.toggle('active', isActiveBtn);
+      // On mobile the tab strip itself scrolls horizontally (see
+      // .top-tabs-wrap's fade hints below) — without this, switching to a
+      // tab that happens to sit off-screen leaves its own newly-active
+      // underline invisible until the user thinks to swipe first.
+      // inline:'nearest' keeps this from also dragging the whole PAGE
+      // vertically, which a plain scrollIntoView() would do.
+      if (isActiveBtn) buttons[i].scrollIntoView({ behavior:'smooth', inline:'nearest', block:'nearest' });
     }
     // The universal info box loads once, the very first time any tab is
     // opened — not gated to DATABASE any more, since it's visible on all
@@ -4975,6 +5013,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     showTab(tab);
   });
+
+  // Tab strip scroll-hint fades (see .top-tabs-wrap CSS) — measured
+  // against real scrollWidth/clientWidth rather than assumed, since
+  // whether it overflows at all depends on viewport width and which tabs
+  // are even in the DOM (SWAP 0FFERS is flag-gated, see SWAP_BUILDER_ENABLED).
+  function updateTopTabsFade(){
+    var maxScroll = el.topTabs.scrollWidth - el.topTabs.clientWidth;
+    el.topTabsWrap.classList.toggle('has-more-left', el.topTabs.scrollLeft > 2);
+    el.topTabsWrap.classList.toggle('has-more-right', el.topTabs.scrollLeft < maxScroll - 2);
+  }
+  el.topTabs.addEventListener('scroll', updateTopTabsFade);
+  window.addEventListener('resize', updateTopTabsFade);
+  updateTopTabsFade();
 
   function showScreen(name){
     if (name === 'browse'){
@@ -10191,6 +10242,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.simpleOfferPanel.style.display = 'none';
     el.swapOffersTabBtn.style.display = 'none';
   }
+  // Re-measure now that SWAP 0FFERS may have just been hidden above —
+  // the very first updateTopTabsFade() call (right after the tab strip's
+  // own click handler is wired) runs before this gate, so it could over-
+  // count real overflow while that tab was still in the layout.
+  updateTopTabsFade();
 
   // DATABASE's own + toggle (SWAP_BUILDER_ENABLED false) redirects here
   // with ?offerFor=<nftId>&offerForNum=&offerForImg=&offerForOwner= —
