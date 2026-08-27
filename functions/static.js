@@ -365,8 +365,43 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.75rem;
   }
   .stats-strip .stat-tile{ flex:0 0 calc(25% - 0.5625rem); }
+  /* Mobile: collapse the whole paged carousel (FLOOR / ITEMS-HOLDERS-
+     VOLUME-LISTED / 24H ACTIVITY, swiped one page at a time) into one
+     flat, small, horizontally-scrollable strip instead — all ten stats
+     side by side, condensed pills, no arrows/dots/paging. JS's
+     auto-rotate timer (see the stats-carousel IIFE) keeps toggling
+     .stats-page-active/-prev/etc and re-writing the viewport's inline
+     height underneath this completely unchanged — every property that
+     would fight it here is !important so none of that has any visible
+     effect any more, without needing to touch the JS itself. */
   @media (max-width:700px){
-    .stats-strip .stat-tile{ flex:0 0 calc(50% - 0.375rem); }
+    .stats-carousel-arrow, .stats-carousel-dots{ display:none; }
+    .stats-carousel-row{ gap:0; }
+    .stats-carousel-viewport{
+      display:flex;
+      gap:0.4rem;
+      overflow-x:auto;
+      overflow-y:hidden;
+      height:auto !important;
+      min-height:0;
+    }
+    .stats-page{
+      position:static !important;
+      transform:none !important;
+      opacity:1 !important;
+      pointer-events:auto !important;
+      transition:none !important;
+      width:auto;
+      flex:0 0 auto;
+    }
+    .stats-strip{ flex-wrap:nowrap; gap:0.4rem; }
+    .stats-strip .stat-tile{
+      flex:0 0 auto !important;
+      min-width:70px;
+      padding:0.4rem 0.5rem;
+    }
+    .stat-label{ font-size:8px; margin-bottom:0.15rem; white-space:nowrap; }
+    .stat-value{ font-size:11px; white-space:nowrap; }
   }
   /* Prev/next arrows flank the viewport; the row itself is the flex
      container that lays out [arrow][viewport][arrow]. */
