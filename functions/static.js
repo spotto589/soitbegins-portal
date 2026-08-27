@@ -2057,7 +2057,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      column, so it (and its COPY button) get bumped noticeably bigger
      than the plain .pigeons-bar-text default. */
   .pigeons-bar-issuer .pigeons-bar-text-lg{ font-size:18px; }
-  /* Small inline [ COPY ] button sitting right next to SET TRUSTLINE TO
+  /* Small inline COPY button sitting right next to SET TRUSTLINE TO
      TRADE — the actual issuer address is now just plain reference text
      underneath (.pigeons-bar-sublabel), not the click target itself. */
   .pigeons-bar-copy-btn{
@@ -3460,7 +3460,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                    COPY, right there next to it. -->
               <span class="pigeons-bar-sublabel pigeons-bar-text-lg">!SSUER :: <span id="ciIssuerAddr" data-full="rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf">rfQVV...QSf</span></span>
             </div>
-            <button class="pigeons-bar-copy-btn" id="copyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="copyIssuerLabel">[ C0PY ]</span></button>
+            <button class="pigeons-bar-copy-btn" id="copyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="copyIssuerLabel">C0PY</span></button>
           </div>
           <button class="pigeons-bar-help-box" id="onboardLink"><span class="pigeons-bar-help-mark">?</span> New to the XRPL, NFTs, memes? Click here.</button>
         </div>
@@ -3474,8 +3474,8 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="pigeons-bar-text" id="pigeonsLoggedInWallet"></span>
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
             <div class="pigeons-bar-identity-actions">
-              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">[ SH0W MY FL0CK<span id="showMyPigeonsCount"></span> ]</button>
-              <button class="bar-btn ci-copy-btn" id="swapSignOutBtn">[ S!GN 0UT ]</button>
+              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">SH0W MY FL0CK<span id="showMyPigeonsCount"></span></button>
+              <button class="bar-btn ci-copy-btn" id="swapSignOutBtn">S!GN 0UT</button>
             </div>
           </div>
         </div>
@@ -3490,9 +3490,9 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="pigeons-bar-balance-label">BALANCE:</div>
             <div class="pigeons-bar-balance-value" id="pigeonsBalanceValue" style="display:none;">…</div>
             <div class="pigeons-bar-balance-login" id="pigeonsBalanceLoginWrap">
-              <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">[ L0G!N T0 V!EW BALANCE ]</button>
+              <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">L0G!N T0 V!EW BALANCE</button>
             </div>
-            <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;">[ BUY $P!GE0NS ]</button>
+            <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;">BUY $P!GE0NS</button>
           </div>
         </div>
 
@@ -3525,7 +3525,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="sw-panel" id="myPigeonsPanel" style="display:none;">
       <div class="skylla-signal" id="connectStatus"></div>
       <div id="myPigeonsConnect" style="display:none; text-align:center;">
-        <button class="bar-btn" id="connectScyllaBtn">[ CONNECT <span style="text-transform:none;">Σκύλλα</span> ]</button>
+        <button class="bar-btn" id="connectScyllaBtn">CONNECT <span style="text-transform:none;">Σκύλλα</span></button>
       </div>
       <!-- No separate "WALLET CONNECTED" box here any more — the trustline
            banner above already shows the connected wallet/balance; this
@@ -3561,7 +3561,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
           </div>
           <div class="simple-offer-actions">
-            <button type="button" class="action-btn" id="simpleOfferCreateBtn" disabled>[ CREATE 0FFER ]</button>
+            <button type="button" class="action-btn" id="simpleOfferCreateBtn" disabled>CREATE 0FFER</button>
           </div>
           <div class="index-line" id="simpleOfferStatus"></div>
         </div>
@@ -3648,7 +3648,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="ob-count" id="wantCount">0 / 4 ASSETS SELECTED</div>
         </div>
         <div style="text-align:center; margin-top:1rem;">
-          <button class="action-btn" id="completeTradeBtn" disabled>[ C0MPLETE TRADE 0FFER ]</button>
+          <button class="action-btn" id="completeTradeBtn" disabled>C0MPLETE TRADE 0FFER</button>
         </div>
       </div>
 
@@ -3658,7 +3658,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="target-pigeon-card" id="targetPigeonCard" style="display:none;">
           <div class="tp-label">TARGET P!GE0N</div>
           <div class="tp-body">
-            <div class="pigeon-img-box tp-img" id="targetPigeonImg">[ IMAGE ]</div>
+            <div class="pigeon-img-box tp-img" id="targetPigeonImg">IMAGE</div>
             <div class="tp-info">
               <div class="tp-num" id="targetPigeonNum"></div>
               <div class="tp-owner-label">OWNER</div>
@@ -3674,7 +3674,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
 
         <div style="text-align:center;">
-          <a class="back-link" href="#" id="backToFullCollectionLink" style="margin:0;">[ ← EX!T TARGET WALLET :: BACK T0 FULL C0LLECT!0N ]</a>
+          <a class="back-link" href="#" id="backToFullCollectionLink" style="margin:0;">← EX!T TARGET WALLET :: BACK T0 FULL C0LLECT!0N</a>
         </div>
       </div>
 
@@ -3752,7 +3752,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="search-row">
               <input class="search-input" id="searchInput" placeholder="# 0R WALLET">
               <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
-              <button class="bar-btn" id="searchBtn">[ GO ]</button>
+              <button class="bar-btn" id="searchBtn">GO</button>
             </div>
             <!-- COLLECTION sits where S0RT BY used to (centered, top row)
                  — swapped with it, see below. -->
@@ -3802,7 +3802,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 </div>
               </div>
               <div id="traitRows"></div>
-              <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">[ CLEAR ]</button>
+              <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">CLEAR</button>
             </div>
           </div>
 
@@ -3810,7 +3810,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                and the results status line below — its own row, not bundled
                into either. -->
           <div class="results-reset-row">
-            <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">[ RESET ]</button>
+            <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">RESET</button>
           </div>
 
           <!-- SHOWING RESULTS FOR — its own line, directly above the
@@ -3844,7 +3844,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="detail-num" id="detailNum"></div>
         <div class="detail-owner-top" id="detailOwner"></div>
         <div class="detail-col-left">
-          <div class="detail-img-large pigeon-img-box" id="detailImgBox" title="VIEW FULLSCREEN">[ IMAGE ]</div>
+          <div class="detail-img-large pigeon-img-box" id="detailImgBox" title="VIEW FULLSCREEN">IMAGE</div>
           <div class="detail-under-pic-box">
             <div class="detail-rarity-row" id="detailRarityRow" style="display:none;">
               <div class="trait-cell">
@@ -3862,8 +3862,8 @@ const SWAP_HTML = `<!DOCTYPE html>
                   <img class="scylla-coin-icon" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
                   <span class="scylla-listing-price" id="detailScyllaPrice">N0T L!STED</span>
                 </span>
-                <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">[ BUY ]</button>
-                <button class="bar-btn" id="detailScyllaDelistBtn" style="display:none;">[ CANCEL ]</button>
+                <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">BUY</button>
+                <button class="bar-btn" id="detailScyllaDelistBtn" style="display:none;">CANCEL</button>
               </div>
               <div class="listing-countdown" id="detailScyllaCountdown" style="display:none;"></div>
               <div class="thumb-offer-row" id="detailMakeOfferRow" style="display:none;">
@@ -3887,7 +3887,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVERAGE SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
           </div>
           <div class="detail-history">
-            <button class="th-toggle" id="detailHistoryToggle">[ TRANSACT!0N H!ST0RY ]</button>
+            <button class="th-toggle" id="detailHistoryToggle">TRANSACT!0N H!ST0RY</button>
           </div>
         </div>
       </div>
@@ -3920,7 +3920,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <!-- Shared L!ST/0FFER/TRANSFER popup — one instance, re-labelled per
          use (openAmountEntryModal). Cards across DATABASE only ever show
-         a button now ([ L!ST ]/[ 0FFER ]/[ TRANSFER ]); this is the one
+         a button now (L!ST/0FFER/TRANSFER); this is the one
          place left to actually type a number or wallet address. Each
          mode reuses the exact input/button classes its own existing
          submit logic already expects (list-price-input/list-inline-btn
@@ -3938,7 +3938,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
               <input class="list-price-input" id="amountEntryListInput" type="text" inputmode="decimal" placeholder="L!ST PR!CE">
             </div>
-            <button class="list-inline-btn" id="amountEntryListBtn">[ L!ST ]</button>
+            <button class="list-inline-btn" id="amountEntryListBtn">L!ST</button>
           </div>
           <!-- Real XRPL NFTokenCreateOffer Expiration, not app-side
                enforcement — see listingExpirationRippleSeconds in
@@ -3967,7 +3967,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="thumb-offer amount-entry-mode" id="amountEntryTransferMode" style="display:none;">
           <div class="thumb-offer-row">
             <input class="transfer-wallet-input" id="amountEntryTransferInput" type="text" placeholder="DEST!NAT!0N WALLET (r...)">
-            <button class="list-inline-btn" id="amountEntryTransferBtn">[ TRANSFER ]</button>
+            <button class="list-inline-btn" id="amountEntryTransferBtn">TRANSFER</button>
           </div>
           <div class="index-line" id="amountEntryTransferStatus" style="display:none;"></div>
         </div>
@@ -3981,7 +3981,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-num" id="historyNum"></div>
       <div class="th-list" id="detailHistoryList"></div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="backToDetailBtn">[ ← BACK ]</button>
+        <button class="secondary-btn" id="backToDetailBtn">← BACK</button>
       </div>
     </div>
 
@@ -4000,8 +4000,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="pc-body">TH!S PR0T0TYPE ST0PS HERE.<br>N0 0FFER HAS BEEN CREATED.<br>N0 WALLET C0NNECTED. N0 ASSETS M0VED.<br>NEXT PHASE :: SELECT Y0UR P!GE0NS + XRP.</div>
       </div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="backFromSummaryBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="continueToOfferBtn">[ C0NT!NUE T0 0FFER ]</button>
+        <button class="secondary-btn" id="backFromSummaryBtn">← BACK</button>
+        <button class="action-btn" id="continueToOfferBtn">C0NT!NUE T0 0FFER</button>
       </div>
     </div>
 
@@ -4023,8 +4023,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
       <div class="index-line" id="reviewResult" style="display:none; margin-top:1.25rem;"></div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="reviewBackBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="reviewCreateBtn">[ CREATE SWAP 0FFER ]</button>
+        <button class="secondary-btn" id="reviewBackBtn">← BACK</button>
+        <button class="action-btn" id="reviewCreateBtn">CREATE SWAP 0FFER</button>
       </div>
     </div>
 
@@ -4046,8 +4046,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field"><span class="df-label">Flags</span><span class="df-value" id="swapConfFlags"></span></div>
       <div class="index-line" id="swapConfirmStatus" style="margin-top:1rem;"></div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="swapOfferConfirmBackBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="swapOfferOpenXamanBtn">[ 0PEN XAMAN ]</button>
+        <button class="secondary-btn" id="swapOfferConfirmBackBtn">← BACK</button>
+        <button class="action-btn" id="swapOfferOpenXamanBtn">0PEN XAMAN</button>
       </div>
     </div>
 
@@ -4062,7 +4062,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field"><span class="df-label">0FFER !D</span><span class="df-value" id="swapResultOfferId"></span></div>
       <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="swapResultTxLink" target="_blank" rel="noopener"></a></span></div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="swapResultDoneBtn">[ ← BACK T0 DATABASE ]</button>
+        <button class="secondary-btn" id="swapResultDoneBtn">← BACK T0 DATABASE</button>
       </div>
     </div>
 
@@ -4081,8 +4081,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field"><span class="df-label">FR0M WALLET</span><span class="df-value" id="acceptConfFromWallet"></span></div>
       <div class="index-line" id="acceptConfirmStatus" style="margin-top:1rem;"></div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="swapAcceptConfirmBackBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="swapAcceptOpenXamanBtn">[ 0PEN XAMAN ]</button>
+        <button class="secondary-btn" id="swapAcceptConfirmBackBtn">← BACK</button>
+        <button class="action-btn" id="swapAcceptOpenXamanBtn">0PEN XAMAN</button>
       </div>
     </div>
 
@@ -4094,7 +4094,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="acceptResultStatus"></span></div>
       <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="acceptResultTxLink" target="_blank" rel="noopener"></a></span></div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="acceptResultDoneBtn">[ ← BACK T0 SWAP 0FFERS ]</button>
+        <button class="secondary-btn" id="acceptResultDoneBtn">← BACK T0 SWAP 0FFERS</button>
       </div>
     </div>
 
@@ -4112,7 +4112,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="receipt-price-value" id="listResultPrice"></div>
       </div>
       <div class="detail-actions">
-        <button class="action-btn" id="listResultDoneBtn">[ ← BACK T0 MY P!GE0NS ]</button>
+        <button class="action-btn" id="listResultDoneBtn">← BACK T0 MY P!GE0NS</button>
       </div>
       <a class="receipt-tx-link" id="listResultTxLink" target="_blank" rel="noopener">V!EW TRANSACT!0N</a>
     </div>
@@ -4128,8 +4128,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="buyConfPrice"></span></div>
       <div class="index-line" id="buyConfirmStatus" style="margin-top:1rem;"></div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="buyConfirmBackBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="buyOpenXamanBtn">[ 0PEN XAMAN ]</button>
+        <button class="secondary-btn" id="buyConfirmBackBtn">← BACK</button>
+        <button class="action-btn" id="buyOpenXamanBtn">0PEN XAMAN</button>
       </div>
     </div>
 
@@ -4141,7 +4141,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="buyResultStatus"></span></div>
       <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="buyResultTxLink" target="_blank" rel="noopener"></a></span></div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="buyResultDoneBtn">[ ← BACK T0 L!STED ]</button>
+        <button class="secondary-btn" id="buyResultDoneBtn">← BACK T0 L!STED</button>
       </div>
     </div>
 
@@ -4164,7 +4164,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="buyswap-trustline-warning-title" id="buySwapTrustlineWarningTitle"></div>
             <div class="pigeons-bar-left-body-row buyswap-trustline-issuer-row">
               <span class="pigeons-bar-sublabel">!SSUER :: <span id="buySwapIssuerAddr" data-full="rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf">rfQVV...QSf</span></span>
-              <button class="pigeons-bar-copy-btn" id="buySwapCopyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="buySwapCopyIssuerLabel">[ C0PY ]</span></button>
+              <button class="pigeons-bar-copy-btn" id="buySwapCopyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="buySwapCopyIssuerLabel">C0PY</span></button>
             </div>
           </div>
           <div class="buyswap-row" id="buySwapPayRow">
@@ -4192,8 +4192,8 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="buyswap-divider"></div>
           <div class="index-line" id="buySwapStatus">QU0TE C0M!NG S00N — SWAP N0T YET L!VE.</div>
           <div class="detail-actions">
-            <button class="secondary-btn" id="buySwapBackBtn">[ ← BACK ]</button>
-            <button class="action-btn" id="buySwapSignBtn" disabled title="QU0TE N0T YET AVA!LABLE">[ S!GN & BUY ]</button>
+            <button class="secondary-btn" id="buySwapBackBtn">← BACK</button>
+            <button class="action-btn" id="buySwapSignBtn" disabled title="QU0TE N0T YET AVA!LABLE">S!GN & BUY</button>
           </div>
         </div>
 
@@ -4215,8 +4215,8 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="detail-field"><span class="df-label">L!QU!D!TY S0URCE</span><span class="df-value" id="buySwapConfSource"></span></div>
           <div class="index-line" id="buySwapConfirmStatus" style="margin-top:1rem;"></div>
           <div class="detail-actions">
-            <button class="secondary-btn" id="buySwapConfirmBackBtn">[ ← BACK ]</button>
-            <button class="action-btn offer-confirm-xaman-btn" id="buySwapOpenXamanBtn">[ 0PEN XAMAN ]</button>
+            <button class="secondary-btn" id="buySwapConfirmBackBtn">← BACK</button>
+            <button class="action-btn offer-confirm-xaman-btn" id="buySwapOpenXamanBtn">0PEN XAMAN</button>
           </div>
         </div>
 
@@ -4234,7 +4234,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="receipt-price-value buyswap-received-value" id="buySwapResultReceived"></div>
           </div>
           <div class="detail-actions">
-            <button class="action-btn" id="buySwapResultDoneBtn">[ D0NE ]</button>
+            <button class="action-btn" id="buySwapResultDoneBtn">D0NE</button>
           </div>
           <a class="buyswap-tx-link" id="buySwapResultTxLink" target="_blank" rel="noopener">V!EW TRANSACT!0N</a>
         </div>
@@ -4250,8 +4250,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="delistConfPigeon"></span></div>
       <div class="index-line" id="delistConfirmStatus" style="margin-top:1rem;"></div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="delistConfirmBackBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="delistOpenXamanBtn">[ 0PEN XAMAN ]</button>
+        <button class="secondary-btn" id="delistConfirmBackBtn">← BACK</button>
+        <button class="action-btn" id="delistOpenXamanBtn">0PEN XAMAN</button>
       </div>
     </div>
 
@@ -4260,8 +4260,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-eyebrow">// DEL!STED</div>
       <div class="detail-num" id="delistResultPigeonNum"></div>
       <div class="detail-actions">
-        <a class="secondary-btn" id="delistResultWalletLink" target="_blank" rel="noopener">[ V!EW Y0UR WALLET ACT!V!TY ]</a>
-        <button class="secondary-btn" id="delistResultDoneBtn">[ ← BACK T0 MY P!GE0NS ]</button>
+        <a class="secondary-btn" id="delistResultWalletLink" target="_blank" rel="noopener">V!EW Y0UR WALLET ACT!V!TY</a>
+        <button class="secondary-btn" id="delistResultDoneBtn">← BACK T0 MY P!GE0NS</button>
       </div>
     </div>
 
@@ -4298,8 +4298,8 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="confirm-pigeon-num confirm-pigeon-num-clickable" id="offerConfPigeonNum"></div>
           <div class="index-line" id="offerConfirmStatus" style="margin-top:1rem;"></div>
           <div class="detail-actions">
-            <button class="secondary-btn" id="offerConfirmBackBtn">[ ← BACK ]</button>
-            <button class="action-btn offer-confirm-xaman-btn" id="offerOpenXamanBtn">[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]</button>
+            <button class="secondary-btn" id="offerConfirmBackBtn">← BACK</button>
+            <button class="action-btn offer-confirm-xaman-btn" id="offerOpenXamanBtn">C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span></button>
           </div>
         </div>
         <!-- Verified against real on-ledger state (nft_buy_offers), not
@@ -4313,7 +4313,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="receipt-price-value" id="offerReceiptPrice"></div>
           </div>
           <div class="detail-actions">
-            <button class="action-btn" id="offerResultDoneBtn">[ D0NE ]</button>
+            <button class="action-btn" id="offerResultDoneBtn">D0NE</button>
           </div>
           <a class="receipt-tx-link" id="offerResultTxLink" target="_blank" rel="noopener">V!EW TRANSACT!0N</a>
           <div class="index-line swap-nonatomic-note" style="margin-top:1.25rem; margin-bottom:0;">THE 0WNER ST!LL NEEDS T0 ACCEPT TH!S 0FFER F0R THE TRADE T0 SETTLE.</div>
@@ -4338,8 +4338,8 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
             <div class="index-line" id="offerSignalStatus" style="margin-top:0.75rem;"></div>
             <div class="detail-actions">
-              <button class="secondary-btn" id="offerSignalSkipBtn">[ SK!P ]</button>
-              <button class="action-btn offer-confirm-xaman-btn" id="offerSignalSendBtn">[ SEND S!GNAL ]</button>
+              <button class="secondary-btn" id="offerSignalSkipBtn">SK!P</button>
+              <button class="action-btn offer-confirm-xaman-btn" id="offerSignalSendBtn">SEND S!GNAL</button>
             </div>
           </div>
           <div id="offerSignalSentConfirm" style="display:none;">
@@ -4348,7 +4348,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="index-line" style="margin-top:0.5rem;">123 DR0PS DEL!VERED</div>
             <a class="receipt-tx-link" id="offerSignalTxLink" target="_blank" rel="noopener">V!EW TRANSACT!0N</a>
             <div class="detail-actions">
-              <button class="action-btn" id="offerSignalDoneBtn">[ D0NE ]</button>
+              <button class="action-btn" id="offerSignalDoneBtn">D0NE</button>
             </div>
           </div>
         </div>
@@ -4372,8 +4372,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="index-line swap-nonatomic-note">TH!S 0NLY CREATES THE 0FFER — THE REC!P!ENT ST!LL NEEDS T0 ACCEPT !T (E.G. FR0M THE!R 0WN XAMAN WALLET) BEF0RE THE P!GE0N ACTUALLY M0VES.</div>
         <div class="index-line" id="transferConfirmStatus" style="margin-top:1rem;"></div>
         <div class="detail-actions">
-          <button class="secondary-btn" id="transferConfirmBackBtn">[ ← BACK ]</button>
-          <button class="action-btn offer-confirm-xaman-btn" id="transferOpenXamanBtn">[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]</button>
+          <button class="secondary-btn" id="transferConfirmBackBtn">← BACK</button>
+          <button class="action-btn offer-confirm-xaman-btn" id="transferOpenXamanBtn">C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span></button>
         </div>
       </div>
     </div>
@@ -4391,7 +4391,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="receipt-price-value" id="transferResultDestination" style="font-family:var(--font-mono); font-size:16px; word-break:break-all;"></div>
       </div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="transferResultDoneBtn">[ ← BACK T0 MY FL0CK ]</button>
+        <button class="secondary-btn" id="transferResultDoneBtn">← BACK T0 MY FL0CK</button>
       </div>
       <a class="receipt-tx-link" id="transferResultTxLink" target="_blank" rel="noopener">V!EW TRANSACT!0N</a>
       <div class="index-line swap-nonatomic-note" style="margin-top:1.25rem; margin-bottom:0;">THE REC!P!ENT ST!LL NEEDS T0 ACCEPT TH!S 0FFER F0R THE P!GE0N T0 M0VE.</div>
@@ -4417,8 +4417,8 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="confirm-field-value" id="acceptTransferConfFrom"></div>
           <div class="index-line" id="acceptTransferConfirmStatus" style="margin-top:1rem;"></div>
           <div class="detail-actions">
-            <button class="secondary-btn" id="acceptTransferConfirmBackBtn">[ ← BACK ]</button>
-            <button class="action-btn offer-confirm-xaman-btn" id="acceptTransferOpenXamanBtn">[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]</button>
+            <button class="secondary-btn" id="acceptTransferConfirmBackBtn">← BACK</button>
+            <button class="action-btn offer-confirm-xaman-btn" id="acceptTransferOpenXamanBtn">C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span></button>
           </div>
         </div>
         <div id="acceptTransferConfirmReceipt" style="display:none;">
@@ -4426,7 +4426,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="receipt-pigeon-num" id="acceptTransferReceiptPigeonNum"></div>
           <div class="receipt-status-line">!S N0W Y0URS</div>
           <div class="detail-actions">
-            <button class="action-btn" id="acceptTransferResultDoneBtn">[ D0NE ]</button>
+            <button class="action-btn" id="acceptTransferResultDoneBtn">D0NE</button>
           </div>
         </div>
       </div>
@@ -4445,8 +4445,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field"><span class="df-label">Y0U RECE!VE</span><span class="df-value" id="acceptOfferConfSellerAmount"></span></div>
       <div class="index-line" id="acceptOfferConfirmStatus" style="margin-top:1rem;"></div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="acceptOfferConfirmBackBtn">[ ← BACK ]</button>
-        <button class="action-btn" id="acceptOfferOpenXamanBtn">[ 0PEN XAMAN ]</button>
+        <button class="secondary-btn" id="acceptOfferConfirmBackBtn">← BACK</button>
+        <button class="action-btn" id="acceptOfferOpenXamanBtn">0PEN XAMAN</button>
       </div>
     </div>
 
@@ -4460,7 +4460,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="acceptOfferResultStatus"></span></div>
       <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="acceptOfferResultTxLink" target="_blank" rel="noopener"></a></span></div>
       <div class="detail-actions">
-        <button class="secondary-btn" id="acceptOfferResultDoneBtn">[ ← BACK T0 MY P!GE0NS ]</button>
+        <button class="secondary-btn" id="acceptOfferResultDoneBtn">← BACK T0 MY P!GE0NS</button>
       </div>
     </div>
 
@@ -4469,7 +4469,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   <div class="target-bar" id="targetBar" style="display:none;">
     <span class="tb-label" id="targetBarLabel">TARGET ASSETS :: 0</span>
-    <span class="tb-toggle">[ V!EW ▲ ]</span>
+    <span class="tb-toggle">V!EW ▲</span>
   </div>
 
 <script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
@@ -5104,12 +5104,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.nodeEyebrowText.textContent = '// Y0UR WALLET !DENT!F!ED';
       el.walletBoxTitleMain.textContent = 'Y0UR WALLET';
       el.walletBoxTitleSub.textContent = '// BU!LD!NG Y0UR 0FFER';
-      el.backToFullCollectionLink.textContent = '[ ← BACK T0 FULL C0LLECT!0N ]';
+      el.backToFullCollectionLink.textContent = '← BACK T0 FULL C0LLECT!0N';
     } else {
       el.nodeEyebrowText.textContent = '// TARGET N0DE !DENT!F!ED';
       el.walletBoxTitleMain.textContent = 'TARGET WALLET';
       el.walletBoxTitleSub.textContent = '// H0LDER N0DE';
-      el.backToFullCollectionLink.textContent = '[ ← EX!T TARGET WALLET :: BACK T0 FULL C0LLECT!0N ]';
+      el.backToFullCollectionLink.textContent = '← EX!T TARGET WALLET :: BACK T0 FULL C0LLECT!0N';
     }
   }
   function renderTradeBuilder(){
@@ -5262,7 +5262,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.swapConfFlags.textContent = String(txjson.Flags);
     el.swapConfirmStatus.textContent = '';
     el.swapOfferOpenXamanBtn.disabled = false;
-    el.swapOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+    el.swapOfferOpenXamanBtn.textContent = '0PEN XAMAN';
   }
   el.swapOfferConfirmBackBtn.addEventListener('click', function(){
     showScreen(swapOfferState && swapOfferState.swapId ? 'swapoffers' : 'swapreview');
@@ -5271,7 +5271,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.swapOfferOpenXamanBtn.addEventListener('click', function(){
     if (!swapOfferState) return;
     el.swapOfferOpenXamanBtn.disabled = true;
-    el.swapOfferOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.swapOfferOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.swapConfirmStatus.textContent = '';
     // Opening the tab HERE, synchronously inside the click handler, and
     // only pointing it at the real URL once the fetch resolves — opening
@@ -5295,19 +5295,19 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!res.ok || !res.data.ok){
         if (xamanTab) xamanTab.close();
         el.swapOfferOpenXamanBtn.disabled = false;
-        el.swapOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.swapOfferOpenXamanBtn.textContent = '0PEN XAMAN';
         el.swapConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
       swapOfferState.uuid = res.data.uuid;
       navigateXamanPopup(xamanTab, res.data.next.always);
-      el.swapOfferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.swapOfferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.swapConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollSwapOfferStatus();
     }).catch(function(){
       if (xamanTab) xamanTab.close();
       el.swapOfferOpenXamanBtn.disabled = false;
-      el.swapOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.swapOfferOpenXamanBtn.textContent = '0PEN XAMAN';
       el.swapConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
@@ -5330,19 +5330,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (data.status === 'rejected'){
           el.swapConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.swapOfferOpenXamanBtn.disabled = false;
-          el.swapOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.swapOfferOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'expired'){
           el.swapConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           el.swapOfferOpenXamanBtn.disabled = false;
-          el.swapOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.swapOfferOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'failed'){
           el.swapConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           el.swapOfferOpenXamanBtn.disabled = false;
-          el.swapOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.swapOfferOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         // 'pending' or 'signed_pending_ledger' — keep polling.
@@ -5386,15 +5386,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // startSwapOffer above unchanged), and accepting both live here. ----
   var swapOffersData = null;
   function swapOfferRowHtml(row){
-    var myImg = row.myImage ? '<img src="' + escapeHtml(row.myImage) + '" alt="">' : '[ IMAGE ]';
-    var otherImg = row.otherImage ? '<img src="' + escapeHtml(row.otherImage) + '" alt="">' : '[ IMAGE ]';
+    var myImg = row.myImage ? '<img src="' + escapeHtml(row.myImage) + '" alt="">' : 'IMAGE';
+    var otherImg = row.otherImage ? '<img src="' + escapeHtml(row.otherImage) + '" alt="">' : 'IMAGE';
     var actionHtml;
     if (row.action === 'need_to_offer'){
-      actionHtml = '<button class="bar-btn swap-offer-reciprocate-btn" data-swapid="' + escapeHtml(row.swapId) + '" style="width:100%; margin-top:0.5rem;">[ CREATE MATCH!NG 0FFER ]</button>';
+      actionHtml = '<button class="bar-btn swap-offer-reciprocate-btn" data-swapid="' + escapeHtml(row.swapId) + '" style="width:100%; margin-top:0.5rem;">CREATE MATCH!NG 0FFER</button>';
     } else if (row.action === 'waiting_for_other_offer'){
       actionHtml = '<div class="index-line" style="margin-top:0.5rem;">WA!T!NG F0R THE 0THER WALLET T0 0FFER</div>';
     } else if (row.action === 'ready_to_accept'){
-      actionHtml = '<button class="bar-btn swap-offer-accept-btn" data-swapid="' + escapeHtml(row.swapId) + '" style="width:100%; margin-top:0.5rem;">[ ACCEPT SWAP ]</button>';
+      actionHtml = '<button class="bar-btn swap-offer-accept-btn" data-swapid="' + escapeHtml(row.swapId) + '" style="width:100%; margin-top:0.5rem;">ACCEPT SWAP</button>';
     } else {
       actionHtml = '<div class="index-line" style="margin-top:0.5rem;">WA!T!NG F0R THE 0THER WALLET T0 ACCEPT</div>';
     }
@@ -5477,7 +5477,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.acceptConfFromWallet.textContent = res.data.display && res.data.display.fromWallet;
       el.acceptConfirmStatus.textContent = '';
       el.swapAcceptOpenXamanBtn.disabled = false;
-      el.swapAcceptOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.swapAcceptOpenXamanBtn.textContent = '0PEN XAMAN';
     }).catch(function(){
       el.acceptConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
       el.swapAcceptOpenXamanBtn.disabled = true;
@@ -5488,7 +5488,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.swapAcceptOpenXamanBtn.addEventListener('click', function(){
     if (!swapAcceptState) return;
     el.swapAcceptOpenXamanBtn.disabled = true;
-    el.swapAcceptOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.swapAcceptOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.acceptConfirmStatus.textContent = '';
     var xamanTab = openXamanPopup();
     fetch('/api/swap-accept-payload', {
@@ -5500,19 +5500,19 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!res.ok || !res.data.ok){
         if (xamanTab) xamanTab.close();
         el.swapAcceptOpenXamanBtn.disabled = false;
-        el.swapAcceptOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.swapAcceptOpenXamanBtn.textContent = '0PEN XAMAN';
         el.acceptConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
       swapAcceptState.uuid = res.data.uuid;
       navigateXamanPopup(xamanTab, res.data.next.always);
-      el.swapAcceptOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.swapAcceptOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.acceptConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollSwapAcceptStatus();
     }).catch(function(){
       if (xamanTab) xamanTab.close();
       el.swapAcceptOpenXamanBtn.disabled = false;
-      el.swapAcceptOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.swapAcceptOpenXamanBtn.textContent = '0PEN XAMAN';
       el.acceptConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
@@ -5541,19 +5541,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (data.status === 'rejected'){
           el.acceptConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.swapAcceptOpenXamanBtn.disabled = false;
-          el.swapAcceptOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.swapAcceptOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'expired'){
           el.acceptConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           el.swapAcceptOpenXamanBtn.disabled = false;
-          el.swapAcceptOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.swapAcceptOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'failed'){
           el.acceptConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           el.swapAcceptOpenXamanBtn.disabled = false;
-          el.swapAcceptOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.swapAcceptOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         swapAcceptPollTimer = setTimeout(pollSwapAcceptStatus, 2000);
@@ -5573,7 +5573,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       var inTarget = offerCtx ? !!state.offerAssets[id] : !!state.targetAssets[id];
       card.classList.toggle('in-target', inTarget);
       var btn = card.querySelector('.select-btn');
-      if (btn){ btn.classList.toggle('selected', inTarget); btn.textContent = inTarget ? '[ SELECTED ]' : '[ SELECT ]'; }
+      if (btn){ btn.classList.toggle('selected', inTarget); btn.textContent = inTarget ? 'SELECTED' : 'SELECT'; }
       var toggle = card.querySelector('.card-select-toggle');
       if (toggle){
         toggle.classList.toggle('selected', inTarget);
@@ -5665,7 +5665,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     refreshSearchPanelSubtitle();
     if (targetPigeon){
       el.targetPigeonCard.style.display = '';
-      el.targetPigeonImg.innerHTML = targetPigeon.image ? '<img src="' + escapeHtml(targetPigeon.image) + '" alt="">' : '[ IMAGE ]';
+      el.targetPigeonImg.innerHTML = targetPigeon.image ? '<img src="' + escapeHtml(targetPigeon.image) + '" alt="">' : 'IMAGE';
       el.targetPigeonNum.innerHTML = targetPigeon.number !== null ? 'P!GE0N #' + greenNum(targetPigeon.number) : 'P!GE0N ...';
       el.targetPigeonOwner.textContent = state.scope.ownerShort;
     } else {
@@ -5795,7 +5795,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     return '<div class="empty-state">' +
       '<div class="es-title">' + escapeHtml(title) + '</div>' +
       lines.map(function(l){ return '<div class="es-line">' + escapeHtml(l) + '</div>'; }).join('') +
-      (showClear ? '<button class="bar-btn" id="clearSearchBtn" style="margin-top:1.25rem;">[ ' + escapeHtml(clearLabel || 'CLEAR SEARCH') + ' ]</button>' : '') +
+      (showClear ? '<button class="bar-btn" id="clearSearchBtn" style="margin-top:1.25rem;">' + escapeHtml(clearLabel || 'CLEAR SEARCH') + '</button>' : '') +
     '</div>';
   }
 
@@ -5809,7 +5809,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       : '<div class="cl-price cl-none">N0 L!ST!NG</div>';
     var inner = '<div class="cl-market">' + marketLabel + '</div>' + priceHtml;
     // The whole box is the buy link when there's a real listing — no
-    // separate [ BUY ] button, just a colored/clickable box.
+    // separate BUY button, just a colored/clickable box.
     return (hasPrice && listing.buyUrl)
       ? '<a class="cl-block cl-block-buy" href="' + escapeHtml(listing.buyUrl) + '" target="_blank" rel="noopener" title="BUY 0N ' + escapeHtml(marketLabel) + '">' + inner + '</a>'
       : '<div class="cl-block">' + inner + '</div>';
@@ -5875,7 +5875,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           // Same .delist-pigeon-btn class/handling ownedPigeonActionHtml's
           // own DELIST button uses (wireResultClicks' delegated listener
           // already covers el.resultsArea too) — no separate wiring needed.
-          '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">[ CANCEL ]</button>' +
+          '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">CANCEL</button>' +
         '</div>';
       }
       return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -5899,13 +5899,13 @@ const SWAP_HTML = `<!DOCTYPE html>
           (buyCountdown ? '<div class="listing-countdown">' + escapeHtml(buyCountdown) + '</div>' : '')
         : '') +
       '<div class="owned-action-row">' +
-        (canBuy ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ BUY N0W ]</button>' : '') +
-        '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ 0FFER ]</button>' +
+        (canBuy ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY N0W</button>' : '') +
+        '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">0FFER</button>' +
       '</div>' +
     '</div>';
   }
   function resultCardHtml(p){
-    var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
+    var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : 'IMAGE';
     var num = p.number !== null ? '#' + greenNum(p.number) : '#????';
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
@@ -5962,7 +5962,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         salesPageHtml +
         historyPageHtml +
       '</div>' +
-      '<button class="card-page-next" data-nftid="' + escapeHtml(p.nftId) + '">[ NEXT ▸ ]</button>';
+      '<button class="card-page-next" data-nftid="' + escapeHtml(p.nftId) + '">NEXT ▸</button>';
     var pigeonsActionHtml = pigeonsActionBoxHtml(p);
     // Above the traits boxes (not inside the carousel's own rarity page,
     // which stays as-is for the flick-through) — rarity is visible
@@ -5993,7 +5993,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // select-toggle/detail-open hooks as the boxed view (.card-select-toggle,
   // .pigeon-img-box) so wireResultClicks needs no view-specific branching.
   function thumbnailCardHtml(p){
-    var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
+    var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : 'IMAGE';
     var num = p.number !== null ? '#' + greenNum(p.number) : '#????';
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     // Real XRP sale history (highSaleEntry, see toItem in api/pigeons.js)
@@ -6053,7 +6053,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.amountEntryTitle.textContent = 'L!ST PR!CE';
       el.amountEntryListInput.value = '';
       el.amountEntryListBtn.disabled = false;
-      el.amountEntryListBtn.textContent = '[ L!ST ]';
+      el.amountEntryListBtn.textContent = 'L!ST';
       el.amountEntryListStatus.style.display = 'none';
       el.amountEntryListStatus.textContent = '';
       amountEntryListDurationDays = 7;
@@ -6089,7 +6089,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.amountEntryTitle.textContent = 'TRANSFER T0 WALLET';
       el.amountEntryTransferInput.value = '';
       el.amountEntryTransferBtn.disabled = false;
-      el.amountEntryTransferBtn.textContent = '[ TRANSFER ]';
+      el.amountEntryTransferBtn.textContent = 'TRANSFER';
       el.amountEntryTransferStatus.style.display = 'none';
       el.amountEntryTransferStatus.textContent = '';
     }
@@ -6308,7 +6308,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           el.acceptOfferConfSellerAmount.textContent = fmtPigeons(res.data.display.sellerValue);
           el.acceptOfferConfirmStatus.textContent = '';
           el.acceptOfferOpenXamanBtn.disabled = false;
-          el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.acceptOfferOpenXamanBtn.textContent = '0PEN XAMAN';
           showScreen('acceptofferconfirm');
         }).catch(function(){
           acceptOfferTarget = null;
@@ -6516,7 +6516,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return '<button type="button" class="trait-chip' + (row.value === v.value ? ' selected' : '') + '" data-id="' + row.id + '" data-value="' + escapeHtml(v.value) + '">' + escapeHtml(v.value.toUpperCase()) + pct + '</button>';
       }).join('');
       return '<div class="trait-row" data-id="' + row.id + '">' +
-        '<select class="trait-cat-select" data-id="' + row.id + '"><option value="">[ CATEG0RY ▼ ]</option>' + catOptions + '</select>' +
+        '<select class="trait-cat-select" data-id="' + row.id + '"><option value="">CATEG0RY ▼</option>' + catOptions + '</select>' +
         '<button class="trait-row-remove" data-id="' + row.id + '">&times;</button>' +
         (row.category ? '<div class="trait-value-chips" data-id="' + row.id + '">' + chips + '</div>' : '') +
       '</div>';
@@ -6958,11 +6958,11 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<span class="listing-market">' + escapeHtml(o.buyerShort || o.buyer) + '</span>' +
         '<div style="display:flex; align-items:center; justify-content:space-between; gap:0.6rem;">' +
           '<span class="listing-price">' + escapeHtml(o.price) + ' $P!GE0NS</span>' +
-          '<button class="listing-buy accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(o.offerId) + '" data-price="' + escapeHtml(o.price) + '" data-buyer="' + escapeHtml(o.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '">[ ACCEPT ]</button>' +
+          '<button class="listing-buy accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(o.offerId) + '" data-price="' + escapeHtml(o.price) + '" data-buyer="' + escapeHtml(o.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '">ACCEPT</button>' +
         '</div>' +
         '<div class="owned-action-row">' +
-          '<button class="bar-btn decline-offer-btn" data-offerid="' + escapeHtml(o.offerId) + '">[ DECL!NE ]</button>' +
-          '<button class="bar-btn" disabled title="C0M!NG S00N">[ C0UNTER ]</button>' +
+          '<button class="bar-btn decline-offer-btn" data-offerid="' + escapeHtml(o.offerId) + '">DECL!NE</button>' +
+          '<button class="bar-btn" disabled title="C0M!NG S00N">C0UNTER</button>' +
         '</div>' +
       '</div>';
     }).join('') + '</div>';
@@ -6993,9 +6993,9 @@ const SWAP_HTML = `<!DOCTYPE html>
         (ownedListingCountdown ? '<div class="listing-countdown" style="text-align:center;">' + escapeHtml(ownedListingCountdown) + '</div>' : '')
       : '';
     var primaryBtn = listedInfo
-      ? '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ CANCEL ]</button>'
-      : '<button class="bar-btn list-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ L!ST ]</button>';
-    var transferBtn = '<button class="bar-btn transfer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ TRANSFER ]</button>';
+      ? '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '">CANCEL</button>'
+      : '<button class="bar-btn list-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">L!ST</button>';
+    var transferBtn = '<button class="bar-btn transfer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">TRANSFER</button>';
     return offersHtml + listedNote + '<div class="owned-action-row">' + primaryBtn + transferBtn + '</div>';
   }
   // The actual pigeon grid for PλWS is the shared DATABASE view itself
@@ -7045,9 +7045,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // 0FFER F0R. ----
   function simpleOfferSlotHtml(item, side){
     if (!item){
-      return '<button type="button" class="simple-offer-select-btn" data-side="' + side + '">[ + SELECT ]</button>';
+      return '<button type="button" class="simple-offer-select-btn" data-side="' + side + '">+ SELECT</button>';
     }
-    var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
+    var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
     var num = item.number !== null && item.number !== undefined ? '#' + greenNum(item.number) : '#????';
     return '<div class="simple-offer-filled" data-side="' + side + '">' +
         '<div class="simple-offer-thumb">' + img + '</div>' +
@@ -7068,12 +7068,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // real trait backgrounds, sales history, everything, not a re-built
   // summary.
   function simplePickerCardHtml(p){
-    var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '[ IMAGE ]';
+    var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : 'IMAGE';
     var num = p.number !== null && p.number !== undefined ? '#' + greenNum(p.number) : '#????';
     return '<div class="simple-picker-card" data-nftid="' + escapeHtml(p.nftId) + '">' +
         '<div class="simple-picker-card-img" data-nftid="' + escapeHtml(p.nftId) + '">' + img + '</div>' +
         '<div class="simple-picker-card-num">P!GE0N ' + num + '</div>' +
-        '<button type="button" class="simple-picker-view-btn" data-nftid="' + escapeHtml(p.nftId) + '">[ VIEW ]</button>' +
+        '<button type="button" class="simple-picker-view-btn" data-nftid="' + escapeHtml(p.nftId) + '">VIEW</button>' +
       '</div>';
   }
   // Y0UR P!GE0N only now — 0FFER F0R picks directly off the real, full
@@ -7189,7 +7189,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function resetLoginButtons(){
     el.connectScyllaBtn.disabled = false;
     el.pigeonsLoginBtn.disabled = false;
-    el.pigeonsLoginBtn.textContent = '[ L0G!N ]';
+    el.pigeonsLoginBtn.textContent = 'L0G!N';
     // Every caller of this is a login failure — pop the CONNECT box back
     // up (it stays hidden otherwise, see loadMyPigeons) so there's a
     // manual retry next to the error text in el.connectStatus.
@@ -7244,12 +7244,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.pigeonsLoginBtn.addEventListener('click', function(){
     el.pigeonsLoginBtn.disabled = true;
-    el.pigeonsLoginBtn.textContent = '[ C0NNECT!NG... ]';
+    el.pigeonsLoginBtn.textContent = 'C0NNECT!NG...';
     getXummAuth().authorize();
   });
   el.swapSignOutBtn.addEventListener('click', function(){
     el.swapSignOutBtn.disabled = true;
-    el.swapSignOutBtn.textContent = '[ S!GN!NG 0UT... ]';
+    el.swapSignOutBtn.textContent = 'S!GN!NG 0UT...';
     fetch('/api/disconnect', { method: 'POST' }).then(function(){
       window.location.href = '/static';
     }).catch(function(){
@@ -7284,7 +7284,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // above it (pigeonsLoggedInCount), showing the exact same number
     // twice in the same small identity block. Left blank rather
     // than showing a placeholder while still loading, since the button
-    // reads fine on its own either way ("[ SH0W MY FL0CK ]").
+    // reads fine on its own either way ("SH0W MY FL0CK").
     el.showMyPigeonsCount.textContent = trustlinePigeonCount === null ? '' : ' :: ' + trustlinePigeonCount.toLocaleString();
     if (trustlineBalanceNum === null){
       el.pigeonsBalanceValue.innerHTML = '…';
@@ -7307,7 +7307,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // left out rather than shown as a misleading 0.
   function updateFlockTabLabel(){
     if (!MY_WALLET){
-      el.flockTabLabel.innerHTML = 'FL0CK <span class="flock-tab-login">[ L0G !N W!TH Σκύλλα ]</span>';
+      el.flockTabLabel.innerHTML = 'FL0CK <span class="flock-tab-login">L0G !N W!TH Σκύλλα</span>';
       return;
     }
     var parts = ['FL0CK'];
@@ -7447,7 +7447,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     listingBtnEl = cardEl.querySelector('.list-inline-btn');
     listingStatusEl = cardEl.querySelector('.list-inline-status');
     listingBtnEl.disabled = true;
-    listingBtnEl.textContent = '[ L!ST!NG... ]';
+    listingBtnEl.textContent = 'L!ST!NG...';
     if (listingStatusEl){ listingStatusEl.style.display = 'none'; listingStatusEl.textContent = ''; }
     // Open a blank tab synchronously in this click handler, then navigate
     // it once the fetch resolves — window.open() called inside the async
@@ -7463,20 +7463,20 @@ const SWAP_HTML = `<!DOCTYPE html>
         closeXamanTabAndFocus(listingXamanTab);
         listingXamanTab = null;
         listingBtnEl.disabled = false;
-        listingBtnEl.textContent = '[ L!ST ]';
+        listingBtnEl.textContent = 'L!ST';
         if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = listingErrorMessage(res.data && res.data.error); }
         return;
       }
       listingUuid = res.data.uuid;
       if (listingXamanTab) listingXamanTab.location.href = res.data.next.always;
-      listingBtnEl.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      listingBtnEl.textContent = 'WA!T!NG F0R S!GNATURE...';
       if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.'; }
       pollListingStatus();
     }).catch(function(){
       closeXamanTabAndFocus(listingXamanTab);
       listingXamanTab = null;
       listingBtnEl.disabled = false;
-      listingBtnEl.textContent = '[ L!ST ]';
+      listingBtnEl.textContent = 'L!ST';
       if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.'; }
     });
   }
@@ -7496,17 +7496,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         }
         if (data.status === 'rejected'){
           if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'S!GNATURE REJECTED !N XAMAN.'; }
-          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = '[ L!ST ]'; }
+          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = 'L!ST'; }
           return;
         }
         if (data.status === 'expired'){
           if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.'; }
-          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = '[ L!ST ]'; }
+          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = 'L!ST'; }
           return;
         }
         if (data.status === 'failed'){
           if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').'; }
-          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = '[ L!ST ]'; }
+          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = 'L!ST'; }
           return;
         }
         // 'pending' or 'signed_pending_ledger' — keep polling.
@@ -7573,7 +7573,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       if (!res.ok || !res.data.ok){
         var rawCode = (res.data && res.data.error) || 'n0_b0dy';
-        alert(listingErrorMessage(res.data && res.data.error) + '\\n\\n[ D!AGN0ST!C :: HTTP ' + (res.ok ? 200 : 'ERR') + ' :: ' + rawCode + ' ]');
+        alert(listingErrorMessage(res.data && res.data.error) + '\\n\\nD!AGN0ST!C :: HTTP ' + (res.ok ? 200 : 'ERR') + ' :: ' + rawCode);
         buyTarget = null;
         return;
       }
@@ -7587,10 +7587,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buyConfPrice.textContent = fmtPigeons(display.price);
       el.buyConfirmStatus.textContent = '';
       el.buyOpenXamanBtn.disabled = false;
-      el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
       showScreen('buyconfirm');
     }).catch(function(e){
-      alert('ERR://S!GNAL_L0ST — TRY AGA!N.\\n\\n[ D!AGN0ST!C :: ' + (e && e.message ? e.message : String(e)) + ' ]');
+      alert('ERR://S!GNAL_L0ST — TRY AGA!N.\\n\\nD!AGN0ST!C :: ' + (e && e.message ? e.message : String(e)));
       buyTarget = null;
     });
   }
@@ -7863,8 +7863,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.buySwapCopyIssuerBtn.addEventListener('click', function(){
     var addr = el.buySwapIssuerAddr ? el.buySwapIssuerAddr.getAttribute('data-full') : '';
     var done = function(){
-      el.buySwapCopyIssuerLabel.textContent = '[ C0P!ED ]';
-      setTimeout(function(){ el.buySwapCopyIssuerLabel.textContent = '[ C0PY ]'; }, 1500);
+      el.buySwapCopyIssuerLabel.textContent = 'C0P!ED';
+      setTimeout(function(){ el.buySwapCopyIssuerLabel.textContent = 'C0PY'; }, 1500);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(done, done);
     else done();
@@ -7886,17 +7886,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     var drops = dropsFromXrpString(raw);
     if (drops === null) return; // shouldn't happen — button is only enabled after a valid quote
     el.buySwapSignBtn.disabled = true;
-    el.buySwapSignBtn.textContent = '[ PREPAR!NG... ]';
+    el.buySwapSignBtn.textContent = 'PREPAR!NG...';
     fetch('/api/buyswap-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ xrpDrops: drops.toString() })
     }).then(function(r){ return r.json().then(function(data){ return { status: r.status, data: data }; }); }).then(function(res){
       el.buySwapSignBtn.disabled = false;
-      el.buySwapSignBtn.textContent = '[ S!GN & BUY ]';
+      el.buySwapSignBtn.textContent = 'S!GN & BUY';
       if (res.status !== 200 || !res.data || !res.data.ok){
         var msg = (res.data && res.data.error) || 'unknown_error';
-        alert('C0ULD N0T PREPARE THE SWAP — [ ' + msg + ' ]. TRY AGA!N.');
+        alert('C0ULD N0T PREPARE THE SWAP — ' + msg + '. TRY AGA!N.');
         // The exact state that failed (quote moved, trustline lost, balance
         // changed) may no longer be valid — re-run the live checks instead
         // of leaving a stale enabled button up.
@@ -7917,11 +7917,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buySwapConfSource.textContent = display.source === 'amm' ? 'AMM P00L' : '0RDER B00K';
       el.buySwapConfirmStatus.textContent = '';
       el.buySwapOpenXamanBtn.disabled = false;
-      el.buySwapOpenXamanBtn.innerHTML = '[ 0PEN XAMAN ]';
+      el.buySwapOpenXamanBtn.innerHTML = '0PEN XAMAN';
       showBuySwapState('confirm');
     }).catch(function(){
       el.buySwapSignBtn.disabled = false;
-      el.buySwapSignBtn.textContent = '[ S!GN & BUY ]';
+      el.buySwapSignBtn.textContent = 'S!GN & BUY';
       alert('C0ULD N0T REACH THE SERVER — TRY AGA!N.');
     });
   });
@@ -7938,7 +7938,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.buySwapOpenXamanBtn.addEventListener('click', function(){
     if (!buySwapReviewDrops) return;
     el.buySwapOpenXamanBtn.disabled = true;
-    el.buySwapOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.buySwapOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.buySwapConfirmStatus.textContent = '';
     var xamanTab = openXamanPopup();
     fetch('/api/buyswap-payload', {
@@ -7950,20 +7950,20 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!res.ok || !res.data.ok){
         if (xamanTab) xamanTab.close();
         el.buySwapOpenXamanBtn.disabled = false;
-        el.buySwapOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
-        el.buySwapConfirmStatus.textContent = 'C0ULD N0T PREPARE THE S!GN REQUEST — [ ' + ((res.data && res.data.error) || 'unknown_error') + ' ]. TRY AGA!N.';
+        el.buySwapOpenXamanBtn.textContent = '0PEN XAMAN';
+        el.buySwapConfirmStatus.textContent = 'C0ULD N0T PREPARE THE S!GN REQUEST — ' + ((res.data && res.data.error) || 'unknown_error') + '. TRY AGA!N.';
         return;
       }
       buySwapUuid = res.data.uuid;
       navigateXamanPopup(xamanTab, res.data.next.always);
       buySwapXamanTab = xamanTab;
-      el.buySwapOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.buySwapOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.buySwapConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollBuySwapStatus();
     }).catch(function(){
       if (xamanTab) xamanTab.close();
       el.buySwapOpenXamanBtn.disabled = false;
-      el.buySwapOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.buySwapOpenXamanBtn.textContent = '0PEN XAMAN';
       el.buySwapConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
@@ -7988,19 +7988,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (data.status === 'rejected'){
           el.buySwapConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.buySwapOpenXamanBtn.disabled = false;
-          el.buySwapOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.buySwapOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'expired'){
           el.buySwapConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           el.buySwapOpenXamanBtn.disabled = false;
-          el.buySwapOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.buySwapOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'failed'){
           el.buySwapConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           el.buySwapOpenXamanBtn.disabled = false;
-          el.buySwapOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.buySwapOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         buySwapPollTimer = setTimeout(pollBuySwapStatus, 2000);
@@ -8044,26 +8044,26 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       if (!res.ok || !res.data.ok){
         el.buyOpenXamanBtn.disabled = false;
-        el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
         var rawCode2 = (res.data && res.data.error) || 'n0_b0dy';
-        el.buyConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error) + ' [ ' + rawCode2 + ' ]';
+        el.buyConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error) + ' ' + rawCode2;
         return;
       }
       buyUuid = res.data.uuid;
       buyXamanTab = window.open(res.data.next.always, 'xamanSign', XAMAN_POPUP_FEATURES);
-      el.buyOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.buyOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.buyConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollBuyStatus();
     }).catch(function(e){
       el.buyOpenXamanBtn.disabled = false;
-      el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
-      el.buyConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N. [ ' + (e && e.message ? e.message : String(e)) + ' ]';
+      el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
+      el.buyConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N. ' + (e && e.message ? e.message : String(e));
     });
   }
   el.buyOpenXamanBtn.addEventListener('click', function(){
     if (!buyTarget) return;
     el.buyOpenXamanBtn.disabled = true;
-    el.buyOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.buyOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.buyConfirmStatus.textContent = '';
     submitBuyPayload();
   });
@@ -8083,19 +8083,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (data.status === 'rejected'){
           el.buyConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.buyOpenXamanBtn.disabled = false;
-          el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'expired'){
           el.buyConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           el.buyOpenXamanBtn.disabled = false;
-          el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'failed'){
           el.buyConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           el.buyOpenXamanBtn.disabled = false;
-          el.buyOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         buyPollTimer = setTimeout(pollBuyStatus, 2000);
@@ -8153,7 +8153,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.delistConfPigeon.innerHTML = 'P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????');
       el.delistConfirmStatus.textContent = '';
       el.delistOpenXamanBtn.disabled = false;
-      el.delistOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.delistOpenXamanBtn.textContent = '0PEN XAMAN';
       showScreen('delistconfirm');
     }).catch(function(){
       alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
@@ -8168,7 +8168,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.delistOpenXamanBtn.addEventListener('click', function(){
     if (!delistTarget) return;
     el.delistOpenXamanBtn.disabled = true;
-    el.delistOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.delistOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.delistConfirmStatus.textContent = '';
     fetch('/api/swap-delist-payload', {
       method: 'POST',
@@ -8178,18 +8178,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     .then(function(res){
       if (!res.ok || !res.data.ok){
         el.delistOpenXamanBtn.disabled = false;
-        el.delistOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.delistOpenXamanBtn.textContent = '0PEN XAMAN';
         el.delistConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
       delistUuid = res.data.uuid;
       delistXamanTab = window.open(res.data.next.always, 'xamanSign', XAMAN_POPUP_FEATURES);
-      el.delistOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.delistOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.delistConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollDelistStatus();
     }).catch(function(){
       el.delistOpenXamanBtn.disabled = false;
-      el.delistOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.delistOpenXamanBtn.textContent = '0PEN XAMAN';
       el.delistConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
@@ -8209,19 +8209,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (data.status === 'rejected'){
           el.delistConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.delistOpenXamanBtn.disabled = false;
-          el.delistOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.delistOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'expired'){
           el.delistConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           el.delistOpenXamanBtn.disabled = false;
-          el.delistOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.delistOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'failed'){
           el.delistConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           el.delistOpenXamanBtn.disabled = false;
-          el.delistOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.delistOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         delistPollTimer = setTimeout(pollDelistStatus, 2000);
@@ -8285,7 +8285,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     var sendBtn = stripEl.querySelector('.make-offer-send');
     sendBtn.disabled = true;
-    sendBtn.textContent = '[ VAL!DAT!NG... ]';
+    sendBtn.textContent = 'VAL!DAT!NG...';
     fetch('/api/swap-makeoffer-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -8311,7 +8311,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Resting-state markup for offerOpenXamanBtn — restored via innerHTML
   // (never plain textContent, needs the Σκύλλα span) at every point this
   // button resets after an attempt.
-  var OFFER_CONFIRM_BTN_HTML = '[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]';
+  var OFFER_CONFIRM_BTN_HTML = 'C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span>';
   function showOfferConfirm(txjson){
     // 0FFER can now start from the amount-entry popup on a card thumbnail
     // (see openAmountEntryModal) as well as the detail screen's own copy
@@ -8367,7 +8367,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.offerOpenXamanBtn.addEventListener('click', function(){
     if (!offerTarget) return;
     el.offerOpenXamanBtn.disabled = true;
-    el.offerOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.offerOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.offerConfirmStatus.textContent = '';
     // Open a blank tab synchronously in this click handler, then navigate
     // it once the fetch resolves — window.open() called inside the async
@@ -8389,7 +8389,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       offerUuid = res.data.uuid;
       if (offerXamanTab) offerXamanTab.location.href = res.data.next.always;
-      el.offerOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.offerOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.offerConfirmStatus.textContent = '';
       pollOfferStatus();
     }).catch(function(){
@@ -8481,7 +8481,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         el.offerSignalStatus.textContent = '';
         el.offerSignalSkipBtn.disabled = false;
         el.offerSignalSendBtn.disabled = false;
-        el.offerSignalSendBtn.innerHTML = '[ SEND S!GNAL ]';
+        el.offerSignalSendBtn.innerHTML = 'SEND S!GNAL';
         el.offerSignalPrompt.style.display = '';
         el.offerSignalSentConfirm.style.display = 'none';
         el.offerConfirmReceipt.style.display = 'none';
@@ -8499,7 +8499,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var target = offerTarget;
     el.offerSignalSkipBtn.disabled = true;
     el.offerSignalSendBtn.disabled = true;
-    el.offerSignalSendBtn.textContent = '[ REQUEST!NG... ]';
+    el.offerSignalSendBtn.textContent = 'REQUEST!NG...';
     el.offerSignalStatus.textContent = '';
     var signalXamanTab = openXamanPopup();
     fetch('/api/swap-signal-payload', {
@@ -8512,19 +8512,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         closeXamanTabAndFocus(signalXamanTab);
         el.offerSignalSkipBtn.disabled = false;
         el.offerSignalSendBtn.disabled = false;
-        el.offerSignalSendBtn.innerHTML = '[ SEND S!GNAL ]';
+        el.offerSignalSendBtn.innerHTML = 'SEND S!GNAL';
         el.offerSignalStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
       offerSignalUuid = res.data.uuid;
       if (signalXamanTab) signalXamanTab.location.href = res.data.next.always;
-      el.offerSignalSendBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.offerSignalSendBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       pollOfferSignalStatus(target, signalXamanTab);
     }).catch(function(){
       closeXamanTabAndFocus(signalXamanTab);
       el.offerSignalSkipBtn.disabled = false;
       el.offerSignalSendBtn.disabled = false;
-      el.offerSignalSendBtn.innerHTML = '[ SEND S!GNAL ]';
+      el.offerSignalSendBtn.innerHTML = 'SEND S!GNAL';
       el.offerSignalStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
@@ -8557,7 +8557,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           offerSignalUuid = null;
           el.offerSignalSkipBtn.disabled = false;
           el.offerSignalSendBtn.disabled = false;
-          el.offerSignalSendBtn.innerHTML = '[ SEND S!GNAL ]';
+          el.offerSignalSendBtn.innerHTML = 'SEND S!GNAL';
           el.offerSignalStatus.textContent = data.status === 'rejected' ? 'S!GNATURE REJECTED !N XAMAN.'
             : data.status === 'expired' ? 'S!GN REQUEST EXP!RED. TRY AGA!N.'
             : 'TRANSACT!0N FA!LED 0N-LEDGER.';
@@ -8609,7 +8609,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var sendBtn = el.amountEntryTransferBtn;
     var statusEl = el.amountEntryTransferStatus;
     sendBtn.disabled = true;
-    sendBtn.textContent = '[ VAL!DAT!NG... ]';
+    sendBtn.textContent = 'VAL!DAT!NG...';
     if (statusEl){ statusEl.style.display = 'none'; statusEl.textContent = ''; }
     fetch('/api/swap-offer-prepare', {
       method: 'POST',
@@ -8618,7 +8618,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       sendBtn.disabled = false;
-      sendBtn.textContent = '[ TRANSFER ]';
+      sendBtn.textContent = 'TRANSFER';
       if (!res.ok || !res.data.ok){
         if (statusEl){ statusEl.style.display = ''; statusEl.textContent = listingErrorMessage(res.data && res.data.error); }
         else alert(listingErrorMessage(res.data && res.data.error));
@@ -8629,7 +8629,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       showTransferConfirm(res.data.txjson);
     }).catch(function(){
       sendBtn.disabled = false;
-      sendBtn.textContent = '[ TRANSFER ]';
+      sendBtn.textContent = 'TRANSFER';
       if (statusEl){ statusEl.style.display = ''; statusEl.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.'; }
     });
   }
@@ -8637,7 +8637,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Resting-state markup for transferOpenXamanBtn — same as 0FFER's own
   // OFFER_CONFIRM_BTN_HTML, restored via innerHTML (needs the Σκύλλα
   // span) at every point this button resets after an attempt.
-  var TRANSFER_CONFIRM_BTN_HTML = '[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]';
+  var TRANSFER_CONFIRM_BTN_HTML = 'C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span>';
   function showTransferConfirm(txjson){
     // TRANSFER only ever starts from the amount-entry popup — close it
     // the instant this second popup takes over (#transferConfirmModal,
@@ -8668,7 +8668,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.transferOpenXamanBtn.addEventListener('click', function(){
     if (!transferTarget) return;
     el.transferOpenXamanBtn.disabled = true;
-    el.transferOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.transferOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.transferConfirmStatus.textContent = '';
     transferXamanTab = openXamanPopup();
     fetch('/api/swap-offer-payload', {
@@ -8687,7 +8687,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       transferUuid = res.data.uuid;
       if (transferXamanTab) transferXamanTab.location.href = res.data.next.always;
-      el.transferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.transferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.transferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollTransferStatus();
     }).catch(function(){
@@ -8826,7 +8826,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           '<div class="incoming-transfer-num">P!GE0N #' + (t.number !== null ? greenNum(t.number) : '????') + '</div>' +
           '<div class="incoming-transfer-from">FR0M :: ' + escapeHtml(t.fromWalletShort || t.fromWallet) + '</div>' +
         '</div>' +
-        '<button class="action-btn incoming-transfer-accept-btn" data-nftid="' + escapeHtml(t.nftId) + '" data-offerid="' + escapeHtml(t.offerId) + '">[ ACCEPT ]</button>' +
+        '<button class="action-btn incoming-transfer-accept-btn" data-nftid="' + escapeHtml(t.nftId) + '" data-offerid="' + escapeHtml(t.offerId) + '">ACCEPT</button>' +
       '</div>';
     }).join('');
   }
@@ -8844,7 +8844,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.acceptTransferConfFrom.textContent = entry.fromWallet;
     el.acceptTransferConfirmStatus.textContent = '';
     el.acceptTransferOpenXamanBtn.disabled = false;
-    el.acceptTransferOpenXamanBtn.innerHTML = '[ C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span> ]';
+    el.acceptTransferOpenXamanBtn.innerHTML = 'C0NF!RM W!TH <span style="text-transform:none;">Σκύλλα</span>';
     el.acceptTransferConfirmForm.style.display = '';
     el.acceptTransferConfirmReceipt.style.display = 'none';
     el.acceptTransferConfirmModal.style.display = 'flex';
@@ -8861,7 +8861,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function submitAcceptTransfer(){
     if (!acceptTransferTarget) return;
     el.acceptTransferOpenXamanBtn.disabled = true;
-    el.acceptTransferOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.acceptTransferOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.acceptTransferConfirmStatus.textContent = '';
     acceptTransferXamanTab = openXamanPopup();
     fetch('/api/swap-transfer-accept-payload', {
@@ -8874,20 +8874,20 @@ const SWAP_HTML = `<!DOCTYPE html>
         closeXamanTabAndFocus(acceptTransferXamanTab);
         acceptTransferXamanTab = null;
         el.acceptTransferOpenXamanBtn.disabled = false;
-        el.acceptTransferOpenXamanBtn.textContent = '[ C0NF!RM W!TH Σκύλλα ]';
+        el.acceptTransferOpenXamanBtn.textContent = 'C0NF!RM W!TH Σκύλλα';
         el.acceptTransferConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
       acceptTransferUuid = res.data.uuid;
       if (acceptTransferXamanTab) acceptTransferXamanTab.location.href = res.data.next.always;
-      el.acceptTransferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.acceptTransferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.acceptTransferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollAcceptTransferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(acceptTransferXamanTab);
       acceptTransferXamanTab = null;
       el.acceptTransferOpenXamanBtn.disabled = false;
-      el.acceptTransferOpenXamanBtn.textContent = '[ C0NF!RM W!TH Σκύλλα ]';
+      el.acceptTransferOpenXamanBtn.textContent = 'C0NF!RM W!TH Σκύλλα';
       el.acceptTransferConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   }
@@ -8906,19 +8906,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (data.status === 'rejected'){
           el.acceptTransferConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.acceptTransferOpenXamanBtn.disabled = false;
-          el.acceptTransferOpenXamanBtn.textContent = '[ C0NF!RM W!TH Σκύλλα ]';
+          el.acceptTransferOpenXamanBtn.textContent = 'C0NF!RM W!TH Σκύλλα';
           return;
         }
         if (data.status === 'expired'){
           el.acceptTransferConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           el.acceptTransferOpenXamanBtn.disabled = false;
-          el.acceptTransferOpenXamanBtn.textContent = '[ C0NF!RM W!TH Σκύλλα ]';
+          el.acceptTransferOpenXamanBtn.textContent = 'C0NF!RM W!TH Σκύλλα';
           return;
         }
         if (data.status === 'failed'){
           el.acceptTransferConfirmStatus.textContent = 'TRANSACT!0N FA!LED 0N-LEDGER.';
           el.acceptTransferOpenXamanBtn.disabled = false;
-          el.acceptTransferOpenXamanBtn.textContent = '[ C0NF!RM W!TH Σκύλλα ]';
+          el.acceptTransferOpenXamanBtn.textContent = 'C0NF!RM W!TH Σκύλλα';
           return;
         }
         acceptTransferPollTimer = setTimeout(pollAcceptTransferStatus, 2000);
@@ -8952,7 +8952,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.acceptOfferOpenXamanBtn.addEventListener('click', function(){
     if (!acceptOfferTarget) return;
     el.acceptOfferOpenXamanBtn.disabled = true;
-    el.acceptOfferOpenXamanBtn.textContent = '[ REQUEST!NG... ]';
+    el.acceptOfferOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.acceptOfferConfirmStatus.textContent = '';
     acceptOfferXamanTab = openXamanPopup();
     fetch('/api/swap-acceptoffer-payload', {
@@ -8965,20 +8965,20 @@ const SWAP_HTML = `<!DOCTYPE html>
         closeXamanTabAndFocus(acceptOfferXamanTab);
         acceptOfferXamanTab = null;
         el.acceptOfferOpenXamanBtn.disabled = false;
-        el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+        el.acceptOfferOpenXamanBtn.textContent = '0PEN XAMAN';
         el.acceptOfferConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
       acceptOfferUuid = res.data.uuid;
       if (acceptOfferXamanTab) acceptOfferXamanTab.location.href = res.data.next.always;
-      el.acceptOfferOpenXamanBtn.textContent = '[ WA!T!NG F0R S!GNATURE... ]';
+      el.acceptOfferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.acceptOfferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
       pollAcceptOfferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(acceptOfferXamanTab);
       acceptOfferXamanTab = null;
       el.acceptOfferOpenXamanBtn.disabled = false;
-      el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+      el.acceptOfferOpenXamanBtn.textContent = '0PEN XAMAN';
       el.acceptOfferConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
@@ -8998,13 +8998,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (data.status === 'rejected'){
           el.acceptOfferConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.acceptOfferOpenXamanBtn.disabled = false;
-          el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.acceptOfferOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'expired'){
           el.acceptOfferConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           el.acceptOfferOpenXamanBtn.disabled = false;
-          el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.acceptOfferOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'failed' || data.status === 'buy_offer_gone' || data.status === 'offer_amount_mismatch'){
@@ -9013,7 +9013,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             : 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           el.acceptOfferConfirmStatus.textContent = reason;
           el.acceptOfferOpenXamanBtn.disabled = false;
-          el.acceptOfferOpenXamanBtn.textContent = '[ 0PEN XAMAN ]';
+          el.acceptOfferOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         // 'signed_pending_ledger' (seller's sell offer not yet visible) and
@@ -9107,8 +9107,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Swap just the label, not the whole button — el.ciIssuerAddr is a
       // real child element (registered separately), and overwriting the
       // button's own textContent would silently destroy that node.
-      el.copyIssuerLabel.textContent = '[ C0P!ED ]';
-      setTimeout(function(){ el.copyIssuerLabel.textContent = '[ C0PY ]'; }, 1500);
+      el.copyIssuerLabel.textContent = 'C0P!ED';
+      setTimeout(function(){ el.copyIssuerLabel.textContent = 'C0PY'; }, 1500);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(done, done);
     else done();
@@ -9525,7 +9525,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // this screen via wireResultClicks' own delegated handler earlier in
     // the same bubble phase, so treating it as "outside" would instantly
     // close the screen it was supposed to open. Same reasoning for the
-    // CREATE OFFER picker's own [ VIEW ] button — it also opens this
+    // CREATE OFFER picker's own VIEW button — it also opens this
     // screen (closing the picker modal first), from a click that started
     // outside #screenDetail by definition since the screen didn't exist
     // yet when the click landed.
@@ -9704,11 +9704,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   // The real $PIGEONS-denominated Σκύλλα marketplace listing (separate
   // from the DEEPTIDE/XRP.CAFE rows above, which are always XRP) — never
   // buyable via a plain link, so this is a button into the same
-  // openBuyConfirm flow the DATABASE cards' [ BUY ] button uses.
+  // openBuyConfirm flow the DATABASE cards' BUY button uses.
   el.detailScyllaBuyBtn.addEventListener('click', function(){
     if (state.currentDetail) openBuyConfirm(state.currentDetail);
   });
-  // Same openDelistConfirm the card grid's own [ CANCEL ]/DELIST buttons
+  // Same openDelistConfirm the card grid's own CANCEL/DELIST buttons
   // use (see wireResultClicks' .delist-pigeon-btn handler) — wired
   // directly here since this button lives outside el.resultsArea/
   // el.myPigeonsList, same reasoning as detailMakeOfferSend above.
@@ -9790,7 +9790,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       line = '<span class="dh-verb">TRANSFERRED</span> T0 ' + (e.receiver ? walletLinkHtml(e.receiver, e.receiverShort) : '?');
     }
     var when = e.date ? new Date(e.date).toLocaleDateString() : '';
-    var txLink = e.txUrl ? '<a class="dh-tx" href="' + escapeHtml(e.txUrl) + '" target="_blank" rel="noopener">[ TXN ]</a>' : '';
+    var txLink = e.txUrl ? '<a class="dh-tx" href="' + escapeHtml(e.txUrl) + '" target="_blank" rel="noopener">TXN</a>' : '';
     return '<div class="dh-row">' +
       '<div class="dh-line">' + line + '</div>' +
       '<div class="dh-meta"><span class="dh-time">' + escapeHtml(when) + '</span>' + txLink + '</div>' +
@@ -9820,7 +9820,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     scrollBeforeDetail = window.scrollY;
     var known = findKnown(nftId);
     el.detailNum.innerHTML = known && known.number !== null ? 'P!GE0N #' + greenNum(known.number) : 'P!GE0N ...';
-    el.detailImgBox.innerHTML = known && known.image ? '<img src="' + escapeHtml(known.image) + '" alt="">' : '[ IMAGE ]';
+    el.detailImgBox.innerHTML = known && known.image ? '<img src="' + escapeHtml(known.image) + '" alt="">' : 'IMAGE';
     // Keep the fullscreen lightbox's own picture in sync when PREV/NEXT is
     // used from inside it (see navigateDetail's lightbox branch below) —
     // it has its own <img>, independent of #detailImgBox's.
@@ -9854,7 +9854,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       var p = data.item;
       state.currentDetail = p;
       el.detailNum.innerHTML = p.number !== null ? 'P!GE0N #' + greenNum(p.number) : 'P!GE0N ...';
-      el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '[ IMAGE ]';
+      el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : 'IMAGE';
       el.detailTraits.innerHTML = sortTraitsByRarity(p.attributes).map(traitCellHtml).join('');
       updateDetailRarity(p);
       updateDetailPrice(p);
