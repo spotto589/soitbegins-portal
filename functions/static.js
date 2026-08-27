@@ -974,6 +974,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      to a second line rather than forcing the button wider. */
   @media (max-width:700px){
     .edition-btn{ width:auto; flex:1 1 0; padding:0.7em 0.3em; font-size:11px; }
+    /* SORT BY/ADD TRAITS stay flush-left against the search bar above on
+       desktop (see .db-config-traits-group's own comment) — once the
+       page is narrow enough that nothing else lines up against them any
+       more, left-aligned just reads as randomly off-center instead. */
+    .db-config-traits-group{ text-align:center; }
+    .db-config-traits-section{ justify-content:center; }
   }
   .index-line{
     text-align:center;
@@ -2232,7 +2238,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     .pigeons-bar-left-lines{ align-items:center; }
     /* Absolute-centering only works with room to spare either side —
        drop back into normal document flow once the row itself stacks. */
-    .pigeons-bar-balance{ position:static; transform:none; flex-direction:column; margin:0.75rem 0; }
+    .pigeons-bar-balance{ position:static; transform:none; flex-direction:column; margin:0.75rem 0; order:-1; }
     .pigeons-bar-balance-info{ align-items:center; text-align:center; }
   }
 
