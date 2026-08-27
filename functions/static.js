@@ -1026,12 +1026,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      to a second line rather than forcing the button wider. */
   @media (max-width:700px){
     .edition-btn{ width:auto; flex:1 1 0; padding:0.7em 0.3em; font-size:11px; }
-    /* SORT BY/ADD TRAITS stay flush-left against the search bar above on
-       desktop (see .db-config-traits-group's own comment) — once the
-       page is narrow enough that nothing else lines up against them any
-       more, left-aligned just reads as randomly off-center instead. */
-    .db-config-traits-group{ text-align:center; }
-    .db-config-traits-section{ justify-content:center; }
+    /* SORT BY/ADD TRAITS centering on mobile lives with
+       .db-config-traits-group's own definition above (near line 828), not
+       here — two sessions independently fixed the same issue and this
+       duplicate copy (identical selectors/values, just missing the
+       #sortRows/#traitRows follow-up the other copy has) got merged in
+       alongside it; removed rather than left as dead duplication. */
   }
   .index-line{
     text-align:center;
