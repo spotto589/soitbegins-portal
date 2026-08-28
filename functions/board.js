@@ -234,6 +234,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
 
   const sessionControls = hasSession ? `
     <div class="session-controls">
+      <a class="messages-link" href="/messages">MESSAGES</a>
       <button class="signout-btn" id="signOutBtn">S!GN 0UT / CHANGE KEY</button>
     </div>
   ` : '';
@@ -2065,6 +2066,20 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-align:center;
     margin-bottom:1.5rem;
   }
+  .messages-link{
+    display:inline-block;
+    background:transparent;
+    border:1px solid rgba(57,255,20,0.4);
+    color:#39ff14;
+    font-family:inherit;
+    font-size:10px;
+    letter-spacing:0.1em;
+    padding:0.5em 1em;
+    text-transform:uppercase;
+    text-decoration:none;
+    margin-right:0.6em;
+  }
+  .messages-link:hover{ background:rgba(57,255,20,0.1); }
   .signout-btn{
     background:transparent;
     border:1px solid rgba(232,232,232,0.25);

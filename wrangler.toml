@@ -1,0 +1,16 @@
+# Not used for production deploys — soitbegins-portal deploys via plain
+# `git push` through Cloudflare Pages' own Git integration, which reads
+# bindings from the dashboard (Pages project > Settings > Functions), not
+# this file. This file exists only so local tooling (`wrangler d1
+# execute --local`, and .claude/launch.json's `wrangler pages dev`) can
+# resolve the messages D1 database by binding name. The production
+# MESSAGES_DB binding still has to be added once via the dashboard,
+# same as every other binding this project already uses (Σκύλλα, coin,
+# vanitykey, etc.) — see HANDOFF.md for that established pattern.
+name = "soitbegins-portal-local-tooling"
+compatibility_date = "2024-09-01"
+
+[[d1_databases]]
+binding = "MESSAGES_DB"
+database_name = "soitbegins-messages"
+database_id = "88b39184-015a-40dd-9841-14928d800bf4"

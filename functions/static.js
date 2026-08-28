@@ -2902,6 +2902,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-owner-top{ font-size:28px; }
   .detail-owner-top .owner-link{ color:var(--cyan); text-decoration:none; }
   .detail-owner-top .owner-link:hover{ text-decoration:underline; }
+  .detail-owner-top .owner-message-link{
+    color:var(--green); font-family:var(--font-mono); font-weight:400; font-size:12px;
+    letter-spacing:0.08em; text-decoration:none; border:1px solid var(--green); border-radius:3px;
+    padding:0.15em 0.5em; vertical-align:middle; margin-left:0.5em;
+  }
+  .detail-owner-top .owner-message-link:hover{ background:var(--green); color:var(--bg); }
   /* Small label above the address itself — otherwise a bare wallet
      string up top read as an ID, not an ownership statement. */
   .detail-owner-top .do-label{ display:block; font-family:var(--font-mono); font-weight:400; font-size:11px; letter-spacing:0.18em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.3rem; }
@@ -10362,7 +10368,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderOwnerLink(short, full){
     if (!full){ el.detailOwner.textContent = 'N0T !NDEXED'; el.detailOwner.classList.add('not-indexed'); return; }
     el.detailOwner.classList.remove('not-indexed');
-    el.detailOwner.innerHTML = '<span class="do-label">0WNED BY</span><a class="owner-link" href="#" data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '" title="V!EW TH!S WALLET\\'S FULL P!GE0N C0LLECT!0N">' + escapeHtml(short || full) + '</a>';
+    // MESSAGE only shown for someone else's Pigeon, and only once we
+    // actually have a connected wallet to send from (an anonymous browser
+    // has no session to attach the message to — /messages itself prompts
+    // to connect, but there's no point linking there before that's even
+    // possible).
+    var messageLink = (MY_WALLET && full !== MY_WALLET)
+      ? ' <a class="owner-message-link" href="/messages?to=' + encodeURIComponent(full) + '" target="_blank" rel="noopener" title="SEND TH!S 0WNER A MESSAGE">M3SSAGE</a>'
+      : '';
+    el.detailOwner.innerHTML = '<span class="do-label">0WNED BY</span><a class="owner-link" href="#" data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '" title="V!EW TH!S WALLET\\'S FULL P!GE0N C0LLECT!0N">' + escapeHtml(short || full) + '</a>' + messageLink;
   }
   // Clicking the owner address on INSPECT jumps straight into that wallet's
   // full real Pigeon collection (same browse UI as SELECT), not an external

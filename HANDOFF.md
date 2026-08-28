@@ -55,6 +55,35 @@ is still exactly as fragile as before. If a future session picks up the D1
 migration, start with `listings` (the one with the proven concurrent-write
 data-loss bug, already documented below in gotcha 5a).
 
+## ⚠️ Messaging feature added — needs a dashboard binding before it works in prod
+
+Wallet-to-wallet messaging (`/messages`, `functions/api/messages-*.js`) was
+added this session, deliberately on **D1** instead of KV — the free tier's
+1,000 writes/day KV cap (see above) would've made a chat feature the first
+thing to break under real use. A new D1 database (`soitbegins-messages`,
+id `88b39184-015a-40dd-9841-14928d800bf4`) was created and the schema
+(`d1/schema.sql`, one `messages` table) applied to it via `wrangler d1
+execute --remote`.
+
+**The code is deployed but will 500 with `server_misconfigured` in
+production until a binding is added via the dashboard** (Pages project >
+Settings > Functions > D1 database bindings) — same manual step every
+other binding here needed (Σκύλλα, coin, vanitykey, etc.), nothing
+registers it automatically. Bind it as **`MESSAGES_DB`** pointing at the
+`soitbegins-messages` database — the code reads `env.MESSAGES_DB`
+specifically, so the binding name has to match exactly.
+
+Local dev already works end-to-end (verified via curl against `wrangler
+pages dev` with real signed session cookies) — `wrangler.toml` at the repo
+root defines the D1 binding for local tooling only (`wrangler d1 execute
+--local`, `.claude/launch.json`'s `pages dev --d1` flag); it's NOT used
+for the production deploy, which still reads bindings from the dashboard
+same as always.
+
+Entry points wired in: `/board`'s session controls (MESSAGES link) and the
+SWAP detail screen's owner line (MESSAGE link, hidden for your own
+Pigeons) — both link to `/messages?to=<wallet>`.
+
 ## This session's real bug fixes (not just UI)
 
 1. **FILTER BY TRAITS was completely unusable on mobile — a real tap
