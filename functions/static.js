@@ -3761,6 +3761,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:2.25rem;
     font-size:1.08em;
   }
+  /* .thumb-offer.amount-entry-mode — this shares the .thumb-offer class
+     with the DATABASE card's own purple action box, which an earlier fix
+     made a row-direction flex container (centers BUY N0W/0FFER together
+     regardless of state — see its own comment). That same change turned
+     THIS popup into a horizontal row too, squeezing the pigeon thumb,
+     balance line, amount input, submit button, and duration row all onto
+     one line — confirmed live, exactly the "all horizontal" complaint.
+     .amount-entry-mode is already a second class applied everywhere this
+     needs to actually stack vertically instead, so scoping the override
+     to the combination fixes the popup without touching the card. */
+  .thumb-offer.amount-entry-mode{ display:block; }
   .amount-entry-mode .thumb-offer-row{ align-items:stretch; }
   .amount-entry-mode .make-offer-input-wrap{ margin-bottom:0; }
   /* Which Pigeon 0FFER AM0UNT is actually for, and the wallet's own live
