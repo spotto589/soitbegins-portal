@@ -97,7 +97,7 @@ function renderBeginHtml(addr) {
 
     <a class="cta" href="https://xrp.cafe/collection/KING" target="_blank" rel="noopener">
       👑 BECOME A K!NG.
-      <span class="sub">Acquire a King NFT → THR0NE R00M</span>
+      <span class="sub">Acquire a King NFT</span>
     </a>
 
     <a class="cta honey" href="https://xrp.cafe/collection/soitbegins" target="_blank" rel="noopener">

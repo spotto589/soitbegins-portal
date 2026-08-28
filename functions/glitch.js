@@ -189,7 +189,7 @@ const GLITCH_HTML = `<!DOCTYPE html>
           const result = await verifyAccess(jwt);
           if(result.granted){
             await runScanAnimation();
-            window.location.href = '/crwn';
+            window.location.href = '/mainframe';
           } else {
             setStatus('N0 S!GNATURES F0UND — RED!RECT!NG...');
             setTimeout(()=>{ window.location.href = '/begin?addr=' + encodeURIComponent(account || ''); }, 800);

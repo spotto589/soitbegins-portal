@@ -1237,10 +1237,13 @@ export function getRewardRates(accessLevel) {
 // ~3016-Pigeon collection (100/page) and takes 30+ seconds — far too slow
 // to run inline on a page request. So this is deliberately split in two:
 //   - recomputeCrownHolder() — the expensive full scan + tie-break bookkeeping.
-//     Meant to be triggered from outside a normal page render — either the
-//     background waitUntil() in board.js when the cache goes stale, or an
-//     external pinger hitting POST /api/crown-recompute on a schedule
-//     (Cloudflare Pages Functions have no cron trigger of their own).
+//     No longer triggered automatically anywhere (the background
+//     waitUntil() calls in board.js/pigeons.js and the standalone
+//     /api/crown-recompute endpoint were all removed — each recompute
+//     cost 4 KV writes, and this was a meaningful chunk of the free
+//     tier's 1,000/day write quota). Only reachable now by calling it
+//     directly (e.g. from a future admin endpoint or manually), so the
+//     snapshot below is effectively frozen at whatever it last was.
 //   - getCachedCrownHolder() — a cheap KV read of the last computed
 //     result. Safe to call on every page render.
 // Deliberately no :51234 — Cloudflare Workers silently ignore custom

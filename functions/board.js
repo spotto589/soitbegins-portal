@@ -2,7 +2,7 @@ import {
   BOARD_COOKIE_NAME, getCookie, verifyToken,
   fetchAllAccountNfts, findPigeon, findAllPigeons, getBestPigeonWordLimit, getPigeonThumbnails,
   getPigeonCountTier, getPigeonTierClass, getPigeonAccessLevel,
-  getCachedCrownHolder, recomputeCrownHolder, isCrownWallet, CROWN_SNAPSHOT_MAX_AGE_SECONDS,
+  getCachedCrownHolder, isCrownWallet,
   proxyIpfsImage
 } from './_shared.js';
 
@@ -2697,21 +2697,15 @@ export async function onRequestGet(context) {
   let connectedAcct = null;
   let isCurrentCrown = false;
 
-  // Crown (Phase 4.5) — cheap cached read only; the live full-collection
-  // scan never runs inline on a page request (see _shared.js). If the
-  // cache is missing or stale, kick off a recompute in the background via
-  // waitUntil() so THIS response isn't slowed down — it just serves
-  // whatever's cached (possibly null, if a recompute has never run) and
-  // the next visitor gets the fresher result. Fetched before the session
-  // check below because accessLevel now needs to know Crown status —
-  // Crown is level 15 on the same scale, not a separate flag layered on
-  // top of it.
+  // Crown (Phase 4.5) — cheap cached read only. The automatic background
+  // recompute (and the /api/crown-recompute endpoint that used to be
+  // pinged externally) was removed to stop the recurring KV writes it
+  // cost every time the cache went stale; this now just serves whatever
+  // was last computed, frozen, with no further writes. Fetched before the
+  // session check below because accessLevel still needs to know Crown
+  // status — Crown is level 15 on the same scale, not a separate flag
+  // layered on top of it.
   const crownSnapshot = await getCachedCrownHolder(env.coin);
-  const crownStale = !crownSnapshot
-    || (Math.floor(Date.now() / 1000) - crownSnapshot.computedAt) > CROWN_SNAPSHOT_MAX_AGE_SECONDS;
-  if (crownStale) {
-    context.waitUntil(recomputeCrownHolder(env.coin).catch(() => {}));
-  }
 
   if (token) {
     const payload = await verifyToken(token, env.Σκύλλα);

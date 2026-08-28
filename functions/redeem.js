@@ -1,6 +1,7 @@
 import {
   COOKIE_NAME, getCookie, verifyToken,
-  fetchAllAccountNfts, findStaticVanityKey, getStaticVanityKeyInfo
+  fetchAllAccountNfts, findStaticVanityKey, getStaticVanityKeyInfo,
+  isStaticKeyRedeemed
 } from './_shared.js';
 
 function escapeHtml(str) {
@@ -13,15 +14,25 @@ function escapeHtml(str) {
 // of a STAT!C Vanity Collector's Key (Deeptide "king" shop, taxon 13) — a
 // distinct collection from Kingdom's King NFTs.
 //
-// The "authorization" for redemption itself is still the Phase 1 mock
-// condition tested via /api/scylla-mock-redeem (untouched). The client
-// re-verifies card possession via /api/redeem-verify-card immediately
-// before calling it, so REDEEM KEY isn't just trusting the page-load state.
+// Redemption itself now goes through /api/scylla-mock-redeem, which is the
+// single place that actually marks a key consumed (see markStaticKeyRedeemed
+// in _shared.js) — this page and /api/redeem-verify-card both just read
+// that same KV state so a key can never be redeemed twice, even if the
+// wallet still holds the NFT afterward.
 function renderNoKeyBody() {
   return `
     <div class="rd-denied">
       <div class="rd-denied-title">ACCΞSS DΞN!ΞD — N0 KΣY F0UND</div>
       <div class="rd-denied-body">TH!S WALLET H0LDS N0 STAT!C VAN!TY C0LLECT0R'S KEY. Σκύλλα D0ES N0T REC0GN!SE Y0U.</div>
+    </div>`;
+}
+
+function renderAlreadyRedeemedBody(keyNumber) {
+  const safeNumber = keyNumber !== null ? escapeHtml(String(keyNumber)) : '????';
+  return `
+    <div class="rd-denied">
+      <div class="rd-denied-title">KΣY ΛLRΣΛDY RΣDΣΣMΣD</div>
+      <div class="rd-denied-body">STAT!C KΣY #${safeNumber} HΛS ΛLRΣΛDY BΣΣN RΣDΣΣMΣD. THΣ RΣDΣMPT!ON W!ND0W F0R TH!S KΣY !S CL0SΣD PΣRMΛNΣNTLY.</div>
     </div>`;
 }
 
@@ -344,16 +355,12 @@ function renderPage(bodyHtml) {
         const checkRes = await fetch('/api/redeem-verify-card', { method: 'POST' });
         const checkData = await checkRes.json();
         if (!checkData.ok) {
-          setDenied('CARD N0 L0NGER DETECTED');
+          setDenied(checkData.reason === 'already_redeemed' ? 'KΣY ΛLRΣΛDY RΣDΣΣMΣD' : 'CARD N0 L0NGER DETECTED');
           return;
         }
 
         confirmStatus.textContent = 'CONTACT!NG Σκύλλα...';
-        const res = await fetch('/api/scylla-mock-redeem', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mockWalletHasStatic: true })
-        });
+        const res = await fetch('/api/scylla-mock-redeem', { method: 'POST' });
         const data = await res.json();
         if (data.granted) {
           confirmStatus.textContent = '';
@@ -362,7 +369,7 @@ function renderPage(bodyHtml) {
           reveal.classList.add('show');
           startRevealTimer();
         } else {
-          setDenied('VAN!TY KEY DEN!ED');
+          setDenied(data.reason === 'already_redeemed' ? 'KΣY ΛLRΣΛDY RΣDΣΣMΣD' : 'VAN!TY KEY DEN!ED');
         }
       } catch (e) {
         setDenied('ERR://SIGNAL_LOST');
@@ -385,7 +392,7 @@ function renderPage(bodyHtml) {
 export async function onRequestGet(context) {
   const { request, env } = context;
 
-  if (!env.Σκύλλα) {
+  if (!env.Σκύλλα || !env.coin) {
     return new Response('server misconfigured', { status: 500 });
   }
 
@@ -405,7 +412,11 @@ export async function onRequestGet(context) {
   let bodyHtml;
   if (key) {
     const info = await getStaticVanityKeyInfo(key);
-    bodyHtml = renderConfirmedBody(info.number, info.address);
+    if (await isStaticKeyRedeemed(env.coin, key.NFTokenID)) {
+      bodyHtml = renderAlreadyRedeemedBody(info.number);
+    } else {
+      bodyHtml = renderConfirmedBody(info.number, info.address);
+    }
   } else {
     bodyHtml = renderNoKeyBody();
   }

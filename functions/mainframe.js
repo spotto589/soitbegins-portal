@@ -356,7 +356,6 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
         <div class="mf-crwn-address" id="crwnAddress">r99LZRNxxss7eSJqKTSEvp1Xd48JGh5Vp5</div>
         <button class="mf-copy-btn" id="copyCrwnBtn">C0PY ADDRESS</button>
       </div>
-      <a class="mf-link" href="/crwn">ENTER THR0NE R00M →</a>
     </div>
   </div>
 

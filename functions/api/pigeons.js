@@ -5,7 +5,7 @@ import {
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue,
   resolveOwnerCollectionLive, fetchAllAccountNftsChecked, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, quotePigeonsForXrpDrops,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG,
-  getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
+  getCachedCrownHolder
 } from '../_shared.js';
 
 // Deeptide's own item page — the real place to buy a listed Pigeon.
@@ -310,13 +310,12 @@ export async function onRequestGet(context) {
   }
 
   // Top 100 current Pigeon holders, network-wide — piggybacks on the same
-  // cached full-scan snapshot the Crown feature already maintains (board.js),
-  // so this is a cheap KV read on every normal request; a stale/missing
-  // snapshot kicks off a background recompute via waitUntil, same pattern.
+  // cached full-scan snapshot the Crown feature already maintains (board.js).
+  // Cheap KV read only; the background recompute-on-stale trigger was
+  // removed (see board.js) to stop the recurring KV writes, so this now
+  // just serves whatever was last computed, frozen.
   if (params.get('topHolders') === '1') {
     const snapshot = await getCachedCrownHolder(env.coin);
-    const stale = !snapshot || (Math.floor(Date.now() / 1000) - snapshot.computedAt) > CROWN_SNAPSHOT_MAX_AGE_SECONDS;
-    if (stale) context.waitUntil(recomputeCrownHolder(env.coin).catch(() => {}));
     const holders = (snapshot && snapshot.topHolders) || [];
     return json({
       holders: holders.map(h => ({

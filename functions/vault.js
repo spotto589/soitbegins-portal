@@ -150,7 +150,6 @@ function renderVaultHtml() {
       <li>
         <h2>$CRWN</h2>
         <p class="placeholder">[content goes here]</p>
-        <a class="crwn-link" href="/crwn">SPEAK TO THE K!NG →</a>
       </li>
       <li>
         <h2>THE K!NGD0M</h2>
