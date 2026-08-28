@@ -940,7 +940,23 @@ const SWAP_HTML = `<!DOCTYPE html>
      its own full-width line is too big once it's sharing a row. */
   .owned-action-row .bar-btn,
   .owned-action-row .thumb-buy-btn,
-  .owned-action-row .offer-open-modal-btn{ flex:1 1 0; min-width:0; width:auto; margin-bottom:0; font-size:11px; letter-spacing:0.02em; padding:0.55em 0.3em; }
+  .owned-action-row .offer-open-modal-btn{
+    flex:1 1 0;
+    min-width:0;
+    width:auto;
+    margin-bottom:0;
+    font-size:11px;
+    letter-spacing:0.02em;
+    padding:0.55em 0.3em;
+    /* BUY N0W wrapping to two lines in its half-width slot (sharing the
+       row with 0FFER) while a lone 0FFER stays one line was the actual
+       reason the purple box came out two different heights depending on
+       state — confirmed live (55px vs 41px). Every state needs to be the
+       same height regardless of what's actually in it. */
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
   .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:#ff4d4d; background:#ff4d4d; color:#000; text-shadow:none; }
   /* Red, same accent as CLEAR TRAITS — resetting every filter is a
      destructive-feeling action, worth calling out differently from the
@@ -1775,6 +1791,36 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-select-toggle:hover, .my-pigeon-offer-toggle:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
   .card-select-toggle.selected, .my-pigeon-offer-toggle.selected{ background:var(--magenta); color:#08090b; border-color:var(--magenta); animation:flicker-in 0.3s ease-out; }
   .my-pigeon-offer-toggle.at-cap{ opacity:0.35; cursor:not-allowed; }
+  /* Listing price — moved here (bottom-right corner of the picture
+     itself) off the purple action box below, which used to carry this
+     text and grow/shrink depending on whether a Pigeon was listed. Same
+     dark semi-transparent badge treatment as .card-select-toggle's own
+     top-right corner, just sized for a price string instead of a single
+     glyph. Purple border/text for a real listing (matches the action
+     box's own purple theme); cyan for YOUR OWN listing (this site's
+     established "this is yours" colour, same as FL0CK/SH0W MY P!GE0NS
+     elsewhere), same price text either way — the border colour alone is
+     what used to be a separate "Y0UR L!ST!NG ::" label. */
+  .thumb-listing-badge{
+    position:absolute;
+    bottom:0.3rem;
+    right:0.3rem;
+    z-index:2;
+    max-width:calc(100% - 0.6rem);
+    background:rgba(8,9,11,0.85);
+    border:1px solid var(--pigeon-purple);
+    color:#fff;
+    font-weight:700;
+    font-size:10.5px;
+    letter-spacing:0.02em;
+    padding:0.3em 0.45em;
+    border-radius:var(--radius);
+    text-shadow:0 0 4px var(--pigeon-purple-glow);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .thumb-listing-badge-own{ border-color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); }
 
   /* ---- DATABASE results: two wide rows side by side, not a 6-up grid
      of tiles — a much bigger thumbnail/number/rarity on the left, every
@@ -1828,31 +1874,15 @@ const SWAP_HTML = `<!DOCTYPE html>
        floating in the middle of it with visible purple margin down each
        side. */
     padding:0.35em 0.25em;
-    /* A slim strip across the bottom of the card, not a tall block — every
-       purple box in a row is this same height regardless of what's
-       actually inside it (a listed card's price + countdown + BUY N0W/
-       0FFER row is the tallest real case; an unlisted card's bare 0FFER,
-       or an own-Pigeon Y0UR L!ST!NG + CANCEL, are shorter). min-height
-       covers the tallest case; flex centers whatever's actually in the
-       shorter ones instead of leaving it stuck at the top. */
-    min-height:76px;
+    /* One row of content now — button(s), or the !N Y0UR FL0CK label —
+       never the price/countdown stack this used to also carry (moved to
+       .thumb-listing-badge on the picture itself). Every purple box is
+       now naturally the exact same height with no min-height needed to
+       cover a taller state. */
     box-sizing:border-box;
     display:flex;
-    flex-direction:column;
+    align-items:center;
     justify-content:center;
-  }
-  /* Plain price line, own row above BUY N0W — the button itself now just
-     says BUY N0W, price isn't baked into the label any more. */
-  .thumb-buy-price{
-    text-align:center;
-    font-family:var(--font-mono);
-    font-weight:700;
-    font-size:13px;
-    letter-spacing:0.05em;
-    color:#fff;
-    text-shadow:0 1px 4px rgba(0,0,0,0.5);
-    text-transform:uppercase;
-    margin-bottom:0.25rem;
   }
   /* BUY N0W — green, matching the site's "real, clickable buy action"
      colour language (distinct from cyan/magenta elsewhere), full width,
@@ -6265,11 +6295,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   // individual Pigeon's thumbnail), amount input always visible, no
   // click-to-reveal step. Handlers key off the shared .result-card
   // ancestor, so this works identically in both views.
-  // One unified action box — BUY N0W (only if this Pigeon carries a real
-  // Σκύλλα $PIGEONS listing) stacked above MAKE AN OFFER, sharing one
-  // purple box instead of two separate strips (a magenta BUY NOW bar
-  // above a purple OFFER strip). No coin thumbnail — the box's own
-  // purple theme already reads as $PIGEONS without repeating the icon.
+  // One unified action box, buttons only now — the price used to live in
+  // here too (a plain line above BUY N0W, or "Y0UR L!ST!NG :: 444K" for
+  // your own), which meant the box grew/shrank by state and never read as
+  // one consistent control. Real price now lives on the picture itself
+  // instead (.thumb-listing-badge, bottom-right corner — see
+  // thumbnailCardHtml), so this box is always exactly the same shape
+  // regardless of state: two buttons (BUY N0W + 0FFER) if it's a real
+  // listing you can buy, one button (CANCEL) if it's your own listing,
+  // one button (0FFER) if it's neither, or a plain label (!N Y0UR FL0CK)
+  // if it's yours and unlisted — never a variable-height stack of price/
+  // countdown/button lines.
   function pigeonsActionBoxHtml(p){
     if (p.owner === MY_WALLET){
       // Full unscoped DATABASE browsing doesn't have myListedData/
@@ -6278,22 +6314,18 @@ const SWAP_HTML = `<!DOCTYPE html>
       // DELIST/OFFERS box isn't available here — but a Pigeon that
       // carries a real Σκύλλα listing (e.g. showing up while browsing
       // FL00R $P!GE0NS, sorted alongside everyone else's real listings)
-      // still needs SOMETHING here, not a blank box where the price/
-      // action area is for every other card — confirmed live, that read
-      // as a broken/empty card rather than "this one's yours."
+      // still needs SOMETHING here, not a blank box where the action
+      // area is for every other card — confirmed live, that read as a
+      // broken/empty card rather than "this one's yours."
       if (isOwnWalletScope()) return ownedPigeonActionHtml(p);
-      // No BUY N0W/OFFER on your own Pigeon here (this box is for the
-      // general unscoped browse, not the SH0W MY FL0CK grid) — a clear
-      // "!N Y0UR FL0CK"/"L!ST!NG :: 444K" note instead, never a blank box.
       if (p.scyllaListing){
-        var listingCountdown = listingCountdownText(p.scyllaListing.expiration);
+        // Same .delist-pigeon-btn class/handling ownedPigeonActionHtml's
+        // own DELIST button uses (wireResultClicks' delegated listener
+        // already covers el.resultsArea too) — no separate wiring needed.
         return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<div class="own-listing-note">Y0UR L!ST!NG :: ' + escapeHtml(compactPigeonsNumber(p.scyllaListing.price)) + '</div>' +
-          (listingCountdown ? '<div class="listing-countdown">' + escapeHtml(listingCountdown) + '</div>' : '') +
-          // Same .delist-pigeon-btn class/handling ownedPigeonActionHtml's
-          // own DELIST button uses (wireResultClicks' delegated listener
-          // already covers el.resultsArea too) — no separate wiring needed.
-          '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '" style="width:100%; margin-top:0.4rem;">CANCEL</button>' +
+          '<div class="owned-action-row">' +
+            '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '">CANCEL</button>' +
+          '</div>' +
         '</div>';
       }
       return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -6304,18 +6336,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     // No inline OFFER AMOUNT input on the card any more — just a button
     // that opens the shared amount-entry popup (see openAmountEntryModal
     // and .offer-open-modal-btn in wireResultClicks) to actually type
-    // the number. Price is now its own plain line above BUY N0W, not
-    // baked into the button label.
-    var buyCountdown = canBuy ? listingCountdownText(p.scyllaListing.expiration) : '';
+    // the number.
     // BUY N0W + 0FFER sit side by side (.owned-action-row, same pairing
     // CANCEL/TRANSFER already uses) instead of stacked — when there's no
     // real listing (canBuy false) 0FFER is still wrapped in the same row
     // alone, so its width behaves identically either way.
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      (canBuy
-        ? '<div class="thumb-buy-price">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>' +
-          (buyCountdown ? '<div class="listing-countdown">' + escapeHtml(buyCountdown) + '</div>' : '')
-        : '') +
       '<div class="owned-action-row">' +
         (canBuy ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY N0W</button>' : '') +
         '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">0FFER</button>' +
@@ -6432,11 +6458,21 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? (!inTarget && offerCount() >= OFFER_MAX)
       : (!inTarget && targetCount() >= OFFER_MAX);
     var pigeonsActionHtml = pigeonsActionBoxHtml(p);
+    // Listing price now lives here, on the picture itself (bottom-right
+    // corner, see .thumb-listing-badge), not inside the purple action box
+    // below — that box is buttons only now, always the same size
+    // regardless of state. Own-vs-others'-listing is just a border/glow
+    // colour difference (cyan vs purple, this site's established "this
+    // is yours" language) on the exact same badge, not separate markup.
+    var listingBadge = p.scyllaListing
+      ? '<div class="thumb-listing-badge' + (p.owner === MY_WALLET ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>'
+      : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">P!GE0N ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         img +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
+        listingBadge +
       '</div>' +
       '<div class="result-card-body">' + rarityLine + avgSaleLine + '<div class="card-action-box">' + pigeonsActionHtml + '</div></div>' +
     '</div>';
