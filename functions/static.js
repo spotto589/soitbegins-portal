@@ -976,7 +976,20 @@ const SWAP_HTML = `<!DOCTYPE html>
      TRANSFER) and an unlisted one (L!ST + TRANSFER) take up the exact
      same one-row shape instead of the listed state ending up visibly
      taller than its neighbor. */
-  .owned-action-row{ display:flex; gap:0.4rem; }
+  /* width:100% — .thumb-offer (the purple box) is itself display:flex
+     now (centers its content both ways so every state is the same
+     height regardless of what's inside), which makes THIS row a flex
+     ITEM of that box instead of an ordinary block child. A flex item
+     shrink-wraps to its own content's width along the main axis by
+     default instead of stretching to fill it — harmless with two
+     buttons (their combined content is already nearly box-width) but a
+     single button (CANCEL, or 0FFER alone) shrank to a tiny pill
+     centered in the middle of the box with huge purple margin on both
+     sides instead of actually filling it. Confirmed live: a lone
+     CANCEL's row measured 54px wide inside a 143px box. width:100% here
+     is what makes flex:1 1 0 below have real room to fill (or split
+     evenly, for two) in the first place. */
+  .owned-action-row{ display:flex; gap:0.4rem; width:100%; }
   /* A slim strip, not a tall block — two buttons genuinely fit side by
      side in a 5-across thumbnail card at this size (11px/tight padding),
      the 15px/0.85em default every one of these buttons normally uses on
@@ -1854,9 +1867,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--pigeon-purple);
     color:#fff;
     font-weight:700;
-    font-size:10.5px;
+    font-size:13px;
     letter-spacing:0.02em;
-    padding:0.3em 0.45em;
+    padding:0.4em 0.55em;
     border-radius:var(--radius);
     text-shadow:0 0 4px var(--pigeon-purple-glow);
     white-space:nowrap;
@@ -2796,25 +2809,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     #detailLightbox .detail-nav-prev{ margin-left:-44px; }
     #detailLightbox .detail-nav-next{ margin-left:8px; }
   }
-  /* Second BACK entry point, fixed to the top-left corner (same
-     containing block as #screenDetail, same reasoning as .detail-nav-btn
-     above) — the full-width strip at the bottom of the traits/listings
-     column is still there too, this just saves a scroll back down.
-     left matches #screenDetail's own horizontal padding exactly
-     (clamp(1rem, 4vw, 3rem)), not .detail-nav-btn's smaller clamp, so
-     this lines up flush with the picture's own left edge (.detail-col-
-     left has no padding/offset of its own beyond the screen's). */
+  /* Second BACK entry point — shares a row with P!GE0N #N now (see
+     .detail-num-row), not floating position:fixed independent of it any
+     more (used to sit at the top-left corner of the whole screen,
+     unrelated to the number's own — centered — position, so the two
+     ended up visually colliding/misaligned depending on scroll position;
+     confirmed live). position:absolute within that row instead, pinned
+     to its left edge and vertically centered against whatever height the
+     row's own content (the number) actually needs — the row itself sits
+     at the very top of .detail-two-col (grid-area:num), so this reads as
+     "moved upward" compared to where it used to float. Loses the old
+     "stays put while you scroll the page" behavior in exchange — the
+     full-width BACK strip at the bottom of the traits/listings column is
+     still there as the persistent option. */
+  .detail-num-row{ position:relative; }
   .detail-back-btn-top{
-    position:fixed;
-    top:clamp(0.5rem, 2vw, 1.5rem);
-    left:clamp(1rem, 4vw, 3rem);
-    z-index:75;
-    /* Same colors/shape as .detail-back-btn (the bottom strip) — just
-       sized up a bit since this one stands alone instead of filling the
-       column's full width. */
-    padding:0.9em 1.7em;
+    position:absolute;
+    left:0;
+    top:50%;
+    transform:translateY(-50%);
+    z-index:2;
+    padding:0.5em 1em;
     font-family:var(--font-mono);
-    font-size:18px;
+    font-size:14px;
     font-weight:700;
     letter-spacing:0.08em;
     color:var(--cyan);
@@ -2827,7 +2844,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .detail-back-btn-top:hover{ background:var(--cyan-faint); border-color:var(--cyan-dim); }
   @media (max-width:760px){
-    .detail-back-btn-top{ font-size:15px; padding:0.7em 1.3em; }
+    .detail-back-btn-top{ font-size:12px; padding:0.4em 0.7em; }
   }
   /* Local copy of canvas#staticBg's own look (see the drawStatic loop —
      both canvases run the identical draw function) — negative z-index so
@@ -2872,7 +2889,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.5rem 2rem;
     align-items:start;
   }
-  #screenDetail .detail-two-col > .detail-num{ grid-area:num; text-align:center; margin:0; }
+  /* grid-area:num moved to the row wrapper (.detail-num-row) now that
+     BACK shares it — .detail-num itself is just the centered text inside
+     that row, same as before. */
+  #screenDetail .detail-two-col > .detail-num-row{ grid-area:num; }
+  #screenDetail .detail-num-row .detail-num{ text-align:center; margin:0; }
   .detail-col-left{ grid-area:left; }
   .detail-col-right{ grid-area:right; }
   /* Owner address sits flush with P!GE0N #N — same row, same text weight —
@@ -3001,7 +3022,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:var(--bg);
     align-items:center;
     justify-content:center;
-    padding:2rem;
+    /* Small, not 2rem — object-fit:contain already keeps the picture's
+       real aspect ratio (never crops it), so the actual limiting factor
+       for "fill the browser" is almost always the viewport's own
+       dimensions, not this padding — but every pixel of padding is still
+       a pixel the picture can't use, and 2rem (32px per side, 64px total)
+       was taking a real bite out of it for no reason. */
+    padding:0.75rem;
     cursor:zoom-out;
   }
   #detailLightbox::before{
@@ -4300,13 +4327,19 @@ const SWAP_HTML = `<!DOCTYPE html>
            the time — not a fixed collection-wide sequence. -->
       <button class="detail-nav-btn detail-nav-prev" id="detailPrevBtn" title="PREV!0US P!GE0N (◂)">◂</button>
       <button class="detail-nav-btn detail-nav-next" id="detailNextBtn" title="NEXT P!GE0N (▸)">▸</button>
-      <!-- Same goBackFromDetail() as the full-width BACK strip at the
-           bottom — just a second, closer-to-hand entry point fixed to the
-           top-right corner so you do not have to scroll back down past
-           the traits/listings to leave. -->
-      <button class="detail-back-btn-top" id="backToBrowseBtnTop">← BACK</button>
       <div class="detail-two-col">
-        <div class="detail-num" id="detailNum"></div>
+        <div class="detail-num-row">
+          <!-- Same goBackFromDetail() as the full-width BACK strip at the
+               bottom — just a second, closer-to-hand entry point at the
+               top so you do not have to scroll back down past the
+               traits/listings to leave. Shares a row with P!GE0N #N now
+               (used to float position:fixed at the top-left corner,
+               independent of it — moved down here and paired on purpose,
+               centered together instead of two unrelated-looking
+               elements landing near each other by coincidence). -->
+          <button class="detail-back-btn-top" id="backToBrowseBtnTop">← BACK</button>
+          <div class="detail-num" id="detailNum"></div>
+        </div>
         <div class="detail-owner-top" id="detailOwner"></div>
         <div class="detail-col-left">
           <div class="detail-img-large pigeon-img-box" id="detailImgBox" title="VIEW FULLSCREEN">IMAGE</div>
