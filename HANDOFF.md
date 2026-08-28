@@ -1,12 +1,14 @@
 # Σκύλλα SWAP — handoff note (updated, supersedes any earlier version)
 
 This file is stale the moment nobody updates it after a session — if you're
-picking this up, skim it, then check `git log -50 --oneline` for what's
+picking this up, skim it, then check `git log -30 --oneline` for what's
 actually landed since it was last edited. The session that wrote this one
-touched almost nothing but `functions/static.js` (formerly `swap.js` — see
-the route rename below) plus a handful of small, surgical backend files
-across ~26 commits — read the commit messages themselves for the fine
-detail; this file is the map, not the territory.
+touched almost nothing but `functions/static.js` (~14 commits) plus one
+backend file (`functions/api/pigeons.js`) and one new standalone deployable
+(`cron-worker/`) — read the commit messages themselves for the fine detail;
+this file is the map, not the territory. Primary focus was a full mobile
+pass on the DATABASE tab, plus browse-only support for two new NFT
+collections (PHN!X/TEDDY).
 
 ## Repo
 
@@ -16,20 +18,9 @@ GitHub: `github.com/spotto589/soitbegins-portal`
 
 ⚠️ There is ALSO a stale, no-git-history folder at
 `C:\Users\Admin\OneDrive\Desktop\Soitbegins.xyz` — don't confuse them. All real
-work happens in `soitbegins-portal-clone`. The default working directory a
-fresh session lands in is often the STALE one — `cd`/read into
-`soitbegins-portal-clone` explicitly before touching anything.
+work happens in `soitbegins-portal-clone`.
 
-**The main swap page is `functions/static.js` now, not `functions/swap.js`**
-— this session renamed the route from `/swap` to `/static` (file renamed to
-match, since Cloudflare Pages Functions route by filename). Every internal
-self-redirect (Xaman OAuth `redirectUrl`, post-login redirect, sign-out
-redirect, the offer-deep-link) and the on-chain `Source` memo attached to
-every real offer now point at `/static` too. ⚠️ If Xaman/XUMM login stops
-working after a fresh deploy, check whether the OAuth app's redirect-URL
-allowlist (in the Xaman developer console, not in this repo) still says
-`/swap` — that was flagged as a real risk when the rename shipped and was
-never independently confirmed fixed on Xaman's side.
+The main swap/DATABASE page is `functions/static.js`, routed at `/static`.
 
 Other uncommitted changes have been sitting in this working tree across
 many sessions now (`functions/api/redeem-verify-card.js`,
@@ -38,190 +29,313 @@ many sessions now (`functions/api/redeem-verify-card.js`,
 the specific files each change actually touched. Don't assume they're
 yours to commit; check with the user before touching them.
 
+⚠️ **Another session (or the user directly) pushed to `main` in parallel
+with this one, mid-session** — a real merge (not a force-push) was needed,
+see the "Merge" note under Gotchas below. This repo is evidently being
+worked on by more than one session at times — always `git fetch && git log
+--oneline HEAD..origin/main` before pushing, not just before starting.
+
 There's also a second real service in this repo: **`xaman-proxy/`**
-(deployed separately on Render, `https://xaman-proxy.onrender.com`) — a
-plain Node.js app, not a Cloudflare Worker, that relays Xaman payload API
-calls AND holds a real XRPL wallet seed (`BROKER_WALLET_SEED`) for the
-brokered $PIGEONS marketplace fee. Untouched this session.
+(deployed separately on Render), and the standalone **`cron-worker/`**
+(see its own section below). Both untouched this session except
+`cron-worker/`'s own initial build.
 
-## ⚠️ Cloudflare KV free-tier write quota — hit it live this session
+## ⚠️ Cloudflare KV free-tier write quota — still a live constraint
 
-The KV namespace backing `env.coin` is on Cloudflare's free tier: **1,000
-writes/day, account-wide, across every key**. This session hit that limit
-mid-debugging (confirmed via `wrangler kv key put` itself failing with
-`code: 10048 — your account has reached the free usage limit for this
-operation for today`). `safeKvPut` in `_shared.js` already anticipates this
-and swallows the error silently ("Quota exhaustion or any other transient
-KV failure — not fatal") — which means **every** write on the site (new
-listings, offers, sales log, incoming transfers, signals — everything)
-fails completely silently once the quota is exhausted for the day, with
-zero user-facing error and nothing in the logs beyond a generic catch. If a
-future session sees "my real on-ledger action isn't showing up anywhere on
-the site" and the data/logic all checks out against a direct XRPL query,
-**check whether the quota is exhausted before assuming it's a code bug** —
-`wrangler kv key put ... --remote` failing the same way is the fastest way
-to confirm. Resets daily (UTC midnight). If this becomes a recurring
-problem, the real fix is upgrading the KV namespace to a paid plan or
-seriously cutting write volume — not chasing more app-level workarounds.
+The KV namespace backing `env.coin` is on Cloudflare's free tier: 1,000
+writes/day, account-wide. `safeKvPut` in `_shared.js` swallows quota
+failures silently — every write (listings, offers, sales log, signals)
+fails silently once exhausted, with nothing in the logs beyond a generic
+catch. If "my real on-ledger action isn't showing up" and the XRPL data
+checks out, check the quota before assuming a code bug (`wrangler kv key
+put ... --remote` failing the same way confirms it). This was discussed at
+length with the user this session (see "D1 migration" conversation) but
+**nothing was changed** — the whole listings/sales/offers KV architecture
+is still exactly as fragile as before. If a future session picks up the D1
+migration, start with `listings` (the one with the proven concurrent-write
+data-loss bug, already documented below in gotcha 5a).
 
 ## This session's real bug fixes (not just UI)
 
-1. **Listings silently disappearing from L!STED/FL00R $P!GE0NS.** Root
-   cause: `swap-listing-owned.js`'s discovery scan checks up to 5 Pigeons
-   *concurrently* (`mapWithConcurrency`), and each match previously called
-   `recordSwapListing` separately — a bare read-modify-write against the
-   same `pswap:listings:v1` KV key. When more than one Pigeon in the same
-   pass turned out to be genuinely listed, the concurrent writes raced:
-   whichever one finished last "won," silently dropping every other
-   listing discovered in that same request. Fixed by collecting every
-   discovered entry into one object and writing it via a new
-   `recordSwapListingsBatch` (single read-modify-write) at the end of the
-   request instead. If you ever add another concurrent-scan-that-writes
-   pattern anywhere in this codebase, this is the exact bug class to avoid
-   — collect, then write once.
-2. **Page permanently unable to scroll** after clicking a wallet link from
-   the pigeon detail/traits screen. `showTab()` hides `#screenDetail`
-   directly (bypassing `showScreen()`, which is the only place that used to
-   clear `body.detail-open` — the class that sets `overflow:hidden` while
-   the detail screen is up). A tab switch triggered from inside the detail
-   screen (e.g. `browseOwnerCollection` via a wallet click) left that class
-   stuck forever. Fixed by having `showTab()` clear it too.
-3. **DATABASE collection picker (P!GE0NS/FUZZY/PHN!X/TEDDY dropdown)
-   rendering half cut off.** `#dbSelectWrap` lives inside a DATABASE tab
-   button, inside `#topTabs`, which is `overflow-x:auto` for horizontal
-   tab-bar scrolling. Per the real CSS Overflow spec, a non-"visible"
-   overflow-x with no explicit overflow-y computes overflow-y to "auto"
-   too — **an explicit `overflow-y:visible` on the ancestor does NOT
-   override this**, confirmed live (computed value stayed "auto"
-   regardless). This clips ANY descendant that visually extends past the
-   tab bar's own height, including a `position:absolute` flyout, no matter
-   which direction it opens. Entries past PHN!X were being painted but
-   invisible — confirmed via `document.elementFromPoint`, which returned
-   the trustline banner's own issuer-address text at the exact coordinates
-   PHN!X should have shown. Fixed by switching `#dbSelectFlyout` to
-   `position:fixed` (escapes all ancestor overflow clipping since it's
-   relative to the viewport), with its `top`/`left` computed fresh from
-   `#dbSelectWrap.getBoundingClientRect()` every time it opens (see
-   `openDbSelectFlyout`) — `position:fixed` has no CSS-only way to anchor
-   to a specific element, so this has to be JS. **If any other dropdown
-   ever gets nested inside `#topTabs` in the future, it needs the same
-   treatment, not a plain `position:absolute` flyout.**
-4. **Duplicate "0 COMBINATIONS OF THESE TRAITS EXIST"** — used to render
-   both in the results-count status line AND in the empty-state box below
-   it when a 2+-trait filter matched nothing. `statusLine` now stays blank
-   on zero results; the empty-state box is the only place that says so.
+1. **FILTER BY TRAITS was completely unusable on mobile — a real tap
+   registered as a text selection instead of a click.** `.trait-row-label`
+   (the tappable `<span>` shared by SORT BY / FILTER BY TRAITS / the
+   DATABASE collection picker — all three) never set `user-select:none`.
+   Confirmed live with the browser tool's own click (not just a synthetic
+   dispatch): the label's text highlighted blue and no click handler fired
+   at all. Fixed once, on the shared class, so it covered all three
+   triggers. **If you ever add a new plain `<span>`/`<div>` as a tap
+   target anywhere on this page, give it `user-select:none` +
+   `-webkit-tap-highlight-color:transparent` up front** — this bug class
+   is easy to reintroduce and easy to miss without testing an actual touch
+   tap (a synthetic `dispatchEvent('click')` does NOT reproduce it).
+2. **MAKE AN OFFER (and 5 other Xaman sign flows) silently never
+   confirmed on mobile.** `openXamanPopup()` pre-opens a blank popup
+   synchronously in the click handler (correct — avoids `window.open()`
+   from an async callback getting blocked), then `navigateXamanPopup()`
+   points that tab at the real sign URL once it's known. Six flows (MAKE
+   AN OFFER, LIST, SIGNAL, TRANSFER, ACCEPT TRANSFER, ACCEPT OFFER) had
+   inlined a bare `if (tabRef) tabRef.location.href = url` with **no
+   fallback** instead of going through `navigateXamanPopup`. Mobile
+   Safari/Chrome frequently return `null` from `window.open('', name,
+   <fixed-size popup features>)` even when called synchronously (no real
+   windowed-popup concept on mobile) — on those devices Xaman never
+   opened, the button sat on "WAITING FOR SIGNATURE" forever, no error
+   shown. BUY/DELIST had a different flavor of the same root issue
+   (`window.open(realUrl, ...)` called directly inside their own async
+   `fetch().then()`, the exact anti-pattern already documented in this
+   file). All 8 flows now go through `navigateXamanPopup` consistently,
+   and its own fallback retries as a plain `window.open(url, '_blank')`
+   instead of reusing the fixed-size popup features (plausibly what got
+   the original call refused in the first place).
+3. **A CSS containing-block bug hijacked a mobile popup's positioning.**
+   `#flockGridPanel` has `backdrop-filter:blur(...)` on it — per the CSS
+   Containing Block spec, `transform`/`filter`/`backdrop-filter`/
+   `perspective` on an ancestor makes THAT element the containing block
+   for a `position:fixed` descendant instead of the viewport. Confirmed
+   live: `top:50%` was resolving against the document's full scroll
+   height (landing past 4000px down), not the actual screen, for
+   FILTER BY TRAITS' mobile popup. Fixed by reparenting the popup to a
+   direct child of `<body>` while open (`restoreTraitsFlyout` moves it
+   back afterward so desktop's `position:absolute`, anchored to the
+   trigger, keeps working). **If you ever see a `position:fixed` element
+   behaving like `position:absolute` relative to some ancestor, check
+   that ancestor chain for `transform`/`filter`/`backdrop-filter` before
+   assuming the positioning math itself is wrong.**
+4. **The same popup then self-closed the instant you picked a value
+   inside it.** `renderTraitsFlyoutVals()` rebuilds `#traitsFlyoutVals`'
+   `innerHTML` synchronously inside the click handler for picking a trait
+   value — the actual clicked button is a **detached node** by the time
+   the event finishes bubbling to the document-level "click outside
+   closes this" listener, so `el.X.contains(e.target)`-style checks read
+   as "outside" even though the click plainly wasn't. Fixed with
+   `e.composedPath()` (captured at dispatch time, before the mutation)
+   instead of `e.target`-based containment checks. **Any "click outside
+   this element closes it" listener needs `composedPath()`, not
+   `e.target`, if the element's own click handler might rebuild its
+   `innerHTML` before the event finishes bubbling.**
+5. **A CSS cascade-order trap bit repeatedly this session — document it
+   well since it WILL happen again.** Several `@media (max-width:700px)`
+   mobile-override blocks in this file are declared *before* the
+   unscoped "desktop base" rule they're meant to override, in the file's
+   source order. Per normal CSS cascade rules, when two rules have EQUAL
+   specificity, the one **later in source order** wins — regardless of
+   whether one is inside a media query. So an unscoped base rule added
+   after an existing mobile block silently wins at mobile widths too,
+   even though its media condition (implicitly "always") is broader.
+   Confirmed live at least three separate times this session (results-
+   header-row's grid overflow, `.traits-flyout-cats`' flex-direction,
+   `#traitsFlyoutCats .traits-flyout-cat`'s width) — each time fixed with
+   either `minmax(0, ...)` (the grid/flex sizing case) or `!important` on
+   the mobile-scoped rule (the ordering case). **Before adding any new
+   base/desktop rule to a selector that already has a `max-width:700px`
+   override earlier in the file, either add `!important` to the existing
+   mobile override, or move the new rule to before that override in
+   source order — don't assume the media query alone protects it.**
+6. **A CSS class shared across two different UI contexts broke one of
+   them when the other was redesigned.** `.thumb-offer` is used both by
+   the DATABASE card's purple action box AND by `#amountEntryModal`'s
+   LIST/OFFER/TRANSFER popup content (via the second class
+   `.amount-entry-mode`, always present together). Making the card a
+   row-direction flex container (to center its button(s) regardless of
+   state) silently turned the popup into a horizontal strip too — same
+   root cause as gotcha 11 below (a shared thing can't assume it's only
+   used in the one place you're looking at), just for a CSS class instead
+   of a JS function. Fixed by scoping the row-flex behavior to
+   `.thumb-offer.amount-entry-mode{ display:block; }`, reusing the
+   `amount-entry-mode` class that was already there for exactly this kind
+   of disambiguation. **Before changing a shared CSS class's `display`/
+   `flex-direction`, grep every place that class is used in the HTML, not
+   just the one card/component you're actively redesigning.**
+7. **The purple action box wasn't actually filling itself even after
+   #6 was "fixed" once.** `.owned-action-row` (the flex row holding
+   BUY N0W/0FFER/CANCEL) is a flex ITEM of `.thumb-offer` once that
+   became row-direction flex — flex items shrink-wrap to their own
+   content's width along the main axis by default instead of stretching.
+   Harmless with two buttons (their combined content is already close to
+   the box's width) but a single button (CANCEL, or 0FFER alone) shrank
+   to a small pill centered with big empty margin on both sides.
+   Confirmed live: a lone CANCEL's row measured 54px inside a 143px box.
+   `width:100%` on `.owned-action-row` is what actually gives `flex:1 1
+   0` real room to fill (or split evenly for two buttons — confirmed
+   63px/63px). This is the SAME underlying spec behavior as gotcha 5
+   above (flex items don't auto-stretch along the main axis) just hitting
+   a nested flex item instead of a grid track — if you see something
+   centered-but-too-small inside a flex container, check this first.
 
-## Major features built this session
+## Major features/redesigns built this session
 
-### 1. TRANSFER's recipient side (FL0CK "NFT 0FFERED T0 Y0U")
-TRANSFER creates a real free (Amount "0") `NFTokenCreateOffer` on an NFT
-the *sender* still owns — invisible to the recipient with no way to
-discover it just by looking at their own `account_nfts`. Added a tracked
-KV index (`pswap:incomingtransfers:v1`, written the moment the sender's own
-offer confirms in `swap-offer-status.js` — specifically when neither
-`wantNftId` nor `swapId` is present, i.e. a pure one-way transfer, not the
-still-paused NFT-for-NFT swap builder), self-healed against live
-`nft_sell_offers` on read (`swap-incoming-transfers.js`), plus a real
-accept flow (`swap-transfer-accept-prepare/-payload/-status.js`). Surfaced
-as a new box above the FL0CK grid. **Known gap:** only tracks transfers
-sent *after* this shipped — anything sent earlier isn't retroactively
-indexed.
+### 1. Full mobile pass on SORT BY / FILTER BY TRAITS / the DATABASE picker
+Went through several iterations (see commit history for the intermediate
+steps) before landing on the current shape, per direct user feedback each
+time:
+- **Mobile**: SORT BY is one flat list (`renderSortFlyoutList`, no
+  category step — with only ~11 options total, the category drill-down
+  added early in the session was more navigation than the option count
+  needed) that lists down inline below its trigger, pushing the rest of
+  the page down, instead of floating as an overlay. FILTER BY TRAITS
+  keeps a real category step (many categories, many values each) but ALSO
+  lists down inline for the category choice; tapping a category pops its
+  values up as a real centered overlay instead (see bug fixes #3/#4
+  above for what that took to get right).
+- **Desktop** (`min-width:701px`): SORT BY is a permanently-visible
+  horizontal strip of every option (no click-to-open step at all — all
+  directly clickable) with PREV/NEXT arrows to scroll along since 11
+  options don't fit on one line; native scrollbar hidden
+  (`scrollbar-width:none` + the `::-webkit-scrollbar` pseudo-element).
+  FILTER BY TRAITS' category list is a horizontal row instead of a
+  vertical column, with its own scroll arrows; its values panel sits
+  below the row now instead of beside it (no more "vertical position of
+  the hovered category" to align a side panel to).
+- The DATABASE collection picker (P!GE0NS/FUZZY/PHN!X/TEDDY) got a
+  JS-clamped `position:fixed` popup fix early in the session (same
+  `#topTabs` overflow-clipping class of bug as last session's handoff
+  documented) before PHN!X/TEDDY became real options later on (see
+  Feature 2 below).
 
-### 2. CR0WN tab — real $PIGEONS trading P&L leaderboard
-New top-level tab next to SALES H!ST0RY. Realized net flow only (seller
-proceeds minus buyer spend, from the real settled sales log
-`pswap:saleslog:v1`) — deliberately does NOT value Pigeons a wallet still
-holds. Weekly/monthly toggle. Read-only — no reward payout logic, per
-explicit scope agreement with the user (asked via AskUserQuestion before
-building). **Known limitation:** the sales log itself is capped at 300
-entries (pre-existing, not new) — a busy month could lose its oldest
-entries before "this month" ever sees them.
+### 2. Browse-only PHN!X/TEDDY collections
+The DATABASE picker's PHN!X/TEDDY options (previously inert "COMING
+SOON" placeholders) are real now — clicking one genuinely browses that
+collection via Deeptide (`shopSlug` = `phnixs`/`teddybg`) and xrp.cafe
+(`vanitySlug` = same), confirmed live against the real APIs (1,588 Phnix
+items, 2,600 Teddy items). FUZZY stays disabled — no shopSlug picked for
+it yet.
 
-### 3. ΣΚΥΛΛΑ://S!GNAL
-After a real MAKE AN OFFER settles, checks whether the recipient (the
-Pigeon's owner) has *any* activity on the site at all
-(`hasWalletActivity` in `_shared.js` — checks sales log, listings, buy
-offers, incoming transfers, and whether they've ever connected via Xaman
-at all/have a stored push token). If none, offers an optional 123-drop XRP
-payment with a memo identifying the offer — entirely separate from the
-NFTokenCreateOffer itself, never sent automatically, SKIP leaves the real
-offer completely untouched. New endpoints: `swap-signal-check.js`,
-`swap-signal-payload.js`, `swap-signal-status.js`. Records are keyed by
-offerId (`pswap:signals:v1`) with `crwnEligible`/`crwnCredited` fields
-already in the shape for a *future* CRWN reward engine to query — nothing
-credits or withdraws anything today; this was an explicit, spelled-out
-constraint in the original request (no CRWN withdrawals, ever, until a
-real reward engine exists).
+**Why this was smaller than it sounds**: `_shared.js`'s Deeptide/xrp.cafe
+fetch functions were ALREADY `shopSlug`-parameterized before this session
+touched anything (see that file's own comment on it) — plain browse,
+trait-filtering, and floor price genuinely needed zero new crawl
+infrastructure. What's new: `COLLECTIONS` config + `resolveCollection()`
+in `functions/api/pigeons.js` (reads a `collection` query param), and
+`state.collection` flowing through `api()`/`apiWithRetry()` in
+`static.js` automatically (the two shared query-builders every
+`/api/pigeons` call goes through — no other call site needed touching).
+`switchCollection()` in the client resets browse/sort/trait state,
+re-fetches, and toggles `body.collection-phnixs`/`-teddybg`, which
+redeclare `--cyan`/`--magenta`/`--pigeon-purple` (every existing rule
+already keyed off those, so the whole DATABASE UI re-themes — orange/red
+for PHN!X, green/white for TEDDY — with zero per-rule changes elsewhere).
 
-### 4. FL0CK redesigned as an account page
-Went through two iterations this session (first a small dropdown, then
-corrected to the current layout per direct follow-up feedback — see the
-commit history if you need the intermediate step). Current shape: a stack
-of separate `.sw-panel` boxes. **MY FL0CK** is its own expand/collapse box
-(starts *minimised* on landing — `state.flockCollapsed` defaults `true`)
-holding the real pigeon grid; clicking it toggles `#flockGridPanel`'s
-visibility directly, no re-fetch. Below it: MESSAGE !NB0X, 0FFERS, BUY
-$P!GE0NS (wired to the real popup), TRANSACT!0N H!ST0RY (C0M!NG S00N),
-$CRWN REWARDS (C0M!NG S00N) — MESSAGE !NB0X/0FFERS are inert placeholders
-with no destination decided yet, not marked C0M!NG S00N specifically (the
-user's own framing left them open). MY FL0CK's box was later stripped of
-its arrow indicator so it renders pixel-identical to the BUY $PIGEONS box
-next to it (same markup shape, only the label differs) — if you touch one
-of these boxes' markup, check whether the "should look the same" intent
-still holds before diverging them again.
+**Explicit scope cut, not an oversight** — browse only, no
+login/trading, per the user's own request ("we don't need to add all the
+scylla logins to it yet"):
+- No BUY N0W/0FFER/CANCEL/trustline banner for these two collections —
+  `pigeonsActionBoxHtml` returns `''` outright when
+  `!COLLECTION_META[state.collection].tradeable`. Those endpoints
+  (`swap-makeoffer-*`, `swap-buy-*`) assume `PIGEON_ISSUER`/`TAXON` and
+  would silently fail against the wrong collection if called.
+- No EDITION toggle, no `# 0R WALLET` search box (both depend on the
+  `$PIGEONS`-only number-map KV crawl — no equivalent crawl exists for
+  these collections) — hidden via `body.collection-browse-only`.
+- No AVG SALE PRICE / COND!T!ON line on cards, no PRICE/HISTORICAL SALES
+  sort options — no sale-history crawl exists for these collections
+  either (would otherwise show every single card as `COND!T!ON :: M!NT`,
+  which is guaranteed-wrong, not just missing).
+- TOP 100 HOLDERS / SALES HISTORY / CR0WN tabs are untouched — NOT
+  collection-aware, they still only ever show `$PIGEONS`' own data
+  regardless of which collection is selected in the DATABASE picker. If
+  a future session wants these working per-collection, that's real new
+  work (a Clio holder-scan and a sales crawl per collection, neither of
+  which exists yet for PHN!X/TEDDY).
+- Card headers ("P!GE0N #N") are collection-aware
+  (`collectionItemLabel()`), but the results-count status line, the
+  "SEARCHING $PIGEONS DATABASE" panel title, and a few empty-state
+  strings still hardcode "P!GE0NS" — known, deliberately left as
+  cosmetic debt rather than chasing every string this session.
 
-### 5. Popup conversions — BUY $PIGEONS and OFFER CONFIRMATION
-Both used to be `showScreen()` full-page navigations; both are now real
-popups matching the `.offer-confirm-panel` purple treatment, using the
-established multi-sub-state-toggled-by-display pattern (never an
-innerHTML rebuild — that caused a real duplicate-id bug earlier this
-session, since fixed). BUY $PIGEONS: entry/confirm/result as three
-sub-states in `#buySwapModal`, underlying quote/trustline/sign logic
-completely untouched, just the container. OFFER CONFIRMATION: now stays in
-the same popup after submitting instead of jumping to a separate result
-screen — swaps to a receipt sub-state in place, then (if the recipient has
-no site activity) chains straight into the ΣΚΥΛΛΑ://S!GNAL sub-state, all
-in the same `#offerConfirmModal`.
+### 3. DATABASE card redesign — listing price + action box
+Listing price (and "YOUR LISTING") moved off the purple action box onto
+the picture itself — `.thumb-listing-badge`, bottom-right corner,
+purple border for a real listing / cyan for your own (matches the site's
+existing "this is yours" colour language). The purple box itself is
+buttons/label only now, and — after the flex-related bugs in fixes #6/#7
+above were actually found and fixed — is a genuinely uniform size across
+every state: BUY N0W + 0FFER (exact 50/50 split, confirmed) if buyable,
+CANCEL (fills the box) if it's your own listing, a plain `!N Y0UR FL0CK`
+label if it's yours and unlisted, or just 0FFER (fills the box) otherwise.
 
-### 6. Exchange calculator overhaul
-Dropped the standalone "1 XRP = N $PIGEONS" readout; title/DEXSCREENER
-link/live price now collapse onto one line above the calculator itself.
-The calculator row is two plain type-in boxes joined by a swap arrow (⇄),
-no unit labels or "=" sign. Two-way (typing either side fills the other).
-$PIGEONS side accepts k/m shorthand (k expands to the full comma-grouped
-number, m stays literal — "123m" never expands, a $PIGEONS amount in the
-hundreds of millions doesn't need spelling out) and auto-compacts past
-100k to "Nk". XRP side capped at 100k, including computed results.
+### 4. Detail screen — BACK button + fullscreen lightbox
+`#backToBrowseBtnTop` used to float `position:fixed` at the screen's
+top-left corner, entirely independent of `P!GE0N #N`'s own (centered)
+position — could visually collide or misalign depending on scroll
+position. Now shares a row with it (`.detail-num-row`, `position:
+absolute` within that row, vertically centered against it) — confirmed
+aligned on both mobile and desktop. Lost the old "stays put while you
+scroll" behavior in exchange (the full-width BACK strip at the bottom of
+the traits/listings column is still there as the persistent option).
+
+Fullscreen lightbox (`#detailLightbox`) padding cut from `2rem` to
+`0.75rem` on all sizes (was already fixed to near-zero on mobile earlier
+in the session) — `object-fit:contain` already preserves the real aspect
+ratio, so padding was the only part of "doesn't fill the browser" still
+fixable without cropping. Confirmed live: image grew to 876×876 in a
+1200×900 viewport (was 836×836), the mathematical max for a square image
+without cropping.
+
+### 5. `cron-worker/` — new standalone deployable
+A Cloudflare Worker (not a Pages Function — Pages can't run scheduled
+triggers), on a `*/15 * * * *` Cron Trigger, bound to the same `coin` KV
+namespace as the Pages site, calling `maybeRefreshPigeonNumberMap`/
+`maybeRefreshHighSaleMap` on every tick — see its own section further
+down for deploy details. Fixes the same class of bug as last session's
+handoff documented for listings ("freshness depends on random traffic"),
+just for the number/high-sale index crawl instead.
+
+## Known open item — NOT fixed this session
+
+**"BUY N0W says CAN'T BUY YOUR OWN LISTING on a pigeon that isn't mine."**
+Reported by the user, could not be reproduced or root-caused this
+session — no live Xaman wallet session available in this environment.
+Traced the code path: `swap-buy-prepare.js` does a **fresh** XRPL
+`nft_sell_offers` lookup and compares the real on-chain seller against
+`payload.acct` from the session cookie (`offer.owner === buyer`) — this
+is a real server-side check, not client-trusted data, and nothing in it
+was touched this session. The client's `data-nftid` wiring
+(`pigeonsActionBoxHtml`/`wireResultClicks`' `.buy-scylla-btn` handler)
+also looks correct on inspection — each card's button carries its own
+real `p.nftId`, no shared/stale reference found. Most likely explanations
+if a future session picks this up: (a) the wallet actually connected via
+Xaman (check the trustline banner) really did list that specific pigeon,
+or (b) `state.currentDetail` going stale after PREV/NEXT navigation on
+the detail screen before clicking its own BUY button — **the next debug
+step should be checking `navigateDetail`'s handling of `state.
+currentDetail` around lines ~10500-10600, and/or asking the user to
+confirm which wallet shows as connected** before assuming client code is
+at fault.
 
 ## Gotchas — read before touching static.js again
 
-Everything from the prior handoff still applies; the two below are new or
-newly-reinforced this session.
+Everything from prior handoffs still applies (the `Σκύλλα` mixed-case
+one, gotcha 3 below, was hit again this session — see bug fix pattern
+above); the items below are new or newly-reinforced.
 
 0. **A CSS clipping bug can look identical to a "the data just isn't
-   there" bug.** Before assuming a dropdown/flyout is missing options or a
-   feature "isn't showing" something, check whether it's actually a
-   z-index/overflow clipping problem first — `document.elementFromPoint()`
-   at the suspect coordinates is the fastest way to prove it (see gotcha
-   #3 in the bug-fixes section above for the exact technique used this
-   session).
-0a. **`overflow-x:auto` with no `overflow-y` set clips vertically too, and
-    an explicit `overflow-y:visible` on the same element does NOT undo
-    that** — confirmed by direct testing, not assumption. If a dropdown
-    needs to escape a horizontally-scrolling ancestor, use
-    `position:fixed` with JS-computed coordinates, not a CSS-only fix.
+   there" bug** — `document.elementFromPoint()` is the fastest way to
+   prove it, same technique as last session.
+0a. **`overflow-x:auto` with no `overflow-y` set clips vertically too**,
+    confirmed again this session for `#topTabs`.
+0b. **A `position:fixed` element can behave like `position:absolute`
+    relative to some ancestor if that ancestor has `transform`/`filter`/
+    `backdrop-filter`/`perspective`** — see bug fix #3 above. Check the
+    full ancestor chain (not just the immediate parent) before assuming
+    fixed-positioning math is wrong.
+0c. **CSS cascade order, not just specificity, matters when two rules
+    tie on specificity** — see bug fix #5 above. A mobile override
+    declared earlier in the file than an unscoped base rule loses to that
+    base rule at ALL widths, media query notwithstanding, unless it uses
+    `!important` or higher specificity.
+0d. **A shared CSS class can silently break a second, unrelated UI
+    context when you redesign the first one** — see bug fixes #6/#7
+    above. Grep every usage of a class before changing its `display`/
+    `flex-direction`.
 1. **Never write a literal backtick anywhere inside the `SWAP_HTML`
-   template literal** — not even in a comment. `node --check` on the outer
-   file will NOT catch this reliably. Run the full render-and-check-the-
-   inner-script pipeline below before every push.
-2. **Escape sequences inside the client script need to survive TWO rounds**
-   of interpretation — any backslash meant to reach the browser as a real
-   escape must be written **doubled** in the source (`\\d`, `\\'`). Avoid
-   apostrophes/contractions in new user-facing strings entirely rather
-   than escaping. (Hit this again this session adding a temporary debug
-   `window.addEventListener('error', ...)` line — a single `\n` in the
-   outer source became a literal embedded newline in the served HTML,
-   breaking the inner script's string literal. Doubled it, fixed.)
+   template literal** — not even in a comment (hit this again this
+   session, inside a comment quoting a code snippet with backticks — use
+   plain text instead of markdown-style code spans in comments). Run the
+   full render-and-check pipeline below before every push.
+2. **Escape sequences inside the client script need to survive TWO
+   rounds of interpretation** — backslashes meant to reach the browser
+   doubled in the source.
 
    **Run this before every push that touches static.js**:
    ```
@@ -242,12 +356,8 @@ newly-reinforced this session.
    node --check rendered_inner.js
    npx --yes esbuild rendered_inner.js --outfile=rendered_inner_bundled.js
    ```
-   Also run this after any HTML restructuring (checks for duplicate ids
-   and `el.*` references with no matching registration, **plus a
-   registered-id-with-no-matching-html-id check added this session** — this
-   caught a real bug: a leftover `el.` registration + wiring block for a
-   dropdown whose markup had already been deleted, which threw a null
-   `.addEventListener` at page-load time):
+   Also run this after any HTML restructuring (dup ids, `el.*` references
+   with no matching registration, registered-id-with-no-matching-html-id):
    ```
    node -e "
    const fs = require('fs');
@@ -266,123 +376,103 @@ newly-reinforced this session.
    "
    ```
    Backtick count should be exactly 4. (`missing: ["body",
-   "getBoundingClientRect"]` is a known false positive, safe to ignore.)
-   `dup ids` and `registered-but-no-html-id` should both be `[]`.
+   "getBoundingClientRect"]` is a known false positive.) `dup ids` and
+   `registered-but-no-html-id` should both be `[]`.
 
    Clean up temp files after: `rm -f rendered.html rendered_inner.js
-   rendered_inner_bundled.js`. Before every push: also scan the diff for
+   rendered_inner_bundled.js`. Before every push: scan the diff for
    anything secret-looking (`git diff <file> | grep -iE
    "secret|api_key|apikey|seed"`) and confirm `git fetch && git log
    --oneline HEAD..origin/main` is empty.
-3. `Σκύλλα` must render mixed-case everywhere — check `text-transform` on
-   every ancestor, not just the string casing. When it needs to appear
-   inside plain uppercase text (e.g. a button label), wrap it in its own
-   `<span style="text-transform:none;">Σκύλλα</span>` and use `.innerHTML`,
-   never `.textContent`, at every reset point for that element.
-4. Cloudflare's per-request subrequest budget is real and hard — do the
+3. `Σκύλλα` must render mixed-case everywhere — wrap in
+   `<span style="text-transform:none;">Σκύλλα</span>`, escape the literal
+   source text too (don't type the all-caps Greek `ΣΚΥΛΛΑ` and rely on
+   CSS alone — confirmed live this session both the CSS AND the literal
+   source text were wrong in the S!GNAL prompt).
+4. Cloudflare's per-request subrequest budget is real — do the
    arithmetic before adding any new per-item enrichment call.
-   `scanFilteredCandidates` is bounded to 600 items for exactly this
-   reason.
-5. KV cache keys are versioned (`pswap:highsale:v3`, etc.) — bump the
-   suffix again if you ever change a cached value's shape.
-5a. **Cloudflare's free-tier KV cap is 1,000 writes/day — hit it live this
-    session** (see its own section above). If listings/offers/signals/etc.
-    silently stop appearing again, check the quota before assuming a code
-    regression.
-6. `NEVER trust a txjson the client sends back` — every `*-prepare.js` and
-   `*-payload.js` endpoint re-derives the transaction from scratch
-   server-side.
-7. `swap-offers-received.js` blind-scans every OTHER Pigeon the seller owns
-   (bounded, `OFFERS_RECEIVED_SCAN_CAP=45`) as a backfill — a wallet
-   holding more than ~45 untracked Pigeons could still miss a real offer.
-   `swap-listing-owned.js`'s own discovery scan has the same
-   `DISCOVERY_CAP=45` limitation, plus see bug fix #1 above for the
-   concurrency issue that was layered on top of it.
-8. `xaman-proxy` signs real transactions autonomously as the broker wallet
-   (`/broker-submit`, allowlisted to `NFTokenAcceptOffer`/`Payment` only).
-   Don't widen that allowlist without a specific reason.
-9. **When adding a new way to open `#screenDetail` from inside an overlay/
-   modal**, check the global "click outside closes detail" listener — it
-   excludes specific click targets by name, not by any general "was this
-   inside an overlay" logic. A new entry point needs its own explicit
-   exclusion.
+5. KV cache keys are versioned — bump the suffix if a cached shape
+   changes.
+5a. **Cloudflare's free-tier KV cap is 1,000 writes/day, account-wide** —
+    still true, still not fixed (see its own section above).
+6. `NEVER trust a txjson the client sends back` — every `*-prepare.js`/
+   `*-payload.js` endpoint re-derives it server-side.
+7. `swap-offers-received.js`/`swap-listing-owned.js` blind-scan bounded
+   at ~45 items as a backfill.
+8. `xaman-proxy` signs real transactions autonomously as the broker
+   wallet, allowlisted to `NFTokenAcceptOffer`/`Payment` only.
+9. **A new way to open `#screenDetail` from inside an overlay** needs its
+   own exclusion in the global "click outside closes detail" listener.
 10. **Popups stack, they don't nest CSS-wise** — every `position:fixed;
-    inset:0; z-index:1000` overlay on this page is independent, not a
-    child of another. When one hands off to the next, the FIRST must be
-    explicitly closed — nothing does that automatically just because a
-    second one opened on top. When a flow needs a THIRD (or more)
-    sequential state instead of a second popup, prefer adding another
-    static sub-div toggled by `display` inside the SAME modal (the pattern
-    `#offerConfirmModal` now uses for form → receipt → S!GNAL) over
-    stacking a whole new overlay — simpler to reason about and avoids the
-    close-the-previous-one bookkeeping entirely.
-11. **A shared function/variable used across sibling flows can't assume
-    it's only ever called from one of them** — grep every call site before
-    changing one, don't assume there's only the one you're looking at.
-12. **Multiple sub-states toggled by `display` inside one modal must reset
-    ALL of them, not just the one being shown, every time the modal (re)opens**
-    — otherwise reopening after a previous flow reached a later sub-state
-    (e.g. a receipt) leaves stale state visible underneath the fresh one.
+    inset:0; z-index:1000` overlay is independent; the first must be
+    explicitly closed when handing off to a second.
+11. **A shared function/variable (or, per this session, CSS class) used
+    across sibling flows can't assume it's only ever called from the one
+    you're looking at** — grep every call site / every usage before
+    changing one.
+12. **Multiple sub-states toggled by `display` inside one modal must
+    reset ALL of them, not just the one being shown, every time the
+    modal (re)opens.**
+13. **This browser-preview environment's screenshot tool frequently
+    fails with "the Browser pane is not displayed"** — not a bug in the
+    site, just whether the user has the pane open on their end at that
+    moment. `getBoundingClientRect()`/`getComputedStyle()` via
+    `javascript_tool` is the reliable fallback for verifying layout
+    changes when screenshots aren't available — used throughout this
+    session, works fine. Don't block real verification work on waiting
+    for a screenshot; measure instead, screenshot opportunistically when
+    it happens to work.
+14. **`document.querySelector('.someClass')` can match a decoy/
+    placeholder element that happens to share a class with the real
+    thing** — burned once this session: `.pigeon-img-box` also matches
+    `#targetPigeonImg` (an unrelated trade-builder placeholder that
+    appears earlier in the DOM). Scope selectors to a real container
+    (`#resultsArea .pigeon-img-box`) when testing/debugging, not just the
+    bare class.
 
 ## Deploy
 
 `git push origin main` from `soitbegins-portal-clone` → live on
-soitbegins.xyz, usually within ~1-2 minutes via Cloudflare Pages, no build
-step for the rest of the site (static.js's bundling by esbuild is the one
-exception — see gotcha #1-2). To watch live server-side logs while
-testing: `npx wrangler pages deployment tail --project-name
-soitbegins-portal` (needs a deployment id — `npx wrangler pages deployment
-list --project-name soitbegins-portal` first). `npx wrangler kv key get
-"<key>" --namespace-id 9169a9a4d1ae42bd9c020a4077bc643c --remote` reads
-production KV directly — useful for confirming whether something actually
-persisted vs. got lost to a race/quota issue before assuming a code bug.
+soitbegins.xyz, usually within ~1-2 minutes via Cloudflare Pages. To
+watch live server-side logs: `npx wrangler pages deployment tail
+--project-name soitbegins-portal`. `npx wrangler kv key get "<key>"
+--namespace-id 9169a9a4d1ae42bd9c020a4077bc643c --remote` reads
+production KV directly.
 
-Local preview: `.claude/launch.json` (in the STALE `Soitbegins.xyz` folder,
-not this repo — that's where the browser preview tool actually looks) has
-a `soitbegins-local` config that `cd`s into this repo and runs
-`wrangler pages dev` with the real `Σκύλλα`/`coin` KV bindings on port
-8799 — use this to verify UI changes live before pushing. Note: this local
-KV binding is the SAME production namespace (not a separate local-only
-store) — writes made while testing locally count against the same daily
-quota and are real.
+Local preview: `.claude/launch.json` **in THIS repo** (not the stale
+folder — that changed since the last handoff, this session added a
+`soitbegins-local` entry directly here) has a config that runs `wrangler
+pages dev . --port 8799` with the real `Σκύλλα`/`coin` KV bindings. Use
+this to verify UI changes live before pushing — this session verified
+essentially everything through it (real Deeptide API calls for PHN!X/
+TEDDY, real DOM measurements for every CSS fix). Note: this local KV
+binding is the SAME production namespace — writes made while testing
+locally are real and count against the same daily quota.
 
-`xaman-proxy` deploys separately on **Render** — a git push to `main`
-alone does NOT redeploy it. Untouched this session.
+`xaman-proxy` deploys separately on **Render** — untouched this session.
 
-## `cron-worker/` — third deployable in this repo, deploys separately too
+## `cron-worker/` — third deployable in this repo, deploys separately
 
-New this session. A standalone Cloudflare Worker (not a Pages Function —
-Pages can't run scheduled triggers), on a `*/15 * * * *` Cron Trigger,
-bound to the SAME `coin` KV namespace as the Pages site
-(`9169a9a4d1ae42bd9c020a4077bc643c`). It just calls
+A standalone Cloudflare Worker (Pages can't run scheduled triggers), on a
+`*/15 * * * *` Cron Trigger, bound to the same `coin` KV namespace as the
+Pages site (`9169a9a4d1ae42bd9c020a4077bc643c`). Calls
 `maybeRefreshPigeonNumberMap`/`maybeRefreshHighSaleMap` from
-`functions/_shared.js` (imported directly via a relative path — those two
-functions are self-contained, no other env/bindings needed) on every tick.
+`functions/_shared.js` on every tick, keeping both indexes warm
+independent of site traffic (previously only refreshed as a side effect
+of some visitor's own request noticing stale data).
 
-**Why it exists**: those two refreshes used to only run as a side effect of
-some visitor's own request noticing the cached data was stale — so
-freshness depended on random traffic; a quiet period could sit stale past
-the 6h window, and a pigeon number the crawl hadn't reached yet showed as
-"not indexed" to whoever searched for it first. This worker keeps both
-indexes warm independent of site traffic. The opportunistic refresh calls
-still in `functions/api/pigeons.js` are now redundant in the common case
-(the functions no-op if already fresh) but harmless — left in place, not
-worth removing for the marginal edge case where the cron worker itself is
-ever paused/deleted.
-
-**Deploys independently** — `git push origin main` does NOT touch it. To
-redeploy after editing `cron-worker/index.js`:
+**Deploys independently** — `git push origin main` does NOT touch it:
 ```
 cd cron-worker
 npx wrangler deploy
 ```
-Live at `https://soitbegins-cron.connor-quinn.workers.dev` (the URL is
-irrelevant — nothing calls it, it only runs on its own schedule). Check
-`npx wrangler tail soitbegins-cron` to watch it fire live, or
-`npx wrangler deployments list --name soitbegins-cron` for deploy history.
+Live at `https://soitbegins-cron.connor-quinn.workers.dev` (URL
+irrelevant, nothing calls it). `npx wrangler tail soitbegins-cron` to
+watch it fire live.
 
-**If this repo ever migrates the listings/sales/etc. maps off KV onto D1**
-(discussed but not started as of this session — see git log / conversation
-history around "KV write races" if picking this up cold), this worker's KV
-binding needs to become a D1 binding too, and the two refresh functions it
-calls will need to be the D1-backed versions once those exist.
+**If this repo ever migrates the listings/sales/etc. maps off KV onto
+D1** (discussed at length this session — see the "browse-only PHN!X/
+TEDDY" conversation and the KV-race-condition discussion earlier in the
+session history if picking this up cold — but NOT started, still exactly
+as fragile as before), this worker's KV binding needs to become a D1
+binding too.
