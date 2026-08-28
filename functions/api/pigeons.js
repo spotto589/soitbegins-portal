@@ -4,7 +4,7 @@ import {
   getHighSaleMap, maybeRefreshHighSaleMap,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue,
   resolveOwnerCollectionLive, fetchAllAccountNftsChecked, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, quotePigeonsForXrpDrops,
-  proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX,
+  proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG,
   getCachedCrownHolder, recomputeCrownHolder, CROWN_SNAPSHOT_MAX_AGE_SECONDS
 } from '../_shared.js';
 
@@ -26,6 +26,42 @@ const SORT_MAP = {
 
 function shortenAddr(addr) {
   return addr ? addr.slice(0, 9) + '...' + addr.slice(-4) : null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Browse-only Teddy Bear Gang / Phnix support. `tradeable: false` collections
+// get NONE of the $PIGEONS-specific machinery below (Scylla listings, real
+// $PIGEONS sales, the number-map/high-sale KV crawls that back number
+// search, EDITION range, and highest/avg-sale sort) — none of that exists
+// for these collections yet (no login/trading wired up, per explicit scope:
+// browse only for now). Every mode below either short-circuits early for a
+// non-tradeable collection or naturally returns empty results, since the
+// three $PIGEONS maps are just empty objects for them (Object.keys(map)
+// yields []) rather than crashing or silently mixing in another
+// collection's data. Deeptide's own listings/traits/floor endpoints ARE
+// already shopSlug-parameterized (see _shared.js's own comment on that),
+// so plain browse + trait filter + floor price genuinely work today with
+// no new crawl infrastructure — that's the whole reason "browse only" is
+// actually a small slice of this file, not all of it.
+const COLLECTIONS = {
+  pigeons: {
+    shopSlug: DEEPTIDE_PIGEON_SHOP_SLUG,
+    vanitySlug: 'xrpigeons',
+    xrpCafeUrl: 'https://xrp.cafe/collection/xrpigeons',
+    sizeApprox: PIGEON_COLLECTION_SIZE_APPROX,
+    tradeable: true
+  },
+  // Sizes are approximate collection totals (Deeptide's own listings
+  // endpoint reports the real total on every page; hardcoded here rather
+  // than fetched, same "approx" convention PIGEON_COLLECTION_SIZE_APPROX
+  // already uses, confirmed against a live listings call at the time this
+  // was added).
+  phnixs: { shopSlug: 'phnixs', vanitySlug: 'phnixs', xrpCafeUrl: 'https://xrp.cafe/collection/phnixs', sizeApprox: 1588, tradeable: false },
+  teddybg: { shopSlug: 'teddybg', vanitySlug: 'teddybg', xrpCafeUrl: 'https://xrp.cafe/collection/teddybg', sizeApprox: 2600, tradeable: false }
+};
+function resolveCollection(params) {
+  const key = params.get('collection');
+  return (key && COLLECTIONS[key]) || COLLECTIONS.pigeons;
 }
 
 // Deeptide's CDN images hotlink fine as-is; only ipfs.io URLs (the wallet-
@@ -111,15 +147,19 @@ export async function onRequestGet(context) {
 
   const url = new URL(request.url);
   const params = url.searchParams;
+  const coll = resolveCollection(params);
+  const tradeable = coll.tradeable;
 
   // Highest-ever sale price per token — one cheap KV read, reused for
   // every item below (cards' "HIGH SALE" line and the highest-sale sort).
-  const highSaleMap = await getHighSaleMap(env.coin);
+  // Empty for a non-tradeable collection (see COLLECTIONS' own comment) —
+  // no crawl exists for these yet, not this global $PIGEONS-collection map.
+  const highSaleMap = tradeable ? await getHighSaleMap(env.coin) : {};
 
   // Σκύλλα SWAP listings — one cheap KV read, reused for every item below
   // (the Σ LISTED badge on ordinary browse cards, and the LISTED filter's
   // own $PIGEONS sort). No per-card cost beyond this single read.
-  const scyllaListingsMap = await getSwapListingsMap(env.coin);
+  const scyllaListingsMap = tradeable ? await getSwapListingsMap(env.coin) : {};
 
   // Real $PIGEONS-denominated sales, straight from the same capped log the
   // SALES DATA tab already reads (getSwapSalesLog) — grouped here by NFT
@@ -127,7 +167,7 @@ export async function onRequestGet(context) {
   // to the XRP one instead of always reading 0. One KV read, reused for
   // every item below, same pattern as highSaleMap.
   const pigeonsSalesMap = {};
-  if (env.coin) {
+  if (tradeable && env.coin) {
     const salesLog = await getSwapSalesLog(env.coin);
     for (const sale of salesLog) {
       const value = parseFloat(sale.priceValue);
@@ -140,28 +180,34 @@ export async function onRequestGet(context) {
   }
 
   // Trait category/value/percentage discovery for the TRAITS stack filter
-  // UI — real, exact counts straight from Deeptide, not sampled.
+  // UI — real, exact counts straight from Deeptide, not sampled. Real for
+  // every collection (getTraitCategoriesWithPercent is shopSlug-keyed
+  // already), but trait EXAMPLE images (a representative photo per trait
+  // value) are a side effect of the $PIGEONS-only number-map crawl — no
+  // equivalent crawl exists for a non-tradeable collection yet, so those
+  // just come back empty rather than showing a Pigeon's photo on a Teddy/
+  // Phnix trait.
   if (params.get('traits') === '1') {
-    const [categories, rawExamples] = await Promise.all([
-      getTraitCategoriesWithPercent(env.coin),
-      getTraitExampleMap(env.coin)
-    ]);
-    // Same ipfs.io same-origin proxy every other image on this page goes
-    // through (displayImage) — raw ipfs.io URLs get Fetch-Metadata-blocked
-    // when hotlinked directly from the browser.
+    const categories = await getTraitCategoriesWithPercent(env.coin, coll.shopSlug, coll.sizeApprox);
     const examples = {};
-    for (const cat of Object.keys(rawExamples)) {
-      examples[cat] = {};
-      for (const val of Object.keys(rawExamples[cat])) {
-        examples[cat][val] = displayImage(rawExamples[cat][val]);
+    if (tradeable) {
+      const rawExamples = await getTraitExampleMap(env.coin);
+      // Same ipfs.io same-origin proxy every other image on this page goes
+      // through (displayImage) — raw ipfs.io URLs get Fetch-Metadata-blocked
+      // when hotlinked directly from the browser.
+      for (const cat of Object.keys(rawExamples)) {
+        examples[cat] = {};
+        for (const val of Object.keys(rawExamples[cat])) {
+          examples[cat][val] = displayImage(rawExamples[cat][val]);
+        }
       }
     }
-    const numberMapStats = await getPigeonNumberMapStats(env.coin);
-    context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
+    const numberMapStats = tradeable ? await getPigeonNumberMapStats(env.coin) : null;
+    if (tradeable) context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
     return json({
       categories,
       examples,
-      collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX,
+      collectionSizeApprox: coll.sizeApprox,
       numberMapStats
     });
   }
@@ -224,11 +270,15 @@ export async function onRequestGet(context) {
   // public collection-stats API is the only one of the two that tracks
   // those particular figures.
   if (params.get('stats') === '1') {
+    // holders (crownSnapshot) is a full Clio scan keyed to PIGEON_ISSUER/
+    // PIGEON_TAXON specifically — no equivalent scan exists for a
+    // non-tradeable collection yet, comes back null rather than showing
+    // $PIGEONS' own holder count on a different collection's tile.
     const [deeptideFloor, xrpCafeStats, crownSnapshot, recentSales] = await Promise.all([
-      fetchDeeptideRealFloor(),
-      fetchXrpCafeCollectionStats(env.coin),
-      getCachedCrownHolder(env.coin),
-      fetchDeeptideSalesHistory({ limit: 50, sort: 'date-desc' })
+      fetchDeeptideRealFloor(coll.shopSlug),
+      fetchXrpCafeCollectionStats(env.coin, coll.vanitySlug),
+      tradeable ? getCachedCrownHolder(env.coin) : Promise.resolve(null),
+      fetchDeeptideSalesHistory({ limit: 50, sort: 'date-desc', shopSlug: coll.shopSlug })
     ]);
     // 24h activity — real, computed from Deeptide's own sales feed (xrp.cafe's
     // collection API has no 24h-scoped fields of its own, just lifetime
@@ -239,12 +289,12 @@ export async function onRequestGet(context) {
     const traded24h = new Set(sales24h.map(s => s.nftId).filter(Boolean));
     const volume24hXrp = sales24h.reduce((sum, s) => sum + (s.priceXrp || 0), 0);
     return json({
-      items: PIGEON_COLLECTION_SIZE_APPROX,
+      items: coll.sizeApprox,
       holders: crownSnapshot ? crownSnapshot.holderCount : null,
       deeptideFloorXrp: deeptideFloor ? deeptideFloor.priceDrops / 1000000 : null,
       deeptideBuyUrl: deeptideFloor ? deeptideBuyUrl(deeptideFloor.nftId) : null,
       xrpCafeFloorXrp: xrpCafeStats && xrpCafeStats.floorDrops !== null ? xrpCafeStats.floorDrops / 1000000 : null,
-      xrpCafeUrl: 'https://xrp.cafe/collection/xrpigeons',
+      xrpCafeUrl: coll.xrpCafeUrl,
       totalVolumeXrp: xrpCafeStats && xrpCafeStats.totalVolumeDrops !== null ? xrpCafeStats.totalVolumeDrops / 1000000 : null,
       listedPercent: xrpCafeStats ? xrpCafeStats.percentListed : null,
       scyllaListedCount: Object.keys(scyllaListingsMap).length,
@@ -486,7 +536,7 @@ export async function onRequestGet(context) {
     const items = [];
     let exhausted = false;
     while (items.length < FILTERED_SCAN_CAP_ITEMS) {
-      const page = await fetchDeeptideListings({ skip, limit: perPage, sort: 'rarity-asc', traits: traitFilters });
+      const page = await fetchDeeptideListings({ skip, limit: perPage, sort: 'rarity-asc', traits: traitFilters, shopSlug: coll.shopSlug });
       if (!page.items.length) { exhausted = true; break; }
       items.push(...page.items);
       skip += page.items.length;
@@ -671,7 +721,7 @@ export async function onRequestGet(context) {
     let exhausted = false;
     let rawPagesScanned = 0;
     while (matched.length < limit && rawPagesScanned < 10) {
-      const page = await fetchDeeptideListings({ skip: cursor, limit: 60, sort: underlyingSort, traits: filters });
+      const page = await fetchDeeptideListings({ skip: cursor, limit: 60, sort: underlyingSort, traits: filters, shopSlug: coll.shopSlug });
       rawPagesScanned++;
       if (!page.items.length) { exhausted = true; break; }
       for (const it of page.items) {
@@ -761,9 +811,9 @@ export async function onRequestGet(context) {
     const deeptideSort = crossListing === 'asc' ? 'price-asc' : 'price-desc';
     if (skip > 0) {
       // Already exhausted the bounded, correctly-sorted set below.
-      return json({ items: [], total: 0, hasMore: false, skip, limit: 0, collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX });
+      return json({ items: [], total: 0, hasMore: false, skip, limit: 0, collectionSizeApprox: coll.sizeApprox });
     }
-    const page = await fetchDeeptideListings({ skip: 0, limit: 60, sort: deeptideSort, traits: filters });
+    const page = await fetchDeeptideListings({ skip: 0, limit: 60, sort: deeptideSort, traits: filters, shopSlug: coll.shopSlug });
     const realCandidates = page.items.filter(it => typeof it.priceDrops === 'number');
     const withCross = await Promise.all(realCandidates.map(async (it) => {
       const xc = await fetchXrpCafeNftListing(env.coin, it.nftId);
@@ -799,12 +849,19 @@ export async function onRequestGet(context) {
   const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
   const sort = SORT_MAP[params.get('sort')] || 'rarity-asc';
 
-  const page = await fetchDeeptideListings({ skip, limit, sort, traits: filters });
+  const page = await fetchDeeptideListings({ skip, limit, sort, traits: filters, shopSlug: coll.shopSlug });
   const items = page.items.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
+  // attachListings is per-nftId (xrp.cafe's own token lookup), not
+  // collection-scoped by anything that needs coll here — safe as-is for
+  // every collection, tradeable or not (still useful: it's real
+  // marketplace listing data, shown on the card regardless of whether
+  // Σκύλλα's own BUY N0W/0FFER apply).
   await attachListings(env.coin, items);
 
-  context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
-  context.waitUntil(maybeRefreshHighSaleMap(env.coin));
+  if (tradeable) {
+    context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
+    context.waitUntil(maybeRefreshHighSaleMap(env.coin));
+  }
 
   return json({
     items,
@@ -812,6 +869,6 @@ export async function onRequestGet(context) {
     hasMore: page.hasMore,
     skip,
     limit,
-    collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
+    collectionSizeApprox: coll.sizeApprox
   });
 }

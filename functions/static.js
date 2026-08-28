@@ -84,6 +84,49 @@ const SWAP_HTML = `<!DOCTYPE html>
        each control sizing to its own content. */
     --ctrl-w:190px;
   }
+  /* PHN!X / TEDDY themes — see switchCollection() in the client script,
+     which toggles these classes on <body>. Re-declares the same accent
+     variables the whole DATABASE UI already keys off (--cyan is SORT BY's
+     active state + most card hover borders, --magenta is FILTER BY
+     TRAITS' + card select-toggle's, --pigeon-purple is the $PIGEONS coin
+     colour specifically) rather than inventing new variables nothing
+     reads yet — every existing rule that uses these just picks up the
+     new colours automatically, no per-rule changes needed anywhere else. */
+  body.collection-phnixs{
+    --cyan:#ff8c1a;
+    --cyan-dim:rgba(255,140,26,0.4);
+    --cyan-faint:rgba(255,140,26,0.12);
+    --cyan-glow:rgba(255,140,26,0.35);
+    --magenta:#ff3b3b;
+    --magenta-dim:rgba(255,59,59,0.4);
+    --magenta-faint:rgba(255,59,59,0.12);
+    --magenta-glow:rgba(255,59,59,0.4);
+    --pigeon-purple:#ff5a1f;
+    --pigeon-purple-dim:rgba(255,90,31,0.4);
+    --pigeon-purple-faint:rgba(255,90,31,0.12);
+    --pigeon-purple-glow:rgba(255,90,31,0.4);
+  }
+  body.collection-teddybg{
+    --cyan:#2f9e44;
+    --cyan-dim:rgba(47,158,68,0.4);
+    --cyan-faint:rgba(47,158,68,0.12);
+    --cyan-glow:rgba(47,158,68,0.35);
+    --magenta:#f5f5f0;
+    --magenta-dim:rgba(245,245,240,0.4);
+    --magenta-faint:rgba(245,245,240,0.12);
+    --magenta-glow:rgba(245,245,240,0.4);
+    --pigeon-purple:#2f9e44;
+    --pigeon-purple-dim:rgba(47,158,68,0.4);
+    --pigeon-purple-faint:rgba(47,158,68,0.12);
+    --pigeon-purple-glow:rgba(47,158,68,0.4);
+  }
+  /* EDITION (1-1515/1516-3015) and the # 0R WALLET search box both depend
+     on the $PIGEONS-only number-map crawl (search resolves a number via
+     that map; EDITION is a hardcoded $PIGEONS mint-era number range) —
+     neither has an equivalent for a browse-only collection, so both are
+     just not offered rather than sitting there silently broken. */
+  body.collection-browse-only .edition-toggle,
+  body.collection-browse-only .search-row{ display:none; }
 
   *{ margin:0; padding:0; box-sizing:border-box; }
   html, body{ min-height:100%; background:var(--bg); }
@@ -3832,10 +3875,10 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="traits-hover-wrap tab-db-select" id="dbSelectWrap">
           <span class="trait-row-label" id="dbSelectLabel">P!GE0NS ▾</span>
           <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
-            <div class="db-option db-option-active">P!GE0NS</div>
+            <div class="db-option db-option-active" data-collection="pigeons">P!GE0NS</div>
             <div class="db-option db-option-disabled db-option-fuzzy">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
-            <div class="db-option db-option-disabled db-option-phnix">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
-            <div class="db-option db-option-disabled db-option-teddy">TEDDY <span class="db-soon">C0M!NG S00N</span></div>
+            <div class="db-option db-option-phnix" data-collection="phnixs">PHN!X</div>
+            <div class="db-option db-option-teddy" data-collection="teddybg">TEDDY</div>
           </div>
         </div>
       </button>
@@ -4943,6 +4986,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // ---- Client-side state ----
   var PAGE_SIZE = 36;
   var state = {
+    collection: 'pigeons',     // 'pigeons' | 'phnixs' | 'teddybg' — see COLLECTION SELECTION (dbSelectFlyout) and switchCollection()
     scope: null,              // null (whole collection) or { wallet, ownerShort }
     flockCollapsed: true,     // MY FL0CK account-box starts minimised on FL0CK — click toggles (see updateSearchPanelTitleForPaws)
     skip: 0,                  // how many items already loaded, for infinite scroll
@@ -5460,7 +5504,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     scrollTabStripIntoView();
   }
 
+  // collection merged in here once (state.collection defaults to
+  // 'pigeons') rather than added to every individual call site across the
+  // file — api()/apiWithRetry() below are the only two places any
+  // /api/pigeons request actually goes out.
   function api(params){
+    params = Object.assign({ collection: state.collection }, params);
     var qs = Object.keys(params)
       .filter(function(k){ return params[k] !== undefined && params[k] !== null; })
       .map(function(k){ return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
@@ -5477,6 +5526,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // "sometimes one shows and not the other." One retry before giving up.
   function apiWithRetry(params, retriesLeft){
     if (retriesLeft === undefined) retriesLeft = 1;
+    params = Object.assign({ collection: state.collection }, params);
     var qs = Object.keys(params)
       .filter(function(k){ return params[k] !== undefined && params[k] !== null; })
       .map(function(k){ return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
@@ -6307,6 +6357,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // if it's yours and unlisted — never a variable-height stack of price/
   // countdown/button lines.
   function pigeonsActionBoxHtml(p){
+    // Browse only for PHN!X/TEDDY (see COLLECTION_META/switchCollection) —
+    // BUY N0W/0FFER/CANCEL all call $PIGEONS-specific endpoints
+    // (swap-makeoffer-*, swap-buy-*) that assume PIGEON_ISSUER/TAXON, no
+    // login/trustline is wired up for these collections either. No box at
+    // all rather than buttons that would silently fail against the wrong
+    // collection.
+    if (!COLLECTION_META[state.collection].tradeable) return '';
     if (p.owner === MY_WALLET){
       // Full unscoped DATABASE browsing doesn't have myListedData/
       // offersByNftId loaded (only the SH0W MY P!GE0NS scope explicitly
@@ -6417,7 +6474,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-row">' +
         '<div class="result-row-left">' +
-          '<div class="result-num">P!GE0N ' + num + '</div>' +
+          '<div class="result-num">' + collectionItemLabel() + ' ' + num + '</div>' +
           '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
             img +
             '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
@@ -6448,8 +6505,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     // this reuses the exact same avgSaleXrp null-check already driving
     // whether AVG SALE PR!CE shows at all). Both lines render label/value
     // stacked (.result-stat-stack), not side by side on one line.
+    // No sale-history crawl exists for a browse-only collection at all
+    // (see COLLECTION_META) — avgSaleXrp is always null for one, which
+    // would otherwise show every single card as COND!T!ON :: M!NT
+    // regardless of its real history. Blank instead of a guaranteed-wrong
+    // label.
     var hasAvgSale = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
-    var avgSaleLine = hasAvgSale
+    var avgSaleLine = !COLLECTION_META[state.collection].tradeable ? '' : hasAvgSale
       ? '<div class="result-rarity-line result-stat-stack"><span class="stat-label">AVG SALE PR!CE ::</span><span class="stat-value">' + greenNum(fmtXrp(p.avgSaleXrp)) + ' XRP</span></div>'
       : '<div class="result-rarity-line result-stat-stack"><span class="stat-label">COND!T!ON ::</span><span class="stat-value">M!NT</span></div>';
     var offerCtxCard = isOwnWalletScope();
@@ -6468,7 +6530,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? '<div class="thumb-listing-badge' + (p.owner === MY_WALLET ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>'
       : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      '<div class="result-num">P!GE0N ' + num + '</div>' +
+      '<div class="result-num">' + collectionItemLabel() + ' ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         img +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
@@ -9628,9 +9690,61 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (el.dbSelectFlyout.style.display === 'block') closeDbSelectFlyout();
     else openDbSelectFlyout();
   });
+  // COLLECTION SELECTION — real for P!GE0NS/PHN!X/TEDDY now (FUZZY stays
+  // .db-option-disabled, no shopSlug for it yet). Browse only for the two
+  // new ones: no BUY N0W/0FFER/trustline/login, matching the explicit
+  // scope this shipped with — see COLLECTION_META's own tradeable flag,
+  // which everything else in this function keys off.
+  var COLLECTION_META = {
+    pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true },
+    phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: false },
+    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false }
+  };
+  // Card headers ("P!GE0N #1921") were hardcoded to say P!GE0N regardless
+  // of collection — harmless-looking but wrong once PHN!X/TEDDY actually
+  // load real items.
+  function collectionItemLabel(){
+    return COLLECTION_META[state.collection].itemLabel;
+  }
+  function switchCollection(newCollection){
+    closeDbSelectFlyout();
+    var meta = COLLECTION_META[newCollection];
+    if (!meta || newCollection === state.collection) return;
+    state.collection = newCollection;
+    el.dbSelectLabel.textContent = meta.label + ' ▾';
+    el.dbSelectFlyout.querySelectorAll('.db-option[data-collection]').forEach(function(opt){
+      opt.classList.toggle('db-option-active', opt.getAttribute('data-collection') === newCollection);
+    });
+    // Theme colours (--pigeon-purple etc.) swap via this class — see the
+    // :root override block in the CSS. Cleared first so switching PHN!X
+    // -> TEDDY (or either -> P!GE0NS) never leaves the wrong one applied.
+    document.body.classList.remove('collection-phnixs', 'collection-teddybg');
+    if (!meta.tradeable) document.body.classList.add('collection-' + newCollection);
+    document.body.classList.toggle('collection-browse-only', !meta.tradeable);
+    // FL00R $P!GE0NS (real Scylla listings sorted by real price) is a
+    // $PIGEONS-only concept — no listings exist for a browse-only
+    // collection at all. Falls back to plain rarity; restored on the way
+    // back to P!GE0NS so its own landing experience is unchanged.
+    state.sort = meta.tradeable ? 'SCYLLA_PRICE_ASC' : 'RARITY_ASC';
+    state.scyllaListedOnly = meta.tradeable;
+    el.statScyllaListedTile.classList.toggle('scylla-active', state.scyllaListedOnly);
+    state.edition = 'ALL';
+    state.traitFilters = [];
+    state.traitCategories = null;
+    state.traitValuesCache = {};
+    state.scope = null;
+    renderTraitRows();
+    renderSortTag();
+    state.statsLoaded = false;
+    loadCollectionStats();
+    ensureTraitsLoaded();
+    runQuery();
+  }
   el.dbSelectFlyout.addEventListener('click', function(e){
     e.stopPropagation();
-    closeDbSelectFlyout();
+    var opt = e.target.closest('.db-option[data-collection]');
+    if (opt) switchCollection(opt.getAttribute('data-collection'));
+    else closeDbSelectFlyout();
   });
 
 
@@ -9958,7 +10072,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // for the single-column layout this renders into.
   function renderSortFlyoutList(){
     var rows = [];
+    // PR!CE (Scylla/$PIGEONS listings + AVG SALE) and H!ST0R!CAL SALES
+    // both read from KV maps that are empty for a browse-only collection
+    // (see COLLECTION_META) — RAR!TY/ALPHABET!CAL are the only categories
+    // that're just a plain Deeptide sort, so those are all that's offered.
+    var tradeable = COLLECTION_META[state.collection].tradeable;
     Object.keys(SORT_CATEGORIES).forEach(function(cat){
+      if (!tradeable && cat !== 'RAR!TY' && cat !== 'ALPHABET!CAL') return;
       SORT_CATEGORIES[cat].forEach(function(o){
         rows.push({ cat: cat, value: o.value, label: o.label, disabled: o.disabled });
       });
