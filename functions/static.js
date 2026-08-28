@@ -1099,6 +1099,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--grey);
     text-transform:uppercase;
     flex:0 0 auto;
+    /* This is the actual tap target for SORT BY / FILTER BY TRAITS / the
+       DATABASE collection picker (all three share this class) — it's a
+       plain <span>, not a real <button>, so it has none of a button's
+       default protection against a tap being interpreted as a text
+       selection instead of a click. Confirmed live on a real touch tap
+       (not just a synthetic dispatch): the label's text highlighted blue
+       and no click handler fired at all — this is what "F!LTER BY
+       TRA!TS is broken, can't be used" on mobile actually was. */
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
   }
   .traits-hover-wrap{ position:relative; display:inline-flex; }
   .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.75em 1em; font-size:15px; }
@@ -1161,11 +1172,93 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* S0RT BY only (see #sortFlyout's own class in the HTML) — it has no
      categories any more (just one flat list of every option, built by
-     renderSortFlyoutList), so it never needs the cats+vals split below,
-     at any width: a plain single-column list, narrower than the two-pane
-     layout since there's no second column to leave room for. */
+     renderSortFlyoutList), so it never needs the cats+vals split below.
+     Mobile: a compact single-column popup, narrower than the two-pane
+     layout since there's no second column to leave room for (this width
+     is later widened by .flyout-flat's own desktop rule further down —
+     kept here, not inside the max-width:700px block, so it's the
+     fallback for anything between that and the min-width:701px desktop
+     rule, though in practice those two breakpoints are contiguous). */
   .traits-flyout.flyout-flat{ width:260px; }
   .flyout-flat .traits-flyout-vals{ position:static; width:100%; max-height:380px; overflow-y:auto; padding:0.4rem; }
+  /* Desktop only: S0RT BY becomes a permanently-visible horizontal strip
+     of every option (all directly clickable, no extra navigation step)
+     instead of a click-to-open popup — PREV/NEXT (#sortScrollPrevBtn/
+     -NextBtn, see .hscroll-arrow below) scroll it if there are more
+     options than fit. !important on display since openSortFlyout()/
+     closeSortFlyout() still toggle a plain inline display:block/none
+     (harmless now — clicking the S0RT BY label still runs that JS, it
+     just has no visible effect here since this always wins). Scoped to
+     min-width:701px specifically (not left as the unscoped base rule)
+     so its higher selector specificity — #sortFlyout.flyout-flat beats
+     the plain #sortFlyout the mobile block above uses — can't leak into
+     and override mobile's click-to-open list. */
+  @media (min-width:701px){
+    /* Flex items default to min-width:auto, not 0 — meaning even with
+       overflow-x:auto set, a flex child refuses to shrink below its
+       CONTENT's own natural width, so it never actually clips/scrolls,
+       it just keeps growing and pushes the whole page wider instead
+       (confirmed live: docScrollWidth blew out to 2121px on a 1200px
+       viewport). min-width:0 on every level of this flex chain is what
+       actually lets the row stop growing and start scrolling instead —
+       same underlying CSS gotcha as the earlier results-header-row grid
+       overflow fix (minmax(0,1fr) there, min-width:0 here — same spec
+       rule, two different display types). */
+    #sortDropWrap{ width:100%; max-width:100%; display:flex; min-width:0; }
+    /* #sortDropWrap .trait-row-label's own width:100% (elsewhere in this
+       file) was sized for the old fixed-190px pill, where a centered
+       full-width label made sense — at this new full-row width it
+       stretched to fill the ENTIRE row instead, squeezing the strip
+       next to it down to nothing (confirmed live: the strip's own width
+       measured 0). It only needs its natural size here. */
+    #sortDropWrap .trait-row-label{ width:auto; flex:0 0 auto; }
+    #sortFlyout.flyout-flat{
+      display:flex !important;
+      position:static;
+      flex-direction:row;
+      align-items:center;
+      flex:1 1 auto;
+      min-width:0;
+      width:auto;
+      max-height:none;
+      background:transparent;
+      border:none;
+      box-shadow:none;
+      padding:0;
+      gap:0.4rem;
+    }
+    .flyout-flat .traits-flyout-vals{
+      display:flex;
+      flex-direction:row;
+      flex-wrap:nowrap;
+      overflow-x:auto;
+      scroll-behavior:smooth;
+      gap:0.4rem;
+      max-height:none;
+      padding:0.2rem;
+      flex:1 1 auto;
+      min-width:0;
+      width:auto;
+    }
+    .flyout-flat .traits-flyout-val{ width:auto; flex:0 0 auto; white-space:nowrap; margin-bottom:0; }
+    .hscroll-arrow{
+      flex:0 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:2em;
+      height:2em;
+      background:rgba(40,10,95,0.6);
+      border:1px solid var(--border-mid);
+      border-radius:50%;
+      color:var(--white);
+      font-size:14px;
+      cursor:pointer;
+      transition:border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    }
+    .hscroll-arrow:hover{ border-color:var(--cyan-dim); background:rgba(25,5,70,0.85); transform:scale(1.06); }
+    .hscroll-arrow:active{ transform:scale(0.96); }
+  }
   /* Hidden on desktop — only shown (see the max-width:700px block below)
      once a category's been tapped on mobile, to get back to the category
      list. F!LTER BY TRA!TS only (see traitsFlyoutBack) — S0RT BY has no
@@ -1203,14 +1296,45 @@ const SWAP_HTML = `<!DOCTYPE html>
        inline in the page flow. */
     #sortDropWrap, #traitsHoverWrap{ display:flex; flex-direction:column; width:100%; }
     #sortFlyout, #traitsFlyout{ position:static; width:100%; max-height:none; box-shadow:none; margin-top:0.4rem; }
-    .traits-flyout-cats{ width:100%; border-right:none; }
+    /* flex-direction:column, not the desktop base rule's row — categories
+       stay a vertical list here (this IS the "list down" accordion), not
+       the horizontal strip desktop gets. The base rule's display:flex/
+       row would otherwise leak through unchanged at this width too,
+       since nothing here previously reset it back (confirmed live). */
+    /* !important on display/flex-direction — .traits-flyout-cats' own
+       desktop base rule (elsewhere in this file, equal specificity)
+       is declared LATER in the file than this media query block, so
+       without !important it silently wins here regardless of viewport
+       (confirmed live — same shape of bug as #traitsFlyoutCats
+       .traits-flyout-cat's own !important above). */
+    .traits-flyout-cats{ display:flex !important; flex-direction:column !important; overflow-x:visible; width:100%; border-right:none; border-bottom:none; }
+    /* #traitsFlyoutCats .traits-flyout-cat's own width:var(--ctrl-w) (a
+       fixed 190px, elsewhere in this file) left a gap of empty space to
+       the right of every category in this vertical list at mobile
+       widths — full width instead, same as every other mobile list item
+       on this page. .traits-flyout-cat's own base rule also switched to
+       width:auto/nowrap for desktop's horizontal chips; back to a plain
+       block row here. */
+    /* !important on width/text-align — #traitsFlyoutCats .traits-flyout-
+       cat's OTHER, unrelated rule (its ADD TRAITS colour override,
+       elsewhere in this file — same id+class, so equal specificity) sets
+       width:var(--ctrl-w)/text-align:center and is declared later in the
+       file than this block, so without !important it would silently win
+       here regardless of this media query (confirmed live — this exact
+       shape of bug already bit the SORT BY row above, see its own
+       !important). */
+    #traitsFlyoutCats .traits-flyout-cat{ width:100% !important; text-align:left !important; flex:0 0 auto; white-space:normal; border-right:none; border-bottom:1px solid var(--border-dim); }
     .traits-flyout-vals{ position:static; width:100%; padding:0.6rem 0.9rem; }
     /* :not(.flyout-flat) — S0RT BY (see the class above) has no category
        list of its own, so its single flat list must stay visible by
        default here instead of starting hidden like F!LTER BY TRA!TS' vals
        pane does before a category's been tapped. */
     .traits-flyout:not(.flyout-flat):not(.flyout-drilled) .traits-flyout-vals{ display:none; }
-    .traits-flyout.flyout-drilled .traits-flyout-cats{ display:none; }
+    /* !important — needed to beat .traits-flyout-cats' own !important a
+       few lines up (that one exists to beat the desktop base rule, see
+       its comment; !important vs !important, higher specificity wins,
+       and this selector has three classes to that rule's one). */
+    .traits-flyout.flyout-drilled .traits-flyout-cats{ display:none !important; }
     .traits-flyout.flyout-drilled .flyout-back-btn{ display:block; }
     /* The actual "pops up" — not anchored to the trigger's own position
        at all (unlike the inline category list above, which is a normal
@@ -1228,40 +1352,46 @@ const SWAP_HTML = `<!DOCTYPE html>
       z-index:1000;
       margin-top:0;
     }
+    /* Desktop-only scroll arrows (see the new desktop block below) —
+       mobile keeps the existing click-to-open dropdowns, no scrolling
+       strip to flank here. */
+    .hscroll-arrow{ display:none; }
   }
   .traits-flyout-cats{
-    width:42%;
-    overflow-y:auto;
-    border-right:1px solid var(--border-dim);
+    display:flex;
+    flex-direction:row;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    scroll-behavior:smooth;
+    width:100%;
+    border-right:none;
+    border-bottom:1px solid var(--border-dim);
   }
-  /* Absolutely positioned (relative to .traits-flyout, already the
-     positioned ancestor) instead of a plain flex column sharing the
-     row's height. A shared column pinned to the top meant hovering a
-     category near the BOTTOM of a short list (e.g. H!ST0R!CAL SALES)
-     put its one value at the TOP of this pane — reaching it meant
-     dragging the mouse diagonally up-and-right, which is easy to
-     overshoot out of both hover zones. positionFlyoutVals() sets top
-     to match the hovered category button's own vertical position on
-     every hover/click, so the value list always starts directly
-     horizontal from wherever you're pointing and only lists downward
-     from there. */
+  /* Sits below the horizontal category row above now, not to its right —
+     categories used to be a vertical column (hovering one positioned this
+     pane absolutely, level with wherever the mouse was, via
+     positionFlyoutVals()); now they're a horizontal strip, so there's no
+     "vertical position of the hovered category" left to align to. Plain
+     static flow underneath instead. positionFlyoutVals() is still called
+     (harmless — it just sets an unused inline top on an element that
+     ignores top while position:static). */
   .traits-flyout-vals{
-    position:absolute;
-    top:0;
-    left:42%;
-    width:58%;
-    max-height:100%;
+    position:static;
+    width:100%;
+    max-height:320px;
     overflow-y:auto;
     padding:0.6rem;
     box-sizing:border-box;
   }
   .traits-flyout-cat{
     display:block;
-    width:100%;
+    width:auto;
+    flex:0 0 auto;
+    white-space:nowrap;
     text-align:left;
     background:transparent;
     border:none;
-    border-bottom:1px solid var(--border-dim);
+    border-right:1px solid var(--border-dim);
     color:var(--grey);
     font-family:var(--font-mono);
     font-size:13px;
@@ -4004,7 +4134,15 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="traits-hover-wrap" id="sortDropWrap">
                 <span class="trait-row-label" id="sortDropLabel">S0RT BY <span class="thl-arrow">▾</span></span>
                 <div class="traits-flyout flyout-flat" id="sortFlyout" style="display:none;">
+                  <!-- Desktop only (see .flyout-flat's own CSS) — a
+                       permanently-visible horizontal strip of every sort
+                       option instead of a click-to-open dropdown, with
+                       these two flanking it to scroll along if there are
+                       more options than fit. Hidden on mobile, which
+                       keeps the click-to-open vertical list. -->
+                  <button type="button" class="hscroll-arrow hscroll-arrow-prev" id="sortScrollPrevBtn" aria-label="PREV!0US">◂</button>
                   <div class="traits-flyout-vals" id="sortFlyoutVals"></div>
+                  <button type="button" class="hscroll-arrow hscroll-arrow-next" id="sortScrollNextBtn" aria-label="NEXT">▸</button>
                 </div>
               </div>
               <div id="sortRows"></div>
@@ -4019,7 +4157,14 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <span class="trait-row-label" id="traitsHoverLabel">F!LTER BY TRA!TS <span class="thl-arrow">▾</span></span>
                 <div class="traits-flyout" id="traitsFlyout" style="display:none;">
                   <button type="button" class="flyout-back-btn" id="traitsFlyoutBack">◂ CATEG0R!ES</button>
+                  <!-- Desktop only (see .traits-flyout-cats' own CSS) — a
+                       horizontal row of every trait category (Background,
+                       Eyewear, ...) instead of the vertical list mobile
+                       still uses, with these flanking it to scroll along
+                       if there are more categories than fit. -->
+                  <button type="button" class="hscroll-arrow hscroll-arrow-prev cats-scroll-arrow" id="traitsCatsScrollPrevBtn" aria-label="PREV!0US">◂</button>
                   <div class="traits-flyout-cats" id="traitsFlyoutCats"></div>
+                  <button type="button" class="hscroll-arrow hscroll-arrow-next cats-scroll-arrow" id="traitsCatsScrollNextBtn" aria-label="NEXT">▸</button>
                   <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
                 </div>
               </div>
@@ -4780,7 +4925,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals',
+  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
@@ -4795,7 +4940,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statsCarousel','statsCarouselDots','statsPrevBtn','statsNextBtn',
    'statTraded24h','statVolume24h','statSalesTile','statSales24h','statBurntLink',
    'traitRows','clearTraitsBtn',
-   'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals','traitsFlyoutBack',
+   'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals','traitsFlyoutBack','traitsCatsScrollPrevBtn','traitsCatsScrollNextBtn',
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
@@ -7010,6 +7155,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.traitsFlyout.classList.remove('flyout-drilled');
     restoreTraitsFlyout();
   });
+  // Desktop's horizontal category row (see .traits-flyout-cats' own CSS,
+  // min-width:701px) — scroll it along if there are more categories than
+  // fit. No-op on mobile (the row's vertical there, arrows hidden).
+  el.traitsCatsScrollPrevBtn.addEventListener('click', function(){ el.traitsFlyoutCats.scrollBy({ left: -180, behavior: 'smooth' }); });
+  el.traitsCatsScrollNextBtn.addEventListener('click', function(){ el.traitsFlyoutCats.scrollBy({ left: 180, behavior: 'smooth' }); });
   el.traitsFlyoutVals.addEventListener('click', function(e){
     var valBtn = e.target.closest('.traits-flyout-val');
     if (!valBtn) return;
@@ -9794,6 +9944,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     applySort(valBtn.getAttribute('data-value'));
     closeSortFlyout();
   });
+  // Desktop's horizontal strip (see #sortFlyout.flyout-flat's own CSS,
+  // min-width:701px) is always visible, not click-to-open — the list has
+  // to actually be in the DOM from page load for that to show anything,
+  // not just whenever openSortFlyout() has been called. Harmless on
+  // mobile too (the strip stays display:none there until opened).
+  renderSortFlyoutList();
+  el.sortScrollPrevBtn.addEventListener('click', function(){ el.sortFlyoutVals.scrollBy({ left: -220, behavior: 'smooth' }); });
+  el.sortScrollNextBtn.addEventListener('click', function(){ el.sortFlyoutVals.scrollBy({ left: 220, behavior: 'smooth' }); });
   renderSortTag();
   // Reflects the default scyllaListedOnly:true landing state — every
   // other place this class gets toggled goes through setScyllaListedOnly
