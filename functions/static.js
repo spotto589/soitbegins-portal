@@ -1233,6 +1233,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       flex-wrap:nowrap;
       overflow-x:auto;
       scroll-behavior:smooth;
+      /* PREV/NEXT already cover scrolling — the native scrollbar was just
+         visual clutter under the strip. */
+      scrollbar-width:none;
+      -ms-overflow-style:none;
       gap:0.4rem;
       max-height:none;
       padding:0.2rem;
@@ -1240,7 +1244,25 @@ const SWAP_HTML = `<!DOCTYPE html>
       min-width:0;
       width:auto;
     }
-    .flyout-flat .traits-flyout-val{ width:auto; flex:0 0 auto; white-space:nowrap; margin-bottom:0; }
+    /* scrollbar-width/-ms-overflow-style above cover Firefox/legacy Edge —
+       Chrome/Safari need this pseudo-element instead, no shared property
+       for it. */
+    .flyout-flat .traits-flyout-vals::-webkit-scrollbar{ display:none; }
+    .flyout-flat .traits-flyout-val{
+      width:auto;
+      flex:0 0 auto;
+      white-space:nowrap;
+      margin-bottom:0;
+      /* Cleaned up for the strip: a plain chip instead of the vertical
+         list's justify-between row (no room for a value on its own line
+         to spread its label/count apart sideways here) and a lighter
+         border so eleven of these side by side doesn't look as busy as
+         eleven full-width list rows did. */
+      justify-content:center;
+      gap:0.4em;
+      padding:0.6em 0.9em;
+      border-color:var(--border-dim);
+    }
     .hscroll-arrow{
       flex:0 0 auto;
       display:flex;
@@ -1802,7 +1824,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--pigeon-purple);
     border-radius:var(--radius);
     box-shadow:0 0 16px var(--pigeon-purple-glow);
-    padding:0.4em 0.5em;
+    /* Tight — the button(s) inside should read as filling this box, not
+       floating in the middle of it with visible purple margin down each
+       side. */
+    padding:0.35em 0.25em;
     /* A slim strip across the bottom of the card, not a tall block — every
        purple box in a row is this same height regardless of what's
        actually inside it (a listed card's price + countdown + BUY N0W/
