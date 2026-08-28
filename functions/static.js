@@ -2942,6 +2942,31 @@ const SWAP_HTML = `<!DOCTYPE html>
     .confirm-pigeon-num{ font-size:24px; }
     .confirm-field-value{ font-size:14px; }
   }
+  /* ΣΚΥΛΛΑ://S!GNAL's own prompt body — was previously built entirely out
+     of .index-line (9.5px, uppercase, meant for a single line of fine
+     print elsewhere), which read as cramped/hard to read for what's
+     actually a real decision (spending real XRP) explained across three
+     sentences. Not text-transform:uppercase here — a real paragraph
+     stays readable in sentence case; individual key terms are bolded
+     with <strong> instead of the whole block shouting. */
+  .signal-heading{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:0.04em;
+    color:var(--white);
+    text-transform:uppercase;
+    margin-bottom:0.6rem;
+  }
+  .signal-body{
+    font-family:var(--font-body);
+    font-size:14px;
+    line-height:1.5;
+    letter-spacing:0.01em;
+    color:var(--grey);
+  }
+  .signal-body strong{ color:var(--white); font-weight:700; }
+  .signal-body-dim{ color:var(--grey-dim); font-size:13px; }
   /* 0FFER CONFIRMATION's own big amount line + real clickable picture —
      "___ $PIGEONS / FOR / [picture] / PIGEON #N", nothing else. */
   .confirm-field-value-big{ font-family:var(--font-display); font-size:26px; font-weight:700; }
@@ -4524,24 +4549,30 @@ const SWAP_HTML = `<!DOCTYPE html>
              with its own two inner toggled views (ask / sent). -->
         <div id="offerSignalState" style="display:none;">
           <div id="offerSignalPrompt">
-            <div class="node-eyebrow">// ΣΚΥΛΛΑ://S!GNAL</div>
-            <div class="confirm-field-value" id="offerSignalWallet" style="font-family:var(--font-mono); margin-bottom:0.75rem;"></div>
-            <div class="index-line">HAS N0 ACT!V!TY 0N SO!TBEG!NS.XYZ</div>
-            <div class="index-line" style="margin-top:0.75rem;">D0 Y0U WANT T0 SEND A 123-DR0P S!GNAL?</div>
-            <div class="index-line" style="margin-top:0.5rem; opacity:0.8;">A 123-DR0P XRP PAYMENT W!LL BE SENT T0 TH!S WALLET W!TH A MEM0 !DENT!FY!NG TH!S 0FFER.</div>
+            <!-- text-transform:none span — see HANDOFF.md gotcha #3, the
+                 ancestor .node-eyebrow forces uppercase (and the literal
+                 Greek text below used to be typed ΣΚΥΛΛΑ, the all-caps
+                 form, rather than escaping it) which renders Σκύλλα's
+                 name wrong everywhere else it appears mixed-case. -->
+            <div class="node-eyebrow">// <span style="text-transform:none;">Σκύλλα</span>://S!GNAL</div>
+            <div class="confirm-field-value" id="offerSignalWallet" style="font-family:var(--font-mono); margin-bottom:1rem;"></div>
+            <div class="signal-heading">N0 ACT!V!TY DETECTED</div>
+            <div class="signal-body">TH!S WALLET HAS N0 REC0RDED ACT!V!TY 0N <strong>S0!TBEG!NS.XYZ</strong>.</div>
+            <div class="signal-body" style="margin-top:0.85rem;">SEND A <strong>123-DR0P S!GNAL</strong> T0 N0T!FY THE WALLET 0WNER?</div>
+            <div class="signal-body signal-body-dim" style="margin-top:0.6rem;">A <strong>123-DR0P XRP PAYMENT</strong> W!LL BE SENT T0 TH!S WALLET W!TH A UN!QUE MEM0 !DENT!FY!NG TH!S 0FFER.</div>
             <div class="receipt-price-row" style="margin-top:1rem;">
               <div class="receipt-price-label">C0ST</div>
               <div class="receipt-price-value" style="font-size:20px;">0.000123 XRP</div>
             </div>
             <div class="index-line" id="offerSignalStatus" style="margin-top:0.75rem;"></div>
             <div class="detail-actions">
-              <button class="secondary-btn" id="offerSignalSkipBtn">SK!P</button>
+              <button class="secondary-btn" id="offerSignalSkipBtn">CANCEL</button>
               <button class="action-btn offer-confirm-xaman-btn" id="offerSignalSendBtn">SEND S!GNAL</button>
             </div>
           </div>
           <div id="offerSignalSentConfirm" style="display:none;">
             <div class="receipt-badge">✓</div>
-            <div class="receipt-status-line">ΣΚΥΛΛΑ://S!GNAL :: SENT</div>
+            <div class="receipt-status-line"><span style="text-transform:none;">Σκύλλα</span>://S!GNAL :: SENT</div>
             <div class="index-line" style="margin-top:0.5rem;">123 DR0PS DEL!VERED</div>
             <a class="receipt-tx-link" id="offerSignalTxLink" target="_blank" rel="noopener">V!EW TRANSACT!0N</a>
             <div class="detail-actions">
