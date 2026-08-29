@@ -2843,8 +2843,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, background 0.15s ease;
   }
   .detail-back-btn-top:hover{ background:var(--cyan-faint); border-color:var(--cyan-dim); }
+  .detail-share-btn{
+    position:absolute;
+    right:0;
+    top:50%;
+    transform:translateY(-50%);
+    z-index:2;
+    padding:0.5em 1em;
+    font-family:var(--font-mono);
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    color:var(--green);
+    background:transparent;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    cursor:pointer;
+    appearance:none;
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .detail-share-btn:hover{ background:rgba(61,255,138,0.1); border-color:var(--green); }
   @media (max-width:760px){
     .detail-back-btn-top{ font-size:12px; padding:0.4em 0.7em; }
+    .detail-share-btn{ font-size:12px; padding:0.4em 0.7em; }
   }
   /* Local copy of canvas#staticBg's own look (see the drawStatic loop —
      both canvases run the identical draw function) — negative z-index so
@@ -4180,8 +4201,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockMyFlockBox">
           <div class="flock-account-box-row"><span class="flock-account-box-label" id="flockMyFlockLabel">MY FL0CK :: 0</span></div>
         </div>
-        <div class="sw-panel flock-account-box flock-account-box-clickable" data-flockbox="inbox">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">MESSAGE !NB0X</span></div>
+        <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockInboxBox">
+          <div class="flock-account-box-row"><span class="flock-account-box-label" id="flockInboxLabel">MESSAGE !NB0X</span></div>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" data-flockbox="offers">
           <div class="flock-account-box-row"><span class="flock-account-box-label">0FFERS</span></div>
@@ -4356,6 +4377,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                elements landing near each other by coincidence). -->
           <button class="detail-back-btn-top" id="backToBrowseBtnTop">← BACK</button>
           <div class="detail-num" id="detailNum"></div>
+          <button class="detail-share-btn" id="detailShareBtn" title="C0PY A SHAREABLE L!NK T0 TH!S P!GE0N">SHARE</button>
         </div>
         <div class="detail-owner-top" id="detailOwner"></div>
         <div class="detail-col-left">
@@ -5093,7 +5115,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
-   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockBuyPigeonsBox','flockGridPanel',
+   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockInboxBox','flockInboxLabel','flockBuyPigeonsBox','flockGridPanel',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn','swapOffersTabBtn',
@@ -5105,7 +5127,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
-   'detailNum','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
+   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn',
    'backToBrowseBtn',
@@ -8492,6 +8514,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.flockCollapsed = !state.flockCollapsed;
     updateSearchPanelTitleForPaws();
   });
+  // MESSAGE !NB0X box existed as a placeholder with no handler — this is
+  // the actual entry point into wallet-to-wallet messaging from SWAP,
+  // where the negotiation this feature exists for actually happens.
+  el.flockInboxBox.addEventListener('click', function(){
+    window.location.href = '/messages';
+  });
+  function loadInboxUnreadBadge(){
+    if (!MY_WALLET) return;
+    fetch('/api/messages-inbox').then(function(r){ return r.ok ? r.json() : null; }).then(function(data){
+      if (!data) return;
+      var unread = (data.items || []).reduce(function(sum, it){ return sum + (it.unreadCount || 0); }, 0);
+      el.flockInboxLabel.textContent = 'MESSAGE !NB0X' + (unread > 0 ? ' :: ' + unread : '');
+    }).catch(function(){});
+  }
+  loadInboxUnreadBadge();
   // BUY $P!GE0NS is the one entry point everywhere now (FL0CK shows the
   // exact same banner as DATABASE, no more BALANCE-amount-as-buy-button
   // substitution — that only existed while FL0CK's banner was slimmed).
@@ -10673,6 +10710,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.backToBrowseBtn.addEventListener('click', goBackFromDetail);
   el.backToBrowseBtnTop.addEventListener('click', goBackFromDetail);
+  // Copies a real, working ?pigeon=N link (see the deep-link handler near
+  // the bottom of this script) — the number, not the NFT ID, since that's
+  // what anyone sharing/reading it actually recognizes.
+  el.detailShareBtn.addEventListener('click', function(){
+    var num = state.currentDetail && state.currentDetail.number;
+    if (!num) return;
+    var url = window.location.origin + '/static?pigeon=' + num;
+    var showCopied = function(){
+      el.detailShareBtn.textContent = 'C0P!ED';
+      setTimeout(function(){ el.detailShareBtn.textContent = 'SHARE'; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(showCopied, showCopied);
+    else showCopied();
+  });
   // Picture click opens a fullscreen lightbox (see #detailLightbox) —
   // click it again (anywhere) to close back to the detail screen.
   el.detailImgBox.addEventListener('click', function(){
@@ -10990,6 +11041,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     loop();
   }
+  // Shareable Pigeon link — ?pigeon=<number> jumps straight to that
+  // Pigeon's detail screen on load, instead of requiring whoever clicks a
+  // shared link to search for it themselves. Runs after everything else
+  // above (openDetail, api, showScreen) is already defined. Silently
+  // no-ops on a bad/unindexed number rather than showing an error page —
+  // worst case the visitor just lands on the normal DATABASE view.
+  (function(){
+    var num = parseInt(new URLSearchParams(window.location.search).get('pigeon'), 10);
+    if (!num || num < 1) return;
+    api({ number: num }).then(function(data){
+      var item = data.items && data.items[0];
+      if (item) openDetail(item.nftId);
+    }).catch(function(){});
+  })();
   startStaticCanvas(document.getElementById('staticBg'));
   startStaticCanvas(document.getElementById('detailStaticBg'), function(){
     return document.getElementById('screenDetail').style.display !== 'none';
