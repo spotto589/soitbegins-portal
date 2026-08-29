@@ -7613,6 +7613,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   // fit. No-op on mobile (the row's vertical there, arrows hidden).
   el.traitsCatsScrollPrevBtn.addEventListener('click', function(){ el.traitsFlyoutCats.scrollBy({ left: -180, behavior: 'smooth' }); });
   el.traitsCatsScrollNextBtn.addEventListener('click', function(){ el.traitsFlyoutCats.scrollBy({ left: 180, behavior: 'smooth' }); });
+  // Desktop's horizontal category strip (min-width:701px, see #traitsFlyout's
+  // own CSS) is always visible now, not click-to-open — same reasoning as
+  // S0RT BY's own unconditional renderSortFlyoutList() call. Without this,
+  // #traitsFlyoutCats stayed empty (renderTraitsFlyoutCats() only ever ran
+  // inside openTraitsFlyout(), which only fires on a real click) even
+  // though the box around it was already forced visible — confirmed live:
+  // categories didn't show at all until F!LTER BY TRA!TS was clicked once,
+  // and the vals pane's static "H0VER A CATEG0RY" placeholder sat there
+  // the whole time with no categories to actually hover. Harmless on
+  // mobile too (the box stays display:none there until opened).
+  ensureTraitsLoaded().then(renderTraitsFlyoutCats);
   el.traitsFlyoutVals.addEventListener('click', function(e){
     var valBtn = e.target.closest('.traits-flyout-val');
     if (!valBtn) return;
