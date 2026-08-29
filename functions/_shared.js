@@ -2102,6 +2102,18 @@ export async function fetchXrpCafeNftListing(kv, nftId) {
 // ledger-scan indexer it replaces.
 // ─────────────────────────────────────────────────────────────────────────
 const PIGEON_NUMBER_MAP_KEY = 'pswap:numbermap:v1';
+// Staging copy written on every intermediate tick of an in-progress
+// crawl — getPigeonNumberMap() (every real reader: search, edition
+// filtering, trait examples) only ever reads the KEY above, which now
+// only gets touched once a full pass genuinely completes. Confirmed
+// live: this used to write straight into the live key on every tick, so
+// every ~6h staleness-triggered recrawl blanked it back to {} and rebuilt
+// from scratch — for the ~1h (900 tokens/run, 3015 total) it took to
+// finish, real Pigeons not yet re-reached that pass looked "not indexed"
+// (wrong number search results, wrong edition-filter membership) even
+// though they'd been correctly indexed moments before the recrawl
+// started. Staging fixes it: readers always see the last COMPLETE map.
+const PIGEON_NUMBER_MAP_STAGING_KEY = 'pswap:numbermap:staging:v1';
 // Bumped v1 -> v2: the crawl this stats key gates now also builds the
 // trait-example map below as a side effect. A v1 "completed" stats entry
 // would otherwise block a fresh crawl for NUMBER_MAP_REFRESH_STALE_SECONDS
@@ -2120,9 +2132,15 @@ const NUMBER_MAP_PAGES_PER_RUN = 15; // 15 * 60 = 900 tokens/run, ~15 fetches �
 // `attributes` per item, so this costs zero extra requests; just keep the
 // first image seen for each trait_type/value pair as the crawl runs.
 const TRAIT_EXAMPLE_MAP_KEY = 'pswap:traitexamples:v1';
+const TRAIT_EXAMPLE_MAP_STAGING_KEY = 'pswap:traitexamples:staging:v1';
 
 export async function getPigeonNumberMap(kv) {
   const raw = await kv.get(PIGEON_NUMBER_MAP_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
+async function getPigeonNumberMapStaging(kv) {
+  const raw = await kv.get(PIGEON_NUMBER_MAP_STAGING_KEY);
   return raw ? JSON.parse(raw) : {};
 }
 
@@ -2136,6 +2154,11 @@ export async function getTraitExampleMap(kv) {
   return raw ? JSON.parse(raw) : {};
 }
 
+async function getTraitExampleMapStaging(kv) {
+  const raw = await kv.get(TRAIT_EXAMPLE_MAP_STAGING_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
 export async function maybeRefreshPigeonNumberMap(kv) {
   const statsRaw = await kv.get(PIGEON_NUMBER_MAP_STATS_KEY);
   const stats = statsRaw ? JSON.parse(statsRaw) : null;
@@ -2144,8 +2167,13 @@ export async function maybeRefreshPigeonNumberMap(kv) {
   if (stats && !stats.inProgress && now - stats.completedAt < NUMBER_MAP_REFRESH_STALE_SECONDS) return;
 
   let skip = stats && stats.inProgress ? stats.nextSkip : 0;
-  const map = stats && stats.inProgress ? await getPigeonNumberMap(kv) : {};
-  const traitExamples = stats && stats.inProgress ? await getTraitExampleMap(kv) : {};
+  // Resuming reads the STAGING copy (this pass's own in-progress work),
+  // never the live map — starting a brand new pass starts genuinely
+  // empty, same as before, but that emptiness now stays invisible to
+  // real readers until the pass actually finishes (see the staging key's
+  // own comment above).
+  const map = stats && stats.inProgress ? await getPigeonNumberMapStaging(kv) : {};
+  const traitExamples = stats && stats.inProgress ? await getTraitExampleMapStaging(kv) : {};
   let lastTotal = 3015;
 
   for (let i = 0; i < NUMBER_MAP_PAGES_PER_RUN; i++) {
@@ -2164,6 +2192,9 @@ export async function maybeRefreshPigeonNumberMap(kv) {
     lastTotal = page.total || lastTotal;
     skip += DEEPTIDE_LISTINGS_MAX_LIMIT;
     if (skip >= lastTotal) {
+      // Pass genuinely complete — ONLY now does the live map (every real
+      // reader) actually change, in one atomic swap rather than the
+      // gradual, visibly-incomplete rebuild this used to be.
       await safeKvPut(kv, PIGEON_NUMBER_MAP_KEY, JSON.stringify(map));
       await safeKvPut(kv, TRAIT_EXAMPLE_MAP_KEY, JSON.stringify(traitExamples));
       await safeKvPut(kv, PIGEON_NUMBER_MAP_STATS_KEY, JSON.stringify({
@@ -2172,8 +2203,11 @@ export async function maybeRefreshPigeonNumberMap(kv) {
       return;
     }
   }
-  await safeKvPut(kv, PIGEON_NUMBER_MAP_KEY, JSON.stringify(map));
-  await safeKvPut(kv, TRAIT_EXAMPLE_MAP_KEY, JSON.stringify(traitExamples));
+  // Still mid-pass — checkpoint into staging only. The live map (and
+  // every real reader of it) stays exactly as it was after the LAST
+  // completed pass until this one actually finishes above.
+  await safeKvPut(kv, PIGEON_NUMBER_MAP_STAGING_KEY, JSON.stringify(map));
+  await safeKvPut(kv, TRAIT_EXAMPLE_MAP_STAGING_KEY, JSON.stringify(traitExamples));
   await safeKvPut(kv, PIGEON_NUMBER_MAP_STATS_KEY, JSON.stringify({
     inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(map).length,
   }));
@@ -2201,6 +2235,17 @@ export async function maybeRefreshPigeonNumberMap(kv) {
 // if the shape changes further.
 // ─────────────────────────────────────────────────────────────────────────
 const HIGH_SALE_MAP_KEY = 'pswap:highsale:v4';
+// Staging copy for an in-progress pass — see PIGEON_NUMBER_MAP_STAGING_KEY's
+// comment above for the full reasoning. This is the one that was actually
+// causing real, sold Pigeons to show "COND!T!ON :: M!NT" on cards: every
+// ~6h staleness recrawl used to blank HIGH_SALE_MAP_KEY (avgSaleXrp/
+// saleCount both live in it) straight back to {} and rebuild from
+// scratch over ~3200+ sales, ~10 minutes of real crawl progress per
+// 15-min cron tick — a real, recurring window (confirmed live: caught
+// production mid-recrawl at nextSkip:500/3224 total, only 357 of however
+// many actually-sold Pigeons still had real data) where most of the
+// collection's genuine sale history was invisible, not actually gone.
+const HIGH_SALE_MAP_STAGING_KEY = 'pswap:highsale:staging:v4';
 const HIGH_SALE_STATS_KEY = 'pswap:highsalestats:v4';
 const HIGH_SALE_REFRESH_STALE_SECONDS = 6 * 3600;
 const HIGH_SALE_CONCURRENT_GUARD_SECONDS = 10;
@@ -2212,6 +2257,11 @@ export async function getHighSaleMap(kv) {
   return raw ? JSON.parse(raw) : {};
 }
 
+async function getHighSaleMapStaging(kv) {
+  const raw = await kv.get(HIGH_SALE_MAP_STAGING_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
 export async function maybeRefreshHighSaleMap(kv) {
   const statsRaw = await kv.get(HIGH_SALE_STATS_KEY);
   const stats = statsRaw ? JSON.parse(statsRaw) : null;
@@ -2220,7 +2270,7 @@ export async function maybeRefreshHighSaleMap(kv) {
   if (stats && !stats.inProgress && now - stats.completedAt < HIGH_SALE_REFRESH_STALE_SECONDS) return;
 
   let skip = stats && stats.inProgress ? stats.nextSkip : 0;
-  const map = stats && stats.inProgress ? await getHighSaleMap(kv) : {};
+  const map = stats && stats.inProgress ? await getHighSaleMapStaging(kv) : {};
   let lastTotal = Infinity;
 
   for (let i = 0; i < HIGH_SALE_PAGES_PER_RUN; i++) {
@@ -2244,6 +2294,10 @@ export async function maybeRefreshHighSaleMap(kv) {
     lastTotal = page.total || lastTotal;
     skip += HIGH_SALE_PAGE_LIMIT;
     if (!page.hasMore || skip >= lastTotal) {
+      // Pass genuinely complete — only now does the live map (every real
+      // reader: toItem's avgSaleXrp/saleCount/highSaleXrp) actually
+      // change. Real requests keep seeing the last complete pass's data
+      // throughout the whole rebuild, never a partial one.
       await safeKvPut(kv, HIGH_SALE_MAP_KEY, JSON.stringify(map));
       await safeKvPut(kv, HIGH_SALE_STATS_KEY, JSON.stringify({
         inProgress: false, completedAt: now, updatedAt: now, count: Object.keys(map).length,
@@ -2251,7 +2305,8 @@ export async function maybeRefreshHighSaleMap(kv) {
       return;
     }
   }
-  await safeKvPut(kv, HIGH_SALE_MAP_KEY, JSON.stringify(map));
+  // Still mid-pass — checkpoint into staging only.
+  await safeKvPut(kv, HIGH_SALE_MAP_STAGING_KEY, JSON.stringify(map));
   await safeKvPut(kv, HIGH_SALE_STATS_KEY, JSON.stringify({
     inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(map).length,
   }));
