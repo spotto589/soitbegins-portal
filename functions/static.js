@@ -1352,24 +1352,45 @@ const SWAP_HTML = `<!DOCTYPE html>
        other row here. !important for the same reason as .flyout-flat's
        own display rule above — open/closeTraitsFlyout() still toggle a
        plain inline display:block/none on click, harmless now since this
-       always wins at this width. The category row underneath stays
-       horizontal and the value list stays static below it via their own
-       unscoped base rules (.traits-flyout-cats/.traits-flyout-vals) —
-       only the outer popup positioning needed overriding here. */
-    #traitsHoverWrap{ width:100%; max-width:100%; display:flex; flex-direction:column; align-items:flex-start; min-width:0; }
+       always wins at this width.
+       Row, not column — the categories sit directly to the right of the
+       F!LTER BY TRA!TS label itself, same line, same shape as S0RT BY's
+       own label+strip row above (confirmed live this was still wrong
+       after the first pass: categories were horizontal but stacked on
+       their own line under the label instead of beside it). flex-wrap so
+       the value chips below (forced onto their own line via
+       flex-basis:100% on #traitsFlyoutVals) still have room to wrap
+       instead of fighting the cats row for space. */
+    #traitsHoverWrap{ width:100%; max-width:100%; display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:0.6rem; row-gap:0.4rem; min-width:0; }
     #traitsHoverWrap .trait-row-label{ width:auto; flex:0 0 auto; }
     #traitsFlyout{
       display:flex !important;
       position:static;
-      flex-direction:column;
-      width:100%;
+      flex-direction:row;
+      flex-wrap:wrap;
+      align-items:center;
+      flex:1 1 auto;
+      min-width:0;
+      width:auto;
       max-height:none;
       background:transparent;
       border:none;
       box-shadow:none;
       padding:0;
-      margin-top:0.5rem;
+      gap:0.4rem;
     }
+    /* Sits inline in the row next to the label now, not stacked full-
+       width above the values — needs its own flex sizing instead of the
+       unscoped base rule's width:100% (meant for when it was the sole
+       child of a column). No border-bottom here either — that was the
+       separator between a stacked cats row and the vals row underneath;
+       mid-row it just reads as a stray line through the label area. */
+    #traitsFlyout > .traits-flyout-cats{ flex:1 1 auto; min-width:0; width:auto; border-bottom:none; }
+    /* Forces the values pane onto its own full-width line below the
+       label+categories row (a flex item at flex-basis:100% in a
+       flex-wrap:wrap row always starts a new line) — see the size/grid
+       fix for the chips themselves further down. */
+    #traitsFlyout > .traits-flyout-vals{ flex-basis:100%; width:100%; }
     .hscroll-arrow{
       flex:0 0 auto;
       display:flex;
@@ -1611,6 +1632,41 @@ const SWAP_HTML = `<!DOCTYPE html>
      keeps its own wider, left-aligned list untouched. */
   #traitsFlyoutCats{ flex:0 0 var(--ctrl-w); }
   #traitsFlyoutCats .traits-flyout-cat{ width:var(--ctrl-w); text-align:center; }
+  /* Desktop only: the value list becomes a wrapped grid of small chips
+     instead of the mobile-style full-width stacked rows above — those
+     were still every value's own width:100% (a leftover from before the
+     panel went horizontal), which stretched has-preview's real Pigeon
+     photo across the entire, now much wider, row: a small source
+     thumbnail smeared into a thin wide band, reading as blurry. A
+     roughly chip-sized box lets the same photo actually read as a photo.
+     Declared after the shared base rules above (not inside the earlier
+     desktop media block with the row/column layout fix) so normal
+     cascade order — not !important — is enough to win over them. */
+  @media (min-width:701px){
+    #traitsFlyoutVals{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:flex-start;
+      gap:0.5rem;
+      max-height:none;
+      padding:0.3rem 0 0;
+    }
+    #traitsFlyoutVals .traits-flyout-val{
+      width:auto;
+      min-width:150px;
+      flex:0 0 auto;
+      margin-bottom:0;
+    }
+    #traitsFlyoutVals .traits-flyout-val.has-preview{
+      width:150px;
+      height:90px;
+      /* Base .traits-flyout-val's own padding is content-box by default —
+         without this, the fixed height above would just add on top of it
+         (measuring ~114px live), missing the point of pinning a
+         consistent, non-stretched box for the photo. */
+      box-sizing:border-box;
+    }
+  }
   #traitsFlyoutVals .traits-flyout-val.has-preview.selected{
     border-color:var(--cyan);
     box-shadow:inset 0 0 0 2px var(--cyan);
