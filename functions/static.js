@@ -1284,6 +1284,11 @@ const SWAP_HTML = `<!DOCTYPE html>
        dropdown (still true on mobile, kept there) and just duplicates
        the highlight now that the strip never closes. */
     #sortRows{ display:none; }
+    /* The ▾ implied a click-to-open dropdown, which S0RT BY no longer is
+       here — the strip next to it is permanently visible, nothing to
+       expand. Still shown on mobile (kept there), where it's still a
+       real toggle. */
+    #sortDropLabel .thl-arrow{ display:none; }
     /* #sortDropWrap .trait-row-label's own width:100% (elsewhere in this
        file) was sized for the old fixed-190px pill, where a centered
        full-width label made sense — at this new full-row width it
