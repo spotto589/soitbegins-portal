@@ -3552,29 +3552,52 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease;
   }
   .listing-buy:hover{ background:var(--cyan-faint); }
-  /* $PIGEONS marketplace listing — styled to read as a currency amount
-     (coin icon + number), distinct from the plain XRP listing rows above */
+  /* $PIGEONS marketplace listing — a clean stacked block (price on its
+     own line, then a big real BUY action below it) instead of a cramped
+     icon+price+small-button row. No coin thumbnail here — the price text
+     itself already reads as a $PIGEONS amount (fmtPigeons appends the
+     unit), the icon was just visual noise crowding the price. */
   .scylla-listing-block{ max-width:460px; margin:1.25rem auto 0; }
   .scylla-listing-row{
     display:flex;
+    flex-direction:column;
     align-items:center;
-    justify-content:space-between;
     gap:0.6rem;
-    padding:0.5em 0.6em;
+    padding:0.75em 0.6em;
     border:1px solid var(--magenta-dim);
     margin-bottom:0.5rem;
     border-radius:var(--radius);
     background:rgba(255,63,208,0.05);
   }
-  /* Not-listed state has no icon/price/buy-button pairing to justify the
+  /* Not-listed state has no price/buy-button pairing to justify the
      boxed currency-amount look — just plain centred text instead. */
-  .scylla-listing-row.not-listed{ border:none; background:none; justify-content:center; padding:0.5em 0.6em; }
-  .scylla-listing-row.not-listed .scylla-coin-icon{ display:none; }
-  .scylla-coin-wrap{ display:flex; align-items:center; gap:0.5rem; }
-  .scylla-coin-icon{ width:22px; height:22px; border-radius:50%; object-fit:cover; border:1px solid var(--magenta-dim); box-shadow:0 0 6px var(--magenta-glow); }
-  .scylla-listing-price{ font-size:13px; font-weight:700; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
-  #detailScyllaBuyBtn{ border-color:var(--magenta-dim); color:var(--magenta); }
-  #detailScyllaBuyBtn:hover{ background:var(--magenta-faint); }
+  .scylla-listing-row.not-listed{ border:none; background:none; padding:0.5em 0.6em; }
+  .scylla-listing-price{ font-size:15px; font-weight:700; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
+  /* Same green "real, clickable buy action" language + size as the
+     DATABASE grid's own .thumb-buy-btn — this is the real $PIGEONS
+     purchase, it should read like the most important thing in the box,
+     not a small outline pill next to the price. */
+  .scylla-buy-btn{
+    width:100%;
+    background:rgba(0,0,0,0.25);
+    border:1px solid var(--green);
+    color:var(--green);
+    text-shadow:0 0 5px var(--green-glow);
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:0.05em;
+    padding:0.95em 0.8em;
+    cursor:pointer;
+    text-transform:uppercase;
+    border-radius:var(--radius);
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .scylla-buy-btn:hover{ background:var(--green); color:#000; text-shadow:none; }
+  /* Same box, YOUR OWN listing — CANCEL takes over BUY N0W's slot, so it
+     should fill the row the same way instead of shrink-wrapping to a
+     small centred pill. */
+  .scylla-listing-row #detailScyllaDelistBtn{ width:100%; }
   .detail-history{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed var(--border-dim); padding-top:1rem; }
   .dh-row{
     padding:0.7em 0.3em;
@@ -4476,11 +4499,8 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
             <div class="scylla-listing-block">
               <div class="scylla-listing-row" id="detailScyllaListingRow">
-                <span class="scylla-coin-wrap">
-                  <img class="scylla-coin-icon" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
-                  <span class="scylla-listing-price" id="detailScyllaPrice">N0 L!ST!NG</span>
-                </span>
-                <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">BUY</button>
+                <span class="scylla-listing-price" id="detailScyllaPrice">N0 L!ST!NG</span>
+                <button class="scylla-buy-btn" id="detailScyllaBuyBtn" style="display:none;">BUY N0W</button>
                 <button class="bar-btn" id="detailScyllaDelistBtn" style="display:none;">CANCEL</button>
               </div>
               <div class="listing-countdown" id="detailScyllaCountdown" style="display:none;"></div>
