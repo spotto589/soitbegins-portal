@@ -1680,13 +1680,26 @@ const SWAP_HTML = `<!DOCTYPE html>
          own unscoped flex:0 0 var(--ctrl-w) further down this file) — this
          rule just covers the rest of the chip-row styling. */
       align-items:center;
-      gap:0.4em;
+      gap:0.35em;
+      /* PREV/NEXT (.hscroll-arrow) already cover scrolling when there
+         really isn't room for every category — the native scrollbar
+         underneath the strip was just visual clutter on top of that,
+         same reasoning S0RT BY's own flat strip already uses. */
+      scrollbar-width:none;
+      -ms-overflow-style:none;
     }
+    #traitsFlyoutCats::-webkit-scrollbar{ display:none; }
+    /* width:auto + smaller text, not the unscoped rule's fixed
+       width:var(--ctrl-w) (~190px, sized for the old narrow sidebar
+       list) — every category chip only as wide as its own label now, so
+       as many as possible fit in view before PREV/NEXT are ever needed. */
     #traitsFlyoutCats .traits-flyout-cat{
+      width:auto;
       border:1px solid var(--border-dim);
       border-radius:var(--radius);
       text-align:center;
-      padding:0.6em 0.9em;
+      font-size:11px;
+      padding:0.55em 0.7em;
     }
     #traitsFlyoutVals{
       display:flex;
@@ -7698,6 +7711,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderTraitRows();
     renderTraitsFlyoutVals(category);
     pendingTraitScroll = true;
+    // Mobile only — the popup there is a real fixed, centered overlay
+    // (.flyout-drilled) covering the whole screen, not an inline strip
+    // like desktop's. Leaving it open after a pick meant the query above
+    // was already re-running and pendingTraitScroll was already queued
+    // to scroll the results into view once it lands, but the overlay
+    // sat there blocking the screen the whole time regardless — picking
+    // a trait needs to actually show you the results, not just start
+    // fetching them behind a popup you still have to close by hand.
+    // Desktop's own strip stays open on purpose (see this handler's
+    // other comment) — only mobile's real popup closes itself here.
+    if (window.innerWidth <= 700) closeTraitsFlyout();
     runQuery();
   });
 
