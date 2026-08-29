@@ -1701,32 +1701,32 @@ const SWAP_HTML = `<!DOCTYPE html>
       font-size:11px;
       padding:0.55em 0.7em;
     }
+    /* Grid, not flex-wrap — auto-fill/minmax stretches every chip to
+       evenly fill the row's real width (no ragged gap on the right of
+       the last partial flex row) and grows/shrinks column count with
+       the actual available space, so this always fits the screen
+       without needing its own scroll — bigger chips (was 150px, now a
+       190px floor) just mean fewer columns, never overflow. */
     #traitsFlyoutVals{
-      display:flex;
-      flex-wrap:wrap;
-      align-items:flex-start;
-      gap:0.5rem;
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));
+      gap:0.6rem;
       max-height:none;
       padding:0.3rem 0 0;
+      width:100%;
     }
     /* No placeholder text any more (openTraitsFlyout/the initial HTML
        both just leave this empty until a category's actually clicked) —
        collapse the box itself too, so there's no empty padded gap
        sitting under the category row before that click happens. */
     #traitsFlyoutVals:empty{ display:none; padding:0; }
-    #traitsFlyoutVals .traits-flyout-val{
-      width:auto;
-      min-width:150px;
-      flex:0 0 auto;
-      margin-bottom:0;
-    }
+    #traitsFlyoutVals .traits-flyout-val{ margin-bottom:0; }
     #traitsFlyoutVals .traits-flyout-val.has-preview{
-      width:150px;
-      height:90px;
+      height:120px;
       /* Base .traits-flyout-val's own padding is content-box by default —
-         without this, the fixed height above would just add on top of it
-         (measuring ~114px live), missing the point of pinning a
-         consistent, non-stretched box for the photo. */
+         without this, the fixed height above would just add on top of it,
+         missing the point of pinning a consistent, non-stretched box for
+         the photo. */
       box-sizing:border-box;
     }
   }
