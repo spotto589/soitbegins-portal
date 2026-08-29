@@ -1382,15 +1382,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     #traitsFlyout{
       display:flex !important;
       position:static;
-      /* Column, not row — the category strip is its own horizontal-
-         scrolling line (see .traits-flyout-cats' own unscoped base rule,
-         unchanged), with the value chips stacked in a second line
-         underneath once a category's picked. Plain block stacking is
-         all that's needed here now that this whole element isn't also
-         trying to sit inline next to the label anymore (that's
-         #traitsHoverWrap's job, one level up) — no flex-wrap tricks. */
-      flex-direction:column;
-      align-items:stretch;
+      /* Row + wrap, not column — #traitsFlyout's own direct children
+         aren't just [cats, vals], they're [back-btn(hidden), prev-arrow,
+         cats, next-arrow, vals] (see the HTML) — column direction made
+         the prev/next scroll arrows their OWN stacked rows instead of
+         sitting inline beside the category strip, pushing the actual
+         category row down below the arrows and throwing off alignment
+         with the label next to it (confirmed live: ~34px gap between the
+         label's top and where the category chips actually started). Row
+         + wrap puts prev-arrow/cats/next-arrow back on one line; the
+         value chips are forced onto their own line below via
+         flex-basis:100% on #traitsFlyoutVals (a flex item at 100% basis
+         in a wrapping row always starts a fresh line). This is safe to
+         wrap now in a way the earlier attempt wasn't — that one had
+         flex-wrap on #traitsHoverWrap itself, where the FLYOUT's own
+         (unset) width let its wide content force the outer row to wrap;
+         here #traitsFlyout's width is already pinned by the outer
+         nowrap row above, so wrapping only ever happens among ITS
+         children within that fixed width. */
+      flex-direction:row;
+      flex-wrap:wrap;
+      align-items:center;
       flex:1 1 auto;
       min-width:0;
       width:auto;
@@ -1401,14 +1413,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       padding:0;
       gap:0.4rem;
     }
-    /* Fills the flyout's own (already-shrunk-to-fit) width instead of the
-       unscoped base rule's width:100% (meant for when the flyout was the
-       sole child of a wider column) — functionally the same value here,
-       kept explicit since this rule also drops the border-bottom
-       separator that made sense stacked under a label, not sitting
-       directly under the row it's now already inside. */
-    #traitsFlyout > .traits-flyout-cats{ width:100%; border-bottom:none; }
-    #traitsFlyout > .traits-flyout-vals{ width:100%; }
+    #traitsFlyout > .traits-flyout-cats{ flex:1 1 auto; min-width:0; width:auto; border-bottom:none; }
+    #traitsFlyout > .traits-flyout-vals{ flex-basis:100%; width:100%; }
     .hscroll-arrow{
       flex:0 0 auto;
       display:flex;
@@ -1691,6 +1697,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       max-height:none;
       padding:0.3rem 0 0;
     }
+    /* No placeholder text any more (openTraitsFlyout/the initial HTML
+       both just leave this empty until a category's actually clicked) —
+       collapse the box itself too, so there's no empty padded gap
+       sitting under the category row before that click happens. */
+    #traitsFlyoutVals:empty{ display:none; padding:0; }
     #traitsFlyoutVals .traits-flyout-val{
       width:auto;
       min-width:150px;
@@ -4563,7 +4574,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                   <button type="button" class="hscroll-arrow hscroll-arrow-prev cats-scroll-arrow" id="traitsCatsScrollPrevBtn" aria-label="PREV!0US">◂</button>
                   <div class="traits-flyout-cats" id="traitsFlyoutCats"></div>
                   <button type="button" class="hscroll-arrow hscroll-arrow-next cats-scroll-arrow" id="traitsCatsScrollNextBtn" aria-label="NEXT">▸</button>
-                  <div class="traits-flyout-vals" id="traitsFlyoutVals"><div class="th-empty">H0VER A CATEG0RY</div></div>
+                  <div class="traits-flyout-vals" id="traitsFlyoutVals"></div>
                 </div>
               </div>
               <div id="traitRows"></div>
@@ -7592,7 +7603,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     ensureTraitsLoaded().then(function(){
       restoreTraitsFlyout();
       renderTraitsFlyoutCats();
-      el.traitsFlyoutVals.innerHTML = '<div class="th-empty">H0VER A CATEG0RY</div>';
+      el.traitsFlyoutVals.innerHTML = '';
       el.traitsFlyoutVals.style.top = '0px';
       el.traitsFlyout.style.display = 'block';
       el.traitsHoverWrap.classList.add('open');
@@ -7615,13 +7626,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (el.traitsFlyout.style.display === 'block') closeTraitsFlyout();
     else openTraitsFlyout();
   });
-  el.traitsFlyoutCats.addEventListener('mouseover', function(e){
-    var catBtn = e.target.closest('.traits-flyout-cat');
-    if (catBtn){
-      renderTraitsFlyoutVals(catBtn.getAttribute('data-cat'));
-      positionFlyoutVals(el.traitsFlyout, el.traitsFlyoutVals, catBtn);
-    }
-  });
+  // Click only, not hover — an earlier version also opened a category's
+  // values on mouseover, which meant just moving the mouse across the
+  // strip (e.g. scrolling past it, or clicking somewhere else nearby)
+  // could pop values open unintentionally. A real click is a deliberate
+  // action; this is the only trigger now.
   el.traitsFlyoutCats.addEventListener('click', function(e){
     var catBtn = e.target.closest('.traits-flyout-cat');
     if (catBtn){
