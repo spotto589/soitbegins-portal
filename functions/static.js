@@ -6982,6 +6982,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     // solved for itself (see runSearchBox's own SEARCH!NG... note) but
     // never got applied here.
     el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG P!GE0NS...</div>';
+    // RESET and the STAT!C://QUERY line both used to sit there showing
+    // the PREVIOUS query's stale count right next to a "loading" message
+    // for the NEW one — confusing, and RESET in particular reads as an
+    // action you could still take on a query that's already gone. Both
+    // come back once real results (or the empty-state) land, see below.
+    el.statusLine.innerHTML = '';
+    el.resetDbBtn.style.display = 'none';
     loadMoreCollection();
   }
   function loadMoreCollection(onDone){
@@ -7042,6 +7049,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     api(reqParams).then(function(data){
       state.loading = false;
       el.loadMoreNote.style.display = 'none';
+      el.resetDbBtn.style.display = '';
       var newItems = data.items || [];
       state.items = state.items.concat(newItems);
       state.skip += newItems.length;
@@ -7098,6 +7106,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).catch(function(){
       state.loading = false;
       el.loadMoreNote.style.display = 'none';
+      el.resetDbBtn.style.display = '';
       if (!state.items.length) el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T REACH THE C0LLECT!0N. TRY AGA!N.'], false);
       pendingTraitScroll = false;
       if (onDone) onDone();
@@ -10229,13 +10238,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     var isScyllaSort = value === 'SCYLLA_PRICE_ASC' || value === 'SCYLLA_PRICE_DESC';
     if (isScyllaSort){
       setScyllaListedOnly(true); // also runs the query
-      return;
-    }
-    if (state.scyllaListedOnly){
+    } else if (state.scyllaListedOnly){
       setScyllaListedOnly(false); // also runs the query
-      return;
+    } else {
+      runQuery();
     }
-    runQuery();
+    // Whichever branch above ran, startCollectionBrowse() has by now
+    // synchronously swapped #resultsArea to the L0AD!NG P!GE0NS note (see
+    // its own comment) — scrolling right here, not waiting for the fetch
+    // to land, is what actually puts that note (not last query's now-
+    // stale results) in view the moment you pick a sort, instead of
+    // leaving you stranded up at SORT BY looking at nothing happening.
+    scrollResultsIntoView();
   }
   // Click to open/close (not hover) — closes on an outside click, see
   // the shared document-level listener further down.
