@@ -1001,9 +1001,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     min-width:0;
     width:auto;
     margin-bottom:0;
-    font-size:11px;
+    font-size:12px;
     letter-spacing:0.02em;
-    padding:0.55em 0.3em;
+    padding:0.65em 0.35em;
     /* BUY N0W wrapping to two lines in its half-width slot (sharing the
        row with 0FFER) while a lone 0FFER stays one line was the actual
        reason the purple box came out two different heights depending on
@@ -1929,7 +1929,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     /* Tight — the button(s) inside should read as filling this box, not
        floating in the middle of it with visible purple margin down each
        side. */
-    padding:0.35em 0.25em;
+    padding:0.5em 0.35em;
     /* One row of content now — button(s), or the !N Y0UR FL0CK label —
        never the price/countdown stack this used to also carry (moved to
        .thumb-listing-badge on the picture itself). Every purple box is
@@ -1952,9 +1952,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:0 0 5px var(--green-glow);
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:15px;
+    font-size:16px;
     letter-spacing:0.05em;
-    padding:0.85em 0.7em;
+    padding:0.95em 0.8em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
@@ -1979,9 +1979,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:0 0 6px var(--green-glow);
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:15px;
+    font-size:16px;
     letter-spacing:0.05em;
-    padding:0.85em 0.7em;
+    padding:0.95em 0.8em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
@@ -3569,6 +3569,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Not-listed state has no icon/price/buy-button pairing to justify the
      boxed currency-amount look — just plain centred text instead. */
   .scylla-listing-row.not-listed{ border:none; background:none; justify-content:center; padding:0.5em 0.6em; }
+  .scylla-listing-row.not-listed .scylla-coin-icon{ display:none; }
   .scylla-coin-wrap{ display:flex; align-items:center; gap:0.5rem; }
   .scylla-coin-icon{ width:22px; height:22px; border-radius:50%; object-fit:cover; border:1px solid var(--magenta-dim); box-shadow:0 0 6px var(--magenta-glow); }
   .scylla-listing-price{ font-size:13px; font-weight:700; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
@@ -4477,7 +4478,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="scylla-listing-row" id="detailScyllaListingRow">
                 <span class="scylla-coin-wrap">
                   <img class="scylla-coin-icon" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="$P!GE0NS">
-                  <span class="scylla-listing-price" id="detailScyllaPrice">N0T L!STED</span>
+                  <span class="scylla-listing-price" id="detailScyllaPrice">N0 L!ST!NG</span>
                 </span>
                 <button class="listing-buy" id="detailScyllaBuyBtn" style="display:none;">BUY</button>
                 <button class="bar-btn" id="detailScyllaDelistBtn" style="display:none;">CANCEL</button>
@@ -10650,7 +10651,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailScyllaCountdown.textContent = detailCountdown;
       el.detailScyllaCountdown.style.display = detailCountdown ? '' : 'none';
     } else {
-      el.detailScyllaPrice.textContent = isOwn ? '!N Y0UR FL0CK' : 'N0T L!STED';
+      el.detailScyllaPrice.textContent = isOwn ? '!N Y0UR FL0CK' : 'N0 L!ST!NG';
       el.detailScyllaBuyBtn.style.display = 'none';
       el.detailScyllaDelistBtn.style.display = 'none';
       el.detailScyllaListingRow.classList.add('not-listed');
