@@ -1351,29 +1351,42 @@ const SWAP_HTML = `<!DOCTYPE html>
        treatment as S0RT BY above, instead of the unscoped .traits-flyout
        base rule further down this file (position:absolute, floating out
        to the right of the trigger — built for the mobile drilled-value
-       overlay, not this). Confirmed live: without this override, F!LTER
-       BY TRA!TS was the one config control on desktop that still
-       "popped out" as a side panel instead of sitting inline like every
-       other row here. !important for the same reason as .flyout-flat's
+       overlay, not this). !important for the same reason as .flyout-flat's
        own display rule above — open/closeTraitsFlyout() still toggle a
        plain inline display:block/none on click, harmless now since this
        always wins at this width.
-       Row, not column — the categories sit directly to the right of the
-       F!LTER BY TRA!TS label itself, same line, same shape as S0RT BY's
-       own label+strip row above (confirmed live this was still wrong
-       after the first pass: categories were horizontal but stacked on
-       their own line under the label instead of beside it). flex-wrap so
-       the value chips below (forced onto their own line via
-       flex-basis:100% on #traitsFlyoutVals) still have room to wrap
-       instead of fighting the cats row for space. */
-    #traitsHoverWrap{ width:100%; max-width:100%; display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:0.6rem; row-gap:0.4rem; min-width:0; }
+       No flex-wrap here — same as #sortDropWrap right above (it has none
+       either). A first attempt used flex-wrap:wrap on this row so the
+       label+flyout could drop to separate lines if they didn't fit, but
+       that's exactly what broke it: the categories inside #traitsFlyout
+       are wide (7 fixed-width chips, way more content than the row has
+       room for), so the browser wrapped the ENTIRE flyout onto its own
+       line below the label instead of shrinking it in place (confirmed
+       live — measured flyout width came out ~equal to the whole row's
+       width, sitting below the label, not beside it). Plain nowrap forces
+       a single line no matter how wide the content wants to be; flex:1 1
+       auto + min-width:0 on the flyout below is what actually lets it
+       shrink to the real remaining space next to the label — the same
+       two properties #sortFlyout.flyout-flat already relies on. */
+    #traitsHoverWrap{ width:100%; max-width:100%; display:flex; align-items:center; min-width:0; }
     #traitsHoverWrap .trait-row-label{ width:auto; flex:0 0 auto; }
+    /* The ▾ implied a click-to-open dropdown, same as S0RT BY's own arrow
+       fix above — this box is permanently visible here too, nothing to
+       expand. Still shown on mobile (kept there), where it's still a
+       real toggle. */
+    #traitsHoverLabel .thl-arrow{ display:none; }
     #traitsFlyout{
       display:flex !important;
       position:static;
-      flex-direction:row;
-      flex-wrap:wrap;
-      align-items:center;
+      /* Column, not row — the category strip is its own horizontal-
+         scrolling line (see .traits-flyout-cats' own unscoped base rule,
+         unchanged), with the value chips stacked in a second line
+         underneath once a category's picked. Plain block stacking is
+         all that's needed here now that this whole element isn't also
+         trying to sit inline next to the label anymore (that's
+         #traitsHoverWrap's job, one level up) — no flex-wrap tricks. */
+      flex-direction:column;
+      align-items:stretch;
       flex:1 1 auto;
       min-width:0;
       width:auto;
@@ -1384,18 +1397,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       padding:0;
       gap:0.4rem;
     }
-    /* Sits inline in the row next to the label now, not stacked full-
-       width above the values — needs its own flex sizing instead of the
-       unscoped base rule's width:100% (meant for when it was the sole
-       child of a column). No border-bottom here either — that was the
-       separator between a stacked cats row and the vals row underneath;
-       mid-row it just reads as a stray line through the label area. */
-    #traitsFlyout > .traits-flyout-cats{ flex:1 1 auto; min-width:0; width:auto; border-bottom:none; }
-    /* Forces the values pane onto its own full-width line below the
-       label+categories row (a flex item at flex-basis:100% in a
-       flex-wrap:wrap row always starts a new line) — see the size/grid
-       fix for the chips themselves further down. */
-    #traitsFlyout > .traits-flyout-vals{ flex-basis:100%; width:100%; }
+    /* Fills the flyout's own (already-shrunk-to-fit) width instead of the
+       unscoped base rule's width:100% (meant for when the flyout was the
+       sole child of a wider column) — functionally the same value here,
+       kept explicit since this rule also drops the border-bottom
+       separator that made sense stacked under a label, not sitting
+       directly under the row it's now already inside. */
+    #traitsFlyout > .traits-flyout-cats{ width:100%; border-bottom:none; }
+    #traitsFlyout > .traits-flyout-vals{ width:100%; }
     .hscroll-arrow{
       flex:0 0 auto;
       display:flex;
@@ -1648,6 +1657,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      desktop media block with the row/column layout fix) so normal
      cascade order — not !important — is enough to win over them. */
   @media (min-width:701px){
+    /* Category chips match S0RT BY's own strip (.flyout-flat .traits-
+       flyout-val) — rounded, gapped pills, not the divider-line list this
+       shares with mobile's vertical accordion by default. */
+    #traitsFlyoutCats{
+      gap:0.4em;
+    }
+    #traitsFlyoutCats .traits-flyout-cat{
+      border:1px solid var(--border-dim);
+      border-radius:var(--radius);
+      text-align:center;
+      padding:0.6em 0.9em;
+    }
     #traitsFlyoutVals{
       display:flex;
       flex-wrap:wrap;
