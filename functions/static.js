@@ -6979,8 +6979,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       // filters was previously dropped here too — picking a trait while
       // FL00R $P!GE0NS was active silently showed every listed Pigeon
       // instead of restricting to ones that actually carry that trait
-      // (or nothing at all, if none of the current listings do).
-      reqParams = { skip: state.skip, limit: PAGE_SIZE, scyllaListed: 1, dir: state.sort === 'SCYLLA_PRICE_DESC' ? 'desc' : 'asc', filters: filters.length ? JSON.stringify(filters) : undefined };
+      // (or nothing at all, if none of the current listings do). Same bug
+      // existed for 1ST/2ND ED!T!0N (numberRange) — picking an edition
+      // alongside any of these three sort modes silently showed the whole
+      // collection instead of just that edition's slice, since only the
+      // two dedicated edition branches further down ever sent it.
+      reqParams = { skip: state.skip, limit: PAGE_SIZE, scyllaListed: 1, dir: state.sort === 'SCYLLA_PRICE_DESC' ? 'desc' : 'asc', filters: filters.length ? JSON.stringify(filters) : undefined, numberRange: isEdition ? (state.edition === 'LOW' ? 'low' : 'high') : undefined };
     } else if (isSalesSort){
       // filters was previously dropped here — picking a trait while a
       // H!ST0R!CAL SALES sort was active silently showed every Pigeon's
@@ -6989,12 +6993,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         skip: state.skip, limit: PAGE_SIZE, highestSale: 1,
         dir: (state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_XRP_ASC' || state.sort === 'AVG_SALE_PIGEONS_ASC') ? 'asc' : 'desc',
         metric: state.sort === 'AVG_SALE_PIGEONS_ASC' ? 'avg_pigeons' : ((state.sort === 'AVG_SALE_XRP_ASC' || state.sort === 'AVG_SALE_XRP_DESC') ? 'avg' : 'max'),
-        filters: filters.length ? JSON.stringify(filters) : undefined
+        filters: filters.length ? JSON.stringify(filters) : undefined,
+        numberRange: isEdition ? (state.edition === 'LOW' ? 'low' : 'high') : undefined
       };
     } else if (isCrossListing){
       // Real lowest/highest across BOTH Deeptide and xrp.cafe, not just
       // whichever platform happens to have the cheaper API.
-      reqParams = { skip: state.skip, limit: 20, crossListing: state.sort === 'PRICE_ASC' ? 'asc' : 'desc', filters: filters.length ? JSON.stringify(filters) : undefined };
+      reqParams = { skip: state.skip, limit: 20, crossListing: state.sort === 'PRICE_ASC' ? 'asc' : 'desc', filters: filters.length ? JSON.stringify(filters) : undefined, numberRange: isEdition ? (state.edition === 'LOW' ? 'low' : 'high') : undefined };
     } else if (isEdition && isNumericSort){
       // Direct slice of the number map restricted to this range — no scan needed.
       reqParams = { skip: state.skip, limit: PAGE_SIZE, numberRange: state.edition === 'LOW' ? 'low' : 'high', numericOrder: state.sort === 'NAME_DESC' ? 'desc' : 'asc', filters: filters.length ? JSON.stringify(filters) : undefined };
@@ -10189,6 +10194,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   function applySort(value){
     state.sort = value;
     renderSortTag();
+    // Desktop's strip (#sortFlyoutVals) is always visible, not just
+    // shown while the flyout is open — its .selected class only ever got
+    // set by openSortFlyout()'s own renderSortFlyoutList() call, so on
+    // desktop (where open/close doesn't really apply) picking a new sort
+    // left the OLD option still visually highlighted even though the tag
+    // above it, and the actual applied sort, had both already changed.
+    renderSortFlyoutList();
     var isScyllaSort = value === 'SCYLLA_PRICE_ASC' || value === 'SCYLLA_PRICE_DESC';
     if (isScyllaSort){
       setScyllaListedOnly(true); // also runs the query
@@ -10218,8 +10230,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   // not just whenever openSortFlyout() has been called. Harmless on
   // mobile too (the strip stays display:none there until opened).
   renderSortFlyoutList();
-  el.sortScrollPrevBtn.addEventListener('click', function(){ el.sortFlyoutVals.scrollBy({ left: -220, behavior: 'smooth' }); });
-  el.sortScrollNextBtn.addEventListener('click', function(){ el.sortFlyoutVals.scrollBy({ left: 220, behavior: 'smooth' }); });
+  // A fixed-pixel nudge (the old ±220) could land mid-item, showing the
+  // strip cut off partway through the last option instead of all the way
+  // at either end — jumping straight to 0 / scrollWidth (the browser
+  // clamps this to the real max scrollLeft on its own) always lands
+  // exactly at the true start or end regardless of how many options
+  // there are or how wide each one renders.
+  el.sortScrollPrevBtn.addEventListener('click', function(){ el.sortFlyoutVals.scrollTo({ left: 0, behavior: 'smooth' }); });
+  el.sortScrollNextBtn.addEventListener('click', function(){ el.sortFlyoutVals.scrollTo({ left: el.sortFlyoutVals.scrollWidth, behavior: 'smooth' }); });
   renderSortTag();
   // Reflects the default scyllaListedOnly:true landing state — every
   // other place this class gets toggled goes through setScyllaListedOnly

@@ -520,6 +520,32 @@ export async function onRequestGet(context) {
     try { filters = JSON.parse(filtersRaw); } catch (e) { filters = []; }
     if (!Array.isArray(filters)) filters = [];
   }
+
+  // 1ST/2ND ED!T!0N (numberRange) — same "parse once, every sort mode
+  // honors it" reasoning as filters just above. Confirmed live: picking
+  // an edition while a sales-price/floor-price/cross-listing sort was
+  // active silently ignored it and showed the whole collection, since
+  // only the two dedicated edition branches further down ever looked at
+  // this param. idsInEditionRange is a lazy, memoized nftId->in-range
+  // lookup (built from the same crawled number map ?number= search
+  // already uses) so the scyllaListed/highestSale branches below can
+  // filter their own id pools without a per-item Deeptide fetch just to
+  // learn each one's number.
+  const numberRange = params.get('numberRange');
+  let editionIdSetPromise = null;
+  function idsInEditionRange() {
+    if (!editionIdSetPromise) {
+      editionIdSetPromise = getPigeonNumberMap(env.coin).then(map => {
+        const set = new Set();
+        for (const numStr of Object.keys(map)) {
+          const n = parseInt(numStr, 10);
+          if (numberRange === 'low' ? n <= PIGEON_LOW_EDITION_MAX : n > PIGEON_LOW_EDITION_MAX) set.add(map[numStr]);
+        }
+        return set;
+      });
+    }
+    return editionIdSetPromise;
+  }
   // Deeptide already filters server-side once a `traits` param is passed,
   // so this just scans its own listings feed collecting every matching
   // item — no per-item guessing needed. Bounded the same way the edition-
@@ -575,6 +601,10 @@ export async function onRequestGet(context) {
       const scan = await scanFilteredCandidates(filters);
       const matchSet = new Set(scan.items.map(it => it.nftId));
       idPool = idPool.filter(id => matchSet.has(id));
+    }
+    if (numberRange === 'low' || numberRange === 'high') {
+      const editionSet = await idsInEditionRange();
+      idPool = idPool.filter(id => editionSet.has(id));
     }
     const sortedIds = idPool.sort((a, b) => {
       const av = parseFloat(scyllaListingsMap[a].price) || 0;
@@ -651,6 +681,10 @@ export async function onRequestGet(context) {
       const matchSet = new Set(scan.items.map(it => it.nftId));
       idPool = idPool.filter(id => matchSet.has(id));
     }
+    if (numberRange === 'low' || numberRange === 'high') {
+      const editionSet = await idsInEditionRange();
+      idPool = idPool.filter(id => editionSet.has(id));
+    }
     const sortedIds = idPool.sort((a, b) => asc ? metricOf(a) - metricOf(b) : metricOf(b) - metricOf(a));
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
@@ -677,7 +711,6 @@ export async function onRequestGet(context) {
   // so nothing scanned-but-unused this request gets skipped or repeated
   // next request. Capped at 10 raw pages (~600 items) per request, which in
   // practice is 1-2 pages since ~half the collection matches either range.
-  const numberRange = params.get('numberRange');
   if (numberRange === 'low' || numberRange === 'high') {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
 
@@ -813,7 +846,12 @@ export async function onRequestGet(context) {
       return json({ items: [], total: 0, hasMore: false, skip, limit: 0, collectionSizeApprox: coll.sizeApprox });
     }
     const page = await fetchDeeptideListings({ skip: 0, limit: 60, sort: deeptideSort, traits: filters, shopSlug: coll.shopSlug });
-    const realCandidates = page.items.filter(it => typeof it.priceDrops === 'number');
+    let realCandidates = page.items.filter(it => typeof it.priceDrops === 'number');
+    if (numberRange === 'low' || numberRange === 'high') {
+      realCandidates = realCandidates.filter(it =>
+        numberRange === 'low' ? (it.number !== null && it.number <= PIGEON_LOW_EDITION_MAX) : (it.number !== null && it.number > PIGEON_LOW_EDITION_MAX)
+      );
+    }
     const withCross = await Promise.all(realCandidates.map(async (it) => {
       const xc = await fetchXrpCafeNftListing(env.coin, it.nftId);
       const dp = it.priceDrops / 1000000;
