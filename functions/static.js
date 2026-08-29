@@ -7655,6 +7655,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (catBtn){
       renderTraitsFlyoutVals(catBtn.getAttribute('data-cat'));
       positionFlyoutVals(el.traitsFlyout, el.traitsFlyoutVals, catBtn);
+      // Desktop: the values grid renders inline, right below the category
+      // strip (see #traitsFlyoutVals' own static-flow CSS) — confirmed
+      // live this can land partly or fully below the fold whenever
+      // FILTER BY TRAITS itself sits lower on the page (a normal-height
+      // browser window, or just having scrolled down a bit), so clicking
+      // a category looked like nothing happened unless you already knew
+      // to scroll down. Same "make the click feel like it did something"
+      // reasoning as scrollResultsIntoView() elsewhere on this page.
+      if (window.innerWidth > 700){
+        el.traitsFlyoutVals.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
       // Only visually a "drill in" below 700px (see the CSS) — clicking a
       // category to preview its values on desktop is unaffected.
       el.traitsFlyout.classList.add('flyout-drilled');
