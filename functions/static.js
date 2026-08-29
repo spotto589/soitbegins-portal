@@ -1277,6 +1277,13 @@ const SWAP_HTML = `<!DOCTYPE html>
        overflow fix (minmax(0,1fr) there, min-width:0 here — same spec
        rule, two different display types). */
     #sortDropWrap{ width:100%; max-width:100%; display:flex; min-width:0; }
+    /* The always-visible strip above already shows the current sort via
+       .selected's own highlight (see renderSortFlyoutList) — the
+       CATEG0RY :: VALUE tag underneath (renderSortTag, #sortRows) was
+       built for when this same trigger opened/closed as a click-to-open
+       dropdown (still true on mobile, kept there) and just duplicates
+       the highlight now that the strip never closes. */
+    #sortRows{ display:none; }
     /* #sortDropWrap .trait-row-label's own width:100% (elsewhere in this
        file) was sized for the old fixed-190px pill, where a centered
        full-width label made sense — at this new full-row width it
