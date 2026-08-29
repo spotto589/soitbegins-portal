@@ -1335,6 +1335,34 @@ const SWAP_HTML = `<!DOCTYPE html>
       padding:0.6em 0.9em;
       border-color:var(--border-dim);
     }
+    /* F!LTER BY TRA!TS gets the same permanently-visible, in-page-flow
+       treatment as S0RT BY above, instead of the unscoped .traits-flyout
+       base rule further down this file (position:absolute, floating out
+       to the right of the trigger — built for the mobile drilled-value
+       overlay, not this). Confirmed live: without this override, F!LTER
+       BY TRA!TS was the one config control on desktop that still
+       "popped out" as a side panel instead of sitting inline like every
+       other row here. !important for the same reason as .flyout-flat's
+       own display rule above — open/closeTraitsFlyout() still toggle a
+       plain inline display:block/none on click, harmless now since this
+       always wins at this width. The category row underneath stays
+       horizontal and the value list stays static below it via their own
+       unscoped base rules (.traits-flyout-cats/.traits-flyout-vals) —
+       only the outer popup positioning needed overriding here. */
+    #traitsHoverWrap{ width:100%; max-width:100%; display:flex; flex-direction:column; align-items:flex-start; min-width:0; }
+    #traitsHoverWrap .trait-row-label{ width:auto; flex:0 0 auto; }
+    #traitsFlyout{
+      display:flex !important;
+      position:static;
+      flex-direction:column;
+      width:100%;
+      max-height:none;
+      background:transparent;
+      border:none;
+      box-shadow:none;
+      padding:0;
+      margin-top:0.5rem;
+    }
     .hscroll-arrow{
       flex:0 0 auto;
       display:flex;
@@ -7056,6 +7084,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.items = [];
     state.hasMore = true;
     state.total = null;
+    // Tracks every nftId already rendered this query, across whichever
+    // auto-fallback stage produced it (see loadMoreCollection's own
+    // stage-2/-3 handoff below) — the different fallback endpoints each
+    // paginate their own bounded set from skip 0, so the same Pigeon can
+    // legitimately turn up again once browsing moves from "listed" to
+    // "sold before" to "everything else"; without this it would render
+    // twice.
+    state.seenNftIds = {};
+    state.autoFallbackStage = 0;
     el.endOfCollectionNote.style.display = 'none';
     // Every sort/filter/edition change routes through here (see runQuery)
     // and used to just blank the results area while the new page fetched
@@ -7131,12 +7168,22 @@ const SWAP_HTML = `<!DOCTYPE html>
       state.loading = false;
       el.loadMoreNote.style.display = 'none';
       el.resetDbBtn.style.display = '';
-      var newItems = data.items || [];
+      var rawItems = data.items || [];
+      // Each auto-fallback stage below (listed -> sold-before -> full
+      // collection) re-paginates its own bounded set from skip 0, so the
+      // same Pigeon can legitimately come back around once browsing moves
+      // to the next stage — drop anything already rendered instead of
+      // showing it twice.
+      var newItems = rawItems.filter(function(it){
+        if (state.seenNftIds[it.nftId]) return false;
+        state.seenNftIds[it.nftId] = true;
+        return true;
+      });
       state.items = state.items.concat(newItems);
-      state.skip += newItems.length;
+      state.skip += rawItems.length;
       if (isEdition && typeof data.rawSkip === 'number') state.editionRawSkip = data.rawSkip;
       state.total = typeof data.total === 'number' ? data.total : state.total;
-      state.hasMore = !!data.hasMore && newItems.length > 0;
+      state.hasMore = !!data.hasMore && rawItems.length > 0;
       appendResults(newItems);
       // Floor listings exhausted — seamlessly continue the same infinite
       // scroll sorted by lowest average sale price in XRP instead of just
@@ -7147,8 +7194,31 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (state.scyllaListedOnly && !state.hasMore){
         state.scyllaListedOnly = false;
         state.sort = 'AVG_SALE_XRP_ASC';
+        state.autoFallbackStage = 1;
         renderSortTag();
         el.statScyllaListedTile.classList.remove('scylla-active');
+        state.skip = 0;
+        state.hasMore = true;
+        loadMoreCollection(onDone);
+        return;
+      }
+      // Sold-before sort ALSO exhausted (only every Pigeon with real sale
+      // history matched the filter, but not the complete real set — a
+      // Pigeon that's neither currently listed nor ever sold was silently
+      // never shown, e.g. a trait the picker itself advertises as
+      // existing on 15 Pigeons capping out at 9 rendered). Only fires
+      // when THIS stage was itself reached by the auto-fallback above
+      // (autoFallbackStage === 1), never when the user picked H!GHEST
+      // SALE sort themselves — that's a deliberate choice and should stop
+      // at its own real end, not silently jump to a different sort under
+      // them. Final stage: the same unrestricted, complete, rarity-sorted
+      // browse every plain (no sort picked) query already uses — a
+      // superset of both earlier stages, so this alone is guaranteed to
+      // eventually surface every real match.
+      if (state.autoFallbackStage === 1 && !state.hasMore){
+        state.sort = 'RARITY_ASC';
+        state.autoFallbackStage = 2;
+        renderSortTag();
         state.skip = 0;
         state.hasMore = true;
         loadMoreCollection(onDone);
