@@ -1368,7 +1368,11 @@ const SWAP_HTML = `<!DOCTYPE html>
        auto + min-width:0 on the flyout below is what actually lets it
        shrink to the real remaining space next to the label — the same
        two properties #sortFlyout.flyout-flat already relies on. */
-    #traitsHoverWrap{ width:100%; max-width:100%; display:flex; align-items:center; min-width:0; }
+    /* flex-start, not center — the flyout is two stacked rows (cats, then
+       vals) now, so centering against its full combined height left the
+       label floating oddly mid-way down instead of lining up with the
+       cats row it actually sits next to. */
+    #traitsHoverWrap{ width:100%; max-width:100%; display:flex; align-items:flex-start; min-width:0; }
     #traitsHoverWrap .trait-row-label{ width:auto; flex:0 0 auto; }
     /* The ▾ implied a click-to-open dropdown, same as S0RT BY's own arrow
        fix above — this box is permanently visible here too, nothing to
@@ -1661,6 +1665,16 @@ const SWAP_HTML = `<!DOCTYPE html>
        flyout-val) — rounded, gapped pills, not the divider-line list this
        shares with mobile's vertical accordion by default. */
     #traitsFlyoutCats{
+      /* #traitsFlyoutCats's own unscoped flex:0 0 var(--ctrl-w) (further
+         down this file) was built for the OLD layout, where #traitsFlyout
+         was flex-direction:row and this flex-basis pinned the cats
+         column's WIDTH. Now that #traitsFlyout is flex-direction:column
+         (see above), the exact same flex-basis pins this row's HEIGHT
+         instead — confirmed live: every category chip stretched to
+         ~175px tall, height:auto here plus align-items:center (not the
+         row's own stretch default) is what actually fixes it. */
+      flex:0 0 auto;
+      align-items:center;
       gap:0.4em;
     }
     #traitsFlyoutCats .traits-flyout-cat{
