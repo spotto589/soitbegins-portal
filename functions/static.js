@@ -2696,13 +2696,33 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .page-btn:hover:not(:disabled){ border-color:var(--cyan-dim); color:var(--cyan); }
   .page-btn:disabled{ opacity:0.3; cursor:not-allowed; }
+  /* Same "unmistakable, fills the space" treatment as .empty-state just
+     below — a sort/filter/search result swap used to just blank this
+     area with a barely-there 11px note easy to miss entirely, especially
+     on mobile where there's no surrounding grid to signal "something is
+     about to happen here." min-height matches .empty-state's own 60vh so
+     there's no layout jump between the loading state and whichever of
+     .result-list / .empty-state replaces it once the fetch settles. */
   .loading-note{
     text-align:center;
-    font-size:11px;
-    letter-spacing:0.1em;
-    color:var(--cyan-dim);
-    padding:1.5rem 0;
+    min-height:60vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    letter-spacing:0.12em;
+    color:var(--cyan);
+    text-shadow:0 0 8px var(--cyan-glow);
     text-transform:uppercase;
+    padding:2rem 1rem;
+    animation:loadingNotePulse 1.4s ease-in-out infinite;
+  }
+  @keyframes loadingNotePulse{
+    0%, 100%{ opacity:1; }
+    50%{ opacity:0.5; }
+  }
+  @media (max-width:760px){
+    .loading-note{ font-size:16px; min-height:40vh; padding:1.5rem 1rem; }
   }
 
   /* ---- detail screen — picture sized to fit its own (now bigger) column
