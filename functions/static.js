@@ -6956,7 +6956,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.hasMore = true;
     state.total = null;
     el.endOfCollectionNote.style.display = 'none';
-    el.resultsArea.innerHTML = '';
+    // Every sort/filter/edition change routes through here (see runQuery)
+    // and used to just blank the results area while the new page fetched
+    // — same "did my click even register" dead air the search box already
+    // solved for itself (see runSearchBox's own SEARCH!NG... note) but
+    // never got applied here.
+    el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG P!GE0NS...</div>';
     loadMoreCollection();
   }
   function loadMoreCollection(onDone){
