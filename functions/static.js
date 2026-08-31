@@ -2816,17 +2816,26 @@ const SWAP_HTML = `<!DOCTYPE html>
      $PIGEONS number to be proud of, or a BUY link in the exact same spot
      if it's empty — either way, the token itself is what this banner is
      actually about. */
+  /* Was position:absolute + left:50% of the WHOLE row — mathematically
+     dead-center of the row, confirmed live (635.0px either way on a
+     1191px-wide panel), but that's not the same as looking centered: the
+     left column (SET TRUSTL!NE, ~304px) and the calc column (~217px)
+     aren't the same width, so pinning BALANCE to the row's raw midpoint
+     left very uneven gaps on either side of it (~100px on the left,
+     ~187px on the right, confirmed live) — it visually read as shoved
+     left even though the number was exactly right. flex:1 makes it a
+     normal, real flex child instead: it fills whatever space is actually
+     LEFT OVER between the two side columns (however uneven those are)
+     and centers its own content within that, which is what "centered"
+     actually needs to mean here. */
   .pigeons-bar-balance{
-    position:absolute;
-    left:50%;
-    top:56%;
-    transform:translate(-50%, -50%);
+    flex:1 1 0;
+    min-width:220px;
     display:flex;
     flex-direction:row;
     align-items:center;
     justify-content:center;
     gap:1rem;
-    min-width:220px;
   }
   /* Centered, not left-aligned — BUY $P!GE0NS is narrower than the
      balance number above it, and flex-start left both edges flush
@@ -2978,9 +2987,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     .pigeons-bar-left-body{ align-items:center; text-align:center; }
     .pigeons-bar-left-body-row{ flex-direction:column; }
     .pigeons-bar-left-lines{ align-items:center; }
-    /* Absolute-centering only works with room to spare either side —
-       drop back into normal document flow once the row itself stacks. */
-    .pigeons-bar-balance{ position:static; transform:none; flex-direction:column; margin:0.75rem 0; order:-1; }
+    /* No longer position:absolute (see the base rule's own comment) — just
+       stacks the thumb+info+buy column above the rest, same as before. */
+    .pigeons-bar-balance{ flex-direction:column; margin:0.75rem 0; order:-1; }
     .pigeons-bar-balance-info{ align-items:center; text-align:center; }
   }
 
