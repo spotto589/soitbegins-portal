@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findPigeonsOffer
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findPigeonsOffer, fetchNftCurrentOwner
 } from '../_shared.js';
 
 // Σκύλλα SWAP — BUY (phase 2). Builds and returns the exact
@@ -45,10 +45,21 @@ export async function onRequestPost(context) {
   if (offers === null) {
     return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 503 });
   }
-  // The Σκύλλα $PIGEONS offer specifically — a Pigeon can carry other
-  // currencies' sell offers simultaneously (e.g. a separate XRP listing
-  // on Deeptide); findPigeonsOffer never grabs the wrong one by accident.
-  const offer = findPigeonsOffer(offers);
+  // Who actually owns this NFT right now — required so the offer lookup
+  // below can't pick a stale offer left behind by a PREVIOUS owner (XRPL
+  // never auto-cancels those when the NFT changes hands). See
+  // fetchNftCurrentOwner's own comment: this is exactly what was making a
+  // real buyer, who once listed and sold this same Pigeon, get told they
+  // "can't buy their own listing" on someone else's real, current one.
+  const currentOwner = await fetchNftCurrentOwner(nftId);
+  if (!currentOwner) {
+    return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 503 });
+  }
+  // The Σκύλλα $PIGEONS offer specifically, and only from the confirmed
+  // current owner — a Pigeon can carry other currencies' sell offers
+  // simultaneously (e.g. a separate XRP listing on Deeptide), or a stale
+  // offer from whoever held it before; this never grabs either by accident.
+  const offer = findPigeonsOffer(offers, currentOwner);
   if (!offer) {
     return new Response(JSON.stringify({ error: 'not_listed' }), { status: 404 });
   }
