@@ -4676,8 +4676,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockMyFlockBox">
           <div class="flock-account-box-row"><span class="flock-account-box-label" id="flockMyFlockLabel">MY FL0CK :: 0</span></div>
         </div>
-        <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockInboxBox">
-          <div class="flock-account-box-row"><span class="flock-account-box-label" id="flockInboxLabel">MESSAGE !NB0X</span></div>
+        <!-- Paused (MESSAGES_DB was never bound in production, see the
+             swap-buy-prepare.js/HANDOFF.md history — messaging is fully
+             built and worked in local dev, but every real request in prod
+             500s) — same inert "not yet" treatment as TRANSACTION
+             H!ST0RY/$CRWN REWARDS below, not a real destination right now. -->
+        <div class="sw-panel flock-account-box flock-account-box-soon">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">MESSAGE !NB0X</span><span class="db-soon">C0M!NG S00N</span></div>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" data-flockbox="offers">
           <div class="flock-account-box-row"><span class="flock-account-box-label">0FFERS</span></div>
@@ -5607,7 +5612,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
-   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockInboxBox','flockInboxLabel','flockBuyPigeonsBox','flockGridPanel',
+   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockBuyPigeonsBox','flockGridPanel',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn','swapOffersTabBtn',
@@ -9159,21 +9164,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.flockCollapsed = !state.flockCollapsed;
     updateSearchPanelTitleForPaws();
   });
-  // MESSAGE !NB0X box existed as a placeholder with no handler — this is
-  // the actual entry point into wallet-to-wallet messaging from SWAP,
-  // where the negotiation this feature exists for actually happens.
-  el.flockInboxBox.addEventListener('click', function(){
-    window.location.href = '/messages';
-  });
-  function loadInboxUnreadBadge(){
-    if (!MY_WALLET) return;
-    fetch('/api/messages-inbox').then(function(r){ return r.ok ? r.json() : null; }).then(function(data){
-      if (!data) return;
-      var unread = (data.items || []).reduce(function(sum, it){ return sum + (it.unreadCount || 0); }, 0);
-      el.flockInboxLabel.textContent = 'MESSAGE !NB0X' + (unread > 0 ? ' :: ' + unread : '');
-    }).catch(function(){});
-  }
-  loadInboxUnreadBadge();
+  // Messaging paused — see the MESSAGE !NB0X box's own HTML comment.
+  // Nothing to wire up here any more (no click handler, no unread-badge
+  // fetch against an endpoint that only ever 500s in prod).
   // BUY $P!GE0NS is the one entry point everywhere now (FL0CK shows the
   // exact same banner as DATABASE, no more BALANCE-amount-as-buy-button
   // substitution — that only existed while FL0CK's banner was slimmed).
@@ -11123,15 +11116,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderOwnerLink(short, full){
     if (!full){ el.detailOwner.textContent = 'N0T !NDEXED'; el.detailOwner.classList.add('not-indexed'); return; }
     el.detailOwner.classList.remove('not-indexed');
-    // MESSAGE only shown for someone else's Pigeon, and only once we
-    // actually have a connected wallet to send from (an anonymous browser
-    // has no session to attach the message to — /messages itself prompts
-    // to connect, but there's no point linking there before that's even
-    // possible).
-    var messageLink = (MY_WALLET && full !== MY_WALLET)
-      ? ' <a class="owner-message-link" href="/messages?to=' + encodeURIComponent(full) + '" target="_blank" rel="noopener" title="SEND TH!S 0WNER A MESSAGE">M3SSAGE</a>'
-      : '';
-    el.detailOwner.innerHTML = '<span class="do-label">0WNED BY</span><a class="owner-link" href="#" data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '" title="V!EW TH!S WALLET\\'S FULL P!GE0N C0LLECT!0N">' + escapeHtml(short || full) + '</a>' + messageLink;
+    // MESSAGE link removed — messaging is paused (MESSAGES_DB was never
+    // bound in production, see the MESSAGE !NB0X account box's own
+    // comment), so this would only ever dead-end at a broken page.
+    el.detailOwner.innerHTML = '<span class="do-label">0WNED BY</span><a class="owner-link" href="#" data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '" title="V!EW TH!S WALLET\\'S FULL P!GE0N C0LLECT!0N">' + escapeHtml(short || full) + '</a>';
   }
   // Clicking the owner address on INSPECT jumps straight into that wallet's
   // full real Pigeon collection (same browse UI as SELECT), not an external
