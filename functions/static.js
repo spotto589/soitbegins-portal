@@ -5371,6 +5371,16 @@ const SWAP_HTML = `<!DOCTYPE html>
 <script>
 (function(){
 
+  // The browser's own scroll-restoration silently restored whatever
+  // scrollY a previous visit/reload happened to be at — landing wherever
+  // that was, not the top, on every plain refresh. Combined with content
+  // whose height depends on what's finished loading (images, async trait/
+  // pigeon data), the restored offset frequently pointed at the wrong
+  // thing entirely. Manual + an explicit top-of-page jump makes every
+  // fresh load of this page start from the same place, every time.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.scrollTo(0, 0);
+
   // Same public OAuth-login key every other page already hardcodes
   // (board.js, scylla.js, kingdom.js, mainframe.js, glitch.js) — the
   // client-facing half of the Xaman app, safe to be public.
@@ -5663,39 +5673,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   // instant jump. Shared by showTab (clicking DATABASE/MY PIGEONS/etc
   // directly) and showScreen (detail/confirm/result screens).
   function scrollTabStripIntoView(){
-    window.scrollTo({ top: window.scrollY + el.topTabs.getBoundingClientRect().top, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   // Clicking a tab on the row (DATABASE/MY PIGEONS/TOP 100/SALES
-  // HISTORY/SWAP OFFERS) should land you at the top of THAT tab's own
-  // content, not just at the tab strip — the trustline banner still sits
-  // between the strip and the content now that the strip moved above it,
-  // so aligning to the strip alone left the actual section scrolled
-  // halfway off-screen.
+  // HISTORY/SWAP OFFERS), or opening a detail/confirm screen, should land
+  // you at the top of the page — literal scrollY 0, not a computed offset
+  // to wherever the target panel's own getBoundingClientRect() happened to
+  // measure. That used to be relative (window.scrollY + panel top), taken
+  // one rAF tick after the tab switch — good enough for the synchronous
+  // display:none toggles that just happened, but the trustline banner
+  // above every panel keeps changing height as its own async data lands
+  // (pigeon count, thumbnail, CONNECT!NG status resolving), same async-
+  // reflow class of bug the body's own overflow-anchor:none comment
+  // already describes for images loading below the fold. Depending on how
+  // much of that had finished within that one tick, the target position
+  // measured differently every time — landing somewhere different on
+  // every click, not reliably at the top of anything. A fixed 0 can't be
+  // invalidated by anything loading later, so it's the only version of
+  // this that's actually predictable.
   function scrollActiveTabPanelIntoView(tab){
-    // mypigeons picks whichever of its two panels is actually visible
-    // (see showTab) — myPigeonsPanel only while still connecting/not yet
-    // scoped, screenBrowse (the real grid) once scoped to your own
-    // wallet. A hidden (display:none) element's getBoundingClientRect is
-    // always all-zero, so scrolling to the wrong one of the pair here
-    // would silently no-op instead of landing at the top of the content.
-    var panel = {
-      database: el.screenBrowse,
-      mypigeons: isOwnWalletScope() ? el.screenBrowse : el.myPigeonsPanel,
-      topholders: el.topHoldersPanelWrap,
-      sales: el.salesPanelWrap,
-      crown: el.crownPanelWrap,
-      swapoffers: el.swapOffersPanelWrap
-    }[tab];
-    if (!panel) return;
-    // Instant, not smooth — should land at the top of the tab's content
-    // immediately, not animate there. Still deferred one tick: the other
-    // tabs' panels just got hidden in this same call stack (showTab's own
-    // display:none toggles), which can shrink the page shorter than the
-    // scroll target for a moment — reading the position before that
-    // reflow settles would jump to the wrong place.
-    requestAnimationFrame(function(){
-      window.scrollTo({ top: window.scrollY + panel.getBoundingClientRect().top, behavior: 'auto' });
-    });
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }
   // Same flush-to-top feel as scrollTabStripIntoView, but for the results
   // list itself — picking a trait should feel like you've actually
