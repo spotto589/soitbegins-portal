@@ -620,11 +620,30 @@ export async function onRequestGet(context) {
     const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
 
+    // Deeptide's own current-owner field, reused from the detail fetch
+    // above (no extra request) — lets the background self-heal below catch
+    // a listing whose NFT has since changed hands even when the ORIGINAL
+    // seller's sell offer is still technically present on-ledger. XRPL
+    // never auto-cancels a seller's old NFTokenCreateOffer just because
+    // the NFT later changed hands (see findPigeonsOffer's own excludeOwner
+    // comment) — that stale-but-present offer used to pass the
+    // offerId-still-there check below forever, leaving a Pigeon showing as
+    // LISTED that could never actually be bought (BUY correctly refuses
+    // it, since only the real current owner's offer is acceptable, but the
+    // index never learned to stop advertising it).
+    const currentOwnerById = {};
+    resolved.forEach(it => { if (it) currentOwnerById[it.nftId] = it.owner; });
+
     const BACKGROUND_VERIFY_SAMPLE = 5;
     context.waitUntil((async () => {
       for (const id of pageIds.slice(0, BACKGROUND_VERIFY_SAMPLE)) {
         const entry = scyllaListingsMap[id];
         if (!entry) continue;
+        const currentOwner = currentOwnerById[id];
+        if (currentOwner && entry.seller && currentOwner !== entry.seller) {
+          await removeSwapListing(env.coin, id);
+          continue;
+        }
         // null means the lookup itself failed (rate-limited, network
         // error) — must NOT be treated as "confirmed gone," or a
         // transient blip wrongly deletes a real, still-live listing from
