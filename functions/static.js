@@ -11530,6 +11530,36 @@ const SWAP_HTML = `<!DOCTYPE html>
     else if (e.key === 'ArrowRight') navigateDetail(1);
   });
 
+  // ---- Browser/mouse BACK button — this page never called
+  // history.pushState anywhere, so there was nothing app-aware for a back
+  // press to step through: clicking back (or a mouse's dedicated back
+  // button, same popstate event) left the whole site entirely instead of
+  // closing whatever was actually open — a Pigeon's detail view, a
+  // confirm popup, a wallet scope, a non-DATABASE tab. Reported live as
+  // "back goes to a separate web page." One synthetic history entry is
+  // pushed on load and re-pushed every time a back press closes exactly
+  // one of these (checked in the order someone would expect to unwind
+  // them — modals before the detail screen, detail before wallet scope,
+  // wallet scope before the tab itself); once nothing here is left open,
+  // the next back press finally leaves the page for real, since nothing
+  // gets pushed again at that point. ----
+  function closeTopmostOverlayForBack(){
+    if (el.acceptTransferConfirmModal.style.display !== 'none'){ closeAcceptTransferConfirm(); return true; }
+    if (el.transferConfirmModal.style.display !== 'none'){ closeTransferConfirmModal(); return true; }
+    if (el.offerConfirmModal.style.display !== 'none'){ closeOfferConfirmModal(); return true; }
+    if (el.buySwapModal.style.display !== 'none'){ closeBuySwapModal(); return true; }
+    if (el.pigeonsCalcModal.style.display !== 'none'){ closeCalcPopover(); return true; }
+    if (el.amountEntryModal.style.display !== 'none'){ closeAmountEntryModal(); return true; }
+    if (el.screenHistory.style.display !== 'none' || el.screenDetail.style.display !== 'none'){ goBackFromDetail(); return true; }
+    if (state.scope){ exitWalletScope(); startCollectionBrowse(); return true; }
+    if (state.activeTab && state.activeTab !== 'database'){ showTab('database'); return true; }
+    return false;
+  }
+  window.addEventListener('popstate', function(){
+    if (closeTopmostOverlayForBack()) history.pushState({ skyllaNav: true }, '', location.href);
+  });
+  history.pushState({ skyllaNav: true }, '', location.href);
+
   // Sales history now swaps out the whole panel (SCREEN 2b) instead of
   // expanding inline underneath the traits — detailHistoryList itself
   // already lives inside screenHistory and is populated by openDetail's
