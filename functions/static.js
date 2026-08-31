@@ -274,11 +274,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-green-num{ color:var(--green); text-shadow:0 0 6px var(--green-glow); }
   .sw-panel{
     position:relative;
-    border:1px solid var(--border-dim);
+    /* Was a plain colourless var(--border-dim) — every panel on the site
+       reads a little more alive with a faint cyan tint on the border and
+       a soft ambient glow around it, same accent every real number/link
+       already uses, instead of the box itself staying totally neutral.
+       Tried live first (not guessed blind): still reads calm even with
+       several panels stacked on one screen, not a wall of glow. */
+    border:1px solid var(--cyan-faint);
     background:var(--panel-bg);
     backdrop-filter:blur(7px);
     -webkit-backdrop-filter:blur(7px);
-    box-shadow:inset 0 0 34px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.015);
+    box-shadow:inset 0 0 34px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.015), 0 0 14px var(--cyan-glow);
     border-radius:var(--radius);
     padding:1.5rem;
     margin-bottom:1.75rem;
