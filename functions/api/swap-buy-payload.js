@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, getXamanUserToken, findPigeonsOffer,
-  fetchNftCurrentOwner, recordPendingBuy
+  recordPendingBuy
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same txjson swap-buy-prepare.js
@@ -57,27 +57,16 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 503 });
   }
   console.log('BUY-PAYLOAD offers found:', offers.length);
-  // Who actually owns this NFT right now — see fetchNftCurrentOwner's own
-  // comment. Without this, findPigeonsOffer could resolve to a stale offer
-  // left behind by a PREVIOUS owner (XRPL never auto-cancels those), which
-  // is exactly what was making this wrongly report cannot_buy_own_listing
-  // for a buyer who once listed and sold this same Pigeon.
-  const currentOwner = await fetchNftCurrentOwner(nftId);
-  if (!currentOwner) {
-    console.log('BUY-PAYLOAD exit: lookup_failed (could not confirm current owner) for', nftId);
-    return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 503 });
-  }
-  // The Σκύλλα $PIGEONS offer specifically, and only from the confirmed
-  // current owner — see findPigeonsOffer's own comment for why offers[0]/
-  // owner-only matching is wrong here.
-  const offer = findPigeonsOffer(offers, currentOwner);
+  // The Σκύλλα $PIGEONS offer specifically, excluding any offer the buyer
+  // themselves created — see findPigeonsOffer's own comment for why
+  // offers[0]/owner-only matching is wrong here, and why excludeOwner (not
+  // a separate "who owns this NFT right now" lookup) is what fixes BUY NOW
+  // wrongly reporting cannot_buy_own_listing on someone else's real,
+  // current listing.
+  const offer = findPigeonsOffer(offers, undefined, buyer);
   if (!offer) {
-    console.log('BUY-PAYLOAD exit: not_listed (no matching $PIGEONS offer from current owner', currentOwner, 'among', offers.length, 'offers)');
+    console.log('BUY-PAYLOAD exit: not_listed (no non-buyer $PIGEONS offer among', offers.length, 'offers)');
     return new Response(JSON.stringify({ error: 'not_listed' }), { status: 404 });
-  }
-  if (offer.owner === buyer) {
-    console.log('BUY-PAYLOAD exit: cannot_buy_own_listing');
-    return new Response(JSON.stringify({ error: 'cannot_buy_own_listing' }), { status: 400 });
   }
   console.log('BUY-PAYLOAD offer matched', offer.nft_offer_index, 'seller', offer.owner);
 

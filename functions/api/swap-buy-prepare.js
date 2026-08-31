@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findPigeonsOffer, fetchNftCurrentOwner
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findPigeonsOffer
 } from '../_shared.js';
 
 // Σκύλλα SWAP — BUY (phase 2). Builds and returns the exact
@@ -45,26 +45,19 @@ export async function onRequestPost(context) {
   if (offers === null) {
     return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 503 });
   }
-  // Who actually owns this NFT right now — required so the offer lookup
-  // below can't pick a stale offer left behind by a PREVIOUS owner (XRPL
-  // never auto-cancels those when the NFT changes hands). See
-  // fetchNftCurrentOwner's own comment: this is exactly what was making a
-  // real buyer, who once listed and sold this same Pigeon, get told they
-  // "can't buy their own listing" on someone else's real, current one.
-  const currentOwner = await fetchNftCurrentOwner(nftId);
-  if (!currentOwner) {
-    return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 503 });
-  }
-  // The Σκύλλα $PIGEONS offer specifically, and only from the confirmed
-  // current owner — a Pigeon can carry other currencies' sell offers
-  // simultaneously (e.g. a separate XRP listing on Deeptide), or a stale
-  // offer from whoever held it before; this never grabs either by accident.
-  const offer = findPigeonsOffer(offers, currentOwner);
+  // The Σκύλλα $PIGEONS offer specifically, excluding any offer the buyer
+  // themselves created — a Pigeon can carry other currencies' sell offers
+  // simultaneously (e.g. a separate XRP listing on Deeptide), and XRPL
+  // never auto-cancels a seller's old sell offer just because the NFT
+  // later changed hands, so a buyer who once listed (and sold) this exact
+  // Pigeon could still have their own dead offer sitting on-ledger. Without
+  // excludeOwner here, that stale self-offer could sort ahead of the real
+  // seller's and get picked as "the" offer instead — confirmed live as the
+  // cause of BUY NOW wrongly reporting cannot_buy_own_listing on someone
+  // else's real, current listing.
+  const offer = findPigeonsOffer(offers, undefined, buyer);
   if (!offer) {
     return new Response(JSON.stringify({ error: 'not_listed' }), { status: 404 });
-  }
-  if (offer.owner === buyer) {
-    return new Response(JSON.stringify({ error: 'cannot_buy_own_listing' }), { status: 400 });
   }
 
   const txjson = {

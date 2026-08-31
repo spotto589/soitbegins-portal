@@ -1019,10 +1019,23 @@ export function isTransferable(nft) {
 // DELIST, and the listings index must all match against; `owner` is
 // optional (omit to find the currency match regardless of who created
 // it, e.g. for BUY where the buyer isn't the offer's owner).
-export function findPigeonsOffer(offers, owner) {
+// `excludeOwner` is the BUY-specific counterpart: XRPL never auto-cancels
+// a seller's old NFTokenCreateOffer just because the NFT later changed
+// hands, so a buyer who once listed (and sold) this exact Pigeon can still
+// have their own dead offer sitting on-ledger. Passing the buyer's own
+// wallet here skips straight past any such stale self-offer instead of
+// grabbing whichever $PIGEONS offer happens to sort first — confirmed
+// live as the cause of BUY NOW wrongly reporting "cannot_buy_own_listing"
+// on someone else's real, current listing. Deliberately NOT solved by an
+// extra "who owns this NFT right now" lookup (Clio's nft_info, tried
+// first) — that call hits a different XRPL server cluster than the
+// nft_sell_offers lookup here, and any sync lag between the two turned
+// real, current listings into false not_listed failures instead.
+export function findPigeonsOffer(offers, owner, excludeOwner) {
   const currency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
   return offers.find(o =>
     (owner === undefined || o.owner === owner) &&
+    (excludeOwner === undefined || o.owner !== excludeOwner) &&
     o.amount && typeof o.amount === 'object' &&
     o.amount.currency === currency &&
     o.amount.issuer === PIGEONS_TOKEN_CONFIG.issuer
@@ -1089,38 +1102,6 @@ export async function fetchNftSellOffersOrNull(nftId, attempt) {
 export async function fetchNftSellOffers(nftId) {
   const result = await fetchNftSellOffersOrNull(nftId);
   return result === null ? [] : result;
-}
-
-// The definitive current owner of one NFT (Clio's nft_info — xrplcluster
-// doesn't serve this method, confirmed live with an "unknownCmd" error, so
-// this goes to CLIO_ENDPOINT like the crown scan below does). Needed so
-// findPigeonsOffer never picks a STALE sell offer: XRPL doesn't cancel a
-// seller's old NFTokenCreateOffer just because the NFT later changed
-// hands, so nft_sell_offers can keep returning a previous owner's
-// unfulfillable offer indefinitely alongside the real, current listing.
-// Confirmed live as the cause of BUY NOW wrongly reporting
-// "cannot_buy_own_listing": a buyer who had once listed (and sold) this
-// exact Pigeon still had that old offer sitting on-ledger, and it sorted
-// ahead of the real seller's — findPigeonsOffer(offers) with no owner
-// filter grabbed it as "the" offer instead. Callers should pass this
-// result into findPigeonsOffer's own owner argument rather than trusting
-// offers[0]. Returns null on any lookup failure or a burned NFT — callers
-// already treat "couldn't confirm a matching offer" as not_listed/
-// lookup_failed, never as a false "yes, listed."
-export async function fetchNftCurrentOwner(nftId) {
-  try {
-    const res = await fetch(CLIO_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ method: 'nft_info', params: [{ nft_id: nftId }] })
-    });
-    const data = await res.json();
-    const result = data && data.result;
-    if (!result || result.error || result.is_burned) return null;
-    return result.owner || null;
-  } catch (e) {
-    return null;
-  }
 }
 
 // Buy offers — the MAKE AN OFFER counterpart to the sell-offer functions
