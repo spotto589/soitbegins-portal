@@ -421,6 +421,49 @@ const SWAP_HTML = `<!DOCTYPE html>
   .flock-account-box-clickable:hover{ border-color:var(--pigeon-purple); }
   .flock-account-box-soon{ opacity:0.6; cursor:not-allowed; }
   .flock-account-box-soon .flock-account-box-label{ color:var(--grey-dim); }
+  /* A real, visible "still counting" state — the underscore alone reads as
+     dead/broken otherwise. */
+  @keyframes flock-count-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
+  .flock-count-loading{ animation:flock-count-pulse 1.1s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce){ .flock-count-loading{ animation:none; opacity:0.6; } }
+  /* MY P!GE0NS — the one box on this whole tab that's actually about YOU,
+     so it gets real presence: full-width, the Σκύλλα padlock as a real
+     background image (not a small icon), cyan/magenta glow matching the
+     mark's own two-tone colour. A dark gradient over the left ~55% keeps
+     the label readable without just tinting the whole image flat. */
+  #flockMyFlockBox{
+    grid-column:1 / -1;
+    position:relative;
+    overflow:hidden;
+    min-height:6rem;
+    background:
+      linear-gradient(100deg, rgba(8,8,11,0.94) 38%, rgba(8,8,11,0.65) 62%, rgba(8,8,11,0.2) 88%),
+      url('/assets/icons/icon-512.png');
+    background-size:auto 100%, auto 165%;
+    background-position:left center, right -10px center;
+    background-repeat:no-repeat;
+    border-color:var(--cyan-dim);
+    box-shadow:inset 0 0 0 1px rgba(255,51,204,0.16), 0 0 26px rgba(61,243,236,0.14);
+    transition:border-color 0.15s ease, box-shadow 0.25s ease;
+  }
+  #flockMyFlockBox:hover{
+    border-color:var(--cyan);
+    box-shadow:inset 0 0 0 1px rgba(255,51,204,0.3), 0 0 34px rgba(61,243,236,0.26);
+  }
+  #flockMyFlockBox .flock-account-box-row{ justify-content:flex-start; text-align:left; }
+  #flockMyFlockBox .flock-account-box-label{ font-size:17px; letter-spacing:0.16em; text-shadow:0 2px 10px rgba(0,0,0,0.85); }
+  @media (max-width:480px){
+    /* Vertical crop reads better than a wide horizontal one once this
+       drops to a single narrow column — same image, just repositioned so
+       the padlock itself stays in frame instead of getting pushed mostly
+       off the right edge. */
+    #flockMyFlockBox{
+      min-height:7.5rem;
+      background-size:auto 260%, 230% auto;
+      background-position:left center, center 78%;
+    }
+    #flockMyFlockBox .flock-account-box-row{ justify-content:center; text-align:center; }
+  }
 
   /* ---- collection details: token/issuer info ---- */
   .collection-info{ max-width:620px; margin:0 auto 1.25rem; text-align:center; }
@@ -734,7 +777,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      button. Logged-in state instead shows pigeon/offer counts, same
      magenta Σκύλλα theme either way. */
   .flock-tab-login{ color:var(--magenta); }
-  .flock-tab-count{ color:var(--grey-dim); }
+  /* Σκύλλα itself always reads as the brand's own magenta/pink, active tab
+     or not — was falling back to the plain .tab-btn colour (grey, or cyan
+     only while this tab happened to be active), which made the count next
+     to it (also grey) blur into one flat, lifeless line. */
+  .flock-tab-brand{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+  .flock-tab-count{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
   .flock-tab-offers-pending{ color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
   /* DATABASE carries the collection picker inline now, instead of that
      living as its own row above the whole tab strip. */
@@ -4674,7 +4722,7 @@ const SWAP_HTML = `<!DOCTYPE html>
            updateSearchPanelTitleForPaws). -->
       <div id="flockAccountBoxes" style="display:none;">
         <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockMyFlockBox">
-          <div class="flock-account-box-row"><span class="flock-account-box-label" id="flockMyFlockLabel">MY FL0CK :: 0</span></div>
+          <div class="flock-account-box-row"><span class="flock-account-box-label flock-count-loading" id="flockMyFlockLabel">MY P!GE0NS :: _</span></div>
         </div>
         <!-- Paused (MESSAGES_DB was never bound in production, see the
              swap-buy-prepare.js/HANDOFF.md history — messaging is fully
@@ -6729,7 +6777,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       : 'SEARCH!NG $P!GE0NS DATABASE';
     el.flockAccountBoxes.style.display = onFlock ? '' : 'none';
     if (onFlock){
-      el.flockMyFlockLabel.textContent = 'MY FL0CK :: ' + state.scopeAllItems.length;
+      // myOwnPigeonsCache stays null until the real held-Pigeons fetch
+      // actually resolves (see loadTrustlineLoginState) — state.scopeAllItems
+      // defaults to [] the whole time, so reading its .length here used to
+      // show "MY P!GE0NS :: 0" the instant this tab opened, indistinguishable
+      // from a genuinely empty wallet. The underscore is a real loading
+      // state, not a fake zero.
+      el.flockMyFlockLabel.classList.toggle('flock-count-loading', myOwnPigeonsCache === null);
+      el.flockMyFlockLabel.textContent = 'MY P!GE0NS :: ' + (myOwnPigeonsCache === null ? '_' : state.scopeAllItems.length);
     }
     // DATABASE's own grid panel never collapses — only MY FL0CK's copy of
     // it does, and only while actually on FL0CK.
@@ -8590,10 +8645,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       // The tab itself is now named Σκύλλα (see terminal — the site's
       // whole verification system, not just the /scylla page), so the
       // logged-out sub-label just needs "L0G !N", not "W!TH Σκύλλα" again.
-      el.flockTabLabel.innerHTML = 'Σκύλλα <span class="flock-tab-login">L0G !N</span>';
+      el.flockTabLabel.innerHTML = '<span class="flock-tab-brand">Σκύλλα</span> <span class="flock-tab-login">L0G !N</span>';
       return;
     }
-    var parts = ['Σκύλλα'];
+    var parts = ['<span class="flock-tab-brand">Σκύλλα</span>'];
     if (trustlinePigeonCount !== null) parts.push('<span class="flock-tab-count">' + trustlinePigeonCount + ' P!GE0NS</span>');
     if (offersReceivedTotal > 0) parts.push('<span class="flock-tab-offers-pending">' + offersReceivedTotal + ' 0FFERS</span>');
     el.flockTabLabel.innerHTML = parts.join(' :: ');
