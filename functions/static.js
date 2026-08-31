@@ -7225,7 +7225,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     // "sold before" to "everything else"; without this it would render
     // twice.
     state.seenNftIds = {};
-    state.autoFallbackStage = 0;
     el.endOfCollectionNote.style.display = 'none';
     // Every sort/filter/edition change routes through here (see runQuery)
     // and used to just blank the results area while the new page fetched
@@ -7327,7 +7326,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (state.scyllaListedOnly && !state.hasMore){
         state.scyllaListedOnly = false;
         state.sort = 'AVG_SALE_XRP_ASC';
-        state.autoFallbackStage = 1;
         renderSortTag();
         el.statScyllaListedTile.classList.remove('scylla-active');
         state.skip = 0;
@@ -7338,19 +7336,30 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Sold-before sort ALSO exhausted (only every Pigeon with real sale
       // history matched the filter, but not the complete real set — a
       // Pigeon that's neither currently listed nor ever sold was silently
-      // never shown, e.g. a trait the picker itself advertises as
-      // existing on 15 Pigeons capping out at 9 rendered). Only fires
-      // when THIS stage was itself reached by the auto-fallback above
-      // (autoFallbackStage === 1), never when the user picked H!GHEST
-      // SALE sort themselves — that's a deliberate choice and should stop
-      // at its own real end, not silently jump to a different sort under
-      // them. Final stage: the same unrestricted, complete, rarity-sorted
-      // browse every plain (no sort picked) query already uses — a
-      // superset of both earlier stages, so this alone is guaranteed to
-      // eventually surface every real match.
-      if (state.autoFallbackStage === 1 && !state.hasMore){
+      // never shown; confirmed live for FEATHERS::EAGLE + EYEWEAR::
+      // GRADUATION — Deeptide's own unrestricted feed has 2 real matches,
+      // this stage only ever found 1). Scoped to filters.length, not a
+      // stage counter: an EARLIER version gated this on
+      // autoFallbackStage === 1 (only set by the scyllaListedOnly branch
+      // right above), which desyncs the moment a query starts ALREADY in
+      // sales-sort mode — e.g. a previous unfiltered browse's own
+      // fallback had already left state.sort on AVG_SALE_XRP_ASC, then
+      // picking a NEW trait filter goes straight to the sales-sort
+      // branch on its very first request, autoFallbackStage freshly
+      // reset to 0 by startCollectionBrowse — so this never fired at all
+      // (confirmed live: exactly the bug report reproduced above). Firing
+      // off filters.length instead means it applies to every trait
+      // search regardless of how the session arrived at sales-sort mode,
+      // while still leaving deliberate, UNFILTERED H!GHEST SALE browsing
+      // alone (filters.length is 0 there) — that's a real intentional
+      // choice and should stop at its own end, not jump to a different
+      // sort under the user. Final stage: the same unrestricted, complete,
+      // rarity-sorted browse every plain (no sort picked) query already
+      // uses — a superset of both earlier stages, so this alone is
+      // guaranteed to eventually surface every real match. state.sort
+      // check stops this from re-firing on itself once already here.
+      if (filters.length && isSalesSort && state.sort !== 'RARITY_ASC' && !state.hasMore){
         state.sort = 'RARITY_ASC';
-        state.autoFallbackStage = 2;
         renderSortTag();
         state.skip = 0;
         state.hasMore = true;
