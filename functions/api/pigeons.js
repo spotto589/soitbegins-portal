@@ -3,7 +3,7 @@ import {
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue,
-  resolveOwnerCollectionLive, fetchAllAccountNftsChecked, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, quotePigeonsForXrpDrops,
+  resolveOwnerCollectionLive, fetchAllAccountNftsChecked, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG,
   getCachedCrownHolder
 } from '../_shared.js';
@@ -249,8 +249,13 @@ export async function onRequestGet(context) {
   if (params.get('xrpBalance') === '1') {
     const wallet = params.get('wallet');
     if (!wallet) return json({ error: 'missing_wallet' }, 400);
-    const drops = await fetchXrpBalanceDrops(wallet);
-    return json({ drops });
+    const info = await fetchXrpBalanceDrops(wallet);
+    if (!info) return json({ error: 'balance_lookup_failed' }, 502);
+    // reserveDrops is the wallet's REAL reserve requirement (base + one
+    // owner-reserve increment per owned ledger object — trustlines, NFT
+    // pages, offers, etc.), computed here so the client never has to
+    // guess it — see accountReserveDrops in _shared.js.
+    return json({ drops: info.drops, reserveDrops: accountReserveDrops(info.ownerCount).toString() });
   }
 
   // BUY $PIGEONS swap — Stage 3 live quote (walks the real order book, see

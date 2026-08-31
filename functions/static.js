@@ -27,6 +27,19 @@ const SWAP_HTML = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
 <title>Σκύλλα :: SWAP</title>
+<!-- Home-screen icon when saved as an app on mobile — previously had no
+     icon/manifest tags at all, so iOS/Android fell back to a screenshot
+     thumbnail of whatever was on screen. apple-touch-icon covers iOS
+     directly (iOS "Add to Home Screen" doesn't reliably read the web
+     manifest for this); the manifest link covers Android/Chrome. -->
+<link rel="icon" href="/assets/icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Σκύλλα">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');
 
@@ -3582,7 +3595,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-size:22px;
     font-weight:700;
     letter-spacing:0.02em;
-    text-align:right;
+    text-align:center;
   }
   .buyswap-input::placeholder{ color:var(--grey-disabled); }
   .buyswap-input-wrap:focus-within{ border-color:var(--pigeon-purple); box-shadow:0 0 0 1px var(--pigeon-purple-dim); }
@@ -3591,7 +3604,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-input-error{ text-align:center; font-size:11px; letter-spacing:0.03em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); margin-top:0.5rem; }
   .buyswap-arrow{ text-align:center; font-size:22px; color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); margin:0.9rem 0; }
   .buyswap-receive-wrap{ border-color:var(--border-mid); }
-  .buyswap-receive-value{ flex:1 1 auto; min-width:0; font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:0.02em; color:var(--grey-dim); text-align:right; }
+  .buyswap-receive-value{ flex:1 1 auto; min-width:0; font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:0.02em; color:var(--grey-dim); text-align:center; }
   .buyswap-divider{ border-top:1px dashed var(--border-dim); margin:1.25rem 0; }
   /* ---- transaction-review title + plain-English summary — every
      confirm screen shows the raw XRPL TransactionType up top now
@@ -4196,7 +4209,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </button>
-      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;" id="flockTabLabel">FL0CK</span></button>
+      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;" id="flockTabLabel">Σκύλλα</span></button>
       <button class="tab-btn" data-tab="topholders">T0P 123 H0LDERS</button>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
       <button class="tab-btn" data-tab="crown">CR0WN</button>
@@ -5007,7 +5020,10 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="tx-val" id="buySwapConfSendMax"></span> to receive a minimum of
             <span class="tx-val" id="buySwapConfAmount"></span>.
           </p>
-          <div class="detail-field"><span class="df-label">DEST!NAT!0N</span><span class="df-value" id="buySwapConfDestination"></span></div>
+          <!-- No DEST!NAT!0N row here — this swap's txjson always sets
+               Destination to the buyer's own Account (see buildBuySwapTxjson
+               in _shared.js), so it's the exact same address already shown
+               in the sentence above. Showing it twice was just noise. -->
           <div class="buyswap-divider"></div>
           <div class="detail-field"><span class="df-label">EST!MATED RECE!VE</span><span class="df-value" id="buySwapConfEstimate"></span></div>
           <div class="detail-field"><span class="df-label">EXCHANGE RATE</span><span class="df-value" id="buySwapConfRate"></span></div>
@@ -5402,7 +5418,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
    'buySwapModal','buySwapEntryState','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapPayRow',
-   'buySwapConfirmState','buySwapConfTxType','buySwapConfAccount','buySwapConfDestination','buySwapConfSendMax','buySwapConfAmount','buySwapConfEstimate','buySwapConfRate','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
+   'buySwapConfirmState','buySwapConfTxType','buySwapConfAccount','buySwapConfSendMax','buySwapConfAmount','buySwapConfEstimate','buySwapConfRate','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
    'buySwapResultState','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
    'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
    'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
@@ -7368,6 +7384,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       } else if (filters.length === 1){
         el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R <span class="hi">' + resultCount + '</span> ' +
           escapeHtml(filters[0].trait.toUpperCase()) + ': ' + escapeHtml(filters[0].value.toUpperCase()) + '</div>';
+      } else if (filters.every(function(f){ return f.trait === filters[0].trait; })){
+        // Multiple VALUES of the SAME trait (e.g. Background: Yellow +
+        // Background: Blue) — not a cross-trait combination, just a wider
+        // net over one trait, so the "combinations exist" wording (below)
+        // would be misleading here.
+        el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R <span class="hi">' + resultCount + '</span> !TEMS</div>';
       } else {
         el.statusLine.innerHTML = '<div class="results-trait-note"><span class="hi">' + resultCount + '</span> C0MB!NAT!0NS 0F THESE TRA!TS EX!ST</div>';
       }
@@ -8298,10 +8320,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // left out rather than shown as a misleading 0.
   function updateFlockTabLabel(){
     if (!MY_WALLET){
-      el.flockTabLabel.innerHTML = 'FL0CK <span class="flock-tab-login">L0G !N W!TH Σκύλλα</span>';
+      // The tab itself is now named Σκύλλα (see terminal — the site's
+      // whole verification system, not just the /scylla page), so the
+      // logged-out sub-label just needs "L0G !N", not "W!TH Σκύλλα" again.
+      el.flockTabLabel.innerHTML = 'Σκύλλα <span class="flock-tab-login">L0G !N</span>';
       return;
     }
-    var parts = ['FL0CK'];
+    var parts = ['Σκύλλα'];
     if (trustlinePigeonCount !== null) parts.push('<span class="flock-tab-count">' + trustlinePigeonCount + ' P!GE0NS</span>');
     if (offersReceivedTotal > 0) parts.push('<span class="flock-tab-offers-pending">' + offersReceivedTotal + ' 0FFERS</span>');
     el.flockTabLabel.innerHTML = parts.join(' :: ');
@@ -8618,12 +8643,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // through this stage regardless of quote validity (nothing built yet to
   // actually submit). ----
   var buySwapMaxDrops = null; // null = no cap known yet (not logged in, or balance fetch pending/failed)
-  // Same base+owner reserve reasoning as any XRPL wallet UI — leaving a
-  // wallet with less than its reserve makes every future transaction fail,
-  // not just this one. 2 XRP is a conservative buffer, not the exact
-  // reserve (which depends on owned objects) — Stage 5's real transaction
-  // prep will re-check the actual reserve server-side before ever signing
-  // anything; this is just a sane UI-level cap.
+  // Fallback only — the real reserve (base + one owner-reserve increment
+  // per owned ledger object: trustlines, NFT pages, offers, etc.) comes
+  // back from the xrpBalance API as reserveDrops (see accountReserveDrops
+  // in _shared.js). This flat guess is used only if that field is ever
+  // missing, so a wallet holding a lot of NFTs/objects doesn't silently
+  // fall back to under-reserving. Server-side buildBuySwapTxjson re-checks
+  // the real reserve again before ever signing anything either way.
   var BUYSWAP_RESERVE_BUFFER_DROPS = 2000000n;
   function updateBuySwapMaxLine(){
     if (buySwapMaxDrops === null){
@@ -8836,7 +8862,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).then(function(data){
         if (!data || typeof data.drops !== 'string' || !/^\\d+$/.test(data.drops)) return;
         var bal = BigInt(data.drops);
-        var max = bal - BUYSWAP_RESERVE_BUFFER_DROPS;
+        var reserve = (typeof data.reserveDrops === 'string' && /^\\d+$/.test(data.reserveDrops))
+          ? BigInt(data.reserveDrops)
+          : BUYSWAP_RESERVE_BUFFER_DROPS;
+        var max = bal - reserve;
         buySwapMaxDrops = max > 0n ? max : 0n;
         updateBuySwapMaxLine();
         validateBuySwapInput();
@@ -8936,9 +8965,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       buySwapReviewDrops = drops.toString();
       el.buySwapConfTxType.textContent = txjson.TransactionType;
       el.buySwapConfAccount.textContent = txjson.Account;
-      el.buySwapConfDestination.textContent = txjson.Destination;
       el.buySwapConfSendMax.textContent = dropsToXrpString(BigInt(txjson.SendMax)) + ' XRP';
-      el.buySwapConfAmount.textContent = txjson.Amount.value + ' $P!GE0NS';
+      // Formatted the same way EST!MATED RECE!VE below it is (locale
+      // thousands separator, 2 decimals) — used to show the raw
+      // txjson.Amount.value string instead (e.g. "5086.089804"), reading
+      // as a different, less-trustworthy number right next to a properly
+      // formatted one for the same currency.
+      el.buySwapConfAmount.textContent = Number(txjson.Amount.value).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
       el.buySwapConfEstimate.textContent = display.estimateReceivePigeons.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
       el.buySwapConfRate.textContent = display.rate.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' P!GE0NS / XRP';
       el.buySwapConfSource.textContent = display.source === 'amm' ? 'AMM P00L' : '0RDER B00K';
@@ -10711,8 +10744,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.dbView = el.dbViewSelect.value;
     if (state.items && state.items.length) renderResultsReplace(state.items);
   });
-  // ALL editions, RARITY highest, THUMBNAILS view, no traits — one click
-  // back to the default browse state.
+  // ALL editions, LOWEST LISTED $P!GE0NS, THUMBNAILS view, no traits — one
+  // click back to the default landing state (matches the initial page-load
+  // state at the top of this file: sort SCYLLA_PRICE_ASC, scyllaListedOnly
+  // true).
   el.resetDbBtn.addEventListener('click', function(){
     state.edition = 'ALL';
     el.editionSelect.querySelectorAll('.edition-btn').forEach(function(b){
@@ -10722,7 +10757,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.dbView = 'thumbnails';
     state.traitFilters = [];
     renderTraitRows();
-    state.sort = 'RARITY_ASC';
+    state.sort = 'SCYLLA_PRICE_ASC';
     renderSortTag();
     if (state.activeTab === 'mypigeons'){
       // FL0CK only ever shows your own Pigeons, no exceptions — RESET
@@ -10737,7 +10772,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // that scope.
       var wasScoped = !!state.scope;
       if (wasScoped) exitWalletScope();
-      if (state.scyllaListedOnly) setScyllaListedOnly(false); // also runs the query
+      if (!state.scyllaListedOnly) setScyllaListedOnly(true); // also runs the query, forces sort to a SCYLLA_PRICE_* value (already ASC from above) and clears any scope
       else if (wasScoped) startCollectionBrowse();
       else runQuery();
     }

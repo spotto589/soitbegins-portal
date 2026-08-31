@@ -8,8 +8,18 @@ compatibility_date = "2024-09-01"
 # ../functions/_shared.js already no-op internally if the data is still
 # within its own staleness window, so it's safe/cheap to call on every
 # tick — this worker doesn't need its own staleness check on top).
+# Tightened from */15 to */10 so the xaman-proxy keep-alive ping (see
+# index.js) lands with real margin inside Render's ~15-minute free-tier
+# idle-sleep window, instead of racing it every single tick.
 [triggers]
-crons = ["*/15 * * * *"]
+crons = ["*/10 * * * *"]
+
+# Not secret (just a hostname) — safe to commit. Same value as the
+# XAMAN_PROXY_URL env var already set on the Pages project's dashboard for
+# the main site (see HANDOFF.md); Workers and Pages have separate env
+# configs, so this worker needs its own copy to ping the same proxy.
+[vars]
+XAMAN_PROXY_URL = "https://xaman-proxy.onrender.com"
 
 # Same KV namespace the Pages app binds as env.coin (see HANDOFF.md /
 # soitbegins-local launch config) — this worker reads/writes the exact

@@ -794,7 +794,19 @@ export async function quotePigeonsForXrpDrops(xrpDropsStr) {
 }
 
 const BUYSWAP_SLIPPAGE_BPS = 50; // 0.5% — matches the panel's own SL!PPAGE figure
-const BUYSWAP_RESERVE_BUFFER_DROPS = 2000000n;
+// Real XRPL reserve math (post-XRPFees-amendment mainnet values), not a
+// flat guess — a wallet holding NFTs/trustlines/offers has a real reserve
+// requirement above the 1 XRP base, one owner-reserve increment per owned
+// ledger object (OwnerCount from account_info, this includes NFTokenPages,
+// so a wallet holding many NFTs does need more than the base alone). The
+// old flat 2 XRP buffer under-reserved any wallet with >5 owned objects,
+// letting MAX AVAILABLE show more than the wallet could actually send.
+const XRPL_BASE_RESERVE_DROPS = 1000000n; // 1 XRP
+const XRPL_OWNER_RESERVE_DROPS = 200000n; // 0.2 XRP per owned object
+const BUYSWAP_FEE_BUFFER_DROPS = 100000n; // 0.1 XRP headroom for the tx fee itself, on top of the real reserve
+function accountReserveDrops(ownerCount) {
+  return XRPL_BASE_RESERVE_DROPS + XRPL_OWNER_RESERVE_DROPS * BigInt(ownerCount || 0) + BUYSWAP_FEE_BUFFER_DROPS;
+}
 
 // The single source of truth for the BUY $PIGEONS swap's txjson — used by
 // BOTH buyswap-prepare.js (review screen, no signing) and
@@ -839,15 +851,15 @@ export async function buildBuySwapTxjson(buyer, xrpDrops) {
     return { ok: false, error: 'no_trustline' };
   }
 
-  const balanceDrops = await fetchXrpBalanceDrops(buyer);
-  if (balanceDrops === null) {
+  const balanceInfo = await fetchXrpBalanceDrops(buyer);
+  if (!balanceInfo) {
     return { ok: false, error: 'balance_lookup_failed' };
   }
   let xrpDropsBig, balanceBig;
-  try { xrpDropsBig = BigInt(xrpDrops); balanceBig = BigInt(balanceDrops); } catch (e) {
+  try { xrpDropsBig = BigInt(xrpDrops); balanceBig = BigInt(balanceInfo.drops); } catch (e) {
     return { ok: false, error: 'bad_amount' };
   }
-  if (xrpDropsBig > balanceBig - BUYSWAP_RESERVE_BUFFER_DROPS) {
+  if (xrpDropsBig > balanceBig - accountReserveDrops(balanceInfo.ownerCount)) {
     return { ok: false, error: 'exceeds_balance' };
   }
 
@@ -967,10 +979,13 @@ export async function fetchPigeonsAccountLine(account) {
 // Native XRP balance for one wallet, in exact integer drops (never a
 // parsed float) — account_info's own Balance field is already a drops
 // string, so this is a straight pass-through, no unit conversion done
-// here at all. Used by the BUY $PIGEONS swap panel to cap the XRP input
-// at something the wallet can actually afford; null means "couldn't
-// check" (network/parse failure), not "zero balance" — callers must not
-// conflate the two.
+// here at all. Also returns OwnerCount from the same response (no extra
+// request) so callers can compute the wallet's REAL reserve requirement
+// via accountReserveDrops instead of a flat guess — see that function's
+// comment. Used by the BUY $PIGEONS swap panel to cap the XRP input at
+// something the wallet can actually afford; null means "couldn't check"
+// (network/parse failure), not "zero balance" — callers must not conflate
+// the two.
 export async function fetchXrpBalanceDrops(account) {
   // Same retry-hardening as fetchPigeonsAccountLine just above — this was
   // the direct cause of buildBuySwapTxjson's "balance_lookup_failed"
@@ -978,10 +993,14 @@ export async function fetchXrpBalanceDrops(account) {
   // xrplcluster.com blip.
   const data = await fetchXrplClusterJson({ method: 'account_info', params: [{ account }] });
   if (!data) return null;
-  const drops = data.result && data.result.account_data && data.result.account_data.Balance;
+  const accountData = data.result && data.result.account_data;
+  const drops = accountData && accountData.Balance;
   if (typeof drops !== 'string' || !/^\d+$/.test(drops)) return null;
-  return drops;
+  const ownerCount = typeof accountData.OwnerCount === 'number' ? accountData.OwnerCount : 0;
+  return { drops, ownerCount };
 }
+
+export { accountReserveDrops };
 
 // tfTransferable (0x0008) — an NFT without this flag can never be sold to
 // anyone but its issuer, so a sell offer against it would only ever fail
@@ -1890,24 +1909,34 @@ async function fetchDeeptideTraitCards(skip, limit, shopSlug = DEEPTIDE_PIGEON_S
 }
 
 // Real trait categories/values/percentages, grouped for the filter panel.
-// Cached for 10 minutes (collection-wide trait distribution barely moves)
-// so opening the TRAITS panel doesn't re-crawl every card on every click.
+// Cached for 1 hour (collection-wide trait distribution barely moves) so
+// opening the TRAITS panel doesn't re-crawl every card on every click, and
+// so a cold-cache rebuild (below) is rare rather than happening every ~10
+// cache-key-mins of traffic.
 const TRAIT_CARDS_CACHE_KEY_PREFIX = 'pswap:traitcards:v2:';
-const TRAIT_CARDS_CACHE_TTL_SECONDS = 600;
+const TRAIT_CARDS_CACHE_TTL_SECONDS = 3600;
 export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX) {
   const cacheKey = TRAIT_CARDS_CACHE_KEY_PREFIX + shopSlug;
   const cached = await kv.get(cacheKey);
   if (cached !== null) return JSON.parse(cached);
 
-  let skip = 0;
-  let total = Infinity;
-  const all = [];
-  while (skip < total && skip < 600) { // 600 is a generous ceiling well above the real ~242
-    const page = await fetchDeeptideTraitCards(skip, DEEPTIDE_LISTINGS_MAX_LIMIT, shopSlug);
-    total = page.total || 0;
-    if (!page.traits || !page.traits.length) break;
-    all.push(...page.traits);
-    skip += DEEPTIDE_LISTINGS_MAX_LIMIT;
+  // Page 0 first (sequentially) so we learn the real `total`, then fire
+  // every remaining page at once instead of awaiting them one at a time —
+  // a cold cache used to mean up to ~10 sequential round trips to Deeptide
+  // (the real collection's ~242 items is ~5 pages); this cuts that down to
+  // roughly the cost of a single page fetch.
+  const first = await fetchDeeptideTraitCards(0, DEEPTIDE_LISTINGS_MAX_LIMIT, shopSlug);
+  const total = first.total || 0;
+  const all = [...(first.traits || [])];
+  const remainingSkips = [];
+  for (let skip = DEEPTIDE_LISTINGS_MAX_LIMIT; skip < Math.min(total, 600); skip += DEEPTIDE_LISTINGS_MAX_LIMIT) { // 600 is a generous ceiling well above the real ~242
+    remainingSkips.push(skip);
+  }
+  if (first.traits && first.traits.length) {
+    const pages = await Promise.all(remainingSkips.map(skip => fetchDeeptideTraitCards(skip, DEEPTIDE_LISTINGS_MAX_LIMIT, shopSlug)));
+    for (const page of pages) {
+      if (page.traits && page.traits.length) all.push(...page.traits);
+    }
   }
 
   const grouped = {};
