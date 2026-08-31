@@ -129,6 +129,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   body.collection-browse-only .search-row{ display:none; }
 
   *{ margin:0; padding:0; box-sizing:border-box; }
+  /* Site-wide scrollbar — every scrollable box (the page itself, popups,
+     the trait dropdown, anywhere overflow:auto/scroll shows up) instead
+     of each browser's own default light-grey bar, which reads jarringly
+     out of place against this dark neon theme. var(--cyan) is the
+     collection's own accent (swaps per theme — see the root variable
+     blocks above), so this stays in sync automatically. Firefox uses
+     scrollbar-width/-color; Chrome/Safari/Edge use the ::-webkit-
+     scrollbar pseudo-elements below — both cover the same ground.
+     Deliberately-hidden scrollbars elsewhere (e.g. #traitsFlyoutCats'
+     own horizontal strip, scrolled via its PREV/NEXT arrows instead)
+     keep working — their own scrollbar-width:none/::-webkit-scrollbar{
+     display:none} rules are scoped to a specific element, which beats
+     this unscoped, universal one regardless of source order. */
+  *{ scrollbar-width:thin; scrollbar-color:var(--cyan-dim) rgba(255,255,255,0.04); }
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-track{ background:rgba(255,255,255,0.04); }
+  ::-webkit-scrollbar-thumb{ background:var(--cyan-dim); border-radius:6px; border:2px solid transparent; background-clip:padding-box; }
+  ::-webkit-scrollbar-thumb:hover{ background:var(--cyan); }
+  ::-webkit-scrollbar-corner{ background:transparent; }
   html, body{ min-height:100%; background:var(--bg); }
   body{
     font-family:var(--font-mono);
