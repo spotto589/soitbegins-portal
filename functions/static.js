@@ -1448,7 +1448,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       left:0;
       margin-top:0.5rem;
       z-index:70;
-      width:min(700px, 100%);
+      width:min(360px, 100%);
       max-height:360px;
       overflow-y:auto;
       padding:0.75rem;
