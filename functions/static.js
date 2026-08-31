@@ -1406,6 +1406,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       box-shadow:none;
       padding:0;
       gap:0.4rem;
+      /* Anchors #traitsFlyoutVals' own position:absolute below — the
+         values panel is a real dropdown now (floats over the page,
+         doesn't push #traitRows/results down), not a second row stacked
+         in this column's own flow. */
+      position:relative;
     }
     /* Nowrap, same trick as #traitsHoverWrap's own label+flyout row —
        cats shrinks (flex:1 1 auto + min-width:0) to whatever's left after
@@ -1418,7 +1423,30 @@ const SWAP_HTML = `<!DOCTYPE html>
        this file (id vs id+class — a bare extra class here would lose to
        a plain id selector, id specificity always sorts first). */
     .traits-flyout-cats-row #traitsFlyoutCats{ flex:1 1 auto; min-width:0; width:auto; border-bottom:none; }
-    #traitsFlyout > .traits-flyout-vals{ width:100%; }
+    /* A real dropdown — floats below the category strip instead of
+       sitting inline in #traitsFlyout's own column flow (which used to
+       push #traitRows/#clearTraitsBtn/the actual results further down
+       the page every time a category was opened). Own background/
+       border/shadow since it's no longer visually part of the
+       (transparent, borderless) strip above it — same panel treatment
+       #sortFlyout/#traitsFlyout's own MOBILE popup already uses (see the
+       unscoped .traits-flyout base rule), just anchored under the strip
+       instead of centered over the whole page. */
+    #traitsFlyout > .traits-flyout-vals{
+      position:absolute;
+      top:100%;
+      left:0;
+      margin-top:0.5rem;
+      z-index:70;
+      width:min(700px, 100%);
+      max-height:360px;
+      overflow-y:auto;
+      padding:0.75rem;
+      background:var(--panel-bg-solid);
+      border:1px solid var(--border-mid);
+      border-radius:var(--radius);
+      box-shadow:0 10px 30px rgba(0,0,0,0.6);
+    }
     .hscroll-arrow{
       flex:0 0 auto;
       display:flex;
@@ -10684,6 +10712,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     // longer inside traitsHoverWrap at all once that's happened.
     var clickPath = e.composedPath();
     if (el.traitsFlyout.style.display === 'block' && !clickPath.includes(el.traitsHoverWrap) && !clickPath.includes(el.traitsFlyout)) closeTraitsFlyout();
+    // Desktop's VALUES panel is a real dropdown now (#traitsFlyoutVals,
+    // position:absolute — see its own CSS), separate from the always-
+    // visible category strip above it, which never closes. This is that
+    // dropdown's own close-on-outside-click, independent of the check
+    // right above (that one only ever fires on mobile in practice — see
+    // its own comment, style.display only actually reaches 'block' via
+    // openTraitsFlyout(), which desktop's always-on strip never calls).
+    // Same composedPath() reasoning as above: picking a value rebuilds
+    // #traitsFlyoutVals' own children, detaching the clicked button
+    // before this handler runs.
+    if (window.innerWidth > 700 && el.traitsFlyoutVals.childElementCount && !clickPath.includes(el.traitsFlyout)){
+      el.traitsFlyoutVals.innerHTML = '';
+    }
     if (el.dbSelectFlyout.style.display === 'block' && !el.dbSelectWrap.contains(e.target)) closeDbSelectFlyout();
     if (el.pigeonsCalcPopover.style.display === 'block' && !el.pigeonsBarCalc.contains(e.target)) closeCalcPopover();
     // Same pattern for the pigeon DETAIL screen itself — a click anywhere
