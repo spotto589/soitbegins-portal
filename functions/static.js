@@ -1732,12 +1732,28 @@ const SWAP_HTML = `<!DOCTYPE html>
        list) — every category chip only as wide as its own label now, so
        as many as possible fit in view before PREV/NEXT are ever needed. */
     #traitsFlyoutCats .traits-flyout-cat{
+      /* flex:1 1 0, not the base class's flex:0 0 auto — every chip
+         grows equally to fill the full width of the bar (matching how
+         wide S0RT BY's own strip reads, just distributed across fewer,
+         bigger buttons here) instead of packing left with empty space
+         trailing after the last one. min-width:0 lets that shrink work
+         at all — same flex-item gotcha as everywhere else in this file
+         (flex items default to min-width:auto, which refuses to shrink
+         below content size otherwise). */
+      flex:1 1 0;
+      min-width:0;
       width:auto;
       border:1px solid var(--border-dim);
       border-radius:var(--radius);
       text-align:center;
-      font-size:11px;
-      padding:0.55em 0.7em;
+      /* Same 13px S0RT BY's own strip uses (.traits-flyout-val's base
+         font-size, never overridden there) — was 11px, noticeably
+         smaller side by side. */
+      font-size:13px;
+      padding:0.6em 0.9em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
     /* Grid, not flex-wrap — auto-fill/minmax stretches every chip to
        evenly fill the row's real width (no ragged gap on the right of
