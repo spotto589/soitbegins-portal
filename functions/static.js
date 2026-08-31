@@ -2905,30 +2905,69 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .pigeons-calc-toggle-btn:hover, .pigeons-calc-toggle-btn.open{ border-color:#fff; background:rgba(0,0,0,0.3); }
   .pigeons-calc-toggle-arrow{ font-size:11px; opacity:0.8; }
-  /* Way bigger than the old inline calculator — this is now the ONLY
-     place the calculator lives, so it can afford real size/padding
-     instead of squeezing into the banner row. position:fixed + JS-
-     computed top/left (see openCalcPopover), not a CSS anchor — see the
-     HTML comment on #pigeonsCalcPopover for why. */
-  .pigeons-calc-popover{
-    position:fixed;
-    top:0;
-    left:0;
-    z-index:60;
-    width:min(420px, 92vw);
-    background:var(--panel-bg-solid);
+  /* A real centered popup now, same purple/exciting overlay treatment as
+     0FFER/BUY $P!GE0NS's own confirm modals (#offerConfirmModal etc. —
+     see that shared selector group's own comment) instead of a small
+     dropdown anchored under the toggle button. */
+  #pigeonsCalcModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  .pigeons-calc-panel{
+    width:min(440px, 100%);
+    text-align:center;
+    background:linear-gradient(160deg, rgba(136,72,248,0.16), var(--panel-bg-solid) 55%);
+    border:1px solid var(--pigeon-purple);
+    border-radius:var(--radius);
+    box-shadow:0 0 50px var(--pigeon-purple-glow), 0 10px 30px rgba(0,0,0,0.6);
+    padding:1.75rem 1.5rem;
+    animation:offer-confirm-pop 0.2s ease;
+  }
+  .pigeons-calc-panel .node-eyebrow{ color:var(--pigeon-purple); text-shadow:0 0 8px var(--pigeon-purple-glow); margin-bottom:1.25rem; }
+  .pigeons-calc-panel .pigeons-bar-rate-row{ justify-content:center; margin-bottom:1.1rem; }
+  .pigeons-calc-panel .pigeons-bar-rate-value{ font-size:15px; }
+  .pigeons-calc-panel .pigeons-bar-calc{ padding:1.1em 1.1em; }
+  .pigeons-calc-panel .pigeons-bar-calc-input{ font-size:22px; }
+  /* VIEW 0N DEX — a real second action underneath the calculator itself,
+     not just the small icon-link next to the rate above (kept as-is, a
+     quick glance rather than a deliberate click). Same treatment as
+     .offer-confirm-xaman-btn's own purple call-to-action elsewhere. */
+  .pigeons-calc-dex-btn{
+    display:block;
+    width:100%;
+    margin-top:1.25rem;
+    background:var(--pigeon-purple);
+    border:1px solid var(--pigeon-purple);
+    border-radius:var(--radius);
+    padding:0.85em 1em;
+    color:#fff;
+    font-family:var(--font-mono);
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    text-decoration:none;
+    text-align:center;
+    cursor:pointer;
+    transition:background 0.15s ease, border-color 0.15s ease;
+  }
+  .pigeons-calc-dex-btn:hover{ background:#7638e8; border-color:#7638e8; }
+  .pigeons-calc-close-btn{
+    display:block;
+    width:100%;
+    margin-top:0.6rem;
+    background:transparent;
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    box-shadow:0 10px 30px rgba(0,0,0,0.6);
-    padding:1.25rem;
+    padding:0.7em 1em;
+    color:var(--grey);
+    font-family:var(--font-mono);
+    font-size:13px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    cursor:pointer;
   }
-  .pigeons-calc-popover .pigeons-bar-rate-row{ justify-content:center; margin-bottom:0.9rem; }
-  .pigeons-calc-popover .pigeons-bar-calc{ padding:1em 1.1em; }
-  .pigeons-calc-popover .pigeons-bar-calc-input{ font-size:20px; }
+  .pigeons-calc-close-btn:hover{ border-color:#fff; color:#fff; }
   @media (max-width:500px){
-    .pigeons-calc-popover{ width:92vw; padding:1rem; }
-    .pigeons-calc-popover .pigeons-bar-calc{ flex-wrap:wrap; justify-content:center; }
-    .pigeons-calc-popover .pigeons-bar-calc-input{ font-size:18px; }
+    .pigeons-calc-panel .pigeons-bar-calc{ flex-wrap:wrap; justify-content:center; }
+    .pigeons-calc-panel .pigeons-bar-calc-input{ font-size:18px; }
   }
   .pigeons-bar-rate-row{ display:flex; align-items:center; gap:0.5rem; }
   .pigeons-bar-rate-value{ font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--green); text-shadow:0 0 6px var(--green-glow); white-space:nowrap; }
@@ -4435,27 +4474,34 @@ const SWAP_HTML = `<!DOCTYPE html>
           <button type="button" class="pigeons-calc-toggle-btn" id="pigeonsCalcToggleBtn">
             <span id="pigeonsCalcToggleLabel">EXCHANGE CALCULAT0R</span> <span class="pigeons-calc-toggle-arrow">▾</span>
           </button>
-          <!-- position:fixed, JS-positioned on open — same reason/pattern
-               as #dbSelectFlyout (see openDbSelectFlyout's own comment):
-               .pigeons-merged-panel has overflow:hidden, so a plain CSS
-               absolute dropdown here would get silently clipped instead
-               of actually popping down below the button. -->
-          <div class="pigeons-calc-popover" id="pigeonsCalcPopover" style="display:none;">
-            <div class="pigeons-bar-rate-row">
-              <a class="pigeons-bar-dex-btn" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
-                <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
-              </a>
-              <span class="pigeons-bar-rate-value" id="pigeonsBarRateValue" style="display:none;"></span>
-            </div>
-            <div class="pigeons-bar-calc">
-              <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="XRP">
-              <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
-              <span class="pigeons-bar-calc-arrow">⇄</span>
-              <input class="pigeons-bar-calc-input pigeons-bar-calc-input-wide" id="pigeonsCalcPigeonsInput" type="text" inputmode="decimal" placeholder="$P!GE0NS">
-              <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
-            </div>
-          </div>
         </div>
+      </div>
+    </div>
+
+    <!-- EXCHANGE CALCULAT0R — a real centered popup (#pigeonsCalcModal),
+         same purple/exciting treatment as 0FFER/BUY $P!GE0NS's own confirm
+         modals, instead of a small dropdown anchored under the toggle
+         button. Lives outside .pigeons-merged-panel entirely now — a
+         position:fixed overlay doesn't need to escape that panel's own
+         overflow:hidden the way the old anchored popover did. -->
+    <div id="pigeonsCalcModal" style="display:none;">
+      <div class="pigeons-calc-panel">
+        <div class="node-eyebrow">// XRP :: $P!GE0NS EXCHANGE</div>
+        <div class="pigeons-bar-rate-row">
+          <a class="pigeons-bar-dex-btn" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+            <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+          </a>
+          <span class="pigeons-bar-rate-value" id="pigeonsBarRateValue" style="display:none;"></span>
+        </div>
+        <div class="pigeons-bar-calc">
+          <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="XRP">
+          <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
+          <span class="pigeons-bar-calc-arrow">⇄</span>
+          <input class="pigeons-bar-calc-input pigeons-bar-calc-input-wide" id="pigeonsCalcPigeonsInput" type="text" inputmode="decimal" placeholder="$P!GE0NS">
+          <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
+        </div>
+        <a class="pigeons-calc-dex-btn" id="pigeonsCalcDexBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener">V!EW 0N DEX</a>
+        <button type="button" class="pigeons-calc-close-btn" id="pigeonsCalcCloseBtn">CL0SE</button>
       </div>
     </div>
     </div>
@@ -5546,7 +5592,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
-   'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcPopover','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
+   'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
@@ -10485,6 +10531,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       if (data && data.dexUrl){
         el.pigeonsDexLink.href = data.dexUrl;
+        el.pigeonsCalcDexBtn.href = data.dexUrl;
       }
       el.pigeonsDexLink.style.display = '';
     }).catch(function(){});
@@ -10607,26 +10654,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.pigeonsCalcXrpInput.addEventListener('input', updatePigeonsCalcFromXrp);
   el.pigeonsCalcPigeonsInput.addEventListener('input', updateXrpCalcFromPigeons);
-  // Same position:fixed-anchored-to-trigger pattern as openDbSelectFlyout
-  // (see that function's own comment for why this can't just be a CSS
-  // absolute dropdown here).
   function openCalcPopover(){
-    var rect = el.pigeonsCalcToggleBtn.getBoundingClientRect();
-    var popW = el.pigeonsCalcPopover.getBoundingClientRect().width || 420;
-    var left = Math.min(rect.left, window.innerWidth - popW - 8);
-    el.pigeonsCalcPopover.style.top = (rect.bottom + 6) + 'px';
-    el.pigeonsCalcPopover.style.left = Math.max(8, left) + 'px';
-    el.pigeonsCalcPopover.style.display = 'block';
+    el.pigeonsCalcModal.style.display = 'flex';
     el.pigeonsCalcToggleBtn.classList.add('open');
   }
   function closeCalcPopover(){
-    el.pigeonsCalcPopover.style.display = 'none';
+    el.pigeonsCalcModal.style.display = 'none';
     el.pigeonsCalcToggleBtn.classList.remove('open');
   }
   el.pigeonsCalcToggleBtn.addEventListener('click', function(e){
     e.stopPropagation();
-    if (el.pigeonsCalcPopover.style.display === 'block') closeCalcPopover();
-    else openCalcPopover();
+    openCalcPopover();
+  });
+  el.pigeonsCalcCloseBtn.addEventListener('click', closeCalcPopover);
+  // Click the dark overlay itself (not the panel) to close — same pattern
+  // as #offerConfirmModal/#buySwapModal's own overlay click handlers.
+  el.pigeonsCalcModal.addEventListener('click', function(e){
+    if (e.target === el.pigeonsCalcModal) closeCalcPopover();
   });
   // Real link, destination doesn't exist yet — same "coming soon"
   // pattern as the BURNT link, honest about what's actually built.
@@ -10939,7 +10983,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.traitsFlyoutVals.innerHTML = '';
     }
     if (el.dbSelectFlyout.style.display === 'block' && !el.dbSelectWrap.contains(e.target)) closeDbSelectFlyout();
-    if (el.pigeonsCalcPopover.style.display === 'block' && !el.pigeonsBarCalc.contains(e.target)) closeCalcPopover();
     // Same pattern for the pigeon DETAIL screen itself — a click anywhere
     // outside it (a different tab, the trustline banner, anywhere) closes
     // it back to the grid, instead of it staying stuck open underneath
