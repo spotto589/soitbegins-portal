@@ -714,6 +714,44 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* DATABASE carries the collection picker inline now, instead of that
      living as its own row above the whole tab strip. */
   .tab-btn-database{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; }
+  /* Mobile: a boxed grid "hub" instead of a horizontally-scrolling strip —
+     every tab visible and tappable at once up top, nothing to swipe
+     through or guess is off-screen. DATABASE spans the full width of its
+     own row since it also carries the collection picker (P!GE0NS ▾) and
+     needs the room; the rest fall into a 2-across grid below it. Has to
+     come AFTER the base .tab-btn/.tab-btn.active/.tab-btn-database rules
+     above (not before, where it originally sat) — same specificity, so
+     source order decides the tie and an earlier copy just gets silently
+     overridden by the later base rule regardless of the media query.
+     updateTopTabsFade's has-more-left/-right math (maxScroll =
+     scrollWidth - clientWidth) needs no JS change for this — a grid with
+     nothing to horizontally scroll always measures maxScroll <= 0, so
+     those fade classes simply never get added any more. */
+  @media (max-width:700px){
+    .top-tabs-wrap::before, .top-tabs-wrap::after{ display:none; }
+    .top-tabs{
+      display:grid;
+      grid-template-columns:repeat(2, 1fr);
+      overflow-x:visible;
+      gap:0.6rem;
+      border-bottom:none;
+    }
+    .tab-btn{
+      flex:none;
+      white-space:normal;
+      font-size:13px;
+      letter-spacing:0.05em;
+      border:1px solid var(--border-mid);
+      border-radius:var(--radius);
+      background:rgba(255,255,255,0.03);
+      padding:1em 0.6em;
+    }
+    .tab-btn.active{
+      border-color:var(--cyan);
+      background:var(--cyan-faint);
+    }
+    .tab-btn-database{ grid-column:1 / -1; }
+  }
   .tab-db-select{ font-size:13px; }
   /* Plain text, no boxed-dropdown look — just the label itself, coloured
      to match whichever collection is actually selected (same colours as
