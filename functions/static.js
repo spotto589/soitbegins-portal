@@ -1411,6 +1411,16 @@ const SWAP_HTML = `<!DOCTYPE html>
          doesn't push #traitRows/results down), not a second row stacked
          in this column's own flow. */
       position:relative;
+      /* The unscoped .traits-flyout base rule (further down this file,
+         built for the mobile drilled-value popup) sets top:0 and
+         left:calc(100% + 0.5rem) — those apply to position:relative
+         same as position:absolute (only position:static ignores top/
+         left entirely), so switching this to relative without resetting
+         them shoved the whole thing ~1100px off-screen to the right
+         (confirmed live: #traitsFlyout's own computed left came back as
+         1102px). Cancel both back out explicitly. */
+      top:auto;
+      left:0;
     }
     /* Nowrap, same trick as #traitsHoverWrap's own label+flyout row —
        cats shrinks (flex:1 1 auto + min-width:0) to whatever's left after
