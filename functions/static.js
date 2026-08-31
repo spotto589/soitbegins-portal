@@ -26,7 +26,13 @@ const SWAP_HTML = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-<title>Σκύλλα :: SWAP</title>
+<title>Σκύλλα</title>
+<!-- Browser-tab title above, and og:title/twitter:title below for the
+     shareable-link preview (Discord/X/iMessage etc unfurl these, not the
+     <title> tag) — both just "Σκύλλα", not "Σκύλλα :: SWAP". -->
+<meta property="og:title" content="Σκύλλα">
+<meta property="og:site_name" content="Σκύλλα">
+<meta name="twitter:title" content="Σκύλλα">
 <!-- Home-screen icon when saved as an app on mobile — previously had no
      icon/manifest tags at all, so iOS/Android fell back to a screenshot
      thumbnail of whatever was on screen. apple-touch-icon covers iOS
@@ -450,15 +456,28 @@ const SWAP_HTML = `<!DOCTYPE html>
      would fight it here is !important so none of that has any visible
      effect any more, without needing to touch the JS itself. */
   @media (max-width:700px){
-    .stats-carousel-arrow, .stats-carousel-dots{ display:none; }
+    /* !important on every property below that also has a later,
+       unconditional same-specificity rule elsewhere in this file
+       (.stats-carousel-dots/.stats-page's own base rules, both declared
+       AFTER this block) — without it, source order lets those base rules
+       silently win regardless of viewport width, since a media query
+       alone doesn't outrank equal specificity. Confirmed live: dots stayed
+       visible and every .stats-page got forced to the base rule's
+       width:100% instead of shrinking to its own content, which broke the
+       whole "compact side-by-side strip" this block exists for — pages
+       ballooned to full viewport width and spilled the next one half
+       off-screen instead of sitting flush next to it. Same bug shape
+       already fixed once this session for the tab strip's own mobile grid
+       override. */
+    .stats-carousel-arrow, .stats-carousel-dots{ display:none !important; }
     .stats-carousel-row{ gap:0; }
     .stats-carousel-viewport{
       display:flex;
       gap:0.4rem;
-      overflow-x:auto;
-      overflow-y:hidden;
+      overflow-x:auto !important;
+      overflow-y:hidden !important;
       height:auto !important;
-      min-height:0;
+      min-height:0 !important;
     }
     .stats-page{
       position:static !important;
@@ -466,8 +485,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       opacity:1 !important;
       pointer-events:auto !important;
       transition:none !important;
-      width:auto;
-      flex:0 0 auto;
+      width:auto !important;
+      flex:0 0 auto !important;
     }
     .stats-strip{ flex-wrap:nowrap; gap:0.4rem; }
     .stats-strip .stat-tile{
@@ -4363,7 +4382,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="pigeons-bar-text" id="pigeonsLoggedInWallet"></span>
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
             <div class="pigeons-bar-identity-actions">
-              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">SH0W MY FL0CK<span id="showMyPigeonsCount"></span></button>
+              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">SH0W MY NFTs<span id="showMyPigeonsCount"></span></button>
               <button class="bar-btn ci-copy-btn" id="swapSignOutBtn">S!GN 0UT</button>
             </div>
           </div>
