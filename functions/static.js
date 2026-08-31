@@ -142,6 +142,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   body.collection-browse-only .search-row{ display:none; }
 
   *{ margin:0; padding:0; box-sizing:border-box; }
+  /* Site-wide scrollbar — every scrollable box (the page itself, popups,
+     the trait dropdown, anywhere overflow:auto/scroll shows up) instead
+     of each browser's own default light-grey bar, which reads jarringly
+     out of place against this dark neon theme. var(--cyan) is the
+     collection's own accent (swaps per theme — see the root variable
+     blocks above), so this stays in sync automatically. Firefox uses
+     scrollbar-width/-color; Chrome/Safari/Edge use the ::-webkit-
+     scrollbar pseudo-elements below — both cover the same ground.
+     Deliberately-hidden scrollbars elsewhere (e.g. #traitsFlyoutCats'
+     own horizontal strip, scrolled via its PREV/NEXT arrows instead)
+     keep working — their own scrollbar-width:none/::-webkit-scrollbar{
+     display:none} rules are scoped to a specific element, which beats
+     this unscoped, universal one regardless of source order. */
+  *{ scrollbar-width:thin; scrollbar-color:var(--cyan-dim) rgba(255,255,255,0.04); }
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-track{ background:rgba(255,255,255,0.04); }
+  ::-webkit-scrollbar-thumb{ background:var(--cyan-dim); border-radius:6px; border:2px solid transparent; background-clip:padding-box; }
+  ::-webkit-scrollbar-thumb:hover{ background:var(--cyan); }
+  ::-webkit-scrollbar-corner{ background:transparent; }
   html, body{ min-height:100%; background:var(--bg); }
   body{
     font-family:var(--font-mono);
@@ -1419,6 +1438,21 @@ const SWAP_HTML = `<!DOCTYPE html>
       box-shadow:none;
       padding:0;
       gap:0.4rem;
+      /* Anchors #traitsFlyoutVals' own position:absolute below — the
+         values panel is a real dropdown now (floats over the page,
+         doesn't push #traitRows/results down), not a second row stacked
+         in this column's own flow. */
+      position:relative;
+      /* The unscoped .traits-flyout base rule (further down this file,
+         built for the mobile drilled-value popup) sets top:0 and
+         left:calc(100% + 0.5rem) — those apply to position:relative
+         same as position:absolute (only position:static ignores top/
+         left entirely), so switching this to relative without resetting
+         them shoved the whole thing ~1100px off-screen to the right
+         (confirmed live: #traitsFlyout's own computed left came back as
+         1102px). Cancel both back out explicitly. */
+      top:auto;
+      left:0;
     }
     /* Nowrap, same trick as #traitsHoverWrap's own label+flyout row —
        cats shrinks (flex:1 1 auto + min-width:0) to whatever's left after
@@ -1431,7 +1465,30 @@ const SWAP_HTML = `<!DOCTYPE html>
        this file (id vs id+class — a bare extra class here would lose to
        a plain id selector, id specificity always sorts first). */
     .traits-flyout-cats-row #traitsFlyoutCats{ flex:1 1 auto; min-width:0; width:auto; border-bottom:none; }
-    #traitsFlyout > .traits-flyout-vals{ width:100%; }
+    /* A real dropdown — floats below the category strip instead of
+       sitting inline in #traitsFlyout's own column flow (which used to
+       push #traitRows/#clearTraitsBtn/the actual results further down
+       the page every time a category was opened). Own background/
+       border/shadow since it's no longer visually part of the
+       (transparent, borderless) strip above it — same panel treatment
+       #sortFlyout/#traitsFlyout's own MOBILE popup already uses (see the
+       unscoped .traits-flyout base rule), just anchored under the strip
+       instead of centered over the whole page. */
+    #traitsFlyout > .traits-flyout-vals{
+      position:absolute;
+      top:100%;
+      left:0;
+      margin-top:0.5rem;
+      z-index:70;
+      width:min(360px, 100%);
+      max-height:360px;
+      overflow-y:auto;
+      padding:0.75rem;
+      background:var(--panel-bg-solid);
+      border:1px solid var(--border-mid);
+      border-radius:var(--radius);
+      box-shadow:0 10px 30px rgba(0,0,0,0.6);
+    }
     .hscroll-arrow{
       flex:0 0 auto;
       display:flex;
@@ -1707,23 +1764,35 @@ const SWAP_HTML = `<!DOCTYPE html>
        list) — every category chip only as wide as its own label now, so
        as many as possible fit in view before PREV/NEXT are ever needed. */
     #traitsFlyoutCats .traits-flyout-cat{
+      /* flex:1 1 0, not the base class's flex:0 0 auto — every chip
+         grows equally to fill the full width of the bar (matching how
+         wide S0RT BY's own strip reads, just distributed across fewer,
+         bigger buttons here) instead of packing left with empty space
+         trailing after the last one. min-width:0 lets that shrink work
+         at all — same flex-item gotcha as everywhere else in this file
+         (flex items default to min-width:auto, which refuses to shrink
+         below content size otherwise). */
+      flex:1 1 0;
+      min-width:0;
       width:auto;
       border:1px solid var(--border-dim);
       border-radius:var(--radius);
       text-align:center;
-      font-size:11px;
-      padding:0.55em 0.7em;
+      /* Same 13px S0RT BY's own strip uses (.traits-flyout-val's base
+         font-size, never overridden there) — was 11px, noticeably
+         smaller side by side. */
+      font-size:13px;
+      padding:0.6em 0.9em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
-    /* Grid, not flex-wrap — auto-fill/minmax stretches every chip to
-       evenly fill the row's real width (no ragged gap on the right of
-       the last partial flex row) and grows/shrinks column count with
-       the actual available space, so this always fits the screen
-       without needing its own scroll — bigger chips (was 150px, now a
-       190px floor) just mean fewer columns, never overflow. */
+    /* A plain vertical list — one trait value per row, not the grid of
+       chips this used to be. */
     #traitsFlyoutVals{
-      display:grid;
-      grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));
-      gap:0.6rem;
+      display:flex;
+      flex-direction:column;
+      gap:0.4rem;
       max-height:none;
       padding:0.3rem 0 0;
       width:100%;
@@ -1733,9 +1802,14 @@ const SWAP_HTML = `<!DOCTYPE html>
        collapse the box itself too, so there's no empty padded gap
        sitting under the category row before that click happens. */
     #traitsFlyoutVals:empty{ display:none; padding:0; }
-    #traitsFlyoutVals .traits-flyout-val{ margin-bottom:0; }
+    #traitsFlyoutVals .traits-flyout-val{ width:100%; margin-bottom:0; }
     #traitsFlyoutVals .traits-flyout-val.has-preview{
-      height:120px;
+      /* A full list-row height, not the old grid-tile's 120px square —
+         at this width (up to 700px, see #traitsFlyoutVals' own parent)
+         a tall box would stretch the photo into a very wide, short crop.
+         Still tall enough to read as a real photo, just proportioned
+         for a row instead of a tile. */
+      height:64px;
       /* Base .traits-flyout-val's own padding is content-box by default —
          without this, the fixed height above would just add on top of it,
          missing the point of pinning a consistent, non-stretched box for
@@ -7241,7 +7315,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     // "sold before" to "everything else"; without this it would render
     // twice.
     state.seenNftIds = {};
-    state.autoFallbackStage = 0;
     el.endOfCollectionNote.style.display = 'none';
     // Every sort/filter/edition change routes through here (see runQuery)
     // and used to just blank the results area while the new page fetched
@@ -7343,7 +7416,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (state.scyllaListedOnly && !state.hasMore){
         state.scyllaListedOnly = false;
         state.sort = 'AVG_SALE_XRP_ASC';
-        state.autoFallbackStage = 1;
         renderSortTag();
         el.statScyllaListedTile.classList.remove('scylla-active');
         state.skip = 0;
@@ -7354,19 +7426,30 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Sold-before sort ALSO exhausted (only every Pigeon with real sale
       // history matched the filter, but not the complete real set — a
       // Pigeon that's neither currently listed nor ever sold was silently
-      // never shown, e.g. a trait the picker itself advertises as
-      // existing on 15 Pigeons capping out at 9 rendered). Only fires
-      // when THIS stage was itself reached by the auto-fallback above
-      // (autoFallbackStage === 1), never when the user picked H!GHEST
-      // SALE sort themselves — that's a deliberate choice and should stop
-      // at its own real end, not silently jump to a different sort under
-      // them. Final stage: the same unrestricted, complete, rarity-sorted
-      // browse every plain (no sort picked) query already uses — a
-      // superset of both earlier stages, so this alone is guaranteed to
-      // eventually surface every real match.
-      if (state.autoFallbackStage === 1 && !state.hasMore){
+      // never shown; confirmed live for FEATHERS::EAGLE + EYEWEAR::
+      // GRADUATION — Deeptide's own unrestricted feed has 2 real matches,
+      // this stage only ever found 1). Scoped to filters.length, not a
+      // stage counter: an EARLIER version gated this on
+      // autoFallbackStage === 1 (only set by the scyllaListedOnly branch
+      // right above), which desyncs the moment a query starts ALREADY in
+      // sales-sort mode — e.g. a previous unfiltered browse's own
+      // fallback had already left state.sort on AVG_SALE_XRP_ASC, then
+      // picking a NEW trait filter goes straight to the sales-sort
+      // branch on its very first request, autoFallbackStage freshly
+      // reset to 0 by startCollectionBrowse — so this never fired at all
+      // (confirmed live: exactly the bug report reproduced above). Firing
+      // off filters.length instead means it applies to every trait
+      // search regardless of how the session arrived at sales-sort mode,
+      // while still leaving deliberate, UNFILTERED H!GHEST SALE browsing
+      // alone (filters.length is 0 there) — that's a real intentional
+      // choice and should stop at its own end, not jump to a different
+      // sort under the user. Final stage: the same unrestricted, complete,
+      // rarity-sorted browse every plain (no sort picked) query already
+      // uses — a superset of both earlier stages, so this alone is
+      // guaranteed to eventually surface every real match. state.sort
+      // check stops this from re-firing on itself once already here.
+      if (filters.length && isSalesSort && state.sort !== 'RARITY_ASC' && !state.hasMore){
         state.sort = 'RARITY_ASC';
-        state.autoFallbackStage = 2;
         renderSortTag();
         state.skip = 0;
         state.hasMore = true;
@@ -10708,6 +10791,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     // longer inside traitsHoverWrap at all once that's happened.
     var clickPath = e.composedPath();
     if (el.traitsFlyout.style.display === 'block' && !clickPath.includes(el.traitsHoverWrap) && !clickPath.includes(el.traitsFlyout)) closeTraitsFlyout();
+    // Desktop's VALUES panel is a real dropdown now (#traitsFlyoutVals,
+    // position:absolute — see its own CSS), separate from the always-
+    // visible category strip above it, which never closes. This is that
+    // dropdown's own close-on-outside-click, independent of the check
+    // right above (that one only ever fires on mobile in practice — see
+    // its own comment, style.display only actually reaches 'block' via
+    // openTraitsFlyout(), which desktop's always-on strip never calls).
+    // Same composedPath() reasoning as above: picking a value rebuilds
+    // #traitsFlyoutVals' own children, detaching the clicked button
+    // before this handler runs.
+    if (window.innerWidth > 700 && el.traitsFlyoutVals.childElementCount && !clickPath.includes(el.traitsFlyout)){
+      el.traitsFlyoutVals.innerHTML = '';
+    }
     if (el.dbSelectFlyout.style.display === 'block' && !el.dbSelectWrap.contains(e.target)) closeDbSelectFlyout();
     if (el.pigeonsCalcPopover.style.display === 'block' && !el.pigeonsBarCalc.contains(e.target)) closeCalcPopover();
     // Same pattern for the pigeon DETAIL screen itself — a click anywhere
