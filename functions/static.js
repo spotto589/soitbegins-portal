@@ -1755,16 +1755,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       overflow:hidden;
       text-overflow:ellipsis;
     }
-    /* Grid, not flex-wrap — auto-fill/minmax stretches every chip to
-       evenly fill the row's real width (no ragged gap on the right of
-       the last partial flex row) and grows/shrinks column count with
-       the actual available space, so this always fits the screen
-       without needing its own scroll — bigger chips (was 150px, now a
-       190px floor) just mean fewer columns, never overflow. */
+    /* A plain vertical list — one trait value per row, not the grid of
+       chips this used to be. */
     #traitsFlyoutVals{
-      display:grid;
-      grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));
-      gap:0.6rem;
+      display:flex;
+      flex-direction:column;
+      gap:0.4rem;
       max-height:none;
       padding:0.3rem 0 0;
       width:100%;
@@ -1774,9 +1770,14 @@ const SWAP_HTML = `<!DOCTYPE html>
        collapse the box itself too, so there's no empty padded gap
        sitting under the category row before that click happens. */
     #traitsFlyoutVals:empty{ display:none; padding:0; }
-    #traitsFlyoutVals .traits-flyout-val{ margin-bottom:0; }
+    #traitsFlyoutVals .traits-flyout-val{ width:100%; margin-bottom:0; }
     #traitsFlyoutVals .traits-flyout-val.has-preview{
-      height:120px;
+      /* A full list-row height, not the old grid-tile's 120px square —
+         at this width (up to 700px, see #traitsFlyoutVals' own parent)
+         a tall box would stretch the photo into a very wide, short crop.
+         Still tall enough to read as a real photo, just proportioned
+         for a row instead of a tile. */
+      height:64px;
       /* Base .traits-flyout-val's own padding is content-box by default —
          without this, the fixed height above would just add on top of it,
          missing the point of pinning a consistent, non-stretched box for
