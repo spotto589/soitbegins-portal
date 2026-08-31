@@ -6002,17 +6002,30 @@ const SWAP_HTML = `<!DOCTYPE html>
   // one piece of UI stuck forever while an unrelated, faster call (e.g.
   // the balance lookup running in parallel) succeeded fine, reading as
   // "sometimes one shows and not the other." One retry before giving up.
+  // No timeout here used to mean a slow backend call (a big wallet's full
+  // account_nfts pagination + per-item resolveOwnerCollectionLive fan-out,
+  // see swap-buy-prepare.js's own comments on how slow that genuinely can
+  // be) just left the fetch hanging indefinitely — "L0AD!NG WALLET..."
+  // sitting there with nothing to fail or retry, which is exactly what
+  // made SH0W MY NFTs feel like it "never comes up" until a manual page
+  // refresh. A real timeout turns that into an actual failure this
+  // function can retry on, instead of silence.
+  var API_TIMEOUT_MS = 15000;
   function apiWithRetry(params, retriesLeft){
-    if (retriesLeft === undefined) retriesLeft = 1;
+    if (retriesLeft === undefined) retriesLeft = 2;
     params = Object.assign({ collection: state.collection }, params);
     var qs = Object.keys(params)
       .filter(function(k){ return params[k] !== undefined && params[k] !== null; })
       .map(function(k){ return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
       .join('&');
-    return fetch('/api/pigeons?' + qs).then(function(r){
+    var controller = new AbortController();
+    var timer = setTimeout(function(){ controller.abort(); }, API_TIMEOUT_MS);
+    return fetch('/api/pigeons?' + qs, { signal: controller.signal }).then(function(r){
+      clearTimeout(timer);
       if (!r.ok) throw new Error('http_' + r.status);
       return r.json();
     }).catch(function(err){
+      clearTimeout(timer);
       if (retriesLeft > 0){
         return new Promise(function(resolve){ setTimeout(resolve, 700); }).then(function(){
           return apiWithRetry(params, retriesLeft - 1);
@@ -6717,7 +6730,19 @@ const SWAP_HTML = `<!DOCTYPE html>
       runScopedQuery();
     }).catch(function(){
       if (!isSelf || myOwnPigeonsCache === null){
-        el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T LOAD TH!S WALLET. TRY AGA!N.'], false);
+        // A real retry button, not just inert "TRY AGA!N." text — this
+        // used to leave a genuine dead end here: apiWithRetry had already
+        // exhausted its own retries by the time this catch runs, and
+        // nothing on screen could do anything about it short of a full
+        // page refresh (confirmed as exactly what SH0W MY NFTs' own
+        // "never comes up" reports meant in practice). Re-running the
+        // exact same call is enough — nothing about scope/targetPigeon/
+        // landOnTab needs to change for a plain retry.
+        el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T LOAD TH!S WALLET.'], true, 'TRY AGA!N');
+        var retryBtn = document.getElementById('clearSearchBtn');
+        if (retryBtn) retryBtn.addEventListener('click', function(){
+          browseOwnerCollection(wallet, ownerShort, targetPigeon, landOnTab);
+        });
       }
     });
     // Scoped to your own wallet — ownedPigeonActionHtml (via
