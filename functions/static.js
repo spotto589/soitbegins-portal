@@ -1822,6 +1822,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.6rem;
     box-sizing:border-box;
   }
+  /* ---- ONE consistent colour language across SORT BY + FILTER BY
+     TRAITS (previously three different, partly self-contradicting
+     schemes stacked on the same shared classes — plain grey text here,
+     forced cyan there, a header comment claiming "filled pink when
+     selected" that the actual .selected rule directly contradicted two
+     lines below it): white text at rest (readable against the new
+     cyan-glow panel backgrounds, unlike the old cyan-on-cyan idle text),
+     magenta/pink is the one "this is chosen" signal everywhere — a
+     category, a sort option, a trait value — and cyan stays reserved for
+     the passive hover border glow every other box on the page already
+     uses, never as body text. ---- */
   .traits-flyout-cat{
     display:block;
     width:auto;
@@ -1831,7 +1842,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:transparent;
     border:none;
     border-right:1px solid var(--border-dim);
-    color:var(--grey);
+    color:var(--white);
     font-family:var(--font-mono);
     font-size:13px;
     letter-spacing:0.06em;
@@ -1840,7 +1851,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
     transition:background 0.15s ease, color 0.15s ease;
   }
-  .traits-flyout-cat:hover, .traits-flyout-cat.active{ background:var(--cyan-faint); color:var(--cyan); }
+  .traits-flyout-cat:hover{ background:var(--cyan-faint); color:var(--white); }
+  .traits-flyout-cat.active{ background:var(--magenta-faint); color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
   .traits-flyout-val{
     position:relative;
     display:flex;
@@ -1850,7 +1862,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.5rem;
     background:transparent;
     border:1px solid var(--border-dim);
-    color:var(--grey);
+    color:var(--white);
     font-family:var(--font-mono);
     font-size:13px;
     letter-spacing:0.03em;
@@ -1863,7 +1875,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
   }
   .traits-flyout-val:hover{ border-color:var(--cyan-dim); color:var(--white); }
-  .traits-flyout-val.selected{ background:var(--cyan-faint); border-color:var(--cyan); color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  .traits-flyout-val.selected{ background:var(--magenta-faint); border-color:var(--magenta); color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
   .traits-flyout-val .tfv-count{ color:var(--grey-dim); font-size:13px; flex:0 0 auto; }
   /* Not-yet-built sort options — same disabled/"C0M!NG S00N" treatment as
      FUZZY/PHN!X in the C0LLECT!0N SELECT!0N list (.db-option-disabled/
@@ -1871,19 +1883,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   .traits-flyout-val.tfv-disabled{ cursor:not-allowed; opacity:0.6; }
   .traits-flyout-val.tfv-disabled:hover{ border-color:var(--border-dim); color:var(--grey); }
 
-  /* ---- ADD TRAITS flyout only: cyan by default, pink outline on hover,
-     filled pink when selected/active — scoped by id so SORT's flyout
-     (same shared .traits-flyout-cat/.traits-flyout-val classes) is
-     untouched. ---- */
-  #traitsFlyoutVals .th-empty{ font-size:16px; color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
-  #traitsFlyoutCats .traits-flyout-cat{ color:var(--cyan); box-shadow:inset 0 0 0 1px transparent; }
-  #traitsFlyoutCats .traits-flyout-cat:hover{ background:transparent; color:var(--cyan); box-shadow:inset 0 0 0 1px var(--magenta); }
-  #traitsFlyoutCats .traits-flyout-cat.active{ background:var(--magenta-faint); color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); box-shadow:none; }
-  #traitsFlyoutVals .traits-flyout-val{ color:var(--cyan); font-size:16px; }
-  #traitsFlyoutVals .traits-flyout-val:hover{ border-color:var(--magenta); color:var(--cyan); background:transparent; }
-  /* Ticked stays cyan, not magenta — magenta here read as a totally
-     different state (SCYLLA/target) than "you selected a trait filter". */
-  #traitsFlyoutVals .traits-flyout-val.selected{ background:var(--cyan-faint); border-color:var(--cyan); color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  /* ADD TRA!TS' own categories/values now just inherit the shared white/
+     magenta scheme above — no separate cyan-idle override any more (see
+     this block's own history if that's ever needed again). */
+  #traitsFlyoutVals .th-empty{ font-size:16px; color:var(--white); }
+  #traitsFlyoutCats .traits-flyout-cat{ box-shadow:inset 0 0 0 1px transparent; }
+  #traitsFlyoutCats .traits-flyout-cat:hover{ box-shadow:inset 0 0 0 1px var(--cyan-dim); }
+  #traitsFlyoutVals .traits-flyout-val{ font-size:16px; }
   #traitsFlyoutVals .tfv-count{ font-size:15px; }
   /* A real Pigeon preview as the button's own background (see
      renderTraitsFlyoutVals — the dark gradient is baked into the same
@@ -2009,10 +2015,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
   }
   #traitsFlyoutVals .traits-flyout-val.has-preview.selected{
-    border-color:var(--cyan);
-    box-shadow:inset 0 0 0 2px var(--cyan);
+    border-color:var(--magenta);
+    box-shadow:inset 0 0 0 2px var(--magenta);
     color:#fff;
-    text-shadow:0 0 6px var(--cyan-glow), 0 1px 3px rgba(0,0,0,0.9);
+    text-shadow:0 0 6px var(--magenta-glow), 0 1px 3px rgba(0,0,0,0.9);
   }
   /* Same corner checkmark badge a selected Pigeon thumbnail gets
      (.card-select-toggle.selected) — same size, same magenta fill, same
