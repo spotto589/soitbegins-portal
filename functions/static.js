@@ -325,6 +325,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Way bigger than a regular panel-title — this is the headline of the
      whole DATABASE screen, not a section label. */
   .search-panel-title{ font-size:24px; font-weight:700; margin-bottom:0.4rem; text-shadow:0 0 10px var(--cyan-glow); }
+  /* SH0W!NG Y0UR P!GE0NS :: N — the FL0CK-scoped version of this title —
+     reads as YOUR real count, worth calling out in the same live cyan as
+     every other real number on this page (MY P!GE0NS ::, P!GE0NS HELD ::)
+     instead of just plain white text. */
+  .search-panel-title-flock{ color:var(--cyan); }
   .search-panel-subtitle{
     text-align:center;
     font-size:12px;
@@ -463,6 +468,63 @@ const SWAP_HTML = `<!DOCTYPE html>
       background-position:left center, center 78%;
     }
     #flockMyFlockBox .flock-account-box-row{ justify-content:center; text-align:center; }
+  }
+
+  /* ---- Σκύλλα (signed-in FL0CK) tab theme — the same faint circuit-
+     glitch texture .sw-panel-signal/-target already use elsewhere on the
+     page (real static, non-repeating, heavily scrimmed so it reads as
+     atmosphere, never competing with the text on top), plus real hover
+     motion so this whole tab feels alive rather than a static list of
+     boxes. MY P!GE0NS keeps its own distinct padlock treatment above —
+     this covers the REST of the account boxes and the P!GE0NS grid
+     underneath, so the tab reads as one themed page, not two looks stapled
+     together. */
+  .flock-account-box:not(#flockMyFlockBox){
+    background-image:
+      linear-gradient(155deg, rgba(8,9,11,0.93), rgba(8,9,11,0.88)),
+      url('/assets/digitalglitchpattern.png');
+    background-size:100% 100%, cover;
+    background-position:center, center;
+    background-repeat:no-repeat, no-repeat;
+    transition:border-color 0.15s ease, box-shadow 0.25s ease, transform 0.15s ease;
+  }
+  .flock-account-box-clickable:not(#flockMyFlockBox):hover{
+    border-color:var(--cyan);
+    box-shadow:0 0 22px var(--cyan-glow);
+    transform:translateY(-2px);
+  }
+  /* A quick flicker on hover — one shot, not a loop, so it reads as a
+     glitchy "system responding to you" beat rather than ambient noise
+     someone has to stare at while deciding what to click. */
+  @keyframes flock-box-glitch{
+    0%, 100%{ text-shadow:none; }
+    20%{ text-shadow:-1px 0 var(--magenta), 1px 0 var(--cyan); }
+    40%{ text-shadow:1px 0 var(--magenta), -1px 0 var(--cyan); }
+    60%{ text-shadow:none; }
+  }
+  .flock-account-box-clickable:not(#flockMyFlockBox):hover .flock-account-box-label{
+    animation:flock-box-glitch 0.35s steps(2, end);
+  }
+  #flockGridPanel{
+    background-image:
+      linear-gradient(180deg, rgba(8,9,11,0.94), rgba(8,9,11,0.9)),
+      url('/assets/digitalglitchpattern.png');
+    background-size:100% 100%, cover;
+    background-position:center, bottom right;
+    background-repeat:no-repeat, no-repeat;
+  }
+  /* Ties SH0W!NG Y0UR P!GE0NS :: N (see .search-panel-title-flock above)
+     to the rest of the theme — a live cyan underline instead of just
+     coloured text sitting on its own. */
+  .search-panel-title-flock{ position:relative; padding-bottom:0.5rem; }
+  .search-panel-title-flock::after{
+    content:''; position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+    width:64px; height:2px; background:linear-gradient(90deg, transparent, var(--cyan), transparent);
+    box-shadow:0 0 8px var(--cyan-glow);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .flock-account-box-clickable:not(#flockMyFlockBox):hover{ transform:none; }
+    .flock-account-box-clickable:not(#flockMyFlockBox):hover .flock-account-box-label{ animation:none; }
   }
 
   /* ---- collection details: token/issuer info ---- */
@@ -6773,8 +6835,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   function updateSearchPanelTitleForPaws(){
     var onFlock = state.activeTab === 'mypigeons' && isOwnWalletScope();
     el.searchPanelTitle.textContent = onFlock
-      ? 'SH0W!NG Y0UR P!GE0NS ' + state.scopeAllItems.length
+      ? 'SH0W!NG Y0UR P!GE0NS :: ' + state.scopeAllItems.length
       : 'SEARCH!NG $P!GE0NS DATABASE';
+    el.searchPanelTitle.classList.toggle('search-panel-title-flock', onFlock);
     el.flockAccountBoxes.style.display = onFlock ? '' : 'none';
     if (onFlock){
       // myOwnPigeonsCache stays null until the real held-Pigeons fetch
