@@ -407,9 +407,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      that expands/collapses; the rest are either real destinations
      (BUY $PIGEONS) or plain clickable placeholders with nowhere to go
      yet — no C0M!NG S00N tag on those specifically, just inert for now. */
-  .flock-account-box{ margin-bottom:0.9rem; padding:1rem 1.25rem; }
-  .flock-account-box-row{ display:flex; align-items:center; justify-content:space-between; gap:1rem; }
-  .flock-account-box-label{ font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:#fff; }
+  /* A grid of menu tiles instead of a thin stacked list — signed-in
+     Σκύλλα reads as a real hub of destinations (MY FL0CK, MESSAGE
+     !NB0X, 0FFERS, BUY $P!GE0NS, ...) at a glance, same "boxed options,
+     not a vertical strip" idea as the mobile tab hub above. */
+  #flockAccountBoxes{ display:grid; grid-template-columns:repeat(2, 1fr); gap:0.7rem; }
+  @media (max-width:480px){ #flockAccountBoxes{ grid-template-columns:1fr; } }
+  .flock-account-box{ padding:1.4rem 1.25rem; min-height:5rem; display:flex; align-items:center; }
+  .flock-account-box-row{ display:flex; align-items:center; justify-content:center; gap:1rem; width:100%; text-align:center; }
+  .flock-account-box-label{ font-size:14px; letter-spacing:0.18em; text-transform:uppercase; color:#fff; }
   .flock-account-box-arrow{ font-size:16px; color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); flex:0 0 auto; }
   .flock-account-box-clickable{ cursor:pointer; transition:border-color 0.15s ease; }
   .flock-account-box-clickable:hover{ border-color:var(--pigeon-purple); }
@@ -1094,13 +1100,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     letter-spacing:0.02em;
     padding:0.65em 0.35em;
     /* BUY N0W wrapping to two lines in its half-width slot (sharing the
-       row with 0FFER) while a lone 0FFER stays one line was the actual
-       reason the purple box came out two different heights depending on
-       state — confirmed live (55px vs 41px). Every state needs to be the
-       same height regardless of what's actually in it. */
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+       row with 0FFER) while a lone 0FFER stays one line used to make the
+       purple box come out two different heights depending on state
+       (confirmed live: 55px vs 41px) — fixed then by truncating BUY N0W
+       to one line with an ellipsis ("BUY N…") instead, which read as
+       broken/cut off. min-height now reserves room for two lines in
+       every state instead, so BUY NOW can wrap onto its own two full
+       lines (line-height tightened so that actually fits the same
+       compact card) without the row height changing based on what's
+       inside it. */
+    white-space:normal;
+    line-height:1.15;
+    min-height:2.9em;
   }
   .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:#ff4d4d; background:#ff4d4d; color:#000; text-shadow:none; }
   /* Red, same accent as CLEAR TRAITS — resetting every filter is a
@@ -1628,7 +1639,14 @@ const SWAP_HTML = `<!DOCTYPE html>
        here regardless of this media query (confirmed live — this exact
        shape of bug already bit the SORT BY row above, see its own
        !important). */
-    #traitsFlyoutCats .traits-flyout-cat{ width:100% !important; text-align:left !important; flex:0 0 auto; white-space:normal; border-right:none; border-bottom:1px solid var(--border-dim); }
+    /* Same boxed-pill treatment SORT BY's own mobile list already gets
+       for free from .traits-flyout-val's base rule (border, radius,
+       margin-bottom) — this list used the much plainer .traits-flyout-cat
+       class instead (a flat divider-line row, no border/radius/margin at
+       all), which read as off/uncentered sitting right next to SORT BY's
+       own boxed list in the same accordion. */
+    #traitsFlyoutCats .traits-flyout-cat{ width:100% !important; text-align:center !important; flex:0 0 auto; white-space:normal; border:1px solid var(--border-dim); border-radius:var(--radius); margin-bottom:0.4rem; }
+    #traitsFlyoutCats .traits-flyout-cat:last-child{ margin-bottom:0; }
     .traits-flyout-vals{ position:static; width:100%; padding:0.6rem 0.9rem; }
     /* :not(.flyout-flat) — S0RT BY (see the class above) has no category
        list of its own, so its single flat list must stay visible by
@@ -5946,6 +5964,32 @@ const SWAP_HTML = `<!DOCTYPE html>
   window.addEventListener('resize', updateTopTabsFade);
   updateTopTabsFade();
 
+  // Same "hide when there's nothing to scroll to" reasoning as
+  // updateTopTabsFade above, for the desktop-only PREV/NEXT pairs
+  // flanking S0RT BY's strip and F!LTER BY TRA!TS' category row (both
+  // .hscroll-arrow, hidden entirely on mobile via CSS already — this only
+  // ever runs their visibility on desktop). Those buttons used to render
+  // unconditionally regardless of whether every item already fit on
+  // screen, showing a scroll affordance for a list with nothing left to
+  // scroll to. display:none/'' directly (not a class toggle) since these
+  // buttons carry no other state-driven styling to preserve.
+  function updateHscrollArrows(scroller, prevBtn, nextBtn){
+    if (!scroller || !prevBtn || !nextBtn) return;
+    var maxScroll = scroller.scrollWidth - scroller.clientWidth;
+    var canScroll = maxScroll > 2;
+    prevBtn.style.display = canScroll && scroller.scrollLeft > 2 ? '' : 'none';
+    nextBtn.style.display = canScroll && scroller.scrollLeft < maxScroll - 2 ? '' : 'none';
+  }
+  function updateSortHscrollArrows(){ updateHscrollArrows(el.sortFlyoutVals, el.sortScrollPrevBtn, el.sortScrollNextBtn); }
+  function updateTraitsCatsHscrollArrows(){ updateHscrollArrows(el.traitsFlyoutCats, el.traitsCatsScrollPrevBtn, el.traitsCatsScrollNextBtn); }
+  el.sortFlyoutVals.addEventListener('scroll', updateSortHscrollArrows);
+  el.traitsFlyoutCats.addEventListener('scroll', updateTraitsCatsHscrollArrows);
+  window.addEventListener('resize', updateSortHscrollArrows);
+  window.addEventListener('resize', updateTraitsCatsHscrollArrows);
+  // Both lists are still empty at this point (SORT BY/categories render
+  // lazily) — re-checked once real content lands, see renderSortFlyoutList
+  // and the trait-categories loader below.
+
   function showScreen(name){
     if (name === 'browse'){
       showTab(state.activeTab);
@@ -6903,7 +6947,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // alone, so its width behaves identically either way.
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="owned-action-row">' +
-        (canBuy ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY N0W</button>' : '') +
+        (canBuy ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY<br>N0W</button>' : '') +
         '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">0FFER</button>' +
       '</div>' +
     '</div>';
@@ -7668,6 +7712,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.traitsFlyoutCats.innerHTML = cats.map(function(c){
       return '<button type="button" class="traits-flyout-cat" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c.toUpperCase()) + '</button>';
     }).join('');
+    updateTraitsCatsHscrollArrows();
   }
   // Different trait categories sit at different heights (or, for
   // Background, need a totally different crop strategy) on the portrait —
@@ -10762,6 +10807,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         (o.disabled ? '<span class="db-soon">C0M!NG S00N</span>' : '') +
       '</button>';
     }).join('');
+    updateSortHscrollArrows();
   }
   function openSortFlyout(){
     renderSortFlyoutList();
