@@ -15,16 +15,18 @@ function shortenAddr(addr) {
 // across Pigeons this one wallet owns, not the whole collection.
 const OFFERS_RECEIVED_SCAN_CAP = 45;
 
-// Same concurrency swap-listing-owned.js's own live-discovery pass already
-// uses — a plain Promise.all over up to 45 candidates used to fire that
-// many concurrent xrplcluster.com calls at once, which is exactly the
-// "up to 60 concurrent calls... triggers its rate limit" scenario already
+// Same concurrency swap-listing-owned.js's own live-discovery pass uses —
+// a plain Promise.all over up to 45 candidates used to fire that many
+// concurrent xrplcluster.com calls at once, which is exactly the "up to
+// 60 concurrent calls... triggers its rate limit" scenario already
 // documented elsewhere in this app (pigeons.js's own scyllaListed comment).
 // Confirmed live: this was making a real, live, confirmed-on-ledger offer
 // never show up here at all — not intermittently, every time — because a
 // rate-limited nft_buy_offers call for that one NFT silently came back
 // empty (see fetchNftBuyOffersOrNull's own null-vs-empty distinction below).
-const OFFERS_RECEIVED_CONCURRENCY = 5;
+// 15, not 5 — still a wide safety margin under the ~60 rate-limit
+// threshold, cuts wall-clock time on this pass to roughly a third.
+const OFFERS_RECEIVED_CONCURRENCY = 15;
 
 // MY PIGEONS' incoming-offers view — every real $PIGEONS buy-offer sitting
 // on a Pigeon the signed-in wallet currently owns. Self-healing like the

@@ -4,16 +4,20 @@ import { fetchAllAccountNftsCached, findAllPigeons, fetchNftSellOffers, recordSw
 // confirmed live: for a wallet with anywhere near DISCOVERY_CAP Pigeons not
 // already covered by the KV listings index, this pass alone (up to 45 live
 // nft_sell_offers checks) was taking 13+ seconds, EVERY single time MY
-// PIGEONS opened, even when nothing had changed since the last look. A
-// short TTL, same convention as the Deeptide owner cache (180s) — pass 1
-// (the real Σκύλλα listings index) is always read fresh regardless, so a
-// genuine new listing or a CANCEL still shows up immediately; only the
-// "did this wallet secretly list something outside Σκύλλα that our own
-// index doesn't know about yet" catch-all scan is what gets skipped on a
-// warm cache. The direct `nftId=` check (e.g. right after LIST!NG one)
-// also always bypasses this cache entirely — see its own comment below.
+// PIGEONS opened, even when nothing had changed since the last look. Pass 1
+// (the real Σκύλλα listings index) is always read fresh regardless of this
+// cache's age, so a genuine new listing or a CANCEL always shows up
+// immediately — only the "did this wallet secretly list something outside
+// Σκύλλα that our own index doesn't know about yet" catch-all scan is what
+// gets skipped on a warm cache. Bumped from 180s to 30 minutes — still
+// confirmed live as too slow at 180s (that window elapses fast enough that
+// most opens were still cold). This is a rare-edge-case safety net, not
+// something that needs re-checking every few minutes; 30 minutes trades a
+// small amount of that edge-case freshness for consistently fast opens
+// through a whole session. The direct `nftId=` check (e.g. right after
+// LIST!NG one) always bypasses this cache entirely — see its own comment.
 const DISCOVERY_CACHE_PREFIX = 'pswap:listingdiscovery:';
-const DISCOVERY_CACHE_TTL_SECONDS = 180;
+const DISCOVERY_CACHE_TTL_SECONDS = 1800;
 
 // Real on-ledger "which of my own Pigeons have an active sell offer I
 // created" check — powers the LISTED badge in MY PIGEONS. Never a
@@ -120,7 +124,11 @@ export async function onRequestGet(context) {
     .slice(0, DISCOVERY_CAP);
 
   // Small batches, not one Promise.all blast — see mapWithConcurrency.
-  await mapWithConcurrency(undiscovered, 5, (nft) => verifyAndRecord(env, nft.NFTokenID, wallet, listed, toRecord));
+  // 15, not 5 — xrplcluster.com's own rate limit only kicks in around ~60
+  // concurrent (see pigeons.js's scyllaListed comment for where that was
+  // confirmed live), so this still leaves a wide safety margin while
+  // cutting the live-scan pass's wall-clock time to roughly a third.
+  await mapWithConcurrency(undiscovered, 15, (nft) => verifyAndRecord(env, nft.NFTokenID, wallet, listed, toRecord));
 
   if (env.coin) context.waitUntil(recordSwapListingsBatch(env.coin, toRecord));
   if (env.coin && undiscovered.length) {
