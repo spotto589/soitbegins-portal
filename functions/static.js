@@ -266,18 +266,36 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   a.back-link:hover{ color:var(--cyan); }
 
+  /* The hero is the thesis (see the Σκύλλα Mainframe identity pitch) —
+     was a small, centered, single-scale line; now genuinely oversized and
+     left-set instead of centered, breaking the "everything centered"
+     pattern the rest of the page still uses. Two rows read at different
+     scales on purpose (S!GNAL as the real headline, MA!NFRAME as a
+     smaller subtitle line underneath it via .h1-sub) instead of one flat
+     block of equal-weight text. */
   h1{
     font-family:var(--font-display);
     font-weight:700;
-    font-size:clamp(17px,4.6vw,32px);
-    letter-spacing:0.08em;
+    font-size:clamp(34px,8vw,84px);
+    line-height:0.94;
+    letter-spacing:0.01em;
     color:var(--white);
     text-shadow:
-      -1.5px 0 rgba(61,243,236,0.55),
-      1.5px 0 rgba(255,51,204,0.5);
-    margin-bottom:0.4rem;
-    text-align:center;
+      -2px 0 rgba(61,243,236,0.6),
+      2px 0 rgba(255,51,204,0.55);
+    margin-bottom:0.6rem;
+    text-align:left;
     text-transform:none;
+    text-wrap:balance;
+  }
+  .h1-sub{
+    display:block;
+    font-size:0.42em;
+    letter-spacing:0.14em;
+    color:var(--grey);
+    -webkit-text-stroke:0;
+    text-shadow:none;
+    margin-top:0.3em;
   }
   .title-online{ color:var(--green); text-shadow:0 0 6px var(--green-glow); }
   /* $PIGEONS numbers — same green as the header's ONLINE, wherever a real
@@ -4488,7 +4506,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   <canvas id="staticBg"></canvas>
 
   <div class="page">
-    <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><br>STAT!C :: MA!NFRAME</h1>
+    <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub">STAT!C :: MA!NFRAME</span></h1>
 
     <!-- DATABASE/MY PIGEONS/TOP 100/SALES HISTORY/SWAP OFFERS — the real
          top bar of the page; the trustline banner + whatever tab is
