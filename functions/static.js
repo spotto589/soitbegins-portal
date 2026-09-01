@@ -2635,7 +2635,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Bigger than the other four — a bare ∞ glyph at the same 12px as
      "30 DAYS" reads as an afterthought/typo next to real words, not a
      deliberate FOREVER option. */
-  .list-duration-forever{ font-size:20px; padding:0.35em 0.3em; }
+  .list-duration-forever{ font-size:26px; padding:0.3em 0.3em; }
   /* $PIGEONS coin sits inside the input itself (not just the placeholder)
      so it stays put once you start typing a number, instead of
      disappearing along with the placeholder text. */
@@ -2707,6 +2707,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Green, not white — this is a real number (a price, an offer amount),
      same "important numbers are green" language as greenNum()/
      .pigeons-green-num everywhere else on the site, not just plain text. */
+  /* Left/right padding matched (both 3.3em) — was 0.75em/3.3em, so
+     text-align:center centered the typed number inside a CONTENT area
+     that itself sat well right of the box's true visual middle, thanks
+     to the coin icon's own left-side padding having no matching padding
+     on the right. Reported live as wanting the number "centred more" —
+     this is what actually fixes that, not the text-align itself (which
+     was already correct for whatever content area it had). */
   .make-offer-input, .list-price-input{
     width:100%;
     background:rgba(8,9,11,0.6);
@@ -2716,7 +2723,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-size:28px;
     font-weight:700;
     text-align:center;
-    padding:0.6em 0.75em 0.6em 3.3em;
+    padding:0.6em 3.3em;
     border-radius:var(--radius);
     box-shadow:0 0 12px rgba(255,255,255,0.08);
     transition:border-color 0.15s ease, box-shadow 0.15s ease;
@@ -2729,11 +2736,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      rather than risking the same overflow class of bug already fixed
      elsewhere in this file for other controls. */
   @media (min-width:701px){
-    .make-offer-input, .list-price-input{ font-size:36px; padding:0.6em 0.75em 0.6em 3.6em; }
+    .make-offer-input, .list-price-input{ font-size:36px; padding:0.6em 3.6em; }
     .make-offer-input-coin{ width:46px; height:46px; }
     .make-offer-send, .list-inline-btn{ font-size:17px; padding:0.85em 0.85em; }
     .list-duration-btn{ font-size:14px; padding:0.75em 0.4em; }
-    .list-duration-forever{ font-size:24px; }
+    .list-duration-forever{ font-size:32px; }
   }
   .make-offer-send, .list-inline-btn{
     flex:1 1 auto;
@@ -5391,13 +5398,15 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <!-- Real XRPL NFTokenCreateOffer Expiration, not app-side
                enforcement — see listingExpirationRippleSeconds in
-               _shared.js. Single pick, 7D default. -->
+               _shared.js. Single pick, F0REVER default (was 7D) — most
+               people listing a Pigeon aren't thinking about a deadline,
+               per explicit request. -->
           <div class="list-duration-row" id="amountEntryListDuration">
             <button type="button" class="list-duration-btn" data-days="1">1 DAY</button>
             <button type="button" class="list-duration-btn" data-days="3">3 DAYS</button>
-            <button type="button" class="list-duration-btn active" data-days="7">7 DAYS</button>
+            <button type="button" class="list-duration-btn" data-days="7">7 DAYS</button>
             <button type="button" class="list-duration-btn" data-days="30">30 DAYS</button>
-            <button type="button" class="list-duration-btn list-duration-forever" data-days="0" title="F0REVER — never expires">∞</button>
+            <button type="button" class="list-duration-btn list-duration-forever active" data-days="0" title="F0REVER — never expires">∞</button>
           </div>
           <div class="index-line list-inline-status" id="amountEntryListStatus" style="display:none;"></div>
         </div>
@@ -6296,6 +6305,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   // invalidated by anything loading later, so it's the only version of
   // this that's actually predictable.
   function scrollActiveTabPanelIntoView(tab){
+    // MY PIGEONS specifically lands right at its own "SH0W!NG Y0UR
+    // P!GE0NS :: N" title instead of literal page top — reported live
+    // (with a screenshot showing that exact line pinned to the very top
+    // of the viewport) as wanting the screen to "start here", not
+    // scrolled all the way up past the hero/trustline banner/tab strip
+    // first every time you open it.
+    if (tab === 'mypigeons'){
+      el.searchPanelTitle.scrollIntoView({ block: 'start', behavior: 'auto' });
+      return;
+    }
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
   // Same flush-to-top feel as scrollTabStripIntoView, but for the results
@@ -7712,7 +7731,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // send) so neither function needed to change — only TRANSFER is new
   // (see submitTransfer below). ----
   var amountEntryPigeon = null; // the Pigeon the currently-open popup is acting on
-  var amountEntryListDurationDays = 7; // real NFTokenCreateOffer Expiration — see listingExpirationRippleSeconds in _shared.js
+  var amountEntryListDurationDays = 0; // real NFTokenCreateOffer Expiration — see listingExpirationRippleSeconds in _shared.js. 0 = F0REVER, the default now (was 7)
   function openAmountEntryModal(mode, p){
     amountEntryPigeon = p;
     el.amountEntryListMode.style.display = mode === 'list' ? '' : 'none';
@@ -7728,9 +7747,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.amountEntryListBtn.textContent = 'L!ST';
       el.amountEntryListStatus.style.display = 'none';
       el.amountEntryListStatus.textContent = '';
-      amountEntryListDurationDays = 7;
+      amountEntryListDurationDays = 0;
       el.amountEntryListDuration.querySelectorAll('.list-duration-btn').forEach(function(b){
-        b.classList.toggle('active', b.getAttribute('data-days') === '7');
+        b.classList.toggle('active', b.getAttribute('data-days') === '0');
       });
     } else if (mode === 'offer'){
       el.amountEntryTitle.textContent = '0FFER AM0UNT';
@@ -9900,8 +9919,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // into view — was just an in-place expand with no scroll at all, so
     // on a page already scrolled down (or on a short viewport) it could
     // expand entirely off-screen with nothing visible to suggest
-    // anything happened.
-    if (!state.flockCollapsed) el.flockGridPanel.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    // anything happened. Same landing spot scrollActiveTabPanelIntoView
+    // uses for every other way into MY PIGEONS (the SH0W MY NFTs button,
+    // the Σκύλλα top tab) — "SH0W!NG Y0UR P!GE0NS :: N" pinned to the
+    // top of the screen, not just centered on the grid below it.
+    if (!state.flockCollapsed) el.searchPanelTitle.scrollIntoView({ block: 'start', behavior: 'smooth' });
   });
   el.flockChangeCollectionBox.addEventListener('click', function(){
     showTab('database');
