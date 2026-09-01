@@ -1269,8 +1269,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:13px;
-    letter-spacing:0.05em;
+    font-size:15px;
+    letter-spacing:0.03em;
     padding:0.85em 1em;
     text-transform:uppercase;
     cursor:pointer;
@@ -1283,7 +1283,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Same fixed width as ADD TRA!TS (var(--ctrl-w)) so every config
      control reads as one uniform row of boxes. */
   #sortDropWrap{ padding:0; width:var(--ctrl-w); flex:0 0 auto; }
-  #sortDropWrap .trait-row-label{ padding:0.85em 1em; font-size:13px; width:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #sortDropWrap .trait-row-label{ padding:0.85em 1em; font-size:15px; width:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   #dbViewSelect{ width:var(--ctrl-w); text-align:center; text-align-last:center; }
   .edition-toggle{
     flex:0 0 auto;
@@ -1298,8 +1298,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-right:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:13px;
-    letter-spacing:0.05em;
+    font-size:15px;
+    letter-spacing:0.03em;
     padding:0.85em 1.1em;
     text-transform:uppercase;
     cursor:pointer;
@@ -1849,6 +1849,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      category, a sort option, a trait value — and cyan stays reserved for
      the passive hover border glow every other box on the page already
      uses, never as body text. ---- */
+  /* 15px, matching F!LTER BY TRA!TS/S0RT BY's own label pill (see
+     .traits-hover-wrap .trait-row-label) — these options were 13px,
+     smaller than the label sitting right next to them, which put more
+     visual weight on the row's caption than on the actual clickable
+     content. Letter-spacing eased off too: tight tracking on all-caps
+     mono reads dense at speed even before size is the problem. */
   .traits-flyout-cat{
     display:block;
     width:auto;
@@ -1860,9 +1866,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-right:1px solid var(--border-dim);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:13px;
-    letter-spacing:0.06em;
-    padding:0.9em 1em;
+    font-size:15px;
+    letter-spacing:0.03em;
+    padding:0.9em 1.1em;
     cursor:pointer;
     text-transform:uppercase;
     transition:background 0.15s ease, color 0.15s ease;
@@ -1880,9 +1886,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-dim);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:13px;
-    letter-spacing:0.03em;
-    padding:0.75em 0.9em;
+    font-size:15px;
+    letter-spacing:0.02em;
+    padding:0.8em 1em;
     margin-bottom:0.4rem;
     cursor:pointer;
     text-align:left;
