@@ -2360,24 +2360,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   .thumb-offer{
     width:100%;
     margin-top:0.5rem;
-    /* Was a flat purple gradient — every card's own action row clashed
-       with the green BUY N0W/cyan 0FFER buttons living inside it instead
-       of setting them off. Dark, same family as .sw-panel's own glow now
-       (cyan border, faint magenta inset ring), so the buttons read as the
-       colour, not the box around them. Tried live against the real grid
-       first. */
-    background:linear-gradient(100deg, rgba(10,10,14,0.95), rgba(15,12,20,0.92));
-    border:1px solid var(--cyan-dim);
+    background:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
+    border:1px solid var(--pigeon-purple);
     border-radius:var(--radius);
-    box-shadow:0 0 14px var(--cyan-glow), inset 0 0 0 1px var(--magenta-faint);
+    box-shadow:0 0 16px var(--pigeon-purple-glow);
     /* Tight — the button(s) inside should read as filling this box, not
-       floating in the middle of it with visible margin down each side. */
+       floating in the middle of it with visible purple margin down each
+       side. */
     padding:0.5em 0.35em;
     /* One row of content now — button(s), or the !N Y0UR FL0CK label —
        never the price/countdown stack this used to also carry (moved to
-       .thumb-listing-badge on the picture itself). Every box is now
-       naturally the exact same height with no min-height needed to cover
-       a taller state. */
+       .thumb-listing-badge on the picture itself). Every purple box is
+       now naturally the exact same height with no min-height needed to
+       cover a taller state. */
     box-sizing:border-box;
     display:flex;
     align-items:center;
