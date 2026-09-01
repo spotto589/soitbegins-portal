@@ -50,17 +50,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     @import url('https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
 
   /* ==========================================================================
-     Σκύλλα SWAP — colour + type system, v3: "corrupted industrial system,"
+     Σκύλλα SWAP — colour + type system, v4: "corrupted industrial system,"
      not cyberpunk (see the Σκύλλα Mainframe identity pitch this was
      approved from). Neutrals: dirty warm near-black/off-white/muted-steel,
-     sharp corners (--radius:0), Anton display face. ONE accent now, not a
-     pair — cyan was tried and dropped; every var(--cyan) reference (and
-     the --green/--pigeon-purple aliases chained through it) resolves to
-     magenta/pink now. New code should reach for --magenta directly rather
-     than --cyan, which only still exists so the hundreds of pre-existing
-     references didn't need individual edits.
-     MAGENTA = the one accent — signal / active / SCYLLA / target /
-       selection / warning / attention, all of it
+     sharp corners (--radius:0), Anton display face. TWO accents, matching
+     the identity pitch: magenta is the primary/selected/CTA signal, cyan
+     is the secondary/hover signal — the site briefly collapsed to magenta
+     only, which is exactly what made everything read as "too much pink";
+     restoring the split is what most of the hundreds of existing
+     var(--cyan) references (borders, hover states, the scrollbar) were
+     written assuming all along.
+     MAGENTA = active / selected / SCYLLA / target / CTA / warning
+     CYAN = hover / secondary interaction, never a resting/idle colour
      WHITE = primary data, headings
      GREY = secondary data, metadata, disabled
      BLACK = depth (panels sit above the static as dark glass)
@@ -73,15 +74,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     --border-dim:rgba(230,225,211,0.1);
     --border-mid:rgba(230,225,211,0.2);
 
-    /* Single accent now, not a pair — cyan is gone, aliased to magenta so
-       the hundreds of existing var(--cyan) references (borders, hover
-       states, active/selected states, the scrollbar) all just become
-       pink automatically instead of needing individual edits. New code
-       should reach for --magenta directly. */
-    --cyan:var(--magenta);
-    --cyan-dim:var(--magenta-dim);
-    --cyan-faint:var(--magenta-faint);
-    --cyan-glow:var(--magenta-glow);
+    /* A real colour again — see this stylesheet's own header comment. */
+    --cyan:#3df3ec;
+    --cyan-dim:rgba(61,243,236,0.28);
+    --cyan-faint:rgba(61,243,236,0.1);
+    --cyan-glow:rgba(61,243,236,0.4);
 
     --magenta:#ff33cc;
     --magenta-dim:rgba(255,51,204,0.4);
@@ -293,16 +290,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   h1{
     font-family:var(--font-display);
     font-weight:700;
-    font-size:clamp(34px,8vw,84px);
+    font-size:clamp(40px,9vw,104px);
     line-height:0.94;
     letter-spacing:0.01em;
     color:var(--white);
-    /* Was a cyan/magenta chromatic-aberration split — cyan's gone (single
-       accent now), so this reads as a print-misregistration double-strike
-       instead: pink offset one way, a hard black offset the other,
-       instead of a second bright colour standing in for "glitched". */
+    /* Cyan/magenta chromatic-aberration split, restored now that cyan is
+       a real colour again — the two-colour glitch (not a plain dark
+       double-strike) is what the identity pitch this whole system is
+       based on actually uses. */
     text-shadow:
-      -2px 0 rgba(0,0,0,0.7),
+      -2px 0 var(--cyan-dim),
       2px 0 var(--magenta-dim);
     margin-bottom:0.6rem;
     text-align:left;
@@ -1366,7 +1363,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     letter-spacing:0.05em;
     color:var(--white);
     text-shadow:
-      -1.5px 0 rgba(0,0,0,0.7),
+      -1.5px 0 var(--cyan-dim),
       1.5px 0 var(--magenta-glow),
       0 0 12px var(--magenta-glow);
     text-align:center;
@@ -2720,10 +2717,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* Hard offset duplicate instead of a soft blurred glow — a print/
      sticker-style shadow, not a neon halo, matching the rest of the
-     brutalist pass. */
-  .result-card:hover{ border-color:var(--magenta); box-shadow:4px 4px 0 var(--magenta); transform:translate(-2px,-2px); }
+     brutalist pass. Cyan (hover role), not magenta — magenta is reserved
+     for a genuinely selected/active card (.in-target, right below), and
+     using it here too made everything look selected/pink all the time. */
+  .result-card:hover{ border-color:var(--cyan); box-shadow:4px 4px 0 var(--cyan); transform:translate(-2px,-2px); }
   .result-card:hover .pigeon-img-box img{ transform:scale(1.04); }
-  .result-card:hover .result-num{ color:var(--magenta); text-shadow:none; }
+  .result-card:hover .result-num{ color:var(--cyan); text-shadow:none; }
   .result-card .pigeon-img-box{ border:none; }
   .result-card.in-target{ border-color:var(--magenta); box-shadow:0 0 0 1px var(--magenta-dim) inset, 0 0 14px rgba(255,63,208,0.22); }
   .result-card.in-target .result-num{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
