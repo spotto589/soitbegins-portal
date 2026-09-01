@@ -5062,6 +5062,14 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <button class="make-offer-send" id="detailMakeOfferSend">SUBM!T</button>
               </div>
             </div>
+            <!-- Real buy-offers received on YOUR OWN Pigeon, same
+                 myPigeonOffersHtml markup/ACCEPT-DECLINE handling the
+                 DATABASE/MY PIGEONS card grid already uses — was only
+                 ever rendered on the card itself, never here, so an offer
+                 that showed up as a real "N 0FFERS" count on the tab
+                 strip had nowhere to actually act on it once you opened
+                 the Pigeon's own detail screen. See updateScyllaListing. -->
+            <div id="detailOffersReceived"></div>
           </div>
         </div>
         <div class="detail-col-right">
@@ -5798,7 +5806,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
    'detailNum','detailShareBtn','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
-   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
+   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn',
    'backToBrowseBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
@@ -7659,6 +7667,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (declineBtn){
         declinedOfferIds[declineBtn.getAttribute('data-offerid')] = true;
         if (isOwnWalletScope()) runScopedQuery();
+        if (el.screenDetail.style.display !== 'none') updateScyllaListing(state.currentDetail);
         return;
       }
     });
@@ -7668,6 +7677,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     // el.amountEntryModal keydown/input listeners near its own wiring).
   }
   wireResultClicks(el.resultsArea, function(){ return state.items; });
+  // #detailOffersReceived's ACCEPT/DECL!NE buttons (myPigeonOffersHtml) —
+  // #screenDetail isn't el.resultsArea/el.myPigeonsList, so the delegated
+  // listener above never saw them; the source() here only ever needs to
+  // resolve the one Pigeon currently open. Every other branch in
+  // wireResultClicks (.list-open-modal-btn etc) is a harmless no-op here
+  // since nothing in #screenDetail's markup matches those selectors.
+  wireResultClicks(el.screenDetail, function(){ return state.currentDetail ? [state.currentDetail] : []; });
 
   // ---- Trait data: fetched once, real categories/values/percentages
   // straight from Deeptide's collection-wide trait-card counts (exact, not
@@ -11427,6 +11443,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // actively listed, just not on your own Pigeon.
     el.detailMakeOfferRow.style.display = notOwn ? '' : 'none';
     if (notOwn) el.detailMakeOfferInput.value = '';
+    // OFFERS RECEIVED — same myPigeonOffersHtml the card grid's own
+    // ownedPigeonActionHtml already renders per-card; this was the only
+    // gap (see the container's own comment above, in the markup).
+    var offers = isOwn ? (offersByNftId[p.nftId] || []) : [];
+    el.detailOffersReceived.innerHTML = offers.length ? myPigeonOffersHtml(p, offers) : '';
   }
   // detailMakeOfferRow isn't inside el.resultsArea/el.myPigeonsList, so
   // wireResultClicks' delegated .make-offer-send/-input handling never
