@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts, findAllPigeons,
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNftsCached, findAllPigeons,
   getSwapBuyOffersMap, addSwapBuyOffer, removeSwapBuyOffer, fetchNftBuyOffersOrNull,
   getOwnerPigeonsViaDeeptide, getSwapListingsMap, encodeCurrencyCode, PIGEONS_TOKEN_CONFIG,
   mapWithConcurrency
@@ -60,7 +60,7 @@ export async function onRequestGet(context) {
   const owner = payload.acct;
 
   const [ownedNfts, buyOffersMap, deeptideItems, listingsMap] = await Promise.all([
-    fetchAllAccountNfts(owner),
+    fetchAllAccountNftsCached(env.coin, owner),
     getSwapBuyOffersMap(env.coin),
     getOwnerPigeonsViaDeeptide(env.coin, owner),
     getSwapListingsMap(env.coin)

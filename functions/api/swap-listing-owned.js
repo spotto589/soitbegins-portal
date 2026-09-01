@@ -1,4 +1,4 @@
-import { fetchAllAccountNfts, findAllPigeons, fetchNftSellOffers, recordSwapListingsBatch, getSwapListingsMap, mapWithConcurrency, findPigeonsOffer, safeKvPut } from '../_shared.js';
+import { fetchAllAccountNftsCached, findAllPigeons, fetchNftSellOffers, recordSwapListingsBatch, getSwapListingsMap, mapWithConcurrency, findPigeonsOffer, safeKvPut } from '../_shared.js';
 
 // Caches the RESULT of the live-discovery pass (pass 2 below) per wallet —
 // confirmed live: for a wallet with anywhere near DISCOVERY_CAP Pigeons not
@@ -97,7 +97,7 @@ export async function onRequestGet(context) {
     await verifyAndRecord(env, directNftId, wallet, listed, toRecord);
   }
 
-  const nfts = await fetchAllAccountNfts(wallet);
+  const nfts = await fetchAllAccountNftsCached(env.coin, wallet);
   const allOwnedPigeons = findAllPigeons(nfts);
 
   // Once a Pigeon has been live-checked (found listed or not) within the

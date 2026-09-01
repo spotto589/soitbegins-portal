@@ -151,6 +151,48 @@ export async function fetchAllAccountNftsChecked(account) {
   return { nfts: all, ok };
 }
 
+// Very short-lived (20s) cache of a wallet's full raw NFT list — display-
+// only call sites ONLY (MY PIGEONS' own wallet= lookup, swap-listing-
+// owned.js, swap-offers-received.js). Never use this for anything that
+// prepares or signs a real transaction — those must always see current
+// on-ledger ownership, uncached. Confirmed live: opening MY PIGEONS fires
+// all three of those endpoints within milliseconds of each other for the
+// SAME wallet, each independently paginating this same live, multi-page
+// XRPL call — for a large-holder wallet that's the single biggest chunk
+// of the real load time, and it's identical work done three times. A
+// wallet's holdings genuinely don't change within 20 seconds under normal
+// use, so sharing one fetch across that window is a safe, meaningful cut.
+const ACCOUNT_NFTS_CACHE_PREFIX = 'pswap:accountnfts:';
+const ACCOUNT_NFTS_CACHE_TTL_SECONDS = 20;
+export async function fetchAllAccountNftsCached(kv, account) {
+  const cacheKey = ACCOUNT_NFTS_CACHE_PREFIX + account;
+  if (kv) {
+    const cached = await kv.get(cacheKey);
+    if (cached !== null) {
+      try { return JSON.parse(cached); } catch (e) {}
+    }
+  }
+  const nfts = await fetchAllAccountNfts(account);
+  if (kv) await safeKvPut(kv, cacheKey, JSON.stringify(nfts), { expirationTtl: ACCOUNT_NFTS_CACHE_TTL_SECONDS });
+  return nfts;
+}
+// Same cached sharing, but preserves fetchAllAccountNftsChecked's own
+// real-failure signal — a cache hit is trivially "ok" (real data already
+// in hand), a miss falls through to the real checked fetch and only
+// caches a genuinely successful result, never a partial/failed scan.
+export async function fetchAllAccountNftsCheckedCached(kv, account) {
+  const cacheKey = ACCOUNT_NFTS_CACHE_PREFIX + account;
+  if (kv) {
+    const cached = await kv.get(cacheKey);
+    if (cached !== null) {
+      try { return { nfts: JSON.parse(cached), ok: true }; } catch (e) {}
+    }
+  }
+  const { nfts, ok } = await fetchAllAccountNftsChecked(account);
+  if (ok && kv) await safeKvPut(kv, cacheKey, JSON.stringify(nfts), { expirationTtl: ACCOUNT_NFTS_CACHE_TTL_SECONDS });
+  return { nfts, ok };
+}
+
 export function hasAccessKey(nfts) {
   return nfts.some(n =>
     (n.Issuer === GLITCH_ISSUER && n.NFTokenTaxon === GLITCH_TAXON) ||

@@ -3,7 +3,7 @@ import {
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue,
-  resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsChecked, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops,
+  resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG,
   getCachedCrownHolder
 } from '../_shared.js';
@@ -426,14 +426,16 @@ export async function onRequestGet(context) {
   // in wallet). No KV writes, cheap regardless of wallet size.
   const wallet = params.get('wallet');
   if (wallet) {
-    // fetchAllAccountNftsChecked (not the plain fetchAllAccountNfts) so a
-    // failed/incomplete live scan (xrplcluster.com still rate-limited
-    // after all 3 retries) returns a real error status instead of a 200
-    // with items:[] — indistinguishable from a genuinely empty wallet,
-    // which is exactly what was making wallet search intermittently show
-    // "N0 P!GE0N MATCH" for wallets that actually own Pigeons. A non-200
-    // here lets the client's existing apiWithRetry actually retry.
-    const { nfts, ok } = await fetchAllAccountNftsChecked(wallet);
+    // The checked variant so a failed/incomplete live scan (xrplcluster.com
+    // still rate-limited after all 3 retries) returns a real error status
+    // instead of a 200 with items:[] — indistinguishable from a genuinely
+    // empty wallet, which is exactly what was making wallet search
+    // intermittently show "N0 P!GE0N MATCH" for wallets that actually own
+    // Pigeons. A non-200 here lets the client's existing apiWithRetry
+    // actually retry. Cached (20s, see fetchAllAccountNftsCheckedCached's
+    // own comment) since MY PIGEONS/OFFERS/listing-owned all fire this
+    // same lookup for the same wallet within milliseconds of each other.
+    const { nfts, ok } = await fetchAllAccountNftsCheckedCached(env.coin, wallet);
     if (!ok) return json({ error: 'ledger_lookup_failed' }, 502);
     const pigeons = findAllPigeons(nfts);
     if (!pigeons.length) return json({ items: [], owner: wallet, ownerShort: shortenAddr(wallet) });
