@@ -2681,17 +2681,17 @@ const SWAP_HTML = `<!DOCTYPE html>
        mobile card at the full 15px size — same shrink other card
        controls already get at this breakpoint. */
     .owned-action-row .bar-btn{ font-size:11px; padding:0.7em 0.4em; }
-    /* BUY N0W/0FFER specifically were left at their tiny 11px/0.55em/0.3em
-       desktop size (tuned for fitting two buttons in a dense 5-across
-       grid — see that rule's own comment) even after the mobile grid
-       dropped to 2-across, where there's real room to spare. Sitting
-       inside the full-width purple .thumb-offer box at that tiny size
-       read as undersized/messy against it — bigger here so the button(s)
-       actually match the box's own visual weight. Most cards only show
-       0FFER alone (BUY N0W only renders on a real listing), where this
-       fills the full purple box width via flex:1 1 0 either way. */
+    /* Smaller than the desktop 13px default (see that rule's own comment),
+       not bigger — confirmed live on an actual 2-across mobile card:
+       "BUY N0W" sharing a row with 0FFER truncated to "BUY …" at 13px,
+       read as broken/cut off rather than just small. 11px/tighter
+       padding is what actually fits both labels on one line without
+       ellipsis kicking in. Most cards only show 0FFER alone (BUY N0W
+       only renders on a real listing), where this fills the full box
+       width via flex:1 1 0 either way, so this only really matters for
+       the two-button state. */
     .owned-action-row .thumb-buy-btn,
-    .owned-action-row .offer-open-modal-btn{ font-size:13px; padding:0.75em 0.5em; }
+    .owned-action-row .offer-open-modal-btn{ font-size:11px; letter-spacing:0.01em; padding:0.7em 0.3em; }
   }
 
   /* ---- old grid-tile card, still used by MY PIGEONS (myPigeonCardHtml) ---- */
@@ -9098,8 +9098,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   var buyUuid = null;
   var buyPollTimer = null;
   var buyXamanTab = null;
-
+  // Clicking BUY N0W while logged out used to just alert("C0NNECT Y0UR
+  // WALLET F!RST.") and stop dead — a native blocking alert() that reads
+  // as "nothing happens" on mobile in particular (reported live as "i
+  // cant buy now on mobile"), and even once dismissed, left you back
+  // where you started with no path forward except finding the login
+  // button yourself and re-finding this same Pigeon after. Now it kicks
+  // off the real Σκύλλα login instead, remembers which Pigeon you were
+  // trying to buy across the login redirect (a real page navigation —
+  // see getXummAuth's own success handler — so in-memory state doesn't
+  // survive it, only sessionStorage does), and resumes straight into
+  // this same confirm flow once you're back. See the resumePendingBuy()
+  // call near the bottom of this script for the other half.
+  var PENDING_BUY_STORAGE_KEY = 'skyllaPendingBuyNftId';
   function openBuyConfirm(p, retriesLeft){
+    if (!MY_WALLET){
+      try { sessionStorage.setItem(PENDING_BUY_STORAGE_KEY, p.nftId); } catch (e){}
+      getXummAuth().authorize();
+      return;
+    }
     buyTarget = p;
     if (retriesLeft === undefined) retriesLeft = 1;
     fetch('/api/swap-buy-prepare', {
@@ -11992,6 +12009,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   } else {
     showTab('database');
   }
+
+  // The other half of openBuyConfirm's own "not logged in" redirect (see
+  // its own comment) — a real MY_WALLET here means this load is either
+  // fresh or a return from that same login, so it's safe to just always
+  // check: harmless no-op whenever nothing's pending. Fetches the real
+  // Pigeon (same api({detail}) call openDetail uses — nothing in
+  // state.items/scopeAllItems is guaranteed to hold it yet on a fresh
+  // load) rather than trusting anything cached from before the redirect.
+  (function resumePendingBuy(){
+    var pendingNftId = null;
+    try { pendingNftId = sessionStorage.getItem(PENDING_BUY_STORAGE_KEY); } catch (e){}
+    if (!pendingNftId) return;
+    try { sessionStorage.removeItem(PENDING_BUY_STORAGE_KEY); } catch (e){}
+    if (!MY_WALLET) return;
+    api({ detail: pendingNftId }).then(function(data){
+      if (data && data.item) openBuyConfirm(data.item);
+    }).catch(function(){});
+  })();
 
   // TV static background, purely atmospheric — matches the rest of the
   // site. Same draw loop run three times: the permanent page-level
