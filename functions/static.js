@@ -51,6 +51,16 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   /* ==========================================================================
      Σκύλλα SWAP — colour + type system
+     Exactly four colours, on purpose — everything else that used to exist
+     here (a mint --green for "buy actions", a violet --pigeon-purple for
+     the coin's own artwork, three ENTIRELY different palettes swapped in
+     per collection via body.collection-phnixs/-teddybg) is gone. Different
+     boxes reading as different micro-themes was exactly what made the
+     site feel inconsistent. --green/--pigeon-purple below are kept only
+     as aliases (pointing at cyan) so the hundred-plus existing
+     var(--green)/var(--pigeon-purple) references across this file didn't
+     all need touching individually — new code should reach for --cyan/
+     --magenta directly instead of either alias.
      CYAN = signal / active / global collection / available actions
      MAGENTA = SCYLLA / target / selection / warning / attention
      WHITE = primary data, headings
@@ -75,16 +85,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     --magenta-faint:rgba(255,51,204,0.12);
     --magenta-glow:rgba(255,51,204,0.4);
 
-    --green:#3dff8a;
-    --green-glow:rgba(61,255,138,0.35);
-
-    /* Sampled straight from the collection's own coin artwork (dominant
-       pixel colour), not the site's magenta accent — used only where the
-       $PIGEONS logo itself needs to be represented, e.g. the trustline bar. */
-    --pigeon-purple:#8848f8;
-    --pigeon-purple-dim:rgba(136,72,248,0.4);
-    --pigeon-purple-faint:rgba(136,72,248,0.12);
-    --pigeon-purple-glow:rgba(136,72,248,0.4);
+    /* Aliases, not real colours of their own — see this stylesheet's own
+       header comment. */
+    --green:var(--cyan);
+    --green-glow:var(--cyan-glow);
+    --pigeon-purple:var(--cyan);
+    --pigeon-purple-dim:var(--cyan-dim);
+    --pigeon-purple-faint:var(--cyan-faint);
+    --pigeon-purple-glow:var(--cyan-glow);
 
     --white:#f3f4f6;
     --grey:rgba(226,229,233,0.56);
@@ -103,42 +111,11 @@ const SWAP_HTML = `<!DOCTYPE html>
        each control sizing to its own content. */
     --ctrl-w:190px;
   }
-  /* PHN!X / TEDDY themes — see switchCollection() in the client script,
-     which toggles these classes on <body>. Re-declares the same accent
-     variables the whole DATABASE UI already keys off (--cyan is SORT BY's
-     active state + most card hover borders, --magenta is FILTER BY
-     TRAITS' + card select-toggle's, --pigeon-purple is the $PIGEONS coin
-     colour specifically) rather than inventing new variables nothing
-     reads yet — every existing rule that uses these just picks up the
-     new colours automatically, no per-rule changes needed anywhere else. */
-  body.collection-phnixs{
-    --cyan:#ff8c1a;
-    --cyan-dim:rgba(255,140,26,0.4);
-    --cyan-faint:rgba(255,140,26,0.12);
-    --cyan-glow:rgba(255,140,26,0.35);
-    --magenta:#ff3b3b;
-    --magenta-dim:rgba(255,59,59,0.4);
-    --magenta-faint:rgba(255,59,59,0.12);
-    --magenta-glow:rgba(255,59,59,0.4);
-    --pigeon-purple:#ff5a1f;
-    --pigeon-purple-dim:rgba(255,90,31,0.4);
-    --pigeon-purple-faint:rgba(255,90,31,0.12);
-    --pigeon-purple-glow:rgba(255,90,31,0.4);
-  }
-  body.collection-teddybg{
-    --cyan:#2f9e44;
-    --cyan-dim:rgba(47,158,68,0.4);
-    --cyan-faint:rgba(47,158,68,0.12);
-    --cyan-glow:rgba(47,158,68,0.35);
-    --magenta:#f5f5f0;
-    --magenta-dim:rgba(245,245,240,0.4);
-    --magenta-faint:rgba(245,245,240,0.12);
-    --magenta-glow:rgba(245,245,240,0.4);
-    --pigeon-purple:#2f9e44;
-    --pigeon-purple-dim:rgba(47,158,68,0.4);
-    --pigeon-purple-faint:rgba(47,158,68,0.12);
-    --pigeon-purple-glow:rgba(47,158,68,0.4);
-  }
+  /* PHN!X/TEDDY used to swap in two entirely different palettes here
+     (orange+red, green+cream) via body.collection-phnixs/-teddybg — one
+     of the biggest sources of "random colours everywhere, no universal
+     theme." Removed outright: with no override, both collections now just
+     inherit the same four :root colours everything else uses. */
   /* EDITION (1-1515/1516-3015) and the # 0R WALLET search box both depend
      on the $PIGEONS-only number-map crawl (search resolves a number via
      that map; EDITION is a hardcoded $PIGEONS mint-era number range) —
@@ -378,16 +355,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.5em;
   }
   .db-option:last-child{ border-bottom:none; }
-  /* Each collection gets its own theme colour in this list, not one
-     shared active/disabled palette — Pigeons purple (matching the
-     trustline strip/floor tile elsewhere), Fuzzy dark brown, Phoenix
-     red-orange. Still cursor:not-allowed/default per active-vs-disabled,
-     just via .db-option-disabled layered on top, not colour. */
-  .db-option-active{ color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); cursor:default; }
+  /* Used to give each collection its own theme colour in this list
+     (Pigeons purple/violet, Fuzzy brown, Phoenix red-orange, Teddy gold)
+     — one of the "random colours everywhere" spots. Just the active one
+     highlighted in cyan now, same as everywhere else; the rest read as
+     plain white/default list text. Still cursor:not-allowed/default per
+     active-vs-disabled, via .db-option-disabled. */
+  .db-option-active{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); cursor:default; }
   .db-option-disabled{ cursor:not-allowed; opacity:0.75; }
-  .db-option-fuzzy{ color:#8a5a34; text-shadow:0 0 5px rgba(138,90,52,0.4); }
-  .db-option-phnix{ color:#ff5a2e; text-shadow:0 0 6px rgba(255,90,46,0.5); }
-  .db-option-teddy{ color:#d4a24e; text-shadow:0 0 5px rgba(212,162,78,0.4); }
   .db-soon{ font-size:9px; letter-spacing:0.1em; border:1px solid var(--border-mid); color:var(--grey-dim); padding:0.2em 0.4em; }
 
   /* ---- FL0CK account-page boxes — a stack of separate .sw-panel cards
@@ -595,7 +570,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      nearly disappearing into it. */
   .stats-carousel-arrow{
     flex:0 0 auto;
-    background:rgba(40,10,95,0.6);
+    background:rgba(15,16,20,0.75);
     border:1px solid rgba(255,255,255,0.4);
     color:#fff;
     font-size:18px;
@@ -606,7 +581,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     transition:border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
   }
-  .stats-carousel-arrow:hover{ border-color:#fff; background:rgba(25,5,70,0.85); transform:scale(1.06); }
+  .stats-carousel-arrow:hover{ border-color:#fff; background:rgba(20,21,26,0.9); transform:scale(1.06); }
   .stats-carousel-arrow:active{ transform:scale(0.96); }
   /* Viewport clips the slide; height is fixed to the tallest page's real
      height (the FLOOR page, which carries a coin thumbnail the other
@@ -688,27 +663,29 @@ const SWAP_HTML = `<!DOCTYPE html>
      currency-colored tile, not a mini poster. */
   .stat-tile-pigeons{
     border-color:var(--pigeon-purple);
-    background:linear-gradient(160deg, rgba(136,72,248,0.55), rgba(120,72,216,0.65));
+    background:linear-gradient(160deg, rgba(61,243,236,0.55), rgba(43,190,185,0.65));
   }
-  .stat-tile-pigeons:hover{ background:linear-gradient(160deg, rgba(136,72,248,0.7), rgba(120,72,216,0.8)); border-color:var(--pigeon-purple); }
+  .stat-tile-pigeons:hover{ background:linear-gradient(160deg, rgba(61,243,236,0.7), rgba(43,190,185,0.8)); border-color:var(--pigeon-purple); }
   .stat-tile-pigeons .stat-label{ color:#fff; opacity:0.9; }
   .stat-tile-pigeons .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.8); font-weight:700; }
-  /* Marketplace floor tiles — a colour each, so FLOOR :: XRP.CAFE and
-     FLOOR :: DEEPTIDE read as two distinct sources at a glance. */
+  /* Marketplace floor tiles — used two different shades of blue (their
+     own brand-ish colours) so FL00R :: XRP.CAFE and FL00R :: DEEPT!DE
+     read as distinct sources; now distinguished with the site's own two
+     accent colours instead — XRP.CAFE cyan, DEEPT!DE magenta. */
   .stat-tile-xrpcafe{
-    border-color:#1a3a6e;
-    background:linear-gradient(160deg, rgba(26,58,110,0.7), rgba(15,35,70,0.8));
+    border-color:var(--cyan-dim);
+    background:linear-gradient(160deg, var(--cyan-faint), rgba(8,9,11,0.8));
   }
-  .stat-tile-xrpcafe:hover{ background:linear-gradient(160deg, rgba(26,58,110,0.85), rgba(15,35,70,0.9)); border-color:#2a5ca0; }
+  .stat-tile-xrpcafe:hover{ background:linear-gradient(160deg, var(--cyan-faint), rgba(8,9,11,0.9)); border-color:var(--cyan); }
   .stat-tile-xrpcafe .stat-label{ color:#fff; opacity:0.9; }
   .stat-tile-xrpcafe .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.6); font-weight:700; }
   .stat-tile-deeptide{
-    border-color:#7fc4e8;
-    background:linear-gradient(160deg, rgba(127,196,232,0.5), rgba(90,170,215,0.6));
+    border-color:var(--magenta-dim);
+    background:linear-gradient(160deg, var(--magenta-faint), rgba(8,9,11,0.8));
   }
-  .stat-tile-deeptide:hover{ background:linear-gradient(160deg, rgba(127,196,232,0.65), rgba(90,170,215,0.75)); border-color:#a5d8f2; }
-  .stat-tile-deeptide .stat-label{ color:#08131a; opacity:0.85; }
-  .stat-tile-deeptide .stat-value{ color:#08131a !important; font-weight:700; }
+  .stat-tile-deeptide:hover{ background:linear-gradient(160deg, var(--magenta-faint), rgba(8,9,11,0.9)); border-color:var(--magenta); }
+  .stat-tile-deeptide .stat-label{ color:#fff; opacity:0.9; }
+  .stat-tile-deeptide .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.6); font-weight:700; }
   /* Deliberate placeholder tile/link, real tracking is a later system */
   .stat-tile-soon{ opacity:0.55; border-style:dashed; }
   .stat-tile-soon:hover{ opacity:0.85; }
@@ -820,7 +797,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      to it (also grey) blur into one flat, lifeless line. */
   .flock-tab-brand{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
   .flock-tab-count{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
-  .flock-tab-offers-pending{ color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
+  .flock-tab-offers-pending{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
   /* DATABASE carries the collection picker inline now, instead of that
      living as its own row above the whole tab strip. */
   .tab-btn-database{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; }
@@ -1150,7 +1127,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-weight:700;
     letter-spacing:0.05em;
   }
-  .delist-pigeon-btn, #detailScyllaDelistBtn{ border-color:#ff4d4d; color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
+  .delist-pigeon-btn, #detailScyllaDelistBtn{ border-color:var(--magenta); color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
   /* ownedPigeonActionHtml's own CANCEL/L!ST + TRANSFER pair — side by
      side, not each stacked full-width, so a listed Pigeon (CANCEL +
      TRANSFER) and an unlisted one (L!ST + TRANSFER) take up the exact
@@ -1198,12 +1175,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     line-height:1.15;
     min-height:2.9em;
   }
-  .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:#ff4d4d; background:#ff4d4d; color:#000; text-shadow:none; }
+  .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:var(--magenta); background:var(--magenta); color:#000; text-shadow:none; }
   /* Red, same accent as CLEAR TRAITS — resetting every filter is a
      destructive-feeling action, worth calling out differently from the
      neutral GO/RESET-adjacent buttons around it. */
-  .reset-db-btn{ border-color:rgba(255,61,61,0.5); color:#ff3d3d; text-shadow:0 0 5px rgba(255,61,61,0.5); }
-  .reset-db-btn:hover{ border-color:#ff3d3d; color:#ff3d3d; background:rgba(255,61,61,0.12); }
+  .reset-db-btn{ border-color:var(--magenta-dim); color:var(--magenta); text-shadow:0 0 5px var(--magenta-dim); }
+  .reset-db-btn:hover{ border-color:var(--magenta); color:var(--magenta); background:var(--magenta-faint); }
   /* VIEW, then COLLECTION SELECTION, then SORTING BY + RESET — grouped
      together in one bordered box, each its own row, with a fixed-width
      label column so every selection control lines up under the next. */
@@ -1649,7 +1626,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       justify-content:center;
       width:2em;
       height:2em;
-      background:rgba(40,10,95,0.6);
+      background:rgba(15,16,20,0.75);
       border:1px solid var(--border-mid);
       border-radius:50%;
       color:var(--white);
@@ -1657,7 +1634,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       cursor:pointer;
       transition:border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
     }
-    .hscroll-arrow:hover{ border-color:var(--cyan-dim); background:rgba(25,5,70,0.85); transform:scale(1.06); }
+    .hscroll-arrow:hover{ border-color:var(--cyan-dim); background:rgba(20,21,26,0.9); transform:scale(1.06); }
     .hscroll-arrow:active{ transform:scale(0.96); }
   }
   /* Hidden on desktop — only shown (see the max-width:700px block below)
@@ -2121,9 +2098,9 @@ const SWAP_HTML = `<!DOCTYPE html>
      in the middle between ADD TRAITS and the chips. */
   .clear-traits-btn{
     background:transparent;
-    border:1px solid rgba(255,61,61,0.5);
-    color:#ff3d3d;
-    text-shadow:0 0 5px rgba(255,61,61,0.5);
+    border:1px solid var(--magenta-dim);
+    color:var(--magenta);
+    text-shadow:0 0 5px var(--magenta-dim);
     font-family:var(--font-mono);
     font-size:15px;
     font-weight:700;
@@ -2135,7 +2112,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease;
     margin-left:auto;
   }
-  .clear-traits-btn:hover{ background:rgba(255,61,61,0.12); }
+  .clear-traits-btn:hover{ background:var(--magenta-faint); }
 
   /* One single bar: SEARCH + GO + VIEW on the left, the results status
      text taking up the middle, SORT BY + RESET on the right — all one
@@ -2329,7 +2306,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .thumb-offer{
     width:100%;
     margin-top:0.5rem;
-    background:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
+    background:linear-gradient(90deg, rgba(61,243,236,0.85), rgba(43,190,185,0.85));
     border:1px solid var(--pigeon-purple);
     border-radius:var(--radius);
     box-shadow:0 0 16px var(--pigeon-purple-glow);
@@ -2375,12 +2352,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      juicy button, not just another plain .bar-btn outline. Overrides
      .bar-btn on specificity-tied-but-later source order. */
   @keyframes offer-btn-pulse{
-    0%, 100%{ box-shadow:0 0 10px var(--green-glow), inset 0 0 0 1px rgba(61,255,138,0.15); }
-    50%{ box-shadow:0 0 22px var(--green-glow), inset 0 0 0 1px rgba(61,255,138,0.3); }
+    0%, 100%{ box-shadow:0 0 10px var(--green-glow), inset 0 0 0 1px rgba(61,243,236,0.15); }
+    50%{ box-shadow:0 0 22px var(--green-glow), inset 0 0 0 1px rgba(61,243,236,0.3); }
   }
   .offer-open-modal-btn{
     width:100%;
-    background:var(--green-faint, rgba(61,255,138,0.12));
+    background:var(--green-faint, rgba(61,243,236,0.12));
     border:1px solid var(--green);
     color:var(--green);
     text-shadow:0 0 6px var(--green-glow);
@@ -2421,7 +2398,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.65em 0.9em;
     border:1px solid var(--pigeon-purple);
     border-radius:var(--radius);
-    background:linear-gradient(160deg, rgba(136,72,248,0.14), var(--panel-bg-solid) 60%);
+    background:linear-gradient(160deg, rgba(61,243,236,0.14), var(--panel-bg-solid) 60%);
     margin-bottom:0.6rem;
   }
   .incoming-transfer-thumb{ width:52px; height:52px; border-radius:6px; object-fit:cover; flex:0 0 auto; background:rgba(255,255,255,0.06); }
@@ -2429,7 +2406,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .incoming-transfer-num{ font-family:var(--font-display); font-weight:700; font-size:15px; color:#fff; }
   .incoming-transfer-from{ font-size:11px; color:var(--grey-dim); letter-spacing:0.05em; margin-top:0.2rem; text-transform:uppercase; }
   .incoming-transfer-accept-btn{ flex:0 0 auto; background:var(--pigeon-purple); border-color:var(--pigeon-purple); color:#fff; text-shadow:none; }
-  .incoming-transfer-accept-btn:hover{ background:#7638e8; border-color:#7638e8; }
+  .incoming-transfer-accept-btn:hover{ background:var(--magenta); border-color:var(--magenta); }
   /* L!ST duration — same collection-purple active state as .edition-btn,
      just a compact 4-across row sized for the amount-entry popup rather
      than .edition-btn's own fixed var(--ctrl-w) (built for the full-page
@@ -2496,7 +2473,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Lighter default color for inputs sitting on the trustline banner's
      purple gradient, where the plain grey-dim default would be nearly
      invisible. */
-  .input-clear-btn-light{ color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
+  .input-clear-btn-light{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
   .input-clear-btn-light:hover{ color:#fff; }
   /* A quick coin-flip bump every time the typed number changes (see
      repositionOfferCoin), so the coin reads as "attached" to the number,
@@ -2511,9 +2488,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Green flash on the field itself each time the number changes —
      "juicy," not just a static grey box. */
   @keyframes offerValuePulse{
-    0%{ box-shadow:0 0 0 rgba(61,255,138,0); border-color:rgba(255,255,255,0.6); }
+    0%{ box-shadow:0 0 0 rgba(61,243,236,0); border-color:rgba(255,255,255,0.6); }
     35%{ box-shadow:0 0 16px 2px var(--green-glow); border-color:var(--green); }
-    100%{ box-shadow:0 0 0 rgba(61,255,138,0); border-color:rgba(255,255,255,0.6); }
+    100%{ box-shadow:0 0 0 rgba(61,243,236,0); border-color:rgba(255,255,255,0.6); }
   }
   .make-offer-input.pulse, .list-price-input.pulse{ animation:offerValuePulse 0.4s ease; }
   .make-offer-input, .list-price-input{
@@ -2732,7 +2709,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-color:var(--green);
     transition:background 0.15s ease, box-shadow 0.15s ease;
   }
-  .cl-block-buy:hover{ background:rgba(61,255,138,0.28); box-shadow:0 0 14px var(--green-glow); }
+  .cl-block-buy:hover{ background:rgba(61,243,236,0.28); box-shadow:0 0 14px var(--green-glow); }
   .cl-block-buy .cl-price{ color:var(--bg); text-shadow:none; }
   .cl-block-buy .cl-market{ color:rgba(8,9,11,0.65); }
   .css-item{ font-size:13px; letter-spacing:0.02em; color:var(--white); text-align:center; font-weight:600; }
@@ -2791,7 +2768,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:0;
     /* The collection's own purple, sampled from the coin artwork — not
        the site's magenta accent (that stays reserved for SCYLLA/target). */
-    background:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
+    background:linear-gradient(90deg, rgba(61,243,236,0.85), rgba(43,190,185,0.85));
     flex-direction:column;
     align-items:center;
   }
@@ -2822,7 +2799,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     height:120px;
     border-radius:var(--radius);
     border:1px solid rgba(255,255,255,0.5);
-    background-image:linear-gradient(160deg, rgba(136,72,248,0.35), rgba(120,72,216,0.45)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs");
+    background-image:linear-gradient(160deg, rgba(61,243,236,0.35), rgba(43,190,185,0.45)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs");
     background-size:cover;
     background-position:center;
   }
@@ -2896,8 +2873,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* SIGN OUT — a real, destructive-feeling action (ends the session), so
      it gets its own red instead of the plain white every other bar-btn
      in this box uses. */
-  #swapSignOutBtn{ color:#ff4d4d; border-color:#ff4d4d; text-shadow:0 0 6px rgba(255,77,77,0.4); }
-  #swapSignOutBtn:hover{ background:#ff4d4d; color:#000; text-shadow:none; }
+  #swapSignOutBtn{ color:var(--magenta); border-color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+  #swapSignOutBtn:hover{ background:var(--magenta); color:#000; text-shadow:none; }
   /* LOGIN — green (the real, positive action here) instead of plain
      white like every other .bar-btn in this box. */
   #pigeonsLoginBtn{ color:var(--green); border-color:var(--green); text-shadow:0 0 6px var(--green-glow); }
@@ -2938,8 +2915,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      is the site's actual real-money call-to-action, worth standing out
      rather than blending in with every other plain outline .bar-btn. */
   @keyframes pigeons-buy-pulse{
-    0%, 100%{ box-shadow:0 0 10px var(--green-glow), inset 0 0 0 1px rgba(61,255,138,0.15); }
-    50%{ box-shadow:0 0 22px var(--green-glow), inset 0 0 0 1px rgba(61,255,138,0.3); }
+    0%, 100%{ box-shadow:0 0 10px var(--green-glow), inset 0 0 0 1px rgba(61,243,236,0.15); }
+    50%{ box-shadow:0 0 22px var(--green-glow), inset 0 0 0 1px rgba(61,243,236,0.3); }
   }
   .pigeons-bar-balance-buy{
     display:inline-block;
@@ -2947,7 +2924,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.65em 1.6em;
     border:1px solid var(--green);
     border-radius:var(--radius);
-    background:var(--green-faint, rgba(61,255,138,0.12));
+    background:var(--green-faint, rgba(61,243,236,0.12));
     color:var(--green);
     text-shadow:0 0 6px var(--green-glow);
     font-family:var(--font-mono);
@@ -3004,7 +2981,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-calc-panel{
     width:min(440px, 100%);
     text-align:center;
-    background:linear-gradient(160deg, rgba(136,72,248,0.16), var(--panel-bg-solid) 55%);
+    background:linear-gradient(160deg, rgba(61,243,236,0.16), var(--panel-bg-solid) 55%);
     border:1px solid var(--pigeon-purple);
     border-radius:var(--radius);
     box-shadow:0 0 50px var(--pigeon-purple-glow), 0 10px 30px rgba(0,0,0,0.6);
@@ -3039,7 +3016,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     transition:background 0.15s ease, border-color 0.15s ease;
   }
-  .pigeons-calc-dex-btn:hover{ background:#7638e8; border-color:#7638e8; }
+  .pigeons-calc-dex-btn:hover{ background:var(--magenta); border-color:var(--magenta); }
   .pigeons-calc-close-btn{
     display:block;
     width:100%;
@@ -3141,7 +3118,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-trait-cell{ background:rgba(61,243,236,0.05); border:1px solid var(--cyan-dim); border-radius:var(--radius); padding:0.85rem 0.5rem; text-align:center; cursor:pointer; transition:background 0.15s ease, border-color 0.15s ease; }
   .card-trait-cell:hover{ background:rgba(61,243,236,0.14); border-color:var(--cyan); }
   .card-tc-label{ font-size:10px; font-weight:700; letter-spacing:0.1em; color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; margin-bottom:0.3rem; }
-  .card-tc-value{ font-size:14px; font-weight:700; letter-spacing:0.02em; color:#e8fbfa; }
+  .card-tc-value{ font-size:14px; font-weight:700; letter-spacing:0.02em; color:var(--white); }
   /* The percent is the important number here — same visual weight as the
      value itself, not a tiny grey afterthought. */
   .card-tc-pct{ font-size:17px; font-weight:800; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); margin-top:0.45rem; padding-top:0.45rem; border-top:1px dashed var(--border-dim); }
@@ -3388,7 +3365,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     appearance:none;
     transition:border-color 0.15s ease, background 0.15s ease;
   }
-  .detail-share-btn:hover{ background:rgba(61,255,138,0.1); border-color:var(--green); }
+  .detail-share-btn:hover{ background:rgba(61,243,236,0.1); border-color:var(--green); }
   @media (max-width:760px){
     .detail-back-btn-top{ font-size:12px; padding:0.4em 0.7em; }
     .detail-share-btn{ font-size:12px; padding:0.4em 0.7em; }
@@ -3474,7 +3451,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .scylla-listing-block{
     max-width:100%;
     margin:0;
-    background:linear-gradient(90deg, rgba(136,72,248,0.85), rgba(120,72,216,0.85));
+    background:linear-gradient(90deg, rgba(61,243,236,0.85), rgba(43,190,185,0.85));
     border:1px solid var(--pigeon-purple);
     border-radius:var(--radius);
     box-shadow:0 0 16px var(--pigeon-purple-glow);
@@ -3813,7 +3790,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .offer-confirm-panel{
     width:min(440px, 100%);
     text-align:center;
-    background:linear-gradient(160deg, rgba(136,72,248,0.16), var(--panel-bg-solid) 55%);
+    background:linear-gradient(160deg, rgba(61,243,236,0.16), var(--panel-bg-solid) 55%);
     border:1px solid var(--pigeon-purple);
     border-radius:var(--radius);
     box-shadow:0 0 50px var(--pigeon-purple-glow), 0 10px 30px rgba(0,0,0,0.6);
@@ -3827,7 +3804,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      declared later in the file and would otherwise win on source order
      despite equal specificity. */
   .action-btn.offer-confirm-xaman-btn{ background:var(--pigeon-purple); border-color:var(--pigeon-purple); color:#fff; text-shadow:none; }
-  .action-btn.offer-confirm-xaman-btn:hover{ background:#7638e8; border-color:#7638e8; }
+  .action-btn.offer-confirm-xaman-btn:hover{ background:var(--magenta); border-color:var(--magenta); }
   /* ---- BUY $P!GE0NS swap panel — a transaction window, not a generic
      trading widget: same purple $PIGEONS theme as the trustline banner/
      detail-screen listing box, same .sw-panel card + .detail-field/
@@ -3855,11 +3832,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:1.25rem;
     font-size:12px;
     letter-spacing:0.1em;
-    color:#4d8dff;
+    color:var(--cyan);
     text-decoration:underline;
     text-transform:uppercase;
   }
-  .buyswap-tx-link:hover{ color:#7bb0ff; }
+  .buyswap-tx-link:hover{ color:var(--white); }
   .buyswap-row{ max-width:100%; margin:0 auto; }
   .buyswap-label{ display:block; text-align:center; font-size:11px; letter-spacing:0.2em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.5rem; }
   .buyswap-input-wrap{
@@ -4476,7 +4453,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   <canvas id="staticBg"></canvas>
 
   <div class="page">
-    <h1>STAT!C :: DATABASE<br>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></h1>
+    <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><br>STAT!C :: MA!NFRAME</h1>
 
     <!-- DATABASE/MY PIGEONS/TOP 100/SALES HISTORY/SWAP OFFERS — the real
          top bar of the page; the trustline banner + whatever tab is
@@ -8296,7 +8273,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return '<div class="th-row" data-wallet="' + escapeHtml(w.wallet) + '" data-short="' + escapeHtml(w.walletShort) + '">' +
         '<span class="th-rank"><span>#' + greenNum(i + 1) + '</span></span>' +
         '<span class="th-wallet">' + escapeHtml(w.walletShort) + '</span>' +
-        '<span class="th-count" style="color:' + (isProfit ? 'var(--green)' : '#ff4d4d') + '; text-shadow:none;">' + escapeHtml(profitStr) + ' $P!GE0NS</span>' +
+        '<span class="th-count" style="color:' + (isProfit ? 'var(--green)' : 'var(--magenta)') + '; text-shadow:none;">' + escapeHtml(profitStr) + ' $P!GE0NS</span>' +
       '</div>';
     }).join('');
   }
