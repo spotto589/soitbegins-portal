@@ -3328,6 +3328,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin:0;
     border-radius:0;
     overflow-y:auto;
+    /* Was unset (defaults to visible) — #screenDetail is its own fixed,
+       self-scrolling box (overflow-y:auto above), entirely separate from
+       body's own overflow-x:hidden, so anything inside wider than the
+       viewport could pan the whole detail page sideways regardless of
+       the site-wide fix. Reported live as "shouldn't be able to scroll
+       across on the detail page". */
+    overflow-x:hidden;
     -webkit-overflow-scrolling:touch;
     /* .sw-panel's own background+blur (background:var(--panel-bg),
        backdrop-filter:blur(7px)) is tuned for a small card floating over
@@ -3541,18 +3548,17 @@ const SWAP_HTML = `<!DOCTYPE html>
      spacing between the two. */
   .detail-under-pic-box{ margin-top:0.5rem; }
   #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 0.6rem; }
-  /* $PIGEONS listing — pink, matching the DATABASE card's OFFER AMOUNT
-     box (.thumb-offer, same "pink main, cyan for the actual click/
-     selection" reasoning) instead of a plain grey block — and now also
-     offers MAKE OFFER (detailMakeOfferRow) when not listed, same as that
-     same DATABASE box does. */
+  /* Plain neutral panel, not pink — same fix as .thumb-offer on the
+     DATABASE card grid (see that rule's own comment): this is just a
+     container for whichever real buttons/inputs it holds (BUY N0W
+     green, CANCEL red, the OFFER AMOUNT field), painting it solid pink
+     regardless of what's inside drowned all of that out. */
   #screenDetail .scylla-listing-block{
     max-width:100%;
     margin:0;
-    background:linear-gradient(90deg, rgba(255,51,204,0.85), rgba(180,30,150,0.85));
-    border:1px solid var(--magenta);
+    background:var(--panel-bg-solid);
+    border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    box-shadow:0 0 16px var(--magenta-glow);
     padding:0.9rem 1rem;
   }
   #screenDetail .scylla-listing-block .tech-meta-title{ color:#fff; opacity:0.9; }
