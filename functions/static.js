@@ -94,6 +94,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     --pigeon-purple-faint:var(--cyan-faint);
     --pigeon-purple-glow:var(--cyan-glow);
 
+    /* The ONE deliberate exception to the four-colour rule above: the
+       trustline banner at the very top of the page is explicitly meant to
+       carry the CURRENT collection's own real colour (sampled from its
+       coin/mint artwork), same as it always did, not the site's universal
+       accent — see body.collection-phnixs/-teddybg below, which only
+       ever redefine this one variable and nothing else. Real purple for
+       $PIGEONS (its actual coin colour), not an alias. */
+    --collection-accent:#8848f8;
+    --collection-accent-rgb:136,72,248;
+    --collection-accent-dim:rgba(136,72,248,0.4);
+    --collection-accent-glow:rgba(136,72,248,0.4);
+    --collection-accent-2-rgb:120,72,216;
+
     --white:#f3f4f6;
     --grey:rgba(226,229,233,0.56);
     --grey-dim:rgba(226,229,233,0.34);
@@ -111,11 +124,27 @@ const SWAP_HTML = `<!DOCTYPE html>
        each control sizing to its own content. */
     --ctrl-w:190px;
   }
-  /* PHN!X/TEDDY used to swap in two entirely different palettes here
-     (orange+red, green+cream) via body.collection-phnixs/-teddybg — one
-     of the biggest sources of "random colours everywhere, no universal
-     theme." Removed outright: with no override, both collections now just
-     inherit the same four :root colours everything else uses. */
+  /* PHN!X/TEDDY used to swap in two entirely different UNIVERSAL palettes
+     here (every cyan/magenta on the page, not just the banner) — that was
+     the actual "random colours everywhere" problem, and stays gone. The
+     top trustline banner is the one deliberate exception (see
+     --collection-accent's own comment at its :root definition): it's
+     still meant to carry each collection's own real colour, so these two
+     blocks come back scoped to ONLY that one variable. */
+  body.collection-phnixs{
+    --collection-accent:#ff5a1f;
+    --collection-accent-rgb:255,90,31;
+    --collection-accent-dim:rgba(255,90,31,0.4);
+    --collection-accent-glow:rgba(255,90,31,0.4);
+    --collection-accent-2-rgb:216,74,21;
+  }
+  body.collection-teddybg{
+    --collection-accent:#2f9e44;
+    --collection-accent-rgb:47,158,68;
+    --collection-accent-dim:rgba(47,158,68,0.4);
+    --collection-accent-glow:rgba(47,158,68,0.4);
+    --collection-accent-2-rgb:35,122,53;
+  }
   /* EDITION (1-1515/1516-3015) and the # 0R WALLET search box both depend
      on the $PIGEONS-only number-map crawl (search resolves a number via
      that map; EDITION is a hardcoded $PIGEONS mint-era number range) —
@@ -658,14 +687,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   .stat-tile-link.scylla-active{ border-color:var(--magenta); background:var(--magenta-faint); }
   .stat-tile-link.scylla-active:hover{ background:var(--magenta-faint); border-color:var(--magenta); }
   .stat-tile-link.scylla-active .stat-value{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
-  /* $PIGEONS FLOOR — flat purple (the collection's own sampled purple,
-     not the site's magenta accent), no artwork/thumbnail — a plain
-     currency-colored tile, not a mini poster. */
+  /* $PIGEONS FLOOR — flat --collection-accent (the collection's own real
+     colour, same as the trustline banner above it), no artwork/
+     thumbnail — a plain currency-colored tile, not a mini poster. */
   .stat-tile-pigeons{
-    border-color:var(--pigeon-purple);
-    background:linear-gradient(160deg, rgba(61,243,236,0.55), rgba(43,190,185,0.65));
+    border-color:var(--collection-accent);
+    background:linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.55), rgba(var(--collection-accent-2-rgb),0.65));
   }
-  .stat-tile-pigeons:hover{ background:linear-gradient(160deg, rgba(61,243,236,0.7), rgba(43,190,185,0.8)); border-color:var(--pigeon-purple); }
+  .stat-tile-pigeons:hover{ background:linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.7), rgba(var(--collection-accent-2-rgb),0.8)); border-color:var(--collection-accent); }
   .stat-tile-pigeons .stat-label{ color:#fff; opacity:0.9; }
   .stat-tile-pigeons .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.8); font-weight:700; }
   /* Marketplace floor tiles — used two different shades of blue (their
@@ -2251,7 +2280,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--pigeon-purple);
     color:#fff;
     font-weight:700;
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.02em;
     padding:0.4em 0.55em;
     border-radius:var(--radius);
@@ -2296,20 +2325,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Full-width strip below the thumbnail — the AMOUNT field is always
      visible and typeable, no click-to-reveal step. Same strip in both
      the boxed and THUMBNAILS card layouts. */
-  /* Same purple as the trustline strip at the top of the site (the
-     collection's own sampled colour), not the site's magenta accent —
-     this represents the $PIGEONS coin, same as everywhere else it shows
-     up (FLOOR tile, trustline bar). */
-  /* Same solid gradient + glow treatment as the trustline strip at the
-     top of the site (.pigeons-bar-issuer), not a faint tint — this box
-     represents the same $PIGEONS currency and should read the same way. */
+  /* Pink as the box's own resting colour, cyan reserved for the actual
+     click/selection feedback on the button(s) inside (BUY N0W/0FFER
+     already use var(--green), aliased to cyan) — not the collection's own
+     purple/--collection-accent, which stays scoped to the trustline
+     banner up top specifically. */
   .thumb-offer{
     width:100%;
     margin-top:0.5rem;
-    background:linear-gradient(90deg, rgba(61,243,236,0.85), rgba(43,190,185,0.85));
-    border:1px solid var(--pigeon-purple);
+    background:linear-gradient(90deg, rgba(255,51,204,0.85), rgba(180,30,150,0.85));
+    border:1px solid var(--magenta);
     border-radius:var(--radius);
-    box-shadow:0 0 16px var(--pigeon-purple-glow);
+    box-shadow:0 0 16px var(--magenta-glow);
     /* Tight — the button(s) inside should read as filling this box, not
        floating in the middle of it with visible purple margin down each
        side. */
@@ -2655,10 +2682,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      (or how little) sits above it. */
   .card-action-box{ margin-top:auto; }
   .result-num{
-    /* Same 15px as .offer-open-modal-btn/every other card action button
-       — one consistent text size across a card instead of the number
-       being its own bigger size. */
-    font-size:15px;
+    /* Bumped up from the old 15px (matched to button text) — direct
+       instruction: text on the Pigeon cards themselves reads too small,
+       make all of it bigger. */
+    font-size:18px;
     font-weight:700;
     letter-spacing:0.03em;
     color:var(--white);
@@ -2667,13 +2694,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-bottom:1px solid var(--border-dim);
     transition:color 0.15s ease;
   }
-  .result-rarity-line{ font-size:15px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
+  .result-rarity-line{ font-size:17px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
   /* AVG SALE PR!CE / COND!T!ON label above its own value, not side by
      side on one line — same stacked shape as .stat-label/.stat-value
      elsewhere on the page, just sized down to fit a thumbnail card. */
   .result-stat-stack{ display:flex; flex-direction:column; align-items:center; gap:0.1rem; }
-  .result-stat-stack .stat-label{ font-size:10px; margin-bottom:0; color:var(--grey-dim); }
-  .result-stat-stack .stat-value{ font-size:14px; color:var(--grey); }
+  .result-stat-stack .stat-label{ font-size:11px; margin-bottom:0; color:var(--grey-dim); }
+  .result-stat-stack .stat-value{ font-size:16px; color:var(--grey); }
   .card-listings{ display:flex; gap:0.4rem; margin-top:0.45rem; }
   /* Neither marketplace has a real listing — one shared full-width bar
      naming both markets, instead of two separate washed-out boxes. */
@@ -2766,9 +2793,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:0;
     box-shadow:none;
     margin-bottom:0;
-    /* The collection's own purple, sampled from the coin artwork — not
-       the site's magenta accent (that stays reserved for SCYLLA/target). */
-    background:linear-gradient(90deg, rgba(61,243,236,0.85), rgba(43,190,185,0.85));
+    /* The collection's own real colour (--collection-accent), sampled
+       from its coin artwork — not the site's universal cyan/magenta,
+       and swaps per collection (see that variable's own comment). */
+    background:linear-gradient(90deg, rgba(var(--collection-accent-rgb),0.85), rgba(var(--collection-accent-2-rgb),0.85));
     flex-direction:column;
     align-items:center;
   }
@@ -2799,7 +2827,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     height:120px;
     border-radius:var(--radius);
     border:1px solid rgba(255,255,255,0.5);
-    background-image:linear-gradient(160deg, rgba(61,243,236,0.35), rgba(43,190,185,0.45)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs");
+    background-image:linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.35), rgba(var(--collection-accent-2-rgb),0.45)), url("/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs");
     background-size:cover;
     background-position:center;
   }
@@ -3444,17 +3472,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      spacing between the two. */
   .detail-under-pic-box{ margin-top:0.5rem; }
   #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 0.6rem; }
-  /* $PIGEONS listing — the collection's own purple, matching the DATABASE
-     card's OFFER AMOUNT box (.thumb-offer) instead of a plain grey block —
-     and now also offers MAKE OFFER (detailMakeOfferRow) when not listed,
-     same as that same DATABASE box does. */
+  /* $PIGEONS listing — pink, matching the DATABASE card's OFFER AMOUNT
+     box (.thumb-offer, same "pink main, cyan for the actual click/
+     selection" reasoning) instead of a plain grey block — and now also
+     offers MAKE OFFER (detailMakeOfferRow) when not listed, same as that
+     same DATABASE box does. */
   #screenDetail .scylla-listing-block{
     max-width:100%;
     margin:0;
-    background:linear-gradient(90deg, rgba(61,243,236,0.85), rgba(43,190,185,0.85));
-    border:1px solid var(--pigeon-purple);
+    background:linear-gradient(90deg, rgba(255,51,204,0.85), rgba(180,30,150,0.85));
+    border:1px solid var(--magenta);
     border-radius:var(--radius);
-    box-shadow:0 0 16px var(--pigeon-purple-glow);
+    box-shadow:0 0 16px var(--magenta-glow);
     padding:0.9rem 1rem;
   }
   #screenDetail .scylla-listing-block .tech-meta-title{ color:#fff; opacity:0.9; }
