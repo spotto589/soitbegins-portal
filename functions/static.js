@@ -1220,9 +1220,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      evenly, for two) in the first place. */
   .owned-action-row{ display:flex; gap:0.4rem; width:100%; }
   /* A slim strip, not a tall block — two buttons genuinely fit side by
-     side in a 5-across thumbnail card at this size (11px/tight padding),
-     the 15px/0.85em default every one of these buttons normally uses on
-     its own full-width line is too big once it's sharing a row. */
+     side in a 5-across thumbnail card at this size, the 17px/1em default
+     every one of these buttons normally uses on its own full-width line
+     is too big once it's sharing a row. Was shrunk all the way to 11px
+     here to force-fit "BUY N0W" onto one line — turned out the actual
+     cause of it wrapping was a hardcoded <br> in the markup (see
+     ownedPigeonActionHtml/pigeonsActionBoxHtml's own BUY N0W button),
+     nothing to do with available width at all; now that that's gone,
+     13px is plenty and reads far less cramped. */
   .owned-action-row .bar-btn,
   .owned-action-row .thumb-buy-btn,
   .owned-action-row .offer-open-modal-btn{
@@ -1230,15 +1235,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     min-width:0;
     width:auto;
     margin-bottom:0;
-    font-size:11px;
-    letter-spacing:0.01em;
-    padding:0.7em 0.3em;
-    /* One line, always — BUY N0W wrapping to two lines while 0FFER
-       stayed one made the two states in this row look like different
-       components entirely, not just different labels. Small enough
-       (11px, tight padding) that "BUY N0W" fits its half-width slot on
-       one line at every card width this grid actually uses; ellipsis is
-       just a safety net, not the normal case. */
+    font-size:13px;
+    letter-spacing:0.02em;
+    padding:0.75em 0.4em;
+    /* One line, always — BUY N0W wrapping while 0FFER stayed one made
+       the two states in this row look like different components
+       entirely, not just different labels. Ellipsis is just a safety
+       net for an extreme-narrow viewport, not the normal case. */
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
@@ -2407,16 +2410,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     justify-content:center;
   }
-  /* BUY N0W — green, matching the site's "real, clickable buy action"
-     colour language (distinct from cyan/magenta elsewhere), full width,
-     sitting above the offer row within the same box. Only rendered when
-     the Pigeon actually carries a real Σκύλλα listing. */
+  /* BUY N0W — solid filled green, not just an outline: this is the one
+     truly one-click "spend real money right now" action on the card, so
+     it should read as the obvious thing to press, not blend in at the
+     same visual weight as 0FFER (a slower, non-committal path). Full
+     width, sitting above the offer row within the same box. Only
+     rendered when the Pigeon actually carries a real Σκύλλα listing. */
   .thumb-buy-btn{
     width:100%;
-    background:rgba(0,0,0,0.25);
+    background:var(--green);
     border:1px solid var(--green);
-    color:var(--green);
-    text-shadow:0 0 5px var(--green-glow);
+    color:#000;
     font-family:var(--font-mono);
     font-weight:700;
     font-size:17px;
@@ -2426,9 +2430,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
     border-radius:var(--radius);
     margin-bottom:0.5rem;
-    transition:background 0.15s ease, color 0.15s ease;
+    box-shadow:0 0 14px var(--green-glow);
+    transition:background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
   }
-  .thumb-buy-btn:hover{ background:var(--green); color:#000; text-shadow:none; }
+  .thumb-buy-btn:hover{ background:#000; color:var(--green); box-shadow:0 0 20px var(--green-glow); transform:translateY(-1px); }
   /* 0FFER — plain, quiet outline, no glow/pulse. BUY N0W is the real,
      immediate action here (a live listing, one click to buy); 0FFER is
      a slower secondary path (submit a price, wait for the owner), so
@@ -7228,7 +7233,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // alone, so its width behaves identically either way.
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="owned-action-row">' +
-        (canBuy ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY<br>N0W</button>' : '') +
+        (canBuy ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY N0W</button>' : '') +
         '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">0FFER</button>' +
       '</div>' +
     '</div>';
