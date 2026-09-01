@@ -2625,6 +2625,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .list-duration-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
   .list-duration-btn.active{ background:var(--pigeon-purple-faint); border-color:var(--pigeon-purple); color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); }
+  /* Bigger than the other four — a bare ∞ glyph at the same 12px as
+     "30 DAYS" reads as an afterthought/typo next to real words, not a
+     deliberate FOREVER option. */
+  .list-duration-forever{ font-size:20px; padding:0.35em 0.3em; }
   /* $PIGEONS coin sits inside the input itself (not just the placeholder)
      so it stays put once you start typing a number, instead of
      disappearing along with the placeholder text. */
@@ -2693,11 +2697,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      "way bigger... clear numbers... slick and clean." A brighter resting
      border (not just on the .pulse flash) gives it some presence even
      before you've typed anything. */
+  /* Green, not white — this is a real number (a price, an offer amount),
+     same "important numbers are green" language as greenNum()/
+     .pigeons-green-num everywhere else on the site, not just plain text. */
   .make-offer-input, .list-price-input{
     width:100%;
     background:rgba(8,9,11,0.6);
     border:1px solid rgba(255,255,255,0.75);
-    color:var(--white);
+    color:var(--green);
     font-family:var(--font-mono);
     font-size:28px;
     font-weight:700;
@@ -2709,6 +2716,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .make-offer-input:focus, .list-price-input:focus{ outline:none; border-color:#fff; box-shadow:0 0 16px rgba(255,255,255,0.18); }
   .make-offer-input::placeholder, .list-price-input::placeholder{ color:rgba(255,255,255,0.5); }
+  /* Bigger again above the mobile breakpoint specifically — desktop has
+     the room, reported live as wanting "everything in list... bigger on
+     desktop, the numbers etc." Kept at the mobile-safe 28px below 700px
+     rather than risking the same overflow class of bug already fixed
+     elsewhere in this file for other controls. */
+  @media (min-width:701px){
+    .make-offer-input, .list-price-input{ font-size:36px; padding:0.6em 0.75em 0.6em 3.6em; }
+    .make-offer-input-coin{ width:46px; height:46px; }
+    .make-offer-send, .list-inline-btn{ font-size:17px; padding:0.85em 0.85em; }
+    .list-duration-btn{ font-size:14px; padding:0.75em 0.4em; }
+    .list-duration-forever{ font-size:24px; }
+  }
   .make-offer-send, .list-inline-btn{
     flex:1 1 auto;
     background:rgba(0,0,0,0.18);
@@ -5290,7 +5309,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="thumb-offer-row">
             <div class="make-offer-input-wrap">
               <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
-              <input class="list-price-input" id="amountEntryListInput" type="text" inputmode="decimal" placeholder="L!ST PR!CE">
+              <input class="list-price-input" id="amountEntryListInput" type="text" inputmode="decimal" placeholder="ENTER AM0UNT">
             </div>
             <button class="list-inline-btn" id="amountEntryListBtn">L!ST</button>
           </div>
@@ -5298,11 +5317,11 @@ const SWAP_HTML = `<!DOCTYPE html>
                enforcement — see listingExpirationRippleSeconds in
                _shared.js. Single pick, 7D default. -->
           <div class="list-duration-row" id="amountEntryListDuration">
-            <button type="button" class="list-duration-btn" data-days="1">1D</button>
-            <button type="button" class="list-duration-btn" data-days="3">3D</button>
-            <button type="button" class="list-duration-btn active" data-days="7">7D</button>
-            <button type="button" class="list-duration-btn" data-days="30">30D</button>
-            <button type="button" class="list-duration-btn" data-days="0" title="F0REVER — never expires">∞</button>
+            <button type="button" class="list-duration-btn" data-days="1">1 DAY</button>
+            <button type="button" class="list-duration-btn" data-days="3">3 DAYS</button>
+            <button type="button" class="list-duration-btn active" data-days="7">7 DAYS</button>
+            <button type="button" class="list-duration-btn" data-days="30">30 DAYS</button>
+            <button type="button" class="list-duration-btn list-duration-forever" data-days="0" title="F0REVER — never expires">∞</button>
           </div>
           <div class="index-line list-inline-status" id="amountEntryListStatus" style="display:none;"></div>
         </div>
@@ -7597,7 +7616,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.amountEntryOfferMode.style.display = mode === 'offer' ? '' : 'none';
     el.amountEntryTransferMode.style.display = mode === 'transfer' ? '' : 'none';
     if (mode === 'list'){
-      el.amountEntryTitle.textContent = 'L!ST PR!CE';
+      // No header text — the input's own "ENTER AM0UNT" placeholder and
+      // the L!ST button already say what this is; reported live as
+      // redundant.
+      el.amountEntryTitle.textContent = '';
       el.amountEntryListInput.value = '';
       el.amountEntryListBtn.disabled = false;
       el.amountEntryListBtn.textContent = 'L!ST';
