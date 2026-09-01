@@ -5148,6 +5148,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="list-duration-btn" data-days="3">3D</button>
             <button type="button" class="list-duration-btn active" data-days="7">7D</button>
             <button type="button" class="list-duration-btn" data-days="30">30D</button>
+            <button type="button" class="list-duration-btn" data-days="0">F0REVER</button>
           </div>
           <div class="index-line list-inline-status" id="amountEntryListStatus" style="display:none;"></div>
         </div>

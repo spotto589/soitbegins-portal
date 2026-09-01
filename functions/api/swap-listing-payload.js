@@ -70,6 +70,7 @@ export async function onRequestPost(context) {
   }
 
   const durationDays = LISTING_DURATION_DAYS_ALLOWED.includes(body && body.durationDays) ? body.durationDays : DEFAULT_LISTING_DURATION_DAYS;
+  const expiration = listingExpirationRippleSeconds(durationDays);
   const txjson = {
     TransactionType: 'NFTokenCreateOffer',
     Account: seller,
@@ -80,7 +81,10 @@ export async function onRequestPost(context) {
       value: priceStr
     },
     Flags: 1,
-    Expiration: listingExpirationRippleSeconds(durationDays),
+    // FOREVER (durationDays 0) -> null -> field omitted entirely, which
+    // is what "never expires" actually means to XRPL (see
+    // listingExpirationRippleSeconds's own comment).
+    ...(expiration !== null ? { Expiration: expiration } : {}),
     Memos: swapOfferSourceMemo()
   };
 

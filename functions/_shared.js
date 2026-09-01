@@ -340,17 +340,26 @@ export function swapOfferSourceMemo() {
 // ---- $PIGEONS listing duration — a real XRPL NFTokenCreateOffer
 // Expiration, not app-side enforcement; the ledger itself refuses to
 // accept (or even keep showing via nft_sell_offers, once something
-// touches it) an expired offer. Only these four presets are ever
-// accepted server-side (swap-listing-prepare.js/-payload.js both
-// re-validate independently, same "never trust the client" pattern as
-// price) — an out-of-range or missing value quietly falls back to the
-// default rather than erroring, since this is a preference, not
-// something that can create an unsafe transaction. ----
-export const LISTING_DURATION_DAYS_ALLOWED = [1, 3, 7, 30];
+// touches it) an expired offer. Only these presets are ever accepted
+// server-side (swap-listing-prepare.js/-payload.js both re-validate
+// independently, same "never trust the client" pattern as price) — an
+// out-of-range or missing value quietly falls back to the default
+// rather than erroring, since this is a preference, not something that
+// can create an unsafe transaction.
+// 0 is FOREVER, not a real day count — XRPL's own NFTokenCreateOffer
+// simply never expires when the Expiration field is left out entirely,
+// so 0 is a sentinel meaning "omit Expiration", never a literal
+// zero-day duration (which wouldn't mean anything). ----
+export const LISTING_DURATION_DAYS_ALLOWED = [1, 3, 7, 30, 0];
 export const DEFAULT_LISTING_DURATION_DAYS = 7;
 const RIPPLE_EPOCH_OFFSET_SECONDS = 946684800; // 2000-01-01T00:00:00Z, vs. Unix's 1970 epoch
 
+// Returns null for FOREVER (0) — caller must omit Expiration from the
+// txjson entirely in that case, not send a null/0 value (XRPL rejects a
+// present-but-invalid Expiration; leaving the field out is what "never
+// expires" actually means on-ledger).
 export function listingExpirationRippleSeconds(durationDays) {
+  if (durationDays === 0) return null;
   const days = LISTING_DURATION_DAYS_ALLOWED.includes(durationDays) ? durationDays : DEFAULT_LISTING_DURATION_DAYS;
   return Math.floor(Date.now() / 1000) - RIPPLE_EPOCH_OFFSET_SECONDS + days * 86400;
 }
