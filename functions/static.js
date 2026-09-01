@@ -6384,7 +6384,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // immediately. Consumed once results actually land (loadMoreCollection's
   // first page, or runScopedQuery's synchronous filter) instead.
   var pendingTraitScroll = false;
-  function showTab(tab){
+  // skipScroll: the top tab strip's own Σκύλλα button opens PλWS just
+  // like clicking it always has, but shouldn't ALSO jump the page down to
+  // "SH0W!NG Y0UR P!GE0NS" — reported live as only wanting that jump from
+  // the "MY P!GE0NS :: N" box itself (which still scrolls there directly,
+  // see el.flockMyFlockBox's own click handler), not from opening the tab
+  // in the first place.
+  function showTab(tab, skipScroll){
     // 0FFER F0R picking mode (enterTheirsPickMode) legitimately visits
     // DATABASE mid-search, and comes back to PλWS itself once a pick is
     // made — cancel it only when heading somewhere unrelated (T0P 123,
@@ -6523,7 +6529,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // a stale cached view would hide real progress.
       loadSwapOffersMine();
     }
-    scrollActiveTabPanelIntoView(tab);
+    if (!skipScroll) scrollActiveTabPanelIntoView(tab);
   }
   el.topTabs.addEventListener('click', function(e){
     var btn = e.target.closest('.tab-btn');
@@ -6531,11 +6537,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     var tab = btn.getAttribute('data-tab');
     // MY PIGEONS with no active session goes straight into the real
     // Σκύλλα/Xaman login instead of requiring a second click on a CONNECT
-    // button — but the tab itself still opens right away (flush-scrolled
-    // same as any other tab) showing a real "connecting" status, instead
+    // button — but the tab itself still opens right away (no longer also
+    // flush-scrolled down to SH0W!NG Y0UR P!GE0NS — see showTab's own
+    // skipScroll comment) showing a real "connecting" status, instead
     // of the screen just sitting there doing nothing while Xaman loads.
     if (tab === 'mypigeons' && !MY_WALLET){
-      showTab('mypigeons');
+      showTab('mypigeons', true);
       el.connectStatus.textContent = 'Σκύλλα://S!GNAL :: C0NNECT!NG';
       getXummAuth().authorize();
       return;
@@ -6557,7 +6564,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       scrollActiveTabPanelIntoView('database');
       return;
     }
-    showTab(tab);
+    showTab(tab, tab === 'mypigeons');
   });
 
   // Tab strip scroll-hint fades (see .top-tabs-wrap CSS) — measured
