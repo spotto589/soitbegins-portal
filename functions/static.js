@@ -2846,22 +2846,28 @@ const SWAP_HTML = `<!DOCTYPE html>
   .my-offer-row{
     display:flex;
     align-items:center;
-    gap:1rem;
-    padding:0.9rem 0.5rem;
+    gap:1.25rem;
+    padding:1.4rem 1rem;
     border-bottom:1px solid var(--border-dim);
   }
   .my-offer-row:last-child{ border-bottom:none; }
-  .my-offer-row-img{ width:56px; height:56px; flex:0 0 auto; border-radius:var(--radius); overflow:hidden; }
+  /* Reported live as wanting to "clearly see all the information" —
+     every piece of this row (thumbnail, number, buyer, price, buttons)
+     scaled up from the original compact version. */
+  .my-offer-row-img{ width:96px; height:96px; flex:0 0 auto; border-radius:var(--radius); overflow:hidden; }
+  .my-offer-row-img img{ width:100%; height:100%; object-fit:cover; }
   .my-offer-row-info{ flex:1 1 auto; min-width:0; }
-  .my-offer-row-num{ font-size:16px; font-weight:700; color:var(--white); }
-  .my-offer-row-buyer{ font-size:12px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; margin-top:0.15rem; }
-  .my-offer-row-price{ flex:0 0 auto; font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--green); text-align:right; margin-right:0.5rem; }
-  .my-offer-row-actions{ flex:0 0 auto; display:flex; gap:0.4rem; }
-  .my-offer-row-actions .highest-offer-btn{ flex:0 0 auto; padding:0.7em 1em; }
+  .my-offer-row-num{ font-size:24px; font-weight:700; color:var(--white); }
+  .my-offer-row-buyer{ font-size:15px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; margin-top:0.3rem; }
+  .my-offer-row-price{ flex:0 0 auto; font-family:var(--font-display); font-size:34px; font-weight:700; color:var(--green); text-align:right; margin-right:0.75rem; }
+  .my-offer-row-actions{ flex:0 0 auto; display:flex; flex-direction:column; gap:0.5rem; min-width:150px; }
+  .my-offer-row-actions .highest-offer-btn{ flex:0 0 auto; padding:0.85em 1.2em; font-size:16px; }
   @media (max-width:700px){
-    .my-offer-row{ flex-wrap:wrap; }
-    .my-offer-row-price{ margin-right:0; margin-left:auto; }
-    .my-offer-row-actions{ flex:1 1 100%; }
+    .my-offer-row{ flex-wrap:wrap; padding:1.2rem 0.6rem; }
+    .my-offer-row-img{ width:72px; height:72px; }
+    .my-offer-row-num{ font-size:20px; }
+    .my-offer-row-price{ margin-right:0; margin-left:auto; font-size:26px; }
+    .my-offer-row-actions{ flex:1 1 100%; flex-direction:row; min-width:0; }
     .my-offer-row-actions .highest-offer-btn{ flex:1 1 0; }
   }
   .result-row-right{
