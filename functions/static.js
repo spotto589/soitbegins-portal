@@ -193,7 +193,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   ::-webkit-scrollbar-thumb{ background:var(--cyan-dim); border-radius:6px; border:2px solid transparent; background-clip:padding-box; }
   ::-webkit-scrollbar-thumb:hover{ background:var(--cyan); }
   ::-webkit-scrollbar-corner{ background:transparent; }
-  html, body{ min-height:100%; background:var(--bg); }
+  /* overflow-x:hidden on BOTH html and body — body alone isn't enough on
+     mobile Safari, which scrolls the viewport based on the html element,
+     not body; something on the page (a fixed-width control, an
+     overflow-x:auto strip that still contributes to layout width, etc)
+     was making the whole page pan left/right on a phone even though
+     nothing was ever meant to. */
+  html, body{ min-height:100%; background:var(--bg); overflow-x:hidden; }
   body{
     font-family:var(--font-mono);
     color:var(--white);
@@ -201,7 +207,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:center;
     padding:8vh 3vw 10vh;
     position:relative;
-    overflow-x:hidden;
     /* A fresh query clears and repopulates #resultsArea, and images below
        the fold keep resizing their boxes as they decode — the browser's
        own scroll anchoring kept "helpfully" yanking scrollY back to
@@ -7017,6 +7022,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Now replaced immediately so it's clear a wallet lookup is in
       // flight, not just a slow re-render of the same list.
       el.statusLine.innerHTML = '<div class="results-trait-note">L0AD!NG WALLET ' + escapeHtml(state.scope.ownerShort) + '...</div>';
+      // Same reasoning for the grid itself — this covers both "someone
+      // else's wallet" and "your own, but the first fetch this session
+      // hasn't landed yet" (myOwnPigeonsCache still null). Without this,
+      // #resultsArea just sat on whatever it last showed (often empty)
+      // until the fetch below resolved — reported live as "flashes and
+      // shows empty space".
+      el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG P!GE0NS...</div>';
     }
     // Force the DATABASE tab regardless of which tab we were on (a wallet
     // click from Top 10 / Sales Data should always land here) — and mark it
