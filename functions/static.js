@@ -10583,6 +10583,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     var sendBtn = stripEl.querySelector('.make-offer-send');
     sendBtn.disabled = true;
     sendBtn.textContent = 'VAL!DAT!NG...';
+    // Opened synchronously in THIS click handler (a real user gesture) so
+    // it's not popup-blocked — startOfferSign() below reuses this exact
+    // tab instead of trying to open its own from inside a .then(), which
+    // browsers silently block. Desktop only (openXamanPopup returns null
+    // on mobile — see its own comment; mobile navigates same-tab instead).
+    offerXamanTab = openXamanPopup();
     fetch('/api/swap-makeoffer-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -10592,13 +10598,30 @@ const SWAP_HTML = `<!DOCTYPE html>
       sendBtn.disabled = false;
       sendBtn.textContent = 'SUBM!T';
       if (!res.ok || !res.data.ok){
+        // The tab opened above has nowhere to go now — close it rather
+        // than leave a blank tab sitting open after a failed validation.
+        closeXamanTabAndFocus(offerXamanTab);
+        offerXamanTab = null;
         alert(listingErrorMessage(res.data && res.data.error));
         return;
       }
       offerTarget = p;
       offerTarget.priceValue = priceValue;
       showOfferConfirm(res.data.txjson);
+      // Straight into the real Xaman request the instant the offer is
+      // valid — reported live as not wanting a separate review screen
+      // requiring its own click first ("we dont need two screens...
+      // click submit, this should open the qr code / auto-open your
+      // wallet"). showOfferConfirm above still populates the modal (so
+      // the pigeon/price/status area has something to show while this
+      // request is in flight) and startOfferSign is still the exact
+      // function el.offerOpenXamanBtn's own click retries through after
+      // a rejection — this just fires it immediately too instead of
+      // waiting on a first manual click.
+      startOfferSign();
     }).catch(function(){
+      closeXamanTabAndFocus(offerXamanTab);
+      offerXamanTab = null;
       sendBtn.disabled = false;
       sendBtn.textContent = 'SUBM!T';
       alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
@@ -10661,15 +10684,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.offerConfPigeonImg.addEventListener('click', openOfferConfirmPigeonDetail);
   el.offerConfPigeonNum.addEventListener('click', openOfferConfirmPigeonDetail);
 
-  el.offerOpenXamanBtn.addEventListener('click', function(){
+  // Extracted so submitMakeOffer can fire this immediately once the offer
+  // validates (see its own comment), not just on el.offerOpenXamanBtn's
+  // own click — that button still exists purely as the retry path after a
+  // rejection/failure (see pollOfferStatus/the catch below re-enabling it).
+  function startOfferSign(){
     if (!offerTarget) return;
     el.offerOpenXamanBtn.disabled = true;
     el.offerOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.offerConfirmStatus.textContent = '';
-    // Open a blank tab synchronously in this click handler, then navigate
-    // it once the fetch resolves — window.open() called inside the async
-    // .then() below gets silently popup-blocked in most browsers.
-    offerXamanTab = openXamanPopup();
+    // Reuses a tab already opened synchronously by the caller's own click
+    // handler (submitMakeOffer does this now) if there is one; opens its
+    // own otherwise — the retry-after-rejection click on this button IS
+    // itself a real user gesture, so opening fresh here is still safe
+    // from popup-blocking in that case.
+    if (!offerXamanTab) offerXamanTab = openXamanPopup();
     fetch('/api/swap-makeoffer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -10696,7 +10725,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.offerOpenXamanBtn.innerHTML = OFFER_CONFIRM_BTN_HTML;
       el.offerConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
-  });
+  }
+  el.offerOpenXamanBtn.addEventListener('click', startOfferSign);
 
   function pollOfferStatus(){
     if (offerPollTimer) clearTimeout(offerPollTimer);
