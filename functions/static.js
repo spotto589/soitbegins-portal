@@ -9071,57 +9071,56 @@ const SWAP_HTML = `<!DOCTYPE html>
   // own hosted sign page loads — that load time is Xaman's, not
   // something this site controls; this only changes the window's shape.
   var XAMAN_POPUP_FEATURES = 'width=420,height=760,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
-  // Sized popup features only above the mobile breakpoint — reported
-  // live as "click to confirm, i click and nothing happens... just
-  // says waiting for signature", even after the null-tabRef fallback
-  // below was already fixed. The likely remaining cause, per
-  // navigateXamanPopup's own comment: on at least some mobile browsers
-  // (particularly in-app/embedded ones), window.open('', name, <sized
-  // popup features>) doesn't reliably return null on failure the way
-  // desktop does — it can hand back a Window reference that never
-  // actually surfaces as a real tab, so tabRef.location.href = url
-  // silently does nothing and the button is left stuck on "WA!T!NG
-  // F0R S!GNATURE..." with no error and no popup ever appearing. A
-  // plain, feature-less window.open is the same "just a normal new
-  // tab" call navigateXamanPopup's own fallback already trusts as
-  // reliable everywhere — using it as the PRIMARY path on mobile too,
-  // not just after a null comes back, is what actually fixes this.
+  // No popup at all on mobile — see navigateXamanPopup's own comment for
+  // why. Only relevant above the mobile breakpoint now.
   function openXamanPopup(){
-    return window.innerWidth <= 700 ? window.open('', 'xamanSign') : window.open('', 'xamanSign', XAMAN_POPUP_FEATURES);
+    return window.innerWidth <= 700 ? null : window.open('', 'xamanSign', XAMAN_POPUP_FEATURES);
   }
-  // tabRef is whatever openXamanPopup() returned when this whole flow
-  // started (called synchronously in the click handler, before any async
-  // gap — window.open() from inside a .then() callback gets silently
-  // popup-blocked in most browsers). Navigate that same reference now
-  // that the real URL is known; only fall back to a fresh window.open()
-  // call if the original one somehow failed to open at all (e.g. was
-  // blocked despite the synchronous call, or — confirmed the real cause
-  // of "MAKE AN OFFER does nothing on mobile, never confirms" — mobile
-  // Safari/Chrome frequently return null from window.open('', name,
-  // <fixed-size popup features>) even when called synchronously, since
-  // they don't support windowed popups the way desktop does. Several
-  // flows (MAKE AN OFFER, LIST, ΣΚΥΛΛΑ://S!GNAL, TRANSFER, ACCEPT
-  // TRANSFER, ACCEPT OFFER) used to skip this fallback entirely — a bare
-  // if(tabRef) tabRef.location.href = url with no else branch — so on a
-  // device where openXamanPopup() came back null, Xaman never actually
-  // opened and the button sat on "WA!T!NG F0R S!GNATURE..." forever with
-  // no error, no signature possible, nothing to confirm. BUY/DELIST had
-  // a different flavor of the same root issue: they called
-  // window.open(realUrl, ...) directly from inside their own async
-  // fetch().then() instead of pre-opening synchronously at all, the
-  // exact anti-pattern warned about two paragraphs up. All of these now
-  // go through this one shared function.
+  // The real, remaining cause of "doesn't open Xaman" on mobile, even
+  // after the null-tabRef popup fallback below was fixed: the URL XUMM
+  // returns (next.always, e.g. https://xumm.app/sign/<uuid>) is a
+  // Universal Link/App Link — iOS/Android intercept a real top-level
+  // navigation to it and hand off straight to the installed Xaman app
+  // without ever loading the web page at all. That interception is
+  // unreliable-to-nonexistent from inside a window.open()'d tab (popup
+  // or plain new-tab alike) on mobile — confirmed as the actual
+  // remaining gap after the previous "sized popup returns a dead
+  // Window reference instead of null" fix still left BUY/MAKE 0FFER
+  // stuck on "WA!T!NG F0R S!GNATURE..." with the tab genuinely opening
+  // but never actually switching to the app. Below the mobile
+  // breakpoint this now navigates the CURRENT tab directly instead of
+  // opening any tab at all — a real top-level navigation, which is
+  // exactly what Universal Links are designed to be triggered by. The
+  // existing "S!GN !N W!TH Σκύλλα, THEN RETURN HERE" messaging and the
+  // status-poll loop already assume you leave and come back, so this
+  // matches the intended flow rather than fighting it.
   function navigateXamanPopup(tabRef, url){
+    if (window.innerWidth <= 700){ window.location.href = url; return; }
+    // Desktop only past this point (mobile already returned above) — a
+    // real popup-blocker denial is the only way tabRef comes back null
+    // here now that openXamanPopup() itself only ever attempts a popup
+    // on desktop. Not XAMAN_POPUP_FEATURES again — a plain window.open
+    // is enough for this rare fallback case.
     if (tabRef) tabRef.location.href = url;
-    // Not XAMAN_POPUP_FEATURES again here — a fixed-size windowed-chrome
-    // request (width=420,height=760,resizable=yes,...) is plausibly why
-    // mobile browsers refused the original openXamanPopup() call in the
-    // first place, being asked for a desktop-style popup window that
-    // mobile has no real equivalent of. A plain window.open(url,'_blank')
-    // is just a normal new tab, which mobile browsers reliably honor.
     else window.open(url, '_blank');
   }
 
+  // Every .xaman-manual-link ("XAMAN D!DN T 0PEN? TAP HERE.") is marked
+  // up with target="_blank" for desktop (opening the sign page in a new
+  // tab is the right call there) — but on mobile that's exactly the
+  // "inside a window.open()'d tab" context Universal Links don't reliably
+  // interrupt (see navigateXamanPopup's own comment). A real top-level
+  // navigation, which is what an unmodified same-tab link tap already
+  // is, gives this manual fallback the best real chance of actually
+  // switching into the Xaman app instead of just loading xumm.app's web
+  // page. One delegated listener covers all eleven sign flows.
+  document.addEventListener('click', function(e){
+    if (window.innerWidth > 700) return;
+    var link = e.target.closest('.xaman-manual-link');
+    if (!link) return;
+    e.preventDefault();
+    window.location.href = link.href;
+  });
   // Once a poll confirms a sign request actually settled, the Xaman tab
   // has done its job — close it and bring focus back to this tab instead
   // of leaving the user staring at Xaman's own "signed" page.
