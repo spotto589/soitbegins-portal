@@ -10889,9 +10889,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   // read by updateFlockTabLabel, which is now the only place a pending-
   // offer count shows (the "N0 0FFERS"/"0FFERS RECE!VED (N)" summary line
   // that used to sit above the grid is gone, redundant with that).
+  // In-flight request, while there is one — see myOwnPigeonsCachePromise's
+  // own comment, exact same problem, just for offers received. Every
+  // entry into MY PIGEONS called this at least twice at once
+  // (browseOwnerCollection called it directly AND, via its own
+  // showTab('mypigeons') call, a second time from showTab's own
+  // tab==='mypigeons' branch) — two overlapping live requests, each with
+  // its own real timing variance, landing out of order and each
+  // triggering its own re-render. Reported live as offers "coming up,
+  // then going away, then coming up again" — that flicker was two (or
+  // more) different snapshots of the same live data racing to be the
+  // one shown last, not a single reliable answer arriving once.
+  var offersReceivedPromise = null;
   function loadOffersReceived(){
     if (!MY_WALLET) return; // the endpoint requires a real session anyway
-    fetch('/api/swap-offers-received').then(function(r){ return r.json(); }).then(function(data){
+    if (offersReceivedPromise) return offersReceivedPromise;
+    offersReceivedPromise = fetch('/api/swap-offers-received').then(function(r){ return r.json(); }).then(function(data){
       offersReceivedData = data.items || [];
       offersByNftId = {};
       var totalOffers = 0;
@@ -10913,7 +10926,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       // the dedicated 0FFERS RECE!VED view if that's what's open.
       if (isOwnWalletScope()) runScopedQuery();
       if (el.myOffersPanelWrap.style.display !== 'none') renderMyOffersList();
-    }).catch(function(){});
+      offersReceivedPromise = null;
+    }).catch(function(){
+      offersReceivedPromise = null;
+    });
+    return offersReceivedPromise;
   }
 
   // ---- NFT 0FFERED T0 Y0U (FL0CK) — real TRANSFER sell-offers sent to
