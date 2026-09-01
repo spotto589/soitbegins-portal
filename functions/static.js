@@ -492,31 +492,38 @@ const SWAP_HTML = `<!DOCTYPE html>
   #flockMyFlockBox:hover{ border-color:var(--collection-accent); background:linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.7), rgba(var(--collection-accent-2-rgb),0.8)); }
   #flockMyFlockBox .flock-account-box-label{ text-shadow:0 1px 4px rgba(0,0,0,0.6); }
 
-  /* Your own connected wallet address + real one-tap COPY — sits above the
-     account boxes, same sw-panel base but a plain single row rather than
-     the grid's own tile shape. */
+  /* Your own connected wallet address — the WHOLE box is the copy button
+     now (reported live as wanting "one big cyan box thats clickable"),
+     not a plain row with a small button tacked on the side. Sits above
+     the account boxes. */
   .flock-wallet-box{
-    display:flex; align-items:center; justify-content:space-between; gap:0.75rem;
-    padding:0.6em 0.9em; margin-bottom:0.75rem;
-    background-color:rgba(8,9,11,0.9);
+    display:flex; align-items:center; justify-content:space-between; gap:1rem;
+    padding:1em 1.1em; margin-bottom:0.75rem;
+    background-color:var(--cyan-faint);
+    border:1px solid var(--cyan);
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:background-color 0.15s ease, box-shadow 0.15s ease;
   }
+  .flock-wallet-box:hover{ background-color:var(--cyan-dim); box-shadow:0 0 18px var(--cyan-glow); }
   .flock-wallet-addr{
     font-family:var(--mono, monospace);
-    font-size:13px; color:var(--cyan);
+    font-size:14px; font-weight:700; color:var(--cyan);
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     letter-spacing:0.02em;
   }
-  .flock-wallet-copy-btn{
+  .flock-wallet-copy-hint{
     flex:0 0 auto;
-    background:transparent; border:1px solid var(--cyan); color:var(--cyan);
-    font-family:inherit; font-size:11px; letter-spacing:0.05em;
-    padding:0.4em 0.9em; cursor:pointer;
-    transition:background-color 0.15s ease, color 0.15s ease;
+    color:var(--cyan);
+    font-size:11px; font-weight:700; letter-spacing:0.08em;
+    text-transform:uppercase;
+    white-space:nowrap;
   }
-  .flock-wallet-copy-btn:hover{ background-color:var(--cyan); color:#000; }
-  .flock-wallet-copy-btn.flock-wallet-copy-done{
-    background-color:var(--green); border-color:var(--green); color:#000;
+  .flock-wallet-box.flock-wallet-copy-done{
+    background-color:var(--green); border-color:var(--green);
   }
+  .flock-wallet-box.flock-wallet-copy-done .flock-wallet-addr,
+  .flock-wallet-box.flock-wallet-copy-done .flock-wallet-copy-hint{ color:#000; }
 
   /* ---- Σκύλλα (signed-in FL0CK) tab theme — the same faint circuit-
      glitch texture .sw-panel-signal/-target already use elsewhere on the
@@ -4818,16 +4825,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .placeholder-card .pc-title{ font-size:12px; letter-spacing:0.2em; color:var(--grey); margin-bottom:0.75rem; text-transform:uppercase; }
   .placeholder-card .pc-body{ font-family:var(--font-body); font-size:11.5px; letter-spacing:0.01em; color:var(--grey); line-height:1.7; text-transform:none; }
 
-  .protocol-footer{
-    text-align:center;
-    font-family:var(--font-body);
-    font-size:10px;
-    letter-spacing:0.06em;
-    color:var(--grey-disabled);
-    margin-top:2.5rem;
-    margin-bottom:4rem;
-    text-transform:uppercase;
-  }
 </style>
 </head>
 <body>
@@ -5130,12 +5127,13 @@ const SWAP_HTML = `<!DOCTYPE html>
 
       <!-- Your own connected wallet address, with a real one-tap copy —
            reported live as wanting "a way to copy our own address when
-           we're in Σκύλλα" instead of having to select the truncated text
-           by hand. Same visibility rule as flockAccountBoxes below (only
-           on FL0CK, scoped to your own wallet). -->
-      <div class="sw-panel flock-wallet-box" id="flockWalletBox" style="display:none;">
+           we're in Σκύλλα", then "one big cyan box thats clickable" —
+           the whole box is the button now, not a small one tacked on the
+           side. Same visibility rule as flockAccountBoxes below (only on
+           FL0CK, scoped to your own wallet). -->
+      <div class="sw-panel flock-wallet-box" id="flockWalletBox" style="display:none;" role="button" tabindex="0">
         <span class="flock-wallet-addr" id="flockWalletAddr"></span>
-        <button class="flock-wallet-copy-btn" id="flockWalletCopyBtn" type="button">C0PY</button>
+        <span class="flock-wallet-copy-hint" id="flockWalletCopyHint">CL!CK T0 C0PY</span>
       </div>
 
       <!-- FL0CK's own account-page layout — separate stacked boxes, not a
@@ -5998,7 +5996,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <div class="protocol-footer"><span style="text-transform:none;">Σκύλλα</span> SWAP :: L!ST!NG, BUY!NG, AND DEL!ST!NG ARE REAL XRPL TRANSACT!0NS. ACCEPT!NG AN 0FFER TAKES A 0.589% MARKETPLACE FEE, SETTLED AT0M!CALLY V!A BR0KERED NFT0KENACCEPT0FFER. N0 NEG0T!AT!0N 0R MULT!-!TEM 0FFERS YET.</div>
   </div>
 
   <div class="target-bar" id="targetBar" style="display:none;">
@@ -6117,7 +6114,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
-   'flockWalletBox','flockWalletAddr','flockWalletCopyBtn',
+   'flockWalletBox','flockWalletAddr','flockWalletCopyHint',
    'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockBuyPigeonsBox','flockChangeCollectionBox','flockGridPanel','flockOffersBox','flockOffersCount',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
@@ -7316,6 +7313,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     // DATABASE's own grid panel never collapses — only MY FL0CK's copy of
     // it does, and only while actually on FL0CK.
     el.flockGridPanel.style.display = (onFlock && state.flockCollapsed) ? 'none' : '';
+    // The REAL pigeon grid (el.screenBrowse, shared with DATABASE — see
+    // browseOwnerCollection's own comment) was left ungated by
+    // flockCollapsed after that sharing refactor, so it always rendered
+    // immediately regardless of collapse state — flockCollapsed only ever
+    // hid the now-empty legacy #flockGridPanel above. Reported live as
+    // wanting Σκύλλα to stay "a flat page" (just the account boxes) until
+    // MY P!GE0NS is actually clicked, not the full grid dumped in
+    // underneath right away. showTab's own unconditional assignment of
+    // this (still needed for the 'database' tab and the not-yet-scoped
+    // "connecting" state) runs before this function every time, so this
+    // always has the final say for the onFlock case specifically.
+    if (onFlock) el.screenBrowse.style.display = state.flockCollapsed ? 'none' : '';
   }
   // Shared by SELECT (auto-enters owner scope + auto-targets the pigeon
   // that got you there) and the plain "view this wallet's collection" click
@@ -9992,22 +10001,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     document.body.removeChild(tmp);
     return ok;
   }
-  el.flockWalletCopyBtn.addEventListener('click', function(){
+  function handleFlockWalletCopy(){
     if (!MY_WALLET) return;
     function showCopied(){
-      el.flockWalletCopyBtn.textContent = 'C0P!ED';
-      el.flockWalletCopyBtn.classList.add('flock-wallet-copy-done');
+      el.flockWalletCopyHint.textContent = 'C0P!ED!';
+      el.flockWalletBox.classList.add('flock-wallet-copy-done');
       clearTimeout(flockWalletCopyResetTimer);
       flockWalletCopyResetTimer = setTimeout(function(){
-        el.flockWalletCopyBtn.textContent = 'C0PY';
-        el.flockWalletCopyBtn.classList.remove('flock-wallet-copy-done');
+        el.flockWalletCopyHint.textContent = 'CL!CK T0 C0PY';
+        el.flockWalletBox.classList.remove('flock-wallet-copy-done');
       }, 1500);
     }
     function showFailed(){
-      el.flockWalletCopyBtn.textContent = 'C0PY FA!LED';
+      el.flockWalletCopyHint.textContent = 'C0PY FA!LED';
       clearTimeout(flockWalletCopyResetTimer);
       flockWalletCopyResetTimer = setTimeout(function(){
-        el.flockWalletCopyBtn.textContent = 'C0PY';
+        el.flockWalletCopyHint.textContent = 'CL!CK T0 C0PY';
       }, 1500);
     }
     if (navigator.clipboard && navigator.clipboard.writeText){
@@ -10017,6 +10026,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     if (copyToClipboardFallback(MY_WALLET)) showCopied(); else showFailed();
+  }
+  el.flockWalletBox.addEventListener('click', handleFlockWalletCopy);
+  // role="button"/tabindex on the box (see its own markup comment) needs
+  // its own Enter/Space handling — a real <button> gets this for free,
+  // a plain <div> acting as one doesn't.
+  el.flockWalletBox.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      handleFlockWalletCopy();
+    }
   });
   el.flockMyFlockBox.addEventListener('click', function(){
     // A previous attempt genuinely failed (see loadMyOwnPigeonsCache) —
