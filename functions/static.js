@@ -51,17 +51,16 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   /* ==========================================================================
      Σκύλλα SWAP — colour + type system, v3: "corrupted industrial system,"
-     not cyberpunk. Foundation pass of the brutalist identity pitch (see
-     the Σκύλλα Mainframe artifact this was approved from) — neutrals shift
-     from a clean cool black/white to a dirty warm near-black/off-white/
-     muted-steel, sharp corners (--radius:0) instead of soft rounding, and
-     the display face is now Anton (oversized, blocky) instead of Chakra
-     Petch. The accent pair stays exactly as it already was — cyan/magenta
-     were already correct for this, nothing to change there. Layout/motion
-     (the oversized hero, staggered grid, scramble-text) is a deliberate
-     follow-up pass, not part of this one.
-     CYAN = signal / active / global collection / available actions
-     MAGENTA = SCYLLA / target / selection / warning / attention
+     not cyberpunk (see the Σκύλλα Mainframe identity pitch this was
+     approved from). Neutrals: dirty warm near-black/off-white/muted-steel,
+     sharp corners (--radius:0), Anton display face. ONE accent now, not a
+     pair — cyan was tried and dropped; every var(--cyan) reference (and
+     the --green/--pigeon-purple aliases chained through it) resolves to
+     magenta/pink now. New code should reach for --magenta directly rather
+     than --cyan, which only still exists so the hundreds of pre-existing
+     references didn't need individual edits.
+     MAGENTA = the one accent — signal / active / SCYLLA / target /
+       selection / warning / attention, all of it
      WHITE = primary data, headings
      GREY = secondary data, metadata, disabled
      BLACK = depth (panels sit above the static as dark glass)
@@ -74,10 +73,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     --border-dim:rgba(230,225,211,0.1);
     --border-mid:rgba(230,225,211,0.2);
 
-    --cyan:#3df3ec;
-    --cyan-dim:rgba(61,243,236,0.4);
-    --cyan-faint:rgba(61,243,236,0.12);
-    --cyan-glow:rgba(61,243,236,0.35);
+    /* Single accent now, not a pair — cyan is gone, aliased to magenta so
+       the hundreds of existing var(--cyan) references (borders, hover
+       states, active/selected states, the scrollbar) all just become
+       pink automatically instead of needing individual edits. New code
+       should reach for --magenta directly. */
+    --cyan:var(--magenta);
+    --cyan-dim:var(--magenta-dim);
+    --cyan-faint:var(--magenta-faint);
+    --cyan-glow:var(--magenta-glow);
 
     --magenta:#ff33cc;
     --magenta-dim:rgba(255,51,204,0.4);
@@ -280,9 +284,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     line-height:0.94;
     letter-spacing:0.01em;
     color:var(--white);
+    /* Was a cyan/magenta chromatic-aberration split — cyan's gone (single
+       accent now), so this reads as a print-misregistration double-strike
+       instead: pink offset one way, a hard black offset the other,
+       instead of a second bright colour standing in for "glitched". */
     text-shadow:
-      -2px 0 rgba(61,243,236,0.6),
-      2px 0 rgba(255,51,204,0.55);
+      -2px 0 rgba(0,0,0,0.7),
+      2px 0 var(--magenta-dim);
     margin-bottom:0.6rem;
     text-align:left;
     text-transform:none;
@@ -2681,7 +2689,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:rgba(255,255,255,0.012);
     border-radius:var(--radius);
     overflow:hidden;
-    transition:border-color 0.15s ease, box-shadow 0.15s ease;
+    transition:border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
     /* Grid items already stretch to the tallest card in their row
        (.result-grid's own display:grid default) — flex column here (+
        .result-card-body/.card-action-box below) is what actually uses
@@ -2690,9 +2698,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     display:flex;
     flex-direction:column;
   }
-  .result-card:hover{ border-color:var(--cyan-dim); box-shadow:0 0 0 1px var(--cyan-faint), 0 0 16px rgba(63,231,255,0.1); }
+  /* Hard offset duplicate instead of a soft blurred glow — a print/
+     sticker-style shadow, not a neon halo, matching the rest of the
+     brutalist pass. */
+  .result-card:hover{ border-color:var(--magenta); box-shadow:4px 4px 0 var(--magenta); transform:translate(-2px,-2px); }
   .result-card:hover .pigeon-img-box img{ transform:scale(1.04); }
-  .result-card:hover .result-num{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
+  .result-card:hover .result-num{ color:var(--magenta); text-shadow:none; }
   .result-card .pigeon-img-box{ border:none; }
   .result-card.in-target{ border-color:var(--magenta); box-shadow:0 0 0 1px var(--magenta-dim) inset, 0 0 14px rgba(255,63,208,0.22); }
   .result-card.in-target .result-num{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
@@ -2966,10 +2977,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Bigger, filled (not just outlined) and gently pulsing at rest — this
      is the site's actual real-money call-to-action, worth standing out
      rather than blending in with every other plain outline .bar-btn. */
-  @keyframes pigeons-buy-pulse{
-    0%, 100%{ box-shadow:0 0 10px var(--green-glow), inset 0 0 0 1px rgba(61,243,236,0.15); }
-    50%{ box-shadow:0 0 22px var(--green-glow), inset 0 0 0 1px rgba(61,243,236,0.3); }
-  }
+  /* Was a soft ambient glow, breathing on a loop forever — the brutalist
+     pass is deliberately quiet at rest and only reacts when actually
+     touched (see the identity pitch's own "no ambient loop" note), so
+     this button now sits flat until hovered instead of glowing at you
+     the whole time you're on the page. */
   .pigeons-bar-balance-buy{
     display:inline-block;
     margin-top:0.4rem;
@@ -2978,21 +2990,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     background:var(--green-faint, rgba(61,243,236,0.12));
     color:var(--green);
-    text-shadow:0 0 6px var(--green-glow);
+    text-shadow:none;
     font-family:var(--font-mono);
     font-size:16px;
     font-weight:700;
     letter-spacing:0.08em;
     text-decoration:none;
-    animation:pigeons-buy-pulse 2.2s ease-in-out infinite;
-    transition:background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    transition:background 0.15s ease, color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
     /* Now a <button> (used to be an <a> straight out to DexScreener) —
        opens the in-site swap panel instead. Reset button-only defaults so
        it renders identically to the old link. */
     appearance:none;
     cursor:pointer;
   }
-  .pigeons-bar-balance-buy:hover{ background:var(--green); color:#000; text-shadow:none; transform:scale(1.04); animation-play-state:paused; box-shadow:0 0 26px var(--green-glow); }
+  .pigeons-bar-balance-buy:hover{ background:var(--green); color:#000; text-shadow:none; transform:translate(-3px,-3px); box-shadow:5px 5px 0 var(--bg); }
   /* XRP <-> $PIGEONS calculator — title, DEXSCREENER link, and the live
      price all sit on one line above the calculator itself; the calculator
      row underneath is deliberately bare — two type-in boxes and a swap
