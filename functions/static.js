@@ -2626,11 +2626,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   .make-offer-input-wrap{ position:relative; flex:1 1 auto; min-width:0; display:flex; align-items:center; }
   .make-offer-input-coin{
     position:absolute;
-    left:0.5em;
+    left:0.6em;
     top:50%;
     transform:translateY(-50%);
-    width:30px;
-    height:30px;
+    width:38px;
+    height:38px;
     border-radius:50%;
     object-fit:cover;
     border:1px solid rgba(255,255,255,0.6);
@@ -2683,19 +2683,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     100%{ box-shadow:0 0 0 rgba(52,255,133,0); border-color:rgba(255,255,255,0.6); }
   }
   .make-offer-input.pulse, .list-price-input.pulse{ animation:offerValuePulse 0.4s ease; }
+  /* Bigger, clearer numbers — was a fairly small 20px field for the one
+     number you're actually there to type, reported live as wanting it
+     "way bigger... clear numbers... slick and clean." A brighter resting
+     border (not just on the .pulse flash) gives it some presence even
+     before you've typed anything. */
   .make-offer-input, .list-price-input{
     width:100%;
     background:rgba(8,9,11,0.6);
-    border:1px solid rgba(255,255,255,0.6);
+    border:1px solid rgba(255,255,255,0.75);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:20px;
+    font-size:28px;
     font-weight:700;
     text-align:center;
-    padding:0.5em 0.65em 0.5em 2.6em;
+    padding:0.6em 0.75em 0.6em 3.3em;
     border-radius:var(--radius);
+    box-shadow:0 0 12px rgba(255,255,255,0.08);
+    transition:border-color 0.15s ease, box-shadow 0.15s ease;
   }
-  .make-offer-input:focus, .list-price-input:focus{ outline:none; border-color:#fff; }
+  .make-offer-input:focus, .list-price-input:focus{ outline:none; border-color:#fff; box-shadow:0 0 16px rgba(255,255,255,0.18); }
   .make-offer-input::placeholder, .list-price-input::placeholder{ color:rgba(255,255,255,0.5); }
   .make-offer-send, .list-inline-btn{
     flex:1 1 auto;
@@ -2704,15 +2711,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#fff;
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:12px;
-    letter-spacing:0.05em;
-    padding:0.6em 0.65em;
+    font-size:15px;
+    letter-spacing:0.04em;
+    padding:0.75em 0.75em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
     transition:border-color 0.15s ease, background 0.15s ease;
   }
   .make-offer-send:hover, .list-inline-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); }
+  /* L!ST specifically (by id, not the shared .list-inline-btn class —
+     that class is also reused for TRANSFER's own submit, which stays
+     the plain neutral treatment) — solid filled green instead of a
+     plain dark outline: this is the one real "put your Pigeon up for
+     real money" action here, so it should read as the obvious,
+     enticing thing to press, same "juicy" filled-CTA language BUY N0W
+     already uses elsewhere on the site instead of blending in. */
+  #amountEntryListBtn{
+    background:var(--green);
+    border-color:var(--green);
+    color:#000;
+    box-shadow:0 0 14px var(--green-glow);
+  }
+  #amountEntryListBtn:hover{ background:#000; color:var(--green); border-color:var(--green); box-shadow:0 0 20px var(--green-glow); }
   /* Offers received, embedded directly on the pigeon's own card (see
      myPigeonOffersHtml) — sits above the LIST/DELIST action box. */
   .my-pigeon-offers{ display:flex; flex-direction:column; gap:0.4rem; margin-top:0.5rem; }
