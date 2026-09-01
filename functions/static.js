@@ -8405,7 +8405,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG ' + walletViewingLabel(state.scope.ownerShort) + ' (<span class="hi">' + list.length + '</span> P!GE0NS)' +
       (list.length === 1 ? '<br>P!GE0N #' + list[0].number : '') + '</div>';
     if (!list.length){
-      el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + (q || '(traits)') + '"'], true);
+      // "QUERY :: (traits)" — a debug-looking placeholder used to show
+      // here whenever the empty result came from trait filters alone (no
+      // typed search text, q empty), reported live as not something that
+      // should ever be user-facing. Only show the real typed query now;
+      // a filters-only miss gets the same "no combination of these
+      // traits exists" wording the general (non-wallet-scoped) browse
+      // view already uses.
+      el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', q ? ['QUERY :: "' + q + '"'] : ['0 C0MB!NAT!0NS 0F THESE TRA!TS EX!ST.'], true);
       wireClearSearch();
     } else {
       renderResultsReplace(list);
