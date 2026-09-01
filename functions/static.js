@@ -340,30 +340,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:1rem;
   }
 
-  /* ---- reference-image texture: one non-repeating instance per panel,
-     cover-sized (preserves native aspect ratio, unlike percentage
-     sizing which stretches per-axis) and cropped toward one corner of
-     the source. Tiling this at a fixed size turned it into a regular
-     wallpaper grid, which reads as decorative pattern rather than
-     glitch — real static doesn't repeat periodically. Nearly blacked
-     out by the scrim gradient so it reads as faint noise, never
-     competing with the text on top. ---- */
-  .sw-panel-signal{
-    background-image:
-      linear-gradient(rgba(8,9,11,0.85), rgba(8,9,11,0.85)),
-      url('/assets/digitalglitchpattern.png');
-    background-size:100% 100%, cover;
-    background-position:center, top left;
-    background-repeat:no-repeat, no-repeat;
-  }
-  .sw-panel-target{
-    background-image:
-      linear-gradient(rgba(8,9,11,0.82), rgba(8,9,11,0.82)),
-      url('/assets/digitalglitchpattern.png');
-    background-size:100% 100%, cover;
-    background-position:center, bottom right;
-    background-repeat:no-repeat, no-repeat;
-  }
+  /* Was a real image texture (the circuit-glitch reference picture,
+     heavily scrimmed) behind these two panels — dropped in favour of a
+     plain solid fill. Direct instruction: the whole site should read as
+     simple and easy to read first, decorative texture second; a busy
+     image behind text, however faint, was working against that even at
+     low opacity. */
+  .sw-panel-signal{ background-color:rgba(8,9,11,0.85); }
+  .sw-panel-target{ background-color:rgba(8,9,11,0.82); }
 
   /* ---- database (multi-collection) selector — now inline inside the
      DATABASE tab button itself (see .tab-db-select above). COLLECTION ::
@@ -479,13 +463,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      this covers the REST of the account boxes and the P!GE0NS grid
      underneath, so the tab reads as one themed page, not two looks stapled
      together. */
+  /* Was the same circuit-glitch image texture as .sw-panel-signal/-target
+     above — removed for the same reason (site-wide: simple and easy to
+     read comes first). Plain fill, keeps the hover motion below. */
   .flock-account-box:not(#flockMyFlockBox){
-    background-image:
-      linear-gradient(155deg, rgba(8,9,11,0.93), rgba(8,9,11,0.88)),
-      url('/assets/digitalglitchpattern.png');
-    background-size:100% 100%, cover;
-    background-position:center, center;
-    background-repeat:no-repeat, no-repeat;
+    background-color:rgba(8,9,11,0.9);
     transition:border-color 0.15s ease, box-shadow 0.25s ease, transform 0.15s ease;
   }
   .flock-account-box-clickable:not(#flockMyFlockBox):hover{
@@ -505,14 +487,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .flock-account-box-clickable:not(#flockMyFlockBox):hover .flock-account-box-label{
     animation:flock-box-glitch 0.35s steps(2, end);
   }
-  #flockGridPanel{
-    background-image:
-      linear-gradient(180deg, rgba(8,9,11,0.94), rgba(8,9,11,0.9)),
-      url('/assets/digitalglitchpattern.png');
-    background-size:100% 100%, cover;
-    background-position:center, bottom right;
-    background-repeat:no-repeat, no-repeat;
-  }
+  #flockGridPanel{ background-color:rgba(8,9,11,0.92); }
   /* Ties SH0W!NG Y0UR P!GE0NS :: N (see .search-panel-title-flock above)
      to the rest of the theme — a live cyan underline instead of just
      coloured text sitting on its own. */
