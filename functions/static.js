@@ -2879,6 +2879,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     .my-offer-row-actions{ flex:1 1 100%; flex-direction:row; min-width:0; }
     .my-offer-row-actions .highest-offer-btn{ flex:1 1 0; }
   }
+  .outgoing-offers-title{ margin-top:1.5rem; padding-top:1.5rem; border-top:1px dashed var(--border-dim); }
+  /* CANCEL — same red treatment DELIST already uses for a listing (see
+     .delist-pigeon-btn:hover) rather than the row's own accept/decline
+     colours, since this is the one destructive action here. */
+  .my-offer-row-actions .cancel-my-offer-btn{ border:1px solid var(--red); color:var(--red); background:transparent; }
+  .my-offer-row-actions .cancel-my-offer-btn:hover{ background:var(--red); color:#000; }
   .result-row-right{
     flex:1;
     min-width:0;
@@ -5039,6 +5045,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="sw-panel" id="myOffersPanelWrap" style="display:none;">
       <div class="panel-title">0FFERS RECE!VED</div>
       <div id="myOffersList"></div>
+      <!-- Every real $PIGEONS buy-offer THIS wallet has made on someone
+           else's Pigeon, with a real CANCEL — reported live as important
+           to get right specifically so cancelling actually works, rather
+           than only being discoverable by revisiting each Pigeon one at
+           a time. Same row layout as 0FFERS RECE!VED above. -->
+      <div class="panel-title outgoing-offers-title">0UTG0!NG 0FFERS</div>
+      <div id="outgoingOffersList"></div>
     </div>
 
     <div class="sw-panel" id="topHoldersPanelWrap" style="display:none;">
@@ -6103,7 +6116,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
-   'myOffersPanelWrap','myOffersList',
+   'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
    'salesPanelWrap',
@@ -6454,7 +6467,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // takes over, same condition as its own visibility above.
     el.myPigeonsPanel.style.display = (tab === 'mypigeons' && !isOwnWalletScope()) ? '' : 'none';
     el.myOffersPanelWrap.style.display = tab === 'myoffers' ? '' : 'none';
-    if (tab === 'myoffers') renderMyOffersList();
+    if (tab === 'myoffers'){ renderMyOffersList(); renderOutgoingOffersList(); }
     el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
     el.salesPanelWrap.style.display = tab === 'sales' ? '' : 'none';
     el.crownPanelWrap.style.display = tab === 'crown' ? '' : 'none';
@@ -6514,6 +6527,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // offer can arrive at any time, so a stale cached view would hide a
       // real pending offer.
       loadOffersReceived();
+      loadOutgoingOffers();
       loadIncomingTransfers();
     }
     if (tab === 'topholders' && topHoldersData === null){
@@ -7513,6 +7527,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (isOwnWalletScope()) runScopedQuery();
       }).catch(function(){});
       loadOffersReceived();
+      loadOutgoingOffers();
       loadIncomingTransfers();
     }
   }
@@ -9523,6 +9538,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // see updateFlockTabLabel above. loadOffersReceived already no-ops
   // with no session.
   loadOffersReceived();
+  loadOutgoingOffers();
   loadIncomingTransfers();
   // Lands on FL0CK now (was: DATABASE, self-scoped) — "SH0W MY FL0CK"
   // should actually take you to the FL0CK tab, not just filter DATABASE
@@ -11186,6 +11202,166 @@ const SWAP_HTML = `<!DOCTYPE html>
     return offersReceivedPromise;
   }
 
+  // ---- 0UTG0!NG 0FFERS — every real $PIGEONS buy-offer THIS wallet has
+  // made on someone ELSE's Pigeon, with a real CANCEL. Reported live as
+  // important to get right specifically so cancelling actually works —
+  // sits directly underneath 0FFERS RECE!VED (see myOffersPanelWrap's own
+  // markup comment), same row layout, loaded/rendered the same way. ----
+  var outgoingOffersData = null;
+  var cancelOfferTarget = null; // { nftId, offerId, number, image, price }
+  var cancelOfferUuid = null;
+  var cancelOfferPollTimer = null;
+  var cancelOfferXamanTab = null;
+  // Same in-flight-promise guard as loadOffersReceived's own — this has
+  // the identical multiple-call-sites shape (the tab-open branch AND the
+  // post-cancel refresh) that made offers received flicker before that
+  // fix, so this starts with the guard already in place instead of
+  // needing the same bug reported twice.
+  var outgoingOffersPromise = null;
+  function loadOutgoingOffers(){
+    if (!MY_WALLET) return;
+    if (outgoingOffersPromise) return outgoingOffersPromise;
+    outgoingOffersPromise = fetch('/api/swap-offers-made').then(function(r){ return r.json(); }).then(function(data){
+      outgoingOffersData = data.items || [];
+      if (el.myOffersPanelWrap.style.display !== 'none') renderOutgoingOffersList();
+      outgoingOffersPromise = null;
+    }).catch(function(){
+      outgoingOffersPromise = null;
+    });
+    return outgoingOffersPromise;
+  }
+  function renderOutgoingOffersList(){
+    if (outgoingOffersData === null){
+      el.outgoingOffersList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+      return;
+    }
+    if (!outgoingOffersData.length){
+      el.outgoingOffersList.innerHTML = '<div class="th-empty">N0 0UTG0!NG 0FFERS R!GHT N0W.</div>';
+      return;
+    }
+    el.outgoingOffersList.innerHTML = outgoingOffersData.map(function(item){
+      var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
+      return '<div class="my-offer-row">' +
+        '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + img + '</div>' +
+        '<div class="my-offer-row-info">' +
+          '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
+          '<div class="my-offer-row-buyer">T0 ' + escapeHtml(item.ownerShort || item.ownerWallet || '????') + '</div>' +
+        '</div>' +
+        '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(item.price)) + '</div>' +
+        '<div class="my-offer-row-actions">' +
+          '<button class="highest-offer-btn cancel-my-offer-btn cancel-outgoing-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(item.offerId) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '" data-price="' + escapeHtml(item.price) + '">CANCEL</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+  el.outgoingOffersList.addEventListener('click', function(e){
+    var btn = e.target.closest('.cancel-outgoing-offer-btn');
+    if (!btn || btn.disabled) return;
+    cancelOfferTarget = {
+      nftId: btn.getAttribute('data-nftid'),
+      offerId: btn.getAttribute('data-offerid'),
+      number: btn.getAttribute('data-num') !== '' ? Number(btn.getAttribute('data-num')) : null,
+      image: btn.getAttribute('data-image'),
+      price: btn.getAttribute('data-price')
+    };
+    startCancelOfferSign(btn);
+  });
+  // Straight into the real Xaman request on click, same "no separate
+  // review screen" reasoning as MAKE OFFER's own submitMakeOffer — CANCEL
+  // is already the confirming action, an outgoing buy-offer isn't a
+  // reversible listing decision the way DELIST's own confirm screen guards
+  // against fat-fingering (DELIST also removes something priced/visible to
+  // buyers; a CANCEL here just withdraws an offer you made).
+  function startCancelOfferSign(btn){
+    if (!cancelOfferTarget) return;
+    btn.disabled = true;
+    btn.textContent = 'REQUEST!NG...';
+    // Opened synchronously in this click handler (a real user gesture) so
+    // it's never popup-blocked — same pattern every other Xaman sign flow
+    // in this app already uses.
+    cancelOfferXamanTab = openXamanPopup();
+    fetch('/api/swap-canceloffer-prepare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: cancelOfferTarget.nftId })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        closeXamanTabAndFocus(cancelOfferXamanTab);
+        cancelOfferXamanTab = null;
+        btn.disabled = false;
+        btn.textContent = 'CANCEL';
+        alert(listingErrorMessage(res.data && res.data.error));
+        return;
+      }
+      return fetch('/api/swap-canceloffer-payload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nftId: cancelOfferTarget.nftId })
+      }).then(function(r2){ return r2.json().then(function(data2){ return { ok: r2.ok, data: data2 }; }); })
+      .then(function(res2){
+        if (!res2.ok || !res2.data.ok){
+          closeXamanTabAndFocus(cancelOfferXamanTab);
+          cancelOfferXamanTab = null;
+          btn.disabled = false;
+          btn.textContent = 'CANCEL';
+          alert(listingErrorMessage(res2.data && res2.data.error));
+          return;
+        }
+        cancelOfferUuid = res2.data.uuid;
+        navigateXamanPopup(cancelOfferXamanTab, res2.data.next.always);
+        btn.textContent = 'WA!T!NG...';
+        pollCancelOfferStatus(btn);
+      });
+    }).catch(function(){
+      closeXamanTabAndFocus(cancelOfferXamanTab);
+      cancelOfferXamanTab = null;
+      btn.disabled = false;
+      btn.textContent = 'CANCEL';
+      alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
+    });
+  }
+  function pollCancelOfferStatus(btn){
+    if (cancelOfferPollTimer) clearTimeout(cancelOfferPollTimer);
+    if (!cancelOfferUuid || !cancelOfferTarget) return;
+    fetch('/api/swap-canceloffer-status?uuid=' + encodeURIComponent(cancelOfferUuid) + '&nftId=' + encodeURIComponent(cancelOfferTarget.nftId))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'cancelled'){
+          closeXamanTabAndFocus(cancelOfferXamanTab);
+          cancelOfferXamanTab = null;
+          // Drop it from the list immediately rather than waiting on a
+          // full reload — same "the response you just got is the real
+          // answer" reasoning as DELIST's own success handling.
+          outgoingOffersData = (outgoingOffersData || []).filter(function(it){ return it.nftId !== cancelOfferTarget.nftId; });
+          renderOutgoingOffersList();
+          cancelOfferTarget = null;
+          return;
+        }
+        if (data.status === 'rejected'){
+          btn.textContent = 'CANCEL';
+          btn.disabled = false;
+          alert('CANCELLAT!0N REJECTED !N XAMAN.');
+          return;
+        }
+        if (data.status === 'expired'){
+          btn.textContent = 'CANCEL';
+          btn.disabled = false;
+          alert('S!GN REQUEST EXP!RED. TRY AGA!N.');
+          return;
+        }
+        if (data.status === 'failed'){
+          btn.textContent = 'CANCEL';
+          btn.disabled = false;
+          alert('XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').');
+          return;
+        }
+        cancelOfferPollTimer = setTimeout(function(){ pollCancelOfferStatus(btn); }, 2000);
+      }).catch(function(){
+        cancelOfferPollTimer = setTimeout(function(){ pollCancelOfferStatus(btn); }, 3000);
+      });
+  }
+
   // ---- NFT 0FFERED T0 Y0U (FL0CK) — real TRANSFER sell-offers sent to
   // this wallet. See swap-incoming-transfers.js's own comment for why this
   // needs its own tracked KV index instead of just looking at what the
@@ -11339,6 +11515,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     closeAcceptTransferConfirm();
     loadIncomingTransfers();
     loadOffersReceived();
+    loadOutgoingOffers();
     renderMyPigeonsList();
     if (isOwnWalletScope()) runScopedQuery();
   });
@@ -11454,6 +11631,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.activeTab = 'mypigeons';
     showScreen('browse');
     loadOffersReceived();
+    loadOutgoingOffers();
     renderMyPigeonsList();
   });
 
