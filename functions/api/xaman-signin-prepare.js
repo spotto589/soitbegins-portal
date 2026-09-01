@@ -18,7 +18,17 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'xaman_not_configured' }), { status: 501 });
   }
 
-  const xummData = await createXamanPayload(env, { TransactionType: 'SignIn' }, undefined, undefined);
+  // Explicitly requests push even though there's no existing user_token
+  // to target yet (the 4th arg, userToken, is genuinely undefined here —
+  // this IS the payload meant to earn the very first one for a wallet).
+  // createXamanPayload's own default only ever sets push:true when a
+  // token is ALREADY known (see its own comment) — without this override
+  // the bootstrap payload for every wallet's first-ever login would never
+  // request push at all, so no wallet could ever earn a token in the
+  // first place. Confirmed live as the real reason push wasn't firing
+  // ("its not sending the push notification straight to the phone like
+  // xrp cafe does") even after the SignIn-payload login switch.
+  const xummData = await createXamanPayload(env, { TransactionType: 'SignIn' }, { push: true }, undefined);
   const uuid = xummData && xummData.uuid;
   const next = xummData && xummData.next;
   if (!uuid || !next) {
