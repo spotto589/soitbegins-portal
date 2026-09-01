@@ -1239,6 +1239,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      is what makes flex:1 1 0 below have real room to fill (or split
      evenly, for two) in the first place. */
   .owned-action-row{ display:flex; gap:0.4rem; width:100%; }
+  /* L!ST/TRANSFER (and CANCEL/TRANSFER) as two full-width stacked bars
+     instead of squeezed side by side — reported live as wanting this
+     specific pair "two horizontal bars stacked". Both buttons already
+     default to width:auto/flex:1 1 auto from their own shared rule
+     above, which is exactly what a column flex parent needs to make
+     each one a full-width bar. */
+  .owned-stack-row{ display:flex; flex-direction:column; gap:0.4rem; width:100%; }
   /* A slim strip, not a tall block — two buttons genuinely fit side by
      side in a 5-across thumbnail card at this size, the 17px/1em default
      every one of these buttons normally uses on its own full-width line
@@ -2761,6 +2768,65 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Offers received, embedded directly on the pigeon's own card (see
      myPigeonOffersHtml) — sits above the LIST/DELIST action box. */
   .my-pigeon-offers{ display:flex; flex-direction:column; gap:0.4rem; margin-top:0.5rem; }
+  /* The single highest offer, big and unmissable — was a stacked list of
+     every offer in small text; reported live as wanting "HIGHEST OFFER /
+     ____ $PIGEONS / ACCEPT DECLINE COUNTER... clean buttons... simple
+     but big and easy to see." */
+  .highest-offer-box{
+    border:1px solid var(--magenta);
+    border-radius:var(--radius);
+    background:var(--panel-bg-solid);
+    padding:0.9rem 0.8rem;
+    text-align:center;
+  }
+  .highest-offer-label{ font-size:11px; letter-spacing:0.14em; color:var(--grey); text-transform:uppercase; }
+  .highest-offer-price{ font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--green); margin:0.25rem 0; }
+  .highest-offer-buyer{ font-size:12px; letter-spacing:0.04em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.7rem; }
+  .highest-offer-actions{ display:flex; gap:0.4rem; }
+  .highest-offer-btn{
+    flex:1 1 0;
+    min-width:0;
+    font-family:var(--font-mono);
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:0.03em;
+    padding:0.8em 0.4em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    text-transform:uppercase;
+    background:transparent;
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .highest-offer-accept{ background:var(--green); border:1px solid var(--green); color:#000; }
+  .highest-offer-accept:hover{ background:#000; color:var(--green); }
+  .highest-offer-decline{ border:1px solid var(--red); color:var(--red); }
+  .highest-offer-decline:hover{ background:var(--red); color:#000; }
+  .highest-offer-counter{ border:1px solid var(--border-dim); color:var(--grey-dim); opacity:0.5; cursor:not-allowed; }
+  /* 0FFERS RECE!VED (renderMyOffersList) — one horizontal row per listed
+     Pigeon with a real offer: thumbnail, number/buyer, price, then the
+     same ACCEPT/DECL!NE/C0UNTER trio the card's own highest-offer box
+     uses, just laid out in a row instead of stacked. */
+  .my-offer-row{
+    display:flex;
+    align-items:center;
+    gap:1rem;
+    padding:0.9rem 0.5rem;
+    border-bottom:1px solid var(--border-dim);
+  }
+  .my-offer-row:last-child{ border-bottom:none; }
+  .my-offer-row-img{ width:56px; height:56px; flex:0 0 auto; border-radius:var(--radius); overflow:hidden; }
+  .my-offer-row-info{ flex:1 1 auto; min-width:0; }
+  .my-offer-row-num{ font-size:16px; font-weight:700; color:var(--white); }
+  .my-offer-row-buyer{ font-size:12px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; margin-top:0.15rem; }
+  .my-offer-row-price{ flex:0 0 auto; font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--green); text-align:right; margin-right:0.5rem; }
+  .my-offer-row-actions{ flex:0 0 auto; display:flex; gap:0.4rem; }
+  .my-offer-row-actions .highest-offer-btn{ flex:0 0 auto; padding:0.7em 1em; }
+  @media (max-width:700px){
+    .my-offer-row{ flex-wrap:wrap; }
+    .my-offer-row-price{ margin-right:0; margin-left:auto; }
+    .my-offer-row-actions{ flex:1 1 100%; }
+    .my-offer-row-actions .highest-offer-btn{ flex:1 1 0; }
+  }
   .result-row-right{
     flex:1;
     min-width:0;
@@ -4923,6 +4989,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div id="myPigeonsList"></div>
     </div>
 
+    <!-- 0FFERS RECE!VED — every real buy-offer sitting on a Pigeon you
+         currently have listed, one horizontal row per Pigeon (thumbnail +
+         number + buyer + price + ACCEPT/DECL!NE/C0UNTER), reached via the
+         Σκύλλα tab's own 0FFERS box (see flockOffersBox's click handler)
+         instead of that box doing nothing, which it used to. -->
+    <div class="sw-panel" id="myOffersPanelWrap" style="display:none;">
+      <div class="panel-title">0FFERS RECE!VED</div>
+      <div id="myOffersList"></div>
+    </div>
+
     <div class="sw-panel" id="topHoldersPanelWrap" style="display:none;">
       <div class="panel-title">T0P 123 H0LDERS</div>
       <div id="topHoldersList"></div>
@@ -5015,7 +5091,7 @@ const SWAP_HTML = `<!DOCTYPE html>
            updateSearchPanelTitleForPaws). -->
       <div id="flockAccountBoxes" style="display:none;">
         <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockMyFlockBox">
-          <div class="flock-account-box-row"><span class="flock-account-box-label flock-count-loading" id="flockMyFlockLabel">MY P!GE0NS :: _</span></div>
+          <div class="flock-account-box-row"><span class="flock-account-box-label flock-count-loading" id="flockMyFlockLabel">MY P!GE0NS :: L0AD!NG...</span></div>
         </div>
         <!-- Paused (MESSAGES_DB was never bound in production, see the
              swap-buy-prepare.js/HANDOFF.md history — messaging is fully
@@ -5025,8 +5101,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="sw-panel flock-account-box flock-account-box-soon">
           <div class="flock-account-box-row"><span class="flock-account-box-label">MESSAGE !NB0X</span><span class="db-soon">C0M!NG S00N</span></div>
         </div>
-        <div class="sw-panel flock-account-box flock-account-box-clickable" data-flockbox="offers">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">0FFERS</span></div>
+        <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockOffersBox">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">0FFERS<span class="flock-tab-offer-dot" id="flockOffersCount" style="display:none;"></span></span></div>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockBuyPigeonsBox">
           <div class="flock-account-box-row"><span class="flock-account-box-label">BUY $P!GE0NS</span></div>
@@ -5965,6 +6041,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
+   'myOffersPanelWrap','myOffersList',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
    'salesPanelWrap',
@@ -5978,7 +6055,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
-   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockBuyPigeonsBox','flockChangeCollectionBox','flockGridPanel',
+   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockBuyPigeonsBox','flockChangeCollectionBox','flockGridPanel','flockOffersBox','flockOffersCount',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn','swapOffersTabBtn',
@@ -6297,6 +6374,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // sitting above screenBrowse. Hidden the instant screenBrowse itself
     // takes over, same condition as its own visibility above.
     el.myPigeonsPanel.style.display = (tab === 'mypigeons' && !isOwnWalletScope()) ? '' : 'none';
+    el.myOffersPanelWrap.style.display = tab === 'myoffers' ? '' : 'none';
+    if (tab === 'myoffers') renderMyOffersList();
     el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
     el.salesPanelWrap.style.display = tab === 'sales' ? '' : 'none';
     el.crownPanelWrap.style.display = tab === 'crown' ? '' : 'none';
@@ -6453,6 +6532,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else {
       el.screenBrowse.style.display = 'none';
       el.myPigeonsPanel.style.display = 'none';
+      el.myOffersPanelWrap.style.display = 'none';
       el.topHoldersPanelWrap.style.display = 'none';
       el.salesPanelWrap.style.display = 'none';
       el.swapOffersPanelWrap.style.display = 'none';
@@ -7141,9 +7221,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       // had actually already failed for good, reported live as "it just
       // shows MY P!GE0NS :: _ ... glitching". A real failed state now,
       // with a tap-to-retry instead of a dead end.
+      // The underscore itself read as broken/glitchy rather than "in
+      // progress" — a real word, still pulsing via .flock-count-loading,
+      // actually reads as a loading state instead of cryptic leftover
+      // text.
       el.flockMyFlockLabel.classList.toggle('flock-count-loading', myOwnPigeonsCache === null && !myOwnPigeonsCacheFailed);
       el.flockMyFlockLabel.classList.toggle('flock-count-failed', myOwnPigeonsCacheFailed);
-      el.flockMyFlockLabel.textContent = 'MY P!GE0NS :: ' + (myOwnPigeonsCacheFailed ? 'TAP T0 RETRY' : myOwnPigeonsCache === null ? '_' : state.scopeAllItems.length);
+      el.flockMyFlockLabel.textContent = 'MY P!GE0NS :: ' + (myOwnPigeonsCacheFailed ? 'TAP T0 RETRY' : myOwnPigeonsCache === null ? 'L0AD!NG...' : state.scopeAllItems.length);
     }
     // DATABASE's own grid panel never collapses — only MY FL0CK's copy of
     // it does, and only while actually on FL0CK.
@@ -7899,6 +7983,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         declinedOfferIds[declineBtn.getAttribute('data-offerid')] = true;
         if (isOwnWalletScope()) runScopedQuery();
         if (el.screenDetail.style.display !== 'none') updateScyllaListing(state.currentDetail);
+        if (el.myOffersPanelWrap.style.display !== 'none') renderMyOffersList();
         return;
       }
     });
@@ -8696,27 +8781,28 @@ const SWAP_HTML = `<!DOCTYPE html>
   // ACCEPT OFFER button/fee breakdown the old combined offersReceivedList
   // used, just embedded per-card instead of in one separate block (see
   // myPigeonCardHtml). Most recent offer first.
+  // Just the single highest offer now, big and unmissable, instead of a
+  // full list of every offer stacked in tiny rows — reported live as
+  // wanting "HIGHEST OFFER / ____ $PIGEONS / ACCEPT DECLINE COUNTER...
+  // clean buttons... simple but big and easy to see." Lower offers still
+  // exist on-ledger and still count toward the tab's own "N 0FFERS"
+  // badge — this just surfaces the one actually worth acting on.
   function myPigeonOffersHtml(p, offers){
-    var sorted = offers.slice()
-      .filter(function(o){ return !declinedOfferIds[o.offerId]; })
-      .sort(function(a, b){ return (b.createdAt || 0) - (a.createdAt || 0); });
-    return '<div class="my-pigeon-offers">' + sorted.map(function(o){
-      // No fee breakdown line here for now (was MARKETPLACE FEE :: X ::
-      // Y0U RECE!VE :: Y) — still computed and shown on the real
-      // ACCEPT 0FFER confirm screen right before signing, just not
-      // repeated on every card.
-      return '<div class="listing-row" style="flex-direction:column; align-items:stretch; gap:0.3rem;">' +
-        '<span class="listing-market">' + escapeHtml(o.buyerShort || o.buyer) + '</span>' +
-        '<div style="display:flex; align-items:center; justify-content:space-between; gap:0.6rem;">' +
-          '<span class="listing-price">' + escapeHtml(o.price) + ' $P!GE0NS</span>' +
-          '<button class="listing-buy accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(o.offerId) + '" data-price="' + escapeHtml(o.price) + '" data-buyer="' + escapeHtml(o.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '">ACCEPT</button>' +
+    var real = offers.filter(function(o){ return !declinedOfferIds[o.offerId]; });
+    if (!real.length) return '';
+    var top = real.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
+    return '<div class="my-pigeon-offers">' +
+      '<div class="highest-offer-box">' +
+        '<div class="highest-offer-label">H!GHEST 0FFER</div>' +
+        '<div class="highest-offer-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + '</div>' +
+        '<div class="highest-offer-buyer">FR0M ' + escapeHtml(top.buyerShort || top.buyer) + '</div>' +
+        '<div class="highest-offer-actions">' +
+          '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '">ACCEPT</button>' +
+          '<button class="highest-offer-btn highest-offer-decline decline-offer-btn" data-offerid="' + escapeHtml(top.offerId) + '">DECL!NE</button>' +
+          '<button class="highest-offer-btn highest-offer-counter" disabled title="C0M!NG S00N">C0UNTER</button>' +
         '</div>' +
-        '<div class="owned-action-row">' +
-          '<button class="bar-btn decline-offer-btn" data-offerid="' + escapeHtml(o.offerId) + '">DECL!NE</button>' +
-          '<button class="bar-btn" disabled title="C0M!NG S00N">C0UNTER</button>' +
-        '</div>' +
-      '</div>';
-    }).join('') + '</div>';
+      '</div>' +
+    '</div>';
   }
   // The LIST/DELIST/OFFERS-RECEIVED box for a pigeon YOU own — shared by
   // myPigeonCardHtml (MY PIGEONS tab) and pigeonsActionBoxHtml (DATABASE,
@@ -8731,23 +8817,63 @@ const SWAP_HTML = `<!DOCTYPE html>
     // modal-btn in wireResultClicks) instead of an inline price input
     // sitting directly on the card — same popup submitInlineListing/
     // submitTransfer both submit through.
-    // CANCEL/L!ST paired side-by-side with TRANSFER (.owned-action-row)
-    // instead of each stacked full-width — a listed Pigeon (CANCEL +
-    // TRANSFER) and an unlisted one (L!ST + TRANSFER) now take up the
-    // exact same one-row shape, instead of the listed state being
-    // visibly taller. Centered explicitly (this card has no .thumb-
-    // offer-own ancestor supplying that the way the general-browse
-    // card's own version does).
+    // Stacked full-width bars now, not side by side (.owned-stack-row,
+    // not .owned-action-row) — reported live as wanting L!ST/TRANSFER
+    // (and CANCEL/TRANSFER) as "two horizontal bars stacked" instead of
+    // squeezed into half-width each.
+    // The price line (L!STED :: 123.1K $P!GE0NS) is gone — it already
+    // shows on the thumbnail itself (.thumb-listing-badge), repeating it
+    // here was redundant. The expiry countdown isn't shown anywhere else
+    // though, so that stays.
     var ownedListingCountdown = listedInfo ? listingCountdownText(listedInfo.expiration) : '';
-    var listedNote = listedInfo
-      ? '<div class="own-listing-note" style="text-align:center; margin-bottom:0.5rem;">L!STED :: ' + escapeHtml(compactPigeonsNumber(listedInfo.price)) + ' $P!GE0NS</div>' +
-        (ownedListingCountdown ? '<div class="listing-countdown" style="text-align:center;">' + escapeHtml(ownedListingCountdown) + '</div>' : '')
+    var listedNote = ownedListingCountdown
+      ? '<div class="listing-countdown" style="text-align:center; margin-bottom:0.5rem;">' + escapeHtml(ownedListingCountdown) + '</div>'
       : '';
     var primaryBtn = listedInfo
       ? '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '">CANCEL</button>'
       : '<button class="bar-btn list-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">L!ST</button>';
     var transferBtn = '<button class="bar-btn transfer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">TRANSFER</button>';
-    return offersHtml + listedNote + '<div class="owned-action-row">' + primaryBtn + transferBtn + '</div>';
+    return offersHtml + listedNote + '<div class="owned-stack-row">' + primaryBtn + transferBtn + '</div>';
+  }
+  // 0FFERS RECE!VED — reached via the Σκύλλα tab's own 0FFERS box (see
+  // el.flockOffersBox's click handler), which used to do nothing at all
+  // when clicked. One horizontal row per listed Pigeon with a real
+  // offer, thumbnail + number + buyer + price + ACCEPT/DECL!NE/C0UNTER —
+  // "set it horizontally showing all the details of the offer" per the
+  // explicit request. Just the highest offer per Pigeon, same as the
+  // card's own myPigeonOffersHtml.
+  function renderMyOffersList(){
+    if (offersReceivedData === null){
+      el.myOffersList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+      return;
+    }
+    var rows = offersReceivedData.map(function(item){
+      var real = item.offers.filter(function(o){ return !declinedOfferIds[o.offerId]; });
+      if (!real.length) return null;
+      var top = real.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
+      var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
+      return { item: item, top: top, img: img };
+    }).filter(Boolean);
+    if (!rows.length){
+      el.myOffersList.innerHTML = '<div class="th-empty">N0 0FFERS RECE!VED R!GHT N0W.</div>';
+      return;
+    }
+    el.myOffersList.innerHTML = rows.map(function(row){
+      var item = row.item, top = row.top;
+      return '<div class="my-offer-row">' +
+        '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + row.img + '</div>' +
+        '<div class="my-offer-row-info">' +
+          '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
+          '<div class="my-offer-row-buyer">FR0M ' + escapeHtml(top.buyerShort || top.buyer) + '</div>' +
+        '</div>' +
+        '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + '</div>' +
+        '<div class="my-offer-row-actions">' +
+          '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '">ACCEPT</button>' +
+          '<button class="highest-offer-btn highest-offer-decline decline-offer-btn" data-offerid="' + escapeHtml(top.offerId) + '">DECL!NE</button>' +
+          '<button class="highest-offer-btn highest-offer-counter" disabled title="C0M!NG S00N">C0UNTER</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
   }
   // The actual pigeon grid for PλWS is the shared DATABASE view itself
   // (screenBrowse, scoped to your own wallet via browseOwnerCollection —
@@ -8786,6 +8912,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // pigeonsActionBoxHtml/ownedPigeonActionHtml) — nothing container-
   // specific left to wire here.
   wireResultClicks(el.myPigeonsList, function(){ return myPigeonsData || []; });
+  // 0FFERS RECE!VED's own ACCEPT/DECL!NE/thumbnail clicks (renderMyOffersList) —
+  // offersReceivedData items already carry nftId/number/image, same shape
+  // every other source() here expects.
+  wireResultClicks(el.myOffersList, function(){ return offersReceivedData || []; });
 
   // ---- CREATE OFFER (V1) — UI/selection only. No XRPL offer/swap
   // transaction is built or submitted here; CREATE 0FFER just confirms
@@ -9727,6 +9857,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.flockChangeCollectionBox.addEventListener('click', function(){
     showTab('database');
     openDbSelectFlyout();
+  });
+  // Used to do nothing at all when clicked — reported live, now goes to
+  // the real 0FFERS RECE!VED view (renderMyOffersList).
+  el.flockOffersBox.addEventListener('click', function(){
+    showTab('myoffers');
   });
   // Messaging paused — see the MESSAGE !NB0X box's own HTML comment.
   // Nothing to wire up here any more (no click handler, no unread-badge
@@ -10689,9 +10824,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       offersReceivedTotal = totalOffers;
       updateFlockTabLabel();
       renderMyPigeonsList();
+      // The Σκύλλα tab's own 0FFERS box — a real count next to it now
+      // instead of a plain unlabelled "0FFERS" (reported live as wanting
+      // this), hidden entirely rather than showing "0FFERS :: 0" when
+      // there's genuinely nothing pending.
+      el.flockOffersCount.textContent = totalOffers || '';
+      el.flockOffersCount.style.display = totalOffers > 0 ? '' : 'none';
       // Also refresh the DATABASE grid when SH0W MY P!GE0NS is what's
-      // showing (ownedPigeonActionHtml reads offersByNftId there too).
+      // showing (ownedPigeonActionHtml reads offersByNftId there too), and
+      // the dedicated 0FFERS RECE!VED view if that's what's open.
       if (isOwnWalletScope()) runScopedQuery();
+      if (el.myOffersPanelWrap.style.display !== 'none') renderMyOffersList();
     }).catch(function(){});
   }
 
