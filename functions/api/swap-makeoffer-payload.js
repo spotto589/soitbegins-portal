@@ -73,7 +73,9 @@ export async function onRequestPost(context) {
   };
 
   const pushToken = await getXamanUserToken(env.coin, buyer);
+  console.log('swap-makeoffer-payload: pushToken for', buyer, '=', pushToken ? ('found, len ' + pushToken.length) : 'null');
   const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
+  console.log('swap-makeoffer-payload: createXamanPayload result pushed=', xummData && xummData.pushed, 'uuid=', xummData && xummData.uuid);
   const uuid = xummData && xummData.uuid;
   const next = xummData && xummData.next;
   if (!uuid || !next) {
