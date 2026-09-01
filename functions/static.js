@@ -6971,6 +6971,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.scope = { wallet: wallet, ownerShort: ownerShort || wallet };
     state.targetAssets = {};
     state.traitFilters = [];
+    // A trait click just before this (setting pendingTraitScroll, see its
+    // own declaration) could otherwise survive to hijack THIS view's own
+    // top-of-page scroll (scrollActiveTabPanelIntoView below, via
+    // showTab) — runScopedQuery's own pendingTraitScroll check doesn't
+    // know this is a different navigation, so a stale true here scrolled
+    // straight to the results block instead, cutting off the hero/tabs/
+    // banner above it (reported live as "should show from the top").
+    pendingTraitScroll = false;
     renderTraitRows();
     el.searchInput.value = '';
     // The "WALLET !DENT!F!ED"/TARGET WALLET node-header chrome belongs to
@@ -7698,10 +7706,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   // #detailOffersReceived's ACCEPT/DECL!NE buttons (myPigeonOffersHtml) —
   // #screenDetail isn't el.resultsArea/el.myPigeonsList, so the delegated
   // listener above never saw them; the source() here only ever needs to
-  // resolve the one Pigeon currently open. Every other branch in
-  // wireResultClicks (.list-open-modal-btn etc) is a harmless no-op here
-  // since nothing in #screenDetail's markup matches those selectors.
-  wireResultClicks(el.screenDetail, function(){ return state.currentDetail ? [state.currentDetail] : []; });
+  // resolve the one Pigeon currently open.
+  // Scoped to #detailOffersReceived specifically, NOT the whole
+  // #screenDetail — confirmed live this was NOT the harmless no-op the
+  // comment here used to claim: #detailImgBox also carries the
+  // .pigeon-img-box class (it's the big picture you click to open the
+  // fullscreen lightbox), so wiring the whole screen made every click on
+  // it ALSO match wireResultClicks' own imgBox branch and call
+  // openDetail(null) (no data-nftid on that element) — which wipes
+  // #detailLightboxImg.src back to '' via openDetail's own "keep the
+  // lightbox in sync if it's open" logic, since the lightbox had *just*
+  // been opened by that same click. Broke the fullscreen view (blank
+  // image) and — since navigateDetail's own PREV/NEXT relies on the
+  // same sync logic — its "click through to other Pigeons" path too.
+  wireResultClicks(el.detailOffersReceived, function(){ return state.currentDetail ? [state.currentDetail] : []; });
 
   // ---- Trait data: fetched once, real categories/values/percentages
   // straight from Deeptide's collection-wide trait-card counts (exact, not
