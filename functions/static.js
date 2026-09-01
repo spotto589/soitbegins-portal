@@ -90,8 +90,21 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     /* Aliases, not real colours of their own — see this stylesheet's own
        header comment. */
-    --green:var(--cyan);
-    --green-glow:var(--cyan-glow);
+    /* A real colour again, not an alias — the one deliberate second
+       colour alongside pink/black/white/grey. Semantic, not a competing
+       brand accent: important numbers (balance, prices, real values —
+       .pigeons-green-num/greenNum()) and the buy/available/real-money
+       actions that already leaned on the same "this is real and
+       positive" meaning before this session's palette work. */
+    --green:#3ecc7a;
+    --green-glow:rgba(62,204,122,0.35);
+    /* A real colour too, not an alias — reserved for destructive/negative
+       actions (cancel, delist) so they read distinctly from the pink
+       brand accent. */
+    --red:#e8384f;
+    --red-dim:rgba(232,56,79,0.4);
+    --red-faint:rgba(232,56,79,0.12);
+    --red-glow:rgba(232,56,79,0.4);
     --pigeon-purple:var(--cyan);
     --pigeon-purple-dim:var(--cyan-dim);
     --pigeon-purple-faint:var(--cyan-faint);
@@ -1188,7 +1201,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-weight:700;
     letter-spacing:0.05em;
   }
-  .delist-pigeon-btn, #detailScyllaDelistBtn{ border-color:var(--magenta); color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+  .delist-pigeon-btn, #detailScyllaDelistBtn{ border-color:var(--red); color:var(--red); text-shadow:0 0 6px var(--red-glow); }
   /* ownedPigeonActionHtml's own CANCEL/L!ST + TRANSFER pair — side by
      side, not each stacked full-width, so a listed Pigeon (CANCEL +
      TRANSFER) and an unlisted one (L!ST + TRANSFER) take up the exact
@@ -1236,12 +1249,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     line-height:1.15;
     min-height:2.9em;
   }
-  .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:var(--magenta); background:var(--magenta); color:#000; text-shadow:none; }
+  .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:var(--red); background:var(--red); color:#000; text-shadow:none; }
   /* Red, same accent as CLEAR TRAITS — resetting every filter is a
      destructive-feeling action, worth calling out differently from the
      neutral GO/RESET-adjacent buttons around it. */
-  .reset-db-btn{ border-color:var(--magenta-dim); color:var(--magenta); text-shadow:0 0 5px var(--magenta-dim); }
-  .reset-db-btn:hover{ border-color:var(--magenta); color:var(--magenta); background:var(--magenta-faint); }
+  .reset-db-btn{ border-color:var(--red-dim); color:var(--red); text-shadow:0 0 5px var(--red-dim); }
+  .reset-db-btn:hover{ border-color:var(--red); color:var(--red); background:var(--red-faint); }
   /* VIEW, then COLLECTION SELECTION, then SORTING BY + RESET — grouped
      together in one bordered box, each its own row, with a fixed-width
      label column so every selection control lines up under the next. */
@@ -1352,7 +1365,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     letter-spacing:0.05em;
     color:var(--white);
     text-shadow:
-      -1.5px 0 rgba(61,243,236,0.35),
+      -1.5px 0 rgba(0,0,0,0.7),
       1.5px 0 var(--magenta-glow),
       0 0 12px var(--magenta-glow);
     text-align:center;
@@ -1591,11 +1604,13 @@ const SWAP_HTML = `<!DOCTYPE html>
        auto + min-width:0 on the flyout below is what actually lets it
        shrink to the real remaining space next to the label — the same
        two properties #sortFlyout.flyout-flat already relies on. */
-    /* flex-start, not center — the flyout is two stacked rows (cats, then
-       vals) now, so centering against its full combined height left the
-       label floating oddly mid-way down instead of lining up with the
-       cats row it actually sits next to. */
-    #traitsHoverWrap{ width:100%; max-width:100%; display:flex; align-items:flex-start; min-width:0; }
+    /* center — #traitsFlyout's vals row is position:absolute (see
+       #traitsFlyout > .traits-flyout-vals below), so it no longer counts
+       toward #traitsFlyout's in-flow height; the cats row is the only
+       row left in flow, so centering this against it now lines the label
+       up with the category chips beside it instead of sitting above
+       them. */
+    #traitsHoverWrap{ width:100%; max-width:100%; display:flex; align-items:center; min-width:0; }
     #traitsHoverWrap .trait-row-label{ width:auto; flex:0 0 auto; }
     /* The ▾ implied a click-to-open dropdown, same as S0RT BY's own arrow
        fix above — this box is permanently visible here too, nothing to
@@ -2159,9 +2174,9 @@ const SWAP_HTML = `<!DOCTYPE html>
      in the middle between ADD TRAITS and the chips. */
   .clear-traits-btn{
     background:transparent;
-    border:1px solid var(--magenta-dim);
-    color:var(--magenta);
-    text-shadow:0 0 5px var(--magenta-dim);
+    border:1px solid var(--red-dim);
+    color:var(--red);
+    text-shadow:0 0 5px var(--red-dim);
     font-family:var(--font-mono);
     font-size:15px;
     font-weight:700;
@@ -2173,7 +2188,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease;
     margin-left:auto;
   }
-  .clear-traits-btn:hover{ background:var(--magenta-faint); }
+  .clear-traits-btn:hover{ background:var(--red-faint); }
 
   /* One single bar: SEARCH + GO + VIEW on the left, the results status
      text taking up the middle, SORT BY + RESET on the right — all one
@@ -2411,12 +2426,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      juicy button, not just another plain .bar-btn outline. Overrides
      .bar-btn on specificity-tied-but-later source order. */
   @keyframes offer-btn-pulse{
-    0%, 100%{ box-shadow:0 0 10px var(--green-glow), inset 0 0 0 1px rgba(61,243,236,0.15); }
-    50%{ box-shadow:0 0 22px var(--green-glow), inset 0 0 0 1px rgba(61,243,236,0.3); }
+    0%, 100%{ box-shadow:0 0 10px var(--green-glow), inset 0 0 0 1px rgba(62,204,122,0.15); }
+    50%{ box-shadow:0 0 22px var(--green-glow), inset 0 0 0 1px rgba(62,204,122,0.3); }
   }
   .offer-open-modal-btn{
     width:100%;
-    background:var(--green-faint, rgba(61,243,236,0.12));
+    background:var(--green-faint, rgba(62,204,122,0.12));
     border:1px solid var(--green);
     color:var(--green);
     text-shadow:0 0 6px var(--green-glow);
@@ -2547,9 +2562,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Green flash on the field itself each time the number changes —
      "juicy," not just a static grey box. */
   @keyframes offerValuePulse{
-    0%{ box-shadow:0 0 0 rgba(61,243,236,0); border-color:rgba(255,255,255,0.6); }
+    0%{ box-shadow:0 0 0 rgba(62,204,122,0); border-color:rgba(255,255,255,0.6); }
     35%{ box-shadow:0 0 16px 2px var(--green-glow); border-color:var(--green); }
-    100%{ box-shadow:0 0 0 rgba(61,243,236,0); border-color:rgba(255,255,255,0.6); }
+    100%{ box-shadow:0 0 0 rgba(62,204,122,0); border-color:rgba(255,255,255,0.6); }
   }
   .make-offer-input.pulse, .list-price-input.pulse{ animation:offerValuePulse 0.4s ease; }
   .make-offer-input, .list-price-input{
@@ -2771,7 +2786,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-color:var(--green);
     transition:background 0.15s ease, box-shadow 0.15s ease;
   }
-  .cl-block-buy:hover{ background:rgba(61,243,236,0.28); box-shadow:0 0 14px var(--green-glow); }
+  .cl-block-buy:hover{ background:rgba(62,204,122,0.28); box-shadow:0 0 14px var(--green-glow); }
   .cl-block-buy .cl-price{ color:var(--bg); text-shadow:none; }
   .cl-block-buy .cl-market{ color:rgba(8,9,11,0.65); }
   .css-item{ font-size:13px; letter-spacing:0.02em; color:var(--white); text-align:center; font-weight:600; }
@@ -2988,7 +3003,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.65em 1.6em;
     border:1px solid var(--green);
     border-radius:var(--radius);
-    background:var(--green-faint, rgba(61,243,236,0.12));
+    background:var(--green-faint, rgba(62,204,122,0.12));
     color:var(--green);
     text-shadow:none;
     font-family:var(--font-mono);
@@ -3428,7 +3443,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     appearance:none;
     transition:border-color 0.15s ease, background 0.15s ease;
   }
-  .detail-share-btn:hover{ background:rgba(61,243,236,0.1); border-color:var(--green); }
+  .detail-share-btn:hover{ background:rgba(62,204,122,0.1); border-color:var(--green); }
   @media (max-width:760px){
     .detail-back-btn-top{ font-size:12px; padding:0.4em 0.7em; }
     .detail-share-btn{ font-size:12px; padding:0.4em 0.7em; }
@@ -5795,13 +5810,39 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   // Shared by the S0RT BY and F!LTER BY TRA!TS flyouts (both use the same
-  // .traits-flyout-cats/.traits-flyout-vals structure): aligns the value
-  // pane's top with the hovered/clicked category button's own position, so
-  // the mouse can travel straight sideways into it instead of diagonally
-  // up-and-right to reach a pane pinned at the top of a tall panel. Clamped
-  // so a category near the bottom of its list still keeps the value pane
-  // fully inside the flyout instead of running off past its bottom edge.
+  // .traits-flyout-cats/.traits-flyout-vals structure).
+  //
+  // Desktop (min-width:701px, see #traitsFlyout > .traits-flyout-vals'
+  // own CSS): the value pane is a real dropdown anchored top:100% under
+  // the whole category strip, not a sibling row in the vertical mobile
+  // list — so it needs a horizontal offset instead, lining its left edge
+  // up under the clicked category chip ("come up straight under that
+  // selection") rather than always the strip's own left edge. Setting an
+  // inline top style here would win over that CSS top:100% (inline style
+  // always beats a stylesheet rule) and render the pane back at the
+  // strip's own top edge, overlapping the categories instead of sitting
+  // below them — confirmed live, that's exactly what an unconditional
+  // catBtn.offsetTop assignment used to do. So top is left untouched at
+  // this width, and any earlier inline value is cleared.
+  //
+  // Below 701px, .traits-flyout-vals is position:static (categories list
+  // vertically, values expand inline as an accordion) — left has no
+  // effect there, so instead this aligns the pane's top with the
+  // hovered/clicked category's own position, same reasoning, just on the
+  // vertical axis: the mouse travels straight sideways into it instead of
+  // diagonally up-and-right to reach a pane pinned at the top of a tall
+  // panel. Both offsets are clamped so a category near the end of its
+  // list still keeps the value pane fully inside the flyout instead of
+  // running off past its edge.
   function positionFlyoutVals(flyoutEl, valsEl, catBtn){
+    if (window.innerWidth > 700){
+      valsEl.style.top = '';
+      if (!catBtn){ valsEl.style.left = '0px'; return; }
+      var maxLeft = Math.max(0, flyoutEl.clientWidth - valsEl.offsetWidth);
+      valsEl.style.left = Math.min(catBtn.offsetLeft, maxLeft) + 'px';
+      return;
+    }
+    valsEl.style.left = '';
     if (!catBtn){ valsEl.style.top = '0px'; return; }
     var maxTop = Math.max(0, flyoutEl.clientHeight - valsEl.scrollHeight);
     valsEl.style.top = Math.min(catBtn.offsetTop, maxTop) + 'px';
