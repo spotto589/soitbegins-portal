@@ -461,44 +461,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   @keyframes flock-count-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
   .flock-count-loading{ animation:flock-count-pulse 1.1s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce){ .flock-count-loading{ animation:none; opacity:0.6; } }
-  /* MY P!GE0NS — the one box on this whole tab that's actually about YOU,
-     so it gets real presence: full-width, the Σκύλλα padlock as a real
-     background image (not a small icon), cyan/magenta glow matching the
-     mark's own two-tone colour. A dark gradient over the left ~55% keeps
-     the label readable without just tinting the whole image flat. */
-  #flockMyFlockBox{
-    grid-column:1 / -1;
-    position:relative;
-    overflow:hidden;
-    min-height:6rem;
-    background:
-      linear-gradient(100deg, rgba(8,8,11,0.94) 38%, rgba(8,8,11,0.65) 62%, rgba(8,8,11,0.2) 88%),
-      url('/assets/icons/icon-512.png');
-    background-size:auto 100%, auto 165%;
-    background-position:left center, right -10px center;
-    background-repeat:no-repeat;
-    border-color:var(--cyan-dim);
-    box-shadow:inset 0 0 0 1px rgba(255,51,204,0.16), 0 0 26px rgba(61,243,236,0.14);
-    transition:border-color 0.15s ease, box-shadow 0.25s ease;
-  }
-  #flockMyFlockBox:hover{
-    border-color:var(--cyan);
-    box-shadow:inset 0 0 0 1px rgba(255,51,204,0.3), 0 0 34px rgba(61,243,236,0.26);
-  }
+  /* MY P!GE0NS — full-width (spans both grid columns) since it's the one
+     box on this tab actually about YOU, but otherwise the exact same
+     plain panel as every other box here now — was a full-bleed padlock
+     background image with a coloured glow, reported live as looking
+     wrong/out of place next to the plain boxes around it. */
+  #flockMyFlockBox{ grid-column:1 / -1; }
   #flockMyFlockBox .flock-account-box-row{ justify-content:flex-start; text-align:left; }
-  #flockMyFlockBox .flock-account-box-label{ font-size:17px; letter-spacing:0.16em; text-shadow:0 2px 10px rgba(0,0,0,0.85); }
-  @media (max-width:480px){
-    /* Vertical crop reads better than a wide horizontal one once this
-       drops to a single narrow column — same image, just repositioned so
-       the padlock itself stays in frame instead of getting pushed mostly
-       off the right edge. */
-    #flockMyFlockBox{
-      min-height:7.5rem;
-      background-size:auto 260%, 230% auto;
-      background-position:left center, center 78%;
-    }
-    #flockMyFlockBox .flock-account-box-row{ justify-content:center; text-align:center; }
-  }
 
   /* ---- Σκύλλα (signed-in FL0CK) tab theme — the same faint circuit-
      glitch texture .sw-panel-signal/-target already use elsewhere on the
@@ -2000,10 +1969,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       border:1px solid var(--border-dim);
       border-radius:var(--radius);
       text-align:center;
-      /* Same 13px S0RT BY's own strip uses (.traits-flyout-val's base
-         font-size, never overridden there) — was 11px, noticeably
-         smaller side by side. */
-      font-size:13px;
+      /* Same 15px S0RT BY's own strip uses (.traits-flyout-val's base
+         font-size, never overridden there) — this id+class override was
+         still hardcoding the old 13px after the base class was bumped,
+         so F!LTER BY TRA!TS' own chips silently stayed smaller than
+         S0RT BY's right next to them. */
+      font-size:15px;
       padding:0.6em 0.9em;
       white-space:nowrap;
       overflow:hidden;
@@ -2462,7 +2433,24 @@ const SWAP_HTML = `<!DOCTYPE html>
      own) and no MAKE 0FFER (offering to yourself doesn't mean anything),
      just a plain readout so the box isn't blank. */
   .thumb-offer-own{ text-align:center; }
-  .own-listing-note{ color:#fff; font-weight:700; font-size:13px; letter-spacing:0.05em; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-transform:uppercase; }
+  /* Same box size/shape as a lone 0FFER button (border, padding, 17px) —
+     was plain unboxed 13px text, so a card that's already yours looked
+     like a different, smaller kind of thing than every other card's
+     action box instead of just a neutral readout in the same spot. */
+  .own-listing-note{
+    display:block;
+    width:100%;
+    box-sizing:border-box;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    padding:1em 0.8em;
+    color:#fff;
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:17px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+  }
   /* Real XRPL NFTokenCreateOffer Expiration countdown (see
      listingCountdownText) — fine print under the price, not competing
      with it, same fine-print grey used for the issuer address/trustline
@@ -3082,14 +3070,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-calc-panel{
     width:min(440px, 100%);
     text-align:center;
-    background:linear-gradient(160deg, rgba(61,243,236,0.16), var(--panel-bg-solid) 55%);
-    border:1px solid var(--pigeon-purple);
+    background:var(--panel-bg-solid);
+    border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    box-shadow:0 0 50px var(--pigeon-purple-glow), 0 10px 30px rgba(0,0,0,0.6);
+    box-shadow:0 10px 30px rgba(0,0,0,0.6);
     padding:1.75rem 1.5rem;
     animation:offer-confirm-pop 0.2s ease;
   }
-  .pigeons-calc-panel .node-eyebrow{ color:var(--pigeon-purple); text-shadow:0 0 8px var(--pigeon-purple-glow); margin-bottom:1.25rem; }
+  .pigeons-calc-panel .node-eyebrow{ color:var(--grey); margin-bottom:1.25rem; }
   .pigeons-calc-panel .pigeons-bar-rate-row{ justify-content:center; margin-bottom:1.1rem; }
   .pigeons-calc-panel .pigeons-bar-rate-value{ font-size:15px; }
   .pigeons-calc-panel .pigeons-bar-calc{ padding:1.1em 1.1em; }
@@ -3874,10 +3862,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   .confirm-pigeon-num-clickable:hover{ text-decoration:underline; }
   /* ---- 0FFER CONFIRMATION — a real second popup (stacked on top of the
      amount-entry one, see showOfferConfirm), not a showScreen navigation
-     away from the grid. Purple/collection-themed and a little louder
-     than .amount-entry-panel's own plain dark box — meant to feel like a
-     real, exciting moment ("you're about to make a real offer"), not
-     just another quiet form. ---- */
+     away from the grid. Same plain dark panel every other popup on this
+     page uses now (.amount-entry-panel's own treatment) — was a purple
+     gradient/glow "exciting moment" panel, reported live as "shiny",
+     out of step with the rest of the site and every other, plainer
+     popup right next to it. ---- */
   @keyframes offer-confirm-pop{
     from{ transform:scale(0.9); opacity:0; }
     to{ transform:scale(1); opacity:1; }
@@ -3895,21 +3884,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   .offer-confirm-panel{
     width:min(440px, 100%);
     text-align:center;
-    background:linear-gradient(160deg, rgba(61,243,236,0.16), var(--panel-bg-solid) 55%);
-    border:1px solid var(--pigeon-purple);
+    background:var(--panel-bg-solid);
+    border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    box-shadow:0 0 50px var(--pigeon-purple-glow), 0 10px 30px rgba(0,0,0,0.6);
+    box-shadow:0 10px 30px rgba(0,0,0,0.6);
     padding:1.75rem 1.5rem;
     animation:offer-confirm-pop 0.2s ease;
   }
-  .offer-confirm-panel .node-eyebrow{ color:var(--pigeon-purple); text-shadow:0 0 8px var(--pigeon-purple-glow); font-size:15px; margin-bottom:1.5rem; }
-  .offer-confirm-panel .confirm-pigeon-num{ color:var(--pigeon-purple); text-shadow:0 0 12px var(--pigeon-purple-glow); }
+  .offer-confirm-panel .node-eyebrow{ color:var(--grey); font-size:15px; margin-bottom:1.5rem; }
+  .offer-confirm-panel .confirm-pigeon-num{ color:var(--white); }
   /* Combined selector, not .offer-confirm-xaman-btn alone — needs to
      out-specificity .action-btn's own background/border/color, which is
      declared later in the file and would otherwise win on source order
      despite equal specificity. */
-  .action-btn.offer-confirm-xaman-btn{ background:var(--pigeon-purple); border-color:var(--pigeon-purple); color:#fff; text-shadow:none; }
-  .action-btn.offer-confirm-xaman-btn:hover{ background:var(--magenta); border-color:var(--magenta); }
+  /* Black text on the filled colour, not white — white-on-bright-cyan
+     was genuinely hard to read (both pale/high-lightness), reported live
+     as "i cannot read these buttons". Same black-on-fill pattern every
+     other solid CTA on the site already uses (BUY N0W, CANCEL/OFFER
+     hover, etc). */
+  .action-btn.offer-confirm-xaman-btn{ background:var(--pigeon-purple); border-color:var(--pigeon-purple); color:#000; }
+  .action-btn.offer-confirm-xaman-btn:hover{ background:var(--magenta); border-color:var(--magenta); color:#000; }
   /* ---- BUY $P!GE0NS swap panel — a transaction window, not a generic
      trading widget: same purple $PIGEONS theme as the trustline banner/
      detail-screen listing box, same .sw-panel card + .detail-field/
@@ -4195,12 +4189,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--cyan-dim);
     color:var(--cyan);
     font-family:var(--font-mono);
-    font-size:12px;
-    letter-spacing:0.12em;
-    padding:0.75em 1.4em;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.04em;
+    padding:0.85em 1.4em;
     cursor:pointer;
     text-transform:uppercase;
-    text-shadow:0 0 6px var(--cyan-glow);
     border-radius:var(--radius);
     transition:background 0.15s ease, border-color 0.15s ease;
   }
@@ -10840,17 +10834,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // OTHER field) never fires that field's own 'input' listener, so there's
   // no risk of these two calling each other back and forth — no sync flag
   // needed.
-  // Button's own label doubles as a live summary once both sides actually
-  // have a value — "____ XRP <> ___ $PIGEONS" — so the collapsed state
-  // alone tells you what you last calculated without opening it again.
-  // Falls back to the plain title whenever either side is empty (nothing
-  // useful to summarize yet).
+  // Kept as a plain, fixed title always — was rewriting itself into a
+  // live "____ XRP <> ___ $PIGEONS" summary once both sides had a value,
+  // which read as the button breaking/glitching once you actually typed
+  // in it rather than a useful summary.
   function updateCalcToggleLabel(){
-    var xrp = el.pigeonsCalcXrpInput.value.trim();
-    var pigeons = el.pigeonsCalcPigeonsInput.value.trim();
-    el.pigeonsCalcToggleLabel.textContent = (xrp && pigeons)
-      ? (xrp + ' XRP <> ' + pigeons + ' $P!GE0NS')
-      : 'EXCHANGE CALCULAT0R';
+    el.pigeonsCalcToggleLabel.textContent = 'EXCHANGE CALCULAT0R';
   }
   function updatePigeonsCalcFromXrp(){
     var xrpValue = Number(el.pigeonsCalcXrpInput.value.replace(/,/g, ''));
