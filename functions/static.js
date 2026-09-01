@@ -5314,6 +5314,13 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <button class="bar-btn" id="detailScyllaDelistBtn" style="display:none;">CANCEL</button>
               </div>
               <div class="listing-countdown" id="detailScyllaCountdown" style="display:none;"></div>
+              <!-- Owned + unlisted — real L!ST/TRANSFER buttons side by
+                   side now instead of the plain "!N Y0UR FL0CK" text
+                   label (see updateScyllaListing). -->
+              <div class="owned-action-row" id="detailScyllaOwnedRow" style="display:none;">
+                <button class="bar-btn" id="detailScyllaListBtn">L!ST</button>
+                <button class="bar-btn" id="detailScyllaTransferBtn">TRANSFER</button>
+              </div>
               <div class="thumb-offer-row" id="detailMakeOfferRow" style="display:none;">
                 <div class="make-offer-input-wrap">
                   <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
@@ -6077,7 +6084,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
    'detailNum','detailShareBtn','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
-   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
+   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn',
    'backToBrowseBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
@@ -11961,6 +11968,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.detailScyllaDelistBtn.addEventListener('click', function(){
     if (state.currentDetail) openDelistConfirm(state.currentDetail);
   });
+  // Same reasoning as detailScyllaDelistBtn above — detailScyllaOwnedRow
+  // lives outside el.resultsArea/el.myPigeonsList, so wireResultClicks'
+  // own .list-open-modal-btn/.transfer-open-modal-btn handling never
+  // sees these.
+  el.detailScyllaListBtn.addEventListener('click', function(){
+    if (state.currentDetail) openAmountEntryModal('list', state.currentDetail);
+  });
+  el.detailScyllaTransferBtn.addEventListener('click', function(){
+    if (state.currentDetail) openAmountEntryModal('transfer', state.currentDetail);
+  });
   function updateScyllaListing(p){
     var listing = p && p.scyllaListing;
     var notOwn = !!(p && p.owner && p.owner !== MY_WALLET);
@@ -11975,14 +11992,18 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailScyllaPrice.textContent = isOwn ? 'Y0UR L!ST!NG :: ' + compactPigeonsNumber(listing.price) : fmtPigeons(listing.price);
       el.detailScyllaBuyBtn.style.display = notOwn ? '' : 'none';
       el.detailScyllaDelistBtn.style.display = isOwn ? '' : 'none';
+      el.detailScyllaOwnedRow.style.display = 'none';
       el.detailScyllaListingRow.classList.remove('not-listed');
       var detailCountdown = listingCountdownText(listing.expiration);
       el.detailScyllaCountdown.textContent = detailCountdown;
       el.detailScyllaCountdown.style.display = detailCountdown ? '' : 'none';
     } else {
-      el.detailScyllaPrice.textContent = isOwn ? '!N Y0UR FL0CK' : 'N0 L!ST!NG';
+      // Owned + unlisted — real L!ST/TRANSFER buttons (detailScyllaOwnedRow)
+      // instead of the plain "!N Y0UR FL0CK" text label this used to be.
+      el.detailScyllaPrice.textContent = isOwn ? 'N0T L!STED' : 'N0 L!ST!NG';
       el.detailScyllaBuyBtn.style.display = 'none';
       el.detailScyllaDelistBtn.style.display = 'none';
+      el.detailScyllaOwnedRow.style.display = isOwn ? '' : 'none';
       el.detailScyllaListingRow.classList.add('not-listed');
       el.detailScyllaCountdown.style.display = 'none';
     }
