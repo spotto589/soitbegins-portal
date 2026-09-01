@@ -6005,7 +6005,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     <span class="tb-toggle">V!EW ▲</span>
   </div>
 
-<script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
 <script>
 (function(){
 
@@ -6018,11 +6017,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   // fresh load of this page start from the same place, every time.
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   window.scrollTo(0, 0);
-
-  // Same public OAuth-login key every other page already hardcodes
-  // (board.js, scylla.js, kingdom.js, mainframe.js, glitch.js) — the
-  // client-facing half of the Xaman app, safe to be public.
-  var XAMAN_API_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
 
   // Wallet of whoever is currently signed in via the shared pigeon_session
   // cookie (set by /board's connect flow, or by the CONNECT SCYLLA button
@@ -8911,9 +8905,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.crownPeriodSelect.addEventListener('change', loadCrownLeaderboard);
 
-  // ---- MY PIGEONS — CONNECT SCYLLA reuses the exact same XummPkce login
-  // /board already uses (same API key, same /api/connect, same
-  // pigeon_session cookie) rather than a second wallet-connect system. ----
+  // ---- MY PIGEONS — CONNECT SCYLLA (see startAuthorize's own comment
+  // further down for the real Xaman SignIn payload this uses). ----
   var myPigeonsData = null; // null = not fetched yet
   var myListedData = {};    // nftId -> { price, currency, offerId, expiration } — real on-ledger sell offers, not a stored flag
   var offersByNftId = {};   // nftId -> [{ offerId, buyer, buyerShort, price, createdAt }] — real on-ledger buy offers received
@@ -9050,7 +9043,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // The CONNECT box itself stays hidden here now — auto-login already
     // fires from the topTabs click handler, so there's nothing for a
     // manual CONNECT button to add on a normal open. It only reappears
-    // if that login attempt actually fails (see getXummAuth's error
+    // if that login attempt actually fails (see startAuthorize's error
     // paths below), as a manual retry.
   }
   // LIST/DELIST/ACCEPT OFFER click + input handling for this container is
@@ -9207,13 +9200,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   renderSimpleOffer();
 
-  // ---- CONNECT SCYLLA — same XummPkce OAuth login /board uses, redirected
-  // back to /static instead. Several entry points share this one flow (the MY
-  // PIGEONS tab's own CONNECT Σκύλλα button, the trustline banner's LOGIN
-  // button, an unauthenticated SEND on DATABASE) — signing in always lands
-  // on MY PIGEONS afterward, since that's where your pigeons AND your
-  // received offers are. ----
-  var xummAuth = null;
+  // ---- CONNECT SCYLLA — a real Xaman SignIn payload, not the old XummPkce
+  // OAuth login. Several entry points share this one flow (the MY PIGEONS
+  // tab's own CONNECT Σκύλλα button, the trustline banner's LOGIN button,
+  // an unauthenticated SEND on DATABASE) — signing in always lands on MY
+  // PIGEONS afterward, since that's where your pigeons AND your received
+  // offers are.
+  //
+  // Reported live as wanting login to work like xrp.cafe's, where even
+  // the FIRST action on desktop pushes straight to the phone: OAuth never
+  // touches the payload/webhook pipeline at all (see xaman-webhook.js's
+  // own comment), so a wallet's push token could only ever get earned
+  // starting from its SECOND transaction through this app — never login,
+  // and never the first offer/buy/list either. A real SignIn payload
+  // resolves through that exact same webhook, so THIS is what earns the
+  // token immediately — the one-time QR/tab moment here is what makes
+  // every real action afterward, including the very first one, able to
+  // push straight to the phone instead of needing its own QR/tab. ----
+  var signinXamanTab = null;
+  var signinUuid = null;
+  var signinPollTimer = null;
   function resetLoginButtons(){
     el.connectScyllaBtn.disabled = false;
     el.pigeonsLoginBtn.disabled = false;
@@ -9223,13 +9229,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // manual retry next to the error text in el.connectStatus.
     if (!MY_WALLET) el.myPigeonsConnect.style.display = '';
   }
-  // XummPkce's own 'error' event doesn't reliably fire for every real
-  // failure mode (a blocked popup, a Xaman deep link that silently never
-  // resolves) — reported live as "the wallet never loads, I have to
-  // refresh the page" after clicking connect. A real timeout backstop so
-  // CONNECT!NG can never sit stuck forever with no way to retry short of
-  // a full reload, regardless of which specific way the third-party SDK
-  // failed silently.
+  // A real timeout backstop so CONNECT!NG can never sit stuck forever
+  // with no way to retry short of a full reload, regardless of which
+  // specific way the sign request stalls — same reasoning as every other
+  // Xaman flow in this app.
   var AUTHORIZE_TIMEOUT_MS = 25000;
   var authorizeTimeoutTimer = null;
   function clearAuthorizeTimeout(){
@@ -9242,51 +9245,64 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.connectStatus.textContent = 'ERR://T!MED 0UT — TRY AGA!N';
       resetLoginButtons();
     }, AUTHORIZE_TIMEOUT_MS);
-    getXummAuth().authorize();
-  }
-  function getXummAuth(){
-    if (!xummAuth){
-      xummAuth = new XummPkce(XAMAN_API_KEY, {
-        implicit: true,
-        rememberJwt: false,
-        redirectUrl: window.location.origin + '/static'
-      });
-      xummAuth.on('error', function(){
+    // Opened synchronously in the original click handler (a real user
+    // gesture) so it's never popup-blocked — same pattern every other
+    // Xaman sign flow in this app already uses.
+    signinXamanTab = openXamanPopup();
+    fetch('/api/xaman-signin-prepare', { method: 'POST' })
+      .then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+      .then(function(res){
+        if (!res.ok || !res.data.ok){
+          clearAuthorizeTimeout();
+          closeXamanTabAndFocus(signinXamanTab);
+          signinXamanTab = null;
+          el.connectStatus.textContent = 'ERR://C0NNECT!0N FA!LED';
+          resetLoginButtons();
+          return;
+        }
+        signinUuid = res.data.uuid;
+        navigateXamanPopup(signinXamanTab, res.data.next.always);
+        el.connectStatus.innerHTML = 'Σκύλλα://S!GNAL :: WA!T!NG F0R S!GNATURE... <a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
+        pollSigninStatus();
+      }).catch(function(){
         clearAuthorizeTimeout();
-        el.connectStatus.textContent = 'ERR://L0G!N AB0RTED';
+        closeXamanTabAndFocus(signinXamanTab);
+        signinXamanTab = null;
+        el.connectStatus.textContent = 'ERR://S!GNAL_L0ST';
         resetLoginButtons();
       });
-      xummAuth.on('success', function(){
-        clearAuthorizeTimeout();
-        xummAuth.state().then(function(authState){
-          var jwt = authState && authState.jwt;
-          if (!jwt){
-            el.connectStatus.textContent = 'ERR://N0 WALLET DATA';
-            resetLoginButtons();
-            return;
-          }
-          fetch('/api/connect', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ jwt: jwt })
-          }).then(function(r){ return r.json(); }).then(function(data){
-            if (data.ok){
-              window.location.href = '/static?connected=1&tab=mypigeons';
-            } else {
-              el.connectStatus.textContent = 'ERR://C0NNECT!0N FA!LED';
-              resetLoginButtons();
-            }
-          }).catch(function(){
-            el.connectStatus.textContent = 'ERR://S!GNAL_L0ST';
-            resetLoginButtons();
-          });
-        });
+  }
+  function pollSigninStatus(){
+    if (signinPollTimer) clearTimeout(signinPollTimer);
+    if (!signinUuid) return;
+    fetch('/api/xaman-signin-status?uuid=' + encodeURIComponent(signinUuid))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'signed'){
+          clearAuthorizeTimeout();
+          closeXamanTabAndFocus(signinXamanTab);
+          signinXamanTab = null;
+          window.location.href = '/static?connected=1&tab=mypigeons';
+          return;
+        }
+        if (data.status === 'rejected'){
+          clearAuthorizeTimeout();
+          el.connectStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
+          resetLoginButtons();
+          return;
+        }
+        if (data.status === 'expired'){
+          clearAuthorizeTimeout();
+          el.connectStatus.textContent = 'ERR://REQUEST EXP!RED — TRY AGA!N.';
+          resetLoginButtons();
+          return;
+        }
+        signinPollTimer = setTimeout(pollSigninStatus, 2000);
+      }).catch(function(){
+        signinPollTimer = setTimeout(pollSigninStatus, 3000);
       });
-    }
-    return xummAuth;
   }
   if (el.connectScyllaBtn){
-    getXummAuth(); // picks up a pending mobile return-from-Xaman redirect automatically
     el.connectScyllaBtn.addEventListener('click', function(){
       el.connectScyllaBtn.disabled = true;
       el.connectStatus.textContent = '';
@@ -9725,8 +9741,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // button yourself and re-finding this same Pigeon after. Now it kicks
   // off the real Σκύλλα login instead, remembers which Pigeon you were
   // trying to buy across the login redirect (a real page navigation —
-  // see getXummAuth's own success handler — so in-memory state doesn't
-  // survive it, only sessionStorage does), and resumes straight into
+  // see pollSigninStatus's own success handler — so in-memory state
+  // doesn't survive it, only sessionStorage does), and resumes straight into
   // this same confirm flow once you're back. See the resumePendingBuy()
   // call near the bottom of this script for the other half.
   var PENDING_BUY_STORAGE_KEY = 'skyllaPendingBuyNftId';
