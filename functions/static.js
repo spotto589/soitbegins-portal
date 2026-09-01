@@ -6670,7 +6670,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // made SH0W MY NFTs feel like it "never comes up" until a manual page
   // refresh. A real timeout turns that into an actual failure this
   // function can retry on, instead of silence.
-  var API_TIMEOUT_MS = 15000;
+  // Bumped from 15s to 25s — directly measured the real wallet= lookup
+  // taking 12-18s for a large-holder wallet even after the server-side
+  // speed fixes (raised XRPL scan concurrency, longer discovery cache).
+  // At 15s the client could abort a request that was about to succeed,
+  // then retry straight into the same slow response again — reported
+  // live as MY P!GE0NS "still getting stuck" even after those fixes.
+  var API_TIMEOUT_MS = 25000;
   function apiWithRetry(params, retriesLeft){
     if (retriesLeft === undefined) retriesLeft = 2;
     params = Object.assign({ collection: state.collection }, params);
