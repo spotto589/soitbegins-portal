@@ -96,8 +96,8 @@ const SWAP_HTML = `<!DOCTYPE html>
        .pigeons-green-num/greenNum()) and the buy/available/real-money
        actions that already leaned on the same "this is real and
        positive" meaning before this session's palette work. */
-    --green:#3ecc7a;
-    --green-glow:rgba(62,204,122,0.35);
+    --green:#34ff85;
+    --green-glow:rgba(52,255,133,0.45);
     /* A real colour too, not an alias — reserved for destructive/negative
        actions (cancel, delist) so they read distinctly from the pink
        brand accent. */
@@ -1173,9 +1173,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:13px;
-    letter-spacing:0.1em;
-    padding:0.85em 1.2em;
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    padding:0.95em 1.3em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
@@ -2410,9 +2411,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:0 0 5px var(--green-glow);
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:16px;
-    letter-spacing:0.05em;
-    padding:0.95em 0.8em;
+    font-size:17px;
+    letter-spacing:0.03em;
+    padding:1em 0.8em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
@@ -2426,20 +2427,20 @@ const SWAP_HTML = `<!DOCTYPE html>
      juicy button, not just another plain .bar-btn outline. Overrides
      .bar-btn on specificity-tied-but-later source order. */
   @keyframes offer-btn-pulse{
-    0%, 100%{ box-shadow:0 0 10px var(--green-glow), inset 0 0 0 1px rgba(62,204,122,0.15); }
-    50%{ box-shadow:0 0 22px var(--green-glow), inset 0 0 0 1px rgba(62,204,122,0.3); }
+    0%, 100%{ box-shadow:0 0 10px var(--green-glow), inset 0 0 0 1px rgba(52,255,133,0.15); }
+    50%{ box-shadow:0 0 22px var(--green-glow), inset 0 0 0 1px rgba(52,255,133,0.3); }
   }
   .offer-open-modal-btn{
     width:100%;
-    background:var(--green-faint, rgba(62,204,122,0.12));
+    background:var(--green-faint, rgba(52,255,133,0.12));
     border:1px solid var(--green);
     color:var(--green);
     text-shadow:0 0 6px var(--green-glow);
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:16px;
-    letter-spacing:0.05em;
-    padding:0.95em 0.8em;
+    font-size:17px;
+    letter-spacing:0.03em;
+    padding:1em 0.8em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
@@ -2562,9 +2563,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Green flash on the field itself each time the number changes —
      "juicy," not just a static grey box. */
   @keyframes offerValuePulse{
-    0%{ box-shadow:0 0 0 rgba(62,204,122,0); border-color:rgba(255,255,255,0.6); }
+    0%{ box-shadow:0 0 0 rgba(52,255,133,0); border-color:rgba(255,255,255,0.6); }
     35%{ box-shadow:0 0 16px 2px var(--green-glow); border-color:var(--green); }
-    100%{ box-shadow:0 0 0 rgba(62,204,122,0); border-color:rgba(255,255,255,0.6); }
+    100%{ box-shadow:0 0 0 rgba(52,255,133,0); border-color:rgba(255,255,255,0.6); }
   }
   .make-offer-input.pulse, .list-price-input.pulse{ animation:offerValuePulse 0.4s ease; }
   .make-offer-input, .list-price-input{
@@ -2786,7 +2787,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-color:var(--green);
     transition:background 0.15s ease, box-shadow 0.15s ease;
   }
-  .cl-block-buy:hover{ background:rgba(62,204,122,0.28); box-shadow:0 0 14px var(--green-glow); }
+  .cl-block-buy:hover{ background:rgba(52,255,133,0.28); box-shadow:0 0 14px var(--green-glow); }
   .cl-block-buy .cl-price{ color:var(--bg); text-shadow:none; }
   .cl-block-buy .cl-market{ color:rgba(8,9,11,0.65); }
   .css-item{ font-size:13px; letter-spacing:0.02em; color:var(--white); text-align:center; font-weight:600; }
@@ -3000,25 +3001,29 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-balance-buy{
     display:inline-block;
     margin-top:0.4rem;
-    padding:0.65em 1.6em;
+    padding:0.85em 1.8em;
     border:1px solid var(--green);
     border-radius:var(--radius);
-    background:var(--green-faint, rgba(62,204,122,0.12));
+    background:var(--green-faint, rgba(52,255,133,0.12));
     color:var(--green);
     text-shadow:none;
     font-family:var(--font-mono);
-    font-size:16px;
+    font-size:17px;
     font-weight:700;
-    letter-spacing:0.08em;
+    letter-spacing:0.05em;
     text-decoration:none;
-    transition:background 0.15s ease, color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+    transition:background 0.15s ease, color 0.15s ease;
     /* Now a <button> (used to be an <a> straight out to DexScreener) —
        opens the in-site swap panel instead. Reset button-only defaults so
        it renders identically to the old link. */
     appearance:none;
     cursor:pointer;
   }
-  .pigeons-bar-balance-buy:hover{ background:var(--green); color:#000; text-shadow:none; transform:translate(-3px,-3px); box-shadow:5px 5px 0 var(--bg); }
+  /* Simple fill-on-hover, no offset shadow/transform — the harder
+     brutalist hover (translate + hard drop shadow) read as messy on a
+     small button rather than deliberate, so this stays plain: same
+     recipe as .thumb-buy-btn's own hover. */
+  .pigeons-bar-balance-buy:hover{ background:var(--green); color:#000; text-shadow:none; }
   /* XRP <-> $PIGEONS calculator — title, DEXSCREENER link, and the live
      price all sit on one line above the calculator itself; the calculator
      row underneath is deliberately bare — two type-in boxes and a swap
@@ -3443,7 +3448,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     appearance:none;
     transition:border-color 0.15s ease, background 0.15s ease;
   }
-  .detail-share-btn:hover{ background:rgba(62,204,122,0.1); border-color:var(--green); }
+  .detail-share-btn:hover{ background:rgba(52,255,133,0.1); border-color:var(--green); }
   @media (max-width:760px){
     .detail-back-btn-top{ font-size:12px; padding:0.4em 0.7em; }
     .detail-share-btn{ font-size:12px; padding:0.4em 0.7em; }
