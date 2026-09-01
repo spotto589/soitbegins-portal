@@ -295,7 +295,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   h1{
     font-family:var(--font-display);
     font-weight:700;
-    font-size:clamp(40px,9vw,104px);
+    /* 40px used to be a hard floor regardless of viewport — fine down to
+       roughly tablet width, but on an actual phone (~375px) 9vw only
+       computes to ~34px, so the clamp pinned it back up to 40px anyway:
+       "Σκύλλα://S!GNAL" at a fixed 40px ran edge-to-edge with no
+       breathing room, reported live as not fitting properly. 28px lets
+       it actually keep shrinking with the viewport below that point. */
+    font-size:clamp(28px,9vw,104px);
     line-height:0.94;
     letter-spacing:0.01em;
     color:var(--white);
@@ -1304,6 +1310,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      white-space:normal (already set above) lets the longer labels wrap
      to a second line rather than forcing the button wider. */
   @media (max-width:700px){
+    /* .edition-toggle itself was still flex:0 0 auto (sized to its own
+       content) at this width — its buttons' own flex:1 1 0 only divides
+       whatever width the CONTAINER actually has, so with no definite
+       width on the container itself, the whole row just sized to its
+       three buttons' combined content width and ran off both edges of
+       the screen (confirmed live: "ALL (1-3015)" cut off on the left,
+       "2ND ED!T!0N (1516-3015)" cut off on the right). width:100% here
+       is what makes flex:1 1 0 below mean anything. */
+    .edition-toggle{ width:100%; }
     .edition-btn{ width:auto; flex:1 1 0; padding:0.7em 0.3em; font-size:11px; }
     /* SORT BY/ADD TRAITS centering on mobile lives with
        .db-config-traits-group's own definition above (near line 828), not
@@ -4601,7 +4616,7 @@ const SWAP_HTML = `<!DOCTYPE html>
          SEARCH!NG $P!GE0NS DATABASE (see #collectionDetailsPanel further
          down), since the carousel's own FL00R/!TEMS/H0LDERS/24H stats are
          DATABASE-specific numbers, not something every tab needs above it. -->
-    <div class="pigeons-merged-panel">
+    <div class="pigeons-merged-panel" id="pigeonsMergedPanel">
 
     <div class="pigeons-bar pigeons-bar-issuer">
       <div class="pigeons-bar-main-row">
@@ -5796,7 +5811,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
-   'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList',
+   'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
    'salesPanelWrap',
@@ -6093,14 +6108,19 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     state.activeTab = tab;
-    // FL0CK shows the exact same trustline banner as every other tab now
-    // (no more slimmed-down version) — .paws-view still exists purely to
-    // hide the # 0R WALLET search box here (this page only ever shows
-    // your own Pigeons, see the .paws-view CSS rule near the top of the
-    // file). A body class, not a per-element JS toggle, so it can't be
-    // fought by anything else's own async display writes running after
-    // this.
+    // .paws-view still exists purely to hide the # 0R WALLET search box
+    // on PλWS (this page only ever shows your own Pigeons, see the
+    // .paws-view CSS rule near the top of the file). A body class, not a
+    // per-element JS toggle, so it can't be fought by anything else's own
+    // async display writes running after this.
     document.body.classList.toggle('paws-view', tab === 'mypigeons');
+    // Trustline banner — DATABASE only now. Was shown on every tab
+    // (deliberately, per an earlier decision — "no more slimmed-down
+    // version") but reported live as belonging only on the collection
+    // page; login is still reachable from the Σκύλλα tab's own
+    // .flock-tab-login label either way, so this loses no real entry
+    // point.
+    el.pigeonsMergedPanel.style.display = tab === 'database' ? '' : 'none';
     // Covers every path that can leave/re-enter PλWS, including the
     // DATABASE tab click while scoped (exitWalletScope + startCollection-
     // Browse never call browseOwnerCollection, so its own call to this
