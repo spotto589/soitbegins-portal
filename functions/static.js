@@ -6564,6 +6564,27 @@ const SWAP_HTML = `<!DOCTYPE html>
       scrollActiveTabPanelIntoView('database');
       return;
     }
+    // Returning to DATABASE from another tab should show the real default
+    // landing state (listed Pigeons, cheapest first) again, not wherever
+    // browsing happened to drift to — reported live as listed Pigeons not
+    // coming up first when navigating back in. showTab's own "only fetch
+    // the first time" guard (state.databaseLoaded) means a plain tab
+    // switch back normally does nothing but toggle visibility, so a sort
+    // change from earlier (a manual pick, or loadMoreCollection's own
+    // auto-fallback once floor listings ran out — see its own comment)
+    // would otherwise just sit there instead of resetting. Only refetches
+    // when something has actually drifted, not on every return.
+    if (tab === 'database' && state.activeTab !== 'database' && !state.scope &&
+        (state.sort !== 'SCYLLA_PRICE_ASC' || !state.scyllaListedOnly)){
+      state.sort = 'SCYLLA_PRICE_ASC';
+      state.scyllaListedOnly = true;
+      renderSortTag();
+      el.statScyllaListedTile.classList.toggle('scylla-active', true);
+      showTab('database');
+      startCollectionBrowse();
+      scrollActiveTabPanelIntoView('database');
+      return;
+    }
     showTab(tab, tab === 'mypigeons');
   });
 

@@ -1924,6 +1924,33 @@ export async function fetchDeeptideNftDetail(nftId) {
   }
 }
 
+// Short-lived (60s) cache + the wrapper the DATABASE grid's own hot paths
+// use instead of calling fetchDeeptideNftDetail directly — confirmed live
+// as a real speed problem: the default landing query alone (scyllaListed=1)
+// was firing up to 60 concurrent, uncached, live per-item Deeptide calls
+// on a plain Promise.all with no bound, same risky shape already fixed for
+// the XRPL calls earlier (see fetchAccountNftsPage's own comment) — no
+// fallback needed here since there's only one Deeptide API, but the
+// unbounded-concurrency and never-cached parts both applied equally. A
+// browse grid showing a listing/price up to 60s stale is the same
+// tradeoff every other display-only cache in this app already makes;
+// nothing that prepares or signs a real transaction uses this.
+const DEEPTIDE_DETAIL_CACHE_PREFIX = 'pswap:deeptidedetail:';
+const DEEPTIDE_DETAIL_CACHE_TTL_SECONDS = 60;
+export async function fetchDeeptideNftDetailCached(context, nftId) {
+  const kv = context.env.coin;
+  const cacheKey = DEEPTIDE_DETAIL_CACHE_PREFIX + nftId;
+  if (kv) {
+    const cached = await kv.get(cacheKey);
+    if (cached !== null) {
+      try { return JSON.parse(cached); } catch (e) {}
+    }
+  }
+  const item = await fetchDeeptideNftDetail(nftId);
+  if (item && kv) context.waitUntil(safeKvPut(kv, cacheKey, JSON.stringify(item), { expirationTtl: DEEPTIDE_DETAIL_CACHE_TTL_SECONDS }));
+  return item;
+}
+
 // The real, buyable Deeptide floor — the listings feed's own cached
 // `lowestSellDrops` (used for card sort/price display) doesn't carry
 // enough per-offer detail to know if that cheapest offer is actually

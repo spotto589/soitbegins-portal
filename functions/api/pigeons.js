@@ -1,11 +1,11 @@
 import {
-  fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent,
+  fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftDetailCached, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG,
-  getCachedCrownHolder
+  getCachedCrownHolder, mapWithConcurrency
 } from '../_shared.js';
 
 // Deeptide's own item page — the real place to buy a listed Pigeon.
@@ -640,7 +640,7 @@ export async function onRequestGet(context) {
       return asc ? av - bv : bv - av;
     });
     const pageIds = sortedIds.slice(skip, skip + limit);
-    const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
+    const resolved = await mapWithConcurrency(pageIds, 15, id => fetchDeeptideNftDetailCached(context, id));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
 
     // Deeptide's own current-owner field, reused from the detail fetch
@@ -734,7 +734,7 @@ export async function onRequestGet(context) {
     }
     const sortedIds = idPool.sort((a, b) => asc ? metricOf(a) - metricOf(b) : metricOf(b) - metricOf(a));
     const pageIds = sortedIds.slice(skip, skip + limit);
-    const resolved = await Promise.all(pageIds.map(id => fetchDeeptideNftDetail(id)));
+    const resolved = await mapWithConcurrency(pageIds, 15, id => fetchDeeptideNftDetailCached(context, id));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
     await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
     return json({
@@ -781,7 +781,7 @@ export async function onRequestGet(context) {
       }
       nums.sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
       const pageNums = nums.slice(skip, skip + limit);
-      const resolved = await Promise.all(pageNums.map(n => fetchDeeptideNftDetail(map[n])));
+      const resolved = await mapWithConcurrency(pageNums, 15, n => fetchDeeptideNftDetailCached(context, map[n]));
       const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
       await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
       return json({
@@ -849,7 +849,7 @@ export async function onRequestGet(context) {
     }
     nums.sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
     const pageNums = nums.slice(skip, skip + limit);
-    const resolved = await Promise.all(pageNums.map(n => fetchDeeptideNftDetail(map[n])));
+    const resolved = await mapWithConcurrency(pageNums, 15, n => fetchDeeptideNftDetailCached(context, map[n]));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
     await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
     return json({
