@@ -848,7 +848,26 @@ const SWAP_HTML = `<!DOCTYPE html>
      to it (also grey) blur into one flat, lifeless line. */
   .flock-tab-brand{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
   .flock-tab-count{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
-  .flock-tab-offers-pending{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+  /* Small notification-dot badge, not a second joined text phrase (see
+     updateFlockTabLabel's own comment on why that wrapped badly on
+     mobile) — a real count, just compact enough to never itself need to
+     wrap. */
+  .flock-tab-offer-dot{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:1.3em;
+    height:1.3em;
+    margin-left:0.35em;
+    padding:0 0.3em;
+    border-radius:999px;
+    background:var(--magenta);
+    color:#000;
+    font-size:0.65em;
+    font-weight:700;
+    text-shadow:none;
+    vertical-align:middle;
+  }
   /* DATABASE carries the collection picker inline now, instead of that
      living as its own row above the whole tab strip. */
   .tab-btn-database{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; }
@@ -8944,9 +8963,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.flockTabLabel.innerHTML = '<span class="flock-tab-brand">Σκύλλα</span> <span class="flock-tab-login">L0G !N</span>';
       return;
     }
-    var parts = ['<span class="flock-tab-brand">Σκύλλα</span>'];
+    // Was three separate " :: "-joined text segments ("Σκύλλα :: 60
+    // P!GE0NS :: 3 0FFERS") — confirmed live this wrapped to 2-3 broken
+    // lines inside the mobile tab's own boxed grid (not enough room for
+    // that much joined text at any reasonable size), splitting mid-
+    // phrase ("60" / "P!GE0NS" on separate lines). Down to one real
+    // segment (brand :: count) plus a small notification-dot badge for
+    // pending offers instead of a second joined phrase — same
+    // information, far less text to actually wrap.
+    var offersDot = offersReceivedTotal > 0 ? '<span class="flock-tab-offer-dot" title="' + offersReceivedTotal + ' 0FFER' + (offersReceivedTotal === 1 ? '' : 'S') + ' RECE!VED">' + offersReceivedTotal + '</span>' : '';
+    var parts = ['<span class="flock-tab-brand">Σκύλλα' + offersDot + '</span>'];
     if (trustlinePigeonCount !== null) parts.push('<span class="flock-tab-count">' + trustlinePigeonCount + ' P!GE0NS</span>');
-    if (offersReceivedTotal > 0) parts.push('<span class="flock-tab-offers-pending">' + offersReceivedTotal + ' 0FFERS</span>');
     el.flockTabLabel.innerHTML = parts.join(' :: ');
   }
   function loadTrustlineLoginState(){
@@ -9015,8 +9042,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   // own hosted sign page loads — that load time is Xaman's, not
   // something this site controls; this only changes the window's shape.
   var XAMAN_POPUP_FEATURES = 'width=420,height=760,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
+  // Sized popup features only above the mobile breakpoint — reported
+  // live as "click to confirm, i click and nothing happens... just
+  // says waiting for signature", even after the null-tabRef fallback
+  // below was already fixed. The likely remaining cause, per
+  // navigateXamanPopup's own comment: on at least some mobile browsers
+  // (particularly in-app/embedded ones), window.open('', name, <sized
+  // popup features>) doesn't reliably return null on failure the way
+  // desktop does — it can hand back a Window reference that never
+  // actually surfaces as a real tab, so tabRef.location.href = url
+  // silently does nothing and the button is left stuck on "WA!T!NG
+  // F0R S!GNATURE..." with no error and no popup ever appearing. A
+  // plain, feature-less window.open is the same "just a normal new
+  // tab" call navigateXamanPopup's own fallback already trusts as
+  // reliable everywhere — using it as the PRIMARY path on mobile too,
+  // not just after a null comes back, is what actually fixes this.
   function openXamanPopup(){
-    return window.open('', 'xamanSign', XAMAN_POPUP_FEATURES);
+    return window.innerWidth <= 700 ? window.open('', 'xamanSign') : window.open('', 'xamanSign', XAMAN_POPUP_FEATURES);
   }
   // tabRef is whatever openXamanPopup() returned when this whole flow
   // started (called synchronously in the click handler, before any async
