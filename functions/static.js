@@ -3897,7 +3897,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     from{ transform:scale(0.9); opacity:0; }
     to{ transform:scale(1); opacity:1; }
   }
-  #offerConfirmModal, #transferConfirmModal, #acceptTransferConfirmModal, #buySwapModal, #buyConfirmModal{
+  #offerConfirmModal, #transferConfirmModal, #acceptTransferConfirmModal, #buySwapModal, #buyConfirmModal, #delistConfirmModal{
     display:none;
     position:fixed;
     inset:0;
@@ -5478,27 +5478,33 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- SCREEN: DELIST CONFIRMATION — the exact NFTokenCancelOffer txjson, before Xaman ever opens -->
-    <div class="sw-panel" id="screenDelistConfirm" style="display:none;">
-      <div class="node-eyebrow">// DEL!ST C0NF!RMAT!0N</div>
-      <div class="tx-type-badge" id="delistConfTxType"></div>
-      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="delistConfAccount"></span></div>
-      <div class="detail-field"><span class="df-label">NFTokenOffers</span><span class="df-value" id="delistConfOfferId"></span></div>
-      <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="delistConfPigeon"></span></div>
-      <div class="index-line" id="delistConfirmStatus" style="margin-top:1rem;"></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="delistConfirmBackBtn">← BACK</button>
-        <button class="action-btn" id="delistOpenXamanBtn">0PEN XAMAN</button>
+    <!-- DEL!ST — a real centered popup (#delistConfirmModal), same
+         treatment as BUY N0W's own confirm modal (converted earlier the
+         same way — see #buyConfirmModal's own comment) instead of a
+         showScreen navigation away from the grid. Plain "are you sure"
+         question now instead of the raw txjson fields (Account,
+         NFTokenOffers, tx-type badge) the old full-page version showed —
+         reported live as wanting this to "just do a pop up... are you
+         sure you want to delist", not a technical confirmation screen. -->
+    <div id="delistConfirmModal" style="display:none;">
+      <div class="offer-confirm-panel" id="screenDelistConfirm">
+        <div class="node-eyebrow">// DEL!ST C0NF!RMAT!0N</div>
+        <div class="confirm-pigeon-num" id="delistConfPigeon"></div>
+        <div class="index-line" style="margin:0.9rem 0;">ARE Y0U SURE Y0U WANT T0 DEL!ST TH!S P!GE0N?</div>
+        <div class="index-line" id="delistConfirmStatus"></div>
+        <div class="detail-actions">
+          <button class="secondary-btn" id="delistConfirmBackBtn">← BACK</button>
+          <button class="action-btn offer-confirm-xaman-btn" id="delistOpenXamanBtn">DEL!ST W!TH <span style="text-transform:none;">Σκύλλα</span></button>
+        </div>
       </div>
-    </div>
 
-    <!-- SCREEN: DELIST RESULT — verified against real on-ledger state (offer gone) -->
-    <div class="sw-panel" id="screenDelistResult" style="display:none;">
-      <div class="detail-eyebrow">// DEL!STED</div>
-      <div class="detail-num" id="delistResultPigeonNum"></div>
-      <div class="detail-actions">
-        <a class="secondary-btn" id="delistResultWalletLink" target="_blank" rel="noopener">V!EW Y0UR WALLET ACT!V!TY</a>
-        <button class="secondary-btn" id="delistResultDoneBtn">← BACK T0 MY P!GE0NS</button>
+      <div class="offer-confirm-panel" id="screenDelistResult" style="display:none;">
+        <div class="detail-eyebrow">// DEL!STED</div>
+        <div class="detail-num" id="delistResultPigeonNum"></div>
+        <div class="detail-actions">
+          <a class="secondary-btn" id="delistResultWalletLink" target="_blank" rel="noopener">V!EW Y0UR WALLET ACT!V!TY</a>
+          <button class="secondary-btn" id="delistResultDoneBtn">← BACK T0 MY P!GE0NS</button>
+        </div>
       </div>
     </div>
 
@@ -5852,7 +5858,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapPayRow',
    'buySwapConfirmState','buySwapConfTxType','buySwapConfAccount','buySwapConfSendMax','buySwapConfAmount','buySwapConfEstimate','buySwapConfRate','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
    'buySwapResultState','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
-   'screenDelistConfirm','delistConfTxType','delistConfAccount','delistConfOfferId','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
+   'delistConfirmModal','screenDelistConfirm','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
    'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
    'offerConfirmModal','offerConfPigeonImg','offerConfPigeonNum','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'offerConfirmForm','offerConfirmReceipt','offerReceiptPigeonNum','offerReceiptPrice','offerResultTxLink','offerResultDoneBtn',
@@ -6319,9 +6325,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     // openBuySwapPanel/showBuySwapState, which fully own those three
     // sub-divs' display instead. BUY N0W's own confirm/result pair
     // (screenBuyConfirm/screenBuyResult) is the same story now, inside
-    // #buyConfirmModal — see openBuyConfirm/closeBuyConfirmModal.
-    el.screenDelistConfirm.style.display = name === 'delistconfirm' ? '' : 'none';
-    el.screenDelistResult.style.display = name === 'delistresult' ? '' : 'none';
+    // #buyConfirmModal — see openBuyConfirm/closeBuyConfirmModal. DEL!ST's
+    // own pair (screenDelistConfirm/screenDelistResult) too, inside
+    // #delistConfirmModal — see openDelistConfirm/closeDelistConfirmModal.
     // 0FFER's own result is a receipt sub-state inside #offerConfirmModal
     // now (see showOfferResult), not a showScreen name.
     el.screenTransferResult.style.display = name === 'transferresult' ? '' : 'none';
@@ -9765,6 +9771,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var delistUuid = null;
   var delistPollTimer = null;
   var delistXamanTab = null;
+  var DELIST_CONFIRM_BTN_HTML = 'DEL!ST W!TH <span style="text-transform:none;">Σκύλλα</span>';
 
   function openDelistConfirm(p){
     delistTarget = p;
@@ -9779,24 +9786,26 @@ const SWAP_HTML = `<!DOCTYPE html>
         delistTarget = null;
         return;
       }
-      var txjson = res.data.txjson;
-      el.delistConfTxType.textContent = txjson.TransactionType;
-      el.delistConfAccount.textContent = txjson.Account;
-      el.delistConfOfferId.textContent = txjson.NFTokenOffers.join(', ');
       el.delistConfPigeon.innerHTML = 'P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????');
       el.delistConfirmStatus.textContent = '';
       el.delistOpenXamanBtn.disabled = false;
-      el.delistOpenXamanBtn.textContent = '0PEN XAMAN';
-      showScreen('delistconfirm');
+      el.delistOpenXamanBtn.innerHTML = DELIST_CONFIRM_BTN_HTML;
+      el.screenDelistResult.style.display = 'none';
+      el.screenDelistConfirm.style.display = '';
+      el.delistConfirmModal.style.display = 'flex';
     }).catch(function(){
       alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
       delistTarget = null;
     });
   }
-  el.delistConfirmBackBtn.addEventListener('click', function(){
+  // Shared by the BACK button, a backdrop click, and browser-back — same
+  // pattern every other confirm popup on this page uses.
+  function closeDelistConfirmModal(){
     delistTarget = null;
-    showScreen('browse');
-  });
+    el.delistConfirmModal.style.display = 'none';
+  }
+  el.delistConfirmBackBtn.addEventListener('click', closeDelistConfirmModal);
+  el.delistConfirmModal.addEventListener('click', function(e){ if (e.target === el.delistConfirmModal) closeDelistConfirmModal(); });
 
   el.delistOpenXamanBtn.addEventListener('click', function(){
     if (!delistTarget) return;
@@ -9817,7 +9826,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     .then(function(res){
       if (!res.ok || !res.data.ok){
         el.delistOpenXamanBtn.disabled = false;
-        el.delistOpenXamanBtn.textContent = '0PEN XAMAN';
+        el.delistOpenXamanBtn.innerHTML = DELIST_CONFIRM_BTN_HTML;
         el.delistConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
@@ -9828,7 +9837,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       pollDelistStatus();
     }).catch(function(){
       el.delistOpenXamanBtn.disabled = false;
-      el.delistOpenXamanBtn.textContent = '0PEN XAMAN';
+      el.delistOpenXamanBtn.innerHTML = DELIST_CONFIRM_BTN_HTML;
       el.delistConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
@@ -9848,19 +9857,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (data.status === 'rejected'){
           el.delistConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.delistOpenXamanBtn.disabled = false;
-          el.delistOpenXamanBtn.textContent = '0PEN XAMAN';
+          el.delistOpenXamanBtn.innerHTML = DELIST_CONFIRM_BTN_HTML;
           return;
         }
         if (data.status === 'expired'){
           el.delistConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           el.delistOpenXamanBtn.disabled = false;
-          el.delistOpenXamanBtn.textContent = '0PEN XAMAN';
+          el.delistOpenXamanBtn.innerHTML = DELIST_CONFIRM_BTN_HTML;
           return;
         }
         if (data.status === 'failed'){
           el.delistConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           el.delistOpenXamanBtn.disabled = false;
-          el.delistOpenXamanBtn.textContent = '0PEN XAMAN';
+          el.delistOpenXamanBtn.innerHTML = DELIST_CONFIRM_BTN_HTML;
           return;
         }
         delistPollTimer = setTimeout(pollDelistStatus, 2000);
@@ -9874,16 +9883,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Wallet activity, not the raw tx hash — MY_WALLET is the seller who
     // just delisted, same account this whole flow ran as.
     if (MY_WALLET) el.delistResultWalletLink.href = 'https://bithomp.com/explorer/' + MY_WALLET;
-    showScreen('delistresult');
+    el.screenDelistConfirm.style.display = 'none';
+    el.screenDelistResult.style.display = '';
   }
   el.delistResultDoneBtn.addEventListener('click', function(){
     if (delistTarget) delete myListedData[delistTarget.nftId];
-    delistTarget = null;
     delistUuid = null;
     if (delistPollTimer) clearTimeout(delistPollTimer);
     renderMyPigeonsList();
     state.activeTab = 'mypigeons';
     showScreen('browse');
+    closeDelistConfirmModal();
   });
 
   // ---- MAKE AN OFFER — the reverse of LIST: a real NFTokenCreateOffer
@@ -11724,6 +11734,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (el.offerConfirmModal.style.display !== 'none'){ closeOfferConfirmModal(); return true; }
     if (el.buySwapModal.style.display !== 'none'){ closeBuySwapModal(); return true; }
     if (el.buyConfirmModal.style.display !== 'none'){ closeBuyConfirmModal(); return true; }
+    if (el.delistConfirmModal.style.display !== 'none'){ closeDelistConfirmModal(); return true; }
     if (el.pigeonsCalcModal.style.display !== 'none'){ closeCalcPopover(); return true; }
     if (el.amountEntryModal.style.display !== 'none'){ closeAmountEntryModal(); return true; }
     if (el.screenHistory.style.display !== 'none' || el.screenDetail.style.display !== 'none'){ goBackFromDetail(); return true; }
