@@ -92,24 +92,19 @@ export async function verifyToken(token, secret) {
 // still treats a short/empty result as "owns nothing here," same
 // fail-toward-refusing behavior as before, just less likely to trip on a
 // transient blip.
+// Was its own hand-rolled retry loop hitting xrplcluster.com only, with no
+// fallback — confirmed live as the real cause of MY PIGEONS "failing to
+// load" outright (not just slow): xrplcluster.com returning a genuine
+// rate-limit response (a real Retry-After: 60 header seen directly on a
+// live 502) with nothing else to fall back to. Every OTHER live XRPL call
+// in this app already goes through fetchXrplClusterJson's real endpoint
+// diversity (xrplcluster.com, then s1/s2.ripple.com) for exactly this
+// reason — this was the one call type that didn't, and it happens to be
+// the highest-volume one (every MY PIGEONS/OFFERS/listing open).
 async function fetchAccountNftsPage(account, marker) {
   const params = { account, limit: 400 };
   if (marker) params.marker = marker;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    if (attempt > 0) await new Promise(r => setTimeout(r, 300 + attempt * 150));
-    try {
-      const res = await fetch('https://xrplcluster.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method: 'account_nfts', params: [params] })
-      });
-      return await res.json();
-    } catch (e) {
-      // Non-JSON (rate-limit) body, or the fetch itself failed — try again
-      // if attempts remain, otherwise fall through and give up on this page.
-    }
-  }
-  return null;
+  return await fetchXrplClusterJson({ method: 'account_nfts', params: [params] });
 }
 
 export async function fetchAllAccountNfts(account) {
@@ -1139,24 +1134,16 @@ export function findSwapOffer(offers, owner, destination) {
 // to clear it. Confirmed live: BUY was intermittently reporting a
 // genuinely-listed Pigeon as "not listed" purely because a single failed
 // lookup attempt was being read as a definitive answer.
-export async function fetchNftSellOffersOrNull(nftId, attempt) {
-  attempt = attempt || 0;
-  try {
-    const res = await fetch('https://xrplcluster.com', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ method: 'nft_sell_offers', params: [{ nft_id: nftId }] })
-    });
-    const data = await res.json();
-    if (!data.result || data.result.error) return [];
-    return data.result.offers || [];
-  } catch (e) {
-    if (attempt < 1) {
-      await new Promise(resolve => setTimeout(resolve, 350));
-      return fetchNftSellOffersOrNull(nftId, attempt + 1);
-    }
-    return null;
-  }
+// Migrated to fetchXrplClusterJson's real endpoint diversity (xrplcluster.com,
+// then s1/s2.ripple.com) instead of a hand-rolled xrplcluster.com-only
+// retry — same reasoning as fetchAccountNftsPage's own comment. This is
+// the single highest-volume live call in the app (up to 45 per listing-
+// discovery scan), so a rate-limited xrplcluster.com with nothing to fall
+// back to hit this one hardest.
+export async function fetchNftSellOffersOrNull(nftId) {
+  const data = await fetchXrplClusterJson({ method: 'nft_sell_offers', params: [{ nft_id: nftId }] });
+  if (!data || !data.result || data.result.error) return data ? [] : null;
+  return data.result.offers || [];
 }
 
 export async function fetchNftSellOffers(nftId) {
@@ -1169,24 +1156,12 @@ export async function fetchNftSellOffers(nftId) {
 // tolerant-on-failure behavior: a lookup failure degrades to "no offers
 // found" rather than a hard error, since every caller here is a display or
 // discovery path, never a single go/no-go safety signal.
-export async function fetchNftBuyOffersOrNull(nftId, attempt) {
-  attempt = attempt || 0;
-  try {
-    const res = await fetch('https://xrplcluster.com', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ method: 'nft_buy_offers', params: [{ nft_id: nftId }] })
-    });
-    const data = await res.json();
-    if (!data.result || data.result.error) return [];
-    return data.result.offers || [];
-  } catch (e) {
-    if (attempt < 1) {
-      await new Promise(resolve => setTimeout(resolve, 350));
-      return fetchNftBuyOffersOrNull(nftId, attempt + 1);
-    }
-    return null;
-  }
+// Same migration as fetchNftSellOffersOrNull above — real endpoint
+// diversity instead of xrplcluster.com-only.
+export async function fetchNftBuyOffersOrNull(nftId) {
+  const data = await fetchXrplClusterJson({ method: 'nft_buy_offers', params: [{ nft_id: nftId }] });
+  if (!data || !data.result || data.result.error) return data ? [] : null;
+  return data.result.offers || [];
 }
 
 export async function fetchNftBuyOffers(nftId) {
