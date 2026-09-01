@@ -1764,17 +1764,31 @@ async function getOwnerPigeonsViaDeeptide(kv, address, shopSlug = DEEPTIDE_PIGEO
 }
 
 // Live, uncached view of one wallet's real holdings — a single Deeptide
-// call already returns every token's image/traits/rarity in one shot, so
-// there's no need to also write each one to a cache just to display this
-// response. Used for the "SELECT -> load owner's collection" flow, where
-// the wallet size isn't bounded by us (some hold 100+ Pigeons).
-export async function resolveOwnerCollectionLive(kv, owner, ledgerItems, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG) {
+// call already returns every token's image/traits/rarity in one shot for
+// the vast majority of items, so there's no need to also write each one
+// to a cache just to display this response. Used for the "SELECT ->
+// load owner's collection" flow, where the wallet size isn't bounded by
+// us (some hold 100+ Pigeons).
+//
+// Split into two phases (was one function that blocked on both) — a
+// wallet with any items Deeptide's own bulk index doesn't have image
+// data for yet used to make the WHOLE response wait on however many
+// individual, uncached, real per-item IPFS/CDN metadata fetches that
+// took (fetchPigeonFullMeta, each with its own real network round trip)
+// — reported live as "my pigeons takes way too long". Now the fast
+// phase (Deeptide-covered items only) returns immediately, and the
+// caller can choose to show that first, then separately resolve
+// whichever few nftIds land in pendingIds via resolveOwnerCollectionPending
+// as a smaller follow-up instead of blocking the initial page on it.
+export async function resolveOwnerCollectionFast(kv, owner, ledgerItems, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG) {
   const deeptideItems = await getOwnerPigeonsViaDeeptide(kv, owner, shopSlug);
   const byId = new Map(deeptideItems.map(d => [d.nftId, d]));
-  const results = await Promise.all(ledgerItems.map(async (it) => {
+  const resolved = [];
+  const pendingIds = [];
+  for (const it of ledgerItems) {
     const fromDeeptide = byId.get(it.nftId);
     if (fromDeeptide && fromDeeptide.image) {
-      return {
+      resolved.push({
         nftId: it.nftId,
         meta: {
           number: fromDeeptide.number,
@@ -1783,8 +1797,19 @@ export async function resolveOwnerCollectionLive(kv, owner, ledgerItems, shopSlu
           rarityRank: fromDeeptide.rarityRank,
           rarityTotal: fromDeeptide.rarityTotal,
         },
-      };
+      });
+    } else {
+      pendingIds.push(it.nftId);
     }
+  }
+  return { resolved, pendingIds };
+}
+
+// The slow per-item fallback, only for whichever nftIds resolveOwnerCollectionFast
+// couldn't cover from Deeptide's own bulk index — a smaller follow-up
+// call instead of what used to gate the entire initial page load.
+export async function resolveOwnerCollectionPending(pendingLedgerItems) {
+  const results = await Promise.all(pendingLedgerItems.map(async (it) => {
     const meta = await fetchPigeonFullMeta(it.uriHex);
     return meta ? { nftId: it.nftId, meta } : null;
   }));

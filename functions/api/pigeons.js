@@ -3,7 +3,7 @@ import {
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue,
-  resolveOwnerCollectionLive, fetchAllAccountNftsChecked, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops,
+  resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsChecked, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG,
   getCachedCrownHolder
 } from '../_shared.js';
@@ -422,7 +422,8 @@ export async function onRequestGet(context) {
   }
 
   // A wallet's full real holdings — used by the SELECT -> owner's
-  // collection flow. No KV writes, cheap regardless of wallet size.
+  // collection flow (and SH0W MY P!GE0NS/the Σκύλλα tab, for the signed-
+  // in wallet). No KV writes, cheap regardless of wallet size.
   const wallet = params.get('wallet');
   if (wallet) {
     // fetchAllAccountNftsChecked (not the plain fetchAllAccountNfts) so a
@@ -437,11 +438,31 @@ export async function onRequestGet(context) {
     const pigeons = findAllPigeons(nfts);
     if (!pigeons.length) return json({ items: [], owner: wallet, ownerShort: shortenAddr(wallet) });
     const ledgerItems = pigeons.map(n => ({ nftId: n.NFTokenID, uriHex: n.URI }));
-    const resolved = await resolveOwnerCollectionLive(env.coin, wallet, ledgerItems);
+    // Follow-up call — the client already got the fast-phase response
+    // below once, and is now asking to resolve specifically whichever
+    // nftIds came back in pendingIds via the slower per-item fallback.
+    // Filtered against this wallet's own real ledgerItems (not trusted
+    // as-is) so a tampered id list can never resolve metadata for a
+    // token this wallet doesn't actually hold.
+    const resolveIds = params.get('resolveIds');
+    if (resolveIds) {
+      const wantIds = new Set(resolveIds.split(',').filter(Boolean));
+      const wantedLedgerItems = ledgerItems.filter(it => wantIds.has(it.nftId));
+      const resolvedPending = await resolveOwnerCollectionPending(wantedLedgerItems);
+      const items = resolvedPending.map(r => toItem(r.nftId, r.meta, wallet, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
+      return json({ items });
+    }
+    // Fast phase — only whatever Deeptide's own bulk index already has
+    // ready (the vast majority of items, in practice), so this doesn't
+    // block on however many slow individual metadata fetches a handful
+    // of not-yet-indexed items would otherwise need. pendingIds is
+    // everything left for the client to optionally resolve via a
+    // resolveIds= follow-up (see above) instead of waiting on it here.
+    const { resolved, pendingIds } = await resolveOwnerCollectionFast(env.coin, wallet, ledgerItems);
     const items = resolved
       .map(r => toItem(r.nftId, r.meta, wallet, highSaleMap, scyllaListingsMap, pigeonsSalesMap))
       .sort((a, b) => (a.number || 0) - (b.number || 0));
-    return json({ items, owner: wallet, ownerShort: shortenAddr(wallet) });
+    return json({ items, owner: wallet, ownerShort: shortenAddr(wallet), pendingIds });
   }
 
   // Full real per-token event history (mint/transfer/sale) — used by the

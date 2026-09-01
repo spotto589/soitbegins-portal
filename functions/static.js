@@ -7350,6 +7350,20 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       runScopedQuery();
+      // isSelf already merges pendingIds in via loadMyOwnPigeonsCache
+      // itself — this covers browsing someone ELSE's wallet, same fast-
+      // phase-then-merge reasoning.
+      if (!isSelf && data.pendingIds && data.pendingIds.length){
+        resolvePendingWalletItems(wallet, data.pendingIds, function(extra){
+          // Guard against having since exited this scope (a different
+          // wallet, or back to the full collection) by the time this
+          // slower follow-up lands.
+          if (!state.scope || state.scope.wallet !== wallet) return;
+          state.scopeAllItems = state.scopeAllItems.concat(extra).sort(function(a, b){ return (a.number || 0) - (b.number || 0); });
+          el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
+          runScopedQuery();
+        });
+      }
     }).catch(function(){
       if (!isSelf || myOwnPigeonsCache === null){
         // A real retry button, not just inert "TRY AGA!N." text — this
@@ -9164,16 +9178,51 @@ const SWAP_HTML = `<!DOCTYPE html>
   // does (wallet label, trustline balance, etc), and so
   // browseOwnerCollection can share its in-flight promise instead of
   // duplicating the request.
+  // Follow-up resolve for whichever nftIds the fast phase (see wallet=
+  // in pigeons.js/resolveOwnerCollectionFast in _shared.js) couldn't
+  // cover from Deeptide's own bulk index — a real XRPL wallet lookup
+  // used to block the ENTIRE page on however many slow, uncached,
+  // individual per-item metadata fetches (fetchPigeonFullMeta) that
+  // took, reported live as "my pigeons takes way too long". Now those
+  // few items just merge in whenever this smaller follow-up lands,
+  // instead of holding up everything else that was ready immediately.
+  // Silent on failure — those specific items just stay missing rather
+  // than breaking the ones that already loaded fine.
+  function resolvePendingWalletItems(wallet, pendingIds, onMerged){
+    if (!pendingIds || !pendingIds.length) return;
+    apiWithRetry({ wallet: wallet, resolveIds: pendingIds.join(',') }).then(function(data){
+      if (data.items && data.items.length) onMerged(data.items);
+    }).catch(function(){});
+  }
   function loadMyOwnPigeonsCache(){
     if (myOwnPigeonsCachePromise) return myOwnPigeonsCachePromise;
     myOwnPigeonsCacheFailed = false;
     updateSearchPanelTitleForPaws();
     myOwnPigeonsCachePromise = apiWithRetry({ wallet: MY_WALLET }).then(function(data){
       myOwnPigeonsCache = data.items || [];
-      trustlinePigeonCount = myOwnPigeonsCache.length;
+      // The real total the instant the fast phase lands, not just
+      // however many happened to resolve immediately — items.length
+      // alone would undercount while anything's still in pendingIds.
+      trustlinePigeonCount = myOwnPigeonsCache.length + (data.pendingIds ? data.pendingIds.length : 0);
       renderTrustlineSummary();
       updateSearchPanelTitleForPaws();
       myOwnPigeonsCachePromise = null;
+      resolvePendingWalletItems(MY_WALLET, data.pendingIds, function(extra){
+        myOwnPigeonsCache = myOwnPigeonsCache.concat(extra).sort(function(a, b){ return (a.number || 0) - (b.number || 0); });
+        trustlinePigeonCount = myOwnPigeonsCache.length;
+        renderTrustlineSummary();
+        // Only touch the live grid/count if this wallet's own scope is
+        // still what's actually showing — this can land well after the
+        // fast phase, by which point the user may have navigated
+        // elsewhere entirely.
+        if (isOwnWalletScope()){
+          state.scopeAllItems = myOwnPigeonsCache;
+          myPigeonsData = myOwnPigeonsCache;
+          el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
+          updateSearchPanelTitleForPaws();
+          runScopedQuery();
+        }
+      });
       return myOwnPigeonsCache;
     }).catch(function(err){
       myOwnPigeonsCacheFailed = true;
