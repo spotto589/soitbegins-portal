@@ -9956,9 +9956,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.pigeonsBalanceBuyBtn.addEventListener('click', openBuySwapPanel);
   el.flockBuyPigeonsBox.addEventListener('click', openBuySwapPanel);
   // navigator.clipboard needs a secure context (https, which this site
-  // always is) — falls back to the old execCommand trick only if that API
-  // itself is ever missing (older in-app browsers).
+  // always is), but its own permission can still be denied even when the
+  // API itself exists (confirmed live: some embedded/in-app browser
+  // contexts reject writeText with a real permission error) — falling
+  // back to the execCommand trick only when the API is missing entirely
+  // silently left the button dead with zero feedback in exactly that case.
+  // Now the fallback runs on ANY writeText failure, not just its absence.
   var flockWalletCopyResetTimer = null;
+  function copyToClipboardFallback(text){
+    var tmp = document.createElement('textarea');
+    tmp.value = text;
+    tmp.style.position = 'fixed';
+    tmp.style.opacity = '0';
+    document.body.appendChild(tmp);
+    tmp.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(tmp);
+    return ok;
+  }
   el.flockWalletCopyBtn.addEventListener('click', function(){
     if (!MY_WALLET) return;
     function showCopied(){
@@ -9970,18 +9986,20 @@ const SWAP_HTML = `<!DOCTYPE html>
         el.flockWalletCopyBtn.classList.remove('flock-wallet-copy-done');
       }, 1500);
     }
+    function showFailed(){
+      el.flockWalletCopyBtn.textContent = 'C0PY FA!LED';
+      clearTimeout(flockWalletCopyResetTimer);
+      flockWalletCopyResetTimer = setTimeout(function(){
+        el.flockWalletCopyBtn.textContent = 'C0PY';
+      }, 1500);
+    }
     if (navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(MY_WALLET).then(showCopied).catch(function(){});
+      navigator.clipboard.writeText(MY_WALLET).then(showCopied).catch(function(){
+        if (copyToClipboardFallback(MY_WALLET)) showCopied(); else showFailed();
+      });
       return;
     }
-    var tmp = document.createElement('textarea');
-    tmp.value = MY_WALLET;
-    tmp.style.position = 'fixed';
-    tmp.style.opacity = '0';
-    document.body.appendChild(tmp);
-    tmp.select();
-    try { document.execCommand('copy'); showCopied(); } catch (e) {}
-    document.body.removeChild(tmp);
+    if (copyToClipboardFallback(MY_WALLET)) showCopied(); else showFailed();
   });
   el.flockMyFlockBox.addEventListener('click', function(){
     // A previous attempt genuinely failed (see loadMyOwnPigeonsCache) —
