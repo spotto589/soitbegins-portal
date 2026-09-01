@@ -2336,6 +2336,28 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-overflow:ellipsis;
   }
   .thumb-listing-badge-own{ border-color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); }
+  /* OWNED sticker — top-left corner (the price badge, when there's a
+     real listing, already owns the bottom-right), shown on a Pigeon you
+     hold but haven't listed, while browsing the general collection. Was
+     a plain "!N Y0UR FL0CK" text label filling the whole action box
+     below instead — replaced by this small marker on the picture itself
+     plus a real L!ST button in that box now (see pigeonsActionBoxHtml).*/
+  .thumb-owned-badge{
+    position:absolute;
+    top:0.3rem;
+    left:0.3rem;
+    z-index:2;
+    background:rgba(8,9,11,0.85);
+    border:1px solid var(--cyan);
+    color:var(--cyan);
+    text-shadow:0 0 4px var(--cyan-glow);
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:0.06em;
+    padding:0.3em 0.5em;
+    border-radius:var(--radius);
+    text-transform:uppercase;
+  }
 
   /* ---- DATABASE results: two wide rows side by side, not a 6-up grid
      of tiles — a much bigger thumbnail/number/rarity on the left, every
@@ -2447,6 +2469,28 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease, color 0.15s ease;
   }
   .offer-open-modal-btn:hover{ background:var(--green); color:#000; }
+  /* L!ST — same box size as a lone 0FFER button (17px, full width),
+     not the smaller shared .list-open-modal-btn default (15px, used
+     when it's paired with TRANSFER in the scoped MY PIGEONS view) —
+     this one stands alone in the box, replacing the old "!N Y0UR
+     FL0CK" text label. Cyan, matching this site's "this is yours"
+     colour language (see thumb-owned-badge on the thumbnail itself). */
+  .thumb-list-btn{
+    width:100%;
+    background:transparent;
+    border:1px solid var(--cyan);
+    color:var(--cyan);
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:17px;
+    letter-spacing:0.03em;
+    padding:1em 0.8em;
+    cursor:pointer;
+    text-transform:uppercase;
+    border-radius:var(--radius);
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .thumb-list-btn:hover{ background:var(--cyan); color:#000; }
   /* A Pigeon that's YOUR OWN active Σκύλλα listing, seen while browsing
      the general/unscoped collection (e.g. sorted by FL00R $P!GE0NS
      alongside everyone else's listings) — no BUY N0W (can't buy your
@@ -5174,7 +5218,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="list-duration-btn" data-days="3">3D</button>
             <button type="button" class="list-duration-btn active" data-days="7">7D</button>
             <button type="button" class="list-duration-btn" data-days="30">30D</button>
-            <button type="button" class="list-duration-btn" data-days="0">F0REVER</button>
+            <button type="button" class="list-duration-btn" data-days="0" title="F0REVER — never expires">∞</button>
           </div>
           <div class="index-line list-inline-status" id="amountEntryListStatus" style="display:none;"></div>
         </div>
@@ -7265,8 +7309,15 @@ const SWAP_HTML = `<!DOCTYPE html>
           '</div>' +
         '</div>';
       }
+      // A real L!ST button now, same box/size as a lone 0FFER button —
+      // was a plain "!N Y0UR FL0CK" text label (see the OWNED sticker on
+      // the thumbnail itself, thumb-owned-badge, for that same "this is
+      // yours" signal now). Reuses .list-open-modal-btn/openAmountEntry-
+      // Modal exactly as ownedPigeonActionHtml's own L!ST button does —
+      // only needs p itself, not myListedData (see this function's own
+      // comment on why that isn't loaded here).
       return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
-        '<div class="own-listing-note">!N Y0UR FL0CK</div>' +
+        '<button class="bar-btn list-open-modal-btn thumb-list-btn" data-nftid="' + escapeHtml(p.nftId) + '">L!ST</button>' +
       '</div>';
     }
     var canBuy = !!p.scyllaListing && p.owner !== MY_WALLET;
@@ -7409,12 +7460,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     var listingBadge = p.scyllaListing
       ? '<div class="thumb-listing-badge' + (p.owner === MY_WALLET ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>'
       : '';
+    var ownedBadge = (p.owner === MY_WALLET && !p.scyllaListing) ? '<div class="thumb-owned-badge">0WNED</div>' : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">' + collectionItemLabel() + ' ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         img +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
         listingBadge +
+        ownedBadge +
       '</div>' +
       '<div class="result-card-body">' + rarityLine + avgSaleLine + '<div class="card-action-box">' + pigeonsActionHtml + '</div></div>' +
     '</div>';
