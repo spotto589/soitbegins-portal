@@ -8669,8 +8669,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Desktop's horizontal category row (see .traits-flyout-cats' own CSS,
   // min-width:701px) — scroll it along if there are more categories than
   // fit. No-op on mobile (the row's vertical there, arrows hidden).
-  el.traitsCatsScrollPrevBtn.addEventListener('click', function(){ el.traitsFlyoutCats.scrollBy({ left: -180, behavior: 'smooth' }); });
-  el.traitsCatsScrollNextBtn.addEventListener('click', function(){ el.traitsFlyoutCats.scrollBy({ left: 180, behavior: 'smooth' }); });
+  // Explicitly refreshed here too, not just left to the 'scroll' listener
+  // above — same reasoning as the SORT BY arrows' own click handlers.
+  el.traitsCatsScrollPrevBtn.addEventListener('click', function(){
+    el.traitsFlyoutCats.scrollBy({ left: -180, behavior: 'smooth' });
+    setTimeout(updateTraitsCatsHscrollArrows, 400);
+  });
+  el.traitsCatsScrollNextBtn.addEventListener('click', function(){
+    el.traitsFlyoutCats.scrollBy({ left: 180, behavior: 'smooth' });
+    setTimeout(updateTraitsCatsHscrollArrows, 400);
+  });
   // Desktop's horizontal category strip (min-width:701px, see #traitsFlyout's
   // own CSS) is always visible now, not click-to-open — same reasoning as
   // S0RT BY's own unconditional renderSortFlyoutList() call. Without this,
@@ -11905,8 +11913,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   // clamps this to the real max scrollLeft on its own) always lands
   // exactly at the true start or end regardless of how many options
   // there are or how wide each one renders.
-  el.sortScrollPrevBtn.addEventListener('click', function(){ el.sortFlyoutVals.scrollTo({ left: 0, behavior: 'smooth' }); });
-  el.sortScrollNextBtn.addEventListener('click', function(){ el.sortFlyoutVals.scrollTo({ left: el.sortFlyoutVals.scrollWidth, behavior: 'smooth' }); });
+  // Explicitly refreshed here too (not just left to the 'scroll' listener
+  // above) — these buttons always jump straight to a known end (0 or the
+  // true scrollWidth), so the resulting arrow state is knowable
+  // immediately without waiting on any scroll event at all. The extra
+  // delayed call catches the true rest position once the smooth-scroll
+  // animation actually finishes, in case anything shifts it slightly.
+  el.sortScrollPrevBtn.addEventListener('click', function(){
+    el.sortFlyoutVals.scrollTo({ left: 0, behavior: 'smooth' });
+    updateSortHscrollArrows();
+    setTimeout(updateSortHscrollArrows, 400);
+  });
+  el.sortScrollNextBtn.addEventListener('click', function(){
+    el.sortFlyoutVals.scrollTo({ left: el.sortFlyoutVals.scrollWidth, behavior: 'smooth' });
+    updateSortHscrollArrows();
+    setTimeout(updateSortHscrollArrows, 400);
+  });
   renderSortTag();
   // Reflects the default scyllaListedOnly:true landing state — every
   // other place this class gets toggled goes through setScyllaListedOnly
