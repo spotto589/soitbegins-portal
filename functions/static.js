@@ -4832,6 +4832,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .placeholder-card .pc-title{ font-size:12px; letter-spacing:0.2em; color:var(--grey); margin-bottom:0.75rem; text-transform:uppercase; }
   .placeholder-card .pc-body{ font-family:var(--font-body); font-size:11.5px; letter-spacing:0.01em; color:var(--grey); line-height:1.7; text-transform:none; }
+  /* ACCEPT 0FFER's own explanation of the Destination-restricted sell
+     offer step, shown BEFORE Xaman's own native signing screen shows the
+     exact same thing with zero context — reported live as reading as
+     alarming/suspicious without it ("it just sent me to offer my NFT to
+     the dev wallet??"). */
+  .accept-offer-explainer{ font-family:var(--font-body); font-size:11.5px; letter-spacing:0.01em; color:var(--grey); line-height:1.7; text-transform:none; margin-top:1rem; padding-top:1rem; border-top:1px dashed var(--border-dim); }
 
 </style>
 </head>
@@ -6002,14 +6008,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- SCREEN: ACCEPT OFFER CONFIRMATION (owner side) — the exact NFTokenAcceptOffer txjson, before Xaman ever opens -->
     <div class="sw-panel" id="screenAcceptOfferConfirm" style="display:none;">
       <div class="node-eyebrow">// ACCEPT 0FFER C0NF!RMAT!0N</div>
-      <div class="tx-type-badge" id="acceptOfferConfTxType"></div>
-      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="acceptOfferConfAccount"></span></div>
-      <div class="detail-field"><span class="df-label">NFTokenBuyOffer</span><span class="df-value" id="acceptOfferConfOfferId"></span></div>
       <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="acceptOfferConfPigeon"></span></div>
       <div class="detail-field"><span class="df-label">BUYER</span><span class="df-value" id="acceptOfferConfBuyer"></span></div>
       <div class="detail-field"><span class="df-label">0FFER</span><span class="df-value" id="acceptOfferConfPrice"></span></div>
       <div class="detail-field"><span class="df-label">MARKETPLACE FEE</span><span class="df-value" id="acceptOfferConfFee"></span></div>
       <div class="detail-field"><span class="df-label">Y0U RECE!VE</span><span class="df-value" id="acceptOfferConfSellerAmount"></span></div>
+      <!-- Reported live as alarming/confusing ("it just sent me to offer
+           my NFT to the dev wallet??") — the raw TX TYPE/Account/
+           NFTokenBuyOffer fields this used to show gave no context for
+           why, and Xaman's own native signing screen (outside this app's
+           control) shows this step as a plain "sell offer to a wallet"
+           with zero further explanation. This is the real, correct,
+           secure brokered-accept mechanism (see swap-acceptoffer-
+           prepare.js's own comment) — a Destination-restricted offer
+           genuinely cannot be taken any other way — but that safety only
+           means something if it's explained before Xaman's own screen
+           shows it, not after. -->
+      <div class="accept-offer-explainer">TH!S !S A TW0-STEP SALE. Y0U'LL F!RST S!GN A REAL SELL 0FFER RESTR!CTED S0 0NLY 0UR MARKETPLACE WALLET CAN C0MPLETE !T — !T CANN0T TAKE Y0UR P!GE0N ANY 0THER WAY 0R F0R ANY 0THER AM0UNT. XAMAN MAY SH0W TH!S STEP AS A PLA!N "SELL 0FFER" T0 0UR WALLET — THAT'S EXPECTED, N0T A M!STAKE. 0NCE C0NF!RMED, THE SALE SETTLES AT0M!CALLY W!TH THE BUYER'S PAYMENT.</div>
       <div class="index-line" id="acceptOfferConfirmStatus" style="margin-top:1rem;"></div>
       <div class="detail-actions">
         <button class="secondary-btn" id="acceptOfferConfirmBackBtn">← BACK</button>
@@ -6191,7 +6206,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
    'amountEntryOfferMode','amountEntryOfferPigeonRow','amountEntryOfferPigeonImg','amountEntryOfferPigeonNum','amountEntryOfferBalanceLine','amountEntryOfferInput','amountEntryOfferBtn','amountEntryOfferDuration',
    'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferBtn','amountEntryTransferStatus',
-   'screenAcceptOfferConfirm','acceptOfferConfTxType','acceptOfferConfAccount','acceptOfferConfOfferId','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
+   'screenAcceptOfferConfirm','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
    'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
@@ -8137,10 +8152,6 @@ const SWAP_HTML = `<!DOCTYPE html>
             acceptOfferTarget = null;
             return;
           }
-          var txjson = res.data.txjson;
-          el.acceptOfferConfTxType.textContent = txjson.TransactionType;
-          el.acceptOfferConfAccount.textContent = txjson.Account;
-          el.acceptOfferConfOfferId.textContent = acceptOfferTarget.offerId;
           el.acceptOfferConfPigeon.innerHTML = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
           el.acceptOfferConfBuyer.textContent = res.data.display.buyer;
           el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
