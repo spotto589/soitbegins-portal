@@ -1355,6 +1355,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:0.5rem;
     text-transform:uppercase;
   }
+  /* A real, always-tappable fallback for every "WA!T!NG F0R S!GNATURE"
+     status — window.open()-based auto-launch (openXamanPopup/
+     navigateXamanPopup) has too many mobile browser/embedded-webview
+     edge cases where it silently fails with no error at all (reported
+     live repeatedly: BUY, MAKE 0FFER — stuck on "waiting" with nothing
+     to do next). A plain anchor tap is never blocked the way
+     window.open can be, so this is the guaranteed way forward
+     regardless of what the automatic attempt did. Own size/weight —
+     .index-line's own 9.5px default would bury this as fine print, and
+     this needs to be the obvious next thing to try. */
+  .xaman-manual-link{
+    display:inline-block;
+    margin-top:0.5rem;
+    font-size:13px;
+    letter-spacing:0.03em;
+    color:var(--cyan);
+    text-decoration:underline;
+    text-transform:none;
+  }
+  .xaman-manual-link:hover{ color:var(--white); }
   /* MY PIGEONS' own "CONNECTING TO Σκύλλα..." status — big and centered,
      not the plain small .index-line every other status message uses,
      since this is the whole tab's content while Xaman loads. */
@@ -6708,7 +6728,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       swapOfferState.uuid = res.data.uuid;
       navigateXamanPopup(xamanTab, res.data.next.always);
       el.swapOfferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.swapConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
+      el.swapConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
       pollSwapOfferStatus();
     }).catch(function(){
       if (xamanTab) xamanTab.close();
@@ -6913,7 +6933,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       swapAcceptState.uuid = res.data.uuid;
       navigateXamanPopup(xamanTab, res.data.next.always);
       el.swapAcceptOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.acceptConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
+      el.acceptConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
       pollSwapAcceptStatus();
     }).catch(function(){
       if (xamanTab) xamanTab.close();
@@ -9167,7 +9187,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       listingUuid = res.data.uuid;
       navigateXamanPopup(listingXamanTab, res.data.next.always);
       listingBtnEl.textContent = 'WA!T!NG F0R S!GNATURE...';
-      if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.'; }
+      if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>'; }
       pollListingStatus();
     }).catch(function(){
       closeXamanTabAndFocus(listingXamanTab);
@@ -9690,7 +9710,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       navigateXamanPopup(xamanTab, res.data.next.always);
       buySwapXamanTab = xamanTab;
       el.buySwapOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.buySwapConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
+      el.buySwapConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
       pollBuySwapStatus();
     }).catch(function(){
       if (xamanTab) xamanTab.close();
@@ -9784,7 +9804,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       buyUuid = res.data.uuid;
       navigateXamanPopup(buyXamanTab, res.data.next.always);
       el.buyOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.buyConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
+      el.buyConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
       pollBuyStatus();
     }).catch(function(e){
       el.buyOpenXamanBtn.disabled = false;
@@ -9935,7 +9955,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       delistUuid = res.data.uuid;
       navigateXamanPopup(delistXamanTab, res.data.next.always);
       el.delistOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.delistConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
+      el.delistConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
       pollDelistStatus();
     }).catch(function(){
       el.delistOpenXamanBtn.disabled = false;
@@ -10141,7 +10161,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       offerUuid = res.data.uuid;
       navigateXamanPopup(offerXamanTab, res.data.next.always);
       el.offerOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.offerConfirmStatus.textContent = '';
+      el.offerConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
       pollOfferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(offerXamanTab);
@@ -10270,6 +10290,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       offerSignalUuid = res.data.uuid;
       navigateXamanPopup(signalXamanTab, res.data.next.always);
       el.offerSignalSendBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
+      el.offerSignalStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
       pollOfferSignalStatus(target, signalXamanTab);
     }).catch(function(){
       closeXamanTabAndFocus(signalXamanTab);
@@ -10439,7 +10460,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       transferUuid = res.data.uuid;
       navigateXamanPopup(transferXamanTab, res.data.next.always);
       el.transferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.transferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
+      el.transferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
       pollTransferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(transferXamanTab);
@@ -10632,7 +10653,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       acceptTransferUuid = res.data.uuid;
       navigateXamanPopup(acceptTransferXamanTab, res.data.next.always);
       el.acceptTransferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.acceptTransferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
+      el.acceptTransferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
       pollAcceptTransferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(acceptTransferXamanTab);
@@ -10723,7 +10744,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       acceptOfferUuid = res.data.uuid;
       navigateXamanPopup(acceptOfferXamanTab, res.data.next.always);
       el.acceptOfferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.acceptOfferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.';
+      el.acceptOfferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
       pollAcceptOfferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(acceptOfferXamanTab);
