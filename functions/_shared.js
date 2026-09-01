@@ -1754,7 +1754,7 @@ async function fetchDeeptideOwnedPigeons(address, shopSlug = DEEPTIDE_PIGEON_SHO
 // Short-lived cache (3 min) so repeatedly rendering pages that include a
 // popular wallet doesn't hammer Deeptide — deliberately much shorter than
 // any collection-wide cache, since a wallet's holdings genuinely change.
-async function getOwnerPigeonsViaDeeptide(kv, address, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG) {
+export async function getOwnerPigeonsViaDeeptide(kv, address, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG) {
   const cacheKey = DEEPTIDE_OWNER_CACHE_PREFIX + shopSlug + ':' + address;
   const cached = await kv.get(cacheKey);
   if (cached !== null) return JSON.parse(cached);

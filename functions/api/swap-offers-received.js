@@ -1,7 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts, findAllPigeons,
-  getSwapBuyOffersMap, addSwapBuyOffer, removeSwapBuyOffer, fetchNftBuyOffers, fetchDeeptideNftDetail,
-  encodeCurrencyCode, PIGEONS_TOKEN_CONFIG
+  getSwapBuyOffersMap, addSwapBuyOffer, removeSwapBuyOffer, fetchNftBuyOffers,
+  getOwnerPigeonsViaDeeptide, encodeCurrencyCode, PIGEONS_TOKEN_CONFIG
 } from '../_shared.js';
 
 function shortenAddr(addr) {
@@ -47,10 +47,12 @@ export async function onRequestGet(context) {
   }
   const owner = payload.acct;
 
-  const [ownedNfts, buyOffersMap] = await Promise.all([
+  const [ownedNfts, buyOffersMap, deeptideItems] = await Promise.all([
     fetchAllAccountNfts(owner),
-    getSwapBuyOffersMap(env.coin)
+    getSwapBuyOffersMap(env.coin),
+    getOwnerPigeonsViaDeeptide(env.coin, owner)
   ]);
+  const deeptideById = new Map(deeptideItems.map(d => [d.nftId, d]));
   const ownedPigeonIds = findAllPigeons(ownedNfts).map(n => n.NFTokenID);
   const ownedPigeonIdSet = new Set(ownedPigeonIds);
   const trackedIds = Object.keys(buyOffersMap).filter(id => ownedPigeonIdSet.has(id));
@@ -59,10 +61,8 @@ export async function onRequestGet(context) {
 
   const currency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
   const results = await Promise.all(candidateIds.map(async nftId => {
-    const [liveOffers, item] = await Promise.all([
-      fetchNftBuyOffers(nftId),
-      fetchDeeptideNftDetail(nftId)
-    ]);
+    const liveOffers = await fetchNftBuyOffers(nftId);
+    const item = deeptideById.get(nftId) || null;
     const stored = buyOffersMap[nftId] || [];
     const storedByOfferId = {};
     stored.forEach(s => { storedByOfferId[s.offerId] = s; });
