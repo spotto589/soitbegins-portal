@@ -1230,22 +1230,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     min-width:0;
     width:auto;
     margin-bottom:0;
-    font-size:12px;
-    letter-spacing:0.02em;
-    padding:0.65em 0.35em;
-    /* BUY N0W wrapping to two lines in its half-width slot (sharing the
-       row with 0FFER) while a lone 0FFER stays one line used to make the
-       purple box come out two different heights depending on state
-       (confirmed live: 55px vs 41px) — fixed then by truncating BUY N0W
-       to one line with an ellipsis ("BUY N…") instead, which read as
-       broken/cut off. min-height now reserves room for two lines in
-       every state instead, so BUY NOW can wrap onto its own two full
-       lines (line-height tightened so that actually fits the same
-       compact card) without the row height changing based on what's
-       inside it. */
-    white-space:normal;
-    line-height:1.15;
-    min-height:2.9em;
+    font-size:11px;
+    letter-spacing:0.01em;
+    padding:0.7em 0.3em;
+    /* One line, always — BUY N0W wrapping to two lines while 0FFER
+       stayed one made the two states in this row look like different
+       components entirely, not just different labels. Small enough
+       (11px, tight padding) that "BUY N0W" fits its half-width slot on
+       one line at every card width this grid actually uses; ellipsis is
+       just a safety net, not the normal case. */
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
   .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:var(--red); background:var(--red); color:#000; text-shadow:none; }
   /* Red, same accent as CLEAR TRAITS — resetting every filter is a
@@ -2284,6 +2280,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--grey-disabled);
   }
   .pigeon-img-box img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.25s ease; }
+  /* Hidden for now, not removed — the multi-select/TARGET BAR feature
+     this "+" belongs to is coming back later; CSS-only so the JS
+     wiring (card-select-toggle click handler, state.target, etc.) stays
+     intact and this is a one-line revert when that's ready. */
+  .card-select-toggle{ display:none; }
   .card-select-toggle, .my-pigeon-offer-toggle{
     position:absolute;
     top:0.3rem;
@@ -2422,21 +2423,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease, color 0.15s ease;
   }
   .thumb-buy-btn:hover{ background:var(--green); color:#000; text-shadow:none; }
-  /* 0FFER — same green "real, clickable buy action" language as BUY N0W,
-     plus a gentle pulse (same recipe as .pigeons-bar-balance-buy, the
-     site's other real-money call-to-action) so it reads as an inviting
-     juicy button, not just another plain .bar-btn outline. Overrides
-     .bar-btn on specificity-tied-but-later source order. */
-  @keyframes offer-btn-pulse{
-    0%, 100%{ box-shadow:0 0 10px var(--green-glow), inset 0 0 0 1px rgba(52,255,133,0.15); }
-    50%{ box-shadow:0 0 22px var(--green-glow), inset 0 0 0 1px rgba(52,255,133,0.3); }
-  }
+  /* 0FFER — plain, quiet outline, no glow/pulse. BUY N0W is the real,
+     immediate action here (a live listing, one click to buy); 0FFER is
+     a slower secondary path (submit a price, wait for the owner), so
+     giving it the same glowing/pulsing treatment as BUY N0W made every
+     card look like it was urgently calling for attention regardless of
+     which action actually mattered. */
   .offer-open-modal-btn{
     width:100%;
-    background:var(--green-faint, rgba(52,255,133,0.12));
+    background:transparent;
     border:1px solid var(--green);
     color:var(--green);
-    text-shadow:0 0 6px var(--green-glow);
     font-family:var(--font-mono);
     font-weight:700;
     font-size:17px;
@@ -2445,10 +2442,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
-    animation:offer-btn-pulse 2.2s ease-in-out infinite;
-    transition:background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    transition:background 0.15s ease, color 0.15s ease;
   }
-  .offer-open-modal-btn:hover{ background:var(--green); color:#000; text-shadow:none; transform:scale(1.02); animation-play-state:paused; }
+  .offer-open-modal-btn:hover{ background:var(--green); color:#000; }
   /* A Pigeon that's YOUR OWN active Σκύλλα listing, seen while browsing
      the general/unscoped collection (e.g. sorted by FL00R $P!GE0NS
      alongside everyone else's listings) — no BUY N0W (can't buy your
@@ -3875,7 +3871,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     from{ transform:scale(0.9); opacity:0; }
     to{ transform:scale(1); opacity:1; }
   }
-  #offerConfirmModal, #transferConfirmModal, #acceptTransferConfirmModal, #buySwapModal{
+  #offerConfirmModal, #transferConfirmModal, #acceptTransferConfirmModal, #buySwapModal, #buyConfirmModal{
     display:none;
     position:fixed;
     inset:0;
@@ -4429,9 +4425,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Which Pigeon 0FFER AM0UNT is actually for, and the wallet's own live
      $PIGEONS balance — both easy to lose track of once the card underneath
      the popup isn't visible any more, so both are big, not fine print. */
-  .amount-entry-pigeon-row{ display:flex; align-items:center; justify-content:center; gap:0.75rem; margin-bottom:1.25rem; }
-  .amount-entry-pigeon-thumb{ width:56px; height:56px; border-radius:6px; object-fit:cover; flex:0 0 auto; }
-  .amount-entry-pigeon-num{ font-family:var(--font-display); font-weight:700; font-size:20px; color:#fff; }
+  /* Bigger, and stacked (image above the number) rather than a small
+     thumb sitting beside small text — this is the one thing that shows
+     you what you're actually about to offer real money on, so it needs
+     to actually be visible, not a 56px afterthought next to the title. */
+  .amount-entry-pigeon-row{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.6rem; margin-bottom:1.5rem; }
+  .amount-entry-pigeon-thumb{ width:140px; height:140px; border-radius:var(--radius); border:1px solid var(--border-mid); object-fit:cover; flex:0 0 auto; }
+  .amount-entry-pigeon-num{ font-family:var(--font-display); font-weight:700; font-size:36px; color:#fff; }
   .make-offer-balance-line{
     text-align:center;
     font-family:var(--font-mono);
@@ -5304,31 +5304,38 @@ const SWAP_HTML = `<!DOCTYPE html>
       <a class="receipt-tx-link" id="listResultTxLink" target="_blank" rel="noopener">V!EW TRANSACT!0N</a>
     </div>
 
-    <!-- SCREEN: BUY CONFIRMATION — the exact NFTokenAcceptOffer txjson, before Xaman ever opens -->
-    <div class="sw-panel" id="screenBuyConfirm" style="display:none;">
-      <div class="node-eyebrow">// BUY C0NF!RMAT!0N</div>
-      <div class="tx-type-badge" id="buyConfTxType"></div>
-      <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="buyConfAccount"></span></div>
-      <div class="detail-field"><span class="df-label">NFTokenSellOffer</span><span class="df-value" id="buyConfOfferId"></span></div>
-      <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="buyConfPigeon"></span></div>
-      <div class="detail-field"><span class="df-label">SELLER</span><span class="df-value" id="buyConfSeller"></span></div>
-      <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="buyConfPrice"></span></div>
-      <div class="index-line" id="buyConfirmStatus" style="margin-top:1rem;"></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="buyConfirmBackBtn">← BACK</button>
-        <button class="action-btn" id="buyOpenXamanBtn">0PEN XAMAN</button>
+    <!-- BUY N0W — a real centered popup (#buyConfirmModal), same treatment
+         as 0FFER/BUY $P!GE0NS's own confirm modals, not a showScreen
+         navigation away from the grid (reported live as "feels like going
+         to another page"). Two static sub-states (confirm, then result)
+         toggled by display, same pattern buySwapModal's own three states
+         use — the actual confirm/result logic below is untouched, only
+         the container changed. -->
+    <div id="buyConfirmModal" style="display:none;">
+      <div class="offer-confirm-panel" id="screenBuyConfirm">
+        <div class="node-eyebrow">// BUY C0NF!RMAT!0N</div>
+        <div class="tx-type-badge" id="buyConfTxType"></div>
+        <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="buyConfAccount"></span></div>
+        <div class="detail-field"><span class="df-label">NFTokenSellOffer</span><span class="df-value" id="buyConfOfferId"></span></div>
+        <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="buyConfPigeon"></span></div>
+        <div class="detail-field"><span class="df-label">SELLER</span><span class="df-value" id="buyConfSeller"></span></div>
+        <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="buyConfPrice"></span></div>
+        <div class="index-line" id="buyConfirmStatus" style="margin-top:1rem;"></div>
+        <div class="detail-actions">
+          <button class="secondary-btn" id="buyConfirmBackBtn">← BACK</button>
+          <button class="action-btn" id="buyOpenXamanBtn">0PEN XAMAN</button>
+        </div>
       </div>
-    </div>
 
-    <!-- SCREEN: BUY RESULT — verified against real on-ledger state (buyer's account_nfts + offer gone) -->
-    <div class="sw-panel" id="screenBuyResult" style="display:none;">
-      <div class="detail-eyebrow">// SETTLED</div>
-      <div class="detail-num" id="buyResultPigeonNum"></div>
-      <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="buyResultPrice"></span></div>
-      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="buyResultStatus"></span></div>
-      <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="buyResultTxLink" target="_blank" rel="noopener"></a></span></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="buyResultDoneBtn">← BACK T0 L!STED</button>
+      <div class="offer-confirm-panel" id="screenBuyResult" style="display:none;">
+        <div class="detail-eyebrow">// SETTLED</div>
+        <div class="detail-num" id="buyResultPigeonNum"></div>
+        <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="buyResultPrice"></span></div>
+        <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="buyResultStatus"></span></div>
+        <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="buyResultTxLink" target="_blank" rel="noopener"></a></span></div>
+        <div class="detail-actions">
+          <button class="secondary-btn" id="buyResultDoneBtn">← BACK T0 L!STED</button>
+        </div>
       </div>
     </div>
 
@@ -5799,7 +5806,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myPigeonsConnect','connectScyllaBtn','connectStatus',
    'myPigeonsSortRow','myPigeonsSortSelect',
    'screenListResult','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
-   'screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
+   'buyConfirmModal','screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
    'buySwapModal','buySwapEntryState','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapPayRow',
@@ -6262,12 +6269,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenSwapAcceptConfirm.style.display = name === 'swapacceptconfirm' ? '' : 'none';
     el.screenSwapAcceptResult.style.display = name === 'swapacceptresult' ? '' : 'none';
     el.screenListResult.style.display = name === 'listresult' ? '' : 'none';
-    el.screenBuyConfirm.style.display = name === 'buyconfirm' ? '' : 'none';
-    el.screenBuyResult.style.display = name === 'buyresult' ? '' : 'none';
     // BUY $P!GE0NS (screenBuySwap/-Confirm/-Result) is a real popup now
     // (#buySwapModal), not part of this showScreen chain — see
     // openBuySwapPanel/showBuySwapState, which fully own those three
-    // sub-divs' display instead.
+    // sub-divs' display instead. BUY N0W's own confirm/result pair
+    // (screenBuyConfirm/screenBuyResult) is the same story now, inside
+    // #buyConfirmModal — see openBuyConfirm/closeBuyConfirmModal.
     el.screenDelistConfirm.style.display = name === 'delistconfirm' ? '' : 'none';
     el.screenDelistResult.style.display = name === 'delistresult' ? '' : 'none';
     // 0FFER's own result is a receipt sub-state inside #offerConfirmModal
@@ -9092,16 +9099,23 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buyConfirmStatus.textContent = '';
       el.buyOpenXamanBtn.disabled = false;
       el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
-      showScreen('buyconfirm');
+      el.screenBuyResult.style.display = 'none';
+      el.screenBuyConfirm.style.display = '';
+      el.buyConfirmModal.style.display = 'flex';
     }).catch(function(e){
       alert('ERR://S!GNAL_L0ST — TRY AGA!N.\\n\\nD!AGN0ST!C :: ' + (e && e.message ? e.message : String(e)));
       buyTarget = null;
     });
   }
-  el.buyConfirmBackBtn.addEventListener('click', function(){
+  // Shared by the BACK button, a backdrop click, and browser-back (see
+  // closeTopmostOverlayForBack) — same pattern every other confirm popup
+  // on this page uses (closeOfferConfirmModal etc).
+  function closeBuyConfirmModal(){
     buyTarget = null;
-    showScreen('browse');
-  });
+    el.buyConfirmModal.style.display = 'none';
+  }
+  el.buyConfirmBackBtn.addEventListener('click', closeBuyConfirmModal);
+  el.buyConfirmModal.addEventListener('click', function(e){ if (e.target === el.buyConfirmModal) closeBuyConfirmModal(); });
 
   // ---- BUY $P!GE0NS swap panel (trustline banner's BUY $P!GE0NS button —
   // was a plain external DexScreener link). STAGE 3: real live quote,
@@ -9638,14 +9652,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buyResultTxLink.removeAttribute('href');
       el.buyResultTxLink.textContent = '—';
     }
-    showScreen('buyresult');
+    el.screenBuyConfirm.style.display = 'none';
+    el.screenBuyResult.style.display = '';
   }
   el.buyResultDoneBtn.addEventListener('click', function(){
-    buyTarget = null;
     buyUuid = null;
     if (buyPollTimer) clearTimeout(buyPollTimer);
     state.activeTab = 'database';
     showScreen('browse');
+    closeBuyConfirmModal();
     runQuery(); // refreshes the LISTED grid so the now-sold Pigeon disappears
   });
 
@@ -11613,6 +11628,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (el.transferConfirmModal.style.display !== 'none'){ closeTransferConfirmModal(); return true; }
     if (el.offerConfirmModal.style.display !== 'none'){ closeOfferConfirmModal(); return true; }
     if (el.buySwapModal.style.display !== 'none'){ closeBuySwapModal(); return true; }
+    if (el.buyConfirmModal.style.display !== 'none'){ closeBuyConfirmModal(); return true; }
     if (el.pigeonsCalcModal.style.display !== 'none'){ closeCalcPopover(); return true; }
     if (el.amountEntryModal.style.display !== 'none'){ closeAmountEntryModal(); return true; }
     if (el.screenHistory.style.display !== 'none' || el.screenDetail.style.display !== 'none'){ goBackFromDetail(); return true; }
