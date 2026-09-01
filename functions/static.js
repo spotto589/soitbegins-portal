@@ -10943,12 +10943,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   var acceptTransferPollTimer = null;
   var acceptTransferXamanTab = null;
 
+  // Same shape as loadOffersReceived's own in-flight guard, same reason —
+  // this has the identical three call sites (the eager page-load call,
+  // browseOwnerCollection's own direct call, and showTab's
+  // tab==='mypigeons' branch) that made offers received flicker.
+  var incomingTransfersPromise = null;
   function loadIncomingTransfers(){
     if (!MY_WALLET){ el.incomingTransfersBox.style.display = 'none'; return; }
-    fetch('/api/swap-incoming-transfers').then(function(r){ return r.json(); }).then(function(data){
+    if (incomingTransfersPromise) return incomingTransfersPromise;
+    incomingTransfersPromise = fetch('/api/swap-incoming-transfers').then(function(r){ return r.json(); }).then(function(data){
       incomingTransfersData = data.items || [];
       renderIncomingTransfers();
-    }).catch(function(){});
+      incomingTransfersPromise = null;
+    }).catch(function(){
+      incomingTransfersPromise = null;
+    });
+    return incomingTransfersPromise;
   }
   function renderIncomingTransfers(){
     if (!incomingTransfersData.length){
