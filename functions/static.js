@@ -1182,7 +1182,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sort-field-label{
     font-size:12px;
     letter-spacing:0.1em;
-    color:var(--grey-dim);
+    color:var(--white);
     text-transform:uppercase;
     white-space:nowrap;
   }
@@ -1245,6 +1245,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-weight:700;
     letter-spacing:0.05em;
   }
+  /* L!ST/TRANSFER specifically — reported live as reading grey/washed-out
+     against CANCEL's own deliberate red; white matches the rest of the
+     card's real (non-muted) text instead of looking disabled. */
+  .list-open-modal-btn, .transfer-open-modal-btn{ color:var(--white); }
   .delist-pigeon-btn, #detailScyllaDelistBtn{ border-color:var(--red); color:var(--red); text-shadow:0 0 6px var(--red-glow); }
   /* ownedPigeonActionHtml's own CANCEL/L!ST + TRANSFER pair — side by
      side, not each stacked full-width, so a listed Pigeon (CANCEL +
@@ -1352,7 +1356,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:transparent;
     border:none;
     border-right:1px solid var(--border-mid);
-    color:var(--grey);
+    color:var(--white);
     font-family:var(--font-mono);
     font-size:15px;
     letter-spacing:0.03em;
@@ -3006,13 +3010,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-bottom:1px solid var(--border-dim);
     transition:color 0.15s ease;
   }
-  .result-rarity-line{ font-size:17px; letter-spacing:0.03em; color:var(--grey); text-align:center; }
+  .result-rarity-line{ font-size:17px; letter-spacing:0.03em; color:var(--white); text-align:center; }
   /* AVG SALE PR!CE / COND!T!ON label above its own value, not side by
      side on one line — same stacked shape as .stat-label/.stat-value
      elsewhere on the page, just sized down to fit a thumbnail card. */
   .result-stat-stack{ display:flex; flex-direction:column; align-items:center; gap:0.1rem; }
-  .result-stat-stack .stat-label{ font-size:11px; margin-bottom:0; color:var(--grey-dim); }
-  .result-stat-stack .stat-value{ font-size:16px; color:var(--grey); }
+  .result-stat-stack .stat-label{ font-size:11px; margin-bottom:0; color:var(--white); }
+  .result-stat-stack .stat-value{ font-size:16px; color:var(--white); }
   .card-listings{ display:flex; gap:0.4rem; margin-top:0.45rem; }
   /* Neither marketplace has a real listing — one shared full-width bar
      naming both markets, instead of two separate washed-out boxes. */
