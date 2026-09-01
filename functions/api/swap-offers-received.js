@@ -1,7 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts, findAllPigeons,
   getSwapBuyOffersMap, addSwapBuyOffer, removeSwapBuyOffer, fetchNftBuyOffers,
-  getOwnerPigeonsViaDeeptide, encodeCurrencyCode, PIGEONS_TOKEN_CONFIG
+  getOwnerPigeonsViaDeeptide, getSwapListingsMap, encodeCurrencyCode, PIGEONS_TOKEN_CONFIG
 } from '../_shared.js';
 
 function shortenAddr(addr) {
@@ -47,17 +47,27 @@ export async function onRequestGet(context) {
   }
   const owner = payload.acct;
 
-  const [ownedNfts, buyOffersMap, deeptideItems] = await Promise.all([
+  const [ownedNfts, buyOffersMap, deeptideItems, listingsMap] = await Promise.all([
     fetchAllAccountNfts(owner),
     getSwapBuyOffersMap(env.coin),
-    getOwnerPigeonsViaDeeptide(env.coin, owner)
+    getOwnerPigeonsViaDeeptide(env.coin, owner),
+    getSwapListingsMap(env.coin)
   ]);
   const deeptideById = new Map(deeptideItems.map(d => [d.nftId, d]));
   const ownedPigeonIds = findAllPigeons(ownedNfts).map(n => n.NFTokenID);
   const ownedPigeonIdSet = new Set(ownedPigeonIds);
   const trackedIds = Object.keys(buyOffersMap).filter(id => ownedPigeonIdSet.has(id));
-  const untrackedIds = ownedPigeonIds.filter(id => !trackedIds.includes(id)).slice(0, OFFERS_RECEIVED_SCAN_CAP);
-  const candidateIds = trackedIds.concat(untrackedIds);
+  // This wallet's own currently-listed Pigeons — always scanned regardless
+  // of OFFERS_RECEIVED_SCAN_CAP, not just whichever happen to fall in the
+  // first `cap` owned NFTs by raw ledger order. A listing is exactly the
+  // kind of Pigeon likely to have a real buy offer sitting on it, and a
+  // large-holder wallet (hundreds of NFTs) could otherwise have its own
+  // listed Pigeon's real offer silently never discovered, since it never
+  // got a chance to be scanned into the tracked index in the first place.
+  const ownListedIds = Object.keys(listingsMap).filter(id => listingsMap[id].seller === owner && ownedPigeonIdSet.has(id) && !trackedIds.includes(id));
+  const remainingCap = Math.max(0, OFFERS_RECEIVED_SCAN_CAP - ownListedIds.length);
+  const untrackedIds = ownedPigeonIds.filter(id => !trackedIds.includes(id) && !ownListedIds.includes(id)).slice(0, remainingCap);
+  const candidateIds = trackedIds.concat(ownListedIds, untrackedIds);
 
   const currency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
   const results = await Promise.all(candidateIds.map(async nftId => {
