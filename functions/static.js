@@ -7314,19 +7314,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     // DATABASE's own grid panel never collapses — only MY FL0CK's copy of
     // it does, and only while actually on FL0CK.
+    // Reverted a bad fix here: #flockGridPanel is NOT vestigial — it
+    // directly wraps resultsBlock/resultsArea (the real grid), so this
+    // line alone already correctly hides it while flockCollapsed. An
+    // earlier attempt additionally hid el.screenBrowse itself, which
+    // ALSO contains flockWalletBox/flockAccountBoxes as siblings inside
+    // it — that bricked the whole Σκύλλα tab (wallet box, account boxes,
+    // everything) with nothing left visible to click to undo it. Confirmed
+    // live as "not loading Σκύλλα at all when logged in" — never do that
+    // again; only flockGridPanel should ever collapse here.
     el.flockGridPanel.style.display = (onFlock && state.flockCollapsed) ? 'none' : '';
-    // The REAL pigeon grid (el.screenBrowse, shared with DATABASE — see
-    // browseOwnerCollection's own comment) was left ungated by
-    // flockCollapsed after that sharing refactor, so it always rendered
-    // immediately regardless of collapse state — flockCollapsed only ever
-    // hid the now-empty legacy #flockGridPanel above. Reported live as
-    // wanting Σκύλλα to stay "a flat page" (just the account boxes) until
-    // MY P!GE0NS is actually clicked, not the full grid dumped in
-    // underneath right away. showTab's own unconditional assignment of
-    // this (still needed for the 'database' tab and the not-yet-scoped
-    // "connecting" state) runs before this function every time, so this
-    // always has the final say for the onFlock case specifically.
-    if (onFlock) el.screenBrowse.style.display = state.flockCollapsed ? 'none' : '';
   }
   // Shared by SELECT (auto-enters owner scope + auto-targets the pigeon
   // that got you there) and the plain "view this wallet's collection" click
