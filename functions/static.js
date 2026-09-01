@@ -11725,17 +11725,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   // click one to sort by it. Single pick, same as the original dropdown —
   // just presented the same way TRAITS is instead of a native <select>.
   var SORT_CATEGORIES = {
-    'RAR!TY': [
-      { value: 'RARITY_ASC', label: 'H!GHEST' },
-      { value: 'RARITY_DESC', label: 'L0WEST' }
-    ],
     'PR!CE': [
-      { value: 'SCYLLA_PRICE_DESC', label: 'H!GHEST $P!GE0NS' },
       { value: 'SCYLLA_PRICE_ASC', label: 'L0WEST $P!GE0NS' },
+      { value: 'SCYLLA_PRICE_DESC', label: 'H!GHEST $P!GE0NS' },
       { value: 'AVG_SALE_XRP_ASC', label: 'L0WEST AVG SALE PR!CE XRP' },
       { value: 'AVG_SALE_XRP_DESC', label: 'H!GHEST AVG SALE PR!CE XRP' },
       { value: 'AVG_SALE_PIGEONS_ASC', label: 'L0WEST AVG SALE PR!CE $P!GE0NS' },
       { value: 'PRICE_ASC', label: 'L0WEST (XRP)', disabled: true }
+    ],
+    'RAR!TY': [
+      { value: 'RARITY_DESC', label: 'L0WEST' },
+      { value: 'RARITY_ASC', label: 'H!GHEST' }
     ],
     'ALPHABET!CAL': [
       { value: 'NAME_ASC', label: 'A-Z' },
