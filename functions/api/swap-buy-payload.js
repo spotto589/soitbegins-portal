@@ -1,6 +1,8 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, getXamanUserToken, findPigeonsOffer,
-  recordPendingBuy
+  recordPendingBuy, PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceFee,
+  MARKETPLACE_BROKER_WALLET, getSwapListingsMap, acquireBrokerAcceptLock, releaseBrokerAcceptLock,
+  recordPendingBrokerAccept, fetchDeeptideNftDetail
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same txjson swap-buy-prepare.js
@@ -9,6 +11,11 @@ import {
 // sign request for it. The server never signs, never holds a seed/key, and
 // never touches the NFT or the $PIGEONS — Xaman only ever asks the buyer's
 // own wallet to approve.
+//
+// For a fee-bearing (post-rollout) listing, that sign request is a real
+// $PIGEONS BUY offer for the full price, not a direct accept — see
+// swap-buy-prepare.js's own comment for why, and swap-buy-status.js for
+// the automatic brokered-accept step that follows once it lands on-ledger.
 export async function onRequestPost(context) {
   const { request, env } = context;
   console.log('BUY-PAYLOAD start', request.headers.get('User-Agent'), request.headers.get('Content-Type'));
@@ -57,12 +64,6 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 503 });
   }
   console.log('BUY-PAYLOAD offers found:', offers.length);
-  // The Σκύλλα $PIGEONS offer specifically, excluding any offer the buyer
-  // themselves created — see findPigeonsOffer's own comment for why
-  // offers[0]/owner-only matching is wrong here, and why excludeOwner (not
-  // a separate "who owns this NFT right now" lookup) is what fixes BUY NOW
-  // wrongly reporting cannot_buy_own_listing on someone else's real,
-  // current listing.
   const offer = findPigeonsOffer(offers, undefined, buyer);
   if (!offer) {
     console.log('BUY-PAYLOAD exit: not_listed (no non-buyer $PIGEONS offer among', offers.length, 'offers)');
@@ -70,32 +71,91 @@ export async function onRequestPost(context) {
   }
   console.log('BUY-PAYLOAD offer matched', offer.nft_offer_index, 'seller', offer.owner);
 
+  const pushToken = await getXamanUserToken(env.coin, buyer);
+
+  // Legacy (pre-rollout) listing: no Destination restriction, on-ledger
+  // amount already IS the full price — stays the original plain, fee-less
+  // direct accept.
+  if (offer.destination !== MARKETPLACE_BROKER_WALLET) {
+    const txjson = {
+      TransactionType: 'NFTokenAcceptOffer',
+      Account: buyer,
+      NFTokenSellOffer: offer.nft_offer_index
+    };
+    const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
+    if (!xummData || !xummData.uuid || !xummData.next) {
+      console.log('BUY-PAYLOAD exit: xaman_request_failed (legacy)', JSON.stringify(xummData));
+      return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });
+    }
+    console.log('BUY-PAYLOAD SUCCESS (legacy)', xummData.uuid, 'for', buyer, nftId, 'at', new Date().toISOString());
+    if (env.coin) {
+      context.waitUntil(recordPendingBuy(env.coin, xummData.uuid, {
+        nftId,
+        seller: offer.owner,
+        buyer,
+        priceValue: offer.amount.value
+      }));
+    }
+    return new Response(JSON.stringify({ ok: true, uuid: xummData.uuid, next: xummData.next }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  const listingsMap = await getSwapListingsMap(env.coin);
+  const tracked = listingsMap && listingsMap[nftId];
+  const fee = tracked && tracked.totalValue ? computeMarketplaceFee(tracked.totalValue) : null;
+  if (!fee || fee.sellerValue !== offer.amount.value) {
+    console.log('BUY-PAYLOAD exit: listing_price_unavailable for', nftId);
+    return new Response(JSON.stringify({ error: 'listing_price_unavailable' }), { status: 409 });
+  }
+
+  // Guards against two buyers racing the same listing at once — keyed by
+  // the SELL offer (the thing that already exists and can only ever be
+  // consumed once), not the not-yet-created buy offer. Same best-effort
+  // reasoning as ACCEPT OFFER's lock: the real backstop is the ledger
+  // itself (only one brokered accept can ever consume a given sell offer).
+  const sellOfferId = offer.nft_offer_index;
+  if (env.coin) {
+    const gotLock = await acquireBrokerAcceptLock(env.coin, sellOfferId);
+    if (!gotLock) {
+      console.log('BUY-PAYLOAD exit: already_processing for sell offer', sellOfferId);
+      return new Response(JSON.stringify({ error: 'already_processing' }), { status: 409 });
+    }
+  }
+
   const txjson = {
-    TransactionType: 'NFTokenAcceptOffer',
+    TransactionType: 'NFTokenCreateOffer',
     Account: buyer,
-    NFTokenSellOffer: offer.nft_offer_index
+    Owner: offer.owner,
+    NFTokenID: nftId,
+    Amount: {
+      currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency),
+      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      value: fee.totalValue
+    },
+    Memos: swapOfferSourceMemo()
   };
 
-  const pushToken = await getXamanUserToken(env.coin, buyer);
   const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   if (!xummData || !xummData.uuid || !xummData.next) {
-    console.log('BUY-PAYLOAD exit: xaman_request_failed, xummData was', JSON.stringify(xummData));
+    console.log('BUY-PAYLOAD exit: xaman_request_failed', JSON.stringify(xummData));
+    if (env.coin) context.waitUntil(releaseBrokerAcceptLock(env.coin, sellOfferId));
     return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });
   }
 
-  console.log('BUY-PAYLOAD SUCCESS', xummData.uuid, 'for', buyer, nftId, 'at', new Date().toISOString());
+  console.log('BUY-PAYLOAD SUCCESS', xummData.uuid, 'for', buyer, nftId, 'total', fee.totalValue, 'at', new Date().toISOString());
 
-  // Stash seller/price now, while the offer still exists — by the time
-  // swap-buy-status.js confirms settlement, the accepted offer is gone
-  // from the ledger and this is no longer derivable. Best-effort: a lost
-  // write here means the sale still completes fine, just without a SALES
-  // DATA row.
   if (env.coin) {
-    context.waitUntil(recordPendingBuy(env.coin, xummData.uuid, {
+    const item = await fetchDeeptideNftDetail(nftId).catch(() => null);
+    context.waitUntil(recordPendingBrokerAccept(env.coin, xummData.uuid, {
       nftId,
+      offerId: sellOfferId,
       seller: offer.owner,
       buyer,
-      priceValue: offer.amount.value
+      totalValue: fee.totalValue,
+      feeValue: fee.feeValue,
+      sellerValue: fee.sellerValue,
+      pigeonNumber: (item && item.number) || null
     }));
   }
 

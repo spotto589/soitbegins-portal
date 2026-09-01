@@ -586,6 +586,14 @@ export async function takePendingBrokerAccept(kv, uuid) {
   await kv.delete(PENDING_BROKER_ACCEPT_PREFIX + uuid).catch(() => {});
   return JSON.parse(raw);
 }
+// Non-consuming read — used by swap-buy-status.js, which (unlike
+// swap-acceptoffer-status.js) has to distinguish a fee-bearing flow from a
+// legacy fee-less one on EVERY poll, not just the final settling one, so it
+// can't afford to consume the record before it's actually ready to submit.
+export async function peekPendingBrokerAccept(kv, uuid) {
+  const raw = await kv.get(PENDING_BROKER_ACCEPT_PREFIX + uuid);
+  return raw ? JSON.parse(raw) : null;
+}
 
 // Best-effort guard against the same buy offer being committed to accept
 // twice at once (two browser tabs, a double click before the button
@@ -605,6 +613,28 @@ export async function acquireBrokerAcceptLock(kv, offerId) {
 }
 export async function releaseBrokerAcceptLock(kv, offerId) {
   await kv.delete(BROKER_ACCEPT_LOCK_PREFIX + offerId).catch(() => {});
+}
+
+// Bridges swap-listing-payload.js (which knows the seller's typed GROSS
+// price right as it builds the Destination-restricted sell offer) to
+// swap-listing-status.js (which only ever sees the on-ledger offer's own
+// amount — now the NET sellerValue, since the marketplace fee moved to
+// LIST time so BUY NOW can stay a single signature). Not single-consume
+// like recordPendingBrokerAccept — swap-listing-status.js can be polled
+// many times before the offer lands on-ledger, and needs the same gross
+// price on every one of those polls, not just the first.
+const PENDING_LISTING_PREFIX = 'pswap:pendinglisting:';
+const PENDING_LISTING_TTL_SECONDS = 900;
+
+export async function recordPendingListing(kv, uuid, entry) {
+  await safeKvPut(kv, PENDING_LISTING_PREFIX + uuid, JSON.stringify(entry), { expirationTtl: PENDING_LISTING_TTL_SECONDS });
+}
+export async function getPendingListing(kv, uuid) {
+  const raw = await kv.get(PENDING_LISTING_PREFIX + uuid);
+  return raw ? JSON.parse(raw) : null;
+}
+export async function clearPendingListing(kv, uuid) {
+  await kv.delete(PENDING_LISTING_PREFIX + uuid).catch(() => {});
 }
 
 // Real live $PIGEONS/XRP rate. DexScreener's public API is the primary

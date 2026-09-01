@@ -1,13 +1,26 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findPigeonsOffer
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findPigeonsOffer,
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceFee,
+  MARKETPLACE_BROKER_WALLET, getSwapListingsMap
 } from '../_shared.js';
 
-// Σκύλλα SWAP — BUY (phase 2). Builds and returns the exact
-// NFTokenAcceptOffer txjson for the confirmation screen. Everything comes
-// from a FRESH nft_sell_offers lookup, never the cached Σκύλλα listings
-// index — that index only ever gates "is this NFT Scylla-tracked at all,"
-// the live offer is the sole source of truth for the offer ID, seller, and
-// price actually used or shown.
+// Σκύλλα SWAP — BUY NOW. Builds and returns a txjson for the confirmation
+// screen. Everything comes from a FRESH nft_sell_offers lookup, never the
+// cached Σκύλλα listings index — that index only ever gates "is this NFT
+// Scylla-tracked at all / what's the gross price," the live offer is the
+// sole source of truth for the offer ID, seller, and on-ledger amount.
+//
+// A LIST-time sell offer is now Destination-restricted to the broker
+// wallet and created for sellerValue, not the full price (see
+// swap-listing-prepare.js) — so a direct NFTokenAcceptOffer by the buyer
+// is no longer possible (Destination blocks it) and would skip the fee
+// even if it were. Instead the buyer creates a matching real $PIGEONS BUY
+// offer for the full totalValue; once that lands on-ledger,
+// swap-buy-status.js automatically submits the brokered accept that
+// settles both sides atomically and routes the fee — mirroring the exact
+// pattern already proven by MAKE OFFER + ACCEPT OFFER, just with the
+// seller's leg already sitting on-ledger from LIST time instead of being
+// signed live. Net effect for the buyer: still just one signature.
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -60,10 +73,60 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'not_listed' }), { status: 404 });
   }
 
+  const pigeonsCurrency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
+
+  // A listing predating the marketplace-fee rollout has no Destination
+  // restriction and its on-ledger amount already IS the full price — stays
+  // a plain, fee-less direct accept exactly like before, so an existing
+  // live listing never breaks out from under a seller mid-flight. Every
+  // NEW listing goes through the fee-bearing branch below.
+  if (offer.destination !== MARKETPLACE_BROKER_WALLET) {
+    const txjson = {
+      TransactionType: 'NFTokenAcceptOffer',
+      Account: buyer,
+      NFTokenSellOffer: offer.nft_offer_index
+    };
+    return new Response(JSON.stringify({
+      ok: true,
+      legacy: true,
+      txjson,
+      display: {
+        nftId,
+        seller: offer.owner,
+        totalValue: offer.amount.value,
+        feeValue: '0',
+        sellerValue: offer.amount.value,
+        currency: offer.amount.currency,
+        issuer: offer.amount.issuer
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // The GROSS price the buyer actually pays can't be re-derived from the
+  // live offer alone any more (its Amount is now the seller's NET take) —
+  // it comes from the Σκύλλα listings index, written by
+  // swap-listing-status.js right after the seller's offer confirmed.
+  // Cross-checked against the real on-ledger amount so a stale/missing
+  // index entry can never let a wrong price reach a real transaction —
+  // it just fails closed and asks the buyer to retry a moment later.
+  const listingsMap = await getSwapListingsMap(env.coin);
+  const tracked = listingsMap && listingsMap[nftId];
+  const fee = tracked && tracked.totalValue ? computeMarketplaceFee(tracked.totalValue) : null;
+  if (!fee || fee.sellerValue !== offer.amount.value) {
+    return new Response(JSON.stringify({ error: 'listing_price_unavailable' }), { status: 409 });
+  }
+
   const txjson = {
-    TransactionType: 'NFTokenAcceptOffer',
+    TransactionType: 'NFTokenCreateOffer',
     Account: buyer,
-    NFTokenSellOffer: offer.nft_offer_index
+    Owner: offer.owner,
+    NFTokenID: nftId,
+    Amount: {
+      currency: pigeonsCurrency,
+      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      value: fee.totalValue
+    },
+    Memos: swapOfferSourceMemo()
   };
 
   return new Response(JSON.stringify({
@@ -72,9 +135,12 @@ export async function onRequestPost(context) {
     display: {
       nftId,
       seller: offer.owner,
-      price: offer.amount.value,
-      currency: offer.amount.currency,
-      issuer: offer.amount.issuer
+      totalValue: fee.totalValue,
+      feeValue: fee.feeValue,
+      sellerValue: fee.sellerValue,
+      currency: pigeonsCurrency,
+      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      sellOfferId: offer.nft_offer_index
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }

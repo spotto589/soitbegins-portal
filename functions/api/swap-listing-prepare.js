@@ -1,16 +1,24 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
   PIGEON_ISSUER, PIGEON_TAXON, isTransferable,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo,
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET,
   LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds
 } from '../_shared.js';
 
-// Σκύλλα SWAP — first real listing test. This endpoint only builds and
-// returns the exact NFTokenCreateOffer txjson for the confirmation screen;
-// it never talks to Xaman and never touches the NFT or any funds. The
-// browser is never trusted for the seller address, the NFT's ownership, or
-// the currency/issuer — all of that is re-derived here from the session and
+// Σκύλλα SWAP — LIST. This endpoint only builds and returns the exact
+// NFTokenCreateOffer txjson for the confirmation screen; it never talks to
+// Xaman and never touches the NFT or any funds. The browser is never
+// trusted for the seller address, the NFT's ownership, or the
+// currency/issuer — all of that is re-derived here from the session and
 // server-side ledger data.
+//
+// The on-ledger sell offer is Destination-restricted to the broker wallet
+// and created for sellerValue (not the seller's full typed price) — the
+// marketplace fee is taken here, at LIST time, instead of at BUY time, so
+// BUY NOW can stay a single buyer signature (see swap-buy-prepare.js's own
+// comment for the full reasoning). The buyer still pays the seller's full
+// typed price (totalValue) — only the seller's own proceeds are reduced by
+// the fee, exactly like every other buyer-facing price on the site.
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -67,6 +75,11 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'not_transferable' }), { status: 400 });
   }
 
+  const fee = computeMarketplaceFee(priceStr);
+  if (!fee) {
+    return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
+  }
+
   const durationDays = LISTING_DURATION_DAYS_ALLOWED.includes(body && body.durationDays) ? body.durationDays : DEFAULT_LISTING_DURATION_DAYS;
   const expiration = listingExpirationRippleSeconds(durationDays);
   const txjson = {
@@ -76,8 +89,9 @@ export async function onRequestPost(context) {
     Amount: {
       currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency),
       issuer: PIGEONS_TOKEN_CONFIG.issuer,
-      value: priceStr
+      value: fee.sellerValue
     },
+    Destination: MARKETPLACE_BROKER_WALLET,
     Flags: 1,
     // FOREVER (durationDays 0) -> null -> field omitted entirely, which
     // is what "never expires" actually means to XRPL (see
@@ -86,7 +100,12 @@ export async function onRequestPost(context) {
     Memos: swapOfferSourceMemo()
   };
 
-  return new Response(JSON.stringify({ ok: true, txjson, durationDays }), {
+  return new Response(JSON.stringify({
+    ok: true,
+    txjson,
+    durationDays,
+    display: { totalValue: fee.totalValue, feeValue: fee.feeValue, sellerValue: fee.sellerValue }
+  }), {
     headers: { 'Content-Type': 'application/json' }
   });
 }

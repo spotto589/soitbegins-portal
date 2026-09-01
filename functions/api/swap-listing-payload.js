@@ -2,7 +2,8 @@ import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
   PIGEON_ISSUER, PIGEON_TAXON, isTransferable,
   PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, createXamanPayload, getXamanUserToken, swapOfferSourceMemo,
-  LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds
+  LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds,
+  computeMarketplaceFee, MARKETPLACE_BROKER_WALLET, recordPendingListing
 } from '../_shared.js';
 
 // Σκύλλα SWAP — first real listing test. Re-derives and re-validates the
@@ -69,6 +70,11 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'not_transferable' }), { status: 400 });
   }
 
+  const fee = computeMarketplaceFee(priceStr);
+  if (!fee) {
+    return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
+  }
+
   const durationDays = LISTING_DURATION_DAYS_ALLOWED.includes(body && body.durationDays) ? body.durationDays : DEFAULT_LISTING_DURATION_DAYS;
   const expiration = listingExpirationRippleSeconds(durationDays);
   const txjson = {
@@ -78,8 +84,9 @@ export async function onRequestPost(context) {
     Amount: {
       currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency),
       issuer: PIGEONS_TOKEN_CONFIG.issuer,
-      value: priceStr
+      value: fee.sellerValue
     },
+    Destination: MARKETPLACE_BROKER_WALLET,
     Flags: 1,
     // FOREVER (durationDays 0) -> null -> field omitted entirely, which
     // is what "never expires" actually means to XRPL (see
@@ -96,7 +103,21 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });
   }
 
-  console.log('SWAP listing payload created', uuid, 'for', seller, nftId, priceStr, 'at', new Date().toISOString());
+  // Stash the seller's GROSS typed price now, while it's still known —
+  // once the sell offer lands on-ledger, its own Amount is the NET
+  // sellerValue, and swap-listing-status.js has no other way to recover
+  // what the buyer is actually meant to pay.
+  if (env.coin) {
+    context.waitUntil(recordPendingListing(env.coin, uuid, {
+      nftId,
+      seller,
+      totalValue: fee.totalValue,
+      feeValue: fee.feeValue,
+      sellerValue: fee.sellerValue
+    }));
+  }
+
+  console.log('SWAP listing payload created', uuid, 'for', seller, nftId, 'total', fee.totalValue, 'seller gets', fee.sellerValue, 'at', new Date().toISOString());
 
   return new Response(JSON.stringify({ ok: true, uuid, next, qr: xummData.refs && xummData.refs.qr_png }), {
     headers: { 'Content-Type': 'application/json' }

@@ -5678,12 +5678,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div id="buyConfirmModal" style="display:none;">
       <div class="offer-confirm-panel" id="screenBuyConfirm">
         <div class="node-eyebrow">// BUY C0NF!RMAT!0N</div>
-        <div class="tx-type-badge" id="buyConfTxType"></div>
-        <div class="detail-field"><span class="df-label">Account</span><span class="df-value" id="buyConfAccount"></span></div>
-        <div class="detail-field"><span class="df-label">NFTokenSellOffer</span><span class="df-value" id="buyConfOfferId"></span></div>
         <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="buyConfPigeon"></span></div>
         <div class="detail-field"><span class="df-label">SELLER</span><span class="df-value" id="buyConfSeller"></span></div>
         <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="buyConfPrice"></span></div>
+        <div class="accept-offer-explainer" id="buyConfExplainer"></div>
         <div class="index-line" id="buyConfirmStatus" style="margin-top:1rem;"></div>
         <div class="detail-actions">
           <button class="secondary-btn" id="buyConfirmBackBtn">← BACK</button>
@@ -6187,7 +6185,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myPigeonsConnect','connectScyllaBtn','connectStatus',
    'myPigeonsSortRow','myPigeonsSortSelect',
    'screenListResult','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
-   'buyConfirmModal','screenBuyConfirm','buyConfTxType','buyConfAccount','buyConfOfferId','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
+   'buyConfirmModal','screenBuyConfirm','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfExplainer','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
    'buySwapModal','buySwapEntryState','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapPayRow',
@@ -9684,7 +9682,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       xaman_request_failed: 'C0ULDN\\'T REACH XAMAN — TRY AGA!N.',
       not_indexed: 'C0ULDN\\'T L00K UP TH!S P!GE0N — TRY AGA!N.',
       cannot_offer_own_pigeon: 'Y0U CAN\\'T MAKE AN 0FFER 0N Y0UR 0WN P!GE0N.',
-      offer_not_found: 'TH!S 0FFER N0 L0NGER EX!STS 0N-LEDGER.'
+      offer_not_found: 'TH!S 0FFER N0 L0NGER EX!STS 0N-LEDGER.',
+      listing_price_unavailable: 'PR!CE !S ST!LL SYNC!NG — TRY AGA!N !N A M0MENT.',
+      already_processing: 'TH!S L!ST!NG !S ALREADY BE!NG PURCHASED BY S0MEONE ELSE R!GHT N0W.'
     };
     return (code && messages[code]) || 'ERR://C0ULD N0T PREPARE THE TRANSACT!0N.';
   }
@@ -9855,14 +9855,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         buyTarget = null;
         return;
       }
-      var txjson = res.data.txjson;
       var display = res.data.display;
-      el.buyConfTxType.textContent = txjson.TransactionType;
-      el.buyConfAccount.textContent = txjson.Account;
-      el.buyConfOfferId.textContent = txjson.NFTokenSellOffer;
       el.buyConfPigeon.innerHTML = 'P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????');
       el.buyConfSeller.textContent = display.seller;
-      el.buyConfPrice.textContent = fmtPigeons(display.price);
+      el.buyConfPrice.textContent = fmtPigeons(display.totalValue);
+      // Legacy (pre-fee-rollout) listings settle in one direct signature,
+      // same as always — only the new fee-bearing flow (see swap-buy-
+      // prepare.js's own comment) needs the buyer told about the automatic
+      // second step, mirroring ACCEPT OFFER's identical explainer.
+      el.buyConfExplainer.style.display = res.data.legacy ? 'none' : '';
+      el.buyConfExplainer.textContent = res.data.legacy ? '' :
+        'TH!S !S A TW0-STEP SALE. Y0U\\'LL F!RST S!GN A REAL 0FFER T0 BUY TH!S P!GE0N F0R THE FULL PR!CE SH0WN AB0VE. 0NCE C0NF!RMED, 0UR MARKETPLACE WALLET AUT0MAT!CALLY SETTLES THE SALE — THE P!GE0N M0VES STRA!GHT T0 Y0U AND THE SELLER GETS PA!D D!RECTLY, N0 FURTHER ACT!0N NEEDED FR0M Y0U.';
       el.buyConfirmStatus.textContent = '';
       el.buyOpenXamanBtn.disabled = false;
       el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
@@ -10475,11 +10478,23 @@ const SWAP_HTML = `<!DOCTYPE html>
           el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
-        if (data.status === 'failed'){
-          el.buyConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
+        if (data.status === 'failed' || data.status === 'sell_offer_gone'){
+          var buyReason = data.status === 'sell_offer_gone' ? 'TH!S L!ST!NG WAS CANCELLED 0R S0LD BEF0RE Y0UR PURCHASE C0ULD SETTLE.'
+            : 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
+          el.buyConfirmStatus.textContent = buyReason;
           el.buyOpenXamanBtn.disabled = false;
           el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
+        }
+        // 'signed_pending_ledger' (buyer's offer not yet visible) and
+        // 'brokering_in_progress' (offer confirmed, broker wallet is now
+        // building/submitting the actual brokered accept) both just keep
+        // polling with a status line that reflects which stage this
+        // actually is — same pattern as ACCEPT OFFER's identical poll.
+        if (data.status === 'brokering_in_progress'){
+          el.buyConfirmStatus.textContent = 'OFFER C0NF!RMED — SETTL!NG SALE...';
+        } else if (data.status === 'signed_pending_ledger'){
+          el.buyConfirmStatus.textContent = 'S!GNED — WA!T!NG F0R LEDGER C0NF!RMAT!0N...';
         }
         buyPollTimer = setTimeout(pollBuyStatus, 2000);
       }).catch(function(){

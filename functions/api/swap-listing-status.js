@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, recordSwapListing, findPigeonsOffer,
-  getXamanPayloadStatus
+  getXamanPayloadStatus, getPendingListing, clearPendingListing, computeMarketplaceFee
 } from '../_shared.js';
 
 // Polled by the browser after [ OPEN XAMAN ] while the user is signing.
@@ -77,12 +77,28 @@ export async function onRequestGet(context) {
     });
   }
 
+  // The on-ledger offer's own Amount is now the NET sellerValue (the fee
+  // moved to LIST time so BUY NOW stays one buyer signature) — the GROSS
+  // price buyers actually pay/see everywhere else on the site has to come
+  // from the record swap-listing-payload.js stashed at signing time.
+  // Cross-checked against the real on-ledger amount before trusting it, so
+  // a stale/tampered pending record can never make the displayed price
+  // disagree with what the buyer will really end up paying.
+  const pending = await getPendingListing(env.coin, uuid);
+  const pendingFee = pending ? computeMarketplaceFee(pending.totalValue) : null;
+  const pendingValid = pendingFee && pendingFee.sellerValue === (ownOffer.amount && ownOffer.amount.value);
+  const displayPrice = pendingValid ? pendingFee.totalValue : (ownOffer.amount && ownOffer.amount.value);
+
   // Record it in the Σκύλλα listings index — this is what powers the
-  // LISTED browse filter and the badges on ordinary browse cards. Doesn't
-  // block the response; a KV write failure here shouldn't stop the user
-  // from seeing their own successful listing result.
+  // LISTED browse filter, the badges on ordinary browse cards, and (via
+  // swap-buy-prepare.js) the GROSS price BUY NOW charges the buyer.
+  // Doesn't block the response; a KV write failure here shouldn't stop the
+  // user from seeing their own successful listing result.
   context.waitUntil(recordSwapListing(env.coin, nftId, {
-    price: ownOffer.amount && ownOffer.amount.value,
+    price: displayPrice,
+    totalValue: pendingValid ? pendingFee.totalValue : null,
+    feeValue: pendingValid ? pendingFee.feeValue : null,
+    sellerValue: pendingValid ? pendingFee.sellerValue : null,
     currency: ownOffer.amount && ownOffer.amount.currency,
     issuer: ownOffer.amount && ownOffer.amount.issuer,
     offerId: ownOffer.nft_offer_index,
@@ -90,12 +106,13 @@ export async function onRequestGet(context) {
     seller,
     listedAt: Math.floor(Date.now() / 1000)
   }));
+  context.waitUntil(clearPendingListing(env.coin, uuid));
 
   return new Response(JSON.stringify({
     status: 'listed',
     txHash,
     offerId: ownOffer.nft_offer_index,
-    price: ownOffer.amount && ownOffer.amount.value,
+    price: displayPrice,
     currency: ownOffer.amount && ownOffer.amount.currency,
     issuer: ownOffer.amount && ownOffer.amount.issuer,
     expiration: ownOffer.expiration || null
