@@ -1643,7 +1643,7 @@ export const PIGEON_COLLECTION_SIZE_APPROX = 3015;
 // at UTC midnight. Swallowing that here means a quota exhaustion pauses
 // caching (a little slower, re-fetches from Deeptide more often) instead
 // of breaking the actual browsing/search experience.
-async function safeKvPut(kv, key, value, opts) {
+export async function safeKvPut(kv, key, value, opts) {
   try {
     await kv.put(key, value, opts);
   } catch (e) {

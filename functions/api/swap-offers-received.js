@@ -1,7 +1,8 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts, findAllPigeons,
-  getSwapBuyOffersMap, addSwapBuyOffer, removeSwapBuyOffer, fetchNftBuyOffers,
-  getOwnerPigeonsViaDeeptide, getSwapListingsMap, encodeCurrencyCode, PIGEONS_TOKEN_CONFIG
+  getSwapBuyOffersMap, addSwapBuyOffer, removeSwapBuyOffer, fetchNftBuyOffersOrNull,
+  getOwnerPigeonsViaDeeptide, getSwapListingsMap, encodeCurrencyCode, PIGEONS_TOKEN_CONFIG,
+  mapWithConcurrency
 } from '../_shared.js';
 
 function shortenAddr(addr) {
@@ -13,6 +14,17 @@ function shortenAddr(addr) {
 // way LISTINGS_ENRICH_CAP_LOW is elsewhere, since this only ever fans out
 // across Pigeons this one wallet owns, not the whole collection.
 const OFFERS_RECEIVED_SCAN_CAP = 45;
+
+// Same concurrency swap-listing-owned.js's own live-discovery pass already
+// uses — a plain Promise.all over up to 45 candidates used to fire that
+// many concurrent xrplcluster.com calls at once, which is exactly the
+// "up to 60 concurrent calls... triggers its rate limit" scenario already
+// documented elsewhere in this app (pigeons.js's own scyllaListed comment).
+// Confirmed live: this was making a real, live, confirmed-on-ledger offer
+// never show up here at all — not intermittently, every time — because a
+// rate-limited nft_buy_offers call for that one NFT silently came back
+// empty (see fetchNftBuyOffersOrNull's own null-vs-empty distinction below).
+const OFFERS_RECEIVED_CONCURRENCY = 5;
 
 // MY PIGEONS' incoming-offers view — every real $PIGEONS buy-offer sitting
 // on a Pigeon the signed-in wallet currently owns. Self-healing like the
@@ -70,19 +82,43 @@ export async function onRequestGet(context) {
   const candidateIds = trackedIds.concat(ownListedIds, untrackedIds);
 
   const currency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
-  const results = await Promise.all(candidateIds.map(async nftId => {
-    const liveOffers = await fetchNftBuyOffers(nftId);
+  const results = await mapWithConcurrency(candidateIds, OFFERS_RECEIVED_CONCURRENCY, async nftId => {
+    const liveOffers = await fetchNftBuyOffersOrNull(nftId);
     const item = deeptideById.get(nftId) || null;
     const stored = buyOffersMap[nftId] || [];
     const storedByOfferId = {};
     stored.forEach(s => { storedByOfferId[s.offerId] = s; });
+
+    // null means the live check itself failed (rate-limited/network) —
+    // must NOT be treated as "confirmed no offers," or a transient blip
+    // both hides a real offer AND deletes it from our own tracked index
+    // below (see this function's own comment on why that was happening).
+    // Fall back to whatever was already tracked instead of reporting
+    // nothing for this Pigeon this pass.
+    if (liveOffers === null) {
+      if (!stored.length) return null;
+      return {
+        nftId,
+        number: item ? item.number : null,
+        image: item ? item.image : null,
+        offers: stored.map(s => ({
+          offerId: s.offerId,
+          buyer: s.buyer,
+          buyerShort: shortenAddr(s.buyer),
+          price: s.price,
+          createdAt: s.createdAt || null
+        }))
+      };
+    }
+
     const live = liveOffers.filter(o =>
       o.amount && typeof o.amount === 'object' &&
       o.amount.currency === currency &&
       o.amount.issuer === PIGEONS_TOKEN_CONFIG.issuer
     );
     // Prune any stored entry no longer actually on-ledger — never blocks
-    // the response, just best-effort cleanup.
+    // the response, just best-effort cleanup. Safe here specifically
+    // because liveOffers is a confirmed real result, not a failed lookup.
     const liveIds = new Set(live.map(o => o.nft_offer_index));
     const stale = stored.filter(s => !liveIds.has(s.offerId));
     stale.forEach(s => context.waitUntil(removeSwapBuyOffer(env.coin, nftId, s.offerId)));
@@ -116,7 +152,7 @@ export async function onRequestGet(context) {
         createdAt: (storedByOfferId[o.nft_offer_index] && storedByOfferId[o.nft_offer_index].createdAt) || null
       }))
     };
-  }));
+  });
 
   return new Response(JSON.stringify({ items: results.filter(Boolean) }), {
     headers: { 'Content-Type': 'application/json' }
