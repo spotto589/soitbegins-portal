@@ -1,6 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchDeeptideNftDetail,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo,
+  LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds
 } from '../_shared.js';
 
 // MAKE AN OFFER — the reverse of LIST. Builds and returns the exact
@@ -59,6 +60,13 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'cannot_offer_own_pigeon' }), { status: 400 });
   }
 
+  // Reported live as wanting offers to eventually clear themselves when
+  // ignored (XRPL has no "rejected" state to detect — see
+  // listingExpirationRippleSeconds's own comment on LIST's identical
+  // reasoning) instead of sitting live forever with no real answer either
+  // way. Same duration set/default as LIST.
+  const durationDays = LISTING_DURATION_DAYS_ALLOWED.includes(body && body.durationDays) ? body.durationDays : DEFAULT_LISTING_DURATION_DAYS;
+  const expiration = listingExpirationRippleSeconds(durationDays);
   const txjson = {
     TransactionType: 'NFTokenCreateOffer',
     Account: buyer,
@@ -69,6 +77,8 @@ export async function onRequestPost(context) {
       issuer: PIGEONS_TOKEN_CONFIG.issuer,
       value: priceStr
     },
+    // FOREVER (durationDays 0) -> null -> field omitted entirely, same as LIST.
+    ...(expiration !== null ? { Expiration: expiration } : {}),
     Memos: swapOfferSourceMemo()
   };
 

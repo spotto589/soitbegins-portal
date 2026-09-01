@@ -88,6 +88,7 @@ export async function onRequestGet(context) {
       nftId,
       offerId: myOffer.nft_offer_index,
       price: myOffer.amount.value,
+      expiration: myOffer.expiration || null,
       createdAt: (storedEntry && storedEntry.createdAt) || null,
       number: item ? item.number : null,
       image: item ? item.image : null,

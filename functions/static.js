@@ -5387,6 +5387,14 @@ const SWAP_HTML = `<!DOCTYPE html>
                   <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
                 </div>
                 <button class="make-offer-send" id="detailMakeOfferSend">SUBM!T</button>
+                <!-- Same duration row/reasoning as amountEntryOfferDuration. -->
+                <div class="list-duration-row" id="detailMakeOfferDuration">
+                  <button type="button" class="list-duration-btn" data-days="1">1 DAY</button>
+                  <button type="button" class="list-duration-btn" data-days="3">3 DAYS</button>
+                  <button type="button" class="list-duration-btn" data-days="7">7 DAYS</button>
+                  <button type="button" class="list-duration-btn" data-days="30">30 DAYS</button>
+                  <button type="button" class="list-duration-btn list-duration-forever active" data-days="0" title="F0REVER — never expires">∞</button>
+                </div>
               </div>
             </div>
             <!-- Real buy-offers received on YOUR OWN Pigeon, same
@@ -5487,6 +5495,18 @@ const SWAP_HTML = `<!DOCTYPE html>
               <input class="make-offer-input" id="amountEntryOfferInput" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">
             </div>
             <button class="make-offer-send" id="amountEntryOfferBtn">SUBM!T</button>
+          </div>
+          <!-- Real XRPL NFTokenCreateOffer Expiration, same as LIST's own
+               duration row — reported live as wanting an offer to
+               eventually clear itself when ignored (XRPL has no
+               "rejected" state to detect) instead of sitting live
+               forever with no real answer either way. -->
+          <div class="list-duration-row" id="amountEntryOfferDuration">
+            <button type="button" class="list-duration-btn" data-days="1">1 DAY</button>
+            <button type="button" class="list-duration-btn" data-days="3">3 DAYS</button>
+            <button type="button" class="list-duration-btn" data-days="7">7 DAYS</button>
+            <button type="button" class="list-duration-btn" data-days="30">30 DAYS</button>
+            <button type="button" class="list-duration-btn list-duration-forever active" data-days="0" title="F0REVER — never expires">∞</button>
           </div>
         </div>
         <div class="thumb-offer amount-entry-mode" id="amountEntryTransferMode" style="display:none;">
@@ -6144,7 +6164,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
    'detailNum','detailShareBtn','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
-   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
+   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn',
    'backToBrowseBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
@@ -6169,7 +6189,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'acceptTransferConfirmReceipt','acceptTransferReceiptPigeonNum','acceptTransferResultDoneBtn',
    'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultTxLink','transferResultDoneBtn',
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
-   'amountEntryOfferMode','amountEntryOfferPigeonRow','amountEntryOfferPigeonImg','amountEntryOfferPigeonNum','amountEntryOfferBalanceLine','amountEntryOfferInput','amountEntryOfferBtn',
+   'amountEntryOfferMode','amountEntryOfferPigeonRow','amountEntryOfferPigeonImg','amountEntryOfferPigeonNum','amountEntryOfferBalanceLine','amountEntryOfferInput','amountEntryOfferBtn','amountEntryOfferDuration',
    'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferBtn','amountEntryTransferStatus',
    'screenAcceptOfferConfirm','acceptOfferConfTxType','acceptOfferConfAccount','acceptOfferConfOfferId','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
    'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
@@ -7848,6 +7868,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // (see submitTransfer below). ----
   var amountEntryPigeon = null; // the Pigeon the currently-open popup is acting on
   var amountEntryListDurationDays = 0; // real NFTokenCreateOffer Expiration — see listingExpirationRippleSeconds in _shared.js. 0 = F0REVER, the default now (was 7)
+  var amountEntryOfferDurationDays = 0; // same real Expiration, for MAKE OFFER's own duration row
   function openAmountEntryModal(mode, p){
     amountEntryPigeon = p;
     el.amountEntryListMode.style.display = mode === 'list' ? '' : 'none';
@@ -7872,6 +7893,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.amountEntryOfferInput.value = '';
       el.amountEntryOfferBtn.disabled = false;
       el.amountEntryOfferBtn.textContent = 'SUBM!T';
+      amountEntryOfferDurationDays = 0;
+      el.amountEntryOfferDuration.querySelectorAll('.list-duration-btn').forEach(function(b){
+        b.classList.toggle('active', b.getAttribute('data-days') === '0');
+      });
       // Which Pigeon this offer is actually for — easy to lose track of
       // once the popup is open and the card underneath isn't visible.
       if (p && p.number !== null){
@@ -7917,11 +7942,19 @@ const SWAP_HTML = `<!DOCTYPE html>
       b.classList.toggle('active', b === btn);
     });
   });
+  el.amountEntryOfferDuration.addEventListener('click', function(e){
+    var btn = e.target.closest('.list-duration-btn');
+    if (!btn) return;
+    amountEntryOfferDurationDays = parseInt(btn.getAttribute('data-days'), 10);
+    el.amountEntryOfferDuration.querySelectorAll('.list-duration-btn').forEach(function(b){
+      b.classList.toggle('active', b === btn);
+    });
+  });
   el.amountEntryListBtn.addEventListener('click', function(){
     if (amountEntryPigeon) submitInlineListing(amountEntryPigeon, el.amountEntryListInput.value.trim().replace(/,/g, ''), el.amountEntryListMode, amountEntryListDurationDays);
   });
   el.amountEntryOfferBtn.addEventListener('click', function(){
-    if (amountEntryPigeon) submitMakeOffer(amountEntryPigeon, el.amountEntryOfferInput.value.trim().replace(/,/g, ''), el.amountEntryOfferMode);
+    if (amountEntryPigeon) submitMakeOffer(amountEntryPigeon, el.amountEntryOfferInput.value.trim().replace(/,/g, ''), el.amountEntryOfferMode, amountEntryOfferDurationDays);
   });
   el.amountEntryTransferBtn.addEventListener('click', function(){
     if (amountEntryPigeon) submitTransfer(amountEntryPigeon, el.amountEntryTransferInput.value.trim(), el.amountEntryTransferMode);
@@ -10609,7 +10642,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Entered right in the DATABASE card's own MAKE AN OFFER strip (see
   // wireResultClicks' .make-offer-send handler) — no separate form screen,
   // straight from the inline number to the confirm screen below.
-  function submitMakeOffer(p, priceValue, stripEl){
+  function submitMakeOffer(p, priceValue, stripEl, durationDays){
     // The server-side prepare endpoint requires a real logged-in session
     // (it derives the offering wallet from the pigeon_session cookie) —
     // rather than let that fail with a confusing auth error, send an
@@ -10645,7 +10678,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-makeoffer-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue })
+      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       sendBtn.disabled = false;
@@ -10660,6 +10693,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       offerTarget = p;
       offerTarget.priceValue = priceValue;
+      offerTarget.durationDays = durationDays;
       showOfferConfirm(res.data.txjson);
       // Straight into the real Xaman request the instant the offer is
       // valid — reported live as not wanting a separate review screen
@@ -10755,7 +10789,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-makeoffer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: offerTarget.nftId, priceValue: offerTarget.priceValue })
+      body: JSON.stringify({ nftId: offerTarget.nftId, priceValue: offerTarget.priceValue, durationDays: offerTarget.durationDays })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
@@ -11241,11 +11275,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     el.outgoingOffersList.innerHTML = outgoingOffersData.map(function(item){
       var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
+      var countdown = listingCountdownText(item.expiration);
       return '<div class="my-offer-row">' +
         '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + img + '</div>' +
         '<div class="my-offer-row-info">' +
           '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
-          '<div class="my-offer-row-buyer">T0 ' + escapeHtml(item.ownerShort || item.ownerWallet || '????') + '</div>' +
+          '<div class="my-offer-row-buyer">T0 ' + escapeHtml(item.ownerShort || item.ownerWallet || '????') + (countdown ? ' :: ' + escapeHtml(countdown) : '') + '</div>' +
         '</div>' +
         '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(item.price)) + '</div>' +
         '<div class="my-offer-row-actions">' +
@@ -12486,7 +12521,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     // offers (submitMakeOffer), available regardless of whether it's
     // actively listed, just not on your own Pigeon.
     el.detailMakeOfferRow.style.display = notOwn ? '' : 'none';
-    if (notOwn) el.detailMakeOfferInput.value = '';
+    if (notOwn){
+      el.detailMakeOfferInput.value = '';
+      detailMakeOfferDurationDays = 0;
+      el.detailMakeOfferDuration.querySelectorAll('.list-duration-btn').forEach(function(b){
+        b.classList.toggle('active', b.getAttribute('data-days') === '0');
+      });
+    }
     // OFFERS RECEIVED — same myPigeonOffersHtml the card grid's own
     // ownedPigeonActionHtml already renders per-card; this was the only
     // gap (see the container's own comment above, in the markup).
@@ -12497,14 +12538,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   // wireResultClicks' delegated .make-offer-send/-input handling never
   // sees it — wired directly here instead, same submitMakeOffer/
   // formatThousandsInput helpers everywhere else uses.
+  var detailMakeOfferDurationDays = 0; // same real Expiration as amountEntryOfferDurationDays, for the detail screen's own copy of MAKE OFFER
   function sendDetailMakeOffer(){
     if (!state.currentDetail) return;
     var priceValue = el.detailMakeOfferInput.value.trim().replace(/,/g, '');
-    submitMakeOffer(state.currentDetail, priceValue, el.detailMakeOfferRow);
+    submitMakeOffer(state.currentDetail, priceValue, el.detailMakeOfferRow, detailMakeOfferDurationDays);
   }
   el.detailMakeOfferSend.addEventListener('click', sendDetailMakeOffer);
   el.detailMakeOfferInput.addEventListener('input', function(){ formatThousandsInput(el.detailMakeOfferInput); });
   el.detailMakeOfferInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') sendDetailMakeOffer(); });
+  el.detailMakeOfferDuration.addEventListener('click', function(e){
+    var btn = e.target.closest('.list-duration-btn');
+    if (!btn) return;
+    detailMakeOfferDurationDays = parseInt(btn.getAttribute('data-days'), 10);
+    el.detailMakeOfferDuration.querySelectorAll('.list-duration-btn').forEach(function(b){
+      b.classList.toggle('active', b === btn);
+    });
+  });
   // Same DEEPTIDE/XRP.CAFE clickable-box component the DATABASE cards use
   // (listingBlockHtml), side by side directly under the big image —
   // instead of the old stacked market/price/buy-link rows.

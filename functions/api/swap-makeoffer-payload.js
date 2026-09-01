@@ -1,6 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchDeeptideNftDetail,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, createXamanPayload, getXamanUserToken, swapOfferSourceMemo
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, createXamanPayload, getXamanUserToken, swapOfferSourceMemo,
+  LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same txjson swap-makeoffer-prepare.js
@@ -59,6 +60,13 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'cannot_offer_own_pigeon' }), { status: 400 });
   }
 
+  // Same duration set/default as LIST, same reasoning — reported live as
+  // wanting offers to eventually clear themselves when ignored instead of
+  // sitting live forever with no real answer either way (XRPL has no
+  // "rejected" state to detect — see listingExpirationRippleSeconds's own
+  // comment).
+  const durationDays = LISTING_DURATION_DAYS_ALLOWED.includes(body && body.durationDays) ? body.durationDays : DEFAULT_LISTING_DURATION_DAYS;
+  const expiration = listingExpirationRippleSeconds(durationDays);
   const txjson = {
     TransactionType: 'NFTokenCreateOffer',
     Account: buyer,
@@ -69,13 +77,12 @@ export async function onRequestPost(context) {
       issuer: PIGEONS_TOKEN_CONFIG.issuer,
       value: priceStr
     },
+    ...(expiration !== null ? { Expiration: expiration } : {}),
     Memos: swapOfferSourceMemo()
   };
 
   const pushToken = await getXamanUserToken(env.coin, buyer);
-  console.log('swap-makeoffer-payload: pushToken for', buyer, '=', pushToken ? ('found, len ' + pushToken.length) : 'null');
   const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
-  console.log('swap-makeoffer-payload: createXamanPayload result pushed=', xummData && xummData.pushed, 'uuid=', xummData && xummData.uuid);
   const uuid = xummData && xummData.uuid;
   const next = xummData && xummData.next;
   if (!uuid || !next) {
