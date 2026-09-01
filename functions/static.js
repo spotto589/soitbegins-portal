@@ -473,12 +473,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   .flock-count-loading{ animation:flock-count-pulse 1.1s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce){ .flock-count-loading{ animation:none; opacity:0.6; } }
   /* MY P!GE0NS — full-width (spans both grid columns) since it's the one
-     box on this tab actually about YOU, but otherwise the exact same
-     plain panel as every other box here now — was a full-bleed padlock
-     background image with a coloured glow, reported live as looking
-     wrong/out of place next to the plain boxes around it. */
-  #flockMyFlockBox{ grid-column:1 / -1; }
-  #flockMyFlockBox .flock-account-box-row{ justify-content:flex-start; text-align:left; }
+     box on this tab actually about YOU. Real --collection-accent purple
+     (the current collection's own colour, same gradient the trustline
+     banner/FL00R tile already use) instead of the plain neutral panel
+     every other box here gets, and centered text like the rest of the
+     grid — was left-aligned from an earlier, wider padlock-background
+     version of this box that no longer applies. */
+  #flockMyFlockBox{
+    grid-column:1 / -1;
+    background:linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.55), rgba(var(--collection-accent-2-rgb),0.65));
+    border-color:var(--collection-accent);
+  }
+  #flockMyFlockBox:hover{ border-color:var(--collection-accent); background:linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.7), rgba(var(--collection-accent-2-rgb),0.8)); }
+  #flockMyFlockBox .flock-account-box-label{ text-shadow:0 1px 4px rgba(0,0,0,0.6); }
 
   /* ---- Σκύλλα (signed-in FL0CK) tab theme — the same faint circuit-
      glitch texture .sw-panel-signal/-target already use elsewhere on the
@@ -4979,6 +4986,9 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockBuyPigeonsBox">
           <div class="flock-account-box-row"><span class="flock-account-box-label">BUY $P!GE0NS</span></div>
         </div>
+        <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockChangeCollectionBox">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">CHANGE C0LLECT!0N</span></div>
+        </div>
         <div class="sw-panel flock-account-box flock-account-box-soon">
           <div class="flock-account-box-row"><span class="flock-account-box-label">TRANSACT!0N H!ST0RY</span><span class="db-soon">C0M!NG S00N</span></div>
         </div>
@@ -5923,7 +5933,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
-   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockBuyPigeonsBox','flockGridPanel',
+   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockBuyPigeonsBox','flockChangeCollectionBox','flockGridPanel',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn','swapOffersTabBtn',
@@ -9608,6 +9618,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.flockMyFlockBox.addEventListener('click', function(){
     state.flockCollapsed = !state.flockCollapsed;
     updateSearchPanelTitleForPaws();
+    // Expanding (not collapsing) should actually bring the real grid
+    // into view — was just an in-place expand with no scroll at all, so
+    // on a page already scrolled down (or on a short viewport) it could
+    // expand entirely off-screen with nothing visible to suggest
+    // anything happened.
+    if (!state.flockCollapsed) el.flockGridPanel.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
+  el.flockChangeCollectionBox.addEventListener('click', function(){
+    showTab('database');
+    openDbSelectFlyout();
   });
   // Messaging paused — see the MESSAGE !NB0X box's own HTML comment.
   // Nothing to wire up here any more (no click handler, no unread-badge
