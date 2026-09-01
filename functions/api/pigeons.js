@@ -435,7 +435,7 @@ export async function onRequestGet(context) {
     // actually retry. Cached (20s, see fetchAllAccountNftsCheckedCached's
     // own comment) since MY PIGEONS/OFFERS/listing-owned all fire this
     // same lookup for the same wallet within milliseconds of each other.
-    const { nfts, ok } = await fetchAllAccountNftsCheckedCached(env.coin, wallet);
+    const { nfts, ok } = await fetchAllAccountNftsCheckedCached(context, wallet);
     if (!ok) return json({ error: 'ledger_lookup_failed' }, 502);
     const pigeons = findAllPigeons(nfts);
     if (!pigeons.length) return json({ items: [], owner: wallet, ownerShort: shortenAddr(wallet) });

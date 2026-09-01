@@ -60,7 +60,7 @@ export async function onRequestGet(context) {
   const owner = payload.acct;
 
   const [ownedNfts, buyOffersMap, deeptideItems, listingsMap] = await Promise.all([
-    fetchAllAccountNftsCached(env.coin, owner),
+    fetchAllAccountNftsCached(context, owner),
     getSwapBuyOffersMap(env.coin),
     getOwnerPigeonsViaDeeptide(env.coin, owner),
     getSwapListingsMap(env.coin)

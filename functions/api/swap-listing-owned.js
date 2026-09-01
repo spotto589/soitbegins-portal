@@ -97,7 +97,7 @@ export async function onRequestGet(context) {
     await verifyAndRecord(env, directNftId, wallet, listed, toRecord);
   }
 
-  const nfts = await fetchAllAccountNftsCached(env.coin, wallet);
+  const nfts = await fetchAllAccountNftsCached(context, wallet);
   const allOwnedPigeons = findAllPigeons(nfts);
 
   // Once a Pigeon has been live-checked (found listed or not) within the

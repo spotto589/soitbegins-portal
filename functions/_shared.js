@@ -164,7 +164,15 @@ export async function fetchAllAccountNftsChecked(account) {
 // use, so sharing one fetch across that window is a safe, meaningful cut.
 const ACCOUNT_NFTS_CACHE_PREFIX = 'pswap:accountnfts:';
 const ACCOUNT_NFTS_CACHE_TTL_SECONDS = 20;
-export async function fetchAllAccountNftsCached(kv, account) {
+// Takes the whole request `context` (not just `kv`) specifically so the
+// cache WRITE can go through context.waitUntil and never block the
+// response on it finishing — an earlier version here `await`ed the write
+// directly, which meant every cache-MISS request got slower (live fetch
+// PLUS a synchronous KV write) instead of faster. The read is still
+// awaited (needs the result to answer the request); only the write moves
+// to the background.
+export async function fetchAllAccountNftsCached(context, account) {
+  const kv = context.env.coin;
   const cacheKey = ACCOUNT_NFTS_CACHE_PREFIX + account;
   if (kv) {
     const cached = await kv.get(cacheKey);
@@ -173,14 +181,15 @@ export async function fetchAllAccountNftsCached(kv, account) {
     }
   }
   const nfts = await fetchAllAccountNfts(account);
-  if (kv) await safeKvPut(kv, cacheKey, JSON.stringify(nfts), { expirationTtl: ACCOUNT_NFTS_CACHE_TTL_SECONDS });
+  if (kv) context.waitUntil(safeKvPut(kv, cacheKey, JSON.stringify(nfts), { expirationTtl: ACCOUNT_NFTS_CACHE_TTL_SECONDS }));
   return nfts;
 }
 // Same cached sharing, but preserves fetchAllAccountNftsChecked's own
 // real-failure signal — a cache hit is trivially "ok" (real data already
 // in hand), a miss falls through to the real checked fetch and only
 // caches a genuinely successful result, never a partial/failed scan.
-export async function fetchAllAccountNftsCheckedCached(kv, account) {
+export async function fetchAllAccountNftsCheckedCached(context, account) {
+  const kv = context.env.coin;
   const cacheKey = ACCOUNT_NFTS_CACHE_PREFIX + account;
   if (kv) {
     const cached = await kv.get(cacheKey);
@@ -189,7 +198,7 @@ export async function fetchAllAccountNftsCheckedCached(kv, account) {
     }
   }
   const { nfts, ok } = await fetchAllAccountNftsChecked(account);
-  if (ok && kv) await safeKvPut(kv, cacheKey, JSON.stringify(nfts), { expirationTtl: ACCOUNT_NFTS_CACHE_TTL_SECONDS });
+  if (ok && kv) context.waitUntil(safeKvPut(kv, cacheKey, JSON.stringify(nfts), { expirationTtl: ACCOUNT_NFTS_CACHE_TTL_SECONDS }));
   return { nfts, ok };
 }
 
