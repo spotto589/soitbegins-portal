@@ -6065,6 +6065,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     editionRawSkip: 0,        // position in the underlying sorted collection, for edition LOW/HIGH scans
     hasMore: true,
     loading: false,
+    // Bumped every time startCollectionBrowse() begins a fresh query —
+    // loadMoreCollection() captures this at request time and checks it
+    // again when the response lands, discarding anything that's since
+    // been superseded instead of rendering a stale, wrong-sort/wrong-
+    // filter response into a grid that's already moved on. See both
+    // functions' own comments for the race this fixes.
+    queryToken: 0,
     total: null,
     items: [],                // everything loaded so far in the current browse/search mode
     scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
@@ -8151,6 +8158,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.items = [];
     state.hasMore = true;
     state.total = null;
+    // A fresh query supersedes whatever's currently in flight — bump the
+    // token (see its own declaration) and force the loading guard clear
+    // so loadMoreCollection() below actually fires a new request instead
+    // of silently no-op'ing because the OLD one hadn't resolved yet.
+    // Confirmed live as the real cause of a sort sometimes "just not
+    // loading" until clicked again: picking a new sort/filter while the
+    // previous query was still in flight used to hit loadMoreCollection's
+    // own loading-guard (state.loading check just below) and do nothing
+    // at all, then the stale old response would land afterward and
+    // render into this now-reset grid with the WRONG sort/filter applied.
+    state.queryToken++;
+    state.loading = false;
     // Tracks every nftId already rendered this query, across whichever
     // auto-fallback stage produced it (see loadMoreCollection's own
     // stage-2/-3 handoff below) — the different fallback endpoints each
@@ -8181,6 +8200,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // (success or failure) either way, never left hanging.
     if (state.loading || !state.hasMore || state.scope){ if (onDone) onDone(); return; }
     state.loading = true;
+    // Captured now, checked again once the response lands (see below) —
+    // if a newer query has since started (startCollectionBrowse bumps
+    // this), this response is for a sort/filter the user has already
+    // moved on from and must be discarded, not rendered.
+    var myQueryToken = state.queryToken;
     el.loadMoreNote.style.display = '';
     var filters = activeFilters();
     var isEdition = state.edition === 'LOW' || state.edition === 'HIGH';
@@ -8231,6 +8255,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       reqParams = { skip: state.skip, limit: PAGE_SIZE, sort: state.sort, filters: filters.length ? JSON.stringify(filters) : undefined };
     }
     api(reqParams).then(function(data){
+      // A newer query has since started (see startCollectionBrowse's own
+      // comment on the race this fixes) — this response is for a sort/
+      // filter the user has already moved on from. Never render it, and
+      // never touch state.loading here: a NEWER loadMoreCollection call
+      // already owns that flag for its own still-in-flight request by
+      // the time a stale response like this one arrives.
+      if (myQueryToken !== state.queryToken){ if (onDone) onDone(); return; }
       state.loading = false;
       el.loadMoreNote.style.display = 'none';
       el.resetDbBtn.style.display = '';
@@ -8337,6 +8368,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (pendingTraitScroll){ pendingTraitScroll = false; scrollResultsIntoView(); }
       if (onDone) onDone();
     }).catch(function(){
+      // Same stale-response guard as the success branch above — a failed
+      // request for an already-abandoned query must not clobber a newer
+      // one's loading state or paint an error over its results.
+      if (myQueryToken !== state.queryToken){ if (onDone) onDone(); return; }
       state.loading = false;
       el.loadMoreNote.style.display = 'none';
       el.resetDbBtn.style.display = '';
@@ -8588,9 +8623,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     restoreTraitsFlyout();
   }
   // Click to open/close (not hover) — closes on an outside click, see
-  // the shared document-level listener further down. Stays open across
-  // multiple trait picks (see traitsFlyoutVals' click handler below), so
-  // you can tick several traits in one sitting.
+  // the shared document-level listener further down. Also closes itself
+  // on a trait pick (see traitsFlyoutVals' click handler below).
   el.traitsHoverLabel.addEventListener('click', function(){
     if (el.traitsFlyout.style.display === 'block') closeTraitsFlyout();
     else openTraitsFlyout();
@@ -8653,9 +8687,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!valBtn) return;
     var category = valBtn.getAttribute('data-cat');
     var value = valBtn.getAttribute('data-value');
-    // Ticking a value that's already selected removes it (toggle); the
-    // menu stays open either way so you can keep picking other traits —
-    // no close-on-select any more.
+    // Ticking a value that's already selected removes it (toggle).
     if (isTraitSelected(category, value)){
       state.traitFilters = state.traitFilters.filter(function(r){ return !(r.category === category && r.value === value); });
     } else {
@@ -8672,17 +8704,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderTraitRows();
     renderTraitsFlyoutVals(category);
     pendingTraitScroll = true;
-    // Mobile only — the popup there is a real fixed, centered overlay
-    // (.flyout-drilled) covering the whole screen, not an inline strip
-    // like desktop's. Leaving it open after a pick meant the query above
-    // was already re-running and pendingTraitScroll was already queued
-    // to scroll the results into view once it lands, but the overlay
-    // sat there blocking the screen the whole time regardless — picking
-    // a trait needs to actually show you the results, not just start
-    // fetching them behind a popup you still have to close by hand.
-    // Desktop's own strip stays open on purpose (see this handler's
-    // other comment) — only mobile's real popup closes itself here.
-    if (window.innerWidth <= 700) closeTraitsFlyout();
+    // Reported live as wanting the picker to close on pick regardless of
+    // screen size — it should just show the trait as selected and show
+    // the matching Pigeons, not stay open blocking the results that are
+    // already loading behind it. Was mobile-only before (desktop's own
+    // strip used to stay open on purpose); now closes everywhere.
+    closeTraitsFlyout();
     runQuery();
   });
 
@@ -11703,8 +11730,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'RARITY_DESC', label: 'L0WEST' }
     ],
     'PR!CE': [
-      { value: 'SCYLLA_PRICE_ASC', label: 'L0WEST $P!GE0NS' },
       { value: 'SCYLLA_PRICE_DESC', label: 'H!GHEST $P!GE0NS' },
+      { value: 'SCYLLA_PRICE_ASC', label: 'L0WEST $P!GE0NS' },
       { value: 'AVG_SALE_XRP_ASC', label: 'L0WEST AVG SALE PR!CE XRP' },
       { value: 'AVG_SALE_XRP_DESC', label: 'H!GHEST AVG SALE PR!CE XRP' },
       { value: 'AVG_SALE_PIGEONS_ASC', label: 'L0WEST AVG SALE PR!CE $P!GE0NS' },
@@ -12006,12 +12033,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       else if (wasScoped) startCollectionBrowse();
       else runQuery();
     }
-    // Same "land at the top of this tab's own content" feel as clicking
-    // the tab itself (scrollActiveTabPanelIntoView) — RESET can get
-    // clicked after scrolling deep into the results list, and should
-    // bring you back to the top of the tab's own box, not leave you
-    // scrolled down looking at a list that just changed under you.
-    scrollActiveTabPanelIntoView(state.activeTab === 'mypigeons' ? 'mypigeons' : 'database');
+    // RESET can get clicked after scrolling deep into the results list —
+    // land back at the search panel's own title (SEARCH!NG $P!GE0NS
+    // DATABASE / SH0W!NG Y0UR P!GE0NS), not the literal page top past the
+    // hero/trustline banner. Reported live (with a screenshot) as wanting
+    // this to land right above SORT BY/FILTER BY TRAITS, same target
+    // scrollActiveTabPanelIntoView already uses for MY PIGEONS — DATABASE
+    // gets that same treatment here specifically for RESET, without
+    // changing what a plain DATABASE tab click still does (full page top).
+    el.searchPanelTitle.scrollIntoView({ block: 'start', behavior: 'smooth' });
   });
 
   // ---- Inspect / detail ----
