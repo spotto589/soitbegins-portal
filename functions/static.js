@@ -47,20 +47,19 @@ const SWAP_HTML = `<!DOCTYPE html>
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
 
   /* ==========================================================================
-     Σκύλλα SWAP — colour + type system
-     Exactly four colours, on purpose — everything else that used to exist
-     here (a mint --green for "buy actions", a violet --pigeon-purple for
-     the coin's own artwork, three ENTIRELY different palettes swapped in
-     per collection via body.collection-phnixs/-teddybg) is gone. Different
-     boxes reading as different micro-themes was exactly what made the
-     site feel inconsistent. --green/--pigeon-purple below are kept only
-     as aliases (pointing at cyan) so the hundred-plus existing
-     var(--green)/var(--pigeon-purple) references across this file didn't
-     all need touching individually — new code should reach for --cyan/
-     --magenta directly instead of either alias.
+     Σκύλλα SWAP — colour + type system, v3: "corrupted industrial system,"
+     not cyberpunk. Foundation pass of the brutalist identity pitch (see
+     the Σκύλλα Mainframe artifact this was approved from) — neutrals shift
+     from a clean cool black/white to a dirty warm near-black/off-white/
+     muted-steel, sharp corners (--radius:0) instead of soft rounding, and
+     the display face is now Anton (oversized, blocky) instead of Chakra
+     Petch. The accent pair stays exactly as it already was — cyan/magenta
+     were already correct for this, nothing to change there. Layout/motion
+     (the oversized hero, staggered grid, scramble-text) is a deliberate
+     follow-up pass, not part of this one.
      CYAN = signal / active / global collection / available actions
      MAGENTA = SCYLLA / target / selection / warning / attention
      WHITE = primary data, headings
@@ -68,12 +67,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      BLACK = depth (panels sit above the static as dark glass)
      ========================================================================== */
   :root{
-    --bg:#08090b;
-    --panel-bg:rgba(13,15,18,0.62);
-    --panel-bg-solid:#0b0d10;
-    --panel-texture:rgba(255,255,255,0.025);
-    --border-dim:rgba(255,255,255,0.09);
-    --border-mid:rgba(255,255,255,0.16);
+    --bg:#0b0b09;
+    --panel-bg:rgba(19,18,15,0.64);
+    --panel-bg-solid:#100f0c;
+    --panel-texture:rgba(230,225,211,0.025);
+    --border-dim:rgba(230,225,211,0.1);
+    --border-mid:rgba(230,225,211,0.2);
 
     --cyan:#3df3ec;
     --cyan-dim:rgba(61,243,236,0.4);
@@ -107,16 +106,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     --collection-accent-glow:rgba(136,72,248,0.4);
     --collection-accent-2-rgb:120,72,216;
 
-    --white:#f3f4f6;
-    --grey:rgba(226,229,233,0.56);
-    --grey-dim:rgba(226,229,233,0.34);
-    --grey-disabled:rgba(226,229,233,0.22);
+    /* Dirty off-white and warm-tinted greys — was a clean, cool white
+       (#f3f4f6) and blue-tinted greys, which read as polished/cyberpunk.
+       Same rgb (230,225,211, --paper from the identity pitch) underneath
+       every grey step below, just at different alpha, so they still form
+       one consistent family. */
+    --white:#e6e1d3;
+    --grey:rgba(230,225,211,0.56);
+    --grey-dim:rgba(230,225,211,0.34);
+    --grey-disabled:rgba(230,225,211,0.22);
 
-    --font-display:'Chakra Petch',sans-serif;
-    --font-mono:'Chakra Petch',sans-serif;
-    --font-body:'Chakra Petch',sans-serif;
+    --font-display:'Anton',Impact,'Arial Narrow',sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+    --font-body:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
 
-    --radius:2px;
+    /* Sharp corners, not soft ones — every rounded box on the site pulls
+       from this one value. */
+    --radius:0px;
 
     /* Shared width every DATABASE config control (ADD TRA!TS, SORT BY,
        VIEW, each C0LLECT!0N edition button, SEARCH) is pinned to, so the
