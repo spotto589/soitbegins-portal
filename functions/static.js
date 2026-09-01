@@ -2866,12 +2866,24 @@ const SWAP_HTML = `<!DOCTYPE html>
      calculator (right). Rate line + DEXSCREENER link now live up in the
      carousel instead (see the RATE page there), which is what frees this
      row up to make BALANCE the thing people actually look at. */
-  /* position:relative so BALANCE can be pinned to the row's exact
-     horizontal centre below, regardless of how wide the left/calc
-     columns end up — that centre line lines up with the carousel's own
-     centered dots directly above it. */
-  .pigeons-bar-main-row{ position:relative; display:flex; align-items:center; justify-content:space-between; gap:1.25rem; flex-wrap:wrap; width:100%; }
-  .pigeons-bar-left{ display:flex; flex-direction:column; align-items:flex-start; gap:0.6rem; flex:0 1 auto; min-width:0; }
+  /* A 3-column grid with equal-width flanking tracks (1fr / auto / 1fr),
+     not flex — two flex attempts at "center BALANCE in this row" were
+     both tried and both looked off (see .pigeons-bar-balance's own
+     comment below for the raw-midpoint attempt; flex:1-fills-leftover-
+     space was the fix after that, and is what's replaced here): with
+     unequal-width left/right columns (SH0W MY NFTs+S!GN 0UT vs just
+     EXCHANGE CALCULAT0R), pinning BALANCE to the row's raw midpoint left
+     it looking shoved toward the narrower side, and centering it in
+     "whatever space is left over" after those two columns left it
+     shoved toward the WIDER side instead — same bug, opposite direction,
+     because neither actually guarantees equal real estate on both
+     flanks. A grid with two same-size 1fr tracks does: whatever's in
+     column 1 is justify-self:start against a track exactly as wide as
+     column 3's justify-self:end, so the auto-sized centre column is
+     genuinely centred on the row regardless of how uneven the left/right
+     content actually is. */
+  .pigeons-bar-main-row{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:1.25rem; width:100%; }
+  .pigeons-bar-left{ grid-column:1; justify-self:start; display:flex; flex-direction:column; align-items:flex-start; gap:0.6rem; min-width:0; }
   /* Way bigger — this is the collection's own artwork, the one thing
      that actually says which collection you're looking at, so it needs
      to read clearly at a glance, not as a small decorative icon. */
@@ -2970,20 +2982,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      $PIGEONS number to be proud of, or a BUY link in the exact same spot
      if it's empty — either way, the token itself is what this banner is
      actually about. */
-  /* Was position:absolute + left:50% of the WHOLE row — mathematically
-     dead-center of the row, confirmed live (635.0px either way on a
-     1191px-wide panel), but that's not the same as looking centered: the
-     left column (SET TRUSTL!NE, ~304px) and the calc column (~217px)
-     aren't the same width, so pinning BALANCE to the row's raw midpoint
-     left very uneven gaps on either side of it (~100px on the left,
-     ~187px on the right, confirmed live) — it visually read as shoved
-     left even though the number was exactly right. flex:1 makes it a
-     normal, real flex child instead: it fills whatever space is actually
-     LEFT OVER between the two side columns (however uneven those are)
-     and centers its own content within that, which is what "centered"
-     actually needs to mean here. */
+  /* grid-column:2 of .pigeons-bar-main-row's own 1fr/auto/1fr track set
+     (see that rule's comment) — genuinely centred regardless of how wide
+     the left/calc columns are, unlike either of the two things tried
+     before this (raw row midpoint, then flex:1-fills-leftover-space). */
   .pigeons-bar-balance{
-    flex:1 1 0;
+    grid-column:2;
     min-width:220px;
     display:flex;
     flex-direction:row;
@@ -3035,7 +3039,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      price all sit on one line above the calculator itself; the calculator
      row underneath is deliberately bare — two type-in boxes and a swap
      arrow between them, no unit labels or "=" sign cluttering it up. */
-  .pigeons-bar-calc-col{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:0.4rem; min-width:0; }
+  .pigeons-bar-calc-col{ grid-column:3; justify-self:end; display:flex; flex-direction:column; align-items:center; gap:0.4rem; min-width:0; }
   /* Collapsed to a single button by default — used to be the calculator
      itself sitting permanently open in the banner, eating space next to
      BALANCE even for anyone who never touches it. Click opens the popover
@@ -3179,7 +3183,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      .stat-tile/.stat-tile-link. */
   .pigeons-bar-dex-icon{ width:22px; height:22px; border-radius:4px; flex:0 0 auto; }
   @media (max-width:700px){
-    .pigeons-bar-main-row{ flex-direction:column; text-align:center; }
+    /* Single column now (was the grid's own 1fr/auto/1fr row track set) —
+       every child stacks full-width in DOM/order sequence instead of
+       sitting in its own side-by-side track. */
+    .pigeons-bar-main-row{ display:flex; flex-direction:column; text-align:center; }
     .pigeons-bar-left{ flex-direction:column; text-align:center; }
     .pigeons-bar-left-body{ align-items:center; text-align:center; }
     .pigeons-bar-left-body-row{ flex-direction:column; }
