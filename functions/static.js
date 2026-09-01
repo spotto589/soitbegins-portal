@@ -6543,7 +6543,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (tab === 'mypigeons' && !MY_WALLET){
       showTab('mypigeons', true);
       el.connectStatus.textContent = 'Σκύλλα://S!GNAL :: C0NNECT!NG';
-      getXummAuth().authorize();
+      startAuthorize();
       return;
     }
     // With the node-header BACK link hidden (SH0W MY P!GE0NS' own scope —
@@ -9182,6 +9182,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     // manual retry next to the error text in el.connectStatus.
     if (!MY_WALLET) el.myPigeonsConnect.style.display = '';
   }
+  // XummPkce's own 'error' event doesn't reliably fire for every real
+  // failure mode (a blocked popup, a Xaman deep link that silently never
+  // resolves) — reported live as "the wallet never loads, I have to
+  // refresh the page" after clicking connect. A real timeout backstop so
+  // CONNECT!NG can never sit stuck forever with no way to retry short of
+  // a full reload, regardless of which specific way the third-party SDK
+  // failed silently.
+  var AUTHORIZE_TIMEOUT_MS = 25000;
+  var authorizeTimeoutTimer = null;
+  function clearAuthorizeTimeout(){
+    clearTimeout(authorizeTimeoutTimer);
+    authorizeTimeoutTimer = null;
+  }
+  function startAuthorize(){
+    clearAuthorizeTimeout();
+    authorizeTimeoutTimer = setTimeout(function(){
+      el.connectStatus.textContent = 'ERR://T!MED 0UT — TRY AGA!N';
+      resetLoginButtons();
+    }, AUTHORIZE_TIMEOUT_MS);
+    getXummAuth().authorize();
+  }
   function getXummAuth(){
     if (!xummAuth){
       xummAuth = new XummPkce(XAMAN_API_KEY, {
@@ -9190,10 +9211,12 @@ const SWAP_HTML = `<!DOCTYPE html>
         redirectUrl: window.location.origin + '/static'
       });
       xummAuth.on('error', function(){
+        clearAuthorizeTimeout();
         el.connectStatus.textContent = 'ERR://L0G!N AB0RTED';
         resetLoginButtons();
       });
       xummAuth.on('success', function(){
+        clearAuthorizeTimeout();
         xummAuth.state().then(function(authState){
           var jwt = authState && authState.jwt;
           if (!jwt){
@@ -9226,13 +9249,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.connectScyllaBtn.addEventListener('click', function(){
       el.connectScyllaBtn.disabled = true;
       el.connectStatus.textContent = '';
-      getXummAuth().authorize();
+      startAuthorize();
     });
   }
   el.pigeonsLoginBtn.addEventListener('click', function(){
     el.pigeonsLoginBtn.disabled = true;
     el.pigeonsLoginBtn.textContent = 'C0NNECT!NG...';
-    getXummAuth().authorize();
+    startAuthorize();
   });
   el.swapSignOutBtn.addEventListener('click', function(){
     el.swapSignOutBtn.disabled = true;
@@ -9669,7 +9692,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function openBuyConfirm(p, retriesLeft){
     if (!MY_WALLET){
       try { sessionStorage.setItem(PENDING_BUY_STORAGE_KEY, p.nftId); } catch (e){}
-      getXummAuth().authorize();
+      startAuthorize();
       return;
     }
     buyTarget = p;
@@ -10498,7 +10521,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // rather than let that fail with a confusing auth error, send an
     // unauthenticated SEND straight into the real Σκύλλα login flow.
     if (!MY_WALLET){
-      getXummAuth().authorize();
+      startAuthorize();
       return;
     }
     if (!priceValue || isNaN(Number(priceValue)) || Number(priceValue) <= 0){
