@@ -606,8 +606,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       min-width:70px;
       padding:0.4rem 0.5rem;
     }
-    .stat-label{ font-size:8px; margin-bottom:0.15rem; white-space:nowrap; }
-    .stat-value{ font-size:11px; white-space:nowrap; }
+    /* !important on font-size here too — same shape of bug this block's
+       own comment already describes for .stats-carousel-dots/.stats-page
+       (a later, unconditional .stat-value{font-size:16px} rule further
+       down this file, same specificity, silently won on source order
+       regardless of viewport). Confirmed live: the carousel's flex/
+       overflow layout collapsed to the compact strip correctly, but
+       $P!GE0NS FL00R's own number stayed at the full 16px+ desktop size
+       and ran off the right edge of its own tile, clipped by the
+       viewport. */
+    .stat-label{ font-size:8px !important; margin-bottom:0.15rem; white-space:nowrap; }
+    .stat-value{ font-size:11px !important; white-space:nowrap; }
   }
   /* Prev/next arrows flank the viewport; the row itself is the flex
      container that lays out [arrow][viewport][arrow]. */
