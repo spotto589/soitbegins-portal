@@ -2378,13 +2378,17 @@ const SWAP_HTML = `<!DOCTYPE html>
      already use var(--green), aliased to cyan) — not the collection's own
      purple/--collection-accent, which stays scoped to the trustline
      banner up top specifically. */
+  /* Plain neutral container, not a coloured call-to-action of its own —
+     it just holds whichever real buttons the card needs (BUY N0W green,
+     0FFER green, CANCEL red), and painting the whole box hot pink
+     regardless of what's inside it drowned those out and read as "too
+     much pink" everywhere a card had any action at all. */
   .thumb-offer{
     width:100%;
     margin-top:0.5rem;
-    background:linear-gradient(90deg, rgba(255,51,204,0.85), rgba(180,30,150,0.85));
-    border:1px solid var(--magenta);
+    background:var(--panel-bg-solid);
+    border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    box-shadow:0 0 16px var(--magenta-glow);
     /* Tight — the button(s) inside should read as filling this box, not
        floating in the middle of it with visible purple margin down each
        side. */
@@ -2932,15 +2936,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Small inline COPY button sitting right next to SET TRUSTLINE TO
      TRADE — the actual issuer address is now just plain reference text
      underneath (.pigeons-bar-sublabel), not the click target itself. */
+  /* Plain outline, no glow — a small COPY button sitting right on the
+     trustline banner doesn't need its own text-shadow bloom, and it's
+     the kind of ambient pink glow the brutalist pass was supposed to be
+     quiet about. */
   .pigeons-bar-copy-btn{
     display:inline-block;
     background:transparent;
-    border:1px solid var(--cyan);
+    border:1px solid rgba(255,255,255,0.6);
     border-radius:var(--radius);
     padding:0.15em 0.6em;
     margin-left:0.3rem;
-    color:var(--cyan);
-    text-shadow:0 0 5px var(--cyan-glow);
+    color:#fff;
     font-family:var(--font-mono);
     font-size:13px;
     letter-spacing:0.05em;
@@ -2948,12 +2955,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     vertical-align:middle;
   }
-  .pigeons-bar-copy-btn:hover{ background:var(--cyan); color:#000; text-shadow:none; }
+  .pigeons-bar-copy-btn:hover{ background:rgba(255,255,255,0.15); }
   /* SIGN OUT — a real, destructive-feeling action (ends the session), so
-     it gets its own red instead of the plain white every other bar-btn
-     in this box uses. */
-  #swapSignOutBtn{ color:var(--magenta); border-color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
-  #swapSignOutBtn:hover{ background:var(--magenta); color:#000; text-shadow:none; }
+     it gets the real --red token instead of the plain white every other
+     bar-btn in this box uses (was pointing at magenta, not actually red,
+     despite the comment always saying red). */
+  #swapSignOutBtn{ color:var(--red); border-color:var(--red); }
+  #swapSignOutBtn:hover{ background:var(--red); color:#000; }
   /* LOGIN — green (the real, positive action here) instead of plain
      white like every other .bar-btn in this box. */
   #pigeonsLoginBtn{ color:var(--green); border-color:var(--green); text-shadow:0 0 6px var(--green-glow); }
