@@ -7217,7 +7217,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // through the whole fetch — looked like nothing had happened yet.
       // Now replaced immediately so it's clear a wallet lookup is in
       // flight, not just a slow re-render of the same list.
-      el.statusLine.innerHTML = '<div class="results-trait-note">L0AD!NG WALLET ' + escapeHtml(state.scope.ownerShort) + '...</div>';
+      el.statusLine.innerHTML = '<div class="results-trait-note">' + (isSelf ? 'L0AD!NG Y0UR P!GE0NS...' : 'L0AD!NG WALLET ' + escapeHtml(state.scope.ownerShort) + '...') + '</div>';
       // Same reasoning for the grid itself — this covers both "someone
       // else's wallet" and "your own, but the first fetch this session
       // hasn't landed yet" (myOwnPigeonsCache still null). Without this,
@@ -7246,10 +7246,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     // must run after, not before, or it'd still see the previous tab.
     updateSearchPanelTitleForPaws();
     renderTradeBuilder();
-    apiWithRetry({ wallet: wallet }).then(function(data){
-      state.scopeAllItems = data.items || [];
+    // isSelf shares loadMyOwnPigeonsCache's own in-flight/cached request
+    // (see its own comment) instead of firing a second, identical
+    // apiWithRetry({wallet}) call — that duplicate was the real reason
+    // the tab label (fed by the eager login-time fetch) could show a
+    // real count while this grid was still separately, redundantly
+    // loading.
+    (isSelf ? loadMyOwnPigeonsCache() : apiWithRetry({ wallet: wallet })).then(function(data){
+      state.scopeAllItems = isSelf ? myOwnPigeonsCache : (data.items || []);
       if (isSelf){
-        myOwnPigeonsCache = state.scopeAllItems;
         myPigeonsData = state.scopeAllItems;
         renderMyPigeonsList();
       }
@@ -9013,22 +9018,40 @@ const SWAP_HTML = `<!DOCTYPE html>
   // null = not fetched yet.
   var myOwnPigeonsCache = null;
   var myOwnPigeonsCacheFailed = false; // true once apiWithRetry has genuinely given up, not just still trying
+  // The in-flight request, while there is one — lets browseOwnerCollection
+  // (SH0W MY P!GE0NS/the FL0CK tab) chain onto THIS same request instead
+  // of firing its own separate, identical apiWithRetry({wallet}) call
+  // whenever you navigate there before this eager login-time fetch has
+  // landed. That duplicate call is exactly why "Σκύλλα will show 61 [the
+  // tab label, from this fetch]... but my pigeons takes a long time [the
+  // actual grid]" could happen: two concurrent requests for the same
+  // slow, real XRPL account_nfts lookup, racing each other, with the
+  // grid's own loading state tied to whichever happened to be slower.
+  var myOwnPigeonsCachePromise = null;
   // Own function (not just inlined in loadTrustlineLoginState) so a
   // failed attempt can be retried from the MY P!GE0NS box's own click
   // handler without re-running everything else loadTrustlineLoginState
-  // does (wallet label, trustline balance, etc).
+  // does (wallet label, trustline balance, etc), and so
+  // browseOwnerCollection can share its in-flight promise instead of
+  // duplicating the request.
   function loadMyOwnPigeonsCache(){
+    if (myOwnPigeonsCachePromise) return myOwnPigeonsCachePromise;
     myOwnPigeonsCacheFailed = false;
     updateSearchPanelTitleForPaws();
-    apiWithRetry({ wallet: MY_WALLET }).then(function(data){
+    myOwnPigeonsCachePromise = apiWithRetry({ wallet: MY_WALLET }).then(function(data){
       myOwnPigeonsCache = data.items || [];
       trustlinePigeonCount = myOwnPigeonsCache.length;
       renderTrustlineSummary();
       updateSearchPanelTitleForPaws();
-    }).catch(function(){
+      myOwnPigeonsCachePromise = null;
+      return myOwnPigeonsCache;
+    }).catch(function(err){
       myOwnPigeonsCacheFailed = true;
       updateSearchPanelTitleForPaws();
+      myOwnPigeonsCachePromise = null;
+      throw err;
     });
+    return myOwnPigeonsCachePromise;
   }
   // Count and balance are fetched in parallel (independent endpoints) and
   // can resolve in either order — each just updates its own piece of state
