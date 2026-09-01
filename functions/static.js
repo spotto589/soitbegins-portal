@@ -472,6 +472,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   @keyframes flock-count-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
   .flock-count-loading{ animation:flock-count-pulse 1.1s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce){ .flock-count-loading{ animation:none; opacity:0.6; } }
+  /* A real failed state, not the loading pulse left running forever —
+     see loadMyOwnPigeonsCache's own comment. Red (this site's
+     destructive/negative colour), no animation, so it visibly reads as
+     "stopped, needs a tap" instead of "still working". */
+  .flock-count-failed{ color:var(--red); animation:none; }
   /* MY P!GE0NS — full-width (spans both grid columns) since it's the one
      box on this tab actually about YOU. Real --collection-accent purple
      (the current collection's own colour, same gradient the trustline
@@ -7109,8 +7114,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       // show "MY P!GE0NS :: 0" the instant this tab opened, indistinguishable
       // from a genuinely empty wallet. The underscore is a real loading
       // state, not a fake zero.
-      el.flockMyFlockLabel.classList.toggle('flock-count-loading', myOwnPigeonsCache === null);
-      el.flockMyFlockLabel.textContent = 'MY P!GE0NS :: ' + (myOwnPigeonsCache === null ? '_' : state.scopeAllItems.length);
+      // myOwnPigeonsCacheFailed distinguishes "still loading" from "gave
+      // up" — a real XRPL account_nfts lookup for a big wallet can take
+      // long enough that apiWithRetry exhausts its own retries, and this
+      // used to just silently swallow that (a bare .catch(function(){}))
+      // and leave the underscore pulsing forever with no way to tell it
+      // had actually already failed for good, reported live as "it just
+      // shows MY P!GE0NS :: _ ... glitching". A real failed state now,
+      // with a tap-to-retry instead of a dead end.
+      el.flockMyFlockLabel.classList.toggle('flock-count-loading', myOwnPigeonsCache === null && !myOwnPigeonsCacheFailed);
+      el.flockMyFlockLabel.classList.toggle('flock-count-failed', myOwnPigeonsCacheFailed);
+      el.flockMyFlockLabel.textContent = 'MY P!GE0NS :: ' + (myOwnPigeonsCacheFailed ? 'TAP T0 RETRY' : myOwnPigeonsCache === null ? '_' : state.scopeAllItems.length);
     }
     // DATABASE's own grid panel never collapses — only MY FL0CK's copy of
     // it does, and only while actually on FL0CK.
@@ -8976,6 +8990,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   // instead of waiting on a second identical fetch — see browseOwnerCollection.
   // null = not fetched yet.
   var myOwnPigeonsCache = null;
+  var myOwnPigeonsCacheFailed = false; // true once apiWithRetry has genuinely given up, not just still trying
+  // Own function (not just inlined in loadTrustlineLoginState) so a
+  // failed attempt can be retried from the MY P!GE0NS box's own click
+  // handler without re-running everything else loadTrustlineLoginState
+  // does (wallet label, trustline balance, etc).
+  function loadMyOwnPigeonsCache(){
+    myOwnPigeonsCacheFailed = false;
+    updateSearchPanelTitleForPaws();
+    apiWithRetry({ wallet: MY_WALLET }).then(function(data){
+      myOwnPigeonsCache = data.items || [];
+      trustlinePigeonCount = myOwnPigeonsCache.length;
+      renderTrustlineSummary();
+      updateSearchPanelTitleForPaws();
+    }).catch(function(){
+      myOwnPigeonsCacheFailed = true;
+      updateSearchPanelTitleForPaws();
+    });
+  }
   // Count and balance are fetched in parallel (independent endpoints) and
   // can resolve in either order — each just updates its own piece of state
   // and calls this shared render, instead of one write clobbering the
@@ -9058,11 +9090,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // run them in parallel instead of one waiting on the other, so each
     // paints as soon as it's ready instead of the slower of the two
     // gating both.
-    apiWithRetry({ wallet: MY_WALLET }).then(function(data){
-      myOwnPigeonsCache = data.items || [];
-      trustlinePigeonCount = myOwnPigeonsCache.length;
-      renderTrustlineSummary();
-    }).catch(function(){});
+    loadMyOwnPigeonsCache();
     apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET }).then(function(line){
       trustlineBalanceNum = (line && line.hasTrustline) ? (line.balance || 0) : 0;
       renderTrustlineSummary();
@@ -9637,6 +9665,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.pigeonsBalanceBuyBtn.addEventListener('click', openBuySwapPanel);
   el.flockBuyPigeonsBox.addEventListener('click', openBuySwapPanel);
   el.flockMyFlockBox.addEventListener('click', function(){
+    // A previous attempt genuinely failed (see loadMyOwnPigeonsCache) —
+    // retry that instead of toggling collapse, which would otherwise
+    // just expand/collapse a grid that has no real data to show either
+    // way.
+    if (myOwnPigeonsCacheFailed){ loadMyOwnPigeonsCache(); return; }
     state.flockCollapsed = !state.flockCollapsed;
     updateSearchPanelTitleForPaws();
     // Expanding (not collapsing) should actually bring the real grid
