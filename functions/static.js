@@ -507,6 +507,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .flock-wallet-box:hover{ background-color:var(--cyan-dim); box-shadow:0 0 18px var(--cyan-glow); }
   .flock-wallet-addr{
+    flex:1 1 auto;
+    text-align:center;
     font-family:var(--mono, monospace);
     font-size:14px; font-weight:700; color:var(--cyan);
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
