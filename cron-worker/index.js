@@ -11,7 +11,7 @@
 // reached yet showed as "not indexed" to whoever searched for it first.
 // This worker just keeps both indexes warm on its own, independent of
 // whether anyone is on the site.
-import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap } from '../functions/_shared.js';
+import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshFloorIndex } from '../functions/_shared.js';
 
 // xaman-proxy (../xaman-proxy, deployed separately on Render) spins down
 // after ~15 minutes with no HTTP traffic on Render's free tier. The first
@@ -38,6 +38,12 @@ export default {
     ctx.waitUntil(Promise.all([
       maybeRefreshPigeonNumberMap(env.coin),
       maybeRefreshHighSaleMap(env.coin),
+      // Real cross-marketplace floor (see its own comment in _shared.js) —
+      // depends on the number map above for its nftId list, but reads
+      // whatever's already cached rather than waiting on this same tick's
+      // maybeRefreshPigeonNumberMap call, same as every other independent
+      // crawl here.
+      maybeRefreshFloorIndex(env.coin),
       pingXamanProxy(env),
     ]));
   },

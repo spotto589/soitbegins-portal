@@ -2714,6 +2714,112 @@ export async function identifySaleVenue(kv, txHash) {
   return venue;
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Real cross-marketplace FLOOR — every current Pigeon's own real, on-ledger
+// nft_sell_offers, scanned collection-wide. A sell offer's `destination`
+// reveals its real venue via the exact same XRP_CAFE_BROKER_ACCOUNT/
+// DEEPTIDE_BROKER_ACCOUNT signal identifySaleVenue above already uses for
+// completed sales — so this needs no marketplace API at all, and (unlike
+// the old crossListing sort in pigeons.js, which only ever cross-checked
+// Deeptide's own cheapest candidates against xrp.cafe) can surface a
+// Pigeon listed ONLY on xrp.cafe, never touching Deeptide's feed at all.
+// Confirmed live as the real gap: soitbegins.xyz's own XRP.CAFE FL00R tile
+// showed 11 XRP while every crossListing result stayed 33+ XRP, all
+// Deeptide — that 11 XRP Pigeon was never in Deeptide's own candidate pool
+// to begin with.
+//
+// A full collection-wide scan (~3015 individual nft_sell_offers calls) is
+// far too slow/subrequest-heavy for a single page request, so this runs as
+// its own resumable background crawl (see cron-worker/index.js), same
+// staging/stats/one-atomic-swap-on-completion shape as the number-map/
+// high-sale crawls above. Reuses getPigeonNumberMap's own nftId list
+// (already the full, current, non-burnt collection this same worker keeps
+// warm) instead of a separate Clio scan.
+// ─────────────────────────────────────────────────────────────────────────
+const FLOOR_INDEX_KEY = 'pswap:floorindex:v1';
+const FLOOR_INDEX_STAGING_KEY = 'pswap:floorindex:staging:v1';
+const FLOOR_INDEX_STATS_KEY = 'pswap:floorindexstats:v1';
+const FLOOR_INDEX_TOP_N = 36; // a display list (matches a normal page size), not the full collection
+// Tokens/run stays modest — this shares a single cron tick with the
+// number-map (up to 15 fetches) and high-sale (up to 10) crawls above, and
+// HANDOFF.md's own standing rule is "do the arithmetic before adding any
+// new per-item enrichment call" against Cloudflare's real subrequest budget.
+const FLOOR_INDEX_TOKENS_PER_RUN = 20;
+const FLOOR_INDEX_CONCURRENCY = 8;
+const FLOOR_INDEX_REFRESH_STALE_SECONDS = 3 * 3600; // floor items don't move minute to minute — re-scan every 3h once a pass completes
+const FLOOR_INDEX_CONCURRENT_GUARD_SECONDS = 10;
+
+export async function getFloorIndex(kv) {
+  const raw = await kv.get(FLOOR_INDEX_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+
+async function getFloorIndexStaging(kv) {
+  const raw = await kv.get(FLOOR_INDEX_STAGING_KEY);
+  return raw ? JSON.parse(raw) : { candidates: [] };
+}
+
+export async function maybeRefreshFloorIndex(kv) {
+  const statsRaw = await kv.get(FLOOR_INDEX_STATS_KEY);
+  const stats = statsRaw ? JSON.parse(statsRaw) : null;
+  const now = Math.floor(Date.now() / 1000);
+  if (stats && stats.inProgress && now - stats.updatedAt < FLOOR_INDEX_CONCURRENT_GUARD_SECONDS) return;
+  if (stats && !stats.inProgress && now - stats.completedAt < FLOOR_INDEX_REFRESH_STALE_SECONDS) return;
+
+  // Not built yet (very first deploy, before the number-map's own first
+  // pass ever completes)? Skip this tick rather than crawling zero tokens.
+  const numberMap = await getPigeonNumberMap(kv);
+  const numbers = Object.keys(numberMap).map(Number).sort((a, b) => a - b);
+  if (!numbers.length) return;
+  const allIds = numbers.map(n => numberMap[n]);
+  const idToNumber = {};
+  numbers.forEach(n => { idToNumber[numberMap[n]] = n; });
+
+  let nextIndex = stats && stats.inProgress ? stats.nextIndex : 0;
+  // A stale in-progress cursor past the (possibly-shrunk) current list —
+  // start the pass over rather than throwing on an out-of-range slice.
+  if (nextIndex >= allIds.length) nextIndex = 0;
+  const staging = stats && stats.inProgress ? await getFloorIndexStaging(kv) : { candidates: [] };
+  // Every real candidate found this pass is kept (not trimmed to
+  // FLOOR_INDEX_TOP_N until the pass fully completes below) — trimming
+  // mid-pass would risk permanently dropping a token that's genuinely
+  // top-N once the whole collection's been seen, just because it happened
+  // to get scanned early. The real listed slice is small (~12% of the
+  // collection per the site's own L!STED stat), so keeping all of it in
+  // staging is trivial size-wise.
+  let candidates = staging.candidates || [];
+
+  const batch = allIds.slice(nextIndex, nextIndex + FLOOR_INDEX_TOKENS_PER_RUN);
+  const found = await mapWithConcurrency(batch, FLOOR_INDEX_CONCURRENCY, async (nftId) => {
+    const offers = await fetchNftSellOffers(nftId); // tolerant [] on failure/not-listed
+    let best = null;
+    for (const o of offers) {
+      if (typeof o.amount !== 'string') continue; // IOU-priced offers are an object, not a drops string — not XRP, skip
+      if (o.destination !== XRP_CAFE_BROKER_ACCOUNT && o.destination !== DEEPTIDE_BROKER_ACCOUNT) continue;
+      const drops = parseInt(o.amount, 10);
+      if (!Number.isFinite(drops)) continue;
+      if (!best || drops < best.drops) {
+        best = { drops, venue: o.destination === XRP_CAFE_BROKER_ACCOUNT ? 'xrpcafe' : 'deeptide' };
+      }
+    }
+    if (!best) return null;
+    return { nftId, number: idToNumber[nftId] || null, priceXrp: best.drops / 1000000, venue: best.venue };
+  });
+  candidates = candidates.concat(found.filter(Boolean));
+
+  nextIndex += batch.length;
+  if (nextIndex >= allIds.length) {
+    candidates.sort((a, b) => a.priceXrp - b.priceXrp);
+    const top = candidates.slice(0, FLOOR_INDEX_TOP_N);
+    await safeKvPut(kv, FLOOR_INDEX_KEY, JSON.stringify({ items: top, updatedAt: now }));
+    await safeKvPut(kv, FLOOR_INDEX_STATS_KEY, JSON.stringify({ inProgress: false, completedAt: now, updatedAt: now }));
+    await safeKvPut(kv, FLOOR_INDEX_STAGING_KEY, JSON.stringify({ candidates: [] }));
+    return;
+  }
+  await safeKvPut(kv, FLOOR_INDEX_STAGING_KEY, JSON.stringify({ candidates }));
+  await safeKvPut(kv, FLOOR_INDEX_STATS_KEY, JSON.stringify({ inProgress: true, nextIndex, updatedAt: now }));
+}
+
 // Shared Xaman Payload API calls — used by every swap-*-payload.js and
 // swap-*-status.js endpoint. Routed through a small proxy (a separate
 // Render service, not on Cloudflare) instead of calling xumm.app directly:

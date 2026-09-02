@@ -2,7 +2,7 @@ import {
   fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftDetailCached, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
-  getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue,
+  getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue, getFloorIndex,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG,
   getCachedCrownHolder, mapWithConcurrency
@@ -862,61 +862,54 @@ export async function onRequestGet(context) {
     });
   }
 
-  // Real lowest/highest listing across BOTH marketplaces — Deeptide's own
-  // price-asc/price-desc only reflects Deeptide's own offers, so a Pigeon
-  // priced lower on xrp.cafe would never surface. This scans Deeptide's
-  // price-sorted feed for candidates, cross-checks each one's xrp.cafe
-  // price too, then re-sorts by whichever is actually better. Honest
-  // limitation: it can't discover a Pigeon listed ONLY on xrp.cafe and
-  // not at all on Deeptide, since xrp.cafe has no bulk sorted-by-price
-  // endpoint we could find (only a per-token lookup) — so this is "best
-  // of both markets among what Deeptide surfaces as listed", not a
-  // mathematically exhaustive global sort.
-  //
-  // Confirmed live: Deeptide's OWN price-asc feed only carries a real
-  // price for a small handful of items (12, in one snapshot) before
-  // falling back to null-priced items in no particular order. Naively
-  // paginating that with skip/limit (the previous version of this code)
-  // meant "page 2" could show items with a null Deeptide price whose
-  // xrp.cafe price happened to be LOWER than everything on "page 1" -
-  // sorted per-page, but not globally, so scrolling could show cheaper
-  // items after more expensive ones. Fixed by pulling one bounded batch
-  // (the full DEEPTIDE_LISTINGS_MAX_LIMIT), dropping the null-priced
-  // noise, and returning it as a single non-paginated result — small
-  // and correctly sorted beats large and wrongly sorted here.
+  // Real lowest/highest listing across BOTH marketplaces — reads the
+  // background-built floor index (see maybeRefreshFloorIndex in
+  // _shared.js) instead of scanning Deeptide's own feed live. That old
+  // approach only ever cross-checked Deeptide's own cheapest candidates
+  // against xrp.cafe, so a Pigeon listed ONLY on xrp.cafe (confirmed live:
+  // exactly the site's own real XRP.CAFE FL00R item) could never surface.
+  // The floor index is built from real on-ledger nft_sell_offers
+  // collection-wide, so it has no such blind spot — this just resolves
+  // each candidate's live display data (image/traits/current price) on
+  // top of it.
   const crossListing = params.get('crossListing');
   if (crossListing === 'asc' || crossListing === 'desc') {
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
-    const deeptideSort = crossListing === 'asc' ? 'price-asc' : 'price-desc';
     if (skip > 0) {
       // Already exhausted the bounded, correctly-sorted set below.
       return json({ items: [], total: 0, hasMore: false, skip, limit: 0, collectionSizeApprox: coll.sizeApprox });
     }
-    const page = await fetchDeeptideListings({ skip: 0, limit: 60, sort: deeptideSort, traits: filters, shopSlug: coll.shopSlug });
-    let realCandidates = page.items.filter(it => typeof it.priceDrops === 'number');
+    const floorIndex = await getFloorIndex(env.coin);
+    let candidates = (floorIndex && floorIndex.items) || [];
     if (numberRange === 'low' || numberRange === 'high') {
-      realCandidates = realCandidates.filter(it =>
-        numberRange === 'low' ? (it.number !== null && it.number <= PIGEON_LOW_EDITION_MAX) : (it.number !== null && it.number > PIGEON_LOW_EDITION_MAX)
+      candidates = candidates.filter(c =>
+        numberRange === 'low' ? (c.number !== null && c.number <= PIGEON_LOW_EDITION_MAX) : (c.number !== null && c.number > PIGEON_LOW_EDITION_MAX)
       );
     }
-    const withCross = await Promise.all(realCandidates.map(async (it) => {
-      const xc = await fetchXrpCafeNftListing(env.coin, it.nftId);
-      const dp = it.priceDrops / 1000000;
-      const xp = xc && xc.priceXrp !== null && xc.priceXrp !== undefined ? xc.priceXrp : null;
-      const useXrpCafe = xp !== null && (crossListing === 'asc' ? xp < dp : xp > dp);
-      return { it, effective: useXrpCafe ? xp : dp, source: useXrpCafe ? 'xrpCafe' : 'deeptide', xp };
-    }));
-    withCross.sort((a, b) => crossListing === 'asc' ? a.effective - b.effective : b.effective - a.effective);
-    const items = withCross.map(({ it, effective, source, xp }) => {
-      const built = toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap);
-      built.bestListingXrp = effective;
-      built.bestListingSource = source;
-      built.listings = {
-        deeptide: { priceXrp: built.priceXrp, buyUrl: built.buyUrl },
-        xrpCafe: { priceXrp: xp, buyUrl: xp !== null ? `https://xrp.cafe/nft/${it.nftId}` : null }
-      };
-      return built;
+    // The floor index carries no trait data of its own — same
+    // scanFilteredCandidates restriction the SCYLLA LISTED sort above
+    // already applies for the same reason.
+    if (filters.length) {
+      const scan = await scanFilteredCandidates(filters);
+      const matchSet = new Set(scan.items.map(it => it.nftId));
+      candidates = candidates.filter(c => matchSet.has(c.nftId));
+    }
+    const details = await mapWithConcurrency(candidates, 15, c => fetchDeeptideNftDetailCached(context, c.nftId));
+    let items = candidates.map((c, i) => toItem(c.nftId, details[i] || { number: c.number, attributes: [], image: null }, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
+    await attachListings(env.coin, items, items.length);
+    items.forEach(it => {
+      const dt = it.listings.deeptide.priceXrp;
+      const xc = it.listings.xrpCafe.priceXrp;
+      const useXrpCafe = xc !== null && (dt === null || xc < dt);
+      it.bestListingXrp = useXrpCafe ? xc : dt;
+      it.bestListingSource = useXrpCafe ? 'xrpCafe' : 'deeptide';
     });
+    // A floor-index candidate whose real offer was cancelled/accepted
+    // since the background scan last ran, and isn't currently showing a
+    // price on either marketplace's own live lookup either — drop rather
+    // than show an impossible null-priced "lowest" result.
+    items = items.filter(it => it.bestListingXrp !== null);
+    items.sort((a, b) => crossListing === 'asc' ? a.bestListingXrp - b.bestListingXrp : b.bestListingXrp - a.bestListingXrp);
     return json({
       items,
       total: items.length,
