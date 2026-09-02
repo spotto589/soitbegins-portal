@@ -12045,7 +12045,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'AVG_SALE_XRP_ASC', label: 'L0WEST AVG SALE PR!CE XRP' },
       { value: 'AVG_SALE_XRP_DESC', label: 'H!GHEST AVG SALE PR!CE XRP' },
       { value: 'AVG_SALE_PIGEONS_ASC', label: 'L0WEST AVG SALE PR!CE $P!GE0NS' },
-      { value: 'PRICE_ASC', label: 'L0WEST (XRP)', disabled: true }
+      { value: 'PRICE_ASC', label: 'L0WEST (XRP)' }
     ],
     'RAR!TY': [
       { value: 'RARITY_DESC', label: 'L0WEST' },
