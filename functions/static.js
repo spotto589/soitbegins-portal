@@ -12229,26 +12229,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   // not just whenever openSortFlyout() has been called. Harmless on
   // mobile too (the strip stays display:none there until opened).
   renderSortFlyoutList();
-  // A fixed-pixel nudge (the old ±220) could land mid-item, showing the
-  // strip cut off partway through the last option instead of all the way
-  // at either end — jumping straight to 0 / scrollWidth (the browser
-  // clamps this to the real max scrollLeft on its own) always lands
-  // exactly at the true start or end regardless of how many options
-  // there are or how wide each one renders.
-  // Explicitly refreshed here too (not just left to the 'scroll' listener
-  // above) — these buttons always jump straight to a known end (0 or the
-  // true scrollWidth), so the resulting arrow state is knowable
-  // immediately without waiting on any scroll event at all. The extra
-  // delayed call catches the true rest position once the smooth-scroll
-  // animation actually finishes, in case anything shifts it slightly.
+  // Used to jump straight to 0/scrollWidth on a single click — with 11
+  // real options (once L0WEST (XRP) was enabled) that skipped over every
+  // option in between, reported live as "click the arrow, it goes past"
+  // the ones in the middle. Same fixed-pixel nudge as the TRAITS category
+  // row's own arrows (see traitsCatsScrollPrevBtn/NextBtn above) instead —
+  // one screenful at a time, not all the way to either end.
   el.sortScrollPrevBtn.addEventListener('click', function(){
-    el.sortFlyoutVals.scrollTo({ left: 0, behavior: 'smooth' });
-    updateSortHscrollArrows();
+    el.sortFlyoutVals.scrollBy({ left: -180, behavior: 'smooth' });
     setTimeout(updateSortHscrollArrows, 400);
   });
   el.sortScrollNextBtn.addEventListener('click', function(){
-    el.sortFlyoutVals.scrollTo({ left: el.sortFlyoutVals.scrollWidth, behavior: 'smooth' });
-    updateSortHscrollArrows();
+    el.sortFlyoutVals.scrollBy({ left: 180, behavior: 'smooth' });
     setTimeout(updateSortHscrollArrows, 400);
   });
   renderSortTag();
