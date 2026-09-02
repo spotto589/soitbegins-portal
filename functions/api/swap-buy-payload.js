@@ -1,7 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, getXamanUserToken, findPigeonsOffer,
-  recordPendingBuy, PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceFee,
-  MARKETPLACE_BROKER_WALLET, getSwapListingsMap, acquireBrokerAcceptLock, releaseBrokerAcceptLock,
+  recordPendingBuy, PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup,
+  MARKETPLACE_BROKER_WALLET, acquireBrokerAcceptLock, releaseBrokerAcceptLock,
   recordPendingBrokerAccept, fetchDeeptideNftDetail
 } from '../_shared.js';
 
@@ -13,9 +13,10 @@ import {
 // own wallet to approve.
 //
 // For a fee-bearing (post-rollout) listing, that sign request is a real
-// $PIGEONS BUY offer for the full price, not a direct accept — see
-// swap-buy-prepare.js's own comment for why, and swap-buy-status.js for
-// the automatic brokered-accept step that follows once it lands on-ledger.
+// $PIGEONS BUY offer for the listed price plus the marketplace's markup,
+// not a direct accept — see swap-buy-prepare.js's own comment for why, and
+// swap-buy-status.js for the automatic brokered-accept step that follows
+// once it lands on-ledger.
 export async function onRequestPost(context) {
   const { request, env } = context;
   console.log('BUY-PAYLOAD start', request.headers.get('User-Agent'), request.headers.get('Content-Type'));
@@ -101,10 +102,10 @@ export async function onRequestPost(context) {
     });
   }
 
-  const listingsMap = await getSwapListingsMap(env.coin);
-  const tracked = listingsMap && listingsMap[nftId];
-  const fee = tracked && tracked.totalValue ? computeMarketplaceFee(tracked.totalValue) : null;
-  if (!fee || fee.sellerValue !== offer.amount.value) {
+  // The live sell offer's own Amount IS the real listed price now — see
+  // swap-buy-prepare.js's identical comment.
+  const fee = computeMarketplaceMarkup(offer.amount.value);
+  if (!fee) {
     console.log('BUY-PAYLOAD exit: listing_price_unavailable for', nftId);
     return new Response(JSON.stringify({ error: 'listing_price_unavailable' }), { status: 409 });
   }

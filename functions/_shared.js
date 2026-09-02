@@ -421,10 +421,10 @@ export function listingExpirationRippleSeconds(durationDays) {
 // Destination the seller's own sell-offer must be restricted to.
 export const MARKETPLACE_BROKER_WALLET = 'rpigEoNV9KYjK6P9kzFmTqesbpqv7dpnzK';
 
-// 0.589% = 589 / 100000, kept as an integer basis-point ratio (not 0.00589
-// as a float) so the fee math below never has to multiply by a repeating
-// binary fraction.
-export const MARKETPLACE_FEE_BASIS_POINTS = 589;
+// 1.023% = 1023 / 100000, kept as an integer basis-point ratio (not
+// 0.01023 as a float) so the fee math below never has to multiply by a
+// repeating binary fraction.
+export const MARKETPLACE_FEE_BASIS_POINTS = 1023;
 
 function decimalToMicroUnits(valueStr) {
   const n = Number(valueStr);
@@ -439,11 +439,35 @@ function microUnitsToDecimalStr(micro) {
 }
 
 // Centralized $PIGEONS marketplace fee math. Works in integer "micro-unit"
-// (6-decimal-place) arithmetic rather than naive `total * 0.00589`
+// (6-decimal-place) arithmetic rather than naive `total * 0.01023`
 // floating point, so feeValue + sellerValue always sums back to exactly
 // totalValue — the same reasoning a drops-based integer fee calc uses for
 // XRP, adapted here for a $PIGEONS decimal-string amount instead of
 // integer drops. Returns null for a non-finite/non-positive amount.
+//
+// Two directions, for the two flows where a different side's number is
+// already fixed before the fee can be applied — confirmed against a real,
+// live xrp.cafe brokered sale pulled straight off the ledger (their own
+// broker wallet's NFTokenAcceptOffer, tx 054D6B64EA5905A5D878711284A6D4FA
+// CB330DD978E7B41CBC6F6BE127C9A7D2): seller's sell offer 14 XRP exactly,
+// buyer's buy offer 14.22246 XRP, NFTokenBrokerFee 0.22246 XRP — a markup
+// on the BUYER, not a cut from the seller. xrp.cafe's own real fee comes
+// out to 1.589% by this same math, confirming the model itself (this
+// site's own rate is a separate, explicit 1.023%, not copied from theirs).
+//
+// - computeMarketplaceMarkup(listedValue): LIST sets the price first, and
+//   BUY NOW's buyer offer is entirely server-built — so the seller's own
+//   number can stay untouched (sellerValue === listedValue) and the fee
+//   gets ADDED for the buyer to pay on top (totalValue = listedValue +
+//   fee). Mirrors xrp.cafe exactly: your own signed sell offer always
+//   shows your real typed price, never a silently reduced one.
+// - computeMarketplaceFee(totalValue): MAKE OFFER is buyer-initiated —
+//   their own buy offer is already signed and fixed for whatever they
+//   typed before ACCEPT OFFER ever runs, so there is no "add it on top"
+//   option any more; the fee is unavoidably taken as a cut from what the
+//   seller receives instead (sellerValue = totalValue − fee). Still used
+//   as-is by swap-acceptoffer-prepare.js/-payload.js for exactly that
+//   reason — not a design inconsistency, just which side moved first.
 export function computeMarketplaceFee(totalValueStr) {
   const totalMicro = decimalToMicroUnits(totalValueStr);
   if (!isFinite(totalMicro) || totalMicro <= 0) return null;
@@ -453,6 +477,18 @@ export function computeMarketplaceFee(totalValueStr) {
     totalValue: microUnitsToDecimalStr(totalMicro),
     feeValue: microUnitsToDecimalStr(feeMicro),
     sellerValue: microUnitsToDecimalStr(sellerMicro)
+  };
+}
+
+export function computeMarketplaceMarkup(listedValueStr) {
+  const listedMicro = decimalToMicroUnits(listedValueStr);
+  if (!isFinite(listedMicro) || listedMicro <= 0) return null;
+  const feeMicro = Math.floor(listedMicro * MARKETPLACE_FEE_BASIS_POINTS / 100000);
+  const totalMicro = listedMicro + feeMicro;
+  return {
+    totalValue: microUnitsToDecimalStr(totalMicro),
+    feeValue: microUnitsToDecimalStr(feeMicro),
+    sellerValue: microUnitsToDecimalStr(listedMicro)
   };
 }
 

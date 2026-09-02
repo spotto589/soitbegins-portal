@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, recordSwapListing, findPigeonsOffer,
-  getXamanPayloadStatus, getPendingListing, clearPendingListing, computeMarketplaceFee
+  getXamanPayloadStatus, getPendingListing, clearPendingListing
 } from '../_shared.js';
 
 // Polled by the browser after [ OPEN XAMAN ] while the user is signing.
@@ -77,28 +77,23 @@ export async function onRequestGet(context) {
     });
   }
 
-  // The on-ledger offer's own Amount is now the NET sellerValue (the fee
-  // moved to LIST time so BUY NOW stays one buyer signature) — the GROSS
-  // price buyers actually pay/see everywhere else on the site has to come
-  // from the record swap-listing-payload.js stashed at signing time.
-  // Cross-checked against the real on-ledger amount before trusting it, so
-  // a stale/tampered pending record can never make the displayed price
-  // disagree with what the buyer will really end up paying.
+  // The on-ledger offer's own Amount IS the real listed price now (the
+  // seller's sell offer is never reduced — see computeMarketplaceMarkup's
+  // own comment in _shared.js) — no fee math needed to recover it, just a
+  // direct cross-check against what swap-listing-payload.js stashed at
+  // signing time, so a stale/tampered pending record can never make the
+  // displayed price disagree with what's actually on-ledger.
   const pending = await getPendingListing(env.coin, uuid);
-  const pendingFee = pending ? computeMarketplaceFee(pending.totalValue) : null;
-  const pendingValid = pendingFee && pendingFee.sellerValue === (ownOffer.amount && ownOffer.amount.value);
-  const displayPrice = pendingValid ? pendingFee.totalValue : (ownOffer.amount && ownOffer.amount.value);
+  const pendingValid = pending && pending.sellerValue === (ownOffer.amount && ownOffer.amount.value);
+  const displayPrice = pendingValid ? pending.sellerValue : (ownOffer.amount && ownOffer.amount.value);
 
   // Record it in the Σκύλλα listings index — this is what powers the
   // LISTED browse filter, the badges on ordinary browse cards, and (via
-  // swap-buy-prepare.js) the GROSS price BUY NOW charges the buyer.
-  // Doesn't block the response; a KV write failure here shouldn't stop the
-  // user from seeing their own successful listing result.
+  // swap-buy-prepare.js) the live sell-offer amount BUY NOW marks its fee
+  // up from. Doesn't block the response; a KV write failure here shouldn't
+  // stop the user from seeing their own successful listing result.
   context.waitUntil(recordSwapListing(env.coin, nftId, {
     price: displayPrice,
-    totalValue: pendingValid ? pendingFee.totalValue : null,
-    feeValue: pendingValid ? pendingFee.feeValue : null,
-    sellerValue: pendingValid ? pendingFee.sellerValue : null,
     currency: ownOffer.amount && ownOffer.amount.currency,
     issuer: ownOffer.amount && ownOffer.amount.issuer,
     offerId: ownOffer.nft_offer_index,

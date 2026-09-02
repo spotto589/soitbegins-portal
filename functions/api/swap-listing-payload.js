@@ -3,7 +3,7 @@ import {
   PIGEON_ISSUER, PIGEON_TAXON, isTransferable,
   PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, createXamanPayload, getXamanUserToken, swapOfferSourceMemo,
   LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds,
-  computeMarketplaceFee, MARKETPLACE_BROKER_WALLET, recordPendingListing
+  computeMarketplaceMarkup, MARKETPLACE_BROKER_WALLET, recordPendingListing
 } from '../_shared.js';
 
 // Σκύλλα SWAP — first real listing test. Re-derives and re-validates the
@@ -70,7 +70,12 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'not_transferable' }), { status: 400 });
   }
 
-  const fee = computeMarketplaceFee(priceStr);
+  // Your own sell offer is created for your exact typed price now — the
+  // fee is added on top for the buyer to pay at BUY NOW time instead of
+  // being silently cut from what you listed for (see computeMarketplaceMarkup's
+  // own comment in _shared.js for the real xrp.cafe transaction this
+  // matches).
+  const fee = computeMarketplaceMarkup(priceStr);
   if (!fee) {
     return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
   }
@@ -103,10 +108,9 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });
   }
 
-  // Stash the seller's GROSS typed price now, while it's still known —
-  // once the sell offer lands on-ledger, its own Amount is the NET
-  // sellerValue, and swap-listing-status.js has no other way to recover
-  // what the buyer is actually meant to pay.
+  // Stash what this listing was actually built for, so
+  // swap-listing-status.js can cross-check the real on-ledger offer
+  // against something other than Xaman's own word once it confirms.
   if (env.coin) {
     context.waitUntil(recordPendingListing(env.coin, uuid, {
       nftId,

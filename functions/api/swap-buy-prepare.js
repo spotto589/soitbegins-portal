@@ -1,26 +1,27 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findPigeonsOffer,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceFee,
-  MARKETPLACE_BROKER_WALLET, getSwapListingsMap
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup,
+  MARKETPLACE_BROKER_WALLET
 } from '../_shared.js';
 
 // Σκύλλα SWAP — BUY NOW. Builds and returns a txjson for the confirmation
-// screen. Everything comes from a FRESH nft_sell_offers lookup, never the
-// cached Σκύλλα listings index — that index only ever gates "is this NFT
-// Scylla-tracked at all / what's the gross price," the live offer is the
-// sole source of truth for the offer ID, seller, and on-ledger amount.
+// screen. Everything comes from a FRESH nft_sell_offers lookup — the live
+// offer is the sole source of truth for the offer ID, seller, and
+// on-ledger amount, which (since LIST no longer reduces it — see
+// swap-listing-prepare.js) is now also directly the real listed price, no
+// separate index needed just to recover it.
 //
-// A LIST-time sell offer is now Destination-restricted to the broker
-// wallet and created for sellerValue, not the full price (see
-// swap-listing-prepare.js) — so a direct NFTokenAcceptOffer by the buyer
-// is no longer possible (Destination blocks it) and would skip the fee
-// even if it were. Instead the buyer creates a matching real $PIGEONS BUY
-// offer for the full totalValue; once that lands on-ledger,
+// A LIST-time sell offer is Destination-restricted to the broker wallet —
+// so a direct NFTokenAcceptOffer by the buyer is no longer possible
+// (Destination blocks it) and would skip the fee even if it were. Instead
+// the buyer creates a matching real $PIGEONS BUY offer for the listed
+// price PLUS the marketplace's markup; once that lands on-ledger,
 // swap-buy-status.js automatically submits the brokered accept that
-// settles both sides atomically and routes the fee — mirroring the exact
-// pattern already proven by MAKE OFFER + ACCEPT OFFER, just with the
-// seller's leg already sitting on-ledger from LIST time instead of being
-// signed live. Net effect for the buyer: still just one signature.
+// settles both sides atomically and routes the fee (NFTokenBrokerFee) —
+// mirroring the exact pattern already proven by MAKE OFFER + ACCEPT OFFER,
+// just with the seller's leg already sitting on-ledger from LIST time
+// instead of being signed live. Net effect for the buyer: still just one
+// signature.
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -102,17 +103,18 @@ export async function onRequestPost(context) {
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  // The GROSS price the buyer actually pays can't be re-derived from the
-  // live offer alone any more (its Amount is now the seller's NET take) —
-  // it comes from the Σκύλλα listings index, written by
-  // swap-listing-status.js right after the seller's offer confirmed.
-  // Cross-checked against the real on-ledger amount so a stale/missing
-  // index entry can never let a wrong price reach a real transaction —
-  // it just fails closed and asks the buyer to retry a moment later.
-  const listingsMap = await getSwapListingsMap(env.coin);
-  const tracked = listingsMap && listingsMap[nftId];
-  const fee = tracked && tracked.totalValue ? computeMarketplaceFee(tracked.totalValue) : null;
-  if (!fee || fee.sellerValue !== offer.amount.value) {
+  // The live sell offer's own Amount IS the real listed price now — the
+  // buyer's total is just that plus the marketplace's markup, computed
+  // fresh here rather than from any cached index. Honest transitional
+  // note: any listing still live from before this rollout already has its
+  // on-ledger Amount reduced under the OLD model, and there's no way to
+  // tell that apart from a real full-price listing here — it'll get a new
+  // markup added on top of its already-reduced number instead of its
+  // seller's real original typed price. Not unsafe (the seller still gets
+  // exactly what their own signed offer says either way), just a one-time
+  // price drift for any straggler until it's re-listed or sells.
+  const fee = computeMarketplaceMarkup(offer.amount.value);
+  if (!fee) {
     return new Response(JSON.stringify({ error: 'listing_price_unavailable' }), { status: 409 });
   }
 

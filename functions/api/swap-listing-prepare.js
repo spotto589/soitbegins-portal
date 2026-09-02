@@ -1,7 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
   PIGEON_ISSUER, PIGEON_TAXON, isTransferable,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET,
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup, MARKETPLACE_BROKER_WALLET,
   LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds
 } from '../_shared.js';
 
@@ -13,12 +13,12 @@ import {
 // server-side ledger data.
 //
 // The on-ledger sell offer is Destination-restricted to the broker wallet
-// and created for sellerValue (not the seller's full typed price) — the
-// marketplace fee is taken here, at LIST time, instead of at BUY time, so
-// BUY NOW can stay a single buyer signature (see swap-buy-prepare.js's own
-// comment for the full reasoning). The buyer still pays the seller's full
-// typed price (totalValue) — only the seller's own proceeds are reduced by
-// the fee, exactly like every other buyer-facing price on the site.
+// and created for the seller's exact typed price, untouched — matches how
+// xrp.cafe's own listings work (confirmed against a real on-ledger sale of
+// theirs, see computeMarketplaceMarkup's own comment in _shared.js). The
+// marketplace fee is instead added on top of what BUY NOW charges the
+// buyer, taken automatically at sale time via NFTokenBrokerFee — nothing
+// is ever deducted from the seller just for listing.
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -75,7 +75,7 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'not_transferable' }), { status: 400 });
   }
 
-  const fee = computeMarketplaceFee(priceStr);
+  const fee = computeMarketplaceMarkup(priceStr);
   if (!fee) {
     return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
   }
