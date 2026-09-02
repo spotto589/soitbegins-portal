@@ -7828,6 +7828,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     var avgSaleLine = !COLLECTION_META[state.collection].tradeable ? '' : hasAvgSale
       ? '<div class="result-rarity-line result-stat-stack"><span class="stat-label">AVG SALE PR!CE ::</span><span class="stat-value">' + greenNum(fmtXrp(p.avgSaleXrp)) + ' XRP</span></div>'
       : '<div class="result-rarity-line result-stat-stack"><span class="stat-label">COND!T!ON ::</span><span class="stat-value">M!NT</span></div>';
+    // Real cross-market floor price (see PRICE_ASC/crossListing in
+    // startCollectionBrowse) — only set on items returned by that sort,
+    // so this stays blank for every other sort instead of guessing.
+    // Boxed view (resultCardHtml, which already shows both marketplaces'
+    // prices via bottomListingsHtml) is disabled/coming soon, so THUMBNAILS
+    // is the only card ever rendered right now — without this line,
+    // L0WEST (XRP) sorted the results correctly but never actually showed
+    // the price being sorted on.
+    var hasBestListing = p.bestListingXrp !== null && p.bestListingXrp !== undefined;
+    var bestListingSourceLabel = p.bestListingSource === 'xrpCafe' ? 'XRP.CAFE' : 'DEEPT!DE';
+    var bestListingUrl = hasBestListing
+      ? (p.bestListingSource === 'xrpCafe' ? (p.listings && p.listings.xrpCafe && p.listings.xrpCafe.buyUrl) : (p.listings && p.listings.deeptide && p.listings.deeptide.buyUrl))
+      : null;
+    var bestListingLine = hasBestListing
+      ? '<a class="result-rarity-line result-stat-stack" href="' + escapeHtml(bestListingUrl || '#') + '" target="_blank" rel="noopener" title="BUY 0N ' + escapeHtml(bestListingSourceLabel) + '"><span class="stat-label">L!STED :: ' + escapeHtml(bestListingSourceLabel) + '</span><span class="stat-value">' + greenNum(fmtXrp(p.bestListingXrp)) + ' XRP</span></a>'
+      : '';
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
     var atCap = offerCtxCard
@@ -7852,7 +7868,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         listingBadge +
         ownedBadge +
       '</div>' +
-      '<div class="result-card-body">' + rarityLine + avgSaleLine + '<div class="card-action-box">' + pigeonsActionHtml + '</div></div>' +
+      '<div class="result-card-body">' + rarityLine + bestListingLine + avgSaleLine + '<div class="card-action-box">' + pigeonsActionHtml + '</div></div>' +
     '</div>';
   }
   function cardHtmlForView(p){
