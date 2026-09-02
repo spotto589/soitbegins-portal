@@ -12895,7 +12895,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function fmtPigeonsCompact(n){
     return compactPigeonsNumber(n) + ' $P!GE0NS';
   }
-  // Display-only mirror of computeMarketplaceFee() in _shared.js (0.589%)
+  // Display-only mirror of computeMarketplaceFee() in _shared.js (1.023%)
   // — no active caller right now (myPigeonOffersHtml's own fee-breakdown
   // line was dropped, "for now" per an explicit request — the real
   // ACCEPT 0FFER confirm screen still shows this exact math right before
@@ -12904,11 +12904,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // per-card line comes back. Never authoritative even when used: the
   // server independently recomputes this from the real on-ledger offer
   // amount before building any transaction, and rejects anything that
-  // doesn't match.
+  // doesn't match. This mirrors ACCEPT 0FFER's own reduction-style math
+  // specifically (buyer's amount fixed, seller's cut reduced) — LIST/BUY
+  // N0W now work the opposite way (seller's price untouched, buyer pays a
+  // markup instead), computed server-side only, no client mirror exists
+  // for that direction.
   function clientMarketplaceFee(totalValueStr){
     var total = Number(totalValueStr);
     if (!isFinite(total) || total <= 0) return null;
-    var feeValue = Math.floor(total * 1e6 * 589 / 100000) / 1e6;
+    var feeValue = Math.floor(total * 1e6 * 1023 / 100000) / 1e6;
     return { totalValue: total, feeValue: feeValue, sellerValue: total - feeValue };
   }
   function loadCollectionStats(){
