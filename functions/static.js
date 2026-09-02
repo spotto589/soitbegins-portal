@@ -10661,9 +10661,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (MY_WALLET) el.delistResultWalletLink.href = 'https://bithomp.com/explorer/' + MY_WALLET;
     el.screenDelistConfirm.style.display = 'none';
     el.screenDelistResult.style.display = '';
+    // Reflect the real delisted state the instant it's confirmed, not only
+    // once BACK T0 MY P!GE0NS is later clicked — reported live as feeling
+    // like nothing had happened, since the card grid underneath never
+    // actually updated on its own (renderMyPigeonsList only ever refreshes
+    // the unrelated Y0UR P!GE0N offer-picker, not a real browse grid — see
+    // its own comment). Patches every in-memory copy of this Pigeon
+    // directly instead of a slow full wallet re-fetch — the server already
+    // confirmed the real on-ledger delist, nothing left to verify.
+    if (delistTarget){
+      var nftId = delistTarget.nftId;
+      delete myListedData[nftId];
+      [state.items, state.scopeAllItems, myOwnPigeonsCache].forEach(function(list){
+        if (!list) return;
+        var it = list.filter(function(p){ return p.nftId === nftId; })[0];
+        if (it) it.scyllaListing = null;
+      });
+      if (state.scope) runScopedQuery();
+      else if (state.items && state.items.length) renderResultsReplace(state.items);
+    }
   }
   el.delistResultDoneBtn.addEventListener('click', function(){
-    if (delistTarget) delete myListedData[delistTarget.nftId];
     delistUuid = null;
     if (delistPollTimer) clearTimeout(delistPollTimer);
     renderMyPigeonsList();
