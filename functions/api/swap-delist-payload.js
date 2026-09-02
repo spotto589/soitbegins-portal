@@ -2,10 +2,12 @@ import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, createXamanPayload, getXamanUserToken, findPigeonsOffer
 } from '../_shared.js';
 
-// Re-derives and re-validates the exact same txjson swap-delist-prepare.js
-// already showed on the confirmation screen (never trusts a txjson the
-// client might send back — only nftId), then asks Xaman to create a real
-// sign request for it.
+// Called straight from the CANCEL click now — no separate confirm step
+// (see openDelistConfirm in static.js) — so this is the first and only
+// server round-trip: never trusts anything from the client but nftId,
+// fully re-derives ownership and the real offer to cancel from a fresh
+// nft_sell_offers lookup before asking Xaman to create a real sign
+// request.
 export async function onRequestPost(context) {
   const { request, env } = context;
 

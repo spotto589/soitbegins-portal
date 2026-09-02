@@ -5803,20 +5803,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- DEL!ST — a real centered popup (#delistConfirmModal), same
          treatment as BUY N0W's own confirm modal (converted earlier the
          same way — see #buyConfirmModal's own comment) instead of a
-         showScreen navigation away from the grid. Plain "are you sure"
-         question now instead of the raw txjson fields (Account,
-         NFTokenOffers, tx-type badge) the old full-page version showed —
-         reported live as wanting this to "just do a pop up... are you
-         sure you want to delist", not a technical confirmation screen. -->
+         showScreen navigation away from the grid. No "are you sure"
+         question any more either — CANCEL now opens Xaman immediately
+         (see openDelistConfirm), reported live as not wanting a
+         confirmation step at all for this one. This panel is now purely
+         the waiting-for-signature status + a BACK 0UT while it's pending,
+         same shape LIST/BUY's own waiting states already use elsewhere. -->
     <div id="delistConfirmModal" style="display:none;">
       <div class="offer-confirm-panel" id="screenDelistConfirm">
-        <div class="node-eyebrow">// DEL!ST C0NF!RMAT!0N</div>
+        <div class="node-eyebrow">// DEL!ST!NG</div>
         <div class="confirm-pigeon-num" id="delistConfPigeon"></div>
-        <div class="index-line" style="margin:0.9rem 0;">ARE Y0U SURE Y0U WANT T0 DEL!ST TH!S P!GE0N?</div>
         <div class="index-line" id="delistConfirmStatus"></div>
         <div class="detail-actions">
           <button class="secondary-btn" id="delistConfirmBackBtn">← BACK</button>
-          <button class="action-btn offer-confirm-xaman-btn" id="delistOpenXamanBtn">DEL!ST W!TH <span style="text-transform:none;">Σκύλλα</span></button>
         </div>
       </div>
 
@@ -6191,7 +6190,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapPayRow',
    'buySwapConfirmState','buySwapConfTxType','buySwapConfAccount','buySwapConfSendMax','buySwapConfAmount','buySwapConfEstimate','buySwapConfRate','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
    'buySwapResultState','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
-   'delistConfirmModal','screenDelistConfirm','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn','delistOpenXamanBtn',
+   'delistConfirmModal','screenDelistConfirm','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn',
    'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
    'offerConfirmModal','offerConfPigeonImg','offerConfPigeonNum','offerConfValue','offerConfirmStatus','offerConfirmBackBtn','offerOpenXamanBtn',
    'offerConfirmForm','offerConfirmReceipt','offerReceiptPigeonNum','offerReceiptPrice','offerResultTxLink','offerResultDoneBtn',
@@ -10547,31 +10546,45 @@ const SWAP_HTML = `<!DOCTYPE html>
   var delistUuid = null;
   var delistPollTimer = null;
   var delistXamanTab = null;
-  var DELIST_CONFIRM_BTN_HTML = 'DEL!ST W!TH <span style="text-transform:none;">Σκύλλα</span>';
 
+  // No "are you sure" step any more — CANCEL opens Xaman immediately,
+  // reported live as not wanting a confirmation for this one. Merges what
+  // used to be two clicks (open the "are you sure" modal, then its own
+  // DEL!ST W!TH Σκύλλα button) into this one function, called directly
+  // from the CANCEL button's own click handler.
   function openDelistConfirm(p){
     delistTarget = p;
-    fetch('/api/swap-delist-prepare', {
+    el.delistConfPigeon.innerHTML = 'P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????');
+    el.delistConfirmStatus.textContent = 'REQUEST!NG...';
+    el.screenDelistResult.style.display = 'none';
+    el.screenDelistConfirm.style.display = '';
+    el.delistConfirmModal.style.display = 'flex';
+    // Opened here, synchronously inside the real click — see
+    // navigateXamanPopup's own comment; the window.open(realUrl, ...)
+    // call below used to happen from inside the async fetch().then()
+    // instead, which mobile browsers in particular treat as no longer a
+    // trusted user gesture and silently refuse.
+    delistXamanTab = openXamanPopup();
+    fetch('/api/swap-delist-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nftId: p.nftId })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
-        alert(listingErrorMessage(res.data && res.data.error));
-        delistTarget = null;
+        closeXamanTabAndFocus(delistXamanTab);
+        delistXamanTab = null;
+        el.delistConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
-      el.delistConfPigeon.innerHTML = 'P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????');
-      el.delistConfirmStatus.textContent = '';
-      el.delistOpenXamanBtn.disabled = false;
-      el.delistOpenXamanBtn.innerHTML = DELIST_CONFIRM_BTN_HTML;
-      el.screenDelistResult.style.display = 'none';
-      el.screenDelistConfirm.style.display = '';
-      el.delistConfirmModal.style.display = 'flex';
+      delistUuid = res.data.uuid;
+      navigateXamanPopup(delistXamanTab, res.data.next.always);
+      el.delistConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
+      pollDelistStatus();
     }).catch(function(){
-      alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
-      delistTarget = null;
+      closeXamanTabAndFocus(delistXamanTab);
+      delistXamanTab = null;
+      el.delistConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   }
   // Shared by the BACK button, a backdrop click, and browser-back — same
@@ -10582,41 +10595,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.delistConfirmBackBtn.addEventListener('click', closeDelistConfirmModal);
   el.delistConfirmModal.addEventListener('click', function(e){ if (e.target === el.delistConfirmModal) closeDelistConfirmModal(); });
-
-  el.delistOpenXamanBtn.addEventListener('click', function(){
-    if (!delistTarget) return;
-    el.delistOpenXamanBtn.disabled = true;
-    el.delistOpenXamanBtn.textContent = 'REQUEST!NG...';
-    el.delistConfirmStatus.textContent = '';
-    // Opened here, synchronously inside the real click — see
-    // navigateXamanPopup's own comment; the window.open(realUrl, ...)
-    // call below used to happen from inside the async fetch().then()
-    // instead, which mobile browsers in particular treat as no longer a
-    // trusted user gesture and silently refuse.
-    delistXamanTab = openXamanPopup();
-    fetch('/api/swap-delist-payload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: delistTarget.nftId })
-    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
-    .then(function(res){
-      if (!res.ok || !res.data.ok){
-        el.delistOpenXamanBtn.disabled = false;
-        el.delistOpenXamanBtn.innerHTML = DELIST_CONFIRM_BTN_HTML;
-        el.delistConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
-        return;
-      }
-      delistUuid = res.data.uuid;
-      navigateXamanPopup(delistXamanTab, res.data.next.always);
-      el.delistOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.delistConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
-      pollDelistStatus();
-    }).catch(function(){
-      el.delistOpenXamanBtn.disabled = false;
-      el.delistOpenXamanBtn.innerHTML = DELIST_CONFIRM_BTN_HTML;
-      el.delistConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
-    });
-  });
 
   function pollDelistStatus(){
     if (delistPollTimer) clearTimeout(delistPollTimer);
@@ -10630,22 +10608,20 @@ const SWAP_HTML = `<!DOCTYPE html>
           showDelistResult(data);
           return;
         }
+        // No button to reset any more (see openDelistConfirm — CANCEL
+        // opens Xaman immediately now, no separate confirm step) — just
+        // leave the reason showing; BACK (still available) closes this,
+        // and clicking CANCEL again on the grid starts a fresh attempt.
         if (data.status === 'rejected'){
           el.delistConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
-          el.delistOpenXamanBtn.disabled = false;
-          el.delistOpenXamanBtn.innerHTML = DELIST_CONFIRM_BTN_HTML;
           return;
         }
         if (data.status === 'expired'){
           el.delistConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
-          el.delistOpenXamanBtn.disabled = false;
-          el.delistOpenXamanBtn.innerHTML = DELIST_CONFIRM_BTN_HTML;
           return;
         }
         if (data.status === 'failed'){
           el.delistConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
-          el.delistOpenXamanBtn.disabled = false;
-          el.delistOpenXamanBtn.innerHTML = DELIST_CONFIRM_BTN_HTML;
           return;
         }
         delistPollTimer = setTimeout(pollDelistStatus, 2000);
