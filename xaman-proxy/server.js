@@ -16,6 +16,26 @@
 const http = require('http');
 const xrpl = require('xrpl');
 
+// Defense-in-depth against the exact failure class chased down live this
+// session: a broker-submit attempt against a rate-limited XRPL endpoint
+// came back as a bare Cloudflare 502 in under a second, with NOTHING
+// logged here at all — consistent with something inside xrpl.js/ws
+// throwing (or emitting an unlistened 'error' event) outside any of this
+// file's own try/catch, which Node's default behavior is to crash the
+// entire process for. A single hard crash mid-request would explain both
+// symptoms at once: the malformed response Cloudflare saw, and the total
+// silence in these logs (nothing flushes before the process dies). These
+// handlers don't fix the underlying library issue, but they stop it from
+// taking the whole server down silently — the request that triggered it
+// still fails, but every OTHER in-flight request, and the server itself,
+// survives, and this leaves a real trace here to look at afterward.
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION (server kept running):', err && err.stack || err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED REJECTION (server kept running):', reason && reason.stack || reason);
+});
+
 const PORT = process.env.PORT || 3000;
 const XAMAN_API_KEY = process.env.XAMAN_API_KEY;
 const XAMAN_API_SECRET = process.env.XAMAN_API_SECRET;
@@ -31,36 +51,34 @@ const FETCH_TIMEOUT_MS = 15000;
 // refuses to do anything — the rest of the proxy (Xaman payloads) keeps
 // working regardless.
 const BROKER_WALLET_SEED = process.env.BROKER_WALLET_SEED;
-const XRPL_WS_ENDPOINT = process.env.XRPL_WS_ENDPOINT || 'wss://xrplcluster.com';
+// Endpoint diversity, same reasoning _shared.js's own fetchXrplClusterJson
+// already uses for REST reads (xrplcluster.com, then Ripple's own public
+// nodes) — confirmed live this session: xrplcluster.com was rate-limiting
+// this exact account hard on the REST side, and a real broker-submit
+// attempt against a single hard-coded wss://xrplcluster.com consistently
+// came back as a bare Cloudflare 502 (connection-level failure, not a
+// clean XRPL error) within under a second — consistent with the same
+// rate-limiting rejecting the WebSocket connection outright. A single
+// endpoint with no fallback had nowhere to go when that happens.
+const XRPL_WS_ENDPOINTS = process.env.XRPL_WS_ENDPOINT
+  ? [process.env.XRPL_WS_ENDPOINT]
+  : ['wss://xrplcluster.com', 'wss://s1.ripple.com', 'wss://s2.ripple.com'];
 // Allowlist of what this proxy will ever sign as the broker — deliberately
 // narrow (not "sign anything you send me") since a bug or compromise on
 // the caller side shouldn't be able to turn this into an arbitrary
 // signing oracle for a wallet that holds real funds.
 const BROKER_ALLOWED_TX_TYPES = new Set(['NFTokenAcceptOffer', 'Payment']);
 
-// Confirmed live: xrplcluster.com rate-limiting this same account hard on
-// the REST side (Cloudflare's own reads) during a real failed settlement —
-// very likely also stalling this WS connection at the same time, and
-// nothing below had a timeout of its own to catch that. A hung connect()/
-// submitAndWait() left this function never resolving, so the app never got
-// to write ANY response — eventually Render's own platform killed the
-// connection and substituted its own generic error page (HTML, not JSON),
-// which is exactly what reached Cloudflare as "proxy_non_json_response".
-// This timeout guarantees a real, clean JSON response either way, well
-// inside the 25s Cloudflare itself allows for this whole call (see
-// BROKER_SUBMIT_TIMEOUT_MS in _shared.js) — a timeout here becomes a
-// normal, retryable 'failed' result instead of a silent platform-level
-// non-response.
-const BROKER_XRPL_TIMEOUT_MS = 18000;
+// Per-endpoint timeout — with up to 3 endpoints to try, this has to stay
+// comfortably under the 25s Cloudflare itself allows for the whole call
+// (see BROKER_SUBMIT_TIMEOUT_MS in _shared.js): 3 * 7s = 21s worst case,
+// leaving real margin. A stuck connect()/submitAndWait() on one endpoint
+// no longer strands the whole request — it becomes a normal move to the
+// next endpoint instead.
+const BROKER_XRPL_TIMEOUT_MS = 7000;
 
-async function submitAsBroker(txjson) {
-  if (!BROKER_WALLET_SEED) {
-    return { ok: false, error: 'broker_wallet_not_configured' };
-  }
-  if (!txjson || typeof txjson !== 'object' || !BROKER_ALLOWED_TX_TYPES.has(txjson.TransactionType)) {
-    return { ok: false, error: 'transaction_type_not_allowed' };
-  }
-  const client = new xrpl.Client(XRPL_WS_ENDPOINT, { connectionTimeout: 8000 });
+async function submitAsBrokerOnce(endpoint, txjson) {
+  const client = new xrpl.Client(endpoint, { connectionTimeout: 4000 });
   const work = (async () => {
     await client.connect();
     const wallet = xrpl.Wallet.fromSeed(BROKER_WALLET_SEED);
@@ -88,6 +106,29 @@ async function submitAsBroker(txjson) {
     // this doesn't need to (and must not) block the response either way.
     client.disconnect().catch(() => {});
   }
+}
+
+async function submitAsBroker(txjson) {
+  if (!BROKER_WALLET_SEED) {
+    return { ok: false, error: 'broker_wallet_not_configured' };
+  }
+  if (!txjson || typeof txjson !== 'object' || !BROKER_ALLOWED_TX_TYPES.has(txjson.TransactionType)) {
+    return { ok: false, error: 'transaction_type_not_allowed' };
+  }
+  let last = { ok: false, error: 'submit_failed' };
+  for (const endpoint of XRPL_WS_ENDPOINTS) {
+    const result = await submitAsBrokerOnce(endpoint, txjson);
+    // A real 'engineResult' (even a non-success one like a tec/tem code)
+    // means this endpoint genuinely reached the ledger and got a real
+    // answer — that answer is authoritative, stop here. Only a
+    // connection-level failure (never got that far) tries the next
+    // endpoint; resubmitting the exact same signed blob afterward is safe
+    // regardless — XRPL dedupes an already-applied transaction by hash,
+    // so a lost-response-after-real-success case can't double-execute.
+    if ('engineResult' in result) return result;
+    last = result;
+  }
+  return last;
 }
 
 function send(res, status, body) {
