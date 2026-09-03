@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts, fetchNftBuyOffers,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET
+  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET, applyNftRoyalty
 } from '../_shared.js';
 
 // Owner accepting an incoming MAKE AN OFFER buy-offer — now via XRPL
@@ -93,6 +93,14 @@ export async function onRequestPost(context) {
     Flags: 1
   };
 
+  // Preview only — fee.sellerValue above (the real on-ledger offer amount)
+  // is never touched by this. This NFT's own royalty (see applyNftRoyalty's
+  // comment in _shared.js) gets deducted automatically by the ledger on
+  // top of that when the sale actually settles; showing it here too means
+  // the seller sees the real final number before signing, not just in the
+  // receipt afterward.
+  const royalty = applyNftRoyalty(fee.sellerValue, nftId);
+
   return new Response(JSON.stringify({
     ok: true,
     txjson,
@@ -101,7 +109,9 @@ export async function onRequestPost(context) {
       buyer: offer.owner,
       totalValue: fee.totalValue,
       feeValue: fee.feeValue,
-      sellerValue: fee.sellerValue
+      sellerValue: royalty.finalSellerValue,
+      royaltyValue: royalty.royaltyValue,
+      royaltyPercent: royalty.royaltyPercent
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }

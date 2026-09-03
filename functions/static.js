@@ -4013,6 +4013,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* A settled/confirmed status reads as unambiguously good — green, not
      plain white like every other field. */
   .df-value.status-ok{ color:var(--green); text-shadow:0 0 6px var(--green-glow); font-weight:700; }
+  /* The real, final, after-every-deduction number (what a seller actually
+     receives) — reported live as easy to miss/misread among a row of
+     same-size fields when it's the one number that actually matters most.
+     Bigger and green (same "this is the good outcome" language status-ok
+     already uses) so it can't be confused with an intermediate figure. */
+  .detail-field.final-amount-row{ margin-top:0.9rem; padding-top:0.7rem; border-top:1px solid var(--border-mid); }
+  .detail-field.final-amount-row .df-label{ font-size:13px; }
+  .df-value.final-amount{ color:var(--green); text-shadow:0 0 6px var(--green-glow); font-weight:700; font-size:20px; }
   .df-value a.owner-link{ color:var(--grey); text-decoration:underline; }
   .df-value a.owner-link:hover{ color:var(--cyan); }
   /* ---- "Receipt" result screen — LIST result's own big/clean layout
@@ -6009,7 +6017,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field"><span class="df-label">BUYER</span><span class="df-value" id="acceptOfferConfBuyer"></span></div>
       <div class="detail-field"><span class="df-label">0FFER</span><span class="df-value" id="acceptOfferConfPrice"></span></div>
       <div class="detail-field"><span class="df-label">MARKETPLACE FEE</span><span class="df-value" id="acceptOfferConfFee"></span></div>
-      <div class="detail-field"><span class="df-label">Y0U RECE!VE</span><span class="df-value" id="acceptOfferConfSellerAmount"></span></div>
+      <!-- Hidden when royaltyPercent is 0 — most tokens on the ledger
+           carry no royalty at all, only shown when this NFT actually has
+           one (see applyNftRoyalty in _shared.js). -->
+      <div class="detail-field" id="acceptOfferConfRoyaltyRow" style="display:none;"><span class="df-label" id="acceptOfferConfRoyaltyLabel">NFT R0YALTY</span><span class="df-value" id="acceptOfferConfRoyalty"></span></div>
+      <div class="detail-field final-amount-row"><span class="df-label">Y0U RECE!VE</span><span class="df-value final-amount" id="acceptOfferConfSellerAmount"></span></div>
       <!-- Reported live as alarming/confusing ("it just sent me to offer
            my NFT to the dev wallet??") — the raw TX TYPE/Account/
            NFTokenBuyOffer fields this used to show gave no context for
@@ -6035,7 +6047,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-num" id="acceptOfferResultPigeonNum"></div>
       <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="acceptOfferResultPrice"></span></div>
       <div class="detail-field"><span class="df-label">MARKETPLACE FEE</span><span class="df-value" id="acceptOfferResultFee"></span></div>
-      <div class="detail-field"><span class="df-label">SELLER RECE!VED</span><span class="df-value" id="acceptOfferResultSellerAmount"></span></div>
+      <div class="detail-field" id="acceptOfferResultRoyaltyRow" style="display:none;"><span class="df-label" id="acceptOfferResultRoyaltyLabel">NFT R0YALTY</span><span class="df-value" id="acceptOfferResultRoyalty"></span></div>
+      <div class="detail-field final-amount-row"><span class="df-label">SELLER RECE!VED</span><span class="df-value final-amount" id="acceptOfferResultSellerAmount"></span></div>
       <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="acceptOfferResultStatus"></span></div>
       <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="acceptOfferResultTxLink" target="_blank" rel="noopener"></a></span></div>
       <div class="detail-actions">
@@ -6203,8 +6216,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
    'amountEntryOfferMode','amountEntryOfferPigeonRow','amountEntryOfferPigeonImg','amountEntryOfferPigeonNum','amountEntryOfferBalanceLine','amountEntryOfferInput','amountEntryOfferBtn','amountEntryOfferDuration',
    'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferBtn','amountEntryTransferStatus',
-   'screenAcceptOfferConfirm','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
-   'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
+   'screenAcceptOfferConfirm','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfRoyaltyRow','acceptOfferConfRoyaltyLabel','acceptOfferConfRoyalty','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
+   'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultRoyaltyRow','acceptOfferResultRoyaltyLabel','acceptOfferResultRoyalty','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   function escapeHtml(str){
@@ -8169,6 +8182,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           el.acceptOfferConfBuyer.textContent = res.data.display.buyer;
           el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
           el.acceptOfferConfFee.textContent = fmtPigeons(res.data.display.feeValue);
+          showRoyaltyRow(el.acceptOfferConfRoyaltyRow, el.acceptOfferConfRoyaltyLabel, el.acceptOfferConfRoyalty, res.data.display.royaltyValue, res.data.display.royaltyPercent);
           el.acceptOfferConfSellerAmount.textContent = fmtPigeons(res.data.display.sellerValue);
           el.acceptOfferConfirmStatus.textContent = '';
           el.acceptOfferOpenXamanBtn.disabled = false;
@@ -11684,6 +11698,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.acceptOfferResultPigeonNum.innerHTML = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
     el.acceptOfferResultPrice.textContent = fmtPigeons(data.totalValue !== undefined ? data.totalValue : acceptOfferTarget.price);
     el.acceptOfferResultFee.textContent = data.feeValue !== undefined ? fmtPigeons(data.feeValue) : '—';
+    showRoyaltyRow(el.acceptOfferResultRoyaltyRow, el.acceptOfferResultRoyaltyLabel, el.acceptOfferResultRoyalty, data.royaltyValue, data.royaltyPercent);
     el.acceptOfferResultSellerAmount.textContent = data.sellerValue !== undefined ? fmtPigeons(data.sellerValue) : '—';
     el.acceptOfferResultStatus.textContent = 'SETTLED';
     if (data.txHash){
@@ -12850,6 +12865,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   function fmtPigeons(n){
     var num = typeof n === 'string' ? Number(n) : n;
     return (num || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
+  }
+  // Shared by ACCEPT OFFER's confirm + result screens — a real, on-ledger,
+  // per-NFT royalty (see applyNftRoyalty in _shared.js), separate from
+  // Σκύλλα's own marketplace fee. Most tokens carry none at all, so this
+  // row only shows up when royaltyPercent is actually nonzero, right above
+  // whichever "you receive"/"seller received" row is the real final
+  // number.
+  function showRoyaltyRow(rowEl, labelEl, valueEl, royaltyValue, royaltyPercent){
+    var percent = Number(royaltyPercent) || 0;
+    if (!percent){
+      rowEl.style.display = 'none';
+      return;
+    }
+    labelEl.textContent = 'NFT R0YALTY (' + percent + '%)';
+    valueEl.textContent = fmtPigeons(royaltyValue);
+    rowEl.style.display = '';
   }
   // Bare K/M-compacted number, no unit — shared by fmtPigeonsCompact below
   // (BUY N0W) and the "L!ST!NG :: 444K" own-listing labels (pigeonsAction-

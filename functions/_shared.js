@@ -492,6 +492,50 @@ export function computeMarketplaceMarkup(listedValueStr) {
   };
 }
 
+// A THIRD fee, completely separate from Σκύλλα's own marketplace cut —
+// confirmed live against a real settled sale, where "SELLER RECE!VED"
+// showed 121.74 $PIGEONS but the seller's own trustline only actually grew
+// by 115.6546245. The gap (exactly 5.00% of 121.74) went to the Pigeon
+// collection's own minter, not to the marketplace — this is XRPL's native
+// per-NFT royalty (`TransferFee`, set once at mint time), which the ledger
+// deducts automatically on every secondary sale of that specific token
+// REGARDLESS of which marketplace or currency is used. Nothing in this
+// codebase controls it and nothing needs to — it's baked directly into
+// the NFT's own 32-byte NFTokenID, decodable offline with no XRPL call:
+// bytes 0-1 are Flags, bytes 2-3 are TransferFee as a big-endian uint16
+// (50000 = 50.000%, so percent = TransferFee / 1000) — see
+// https://xrpl.org/docs/references/protocol/data-types/nftoken#nftokenid.
+// Existed on every Pigeon since mint; this app just never accounted for
+// it anywhere it showed a seller's proceeds.
+export function nftRoyaltyBasisPoints(nftId) {
+  if (typeof nftId !== 'string' || nftId.length !== 64 || !/^[0-9A-Fa-f]{64}$/.test(nftId)) return 0;
+  const transferFee = parseInt(nftId.slice(4, 8), 16);
+  return isFinite(transferFee) ? transferFee : 0; // already in the same "/100000 = fraction" units MARKETPLACE_FEE_BASIS_POINTS uses
+}
+
+// Applies a token's own on-ledger royalty on top of whatever the seller's
+// marketplace-fee-adjusted portion already is, returning the real final
+// amount that lands in their wallet plus the royalty split out as its own
+// disclosed line — same integer micro-unit math as computeMarketplaceFee
+// above, for the same reasons.
+export function applyNftRoyalty(sellerPortionStr, nftId) {
+  const basisPoints = nftRoyaltyBasisPoints(nftId);
+  const portionMicro = decimalToMicroUnits(sellerPortionStr);
+  if (!isFinite(portionMicro) || portionMicro <= 0) {
+    return { finalSellerValue: sellerPortionStr, royaltyValue: '0', royaltyPercent: 0 };
+  }
+  if (!basisPoints) {
+    return { finalSellerValue: sellerPortionStr, royaltyValue: '0', royaltyPercent: 0 };
+  }
+  const royaltyMicro = Math.floor(portionMicro * basisPoints / 100000);
+  const finalMicro = portionMicro - royaltyMicro;
+  return {
+    finalSellerValue: microUnitsToDecimalStr(finalMicro),
+    royaltyValue: microUnitsToDecimalStr(royaltyMicro),
+    royaltyPercent: basisPoints / 1000
+  };
+}
+
 // Identifies the marketplace + which Pigeon on-ledger, alongside the
 // generic swapOfferSourceMemo() (both ride in the same Memos array —
 // XRPL allows multiple Memo entries per transaction).

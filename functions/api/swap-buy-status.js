@@ -3,7 +3,7 @@ import {
   getXamanPayloadStatus, removeSwapListing, findPigeonsOffer, takePendingBuy, recordSwapSale,
   peekPendingBrokerAccept, takePendingBrokerAccept, releaseBrokerAcceptLock,
   PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, MARKETPLACE_BROKER_WALLET,
-  swapOfferSourceMemo, brokeredSaleMemo, submitAsBroker, verifyBrokerFeeFromMeta, payBrokerReward
+  swapOfferSourceMemo, brokeredSaleMemo, submitAsBroker, verifyBrokerFeeFromMeta, payBrokerReward, applyNftRoyalty
 } from '../_shared.js';
 
 // Polled by the browser after [ OPEN XAMAN ] while the buyer is signing.
@@ -186,6 +186,14 @@ export async function onRequestGet(context) {
   // proxy's tesSUCCESS.
   const feeCheck = verifyBrokerFeeFromMeta(brokerResult.meta, MARKETPLACE_BROKER_WALLET, PIGEONS_TOKEN_CONFIG.issuer, pigeonsCurrency, pending.feeValue);
 
+  // A THIRD, separate deduction — see applyNftRoyalty's own comment in
+  // _shared.js, and swap-acceptoffer-status.js's identical fix. Real,
+  // confirmed live: pending.sellerValue is only the marketplace-fee-
+  // adjusted portion, not what actually lands in the seller's wallet —
+  // XRPL takes this NFT's own on-ledger royalty automatically in the same
+  // settling transaction, before this response is even built.
+  const royalty = applyNftRoyalty(pending.sellerValue, nftId);
+
   context.waitUntil(releaseBrokerAcceptLock(env.coin, pending.offerId));
   context.waitUntil(removeSwapListing(env.coin, nftId));
   context.waitUntil(recordSwapSale(env.coin, {
@@ -195,7 +203,9 @@ export async function onRequestGet(context) {
     buyer: pending.buyer,
     priceValue: pending.totalValue,
     feeValue: pending.feeValue,
-    sellerValue: pending.sellerValue,
+    sellerValue: royalty.finalSellerValue,
+    royaltyValue: royalty.royaltyValue,
+    royaltyPercent: royalty.royaltyPercent,
     brokerFeeVerified: feeCheck.ok,
     createdAt: new Date().toISOString()
   }));
@@ -209,7 +219,9 @@ export async function onRequestGet(context) {
     txHash: brokerResult.hash,
     totalValue: pending.totalValue,
     feeValue: pending.feeValue,
-    sellerValue: pending.sellerValue,
+    sellerValue: royalty.finalSellerValue,
+    royaltyValue: royalty.royaltyValue,
+    royaltyPercent: royalty.royaltyPercent,
     brokerFeeVerified: feeCheck.ok
   }), { headers: { 'Content-Type': 'application/json' } });
 }
