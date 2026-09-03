@@ -31,6 +31,11 @@ export async function onRequestGet(context) {
     xamanProxyUrlConfigured: !!base,
     xamanProxySecretConfigured: !!env.XAMAN_PROXY_SHARED_SECRET,
     plainGetRoot: await tryFetch(base + '/'),
+    postBrokerSubmitWrongSecret: await tryFetch(base + '/broker-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Proxy-Secret': 'deliberately-wrong-value' },
+      body: JSON.stringify({ txjson: { TransactionType: 'NOT_A_REAL_TYPE' } })
+    }),
     postBrokerSubmitInvalidType: await tryFetch(base + '/broker-submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Proxy-Secret': env.XAMAN_PROXY_SHARED_SECRET },
