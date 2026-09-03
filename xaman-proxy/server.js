@@ -71,11 +71,8 @@ const BROKER_ALLOWED_TX_TYPES = new Set(['NFTokenAcceptOffer', 'Payment']);
 
 // Per-endpoint timeout — with up to 3 endpoints to try, this has to stay
 // comfortably under the 25s Cloudflare itself allows for the whole call
-// (see BROKER_SUBMIT_TIMEOUT_MS in _shared.js): 3 * 7s = 21s worst case,
-// leaving real margin. A stuck connect()/submitAndWait() on one endpoint
-// no longer strands the whole request — it becomes a normal move to the
-// next endpoint instead.
-const BROKER_XRPL_TIMEOUT_MS = 7000;
+// (see BROKER_SUBMIT_TIMEOUT_MS in _shared.js).
+const BROKER_XRPL_TIMEOUT_MS = 6000;
 
 async function submitAsBrokerOnce(endpoint, txjson) {
   const client = new xrpl.Client(endpoint, { connectionTimeout: 4000 });
@@ -84,14 +81,30 @@ async function submitAsBrokerOnce(endpoint, txjson) {
     const wallet = xrpl.Wallet.fromSeed(BROKER_WALLET_SEED);
     const prepared = await client.autofill({ ...txjson, Account: wallet.address });
     const signed = wallet.sign(prepared);
-    const result = await client.submitAndWait(signed.tx_blob);
-    const meta = result && result.result && result.result.meta;
-    const engineResult = meta && meta.TransactionResult;
+    // submit(), not submitAndWait() — confirmed live this session:
+    // submitAndWait() blocks for several real seconds waiting for ledger
+    // validation (XRPL closes a ledger roughly every 3-5s, and this polls
+    // until the tx shows up validated), and whatever's fronting this
+    // Render service returns its own bare 502 well before that finishes —
+    // consistently around 7s, with no x-render-origin-server header on
+    // the 502 at all, meaning Cloudflare's own edge gives up on this
+    // connection before Render's own layer is even involved. submit()
+    // returns as soon as the node's own engine provisionally accepts (or
+    // rejects) the transaction — one round trip, no waiting on a ledger
+    // close — which is exactly what a broker-fee NFTokenAcceptOffer needs
+    // here: the callers of this endpoint (swap-buy-status.js/
+    // swap-acceptoffer-status.js) already independently re-verify the
+    // real on-chain outcome (NFT ownership, offer gone) on their own
+    // subsequent polls before ever telling the user it's settled, so
+    // nothing downstream was actually relying on this call itself having
+    // waited for full validation.
+    const response = await client.submit(signed.tx_blob);
+    const engineResult = response && response.result && response.result.engine_result;
     return {
-      ok: engineResult === 'tesSUCCESS',
+      ok: typeof engineResult === 'string' && engineResult.startsWith('tes'),
       hash: signed.hash,
       engineResult: engineResult || null,
-      meta: meta || null,
+      engineResultMessage: (response && response.result && response.result.engine_result_message) || null,
       brokerAddress: wallet.address
     };
   })().catch(e => ({ ok: false, error: (e && e.message) || 'submit_failed' }));
