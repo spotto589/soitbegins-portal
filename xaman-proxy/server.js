@@ -201,7 +201,20 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (!XAMAN_API_KEY || !XAMAN_API_SECRET || !PROXY_SHARED_SECRET) {
-      return send(res, 500, { error: 'proxy_misconfigured' });
+      // 200, not 500 — Cloudflare fronts this Render service too, and by
+      // default silently REPLACES any 5xx response body with its own
+      // generic branded error page ("error code: 502", plain text) before
+      // it ever reaches the caller. This was the actual root cause behind
+      // the whole "proxy_non_json_response" investigation this session —
+      // confirmed live with an isolation test: a request that hit this
+      // exact code path with a deliberately-invalid TransactionType (never
+      // touching XRPL/websockets at all) still came back as a bare
+      // Cloudflare 502 in ~200ms, purely because /broker-submit below
+      // used to choose a 5xx status for a legitimate JSON error response.
+      // Every real caller here (submitAsBroker in _shared.js) already
+      // reads the actual outcome from the JSON body's own ok/error field,
+      // never from the HTTP status, so this costs nothing.
+      return send(res, 200, { error: 'proxy_misconfigured' });
     }
     if (!checkAuth(req)) {
       return send(res, 401, { error: 'unauthorized' });
@@ -235,13 +248,19 @@ const server = http.createServer(async (req, res) => {
       let body;
       try { body = JSON.parse(bodyText); } catch (e) { return send(res, 400, { error: 'bad_request' }); }
       const result = await submitAsBroker(body && body.txjson);
-      return send(res, result.ok ? 200 : 502, result);
+      // Always 200 — see the proxy_misconfigured branch above for why.
+      // result.ok (inside the body) is the real signal; submitAsBroker's
+      // own caller never looks at the HTTP status at all.
+      return send(res, 200, result);
     }
 
     return send(res, 404, { error: 'not_found' });
   } catch (e) {
     console.error('proxy error', e && e.message);
-    return send(res, 502, { error: 'proxy_fetch_failed', message: e && e.message });
+    // Always 200 here too, same reasoning — an unexpected exception is
+    // exactly the case where the caller most needs to actually see the
+    // real JSON error instead of it being silently swapped out.
+    return send(res, 200, { error: 'proxy_fetch_failed', message: e && e.message });
   }
 });
 
