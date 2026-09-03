@@ -2,7 +2,7 @@ import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts, fetchNftBuyOffers,
   fetchDeeptideNftDetail, createXamanPayload, getXamanUserToken,
   PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET,
-  acquireBrokerAcceptLock, recordPendingBrokerAccept
+  acquireBrokerAcceptLock, recordPendingBrokerAccept, applyNftRoyalty
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same seller sell-offer txjson
@@ -97,6 +97,15 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });
   }
 
+  // CANCEL/DELIST-style instant flow now (see openDelistConfirm in
+  // static.js) — the confirm-first screen is gone, so this is the only
+  // response the client ever gets before Xaman opens. Includes the same
+  // fee/royalty breakdown swap-acceptoffer-prepare.js's old preview
+  // screen used to show, so the waiting panel can still display it
+  // (see applyNftRoyalty's own comment in _shared.js for why sellerValue
+  // alone was never the real final number).
+  const royalty = applyNftRoyalty(fee.sellerValue, nftId);
+
   if (env.coin) {
     const item = await fetchDeeptideNftDetail(nftId).catch(() => null);
     context.waitUntil(recordPendingBrokerAccept(env.coin, xummData.uuid, {
@@ -111,7 +120,19 @@ export async function onRequestPost(context) {
     }));
   }
 
-  return new Response(JSON.stringify({ ok: true, uuid: xummData.uuid, next: xummData.next }), {
+  return new Response(JSON.stringify({
+    ok: true,
+    uuid: xummData.uuid,
+    next: xummData.next,
+    display: {
+      buyer: offer.owner,
+      totalValue: fee.totalValue,
+      feeValue: fee.feeValue,
+      sellerValue: royalty.finalSellerValue,
+      royaltyValue: royalty.royaltyValue,
+      royaltyPercent: royalty.royaltyPercent
+    }
+  }), {
     headers: { 'Content-Type': 'application/json' }
   });
 }

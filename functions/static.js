@@ -6010,9 +6010,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- SCREEN: ACCEPT OFFER CONFIRMATION (owner side) — the exact NFTokenAcceptOffer txjson, before Xaman ever opens -->
+    <!-- SCREEN: ACCEPT!NG — no confirm-first step any more (see
+         openAcceptOfferConfirm in static.js), ACCEPT opens Xaman
+         immediately; this is now purely the waiting-for-signature state,
+         its fields filling in a moment after Xaman's already open. -->
     <div class="sw-panel" id="screenAcceptOfferConfirm" style="display:none;">
-      <div class="node-eyebrow">// ACCEPT 0FFER C0NF!RMAT!0N</div>
+      <div class="node-eyebrow">// ACCEPT!NG 0FFER</div>
       <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="acceptOfferConfPigeon"></span></div>
       <div class="detail-field"><span class="df-label">BUYER</span><span class="df-value" id="acceptOfferConfBuyer"></span></div>
       <div class="detail-field"><span class="df-label">0FFER</span><span class="df-value" id="acceptOfferConfPrice"></span></div>
@@ -6025,7 +6028,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="index-line" id="acceptOfferConfirmStatus" style="margin-top:1rem;"></div>
       <div class="detail-actions">
         <button class="secondary-btn" id="acceptOfferConfirmBackBtn">← BACK</button>
-        <button class="action-btn" id="acceptOfferOpenXamanBtn">0PEN XAMAN</button>
       </div>
     </div>
 
@@ -6204,7 +6206,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
    'amountEntryOfferMode','amountEntryOfferPigeonRow','amountEntryOfferPigeonImg','amountEntryOfferPigeonNum','amountEntryOfferBalanceLine','amountEntryOfferInput','amountEntryOfferBtn','amountEntryOfferDuration',
    'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferBtn','amountEntryTransferStatus',
-   'screenAcceptOfferConfirm','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfRoyaltyRow','acceptOfferConfRoyaltyLabel','acceptOfferConfRoyalty','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn','acceptOfferOpenXamanBtn',
+   'screenAcceptOfferConfirm','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfRoyaltyRow','acceptOfferConfRoyaltyLabel','acceptOfferConfRoyalty','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn',
    'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultRoyaltyRow','acceptOfferResultRoyaltyLabel','acceptOfferResultRoyalty','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
@@ -8155,31 +8157,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           number: acceptBtn.getAttribute('data-num') ? parseInt(acceptBtn.getAttribute('data-num'), 10) : null,
           image: acceptBtn.getAttribute('data-image') || null
         };
-        fetch('/api/swap-acceptoffer-prepare', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nftId: acceptOfferTarget.nftId, offerId: acceptOfferTarget.offerId })
-        }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
-        .then(function(res){
-          if (!res.ok || !res.data.ok){
-            alert(listingErrorMessage(res.data && res.data.error));
-            acceptOfferTarget = null;
-            return;
-          }
-          el.acceptOfferConfPigeon.innerHTML = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
-          el.acceptOfferConfBuyer.textContent = res.data.display.buyer;
-          el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
-          el.acceptOfferConfFee.textContent = fmtPigeons(res.data.display.feeValue);
-          showRoyaltyRow(el.acceptOfferConfRoyaltyRow, el.acceptOfferConfRoyaltyLabel, el.acceptOfferConfRoyalty, res.data.display.royaltyValue, res.data.display.royaltyPercent);
-          el.acceptOfferConfSellerAmount.textContent = fmtPigeons(res.data.display.sellerValue);
-          el.acceptOfferConfirmStatus.textContent = '';
-          el.acceptOfferOpenXamanBtn.disabled = false;
-          el.acceptOfferOpenXamanBtn.textContent = '0PEN XAMAN';
-          showScreen('acceptofferconfirm');
-        }).catch(function(){
-          acceptOfferTarget = null;
-          alert('ERR://S!GNAL_L0ST — TRY AGA!N.');
-        });
+        openAcceptOfferConfirm();
         return;
       }
       // Session-only local dismiss (see declinedOfferIds) — nothing
@@ -11599,11 +11577,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     showScreen('browse');
   });
 
-  el.acceptOfferOpenXamanBtn.addEventListener('click', function(){
-    if (!acceptOfferTarget) return;
-    el.acceptOfferOpenXamanBtn.disabled = true;
-    el.acceptOfferOpenXamanBtn.textContent = 'REQUEST!NG...';
-    el.acceptOfferConfirmStatus.textContent = '';
+  // No confirm-first click any more — ACCEPT opens Xaman immediately
+  // (reported live as not wanting a confirmation step, same change already
+  // made for CANCEL/DELIST — see openDelistConfirm's own comment). The
+  // PIGEON/BUYER/0FFER/FEE/R0YALTY/RECE!VE fields still populate, just a
+  // moment later once swap-acceptoffer-payload.js's own response lands
+  // (it now returns the same display breakdown the old prepare-first
+  // screen used to show up front) instead of gating Xaman behind them.
+  function openAcceptOfferConfirm(){
+    el.acceptOfferConfPigeon.innerHTML = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
+    el.acceptOfferConfBuyer.textContent = acceptOfferTarget.buyer || '';
+    el.acceptOfferConfPrice.textContent = acceptOfferTarget.price ? fmtPigeons(acceptOfferTarget.price) : '';
+    el.acceptOfferConfFee.textContent = '';
+    el.acceptOfferConfRoyaltyRow.style.display = 'none';
+    el.acceptOfferConfSellerAmount.textContent = '';
+    el.acceptOfferConfirmStatus.textContent = 'REQUEST!NG...';
+    showScreen('acceptofferconfirm');
+    // Opened here, synchronously inside the real click — see
+    // navigateXamanPopup's own comment; the window.open(realUrl, ...) call
+    // below used to happen from inside the async fetch().then() instead,
+    // which mobile browsers in particular treat as no longer a trusted
+    // user gesture and silently refuse.
     acceptOfferXamanTab = openXamanPopup();
     fetch('/api/swap-acceptoffer-payload', {
       method: 'POST',
@@ -11614,24 +11608,26 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!res.ok || !res.data.ok){
         closeXamanTabAndFocus(acceptOfferXamanTab);
         acceptOfferXamanTab = null;
-        el.acceptOfferOpenXamanBtn.disabled = false;
-        el.acceptOfferOpenXamanBtn.textContent = '0PEN XAMAN';
         el.acceptOfferConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
       acceptOfferUuid = res.data.uuid;
       navigateXamanPopup(acceptOfferXamanTab, res.data.next.always);
-      el.acceptOfferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
+      if (res.data.display){
+        el.acceptOfferConfBuyer.textContent = res.data.display.buyer;
+        el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
+        el.acceptOfferConfFee.textContent = fmtPigeons(res.data.display.feeValue);
+        showRoyaltyRow(el.acceptOfferConfRoyaltyRow, el.acceptOfferConfRoyaltyLabel, el.acceptOfferConfRoyalty, res.data.display.royaltyValue, res.data.display.royaltyPercent);
+        el.acceptOfferConfSellerAmount.textContent = fmtPigeons(res.data.display.sellerValue);
+      }
       el.acceptOfferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
       pollAcceptOfferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(acceptOfferXamanTab);
       acceptOfferXamanTab = null;
-      el.acceptOfferOpenXamanBtn.disabled = false;
-      el.acceptOfferOpenXamanBtn.textContent = '0PEN XAMAN';
       el.acceptOfferConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
-  });
+  }
 
   function pollAcceptOfferStatus(){
     if (acceptOfferPollTimer) clearTimeout(acceptOfferPollTimer);
@@ -11645,16 +11641,16 @@ const SWAP_HTML = `<!DOCTYPE html>
           showAcceptOfferResult(data);
           return;
         }
+        // No button to reset any more (see openAcceptOfferConfirm — ACCEPT
+        // opens Xaman immediately now, no separate confirm step) — just
+        // leave the reason showing; BACK (still available) closes this,
+        // and clicking ACCEPT again on the grid starts a fresh attempt.
         if (data.status === 'rejected'){
           el.acceptOfferConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
-          el.acceptOfferOpenXamanBtn.disabled = false;
-          el.acceptOfferOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'expired'){
           el.acceptOfferConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
-          el.acceptOfferOpenXamanBtn.disabled = false;
-          el.acceptOfferOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'failed' || data.status === 'buy_offer_gone' || data.status === 'offer_amount_mismatch'){
@@ -11662,8 +11658,6 @@ const SWAP_HTML = `<!DOCTYPE html>
             : data.status === 'offer_amount_mismatch' ? 'OFFER AM0UNT CHANGED — TRY AGA!N.'
             : 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           el.acceptOfferConfirmStatus.textContent = reason;
-          el.acceptOfferOpenXamanBtn.disabled = false;
-          el.acceptOfferOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         // 'signed_pending_ledger' (seller's sell offer not yet visible) and
