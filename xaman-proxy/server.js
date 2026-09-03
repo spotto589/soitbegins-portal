@@ -38,6 +38,21 @@ const XRPL_WS_ENDPOINT = process.env.XRPL_WS_ENDPOINT || 'wss://xrplcluster.com'
 // signing oracle for a wallet that holds real funds.
 const BROKER_ALLOWED_TX_TYPES = new Set(['NFTokenAcceptOffer', 'Payment']);
 
+// Confirmed live: xrplcluster.com rate-limiting this same account hard on
+// the REST side (Cloudflare's own reads) during a real failed settlement —
+// very likely also stalling this WS connection at the same time, and
+// nothing below had a timeout of its own to catch that. A hung connect()/
+// submitAndWait() left this function never resolving, so the app never got
+// to write ANY response — eventually Render's own platform killed the
+// connection and substituted its own generic error page (HTML, not JSON),
+// which is exactly what reached Cloudflare as "proxy_non_json_response".
+// This timeout guarantees a real, clean JSON response either way, well
+// inside the 25s Cloudflare itself allows for this whole call (see
+// BROKER_SUBMIT_TIMEOUT_MS in _shared.js) — a timeout here becomes a
+// normal, retryable 'failed' result instead of a silent platform-level
+// non-response.
+const BROKER_XRPL_TIMEOUT_MS = 18000;
+
 async function submitAsBroker(txjson) {
   if (!BROKER_WALLET_SEED) {
     return { ok: false, error: 'broker_wallet_not_configured' };
@@ -45,8 +60,8 @@ async function submitAsBroker(txjson) {
   if (!txjson || typeof txjson !== 'object' || !BROKER_ALLOWED_TX_TYPES.has(txjson.TransactionType)) {
     return { ok: false, error: 'transaction_type_not_allowed' };
   }
-  const client = new xrpl.Client(XRPL_WS_ENDPOINT);
-  try {
+  const client = new xrpl.Client(XRPL_WS_ENDPOINT, { connectionTimeout: 8000 });
+  const work = (async () => {
     await client.connect();
     const wallet = xrpl.Wallet.fromSeed(BROKER_WALLET_SEED);
     const prepared = await client.autofill({ ...txjson, Account: wallet.address });
@@ -61,10 +76,17 @@ async function submitAsBroker(txjson) {
       meta: meta || null,
       brokerAddress: wallet.address
     };
-  } catch (e) {
-    return { ok: false, error: (e && e.message) || 'submit_failed' };
+  })().catch(e => ({ ok: false, error: (e && e.message) || 'submit_failed' }));
+  const timeout = new Promise(resolve => {
+    setTimeout(() => resolve({ ok: false, error: 'xrpl_submit_timeout' }), BROKER_XRPL_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([work, timeout]);
   } finally {
-    try { await client.disconnect(); } catch (e) { /* already disconnected */ }
+    // Fire-and-forget regardless of which side of the race won — if the
+    // timeout fired first, `work` may still be running in the background;
+    // this doesn't need to (and must not) block the response either way.
+    client.disconnect().catch(() => {});
   }
 }
 
