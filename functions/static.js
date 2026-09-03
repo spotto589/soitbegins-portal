@@ -5709,8 +5709,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="offer-confirm-panel" id="screenBuyResult" style="display:none;">
         <div class="detail-eyebrow">// SETTLED</div>
         <div class="detail-num" id="buyResultPigeonNum"></div>
-        <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="buyResultPrice"></span></div>
-        <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="buyResultStatus"></span></div>
+        <div class="detail-field final-amount-row"><span class="df-label">PR!CE</span><span class="df-value final-amount" id="buyResultPrice"></span></div>
+        <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value status-ok" id="buyResultStatus"></span></div>
         <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="buyResultTxLink" target="_blank" rel="noopener"></a></span></div>
         <div class="detail-actions">
           <button class="secondary-btn" id="buyResultDoneBtn">← BACK T0 L!STED</button>
@@ -6048,7 +6048,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="detail-field"><span class="df-label">MARKETPLACE FEE</span><span class="df-value" id="acceptOfferResultFee"></span></div>
       <div class="detail-field" id="acceptOfferResultRoyaltyRow" style="display:none;"><span class="df-label" id="acceptOfferResultRoyaltyLabel">NFT R0YALTY</span><span class="df-value" id="acceptOfferResultRoyalty"></span></div>
       <div class="detail-field final-amount-row"><span class="df-label">SELLER RECE!VED</span><span class="df-value final-amount" id="acceptOfferResultSellerAmount"></span></div>
-      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value" id="acceptOfferResultStatus"></span></div>
+      <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value status-ok" id="acceptOfferResultStatus"></span></div>
       <div class="detail-field"><span class="df-label">TRANSACT!0N</span><span class="df-value"><a id="acceptOfferResultTxLink" target="_blank" rel="noopener"></a></span></div>
       <div class="detail-actions">
         <button class="secondary-btn" id="acceptOfferResultDoneBtn">← BACK T0 MY P!GE0NS</button>
@@ -10483,7 +10483,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.buyResultStatus.textContent = 'SETTLED';
     if (data.txHash){
       el.buyResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
-      el.buyResultTxLink.textContent = data.txHash;
+      el.buyResultTxLink.textContent = shortHash(data.txHash);
     } else {
       el.buyResultTxLink.removeAttribute('href');
       el.buyResultTxLink.textContent = '—';
@@ -11677,7 +11677,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.acceptOfferResultStatus.textContent = 'SETTLED';
     if (data.txHash){
       el.acceptOfferResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
-      el.acceptOfferResultTxLink.textContent = data.txHash;
+      el.acceptOfferResultTxLink.textContent = shortHash(data.txHash);
     } else {
       el.acceptOfferResultTxLink.removeAttribute('href');
       el.acceptOfferResultTxLink.textContent = '—';
@@ -12845,6 +12845,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // reported live as reading cluttered on BUY N0W's own waiting screen.
   function shortAddr(addr){
     return addr ? addr.slice(0, 9) + '...' + addr.slice(-4) : '';
+  }
+  // Same reasoning as shortAddr, for a 64-char tx hash — reported live as
+  // making the SETTLED receipt read as cluttered/too small. The full hash
+  // is still there, just as the real link target (bithomp), not spelled
+  // out in the visible text.
+  function shortHash(hash){
+    return hash ? hash.slice(0, 10) + '...' + hash.slice(-6) : '—';
   }
   // Toggles the pulse (see .waiting-status-line.pulsing in the CSS) on
   // BUY N0W/ACCEPT 0FFER/CANCEL's own waiting-for-signature line — only
