@@ -56,15 +56,30 @@ const FETCH_TIMEOUT_MS = 15000;
 // "Account not found") wallet than intended, with no visible sign
 // anything's wrong until the ledger call fails.
 const BROKER_WALLET_SEED = (process.env.BROKER_WALLET_SEED || '').trim() || undefined;
+// The real, fixed marketplace account (must match MARKETPLACE_BROKER_WALLET
+// in ../functions/_shared.js) — every seller's sell offer is Destination-
+// restricted to this exact address, so it's what every transaction below
+// must sign as `Account`, regardless of which key does the actual signing.
+// BROKER_WALLET_SEED now derives a Regular Key registered TO this account
+// (see SetRegularKey, set up live this session after the original master
+// key's own seed could never be gotten to derive the right address on
+// Render) rather than the account's own master key — wallet.address for a
+// regular key is a throwaway address that has nothing to do with this
+// account and must never be used as Account here.
+const BROKER_ACCOUNT = 'rpigEoNV9KYjK6P9kzFmTqesbpqv7dpnzK';
 // Safe to log — a wallet ADDRESS is public information, never the seed
 // itself. Printed once at boot so a real mismatch (wrong seed entirely,
 // not just whitespace) is visible directly in Render's own logs instead
 // of only showing up as an opaque "Account not found" on a real attempt.
 if (BROKER_WALLET_SEED) {
   try {
-    console.log('BROKER_WALLET_SEED configured, derives to address:', xrpl.Wallet.fromSeed(BROKER_WALLET_SEED).address);
+    // This is the REGULAR KEY's own throwaway address (a side effect of
+    // how XRPL keypairs work), NOT the marketplace account itself — the
+    // account transactions actually sign as is the fixed BROKER_ACCOUNT
+    // below, regardless of what this prints.
+    console.log('BROKER_WALLET_SEED configured, its own (regular-key) address is:', xrpl.Wallet.fromSeed(BROKER_WALLET_SEED).address, '— real broker account is fixed at', BROKER_ACCOUNT);
   } catch (e) {
-    console.log('BROKER_WALLET_SEED configured but INVALID (cannot derive an address):', e && e.message);
+    console.log('BROKER_WALLET_SEED configured but INVALID (cannot derive a keypair):', e && e.message);
   }
 } else {
   console.log('BROKER_WALLET_SEED not configured — /broker-submit will refuse to do anything.');
@@ -113,7 +128,7 @@ async function submitAsBrokerOnce(endpoint, txjson) {
   const work = (async () => {
     await client.connect();
     const wallet = xrpl.Wallet.fromSeed(BROKER_WALLET_SEED);
-    const prepared = await client.autofill({ ...txjson, Account: wallet.address });
+    const prepared = await client.autofill({ ...txjson, Account: BROKER_ACCOUNT });
     const signed = wallet.sign(prepared);
     // submit(), not submitAndWait() — confirmed live this session:
     // submitAndWait() blocks for several real seconds waiting for ledger
@@ -139,7 +154,7 @@ async function submitAsBrokerOnce(endpoint, txjson) {
       hash: signed.hash,
       engineResult: engineResult || null,
       engineResultMessage: (response && response.result && response.result.engine_result_message) || null,
-      brokerAddress: wallet.address
+      brokerAddress: BROKER_ACCOUNT
     };
   })().catch(e => ({ ok: false, error: (e && e.message) || 'submit_failed' }));
   const timeout = new Promise(resolve => {
