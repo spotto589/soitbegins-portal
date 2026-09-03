@@ -6022,18 +6022,6 @@ const SWAP_HTML = `<!DOCTYPE html>
            one (see applyNftRoyalty in _shared.js). -->
       <div class="detail-field" id="acceptOfferConfRoyaltyRow" style="display:none;"><span class="df-label" id="acceptOfferConfRoyaltyLabel">NFT R0YALTY</span><span class="df-value" id="acceptOfferConfRoyalty"></span></div>
       <div class="detail-field final-amount-row"><span class="df-label">Y0U RECE!VE</span><span class="df-value final-amount" id="acceptOfferConfSellerAmount"></span></div>
-      <!-- Reported live as alarming/confusing ("it just sent me to offer
-           my NFT to the dev wallet??") — the raw TX TYPE/Account/
-           NFTokenBuyOffer fields this used to show gave no context for
-           why, and Xaman's own native signing screen (outside this app's
-           control) shows this step as a plain "sell offer to a wallet"
-           with zero further explanation. This is the real, correct,
-           secure brokered-accept mechanism (see swap-acceptoffer-
-           prepare.js's own comment) — a Destination-restricted offer
-           genuinely cannot be taken any other way — but that safety only
-           means something if it's explained before Xaman's own screen
-           shows it, not after. -->
-      <div class="accept-offer-explainer">TH!S !S A TW0-STEP SALE. Y0U'LL F!RST S!GN A REAL SELL 0FFER RESTR!CTED S0 0NLY 0UR MARKETPLACE WALLET CAN C0MPLETE !T — !T CANN0T TAKE Y0UR P!GE0N ANY 0THER WAY 0R F0R ANY 0THER AM0UNT. XAMAN MAY SH0W TH!S STEP AS A PLA!N "SELL 0FFER" T0 0UR WALLET — THAT'S EXPECTED, N0T A M!STAKE. 0NCE C0NF!RMED, THE SALE SETTLES AT0M!CALLY W!TH THE BUYER'S PAYMENT.</div>
       <div class="index-line" id="acceptOfferConfirmStatus" style="margin-top:1rem;"></div>
       <div class="detail-actions">
         <button class="secondary-btn" id="acceptOfferConfirmBackBtn">← BACK</button>
