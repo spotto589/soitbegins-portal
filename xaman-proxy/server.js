@@ -76,6 +76,22 @@ const BROKER_XRPL_TIMEOUT_MS = 6000;
 
 async function submitAsBrokerOnce(endpoint, txjson) {
   const client = new xrpl.Client(endpoint, { connectionTimeout: 4000 });
+  // xrpl.js's Client (via its internal Connection) is an EventEmitter that
+  // emits its own 'error' event on a websocket/protocol problem — Node's
+  // EventEmitter throws synchronously (crashing the whole process) when
+  // an 'error' event has zero listeners, a DIFFERENT mechanism from a
+  // normal uncaught exception/rejection, and NOT reliably caught by the
+  // process-level uncaughtException/unhandledRejection handlers above.
+  // Confirmed live: even after adding those, an authenticated
+  // broker-submit call kept coming back as a bare Cloudflare 502 (no
+  // x-render-origin-server header — never even reaching Render's own
+  // response layer) in as little as ~1s, consistent with the whole
+  // process still going down before this specific request's own error
+  // handling ever got a chance to run. This listener is the actual fix
+  // for that class of failure — it exists purely to stop this exact
+  // crash, deliberately doing nothing with the error itself since `work`
+  // below already handles a real connect()/submit() rejection correctly.
+  client.on('error', () => {});
   const work = (async () => {
     await client.connect();
     const wallet = xrpl.Wallet.fromSeed(BROKER_WALLET_SEED);
