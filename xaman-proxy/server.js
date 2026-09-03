@@ -50,7 +50,25 @@ const FETCH_TIMEOUT_MS = 15000;
 // wallet should sign instead. If this is unset, /broker-submit simply
 // refuses to do anything — the rest of the proxy (Xaman payloads) keeps
 // working regardless.
-const BROKER_WALLET_SEED = process.env.BROKER_WALLET_SEED;
+// .trim() — a value pasted into a dashboard text field can pick up an
+// invisible trailing space or newline that a terminal copy/paste doesn't;
+// that's enough to make this derive a completely different (unfunded,
+// "Account not found") wallet than intended, with no visible sign
+// anything's wrong until the ledger call fails.
+const BROKER_WALLET_SEED = (process.env.BROKER_WALLET_SEED || '').trim() || undefined;
+// Safe to log — a wallet ADDRESS is public information, never the seed
+// itself. Printed once at boot so a real mismatch (wrong seed entirely,
+// not just whitespace) is visible directly in Render's own logs instead
+// of only showing up as an opaque "Account not found" on a real attempt.
+if (BROKER_WALLET_SEED) {
+  try {
+    console.log('BROKER_WALLET_SEED configured, derives to address:', xrpl.Wallet.fromSeed(BROKER_WALLET_SEED).address);
+  } catch (e) {
+    console.log('BROKER_WALLET_SEED configured but INVALID (cannot derive an address):', e && e.message);
+  }
+} else {
+  console.log('BROKER_WALLET_SEED not configured — /broker-submit will refuse to do anything.');
+}
 // Endpoint diversity, same reasoning _shared.js's own fetchXrplClusterJson
 // already uses for REST reads (xrplcluster.com, then Ripple's own public
 // nodes) — confirmed live this session: xrplcluster.com was rate-limiting
