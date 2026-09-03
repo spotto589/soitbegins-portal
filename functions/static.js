@@ -4840,12 +4840,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .placeholder-card .pc-title{ font-size:12px; letter-spacing:0.2em; color:var(--grey); margin-bottom:0.75rem; text-transform:uppercase; }
   .placeholder-card .pc-body{ font-family:var(--font-body); font-size:11.5px; letter-spacing:0.01em; color:var(--grey); line-height:1.7; text-transform:none; }
-  /* ACCEPT 0FFER's own explanation of the Destination-restricted sell
-     offer step, shown BEFORE Xaman's own native signing screen shows the
-     exact same thing with zero context — reported live as reading as
-     alarming/suspicious without it ("it just sent me to offer my NFT to
-     the dev wallet??"). */
-  .accept-offer-explainer{ font-family:var(--font-body); font-size:11.5px; letter-spacing:0.01em; color:var(--grey); line-height:1.7; text-transform:none; margin-top:1rem; padding-top:1rem; border-top:1px dashed var(--border-dim); }
 
 </style>
 </head>
@@ -5683,17 +5677,20 @@ const SWAP_HTML = `<!DOCTYPE html>
          toggled by display, same pattern buySwapModal's own three states
          use — the actual confirm/result logic below is untouched, only
          the container changed. -->
+    <!-- No confirm-first step any more — BUY N0W opens Xaman immediately
+         (see openBuyConfirm in static.js), same change already made for
+         CANCEL/DELIST and ACCEPT OFFER; this is now purely the waiting-
+         for-signature state, PIGEON/SELLER/PR!CE filling in a moment
+         after Xaman's already open. -->
     <div id="buyConfirmModal" style="display:none;">
       <div class="offer-confirm-panel" id="screenBuyConfirm">
-        <div class="node-eyebrow">// BUY C0NF!RMAT!0N</div>
+        <div class="node-eyebrow">// BUY!NG</div>
         <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="buyConfPigeon"></span></div>
         <div class="detail-field"><span class="df-label">SELLER</span><span class="df-value" id="buyConfSeller"></span></div>
         <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="buyConfPrice"></span></div>
-        <div class="accept-offer-explainer" id="buyConfExplainer"></div>
         <div class="index-line" id="buyConfirmStatus" style="margin-top:1rem;"></div>
         <div class="detail-actions">
           <button class="secondary-btn" id="buyConfirmBackBtn">← BACK</button>
-          <button class="action-btn" id="buyOpenXamanBtn">0PEN XAMAN</button>
         </div>
       </div>
 
@@ -6187,7 +6184,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myPigeonsConnect','connectScyllaBtn','connectStatus',
    'myPigeonsSortRow','myPigeonsSortSelect',
    'screenListResult','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
-   'buyConfirmModal','screenBuyConfirm','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfExplainer','buyConfirmStatus','buyConfirmBackBtn','buyOpenXamanBtn',
+   'buyConfirmModal','screenBuyConfirm','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
    'buySwapModal','buySwapEntryState','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapPayRow',
@@ -9822,55 +9819,34 @@ const SWAP_HTML = `<!DOCTYPE html>
   // this same confirm flow once you're back. See the resumePendingBuy()
   // call near the bottom of this script for the other half.
   var PENDING_BUY_STORAGE_KEY = 'skyllaPendingBuyNftId';
-  function openBuyConfirm(p, retriesLeft){
+  // No confirm-first step any more — BUY N0W opens Xaman immediately
+  // (reported live as not wanting a confirmation step, same change
+  // already made for CANCEL/DELIST and ACCEPT OFFER — see
+  // openDelistConfirm's own comment). PIGEON/SELLER/PR!CE still populate,
+  // just a moment later once submitBuyPayload's own response lands (it
+  // now returns the same seller/totalValue the old prepare-first screen
+  // used to show up front) instead of gating Xaman behind them.
+  function openBuyConfirm(p){
     if (!MY_WALLET){
       try { sessionStorage.setItem(PENDING_BUY_STORAGE_KEY, p.nftId); } catch (e){}
       startAuthorize();
       return;
     }
     buyTarget = p;
-    if (retriesLeft === undefined) retriesLeft = 1;
-    fetch('/api/swap-buy-prepare', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: p.nftId })
-    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
-    .then(function(res){
-      // lookup_failed means the XRPL check itself couldn't complete
-      // (e.g. rate-limited) — genuinely retryable, unlike "not listed"
-      // which is a real answer. One silent client-side retry before
-      // bothering the user.
-      if (!res.ok && res.data && res.data.error === 'lookup_failed' && retriesLeft > 0){
-        setTimeout(function(){ openBuyConfirm(p, retriesLeft - 1); }, 500);
-        return;
-      }
-      if (!res.ok || !res.data.ok){
-        var rawCode = (res.data && res.data.error) || 'n0_b0dy';
-        alert(listingErrorMessage(res.data && res.data.error) + '\\n\\nD!AGN0ST!C :: HTTP ' + (res.ok ? 200 : 'ERR') + ' :: ' + rawCode);
-        buyTarget = null;
-        return;
-      }
-      var display = res.data.display;
-      el.buyConfPigeon.innerHTML = 'P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????');
-      el.buyConfSeller.textContent = display.seller;
-      el.buyConfPrice.textContent = fmtPigeons(display.totalValue);
-      // Legacy (pre-fee-rollout) listings settle in one direct signature,
-      // same as always — only the new fee-bearing flow (see swap-buy-
-      // prepare.js's own comment) needs the buyer told about the automatic
-      // second step, mirroring ACCEPT OFFER's identical explainer.
-      el.buyConfExplainer.style.display = res.data.legacy ? 'none' : '';
-      el.buyConfExplainer.textContent = res.data.legacy ? '' :
-        'TH!S !S A TW0-STEP SALE. Y0U\\'LL F!RST S!GN A REAL 0FFER T0 BUY TH!S P!GE0N F0R THE FULL PR!CE SH0WN AB0VE. 0NCE C0NF!RMED, 0UR MARKETPLACE WALLET AUT0MAT!CALLY SETTLES THE SALE — THE P!GE0N M0VES STRA!GHT T0 Y0U AND THE SELLER GETS PA!D D!RECTLY, N0 FURTHER ACT!0N NEEDED FR0M Y0U.';
-      el.buyConfirmStatus.textContent = '';
-      el.buyOpenXamanBtn.disabled = false;
-      el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
-      el.screenBuyResult.style.display = 'none';
-      el.screenBuyConfirm.style.display = '';
-      el.buyConfirmModal.style.display = 'flex';
-    }).catch(function(e){
-      alert('ERR://S!GNAL_L0ST — TRY AGA!N.\\n\\nD!AGN0ST!C :: ' + (e && e.message ? e.message : String(e)));
-      buyTarget = null;
-    });
+    el.buyConfPigeon.innerHTML = 'P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????');
+    el.buyConfSeller.textContent = '';
+    el.buyConfPrice.textContent = '';
+    el.buyConfirmStatus.textContent = 'REQUEST!NG...';
+    el.screenBuyResult.style.display = 'none';
+    el.screenBuyConfirm.style.display = '';
+    el.buyConfirmModal.style.display = 'flex';
+    // Opened here, synchronously inside the real click — see
+    // navigateXamanPopup's own comment; the window.open(realUrl, ...) call
+    // used to happen from inside submitBuyPayload's own async
+    // fetch().then() instead, which mobile browsers in particular treat
+    // as no longer a trusted user gesture and silently refuse.
+    buyXamanTab = openXamanPopup();
+    submitBuyPayload();
   }
   // Shared by the BACK button, a backdrop click, and browser-back (see
   // closeTopmostOverlayForBack) — same pattern every other confirm popup
@@ -10416,38 +10392,26 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       if (!res.ok || !res.data.ok){
-        el.buyOpenXamanBtn.disabled = false;
-        el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
+        closeXamanTabAndFocus(buyXamanTab);
+        buyXamanTab = null;
         var rawCode2 = (res.data && res.data.error) || 'n0_b0dy';
         el.buyConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error) + ' ' + rawCode2;
         return;
       }
       buyUuid = res.data.uuid;
       navigateXamanPopup(buyXamanTab, res.data.next.always);
-      el.buyOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
+      if (res.data.display){
+        el.buyConfSeller.textContent = res.data.display.seller;
+        el.buyConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
+      }
       el.buyConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
       pollBuyStatus();
     }).catch(function(e){
-      el.buyOpenXamanBtn.disabled = false;
-      el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
+      closeXamanTabAndFocus(buyXamanTab);
+      buyXamanTab = null;
       el.buyConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N. ' + (e && e.message ? e.message : String(e));
     });
   }
-  el.buyOpenXamanBtn.addEventListener('click', function(){
-    if (!buyTarget) return;
-    el.buyOpenXamanBtn.disabled = true;
-    el.buyOpenXamanBtn.textContent = 'REQUEST!NG...';
-    el.buyConfirmStatus.textContent = '';
-    // Opened here, synchronously inside the real click — see
-    // navigateXamanPopup's own comment for why submitBuyPayload's
-    // window.open(realUrl, ...) call used to happen from inside its own
-    // async fetch().then() instead (sometimes two .then()s and a retry
-    // setTimeout away from this click by the time it ran), which mobile
-    // browsers in particular treat as no longer a trusted user gesture
-    // and silently refuse.
-    buyXamanTab = openXamanPopup();
-    submitBuyPayload();
-  });
 
   function pollBuyStatus(){
     if (buyPollTimer) clearTimeout(buyPollTimer);
@@ -10461,24 +10425,22 @@ const SWAP_HTML = `<!DOCTYPE html>
           showBuyResult(data);
           return;
         }
+        // No button to reset any more (see openBuyConfirm — BUY N0W opens
+        // Xaman immediately now, no separate confirm step) — just leave
+        // the reason showing; BACK (still available) closes this, and
+        // clicking BUY N0W again on the grid starts a fresh attempt.
         if (data.status === 'rejected'){
           el.buyConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
-          el.buyOpenXamanBtn.disabled = false;
-          el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'expired'){
           el.buyConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
-          el.buyOpenXamanBtn.disabled = false;
-          el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         if (data.status === 'failed' || data.status === 'sell_offer_gone'){
           var buyReason = data.status === 'sell_offer_gone' ? 'TH!S L!ST!NG WAS CANCELLED 0R S0LD BEF0RE Y0UR PURCHASE C0ULD SETTLE.'
             : 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           el.buyConfirmStatus.textContent = buyReason;
-          el.buyOpenXamanBtn.disabled = false;
-          el.buyOpenXamanBtn.textContent = '0PEN XAMAN';
           return;
         }
         // 'signed_pending_ledger' (buyer's offer not yet visible) and

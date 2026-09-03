@@ -97,7 +97,12 @@ export async function onRequestPost(context) {
         priceValue: offer.amount.value
       }));
     }
-    return new Response(JSON.stringify({ ok: true, uuid: xummData.uuid, next: xummData.next }), {
+    return new Response(JSON.stringify({
+      ok: true,
+      uuid: xummData.uuid,
+      next: xummData.next,
+      display: { seller: offer.owner, totalValue: offer.amount.value }
+    }), {
       headers: { 'Content-Type': 'application/json' }
     });
   }
@@ -160,7 +165,16 @@ export async function onRequestPost(context) {
     }));
   }
 
-  return new Response(JSON.stringify({ ok: true, uuid: xummData.uuid, next: xummData.next }), {
+  // No confirm-first screen any more (see openBuyConfirm in static.js) —
+  // this display data is what fills the waiting panel's PIGEON/SELLER/
+  // PRICE fields once this response lands, a moment after Xaman's already
+  // open, instead of gating it behind a separate confirm click.
+  return new Response(JSON.stringify({
+    ok: true,
+    uuid: xummData.uuid,
+    next: xummData.next,
+    display: { seller: offer.owner, totalValue: fee.totalValue }
+  }), {
     headers: { 'Content-Type': 'application/json' }
   });
 }
