@@ -2,7 +2,7 @@ import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts, fetchNftBuyOffers,
   fetchDeeptideNftDetail, createXamanPayload, getXamanUserToken,
   PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET,
-  acquireBrokerAcceptLock, recordPendingBrokerAccept, applyNftRoyalty
+  acquireBrokerAcceptLock, releaseBrokerAcceptLock, recordPendingBrokerAccept, applyNftRoyalty
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same seller sell-offer txjson
@@ -47,13 +47,6 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
-  if (env.coin) {
-    const gotLock = await acquireBrokerAcceptLock(env.coin, offerId);
-    if (!gotLock) {
-      return new Response(JSON.stringify({ error: 'already_processing' }), { status: 409 });
-    }
-  }
-
   const nfts = await fetchAllAccountNfts(owner);
   if (!nfts.some(n => n.NFTokenID === nftId)) {
     return new Response(JSON.stringify({ error: 'not_owned' }), { status: 403 });
@@ -78,6 +71,20 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_offer_amount' }), { status: 400 });
   }
 
+  // Lock acquired only once every validation above has passed — matches
+  // swap-buy-payload.js's pattern. Acquiring it earlier (before these
+  // checks) meant a routine validation failure (stale offer, wrong
+  // currency, etc.) left the lock stuck for the full
+  // BROKER_ACCEPT_LOCK_TTL_SECONDS with no release path, so any legitimate
+  // retry on the same offer within that window got wrongly told
+  // "already_processing".
+  if (env.coin) {
+    const gotLock = await acquireBrokerAcceptLock(env.coin, offerId);
+    if (!gotLock) {
+      return new Response(JSON.stringify({ error: 'already_processing' }), { status: 409 });
+    }
+  }
+
   const txjson = {
     TransactionType: 'NFTokenCreateOffer',
     Account: owner,
@@ -94,6 +101,7 @@ export async function onRequestPost(context) {
   const pushToken = await getXamanUserToken(env.coin, owner);
   const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   if (!xummData || !xummData.uuid || !xummData.next) {
+    if (env.coin) context.waitUntil(releaseBrokerAcceptLock(env.coin, offerId));
     return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });
   }
 
