@@ -4021,6 +4021,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   .detail-field.final-amount-row{ margin-top:0.9rem; padding-top:0.7rem; border-top:1px solid var(--border-mid); }
   .detail-field.final-amount-row .df-label{ font-size:13px; }
   .df-value.final-amount{ color:var(--green); text-shadow:0 0 6px var(--green-glow); font-weight:700; font-size:20px; }
+  /* BUY N0W/ACCEPT 0FFER/CANCEL's waiting-for-signature line — reported
+     live as reading cluttered (a wall of plain grey text sitting flush
+     against the price above it), so this gets real breathing room and a
+     pulse (same flock-count-pulse keyframe the trustline banner's own
+     loading state already uses) instead of sitting static the whole time
+     it's genuinely waiting on Xaman. The pulse is only ever toggled on for
+     the live "waiting" state (see waitingStatusPulse in static.js) — a
+     final error/success line stays still, since it's no longer waiting
+     on anything.
+  */
+  .waiting-status-line{ margin-top:1.4rem; }
+  .waiting-status-line.pulsing{ animation:flock-count-pulse 1.4s ease-in-out infinite; }
   .df-value a.owner-link{ color:var(--grey); text-decoration:underline; }
   .df-value a.owner-link:hover{ color:var(--cyan); }
   /* ---- "Receipt" result screen — LIST result's own big/clean layout
@@ -5685,10 +5697,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div id="buyConfirmModal" style="display:none;">
       <div class="offer-confirm-panel" id="screenBuyConfirm">
         <div class="node-eyebrow">// BUY!NG</div>
-        <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="buyConfPigeon"></span></div>
+        <div class="detail-num" id="buyConfPigeon"></div>
         <div class="detail-field"><span class="df-label">SELLER</span><span class="df-value" id="buyConfSeller"></span></div>
-        <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="buyConfPrice"></span></div>
-        <div class="index-line" id="buyConfirmStatus" style="margin-top:1rem;"></div>
+        <div class="detail-field final-amount-row"><span class="df-label">PR!CE</span><span class="df-value final-amount" id="buyConfPrice"></span></div>
+        <div class="index-line waiting-status-line" id="buyConfirmStatus"></div>
         <div class="detail-actions">
           <button class="secondary-btn" id="buyConfirmBackBtn">← BACK</button>
         </div>
@@ -5818,7 +5830,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="offer-confirm-panel" id="screenDelistConfirm">
         <div class="node-eyebrow">// DEL!ST!NG</div>
         <div class="confirm-pigeon-num" id="delistConfPigeon"></div>
-        <div class="index-line" id="delistConfirmStatus"></div>
+        <div class="index-line waiting-status-line" id="delistConfirmStatus"></div>
         <div class="detail-actions">
           <button class="secondary-btn" id="delistConfirmBackBtn">← BACK</button>
         </div>
@@ -6013,7 +6025,7 @@ const SWAP_HTML = `<!DOCTYPE html>
          its fields filling in a moment after Xaman's already open. -->
     <div class="sw-panel" id="screenAcceptOfferConfirm" style="display:none;">
       <div class="node-eyebrow">// ACCEPT!NG 0FFER</div>
-      <div class="detail-field"><span class="df-label">P!GE0N</span><span class="df-value" id="acceptOfferConfPigeon"></span></div>
+      <div class="detail-num" id="acceptOfferConfPigeon"></div>
       <div class="detail-field"><span class="df-label">BUYER</span><span class="df-value" id="acceptOfferConfBuyer"></span></div>
       <div class="detail-field"><span class="df-label">0FFER</span><span class="df-value" id="acceptOfferConfPrice"></span></div>
       <div class="detail-field"><span class="df-label">MARKETPLACE FEE</span><span class="df-value" id="acceptOfferConfFee"></span></div>
@@ -6022,7 +6034,7 @@ const SWAP_HTML = `<!DOCTYPE html>
            one (see applyNftRoyalty in _shared.js). -->
       <div class="detail-field" id="acceptOfferConfRoyaltyRow" style="display:none;"><span class="df-label" id="acceptOfferConfRoyaltyLabel">NFT R0YALTY</span><span class="df-value" id="acceptOfferConfRoyalty"></span></div>
       <div class="detail-field final-amount-row"><span class="df-label">Y0U RECE!VE</span><span class="df-value final-amount" id="acceptOfferConfSellerAmount"></span></div>
-      <div class="index-line" id="acceptOfferConfirmStatus" style="margin-top:1rem;"></div>
+      <div class="index-line waiting-status-line" id="acceptOfferConfirmStatus"></div>
       <div class="detail-actions">
         <button class="secondary-btn" id="acceptOfferConfirmBackBtn">← BACK</button>
       </div>
@@ -9837,6 +9849,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.buyConfSeller.textContent = '';
     el.buyConfPrice.textContent = '';
     el.buyConfirmStatus.textContent = 'REQUEST!NG...';
+    setWaitingPulse(el.buyConfirmStatus, true);
     el.screenBuyResult.style.display = 'none';
     el.screenBuyConfirm.style.display = '';
     el.buyConfirmModal.style.display = 'flex';
@@ -10394,6 +10407,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!res.ok || !res.data.ok){
         closeXamanTabAndFocus(buyXamanTab);
         buyXamanTab = null;
+        setWaitingPulse(el.buyConfirmStatus, false);
         var rawCode2 = (res.data && res.data.error) || 'n0_b0dy';
         el.buyConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error) + ' ' + rawCode2;
         return;
@@ -10401,7 +10415,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       buyUuid = res.data.uuid;
       navigateXamanPopup(buyXamanTab, res.data.next.always);
       if (res.data.display){
-        el.buyConfSeller.textContent = res.data.display.seller;
+        el.buyConfSeller.textContent = shortAddr(res.data.display.seller);
         el.buyConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
       }
       el.buyConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
@@ -10409,6 +10423,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).catch(function(e){
       closeXamanTabAndFocus(buyXamanTab);
       buyXamanTab = null;
+      setWaitingPulse(el.buyConfirmStatus, false);
       el.buyConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N. ' + (e && e.message ? e.message : String(e));
     });
   }
@@ -10430,14 +10445,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         // the reason showing; BACK (still available) closes this, and
         // clicking BUY N0W again on the grid starts a fresh attempt.
         if (data.status === 'rejected'){
+          setWaitingPulse(el.buyConfirmStatus, false);
           el.buyConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           return;
         }
         if (data.status === 'expired'){
+          setWaitingPulse(el.buyConfirmStatus, false);
           el.buyConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           return;
         }
         if (data.status === 'failed' || data.status === 'sell_offer_gone'){
+          setWaitingPulse(el.buyConfirmStatus, false);
           var buyReason = data.status === 'sell_offer_gone' ? 'TH!S L!ST!NG WAS CANCELLED 0R S0LD BEF0RE Y0UR PURCHASE C0ULD SETTLE.'
             : 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           el.buyConfirmStatus.textContent = buyReason;
@@ -10498,6 +10516,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     delistTarget = p;
     el.delistConfPigeon.innerHTML = 'P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????');
     el.delistConfirmStatus.textContent = 'REQUEST!NG...';
+    setWaitingPulse(el.delistConfirmStatus, true);
     el.screenDelistResult.style.display = 'none';
     el.screenDelistConfirm.style.display = '';
     el.delistConfirmModal.style.display = 'flex';
@@ -10516,6 +10535,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!res.ok || !res.data.ok){
         closeXamanTabAndFocus(delistXamanTab);
         delistXamanTab = null;
+        setWaitingPulse(el.delistConfirmStatus, false);
         el.delistConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
@@ -10526,6 +10546,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).catch(function(){
       closeXamanTabAndFocus(delistXamanTab);
       delistXamanTab = null;
+      setWaitingPulse(el.delistConfirmStatus, false);
       el.delistConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   }
@@ -10555,14 +10576,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         // leave the reason showing; BACK (still available) closes this,
         // and clicking CANCEL again on the grid starts a fresh attempt.
         if (data.status === 'rejected'){
+          setWaitingPulse(el.delistConfirmStatus, false);
           el.delistConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           return;
         }
         if (data.status === 'expired'){
+          setWaitingPulse(el.delistConfirmStatus, false);
           el.delistConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           return;
         }
         if (data.status === 'failed'){
+          setWaitingPulse(el.delistConfirmStatus, false);
           el.delistConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           return;
         }
@@ -11554,6 +11578,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.acceptOfferConfRoyaltyRow.style.display = 'none';
     el.acceptOfferConfSellerAmount.textContent = '';
     el.acceptOfferConfirmStatus.textContent = 'REQUEST!NG...';
+    setWaitingPulse(el.acceptOfferConfirmStatus, true);
     showScreen('acceptofferconfirm');
     // Opened here, synchronously inside the real click — see
     // navigateXamanPopup's own comment; the window.open(realUrl, ...) call
@@ -11570,13 +11595,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!res.ok || !res.data.ok){
         closeXamanTabAndFocus(acceptOfferXamanTab);
         acceptOfferXamanTab = null;
+        setWaitingPulse(el.acceptOfferConfirmStatus, false);
         el.acceptOfferConfirmStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
       acceptOfferUuid = res.data.uuid;
       navigateXamanPopup(acceptOfferXamanTab, res.data.next.always);
       if (res.data.display){
-        el.acceptOfferConfBuyer.textContent = res.data.display.buyer;
+        el.acceptOfferConfBuyer.textContent = shortAddr(res.data.display.buyer);
         el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
         el.acceptOfferConfFee.textContent = fmtPigeons(res.data.display.feeValue);
         showRoyaltyRow(el.acceptOfferConfRoyaltyRow, el.acceptOfferConfRoyaltyLabel, el.acceptOfferConfRoyalty, res.data.display.royaltyValue, res.data.display.royaltyPercent);
@@ -11587,6 +11613,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).catch(function(){
       closeXamanTabAndFocus(acceptOfferXamanTab);
       acceptOfferXamanTab = null;
+      setWaitingPulse(el.acceptOfferConfirmStatus, false);
       el.acceptOfferConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   }
@@ -11608,14 +11635,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         // leave the reason showing; BACK (still available) closes this,
         // and clicking ACCEPT again on the grid starts a fresh attempt.
         if (data.status === 'rejected'){
+          setWaitingPulse(el.acceptOfferConfirmStatus, false);
           el.acceptOfferConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           return;
         }
         if (data.status === 'expired'){
+          setWaitingPulse(el.acceptOfferConfirmStatus, false);
           el.acceptOfferConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           return;
         }
         if (data.status === 'failed' || data.status === 'buy_offer_gone' || data.status === 'offer_amount_mismatch'){
+          setWaitingPulse(el.acceptOfferConfirmStatus, false);
           var reason = data.status === 'buy_offer_gone' ? 'BUYER\\'S 0FFER N0 L0NGER EX!STS (CANCELLED 0R ALREADY ACCEPTED).'
             : data.status === 'offer_amount_mismatch' ? 'OFFER AM0UNT CHANGED — TRY AGA!N.'
             : 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
@@ -12809,6 +12839,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   function fmtPigeons(n){
     var num = typeof n === 'string' ? Number(n) : n;
     return (num || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
+  }
+  // Same r...XXXX shortening already used elsewhere (S!GNED !N AS, wallet
+  // search) — a raw 34-char address sitting next to a clean price row was
+  // reported live as reading cluttered on BUY N0W's own waiting screen.
+  function shortAddr(addr){
+    return addr ? addr.slice(0, 9) + '...' + addr.slice(-4) : '';
+  }
+  // Toggles the pulse (see .waiting-status-line.pulsing in the CSS) on
+  // BUY N0W/ACCEPT 0FFER/CANCEL's own waiting-for-signature line — only
+  // ever on while genuinely still waiting on something; a final error or
+  // "SETTLED" line stops pulsing since there's nothing left to wait on.
+  function setWaitingPulse(lineEl, on){
+    lineEl.classList.toggle('pulsing', !!on);
   }
   // Shared by ACCEPT OFFER's confirm + result screens — a real, on-ledger,
   // per-NFT royalty (see applyNftRoyalty in _shared.js), separate from

@@ -540,7 +540,7 @@ export function applyNftRoyalty(sellerPortionStr, nftId) {
 // generic swapOfferSourceMemo() (both ride in the same Memos array —
 // XRPL allows multiple Memo entries per transaction).
 export function brokeredSaleMemo(pigeonNumber) {
-  const label = 'SOITBEGINS | PIGEON SALE' + (pigeonNumber !== null && pigeonNumber !== undefined ? ' | #' + pigeonNumber : '');
+  const label = 'Σκύλλα | PIGEON SALE' + (pigeonNumber !== null && pigeonNumber !== undefined ? ' | #' + pigeonNumber : '');
   return {
     Memo: {
       MemoType: stringToHex('SaleInfo'),

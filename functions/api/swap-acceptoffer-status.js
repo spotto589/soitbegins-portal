@@ -184,8 +184,8 @@ export async function onRequestGet(context) {
   // $CRWN reward to both sides, TEST-PHASE flat amount — a separate
   // Payment fired right after settlement (see payBrokerReward), never
   // allowed to affect the sale's own already-settled outcome either way.
-  context.waitUntil(payBrokerReward(env, pending.buyer, 'SOITBEGINS REWARD | BUYER | #' + (pending.pigeonNumber || '?')).catch(() => {}));
-  context.waitUntil(payBrokerReward(env, pending.seller, 'SOITBEGINS REWARD | SELLER | #' + (pending.pigeonNumber || '?')).catch(() => {}));
+  context.waitUntil(payBrokerReward(env, pending.buyer, 'Σκύλλα REWARD | BUYER | #' + (pending.pigeonNumber || '?')).catch(() => {}));
+  context.waitUntil(payBrokerReward(env, pending.seller, 'Σκύλλα REWARD | SELLER | #' + (pending.pigeonNumber || '?')).catch(() => {}));
 
   return new Response(JSON.stringify({
     status: 'settled',
