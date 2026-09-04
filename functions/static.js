@@ -1049,6 +1049,53 @@ const SWAP_HTML = `<!DOCTYPE html>
      rest of the app uses for "this is the real/active one" (see
      .highest-offer-price). */
   .simple-picker-card-selected{ border-color:var(--green); box-shadow:0 0 0 1px var(--green); }
+  /* ---- MY C0!NS (PR0F!LE) — one clean row per collection, real balance/
+     trustline for anything with a token, C0M!NG S00N for anything without
+     one yet. Own colour per row via --card-accent (same r,g,b convention
+     COLLECTION_META's own trustline-banner theming already uses), so this
+     reads as "the same coins from MAINFRAME" rather than a plain list. ---- */
+  .profile-coins-list{ display:flex; flex-direction:column; gap:0.6rem; margin-bottom:1.5rem; }
+  .profile-coin-row{
+    display:flex;
+    align-items:center;
+    gap:1rem;
+    padding:0.75rem 1rem;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    background:linear-gradient(90deg, rgba(var(--card-accent, 61,243,236),0.08), transparent 60%);
+  }
+  .profile-coin-thumb{
+    width:44px; height:44px; flex:0 0 auto;
+    border-radius:var(--radius);
+    border:1px solid rgba(var(--card-accent, 61,243,236), 0.4);
+    background-size:cover; background-position:center;
+    background-color:rgba(var(--card-accent, 61,243,236), 0.18);
+  }
+  .profile-coin-info{ flex:1 1 auto; min-width:0; text-align:left; }
+  .profile-coin-label{ font-family:var(--font-display); font-size:16px; font-weight:700; color:#fff; }
+  .profile-coin-balance{ font-family:var(--font-mono); font-size:12px; letter-spacing:0.03em; color:var(--grey); margin-top:0.15rem; }
+  .profile-coin-balance .hi{ color:var(--green); font-weight:600; }
+  .profile-coin-balance.profile-coin-warn{ color:var(--red); }
+  .profile-coin-action{
+    flex:0 0 auto;
+    background:var(--green);
+    border:1px solid var(--green);
+    color:#000;
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    padding:0.6em 0.9em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .profile-coin-action:hover{ background:#000; color:var(--green); }
+  .profile-coin-action.profile-coin-action-soon{
+    background:transparent; color:var(--grey-dim); border-color:var(--border-mid); cursor:default;
+  }
+  .profile-coin-action.profile-coin-action-soon:hover{ background:transparent; color:var(--grey-dim); }
 
   /* ---- sales history ---- */
   /* XRP / $P!GE0NS — each its own independent feed/pagination (see the
@@ -5256,7 +5303,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     mix-blend-mode:overlay;
   }
   #screenMainframe > .local-static-bg{ z-index:-1; }
-  #screenMainframe > *:not(.local-static-bg){ position:relative; z-index:1; }
+  #screenMainframe > *:not(.local-static-bg):not(.mainframe-profile-btn){ position:relative; z-index:1; }
   /* Header shrinks to its own content — flex:0 0 auto keeps it from
      eating into the carousel's space, and its own H1 is capped much
      smaller than the persistent page's (up to 104px there) specifically
@@ -5450,6 +5497,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-arrow-prev{ left:0.25rem; }
   .mainframe-arrow-next{ right:0.25rem; }
   #mainframeReopenLabel{ cursor:pointer; }
+  .mainframe-profile-btn{
+    position:absolute;
+    top:2rem; right:1.5rem;
+    z-index:2;
+    background:transparent;
+    border:1px solid var(--magenta-dim);
+    color:var(--magenta);
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    padding:0.6em 1em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    text-shadow:0 0 5px var(--magenta-glow);
+  }
+  .mainframe-profile-btn:hover{ background:var(--magenta-faint); border-color:var(--magenta); }
+  @media (max-width:600px){
+    .mainframe-profile-btn{ position:static; display:block; margin:0 auto 0.5rem; width:fit-content; }
+  }
 </style>
 </head>
 <body>
@@ -5464,6 +5532,13 @@ const SWAP_HTML = `<!DOCTYPE html>
        the DATABASE dropdown already does today. -->
   <div id="screenMainframe">
     <canvas class="local-static-bg" id="mainframeStaticBg"></canvas>
+    <!-- MY PR0F!LE — the entry point into login + the real multi-coin
+         balance view (see #profileCoinsList/renderProfileCoins), reported
+         live as wanting "a place where we can login and view our
+         profile" reachable right from here, not buried inside DATABASE. -->
+    <button type="button" class="mainframe-profile-btn" id="mainframeProfileBtn">
+      <span style="text-transform:none;">Σκύλλα</span> · MY PR0F!LE
+    </button>
     <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub">STAT!C :: MA!NFRAME</span></h1>
     <div class="mainframe-subtitle">SELECT A C0LLECT!0N</div>
     <div class="mainframe-carousel-wrap">
@@ -5823,6 +5898,19 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="profile-current-wallet" id="profileCurrentWallet"></div>
         </div>
       </div>
+      <!-- MY C0!NS — real balance + trustline status for every collection
+           with a real token (see COLLECTION_META's own tokenIssuer),
+           reported live as wanting one place to see every coin at a
+           glance. $P!GE0NS is the only one with a working BUY/T0P UP
+           right now (COLLECTION_META.hasAmm) — everything else still
+           shows its own real balance/trustline, just with a C0M!NG S00N
+           action instead of a live BUY, same treatment those collections
+           already get everywhere else on the site. Built by
+           renderProfileCoins() below, not static — it has to iterate
+           COLLECTION_META itself so a future collection just needs its
+           own entry there, nothing here changes. -->
+      <div class="panel-title outgoing-offers-title" style="font-size:13px;">MY C0!NS</div>
+      <div class="profile-coins-list" id="profileCoinsList"></div>
       <div class="search-row" style="justify-content:center;">
         <input class="transfer-wallet-input" id="profileUsernameInput" type="text" placeholder="CH00SE A USERNAME (LETTERS/NUMBERS/_/EM0J!, UP T0 20)">
         <button class="bar-btn" id="profileUsernameSaveBtn">SAVE</button>
@@ -6963,13 +7051,13 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
-   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeArrowPrev','mainframeArrowNext',
+   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
    'profilePanelWrap','profileCurrentAvatar','profileCurrentUsername','profileCurrentWallet',
-   'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid',
+   'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
    'salesPanelWrap',
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
@@ -12941,6 +13029,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.mainframeReopenLabel.addEventListener('click', function(){
     el.screenMainframe.style.display = 'flex';
   });
+  // Logged in already -> straight to PR0F!LE (the real multi-coin balance
+  // view). Not logged in -> the same auto-login FL0CK already triggers
+  // from topTabs' own click handler; PR0F!LE itself has no interactive
+  // CONNECT flow of its own (its "not logged in" state is just static
+  // text), so this reuses that existing real flow rather than building a
+  // second one — MY C0!NS/username/pfp are all one click away on FL0CK's
+  // own PR0F!LE box once signed in.
+  el.mainframeProfileBtn.addEventListener('click', function(){
+    hideMainframe();
+    if (!MY_WALLET){
+      showTab('mypigeons', true);
+      startAuthorize();
+    } else {
+      showTab('profile');
+    }
+  });
   // Real, live numbers on the P!GE0NS card (see .mainframe-card-stats' own
   // comment in the CSS) — the only tradeable card right now, so the only
   // one worth a real fetch; C0M!NG S00N cards have nothing live to show.
@@ -14228,7 +14332,106 @@ const SWAP_HTML = `<!DOCTYPE html>
   // markup OFFER F0R's own picker already uses (openSimpleOfferPicker),
   // just a different grid element and no view-detail button. ----
   var profileSelectedPfpNftId = null;
+  // r,g,b triplets — same values MAINFRAME's own --card-accent uses per
+  // collection (see its own cards' inline style) — kept here too rather
+  // than read off COLLECTION_META, which doesn't carry a display accent
+  // of its own. A future collection just needs one more entry here for
+  // its MY C0!NS row to pick up its real colour instead of the fallback.
+  var PROFILE_COIN_ACCENTS = { pigeons: '136,72,248', phnixs: '255,90,31', teddybg: '47,158,68' };
+  function renderProfileCoins(){
+    if (!MY_WALLET){ el.profileCoinsList.innerHTML = ''; return; }
+    var keys = Object.keys(COLLECTION_META);
+    el.profileCoinsList.innerHTML = keys.map(function(key){
+      var meta = COLLECTION_META[key];
+      var accent = PROFILE_COIN_ACCENTS[key] || '61,243,236';
+      // BUY only for $P!GE0NS right now (the only collection with a real
+      // AMM/DEX pool behind it, same COLLECTION_META.hasAmm gate the
+      // trustline banner's own BUY button already uses) — everything else
+      // still shows its own real balance/trustline below, just with
+      // C0M!NG S00N here instead of a live action, matching how every
+      // other collection reads everywhere else on the site right now.
+      var actionHtml = meta.hasAmm
+        ? '<button type="button" class="profile-coin-action" data-action="buy" data-collection="' + key + '">BUY ' + escapeHtml(meta.tokenLabel) + '</button>'
+        : '<button type="button" class="profile-coin-action profile-coin-action-soon" disabled>C0M!NG S00N</button>';
+      return '<div class="profile-coin-row" style="--card-accent:' + accent + ';" data-collection="' + key + '">' +
+        '<div class="profile-coin-thumb" id="profileCoinThumb-' + key + '"></div>' +
+        '<div class="profile-coin-info">' +
+          '<div class="profile-coin-label">' + escapeHtml(meta.tokenLabel) + '</div>' +
+          '<div class="profile-coin-balance" id="profileCoinBalance-' + key + '">' + (meta.tokenIssuer ? 'L0AD!NG...' : 'N0 T0KEN YET') + '</div>' +
+        '</div>' +
+        actionHtml +
+      '</div>';
+    }).join('');
+    // Real per-collection art — same live-fetched-and-cached trick the
+    // trustline banner's own thumbnail already uses (collectionThumbCache),
+    // reused here instead of a second cache so switching DATABASE
+    // collections and opening PR0F!LE never both fetch the same image
+    // twice.
+    keys.forEach(function(key){
+      var thumbEl = document.getElementById('profileCoinThumb-' + key);
+      if (!thumbEl) return;
+      if (collectionThumbCache[key]){
+        thumbEl.style.backgroundImage = 'url("' + collectionThumbCache[key] + '")';
+        return;
+      }
+      apiWithRetry({ collection: key, skip: 0, limit: 1, sort: 'RARITY_ASC' }, 0).then(function(data){
+        var img = data && data.items && data.items[0] && data.items[0].image;
+        if (!img) return;
+        collectionThumbCache[key] = img;
+        var stillThere = document.getElementById('profileCoinThumb-' + key);
+        if (stillThere) stillThere.style.backgroundImage = 'url("' + img + '")';
+      }).catch(function(){});
+    });
+    // Real balance/trustline per collection — pigeonsAccountLine already
+    // resolves whichever collection's real token config via getTradeConfig
+    // server-side (see pigeons.js), so this is just the same call every
+    // other trustline check on the site makes, once per coin that
+    // actually has one.
+    keys.forEach(function(key){
+      var meta = COLLECTION_META[key];
+      if (!meta.tokenIssuer) return;
+      apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET, collection: key }).then(function(line){
+        var balEl = document.getElementById('profileCoinBalance-' + key);
+        if (!balEl) return;
+        if (line && line.hasTrustline === false){
+          balEl.textContent = 'TRUSTL!NE N0T SET';
+          balEl.classList.add('profile-coin-warn');
+        } else if (line && line.hasTrustline){
+          balEl.innerHTML = '<span class="hi">' + (line.balance || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</span> ' + escapeHtml(meta.tokenLabel);
+          balEl.classList.remove('profile-coin-warn');
+        } else {
+          balEl.textContent = 'ERR://C0ULDN T CHECK BALANCE';
+          balEl.classList.add('profile-coin-warn');
+        }
+      }).catch(function(){
+        var balEl = document.getElementById('profileCoinBalance-' + key);
+        if (balEl){ balEl.textContent = 'ERR://C0ULDN T CHECK BALANCE'; balEl.classList.add('profile-coin-warn'); }
+      });
+    });
+  }
+  // BUY opens the real swap panel; clicking anywhere else on a row jumps
+  // to that collection's own DATABASE view — but only for P!GE0NS right
+  // now. Every other collection is deliberately not reachable through the
+  // UI anywhere else on the site yet (MAINFRAME/the DATABASE dropdown both
+  // keep them inert) — a live link straight out of PR0F!LE would quietly
+  // reopen that door from a third place. Revisit this gate together with
+  // MAINFRAME's own once a second collection is actually re-enabled.
+  el.profileCoinsList.addEventListener('click', function(e){
+    var buyBtn = e.target.closest('.profile-coin-action[data-action="buy"]');
+    if (buyBtn){
+      e.stopPropagation();
+      openBuySwapPanel();
+      return;
+    }
+    var row = e.target.closest('.profile-coin-row');
+    if (!row) return;
+    var key = row.getAttribute('data-collection');
+    if (key !== 'pigeons') return;
+    if (key !== state.collection) switchCollection(key);
+    showTab('database');
+  });
   function loadProfilePanel(){
+    renderProfileCoins();
     if (!MY_WALLET){
       el.profileCurrentWallet.textContent = '';
       el.profileCurrentUsername.textContent = 'C0NNECT Y0UR WALLET F!RST.';
