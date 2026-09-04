@@ -6370,6 +6370,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     queryToken: 0,
     total: null,
     items: [],                // everything loaded so far in the current browse/search mode
+    // Real object from the start (also reset by startCollectionBrowse on
+    // every fresh query) — the scroll-triggered infinite-load observer can
+    // fire loadMoreCollection() before any browse has actually begun (e.g.
+    // while MAINFRAME still covers DATABASE), and used to crash reading
+    // off this when it was still undefined at that point.
+    seenNftIds: {},
     scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
     mode: 'browse',            // 'browse' | 'search' | 'scoped'
     // Default landing sort is FL00R $P!GE0NS (lowest listed price first),
@@ -12226,11 +12232,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenMainframe.style.display = 'none';
   }
   function enterMainframeCollection(key){
-    if (key !== state.collection) switchCollection(key);
-    // Avoids showTab's own first-open bootstrap (ensureTraitsLoaded +
-    // runQuery) firing a second time right behind switchCollection's own
-    // identical calls above for anything other than P!GE0NS.
-    state.databaseLoaded = true;
+    if (key !== state.collection){
+      // switchCollection's own end-of-function calls (ensureTraitsLoaded +
+      // runQuery) already do the first real fetch for the new collection —
+      // setting databaseLoaded here just stops showTab's OWN first-open
+      // bootstrap from firing a redundant second one right behind it.
+      switchCollection(key);
+      state.databaseLoaded = true;
+    } else if (!state.databaseLoaded){
+      // Picking the collection ALREADY active (P!GE0NS, the default) never
+      // calls switchCollection at all (its own no-op guard for "already
+      // this collection") — setting databaseLoaded unconditionally used to
+      // skip BOTH that call's bootstrap AND showTab's own fallback one,
+      // so the very first MAINFRAME -> P!GE0NS entry never fetched
+      // anything: state.seenNftIds (only ever set inside
+      // startCollectionBrowse) stayed undefined, and the scroll-triggered
+      // infinite-load observer crashed the instant it fired, leaving
+      // DATABASE stuck on SIGNAL_LOST — confirmed live as exactly the
+      // "everything's crashed" report. Doing the real bootstrap here
+      // instead of just flipping the flag is the fix.
+      state.databaseLoaded = true;
+      ensureTraitsLoaded();
+      runQuery();
+    }
     hideMainframe();
     showTab('database');
   }
