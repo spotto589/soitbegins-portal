@@ -2495,31 +2495,36 @@ const SWAP_HTML = `<!DOCTYPE html>
      text and grow/shrink depending on whether a Pigeon was listed. Same
      dark semi-transparent badge treatment as .card-select-toggle's own
      top-right corner, just sized for a price string instead of a single
-     glyph. Purple border/text for a real listing (matches the action
-     box's own purple theme); cyan for YOUR OWN listing (this site's
+     glyph. Green border/glow for a real listing — reported live as the
+     price "not showing clearly" / a listed card "not feeling enticing to
+     buy"; green ties this number to BUY N0W's own colour language (same
+     green, same glow) instead of the old neutral purple, so the price
+     reads as "you can buy this right now" at a glance, not just
+     reference info. Cyan stays for YOUR OWN listing (this site's
      established "this is yours" colour, same as FL0CK/SH0W MY P!GE0NS
-     elsewhere), same price text either way — the border colour alone is
-     what used to be a separate "Y0UR L!ST!NG ::" label. */
+     elsewhere) — the border colour alone is what used to be a separate
+     "Y0UR L!ST!NG ::" label. */
   .thumb-listing-badge{
     position:absolute;
     bottom:0.3rem;
     right:0.3rem;
     z-index:2;
     max-width:calc(100% - 0.6rem);
-    background:rgba(8,9,11,0.85);
-    border:1px solid var(--pigeon-purple);
+    background:rgba(8,9,11,0.9);
+    border:1px solid var(--green);
     color:#fff;
     font-weight:700;
-    font-size:15px;
+    font-size:16px;
     letter-spacing:0.02em;
-    padding:0.4em 0.55em;
+    padding:0.4em 0.6em;
     border-radius:var(--radius);
-    text-shadow:0 0 4px var(--pigeon-purple-glow);
+    text-shadow:0 0 6px var(--green-glow);
+    box-shadow:0 0 10px var(--green-glow);
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
   }
-  .thumb-listing-badge-own{ border-color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); }
+  .thumb-listing-badge-own{ border-color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); box-shadow:0 0 10px var(--cyan-glow); }
   /* OWNED sticker — top-left corner (the price badge, when there's a
      real listing, already owns the bottom-right), shown on a Pigeon you
      hold but haven't listed, while browsing the general collection. Was
@@ -2620,17 +2625,28 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#000;
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:17px;
     letter-spacing:0.03em;
-    padding:1em 0.8em;
+    padding:0.7em 0.8em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
     margin-bottom:0.5rem;
     box-shadow:0 0 14px var(--green-glow);
     transition:background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0.1rem;
+    line-height:1.15;
   }
   .thumb-buy-btn:hover{ background:#000; color:var(--green); box-shadow:0 0 20px var(--green-glow); transform:translateY(-1px); }
+  /* The real price, right on the button — reported live as BUY N0W not
+     feeling "enticing" with the price only ever a small corner badge on
+     the picture, easy to miss entirely at the actual moment of deciding
+     to buy. Bigger and bolder than the "BUY N0W" label above it, same
+     "the number is the point" treatment SALES H!ST0RY's own price gets. */
+  .thumb-buy-label{ font-size:13px; letter-spacing:0.08em; opacity:0.85; }
+  .thumb-buy-price{ font-family:var(--font-display); font-size:19px; font-weight:800; letter-spacing:0.01em; }
   /* 0FFER — plain, quiet outline, no glow/pulse. BUY N0W is the real,
      immediate action here (a live listing, one click to buy); 0FFER is
      a slower secondary path (submit a price, wait for the owner), so
@@ -7885,7 +7901,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // alone, so its width behaves identically either way.
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="owned-action-row">' +
-        (canBuy ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY N0W</button>' : '') +
+        (canBuy ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">' +
+          '<span class="thumb-buy-label">BUY N0W</span>' +
+          '<span class="thumb-buy-price">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</span>' +
+        '</button>' : '') +
         '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">0FFER</button>' +
       '</div>' +
     '</div>';
