@@ -12433,15 +12433,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   // from directly. See #sortFlyout's own "flyout-flat" class in the CSS
   // for the single-column layout this renders into.
   function renderSortFlyoutList(){
-    var rows = [];
     // PR!CE (Scylla/$PIGEONS listings + AVG SALE) and H!ST0R!CAL SALES
     // both read from KV maps that are empty for a browse-only collection
     // (see COLLECTION_META) — RAR!TY/ALPHABET!CAL are the only categories
     // that're just a plain Deeptide sort, so those are all that's offered.
     var tradeable = COLLECTION_META[state.collection].tradeable;
+    var rows = [];
+    var placed = {};
+    // L0WEST $P!GE0NS then H!GHEST RAR!TY lead the whole list — reported
+    // live as wanting these two specific options first and second, not
+    // just each first within its own category further down.
+    (tradeable ? ['SCYLLA_PRICE_ASC', 'RARITY_ASC'] : ['RARITY_ASC']).forEach(function(value){
+      var cat = sortCategoryOf(value);
+      var found = cat && SORT_CATEGORIES[cat].filter(function(o){ return o.value === value; })[0];
+      if (!found) return;
+      rows.push({ cat: cat, value: found.value, label: found.label, disabled: found.disabled });
+      placed[value] = true;
+    });
     Object.keys(SORT_CATEGORIES).forEach(function(cat){
       if (!tradeable && cat !== 'RAR!TY' && cat !== 'ALPHABET!CAL') return;
       SORT_CATEGORIES[cat].forEach(function(o){
+        if (placed[o.value]) return;
         rows.push({ cat: cat, value: o.value, label: o.label, disabled: o.disabled });
       });
     });
@@ -12512,13 +12524,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   // the ones in the middle. Same fixed-pixel nudge as the TRAITS category
   // row's own arrows (see traitsCatsScrollPrevBtn/NextBtn above) instead —
   // one screenful at a time, not all the way to either end.
+  // Instant, not 'smooth' — reported live as the animated scroll feeling
+  // slow, especially clicking again before the previous animation had
+  // finished (each click restarted a fresh ~300-500ms animation fighting
+  // the last one). The scroll listener above already keeps the arrows in
+  // sync in real time, so no setTimeout re-check is needed here any more
+  // either — it only ever existed to wait out that same animation.
   el.sortScrollPrevBtn.addEventListener('click', function(){
-    el.sortFlyoutVals.scrollBy({ left: -180, behavior: 'smooth' });
-    setTimeout(updateSortHscrollArrows, 400);
+    el.sortFlyoutVals.scrollBy({ left: -180 });
   });
   el.sortScrollNextBtn.addEventListener('click', function(){
-    el.sortFlyoutVals.scrollBy({ left: 180, behavior: 'smooth' });
-    setTimeout(updateSortHscrollArrows, 400);
+    el.sortFlyoutVals.scrollBy({ left: 180 });
   });
   renderSortTag();
   // Reflects the default scyllaListedOnly:true landing state — every
