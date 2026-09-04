@@ -6404,6 +6404,38 @@ const SWAP_HTML = `<!DOCTYPE html>
     simpleOfferPickingTheirs: false // true while 0FFER F0R is being picked directly off the real, full DATABASE — see enterTheirsPickMode
   };
 
+  // Per-collection config driving everything collection-aware on this page
+  // (card labels, price-currency suffixes, the trustline banner, DATABASE's
+  // own title, etc. — see switchCollection/updateTrustlineBannerChrome
+  // further down). Declared THIS early, right next to state, on purpose —
+  // it used to live much further down the file, but loadTrustlineLoginState
+  // calls renderTrustlineSummary() unconditionally as part of this script's
+  // own bootstrap (a few hundred lines down) whenever a signed-in wallet
+  // cookie is present, and that function reads COLLECTION_META[state.collection].
+  // A var declared later is still undefined at that point in top-level
+  // execution — confirmed live as a hard crash on EVERY page load for a
+  // signed-in wallet (worked fine signed out, since that early-return path
+  // never reaches renderTrustlineSummary) that took the whole app down,
+  // not just the trustline banner, since the thrown error aborted the rest
+  // of this script's top-level setup too.
+  // tokenLabel is what fmtPigeons/fmtPigeonsCompact append to every price
+  // shown anywhere on the site (BUY N0W, offers, sales history, etc.) — one
+  // field here fixes the currency name everywhere at once instead of
+  // hunting down every hardcoded "$P!GE0NS" string. tokenIssuer/hasAmm
+  // drive the trustline banner: tokenIssuer is the real on-ledger token
+  // issuer shown next to !SSUER :: /COPY, hasAmm gates the EXCHANGE
+  // CALCULAT0R + BUY $TOKEN-with-XRP panel, which only exists for
+  // $P!GE0NS today (real DexScreener pair + AMM pool — see
+  // quotePigeonsForXrpDrops/fetchPigeonsXrpRate in _shared.js). A
+  // collection without those hides that part of the banner entirely rather
+  // than showing a broken/mislabeled calculator — same graceful-
+  // degradation pattern TEDDY's browse-only mode already uses.
+  var COLLECTION_META = {
+    pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true },
+    phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: false },
+    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: null, hasAmm: false }
+  };
+
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn',
@@ -12091,24 +12123,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // .db-option-disabled, no shopSlug for it yet). Browse only for the two
   // new ones: no BUY N0W/0FFER/trustline/login, matching the explicit
   // scope this shipped with — see COLLECTION_META's own tradeable flag,
-  // which everything else in this function keys off.
-  // tokenLabel is what fmtPigeons/fmtPigeonsCompact append to every price
-  // shown anywhere on the site (BUY N0W, offers, sales history, etc.) —
-  // one field here fixes the currency name everywhere at once instead of
-  // hunting down every hardcoded "$P!GE0NS" string.
-  // tokenIssuer/hasAmm drive the trustline banner (see updateTrustlineBannerChrome
-  // below) — tokenIssuer is the real on-ledger token issuer shown next to
-  // !SSUER :: /COPY, hasAmm gates the EXCHANGE CALCULAT0R + BUY $TOKEN-with-
-  // XRP panel, which only exists for $P!GE0NS today (real DexScreener pair +
-  // AMM pool — see quotePigeonsForXrpDrops/fetchPigeonsXrpRate in
-  // _shared.js). A collection without those hides that part of the banner
-  // entirely rather than showing a broken/mislabeled calculator — same
-  // graceful-degradation pattern TEDDY's browse-only mode already uses.
-  var COLLECTION_META = {
-    pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true },
-    phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: false },
-    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: null, hasAmm: false }
-  };
+  // which everything else in this function keys off. COLLECTION_META
+  // itself now lives up near state (see its own comment there) — it has
+  // to exist before loadTrustlineLoginState's bootstrap call further up
+  // the file can safely read it for a signed-in wallet.
   // Real per-collection artwork for the trustline banner's big thumbnail —
   // fetched once per collection (first item off the real DATABASE, rarest-
   // first) and cached, rather than a second hardcoded image URL living
