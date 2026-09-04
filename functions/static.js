@@ -5600,15 +5600,17 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="mainframe-card-buy" data-collection="pigeons">BUY $P!GE0NS</button>
           </div>
         </div>
-        <!-- PHN!X/TEDDY/SEAL/FUZZY/C0NSP!RACY are all C0M!NG S00N and no longer
+        <!-- TEDDY/SEAL/FUZZY/C0NSP!RACY are all C0M!NG S00N and no longer
              clickable (no data-collection — mainframeGrid's own click
-             handler below only matches [data-collection]) while Pigeons
-             gets hardened into the real template first. -->
-        <div class="mainframe-card mainframe-card-soon" style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg?v=2');">
+             handler below only matches [data-collection]). PHN!X is now a
+             real tradeable collection (see COLLECTION_META.phnixs) so it
+             gets the same active card treatment as Pigeons. -->
+        <div class="mainframe-card" data-collection="phnixs" role="button" tabindex="0" style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$PHN!X</div>
-            <div class="mainframe-card-tag">C0M!NG S00N</div>
+            <div class="mainframe-card-tag">TRAD!NG L!VE</div>
+            <button type="button" class="mainframe-card-buy" data-collection="phnixs">BUY $PHN!X</button>
           </div>
         </div>
         <div class="mainframe-card mainframe-card-soon" style="--card-accent:47,158,68; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
@@ -6623,7 +6625,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div id="buySwapModal" style="display:none;">
       <div class="offer-confirm-panel buyswap-modal-panel">
         <div id="buySwapEntryState">
-          <div class="node-eyebrow">// BUY $P!GE0NS</div>
+          <div class="node-eyebrow" id="buySwapTitle">// BUY $P!GE0NS</div>
           <div class="buyswap-trustline-warning" id="buySwapTrustlineWarning" style="display:none;">
             <div class="buyswap-trustline-warning-title" id="buySwapTrustlineWarningTitle"></div>
             <div class="pigeons-bar-left-body-row buyswap-trustline-issuer-row">
@@ -6646,7 +6648,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="buyswap-label">Y0U RECE!VE</span>
             <div class="buyswap-input-wrap buyswap-receive-wrap">
               <span class="buyswap-receive-value" id="buySwapReceiveValue">—</span>
-              <span class="buyswap-unit">P!GE0NS</span>
+              <span class="buyswap-unit" id="buySwapReceiveUnit">P!GE0NS</span>
             </div>
           </div>
           <div class="buyswap-divider"></div>
@@ -7145,7 +7147,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenListResult','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
    'buyConfirmModal','screenBuyConfirm','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
-   'buySwapModal','buySwapEntryState','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
+   'buySwapModal','buySwapEntryState','buySwapTitle','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapPayRow',
    'buySwapConfirmState','buySwapConfTxType','buySwapConfAccount','buySwapConfSendMax','buySwapConfAmount','buySwapConfEstimate','buySwapConfRate','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
    'buySwapResultState','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
@@ -10943,6 +10945,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // _shared.js) — still no txjson, no Xaman, SIGN & BUY stays disabled
   // through this stage regardless of quote validity (nothing built yet to
   // actually submit). ----
+  // Which collection this open panel session is buying — set by
+  // openBuySwapPanel(collectionKey) below, read by every fetch/display
+  // call in this whole block instead of assuming $PIGEONS or the
+  // ambient state.collection (this panel is reachable straight from
+  // MAINFRAME now, where state.collection may not match whichever BUY
+  // button was actually clicked).
+  var buySwapCollection = 'pigeons';
   var buySwapMaxDrops = null; // null = no cap known yet (not logged in, or balance fetch pending/failed)
   // Fallback only — the real reserve (base + one owner-reserve increment
   // per owned ledger object: trustlines, NFT pages, offers, etc.) comes
@@ -11047,7 +11056,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var myReq = ++buySwapReqId;
     el.buySwapSignBtn.disabled = true;
     el.buySwapStatus.textContent = 'GETT!NG QU0TE...';
-    apiWithRetry({ pigeonsQuote: 1, xrpDrops: drops.toString() }).then(function(data){
+    apiWithRetry({ pigeonsQuote: 1, xrpDrops: drops.toString(), collection: buySwapCollection }).then(function(data){
       if (myReq !== buySwapReqId) return; // superseded by a newer request
       if (el.buySwapXrpInput.value.trim() !== raw) return; // input changed while this was in flight
       if (!data || !data.ok){
@@ -11065,10 +11074,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       buySwapQuote = data;
       buySwapQuoteForRaw = raw;
+      var quoteTokenLabel = COLLECTION_META[buySwapCollection].tokenLabel;
       el.buySwapReceiveValue.textContent = data.receivePigeons.toLocaleString(undefined, { maximumFractionDigits: 2 });
-      el.buySwapRate.textContent = data.rate.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' P!GE0NS / XRP';
+      el.buySwapRate.textContent = data.rate.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + quoteTokenLabel + ' / XRP';
       var minReceived = data.receivePigeons * (10000 - BUYSWAP_SLIPPAGE_BPS) / 10000;
-      el.buySwapMinReceived.textContent = minReceived.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' P!GE0NS';
+      el.buySwapMinReceived.textContent = minReceived.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + quoteTokenLabel;
       // STAGE 5: a valid, live, trustline-confirmed quote is finally
       // enough to let SIGN & BUY actually be clicked — but clicking it
       // only opens the REVIEW screen (buyswap-prepare.js re-derives
@@ -11104,18 +11114,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   // true, never assumed true by default or on a failed check). ----
   var buySwapHasTrustline = null;
   function applyBuySwapGate(){
+    var gateTokenLabel = COLLECTION_META[buySwapCollection].tokenLabel;
     if (!MY_WALLET){
       el.buySwapPayRow.style.display = 'none';
       el.buySwapTrustlineWarning.style.display = 'none';
       el.buySwapXrpInput.disabled = true;
-      clearBuySwapQuote('L0G !N T0 BUY $P!GE0NS.');
+      clearBuySwapQuote('L0G !N T0 BUY ' + gateTokenLabel + '.');
       return;
     }
     if (buySwapHasTrustline === null){
       el.buySwapPayRow.style.display = 'none';
       el.buySwapTrustlineWarning.style.display = 'none';
       el.buySwapXrpInput.disabled = true;
-      clearBuySwapQuote('CHECK!NG Y0UR $P!GE0NS TRUSTL!NE...');
+      clearBuySwapQuote('CHECK!NG Y0UR ' + gateTokenLabel + ' TRUSTL!NE...');
       return;
     }
     if (buySwapHasTrustline === false){
@@ -11123,7 +11134,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buySwapTrustlineWarningTitle.textContent = '⚠ TRUSTL!NE REQU!RED';
       el.buySwapTrustlineWarning.style.display = '';
       el.buySwapXrpInput.disabled = true;
-      clearBuySwapQuote('Y0UR WALLET CAN\\'T RECE!VE $P!GE0NS YET — SET THE TRUSTL!NE AB0VE F!RST.');
+      clearBuySwapQuote('Y0UR WALLET CAN\\'T RECE!VE ' + gateTokenLabel + ' YET — SET THE TRUSTL!NE AB0VE F!RST.');
       return;
     }
     el.buySwapPayRow.style.display = '';
@@ -11149,7 +11160,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     stopBuySwapTimers();
   }
   el.buySwapModal.addEventListener('click', function(e){ if (e.target === el.buySwapModal) closeBuySwapModal(); });
-  function openBuySwapPanel(){
+  // collectionKey: which token this session buys — defaults to 'pigeons'
+  // so every existing caller (the trustline banner's own BUY button,
+  // FL0CK's BUY box) keeps working unchanged; MAINFRAME's own BUY
+  // buttons (see mainframeGrid's click handler) pass their own card's
+  // collection explicitly instead of relying on state.collection, since
+  // MAINFRAME can open this panel for a collection that isn't the one
+  // currently active in DATABASE.
+  function openBuySwapPanel(collectionKey){
+    buySwapCollection = collectionKey || 'pigeons';
+    var meta = COLLECTION_META[buySwapCollection];
+    el.buySwapTitle.textContent = '// BUY ' + meta.tokenLabel;
+    el.buySwapReceiveUnit.textContent = meta.tokenLabel.replace(/^\\$/, '');
+    if (meta.tokenIssuer){
+      el.buySwapIssuerAddr.setAttribute('data-full', meta.tokenIssuer);
+      el.buySwapIssuerAddr.textContent = meta.tokenIssuer.slice(0, 5) + '...' + meta.tokenIssuer.slice(-3);
+    }
     el.buySwapXrpInput.value = '';
     clearBuySwapInputError();
     stopBuySwapTimers();
@@ -11160,7 +11186,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     showBuySwapState('entry');
     el.buySwapModal.style.display = 'flex';
     if (MY_WALLET){
-      apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).then(function(data){
+      apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET, collection: buySwapCollection }).then(function(data){
         if (!data || typeof data.drops !== 'string' || !/^\\d+$/.test(data.drops)) return;
         var bal = BigInt(data.drops);
         var reserve = (typeof data.reserveDrops === 'string' && /^\\d+$/.test(data.reserveDrops))
@@ -11175,7 +11201,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // own LOGIN state uses (fetchPigeonsAccountLine) — never assumed
       // from cached state, this panel can open right after a fresh login
       // before that banner state has even settled.
-      apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET }).then(function(data){
+      apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET, collection: buySwapCollection }).then(function(data){
         buySwapHasTrustline = !!(data && data.hasTrustline);
         applyBuySwapGate();
       }).catch(function(){
@@ -11192,8 +11218,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (buySwapHasTrustline === true && validateBuySwapInput() !== null) fetchBuySwapQuote();
     }, BUYSWAP_REFRESH_MS);
   }
-  el.pigeonsBalanceBuyBtn.addEventListener('click', openBuySwapPanel);
-  el.flockBuyPigeonsBox.addEventListener('click', openBuySwapPanel);
+  el.pigeonsBalanceBuyBtn.addEventListener('click', function(){ openBuySwapPanel(state.collection); });
+  el.flockBuyPigeonsBox.addEventListener('click', function(){ openBuySwapPanel(state.collection); });
   // navigator.clipboard needs a secure context (https, which this site
   // always is), but its own permission can still be denied even when the
   // API itself exists (confirmed live: some embedded/in-app browser
@@ -11317,7 +11343,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/buyswap-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ xrpDrops: drops.toString() })
+      body: JSON.stringify({ xrpDrops: drops.toString(), collection: buySwapCollection })
     }).then(function(r){ return r.json().then(function(data){ return { status: r.status, data: data }; }); }).then(function(res){
       el.buySwapSignBtn.disabled = false;
       el.buySwapSignBtn.textContent = 'S!GN & BUY';
@@ -11333,6 +11359,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       var txjson = res.data.txjson;
       var display = res.data.display;
+      var confTokenLabel = COLLECTION_META[buySwapCollection].tokenLabel;
       buySwapReviewDrops = drops.toString();
       el.buySwapConfTxType.textContent = txjson.TransactionType;
       el.buySwapConfAccount.textContent = txjson.Account;
@@ -11342,9 +11369,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       // txjson.Amount.value string instead (e.g. "5086.089804"), reading
       // as a different, less-trustworthy number right next to a properly
       // formatted one for the same currency.
-      el.buySwapConfAmount.textContent = Number(txjson.Amount.value).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
-      el.buySwapConfEstimate.textContent = display.estimateReceivePigeons.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
-      el.buySwapConfRate.textContent = display.rate.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' P!GE0NS / XRP';
+      el.buySwapConfAmount.textContent = Number(txjson.Amount.value).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + confTokenLabel;
+      el.buySwapConfEstimate.textContent = display.estimateReceivePigeons.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + confTokenLabel;
+      el.buySwapConfRate.textContent = display.rate.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + confTokenLabel + ' / XRP';
       el.buySwapConfSource.textContent = display.source === 'amm' ? 'AMM P00L' : '0RDER B00K';
       el.buySwapConfirmStatus.textContent = '';
       el.buySwapOpenXamanBtn.disabled = false;
@@ -11375,7 +11402,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/buyswap-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ xrpDrops: buySwapReviewDrops })
+      body: JSON.stringify({ xrpDrops: buySwapReviewDrops, collection: buySwapCollection })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
@@ -11407,7 +11434,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function pollBuySwapStatus(){
     if (buySwapPollTimer) clearTimeout(buySwapPollTimer);
     if (!buySwapUuid) return;
-    fetch('/api/buyswap-status?uuid=' + encodeURIComponent(buySwapUuid))
+    fetch('/api/buyswap-status?uuid=' + encodeURIComponent(buySwapUuid) + '&collection=' + encodeURIComponent(buySwapCollection))
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.status === 'settled'){
@@ -11441,8 +11468,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showBuySwapResult(data){
+    var resultTokenLabel = COLLECTION_META[buySwapCollection].tokenLabel;
     el.buySwapResultReceived.innerHTML = data.receivedPigeons !== null && data.receivedPigeons !== undefined
-      ? greenNum(Number(data.receivedPigeons).toLocaleString(undefined, { maximumFractionDigits: 6 })) + ' <span class="buyswap-received-unit">$P!GE0NS</span>'
+      ? greenNum(Number(data.receivedPigeons).toLocaleString(undefined, { maximumFractionDigits: 6 })) + ' <span class="buyswap-received-unit">' + resultTokenLabel + '</span>'
       : 'EXACT AM0UNT UNAVA!LABLE';
     if (data.txHash){
       el.buySwapResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
@@ -13047,7 +13075,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var buyBtn = e.target.closest('.mainframe-card-buy');
     if (buyBtn){
       e.stopPropagation();
-      enterMainframeCollection(buyBtn.getAttribute('data-collection'));
+      openBuySwapPanel(buyBtn.getAttribute('data-collection'));
       return;
     }
     var card = e.target.closest('.mainframe-card[data-collection]');
