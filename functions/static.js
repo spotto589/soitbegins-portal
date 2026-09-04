@@ -1277,6 +1277,23 @@ const SWAP_HTML = `<!DOCTYPE html>
      the COLLECTION box — left-aligned (not centered like COLLECTION) so
      its content starts flush with the search bar above it. */
   .db-config-traits-group{ text-align:left; }
+  /* Real visible feedback for whichever S0RT/TRA!TS are actually applied —
+     #sortRows/#traitRows/#clearTraitsBtn's own trigger boxes moved into
+     #dbControlsSticky (display:none, see its own HTML comment), so this
+     row needs its own copy of the same flex/wrap/gap layout
+     .db-config-traits-section used to provide them for free. */
+  .applied-filters-row{
+    display:flex;
+    flex-direction:row;
+    flex-wrap:wrap;
+    justify-content:flex-start;
+    align-items:center;
+    gap:0.5rem;
+    margin-bottom:0.75rem;
+  }
+  @media (max-width:700px){
+    .applied-filters-row{ justify-content:center; }
+  }
   .db-config-traits-section{
     display:flex;
     /* Row, not column — selected trait chips (#traitRows) list to the
@@ -6131,7 +6148,6 @@ const SWAP_HTML = `<!DOCTYPE html>
                   <button type="button" class="hscroll-arrow hscroll-arrow-next" id="sortScrollNextBtn" aria-label="NEXT">▸</button>
                 </div>
               </div>
-              <div id="sortRows"></div>
             </div>
           </div>
 
@@ -6162,15 +6178,30 @@ const SWAP_HTML = `<!DOCTYPE html>
                   <div class="traits-flyout-vals" id="traitsFlyoutVals"></div>
                 </div>
               </div>
-              <div id="traitRows"></div>
-              <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">CLEAR</button>
             </div>
           </div>
           </div>
 
-          <!-- RESET sits between the COLLECTION/ADD TRAITS config box above
-               and the results status line below — its own row, not bundled
-               into either. -->
+          <!-- Real visible feedback for whichever S0RT/TRA!TS are actually
+               applied right now — #sortRows/#traitRows/#clearTraitsBtn
+               used to live inside #dbControlsSticky itself, which is
+               display:none now that its own trigger buttons moved to the
+               fixed bottom bar (see that div's own comment). Reported live
+               as "filter by traits isn't working" — it WAS applying (the
+               real query/grid updated fine), there was just no longer any
+               visible sign it had: no applied-trait chip, no CLEAR button,
+               nothing. Pulled out into their own always-visible row so
+               that feedback exists again regardless of where the trigger
+               buttons themselves live. -->
+          <div class="applied-filters-row" id="appliedFiltersRow">
+            <div id="sortRows"></div>
+            <div id="traitRows"></div>
+            <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">CLEAR</button>
+          </div>
+
+          <!-- RESET sits between the applied-filters row above and the
+               results status line below — its own row, not bundled into
+               either. -->
           <div class="results-reset-row">
             <button class="bar-btn reset-db-btn" id="resetDbBtn" title="ALL ED!T!0NS, RAR!TY H!GHEST, THUMBNA!LS V!EW, N0 TRA!TS">RESET</button>
           </div>
