@@ -807,11 +807,11 @@ const PIGEONS_DEXSCREENER_PAIR = '504947454f4e5300000000000000000000000000.rfqvv
 const PIGEONS_RATE_CACHE_KEY = 'pswap:pigeonsrate:v2';
 const PIGEONS_RATE_CACHE_TTL_SECONDS = 60;
 
-async function fetchPigeonsXrpRateFromBookOffers() {
+async function fetchTokenXrpRateFromBookOffers(tokenConfig) {
   const data = await fetchXrplClusterJson({
     method: 'book_offers',
     params: [{
-      taker_gets: { currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency), issuer: PIGEONS_TOKEN_CONFIG.issuer },
+      taker_gets: { currency: encodeCurrencyCode(tokenConfig.currency), issuer: tokenConfig.issuer },
       taker_pays: { currency: 'XRP' },
       limit: 5
     }]
@@ -820,9 +820,9 @@ async function fetchPigeonsXrpRateFromBookOffers() {
   const offers = (data.result && data.result.offers) || [];
   const best = offers.find(o => typeof o.TakerGets === 'object' && typeof o.TakerPays === 'string' && parseFloat(o.TakerGets.value) > 0);
   if (best) {
-    const pigeonsOut = parseFloat(best.TakerGets.value);
+    const tokensOut = parseFloat(best.TakerGets.value);
     const dropsIn = parseFloat(best.TakerPays);
-    if (pigeonsOut > 0 && dropsIn > 0) return (dropsIn / 1000000) / pigeonsOut;
+    if (tokensOut > 0 && dropsIn > 0) return (dropsIn / 1000000) / tokensOut;
   }
   return null;
 }
@@ -894,11 +894,11 @@ async function fetchXrplClusterJson(body) {
   return null;
 }
 
-async function fetchPigeonsBookOffers(limit) {
+async function fetchTokenBookOffers(tokenConfig, limit) {
   const data = await fetchXrplClusterJson({
     method: 'book_offers',
     params: [{
-      taker_gets: { currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency), issuer: PIGEONS_TOKEN_CONFIG.issuer },
+      taker_gets: { currency: encodeCurrencyCode(tokenConfig.currency), issuer: tokenConfig.issuer },
       taker_pays: { currency: 'XRP' },
       limit: limit
     }]
@@ -909,31 +909,34 @@ async function fetchPigeonsBookOffers(limit) {
 // Real live pool reserves + trading fee, straight from amm_info — never
 // cached (the whole point of a constant-product quote is that reserves
 // shift with every trade, a stale snapshot would misprice immediately).
-// Returns null on any lookup/shape failure, never a fabricated fallback.
-async function fetchPigeonsAmmPool() {
+// Returns null on any lookup/shape failure (or no ammAccount configured
+// for this collection at all — see COLLECTION_AMM_ACCOUNTS below), never
+// a fabricated fallback.
+async function fetchTokenAmmPool(ammAccount, tokenConfig) {
+  if (!ammAccount) return null;
   try {
-    const data = await fetchXrplClusterJson({ method: 'amm_info', params: [{ amm_account: PIGEONS_AMM_ACCOUNT }] });
-    if (!data) { console.log('fetchPigeonsAmmPool: all endpoints failed'); return null; }
+    const data = await fetchXrplClusterJson({ method: 'amm_info', params: [{ amm_account: ammAccount }] });
+    if (!data) { console.log('fetchTokenAmmPool: all endpoints failed'); return null; }
     const amm = data && data.result && data.result.amm;
-    if (!amm) { console.log('fetchPigeonsAmmPool: no amm in response', JSON.stringify(data).slice(0, 300)); return null; }
+    if (!amm) { console.log('fetchTokenAmmPool: no amm in response', JSON.stringify(data).slice(0, 300)); return null; }
     // amount = XRP side (drops, as a plain string when XRP); amount2 =
-    // the issued-currency side. Confirm which one is actually PIGEONS
-    // rather than assuming position, in case the pool's own field order
-    // ever differs.
+    // the issued-currency side. Confirm which one is actually the real
+    // token rather than assuming position, in case the pool's own field
+    // order ever differs.
     const xrpSide = typeof amm.amount === 'string' ? amm.amount : null;
-    const pigeonsSide = (amm.amount2 && typeof amm.amount2 === 'object' && amm.amount2.currency === encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency) && amm.amount2.issuer === PIGEONS_TOKEN_CONFIG.issuer)
+    const tokenSide = (amm.amount2 && typeof amm.amount2 === 'object' && amm.amount2.currency === encodeCurrencyCode(tokenConfig.currency) && amm.amount2.issuer === tokenConfig.issuer)
       ? amm.amount2
-      : (amm.amount && typeof amm.amount === 'object' && amm.amount.currency === encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency) && amm.amount.issuer === PIGEONS_TOKEN_CONFIG.issuer ? amm.amount : null);
+      : (amm.amount && typeof amm.amount === 'object' && amm.amount.currency === encodeCurrencyCode(tokenConfig.currency) && amm.amount.issuer === tokenConfig.issuer ? amm.amount : null);
     const xrpReserveDrops = xrpSide !== null ? xrpSide : (typeof amm.amount2 === 'string' ? amm.amount2 : null);
-    if (xrpReserveDrops === null || !pigeonsSide) { console.log('fetchPigeonsAmmPool: unexpected shape', JSON.stringify(amm).slice(0, 300)); return null; }
+    if (xrpReserveDrops === null || !tokenSide) { console.log('fetchTokenAmmPool: unexpected shape', JSON.stringify(amm).slice(0, 300)); return null; }
     let xrpReserve;
-    try { xrpReserve = BigInt(xrpReserveDrops); } catch (e) { console.log('fetchPigeonsAmmPool: bad drops value', xrpReserveDrops); return null; }
-    const pigeonsReserve = parseFloat(pigeonsSide.value);
+    try { xrpReserve = BigInt(xrpReserveDrops); } catch (e) { console.log('fetchTokenAmmPool: bad drops value', xrpReserveDrops); return null; }
+    const pigeonsReserve = parseFloat(tokenSide.value);
     const tradingFeeBps = typeof amm.trading_fee === 'number' ? amm.trading_fee : 0; // units of 1/100000
-    if (xrpReserve <= 0n || !(pigeonsReserve > 0)) { console.log('fetchPigeonsAmmPool: non-positive reserve', xrpReserve.toString(), pigeonsReserve); return null; }
+    if (xrpReserve <= 0n || !(pigeonsReserve > 0)) { console.log('fetchTokenAmmPool: non-positive reserve', xrpReserve.toString(), pigeonsReserve); return null; }
     return { xrpReserveDrops: xrpReserve, pigeonsReserve, tradingFeeBps };
   } catch (e) {
-    console.log('fetchPigeonsAmmPool: exception', String(e && e.message || e));
+    console.log('fetchTokenAmmPool: exception', String(e && e.message || e));
     return null;
   }
 }
@@ -954,11 +957,11 @@ function quoteFromAmmPool(pool, xrpDrops) {
 }
 
 // Walks the order book exactly as before, returning the total fillable
-// PIGEONS for xrpDrops and whether the book had enough depth to fill it
-// in full.
-async function quoteFromOrderBook(xrpDrops) {
+// tokens for xrpDrops and whether the book had enough depth to fill it in
+// full.
+async function quoteFromOrderBook(tokenConfig, xrpDrops) {
   let offers;
-  try { offers = await fetchPigeonsBookOffers(PIGEONS_QUOTE_BOOK_DEPTH); } catch (e) { return { filled: false, receivePigeons: 0 }; }
+  try { offers = await fetchTokenBookOffers(tokenConfig, PIGEONS_QUOTE_BOOK_DEPTH); } catch (e) { return { filled: false, receivePigeons: 0 }; }
   if (!Array.isArray(offers) || !offers.length) return { filled: false, receivePigeons: 0 };
 
   let remaining = xrpDrops;
@@ -988,41 +991,62 @@ async function quoteFromOrderBook(xrpDrops) {
   return { filled: remaining <= 0n, receivePigeons: total };
 }
 
-// xrpDropsStr: exact integer drops (string) the user is spending — never a
-// parsed float. Returns:
+// Real on-chain AMM pool per collection, keyed by TRADEABLE_COLLECTIONS'
+// own key — deliberately NOT part of that config object itself (this file
+// declares PIGEONS_AMM_ACCOUNT further down than TRADEABLE_COLLECTIONS,
+// so referencing it there would hit the temporal dead zone). Only
+// $PIGEONS has a confirmed real pool (see PIGEONS_AMM_ACCOUNT's own
+// comment) — every other collection quotes order-book-only, which is a
+// completely normal, real way to buy on the XRPL DEX and needs no special
+// account at all, just the token's own currency/issuer (already in
+// TRADEABLE_COLLECTIONS). Add an entry here only once a collection's real
+// AMM pool account has been independently confirmed live, same bar
+// PIGEONS_AMM_ACCOUNT's own comment describes — never guessed.
+const COLLECTION_AMM_ACCOUNTS = { pigeons: PIGEONS_AMM_ACCOUNT };
+
+// collectionKey defaults to 'pigeons' for backward compatibility with
+// existing callers. xrpDropsStr: exact integer drops (string) the user is
+// spending — never a parsed float. Returns:
 //   { ok:true, receivePigeons, rate, spentDrops, source }   — fully quotable
-//   { ok:false, insufficientLiquidity:true }                 — neither source could fill it
-//   { ok:false, error:'...' }                                 — lookup failed
+//   { ok:false, insufficientLiquidity:true }                 — no source could fill it
+//   { ok:false, error:'...' }                                 — lookup failed / unknown collection
 // receivePigeons/rate are Numbers — this is a live ESTIMATE shown to the
 // user, not a value written into a transaction (Stage 5 will re-derive
 // and re-validate everything server-side from scratch before anything is
 // ever signed, same as every other transaction this app builds).
-export async function quotePigeonsForXrpDrops(xrpDropsStr) {
+export async function quotePigeonsForXrpDrops(xrpDropsStr, collectionKey = 'pigeons') {
+  const cfg = getTradeConfig(collectionKey);
+  if (!cfg || !cfg.tokenConfig) return { ok: false, error: 'invalid_collection' };
   let xrpDrops;
   try { xrpDrops = BigInt(xrpDropsStr); } catch (e) { return { ok: false, error: 'bad_amount' }; }
   if (xrpDrops <= 0n) return { ok: false, error: 'bad_amount' };
 
+  const ammAccount = COLLECTION_AMM_ACCOUNTS[collectionKey] || null;
   const [bookResult, pool] = await Promise.all([
-    quoteFromOrderBook(xrpDrops),
-    fetchPigeonsAmmPool()
+    quoteFromOrderBook(cfg.tokenConfig, xrpDrops),
+    fetchTokenAmmPool(ammAccount, cfg.tokenConfig)
   ]);
 
-  // If the AMM lookup itself failed (pool === null, not "AMM genuinely
-  // has less liquidity"), this must NOT silently fall through to
-  // whatever the order book offers — the AMM is this pair's dominant,
-  // far-better-priced liquidity (confirmed live: ~3900 PIGEONS/XRP vs the
-  // thin book's ~1700-2000), so treating a failed AMM lookup as "AMM
-  // offers 0" let the much worse order-book price win the comparison by
-  // default. Confirmed live: this is exactly what got baked into a real
-  // signable transaction worth roughly HALF fair value. A failed AMM
-  // lookup now fails the whole quote instead — an honest "try again" beats
-  // a silently bad price on something the user is about to sign.
-  if (!pool) {
-    console.log('quotePigeonsForXrpDrops: AMM pool unreachable, refusing to fall back to order-book-only pricing');
+  // If a collection HAS a known AMM account but the lookup itself failed
+  // (pool === null, not "AMM genuinely has less liquidity"), this must
+  // NOT silently fall through to whatever the order book offers — for
+  // $PIGEONS specifically the AMM is this pair's dominant, far-better-
+  // priced liquidity (confirmed live: ~3900 PIGEONS/XRP vs the thin
+  // book's ~1700-2000), so treating a failed AMM lookup as "AMM offers 0"
+  // let the much worse order-book price win the comparison by default —
+  // confirmed live as exactly what got baked into a real signable
+  // transaction worth roughly HALF fair value. A failed AMM lookup on a
+  // collection that's supposed to have one now fails the whole quote
+  // instead. A collection with NO configured AMM account at all (every
+  // collection except $PIGEONS right now) never had this problem to begin
+  // with — pool is expectedly null there, and order-book-only pricing is
+  // the correct, honest source for it.
+  if (ammAccount && !pool) {
+    console.log('quotePigeonsForXrpDrops: AMM pool unreachable for', collectionKey, '- refusing to fall back to order-book-only pricing');
     return { ok: false, error: 'quote_failed' };
   }
 
-  const ammPigeons = quoteFromAmmPool(pool, xrpDrops); // AMM has effectively unlimited depth for any sane trade size relative to this pool, always "fills"
+  const ammPigeons = pool ? quoteFromAmmPool(pool, xrpDrops) : 0; // AMM has effectively unlimited depth for any sane trade size relative to this pool, always "fills" once real
   const bookPigeons = bookResult.filled ? bookResult.receivePigeons : 0;
 
   const best = ammPigeons >= bookPigeons ? ammPigeons : bookPigeons;
@@ -1072,7 +1096,11 @@ function accountReserveDrops(ownerCount) {
 // deliberately omitted — that combination means the transaction either
 // delivers AT LEAST the full Amount for AT MOST SendMax, or fails
 // atomically with no funds moved, never a partial fill.
-export async function buildBuySwapTxjson(buyer, xrpDrops) {
+export async function buildBuySwapTxjson(buyer, xrpDrops, collectionKey = 'pigeons') {
+  const cfg = getTradeConfig(collectionKey);
+  if (!cfg || !cfg.tokenConfig) {
+    return { ok: false, error: 'invalid_collection' };
+  }
   if (typeof xrpDrops !== 'string' || !/^[1-9][0-9]*$/.test(xrpDrops)) {
     return { ok: false, error: 'bad_amount' };
   }
@@ -1084,7 +1112,7 @@ export async function buildBuySwapTxjson(buyer, xrpDrops) {
   // trustline" when the real issue is a transient ledger-read failure —
   // confirmed live as the actual cause of repeated false no_trustline
   // reports for a wallet that has one set).
-  const line = await fetchPigeonsAccountLine(buyer);
+  const line = await fetchPigeonsAccountLine(buyer, cfg.tokenConfig);
   if (!line || line.hasTrustline === null) {
     return { ok: false, error: 'trustline_lookup_failed' };
   }
@@ -1104,7 +1132,7 @@ export async function buildBuySwapTxjson(buyer, xrpDrops) {
     return { ok: false, error: 'exceeds_balance' };
   }
 
-  const quote = await quotePigeonsForXrpDrops(xrpDrops);
+  const quote = await quotePigeonsForXrpDrops(xrpDrops, collectionKey);
   if (!quote.ok) {
     return { ok: false, error: quote.insufficientLiquidity ? 'insufficient_liquidity' : 'quote_failed' };
   }
@@ -1120,8 +1148,8 @@ export async function buildBuySwapTxjson(buyer, xrpDrops) {
     Account: buyer,
     Destination: buyer,
     Amount: {
-      currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency),
-      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      currency: encodeCurrencyCode(cfg.tokenConfig.currency),
+      issuer: cfg.tokenConfig.issuer,
       value: minReceiveStr
     },
     SendMax: xrpDrops,
@@ -1163,29 +1191,40 @@ export async function fetchValidatedTxResult(txHash) {
   };
 }
 
-export async function fetchPigeonsXrpRate(kv) {
+// Same reasoning/placement as COLLECTION_AMM_ACCOUNTS above — only
+// $PIGEONS has a confirmed real DexScreener pair right now. A collection
+// without one here just skips straight to the real order-book rate
+// (fetchTokenXrpRateFromBookOffers), never a fabricated DEX link.
+const COLLECTION_DEXSCREENER_PAIRS = { pigeons: PIGEONS_DEXSCREENER_PAIR };
+
+export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
+  const cfg = getTradeConfig(collectionKey);
+  if (!cfg || !cfg.tokenConfig) return { xrpPerPigeon: null, usdPerPigeon: null, dexUrl: null };
+  const cacheKey = collectionKey === 'pigeons' ? PIGEONS_RATE_CACHE_KEY : PIGEONS_RATE_CACHE_KEY + ':' + collectionKey;
   if (kv) {
-    const cached = await kv.get(PIGEONS_RATE_CACHE_KEY);
+    const cached = await kv.get(cacheKey);
     if (cached !== null) return JSON.parse(cached);
   }
-  const dexUrl = 'https://dexscreener.com/xrpl/' + PIGEONS_DEXSCREENER_PAIR;
-  let result = { xrpPerPigeon: null, usdPerPigeon: null, dexUrl };
-  try {
-    const res = await fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + PIGEONS_DEXSCREENER_PAIR);
-    const data = await res.json();
-    const pair = data && data.pairs && data.pairs[0];
-    if (pair) {
-      const nativeVal = parseFloat(pair.priceNative);
-      if (nativeVal > 0) result.xrpPerPigeon = nativeVal;
-      const usdVal = parseFloat(pair.priceUsd);
-      if (usdVal > 0) result.usdPerPigeon = usdVal;
-      if (pair.url) result.dexUrl = pair.url;
-    }
-  } catch (e) { /* fall through to book-offers fallback below */ }
-  if (result.xrpPerPigeon === null) {
-    result.xrpPerPigeon = await fetchPigeonsXrpRateFromBookOffers();
+  const dexPair = COLLECTION_DEXSCREENER_PAIRS[collectionKey] || null;
+  let result = { xrpPerPigeon: null, usdPerPigeon: null, dexUrl: dexPair ? 'https://dexscreener.com/xrpl/' + dexPair : null };
+  if (dexPair) {
+    try {
+      const res = await fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + dexPair);
+      const data = await res.json();
+      const pair = data && data.pairs && data.pairs[0];
+      if (pair) {
+        const nativeVal = parseFloat(pair.priceNative);
+        if (nativeVal > 0) result.xrpPerPigeon = nativeVal;
+        const usdVal = parseFloat(pair.priceUsd);
+        if (usdVal > 0) result.usdPerPigeon = usdVal;
+        if (pair.url) result.dexUrl = pair.url;
+      }
+    } catch (e) { /* fall through to book-offers fallback below */ }
   }
-  if (kv) await safeKvPut(kv, PIGEONS_RATE_CACHE_KEY, JSON.stringify(result), { expirationTtl: PIGEONS_RATE_CACHE_TTL_SECONDS });
+  if (result.xrpPerPigeon === null) {
+    result.xrpPerPigeon = await fetchTokenXrpRateFromBookOffers(cfg.tokenConfig);
+  }
+  if (kv) await safeKvPut(kv, cacheKey, JSON.stringify(result), { expirationTtl: PIGEONS_RATE_CACHE_TTL_SECONDS });
   return result;
 }
 

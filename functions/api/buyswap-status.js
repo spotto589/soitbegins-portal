@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, getXamanPayloadStatus, fetchValidatedTxResult, encodeCurrencyCode, PIGEONS_TOKEN_CONFIG
+  BOARD_COOKIE_NAME, getCookie, verifyToken, getXamanPayloadStatus, fetchValidatedTxResult, encodeCurrencyCode, PIGEONS_TOKEN_CONFIG, getTradeConfig
 } from '../_shared.js';
 
 // Polled by the browser after [ OPEN XAMAN ] while the buyer is signing.
@@ -35,6 +35,9 @@ export async function onRequestGet(context) {
   if (!uuid || !/^[0-9a-fA-F-]{10,60}$/.test(uuid)) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
+  const collection = url.searchParams.get('collection') || 'pigeons';
+  const cfg = getTradeConfig(collection);
+  const tokenConfig = cfg ? cfg.tokenConfig : PIGEONS_TOKEN_CONFIG;
 
   const xummData = await getXamanPayloadStatus(env, uuid);
   if (!xummData) {
@@ -80,8 +83,8 @@ export async function onRequestGet(context) {
   // cross-currency Payment is the exact issued-currency object actually
   // received, confirmed to be the $PIGEONS side (never assumed).
   const delivered = validated.deliveredAmount;
-  const wantCurrency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
-  const receivedPigeons = (delivered && typeof delivered === 'object' && delivered.currency === wantCurrency && delivered.issuer === PIGEONS_TOKEN_CONFIG.issuer)
+  const wantCurrency = encodeCurrencyCode(tokenConfig.currency);
+  const receivedPigeons = (delivered && typeof delivered === 'object' && delivered.currency === wantCurrency && delivered.issuer === tokenConfig.issuer)
     ? delivered.value
     : null;
 

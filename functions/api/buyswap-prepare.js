@@ -37,7 +37,8 @@ export async function onRequestPost(context) {
   // even that only as a REQUEST — buildBuySwapTxjson re-derives everything
   // that actually goes into the txjson from live ledger/liquidity state.
   const xrpDrops = body && body.xrpDrops;
-  const result = await buildBuySwapTxjson(buyer, xrpDrops);
+  const collection = (body && body.collection) || 'pigeons';
+  const result = await buildBuySwapTxjson(buyer, xrpDrops, collection);
   if (!result.ok) {
     return new Response(JSON.stringify({ error: result.error }), { status: 400 });
   }

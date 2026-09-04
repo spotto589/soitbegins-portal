@@ -228,7 +228,7 @@ export async function onRequestGet(context) {
   // calculator (a convenience readout only, never used to set/validate a
   // price).
   if (params.get('pigeonsRate') === '1') {
-    const rate = await fetchPigeonsXrpRate(env.coin);
+    const rate = await fetchPigeonsXrpRate(env.coin, coll.key);
     return json({ xrpPerPigeon: rate.xrpPerPigeon, usdPerPigeon: rate.usdPerPigeon, dexUrl: rate.dexUrl });
   }
 
@@ -279,7 +279,7 @@ export async function onRequestGet(context) {
   if (params.get('pigeonsQuote') === '1') {
     const drops = params.get('xrpDrops');
     if (!drops || !/^[1-9][0-9]*$/.test(drops)) return json({ error: 'bad_amount' }, 400);
-    const quote = await quotePigeonsForXrpDrops(drops);
+    const quote = await quotePigeonsForXrpDrops(drops, coll.key);
     return json(Object.assign({ quotedAt: Date.now() }, quote));
   }
 
