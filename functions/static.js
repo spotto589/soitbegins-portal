@@ -8652,7 +8652,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function thumbnailCardHtml(p){
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : 'IMAGE';
     var num = p.number !== null ? '#' + greenNum(p.number) : '#????';
-    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
+    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     // Real XRP sale history (highSaleEntry, see toItem in api/pigeons.js)
     // is null (not 0) when a Pigeon genuinely has no recorded sale, distinct
     // from an actual free/near-free past sale — that's the "never resold
@@ -8668,7 +8668,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // label.
     var hasAvgSale = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
     var avgSaleLine = !COLLECTION_META[state.collection].tradeable ? '' : hasAvgSale
-      ? '<div class="result-rarity-line result-stat-stack"><span class="stat-label">AVG SALE PR!CE ::</span><span class="stat-value">' + fmtXrp(p.avgSaleXrp) + ' XRP</span></div>'
+      ? '<div class="result-rarity-line result-stat-stack"><span class="stat-label">AVG SALE PR!CE ::</span><span class="stat-value">' + greenNum(fmtXrp(p.avgSaleXrp)) + ' XRP</span></div>'
       : '<div class="result-rarity-line result-stat-stack"><span class="stat-label">COND!T!ON ::</span><span class="stat-value">M!NT</span></div>';
     // Real cross-market floor price (see PRICE_ASC/crossListing in
     // startCollectionBrowse) — only set on items returned by that sort,
