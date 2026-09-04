@@ -4922,7 +4922,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button class="tab-btn" data-tab="topholders">T0P 123 H0LDERS</button>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
       <button class="tab-btn" data-tab="crown">CR0WN</button>
-      <button class="tab-btn" data-tab="profile">PR0F!LE</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
     </div>
     </div>
@@ -5249,6 +5248,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockOffersBox">
           <div class="flock-account-box-row"><span class="flock-account-box-label">0FFERS<span class="flock-tab-offer-dot" id="flockOffersCount" style="display:none;"></span></span></div>
+        </div>
+        <!-- Username + pfp, set from one of your own Pigeons — lives here
+             inside Σκύλλα (reported live as wanting it here, not as its
+             own separate top-level tab) rather than as a sibling of
+             DATABASE/FL0CK/T0P H0LDERS/etc. -->
+        <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockProfileBox">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">PR0F!LE</span></div>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockBuyPigeonsBox">
           <div class="flock-account-box-row"><span class="flock-account-box-label">BUY $P!GE0NS</span></div>
@@ -6237,7 +6243,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
    'flockWalletBox','flockWalletAddr','flockWalletCopyHint',
-   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockBuyPigeonsBox','flockChangeCollectionBox','flockGridPanel','flockOffersBox','flockOffersCount',
+   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockBuyPigeonsBox','flockChangeCollectionBox','flockGridPanel','flockOffersBox','flockOffersCount','flockProfileBox',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn','swapOffersTabBtn',
@@ -10345,6 +10351,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // the real 0FFERS RECE!VED view (renderMyOffersList).
   el.flockOffersBox.addEventListener('click', function(){
     showTab('myoffers');
+  });
+  el.flockProfileBox.addEventListener('click', function(){
+    showTab('profile');
   });
   // Messaging paused — see the MESSAGE !NB0X box's own HTML comment.
   // Nothing to wire up here any more (no click handler, no unread-badge
