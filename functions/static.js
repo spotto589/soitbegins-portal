@@ -5435,18 +5435,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:transform 0.4s ease;
   }
   .mainframe-card:hover .mainframe-card-art{ transform:scale(1.05); }
-  /* $P!GE0NS' own art still crops best a little below the very top (avoids
-     the empty purple background above the character's head), and PHN!X/
-     TEDDY need a bit more of a shift down than the shared default — plain
-     top crops into PHN!X's crest/feathers above the actual face, and into
-     TEDDY's ears above its eyes. */
-  .mainframe-card[data-collection="pigeons"] .mainframe-card-art{ background-position:center 15%; }
-  .mainframe-card[data-collection="phnixs"] .mainframe-card-art{ background-position:center 30%; }
+  /* Per-collection crop offsets, tuned live against each card's actual
+     art so only the character's head shows (not the text logo above it
+     or the shoulders/body below) — same idea as $SEAL/$TEDDY below,
+     confirmed live as the reference "perfect" crop to match. */
+  .mainframe-card[data-collection="pigeons"] .mainframe-card-art{ background-position:center 40%; }
+  .mainframe-card[data-collection="phnixs"] .mainframe-card-art{ background-position:center 38%; }
   .mainframe-card-teddy .mainframe-card-art{ background-position:center 30%; }
   /* $SEAL's own art is a square image with the face sitting roughly
      mid-height (starry sky above it) — plain top crop showed almost
-     nothing but sky. */
+     nothing but sky. Confirmed live as the reference "perfect" crop. */
   .mainframe-card-seal .mainframe-card-art{ background-position:center 40%; }
+  .mainframe-card-fuzzy .mainframe-card-art{ background-position:center 45%; }
+  .mainframe-card-conspiracy .mainframe-card-art{ background-position:center 45%; }
   /* Cards are much shorter now (3x2 grid, not a full-height carousel
      card) — body padding/spacing tightened throughout so the art above
      it keeps a real, visible chunk of the card instead of getting
@@ -5642,14 +5643,14 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="mainframe-card-tag">C0M!NG S00N</div>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-soon" style="--card-accent:255,51,204; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
+        <div class="mainframe-card mainframe-card-soon mainframe-card-fuzzy" style="--card-accent:255,51,204; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$FUZZY</div>
             <div class="mainframe-card-tag">C0M!NG S00N</div>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-soon" style="--card-accent:168,50,255; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
+        <div class="mainframe-card mainframe-card-soon mainframe-card-conspiracy" style="--card-accent:168,50,255; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$C0NSP!RACY</div>
