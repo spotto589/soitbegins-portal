@@ -5629,32 +5629,45 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="mainframe-card-buy" data-collection="phnixs">BUY $PHN!X</button>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-soon mainframe-card-teddy" style="--card-accent:47,158,68; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
+        <!-- TEDDY/SEAL/FUZZY/C0NSP!RACY now have real tokens (see
+             TRADEABLE_COLLECTIONS in _shared.js) so BUY works via the same
+             openBuySwapPanel popup PIGEONS/PHNIX use — mainframe-card-soon
+             dropped (no longer "coming soon") since it dimmed the whole
+             card AND greyed the tag text. No real NFT issuer/taxon exists
+             for any of these four yet though, so the card root itself
+             stays non-clickable (no data-collection/role="button") — only
+             the BUY button is live, same as before. -->
+        <div class="mainframe-card mainframe-card-teddy" style="--card-accent:47,158,68; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$TEDDY</div>
-            <div class="mainframe-card-tag">C0M!NG S00N</div>
+            <div class="mainframe-card-stats" id="mainframeStatsTeddybg"></div>
+            <div class="mainframe-card-tag">TRAD!NG L!VE</div>
+            <button type="button" class="mainframe-card-buy" data-collection="teddybg">BUY $TEDDY</button>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-soon mainframe-card-seal" style="--card-accent:61,178,243; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
+        <div class="mainframe-card mainframe-card-seal" style="--card-accent:61,178,243; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$SEAL</div>
-            <div class="mainframe-card-tag">C0M!NG S00N</div>
+            <div class="mainframe-card-tag">TRAD!NG L!VE</div>
+            <button type="button" class="mainframe-card-buy" data-collection="seal">BUY $SEAL</button>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-soon mainframe-card-fuzzy" style="--card-accent:255,51,204; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
+        <div class="mainframe-card mainframe-card-fuzzy" style="--card-accent:255,51,204; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$FUZZY</div>
-            <div class="mainframe-card-tag">C0M!NG S00N</div>
+            <div class="mainframe-card-tag">TRAD!NG L!VE</div>
+            <button type="button" class="mainframe-card-buy" data-collection="fuzzy">BUY $FUZZY</button>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-soon mainframe-card-conspiracy" style="--card-accent:168,50,255; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
+        <div class="mainframe-card mainframe-card-conspiracy" style="--card-accent:168,50,255; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$C0NSP!RACY</div>
-            <div class="mainframe-card-tag">C0M!NG S00N</div>
+            <div class="mainframe-card-tag">TRAD!NG L!VE</div>
+            <button type="button" class="mainframe-card-buy" data-collection="conspiracy">BUY $CNS</button>
           </div>
         </div>
       </div>
@@ -7108,10 +7121,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   // collection without those hides that part of the banner entirely rather
   // than showing a broken/mislabeled calculator — same graceful-
   // degradation pattern TEDDY's browse-only mode already uses.
+  // SEAL/FUZZY/C0NSP!RACY/TEDDY: tradeable stays FALSE here deliberately —
+  // this flag gates DATABASE's own LIST/MAKE 0FFER/etc UI (see its own
+  // call sites), which needs a real NFT issuer/taxon behind it (none
+  // given for these four yet, see TRADEABLE_COLLECTIONS in _shared.js).
+  // tokenLabel/tokenIssuer are set anyway so the MAINFRAME BUY-with-XRP
+  // popup (openBuySwapPanel — reads only those two fields, never
+  // .tradeable) works correctly for all four.
   var COLLECTION_META = {
     pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true },
     phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: false },
-    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: null, hasAmm: false }
+    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: false },
+    seal: { label: 'SEAL', itemLabel: 'SEAL', tradeable: false, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', hasAmm: false },
+    fuzzy: { label: 'FUZZY', itemLabel: 'FUZZY', tradeable: false, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: false },
+    conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: false }
   };
 
   var el = {};
@@ -7121,7 +7144,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
-   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
+   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
@@ -13161,7 +13184,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // instant you land back on it (STAT!C :: MA!NFRAME, top-left).
   [
     { collection: 'pigeons', target: 'mainframeStatsPigeons' },
-    { collection: 'phnixs', target: 'mainframeStatsPhnixs' }
+    { collection: 'phnixs', target: 'mainframeStatsPhnixs' },
+    // SEAL/FUZZY/C0NSP!RACY get no stats fetch — no real Deeptide shop
+    // slug exists for any of them yet (see COLLECTIONS in pigeons.js), so
+    // items/holders/volume would just read null/wrong. TEDDY does have a
+    // real shopSlug ('teddybg'), so it gets the real numbers same as the
+    // other two.
+    { collection: 'teddybg', target: 'mainframeStatsTeddybg' }
   ].forEach(function(cfg){
     api({ stats: 1, collection: cfg.collection }).then(function(data){
       if (data.items == null && data.holders == null && data.totalVolumeXrp == null) return;

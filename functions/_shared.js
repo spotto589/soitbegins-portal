@@ -391,14 +391,52 @@ export const TRADEABLE_COLLECTIONS = {
     deeptideShopSlug: 'phnixs',
     tradeable: true
   },
+  // TEDDY/SEAL/FUZZY/C0NSP!RACY — token currency/issuer only (no real NFT
+  // issuer/taxon given for any of these yet, unlike PIGEONS/PHNIX above),
+  // so nftIssuer/nftTaxon stay null and findAllCollectionNfts correctly
+  // matches nothing for them. That's fine: getTradeConfig/tokenConfig is
+  // all the BUY-with-XRP swap (quotePigeonsForXrpDrops/buildBuySwapTxjson)
+  // actually needs — full NFT listing/offer trading for these stays
+  // disabled until a real collection issuer/taxon is provided. No
+  // deeptideShopSlug for seal/fuzzy/conspiracy — no real Deeptide shop
+  // slug confirmed for them, so MAINFRAME shows no items/holders/volume
+  // stats for these three (see the stats fetch loop in static.js, which
+  // only fetches for collections it has real browse data for).
   teddybg: {
     key: 'teddybg',
     label: 'TEDDY',
     nftIssuer: null,
     nftTaxon: null,
-    tokenConfig: null,
+    tokenConfig: { currency: 'Teddy', issuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', configured: true },
     deeptideShopSlug: 'teddybg',
-    tradeable: false
+    tradeable: true
+  },
+  seal: {
+    key: 'seal',
+    label: 'SEAL',
+    nftIssuer: null,
+    nftTaxon: null,
+    tokenConfig: { currency: 'SEAL', issuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', configured: true },
+    deeptideShopSlug: null,
+    tradeable: true
+  },
+  fuzzy: {
+    key: 'fuzzy',
+    label: 'FUZZY',
+    nftIssuer: null,
+    nftTaxon: null,
+    tokenConfig: { currency: 'FUZZY', issuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', configured: true },
+    deeptideShopSlug: null,
+    tradeable: true
+  },
+  conspiracy: {
+    key: 'conspiracy',
+    label: 'C0NSP!RACY',
+    nftIssuer: null,
+    nftTaxon: null,
+    tokenConfig: { currency: 'CNS', issuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', configured: true },
+    deeptideShopSlug: null,
+    tradeable: true
   }
 };
 

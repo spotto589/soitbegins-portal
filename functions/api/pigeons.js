@@ -61,7 +61,21 @@ const COLLECTIONS = {
   // own key so scyllaListingsMap/pigeonsSalesMap below read PHNIX's own
   // namespaced KV data, not Pigeons'.
   phnixs: { key: 'phnixs', shopSlug: 'phnixs', vanitySlug: 'phnixs', xrpCafeUrl: 'https://xrp.cafe/collection/phnixs', sizeApprox: 1588, tradeable: true },
-  teddybg: { key: 'teddybg', shopSlug: 'teddybg', vanitySlug: 'teddybg', xrpCafeUrl: 'https://xrp.cafe/collection/teddybg', sizeApprox: 2600, tradeable: false }
+  // TEDDY now has a real token (see TRADEABLE_COLLECTIONS.teddybg in
+  // _shared.js) so BUY $TEDDY works — tradeable:true here too, so its
+  // scyllaListingsMap/pigeonsSalesMap KV reads use TEDDY's own namespaced
+  // keys, same as every other tradeable collection above.
+  teddybg: { key: 'teddybg', shopSlug: 'teddybg', vanitySlug: 'teddybg', xrpCafeUrl: 'https://xrp.cafe/collection/teddybg', sizeApprox: 2600, tradeable: true },
+  // SEAL/FUZZY/C0NSP!RACY — token-only entries (see TRADEABLE_COLLECTIONS
+  // in _shared.js), added here specifically so resolveCollection() below
+  // doesn't silently fall back to $PIGEONS for these collection keys and
+  // quote/prepare a Pigeons-denominated swap by mistake. No real Deeptide
+  // shop slug for any of these yet, so shopSlug/vanitySlug/xrpCafeUrl/
+  // sizeApprox stay null — nothing that needs them (browse/traits/stats)
+  // is ever called for these three, only the BUY-with-XRP swap endpoints.
+  seal: { key: 'seal', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: null, tradeable: true },
+  fuzzy: { key: 'fuzzy', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: null, tradeable: true },
+  conspiracy: { key: 'conspiracy', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: null, tradeable: true }
 };
 function resolveCollection(params) {
   const key = params.get('collection');
