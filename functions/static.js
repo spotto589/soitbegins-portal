@@ -1089,10 +1089,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sale-row{
     display:flex;
     align-items:center;
-    gap:1rem;
-    padding:1rem 0.6rem;
+    gap:1.1rem;
+    padding:1.1rem 0.6rem;
     border-bottom:1px solid var(--border-dim);
-    font-size:14px;
+    font-size:16px;
     letter-spacing:0.03em;
     flex-wrap:wrap;
     cursor:pointer;
@@ -1100,13 +1100,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .sale-row:hover{ background:var(--cyan-faint); }
   .sale-row:last-child{ border-bottom:none; }
-  .sale-thumb-wrap{ display:flex; flex-direction:column; align-items:center; gap:0.4rem; flex:0 0 auto; }
+  /* Number sits beside the thumbnail now, not stacked above it — reported
+     live as wanting the pigeon number to "go horizontally as well". */
+  .sale-thumb-wrap{ display:flex; flex-direction:row; align-items:center; gap:0.6rem; flex:0 0 auto; }
   .sale-num-box{
-    font-size:13px;
+    font-size:16px;
     letter-spacing:0.05em;
     color:var(--white);
     border:1px solid var(--border-mid);
-    padding:0.3em 0.6em;
+    padding:0.35em 0.7em;
     white-space:nowrap;
     border-radius:var(--radius);
   }
@@ -1114,13 +1116,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
   /* Horizontal, not stacked — reported live as wanting "the details go
      horizontally" instead of price/parties/time each on their own line. */
-  .sale-info{ flex:1 1 320px; display:flex; flex-direction:row; flex-wrap:wrap; align-items:baseline; gap:0.4rem 1.25rem; }
-  .sale-price{ font-family:var(--font-display); font-size:20px; font-weight:700; color:var(--green); }
-  .sale-via{ font-family:var(--font-body); font-size:12px; letter-spacing:0.08em; color:var(--white); text-transform:uppercase; }
-  .sale-parties{ font-family:var(--font-body); font-size:15px; color:var(--white); text-transform:none; }
+  .sale-info{ flex:1 1 320px; display:flex; flex-direction:row; flex-wrap:wrap; align-items:baseline; gap:0.5rem 1.5rem; }
+  .sale-price{ font-family:var(--font-display); font-size:24px; font-weight:700; color:var(--green); }
+  .sale-via{ font-family:var(--font-body); font-size:14px; letter-spacing:0.08em; color:var(--white); text-transform:uppercase; }
+  .sale-parties{ font-family:var(--font-body); font-size:18px; color:var(--white); text-transform:none; }
   .sale-parties a{ color:var(--white); text-decoration:underline; cursor:pointer; }
   .sale-parties a:hover{ color:var(--cyan); }
-  .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:12px; }
+  .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:15px; }
 
   /* ---- target node header (owner-scope) — SCYLLA / MAGENTA system ---- */
   .node-eyebrow{
@@ -12176,6 +12178,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
 
   // ---- Sales history (real, collection-wide, infinite scroll) ----
+  // "How long ago" instead of a plain date/time stamp — reported live as
+  // wanting it in hours, then switching to weeks once it's old enough
+  // that an hour count stops being a useful glance at "how recent".
+  function relativeTimeText(dateStr){
+    var ms = Date.now() - new Date(dateStr).getTime();
+    if (!isFinite(ms) || ms < 0) ms = 0;
+    var hours = Math.floor(ms / 3600000);
+    if (hours < 1) return 'JUST N0W';
+    if (hours < 24 * 7) return hours + ' H0UR' + (hours === 1 ? '' : 'S') + ' AG0';
+    var weeks = Math.floor(hours / (24 * 7));
+    return weeks + ' WEEK' + (weeks === 1 ? '' : 'S') + ' AG0';
+  }
   function saleRowHtml(s){
     var thumb = s.image ? '<img src="' + escapeHtml(s.image) + '" alt="" loading="lazy">' : '';
     var num = s.number !== null ? '#' + greenNum(s.number) : '#????';
@@ -12183,7 +12197,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? (s.pigeonsPrice !== null && s.pigeonsPrice !== undefined ? s.pigeonsPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS' : '?')
       : (s.priceXrp !== null ? s.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?');
     var via = s.via === 'scylla' ? 'Σ SWAP' : (s.via === 'xrpcafe' ? 'XRP.CAFE' : (s.via === 'deeptide' ? 'DEEPT!DE' : ''));
-    var when = s.createdAt ? new Date(s.createdAt).toLocaleString() : '';
+    var when = s.createdAt ? relativeTimeText(s.createdAt) : '';
     return '<div class="sale-row" data-nftid="' + escapeHtml(s.nftId) + '">' +
       '<div class="sale-thumb-wrap">' +
         '<div class="sale-num-box" data-nftid="' + escapeHtml(s.nftId) + '">P!GE0N ' + num + '</div>' +
