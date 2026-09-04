@@ -7720,7 +7720,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (targetPigeon){
       el.targetPigeonCard.style.display = '';
       el.targetPigeonImg.innerHTML = targetPigeon.image ? '<img src="' + escapeHtml(targetPigeon.image) + '" alt="">' : 'IMAGE';
-      el.targetPigeonNum.innerHTML = targetPigeon.number !== null ? 'P!GE0N #' + greenNum(targetPigeon.number) : 'P!GE0N ...';
+      el.targetPigeonNum.innerHTML = targetPigeon.number !== null ? collectionItemLabel() + ' #' +greenNum(targetPigeon.number) : collectionItemLabel() + ' ...';
       el.targetPigeonOwner.textContent = state.scope.ownerShort;
     } else {
       el.targetPigeonCard.style.display = 'none';
@@ -8222,7 +8222,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (p && p.number !== null){
         el.amountEntryOfferPigeonImg.src = p.image || '';
         el.amountEntryOfferPigeonImg.style.display = p.image ? '' : 'none';
-        el.amountEntryOfferPigeonNum.innerHTML = 'P!GE0N #' + greenNum(p.number);
+        el.amountEntryOfferPigeonNum.innerHTML = collectionItemLabel() + ' #' +greenNum(p.number);
         el.amountEntryOfferPigeonRow.style.display = '';
       } else {
         el.amountEntryOfferPigeonRow.style.display = 'none';
@@ -10097,7 +10097,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // openAmountEntryModal) — close it here, the moment the full LISTED
     // result screen takes over, rather than leaving it sitting on top.
     closeAmountEntryModal();
-    el.listResultPigeonNum.innerHTML = 'P!GE0N #' + (listingTarget.number !== null ? greenNum(listingTarget.number) : '????');
+    el.listResultPigeonNum.innerHTML = collectionItemLabel() + ' #' +(listingTarget.number !== null ? greenNum(listingTarget.number) : '????');
     // Compact (123M), same as BUY N0W/the own-listing readouts elsewhere —
     // this is the one big number on the receipt, not a small field value,
     // so it gets the same treatment as everywhere else a price needs to
@@ -10156,7 +10156,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     buyTarget = p;
-    el.buyConfPigeon.innerHTML = 'P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????');
+    el.buyConfPigeon.innerHTML = collectionItemLabel() + ' #' +(p.number !== null ? greenNum(p.number) : '????');
     el.buyConfSeller.textContent = '';
     el.buyConfPrice.textContent = '';
     el.buyConfirmStatus.textContent = 'REQUEST!NG...';
@@ -10792,7 +10792,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showBuyResult(data){
-    el.buyResultPigeonNum.innerHTML = 'P!GE0N #' + (buyTarget.number !== null ? greenNum(buyTarget.number) : '????');
+    el.buyResultPigeonNum.innerHTML = collectionItemLabel() + ' #' +(buyTarget.number !== null ? greenNum(buyTarget.number) : '????');
     el.buyResultPrice.textContent = el.buyConfPrice.textContent;
     el.buyResultStatus.textContent = 'SETTLED';
     if (data.txHash){
@@ -10828,7 +10828,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // from the CANCEL button's own click handler.
   function openDelistConfirm(p){
     delistTarget = p;
-    el.delistConfPigeon.innerHTML = 'P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????');
+    el.delistConfPigeon.innerHTML = collectionItemLabel() + ' #' +(p.number !== null ? greenNum(p.number) : '????');
     el.delistConfirmStatus.textContent = 'REQUEST!NG...';
     setWaitingPulse(el.delistConfirmStatus, true);
     el.screenDelistResult.style.display = 'none';
@@ -10911,7 +10911,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showDelistResult(data){
-    el.delistResultPigeonNum.innerHTML = 'P!GE0N #' + (delistTarget.number !== null ? greenNum(delistTarget.number) : '????') + ' WAS DEL!STED.';
+    el.delistResultPigeonNum.innerHTML = collectionItemLabel() + ' #' +(delistTarget.number !== null ? greenNum(delistTarget.number) : '????') + ' WAS DEL!STED.';
     // Wallet activity, not the raw tx hash — MY_WALLET is the seller who
     // just delisted, same account this whole flow ran as.
     if (MY_WALLET) el.delistResultWalletLink.href = 'https://bithomp.com/explorer/' + MY_WALLET;
@@ -11054,7 +11054,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // not shown anywhere in this form itself any more (see the redesign
     // that dropped the 0WNED BY line).
     offerTarget.recipientWallet = txjson.Owner;
-    el.offerConfPigeonNum.innerHTML = 'P!GE0N #' + (offerTarget.number !== null ? greenNum(offerTarget.number) : '????');
+    el.offerConfPigeonNum.innerHTML = collectionItemLabel() + ' #' +(offerTarget.number !== null ? greenNum(offerTarget.number) : '????');
     el.offerConfPigeonImg.src = offerTarget.image || '';
     el.offerConfPigeonImg.style.display = offerTarget.image ? '' : 'none';
     el.offerConfValue.textContent = fmtPigeons(txjson.Amount.value);
@@ -11171,7 +11171,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Same popup, not a screen navigation — swap to the receipt sub-state
     // in place (offerTarget stays set, still needs .number below).
     offerTarget.offerId = data.offerId;
-    el.offerReceiptPigeonNum.innerHTML = 'P!GE0N #' + (offerTarget.number !== null ? greenNum(offerTarget.number) : '????');
+    el.offerReceiptPigeonNum.innerHTML = collectionItemLabel() + ' #' +(offerTarget.number !== null ? greenNum(offerTarget.number) : '????');
     el.offerReceiptPrice.textContent = fmtPigeons(data.price);
     if (data.txHash){
       el.offerResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
@@ -11382,7 +11382,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // from the client) doesn't need to be spelled out on screen for that
     // to be true.
     el.transferConfAccount.textContent = txjson.Account;
-    el.transferConfPigeonNum.innerHTML = 'P!GE0N #' + (transferTarget.number !== null ? greenNum(transferTarget.number) : '????');
+    el.transferConfPigeonNum.innerHTML = collectionItemLabel() + ' #' +(transferTarget.number !== null ? greenNum(transferTarget.number) : '????');
     el.transferConfDestination.textContent = txjson.Destination;
     el.transferConfirmStatus.textContent = '';
     el.transferOpenXamanBtn.disabled = false;
@@ -11472,7 +11472,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // which also clears it) since this still needs .number/.toWallet
     // below.
     el.transferConfirmModal.style.display = 'none';
-    el.transferResultPigeonNum.innerHTML = 'P!GE0N #' + (transferTarget.number !== null ? greenNum(transferTarget.number) : '????');
+    el.transferResultPigeonNum.innerHTML = collectionItemLabel() + ' #' +(transferTarget.number !== null ? greenNum(transferTarget.number) : '????');
     el.transferResultDestination.textContent = transferTarget.toWallet;
     if (data.txHash){
       el.transferResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
@@ -11787,7 +11787,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   function openAcceptTransferConfirm(entry){
     acceptTransferTarget = entry;
-    el.acceptTransferConfPigeonNum.innerHTML = 'P!GE0N #' + (entry.number !== null ? greenNum(entry.number) : '????');
+    el.acceptTransferConfPigeonNum.innerHTML = collectionItemLabel() + ' #' +(entry.number !== null ? greenNum(entry.number) : '????');
     el.acceptTransferConfFrom.textContent = entry.fromWallet;
     el.acceptTransferConfirmStatus.textContent = '';
     el.acceptTransferOpenXamanBtn.disabled = false;
@@ -11878,7 +11878,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // so there's no separate result screen to navigate to.
   function showAcceptTransferResult(){
     var num = acceptTransferTarget && acceptTransferTarget.number !== null ? greenNum(acceptTransferTarget.number) : '????';
-    el.acceptTransferReceiptPigeonNum.innerHTML = 'P!GE0N #' + num;
+    el.acceptTransferReceiptPigeonNum.innerHTML = collectionItemLabel() + ' #' +num;
     el.acceptTransferConfirmForm.style.display = 'none';
     el.acceptTransferConfirmReceipt.style.display = '';
   }
@@ -11917,7 +11917,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // thumb treatment the L!ST/0FFER/TRANSFER popup already shows.
     el.acceptOfferConfThumb.style.display = acceptOfferTarget.image ? '' : 'none';
     el.acceptOfferConfThumb.src = acceptOfferTarget.image || '';
-    el.acceptOfferConfPigeon.innerHTML = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
+    el.acceptOfferConfPigeon.innerHTML = collectionItemLabel() + ' ' +(acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
     setWalletText(el.acceptOfferConfBuyer, acceptOfferTarget.buyer, shortAddr(acceptOfferTarget.buyer));
     el.acceptOfferConfPrice.textContent = acceptOfferTarget.price ? fmtPigeons(acceptOfferTarget.price) : '';
     el.acceptOfferConfFee.textContent = '';
@@ -12019,7 +12019,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function showAcceptOfferResult(data){
     el.acceptOfferResultThumb.style.display = acceptOfferTarget.image ? '' : 'none';
     el.acceptOfferResultThumb.src = acceptOfferTarget.image || '';
-    el.acceptOfferResultPigeonNum.innerHTML = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
+    el.acceptOfferResultPigeonNum.innerHTML = collectionItemLabel() + ' ' +(acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
     el.acceptOfferResultPrice.textContent = fmtPigeons(data.totalValue !== undefined ? data.totalValue : acceptOfferTarget.price);
     el.acceptOfferResultFee.textContent = data.feeValue !== undefined ? fmtPigeons(data.feeValue) : '—';
     showRoyaltyRow(el.acceptOfferResultRoyaltyRow, el.acceptOfferResultRoyaltyLabel, el.acceptOfferResultRoyalty, data.royaltyValue, data.royaltyPercent);
@@ -13067,7 +13067,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function openDetail(nftId){
     scrollBeforeDetail = window.scrollY;
     var known = findKnown(nftId);
-    el.detailNum.innerHTML = known && known.number !== null ? 'P!GE0N #' + greenNum(known.number) : 'P!GE0N ...';
+    el.detailNum.innerHTML = known && known.number !== null ? collectionItemLabel() + ' #' +greenNum(known.number) : collectionItemLabel() + ' ...';
     el.detailImgBox.innerHTML = known && known.image ? '<img src="' + escapeHtml(known.image) + '" alt="">' : 'IMAGE';
     // Keep the fullscreen lightbox's own picture in sync when PREV/NEXT is
     // used from inside it (see navigateDetail's lightbox branch below) —
@@ -13101,7 +13101,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       var p = data.item;
       state.currentDetail = p;
-      el.detailNum.innerHTML = p.number !== null ? 'P!GE0N #' + greenNum(p.number) : 'P!GE0N ...';
+      el.detailNum.innerHTML = p.number !== null ? collectionItemLabel() + ' #' +greenNum(p.number) : collectionItemLabel() + ' ...';
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : 'IMAGE';
       el.detailTraits.innerHTML = sortTraitsByRarity(p.attributes).map(traitCellHtml).join('');
       updateDetailRarity(p);
