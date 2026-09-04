@@ -12113,12 +12113,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     document.body.classList.remove('collection-phnixs', 'collection-teddybg');
     if (!meta.tradeable) document.body.classList.add('collection-' + newCollection);
     document.body.classList.toggle('collection-browse-only', !meta.tradeable);
-    // FL00R $P!GE0NS (real Scylla listings sorted by real price) is a
-    // $PIGEONS-only concept — no listings exist for a browse-only
-    // collection at all. Falls back to plain rarity; restored on the way
-    // back to P!GE0NS so its own landing experience is unchanged.
-    state.sort = meta.tradeable ? 'SCYLLA_PRICE_ASC' : 'RARITY_ASC';
-    state.scyllaListedOnly = meta.tradeable;
+    // FL00R (real Scylla listings sorted by real price) only makes sense
+    // as the DEFAULT landing view for P!GE0NS specifically — it has an
+    // established market with real listings to actually show. A newly
+    // tradeable collection (PHN!X today, more later) starts with zero real
+    // listings, so defaulting to "0NLY SH0W L!STED" the same way showed a
+    // completely empty grid — reported live as "the collection has
+    // completely gone" when it hadn't, the default filter was just too
+    // narrow for a market with nothing listed yet. Every OTHER tradeable
+    // collection defaults to plain rarity browse instead (BUY N0W/0FFER
+    // still work per-card regardless) — the L!STED stat tile is still
+    // right there to opt into once it actually has real listings.
+    state.sort = (meta.tradeable && newCollection === 'pigeons') ? 'SCYLLA_PRICE_ASC' : 'RARITY_ASC';
+    state.scyllaListedOnly = meta.tradeable && newCollection === 'pigeons';
     el.statScyllaListedTile.classList.toggle('scylla-active', state.scyllaListedOnly);
     state.edition = 'ALL';
     state.traitFilters = [];
