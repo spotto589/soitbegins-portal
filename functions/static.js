@@ -9307,7 +9307,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   // exists (and still works) purely because it's what openTraitsFlyout's
   // whole cats/vals/back-button machinery already targets; no reason to
   // rewire all of that just because the clickable label itself moved.
-  el.bottomTraitsBtn.addEventListener('click', function(){
+  el.bottomTraitsBtn.addEventListener('click', function(e){
+    // Without this, the click that just opened the popup keeps bubbling
+    // after this handler returns, reaches the document-level outside-
+    // click closer further down, and — since bottomTraitsBtn's own
+    // composedPath never includes traitsHoverWrap/traitsFlyout, it lives
+    // in a completely different part of the DOM — that closer reads it as
+    // an outside click and immediately closes what was just opened, all
+    // within the same click. Confirmed live: the popup would flash open
+    // and instantly shut.
+    e.stopPropagation();
     el.bottomTraitsBtn.classList.toggle('open', el.traitsFlyout.style.display !== 'block');
     el.traitsHoverLabel.click();
   });
@@ -13100,8 +13109,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.sortFlyoutClose.addEventListener('click', closeSortFlyout);
   // Real, visible trigger — see bottomTraitsBtn's own comment above for
-  // why el.sortDropLabel itself stays as the thing actually clicked.
-  el.bottomSortBtn.addEventListener('click', function(){
+  // why el.sortDropLabel itself stays as the thing actually clicked, and
+  // why stopPropagation() here is load-bearing, not defensive.
+  el.bottomSortBtn.addEventListener('click', function(e){
+    e.stopPropagation();
     el.bottomSortBtn.classList.toggle('open', el.sortFlyout.style.display !== 'block');
     el.sortDropLabel.click();
   });
