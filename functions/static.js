@@ -2848,6 +2848,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   .highest-offer-decline{ border:1px solid var(--red); color:var(--red); }
   .highest-offer-decline:hover{ background:var(--red); color:#000; }
   .highest-offer-counter{ border:1px solid var(--border-dim); color:var(--grey-dim); opacity:0.5; cursor:not-allowed; }
+  /* An offer YOU placed sitting on a Pigeon YOU own (self-testing leftover,
+     or a mixed-up offer) — the server always refuses to ACCEPT this one
+     (cannot_accept_own_offer), so it gets its own box instead of the
+     ACCEPT/DECLINE/COUNTER trio, with just a way to take it back off. */
+  .own-offer-box{
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    background:var(--panel-bg-solid);
+    padding:0.9rem 0.8rem;
+    text-align:center;
+  }
+  .own-offer-label{ font-size:11px; letter-spacing:0.14em; color:var(--grey); text-transform:uppercase; }
+  .own-offer-price{ font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--white); margin:0.25rem 0 0.7rem; }
+  .own-offer-remove{ border:1px solid var(--red); color:var(--red); }
+  .own-offer-remove:hover{ background:var(--red); color:#000; }
   /* 0FFERS RECE!VED (renderMyOffersList) — one horizontal row per listed
      Pigeon with a real offer: thumbnail, number/buyer, price, then the
      same ACCEPT/DECL!NE/C0UNTER trio the card's own highest-offer box
@@ -8181,6 +8196,22 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (el.myOffersPanelWrap.style.display !== 'none') renderMyOffersList();
         return;
       }
+      // Y0UR 0WN 0FFER 0N TH!S P!GE0N's own box (myPigeonOffersHtml/
+      // renderMyOffersList) — reuses OUTGOING OFFERS' exact same real
+      // on-ledger cancel flow (cancelOfferTarget/startCancelOfferSign),
+      // just triggered from a different container.
+      var removeSelfOfferBtn = e.target.closest('.remove-self-offer-btn');
+      if (removeSelfOfferBtn){
+        cancelOfferTarget = {
+          nftId: removeSelfOfferBtn.getAttribute('data-nftid'),
+          offerId: removeSelfOfferBtn.getAttribute('data-offerid'),
+          number: removeSelfOfferBtn.getAttribute('data-num') !== '' ? Number(removeSelfOfferBtn.getAttribute('data-num')) : null,
+          image: removeSelfOfferBtn.getAttribute('data-image'),
+          price: removeSelfOfferBtn.getAttribute('data-price')
+        };
+        startCancelOfferSign(removeSelfOfferBtn);
+        return;
+      }
     });
     // No more inline MAKE AN OFFER/LIST PRICE inputs living directly on a
     // card (see openAmountEntryModal) — their own Enter-to-submit and
@@ -9010,21 +9041,42 @@ const SWAP_HTML = `<!DOCTYPE html>
   // exist on-ledger and still count toward the tab's own "N 0FFERS"
   // badge — this just surfaces the one actually worth acting on.
   function myPigeonOffersHtml(p, offers){
-    var real = offers.filter(function(o){ return !declinedOfferIds[o.offerId]; });
-    if (!real.length) return '';
-    var top = real.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
-    return '<div class="my-pigeon-offers">' +
-      '<div class="highest-offer-box">' +
-        '<div class="highest-offer-label">H!GHEST 0FFER</div>' +
-        '<div class="highest-offer-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + '</div>' +
-        '<div class="highest-offer-buyer">FR0M ' + escapeHtml(top.buyerShort || top.buyer) + '</div>' +
-        '<div class="highest-offer-actions">' +
-          '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '">ACCEPT</button>' +
-          '<button class="highest-offer-btn highest-offer-decline decline-offer-btn" data-offerid="' + escapeHtml(top.offerId) + '">DECL!NE</button>' +
-          '<button class="highest-offer-btn highest-offer-counter" disabled title="C0M!NG S00N">C0UNTER</button>' +
+    // Split off any offer THIS wallet placed on this very Pigeon — never
+    // acceptable server-side (cannot_accept_own_offer, see
+    // swap-acceptoffer-payload.js), so it never belongs in the real
+    // ACCEPT/DECLINE box below. Gets its own box instead (see .own-offer-box),
+    // reusing the exact same real on-ledger cancel flow OUTGOING OFFERS
+    // already uses (startCancelOfferSign/cancelOfferTarget) via the
+    // .remove-self-offer-btn branch in wireResultClicks.
+    var real = offers.filter(function(o){ return !declinedOfferIds[o.offerId] && o.buyer !== MY_WALLET; });
+    var mine = offers.filter(function(o){ return !declinedOfferIds[o.offerId] && o.buyer === MY_WALLET; });
+    var html = '';
+    if (real.length){
+      var top = real.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
+      html += '<div class="my-pigeon-offers">' +
+        '<div class="highest-offer-box">' +
+          '<div class="highest-offer-label">H!GHEST 0FFER</div>' +
+          '<div class="highest-offer-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + '</div>' +
+          '<div class="highest-offer-buyer">FR0M ' + escapeHtml(top.buyerShort || top.buyer) + '</div>' +
+          '<div class="highest-offer-actions">' +
+            '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '">ACCEPT</button>' +
+            '<button class="highest-offer-btn highest-offer-decline decline-offer-btn" data-offerid="' + escapeHtml(top.offerId) + '">DECL!NE</button>' +
+            '<button class="highest-offer-btn highest-offer-counter" disabled title="C0M!NG S00N">C0UNTER</button>' +
+          '</div>' +
         '</div>' +
-      '</div>' +
-    '</div>';
+      '</div>';
+    }
+    if (mine.length){
+      var own = mine.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
+      html += '<div class="my-pigeon-offers">' +
+        '<div class="own-offer-box">' +
+          '<div class="own-offer-label">Y0UR 0WN 0FFER 0N TH!S P!GE0N</div>' +
+          '<div class="own-offer-price">' + escapeHtml(fmtPigeonsCompact(own.price)) + '</div>' +
+          '<button class="highest-offer-btn own-offer-remove remove-self-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(own.offerId) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '" data-price="' + escapeHtml(own.price) + '">REM0VE 0FFER</button>' +
+        '</div>' +
+      '</div>';
+    }
+    return html;
   }
   // The LIST/DELIST/OFFERS-RECEIVED box for a pigeon YOU own — shared by
   // myPigeonCardHtml (MY PIGEONS tab) and pigeonsActionBoxHtml (DATABASE,
@@ -9070,17 +9122,27 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     var rows = offersReceivedData.map(function(item){
-      var real = item.offers.filter(function(o){ return !declinedOfferIds[o.offerId]; });
+      var real = item.offers.filter(function(o){ return !declinedOfferIds[o.offerId] && o.buyer !== MY_WALLET; });
       if (!real.length) return null;
       var top = real.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
       var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
       return { item: item, top: top, img: img };
     }).filter(Boolean);
-    if (!rows.length){
+    // Same split as myPigeonOffersHtml — an offer THIS wallet placed on its
+    // own Pigeon can never be ACCEPTed, so it never belongs mixed in with
+    // rows above; gets its own labeled block below with just REM0VE.
+    var ownRows = offersReceivedData.map(function(item){
+      var mine = item.offers.filter(function(o){ return !declinedOfferIds[o.offerId] && o.buyer === MY_WALLET; });
+      if (!mine.length) return null;
+      var own = mine.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
+      var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
+      return { item: item, own: own, img: img };
+    }).filter(Boolean);
+    if (!rows.length && !ownRows.length){
       el.myOffersList.innerHTML = '<div class="th-empty">N0 0FFERS RECE!VED R!GHT N0W.</div>';
       return;
     }
-    el.myOffersList.innerHTML = rows.map(function(row){
+    var html = rows.length ? rows.map(function(row){
       var item = row.item, top = row.top;
       return '<div class="my-offer-row">' +
         '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + row.img + '</div>' +
@@ -9095,7 +9157,25 @@ const SWAP_HTML = `<!DOCTYPE html>
           '<button class="highest-offer-btn highest-offer-counter" disabled title="C0M!NG S00N">C0UNTER</button>' +
         '</div>' +
       '</div>';
-    }).join('');
+    }).join('') : '<div class="th-empty">N0 0FFERS RECE!VED R!GHT N0W.</div>';
+    if (ownRows.length){
+      html += '<div class="panel-title outgoing-offers-title">Y0UR 0WN 0FFERS</div>' +
+        ownRows.map(function(row){
+          var item = row.item, own = row.own;
+          return '<div class="my-offer-row">' +
+            '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + row.img + '</div>' +
+            '<div class="my-offer-row-info">' +
+              '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
+              '<div class="my-offer-row-buyer">Y0U 0FFERED 0N Y0UR 0WN P!GE0N</div>' +
+            '</div>' +
+            '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(own.price)) + '</div>' +
+            '<div class="my-offer-row-actions">' +
+              '<button class="highest-offer-btn own-offer-remove remove-self-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(own.offerId) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '" data-price="' + escapeHtml(own.price) + '">REM0VE 0FFER</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+    }
+    el.myOffersList.innerHTML = html;
   }
   // The actual pigeon grid for PλWS is the shared DATABASE view itself
   // (screenBrowse, scoped to your own wallet via browseOwnerCollection —
@@ -11375,6 +11455,21 @@ const SWAP_HTML = `<!DOCTYPE html>
           // answer" reasoning as DELIST's own success handling.
           outgoingOffersData = (outgoingOffersData || []).filter(function(it){ return it.nftId !== cancelOfferTarget.nftId; });
           renderOutgoingOffersList();
+          // Also drops it out of Y0UR 0WN 0FFERS (see the
+          // .remove-self-offer-btn branch in wireResultClicks, the other
+          // way this function gets triggered) and refreshes whichever
+          // views could be showing it — same reasoning as DECL!NE's own
+          // refresh above.
+          if (offersReceivedData){
+            offersReceivedData.forEach(function(it){
+              if (it.nftId === cancelOfferTarget.nftId){
+                it.offers = it.offers.filter(function(o){ return o.offerId !== cancelOfferTarget.offerId; });
+              }
+            });
+          }
+          if (el.myOffersPanelWrap.style.display !== 'none') renderMyOffersList();
+          if (isOwnWalletScope()) runScopedQuery();
+          if (el.screenDetail.style.display !== 'none') updateScyllaListing(state.currentDetail);
           cancelOfferTarget = null;
           return;
         }
