@@ -1080,29 +1080,37 @@ const SWAP_HTML = `<!DOCTYPE html>
     max-height:820px;
     overflow-y:auto;
   }
-  /* Reported live as wanting sales history bigger/bolder at first, then
-     "a little bit smaller" once seen — settled here in between the
-     original compact row and that first bigger pass. The whole row opens
-     the real pigeon detail now (not just the thumbnail/number), reported
-     live as wanting a quick way into "the big detailed version" straight
-     from a sale. */
+  /* Grid, not flex-wrap — same reasoning as .th-row's own comment (T0P
+     123 H0LDERS): fixed columns are what actually keep every row's
+     THUMB/PR!CE/PART!ES/T!ME/NUMBER lined up under each other down the
+     whole list, which a wrapping flex row (the previous version) can't
+     guarantee once content lengths differ row to row. Reported live as
+     "doesn't look clean" / "make everything line up". Pigeon number is
+     its own column on the right now (the "other side" from the
+     thumbnail), not sitting next to the thumbnail any more. */
   .sale-row{
-    display:flex;
+    display:grid;
+    grid-template-columns:72px 170px 1fr 140px 108px;
     align-items:center;
-    gap:1.1rem;
+    gap:1rem;
     padding:1.1rem 0.6rem;
     border-bottom:1px solid var(--border-dim);
     font-size:16px;
     letter-spacing:0.03em;
-    flex-wrap:wrap;
     cursor:pointer;
     transition:background 0.15s ease;
   }
   .sale-row:hover{ background:var(--cyan-faint); }
   .sale-row:last-child{ border-bottom:none; }
-  /* Number sits beside the thumbnail now, not stacked above it — reported
-     live as wanting the pigeon number to "go horizontally as well". */
-  .sale-thumb-wrap{ display:flex; flex-direction:row; align-items:center; gap:0.6rem; flex:0 0 auto; }
+  .sale-thumb{ width:72px; height:72px; border:1px solid var(--border-dim); }
+  .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .sale-price-cell{ display:flex; flex-direction:column; gap:0.2rem; min-width:0; }
+  .sale-price{ font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--green); white-space:nowrap; }
+  .sale-via{ font-family:var(--font-body); font-size:13px; letter-spacing:0.08em; color:var(--white); text-transform:uppercase; }
+  .sale-parties{ font-family:var(--font-body); font-size:18px; color:var(--white); text-transform:none; min-width:0; overflow-wrap:anywhere; }
+  .sale-parties a{ color:var(--white); text-decoration:underline; cursor:pointer; }
+  .sale-parties a:hover{ color:var(--cyan); }
+  .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:15px; }
   .sale-num-box{
     font-size:16px;
     letter-spacing:0.05em;
@@ -1111,18 +1119,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.35em 0.7em;
     white-space:nowrap;
     border-radius:var(--radius);
+    text-align:center;
+    justify-self:end;
   }
-  .sale-thumb{ flex:0 0 auto; width:88px; height:88px; border:1px solid var(--border-dim); }
-  .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
-  /* Horizontal, not stacked — reported live as wanting "the details go
-     horizontally" instead of price/parties/time each on their own line. */
-  .sale-info{ flex:1 1 320px; display:flex; flex-direction:row; flex-wrap:wrap; align-items:baseline; gap:0.5rem 1.5rem; }
-  .sale-price{ font-family:var(--font-display); font-size:24px; font-weight:700; color:var(--green); }
-  .sale-via{ font-family:var(--font-body); font-size:14px; letter-spacing:0.08em; color:var(--white); text-transform:uppercase; }
-  .sale-parties{ font-family:var(--font-body); font-size:18px; color:var(--white); text-transform:none; }
-  .sale-parties a{ color:var(--white); text-decoration:underline; cursor:pointer; }
-  .sale-parties a:hover{ color:var(--cyan); }
-  .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:15px; }
+  @media (max-width:820px){
+    .sale-row{ grid-template-columns:64px 1fr; grid-template-areas:"thumb price" "thumb parties" "thumb time" "num num"; row-gap:0.4rem; }
+    .sale-thumb{ grid-area:thumb; width:64px; height:64px; }
+    .sale-price-cell{ grid-area:price; }
+    .sale-parties{ grid-area:parties; }
+    .sale-time{ grid-area:time; }
+    .sale-num-box{ grid-area:num; justify-self:start; margin-top:0.3rem; }
+  }
 
   /* ---- target node header (owner-scope) — SCYLLA / MAGENTA system ---- */
   .node-eyebrow{
@@ -12179,15 +12186,18 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   // ---- Sales history (real, collection-wide, infinite scroll) ----
   // "How long ago" instead of a plain date/time stamp — reported live as
-  // wanting it in hours, then switching to weeks once it's old enough
-  // that an hour count stops being a useful glance at "how recent".
+  // wanting it in hours under a day, then days once it's past 24 hours,
+  // then weeks once it's past 13 days (the coarser unit only kicking in
+  // once the finer one would otherwise show an unwieldy number).
   function relativeTimeText(dateStr){
     var ms = Date.now() - new Date(dateStr).getTime();
     if (!isFinite(ms) || ms < 0) ms = 0;
     var hours = Math.floor(ms / 3600000);
     if (hours < 1) return 'JUST N0W';
-    if (hours < 24 * 7) return hours + ' H0UR' + (hours === 1 ? '' : 'S') + ' AG0';
-    var weeks = Math.floor(hours / (24 * 7));
+    if (hours < 24) return hours + ' H0UR' + (hours === 1 ? '' : 'S') + ' AG0';
+    var days = Math.floor(hours / 24);
+    if (days <= 13) return days + ' DAY' + (days === 1 ? '' : 'S') + ' AG0';
+    var weeks = Math.floor(days / 7);
     return weeks + ' WEEK' + (weeks === 1 ? '' : 'S') + ' AG0';
   }
   function saleRowHtml(s){
@@ -12199,19 +12209,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     var via = s.via === 'scylla' ? 'Σ SWAP' : (s.via === 'xrpcafe' ? 'XRP.CAFE' : (s.via === 'deeptide' ? 'DEEPT!DE' : ''));
     var when = s.createdAt ? relativeTimeText(s.createdAt) : '';
     return '<div class="sale-row" data-nftid="' + escapeHtml(s.nftId) + '">' +
-      '<div class="sale-thumb-wrap">' +
-        '<div class="sale-num-box" data-nftid="' + escapeHtml(s.nftId) + '">P!GE0N ' + num + '</div>' +
-        '<div class="sale-thumb" data-nftid="' + escapeHtml(s.nftId) + '">' + thumb + '</div>' +
+      '<div class="sale-thumb" data-nftid="' + escapeHtml(s.nftId) + '">' + thumb + '</div>' +
+      '<div class="sale-price-cell">' +
+        '<div class="sale-price">' + price + '</div>' +
+        (via ? '<div class="sale-via">' + via + '</div>' : '') +
       '</div>' +
-      '<div class="sale-info">' +
-        '<div class="sale-price">' + price + (via ? ' <span class="sale-via">· ' + via + '</span>' : '') + '</div>' +
-        '<div class="sale-parties">' +
-          (s.seller ? '<a data-wallet="' + escapeHtml(s.seller) + '" data-short="' + escapeHtml(s.sellerShort || s.seller) + '">' + walletTagHtml(s.seller, s.sellerShort) + '</a>' : '?') +
-          ' → ' +
-          (s.buyer ? '<a data-wallet="' + escapeHtml(s.buyer) + '" data-short="' + escapeHtml(s.buyerShort || s.buyer) + '">' + walletTagHtml(s.buyer, s.buyerShort) + '</a>' : '?') +
-        '</div>' +
-        '<div class="sale-time">' + escapeHtml(when) + '</div>' +
+      '<div class="sale-parties">' +
+        (s.seller ? '<a data-wallet="' + escapeHtml(s.seller) + '" data-short="' + escapeHtml(s.sellerShort || s.seller) + '">' + walletTagHtml(s.seller, s.sellerShort) + '</a>' : '?') +
+        ' → ' +
+        (s.buyer ? '<a data-wallet="' + escapeHtml(s.buyer) + '" data-short="' + escapeHtml(s.buyerShort || s.buyer) + '">' + walletTagHtml(s.buyer, s.buyerShort) + '</a>' : '?') +
       '</div>' +
+      '<div class="sale-time">' + escapeHtml(when) + '</div>' +
+      '<div class="sale-num-box" data-nftid="' + escapeHtml(s.nftId) + '">P!GE0N ' + num + '</div>' +
     '</div>';
   }
   function loadMoreSales(){
