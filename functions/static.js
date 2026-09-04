@@ -5569,7 +5569,7 @@ const SWAP_HTML = `<!DOCTYPE html>
              the OLD image for up to 4h, this asset's own real
              Cache-Control max-age, even on a fresh tab/hard navigate,
              since HTTP caching happens below any of that). Bump this
-             number the next time any of these five files changes. Also
+             number the next time any of these six files changes. Also
              a plain coloured tile in that same accent until a file
              genuinely doesn't exist yet, never a blank/broken-image
              box (see .mainframe-card-art's own CSS).
@@ -5594,7 +5594,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="mainframe-card-buy" data-collection="pigeons">BUY $P!GE0NS</button>
           </div>
         </div>
-        <!-- PHN!X/TEDDY/SEAL/FUZZY are all C0M!NG S00N and no longer
+        <!-- PHN!X/TEDDY/SEAL/FUZZY/C0NSP!RACY are all C0M!NG S00N and no longer
              clickable (no data-collection — mainframeGrid's own click
              handler below only matches [data-collection]) while Pigeons
              gets hardened into the real template first. -->
@@ -5623,6 +5623,13 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$FUZZY</div>
+            <div class="mainframe-card-tag">C0M!NG S00N</div>
+          </div>
+        </div>
+        <div class="mainframe-card mainframe-card-soon" style="--card-accent:168,50,255; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
+          <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-body">
+            <div class="mainframe-card-label">$C0NSP!RACY</div>
             <div class="mainframe-card-tag">C0M!NG S00N</div>
           </div>
         </div>
