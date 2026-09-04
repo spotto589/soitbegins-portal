@@ -158,12 +158,38 @@ const SWAP_HTML = `<!DOCTYPE html>
     --collection-accent-glow:rgba(255,90,31,0.4);
     --collection-accent-2-rgb:216,74,21;
   }
+  /* Each collection's accent is sampled from its own mascot's real fur/
+     body colour (not a random pick) — same rgb-triplet each card's own
+     --card-accent on MAINFRAME uses, so the colour carries through from
+     the landing page into DATABASE instead of resetting to plain purple
+     the moment you're actually browsing the collection. */
   body.collection-teddybg{
-    --collection-accent:#2f9e44;
-    --collection-accent-rgb:47,158,68;
-    --collection-accent-dim:rgba(47,158,68,0.4);
-    --collection-accent-glow:rgba(47,158,68,0.4);
-    --collection-accent-2-rgb:35,122,53;
+    --collection-accent:#a6632e;
+    --collection-accent-rgb:166,99,46;
+    --collection-accent-dim:rgba(166,99,46,0.4);
+    --collection-accent-glow:rgba(166,99,46,0.4);
+    --collection-accent-2-rgb:130,76,32;
+  }
+  body.collection-seal{
+    --collection-accent:#2d8ca8;
+    --collection-accent-rgb:45,140,168;
+    --collection-accent-dim:rgba(45,140,168,0.4);
+    --collection-accent-glow:rgba(45,140,168,0.4);
+    --collection-accent-2-rgb:34,108,130;
+  }
+  body.collection-fuzzy{
+    --collection-accent:#7a421a;
+    --collection-accent-rgb:122,66,26;
+    --collection-accent-dim:rgba(122,66,26,0.4);
+    --collection-accent-glow:rgba(122,66,26,0.4);
+    --collection-accent-2-rgb:94,50,20;
+  }
+  body.collection-conspiracy{
+    --collection-accent:#f000e4;
+    --collection-accent-rgb:240,0,228;
+    --collection-accent-dim:rgba(240,0,228,0.4);
+    --collection-accent-glow:rgba(240,0,228,0.4);
+    --collection-accent-2-rgb:184,0,175;
   }
   /* EDITION (1-1515/1516-3015) and the # 0R WALLET search box both depend
      on the $PIGEONS-only number-map crawl (search resolves a number via
@@ -4731,6 +4757,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .buyswap-trustline-warning-title{ font-size:13px; letter-spacing:0.1em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); text-transform:uppercase; margin-bottom:0.6rem; }
   .buyswap-trustline-issuer-row{ justify-content:center; gap:0; }
+  /* .pigeons-bar-dex-btn's own shared rule is a fixed 24x24 icon-only
+     button (see pigeonsDexLink) — this reads as a real, labelled action
+     inside the trustline gate instead, so width/padding/font override it
+     back to a normal text pill. */
+  .buyswap-trustline-dex-btn{
+    display:inline-block;
+    width:auto;
+    height:auto;
+    margin-top:0.75rem;
+    padding:0.5em 1em;
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.05em;
+    text-decoration:none;
+    color:#fff;
+  }
   .detail-traits-title{
     text-align:center;
     font-size:11px;
@@ -5456,8 +5499,22 @@ const SWAP_HTML = `<!DOCTYPE html>
      card) — body padding/spacing tightened throughout so the art above
      it keeps a real, visible chunk of the card instead of getting
      squeezed to a sliver by six lines of body content. */
-  .mainframe-card-body{ flex:0 0 auto; padding:0.65rem 1rem 0.85rem; }
-  .mainframe-card-label{ font-family:var(--font-display); font-size:clamp(18px, 1.8vw, 24px); font-weight:700; color:#fff; letter-spacing:0.02em; }
+  .mainframe-card-body{ flex:0 0 auto; padding:0.75rem 1rem 0.85rem; }
+  /* Letter-spacing bumped from 0.02em to 0.06em and a soft glow in the
+     card's own accent colour added — reported live as reading cramped/
+     hard to scan at the tighter spacing, especially with "!"/"0" glyphs
+     sitting right up against their neighbours. The glow also ties each
+     title to its own per-collection colour (see --card-accent), so the
+     page reads as six distinct identities, not one repeated template. */
+  .mainframe-card-label{
+    font-family:var(--font-display);
+    font-size:clamp(18px, 1.8vw, 24px);
+    font-weight:700;
+    color:#fff;
+    letter-spacing:0.06em;
+    line-height:1.3;
+    text-shadow:0 0 14px rgba(var(--card-accent, 61,243,236), 0.65);
+  }
   /* Real, live numbers (items/holders/volume — see the stats fetch loop),
      not decorative — the whole point of showing them right here is
      proving "this is a real, active market" before you've even picked a
@@ -5641,7 +5698,7 @@ const SWAP_HTML = `<!DOCTYPE html>
              for any of these four yet though, so the card root itself
              stays non-clickable (no data-collection/role="button") — only
              the BUY button is live, same as before. -->
-        <div class="mainframe-card mainframe-card-teddy" style="--card-accent:47,158,68; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
+        <div class="mainframe-card mainframe-card-teddy" style="--card-accent:166,99,46; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$TEDDY</div>
@@ -5650,7 +5707,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="mainframe-card-buy" data-collection="teddybg">BUY $TEDDY</button>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-seal" style="--card-accent:61,178,243; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
+        <div class="mainframe-card mainframe-card-seal" style="--card-accent:45,140,168; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$SEAL</div>
@@ -5658,7 +5715,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="mainframe-card-buy" data-collection="seal">BUY $SEAL</button>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-fuzzy" style="--card-accent:255,51,204; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
+        <div class="mainframe-card mainframe-card-fuzzy" style="--card-accent:122,66,26; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$FUZZY</div>
@@ -5666,7 +5723,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="mainframe-card-buy" data-collection="fuzzy">BUY $FUZZY</button>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-conspiracy" style="--card-accent:168,50,255; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
+        <div class="mainframe-card mainframe-card-conspiracy" style="--card-accent:240,0,228; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$C0NSP!RACY</div>
@@ -6665,6 +6722,15 @@ const SWAP_HTML = `<!DOCTYPE html>
               <span class="pigeons-bar-sublabel">!SSUER :: <span id="buySwapIssuerAddr" data-full="rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf">rfQVV...QSf</span></span>
               <button class="pigeons-bar-copy-btn" id="buySwapCopyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="buySwapCopyIssuerLabel">C0PY</span></button>
             </div>
+            <!-- Lets someone verify the token (real pair, real price/
+                 liquidity) BEFORE setting a trustline to an issuer they've
+                 never seen — same DexScreener link the trustline banner's
+                 own EXCHANGE CALCULATOR already offers for $PIGEONS,
+                 generalized to any collection (see dexUrl on the
+                 pigeonsRate fetch in openBuySwapPanel). Hidden until that
+                 fetch actually returns a real URL — never a guessed/
+                 unconfirmed link. -->
+            <a class="pigeons-bar-dex-btn buyswap-trustline-dex-btn" id="buySwapDexLink" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
           </div>
           <div class="buyswap-row" id="buySwapPayRow">
             <span class="buyswap-label">Y0U PAY</span>
@@ -7191,7 +7257,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'buyConfirmModal','screenBuyConfirm','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
    'buySwapModal','buySwapEntryState','buySwapTitle','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
-   'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapPayRow',
+   'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapDexLink','buySwapPayRow',
    'buySwapConfirmState','buySwapConfTxType','buySwapConfAccount','buySwapConfSendMax','buySwapConfAmount','buySwapConfEstimate','buySwapConfRate','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
    'buySwapResultState','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
    'delistConfirmModal','screenDelistConfirm','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn',
@@ -11005,6 +11071,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // MAINFRAME now, where state.collection may not match whichever BUY
   // button was actually clicked).
   var buySwapCollection = 'pigeons';
+  // The current panel's real DexScreener link, if one exists (see
+  // pigeonsRate's own dexUrl, fetched fresh in openBuySwapPanel below) —
+  // shown inside the TRUSTL!NE REQU!RED gate so someone can verify the
+  // token (real pair, real price/liquidity) before ever trusting an
+  // issuer they've never seen. null until that fetch resolves, or if the
+  // collection genuinely has no indexed pair yet.
+  var buySwapDexUrl = null;
   var buySwapMaxDrops = null; // null = no cap known yet (not logged in, or balance fetch pending/failed)
   // Fallback only — the real reserve (base + one owner-reserve increment
   // per owned ledger object: trustlines, NFT pages, offers, etc.) comes
@@ -11186,6 +11259,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buySwapPayRow.style.display = 'none';
       el.buySwapTrustlineWarningTitle.textContent = '⚠ TRUSTL!NE REQU!RED';
       el.buySwapTrustlineWarning.style.display = '';
+      if (buySwapDexUrl){
+        el.buySwapDexLink.href = buySwapDexUrl;
+        el.buySwapDexLink.style.display = '';
+      } else {
+        el.buySwapDexLink.style.display = 'none';
+      }
       el.buySwapXrpInput.disabled = true;
       clearBuySwapQuote('Y0UR WALLET CAN\\'T RECE!VE ' + gateTokenLabel + ' YET — SET THE TRUSTL!NE AB0VE F!RST.');
       return;
@@ -11235,9 +11314,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     buySwapMaxDrops = null;
     updateBuySwapMaxLine();
     buySwapHasTrustline = null;
+    buySwapDexUrl = null;
     applyBuySwapGate();
     showBuySwapState('entry');
     el.buySwapModal.style.display = 'flex';
+    // Public lookup (no wallet/login needed) — fires regardless of
+    // MY_WALLET so the DEXSCREENER link is ready the instant the
+    // trustline gate might need it, not just for a logged-in visitor.
+    (function(){
+      var openedFor = buySwapCollection;
+      api({ pigeonsRate: 1, collection: openedFor }).then(function(data){
+        // Panel may have been closed/reopened for a DIFFERENT collection
+        // by the time this lands — never let a stale result from one
+        // token's rate lookup show as another's DexScreener link.
+        if (openedFor !== buySwapCollection) return;
+        buySwapDexUrl = (data && data.dexUrl) || null;
+        applyBuySwapGate();
+      }).catch(function(){});
+    })();
     if (MY_WALLET){
       apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET, collection: buySwapCollection }).then(function(data){
         if (!data || typeof data.drops !== 'string' || !/^\\d+$/.test(data.drops)) return;
@@ -14488,7 +14582,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // than read off COLLECTION_META, which doesn't carry a display accent
   // of its own. A future collection just needs one more entry here for
   // its MY C0!NS row to pick up its real colour instead of the fallback.
-  var PROFILE_COIN_ACCENTS = { pigeons: '136,72,248', phnixs: '255,90,31', teddybg: '47,158,68' };
+  var PROFILE_COIN_ACCENTS = { pigeons: '136,72,248', phnixs: '255,90,31', teddybg: '166,99,46', seal: '45,140,168', fuzzy: '122,66,26', conspiracy: '240,0,228' };
   function renderProfileCoins(){
     if (!MY_WALLET){ el.profileCoinsList.innerHTML = ''; return; }
     var keys = Object.keys(COLLECTION_META);

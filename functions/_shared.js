@@ -1229,10 +1229,23 @@ export async function fetchValidatedTxResult(txHash) {
   };
 }
 
-// Same reasoning/placement as COLLECTION_AMM_ACCOUNTS above — only
-// $PIGEONS has a confirmed real DexScreener pair right now. A collection
-// without one here just skips straight to the real order-book rate
-// (fetchTokenXrpRateFromBookOffers), never a fabricated DEX link.
+// $PIGEONS' own pair was manually verified live against dexscreener.com's
+// real UI (see its own comment above) — kept as an explicit constant
+// rather than re-derived, since that verification is exactly what makes
+// it trustworthy. Every OTHER collection's pair follows dexscreener.com's
+// own documented, deterministic XRPL pair-id format (lowercase hex
+// currency + issuer, "_xrp" suffix) — same encodeCurrencyCode this app
+// already uses to build the real on-ledger currency field, so this never
+// needs its own separate per-collection entry. fetchPigeonsXrpRate below
+// always confirms this against dexscreener's own API before using it (and
+// prefers whatever real pair.url that returns) — a collection with no
+// real indexed liquidity there yet just falls through to the honest
+// order-book rate, same as before, the constructed link is never shown
+// as if verified.
+function dexscreenerPairFor(tokenConfig) {
+  if (!tokenConfig || !tokenConfig.currency || !tokenConfig.issuer) return null;
+  return encodeCurrencyCode(tokenConfig.currency).toLowerCase() + '.' + tokenConfig.issuer.toLowerCase() + '_xrp';
+}
 const COLLECTION_DEXSCREENER_PAIRS = { pigeons: PIGEONS_DEXSCREENER_PAIR };
 
 export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
@@ -1243,7 +1256,7 @@ export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
     const cached = await kv.get(cacheKey);
     if (cached !== null) return JSON.parse(cached);
   }
-  const dexPair = COLLECTION_DEXSCREENER_PAIRS[collectionKey] || null;
+  const dexPair = COLLECTION_DEXSCREENER_PAIRS[collectionKey] || dexscreenerPairFor(cfg.tokenConfig);
   let result = { xrpPerPigeon: null, usdPerPigeon: null, dexUrl: dexPair ? 'https://dexscreener.com/xrpl/' + dexPair : null };
   if (dexPair) {
     try {
