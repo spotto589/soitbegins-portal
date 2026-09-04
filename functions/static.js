@@ -4979,14 +4979,86 @@ const SWAP_HTML = `<!DOCTYPE html>
   .placeholder-card .pc-title{ font-size:12px; letter-spacing:0.2em; color:var(--grey); margin-bottom:0.75rem; text-transform:uppercase; }
   .placeholder-card .pc-body{ font-family:var(--font-body); font-size:11.5px; letter-spacing:0.01em; color:var(--grey); line-height:1.7; text-transform:none; }
 
+  /* MA!NFRAME — a real landing page shown before DATABASE, pick a
+     collection to enter. Full-screen overlay (same z-index/position
+     pattern every confirm modal on this page already uses) rather than a
+     showTab name, since it sits BEFORE any tab exists to switch to. The
+     h1's own "STAT!C :: MA!NFRAME" sub-label (see #mainframeReopenLabel)
+     is the way back in, matching the site's existing branding instead of
+     adding new chrome for it. */
+  #screenMainframe{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:2000;
+    background:#050506;
+    overflow-y:auto;
+    padding:3rem 1.5rem;
+  }
+  .mainframe-subtitle{
+    text-align:center;
+    font-size:13px;
+    letter-spacing:0.25em;
+    color:var(--grey);
+    text-transform:uppercase;
+    margin:1.5rem 0 2.5rem;
+  }
+  .mainframe-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+    gap:1.5rem;
+    max-width:760px;
+    margin:0 auto;
+  }
+  .mainframe-card{
+    background:var(--panel-bg-solid);
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    padding:2.5rem 1.5rem;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .mainframe-card:hover{ border-color:var(--cyan); transform:translateY(-3px); box-shadow:0 0 18px var(--cyan-faint); }
+  .mainframe-card-label{ font-family:var(--font-display); font-size:24px; font-weight:700; color:#fff; margin-bottom:0.6rem; }
+  .mainframe-card-tag{ font-size:11px; letter-spacing:0.14em; color:var(--green); text-transform:uppercase; }
+  .mainframe-card-soon{ opacity:0.75; }
+  .mainframe-card-soon:hover{ border-color:var(--border-mid); transform:none; box-shadow:none; }
+  .mainframe-card-soon .mainframe-card-tag{ color:var(--grey-dim); }
+  #mainframeReopenLabel{ cursor:pointer; }
 </style>
 </head>
 <body>
 
   <canvas id="staticBg"></canvas>
 
-  <div class="page">
+  <!-- MA!NFRAME — landing page, shown first on a plain fresh load; pick a
+       collection to enter DATABASE scoped to it (see enterMainframeCollection
+       in static.js). TEDDY stays browse-only (matches its own tradeable:false
+       in COLLECTION_META) — clicking it still enters DATABASE, just without
+       BUY N0W/0FFER/trustline available once there, same as clicking it from
+       the DATABASE dropdown already does today. -->
+  <div id="screenMainframe">
     <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub">STAT!C :: MA!NFRAME</span></h1>
+    <div class="mainframe-subtitle">SELECT A C0LLECT!0N</div>
+    <div class="mainframe-grid" id="mainframeGrid">
+      <button class="mainframe-card" data-collection="pigeons">
+        <div class="mainframe-card-label">P!GE0NS</div>
+        <div class="mainframe-card-tag">TRAD!NG L!VE</div>
+      </button>
+      <button class="mainframe-card" data-collection="phnixs">
+        <div class="mainframe-card-label">PHN!X</div>
+        <div class="mainframe-card-tag">TRAD!NG L!VE</div>
+      </button>
+      <button class="mainframe-card mainframe-card-soon" data-collection="teddybg">
+        <div class="mainframe-card-label">TEDDY</div>
+        <div class="mainframe-card-tag">BR0WSE 0NLY</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="page">
+    <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub" id="mainframeReopenLabel">STAT!C :: MA!NFRAME</span></h1>
 
     <!-- DATABASE/MY PIGEONS/TOP 100/SALES HISTORY/SWAP OFFERS — the real
          top bar of the page; the trustline banner + whatever tab is
@@ -6332,6 +6404,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
+   'screenMainframe','mainframeGrid','mainframeReopenLabel',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
@@ -12059,6 +12132,30 @@ const SWAP_HTML = `<!DOCTYPE html>
     ensureTraitsLoaded();
     runQuery();
   }
+  // MA!NFRAME — landing page shown before DATABASE (see #screenMainframe
+  // in the HTML). Picking a card either switches collection (PHN!X/TEDDY)
+  // or, for P!GE0NS (already the default), just proceeds straight in —
+  // switchCollection's own no-op guard for "already this collection"
+  // means enterMainframeCollection has to drive showTab itself either way.
+  function hideMainframe(){
+    el.screenMainframe.style.display = 'none';
+  }
+  function enterMainframeCollection(key){
+    if (key !== state.collection) switchCollection(key);
+    // Avoids showTab's own first-open bootstrap (ensureTraitsLoaded +
+    // runQuery) firing a second time right behind switchCollection's own
+    // identical calls above for anything other than P!GE0NS.
+    state.databaseLoaded = true;
+    hideMainframe();
+    showTab('database');
+  }
+  el.mainframeGrid.addEventListener('click', function(e){
+    var card = e.target.closest('.mainframe-card[data-collection]');
+    if (card) enterMainframeCollection(card.getAttribute('data-collection'));
+  });
+  el.mainframeReopenLabel.addEventListener('click', function(){
+    el.screenMainframe.style.display = 'block';
+  });
   el.dbSelectFlyout.addEventListener('click', function(e){
     e.stopPropagation();
     var opt = e.target.closest('.db-option[data-collection]');
@@ -13694,8 +13791,10 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   // A return from the CONNECT SCYLLA redirect always lands on MY PIGEONS —
   // that's where your pigeons and any received offers actually are; any
-  // other fresh page load (a plain refresh) defaults to DATABASE instead
-  // of sitting on a blank screen until a tab is clicked.
+  // other fresh page load (a plain refresh) shows MA!NFRAME instead of
+  // jumping straight into DATABASE — a mid-flow return (Xaman login, a
+  // pending BUY) means the user's already committed to a specific
+  // collection/action, so those two skip the landing page entirely.
   if (window.location.search.indexOf('connected=1') !== -1 || offerForMatch){
     showTab('mypigeons');
     // Strip the query param right after using it once — otherwise it
@@ -13704,7 +13803,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // the real default.
     window.history.replaceState({}, '', window.location.pathname);
   } else {
-    showTab('database');
+    el.screenMainframe.style.display = 'block';
   }
 
   // The other half of openBuyConfirm's own "not logged in" redirect (see
