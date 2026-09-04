@@ -5443,6 +5443,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card[data-collection="pigeons"] .mainframe-card-art{ background-position:center 15%; }
   .mainframe-card[data-collection="phnixs"] .mainframe-card-art{ background-position:center 30%; }
   .mainframe-card-teddy .mainframe-card-art{ background-position:center 30%; }
+  /* $SEAL's own art is a square image with the face sitting roughly
+     mid-height (starry sky above it) — plain top crop showed almost
+     nothing but sky. */
+  .mainframe-card-seal .mainframe-card-art{ background-position:center 40%; }
   /* Cards are much shorter now (3x2 grid, not a full-height carousel
      card) — body padding/spacing tightened throughout so the art above
      it keeps a real, visible chunk of the card instead of getting
@@ -5631,7 +5635,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="mainframe-card-tag">C0M!NG S00N</div>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-soon" style="--card-accent:61,178,243; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
+        <div class="mainframe-card mainframe-card-soon mainframe-card-seal" style="--card-accent:61,178,243; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$SEAL</div>
