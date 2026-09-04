@@ -1405,6 +1405,30 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:1.1rem 1.25rem;
     margin-bottom:0.75rem;
   }
+  /* S0RT BY / F!LTER BY TRA!TS stay on screen while scrolling the results
+     grid below — reported live as wanting these two to "follow as you
+     scroll down" instead of having to scroll back up to change either.
+     top:0 since nothing else on this page is sticky above it (confirmed —
+     no other position:sticky exists yet). Own solid background (not the
+     page's transparent default) so result cards don't visibly scroll up
+     underneath/through it once stuck; a touch of shadow once actually
+     stuck (.db-controls-stuck, toggled by an IntersectionObserver in the
+     script) is the only way to tell it left the normal page flow, since
+     sticky alone gives no such signal on its own. */
+  .db-controls-sticky{
+    position:sticky;
+    top:0;
+    z-index:80;
+    background:var(--bg);
+    padding-top:0.5rem;
+    margin-top:-0.5rem;
+  }
+  .db-controls-sticky.db-controls-stuck{ box-shadow:0 8px 16px -8px rgba(0,0,0,0.6); }
+  /* Zero-height marker just above the sticky row — an IntersectionObserver
+     watches this (see the script) to know the exact moment the row
+     actually leaves normal flow and starts sticking, purely to toggle
+     .db-controls-stuck's shadow above. Not visible/interactive itself. */
+  .db-controls-sticky-sentinel{ height:0; }
   .db-config-row{ margin-bottom:1rem; flex-wrap:wrap; row-gap:0.5rem; }
   .db-config-row:last-child{ margin-bottom:0; }
   .db-config-row .sort-field-label{ flex:0 0 175px; }
@@ -1749,7 +1773,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      so its higher selector specificity — #sortFlyout.flyout-flat beats
      the plain #sortFlyout the mobile block above uses — can't leak into
      and override mobile's click-to-open list. */
-  @media (min-width:701px){
+  /* Retired: S0RT BY/F!LTER BY TRA!TS's old desktop treatment — a
+     permanently-visible strip in the page flow instead of a click-to-open
+     popup. Reported live as wanting real clickable buttons that pop the
+     options up centered on the page instead, same as mobile already got
+     for the traits VALUES step (see .flyout-popup further down, which now
+     covers both controls at every width) — so this block is disabled
+     (impossible min-width) rather than deleted, in case any of its
+     layout math is worth referencing later. */
+  @media (min-width:99999px){
     /* Flex items default to min-width:auto, not 0 — meaning even with
        overflow-x:auto set, a flex child refuses to shrink below its
        CONTENT's own natural width, so it never actually clips/scrolls,
@@ -1982,6 +2014,73 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
   }
   .flyout-back-btn:hover{ background:var(--cyan-faint); }
+  /* ---- S0RT BY / F!LTER BY TRA!TS — real clickable buttons that pop
+     their options up centered on the page, with a dimmed backdrop behind
+     them, at every screen width (not just mobile's old drilled-value
+     step — see .flyout-popup below, added by openSortFlyout/
+     openTraitsFlyout to whichever of #sortFlyout/#traitsFlyout is
+     opening). !important throughout: beats both the old desktop
+     always-visible-strip rules above (now disabled, kept only for
+     reference) and the plain .traits-flyout/.flyout-flat base rules
+     without having to edit either. ---- */
+  .flyout-popup-backdrop{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(4,4,6,0.72);
+    z-index:1900;
+  }
+  .flyout-popup-backdrop.open{ display:block; }
+  .traits-flyout.flyout-popup{
+    display:block !important;
+    position:fixed !important;
+    top:50% !important;
+    left:50% !important;
+    transform:translate(-50%, -50%) !important;
+    width:min(380px, 92vw) !important;
+    max-width:none !important;
+    max-height:75vh !important;
+    overflow-y:auto;
+    margin:0 !important;
+    z-index:1950;
+    background:var(--panel-bg-solid);
+    border:1px solid var(--cyan-dim);
+    box-shadow:0 20px 50px rgba(0,0,0,0.7);
+  }
+  .traits-flyout.flyout-popup .traits-flyout-cats-row{ flex-direction:column !important; }
+  .traits-flyout.flyout-popup .traits-flyout-cats{ display:flex !important; flex-direction:column !important; overflow-x:visible !important; border-right:none !important; border-bottom:none !important; width:100% !important; }
+  .traits-flyout.flyout-popup .traits-flyout-cats .traits-flyout-cat{ width:100% !important; text-align:center !important; white-space:normal !important; flex:0 0 auto; }
+  .traits-flyout.flyout-popup .traits-flyout-vals{
+    position:static !important;
+    display:block !important;
+    width:100% !important;
+    max-height:none !important;
+    padding:0.6rem !important;
+  }
+  .traits-flyout.flyout-popup .traits-flyout-vals .traits-flyout-val{ width:100% !important; white-space:normal !important; margin-bottom:0.4rem; }
+  .traits-flyout.flyout-popup .hscroll-arrow{ display:none !important; }
+  /* F!LTER BY TRA!TS' own two-step drill (categories, then one category's
+     values) still happens inside this same centered popup — categories
+     first, .flyout-drilled swaps to the values + a BACK button once one's
+     picked. :not(.flyout-flat) excludes S0RT BY (#sortFlyout), which has
+     no categories/back-button of its own and should just always show its
+     one flat value list — same distinction the old mobile-only rules
+     already drew. */
+  .traits-flyout.flyout-popup .flyout-back-btn{ display:none; }
+  .traits-flyout.flyout-popup:not(.flyout-flat):not(.flyout-drilled) .traits-flyout-vals{ display:none !important; }
+  .traits-flyout.flyout-popup.flyout-drilled .traits-flyout-cats-row{ display:none !important; }
+  .traits-flyout.flyout-popup.flyout-drilled .flyout-back-btn{ display:block !important; }
+  /* A visible X reads clearer than "tap the dimmed backdrop" on desktop,
+     where there's no established "tap outside a sheet to close it"
+     convention the way there is on mobile — the backdrop still closes it
+     too (see its own click handler), this is just the obvious affordance. */
+  .flyout-popup-close-btn{
+    display:none;
+    position:absolute; top:0.5rem; right:0.6rem;
+    background:none; border:none; color:var(--grey);
+    font-size:20px; line-height:1; cursor:pointer; padding:0.35em;
+  }
+  .traits-flyout.flyout-popup .flyout-popup-close-btn{ display:block; }
+  .flyout-popup-close-btn:hover{ color:var(--cyan); }
   @media (max-width:700px){
     /* S0RT BY's flat list, and F!LTER BY TRA!TS' own category list, both
        list down inline below their trigger now instead of floating as an
@@ -5596,6 +5695,16 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
           </div>
 
+          <!-- S0RT BY / F!LTER BY TRA!TS — a sticky row that stays in
+               view while scrolling the results grid below (reported live
+               as wanting these two "to follow as you scroll down"), so
+               changing either never means scrolling all the way back up
+               first. Both open the same centered popup now — see
+               .flyout-popup-backdrop right below and openSortFlyout/
+               openTraitsFlyout in the script. -->
+          <div class="db-controls-sticky-sentinel" id="dbControlsStickySentinel"></div>
+          <div class="db-controls-sticky" id="dbControlsSticky">
+          <div class="flyout-popup-backdrop" id="flyoutPopupBackdrop"></div>
           <!-- S0RT BY sits directly underneath now, in COLLECTION's old
                spot — same static-label + stacked-applied-tag treatment as
                F!LTER BY TRA!TS below it (#sortRows is #traitRows' own
@@ -5606,12 +5715,13 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="traits-hover-wrap" id="sortDropWrap">
                 <span class="trait-row-label" id="sortDropLabel">S0RT BY <span class="thl-arrow">▾</span></span>
                 <div class="traits-flyout flyout-flat" id="sortFlyout" style="display:none;">
-                  <!-- Desktop only (see .flyout-flat's own CSS) — a
-                       permanently-visible horizontal strip of every sort
-                       option instead of a click-to-open dropdown, with
-                       these two flanking it to scroll along if there are
-                       more options than fit. Hidden on mobile, which
-                       keeps the click-to-open vertical list. -->
+                  <!-- flyout-flat's own permanently-visible desktop strip
+                       is retired (see its CSS) — S0RT BY now opens as the
+                       same centered popup at every width, so these two
+                       PREV/NEXT arrows are effectively dead (kept, not
+                       removed, in case the strip layout is ever wanted
+                       back for a wide value list). -->
+                  <button type="button" class="flyout-popup-close-btn" id="sortFlyoutClose" aria-label="CL0SE">✕</button>
                   <button type="button" class="hscroll-arrow hscroll-arrow-prev" id="sortScrollPrevBtn" aria-label="PREV!0US">◂</button>
                   <div class="traits-flyout-vals" id="sortFlyoutVals"></div>
                   <button type="button" class="hscroll-arrow hscroll-arrow-next" id="sortScrollNextBtn" aria-label="NEXT">▸</button>
@@ -5628,6 +5738,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="traits-hover-wrap" id="traitsHoverWrap">
                 <span class="trait-row-label" id="traitsHoverLabel">F!LTER BY TRA!TS <span class="thl-arrow">▾</span></span>
                 <div class="traits-flyout" id="traitsFlyout" style="display:none;">
+                  <button type="button" class="flyout-popup-close-btn" id="traitsFlyoutClose" aria-label="CL0SE">✕</button>
                   <button type="button" class="flyout-back-btn" id="traitsFlyoutBack">◂ CATEG0R!ES</button>
                   <!-- Desktop only (see .traits-flyout-cats' own CSS) — a
                        horizontal row of every trait category (Background,
@@ -5650,6 +5761,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div id="traitRows"></div>
               <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">CLEAR</button>
             </div>
+          </div>
           </div>
 
           <!-- RESET sits between the COLLECTION/ADD TRAITS config box above
@@ -6530,6 +6642,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
+   'dbControlsSticky','dbControlsStickySentinel','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
@@ -6596,6 +6709,15 @@ const SWAP_HTML = `<!DOCTYPE html>
    'acceptOfferConfirmModal','screenAcceptOfferConfirm','acceptOfferConfThumb','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfRoyaltyRow','acceptOfferConfRoyaltyLabel','acceptOfferConfRoyalty','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn',
    'screenAcceptOfferResult','acceptOfferResultThumb','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultRoyaltyRow','acceptOfferResultRoyaltyLabel','acceptOfferResultRoyalty','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
+
+  // Toggles a shadow on the S0RT BY / F!LTER BY TRA!TS row (see
+  // .db-controls-stuck's own CSS) the instant it actually starts
+  // sticking — the zero-height sentinel just above it scrolling out of
+  // view IS that moment; sticky positioning alone gives no event/class of
+  // its own to hook for this.
+  new IntersectionObserver(function(entries){
+    el.dbControlsSticky.classList.toggle('db-controls-stuck', !entries[0].isIntersecting);
+  }, { threshold: 0 }).observe(el.dbControlsStickySentinel);
 
   function escapeHtml(str){
     return String(str).replace(/[&<>"']/g, function(c){
@@ -9072,51 +9194,59 @@ const SWAP_HTML = `<!DOCTYPE html>
   function isTraitSelected(category, value){
     return state.traitFilters.some(function(r){ return r.category === category && r.value === value; });
   }
-  // Below 700px, tapping a category (see the *FlyoutCats click handler
-  // below) turns #traitsFlyout from an inline "list down" child of
-  // #traitsHoverWrap into a fixed, centered popup (.flyout-drilled — see
-  // its CSS). position:fixed is supposed to anchor to the viewport
-  // regardless of where in the DOM it lives, but #flockGridPanel (an
-  // ancestor of #traitsHoverWrap) has backdrop-filter:blur(...) on it —
+  // S0RT BY / F!LTER BY TRAITS now both pop up as a real fixed, centered
+  // overlay at every width (see .flyout-popup's own CSS) instead of a
+  // dropdown anchored to the trigger — reported live as wanting real
+  // clickable buttons whose options "pop up in the middle of the page".
+  // position:fixed is supposed to anchor to the viewport regardless of
+  // where in the DOM it lives, but #flockGridPanel (an ancestor of
+  // #traitsHoverWrap/#sortDropWrap) has backdrop-filter:blur(...) on it —
   // per the CSS Containing Block spec, transform/filter/backdrop-filter/
   // perspective on an ancestor makes THAT element the containing block
-  // for a position:fixed descendant instead of the viewport. Confirmed
-  // live: top:50% was resolving against the document's full scroll
-  // height (top landed past 4000px), not the actual screen. Moving the
-  // flyout to be a direct child of <body> for the popup step sidesteps
-  // this entirely (body itself has no transform/filter of its own);
-  // restoreTraitsFlyout moves it back into #traitsHoverWrap afterward so
-  // desktop's position:absolute (anchored to that wrap) keeps working
-  // next time it opens.
+  // for a position:fixed descendant instead of the viewport (confirmed
+  // live: top:50% resolved against the document's full scroll height, not
+  // the actual screen). Reparenting to a direct child of <body> while open
+  // sidesteps this entirely; restore*Flyout moves it back afterward so it
+  // sits in its normal spot in the DOM again once closed (harmless either
+  // way now that position is always fixed+centered while open, but keeps
+  // the DOM tidy / avoids two flyouts silently piling up as siblings of
+  // <body> over a long session).
+  function showFlyoutBackdrop(){ el.flyoutPopupBackdrop.classList.add('open'); }
+  function hideFlyoutBackdrop(){ el.flyoutPopupBackdrop.classList.remove('open'); }
   function restoreTraitsFlyout(){
     if (el.traitsFlyout.parentElement !== el.traitsHoverWrap) el.traitsHoverWrap.appendChild(el.traitsFlyout);
   }
   function openTraitsFlyout(){
     ensureTraitsLoaded().then(function(){
-      restoreTraitsFlyout();
+      closeSortFlyout();
+      document.body.appendChild(el.traitsFlyout);
       renderTraitsFlyoutCats();
       el.traitsFlyoutVals.innerHTML = '';
-      el.traitsFlyoutVals.style.top = '0px';
       el.traitsFlyout.style.display = 'block';
+      el.traitsFlyout.classList.add('flyout-popup');
       el.traitsHoverWrap.classList.add('open');
-      // Always reopens on the category list — see the matching comment on
-      // openSortFlyout for why this is unconditional and harmless above
-      // the 700px width where .flyout-drilled has no visual effect.
+      showFlyoutBackdrop();
+      // Always reopens on the category list, never mid-drill from
+      // wherever it was left last time.
       el.traitsFlyout.classList.remove('flyout-drilled');
     });
   }
   function closeTraitsFlyout(){
     el.traitsFlyout.style.display = 'none';
+    el.traitsFlyout.classList.remove('flyout-popup', 'flyout-drilled');
     el.traitsHoverWrap.classList.remove('open');
     restoreTraitsFlyout();
+    if (el.sortFlyout.style.display !== 'block') hideFlyoutBackdrop();
   }
-  // Click to open/close (not hover) — closes on an outside click, see
-  // the shared document-level listener further down. Also closes itself
-  // on a trait pick (see traitsFlyoutVals' click handler below).
+  // Click to open/close (not hover) — closes on an outside click (the
+  // backdrop itself — see its own listener further down) or the panel's
+  // own ✕. Also closes itself on a trait pick (see traitsFlyoutVals'
+  // click handler below).
   el.traitsHoverLabel.addEventListener('click', function(){
     if (el.traitsFlyout.style.display === 'block') closeTraitsFlyout();
     else openTraitsFlyout();
   });
+  el.traitsFlyoutClose.addEventListener('click', closeTraitsFlyout);
   // Click only, not hover — an earlier version also opened a category's
   // values on mouseover, which meant just moving the mouse across the
   // strip (e.g. scrolling past it, or clicking somewhere else nearby)
@@ -9126,33 +9256,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     var catBtn = e.target.closest('.traits-flyout-cat');
     if (catBtn){
       renderTraitsFlyoutVals(catBtn.getAttribute('data-cat'));
-      positionFlyoutVals(el.traitsFlyout, el.traitsFlyoutVals, catBtn);
-      // Desktop: the values grid renders inline, right below the category
-      // strip (see #traitsFlyoutVals' own static-flow CSS) — confirmed
-      // live this can land partly or fully below the fold whenever
-      // FILTER BY TRAITS itself sits lower on the page (a normal-height
-      // browser window, or just having scrolled down a bit), so clicking
-      // a category looked like nothing happened unless you already knew
-      // to scroll down. Same "make the click feel like it did something"
-      // reasoning as scrollResultsIntoView() elsewhere on this page.
-      if (window.innerWidth > 700){
-        el.traitsFlyoutVals.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-      // Only visually a "drill in" below 700px (see the CSS) — clicking a
-      // category to preview its values on desktop is unaffected.
+      // Drills to the values step, still inside the same centered popup —
+      // see .flyout-popup.flyout-drilled's own CSS for what this swaps.
+      // scrollTop reset: the popup itself scrolls (overflow-y:auto), so
+      // without this a long category list scrolled down would leave the
+      // values step opening already scrolled past its own top.
       el.traitsFlyout.classList.add('flyout-drilled');
-      // See restoreTraitsFlyout's own comment — escapes #flockGridPanel's
-      // backdrop-filter so the popup's position:fixed actually anchors to
-      // the viewport. No-op above 700px (desktop never adds .flyout-
-      // drilled's fixed-popup CSS, so being reparented has no visual
-      // effect there, but skip the DOM move anyway — no reason to disturb
-      // desktop's layout for a change that only matters on mobile).
-      if (window.innerWidth <= 700) document.body.appendChild(el.traitsFlyout);
+      el.traitsFlyout.scrollTop = 0;
     }
   });
   el.traitsFlyoutBack.addEventListener('click', function(){
     el.traitsFlyout.classList.remove('flyout-drilled');
-    restoreTraitsFlyout();
+    el.traitsFlyout.scrollTop = 0;
   });
   // Desktop's horizontal category row (see .traits-flyout-cats' own CSS,
   // min-width:701px) — scroll it along if there are more categories than
@@ -12865,14 +12980,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).join('');
     updateSortHscrollArrows();
   }
+  // Reparented to <body> for the same reason #traitsFlyout is — see that
+  // function's own comment on the backdrop-filter containing-block issue.
+  function restoreSortFlyout(){
+    if (el.sortFlyout.parentElement !== el.sortDropWrap) el.sortDropWrap.appendChild(el.sortFlyout);
+  }
   function openSortFlyout(){
+    closeTraitsFlyout();
     renderSortFlyoutList();
+    document.body.appendChild(el.sortFlyout);
     el.sortFlyout.style.display = 'block';
+    el.sortFlyout.classList.add('flyout-popup');
     el.sortDropWrap.classList.add('open');
+    showFlyoutBackdrop();
   }
   function closeSortFlyout(){
     el.sortFlyout.style.display = 'none';
+    el.sortFlyout.classList.remove('flyout-popup');
     el.sortDropWrap.classList.remove('open');
+    restoreSortFlyout();
+    if (el.traitsFlyout.style.display !== 'block') hideFlyoutBackdrop();
   }
   function applySort(value){
     state.sort = value;
@@ -12906,6 +13033,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (el.sortFlyout.style.display === 'block') closeSortFlyout();
     else openSortFlyout();
   });
+  el.sortFlyoutClose.addEventListener('click', closeSortFlyout);
   el.sortFlyoutVals.addEventListener('click', function(e){
     var valBtn = e.target.closest('.traits-flyout-val');
     if (!valBtn || valBtn.hasAttribute('disabled')) return;
@@ -12966,7 +13094,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   // SORTING BY / ADD TRAITS are click-to-open now (not hover) — close
   // whichever is open on a click anywhere outside its own box.
   document.addEventListener('click', function(e){
-    if (el.sortFlyout.style.display === 'block' && !el.sortDropWrap.contains(e.target)) closeSortFlyout();
+    // composedPath(), and checking el.sortFlyout itself alongside
+    // sortDropWrap — same reasoning as the traits check right below:
+    // #sortFlyout is now reparented to <body> for its entire time open
+    // (see openSortFlyout), so a plain e.target/.contains(sortDropWrap)
+    // check would read every click INSIDE the popup as "outside" and
+    // close it before a pick could ever register. This also doubles as
+    // the backdrop's own close-on-click — .flyout-popup-backdrop is
+    // never inside either flyout, so a click on it always counts as
+    // outside both.
+    var sortClickPath = e.composedPath();
+    if (el.sortFlyout.style.display === 'block' && !sortClickPath.includes(el.sortDropWrap) && !sortClickPath.includes(el.sortFlyout)) closeSortFlyout();
     // e.composedPath() instead of e.target — picking a trait VALUE
     // rebuilds #traitsFlyoutVals' innerHTML (renderTraitsFlyoutVals,
     // called synchronously inside that click's own handler, which runs
