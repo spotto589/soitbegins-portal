@@ -4938,6 +4938,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:color 0.15s ease, background 0.15s ease;
   }
   .simple-picker-view-btn:hover{ color:var(--cyan); background:var(--cyan-faint); }
+  /* PR0F!LE's own pfp picker reuses .simple-picker-grid's card styling but
+     isn't inside a fixed-height modal (like OFFER F0R's own picker, which
+     .simple-picker-grid's overflow-y/max-height above exist for) — it's
+     just part of the normal page. Reported live as "two scroll wheels" —
+     this box scrolling on its own, inside the whole page also scrolling.
+     Drops the internal scroll entirely so the grid just grows with the
+     page like everything else on PR0F!LE. */
+  #profilePfpGrid{ overflow-y:visible; max-height:none; }
+  /* Reported live as wanting PR0F!LE to "feel interactive" — a stronger
+     hover lift/glow (not just a border colour swap) and an immediate
+     picking state the instant you click, rather than the grid just
+     sitting still until the save request happens to finish. */
+  #profilePfpGrid .simple-picker-card{ cursor:pointer; transition:border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease; }
+  #profilePfpGrid .simple-picker-card:hover{ border-color:var(--green); transform:translateY(-3px); box-shadow:0 0 14px var(--green-glow); }
+  #profilePfpGrid .simple-picker-card-selected{ border-color:var(--green); box-shadow:0 0 0 2px var(--green), 0 0 16px var(--green-glow); }
+  #profilePfpGrid .simple-picker-card-picking{ opacity:0.6; pointer-events:none; }
+  #profilePfpGrid .simple-picker-card-picking .simple-picker-card-num::after{ content:' :: SETT!NG...'; color:var(--green); }
   .swap-nonatomic-note{
     max-width:520px;
     margin:0 auto 1.25rem;
@@ -13362,6 +13379,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!pick) return;
     var nftId = pick.getAttribute('data-nftid');
     if (nftId === profileSelectedPfpNftId) return;
+    // Instant feedback the moment you click — a "picking" state right on
+    // that card (dimmed + :: SETT!NG..., see the CSS) — instead of the
+    // grid just sitting there unchanged until the save request happens to
+    // come back.
+    var card = el.profilePfpGrid.querySelector('.simple-picker-card[data-nftid="' + nftId + '"]');
+    if (card) card.classList.add('simple-picker-card-picking');
     el.profilePfpStatus.style.display = '';
     el.profilePfpStatus.textContent = 'SETT!NG PR0F!LE P!C...';
     fetch('/api/profile-set', {
@@ -13370,6 +13393,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       body: JSON.stringify({ pfpNftId: nftId })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
+      if (card) card.classList.remove('simple-picker-card-picking');
       if (!res.ok || !res.data.ok){
         el.profilePfpStatus.style.display = '';
         el.profilePfpStatus.textContent = listingErrorMessage(res.data && res.data.error);
@@ -13384,6 +13408,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       profileCache[MY_WALLET] = { username: res.data.profile.username || null, pfpImage: res.data.profile.pfpImage || null };
       applyResolvedProfiles([MY_WALLET]);
     }).catch(function(){
+      if (card) card.classList.remove('simple-picker-card-picking');
       el.profilePfpStatus.style.display = '';
       el.profilePfpStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
