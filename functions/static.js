@@ -7174,6 +7174,16 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenAcceptOfferResult','acceptOfferResultThumb','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultRoyaltyRow','acceptOfferResultRoyaltyLabel','acceptOfferResultRoyalty','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
+  // #buySwapModal is now openable directly from MAINFRAME's BUY buttons
+  // (previously only ever opened from inside DATABASE). It lived nested
+  // inside div.page, a stacking context of its own (z-index:1) — so no
+  // z-index on the modal itself could ever place it above #screenMainframe
+  // (z-index:2000, a direct child of <body>), since the WHOLE of div.page
+  // gets compared at body level using page's own z-index:1. Reparenting it
+  // to <body> escapes that trapped stacking context so its own z-index
+  // (2100) is finally compared against #screenMainframe's directly.
+  document.body.appendChild(el.buySwapModal);
+
   function escapeHtml(str){
     return String(str).replace(/[&<>"']/g, function(c){
       return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
