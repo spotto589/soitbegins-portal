@@ -5431,6 +5431,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:transform 0.4s ease;
   }
   .mainframe-card:hover .mainframe-card-art{ transform:scale(1.05); }
+  /* $P!GE0NS' own art crops too high at plain center — shifted down so
+     less of the top (empty purple background above the character) shows
+     and more of the actual pigeon does. */
+  .mainframe-card[data-collection="pigeons"] .mainframe-card-art{ background-position:center 25%; }
   .mainframe-card-body{ flex:0 0 auto; padding:1.25rem 1.5rem 1.5rem; }
   .mainframe-card-label{ font-family:var(--font-display); font-size:clamp(20px, 2.2vw, 28px); font-weight:700; color:#fff; letter-spacing:0.02em; }
   /* Real, live numbers (items/holders/floor — see loadMainframeStats),
@@ -5519,19 +5523,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     top:2rem; right:1.5rem;
     z-index:2;
     background:transparent;
-    border:1px solid var(--magenta-dim);
+    border:1px solid var(--magenta);
     color:var(--magenta);
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:12px;
+    font-size:16px;
     letter-spacing:0.05em;
     text-transform:uppercase;
-    padding:0.6em 1em;
+    padding:0.9em 1.6em;
     border-radius:var(--radius);
     cursor:pointer;
+    white-space:nowrap;
     text-shadow:0 0 5px var(--magenta-glow);
+    box-shadow:0 0 14px var(--magenta-dim);
   }
-  .mainframe-profile-btn:hover{ background:var(--magenta-faint); border-color:var(--magenta); }
+  .mainframe-profile-btn:hover{ background:var(--magenta); color:#000; text-shadow:none; }
   @media (max-width:600px){
     .mainframe-profile-btn{ position:static; display:block; margin:0 auto 0.5rem; width:fit-content; }
   }
