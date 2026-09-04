@@ -1080,41 +1080,47 @@ const SWAP_HTML = `<!DOCTYPE html>
     max-height:820px;
     overflow-y:auto;
   }
-  /* Reported live as wanting sales history "bigger, with bigger writing
-     ... clean and clear ... see the information quickly" — every piece
-     scaled up from the original compact row (same reasoning already
-     applied to 0FFERS RECE!VED's own .my-offer-row). */
+  /* Reported live as wanting sales history bigger/bolder at first, then
+     "a little bit smaller" once seen — settled here in between the
+     original compact row and that first bigger pass. The whole row opens
+     the real pigeon detail now (not just the thumbnail/number), reported
+     live as wanting a quick way into "the big detailed version" straight
+     from a sale. */
   .sale-row{
     display:flex;
     align-items:center;
-    gap:1.25rem;
-    padding:1.3rem 0.6rem;
+    gap:1rem;
+    padding:1rem 0.6rem;
     border-bottom:1px solid var(--border-dim);
-    font-size:15px;
+    font-size:14px;
     letter-spacing:0.03em;
     flex-wrap:wrap;
+    cursor:pointer;
+    transition:background 0.15s ease;
   }
+  .sale-row:hover{ background:var(--cyan-faint); }
   .sale-row:last-child{ border-bottom:none; }
-  .sale-thumb-wrap{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; flex:0 0 auto; }
+  .sale-thumb-wrap{ display:flex; flex-direction:column; align-items:center; gap:0.4rem; flex:0 0 auto; }
   .sale-num-box{
-    font-size:14px;
+    font-size:13px;
     letter-spacing:0.05em;
     color:var(--white);
     border:1px solid var(--border-mid);
-    padding:0.35em 0.7em;
-    cursor:pointer;
+    padding:0.3em 0.6em;
     white-space:nowrap;
     border-radius:var(--radius);
   }
-  .sale-thumb{ flex:0 0 auto; width:132px; height:132px; cursor:pointer; border:1px solid var(--border-dim); }
+  .sale-thumb{ flex:0 0 auto; width:88px; height:88px; border:1px solid var(--border-dim); }
   .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .sale-info{ flex:1 1 220px; display:flex; flex-direction:column; gap:0.5rem; }
-  .sale-price{ font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--green); }
-  .sale-via{ font-family:var(--font-body); font-size:12px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; }
-  .sale-parties{ font-family:var(--font-body); font-size:16px; color:var(--grey); text-transform:none; }
+  /* Horizontal, not stacked — reported live as wanting "the details go
+     horizontally" instead of price/parties/time each on their own line. */
+  .sale-info{ flex:1 1 320px; display:flex; flex-direction:row; flex-wrap:wrap; align-items:baseline; gap:0.4rem 1.25rem; }
+  .sale-price{ font-family:var(--font-display); font-size:20px; font-weight:700; color:var(--green); }
+  .sale-via{ font-family:var(--font-body); font-size:12px; letter-spacing:0.08em; color:var(--white); text-transform:uppercase; }
+  .sale-parties{ font-family:var(--font-body); font-size:15px; color:var(--white); text-transform:none; }
   .sale-parties a{ color:var(--white); text-decoration:underline; cursor:pointer; }
   .sale-parties a:hover{ color:var(--cyan); }
-  .sale-time{ font-family:var(--font-body); color:var(--grey-dim); text-transform:uppercase; font-size:12px; }
+  .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:12px; }
 
   /* ---- target node header (owner-scope) — SCYLLA / MAGENTA system ---- */
   .node-eyebrow{
@@ -12178,7 +12184,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       : (s.priceXrp !== null ? s.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?');
     var via = s.via === 'scylla' ? 'Σ SWAP' : (s.via === 'xrpcafe' ? 'XRP.CAFE' : (s.via === 'deeptide' ? 'DEEPT!DE' : ''));
     var when = s.createdAt ? new Date(s.createdAt).toLocaleString() : '';
-    return '<div class="sale-row">' +
+    return '<div class="sale-row" data-nftid="' + escapeHtml(s.nftId) + '">' +
       '<div class="sale-thumb-wrap">' +
         '<div class="sale-num-box" data-nftid="' + escapeHtml(s.nftId) + '">P!GE0N ' + num + '</div>' +
         '<div class="sale-thumb" data-nftid="' + escapeHtml(s.nftId) + '">' + thumb + '</div>' +
@@ -12230,11 +12236,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.salesEndNote.style.display = 'none';
     loadMoreSales();
   });
+  // The whole row opens the real pigeon detail now, not just the
+  // thumbnail/number — reported live as wanting a quick way into "the
+  // big detailed version" straight from a sale. A wallet link inside the
+  // row still takes priority (browses that wallet instead).
   el.salesArea.addEventListener('click', function(e){
     var walletLink = e.target.closest('.sale-parties a');
     if (walletLink){ browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short')); return; }
-    var target = e.target.closest('.sale-thumb, .sale-num-box');
-    if (target) openDetail(target.getAttribute('data-nftid'));
+    var row = e.target.closest('.sale-row');
+    if (row) openDetail(row.getAttribute('data-nftid'));
   });
   // Rooted at the scrollbox itself (not the viewport) so it fires on
   // scrolling *within* the box, not the page.
