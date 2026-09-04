@@ -5203,16 +5203,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:fixed;
     inset:0;
     z-index:2000;
-    /* var(--bg), not a separate opaque colour — that used to fully block
-       #staticBg (the site's own animated noise/scanline canvas, z-index:0,
-       painted underneath everything) from ever showing through here,
-       reported live as wanting it back on this screen too. --bg is the
-       same colour the rest of the site's own body already sits on top of
-       the canvas with (mix-blend-mode:screen on the canvas is what makes
-       the noise read as a texture ON this colour rather than washing it
-       out), so this now looks like the same surface as everywhere else
-       instead of a flatter one-off black. */
-    background:var(--bg);
+    /* transparent, not var(--bg) — a same-COLOUR opaque background still
+       fully PAINTS OVER #staticBg (the site's own animated noise/scanline
+       canvas, a fixed z-index:0 child of body) the same as any other solid
+       fill would; matching the colour alone doesn't let anything show
+       through, confirmed live as still fully flat with no texture despite
+       the color match. Genuine transparency here lets body's own --bg
+       background AND the canvas sitting on top of it (mix-blend-mode:
+       screen against that same colour is what makes the noise read as a
+       texture rather than washing it out) both composite through, same as
+       every other screen on the site. */
+    background:transparent;
     overflow:hidden;
     height:100vh;
     height:100dvh;
@@ -5240,7 +5241,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      smaller than the persistent page's (up to 104px there) specifically
      here, so the whole screen reliably fits with zero scroll on a short
      window too, not just a tall one. */
-  #screenMainframe > h1{ flex:0 0 auto; font-size:clamp(22px, 4vw, 46px); margin-bottom:0.2rem; }
+  #screenMainframe > h1{ flex:0 0 auto; font-size:clamp(30px, 6.5vw, 78px); margin-bottom:0.2rem; }
   .mainframe-subtitle{
     position:relative;
     flex:0 0 auto;
