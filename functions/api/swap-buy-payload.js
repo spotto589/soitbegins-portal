@@ -1,6 +1,6 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, getXamanUserToken, findPigeonsOffer,
-  recordPendingBuy, PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup,
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, getXamanUserToken, findCollectionOffer, getTradeConfig,
+  recordPendingBuy, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup,
   MARKETPLACE_BROKER_WALLET, acquireBrokerAcceptLock, releaseBrokerAcceptLock,
   recordPendingBrokerAccept, fetchDeeptideNftDetail
 } from '../_shared.js';
@@ -51,6 +51,12 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
+  const collection = (body && body.collection) || 'pigeons';
+  const cfg = getTradeConfig(collection);
+  if (!cfg) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
+  }
+
   const nftId = body && body.nftId;
   if (!nftId || typeof nftId !== 'string' || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
     console.log('BUY-PAYLOAD exit: invalid_nft_id', JSON.stringify(nftId));
@@ -65,7 +71,7 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 503 });
   }
   console.log('BUY-PAYLOAD offers found:', offers.length);
-  const offer = findPigeonsOffer(offers, undefined, buyer);
+  const offer = findCollectionOffer(offers, collection, undefined, buyer);
   if (!offer) {
     console.log('BUY-PAYLOAD exit: not_listed (no non-buyer $PIGEONS offer among', offers.length, 'offers)');
     return new Response(JSON.stringify({ error: 'not_listed' }), { status: 404 });
@@ -135,8 +141,8 @@ export async function onRequestPost(context) {
     Owner: offer.owner,
     NFTokenID: nftId,
     Amount: {
-      currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency),
-      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      currency: encodeCurrencyCode(cfg.tokenConfig.currency),
+      issuer: cfg.tokenConfig.issuer,
       value: fee.totalValue
     },
     Memos: swapOfferSourceMemo()
@@ -158,6 +164,7 @@ export async function onRequestPost(context) {
       offerId: sellOfferId,
       seller: offer.owner,
       buyer,
+      collection,
       totalValue: fee.totalValue,
       feeValue: fee.feeValue,
       sellerValue: fee.sellerValue,

@@ -340,6 +340,16 @@ export function findAllPigeons(nfts) {
   return nfts.filter(n => n.Issuer === PIGEON_ISSUER && n.NFTokenTaxon === PIGEON_TAXON);
 }
 
+// Generic form of findAllPigeons — filters nfts down to whichever
+// collection collectionKey resolves to via getTradeConfig. findAllPigeons
+// above is just findAllCollectionNfts(nfts, 'pigeons') and stays as its
+// own export so existing call sites don't need to change.
+export function findAllCollectionNfts(nfts, collectionKey) {
+  const cfg = getTradeConfig(collectionKey);
+  if (!cfg) return [];
+  return nfts.filter(n => n.Issuer === cfg.nftIssuer && n.NFTokenTaxon === cfg.nftTaxon);
+}
+
 // ── Σκύλλα SWAP: first real listing test ──────────────────────────────────
 // Verified on-ledger before flipping configured:true (2026-08-21) — this
 // issuer genuinely holds 50+ real trust lines for currency code
@@ -349,6 +359,58 @@ export function findAllPigeons(nfts) {
 // one is the NFT collection issuer, this one is the fungible-token issuer,
 // intentionally different per the user's own instruction.
 export const PIGEONS_TOKEN_CONFIG = { currency: 'PIGEONS', issuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', configured: true };
+
+// ── Multi-collection trading — the template every tradeable collection
+// (Pigeons, PHNIX, and whatever comes after) is defined through. One
+// object, one place to add a new collection: an NFT issuer/taxon (which
+// on-ledger NFTs belong to it) and a tokenConfig (which currency/issuer it
+// trades against) — nothing else in this file, or in any swap-*.js
+// endpoint, should hardcode Pigeon-specific constants going forward; new
+// code should resolve everything through getTradeConfig(collectionKey)
+// instead. deeptideShopSlug is Deeptide's own collection key, reused as-is
+// by every fetchDeeptide*() helper (they already take a shopSlug param).
+// PIGEON_ISSUER/PIGEON_TAXON/PIGEONS_TOKEN_CONFIG above stay exported
+// unchanged for existing call sites — TRADEABLE_COLLECTIONS.pigeons is
+// just this same data, addressable by key.
+export const TRADEABLE_COLLECTIONS = {
+  pigeons: {
+    key: 'pigeons',
+    label: 'P!GE0NS',
+    nftIssuer: PIGEON_ISSUER,
+    nftTaxon: PIGEON_TAXON,
+    tokenConfig: PIGEONS_TOKEN_CONFIG,
+    deeptideShopSlug: 'xrpigeons',
+    tradeable: true
+  },
+  phnixs: {
+    key: 'phnixs',
+    label: 'PHN!X',
+    nftIssuer: 'rMiNJh6eQE5fSpgke5vrjUGiU9rXhrgoSA',
+    nftTaxon: 1,
+    tokenConfig: { currency: 'PHNIX', issuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', configured: true },
+    deeptideShopSlug: 'phnixs',
+    tradeable: true
+  },
+  teddybg: {
+    key: 'teddybg',
+    label: 'TEDDY',
+    nftIssuer: null,
+    nftTaxon: null,
+    tokenConfig: null,
+    deeptideShopSlug: 'teddybg',
+    tradeable: false
+  }
+};
+
+// The one lookup every collection-aware endpoint should use — returns
+// null for an unknown key or a collection that isn't (yet) tradeable, so
+// callers can 400 with a real "invalid_collection"/"not_tradeable" error
+// instead of silently falling back to Pigeons.
+export function getTradeConfig(collectionKey) {
+  const cfg = TRADEABLE_COLLECTIONS[collectionKey];
+  if (!cfg || !cfg.tradeable) return null;
+  return cfg;
+}
 
 // XRPL currency codes are exactly 3 ASCII chars ("standard") or, for
 // anything else, a 40-hex-char string: the code's ASCII bytes, left-
@@ -1211,13 +1273,24 @@ export function isTransferable(nft) {
 // nft_sell_offers lookup here, and any sync lag between the two turned
 // real, current listings into false not_listed failures instead.
 export function findPigeonsOffer(offers, owner, excludeOwner) {
-  const currency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
+  return findCollectionOffer(offers, 'pigeons', owner, excludeOwner);
+}
+
+// Generic form of findPigeonsOffer — matches against whichever
+// collection's own tokenConfig collectionKey resolves to via
+// getTradeConfig, instead of always PIGEONS_TOKEN_CONFIG. Same
+// multiple-currencies-on-one-NFT reasoning as findPigeonsOffer's own
+// comment above applies per collection too.
+export function findCollectionOffer(offers, collectionKey, owner, excludeOwner) {
+  const cfg = getTradeConfig(collectionKey);
+  if (!cfg) return null;
+  const currency = encodeCurrencyCode(cfg.tokenConfig.currency);
   return offers.find(o =>
     (owner === undefined || o.owner === owner) &&
     (excludeOwner === undefined || o.owner !== excludeOwner) &&
     o.amount && typeof o.amount === 'object' &&
     o.amount.currency === currency &&
-    o.amount.issuer === PIGEONS_TOKEN_CONFIG.issuer
+    o.amount.issuer === cfg.tokenConfig.issuer
   ) || null;
 }
 
@@ -2581,15 +2654,29 @@ export async function maybeRefreshHighSaleMap(kv) {
 // ─────────────────────────────────────────────────────────────────────────
 const SWAP_LISTINGS_MAP_KEY = 'pswap:listings:v1';
 
-export async function getSwapListingsMap(kv) {
-  const raw = await kv.get(SWAP_LISTINGS_MAP_KEY);
+// Every per-collection KV map below (listings, buy-offers, sales-log, and
+// the floor/high-sale/number indexes elsewhere in this file) shares this
+// one namespacing rule: Pigeons keeps its exact original, unsuffixed key
+// (zero migration, zero risk to existing data) — any OTHER collection
+// gets its own ":<collectionKey>" suffix, so a second/third collection's
+// data never mixes into the same blob. XRPL NFTokenIDs are already
+// globally unique (they encode the issuer), so this isn't needed to avoid
+// key collisions inside a map — it's what lets a collection-scoped bulk
+// read (crown leaderboard, floor index, "all Pigeons sales") stay scoped
+// to just that collection instead of needing to filter one combined blob.
+function kvKeyFor(baseKey, collectionKey) {
+  return (!collectionKey || collectionKey === 'pigeons') ? baseKey : baseKey + ':' + collectionKey;
+}
+
+export async function getSwapListingsMap(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(SWAP_LISTINGS_MAP_KEY, collectionKey));
   return raw ? JSON.parse(raw) : {};
 }
 
-export async function recordSwapListing(kv, nftId, entry) {
-  const map = await getSwapListingsMap(kv);
+export async function recordSwapListing(kv, nftId, entry, collectionKey) {
+  const map = await getSwapListingsMap(kv, collectionKey);
   map[nftId] = entry;
-  await safeKvPut(kv, SWAP_LISTINGS_MAP_KEY, JSON.stringify(map));
+  await safeKvPut(kv, kvKeyFor(SWAP_LISTINGS_MAP_KEY, collectionKey), JSON.stringify(map));
 }
 
 // Merges multiple entries in ONE read-modify-write instead of one per
@@ -2603,18 +2690,18 @@ export async function recordSwapListing(kv, nftId, entry) {
 // L!STED/FL00R $P!GE0NS). Callers that discover multiple entries in the
 // same pass should collect them and call this once at the end rather than
 // calling recordSwapListing per entry in a loop/Promise.all.
-export async function recordSwapListingsBatch(kv, entries) {
+export async function recordSwapListingsBatch(kv, entries, collectionKey) {
   if (!entries || !Object.keys(entries).length) return;
-  const map = await getSwapListingsMap(kv);
+  const map = await getSwapListingsMap(kv, collectionKey);
   Object.assign(map, entries);
-  await safeKvPut(kv, SWAP_LISTINGS_MAP_KEY, JSON.stringify(map));
+  await safeKvPut(kv, kvKeyFor(SWAP_LISTINGS_MAP_KEY, collectionKey), JSON.stringify(map));
 }
 
-export async function removeSwapListing(kv, nftId) {
-  const map = await getSwapListingsMap(kv);
+export async function removeSwapListing(kv, nftId, collectionKey) {
+  const map = await getSwapListingsMap(kv, collectionKey);
   if (!map[nftId]) return;
   delete map[nftId];
-  await safeKvPut(kv, SWAP_LISTINGS_MAP_KEY, JSON.stringify(map));
+  await safeKvPut(kv, kvKeyFor(SWAP_LISTINGS_MAP_KEY, collectionKey), JSON.stringify(map));
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -2629,26 +2716,26 @@ export async function removeSwapListing(kv, nftId) {
 // ─────────────────────────────────────────────────────────────────────────
 const SWAP_BUY_OFFERS_MAP_KEY = 'pswap:buyoffers:v1';
 
-export async function getSwapBuyOffersMap(kv) {
-  const raw = await kv.get(SWAP_BUY_OFFERS_MAP_KEY);
+export async function getSwapBuyOffersMap(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(SWAP_BUY_OFFERS_MAP_KEY, collectionKey));
   return raw ? JSON.parse(raw) : {};
 }
 
-export async function addSwapBuyOffer(kv, nftId, entry) {
-  const map = await getSwapBuyOffersMap(kv);
+export async function addSwapBuyOffer(kv, nftId, entry, collectionKey) {
+  const map = await getSwapBuyOffersMap(kv, collectionKey);
   const list = map[nftId] || (map[nftId] = []);
   const existingIdx = list.findIndex(o => o.offerId === entry.offerId);
   if (existingIdx !== -1) list[existingIdx] = entry;
   else list.push(entry);
-  await safeKvPut(kv, SWAP_BUY_OFFERS_MAP_KEY, JSON.stringify(map));
+  await safeKvPut(kv, kvKeyFor(SWAP_BUY_OFFERS_MAP_KEY, collectionKey), JSON.stringify(map));
 }
 
-export async function removeSwapBuyOffer(kv, nftId, offerId) {
-  const map = await getSwapBuyOffersMap(kv);
+export async function removeSwapBuyOffer(kv, nftId, offerId, collectionKey) {
+  const map = await getSwapBuyOffersMap(kv, collectionKey);
   if (!map[nftId]) return;
   map[nftId] = map[nftId].filter(o => o.offerId !== offerId);
   if (!map[nftId].length) delete map[nftId];
-  await safeKvPut(kv, SWAP_BUY_OFFERS_MAP_KEY, JSON.stringify(map));
+  await safeKvPut(kv, kvKeyFor(SWAP_BUY_OFFERS_MAP_KEY, collectionKey), JSON.stringify(map));
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -2819,16 +2906,17 @@ export async function takePendingBuy(kv, uuid) {
 const SWAP_SALES_LOG_KEY = 'pswap:saleslog:v1';
 const SWAP_SALES_LOG_MAX = 300;
 
-export async function recordSwapSale(kv, entry) {
-  const raw = await kv.get(SWAP_SALES_LOG_KEY);
+export async function recordSwapSale(kv, entry, collectionKey) {
+  const key = kvKeyFor(SWAP_SALES_LOG_KEY, collectionKey);
+  const raw = await kv.get(key);
   const list = raw ? JSON.parse(raw) : [];
   list.unshift(entry);
   if (list.length > SWAP_SALES_LOG_MAX) list.length = SWAP_SALES_LOG_MAX;
-  await safeKvPut(kv, SWAP_SALES_LOG_KEY, JSON.stringify(list));
+  await safeKvPut(kv, key, JSON.stringify(list));
 }
 
-export async function getSwapSalesLog(kv) {
-  const raw = await kv.get(SWAP_SALES_LOG_KEY);
+export async function getSwapSalesLog(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(SWAP_SALES_LOG_KEY, collectionKey));
   return raw ? JSON.parse(raw) : [];
 }
 

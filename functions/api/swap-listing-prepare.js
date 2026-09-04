@@ -1,7 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
-  PIGEON_ISSUER, PIGEON_TAXON, isTransferable,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup, MARKETPLACE_BROKER_WALLET,
+  isTransferable, getTradeConfig,
+  encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup, MARKETPLACE_BROKER_WALLET,
   LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds
 } from '../_shared.js';
 
@@ -43,6 +43,12 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
+  const collection = (body && body.collection) || 'pigeons';
+  const cfg = getTradeConfig(collection);
+  if (!cfg) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
+  }
+
   const nftId = body && body.nftId;
   if (!nftId || typeof nftId !== 'string' || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
     return new Response(JSON.stringify({ error: 'invalid_nft_id' }), { status: 400 });
@@ -59,7 +65,7 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
   }
 
-  if (!PIGEONS_TOKEN_CONFIG.configured) {
+  if (!cfg.tokenConfig.configured) {
     return new Response(JSON.stringify({ error: 'not_configured' }), { status: 501 });
   }
 
@@ -68,7 +74,7 @@ export async function onRequestPost(context) {
   if (!nft) {
     return new Response(JSON.stringify({ error: 'not_owned' }), { status: 403 });
   }
-  if (nft.Issuer !== PIGEON_ISSUER || nft.NFTokenTaxon !== PIGEON_TAXON) {
+  if (nft.Issuer !== cfg.nftIssuer || nft.NFTokenTaxon !== cfg.nftTaxon) {
     return new Response(JSON.stringify({ error: 'not_a_pigeon' }), { status: 400 });
   }
   if (!isTransferable(nft)) {
@@ -87,8 +93,8 @@ export async function onRequestPost(context) {
     Account: seller,
     NFTokenID: nftId,
     Amount: {
-      currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency),
-      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      currency: encodeCurrencyCode(cfg.tokenConfig.currency),
+      issuer: cfg.tokenConfig.issuer,
       value: fee.sellerValue
     },
     Destination: MARKETPLACE_BROKER_WALLET,

@@ -1,8 +1,8 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, fetchNftBuyOffers, fetchAllAccountNfts,
-  getXamanPayloadStatus, removeSwapListing, findPigeonsOffer, takePendingBuy, recordSwapSale,
+  getXamanPayloadStatus, removeSwapListing, findCollectionOffer, getTradeConfig, takePendingBuy, recordSwapSale,
   peekPendingBrokerAccept, takePendingBrokerAccept, releaseBrokerAcceptLock,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, MARKETPLACE_BROKER_WALLET,
+  encodeCurrencyCode, MARKETPLACE_BROKER_WALLET,
   swapOfferSourceMemo, brokeredSaleMemo, submitAsBroker, verifyBrokerFeeFromMeta, payBrokerReward, applyNftRoyalty
 } from '../_shared.js';
 
@@ -86,7 +86,12 @@ export async function onRequestGet(context) {
       fetchNftSellOffers(nftId)
     ]);
     const buyerOwnsIt = buyerNfts.some(n => n.NFTokenID === nftId);
-    const offerGone = !findPigeonsOffer(remainingOffers);
+    // Legacy branch only ever applies to a listing that predates the
+    // marketplace-fee rollout — real for old Pigeons listings, can never
+    // trigger for a new collection (every listing there is created
+    // through the current Destination-restricted model), so 'pigeons' is
+    // correct here unconditionally, not a collection this poll knows.
+    const offerGone = !findCollectionOffer(remainingOffers, 'pigeons');
 
     if (!buyerOwnsIt || !offerGone) {
       return new Response(JSON.stringify({ status: 'signed_pending_ledger', txHash }), {
@@ -116,13 +121,18 @@ export async function onRequestGet(context) {
   // ─── Fee-bearing: buyer's transaction was a real BUY offer for the full
   // price, not an accept — confirm it actually landed on-ledger before
   // doing anything else.
-  const pigeonsCurrency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
+  const collection = feeFlow.collection || 'pigeons';
+  const cfg = getTradeConfig(collection);
+  if (!cfg) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
+  }
+  const tokenCurrency = encodeCurrencyCode(cfg.tokenConfig.currency);
   const buyOffers = await fetchNftBuyOffers(nftId);
   const buyOffer = buyOffers.find(o =>
     o.owner === buyer &&
     o.amount && typeof o.amount === 'object' &&
-    o.amount.currency === pigeonsCurrency &&
-    o.amount.issuer === PIGEONS_TOKEN_CONFIG.issuer &&
+    o.amount.currency === tokenCurrency &&
+    o.amount.issuer === cfg.tokenConfig.issuer &&
     o.amount.value === feeFlow.totalValue
   );
 
@@ -165,8 +175,8 @@ export async function onRequestGet(context) {
     NFTokenBuyOffer: buyOffer.nft_offer_index,
     NFTokenSellOffer: pending.offerId,
     NFTokenBrokerFee: {
-      currency: pigeonsCurrency,
-      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      currency: tokenCurrency,
+      issuer: cfg.tokenConfig.issuer,
       value: pending.feeValue
     },
     Memos: [...swapOfferSourceMemo(), brokeredSaleMemo(pending.pigeonNumber)]
@@ -184,7 +194,7 @@ export async function onRequestGet(context) {
   // Confirm the 0.589% actually landed in the broker wallet, straight from
   // this settling transaction's own metadata — not just trusting the
   // proxy's tesSUCCESS.
-  const feeCheck = verifyBrokerFeeFromMeta(brokerResult.meta, MARKETPLACE_BROKER_WALLET, PIGEONS_TOKEN_CONFIG.issuer, pigeonsCurrency, pending.feeValue);
+  const feeCheck = verifyBrokerFeeFromMeta(brokerResult.meta, MARKETPLACE_BROKER_WALLET, cfg.tokenConfig.issuer, tokenCurrency, pending.feeValue);
 
   // A THIRD, separate deduction — see applyNftRoyalty's own comment in
   // _shared.js, and swap-acceptoffer-status.js's identical fix. Real,
@@ -195,7 +205,7 @@ export async function onRequestGet(context) {
   const royalty = applyNftRoyalty(pending.sellerValue, nftId);
 
   context.waitUntil(releaseBrokerAcceptLock(env.coin, pending.offerId));
-  context.waitUntil(removeSwapListing(env.coin, nftId));
+  context.waitUntil(removeSwapListing(env.coin, nftId, collection));
   context.waitUntil(recordSwapSale(env.coin, {
     txHash: brokerResult.hash,
     nftId,
@@ -208,7 +218,7 @@ export async function onRequestGet(context) {
     royaltyPercent: royalty.royaltyPercent,
     brokerFeeVerified: feeCheck.ok,
     createdAt: new Date().toISOString()
-  }));
+  }, collection));
   // $CRWN reward to both sides, TEST-PHASE flat amount — see
   // swap-acceptoffer-status.js's identical comment.
   context.waitUntil(payBrokerReward(env, pending.buyer, 'Σκύλλα REWARD | BUYER | #' + (pending.pigeonNumber || '?')).catch(() => {}));

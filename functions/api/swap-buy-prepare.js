@@ -1,6 +1,6 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findPigeonsOffer,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup,
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findCollectionOffer, getTradeConfig,
+  encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup,
   MARKETPLACE_BROKER_WALLET
 } from '../_shared.js';
 
@@ -46,6 +46,12 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
+  const collection = (body && body.collection) || 'pigeons';
+  const cfg = getTradeConfig(collection);
+  if (!cfg) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
+  }
+
   const nftId = body && body.nftId;
   if (!nftId || typeof nftId !== 'string' || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
     return new Response(JSON.stringify({ error: 'invalid_nft_id' }), { status: 400 });
@@ -69,12 +75,12 @@ export async function onRequestPost(context) {
   // seller's and get picked as "the" offer instead — confirmed live as the
   // cause of BUY NOW wrongly reporting cannot_buy_own_listing on someone
   // else's real, current listing.
-  const offer = findPigeonsOffer(offers, undefined, buyer);
+  const offer = findCollectionOffer(offers, collection, undefined, buyer);
   if (!offer) {
     return new Response(JSON.stringify({ error: 'not_listed' }), { status: 404 });
   }
 
-  const pigeonsCurrency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
+  const tokenCurrency = encodeCurrencyCode(cfg.tokenConfig.currency);
 
   // A listing predating the marketplace-fee rollout has no Destination
   // restriction and its on-ledger amount already IS the full price — stays
@@ -124,8 +130,8 @@ export async function onRequestPost(context) {
     Owner: offer.owner,
     NFTokenID: nftId,
     Amount: {
-      currency: pigeonsCurrency,
-      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      currency: tokenCurrency,
+      issuer: cfg.tokenConfig.issuer,
       value: fee.totalValue
     },
     Memos: swapOfferSourceMemo()
@@ -140,8 +146,8 @@ export async function onRequestPost(context) {
       totalValue: fee.totalValue,
       feeValue: fee.feeValue,
       sellerValue: fee.sellerValue,
-      currency: pigeonsCurrency,
-      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      currency: tokenCurrency,
+      issuer: cfg.tokenConfig.issuer,
       sellOfferId: offer.nft_offer_index
     }
   }), { headers: { 'Content-Type': 'application/json' } });

@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, recordSwapListing, findPigeonsOffer,
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, recordSwapListing, findCollectionOffer, getTradeConfig,
   getXamanPayloadStatus, getPendingListing, clearPendingListing
 } from '../_shared.js';
 
@@ -30,8 +30,12 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const uuid = url.searchParams.get('uuid');
   const nftId = url.searchParams.get('nftId');
+  const collection = url.searchParams.get('collection') || 'pigeons';
   if (!uuid || !/^[0-9a-fA-F-]{10,60}$/.test(uuid) || !nftId || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
+  }
+  if (!getTradeConfig(collection)) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
   }
 
   const xummData = await getXamanPayloadStatus(env, uuid);
@@ -67,7 +71,7 @@ export async function onRequestGet(context) {
   // declare "listed" before the real new offer even exists on ledger.
   const seller = payload.acct;
   const offers = await fetchNftSellOffers(nftId);
-  const ownOffer = findPigeonsOffer(offers, seller);
+  const ownOffer = findCollectionOffer(offers, collection, seller);
 
   if (!ownOffer) {
     // Signed successfully on Xaman's side but not yet visible via
@@ -100,7 +104,7 @@ export async function onRequestGet(context) {
     expiration: ownOffer.expiration || null,
     seller,
     listedAt: Math.floor(Date.now() / 1000)
-  }));
+  }, collection));
   context.waitUntil(clearPendingListing(env.coin, uuid));
 
   return new Response(JSON.stringify({

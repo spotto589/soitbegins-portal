@@ -1,4 +1,4 @@
-import { fetchAllAccountNftsCached, findAllPigeons, fetchNftSellOffers, recordSwapListingsBatch, getSwapListingsMap, mapWithConcurrency, findPigeonsOffer, safeKvPut } from '../_shared.js';
+import { fetchAllAccountNftsCached, findAllCollectionNfts, fetchNftSellOffers, recordSwapListingsBatch, getSwapListingsMap, mapWithConcurrency, findCollectionOffer, getTradeConfig, safeKvPut } from '../_shared.js';
 
 // Caches the RESULT of the live-discovery pass (pass 2 below) per wallet —
 // confirmed live: for a wallet with anywhere near DISCOVERY_CAP Pigeons not
@@ -43,12 +43,12 @@ const DISCOVERY_CAP = 45;
 // silently losing entries under concurrency. Just returns what it found;
 // the caller collects everything and writes it in one batched call once
 // every check (direct + the concurrent discovery scan) has settled.
-async function verifyAndRecord(env, nftId, wallet, listed, toRecord) {
+async function verifyAndRecord(env, nftId, wallet, listed, toRecord, collection) {
   const offers = await fetchNftSellOffers(nftId);
   // Specifically the Σκύλλα $PIGEONS offer — a wallet's held Pigeon can
   // also carry an unrelated (e.g. XRP/Deeptide) offer from the same
   // owner at the same time.
-  const ownOffer = findPigeonsOffer(offers, wallet);
+  const ownOffer = findCollectionOffer(offers, collection, wallet);
   if (ownOffer) {
     listed[nftId] = {
       price: ownOffer.amount.value,
@@ -77,6 +77,10 @@ export async function onRequestGet(context) {
   if (!wallet) {
     return new Response(JSON.stringify({ error: 'missing_wallet' }), { status: 400 });
   }
+  const collection = url.searchParams.get('collection') || 'pigeons';
+  if (!getTradeConfig(collection)) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
+  }
 
   const listed = {};
   // Collected across every verifyAndRecord call below (the direct nftId
@@ -85,7 +89,7 @@ export async function onRequestGet(context) {
   // that matters here specifically.
   const toRecord = {};
 
-  const listingsMap = env.coin ? await getSwapListingsMap(env.coin) : {};
+  const listingsMap = env.coin ? await getSwapListingsMap(env.coin, collection) : {};
   for (const nftId of Object.keys(listingsMap)) {
     if (listingsMap[nftId].seller === wallet) {
       listed[nftId] = { price: listingsMap[nftId].price, currency: listingsMap[nftId].currency, offerId: listingsMap[nftId].offerId, expiration: listingsMap[nftId].expiration || null };
@@ -98,11 +102,11 @@ export async function onRequestGet(context) {
   // regardless of how many other Pigeons the wallet holds.
   const directNftId = url.searchParams.get('nftId');
   if (directNftId && /^[0-9A-Fa-f]{64}$/.test(directNftId) && !listed[directNftId]) {
-    await verifyAndRecord(env, directNftId, wallet, listed, toRecord);
+    await verifyAndRecord(env, directNftId, wallet, listed, toRecord, collection);
   }
 
   const nfts = await fetchAllAccountNftsCached(context, wallet);
-  const allOwnedPigeons = findAllPigeons(nfts);
+  const allOwnedPigeons = findAllCollectionNfts(nfts, collection);
 
   // Once a Pigeon has been live-checked (found listed or not) within the
   // TTL window, skip re-checking it — a FOUND one is already covered by
@@ -128,9 +132,9 @@ export async function onRequestGet(context) {
   // concurrent (see pigeons.js's scyllaListed comment for where that was
   // confirmed live), so this still leaves a wide safety margin while
   // cutting the live-scan pass's wall-clock time to roughly a third.
-  await mapWithConcurrency(undiscovered, 15, (nft) => verifyAndRecord(env, nft.NFTokenID, wallet, listed, toRecord));
+  await mapWithConcurrency(undiscovered, 15, (nft) => verifyAndRecord(env, nft.NFTokenID, wallet, listed, toRecord, collection));
 
-  if (env.coin) context.waitUntil(recordSwapListingsBatch(env.coin, toRecord));
+  if (env.coin) context.waitUntil(recordSwapListingsBatch(env.coin, toRecord, collection));
   if (env.coin && undiscovered.length) {
     undiscovered.forEach(nft => recentlyChecked.add(nft.NFTokenID));
     context.waitUntil(safeKvPut(env.coin, discoveryCacheKey, JSON.stringify(Array.from(recentlyChecked)), { expirationTtl: DISCOVERY_CACHE_TTL_SECONDS }));
