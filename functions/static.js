@@ -5436,8 +5436,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .mainframe-card:hover .mainframe-card-art{ transform:scale(1.05); }
   /* $P!GE0NS' own art still crops best a little below the very top (avoids
-     the empty purple background above the character's head). */
+     the empty purple background above the character's head), and PHN!X/
+     TEDDY need a bit more of a shift down than the shared default — plain
+     top crops into PHN!X's crest/feathers above the actual face, and into
+     TEDDY's ears above its eyes. */
   .mainframe-card[data-collection="pigeons"] .mainframe-card-art{ background-position:center 15%; }
+  .mainframe-card[data-collection="phnixs"] .mainframe-card-art{ background-position:center 30%; }
+  .mainframe-card-teddy .mainframe-card-art{ background-position:center 30%; }
   /* Cards are much shorter now (3x2 grid, not a full-height carousel
      card) — body padding/spacing tightened throughout so the art above
      it keeps a real, visible chunk of the card instead of getting
@@ -5619,7 +5624,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="mainframe-card-buy" data-collection="phnixs">BUY $PHN!X</button>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-soon" style="--card-accent:47,158,68; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
+        <div class="mainframe-card mainframe-card-soon mainframe-card-teddy" style="--card-accent:47,158,68; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$TEDDY</div>
