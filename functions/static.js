@@ -1073,12 +1073,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .sale-currency-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
   .sale-currency-btn-active{ border-color:var(--green); color:var(--green); background:rgba(0,255,140,0.08); }
+  /* No max-height/overflow of its own any more — reported live as not
+     needing "two scroll bars" (this box scrolling internally, inside the
+     whole page also scrolling). Now just flows as part of the normal
+     page, with the infinite-scroll trigger (salesScrollObserver in the
+     JS) rooted at the page viewport instead of this element. */
   .sales-scrollbox{
     margin-top:1rem;
     border-top:1px dashed var(--border-dim);
     padding-top:0.5rem;
-    max-height:820px;
-    overflow-y:auto;
   }
   /* Grid, not flex-wrap — same reasoning as .th-row's own comment (T0P
      123 H0LDERS): fixed columns are what actually keep every row's
@@ -1127,10 +1130,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sale-parties a{ color:var(--white); text-decoration:underline; cursor:pointer; }
   .sale-parties a:hover{ color:var(--cyan); }
   .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:15px; text-align:right; }
+  /* Icon-left/details-right list layout, not a full stack — a plain
+     top-to-bottom stack (the previous version) read as an unrelated pile
+     of text lines rather than one grouped row, especially once the tall
+     thumbnail towered over the much shorter number badge next to it.
+     The thumbnail+number column spans every text row beside it here, so
+     there's always a clear left anchor tying the whole row together. */
   @media (max-width:820px){
-    .sale-row{ grid-template-columns:1fr; grid-template-areas:"thumb" "price" "parties" "time"; row-gap:0.5rem; justify-items:start; }
-    .sale-thumb-wrap{ grid-area:thumb; }
-    .sale-price-cell{ grid-area:price; }
+    .sale-row{
+      grid-template-columns:84px 1fr;
+      grid-template-areas:"thumb price" "thumb parties" "thumb time";
+      row-gap:0.4rem;
+      column-gap:0.9rem;
+      align-items:start;
+    }
+    .sale-thumb-wrap{ grid-area:thumb; flex-direction:column; align-items:flex-start; gap:0.4rem; align-self:start; }
+    .sale-num-box{ font-size:13px; padding:0.3em 0.5em; }
+    .sale-price-cell{ grid-area:price; align-self:end; }
     .sale-parties{ grid-area:parties; text-align:left; }
     .sale-time{ grid-area:time; text-align:left; }
   }
@@ -12275,11 +12291,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     var row = e.target.closest('.sale-row');
     if (row) openDetail(row.getAttribute('data-nftid'));
   });
-  // Rooted at the scrollbox itself (not the viewport) so it fires on
-  // scrolling *within* the box, not the page.
+  // Rooted at the page viewport (root:null), not the scrollbox — the
+  // scrollbox no longer scrolls on its own (see .sales-scrollbox's own
+  // comment, "doesn't need two scroll bars"), so this now fires on
+  // scrolling the whole page instead.
   var salesScrollObserver = new IntersectionObserver(function(entries){
     if (entries[0].isIntersecting) loadMoreSales();
-  }, { root: el.salesScrollBox, rootMargin: '200px' });
+  }, { root: null, rootMargin: '200px' });
   salesScrollObserver.observe(el.salesScrollSentinel);
 
   el.searchBtn.addEventListener('click', runSearchBox);
