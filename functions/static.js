@@ -1405,30 +1405,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:1.1rem 1.25rem;
     margin-bottom:0.75rem;
   }
-  /* S0RT BY / F!LTER BY TRA!TS stay on screen while scrolling the results
-     grid below — reported live as wanting these two to "follow as you
-     scroll down" instead of having to scroll back up to change either.
-     top:0 since nothing else on this page is sticky above it (confirmed —
-     no other position:sticky exists yet). Own solid background (not the
-     page's transparent default) so result cards don't visibly scroll up
-     underneath/through it once stuck; a touch of shadow once actually
-     stuck (.db-controls-stuck, toggled by an IntersectionObserver in the
-     script) is the only way to tell it left the normal page flow, since
-     sticky alone gives no such signal on its own. */
-  .db-controls-sticky{
-    position:sticky;
-    top:0;
-    z-index:80;
-    background:var(--bg);
-    padding-top:0.5rem;
-    margin-top:-0.5rem;
-  }
-  .db-controls-sticky.db-controls-stuck{ box-shadow:0 8px 16px -8px rgba(0,0,0,0.6); }
-  /* Zero-height marker just above the sticky row — an IntersectionObserver
-     watches this (see the script) to know the exact moment the row
-     actually leaves normal flow and starts sticking, purely to toggle
-     .db-controls-stuck's shadow above. Not visible/interactive itself. */
-  .db-controls-sticky-sentinel{ height:0; }
+  /* S0RT BY/F!LTER BY TRA!TS' old in-page trigger boxes are display:none
+     now (see the HTML's own comment on #dbControlsSticky) — real buttons
+     for both live in the fixed #bottomControlsBar instead (further down
+     this file). A brief sticky-row version of this lived here before that
+     (position:sticky, a shadow once stuck) but was retired just as
+     quickly once "at the bottom, not partway down the page" turned out to
+     be the actual want. */
   .db-config-row{ margin-bottom:1rem; flex-wrap:wrap; row-gap:0.5rem; }
   .db-config-row:last-child{ margin-bottom:0; }
   .db-config-row .sort-field-label{ flex:0 0 175px; }
@@ -2030,6 +2013,49 @@ const SWAP_HTML = `<!DOCTYPE html>
     z-index:1900;
   }
   .flyout-popup-backdrop.open{ display:block; }
+  /* S0RT BY / F!LTER BY TRA!TS — a real fixed bar pinned to the bottom of
+     the viewport (display toggled in showTab(), matching #screenBrowse's
+     own DATABASE/PλWS-only visibility), so both stay reachable regardless
+     of scroll position while the rest of the page scrolls normally
+     underneath — no position:sticky/shadow trickery, just genuinely
+     always there. z-index sits above ordinary page content but below the
+     popup + its backdrop (1900/1950 above), so opening either still
+     covers this bar the same way it covers everything else. */
+  .bottom-controls-bar{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:500;
+    display:flex;
+    border-top:1px solid var(--border-mid);
+    background:rgba(9,9,7,0.96);
+    backdrop-filter:blur(6px);
+  }
+  .bottom-controls-btn{
+    flex:1 1 0;
+    min-width:0;
+    background:transparent;
+    border:none;
+    border-left:1px solid var(--border-dim);
+    color:var(--cyan);
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:1em 0.5em;
+    cursor:pointer;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .bottom-controls-btn:first-child{ border-left:none; }
+  .bottom-controls-btn:hover, .bottom-controls-btn.open{ background:var(--cyan-faint); text-shadow:0 0 5px var(--cyan-glow); }
+  /* Own bottom padding on the page's actual scrollable content so the
+     last row of result cards never sits underneath this fixed bar with
+     no way to see it — #screenBrowse is the shared DATABASE/PλWS grid
+     container this bar is always paired with (see showTab, which toggles
+     body.has-bottom-bar in lockstep with the bar's own visibility). */
+  body.has-bottom-bar #screenBrowse{ padding-bottom:4rem; }
   .traits-flyout.flyout-popup{
     display:block !important;
     position:fixed !important;
@@ -2824,17 +2850,17 @@ const SWAP_HTML = `<!DOCTYPE html>
      "the number is the point" treatment SALES H!ST0RY's own price gets. */
   .thumb-buy-label{ font-size:13px; letter-spacing:0.08em; opacity:0.85; }
   .thumb-buy-price{ font-family:var(--font-display); font-size:19px; font-weight:800; letter-spacing:0.01em; }
-  /* 0FFER — plain, quiet outline, no glow/pulse. BUY N0W is the real,
-     immediate action here (a live listing, one click to buy); 0FFER is
-     a slower secondary path (submit a price, wait for the owner), so
-     giving it the same glowing/pulsing treatment as BUY N0W made every
-     card look like it was urgently calling for attention regardless of
-     which action actually mattered. */
+  /* 0FFER — solid green now (reported live as wanting it "fully green"),
+     same fill BUY N0W already uses, just without that button's own
+     glow/pulse: BUY N0W is the real, immediate action here (a live
+     listing, one click to buy); 0FFER is a slower secondary path (submit
+     a price, wait for the owner), so it stays a plain flat fill rather
+     than competing for the same urgent attention. */
   .offer-open-modal-btn{
     width:100%;
-    background:transparent;
+    background:var(--green);
     border:1px solid var(--green);
-    color:var(--green);
+    color:#000;
     font-family:var(--font-mono);
     font-weight:700;
     font-size:17px;
@@ -2845,7 +2871,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     transition:background 0.15s ease, color 0.15s ease;
   }
-  .offer-open-modal-btn:hover{ background:var(--green); color:#000; }
+  .offer-open-modal-btn:hover{ background:#000; color:var(--green); }
   /* L!ST — same box size as a lone 0FFER button (17px, full width),
      not the smaller shared .list-open-modal-btn default (15px, used
      when it's paired with TRANSFER in the scoped MY PIGEONS view) —
@@ -5238,6 +5264,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
   </div>
 
+  <!-- S0RT BY / F!LTER BY TRA!TS — real clickable buttons fixed to the
+       bottom of the viewport (not sticky-in-flow any more — reported live
+       as not wanting these "in their own tab" partway down the page, just
+       two buttons always reachable at the bottom while the rest of the
+       page scrolls normally underneath). Sitting here, a sibling of
+       #screenMainframe rather than nested inside any tab panel, is
+       deliberate: #flockGridPanel (an ancestor of the DATABASE grid these
+       used to live inside) has backdrop-filter:blur(...) on it, which per
+       the CSS Containing Block spec would hijack position:fixed's own
+       anchor from the real viewport to that blurred ancestor instead (see
+       openSortFlyout/openTraitsFlyout's own comment on this same issue —
+       confirmed live there already). Visibility is toggled in showTab()
+       to match #screenBrowse's own DATABASE/PλWS-only condition, not CSS,
+       since there's no ancestor display:none left here to hide behind. -->
+  <div class="flyout-popup-backdrop" id="flyoutPopupBackdrop"></div>
+  <div class="bottom-controls-bar" id="bottomControlsBar" style="display:none;">
+    <button type="button" class="bottom-controls-btn" id="bottomSortBtn">S0RT BY ▾</button>
+    <button type="button" class="bottom-controls-btn" id="bottomTraitsBtn">F!LTER BY TRA!TS ▾</button>
+  </div>
+
   <div class="page">
     <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub" id="mainframeReopenLabel">STAT!C :: MA!NFRAME</span></h1>
 
@@ -5695,16 +5741,19 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- S0RT BY / F!LTER BY TRA!TS — a sticky row that stays in
-               view while scrolling the results grid below (reported live
-               as wanting these two "to follow as you scroll down"), so
-               changing either never means scrolling all the way back up
-               first. Both open the same centered popup now — see
-               .flyout-popup-backdrop right below and openSortFlyout/
-               openTraitsFlyout in the script. -->
-          <div class="db-controls-sticky-sentinel" id="dbControlsStickySentinel"></div>
-          <div class="db-controls-sticky" id="dbControlsSticky">
-          <div class="flyout-popup-backdrop" id="flyoutPopupBackdrop"></div>
+          <!-- S0RT BY / F!LTER BY TRA!TS' own trigger boxes — no longer
+               shown here at all (reported live as not wanting these "in
+               their own tab" partway down the page); real buttons for
+               both now live in the fixed #bottomControlsBar (see
+               #screenMainframe's own sibling further up). This whole
+               block stays in the DOM purely as the machinery
+               renderSortFlyoutList/renderTraitsFlyoutCats/openSortFlyout/
+               openTraitsFlyout already write into and reparent from (the
+               popup itself, #sortFlyoutVals, #traitsFlyoutCats, etc.) —
+               changing every one of those to build fresh markup instead
+               would be a much bigger, riskier rewrite for the exact same
+               end result. -->
+          <div class="db-controls-sticky" id="dbControlsSticky" style="display:none;">
           <!-- S0RT BY sits directly underneath now, in COLLECTION's old
                spot — same static-label + stacked-applied-tag treatment as
                F!LTER BY TRA!TS below it (#sortRows is #traitRows' own
@@ -6642,7 +6691,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
-   'dbControlsSticky','dbControlsStickySentinel','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose',
+   'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','bottomControlsBar','bottomSortBtn','bottomTraitsBtn',
    'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
@@ -6709,15 +6758,6 @@ const SWAP_HTML = `<!DOCTYPE html>
    'acceptOfferConfirmModal','screenAcceptOfferConfirm','acceptOfferConfThumb','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfRoyaltyRow','acceptOfferConfRoyaltyLabel','acceptOfferConfRoyalty','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn',
    'screenAcceptOfferResult','acceptOfferResultThumb','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultRoyaltyRow','acceptOfferResultRoyaltyLabel','acceptOfferResultRoyalty','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
-
-  // Toggles a shadow on the S0RT BY / F!LTER BY TRA!TS row (see
-  // .db-controls-stuck's own CSS) the instant it actually starts
-  // sticking — the zero-height sentinel just above it scrolling out of
-  // view IS that moment; sticky positioning alone gives no event/class of
-  // its own to hook for this.
-  new IntersectionObserver(function(entries){
-    el.dbControlsSticky.classList.toggle('db-controls-stuck', !entries[0].isIntersecting);
-  }, { threshold: 0 }).observe(el.dbControlsStickySentinel);
 
   function escapeHtml(str){
     return String(str).replace(/[&<>"']/g, function(c){
@@ -7002,7 +7042,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     // actually scoped to your own wallet; before that (no session yet,
     // still connecting), staying hidden avoids briefly showing a stale/
     // unrelated grid underneath the CONNECTING status.
-    el.screenBrowse.style.display = (tab === 'database' || (tab === 'mypigeons' && isOwnWalletScope())) ? '' : 'none';
+    var showBrowseChrome = tab === 'database' || (tab === 'mypigeons' && isOwnWalletScope());
+    el.screenBrowse.style.display = showBrowseChrome ? '' : 'none';
+    // S0RT BY / F!LTER BY TRA!TS' fixed bottom bar — same visibility rule
+    // as screenBrowse itself, since there's nothing to sort/filter
+    // without a grid showing. body.has-bottom-bar drives that grid's own
+    // bottom padding (see .bottom-controls-bar's CSS) so the last row of
+    // cards never sits hidden underneath this bar.
+    el.bottomControlsBar.style.display = showBrowseChrome ? 'flex' : 'none';
+    document.body.classList.toggle('has-bottom-bar', showBrowseChrome);
+    if (!showBrowseChrome){ closeSortFlyout(); closeTraitsFlyout(); }
     // myPigeonsPanel only has real content left (connect status, CONNECT
     // button) while not yet scoped — title/offers-summary/pigeon-grid all
     // moved out (see renderMyPigeonsList/showTab history), so leaving it
@@ -7222,6 +7271,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.topHoldersPanelWrap.style.display = 'none';
       el.salesPanelWrap.style.display = 'none';
       el.swapOffersPanelWrap.style.display = 'none';
+      // Nothing to sort/filter on a single-item screen (DETAIL/HIST0RY/
+      // SUMMARY) — same reasoning as showTab's own bottom-bar toggle.
+      el.bottomControlsBar.style.display = 'none';
+      document.body.classList.remove('has-bottom-bar');
+      closeSortFlyout();
+      closeTraitsFlyout();
     }
     el.screenDetail.style.display = name === 'detail' ? '' : 'none';
     document.body.classList.toggle('detail-open', name === 'detail');
@@ -8353,7 +8408,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function thumbnailCardHtml(p){
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : 'IMAGE';
     var num = p.number !== null ? '#' + greenNum(p.number) : '#????';
-    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) + '</div>' : '';
+    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + p.rarityRank + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     // Real XRP sale history (highSaleEntry, see toItem in api/pigeons.js)
     // is null (not 0) when a Pigeon genuinely has no recorded sale, distinct
     // from an actual free/near-free past sale — that's the "never resold
@@ -8369,7 +8424,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // label.
     var hasAvgSale = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
     var avgSaleLine = !COLLECTION_META[state.collection].tradeable ? '' : hasAvgSale
-      ? '<div class="result-rarity-line result-stat-stack"><span class="stat-label">AVG SALE PR!CE ::</span><span class="stat-value">' + greenNum(fmtXrp(p.avgSaleXrp)) + ' XRP</span></div>'
+      ? '<div class="result-rarity-line result-stat-stack"><span class="stat-label">AVG SALE PR!CE ::</span><span class="stat-value">' + fmtXrp(p.avgSaleXrp) + ' XRP</span></div>'
       : '<div class="result-rarity-line result-stat-stack"><span class="stat-label">COND!T!ON ::</span><span class="stat-value">M!NT</span></div>';
     // Real cross-market floor price (see PRICE_ASC/crossListing in
     // startCollectionBrowse) — only set on items returned by that sort,
@@ -9235,6 +9290,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.traitsFlyout.style.display = 'none';
     el.traitsFlyout.classList.remove('flyout-popup', 'flyout-drilled');
     el.traitsHoverWrap.classList.remove('open');
+    el.bottomTraitsBtn.classList.remove('open');
     restoreTraitsFlyout();
     if (el.sortFlyout.style.display !== 'block') hideFlyoutBackdrop();
   }
@@ -9247,6 +9303,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     else openTraitsFlyout();
   });
   el.traitsFlyoutClose.addEventListener('click', closeTraitsFlyout);
+  // The real, visible trigger now — el.traitsHoverLabel above still
+  // exists (and still works) purely because it's what openTraitsFlyout's
+  // whole cats/vals/back-button machinery already targets; no reason to
+  // rewire all of that just because the clickable label itself moved.
+  el.bottomTraitsBtn.addEventListener('click', function(){
+    el.bottomTraitsBtn.classList.toggle('open', el.traitsFlyout.style.display !== 'block');
+    el.traitsHoverLabel.click();
+  });
   // Click only, not hover — an earlier version also opened a category's
   // values on mouseover, which meant just moving the mouse across the
   // strip (e.g. scrolling past it, or clicking somewhere else nearby)
@@ -12998,6 +13062,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.sortFlyout.style.display = 'none';
     el.sortFlyout.classList.remove('flyout-popup');
     el.sortDropWrap.classList.remove('open');
+    el.bottomSortBtn.classList.remove('open');
     restoreSortFlyout();
     if (el.traitsFlyout.style.display !== 'block') hideFlyoutBackdrop();
   }
@@ -13034,6 +13099,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     else openSortFlyout();
   });
   el.sortFlyoutClose.addEventListener('click', closeSortFlyout);
+  // Real, visible trigger — see bottomTraitsBtn's own comment above for
+  // why el.sortDropLabel itself stays as the thing actually clicked.
+  el.bottomSortBtn.addEventListener('click', function(){
+    el.bottomSortBtn.classList.toggle('open', el.sortFlyout.style.display !== 'block');
+    el.sortDropLabel.click();
+  });
   el.sortFlyoutVals.addEventListener('click', function(e){
     var valBtn = e.target.closest('.traits-flyout-val');
     if (!valBtn || valBtn.hasAttribute('disabled')) return;
