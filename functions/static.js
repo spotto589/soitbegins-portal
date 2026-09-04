@@ -5046,13 +5046,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="mainframe-card-label">P!GE0NS</div>
         <div class="mainframe-card-tag">TRAD!NG L!VE</div>
       </button>
-      <button class="mainframe-card" data-collection="phnixs">
+      <!-- PHN!X/TEDDY pulled back to C0M!NG S00N and no longer clickable
+           (no data-collection — mainframeGrid's own click handler below
+           only matches [data-collection]) while Pigeons gets hardened
+           into the real template first. -->
+      <button class="mainframe-card mainframe-card-soon" disabled>
         <div class="mainframe-card-label">PHN!X</div>
-        <div class="mainframe-card-tag">TRAD!NG L!VE</div>
+        <div class="mainframe-card-tag">C0M!NG S00N</div>
       </button>
-      <button class="mainframe-card mainframe-card-soon" data-collection="teddybg">
+      <button class="mainframe-card mainframe-card-soon" disabled>
         <div class="mainframe-card-label">TEDDY</div>
-        <div class="mainframe-card-tag">BR0WSE 0NLY</div>
+        <div class="mainframe-card-tag">C0M!NG S00N</div>
       </button>
     </div>
   </div>
@@ -5073,9 +5077,15 @@ const SWAP_HTML = `<!DOCTYPE html>
           <span class="trait-row-label" id="dbSelectLabel">P!GE0NS ▾</span>
           <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
             <div class="db-option db-option-active" data-collection="pigeons">P!GE0NS</div>
+            <!-- PHN!X/TEDDY pulled back to C0M!NG S00N (matching FUZZY's own
+                 disabled pattern — no data-collection, so neither the flyout
+                 click handler nor switchCollection's own querySelectorAll
+                 above can ever select them) while Pigeons gets hardened
+                 into the real template first — see COLLECTION_META/
+                 TRADEABLE_COLLECTIONS' own comments on why. -->
+            <div class="db-option db-option-disabled db-option-phnix">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
+            <div class="db-option db-option-disabled db-option-teddy">TEDDY <span class="db-soon">C0M!NG S00N</span></div>
             <div class="db-option db-option-disabled db-option-fuzzy">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
-            <div class="db-option db-option-phnix" data-collection="phnixs">PHN!X</div>
-            <div class="db-option db-option-teddy" data-collection="teddybg">TEDDY</div>
           </div>
         </div>
       </button>
