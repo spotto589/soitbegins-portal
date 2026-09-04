@@ -2965,9 +2965,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* 0FFERS RECE!VED (renderMyOffersList) — one horizontal row per listed
      Pigeon with a real offer: thumbnail, number/buyer, price, then the
      same ACCEPT/DECL!NE/C0UNTER trio the card's own highest-offer box
-     uses, just laid out in a row instead of stacked. */
+     uses, just laid out in a row instead of stacked.
+     Grid, not flex — reported live as wanting the price/number truly
+     centred in the middle of the row (not just sitting between whatever
+     widths the thumbnail block and the buttons happened to take up) and
+     ACCEPT/DECL!NE/C0UNTER sitting horizontal on the right, not stacked.
+     Left and right columns both 1fr — equal width either side keeps the
+     middle (price) column visually centred on the row regardless of how
+     wide the thumbnail+info block or the button row actually are. */
   .my-offer-row{
-    display:flex;
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
     align-items:center;
     gap:1.25rem;
     padding:1.4rem 1rem;
@@ -2982,6 +2990,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      off on the bottom" instead of a full box. Same specificity, later in
      the file, wins. */
   .own-offer-row:last-child{ border-bottom:1px solid var(--red); }
+  /* Groups the thumbnail+number/buyer block into the row's own left grid
+     column (see .my-offer-row's own comment on why left/right need to
+     both be 1fr for the price column to actually land centred). */
+  .my-offer-row-left{ display:flex; align-items:center; gap:1.25rem; min-width:0; }
   /* Reported live as wanting to "clearly see all the information" —
      every piece of this row (thumbnail, number, buyer, price, buttons)
      scaled up from the original compact version. */
@@ -2990,15 +3002,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   .my-offer-row-info{ flex:1 1 auto; min-width:0; }
   .my-offer-row-num{ font-size:24px; font-weight:700; color:var(--white); }
   .my-offer-row-buyer{ font-size:15px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; margin-top:0.3rem; }
-  .my-offer-row-price{ flex:0 0 auto; font-family:var(--font-display); font-size:34px; font-weight:700; color:var(--green); text-align:right; margin-right:0.75rem; }
-  .my-offer-row-actions{ flex:0 0 auto; display:flex; flex-direction:column; gap:0.5rem; min-width:150px; }
+  .my-offer-row-price{ font-family:var(--font-display); font-size:34px; font-weight:700; color:var(--green); text-align:center; white-space:nowrap; }
+  .my-offer-row-actions{ display:flex; flex-direction:row; gap:0.5rem; justify-self:end; }
   .my-offer-row-actions .highest-offer-btn{ flex:0 0 auto; padding:0.85em 1.2em; font-size:16px; }
   @media (max-width:700px){
-    .my-offer-row{ flex-wrap:wrap; padding:1.2rem 0.6rem; }
+    .my-offer-row{ grid-template-columns:1fr; row-gap:0.75rem; padding:1.2rem 0.6rem; }
     .my-offer-row-img{ width:72px; height:72px; }
     .my-offer-row-num{ font-size:20px; }
-    .my-offer-row-price{ margin-right:0; margin-left:auto; font-size:26px; }
-    .my-offer-row-actions{ flex:1 1 100%; flex-direction:row; min-width:0; }
+    .my-offer-row-price{ text-align:left; font-size:26px; }
+    .my-offer-row-actions{ justify-self:start; width:100%; }
     .my-offer-row-actions .highest-offer-btn{ flex:1 1 0; }
   }
   .outgoing-offers-title{ margin-top:1.5rem; padding-top:1.5rem; border-top:1px dashed var(--border-dim); }
@@ -9361,10 +9373,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     var html = rows.length ? rows.map(function(row){
       var item = row.item, top = row.top;
       return '<div class="my-offer-row">' +
-        '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + row.img + '</div>' +
-        '<div class="my-offer-row-info">' +
-          '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
-          '<div class="my-offer-row-buyer">FR0M ' + walletTagHtml(top.buyer, top.buyerShort) + '</div>' +
+        '<div class="my-offer-row-left">' +
+          '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + row.img + '</div>' +
+          '<div class="my-offer-row-info">' +
+            '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
+            '<div class="my-offer-row-buyer">FR0M ' + walletTagHtml(top.buyer, top.buyerShort) + '</div>' +
+          '</div>' +
         '</div>' +
         '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + '</div>' +
         '<div class="my-offer-row-actions">' +
@@ -9379,10 +9393,12 @@ const SWAP_HTML = `<!DOCTYPE html>
         ownRows.map(function(row){
           var item = row.item, own = row.own;
           return '<div class="my-offer-row own-offer-row">' +
-            '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + row.img + '</div>' +
-            '<div class="my-offer-row-info">' +
-              '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
-              '<div class="my-offer-row-buyer">Y0U 0FFERED 0N Y0UR 0WN P!GE0N</div>' +
+            '<div class="my-offer-row-left">' +
+              '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + row.img + '</div>' +
+              '<div class="my-offer-row-info">' +
+                '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
+                '<div class="my-offer-row-buyer">Y0U 0FFERED 0N Y0UR 0WN P!GE0N</div>' +
+              '</div>' +
             '</div>' +
             '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(own.price)) + '</div>' +
             '<div class="my-offer-row-actions">' +
@@ -11589,10 +11605,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
       var countdown = listingCountdownText(item.expiration);
       return '<div class="my-offer-row">' +
-        '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + img + '</div>' +
-        '<div class="my-offer-row-info">' +
-          '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
-          '<div class="my-offer-row-buyer">T0 ' + walletTagHtml(item.ownerWallet, item.ownerShort) + (countdown ? ' :: ' + escapeHtml(countdown) : '') + '</div>' +
+        '<div class="my-offer-row-left">' +
+          '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + img + '</div>' +
+          '<div class="my-offer-row-info">' +
+            '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
+            '<div class="my-offer-row-buyer">T0 ' + walletTagHtml(item.ownerWallet, item.ownerShort) + (countdown ? ' :: ' + escapeHtml(countdown) : '') + '</div>' +
+          '</div>' +
         '</div>' +
         '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(item.price)) + '</div>' +
         '<div class="my-offer-row-actions">' +
