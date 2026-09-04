@@ -168,10 +168,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* EDITION (1-1515/1516-3015) and the # 0R WALLET search box both depend
      on the $PIGEONS-only number-map crawl (search resolves a number via
      that map; EDITION is a hardcoded $PIGEONS mint-era number range) —
-     neither has an equivalent for a browse-only collection, so both are
-     just not offered rather than sitting there silently broken. */
-  body.collection-browse-only .edition-toggle,
-  body.collection-browse-only .search-row{ display:none; }
+     no OTHER collection has an equivalent, tradeable or not (confirmed
+     live: PHN!X showed the same 1ST/2ND ED!T!0N split as $PIGEONS even
+     though it's a completely different, unrelated collection with its
+     own real numbering) — gated on collection-non-pigeons (every
+     collection except $PIGEONS itself), not collection-browse-only
+     (tradeable vs not), which is a different axis entirely. */
+  body.collection-non-pigeons .edition-toggle,
+  body.collection-non-pigeons .search-row{ display:none; }
 
   *{ margin:0; padding:0; box-sizing:border-box; }
   /* Site-wide scrollbar — every scrollable box (the page itself, popups,
@@ -8498,7 +8502,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var isSelf = MY_WALLET && wallet === MY_WALLET;
     if (isSelf && myOwnPigeonsCache !== null){
       state.scopeAllItems = myOwnPigeonsCache;
-      el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
+      el.nodeCount.textContent = COLLECTION_META[state.collection].label + ' HELD :: ' + state.scopeAllItems.length;
       // Mirrors into myPigeonsData (CREATE OFFER's Y0UR P!GE0N picker
       // source) instead of that picker triggering its own separate
       // apiWithRetry({wallet}) fetch — this scoped fetch is already the
@@ -8512,8 +8516,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (state.scopeAllItems.length){
         runScopedQuery();
       } else {
-        el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG ' + walletViewingLabel(state.scope.ownerShort) + ' (<span class="hi">0</span> P!GE0NS)</div>';
-        el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0NS F0UND', ['TH!S WALLET 0WNS N0 P!GE0NS.'], false);
+        el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG ' + walletViewingLabel(state.scope.ownerShort) + ' (<span class="hi">0</span> ' + escapeHtml(COLLECTION_META[state.collection].label) + ')</div>';
+        el.resultsArea.innerHTML = emptyStateHtml('// N0 ' + escapeHtml(COLLECTION_META[state.collection].label) + ' F0UND', ['TH!S WALLET 0WNS N0 ' + escapeHtml(COLLECTION_META[state.collection].label) + '.'], false);
       }
     } else {
       // Old status line (still showing whatever query was active before this
@@ -8562,11 +8566,11 @@ const SWAP_HTML = `<!DOCTYPE html>
         myPigeonsData = state.scopeAllItems;
         renderMyPigeonsList();
       }
-      el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
+      el.nodeCount.textContent = COLLECTION_META[state.collection].label + ' HELD :: ' + state.scopeAllItems.length;
       updateSearchPanelTitleForPaws();
       if (!state.scopeAllItems.length){
-        el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG ' + walletViewingLabel(state.scope.ownerShort) + ' (<span class="hi">0</span> P!GE0NS)</div>';
-        el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0NS F0UND', ['TH!S WALLET 0WNS N0 P!GE0NS.'], false);
+        el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG ' + walletViewingLabel(state.scope.ownerShort) + ' (<span class="hi">0</span> ' + escapeHtml(COLLECTION_META[state.collection].label) + ')</div>';
+        el.resultsArea.innerHTML = emptyStateHtml('// N0 ' + escapeHtml(COLLECTION_META[state.collection].label) + ' F0UND', ['TH!S WALLET 0WNS N0 ' + escapeHtml(COLLECTION_META[state.collection].label) + '.'], false);
         return;
       }
       runScopedQuery();
@@ -8580,7 +8584,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           // slower follow-up lands.
           if (!state.scope || state.scope.wallet !== wallet) return;
           state.scopeAllItems = state.scopeAllItems.concat(extra).sort(function(a, b){ return (a.number || 0) - (b.number || 0); });
-          el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
+          el.nodeCount.textContent = COLLECTION_META[state.collection].label + ' HELD :: ' + state.scopeAllItems.length;
           runScopedQuery();
         });
       }
@@ -9461,7 +9465,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!state.items.length){
         el.statusLine.innerHTML = '';
       } else if (filters.length === 0){
-        el.statusLine.innerHTML = '<div class="results-trait-note">STAT!C://QUERY :: <span class="hi">' + resultCount + '</span> P!GE0NS F0UND</div>';
+        el.statusLine.innerHTML = '<div class="results-trait-note">STAT!C://QUERY :: <span class="hi">' + resultCount + '</span> ' + escapeHtml(COLLECTION_META[state.collection].label) + ' F0UND</div>';
       } else if (filters.length === 1){
         el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R <span class="hi">' + resultCount + '</span> ' +
           escapeHtml(filters[0].trait.toUpperCase()) + ': ' + escapeHtml(filters[0].value.toUpperCase()) + '</div>';
@@ -10256,7 +10260,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var num = p.number !== null && p.number !== undefined ? '#' + greenNum(p.number) : '#????';
     return '<div class="simple-picker-card" data-nftid="' + escapeHtml(p.nftId) + '">' +
         '<div class="simple-picker-card-img" data-nftid="' + escapeHtml(p.nftId) + '">' + img + '</div>' +
-        '<div class="simple-picker-card-num">P!GE0N ' + num + '</div>' +
+        '<div class="simple-picker-card-num">' + escapeHtml(collectionItemLabel()) + ' ' + num + '</div>' +
         '<button type="button" class="simple-picker-view-btn" data-nftid="' + escapeHtml(p.nftId) + '">VIEW</button>' +
       '</div>';
   }
@@ -10267,7 +10271,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderSimpleOfferPickerGrid(emptyMsg){
     el.simpleOfferPickerGrid.innerHTML = simpleOfferPickerItems.length
       ? simpleOfferPickerItems.map(simplePickerCardHtml).join('')
-      : '<div class="th-empty">' + (emptyMsg || 'N0 P!GE0NS F0UND.') + '</div>';
+      : '<div class="th-empty">' + (emptyMsg || 'N0 ' + escapeHtml(COLLECTION_META[state.collection].label) + ' F0UND.') + '</div>';
   }
   function openSimpleOfferPicker(){
     if (!MY_WALLET){
@@ -10580,7 +10584,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (isOwnWalletScope()){
           state.scopeAllItems = myOwnPigeonsCache;
           myPigeonsData = myOwnPigeonsCache;
-          el.nodeCount.textContent = 'P!GE0NS HELD :: ' + state.scopeAllItems.length;
+          el.nodeCount.textContent = COLLECTION_META[state.collection].label + ' HELD :: ' + state.scopeAllItems.length;
           updateSearchPanelTitleForPaws();
           runScopedQuery();
         }
@@ -12997,9 +13001,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     // once PHN!X flipped to tradeable: meta.tradeable became true, so this
     // class never got added and the trustline banner stayed purple instead
     // of PHN!X's own real orange/red (#ff5a1f) — confirmed live.
-    document.body.classList.remove('collection-phnixs', 'collection-teddybg');
+    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy');
     if (newCollection !== 'pigeons') document.body.classList.add('collection-' + newCollection);
     document.body.classList.toggle('collection-browse-only', !meta.tradeable);
+    // ED!T!ON/# 0R WALLET search (see their own CSS comment) are
+    // $PIGEONS-only infrastructure, unrelated to whether a collection is
+    // tradeable — every OTHER collection hides both, PHN!X included.
+    document.body.classList.toggle('collection-non-pigeons', newCollection !== 'pigeons');
     // FL00R (real Scylla listings sorted by real price) only makes sense
     // as the DEFAULT landing view for P!GE0NS specifically — it has an
     // established market with real listings to actually show. A newly
