@@ -682,7 +682,21 @@ export async function peekPendingBrokerAccept(kv, uuid) {
 // accept can ever succeed against a given NFTokenBuyOffer, since accepting
 // it removes it. This just avoids wasted Xaman round-trips on the loser.
 const BROKER_ACCEPT_LOCK_PREFIX = 'pswap:brokeracceptlock:';
-const BROKER_ACCEPT_LOCK_TTL_SECONDS = 600;
+// Was 600 (10 minutes) — reported live as genuinely painful: every real
+// release path (swap-acceptoffer-status.js/swap-buy-status.js's own
+// expired/rejected/failed/gone branches) requires an authenticated
+// status poll to actually reach that code, so an attempt that never
+// gets that far — session expired mid-flow, the tab closed, Xaman
+// itself timed out before the user ever signed — left the lock stuck
+// for the FULL TTL with no way to force it clear, and "TH!S L!ST!NG !S
+// ALREADY BE!NG PURCHASED" reads like a real conflict when it's
+// actually just an abandoned attempt. Per this function's own comment
+// above, this was never a real security lock to begin with — the ledger
+// itself is what actually prevents a double-accept — so shortening this
+// costs nothing but an occasional wasted Xaman round-trip on a genuinely
+// concurrent attempt, which is a far smaller cost than a ~10 minute wait
+// to simply try again.
+const BROKER_ACCEPT_LOCK_TTL_SECONDS = 120;
 
 export async function acquireBrokerAcceptLock(kv, offerId) {
   const key = BROKER_ACCEPT_LOCK_PREFIX + offerId;
