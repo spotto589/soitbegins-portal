@@ -2974,6 +2974,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-bottom:1px solid var(--border-dim);
   }
   .my-offer-row:last-child{ border-bottom:none; }
+  /* .own-offer-row is meant to be a complete red rectangle (see its own
+     comment above) — .my-offer-row:last-child's border-bottom:none above
+     shares the exact same specificity (class + :last-child either way),
+     so without this override, Y0UR 0WN 0FFERS being the last (often only)
+     row in the list silently lost its bottom edge, reported live as "cut
+     off on the bottom" instead of a full box. Same specificity, later in
+     the file, wins. */
+  .own-offer-row:last-child{ border-bottom:1px solid var(--red); }
   /* Reported live as wanting to "clearly see all the information" —
      every piece of this row (thumbnail, number, buyer, price, buttons)
      scaled up from the original compact version. */
@@ -8348,13 +8356,15 @@ const SWAP_HTML = `<!DOCTYPE html>
         openAcceptOfferConfirm();
         return;
       }
-      // Session-only local dismiss (see declinedOfferIds) — nothing
+      // Persisted local dismiss (see declinedOfferIds) — nothing
       // on-ledger to cancel from the seller's side, just hides it from
-      // this view. Re-runs the current scoped query so the card
-      // re-renders without the declined offer immediately.
+      // this view, on this browser, from now on. Re-runs the current
+      // scoped query so the card re-renders without the declined offer
+      // immediately.
       var declineBtn = e.target.closest('.decline-offer-btn');
       if (declineBtn){
         declinedOfferIds[declineBtn.getAttribute('data-offerid')] = true;
+        persistDeclinedOfferIds();
         if (isOwnWalletScope()) runScopedQuery();
         if (el.screenDetail.style.display !== 'none') updateScyllaListing(state.currentDetail);
         if (el.myOffersPanelWrap.style.display !== 'none') renderMyOffersList();
@@ -9188,12 +9198,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   var myListedData = {};    // nftId -> { price, currency, offerId, expiration } — real on-ledger sell offers, not a stored flag
   var offersByNftId = {};   // nftId -> [{ offerId, buyer, buyerShort, price, createdAt }] — real on-ledger buy offers received
   // DECL!NE — XRPL has no seller-side "reject" for an incoming NFT buy
-  // offer (only the buyer can cancel their own), so this is a real but
-  // session-only local dismiss: hides the offer from view here without
-  // touching anything on-ledger. Not persisted server-side — a fresh
-  // page load (or the buyer's own offer still being live) brings it
-  // back. offerId -> true.
+  // offer (only the buyer can cancel their own), so this hides the offer
+  // from view here without touching anything on-ledger — the real offer
+  // is still live, the buyer could still in theory get it accepted some
+  // other way. Persisted to localStorage (offerId -> true) so it actually
+  // stays gone across a refresh — reported live as coming back every
+  // time, which a plain in-memory object (the original version of this)
+  // always would once the page reloaded and re-fetched the same still-
+  // live offer. Per-browser only, not server-side — declining on one
+  // device won't hide it on another.
+  var DECLINED_OFFERS_STORAGE_KEY = 'pswap:declinedOfferIds:v1';
   var declinedOfferIds = {};
+  try { declinedOfferIds = JSON.parse(localStorage.getItem(DECLINED_OFFERS_STORAGE_KEY) || '{}') || {}; } catch (e) { declinedOfferIds = {}; }
+  function persistDeclinedOfferIds(){
+    try { localStorage.setItem(DECLINED_OFFERS_STORAGE_KEY, JSON.stringify(declinedOfferIds)); } catch (e) {}
+  }
   // Offers received on THIS pigeon, shown directly on its own card — same
   // ACCEPT OFFER button/fee breakdown the old combined offersReceivedList
   // used, just embedded per-card instead of in one separate block (see
