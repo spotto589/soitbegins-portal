@@ -2638,6 +2638,53 @@ export async function removeSwapBuyOffer(kv, nftId, offerId) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// PR0F!LES — a wallet's own chosen display name + profile picture (one of
+// its own Pigeons), shown everywhere an address used to just print its own
+// short form (owner, buyer, seller, top holders, sales history…). Same
+// single-JSON-blob-per-key shape as the listings/buy-offers maps above —
+// there just aren't enough of these for a real per-key KV store to matter,
+// and it keeps username-uniqueness a single in-memory scan instead of a
+// second reverse-index key that could drift out of sync with this one.
+// ─────────────────────────────────────────────────────────────────────────
+const PROFILES_MAP_KEY = 'pswap:profiles:v1';
+const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,20}$/;
+
+export async function getProfilesMap(kv) {
+  const raw = await kv.get(PROFILES_MAP_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
+export async function getProfile(kv, wallet) {
+  const map = await getProfilesMap(kv);
+  return map[wallet] || null;
+}
+
+export function isValidUsername(username) {
+  return typeof username === 'string' && USERNAME_PATTERN.test(username);
+}
+
+// Case-insensitive — "Pigeon" and "pigeon" would otherwise both render
+// distinctly but be indistinguishable at a glance everywhere this shows up.
+export async function isUsernameTaken(kv, username, exceptWallet) {
+  const map = await getProfilesMap(kv);
+  const lower = username.toLowerCase();
+  return Object.keys(map).some(w => w !== exceptWallet && map[w].username && map[w].username.toLowerCase() === lower);
+}
+
+// Merges into whatever this wallet already has set (a username-only update
+// must not clobber a previously-chosen pfp, and vice versa) — same
+// read-modify-write shape as recordSwapListing's own comment explains, and
+// fine at this scale for the same reason (one wallet setting its own
+// profile is never a concurrent-write hazard the way multiple listings
+// discovered in the same scan pass were).
+export async function setProfile(kv, wallet, patch) {
+  const map = await getProfilesMap(kv);
+  map[wallet] = Object.assign({}, map[wallet], patch);
+  await safeKvPut(kv, PROFILES_MAP_KEY, JSON.stringify(map));
+  return map[wallet];
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // TRANSFER — incoming side. TRANSFER creates a real free (Amount "0")
 // NFTokenCreateOffer restricted via Destination to the recipient's wallet
 // (see swap-offer-prepare/-payload.js), but that offer sits on an NFT the

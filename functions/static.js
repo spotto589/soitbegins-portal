@@ -1033,6 +1033,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   .th-count{ color:var(--white); text-transform:uppercase; text-align:left; }
   .th-empty{ text-align:center; font-size:11px; letter-spacing:0.08em; color:var(--grey-dim); padding:0.5rem 0; text-transform:uppercase; }
 
+  /* Every address-display spot site-wide (walletTagHtml/setWalletText) —
+     starts as plain short-address text, an avatar/username silently slots
+     in ahead of it the moment that wallet's profile resolves. */
+  .wallet-tag{ display:inline-flex; align-items:center; gap:0.35em; vertical-align:middle; }
+  .wallet-avatar{ width:1.3em; height:1.3em; min-width:1.3em; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--border-mid); }
+  /* PR0F!LE panel — current username/avatar, big and unmissable at the
+     top, same reasoning as the highest-offer box elsewhere. */
+  .profile-current-row{ display:flex; align-items:center; gap:1rem; justify-content:center; margin-bottom:1rem; }
+  .profile-current-avatar{ width:64px; height:64px; border-radius:50%; overflow:hidden; background:#000; border:1px solid var(--border-mid); flex:0 0 auto; }
+  .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-current-username{ font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--green); }
+  .profile-current-wallet{ font-size:12px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; }
+  /* Currently-selected pfp in the picker grid — same green highlight the
+     rest of the app uses for "this is the real/active one" (see
+     .highest-offer-price). */
+  .simple-picker-card-selected{ border-color:var(--green); box-shadow:0 0 0 1px var(--green); }
+
   /* ---- sales history ---- */
   .sales-scrollbox{
     margin-top:1rem;
@@ -4905,6 +4922,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button class="tab-btn" data-tab="topholders">T0P 123 H0LDERS</button>
       <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
       <button class="tab-btn" data-tab="crown">CR0WN</button>
+      <button class="tab-btn" data-tab="profile">PR0F!LE</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
     </div>
     </div>
@@ -5123,6 +5141,28 @@ const SWAP_HTML = `<!DOCTYPE html>
         </select>
       </div>
       <div id="crownLeaderboardList"></div>
+    </div>
+
+    <!-- PR0F!LE — a wallet's own chosen username + profile picture (one of
+         its own Pigeons), shown everywhere an address used to just print
+         its own short form (see walletTagHtml/setWalletText). -->
+    <div class="sw-panel" id="profilePanelWrap" style="display:none;">
+      <div class="panel-title">PR0F!LE</div>
+      <div class="profile-current-row">
+        <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
+        <div class="profile-current-info">
+          <div class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</div>
+          <div class="profile-current-wallet" id="profileCurrentWallet"></div>
+        </div>
+      </div>
+      <div class="search-row" style="justify-content:center;">
+        <input class="transfer-wallet-input" id="profileUsernameInput" type="text" maxlength="20" placeholder="CH00SE A USERNAME (3-20, LETTERS/NUMBERS/_)">
+        <button class="bar-btn" id="profileUsernameSaveBtn">SAVE</button>
+      </div>
+      <div class="index-line" id="profileUsernameStatus" style="text-align:center; margin-top:0.5rem;"></div>
+      <div class="panel-title outgoing-offers-title" style="font-size:13px;">CH00SE PR0F!LE P!CTURE FR0M Y0UR P!GE0NS</div>
+      <div id="profilePfpStatus" class="th-empty" style="display:none;"></div>
+      <div class="simple-picker-grid" id="profilePfpGrid"></div>
     </div>
 
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
@@ -6183,6 +6223,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
+   'profilePanelWrap','profileCurrentAvatar','profileCurrentUsername','profileCurrentWallet',
+   'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid',
    'salesPanelWrap',
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
@@ -6535,6 +6577,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
     el.salesPanelWrap.style.display = tab === 'sales' ? '' : 'none';
     el.crownPanelWrap.style.display = tab === 'crown' ? '' : 'none';
+    el.profilePanelWrap.style.display = tab === 'profile' ? '' : 'none';
+    if (tab === 'profile') loadProfilePanel();
     el.swapOffersPanelWrap.style.display = tab === 'swapoffers' ? '' : 'none';
     // The trustline banner itself stays up across every tab, but the
     // $PIGEONS thumbnail is DATABASE-only — it's collection artwork, not
@@ -8971,7 +9015,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         : '';
       return '<div class="th-row' + (i < 15 ? ' th-row-top' : '') + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
         '<span class="th-rank">' + thumb + '<span>#' + greenNum(i + 1) + '</span></span>' +
-        '<span class="th-wallet">' + escapeHtml(h.ownerShort) + '</span>' +
+        '<span class="th-wallet">' + walletTagHtml(h.wallet, h.ownerShort) + '</span>' +
         '<span class="th-count">' + greenNum(h.count) + ' P!GE0NS' + (percentStr ? '  ::  ' + greenNum(percentStr + '%') : '') + '</span>' +
       '</div>';
     }).join('');
@@ -9062,7 +9106,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="highest-offer-box">' +
           '<div class="highest-offer-label">H!GHEST 0FFER</div>' +
           '<div class="highest-offer-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + '</div>' +
-          '<div class="highest-offer-buyer">FR0M ' + escapeHtml(top.buyerShort || top.buyer) + '</div>' +
+          '<div class="highest-offer-buyer">FR0M ' + walletTagHtml(top.buyer, top.buyerShort) + '</div>' +
           '<div class="highest-offer-actions">' +
             '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '">ACCEPT</button>' +
             '<button class="highest-offer-btn highest-offer-decline decline-offer-btn" data-offerid="' + escapeHtml(top.offerId) + '">DECL!NE</button>' +
@@ -9153,7 +9197,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + row.img + '</div>' +
         '<div class="my-offer-row-info">' +
           '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
-          '<div class="my-offer-row-buyer">FR0M ' + escapeHtml(top.buyerShort || top.buyer) + '</div>' +
+          '<div class="my-offer-row-buyer">FR0M ' + walletTagHtml(top.buyer, top.buyerShort) + '</div>' +
         '</div>' +
         '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + '</div>' +
         '<div class="my-offer-row-actions">' +
@@ -9776,7 +9820,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       already_processing: 'TH!S L!ST!NG !S ALREADY BE!NG PURCHASED BY S0MEONE ELSE R!GHT N0W.',
       cannot_accept_own_offer: 'Y0U CAN\\'T ACCEPT AN 0FFER FR0M Y0UR 0WN WALLET.',
       unexpected_offer_currency: 'TH!S 0FFER !SN\\'T !N REAL $P!GE0NS — REFUS!NG T0 ACCEPT !T.',
-      invalid_offer_amount: 'TH!S 0FFER AM0UNT !S!NVAL!D.'
+      invalid_offer_amount: 'TH!S 0FFER AM0UNT !S!NVAL!D.',
+      invalid_username: 'USERNAME MUST BE 3-20 LETTERS, NUMBERS 0R UNDERSC0RES.',
+      pfp_unavailable: 'C0ULDN\\'T L0AD TH!S P!GE0N S !MAGE — TRY AGA!N.',
+      nothing_to_update: 'N0TH!NG T0 SAVE.'
     };
     return (code && messages[code]) || 'ERR://C0ULD N0T PREPARE THE TRANSACT!0N.';
   }
@@ -10503,7 +10550,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       buyUuid = res.data.uuid;
       navigateXamanPopup(buyXamanTab, res.data.next.always);
       if (res.data.display){
-        el.buyConfSeller.textContent = shortAddr(res.data.display.seller);
+        setWalletText(el.buyConfSeller, res.data.display.seller, shortAddr(res.data.display.seller));
         el.buyConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
       }
       el.buyConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN T 0PEN? TAP HERE.</a>';
@@ -11375,7 +11422,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + img + '</div>' +
         '<div class="my-offer-row-info">' +
           '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
-          '<div class="my-offer-row-buyer">T0 ' + escapeHtml(item.ownerShort || item.ownerWallet || '????') + (countdown ? ' :: ' + escapeHtml(countdown) : '') + '</div>' +
+          '<div class="my-offer-row-buyer">T0 ' + walletTagHtml(item.ownerWallet, item.ownerShort) + (countdown ? ' :: ' + escapeHtml(countdown) : '') + '</div>' +
         '</div>' +
         '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(item.price)) + '</div>' +
         '<div class="my-offer-row-actions">' +
@@ -11680,7 +11727,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // screen used to show up front) instead of gating Xaman behind them.
   function openAcceptOfferConfirm(){
     el.acceptOfferConfPigeon.innerHTML = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
-    el.acceptOfferConfBuyer.textContent = acceptOfferTarget.buyer || '';
+    setWalletText(el.acceptOfferConfBuyer, acceptOfferTarget.buyer, shortAddr(acceptOfferTarget.buyer));
     el.acceptOfferConfPrice.textContent = acceptOfferTarget.price ? fmtPigeons(acceptOfferTarget.price) : '';
     el.acceptOfferConfFee.textContent = '';
     el.acceptOfferConfRoyaltyRow.style.display = 'none';
@@ -11710,7 +11757,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       acceptOfferUuid = res.data.uuid;
       navigateXamanPopup(acceptOfferXamanTab, res.data.next.always);
       if (res.data.display){
-        el.acceptOfferConfBuyer.textContent = shortAddr(res.data.display.buyer);
+        setWalletText(el.acceptOfferConfBuyer, res.data.display.buyer, shortAddr(res.data.display.buyer));
         el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
         el.acceptOfferConfFee.textContent = fmtPigeons(res.data.display.feeValue);
         showRoyaltyRow(el.acceptOfferConfRoyaltyRow, el.acceptOfferConfRoyaltyLabel, el.acceptOfferConfRoyalty, res.data.display.royaltyValue, res.data.display.royaltyPercent);
@@ -12100,9 +12147,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       '<div class="sale-info">' +
         '<div class="sale-price">' + price + (via ? ' <span class="sale-via">· ' + via + '</span>' : '') + '</div>' +
         '<div class="sale-parties">' +
-          (s.seller ? '<a data-wallet="' + escapeHtml(s.seller) + '" data-short="' + escapeHtml(s.sellerShort || s.seller) + '">' + escapeHtml(s.sellerShort || s.seller) + '</a>' : '?') +
+          (s.seller ? '<a data-wallet="' + escapeHtml(s.seller) + '" data-short="' + escapeHtml(s.sellerShort || s.seller) + '">' + walletTagHtml(s.seller, s.sellerShort) + '</a>' : '?') +
           ' → ' +
-          (s.buyer ? '<a data-wallet="' + escapeHtml(s.buyer) + '" data-short="' + escapeHtml(s.buyerShort || s.buyer) + '">' + escapeHtml(s.buyerShort || s.buyer) + '</a>' : '?') +
+          (s.buyer ? '<a data-wallet="' + escapeHtml(s.buyer) + '" data-short="' + escapeHtml(s.buyerShort || s.buyer) + '">' + walletTagHtml(s.buyer, s.buyerShort) + '</a>' : '?') +
         '</div>' +
         '<div class="sale-time">' + escapeHtml(when) + '</div>' +
       '</div>' +
@@ -12540,7 +12587,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // MESSAGE link removed — messaging is paused (MESSAGES_DB was never
     // bound in production, see the MESSAGE !NB0X account box's own
     // comment), so this would only ever dead-end at a broken page.
-    el.detailOwner.innerHTML = '<span class="do-label">0WNED BY</span><a class="owner-link" href="#" data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '" title="V!EW TH!S WALLET\\'S FULL P!GE0N C0LLECT!0N">' + escapeHtml(short || full) + '</a>';
+    el.detailOwner.innerHTML = '<span class="do-label">0WNED BY</span><a class="owner-link" href="#" data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '" title="V!EW TH!S WALLET\\'S FULL P!GE0N C0LLECT!0N">' + walletTagHtml(full, short) + '</a>';
   }
   // Clicking the owner address on INSPECT jumps straight into that wallet's
   // full real Pigeon collection (same browse UI as SELECT), not an external
@@ -12694,7 +12741,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Deeptide's per-token history endpoint) ----
   function walletLinkHtml(full, short){
     if (!full) return '';
-    return '<a data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '">' + escapeHtml(short || full) + '</a>';
+    return '<a data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '">' + walletTagHtml(full, short) + '</a>';
   }
   // Reads as a plain sentence per event — SOLD FOR x XRP TO wallet,
   // TRANSFERRED TO wallet, MINTED BY wallet — instead of a cramped data
@@ -12954,6 +13001,234 @@ const SWAP_HTML = `<!DOCTYPE html>
   function shortAddr(addr){
     return addr ? addr.slice(0, 9) + '...' + addr.slice(-4) : '';
   }
+  // ---- PR0F!LES — a wallet's own chosen username/pfp, resolved and
+  // patched in everywhere a short address used to be the final answer
+  // (top holders, offers, sales history, pigeon owner, buy/accept
+  // confirm screens…). Every one of those already renders instantly with
+  // the short address as normal (walletTagHtml's own fallback) — this
+  // only ever upgrades it in place a moment later if a profile exists,
+  // never blocks or delays anything on the resolve.
+  var profileCache = {};       // wallet -> {username, pfpImage} | null once resolved
+  var profilePendingSet = {};  // wallet -> true, batched up until the next flush
+  var profileResolveTimer = null;
+  function queueProfileResolve(address){
+    if (!address || Object.prototype.hasOwnProperty.call(profileCache, address) || profilePendingSet[address]) return;
+    profilePendingSet[address] = true;
+    if (profileResolveTimer) clearTimeout(profileResolveTimer);
+    profileResolveTimer = setTimeout(flushProfileResolve, 150);
+  }
+  function flushProfileResolve(){
+    profileResolveTimer = null;
+    var wallets = Object.keys(profilePendingSet);
+    profilePendingSet = {};
+    if (!wallets.length) return;
+    fetch('/api/profiles-batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wallets: wallets })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      var profiles = data.profiles || {};
+      wallets.forEach(function(w){ profileCache[w] = profiles[w] || null; });
+      applyResolvedProfiles(wallets);
+    }).catch(function(){
+      // Left out of profileCache entirely (not even cached as null) — a
+      // later queueProfileResolve for the same wallet retries instead of
+      // permanently sticking with the short-address fallback over one
+      // transient network blip.
+    });
+  }
+  // .wallet-tag elements everywhere carrying this exact address get their
+  // visible text/avatar patched in place — every render site shares the
+  // same data-wallet value, so one resolve covers every place that same
+  // wallet happens to show up on screen at once (a seller showing up in
+  // both a card's HIGHEST OFFER box and SALES H!ST0RY, say).
+  function applyResolvedProfiles(wallets){
+    wallets.forEach(function(w){
+      var profile = profileCache[w];
+      if (!profile || !profile.username) return;
+      var nodes = document.querySelectorAll('.wallet-tag[data-wallet="' + w + '"]');
+      nodes.forEach(function(node){
+        node.textContent = profile.username;
+        if (profile.pfpImage && !node.querySelector('.wallet-avatar')){
+          var img = document.createElement('img');
+          img.className = 'wallet-avatar';
+          img.src = profile.pfpImage;
+          img.alt = '';
+          node.insertBefore(img, node.firstChild);
+        }
+      });
+    });
+  }
+  // The one function every address-display spot in the app should build
+  // its visible text through from now on — HTML string form, for anywhere
+  // building up a bigger innerHTML blob (card rows, list rows, history
+  // lines). See setWalletText below for the handful of spots that instead
+  // set a single dedicated element's content directly.
+  function walletTagHtml(address, fallbackShort){
+    if (!address) return '';
+    queueProfileResolve(address);
+    var cached = profileCache[address];
+    var label = (cached && cached.username) ? cached.username : (fallbackShort || shortAddr(address));
+    var avatarHtml = (cached && cached.pfpImage) ? '<img class="wallet-avatar" src="' + escapeHtml(cached.pfpImage) + '" alt="">' : '';
+    return '<span class="wallet-tag" data-wallet="' + escapeHtml(address) + '">' + avatarHtml + escapeHtml(label) + '</span>';
+  }
+  // For the handful of spots that assign a dedicated element's content
+  // directly instead of building an HTML string (BUY N0W/ACCEPT 0FFER's
+  // own confirm screens) — same fallback-now/upgrade-later behaviour as
+  // walletTagHtml, just applied to one specific element.
+  function setWalletText(el2, address, fallbackShort){
+    el2.classList.add('wallet-tag');
+    if (!address){ el2.removeAttribute('data-wallet'); el2.textContent = fallbackShort || ''; return; }
+    el2.setAttribute('data-wallet', address);
+    queueProfileResolve(address);
+    var cached = profileCache[address];
+    el2.textContent = '';
+    if (cached && cached.pfpImage){
+      var img = document.createElement('img');
+      img.className = 'wallet-avatar';
+      img.src = cached.pfpImage;
+      img.alt = '';
+      el2.appendChild(img);
+    }
+    el2.appendChild(document.createTextNode((cached && cached.username) ? cached.username : (fallbackShort || shortAddr(address))));
+  }
+  // ---- PR0F!LE panel — set your own username + pick a pfp from your own
+  // Pigeons. pfp picking reuses the exact same .simple-picker-grid/card
+  // markup OFFER F0R's own picker already uses (openSimpleOfferPicker),
+  // just a different grid element and no view-detail button. ----
+  var profileSelectedPfpNftId = null;
+  function loadProfilePanel(){
+    if (!MY_WALLET){
+      el.profileCurrentWallet.textContent = '';
+      el.profileCurrentUsername.textContent = 'C0NNECT Y0UR WALLET F!RST.';
+      el.profileCurrentAvatar.innerHTML = '';
+      el.profileUsernameInput.disabled = true;
+      el.profileUsernameSaveBtn.disabled = true;
+      el.profilePfpGrid.innerHTML = '';
+      el.profilePfpStatus.style.display = '';
+      el.profilePfpStatus.textContent = 'C0NNECT Y0UR WALLET F!RST.';
+      return;
+    }
+    el.profileCurrentWallet.textContent = shortAddr(MY_WALLET);
+    el.profileUsernameInput.disabled = false;
+    el.profileUsernameSaveBtn.disabled = false;
+    fetch('/api/profiles-batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wallets: [MY_WALLET] })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      var profile = (data.profiles && data.profiles[MY_WALLET]) || null;
+      profileCache[MY_WALLET] = profile;
+      renderProfileCurrent(profile);
+    }).catch(function(){});
+    // myOwnPigeonsCache (see loadMyOwnPigeonsCache) is the same real
+    // owned-Pigeons list the FL0CK tab and OFFER F0R's own picker already
+    // use — reused here rather than a separate fetch, but PR0F!LE can be
+    // the very first tab opened this session, so this still has to kick
+    // the fetch off itself rather than assuming it's already in flight.
+    if (myOwnPigeonsCache !== null){
+      renderProfilePfpGrid(myOwnPigeonsCache);
+    } else {
+      el.profilePfpGrid.innerHTML = '';
+      el.profilePfpStatus.style.display = '';
+      el.profilePfpStatus.textContent = 'L0AD!NG Y0UR P!GE0NS...';
+      loadMyOwnPigeonsCache().then(function(items){
+        if (el.profilePanelWrap.style.display !== 'none') renderProfilePfpGrid(items);
+      });
+    }
+  }
+  function renderProfileCurrent(profile){
+    el.profileCurrentAvatar.innerHTML = (profile && profile.pfpImage) ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
+    el.profileCurrentUsername.textContent = (profile && profile.username) ? profile.username : 'N0 USERNAME SET';
+    profileSelectedPfpNftId = (profile && profile.pfpNftId) || null;
+    highlightSelectedPfpCard();
+  }
+  function renderProfilePfpGrid(items){
+    if (!items.length){
+      el.profilePfpStatus.style.display = '';
+      el.profilePfpStatus.textContent = 'Y0U D0N T 0WN ANY P!GE0NS YET.';
+      el.profilePfpGrid.innerHTML = '';
+      return;
+    }
+    el.profilePfpStatus.style.display = 'none';
+    el.profilePfpGrid.innerHTML = items.map(function(p){
+      return '<div class="simple-picker-card' + (p.nftId === profileSelectedPfpNftId ? ' simple-picker-card-selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
+        '<div class="simple-picker-card-img profile-pfp-pick" data-nftid="' + escapeHtml(p.nftId) + '">' + (p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '') + '</div>' +
+        '<div class="simple-picker-card-num">P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+  function highlightSelectedPfpCard(){
+    var cards = el.profilePfpGrid.querySelectorAll('.simple-picker-card');
+    cards.forEach(function(card){
+      card.classList.toggle('simple-picker-card-selected', card.getAttribute('data-nftid') === profileSelectedPfpNftId);
+    });
+  }
+  el.profilePfpGrid.addEventListener('click', function(e){
+    var pick = e.target.closest('.profile-pfp-pick');
+    if (!pick) return;
+    var nftId = pick.getAttribute('data-nftid');
+    if (nftId === profileSelectedPfpNftId) return;
+    el.profilePfpStatus.style.display = '';
+    el.profilePfpStatus.textContent = 'SETT!NG PR0F!LE P!C...';
+    fetch('/api/profile-set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pfpNftId: nftId })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        el.profilePfpStatus.style.display = '';
+        el.profilePfpStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      el.profilePfpStatus.style.display = 'none';
+      renderProfileCurrent(res.data.profile);
+      // Every .wallet-tag already on screen showing THIS wallet's old
+      // avatar (or none) needs the new one right away, not just the
+      // profile panel itself — same live-patch resolver every other
+      // address display already goes through.
+      profileCache[MY_WALLET] = { username: res.data.profile.username || null, pfpImage: res.data.profile.pfpImage || null };
+      applyResolvedProfiles([MY_WALLET]);
+    }).catch(function(){
+      el.profilePfpStatus.style.display = '';
+      el.profilePfpStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+  el.profileUsernameSaveBtn.addEventListener('click', function(){
+    var username = el.profileUsernameInput.value.trim();
+    if (!/^[A-Za-z0-9_]{3,20}$/.test(username)){
+      el.profileUsernameStatus.textContent = 'USERNAME MUST BE 3-20 LETTERS, NUMBERS 0R UNDERSC0RES.';
+      return;
+    }
+    el.profileUsernameSaveBtn.disabled = true;
+    el.profileUsernameSaveBtn.textContent = 'SAV!NG...';
+    el.profileUsernameStatus.textContent = '';
+    fetch('/api/profile-set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      el.profileUsernameSaveBtn.disabled = false;
+      el.profileUsernameSaveBtn.textContent = 'SAVE';
+      if (!res.ok || !res.data.ok){
+        el.profileUsernameStatus.textContent = (res.data && res.data.error === 'username_taken')
+          ? 'TH!S USERNAME !S ALREADY TAKEN.'
+          : listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      el.profileUsernameInput.value = '';
+      el.profileUsernameStatus.textContent = 'SAVED.';
+      renderProfileCurrent(res.data.profile);
+      profileCache[MY_WALLET] = { username: res.data.profile.username || null, pfpImage: res.data.profile.pfpImage || null };
+      applyResolvedProfiles([MY_WALLET]);
+    }).catch(function(){
+      el.profileUsernameSaveBtn.disabled = false;
+      el.profileUsernameSaveBtn.textContent = 'SAVE';
+      el.profileUsernameStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
   // Same reasoning as shortAddr, for a 64-char tx hash — reported live as
   // making the SETTLED receipt read as cluttered/too small. The full hash
   // is still there, just as the real link target (bithomp), not spelled
