@@ -1082,15 +1082,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* Grid, not flex-wrap — same reasoning as .th-row's own comment (T0P
      123 H0LDERS): fixed columns are what actually keep every row's
-     THUMB/PR!CE/PART!ES/T!ME/NUMBER lined up under each other down the
-     whole list, which a wrapping flex row (the previous version) can't
-     guarantee once content lengths differ row to row. Reported live as
-     "doesn't look clean" / "make everything line up". Pigeon number is
-     its own column on the right now (the "other side" from the
-     thumbnail), not sitting next to the thumbnail any more. */
+     fields lined up under each other down the whole list, which a
+     wrapping flex row can't guarantee once content lengths differ row to
+     row. Reported live as "doesn't look clean" / "make everything line
+     up". Pigeon number lives right next to the thumbnail (its own
+     .sale-thumb-wrap group, back after briefly being its own column on
+     the far side — reported live as reading too far from the thumbnail
+     out there, and crowding the time column next to it). Addresses get
+     the true middle column, centered. */
   .sale-row{
     display:grid;
-    grid-template-columns:72px 170px 1fr 140px 108px;
+    grid-template-columns:200px 150px 1fr 140px;
     align-items:center;
     gap:1rem;
     padding:1.1rem 0.6rem;
@@ -1102,15 +1104,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .sale-row:hover{ background:var(--cyan-faint); }
   .sale-row:last-child{ border-bottom:none; }
-  .sale-thumb{ width:72px; height:72px; border:1px solid var(--border-dim); }
+  .sale-thumb-wrap{ display:flex; align-items:center; gap:0.6rem; min-width:0; }
+  .sale-thumb{ flex:0 0 auto; width:72px; height:72px; border:1px solid var(--border-dim); }
   .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .sale-price-cell{ display:flex; flex-direction:column; gap:0.2rem; min-width:0; }
-  .sale-price{ font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--green); white-space:nowrap; }
-  .sale-via{ font-family:var(--font-body); font-size:13px; letter-spacing:0.08em; color:var(--white); text-transform:uppercase; }
-  .sale-parties{ font-family:var(--font-body); font-size:18px; color:var(--white); text-transform:none; min-width:0; overflow-wrap:anywhere; }
-  .sale-parties a{ color:var(--white); text-decoration:underline; cursor:pointer; }
-  .sale-parties a:hover{ color:var(--cyan); }
-  .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:15px; }
   .sale-num-box{
     font-size:16px;
     letter-spacing:0.05em;
@@ -1119,16 +1115,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.35em 0.7em;
     white-space:nowrap;
     border-radius:var(--radius);
-    text-align:center;
-    justify-self:end;
   }
+  .sale-price-cell{ display:flex; flex-direction:column; gap:0.2rem; min-width:0; }
+  /* Bigger and bolder than the rest of the row on purpose (this is the
+     one number every sale is really "about"), with a soft glow behind
+     it — reported live as small green text being hard to read; the glow
+     is what actually fixes that at small sizes, not just going bigger. */
+  .sale-price{ font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--green); text-shadow:0 0 10px rgba(0,255,140,0.45); white-space:nowrap; }
+  .sale-via{ font-family:var(--font-body); font-size:13px; letter-spacing:0.08em; color:var(--white); text-transform:uppercase; }
+  .sale-parties{ font-family:var(--font-body); font-size:18px; color:var(--white); text-transform:none; text-align:center; min-width:0; overflow-wrap:anywhere; }
+  .sale-parties a{ color:var(--white); text-decoration:underline; cursor:pointer; }
+  .sale-parties a:hover{ color:var(--cyan); }
+  .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:15px; text-align:right; }
   @media (max-width:820px){
-    .sale-row{ grid-template-columns:64px 1fr; grid-template-areas:"thumb price" "thumb parties" "thumb time" "num num"; row-gap:0.4rem; }
-    .sale-thumb{ grid-area:thumb; width:64px; height:64px; }
+    .sale-row{ grid-template-columns:1fr; grid-template-areas:"thumb" "price" "parties" "time"; row-gap:0.5rem; justify-items:start; }
+    .sale-thumb-wrap{ grid-area:thumb; }
     .sale-price-cell{ grid-area:price; }
-    .sale-parties{ grid-area:parties; }
-    .sale-time{ grid-area:time; }
-    .sale-num-box{ grid-area:num; justify-self:start; margin-top:0.3rem; }
+    .sale-parties{ grid-area:parties; text-align:left; }
+    .sale-time{ grid-area:time; text-align:left; }
   }
 
   /* ---- target node header (owner-scope) — SCYLLA / MAGENTA system ---- */
@@ -12209,7 +12213,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     var via = s.via === 'scylla' ? 'Σ SWAP' : (s.via === 'xrpcafe' ? 'XRP.CAFE' : (s.via === 'deeptide' ? 'DEEPT!DE' : ''));
     var when = s.createdAt ? relativeTimeText(s.createdAt) : '';
     return '<div class="sale-row" data-nftid="' + escapeHtml(s.nftId) + '">' +
-      '<div class="sale-thumb" data-nftid="' + escapeHtml(s.nftId) + '">' + thumb + '</div>' +
+      '<div class="sale-thumb-wrap">' +
+        '<div class="sale-thumb" data-nftid="' + escapeHtml(s.nftId) + '">' + thumb + '</div>' +
+        '<div class="sale-num-box" data-nftid="' + escapeHtml(s.nftId) + '">P!GE0N ' + num + '</div>' +
+      '</div>' +
       '<div class="sale-price-cell">' +
         '<div class="sale-price">' + price + '</div>' +
         (via ? '<div class="sale-via">' + via + '</div>' : '') +
@@ -12220,7 +12227,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         (s.buyer ? '<a data-wallet="' + escapeHtml(s.buyer) + '" data-short="' + escapeHtml(s.buyerShort || s.buyer) + '">' + walletTagHtml(s.buyer, s.buyerShort) + '</a>' : '?') +
       '</div>' +
       '<div class="sale-time">' + escapeHtml(when) + '</div>' +
-      '<div class="sale-num-box" data-nftid="' + escapeHtml(s.nftId) + '">P!GE0N ' + num + '</div>' +
     '</div>';
   }
   function loadMoreSales(){
