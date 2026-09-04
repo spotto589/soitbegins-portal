@@ -5439,14 +5439,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      art so only the character's head shows (not the text logo above it
      or the shoulders/body below) — same idea as $SEAL/$TEDDY below,
      confirmed live as the reference "perfect" crop to match. */
-  .mainframe-card[data-collection="pigeons"] .mainframe-card-art{ background-position:center 40%; }
-  .mainframe-card[data-collection="phnixs"] .mainframe-card-art{ background-position:center 38%; }
+  .mainframe-card[data-collection="pigeons"] .mainframe-card-art{ background-position:center 48%; }
+  .mainframe-card[data-collection="phnixs"] .mainframe-card-art{ background-position:center 30%; }
   .mainframe-card-teddy .mainframe-card-art{ background-position:center 30%; }
   /* $SEAL's own art is a square image with the face sitting roughly
      mid-height (starry sky above it) — plain top crop showed almost
      nothing but sky. Confirmed live as the reference "perfect" crop. */
   .mainframe-card-seal .mainframe-card-art{ background-position:center 40%; }
-  .mainframe-card-fuzzy .mainframe-card-art{ background-position:center 45%; }
+  .mainframe-card-fuzzy .mainframe-card-art{ background-position:center 55%; }
   .mainframe-card-conspiracy .mainframe-card-art{ background-position:center 45%; }
   /* Cards are much shorter now (3x2 grid, not a full-height carousel
      card) — body padding/spacing tightened throughout so the art above
