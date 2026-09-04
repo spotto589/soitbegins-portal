@@ -5365,7 +5365,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex:1 1 auto;
     min-height:0;
     display:flex;
-    align-items:stretch;
+    align-items:center;
   }
   .mainframe-grid{
     display:flex;
@@ -5392,6 +5392,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     scroll-snap-align:start;
     min-width:0;
     height:100%;
+    max-height:420px;
     display:flex;
     flex-direction:column;
     background:var(--panel-bg-solid);
@@ -5615,6 +5616,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$PHN!X</div>
+            <div class="mainframe-card-stats" id="mainframeStatsPhnixs"></div>
             <div class="mainframe-card-tag">TRAD!NG L!VE</div>
             <button type="button" class="mainframe-card-buy" data-collection="phnixs">BUY $PHN!X</button>
           </div>
@@ -7111,7 +7113,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
-   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
+   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
@@ -13141,19 +13143,27 @@ const SWAP_HTML = `<!DOCTYPE html>
       showTab('profile');
     }
   });
-  // Real, live numbers on the P!GE0NS card (see .mainframe-card-stats' own
-  // comment in the CSS) — the only tradeable card right now, so the only
-  // one worth a real fetch; C0M!NG S00N cards have nothing live to show.
+  // Real, live numbers on every TRAD!NG L!VE card (see .mainframe-card-stats'
+  // own comment in the CSS) — same three fields, same order, on every
+  // tradeable collection, so the bottom-of-card line reads identically
+  // everywhere instead of only ever existing on P!GE0NS. C0M!NG S00N cards
+  // have nothing live to show (no real trading data behind them yet).
   // Fires once, at load, regardless of whether MAINFRAME is the visible
   // screen right now — cheap, and means the numbers are already there the
   // instant you land back on it (STAT!C :: MA!NFRAME, top-left).
-  api({ stats: 1, collection: 'pigeons' }).then(function(data){
-    if (data.items == null && data.holders == null) return;
-    var parts = [];
-    if (data.items != null) parts.push('<span class="hi">' + data.items.toLocaleString() + '</span> !TEMS');
-    if (data.holders != null) parts.push('<span class="hi">' + data.holders.toLocaleString() + '</span> H0LDERS');
-    el.mainframeStatsPigeons.innerHTML = parts.join(' :: ');
-  }).catch(function(){});
+  [
+    { collection: 'pigeons', target: 'mainframeStatsPigeons' },
+    { collection: 'phnixs', target: 'mainframeStatsPhnixs' }
+  ].forEach(function(cfg){
+    api({ stats: 1, collection: cfg.collection }).then(function(data){
+      if (data.items == null && data.holders == null && data.totalVolumeXrp == null) return;
+      var parts = [];
+      if (data.items != null) parts.push('<span class="hi">' + data.items.toLocaleString() + '</span> !TEMS');
+      if (data.holders != null) parts.push('<span class="hi">' + data.holders.toLocaleString() + '</span> H0LDERS');
+      if (data.totalVolumeXrp != null) parts.push('<span class="hi">' + Math.round(data.totalVolumeXrp).toLocaleString() + '</span> XRP V0L');
+      el[cfg.target].innerHTML = parts.join(' :: ');
+    }).catch(function(){});
+  });
   el.dbSelectFlyout.addEventListener('click', function(e){
     e.stopPropagation();
     var opt = e.target.closest('.db-option[data-collection]');
