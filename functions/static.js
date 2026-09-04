@@ -4571,6 +4571,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:center;
     padding:2rem 1rem;
   }
+  /* #buySwapModal now also opens straight from MAINFRAME's BUY buttons
+     (see mainframeGrid's click handler), and #screenMainframe sits at
+     z-index:2000 — above this modal's shared z-index:1000 — so without
+     its own higher stacking the popup would render but be painted over
+     by MAINFRAME itself. */
+  #buySwapModal{ z-index:2100; }
   .offer-confirm-panel{
     width:min(440px, 100%);
     text-align:center;
