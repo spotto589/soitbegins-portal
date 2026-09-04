@@ -5196,38 +5196,121 @@ const SWAP_HTML = `<!DOCTYPE html>
     z-index:2000;
     background:#050506;
     overflow-y:auto;
-    padding:3rem 1.5rem;
+    padding:3rem 1.5rem 4rem;
   }
+  /* A faint, slow-drifting glow behind everything — the same trick as
+     .pigeons-bar-thumb's own accent gradient, just huge and centred
+     instead of boxed, so the very first screen anyone lands on reads as
+     alive rather than a flat black page with three boxes on it. Pure
+     decoration: fixed behind the grid, never intercepts clicks. */
+  #screenMainframe::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    background:
+      radial-gradient(ellipse 900px 500px at 20% -10%, rgba(136,72,248,0.16), transparent 60%),
+      radial-gradient(ellipse 900px 500px at 85% 10%, rgba(52,255,133,0.10), transparent 60%);
+  }
+  #screenMainframe > *{ position:relative; z-index:1; }
   .mainframe-subtitle{
+    position:relative;
     text-align:center;
     font-size:13px;
     letter-spacing:0.25em;
     color:var(--grey);
     text-transform:uppercase;
     margin:1.5rem 0 2.5rem;
+    padding-bottom:0.9rem;
+  }
+  /* Same glowing-underline device as SH0W!NG Y0UR P!GE0NS' own title
+     (.search-panel-title-flock) — ties this landing screen visually to
+     the rest of the site's language instead of inventing a new one. */
+  .mainframe-subtitle::after{
+    content:''; position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+    width:64px; height:2px; background:linear-gradient(90deg, transparent, var(--cyan), transparent);
+    box-shadow:0 0 8px var(--cyan-glow);
   }
   .mainframe-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
-    gap:1.5rem;
-    max-width:760px;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:1.75rem;
+    max-width:900px;
     margin:0 auto;
   }
+  /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
+     $PIGEONS' real purple) drives the art overlay + hover glow — same
+     r,g,b-triplet convention --collection-accent-rgb already uses
+     elsewhere, so a future collection just needs its own accent here,
+     nothing structural changes. */
   .mainframe-card{
+    display:block;
+    width:100%;
     background:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    padding:2.5rem 1.5rem;
+    padding:0;
+    overflow:hidden;
     text-align:center;
     cursor:pointer;
-    transition:border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    transition:border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .mainframe-card:hover{ border-color:var(--cyan); transform:translateY(-3px); box-shadow:0 0 18px var(--cyan-faint); }
-  .mainframe-card-label{ font-family:var(--font-display); font-size:24px; font-weight:700; color:#fff; margin-bottom:0.6rem; }
-  .mainframe-card-tag{ font-size:11px; letter-spacing:0.14em; color:var(--green); text-transform:uppercase; }
-  .mainframe-card-soon{ opacity:0.75; }
+  .mainframe-card:hover{
+    border-color:rgba(var(--card-accent, 61,243,236), 0.8);
+    transform:translateY(-4px);
+    box-shadow:0 12px 32px rgba(0,0,0,0.5), 0 0 24px rgba(var(--card-accent, 61,243,236), 0.35);
+  }
+  /* The collection's own artwork — a real photo/logo dropped in under
+     /assets/mainframe/ (see mainframe-card-art's background-image,
+     per-card in the HTML), with a bottom gradient in that same accent
+     colour so the label/tag underneath stay readable over any image
+     without a separate dark strip breaking the art. Until real art is in
+     place for a card, the gradient alone still reads fine as a coloured
+     tile — never a blank/broken-image box. */
+  .mainframe-card-art{
+    height:150px;
+    background-size:cover;
+    background-position:center;
+    background-color:rgba(var(--card-accent, 61,243,236), 0.14);
+    background-image:linear-gradient(180deg, rgba(var(--card-accent, 61,243,236),0.08) 0%, rgba(6,6,7,0.92) 100%), var(--card-art, none);
+    border-bottom:1px solid rgba(var(--card-accent, 61,243,236), 0.35);
+    transition:transform 0.4s ease;
+  }
+  .mainframe-card:hover .mainframe-card-art{ transform:scale(1.05); }
+  .mainframe-card-body{ padding:1.5rem 1.5rem 1.75rem; }
+  .mainframe-card-label{ font-family:var(--font-display); font-size:26px; font-weight:700; color:#fff; letter-spacing:0.02em; }
+  /* Real, live numbers (items/holders/floor — see loadMainframeStats),
+     not decorative — the whole point of showing them right here is
+     proving "this is a real, active market" before you've even picked a
+     collection. Blank (not a placeholder like "…") until they land, and
+     silently stays blank on a failed fetch — never worth blocking or
+     erroring the very first screen of the app over a stats tile. */
+  .mainframe-card-stats{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.05em;
+    color:var(--grey);
+    margin-top:0.5rem;
+    min-height:1.4em;
+  }
+  .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
+  .mainframe-card-tag{
+    display:inline-block;
+    font-size:10.5px;
+    letter-spacing:0.14em;
+    color:var(--green);
+    text-transform:uppercase;
+    margin-top:0.9rem;
+    padding:0.35em 0.9em;
+    border:1px solid rgba(52,255,133,0.4);
+    border-radius:var(--radius);
+    background:rgba(52,255,133,0.08);
+  }
+  .mainframe-card-soon{ opacity:0.6; cursor:default; }
   .mainframe-card-soon:hover{ border-color:var(--border-mid); transform:none; box-shadow:none; }
-  .mainframe-card-soon .mainframe-card-tag{ color:var(--grey-dim); }
+  .mainframe-card-soon:hover .mainframe-card-art{ transform:none; }
+  .mainframe-card-soon .mainframe-card-tag{ color:var(--grey-dim); border-color:var(--border-mid); background:transparent; }
   #mainframeReopenLabel{ cursor:pointer; }
 </style>
 </head>
@@ -5245,21 +5328,49 @@ const SWAP_HTML = `<!DOCTYPE html>
     <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub">STAT!C :: MA!NFRAME</span></h1>
     <div class="mainframe-subtitle">SELECT A C0LLECT!0N</div>
     <div class="mainframe-grid" id="mainframeGrid">
-      <button class="mainframe-card" data-collection="pigeons">
-        <div class="mainframe-card-label">P!GE0NS</div>
-        <div class="mainframe-card-tag">TRAD!NG L!VE</div>
+      <!-- Each card's own real artwork lives at /assets/mainframe/<name>.png
+           (mainframe-card-art's background-image below) — a plain coloured
+           tile in that same accent until the file's actually there, never a
+           blank/broken-image box (see .mainframe-card-art's own CSS). -->
+      <button class="mainframe-card" data-collection="pigeons" style="--card-accent:136,72,248; --card-art:url('/assets/mainframe/pigeons.png');">
+        <div class="mainframe-card-art"></div>
+        <div class="mainframe-card-body">
+          <div class="mainframe-card-label">P!GE0NS</div>
+          <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
+          <div class="mainframe-card-tag">TRAD!NG L!VE</div>
+        </div>
       </button>
-      <!-- PHN!X/TEDDY pulled back to C0M!NG S00N and no longer clickable
-           (no data-collection — mainframeGrid's own click handler below
-           only matches [data-collection]) while Pigeons gets hardened
-           into the real template first. -->
-      <button class="mainframe-card mainframe-card-soon" disabled>
-        <div class="mainframe-card-label">PHN!X</div>
-        <div class="mainframe-card-tag">C0M!NG S00N</div>
+      <!-- PHN!X/TEDDY/SEAL/FUZZY are all C0M!NG S00N and no longer
+           clickable (no data-collection — mainframeGrid's own click
+           handler below only matches [data-collection]) while Pigeons
+           gets hardened into the real template first. -->
+      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.png');">
+        <div class="mainframe-card-art"></div>
+        <div class="mainframe-card-body">
+          <div class="mainframe-card-label">PHN!X</div>
+          <div class="mainframe-card-tag">C0M!NG S00N</div>
+        </div>
       </button>
-      <button class="mainframe-card mainframe-card-soon" disabled>
-        <div class="mainframe-card-label">TEDDY</div>
-        <div class="mainframe-card-tag">C0M!NG S00N</div>
+      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:47,158,68; --card-art:url('/assets/mainframe/teddy.png');">
+        <div class="mainframe-card-art"></div>
+        <div class="mainframe-card-body">
+          <div class="mainframe-card-label">TEDDY</div>
+          <div class="mainframe-card-tag">C0M!NG S00N</div>
+        </div>
+      </button>
+      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:61,178,243; --card-art:url('/assets/mainframe/seal.png');">
+        <div class="mainframe-card-art"></div>
+        <div class="mainframe-card-body">
+          <div class="mainframe-card-label">SEAL</div>
+          <div class="mainframe-card-tag">C0M!NG S00N</div>
+        </div>
+      </button>
+      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:255,51,204; --card-art:url('/assets/mainframe/fuzzy.png');">
+        <div class="mainframe-card-art"></div>
+        <div class="mainframe-card-body">
+          <div class="mainframe-card-label">FUZZY</div>
+          <div class="mainframe-card-tag">C0M!NG S00N</div>
+        </div>
       </button>
     </div>
   </div>
@@ -6696,7 +6807,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
-   'screenMainframe','mainframeGrid','mainframeReopenLabel',
+   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
@@ -12599,6 +12710,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.mainframeReopenLabel.addEventListener('click', function(){
     el.screenMainframe.style.display = 'block';
   });
+  // Real, live numbers on the P!GE0NS card (see .mainframe-card-stats' own
+  // comment in the CSS) — the only tradeable card right now, so the only
+  // one worth a real fetch; C0M!NG S00N cards have nothing live to show.
+  // Fires once, at load, regardless of whether MAINFRAME is the visible
+  // screen right now — cheap, and means the numbers are already there the
+  // instant you land back on it (STAT!C :: MA!NFRAME, top-left).
+  api({ stats: 1, collection: 'pigeons' }).then(function(data){
+    if (data.items == null && data.holders == null) return;
+    var parts = [];
+    if (data.items != null) parts.push('<span class="hi">' + data.items.toLocaleString() + '</span> !TEMS');
+    if (data.holders != null) parts.push('<span class="hi">' + data.holders.toLocaleString() + '</span> H0LDERS');
+    el.mainframeStatsPigeons.innerHTML = parts.join(' :: ');
+  }).catch(function(){});
   el.dbSelectFlyout.addEventListener('click', function(e){
     e.stopPropagation();
     var opt = e.target.closest('.db-option[data-collection]');
