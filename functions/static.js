@@ -2942,26 +2942,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .highest-offer-decline{ border:1px solid var(--red); color:var(--red); }
   .highest-offer-decline:hover{ background:var(--red); color:#000; }
   .highest-offer-counter{ border:1px solid var(--border-dim); color:var(--grey-dim); opacity:0.5; cursor:not-allowed; }
-  /* An offer YOU placed sitting on a Pigeon YOU own (self-testing leftover,
-     or a mixed-up offer) — the server always refuses to ACCEPT this one
-     (cannot_accept_own_offer), so it gets its own box instead of the
-     ACCEPT/DECLINE/COUNTER trio, with just a way to take it back off. */
-  .own-offer-box{
-    border:1px solid var(--red);
-    border-radius:var(--radius);
-    background:var(--panel-bg-solid);
-    padding:0.9rem 0.8rem;
-    text-align:center;
-  }
-  .own-offer-label{ font-size:11px; letter-spacing:0.14em; color:var(--red); text-transform:uppercase; }
-  .own-offer-price{ font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--red); margin:0.25rem 0 0.7rem; }
-  .own-offer-remove{ border:1px solid var(--red); color:var(--red); }
-  .own-offer-remove:hover{ background:var(--red); color:#000; }
-  /* Row version of the same box (Y0UR 0WN 0FFERS in renderMyOffersList) —
-     same red treatment as .own-offer-box. */
-  .own-offer-row{ border:1px solid var(--red); border-radius:var(--radius); }
-  .own-offer-row .my-offer-row-buyer{ color:var(--red); }
-  .own-offer-row .my-offer-row-price{ color:var(--red); }
   /* 0FFERS RECE!VED (renderMyOffersList) — one horizontal row per listed
      Pigeon with a real offer: thumbnail, number/buyer, price, then the
      same ACCEPT/DECL!NE/C0UNTER trio the card's own highest-offer box
@@ -2982,14 +2962,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-bottom:1px solid var(--border-dim);
   }
   .my-offer-row:last-child{ border-bottom:none; }
-  /* .own-offer-row is meant to be a complete red rectangle (see its own
-     comment above) — .my-offer-row:last-child's border-bottom:none above
-     shares the exact same specificity (class + :last-child either way),
-     so without this override, Y0UR 0WN 0FFERS being the last (often only)
-     row in the list silently lost its bottom edge, reported live as "cut
-     off on the bottom" instead of a full box. Same specificity, later in
-     the file, wins. */
-  .own-offer-row:last-child{ border-bottom:1px solid var(--red); }
   /* Groups the thumbnail+number/buyer block into the row's own left grid
      column (see .my-offer-row's own comment on why left/right need to
      both be 1fr for the price column to actually land centred). */
@@ -3000,9 +2972,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   .my-offer-row-img{ width:96px; height:96px; flex:0 0 auto; border-radius:var(--radius); overflow:hidden; }
   .my-offer-row-img img{ width:100%; height:100%; object-fit:cover; }
   .my-offer-row-info{ flex:1 1 auto; min-width:0; }
-  .my-offer-row-num{ font-size:24px; font-weight:700; color:var(--white); }
-  .my-offer-row-buyer{ font-size:15px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; margin-top:0.3rem; }
-  .my-offer-row-price{ font-family:var(--font-display); font-size:34px; font-weight:700; color:var(--green); text-align:center; white-space:nowrap; }
+  .my-offer-row-num{ font-size:28px; font-weight:700; color:var(--white); }
+  /* Reported live as wanting OFFERS RECE!VED/0UTG0!NG 0FFERS text white
+     and bigger — this was grey-dim (hard to read, same complaint already
+     fixed elsewhere on the site), now full white and a size up. */
+  .my-offer-row-buyer{ font-size:18px; letter-spacing:0.03em; color:var(--white); text-transform:uppercase; margin-top:0.3rem; }
+  .my-offer-row-price{ font-family:var(--font-display); font-size:38px; font-weight:700; color:var(--green); text-align:center; white-space:nowrap; }
   .my-offer-row-actions{ display:flex; flex-direction:row; gap:0.5rem; justify-self:end; }
   .my-offer-row-actions .highest-offer-btn{ flex:0 0 auto; padding:0.85em 1.2em; font-size:16px; }
   @media (max-width:700px){
@@ -8415,22 +8390,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (el.myOffersPanelWrap.style.display !== 'none') renderMyOffersList();
         return;
       }
-      // Y0UR 0WN 0FFER 0N TH!S P!GE0N's own box (myPigeonOffersHtml/
-      // renderMyOffersList) — reuses OUTGOING OFFERS' exact same real
-      // on-ledger cancel flow (cancelOfferTarget/startCancelOfferSign),
-      // just triggered from a different container.
-      var removeSelfOfferBtn = e.target.closest('.remove-self-offer-btn');
-      if (removeSelfOfferBtn){
-        cancelOfferTarget = {
-          nftId: removeSelfOfferBtn.getAttribute('data-nftid'),
-          offerId: removeSelfOfferBtn.getAttribute('data-offerid'),
-          number: removeSelfOfferBtn.getAttribute('data-num') !== '' ? Number(removeSelfOfferBtn.getAttribute('data-num')) : null,
-          image: removeSelfOfferBtn.getAttribute('data-image'),
-          price: removeSelfOfferBtn.getAttribute('data-price')
-        };
-        startCancelOfferSign(removeSelfOfferBtn);
-        return;
-      }
     });
     // No more inline MAKE AN OFFER/LIST PRICE inputs living directly on a
     // card (see openAmountEntryModal) — their own Enter-to-submit and
@@ -9269,42 +9228,28 @@ const SWAP_HTML = `<!DOCTYPE html>
   // exist on-ledger and still count toward the tab's own "N 0FFERS"
   // badge — this just surfaces the one actually worth acting on.
   function myPigeonOffersHtml(p, offers){
-    // Split off any offer THIS wallet placed on this very Pigeon — never
+    // Excludes any offer THIS wallet placed on its own Pigeon — never
     // acceptable server-side (cannot_accept_own_offer, see
     // swap-acceptoffer-payload.js), so it never belongs in the real
-    // ACCEPT/DECLINE box below. Gets its own box instead (see .own-offer-box),
-    // reusing the exact same real on-ledger cancel flow OUTGOING OFFERS
-    // already uses (startCancelOfferSign/cancelOfferTarget) via the
-    // .remove-self-offer-btn branch in wireResultClicks.
+    // ACCEPT/DECLINE box below. No separate "own offer" box for it either
+    // any more — reported live as not needing that, it already shows (and
+    // can be cancelled) in OUTGOING OFFERS like every other offer this
+    // wallet has made.
     var real = offers.filter(function(o){ return !declinedOfferIds[o.offerId] && o.buyer !== MY_WALLET; });
-    var mine = offers.filter(function(o){ return !declinedOfferIds[o.offerId] && o.buyer === MY_WALLET; });
-    var html = '';
-    if (real.length){
-      var top = real.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
-      html += '<div class="my-pigeon-offers">' +
-        '<div class="highest-offer-box">' +
-          '<div class="highest-offer-label">H!GHEST 0FFER</div>' +
-          '<div class="highest-offer-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + '</div>' +
-          '<div class="highest-offer-buyer">FR0M ' + walletTagHtml(top.buyer, top.buyerShort) + '</div>' +
-          '<div class="highest-offer-actions">' +
-            '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '">ACCEPT</button>' +
-            '<button class="highest-offer-btn highest-offer-decline decline-offer-btn" data-offerid="' + escapeHtml(top.offerId) + '">DECL!NE</button>' +
-            '<button class="highest-offer-btn highest-offer-counter" disabled title="C0M!NG S00N">C0UNTER</button>' +
-          '</div>' +
+    if (!real.length) return '';
+    var top = real.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
+    return '<div class="my-pigeon-offers">' +
+      '<div class="highest-offer-box">' +
+        '<div class="highest-offer-label">H!GHEST 0FFER</div>' +
+        '<div class="highest-offer-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + '</div>' +
+        '<div class="highest-offer-buyer">FR0M ' + walletTagHtml(top.buyer, top.buyerShort) + '</div>' +
+        '<div class="highest-offer-actions">' +
+          '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '">ACCEPT</button>' +
+          '<button class="highest-offer-btn highest-offer-decline decline-offer-btn" data-offerid="' + escapeHtml(top.offerId) + '">DECL!NE</button>' +
+          '<button class="highest-offer-btn highest-offer-counter" disabled title="C0M!NG S00N">C0UNTER</button>' +
         '</div>' +
-      '</div>';
-    }
-    if (mine.length){
-      var own = mine.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
-      html += '<div class="my-pigeon-offers">' +
-        '<div class="own-offer-box">' +
-          '<div class="own-offer-label">Y0UR 0WN 0FFER 0N TH!S P!GE0N</div>' +
-          '<div class="own-offer-price">' + escapeHtml(fmtPigeonsCompact(own.price)) + '</div>' +
-          '<button class="highest-offer-btn own-offer-remove remove-self-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(own.offerId) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '" data-price="' + escapeHtml(own.price) + '">REM0VE 0FFER</button>' +
-        '</div>' +
-      '</div>';
-    }
-    return html;
+      '</div>' +
+    '</div>';
   }
   // The LIST/DELIST/OFFERS-RECEIVED box for a pigeon YOU own — shared by
   // myPigeonCardHtml (MY PIGEONS tab) and pigeonsActionBoxHtml (DATABASE,
@@ -9349,6 +9294,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.myOffersList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
       return;
     }
+    // An offer THIS wallet placed on its own Pigeon is excluded here
+    // entirely — can never be ACCEPTed (cannot_accept_own_offer) — no
+    // separate "own offer" section for it either any more, reported live
+    // as not needing that; it already shows (and can be cancelled) in
+    // OUTGOING OFFERS below like every other offer this wallet has made.
     var rows = offersReceivedData.map(function(item){
       var real = item.offers.filter(function(o){ return !declinedOfferIds[o.offerId] && o.buyer !== MY_WALLET; });
       if (!real.length) return null;
@@ -9356,21 +9306,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
       return { item: item, top: top, img: img };
     }).filter(Boolean);
-    // Same split as myPigeonOffersHtml — an offer THIS wallet placed on its
-    // own Pigeon can never be ACCEPTed, so it never belongs mixed in with
-    // rows above; gets its own labeled block below with just REM0VE.
-    var ownRows = offersReceivedData.map(function(item){
-      var mine = item.offers.filter(function(o){ return !declinedOfferIds[o.offerId] && o.buyer === MY_WALLET; });
-      if (!mine.length) return null;
-      var own = mine.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
-      var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
-      return { item: item, own: own, img: img };
-    }).filter(Boolean);
-    if (!rows.length && !ownRows.length){
+    if (!rows.length){
       el.myOffersList.innerHTML = '<div class="th-empty">N0 0FFERS RECE!VED R!GHT N0W.</div>';
       return;
     }
-    var html = rows.length ? rows.map(function(row){
+    el.myOffersList.innerHTML = rows.map(function(row){
       var item = row.item, top = row.top;
       return '<div class="my-offer-row">' +
         '<div class="my-offer-row-left">' +
@@ -9387,27 +9327,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           '<button class="highest-offer-btn highest-offer-counter" disabled title="C0M!NG S00N">C0UNTER</button>' +
         '</div>' +
       '</div>';
-    }).join('') : '<div class="th-empty">N0 0FFERS RECE!VED R!GHT N0W.</div>';
-    if (ownRows.length){
-      html += '<div class="panel-title outgoing-offers-title">Y0UR 0WN 0FFERS</div>' +
-        ownRows.map(function(row){
-          var item = row.item, own = row.own;
-          return '<div class="my-offer-row own-offer-row">' +
-            '<div class="my-offer-row-left">' +
-              '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + row.img + '</div>' +
-              '<div class="my-offer-row-info">' +
-                '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
-                '<div class="my-offer-row-buyer">Y0U 0FFERED 0N Y0UR 0WN P!GE0N</div>' +
-              '</div>' +
-            '</div>' +
-            '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(own.price)) + '</div>' +
-            '<div class="my-offer-row-actions">' +
-              '<button class="highest-offer-btn own-offer-remove remove-self-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(own.offerId) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '" data-price="' + escapeHtml(own.price) + '">REM0VE 0FFER</button>' +
-            '</div>' +
-          '</div>';
-        }).join('');
-    }
-    el.myOffersList.innerHTML = html;
+    }).join('');
   }
   // The actual pigeon grid for PλWS is the shared DATABASE view itself
   // (screenBrowse, scoped to your own wallet via browseOwnerCollection —
@@ -11592,16 +11512,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.outgoingOffersList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
       return;
     }
-    // An offer on YOUR OWN Pigeon shows only in Y0UR 0WN 0FFERS (see
-    // renderMyOffersList) — was showing here too (swap-offers-made.js
-    // returns every offer this wallet made, regardless of target
-    // ownership), doubling up the exact same offer in two sections.
-    var otherOffers = outgoingOffersData.filter(function(item){ return item.ownerWallet !== MY_WALLET; });
-    if (!otherOffers.length){
+    // An offer on YOUR OWN Pigeon shows here too, same as any other
+    // outgoing offer — no separate "own offer" section any more (reported
+    // live as not needing one); swap-offers-made.js already returns every
+    // offer this wallet made regardless of target ownership.
+    if (!outgoingOffersData.length){
       el.outgoingOffersList.innerHTML = '<div class="th-empty">N0 0UTG0!NG 0FFERS R!GHT N0W.</div>';
       return;
     }
-    el.outgoingOffersList.innerHTML = otherOffers.map(function(item){
+    el.outgoingOffersList.innerHTML = outgoingOffersData.map(function(item){
       var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
       var countdown = listingCountdownText(item.expiration);
       return '<div class="my-offer-row">' +
@@ -11700,9 +11619,8 @@ const SWAP_HTML = `<!DOCTYPE html>
           // answer" reasoning as DELIST's own success handling.
           outgoingOffersData = (outgoingOffersData || []).filter(function(it){ return it.nftId !== cancelOfferTarget.nftId; });
           renderOutgoingOffersList();
-          // Also drops it out of Y0UR 0WN 0FFERS (see the
-          // .remove-self-offer-btn branch in wireResultClicks, the other
-          // way this function gets triggered) and refreshes whichever
+          // Also keeps offersReceivedData in sync (a self-placed offer on
+          // your own Pigeon shows up there too) and refreshes whichever
           // views could be showing it — same reasoning as DECL!NE's own
           // refresh above.
           if (offersReceivedData){
