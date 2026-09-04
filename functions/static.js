@@ -4307,7 +4307,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     from{ transform:scale(0.9); opacity:0; }
     to{ transform:scale(1); opacity:1; }
   }
-  #offerConfirmModal, #transferConfirmModal, #acceptTransferConfirmModal, #buySwapModal, #buyConfirmModal, #delistConfirmModal{
+  #offerConfirmModal, #transferConfirmModal, #acceptTransferConfirmModal, #buySwapModal, #buyConfirmModal, #delistConfirmModal, #acceptOfferConfirmModal{
     display:none;
     position:fixed;
     inset:0;
@@ -6195,12 +6195,24 @@ const SWAP_HTML = `<!DOCTYPE html>
          openAcceptOfferConfirm in static.js), ACCEPT opens Xaman
          immediately; this is now purely the waiting-for-signature state,
          its fields filling in a moment after Xaman's already open. -->
-    <div class="sw-panel" id="screenAcceptOfferConfirm" style="display:none;">
+  </div>
+
+  <!-- ACCEPT 0FFER — a real centered popup (#acceptOfferConfirmModal), same
+       treatment as BUY N0W's own confirm modal (#buyConfirmModal), not a
+       showScreen navigation away from the grid — reported live as wanting
+       "a pop up instead of a new screen". Also now shows the actual pigeon
+       thumbnail (was text-only), same .amount-entry-pigeon-row/-thumb
+       pattern the L!ST/0FFER/TRANSFER popup already uses. -->
+  <div id="acceptOfferConfirmModal" style="display:none;">
+    <div class="offer-confirm-panel" id="screenAcceptOfferConfirm">
       <div class="node-eyebrow">// ACCEPT!NG 0FFER</div>
-      <div class="detail-num" id="acceptOfferConfPigeon"></div>
+      <div class="amount-entry-pigeon-row">
+        <img class="amount-entry-pigeon-thumb" id="acceptOfferConfThumb" alt="">
+        <div class="detail-num" id="acceptOfferConfPigeon"></div>
+      </div>
       <div class="detail-field"><span class="df-label">BUYER</span><span class="df-value" id="acceptOfferConfBuyer"></span></div>
       <div class="detail-field"><span class="df-label">0FFER</span><span class="df-value" id="acceptOfferConfPrice"></span></div>
-      <div class="detail-field"><span class="df-label">MARKETPLACE FEE</span><span class="df-value" id="acceptOfferConfFee"></span></div>
+      <div class="detail-field"><span class="df-label">MARKETPLACE FEE (1.023%)</span><span class="df-value" id="acceptOfferConfFee"></span></div>
       <!-- Hidden when royaltyPercent is 0 — most tokens on the ledger
            carry no royalty at all, only shown when this NFT actually has
            one (see applyNftRoyalty in _shared.js). -->
@@ -6212,12 +6224,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- SCREEN: ACCEPT OFFER RESULT — verified against real on-ledger state (offer gone, NFT no longer owner's) -->
-    <div class="sw-panel" id="screenAcceptOfferResult" style="display:none;">
+    <!-- ACCEPT OFFER RESULT — verified against real on-ledger state (offer gone, NFT no longer owner's) -->
+    <div class="offer-confirm-panel" id="screenAcceptOfferResult" style="display:none;">
       <div class="detail-eyebrow">// SETTLED</div>
-      <div class="detail-num" id="acceptOfferResultPigeonNum"></div>
+      <div class="amount-entry-pigeon-row">
+        <img class="amount-entry-pigeon-thumb" id="acceptOfferResultThumb" alt="">
+        <div class="detail-num" id="acceptOfferResultPigeonNum"></div>
+      </div>
       <div class="detail-field"><span class="df-label">PR!CE</span><span class="df-value" id="acceptOfferResultPrice"></span></div>
-      <div class="detail-field"><span class="df-label">MARKETPLACE FEE</span><span class="df-value" id="acceptOfferResultFee"></span></div>
+      <div class="detail-field"><span class="df-label">MARKETPLACE FEE (1.023%)</span><span class="df-value" id="acceptOfferResultFee"></span></div>
       <div class="detail-field" id="acceptOfferResultRoyaltyRow" style="display:none;"><span class="df-label" id="acceptOfferResultRoyaltyLabel">NFT R0YALTY</span><span class="df-value" id="acceptOfferResultRoyalty"></span></div>
       <div class="detail-field final-amount-row"><span class="df-label">SELLER RECE!VED</span><span class="df-value final-amount" id="acceptOfferResultSellerAmount"></span></div>
       <div class="detail-field"><span class="df-label">STATUS</span><span class="df-value status-ok" id="acceptOfferResultStatus"></span></div>
@@ -6226,7 +6241,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button class="secondary-btn" id="acceptOfferResultDoneBtn">← BACK T0 MY P!GE0NS</button>
       </div>
     </div>
-
   </div>
 
   <div class="target-bar" id="targetBar" style="display:none;">
@@ -6389,8 +6403,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
    'amountEntryOfferMode','amountEntryOfferPigeonRow','amountEntryOfferPigeonImg','amountEntryOfferPigeonNum','amountEntryOfferBalanceLine','amountEntryOfferInput','amountEntryOfferBtn','amountEntryOfferDuration',
    'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferBtn','amountEntryTransferStatus',
-   'screenAcceptOfferConfirm','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfRoyaltyRow','acceptOfferConfRoyaltyLabel','acceptOfferConfRoyalty','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn',
-   'screenAcceptOfferResult','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultRoyaltyRow','acceptOfferResultRoyaltyLabel','acceptOfferResultRoyalty','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
+   'acceptOfferConfirmModal','screenAcceptOfferConfirm','acceptOfferConfThumb','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfRoyaltyRow','acceptOfferConfRoyaltyLabel','acceptOfferConfRoyalty','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn',
+   'screenAcceptOfferResult','acceptOfferResultThumb','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultRoyaltyRow','acceptOfferResultRoyaltyLabel','acceptOfferResultRoyalty','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   function escapeHtml(str){
@@ -6918,8 +6932,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // 0FFER's own result is a receipt sub-state inside #offerConfirmModal
     // now (see showOfferResult), not a showScreen name.
     el.screenTransferResult.style.display = name === 'transferresult' ? '' : 'none';
-    el.screenAcceptOfferConfirm.style.display = name === 'acceptofferconfirm' ? '' : 'none';
-    el.screenAcceptOfferResult.style.display = name === 'acceptofferresult' ? '' : 'none';
+    // ACCEPT OFFER's own confirm/result pair are sub-states inside
+    // #acceptOfferConfirmModal now (see openAcceptOfferConfirm/
+    // showAcceptOfferResult/closeAcceptOfferConfirmModal), not showScreen
+    // names — same change already made for BUY N0W's own modal.
     scrollTabStripIntoView();
   }
 
@@ -11866,11 +11882,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (isOwnWalletScope()) runScopedQuery();
   });
 
-  el.acceptOfferConfirmBackBtn.addEventListener('click', function(){
+  // A real popup now (#acceptOfferConfirmModal), not a showScreen
+  // navigation away from the grid — reported live as wanting "a pop up
+  // instead of a new screen", same treatment BUY N0W's own modal already
+  // got. Just closes and clears the target; whatever page was showing
+  // underneath stays showing, same as closeBuyConfirmModal's own
+  // reasoning.
+  function closeAcceptOfferConfirmModal(){
     acceptOfferTarget = null;
-    state.activeTab = 'mypigeons';
-    showScreen('browse');
-  });
+    el.acceptOfferConfirmModal.style.display = 'none';
+  }
+  el.acceptOfferConfirmBackBtn.addEventListener('click', closeAcceptOfferConfirmModal);
+  el.acceptOfferConfirmModal.addEventListener('click', function(e){ if (e.target === el.acceptOfferConfirmModal) closeAcceptOfferConfirmModal(); });
 
   // No confirm-first click any more — ACCEPT opens Xaman immediately
   // (reported live as not wanting a confirmation step, same change already
@@ -11880,6 +11903,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   // (it now returns the same display breakdown the old prepare-first
   // screen used to show up front) instead of gating Xaman behind them.
   function openAcceptOfferConfirm(){
+    // Real pigeon thumbnail now, not text-only — reported live as wanting
+    // to actually see which Pigeon this is, same .amount-entry-pigeon-
+    // thumb treatment the L!ST/0FFER/TRANSFER popup already shows.
+    el.acceptOfferConfThumb.style.display = acceptOfferTarget.image ? '' : 'none';
+    el.acceptOfferConfThumb.src = acceptOfferTarget.image || '';
     el.acceptOfferConfPigeon.innerHTML = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
     setWalletText(el.acceptOfferConfBuyer, acceptOfferTarget.buyer, shortAddr(acceptOfferTarget.buyer));
     el.acceptOfferConfPrice.textContent = acceptOfferTarget.price ? fmtPigeons(acceptOfferTarget.price) : '';
@@ -11888,7 +11916,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.acceptOfferConfSellerAmount.textContent = '';
     el.acceptOfferConfirmStatus.textContent = 'REQUEST!NG...';
     setWaitingPulse(el.acceptOfferConfirmStatus, true);
-    showScreen('acceptofferconfirm');
+    el.screenAcceptOfferResult.style.display = 'none';
+    el.screenAcceptOfferConfirm.style.display = '';
+    el.acceptOfferConfirmModal.style.display = 'flex';
     // Opened here, synchronously inside the real click — see
     // navigateXamanPopup's own comment; the window.open(realUrl, ...) call
     // below used to happen from inside the async fetch().then() instead,
@@ -11978,6 +12008,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showAcceptOfferResult(data){
+    el.acceptOfferResultThumb.style.display = acceptOfferTarget.image ? '' : 'none';
+    el.acceptOfferResultThumb.src = acceptOfferTarget.image || '';
     el.acceptOfferResultPigeonNum.innerHTML = 'P!GE0N ' + (acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
     el.acceptOfferResultPrice.textContent = fmtPigeons(data.totalValue !== undefined ? data.totalValue : acceptOfferTarget.price);
     el.acceptOfferResultFee.textContent = data.feeValue !== undefined ? fmtPigeons(data.feeValue) : '—';
@@ -11991,17 +12023,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.acceptOfferResultTxLink.removeAttribute('href');
       el.acceptOfferResultTxLink.textContent = '—';
     }
-    showScreen('acceptofferresult');
+    el.screenAcceptOfferConfirm.style.display = 'none';
+    el.screenAcceptOfferResult.style.display = '';
   }
   el.acceptOfferResultDoneBtn.addEventListener('click', function(){
-    acceptOfferTarget = null;
     acceptOfferUuid = null;
     if (acceptOfferPollTimer) clearTimeout(acceptOfferPollTimer);
-    state.activeTab = 'mypigeons';
-    showScreen('browse');
+    closeAcceptOfferConfirmModal();
     loadOffersReceived();
     loadOutgoingOffers();
     renderMyPigeonsList();
+    if (isOwnWalletScope()) runScopedQuery();
   });
 
   // ---- DATABASE selector — multi-collection groundwork; only PIGEONS is
@@ -13126,6 +13158,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (el.offerConfirmModal.style.display !== 'none'){ closeOfferConfirmModal(); return true; }
     if (el.buySwapModal.style.display !== 'none'){ closeBuySwapModal(); return true; }
     if (el.buyConfirmModal.style.display !== 'none'){ closeBuyConfirmModal(); return true; }
+    if (el.acceptOfferConfirmModal.style.display !== 'none'){ closeAcceptOfferConfirmModal(); return true; }
     if (el.delistConfirmModal.style.display !== 'none'){ closeDelistConfirmModal(); return true; }
     if (el.pigeonsCalcModal.style.display !== 'none'){ closeCalcPopover(); return true; }
     if (el.amountEntryModal.style.display !== 'none'){ closeAmountEntryModal(); return true; }
