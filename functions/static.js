@@ -6819,6 +6819,31 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Both lists are still empty at this point (SORT BY/categories render
   // lazily) — re-checked once real content lands, see renderSortFlyoutList
   // and the trait-categories loader below.
+  // Reported live as the PREV/NEXT arrows "glitching" — not wrong forever,
+  // just wrong until the next scroll/resize event happened to fire. Root
+  // cause: renderSortFlyoutList's own updateSortHscrollArrows() call runs
+  // the moment the strip's HTML is set, which can be BEFORE the page's own
+  // web fonts finish loading — scrollWidth measured against the fallback
+  // font's (different) metrics doesn't match the real font's width once it
+  // swaps in, so a strip that turns out to overflow could still show no
+  // arrows at all until something else happened to re-trigger the check.
+  // document.fonts.ready is the direct fix — re-checks the instant the
+  // real fonts are actually in place, not on a guess about which other
+  // event might coincidentally follow.
+  if (window.document && document.fonts && document.fonts.ready){
+    document.fonts.ready.then(function(){
+      updateSortHscrollArrows();
+      updateTraitsCatsHscrollArrows();
+    });
+  }
+  // Also covers layout shifts the plain window 'resize' listener above
+  // can't see — sibling content (trustline banner, stats carousel, etc.)
+  // finishing its own async load can change #sortDropWrap's own width
+  // without the WINDOW ever resizing.
+  if (window.ResizeObserver){
+    new ResizeObserver(updateSortHscrollArrows).observe(el.sortFlyoutVals);
+    new ResizeObserver(updateTraitsCatsHscrollArrows).observe(el.traitsFlyoutCats);
+  }
 
   function showScreen(name){
     if (name === 'browse'){
@@ -12316,8 +12341,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'PRICE_ASC', label: 'L0WEST (XRP)' }
     ],
     'RAR!TY': [
-      { value: 'RARITY_DESC', label: 'L0WEST' },
-      { value: 'RARITY_ASC', label: 'H!GHEST' }
+      { value: 'RARITY_ASC', label: 'H!GHEST' },
+      { value: 'RARITY_DESC', label: 'L0WEST' }
     ],
     'ALPHABET!CAL': [
       { value: 'NAME_ASC', label: 'A-Z' },
