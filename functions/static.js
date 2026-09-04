@@ -377,10 +377,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     --cyan-faint:var(--magenta-faint);
     --cyan-glow:var(--magenta-glow);
   }
-  /* Her actual button, not just whatever it turns into on hover — always
-     neon pink, not plain grey-until-touched like every other .bar-btn. */
-  #connectScyllaBtn{ border-color:var(--magenta); color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
-  #connectScyllaBtn:hover{ background:var(--magenta); color:#000; text-shadow:none; }
+  /* connectScyllaBtn's own look now lives entirely in .connect-panel-btn
+     (see the CONNECT panel block below) — var(--cyan) already resolves to
+     her real neon pink in here via the --cyan override just above, so
+     that one class is enough on its own. */
   /* Way bigger than a regular panel-title — this is the headline of the
      whole DATABASE screen, not a section label. */
   .search-panel-title{ font-size:24px; font-weight:700; margin-bottom:0.4rem; text-shadow:0 0 10px var(--cyan-glow); }
@@ -1542,6 +1542,84 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:1.25rem;
     text-transform:none;
   }
+  /* ---- CONNECT panel — the whole logged-out state of the Σκύλλα tab,
+     one real card instead of a bare button plus a wall of status text
+     all run together on one line ("WA!T!NG F0R S!GNATURE... TAP HERE"
+     reported live as reading gross). One container, one state at a time
+     (IDLE/CONNECT!NG/WA!T!NG/ERR0R) swapped by renderConnectPanel — see
+     its own comment further down. Lives inside #myPigeonsPanel, so
+     var(--cyan) here already resolves to her real neon pink (see that
+     panel's own --cyan override above) — no separate colour to maintain. */
+  .connect-panel{
+    max-width:420px;
+    margin:2.5rem auto 1rem;
+    padding:2.25rem 1.5rem 2rem;
+    border:1px solid var(--cyan-dim);
+    border-radius:var(--radius);
+    background:linear-gradient(160deg, var(--cyan-faint), transparent 65%);
+    text-align:center;
+  }
+  /* Signal-strength bars — low and dim at rest (IDLE/ERR0R), climbing in
+     a staggered pulse once a real sign request is in flight
+     (.connect-panel-active), so "something is happening" reads at a
+     glance even before you read the title underneath. */
+  .connect-panel-icon{
+    display:flex; justify-content:center; align-items:flex-end; gap:5px;
+    height:34px; margin-bottom:1.4rem;
+  }
+  .connect-panel-icon span{
+    display:block; width:6px; border-radius:2px;
+    background:var(--cyan); box-shadow:0 0 8px var(--cyan-glow);
+    opacity:0.3; transform:scaleY(0.45); transform-origin:bottom;
+    transition:opacity 0.3s, transform 0.3s, background 0.3s;
+  }
+  .connect-panel-icon span:nth-child(1){ height:45%; }
+  .connect-panel-icon span:nth-child(2){ height:70%; }
+  .connect-panel-icon span:nth-child(3){ height:100%; }
+  .connect-panel-icon span:nth-child(4){ height:65%; }
+  .connect-panel-icon span:nth-child(5){ height:85%; }
+  @keyframes connect-signal-bar{
+    0%, 100%{ opacity:0.35; transform:scaleY(0.4); }
+    50%{ opacity:1; transform:scaleY(1); }
+  }
+  .connect-panel-active .connect-panel-icon span{ animation:connect-signal-bar 1.1s ease-in-out infinite; }
+  .connect-panel-active .connect-panel-icon span:nth-child(1){ animation-delay:0s; }
+  .connect-panel-active .connect-panel-icon span:nth-child(2){ animation-delay:0.11s; }
+  .connect-panel-active .connect-panel-icon span:nth-child(3){ animation-delay:0.22s; }
+  .connect-panel-active .connect-panel-icon span:nth-child(4){ animation-delay:0.33s; }
+  .connect-panel-active .connect-panel-icon span:nth-child(5){ animation-delay:0.44s; }
+  .connect-panel-error .connect-panel-icon span{ background:var(--red); box-shadow:0 0 8px var(--red-glow); opacity:0.5; transform:scaleY(0.3); }
+  @media (prefers-reduced-motion: reduce){
+    .connect-panel-active .connect-panel-icon span{ animation:none; opacity:0.9; transform:scaleY(0.8); }
+  }
+  .connect-panel-title{
+    font-family:var(--font-display); font-weight:700;
+    font-size:clamp(19px, 3.6vw, 26px); letter-spacing:0.04em;
+    color:var(--white); text-shadow:0 0 12px var(--cyan-glow);
+  }
+  .connect-panel-error .connect-panel-title{ color:var(--red); text-shadow:0 0 10px var(--red-glow); }
+  .connect-panel-sub{
+    font-family:var(--font-body); font-size:12px; letter-spacing:0.03em;
+    color:var(--grey); margin-top:0.6rem; line-height:1.5;
+  }
+  .connect-panel-actions{ margin-top:1.5rem; display:flex; flex-direction:column; align-items:center; gap:0.6rem; }
+  .connect-panel-btn{
+    display:inline-block; font-family:var(--font-body); font-weight:600;
+    font-size:13px; letter-spacing:0.05em; text-transform:uppercase;
+    text-decoration:none; color:#000; background:var(--cyan);
+    border:1px solid var(--cyan); border-radius:var(--radius);
+    padding:0.85em 1.75em; cursor:pointer;
+    box-shadow:0 0 14px var(--cyan-glow);
+    transition:transform 0.15s, box-shadow 0.15s;
+  }
+  .connect-panel-btn:hover{ transform:translateY(-2px); box-shadow:0 0 20px var(--cyan-glow); }
+  .connect-panel-btn:disabled{ opacity:0.45; cursor:not-allowed; transform:none; box-shadow:none; }
+  /* The always-tappable Xaman fallback (see the .xaman-manual-link
+     comment further down for why this can never just be the automatic
+     window.open attempt alone) — same button treatment as CONNECT/TRY
+     AGAIN so it reads as the obvious next real step, not fine print. */
+  .connect-panel-btn-outline{ background:transparent; color:var(--cyan); box-shadow:none; }
+  .connect-panel-btn-outline:hover{ background:var(--cyan-faint); box-shadow:0 0 14px var(--cyan-glow); }
 
   /* ---- trait stack filter panel (active filter = cyan) ---- */
   .traits-block{
@@ -5196,9 +5274,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
 
     <div class="sw-panel" id="myPigeonsPanel" style="display:none;">
-      <div class="skylla-signal" id="connectStatus"></div>
-      <div id="myPigeonsConnect" style="display:none; text-align:center;">
-        <button class="bar-btn" id="connectScyllaBtn">CONNECT <span style="text-transform:none;">Σκύλλα</span></button>
+      <div class="connect-panel" id="connectPanel">
+        <div class="connect-panel-icon"><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="connect-panel-title" id="connectPanelTitle">CONNECT <span style="text-transform:none;">Σκύλλα</span></div>
+        <div class="connect-panel-sub" id="connectPanelSub">S!GN !N W!TH XAMAN T0 TRADE, L!ST, AND TRACK Y0UR FL0CK.</div>
+        <div class="connect-panel-actions" id="connectPanelActions">
+          <button type="button" class="connect-panel-btn" id="connectScyllaBtn">CONNECT <span style="text-transform:none;">Σκύλλα</span></button>
+        </div>
       </div>
       <!-- No separate "WALLET CONNECTED" box here any more — the trustline
            banner above already shows the connected wallet/balance; this
@@ -6489,7 +6571,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'backToBrowseBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
-   'myPigeonsConnect','connectScyllaBtn','connectStatus',
+   'connectPanel','connectPanelTitle','connectPanelSub','connectPanelActions',
    'myPigeonsSortRow','myPigeonsSortSelect',
    'screenListResult','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
    'buyConfirmModal','screenBuyConfirm','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn',
@@ -6899,7 +6981,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // of the screen just sitting there doing nothing while Xaman loads.
     if (tab === 'mypigeons' && !MY_WALLET){
       showTab('mypigeons', true);
-      el.connectStatus.textContent = 'Σκύλλα://S!GNAL :: C0NNECT!NG';
+      // startAuthorize() itself renders the CONNECT!NG state immediately.
       startAuthorize();
       return;
     }
@@ -9655,14 +9737,52 @@ const SWAP_HTML = `<!DOCTYPE html>
   var signinXamanTab = null;
   var signinUuid = null;
   var signinPollTimer = null;
-  function resetLoginButtons(){
-    el.connectScyllaBtn.disabled = false;
+  // One real panel, one state at a time — replaces the old bare button +
+  // a single line of status text that kept growing ("Σκύλλα://S!GNAL ::
+  // WA!T!NG F0R S!GNATURE... Σκύλλα D!DN T 0PEN? TAP HERE." all run
+  // together) as more got appended to it. IDLE is the only state with a
+  // CONNECT button; ERR0R always gets its own real TRY AGA!N button
+  // rather than expecting a second click on a button that's still there
+  // from before. Mode drives .connect-panel's own class (see its CSS) for
+  // the signal-bars animation + colour.
+  function renderConnectPanel(mode, opts){
+    opts = opts || {};
+    el.connectPanel.className = 'connect-panel' + (mode === 'error' ? ' connect-panel-error' : (mode === 'idle' ? '' : ' connect-panel-active'));
+    if (mode === 'idle'){
+      el.connectPanelTitle.innerHTML = 'CONNECT <span style="text-transform:none;">Σκύλλα</span>';
+      el.connectPanelSub.textContent = 'S!GN !N W!TH XAMAN T0 TRADE, L!ST, AND TRACK Y0UR FL0CK.';
+      el.connectPanelActions.innerHTML = '<button type="button" class="connect-panel-btn" id="connectScyllaBtn">CONNECT <span style="text-transform:none;">Σκύλλα</span></button>';
+    } else if (mode === 'connecting'){
+      el.connectPanelTitle.textContent = 'Σκύλλα://S!GNAL';
+      el.connectPanelSub.textContent = 'C0NNECT!NG...';
+      el.connectPanelActions.innerHTML = '';
+    } else if (mode === 'waiting'){
+      el.connectPanelTitle.textContent = 'WA!T!NG F0R S!GNATURE';
+      el.connectPanelSub.innerHTML = 'CHECK Y0UR PH0NE F0R THE <span style="text-transform:none;">Σκύλλα</span> REQUEST !N XAMAN.';
+      el.connectPanelActions.innerHTML = '<a href="' + escapeHtml(opts.url) + '" target="_blank" rel="noopener" class="connect-panel-btn connect-panel-btn-outline xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE</a>';
+    } else if (mode === 'error'){
+      el.connectPanelTitle.textContent = opts.title || 'ERR://C0NNECT!0N FA!LED';
+      el.connectPanelSub.textContent = opts.sub || 'S0METH!NG BR0KE ON THE WAY T0 XAMAN.';
+      el.connectPanelActions.innerHTML = '<button type="button" class="connect-panel-btn" id="connectScyllaBtn">TRY AGA!N</button>';
+    }
+  }
+  // Delegated once — connectScyllaBtn is a fresh element every render
+  // (see renderConnectPanel above), so a listener bound directly to it
+  // would silently stop working the moment IDLE/ERR0R swap it back in.
+  el.connectPanelActions.addEventListener('click', function(e){
+    var btn = e.target.closest('#connectScyllaBtn');
+    if (!btn) return;
+    btn.disabled = true;
+    startAuthorize();
+  });
+  function resetLoginButtons(mode, opts){
     el.pigeonsLoginBtn.disabled = false;
     el.pigeonsLoginBtn.textContent = 'L0G!N';
-    // Every caller of this is a login failure — pop the CONNECT box back
-    // up (it stays hidden otherwise, see loadMyPigeons) so there's a
-    // manual retry next to the error text in el.connectStatus.
-    if (!MY_WALLET) el.myPigeonsConnect.style.display = '';
+    // Every caller of this is a login failure — pop the real error state
+    // (with its own TRY AGA!N) back into the panel, but only if this tab
+    // is still the one actually showing it (see loadMyPigeons — it stays
+    // hidden entirely once a session exists).
+    if (!MY_WALLET) renderConnectPanel(mode || 'error', opts);
   }
   // A real timeout backstop so CONNECT!NG can never sit stuck forever
   // with no way to retry short of a full reload, regardless of which
@@ -9676,9 +9796,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function startAuthorize(){
     clearAuthorizeTimeout();
+    renderConnectPanel('connecting');
     authorizeTimeoutTimer = setTimeout(function(){
-      el.connectStatus.textContent = 'ERR://T!MED 0UT — TRY AGA!N';
-      resetLoginButtons();
+      resetLoginButtons('error', { title: 'ERR://T!MED 0UT', sub: 'THE S!GN REQUEST T00K T00 L0NG — TRY AGA!N.' });
     }, AUTHORIZE_TIMEOUT_MS);
     // Opened synchronously in the original click handler (a real user
     // gesture) so it's never popup-blocked — same pattern every other
@@ -9691,20 +9811,18 @@ const SWAP_HTML = `<!DOCTYPE html>
           clearAuthorizeTimeout();
           closeXamanTabAndFocus(signinXamanTab);
           signinXamanTab = null;
-          el.connectStatus.textContent = 'ERR://C0NNECT!0N FA!LED';
-          resetLoginButtons();
+          resetLoginButtons('error', { title: 'ERR://C0NNECT!0N FA!LED', sub: 'C0ULDN T REACH THE SERVER — TRY AGA!N.' });
           return;
         }
         signinUuid = res.data.uuid;
         navigateXamanPopup(signinXamanTab, res.data.next.always);
-        el.connectStatus.innerHTML = 'Σκύλλα://S!GNAL :: WA!T!NG F0R S!GNATURE... <a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
+        renderConnectPanel('waiting', { url: res.data.next.always });
         pollSigninStatus();
       }).catch(function(){
         clearAuthorizeTimeout();
         closeXamanTabAndFocus(signinXamanTab);
         signinXamanTab = null;
-        el.connectStatus.textContent = 'ERR://S!GNAL_L0ST';
-        resetLoginButtons();
+        resetLoginButtons('error', { title: 'ERR://S!GNAL_L0ST', sub: 'TRY AGA!N.' });
       });
   }
   function pollSigninStatus(){
@@ -9722,27 +9840,18 @@ const SWAP_HTML = `<!DOCTYPE html>
         }
         if (data.status === 'rejected'){
           clearAuthorizeTimeout();
-          el.connectStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
-          resetLoginButtons();
+          resetLoginButtons('error', { title: 'S!GNATURE REJECTED', sub: 'REJECTED !N XAMAN — TRY AGA!N WHEN Y0U RE READY.' });
           return;
         }
         if (data.status === 'expired'){
           clearAuthorizeTimeout();
-          el.connectStatus.textContent = 'ERR://REQUEST EXP!RED — TRY AGA!N.';
-          resetLoginButtons();
+          resetLoginButtons('error', { title: 'ERR://REQUEST EXP!RED', sub: 'TRY AGA!N.' });
           return;
         }
         signinPollTimer = setTimeout(pollSigninStatus, 2000);
       }).catch(function(){
         signinPollTimer = setTimeout(pollSigninStatus, 3000);
       });
-  }
-  if (el.connectScyllaBtn){
-    el.connectScyllaBtn.addEventListener('click', function(){
-      el.connectScyllaBtn.disabled = true;
-      el.connectStatus.textContent = '';
-      startAuthorize();
-    });
   }
   el.pigeonsLoginBtn.addEventListener('click', function(){
     el.pigeonsLoginBtn.disabled = true;
