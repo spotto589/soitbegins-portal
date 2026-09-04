@@ -7770,7 +7770,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // scoped grid once each lands (guarded against having since exited
     // this scope).
     if (isSelf){
-      fetch('/api/swap-listing-owned?wallet=' + encodeURIComponent(wallet)).then(function(r){ return r.json(); }).then(function(listedRes){
+      fetch('/api/swap-listing-owned?wallet=' + encodeURIComponent(wallet) + '&collection=' + encodeURIComponent(state.collection)).then(function(r){ return r.json(); }).then(function(listedRes){
         myListedData = (listedRes && listedRes.listed) || {};
         if (isOwnWalletScope()) runScopedQuery();
       }).catch(function(){});
@@ -9959,7 +9959,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-listing-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays })
+      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays, collection: state.collection })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
@@ -9987,7 +9987,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function pollListingStatus(){
     if (listingPollTimer) clearTimeout(listingPollTimer);
     if (!listingUuid || !listingTarget) return;
-    fetch('/api/swap-listing-status?uuid=' + encodeURIComponent(listingUuid) + '&nftId=' + encodeURIComponent(listingTarget.nftId))
+    fetch('/api/swap-listing-status?uuid=' + encodeURIComponent(listingUuid) + '&nftId=' + encodeURIComponent(listingTarget.nftId) + '&collection=' + encodeURIComponent(state.collection))
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.status === 'listed'){
@@ -10638,7 +10638,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-buy-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: buyTarget.nftId })
+      body: JSON.stringify({ nftId: buyTarget.nftId, collection: state.collection })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok && res.data && res.data.error === 'lookup_failed' && retriesLeft > 0){
@@ -10672,7 +10672,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function pollBuyStatus(){
     if (buyPollTimer) clearTimeout(buyPollTimer);
     if (!buyUuid || !buyTarget) return;
-    fetch('/api/swap-buy-status?uuid=' + encodeURIComponent(buyUuid) + '&nftId=' + encodeURIComponent(buyTarget.nftId))
+    fetch('/api/swap-buy-status?uuid=' + encodeURIComponent(buyUuid) + '&nftId=' + encodeURIComponent(buyTarget.nftId) + '&collection=' + encodeURIComponent(state.collection))
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.status === 'settled'){
@@ -10770,7 +10770,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-delist-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: p.nftId })
+      body: JSON.stringify({ nftId: p.nftId, collection: state.collection })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
@@ -10803,7 +10803,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function pollDelistStatus(){
     if (delistPollTimer) clearTimeout(delistPollTimer);
     if (!delistUuid || !delistTarget) return;
-    fetch('/api/swap-delist-status?uuid=' + encodeURIComponent(delistUuid) + '&nftId=' + encodeURIComponent(delistTarget.nftId))
+    fetch('/api/swap-delist-status?uuid=' + encodeURIComponent(delistUuid) + '&nftId=' + encodeURIComponent(delistTarget.nftId) + '&collection=' + encodeURIComponent(state.collection))
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.status === 'delisted'){
@@ -10921,7 +10921,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-makeoffer-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays })
+      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays, collection: state.collection })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       sendBtn.disabled = false;
@@ -11032,7 +11032,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-makeoffer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: offerTarget.nftId, priceValue: offerTarget.priceValue, durationDays: offerTarget.durationDays })
+      body: JSON.stringify({ nftId: offerTarget.nftId, priceValue: offerTarget.priceValue, durationDays: offerTarget.durationDays, collection: state.collection })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
@@ -11061,7 +11061,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function pollOfferStatus(){
     if (offerPollTimer) clearTimeout(offerPollTimer);
     if (!offerUuid || !offerTarget) return;
-    fetch('/api/swap-makeoffer-status?uuid=' + encodeURIComponent(offerUuid) + '&nftId=' + encodeURIComponent(offerTarget.nftId) + '&priceValue=' + encodeURIComponent(offerTarget.priceValue))
+    fetch('/api/swap-makeoffer-status?uuid=' + encodeURIComponent(offerUuid) + '&nftId=' + encodeURIComponent(offerTarget.nftId) + '&priceValue=' + encodeURIComponent(offerTarget.priceValue) + '&collection=' + encodeURIComponent(state.collection))
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.status === 'offered'){
@@ -11450,7 +11450,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function loadOffersReceived(){
     if (!MY_WALLET) return; // the endpoint requires a real session anyway
     if (offersReceivedPromise) return offersReceivedPromise;
-    offersReceivedPromise = fetch('/api/swap-offers-received').then(function(r){ return r.json(); }).then(function(data){
+    offersReceivedPromise = fetch('/api/swap-offers-received?collection=' + encodeURIComponent(state.collection)).then(function(r){ return r.json(); }).then(function(data){
       offersReceivedData = data.items || [];
       offersByNftId = {};
       var totalOffers = 0;
@@ -11498,7 +11498,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function loadOutgoingOffers(){
     if (!MY_WALLET) return;
     if (outgoingOffersPromise) return outgoingOffersPromise;
-    outgoingOffersPromise = fetch('/api/swap-offers-made').then(function(r){ return r.json(); }).then(function(data){
+    outgoingOffersPromise = fetch('/api/swap-offers-made?collection=' + encodeURIComponent(state.collection)).then(function(r){ return r.json(); }).then(function(data){
       outgoingOffersData = data.items || [];
       if (el.myOffersPanelWrap.style.display !== 'none') renderOutgoingOffersList();
       outgoingOffersPromise = null;
@@ -11567,7 +11567,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-canceloffer-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: cancelOfferTarget.nftId })
+      body: JSON.stringify({ nftId: cancelOfferTarget.nftId, collection: state.collection })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
@@ -11581,7 +11581,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return fetch('/api/swap-canceloffer-payload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nftId: cancelOfferTarget.nftId })
+        body: JSON.stringify({ nftId: cancelOfferTarget.nftId, collection: state.collection })
       }).then(function(r2){ return r2.json().then(function(data2){ return { ok: r2.ok, data: data2 }; }); })
       .then(function(res2){
         if (!res2.ok || !res2.data.ok){
@@ -11608,7 +11608,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function pollCancelOfferStatus(btn){
     if (cancelOfferPollTimer) clearTimeout(cancelOfferPollTimer);
     if (!cancelOfferUuid || !cancelOfferTarget) return;
-    fetch('/api/swap-canceloffer-status?uuid=' + encodeURIComponent(cancelOfferUuid) + '&nftId=' + encodeURIComponent(cancelOfferTarget.nftId))
+    fetch('/api/swap-canceloffer-status?uuid=' + encodeURIComponent(cancelOfferUuid) + '&nftId=' + encodeURIComponent(cancelOfferTarget.nftId) + '&collection=' + encodeURIComponent(state.collection))
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.status === 'cancelled'){
@@ -11864,7 +11864,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-acceptoffer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: acceptOfferTarget.nftId, offerId: acceptOfferTarget.offerId })
+      body: JSON.stringify({ nftId: acceptOfferTarget.nftId, offerId: acceptOfferTarget.offerId, collection: state.collection })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
@@ -11896,7 +11896,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function pollAcceptOfferStatus(){
     if (acceptOfferPollTimer) clearTimeout(acceptOfferPollTimer);
     if (!acceptOfferUuid || !acceptOfferTarget) return;
-    fetch('/api/swap-acceptoffer-status?uuid=' + encodeURIComponent(acceptOfferUuid) + '&nftId=' + encodeURIComponent(acceptOfferTarget.nftId) + '&offerId=' + encodeURIComponent(acceptOfferTarget.offerId))
+    fetch('/api/swap-acceptoffer-status?uuid=' + encodeURIComponent(acceptOfferUuid) + '&nftId=' + encodeURIComponent(acceptOfferTarget.nftId) + '&offerId=' + encodeURIComponent(acceptOfferTarget.offerId) + '&collection=' + encodeURIComponent(state.collection))
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.status === 'settled'){
