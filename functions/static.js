@@ -5189,14 +5189,35 @@ const SWAP_HTML = `<!DOCTYPE html>
      h1's own "STAT!C :: MA!NFRAME" sub-label (see #mainframeReopenLabel)
      is the way back in, matching the site's existing branding instead of
      adding new chrome for it. */
+  /* One static screen, genuinely never scrolls (reported live as wanting
+     this) — height:100dvh + overflow:hidden, flex column so the header
+     takes only what it needs and the carousel absorbs whatever's left,
+     regardless of viewport height. 100dvh over 100vh: on mobile Safari/
+     Chrome, 100vh includes the space the address bar temporarily covers,
+     which would make this taller than the ACTUAL visible viewport and
+     force exactly the scroll this is meant to never have; 100dvh tracks
+     the real visible area. display is toggled to 'flex' (not 'block') in
+     the script wherever this shows. */
   #screenMainframe{
     display:none;
     position:fixed;
     inset:0;
     z-index:2000;
-    background:#050506;
-    overflow-y:auto;
-    padding:3rem 1.5rem 4rem;
+    /* var(--bg), not a separate opaque colour — that used to fully block
+       #staticBg (the site's own animated noise/scanline canvas, z-index:0,
+       painted underneath everything) from ever showing through here,
+       reported live as wanting it back on this screen too. --bg is the
+       same colour the rest of the site's own body already sits on top of
+       the canvas with (mix-blend-mode:screen on the canvas is what makes
+       the noise read as a texture ON this colour rather than washing it
+       out), so this now looks like the same surface as everywhere else
+       instead of a flatter one-off black. */
+    background:var(--bg);
+    overflow:hidden;
+    height:100vh;
+    height:100dvh;
+    padding:2rem 1.5rem;
+    flex-direction:column;
   }
   /* A faint, slow-drifting glow behind everything — the same trick as
      .pigeons-bar-thumb's own accent gradient, just huge and centred
@@ -5214,15 +5235,22 @@ const SWAP_HTML = `<!DOCTYPE html>
       radial-gradient(ellipse 900px 500px at 85% 10%, rgba(52,255,133,0.10), transparent 60%);
   }
   #screenMainframe > *{ position:relative; z-index:1; }
+  /* Header shrinks to its own content — flex:0 0 auto keeps it from
+     eating into the carousel's space, and its own H1 is capped much
+     smaller than the persistent page's (up to 104px there) specifically
+     here, so the whole screen reliably fits with zero scroll on a short
+     window too, not just a tall one. */
+  #screenMainframe > h1{ flex:0 0 auto; font-size:clamp(22px, 4vw, 46px); margin-bottom:0.2rem; }
   .mainframe-subtitle{
     position:relative;
+    flex:0 0 auto;
     text-align:center;
-    font-size:13px;
+    font-size:12px;
     letter-spacing:0.25em;
     color:var(--grey);
     text-transform:uppercase;
-    margin:1.5rem 0 2.5rem;
-    padding-bottom:0.9rem;
+    margin:0.75rem 0 1.25rem;
+    padding-bottom:0.75rem;
   }
   /* Same glowing-underline device as SH0W!NG Y0UR P!GE0NS' own title
      (.search-panel-title-flock) — ties this landing screen visually to
@@ -5232,21 +5260,48 @@ const SWAP_HTML = `<!DOCTYPE html>
     width:64px; height:2px; background:linear-gradient(90deg, transparent, var(--cyan), transparent);
     box-shadow:0 0 8px var(--cyan-glow);
   }
-  .mainframe-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
-    gap:1.75rem;
-    max-width:900px;
-    margin:0 auto;
+  /* ---- Carousel — exactly 3 cards visible at a time (reported live),
+     the rest reachable by dragging, a trackpad/touch swipe, or the
+     PREV/NEXT arrows either side. flex:1 1 auto + min-height:0 is what
+     actually lets this fill "whatever's left" of the screen's own height
+     instead of pushing it taller than the viewport (min-height:0 is the
+     same flex-child shrink gotcha this file already documents elsewhere —
+     a flex item defaults to min-height:auto, which refuses to shrink
+     below its content's natural size no matter what flex:1 says). ---- */
+  .mainframe-carousel-wrap{
+    position:relative;
+    flex:1 1 auto;
+    min-height:0;
+    display:flex;
+    align-items:stretch;
   }
-  /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
-     $PIGEONS' real purple) drives the art overlay + hover glow — same
-     r,g,b-triplet convention --collection-accent-rgb already uses
-     elsewhere, so a future collection just needs its own accent here,
-     nothing structural changes. */
-  .mainframe-card{
-    display:block;
+  .mainframe-grid{
+    display:flex;
+    gap:1.5rem;
     width:100%;
+    height:100%;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    scroll-behavior:smooth;
+    padding:0 2.5rem;
+    cursor:grab;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .mainframe-grid::-webkit-scrollbar{ display:none; }
+  .mainframe-grid.dragging{ cursor:grabbing; scroll-snap-type:none; scroll-behavior:auto; }
+  /* Exactly 3 per screen: each card is a third of the row minus its share
+     of the 2 gaps between them. Below ~760px this drops toward 1-per-
+     screen instead (see the media query further down) — 3 real, legible
+     cards on a phone-width screen was never going to fit no matter how
+     this is built. */
+  .mainframe-card{
+    flex:0 0 calc((100% - 3rem) / 3);
+    scroll-snap-align:start;
+    min-width:0;
+    height:100%;
+    display:flex;
+    flex-direction:column;
     background:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
@@ -5256,6 +5311,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     transition:border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
+  @media (max-width:760px){
+    .mainframe-card{ flex-basis:82%; }
+  }
+  /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
+     $PIGEONS' real purple) drives the art overlay + hover glow — same
+     r,g,b-triplet convention --collection-accent-rgb already uses
+     elsewhere, so a future collection just needs its own accent here,
+     nothing structural changes. */
   .mainframe-card:hover{
     border-color:rgba(var(--card-accent, 61,243,236), 0.8);
     transform:translateY(-4px);
@@ -5267,9 +5330,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      colour so the label/tag underneath stay readable over any image
      without a separate dark strip breaking the art. Until real art is in
      place for a card, the gradient alone still reads fine as a coloured
-     tile — never a blank/broken-image box. */
+     tile — never a blank/broken-image box. flex:1 1 auto (not a fixed
+     height like this used to be) — the art fills however much vertical
+     room the card actually has now that cards are as tall as the whole
+     carousel, not a fixed small thumbnail strip. */
   .mainframe-card-art{
-    height:150px;
+    flex:1 1 auto;
+    min-height:0;
     background-size:cover;
     background-position:center;
     background-color:rgba(var(--card-accent, 61,243,236), 0.14);
@@ -5278,8 +5345,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:transform 0.4s ease;
   }
   .mainframe-card:hover .mainframe-card-art{ transform:scale(1.05); }
-  .mainframe-card-body{ padding:1.5rem 1.5rem 1.75rem; }
-  .mainframe-card-label{ font-family:var(--font-display); font-size:26px; font-weight:700; color:#fff; letter-spacing:0.02em; }
+  .mainframe-card-body{ flex:0 0 auto; padding:1.25rem 1.5rem 1.5rem; }
+  .mainframe-card-label{ font-family:var(--font-display); font-size:clamp(20px, 2.2vw, 28px); font-weight:700; color:#fff; letter-spacing:0.02em; }
   /* Real, live numbers (items/holders/floor — see loadMainframeStats),
      not decorative — the whole point of showing them right here is
      proving "this is a real, active market" before you've even picked a
@@ -5301,16 +5368,65 @@ const SWAP_HTML = `<!DOCTYPE html>
     letter-spacing:0.14em;
     color:var(--green);
     text-transform:uppercase;
-    margin-top:0.9rem;
+    margin-top:0.75rem;
     padding:0.35em 0.9em;
     border:1px solid rgba(52,255,133,0.4);
     border-radius:var(--radius);
     background:rgba(52,255,133,0.08);
   }
+  /* A real, solid button — same treatment BUY N0W already uses on a card
+     in the real DATABASE, so "buy the token" reads as the same kind of
+     action there and here. display:block/width:100% — its own full-width
+     row underneath the TRAD!NG L!VE tag, not squeezed inline beside it. */
+  .mainframe-card-buy{
+    display:block;
+    width:100%;
+    margin-top:0.85rem;
+    background:var(--green);
+    border:1px solid var(--green);
+    color:#000;
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:0.7em 0.6em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    box-shadow:0 0 12px var(--green-glow);
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .mainframe-card-buy:hover{ background:#000; color:var(--green); }
   .mainframe-card-soon{ opacity:0.6; cursor:default; }
   .mainframe-card-soon:hover{ border-color:var(--border-mid); transform:none; box-shadow:none; }
   .mainframe-card-soon:hover .mainframe-card-art{ transform:none; }
   .mainframe-card-soon .mainframe-card-tag{ color:var(--grey-dim); border-color:var(--border-mid); background:transparent; }
+  /* PREV/NEXT — floating circular buttons over the carousel's own edges
+     (not pushed out to the sides of the screen), same treatment
+     .hscroll-arrow already uses for SORT BY's category strip elsewhere,
+     just bigger since these are the primary way through 5 cards, not a
+     minor scroll nicety. */
+  .mainframe-arrow{
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    z-index:5;
+    width:2.75em;
+    height:2.75em;
+    border-radius:50%;
+    background:rgba(15,16,20,0.85);
+    border:1px solid var(--border-mid);
+    color:#fff;
+    font-size:18px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  }
+  .mainframe-arrow:hover{ border-color:var(--cyan-dim); background:rgba(20,21,26,0.95); transform:translateY(-50%) scale(1.08); }
+  .mainframe-arrow-prev{ left:0.25rem; }
+  .mainframe-arrow-next{ right:0.25rem; }
   #mainframeReopenLabel{ cursor:pointer; }
 </style>
 </head>
@@ -5327,51 +5443,68 @@ const SWAP_HTML = `<!DOCTYPE html>
   <div id="screenMainframe">
     <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub">STAT!C :: MA!NFRAME</span></h1>
     <div class="mainframe-subtitle">SELECT A C0LLECT!0N</div>
-    <div class="mainframe-grid" id="mainframeGrid">
-      <!-- Each card's own real artwork lives at /assets/mainframe/<name>.jpeg
-           (mainframe-card-art's background-image below) — a plain coloured
-           tile in that same accent until the file's actually there, never a
-           blank/broken-image box (see .mainframe-card-art's own CSS). -->
-      <button class="mainframe-card" data-collection="pigeons" style="--card-accent:136,72,248; --card-art:url('/assets/mainframe/pigeons.jpeg');">
-        <div class="mainframe-card-art"></div>
-        <div class="mainframe-card-body">
-          <div class="mainframe-card-label">P!GE0NS</div>
-          <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
-          <div class="mainframe-card-tag">TRAD!NG L!VE</div>
+    <div class="mainframe-carousel-wrap">
+      <button type="button" class="mainframe-arrow mainframe-arrow-prev" id="mainframeArrowPrev" aria-label="PREV!0US">◂</button>
+      <div class="mainframe-grid" id="mainframeGrid">
+        <!-- Each card's own real artwork lives at /assets/mainframe/<name>.jpeg
+             (mainframe-card-art's background-image below) — a plain coloured
+             tile in that same accent until the file's actually there, never a
+             blank/broken-image box (see .mainframe-card-art's own CSS).
+             A plain div, not a <button> — it needs to contain a REAL button
+             of its own (mainframe-card-buy) below, and a <button> can never
+             validly contain another <button> (browsers silently hoist the
+             inner one out, breaking the DOM). role="button"/tabindex keep it
+             keyboard/screen-reader operable the way a real button is; see
+             mainframeGrid's own click+keydown handlers in the script.
+             BUY $T0KEN is a real button, not just part of the tag row —
+             reported live as wanting a direct path to buying each token
+             right from here; for now it enters the collection the same as
+             clicking the card itself, the actual straight-to-buy flow is
+             the next pass. stopPropagation keeps it from also double-firing
+             the card's own click. -->
+        <div class="mainframe-card" data-collection="pigeons" role="button" tabindex="0" style="--card-accent:136,72,248; --card-art:url('/assets/mainframe/pigeons.jpeg');">
+          <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-body">
+            <div class="mainframe-card-label">$P!GE0NS</div>
+            <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
+            <div class="mainframe-card-tag">TRAD!NG L!VE</div>
+            <button type="button" class="mainframe-card-buy" data-collection="pigeons">BUY $P!GE0NS</button>
+          </div>
         </div>
-      </button>
-      <!-- PHN!X/TEDDY/SEAL/FUZZY are all C0M!NG S00N and no longer
-           clickable (no data-collection — mainframeGrid's own click
-           handler below only matches [data-collection]) while Pigeons
-           gets hardened into the real template first. -->
-      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg');">
-        <div class="mainframe-card-art"></div>
-        <div class="mainframe-card-body">
-          <div class="mainframe-card-label">PHN!X</div>
-          <div class="mainframe-card-tag">C0M!NG S00N</div>
+        <!-- PHN!X/TEDDY/SEAL/FUZZY are all C0M!NG S00N and no longer
+             clickable (no data-collection — mainframeGrid's own click
+             handler below only matches [data-collection]) while Pigeons
+             gets hardened into the real template first. -->
+        <div class="mainframe-card mainframe-card-soon" style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg');">
+          <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-body">
+            <div class="mainframe-card-label">$PHN!X</div>
+            <div class="mainframe-card-tag">C0M!NG S00N</div>
+          </div>
         </div>
-      </button>
-      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:47,158,68; --card-art:url('/assets/mainframe/teddy.jpeg');">
-        <div class="mainframe-card-art"></div>
-        <div class="mainframe-card-body">
-          <div class="mainframe-card-label">TEDDY</div>
-          <div class="mainframe-card-tag">C0M!NG S00N</div>
+        <div class="mainframe-card mainframe-card-soon" style="--card-accent:47,158,68; --card-art:url('/assets/mainframe/teddy.jpeg');">
+          <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-body">
+            <div class="mainframe-card-label">$TEDDY</div>
+            <div class="mainframe-card-tag">C0M!NG S00N</div>
+          </div>
         </div>
-      </button>
-      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:61,178,243; --card-art:url('/assets/mainframe/seal.jpeg');">
-        <div class="mainframe-card-art"></div>
-        <div class="mainframe-card-body">
-          <div class="mainframe-card-label">SEAL</div>
-          <div class="mainframe-card-tag">C0M!NG S00N</div>
+        <div class="mainframe-card mainframe-card-soon" style="--card-accent:61,178,243; --card-art:url('/assets/mainframe/seal.jpeg');">
+          <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-body">
+            <div class="mainframe-card-label">$SEAL</div>
+            <div class="mainframe-card-tag">C0M!NG S00N</div>
+          </div>
         </div>
-      </button>
-      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:255,51,204; --card-art:url('/assets/mainframe/fuzzy.jpeg');">
-        <div class="mainframe-card-art"></div>
-        <div class="mainframe-card-body">
-          <div class="mainframe-card-label">FUZZY</div>
-          <div class="mainframe-card-tag">C0M!NG S00N</div>
+        <div class="mainframe-card mainframe-card-soon" style="--card-accent:255,51,204; --card-art:url('/assets/mainframe/fuzzy.jpeg');">
+          <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-body">
+            <div class="mainframe-card-label">$FUZZY</div>
+            <div class="mainframe-card-tag">C0M!NG S00N</div>
+          </div>
         </div>
-      </button>
+      </div>
+      <button type="button" class="mainframe-arrow mainframe-arrow-next" id="mainframeArrowNext" aria-label="NEXT">▸</button>
     </div>
   </div>
 
@@ -6807,7 +6940,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
-   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons',
+   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeArrowPrev','mainframeArrowNext',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
@@ -12703,12 +12836,87 @@ const SWAP_HTML = `<!DOCTYPE html>
     hideMainframe();
     showTab('database');
   }
+  // Drag-to-scroll (mouse) — trackpad/touch already scroll #mainframeGrid
+  // natively via its own overflow-x:auto, this is just the desktop-mouse
+  // equivalent ("drag and scroll through", reported live). Tracks total
+  // movement so a genuine drag (past mainframeDragThreshold) suppresses
+  // the click that would otherwise fire on mouseup and open whatever
+  // card the cursor happened to land on — a real drag is a navigation
+  // gesture, not a pick.
+  var mainframeDragThreshold = 6;
+  var mainframeDragState = null; // { startX, startScrollLeft, moved }
+  el.mainframeGrid.addEventListener('mousedown', function(e){
+    mainframeDragState = { startX: e.pageX, startScrollLeft: el.mainframeGrid.scrollLeft, moved: false };
+    el.mainframeGrid.classList.add('dragging');
+  });
+  window.addEventListener('mousemove', function(e){
+    if (!mainframeDragState) return;
+    var dx = e.pageX - mainframeDragState.startX;
+    if (Math.abs(dx) > mainframeDragThreshold) mainframeDragState.moved = true;
+    if (mainframeDragState.moved){
+      e.preventDefault();
+      el.mainframeGrid.scrollLeft = mainframeDragState.startScrollLeft - dx;
+    }
+  });
+  window.addEventListener('mouseup', function(){
+    if (mainframeDragState) el.mainframeGrid.classList.remove('dragging');
+    // Left set (not cleared) until the next click's own capture-phase
+    // check below reads it — clearing here would race the click event
+    // that's about to fire from this same mouseup.
+  });
+  // Capture phase, ahead of the plain click handler below — stops a
+  // just-finished drag's own mouseup-triggered click from reaching it at
+  // all, rather than trying to distinguish "drag" from "pick" inside that
+  // handler itself.
   el.mainframeGrid.addEventListener('click', function(e){
+    if (mainframeDragState && mainframeDragState.moved){
+      // stopImmediatePropagation, not just stopPropagation — this and the
+      // real pick/buy handler right below are two SEPARATE listeners on
+      // this SAME element, and plain stopPropagation only ever stops an
+      // event moving to the NEXT node in the DOM, not sibling listeners
+      // already registered on the node it's currently at.
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    }
+    mainframeDragState = null;
+  }, true);
+  el.mainframeGrid.addEventListener('click', function(e){
+    var buyBtn = e.target.closest('.mainframe-card-buy');
+    if (buyBtn){
+      e.stopPropagation();
+      enterMainframeCollection(buyBtn.getAttribute('data-collection'));
+      return;
+    }
     var card = e.target.closest('.mainframe-card[data-collection]');
     if (card) enterMainframeCollection(card.getAttribute('data-collection'));
   });
+  // Keyboard equivalent for the card itself (role="button"/tabindex, see
+  // the HTML's own comment on why this can't be a real <button> any
+  // more) — Enter/Space activate it the same way a real button would.
+  el.mainframeGrid.addEventListener('keydown', function(e){
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var card = e.target.closest('.mainframe-card[data-collection]');
+    if (!card) return;
+    e.preventDefault();
+    enterMainframeCollection(card.getAttribute('data-collection'));
+  });
+  // PREV/NEXT — one card-width (+ its gap) per click, same distance
+  // regardless of which card happens to be first, so this always lands
+  // exactly on the next/previous card's own scroll-snap point.
+  function mainframeCardStep(){
+    var card = el.mainframeGrid.querySelector('.mainframe-card');
+    if (!card) return 320;
+    var gap = parseFloat(getComputedStyle(el.mainframeGrid).columnGap) || 0;
+    return card.getBoundingClientRect().width + gap;
+  }
+  el.mainframeArrowPrev.addEventListener('click', function(){
+    el.mainframeGrid.scrollBy({ left: -mainframeCardStep(), behavior: 'smooth' });
+  });
+  el.mainframeArrowNext.addEventListener('click', function(){
+    el.mainframeGrid.scrollBy({ left: mainframeCardStep(), behavior: 'smooth' });
+  });
   el.mainframeReopenLabel.addEventListener('click', function(){
-    el.screenMainframe.style.display = 'block';
+    el.screenMainframe.style.display = 'flex';
   });
   // Real, live numbers on the P!GE0NS card (see .mainframe-card-stats' own
   // comment in the CSS) — the only tradeable card right now, so the only
@@ -14423,7 +14631,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // the real default.
     window.history.replaceState({}, '', window.location.pathname);
   } else {
-    el.screenMainframe.style.display = 'block';
+    el.screenMainframe.style.display = 'flex';
   }
 
   // The other half of openBuyConfirm's own "not logged in" redirect (see
