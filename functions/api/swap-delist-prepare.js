@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findPigeonsOffer
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findCollectionOffer, getTradeConfig
 } from '../_shared.js';
 
 // Σκύλλα SWAP — DELIST (phase 2). Builds and returns the exact
@@ -32,6 +32,11 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
+  const collection = (body && body.collection) || 'pigeons';
+  if (!getTradeConfig(collection)) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
+  }
+
   const nftId = body && body.nftId;
   if (!nftId || typeof nftId !== 'string' || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
     return new Response(JSON.stringify({ error: 'invalid_nft_id' }), { status: 400 });
@@ -53,7 +58,7 @@ export async function onRequestPost(context) {
   // have an unrelated XRP (or other) sell offer live on the same NFT
   // (e.g. an existing Deeptide listing); matching on owner alone would
   // risk cancelling the wrong one.
-  const ownOffer = findPigeonsOffer(offers, seller);
+  const ownOffer = findCollectionOffer(offers, collection, seller);
   if (!ownOffer) {
     return new Response(JSON.stringify({ error: 'not_listed_by_you' }), { status: 403 });
   }

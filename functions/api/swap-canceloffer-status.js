@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftBuyOffersOrNull,
-  getXamanPayloadStatus, getSwapBuyOffersMap, removeSwapBuyOffer, findPigeonsOffer
+  getXamanPayloadStatus, getSwapBuyOffersMap, removeSwapBuyOffer, findCollectionOffer, getTradeConfig
 } from '../_shared.js';
 
 // Polled by the browser after [ OPEN XAMAN ] while the offerer is signing.
@@ -30,8 +30,12 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const uuid = url.searchParams.get('uuid');
   const nftId = url.searchParams.get('nftId');
+  const collection = url.searchParams.get('collection') || 'pigeons';
   if (!uuid || !/^[0-9a-fA-F-]{10,60}$/.test(uuid) || !nftId || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
+  }
+  if (!getTradeConfig(collection)) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
   }
 
   const xummData = await getXamanPayloadStatus(env, uuid);
@@ -64,7 +68,7 @@ export async function onRequestGet(context) {
   // while the offer is still live. null means "couldn't verify" — keep
   // polling, same as still finding the offer.
   const remainingOffers = await fetchNftBuyOffersOrNull(nftId);
-  const stillThere = remainingOffers === null || !!findPigeonsOffer(remainingOffers, buyer);
+  const stillThere = remainingOffers === null || !!findCollectionOffer(remainingOffers, collection, buyer);
   if (stillThere) {
     return new Response(JSON.stringify({ status: 'signed_pending_ledger', txHash }), {
       headers: { 'Content-Type': 'application/json' }
@@ -75,9 +79,9 @@ export async function onRequestGet(context) {
   // it's already gone from the live ledger check above by this point, so
   // this is cleanup of the index only, not a correctness gate.
   context.waitUntil((async () => {
-    const map = await getSwapBuyOffersMap(env.coin);
+    const map = await getSwapBuyOffersMap(env.coin, collection);
     const stored = (map[nftId] || []).find(o => o.buyer === buyer);
-    if (stored) await removeSwapBuyOffer(env.coin, nftId, stored.offerId);
+    if (stored) await removeSwapBuyOffer(env.coin, nftId, stored.offerId, collection);
   })());
 
   return new Response(JSON.stringify({ status: 'cancelled', txHash }), {

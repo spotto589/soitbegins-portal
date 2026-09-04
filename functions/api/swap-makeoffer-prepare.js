@@ -1,6 +1,6 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchDeeptideNftDetail,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, swapOfferSourceMemo,
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchDeeptideNftDetail, getTradeConfig,
+  encodeCurrencyCode, swapOfferSourceMemo,
   LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds
 } from '../_shared.js';
 
@@ -33,6 +33,12 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
+  const collection = (body && body.collection) || 'pigeons';
+  const cfg = getTradeConfig(collection);
+  if (!cfg) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
+  }
+
   const nftId = body && body.nftId;
   if (!nftId || typeof nftId !== 'string' || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
     return new Response(JSON.stringify({ error: 'invalid_nft_id' }), { status: 400 });
@@ -48,7 +54,7 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
   }
 
-  if (!PIGEONS_TOKEN_CONFIG.configured) {
+  if (!cfg.tokenConfig.configured) {
     return new Response(JSON.stringify({ error: 'not_configured' }), { status: 501 });
   }
 
@@ -73,8 +79,8 @@ export async function onRequestPost(context) {
     Owner: item.owner,
     NFTokenID: nftId,
     Amount: {
-      currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency),
-      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      currency: encodeCurrencyCode(cfg.tokenConfig.currency),
+      issuer: cfg.tokenConfig.issuer,
       value: priceStr
     },
     // FOREVER (durationDays 0) -> null -> field omitted entirely, same as LIST.

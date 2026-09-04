@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, createXamanPayload, getXamanUserToken, findPigeonsOffer
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, createXamanPayload, getXamanUserToken, findCollectionOffer, getTradeConfig
 } from '../_shared.js';
 
 // Called straight from the CANCEL click now — no separate confirm step
@@ -35,13 +35,18 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
+  const collection = (body && body.collection) || 'pigeons';
+  if (!getTradeConfig(collection)) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
+  }
+
   const nftId = body && body.nftId;
   if (!nftId || typeof nftId !== 'string' || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
     return new Response(JSON.stringify({ error: 'invalid_nft_id' }), { status: 400 });
   }
 
   const offers = await fetchNftSellOffers(nftId);
-  const ownOffer = findPigeonsOffer(offers, seller);
+  const ownOffer = findCollectionOffer(offers, collection, seller);
   if (!ownOffer) {
     return new Response(JSON.stringify({ error: 'not_listed_by_you' }), { status: 403 });
   }

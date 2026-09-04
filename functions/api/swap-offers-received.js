@@ -1,7 +1,7 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNftsCached, findAllPigeons,
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNftsCached, findAllCollectionNfts, getTradeConfig,
   getSwapBuyOffersMap, addSwapBuyOffer, removeSwapBuyOffer, fetchNftBuyOffersOrNull,
-  getOwnerPigeonsViaDeeptide, getSwapListingsMap, encodeCurrencyCode, PIGEONS_TOKEN_CONFIG,
+  getOwnerPigeonsViaDeeptide, getSwapListingsMap, encodeCurrencyCode,
   mapWithConcurrency
 } from '../_shared.js';
 
@@ -60,15 +60,20 @@ export async function onRequestGet(context) {
     return new Response(JSON.stringify({ error: 'invalid_session' }), { status: 401 });
   }
   const owner = payload.acct;
+  const collection = new URL(request.url).searchParams.get('collection') || 'pigeons';
+  const cfg = getTradeConfig(collection);
+  if (!cfg) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
+  }
 
   const [ownedNfts, buyOffersMap, deeptideItems, listingsMap] = await Promise.all([
     fetchAllAccountNftsCached(context, owner),
-    getSwapBuyOffersMap(env.coin),
-    getOwnerPigeonsViaDeeptide(env.coin, owner),
-    getSwapListingsMap(env.coin)
+    getSwapBuyOffersMap(env.coin, collection),
+    getOwnerPigeonsViaDeeptide(env.coin, owner, cfg.deeptideShopSlug),
+    getSwapListingsMap(env.coin, collection)
   ]);
   const deeptideById = new Map(deeptideItems.map(d => [d.nftId, d]));
-  const ownedPigeonIds = findAllPigeons(ownedNfts).map(n => n.NFTokenID);
+  const ownedPigeonIds = findAllCollectionNfts(ownedNfts, collection).map(n => n.NFTokenID);
   const ownedPigeonIdSet = new Set(ownedPigeonIds);
   const trackedIds = Object.keys(buyOffersMap).filter(id => ownedPigeonIdSet.has(id));
   // This wallet's own currently-listed Pigeons — always scanned regardless
@@ -83,7 +88,7 @@ export async function onRequestGet(context) {
   const untrackedIds = ownedPigeonIds.filter(id => !trackedIds.includes(id) && !ownListedIds.includes(id)).slice(0, remainingCap);
   const candidateIds = trackedIds.concat(ownListedIds, untrackedIds);
 
-  const currency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
+  const currency = encodeCurrencyCode(cfg.tokenConfig.currency);
   const results = await mapWithConcurrency(candidateIds, OFFERS_RECEIVED_CONCURRENCY, async nftId => {
     const liveOffers = await fetchNftBuyOffersOrNull(nftId);
     const item = deeptideById.get(nftId) || null;
@@ -116,14 +121,14 @@ export async function onRequestGet(context) {
     const live = liveOffers.filter(o =>
       o.amount && typeof o.amount === 'object' &&
       o.amount.currency === currency &&
-      o.amount.issuer === PIGEONS_TOKEN_CONFIG.issuer
+      o.amount.issuer === cfg.tokenConfig.issuer
     );
     // Prune any stored entry no longer actually on-ledger — never blocks
     // the response, just best-effort cleanup. Safe here specifically
     // because liveOffers is a confirmed real result, not a failed lookup.
     const liveIds = new Set(live.map(o => o.nft_offer_index));
     const stale = stored.filter(s => !liveIds.has(s.offerId));
-    stale.forEach(s => context.waitUntil(removeSwapBuyOffer(env.coin, nftId, s.offerId)));
+    stale.forEach(s => context.waitUntil(removeSwapBuyOffer(env.coin, nftId, s.offerId, collection)));
     // Backfill anything real that isn't in our own index yet (see the
     // untrackedIds scan above — this is what actually registers it).
     live.forEach(o => {
@@ -133,7 +138,7 @@ export async function onRequestGet(context) {
           buyer: o.owner,
           price: o.amount.value,
           createdAt: Math.floor(Date.now() / 1000)
-        }));
+        }, collection));
       }
     });
 

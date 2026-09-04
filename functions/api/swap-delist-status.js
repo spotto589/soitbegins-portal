@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull,
-  getXamanPayloadStatus, removeSwapListing, findPigeonsOffer
+  getXamanPayloadStatus, removeSwapListing, findCollectionOffer, getTradeConfig
 } from '../_shared.js';
 
 // Polled by the browser after [ OPEN XAMAN ] while the seller is signing.
@@ -30,8 +30,12 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const uuid = url.searchParams.get('uuid');
   const nftId = url.searchParams.get('nftId');
+  const collection = url.searchParams.get('collection') || 'pigeons';
   if (!uuid || !/^[0-9a-fA-F-]{10,60}$/.test(uuid) || !nftId || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
+  }
+  if (!getTradeConfig(collection)) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
   }
 
   const xummData = await getXamanPayloadStatus(env, uuid);
@@ -68,7 +72,7 @@ export async function onRequestGet(context) {
   // unrelated (e.g. XRP) offer from the same seller must never block a
   // real delist from ever resolving.
   const remainingOffers = await fetchNftSellOffersOrNull(nftId);
-  const stillThere = remainingOffers === null || !!findPigeonsOffer(remainingOffers, seller);
+  const stillThere = remainingOffers === null || !!findCollectionOffer(remainingOffers, collection, seller);
   if (stillThere) {
     // Signed successfully on Xaman's side but not yet reflected on ledger
     // reads (or the read itself failed) — caller should keep polling.
@@ -77,7 +81,7 @@ export async function onRequestGet(context) {
     });
   }
 
-  context.waitUntil(removeSwapListing(env.coin, nftId));
+  context.waitUntil(removeSwapListing(env.coin, nftId, collection));
 
   return new Response(JSON.stringify({ status: 'delisted', txHash }), {
     headers: { 'Content-Type': 'application/json' }

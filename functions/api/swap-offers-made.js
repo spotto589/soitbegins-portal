@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, getSwapBuyOffersMap, fetchNftBuyOffersOrNull,
-  removeSwapBuyOffer, findPigeonsOffer, fetchDeeptideNftDetailCached, mapWithConcurrency
+  removeSwapBuyOffer, findCollectionOffer, getTradeConfig, fetchDeeptideNftDetailCached, mapWithConcurrency
 } from '../_shared.js';
 
 function shortenAddr(addr) {
@@ -46,8 +46,12 @@ export async function onRequestGet(context) {
     return new Response(JSON.stringify({ error: 'invalid_session' }), { status: 401 });
   }
   const buyer = payload.acct;
+  const collection = new URL(request.url).searchParams.get('collection') || 'pigeons';
+  if (!getTradeConfig(collection)) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
+  }
 
-  const buyOffersMap = await getSwapBuyOffersMap(env.coin);
+  const buyOffersMap = await getSwapBuyOffersMap(env.coin, collection);
   const candidateIds = Object.keys(buyOffersMap)
     .filter(nftId => buyOffersMap[nftId].some(o => o.buyer === buyer))
     .slice(0, OUTGOING_OFFERS_SCAN_CAP);
@@ -75,11 +79,11 @@ export async function onRequestGet(context) {
       };
     }
 
-    const myOffer = findPigeonsOffer(liveOffers, buyer);
+    const myOffer = findCollectionOffer(liveOffers, collection, buyer);
     if (!myOffer) {
       // Genuinely gone (accepted, cancelled, or expired) — prune the
       // stale tracked record so it doesn't show up again next time.
-      if (storedEntry) context.waitUntil(removeSwapBuyOffer(env.coin, nftId, storedEntry.offerId));
+      if (storedEntry) context.waitUntil(removeSwapBuyOffer(env.coin, nftId, storedEntry.offerId, collection));
       return null;
     }
 

@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftBuyOffersOrNull, findPigeonsOffer
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftBuyOffersOrNull, findCollectionOffer, getTradeConfig
 } from '../_shared.js';
 
 // Σκύλλα SWAP — CANCEL an outgoing offer (phase 1). Builds and returns the
@@ -33,6 +33,11 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
+  const collection = (body && body.collection) || 'pigeons';
+  if (!getTradeConfig(collection)) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
+  }
+
   const nftId = body && body.nftId;
   if (!nftId || typeof nftId !== 'string' || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
     return new Response(JSON.stringify({ error: 'invalid_nft_id' }), { status: 400 });
@@ -45,9 +50,10 @@ export async function onRequestPost(context) {
   if (offers === null) {
     return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 502 });
   }
-  // Specifically the Σκύλλα $PIGEONS offer — the same wallet could in
-  // principle have made more than one offer type on the same NFT.
-  const ownOffer = findPigeonsOffer(offers, buyer);
+  // Specifically the Σκύλλα token offer for this collection — the same
+  // wallet could in principle have made more than one offer type on the
+  // same NFT.
+  const ownOffer = findCollectionOffer(offers, collection, buyer);
   if (!ownOffer) {
     return new Response(JSON.stringify({ error: 'not_offered_by_you' }), { status: 403 });
   }

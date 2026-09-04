@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftBuyOffers,
-  getXamanPayloadStatus, addSwapBuyOffer, encodeCurrencyCode, PIGEONS_TOKEN_CONFIG
+  getXamanPayloadStatus, addSwapBuyOffer, encodeCurrencyCode, getTradeConfig
 } from '../_shared.js';
 
 // Polled by the browser after [ OPEN XAMAN ] while the offerer is signing.
@@ -34,8 +34,13 @@ export async function onRequestGet(context) {
   const uuid = url.searchParams.get('uuid');
   const nftId = url.searchParams.get('nftId');
   const priceValue = url.searchParams.get('priceValue');
+  const collection = url.searchParams.get('collection') || 'pigeons';
   if (!uuid || !/^[0-9a-fA-F-]{10,60}$/.test(uuid) || !nftId || !/^[0-9A-Fa-f]{64}$/.test(nftId) || !priceValue) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
+  }
+  const cfg = getTradeConfig(collection);
+  if (!cfg) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
   }
 
   const xummData = await getXamanPayloadStatus(env, uuid);
@@ -62,13 +67,13 @@ export async function onRequestGet(context) {
 
   const txHash = resp && resp.txid;
 
-  const currency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
+  const currency = encodeCurrencyCode(cfg.tokenConfig.currency);
   const offers = await fetchNftBuyOffers(nftId);
   const ownOffer = offers.find(o =>
     o.owner === buyer &&
     o.amount && typeof o.amount === 'object' &&
     o.amount.currency === currency &&
-    o.amount.issuer === PIGEONS_TOKEN_CONFIG.issuer &&
+    o.amount.issuer === cfg.tokenConfig.issuer &&
     o.amount.value === priceValue
   );
 
@@ -85,7 +90,7 @@ export async function onRequestGet(context) {
     buyer,
     price: ownOffer.amount.value,
     createdAt: Math.floor(Date.now() / 1000)
-  }));
+  }, collection));
 
   return new Response(JSON.stringify({
     status: 'offered',

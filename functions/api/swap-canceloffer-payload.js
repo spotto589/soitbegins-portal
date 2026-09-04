@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftBuyOffers, createXamanPayload, getXamanUserToken, findPigeonsOffer
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftBuyOffers, createXamanPayload, getXamanUserToken, findCollectionOffer, getTradeConfig
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same txjson swap-canceloffer-
@@ -33,13 +33,18 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
+  const collection = (body && body.collection) || 'pigeons';
+  if (!getTradeConfig(collection)) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
+  }
+
   const nftId = body && body.nftId;
   if (!nftId || typeof nftId !== 'string' || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
     return new Response(JSON.stringify({ error: 'invalid_nft_id' }), { status: 400 });
   }
 
   const offers = await fetchNftBuyOffers(nftId);
-  const ownOffer = findPigeonsOffer(offers, buyer);
+  const ownOffer = findCollectionOffer(offers, collection, buyer);
   if (!ownOffer) {
     return new Response(JSON.stringify({ error: 'not_offered_by_you' }), { status: 403 });
   }

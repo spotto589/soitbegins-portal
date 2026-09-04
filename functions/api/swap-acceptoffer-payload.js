@@ -1,7 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts, fetchNftBuyOffers,
-  fetchDeeptideNftDetail, createXamanPayload, getXamanUserToken,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET,
+  fetchDeeptideNftDetail, createXamanPayload, getXamanUserToken, getTradeConfig,
+  encodeCurrencyCode, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET,
   acquireBrokerAcceptLock, releaseBrokerAcceptLock, recordPendingBrokerAccept, applyNftRoyalty
 } from '../_shared.js';
 
@@ -40,6 +40,12 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
 
+  const collection = (body && body.collection) || 'pigeons';
+  const cfg = getTradeConfig(collection);
+  if (!cfg) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
+  }
+
   const nftId = body && body.nftId;
   const offerId = body && body.offerId;
   if (!nftId || typeof nftId !== 'string' || !/^[0-9A-Fa-f]{64}$/.test(nftId) ||
@@ -61,8 +67,8 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'cannot_accept_own_offer' }), { status: 400 });
   }
   if (!offer.amount || typeof offer.amount !== 'object' ||
-      offer.amount.currency !== encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency) ||
-      offer.amount.issuer !== PIGEONS_TOKEN_CONFIG.issuer) {
+      offer.amount.currency !== encodeCurrencyCode(cfg.tokenConfig.currency) ||
+      offer.amount.issuer !== cfg.tokenConfig.issuer) {
     return new Response(JSON.stringify({ error: 'unexpected_offer_currency' }), { status: 400 });
   }
 
@@ -90,8 +96,8 @@ export async function onRequestPost(context) {
     Account: owner,
     NFTokenID: nftId,
     Amount: {
-      currency: encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency),
-      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      currency: encodeCurrencyCode(cfg.tokenConfig.currency),
+      issuer: cfg.tokenConfig.issuer,
       value: fee.sellerValue
     },
     Destination: MARKETPLACE_BROKER_WALLET,
@@ -121,6 +127,7 @@ export async function onRequestPost(context) {
       offerId,
       seller: owner,
       buyer: offer.owner,
+      collection,
       totalValue: fee.totalValue,
       feeValue: fee.feeValue,
       sellerValue: fee.sellerValue,

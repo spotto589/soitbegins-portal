@@ -1,8 +1,8 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts, fetchNftBuyOffers, fetchNftSellOffers,
   getXamanPayloadStatus, takePendingBrokerAccept, releaseBrokerAcceptLock,
-  recordSwapSale, removeSwapBuyOffer, removeSwapListing,
-  PIGEONS_TOKEN_CONFIG, encodeCurrencyCode, MARKETPLACE_BROKER_WALLET,
+  recordSwapSale, removeSwapBuyOffer, removeSwapListing, getTradeConfig,
+  encodeCurrencyCode, MARKETPLACE_BROKER_WALLET,
   swapOfferSourceMemo, brokeredSaleMemo, submitAsBroker, verifyBrokerFeeFromMeta, payBrokerReward, applyNftRoyalty
 } from '../_shared.js';
 
@@ -45,9 +45,14 @@ export async function onRequestGet(context) {
   const uuid = url.searchParams.get('uuid');
   const nftId = url.searchParams.get('nftId');
   const offerId = url.searchParams.get('offerId');
+  const collection = url.searchParams.get('collection') || 'pigeons';
   if (!uuid || !/^[0-9a-fA-F-]{10,60}$/.test(uuid) || !nftId || !/^[0-9A-Fa-f]{64}$/.test(nftId) ||
       !offerId || !/^[0-9A-Fa-f]{64}$/.test(offerId)) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
+  }
+  const cfg = getTradeConfig(collection);
+  if (!cfg) {
+    return new Response(JSON.stringify({ error: 'invalid_collection' }), { status: 400 });
   }
 
   const xummData = await getXamanPayloadStatus(env, uuid);
@@ -75,7 +80,7 @@ export async function onRequestGet(context) {
     });
   }
 
-  const pigeonsCurrency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
+  const tokenCurrency = encodeCurrencyCode(cfg.tokenConfig.currency);
 
   // Real on-ledger read for "did the seller's sell offer actually land" —
   // never trusts Xaman's dispatched_result alone.
@@ -84,8 +89,8 @@ export async function onRequestGet(context) {
     o.owner === owner &&
     o.destination === MARKETPLACE_BROKER_WALLET &&
     o.amount && typeof o.amount === 'object' &&
-    o.amount.currency === pigeonsCurrency &&
-    o.amount.issuer === PIGEONS_TOKEN_CONFIG.issuer
+    o.amount.currency === tokenCurrency &&
+    o.amount.issuer === cfg.tokenConfig.issuer
   );
 
   if (!sellOffer) {
@@ -134,8 +139,8 @@ export async function onRequestGet(context) {
     NFTokenBuyOffer: offerId,
     NFTokenSellOffer: sellOffer.nft_offer_index,
     NFTokenBrokerFee: {
-      currency: pigeonsCurrency,
-      issuer: PIGEONS_TOKEN_CONFIG.issuer,
+      currency: tokenCurrency,
+      issuer: cfg.tokenConfig.issuer,
       value: pending.feeValue
     },
     Memos: [...swapOfferSourceMemo(), brokeredSaleMemo(pending.pigeonNumber)]
@@ -153,7 +158,7 @@ export async function onRequestGet(context) {
   // Confirm the 0.589% actually landed in the broker wallet, straight from
   // this settling transaction's own metadata — not just trusting the
   // proxy's tesSUCCESS.
-  const feeCheck = verifyBrokerFeeFromMeta(brokerResult.meta, MARKETPLACE_BROKER_WALLET, PIGEONS_TOKEN_CONFIG.issuer, pigeonsCurrency, pending.feeValue);
+  const feeCheck = verifyBrokerFeeFromMeta(brokerResult.meta, MARKETPLACE_BROKER_WALLET, cfg.tokenConfig.issuer, tokenCurrency, pending.feeValue);
 
   // A THIRD, separate deduction — confirmed live against a real settled
   // sale (see applyNftRoyalty's own comment in _shared.js): pending.sellerValue
@@ -166,8 +171,8 @@ export async function onRequestGet(context) {
   const royalty = applyNftRoyalty(pending.sellerValue, nftId);
 
   context.waitUntil(releaseBrokerAcceptLock(env.coin, offerId));
-  context.waitUntil(removeSwapBuyOffer(env.coin, nftId, offerId));
-  context.waitUntil(removeSwapListing(env.coin, nftId));
+  context.waitUntil(removeSwapBuyOffer(env.coin, nftId, offerId, collection));
+  context.waitUntil(removeSwapListing(env.coin, nftId, collection));
   context.waitUntil(recordSwapSale(env.coin, {
     txHash: brokerResult.hash,
     nftId,
@@ -180,7 +185,7 @@ export async function onRequestGet(context) {
     royaltyPercent: royalty.royaltyPercent,
     brokerFeeVerified: feeCheck.ok,
     createdAt: new Date().toISOString()
-  }));
+  }, collection));
   // $CRWN reward to both sides, TEST-PHASE flat amount — a separate
   // Payment fired right after settlement (see payBrokerReward), never
   // allowed to affect the sale's own already-settled outcome either way.
