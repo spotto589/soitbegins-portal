@@ -5442,7 +5442,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      and more of the actual pigeon does. */
   .mainframe-card[data-collection="pigeons"] .mainframe-card-art{ background-position:center 25%; }
   .mainframe-card-body{ flex:0 0 auto; padding:1.25rem 1.5rem 1.5rem; }
-  .mainframe-card-label{ font-family:var(--font-display); font-size:clamp(20px, 2.2vw, 28px); font-weight:700; color:#fff; letter-spacing:0.02em; }
+  .mainframe-card-label{ font-family:var(--font-display); font-size:clamp(26px, 2.8vw, 36px); font-weight:700; color:#fff; letter-spacing:0.02em; }
   /* Real, live numbers (items/holders/floor — see loadMainframeStats),
      not decorative — the whole point of showing them right here is
      proving "this is a real, active market" before you've even picked a
@@ -5460,12 +5460,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
   .mainframe-card-tag{
     display:inline-block;
-    font-size:10.5px;
+    font-size:13px;
     letter-spacing:0.14em;
     color:var(--green);
     text-transform:uppercase;
     margin-top:0.75rem;
-    padding:0.35em 0.9em;
+    padding:0.4em 1em;
     border:1px solid rgba(52,255,133,0.4);
     border-radius:var(--radius);
     background:rgba(52,255,133,0.08);
@@ -5483,10 +5483,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#000;
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:13px;
+    font-size:18px;
     letter-spacing:0.04em;
     text-transform:uppercase;
-    padding:0.7em 0.6em;
+    padding:0.9em 0.6em;
     border-radius:var(--radius);
     cursor:pointer;
     box-shadow:0 0 12px var(--green-glow);
@@ -13107,14 +13107,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     e.preventDefault();
     enterMainframeCollection(card.getAttribute('data-collection'));
   });
-  // PREV/NEXT — one card-width (+ its gap) per click, same distance
+  // PREV/NEXT — THREE card-widths (+ gaps) per click, same distance
   // regardless of which card happens to be first, so this always lands
-  // exactly on the next/previous card's own scroll-snap point.
+  // exactly on a card's own scroll-snap point three cards over.
   function mainframeCardStep(){
     var card = el.mainframeGrid.querySelector('.mainframe-card');
-    if (!card) return 320;
+    if (!card) return 960;
     var gap = parseFloat(getComputedStyle(el.mainframeGrid).columnGap) || 0;
-    return card.getBoundingClientRect().width + gap;
+    return (card.getBoundingClientRect().width + gap) * 3;
   }
   el.mainframeArrowPrev.addEventListener('click', function(){
     el.mainframeGrid.scrollBy({ left: -mainframeCardStep(), behavior: 'smooth' });
