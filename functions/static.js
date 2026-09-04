@@ -8669,7 +8669,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var hasAvgSale = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
     var avgSaleLine = !COLLECTION_META[state.collection].tradeable ? '' : hasAvgSale
       ? '<div class="result-rarity-line result-stat-stack"><span class="stat-label">AVG SALE PR!CE ::</span><span class="stat-value">' + greenNum(fmtXrp(p.avgSaleXrp)) + ' XRP</span></div>'
-      : '<div class="result-rarity-line result-stat-stack"><span class="stat-label">COND!T!ON ::</span><span class="stat-value">M!NT</span></div>';
+      : '<div class="result-rarity-line result-stat-stack"><span class="stat-label">COND!T!ON ::</span><span class="stat-value">' + greenNum('M!NT') + '</span></div>';
     // Real cross-market floor price (see PRICE_ASC/crossListing in
     // startCollectionBrowse) — only set on items returned by that sort,
     // so this stays blank for every other sort instead of guessing.
