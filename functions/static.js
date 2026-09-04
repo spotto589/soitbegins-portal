@@ -5155,7 +5155,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
       </div>
       <div class="search-row" style="justify-content:center;">
-        <input class="transfer-wallet-input" id="profileUsernameInput" type="text" maxlength="20" placeholder="CH00SE A USERNAME (3-20, LETTERS/NUMBERS/_)">
+        <input class="transfer-wallet-input" id="profileUsernameInput" type="text" placeholder="CH00SE A USERNAME (LETTERS/NUMBERS/_/EM0J!, UP T0 20)">
         <button class="bar-btn" id="profileUsernameSaveBtn">SAVE</button>
       </div>
       <div class="index-line" id="profileUsernameStatus" style="text-align:center; margin-top:0.5rem;"></div>
@@ -9827,7 +9827,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       cannot_accept_own_offer: 'Y0U CAN\\'T ACCEPT AN 0FFER FR0M Y0UR 0WN WALLET.',
       unexpected_offer_currency: 'TH!S 0FFER !SN\\'T !N REAL $P!GE0NS — REFUS!NG T0 ACCEPT !T.',
       invalid_offer_amount: 'TH!S 0FFER AM0UNT !S!NVAL!D.',
-      invalid_username: 'USERNAME MUST BE 3-20 LETTERS, NUMBERS 0R UNDERSC0RES.',
+      invalid_username: 'USERNAME MUST BE LETTERS, NUMBERS, UNDERSC0RES 0R EM0J!, UP T0 20 CHARACTERS.',
       pfp_unavailable: 'C0ULDN\\'T L0AD TH!S P!GE0N S !MAGE — TRY AGA!N.',
       nothing_to_update: 'N0TH!NG T0 SAVE.'
     };
@@ -13206,8 +13206,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.profileUsernameSaveBtn.addEventListener('click', function(){
     var username = el.profileUsernameInput.value.trim();
-    if (!/^[A-Za-z0-9_]{3,20}$/.test(username)){
-      el.profileUsernameStatus.textContent = 'USERNAME MUST BE 3-20 LETTERS, NUMBERS 0R UNDERSC0RES.';
+    var usernamePattern = /^[A-Za-z0-9_\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\u200D\uFE0F]+$/u;
+    if (!usernamePattern.test(username) || [...username].length > 20){
+      el.profileUsernameStatus.textContent = 'USERNAME MUST BE LETTERS, NUMBERS, UNDERSC0RES 0R EM0J!, UP T0 20 CHARACTERS.';
       return;
     }
     el.profileUsernameSaveBtn.disabled = true;

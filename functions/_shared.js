@@ -2647,7 +2647,17 @@ export async function removeSwapBuyOffer(kv, nftId, offerId) {
 // second reverse-index key that could drift out of sync with this one.
 // ─────────────────────────────────────────────────────────────────────────
 const PROFILES_MAP_KEY = 'pswap:profiles:v1';
-const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,20}$/;
+// Letters/numbers/underscore, plus real emoji — \p{Extended_Pictographic}
+// covers the base emoji themselves, the rest are the modifier codepoints a
+// single visible emoji is often actually built from: \u{1F1E6}-\u{1F1FF}
+// are the paired regional-indicator letters a flag emoji is made of,
+// \u{1F3FB}-\u{1F3FF} are skin-tone modifiers, ‍ is the zero-width
+// joiner that chains codepoints into one combined emoji (a family emoji
+// is 7 separate codepoints joined this way), and ️ forces
+// emoji-style rendering on an otherwise plain glyph. Rejects anything
+// else (control chars, RTL override tricks, whitespace) by just not
+// being in this set at all.
+const USERNAME_CHAR_PATTERN = /^[A-Za-z0-9_\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\u200D\uFE0F]+$/u;
 
 export async function getProfilesMap(kv) {
   const raw = await kv.get(PROFILES_MAP_KEY);
@@ -2659,8 +2669,15 @@ export async function getProfile(kv, wallet) {
   return map[wallet] || null;
 }
 
+// Length is counted in real codepoints ([...username].length), not
+// username.length's own UTF-16 code-unit count — a single emoji can be a
+// surrogate pair (2 UTF-16 units for 1 codepoint) or a multi-codepoint
+// ‍-joined sequence, either of which would badly over-count against a
+// plain .length check.
 export function isValidUsername(username) {
-  return typeof username === 'string' && USERNAME_PATTERN.test(username);
+  if (typeof username !== 'string' || !USERNAME_CHAR_PATTERN.test(username)) return false;
+  const len = [...username].length;
+  return len >= 1 && len <= 20;
 }
 
 // Case-insensitive — "Pigeon" and "pigeon" would otherwise both render
