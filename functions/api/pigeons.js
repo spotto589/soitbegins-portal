@@ -45,6 +45,7 @@ function shortenAddr(addr) {
 // actually a small slice of this file, not all of it.
 const COLLECTIONS = {
   pigeons: {
+    key: 'pigeons',
     shopSlug: DEEPTIDE_PIGEON_SHOP_SLUG,
     vanitySlug: 'xrpigeons',
     xrpCafeUrl: 'https://xrp.cafe/collection/xrpigeons',
@@ -55,9 +56,12 @@ const COLLECTIONS = {
   // endpoint reports the real total on every page; hardcoded here rather
   // than fetched, same "approx" convention PIGEON_COLLECTION_SIZE_APPROX
   // already uses, confirmed against a live listings call at the time this
-  // was added).
-  phnixs: { shopSlug: 'phnixs', vanitySlug: 'phnixs', xrpCafeUrl: 'https://xrp.cafe/collection/phnixs', sizeApprox: 1588, tradeable: false },
-  teddybg: { shopSlug: 'teddybg', vanitySlug: 'teddybg', xrpCafeUrl: 'https://xrp.cafe/collection/teddybg', sizeApprox: 2600, tradeable: false }
+  // was added). PHNIX is now real trading (see TRADEABLE_COLLECTIONS in
+  // _shared.js for its NFT issuer/taxon/token) — key matches that config's
+  // own key so scyllaListingsMap/pigeonsSalesMap below read PHNIX's own
+  // namespaced KV data, not Pigeons'.
+  phnixs: { key: 'phnixs', shopSlug: 'phnixs', vanitySlug: 'phnixs', xrpCafeUrl: 'https://xrp.cafe/collection/phnixs', sizeApprox: 1588, tradeable: true },
+  teddybg: { key: 'teddybg', shopSlug: 'teddybg', vanitySlug: 'teddybg', xrpCafeUrl: 'https://xrp.cafe/collection/teddybg', sizeApprox: 2600, tradeable: false }
 };
 function resolveCollection(params) {
   const key = params.get('collection');
@@ -159,7 +163,7 @@ export async function onRequestGet(context) {
   // Σκύλλα SWAP listings — one cheap KV read, reused for every item below
   // (the Σ LISTED badge on ordinary browse cards, and the LISTED filter's
   // own $PIGEONS sort). No per-card cost beyond this single read.
-  const scyllaListingsMap = tradeable ? await getSwapListingsMap(env.coin) : {};
+  const scyllaListingsMap = tradeable ? await getSwapListingsMap(env.coin, coll.key) : {};
 
   // Real $PIGEONS-denominated sales, straight from the same capped log the
   // SALES DATA tab already reads (getSwapSalesLog) — grouped here by NFT
@@ -168,7 +172,7 @@ export async function onRequestGet(context) {
   // every item below, same pattern as highSaleMap.
   const pigeonsSalesMap = {};
   if (tradeable && env.coin) {
-    const salesLog = await getSwapSalesLog(env.coin);
+    const salesLog = await getSwapSalesLog(env.coin, coll.key);
     for (const sale of salesLog) {
       const value = parseFloat(sale.priceValue);
       if (!sale.nftId || !Number.isFinite(value)) continue;

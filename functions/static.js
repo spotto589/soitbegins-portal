@@ -12010,10 +12010,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   // new ones: no BUY N0W/0FFER/trustline/login, matching the explicit
   // scope this shipped with — see COLLECTION_META's own tradeable flag,
   // which everything else in this function keys off.
+  // tokenLabel is what fmtPigeons/fmtPigeonsCompact append to every price
+  // shown anywhere on the site (BUY N0W, offers, sales history, etc.) —
+  // one field here fixes the currency name everywhere at once instead of
+  // hunting down every hardcoded "$P!GE0NS" string.
   var COLLECTION_META = {
-    pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true },
-    phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: false },
-    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false }
+    pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS' },
+    phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X' },
+    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY' }
   };
   // Card headers ("P!GE0N #1921") were hardcoded to say P!GE0N regardless
   // of collection — harmless-looking but wrong once PHN!X/TEDDY actually
@@ -13172,7 +13176,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // app gets the same comma-grouped formatting, not just the sale stats.
   function fmtPigeons(n){
     var num = typeof n === 'string' ? Number(n) : n;
-    return (num || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS';
+    return (num || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + COLLECTION_META[state.collection].tokenLabel;
   }
   // Same r...XXXX shortening already used elsewhere (S!GNED !N AS, wallet
   // search) — a raw 34-char address sitting next to a clean price row was
@@ -13483,7 +13487,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // purely a display cleanup for the one place a long comma-grouped
   // number was cluttering a small button ("BUY N0W :: 123K $P!GE0NS").
   function fmtPigeonsCompact(n){
-    return compactPigeonsNumber(n) + ' $P!GE0NS';
+    return compactPigeonsNumber(n) + ' ' + COLLECTION_META[state.collection].tokenLabel;
   }
   // Display-only mirror of computeMarketplaceFee() in _shared.js (1.023%)
   // — no active caller right now (myPigeonOffersHtml's own fee-breakdown
