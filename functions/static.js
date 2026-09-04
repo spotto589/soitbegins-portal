@@ -5099,7 +5099,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="pigeons-bar-left" id="pigeonsBarLoggedOut">
           <div class="pigeons-bar-left-body pigeons-bar-left-body-row">
             <div class="pigeons-bar-left-lines">
-              <span class="pigeons-bar-text pigeons-bar-text-lg">SET $P!GE0NS TRUSTL!NE</span>
+              <span class="pigeons-bar-text pigeons-bar-text-lg" id="trustlineTitleLabel">SET $P!GE0NS TRUSTL!NE</span>
               <!-- Shortened for display only — the copy handler reads
                    data-full, never this shortened text, so the clipboard
                    always gets the real address regardless. Not worth
@@ -5281,7 +5281,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="panel-title">SALES H!ST0RY</div>
       <div class="sale-currency-toggle" id="salesCurrencyToggle">
         <button class="sale-currency-btn sale-currency-btn-active" data-currency="XRP">XRP</button>
-        <button class="sale-currency-btn" data-currency="PIGEONS">$P!GE0NS</button>
+        <button class="sale-currency-btn" data-currency="PIGEONS" id="salesCurrencyPigeonsBtn">$P!GE0NS</button>
       </div>
       <div class="sales-scrollbox" id="salesScrollBox">
         <div id="salesArea"></div>
@@ -6400,7 +6400,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
-   'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink',
+   'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
@@ -7644,8 +7644,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   function updateSearchPanelTitleForPaws(){
     var onFlock = state.activeTab === 'mypigeons' && isOwnWalletScope();
     el.searchPanelTitle.textContent = onFlock
-      ? 'SH0W!NG Y0UR P!GE0NS :: ' + state.scopeAllItems.length
-      : 'SEARCH!NG $P!GE0NS DATABASE';
+      ? 'SH0W!NG Y0UR ' + collectionItemLabel() + 'S :: ' + state.scopeAllItems.length
+      : 'SEARCH!NG ' + COLLECTION_META[state.collection].tokenLabel + ' DATABASE';
     el.searchPanelTitle.classList.toggle('search-panel-title-flock', onFlock);
     el.flockAccountBoxes.style.display = onFlock ? '' : 'none';
     el.flockWalletBox.style.display = onFlock ? '' : 'none';
@@ -9811,12 +9811,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     // than showing a placeholder while still loading, since the button
     // reads fine on its own either way ("SH0W MY FL0CK").
     el.showMyPigeonsCount.textContent = trustlinePigeonCount === null ? '' : ' :: ' + trustlinePigeonCount.toLocaleString();
+    var meta = COLLECTION_META[state.collection];
     if (trustlineBalanceNum === null){
       el.pigeonsBalanceValue.innerHTML = '…';
       el.pigeonsBalanceBuyBtn.style.display = 'none';
     } else {
-      el.pigeonsBalanceValue.innerHTML = greenNum(trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' $P!GE0NS';
-      el.pigeonsBalanceBuyBtn.style.display = '';
+      el.pigeonsBalanceValue.innerHTML = greenNum(trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' ' + meta.tokenLabel;
+      // BUY $TOKEN opens the XRP<->token AMM swap panel — only meaningful
+      // for a collection with real pool data (see COLLECTION_META.hasAmm).
+      el.pigeonsBalanceBuyBtn.style.display = meta.hasAmm ? '' : 'none';
     }
     updateFlockTabLabel();
   }
@@ -12087,11 +12090,72 @@ const SWAP_HTML = `<!DOCTYPE html>
   // shown anywhere on the site (BUY N0W, offers, sales history, etc.) —
   // one field here fixes the currency name everywhere at once instead of
   // hunting down every hardcoded "$P!GE0NS" string.
+  // tokenIssuer/hasAmm drive the trustline banner (see updateTrustlineBannerChrome
+  // below) — tokenIssuer is the real on-ledger token issuer shown next to
+  // !SSUER :: /COPY, hasAmm gates the EXCHANGE CALCULAT0R + BUY $TOKEN-with-
+  // XRP panel, which only exists for $P!GE0NS today (real DexScreener pair +
+  // AMM pool — see quotePigeonsForXrpDrops/fetchPigeonsXrpRate in
+  // _shared.js). A collection without those hides that part of the banner
+  // entirely rather than showing a broken/mislabeled calculator — same
+  // graceful-degradation pattern TEDDY's browse-only mode already uses.
   var COLLECTION_META = {
-    pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS' },
-    phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X' },
-    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY' }
+    pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true },
+    phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: false },
+    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: null, hasAmm: false }
   };
+  // Real per-collection artwork for the trustline banner's big thumbnail —
+  // fetched once per collection (first item off the real DATABASE, rarest-
+  // first) and cached, rather than a second hardcoded image URL living
+  // alongside COLLECTION_META that'd need updating by hand for every new
+  // collection. null while not yet fetched/unavailable — the CSS gradient
+  // alone still reads fine as a placeholder.
+  var collectionThumbCache = {};
+  function updateTrustlineThumb(collectionKey){
+    if (collectionThumbCache[collectionKey]){
+      el.pigeonsBarThumb.style.backgroundImage = 'linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.35), rgba(var(--collection-accent-2-rgb),0.45)), url("' + collectionThumbCache[collectionKey] + '")';
+      return;
+    }
+    apiWithRetry({ collection: collectionKey, skip: 0, limit: 1, sort: 'RARITY_ASC' }, 0).then(function(data){
+      var img = data && data.items && data.items[0] && data.items[0].image;
+      if (!img) return;
+      collectionThumbCache[collectionKey] = img;
+      if (state.collection === collectionKey){
+        el.pigeonsBarThumb.style.backgroundImage = 'linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.35), rgba(var(--collection-accent-2-rgb),0.45)), url("' + img + '")';
+      }
+    }).catch(function(){});
+  }
+  // Everything in the trustline banner that isn't already driven by
+  // fmtPigeons/collectionItemLabel — title text, issuer address + COPY,
+  // thumbnail, BUY button label, and the EXCHANGE CALCULAT0R's visibility.
+  // Called on every switchCollection so "phnix should be everywhere" stays
+  // true no matter which collection you're on, and adding a future
+  // collection only ever means one more COLLECTION_META entry.
+  function updateTrustlineBannerChrome(collectionKey){
+    var meta = COLLECTION_META[collectionKey];
+    el.trustlineTitleLabel.textContent = 'SET ' + meta.tokenLabel + ' TRUSTL!NE';
+    el.pigeonsBarThumb.title = meta.tokenLabel;
+    if (meta.tokenIssuer){
+      el.ciIssuerAddr.setAttribute('data-full', meta.tokenIssuer);
+      el.ciIssuerAddr.textContent = meta.tokenIssuer.slice(0, 5) + '...' + meta.tokenIssuer.slice(-3);
+    } else {
+      el.ciIssuerAddr.setAttribute('data-full', '');
+      el.ciIssuerAddr.textContent = 'N/A';
+    }
+    el.pigeonsBalanceBuyBtn.textContent = 'BUY ' + meta.tokenLabel;
+    el.salesCurrencyPigeonsBtn.textContent = meta.tokenLabel;
+    updateTrustlineThumb(collectionKey);
+    // AMM-backed BUY-with-XRP + EXCHANGE CALCULAT0R only exist for
+    // collections with real pool/DEX data (see COLLECTION_META's own
+    // comment) — hidden outright for everything else instead of showing a
+    // calculator quoting the wrong token.
+    if (!meta.hasAmm){
+      el.pigeonsBarCalc.style.display = 'none';
+      el.pigeonsDexLink.style.display = 'none';
+      el.pigeonsCalcModal.style.display = 'none';
+    } else {
+      refreshTrustlineRate();
+    }
+  }
   // Card headers ("P!GE0N #1921") were hardcoded to say P!GE0N regardless
   // of collection — harmless-looking but wrong once PHN!X/TEDDY actually
   // load real items.
@@ -12127,6 +12191,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.sort = (meta.tradeable && newCollection === 'pigeons') ? 'SCYLLA_PRICE_ASC' : 'RARITY_ASC';
     state.scyllaListedOnly = meta.tradeable && newCollection === 'pigeons';
     el.statScyllaListedTile.classList.toggle('scylla-active', state.scyllaListedOnly);
+    updateTrustlineBannerChrome(newCollection);
+    if (MY_WALLET){
+      // myOwnPigeonsCache is a single flat cache, not keyed by collection —
+      // without clearing it here, switching collection while logged in
+      // would keep showing the PREVIOUS collection's held-NFT list/count
+      // (SH0W MY NFTs, FL0CK tab) since loadMyOwnPigeonsCache's own
+      // promise-cache guard would just hand back the stale result instead
+      // of re-fetching scoped to the new collection.
+      myOwnPigeonsCache = null;
+      myOwnPigeonsCacheFailed = false;
+      myOwnPigeonsCachePromise = null;
+      loadTrustlineLoginState();
+    }
     state.edition = 'ALL';
     state.traitFilters = [];
     state.traitCategories = null;
@@ -12134,6 +12211,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.scope = null;
     renderTraitRows();
     renderSortTag();
+    updateSearchPanelTitleForPaws();
     state.statsLoaded = false;
     loadCollectionStats();
     ensureTraitsLoaded();

@@ -3,8 +3,8 @@ import {
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue, getFloorIndex,
-  resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops,
-  proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG,
+  resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops,
+  proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG,
   getCachedCrownHolder, mapWithConcurrency
 } from '../_shared.js';
 
@@ -79,7 +79,7 @@ function bithompTxUrl(txHash) {
   return `https://bithomp.com/explorer/${txHash}`;
 }
 
-function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pigeonsSalesMap) {
+function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency) {
   const owner = ownerOverride !== undefined ? ownerOverride : meta.owner;
   const priceDrops = typeof meta.priceDrops === 'number' ? meta.priceDrops : null;
   const highSaleEntry = highSaleMap ? highSaleMap[nftId] : undefined;
@@ -107,7 +107,7 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pige
     // Pigeon has actually sold for $PIGEONS, then the real figure.
     highSalePigeons: pigeonsSaleEntry ? pigeonsSaleEntry.highest : 0,
     avgSalePigeons: pigeonsSaleEntry ? pigeonsSaleEntry.total / pigeonsSaleEntry.count : 0,
-    scyllaListing: scyllaEntry ? { price: scyllaEntry.price, currency: 'PIGEONS', expiration: scyllaEntry.expiration || null } : null
+    scyllaListing: scyllaEntry ? { price: scyllaEntry.price, currency: tokenCurrency, expiration: scyllaEntry.expiration || null } : null
   };
 }
 
@@ -153,6 +153,12 @@ export async function onRequestGet(context) {
   const params = url.searchParams;
   const coll = resolveCollection(params);
   const tradeable = coll.tradeable;
+  // The active collection's real token currency — toItem's own
+  // scyllaListing.currency used to always say 'PIGEONS' even on a PHNIX
+  // card. Falls back to $PIGEONS' currency for a non-tradeable collection
+  // (never actually read there, scyllaListingsMap is always empty).
+  const tradeCfg = tradeable ? getTradeConfig(coll.key) : null;
+  const tokenCurrency = tradeCfg ? tradeCfg.tokenConfig.currency : PIGEONS_TOKEN_CONFIG.currency;
 
   // Highest-ever sale price per token — one cheap KV read, reused for
   // every item below (cards' "HIGH SALE" line and the highest-sale sort).
@@ -232,7 +238,12 @@ export async function onRequestGet(context) {
   if (params.get('pigeonsAccountLine') === '1') {
     const wallet = params.get('wallet');
     if (!wallet) return json({ error: 'missing_wallet' }, 400);
-    const line = await fetchPigeonsAccountLine(wallet);
+    // The ACTIVE collection's real token, not always $PIGEONS — see
+    // getTradeConfig/TRADEABLE_COLLECTIONS in _shared.js. Falls back to
+    // $PIGEONS for an unknown/non-tradeable collection param rather than
+    // 400ing, since this banner always needs to render something.
+    const lineCfg = getTradeConfig(coll.key);
+    const line = await fetchPigeonsAccountLine(wallet, lineCfg ? lineCfg.tokenConfig : PIGEONS_TOKEN_CONFIG);
     // hasTrustline === null means the live lookup itself failed (even
     // after fetchPigeonsAccountLine's own retries) — never a fabricated
     // "no trustline"/"0 balance". This used to always return 200 either
@@ -385,7 +396,7 @@ export async function onRequestGet(context) {
       via: it.txHash ? await identifySaleVenue(env.coin, it.txHash).catch(() => null) : null
     });
     if (salesCurrency === 'PIGEONS') {
-      let ownSales = env.coin ? await getSwapSalesLog(env.coin) : [];
+      let ownSales = env.coin ? await getSwapSalesLog(env.coin, coll.key) : [];
       if (salesWallet) ownSales = ownSales.filter(s => s.buyer === salesWallet || s.seller === salesWallet);
       const slice = ownSales.slice(salesSkip, salesSkip + salesLimit);
       const details = await Promise.all(slice.map(s => fetchDeeptideNftDetail(s.nftId).catch(() => null)));
@@ -396,7 +407,7 @@ export async function onRequestGet(context) {
         image: details[i] ? displayImage(details[i].image) : null,
         priceXrp: null,
         pigeonsPrice: typeof s.priceValue === 'string' ? Number(s.priceValue) : s.priceValue,
-        currency: 'PIGEONS',
+        currency: tokenCurrency,
         buyer: s.buyer,
         buyerShort: shortenAddr(s.buyer),
         seller: s.seller,
@@ -407,12 +418,12 @@ export async function onRequestGet(context) {
       return json({ items, total: ownSales.length, hasMore: (salesSkip + items.length) < ownSales.length, skip: salesSkip, limit: salesLimit });
     }
     if (salesCurrency === 'XRP') {
-      const page = await fetchDeeptideSalesHistory({ skip: salesSkip, limit: salesLimit, sort: 'date-desc', wallet: salesWallet });
+      const page = await fetchDeeptideSalesHistory({ skip: salesSkip, limit: salesLimit, sort: 'date-desc', wallet: salesWallet, shopSlug: coll.shopSlug });
       const items = await Promise.all(page.items.map(mapDeeptideItem));
       return json({ items, total: page.total, hasMore: page.hasMore, skip: salesSkip, limit: salesLimit });
     }
 
-    let ownSales = env.coin ? await getSwapSalesLog(env.coin) : [];
+    let ownSales = env.coin ? await getSwapSalesLog(env.coin, coll.key) : [];
     if (salesWallet) {
       ownSales = ownSales.filter(s => s.buyer === salesWallet || s.seller === salesWallet);
     }
@@ -433,7 +444,7 @@ export async function onRequestGet(context) {
         image: details[i] ? displayImage(details[i].image) : null,
         priceXrp: null,
         pigeonsPrice: typeof s.priceValue === 'string' ? Number(s.priceValue) : s.priceValue,
-        currency: 'PIGEONS',
+        currency: tokenCurrency,
         buyer: s.buyer,
         buyerShort: shortenAddr(s.buyer),
         seller: s.seller,
@@ -442,13 +453,13 @@ export async function onRequestGet(context) {
         via: 'scylla'
       }));
       const remaining = salesLimit - ownItems.length;
-      const page = await fetchDeeptideSalesHistory({ skip: 0, limit: Math.max(remaining, 1), sort: 'date-desc', wallet: salesWallet });
+      const page = await fetchDeeptideSalesHistory({ skip: 0, limit: Math.max(remaining, 1), sort: 'date-desc', wallet: salesWallet, shopSlug: coll.shopSlug });
       deeptideTotal = page.total;
       deeptideHasMore = page.hasMore;
       const deepItems = remaining > 0 ? await Promise.all(page.items.slice(0, remaining).map(mapDeeptideItem)) : [];
       items = ownItems.concat(deepItems);
     } else {
-      const page = await fetchDeeptideSalesHistory({ skip: salesSkip - ownTotal, limit: salesLimit, sort: 'date-desc', wallet: salesWallet });
+      const page = await fetchDeeptideSalesHistory({ skip: salesSkip - ownTotal, limit: salesLimit, sort: 'date-desc', wallet: salesWallet, shopSlug: coll.shopSlug });
       deeptideTotal = page.total;
       deeptideHasMore = page.hasMore;
       items = await Promise.all(page.items.map(mapDeeptideItem));
@@ -474,7 +485,10 @@ export async function onRequestGet(context) {
     // same lookup for the same wallet within milliseconds of each other.
     const { nfts, ok } = await fetchAllAccountNftsCheckedCached(context, wallet);
     if (!ok) return json({ error: 'ledger_lookup_failed' }, 502);
-    const pigeons = findAllPigeons(nfts);
+    // The ACTIVE collection's NFTs, not always Pigeons — this is the
+    // wallet= handler behind SH0W MY NFTs/the FL0CK tab, so a PHNIX wallet
+    // lookup must filter by PHNIX's own issuer/taxon, not Pigeons'.
+    const pigeons = findAllCollectionNfts(nfts, coll.key);
     if (!pigeons.length) return json({ items: [], owner: wallet, ownerShort: shortenAddr(wallet) });
     const ledgerItems = pigeons.map(n => ({ nftId: n.NFTokenID, uriHex: n.URI }));
     // Follow-up call — the client already got the fast-phase response
@@ -488,7 +502,7 @@ export async function onRequestGet(context) {
       const wantIds = new Set(resolveIds.split(',').filter(Boolean));
       const wantedLedgerItems = ledgerItems.filter(it => wantIds.has(it.nftId));
       const resolvedPending = await resolveOwnerCollectionPending(wantedLedgerItems);
-      const items = resolvedPending.map(r => toItem(r.nftId, r.meta, wallet, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
+      const items = resolvedPending.map(r => toItem(r.nftId, r.meta, wallet, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency));
       return json({ items });
     }
     // Fast phase — only whatever Deeptide's own bulk index already has
@@ -497,9 +511,9 @@ export async function onRequestGet(context) {
     // of not-yet-indexed items would otherwise need. pendingIds is
     // everything left for the client to optionally resolve via a
     // resolveIds= follow-up (see above) instead of waiting on it here.
-    const { resolved, pendingIds } = await resolveOwnerCollectionFast(env.coin, wallet, ledgerItems);
+    const { resolved, pendingIds } = await resolveOwnerCollectionFast(env.coin, wallet, ledgerItems, coll.shopSlug);
     const items = resolved
-      .map(r => toItem(r.nftId, r.meta, wallet, highSaleMap, scyllaListingsMap, pigeonsSalesMap))
+      .map(r => toItem(r.nftId, r.meta, wallet, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency))
       .sort((a, b) => (a.number || 0) - (b.number || 0));
     return json({ items, owner: wallet, ownerShort: shortenAddr(wallet), pendingIds });
   }
@@ -542,7 +556,7 @@ export async function onRequestGet(context) {
       const match = (categories[a.trait_type] || []).find(v => v.value === a.value);
       return { trait_type: a.trait_type, value: a.value, percent: match ? match.percent : (a.percent != null ? a.percent : null), count: match ? match.count : null };
     });
-    const result = toItem(item.nftId, item, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap);
+    const result = toItem(item.nftId, item, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency);
     // Per-marketplace listings — each platform has its own separate sell
     // offers, so a Pigeon can be listed on one, both, or neither.
     result.listings = {
@@ -569,7 +583,7 @@ export async function onRequestGet(context) {
     }
     const item = await fetchDeeptideNftDetail(nftId);
     if (!item) return json({ items: [], notIndexed: true, query: num });
-    return json({ items: [toItem(item.nftId, item, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap)] });
+    return json({ items: [toItem(item.nftId, item, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency)] });
   }
 
   // Trait filters (# 0R WALLET's own F!LTER BY TRA!TS) — parsed once here
@@ -678,7 +692,7 @@ export async function onRequestGet(context) {
     });
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await mapWithConcurrency(pageIds, 15, id => fetchDeeptideNftDetailCached(context, id));
-    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
+    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency));
 
     // Deeptide's own current-owner field, reused from the detail fetch
     // above (no extra request) — lets the background self-heal below catch
@@ -729,7 +743,7 @@ export async function onRequestGet(context) {
       hasMore: skip + pageIds.length < sortedIds.length,
       skip: skip + pageIds.length,
       limit,
-      collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
+      collectionSizeApprox: coll.sizeApprox
     });
   }
 
@@ -772,7 +786,7 @@ export async function onRequestGet(context) {
     const sortedIds = idPool.sort((a, b) => asc ? metricOf(a) - metricOf(b) : metricOf(b) - metricOf(a));
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await mapWithConcurrency(pageIds, 15, id => fetchDeeptideNftDetailCached(context, id));
-    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
+    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency));
     await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
     return json({
       items,
@@ -780,7 +794,7 @@ export async function onRequestGet(context) {
       hasMore: skip + pageIds.length < sortedIds.length,
       skip,
       limit,
-      collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
+      collectionSizeApprox: coll.sizeApprox
     });
   }
 
@@ -819,7 +833,7 @@ export async function onRequestGet(context) {
       nums.sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
       const pageNums = nums.slice(skip, skip + limit);
       const resolved = await mapWithConcurrency(pageNums, 15, n => fetchDeeptideNftDetailCached(context, map[n]));
-      const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
+      const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency));
       await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
       return json({
         items,
@@ -827,7 +841,7 @@ export async function onRequestGet(context) {
         hasMore: skip + pageNums.length < nums.length,
         skip: skip + pageNums.length,
         limit,
-        collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
+        collectionSizeApprox: coll.sizeApprox
       });
     }
 
@@ -851,7 +865,7 @@ export async function onRequestGet(context) {
       if (matched.length >= limit) break;
       if (!page.hasMore) { exhausted = true; break; }
     }
-    const items = matched.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
+    const items = matched.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency));
     await attachListings(env.coin, items);
     return json({
       items,
@@ -860,7 +874,7 @@ export async function onRequestGet(context) {
       rawSkip: cursor,
       skip: cursor,
       limit,
-      collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
+      collectionSizeApprox: coll.sizeApprox
     });
   }
 
@@ -887,7 +901,7 @@ export async function onRequestGet(context) {
     nums.sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
     const pageNums = nums.slice(skip, skip + limit);
     const resolved = await mapWithConcurrency(pageNums, 15, n => fetchDeeptideNftDetailCached(context, map[n]));
-    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
+    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency));
     await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
     return json({
       items,
@@ -895,7 +909,7 @@ export async function onRequestGet(context) {
       hasMore: skip + pageNums.length < nums.length,
       skip: skip + pageNums.length,
       limit,
-      collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
+      collectionSizeApprox: coll.sizeApprox
     });
   }
 
@@ -932,7 +946,7 @@ export async function onRequestGet(context) {
       candidates = candidates.filter(c => matchSet.has(c.nftId));
     }
     const details = await mapWithConcurrency(candidates, 15, c => fetchDeeptideNftDetailCached(context, c.nftId));
-    let items = candidates.map((c, i) => toItem(c.nftId, details[i] || { number: c.number, attributes: [], image: null }, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
+    let items = candidates.map((c, i) => toItem(c.nftId, details[i] || { number: c.number, attributes: [], image: null }, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency));
     await attachListings(env.coin, items, items.length);
     items.forEach(it => {
       const dt = it.listings.deeptide.priceXrp;
@@ -953,7 +967,7 @@ export async function onRequestGet(context) {
       hasMore: false,
       skip: items.length,
       limit: items.length,
-      collectionSizeApprox: PIGEON_COLLECTION_SIZE_APPROX
+      collectionSizeApprox: coll.sizeApprox
     });
   }
 
@@ -964,7 +978,7 @@ export async function onRequestGet(context) {
   const sort = SORT_MAP[params.get('sort')] || 'rarity-asc';
 
   const page = await fetchDeeptideListings({ skip, limit, sort, traits: filters, shopSlug: coll.shopSlug });
-  const items = page.items.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap));
+  const items = page.items.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency));
   // attachListings is per-nftId (xrp.cafe's own token lookup), not
   // collection-scoped by anything that needs coll here — safe as-is for
   // every collection, tradeable or not (still useful: it's real

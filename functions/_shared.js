@@ -1198,20 +1198,26 @@ export async function fetchPigeonsXrpRate(kv) {
 // entry at all means no trustline (never a fabricated 0); a lookup
 // failure returns nulls so callers can tell "no trustline" from
 // "couldn't check" and not conflate the two.
-export async function fetchPigeonsAccountLine(account) {
+export async function fetchPigeonsAccountLine(account, tokenConfig = PIGEONS_TOKEN_CONFIG) {
   // Routed through the same retrying fetchXrplClusterJson every other
   // xrplcluster.com call in the BUY $PIGEONS path now uses — this one had
   // zero retry until confirmed live as the direct cause of "N0 TRUSTL!NE"
   // intermittently showing for a wallet that genuinely has one set,
   // including inside buildBuySwapTxjson (server-side prepare/payload),
   // which made it a hard block on buying, not just a display glitch.
+  //
+  // tokenConfig defaults to $PIGEONS (every existing caller keeps working
+  // unchanged) but the trustline banner's own balance check
+  // (pigeonsAccountLine in pigeons.js) passes the ACTIVE collection's real
+  // token config instead, so switching to PHN!X checks the real $PHNIX
+  // trustline/balance, not $PIGEONS'.
   const data = await fetchXrplClusterJson({
     method: 'account_lines',
-    params: [{ account, peer: PIGEONS_TOKEN_CONFIG.issuer }]
+    params: [{ account, peer: tokenConfig.issuer }]
   });
   if (!data) return { hasTrustline: null, balance: null };
   const lines = (data.result && data.result.lines) || [];
-  const wantCurrency = encodeCurrencyCode(PIGEONS_TOKEN_CONFIG.currency);
+  const wantCurrency = encodeCurrencyCode(tokenConfig.currency);
   const line = lines.find(l => l.currency === wantCurrency);
   if (!line) return { hasTrustline: false, balance: 0 };
   return { hasTrustline: true, balance: parseFloat(line.balance) || 0 };
