@@ -5421,7 +5421,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      carousel, not a fixed small thumbnail strip. */
   .mainframe-card-art{
     flex:1 1 auto;
-    min-height:0;
+    min-height:60px;
     background-size:cover;
     /* Cards are much shorter now (3x2 grid, not a full-height carousel
        card) — plain center crops most character art around the torso/
@@ -5438,9 +5438,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* $P!GE0NS' own art still crops best a little below the very top (avoids
      the empty purple background above the character's head). */
   .mainframe-card[data-collection="pigeons"] .mainframe-card-art{ background-position:center 15%; }
-  .mainframe-card-body{ flex:0 0 auto; padding:1.25rem 1.5rem 1.5rem; }
-  .mainframe-card-label{ font-family:var(--font-display); font-size:clamp(26px, 2.8vw, 36px); font-weight:700; color:#fff; letter-spacing:0.02em; }
-  /* Real, live numbers (items/holders/floor — see loadMainframeStats),
+  /* Cards are much shorter now (3x2 grid, not a full-height carousel
+     card) — body padding/spacing tightened throughout so the art above
+     it keeps a real, visible chunk of the card instead of getting
+     squeezed to a sliver by six lines of body content. */
+  .mainframe-card-body{ flex:0 0 auto; padding:0.65rem 1rem 0.85rem; }
+  .mainframe-card-label{ font-family:var(--font-display); font-size:clamp(18px, 1.8vw, 24px); font-weight:700; color:#fff; letter-spacing:0.02em; }
+  /* Real, live numbers (items/holders/volume — see the stats fetch loop),
      not decorative — the whole point of showing them right here is
      proving "this is a real, active market" before you've even picked a
      collection. Blank (not a placeholder like "…") until they land, and
@@ -5448,21 +5452,20 @@ const SWAP_HTML = `<!DOCTYPE html>
      erroring the very first screen of the app over a stats tile. */
   .mainframe-card-stats{
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:10px;
     letter-spacing:0.05em;
     color:var(--grey);
-    margin-top:0.5rem;
-    min-height:1.4em;
+    margin-top:0.3rem;
   }
   .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
   .mainframe-card-tag{
     display:inline-block;
-    font-size:13px;
-    letter-spacing:0.14em;
+    font-size:11px;
+    letter-spacing:0.12em;
     color:var(--green);
     text-transform:uppercase;
-    margin-top:0.75rem;
-    padding:0.4em 1em;
+    margin-top:0.4rem;
+    padding:0.3em 0.8em;
     border:1px solid rgba(52,255,133,0.4);
     border-radius:var(--radius);
     background:rgba(52,255,133,0.08);
@@ -5474,16 +5477,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-buy{
     display:block;
     width:100%;
-    margin-top:0.85rem;
+    margin-top:0.5rem;
     background:var(--green);
     border:1px solid var(--green);
     color:#000;
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:18px;
+    font-size:14px;
     letter-spacing:0.04em;
     text-transform:uppercase;
-    padding:0.9em 0.6em;
+    padding:0.55em 0.6em;
     border-radius:var(--radius);
     cursor:pointer;
     box-shadow:0 0 12px var(--green-glow);
