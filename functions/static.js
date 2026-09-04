@@ -5562,9 +5562,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button type="button" class="mainframe-arrow mainframe-arrow-prev" id="mainframeArrowPrev" aria-label="PREV!0US">◂</button>
       <div class="mainframe-grid" id="mainframeGrid">
         <!-- Each card's own real artwork lives at /assets/mainframe/<name>.jpeg
-             (mainframe-card-art's background-image below) — a plain coloured
-             tile in that same accent until the file's actually there, never a
-             blank/broken-image box (see .mainframe-card-art's own CSS).
+             (mainframe-card-art's background-image below). ?v=2 on each
+             URL is a plain cache-buster — these files get overwritten
+             in place at the same path/filename when art is updated
+             (confirmed live: a straight overwrite left visitors with
+             the OLD image for up to 4h, this asset's own real
+             Cache-Control max-age, even on a fresh tab/hard navigate,
+             since HTTP caching happens below any of that). Bump this
+             number the next time any of these five files changes. Also
+             a plain coloured tile in that same accent until a file
+             genuinely doesn't exist yet, never a blank/broken-image
+             box (see .mainframe-card-art's own CSS).
              A plain div, not a <button> — it needs to contain a REAL button
              of its own (mainframe-card-buy) below, and a <button> can never
              validly contain another <button> (browsers silently hoist the
@@ -5577,7 +5585,7 @@ const SWAP_HTML = `<!DOCTYPE html>
              clicking the card itself, the actual straight-to-buy flow is
              the next pass. stopPropagation keeps it from also double-firing
              the card's own click. -->
-        <div class="mainframe-card" data-collection="pigeons" role="button" tabindex="0" style="--card-accent:136,72,248; --card-art:url('/assets/mainframe/pigeons.jpeg');">
+        <div class="mainframe-card" data-collection="pigeons" role="button" tabindex="0" style="--card-accent:136,72,248; --card-art:url('/assets/mainframe/pigeons.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$P!GE0NS</div>
@@ -5590,28 +5598,28 @@ const SWAP_HTML = `<!DOCTYPE html>
              clickable (no data-collection — mainframeGrid's own click
              handler below only matches [data-collection]) while Pigeons
              gets hardened into the real template first. -->
-        <div class="mainframe-card mainframe-card-soon" style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg');">
+        <div class="mainframe-card mainframe-card-soon" style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$PHN!X</div>
             <div class="mainframe-card-tag">C0M!NG S00N</div>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-soon" style="--card-accent:47,158,68; --card-art:url('/assets/mainframe/teddy.jpeg');">
+        <div class="mainframe-card mainframe-card-soon" style="--card-accent:47,158,68; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$TEDDY</div>
             <div class="mainframe-card-tag">C0M!NG S00N</div>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-soon" style="--card-accent:61,178,243; --card-art:url('/assets/mainframe/seal.jpeg');">
+        <div class="mainframe-card mainframe-card-soon" style="--card-accent:61,178,243; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$SEAL</div>
             <div class="mainframe-card-tag">C0M!NG S00N</div>
           </div>
         </div>
-        <div class="mainframe-card mainframe-card-soon" style="--card-accent:255,51,204; --card-art:url('/assets/mainframe/fuzzy.jpeg');">
+        <div class="mainframe-card mainframe-card-soon" style="--card-accent:255,51,204; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$FUZZY</div>
