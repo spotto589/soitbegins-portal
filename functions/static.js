@@ -5359,7 +5359,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="flock-account-box-row"><span class="flock-account-box-label">TRANSACT!0N H!ST0RY</span><span class="db-soon">C0M!NG S00N</span></div>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-soon">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">$CRWN REWARDS</span><span class="db-soon">C0M!NG S00N</span></div>
+          <div class="flock-account-box-row"><span class="flock-account-box-label">CR0WN REWARDS</span><span class="db-soon">C0M!NG S00N</span></div>
         </div>
       </div>
 
