@@ -2853,16 +2853,21 @@ const SWAP_HTML = `<!DOCTYPE html>
      (cannot_accept_own_offer), so it gets its own box instead of the
      ACCEPT/DECLINE/COUNTER trio, with just a way to take it back off. */
   .own-offer-box{
-    border:1px solid var(--border-mid);
+    border:1px solid var(--red);
     border-radius:var(--radius);
     background:var(--panel-bg-solid);
     padding:0.9rem 0.8rem;
     text-align:center;
   }
-  .own-offer-label{ font-size:11px; letter-spacing:0.14em; color:var(--grey); text-transform:uppercase; }
-  .own-offer-price{ font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--white); margin:0.25rem 0 0.7rem; }
+  .own-offer-label{ font-size:11px; letter-spacing:0.14em; color:var(--red); text-transform:uppercase; }
+  .own-offer-price{ font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--red); margin:0.25rem 0 0.7rem; }
   .own-offer-remove{ border:1px solid var(--red); color:var(--red); }
   .own-offer-remove:hover{ background:var(--red); color:#000; }
+  /* Row version of the same box (Y0UR 0WN 0FFERS in renderMyOffersList) —
+     same red treatment as .own-offer-box. */
+  .own-offer-row{ border:1px solid var(--red); border-radius:var(--radius); }
+  .own-offer-row .my-offer-row-buyer{ color:var(--red); }
+  .own-offer-row .my-offer-row-price{ color:var(--red); }
   /* 0FFERS RECE!VED (renderMyOffersList) — one horizontal row per listed
      Pigeon with a real offer: thumbnail, number/buyer, price, then the
      same ACCEPT/DECL!NE/C0UNTER trio the card's own highest-offer box
@@ -9162,7 +9167,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       html += '<div class="panel-title outgoing-offers-title">Y0UR 0WN 0FFERS</div>' +
         ownRows.map(function(row){
           var item = row.item, own = row.own;
-          return '<div class="my-offer-row">' +
+          return '<div class="my-offer-row own-offer-row">' +
             '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + row.img + '</div>' +
             '<div class="my-offer-row-info">' +
               '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
@@ -11354,11 +11359,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.outgoingOffersList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
       return;
     }
-    if (!outgoingOffersData.length){
+    // An offer on YOUR OWN Pigeon shows only in Y0UR 0WN 0FFERS (see
+    // renderMyOffersList) — was showing here too (swap-offers-made.js
+    // returns every offer this wallet made, regardless of target
+    // ownership), doubling up the exact same offer in two sections.
+    var otherOffers = outgoingOffersData.filter(function(item){ return item.ownerWallet !== MY_WALLET; });
+    if (!otherOffers.length){
       el.outgoingOffersList.innerHTML = '<div class="th-empty">N0 0UTG0!NG 0FFERS R!GHT N0W.</div>';
       return;
     }
-    el.outgoingOffersList.innerHTML = outgoingOffersData.map(function(item){
+    el.outgoingOffersList.innerHTML = otherOffers.map(function(item){
       var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
       var countdown = listingCountdownText(item.expiration);
       return '<div class="my-offer-row">' +
