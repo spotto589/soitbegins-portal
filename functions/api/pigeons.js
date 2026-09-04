@@ -297,7 +297,12 @@ export async function onRequestGet(context) {
     const [deeptideFloor, xrpCafeStats, crownSnapshot, recentSales] = await Promise.all([
       fetchDeeptideRealFloor(coll.shopSlug),
       fetchXrpCafeCollectionStats(env.coin, coll.vanitySlug),
-      tradeable ? getCachedCrownHolder(env.coin) : Promise.resolve(null),
+      // Crown is a $PIGEONS-only feature (its own holder-tracking crawl is
+      // keyed to PIGEON_ISSUER/PIGEON_TAXON specifically, see its own
+      // comment above) — fetching it for any other collection was
+      // harmless but pointless, since the real bug was down in `holders`
+      // below always reading its count regardless of collection.
+      coll.key === 'pigeons' ? getCachedCrownHolder(env.coin) : Promise.resolve(null),
       fetchDeeptideSalesHistory({ limit: 50, sort: 'date-desc', shopSlug: coll.shopSlug })
     ]);
     // 24h activity — real, computed from Deeptide's own sales feed (xrp.cafe's
@@ -310,7 +315,16 @@ export async function onRequestGet(context) {
     const volume24hXrp = sales24h.reduce((sum, s) => sum + (s.priceXrp || 0), 0);
     return json({
       items: coll.sizeApprox,
-      holders: crownSnapshot ? crownSnapshot.holderCount : null,
+      // crownSnapshot.holderCount is $PIGEONS-only (see the fetch above) —
+      // used to get shown as the HOLDERS tile for every OTHER tradeable
+      // collection too, since this line never checked which collection it
+      // was actually looking at. xrp.cafe's own per-collection stats
+      // (already vanitySlug-scoped, see fetchXrpCafeCollectionStats) is a
+      // real fallback for everything else, and for $PIGEONS itself when
+      // Crown hasn't computed a snapshot yet.
+      holders: coll.key === 'pigeons'
+        ? (crownSnapshot ? crownSnapshot.holderCount : (xrpCafeStats ? xrpCafeStats.holders : null))
+        : (xrpCafeStats ? xrpCafeStats.holders : null),
       deeptideFloorXrp: deeptideFloor ? deeptideFloor.priceDrops / 1000000 : null,
       deeptideBuyUrl: deeptideFloor ? deeptideBuyUrl(deeptideFloor.nftId) : null,
       xrpCafeFloorXrp: xrpCafeStats && xrpCafeStats.floorDrops !== null ? xrpCafeStats.floorDrops / 1000000 : null,

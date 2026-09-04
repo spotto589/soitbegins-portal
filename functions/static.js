@@ -5452,7 +5452,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="stats-carousel-viewport">
           <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
             <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
-            <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY P!GE0NS L!STED THR0UGH SCYLLA"><div class="stat-label">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+            <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY L!STED THR0UGH SCYLLA"><div class="stat-label" id="statScyllaListedLabel">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
             <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
           </div>
           <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
@@ -6452,7 +6452,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'salesPanelWrap',
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
-   'statScyllaListedTile','statScyllaListedCount',
+   'statScyllaListedTile','statScyllaListedCount','statScyllaListedLabel',
    'statsCarousel','statsCarouselDots','statsPrevBtn','statsNextBtn',
    'statTraded24h','statVolume24h','statSalesTile','statSales24h','statBurntLink',
    'traitRows','clearTraitsBtn',
@@ -8270,7 +8270,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // means it hasn't loaded yet (or there's no session), in which case
       // this stays hidden rather than showing a stale/wrong 0.
       if (trustlineBalanceNum !== null){
-        el.amountEntryOfferBalanceLine.innerHTML = 'Y0UR BALANCE<br>' + greenNum(trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' $P!GE0NS';
+        el.amountEntryOfferBalanceLine.innerHTML = 'Y0UR BALANCE<br>' + greenNum(trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' ' + COLLECTION_META[state.collection].tokenLabel;
         el.amountEntryOfferBalanceLine.style.display = '';
       } else {
         el.amountEntryOfferBalanceLine.style.display = 'none';
@@ -10015,7 +10015,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   function listingErrorMessage(code){
     var messages = {
-      not_configured: '$P!GE0NS L!ST!NGS ARE N0T C0NF!GURED YET.',
+      not_configured: COLLECTION_META[state.collection].tokenLabel + ' L!ST!NGS ARE N0T C0NF!GURED YET.',
       xaman_not_configured: 'XAMAN S!GN!NG !S N0T C0NF!GURED YET.',
       not_owned: 'TH!S WALLET D0ES N0T 0WN TH!S P!GE0N.',
       not_transferable: 'TH!S P!GE0N !S N0T TRANSFERABLE.',
@@ -10036,7 +10036,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       listing_price_unavailable: 'PR!CE !S ST!LL SYNC!NG — TRY AGA!N !N A M0MENT.',
       already_processing: 'TH!S L!ST!NG !S ALREADY BE!NG PURCHASED BY S0MEONE ELSE R!GHT N0W.',
       cannot_accept_own_offer: 'Y0U CAN\\'T ACCEPT AN 0FFER FR0M Y0UR 0WN WALLET.',
-      unexpected_offer_currency: 'TH!S 0FFER !SN\\'T !N REAL $P!GE0NS — REFUS!NG T0 ACCEPT !T.',
+      unexpected_offer_currency: 'TH!S 0FFER !SN\\'T !N REAL ' + COLLECTION_META[state.collection].tokenLabel + ' — REFUS!NG T0 ACCEPT !T.',
       invalid_offer_amount: 'TH!S 0FFER AM0UNT !S!NVAL!D.',
       invalid_username: 'USERNAME MUST BE LETTERS, NUMBERS, UNDERSC0RES 0R EM0J!, UP T0 20 CHARACTERS.',
       pfp_unavailable: 'C0ULDN\\'T L0AD TH!S P!GE0N S !MAGE — TRY AGA!N.',
@@ -11020,7 +11020,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // doesn't require the offerer to hold anything until it's accepted —
     // this is purely a "don't let you promise more than you have" UI guard.
     if (trustlineBalanceNum !== null && Number(priceValue) > trustlineBalanceNum){
-      alert('Y0U D0N\\'T HAVE EN0UGH $P!GE0NS F0R TH!S 0FFER — BALANCE :: ' + trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS.');
+      alert('Y0U D0N\\'T HAVE EN0UGH ' + COLLECTION_META[state.collection].tokenLabel + ' F0R TH!S 0FFER — BALANCE :: ' + trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + COLLECTION_META[state.collection].tokenLabel + '.');
       return;
     }
     var sendBtn = stripEl.querySelector('.make-offer-send');
@@ -12167,6 +12167,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     el.pigeonsBalanceBuyBtn.textContent = 'BUY ' + meta.tokenLabel;
     el.salesCurrencyPigeonsBtn.textContent = meta.tokenLabel;
+    el.statScyllaListedLabel.textContent = meta.tokenLabel + ' FL00R';
     updateTrustlineThumb(collectionKey);
     // AMM-backed BUY-with-XRP + EXCHANGE CALCULAT0R only exist for
     // collections with real pool/DEX data (see COLLECTION_META's own
@@ -12195,11 +12196,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.dbSelectFlyout.querySelectorAll('.db-option[data-collection]').forEach(function(opt){
       opt.classList.toggle('db-option-active', opt.getAttribute('data-collection') === newCollection);
     });
-    // Theme colours (--pigeon-purple etc.) swap via this class — see the
-    // :root override block in the CSS. Cleared first so switching PHN!X
-    // -> TEDDY (or either -> P!GE0NS) never leaves the wrong one applied.
+    // Theme colours (--collection-accent, the trustline banner's own real
+    // per-collection colour) swap via this class — see the :root override
+    // block in the CSS. Cleared first so switching PHN!X -> TEDDY (or
+    // either -> P!GE0NS) never leaves the wrong one applied. Gated on
+    // !== 'pigeons' (P!GE0NS uses the plain :root purple, no class needed)
+    // — used to be gated on !meta.tradeable instead, which happened to be
+    // equivalent back when PHN!X was still browse-only, but silently broke
+    // once PHN!X flipped to tradeable: meta.tradeable became true, so this
+    // class never got added and the trustline banner stayed purple instead
+    // of PHN!X's own real orange/red (#ff5a1f) — confirmed live.
     document.body.classList.remove('collection-phnixs', 'collection-teddybg');
-    if (!meta.tradeable) document.body.classList.add('collection-' + newCollection);
+    if (newCollection !== 'pigeons') document.body.classList.add('collection-' + newCollection);
     document.body.classList.toggle('collection-browse-only', !meta.tradeable);
     // FL00R (real Scylla listings sorted by real price) only makes sense
     // as the DEFAULT landing view for P!GE0NS specifically — it has an
@@ -12215,6 +12223,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.sort = (meta.tradeable && newCollection === 'pigeons') ? 'SCYLLA_PRICE_ASC' : 'RARITY_ASC';
     state.scyllaListedOnly = meta.tradeable && newCollection === 'pigeons';
     el.statScyllaListedTile.classList.toggle('scylla-active', state.scyllaListedOnly);
+    updateSortLabelsForCollection();
     updateTrustlineBannerChrome(newCollection);
     if (MY_WALLET){
       // myOwnPigeonsCache is a single flat cache, not keyed by collection —
@@ -12499,8 +12508,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   function saleRowHtml(s){
     var thumb = s.image ? '<img src="' + escapeHtml(s.image) + '" alt="" loading="lazy">' : '';
     var num = s.number !== null ? '#' + greenNum(s.number) : '#????';
-    var price = s.currency === 'PIGEONS'
-      ? (s.pigeonsPrice !== null && s.pigeonsPrice !== undefined ? s.pigeonsPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' $P!GE0NS' : '?')
+    // s.currency is 'XRP' for a Deeptide-feed sale, or the active
+    // collection's real token currency (e.g. 'PHNIX') for one of Σκύλλα's
+    // own — never the literal string 'PIGEONS' any more now that the
+    // backend reports each collection's real currency (see pigeons.js's
+    // own tokenCurrency), so this checks !== 'XRP' rather than === a
+    // collection-specific value that would silently stop matching on
+    // anything but $PIGEONS.
+    var price = s.currency !== 'XRP'
+      ? (s.pigeonsPrice !== null && s.pigeonsPrice !== undefined ? s.pigeonsPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + COLLECTION_META[state.collection].tokenLabel : '?')
       : (s.priceXrp !== null ? s.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?');
     var via = s.via === 'scylla' ? 'Σ SWAP' : (s.via === 'xrpcafe' ? 'XRP.CAFE' : (s.via === 'deeptide' ? 'DEEPT!DE' : ''));
     var when = s.createdAt ? relativeTimeText(s.createdAt) : '';
@@ -12603,6 +12619,20 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'HIGHEST_SALE', label: 'H!GHEST REC0RDED SALES' }
     ]
   };
+  // The 3 PR!CE labels that name the token directly ("L0WEST $P!GE0NS"
+  // etc.) are mutated in place here rather than built as a function each
+  // render — sortLabelOf/renderSortFlyoutList both just read o.label
+  // straight off SORT_CATEGORIES already, so patching the 3 strings once
+  // per switchCollection is enough for both to pick up the right token
+  // with no other changes.
+  function updateSortLabelsForCollection(){
+    var tokenLabel = COLLECTION_META[state.collection].tokenLabel;
+    SORT_CATEGORIES['PR!CE'].forEach(function(o){
+      if (o.value === 'SCYLLA_PRICE_ASC') o.label = 'L0WEST ' + tokenLabel;
+      else if (o.value === 'SCYLLA_PRICE_DESC') o.label = 'H!GHEST ' + tokenLabel;
+      else if (o.value === 'AVG_SALE_PIGEONS_ASC') o.label = 'L0WEST AVG SALE PR!CE ' + tokenLabel;
+    });
+  }
   function sortCategoryOf(value){
     for (var cat in SORT_CATEGORIES){
       if (SORT_CATEGORIES[cat].some(function(o){ return o.value === value; })) return cat;
@@ -13743,7 +13773,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.statFloorXrpCafe.textContent = data.xrpCafeFloorXrp !== null && data.xrpCafeFloorXrp !== undefined ? fmtXrp(data.xrpCafeFloorXrp) + ' XRP' : '—';
       if (data.deeptideBuyUrl) el.statFloorDeeptideTile.href = data.deeptideBuyUrl;
       if (data.xrpCafeUrl) el.statFloorXrpCafeTile.href = data.xrpCafeUrl;
-      el.statScyllaListedCount.innerHTML = data.scyllaFloorPigeons !== null && data.scyllaFloorPigeons !== undefined ? greenNum(data.scyllaFloorPigeons.toLocaleString()) + ' $P!GE0NS' : 'N0T L!STED';
+      el.statScyllaListedCount.innerHTML = data.scyllaFloorPigeons !== null && data.scyllaFloorPigeons !== undefined ? greenNum(data.scyllaFloorPigeons.toLocaleString()) + ' ' + COLLECTION_META[state.collection].tokenLabel : 'N0T L!STED';
       el.statTraded24h.textContent = data.traded24hCount !== null && data.traded24hCount !== undefined ? data.traded24hCount.toLocaleString() : '—';
       el.statVolume24h.textContent = data.volume24hXrp !== null && data.volume24hXrp !== undefined ? fmtXrp(data.volume24hXrp) + ' XRP' : '—';
       el.statSales24h.textContent = data.sales24hCount !== null && data.sales24hCount !== undefined ? data.sales24hCount.toLocaleString() : '—';
