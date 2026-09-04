@@ -13206,7 +13206,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.profileUsernameSaveBtn.addEventListener('click', function(){
     var username = el.profileUsernameInput.value.trim();
-    var usernamePattern = /^[A-Za-z0-9_\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\u200D\uFE0F]+$/u;
+    var usernamePattern = /^[A-Za-z0-9_\\p{Extended_Pictographic}\\u{1F1E6}-\\u{1F1FF}\\u{1F3FB}-\\u{1F3FF}\\u200D\\uFE0F]+$/u;
     if (!usernamePattern.test(username) || [...username].length > 20){
       el.profileUsernameStatus.textContent = 'USERNAME MUST BE LETTERS, NUMBERS, UNDERSC0RES 0R EM0J!, UP T0 20 CHARACTERS.';
       return;
