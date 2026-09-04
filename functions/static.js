@@ -9688,7 +9688,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       cannot_offer_own_pigeon: 'Y0U CAN\\'T MAKE AN 0FFER 0N Y0UR 0WN P!GE0N.',
       offer_not_found: 'TH!S 0FFER N0 L0NGER EX!STS 0N-LEDGER.',
       listing_price_unavailable: 'PR!CE !S ST!LL SYNC!NG — TRY AGA!N !N A M0MENT.',
-      already_processing: 'TH!S L!ST!NG !S ALREADY BE!NG PURCHASED BY S0MEONE ELSE R!GHT N0W.'
+      already_processing: 'TH!S L!ST!NG !S ALREADY BE!NG PURCHASED BY S0MEONE ELSE R!GHT N0W.',
+      cannot_accept_own_offer: 'Y0U CAN\\'T ACCEPT AN 0FFER FR0M Y0UR 0WN WALLET.',
+      unexpected_offer_currency: 'TH!S 0FFER !SN\\'T !N REAL $P!GE0NS — REFUS!NG T0 ACCEPT !T.',
+      invalid_offer_amount: 'TH!S 0FFER AM0UNT !S!NVAL!D.'
     };
     return (code && messages[code]) || 'ERR://C0ULD N0T PREPARE THE TRANSACT!0N.';
   }
