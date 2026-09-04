@@ -1051,6 +1051,28 @@ const SWAP_HTML = `<!DOCTYPE html>
   .simple-picker-card-selected{ border-color:var(--green); box-shadow:0 0 0 1px var(--green); }
 
   /* ---- sales history ---- */
+  /* XRP / $P!GE0NS — each its own independent feed/pagination (see the
+     currency branches in pigeons.js), not a client-side filter over one
+     merged list. Big, obvious, only two choices — same "clean, glanceable"
+     treatment the rows themselves now get below. */
+  .sale-currency-toggle{ display:flex; gap:0.6rem; justify-content:center; margin:0.75rem 0 0.25rem; }
+  .sale-currency-btn{
+    flex:0 0 auto;
+    min-width:140px;
+    background:transparent;
+    border:1px solid var(--border-mid);
+    color:var(--grey);
+    font-family:var(--font-mono);
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:0.05em;
+    padding:0.7em 1.4em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .sale-currency-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
+  .sale-currency-btn-active{ border-color:var(--green); color:var(--green); background:rgba(0,255,140,0.08); }
   .sales-scrollbox{
     margin-top:1rem;
     border-top:1px dashed var(--border-dim);
@@ -1058,37 +1080,41 @@ const SWAP_HTML = `<!DOCTYPE html>
     max-height:820px;
     overflow-y:auto;
   }
+  /* Reported live as wanting sales history "bigger, with bigger writing
+     ... clean and clear ... see the information quickly" — every piece
+     scaled up from the original compact row (same reasoning already
+     applied to 0FFERS RECE!VED's own .my-offer-row). */
   .sale-row{
     display:flex;
     align-items:center;
-    gap:1rem;
-    padding:0.9rem 0.4rem;
+    gap:1.25rem;
+    padding:1.3rem 0.6rem;
     border-bottom:1px solid var(--border-dim);
-    font-size:12px;
+    font-size:15px;
     letter-spacing:0.03em;
     flex-wrap:wrap;
   }
   .sale-row:last-child{ border-bottom:none; }
-  .sale-thumb-wrap{ display:flex; flex-direction:column; align-items:center; gap:0.4rem; flex:0 0 auto; }
+  .sale-thumb-wrap{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; flex:0 0 auto; }
   .sale-num-box{
-    font-size:11px;
+    font-size:14px;
     letter-spacing:0.05em;
     color:var(--white);
     border:1px solid var(--border-mid);
-    padding:0.3em 0.6em;
+    padding:0.35em 0.7em;
     cursor:pointer;
     white-space:nowrap;
     border-radius:var(--radius);
   }
-  .sale-thumb{ flex:0 0 auto; width:96px; height:96px; cursor:pointer; border:1px solid var(--border-dim); }
+  .sale-thumb{ flex:0 0 auto; width:132px; height:132px; cursor:pointer; border:1px solid var(--border-dim); }
   .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .sale-info{ flex:1 1 200px; display:flex; flex-direction:column; gap:0.35rem; }
-  .sale-price{ font-family:var(--font-mono); font-size:14px; color:var(--white); }
-  .sale-via{ font-family:var(--font-body); font-size:10px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; }
-  .sale-parties{ font-family:var(--font-body); color:var(--grey); text-transform:none; }
+  .sale-info{ flex:1 1 220px; display:flex; flex-direction:column; gap:0.5rem; }
+  .sale-price{ font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--green); }
+  .sale-via{ font-family:var(--font-body); font-size:12px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; }
+  .sale-parties{ font-family:var(--font-body); font-size:16px; color:var(--grey); text-transform:none; }
   .sale-parties a{ color:var(--white); text-decoration:underline; cursor:pointer; }
   .sale-parties a:hover{ color:var(--cyan); }
-  .sale-time{ font-family:var(--font-body); color:var(--grey-dim); text-transform:uppercase; font-size:10px; }
+  .sale-time{ font-family:var(--font-body); color:var(--grey-dim); text-transform:uppercase; font-size:12px; }
 
   /* ---- target node header (owner-scope) — SCYLLA / MAGENTA system ---- */
   .node-eyebrow{
@@ -5118,6 +5144,10 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <div class="sw-panel" id="salesPanelWrap" style="display:none;">
       <div class="panel-title">SALES H!ST0RY</div>
+      <div class="sale-currency-toggle" id="salesCurrencyToggle">
+        <button class="sale-currency-btn sale-currency-btn-active" data-currency="XRP">XRP</button>
+        <button class="sale-currency-btn" data-currency="PIGEONS">$P!GE0NS</button>
+      </div>
       <div class="sales-scrollbox" id="salesScrollBox">
         <div id="salesArea"></div>
         <div class="scroll-sentinel" id="salesScrollSentinel"></div>
@@ -6211,7 +6241,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     collectionSizeApprox: 3015,
     currentDetail: null,
     targetAssets: {},         // nftId -> { nftId, number, image } — only while scope is a wallet
-    sales: { skip: 0, hasMore: true, loading: false, opened: false },
+    sales: { skip: 0, hasMore: true, loading: false, opened: false, currency: 'XRP' },
     scyllaListedOnly: true,   // whole-collection LISTED filter — Pigeons listed through Scylla itself; starts true to match the default FL00R $P!GE0NS landing sort above
     offerAssets: {},          // nftId -> { nftId, number, image } — up to 4, YOUR pigeons in the persistent trade builder
     dbView: 'thumbnails',     // 'boxed' (full detail row) | 'thumbnails' (5-across, # + rarity only, default) — DATABASE grid only
@@ -6240,7 +6270,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals','traitsFlyoutBack','traitsCatsScrollPrevBtn','traitsCatsScrollNextBtn',
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
-   'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote',
+   'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote','salesCurrencyToggle',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
    'flockWalletBox','flockWalletAddr','flockWalletCopyHint',
    'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockBuyPigeonsBox','flockChangeCollectionBox','flockGridPanel','flockOffersBox','flockOffersCount','flockProfileBox',
@@ -12168,7 +12198,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (state.sales.loading || !state.sales.hasMore) return;
     state.sales.loading = true;
     el.salesLoadMoreNote.style.display = '';
-    api({ sales: 1, skip: state.sales.skip, limit: 10 }).then(function(data){
+    api({ sales: 1, skip: state.sales.skip, limit: 10, currency: state.sales.currency }).then(function(data){
       state.sales.loading = false;
       el.salesLoadMoreNote.style.display = 'none';
       var items = data.items || [];
@@ -12182,6 +12212,24 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.salesLoadMoreNote.style.display = 'none';
     });
   }
+  // XRP/$P!GE0NS toggle — each side is its own independent paginated feed
+  // (see the currency param branches in pigeons.js), so switching resets
+  // the scroll state from scratch rather than trying to filter whatever
+  // rows happen to already be loaded.
+  el.salesCurrencyToggle.addEventListener('click', function(e){
+    var btn = e.target.closest('.sale-currency-btn');
+    if (!btn) return;
+    var currency = btn.getAttribute('data-currency');
+    if (currency === state.sales.currency) return;
+    var buttons = el.salesCurrencyToggle.querySelectorAll('.sale-currency-btn');
+    for (var i = 0; i < buttons.length; i++){
+      buttons[i].classList.toggle('sale-currency-btn-active', buttons[i] === btn);
+    }
+    state.sales = { skip: 0, hasMore: true, loading: false, opened: false, currency: currency };
+    el.salesArea.innerHTML = '';
+    el.salesEndNote.style.display = 'none';
+    loadMoreSales();
+  });
   el.salesArea.addEventListener('click', function(e){
     var walletLink = e.target.closest('.sale-parties a');
     if (walletLink){ browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short')); return; }

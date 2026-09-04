@@ -352,7 +352,13 @@ export async function onRequestGet(context) {
     const salesSkip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
     const salesLimit = Math.min(50, Math.max(1, parseInt(params.get('limit') || '20', 10) || 20));
     const salesWallet = params.get('wallet') || undefined;
-
+    // XRP/$PIGEONS tabs (see SALES H!ST0RY's own currency toggle) — each
+    // currency only ever comes from exactly one of the two sources below
+    // (Σκύλλα's own log is 100% $PIGEONS trades, Deeptide's feed is 100%
+    // XRP), so a single-currency request can paginate straight against
+    // just that one source instead of the two-source interleave the
+    // unfiltered branch further down still needs.
+    const salesCurrency = params.get('currency');
     // This feed is a collection-wide sales index Deeptide happens to
     // operate, not proof a trade was actually brokered through Deeptide's
     // own marketplace UI - confirmed live, most of what it returns turns
@@ -374,6 +380,33 @@ export async function onRequestGet(context) {
       createdAt: it.createdAt,
       via: it.txHash ? await identifySaleVenue(env.coin, it.txHash).catch(() => null) : null
     });
+    if (salesCurrency === 'PIGEONS') {
+      let ownSales = env.coin ? await getSwapSalesLog(env.coin) : [];
+      if (salesWallet) ownSales = ownSales.filter(s => s.buyer === salesWallet || s.seller === salesWallet);
+      const slice = ownSales.slice(salesSkip, salesSkip + salesLimit);
+      const details = await Promise.all(slice.map(s => fetchDeeptideNftDetail(s.nftId).catch(() => null)));
+      const items = slice.map((s, i) => ({
+        txHash: s.txHash,
+        nftId: s.nftId,
+        number: details[i] ? details[i].number : null,
+        image: details[i] ? displayImage(details[i].image) : null,
+        priceXrp: null,
+        pigeonsPrice: typeof s.priceValue === 'string' ? Number(s.priceValue) : s.priceValue,
+        currency: 'PIGEONS',
+        buyer: s.buyer,
+        buyerShort: shortenAddr(s.buyer),
+        seller: s.seller,
+        sellerShort: shortenAddr(s.seller),
+        createdAt: s.createdAt,
+        via: 'scylla'
+      }));
+      return json({ items, total: ownSales.length, hasMore: (salesSkip + items.length) < ownSales.length, skip: salesSkip, limit: salesLimit });
+    }
+    if (salesCurrency === 'XRP') {
+      const page = await fetchDeeptideSalesHistory({ skip: salesSkip, limit: salesLimit, sort: 'date-desc', wallet: salesWallet });
+      const items = await Promise.all(page.items.map(mapDeeptideItem));
+      return json({ items, total: page.total, hasMore: page.hasMore, skip: salesSkip, limit: salesLimit });
+    }
 
     let ownSales = env.coin ? await getSwapSalesLog(env.coin) : [];
     if (salesWallet) {
