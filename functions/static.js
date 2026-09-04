@@ -5203,17 +5203,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:fixed;
     inset:0;
     z-index:2000;
-    /* transparent, not var(--bg) — a same-COLOUR opaque background still
-       fully PAINTS OVER #staticBg (the site's own animated noise/scanline
-       canvas, a fixed z-index:0 child of body) the same as any other solid
-       fill would; matching the colour alone doesn't let anything show
-       through, confirmed live as still fully flat with no texture despite
-       the color match. Genuine transparency here lets body's own --bg
-       background AND the canvas sitting on top of it (mix-blend-mode:
-       screen against that same colour is what makes the noise read as a
-       texture rather than washing it out) both composite through, same as
-       every other screen on the site. */
-    background:transparent;
+    /* Opaque (var(--bg)), same as #screenDetail's own identical situation
+       (see its own comment) — plain transparent here doesn't reveal just
+       #staticBg, it reveals the ENTIRE real page sitting behind this
+       screen (the DATABASE view, trustline banner, tabs — all of it, just
+       display:none's own children stay hidden, the page itself doesn't),
+       confirmed live as a ghosted double-exposure of both screens at
+       once. Opaque instead, with its own local TV-static canvas
+       (#mainframeStaticBg, .local-static-bg) + scanline layer
+       (::after below) — an exact copy of the page's own recipe, not a
+       window into it, same reasoning #screenDetail/#detailLightbox
+       already settled on. */
+    background:var(--bg);
     overflow:hidden;
     height:100vh;
     height:100dvh;
@@ -5224,18 +5225,38 @@ const SWAP_HTML = `<!DOCTYPE html>
      .pigeons-bar-thumb's own accent gradient, just huge and centred
      instead of boxed, so the very first screen anyone lands on reads as
      alive rather than a flat black page with three boxes on it. Pure
-     decoration: fixed behind the grid, never intercepts clicks. */
+     decoration: fixed behind the grid, never intercepts clicks. Negative
+     z-index — paints above the opaque background + local static canvas
+     (both z-index:-1 too) but still behind the screen's real content. */
   #screenMainframe::before{
     content:'';
     position:fixed;
     inset:0;
-    z-index:0;
+    z-index:-1;
     pointer-events:none;
     background:
       radial-gradient(ellipse 900px 500px at 20% -10%, rgba(136,72,248,0.16), transparent 60%),
       radial-gradient(ellipse 900px 500px at 85% 10%, rgba(52,255,133,0.10), transparent 60%);
   }
-  #screenMainframe > *{ position:relative; z-index:1; }
+  /* CRT scanline layer — exact copy of body::before's own recipe, see
+     #screenDetail::before for the same pattern already established. */
+  #screenMainframe::after{
+    content:'';
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.018) 0px,
+      rgba(255,255,255,0.018) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode:overlay;
+  }
+  #screenMainframe > .local-static-bg{ z-index:-1; }
+  #screenMainframe > *:not(.local-static-bg){ position:relative; z-index:1; }
   /* Header shrinks to its own content — flex:0 0 auto keeps it from
      eating into the carousel's space, and its own H1 is capped much
      smaller than the persistent page's (up to 104px there) specifically
@@ -5442,6 +5463,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        BUY N0W/0FFER/trustline available once there, same as clicking it from
        the DATABASE dropdown already does today. -->
   <div id="screenMainframe">
+    <canvas class="local-static-bg" id="mainframeStaticBg"></canvas>
     <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub">STAT!C :: MA!NFRAME</span></h1>
     <div class="mainframe-subtitle">SELECT A C0LLECT!0N</div>
     <div class="mainframe-carousel-wrap">
@@ -14707,6 +14729,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   startStaticCanvas(document.getElementById('lightboxStaticBg'), function(){
     return document.getElementById('detailLightbox').style.display !== 'none';
+  });
+  startStaticCanvas(document.getElementById('mainframeStaticBg'), function(){
+    return document.getElementById('screenMainframe').style.display !== 'none';
   });
 
 })();
