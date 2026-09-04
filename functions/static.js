@@ -5328,11 +5328,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub">STAT!C :: MA!NFRAME</span></h1>
     <div class="mainframe-subtitle">SELECT A C0LLECT!0N</div>
     <div class="mainframe-grid" id="mainframeGrid">
-      <!-- Each card's own real artwork lives at /assets/mainframe/<name>.png
+      <!-- Each card's own real artwork lives at /assets/mainframe/<name>.jpeg
            (mainframe-card-art's background-image below) — a plain coloured
            tile in that same accent until the file's actually there, never a
            blank/broken-image box (see .mainframe-card-art's own CSS). -->
-      <button class="mainframe-card" data-collection="pigeons" style="--card-accent:136,72,248; --card-art:url('/assets/mainframe/pigeons.png');">
+      <button class="mainframe-card" data-collection="pigeons" style="--card-accent:136,72,248; --card-art:url('/assets/mainframe/pigeons.jpeg');">
         <div class="mainframe-card-art"></div>
         <div class="mainframe-card-body">
           <div class="mainframe-card-label">P!GE0NS</div>
@@ -5344,28 +5344,28 @@ const SWAP_HTML = `<!DOCTYPE html>
            clickable (no data-collection — mainframeGrid's own click
            handler below only matches [data-collection]) while Pigeons
            gets hardened into the real template first. -->
-      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.png');">
+      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg');">
         <div class="mainframe-card-art"></div>
         <div class="mainframe-card-body">
           <div class="mainframe-card-label">PHN!X</div>
           <div class="mainframe-card-tag">C0M!NG S00N</div>
         </div>
       </button>
-      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:47,158,68; --card-art:url('/assets/mainframe/teddy.png');">
+      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:47,158,68; --card-art:url('/assets/mainframe/teddy.jpeg');">
         <div class="mainframe-card-art"></div>
         <div class="mainframe-card-body">
           <div class="mainframe-card-label">TEDDY</div>
           <div class="mainframe-card-tag">C0M!NG S00N</div>
         </div>
       </button>
-      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:61,178,243; --card-art:url('/assets/mainframe/seal.png');">
+      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:61,178,243; --card-art:url('/assets/mainframe/seal.jpeg');">
         <div class="mainframe-card-art"></div>
         <div class="mainframe-card-body">
           <div class="mainframe-card-label">SEAL</div>
           <div class="mainframe-card-tag">C0M!NG S00N</div>
         </div>
       </button>
-      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:255,51,204; --card-art:url('/assets/mainframe/fuzzy.png');">
+      <button class="mainframe-card mainframe-card-soon" disabled style="--card-accent:255,51,204; --card-art:url('/assets/mainframe/fuzzy.jpeg');">
         <div class="mainframe-card-art"></div>
         <div class="mainframe-card-body">
           <div class="mainframe-card-label">FUZZY</div>
