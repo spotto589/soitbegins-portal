@@ -5352,47 +5352,36 @@ const SWAP_HTML = `<!DOCTYPE html>
     width:64px; height:2px; background:linear-gradient(90deg, transparent, var(--cyan), transparent);
     box-shadow:0 0 8px var(--cyan-glow);
   }
-  /* ---- Carousel — exactly 3 cards visible at a time (reported live),
-     the rest reachable by dragging, a trackpad/touch swipe, or the
-     PREV/NEXT arrows either side. flex:1 1 auto + min-height:0 is what
-     actually lets this fill "whatever's left" of the screen's own height
-     instead of pushing it taller than the viewport (min-height:0 is the
-     same flex-child shrink gotcha this file already documents elsewhere —
-     a flex item defaults to min-height:auto, which refuses to shrink
-     below its content's natural size no matter what flex:1 says). ---- */
+  /* ---- All 6 cards fit on one screen at once now (no carousel/arrows
+     for now — see mainframeArrowPrev/Next's display:none below) — a real
+     3-column x 2-row grid instead of a horizontally-scrolling row, so
+     every card is visible without scrolling or clicking through. flex:1 1
+     auto + min-height:0 is what actually lets this fill "whatever's left"
+     of the screen's own height instead of pushing it taller than the
+     viewport (min-height:0 is the same flex-child shrink gotcha this file
+     already documents elsewhere — a flex item defaults to min-height:auto,
+     which refuses to shrink below its content's natural size no matter
+     what flex:1 says). ---- */
   .mainframe-carousel-wrap{
     position:relative;
     flex:1 1 auto;
     min-height:0;
     display:flex;
-    align-items:center;
+    align-items:stretch;
   }
   .mainframe-grid{
-    display:flex;
-    gap:1.5rem;
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    grid-template-rows:repeat(2, 1fr);
+    gap:1.25rem;
     width:100%;
     height:100%;
-    overflow-x:auto;
-    scroll-snap-type:x mandatory;
-    scroll-behavior:smooth;
-    padding:0 2.5rem;
-    cursor:grab;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
+    padding:0 1rem;
   }
-  .mainframe-grid::-webkit-scrollbar{ display:none; }
-  .mainframe-grid.dragging{ cursor:grabbing; scroll-snap-type:none; scroll-behavior:auto; }
-  /* Exactly 3 per screen: each card is a third of the row minus its share
-     of the 2 gaps between them. Below ~760px this drops toward 1-per-
-     screen instead (see the media query further down) — 3 real, legible
-     cards on a phone-width screen was never going to fit no matter how
-     this is built. */
   .mainframe-card{
-    flex:0 0 calc((100% - 3rem) / 3);
-    scroll-snap-align:start;
     min-width:0;
+    min-height:0;
     height:100%;
-    max-height:420px;
     display:flex;
     flex-direction:column;
     background:var(--panel-bg-solid);
@@ -5405,7 +5394,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
   @media (max-width:760px){
-    .mainframe-card{ flex-basis:82%; }
+    /* 2 columns x 3 rows on narrow screens — 3 columns of real cards
+       never fit legibly at phone width, and this still shows all 6 with
+       no scrolling/arrows needed, same as desktop. */
+    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.75rem; padding:0 0.5rem; }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
@@ -5431,17 +5423,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex:1 1 auto;
     min-height:0;
     background-size:cover;
-    background-position:center;
+    /* Cards are much shorter now (3x2 grid, not a full-height carousel
+       card) — plain center crops most character art around the torso/
+       logo text instead of the face, so default to the top of the image
+       (where each collection's mascot head sits) unless a collection
+       needs its own tuned offset, same as $P!GE0NS' own override below. */
+    background-position:center top;
     background-color:rgba(var(--card-accent, 61,243,236), 0.14);
     background-image:linear-gradient(180deg, rgba(var(--card-accent, 61,243,236),0.08) 0%, rgba(6,6,7,0.92) 100%), var(--card-art, none);
     border-bottom:1px solid rgba(var(--card-accent, 61,243,236), 0.35);
     transition:transform 0.4s ease;
   }
   .mainframe-card:hover .mainframe-card-art{ transform:scale(1.05); }
-  /* $P!GE0NS' own art crops too high at plain center — shifted down so
-     less of the top (empty purple background above the character) shows
-     and more of the actual pigeon does. */
-  .mainframe-card[data-collection="pigeons"] .mainframe-card-art{ background-position:center 25%; }
+  /* $P!GE0NS' own art still crops best a little below the very top (avoids
+     the empty purple background above the character's head). */
+  .mainframe-card[data-collection="pigeons"] .mainframe-card-art{ background-position:center 15%; }
   .mainframe-card-body{ flex:0 0 auto; padding:1.25rem 1.5rem 1.5rem; }
   .mainframe-card-label{ font-family:var(--font-display); font-size:clamp(26px, 2.8vw, 36px); font-weight:700; color:#fff; letter-spacing:0.02em; }
   /* Real, live numbers (items/holders/floor — see loadMainframeStats),
@@ -5498,12 +5494,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-soon:hover{ border-color:var(--border-mid); transform:none; box-shadow:none; }
   .mainframe-card-soon:hover .mainframe-card-art{ transform:none; }
   .mainframe-card-soon .mainframe-card-tag{ color:var(--grey-dim); border-color:var(--border-mid); background:transparent; }
-  /* PREV/NEXT — floating circular buttons over the carousel's own edges
-     (not pushed out to the sides of the screen), same treatment
-     .hscroll-arrow already uses for SORT BY's category strip elsewhere,
-     just bigger since these are the primary way through 5 cards, not a
-     minor scroll nicety. */
+  /* PREV/NEXT — not needed for now (all 6 cards fit on one screen at
+     once, see .mainframe-grid's own comment), hidden rather than removed
+     so they're a one-line revert if the grid ever goes back to a
+     horizontally-scrolling carousel. */
   .mainframe-arrow{
+    display:none;
     position:absolute;
     top:50%;
     transform:translateY(-50%);
@@ -5516,7 +5512,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#fff;
     font-size:18px;
     cursor:pointer;
-    display:flex;
     align-items:center;
     justify-content:center;
     transition:border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
