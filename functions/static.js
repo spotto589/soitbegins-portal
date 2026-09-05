@@ -107,13 +107,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     --pigeon-purple-faint:var(--cyan-faint);
     --pigeon-purple-glow:var(--cyan-glow);
 
-    /* The ONE deliberate exception to the four-colour rule above: the
-       trustline banner at the very top of the page is explicitly meant to
-       carry the CURRENT collection's own real colour (sampled from its
-       coin/mint artwork), same as it always did, not the site's universal
-       accent — see body.collection-phnixs/-teddybg below, which only
-       ever redefine this one variable and nothing else. Real purple for
-       $PIGEONS (its actual coin colour), not an alias. */
+    /* Started as the ONE deliberate exception to the four-colour rule
+       above (just the trustline banner's own background) — now also
+       what every real Σκύλλα BUY button site-wide (thumb-buy-btn,
+       offer-open-modal-btn, mainframe-card-buy's own --card-accent
+       twin, scylla-buy-btn, pigeons-bar-balance-buy, profile-coin-action)
+       is coloured from, so BUY reads as "this collection's own real
+       coin" everywhere it appears, not one flat green regardless of
+       collection. Sampled from each collection's coin/mint artwork —
+       see body.collection-phnixs/-teddybg below, which only ever
+       redefine this one variable (plus its rgb/dim/glow siblings) and
+       nothing else. Real purple for $PIGEONS (its actual coin colour),
+       not an alias. */
     --collection-accent:#8848f8;
     --collection-accent-rgb:136,72,248;
     --collection-accent-dim:rgba(136,72,248,0.4);
@@ -1106,11 +1111,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-coin-balance{ font-family:var(--font-mono); font-size:12px; letter-spacing:0.03em; color:var(--grey); margin-top:0.15rem; }
   .profile-coin-balance .hi{ color:var(--green); font-weight:600; }
   .profile-coin-balance.profile-coin-warn{ color:var(--red); }
+  /* Σκύλλα BUY button — ghost at rest (ties this button to whichever
+     collection's own real coin it's for, --card-accent, same as the
+     thumb right next to it), fills solid on hover. Same recipe as every
+     other real BUY control site-wide now (mainframe-card-buy,
+     thumb-buy-btn, offer-open-modal-btn, scylla-buy-btn,
+     pigeons-bar-balance-buy) — one consistent "this is a BUY button"
+     shape, not a per-screen reinvention, no longer a flat --green
+     regardless of which token it's actually for. */
   .profile-coin-action{
     flex:0 0 auto;
-    background:var(--green);
-    border:1px solid var(--green);
-    color:#000;
+    background:rgba(var(--card-accent, 61,243,236), 0.1);
+    border:1px solid rgb(var(--card-accent, 61,243,236));
+    color:rgb(var(--card-accent, 61,243,236));
+    text-shadow:0 0 6px rgba(var(--card-accent, 61,243,236), 0.5);
     font-family:var(--font-mono);
     font-weight:700;
     font-size:12px;
@@ -1120,8 +1134,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     cursor:pointer;
     white-space:nowrap;
+    transition:background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   }
-  .profile-coin-action:hover{ background:#000; color:var(--green); }
+  .profile-coin-action:hover{
+    background:rgb(var(--card-accent, 61,243,236));
+    color:#000;
+    text-shadow:none;
+    box-shadow:0 0 16px rgba(var(--card-accent, 61,243,236), 0.5);
+  }
   .profile-coin-action.profile-coin-action-soon{
     background:transparent; color:var(--grey-dim); border-color:var(--border-mid); cursor:default;
   }
@@ -2962,17 +2982,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     justify-content:center;
   }
-  /* BUY N0W — solid filled green, not just an outline: this is the one
-     truly one-click "spend real money right now" action on the card, so
-     it should read as the obvious thing to press, not blend in at the
+  /* BUY N0W — the Σκύλλα button: ghost at rest (faint accent fill,
+     accent border/text/glow), fills solid accent with black text on
+     hover — same recipe as every other real BUY control site-wide now
+     (mainframe-card-buy, offer-open-modal-btn, scylla-buy-btn,
+     pigeons-bar-balance-buy, profile-coin-action), in the CURRENT
+     collection's own real colour (--collection-accent-rgb, the same
+     variable the trustline banner's background already swaps per
+     collection) rather than one flat --green regardless of which
+     collection's Pigeon/PHN!X/etc. this actually is. Still the one
+     truly one-click "spend real money right now" action on the card,
+     so it stays the boldest thing in the box — not blending in at the
      same visual weight as 0FFER (a slower, non-committal path). Full
      width, sitting above the offer row within the same box. Only
-     rendered when the Pigeon actually carries a real Σκύλλα listing. */
+     rendered when the item actually carries a real Σκύλλα listing. */
   .thumb-buy-btn{
     width:100%;
-    background:var(--green);
-    border:1px solid var(--green);
-    color:#000;
+    background:rgba(var(--collection-accent-rgb), 0.12);
+    border:1px solid var(--collection-accent);
+    color:var(--collection-accent);
+    text-shadow:0 0 8px var(--collection-accent-glow);
     font-family:var(--font-mono);
     font-weight:700;
     letter-spacing:0.03em;
@@ -2981,15 +3010,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
     border-radius:var(--radius);
     margin-bottom:0.5rem;
-    box-shadow:0 0 14px var(--green-glow);
-    transition:background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+    box-shadow:0 0 14px var(--collection-accent-glow);
+    transition:background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
     display:flex;
     flex-direction:column;
     align-items:center;
     gap:0.1rem;
     line-height:1.15;
   }
-  .thumb-buy-btn:hover{ background:#000; color:var(--green); box-shadow:0 0 20px var(--green-glow); transform:translateY(-1px); }
+  .thumb-buy-btn:hover{
+    background:var(--collection-accent);
+    color:#000;
+    text-shadow:none;
+    box-shadow:0 0 20px var(--collection-accent-glow);
+    transform:translateY(-1px);
+  }
   /* The real price, right on the button — reported live as BUY N0W not
      feeling "enticing" with the price only ever a small corner badge on
      the picture, easy to miss entirely at the actual moment of deciding
@@ -2997,17 +3032,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      "the number is the point" treatment SALES H!ST0RY's own price gets. */
   .thumb-buy-label{ font-size:13px; letter-spacing:0.08em; opacity:0.85; }
   .thumb-buy-price{ font-family:var(--font-display); font-size:19px; font-weight:800; letter-spacing:0.01em; }
-  /* 0FFER — solid green now (reported live as wanting it "fully green"),
-     same fill BUY N0W already uses, just without that button's own
+  /* 0FFER — same Σκύλλα-button recipe as BUY N0W (see its own comment
+     above), same per-collection accent, just without BUY N0W's own
      glow/pulse: BUY N0W is the real, immediate action here (a live
      listing, one click to buy); 0FFER is a slower secondary path (submit
-     a price, wait for the owner), so it stays a plain flat fill rather
+     a price, wait for the owner), so it stays a plain ghost fill rather
      than competing for the same urgent attention. */
   .offer-open-modal-btn{
     width:100%;
-    background:var(--green);
-    border:1px solid var(--green);
-    color:#000;
+    background:rgba(var(--collection-accent-rgb), 0.12);
+    border:1px solid var(--collection-accent);
+    color:var(--collection-accent);
+    text-shadow:0 0 6px var(--collection-accent-glow);
     font-family:var(--font-mono);
     font-weight:700;
     font-size:17px;
@@ -3018,7 +3054,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     transition:background 0.15s ease, color 0.15s ease;
   }
-  .offer-open-modal-btn:hover{ background:#000; color:var(--green); }
+  .offer-open-modal-btn:hover{ background:var(--collection-accent); color:#000; text-shadow:none; }
   /* L!ST — same box size as a lone 0FFER button (17px, full width),
      not the smaller shared .list-open-modal-btn default (15px, used
      when it's paired with TRANSFER in the scoped MY PIGEONS view) —
@@ -3771,14 +3807,20 @@ const SWAP_HTML = `<!DOCTYPE html>
      touched (see the identity pitch's own "no ambient loop" note), so
      this button now sits flat until hovered instead of glowing at you
      the whole time you're on the page. */
+  /* THE Σκύλλα button — the original of the recipe every other real BUY
+     control site-wide now shares (thumb-buy-btn/offer-open-modal-btn/
+     mainframe-card-buy/scylla-buy-btn/profile-coin-action all match this
+     one). Already lived in the trustline banner's own --collection-accent
+     (this box's one deliberate per-collection exception, see that
+     variable's own comment) — just generalized outward, not reinvented. */
   .pigeons-bar-balance-buy{
     display:inline-block;
     margin-top:0.4rem;
     padding:0.85em 1.8em;
-    border:1px solid var(--green);
+    border:1px solid var(--collection-accent);
     border-radius:var(--radius);
-    background:var(--green-faint, rgba(52,255,133,0.12));
-    color:var(--green);
+    background:rgba(var(--collection-accent-rgb), 0.12);
+    color:var(--collection-accent);
     text-shadow:none;
     font-family:var(--font-mono);
     font-size:17px;
@@ -3796,7 +3838,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      brutalist hover (translate + hard drop shadow) read as messy on a
      small button rather than deliberate, so this stays plain: same
      recipe as .thumb-buy-btn's own hover. */
-  .pigeons-bar-balance-buy:hover{ background:var(--green); color:#000; text-shadow:none; }
+  .pigeons-bar-balance-buy:hover{ background:var(--collection-accent); color:#000; text-shadow:none; }
   /* XRP <-> $PIGEONS calculator — title, DEXSCREENER link, and the live
      price all sit on one line above the calculator itself; the calculator
      row underneath is deliberately bare — two type-in boxes and a swap
@@ -5076,12 +5118,16 @@ const SWAP_HTML = `<!DOCTYPE html>
      DATABASE grid's own .thumb-buy-btn — this is the real $PIGEONS
      purchase, it should read like the most important thing in the box,
      not a small outline pill next to the price. */
+  /* Same Σκύλλα-button recipe as every other real BUY control (see
+     thumb-buy-btn's own comment) — this collection's own accent, not a
+     flat --green regardless of which collection's item this INSPECT
+     screen is showing. */
   .scylla-buy-btn{
     width:100%;
-    background:rgba(0,0,0,0.25);
-    border:1px solid var(--green);
-    color:var(--green);
-    text-shadow:0 0 5px var(--green-glow);
+    background:rgba(var(--collection-accent-rgb), 0.1);
+    border:1px solid var(--collection-accent);
+    color:var(--collection-accent);
+    text-shadow:0 0 5px var(--collection-accent-glow);
     font-family:var(--font-mono);
     font-weight:700;
     font-size:16px;
@@ -5092,7 +5138,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     transition:background 0.15s ease, color 0.15s ease;
   }
-  .scylla-buy-btn:hover{ background:var(--green); color:#000; text-shadow:none; }
+  .scylla-buy-btn:hover{ background:var(--collection-accent); color:#000; text-shadow:none; }
   /* Same box, YOUR OWN listing — CANCEL takes over BUY N0W's slot, so it
      should fill the row the same way instead of shrink-wrapping to a
      small centred pill. */
@@ -5862,13 +5908,19 @@ const SWAP_HTML = `<!DOCTYPE html>
      in the real DATABASE, so "buy the token" reads as the same kind of
      action there and here. display:block/width:100% — its own full-width
      row underneath the TRAD!NG L!VE tag, not squeezed inline beside it. */
+  /* Σκύλλα BUY button — same ghost-at-rest/solid-on-hover recipe as
+     every other real BUY control site-wide (DATABASE's own thumb-buy-btn/
+     offer-open-modal-btn, scylla-buy-btn, pigeons-bar-balance-buy,
+     profile-coin-action), in THIS card's own --card-accent rather than
+     one flat --green regardless of which of the six collections it is. */
   .mainframe-card-buy{
     display:block;
     width:100%;
     margin-top:0.5rem;
-    background:var(--green);
-    border:1px solid var(--green);
-    color:#000;
+    background:rgba(var(--card-accent, 61,243,236), 0.12);
+    border:1px solid rgb(var(--card-accent, 61,243,236));
+    color:rgb(var(--card-accent, 61,243,236));
+    text-shadow:0 0 6px rgba(var(--card-accent, 61,243,236), 0.5);
     font-family:var(--font-mono);
     font-weight:700;
     font-size:14px;
@@ -5877,10 +5929,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.55em 0.6em;
     border-radius:var(--radius);
     cursor:pointer;
-    box-shadow:0 0 12px var(--green-glow);
-    transition:background 0.15s ease, color 0.15s ease;
+    box-shadow:0 0 12px rgba(var(--card-accent, 61,243,236), 0.4);
+    transition:background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   }
-  .mainframe-card-buy:hover{ background:#000; color:var(--green); }
+  .mainframe-card-buy:hover{
+    background:rgb(var(--card-accent, 61,243,236));
+    color:#000;
+    text-shadow:none;
+    box-shadow:0 0 18px rgba(var(--card-accent, 61,243,236), 0.55);
+  }
   /* Card body text (label/stats line/BUY) read small on an actual desktop
      monitor, where there's plenty of room per card — bumped here, AFTER
      the three base rules above (same specificity, later in source order
