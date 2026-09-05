@@ -331,7 +331,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        "Σκύλλα://S!GNAL" at a fixed 40px ran edge-to-edge with no
        breathing room, reported live as not fitting properly. 28px lets
        it actually keep shrinking with the viewport below that point. */
-    font-size:clamp(28px,9vw,104px);
+    font-size:clamp(24px,7vw,76px);
     line-height:0.94;
     letter-spacing:0.01em;
     color:var(--white);
@@ -5430,7 +5430,21 @@ const SWAP_HTML = `<!DOCTYPE html>
      smaller than the persistent page's (up to 104px there) specifically
      here, so the whole screen reliably fits with zero scroll on a short
      window too, not just a tall one. */
-  #screenMainframe > h1{ flex:0 0 auto; font-size:clamp(30px, 6.5vw, 78px); margin-bottom:0.2rem; }
+  #screenMainframe > h1{ flex:0 0 auto; font-size:clamp(26px, 5.5vw, 58px); margin-bottom:0.2rem; }
+  /* STAT!C :: MA!NFRAME — pulled OUT of the h1 (was .h1-sub, a tiny
+     caption glued underneath the giant "Σκύλλα://S!GNAL :: 0NL!NE" title)
+     and given its own line directly above SELECT A C0LLECT!0N instead —
+     reported live as wanting it read as a header for the picker below,
+     not an afterthought under the hero. */
+  .mainframe-static-label{
+    flex:0 0 auto;
+    text-align:center;
+    font-size:12px;
+    letter-spacing:0.25em;
+    color:var(--grey);
+    text-transform:uppercase;
+    margin-top:0.75rem;
+  }
   .mainframe-subtitle{
     position:relative;
     flex:0 0 auto;
@@ -5729,7 +5743,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     <button type="button" class="mainframe-profile-btn" id="mainframeProfileBtn">
       <span style="text-transform:none;">Σκύλλα</span> · MY PR0F!LE
     </button>
-    <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub">STAT!C :: MA!NFRAME</span></h1>
+    <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></h1>
+    <div class="mainframe-static-label">STAT!C :: MA!NFRAME</div>
     <div class="mainframe-subtitle">SELECT A C0LLECT!0N</div>
     <div class="mainframe-carousel-wrap">
       <button type="button" class="mainframe-arrow mainframe-arrow-prev" id="mainframeArrowPrev" aria-label="PREV!0US">◂</button>
