@@ -2359,7 +2359,12 @@ async function fetchDeeptideTraitCards(skip, limit, shopSlug = DEEPTIDE_PIGEON_S
 // opening the TRAITS panel doesn't re-crawl every card on every click, and
 // so a cold-cache rebuild (below) is rare rather than happening every ~10
 // cache-key-mins of traffic.
-const TRAIT_CARDS_CACHE_KEY_PREFIX = 'pswap:traitcards:v2:';
+// Bumped v2 -> v3: single-value "categories" (a unique item's own name
+// used as its trait_type, see the single-value filter below) are now
+// dropped before caching — a v2 cache entry already computed and stored
+// before this change would otherwise keep serving the polluted category
+// list for up to an hour after deploy.
+const TRAIT_CARDS_CACHE_KEY_PREFIX = 'pswap:traitcards:v3:';
 const TRAIT_CARDS_CACHE_TTL_SECONDS = 3600;
 export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX) {
   const cacheKey = TRAIT_CARDS_CACHE_KEY_PREFIX + shopSlug;
@@ -2397,6 +2402,23 @@ export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGE
     });
   }
   for (const cat of Object.keys(grouped)) grouped[cat].sort((a, b) => a.value.localeCompare(b.value));
+
+  // A real shared trait dimension (head, outfits, Background, ...) always
+  // has many distinct values across the collection — a "category" with
+  // exactly one possible value is never a genuine filterable trait, it's
+  // Deeptide's own metadata for a one-of-a-kind item using the ITEM'S OWN
+  // NAME as its trait_type (confirmed live on PHN!X: "David Schwartz
+  // Phnix" and "Brad Phoenix " each showed up as their own one-item
+  // "category" — real 1/1s with no shared head/outfits/etc. traits at
+  // all — polluting FILTER BY TRAITS with two junk categories alongside
+  // the 6 real ones). Dropping any single-value category catches this
+  // generically for any collection (PHN!X today, TEDDY/SEAL/whatever's
+  // imported next) without hardcoding a specific item's name — a real
+  // category never has just one value in the first place, so this can't
+  // accidentally remove a genuine one.
+  for (const cat of Object.keys(grouped)) {
+    if (grouped[cat].length === 1) delete grouped[cat];
+  }
 
   await safeKvPut(kv, cacheKey, JSON.stringify(grouped), { expirationTtl: TRAIT_CARDS_CACHE_TTL_SECONDS });
   return grouped;
