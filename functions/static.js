@@ -7086,6 +7086,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // below reusing the exact same login) — read server-side, null if no
   // signature is on file.
   var MY_WALLET = "__SWAP_WALLET__";
+  // Set server-side only by the pretty per-collection routes (functions/
+  // pigeons.js, functions/phnixs.js, etc. — see renderSwap below) so
+  // soitbegins.xyz/phnixs lands directly on PHN!X without a client-side
+  // redirect flash. null on the plain /static route, which keeps falling
+  // back to the ?collection= query-string handling further down (and, if
+  // neither is present, plain P!GE0NS via state's own default above).
+  var SERVER_COLLECTION = "__SWAP_COLLECTION__";
 
   // BETA — the NFT-for-NFT swap builder (CREATE AN OFFER box, MY PIGEONS'
   // + toggle, SWAP OFFERS tab) is fully built and working, just hidden for
@@ -13142,6 +13149,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     loadCollectionStats();
     ensureTraitsLoaded();
     runQuery();
+    // Keep the address bar's ?collection= in sync so whatever's on screen
+    // is always the thing a copied link actually reopens to — replaceState
+    // (not pushState) since switching collections mid-browse shouldn't
+    // pile up back-button history entries, same reasoning as the
+    // connected=1/?pigeon= cleanup elsewhere in this file.
+    try {
+      var url = new URL(window.location.href);
+      if (newCollection === 'pigeons') url.searchParams.delete('collection');
+      else url.searchParams.set('collection', newCollection);
+      window.history.replaceState({}, '', url.pathname + url.search);
+    } catch (e) {}
   }
   // MA!NFRAME — landing page shown before DATABASE (see #screenMainframe
   // in the HTML). Picking a card either switches collection (PHN!X/TEDDY)
@@ -15157,6 +15175,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     loop();
   }
+  // Shareable per-collection link. SERVER_COLLECTION (set only by the
+  // pretty /phnixs, /teddybg etc. routes — see renderSwap) wins when
+  // present; ?collection=phnixs on plain /static is the fallback for
+  // anyone linking that form directly. Runs before the ?pigeon= handler
+  // below so a link combining both (rare, but harmless) resolves the
+  // collection first. switchCollection() already no-ops if the key is
+  // unknown or already active, so this is safe to call unconditionally.
+  (function(){
+    var key = (SERVER_COLLECTION && COLLECTION_META[SERVER_COLLECTION])
+      ? SERVER_COLLECTION
+      : new URLSearchParams(window.location.search).get('collection');
+    // enterMainframeCollection (not a bare switchCollection) so a pretty
+    // collection link — /phnixs, /teddybg, etc. — drops straight into
+    // DATABASE already showing that collection, same as actually clicking
+    // that MA!NFRAME card, rather than leaving the picker on screen with
+    // just the right card highlighted underneath it.
+    if (key && COLLECTION_META[key]) enterMainframeCollection(key);
+  })();
+
   // Shareable Pigeon link — ?pigeon=<number> jumps straight to that
   // Pigeon's detail screen on load, instead of requiring whoever clicks a
   // shared link to search for it themselves. Runs after everything else
@@ -15187,7 +15224,14 @@ const SWAP_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
-export async function onRequestGet(context) {
+// Shared by the plain /static route below and by the pretty per-collection
+// routes (functions/pigeons.js, functions/phnixs.js, etc.) — same page,
+// same handler, same underlying data (one KV binding namespaced by
+// collection key, see COLLECTIONS in functions/api/pigeons.js), just a
+// different collection baked in server-side instead of left for the
+// client's own ?collection= handling to pick up. presetCollection is null
+// from plain /static (client falls back to ?collection= / plain P!GE0NS).
+export async function renderSwap(context, presetCollection) {
   const { request, env } = context;
   let wallet = null;
   if (env.Σκύλλα) {
@@ -15197,6 +15241,12 @@ export async function onRequestGet(context) {
       if (payload && payload.acct) wallet = payload.acct;
     }
   }
-  const html = SWAP_HTML.replace('"__SWAP_WALLET__"', JSON.stringify(wallet));
+  const html = SWAP_HTML
+    .replace('"__SWAP_WALLET__"', JSON.stringify(wallet))
+    .replace('"__SWAP_COLLECTION__"', JSON.stringify(presetCollection || null));
   return new Response(html, { headers: { 'Content-Type': 'text/html' } });
+}
+
+export async function onRequestGet(context) {
+  return renderSwap(context, null);
 }
