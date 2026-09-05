@@ -243,7 +243,7 @@ export async function onRequestGet(context) {
   // price).
   if (params.get('pigeonsRate') === '1') {
     const rate = await fetchPigeonsXrpRate(env.coin, coll.key);
-    return json({ xrpPerPigeon: rate.xrpPerPigeon, usdPerPigeon: rate.usdPerPigeon, dexUrl: rate.dexUrl });
+    return json({ xrpPerPigeon: rate.xrpPerPigeon, usdPerPigeon: rate.usdPerPigeon, marketCapXrp: rate.marketCapXrp, dexUrl: rate.dexUrl });
   }
 
   // Real $PIGEONS trustline + balance for the logged-in wallet (LOGIN

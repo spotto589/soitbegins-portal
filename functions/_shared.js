@@ -1257,7 +1257,7 @@ export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
     if (cached !== null) return JSON.parse(cached);
   }
   const dexPair = COLLECTION_DEXSCREENER_PAIRS[collectionKey] || dexscreenerPairFor(cfg.tokenConfig);
-  let result = { xrpPerPigeon: null, usdPerPigeon: null, dexUrl: dexPair ? 'https://dexscreener.com/xrpl/' + dexPair : null };
+  let result = { xrpPerPigeon: null, usdPerPigeon: null, marketCapXrp: null, dexUrl: dexPair ? 'https://dexscreener.com/xrpl/' + dexPair : null };
   if (dexPair) {
     try {
       const res = await fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + dexPair);
@@ -1269,6 +1269,13 @@ export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
         const usdVal = parseFloat(pair.priceUsd);
         if (usdVal > 0) result.usdPerPigeon = usdVal;
         if (pair.url) result.dexUrl = pair.url;
+        // DexScreener's own marketCap (falls back to fdv when marketCap
+        // isn't populated) comes back in USD — converted to XRP via the
+        // pair's own priceNative/priceUsd ratio (XRP per USD) rather than
+        // a second lookup, so it's consistent with the price shown right
+        // next to it.
+        const capUsd = parseFloat(pair.marketCap != null ? pair.marketCap : pair.fdv);
+        if (capUsd > 0 && nativeVal > 0 && usdVal > 0) result.marketCapXrp = capUsd * (nativeVal / usdVal);
       }
     } catch (e) { /* fall through to book-offers fallback below */ }
   }

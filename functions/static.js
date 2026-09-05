@@ -5426,6 +5426,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0 1rem;
   }
   .mainframe-card{
+    position:relative;
     min-width:0;
     min-height:0;
     height:100%;
@@ -5439,6 +5440,31 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     cursor:pointer;
     transition:border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  /* Diagonal "C0M!NG S00N" ribbon laid over the art on PHN!X/TEDDY/SEAL/
+     FUZZY/C0NSP!RACY — BUY stays fully live underneath (reported live as
+     wanting the buy path kept open), this is purely a visual banner over
+     the artwork. pointer-events:none so it never intercepts clicks meant
+     for the card or its BUY button. */
+  .mainframe-card-soon-banner{
+    position:absolute;
+    top:16%;
+    left:-10%;
+    width:120%;
+    transform:rotate(-8deg);
+    background:rgba(10,10,11,0.88);
+    border-top:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
+    border-bottom:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
+    color:#e8e8e8;
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.22em;
+    text-align:center;
+    text-transform:uppercase;
+    padding:0.4em 0;
+    z-index:2;
+    pointer-events:none;
   }
   @media (max-width:760px){
     /* 2 columns x 3 rows on narrow screens — 3 columns of real cards
@@ -5672,7 +5698,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$P!GE0NS</div>
             <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
-            <div class="mainframe-card-tag">TRAD!NG L!VE</div>
             <button type="button" class="mainframe-card-buy" data-collection="pigeons">BUY $P!GE0NS</button>
           </div>
         </div>
@@ -5683,10 +5708,10 @@ const SWAP_HTML = `<!DOCTYPE html>
              gets the same active card treatment as Pigeons. -->
         <div class="mainframe-card" data-collection="phnixs" role="button" tabindex="0" style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$PHN!X</div>
             <div class="mainframe-card-stats" id="mainframeStatsPhnixs"></div>
-            <div class="mainframe-card-tag">TRAD!NG L!VE</div>
             <button type="button" class="mainframe-card-buy" data-collection="phnixs">BUY $PHN!X</button>
           </div>
         </div>
@@ -5700,34 +5725,34 @@ const SWAP_HTML = `<!DOCTYPE html>
              the BUY button is live, same as before. -->
         <div class="mainframe-card mainframe-card-teddy" style="--card-accent:166,99,46; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$TEDDY</div>
             <div class="mainframe-card-stats" id="mainframeStatsTeddybg"></div>
-            <div class="mainframe-card-tag">TRAD!NG L!VE</div>
             <button type="button" class="mainframe-card-buy" data-collection="teddybg">BUY $TEDDY</button>
           </div>
         </div>
         <div class="mainframe-card mainframe-card-seal" style="--card-accent:45,140,168; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$SEAL</div>
-            <div class="mainframe-card-tag">TRAD!NG L!VE</div>
             <button type="button" class="mainframe-card-buy" data-collection="seal">BUY $SEAL</button>
           </div>
         </div>
         <div class="mainframe-card mainframe-card-fuzzy" style="--card-accent:122,66,26; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$FUZZY</div>
-            <div class="mainframe-card-tag">TRAD!NG L!VE</div>
             <button type="button" class="mainframe-card-buy" data-collection="fuzzy">BUY $FUZZY</button>
           </div>
         </div>
         <div class="mainframe-card mainframe-card-conspiracy" style="--card-accent:240,0,228; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
           <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$C0NSP!RACY</div>
-            <div class="mainframe-card-tag">TRAD!NG L!VE</div>
             <button type="button" class="mainframe-card-buy" data-collection="conspiracy">BUY $CNS</button>
           </div>
         </div>
@@ -13283,25 +13308,33 @@ const SWAP_HTML = `<!DOCTYPE html>
   // have nothing live to show (no real trading data behind them yet).
   // Fires once, at load, regardless of whether MAINFRAME is the visible
   // screen right now — cheap, and means the numbers are already there the
-  // instant you land back on it (STAT!C :: MA!NFRAME, top-left).
+  // instant you land back on it (STAT!C :: MA!NFRAME, top-left). Line now
+  // reads H0LDERS :: MARKETCAP :: PRICE (XRP) — holders still comes from
+  // the NFT-collection stats endpoint, marketcap/price come from the
+  // token's own DexScreener-derived rate (fetchPigeonsXrpRate's own
+  // marketCapXrp/xrpPerPigeon, see _shared.js) since items/volume were
+  // NFT-listing figures, not token trading ones.
   [
     { collection: 'pigeons', target: 'mainframeStatsPigeons' },
     { collection: 'phnixs', target: 'mainframeStatsPhnixs' },
     // SEAL/FUZZY/C0NSP!RACY get no stats fetch — no real Deeptide shop
     // slug exists for any of them yet (see COLLECTIONS in pigeons.js), so
-    // items/holders/volume would just read null/wrong. TEDDY does have a
-    // real shopSlug ('teddybg'), so it gets the real numbers same as the
-    // other two.
+    // holders would just read null/wrong. TEDDY does have a real shopSlug
+    // ('teddybg'), so it gets the real numbers same as the other two.
     { collection: 'teddybg', target: 'mainframeStatsTeddybg' }
   ].forEach(function(cfg){
-    api({ stats: 1, collection: cfg.collection }).then(function(data){
-      if (data.items == null && data.holders == null && data.totalVolumeXrp == null) return;
+    Promise.all([
+      api({ stats: 1, collection: cfg.collection }).catch(function(){ return {}; }),
+      api({ pigeonsRate: 1, collection: cfg.collection }).catch(function(){ return {}; })
+    ]).then(function(results){
+      var stats = results[0] || {}, rate = results[1] || {};
+      if (stats.holders == null && rate.marketCapXrp == null && rate.xrpPerPigeon == null) return;
       var parts = [];
-      if (data.items != null) parts.push('<span class="hi">' + data.items.toLocaleString() + '</span> !TEMS');
-      if (data.holders != null) parts.push('<span class="hi">' + data.holders.toLocaleString() + '</span> H0LDERS');
-      if (data.totalVolumeXrp != null) parts.push('<span class="hi">' + Math.round(data.totalVolumeXrp).toLocaleString() + '</span> XRP V0L');
+      if (stats.holders != null) parts.push('<span class="hi">' + stats.holders.toLocaleString() + '</span> H0LDERS');
+      if (rate.marketCapXrp != null) parts.push('<span class="hi">' + Math.round(rate.marketCapXrp).toLocaleString() + '</span> MARKETCAP');
+      if (rate.xrpPerPigeon != null) parts.push('<span class="hi">' + rate.xrpPerPigeon.toLocaleString(undefined, { maximumFractionDigits: 6 }) + '</span> XRP');
       el[cfg.target].innerHTML = parts.join(' :: ');
-    }).catch(function(){});
+    });
   });
   el.dbSelectFlyout.addEventListener('click', function(e){
     e.stopPropagation();
