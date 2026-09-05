@@ -5435,26 +5435,42 @@ const SWAP_HTML = `<!DOCTYPE html>
      caption glued underneath the giant "Σκύλλα://S!GNAL :: 0NL!NE" title)
      and given its own line directly above SELECT A C0LLECT!0N instead —
      reported live as wanting it read as a header for the picker below,
-     not an afterthought under the hero. */
+     not an afterthought under the hero. Kept at roughly its OLD size
+     (.h1-sub's own 0.42em of the hero, ~24-33px at typical viewport
+     widths) rather than shrunk to match .mainframe-subtitle below it —
+     reported live as this one specifically should have stayed the same
+     size when it moved. */
   .mainframe-static-label{
     flex:0 0 auto;
     text-align:center;
-    font-size:12px;
-    letter-spacing:0.25em;
+    font-size:clamp(15px, 2.4vw, 24px);
+    letter-spacing:0.14em;
     color:var(--grey);
     text-transform:uppercase;
     margin-top:0.75rem;
   }
+  /* SELECT A C0LLECT!0N — now the smaller of the two lines (was equal to
+     STAT!C :: MA!NFRAME above it), and flashes slowly rather than sitting
+     static — reported live as wanting it to visually nudge you toward
+     actually picking one of the six cards below, not just label them. */
   .mainframe-subtitle{
     position:relative;
     flex:0 0 auto;
     text-align:center;
-    font-size:12px;
+    font-size:10px;
     letter-spacing:0.25em;
     color:var(--grey);
     text-transform:uppercase;
     margin:0.75rem 0 1.25rem;
     padding-bottom:0.75rem;
+    animation:mainframe-subtitle-flash 2.6s ease-in-out infinite;
+  }
+  @keyframes mainframe-subtitle-flash{
+    0%, 100%{ opacity:1; }
+    50%{ opacity:0.35; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .mainframe-subtitle{ animation:none; }
   }
   /* Same glowing-underline device as SH0W!NG Y0UR P!GE0NS' own title
      (.search-panel-title-flock) — ties this landing screen visually to
