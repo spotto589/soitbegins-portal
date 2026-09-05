@@ -4607,17 +4607,39 @@ const SWAP_HTML = `<!DOCTYPE html>
      its own higher stacking the popup would render but be painted over
      by MAINFRAME itself. */
   #buySwapModal{ z-index:2100; }
+  /* Every swap-family popup (0FFER/TRANSFER/ACCEPT TRANSFER/DELIST/ACCEPT
+     0FFER/BUY) shares this shell — reported live as wanting all of them
+     "clean, colourful, personalised" rather than the flat neutral-grey
+     panel this used to be. Colour comes from --collection-accent-rgb, the
+     SAME per-collection variable the trustline banner/stat tiles already
+     redefine via body.collection-<key> in switchCollection (see its own
+     comment) — these popups only ever open scoped to whichever collection
+     is currently active, so no separate wiring is needed for them to pick
+     up e.g. PHN!X's orange vs SEAL's teal automatically. BUY is the one
+     exception (MAINFRAME can open it for a collection that ISN'T the
+     active one) — openBuySwapPanel sets its own local override directly
+     on #buySwapModal, which still cascades into every rule below exactly
+     the same way. NOT a return to the old "purple gradient/glow, shiny"
+     panel this was explicitly reverted FROM before (see git history) —
+     a plain dark panel with a real coloured border/glow/CTA, not a filled
+     gradient background. */
   .offer-confirm-panel{
     width:min(440px, 100%);
     text-align:center;
     background:var(--panel-bg-solid);
-    border:1px solid var(--border-mid);
+    border:1px solid rgba(var(--collection-accent-rgb), 0.4);
     border-radius:var(--radius);
-    box-shadow:0 10px 30px rgba(0,0,0,0.6);
+    box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 44px rgba(var(--collection-accent-rgb), 0.14);
     padding:1.75rem 1.5rem;
     animation:offer-confirm-pop 0.2s ease;
   }
-  .offer-confirm-panel .node-eyebrow{ color:var(--grey); font-size:15px; margin-bottom:1.5rem; }
+  .offer-confirm-panel .node-eyebrow{
+    color:var(--collection-accent);
+    font-size:15px;
+    letter-spacing:0.14em;
+    margin-bottom:1.5rem;
+    text-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.35);
+  }
   .offer-confirm-panel .confirm-pigeon-num{ color:var(--white); }
   /* Combined selector, not .offer-confirm-xaman-btn alone — needs to
      out-specificity .action-btn's own background/border/color, which is
@@ -4627,9 +4649,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      was genuinely hard to read (both pale/high-lightness), reported live
      as "i cannot read these buttons". Same black-on-fill pattern every
      other solid CTA on the site already uses (BUY N0W, CANCEL/OFFER
-     hover, etc). */
-  .action-btn.offer-confirm-xaman-btn{ background:var(--pigeon-purple); border-color:var(--pigeon-purple); color:#000; }
-  .action-btn.offer-confirm-xaman-btn:hover{ background:var(--magenta); border-color:var(--magenta); color:#000; }
+     hover, etc). Fill is now the live collection accent instead of a
+     fixed purple/magenta pair, so the button itself carries the same
+     per-collection colour as the panel's border/glow around it. */
+  .action-btn.offer-confirm-xaman-btn{ background:var(--collection-accent); border-color:var(--collection-accent); color:#000; box-shadow:0 0 16px rgba(var(--collection-accent-rgb), 0.4); }
+  .action-btn.offer-confirm-xaman-btn:hover{ filter:brightness(1.15); }
   /* ---- BUY $P!GE0NS swap panel — a transaction window, not a generic
      trading widget: same purple $PIGEONS theme as the trustline banner/
      detail-screen listing box, same .sw-panel card + .detail-field/
@@ -4670,9 +4694,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:center;
     gap:0.6rem;
     background:#000;
-    border:1px solid var(--pigeon-purple-dim);
+    border:1px solid rgba(var(--collection-accent-rgb), 0.4);
     border-radius:var(--radius);
     padding:0.9rem 1rem;
+    transition:border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .buyswap-input{
     flex:1 1 auto;
@@ -4688,12 +4713,38 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
   }
   .buyswap-input::placeholder{ color:var(--grey-disabled); }
-  .buyswap-input-wrap:focus-within{ border-color:var(--pigeon-purple); box-shadow:0 0 0 1px var(--pigeon-purple-dim); }
+  .buyswap-input-wrap:focus-within{ border-color:var(--collection-accent); box-shadow:0 0 0 1px rgba(var(--collection-accent-rgb), 0.4), 0 0 14px rgba(var(--collection-accent-rgb), 0.25); }
   .buyswap-unit{ flex:0 0 auto; font-size:13px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; }
   .buyswap-max-line{ text-align:center; font-size:11px; letter-spacing:0.05em; color:var(--grey-dim); margin-top:0.5rem; text-transform:uppercase; }
   .buyswap-input-error{ text-align:center; font-size:11px; letter-spacing:0.03em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); margin-top:0.5rem; }
-  .buyswap-arrow{ text-align:center; font-size:22px; color:var(--pigeon-purple); text-shadow:0 0 6px var(--pigeon-purple-glow); margin:0.9rem 0; }
+  .buyswap-arrow{ text-align:center; font-size:22px; color:var(--collection-accent); text-shadow:0 0 6px rgba(var(--collection-accent-rgb), 0.5); margin:0.9rem 0; }
   .buyswap-receive-wrap{ border-color:var(--border-mid); }
+  /* Pay row fades/slides in the instant the trustline gate actually opens
+     it (display:none -> '' in applyBuySwapGate) — CSS animations replay
+     on their own the moment a display:none element re-enters the render
+     tree, so no extra JS timing is needed for this. */
+  @keyframes buyswap-row-reveal{
+    from{ opacity:0; transform:translateY(6px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  #buySwapPayRow{ animation:buyswap-row-reveal 0.35s ease; }
+  /* Real spinning ring (not a text ellipsis) next to "CHECK!NG Y0UR ___
+     TRUSTL!NE..." — reported live as wanting that moment to read clearly
+     as "something is happening" rather than a flat status line that could
+     just as easily be a dead end. Coloured with the same collection
+     accent as everything else in this panel. */
+  .buyswap-spinner{
+    display:inline-block;
+    width:11px;
+    height:11px;
+    margin-right:0.45em;
+    vertical-align:-1.5px;
+    border:2px solid rgba(var(--collection-accent-rgb), 0.25);
+    border-top-color:var(--collection-accent);
+    border-radius:50%;
+    animation:buyswap-spin 0.7s linear infinite;
+  }
+  @keyframes buyswap-spin{ to{ transform:rotate(360deg); } }
   .buyswap-receive-value{ flex:1 1 auto; min-width:0; font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:0.02em; color:var(--grey-dim); text-align:center; }
   .buyswap-divider{ border-top:1px dashed var(--border-dim); margin:1.25rem 0; }
   /* ---- transaction-review title + plain-English summary — every
@@ -7247,12 +7298,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // popup (openBuySwapPanel — reads only those two fields, never
   // .tradeable) works correctly for all four.
   var COLLECTION_META = {
-    pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true },
-    phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: false },
-    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: false },
-    seal: { label: 'SEAL', itemLabel: 'SEAL', tradeable: false, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', hasAmm: false },
-    fuzzy: { label: 'FUZZY', itemLabel: 'FUZZY', tradeable: false, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: false },
-    conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: false }
+    pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true, accent: '#8848f8', accentRgb: '136,72,248' },
+    phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: false, accent: '#ff5a1f', accentRgb: '255,90,31' },
+    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: false, accent: '#a6632e', accentRgb: '166,99,46' },
+    seal: { label: 'SEAL', itemLabel: 'SEAL', tradeable: false, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', hasAmm: false, accent: '#2d8ca8', accentRgb: '45,140,168' },
+    fuzzy: { label: 'FUZZY', itemLabel: 'FUZZY', tradeable: false, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: false, accent: '#7a421a', accentRgb: '122,66,26' },
+    conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: false, accent: '#f000e4', accentRgb: '240,0,228' }
   };
 
   var el = {};
@@ -11302,6 +11353,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buySwapTrustlineWarning.style.display = 'none';
       el.buySwapXrpInput.disabled = true;
       clearBuySwapQuote('CHECK!NG Y0UR ' + gateTokenLabel + ' TRUSTL!NE...');
+      // Real spinning ring, not just a status sentence — reported live as
+      // wanting this moment to read clearly as "something is happening",
+      // not indistinguishable from every other plain status line. Set
+      // straight after clearBuySwapQuote (which only ever sets
+      // textContent) so this innerHTML sticks.
+      el.buySwapStatus.innerHTML = '<span class="buyswap-spinner"></span>CHECK!NG Y0UR ' + gateTokenLabel + ' TRUSTL!NE...';
       return;
     }
     if (buySwapHasTrustline === false){
@@ -11351,6 +11408,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   function openBuySwapPanel(collectionKey){
     buySwapCollection = collectionKey || 'pigeons';
     var meta = COLLECTION_META[buySwapCollection];
+    // Local override, scoped to this modal only — BUY can open for a
+    // collection that ISN'T the one currently active in DATABASE (see
+    // this function's own comment above), so it can't just rely on the
+    // body.collection-<key> class switchCollection sets; setting the same
+    // --collection-accent variables directly here still cascades into
+    // every rule .offer-confirm-panel/.buyswap-modal-panel define off
+    // them (see their own comment in the CSS).
+    el.buySwapModal.style.setProperty('--collection-accent', meta.accent);
+    el.buySwapModal.style.setProperty('--collection-accent-rgb', meta.accentRgb);
     el.buySwapTitle.textContent = '// BUY ' + meta.tokenLabel;
     el.buySwapReceiveUnit.textContent = meta.tokenLabel.replace(/^\\$/, '');
     if (meta.tokenIssuer){
