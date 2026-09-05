@@ -8855,14 +8855,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       // through the whole fetch — looked like nothing had happened yet.
       // Now replaced immediately so it's clear a wallet lookup is in
       // flight, not just a slow re-render of the same list.
-      el.statusLine.innerHTML = '<div class="results-trait-note">' + (isSelf ? 'L0AD!NG Y0UR P!GE0NS...' : 'L0AD!NG WALLET ' + escapeHtml(state.scope.ownerShort) + '...') + '</div>';
+      el.statusLine.innerHTML = '<div class="results-trait-note">' + (isSelf ? 'L0AD!NG Y0UR ' + collectionItemLabel() + 'S...' : 'L0AD!NG WALLET ' + escapeHtml(state.scope.ownerShort) + '...') + '</div>';
       // Same reasoning for the grid itself — this covers both "someone
       // else's wallet" and "your own, but the first fetch this session
       // hasn't landed yet" (myOwnPigeonsCache still null). Without this,
       // #resultsArea just sat on whatever it last showed (often empty)
       // until the fetch below resolved — reported live as "flashes and
-      // shows empty space".
-      el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG P!GE0NS...</div>';
+      // shows empty space". collectionItemLabel() (not a hardcoded
+      // P!GE0NS) so this reads right on PHN!X/TEDDY too — confirmed live
+      // as still saying L0AD!NG P!GE0NS... on every other collection.
+      el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG ' + collectionItemLabel() + 'S...</div>';
     }
     // Force the DATABASE tab regardless of which tab we were on (a wallet
     // click from Top 10 / Sales Data should always land here) — and mark it
@@ -9640,8 +9642,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // and used to just blank the results area while the new page fetched
     // — same "did my click even register" dead air the search box already
     // solved for itself (see runSearchBox's own SEARCH!NG... note) but
-    // never got applied here.
-    el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG P!GE0NS...</div>';
+    // never got applied here. collectionItemLabel() (not a hardcoded
+    // P!GE0NS) — confirmed live as still saying L0AD!NG P!GE0NS... while
+    // browsing PHN!X/TEDDY/etc.
+    el.resultsArea.innerHTML = '<div class="loading-note">L0AD!NG ' + collectionItemLabel() + 'S...</div>';
     // RESET and the STAT!C://QUERY line both used to sit there showing
     // the PREVIOUS query's stale count right next to a "loading" message
     // for the NEW one — confusing, and RESET in particular reads as an
