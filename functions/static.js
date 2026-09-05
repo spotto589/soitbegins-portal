@@ -3596,6 +3596,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex-direction:column;
     align-items:center;
   }
+  /* PHN!X's banner specifically: the outer .pigeons-merged-panel border
+     (--pigeon-purple, which is just an alias for the site's universal
+     --cyan — see its own :root comment) never actually swaps per
+     collection the way this inner box's own background does, so a cyan
+     ring sat around an orange banner regardless of which collection was
+     active — confirmed live as reading badly on PHN!X specifically.
+     White text/glow (.pigeons-bar-text/-sublabel's own base rules,
+     tuned to read against $PIGEONS' purple) also washed out against
+     PHN!X's brighter orange. Both switched to black here, scoped to
+     collection-phnixs only — every other collection's banner (still
+     genuinely fine against purple/brown/teal/etc.) is untouched. */
+  body.collection-phnixs .pigeons-merged-panel{
+    border-color:#000;
+    box-shadow:0 0 16px rgba(0,0,0,0.45);
+  }
+  body.collection-phnixs .pigeons-bar-issuer .pigeons-bar-text,
+  body.collection-phnixs .pigeons-bar-issuer .pigeons-bar-sublabel{
+    color:#000;
+    text-shadow:none;
+  }
   /* Thumb + SET TRUSTLINE/address/COPY, centered as one group — big,
      clear thumbnail right next to the address block, not pinned to a
      far edge. */
@@ -5728,6 +5748,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      room the card actually has now that cards are as tall as the whole
      carousel, not a fixed small thumbnail strip. */
   .mainframe-card-art{
+    position:relative;
     flex:1 1 auto;
     min-height:60px;
     background-size:cover;
@@ -5793,17 +5814,38 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Real per-collection DexScreener link — hidden until its own fetch
      resolves a real dexUrl (see the stats-fetch loop in the script), same
      "never show as if verified before it's real" rule dexUrl's own
-     comment in _shared.js already follows. */
+     comment in _shared.js already follows. Sits as a small badge pinned
+     to the top-left corner of the card's own art (mainframe-card-art is
+     its positioned ancestor) rather than as a text line down in the body
+     — icon left of the label, a solid scrim behind both so it stays
+     readable over any artwork. display:flex is the shown state; the
+     inline style="display:none" in the HTML is what actually hides it
+     until a real dexUrl lands, same toggle the JS already did. */
   .mainframe-card-dex-link{
-    display:block;
+    display:flex;
+    align-items:center;
+    gap:0.35em;
+    position:absolute;
+    top:0.5rem;
+    left:0.5rem;
+    z-index:3;
     font-family:var(--font-mono);
-    font-size:10px;
-    letter-spacing:0.1em;
-    color:rgba(var(--card-accent, 61,243,236), 1);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.05em;
+    color:#fff;
     text-decoration:none;
-    margin-top:0.35rem;
+    text-transform:uppercase;
+    background:rgba(6,6,7,0.72);
+    border:1px solid rgba(var(--card-accent, 61,243,236), 0.7);
+    border-radius:var(--radius);
+    padding:0.35em 0.6em;
   }
-  .mainframe-card-dex-link:hover{ text-decoration:underline; }
+  .mainframe-card-dex-link:hover{
+    background:rgba(6,6,7,0.9);
+    border-color:rgba(var(--card-accent, 61,243,236), 1);
+  }
+  .mainframe-card-dex-icon{ width:14px; height:14px; border-radius:3px; flex:0 0 auto; }
   .mainframe-card-tag{
     display:inline-block;
     font-size:11px;
@@ -5839,6 +5881,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease, color 0.15s ease;
   }
   .mainframe-card-buy:hover{ background:#000; color:var(--green); }
+  /* Card body text (label/stats line/BUY) read small on an actual desktop
+     monitor, where there's plenty of room per card — bumped here, AFTER
+     the three base rules above (same specificity, later in source order
+     wins), so a phone (same breakpoint the grid switch earlier in this
+     file already uses) keeps the tighter sizing tuned for its own real
+     width instead of also getting the desktop bump. */
+  @media (min-width:761px){
+    .mainframe-card-label{ font-size:clamp(20px, 2vw, 30px); }
+    .mainframe-card-stats{ font-size:14px; }
+    .mainframe-card-buy{ font-size:16px; }
+  }
   .mainframe-card-soon{ opacity:0.6; cursor:default; }
   .mainframe-card-soon:hover{ border-color:var(--border-mid); transform:none; box-shadow:none; }
   .mainframe-card-soon:hover .mainframe-card-art{ transform:none; }
@@ -5944,11 +5997,15 @@ const SWAP_HTML = `<!DOCTYPE html>
              the next pass. stopPropagation keeps it from also double-firing
              the card's own click. -->
         <div class="mainframe-card" data-collection="pigeons" role="button" tabindex="0" style="--card-accent:136,72,248; --card-art:url('/assets/mainframe/pigeons.jpeg?v=2');">
-          <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-art">
+            <a class="mainframe-card-dex-link" id="mainframeDexPigeons" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+              <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+              <span>V!EW CHART</span>
+            </a>
+          </div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$P!GE0NS</div>
             <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
-            <a class="mainframe-card-dex-link" id="mainframeDexPigeons" href="#" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="pigeons">BUY $P!GE0NS</button>
           </div>
         </div>
@@ -5958,12 +6015,16 @@ const SWAP_HTML = `<!DOCTYPE html>
              real tradeable collection (see COLLECTION_META.phnixs) so it
              gets the same active card treatment as Pigeons. -->
         <div class="mainframe-card" data-collection="phnixs" role="button" tabindex="0" style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg?v=2');">
-          <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-art">
+            <a class="mainframe-card-dex-link" id="mainframeDexPhnixs" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+              <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+              <span>V!EW CHART</span>
+            </a>
+          </div>
           <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$PHN!X</div>
             <div class="mainframe-card-stats" id="mainframeStatsPhnixs"></div>
-            <a class="mainframe-card-dex-link" id="mainframeDexPhnixs" href="#" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="phnixs">BUY $PHN!X</button>
           </div>
         </div>
@@ -5976,42 +6037,58 @@ const SWAP_HTML = `<!DOCTYPE html>
              stays non-clickable (no data-collection/role="button") — only
              the BUY button is live, same as before. -->
         <div class="mainframe-card mainframe-card-teddy" style="--card-accent:166,99,46; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
-          <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-art">
+            <a class="mainframe-card-dex-link" id="mainframeDexTeddybg" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+              <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+              <span>V!EW CHART</span>
+            </a>
+          </div>
           <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$TEDDY</div>
             <div class="mainframe-card-stats" id="mainframeStatsTeddybg"></div>
-            <a class="mainframe-card-dex-link" id="mainframeDexTeddybg" href="#" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="teddybg">BUY $TEDDY</button>
           </div>
         </div>
         <div class="mainframe-card mainframe-card-seal" style="--card-accent:45,140,168; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
-          <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-art">
+            <a class="mainframe-card-dex-link" id="mainframeDexSeal" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+              <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+              <span>V!EW CHART</span>
+            </a>
+          </div>
           <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$SEAL</div>
             <div class="mainframe-card-stats" id="mainframeStatsSeal"></div>
-            <a class="mainframe-card-dex-link" id="mainframeDexSeal" href="#" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="seal">BUY $SEAL</button>
           </div>
         </div>
         <div class="mainframe-card mainframe-card-fuzzy" style="--card-accent:122,66,26; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
-          <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-art">
+            <a class="mainframe-card-dex-link" id="mainframeDexFuzzy" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+              <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+              <span>V!EW CHART</span>
+            </a>
+          </div>
           <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$FUZZY</div>
             <div class="mainframe-card-stats" id="mainframeStatsFuzzy"></div>
-            <a class="mainframe-card-dex-link" id="mainframeDexFuzzy" href="#" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="fuzzy">BUY $FUZZY</button>
           </div>
         </div>
         <div class="mainframe-card mainframe-card-conspiracy" style="--card-accent:240,0,228; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
-          <div class="mainframe-card-art"></div>
+          <div class="mainframe-card-art">
+            <a class="mainframe-card-dex-link" id="mainframeDexConspiracy" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+              <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+              <span>V!EW CHART</span>
+            </a>
+          </div>
           <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$C0NSP!RACY</div>
             <div class="mainframe-card-stats" id="mainframeStatsConspiracy"></div>
-            <a class="mainframe-card-dex-link" id="mainframeDexConspiracy" href="#" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="conspiracy">BUY $CNS</button>
           </div>
         </div>
@@ -13446,26 +13523,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   // itself now lives up near state (see its own comment there) — it has
   // to exist before loadTrustlineLoginState's bootstrap call further up
   // the file can safely read it for a signed-in wallet.
-  // Real per-collection artwork for the trustline banner's big thumbnail —
-  // fetched once per collection (first item off the real DATABASE, rarest-
-  // first) and cached, rather than a second hardcoded image URL living
-  // alongside COLLECTION_META that'd need updating by hand for every new
-  // collection. null while not yet fetched/unavailable — the CSS gradient
-  // alone still reads fine as a placeholder.
-  var collectionThumbCache = {};
+  // The trustline banner's big thumbnail — COLLECTION_META's own thumb
+  // (the same static mascot art MAINFRAME's cards already use), not a
+  // live-fetched real NFT. Used to pull the rarest real item off the
+  // live DATABASE instead (skip:0, sort:RARITY_ASC) on the reasoning
+  // that per-collection art shouldn't need a second hardcoded image URL
+  // living alongside COLLECTION_META — but "rarest" isn't "representative"
+  // once a collection has real 1-of-1s in it: PHN!X's own rarity-1 item
+  // is one of its uniquely-named 1/1s (see itemNumberLabel's own comment),
+  // so the banner was showing that one specific NFT's portrait instead of
+  // artwork for the collection as a whole. The static thumb already exists
+  // for exactly this purpose (MAINFRAME), so this just reuses it instead
+  // of introducing a second, more complicated "pick a genuinely
+  // representative item" rule.
   function updateTrustlineThumb(collectionKey){
-    if (collectionThumbCache[collectionKey]){
-      el.pigeonsBarThumb.style.backgroundImage = 'linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.35), rgba(var(--collection-accent-2-rgb),0.45)), url("' + collectionThumbCache[collectionKey] + '")';
-      return;
-    }
-    apiWithRetry({ collection: collectionKey, skip: 0, limit: 1, sort: 'RARITY_ASC' }, 0).then(function(data){
-      var img = data && data.items && data.items[0] && data.items[0].image;
-      if (!img) return;
-      collectionThumbCache[collectionKey] = img;
-      if (state.collection === collectionKey){
-        el.pigeonsBarThumb.style.backgroundImage = 'linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.35), rgba(var(--collection-accent-2-rgb),0.45)), url("' + img + '")';
-      }
-    }).catch(function(){});
+    var meta = COLLECTION_META[collectionKey];
+    if (!meta || !meta.thumb) return;
+    el.pigeonsBarThumb.style.backgroundImage = 'linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.35), rgba(var(--collection-accent-2-rgb),0.45)), url("' + meta.thumb + '")';
   }
   // Everything in the trustline banner that isn't already driven by
   // fmtPigeons/collectionItemLabel — title text, issuer address + COPY,
@@ -15106,25 +15180,14 @@ const SWAP_HTML = `<!DOCTYPE html>
         actionHtml +
       '</div>';
     }).join('');
-    // Real per-collection art — same live-fetched-and-cached trick the
-    // trustline banner's own thumbnail already uses (collectionThumbCache),
-    // reused here instead of a second cache so switching DATABASE
-    // collections and opening PR0F!LE never both fetch the same image
-    // twice.
+    // Per-collection art — COLLECTION_META's own static thumb (see
+    // updateTrustlineThumb's own comment for why this is a real mascot
+    // image now, not a live-fetched real NFT).
     keys.forEach(function(key){
       var thumbEl = document.getElementById('profileCoinThumb-' + key);
-      if (!thumbEl) return;
-      if (collectionThumbCache[key]){
-        thumbEl.style.backgroundImage = 'url("' + collectionThumbCache[key] + '")';
-        return;
-      }
-      apiWithRetry({ collection: key, skip: 0, limit: 1, sort: 'RARITY_ASC' }, 0).then(function(data){
-        var img = data && data.items && data.items[0] && data.items[0].image;
-        if (!img) return;
-        collectionThumbCache[key] = img;
-        var stillThere = document.getElementById('profileCoinThumb-' + key);
-        if (stillThere) stillThere.style.backgroundImage = 'url("' + img + '")';
-      }).catch(function(){});
+      var thumbMeta = COLLECTION_META[key];
+      if (!thumbEl || !thumbMeta || !thumbMeta.thumb) return;
+      thumbEl.style.backgroundImage = 'url("' + thumbMeta.thumb + '")';
     });
     // Real balance/trustline per collection — pigeonsAccountLine already
     // resolves whichever collection's real token config via getTradeConfig
