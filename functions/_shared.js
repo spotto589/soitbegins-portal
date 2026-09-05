@@ -841,8 +841,10 @@ export async function clearPendingListing(kv, uuid) {
 const PIGEONS_DEXSCREENER_PAIR = '504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp';
 // v2: switched from top-of-book best-ask to DexScreener's trade-derived
 // price, and the cached shape grew (usdPerPigeon, dexUrl alongside
-// xrpPerPigeon) — bump the key again if the shape changes further.
-const PIGEONS_RATE_CACHE_KEY = 'pswap:pigeonsrate:v2';
+// xrpPerPigeon) — bump the key again if the shape changes further. v3:
+// marketCapXrp/liquidityXrp (derived, XRP-converted) replaced with
+// marketCapUsd/liquidityUsd (DexScreener's own USD figures, unconverted).
+const PIGEONS_RATE_CACHE_KEY = 'pswap:pigeonsrate:v3';
 const PIGEONS_RATE_CACHE_TTL_SECONDS = 60;
 
 async function fetchTokenXrpRateFromBookOffers(tokenConfig) {
@@ -1032,15 +1034,33 @@ async function quoteFromOrderBook(tokenConfig, xrpDrops) {
 // Real on-chain AMM pool per collection, keyed by TRADEABLE_COLLECTIONS'
 // own key — deliberately NOT part of that config object itself (this file
 // declares PIGEONS_AMM_ACCOUNT further down than TRADEABLE_COLLECTIONS,
-// so referencing it there would hit the temporal dead zone). Only
-// $PIGEONS has a confirmed real pool (see PIGEONS_AMM_ACCOUNT's own
-// comment) — every other collection quotes order-book-only, which is a
-// completely normal, real way to buy on the XRPL DEX and needs no special
-// account at all, just the token's own currency/issuer (already in
-// TRADEABLE_COLLECTIONS). Add an entry here only once a collection's real
-// AMM pool account has been independently confirmed live, same bar
-// PIGEONS_AMM_ACCOUNT's own comment describes — never guessed.
-const COLLECTION_AMM_ACCOUNTS = { pigeons: PIGEONS_AMM_ACCOUNT };
+// so referencing it there would hit the temporal dead zone). Add an entry
+// here only once a collection's real AMM pool account has been
+// independently confirmed live, same bar PIGEONS_AMM_ACCOUNT's own
+// comment describes — never guessed. A collection with no entry here
+// quotes order-book-only, which is a completely normal, real way to buy
+// on the XRPL DEX and needs no special account at all, just the token's
+// own currency/issuer (already in TRADEABLE_COLLECTIONS).
+//
+// PHNIX/TEDDY/SEAL/FUZZY/CNS below were each confirmed live via the
+// public XRPL amm_info RPC (asset=XRP, asset2=<currency,issuer> from
+// TRADEABLE_COLLECTIONS) on 2026-09-05 — every one of them genuinely has
+// its own real AMM pool, not just an order book:
+//   PHNIX  rLJMi56CJMUnELQ5XzSrefn2WuFAwKQmDt  (~208.3K XRP / 25.0B PHNIX)
+//   TEDDY  rU85ZJgHRniDYMfhq7QTcGZDSsggaXryzg  (~18.8K XRP / 117.3B TEDDY)
+//   SEAL   rfqbzs3qQ7BEeBecZxUCU4sdaqeUkxrwdD  (~26.2K XRP / 57.6B SEAL)
+//   FUZZY  rBudi9ArACZzLrReUWKFZmHve13LD7CbrM  (~700.0K XRP / 14.7B FUZZY)
+//   CNS    rCYbfLe3DVpzan3aPmKoha7EukCP1CqCL   (~767 XRP / 7.4B CNS — real
+//          but genuinely thin, so the order book still often wins the
+//          comparison below for this one specifically)
+const COLLECTION_AMM_ACCOUNTS = {
+  pigeons: PIGEONS_AMM_ACCOUNT,
+  phnixs: 'rLJMi56CJMUnELQ5XzSrefn2WuFAwKQmDt',
+  teddybg: 'rU85ZJgHRniDYMfhq7QTcGZDSsggaXryzg',
+  seal: 'rfqbzs3qQ7BEeBecZxUCU4sdaqeUkxrwdD',
+  fuzzy: 'rBudi9ArACZzLrReUWKFZmHve13LD7CbrM',
+  conspiracy: 'rCYbfLe3DVpzan3aPmKoha7EukCP1CqCL'
+};
 
 // collectionKey defaults to 'pigeons' for backward compatibility with
 // existing callers. xrpDropsStr: exact integer drops (string) the user is
@@ -1257,7 +1277,7 @@ export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
     if (cached !== null) return JSON.parse(cached);
   }
   const dexPair = COLLECTION_DEXSCREENER_PAIRS[collectionKey] || dexscreenerPairFor(cfg.tokenConfig);
-  let result = { xrpPerPigeon: null, usdPerPigeon: null, dexUrl: dexPair ? 'https://dexscreener.com/xrpl/' + dexPair : null };
+  let result = { xrpPerPigeon: null, usdPerPigeon: null, marketCapUsd: null, liquidityUsd: null, dexUrl: dexPair ? 'https://dexscreener.com/xrpl/' + dexPair : null };
   if (dexPair) {
     try {
       const res = await fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + dexPair);
@@ -1269,6 +1289,18 @@ export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
         const usdVal = parseFloat(pair.priceUsd);
         if (usdVal > 0) result.usdPerPigeon = usdVal;
         if (pair.url) result.dexUrl = pair.url;
+        // marketCap/liquidity taken straight off DexScreener's own pair
+        // object, in USD, with no XRP conversion applied — matches
+        // whatever the real DexScreener page for this pair shows exactly
+        // (reported live as the previous XRP-converted numbers reading as
+        // "wrong" next to the real page), and it's the one page these
+        // numbers are always cross-checked against anyway (see dexUrl,
+        // now surfaced as a real link on every card). marketCap falls
+        // back to fdv when marketCap isn't populated, same as before.
+        const capUsd = parseFloat(pair.marketCap != null ? pair.marketCap : pair.fdv);
+        if (capUsd > 0) result.marketCapUsd = capUsd;
+        const liqUsd = pair.liquidity ? parseFloat(pair.liquidity.usd) : NaN;
+        if (liqUsd > 0) result.liquidityUsd = liqUsd;
       }
     } catch (e) { /* fall through to book-offers fallback below */ }
   }
