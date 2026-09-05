@@ -4862,7 +4862,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .buyswap-tx-link:hover{ color:var(--white); }
   .buyswap-row{ max-width:100%; margin:0 auto; }
-  .buyswap-label{ display:block; text-align:center; font-size:11px; letter-spacing:0.2em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.5rem; }
+  /* Bigger + this collection's own accent (not a dim grey caption) —
+     Y0U PAY/Y0U RECE!VE are the two real steps of the swap, worth
+     reading as clearly as the amounts themselves, and in the same real
+     colour as everything else in this panel (border/glow/BUY button). */
+  .buyswap-label{ display:block; text-align:center; font-size:14px; font-weight:700; letter-spacing:0.15em; color:var(--collection-accent); text-shadow:0 0 6px rgba(var(--collection-accent-rgb), 0.5); text-transform:uppercase; margin-bottom:0.5rem; }
   /* position:relative anchors .buyswap-trailing (the CLEAR ×/unit, on
      the PAY row; just the unit on RECE!VE) — pulled out of normal flow
      entirely now (see its own comment) so it can never compete with the
@@ -4920,11 +4924,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.3rem;
   }
   .buyswap-unit{ flex:0 0 auto; font-size:13px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; }
-  /* Available XRP balance — green like every other real figure in this
-     panel (see .df-value's own comment), not just a dim grey caption, so
-     it actually reads as a clear, checkable number. */
-  .buyswap-max-line{ text-align:center; font-size:11px; letter-spacing:0.05em; color:var(--green); text-shadow:0 0 5px var(--green-glow); margin-top:0.5rem; text-transform:uppercase; }
   .buyswap-input-error{ text-align:center; font-size:11px; letter-spacing:0.03em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); margin-top:0.5rem; }
+  /* Both real balances, side by side, right at the top of the panel —
+     see buySwapBalancesRow's own HTML comment for why this replaced the
+     single standing "MAX :: X XRP AVAILABLE" caption. */
+  .buyswap-balances-row{
+    display:flex;
+    gap:0.6rem;
+    margin:0 0 1.1rem;
+  }
+  .buyswap-balance-tile{
+    flex:1 1 0;
+    min-width:0;
+    text-align:center;
+    background:rgba(var(--collection-accent-rgb), 0.08);
+    border:1px solid rgba(var(--collection-accent-rgb), 0.3);
+    border-radius:var(--radius);
+    padding:0.55em 0.5em;
+  }
+  .buyswap-balance-label{ display:block; font-size:10px; letter-spacing:0.12em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.2rem; }
+  .buyswap-balance-value{ font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--green); text-shadow:0 0 5px var(--green-glow); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
   /* Every "things are actively working" status here — TRUSTL!NE SET ✓,
      GETT!NG QU0TE..., QU0TE UPDATED :: Ns AG0 — bigger and green instead
      of blending into the same tiny grey .index-line default, reported
@@ -7165,7 +7184,26 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="offer-confirm-panel buyswap-modal-panel">
         <div id="buySwapEntryState">
           <img class="buyswap-thumb" id="buySwapThumb" src="" alt="" style="display:none;">
-          <div class="node-eyebrow" id="buySwapTitle">// BUY $P!GE0NS</div>
+          <!-- Both real balances, right up top — the wallet's spendable
+               XRP and its current holding of whichever token this panel
+               is for, always visible together rather than a single
+               "MAX :: X XRP AVAILABLE" caption buried under the input
+               (reported live as wanting this simpler: see both balances
+               up front, only see an error if you actually type more than
+               you have — that reactive over-limit message is
+               buySwapInputError below, unchanged). Hidden until MY_WALLET
+               is set (see openBuySwapPanel) — no fabricated "0.00" for a
+               wallet that hasn't logged in yet. -->
+          <div class="buyswap-balances-row" id="buySwapBalancesRow" style="display:none;">
+            <div class="buyswap-balance-tile">
+              <span class="buyswap-balance-label">XRP BALANCE</span>
+              <span class="buyswap-balance-value" id="buySwapXrpBalanceValue">—</span>
+            </div>
+            <div class="buyswap-balance-tile">
+              <span class="buyswap-balance-label" id="buySwapTokenBalanceLabel">P!GE0NS BALANCE</span>
+              <span class="buyswap-balance-value" id="buySwapTokenBalanceValue">—</span>
+            </div>
+          </div>
           <div class="buyswap-trustline-warning" id="buySwapTrustlineWarning" style="display:none;">
             <div class="buyswap-trustline-warning-title" id="buySwapTrustlineWarningTitle"></div>
             <div class="pigeons-bar-left-body-row buyswap-trustline-issuer-row">
@@ -7201,7 +7239,6 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <span class="buyswap-unit">XRP</span>
               </div>
             </div>
-            <div class="buyswap-max-line" id="buySwapMaxLine" style="display:none;"></div>
             <div class="buyswap-input-error" id="buySwapInputError" style="display:none;"></div>
           </div>
           <div class="buyswap-arrow" aria-hidden="true">↓</div>
@@ -7742,7 +7779,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenListResult','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
    'buyConfirmModal','screenBuyConfirm','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
-   'buySwapModal','buySwapEntryState','buySwapThumb','buySwapChecking','buySwapCheckingText','buySwapQuoteSection','buySwapTitle','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
+   'buySwapModal','buySwapEntryState','buySwapThumb','buySwapChecking','buySwapCheckingText','buySwapQuoteSection','buySwapXrpInput','buySwapBalancesRow','buySwapXrpBalanceValue','buySwapTokenBalanceLabel','buySwapTokenBalanceValue','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapDexLink','buySwapPayRow',
    'buySwapConfirmState','buySwapConfAccount','buySwapConfSendMax','buySwapConfAmount','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
    'buySwapResultState','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
@@ -11569,6 +11606,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // collection genuinely has no indexed pair yet.
   var buySwapDexUrl = null;
   var buySwapMaxDrops = null; // null = no cap known yet (not logged in, or balance fetch pending/failed)
+  var buySwapTokenBalance = null; // null = not known yet — this collection's real token balance (pigeonsAccountLine's own balance field)
   // Fallback only — the real reserve (base + one owner-reserve increment
   // per owned ledger object: trustlines, NFT pages, offers, etc.) comes
   // back from the xrpBalance API as reserveDrops (see accountReserveDrops
@@ -11577,13 +11615,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   // fall back to under-reserving. Server-side buildBuySwapTxjson re-checks
   // the real reserve again before ever signing anything either way.
   var BUYSWAP_RESERVE_BUFFER_DROPS = 2000000n;
-  function updateBuySwapMaxLine(){
-    if (buySwapMaxDrops === null){
-      el.buySwapMaxLine.style.display = 'none';
+  // Both real balances together, right at the top — replaced the old
+  // single "MAX :: X XRP AVAILABLE" caption (reported live as wanting
+  // this simpler: see both balances up front, only get an error if you
+  // actually type more than you have — see showBuySwapInputError's own
+  // EXCEEDS YOUR AVAILABLE... message below, unchanged). Hidden entirely
+  // until BOTH numbers are known so it never shows one real figure next
+  // to a placeholder "—" — either both balances are ready, or neither
+  // shows yet.
+  function updateBuySwapBalancesRow(){
+    if (buySwapMaxDrops === null || buySwapTokenBalance === null){
+      el.buySwapBalancesRow.style.display = 'none';
       return;
     }
-    el.buySwapMaxLine.style.display = '';
-    el.buySwapMaxLine.textContent = 'MAX :: ' + dropsToXrpString(buySwapMaxDrops) + ' XRP AVA!LABLE';
+    el.buySwapBalancesRow.style.display = '';
+    el.buySwapXrpBalanceValue.textContent = dropsToXrpString(buySwapMaxDrops) + ' XRP';
+    el.buySwapTokenBalanceValue.textContent = compactPigeonsNumber(buySwapTokenBalance);
   }
   function showBuySwapInputError(msg){
     el.buySwapInputError.textContent = msg;
@@ -11853,7 +11900,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // them (see their own comment in the CSS).
     el.buySwapModal.style.setProperty('--collection-accent', meta.accent);
     el.buySwapModal.style.setProperty('--collection-accent-rgb', meta.accentRgb);
-    el.buySwapTitle.textContent = '// BUY ' + meta.tokenLabel;
+    el.buySwapTokenBalanceLabel.textContent = meta.tokenLabel.replace(/^\\$/, '') + ' BALANCE';
     // Real coin thumbnail — same art MAINFRAME's own card uses for this
     // collection (see COLLECTION_META's own thumb field), so the popup
     // shows what you're actually buying rather than just a text label.
@@ -11873,7 +11920,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     clearBuySwapInputError();
     stopBuySwapTimers();
     buySwapMaxDrops = null;
-    updateBuySwapMaxLine();
+    buySwapTokenBalance = null;
+    updateBuySwapBalancesRow();
     buySwapHasTrustline = null;
     buySwapDexUrl = null;
     buySwapReviewDrops = null;
@@ -11909,7 +11957,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           : BUYSWAP_RESERVE_BUFFER_DROPS;
         var max = bal - reserve;
         buySwapMaxDrops = max > 0n ? max : 0n;
-        updateBuySwapMaxLine();
+        updateBuySwapBalancesRow();
         validateBuySwapInput();
       }).catch(function(){});
       // Real live account_lines check, same source the trustline banner's
@@ -11918,11 +11966,21 @@ const SWAP_HTML = `<!DOCTYPE html>
       // before that banner state has even settled.
       apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET, collection: buySwapCollection }).then(function(data){
         buySwapHasTrustline = !!(data && data.hasTrustline);
+        // Real current holding of this collection's own token — 0 (not
+        // null) once a genuine no-trustline/zero-balance result comes
+        // back, so the balances row still shows a real "0" rather than
+        // staying hidden forever for a wallet that just hasn't bought in
+        // yet (see updateBuySwapBalancesRow's own null-means-not-loaded
+        // rule for the distinction).
+        buySwapTokenBalance = (data && typeof data.balance === 'number') ? data.balance : 0;
+        updateBuySwapBalancesRow();
         applyBuySwapGate();
       }).catch(function(){
         // Lookup failed — fail closed, never let an unknown result read as
         // "trustline confirmed present."
         buySwapHasTrustline = false;
+        buySwapTokenBalance = 0;
+        updateBuySwapBalancesRow();
         applyBuySwapGate();
       });
     }
