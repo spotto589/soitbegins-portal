@@ -315,49 +315,46 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   a.back-link:hover{ color:var(--cyan); }
 
-  /* The site's real title, now a small terminal-style readout tucked into
-     the top-left corner rather than a full-width hero — reported live as
-     the oversized display-font version reading more like a splash banner
-     than "the main title of the website." Plain monospace instead of
-     --font-display, a real blinking block cursor (::after, same idea as
-     HACK_MA!NFRAME.exe's own scan-cursor in mainframe.js) so it reads as
-     something a terminal just typed out, not a logo. */
+  /* The hero is the thesis (see the Σκύλλα Mainframe identity pitch) —
+     was a small, centered, single-scale line; now genuinely oversized and
+     left-set instead of centered, breaking the "everything centered"
+     pattern the rest of the page still uses. Two rows read at different
+     scales on purpose (S!GNAL as the real headline, MA!NFRAME as a
+     smaller subtitle line underneath it via .h1-sub) instead of one flat
+     block of equal-weight text. */
   h1{
-    font-family:var(--font-mono);
-    font-weight:500;
-    font-size:clamp(11px,1.6vw,14px);
-    line-height:1.5;
-    letter-spacing:0.06em;
-    color:var(--grey);
-    text-shadow:none;
-    margin-bottom:1.25rem;
+    font-family:var(--font-display);
+    font-weight:700;
+    /* 40px used to be a hard floor regardless of viewport — fine down to
+       roughly tablet width, but on an actual phone (~375px) 9vw only
+       computes to ~34px, so the clamp pinned it back up to 40px anyway:
+       "Σκύλλα://S!GNAL" at a fixed 40px ran edge-to-edge with no
+       breathing room, reported live as not fitting properly. 28px lets
+       it actually keep shrinking with the viewport below that point. */
+    font-size:clamp(28px,9vw,104px);
+    line-height:0.94;
+    letter-spacing:0.01em;
+    color:var(--white);
+    /* Cyan/magenta chromatic-aberration split, restored now that cyan is
+       a real colour again — the two-colour glitch (not a plain dark
+       double-strike) is what the identity pitch this whole system is
+       based on actually uses. */
+    text-shadow:
+      -2px 0 var(--cyan-dim),
+      2px 0 var(--magenta-dim);
+    margin-bottom:0.6rem;
     text-align:left;
     text-transform:none;
     text-wrap:balance;
   }
-  h1::after{
-    content:'';
-    display:inline-block;
-    width:0.55em;
-    height:1em;
-    margin-left:0.3em;
-    vertical-align:-0.15em;
-    background:var(--green);
-    box-shadow:0 0 6px var(--green-glow);
-    animation:h1-cursor-blink 1s step-end infinite;
-  }
-  @keyframes h1-cursor-blink{
-    0%, 50%{ opacity:1; }
-    51%, 100%{ opacity:0; }
-  }
   .h1-sub{
     display:block;
-    font-size:0.85em;
+    font-size:0.42em;
     letter-spacing:0.14em;
-    color:var(--grey-dim);
+    color:var(--grey);
     -webkit-text-stroke:0;
     text-shadow:none;
-    margin-top:0.25em;
+    margin-top:0.3em;
   }
   .title-online{ color:var(--green); text-shadow:0 0 6px var(--green-glow); }
   /* $PIGEONS numbers — same green as the header's ONLINE, wherever a real
