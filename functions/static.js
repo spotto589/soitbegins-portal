@@ -4668,6 +4668,34 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-modal-panel .tx-review-title{ text-align:center; }
   .buyswap-modal-panel .detail-actions{ justify-content:center; }
   .buyswap-modal-panel .receipt-price-row{ text-align:center; }
+  /* Real coin thumbnail — same art MAINFRAME's own cards use, so the coin
+     you're buying is recognisable rather than just a text label. Hidden
+     until openBuySwapPanel sets a real src for the collection (never a
+     broken-image box for one with no art path). */
+  .buyswap-thumb{
+    display:block;
+    width:64px;
+    height:64px;
+    object-fit:cover;
+    margin:0 auto 0.9rem;
+    border-radius:var(--radius);
+    border:1px solid rgba(var(--collection-accent-rgb), 0.5);
+    box-shadow:0 0 16px rgba(var(--collection-accent-rgb), 0.3);
+  }
+  /* Every real figure in this panel reads in the site's own $PIGEONS
+     green (same convention .pigeons-green-num already uses elsewhere) —
+     reported live as wanting the numbers to stand out, not blend into
+     the plain grey/white field text every other confirm screen uses.
+     Scoped to .buyswap-modal-panel specifically so .df-value/.tx-val's
+     shared rules (used by OFFER/TRANSFER/DELIST/etc, which stay plain)
+     aren't repainted site-wide. */
+  .buyswap-modal-panel .df-value{ color:var(--green); text-shadow:0 0 6px var(--green-glow); }
+  .buyswap-modal-panel .tx-summary .tx-val{ color:var(--green); text-shadow:0 0 6px var(--green-glow); }
+  /* ...except the account address and the liquidity-source label — an
+     address isn't a number, and "AMM P00L"/"0RDER B00K" is a plain-text
+     source name, not a figure, so both stay the panel's normal white. */
+  .buyswap-modal-panel .tx-summary .tx-val-addr{ color:var(--white); text-shadow:none; }
+  #buySwapConfSource{ color:var(--white); text-shadow:none; }
   /* RESULT state — the exciting "you just bought $PIGEONS" receipt, not a
      dense field list. Big green number (matches every other real $PIGEONS
      amount on the site — greenNum), a plain-english unit underneath it
@@ -4705,7 +4733,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:transparent;
     border:none;
     outline:none;
-    color:var(--white);
+    color:var(--green);
     font-family:var(--font-mono);
     font-size:22px;
     font-weight:700;
@@ -4715,7 +4743,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-input::placeholder{ color:var(--grey-disabled); }
   .buyswap-input-wrap:focus-within{ border-color:var(--collection-accent); box-shadow:0 0 0 1px rgba(var(--collection-accent-rgb), 0.4), 0 0 14px rgba(var(--collection-accent-rgb), 0.25); }
   .buyswap-unit{ flex:0 0 auto; font-size:13px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; }
-  .buyswap-max-line{ text-align:center; font-size:11px; letter-spacing:0.05em; color:var(--grey-dim); margin-top:0.5rem; text-transform:uppercase; }
+  /* Available XRP balance — green like every other real figure in this
+     panel (see .df-value's own comment), not just a dim grey caption, so
+     it actually reads as a clear, checkable number. */
+  .buyswap-max-line{ text-align:center; font-size:11px; letter-spacing:0.05em; color:var(--green); text-shadow:0 0 5px var(--green-glow); margin-top:0.5rem; text-transform:uppercase; }
   .buyswap-input-error{ text-align:center; font-size:11px; letter-spacing:0.03em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); margin-top:0.5rem; }
   .buyswap-arrow{ text-align:center; font-size:22px; color:var(--collection-accent); text-shadow:0 0 6px rgba(var(--collection-accent-rgb), 0.5); margin:0.9rem 0; }
   .buyswap-receive-wrap{ border-color:var(--border-mid); }
@@ -4745,7 +4776,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     animation:buyswap-spin 0.7s linear infinite;
   }
   @keyframes buyswap-spin{ to{ transform:rotate(360deg); } }
-  .buyswap-receive-value{ flex:1 1 auto; min-width:0; font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:0.02em; color:var(--grey-dim); text-align:center; }
+  .buyswap-receive-value{ flex:1 1 auto; min-width:0; font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:0.02em; color:var(--green); text-shadow:0 0 6px var(--green-glow); text-align:center; }
   .buyswap-divider{ border-top:1px dashed var(--border-dim); margin:1.25rem 0; }
   /* ---- transaction-review title + plain-English summary — every
      confirm screen shows the raw XRPL TransactionType up top now
@@ -6845,6 +6876,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div id="buySwapModal" style="display:none;">
       <div class="offer-confirm-panel buyswap-modal-panel">
         <div id="buySwapEntryState">
+          <img class="buyswap-thumb" id="buySwapThumb" src="" alt="" style="display:none;">
           <div class="node-eyebrow" id="buySwapTitle">// BUY $P!GE0NS</div>
           <div class="buyswap-trustline-warning" id="buySwapTrustlineWarning" style="display:none;">
             <div class="buyswap-trustline-warning-title" id="buySwapTrustlineWarningTitle"></div>
@@ -6888,7 +6920,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="index-line" id="buySwapStatus">QU0TE C0M!NG S00N — SWAP N0T YET L!VE.</div>
           <div class="detail-actions">
             <button class="secondary-btn" id="buySwapBackBtn">← BACK</button>
-            <button class="action-btn" id="buySwapSignBtn" disabled title="QU0TE N0T YET AVA!LABLE">S!GN & BUY</button>
+            <button class="action-btn" id="buySwapSignBtn" disabled title="QU0TE N0T YET AVA!LABLE">S!GN AND SWAP</button>
           </div>
         </div>
 
@@ -7329,12 +7361,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // popup (openBuySwapPanel — reads only those two fields, never
   // .tradeable) works correctly for all four.
   var COLLECTION_META = {
-    pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true, accent: '#8848f8', accentRgb: '136,72,248' },
-    phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: false, accent: '#ff5a1f', accentRgb: '255,90,31' },
-    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: false, accent: '#a6632e', accentRgb: '166,99,46' },
-    seal: { label: 'SEAL', itemLabel: 'SEAL', tradeable: false, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', hasAmm: false, accent: '#2d8ca8', accentRgb: '45,140,168' },
-    fuzzy: { label: 'FUZZY', itemLabel: 'FUZZY', tradeable: false, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: false, accent: '#7a421a', accentRgb: '122,66,26' },
-    conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: false, accent: '#f000e4', accentRgb: '240,0,228' }
+    pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true, accent: '#8848f8', accentRgb: '136,72,248', thumb: '/assets/mainframe/pigeons.jpeg?v=2' },
+    phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: false, accent: '#ff5a1f', accentRgb: '255,90,31', thumb: '/assets/mainframe/phnix.jpeg?v=2' },
+    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: false, accent: '#a6632e', accentRgb: '166,99,46', thumb: '/assets/mainframe/teddy.jpeg?v=2' },
+    seal: { label: 'SEAL', itemLabel: 'SEAL', tradeable: false, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', hasAmm: false, accent: '#2d8ca8', accentRgb: '45,140,168', thumb: '/assets/mainframe/seal.jpeg?v=2' },
+    fuzzy: { label: 'FUZZY', itemLabel: 'FUZZY', tradeable: false, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: false, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2' },
+    conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: false, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' }
   };
 
   var el = {};
@@ -7387,7 +7419,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenListResult','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
    'buyConfirmModal','screenBuyConfirm','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
-   'buySwapModal','buySwapEntryState','buySwapTitle','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
+   'buySwapModal','buySwapEntryState','buySwapThumb','buySwapTitle','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapDexLink','buySwapPayRow',
    'buySwapConfirmState','buySwapConfTxType','buySwapConfAccount','buySwapConfSendMax','buySwapConfAmount','buySwapConfEstimate','buySwapConfRate','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
    'buySwapResultState','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
@@ -11250,12 +11282,25 @@ const SWAP_HTML = `<!DOCTYPE html>
       showBuySwapInputError('ENTER AN AM0UNT GREATER THAN 0.');
       return null;
     }
+    // Exceeding balance no longer blocks the quote itself — reported live
+    // as wanting "how much would I get" to keep working for any amount
+    // typed in, with only actually SIGNING gated on real balance (see
+    // buySwapExceedsBalance, checked separately in fetchBuySwapQuote's own
+    // success handler below). Still surfaces the same error text so it's
+    // clear signing won't be possible yet.
     if (buySwapMaxDrops !== null && drops > buySwapMaxDrops){
-      showBuySwapInputError('EXCEEDS YOUR AVA!LABLE XRP BALANCE.');
-      return null;
+      showBuySwapInputError('EXCEEDS YOUR AVA!LABLE XRP BALANCE — QU0TE ST!LL SH0WN BEL0W.');
+    } else {
+      clearBuySwapInputError();
     }
-    clearBuySwapInputError();
     return drops;
+  }
+  // Separate from validateBuySwapInput's own structural checks (empty/
+  // invalid/zero) — this ONLY answers "can they actually sign this", so
+  // the quote itself can keep working regardless (see validateBuySwapInput's
+  // own comment above).
+  function buySwapExceedsBalance(drops){
+    return buySwapMaxDrops !== null && drops !== null && drops > buySwapMaxDrops;
   }
 
   // 0.5% — matches the SL!PPAGE figure shown in the panel itself. Applied
@@ -11337,12 +11382,20 @@ const SWAP_HTML = `<!DOCTYPE html>
       var minReceived = data.receivePigeons * (10000 - BUYSWAP_SLIPPAGE_BPS) / 10000;
       el.buySwapMinReceived.textContent = minReceived.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + quoteTokenLabel;
       // STAGE 5: a valid, live, trustline-confirmed quote is finally
-      // enough to let SIGN & BUY actually be clicked — but clicking it
+      // enough to let SIGN AND SWAP actually be clicked — but clicking it
       // only opens the REVIEW screen (buyswap-prepare.js re-derives
       // everything from scratch server-side); it still doesn't sign or
-      // call Xaman anywhere.
-      el.buySwapSignBtn.disabled = false;
-      el.buySwapSignBtn.title = 'REV!EW THE EXACT TRANSACT!0N BEF0RE ANYTH!NG !S S!GNED';
+      // call Xaman anywhere. Gated separately on real balance too — the
+      // quote itself still shows above regardless (reported live as
+      // wanting "how much would I get" to keep working for any amount),
+      // only SIGNING needs the wallet to actually be able to afford it.
+      if (buySwapExceedsBalance(drops)){
+        el.buySwapSignBtn.disabled = true;
+        el.buySwapSignBtn.title = 'EXCEEDS Y0UR AVA!LABLE XRP BALANCE';
+      } else {
+        el.buySwapSignBtn.disabled = false;
+        el.buySwapSignBtn.title = 'REV!EW THE EXACT TRANSACT!0N BEF0RE ANYTH!NG !S S!GNED';
+      }
       startBuySwapAgeTicker();
     }).catch(function(){
       if (myReq !== buySwapReqId) return;
@@ -11449,6 +11502,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.buySwapModal.style.setProperty('--collection-accent', meta.accent);
     el.buySwapModal.style.setProperty('--collection-accent-rgb', meta.accentRgb);
     el.buySwapTitle.textContent = '// BUY ' + meta.tokenLabel;
+    // Real coin thumbnail — same art MAINFRAME's own card uses for this
+    // collection (see COLLECTION_META's own thumb field), so the popup
+    // shows what you're actually buying rather than just a text label.
+    if (meta.thumb){
+      el.buySwapThumb.src = meta.thumb;
+      el.buySwapThumb.alt = meta.tokenLabel;
+      el.buySwapThumb.style.display = '';
+    } else {
+      el.buySwapThumb.style.display = 'none';
+    }
     el.buySwapReceiveUnit.textContent = meta.tokenLabel.replace(/^\\$/, '');
     if (meta.tokenIssuer){
       el.buySwapIssuerAddr.setAttribute('data-full', meta.tokenIssuer);
@@ -11461,6 +11524,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     updateBuySwapMaxLine();
     buySwapHasTrustline = null;
     buySwapDexUrl = null;
+    buySwapReviewDrops = null;
+    // Manual-retry-only now (see requestBuySwapPayload's own comment) —
+    // reset to its default hidden/idle state on every fresh open, not
+    // whatever it was left showing from a previous failed attempt.
+    el.buySwapOpenXamanBtn.disabled = false;
+    el.buySwapOpenXamanBtn.textContent = 'TRY AGA!N';
+    el.buySwapOpenXamanBtn.style.display = 'none';
     applyBuySwapGate();
     showBuySwapState('entry');
     el.buySwapModal.style.display = 'flex';
@@ -11617,12 +11687,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.buySwapBackBtn.addEventListener('click', closeBuySwapModal);
 
-  // SIGN & BUY opens the REVIEW screen — the actual prepare call
-  // re-derives the quote/trustline/balance from scratch server-side
-  // (buyswap-prepare.js), same "never trust the client's own numbers"
-  // rule every other transaction-prep endpoint in this app follows. No
-  // Xaman payload is created here yet.
-  var buySwapReviewDrops = null; // the exact drops string OPEN XAMAN will request a payload for
+  // SIGN AND SWAP now opens Xaman automatically instead of landing on the
+  // REVIEW screen and waiting for a SECOND click on a separate 0PEN XAMAN
+  // button — reported live as wanting that merged into one action. The
+  // review screen still shows first (still re-derived from scratch
+  // server-side via buyswap-prepare.js, same "never trust the client's
+  // own numbers" rule every other transaction-prep endpoint follows) so
+  // everything about to be signed is genuinely visible before Xaman opens
+  // on top of it, it just no longer waits on its own click to proceed.
+  var buySwapReviewDrops = null; // the exact drops string requestBuySwapPayload will request a payload for
   var buySwapUuid = null;
   var buySwapXamanTab = null;
   var buySwapPollTimer = null;
@@ -11633,14 +11706,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (drops === null) return; // shouldn't happen — button is only enabled after a valid quote
     el.buySwapSignBtn.disabled = true;
     el.buySwapSignBtn.textContent = 'PREPAR!NG...';
+    // Opened HERE, synchronously inside the real click handler — pointed
+    // at the actual Xaman sign URL later once buyswap-payload resolves
+    // (see requestBuySwapPayload). Opening it any later, inside a .then()
+    // callback, is what browsers treat as an untrusted popup and block.
+    var xamanTab = openXamanPopup();
     fetch('/api/buyswap-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ xrpDrops: drops.toString(), collection: buySwapCollection })
     }).then(function(r){ return r.json().then(function(data){ return { status: r.status, data: data }; }); }).then(function(res){
       el.buySwapSignBtn.disabled = false;
-      el.buySwapSignBtn.textContent = 'S!GN & BUY';
+      el.buySwapSignBtn.textContent = 'S!GN AND SWAP';
       if (res.status !== 200 || !res.data || !res.data.ok){
+        if (xamanTab) xamanTab.close();
         var msg = (res.data && res.data.error) || 'unknown_error';
         alert('C0ULD N0T PREPARE THE SWAP — ' + msg + '. TRY AGA!N.');
         // The exact state that failed (quote moved, trustline lost, balance
@@ -11667,12 +11746,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buySwapConfRate.textContent = display.rate.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + confTokenLabel + ' / XRP';
       el.buySwapConfSource.textContent = display.source === 'amm' ? 'AMM P00L' : '0RDER B00K';
       el.buySwapConfirmStatus.textContent = '';
-      el.buySwapOpenXamanBtn.disabled = false;
-      el.buySwapOpenXamanBtn.innerHTML = '0PEN XAMAN';
       showBuySwapState('confirm');
+      // Straight into requesting the actual sign payload — no separate
+      // click needed. requestBuySwapPayload still drives el.buySwapOpenXamanBtn
+      // as a live status readout (REQUEST!NG.../WA!T!NG F0R S!GNATURE...),
+      // it just isn't the thing that triggers this any more; it re-enables
+      // itself as a manual retry only if something actually fails.
+      requestBuySwapPayload(xamanTab);
     }).catch(function(){
+      if (xamanTab) xamanTab.close();
       el.buySwapSignBtn.disabled = false;
-      el.buySwapSignBtn.textContent = 'S!GN & BUY';
+      el.buySwapSignBtn.textContent = 'S!GN AND SWAP';
       alert('C0ULD N0T REACH THE SERVER — TRY AGA!N.');
     });
   });
@@ -11681,17 +11765,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     showBuySwapState('entry');
   });
 
-  // STAGE 6: the tab is opened HERE, synchronously inside the click
-  // handler, and only pointed at the real Xaman URL once the fetch
-  // resolves — opening it inside the .then() callback instead is what
-  // browsers treat as an untrusted popup and silently block (see the
-  // identical pattern/comment on the swap-offer OPEN XAMAN handler above).
-  el.buySwapOpenXamanBtn.addEventListener('click', function(){
-    if (!buySwapReviewDrops) return;
+  // Requests the real Xaman sign payload and navigates an ALREADY-OPEN
+  // tab to it (xamanTab — opened synchronously back in the real click
+  // handler that led here, see its own comment on why that timing
+  // matters). Shared by the automatic SIGN AND SWAP flow above and
+  // el.buySwapOpenXamanBtn's own click handler below, which now only
+  // exists as a manual retry if the automatic request failed (the button
+  // stays disabled/hidden otherwise — see its own comment).
+  function requestBuySwapPayload(xamanTab){
     el.buySwapOpenXamanBtn.disabled = true;
-    el.buySwapOpenXamanBtn.textContent = 'REQUEST!NG...';
-    el.buySwapConfirmStatus.textContent = '';
-    var xamanTab = openXamanPopup();
+    el.buySwapOpenXamanBtn.style.display = 'none';
+    el.buySwapConfirmStatus.textContent = 'REQUEST!NG S!GN!NG REQUEST...';
     fetch('/api/buyswap-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -11701,22 +11785,30 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!res.ok || !res.data.ok){
         if (xamanTab) xamanTab.close();
         el.buySwapOpenXamanBtn.disabled = false;
-        el.buySwapOpenXamanBtn.textContent = '0PEN XAMAN';
+        el.buySwapOpenXamanBtn.textContent = 'TRY AGA!N';
+        el.buySwapOpenXamanBtn.style.display = '';
         el.buySwapConfirmStatus.textContent = 'C0ULD N0T PREPARE THE S!GN REQUEST — ' + ((res.data && res.data.error) || 'unknown_error') + '. TRY AGA!N.';
         return;
       }
       buySwapUuid = res.data.uuid;
       navigateXamanPopup(xamanTab, res.data.next.always);
       buySwapXamanTab = xamanTab;
-      el.buySwapOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.buySwapConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollBuySwapStatus();
     }).catch(function(){
       if (xamanTab) xamanTab.close();
       el.buySwapOpenXamanBtn.disabled = false;
-      el.buySwapOpenXamanBtn.textContent = '0PEN XAMAN';
+      el.buySwapOpenXamanBtn.textContent = 'TRY AGA!N';
+      el.buySwapOpenXamanBtn.style.display = '';
       el.buySwapConfirmStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
+  }
+  // Manual retry only (see requestBuySwapPayload's own comment) — opens
+  // its OWN fresh tab, since whichever one SIGN AND SWAP opened may
+  // already be closed/dead by the time this is ever actually clickable.
+  el.buySwapOpenXamanBtn.addEventListener('click', function(){
+    if (!buySwapReviewDrops) return;
+    requestBuySwapPayload(openXamanPopup());
   });
 
   // Never reports success on Xaman's word alone — buyswap-status.js only
