@@ -841,8 +841,10 @@ export async function clearPendingListing(kv, uuid) {
 const PIGEONS_DEXSCREENER_PAIR = '504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp';
 // v2: switched from top-of-book best-ask to DexScreener's trade-derived
 // price, and the cached shape grew (usdPerPigeon, dexUrl alongside
-// xrpPerPigeon) — bump the key again if the shape changes further.
-const PIGEONS_RATE_CACHE_KEY = 'pswap:pigeonsrate:v2';
+// xrpPerPigeon) — bump the key again if the shape changes further. v3:
+// marketCapXrp/liquidityXrp (derived, XRP-converted) replaced with
+// marketCapUsd/liquidityUsd (DexScreener's own USD figures, unconverted).
+const PIGEONS_RATE_CACHE_KEY = 'pswap:pigeonsrate:v3';
 const PIGEONS_RATE_CACHE_TTL_SECONDS = 60;
 
 async function fetchTokenXrpRateFromBookOffers(tokenConfig) {
@@ -1257,7 +1259,7 @@ export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
     if (cached !== null) return JSON.parse(cached);
   }
   const dexPair = COLLECTION_DEXSCREENER_PAIRS[collectionKey] || dexscreenerPairFor(cfg.tokenConfig);
-  let result = { xrpPerPigeon: null, usdPerPigeon: null, marketCapXrp: null, liquidityXrp: null, dexUrl: dexPair ? 'https://dexscreener.com/xrpl/' + dexPair : null };
+  let result = { xrpPerPigeon: null, usdPerPigeon: null, marketCapUsd: null, liquidityUsd: null, dexUrl: dexPair ? 'https://dexscreener.com/xrpl/' + dexPair : null };
   if (dexPair) {
     try {
       const res = await fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + dexPair);
@@ -1269,25 +1271,18 @@ export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
         const usdVal = parseFloat(pair.priceUsd);
         if (usdVal > 0) result.usdPerPigeon = usdVal;
         if (pair.url) result.dexUrl = pair.url;
-        // DexScreener's own marketCap (falls back to fdv when marketCap
-        // isn't populated) comes back in USD — converted to XRP via the
-        // pair's own priceNative/priceUsd ratio (XRP per USD) rather than
-        // a second lookup, so it's consistent with the price shown right
-        // next to it.
+        // marketCap/liquidity taken straight off DexScreener's own pair
+        // object, in USD, with no XRP conversion applied — matches
+        // whatever the real DexScreener page for this pair shows exactly
+        // (reported live as the previous XRP-converted numbers reading as
+        // "wrong" next to the real page), and it's the one page these
+        // numbers are always cross-checked against anyway (see dexUrl,
+        // now surfaced as a real link on every card). marketCap falls
+        // back to fdv when marketCap isn't populated, same as before.
         const capUsd = parseFloat(pair.marketCap != null ? pair.marketCap : pair.fdv);
-        if (capUsd > 0 && nativeVal > 0 && usdVal > 0) result.marketCapXrp = capUsd * (nativeVal / usdVal);
-        // Pool liquidity — pair.liquidity.quote is already the XRP side of
-        // the pool (the pair is always TOKEN/XRP, XRP as quote) straight
-        // from DexScreener, a real on-chain figure rather than something
-        // derived/estimated, so it's used directly over the usd field with
-        // no unit conversion needed.
-        const liq = pair.liquidity;
-        const liqQuote = liq ? parseFloat(liq.quote) : NaN;
-        if (liqQuote > 0) result.liquidityXrp = liqQuote;
-        else {
-          const liqUsd = liq ? parseFloat(liq.usd) : NaN;
-          if (liqUsd > 0 && nativeVal > 0 && usdVal > 0) result.liquidityXrp = liqUsd * (nativeVal / usdVal);
-        }
+        if (capUsd > 0) result.marketCapUsd = capUsd;
+        const liqUsd = pair.liquidity ? parseFloat(pair.liquidity.usd) : NaN;
+        if (liqUsd > 0) result.liquidityUsd = liqUsd;
       }
     } catch (e) { /* fall through to book-offers fallback below */ }
   }

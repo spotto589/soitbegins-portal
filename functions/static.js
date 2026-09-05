@@ -5555,6 +5555,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:0.3rem;
   }
   .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
+  /* Real per-collection DexScreener link — hidden until its own fetch
+     resolves a real dexUrl (see the stats-fetch loop in the script), same
+     "never show as if verified before it's real" rule dexUrl's own
+     comment in _shared.js already follows. */
+  .mainframe-card-dex-link{
+    display:block;
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:0.1em;
+    color:rgba(var(--card-accent, 61,243,236), 1);
+    text-decoration:none;
+    margin-top:0.35rem;
+  }
+  .mainframe-card-dex-link:hover{ text-decoration:underline; }
   .mainframe-card-tag{
     display:inline-block;
     font-size:11px;
@@ -5698,6 +5712,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$P!GE0NS</div>
             <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
+            <a class="mainframe-card-dex-link" id="mainframeDexPigeons" href="#" target="_blank" rel="noopener" style="display:none;">DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="pigeons">BUY $P!GE0NS</button>
           </div>
         </div>
@@ -5712,6 +5727,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$PHN!X</div>
             <div class="mainframe-card-stats" id="mainframeStatsPhnixs"></div>
+            <a class="mainframe-card-dex-link" id="mainframeDexPhnixs" href="#" target="_blank" rel="noopener" style="display:none;">DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="phnixs">BUY $PHN!X</button>
           </div>
         </div>
@@ -5729,6 +5745,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$TEDDY</div>
             <div class="mainframe-card-stats" id="mainframeStatsTeddybg"></div>
+            <a class="mainframe-card-dex-link" id="mainframeDexTeddybg" href="#" target="_blank" rel="noopener" style="display:none;">DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="teddybg">BUY $TEDDY</button>
           </div>
         </div>
@@ -5738,6 +5755,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$SEAL</div>
             <div class="mainframe-card-stats" id="mainframeStatsSeal"></div>
+            <a class="mainframe-card-dex-link" id="mainframeDexSeal" href="#" target="_blank" rel="noopener" style="display:none;">DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="seal">BUY $SEAL</button>
           </div>
         </div>
@@ -5747,6 +5765,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$FUZZY</div>
             <div class="mainframe-card-stats" id="mainframeStatsFuzzy"></div>
+            <a class="mainframe-card-dex-link" id="mainframeDexFuzzy" href="#" target="_blank" rel="noopener" style="display:none;">DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="fuzzy">BUY $FUZZY</button>
           </div>
         </div>
@@ -5756,6 +5775,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$C0NSP!RACY</div>
             <div class="mainframe-card-stats" id="mainframeStatsConspiracy"></div>
+            <a class="mainframe-card-dex-link" id="mainframeDexConspiracy" href="#" target="_blank" rel="noopener" style="display:none;">DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="conspiracy">BUY $CNS</button>
           </div>
         </div>
@@ -7242,7 +7262,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
-   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
+   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
+   'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
@@ -13257,6 +13278,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       openBuySwapPanel(buyBtn.getAttribute('data-collection'));
       return;
     }
+    // DEXSCREENER link — a real <a target="_blank">, its own navigation
+    // already happens on click; just stop it from ALSO bubbling into the
+    // card's own enterMainframeCollection below (same double-fire issue
+    // BUY has, see its own comment above).
+    if (e.target.closest('.mainframe-card-dex-link')){
+      e.stopPropagation();
+      return;
+    }
     var card = e.target.closest('.mainframe-card[data-collection]');
     if (card) enterMainframeCollection(card.getAttribute('data-collection'));
   });
@@ -13309,45 +13338,54 @@ const SWAP_HTML = `<!DOCTYPE html>
   // collection, so the bottom-of-card line reads identically everywhere.
   // Fires once, at load, regardless of whether MAINFRAME is the visible
   // screen right now — cheap, and means the numbers are already there the
-  // instant you land back on it. Line reads H0LDERS :: MARKETCAP :: PRICE
-  // (XRP) — holders comes from the NFT-collection stats endpoint (only
-  // real for collections with a Deeptide shop slug, see hasShopSlug
-  // below), marketcap/liquidity come from the token's own DexScreener-
-  // derived rate (fetchPigeonsXrpRate's own marketCapXrp/liquidityXrp, see
-  // _shared.js) which works off the token's currency+issuer alone, so
-  // every collection gets it even the three with no real NFT shop slug
-  // yet (SEAL/FUZZY/C0NSP!RACY). Both money figures shown in K/M-
-  // abbreviated XRP (formatXrpAbbrev) — full precision would run several
-  // digits deep and never fit the small card width.
-  function formatXrpAbbrev(n){
-    if (n >= 1000000) return (n / 1000000).toLocaleString(undefined, { maximumFractionDigits: 2 }) + 'M';
-    if (n >= 1000) return (n / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'K';
-    return Math.round(n).toLocaleString();
+  // instant you land back on it. Line reads <N># NFT H0LDERS :: MARKETCAP
+  // :: L!QU!D!TY — holders comes from the NFT-collection stats endpoint
+  // (only real for collections with a Deeptide shop slug, see hasShopSlug
+  // below), marketcap/liquidity are DexScreener's own USD figures, taken
+  // straight off the same pair fetchPigeonsXrpRate already resolves (see
+  // _shared.js) with NO unit conversion — reported live as the previous
+  // XRP-converted numbers reading as "wrong" against the real DexScreener
+  // page, so this now shows exactly what that page shows, and each card
+  // links straight to it (mainframeDex* below) to make that checkable.
+  function formatUsdAbbrev(n){
+    if (n >= 1000000) return '$' + (n / 1000000).toLocaleString(undefined, { maximumFractionDigits: 2 }) + 'M';
+    if (n >= 1000) return '$' + (n / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'K';
+    return '$' + Math.round(n).toLocaleString();
   }
   [
-    { collection: 'pigeons', target: 'mainframeStatsPigeons', hasShopSlug: true },
-    { collection: 'phnixs', target: 'mainframeStatsPhnixs', hasShopSlug: true },
+    { collection: 'pigeons', target: 'mainframeStatsPigeons', dexTarget: 'mainframeDexPigeons', hasShopSlug: true },
+    { collection: 'phnixs', target: 'mainframeStatsPhnixs', dexTarget: 'mainframeDexPhnixs', hasShopSlug: true },
     // TEDDY has a real shopSlug ('teddybg'), so it gets real holders same
     // as PIGEONS/PHNIX. SEAL/FUZZY/C0NSP!RACY don't (no real Deeptide shop
     // slug exists for any of them yet, see COLLECTIONS in pigeons.js) —
     // they skip the stats:1 call entirely (it would just 400/return
     // nothing useful against a null slug) but still get their real
     // marketcap/liquidity below.
-    { collection: 'teddybg', target: 'mainframeStatsTeddybg', hasShopSlug: true },
-    { collection: 'seal', target: 'mainframeStatsSeal', hasShopSlug: false },
-    { collection: 'fuzzy', target: 'mainframeStatsFuzzy', hasShopSlug: false },
-    { collection: 'conspiracy', target: 'mainframeStatsConspiracy', hasShopSlug: false }
+    { collection: 'teddybg', target: 'mainframeStatsTeddybg', dexTarget: 'mainframeDexTeddybg', hasShopSlug: true },
+    { collection: 'seal', target: 'mainframeStatsSeal', dexTarget: 'mainframeDexSeal', hasShopSlug: false },
+    { collection: 'fuzzy', target: 'mainframeStatsFuzzy', dexTarget: 'mainframeDexFuzzy', hasShopSlug: false },
+    { collection: 'conspiracy', target: 'mainframeStatsConspiracy', dexTarget: 'mainframeDexConspiracy', hasShopSlug: false }
   ].forEach(function(cfg){
     Promise.all([
       cfg.hasShopSlug ? api({ stats: 1, collection: cfg.collection }).catch(function(){ return {}; }) : Promise.resolve({}),
       api({ pigeonsRate: 1, collection: cfg.collection }).catch(function(){ return {}; })
     ]).then(function(results){
       var stats = results[0] || {}, rate = results[1] || {};
-      if (stats.holders == null && rate.marketCapXrp == null && rate.liquidityXrp == null) return;
+      // usdPerPigeon only ever gets set inside a real, resolved DexScreener
+      // pair (see fetchPigeonsXrpRate) — gating the link on it, not just on
+      // dexUrl being non-null, keeps a collection with no real indexed pool
+      // yet (C0NSP!RACY, confirmed live as having none) from showing a
+      // constructed link that 404s, same "never shown as if verified"
+      // rule dexUrl's own comment in _shared.js already follows.
+      if (rate.dexUrl && rate.usdPerPigeon != null && el[cfg.dexTarget]){
+        el[cfg.dexTarget].href = rate.dexUrl;
+        el[cfg.dexTarget].style.display = '';
+      }
+      if (stats.holders == null && rate.marketCapUsd == null && rate.liquidityUsd == null) return;
       var parts = [];
       if (stats.holders != null) parts.push('<span class="hi">' + stats.holders.toLocaleString() + '</span># NFT H0LDERS');
-      if (rate.marketCapXrp != null) parts.push('<span class="hi">' + formatXrpAbbrev(rate.marketCapXrp) + '</span> MARKETCAP');
-      if (rate.liquidityXrp != null) parts.push('<span class="hi">' + formatXrpAbbrev(rate.liquidityXrp) + '</span> L!QU!D!TY');
+      if (rate.marketCapUsd != null) parts.push('<span class="hi">' + formatUsdAbbrev(rate.marketCapUsd) + '</span> MARKETCAP');
+      if (rate.liquidityUsd != null) parts.push('<span class="hi">' + formatUsdAbbrev(rate.liquidityUsd) + '</span> L!QU!D!TY');
       el[cfg.target].innerHTML = parts.join(' :: ');
     });
   });
