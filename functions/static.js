@@ -5712,7 +5712,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$P!GE0NS</div>
             <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
-            <a class="mainframe-card-dex-link" id="mainframeDexPigeons" href="#" target="_blank" rel="noopener" style="display:none;">DEXSCREENER ↗</a>
+            <a class="mainframe-card-dex-link" id="mainframeDexPigeons" href="#" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="pigeons">BUY $P!GE0NS</button>
           </div>
         </div>
@@ -5727,7 +5727,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$PHN!X</div>
             <div class="mainframe-card-stats" id="mainframeStatsPhnixs"></div>
-            <a class="mainframe-card-dex-link" id="mainframeDexPhnixs" href="#" target="_blank" rel="noopener" style="display:none;">DEXSCREENER ↗</a>
+            <a class="mainframe-card-dex-link" id="mainframeDexPhnixs" href="#" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="phnixs">BUY $PHN!X</button>
           </div>
         </div>
@@ -5745,7 +5745,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$TEDDY</div>
             <div class="mainframe-card-stats" id="mainframeStatsTeddybg"></div>
-            <a class="mainframe-card-dex-link" id="mainframeDexTeddybg" href="#" target="_blank" rel="noopener" style="display:none;">DEXSCREENER ↗</a>
+            <a class="mainframe-card-dex-link" id="mainframeDexTeddybg" href="#" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="teddybg">BUY $TEDDY</button>
           </div>
         </div>
@@ -5755,7 +5755,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$SEAL</div>
             <div class="mainframe-card-stats" id="mainframeStatsSeal"></div>
-            <a class="mainframe-card-dex-link" id="mainframeDexSeal" href="#" target="_blank" rel="noopener" style="display:none;">DEXSCREENER ↗</a>
+            <a class="mainframe-card-dex-link" id="mainframeDexSeal" href="#" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="seal">BUY $SEAL</button>
           </div>
         </div>
@@ -5765,7 +5765,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$FUZZY</div>
             <div class="mainframe-card-stats" id="mainframeStatsFuzzy"></div>
-            <a class="mainframe-card-dex-link" id="mainframeDexFuzzy" href="#" target="_blank" rel="noopener" style="display:none;">DEXSCREENER ↗</a>
+            <a class="mainframe-card-dex-link" id="mainframeDexFuzzy" href="#" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="fuzzy">BUY $FUZZY</button>
           </div>
         </div>
@@ -5775,7 +5775,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$C0NSP!RACY</div>
             <div class="mainframe-card-stats" id="mainframeStatsConspiracy"></div>
-            <a class="mainframe-card-dex-link" id="mainframeDexConspiracy" href="#" target="_blank" rel="noopener" style="display:none;">DEXSCREENER ↗</a>
+            <a class="mainframe-card-dex-link" id="mainframeDexConspiracy" href="#" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
             <button type="button" class="mainframe-card-buy" data-collection="conspiracy">BUY $CNS</button>
           </div>
         </div>
@@ -13338,7 +13338,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // collection, so the bottom-of-card line reads identically everywhere.
   // Fires once, at load, regardless of whether MAINFRAME is the visible
   // screen right now — cheap, and means the numbers are already there the
-  // instant you land back on it. Line reads <N># NFT H0LDERS :: MARKETCAP
+  // instant you land back on it. Line reads <N> NFT H0LDERS :: MARKETCAP
   // :: L!QU!D!TY — holders comes from the NFT-collection stats endpoint
   // (only real for collections with a Deeptide shop slug, see hasShopSlug
   // below), marketcap/liquidity are DexScreener's own USD figures, taken
@@ -13383,7 +13383,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       if (stats.holders == null && rate.marketCapUsd == null && rate.liquidityUsd == null) return;
       var parts = [];
-      if (stats.holders != null) parts.push('<span class="hi">' + stats.holders.toLocaleString() + '</span># NFT H0LDERS');
+      if (stats.holders != null) parts.push('<span class="hi">' + stats.holders.toLocaleString() + '</span> NFT H0LDERS');
       if (rate.marketCapUsd != null) parts.push('<span class="hi">' + formatUsdAbbrev(rate.marketCapUsd) + '</span> MARKETCAP');
       if (rate.liquidityUsd != null) parts.push('<span class="hi">' + formatUsdAbbrev(rate.liquidityUsd) + '</span> L!QU!D!TY');
       el[cfg.target].innerHTML = parts.join(' :: ');
