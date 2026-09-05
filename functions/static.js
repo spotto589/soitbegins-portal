@@ -4863,19 +4863,35 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-tx-link:hover{ color:var(--white); }
   .buyswap-row{ max-width:100%; margin:0 auto; }
   .buyswap-label{ display:block; text-align:center; font-size:11px; letter-spacing:0.2em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.5rem; }
+  /* position:relative anchors .buyswap-trailing (the CLEAR ×/unit, on
+     the PAY row; just the unit on RECE!VE) — pulled out of normal flow
+     entirely now (see its own comment) so it can never compete with the
+     actual value for centering. */
   .buyswap-input-wrap{
+    position:relative;
     display:flex;
     align-items:center;
     justify-content:center;
-    gap:0.6rem;
     background:#000;
     border:1px solid rgba(var(--collection-accent-rgb), 0.4);
     border-radius:var(--radius);
     padding:0.9rem 1rem;
     transition:border-color 0.15s ease, box-shadow 0.15s ease;
   }
+  /* The actual bug: whether the CLEAR ×/unit sat in the same flex row as
+     the value (stretching it, or — even shrunk to its own typed length —
+     still sharing the row as a two/three-item GROUP that only centers as
+     a whole, leaving the value itself left of the row's true centre by
+     however wide the trailing decoration is) neither one actually
+     centers the number people are looking at, only the group including
+     its decoration (confirmed live both ways: reported as "not centred,
+     feels wonky"). Pulling the trailing group out to position:absolute
+     (see .buyswap-trailing) removes it from this calculation entirely —
+     the value is now the ONLY thing in flow, full width, so its own
+     text-align:center centers it against the real row, not a row minus
+     whatever the unit happens to measure. */
   .buyswap-input{
-    flex:1 1 auto;
+    width:100%;
     min-width:0;
     background:transparent;
     border:none;
@@ -4889,6 +4905,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .buyswap-input::placeholder{ color:var(--grey-disabled); }
   .buyswap-input-wrap:focus-within{ border-color:var(--collection-accent); box-shadow:0 0 0 1px rgba(var(--collection-accent-rgb), 0.4), 0 0 14px rgba(var(--collection-accent-rgb), 0.25); }
+  /* The CLEAR ×/unit (PAY row) or just the unit (RECE!VE row) — pinned
+     to the right edge, entirely out of normal flow, so it can never
+     again share a flex row with the actual value and throw off its
+     centering (see .buyswap-input's own comment). The clear button stays
+     a real, clickable element; only its LAYOUT is taken out of flow. */
+  .buyswap-trailing{
+    position:absolute;
+    right:0.9rem;
+    top:50%;
+    transform:translateY(-50%);
+    display:flex;
+    align-items:center;
+    gap:0.3rem;
+  }
   .buyswap-unit{ flex:0 0 auto; font-size:13px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; }
   /* Available XRP balance — green like every other real figure in this
      panel (see .df-value's own comment), not just a dim grey caption, so
@@ -4961,7 +4991,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-width:3px;
     margin-right:0;
   }
-  .buyswap-receive-value{ flex:1 1 auto; min-width:0; font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:0.02em; color:var(--green); text-shadow:0 0 6px var(--green-glow); text-align:center; }
+  /* Same fix as .buyswap-input above — the unit (CNS/P!GE0NS/etc) now
+     lives in .buyswap-trailing, out of flow, so this is the only real
+     flow content and centers against the row's true width. */
+  .buyswap-receive-value{ width:100%; min-width:0; font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:0.02em; color:var(--green); text-shadow:0 0 6px var(--green-glow); text-align:center; }
   .buyswap-divider{ border-top:1px dashed var(--border-dim); margin:1.25rem 0; }
   /* ---- transaction-review title + plain-English summary — every
      confirm screen shows the raw XRPL TransactionType up top now
@@ -7163,8 +7196,10 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="buyswap-label">Y0U PAY</span>
             <div class="buyswap-input-wrap">
               <input class="buyswap-input" id="buySwapXrpInput" type="text" inputmode="decimal" placeholder="0.00" autocomplete="off">
-              <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
-              <span class="buyswap-unit">XRP</span>
+              <div class="buyswap-trailing">
+                <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
+                <span class="buyswap-unit">XRP</span>
+              </div>
             </div>
             <div class="buyswap-max-line" id="buySwapMaxLine" style="display:none;"></div>
             <div class="buyswap-input-error" id="buySwapInputError" style="display:none;"></div>
@@ -7174,7 +7209,9 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="buyswap-label">Y0U RECE!VE</span>
             <div class="buyswap-input-wrap buyswap-receive-wrap">
               <span class="buyswap-receive-value" id="buySwapReceiveValue">—</span>
-              <span class="buyswap-unit" id="buySwapReceiveUnit">P!GE0NS</span>
+              <div class="buyswap-trailing">
+                <span class="buyswap-unit" id="buySwapReceiveUnit">P!GE0NS</span>
+              </div>
             </div>
           </div>
           <div class="buyswap-divider"></div>
