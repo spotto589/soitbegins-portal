@@ -1034,15 +1034,33 @@ async function quoteFromOrderBook(tokenConfig, xrpDrops) {
 // Real on-chain AMM pool per collection, keyed by TRADEABLE_COLLECTIONS'
 // own key — deliberately NOT part of that config object itself (this file
 // declares PIGEONS_AMM_ACCOUNT further down than TRADEABLE_COLLECTIONS,
-// so referencing it there would hit the temporal dead zone). Only
-// $PIGEONS has a confirmed real pool (see PIGEONS_AMM_ACCOUNT's own
-// comment) — every other collection quotes order-book-only, which is a
-// completely normal, real way to buy on the XRPL DEX and needs no special
-// account at all, just the token's own currency/issuer (already in
-// TRADEABLE_COLLECTIONS). Add an entry here only once a collection's real
-// AMM pool account has been independently confirmed live, same bar
-// PIGEONS_AMM_ACCOUNT's own comment describes — never guessed.
-const COLLECTION_AMM_ACCOUNTS = { pigeons: PIGEONS_AMM_ACCOUNT };
+// so referencing it there would hit the temporal dead zone). Add an entry
+// here only once a collection's real AMM pool account has been
+// independently confirmed live, same bar PIGEONS_AMM_ACCOUNT's own
+// comment describes — never guessed. A collection with no entry here
+// quotes order-book-only, which is a completely normal, real way to buy
+// on the XRPL DEX and needs no special account at all, just the token's
+// own currency/issuer (already in TRADEABLE_COLLECTIONS).
+//
+// PHNIX/TEDDY/SEAL/FUZZY/CNS below were each confirmed live via the
+// public XRPL amm_info RPC (asset=XRP, asset2=<currency,issuer> from
+// TRADEABLE_COLLECTIONS) on 2026-09-05 — every one of them genuinely has
+// its own real AMM pool, not just an order book:
+//   PHNIX  rLJMi56CJMUnELQ5XzSrefn2WuFAwKQmDt  (~208.3K XRP / 25.0B PHNIX)
+//   TEDDY  rU85ZJgHRniDYMfhq7QTcGZDSsggaXryzg  (~18.8K XRP / 117.3B TEDDY)
+//   SEAL   rfqbzs3qQ7BEeBecZxUCU4sdaqeUkxrwdD  (~26.2K XRP / 57.6B SEAL)
+//   FUZZY  rBudi9ArACZzLrReUWKFZmHve13LD7CbrM  (~700.0K XRP / 14.7B FUZZY)
+//   CNS    rCYbfLe3DVpzan3aPmKoha7EukCP1CqCL   (~767 XRP / 7.4B CNS — real
+//          but genuinely thin, so the order book still often wins the
+//          comparison below for this one specifically)
+const COLLECTION_AMM_ACCOUNTS = {
+  pigeons: PIGEONS_AMM_ACCOUNT,
+  phnixs: 'rLJMi56CJMUnELQ5XzSrefn2WuFAwKQmDt',
+  teddybg: 'rU85ZJgHRniDYMfhq7QTcGZDSsggaXryzg',
+  seal: 'rfqbzs3qQ7BEeBecZxUCU4sdaqeUkxrwdD',
+  fuzzy: 'rBudi9ArACZzLrReUWKFZmHve13LD7CbrM',
+  conspiracy: 'rCYbfLe3DVpzan3aPmKoha7EukCP1CqCL'
+};
 
 // collectionKey defaults to 'pigeons' for backward compatibility with
 // existing callers. xrpDropsStr: exact integer drops (string) the user is
