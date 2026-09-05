@@ -1337,6 +1337,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.6rem;
   }
   #dbControlsSticky .db-config-traits-group{
+    display:flex;
+    flex-direction:column;
+    gap:0.6rem;
     flex:1 1 0;
     min-width:0;
     text-align:center;
@@ -1364,23 +1367,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   #dbControlsSticky #sortDropWrap, #dbControlsSticky #traitsHoverWrap{
     width:100%;
     flex:1 1 auto;
-  }
-  /* Real visible feedback for whichever S0RT/TRA!TS are actually applied —
-     #sortRows/#traitRows/#clearTraitsBtn's own trigger boxes moved into
-     #dbControlsSticky (display:none, see its own HTML comment), so this
-     row needs its own copy of the same flex/wrap/gap layout
-     .db-config-traits-section used to provide them for free. */
-  .applied-filters-row{
-    display:flex;
-    flex-direction:row;
-    flex-wrap:wrap;
-    justify-content:flex-start;
-    align-items:center;
-    gap:0.5rem;
-    margin-bottom:0.75rem;
-  }
-  @media (max-width:700px){
-    .applied-filters-row{ justify-content:center; }
   }
   .db-config-traits-section{
     display:flex;
@@ -2676,47 +2662,41 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .trait-chip:hover{ border-color:var(--cyan-dim); color:var(--white); }
   .trait-chip.selected{ background:var(--cyan-faint); color:var(--cyan); border-color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
-  /* Same box treatment as F!LTER BY TRA!TS (#traitsHoverWrap) — width
-     (var(--ctrl-w)), border, radius, padding all matched, so an applied
-     filter reads as the same kind of control instead of a smaller,
-     differently-styled one-off tag. Text is green — a selected/active
-     filter, not just another neutral option. */
+  /* The applied S0RT BY/FILTER-value tag, directly underneath its own
+     trigger box now (see the HTML's own comment) — full width of that
+     box, not the old fixed var(--ctrl-w) pill, and big enough to read
+     the whole "CATEG0RY :: VALUE" (or S0RT's own label) at a glance
+     instead of clipping it with an ellipsis (reported live as wanting
+     this "big and readable... so you can read all of the text"). Wraps
+     onto a second line rather than truncating if it's still too long for
+     one. */
   .trait-row-tag{
-    width:var(--ctrl-w);
+    width:100%;
     box-sizing:border-box;
-    /* Override .trait-row's flex-wrap:wrap — with it on, the label and
-       the remove button wrap onto separate lines the moment they don't
-       both fit unshrunk, making this box roughly double the height of
-       F!LTER BY TRA!TS instead of matching it. nowrap forces them onto
-       one line so the label's own ellipsis (not a line wrap) absorbs
-       the overflow. */
-    flex-wrap:nowrap;
+    align-items:flex-start;
     justify-content:space-between;
+    gap:0.6rem;
     background:transparent;
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    /* Same 13px font-size #traitsHoverWrap's own label uses — its em
-       padding is computed against that 13px, not this box's inherited
-       16px body size, so without matching it here the two boxes' padding
-       (and therefore height) don't actually come out equal despite using
-       the same em values. */
-    font-size:13px;
-    padding:0.9em 1.3em;
+    font-size:17px;
+    padding:0.75em 0.9em;
     transition:border-color 0.15s ease;
   }
   .trait-row-tag:hover{ border-color:var(--green); }
   .trait-tag-label{
     color:var(--green);
     font-family:var(--font-mono);
-    font-size:13px;
-    letter-spacing:0.04em;
+    font-size:17px;
+    font-weight:700;
+    letter-spacing:0.03em;
     text-shadow:0 0 5px var(--green-glow);
-    /* A long CATEGORY :: VALUE combo shouldn't blow out the fixed box
-       width — clip with an ellipsis instead. */
+    /* No ellipsis/nowrap — the whole point of this box is showing the
+       full text, wrapping onto as many lines as it actually needs. */
     min-width:0;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+    white-space:normal;
+    word-break:break-word;
+    text-align:left;
   }
   .trait-row-remove{
     background:transparent;
@@ -2731,13 +2711,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease;
   }
   .trait-row-remove:hover{ background:var(--magenta-faint); }
-  /* Inside an applied tag (.trait-row-tag — traits AND stacked sort
-     criteria alike), the default 2em/24px button is taller than the
-     label's own line box, which was stretching the tag noticeably past
-     F!LTER BY TRA!TS'/S0RT BY's own trigger-box height despite matching
-     padding/font-size everywhere else. Sized to the label's actual line
-     height instead so the two match. */
-  .trait-row-tag .trait-row-remove{ width:19px; height:19px; }
+  /* Sized to match the tag's own bigger 17px label now (was 19px, tuned
+     to the old smaller 13px single-line label) — still compact, just not
+     visually undersized next to the larger readable text beside it. */
+  .trait-row-tag .trait-row-remove{ width:24px; height:24px; flex:0 0 auto; }
   /* Same box dimensions/text size as ADD TRAITS (#traitsHoverWrap) — and
      always pinned to the right edge of the row (margin-left:auto), even
      once trait chips (#traitRows, which now sits before it in the DOM)
@@ -6768,6 +6745,13 @@ const SWAP_HTML = `<!DOCTYPE html>
                 </div>
               </div>
             </div>
+            <!-- The applied S0RT BY tag — directly underneath its own
+                 trigger box now, not off in a shared row under BOTH
+                 boxes (reported live as wanting the selection to "come
+                 up underneath the box" it belongs to). Real ID, so
+                 renderSortTag's own el.sortRows reference needs no
+                 change — this is purely a layout move. -->
+            <div id="sortRows"></div>
           </div>
 
           <!-- ADD TRAITS — its own box underneath S0RT BY, left-aligned
@@ -6798,24 +6782,11 @@ const SWAP_HTML = `<!DOCTYPE html>
                 </div>
               </div>
             </div>
-          </div>
-          </div>
-
-          <!-- Real visible feedback for whichever S0RT/TRA!TS are actually
-               applied right now — #sortRows/#traitRows/#clearTraitsBtn
-               used to live inside #dbControlsSticky itself, which is
-               display:none now that its own trigger buttons moved to the
-               fixed bottom bar (see that div's own comment). Reported live
-               as "filter by traits isn't working" — it WAS applying (the
-               real query/grid updated fine), there was just no longer any
-               visible sign it had: no applied-trait chip, no CLEAR button,
-               nothing. Pulled out into their own always-visible row so
-               that feedback exists again regardless of where the trigger
-               buttons themselves live. -->
-          <div class="applied-filters-row" id="appliedFiltersRow">
-            <div id="sortRows"></div>
+            <!-- Applied trait chips + CLEAR — directly underneath F!LTER
+                 BY TRA!TS' own box, same reasoning as #sortRows above. -->
             <div id="traitRows"></div>
             <button class="clear-traits-btn" id="clearTraitsBtn" style="display:none;">CLEAR</button>
+          </div>
           </div>
 
           <!-- RESET sits between the applied-filters row above and the
