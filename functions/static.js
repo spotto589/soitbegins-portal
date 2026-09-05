@@ -4665,23 +4665,39 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-modal-panel .node-eyebrow{ text-align:center; }
   .buyswap-modal-panel .receipt-badge,
   .buyswap-modal-panel .receipt-status-line{ text-align:center; }
-  .buyswap-modal-panel .tx-review-title{ text-align:center; font-size:19px; margin-bottom:1.4rem; }
   .buyswap-modal-panel .detail-actions{ justify-content:center; }
   .buyswap-modal-panel .receipt-price-row{ text-align:center; }
-  /* REVIEW screen — reported live as feeling "off" and wanting the
-     accepted details (account/amount/rate/liquidity source) shown very
-     clearly right before Xaman opens on top of it. Centered, stacked
-     label-then-value fields instead of the plain compact left/right
-     .detail-field row every other confirm screen uses, and bigger text
-     throughout — same idea #screenDetail's own sales-section rows
-     already use for its one most-important number. */
-  .buyswap-modal-panel #buySwapConfirmState .tx-summary{ font-size:17px; line-height:1.9; max-width:460px; }
+  /* REVIEW screen — trimmed to exactly account/amount/minimum-received/
+     liquidity-source (see the HTML's own comment on #buySwapConfirmState)
+     after the previous title+run-on-sentence+EST!MATED RECE!VE+EXCHANGE
+     RATE version was reported live as cluttered/unclear. Each amount is
+     its OWN big centered line, not inline text buried in a sentence — the
+     two numbers that actually matter (pay/receive) should be the first
+     thing your eye lands on. */
+  .buyswap-review-line{
+    text-align:center;
+    font-size:14px;
+    letter-spacing:0.04em;
+    color:var(--grey);
+    text-transform:uppercase;
+    margin-top:0.9rem;
+  }
+  .buyswap-review-line:first-child{ margin-top:0; }
+  .buyswap-review-amount{
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:32px;
+    font-weight:700;
+    color:var(--green);
+    text-shadow:0 0 8px var(--green-glow);
+    margin-top:0.2rem;
+  }
   .buyswap-modal-panel #buySwapConfirmState .detail-field{
     flex-direction:column;
     align-items:center;
     gap:0.3rem;
     text-align:center;
-    margin:0 auto 1.1rem;
+    margin:1.1rem auto 0;
   }
   .buyswap-modal-panel #buySwapConfirmState .df-label{ font-size:11px; }
   .buyswap-modal-panel #buySwapConfirmState .df-value{ font-size:19px; font-weight:700; }
@@ -4703,15 +4719,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      green (same convention .pigeons-green-num already uses elsewhere) —
      reported live as wanting the numbers to stand out, not blend into
      the plain grey/white field text every other confirm screen uses.
-     Scoped to .buyswap-modal-panel specifically so .df-value/.tx-val's
-     shared rules (used by OFFER/TRANSFER/DELIST/etc, which stay plain)
-     aren't repainted site-wide. */
+     Scoped to .buyswap-modal-panel specifically so .df-value's shared
+     rule (used by OFFER/TRANSFER/DELIST/etc, which stay plain) isn't
+     repainted site-wide. */
   .buyswap-modal-panel .df-value{ color:var(--green); text-shadow:0 0 6px var(--green-glow); }
-  .buyswap-modal-panel .tx-summary .tx-val{ color:var(--green); text-shadow:0 0 6px var(--green-glow); }
   /* ...except the account address and the liquidity-source label — an
      address isn't a number, and "AMM P00L"/"0RDER B00K" is a plain-text
      source name, not a figure, so both stay the panel's normal white. */
-  .buyswap-modal-panel .tx-summary .tx-val-addr{ color:var(--white); text-shadow:none; }
+  .buyswap-modal-panel .tx-val-addr{ color:var(--white); text-shadow:none; font-family:var(--font-mono); font-size:13px; }
   #buySwapConfSource{ color:var(--white); text-shadow:none; }
   /* RESULT state — the exciting "you just bought $PIGEONS" receipt, not a
      dense field list. Big green number (matches every other real $PIGEONS
@@ -4765,6 +4780,19 @@ const SWAP_HTML = `<!DOCTYPE html>
      it actually reads as a clear, checkable number. */
   .buyswap-max-line{ text-align:center; font-size:11px; letter-spacing:0.05em; color:var(--green); text-shadow:0 0 5px var(--green-glow); margin-top:0.5rem; text-transform:uppercase; }
   .buyswap-input-error{ text-align:center; font-size:11px; letter-spacing:0.03em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); margin-top:0.5rem; }
+  /* Every "things are actively working" status here — TRUSTL!NE SET ✓,
+     GETT!NG QU0TE..., QU0TE UPDATED :: Ns AG0 — bigger and green instead
+     of blending into the same tiny grey .index-line default, reported
+     live as easy to miss the same way CHECK!NG Y0UR TRUSTL!NE... used to
+     (see #buySwapChecking's own comment). Added at each of those call
+     sites, always cleared first in clearBuySwapQuote so an ERROR message
+     (QU0TE UNAVA!LABLE, EXCEEDS BALANCE, etc) never inherits it. */
+  #buySwapStatus.buyswap-status-success{
+    font-size:15px;
+    font-weight:700;
+    color:var(--green);
+    text-shadow:0 0 6px var(--green-glow);
+  }
   .buyswap-arrow{ text-align:center; font-size:22px; color:var(--collection-accent); text-shadow:0 0 6px rgba(var(--collection-accent-rgb), 0.5); margin:0.9rem 0; }
   .buyswap-receive-wrap{ border-color:var(--border-mid); }
   /* Pay row fades/slides in the instant the trustline gate actually opens
@@ -6234,14 +6262,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       <!-- MY C0!NS — real balance + trustline status for every collection
            with a real token (see COLLECTION_META's own tokenIssuer),
            reported live as wanting one place to see every coin at a
-           glance. $P!GE0NS is the only one with a working BUY/T0P UP
-           right now (COLLECTION_META.hasAmm) — everything else still
-           shows its own real balance/trustline, just with a C0M!NG S00N
-           action instead of a live BUY, same treatment those collections
-           already get everywhere else on the site. Built by
-           renderProfileCoins() below, not static — it has to iterate
-           COLLECTION_META itself so a future collection just needs its
-           own entry there, nothing here changes. -->
+           glance. Every collection now has a real BUY button here
+           (COLLECTION_META.hasAmm, true for all six now that every one
+           has a confirmed real AMM pool — see hasAmm's own comment on
+           COLLECTION_META) matching the BUY flow MAINFRAME's own cards
+           already offered for all of them. Built by renderProfileCoins()
+           below, not static — it has to iterate COLLECTION_META itself so
+           a future collection just needs its own entry there, nothing
+           here changes. -->
       <div class="panel-title outgoing-offers-title" style="font-size:13px;">MY C0!NS</div>
       <div class="profile-coins-list" id="profileCoinsList"></div>
       <div class="search-row" style="justify-content:center;">
@@ -6981,20 +7009,23 @@ const SWAP_HTML = `<!DOCTYPE html>
              buyswap-payload.js, same shared buildBuySwapTxjson), re-derived
              server-side from a fresh quote/trustline/balance check, for
              inspection before Xaman ever opens. -->
+        <!-- Trimmed right down to exactly what's being signed — reported
+             live as the previous version (title + run-on sentence +
+             EST!MATED RECE!VE + EXCHANGE RATE + L!QU!D!TY S0URCE, all
+             the same small size) reading as cluttered/unclear. No
+             DEST!NAT!0N row either — this swap's txjson always sets
+             Destination to the buyer's own Account (see buildBuySwapTxjson
+             in _shared.js), so it's the exact same address already shown
+             here. EXCHANGE RATE/EST!MATED RECE!VE both dropped — RECE!VED
+             below already answers the only question that actually
+             matters ("how much do I get"), the rate is trivially
+             re-derivable from PAY/RECE!VE and was mostly noise here. -->
         <div id="buySwapConfirmState" style="display:none;">
-          <div class="tx-review-title" id="buySwapConfTxType"></div>
-          <p class="tx-summary">
-            Account <span class="tx-val tx-val-addr" id="buySwapConfAccount"></span> is spending
-            <span class="tx-val" id="buySwapConfSendMax"></span> to receive a minimum of
-            <span class="tx-val" id="buySwapConfAmount"></span>.
-          </p>
-          <!-- No DEST!NAT!0N row here — this swap's txjson always sets
-               Destination to the buyer's own Account (see buildBuySwapTxjson
-               in _shared.js), so it's the exact same address already shown
-               in the sentence above. Showing it twice was just noise. -->
+          <div class="buyswap-review-line"><span class="tx-val-addr" id="buySwapConfAccount"></span> !S SPEND!NG</div>
+          <div class="buyswap-review-amount" id="buySwapConfSendMax"></div>
+          <div class="buyswap-review-line">T0 RECE!VE A M!N!MUM 0F</div>
+          <div class="buyswap-review-amount" id="buySwapConfAmount"></div>
           <div class="buyswap-divider"></div>
-          <div class="detail-field"><span class="df-label">EST!MATED RECE!VE</span><span class="df-value" id="buySwapConfEstimate"></span></div>
-          <div class="detail-field"><span class="df-label">EXCHANGE RATE</span><span class="df-value" id="buySwapConfRate"></span></div>
           <div class="detail-field"><span class="df-label">L!QU!D!TY S0URCE</span><span class="df-value" id="buySwapConfSource"></span></div>
           <div class="index-line" id="buySwapConfirmStatus" style="margin-top:1rem;"></div>
           <div class="detail-actions">
@@ -7400,12 +7431,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   // hunting down every hardcoded "$P!GE0NS" string. tokenIssuer/hasAmm
   // drive the trustline banner: tokenIssuer is the real on-ledger token
   // issuer shown next to !SSUER :: /COPY, hasAmm gates the EXCHANGE
-  // CALCULAT0R + BUY $TOKEN-with-XRP panel, which only exists for
-  // $P!GE0NS today (real DexScreener pair + AMM pool — see
-  // quotePigeonsForXrpDrops/fetchPigeonsXrpRate in _shared.js). A
-  // collection without those hides that part of the banner entirely rather
-  // than showing a broken/mislabeled calculator — same graceful-
-  // degradation pattern TEDDY's browse-only mode already uses.
+  // CALCULAT0R + BUY $TOKEN-with-XRP panel (and, separately, the PR0F!LE
+  // screen's own MY C0!NS BUY/T0P UP button — see renderProfileCoins).
+  // Every collection below now has a real, independently-confirmed AMM
+  // pool (see COLLECTION_AMM_ACCOUNTS in _shared.js, confirmed live via
+  // the public XRPL amm_info RPC on 2026-09-05) and BUY already works for
+  // all six via MAINFRAME's own cards regardless of this flag — hasAmm
+  // being false for five of them was stale, left over from before those
+  // pools/BUY flow existed, and had drifted out of sync with what the
+  // site actually does (confirmed live: PR0F!LE still showed C0M!NG S00N
+  // for tokens that already buy fine from MAINFRAME). C0NSP!RACY has no
+  // real DexScreener pair (confirmed live as genuinely unindexed, too
+  // little volume) so its EXCHANGE CALCULAT0R quotes off the order-book-
+  // only fallback in fetchPigeonsXrpRate instead — refreshTrustlineRate's
+  // own null-rate/no-dexUrl handling already degrades that gracefully
+  // (hides the calculator/DEX link rather than showing broken/stale
+  // data), same as before this flag existed for it at all.
   // SEAL/FUZZY/C0NSP!RACY/TEDDY: tradeable stays FALSE here deliberately —
   // this flag gates DATABASE's own LIST/MAKE 0FFER/etc UI (see its own
   // call sites), which needs a real NFT issuer/taxon behind it (none
@@ -7415,11 +7456,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   // .tradeable) works correctly for all four.
   var COLLECTION_META = {
     pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true, accent: '#8848f8', accentRgb: '136,72,248', thumb: '/assets/mainframe/pigeons.jpeg?v=2' },
-    phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: false, accent: '#ff5a1f', accentRgb: '255,90,31', thumb: '/assets/mainframe/phnix.jpeg?v=2' },
-    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: false, accent: '#a6632e', accentRgb: '166,99,46', thumb: '/assets/mainframe/teddy.jpeg?v=2' },
-    seal: { label: 'SEAL', itemLabel: 'SEAL', tradeable: false, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', hasAmm: false, accent: '#2d8ca8', accentRgb: '45,140,168', thumb: '/assets/mainframe/seal.jpeg?v=2' },
-    fuzzy: { label: 'FUZZY', itemLabel: 'FUZZY', tradeable: false, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: false, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2' },
-    conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: false, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' }
+    phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: true, accent: '#ff5a1f', accentRgb: '255,90,31', thumb: '/assets/mainframe/phnix.jpeg?v=2' },
+    teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: true, accent: '#a6632e', accentRgb: '166,99,46', thumb: '/assets/mainframe/teddy.jpeg?v=2' },
+    seal: { label: 'SEAL', itemLabel: 'SEAL', tradeable: false, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', hasAmm: true, accent: '#2d8ca8', accentRgb: '45,140,168', thumb: '/assets/mainframe/seal.jpeg?v=2' },
+    fuzzy: { label: 'FUZZY', itemLabel: 'FUZZY', tradeable: false, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2' },
+    conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: true, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' }
   };
 
   var el = {};
@@ -7474,7 +7515,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
    'buySwapModal','buySwapEntryState','buySwapThumb','buySwapChecking','buySwapCheckingText','buySwapQuoteSection','buySwapTitle','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapDexLink','buySwapPayRow',
-   'buySwapConfirmState','buySwapConfTxType','buySwapConfAccount','buySwapConfSendMax','buySwapConfAmount','buySwapConfEstimate','buySwapConfRate','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
+   'buySwapConfirmState','buySwapConfAccount','buySwapConfSendMax','buySwapConfAmount','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
    'buySwapResultState','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
    'delistConfirmModal','screenDelistConfirm','delistConfPigeon','delistConfirmStatus','delistConfirmBackBtn',
    'screenDelistResult','delistResultPigeonNum','delistResultWalletLink','delistResultDoneBtn',
@@ -11384,6 +11425,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.buySwapSignBtn.title = 'QU0TE N0T YET AVA!LABLE';
     if (buySwapAgeInterval){ clearInterval(buySwapAgeInterval); buySwapAgeInterval = null; }
     el.buySwapStatus.textContent = statusText || 'ENTER AN AM0UNT T0 GET A L!VE QU0TE.';
+    // Cleared on every call — only the TRUSTL!NE SET ✓ call site (see
+    // applyBuySwapGate's true branch) re-adds this, so a later status
+    // update (GETT!NG QU0TE..., etc) never keeps the bigger green styling
+    // around after the message it was meant for is gone.
+    el.buySwapStatus.classList.remove('buyswap-status-success');
   }
   function startBuySwapAgeTicker(){
     if (buySwapAgeInterval) clearInterval(buySwapAgeInterval);
@@ -11391,6 +11437,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     function tick(){
       var secs = Math.floor((Date.now() - startedAt) / 1000);
       el.buySwapStatus.textContent = secs < 2 ? 'QU0TE UPDATED :: JUST N0W' : 'QU0TE UPDATED :: ' + secs + 'S AG0';
+      // Bigger and green, same as TRUSTL!NE SET ✓/GETT!NG QU0TE... —
+      // reported live as wanting these live-quote status messages to
+      // stand out, not blend into the plain grey/tiny default.
+      el.buySwapStatus.classList.add('buyswap-status-success');
     }
     tick();
     buySwapAgeInterval = setInterval(tick, 1000);
@@ -11411,6 +11461,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var myReq = ++buySwapReqId;
     el.buySwapSignBtn.disabled = true;
     el.buySwapStatus.textContent = 'GETT!NG QU0TE...';
+    el.buySwapStatus.classList.add('buyswap-status-success');
     apiWithRetry({ pigeonsQuote: 1, xrpDrops: drops.toString(), collection: buySwapCollection }).then(function(data){
       if (myReq !== buySwapReqId) return; // superseded by a newer request
       if (el.buySwapXrpInput.value.trim() !== raw) return; // input changed while this was in flight
@@ -11422,6 +11473,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         el.buySwapMinReceived.textContent = '—';
         el.buySwapSignBtn.disabled = true;
         if (buySwapAgeInterval){ clearInterval(buySwapAgeInterval); buySwapAgeInterval = null; }
+        el.buySwapStatus.classList.remove('buyswap-status-success');
         el.buySwapStatus.textContent = (data && data.insufficientLiquidity)
           ? 'N0T EN0UGH L!QU!D!TY 0N THE B00K F0R TH!S AM0UNT — TRY A SMALLER AM0UNT.'
           : 'QU0TE UNAVA!LABLE — TRY AGA!N.';
@@ -11456,6 +11508,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       buySwapQuoteForRaw = null;
       el.buySwapSignBtn.disabled = true;
       if (buySwapAgeInterval){ clearInterval(buySwapAgeInterval); buySwapAgeInterval = null; }
+      el.buySwapStatus.classList.remove('buyswap-status-success');
       el.buySwapStatus.textContent = 'QU0TE UNAVA!LABLE — TRY AGA!N.';
     });
   }
@@ -11468,6 +11521,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     el.buySwapStatus.textContent = 'GETT!NG QU0TE...';
+    el.buySwapStatus.classList.add('buyswap-status-success');
     buySwapDebounceTimer = setTimeout(fetchBuySwapQuote, BUYSWAP_DEBOUNCE_MS);
   }
 
@@ -11529,6 +11583,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // actually confirmed — nothing updated it until the user typed an
     // amount and triggered a quote fetch.
     clearBuySwapQuote('TRUSTL!NE SET ✓');
+    // Bigger and green — reported live as this confirmation reading as
+    // just another tiny status line, easy to miss the same way CHECK!NG
+    // Y0UR TRUSTL!NE... used to (see .buyswap-checking's own comment).
+    el.buySwapStatus.classList.add('buyswap-status-success');
   }
   // Three static sub-states inside #buySwapModal, exactly one visible at a
   // time — same pattern as acceptTransferConfirmModal's own form/receipt
@@ -11794,17 +11852,19 @@ const SWAP_HTML = `<!DOCTYPE html>
       var display = res.data.display;
       var confTokenLabel = COLLECTION_META[buySwapCollection].tokenLabel;
       buySwapReviewDrops = drops.toString();
-      el.buySwapConfTxType.textContent = txjson.TransactionType;
-      el.buySwapConfAccount.textContent = txjson.Account;
+      // Address shortened the same way every other real address on the
+      // site is (see buySwapIssuerAddr/ciIssuerAddr) — the full raw
+      // string next to a big amount just read as clutter, and this is
+      // never itself something a user needs to compare/copy character by
+      // character before signing (Xaman shows the full real address).
+      el.buySwapConfAccount.textContent = txjson.Account.slice(0, 5) + '...' + txjson.Account.slice(-3);
       el.buySwapConfSendMax.textContent = dropsToXrpString(BigInt(txjson.SendMax)) + ' XRP';
-      // Formatted the same way EST!MATED RECE!VE below it is (locale
+      // Formatted the same way the PAY amount above it is (locale
       // thousands separator, 2 decimals) — used to show the raw
       // txjson.Amount.value string instead (e.g. "5086.089804"), reading
       // as a different, less-trustworthy number right next to a properly
       // formatted one for the same currency.
       el.buySwapConfAmount.textContent = Number(txjson.Amount.value).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + confTokenLabel;
-      el.buySwapConfEstimate.textContent = display.estimateReceivePigeons.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + confTokenLabel;
-      el.buySwapConfRate.textContent = display.rate.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + confTokenLabel + ' / XRP';
       el.buySwapConfSource.textContent = display.source === 'amm' ? 'AMM P00L' : '0RDER B00K';
       el.buySwapConfirmStatus.textContent = '';
       showBuySwapState('confirm');
@@ -11854,7 +11914,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       buySwapUuid = res.data.uuid;
       navigateXamanPopup(xamanTab, res.data.next.always);
       buySwapXamanTab = xamanTab;
-      el.buySwapConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
+      // No "S!GN !N W!TH Σκύλλα, THEN RETURN HERE" line here — Xaman
+      // already opened automatically the instant SIGN AND SWAP was
+      // clicked (see this whole flow's own comment), so telling someone
+      // to go do that read as a redundant, confusing extra step. Just the
+      // real fallback link stays, for the genuine mobile/embedded-webview
+      // cases where the automatic open silently failed.
+      el.buySwapConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollBuySwapStatus();
     }).catch(function(){
       if (xamanTab) xamanTab.close();
@@ -11892,19 +11958,22 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (data.status === 'rejected'){
           el.buySwapConfirmStatus.textContent = 'S!GNATURE REJECTED !N XAMAN.';
           el.buySwapOpenXamanBtn.disabled = false;
-          el.buySwapOpenXamanBtn.textContent = '0PEN XAMAN';
+          el.buySwapOpenXamanBtn.textContent = 'TRY AGA!N';
+          el.buySwapOpenXamanBtn.style.display = '';
           return;
         }
         if (data.status === 'expired'){
           el.buySwapConfirmStatus.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.';
           el.buySwapOpenXamanBtn.disabled = false;
-          el.buySwapOpenXamanBtn.textContent = '0PEN XAMAN';
+          el.buySwapOpenXamanBtn.textContent = 'TRY AGA!N';
+          el.buySwapOpenXamanBtn.style.display = '';
           return;
         }
         if (data.status === 'failed'){
           el.buySwapConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
           el.buySwapOpenXamanBtn.disabled = false;
-          el.buySwapOpenXamanBtn.textContent = '0PEN XAMAN';
+          el.buySwapOpenXamanBtn.textContent = 'TRY AGA!N';
+          el.buySwapOpenXamanBtn.style.display = '';
           return;
         }
         buySwapPollTimer = setTimeout(pollBuySwapStatus, 2000);
@@ -13692,11 +13761,19 @@ const SWAP_HTML = `<!DOCTYPE html>
           updatePigeonsCalcFromXrp();
         }
       }
+      // Hidden rather than shown with a stale/wrong href when this
+      // collection genuinely has no real DexScreener pair (C0NSP!RACY,
+      // confirmed live as having none) — a collection whose hasAmm just
+      // turned on for the first time would otherwise briefly show
+      // whichever OTHER collection's link this happened to be pointing at
+      // last, or the hardcoded $PIGEONS default from the HTML.
       if (data && data.dexUrl){
         el.pigeonsDexLink.href = data.dexUrl;
         el.pigeonsCalcDexBtn.href = data.dexUrl;
+        el.pigeonsDexLink.style.display = '';
+      } else {
+        el.pigeonsDexLink.style.display = 'none';
       }
-      el.pigeonsDexLink.style.display = '';
     }).catch(function(){});
   }
   refreshTrustlineRate();
@@ -15001,7 +15078,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     var buyBtn = e.target.closest('.profile-coin-action[data-action="buy"]');
     if (buyBtn){
       e.stopPropagation();
-      openBuySwapPanel();
+      // Every row's own BUY button now works (hasAmm is true for all six
+      // — see COLLECTION_META's own comment), not just P!GE0NS, so this
+      // has to open the panel for the SPECIFIC row that was clicked
+      // (data-collection, set per-row above) rather than always
+      // defaulting to pigeons — harmless before when this button only
+      // ever existed for pigeons anyway, a real bug now that it doesn't.
+      openBuySwapPanel(buyBtn.getAttribute('data-collection'));
       return;
     }
     var row = e.target.closest('.profile-coin-row');
