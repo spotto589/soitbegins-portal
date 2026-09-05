@@ -4665,22 +4665,39 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-modal-panel .node-eyebrow{ text-align:center; }
   .buyswap-modal-panel .receipt-badge,
   .buyswap-modal-panel .receipt-status-line{ text-align:center; }
-  .buyswap-modal-panel .tx-review-title{ text-align:center; }
+  .buyswap-modal-panel .tx-review-title{ text-align:center; font-size:19px; margin-bottom:1.4rem; }
   .buyswap-modal-panel .detail-actions{ justify-content:center; }
   .buyswap-modal-panel .receipt-price-row{ text-align:center; }
+  /* REVIEW screen — reported live as feeling "off" and wanting the
+     accepted details (account/amount/rate/liquidity source) shown very
+     clearly right before Xaman opens on top of it. Centered, stacked
+     label-then-value fields instead of the plain compact left/right
+     .detail-field row every other confirm screen uses, and bigger text
+     throughout — same idea #screenDetail's own sales-section rows
+     already use for its one most-important number. */
+  .buyswap-modal-panel #buySwapConfirmState .tx-summary{ font-size:17px; line-height:1.9; max-width:460px; }
+  .buyswap-modal-panel #buySwapConfirmState .detail-field{
+    flex-direction:column;
+    align-items:center;
+    gap:0.3rem;
+    text-align:center;
+    margin:0 auto 1.1rem;
+  }
+  .buyswap-modal-panel #buySwapConfirmState .df-label{ font-size:11px; }
+  .buyswap-modal-panel #buySwapConfirmState .df-value{ font-size:19px; font-weight:700; }
   /* Real coin thumbnail — same art MAINFRAME's own cards use, so the coin
      you're buying is recognisable rather than just a text label. Hidden
      until openBuySwapPanel sets a real src for the collection (never a
      broken-image box for one with no art path). */
   .buyswap-thumb{
     display:block;
-    width:64px;
-    height:64px;
+    width:96px;
+    height:96px;
     object-fit:cover;
-    margin:0 auto 0.9rem;
+    margin:0 auto 1rem;
     border-radius:var(--radius);
-    border:1px solid rgba(var(--collection-accent-rgb), 0.5);
-    box-shadow:0 0 16px rgba(var(--collection-accent-rgb), 0.3);
+    border:2px solid rgba(var(--collection-accent-rgb), 0.5);
+    box-shadow:0 0 22px rgba(var(--collection-accent-rgb), 0.35);
   }
   /* Every real figure in this panel reads in the site's own $PIGEONS
      green (same convention .pigeons-green-num already uses elsewhere) —
@@ -4776,6 +4793,31 @@ const SWAP_HTML = `<!DOCTYPE html>
     animation:buyswap-spin 0.7s linear infinite;
   }
   @keyframes buyswap-spin{ to{ transform:rotate(360deg); } }
+  /* CHECKING TRUSTLINE — its own big centered block (see the HTML's own
+     comment on #buySwapChecking) instead of the tiny 9.5px .index-line
+     text this used to rely on alone, which was reported live as easy to
+     miss entirely. Takes over the SAME vertical space the pay/receive
+     fields normally occupy (#buySwapQuoteSection sits hidden behind it,
+     see applyBuySwapGate), so nothing shifts size once the real quote UI
+     replaces it. */
+  .buyswap-checking{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.6em;
+    min-height:180px;
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    color:var(--white);
+    text-align:center;
+  }
+  .buyswap-spinner-lg{
+    width:20px;
+    height:20px;
+    border-width:3px;
+    margin-right:0;
+  }
   .buyswap-receive-value{ flex:1 1 auto; min-width:0; font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:0.02em; color:var(--green); text-shadow:0 0 6px var(--green-glow); text-align:center; }
   .buyswap-divider{ border-top:1px dashed var(--border-dim); margin:1.25rem 0; }
   /* ---- transaction-review title + plain-English summary — every
@@ -6894,6 +6936,16 @@ const SWAP_HTML = `<!DOCTYPE html>
                  unconfirmed link. -->
             <a class="pigeons-bar-dex-btn buyswap-trustline-dex-btn" id="buySwapDexLink" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">V!EW 0N DEXSCREENER ↗</a>
           </div>
+          <!-- CHECKING TRUSTLINE — its own big, impossible-to-miss block
+               instead of a tiny status line buried under a wall of empty
+               "—" fields (reported live as genuinely not noticing this was
+               happening at all). Takes over the whole quote area while
+               buySwapHasTrustline is still null; see applyBuySwapGate. -->
+          <div class="buyswap-checking" id="buySwapChecking" style="display:none;">
+            <span class="buyswap-spinner buyswap-spinner-lg"></span>
+            <span id="buySwapCheckingText">CHECK!NG Y0UR TRUSTL!NE...</span>
+          </div>
+          <div id="buySwapQuoteSection">
           <div class="buyswap-row" id="buySwapPayRow">
             <span class="buyswap-label">Y0U PAY</span>
             <div class="buyswap-input-wrap">
@@ -6917,6 +6969,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="detail-field"><span class="df-label">M!N!MUM RECE!VED</span><span class="df-value" id="buySwapMinReceived">—</span></div>
           <div class="detail-field"><span class="df-label">SL!PPAGE</span><span class="df-value" id="buySwapSlippage">0.5%</span></div>
           <div class="buyswap-divider"></div>
+          </div>
           <div class="index-line" id="buySwapStatus">QU0TE C0M!NG S00N — SWAP N0T YET L!VE.</div>
           <div class="detail-actions">
             <button class="secondary-btn" id="buySwapBackBtn">← BACK</button>
@@ -7419,7 +7472,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenListResult','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
    'buyConfirmModal','screenBuyConfirm','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
-   'buySwapModal','buySwapEntryState','buySwapThumb','buySwapTitle','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
+   'buySwapModal','buySwapEntryState','buySwapThumb','buySwapChecking','buySwapCheckingText','buySwapQuoteSection','buySwapTitle','buySwapXrpInput','buySwapMaxLine','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapDexLink','buySwapPayRow',
    'buySwapConfirmState','buySwapConfTxType','buySwapConfAccount','buySwapConfSendMax','buySwapConfAmount','buySwapConfEstimate','buySwapConfRate','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
    'buySwapResultState','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
@@ -11426,6 +11479,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   function applyBuySwapGate(){
     var gateTokenLabel = COLLECTION_META[buySwapCollection].tokenLabel;
     if (!MY_WALLET){
+      el.buySwapChecking.style.display = 'none';
+      el.buySwapQuoteSection.style.display = '';
       el.buySwapPayRow.style.display = 'none';
       el.buySwapTrustlineWarning.style.display = 'none';
       el.buySwapXrpInput.disabled = true;
@@ -11433,19 +11488,23 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     if (buySwapHasTrustline === null){
-      el.buySwapPayRow.style.display = 'none';
+      // Its own big, impossible-to-miss block takes over the whole quote
+      // area (see #buySwapChecking's own comment in the HTML/CSS) —
+      // reported live as genuinely not noticing the previous tiny
+      // .index-line version was even happening. Real spinning ring, not
+      // just a status sentence, colour-matched to this collection's
+      // accent same as everything else in the panel.
+      el.buySwapQuoteSection.style.display = 'none';
+      el.buySwapChecking.style.display = 'flex';
+      el.buySwapCheckingText.textContent = 'CHECK!NG Y0UR ' + gateTokenLabel + ' TRUSTL!NE...';
       el.buySwapTrustlineWarning.style.display = 'none';
       el.buySwapXrpInput.disabled = true;
       clearBuySwapQuote('CHECK!NG Y0UR ' + gateTokenLabel + ' TRUSTL!NE...');
-      // Real spinning ring, not just a status sentence — reported live as
-      // wanting this moment to read clearly as "something is happening",
-      // not indistinguishable from every other plain status line. Set
-      // straight after clearBuySwapQuote (which only ever sets
-      // textContent) so this innerHTML sticks.
-      el.buySwapStatus.innerHTML = '<span class="buyswap-spinner"></span>CHECK!NG Y0UR ' + gateTokenLabel + ' TRUSTL!NE...';
       return;
     }
     if (buySwapHasTrustline === false){
+      el.buySwapChecking.style.display = 'none';
+      el.buySwapQuoteSection.style.display = '';
       el.buySwapPayRow.style.display = 'none';
       el.buySwapTrustlineWarningTitle.textContent = '⚠ TRUSTL!NE REQU!RED';
       el.buySwapTrustlineWarning.style.display = '';
@@ -11459,6 +11518,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       clearBuySwapQuote('Y0UR WALLET CAN\\'T RECE!VE ' + gateTokenLabel + ' YET — SET THE TRUSTL!NE AB0VE F!RST.');
       return;
     }
+    el.buySwapChecking.style.display = 'none';
+    el.buySwapQuoteSection.style.display = '';
     el.buySwapPayRow.style.display = '';
     el.buySwapTrustlineWarning.style.display = 'none';
     el.buySwapXrpInput.disabled = false;
