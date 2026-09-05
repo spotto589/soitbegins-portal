@@ -1327,6 +1327,44 @@ const SWAP_HTML = `<!DOCTYPE html>
      the COLLECTION box — left-aligned (not centered like COLLECTION) so
      its content starts flush with the search bar above it. */
   .db-config-traits-group{ text-align:left; }
+  /* S0RT BY / F!LTER BY TRA!TS, side by side as two equal buttons
+     directly above RESET — was two separate full-width bordered boxes
+     stacked one under the other (each .db-config-group's own border,
+     just never placed in a row together), reported live as not what was
+     wanted ("two buttons directly above it, not like it is now"). */
+  #dbControlsSticky{
+    display:flex;
+    gap:0.6rem;
+  }
+  #dbControlsSticky .db-config-traits-group{
+    flex:1 1 0;
+    min-width:0;
+    text-align:center;
+    margin-bottom:0;
+  }
+  /* .db-config-traits-section's own base rule left-aligns (justify-
+     content:flex-start — right for its ORIGINAL "flush under the search
+     bar" placement) regardless of the outer box's text-align, only
+     centering itself below 700px. These two boxes are compact button-
+     sized now, not full-width rows, so the label should sit centered
+     in its own button at every width, not just on mobile. */
+  #dbControlsSticky .db-config-traits-section{
+    justify-content:center;
+  }
+  /* #sortDropWrap/#traitsHoverWrap's own base rules further down this
+     file (width:var(--ctrl-w), flex:0 0 auto — sized for the original
+     narrow dropdown-pill look) are equal specificity and declared AFTER
+     this, so they'd otherwise win regardless of source position here.
+     #dbControlsSticky #sortDropWrap (two IDs) beats a lone #sortDropWrap
+     no matter which comes first in the file — real width:100%/flex:1 so
+     S0RT BY/F!LTER BY TRA!TS each fill their whole half of the row,
+     instead of sitting as a small content-sized label floating inside an
+     otherwise-empty button box (confirmed live: the box was there, but
+     the label sat pinned to its left edge at the old fixed width). */
+  #dbControlsSticky #sortDropWrap, #dbControlsSticky #traitsHoverWrap{
+    width:100%;
+    flex:1 1 auto;
+  }
   /* Real visible feedback for whichever S0RT/TRA!TS are actually applied —
      #sortRows/#traitRows/#clearTraitsBtn's own trigger boxes moved into
      #dbControlsSticky (display:none, see its own HTML comment), so this
