@@ -2166,9 +2166,47 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--cyan-dim);
     box-shadow:0 20px 50px rgba(0,0,0,0.7);
   }
+  /* The CATEG0R!ES step (not yet drilled into one category's values) gets
+     real room — a plain 380px popup crammed every category into a single
+     narrow column, one full-width row each, which read as "stacked on
+     top of each other" rather than a real category picker. Widened just
+     for this step (:not(.flyout-drilled), and :not(.flyout-flat) since
+     S0RT BY has no categories step at all) and switched from a forced
+     column to a wrapped grid of chips below, so categories spread across
+     the available width instead of listing one-per-row. */
+  .traits-flyout.flyout-popup:not(.flyout-flat):not(.flyout-drilled){
+    width:min(640px, 94vw) !important;
+  }
   .traits-flyout.flyout-popup .traits-flyout-cats-row{ flex-direction:column !important; }
-  .traits-flyout.flyout-popup .traits-flyout-cats{ display:flex !important; flex-direction:column !important; overflow-x:visible !important; border-right:none !important; border-bottom:none !important; width:100% !important; }
-  .traits-flyout.flyout-popup .traits-flyout-cats .traits-flyout-cat{ width:100% !important; text-align:center !important; white-space:normal !important; flex:0 0 auto; }
+  .traits-flyout.flyout-popup .traits-flyout-cats{
+    display:flex !important;
+    flex-direction:row !important;
+    flex-wrap:wrap !important;
+    justify-content:center !important;
+    gap:0.6rem !important;
+    overflow-x:visible !important;
+    border-right:none !important;
+    border-bottom:none !important;
+    width:100% !important;
+  }
+  .traits-flyout.flyout-popup .traits-flyout-cats .traits-flyout-cat{
+    /* !important on flex/min-width — #traitsFlyoutCats .traits-flyout-cat
+       (an ID selector elsewhere in this file, higher specificity than
+       this 3-class one) sets flex:1 1 0/min-width:0 for the old fixed-
+       width horizontal-strip layout, which otherwise wins here regardless
+       of source order and stretches every chip to the same equal width
+       (confirmed live: BACKGROUND and AURA rendering at the same 83px)
+       instead of sizing to its own label. */
+    width:auto !important;
+    flex:0 0 auto !important;
+    min-width:0 !important;
+    text-align:center !important;
+    white-space:nowrap !important;
+    padding:0.7em 1.1em !important;
+    font-size:16px !important;
+    border:1px solid var(--border-dim) !important;
+    border-radius:var(--radius);
+  }
   .traits-flyout.flyout-popup .traits-flyout-vals{
     position:static !important;
     display:block !important;
@@ -6472,19 +6510,17 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- S0RT BY / F!LTER BY TRA!TS' own trigger boxes — no longer
-               shown here at all (reported live as not wanting these "in
-               their own tab" partway down the page); real buttons for
-               both now live in the fixed #bottomControlsBar (see
-               #screenMainframe's own sibling further up). This whole
-               block stays in the DOM purely as the machinery
+          <!-- S0RT BY / F!LTER BY TRA!TS' own trigger boxes — shown here
+               again (inline, directly above RESET below), alongside the
+               same two triggers in the fixed #bottomControlsBar (see
+               #screenMainframe's own sibling further up) — both open the
+               exact same flyout, this is just a second, always-in-flow
+               entry point to it rather than only the floating bottom bar.
+               This block is also the real machinery
                renderSortFlyoutList/renderTraitsFlyoutCats/openSortFlyout/
-               openTraitsFlyout already write into and reparent from (the
-               popup itself, #sortFlyoutVals, #traitsFlyoutCats, etc.) —
-               changing every one of those to build fresh markup instead
-               would be a much bigger, riskier rewrite for the exact same
-               end result. -->
-          <div class="db-controls-sticky" id="dbControlsSticky" style="display:none;">
+               openTraitsFlyout write into and reparent from (the popup
+               itself, #sortFlyoutVals, #traitsFlyoutCats, etc.). -->
+          <div class="db-controls-sticky" id="dbControlsSticky">
           <!-- S0RT BY sits directly underneath now, in COLLECTION's old
                spot — same static-label + stacked-applied-tag treatment as
                F!LTER BY TRA!TS below it (#sortRows is #traitRows' own
