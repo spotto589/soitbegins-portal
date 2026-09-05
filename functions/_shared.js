@@ -2048,7 +2048,9 @@ async function fetchPigeonFullMeta(uriHex) {
     const number = match ? parseInt(match[1], 10) : null;
     const image = meta && meta.image ? resolveIpfsUri(meta.image) : null;
     const attributes = Array.isArray(meta && meta.attributes) ? meta.attributes : [];
-    return { number, image, attributes };
+    // See deeptideListingToPigeon's own comment on the uniquely-named-item
+    // fallback — same reasoning applies to this slow per-token IPFS path.
+    return { number, name: name || null, image, attributes };
   } catch (e) {
     return null;
   }
@@ -2091,6 +2093,10 @@ async function fetchDeeptideOwnedPigeons(address, shopSlug = DEEPTIDE_PIGEON_SHO
         return {
           nftId: it.nftTokenId,
           number: match ? parseInt(match[1], 10) : null,
+          // See deeptideListingToPigeon's own comment on the uniquely-
+          // named-item fallback — same reasoning for a wallet's own
+          // holdings (SH0W MY NFTs/FL0CK).
+          name: it.name || null,
           image: it.imageUrl || null,
           attributes: Array.isArray(it.traits) ? it.traits : [],
           rarityRank: typeof it.rarityRank === 'number' ? it.rarityRank : null,
@@ -2143,6 +2149,7 @@ export async function resolveOwnerCollectionFast(kv, owner, ledgerItems, shopSlu
         nftId: it.nftId,
         meta: {
           number: fromDeeptide.number,
+          name: fromDeeptide.name,
           image: fromDeeptide.image,
           attributes: fromDeeptide.attributes,
           rarityRank: fromDeeptide.rarityRank,
@@ -2172,6 +2179,15 @@ function deeptideListingToPigeon(it) {
   return {
     nftId: it.nftTokenId,
     number: match ? parseInt(match[1], 10) : null,
+    // Deeptide's own raw display name — kept alongside `number` (not just
+    // the regex-extracted digits) for collections with a handful of
+    // uniquely-named items mixed into an otherwise "COLLECTION123"-named
+    // set (confirmed live: PHN!X has a few 1/1s at the start of the
+    // collection with real, different names instead of a plain number) —
+    // those have no digits to match, so `number` is genuinely null for
+    // them, and the card renderer falls back to showing this real name
+    // instead of a meaningless "#????".
+    name: it.name || null,
     image: it.imageUrl || null,
     attributes: Array.isArray(it.traits) ? it.traits : [],
     rarityRank: typeof it.rarityRank === 'number' ? it.rarityRank : null,
@@ -2237,6 +2253,11 @@ export async function fetchDeeptideNftDetail(nftId) {
     return {
       nftId: d.tokenId || nftId,
       number: match ? parseInt(match[1], 10) : null,
+      // See deeptideListingToPigeon's own comment — same real-name
+      // fallback for a uniquely-named item (no digits for `number` to
+      // match), kept here too since INSPECT/number-search both resolve
+      // through this function, not just the browse grid.
+      name: listing.name || null,
       image: listing.imageUrl || null,
       attributes: (listing.traits || []).map(t => ({ trait_type: t.trait_type, value: t.value, percent: t.percentage })),
       rarityRank: typeof listing.rarityRank === 'number' ? listing.rarityRank : null,
@@ -2588,33 +2609,47 @@ const NUMBER_MAP_PAGES_PER_RUN = 15; // 15 * 60 = 900 tokens/run, ~15 fetches �
 const TRAIT_EXAMPLE_MAP_KEY = 'pswap:traitexamples:v1';
 const TRAIT_EXAMPLE_MAP_STAGING_KEY = 'pswap:traitexamples:staging:v1';
 
-export async function getPigeonNumberMap(kv) {
-  const raw = await kv.get(PIGEON_NUMBER_MAP_KEY);
+// Every reader/writer below takes an explicit collectionKey and goes
+// through kvKeyFor (same Pigeons-keeps-its-original-key, everyone-else-
+// gets-a-suffix namespacing already used for listings/sales/floor — see
+// kvKeyFor's own comment further down) — this crawl used to be hardcoded
+// to the single un-namespaced key no matter which collection asked for
+// it, so browsing PHN!X (or any other collection) with ALPHABET!CAL sort
+// silently read $PIGEONS' own number map and rendered real Pigeons back
+// instead (confirmed live: "picking a sort goes back to pigeons").
+export async function getPigeonNumberMap(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(PIGEON_NUMBER_MAP_KEY, collectionKey));
   return raw ? JSON.parse(raw) : {};
 }
 
-async function getPigeonNumberMapStaging(kv) {
-  const raw = await kv.get(PIGEON_NUMBER_MAP_STAGING_KEY);
+async function getPigeonNumberMapStaging(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(PIGEON_NUMBER_MAP_STAGING_KEY, collectionKey));
   return raw ? JSON.parse(raw) : {};
 }
 
-export async function getPigeonNumberMapStats(kv) {
-  const raw = await kv.get(PIGEON_NUMBER_MAP_STATS_KEY);
+export async function getPigeonNumberMapStats(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(PIGEON_NUMBER_MAP_STATS_KEY, collectionKey));
   return raw ? JSON.parse(raw) : null;
 }
 
-export async function getTraitExampleMap(kv) {
-  const raw = await kv.get(TRAIT_EXAMPLE_MAP_KEY);
+export async function getTraitExampleMap(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(TRAIT_EXAMPLE_MAP_KEY, collectionKey));
   return raw ? JSON.parse(raw) : {};
 }
 
-async function getTraitExampleMapStaging(kv) {
-  const raw = await kv.get(TRAIT_EXAMPLE_MAP_STAGING_KEY);
+async function getTraitExampleMapStaging(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(TRAIT_EXAMPLE_MAP_STAGING_KEY, collectionKey));
   return raw ? JSON.parse(raw) : {};
 }
 
-export async function maybeRefreshPigeonNumberMap(kv) {
-  const statsRaw = await kv.get(PIGEON_NUMBER_MAP_STATS_KEY);
+export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
+  const cfg = getTradeConfig(collectionKey);
+  // No real Deeptide shop for this collection (SEAL/FUZZY/C0NSP!RACY
+  // today — see TRADEABLE_COLLECTIONS' own comment) — nothing to crawl.
+  const shopSlug = cfg && cfg.deeptideShopSlug ? cfg.deeptideShopSlug : (collectionKey ? null : DEEPTIDE_PIGEON_SHOP_SLUG);
+  if (!shopSlug) return;
+  const statsKey = kvKeyFor(PIGEON_NUMBER_MAP_STATS_KEY, collectionKey);
+  const statsRaw = await kv.get(statsKey);
   const stats = statsRaw ? JSON.parse(statsRaw) : null;
   const now = Math.floor(Date.now() / 1000);
   if (stats && stats.inProgress && now - stats.updatedAt < NUMBER_MAP_CONCURRENT_GUARD_SECONDS) return;
@@ -2626,12 +2661,15 @@ export async function maybeRefreshPigeonNumberMap(kv) {
   // empty, same as before, but that emptiness now stays invisible to
   // real readers until the pass actually finishes (see the staging key's
   // own comment above).
-  const map = stats && stats.inProgress ? await getPigeonNumberMapStaging(kv) : {};
-  const traitExamples = stats && stats.inProgress ? await getTraitExampleMapStaging(kv) : {};
-  let lastTotal = 3015;
+  const map = stats && stats.inProgress ? await getPigeonNumberMapStaging(kv, collectionKey) : {};
+  const traitExamples = stats && stats.inProgress ? await getTraitExampleMapStaging(kv, collectionKey) : {};
+  // Real total, once the first page below reports it — this is just a
+  // safe starting guess so the very first iteration's skip>=lastTotal
+  // check has something to compare against before that.
+  let lastTotal = Infinity;
 
   for (let i = 0; i < NUMBER_MAP_PAGES_PER_RUN; i++) {
-    const page = await fetchDeeptideListings({ skip, limit: DEEPTIDE_LISTINGS_MAX_LIMIT, sort: 'rarity-asc' });
+    const page = await fetchDeeptideListings({ skip, limit: DEEPTIDE_LISTINGS_MAX_LIMIT, sort: 'rarity-asc', shopSlug });
     if (page.error || !page.items.length) break;
     for (const it of page.items) {
       if (it.number !== null) map[it.number] = it.nftId;
@@ -2649,9 +2687,9 @@ export async function maybeRefreshPigeonNumberMap(kv) {
       // Pass genuinely complete — ONLY now does the live map (every real
       // reader) actually change, in one atomic swap rather than the
       // gradual, visibly-incomplete rebuild this used to be.
-      await safeKvPut(kv, PIGEON_NUMBER_MAP_KEY, JSON.stringify(map));
-      await safeKvPut(kv, TRAIT_EXAMPLE_MAP_KEY, JSON.stringify(traitExamples));
-      await safeKvPut(kv, PIGEON_NUMBER_MAP_STATS_KEY, JSON.stringify({
+      await safeKvPut(kv, kvKeyFor(PIGEON_NUMBER_MAP_KEY, collectionKey), JSON.stringify(map));
+      await safeKvPut(kv, kvKeyFor(TRAIT_EXAMPLE_MAP_KEY, collectionKey), JSON.stringify(traitExamples));
+      await safeKvPut(kv, statsKey, JSON.stringify({
         inProgress: false, completedAt: now, updatedAt: now, count: Object.keys(map).length,
       }));
       return;
@@ -2660,9 +2698,9 @@ export async function maybeRefreshPigeonNumberMap(kv) {
   // Still mid-pass — checkpoint into staging only. The live map (and
   // every real reader of it) stays exactly as it was after the LAST
   // completed pass until this one actually finishes above.
-  await safeKvPut(kv, PIGEON_NUMBER_MAP_STAGING_KEY, JSON.stringify(map));
-  await safeKvPut(kv, TRAIT_EXAMPLE_MAP_STAGING_KEY, JSON.stringify(traitExamples));
-  await safeKvPut(kv, PIGEON_NUMBER_MAP_STATS_KEY, JSON.stringify({
+  await safeKvPut(kv, kvKeyFor(PIGEON_NUMBER_MAP_STAGING_KEY, collectionKey), JSON.stringify(map));
+  await safeKvPut(kv, kvKeyFor(TRAIT_EXAMPLE_MAP_STAGING_KEY, collectionKey), JSON.stringify(traitExamples));
+  await safeKvPut(kv, statsKey, JSON.stringify({
     inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(map).length,
   }));
 }
@@ -2706,29 +2744,37 @@ const HIGH_SALE_CONCURRENT_GUARD_SECONDS = 10;
 const HIGH_SALE_PAGES_PER_RUN = 10;
 const HIGH_SALE_PAGE_LIMIT = 50; // server-enforced cap on /api/sales/recent
 
-export async function getHighSaleMap(kv) {
-  const raw = await kv.get(HIGH_SALE_MAP_KEY);
+// Same collectionKey/kvKeyFor namespacing as the number map above — this
+// used to be one un-namespaced map no matter which collection asked, so
+// H!GHEST REC0RDED SALES / avg-sale sort on PHN!X (or any other
+// collection) silently read $PIGEONS' own high-sale history instead.
+export async function getHighSaleMap(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(HIGH_SALE_MAP_KEY, collectionKey));
   return raw ? JSON.parse(raw) : {};
 }
 
-async function getHighSaleMapStaging(kv) {
-  const raw = await kv.get(HIGH_SALE_MAP_STAGING_KEY);
+async function getHighSaleMapStaging(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(HIGH_SALE_MAP_STAGING_KEY, collectionKey));
   return raw ? JSON.parse(raw) : {};
 }
 
-export async function maybeRefreshHighSaleMap(kv) {
-  const statsRaw = await kv.get(HIGH_SALE_STATS_KEY);
+export async function maybeRefreshHighSaleMap(kv, collectionKey) {
+  const cfg = getTradeConfig(collectionKey);
+  const shopSlug = cfg && cfg.deeptideShopSlug ? cfg.deeptideShopSlug : (collectionKey ? null : DEEPTIDE_PIGEON_SHOP_SLUG);
+  if (!shopSlug) return;
+  const statsKey = kvKeyFor(HIGH_SALE_STATS_KEY, collectionKey);
+  const statsRaw = await kv.get(statsKey);
   const stats = statsRaw ? JSON.parse(statsRaw) : null;
   const now = Math.floor(Date.now() / 1000);
   if (stats && stats.inProgress && now - stats.updatedAt < HIGH_SALE_CONCURRENT_GUARD_SECONDS) return;
   if (stats && !stats.inProgress && now - stats.completedAt < HIGH_SALE_REFRESH_STALE_SECONDS) return;
 
   let skip = stats && stats.inProgress ? stats.nextSkip : 0;
-  const map = stats && stats.inProgress ? await getHighSaleMapStaging(kv) : {};
+  const map = stats && stats.inProgress ? await getHighSaleMapStaging(kv, collectionKey) : {};
   let lastTotal = Infinity;
 
   for (let i = 0; i < HIGH_SALE_PAGES_PER_RUN; i++) {
-    const page = await fetchDeeptideSalesHistory({ skip, limit: HIGH_SALE_PAGE_LIMIT, sort: 'date-desc' });
+    const page = await fetchDeeptideSalesHistory({ skip, limit: HIGH_SALE_PAGE_LIMIT, sort: 'date-desc', shopSlug });
     if (page.error || !page.items.length) break;
     for (const s of page.items) {
       if (!s.nftId || typeof s.priceXrp !== 'number') continue;
@@ -2752,16 +2798,16 @@ export async function maybeRefreshHighSaleMap(kv) {
       // reader: toItem's avgSaleXrp/saleCount/highSaleXrp) actually
       // change. Real requests keep seeing the last complete pass's data
       // throughout the whole rebuild, never a partial one.
-      await safeKvPut(kv, HIGH_SALE_MAP_KEY, JSON.stringify(map));
-      await safeKvPut(kv, HIGH_SALE_STATS_KEY, JSON.stringify({
+      await safeKvPut(kv, kvKeyFor(HIGH_SALE_MAP_KEY, collectionKey), JSON.stringify(map));
+      await safeKvPut(kv, statsKey, JSON.stringify({
         inProgress: false, completedAt: now, updatedAt: now, count: Object.keys(map).length,
       }));
       return;
     }
   }
   // Still mid-pass — checkpoint into staging only.
-  await safeKvPut(kv, HIGH_SALE_MAP_STAGING_KEY, JSON.stringify(map));
-  await safeKvPut(kv, HIGH_SALE_STATS_KEY, JSON.stringify({
+  await safeKvPut(kv, kvKeyFor(HIGH_SALE_MAP_STAGING_KEY, collectionKey), JSON.stringify(map));
+  await safeKvPut(kv, statsKey, JSON.stringify({
     inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(map).length,
   }));
 }

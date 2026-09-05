@@ -2761,6 +2761,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--grey-disabled);
   }
   .pigeon-img-box img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.25s ease; }
+  /* PHN!X art is a real 1200x1403 portrait crop (Deeptide's own source
+     images — confirmed live), not the 1024x1024/1080x1080 square every
+     other collection's images actually are. The shared box above is a
+     fixed square (aspect-ratio:1, kept as-is so the grid stays uniform
+     rather than every card having a different height) — object-fit:cover
+     on a portrait image inside a square box crops real height off the top
+     and bottom to fill it, cutting into the actual artwork (a PHN!X's
+     head/base) instead of just tightening the crop. contain instead
+     letterboxes it (the box's own dashed-border/diagonal-stripe
+     background — already the "no image yet" placeholder look — shows
+     through top and bottom), showing the full uncropped PHN!X. Scoped to
+     collection-phnixs specifically, not every collection, since square
+     art (P!GE0NS, TEDDY) already fills the box exactly with cover and
+     shouldn't switch to contain and gain pointless letterboxing. */
+  body.collection-phnixs .pigeon-img-box img{ object-fit:contain; }
   /* Hidden for now, not removed — the multi-select/TARGET BAR feature
      this "+" belongs to is coming back later; CSS-only so the JS
      wiring (card-select-toggle click handler, state.target, etc.) stays
@@ -8819,7 +8834,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (targetPigeon){
       el.targetPigeonCard.style.display = '';
       el.targetPigeonImg.innerHTML = targetPigeon.image ? '<img src="' + escapeHtml(targetPigeon.image) + '" alt="">' : 'IMAGE';
-      el.targetPigeonNum.innerHTML = targetPigeon.number !== null ? collectionItemLabel() + ' #' +greenNum(targetPigeon.number) : collectionItemLabel() + ' ...';
+      el.targetPigeonNum.innerHTML = targetPigeon.number !== null ? collectionItemLabel() + ' #' +greenNum(targetPigeon.number) : (targetPigeon.name ? collectionItemLabel() + ' ' + escapeHtml(targetPigeon.name) : collectionItemLabel() + ' ...');
       el.targetPigeonOwner.textContent = state.scope.ownerShort;
     } else {
       el.targetPigeonCard.style.display = 'none';
@@ -9113,7 +9128,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function resultCardHtml(p){
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : 'IMAGE';
-    var num = p.number !== null ? '#' + greenNum(p.number) : '#????';
+    var num = itemNumberLabel(p);
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
     var atCap = offerCtxCard
@@ -9201,7 +9216,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // .pigeon-img-box) so wireResultClicks needs no view-specific branching.
   function thumbnailCardHtml(p){
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : 'IMAGE';
-    var num = p.number !== null ? '#' + greenNum(p.number) : '#????';
+    var num = itemNumberLabel(p);
     var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) + '</div>' : '';
     // Real XRP sale history (highSaleEntry, see toItem in api/pigeons.js)
     // is null (not 0) when a Pigeon genuinely has no recorded sale, distinct
@@ -9320,10 +9335,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
       // Which Pigeon this offer is actually for — easy to lose track of
       // once the popup is open and the card underneath isn't visible.
-      if (p && p.number !== null){
+      if (p && (p.number !== null || p.name)){
         el.amountEntryOfferPigeonImg.src = p.image || '';
         el.amountEntryOfferPigeonImg.style.display = p.image ? '' : 'none';
-        el.amountEntryOfferPigeonNum.innerHTML = collectionItemLabel() + ' #' +greenNum(p.number);
+        el.amountEntryOfferPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(p);
         el.amountEntryOfferPigeonRow.style.display = '';
       } else {
         el.amountEntryOfferPigeonRow.style.display = 'none';
@@ -10226,8 +10241,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     var cmp = sortComparatorFor(state.sort);
     if (cmp) list = list.slice().sort(cmp);
     state.items = list;
-    el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG ' + walletViewingLabel(state.scope.ownerShort) + ' (<span class="hi">' + list.length + '</span> P!GE0NS)' +
-      (list.length === 1 ? '<br>P!GE0N #' + list[0].number : '') + '</div>';
+    el.statusLine.innerHTML = '<div class="results-trait-note">V!EW!NG ' + walletViewingLabel(state.scope.ownerShort) + ' (<span class="hi">' + list.length + '</span> ' + collectionItemLabel() + 'S)' +
+      (list.length === 1 ? '<br>' + collectionItemLabel() + ' ' + itemNumberLabel(list[0]) : '') + '</div>';
     if (!list.length){
       // "QUERY :: (traits)" — a debug-looking placeholder used to show
       // here whenever the empty result came from trait filters alone (no
@@ -10503,7 +10518,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="my-offer-row-left">' +
           '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + row.img + '</div>' +
           '<div class="my-offer-row-info">' +
-            '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
+            '<div class="my-offer-row-num">' + collectionItemLabel() + ' ' + itemNumberLabel(item) + '</div>' +
             '<div class="my-offer-row-buyer">FR0M ' + walletTagHtml(top.buyer, top.buyerShort) + '</div>' +
           '</div>' +
         '</div>' +
@@ -10570,10 +10585,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       return '<button type="button" class="simple-offer-select-btn" data-side="' + side + '">+ SELECT</button>';
     }
     var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
-    var num = item.number !== null && item.number !== undefined ? '#' + greenNum(item.number) : '#????';
+    var num = itemNumberLabel(item);
     return '<div class="simple-offer-filled" data-side="' + side + '">' +
         '<div class="simple-offer-thumb">' + img + '</div>' +
-        '<div class="simple-offer-num">P!GE0N ' + num + '</div>' +
+        '<div class="simple-offer-num">' + escapeHtml(collectionItemLabel()) + ' ' + num + '</div>' +
         '<button type="button" class="simple-offer-clear" data-side="' + side + '" title="CLEAR">&times;</button>' +
       '</div>';
   }
@@ -10591,7 +10606,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // summary.
   function simplePickerCardHtml(p){
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : 'IMAGE';
-    var num = p.number !== null && p.number !== undefined ? '#' + greenNum(p.number) : '#????';
+    var num = itemNumberLabel(p);
     return '<div class="simple-picker-card" data-nftid="' + escapeHtml(p.nftId) + '">' +
         '<div class="simple-picker-card-img" data-nftid="' + escapeHtml(p.nftId) + '">' + img + '</div>' +
         '<div class="simple-picker-card-num">' + escapeHtml(collectionItemLabel()) + ' ' + num + '</div>' +
@@ -11241,7 +11256,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // openAmountEntryModal) — close it here, the moment the full LISTED
     // result screen takes over, rather than leaving it sitting on top.
     closeAmountEntryModal();
-    el.listResultPigeonNum.innerHTML = collectionItemLabel() + ' #' +(listingTarget.number !== null ? greenNum(listingTarget.number) : '????');
+    el.listResultPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(listingTarget);
     // Compact (123M), same as BUY N0W/the own-listing readouts elsewhere —
     // this is the one big number on the receipt, not a small field value,
     // so it gets the same treatment as everywhere else a price needs to
@@ -11300,7 +11315,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     buyTarget = p;
-    el.buyConfPigeon.innerHTML = collectionItemLabel() + ' #' +(p.number !== null ? greenNum(p.number) : '????');
+    el.buyConfPigeon.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(p);
     el.buyConfSeller.textContent = '';
     el.buyConfPrice.textContent = '';
     el.buyConfirmStatus.textContent = 'REQUEST!NG...';
@@ -12101,7 +12116,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showBuyResult(data){
-    el.buyResultPigeonNum.innerHTML = collectionItemLabel() + ' #' +(buyTarget.number !== null ? greenNum(buyTarget.number) : '????');
+    el.buyResultPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(buyTarget);
     el.buyResultPrice.textContent = el.buyConfPrice.textContent;
     el.buyResultStatus.textContent = 'SETTLED';
     if (data.txHash){
@@ -12137,7 +12152,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // from the CANCEL button's own click handler.
   function openDelistConfirm(p){
     delistTarget = p;
-    el.delistConfPigeon.innerHTML = collectionItemLabel() + ' #' +(p.number !== null ? greenNum(p.number) : '????');
+    el.delistConfPigeon.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(p);
     el.delistConfirmStatus.textContent = 'REQUEST!NG...';
     setWaitingPulse(el.delistConfirmStatus, true);
     el.screenDelistResult.style.display = 'none';
@@ -12220,7 +12235,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showDelistResult(data){
-    el.delistResultPigeonNum.innerHTML = collectionItemLabel() + ' #' +(delistTarget.number !== null ? greenNum(delistTarget.number) : '????') + ' WAS DEL!STED.';
+    el.delistResultPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(delistTarget) + ' WAS DEL!STED.';
     // Wallet activity, not the raw tx hash — MY_WALLET is the seller who
     // just delisted, same account this whole flow ran as.
     if (MY_WALLET) el.delistResultWalletLink.href = 'https://bithomp.com/explorer/' + MY_WALLET;
@@ -12363,7 +12378,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // not shown anywhere in this form itself any more (see the redesign
     // that dropped the 0WNED BY line).
     offerTarget.recipientWallet = txjson.Owner;
-    el.offerConfPigeonNum.innerHTML = collectionItemLabel() + ' #' +(offerTarget.number !== null ? greenNum(offerTarget.number) : '????');
+    el.offerConfPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(offerTarget);
     el.offerConfPigeonImg.src = offerTarget.image || '';
     el.offerConfPigeonImg.style.display = offerTarget.image ? '' : 'none';
     el.offerConfValue.textContent = fmtPigeons(txjson.Amount.value);
@@ -12480,7 +12495,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Same popup, not a screen navigation — swap to the receipt sub-state
     // in place (offerTarget stays set, still needs .number below).
     offerTarget.offerId = data.offerId;
-    el.offerReceiptPigeonNum.innerHTML = collectionItemLabel() + ' #' +(offerTarget.number !== null ? greenNum(offerTarget.number) : '????');
+    el.offerReceiptPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(offerTarget);
     el.offerReceiptPrice.textContent = fmtPigeons(data.price);
     if (data.txHash){
       el.offerResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
@@ -12691,7 +12706,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // from the client) doesn't need to be spelled out on screen for that
     // to be true.
     el.transferConfAccount.textContent = txjson.Account;
-    el.transferConfPigeonNum.innerHTML = collectionItemLabel() + ' #' +(transferTarget.number !== null ? greenNum(transferTarget.number) : '????');
+    el.transferConfPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(transferTarget);
     el.transferConfDestination.textContent = txjson.Destination;
     el.transferConfirmStatus.textContent = '';
     el.transferOpenXamanBtn.disabled = false;
@@ -12781,7 +12796,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // which also clears it) since this still needs .number/.toWallet
     // below.
     el.transferConfirmModal.style.display = 'none';
-    el.transferResultPigeonNum.innerHTML = collectionItemLabel() + ' #' +(transferTarget.number !== null ? greenNum(transferTarget.number) : '????');
+    el.transferResultPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(transferTarget);
     el.transferResultDestination.textContent = transferTarget.toWallet;
     if (data.txHash){
       el.transferResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
@@ -12909,7 +12924,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="my-offer-row-left">' +
           '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + img + '</div>' +
           '<div class="my-offer-row-info">' +
-            '<div class="my-offer-row-num">P!GE0N #' + (item.number !== null ? greenNum(item.number) : '????') + '</div>' +
+            '<div class="my-offer-row-num">' + collectionItemLabel() + ' ' + itemNumberLabel(item) + '</div>' +
             '<div class="my-offer-row-buyer">T0 ' + walletTagHtml(item.ownerWallet, item.ownerShort) + (countdown ? ' :: ' + escapeHtml(countdown) : '') + '</div>' +
           '</div>' +
         '</div>' +
@@ -13079,7 +13094,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return '<div class="incoming-transfer-row">' +
         (t.image ? '<img class="incoming-transfer-thumb" src="' + escapeHtml(t.image) + '" alt="" loading="lazy">' : '<div class="incoming-transfer-thumb"></div>') +
         '<div class="incoming-transfer-info">' +
-          '<div class="incoming-transfer-num">P!GE0N #' + (t.number !== null ? greenNum(t.number) : '????') + '</div>' +
+          '<div class="incoming-transfer-num">' + escapeHtml(collectionItemLabel()) + ' ' + itemNumberLabel(t) + '</div>' +
           '<div class="incoming-transfer-from">FR0M :: ' + escapeHtml(t.fromWalletShort || t.fromWallet) + '</div>' +
         '</div>' +
         '<button class="action-btn incoming-transfer-accept-btn" data-nftid="' + escapeHtml(t.nftId) + '" data-offerid="' + escapeHtml(t.offerId) + '">ACCEPT</button>' +
@@ -13096,7 +13111,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   function openAcceptTransferConfirm(entry){
     acceptTransferTarget = entry;
-    el.acceptTransferConfPigeonNum.innerHTML = collectionItemLabel() + ' #' +(entry.number !== null ? greenNum(entry.number) : '????');
+    el.acceptTransferConfPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(entry);
     el.acceptTransferConfFrom.textContent = entry.fromWallet;
     el.acceptTransferConfirmStatus.textContent = '';
     el.acceptTransferOpenXamanBtn.disabled = false;
@@ -13186,7 +13201,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // lives entirely inside FL0CK, not the DATABASE grid's showScreen chain,
   // so there's no separate result screen to navigate to.
   function showAcceptTransferResult(){
-    var num = acceptTransferTarget && acceptTransferTarget.number !== null ? greenNum(acceptTransferTarget.number) : '????';
+    var num = itemNumberLabel(acceptTransferTarget, false);
     el.acceptTransferReceiptPigeonNum.innerHTML = collectionItemLabel() + ' #' +num;
     el.acceptTransferConfirmForm.style.display = 'none';
     el.acceptTransferConfirmReceipt.style.display = '';
@@ -13226,7 +13241,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // thumb treatment the L!ST/0FFER/TRANSFER popup already shows.
     el.acceptOfferConfThumb.style.display = acceptOfferTarget.image ? '' : 'none';
     el.acceptOfferConfThumb.src = acceptOfferTarget.image || '';
-    el.acceptOfferConfPigeon.innerHTML = collectionItemLabel() + ' ' +(acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
+    el.acceptOfferConfPigeon.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(acceptOfferTarget);
     setWalletText(el.acceptOfferConfBuyer, acceptOfferTarget.buyer, shortAddr(acceptOfferTarget.buyer));
     el.acceptOfferConfPrice.textContent = acceptOfferTarget.price ? fmtPigeons(acceptOfferTarget.price) : '';
     el.acceptOfferConfFee.textContent = '';
@@ -13328,7 +13343,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function showAcceptOfferResult(data){
     el.acceptOfferResultThumb.style.display = acceptOfferTarget.image ? '' : 'none';
     el.acceptOfferResultThumb.src = acceptOfferTarget.image || '';
-    el.acceptOfferResultPigeonNum.innerHTML = collectionItemLabel() + ' ' +(acceptOfferTarget.number !== null ? '#' + greenNum(acceptOfferTarget.number) : '#????');
+    el.acceptOfferResultPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(acceptOfferTarget);
     el.acceptOfferResultPrice.textContent = fmtPigeons(data.totalValue !== undefined ? data.totalValue : acceptOfferTarget.price);
     el.acceptOfferResultFee.textContent = data.feeValue !== undefined ? fmtPigeons(data.feeValue) : '—';
     showRoyaltyRow(el.acceptOfferResultRoyaltyRow, el.acceptOfferResultRoyaltyLabel, el.acceptOfferResultRoyalty, data.royaltyValue, data.royaltyPercent);
@@ -13454,6 +13469,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   // load real items.
   function collectionItemLabel(){
     return COLLECTION_META[state.collection].itemLabel;
+  }
+  // "#1921" for almost everything, but a numberless item (PHN!X has a
+  // handful of uniquely-named 1/1s at the start of the collection with no
+  // digits in their real name — see deeptideListingToPigeon's own comment
+  // in _shared.js) falls back to its real Deeptide name instead of a
+  // meaningless "#????". withHash controls whether a resolved number
+  // gets a leading "#" (every card/label site wants it) since a bare name
+  // like "GOLDEN PHN!X" shouldn't get one glued on the front.
+  function itemNumberLabel(p, withHash){
+    if (withHash === undefined) withHash = true;
+    if (p && p.number !== null && p.number !== undefined) return (withHash ? '#' : '') + greenNum(p.number);
+    if (p && p.name) return escapeHtml(p.name);
+    return withHash ? '#????' : '????';
   }
   function switchCollection(newCollection){
     closeDbSelectFlyout();
@@ -13953,7 +13981,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function saleRowHtml(s){
     var thumb = s.image ? '<img src="' + escapeHtml(s.image) + '" alt="" loading="lazy">' : '';
-    var num = s.number !== null ? '#' + greenNum(s.number) : '#????';
+    var num = itemNumberLabel(s);
     // s.currency is 'XRP' for a Deeptide-feed sale, or the active
     // collection's real token currency (e.g. 'PHNIX') for one of Σκύλλα's
     // own — never the literal string 'PIGEONS' any more now that the
@@ -14702,7 +14730,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function openDetail(nftId){
     scrollBeforeDetail = window.scrollY;
     var known = findKnown(nftId);
-    el.detailNum.innerHTML = known && known.number !== null ? collectionItemLabel() + ' #' +greenNum(known.number) : collectionItemLabel() + ' ...';
+    el.detailNum.innerHTML = known && known.number !== null ? collectionItemLabel() + ' #' +greenNum(known.number) : (known && known.name ? collectionItemLabel() + ' ' + escapeHtml(known.name) : collectionItemLabel() + ' ...');
     el.detailImgBox.innerHTML = known && known.image ? '<img src="' + escapeHtml(known.image) + '" alt="">' : 'IMAGE';
     // Keep the fullscreen lightbox's own picture in sync when PREV/NEXT is
     // used from inside it (see navigateDetail's lightbox branch below) —
@@ -14736,7 +14764,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       var p = data.item;
       state.currentDetail = p;
-      el.detailNum.innerHTML = p.number !== null ? collectionItemLabel() + ' #' +greenNum(p.number) : collectionItemLabel() + ' ...';
+      el.detailNum.innerHTML = p.number !== null ? collectionItemLabel() + ' #' +greenNum(p.number) : (p.name ? collectionItemLabel() + ' ' + escapeHtml(p.name) : collectionItemLabel() + ' ...');
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : 'IMAGE';
       el.detailTraits.innerHTML = sortTraitsByRarity(p.attributes).map(traitCellHtml).join('');
       updateDetailRarity(p);
@@ -15174,7 +15202,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.profilePfpGrid.innerHTML = items.map(function(p){
       return '<div class="simple-picker-card' + (p.nftId === profileSelectedPfpNftId ? ' simple-picker-card-selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
         '<div class="simple-picker-card-img profile-pfp-pick" data-nftid="' + escapeHtml(p.nftId) + '">' + (p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '') + '</div>' +
-        '<div class="simple-picker-card-num">P!GE0N #' + (p.number !== null ? greenNum(p.number) : '????') + '</div>' +
+        '<div class="simple-picker-card-num">' + escapeHtml(collectionItemLabel()) + ' ' + itemNumberLabel(p) + '</div>' +
       '</div>';
     }).join('');
   }

@@ -1,4 +1,4 @@
-import {
+﻿import {
   fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftDetailCached, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
@@ -102,6 +102,12 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pige
   return {
     nftId,
     number: meta.number,
+    // Real Deeptide display name, alongside `number` — see
+    // deeptideListingToPigeon's own comment in _shared.js. null for the
+    // vast majority of items (their number is already the whole story),
+    // populated for a handful of uniquely-named items (PHN!X's own 1/1s)
+    // so the card can show that instead of a meaningless "#????".
+    name: meta.name || null,
     image: displayImage(meta.image),
     attributes: meta.attributes,
     rarityRank: meta.rarityRank || null,
@@ -177,8 +183,10 @@ export async function onRequestGet(context) {
   // Highest-ever sale price per token — one cheap KV read, reused for
   // every item below (cards' "HIGH SALE" line and the highest-sale sort).
   // Empty for a non-tradeable collection (see COLLECTIONS' own comment) —
-  // no crawl exists for these yet, not this global $PIGEONS-collection map.
-  const highSaleMap = tradeable ? await getHighSaleMap(env.coin) : {};
+  // no crawl exists for these yet. Namespaced by coll.key (see
+  // getHighSaleMap's own comment in _shared.js) — this used to always
+  // read $PIGEONS' own map regardless of the active collection.
+  const highSaleMap = tradeable ? await getHighSaleMap(env.coin, coll.key) : {};
 
   // Σκύλλα SWAP listings — one cheap KV read, reused for every item below
   // (the Σ LISTED badge on ordinary browse cards, and the LISTED filter's
@@ -215,7 +223,7 @@ export async function onRequestGet(context) {
     const categories = await getTraitCategoriesWithPercent(env.coin, coll.shopSlug, coll.sizeApprox);
     const examples = {};
     if (tradeable) {
-      const rawExamples = await getTraitExampleMap(env.coin);
+      const rawExamples = await getTraitExampleMap(env.coin, coll.key);
       // Same ipfs.io same-origin proxy every other image on this page goes
       // through (displayImage) — raw ipfs.io URLs get Fetch-Metadata-blocked
       // when hotlinked directly from the browser.
@@ -226,8 +234,8 @@ export async function onRequestGet(context) {
         }
       }
     }
-    const numberMapStats = tradeable ? await getPigeonNumberMapStats(env.coin) : null;
-    if (tradeable) context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
+    const numberMapStats = tradeable ? await getPigeonNumberMapStats(env.coin, coll.key) : null;
+    if (tradeable) context.waitUntil(maybeRefreshPigeonNumberMap(env.coin, coll.key));
     return json({
       categories,
       examples,
@@ -603,10 +611,10 @@ export async function onRequestGet(context) {
   if (number) {
     const num = parseInt(number, 10);
     if (!num || num < 1) return json({ items: [], notIndexed: false, invalid: true });
-    const map = await getPigeonNumberMap(env.coin);
+    const map = await getPigeonNumberMap(env.coin, coll.key);
     const nftId = map[num];
     if (!nftId) {
-      context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
+      context.waitUntil(maybeRefreshPigeonNumberMap(env.coin, coll.key));
       return json({ items: [], notIndexed: true, query: num });
     }
     const item = await fetchDeeptideNftDetail(nftId);
@@ -642,7 +650,7 @@ export async function onRequestGet(context) {
   let editionIdSetPromise = null;
   function idsInEditionRange() {
     if (!editionIdSetPromise) {
-      editionIdSetPromise = getPigeonNumberMap(env.coin).then(map => {
+      editionIdSetPromise = getPigeonNumberMap(env.coin, coll.key).then(map => {
         const set = new Set();
         for (const numStr of Object.keys(map)) {
           const n = parseInt(numStr, 10);
@@ -847,7 +855,7 @@ export async function onRequestGet(context) {
     const numericOrder = params.get('numericOrder');
     if (numericOrder === 'asc' || numericOrder === 'desc') {
       const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
-      const map = await getPigeonNumberMap(env.coin);
+      const map = await getPigeonNumberMap(env.coin, coll.key);
       let nums = Object.keys(map)
         .map(n => parseInt(n, 10))
         .filter(n => numberRange === 'low' ? n <= PIGEON_LOW_EDITION_MAX : n > PIGEON_LOW_EDITION_MAX);
@@ -914,7 +922,7 @@ export async function onRequestGet(context) {
   if (numericOrder === 'asc' || numericOrder === 'desc') {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
-    const map = await getPigeonNumberMap(env.coin);
+    const map = await getPigeonNumberMap(env.coin, coll.key);
     let nums = Object.keys(map).map(n => parseInt(n, 10));
     let total = nums.length;
     // The number map carries no trait data — a trait filter (previously
@@ -1015,8 +1023,8 @@ export async function onRequestGet(context) {
   await attachListings(env.coin, items);
 
   if (tradeable) {
-    context.waitUntil(maybeRefreshPigeonNumberMap(env.coin));
-    context.waitUntil(maybeRefreshHighSaleMap(env.coin));
+    context.waitUntil(maybeRefreshPigeonNumberMap(env.coin, coll.key));
+    context.waitUntil(maybeRefreshHighSaleMap(env.coin, coll.key));
   }
 
   return json({
