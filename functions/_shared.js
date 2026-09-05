@@ -1257,7 +1257,7 @@ export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
     if (cached !== null) return JSON.parse(cached);
   }
   const dexPair = COLLECTION_DEXSCREENER_PAIRS[collectionKey] || dexscreenerPairFor(cfg.tokenConfig);
-  let result = { xrpPerPigeon: null, usdPerPigeon: null, marketCapXrp: null, dexUrl: dexPair ? 'https://dexscreener.com/xrpl/' + dexPair : null };
+  let result = { xrpPerPigeon: null, usdPerPigeon: null, marketCapXrp: null, liquidityXrp: null, dexUrl: dexPair ? 'https://dexscreener.com/xrpl/' + dexPair : null };
   if (dexPair) {
     try {
       const res = await fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + dexPair);
@@ -1276,6 +1276,18 @@ export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
         // next to it.
         const capUsd = parseFloat(pair.marketCap != null ? pair.marketCap : pair.fdv);
         if (capUsd > 0 && nativeVal > 0 && usdVal > 0) result.marketCapXrp = capUsd * (nativeVal / usdVal);
+        // Pool liquidity — pair.liquidity.quote is already the XRP side of
+        // the pool (the pair is always TOKEN/XRP, XRP as quote) straight
+        // from DexScreener, a real on-chain figure rather than something
+        // derived/estimated, so it's used directly over the usd field with
+        // no unit conversion needed.
+        const liq = pair.liquidity;
+        const liqQuote = liq ? parseFloat(liq.quote) : NaN;
+        if (liqQuote > 0) result.liquidityXrp = liqQuote;
+        else {
+          const liqUsd = liq ? parseFloat(liq.usd) : NaN;
+          if (liqUsd > 0 && nativeVal > 0 && usdVal > 0) result.liquidityXrp = liqUsd * (nativeVal / usdVal);
+        }
       }
     } catch (e) { /* fall through to book-offers fallback below */ }
   }

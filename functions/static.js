@@ -315,46 +315,49 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   a.back-link:hover{ color:var(--cyan); }
 
-  /* The hero is the thesis (see the Σκύλλα Mainframe identity pitch) —
-     was a small, centered, single-scale line; now genuinely oversized and
-     left-set instead of centered, breaking the "everything centered"
-     pattern the rest of the page still uses. Two rows read at different
-     scales on purpose (S!GNAL as the real headline, MA!NFRAME as a
-     smaller subtitle line underneath it via .h1-sub) instead of one flat
-     block of equal-weight text. */
+  /* The site's real title, now a small terminal-style readout tucked into
+     the top-left corner rather than a full-width hero — reported live as
+     the oversized display-font version reading more like a splash banner
+     than "the main title of the website." Plain monospace instead of
+     --font-display, a real blinking block cursor (::after, same idea as
+     HACK_MA!NFRAME.exe's own scan-cursor in mainframe.js) so it reads as
+     something a terminal just typed out, not a logo. */
   h1{
-    font-family:var(--font-display);
-    font-weight:700;
-    /* 40px used to be a hard floor regardless of viewport — fine down to
-       roughly tablet width, but on an actual phone (~375px) 9vw only
-       computes to ~34px, so the clamp pinned it back up to 40px anyway:
-       "Σκύλλα://S!GNAL" at a fixed 40px ran edge-to-edge with no
-       breathing room, reported live as not fitting properly. 28px lets
-       it actually keep shrinking with the viewport below that point. */
-    font-size:clamp(28px,9vw,104px);
-    line-height:0.94;
-    letter-spacing:0.01em;
-    color:var(--white);
-    /* Cyan/magenta chromatic-aberration split, restored now that cyan is
-       a real colour again — the two-colour glitch (not a plain dark
-       double-strike) is what the identity pitch this whole system is
-       based on actually uses. */
-    text-shadow:
-      -2px 0 var(--cyan-dim),
-      2px 0 var(--magenta-dim);
-    margin-bottom:0.6rem;
+    font-family:var(--font-mono);
+    font-weight:500;
+    font-size:clamp(11px,1.6vw,14px);
+    line-height:1.5;
+    letter-spacing:0.06em;
+    color:var(--grey);
+    text-shadow:none;
+    margin-bottom:1.25rem;
     text-align:left;
     text-transform:none;
     text-wrap:balance;
   }
+  h1::after{
+    content:'';
+    display:inline-block;
+    width:0.55em;
+    height:1em;
+    margin-left:0.3em;
+    vertical-align:-0.15em;
+    background:var(--green);
+    box-shadow:0 0 6px var(--green-glow);
+    animation:h1-cursor-blink 1s step-end infinite;
+  }
+  @keyframes h1-cursor-blink{
+    0%, 50%{ opacity:1; }
+    51%, 100%{ opacity:0; }
+  }
   .h1-sub{
     display:block;
-    font-size:0.42em;
+    font-size:0.85em;
     letter-spacing:0.14em;
-    color:var(--grey);
+    color:var(--grey-dim);
     -webkit-text-stroke:0;
     text-shadow:none;
-    margin-top:0.3em;
+    margin-top:0.25em;
   }
   .title-online{ color:var(--green); text-shadow:0 0 6px var(--green-glow); }
   /* $PIGEONS numbers — same green as the header's ONLINE, wherever a real
@@ -5448,7 +5451,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      for the card or its BUY button. */
   .mainframe-card-soon-banner{
     position:absolute;
-    top:16%;
+    top:46%;
     left:-10%;
     width:120%;
     transform:rotate(-8deg);
@@ -5737,6 +5740,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$SEAL</div>
+            <div class="mainframe-card-stats" id="mainframeStatsSeal"></div>
             <button type="button" class="mainframe-card-buy" data-collection="seal">BUY $SEAL</button>
           </div>
         </div>
@@ -5745,6 +5749,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$FUZZY</div>
+            <div class="mainframe-card-stats" id="mainframeStatsFuzzy"></div>
             <button type="button" class="mainframe-card-buy" data-collection="fuzzy">BUY $FUZZY</button>
           </div>
         </div>
@@ -5753,6 +5758,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$C0NSP!RACY</div>
+            <div class="mainframe-card-stats" id="mainframeStatsConspiracy"></div>
             <button type="button" class="mainframe-card-buy" data-collection="conspiracy">BUY $CNS</button>
           </div>
         </div>
@@ -7239,7 +7245,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
-   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
+   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
@@ -13301,38 +13307,50 @@ const SWAP_HTML = `<!DOCTYPE html>
       showTab('profile');
     }
   });
-  // Real, live numbers on every TRAD!NG L!VE card (see .mainframe-card-stats'
-  // own comment in the CSS) — same three fields, same order, on every
-  // tradeable collection, so the bottom-of-card line reads identically
-  // everywhere instead of only ever existing on P!GE0NS. C0M!NG S00N cards
-  // have nothing live to show (no real trading data behind them yet).
+  // Real, live numbers on every card (see .mainframe-card-stats' own
+  // comment in the CSS) — same fields, same order, on every tradeable
+  // collection, so the bottom-of-card line reads identically everywhere.
   // Fires once, at load, regardless of whether MAINFRAME is the visible
   // screen right now — cheap, and means the numbers are already there the
-  // instant you land back on it (STAT!C :: MA!NFRAME, top-left). Line now
-  // reads H0LDERS :: MARKETCAP :: PRICE (XRP) — holders still comes from
-  // the NFT-collection stats endpoint, marketcap/price come from the
-  // token's own DexScreener-derived rate (fetchPigeonsXrpRate's own
-  // marketCapXrp/xrpPerPigeon, see _shared.js) since items/volume were
-  // NFT-listing figures, not token trading ones.
+  // instant you land back on it. Line reads H0LDERS :: MARKETCAP :: PRICE
+  // (XRP) — holders comes from the NFT-collection stats endpoint (only
+  // real for collections with a Deeptide shop slug, see hasShopSlug
+  // below), marketcap/liquidity come from the token's own DexScreener-
+  // derived rate (fetchPigeonsXrpRate's own marketCapXrp/liquidityXrp, see
+  // _shared.js) which works off the token's currency+issuer alone, so
+  // every collection gets it even the three with no real NFT shop slug
+  // yet (SEAL/FUZZY/C0NSP!RACY). Both money figures shown in K/M-
+  // abbreviated XRP (formatXrpAbbrev) — full precision would run several
+  // digits deep and never fit the small card width.
+  function formatXrpAbbrev(n){
+    if (n >= 1000000) return (n / 1000000).toLocaleString(undefined, { maximumFractionDigits: 2 }) + 'M';
+    if (n >= 1000) return (n / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'K';
+    return Math.round(n).toLocaleString();
+  }
   [
-    { collection: 'pigeons', target: 'mainframeStatsPigeons' },
-    { collection: 'phnixs', target: 'mainframeStatsPhnixs' },
-    // SEAL/FUZZY/C0NSP!RACY get no stats fetch — no real Deeptide shop
-    // slug exists for any of them yet (see COLLECTIONS in pigeons.js), so
-    // holders would just read null/wrong. TEDDY does have a real shopSlug
-    // ('teddybg'), so it gets the real numbers same as the other two.
-    { collection: 'teddybg', target: 'mainframeStatsTeddybg' }
+    { collection: 'pigeons', target: 'mainframeStatsPigeons', hasShopSlug: true },
+    { collection: 'phnixs', target: 'mainframeStatsPhnixs', hasShopSlug: true },
+    // TEDDY has a real shopSlug ('teddybg'), so it gets real holders same
+    // as PIGEONS/PHNIX. SEAL/FUZZY/C0NSP!RACY don't (no real Deeptide shop
+    // slug exists for any of them yet, see COLLECTIONS in pigeons.js) —
+    // they skip the stats:1 call entirely (it would just 400/return
+    // nothing useful against a null slug) but still get their real
+    // marketcap/liquidity below.
+    { collection: 'teddybg', target: 'mainframeStatsTeddybg', hasShopSlug: true },
+    { collection: 'seal', target: 'mainframeStatsSeal', hasShopSlug: false },
+    { collection: 'fuzzy', target: 'mainframeStatsFuzzy', hasShopSlug: false },
+    { collection: 'conspiracy', target: 'mainframeStatsConspiracy', hasShopSlug: false }
   ].forEach(function(cfg){
     Promise.all([
-      api({ stats: 1, collection: cfg.collection }).catch(function(){ return {}; }),
+      cfg.hasShopSlug ? api({ stats: 1, collection: cfg.collection }).catch(function(){ return {}; }) : Promise.resolve({}),
       api({ pigeonsRate: 1, collection: cfg.collection }).catch(function(){ return {}; })
     ]).then(function(results){
       var stats = results[0] || {}, rate = results[1] || {};
-      if (stats.holders == null && rate.marketCapXrp == null && rate.xrpPerPigeon == null) return;
+      if (stats.holders == null && rate.marketCapXrp == null && rate.liquidityXrp == null) return;
       var parts = [];
-      if (stats.holders != null) parts.push('<span class="hi">' + stats.holders.toLocaleString() + '</span> H0LDERS');
-      if (rate.marketCapXrp != null) parts.push('<span class="hi">' + Math.round(rate.marketCapXrp).toLocaleString() + '</span> MARKETCAP');
-      if (rate.xrpPerPigeon != null) parts.push('<span class="hi">' + rate.xrpPerPigeon.toLocaleString(undefined, { maximumFractionDigits: 6 }) + '</span> XRP');
+      if (stats.holders != null) parts.push('<span class="hi">' + stats.holders.toLocaleString() + '</span># NFT H0LDERS');
+      if (rate.marketCapXrp != null) parts.push('<span class="hi">' + formatXrpAbbrev(rate.marketCapXrp) + '</span> MARKETCAP');
+      if (rate.liquidityXrp != null) parts.push('<span class="hi">' + formatXrpAbbrev(rate.liquidityXrp) + '</span> L!QU!D!TY');
       el[cfg.target].innerHTML = parts.join(' :: ');
     });
   });
