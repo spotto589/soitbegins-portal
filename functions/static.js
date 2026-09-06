@@ -5937,11 +5937,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      collection. Blank (not a placeholder like "…") until they land, and
      silently stays blank on a failed fetch — never worth blocking or
      erroring the very first screen of the app over a stats tile. */
-  /* Each stat its own row (label left, value right, same edge-to-edge
-     width as every other row) instead of one run-on line joined with
-     " :: " that wrapped raggedly at card width — confirmed live as
-     wanting NFT H0LDERS/MARKETCAP/L!QU!D!TY to each read on their own
-     line with the values landing in a clean lined-up column. */
+  /* NFT H0LDERS gets its own row; MARKETCAP + L!QU!D!TY are grouped in
+     .stat-combo, which sits side-by-side on desktop (one line — reported
+     live as wanting holders alone on line 1, marketcap+liquidity together
+     on line 2) and stacks into its own two rows on phone width (see the
+     max-width:760px override below), matching the "each stat its own
+     line" ask there. Each .stat-row is label-left/value-right at the same
+     edge-to-edge width as every other row, instead of the old single
+     run-on line joined with " :: " that wrapped raggedly at card width. */
   .mainframe-card-stats{
     display:flex;
     flex-direction:column;
@@ -5953,6 +5956,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:0.3rem;
   }
   .mainframe-card-stats .stat-row{ display:flex; justify-content:space-between; gap:0.5em; }
+  .mainframe-card-stats .stat-combo{ display:flex; gap:1.25em; }
   .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
   /* Real per-collection DexScreener link — hidden until its own fetch
      resolves a real dexUrl (see the stats-fetch loop in the script), same
@@ -6065,6 +6069,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     .mainframe-card-body{ padding:0.5rem 0.6rem 0.55rem; }
     .mainframe-card-label{ font-size:15px; line-height:1.2; }
     .mainframe-card-stats{ font-size:9px; line-height:1.4; margin-top:0.25rem; gap:0.15rem; }
+    .mainframe-card-stats .stat-combo{ flex-direction:column; gap:0.15rem; }
     .mainframe-card-buy{ font-size:11px; letter-spacing:0.02em; padding:0.5em 0.3em; margin-top:0.4rem; }
     /* V!EW CHART badge dropped on phone — confirmed live as clutter at
        this width, and BUY (below, still live) is the action that matters
@@ -14078,16 +14083,20 @@ const SWAP_HTML = `<!DOCTYPE html>
         el[cfg.dexTarget].style.display = '';
       }
       if (stats.holders == null && rate.marketCapUsd == null && rate.liquidityUsd == null) return;
-      // Each stat its own row (label left, value right) instead of one
-      // run-on line — see .mainframe-card-stats .stat-row's own CSS.
+      // NFT H0LDERS is its own row; MARKETCAP + L!QU!D!TY are grouped in
+      // a .stat-combo, which CSS puts side-by-side on desktop (holders
+      // alone on line 1, marketcap+liquidity together on line 2) and
+      // stacks into two more rows on phone width (each stat its own
+      // line) — see .mainframe-card-stats' own CSS for both layouts.
       function row(label, value){
         return '<div class="stat-row"><span>' + label + ' ::</span><span class="hi">' + value + '</span></div>';
       }
-      var rows = [];
-      if (stats.holders != null) rows.push(row('NFT H0LDERS', stats.holders.toLocaleString()));
-      if (rate.marketCapUsd != null) rows.push(row('MARKETCAP', formatUsdAbbrev(rate.marketCapUsd)));
-      if (rate.liquidityUsd != null) rows.push(row('L!QU!D!TY', formatUsdAbbrev(rate.liquidityUsd)));
-      el[cfg.target].innerHTML = rows.join('');
+      var html = stats.holders != null ? row('NFT H0LDERS', stats.holders.toLocaleString()) : '';
+      var comboRows = [];
+      if (rate.marketCapUsd != null) comboRows.push(row('MARKETCAP', formatUsdAbbrev(rate.marketCapUsd)));
+      if (rate.liquidityUsd != null) comboRows.push(row('L!QU!D!TY', formatUsdAbbrev(rate.liquidityUsd)));
+      if (comboRows.length) html += '<div class="stat-combo">' + comboRows.join('') + '</div>';
+      el[cfg.target].innerHTML = html;
     });
   });
   el.dbSelectFlyout.addEventListener('click', function(e){
