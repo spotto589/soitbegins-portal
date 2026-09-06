@@ -1089,28 +1089,89 @@ const SWAP_HTML = `<!DOCTYPE html>
      one yet. Own colour per row via --card-accent (same r,g,b convention
      COLLECTION_META's own trustline-banner theming already uses), so this
      reads as "the same coins from MAINFRAME" rather than a plain list. ---- */
-  .profile-coins-list{ display:flex; flex-direction:column; gap:0.6rem; margin-bottom:1.5rem; }
-  .profile-coin-row{
+  /* MY C0!NS is now a collapsible section (profileCoinsBanner toggles
+     profileCoinsBody) — open by default the moment PR0F!LE loads,
+     reported live as wanting the balances visible immediately rather than
+     needing an extra click, but collapsible via its own header banner for
+     anyone who wants the rest of PR0F!LE (username/pfp) without scrolling
+     past a big coin grid every time. */
+  .profile-coins-section{ margin-bottom:1.5rem; }
+  .profile-coins-banner{
     display:flex;
     align-items:center;
+    justify-content:center;
+    gap:0.6rem;
+    cursor:pointer;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+    text-align:center;
+    font-size:13px;
+    font-weight:500;
+    letter-spacing:0.24em;
+    color:var(--white);
+    text-transform:uppercase;
+    padding:0.6em 0;
+    border-bottom:1px solid var(--border-dim);
+    margin-bottom:1rem;
+  }
+  .profile-coins-banner:hover{ color:var(--cyan); }
+  .profile-coins-banner-arrow{ display:inline-block; transition:transform 0.15s ease; color:var(--grey); }
+  .profile-coins-section.collapsed .profile-coins-banner-arrow{ transform:rotate(-90deg); }
+  .profile-coins-section.collapsed .profile-coins-body{ display:none; }
+  /* WALLET BALANCE (real native XRP, straight from account_info) up top,
+     T0TAL P0RTF0L!0 VALUE (every coin balance converted to XRP via its own
+     real AMM pool rate, see pigeonsRate, plus the wallet balance above)
+     at the bottom — reported live as wanting "an xrp balance on the
+     wallet" that actually reflects everything held, not just the native
+     XRP line. Same green-highlight-number convention as everywhere else
+     (.profile-coin-balance .hi) rather than a new one. */
+  .profile-coins-wallet-row, .profile-coins-total-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
     gap:1rem;
-    padding:0.75rem 1rem;
+    font-family:var(--font-mono);
+    font-size:13px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    color:var(--grey);
+    padding:0.6em 0.9em;
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    background:linear-gradient(90deg, rgba(var(--card-accent, 61,243,236),0.08), transparent 60%);
+  }
+  .profile-coins-wallet-row{ margin-bottom:1rem; }
+  .profile-coins-total-row{ margin-top:1rem; border-color:var(--green); background:rgba(0,255,140,0.06); }
+  .profile-coins-total-row span:last-child{ color:var(--green); font-weight:700; text-shadow:0 0 6px var(--green-glow); }
+  .profile-coins-wallet-row span:last-child{ color:#fff; font-weight:600; }
+  /* Boxed layout — one square-ish card per collection instead of the old
+     flat list, reported live as wanting all collections laid out as
+     clean boxes rather than stacked rows. auto-fill/minmax keeps it
+     responsive without a breakpoint of its own. */
+  .profile-coins-list{ display:grid; grid-template-columns:repeat(auto-fill, minmax(148px, 1fr)); gap:0.75rem; margin-bottom:0; }
+  .profile-coin-row{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    gap:0.5rem;
+    padding:1rem 0.85rem;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    background:linear-gradient(180deg, rgba(var(--card-accent, 61,243,236),0.1), transparent 70%);
   }
   .profile-coin-thumb{
-    width:44px; height:44px; flex:0 0 auto;
+    width:56px; height:56px; flex:0 0 auto;
     border-radius:var(--radius);
     border:1px solid rgba(var(--card-accent, 61,243,236), 0.4);
     background-size:cover; background-position:center;
     background-color:rgba(var(--card-accent, 61,243,236), 0.18);
   }
-  .profile-coin-info{ flex:1 1 auto; min-width:0; text-align:left; }
+  .profile-coin-info{ min-width:0; text-align:center; width:100%; }
   .profile-coin-label{ font-family:var(--font-display); font-size:16px; font-weight:700; color:#fff; }
   .profile-coin-balance{ font-family:var(--font-mono); font-size:12px; letter-spacing:0.03em; color:var(--grey); margin-top:0.15rem; }
   .profile-coin-balance .hi{ color:var(--green); font-weight:600; }
   .profile-coin-balance.profile-coin-warn{ color:var(--red); }
+  .profile-coin-value{ font-family:var(--font-mono); font-size:11px; letter-spacing:0.03em; color:var(--cyan); margin-top:0.1rem; }
   /* Σκύλλα BUY button — ghost at rest (ties this button to whichever
      collection's own real coin it's for, --card-accent, same as the
      thumb right next to it), fills solid on hover. Same recipe as every
@@ -1120,7 +1181,9 @@ const SWAP_HTML = `<!DOCTYPE html>
      shape, not a per-screen reinvention, no longer a flat --green
      regardless of which token it's actually for. */
   .profile-coin-action{
-    flex:0 0 auto;
+    width:100%;
+    box-sizing:border-box;
+    margin-top:0.15rem;
     background:rgba(var(--card-accent, 61,243,236), 0.1);
     border:1px solid rgb(var(--card-accent, 61,243,236));
     color:rgb(var(--card-accent, 61,243,236));
@@ -2167,7 +2230,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-top:1px solid var(--border-mid);
     background:rgba(9,9,7,0.96);
     backdrop-filter:blur(6px);
+    /* Hidden (slid off the bottom edge) until dbControlsStickyObserver
+       (see the JS) confirms #dbControlsSticky — the SAME S0RT BY/F!LTER
+       BY TRA!TS triggers, just the in-page ones directly above RESET —
+       has scrolled out of view above the viewport. Reported live as not
+       wanting this floating bar competing with the real in-page buttons
+       while they're still both on screen, only reachable once you've
+       actually scrolled past them. transform, not display:none, so the
+       slide is a real animation rather than an instant pop-in/out — the
+       tab-level display:flex/none toggle in showTab still fully removes
+       it (and its layout space) on non-DATABASE/PλWS tabs, this class
+       only governs visibility WHILE that's true. */
+    transform:translateY(120%);
+    transition:transform 0.2s ease;
   }
+  .bottom-controls-bar.bottom-controls-bar-revealed{ transform:translateY(0); }
   .bottom-controls-btn{
     flex:1 1 0;
     min-width:0;
@@ -5711,38 +5788,103 @@ const SWAP_HTML = `<!DOCTYPE html>
     mix-blend-mode:overlay;
   }
   #screenMainframe > .local-static-bg{ z-index:-1; }
-  #screenMainframe > *:not(.local-static-bg):not(.mainframe-profile-btn){ position:relative; z-index:1; }
-  /* Header shrinks to its own content — flex:0 0 auto keeps it from
-     eating into the carousel's space, and its own H1 is capped much
-     smaller than the persistent page's (up to 104px there) specifically
-     here, so the whole screen reliably fits with zero scroll on a short
-     window too, not just a tall one. */
-  #screenMainframe > h1{ flex:0 0 auto; font-size:clamp(26px, 5.5vw, 58px); margin-bottom:0.2rem; }
-  /* STAT!C :: MA!NFRAME — pulled OUT of the h1 (was .h1-sub, a tiny
-     caption glued underneath the giant "Σκύλλα://S!GNAL :: 0NL!NE" title)
-     and given its own line directly above SELECT A C0LLECT!0N instead —
-     reported live as wanting it read as a header for the picker below,
-     not an afterthought under the hero. Kept at roughly its OLD size
-     (.h1-sub's own 0.42em of the hero, ~24-33px at typical viewport
-     widths) rather than shrunk to match .mainframe-subtitle below it —
-     reported live as this one specifically should have stayed the same
-     size when it moved. */
-  .mainframe-static-label{
+  #screenMainframe > *:not(.local-static-bg){ position:relative; z-index:1; }
+  /* HER0 — headline + Σκύλλα's own CTA + her one-line tagline, one
+     centered flex column instead of the old flat sibling list (h1/button/
+     label/subtitle all direct children of #screenMainframe). flex:0 0
+     auto keeps it from eating into the carousel's space below, same
+     reasoning the old bare h1 rule already used. */
+  .mainframe-hero{
     flex:0 0 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  /* H1 is capped much smaller than the persistent page's own (up to 104px
+     there) specifically here, so the whole screen reliably fits with zero
+     scroll on a short window too, not just a tall one. */
+  .mainframe-hero > h1{ font-size:clamp(26px, 5.5vw, 58px); margin-bottom:0; text-align:center; }
+  /* Σκύλλα's own button — was a small ghost button pinned absolute to the
+     top-right corner, easy to miss entirely. Promoted to a real, primary,
+     in-flow CTA directly under the headline instead — she's the site's
+     connector/gateway (balances, buying coins, trading, messaging), not a
+     side option, so this is deliberately the boldest/brightest single
+     control on the whole screen (solid fill, not ghost, plus a strong
+     glow) rather than another outlined button matching the six collection
+     cards below it. */
+  .mainframe-profile-btn{
+    margin-top:1.1rem;
+    background:var(--magenta);
+    border:1px solid var(--magenta);
+    color:#000;
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:clamp(16px, 2.6vw, 22px);
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    padding:0.85em 2.2em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    white-space:nowrap;
+    box-shadow:0 0 26px var(--magenta-dim), 0 0 60px rgba(240,0,228,0.18);
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .mainframe-profile-btn:hover{ transform:translateY(-1px); box-shadow:0 0 34px var(--magenta-dim), 0 0 80px rgba(240,0,228,0.28); }
+  /* One line under the button spelling out what she actually does — the
+     button text alone ("MY PR0F!LE") doesn't carry "connector/gateway"
+     on its own, reported live as wanting that read immediately, not
+     discovered after clicking in. */
+  .mainframe-profile-tagline{
+    margin-top:0.6rem;
+    font-size:10.5px;
+    letter-spacing:0.16em;
+    color:var(--grey-dim);
+    text-transform:uppercase;
+    text-align:center;
+  }
+  @media (max-width:600px){
+    .mainframe-profile-btn{ padding:0.8em 1.6em; }
+  }
+  /* SECT!0N HEADER — STAT!C :: MA!NFRAME/SELECT A C0LLECT!0N, now its own
+     clearly separate block directly over the collection grid rather than
+     glued underneath the identity hero above — "the static IS the
+     database/system that shows all the data" (reported live), so this
+     reads as a real sub-heading for the picker below it, not a caption on
+     the headline. A top divider (the same glowing-line device the
+     subtitle below already uses via ::after) visually splits it from the
+     hero block above. */
+  .mainframe-section-header{
+    flex:0 0 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin-top:1.5rem;
+    padding-top:1.25rem;
+    position:relative;
+  }
+  .mainframe-section-header::before{
+    content:'';
+    position:absolute;
+    top:0; left:50%; transform:translateX(-50%);
+    width:min(320px, 70%); height:1px;
+    background:linear-gradient(90deg, transparent, var(--border-mid), transparent);
+  }
+  /* Kept at roughly its old size (~24-33px at typical viewport widths) —
+     reported live as this one specifically should read as a real
+     eyebrow/label for the section, not shrunk to match SELECT A
+     C0LLECT!0N below it. */
+  .mainframe-static-label{
     text-align:center;
     font-size:clamp(15px, 2.4vw, 24px);
     letter-spacing:0.14em;
     color:var(--grey);
     text-transform:uppercase;
-    margin-top:0.75rem;
   }
-  /* SELECT A C0LLECT!0N — now the smaller of the two lines (was equal to
-     STAT!C :: MA!NFRAME above it), and flashes slowly rather than sitting
-     static — reported live as wanting it to visually nudge you toward
-     actually picking one of the six cards below, not just label them. */
+  /* SELECT A C0LLECT!0N — the smaller of the two lines, flashes slowly
+     rather than sitting static, nudging you toward actually picking one
+     of the six cards below rather than just labelling them. */
   .mainframe-subtitle{
     position:relative;
-    flex:0 0 auto;
     text-align:center;
     font-size:10px;
     letter-spacing:0.25em;
@@ -6046,29 +6188,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-arrow-prev{ left:0.25rem; }
   .mainframe-arrow-next{ right:0.25rem; }
   #mainframeReopenLabel{ cursor:pointer; }
-  .mainframe-profile-btn{
-    position:absolute;
-    top:2rem; right:1.5rem;
-    z-index:2;
-    background:transparent;
-    border:1px solid var(--magenta);
-    color:var(--magenta);
-    font-family:var(--font-mono);
-    font-weight:700;
-    font-size:16px;
-    letter-spacing:0.05em;
-    text-transform:uppercase;
-    padding:0.9em 1.6em;
-    border-radius:var(--radius);
-    cursor:pointer;
-    white-space:nowrap;
-    text-shadow:0 0 5px var(--magenta-glow);
-    box-shadow:0 0 14px var(--magenta-dim);
-  }
-  .mainframe-profile-btn:hover{ background:var(--magenta); color:#000; text-shadow:none; }
-  @media (max-width:600px){
-    .mainframe-profile-btn{ position:static; display:block; margin:0 auto 0.5rem; width:fit-content; }
-  }
+  /* .mainframe-profile-btn's real rule now lives up with .mainframe-hero
+     (she's promoted to an in-flow primary CTA, not an absolute-positioned
+     corner button any more) — see that block's own comment. */
 </style>
 </head>
 <body>
@@ -6083,16 +6205,36 @@ const SWAP_HTML = `<!DOCTYPE html>
        the DATABASE dropdown already does today. -->
   <div id="screenMainframe">
     <canvas class="local-static-bg" id="mainframeStaticBg"></canvas>
-    <!-- MY PR0F!LE — the entry point into login + the real multi-coin
-         balance view (see #profileCoinsList/renderProfileCoins), reported
-         live as wanting "a place where we can login and view our
-         profile" reachable right from here, not buried inside DATABASE. -->
-    <button type="button" class="mainframe-profile-btn" id="mainframeProfileBtn">
-      <span style="text-transform:none;">Σκύλλα</span> · MY PR0F!LE
-    </button>
-    <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></h1>
-    <div class="mainframe-static-label">STAT!C :: MA!NFRAME</div>
-    <div class="mainframe-subtitle">SELECT A C0LLECT!0N</div>
+    <!-- HER0 — the headline (unchanged, see its own h1 rule) plus Σκύλλα's
+         own button, now grouped as one centered block instead of the
+         headline sitting alone with the button floating off in a corner.
+         Reported live as wanting the header to read as "balanced" and
+         Σκύλλα's own button to be the visual centerpiece — she's the
+         site's connector/gateway (balances, buying coins, trading,
+         messaging), not a side option, so this promotes her out of the
+         old absolute-positioned top-right ghost button into a real,
+         primary, in-flow CTA directly under the hero. -->
+    <div class="mainframe-hero">
+      <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></h1>
+      <!-- MY PR0F!LE — the entry point into login + the real multi-coin
+           balance view (see #profileCoinsList/renderProfileCoins), reported
+           live as wanting "a place where we can login and view our
+           profile" reachable right from here, not buried inside DATABASE. -->
+      <button type="button" class="mainframe-profile-btn" id="mainframeProfileBtn">
+        <span style="text-transform:none;">Σκύλλα</span> · MY PR0F!LE
+      </button>
+      <div class="mainframe-profile-tagline">Y0UR C0NNECT!0N :: BALANCES // TRADES // MESSAGES</div>
+    </div>
+    <!-- SECT!0N HEADER — STAT!C :: MA!NFRAME/SELECT A C0LLECT!0N moved out
+         of the hero block above and given its own clearly separate row
+         directly over the collection grid, reported live as "the static
+         IS the database/system that shows all the data" — this is a real
+         sub-heading introducing the picker below, not a caption glued to
+         the identity headline above it. -->
+    <div class="mainframe-section-header">
+      <div class="mainframe-static-label">STAT!C :: MA!NFRAME</div>
+      <div class="mainframe-subtitle">SELECT A C0LLECT!0N</div>
+    </div>
     <div class="mainframe-carousel-wrap">
       <button type="button" class="mainframe-arrow mainframe-arrow-prev" id="mainframeArrowPrev" aria-label="PREV!0US">◂</button>
       <div class="mainframe-grid" id="mainframeGrid">
@@ -6524,8 +6666,33 @@ const SWAP_HTML = `<!DOCTYPE html>
            below, not static — it has to iterate COLLECTION_META itself so
            a future collection just needs its own entry there, nothing
            here changes. -->
-      <div class="panel-title outgoing-offers-title" style="font-size:13px;">MY C0!NS</div>
-      <div class="profile-coins-list" id="profileCoinsList"></div>
+      <!-- Collapsible — profileCoinsBanner toggles the "collapsed" class on
+           profileCoinsSection (see the CSS above); open by default every
+           time PR0F!LE loads (loadProfilePanel never adds "collapsed"
+           itself), closable by clicking this banner, reported live as
+           wanting it start open but not forced to stay that way. -->
+      <div class="profile-coins-section" id="profileCoinsSection">
+        <div class="profile-coins-banner" id="profileCoinsBanner">
+          <span>MY C0!NS</span>
+          <span class="profile-coins-banner-arrow" id="profileCoinsBannerArrow">▾</span>
+        </div>
+        <div class="profile-coins-body" id="profileCoinsBody">
+          <div class="profile-coins-wallet-row" id="profileCoinsWalletRow">
+            <span>WALLET BALANCE (XRP)</span>
+            <span id="profileCoinsWalletBalance">--</span>
+          </div>
+          <div class="profile-coins-list" id="profileCoinsList"></div>
+          <!-- T0TAL P0RTF0L!0 VALUE — wallet XRP + every coin balance
+               converted to XRP via its own real AMM pool rate (see
+               renderProfileCoins' own comment on profileCoinValueXrp),
+               reported live as the big feature here: one real number for
+               everything this wallet holds, not just its native XRP. -->
+          <div class="profile-coins-total-row" id="profileCoinsTotalRow">
+            <span>T0TAL P0RTF0L!0 VALUE (XRP)</span>
+            <span id="profileCoinsTotalValue">--</span>
+          </div>
+        </div>
+      </div>
       <div class="search-row" style="justify-content:center;">
         <input class="transfer-wallet-input" id="profileUsernameInput" type="text" placeholder="CH00SE A USERNAME (LETTERS/NUMBERS/_/EM0J!, UP T0 20)">
         <button class="bar-btn" id="profileUsernameSaveBtn">SAVE</button>
@@ -7753,6 +7920,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
    'profilePanelWrap','profileCurrentAvatar','profileCurrentUsername','profileCurrentWallet',
    'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
+   'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
    'salesPanelWrap',
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
@@ -10113,6 +10281,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (entries[0].isIntersecting) loadMoreCollection();
   }, { rootMargin: '600px' });
   scrollObserver.observe(el.scrollSentinel);
+
+  // The fixed bottom S0RT BY/F!LTER BY TRA!TS bar (#bottomControlsBar)
+  // only reveals itself once #dbControlsSticky — the same two triggers,
+  // just the in-page copy sitting directly above RESET — has scrolled
+  // out of view ABOVE the viewport, not merely off-screen below (i.e.
+  // before you've scrolled down to it yet). boundingClientRect.top < 0
+  // is what distinguishes "scrolled past it" from "haven't reached it",
+  // isIntersecting alone can't. threshold:0 + no rootMargin: fires the
+  // instant any part of it crosses the viewport edge either way.
+  var dbControlsStickyObserver = new IntersectionObserver(function(entries){
+    var entry = entries[0];
+    var scrolledPast = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+    el.bottomControlsBar.classList.toggle('bottom-controls-bar-revealed', scrolledPast);
+  }, { threshold: 0 });
+  dbControlsStickyObserver.observe(el.dbControlsSticky);
 
   // ---- Trait stack (stackable AND filters) ----
   // Pick a category from the dropdown; every value for that category then
@@ -15318,7 +15501,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // its MY C0!NS row to pick up its real colour instead of the fallback.
   var PROFILE_COIN_ACCENTS = { pigeons: '136,72,248', phnixs: '255,90,31', teddybg: '166,99,46', seal: '45,140,168', fuzzy: '122,66,26', conspiracy: '240,0,228' };
   function renderProfileCoins(){
-    if (!MY_WALLET){ el.profileCoinsList.innerHTML = ''; return; }
+    if (!MY_WALLET){
+      el.profileCoinsList.innerHTML = '';
+      el.profileCoinsWalletBalance.textContent = '--';
+      el.profileCoinsTotalValue.textContent = '--';
+      return;
+    }
     var keys = Object.keys(COLLECTION_META);
     el.profileCoinsList.innerHTML = keys.map(function(key){
       var meta = COLLECTION_META[key];
@@ -15332,11 +15520,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       var actionHtml = meta.hasAmm
         ? '<button type="button" class="profile-coin-action" data-action="buy" data-collection="' + key + '">BUY ' + escapeHtml(meta.tokenLabel) + '</button>'
         : '<button type="button" class="profile-coin-action profile-coin-action-soon" disabled>C0M!NG S00N</button>';
+      // profile-coin-value only exists for a real token — nothing to
+      // convert to XRP for a collection with no tokenIssuer yet.
       return '<div class="profile-coin-row" style="--card-accent:' + accent + ';" data-collection="' + key + '">' +
         '<div class="profile-coin-thumb" id="profileCoinThumb-' + key + '"></div>' +
         '<div class="profile-coin-info">' +
           '<div class="profile-coin-label">' + escapeHtml(meta.tokenLabel) + '</div>' +
           '<div class="profile-coin-balance" id="profileCoinBalance-' + key + '">' + (meta.tokenIssuer ? 'L0AD!NG...' : 'N0 T0KEN YET') + '</div>' +
+          (meta.tokenIssuer ? '<div class="profile-coin-value" id="profileCoinValue-' + key + '"></div>' : '') +
         '</div>' +
         actionHtml +
       '</div>';
@@ -15350,23 +15541,66 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!thumbEl || !thumbMeta || !thumbMeta.thumb) return;
       thumbEl.style.backgroundImage = 'url("' + thumbMeta.thumb + '")';
     });
+    // ---- T0TAL P0RTF0L!0 VALUE — the big feature here: one real XRP
+    // number for everything this wallet holds, not just its native XRP.
+    // walletXrp is the wallet's own real native balance (xrpBalance:1,
+    // straight off account_info). coinValuesXrp[key] is that collection's
+    // real balance converted to XRP via its own real AMM pool rate
+    // (pigeonsRate's xrpPerPigeon — the same live price the trustline
+    // banner's own calculator uses, never a fabricated/cached figure).
+    // recomputeTotal() re-sums both every time either piece resolves, so
+    // the total is never stuck wrong waiting on the slowest fetch — it
+    // just grows more accurate as each collection's own balance/rate
+    // pair comes in. ----
+    var walletXrp = null;
+    var coinValuesXrp = {};
+    function recomputeTotal(){
+      var sum = (walletXrp != null) ? walletXrp : 0;
+      Object.keys(coinValuesXrp).forEach(function(k){ if (typeof coinValuesXrp[k] === 'number') sum += coinValuesXrp[k]; });
+      el.profileCoinsTotalValue.textContent = sum.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+    }
+    el.profileCoinsWalletBalance.textContent = 'L0AD!NG...';
+    el.profileCoinsTotalValue.textContent = 'L0AD!NG...';
+    apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).then(function(data){
+      if (!data || data.drops == null) throw new Error('no drops');
+      walletXrp = Number(data.drops) / 1e6;
+      el.profileCoinsWalletBalance.textContent = walletXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+      recomputeTotal();
+    }).catch(function(){
+      el.profileCoinsWalletBalance.textContent = 'ERR://C0ULDN T CHECK BALANCE';
+    });
     // Real balance/trustline per collection — pigeonsAccountLine already
     // resolves whichever collection's real token config via getTradeConfig
     // server-side (see pigeons.js), so this is just the same call every
     // other trustline check on the site makes, once per coin that
-    // actually has one.
+    // actually has one. pigeonsRate alongside it is the same real
+    // DexScreener/order-book-derived price MAINFRAME's own cards and the
+    // trustline calculator already use — fetched here too so this box can
+    // convert the balance to XRP without inventing a second price source.
     keys.forEach(function(key){
       var meta = COLLECTION_META[key];
       if (!meta.tokenIssuer) return;
-      apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET, collection: key }).then(function(line){
+      Promise.all([
+        apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET, collection: key }),
+        meta.hasAmm ? api({ pigeonsRate: 1, collection: key }).catch(function(){ return null; }) : Promise.resolve(null)
+      ]).then(function(results){
+        var line = results[0], rate = results[1];
         var balEl = document.getElementById('profileCoinBalance-' + key);
+        var valEl = document.getElementById('profileCoinValue-' + key);
         if (!balEl) return;
         if (line && line.hasTrustline === false){
           balEl.textContent = 'TRUSTL!NE N0T SET';
           balEl.classList.add('profile-coin-warn');
         } else if (line && line.hasTrustline){
-          balEl.innerHTML = '<span class="hi">' + (line.balance || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</span> ' + escapeHtml(meta.tokenLabel);
+          var bal = line.balance || 0;
+          balEl.innerHTML = '<span class="hi">' + bal.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</span> ' + escapeHtml(meta.tokenLabel);
           balEl.classList.remove('profile-coin-warn');
+          if (valEl && rate && typeof rate.xrpPerPigeon === 'number'){
+            var value = bal * rate.xrpPerPigeon;
+            coinValuesXrp[key] = value;
+            valEl.textContent = '≈ ' + value.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+            recomputeTotal();
+          }
         } else {
           balEl.textContent = 'ERR://C0ULDN T CHECK BALANCE';
           balEl.classList.add('profile-coin-warn');
@@ -15377,6 +15611,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
     });
   }
+  // MY C0!NS banner — collapses/expands profileCoinsBody, open by default
+  // (loadProfilePanel never adds "collapsed" itself). trait-row-label's own
+  // gotcha applies here too (a plain tap target needs user-select:none —
+  // already set on .profile-coins-banner in the CSS above).
+  el.profileCoinsBanner.addEventListener('click', function(){
+    var collapsed = el.profileCoinsSection.classList.toggle('collapsed');
+    el.profileCoinsBannerArrow.textContent = collapsed ? '▸' : '▾';
+  });
   // BUY opens the real swap panel; clicking anywhere else on a row jumps
   // to that collection's own DATABASE view — but only for P!GE0NS right
   // now. Every other collection is deliberately not reachable through the
@@ -15405,6 +15647,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     showTab('database');
   });
   function loadProfilePanel(){
+    // Always starts open on a fresh visit to PR0F!LE, even if it was
+    // collapsed last time this session — reported live as wanting MY
+    // C0!NS visible immediately every time, collapsing is just a
+    // while-you're-here convenience, not a remembered preference.
+    el.profileCoinsSection.classList.remove('collapsed');
+    el.profileCoinsBannerArrow.textContent = '▾';
     renderProfileCoins();
     if (!MY_WALLET){
       el.profileCurrentWallet.textContent = '';
