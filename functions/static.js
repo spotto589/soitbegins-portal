@@ -5860,6 +5860,20 @@ const SWAP_HTML = `<!DOCTYPE html>
        never fit legibly at phone width, and this still shows all 6 with
        no scrolling/arrows needed, same as desktop. */
     .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.75rem; padding:0 0.5rem; }
+    /* At 2 cols x 3 rows, each card's actual height on a real phone works
+       out to ~180px — the base body sizing (tuned for a wider single-row
+       carousel card) needed ~170px on its own for label+stats+button,
+       which left almost nothing for the art and pushed the BUY button
+       past the card's own overflow:hidden edge (confirmed live: PIGEONS/
+       PHN!X/TEDDY's BUY text clipped, the three collections whose 3-part
+       stats line — holders+marketcap+liquidity — is longest). Tightened
+       throughout, and the BUY label's font/padding shrunk specifically so
+       "BUY $P!GE0NS" (the longest button label) stays on one line instead
+       of wrapping to two and roughly doubling the button's own height. */
+    .mainframe-card-body{ padding:0.5rem 0.6rem 0.55rem; }
+    .mainframe-card-label{ font-size:15px; line-height:1.2; }
+    .mainframe-card-stats{ font-size:9px; line-height:1.4; margin-top:0.25rem; }
+    .mainframe-card-buy{ font-size:11px; letter-spacing:0.02em; padding:0.5em 0.3em; margin-top:0.4rem; }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
