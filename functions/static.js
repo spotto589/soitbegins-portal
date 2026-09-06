@@ -1190,6 +1190,30 @@ const SWAP_HTML = `<!DOCTYPE html>
      the far side — reported live as reading too far from the thumbnail
      out there, and crowding the time column next to it). Addresses get
      the true middle column, centered. */
+  /* Column titles (NFT/PR!CE/FR0M/T0/T!ME) sit right above the list,
+     sharing .sale-row's own grid-template-columns so every title lines
+     up exactly over its column — reported live as wanting real headers,
+     not just each row's own labels doing the work. Desktop only: the
+     mobile breakpoint below collapses to a stacked card layout that
+     column headers don't map onto. */
+  .sale-header-row{
+    display:grid;
+    grid-template-columns:236px 150px 1fr 1fr 140px;
+    gap:1rem;
+    padding:0 0.6rem 0.6rem;
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.15em;
+    color:var(--grey-dim);
+    text-transform:uppercase;
+    border-bottom:1px solid var(--border-dim);
+    margin-bottom:0.25rem;
+  }
+  .sale-header-row span:nth-child(3),
+  .sale-header-row span:nth-child(4){ text-align:center; }
+  .sale-header-row span:last-child{ text-align:right; }
+  @media (max-width:820px){ .sale-header-row{ display:none; } }
   .sale-row{
     display:grid;
     /* First column was 200px — the thumbnail (72px) + gap (0.6rem) only
@@ -1199,8 +1223,8 @@ const SWAP_HTML = `<!DOCTYPE html>
        overflowing child, so it spilled ~30px into the price column next
        to it — reported live as the price sitting right on top of the
        pigeon number. 236px covers the widest real number with room to
-       spare. */
-    grid-template-columns:236px 150px 1fr 140px;
+       spare. Matches .sale-header-row's own columns above exactly. */
+    grid-template-columns:236px 150px 1fr 1fr 140px;
     align-items:center;
     gap:1rem;
     padding:1.1rem 0.6rem;
@@ -1231,9 +1255,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      is what actually fixes that at small sizes, not just going bigger. */
   .sale-price{ font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--green); text-shadow:0 0 10px rgba(0,255,140,0.45); white-space:nowrap; }
   .sale-via{ font-family:var(--font-body); font-size:13px; letter-spacing:0.08em; color:var(--white); text-transform:uppercase; }
-  .sale-parties{ font-family:var(--font-body); font-size:18px; color:var(--white); text-transform:none; text-align:center; min-width:0; overflow-wrap:anywhere; }
-  .sale-parties a{ color:var(--white); text-decoration:underline; cursor:pointer; }
-  .sale-parties a:hover{ color:var(--cyan); }
+  /* FR0M/T0 were one combined "seller → buyer" cell — split into their
+     own columns so each can line up under its own header. */
+  .sale-from, .sale-to{ font-family:var(--font-body); font-size:18px; color:var(--white); text-transform:none; text-align:center; min-width:0; overflow-wrap:anywhere; }
+  .sale-from a, .sale-to a{ color:var(--white); text-decoration:underline; cursor:pointer; }
+  .sale-from a:hover, .sale-to a:hover{ color:var(--cyan); }
   .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:15px; text-align:right; }
   /* Icon-left/details-right list layout, not a full stack — a plain
      top-to-bottom stack (the previous version) read as an unrelated pile
@@ -1247,17 +1273,21 @@ const SWAP_HTML = `<!DOCTYPE html>
          P!GE0N #____ badge stacked under the thumbnail is wider than an
          84px column even at the smaller mobile font, and grid doesn't
          clip an overflowing child, so it spilled into the price column
-         beside it. 124px covers the widest real number (4 digits). */
-      grid-template-columns:124px 1fr;
-      grid-template-areas:"thumb price" "thumb parties" "thumb time";
+         beside it. 124px covers the widest real number (4 digits). A
+         3rd track (vs. desktop's 5) lets FR0M/T0 sit side by side in
+         their own row while PR!CE/T!ME each span the full width next to
+         the thumbnail, same as they did before the FR0M/T0 split. */
+      grid-template-columns:124px 1fr 1fr;
+      grid-template-areas:"thumb price price" "thumb from to" "thumb time time";
       row-gap:0.4rem;
       column-gap:0.9rem;
       align-items:start;
     }
+    .sale-from{ grid-area:from; text-align:left; }
+    .sale-to{ grid-area:to; text-align:right; }
     .sale-thumb-wrap{ grid-area:thumb; flex-direction:column; align-items:flex-start; gap:0.4rem; align-self:start; }
     .sale-num-box{ font-size:13px; padding:0.3em 0.5em; }
     .sale-price-cell{ grid-area:price; align-self:end; }
-    .sale-parties{ grid-area:parties; text-align:left; }
     .sale-time{ grid-area:time; text-align:left; }
   }
 
@@ -6551,6 +6581,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button class="sale-currency-btn" data-currency="PIGEONS" id="salesCurrencyPigeonsBtn">$P!GE0NS</button>
       </div>
       <div class="sales-scrollbox" id="salesScrollBox">
+        <div class="sale-header-row"><span>NFT</span><span>PR!CE</span><span>FR0M</span><span>T0</span><span>T!ME</span></div>
         <div id="salesArea"></div>
         <div class="scroll-sentinel" id="salesScrollSentinel"></div>
         <div class="load-more-note" id="salesLoadMoreNote" style="display:none;">L0AD!NG M0RE SALES...</div>
@@ -14355,9 +14386,10 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="sale-price">' + price + '</div>' +
         (via ? '<div class="sale-via">' + via + '</div>' : '') +
       '</div>' +
-      '<div class="sale-parties">' +
+      '<div class="sale-from">' +
         (s.seller ? '<a data-wallet="' + escapeHtml(s.seller) + '" data-short="' + escapeHtml(s.sellerShort || s.seller) + '">' + walletTagHtml(s.seller, s.sellerShort) + '</a>' : '?') +
-        ' → ' +
+      '</div>' +
+      '<div class="sale-to">' +
         (s.buyer ? '<a data-wallet="' + escapeHtml(s.buyer) + '" data-short="' + escapeHtml(s.buyerShort || s.buyer) + '">' + walletTagHtml(s.buyer, s.buyerShort) + '</a>' : '?') +
       '</div>' +
       '<div class="sale-time">' + escapeHtml(when) + '</div>' +
@@ -14415,7 +14447,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // of the way back up sidesteps whatever that is.
   document.addEventListener('click', function(e){
     if (!el.salesArea.contains(e.target)) return;
-    var walletLink = e.target.closest('.sale-parties a');
+    var walletLink = e.target.closest('.sale-from a, .sale-to a');
     if (walletLink){ browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short')); return; }
     var row = e.target.closest('.sale-row');
     if (row) openDetail(row.getAttribute('data-nftid'));
