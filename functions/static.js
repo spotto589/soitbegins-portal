@@ -1073,60 +1073,151 @@ const SWAP_HTML = `<!DOCTYPE html>
      in ahead of it the moment that wallet's profile resolves. */
   .wallet-tag{ display:inline-flex; align-items:center; gap:0.35em; vertical-align:middle; }
   .wallet-avatar{ width:1.3em; height:1.3em; min-width:1.3em; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--border-mid); }
-  /* BANNER — a wallet's own chosen backdrop, real image (one of its own
-     Pigeons) or a plain gradient placeholder (.profile-banner-empty)
-     before one's ever been set, never a blank/broken box. Sits above the
-     PR0F!LE title, full width of the panel's own content area. */
+  /* BANNER — now the whole identity card (PR0F!LE's own title text is
+     gone — reported live as redundant once everything lives here).
+     overflow:hidden clips the blurred bg layer's own oversized/scaled
+     edges (see .profile-banner-bg) to this box's real rounded corners. */
   .profile-banner{
     position:relative;
+    overflow:hidden;
     width:100%;
-    height:160px;
+    min-height:220px;
     border-radius:var(--radius);
     background-color:var(--panel-bg-solid);
-    background-size:contain;
-    background-repeat:no-repeat;
-    background-position:center;
     border:1px solid var(--border-mid);
     margin-bottom:1.25rem;
     display:flex;
-    align-items:flex-end;
-    justify-content:center;
+    flex-direction:column;
+    justify-content:flex-end;
   }
   .profile-banner-empty{
     background-image:linear-gradient(120deg, rgba(136,72,248,0.35), rgba(61,243,236,0.2), rgba(240,0,228,0.3));
   }
-  /* QU0TE + TW!TTER — centered as a caption over the bottom of the banner
-     (reported live as wanting them "in the middle"), a dark scrim behind
-     the text so it stays readable over any banner art/colour rather than
-     assuming the art is always dark enough on its own. Hidden outright
-     (not shown empty) when a wallet hasn't set either yet — see
-     renderProfileCurrent's own display toggle on each. */
-  .profile-banner-caption{
-    max-width:100%;
-    text-align:center;
-    padding:0.5rem 1rem 0.6rem;
-    background:linear-gradient(to top, rgba(5,5,6,0.75), transparent);
-    border-radius:0 0 var(--radius) var(--radius);
+  /* The SAME image as the crisp foreground (profileCurrentAvatar's own
+     bannerImage, set alongside this in renderProfileCurrent), blurred and
+     scaled up past the box's own edges — reported live as wanting the
+     banner to read as "the same colour as the Pigeon" all the way to its
+     borders, not a neutral fill either side of a contain-fitted image.
+     scale(1.15) + inset:-20px push the blur's own soft edge outside the
+     visible box (overflow:hidden on .profile-banner crops it), so no
+     lighter halo shows at the crop line. Sits behind everything else via
+     z-index; .profile-banner-empty's gradient shows through instead when
+     there's no image yet (this layer has no background-image of its own
+     then). */
+  .profile-banner-bg{
+    position:absolute;
+    inset:-20px;
+    background-size:cover;
+    background-position:center;
+    filter:blur(28px) brightness(0.6) saturate(1.3);
+    transform:scale(1.15);
+    z-index:0;
   }
-  @media (max-width:600px){ .profile-banner{ height:96px; } }
-  /* PR0F!LE panel — current username/avatar, big and unmissable at the
-     top, same reasoning as the highest-offer box elsewhere. */
-  .profile-current-row{ display:flex; align-items:center; gap:1rem; justify-content:center; margin-bottom:1rem; }
-  .profile-current-avatar{ width:64px; height:64px; border-radius:50%; overflow:hidden; background:#000; border:1px solid var(--border-mid); flex:0 0 auto; }
+  /* Real content sits above the blurred layer — avatar + identity info,
+     bottom-left, over a scrim so it stays readable regardless of the
+     banner's own colour. */
+  .profile-banner-content{
+    position:relative;
+    z-index:1;
+    display:flex;
+    align-items:center;
+    gap:1rem;
+    padding:1.25rem;
+    background:linear-gradient(to top, rgba(5,5,6,0.8), rgba(5,5,6,0.15) 80%, transparent);
+  }
+  /* Avatar — the crisp Pigeon image (background, not <img>, so it can sit
+     centred/cropped the same way every other round avatar on the site
+     does — object-fit:cover equivalent via background-size). The + badge
+     is a real always-there affordance (not hover-only — reported live as
+     wanting everything editable via clicking, discoverable without
+     guessing to hover first), clicking it jumps to CH00SE PR0F!LE
+     P!CTURE below (see scrollToProfileField in the JS). */
+  .profile-avatar-wrap{ position:relative; flex:0 0 auto; }
+  .profile-current-avatar{ width:64px; height:64px; border-radius:50%; overflow:hidden; background:#000; border:2px solid var(--bg); box-shadow:0 0 0 1px var(--border-mid); }
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-avatar-edit-btn{
+    position:absolute;
+    right:-2px; bottom:-2px;
+    width:22px; height:22px;
+    border-radius:50%;
+    background:var(--green);
+    color:#000;
+    border:2px solid var(--bg);
+    font-weight:700;
+    font-size:14px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 0 8px var(--green-glow);
+  }
+  .profile-avatar-edit-btn:hover{ filter:brightness(1.15); }
+  .profile-current-username-row{ display:flex; align-items:center; gap:0.4rem; }
   .profile-current-username{ font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--green); }
+  /* Small, quiet edit affordance next to any click-to-edit field — real
+     hit target (not just a hover cue) that jumps to the matching input
+     below, same reasoning as the avatar's own + badge. */
+  .profile-field-edit-btn{
+    background:transparent;
+    border:none;
+    color:var(--grey-dim);
+    font-size:13px;
+    cursor:pointer;
+    padding:0.1em 0.3em;
+    transition:color 0.15s ease;
+  }
+  .profile-field-edit-btn:hover{ color:var(--cyan); }
   .profile-current-wallet{ font-size:12px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; }
   /* EST VALUE — mirrors MY C0!NS' own T0TAL P0RTF0L!0 VALUE number, right
      under the address so your net worth reads as part of your identity,
      not just buried in the collapsible coins section below. */
   .profile-current-estvalue{ font-size:13px; letter-spacing:0.04em; color:var(--grey); text-transform:uppercase; margin-top:0.3rem; }
   .profile-current-estvalue span{ color:var(--green); font-weight:700; text-shadow:0 0 6px var(--green-glow); }
-  /* QU0TE — small italic line, muted so it reads as flavor text rather
-     than competing with the name. TW!TTER is a real link, cyan same as
-     every other outbound link on the site. */
-  .profile-quote{ font-size:13px; font-style:italic; color:#fff; text-transform:none; }
-  .profile-twitter-link{ display:inline-block; font-size:12px; letter-spacing:0.03em; color:var(--cyan); text-decoration:none; margin-top:0.25rem; text-transform:none; }
+  /* QU0TE + TW!TTER — centered as a caption under the identity row
+     (reported live as wanting them "in the middle" of the banner), same
+     dark scrim treatment so they stay readable over any banner colour.
+     Both are real click-to-edit targets now — a real value shows plain
+     text/link + a quiet ✎ (see the JS' own renderProfileCurrent), an
+     unset one shows a dashed, clickable "+ ADD..." invite instead of
+     hiding outright, so the banner itself teaches you it's editable. */
+  .profile-banner-caption{
+    position:relative;
+    z-index:1;
+    max-width:100%;
+    text-align:center;
+    padding:0 1rem 1rem;
+  }
+  .profile-quote{ font-size:13px; font-style:italic; color:#fff; text-transform:none; cursor:pointer; }
+  .profile-quote .profile-field-edit-btn{ font-style:normal; }
+  .profile-twitter-row{ margin-top:0.3rem; }
+  .profile-twitter-link{ display:inline-block; font-size:12px; letter-spacing:0.03em; color:var(--cyan); text-decoration:none; text-transform:none; }
   .profile-twitter-link:hover{ text-decoration:underline; }
+  /* Empty-state invites — dashed, muted, unmistakably "click to add"
+     rather than reading like a real value. */
+  .profile-field-placeholder{
+    display:inline-block;
+    color:var(--grey-dim);
+    border:1px dashed var(--border-mid);
+    border-radius:var(--radius);
+    padding:0.3em 0.8em;
+    cursor:pointer;
+    font-style:normal;
+    transition:color 0.15s ease, border-color 0.15s ease;
+  }
+  .profile-field-placeholder:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
+  /* Brief highlight flash on whichever real input a banner click jumps
+     to — confirms "this is the box that just opened", not just an
+     unexplained scroll. */
+  @keyframes profileFieldHighlight{
+    0%, 100%{ box-shadow:0 0 0 rgba(97,243,236,0); }
+    30%{ box-shadow:0 0 0 3px var(--cyan-dim); }
+  }
+  .profile-field-highlight{ animation:profileFieldHighlight 1.1s ease; }
+  @media (max-width:600px){
+    .profile-banner{ min-height:190px; }
+    .profile-banner-content{ padding:1rem; }
+  }
   /* Currently-selected pfp in the picker grid — same green highlight the
      rest of the app uses for "this is the real/active one" (see
      .highest-offer-price). */
@@ -6836,39 +6927,54 @@ const SWAP_HTML = `<!DOCTYPE html>
          its own Pigeons), shown everywhere an address used to just print
          its own short form (see walletTagHtml/setWalletText). -->
     <div class="sw-panel" id="profilePanelWrap" style="display:none;">
-      <!-- BANNER — a wallet's own chosen backdrop (one of its own Pigeons,
-           same ownership-verified pattern as the pfp picker below), shown
-           at the very top of PR0F!LE. background-size:contain (not cover)
-           — the source art is square, and covering a wide short banner
-           with a square image crops down to a thin sliver that rarely
-           shows anything recognizable (confirmed live: mostly just the
-           art's own flat background colour, the Pigeon itself cut off to
-           one edge). contain always shows the WHOLE Pigeon, letterboxed
-           against profile-banner's own neutral fill either side, never an
-           unpredictable crop. QU0TE + TW!TTER sit centered as a caption
-           OVER the banner now (reported live as wanting them "in the
-           middle"), not stacked under the username. A plain gradient
-           placeholder (.profile-banner-empty, see the CSS) shows when no
-           banner's ever been set — never a blank box. -->
+      <!-- BANNER — now the WHOLE identity card (reported live as wanting
+           "all this detail in the top banner" and PR0F!LE's own title
+           gone — this replaces both). Two background layers behind the
+           real content: profileBannerBg is the SAME image, blurred +
+           scaled up, so the banner reads as "the same colour as the
+           Pigeon" all the way to its edges (reported live) instead of a
+           neutral letterboxed fill either side of a contain-fitted image
+           — a real colour-accurate backdrop without needing to sample
+           actual pixels (which would need the image loaded through a
+           CORS-clean path — the blur trick sidesteps that entirely, it's
+           just the same background-image twice). profileBannerFg is the
+           crisp, un-cropped Pigeon on top (background-size:contain — see
+           this file's own earlier fix for why contain, not cover).
+           EVERYTHING here is click-to-edit now: the avatar's own +
+           badge, the click-to-edit pencil on username/quote/twitter, and
+           a plain "+ ADD..." placeholder in place of quote/twitter when
+           neither's ever been set — clicking any of them scrolls to and
+           focuses the real input further down (see scrollToProfileField
+           in the JS) rather than needing to hunt for the right box
+           yourself. A plain gradient placeholder (.profile-banner-empty)
+           shows behind everything until a banner's actually been set. -->
       <div class="profile-banner profile-banner-empty" id="profileBanner">
-        <div class="profile-banner-caption">
-          <div class="profile-quote" id="profileCurrentQuote" style="display:none;"></div>
-          <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener" style="display:none;"></a>
+        <div class="profile-banner-bg" id="profileBannerBg"></div>
+        <div class="profile-banner-content">
+          <div class="profile-avatar-wrap">
+            <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
+            <button type="button" class="profile-avatar-edit-btn" id="profileAvatarEditBtn" title="CHANGE PR0F!LE P!CTURE">+</button>
+          </div>
+          <!-- USERNAME / ADDRESS / EST VALUE — EST VALUE mirrors MY C0!NS'
+               own T0TAL P0RTF0L!0 VALUE (wallet XRP + every coin balance
+               converted to XRP, see recomputeTotal in renderProfileCoins)
+               so this reads as a real net-worth line right under your
+               identity, not just buried inside the collapsible coins list
+               below. -->
+          <div class="profile-current-info">
+            <div class="profile-current-username-row">
+              <span class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</span>
+              <button type="button" class="profile-field-edit-btn" id="profileUsernameEditBtn" title="EDIT USERNAME">✎</button>
+            </div>
+            <div class="profile-current-wallet" id="profileCurrentWallet"></div>
+            <div class="profile-current-estvalue">EST VALUE :: <span id="profileCurrentEstValue">--</span></div>
+          </div>
         </div>
-      </div>
-      <div class="panel-title">PR0F!LE</div>
-      <div class="profile-current-row">
-        <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
-        <!-- USERNAME / ADDRESS / EST VALUE — EST VALUE mirrors MY C0!NS'
-             own T0TAL P0RTF0L!0 VALUE (wallet XRP + every coin balance
-             converted to XRP, see recomputeTotal in renderProfileCoins)
-             so this reads as a real net-worth line right under your
-             identity, not just buried inside the collapsible coins list
-             below. -->
-        <div class="profile-current-info">
-          <div class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</div>
-          <div class="profile-current-wallet" id="profileCurrentWallet"></div>
-          <div class="profile-current-estvalue">EST VALUE :: <span id="profileCurrentEstValue">--</span></div>
+        <div class="profile-banner-caption">
+          <div class="profile-quote" id="profileCurrentQuote"></div>
+          <div class="profile-twitter-row">
+            <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener"></a>
+          </div>
         </div>
       </div>
       <!-- MY C0!NS — real balance + trustline status for every collection
@@ -8181,7 +8287,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
-   'profilePanelWrap','profileBanner','profileCurrentAvatar','profileCurrentUsername','profileCurrentWallet','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
+   'profilePanelWrap','profileBanner','profileBannerBg','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
    'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus','profileBannerPickerStatus','profileBannerGrid',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
@@ -16067,28 +16173,49 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
     }
   }
+  // Scrolls to + focuses (or just flashes, for non-focusable targets like
+  // the pfp/banner picker grids) whichever real field a banner click
+  // should jump to — every click-to-edit affordance on the banner
+  // (avatar +, username/quote ✎, quote/twitter placeholders) goes through
+  // this one helper instead of each wiring its own scroll/focus.
+  function scrollToProfileField(target){
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (typeof target.focus === 'function') target.focus();
+    target.classList.add('profile-field-highlight');
+    setTimeout(function(){ target.classList.remove('profile-field-highlight'); }, 1100);
+  }
   function renderProfileCurrent(profile){
     el.profileCurrentAvatar.innerHTML = (profile && profile.pfpImage) ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
     el.profileCurrentUsername.textContent = (profile && profile.username) ? profile.username : 'N0 USERNAME SET';
+    // The SAME banner image feeds both the empty-state gradient's
+    // replacement (profileBannerBg, blurred+scaled via CSS — see its own
+    // comment) and profileBanner's empty/not-empty state — there's no
+    // separate crisp full-image layer any more, just this ambient colour-
+    // matched backdrop behind the avatar/identity row.
     if (profile && profile.bannerImage){
-      el.profileBanner.style.backgroundImage = 'url("' + profile.bannerImage.replace(/"/g, '') + '")';
+      el.profileBannerBg.style.backgroundImage = 'url("' + profile.bannerImage.replace(/"/g, '') + '")';
       el.profileBanner.classList.remove('profile-banner-empty');
     } else {
-      el.profileBanner.style.backgroundImage = '';
+      el.profileBannerBg.style.backgroundImage = '';
       el.profileBanner.classList.add('profile-banner-empty');
     }
+    // QU0TE — a real value shows the text + a quiet ✎ (click jumps to the
+    // real input); unset shows a dashed "+ ADD A B!0..." invite instead of
+    // hiding outright, so the banner itself teaches you it's editable.
     if (profile && profile.quote){
-      el.profileCurrentQuote.textContent = '“' + profile.quote + '”';
-      el.profileCurrentQuote.style.display = '';
+      el.profileCurrentQuote.innerHTML = '“' + escapeHtml(profile.quote) + '”<button type="button" class="profile-field-edit-btn" data-field="quote" title="EDIT QU0TE">✎</button>';
     } else {
-      el.profileCurrentQuote.style.display = 'none';
+      el.profileCurrentQuote.innerHTML = '<span class="profile-field-placeholder" data-field="quote">+ ADD A B!0</span>';
     }
     if (profile && profile.twitter){
       el.profileCurrentTwitterLink.href = 'https://x.com/' + encodeURIComponent(profile.twitter);
-      el.profileCurrentTwitterLink.textContent = '𝕏 @' + profile.twitter;
-      el.profileCurrentTwitterLink.style.display = '';
+      el.profileCurrentTwitterLink.innerHTML = '𝕏 @' + escapeHtml(profile.twitter);
+      el.profileCurrentTwitterLink.classList.remove('profile-field-placeholder');
     } else {
-      el.profileCurrentTwitterLink.style.display = 'none';
+      el.profileCurrentTwitterLink.removeAttribute('href');
+      el.profileCurrentTwitterLink.innerHTML = '+ ADD TW!TTER';
+      el.profileCurrentTwitterLink.classList.add('profile-field-placeholder');
     }
     profileSelectedPfpNftId = (profile && profile.pfpNftId) || null;
     profileSelectedBannerNftId = (profile && profile.bannerNftId) || null;
@@ -16140,6 +16267,33 @@ const SWAP_HTML = `<!DOCTYPE html>
       card.classList.toggle('simple-picker-card-selected', card.getAttribute('data-nftid') === profileSelectedBannerNftId);
     });
   }
+  // ---- Click-to-edit on the banner itself — reported live as wanting to
+  // "edit everything through clicking stuff on our own banner" instead of
+  // hunting down the matching box further below. Every trigger jumps to
+  // (and briefly highlights) the real input/grid that already does the
+  // actual saving — this is purely navigation, no new save logic. ----
+  el.profileAvatarEditBtn.addEventListener('click', function(){
+    scrollToProfileField(el.profilePfpGrid);
+  });
+  el.profileUsernameEditBtn.addEventListener('click', function(){
+    scrollToProfileField(el.profileUsernameInput);
+  });
+  // Delegated (quote's own edit ✎/placeholder are rebuilt by
+  // renderProfileCurrent's own innerHTML, so a direct listener on either
+  // would be lost the next time that runs).
+  el.profileCurrentQuote.addEventListener('click', function(){
+    scrollToProfileField(el.profileQuoteInput);
+  });
+  el.profileCurrentTwitterLink.addEventListener('click', function(e){
+    // A real handle is a real link (target="_blank") — let it navigate.
+    // The placeholder state has no href at all, so this only ever
+    // "activates" (and needs preventDefault, since a bare <a> with no
+    // href can still be focused/clicked) when there's nothing to open.
+    if (!el.profileCurrentTwitterLink.getAttribute('href')){
+      e.preventDefault();
+      scrollToProfileField(el.profileTwitterInput);
+    }
+  });
   el.profilePfpGrid.addEventListener('click', function(e){
     var pick = e.target.closest('.profile-pfp-pick');
     if (!pick) return;
