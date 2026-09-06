@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNftsChecked,
   isTransferable, getTradeConfig,
   encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup, MARKETPLACE_BROKER_WALLET,
   LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds
@@ -69,7 +69,15 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'not_configured' }), { status: 501 });
   }
 
-  const nfts = await fetchAllAccountNfts(seller);
+  // Checked, not the plain fetchAllAccountNfts — see swap-listing-
+  // payload.js's own comment on this same fix: a failed/rate-limited XRPL
+  // scan returns the same empty-ish array a genuinely-empty wallet would,
+  // which produced real false "TH!S WALLET D0ES N0T 0WN TH!S P!GE0N."
+  // errors for a wallet that actually does own it.
+  const { nfts, ok: nftsOk } = await fetchAllAccountNftsChecked(seller);
+  if (!nftsOk) {
+    return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 502 });
+  }
   const nft = nfts.find(n => n.NFTokenID === nftId);
   if (!nft) {
     return new Response(JSON.stringify({ error: 'not_owned' }), { status: 403 });
@@ -86,7 +94,10 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
   }
 
-  const durationDays = LISTING_DURATION_DAYS_ALLOWED.includes(body && body.durationDays) ? body.durationDays : DEFAULT_LISTING_DURATION_DAYS;
+  // F0REVER (0 = no Expiration) is P!GE0NS-only — see swap-listing-
+  // payload.js's own comment on this same enforcement.
+  let durationDays = LISTING_DURATION_DAYS_ALLOWED.includes(body && body.durationDays) ? body.durationDays : DEFAULT_LISTING_DURATION_DAYS;
+  if (durationDays === 0 && collection !== 'pigeons') durationDays = DEFAULT_LISTING_DURATION_DAYS;
   const expiration = listingExpirationRippleSeconds(durationDays);
   const txjson = {
     TransactionType: 'NFTokenCreateOffer',

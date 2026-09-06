@@ -3391,7 +3391,9 @@ const SWAP_HTML = `<!DOCTYPE html>
      elsewhere in this file for other controls. */
   @media (min-width:701px){
     .make-offer-input, .list-price-input{ font-size:36px; padding:0.6em 3.6em; }
-    .make-offer-input-coin{ width:46px; height:46px; }
+    /* Bigger again specifically — reported live as wanting the collection
+       coin bigger too, not just the popup around it. */
+    .make-offer-input-coin{ width:54px; height:54px; }
     .make-offer-send, .list-inline-btn{ font-size:17px; padding:0.85em 0.85em; }
     .list-duration-btn{ font-size:14px; padding:0.75em 0.4em; }
     .list-duration-forever{ font-size:32px; }
@@ -3426,6 +3428,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-shadow:0 0 14px var(--green-glow);
   }
   #amountEntryListBtn:hover{ background:#000; color:var(--green); border-color:var(--green); box-shadow:0 0 20px var(--green-glow); }
+  /* L!ST moved to its own full-width row at the bottom of the popup
+     (price input, then duration picker, then this) instead of sitting
+     beside the price input — reported live as not wanting it crammed in
+     next to the number any more. */
+  .list-inline-btn-bottom{ width:100%; margin-top:0.9rem; padding:0.9em; font-size:16px; }
   /* Offers received, embedded directly on the pigeon's own card (see
      myPigeonOffersHtml) — sits above the LIST/DELIST action box. */
   .my-pigeon-offers{ display:flex; flex-direction:column; gap:0.4rem; margin-top:0.5rem; }
@@ -5630,6 +5637,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:2.25rem;
     font-size:1.08em;
   }
+  /* Bigger on desktop specifically — reported live as "the list box
+     doesn't look good, make it bigger on pc" — mobile keeps the
+     min(540px,100%)/2.25rem sizing above (already tight against real
+     phone widths), desktop has the room for a genuinely larger panel and
+     a bigger NFT preview thumbnail. */
+  @media (min-width:701px){
+    .amount-entry-panel{ width:min(640px, 100%); padding:3rem; }
+    .amount-entry-pigeon-thumb{ width:200px; height:200px; }
+    .amount-entry-pigeon-num{ font-size:44px; }
+  }
   /* .thumb-offer.amount-entry-mode — this shares the .thumb-offer class
      with the DATABASE card's own purple action box, which an earlier fix
      made a row-direction flex container (centers BUY N0W/0FFER together
@@ -7184,18 +7201,26 @@ const SWAP_HTML = `<!DOCTYPE html>
           <button type="button" class="simple-picker-close" id="amountEntryClose" title="CL0SE">&times;</button>
         </div>
         <div class="thumb-offer amount-entry-mode" id="amountEntryListMode" style="display:none;">
+          <!-- What you're actually about to list, real image + number —
+               same big-thumb treatment 0FFER's own pigeon row already
+               uses (.amount-entry-pigeon-row), reported live as wanting a
+               preview here too rather than only the card underneath the
+               popup (not visible once it's open). -->
+          <div class="amount-entry-pigeon-row" id="amountEntryListPigeonRow" style="display:none;">
+            <img class="amount-entry-pigeon-thumb" id="amountEntryListPigeonImg" src="" alt="">
+            <div class="amount-entry-pigeon-num" id="amountEntryListPigeonNum"></div>
+          </div>
           <div class="thumb-offer-row">
             <div class="make-offer-input-wrap">
-              <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
+              <img class="make-offer-input-coin" id="amountEntryListCoin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
               <input class="list-price-input" id="amountEntryListInput" type="text" inputmode="decimal" placeholder="ENTER AM0UNT">
             </div>
-            <button class="list-inline-btn" id="amountEntryListBtn">L!ST</button>
           </div>
           <!-- Real XRPL NFTokenCreateOffer Expiration, not app-side
                enforcement — see listingExpirationRippleSeconds in
-               _shared.js. Single pick, F0REVER default (was 7D) — most
-               people listing a Pigeon aren't thinking about a deadline,
-               per explicit request. -->
+               _shared.js. F0REVER (∞) is P!GE0NS-only (see
+               openAmountEntryModal's own comment) — every other
+               collection only ever gets a real finite deadline. -->
           <div class="list-duration-row" id="amountEntryListDuration">
             <button type="button" class="list-duration-btn" data-days="1">1 DAY</button>
             <button type="button" class="list-duration-btn" data-days="3">3 DAYS</button>
@@ -7203,6 +7228,10 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="list-duration-btn" data-days="30">30 DAYS</button>
             <button type="button" class="list-duration-btn list-duration-forever active" data-days="0" title="F0REVER — never expires">∞</button>
           </div>
+          <!-- L!ST moved to the bottom of the popup, its own full-width row
+               underneath price + duration — reported live as not wanting
+               it crammed beside the price input any more. -->
+          <button class="list-inline-btn list-inline-btn-bottom" id="amountEntryListBtn">L!ST</button>
           <div class="index-line list-inline-status" id="amountEntryListStatus" style="display:none;"></div>
         </div>
         <div class="thumb-offer amount-entry-mode" id="amountEntryOfferMode" style="display:none;">
@@ -8044,7 +8073,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'incomingTransfersBox','incomingTransfersList','acceptTransferConfirmModal','acceptTransferConfirmForm','acceptTransferConfPigeonNum','acceptTransferConfFrom','acceptTransferConfirmStatus','acceptTransferConfirmBackBtn','acceptTransferOpenXamanBtn',
    'acceptTransferConfirmReceipt','acceptTransferReceiptPigeonNum','acceptTransferResultDoneBtn',
    'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultTxLink','transferResultDoneBtn',
-   'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
+   'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListPigeonRow','amountEntryListPigeonImg','amountEntryListPigeonNum','amountEntryListCoin','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
    'amountEntryOfferMode','amountEntryOfferPigeonRow','amountEntryOfferPigeonImg','amountEntryOfferPigeonNum','amountEntryOfferBalanceLine','amountEntryOfferInput','amountEntryOfferBtn','amountEntryOfferDuration',
    'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferBtn','amountEntryTransferStatus',
    'acceptOfferConfirmModal','screenAcceptOfferConfirm','acceptOfferConfThumb','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfRoyaltyRow','acceptOfferConfRoyaltyLabel','acceptOfferConfRoyalty','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn',
@@ -9821,9 +9850,33 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.amountEntryListBtn.textContent = 'L!ST';
       el.amountEntryListStatus.style.display = 'none';
       el.amountEntryListStatus.textContent = '';
-      amountEntryListDurationDays = 0;
+      // What you're actually about to list — same big-thumb treatment
+      // 0FFER's own pigeon row uses (see its own comment below), reported
+      // live as wanting a real preview here too, not just the amount input.
+      if (p && (p.number !== null || p.name)){
+        el.amountEntryListPigeonImg.src = p.image || '';
+        el.amountEntryListPigeonImg.style.display = p.image ? '' : 'none';
+        el.amountEntryListPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(p);
+        el.amountEntryListPigeonRow.style.display = '';
+      } else {
+        el.amountEntryListPigeonRow.style.display = 'none';
+      }
+      // The coin sitting inside the price input reflects whichever
+      // collection is actually being listed (COLLECTION_META's own thumb —
+      // same art MAINFRAME's cards and MY C0!NS already use for it), not a
+      // hardcoded $PIGEONS image regardless of what's on screen.
+      var listMeta = COLLECTION_META[state.collection];
+      if (listMeta && listMeta.thumb) el.amountEntryListCoin.src = listMeta.thumb;
+      // F0REVER (∞) is P!GE0NS-only — reported live as wanting every other
+      // collection to always get a real, finite deadline instead. Hidden
+      // outright rather than merely disabled, so a non-P!GE0N listing
+      // never even shows an option it can't use.
+      var listForeverAllowed = state.collection === 'pigeons';
+      var listForeverBtn = el.amountEntryListDuration.querySelector('.list-duration-forever');
+      listForeverBtn.style.display = listForeverAllowed ? '' : 'none';
+      amountEntryListDurationDays = listForeverAllowed ? 0 : 30;
       el.amountEntryListDuration.querySelectorAll('.list-duration-btn').forEach(function(b){
-        b.classList.toggle('active', b.getAttribute('data-days') === '0');
+        b.classList.toggle('active', b.getAttribute('data-days') === String(amountEntryListDurationDays));
       });
     } else if (mode === 'offer'){
       el.amountEntryTitle.textContent = '0FFER AM0UNT';

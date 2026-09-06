@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts,
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNftsChecked,
   PIGEON_ISSUER, PIGEON_TAXON, isTransferable, swapOfferSourceMemo
 } from '../_shared.js';
 
@@ -50,7 +50,15 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'cannot_swap_with_self' }), { status: 400 });
   }
 
-  const nfts = await fetchAllAccountNfts(offerer);
+  // Checked, not the plain fetchAllAccountNfts — see swap-listing-
+  // payload.js's own comment on this same fix: a failed/rate-limited XRPL
+  // scan returns the same empty-ish array a genuinely-empty wallet would,
+  // which produced real false not_owned errors for a wallet that
+  // actually does own the NFT.
+  const { nfts, ok: nftsOk } = await fetchAllAccountNftsChecked(offerer);
+  if (!nftsOk) {
+    return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 502 });
+  }
   const nft = nfts.find(n => n.NFTokenID === nftId);
   if (!nft) {
     return new Response(JSON.stringify({ error: 'not_owned' }), { status: 403 });
