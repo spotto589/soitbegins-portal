@@ -4725,6 +4725,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:0 0 10px var(--green-glow);
     box-shadow:0 0 22px var(--green-glow);
   }
+  /* Real NFT preview on the receipt — LIST's own result screen
+     specifically (see its own HTML comment), same "what you actually did"
+     reasoning ACCEPT 0FFER's result screen already applies with
+     .amount-entry-pigeon-thumb, just sized/framed to match this panel's
+     own centered receipt shape instead. */
+  .receipt-thumb{
+    width:140px;
+    height:140px;
+    object-fit:cover;
+    border-radius:var(--radius);
+    border:1px solid var(--border-mid);
+    margin:0 auto 1.25rem;
+    display:block;
+    box-shadow:0 0 22px var(--green-glow);
+  }
   .receipt-pigeon-num{
     font-family:var(--font-display);
     font-weight:700;
@@ -5647,6 +5662,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     .amount-entry-pigeon-thumb{ width:200px; height:200px; }
     .amount-entry-pigeon-num{ font-size:44px; }
   }
+  /* ---- TRANSACT!0N H!ST0RY — same dimmed-backdrop/✕-to-close popup
+     pattern as #amountEntryModal above, opened over DETAIL instead of
+     swapping DETAIL out for a separate full-panel screen (reported live
+     as "it comes as a pop up, not another page"). #screenHistory keeps
+     its existing .sw-panel base styling — just wrapped in the same
+     fixed-overlay shell every other popup here already uses. ---- */
+  #historyModal{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    background:rgba(5,5,6,0.88);
+    align-items:center;
+    justify-content:center;
+    padding:2rem 1rem;
+  }
+  .history-modal-panel{
+    width:min(640px, 100%);
+    max-height:85vh;
+    overflow-y:auto;
+    margin-bottom:0;
+  }
+  .history-modal-close{ position:absolute; top:1rem; right:1rem; }
   /* .thumb-offer.amount-entry-mode — this shares the .thumb-offer class
      with the DATABASE card's own purple action box, which an earlier fix
      made a row-direction flex container (centers BUY N0W/0FFER together
@@ -7271,12 +7309,18 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <!-- SCREEN 2b: TRANSACTION HISTORY — a full swap of the DETAIL box, not an
          inline expand, so the history list gets the whole panel to itself -->
-    <div class="sw-panel" id="screenHistory" style="display:none;">
-      <div class="detail-eyebrow">// TRANSACT!0N H!ST0RY</div>
-      <div class="detail-num" id="historyNum"></div>
-      <div class="th-list" id="detailHistoryList"></div>
-      <div class="detail-actions">
-        <button class="secondary-btn" id="backToDetailBtn">← BACK</button>
+    <!-- TRANSACT!0N H!ST0RY — a real popup over the DETAIL screen now
+         (same dimmed-backdrop/✕-to-close pattern every other popup here
+         already uses, e.g. #amountEntryModal), not a full swap of the
+         whole DETAIL panel out for a separate-feeling "page". Click the
+         dimmed backdrop or ✕ to close and land right back on DETAIL,
+         exactly as it was. -->
+    <div id="historyModal" style="display:none;">
+      <div class="sw-panel history-modal-panel" id="screenHistory">
+        <button type="button" class="simple-picker-close history-modal-close" id="historyModalClose" title="CL0SE">&times;</button>
+        <div class="detail-eyebrow">// TRANSACT!0N H!ST0RY</div>
+        <div class="detail-num" id="historyNum"></div>
+        <div class="th-list" id="detailHistoryList"></div>
       </div>
     </div>
 
@@ -7399,7 +7443,12 @@ const SWAP_HTML = `<!DOCTYPE html>
          tx hash is still there (real proof, one click away) but doesn't
          compete with the three things that actually matter. -->
     <div class="sw-panel result-receipt" id="screenListResult" style="display:none;">
-      <div class="receipt-badge">✓</div>
+      <!-- Real image, not just a checkmark — reported live as wanting a
+         preview of the actual NFT here too, same treatment ACCEPT
+         0FFER's own result screen already gives it
+         (.amount-entry-pigeon-thumb). Hidden rather than a broken-image
+         box on the rare case listingTarget has no image yet. -->
+      <img class="receipt-thumb" id="listResultThumb" alt="" style="display:none;">
       <div class="receipt-pigeon-num" id="listResultPigeonNum"></div>
       <div class="receipt-status-line">TRANSACT!0N C0NF!RMED</div>
       <div class="receipt-price-row">
@@ -8050,13 +8099,13 @@ const SWAP_HTML = `<!DOCTYPE html>
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
    'detailNum','detailShareBtn','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
-   'detailHistoryToggle','detailHistoryList','historyNum','backToDetailBtn',
+   'detailHistoryToggle','detailHistoryList','historyNum','historyModal','historyModalClose',
    'backToBrowseBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
    'connectPanel','connectPanelTitle','connectPanelSub','connectPanelActions',
    'myPigeonsSortRow','myPigeonsSortSelect',
-   'screenListResult','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
+   'screenListResult','listResultThumb','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
    'buyConfirmModal','screenBuyConfirm','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
    'buySwapModal','buySwapEntryState','buySwapThumb','buySwapChecking','buySwapCheckingText','buySwapQuoteSection','buySwapXrpInput','buySwapBalancesRow','buySwapXrpBalanceValue','buySwapTokenBalanceLabel','buySwapTokenBalanceValue','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
@@ -8420,7 +8469,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Collection -> showTab, never touching showScreen) left the class
     // stuck forever, permanently scroll-locking the whole page.
     el.screenDetail.style.display = 'none';
-    el.screenHistory.style.display = 'none';
+    el.historyModal.style.display = 'none';
     document.body.classList.remove('detail-open');
     var buttons = el.topTabs.querySelectorAll('.tab-btn');
     for (var i = 0; i < buttons.length; i++){
@@ -8617,7 +8666,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     el.screenDetail.style.display = name === 'detail' ? '' : 'none';
     document.body.classList.toggle('detail-open', name === 'detail');
-    el.screenHistory.style.display = name === 'history' ? '' : 'none';
     el.screenSummary.style.display = name === 'summary' ? '' : 'none';
     el.screenSwapReview.style.display = name === 'swapreview' ? '' : 'none';
     el.screenSwapOfferConfirm.style.display = name === 'swapofferconfirm' ? '' : 'none';
@@ -11825,12 +11873,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     // openAmountEntryModal) — close it here, the moment the full LISTED
     // result screen takes over, rather than leaving it sitting on top.
     closeAmountEntryModal();
+    el.listResultThumb.src = (listingTarget && listingTarget.image) || '';
+    el.listResultThumb.style.display = (listingTarget && listingTarget.image) ? '' : 'none';
     el.listResultPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(listingTarget);
-    // Compact (123M), same as BUY N0W/the own-listing readouts elsewhere —
-    // this is the one big number on the receipt, not a small field value,
-    // so it gets the same treatment as everywhere else a price needs to
-    // read at a glance instead of being counted out digit by digit.
-    el.listResultPrice.textContent = fmtPigeonsCompact(data.price);
+    // Exact, comma-grouped (fmtPigeons), not the compact/rounded
+    // fmtPigeonsCompact every card badge/offer row uses — confirmed live
+    // as a real bug: compactPigeonsNumber only keeps 1 decimal digit past
+    // a million, so a real 1,230,000 listing rendered as "1.2 M!LL!0N" on
+    // its own receipt, silently dropping the real 30,000 difference. Every
+    // OTHER result/confirm screen (BUY N0W, ACCEPT 0FFER) already shows
+    // the exact figure here — this was the one inconsistent one.
+    el.listResultPrice.textContent = fmtPigeons(data.price);
     if (data.txHash){
       el.listResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
       el.listResultTxLink.style.display = '';
@@ -15013,8 +15066,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // CREATE OFFER picker's own VIEW button — it also opens this
     // screen (closing the picker modal first), from a click that started
     // outside #screenDetail by definition since the screen didn't exist
-    // yet when the click landed.
-    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !e.target.closest('.pigeon-img-box') && !e.target.closest('.simple-picker-view-btn')){
+    // yet when the click landed. #historyModal is the same class of
+    // exclusion again — TRANSACT!0N H!ST0RY's popup (and its own ✕/
+    // backdrop) is a sibling overlay on top of DETAIL, not a child of it,
+    // so closing it (clicking ✕ or the dimmed backdrop) was confirmed live
+    // to also fire this and exit DETAIL entirely underneath it — a real
+    // regression once TRANSACT!0N H!ST0RY stopped being its own full
+    // screen swap and became a popup sitting outside #screenDetail's DOM.
+    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !el.historyModal.contains(e.target) && !e.target.closest('.pigeon-img-box') && !e.target.closest('.simple-picker-view-btn')){
       goBackFromDetail();
     }
   });
@@ -15478,7 +15537,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (el.delistConfirmModal.style.display !== 'none'){ closeDelistConfirmModal(); return true; }
     if (el.pigeonsCalcModal.style.display !== 'none'){ closeCalcPopover(); return true; }
     if (el.amountEntryModal.style.display !== 'none'){ closeAmountEntryModal(); return true; }
-    if (el.screenHistory.style.display !== 'none' || el.screenDetail.style.display !== 'none'){ goBackFromDetail(); return true; }
+    if (el.historyModal.style.display !== 'none'){ closeHistoryModal(); return true; }
+    if (el.screenDetail.style.display !== 'none'){ goBackFromDetail(); return true; }
     if (state.scope){ exitWalletScope(); startCollectionBrowse(); return true; }
     if (state.activeTab && state.activeTab !== 'database'){ showTab('database'); return true; }
     return false;
@@ -15488,15 +15548,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   history.pushState({ skyllaNav: true }, '', location.href);
 
-  // Sales history now swaps out the whole panel (SCREEN 2b) instead of
-  // expanding inline underneath the traits — detailHistoryList itself
-  // already lives inside screenHistory and is populated by openDetail's
-  // eager loadDetailHistory() call, so there's nothing left to fetch here.
+  // TRANSACT!0N H!ST0RY opens as a real popup over DETAIL now (reported
+  // live as not wanting it to feel like "another page") — detailHistoryList
+  // itself already lives inside it and is populated by openDetail's own
+  // eager loadDetailHistory() call, so there's nothing left to fetch here,
+  // just show/hide.
   el.detailHistoryToggle.addEventListener('click', function(){
     el.historyNum.innerHTML = el.detailNum.innerHTML;
-    showScreen('history');
+    el.historyModal.style.display = 'flex';
   });
-  el.backToDetailBtn.addEventListener('click', function(){ showScreen('detail'); });
+  function closeHistoryModal(){ el.historyModal.style.display = 'none'; }
+  el.historyModalClose.addEventListener('click', closeHistoryModal);
+  el.historyModal.addEventListener('click', function(e){ if (e.target === el.historyModal) closeHistoryModal(); });
   function goBackFromDetail(){
     showScreen('browse');
     // Overrides showScreen's own tab-strip-aligned scroll with the exact
