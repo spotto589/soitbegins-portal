@@ -5937,13 +5937,22 @@ const SWAP_HTML = `<!DOCTYPE html>
      collection. Blank (not a placeholder like "…") until they land, and
      silently stays blank on a failed fetch — never worth blocking or
      erroring the very first screen of the app over a stats tile. */
+  /* Each stat its own row (label left, value right, same edge-to-edge
+     width as every other row) instead of one run-on line joined with
+     " :: " that wrapped raggedly at card width — confirmed live as
+     wanting NFT H0LDERS/MARKETCAP/L!QU!D!TY to each read on their own
+     line with the values landing in a clean lined-up column. */
   .mainframe-card-stats{
+    display:flex;
+    flex-direction:column;
+    gap:0.25rem;
     font-family:var(--font-mono);
     font-size:10px;
     letter-spacing:0.05em;
     color:var(--grey);
     margin-top:0.3rem;
   }
+  .mainframe-card-stats .stat-row{ display:flex; justify-content:space-between; gap:0.5em; }
   .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
   /* Real per-collection DexScreener link — hidden until its own fetch
      resolves a real dexUrl (see the stats-fetch loop in the script), same
@@ -6055,8 +6064,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:760px){
     .mainframe-card-body{ padding:0.5rem 0.6rem 0.55rem; }
     .mainframe-card-label{ font-size:15px; line-height:1.2; }
-    .mainframe-card-stats{ font-size:9px; line-height:1.4; margin-top:0.25rem; }
+    .mainframe-card-stats{ font-size:9px; line-height:1.4; margin-top:0.25rem; gap:0.15rem; }
     .mainframe-card-buy{ font-size:11px; letter-spacing:0.02em; padding:0.5em 0.3em; margin-top:0.4rem; }
+    /* V!EW CHART badge dropped on phone — confirmed live as clutter at
+       this width, and BUY (below, still live) is the action that matters
+       here anyway. DexScreener is one tap away already via the collection
+       detail screen, so nothing is actually lost. */
+    .mainframe-card-dex-link{ display:none !important; }
   }
   .mainframe-card-soon{ opacity:0.6; cursor:default; }
   .mainframe-card-soon:hover{ border-color:var(--border-mid); transform:none; box-shadow:none; }
@@ -14064,11 +14078,16 @@ const SWAP_HTML = `<!DOCTYPE html>
         el[cfg.dexTarget].style.display = '';
       }
       if (stats.holders == null && rate.marketCapUsd == null && rate.liquidityUsd == null) return;
-      var parts = [];
-      if (stats.holders != null) parts.push('<span class="hi">' + stats.holders.toLocaleString() + '</span> NFT H0LDERS');
-      if (rate.marketCapUsd != null) parts.push('<span class="hi">' + formatUsdAbbrev(rate.marketCapUsd) + '</span> MARKETCAP');
-      if (rate.liquidityUsd != null) parts.push('<span class="hi">' + formatUsdAbbrev(rate.liquidityUsd) + '</span> L!QU!D!TY');
-      el[cfg.target].innerHTML = parts.join(' :: ');
+      // Each stat its own row (label left, value right) instead of one
+      // run-on line — see .mainframe-card-stats .stat-row's own CSS.
+      function row(label, value){
+        return '<div class="stat-row"><span>' + label + ' ::</span><span class="hi">' + value + '</span></div>';
+      }
+      var rows = [];
+      if (stats.holders != null) rows.push(row('NFT H0LDERS', stats.holders.toLocaleString()));
+      if (rate.marketCapUsd != null) rows.push(row('MARKETCAP', formatUsdAbbrev(rate.marketCapUsd)));
+      if (rate.liquidityUsd != null) rows.push(row('L!QU!D!TY', formatUsdAbbrev(rate.liquidityUsd)));
+      el[cfg.target].innerHTML = rows.join('');
     });
   });
   el.dbSelectFlyout.addEventListener('click', function(e){
