@@ -5955,8 +5955,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--grey);
     margin-top:0.3rem;
   }
-  .mainframe-card-stats .stat-row{ display:flex; justify-content:center; gap:0.4em; }
-  .mainframe-card-stats .stat-combo{ display:flex; justify-content:center; gap:1.25em; }
+  /* white-space:nowrap + flex-shrink:0 on each row keeps "LABEL :: VALUE"
+     together as one unbreakable unit — without it, when .stat-combo's two
+     rows were a couple pixels too wide for the card together, flexbox
+     shrank one row below its own content width and wrapped its text
+     mid-label instead of just moving the whole second row down.
+     stat-combo's own flex-wrap:wrap is the graceful fallback for that
+     case: the second row drops to its own line as a whole, still intact,
+     rather than the row itself gets stretched or broken up. */
+  .mainframe-card-stats .stat-row{ display:flex; justify-content:center; gap:0.4em; white-space:nowrap; flex-shrink:0; }
+  .mainframe-card-stats .stat-combo{ display:flex; flex-wrap:wrap; justify-content:center; row-gap:0.25rem; column-gap:1.25em; }
   .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
   /* Real per-collection DexScreener link — hidden until its own fetch
      resolves a real dexUrl (see the stats-fetch loop in the script), same
