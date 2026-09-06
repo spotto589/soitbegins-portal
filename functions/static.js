@@ -4797,6 +4797,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-modal-panel .receipt-status-line{ text-align:center; }
   .buyswap-modal-panel .detail-actions{ justify-content:center; }
   .buyswap-modal-panel .receipt-price-row{ text-align:center; }
+  /* ENTRY screen (Y0U PAY / Y0U RECE!VE) — a fixed-width centered column,
+     not full-width rows each individually text-align:center'd. Reported
+     live as looking "off"/inconsistent between coins: a wider full-width
+     row still centers ITS OWN text, but different amounts (e.g. PHN!X's
+     "119,976.16" vs P!GE0NS' "5,570.06") are different lengths, so each
+     coin's actual content block sat at a different effective width/
+     position even though every individual line was "centered" on its
+     own — this pins every coin's whole quote area to the exact same
+     narrow centered column regardless of digit count. */
+  #buySwapQuoteSection{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  #buySwapQuoteSection > *{ width:100%; max-width:320px; }
   /* REVIEW screen — trimmed to exactly account/amount/minimum-received/
      liquidity-source (see the HTML's own comment on #buySwapConfirmState)
      after the previous title+run-on-sentence+EST!MATED RECE!VE+EXCHANGE
