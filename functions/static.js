@@ -1084,7 +1084,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-banner{
     position:relative;
     width:100%;
-    min-height:340px;
+    min-height:260px;
     border-radius:var(--radius);
     background-color:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
@@ -1113,16 +1113,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* Avatar — the crisp Pigeon image (background, not <img>, so it can sit
      centred/cropped the same way every other round avatar on the site
-     does — object-fit:cover equivalent via background-size). A little
-     bigger again (128px -> 150px, reported live) — this is now the ONLY
-     place a Pigeon's own image actually shows on the banner, so it
-     carries more visual weight than before. The + badge is a real
-     always-there affordance (not hover-only — reported live as wanting
-     everything editable via clicking, discoverable without guessing to
-     hover first), clicking it (or the avatar image itself) opens
-     profileEditModal to the PFP pane. */
+     does — object-fit:cover equivalent via background-size). Way bigger
+     again (150px -> 220px, reported live), no outline any more either
+     (was border+box-shadow) — sits flush against the now-matching banner
+     colour instead of being ringed off from it. This is the ONLY place a
+     Pigeon's own image actually shows on the banner, so it carries real
+     visual weight. The + badge is a real always-there affordance (not
+     hover-only — reported live as wanting everything editable via
+     clicking, discoverable without guessing to hover first), clicking it
+     (or the avatar image itself) opens profileEditModal to the PFP pane. */
   .profile-avatar-wrap{ position:relative; flex:0 0 auto; }
-  .profile-current-avatar{ width:150px; height:150px; border-radius:50%; overflow:hidden; background:#000; border:3px solid var(--bg); box-shadow:0 0 0 1px var(--border-mid); cursor:pointer; }
+  .profile-current-avatar{ width:220px; height:220px; border-radius:50%; overflow:hidden; background:#000; cursor:pointer; }
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
   .profile-avatar-edit-btn{
     position:absolute;
@@ -1204,9 +1205,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profile-field-highlight{ animation:profileFieldHighlight 1.1s ease; }
   @media (max-width:600px){
-    .profile-banner{ min-height:280px; }
+    .profile-banner{ min-height:220px; }
     .profile-banner-content{ padding:1rem; }
-    .profile-current-avatar{ width:104px; height:104px; }
+    .profile-current-avatar{ width:150px; height:150px; }
     .profile-avatar-edit-btn{ width:34px; height:34px; font-size:19px; }
     .profile-current-username{ font-size:24px; }
   }
