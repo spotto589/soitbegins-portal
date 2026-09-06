@@ -5847,62 +5847,40 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   #screenMainframe > .local-static-bg{ z-index:-1; }
   #screenMainframe > *:not(.local-static-bg){ position:relative; z-index:1; }
-  /* HER0 — headline + Σκύλλα's own CTA + her one-line tagline, one
-     centered flex column instead of the old flat sibling list (h1/button/
-     label/subtitle all direct children of #screenMainframe). flex:0 0
-     auto keeps it from eating into the carousel's space below, same
-     reasoning the old bare h1 rule already used. */
+  /* HER0 — just the one headline now, which IS Σκύλλα's own button (see
+     the HTML's own comment on .mainframe-hero-btn/#mainframeProfileBtn) —
+     the separate CTA below it and its one-line tagline are both gone,
+     reported live as wanting these "made into one" thing instead of a
+     headline sitting above a second, separate control. flex:0 0 auto
+     keeps it from eating into the carousel's space below, same reasoning
+     the old bare h1 rule already used. */
   .mainframe-hero{
     flex:0 0 auto;
     display:flex;
     flex-direction:column;
     align-items:center;
   }
-  /* H1 is capped much smaller than the persistent page's own (up to 104px
-     there) specifically here, so the whole screen reliably fits with zero
-     scroll on a short window too, not just a tall one. */
-  .mainframe-hero > h1{ font-size:clamp(26px, 5.5vw, 58px); margin-bottom:0; text-align:center; }
-  /* Σκύλλα's own button — was a small ghost button pinned absolute to the
-     top-right corner, easy to miss entirely. Promoted to a real, primary,
-     in-flow CTA directly under the headline instead — she's the site's
-     connector/gateway (balances, buying coins, trading, messaging), not a
-     side option, so this is deliberately the boldest/brightest single
-     control on the whole screen (solid fill, not ghost, plus a strong
-     glow) rather than another outlined button matching the six collection
-     cards below it. */
-  .mainframe-profile-btn{
-    margin-top:1.1rem;
-    background:var(--magenta);
-    border:1px solid var(--magenta);
-    color:#000;
-    font-family:var(--font-mono);
-    font-weight:700;
-    font-size:clamp(16px, 2.6vw, 22px);
-    letter-spacing:0.05em;
-    text-transform:uppercase;
-    padding:0.85em 2.2em;
-    border-radius:var(--radius);
-    cursor:pointer;
-    white-space:nowrap;
-    box-shadow:0 0 26px var(--magenta-dim), 0 0 60px rgba(240,0,228,0.18);
-    transition:transform 0.15s ease, box-shadow 0.15s ease;
-  }
-  .mainframe-profile-btn:hover{ transform:translateY(-1px); box-shadow:0 0 34px var(--magenta-dim), 0 0 80px rgba(240,0,228,0.28); }
-  /* One line under the button spelling out what she actually does — the
-     button text alone ("MY PR0F!LE") doesn't carry "connector/gateway"
-     on its own, reported live as wanting that read immediately, not
-     discovered after clicking in. */
-  .mainframe-profile-tagline{
-    margin-top:0.6rem;
-    font-size:10.5px;
-    letter-spacing:0.16em;
-    color:var(--grey-dim);
-    text-transform:uppercase;
+  /* The headline itself, now interactive — same size/weight/glitch text-
+     shadow the plain h1 rule already gives it (this only adds the
+     clickable affordance), capped smaller than the persistent page's own
+     H1 (up to 104px there) specifically here, so the whole screen
+     reliably fits with zero scroll on a short window too, not just a tall
+     one. cursor:pointer + a hover/focus glow are the only real signal
+     this is clickable now that there's no separate button spelling that
+     out — brightens on hover/keyboard-focus rather than changing size, so
+     it never shifts the six cards below it. */
+  .mainframe-hero-btn{
+    font-size:clamp(26px, 5.5vw, 58px);
+    margin-bottom:0;
     text-align:center;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    transition:filter 0.15s ease;
   }
-  @media (max-width:600px){
-    .mainframe-profile-btn{ padding:0.8em 1.6em; }
+  .mainframe-hero-btn:hover, .mainframe-hero-btn:focus-visible{
+    filter:brightness(1.25) drop-shadow(0 0 18px var(--magenta-dim));
   }
+  .mainframe-hero-btn:focus-visible{ outline:1px solid var(--magenta); outline-offset:6px; }
   /* SECT!0N HEADER — STAT!C :: MA!NFRAME/SELECT A C0LLECT!0N, now its own
      clearly separate block directly over the collection grid rather than
      glued underneath the identity hero above — "the static IS the
@@ -6291,9 +6269,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-arrow-prev{ left:0.25rem; }
   .mainframe-arrow-next{ right:0.25rem; }
   #mainframeReopenLabel{ cursor:pointer; }
-  /* .mainframe-profile-btn's real rule now lives up with .mainframe-hero
-     (she's promoted to an in-flow primary CTA, not an absolute-positioned
-     corner button any more) — see that block's own comment. */
 </style>
 </head>
 <body>
@@ -6308,25 +6283,20 @@ const SWAP_HTML = `<!DOCTYPE html>
        the DATABASE dropdown already does today. -->
   <div id="screenMainframe">
     <canvas class="local-static-bg" id="mainframeStaticBg"></canvas>
-    <!-- HER0 — the headline (unchanged, see its own h1 rule) plus Σκύλλα's
-         own button, now grouped as one centered block instead of the
-         headline sitting alone with the button floating off in a corner.
-         Reported live as wanting the header to read as "balanced" and
-         Σκύλλα's own button to be the visual centerpiece — she's the
-         site's connector/gateway (balances, buying coins, trading,
-         messaging), not a side option, so this promotes her out of the
-         old absolute-positioned top-right ghost button into a real,
-         primary, in-flow CTA directly under the hero. -->
+    <!-- HER0 — the headline itself IS Σκύλλα's own button now (one thing,
+         not a headline sitting above a separate CTA below it, reported
+         live as wanting these "made into one" plus the tagline dropped —
+         the headline's own text already carries who this is). role=
+         "button"/tabindex instead of a real <button> wrapping the h1:
+         a <button> can't validly contain a heading (browsers silently
+         hoist block content like that back out, breaking the DOM — same
+         reasoning .mainframe-card's own markup comment already gives for
+         using role="button" on a div instead of nesting a real button).
+         Same id (mainframeProfileBtn) as the old separate button, so its
+         existing click handler needs no change; a keydown handler right
+         next to that one adds Enter/Space activation (see the JS). -->
     <div class="mainframe-hero">
-      <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></h1>
-      <!-- MY PR0F!LE — the entry point into login + the real multi-coin
-           balance view (see #profileCoinsList/renderProfileCoins), reported
-           live as wanting "a place where we can login and view our
-           profile" reachable right from here, not buried inside DATABASE. -->
-      <button type="button" class="mainframe-profile-btn" id="mainframeProfileBtn">
-        <span style="text-transform:none;">Σκύλλα</span> · MY PR0F!LE
-      </button>
-      <div class="mainframe-profile-tagline">Y0UR C0NNECT!0N :: BALANCES // TRADES // MESSAGES</div>
+      <h1 class="mainframe-hero-btn" id="mainframeProfileBtn" role="button" tabindex="0">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></h1>
     </div>
     <!-- SECT!0N HEADER — STAT!C :: MA!NFRAME/SELECT A C0LLECT!0N moved out
          of the hero block above and given its own clearly separate row
@@ -14265,6 +14235,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else {
       showTab('profile');
     }
+  });
+  // Keyboard equivalent — #mainframeProfileBtn is the headline itself now
+  // (role="button"/tabindex, see the HTML's own comment on why this
+  // can't be a real <button> wrapping an h1), so Enter/Space need their
+  // own handler the same way mainframeGrid's own cards already do.
+  el.mainframeProfileBtn.addEventListener('keydown', function(e){
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    el.mainframeProfileBtn.click();
   });
   // Real, live numbers on every card (see .mainframe-card-stats' own
   // comment in the CSS) — same fields, same order, on every tradeable
