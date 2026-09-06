@@ -5955,8 +5955,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--grey);
     margin-top:0.3rem;
   }
-  .mainframe-card-stats .stat-row{ display:flex; justify-content:space-between; gap:0.5em; }
-  .mainframe-card-stats .stat-combo{ display:flex; gap:1.25em; }
+  .mainframe-card-stats .stat-row{ display:flex; justify-content:center; gap:0.4em; }
+  .mainframe-card-stats .stat-combo{ display:flex; justify-content:center; gap:1.25em; }
   .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
   /* Real per-collection DexScreener link — hidden until its own fetch
      resolves a real dexUrl (see the stats-fetch loop in the script), same
