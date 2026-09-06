@@ -1192,7 +1192,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      the true middle column, centered. */
   .sale-row{
     display:grid;
-    grid-template-columns:200px 150px 1fr 140px;
+    /* First column was 200px — the thumbnail (72px) + gap (0.6rem) only
+       leaves ~118px for the P!GE0N #____ badge next to it, but at a
+       4-digit number ("P!GE0N #3015", the collection's own real ceiling)
+       that badge is ~149px wide on its own. Grid doesn't clip an
+       overflowing child, so it spilled ~30px into the price column next
+       to it — reported live as the price sitting right on top of the
+       pigeon number. 236px covers the widest real number with room to
+       spare. */
+    grid-template-columns:236px 150px 1fr 140px;
     align-items:center;
     gap:1rem;
     padding:1.1rem 0.6rem;
@@ -1235,7 +1243,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      there's always a clear left anchor tying the whole row together. */
   @media (max-width:820px){
     .sale-row{
-      grid-template-columns:84px 1fr;
+      /* Same overflow as the desktop column (see its own comment) — the
+         P!GE0N #____ badge stacked under the thumbnail is wider than an
+         84px column even at the smaller mobile font, and grid doesn't
+         clip an overflowing child, so it spilled into the price column
+         beside it. 124px covers the widest real number (4 digits). */
+      grid-template-columns:124px 1fr;
       grid-template-areas:"thumb price" "thumb parties" "thumb time";
       row-gap:0.4rem;
       column-gap:0.9rem;

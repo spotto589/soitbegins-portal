@@ -24,8 +24,11 @@ const SORT_MAP = {
   PRICE_DESC: 'price-desc',
 };
 
+// Sale-row addresses only show the first 6 chars — reported live as the
+// full 9+4 shortening still reading cluttered next to the price/thumbnail
+// in that row specifically.
 function shortenAddr(addr) {
-  return addr ? addr.slice(0, 9) + '...' + addr.slice(-4) : null;
+  return addr ? addr.slice(0, 6) + '...' : null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
