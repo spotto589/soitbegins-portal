@@ -1253,9 +1253,41 @@ const SWAP_HTML = `<!DOCTYPE html>
      the far side — reported live as reading too far from the thumbnail
      out there, and crowding the time column next to it). Addresses get
      the true middle column, centered. */
+  /* Column titles (NFT/PR!CE/FR0M/T0/T!ME) sit right above the list,
+     sharing .sale-row's own grid-template-columns so every title lines
+     up exactly over its column — reported live as wanting real headers,
+     not just each row's own labels doing the work. Desktop only: the
+     mobile breakpoint below collapses to a stacked card layout that
+     column headers don't map onto. */
+  .sale-header-row{
+    display:grid;
+    grid-template-columns:236px 150px 1fr 1fr 140px;
+    gap:1rem;
+    padding:0 0.6rem 0.6rem;
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.15em;
+    color:var(--grey-dim);
+    text-transform:uppercase;
+    border-bottom:1px solid var(--border-dim);
+    margin-bottom:0.25rem;
+  }
+  .sale-header-row span:nth-child(3),
+  .sale-header-row span:nth-child(4){ text-align:center; }
+  .sale-header-row span:last-child{ text-align:right; }
+  @media (max-width:820px){ .sale-header-row{ display:none; } }
   .sale-row{
     display:grid;
-    grid-template-columns:200px 150px 1fr 140px;
+    /* First column was 200px — the thumbnail (72px) + gap (0.6rem) only
+       leaves ~118px for the P!GE0N #____ badge next to it, but at a
+       4-digit number ("P!GE0N #3015", the collection's own real ceiling)
+       that badge is ~149px wide on its own. Grid doesn't clip an
+       overflowing child, so it spilled ~30px into the price column next
+       to it — reported live as the price sitting right on top of the
+       pigeon number. 236px covers the widest real number with room to
+       spare. Matches .sale-header-row's own columns above exactly. */
+    grid-template-columns:236px 150px 1fr 1fr 140px;
     align-items:center;
     gap:1rem;
     padding:1.1rem 0.6rem;
@@ -1286,9 +1318,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      is what actually fixes that at small sizes, not just going bigger. */
   .sale-price{ font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--green); text-shadow:0 0 10px rgba(0,255,140,0.45); white-space:nowrap; }
   .sale-via{ font-family:var(--font-body); font-size:13px; letter-spacing:0.08em; color:var(--white); text-transform:uppercase; }
-  .sale-parties{ font-family:var(--font-body); font-size:18px; color:var(--white); text-transform:none; text-align:center; min-width:0; overflow-wrap:anywhere; }
-  .sale-parties a{ color:var(--white); text-decoration:underline; cursor:pointer; }
-  .sale-parties a:hover{ color:var(--cyan); }
+  /* FR0M/T0 were one combined "seller → buyer" cell — split into their
+     own columns so each can line up under its own header. */
+  .sale-from, .sale-to{ font-family:var(--font-body); font-size:18px; color:var(--white); text-transform:none; text-align:center; min-width:0; overflow-wrap:anywhere; }
+  .sale-from a, .sale-to a{ color:var(--white); text-decoration:underline; cursor:pointer; }
+  .sale-from a:hover, .sale-to a:hover{ color:var(--cyan); }
   .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:15px; text-align:right; }
   /* Icon-left/details-right list layout, not a full stack — a plain
      top-to-bottom stack (the previous version) read as an unrelated pile
@@ -1298,16 +1332,25 @@ const SWAP_HTML = `<!DOCTYPE html>
      there's always a clear left anchor tying the whole row together. */
   @media (max-width:820px){
     .sale-row{
-      grid-template-columns:84px 1fr;
-      grid-template-areas:"thumb price" "thumb parties" "thumb time";
+      /* Same overflow as the desktop column (see its own comment) — the
+         P!GE0N #____ badge stacked under the thumbnail is wider than an
+         84px column even at the smaller mobile font, and grid doesn't
+         clip an overflowing child, so it spilled into the price column
+         beside it. 124px covers the widest real number (4 digits). A
+         3rd track (vs. desktop's 5) lets FR0M/T0 sit side by side in
+         their own row while PR!CE/T!ME each span the full width next to
+         the thumbnail, same as they did before the FR0M/T0 split. */
+      grid-template-columns:124px 1fr 1fr;
+      grid-template-areas:"thumb price price" "thumb from to" "thumb time time";
       row-gap:0.4rem;
       column-gap:0.9rem;
       align-items:start;
     }
+    .sale-from{ grid-area:from; text-align:left; }
+    .sale-to{ grid-area:to; text-align:right; }
     .sale-thumb-wrap{ grid-area:thumb; flex-direction:column; align-items:flex-start; gap:0.4rem; align-self:start; }
     .sale-num-box{ font-size:13px; padding:0.3em 0.5em; }
     .sale-price-cell{ grid-area:price; align-self:end; }
-    .sale-parties{ grid-area:parties; text-align:left; }
     .sale-time{ grid-area:time; text-align:left; }
   }
 
@@ -4874,6 +4917,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-modal-panel .receipt-status-line{ text-align:center; }
   .buyswap-modal-panel .detail-actions{ justify-content:center; }
   .buyswap-modal-panel .receipt-price-row{ text-align:center; }
+  /* ENTRY screen (Y0U PAY / Y0U RECE!VE) — a fixed-width centered column,
+     not full-width rows each individually text-align:center'd. Reported
+     live as looking "off"/inconsistent between coins: a wider full-width
+     row still centers ITS OWN text, but different amounts (e.g. PHN!X's
+     "119,976.16" vs P!GE0NS' "5,570.06") are different lengths, so each
+     coin's actual content block sat at a different effective width/
+     position even though every individual line was "centered" on its
+     own — this pins every coin's whole quote area to the exact same
+     narrow centered column regardless of digit count. */
+  #buySwapQuoteSection{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  #buySwapQuoteSection > *{ width:100%; max-width:320px; }
   /* REVIEW screen — trimmed to exactly account/amount/minimum-received/
      liquidity-source (see the HTML's own comment on #buySwapConfirmState)
      after the previous title+run-on-sentence+EST!MATED RECE!VE+EXCHANGE
@@ -5955,13 +6013,19 @@ const SWAP_HTML = `<!DOCTYPE html>
      FUZZY/C0NSP!RACY — BUY stays fully live underneath (reported live as
      wanting the buy path kept open), this is purely a visual banner over
      the artwork. pointer-events:none so it never intercepts clicks meant
-     for the card or its BUY button. */
+     for the card or its BUY button. Lives inside .mainframe-card-art (not
+     as a sibling positioned against the whole card) and centers via
+     top:50%/translateY — .mainframe-card-art is already position:relative,
+     so this tracks the art box's own height. Anchoring it to the whole
+     card's height at a fixed top:46% put it on top of the name/stats text
+     on the mobile 2-col grid, where the art shrinks to a smaller share of
+     a much shorter card than on desktop. */
   .mainframe-card-soon-banner{
     position:absolute;
-    top:46%;
+    top:50%;
     left:-10%;
     width:120%;
-    transform:rotate(-8deg);
+    transform:translateY(-50%) rotate(-8deg);
     background:rgba(10,10,11,0.88);
     border-top:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
     border-bottom:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
@@ -6058,13 +6122,26 @@ const SWAP_HTML = `<!DOCTYPE html>
      collection. Blank (not a placeholder like "…") until they land, and
      silently stays blank on a failed fetch — never worth blocking or
      erroring the very first screen of the app over a stats tile. */
+  /* NFT H0LDERS gets its own centered line; MARKETCAP + L!QU!D!TY share
+     the line under it, joined by " :: " same as the original single-line
+     format — reported live as wanting the VALUE-then-LABEL reading order
+     back (e.g. "289 NFT H0LDERS", not "NFT H0LDERS :: 289"). Plain
+     centered text rows, not a flex split — simpler, and normal text
+     wrap is a graceful fallback on its own if a line ever runs long,
+     unlike the flex-row version this replaced (two flex children a
+     couple px too wide for the card shrank one below its own content
+     width and wrapped mid-label instead of just wrapping the line). */
   .mainframe-card-stats{
+    display:flex;
+    flex-direction:column;
+    gap:0.25rem;
     font-family:var(--font-mono);
     font-size:10px;
     letter-spacing:0.05em;
     color:var(--grey);
     margin-top:0.3rem;
   }
+  .mainframe-card-stats .stat-row{ text-align:center; }
   .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
   /* Real per-collection DexScreener link — hidden until its own fetch
      resolves a real dexUrl (see the stats-fetch loop in the script), same
@@ -6157,6 +6234,32 @@ const SWAP_HTML = `<!DOCTYPE html>
     .mainframe-card-label{ font-size:clamp(20px, 2vw, 30px); }
     .mainframe-card-stats{ font-size:14px; }
     .mainframe-card-buy{ font-size:16px; }
+  }
+  /* At 2 cols x 3 rows (the phone grid, see the max-width:760px switch
+     above), each card's actual height on a real phone works out to
+     ~180px — the base body sizing above (tuned for a wider single-row
+     carousel card) needed ~170px on its own for label+stats+button,
+     which left almost nothing for the art and pushed the BUY button past
+     the card's own overflow:hidden edge (confirmed live: PIGEONS/PHN!X/
+     TEDDY's BUY text clipped, the three collections whose 3-part stats
+     line — holders+marketcap+liquidity — is longest). Tightened
+     throughout, and the BUY label's font/padding shrunk specifically so
+     "BUY $P!GE0NS" (the longest button label) stays on one line instead
+     of wrapping to two and roughly doubling the button's own height.
+     Placed AFTER the base rules above (same reasoning as the desktop
+     bump's own comment) — a media query doesn't add specificity, so
+     stacking this before the base .mainframe-card-buy/label/stats rules
+     let the later, unconditional base rule win even on a narrow screen. */
+  @media (max-width:760px){
+    .mainframe-card-body{ padding:0.5rem 0.6rem 0.55rem; }
+    .mainframe-card-label{ font-size:15px; line-height:1.2; }
+    .mainframe-card-stats{ font-size:9px; line-height:1.4; margin-top:0.25rem; gap:0.15rem; }
+    .mainframe-card-buy{ font-size:11px; letter-spacing:0.02em; padding:0.5em 0.3em; margin-top:0.4rem; }
+    /* V!EW CHART badge dropped on phone — confirmed live as clutter at
+       this width, and BUY (below, still live) is the action that matters
+       here anyway. DexScreener is one tap away already via the collection
+       detail screen, so nothing is actually lost. */
+    .mainframe-card-dex-link{ display:none !important; }
   }
   .mainframe-card-soon{ opacity:0.6; cursor:default; }
   .mainframe-card-soon:hover{ border-color:var(--border-mid); transform:none; box-shadow:none; }
@@ -6286,8 +6389,8 @@ const SWAP_HTML = `<!DOCTYPE html>
               <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
               <span>V!EW CHART</span>
             </a>
+            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           </div>
-          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$PHN!X</div>
             <div class="mainframe-card-stats" id="mainframeStatsPhnixs"></div>
@@ -6308,8 +6411,8 @@ const SWAP_HTML = `<!DOCTYPE html>
               <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
               <span>V!EW CHART</span>
             </a>
+            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           </div>
-          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$TEDDY</div>
             <div class="mainframe-card-stats" id="mainframeStatsTeddybg"></div>
@@ -6322,8 +6425,8 @@ const SWAP_HTML = `<!DOCTYPE html>
               <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
               <span>V!EW CHART</span>
             </a>
+            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           </div>
-          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$SEAL</div>
             <div class="mainframe-card-stats" id="mainframeStatsSeal"></div>
@@ -6336,8 +6439,8 @@ const SWAP_HTML = `<!DOCTYPE html>
               <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
               <span>V!EW CHART</span>
             </a>
+            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           </div>
-          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$FUZZY</div>
             <div class="mainframe-card-stats" id="mainframeStatsFuzzy"></div>
@@ -6350,8 +6453,8 @@ const SWAP_HTML = `<!DOCTYPE html>
               <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
               <span>V!EW CHART</span>
             </a>
+            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           </div>
-          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$C0NSP!RACY</div>
             <div class="mainframe-card-stats" id="mainframeStatsConspiracy"></div>
@@ -6620,6 +6723,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button class="sale-currency-btn" data-currency="PIGEONS" id="salesCurrencyPigeonsBtn">$P!GE0NS</button>
       </div>
       <div class="sales-scrollbox" id="salesScrollBox">
+        <div class="sale-header-row"><span>NFT</span><span>PR!CE</span><span>FR0M</span><span>T0</span><span>T!ME</span></div>
         <div id="salesArea"></div>
         <div class="scroll-sentinel" id="salesScrollSentinel"></div>
         <div class="load-more-note" id="salesLoadMoreNote" style="display:none;">L0AD!NG M0RE SALES...</div>
@@ -8272,14 +8376,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     // unrelated grid underneath the CONNECTING status.
     var showBrowseChrome = tab === 'database' || (tab === 'mypigeons' && isOwnWalletScope());
     el.screenBrowse.style.display = showBrowseChrome ? '' : 'none';
-    // S0RT BY / F!LTER BY TRA!TS' fixed bottom bar — same visibility rule
-    // as screenBrowse itself, since there's nothing to sort/filter
-    // without a grid showing. body.has-bottom-bar drives that grid's own
-    // bottom padding (see .bottom-controls-bar's CSS) so the last row of
-    // cards never sits hidden underneath this bar.
-    el.bottomControlsBar.style.display = showBrowseChrome ? 'flex' : 'none';
-    document.body.classList.toggle('has-bottom-bar', showBrowseChrome);
-    if (!showBrowseChrome){ closeSortFlyout(); closeTraitsFlyout(); }
+    // S0RT BY / F!LTER BY TRA!TS — DATABASE only now, not MY P!GE0NS
+    // (the Σκύλλα-connected wallet view) — reported live as not wanting
+    // that popup there. MY P!GE0NS is always your own small, already-
+    // owned set, not the full 3015-item collection, so sorting/filtering
+    // it the same way as DATABASE never made as much sense there anyway.
+    // Both the always-in-flow inline controls (#dbControlsSticky) and the
+    // fixed bottom bar get hidden — screenBrowse itself still shows for
+    // MY P!GE0NS once scoped (the grid/detail overlay it shares with
+    // DATABASE), just without either sort/filter entry point.
+    var showSortFilterChrome = tab === 'database';
+    el.dbControlsSticky.style.display = showSortFilterChrome ? '' : 'none';
+    el.bottomControlsBar.style.display = showSortFilterChrome ? 'flex' : 'none';
+    document.body.classList.toggle('has-bottom-bar', showSortFilterChrome);
+    if (!showSortFilterChrome){ closeSortFlyout(); closeTraitsFlyout(); }
     // myPigeonsPanel only has real content left (connect status, CONNECT
     // button) while not yet scoped — title/offers-summary/pigeon-grid all
     // moved out (see renderMyPigeonsList/showTab history), so leaving it
@@ -14205,11 +14315,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         el[cfg.dexTarget].style.display = '';
       }
       if (stats.holders == null && rate.marketCapUsd == null && rate.liquidityUsd == null) return;
-      var parts = [];
-      if (stats.holders != null) parts.push('<span class="hi">' + stats.holders.toLocaleString() + '</span> NFT H0LDERS');
-      if (rate.marketCapUsd != null) parts.push('<span class="hi">' + formatUsdAbbrev(rate.marketCapUsd) + '</span> MARKETCAP');
-      if (rate.liquidityUsd != null) parts.push('<span class="hi">' + formatUsdAbbrev(rate.liquidityUsd) + '</span> L!QU!D!TY');
-      el[cfg.target].innerHTML = parts.join(' :: ');
+      // NFT H0LDERS is its own centered line; MARKETCAP + L!QU!D!TY share
+      // the line under it, joined by " :: " — VALUE-then-LABEL reading
+      // order (e.g. "289 NFT H0LDERS"), same as the site's original
+      // single-line format elsewhere.
+      function stat(value, label){
+        return '<span class="hi">' + value + '</span> ' + label;
+      }
+      var html = stats.holders != null ? '<div class="stat-row">' + stat(stats.holders.toLocaleString(), 'NFT H0LDERS') + '</div>' : '';
+      var comboParts = [];
+      if (rate.marketCapUsd != null) comboParts.push(stat(formatUsdAbbrev(rate.marketCapUsd), 'MARKETCAP'));
+      if (rate.liquidityUsd != null) comboParts.push(stat(formatUsdAbbrev(rate.liquidityUsd), 'L!QU!D!TY'));
+      if (comboParts.length) html += '<div class="stat-row">' + comboParts.join(' :: ') + '</div>';
+      el[cfg.target].innerHTML = html;
     });
   });
   el.dbSelectFlyout.addEventListener('click', function(e){
@@ -14457,9 +14575,10 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="sale-price">' + price + '</div>' +
         (via ? '<div class="sale-via">' + via + '</div>' : '') +
       '</div>' +
-      '<div class="sale-parties">' +
+      '<div class="sale-from">' +
         (s.seller ? '<a data-wallet="' + escapeHtml(s.seller) + '" data-short="' + escapeHtml(s.sellerShort || s.seller) + '">' + walletTagHtml(s.seller, s.sellerShort) + '</a>' : '?') +
-        ' → ' +
+      '</div>' +
+      '<div class="sale-to">' +
         (s.buyer ? '<a data-wallet="' + escapeHtml(s.buyer) + '" data-short="' + escapeHtml(s.buyerShort || s.buyer) + '">' + walletTagHtml(s.buyer, s.buyerShort) + '</a>' : '?') +
       '</div>' +
       '<div class="sale-time">' + escapeHtml(when) + '</div>' +
@@ -14505,12 +14624,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   // thumbnail/number — reported live as wanting a quick way into "the
   // big detailed version" straight from a sale. A wallet link inside the
   // row still takes priority (browses that wallet instead).
-  el.salesArea.addEventListener('click', function(e){
-    var walletLink = e.target.closest('.sale-parties a');
+  //
+  // Bound on document in the CAPTURE phase, not a plain listener on
+  // el.salesArea — confirmed live that a real click never reached a
+  // bubble-phase listener on #salesArea at all (a delegated listener
+  // added fresh on that exact element, at click time, simply never
+  // fired for a real mouse click, only for a synthetic dispatchEvent),
+  // while a capture-phase listener on document sees every real click.
+  // Something else already stops this particular bubble somewhere
+  // between the row and #salesArea; catching it on the way down instead
+  // of the way back up sidesteps whatever that is.
+  document.addEventListener('click', function(e){
+    if (!el.salesArea.contains(e.target)) return;
+    var walletLink = e.target.closest('.sale-from a, .sale-to a');
     if (walletLink){ browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short')); return; }
     var row = e.target.closest('.sale-row');
     if (row) openDetail(row.getAttribute('data-nftid'));
-  });
+  }, true);
   // Rooted at the page viewport (root:null), not the scrollbox — the
   // scrollbox no longer scrolls on its own (see .sales-scrollbox's own
   // comment, "doesn't need two scroll bars"), so this now fires on
