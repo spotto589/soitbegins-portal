@@ -1078,16 +1078,35 @@ const SWAP_HTML = `<!DOCTYPE html>
      before one's ever been set, never a blank/broken box. Sits above the
      PR0F!LE title, full width of the panel's own content area. */
   .profile-banner{
+    position:relative;
     width:100%;
     height:160px;
     border-radius:var(--radius);
-    background-size:cover;
+    background-color:var(--panel-bg-solid);
+    background-size:contain;
+    background-repeat:no-repeat;
     background-position:center;
     border:1px solid var(--border-mid);
     margin-bottom:1.25rem;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
   }
   .profile-banner-empty{
     background-image:linear-gradient(120deg, rgba(136,72,248,0.35), rgba(61,243,236,0.2), rgba(240,0,228,0.3));
+  }
+  /* QU0TE + TW!TTER — centered as a caption over the bottom of the banner
+     (reported live as wanting them "in the middle"), a dark scrim behind
+     the text so it stays readable over any banner art/colour rather than
+     assuming the art is always dark enough on its own. Hidden outright
+     (not shown empty) when a wallet hasn't set either yet — see
+     renderProfileCurrent's own display toggle on each. */
+  .profile-banner-caption{
+    max-width:100%;
+    text-align:center;
+    padding:0.5rem 1rem 0.6rem;
+    background:linear-gradient(to top, rgba(5,5,6,0.75), transparent);
+    border-radius:0 0 var(--radius) var(--radius);
   }
   @media (max-width:600px){ .profile-banner{ height:96px; } }
   /* PR0F!LE panel — current username/avatar, big and unmissable at the
@@ -1097,11 +1116,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
   .profile-current-username{ font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--green); }
   .profile-current-wallet{ font-size:12px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; }
-  /* QU0TE — small italic line, muted so it reads as flavor text under the
-     name rather than competing with it. TW!TTER is a real link, cyan same
-     as every other outbound link on the site. */
-  .profile-quote{ font-size:13px; font-style:italic; color:var(--grey); margin-top:0.35rem; text-transform:none; }
-  .profile-twitter-link{ display:inline-block; font-size:12px; letter-spacing:0.03em; color:var(--cyan); text-decoration:none; margin-top:0.3rem; text-transform:none; }
+  /* EST VALUE — mirrors MY C0!NS' own T0TAL P0RTF0L!0 VALUE number, right
+     under the address so your net worth reads as part of your identity,
+     not just buried in the collapsible coins section below. */
+  .profile-current-estvalue{ font-size:13px; letter-spacing:0.04em; color:var(--grey); text-transform:uppercase; margin-top:0.3rem; }
+  .profile-current-estvalue span{ color:var(--green); font-weight:700; text-shadow:0 0 6px var(--green-glow); }
+  /* QU0TE — small italic line, muted so it reads as flavor text rather
+     than competing with the name. TW!TTER is a real link, cyan same as
+     every other outbound link on the site. */
+  .profile-quote{ font-size:13px; font-style:italic; color:#fff; text-transform:none; }
+  .profile-twitter-link{ display:inline-block; font-size:12px; letter-spacing:0.03em; color:var(--cyan); text-decoration:none; margin-top:0.25rem; text-transform:none; }
   .profile-twitter-link:hover{ text-decoration:underline; }
   /* Currently-selected pfp in the picker grid — same green highlight the
      rest of the app uses for "this is the real/active one" (see
@@ -1166,35 +1190,37 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-coins-total-row{ margin-top:1rem; border-color:var(--green); background:rgba(0,255,140,0.06); }
   .profile-coins-total-row span:last-child{ color:var(--green); font-weight:700; text-shadow:0 0 6px var(--green-glow); }
   .profile-coins-wallet-row span:last-child{ color:#fff; font-weight:600; }
-  /* Boxed layout — one square-ish card per collection instead of the old
-     flat list, reported live as wanting all collections laid out as
-     clean boxes rather than stacked rows. auto-fill/minmax keeps it
-     responsive without a breakpoint of its own. */
-  .profile-coins-list{ display:grid; grid-template-columns:repeat(auto-fill, minmax(148px, 1fr)); gap:0.75rem; margin-bottom:0; }
+  /* Boxed layout — fixed 3-column grid (was auto-fill/minmax, which packed
+     in as many narrow columns as fit) — reported live as wanting a real
+     3-across grid, bigger and cleaner, not a variable-count wrap. 2
+     columns below the mobile breakpoint instead of cramming 3 skinny
+     boxes into a phone width. */
+  .profile-coins-list{ display:grid; grid-template-columns:repeat(2, 1fr); gap:1rem; margin-bottom:0; }
+  @media (min-width:601px){ .profile-coins-list{ grid-template-columns:repeat(3, 1fr); } }
   .profile-coin-row{
     display:flex;
     flex-direction:column;
     align-items:center;
     text-align:center;
-    gap:0.5rem;
-    padding:1rem 0.85rem;
+    gap:0.6rem;
+    padding:1.4rem 1rem;
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
     background:linear-gradient(180deg, rgba(var(--card-accent, 61,243,236),0.1), transparent 70%);
   }
   .profile-coin-thumb{
-    width:56px; height:56px; flex:0 0 auto;
+    width:76px; height:76px; flex:0 0 auto;
     border-radius:var(--radius);
     border:1px solid rgba(var(--card-accent, 61,243,236), 0.4);
     background-size:cover; background-position:center;
     background-color:rgba(var(--card-accent, 61,243,236), 0.18);
   }
   .profile-coin-info{ min-width:0; text-align:center; width:100%; }
-  .profile-coin-label{ font-family:var(--font-display); font-size:16px; font-weight:700; color:#fff; }
-  .profile-coin-balance{ font-family:var(--font-mono); font-size:12px; letter-spacing:0.03em; color:var(--grey); margin-top:0.15rem; }
+  .profile-coin-label{ font-family:var(--font-display); font-size:19px; font-weight:700; color:#fff; }
+  .profile-coin-balance{ font-family:var(--font-mono); font-size:13px; letter-spacing:0.03em; color:var(--grey); margin-top:0.2rem; }
   .profile-coin-balance .hi{ color:var(--green); font-weight:600; }
   .profile-coin-balance.profile-coin-warn{ color:var(--red); }
-  .profile-coin-value{ font-family:var(--font-mono); font-size:11px; letter-spacing:0.03em; color:var(--cyan); margin-top:0.1rem; }
+  .profile-coin-value{ font-family:var(--font-mono); font-size:12px; letter-spacing:0.03em; color:var(--cyan); margin-top:0.15rem; }
   /* Σκύλλα BUY button — ghost at rest (ties this button to whichever
      collection's own real coin it's for, --card-accent, same as the
      thumb right next to it), fills solid on hover. Same recipe as every
@@ -1206,17 +1232,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-coin-action{
     width:100%;
     box-sizing:border-box;
-    margin-top:0.15rem;
+    margin-top:0.3rem;
     background:rgba(var(--card-accent, 61,243,236), 0.1);
     border:1px solid rgb(var(--card-accent, 61,243,236));
     color:rgb(var(--card-accent, 61,243,236));
     text-shadow:0 0 6px rgba(var(--card-accent, 61,243,236), 0.5);
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:12px;
+    font-size:13px;
     letter-spacing:0.03em;
     text-transform:uppercase;
-    padding:0.6em 0.9em;
+    padding:0.75em 0.9em;
     border-radius:var(--radius);
     cursor:pointer;
     white-space:nowrap;
@@ -6812,21 +6838,37 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="sw-panel" id="profilePanelWrap" style="display:none;">
       <!-- BANNER — a wallet's own chosen backdrop (one of its own Pigeons,
            same ownership-verified pattern as the pfp picker below), shown
-           at the very top of PR0F!LE. Reported live as wanting profiles to
-           feel like a real customizable identity people come back to, not
-           just a name — a plain gradient placeholder (.profile-banner-
-           empty, see the CSS) when none is set yet, never a blank box. -->
-      <div class="profile-banner profile-banner-empty" id="profileBanner"></div>
+           at the very top of PR0F!LE. background-size:contain (not cover)
+           — the source art is square, and covering a wide short banner
+           with a square image crops down to a thin sliver that rarely
+           shows anything recognizable (confirmed live: mostly just the
+           art's own flat background colour, the Pigeon itself cut off to
+           one edge). contain always shows the WHOLE Pigeon, letterboxed
+           against profile-banner's own neutral fill either side, never an
+           unpredictable crop. QU0TE + TW!TTER sit centered as a caption
+           OVER the banner now (reported live as wanting them "in the
+           middle"), not stacked under the username. A plain gradient
+           placeholder (.profile-banner-empty, see the CSS) shows when no
+           banner's ever been set — never a blank box. -->
+      <div class="profile-banner profile-banner-empty" id="profileBanner">
+        <div class="profile-banner-caption">
+          <div class="profile-quote" id="profileCurrentQuote" style="display:none;"></div>
+          <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener" style="display:none;"></a>
+        </div>
+      </div>
       <div class="panel-title">PR0F!LE</div>
       <div class="profile-current-row">
         <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
+        <!-- USERNAME / ADDRESS / EST VALUE — EST VALUE mirrors MY C0!NS'
+             own T0TAL P0RTF0L!0 VALUE (wallet XRP + every coin balance
+             converted to XRP, see recomputeTotal in renderProfileCoins)
+             so this reads as a real net-worth line right under your
+             identity, not just buried inside the collapsible coins list
+             below. -->
         <div class="profile-current-info">
           <div class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</div>
           <div class="profile-current-wallet" id="profileCurrentWallet"></div>
-          <!-- QU0TE + TW!TTER — both optional, both hidden outright rather
-               than shown empty when a wallet hasn't set one yet. -->
-          <div class="profile-quote" id="profileCurrentQuote" style="display:none;"></div>
-          <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener" style="display:none;"></a>
+          <div class="profile-current-estvalue">EST VALUE :: <span id="profileCurrentEstValue">--</span></div>
         </div>
       </div>
       <!-- MY C0!NS — real balance + trustline status for every collection
@@ -8139,7 +8181,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
-   'profilePanelWrap','profileBanner','profileCurrentAvatar','profileCurrentUsername','profileCurrentWallet','profileCurrentQuote','profileCurrentTwitterLink',
+   'profilePanelWrap','profileBanner','profileCurrentAvatar','profileCurrentUsername','profileCurrentWallet','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
    'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus','profileBannerPickerStatus','profileBannerGrid',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
@@ -15857,10 +15899,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     function recomputeTotal(){
       var sum = (walletXrp != null) ? walletXrp : 0;
       Object.keys(coinValuesXrp).forEach(function(k){ if (typeof coinValuesXrp[k] === 'number') sum += coinValuesXrp[k]; });
-      el.profileCoinsTotalValue.textContent = sum.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+      var formatted = sum.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+      el.profileCoinsTotalValue.textContent = formatted;
+      // EST VALUE — the exact same number, mirrored up into the header
+      // (see profileCurrentEstValue's own HTML comment) so it reads as
+      // part of your identity, not just something buried in the
+      // collapsible MY C0!NS section below.
+      el.profileCurrentEstValue.textContent = formatted;
     }
     el.profileCoinsWalletBalance.textContent = 'L0AD!NG...';
     el.profileCoinsTotalValue.textContent = 'L0AD!NG...';
+    el.profileCurrentEstValue.textContent = 'L0AD!NG...';
     apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).then(function(data){
       if (!data || data.drops == null) throw new Error('no drops');
       walletXrp = Number(data.drops) / 1e6;
@@ -15957,6 +16006,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!MY_WALLET){
       el.profileCurrentWallet.textContent = '';
       el.profileCurrentUsername.textContent = 'C0NNECT Y0UR WALLET F!RST.';
+      el.profileCurrentEstValue.textContent = '--';
       el.profileCurrentAvatar.innerHTML = '';
       el.profileBanner.style.backgroundImage = '';
       el.profileBanner.classList.add('profile-banner-empty');
