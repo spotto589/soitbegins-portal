@@ -8958,7 +8958,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       swapOfferState.uuid = res.data.uuid;
       navigateXamanPopup(xamanTab, res.data.next.always);
       el.swapOfferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.swapConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
+      el.swapConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollSwapOfferStatus();
     }).catch(function(){
       if (xamanTab) xamanTab.close();
@@ -9163,7 +9163,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       swapAcceptState.uuid = res.data.uuid;
       navigateXamanPopup(xamanTab, res.data.next.always);
       el.swapAcceptOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.acceptConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
+      el.acceptConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollSwapAcceptStatus();
     }).catch(function(){
       if (xamanTab) xamanTab.close();
@@ -11662,7 +11662,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // breakpoint this now navigates the CURRENT tab directly instead of
   // opening any tab at all — a real top-level navigation, which is
   // exactly what Universal Links are designed to be triggered by. The
-  // existing "S!GN !N W!TH Σκύλλα, THEN RETURN HERE" messaging and the
+  // existing "Σκύλλα D!DN T 0PEN? TAP HERE" fallback link and the
   // status-poll loop already assume you leave and come back, so this
   // matches the intended flow rather than fighting it.
   function navigateXamanPopup(tabRef, url){
@@ -11774,7 +11774,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       listingUuid = res.data.uuid;
       navigateXamanPopup(listingXamanTab, res.data.next.always);
       listingBtnEl.textContent = 'WA!T!NG F0R S!GNATURE...';
-      if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>'; }
+      if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>'; }
       pollListingStatus();
     }).catch(function(){
       closeXamanTabAndFocus(listingXamanTab);
@@ -12646,7 +12646,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         setWalletText(el.buyConfSeller, res.data.display.seller, shortAddr(res.data.display.seller));
         el.buyConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
       }
-      el.buyConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
+      el.buyConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollBuyStatus();
     }).catch(function(e){
       closeXamanTabAndFocus(buyXamanTab);
@@ -12769,7 +12769,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       delistUuid = res.data.uuid;
       navigateXamanPopup(delistXamanTab, res.data.next.always);
-      el.delistConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
+      el.delistConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollDelistStatus();
     }).catch(function(){
       closeXamanTabAndFocus(delistXamanTab);
@@ -13333,7 +13333,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       transferUuid = res.data.uuid;
       navigateXamanPopup(transferXamanTab, res.data.next.always);
       el.transferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.transferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
+      el.transferConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollTransferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(transferXamanTab);
@@ -13742,7 +13742,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       acceptTransferUuid = res.data.uuid;
       navigateXamanPopup(acceptTransferXamanTab, res.data.next.always);
       el.acceptTransferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
-      el.acceptTransferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
+      el.acceptTransferConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollAcceptTransferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(acceptTransferXamanTab);
@@ -13870,7 +13870,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         showRoyaltyRow(el.acceptOfferConfRoyaltyRow, el.acceptOfferConfRoyaltyLabel, el.acceptOfferConfRoyalty, res.data.display.royaltyValue, res.data.display.royaltyPercent);
         el.acceptOfferConfSellerAmount.textContent = fmtPigeons(res.data.display.sellerValue);
       }
-      el.acceptOfferConfirmStatus.innerHTML = 'S!GN !N W!TH <span style="text-transform:none;">Σκύλλα</span>, THEN RETURN HERE.<br><a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
+      el.acceptOfferConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollAcceptOfferStatus();
     }).catch(function(){
       closeXamanTabAndFocus(acceptOfferXamanTab);
