@@ -14403,12 +14403,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   // thumbnail/number — reported live as wanting a quick way into "the
   // big detailed version" straight from a sale. A wallet link inside the
   // row still takes priority (browses that wallet instead).
-  el.salesArea.addEventListener('click', function(e){
+  //
+  // Bound on document in the CAPTURE phase, not a plain listener on
+  // el.salesArea — confirmed live that a real click never reached a
+  // bubble-phase listener on #salesArea at all (a delegated listener
+  // added fresh on that exact element, at click time, simply never
+  // fired for a real mouse click, only for a synthetic dispatchEvent),
+  // while a capture-phase listener on document sees every real click.
+  // Something else already stops this particular bubble somewhere
+  // between the row and #salesArea; catching it on the way down instead
+  // of the way back up sidesteps whatever that is.
+  document.addEventListener('click', function(e){
+    if (!el.salesArea.contains(e.target)) return;
     var walletLink = e.target.closest('.sale-parties a');
     if (walletLink){ browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short')); return; }
     var row = e.target.closest('.sale-row');
     if (row) openDetail(row.getAttribute('data-nftid'));
-  });
+  }, true);
   // Rooted at the page viewport (root:null), not the scrollbox — the
   // scrollbox no longer scrolls on its own (see .sales-scrollbox's own
   // comment, "doesn't need two scroll bars"), so this now fires on
