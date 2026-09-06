@@ -2863,7 +2863,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      row, bordered as one unit, instead of stacked/separate pieces. */
   /* RESET on its own, between the COLLECTION/ADD TRAITS box above and
      the results status line below. */
-  .results-reset-row{ text-align:center; margin-bottom:0.85rem; }
+  /* margin-top added — #dbControlsSticky .db-config-traits-group{
+     margin-bottom:0 } (its own SORT BY/FILTER BY TRAITS boxes) leaves
+     nothing above this row at all, so RESET sat flush against them with
+     zero breathing room. Confirmed live. */
+  .results-reset-row{ text-align:center; margin-top:0.85rem; margin-bottom:0.85rem; }
   /* One line: SEARCH (left), SORT BY (dead centre — a 3-column grid so
      it's truly centred regardless of how wide SEARCH/VIEW end up, not
      just flex-centred in whatever space happens to be left over), VIEW
@@ -15282,13 +15286,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     var notOwn = !!(p && p.owner && p.owner !== MY_WALLET);
     var isOwn = !!(p && p.owner) && !notOwn;
     if (listing && listing.price !== null && listing.price !== undefined){
-      // Same "Y0UR L!ST!NG :: 444K" compact note (+ CANCEL button) as the
-      // card grid's own pigeonsActionBoxHtml on your own listed Pigeon —
-      // never the raw fmtPigeons price there, since there's no BUY button
-      // next to it to buy your own listing anyway.
-      // Plain white (#screenDetail .scylla-listing-price's own default) —
-      // the CANCEL button next to it is what's red now, not this text.
-      el.detailScyllaPrice.textContent = isOwn ? 'Y0UR L!ST!NG :: ' + compactPigeonsNumber(listing.price) : fmtPigeons(listing.price);
+      // Exact (fmtPigeons), not the compact/rounded compactPigeonsNumber —
+      // this is DETAIL, the one full-width screen with real room for the
+      // real number, not a space-constrained card badge. Confirmed live
+      // as the same class of bug as the LIST result receipt's own fix: a
+      // real 1,230,000 listing showed as "Y0UR L!ST!NG :: 1.2 M!LL!0N"
+      // here, silently dropping 30,000. The "N0T 0WN" branch already used
+      // the exact figure — this just matches it instead of rounding only
+      // your own listing's price.
+      el.detailScyllaPrice.textContent = isOwn ? 'Y0UR L!ST!NG :: ' + fmtPigeons(listing.price) : fmtPigeons(listing.price);
       el.detailScyllaBuyBtn.style.display = notOwn ? '' : 'none';
       el.detailScyllaDelistBtn.style.display = isOwn ? '' : 'none';
       el.detailScyllaOwnedRow.style.display = 'none';
