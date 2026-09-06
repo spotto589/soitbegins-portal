@@ -1081,7 +1081,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:relative;
     overflow:hidden;
     width:100%;
-    min-height:220px;
+    min-height:340px;
     border-radius:var(--radius);
     background-color:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
@@ -1133,28 +1133,28 @@ const SWAP_HTML = `<!DOCTYPE html>
      guessing to hover first), clicking it jumps to CH00SE PR0F!LE
      P!CTURE below (see scrollToProfileField in the JS). */
   .profile-avatar-wrap{ position:relative; flex:0 0 auto; }
-  .profile-current-avatar{ width:64px; height:64px; border-radius:50%; overflow:hidden; background:#000; border:2px solid var(--bg); box-shadow:0 0 0 1px var(--border-mid); }
+  .profile-current-avatar{ width:128px; height:128px; border-radius:50%; overflow:hidden; background:#000; border:3px solid var(--bg); box-shadow:0 0 0 1px var(--border-mid); }
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
   .profile-avatar-edit-btn{
     position:absolute;
-    right:-2px; bottom:-2px;
-    width:22px; height:22px;
+    right:0; bottom:0;
+    width:36px; height:36px;
     border-radius:50%;
     background:var(--green);
     color:#000;
-    border:2px solid var(--bg);
+    border:3px solid var(--bg);
     font-weight:700;
-    font-size:14px;
+    font-size:20px;
     line-height:1;
     cursor:pointer;
     display:flex;
     align-items:center;
     justify-content:center;
-    box-shadow:0 0 8px var(--green-glow);
+    box-shadow:0 0 10px var(--green-glow);
   }
   .profile-avatar-edit-btn:hover{ filter:brightness(1.15); }
-  .profile-current-username-row{ display:flex; align-items:center; gap:0.4rem; }
-  .profile-current-username{ font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--green); }
+  .profile-current-username-row{ display:flex; align-items:center; gap:0.5rem; }
+  .profile-current-username{ font-family:var(--font-display); font-size:32px; font-weight:700; color:var(--green); }
   /* Small, quiet edit affordance next to any click-to-edit field — real
      hit target (not just a hover cue) that jumps to the matching input
      below, same reasoning as the avatar's own + badge. */
@@ -1168,11 +1168,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:color 0.15s ease;
   }
   .profile-field-edit-btn:hover{ color:var(--cyan); }
-  .profile-current-wallet{ font-size:12px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; }
+  .profile-current-wallet{ font-size:14px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; margin-top:0.2rem; }
   /* EST VALUE — mirrors MY C0!NS' own T0TAL P0RTF0L!0 VALUE number, right
      under the address so your net worth reads as part of your identity,
      not just buried in the collapsible coins section below. */
-  .profile-current-estvalue{ font-size:13px; letter-spacing:0.04em; color:var(--grey); text-transform:uppercase; margin-top:0.3rem; }
+  .profile-current-estvalue{ font-size:15px; letter-spacing:0.04em; color:var(--grey); text-transform:uppercase; margin-top:0.4rem; }
   .profile-current-estvalue span{ color:var(--green); font-weight:700; text-shadow:0 0 6px var(--green-glow); }
   /* QU0TE + TW!TTER — centered as a caption under the identity row
      (reported live as wanting them "in the middle" of the banner), same
@@ -1215,8 +1215,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profile-field-highlight{ animation:profileFieldHighlight 1.1s ease; }
   @media (max-width:600px){
-    .profile-banner{ min-height:190px; }
+    .profile-banner{ min-height:280px; }
     .profile-banner-content{ padding:1rem; }
+    .profile-current-avatar{ width:88px; height:88px; }
+    .profile-avatar-edit-btn{ width:30px; height:30px; font-size:17px; }
+    .profile-current-username{ font-size:24px; }
   }
   /* Currently-selected pfp in the picker grid — same green highlight the
      rest of the app uses for "this is the real/active one" (see
@@ -7036,17 +7039,27 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button class="bar-btn" id="profileTwitterSaveBtn">SAVE</button>
       </div>
       <div class="index-line" id="profileTwitterStatus" style="text-align:center; margin-top:0.5rem;"></div>
-      <div class="panel-title outgoing-offers-title" style="font-size:13px;">CH00SE PR0F!LE P!CTURE FR0M Y0UR P!GE0NS</div>
-      <div id="profilePfpStatus" class="th-empty" style="display:none;"></div>
-      <div class="simple-picker-grid" id="profilePfpGrid"></div>
+      <!-- Whole section hidden outright (not just an empty grid under a
+           "Y0U D0N T 0WN ANY P!GE0NS YET" message) once a real owned-
+           Pigeons count comes back at 0 — reported live as wanting that
+           removed rather than shown. Still shows normally while loading/
+           not-yet-connected (renderProfilePfpGrid only hides it on the
+           genuine "checked, owns zero" case — see its own comment). -->
+      <div id="profilePfpSection">
+        <div class="panel-title outgoing-offers-title" style="font-size:13px;">CH00SE PR0F!LE P!CTURE FR0M Y0UR P!GE0NS</div>
+        <div id="profilePfpStatus" class="th-empty" style="display:none;"></div>
+        <div class="simple-picker-grid" id="profilePfpGrid"></div>
+      </div>
       <!-- BANNER picker — exact clone of the pfp picker above (same owned-
            Pigeons list, same grid/card markup, its own grid id + status
            line + selected-nftid tracking) since it's the same "pick one of
            your own Pigeons" flow, just feeding profileBanner instead of
            profileCurrentAvatar. -->
-      <div class="panel-title outgoing-offers-title" style="font-size:13px;">CH00SE BANNER FR0M Y0UR P!GE0NS</div>
-      <div id="profileBannerPickerStatus" class="th-empty" style="display:none;"></div>
-      <div class="simple-picker-grid" id="profileBannerGrid"></div>
+      <div id="profileBannerSection">
+        <div class="panel-title outgoing-offers-title" style="font-size:13px;">CH00SE BANNER FR0M Y0UR P!GE0NS</div>
+        <div id="profileBannerPickerStatus" class="th-empty" style="display:none;"></div>
+        <div class="simple-picker-grid" id="profileBannerGrid"></div>
+      </div>
     </div>
 
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
@@ -8288,8 +8301,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
    'profilePanelWrap','profileBanner','profileBannerBg','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
-   'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
-   'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus','profileBannerPickerStatus','profileBannerGrid',
+   'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpSection','profilePfpStatus','profilePfpGrid','profileCoinsList',
+   'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus','profileBannerSection','profileBannerPickerStatus','profileBannerGrid',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
    'salesPanelWrap',
    'swapOffersPanelWrap','swapOffersList',
@@ -16124,9 +16137,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileQuoteSaveBtn.disabled = true;
       el.profileTwitterInput.disabled = true;
       el.profileTwitterSaveBtn.disabled = true;
+      el.profilePfpSection.style.display = '';
       el.profilePfpGrid.innerHTML = '';
       el.profilePfpStatus.style.display = '';
       el.profilePfpStatus.textContent = 'C0NNECT Y0UR WALLET F!RST.';
+      el.profileBannerSection.style.display = '';
       el.profileBannerGrid.innerHTML = '';
       el.profileBannerPickerStatus.style.display = '';
       el.profileBannerPickerStatus.textContent = 'C0NNECT Y0UR WALLET F!RST.';
@@ -16159,9 +16174,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       renderProfilePfpGrid(myOwnPigeonsCache);
       renderProfileBannerGrid(myOwnPigeonsCache);
     } else {
+      el.profilePfpSection.style.display = '';
       el.profilePfpGrid.innerHTML = '';
       el.profilePfpStatus.style.display = '';
       el.profilePfpStatus.textContent = 'L0AD!NG Y0UR P!GE0NS...';
+      el.profileBannerSection.style.display = '';
       el.profileBannerGrid.innerHTML = '';
       el.profileBannerPickerStatus.style.display = '';
       el.profileBannerPickerStatus.textContent = 'L0AD!NG Y0UR P!GE0NS...';
@@ -16185,6 +16202,43 @@ const SWAP_HTML = `<!DOCTYPE html>
     target.classList.add('profile-field-highlight');
     setTimeout(function(){ target.classList.remove('profile-field-highlight'); }, 1100);
   }
+  // Real colour match, not just a blur — draws the banner image (routed
+  // through /api/nft-image-proxy so the browser only ever loads it same-
+  // origin, see that endpoint's own comment on why Deeptide's CDN can't be
+  // read directly off a canvas) and reads its own top-left corner, scaled
+  // down to a single pixel. Confirmed live: averaging the WHOLE image
+  // instead (the first version of this) landed on a muddy dark grey for a
+  // Pigeon with a bright flat-yellow background, because the character
+  // and its own dark linework covers enough of the frame to drag a
+  // whole-image average away from the real background colour — the
+  // top-left corner alone, on the same image, read back a clean, accurate
+  // (223,229,0). Most Pigeon art is a centred subject over a flat-colour
+  // background, so a corner is reliably just that background with nothing
+  // else in it — a small 12%-of-width crop (not the literal single corner
+  // pixel) absorbs any anti-aliasing/dithering right at the true corner.
+  // Silently gives up (leaves whatever background-color was already
+  // there) on any failure — a slow/broken image must never block or
+  // blank the banner.
+  function sampleBannerColor(imageUrl){
+    try {
+      var img = new Image();
+      img.onload = function(){
+        try {
+          var w = img.naturalWidth, h = img.naturalHeight;
+          if (!w || !h) return;
+          var crop = Math.max(4, Math.floor(Math.min(w, h) * 0.12));
+          var canvas = document.createElement('canvas');
+          canvas.width = 1;
+          canvas.height = 1;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, crop, crop, 0, 0, 1, 1);
+          var px = ctx.getImageData(0, 0, 1, 1).data;
+          el.profileBanner.style.backgroundColor = 'rgb(' + px[0] + ',' + px[1] + ',' + px[2] + ')';
+        } catch (e){}
+      };
+      img.src = '/api/nft-image-proxy?src=' + encodeURIComponent(imageUrl);
+    } catch (e){}
+  }
   function renderProfileCurrent(profile){
     el.profileCurrentAvatar.innerHTML = (profile && profile.pfpImage) ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
     el.profileCurrentUsername.textContent = (profile && profile.username) ? profile.username : 'N0 USERNAME SET';
@@ -16192,12 +16246,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     // replacement (profileBannerBg, blurred+scaled via CSS — see its own
     // comment) and profileBanner's empty/not-empty state — there's no
     // separate crisp full-image layer any more, just this ambient colour-
-    // matched backdrop behind the avatar/identity row.
+    // matched backdrop behind the avatar/identity row. The real sampled
+    // colour (see sampleBannerColor above) sits BEHIND the blur layer as
+    // profileBanner's own background-color, so the blur's own soft edges
+    // blend into an exact match instead of a merely-similar guess.
     if (profile && profile.bannerImage){
       el.profileBannerBg.style.backgroundImage = 'url("' + profile.bannerImage.replace(/"/g, '') + '")';
       el.profileBanner.classList.remove('profile-banner-empty');
+      sampleBannerColor(profile.bannerImage);
     } else {
       el.profileBannerBg.style.backgroundImage = '';
+      el.profileBanner.style.backgroundColor = '';
       el.profileBanner.classList.add('profile-banner-empty');
     }
     // QU0TE — a real value shows the text + a quiet ✎ (click jumps to the
@@ -16224,11 +16283,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function renderProfilePfpGrid(items){
     if (!items.length){
-      el.profilePfpStatus.style.display = '';
-      el.profilePfpStatus.textContent = 'Y0U D0N T 0WN ANY P!GE0NS YET.';
+      // Hidden outright, not a "Y0U D0N T 0WN ANY P!GE0NS YET" message —
+      // reported live as wanting that removed; there's genuinely nothing
+      // to pick from a wallet with zero Pigeons, so the whole section
+      // just isn't there instead of showing an empty state.
+      el.profilePfpSection.style.display = 'none';
       el.profilePfpGrid.innerHTML = '';
       return;
     }
+    el.profilePfpSection.style.display = '';
     el.profilePfpStatus.style.display = 'none';
     el.profilePfpGrid.innerHTML = items.map(function(p){
       return '<div class="simple-picker-card' + (p.nftId === profileSelectedPfpNftId ? ' simple-picker-card-selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -16248,11 +16311,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // instead.
   function renderProfileBannerGrid(items){
     if (!items.length){
-      el.profileBannerPickerStatus.style.display = '';
-      el.profileBannerPickerStatus.textContent = 'Y0U D0N T 0WN ANY P!GE0NS YET.';
+      // Same "hide the whole section, not an empty-state message" as
+      // renderProfilePfpGrid's own comment above.
+      el.profileBannerSection.style.display = 'none';
       el.profileBannerGrid.innerHTML = '';
       return;
     }
+    el.profileBannerSection.style.display = '';
     el.profileBannerPickerStatus.style.display = 'none';
     el.profileBannerGrid.innerHTML = items.map(function(p){
       return '<div class="simple-picker-card' + (p.nftId === profileSelectedBannerNftId ? ' simple-picker-card-selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
