@@ -2977,6 +2977,33 @@ export function isValidUsername(username) {
   return len >= 1 && len <= 20;
 }
 
+// QU0TE — a short freeform line under the username on PR0F!LE (banner/pfp/
+// quote/twitter, reported live as wanting the profile page to feel like a
+// real customizable identity, not just a name). Allows an empty string
+// (clearing it), rejects control characters (a plain \n included — this is
+// a single line, not a bio paragraph) rather than allowlisting a character
+// set the way USERNAME_CHAR_PATTERN does, since a quote is free text in a
+// way a handle isn't.
+const QUOTE_MAX_LEN = 140;
+const CONTROL_CHAR_PATTERN = /[\x00-\x1f\x7f]/;
+export function isValidQuote(quote) {
+  if (typeof quote !== 'string') return false;
+  if (CONTROL_CHAR_PATTERN.test(quote)) return false;
+  return [...quote].length <= QUOTE_MAX_LEN;
+}
+
+// TW!TTER — stored WITHOUT the leading @ (added back at display time), same
+// real handle rules X/Twitter itself enforces (letters/digits/underscore,
+// 1-15 chars) so a stored handle always produces a real profile URL, never
+// a garbage link. Allows an empty string (clearing it).
+const TWITTER_HANDLE_PATTERN = /^[A-Za-z0-9_]{1,15}$/;
+export function normalizeTwitterHandle(input) {
+  return typeof input === 'string' ? input.trim().replace(/^@/, '') : '';
+}
+export function isValidTwitterHandle(handle) {
+  return handle === '' || TWITTER_HANDLE_PATTERN.test(handle);
+}
+
 // Case-insensitive — "Pigeon" and "pigeon" would otherwise both render
 // distinctly but be indistinguishable at a glance everywhere this shows up.
 export async function isUsernameTaken(kv, username, exceptWallet) {

@@ -31,7 +31,16 @@ export async function onRequestPost(context) {
   const profiles = {};
   wallets.forEach(w => {
     const p = map[w];
-    profiles[w] = p ? { username: p.username || null, pfpImage: p.pfpImage || null } : null;
+    // bannerImage/quote/twitter are the same kind of public identity flair
+    // username/pfpImage already are — meant to be seen on this wallet's
+    // own PR0F!LE page (and anywhere else it's shown), not private data.
+    profiles[w] = p ? {
+      username: p.username || null,
+      pfpImage: p.pfpImage || null,
+      bannerImage: p.bannerImage || null,
+      quote: p.quote || null,
+      twitter: p.twitter || null
+    } : null;
   });
 
   return new Response(JSON.stringify({ profiles }), {

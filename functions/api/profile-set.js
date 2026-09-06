@@ -1,11 +1,14 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNfts, findAllPigeons,
-  fetchDeeptideNftDetail, isValidUsername, isUsernameTaken, setProfile
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNftsChecked, findAllPigeons,
+  fetchDeeptideNftDetail, isValidUsername, isUsernameTaken, setProfile,
+  isValidQuote, normalizeTwitterHandle, isValidTwitterHandle
 } from '../_shared.js';
 
-// Lets a wallet set its own display name and/or profile picture (one of its
-// own Pigeons). Either field can be sent alone — setProfile merges into
-// whatever's already stored rather than requiring both every time.
+// Lets a wallet set its own display name, profile picture, banner, quote,
+// and/or Twitter handle (banner/pfp are each one of its own Pigeons — see
+// PR0F!LE's own "customize your identity" pitch). Any subset of fields can
+// be sent alone — setProfile merges into whatever's already stored rather
+// than requiring all of them every time.
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -32,7 +35,10 @@ export async function onRequestPost(context) {
 
   const hasUsername = typeof body.username === 'string';
   const hasPfp = typeof body.pfpNftId === 'string';
-  if (!hasUsername && !hasPfp) {
+  const hasBanner = typeof body.bannerNftId === 'string';
+  const hasQuote = typeof body.quote === 'string';
+  const hasTwitter = typeof body.twitter === 'string';
+  if (!hasUsername && !hasPfp && !hasBanner && !hasQuote && !hasTwitter) {
     return new Response(JSON.stringify({ error: 'nothing_to_update' }), { status: 400 });
   }
 
@@ -49,28 +55,65 @@ export async function onRequestPost(context) {
     patch.username = username;
   }
 
-  if (hasPfp) {
-    const pfpNftId = body.pfpNftId;
-    if (!/^[0-9A-Fa-f]{64}$/.test(pfpNftId)) {
+  if (hasQuote) {
+    const quote = body.quote.trim();
+    if (!isValidQuote(quote)) {
+      return new Response(JSON.stringify({ error: 'invalid_quote' }), { status: 400 });
+    }
+    patch.quote = quote;
+  }
+
+  if (hasTwitter) {
+    const twitter = normalizeTwitterHandle(body.twitter);
+    if (!isValidTwitterHandle(twitter)) {
+      return new Response(JSON.stringify({ error: 'invalid_twitter' }), { status: 400 });
+    }
+    patch.twitter = twitter;
+  }
+
+  // pfp/banner share the exact same "must be a Pigeon this wallet actually
+  // owns right now" real on-ledger check — fetched together (one
+  // fetchAllAccountNftsChecked call covers both) rather than twice when a
+  // save touches both fields at once.
+  if (hasPfp || hasBanner) {
+    const pfpNftId = hasPfp ? body.pfpNftId : null;
+    const bannerNftId = hasBanner ? body.bannerNftId : null;
+    if ((pfpNftId !== null && !/^[0-9A-Fa-f]{64}$/.test(pfpNftId)) ||
+        (bannerNftId !== null && !/^[0-9A-Fa-f]{64}$/.test(bannerNftId))) {
       return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
     }
-    // Only ever a Pigeon this wallet actually owns right now — the same
-    // real on-ledger check every other "is this really yours" branch in
-    // this app uses (see swap-acceptoffer-payload.js's not_owned), not
-    // just trusting whatever nftId the client sent.
-    const [nfts, item] = await Promise.all([
-      fetchAllAccountNfts(wallet),
-      fetchDeeptideNftDetail(pfpNftId)
-    ]);
-    const ownsIt = findAllPigeons(nfts).some(n => n.NFTokenID === pfpNftId);
-    if (!ownsIt) {
-      return new Response(JSON.stringify({ error: 'not_owned' }), { status: 403 });
+    // Checked, not the plain fetchAllAccountNfts — a failed/rate-limited
+    // XRPL scan returns the same empty-ish array a genuinely-empty wallet
+    // would, which would otherwise report a false not_owned for a Pigeon
+    // this wallet actually holds (same fix already applied to every real
+    // trade endpoint — see swap-listing-payload.js's own comment).
+    const { nfts, ok: nftsOk } = await fetchAllAccountNftsChecked(wallet);
+    if (!nftsOk) {
+      return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 502 });
     }
-    if (!item || !item.image) {
-      return new Response(JSON.stringify({ error: 'pfp_unavailable' }), { status: 503 });
+    const owned = findAllPigeons(nfts);
+    if (pfpNftId !== null) {
+      if (!owned.some(n => n.NFTokenID === pfpNftId)) {
+        return new Response(JSON.stringify({ error: 'not_owned' }), { status: 403 });
+      }
+      const item = await fetchDeeptideNftDetail(pfpNftId);
+      if (!item || !item.image) {
+        return new Response(JSON.stringify({ error: 'pfp_unavailable' }), { status: 503 });
+      }
+      patch.pfpNftId = pfpNftId;
+      patch.pfpImage = item.image;
     }
-    patch.pfpNftId = pfpNftId;
-    patch.pfpImage = item.image;
+    if (bannerNftId !== null) {
+      if (!owned.some(n => n.NFTokenID === bannerNftId)) {
+        return new Response(JSON.stringify({ error: 'not_owned' }), { status: 403 });
+      }
+      const item = await fetchDeeptideNftDetail(bannerNftId);
+      if (!item || !item.image) {
+        return new Response(JSON.stringify({ error: 'pfp_unavailable' }), { status: 503 });
+      }
+      patch.bannerNftId = bannerNftId;
+      patch.bannerImage = item.image;
+    }
   }
 
   const profile = await setProfile(env.coin, wallet, patch);

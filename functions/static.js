@@ -1073,6 +1073,23 @@ const SWAP_HTML = `<!DOCTYPE html>
      in ahead of it the moment that wallet's profile resolves. */
   .wallet-tag{ display:inline-flex; align-items:center; gap:0.35em; vertical-align:middle; }
   .wallet-avatar{ width:1.3em; height:1.3em; min-width:1.3em; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--border-mid); }
+  /* BANNER — a wallet's own chosen backdrop, real image (one of its own
+     Pigeons) or a plain gradient placeholder (.profile-banner-empty)
+     before one's ever been set, never a blank/broken box. Sits above the
+     PR0F!LE title, full width of the panel's own content area. */
+  .profile-banner{
+    width:100%;
+    height:160px;
+    border-radius:var(--radius);
+    background-size:cover;
+    background-position:center;
+    border:1px solid var(--border-mid);
+    margin-bottom:1.25rem;
+  }
+  .profile-banner-empty{
+    background-image:linear-gradient(120deg, rgba(136,72,248,0.35), rgba(61,243,236,0.2), rgba(240,0,228,0.3));
+  }
+  @media (max-width:600px){ .profile-banner{ height:96px; } }
   /* PR0F!LE panel — current username/avatar, big and unmissable at the
      top, same reasoning as the highest-offer box elsewhere. */
   .profile-current-row{ display:flex; align-items:center; gap:1rem; justify-content:center; margin-bottom:1rem; }
@@ -1080,6 +1097,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
   .profile-current-username{ font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--green); }
   .profile-current-wallet{ font-size:12px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; }
+  /* QU0TE — small italic line, muted so it reads as flavor text under the
+     name rather than competing with it. TW!TTER is a real link, cyan same
+     as every other outbound link on the site. */
+  .profile-quote{ font-size:13px; font-style:italic; color:var(--grey); margin-top:0.35rem; text-transform:none; }
+  .profile-twitter-link{ display:inline-block; font-size:12px; letter-spacing:0.03em; color:var(--cyan); text-decoration:none; margin-top:0.3rem; text-transform:none; }
+  .profile-twitter-link:hover{ text-decoration:underline; }
   /* Currently-selected pfp in the picker grid — same green highlight the
      rest of the app uses for "this is the real/active one" (see
      .highest-offer-price). */
@@ -5794,6 +5817,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   #profilePfpGrid .simple-picker-card-selected{ border-color:var(--green); box-shadow:0 0 0 2px var(--green), 0 0 16px var(--green-glow); }
   #profilePfpGrid .simple-picker-card-picking{ opacity:0.6; pointer-events:none; }
   #profilePfpGrid .simple-picker-card-picking .simple-picker-card-num::after{ content:' :: SETT!NG...'; color:var(--green); }
+  /* BANNER picker — exact clone of #profilePfpGrid's own rules above. */
+  #profileBannerGrid{ overflow-y:visible; max-height:none; }
+  #profileBannerGrid .simple-picker-card{ cursor:pointer; transition:border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease; }
+  #profileBannerGrid .simple-picker-card:hover{ border-color:var(--green); transform:translateY(-3px); box-shadow:0 0 14px var(--green-glow); }
+  #profileBannerGrid .simple-picker-card-selected{ border-color:var(--green); box-shadow:0 0 0 2px var(--green), 0 0 16px var(--green-glow); }
+  #profileBannerGrid .simple-picker-card-picking{ opacity:0.6; pointer-events:none; }
+  #profileBannerGrid .simple-picker-card-picking .simple-picker-card-num::after{ content:' :: SETT!NG...'; color:var(--green); }
   .swap-nonatomic-note{
     max-width:520px;
     margin:0 auto 1.25rem;
@@ -6780,12 +6810,23 @@ const SWAP_HTML = `<!DOCTYPE html>
          its own Pigeons), shown everywhere an address used to just print
          its own short form (see walletTagHtml/setWalletText). -->
     <div class="sw-panel" id="profilePanelWrap" style="display:none;">
+      <!-- BANNER — a wallet's own chosen backdrop (one of its own Pigeons,
+           same ownership-verified pattern as the pfp picker below), shown
+           at the very top of PR0F!LE. Reported live as wanting profiles to
+           feel like a real customizable identity people come back to, not
+           just a name — a plain gradient placeholder (.profile-banner-
+           empty, see the CSS) when none is set yet, never a blank box. -->
+      <div class="profile-banner profile-banner-empty" id="profileBanner"></div>
       <div class="panel-title">PR0F!LE</div>
       <div class="profile-current-row">
         <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
         <div class="profile-current-info">
           <div class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</div>
           <div class="profile-current-wallet" id="profileCurrentWallet"></div>
+          <!-- QU0TE + TW!TTER — both optional, both hidden outright rather
+               than shown empty when a wallet hasn't set one yet. -->
+          <div class="profile-quote" id="profileCurrentQuote" style="display:none;"></div>
+          <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener" style="display:none;"></a>
         </div>
       </div>
       <!-- MY C0!NS — real balance + trustline status for every collection
@@ -6831,9 +6872,33 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button class="bar-btn" id="profileUsernameSaveBtn">SAVE</button>
       </div>
       <div class="index-line" id="profileUsernameStatus" style="text-align:center; margin-top:0.5rem;"></div>
+      <!-- QU0TE — a short freeform line under the username (140 chars,
+           see isValidQuote in _shared.js), same save-row pattern as
+           username above. -->
+      <div class="search-row" style="justify-content:center;">
+        <input class="transfer-wallet-input" id="profileQuoteInput" type="text" maxlength="140" placeholder="A SH0RT QU0TE (UP T0 140 CHARACTERS)">
+        <button class="bar-btn" id="profileQuoteSaveBtn">SAVE</button>
+      </div>
+      <div class="index-line" id="profileQuoteStatus" style="text-align:center; margin-top:0.5rem;"></div>
+      <!-- TW!TTER/X — stored+validated as a bare handle (see
+           normalizeTwitterHandle/isValidTwitterHandle in _shared.js),
+           rendered as a real clickable @handle link above. -->
+      <div class="search-row" style="justify-content:center;">
+        <input class="transfer-wallet-input" id="profileTwitterInput" type="text" maxlength="16" placeholder="TW!TTER/X HANDLE (E.G. @P!GE0NSXRPL)">
+        <button class="bar-btn" id="profileTwitterSaveBtn">SAVE</button>
+      </div>
+      <div class="index-line" id="profileTwitterStatus" style="text-align:center; margin-top:0.5rem;"></div>
       <div class="panel-title outgoing-offers-title" style="font-size:13px;">CH00SE PR0F!LE P!CTURE FR0M Y0UR P!GE0NS</div>
       <div id="profilePfpStatus" class="th-empty" style="display:none;"></div>
       <div class="simple-picker-grid" id="profilePfpGrid"></div>
+      <!-- BANNER picker — exact clone of the pfp picker above (same owned-
+           Pigeons list, same grid/card markup, its own grid id + status
+           line + selected-nftid tracking) since it's the same "pick one of
+           your own Pigeons" flow, just feeding profileBanner instead of
+           profileCurrentAvatar. -->
+      <div class="panel-title outgoing-offers-title" style="font-size:13px;">CH00SE BANNER FR0M Y0UR P!GE0NS</div>
+      <div id="profileBannerPickerStatus" class="th-empty" style="display:none;"></div>
+      <div class="simple-picker-grid" id="profileBannerGrid"></div>
     </div>
 
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
@@ -8074,8 +8139,9 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
-   'profilePanelWrap','profileCurrentAvatar','profileCurrentUsername','profileCurrentWallet',
+   'profilePanelWrap','profileBanner','profileCurrentAvatar','profileCurrentUsername','profileCurrentWallet','profileCurrentQuote','profileCurrentTwitterLink',
    'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
+   'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus','profileBannerPickerStatus','profileBannerGrid',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
    'salesPanelWrap',
    'swapOffersPanelWrap','swapOffersList',
@@ -11778,6 +11844,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       unexpected_offer_currency: 'TH!S 0FFER !SN\\'T !N REAL ' + COLLECTION_META[state.collection].tokenLabel + ' — REFUS!NG T0 ACCEPT !T.',
       invalid_offer_amount: 'TH!S 0FFER AM0UNT !S!NVAL!D.',
       invalid_username: 'USERNAME MUST BE LETTERS, NUMBERS, UNDERSC0RES 0R EM0J!, UP T0 20 CHARACTERS.',
+      invalid_quote: 'QU0TE MUST BE 140 CHARACTERS 0R FEWER, N0 L!NE BREAKS.',
+      invalid_twitter: 'ENTER A REAL TW!TTER/X HANDLE (LETTERS/NUMBERS/_, UP T0 15 CHARACTERS).',
       pfp_unavailable: 'C0ULDN\\'T L0AD TH!S P!GE0N S !MAGE — TRY AGA!N.',
       nothing_to_update: 'N0TH!NG T0 SAVE.'
     };
@@ -15725,6 +15793,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // markup OFFER F0R's own picker already uses (openSimpleOfferPicker),
   // just a different grid element and no view-detail button. ----
   var profileSelectedPfpNftId = null;
+  var profileSelectedBannerNftId = null;
   // r,g,b triplets — same values MAINFRAME's own --card-accent uses per
   // collection (see its own cards' inline style) — kept here too rather
   // than read off COLLECTION_META, which doesn't carry a display accent
@@ -15889,16 +15958,31 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileCurrentWallet.textContent = '';
       el.profileCurrentUsername.textContent = 'C0NNECT Y0UR WALLET F!RST.';
       el.profileCurrentAvatar.innerHTML = '';
+      el.profileBanner.style.backgroundImage = '';
+      el.profileBanner.classList.add('profile-banner-empty');
+      el.profileCurrentQuote.style.display = 'none';
+      el.profileCurrentTwitterLink.style.display = 'none';
       el.profileUsernameInput.disabled = true;
       el.profileUsernameSaveBtn.disabled = true;
+      el.profileQuoteInput.disabled = true;
+      el.profileQuoteSaveBtn.disabled = true;
+      el.profileTwitterInput.disabled = true;
+      el.profileTwitterSaveBtn.disabled = true;
       el.profilePfpGrid.innerHTML = '';
       el.profilePfpStatus.style.display = '';
       el.profilePfpStatus.textContent = 'C0NNECT Y0UR WALLET F!RST.';
+      el.profileBannerGrid.innerHTML = '';
+      el.profileBannerPickerStatus.style.display = '';
+      el.profileBannerPickerStatus.textContent = 'C0NNECT Y0UR WALLET F!RST.';
       return;
     }
     el.profileCurrentWallet.textContent = shortAddr(MY_WALLET);
     el.profileUsernameInput.disabled = false;
     el.profileUsernameSaveBtn.disabled = false;
+    el.profileQuoteInput.disabled = false;
+    el.profileQuoteSaveBtn.disabled = false;
+    el.profileTwitterInput.disabled = false;
+    el.profileTwitterSaveBtn.disabled = false;
     fetch('/api/profiles-batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -15913,22 +15997,53 @@ const SWAP_HTML = `<!DOCTYPE html>
     // use — reused here rather than a separate fetch, but PR0F!LE can be
     // the very first tab opened this session, so this still has to kick
     // the fetch off itself rather than assuming it's already in flight.
+    // BANNER's own grid shares this exact same list — one fetch feeds both
+    // pickers.
     if (myOwnPigeonsCache !== null){
       renderProfilePfpGrid(myOwnPigeonsCache);
+      renderProfileBannerGrid(myOwnPigeonsCache);
     } else {
       el.profilePfpGrid.innerHTML = '';
       el.profilePfpStatus.style.display = '';
       el.profilePfpStatus.textContent = 'L0AD!NG Y0UR P!GE0NS...';
+      el.profileBannerGrid.innerHTML = '';
+      el.profileBannerPickerStatus.style.display = '';
+      el.profileBannerPickerStatus.textContent = 'L0AD!NG Y0UR P!GE0NS...';
       loadMyOwnPigeonsCache().then(function(items){
-        if (el.profilePanelWrap.style.display !== 'none') renderProfilePfpGrid(items);
+        if (el.profilePanelWrap.style.display !== 'none'){
+          renderProfilePfpGrid(items);
+          renderProfileBannerGrid(items);
+        }
       });
     }
   }
   function renderProfileCurrent(profile){
     el.profileCurrentAvatar.innerHTML = (profile && profile.pfpImage) ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
     el.profileCurrentUsername.textContent = (profile && profile.username) ? profile.username : 'N0 USERNAME SET';
+    if (profile && profile.bannerImage){
+      el.profileBanner.style.backgroundImage = 'url("' + profile.bannerImage.replace(/"/g, '') + '")';
+      el.profileBanner.classList.remove('profile-banner-empty');
+    } else {
+      el.profileBanner.style.backgroundImage = '';
+      el.profileBanner.classList.add('profile-banner-empty');
+    }
+    if (profile && profile.quote){
+      el.profileCurrentQuote.textContent = '“' + profile.quote + '”';
+      el.profileCurrentQuote.style.display = '';
+    } else {
+      el.profileCurrentQuote.style.display = 'none';
+    }
+    if (profile && profile.twitter){
+      el.profileCurrentTwitterLink.href = 'https://x.com/' + encodeURIComponent(profile.twitter);
+      el.profileCurrentTwitterLink.textContent = '𝕏 @' + profile.twitter;
+      el.profileCurrentTwitterLink.style.display = '';
+    } else {
+      el.profileCurrentTwitterLink.style.display = 'none';
+    }
     profileSelectedPfpNftId = (profile && profile.pfpNftId) || null;
+    profileSelectedBannerNftId = (profile && profile.bannerNftId) || null;
     highlightSelectedPfpCard();
+    highlightSelectedBannerCard();
   }
   function renderProfilePfpGrid(items){
     if (!items.length){
@@ -15949,6 +16064,30 @@ const SWAP_HTML = `<!DOCTYPE html>
     var cards = el.profilePfpGrid.querySelectorAll('.simple-picker-card');
     cards.forEach(function(card){
       card.classList.toggle('simple-picker-card-selected', card.getAttribute('data-nftid') === profileSelectedPfpNftId);
+    });
+  }
+  // BANNER picker — exact clone of renderProfilePfpGrid/highlightSelected-
+  // PfpCard above, feeding profileBannerGrid/profileSelectedBannerNftId
+  // instead.
+  function renderProfileBannerGrid(items){
+    if (!items.length){
+      el.profileBannerPickerStatus.style.display = '';
+      el.profileBannerPickerStatus.textContent = 'Y0U D0N T 0WN ANY P!GE0NS YET.';
+      el.profileBannerGrid.innerHTML = '';
+      return;
+    }
+    el.profileBannerPickerStatus.style.display = 'none';
+    el.profileBannerGrid.innerHTML = items.map(function(p){
+      return '<div class="simple-picker-card' + (p.nftId === profileSelectedBannerNftId ? ' simple-picker-card-selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
+        '<div class="simple-picker-card-img profile-banner-pick" data-nftid="' + escapeHtml(p.nftId) + '">' + (p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '') + '</div>' +
+        '<div class="simple-picker-card-num">' + escapeHtml(collectionItemLabel()) + ' ' + itemNumberLabel(p) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+  function highlightSelectedBannerCard(){
+    var cards = el.profileBannerGrid.querySelectorAll('.simple-picker-card');
+    cards.forEach(function(card){
+      card.classList.toggle('simple-picker-card-selected', card.getAttribute('data-nftid') === profileSelectedBannerNftId);
     });
   }
   el.profilePfpGrid.addEventListener('click', function(e){
@@ -16023,6 +16162,106 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileUsernameSaveBtn.disabled = false;
       el.profileUsernameSaveBtn.textContent = 'SAVE';
       el.profileUsernameStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+  // BANNER picker — exact clone of the pfp grid's own click handler above,
+  // feeding profileBannerGrid/bannerNftId instead.
+  el.profileBannerGrid.addEventListener('click', function(e){
+    var pick = e.target.closest('.profile-banner-pick');
+    if (!pick) return;
+    var nftId = pick.getAttribute('data-nftid');
+    if (nftId === profileSelectedBannerNftId) return;
+    var card = el.profileBannerGrid.querySelector('.simple-picker-card[data-nftid="' + nftId + '"]');
+    if (card) card.classList.add('simple-picker-card-picking');
+    el.profileBannerPickerStatus.style.display = '';
+    el.profileBannerPickerStatus.textContent = 'SETT!NG BANNER...';
+    fetch('/api/profile-set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bannerNftId: nftId })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (card) card.classList.remove('simple-picker-card-picking');
+      if (!res.ok || !res.data.ok){
+        el.profileBannerPickerStatus.style.display = '';
+        el.profileBannerPickerStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      el.profileBannerPickerStatus.style.display = 'none';
+      renderProfileCurrent(res.data.profile);
+    }).catch(function(){
+      if (card) card.classList.remove('simple-picker-card-picking');
+      el.profileBannerPickerStatus.style.display = '';
+      el.profileBannerPickerStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+  // QU0TE — same save-row pattern as USERNAME above, just a longer free-
+  // text field (140 chars, isValidQuote in _shared.js) instead of a
+  // handle. An empty string is valid (clears it), so this only blocks on
+  // the actual length check, never on "field is empty".
+  el.profileQuoteSaveBtn.addEventListener('click', function(){
+    var quote = el.profileQuoteInput.value.trim();
+    if ([...quote].length > 140){
+      el.profileQuoteStatus.textContent = 'QU0TE MUST BE 140 CHARACTERS 0R FEWER.';
+      return;
+    }
+    el.profileQuoteSaveBtn.disabled = true;
+    el.profileQuoteSaveBtn.textContent = 'SAV!NG...';
+    el.profileQuoteStatus.textContent = '';
+    fetch('/api/profile-set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quote: quote })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      el.profileQuoteSaveBtn.disabled = false;
+      el.profileQuoteSaveBtn.textContent = 'SAVE';
+      if (!res.ok || !res.data.ok){
+        el.profileQuoteStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      el.profileQuoteInput.value = '';
+      el.profileQuoteStatus.textContent = 'SAVED.';
+      renderProfileCurrent(res.data.profile);
+    }).catch(function(){
+      el.profileQuoteSaveBtn.disabled = false;
+      el.profileQuoteSaveBtn.textContent = 'SAVE';
+      el.profileQuoteStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+  // TW!TTER/X — normalized client-side too (strip a leading @) purely so
+  // the validation error can't fire on the one character everyone will
+  // naturally type first; the server re-validates the real stored value
+  // regardless (normalizeTwitterHandle/isValidTwitterHandle in
+  // _shared.js), never trusts this client-side check alone.
+  el.profileTwitterSaveBtn.addEventListener('click', function(){
+    var twitter = el.profileTwitterInput.value.trim().replace(/^@/, '');
+    if (!/^[A-Za-z0-9_]{0,15}$/.test(twitter)){
+      el.profileTwitterStatus.textContent = 'ENTER A REAL TW!TTER/X HANDLE (LETTERS/NUMBERS/_, UP T0 15 CHARACTERS).';
+      return;
+    }
+    el.profileTwitterSaveBtn.disabled = true;
+    el.profileTwitterSaveBtn.textContent = 'SAV!NG...';
+    el.profileTwitterStatus.textContent = '';
+    fetch('/api/profile-set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ twitter: twitter })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      el.profileTwitterSaveBtn.disabled = false;
+      el.profileTwitterSaveBtn.textContent = 'SAVE';
+      if (!res.ok || !res.data.ok){
+        el.profileTwitterStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      el.profileTwitterInput.value = '';
+      el.profileTwitterStatus.textContent = 'SAVED.';
+      renderProfileCurrent(res.data.profile);
+    }).catch(function(){
+      el.profileTwitterSaveBtn.disabled = false;
+      el.profileTwitterSaveBtn.textContent = 'SAVE';
+      el.profileTwitterStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
   // Same reasoning as shortAddr, for a 64-char tx hash — reported live as
