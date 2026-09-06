@@ -5937,14 +5937,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      collection. Blank (not a placeholder like "…") until they land, and
      silently stays blank on a failed fetch — never worth blocking or
      erroring the very first screen of the app over a stats tile. */
-  /* NFT H0LDERS gets its own row; MARKETCAP + L!QU!D!TY are grouped in
-     .stat-combo, which sits side-by-side on desktop (one line — reported
-     live as wanting holders alone on line 1, marketcap+liquidity together
-     on line 2) and stacks into its own two rows on phone width (see the
-     max-width:760px override below), matching the "each stat its own
-     line" ask there. Each .stat-row is label-left/value-right at the same
-     edge-to-edge width as every other row, instead of the old single
-     run-on line joined with " :: " that wrapped raggedly at card width. */
+  /* NFT H0LDERS gets its own centered line; MARKETCAP + L!QU!D!TY share
+     the line under it, joined by " :: " same as the original single-line
+     format — reported live as wanting the VALUE-then-LABEL reading order
+     back (e.g. "289 NFT H0LDERS", not "NFT H0LDERS :: 289"). Plain
+     centered text rows, not a flex split — simpler, and normal text
+     wrap is a graceful fallback on its own if a line ever runs long,
+     unlike the flex-row version this replaced (two flex children a
+     couple px too wide for the card shrank one below its own content
+     width and wrapped mid-label instead of just wrapping the line). */
   .mainframe-card-stats{
     display:flex;
     flex-direction:column;
@@ -5955,16 +5956,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--grey);
     margin-top:0.3rem;
   }
-  /* white-space:nowrap + flex-shrink:0 on each row keeps "LABEL :: VALUE"
-     together as one unbreakable unit — without it, when .stat-combo's two
-     rows were a couple pixels too wide for the card together, flexbox
-     shrank one row below its own content width and wrapped its text
-     mid-label instead of just moving the whole second row down.
-     stat-combo's own flex-wrap:wrap is the graceful fallback for that
-     case: the second row drops to its own line as a whole, still intact,
-     rather than the row itself gets stretched or broken up. */
-  .mainframe-card-stats .stat-row{ display:flex; justify-content:center; gap:0.4em; white-space:nowrap; flex-shrink:0; }
-  .mainframe-card-stats .stat-combo{ display:flex; flex-wrap:wrap; justify-content:center; row-gap:0.25rem; column-gap:1.25em; }
+  .mainframe-card-stats .stat-row{ text-align:center; }
   .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
   /* Real per-collection DexScreener link — hidden until its own fetch
      resolves a real dexUrl (see the stats-fetch loop in the script), same
@@ -6077,7 +6069,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     .mainframe-card-body{ padding:0.5rem 0.6rem 0.55rem; }
     .mainframe-card-label{ font-size:15px; line-height:1.2; }
     .mainframe-card-stats{ font-size:9px; line-height:1.4; margin-top:0.25rem; gap:0.15rem; }
-    .mainframe-card-stats .stat-combo{ flex-direction:column; gap:0.15rem; }
     .mainframe-card-buy{ font-size:11px; letter-spacing:0.02em; padding:0.5em 0.3em; margin-top:0.4rem; }
     /* V!EW CHART badge dropped on phone — confirmed live as clutter at
        this width, and BUY (below, still live) is the action that matters
@@ -14091,19 +14082,18 @@ const SWAP_HTML = `<!DOCTYPE html>
         el[cfg.dexTarget].style.display = '';
       }
       if (stats.holders == null && rate.marketCapUsd == null && rate.liquidityUsd == null) return;
-      // NFT H0LDERS is its own row; MARKETCAP + L!QU!D!TY are grouped in
-      // a .stat-combo, which CSS puts side-by-side on desktop (holders
-      // alone on line 1, marketcap+liquidity together on line 2) and
-      // stacks into two more rows on phone width (each stat its own
-      // line) — see .mainframe-card-stats' own CSS for both layouts.
-      function row(label, value){
-        return '<div class="stat-row"><span>' + label + ' ::</span><span class="hi">' + value + '</span></div>';
+      // NFT H0LDERS is its own centered line; MARKETCAP + L!QU!D!TY share
+      // the line under it, joined by " :: " — VALUE-then-LABEL reading
+      // order (e.g. "289 NFT H0LDERS"), same as the site's original
+      // single-line format elsewhere.
+      function stat(value, label){
+        return '<span class="hi">' + value + '</span> ' + label;
       }
-      var html = stats.holders != null ? row('NFT H0LDERS', stats.holders.toLocaleString()) : '';
-      var comboRows = [];
-      if (rate.marketCapUsd != null) comboRows.push(row('MARKETCAP', formatUsdAbbrev(rate.marketCapUsd)));
-      if (rate.liquidityUsd != null) comboRows.push(row('L!QU!D!TY', formatUsdAbbrev(rate.liquidityUsd)));
-      if (comboRows.length) html += '<div class="stat-combo">' + comboRows.join('') + '</div>';
+      var html = stats.holders != null ? '<div class="stat-row">' + stat(stats.holders.toLocaleString(), 'NFT H0LDERS') + '</div>' : '';
+      var comboParts = [];
+      if (rate.marketCapUsd != null) comboParts.push(stat(formatUsdAbbrev(rate.marketCapUsd), 'MARKETCAP'));
+      if (rate.liquidityUsd != null) comboParts.push(stat(formatUsdAbbrev(rate.liquidityUsd), 'L!QU!D!TY'));
+      if (comboParts.length) html += '<div class="stat-row">' + comboParts.join(' :: ') + '</div>';
       el[cfg.target].innerHTML = html;
     });
   });
