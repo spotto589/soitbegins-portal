@@ -1074,12 +1074,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   .wallet-tag{ display:inline-flex; align-items:center; gap:0.35em; vertical-align:middle; }
   .wallet-avatar{ width:1.3em; height:1.3em; min-width:1.3em; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--border-mid); }
   /* BANNER — now the whole identity card (PR0F!LE's own title text is
-     gone — reported live as redundant once everything lives here).
-     overflow:hidden clips the blurred bg layer's own oversized/scaled
-     edges (see .profile-banner-bg) to this box's real rounded corners. */
+     gone — reported live as redundant once everything lives here). No
+     image/blur layer of its own any more — see this rule's own comment
+     in the HTML for why. background-color alone (set by sampleBannerColor
+     in the JS, off the chosen PFP) is the entire banner background —
+     confirmed live that even a DIM blurred image on top of the right
+     solid colour still read as "multi coloured", which defeats the
+     actual point ("it all looks like one"). */
   .profile-banner{
     position:relative;
-    overflow:hidden;
     width:100%;
     min-height:340px;
     border-radius:var(--radius);
@@ -1088,60 +1091,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:1.25rem;
     display:flex;
     flex-direction:column;
-    justify-content:flex-end;
+    /* Identity row pinned to the TOP (reported live as wanting it "more
+       into the top left" — was flex-end, bottom-anchored), QU0TE/TW!TTER
+       caption pinned to the bottom — space-between with exactly these
+       two children gives that split without a fixed height on either. */
+    justify-content:space-between;
   }
   .profile-banner-empty{
     background-image:linear-gradient(120deg, rgba(136,72,248,0.35), rgba(61,243,236,0.2), rgba(240,0,228,0.3));
   }
-  /* The SAME image as the avatar's own (bannerImage, set alongside this in
-     renderProfileCurrent), blurred and scaled up past the box's own
-     edges. LOW OPACITY — this layer used to sit fully opaque, which
-     completely covered profile-banner's own background-color (the REAL
-     sampled colour match, see sampleBannerColor in the JS) with the
-     image's full colour range instead, so the banner never actually read
-     as "the same solid colour" no matter how accurate the sampled colour
-     was underneath — confirmed live/reported as still not matching.
-     opacity:0.4 here lets that solid sampled colour dominate (it's
-     visible through this layer everywhere, not just at the untouched
-     edges) while this still adds a soft, textured hint of the real
-     artwork on top, rather than a flat, lifeless single-colour box.
-     scale(1.15) + inset:-20px push the blur's own soft edge outside the
-     visible box (overflow:hidden on .profile-banner crops it), so no
-     lighter halo shows at the crop line. Sits behind everything else via
-     z-index; .profile-banner-empty's gradient shows through instead when
-     there's no image yet (this layer has no background-image of its own
-     then). */
-  .profile-banner-bg{
-    position:absolute;
-    inset:-20px;
-    background-size:cover;
-    background-position:center;
-    filter:blur(28px) saturate(1.3);
-    opacity:0.4;
-    transform:scale(1.15);
-    z-index:0;
-  }
-  /* Banner's own edit trigger — top-right corner, same quiet real-button
-     treatment as every other click-to-edit affordance here. */
-  .profile-banner-edit-btn{
-    position:absolute;
-    top:0.75rem; right:0.75rem;
-    z-index:2;
-    background:rgba(5,5,6,0.65);
-    border:1px solid rgba(255,255,255,0.3);
-    color:#fff;
-    font-family:var(--font-mono);
-    font-size:11px;
-    letter-spacing:0.05em;
-    text-transform:uppercase;
-    padding:0.4em 0.7em;
-    border-radius:var(--radius);
-    cursor:pointer;
-  }
-  .profile-banner-edit-btn:hover{ background:rgba(5,5,6,0.85); border-color:#fff; }
-  /* Real content sits above the blurred layer — avatar + identity info,
-     bottom-left, over a scrim so it stays readable regardless of the
-     banner's own colour. */
+  /* Identity row — avatar + username/address/est value, top-left. No
+     scrim needed any more (there's no busy image behind it to fight for
+     readability against, just the flat sampled colour). */
   .profile-banner-content{
     position:relative;
     z-index:1;
@@ -1149,28 +1110,30 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     gap:1rem;
     padding:1.25rem;
-    background:linear-gradient(to top, rgba(5,5,6,0.8), rgba(5,5,6,0.15) 80%, transparent);
   }
   /* Avatar — the crisp Pigeon image (background, not <img>, so it can sit
      centred/cropped the same way every other round avatar on the site
-     does — object-fit:cover equivalent via background-size). The + badge
-     is a real always-there affordance (not hover-only — reported live as
-     wanting everything editable via clicking, discoverable without
-     guessing to hover first), clicking it jumps to CH00SE PR0F!LE
-     P!CTURE below (see scrollToProfileField in the JS). */
+     does — object-fit:cover equivalent via background-size). A little
+     bigger again (128px -> 150px, reported live) — this is now the ONLY
+     place a Pigeon's own image actually shows on the banner, so it
+     carries more visual weight than before. The + badge is a real
+     always-there affordance (not hover-only — reported live as wanting
+     everything editable via clicking, discoverable without guessing to
+     hover first), clicking it (or the avatar image itself) opens
+     profileEditModal to the PFP pane. */
   .profile-avatar-wrap{ position:relative; flex:0 0 auto; }
-  .profile-current-avatar{ width:128px; height:128px; border-radius:50%; overflow:hidden; background:#000; border:3px solid var(--bg); box-shadow:0 0 0 1px var(--border-mid); cursor:pointer; }
+  .profile-current-avatar{ width:150px; height:150px; border-radius:50%; overflow:hidden; background:#000; border:3px solid var(--bg); box-shadow:0 0 0 1px var(--border-mid); cursor:pointer; }
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
   .profile-avatar-edit-btn{
     position:absolute;
     right:0; bottom:0;
-    width:36px; height:36px;
+    width:40px; height:40px;
     border-radius:50%;
     background:var(--green);
     color:#000;
     border:3px solid var(--bg);
     font-weight:700;
-    font-size:20px;
+    font-size:22px;
     line-height:1;
     cursor:pointer;
     display:flex;
@@ -1243,8 +1206,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:600px){
     .profile-banner{ min-height:280px; }
     .profile-banner-content{ padding:1rem; }
-    .profile-current-avatar{ width:88px; height:88px; }
-    .profile-avatar-edit-btn{ width:30px; height:30px; font-size:17px; }
+    .profile-current-avatar{ width:104px; height:104px; }
+    .profile-avatar-edit-btn{ width:34px; height:34px; font-size:19px; }
     .profile-current-username{ font-size:24px; }
   }
   /* Currently-selected pfp in the picker grid — same green highlight the
@@ -5875,7 +5838,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:2rem 1rem;
   }
   .profile-edit-panel{ max-height:80vh; overflow-y:auto; }
-  #profileEditPanePfp .simple-picker-grid, #profileEditPaneBanner .simple-picker-grid{ overflow-y:visible; max-height:none; }
+  #profileEditPanePfp .simple-picker-grid{ overflow-y:visible; max-height:none; }
   /* .thumb-offer.amount-entry-mode — this shares the .thumb-offer class
      with the DATABASE card's own purple action box, which an earlier fix
      made a row-direction flex container (centers BUY N0W/0FFER together
@@ -5981,13 +5944,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   #profilePfpGrid .simple-picker-card-selected{ border-color:var(--green); box-shadow:0 0 0 2px var(--green), 0 0 16px var(--green-glow); }
   #profilePfpGrid .simple-picker-card-picking{ opacity:0.6; pointer-events:none; }
   #profilePfpGrid .simple-picker-card-picking .simple-picker-card-num::after{ content:' :: SETT!NG...'; color:var(--green); }
-  /* BANNER picker — exact clone of #profilePfpGrid's own rules above. */
-  #profileBannerGrid{ overflow-y:visible; max-height:none; }
-  #profileBannerGrid .simple-picker-card{ cursor:pointer; transition:border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease; }
-  #profileBannerGrid .simple-picker-card:hover{ border-color:var(--green); transform:translateY(-3px); box-shadow:0 0 14px var(--green-glow); }
-  #profileBannerGrid .simple-picker-card-selected{ border-color:var(--green); box-shadow:0 0 0 2px var(--green), 0 0 16px var(--green-glow); }
-  #profileBannerGrid .simple-picker-card-picking{ opacity:0.6; pointer-events:none; }
-  #profileBannerGrid .simple-picker-card-picking .simple-picker-card-num::after{ content:' :: SETT!NG...'; color:var(--green); }
   .swap-nonatomic-note{
     max-width:520px;
     margin:0 auto 1.25rem;
@@ -6976,30 +6932,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="sw-panel" id="profilePanelWrap" style="display:none;">
       <!-- BANNER — now the WHOLE identity card (reported live as wanting
            "all this detail in the top banner" and PR0F!LE's own title
-           gone — this replaces both). Two background layers behind the
-           real content: profileBannerBg is the SAME image, blurred +
-           scaled up, so the banner reads as "the same colour as the
-           Pigeon" all the way to its edges (reported live) instead of a
-           neutral letterboxed fill either side of a contain-fitted image
-           — a real colour-accurate backdrop without needing to sample
-           actual pixels (which would need the image loaded through a
-           CORS-clean path — the blur trick sidesteps that entirely, it's
-           just the same background-image twice). profileBannerFg is the
-           crisp, un-cropped Pigeon on top (background-size:contain — see
-           this file's own earlier fix for why contain, not cover).
-           EVERYTHING here is click-to-edit now: the avatar's own +
-           badge, the click-to-edit pencil on username/quote/twitter, and
-           a plain "+ ADD..." placeholder in place of quote/twitter when
-           neither's ever been set — clicking any of them scrolls to and
-           focuses the real input further down (see scrollToProfileField
-           in the JS) rather than needing to hunt for the right box
-           yourself. A plain gradient placeholder (.profile-banner-empty)
-           shows behind everything until a banner's actually been set. -->
+           gone — this replaces both). No banner image/picker of its own
+           any more — reported live as wanting it "auto chosen by the
+           pigeon you choose" instead of a second separate pick, so this
+           is now a flat solid colour sampled straight off your PFP
+           (sampleBannerColor in the JS, called with profile.pfpImage —
+           see its own comment for why a corner-crop sample, not a whole-
+           image average) and NOTHING else layered on top — confirmed
+           live that even a dim blurred image layer still read as "multi
+           coloured" instead of one flat matching colour, which is the
+           whole point here ("it all looks like one"). A plain gradient
+           placeholder (.profile-banner-empty) shows before a pfp's ever
+           been set. EVERYTHING here is click-to-edit: the avatar's own +
+           badge (and the avatar image itself), the click-to-edit pencil
+           on username/quote, and a plain "+ ADD..." placeholder in place
+           of quote/twitter when neither's ever been set — clicking any
+           of them opens profileEditModal to the matching pane. -->
       <div class="profile-banner profile-banner-empty" id="profileBanner">
-        <div class="profile-banner-bg" id="profileBannerBg"></div>
-        <!-- Banner's own edit trigger — same "+ EDIT BANNER" popup PFP's
-             own + badge opens, just for profileEditPaneBanner. -->
-        <button type="button" class="profile-banner-edit-btn" id="profileBannerEditBtn" title="CHANGE BANNER">✎ BANNER</button>
         <div class="profile-banner-content">
           <div class="profile-avatar-wrap">
             <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
@@ -7121,15 +7070,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="profile-edit-pane" id="profileEditPanePfp" style="display:none;">
           <div id="profilePfpStatus" class="th-empty" style="display:none;"></div>
           <div class="simple-picker-grid" id="profilePfpGrid"></div>
-        </div>
-        <!-- BANNER picker — exact clone of the pfp pane above (same owned-
-             Pigeons list, same grid/card markup, its own grid id + status
-             line + selected-nftid tracking) since it's the same "pick one
-             of your own Pigeons" flow, just feeding profileBanner instead
-             of profileCurrentAvatar. -->
-        <div class="profile-edit-pane" id="profileEditPaneBanner" style="display:none;">
-          <div id="profileBannerPickerStatus" class="th-empty" style="display:none;"></div>
-          <div class="simple-picker-grid" id="profileBannerGrid"></div>
         </div>
       </div>
     </div>
@@ -8372,10 +8312,10 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
-   'profilePanelWrap','profileBanner','profileBannerBg','profileBannerEditBtn','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
-   'profileEditModal','profileEditTitle','profileEditClose','profileEditPaneUsername','profileEditPaneQuote','profileEditPaneTwitter','profileEditPanePfp','profileEditPaneBanner',
+   'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
+   'profileEditModal','profileEditTitle','profileEditClose','profileEditPaneUsername','profileEditPaneQuote','profileEditPaneTwitter','profileEditPanePfp',
    'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
-   'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus','profileBannerPickerStatus','profileBannerGrid',
+   'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
    'salesPanelWrap',
    'swapOffersPanelWrap','swapOffersList',
@@ -16027,7 +15967,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   // markup OFFER F0R's own picker already uses (openSimpleOfferPicker),
   // just a different grid element and no view-detail button. ----
   var profileSelectedPfpNftId = null;
-  var profileSelectedBannerNftId = null;
   // r,g,b triplets — same values MAINFRAME's own --card-accent uses per
   // collection (see its own cards' inline style) — kept here too rather
   // than read off COLLECTION_META, which doesn't carry a display accent
@@ -16200,7 +16139,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileCurrentUsername.textContent = 'C0NNECT Y0UR WALLET F!RST.';
       el.profileCurrentEstValue.textContent = '--';
       el.profileCurrentAvatar.innerHTML = '';
-      el.profileBanner.style.backgroundImage = '';
+      el.profileBanner.style.backgroundColor = '';
       el.profileBanner.classList.add('profile-banner-empty');
       el.profileCurrentQuote.style.display = 'none';
       el.profileCurrentTwitterLink.style.display = 'none';
@@ -16213,9 +16152,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profilePfpGrid.innerHTML = '';
       el.profilePfpStatus.style.display = '';
       el.profilePfpStatus.textContent = 'C0NNECT Y0UR WALLET F!RST.';
-      el.profileBannerGrid.innerHTML = '';
-      el.profileBannerPickerStatus.style.display = '';
-      el.profileBannerPickerStatus.textContent = 'C0NNECT Y0UR WALLET F!RST.';
       return;
     }
     el.profileCurrentWallet.textContent = shortAddr(MY_WALLET);
@@ -16239,22 +16175,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     // use — reused here rather than a separate fetch, but PR0F!LE can be
     // the very first tab opened this session, so this still has to kick
     // the fetch off itself rather than assuming it's already in flight.
-    // BANNER's own grid shares this exact same list — one fetch feeds both
-    // pickers.
     if (myOwnPigeonsCache !== null){
       renderProfilePfpGrid(myOwnPigeonsCache);
-      renderProfileBannerGrid(myOwnPigeonsCache);
     } else {
       el.profilePfpGrid.innerHTML = '';
       el.profilePfpStatus.style.display = '';
       el.profilePfpStatus.textContent = 'L0AD!NG Y0UR P!GE0NS...';
-      el.profileBannerGrid.innerHTML = '';
-      el.profileBannerPickerStatus.style.display = '';
-      el.profileBannerPickerStatus.textContent = 'L0AD!NG Y0UR P!GE0NS...';
       loadMyOwnPigeonsCache().then(function(items){
         if (el.profilePanelWrap.style.display !== 'none'){
           renderProfilePfpGrid(items);
-          renderProfileBannerGrid(items);
         }
       });
     }
@@ -16267,7 +16196,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   // .profile-edit-pane visible at a time, everything else hidden. ----
   var PROFILE_EDIT_PANES = {
     pfp: { pane: 'profileEditPanePfp', title: 'CH00SE PR0F!LE P!CTURE', focus: null },
-    banner: { pane: 'profileEditPaneBanner', title: 'CH00SE BANNER', focus: null },
     username: { pane: 'profileEditPaneUsername', title: 'USERNAME', focus: 'profileUsernameInput' },
     quote: { pane: 'profileEditPaneQuote', title: 'B!0', focus: 'profileQuoteInput' },
     twitter: { pane: 'profileEditPaneTwitter', title: 'TW!TTER/X', focus: 'profileTwitterInput' }
@@ -16287,23 +16215,28 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.profileEditClose.addEventListener('click', closeProfileEditModal);
   el.profileEditModal.addEventListener('click', function(e){ if (e.target === el.profileEditModal) closeProfileEditModal(); });
-  // Real colour match, not just a blur — draws the banner image (routed
-  // through /api/nft-image-proxy so the browser only ever loads it same-
-  // origin, see that endpoint's own comment on why Deeptide's CDN can't be
-  // read directly off a canvas) and reads its own top-left corner, scaled
-  // down to a single pixel. Confirmed live: averaging the WHOLE image
-  // instead (the first version of this) landed on a muddy dark grey for a
-  // Pigeon with a bright flat-yellow background, because the character
-  // and its own dark linework covers enough of the frame to drag a
-  // whole-image average away from the real background colour — the
-  // top-left corner alone, on the same image, read back a clean, accurate
-  // (223,229,0). Most Pigeon art is a centred subject over a flat-colour
-  // background, so a corner is reliably just that background with nothing
-  // else in it — a small 12%-of-width crop (not the literal single corner
-  // pixel) absorbs any anti-aliasing/dithering right at the true corner.
-  // Silently gives up (leaves whatever background-color was already
-  // there) on any failure — a slow/broken image must never block or
-  // blank the banner.
+  // Real colour match — the banner has no image of its own any more
+  // (reported live as wanting it "auto chosen by the pigeon you choose",
+  // no separate banner selection); this reads the actual PFP image
+  // (routed through /api/nft-image-proxy so the browser only ever loads
+  // it same-origin, see that endpoint's own comment on why Deeptide's CDN
+  // can't be read directly off a canvas) and samples its own top-left
+  // corner, scaled down to a single pixel. Confirmed live: averaging the
+  // WHOLE image instead (the first version of this) landed on a muddy
+  // dark grey for a Pigeon with a bright flat-yellow background, because
+  // the character and its own dark linework covers enough of the frame
+  // to drag a whole-image average away from the real background colour —
+  // the top-left corner alone, on the same image, read back a clean,
+  // accurate (223,229,0). Most Pigeon art is a centred subject over a
+  // flat-colour background, so a corner is reliably just that background
+  // with nothing else in it — a small 12%-of-width crop (not the literal
+  // single corner pixel) absorbs any anti-aliasing/dithering right at the
+  // true corner. This is the ONLY thing that sets profileBanner's own
+  // background-color now — no blurred image layered on top any more
+  // either (confirmed live that even a dim one still read as "multi
+  // coloured" instead of one flat matching colour). Silently gives up
+  // (leaves whatever background-color was already there) on any failure —
+  // a slow/broken image must never block or blank the banner.
   function sampleBannerColor(imageUrl){
     try {
       var img = new Image();
@@ -16327,20 +16260,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderProfileCurrent(profile){
     el.profileCurrentAvatar.innerHTML = (profile && profile.pfpImage) ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
     el.profileCurrentUsername.textContent = (profile && profile.username) ? profile.username : 'N0 USERNAME SET';
-    // The SAME banner image feeds both the empty-state gradient's
-    // replacement (profileBannerBg, blurred+scaled via CSS — see its own
-    // comment) and profileBanner's empty/not-empty state — there's no
-    // separate crisp full-image layer any more, just this ambient colour-
-    // matched backdrop behind the avatar/identity row. The real sampled
-    // colour (see sampleBannerColor above) sits BEHIND the blur layer as
-    // profileBanner's own background-color, so the blur's own soft edges
-    // blend into an exact match instead of a merely-similar guess.
-    if (profile && profile.bannerImage){
-      el.profileBannerBg.style.backgroundImage = 'url("' + profile.bannerImage.replace(/"/g, '') + '")';
+    // Banner colour is auto-chosen from the PFP itself now — no separate
+    // banner image/selection at all (see sampleBannerColor's own comment).
+    if (profile && profile.pfpImage){
       el.profileBanner.classList.remove('profile-banner-empty');
-      sampleBannerColor(profile.bannerImage);
+      sampleBannerColor(profile.pfpImage);
     } else {
-      el.profileBannerBg.style.backgroundImage = '';
       el.profileBanner.style.backgroundColor = '';
       el.profileBanner.classList.add('profile-banner-empty');
     }
@@ -16362,9 +16287,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileCurrentTwitterLink.classList.add('profile-field-placeholder');
     }
     profileSelectedPfpNftId = (profile && profile.pfpNftId) || null;
-    profileSelectedBannerNftId = (profile && profile.bannerNftId) || null;
     highlightSelectedPfpCard();
-    highlightSelectedBannerCard();
   }
   function renderProfilePfpGrid(items){
     // This whole grid now lives inside profileEditModal's own PFP pane,
@@ -16392,32 +16315,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       card.classList.toggle('simple-picker-card-selected', card.getAttribute('data-nftid') === profileSelectedPfpNftId);
     });
   }
-  // BANNER picker — exact clone of renderProfilePfpGrid/highlightSelected-
-  // PfpCard above, feeding profileBannerGrid/profileSelectedBannerNftId
-  // instead.
-  function renderProfileBannerGrid(items){
-    // Same "a real empty-state message is fine now, this only shows
-    // inside the modal" reasoning as renderProfilePfpGrid's own comment.
-    if (!items.length){
-      el.profileBannerPickerStatus.style.display = '';
-      el.profileBannerPickerStatus.textContent = 'Y0U D0N T 0WN ANY P!GE0NS YET.';
-      el.profileBannerGrid.innerHTML = '';
-      return;
-    }
-    el.profileBannerPickerStatus.style.display = 'none';
-    el.profileBannerGrid.innerHTML = items.map(function(p){
-      return '<div class="simple-picker-card' + (p.nftId === profileSelectedBannerNftId ? ' simple-picker-card-selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
-        '<div class="simple-picker-card-img profile-banner-pick" data-nftid="' + escapeHtml(p.nftId) + '">' + (p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '') + '</div>' +
-        '<div class="simple-picker-card-num">' + escapeHtml(collectionItemLabel()) + ' ' + itemNumberLabel(p) + '</div>' +
-      '</div>';
-    }).join('');
-  }
-  function highlightSelectedBannerCard(){
-    var cards = el.profileBannerGrid.querySelectorAll('.simple-picker-card');
-    cards.forEach(function(card){
-      card.classList.toggle('simple-picker-card-selected', card.getAttribute('data-nftid') === profileSelectedBannerNftId);
-    });
-  }
   // ---- Click-to-edit on the banner itself — reported live as wanting to
   // "edit everything through clicking stuff on our own banner" instead of
   // hunting down a matching box on the page. Every trigger now opens
@@ -16432,9 +16329,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   // it" was the literal ask.
   el.profileCurrentAvatar.addEventListener('click', function(){
     openProfileEditModal('pfp');
-  });
-  el.profileBannerEditBtn.addEventListener('click', function(){
-    openProfileEditModal('banner');
   });
   el.profileUsernameEditBtn.addEventListener('click', function(){
     openProfileEditModal('username');
@@ -16529,38 +16423,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileUsernameSaveBtn.disabled = false;
       el.profileUsernameSaveBtn.textContent = 'SAVE';
       el.profileUsernameStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
-    });
-  });
-  // BANNER picker — exact clone of the pfp grid's own click handler above,
-  // feeding profileBannerGrid/bannerNftId instead.
-  el.profileBannerGrid.addEventListener('click', function(e){
-    var pick = e.target.closest('.profile-banner-pick');
-    if (!pick) return;
-    var nftId = pick.getAttribute('data-nftid');
-    if (nftId === profileSelectedBannerNftId) return;
-    var card = el.profileBannerGrid.querySelector('.simple-picker-card[data-nftid="' + nftId + '"]');
-    if (card) card.classList.add('simple-picker-card-picking');
-    el.profileBannerPickerStatus.style.display = '';
-    el.profileBannerPickerStatus.textContent = 'SETT!NG BANNER...';
-    fetch('/api/profile-set', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bannerNftId: nftId })
-    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
-    .then(function(res){
-      if (card) card.classList.remove('simple-picker-card-picking');
-      if (!res.ok || !res.data.ok){
-        el.profileBannerPickerStatus.style.display = '';
-        el.profileBannerPickerStatus.textContent = listingErrorMessage(res.data && res.data.error);
-        return;
-      }
-      el.profileBannerPickerStatus.style.display = 'none';
-      renderProfileCurrent(res.data.profile);
-      closeProfileEditModal();
-    }).catch(function(){
-      if (card) card.classList.remove('simple-picker-card-picking');
-      el.profileBannerPickerStatus.style.display = '';
-      el.profileBannerPickerStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
   // QU0TE — same save-row pattern as USERNAME above, just a longer free-
