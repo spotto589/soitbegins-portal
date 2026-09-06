@@ -1093,11 +1093,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-banner-empty{
     background-image:linear-gradient(120deg, rgba(136,72,248,0.35), rgba(61,243,236,0.2), rgba(240,0,228,0.3));
   }
-  /* The SAME image as the crisp foreground (profileCurrentAvatar's own
-     bannerImage, set alongside this in renderProfileCurrent), blurred and
-     scaled up past the box's own edges — reported live as wanting the
-     banner to read as "the same colour as the Pigeon" all the way to its
-     borders, not a neutral fill either side of a contain-fitted image.
+  /* The SAME image as the avatar's own (bannerImage, set alongside this in
+     renderProfileCurrent), blurred and scaled up past the box's own
+     edges. LOW OPACITY — this layer used to sit fully opaque, which
+     completely covered profile-banner's own background-color (the REAL
+     sampled colour match, see sampleBannerColor in the JS) with the
+     image's full colour range instead, so the banner never actually read
+     as "the same solid colour" no matter how accurate the sampled colour
+     was underneath — confirmed live/reported as still not matching.
+     opacity:0.4 here lets that solid sampled colour dominate (it's
+     visible through this layer everywhere, not just at the untouched
+     edges) while this still adds a soft, textured hint of the real
+     artwork on top, rather than a flat, lifeless single-colour box.
      scale(1.15) + inset:-20px push the blur's own soft edge outside the
      visible box (overflow:hidden on .profile-banner crops it), so no
      lighter halo shows at the crop line. Sits behind everything else via
@@ -1109,10 +1116,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     inset:-20px;
     background-size:cover;
     background-position:center;
-    filter:blur(28px) brightness(0.6) saturate(1.3);
+    filter:blur(28px) saturate(1.3);
+    opacity:0.4;
     transform:scale(1.15);
     z-index:0;
   }
+  /* Banner's own edit trigger — top-right corner, same quiet real-button
+     treatment as every other click-to-edit affordance here. */
+  .profile-banner-edit-btn{
+    position:absolute;
+    top:0.75rem; right:0.75rem;
+    z-index:2;
+    background:rgba(5,5,6,0.65);
+    border:1px solid rgba(255,255,255,0.3);
+    color:#fff;
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    padding:0.4em 0.7em;
+    border-radius:var(--radius);
+    cursor:pointer;
+  }
+  .profile-banner-edit-btn:hover{ background:rgba(5,5,6,0.85); border-color:#fff; }
   /* Real content sits above the blurred layer — avatar + identity info,
      bottom-left, over a scrim so it stays readable regardless of the
      banner's own colour. */
@@ -1133,7 +1159,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      guessing to hover first), clicking it jumps to CH00SE PR0F!LE
      P!CTURE below (see scrollToProfileField in the JS). */
   .profile-avatar-wrap{ position:relative; flex:0 0 auto; }
-  .profile-current-avatar{ width:128px; height:128px; border-radius:50%; overflow:hidden; background:#000; border:3px solid var(--bg); box-shadow:0 0 0 1px var(--border-mid); }
+  .profile-current-avatar{ width:128px; height:128px; border-radius:50%; overflow:hidden; background:#000; border:3px solid var(--bg); box-shadow:0 0 0 1px var(--border-mid); cursor:pointer; }
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
   .profile-avatar-edit-btn{
     position:absolute;
@@ -5832,6 +5858,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:0;
   }
   .history-modal-close{ position:absolute; top:1rem; right:1rem; }
+  /* PR0F!LE ED!T popup — its own id (not #amountEntryModal, so it needs
+     the same fixed-overlay shell spelled out again here rather than
+     inheriting it), .profile-edit-panel reuses .amount-entry-panel's own
+     sizing (see the HTML) plus a taller max-height for a picker grid.
+     Exactly one .profile-edit-pane shows at a time (see
+     openProfileEditModal in the JS). */
+  #profileEditModal{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    background:rgba(5,5,6,0.88);
+    align-items:center;
+    justify-content:center;
+    padding:2rem 1rem;
+  }
+  .profile-edit-panel{ max-height:80vh; overflow-y:auto; }
+  #profileEditPanePfp .simple-picker-grid, #profileEditPaneBanner .simple-picker-grid{ overflow-y:visible; max-height:none; }
   /* .thumb-offer.amount-entry-mode — this shares the .thumb-offer class
      with the DATABASE card's own purple action box, which an earlier fix
      made a row-direction flex container (centers BUY N0W/0FFER together
@@ -6953,6 +6997,9 @@ const SWAP_HTML = `<!DOCTYPE html>
            shows behind everything until a banner's actually been set. -->
       <div class="profile-banner profile-banner-empty" id="profileBanner">
         <div class="profile-banner-bg" id="profileBannerBg"></div>
+        <!-- Banner's own edit trigger — same "+ EDIT BANNER" popup PFP's
+             own + badge opens, just for profileEditPaneBanner. -->
+        <button type="button" class="profile-banner-edit-btn" id="profileBannerEditBtn" title="CHANGE BANNER">✎ BANNER</button>
         <div class="profile-banner-content">
           <div class="profile-avatar-wrap">
             <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
@@ -7018,47 +7065,72 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </div>
-      <div class="search-row" style="justify-content:center;">
-        <input class="transfer-wallet-input" id="profileUsernameInput" type="text" placeholder="CH00SE A USERNAME (LETTERS/NUMBERS/_/EM0J!, UP T0 20)">
-        <button class="bar-btn" id="profileUsernameSaveBtn">SAVE</button>
-      </div>
-      <div class="index-line" id="profileUsernameStatus" style="text-align:center; margin-top:0.5rem;"></div>
-      <!-- QU0TE — a short freeform line under the username (140 chars,
-           see isValidQuote in _shared.js), same save-row pattern as
-           username above. -->
-      <div class="search-row" style="justify-content:center;">
-        <input class="transfer-wallet-input" id="profileQuoteInput" type="text" maxlength="140" placeholder="A SH0RT QU0TE (UP T0 140 CHARACTERS)">
-        <button class="bar-btn" id="profileQuoteSaveBtn">SAVE</button>
-      </div>
-      <div class="index-line" id="profileQuoteStatus" style="text-align:center; margin-top:0.5rem;"></div>
-      <!-- TW!TTER/X — stored+validated as a bare handle (see
-           normalizeTwitterHandle/isValidTwitterHandle in _shared.js),
-           rendered as a real clickable @handle link above. -->
-      <div class="search-row" style="justify-content:center;">
-        <input class="transfer-wallet-input" id="profileTwitterInput" type="text" maxlength="16" placeholder="TW!TTER/X HANDLE (E.G. @P!GE0NSXRPL)">
-        <button class="bar-btn" id="profileTwitterSaveBtn">SAVE</button>
-      </div>
-      <div class="index-line" id="profileTwitterStatus" style="text-align:center; margin-top:0.5rem;"></div>
-      <!-- Whole section hidden outright (not just an empty grid under a
-           "Y0U D0N T 0WN ANY P!GE0NS YET" message) once a real owned-
-           Pigeons count comes back at 0 — reported live as wanting that
-           removed rather than shown. Still shows normally while loading/
-           not-yet-connected (renderProfilePfpGrid only hides it on the
-           genuine "checked, owns zero" case — see its own comment). -->
-      <div id="profilePfpSection">
-        <div class="panel-title outgoing-offers-title" style="font-size:13px;">CH00SE PR0F!LE P!CTURE FR0M Y0UR P!GE0NS</div>
-        <div id="profilePfpStatus" class="th-empty" style="display:none;"></div>
-        <div class="simple-picker-grid" id="profilePfpGrid"></div>
-      </div>
-      <!-- BANNER picker — exact clone of the pfp picker above (same owned-
-           Pigeons list, same grid/card markup, its own grid id + status
-           line + selected-nftid tracking) since it's the same "pick one of
-           your own Pigeons" flow, just feeding profileBanner instead of
-           profileCurrentAvatar. -->
-      <div id="profileBannerSection">
-        <div class="panel-title outgoing-offers-title" style="font-size:13px;">CH00SE BANNER FR0M Y0UR P!GE0NS</div>
-        <div id="profileBannerPickerStatus" class="th-empty" style="display:none;"></div>
-        <div class="simple-picker-grid" id="profileBannerGrid"></div>
+    </div>
+
+    <!-- PR0F!LE ED!T — one shared popup for every editable field (pfp,
+         banner, username, quote, twitter), reported live as wanting the
+         inline SAVE rows and the two "CH00SE ... FR0M Y0UR P!GE0NS"
+         picker sections gone from the page itself, replaced by a real
+         popup that opens when you click the thing you're actually
+         editing (the avatar, the banner's own edit button, or the
+         username/quote/twitter fields on the banner). Same shared
+         overlay/panel pattern as #amountEntryModal — one instance,
+         re-labelled and re-paned per use (openProfileEditModal in the
+         JS), exactly one .profile-edit-pane visible at a time. Every
+         input/button/grid inside kept its EXACT same id as when it lived
+         inline on the page, so none of the existing save/pick logic
+         needed to change — only where this markup physically lives did. -->
+    <div id="profileEditModal" style="display:none;">
+      <div class="amount-entry-panel profile-edit-panel">
+        <div class="simple-picker-header">
+          <span class="simple-picker-title" id="profileEditTitle"></span>
+          <button type="button" class="simple-picker-close" id="profileEditClose" title="CL0SE">&times;</button>
+        </div>
+        <div class="profile-edit-pane" id="profileEditPaneUsername" style="display:none;">
+          <div class="search-row" style="justify-content:center;">
+            <input class="transfer-wallet-input" id="profileUsernameInput" type="text" placeholder="CH00SE A USERNAME (LETTERS/NUMBERS/_/EM0J!, UP T0 20)">
+            <button class="bar-btn" id="profileUsernameSaveBtn">SAVE</button>
+          </div>
+          <div class="index-line" id="profileUsernameStatus" style="text-align:center; margin-top:0.5rem;"></div>
+        </div>
+        <!-- QU0TE — a short freeform line under the username (140 chars,
+             see isValidQuote in _shared.js). -->
+        <div class="profile-edit-pane" id="profileEditPaneQuote" style="display:none;">
+          <div class="search-row" style="justify-content:center;">
+            <input class="transfer-wallet-input" id="profileQuoteInput" type="text" maxlength="140" placeholder="A SH0RT QU0TE (UP T0 140 CHARACTERS)">
+            <button class="bar-btn" id="profileQuoteSaveBtn">SAVE</button>
+          </div>
+          <div class="index-line" id="profileQuoteStatus" style="text-align:center; margin-top:0.5rem;"></div>
+        </div>
+        <!-- TW!TTER/X — stored+validated as a bare handle (see
+             normalizeTwitterHandle/isValidTwitterHandle in _shared.js),
+             rendered as a real clickable @handle link on the banner. -->
+        <div class="profile-edit-pane" id="profileEditPaneTwitter" style="display:none;">
+          <div class="search-row" style="justify-content:center;">
+            <input class="transfer-wallet-input" id="profileTwitterInput" type="text" maxlength="16" placeholder="TW!TTER/X HANDLE (E.G. @P!GE0NSXRPL)">
+            <button class="bar-btn" id="profileTwitterSaveBtn">SAVE</button>
+          </div>
+          <div class="index-line" id="profileTwitterStatus" style="text-align:center; margin-top:0.5rem;"></div>
+        </div>
+        <!-- PFP — hidden outright (not a "Y0U D0N T 0WN ANY P!GE0NS YET"
+             message) once a real owned-Pigeons count comes back at 0 —
+             reported live as wanting that removed. Still shows normally
+             while loading/not-yet-connected (renderProfilePfpGrid only
+             hides the grid itself on the genuine "checked, owns zero"
+             case — see its own comment). -->
+        <div class="profile-edit-pane" id="profileEditPanePfp" style="display:none;">
+          <div id="profilePfpStatus" class="th-empty" style="display:none;"></div>
+          <div class="simple-picker-grid" id="profilePfpGrid"></div>
+        </div>
+        <!-- BANNER picker — exact clone of the pfp pane above (same owned-
+             Pigeons list, same grid/card markup, its own grid id + status
+             line + selected-nftid tracking) since it's the same "pick one
+             of your own Pigeons" flow, just feeding profileBanner instead
+             of profileCurrentAvatar. -->
+        <div class="profile-edit-pane" id="profileEditPaneBanner" style="display:none;">
+          <div id="profileBannerPickerStatus" class="th-empty" style="display:none;"></div>
+          <div class="simple-picker-grid" id="profileBannerGrid"></div>
+        </div>
       </div>
     </div>
 
@@ -8300,9 +8372,10 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
-   'profilePanelWrap','profileBanner','profileBannerBg','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
-   'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpSection','profilePfpStatus','profilePfpGrid','profileCoinsList',
-   'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus','profileBannerSection','profileBannerPickerStatus','profileBannerGrid',
+   'profilePanelWrap','profileBanner','profileBannerBg','profileBannerEditBtn','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
+   'profileEditModal','profileEditTitle','profileEditClose','profileEditPaneUsername','profileEditPaneQuote','profileEditPaneTwitter','profileEditPanePfp','profileEditPaneBanner',
+   'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
+   'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus','profileBannerPickerStatus','profileBannerGrid',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
    'salesPanelWrap',
    'swapOffersPanelWrap','swapOffersList',
@@ -16137,11 +16210,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileQuoteSaveBtn.disabled = true;
       el.profileTwitterInput.disabled = true;
       el.profileTwitterSaveBtn.disabled = true;
-      el.profilePfpSection.style.display = '';
       el.profilePfpGrid.innerHTML = '';
       el.profilePfpStatus.style.display = '';
       el.profilePfpStatus.textContent = 'C0NNECT Y0UR WALLET F!RST.';
-      el.profileBannerSection.style.display = '';
       el.profileBannerGrid.innerHTML = '';
       el.profileBannerPickerStatus.style.display = '';
       el.profileBannerPickerStatus.textContent = 'C0NNECT Y0UR WALLET F!RST.';
@@ -16174,11 +16245,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       renderProfilePfpGrid(myOwnPigeonsCache);
       renderProfileBannerGrid(myOwnPigeonsCache);
     } else {
-      el.profilePfpSection.style.display = '';
       el.profilePfpGrid.innerHTML = '';
       el.profilePfpStatus.style.display = '';
       el.profilePfpStatus.textContent = 'L0AD!NG Y0UR P!GE0NS...';
-      el.profileBannerSection.style.display = '';
       el.profileBannerGrid.innerHTML = '';
       el.profileBannerPickerStatus.style.display = '';
       el.profileBannerPickerStatus.textContent = 'L0AD!NG Y0UR P!GE0NS...';
@@ -16190,18 +16259,34 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
     }
   }
-  // Scrolls to + focuses (or just flashes, for non-focusable targets like
-  // the pfp/banner picker grids) whichever real field a banner click
-  // should jump to — every click-to-edit affordance on the banner
-  // (avatar +, username/quote ✎, quote/twitter placeholders) goes through
-  // this one helper instead of each wiring its own scroll/focus.
-  function scrollToProfileField(target){
-    if (!target) return;
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    if (typeof target.focus === 'function') target.focus();
-    target.classList.add('profile-field-highlight');
-    setTimeout(function(){ target.classList.remove('profile-field-highlight'); }, 1100);
+  // ---- PR0F!LE ED!T popup — one shared overlay, re-paned per field
+  // (reported live as wanting the inline SAVE rows and the two picker
+  // sections gone from the page itself, replaced by a real popup that
+  // opens from whatever you actually click on the banner). Same shared
+  // overlay/panel pattern as openAmountEntryModal — exactly one
+  // .profile-edit-pane visible at a time, everything else hidden. ----
+  var PROFILE_EDIT_PANES = {
+    pfp: { pane: 'profileEditPanePfp', title: 'CH00SE PR0F!LE P!CTURE', focus: null },
+    banner: { pane: 'profileEditPaneBanner', title: 'CH00SE BANNER', focus: null },
+    username: { pane: 'profileEditPaneUsername', title: 'USERNAME', focus: 'profileUsernameInput' },
+    quote: { pane: 'profileEditPaneQuote', title: 'B!0', focus: 'profileQuoteInput' },
+    twitter: { pane: 'profileEditPaneTwitter', title: 'TW!TTER/X', focus: 'profileTwitterInput' }
+  };
+  function openProfileEditModal(field){
+    var cfg = PROFILE_EDIT_PANES[field];
+    if (!cfg) return;
+    Object.keys(PROFILE_EDIT_PANES).forEach(function(key){
+      el[PROFILE_EDIT_PANES[key].pane].style.display = key === field ? '' : 'none';
+    });
+    el.profileEditTitle.textContent = cfg.title;
+    el.profileEditModal.style.display = 'flex';
+    if (cfg.focus) el[cfg.focus].focus();
   }
+  function closeProfileEditModal(){
+    el.profileEditModal.style.display = 'none';
+  }
+  el.profileEditClose.addEventListener('click', closeProfileEditModal);
+  el.profileEditModal.addEventListener('click', function(e){ if (e.target === el.profileEditModal) closeProfileEditModal(); });
   // Real colour match, not just a blur — draws the banner image (routed
   // through /api/nft-image-proxy so the browser only ever loads it same-
   // origin, see that endpoint's own comment on why Deeptide's CDN can't be
@@ -16282,16 +16367,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     highlightSelectedBannerCard();
   }
   function renderProfilePfpGrid(items){
+    // This whole grid now lives inside profileEditModal's own PFP pane,
+    // only ever visible after a deliberate click to open it — showing a
+    // real "Y0U D0N T 0WN ANY P!GE0NS YET." message here is fine again
+    // (it's no longer permanently sitting on the page itself, which is
+    // what the earlier "hide outright" fix was actually about).
     if (!items.length){
-      // Hidden outright, not a "Y0U D0N T 0WN ANY P!GE0NS YET" message —
-      // reported live as wanting that removed; there's genuinely nothing
-      // to pick from a wallet with zero Pigeons, so the whole section
-      // just isn't there instead of showing an empty state.
-      el.profilePfpSection.style.display = 'none';
+      el.profilePfpStatus.style.display = '';
+      el.profilePfpStatus.textContent = 'Y0U D0N T 0WN ANY P!GE0NS YET.';
       el.profilePfpGrid.innerHTML = '';
       return;
     }
-    el.profilePfpSection.style.display = '';
     el.profilePfpStatus.style.display = 'none';
     el.profilePfpGrid.innerHTML = items.map(function(p){
       return '<div class="simple-picker-card' + (p.nftId === profileSelectedPfpNftId ? ' simple-picker-card-selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -16310,14 +16396,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   // PfpCard above, feeding profileBannerGrid/profileSelectedBannerNftId
   // instead.
   function renderProfileBannerGrid(items){
+    // Same "a real empty-state message is fine now, this only shows
+    // inside the modal" reasoning as renderProfilePfpGrid's own comment.
     if (!items.length){
-      // Same "hide the whole section, not an empty-state message" as
-      // renderProfilePfpGrid's own comment above.
-      el.profileBannerSection.style.display = 'none';
+      el.profileBannerPickerStatus.style.display = '';
+      el.profileBannerPickerStatus.textContent = 'Y0U D0N T 0WN ANY P!GE0NS YET.';
       el.profileBannerGrid.innerHTML = '';
       return;
     }
-    el.profileBannerSection.style.display = '';
     el.profileBannerPickerStatus.style.display = 'none';
     el.profileBannerGrid.innerHTML = items.map(function(p){
       return '<div class="simple-picker-card' + (p.nftId === profileSelectedBannerNftId ? ' simple-picker-card-selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -16334,20 +16420,30 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   // ---- Click-to-edit on the banner itself — reported live as wanting to
   // "edit everything through clicking stuff on our own banner" instead of
-  // hunting down the matching box further below. Every trigger jumps to
-  // (and briefly highlights) the real input/grid that already does the
-  // actual saving — this is purely navigation, no new save logic. ----
+  // hunting down a matching box on the page. Every trigger now opens
+  // profileEditModal to the matching pane (see openProfileEditModal
+  // above) instead of scrolling to an inline row — this is purely
+  // navigation, no new save logic. ----
   el.profileAvatarEditBtn.addEventListener('click', function(){
-    scrollToProfileField(el.profilePfpGrid);
+    openProfileEditModal('pfp');
+  });
+  // The avatar image itself is a real click target too, not just its own
+  // + badge — "a popup when we select our profile picture by clicking
+  // it" was the literal ask.
+  el.profileCurrentAvatar.addEventListener('click', function(){
+    openProfileEditModal('pfp');
+  });
+  el.profileBannerEditBtn.addEventListener('click', function(){
+    openProfileEditModal('banner');
   });
   el.profileUsernameEditBtn.addEventListener('click', function(){
-    scrollToProfileField(el.profileUsernameInput);
+    openProfileEditModal('username');
   });
   // Delegated (quote's own edit ✎/placeholder are rebuilt by
   // renderProfileCurrent's own innerHTML, so a direct listener on either
   // would be lost the next time that runs).
   el.profileCurrentQuote.addEventListener('click', function(){
-    scrollToProfileField(el.profileQuoteInput);
+    openProfileEditModal('quote');
   });
   el.profileCurrentTwitterLink.addEventListener('click', function(e){
     // A real handle is a real link (target="_blank") — let it navigate.
@@ -16356,7 +16452,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // href can still be focused/clicked) when there's nothing to open.
     if (!el.profileCurrentTwitterLink.getAttribute('href')){
       e.preventDefault();
-      scrollToProfileField(el.profileTwitterInput);
+      openProfileEditModal('twitter');
     }
   });
   el.profilePfpGrid.addEventListener('click', function(e){
@@ -16392,6 +16488,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // address display already goes through.
       profileCache[MY_WALLET] = { username: res.data.profile.username || null, pfpImage: res.data.profile.pfpImage || null };
       applyResolvedProfiles([MY_WALLET]);
+      closeProfileEditModal();
     }).catch(function(){
       if (card) card.classList.remove('simple-picker-card-picking');
       el.profilePfpStatus.style.display = '';
@@ -16427,6 +16524,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       renderProfileCurrent(res.data.profile);
       profileCache[MY_WALLET] = { username: res.data.profile.username || null, pfpImage: res.data.profile.pfpImage || null };
       applyResolvedProfiles([MY_WALLET]);
+      setTimeout(closeProfileEditModal, 600);
     }).catch(function(){
       el.profileUsernameSaveBtn.disabled = false;
       el.profileUsernameSaveBtn.textContent = 'SAVE';
@@ -16458,6 +16556,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       el.profileBannerPickerStatus.style.display = 'none';
       renderProfileCurrent(res.data.profile);
+      closeProfileEditModal();
     }).catch(function(){
       if (card) card.classList.remove('simple-picker-card-picking');
       el.profileBannerPickerStatus.style.display = '';
@@ -16492,6 +16591,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileQuoteInput.value = '';
       el.profileQuoteStatus.textContent = 'SAVED.';
       renderProfileCurrent(res.data.profile);
+      setTimeout(closeProfileEditModal, 600);
     }).catch(function(){
       el.profileQuoteSaveBtn.disabled = false;
       el.profileQuoteSaveBtn.textContent = 'SAVE';
@@ -16527,6 +16627,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileTwitterInput.value = '';
       el.profileTwitterStatus.textContent = 'SAVED.';
       renderProfileCurrent(res.data.profile);
+      setTimeout(closeProfileEditModal, 600);
     }).catch(function(){
       el.profileTwitterSaveBtn.disabled = false;
       el.profileTwitterSaveBtn.textContent = 'SAVE';
