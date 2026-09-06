@@ -8208,14 +8208,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     // unrelated grid underneath the CONNECTING status.
     var showBrowseChrome = tab === 'database' || (tab === 'mypigeons' && isOwnWalletScope());
     el.screenBrowse.style.display = showBrowseChrome ? '' : 'none';
-    // S0RT BY / F!LTER BY TRA!TS' fixed bottom bar — same visibility rule
-    // as screenBrowse itself, since there's nothing to sort/filter
-    // without a grid showing. body.has-bottom-bar drives that grid's own
-    // bottom padding (see .bottom-controls-bar's CSS) so the last row of
-    // cards never sits hidden underneath this bar.
-    el.bottomControlsBar.style.display = showBrowseChrome ? 'flex' : 'none';
-    document.body.classList.toggle('has-bottom-bar', showBrowseChrome);
-    if (!showBrowseChrome){ closeSortFlyout(); closeTraitsFlyout(); }
+    // S0RT BY / F!LTER BY TRA!TS — DATABASE only now, not MY P!GE0NS
+    // (the Σκύλλα-connected wallet view) — reported live as not wanting
+    // that popup there. MY P!GE0NS is always your own small, already-
+    // owned set, not the full 3015-item collection, so sorting/filtering
+    // it the same way as DATABASE never made as much sense there anyway.
+    // Both the always-in-flow inline controls (#dbControlsSticky) and the
+    // fixed bottom bar get hidden — screenBrowse itself still shows for
+    // MY P!GE0NS once scoped (the grid/detail overlay it shares with
+    // DATABASE), just without either sort/filter entry point.
+    var showSortFilterChrome = tab === 'database';
+    el.dbControlsSticky.style.display = showSortFilterChrome ? '' : 'none';
+    el.bottomControlsBar.style.display = showSortFilterChrome ? 'flex' : 'none';
+    document.body.classList.toggle('has-bottom-bar', showSortFilterChrome);
+    if (!showSortFilterChrome){ closeSortFlyout(); closeTraitsFlyout(); }
     // myPigeonsPanel only has real content left (connect status, CONNECT
     // button) while not yet scoped — title/offers-summary/pigeon-grid all
     // moved out (see renderMyPigeonsList/showTab history), so leaving it
