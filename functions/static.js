@@ -5828,13 +5828,19 @@ const SWAP_HTML = `<!DOCTYPE html>
      FUZZY/C0NSP!RACY — BUY stays fully live underneath (reported live as
      wanting the buy path kept open), this is purely a visual banner over
      the artwork. pointer-events:none so it never intercepts clicks meant
-     for the card or its BUY button. */
+     for the card or its BUY button. Lives inside .mainframe-card-art (not
+     as a sibling positioned against the whole card) and centers via
+     top:50%/translateY — .mainframe-card-art is already position:relative,
+     so this tracks the art box's own height. Anchoring it to the whole
+     card's height at a fixed top:46% put it on top of the name/stats text
+     on the mobile 2-col grid, where the art shrinks to a smaller share of
+     a much shorter card than on desktop. */
   .mainframe-card-soon-banner{
     position:absolute;
-    top:46%;
+    top:50%;
     left:-10%;
     width:120%;
-    transform:rotate(-8deg);
+    transform:translateY(-50%) rotate(-8deg);
     background:rgba(10,10,11,0.88);
     border-top:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
     border-bottom:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
@@ -6159,8 +6165,8 @@ const SWAP_HTML = `<!DOCTYPE html>
               <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
               <span>V!EW CHART</span>
             </a>
+            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           </div>
-          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$PHN!X</div>
             <div class="mainframe-card-stats" id="mainframeStatsPhnixs"></div>
@@ -6181,8 +6187,8 @@ const SWAP_HTML = `<!DOCTYPE html>
               <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
               <span>V!EW CHART</span>
             </a>
+            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           </div>
-          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$TEDDY</div>
             <div class="mainframe-card-stats" id="mainframeStatsTeddybg"></div>
@@ -6195,8 +6201,8 @@ const SWAP_HTML = `<!DOCTYPE html>
               <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
               <span>V!EW CHART</span>
             </a>
+            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           </div>
-          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$SEAL</div>
             <div class="mainframe-card-stats" id="mainframeStatsSeal"></div>
@@ -6209,8 +6215,8 @@ const SWAP_HTML = `<!DOCTYPE html>
               <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
               <span>V!EW CHART</span>
             </a>
+            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           </div>
-          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$FUZZY</div>
             <div class="mainframe-card-stats" id="mainframeStatsFuzzy"></div>
@@ -6223,8 +6229,8 @@ const SWAP_HTML = `<!DOCTYPE html>
               <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
               <span>V!EW CHART</span>
             </a>
+            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           </div>
-          <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
           <div class="mainframe-card-body">
             <div class="mainframe-card-label">$C0NSP!RACY</div>
             <div class="mainframe-card-stats" id="mainframeStatsConspiracy"></div>
