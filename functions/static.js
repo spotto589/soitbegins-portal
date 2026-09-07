@@ -1102,13 +1102,39 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* Avatar — the crisp Pigeon image (background, not <img>, so it can sit
      centred/cropped the same way every other round avatar on the site
-     does — object-fit:cover equivalent via background-size). No outline/
-     ring of its own (was border+box-shadow) — sits flush against the
-     now-matching banner colour, fully inside it, so the two genuinely
-     read as one shape, not two overlapping ones. */
+     does — object-fit:cover equivalent via background-size). No CSS
+     border/box-shadow of its own — reported live as still seeing a
+     visible ring even with the avatar fully inside the matching-colour
+     banner. Confirmed by actually sampling this specific artwork: the
+     circle's real edge pixels are the source square's four EDGE
+     MIDPOINTS, not its corners (sampleBannerColor only ever reads one
+     corner) — top/left/right midpoints on this Pigeon really were the
+     same flat yellow as the sampled corner, but the BOTTOM midpoint read
+     back a completely different orange/brown (the character's own scarf
+     reaches that far down in the source art). That's not a sampling bug
+     to fix — it's real image content, an orange scarf pixel can't
+     "actually be" the yellow background colour. A narrow feather (the
+     first version here, transparent 68%/colour 100%) still left that
+     real orange visible through most of the fade. Widened to
+     transparent 40%/colour 100% instead — a much bigger, slower vignette
+     that washes out a real ~30% band of the image into the exact same
+     --profile-banner-color CSS custom property sampleBannerColor sets
+     alongside backgroundColor (inherits straight down from
+     .profile-banner, no separate JS wiring here), so whatever's actually
+     sitting at the true edge — flat background or not — is fully
+     covered by 100% opaque banner colour by the time it gets there,
+     rather than assuming the source art is uniform all the way out. */
   .profile-avatar-wrap{ position:relative; flex:0 0 auto; }
-  .profile-current-avatar{ width:220px; height:220px; border-radius:50%; overflow:hidden; background:#000; cursor:pointer; }
+  .profile-current-avatar{ position:relative; width:220px; height:220px; border-radius:50%; overflow:hidden; background:#000; cursor:pointer; }
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-current-avatar::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    background:radial-gradient(circle, transparent 40%, var(--profile-banner-color, transparent) 100%);
+    pointer-events:none;
+  }
   .profile-avatar-edit-btn{
     position:absolute;
     right:8px; bottom:8px;
@@ -16243,6 +16269,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileCurrentEstValue.textContent = '--';
       el.profileCurrentAvatar.innerHTML = '';
       el.profileBanner.style.backgroundColor = '';
+      el.profileBanner.style.removeProperty('--profile-banner-color');
       el.profileBanner.classList.add('profile-banner-empty');
       el.profileCurrentQuote.style.display = 'none';
       el.profileCurrentTwitterLink.style.display = 'none';
@@ -16355,7 +16382,16 @@ const SWAP_HTML = `<!DOCTYPE html>
           var ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, crop, crop, 0, 0, 1, 1);
           var px = ctx.getImageData(0, 0, 1, 1).data;
-          el.profileBanner.style.backgroundColor = 'rgb(' + px[0] + ',' + px[1] + ',' + px[2] + ')';
+          var colorStr = 'rgb(' + px[0] + ',' + px[1] + ',' + px[2] + ')';
+          el.profileBanner.style.backgroundColor = colorStr;
+          // Real CSS custom property, not just the plain background-color
+          // — .profile-current-avatar's own ::after feather (see its CSS
+          // comment) reads this same exact value via var(), inherited
+          // straight down from this element, so the avatar's soft edge
+          // blend always matches the banner's real colour exactly, never
+          // a second, separately-maintained value that could drift out
+          // of sync with it.
+          el.profileBanner.style.setProperty('--profile-banner-color', colorStr);
         } catch (e){}
       };
       img.src = '/api/nft-image-proxy?src=' + encodeURIComponent(imageUrl);
@@ -16371,6 +16407,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       sampleBannerColor(profile.pfpImage);
     } else {
       el.profileBanner.style.backgroundColor = '';
+      el.profileBanner.style.removeProperty('--profile-banner-color');
       el.profileBanner.classList.add('profile-banner-empty');
     }
     // QU0TE — a real value shows the text + a quiet ✎ (click jumps to the
