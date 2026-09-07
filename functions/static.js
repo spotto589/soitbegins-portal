@@ -1073,61 +1073,47 @@ const SWAP_HTML = `<!DOCTYPE html>
      in ahead of it the moment that wallet's profile resolves. */
   .wallet-tag{ display:inline-flex; align-items:center; gap:0.35em; vertical-align:middle; }
   .wallet-avatar{ width:1.3em; height:1.3em; min-width:1.3em; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--border-mid); }
-  /* BANNER — now the whole identity card (PR0F!LE's own title text is
-     gone — reported live as redundant once everything lives here). No
-     image/blur layer of its own any more — see this rule's own comment
-     in the HTML for why. background-color alone (set by sampleBannerColor
-     in the JS, off the chosen PFP) is the entire banner background —
-     confirmed live that even a DIM blurred image on top of the right
-     solid colour still read as "multi coloured", which defeats the
-     actual point ("it all looks like one"). */
+  /* BANNER — just the coloured backdrop now, sized to fit snugly to the
+     avatar's own bottom edge (reported live) instead of a tall card
+     holding the whole identity. background-color alone (set by
+     sampleBannerColor in the JS, off the chosen PFP) is the entire
+     background — confirmed live that even a dim blurred image on top of
+     the right solid colour still read as "multi coloured", which defeats
+     the actual point ("it all looks like one"). Zero bottom padding +
+     the avatar as the only/last child is what makes the banner's own
+     bottom edge land exactly at the avatar's bottom — see
+     .profile-avatar-wrap's own negative margin below for the "fits to
+     the bottom of the thumbnail" part. */
   .profile-banner{
     position:relative;
     width:100%;
-    min-height:260px;
     border-radius:var(--radius);
     background-color:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
-    margin-bottom:1.25rem;
+    padding:1.5rem 1.5rem 0;
     display:flex;
-    flex-direction:column;
-    /* Identity row pinned to the TOP (reported live as wanting it "more
-       into the top left" — was flex-end, bottom-anchored), QU0TE/TW!TTER
-       caption pinned to the bottom — space-between with exactly these
-       two children gives that split without a fixed height on either. */
-    justify-content:space-between;
+    justify-content:center;
+    overflow:hidden;
   }
   .profile-banner-empty{
     background-image:linear-gradient(120deg, rgba(136,72,248,0.35), rgba(61,243,236,0.2), rgba(240,0,228,0.3));
   }
-  /* Identity row — avatar + username/address/est value, top-left. No
-     scrim needed any more (there's no busy image behind it to fight for
-     readability against, just the flat sampled colour). */
-  .profile-banner-content{
-    position:relative;
-    z-index:1;
-    display:flex;
-    align-items:center;
-    gap:1rem;
-    padding:1.25rem;
-  }
   /* Avatar — the crisp Pigeon image (background, not <img>, so it can sit
      centred/cropped the same way every other round avatar on the site
-     does — object-fit:cover equivalent via background-size). Way bigger
-     again (150px -> 220px, reported live), no outline any more either
-     (was border+box-shadow) — sits flush against the now-matching banner
-     colour instead of being ringed off from it. This is the ONLY place a
-     Pigeon's own image actually shows on the banner, so it carries real
-     visual weight. The + badge is a real always-there affordance (not
-     hover-only — reported live as wanting everything editable via
-     clicking, discoverable without guessing to hover first), clicking it
-     (or the avatar image itself) opens profileEditModal to the PFP pane. */
-  .profile-avatar-wrap{ position:relative; flex:0 0 auto; }
+     does — object-fit:cover equivalent via background-size). No outline/
+     ring of its own (was border+box-shadow) — it sits flush against the
+     now-matching banner colour so the two genuinely read as one shape,
+     not two overlapping ones. Half its own height pokes below the
+     banner's padding-bottom:0 (negative margin-bottom), which is what
+     "fits to the bottom of the thumbnail" actually means here — the
+     coloured banner ends right at the avatar's own visual centre/bottom
+     instead of trailing empty space under it. */
+  .profile-avatar-wrap{ position:relative; flex:0 0 auto; margin-bottom:-56px; }
   .profile-current-avatar{ width:220px; height:220px; border-radius:50%; overflow:hidden; background:#000; cursor:pointer; }
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
   .profile-avatar-edit-btn{
     position:absolute;
-    right:0; bottom:0;
+    right:8px; bottom:8px;
     width:40px; height:40px;
     border-radius:50%;
     background:var(--green);
@@ -1143,7 +1129,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-shadow:0 0 10px var(--green-glow);
   }
   .profile-avatar-edit-btn:hover{ filter:brightness(1.15); }
-  .profile-current-username-row{ display:flex; align-items:center; gap:0.5rem; }
+  /* IDENT!TY — underneath the avatar now (reported live), centered:
+     margin-top clears the avatar's own negative-margin overhang from the
+     banner above it. */
+  .profile-current-info{ text-align:center; padding-top:72px; margin-bottom:1.5rem; }
+  .profile-current-username-row{ display:flex; align-items:center; justify-content:center; gap:0.5rem; }
   .profile-current-username{ font-family:var(--font-display); font-size:32px; font-weight:700; color:var(--green); }
   /* Small, quiet edit affordance next to any click-to-edit field — real
      hit target (not just a hover cue) that jumps to the matching input
@@ -1158,31 +1148,62 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:color 0.15s ease;
   }
   .profile-field-edit-btn:hover{ color:var(--cyan); }
-  .profile-current-wallet{ font-size:14px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; margin-top:0.2rem; }
+  .profile-current-wallet-row{ display:flex; align-items:center; justify-content:center; gap:0.4rem; margin-top:0.3rem; }
+  .profile-current-wallet{ font-size:14px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; }
+  /* Tiny real buttons next to the address — C0PY (clipboard, same
+     pattern the issuer address' own COPY button already uses) and a
+     direct link straight to this wallet's real B!TH0MP explorer page
+     (bithomp.com/explorer/<address> — same URL shape the receipt
+     screens' own TXN links already use for a hash). */
+  .profile-mini-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:22px; height:22px;
+    border-radius:var(--radius);
+    background:transparent;
+    border:1px solid var(--border-mid);
+    color:var(--grey-dim);
+    font-size:12px;
+    line-height:1;
+    cursor:pointer;
+    text-decoration:none;
+    transition:color 0.15s ease, border-color 0.15s ease;
+  }
+  .profile-mini-btn:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
   /* EST VALUE — mirrors MY C0!NS' own T0TAL P0RTF0L!0 VALUE number, right
      under the address so your net worth reads as part of your identity,
      not just buried in the collapsible coins section below. */
-  .profile-current-estvalue{ font-size:15px; letter-spacing:0.04em; color:var(--grey); text-transform:uppercase; margin-top:0.4rem; }
+  .profile-current-estvalue{ font-size:15px; letter-spacing:0.04em; color:var(--grey); text-transform:uppercase; margin-top:0.6rem; }
   .profile-current-estvalue span{ color:var(--green); font-weight:700; text-shadow:0 0 6px var(--green-glow); }
-  /* QU0TE + TW!TTER — centered as a caption under the identity row
-     (reported live as wanting them "in the middle" of the banner), same
-     dark scrim treatment so they stay readable over any banner colour.
-     Both are real click-to-edit targets now — a real value shows plain
-     text/link + a quiet ✎ (see the JS' own renderProfileCurrent), an
-     unset one shows a dashed, clickable "+ ADD..." invite instead of
-     hiding outright, so the banner itself teaches you it's editable. */
-  .profile-banner-caption{
-    position:relative;
-    z-index:1;
-    max-width:100%;
-    text-align:center;
-    padding:0 1rem 1rem;
-  }
-  .profile-quote{ font-size:13px; font-style:italic; color:#fff; text-transform:none; cursor:pointer; }
+  /* QU0TE — centered "in the middle" (reported live), real click-to-edit
+     target (a real value shows the text + a quiet ✎, an unset one shows
+     a dashed "+ ADD A B!0" invite instead of hiding outright — see
+     renderProfileCurrent in the JS). */
+  .profile-quote{ font-size:14px; font-style:italic; color:#fff; text-transform:none; cursor:pointer; margin-top:0.75rem; }
   .profile-quote .profile-field-edit-btn{ font-style:normal; }
-  .profile-twitter-row{ margin-top:0.3rem; }
-  .profile-twitter-link{ display:inline-block; font-size:12px; letter-spacing:0.03em; color:var(--cyan); text-decoration:none; text-transform:none; }
-  .profile-twitter-link:hover{ text-decoration:underline; }
+  /* TW!TTER — real black-pill X/Twitter button styling (reported live as
+     wanting it to "look like the actual twitter design") instead of a
+     plain text link — black fill, white text, the 𝕏 mark, a real rounded
+     pill, same shape X's own share/follow buttons use. */
+  .profile-twitter-row{ margin-top:0.75rem; }
+  .profile-twitter-link{
+    display:inline-flex;
+    align-items:center;
+    gap:0.4em;
+    background:#000;
+    color:#fff;
+    border:1px solid #000;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:0.02em;
+    text-transform:none;
+    text-decoration:none;
+    padding:0.5em 1.1em;
+    border-radius:9999px;
+    transition:background 0.15s ease;
+  }
+  .profile-twitter-link:hover{ background:#000; text-decoration:none; opacity:0.85; }
   /* Empty-state invites — dashed, muted, unmistakably "click to add"
      rather than reading like a real value. */
   .profile-field-placeholder{
@@ -1205,9 +1226,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profile-field-highlight{ animation:profileFieldHighlight 1.1s ease; }
   @media (max-width:600px){
-    .profile-banner{ min-height:220px; }
-    .profile-banner-content{ padding:1rem; }
     .profile-current-avatar{ width:150px; height:150px; }
+    .profile-avatar-wrap{ margin-bottom:-40px; }
+    .profile-current-info{ padding-top:52px; }
     .profile-avatar-edit-btn{ width:34px; height:34px; font-size:19px; }
     .profile-current-username{ font-size:24px; }
   }
@@ -6069,6 +6090,72 @@ const SWAP_HTML = `<!DOCTYPE html>
     display:flex;
     flex-direction:column;
     align-items:center;
+    /* Real "hanging banner" treatment (reported live) — a distinct bar
+       with its own background/border/shadow reading as suspended from
+       the very top of the screen, bled edge-to-edge via a negative
+       margin matching #screenMainframe's own padding (2rem 1.5rem)
+       instead of just plain page text sitting inside that padding. */
+    background:rgba(9,9,7,0.55);
+    border-bottom:1px solid var(--border-mid);
+    box-shadow:0 12px 28px rgba(0,0,0,0.35);
+    padding:1.5rem 1rem 1rem;
+    margin:-2rem -1.5rem 0;
+    width:calc(100% + 3rem);
+  }
+  /* T!CKER — every collection, clickable straight into its own DATABASE
+     (enterMainframeCollection, same as its own card below), each in its
+     real accent colour (--card-accent, same convention the cards
+     already use) with a live MARKETCAP figure filled in by the same
+     stats fetch the cards make (see the JS). Horizontal scroll instead
+     of wrapping — 6 items plus real numbers doesn't fit one line at
+     most widths, and a ticker reads naturally as a scrollable strip. */
+  .mainframe-ticker{
+    display:flex;
+    gap:0.6rem;
+    margin-top:1rem;
+    max-width:100%;
+    overflow-x:auto;
+    padding-bottom:0.25rem;
+    scrollbar-width:none;
+  }
+  .mainframe-ticker::-webkit-scrollbar{ display:none; }
+  .mainframe-ticker-item{
+    flex:0 0 auto;
+    background:rgba(var(--card-accent, 61,243,236), 0.1);
+    border:1px solid rgb(var(--card-accent, 61,243,236));
+    color:rgb(var(--card-accent, 61,243,236));
+    text-shadow:0 0 6px rgba(var(--card-accent, 61,243,236), 0.5);
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    white-space:nowrap;
+    padding:0.6em 0.9em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .mainframe-ticker-item:hover{
+    background:rgb(var(--card-accent, 61,243,236));
+    color:#000;
+    text-shadow:none;
+    box-shadow:0 0 14px rgba(var(--card-accent, 61,243,236), 0.5);
+  }
+  .mainframe-ticker-item span{ opacity:0.85; }
+  /* No real browsable DATABASE yet for these four (see the HTML's own
+     comment) — same real-info-but-not-clickable-to-browse treatment as
+     their own mainframe-card below, just cursor:default instead of a
+     hover-fill promising a click that wouldn't do anything. */
+  .mainframe-ticker-item-soon{ cursor:default; }
+  .mainframe-ticker-item-soon:hover{
+    background:rgba(var(--card-accent, 61,243,236), 0.1);
+    color:rgb(var(--card-accent, 61,243,236));
+    text-shadow:0 0 6px rgba(var(--card-accent, 61,243,236), 0.5);
+    box-shadow:none;
+  }
+  @media (max-width:600px){
+    .mainframe-hero{ margin:-1.5rem -1rem 0; width:calc(100% + 2rem); padding:1.25rem 0.75rem 0.85rem; }
   }
   /* The headline itself, now interactive — same size/weight/glitch text-
      shadow the plain h1 rule already gives it (this only adds the
@@ -6505,8 +6592,32 @@ const SWAP_HTML = `<!DOCTYPE html>
          Same id (mainframeProfileBtn) as the old separate button, so its
          existing click handler needs no change; a keydown handler right
          next to that one adds Enter/Space activation (see the JS). -->
+    <!-- Now a real "hanging banner" (reported live) — the headline plus a
+         horizontal ticker of every collection, each in its own real
+         accent colour (same accentRgb COLLECTION_META already uses for
+         the cards below), showing its own live MARKETCAP. Clicking any
+         ticker item goes straight into that collection's DATABASE, same
+         as clicking its own card further down (enterMainframeCollection
+         — see the JS). Market cap text is filled in by the exact same
+         live stats fetch the cards below already make (see the
+         [{collection...}].forEach block in the JS) — no second fetch. -->
     <div class="mainframe-hero">
       <h1 class="mainframe-hero-btn" id="mainframeProfileBtn" role="button" tabindex="0">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></h1>
+      <!-- P!GE0NS/PHN!X are the only two with a real browsable NFT
+           collection right now (same reason mainframeGrid's own TEDDY/
+           SEAL/FUZZY/C0NSP!RACY cards carry no data-collection/role
+           either — no real issuer/taxon exists yet for those four) —
+           only these two get data-collection so the click handler below
+           actually enters DATABASE; the other four still show their real
+           live MARKETCAP but aren't clickable-to-browse. -->
+      <div class="mainframe-ticker" id="mainframeTicker">
+        <button type="button" class="mainframe-ticker-item" data-collection="pigeons" style="--card-accent:136,72,248;">$P!GE0NS <span id="mainframeTickerMcPigeons"></span></button>
+        <button type="button" class="mainframe-ticker-item" data-collection="phnixs" style="--card-accent:255,90,31;">$PHN!X <span id="mainframeTickerMcPhnixs"></span></button>
+        <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:166,99,46;">$TEDDY <span id="mainframeTickerMcTeddybg"></span></button>
+        <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:45,140,168;">$SEAL <span id="mainframeTickerMcSeal"></span></button>
+        <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:122,66,26;">$FUZZY <span id="mainframeTickerMcFuzzy"></span></button>
+        <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:240,0,228;">$C0NSP!RACY <span id="mainframeTickerMcConspiracy"></span></button>
+      </div>
     </div>
     <!-- SECT!0N HEADER — STAT!C :: MA!NFRAME/SELECT A C0LLECT!0N moved out
          of the hero block above and given its own clearly separate row
@@ -6931,50 +7042,42 @@ const SWAP_HTML = `<!DOCTYPE html>
          its own Pigeons), shown everywhere an address used to just print
          its own short form (see walletTagHtml/setWalletText). -->
     <div class="sw-panel" id="profilePanelWrap" style="display:none;">
-      <!-- BANNER — now the WHOLE identity card (reported live as wanting
-           "all this detail in the top banner" and PR0F!LE's own title
-           gone — this replaces both). No banner image/picker of its own
-           any more — reported live as wanting it "auto chosen by the
-           pigeon you choose" instead of a second separate pick, so this
-           is now a flat solid colour sampled straight off your PFP
-           (sampleBannerColor in the JS, called with profile.pfpImage —
-           see its own comment for why a corner-crop sample, not a whole-
-           image average) and NOTHING else layered on top — confirmed
-           live that even a dim blurred image layer still read as "multi
-           coloured" instead of one flat matching colour, which is the
-           whole point here ("it all looks like one"). A plain gradient
-           placeholder (.profile-banner-empty) shows before a pfp's ever
-           been set. EVERYTHING here is click-to-edit: the avatar's own +
-           badge (and the avatar image itself), the click-to-edit pencil
-           on username/quote, and a plain "+ ADD..." placeholder in place
-           of quote/twitter when neither's ever been set — clicking any
-           of them opens profileEditModal to the matching pane. -->
+      <!-- BANNER — just the coloured backdrop now, sized to fit snugly to
+           the bottom of the avatar (reported live) instead of a tall card
+           holding everything. No banner image/picker of its own — the
+           colour is auto-sampled straight off your PFP (sampleBannerColor
+           in the JS, called with profile.pfpImage) and NOTHING else
+           layered on top, so it's one flat matching colour end to end.
+           A plain gradient placeholder (.profile-banner-empty) shows
+           before a pfp's ever been set. The avatar has no border/ring any
+           more either — it sits flush against the banner so the two
+           genuinely blend into one shape, not two overlapping ones. -->
       <div class="profile-banner profile-banner-empty" id="profileBanner">
-        <div class="profile-banner-content">
-          <div class="profile-avatar-wrap">
-            <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
-            <button type="button" class="profile-avatar-edit-btn" id="profileAvatarEditBtn" title="CHANGE PR0F!LE P!CTURE">+</button>
-          </div>
-          <!-- USERNAME / ADDRESS / EST VALUE — EST VALUE mirrors MY C0!NS'
-               own T0TAL P0RTF0L!0 VALUE (wallet XRP + every coin balance
-               converted to XRP, see recomputeTotal in renderProfileCoins)
-               so this reads as a real net-worth line right under your
-               identity, not just buried inside the collapsible coins list
-               below. -->
-          <div class="profile-current-info">
-            <div class="profile-current-username-row">
-              <span class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</span>
-              <button type="button" class="profile-field-edit-btn" id="profileUsernameEditBtn" title="EDIT USERNAME">✎</button>
-            </div>
-            <div class="profile-current-wallet" id="profileCurrentWallet"></div>
-            <div class="profile-current-estvalue">EST VALUE :: <span id="profileCurrentEstValue">--</span></div>
-          </div>
+        <div class="profile-avatar-wrap">
+          <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
+          <button type="button" class="profile-avatar-edit-btn" id="profileAvatarEditBtn" title="CHANGE PR0F!LE P!CTURE">+</button>
         </div>
-        <div class="profile-banner-caption">
-          <div class="profile-quote" id="profileCurrentQuote"></div>
-          <div class="profile-twitter-row">
-            <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener"></a>
-          </div>
+      </div>
+      <!-- IDENT!TY — moved OUT of the banner and underneath the avatar
+           instead (reported live), centered: USERNAME, then ADDRESS (with
+           its own real COPY button + a direct B!TH0MP link), then EST
+           VALUE (mirrors MY C0!NS' own T0TAL P0RTF0L!0 VALUE — see
+           recomputeTotal in renderProfileCoins), then the QU0TE centered
+           in the middle, then TW!TTER styled like the real X button. -->
+      <div class="profile-current-info">
+        <div class="profile-current-username-row">
+          <span class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</span>
+          <button type="button" class="profile-field-edit-btn" id="profileUsernameEditBtn" title="EDIT USERNAME">✎</button>
+        </div>
+        <div class="profile-current-wallet-row">
+          <span class="profile-current-wallet" id="profileCurrentWallet"></span>
+          <button type="button" class="profile-mini-btn" id="profileAddressCopyBtn" title="C0PY ADDRESS">⧉</button>
+          <a class="profile-mini-btn" id="profileAddressBithompLink" target="_blank" rel="noopener" title="V!EW 0N B!TH0MP">↗</a>
+        </div>
+        <div class="profile-current-estvalue">EST VALUE :: <span id="profileCurrentEstValue">--</span></div>
+        <div class="profile-quote" id="profileCurrentQuote"></div>
+        <div class="profile-twitter-row">
+          <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener"></a>
         </div>
       </div>
       <!-- MY C0!NS — real balance + trustline status for every collection
@@ -8308,12 +8411,13 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
+   'mainframeTicker','mainframeTickerMcPigeons','mainframeTickerMcPhnixs','mainframeTickerMcTeddybg','mainframeTickerMcSeal','mainframeTickerMcFuzzy','mainframeTickerMcConspiracy',
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersPanelWrap','myOffersList','outgoingOffersList',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
-   'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
+   'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileAddressCopyBtn','profileAddressBithompLink','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
    'profileEditModal','profileEditTitle','profileEditClose','profileEditPaneUsername','profileEditPaneQuote','profileEditPaneTwitter','profileEditPanePfp',
    'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus',
@@ -14483,6 +14587,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     hideMainframe();
     showTab('database');
   }
+  // T!CKER — only P!GE0NS/PHN!X carry data-collection (see the HTML's own
+  // comment on why), so this only ever fires enterMainframeCollection for
+  // those two; a click on one of the other four's own item just does
+  // nothing, same as their own mainframe-card below.
+  el.mainframeTicker.addEventListener('click', function(e){
+    var item = e.target.closest('.mainframe-ticker-item[data-collection]');
+    if (item) enterMainframeCollection(item.getAttribute('data-collection'));
+  });
   // Drag-to-scroll (mouse) — trackpad/touch already scroll #mainframeGrid
   // natively via its own overflow-x:auto, this is just the desktop-mouse
   // equivalent ("drag and scroll through", reported live). Tracks total
@@ -14618,18 +14730,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     return '$' + Math.round(n).toLocaleString();
   }
   [
-    { collection: 'pigeons', target: 'mainframeStatsPigeons', dexTarget: 'mainframeDexPigeons', hasShopSlug: true },
-    { collection: 'phnixs', target: 'mainframeStatsPhnixs', dexTarget: 'mainframeDexPhnixs', hasShopSlug: true },
+    { collection: 'pigeons', target: 'mainframeStatsPigeons', dexTarget: 'mainframeDexPigeons', tickerTarget: 'mainframeTickerMcPigeons', hasShopSlug: true },
+    { collection: 'phnixs', target: 'mainframeStatsPhnixs', dexTarget: 'mainframeDexPhnixs', tickerTarget: 'mainframeTickerMcPhnixs', hasShopSlug: true },
     // TEDDY has a real shopSlug ('teddybg'), so it gets real holders same
     // as PIGEONS/PHNIX. SEAL/FUZZY/C0NSP!RACY don't (no real Deeptide shop
     // slug exists for any of them yet, see COLLECTIONS in pigeons.js) —
     // they skip the stats:1 call entirely (it would just 400/return
     // nothing useful against a null slug) but still get their real
     // marketcap/liquidity below.
-    { collection: 'teddybg', target: 'mainframeStatsTeddybg', dexTarget: 'mainframeDexTeddybg', hasShopSlug: true },
-    { collection: 'seal', target: 'mainframeStatsSeal', dexTarget: 'mainframeDexSeal', hasShopSlug: false },
-    { collection: 'fuzzy', target: 'mainframeStatsFuzzy', dexTarget: 'mainframeDexFuzzy', hasShopSlug: false },
-    { collection: 'conspiracy', target: 'mainframeStatsConspiracy', dexTarget: 'mainframeDexConspiracy', hasShopSlug: false }
+    { collection: 'teddybg', target: 'mainframeStatsTeddybg', dexTarget: 'mainframeDexTeddybg', tickerTarget: 'mainframeTickerMcTeddybg', hasShopSlug: true },
+    { collection: 'seal', target: 'mainframeStatsSeal', dexTarget: 'mainframeDexSeal', tickerTarget: 'mainframeTickerMcSeal', hasShopSlug: false },
+    { collection: 'fuzzy', target: 'mainframeStatsFuzzy', dexTarget: 'mainframeDexFuzzy', tickerTarget: 'mainframeTickerMcFuzzy', hasShopSlug: false },
+    { collection: 'conspiracy', target: 'mainframeStatsConspiracy', dexTarget: 'mainframeDexConspiracy', tickerTarget: 'mainframeTickerMcConspiracy', hasShopSlug: false }
   ].forEach(function(cfg){
     Promise.all([
       cfg.hasShopSlug ? api({ stats: 1, collection: cfg.collection }).catch(function(){ return {}; }) : Promise.resolve({}),
@@ -14646,6 +14758,12 @@ const SWAP_HTML = `<!DOCTYPE html>
         el[cfg.dexTarget].href = rate.dexUrl;
         el[cfg.dexTarget].style.display = '';
       }
+      // T!CKER's own MARKETCAP figure — same real number the card below
+      // shows, just abbreviated further to fit a one-line pill (e.g.
+      // "104K MC" instead of "104K MARKETCAP"). Handled before the early
+      // return below since the ticker only needs marketCapUsd, not the
+      // card's own holders/liquidity too.
+      if (rate.marketCapUsd != null && el[cfg.tickerTarget]) el[cfg.tickerTarget].textContent = formatUsdAbbrev(rate.marketCapUsd) + ' MC';
       if (stats.holders == null && rate.marketCapUsd == null && rate.liquidityUsd == null) return;
       // NFT H0LDERS is its own centered line; MARKETCAP + L!QU!D!TY share
       // the line under it, joined by " :: " — VALUE-then-LABEL reading
@@ -16068,6 +16186,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         var line = results[0], rate = results[1];
         var balEl = document.getElementById('profileCoinBalance-' + key);
         var valEl = document.getElementById('profileCoinValue-' + key);
+        // DexScreener's own token logo, once the rate call resolves it —
+        // reported live as looking cleaner at this thumbnail's small size
+        // than the static mascot art (COLLECTION_META.thumb). Swapped in
+        // place, not on initial render, since it needs this same live
+        // fetch anyway — no separate request just for the image.
+        var thumbEl = document.getElementById('profileCoinThumb-' + key);
+        if (thumbEl && rate && rate.tokenImageUrl) thumbEl.style.backgroundImage = 'url("' + rate.tokenImageUrl + '")';
         if (!balEl) return;
         if (line && line.hasTrustline === false){
           balEl.textContent = 'TRUSTL!NE N0T SET';
@@ -16156,6 +16281,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     el.profileCurrentWallet.textContent = shortAddr(MY_WALLET);
+    el.profileAddressBithompLink.href = 'https://bithomp.com/explorer/' + MY_WALLET;
     el.profileUsernameInput.disabled = false;
     el.profileUsernameSaveBtn.disabled = false;
     el.profileQuoteInput.disabled = false;
@@ -16333,6 +16459,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.profileUsernameEditBtn.addEventListener('click', function(){
     openProfileEditModal('username');
+  });
+  // Address C0PY — same real clipboard pattern the issuer address' own
+  // COPY button already uses (copyIssuerBtn). B!TH0MP itself is a plain
+  // real link (href set once MY_WALLET is known, see loadProfilePanel) —
+  // no JS needed for that one.
+  el.profileAddressCopyBtn.addEventListener('click', function(){
+    if (!MY_WALLET) return;
+    var done = function(){
+      el.profileAddressCopyBtn.textContent = '✓';
+      setTimeout(function(){ el.profileAddressCopyBtn.textContent = '⧉'; }, 1200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(MY_WALLET).then(done, done);
+    else done();
   });
   // Delegated (quote's own edit ✎/placeholder are rebuilt by
   // renderProfileCurrent's own innerHTML, so a direct listener on either

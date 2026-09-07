@@ -1277,7 +1277,7 @@ export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
     if (cached !== null) return JSON.parse(cached);
   }
   const dexPair = COLLECTION_DEXSCREENER_PAIRS[collectionKey] || dexscreenerPairFor(cfg.tokenConfig);
-  let result = { xrpPerPigeon: null, usdPerPigeon: null, marketCapUsd: null, liquidityUsd: null, dexUrl: dexPair ? 'https://dexscreener.com/xrpl/' + dexPair : null };
+  let result = { xrpPerPigeon: null, usdPerPigeon: null, marketCapUsd: null, liquidityUsd: null, tokenImageUrl: null, dexUrl: dexPair ? 'https://dexscreener.com/xrpl/' + dexPair : null };
   if (dexPair) {
     try {
       const res = await fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + dexPair);
@@ -1289,6 +1289,13 @@ export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
         const usdVal = parseFloat(pair.priceUsd);
         if (usdVal > 0) result.usdPerPigeon = usdVal;
         if (pair.url) result.dexUrl = pair.url;
+        // DexScreener's own token logo — reported live as wanting MY C0!NS'
+        // own coin thumbnails to use this instead of the static mascot art
+        // (COLLECTION_META.thumb), since it reads cleaner at small sizes.
+        // Real per-collection art already vetted by DexScreener's own
+        // listing process, not user-suppliable, so no extra validation
+        // needed before using it as a plain <img src>/background-image.
+        if (pair.info && pair.info.imageUrl) result.tokenImageUrl = pair.info.imageUrl;
         // marketCap/liquidity taken straight off DexScreener's own pair
         // object, in USD, with no XRP conversion applied — matches
         // whatever the real DexScreener page for this pair shows exactly
