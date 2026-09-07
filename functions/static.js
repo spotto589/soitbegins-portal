@@ -10953,10 +10953,20 @@ const SWAP_HTML = `<!DOCTYPE html>
       // this appends more underneath). Only ever fires once per landing
       // here: the recursive call below runs with scyllaListedOnly false,
       // so this exact condition can't refire on it.
+      // NOT calling renderSortTag() here any more — reported live as
+      // "PR!CE :: L0W ($P!GE0NS)" reading as flat-out broken: with only a
+      // handful of real listings right now, hasMore comes back false on
+      // the very FIRST page, so this used to relabel the tag to L0WEST
+      // AVG SALE PR!CE before the user had even seen the real listings
+      // it just showed, let alone scrolled. The tag now stays pinned to
+      // whatever was actually picked (applySort's own renderSortTag call)
+      // for the rest of this browse — state.sort itself still switches
+      // (everything that actually queries/orders results keys off that,
+      // unaffected), only the visible label stops silently flipping under
+      // an explicit choice.
       if (state.scyllaListedOnly && !state.hasMore){
         state.scyllaListedOnly = false;
         state.sort = 'AVG_SALE_XRP_ASC';
-        renderSortTag();
         el.statScyllaListedTile.classList.remove('scylla-active');
         state.skip = 0;
         state.hasMore = true;
@@ -10988,9 +10998,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       // uses — a superset of both earlier stages, so this alone is
       // guaranteed to eventually surface every real match. state.sort
       // check stops this from re-firing on itself once already here.
+      // Same reasoning as the scyllaListedOnly fallback above — this is
+      // still a silent auto-continuation, not a real user pick, so the
+      // visible tag stays put here too.
       if (filters.length && isSalesSort && state.sort !== 'RARITY_ASC' && !state.hasMore){
         state.sort = 'RARITY_ASC';
-        renderSortTag();
         state.skip = 0;
         state.hasMore = true;
         loadMoreCollection(onDone);
