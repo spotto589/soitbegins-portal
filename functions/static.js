@@ -1112,8 +1112,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      washing out real art, which read as "a weird glow"). A square has
      no such edge to blend at all — corners included, so the previous
      ::after feather overlay is gone entirely, nothing left to fake. */
-  .profile-avatar-wrap{ position:relative; flex:0 0 auto; margin-left:0.5rem; }
-  .profile-current-avatar{ width:200px; height:200px; border-radius:var(--radius); overflow:hidden; background:#000; cursor:pointer; }
+  /* Negative bottom margin cancels the banner's own bottom padding
+     exactly, so this sits flush against the banner's real bottom edge
+     (the padding box's inner boundary) instead of floating 1.5rem above
+     it despite align-items:flex-end — reported live (three times) as
+     wanting it "lined up with the very bottom of the banner". Banner's
+     own overflow:hidden clips this cleanly at that edge. */
+  .profile-avatar-wrap{ position:relative; flex:0 0 auto; margin-left:0.5rem; margin-bottom:-1.5rem; }
+  .profile-current-avatar{ width:260px; height:260px; border-radius:var(--radius); overflow:hidden; background:#000; cursor:pointer; }
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
   .profile-avatar-edit-btn{
     position:absolute;
@@ -1228,8 +1234,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-field-highlight{ animation:profileFieldHighlight 1.1s ease; }
   @media (max-width:600px){
     .profile-banner{ padding:1rem; gap:0.85rem; }
-    .profile-avatar-wrap{ margin-left:0; }
-    .profile-current-avatar{ width:120px; height:120px; }
+    .profile-avatar-wrap{ margin-left:0; margin-bottom:-1rem; }
+    .profile-current-avatar{ width:150px; height:150px; }
     .profile-avatar-edit-btn{ width:28px; height:28px; font-size:16px; right:-6px; bottom:-6px; }
     .profile-current-username{ font-size:20px; }
   }
@@ -1303,7 +1309,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      exact same .flock-account-box visual language the old FL0CK-era
      boxes always used (see that CSS's own comment) — 3 columns fits 6
      boxes in two even rows on desktop, collapsing narrower on mobile. */
-  .profile-box-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.7rem; margin-bottom:1.5rem; }
+  /* margin-top clears the banner above — reported live as "touching the
+     banner", especially now the avatar itself overhangs the banner's own
+     bottom edge (see .profile-avatar-wrap's own negative margin) and
+     would otherwise sit right against these boxes with zero breathing
+     room. */
+  .profile-box-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.7rem; margin-top:1.25rem; margin-bottom:1.5rem; }
   @media (max-width:600px){ .profile-box-grid{ grid-template-columns:repeat(2, 1fr); } }
   @media (max-width:400px){ .profile-box-grid{ grid-template-columns:1fr; } }
   /* V!EW PR0F!LE/0FFERS/C0LLECT!0NS/CR0WN all use the same magenta
@@ -6272,10 +6283,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* GL0BAL T!CKER BAR — see the HTML's own comment on why this exists
      separately from #screenMainframe's own big hero. Fixed, full-width,
      ABOVE #screenMainframe (z-index:2000) so it's genuinely on every
-     screen including that overlay, not just .page's own tabs. One row,
-     no wrap — horizontal scroll instead, same reasoning .mainframe-
-     ticker's own comment gives (6 items + real numbers never fits one
-     line at most widths). */
+     screen including that overlay, not just .page's own tabs.
+     Σκύλλα://S!GNAL::0NL!NE sits fixed at the true top-left (reported
+     live wanting it there specifically, not just "first in the row"),
+     the six collection buttons then STRETCH to fill every remaining
+     pixel across the rest of the bar (flex:1 1 0 each, reported live as
+     wanting them "longer to fit across the page horizontally") instead
+     of staying compact pills — horizontal scroll is still there as a
+     narrow-viewport fallback, but stretching is what actually fills a
+     normal-width screen now. */
   #globalTickerBar{
     position:fixed;
     top:0;
@@ -6285,6 +6301,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     height:var(--global-ticker-h);
     display:flex;
     align-items:center;
+    justify-content:flex-start;
     gap:0.6rem;
     padding:0 0.75rem;
     background:rgba(9,9,7,0.92);
@@ -6296,7 +6313,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   #globalTickerBar::-webkit-scrollbar{ display:none; }
   /* Σκύλλα — a real button now (border, background, hover fill), not
      just coloured text — reported live as the old hero's plain text
-     link "not being obvious it's a button". */
+     link "not being obvious it's a button". Pinned top-left, never
+     shrinks/stretches — the six collection buttons absorb all the extra
+     width instead (see .global-ticker-items below). */
   #globalTickerScyllaBtn{
     flex:0 0 auto;
     background:rgba(255,51,204,0.12);
@@ -6311,6 +6330,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.4em 0.9em;
     border-radius:var(--radius);
     cursor:pointer;
+    white-space:nowrap;
     transition:background 0.15s ease, box-shadow 0.15s ease;
   }
   #globalTickerScyllaBtn:hover, #globalTickerScyllaBtn:focus-visible{
@@ -6319,10 +6339,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:none;
     box-shadow:0 0 14px var(--magenta-glow);
   }
-  .global-ticker-items{ display:flex; gap:0.5rem; flex:0 0 auto; }
-  #globalTickerBar .mainframe-ticker-item{ font-size:11px; padding:0.4em 0.7em; }
+  .global-ticker-items{ display:flex; gap:0.5rem; flex:1 1 auto; min-width:0; }
+  #globalTickerBar .mainframe-ticker-item{ flex:1 1 0; min-width:0; font-size:11px; padding:0.4em 0.5em; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   @media (max-width:600px){
     #globalTickerScyllaBtn{ font-size:12px; padding:0.35em 0.7em; }
+    /* Six equal-stretch buttons at 600px+ can't shrink further without
+       becoming unreadable — back to compact auto-width pills with
+       horizontal scroll on the bar itself below this width. */
+    .global-ticker-items{ flex:0 0 auto; }
+    #globalTickerBar .mainframe-ticker-item{ flex:0 0 auto; }
   }
   /* HER0 — just the one headline now, which IS Σκύλλα's own button (see
      the HTML's own comment on .mainframe-hero-btn/#mainframeProfileBtn) —
@@ -6833,7 +6858,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        fill, not just coloured text) — reported live as the plain
        "Σκύλλα" text "not being obvious it's a button" on the old hero. -->
   <div id="globalTickerBar">
-    <button type="button" id="globalTickerScyllaBtn">Σκύλλα</button>
+    <button type="button" id="globalTickerScyllaBtn">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></button>
     <div class="global-ticker-items" id="globalTickerItems">
       <button type="button" class="mainframe-ticker-item" data-collection="pigeons" style="--card-accent:136,72,248;">$P!GE0NS <span id="globalTickerMcPigeons"></span></button>
       <button type="button" class="mainframe-ticker-item" data-collection="phnixs" style="--card-accent:255,90,31;">$PHN!X <span id="globalTickerMcPhnixs"></span></button>
@@ -7359,7 +7384,7 @@ const SWAP_HTML = `<!DOCTYPE html>
            yet). Exactly one panel (or none) visible at a time — see
            switchProfileTab in the JS. -->
       <div class="profile-box-grid" id="profileBoxGrid">
-        <div class="sw-panel flock-account-box flock-account-box-clickable active" role="button" tabindex="0" data-profilebox="profile">
+        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="profile">
           <div class="flock-account-box-row"><span class="flock-account-box-label">V!EW PR0F!LE</span></div>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="offers">
@@ -16797,9 +16822,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderMyOffersList();
     renderOutgoingOffersList();
     renderProfileWatchlist();
-    // N0TH!NG open on a fresh visit (reported live) — V!EW PR0F!LE is
-    // the neutral/closed state every real destination box reveals from.
-    switchProfileTab('profile');
+    // N0TH!NG open AND N0TH!NG highlighted on a fresh visit (reported
+    // live as wanting to "wait for a user to click before it shows
+    // anything") — null matches no real box's data-profilebox, so every
+    // box (V!EW PR0F!LE included) starts perfectly neutral.
+    switchProfileTab(null);
     if (!MY_WALLET){
       el.profileCurrentWallet.textContent = '';
       el.profileCurrentUsername.textContent = 'C0NNECT Y0UR WALLET F!RST.';
