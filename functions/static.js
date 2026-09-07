@@ -148,6 +148,13 @@ const SWAP_HTML = `<!DOCTYPE html>
        whole config area reads as one row of uniform boxes instead of
        each control sizing to its own content. */
     --ctrl-w:190px;
+
+    /* Height of #globalTickerBar (the persistent Σκύλλα + collection-
+       marketcap strip pinned to the very top of every screen) — a real
+       variable, not a magic number repeated in both body's own padding-
+       top and #screenMainframe's top offset, which otherwise have to
+       agree by coincidence. */
+    --global-ticker-h:44px;
   }
   /* PHN!X/TEDDY used to swap in two entirely different UNIVERSAL palettes
      here (every cyan/magenta on the page, not just the banner) — that was
@@ -240,7 +247,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--white);
     display:flex;
     justify-content:center;
-    padding:8vh 3vw 10vh;
+    /* Extra top padding for #globalTickerBar (position:fixed, so it
+       takes no real layout space of its own) — this only ever pushes
+       .page (a normal in-flow child) down to clear it; #screenMainframe
+       is its own fixed overlay and gets the same clearance directly via
+       its own top offset instead (see its own comment). */
+    padding:calc(8vh + var(--global-ticker-h)) 3vw 10vh;
     position:relative;
     /* A fresh query clears and repopulates #resultsArea, and images below
        the fold keep resizing their boxes as they decode — the browser's
@@ -1119,12 +1131,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   .signature-banner-info{ min-width:0; flex:1 1 auto; }
   .signature-banner-username{ font-family:var(--font-display); font-weight:700; color:var(--green); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .signature-banner-quote{ font-style:italic; color:#fff; margin-top:0.3rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  /* DETA!L — sits at the top of the pigeon DETA!L screen, one size down
-     from Σκύλλα's own banner (see .profile-banner/.profile-current-
-     avatar) so it reads as "this Pigeon's owner", not a second identical
-     copy of your own profile header. */
-  .signature-banner-detail{ gap:1rem; padding:1rem; margin-bottom:1rem; }
-  .signature-banner-detail .signature-banner-avatar{ width:64px; height:64px; }
+  /* DETA!L — sits at the top of the pigeon DETA!L screen, reads as "this
+     Pigeon's owner". Bigger avatar + bottom-aligned (reported live after
+     seeing the first pass — wanted the thumbnail bigger and lined up
+     with the banner's own bottom edge, same flush-to-the-bottom feel
+     Σκύλλα's own banner settled on, rather than centred). */
+  .signature-banner-detail{ gap:1rem; padding:1rem; margin-bottom:1rem; align-items:flex-end; }
+  .signature-banner-detail .signature-banner-avatar{ width:96px; height:96px; }
   .signature-banner-detail .signature-banner-username{ font-size:20px; }
   .signature-banner-detail .signature-banner-quote{ font-size:13px; }
   /* R0W — compact inline version for T0P 123 H0LDERS, replacing that
@@ -1135,7 +1148,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .signature-banner-row .signature-banner-username{ font-size:14px; }
   @media (max-width:600px){
     .signature-banner-detail{ padding:0.75rem; gap:0.75rem; }
-    .signature-banner-detail .signature-banner-avatar{ width:48px; height:48px; }
+    .signature-banner-detail .signature-banner-avatar{ width:72px; height:72px; }
     .signature-banner-detail .signature-banner-username{ font-size:17px; }
   }
   /* Avatar — SQUARE now (was a circle), reported live as wanting it
@@ -1333,6 +1346,45 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
   }
   .profile-watchlist-remove:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
+  /* PR0F!LE TABS — sits right under the banner, sorting 0FFERS and
+     C0LLECT!0NS into their own destinations instead of one long stacked
+     scroll (reported live). Same real tab-strip language the top-level
+     .tab-btn already uses (active = magenta underline), scaled down to
+     fit inside the profile card rather than the full top nav. */
+  .profile-tabs{ display:flex; gap:1.5rem; border-bottom:1px solid var(--border-dim); margin-bottom:1.25rem; }
+  .profile-tab-btn{
+    background:none;
+    border:none;
+    border-bottom:2px solid transparent;
+    color:var(--grey-dim);
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:0.7em 0.1em;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:0.4em;
+    transition:color 0.15s ease, border-color 0.15s ease;
+  }
+  .profile-tab-btn:hover{ color:var(--white); }
+  .profile-tab-btn.active{ color:var(--magenta); border-bottom-color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+  /* Pending 0FFERS count — same real-number-or-hidden-entirely pattern
+     flockOffersCount already uses (never "0FFERS (0)"). */
+  .profile-tab-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:1.4em;
+    height:1.4em;
+    padding:0 0.35em;
+    border-radius:50%;
+    background:var(--magenta);
+    color:#08090b;
+    font-size:11px;
+  }
   .profile-offers-section{ margin-bottom:1.5rem; }
   .profile-coins-section{ margin-bottom:1.5rem; }
   .profile-coins-banner{
@@ -4583,7 +4635,16 @@ const SWAP_HTML = `<!DOCTYPE html>
      a short viewport, still needs to scroll this box internally. */
   #screenDetail{
     position:fixed;
-    inset:0;
+    /* top instead of inset:0's implicit 0 — same reasoning as
+       #screenMainframe's own comment: #globalTickerBar sits at a higher
+       z-index than this (2200 vs 70) so without this its fixed 44px
+       strip would sit on top of (not push down) this box's own top
+       content — the ← BACK/P!GE0N # row and the new S!GNATURE BANNER
+       above it (detailOwnerBanner) both start flush at the very top. */
+    top:var(--global-ticker-h);
+    left:0;
+    right:0;
+    bottom:0;
     z-index:70;
     margin:0;
     border-radius:0;
@@ -6178,7 +6239,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenMainframe{
     display:none;
     position:fixed;
-    inset:0;
+    /* top instead of inset:0's implicit 0 — leaves #globalTickerBar (a
+       higher z-index sibling, see its own comment) visible above this
+       overlay instead of covered by it, same "on every screen" real
+       estate #globalTickerBar claims everywhere else. */
+    top:var(--global-ticker-h);
+    left:0;
+    right:0;
+    bottom:0;
     z-index:2000;
     /* Opaque (var(--bg)), same as #screenDetail's own identical situation
        (see its own comment) — plain transparent here doesn't reveal just
@@ -6193,8 +6261,10 @@ const SWAP_HTML = `<!DOCTYPE html>
        already settled on. */
     background:var(--bg);
     overflow:hidden;
-    height:100vh;
-    height:100dvh;
+    /* No explicit height any more — top+bottom above already pin this to
+       exactly "the rest of the viewport under #globalTickerBar" (an
+       explicit height here would win over bottom and silently undo
+       that). */
     padding:2rem 1.5rem;
     flex-direction:column;
   }
@@ -6234,6 +6304,61 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   #screenMainframe > .local-static-bg{ z-index:-1; }
   #screenMainframe > *:not(.local-static-bg){ position:relative; z-index:1; }
+  /* GL0BAL T!CKER BAR — see the HTML's own comment on why this exists
+     separately from #screenMainframe's own big hero. Fixed, full-width,
+     ABOVE #screenMainframe (z-index:2000) so it's genuinely on every
+     screen including that overlay, not just .page's own tabs. One row,
+     no wrap — horizontal scroll instead, same reasoning .mainframe-
+     ticker's own comment gives (6 items + real numbers never fits one
+     line at most widths). */
+  #globalTickerBar{
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:2200;
+    height:var(--global-ticker-h);
+    display:flex;
+    align-items:center;
+    gap:0.6rem;
+    padding:0 0.75rem;
+    background:rgba(9,9,7,0.92);
+    border-bottom:1px solid var(--border-mid);
+    backdrop-filter:blur(6px);
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  #globalTickerBar::-webkit-scrollbar{ display:none; }
+  /* Σκύλλα — a real button now (border, background, hover fill), not
+     just coloured text — reported live as the old hero's plain text
+     link "not being obvious it's a button". */
+  #globalTickerScyllaBtn{
+    flex:0 0 auto;
+    background:rgba(255,51,204,0.12);
+    border:1px solid var(--magenta);
+    color:var(--magenta);
+    text-shadow:0 0 6px var(--magenta-glow);
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:0.4em 0.9em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:background 0.15s ease, box-shadow 0.15s ease;
+  }
+  #globalTickerScyllaBtn:hover, #globalTickerScyllaBtn:focus-visible{
+    background:var(--magenta);
+    color:#08090b;
+    text-shadow:none;
+    box-shadow:0 0 14px var(--magenta-glow);
+  }
+  .global-ticker-items{ display:flex; gap:0.5rem; flex:0 0 auto; }
+  #globalTickerBar .mainframe-ticker-item{ font-size:11px; padding:0.4em 0.7em; }
+  @media (max-width:600px){
+    #globalTickerScyllaBtn{ font-size:12px; padding:0.35em 0.7em; }
+  }
   /* HER0 — just the one headline now, which IS Σκύλλα's own button (see
      the HTML's own comment on .mainframe-hero-btn/#mainframeProfileBtn) —
      the separate CTA below it and its one-line tagline are both gone,
@@ -6728,6 +6853,32 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   <canvas id="staticBg"></canvas>
 
+  <!-- GL0BAL T!CKER — Σκύλλα itself plus every collection's live
+       MARKETCAP, pinned to the very top of EVERY screen now (reported
+       live as wanting this "on all pages" since "this is the hub"), not
+       just the MA!NFRAME landing screen's own big hero (#screenMainframe
+       .mainframe-hero further down keeps that separately — this is a
+       second, much smaller copy purpose-built to sit permanently at the
+       top). One real single-line strip (horizontal scroll instead of
+       wrap, same reasoning .mainframe-ticker's own comment already gives)
+       — a fixed z-index:2200 sibling of #screenMainframe (z-index:2000),
+       so it stays visible even while that overlay is up (see its own
+       "top:var(--global-ticker-h)" instead of inset:0). globalTicker-
+       ScyllaBtn is a real, obviously-clickable button now (border/hover
+       fill, not just coloured text) — reported live as the plain
+       "Σκύλλα" text "not being obvious it's a button" on the old hero. -->
+  <div id="globalTickerBar">
+    <button type="button" id="globalTickerScyllaBtn">Σκύλλα</button>
+    <div class="global-ticker-items" id="globalTickerItems">
+      <button type="button" class="mainframe-ticker-item" data-collection="pigeons" style="--card-accent:136,72,248;">$P!GE0NS <span id="globalTickerMcPigeons"></span></button>
+      <button type="button" class="mainframe-ticker-item" data-collection="phnixs" style="--card-accent:255,90,31;">$PHN!X <span id="globalTickerMcPhnixs"></span></button>
+      <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:166,99,46;">$TEDDY <span id="globalTickerMcTeddybg"></span></button>
+      <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:45,140,168;">$SEAL <span id="globalTickerMcSeal"></span></button>
+      <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:122,66,26;">$FUZZY <span id="globalTickerMcFuzzy"></span></button>
+      <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:240,0,228;">$C0NSP!RACY <span id="globalTickerMcConspiracy"></span></button>
+    </div>
+  </div>
+
   <!-- MA!NFRAME — landing page, shown first on a plain fresh load; pick a
        collection to enter DATABASE scoped to it (see enterMainframeCollection
        in static.js). TEDDY stays browse-only (matches its own tradeable:false
@@ -7220,78 +7371,95 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </div>
-      <!-- WATCHL!ST — any NFT starred from DATABASE (the ☆/★ on every
-           card, see .watchlist-toggle) shows up here (reported live as
-           wanting "a watchlist button for nfts to choose from the
-           database which show up in Σκύλλα as well"). Personal, per-
-           wallet, localStorage-only (see watchlistKey in the JS) —
-           renderProfileWatchlist builds this straight from the real
-           snapshot kept per entry (image/number/collection), no live
-           re-fetch needed just to show the grid. Hidden entirely (not
-           just empty) while there's nothing watched — see its own
-           display toggle in loadProfilePanel. -->
-      <div class="profile-watchlist-section" id="profileWatchlistSection" style="display:none;">
-        <div class="panel-title">WATCHL!ST</div>
-        <div class="profile-watchlist-grid" id="profileWatchlistGrid"></div>
+      <!-- PR0F!LE TABS — sits right under the banner now (reported live),
+           sorting everything below it into two destinations instead of
+           one long stacked scroll: 0FFERS (received/outgoing, with a
+           real pending-count badge — same offersReceivedTotal
+           updateFlockTabLabel/el.flockOffersCount already track) and
+           C0LLECT!0NS (WATCHL!ST + MY C0!NS together — both are real
+           collection/NFT curation, just balances vs individual picks).
+           Exactly one profile-tab-panel visible at a time (see
+           switchProfileTab in the JS); OFFERS is first/default since
+           open offers are the more time-sensitive of the two. -->
+      <div class="profile-tabs" id="profileTabs">
+        <button type="button" class="profile-tab-btn active" data-profiletab="offers">
+          0FFERS<span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span>
+        </button>
+        <button type="button" class="profile-tab-btn" data-profiletab="collections">C0LLECT!0NS</button>
       </div>
-      <!-- 0FFERS — moved directly onto Σκύλλα now (reported live), sitting
-           above MY C0!NS since open offers are more time-sensitive than
-           balances. Same real 0FFERS RECE!VED/0UTG0!NG 0FFERS lists this
-           always had (renderMyOffersList/renderOutgoingOffersList,
-           fed by loadOffersReceived/loadOutgoingOffers which already run
-           on wallet connect) — only where they live changed. The old
-           standalone MY 0FFERS tab (myOffersPanelWrap) is gone; the
-           0FFERS quick-box (flockOffersBox, further down this same tab)
-           now just scrolls to this section instead of switching tabs. -->
-      <div class="profile-offers-section" id="profileOffersSection">
+      <div class="profile-tab-panel" id="profileTabPanelOffers">
+        <!-- 0FFERS — same real 0FFERS RECE!VED/0UTG0!NG 0FFERS lists this
+             always had (renderMyOffersList/renderOutgoingOffersList, fed
+             by loadOffersReceived/loadOutgoingOffers which already run on
+             wallet connect) — only where they live changed. The old
+             standalone MY 0FFERS tab (myOffersPanelWrap) is gone; the
+             0FFERS quick-box (flockOffersBox, further down this same
+             page) now just switches to this profile tab instead of a
+             separate top-level one. -->
         <div class="panel-title">0FFERS RECE!VED</div>
         <div id="myOffersList"></div>
         <div class="panel-title outgoing-offers-title">0UTG0!NG 0FFERS</div>
         <div id="outgoingOffersList"></div>
       </div>
-      <!-- MY C0!NS — real balance + trustline status for every collection
-           with a real token (see COLLECTION_META's own tokenIssuer),
-           reported live as wanting one place to see every coin at a
-           glance. Every collection now has a real BUY button here
-           (COLLECTION_META.hasAmm, true for all six now that every one
-           has a confirmed real AMM pool — see hasAmm's own comment on
-           COLLECTION_META) matching the BUY flow MAINFRAME's own cards
-           already offered for all of them. Built by renderProfileCoins()
-           below, not static — it has to iterate COLLECTION_META itself so
-           a future collection just needs its own entry there, nothing
-           here changes. EDIT opens profileCoinsEditPopover — reported
-           live as wanting to choose which collections' balances actually
-           show here (see PROFILE_COINS_HIDDEN_KEY in the JS), not forced
-           to always see all six. -->
-      <!-- Collapsible — profileCoinsBanner toggles the "collapsed" class on
-           profileCoinsSection (see the CSS above); open by default every
-           time PR0F!LE loads (loadProfilePanel never adds "collapsed"
-           itself), closable by clicking this banner, reported live as
-           wanting it start open but not forced to stay that way. -->
-      <div class="profile-coins-section" id="profileCoinsSection">
-        <div class="profile-coins-banner" id="profileCoinsBanner">
-          <span>MY C0!NS</span>
-          <span class="profile-coins-edit-btn" id="profileCoinsEditBtn" title="CH00SE WH!CH C0!NS SH0W">EDIT</span>
-          <span class="profile-coins-banner-arrow" id="profileCoinsBannerArrow">▾</span>
+      <div class="profile-tab-panel" id="profileTabPanelCollections" style="display:none;">
+        <!-- WATCHL!ST — any NFT starred from DATABASE (the ☆/★ on every
+             card, see .watchlist-toggle) shows up here (reported live as
+             wanting "a watchlist button for nfts to choose from the
+             database which show up in Σκύλλα as well"). Personal, per-
+             wallet, localStorage-only (see watchlistKey in the JS) —
+             renderProfileWatchlist builds this straight from the real
+             snapshot kept per entry (image/number/collection), no live
+             re-fetch needed just to show the grid. Hidden entirely (not
+             just empty) while there's nothing watched — see its own
+             display toggle in loadProfilePanel. -->
+        <div class="profile-watchlist-section" id="profileWatchlistSection" style="display:none;">
+          <div class="panel-title">WATCHL!ST</div>
+          <div class="profile-watchlist-grid" id="profileWatchlistGrid"></div>
         </div>
-        <div class="profile-coins-edit-popover" id="profileCoinsEditPopover" style="display:none;">
-          <div class="index-line" style="margin-bottom:0.5rem;">SH0W !N MY C0!NS ::</div>
-          <div id="profileCoinsEditList"></div>
-        </div>
-        <div class="profile-coins-body" id="profileCoinsBody">
-          <div class="profile-coins-wallet-row" id="profileCoinsWalletRow">
-            <span>WALLET BALANCE (XRP)</span>
-            <span id="profileCoinsWalletBalance">--</span>
+        <!-- MY C0!NS — real balance + trustline status for every collection
+             with a real token (see COLLECTION_META's own tokenIssuer),
+             reported live as wanting one place to see every coin at a
+             glance. Every collection now has a real BUY button here
+             (COLLECTION_META.hasAmm, true for all six now that every one
+             has a confirmed real AMM pool — see hasAmm's own comment on
+             COLLECTION_META) matching the BUY flow MAINFRAME's own cards
+             already offered for all of them. Built by renderProfileCoins()
+             below, not static — it has to iterate COLLECTION_META itself so
+             a future collection just needs its own entry there, nothing
+             here changes. EDIT opens profileCoinsEditPopover — reported
+             live as wanting to choose which collections' balances actually
+             show here (see PROFILE_COINS_HIDDEN_KEY in the JS), not forced
+             to always see all six. -->
+        <!-- Collapsible — profileCoinsBanner toggles the "collapsed" class on
+             profileCoinsSection (see the CSS above); open by default every
+             time PR0F!LE loads (loadProfilePanel never adds "collapsed"
+             itself), closable by clicking this banner, reported live as
+             wanting it start open but not forced to stay that way. -->
+        <div class="profile-coins-section" id="profileCoinsSection">
+          <div class="profile-coins-banner" id="profileCoinsBanner">
+            <span>MY C0!NS</span>
+            <span class="profile-coins-edit-btn" id="profileCoinsEditBtn" title="CH00SE WH!CH C0!NS SH0W">EDIT</span>
+            <span class="profile-coins-banner-arrow" id="profileCoinsBannerArrow">▾</span>
           </div>
-          <div class="profile-coins-list" id="profileCoinsList"></div>
-          <!-- T0TAL P0RTF0L!0 VALUE — wallet XRP + every coin balance
-               converted to XRP via its own real AMM pool rate (see
-               renderProfileCoins' own comment on profileCoinValueXrp),
-               reported live as the big feature here: one real number for
-               everything this wallet holds, not just its native XRP. -->
-          <div class="profile-coins-total-row" id="profileCoinsTotalRow">
-            <span>T0TAL P0RTF0L!0 VALUE (XRP)</span>
-            <span id="profileCoinsTotalValue">--</span>
+          <div class="profile-coins-edit-popover" id="profileCoinsEditPopover" style="display:none;">
+            <div class="index-line" style="margin-bottom:0.5rem;">SH0W !N MY C0!NS ::</div>
+            <div id="profileCoinsEditList"></div>
+          </div>
+          <div class="profile-coins-body" id="profileCoinsBody">
+            <div class="profile-coins-wallet-row" id="profileCoinsWalletRow">
+              <span>WALLET BALANCE (XRP)</span>
+              <span id="profileCoinsWalletBalance">--</span>
+            </div>
+            <div class="profile-coins-list" id="profileCoinsList"></div>
+            <!-- T0TAL P0RTF0L!0 VALUE — wallet XRP + every coin balance
+                 converted to XRP via its own real AMM pool rate (see
+                 renderProfileCoins' own comment on profileCoinValueXrp),
+                 reported live as the big feature here: one real number for
+                 everything this wallet holds, not just its native XRP. -->
+            <div class="profile-coins-total-row" id="profileCoinsTotalRow">
+              <span>T0TAL P0RTF0L!0 VALUE (XRP)</span>
+              <span id="profileCoinsTotalValue">--</span>
+            </div>
           </div>
         </div>
       </div>
@@ -8582,9 +8750,12 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
    'mainframeTicker','mainframeTickerMcPigeons','mainframeTickerMcPhnixs','mainframeTickerMcTeddybg','mainframeTickerMcSeal','mainframeTickerMcFuzzy','mainframeTickerMcConspiracy',
+   'globalTickerBar','globalTickerScyllaBtn','globalTickerItems',
+   'globalTickerMcPigeons','globalTickerMcPhnixs','globalTickerMcTeddybg','globalTickerMcSeal','globalTickerMcFuzzy','globalTickerMcConspiracy',
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
-   'myOffersList','outgoingOffersList','profileOffersSection',
+   'myOffersList','outgoingOffersList',
+   'profileTabs','profileTabOffersBadge','profileTabPanelOffers','profileTabPanelCollections',
    'profileWatchlistSection','profileWatchlistGrid',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
@@ -13049,13 +13220,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     // top of the screen, not just centered on the grid below it.
     if (!state.flockCollapsed) el.searchPanelTitle.scrollIntoView({ block: 'start', behavior: 'smooth' });
   });
-  // Used to do nothing at all when clicked — reported live, now scrolls
-  // straight to the real 0FFERS RECE!VED/0UTG0!NG 0FFERS section, which
-  // lives on Σκύλλα itself now (profileOffersSection) rather than its own
-  // separate tab — no tab switch needed, this box only ever shows while
-  // already scoped to your own wallet on the same tab.
+  // Used to do nothing at all when clicked — reported live, now switches
+  // Σκύλλα's own OFFERS profile-tab (see switchProfileTab) and scrolls
+  // the banner back into view, since this box only ever shows while
+  // already scoped to your own wallet further down the same page.
   el.flockOffersBox.addEventListener('click', function(){
-    el.profileOffersSection.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    switchProfileTab('offers');
+    el.profileBanner.scrollIntoView({ block: 'start', behavior: 'smooth' });
   });
   // Messaging paused — see the MESSAGE !NB0X box's own HTML comment.
   // Nothing to wire up here any more (no click handler, no unread-badge
@@ -14107,6 +14278,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       // there's genuinely nothing pending.
       el.flockOffersCount.textContent = totalOffers || '';
       el.flockOffersCount.style.display = totalOffers > 0 ? '' : 'none';
+      // Same real count, now on the 0FFERS profile-tab itself too
+      // (reported live wanting "a pending number if the address has
+      // them") — same hide-entirely-at-zero rule as flockOffersCount's
+      // own badge right above.
+      el.profileTabOffersBadge.textContent = totalOffers || '';
+      el.profileTabOffersBadge.style.display = totalOffers > 0 ? '' : 'none';
       // Also refresh the DATABASE grid when SH0W MY P!GE0NS is what's
       // showing (ownedPigeonActionHtml reads offersByNftId there too), and
       // the dedicated 0FFERS RECE!VED view if that's what's open.
@@ -14844,6 +15021,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     var item = e.target.closest('.mainframe-ticker-item[data-collection]');
     if (item) enterMainframeCollection(item.getAttribute('data-collection'));
   });
+  // GL0BAL T!CKER's own copy of the exact same collection items — same
+  // enterMainframeCollection (it already handles hiding MA!NFRAME and
+  // entering DATABASE itself, whichever screen this was clicked from).
+  el.globalTickerItems.addEventListener('click', function(e){
+    var item = e.target.closest('.mainframe-ticker-item[data-collection]');
+    if (item) enterMainframeCollection(item.getAttribute('data-collection'));
+  });
   // Drag-to-scroll (mouse) — trackpad/touch already scroll #mainframeGrid
   // natively via its own overflow-x:auto, this is just the desktop-mouse
   // equivalent ("drag and scroll through", reported live). Tracks total
@@ -14953,6 +15137,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     e.preventDefault();
     el.mainframeProfileBtn.click();
   });
+  // GL0BAL T!CKER's own Σκύλλα button — same exact behaviour as the
+  // MA!NFRAME hero's own (a real <button> already, no separate keydown
+  // handler needed the way the role="button" h1 above does).
+  el.globalTickerScyllaBtn.addEventListener('click', function(){
+    hideMainframe();
+    showTab('mypigeons', true);
+    if (!MY_WALLET) startAuthorize();
+  });
   // Real, live numbers on every card (see .mainframe-card-stats' own
   // comment in the CSS) — same fields, same order, on every tradeable
   // collection, so the bottom-of-card line reads identically everywhere.
@@ -14973,18 +15165,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     return '$' + Math.round(n).toLocaleString();
   }
   [
-    { collection: 'pigeons', target: 'mainframeStatsPigeons', dexTarget: 'mainframeDexPigeons', tickerTarget: 'mainframeTickerMcPigeons', hasShopSlug: true },
-    { collection: 'phnixs', target: 'mainframeStatsPhnixs', dexTarget: 'mainframeDexPhnixs', tickerTarget: 'mainframeTickerMcPhnixs', hasShopSlug: true },
+    { collection: 'pigeons', target: 'mainframeStatsPigeons', dexTarget: 'mainframeDexPigeons', tickerTarget: 'mainframeTickerMcPigeons', globalTickerTarget: 'globalTickerMcPigeons', hasShopSlug: true },
+    { collection: 'phnixs', target: 'mainframeStatsPhnixs', dexTarget: 'mainframeDexPhnixs', tickerTarget: 'mainframeTickerMcPhnixs', globalTickerTarget: 'globalTickerMcPhnixs', hasShopSlug: true },
     // TEDDY has a real shopSlug ('teddybg'), so it gets real holders same
     // as PIGEONS/PHNIX. SEAL/FUZZY/C0NSP!RACY don't (no real Deeptide shop
     // slug exists for any of them yet, see COLLECTIONS in pigeons.js) —
     // they skip the stats:1 call entirely (it would just 400/return
     // nothing useful against a null slug) but still get their real
     // marketcap/liquidity below.
-    { collection: 'teddybg', target: 'mainframeStatsTeddybg', dexTarget: 'mainframeDexTeddybg', tickerTarget: 'mainframeTickerMcTeddybg', hasShopSlug: true },
-    { collection: 'seal', target: 'mainframeStatsSeal', dexTarget: 'mainframeDexSeal', tickerTarget: 'mainframeTickerMcSeal', hasShopSlug: false },
-    { collection: 'fuzzy', target: 'mainframeStatsFuzzy', dexTarget: 'mainframeDexFuzzy', tickerTarget: 'mainframeTickerMcFuzzy', hasShopSlug: false },
-    { collection: 'conspiracy', target: 'mainframeStatsConspiracy', dexTarget: 'mainframeDexConspiracy', tickerTarget: 'mainframeTickerMcConspiracy', hasShopSlug: false }
+    { collection: 'teddybg', target: 'mainframeStatsTeddybg', dexTarget: 'mainframeDexTeddybg', tickerTarget: 'mainframeTickerMcTeddybg', globalTickerTarget: 'globalTickerMcTeddybg', hasShopSlug: true },
+    { collection: 'seal', target: 'mainframeStatsSeal', dexTarget: 'mainframeDexSeal', tickerTarget: 'mainframeTickerMcSeal', globalTickerTarget: 'globalTickerMcSeal', hasShopSlug: false },
+    { collection: 'fuzzy', target: 'mainframeStatsFuzzy', dexTarget: 'mainframeDexFuzzy', tickerTarget: 'mainframeTickerMcFuzzy', globalTickerTarget: 'globalTickerMcFuzzy', hasShopSlug: false },
+    { collection: 'conspiracy', target: 'mainframeStatsConspiracy', dexTarget: 'mainframeDexConspiracy', tickerTarget: 'mainframeTickerMcConspiracy', globalTickerTarget: 'globalTickerMcConspiracy', hasShopSlug: false }
   ].forEach(function(cfg){
     Promise.all([
       cfg.hasShopSlug ? api({ stats: 1, collection: cfg.collection }).catch(function(){ return {}; }) : Promise.resolve({}),
@@ -15007,6 +15199,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       // return below since the ticker only needs marketCapUsd, not the
       // card's own holders/liquidity too.
       if (rate.marketCapUsd != null && el[cfg.tickerTarget]) el[cfg.tickerTarget].textContent = formatUsdAbbrev(rate.marketCapUsd) + ' MC';
+      // GL0BAL T!CKER's own copy of the exact same span — same value,
+      // just rendered into the persistent top bar's own element too.
+      if (rate.marketCapUsd != null && el[cfg.globalTickerTarget]) el[cfg.globalTickerTarget].textContent = formatUsdAbbrev(rate.marketCapUsd) + ' MC';
       if (stats.holders == null && rate.marketCapUsd == null && rate.liquidityUsd == null) return;
       // NFT H0LDERS is its own centered line; MARKETCAP + L!QU!D!TY share
       // the line under it, joined by " :: " — VALUE-then-LABEL reading
@@ -16661,6 +16856,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (key !== state.collection) switchCollection(key);
     showTab('database');
   });
+  // ---- PR0F!LE TABS — 0FFERS/C0LLECT!0NS, right under the banner (see
+  // the HTML's own comment on .profile-tabs). Plain show/hide, exactly
+  // one panel visible — same pattern as every other tab strip on this
+  // site, just scoped to two elements instead of a whole screen. ----
+  function switchProfileTab(tab){
+    el.profileTabPanelOffers.style.display = tab === 'offers' ? '' : 'none';
+    el.profileTabPanelCollections.style.display = tab === 'collections' ? '' : 'none';
+    el.profileTabs.querySelectorAll('.profile-tab-btn').forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-profiletab') === tab);
+    });
+  }
+  el.profileTabs.addEventListener('click', function(e){
+    var btn = e.target.closest('.profile-tab-btn');
+    if (btn) switchProfileTab(btn.getAttribute('data-profiletab'));
+  });
   function loadProfilePanel(){
     // Always starts open on a fresh visit to PR0F!LE, even if it was
     // collapsed last time this session — reported live as wanting MY
@@ -16671,12 +16881,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderProfileCoins();
     // 0FFERS — whatever loadOffersReceived/loadOutgoingOffers already
     // resolved (they run independently on wallet connect, see their own
-    // comments) renders straight into profileOffersSection here; still
-    // just "L0AD!NG..."/empty until those land if this is the very first
-    // paint after connecting.
+    // comments) renders straight into the 0FFERS profile-tab panel here;
+    // still just "L0AD!NG..."/empty until those land if this is the very
+    // first paint after connecting. 0FFERS is also always the tab this
+    // lands back on — reported live as wanting it first/default since
+    // it's the more time-sensitive of the two.
     renderMyOffersList();
     renderOutgoingOffersList();
     renderProfileWatchlist();
+    switchProfileTab('offers');
     if (!MY_WALLET){
       el.profileCurrentWallet.textContent = '';
       el.profileCurrentUsername.textContent = 'C0NNECT Y0UR WALLET F!RST.';
