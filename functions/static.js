@@ -8635,6 +8635,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     fuzzy: { label: 'FUZZY', itemLabel: 'FUZZY', tradeable: false, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2' },
     conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: true, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' }
   };
+  // Every tradeable collection gets scanned for offers, not just whichever
+  // one DATABASE happens to be browsing (state.collection) — see
+  // loadOffersReceived/loadOutgoingOffers further down. Declared here,
+  // immediately next to COLLECTION_META itself, because loadOffersReceived
+  // is already called at real top-level page-init time (around line
+  // 12347, well before its own function body appears further down this
+  // script) — a var declared down next to that function instead would
+  // still be undefined at that init call (function declarations hoist
+  // their whole body, but a var assignment only actually runs once
+  // execution reaches that line), throwing on .map of undefined and
+  // silently killing every remaining top-level statement in this script,
+  // including all the event-listener wiring below it. Confirmed live:
+  // this exact bug made a signed-in session look like "the entire website"
+  // had broken, while signed-out looked fine (loadOffersReceived's own
+  // MY_WALLET check skips the bad line entirely when logged out).
+  var OFFERS_TRADEABLE_COLLECTIONS = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].tradeable; });
 
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
@@ -14082,8 +14098,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // DATABASE happens to be browsing right now (state.collection) — a real
   // offer sitting on a Pigeon was reported as invisible here specifically
   // because DATABASE had been switched to a different collection first, so
-  // this can no longer depend on that browsing context at all.
-  var OFFERS_TRADEABLE_COLLECTIONS = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].tradeable; });
+  // this can no longer depend on that browsing context at all. (See
+  // OFFERS_TRADEABLE_COLLECTIONS' own declaration up next to
+  // COLLECTION_META for why it lives there and not here.)
   var offersReceivedPromise = null;
   function loadOffersReceived(){
     if (!MY_WALLET) return; // the endpoint requires a real session anyway
