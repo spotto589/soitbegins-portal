@@ -149,12 +149,12 @@ const SWAP_HTML = `<!DOCTYPE html>
        each control sizing to its own content. */
     --ctrl-w:190px;
 
-    /* Height of #globalTickerBar (the persistent Σκύλλα + collection-
-       marketcap strip pinned to the very top of every screen) — a real
-       variable, not a magic number repeated in both body's own padding-
-       top and #screenMainframe's top offset, which otherwise have to
-       agree by coincidence. */
-    --global-ticker-h:44px;
+    /* Height of #globalTopBar (the one real Σκύλλα banner — heading +
+       MA!NFRAME/DATABASE/Σκύλλα tabs — pinned to the very top of every
+       screen) — a real variable, not a magic number repeated in both
+       body's own padding-top and #screenMainframe/#screenDetail's own
+       top offset, which otherwise have to agree by coincidence. */
+    --global-ticker-h:92px;
   }
   /* PHN!X/TEDDY used to swap in two entirely different UNIVERSAL palettes
      here (every cyan/magenta on the page, not just the banner) — that was
@@ -247,11 +247,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--white);
     display:flex;
     justify-content:center;
-    /* Extra top padding for #globalTickerBar (position:fixed, so it
-       takes no real layout space of its own) — this only ever pushes
-       .page (a normal in-flow child) down to clear it; #screenMainframe
-       is its own fixed overlay and gets the same clearance directly via
-       its own top offset instead (see its own comment). */
+    /* Extra top padding for #globalTopBar (position:fixed, so it takes
+       no real layout space of its own) — this only ever pushes .page (a
+       normal in-flow child) down to clear it; #screenMainframe is its
+       own fixed overlay and gets the same clearance directly via its own
+       top offset instead (see its own comment). */
     padding:calc(8vh + var(--global-ticker-h)) 3vw 10vh;
     position:relative;
     /* A fresh query clears and repopulates #resultsArea, and images below
@@ -959,6 +959,29 @@ const SWAP_HTML = `<!DOCTYPE html>
       background:var(--cyan-faint);
     }
     .tab-btn-database{ grid-column:1 / -1; }
+    /* #globalTopBar overrides the boxed-grid mobile treatment right
+       above — that grid was built back when this strip carried 6 tabs
+       and needed a tappable mobile hub; now it's just 3 (MA!NFRAME/
+       DATABASE/Σκύλλα), and more importantly a multi-row grid here would
+       grow taller than the one fixed --global-ticker-h every screen's
+       own top offset assumes, overlapping real content underneath. Back
+       to a plain single-row, horizontally-scrollable strip instead —
+       same real fallback the DATABASE tab's own dropdown always relied
+       on at any width. */
+    #globalTopBar .top-tabs-wrap::before, #globalTopBar .top-tabs-wrap::after{ display:block; }
+    #globalTopBar .top-tabs{
+      display:flex;
+      overflow-x:auto;
+      grid-template-columns:none;
+    }
+    #globalTopBar .tab-btn{
+      flex:0 0 auto;
+      white-space:nowrap;
+      border:none;
+      background:none;
+      padding:0.6em 0.5em;
+    }
+    #globalTopBar .tab-btn-database{ grid-column:auto; }
   }
   .tab-db-select{ font-size:13px; }
   /* Plain text, no boxed-dropdown look — just the label itself, coloured
@@ -1043,6 +1066,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      everything else underneath/outside it. */
   .profile-banner{
     position:relative;
+    /* z-index:0 (not just position:relative) is load-bearing — it's what
+       actually establishes a real stacking context here, which the
+       ::before scrim's own z-index:-1 needs to stay confined behind
+       THIS element's children rather than escaping to wherever the
+       nearest ANCESTOR stacking context happens to be (position:relative
+       alone doesn't create one). Same reason #screenMainframe's own
+       identical trick works — it has a real z-index of its own too. */
+    z-index:0;
     width:100%;
     border-radius:var(--radius);
     background-color:var(--panel-bg-solid);
@@ -1059,6 +1090,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-banner-empty{
     background-image:linear-gradient(120deg, rgba(136,72,248,0.35), rgba(61,243,236,0.2), rgba(240,0,228,0.3));
   }
+  /* SCR!M — the banner's own background-color is sampled straight off
+     your PFP (sampleBannerColor), so it can land on genuinely ANY real
+     colour, including ones close enough to the username's green or the
+     address/EST VALUE's grey that the text became unreadable (reported
+     live). A flat dark overlay behind every child guarantees enough
+     contrast for any text colour this banner ever uses, regardless of
+     what the sampled colour happens to be, without giving up the "one
+     matching colour" effect entirely (the sampled colour still shows
+     through, just darkened). Same negative-z-index-behind-real-content
+     trick #screenMainframe's own local-static-bg already uses. */
+  .profile-banner::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.4);
+    z-index:-1;
+  }
+  .profile-banner > *{ position:relative; z-index:1; }
   /* S!GNATURE BANNER — same real identity (avatar/username/quote,
      colour-matched banner) Σκύλλα itself shows, reused wherever a
      specific wallet's own Pigeon is the point of the screen (reported
@@ -1067,6 +1116,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      rule + a size modifier (-detail/-row) so each page only needs its
      own modifier tweaked to fit, not a whole separate markup. */
   .signature-banner{
+    position:relative;
+    /* z-index:0 — load-bearing, same reasoning as .profile-banner's own
+       identical comment (its ::before scrim's z-index:-1 needs a real
+       stacking context here to stay confined, not just position). */
+    z-index:0;
     display:flex;
     align-items:center;
     border-radius:var(--radius);
@@ -1074,6 +1128,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     background-color:var(--panel-bg-solid);
     overflow:hidden;
   }
+  /* Same scrim as .profile-banner's own (see its comment) — this
+     banner's colour is sampled off a PFP too (signatureBannerHtml), so
+     it needs the exact same "readable regardless of sampled colour"
+     guarantee. */
+  .signature-banner::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.4);
+    z-index:-1;
+  }
+  .signature-banner > *{ position:relative; z-index:1; }
   .signature-banner-empty{
     background-image:linear-gradient(120deg, rgba(136,72,248,0.35), rgba(61,243,236,0.2), rgba(240,0,228,0.3));
   }
@@ -1138,10 +1204,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:center;
   }
   .profile-avatar-edit-btn:hover{ filter:brightness(1.15); }
-  /* IDENT!TY — to the RIGHT of the avatar now (reported live), left-
-     aligned to match reading that way instead of centred under it. */
-  .profile-current-info{ text-align:left; flex:1 1 auto; min-width:0; }
-  .profile-current-username-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.5rem; }
+  /* ADDRESS cluster — right of the thumbnail (reported live), bottom-
+     aligned to the exact same baseline as the avatar itself (both plain
+     flex children of a flex-end banner). */
+  .profile-current-identity{ text-align:left; flex:0 0 auto; min-width:0; }
+  /* USERNAME/QU0TE — centred "in the middle of the banner" (reported
+     live), meaning the real remaining width once the avatar+address
+     cluster on the left and the TW!TTER badge in the corner are
+     accounted for — a literal full-banner-width centre would either
+     overlap the avatar or force the banner much taller to clear it.
+     flex:1 1 auto soaks up whatever's left; align-self:center overrides
+     the banner's own align-items:flex-end just for this one piece, so
+     it reads as the banner's own centrepiece regardless of how tall the
+     avatar is. */
+  .profile-current-center{ flex:1 1 auto; align-self:center; min-width:0; text-align:center; }
+  .profile-current-username-row{ display:flex; align-items:center; justify-content:center; gap:0.5rem; }
   .profile-current-username{ font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--green); }
   /* Small, quiet edit affordance next to any click-to-edit field — real
      hit target (not just a hover cue) that jumps to the matching input
@@ -1156,7 +1233,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:color 0.15s ease;
   }
   .profile-field-edit-btn:hover{ color:var(--cyan); }
-  .profile-current-wallet-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.4rem; margin-top:0.3rem; }
+  .profile-current-wallet-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.4rem; }
   .profile-current-wallet{ font-size:13px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; }
   /* Tiny real buttons next to the address — C0PY (clipboard, same
      pattern the issuer address' own COPY button already uses) and a
@@ -1189,11 +1266,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      hiding outright — see renderProfileCurrent in the JS). */
   .profile-quote{ font-size:13px; font-style:italic; color:#fff; text-transform:none; cursor:pointer; margin-top:0.6rem; }
   .profile-quote .profile-field-edit-btn{ font-style:normal; }
-  /* TW!TTER — real black-pill X/Twitter button styling (reported live as
-     wanting it to "look like the actual twitter design") instead of a
-     plain text link — black fill, white text, the 𝕏 mark, a real rounded
-     pill, same shape X's own share/follow buttons use. */
-  .profile-twitter-row{ margin-top:0.6rem; }
+  /* TW!TTER — top-right corner of the banner now (reported live), real
+     black-pill X/Twitter button styling (reported live as wanting it to
+     "look like the actual twitter design") instead of a plain text link
+     — black fill, white text, the 𝕏 mark, a real rounded pill, same
+     shape X's own share/follow buttons use. Absolutely positioned (not a
+     flex child) so it sits in its own corner regardless of the avatar/
+     identity/username layout below it. */
+  .profile-twitter-row{ position:absolute; top:1rem; right:1rem; }
   .profile-twitter-link{
     display:inline-flex;
     align-items:center;
@@ -1233,11 +1313,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profile-field-highlight{ animation:profileFieldHighlight 1.1s ease; }
   @media (max-width:600px){
-    .profile-banner{ padding:1rem; gap:0.85rem; }
+    /* Wraps to a second row (the centred username/quote block) instead
+       of cramming avatar+address+username all into one line — same real
+       content, just stacked once there's genuinely not enough width for
+       all three side by side. */
+    .profile-banner{ padding:1rem; gap:0.6rem; flex-wrap:wrap; }
     .profile-avatar-wrap{ margin-left:0; margin-bottom:-1rem; }
     .profile-current-avatar{ width:150px; height:150px; }
     .profile-avatar-edit-btn{ width:28px; height:28px; font-size:16px; right:-6px; bottom:-6px; }
     .profile-current-username{ font-size:20px; }
+    .profile-current-center{ flex-basis:100%; align-self:auto; order:1; margin-top:0.5rem; }
+    .profile-twitter-row{ top:0.65rem; right:0.65rem; }
   }
   /* Currently-selected pfp in the picker grid — same green highlight the
      rest of the app uses for "this is the real/active one" (see
@@ -4612,7 +4698,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail{
     position:fixed;
     /* top instead of inset:0's implicit 0 — same reasoning as
-       #screenMainframe's own comment: #globalTickerBar sits at a higher
+       #screenMainframe's own comment: #globalTopBar sits at a higher
        z-index than this (2200 vs 70) so without this its fixed 44px
        strip would sit on top of (not push down) this box's own top
        content — the ← BACK/P!GE0N # row and the new S!GNATURE BANNER
@@ -6215,10 +6301,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenMainframe{
     display:none;
     position:fixed;
-    /* top instead of inset:0's implicit 0 — leaves #globalTickerBar (a
+    /* top instead of inset:0's implicit 0 — leaves #globalTopBar (a
        higher z-index sibling, see its own comment) visible above this
        overlay instead of covered by it, same "on every screen" real
-       estate #globalTickerBar claims everywhere else. */
+       estate #globalTopBar claims everywhere else. */
     top:var(--global-ticker-h);
     left:0;
     right:0;
@@ -6238,7 +6324,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:var(--bg);
     overflow:hidden;
     /* No explicit height any more — top+bottom above already pin this to
-       exactly "the rest of the viewport under #globalTickerBar" (an
+       exactly "the rest of the viewport under #globalTopBar" (an
        explicit height here would win over bottom and silently undo
        that). */
     padding:2rem 1.5rem;
@@ -6280,175 +6366,66 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   #screenMainframe > .local-static-bg{ z-index:-1; }
   #screenMainframe > *:not(.local-static-bg){ position:relative; z-index:1; }
-  /* GL0BAL T!CKER BAR — see the HTML's own comment on why this exists
-     separately from #screenMainframe's own big hero. Fixed, full-width,
-     ABOVE #screenMainframe (z-index:2000) so it's genuinely on every
-     screen including that overlay, not just .page's own tabs.
-     Σκύλλα://S!GNAL::0NL!NE sits fixed at the true top-left (reported
-     live wanting it there specifically, not just "first in the row"),
-     the six collection buttons then STRETCH to fill every remaining
-     pixel across the rest of the bar (flex:1 1 0 each, reported live as
-     wanting them "longer to fit across the page horizontally") instead
-     of staying compact pills — horizontal scroll is still there as a
-     narrow-viewport fallback, but stretching is what actually fills a
-     normal-width screen now. */
-  #globalTickerBar{
+  /* GL0BAL T0P BAR — see the HTML's own comment: ONE real banner now
+     (reported live as "we have two banners, just make it the one"),
+     replacing both the old separate ticker strip and #screenMainframe's
+     own duplicate hero. Fixed, full-width, ABOVE #screenMainframe
+     (z-index:2000) so it's genuinely on every screen including that
+     overlay, not just .page's own tabs. Solid background, no
+     backdrop-filter — a blurred ancestor becomes the containing block
+     for any position:fixed descendant (CSS spec), which would silently
+     break #dbSelectFlyout (position:fixed, now living inside this bar)
+     the same way openSortFlyout/openTraitsFlyout's own comment already
+     warns about elsewhere in this file. */
+  #globalTopBar{
     position:fixed;
     top:0;
     left:0;
     right:0;
     z-index:2200;
-    height:var(--global-ticker-h);
     display:flex;
     align-items:center;
-    justify-content:flex-start;
-    gap:0.6rem;
-    padding:0 0.75rem;
-    background:rgba(9,9,7,0.92);
+    gap:1.5rem;
+    padding:0.6rem 1.25rem;
+    background:var(--bg);
     border-bottom:1px solid var(--border-mid);
-    backdrop-filter:blur(6px);
-    overflow-x:auto;
-    scrollbar-width:none;
   }
-  #globalTickerBar::-webkit-scrollbar{ display:none; }
-  /* Σκύλλα — a real button now (border, background, hover fill), not
-     just coloured text — reported live as the old hero's plain text
-     link "not being obvious it's a button". Pinned top-left, never
-     shrinks/stretches — the six collection buttons absorb all the extra
-     width instead (see .global-ticker-items below). */
-  #globalTickerScyllaBtn{
+  /* Σκύλλα://S!GNAL::0NL!NE — same real heading/glitch-text styling the
+     base h1 rule always gives it, just sized to actually fit this bar
+     alongside the tab strip instead of the clamp(24px,7vw,76px) a
+     full-width page hero needs. Pinned top-left (reported live wanting
+     it there specifically), never shrinks — the tab strip absorbs the
+     rest of the row's width instead. */
+  #globalTopBarHeading{
     flex:0 0 auto;
-    background:rgba(255,51,204,0.12);
-    border:1px solid var(--magenta);
-    color:var(--magenta);
-    text-shadow:0 0 6px var(--magenta-glow);
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:14px;
-    letter-spacing:0.04em;
-    text-transform:uppercase;
-    padding:0.4em 0.9em;
-    border-radius:var(--radius);
-    cursor:pointer;
-    white-space:nowrap;
-    transition:background 0.15s ease, box-shadow 0.15s ease;
+    margin:0;
+    font-size:20px;
+    line-height:1.1;
   }
-  #globalTickerScyllaBtn:hover, #globalTickerScyllaBtn:focus-visible{
-    background:var(--magenta);
-    color:#08090b;
-    text-shadow:none;
-    box-shadow:0 0 14px var(--magenta-glow);
+  #globalTopBarHeading .h1-sub{ font-size:0.55em; cursor:pointer; }
+  /* The tab strip itself is unchanged (.top-tabs-wrap/.top-tabs/.tab-btn
+     all keep their own real styling) — only the vertical rhythm tuned
+     for sitting below a full-page hero (margin-top/-bottom, its own
+     divider line) needs resetting now that it's a compact row inside
+     this bar instead. */
+  #globalTopBar .top-tabs-wrap{ flex:1 1 auto; min-width:0; }
+  #globalTopBar .top-tabs{ margin:0; border-bottom:none; }
+  /* .top-tabs-wrap's own scroll-fade hints assume the old vertical
+     margin context (bottom:1.75rem, stopping above .top-tabs' own
+     margin-bottom) — reset flush to 0 here since that margin is gone. */
+  #globalTopBar .top-tabs-wrap::before, #globalTopBar .top-tabs-wrap::after{ bottom:0; }
+  /* Never wraps to a second line, at any width — #screenMainframe/
+     #screenDetail/body's own padding-top all key off one fixed
+     --global-ticker-h value for this bar's height; a wrapped second row
+     would silently grow past that and get overlapped. The tab strip's
+     own overflow-x:auto (same as it always had) is what actually
+     handles a narrow viewport instead, exactly like the DATABASE
+     dropdown always relied on. */
+  @media (max-width:700px){
+    #globalTopBar{ gap:0.75rem; padding:0.5rem 1rem; }
+    #globalTopBarHeading{ font-size:15px; }
+    #globalTopBarHeading .h1-sub{ display:none; }
   }
-  .global-ticker-items{ display:flex; gap:0.5rem; flex:1 1 auto; min-width:0; }
-  #globalTickerBar .mainframe-ticker-item{ flex:1 1 0; min-width:0; font-size:11px; padding:0.4em 0.5em; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  @media (max-width:600px){
-    #globalTickerScyllaBtn{ font-size:12px; padding:0.35em 0.7em; }
-    /* Six equal-stretch buttons at 600px+ can't shrink further without
-       becoming unreadable — back to compact auto-width pills with
-       horizontal scroll on the bar itself below this width. */
-    .global-ticker-items{ flex:0 0 auto; }
-    #globalTickerBar .mainframe-ticker-item{ flex:0 0 auto; }
-  }
-  /* HER0 — just the one headline now, which IS Σκύλλα's own button (see
-     the HTML's own comment on .mainframe-hero-btn/#mainframeProfileBtn) —
-     the separate CTA below it and its one-line tagline are both gone,
-     reported live as wanting these "made into one" thing instead of a
-     headline sitting above a second, separate control. flex:0 0 auto
-     keeps it from eating into the carousel's space below, same reasoning
-     the old bare h1 rule already used. */
-  .mainframe-hero{
-    flex:0 0 auto;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    /* Real "hanging banner" treatment (reported live) — a distinct bar
-       with its own background/border/shadow reading as suspended from
-       the very top of the screen, bled edge-to-edge via a negative
-       margin matching #screenMainframe's own padding (2rem 1.5rem)
-       instead of just plain page text sitting inside that padding. */
-    background:rgba(9,9,7,0.55);
-    border-bottom:1px solid var(--border-mid);
-    box-shadow:0 12px 28px rgba(0,0,0,0.35);
-    padding:1.5rem 1rem 1rem;
-    margin:-2rem -1.5rem 0;
-    width:calc(100% + 3rem);
-  }
-  /* T!CKER — every collection, clickable straight into its own DATABASE
-     (enterMainframeCollection, same as its own card below), each in its
-     real accent colour (--card-accent, same convention the cards
-     already use) with a live MARKETCAP figure filled in by the same
-     stats fetch the cards make (see the JS). Horizontal scroll instead
-     of wrapping — 6 items plus real numbers doesn't fit one line at
-     most widths, and a ticker reads naturally as a scrollable strip. */
-  .mainframe-ticker{
-    display:flex;
-    gap:0.6rem;
-    margin-top:1rem;
-    max-width:100%;
-    overflow-x:auto;
-    padding-bottom:0.25rem;
-    scrollbar-width:none;
-  }
-  .mainframe-ticker::-webkit-scrollbar{ display:none; }
-  .mainframe-ticker-item{
-    flex:0 0 auto;
-    background:rgba(var(--card-accent, 61,243,236), 0.1);
-    border:1px solid rgb(var(--card-accent, 61,243,236));
-    color:rgb(var(--card-accent, 61,243,236));
-    text-shadow:0 0 6px rgba(var(--card-accent, 61,243,236), 0.5);
-    font-family:var(--font-mono);
-    font-weight:700;
-    font-size:12px;
-    letter-spacing:0.03em;
-    text-transform:uppercase;
-    white-space:nowrap;
-    padding:0.6em 0.9em;
-    border-radius:var(--radius);
-    cursor:pointer;
-    transition:background 0.15s ease, box-shadow 0.15s ease;
-  }
-  .mainframe-ticker-item:hover{
-    background:rgb(var(--card-accent, 61,243,236));
-    color:#000;
-    text-shadow:none;
-    box-shadow:0 0 14px rgba(var(--card-accent, 61,243,236), 0.5);
-  }
-  .mainframe-ticker-item span{ opacity:0.85; }
-  /* No real browsable DATABASE yet for these four (see the HTML's own
-     comment) — same real-info-but-not-clickable-to-browse treatment as
-     their own mainframe-card below, just cursor:default instead of a
-     hover-fill promising a click that wouldn't do anything. */
-  .mainframe-ticker-item-soon{ cursor:default; }
-  .mainframe-ticker-item-soon:hover{
-    background:rgba(var(--card-accent, 61,243,236), 0.1);
-    color:rgb(var(--card-accent, 61,243,236));
-    text-shadow:0 0 6px rgba(var(--card-accent, 61,243,236), 0.5);
-    box-shadow:none;
-  }
-  @media (max-width:600px){
-    .mainframe-hero{ margin:-1.5rem -1rem 0; width:calc(100% + 2rem); padding:1.25rem 0.75rem 0.85rem; }
-  }
-  /* The headline itself, now interactive — same size/weight/glitch text-
-     shadow the plain h1 rule already gives it (this only adds the
-     clickable affordance), capped smaller than the persistent page's own
-     H1 (up to 104px there) specifically here, so the whole screen
-     reliably fits with zero scroll on a short window too, not just a tall
-     one. cursor:pointer + a hover/focus glow are the only real signal
-     this is clickable now that there's no separate button spelling that
-     out — brightens on hover/keyboard-focus rather than changing size, so
-     it never shifts the six cards below it. */
-  .mainframe-hero-btn{
-    font-size:clamp(26px, 5.5vw, 58px);
-    margin-bottom:0;
-    text-align:center;
-    cursor:pointer;
-    -webkit-tap-highlight-color:transparent;
-    transition:filter 0.15s ease;
-  }
-  .mainframe-hero-btn:hover, .mainframe-hero-btn:focus-visible{
-    filter:brightness(1.25) drop-shadow(0 0 18px var(--magenta-dim));
-  }
-  .mainframe-hero-btn:focus-visible{ outline:1px solid var(--magenta); outline-offset:6px; }
   /* SECT!0N HEADER — STAT!C :: MA!NFRAME/SELECT A C0LLECT!0N, now its own
      clearly separate block directly over the collection grid rather than
      glued underneath the identity hero above — "the static IS the
@@ -6843,29 +6820,44 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   <canvas id="staticBg"></canvas>
 
-  <!-- GL0BAL T!CKER — Σκύλλα itself plus every collection's live
-       MARKETCAP, pinned to the very top of EVERY screen now (reported
-       live as wanting this "on all pages" since "this is the hub"), not
-       just the MA!NFRAME landing screen's own big hero (#screenMainframe
-       .mainframe-hero further down keeps that separately — this is a
-       second, much smaller copy purpose-built to sit permanently at the
-       top). One real single-line strip (horizontal scroll instead of
-       wrap, same reasoning .mainframe-ticker's own comment already gives)
-       — a fixed z-index:2200 sibling of #screenMainframe (z-index:2000),
-       so it stays visible even while that overlay is up (see its own
-       "top:var(--global-ticker-h)" instead of inset:0). globalTicker-
-       ScyllaBtn is a real, obviously-clickable button now (border/hover
-       fill, not just coloured text) — reported live as the plain
-       "Σκύλλα" text "not being obvious it's a button" on the old hero. -->
-  <div id="globalTickerBar">
-    <button type="button" id="globalTickerScyllaBtn">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></button>
-    <div class="global-ticker-items" id="globalTickerItems">
-      <button type="button" class="mainframe-ticker-item" data-collection="pigeons" style="--card-accent:136,72,248;">$P!GE0NS <span id="globalTickerMcPigeons"></span></button>
-      <button type="button" class="mainframe-ticker-item" data-collection="phnixs" style="--card-accent:255,90,31;">$PHN!X <span id="globalTickerMcPhnixs"></span></button>
-      <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:166,99,46;">$TEDDY <span id="globalTickerMcTeddybg"></span></button>
-      <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:45,140,168;">$SEAL <span id="globalTickerMcSeal"></span></button>
-      <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:122,66,26;">$FUZZY <span id="globalTickerMcFuzzy"></span></button>
-      <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:240,0,228;">$C0NSP!RACY <span id="globalTickerMcConspiracy"></span></button>
+  <!-- GL0BAL T0P BAR — ONE real banner now (reported live as "at the
+       moment were all over the place... we have two banners, just make
+       it the one"), replacing both the separate global ticker strip
+       this used to be AND #screenMainframe's own duplicate hero further
+       down. Σκύλλα://S!GNAL::0NL!NE (exactly the same heading/heading
+       styling as always) sits top-left, the real MA!NFRAME/DATABASE/
+       Σκύλλα tab strip (moved here from .page — same #topTabsWrap/
+       #topTabs, unchanged ids so none of its own wiring needed to
+       change) sits to its right. Fixed, z-index:2200 — ABOVE
+       #screenMainframe (z-index:2000) so it's genuinely the one banner
+       on every screen, including that overlay, not just .page's own
+       tabs. -->
+  <div id="globalTopBar">
+    <h1 id="globalTopBarHeading">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub" id="mainframeReopenLabel">STAT!C :: MA!NFRAME</span></h1>
+    <div class="top-tabs-wrap" id="topTabsWrap">
+    <div class="top-tabs" id="topTabs">
+      <button class="tab-btn" data-tab="mainframe">MA!NFRAME</button>
+      <button class="tab-btn tab-btn-database" data-tab="database">
+        DATABASE ::
+        <div class="traits-hover-wrap tab-db-select" id="dbSelectWrap">
+          <span class="trait-row-label" id="dbSelectLabel">P!GE0NS ▾</span>
+          <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
+            <div class="db-option db-option-active" data-collection="pigeons">P!GE0NS</div>
+            <!-- PHN!X/TEDDY pulled back to C0M!NG S00N (matching FUZZY's own
+                 disabled pattern — no data-collection, so neither the flyout
+                 click handler nor switchCollection's own querySelectorAll
+                 above can ever select them) while Pigeons gets hardened
+                 into the real template first — see COLLECTION_META/
+                 TRADEABLE_COLLECTIONS' own comments on why. -->
+            <div class="db-option db-option-disabled db-option-phnix">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
+            <div class="db-option db-option-disabled db-option-teddy">TEDDY <span class="db-soon">C0M!NG S00N</span></div>
+            <div class="db-option db-option-disabled db-option-fuzzy">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
+          </div>
+        </div>
+      </button>
+      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;" id="flockTabLabel">Σκύλλα</span></button>
+      <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
+    </div>
     </div>
   </div>
 
@@ -6877,51 +6869,12 @@ const SWAP_HTML = `<!DOCTYPE html>
        the DATABASE dropdown already does today. -->
   <div id="screenMainframe">
     <canvas class="local-static-bg" id="mainframeStaticBg"></canvas>
-    <!-- HER0 — the headline itself IS Σκύλλα's own button now (one thing,
-         not a headline sitting above a separate CTA below it, reported
-         live as wanting these "made into one" plus the tagline dropped —
-         the headline's own text already carries who this is). role=
-         "button"/tabindex instead of a real <button> wrapping the h1:
-         a <button> can't validly contain a heading (browsers silently
-         hoist block content like that back out, breaking the DOM — same
-         reasoning .mainframe-card's own markup comment already gives for
-         using role="button" on a div instead of nesting a real button).
-         Same id (mainframeProfileBtn) as the old separate button, so its
-         existing click handler needs no change; a keydown handler right
-         next to that one adds Enter/Space activation (see the JS). -->
-    <!-- Now a real "hanging banner" (reported live) — the headline plus a
-         horizontal ticker of every collection, each in its own real
-         accent colour (same accentRgb COLLECTION_META already uses for
-         the cards below), showing its own live MARKETCAP. Clicking any
-         ticker item goes straight into that collection's DATABASE, same
-         as clicking its own card further down (enterMainframeCollection
-         — see the JS). Market cap text is filled in by the exact same
-         live stats fetch the cards below already make (see the
-         [{collection...}].forEach block in the JS) — no second fetch. -->
-    <div class="mainframe-hero">
-      <h1 class="mainframe-hero-btn" id="mainframeProfileBtn" role="button" tabindex="0">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></h1>
-      <!-- P!GE0NS/PHN!X are the only two with a real browsable NFT
-           collection right now (same reason mainframeGrid's own TEDDY/
-           SEAL/FUZZY/C0NSP!RACY cards carry no data-collection/role
-           either — no real issuer/taxon exists yet for those four) —
-           only these two get data-collection so the click handler below
-           actually enters DATABASE; the other four still show their real
-           live MARKETCAP but aren't clickable-to-browse. -->
-      <div class="mainframe-ticker" id="mainframeTicker">
-        <button type="button" class="mainframe-ticker-item" data-collection="pigeons" style="--card-accent:136,72,248;">$P!GE0NS <span id="mainframeTickerMcPigeons"></span></button>
-        <button type="button" class="mainframe-ticker-item" data-collection="phnixs" style="--card-accent:255,90,31;">$PHN!X <span id="mainframeTickerMcPhnixs"></span></button>
-        <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:166,99,46;">$TEDDY <span id="mainframeTickerMcTeddybg"></span></button>
-        <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:45,140,168;">$SEAL <span id="mainframeTickerMcSeal"></span></button>
-        <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:122,66,26;">$FUZZY <span id="mainframeTickerMcFuzzy"></span></button>
-        <button type="button" class="mainframe-ticker-item mainframe-ticker-item-soon" style="--card-accent:240,0,228;">$C0NSP!RACY <span id="mainframeTickerMcConspiracy"></span></button>
-      </div>
-    </div>
-    <!-- SECT!0N HEADER — STAT!C :: MA!NFRAME/SELECT A C0LLECT!0N moved out
-         of the hero block above and given its own clearly separate row
-         directly over the collection grid, reported live as "the static
-         IS the database/system that shows all the data" — this is a real
-         sub-heading introducing the picker below, not a caption glued to
-         the identity headline above it. -->
+    <!-- The old in-screen hero (headline + its own ticker) is gone —
+         #globalTopBar above now provides the one real Σκύλλα banner on
+         every screen including this one (reported live as "we have two
+         banners, just make it the one"). This section header is what's
+         left: a real sub-heading introducing the picker below, not a
+         caption glued to an identity headline any more. -->
     <div class="mainframe-section-header">
       <div class="mainframe-static-label">STAT!C :: MA!NFRAME</div>
       <div class="mainframe-subtitle">SELECT A C0LLECT!0N</div>
@@ -7075,44 +7028,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   </div>
 
   <div class="page">
-    <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub" id="mainframeReopenLabel">STAT!C :: MA!NFRAME</span></h1>
-
-    <!-- MA!NFRAME/DATABASE/Σκύλλα — only 3 real options now (reported
-         live), T0P 123 H0LDERS/SALES H!ST0RY/CR0WN all moved elsewhere
-         (the DATABASE banner's own vertical buttons, and Σκύλλα's own
-         profileBoxGrid, respectively — see their own comments). MA!NFRAME
-         itself doesn't switch state.activeTab at all — it just reopens
-         the existing #screenMainframe overlay (see the JS click handler),
-         same behaviour the old mainframeReopenLabel/mainframeProfileBtn
-         always had. DATABASE itself carries the collection picker (see
-         .tab-db-select / dbSelectWrap) instead of that living as its own
-         separate row above the strip. -->
-    <div class="top-tabs-wrap" id="topTabsWrap">
-    <div class="top-tabs" id="topTabs">
-      <button class="tab-btn" data-tab="mainframe">MA!NFRAME</button>
-      <button class="tab-btn tab-btn-database" data-tab="database">
-        DATABASE ::
-        <div class="traits-hover-wrap tab-db-select" id="dbSelectWrap">
-          <span class="trait-row-label" id="dbSelectLabel">P!GE0NS ▾</span>
-          <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
-            <div class="db-option db-option-active" data-collection="pigeons">P!GE0NS</div>
-            <!-- PHN!X/TEDDY pulled back to C0M!NG S00N (matching FUZZY's own
-                 disabled pattern — no data-collection, so neither the flyout
-                 click handler nor switchCollection's own querySelectorAll
-                 above can ever select them) while Pigeons gets hardened
-                 into the real template first — see COLLECTION_META/
-                 TRADEABLE_COLLECTIONS' own comments on why. -->
-            <div class="db-option db-option-disabled db-option-phnix">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
-            <div class="db-option db-option-disabled db-option-teddy">TEDDY <span class="db-soon">C0M!NG S00N</span></div>
-            <div class="db-option db-option-disabled db-option-fuzzy">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
-          </div>
-        </div>
-      </button>
-      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;" id="flockTabLabel">Σκύλλα</span></button>
-      <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
-    </div>
-    </div>
-
+    <!-- Σκύλλα://S!GNAL::0NL!NE + the MA!NFRAME/DATABASE/Σκύλλα tab strip
+         both moved into #globalTopBar now (reported live as wanting "the
+         one" banner instead of two) — see the HTML further up. -->
     <!-- Trustline banner, on its own now — the stats carousel that used to
          merge into this same box moved to DATABASE itself, right above
          SEARCH!NG $P!GE0NS DATABASE (see #collectionDetailsPanel further
@@ -7349,27 +7267,34 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
           <button type="button" class="profile-avatar-edit-btn" id="profileAvatarEditBtn" title="CHANGE PR0F!LE P!CTURE">+</button>
         </div>
-        <!-- IDENT!TY — to the RIGHT of the avatar, both inside the same
-             banner (reported live), left-aligned: USERNAME, then ADDRESS
-             (with its own real COPY button + a direct B!TH0MP link), then
-             EST VALUE (mirrors MY C0!NS' own T0TAL P0RTF0L!0 VALUE — see
-             recomputeTotal in renderProfileCoins), then the QU0TE, then
-             TW!TTER styled like the real X button. -->
-        <div class="profile-current-info">
-          <div class="profile-current-username-row">
-            <span class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</span>
-            <button type="button" class="profile-field-edit-btn" id="profileUsernameEditBtn" title="EDIT USERNAME">✎</button>
-          </div>
+        <!-- ADDRESS — right of the thumbnail now (reported live), same
+             bottom-aligned baseline as the avatar itself (both plain flex
+             children of the banner, align-items:flex-end). EST VALUE sits
+             right under it — the other real "fact about this wallet",
+             not personal branding like the username/quote. -->
+        <div class="profile-current-identity">
           <div class="profile-current-wallet-row">
             <span class="profile-current-wallet" id="profileCurrentWallet"></span>
             <button type="button" class="profile-mini-btn" id="profileAddressCopyBtn" title="C0PY ADDRESS">⧉</button>
             <a class="profile-mini-btn" id="profileAddressBithompLink" target="_blank" rel="noopener" title="V!EW 0N B!TH0MP">↗</a>
           </div>
           <div class="profile-current-estvalue">EST VALUE :: <span id="profileCurrentEstValue">--</span></div>
-          <div class="profile-quote" id="profileCurrentQuote"></div>
-          <div class="profile-twitter-row">
-            <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener"></a>
+        </div>
+        <!-- USERNAME — centred in the banner now (reported live), the
+             QU0TE directly underneath it — both absolutely positioned so
+             they read as the banner's own centrepiece regardless of how
+             wide the avatar/address cluster on the left or the TW!TTER
+             badge in the corner happen to be. -->
+        <div class="profile-current-center">
+          <div class="profile-current-username-row">
+            <span class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</span>
+            <button type="button" class="profile-field-edit-btn" id="profileUsernameEditBtn" title="EDIT USERNAME">✎</button>
           </div>
+          <div class="profile-quote" id="profileCurrentQuote"></div>
+        </div>
+        <!-- TW!TTER — top right corner of the banner now (reported live). -->
+        <div class="profile-twitter-row">
+          <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener"></a>
         </div>
       </div>
       <!-- PR0F!LE B0X GR!D — sits right under the banner now (reported
@@ -8641,6 +8566,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     collection: 'pigeons',     // 'pigeons' | 'phnixs' | 'teddybg' — see COLLECTION SELECTION (dbSelectFlyout) and switchCollection()
     scope: null,              // null (whole collection) or { wallet, ownerShort }
     flockCollapsed: false,    // Always expanded now — its own toggle box (flockMyFlockBox) is gone (see updateSearchPanelTitleForPaws)
+    // Σκύλλα no longer auto-scopes/shows your own NFT grid the instant
+    // the tab opens (reported live as wanting it to "show nothing" by
+    // default) — only the C0LLECT!0NS box in profileBoxGrid opens it now
+    // (see switchProfileTab). Gates showTab's own browse-chrome/
+    // myPigeonsPanel visibility on the mypigeons tab alongside
+    // isOwnWalletScope(), which alone used to be enough.
+    myPigeonsGridOpen: false,
     skip: 0,                  // how many items already loaded, for infinite scroll
     editionRawSkip: 0,        // position in the underlying sorted collection, for edition LOW/HIGH scans
     hasMore: true,
@@ -8748,10 +8680,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
-   'mainframeTicker','mainframeTickerMcPigeons','mainframeTickerMcPhnixs','mainframeTickerMcTeddybg','mainframeTickerMcSeal','mainframeTickerMcFuzzy','mainframeTickerMcConspiracy',
-   'globalTickerBar','globalTickerScyllaBtn','globalTickerItems',
-   'globalTickerMcPigeons','globalTickerMcPhnixs','globalTickerMcTeddybg','globalTickerMcSeal','globalTickerMcFuzzy','globalTickerMcConspiracy',
-   'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
+   'globalTopBar','globalTopBarHeading',
+   'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
    'profileBoxGrid','profileTabOffersBadge','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelCrown',
@@ -9056,6 +8986,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // "SH0W!NG Y0UR P!GE0NS" — reported live as only wanting that jump from
   // a real destination further down, not from opening the tab itself.
   function showTab(tab, skipScroll){
+    // A genuinely fresh arrival on Σκύλλα (coming from a different tab),
+    // not a re-entrant call from something already ON this tab (e.g.
+    // switchProfileTab's own browseOwnerCollection call once C0LLECT!0NS
+    // is clicked — that also lands back on showTab('mypigeons') as part
+    // of the exact same click, and must NOT reset the box grid selection
+    // it just made). Captured before state.activeTab is overwritten
+    // below — loadProfilePanel only resets to the neutral/nothing-open
+    // state on a real fresh arrival.
+    var enteringFreshMyPigeons = tab === 'mypigeons' && state.activeTab !== 'mypigeons';
     // 0FFER F0R picking mode (enterTheirsPickMode) legitimately visits
     // DATABASE mid-search, and comes back to PλWS itself once a pick is
     // made — cancel it only when heading somewhere unrelated (T0P 123,
@@ -9065,22 +9004,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       state.simpleOfferPickingTheirs = false;
       document.body.classList.remove('picking-theirs');
     }
-    // PλWS shows the exact same DATABASE grid/detail view — not a
-    // separate look — just scoped to your own wallet. Delegates straight
-    // to browseOwnerCollection (same call SH0W MY P!GE0NS already makes),
-    // which sets state.scope then calls back into showTab('mypigeons')
-    // itself once scoped — guarded by the isOwnWalletScope() check below
-    // so that second call falls through to the normal body instead of
-    // looping back here again.
-    if (tab === 'mypigeons' && MY_WALLET && !isOwnWalletScope()){
-      // No separate loadMyPigeons() call here any more — browseOwner-
-      // Collection's own fetch below is the exact same data (your own
-      // wallet's Pigeons) and mirrors it into myPigeonsData itself once
-      // it lands (see its isSelf branches). A second independent fetch
-      // racing it was what made this feel slow/glitchy on open.
-      browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
-      return;
-    }
+    // Σκύλλα used to auto-delegate straight to browseOwnerCollection the
+    // instant this tab opened (scoping to your own wallet and showing
+    // the NFT grid immediately) — reported live as wanting it to "show
+    // nothing" by default instead, with your own collection only ever
+    // reachable through the real C0LLECT!0NS box now (see
+    // switchProfileTab, which calls browseOwnerCollection itself once
+    // that box is actually clicked). No auto-scoping here any more.
     state.activeTab = tab;
     // STAT!C :: MA!NFRAME/DATABASE title — reported live as wanting this
     // to actually track the active tab instead of always reading
@@ -9117,10 +9047,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.collectionDetailsPanel.style.display = tab === 'database' ? '' : 'none';
     // screenBrowse (search/sort/filter row, results grid, detail overlay)
     // is shared by DATABASE and PλWS now — only shown for 'mypigeons' once
-    // actually scoped to your own wallet; before that (no session yet,
-    // still connecting), staying hidden avoids briefly showing a stale/
-    // unrelated grid underneath the CONNECTING status.
-    var showBrowseChrome = tab === 'database' || (tab === 'mypigeons' && isOwnWalletScope());
+    // actually scoped to your own wallet AND the real C0LLECT!0NS box has
+    // actually been clicked (state.myPigeonsGridOpen — see switchProfile-
+    // Tab). Reported live as wanting Σκύλλα to "show nothing" on open
+    // rather than auto-scoping straight into this grid.
+    var showBrowseChrome = tab === 'database' || (tab === 'mypigeons' && isOwnWalletScope() && state.myPigeonsGridOpen);
     el.screenBrowse.style.display = showBrowseChrome ? '' : 'none';
     // S0RT BY / F!LTER BY TRA!TS — DATABASE only now, not MY P!GE0NS
     // (the Σκύλλα-connected wallet view) — reported live as not wanting
@@ -9137,12 +9068,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     document.body.classList.toggle('has-bottom-bar', showSortFilterChrome);
     if (!showSortFilterChrome){ closeSortFlyout(); closeTraitsFlyout(); }
     // myPigeonsPanel only has real content left (connect status, CONNECT
-    // button) while not yet scoped — title/offers-summary/pigeon-grid all
-    // moved out (see renderMyPigeonsList/showTab history), so leaving it
-    // visible once actually scoped left a genuinely empty bordered box
-    // sitting above screenBrowse. Hidden the instant screenBrowse itself
-    // takes over, same condition as its own visibility above.
-    el.myPigeonsPanel.style.display = (tab === 'mypigeons' && !isOwnWalletScope()) ? '' : 'none';
+    // button) for a genuinely disconnected wallet — loadMyPigeons' own
+    // comment confirms there's nothing left to show once MY_WALLET is
+    // set (auto-login already fires elsewhere). Showing it whenever
+    // merely "not yet scoped" would now mean an empty bordered box on
+    // every ordinary Σκύλλα visit, since scoping no longer happens
+    // automatically (see showBrowseChrome's own comment).
+    el.myPigeonsPanel.style.display = (tab === 'mypigeons' && !MY_WALLET) ? '' : 'none';
     // T0P 123 H0LDERS/SALES H!ST0RY/CR0WN are real popups/profile boxes
     // now (openTopHoldersModal/openSalesModal, profileBoxGrid's own CR0WN
     // box) — no longer separate top-level tabs, so showTab never needs to
@@ -9227,8 +9159,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!btn) return;
     var tab = btn.getAttribute('data-tab');
     // MA!NFRAME doesn't switch state.activeTab at all — it just reopens
-    // the existing full-screen overlay, same as mainframeReopenLabel/
-    // mainframeProfileBtn already do, so this returns before reaching
+    // the existing full-screen overlay, same as mainframeReopenLabel's
+    // own click handler already does, so this returns before reaching
     // showTab (which has no 'mainframe' case of its own).
     if (tab === 'mainframe'){
       el.screenMainframe.style.display = 'flex';
@@ -14903,21 +14835,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     hideMainframe();
     showTab('database');
   }
-  // T!CKER — only P!GE0NS/PHN!X carry data-collection (see the HTML's own
-  // comment on why), so this only ever fires enterMainframeCollection for
-  // those two; a click on one of the other four's own item just does
-  // nothing, same as their own mainframe-card below.
-  el.mainframeTicker.addEventListener('click', function(e){
-    var item = e.target.closest('.mainframe-ticker-item[data-collection]');
-    if (item) enterMainframeCollection(item.getAttribute('data-collection'));
-  });
-  // GL0BAL T!CKER's own copy of the exact same collection items — same
-  // enterMainframeCollection (it already handles hiding MA!NFRAME and
-  // entering DATABASE itself, whichever screen this was clicked from).
-  el.globalTickerItems.addEventListener('click', function(e){
-    var item = e.target.closest('.mainframe-ticker-item[data-collection]');
-    if (item) enterMainframeCollection(item.getAttribute('data-collection'));
-  });
   // Drag-to-scroll (mouse) — trackpad/touch already scroll #mainframeGrid
   // natively via its own overflow-x:auto, this is just the desktop-mouse
   // equivalent ("drag and scroll through", reported live). Tracks total
@@ -15010,32 +14927,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.mainframeReopenLabel.textContent = 'STAT!C :: MA!NFRAME';
   });
   // Σκύλλα IS the profile/hub page now (reported live as "we dont need
-  // both") — always the same tab either way, connected or not.
-  // PR0F!LE's own content (banner/avatar/MY C0!NS) now renders right at
-  // the top of this same tab (see showTab's own profilePanelWrap
-  // condition) — no separate destination to branch to any more.
-  el.mainframeProfileBtn.addEventListener('click', function(){
-    hideMainframe();
-    showTab('mypigeons', true);
-    if (!MY_WALLET) startAuthorize();
-  });
-  // Keyboard equivalent — #mainframeProfileBtn is the headline itself now
-  // (role="button"/tabindex, see the HTML's own comment on why this
-  // can't be a real <button> wrapping an h1), so Enter/Space need their
-  // own handler the same way mainframeGrid's own cards already do.
-  el.mainframeProfileBtn.addEventListener('keydown', function(e){
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    e.preventDefault();
-    el.mainframeProfileBtn.click();
-  });
-  // GL0BAL T!CKER's own Σκύλλα button — same exact behaviour as the
-  // MA!NFRAME hero's own (a real <button> already, no separate keydown
-  // handler needed the way the role="button" h1 above does).
-  el.globalTickerScyllaBtn.addEventListener('click', function(){
-    hideMainframe();
-    showTab('mypigeons', true);
-    if (!MY_WALLET) startAuthorize();
-  });
+  // both") — always the same tab either way, connected or not. Reached
+  // through the real Σκύλλα tab button in #globalTopBar's own strip now
+  // (the topTabs click handler already handles the !MY_WALLET auto-
+  // authorize case) — the heading itself is plain text, no longer its
+  // own separate click target now that #screenMainframe's duplicate hero
+  // (and its role="button" headline) is gone.
   // Real, live numbers on every card (see .mainframe-card-stats' own
   // comment in the CSS) — same fields, same order, on every tradeable
   // collection, so the bottom-of-card line reads identically everywhere.
@@ -15056,18 +14953,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     return '$' + Math.round(n).toLocaleString();
   }
   [
-    { collection: 'pigeons', target: 'mainframeStatsPigeons', dexTarget: 'mainframeDexPigeons', tickerTarget: 'mainframeTickerMcPigeons', globalTickerTarget: 'globalTickerMcPigeons', hasShopSlug: true },
-    { collection: 'phnixs', target: 'mainframeStatsPhnixs', dexTarget: 'mainframeDexPhnixs', tickerTarget: 'mainframeTickerMcPhnixs', globalTickerTarget: 'globalTickerMcPhnixs', hasShopSlug: true },
+    { collection: 'pigeons', target: 'mainframeStatsPigeons', dexTarget: 'mainframeDexPigeons', hasShopSlug: true },
+    { collection: 'phnixs', target: 'mainframeStatsPhnixs', dexTarget: 'mainframeDexPhnixs', hasShopSlug: true },
     // TEDDY has a real shopSlug ('teddybg'), so it gets real holders same
     // as PIGEONS/PHNIX. SEAL/FUZZY/C0NSP!RACY don't (no real Deeptide shop
     // slug exists for any of them yet, see COLLECTIONS in pigeons.js) —
     // they skip the stats:1 call entirely (it would just 400/return
     // nothing useful against a null slug) but still get their real
     // marketcap/liquidity below.
-    { collection: 'teddybg', target: 'mainframeStatsTeddybg', dexTarget: 'mainframeDexTeddybg', tickerTarget: 'mainframeTickerMcTeddybg', globalTickerTarget: 'globalTickerMcTeddybg', hasShopSlug: true },
-    { collection: 'seal', target: 'mainframeStatsSeal', dexTarget: 'mainframeDexSeal', tickerTarget: 'mainframeTickerMcSeal', globalTickerTarget: 'globalTickerMcSeal', hasShopSlug: false },
-    { collection: 'fuzzy', target: 'mainframeStatsFuzzy', dexTarget: 'mainframeDexFuzzy', tickerTarget: 'mainframeTickerMcFuzzy', globalTickerTarget: 'globalTickerMcFuzzy', hasShopSlug: false },
-    { collection: 'conspiracy', target: 'mainframeStatsConspiracy', dexTarget: 'mainframeDexConspiracy', tickerTarget: 'mainframeTickerMcConspiracy', globalTickerTarget: 'globalTickerMcConspiracy', hasShopSlug: false }
+    { collection: 'teddybg', target: 'mainframeStatsTeddybg', dexTarget: 'mainframeDexTeddybg', hasShopSlug: true },
+    { collection: 'seal', target: 'mainframeStatsSeal', dexTarget: 'mainframeDexSeal', hasShopSlug: false },
+    { collection: 'fuzzy', target: 'mainframeStatsFuzzy', dexTarget: 'mainframeDexFuzzy', hasShopSlug: false },
+    { collection: 'conspiracy', target: 'mainframeStatsConspiracy', dexTarget: 'mainframeDexConspiracy', hasShopSlug: false }
   ].forEach(function(cfg){
     Promise.all([
       cfg.hasShopSlug ? api({ stats: 1, collection: cfg.collection }).catch(function(){ return {}; }) : Promise.resolve({}),
@@ -15084,15 +14981,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         el[cfg.dexTarget].href = rate.dexUrl;
         el[cfg.dexTarget].style.display = '';
       }
-      // T!CKER's own MARKETCAP figure — same real number the card below
-      // shows, just abbreviated further to fit a one-line pill (e.g.
-      // "104K MC" instead of "104K MARKETCAP"). Handled before the early
-      // return below since the ticker only needs marketCapUsd, not the
-      // card's own holders/liquidity too.
-      if (rate.marketCapUsd != null && el[cfg.tickerTarget]) el[cfg.tickerTarget].textContent = formatUsdAbbrev(rate.marketCapUsd) + ' MC';
-      // GL0BAL T!CKER's own copy of the exact same span — same value,
-      // just rendered into the persistent top bar's own element too.
-      if (rate.marketCapUsd != null && el[cfg.globalTickerTarget]) el[cfg.globalTickerTarget].textContent = formatUsdAbbrev(rate.marketCapUsd) + ' MC';
       if (stats.holders == null && rate.marketCapUsd == null && rate.liquidityUsd == null) return;
       // NFT H0LDERS is its own centered line; MARKETCAP + L!QU!D!TY share
       // the line under it, joined by " :: " — VALUE-then-LABEL reading
@@ -16790,6 +16678,24 @@ const SWAP_HTML = `<!DOCTYPE html>
       btn.classList.toggle('active', btn.getAttribute('data-profilebox') === tab);
     });
     if (tab === 'crown' && crownData === null) loadCrownLeaderboard();
+    // C0LLECT!0NS is the one real destination that also reveals your own
+    // NFT grid (reported live as "we only view our own collections
+    // through collection") — browseOwnerCollection sets the scope, does
+    // the real fetch, and calls showTab('mypigeons') itself, which reads
+    // myPigeonsGridOpen (set true just below) to actually let screenBrowse
+    // show this time. Once already scoped, no need to re-fetch — just
+    // let showTab's own chrome conditions re-evaluate against the flag.
+    if (tab === 'collections' && MY_WALLET){
+      state.myPigeonsGridOpen = true;
+      if (!isOwnWalletScope()) browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
+      else showTab('mypigeons', true);
+    } else if (state.myPigeonsGridOpen){
+      // Leaving C0LLECT!0NS for any other box (or back to the neutral
+      // V!EW PR0F!LE state) hides the grid again — same "wait for a
+      // click" rule applies to un-opening it, not just opening it.
+      state.myPigeonsGridOpen = false;
+      showTab('mypigeons', true);
+    }
   }
   el.profileBoxGrid.addEventListener('click', function(e){
     var btn = e.target.closest('.flock-account-box-clickable[data-profilebox]');
