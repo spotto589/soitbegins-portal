@@ -1096,6 +1096,48 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-banner-empty{
     background-image:linear-gradient(120deg, rgba(136,72,248,0.35), rgba(61,243,236,0.2), rgba(240,0,228,0.3));
   }
+  /* S!GNATURE BANNER — same real identity (avatar/username/quote,
+     colour-matched banner) Σκύλλα itself shows, reused wherever a
+     specific wallet's own Pigeon is the point of the screen (reported
+     live wanting it on the DETA!L screen for a Pigeon you own, and on
+     T0P 123 H0LDERS) — see signatureBannerHtml's own comment. One base
+     rule + a size modifier (-detail/-row) so each page only needs its
+     own modifier tweaked to fit, not a whole separate markup. */
+  .signature-banner{
+    display:flex;
+    align-items:center;
+    border-radius:var(--radius);
+    border:1px solid var(--border-mid);
+    background-color:var(--panel-bg-solid);
+    overflow:hidden;
+  }
+  .signature-banner-empty{
+    background-image:linear-gradient(120deg, rgba(136,72,248,0.35), rgba(61,243,236,0.2), rgba(240,0,228,0.3));
+  }
+  .signature-banner-avatar{ flex:0 0 auto; overflow:hidden; background:#000; border-radius:var(--radius); }
+  .signature-banner-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .signature-banner-info{ min-width:0; flex:1 1 auto; }
+  .signature-banner-username{ font-family:var(--font-display); font-weight:700; color:var(--green); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .signature-banner-quote{ font-style:italic; color:#fff; margin-top:0.3rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* DETA!L — sits at the top of the pigeon DETA!L screen, one size down
+     from Σκύλλα's own banner (see .profile-banner/.profile-current-
+     avatar) so it reads as "this Pigeon's owner", not a second identical
+     copy of your own profile header. */
+  .signature-banner-detail{ gap:1rem; padding:1rem; margin-bottom:1rem; }
+  .signature-banner-detail .signature-banner-avatar{ width:64px; height:64px; }
+  .signature-banner-detail .signature-banner-username{ font-size:20px; }
+  .signature-banner-detail .signature-banner-quote{ font-size:13px; }
+  /* R0W — compact inline version for T0P 123 H0LDERS, replacing that
+     list's plain wallet-tag short address with the same real identity
+     card, just small enough to fit one per leaderboard row. */
+  .signature-banner-row{ gap:0.6rem; padding:0.4rem 0.6rem; border-radius:calc(var(--radius) - 2px); }
+  .signature-banner-row .signature-banner-avatar{ width:32px; height:32px; }
+  .signature-banner-row .signature-banner-username{ font-size:14px; }
+  @media (max-width:600px){
+    .signature-banner-detail{ padding:0.75rem; gap:0.75rem; }
+    .signature-banner-detail .signature-banner-avatar{ width:48px; height:48px; }
+    .signature-banner-detail .signature-banner-username{ font-size:17px; }
+  }
   /* Avatar — SQUARE now (was a circle), reported live as wanting it
      "clean" instead of fighting a circular crop's own blend-into-the-
      banner problem: a circle's visible edge is the source image's four
@@ -7582,6 +7624,12 @@ const SWAP_HTML = `<!DOCTYPE html>
            the time — not a fixed collection-wide sequence. -->
       <button class="detail-nav-btn detail-nav-prev" id="detailPrevBtn" title="PREV!0US P!GE0N (◂)">◂</button>
       <button class="detail-nav-btn detail-nav-next" id="detailNextBtn" title="NEXT P!GE0N (▸)">▸</button>
+      <!-- S!GNATURE BANNER — this Pigeon's real owner (reported live as
+           wanting the banner to show "when im clicked into a pigeon and i
+           own this"), built by signatureBannerHtml/openDetail. Hidden
+           entirely while the owner isn't known yet (not-indexed, or
+           still loading) rather than showing an empty/placeholder card. -->
+      <div id="detailOwnerBanner" style="display:none;"></div>
       <div class="detail-two-col">
         <div class="detail-num-row">
           <!-- Same goBackFromDetail() as the full-width BACK strip at the
@@ -8570,7 +8618,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
-   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
+   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailHistoryList','historyNum','historyModal','historyModalClose',
    'backToBrowseBtn',
@@ -11500,9 +11548,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       var thumb = (i < 15 && h.rarestPigeon && h.rarestPigeon.image)
         ? '<img class="th-thumb" src="' + escapeHtml(h.rarestPigeon.image) + '" alt="" loading="lazy" title="RAREST P!GE0N HELD :: RAR!TY #' + escapeHtml(h.rarestPigeon.rarityRank) + '">'
         : '';
+      // T0P 123's own real identity card now (reported live wanting "if
+      // im in top 123, it should show the banner") — the compact -row
+      // size of the same signatureBannerHtml Σκύλλα/DETA!L use, not just
+      // a plain wallet-tag short address.
       return '<div class="th-row' + (i < 15 ? ' th-row-top' : '') + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
         '<span class="th-rank">' + thumb + '<span>#' + greenNum(i + 1) + '</span></span>' +
-        '<span class="th-wallet">' + walletTagHtml(h.wallet, h.ownerShort) + '</span>' +
+        '<span class="th-wallet">' + signatureBannerHtml(h.wallet, 'row') + '</span>' +
         '<span class="th-count">' + greenNum(h.count) + ' P!GE0NS' + (percentStr ? '  ::  ' + greenNum(percentStr + '%') : '') + '</span>' +
       '</div>';
     }).join('');
@@ -15962,6 +16014,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     if (known && known.owner) renderOwnerLink(known.ownerShort, known.owner);
     else { el.detailOwner.textContent = '...'; el.detailOwner.classList.remove('not-indexed'); }
+    updateDetailOwnerBanner(known && known.owner);
     el.detailTraits.innerHTML = known ? sortTraitsByRarity(known.attributes).map(traitCellHtml).join('') : '';
     el.detailHistoryList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     updateDetailRarity(known);
@@ -15994,10 +16047,24 @@ const SWAP_HTML = `<!DOCTYPE html>
       updateDetailListings(p.listings);
       updateScyllaListing(p);
       renderOwnerLink(p.ownerShort, p.owner);
+      updateDetailOwnerBanner(p.owner);
       refreshCardSelectionStates();
     }).catch(function(){
       renderOwnerLink(null, null);
     });
+  }
+  // S!GNATURE BANNER at the top of DETA!L — this Pigeon's real owner
+  // (reported live wanting it "when im clicked into a pigeon and i own
+  // this"), same signatureBannerHtml Σκύλλα/T0P 123 use. Hidden entirely
+  // rather than showing an empty card while the owner isn't known yet.
+  function updateDetailOwnerBanner(owner){
+    if (!owner){
+      el.detailOwnerBanner.style.display = 'none';
+      el.detailOwnerBanner.innerHTML = '';
+      return;
+    }
+    el.detailOwnerBanner.innerHTML = signatureBannerHtml(owner, 'detail');
+    el.detailOwnerBanner.style.display = '';
   }
 
   // ---- PREV/NEXT — walks whichever list this Pigeon was opened from, in
@@ -16199,6 +16266,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       var profiles = data.profiles || {};
       wallets.forEach(function(w){ profileCache[w] = profiles[w] || null; });
       applyResolvedProfiles(wallets);
+      applySignatureBanners(wallets);
     }).catch(function(){
       // Left out of profileCache entirely (not even cached as null) — a
       // later queueProfileResolve for the same wallet retries instead of
@@ -16225,6 +16293,61 @@ const SWAP_HTML = `<!DOCTYPE html>
           img.alt = '';
           node.insertBefore(img, node.firstChild);
         }
+      });
+    });
+  }
+  // ---- S!GNATURE BANNER — the same real identity card Σκύλλα itself
+  // shows (avatar + username + quote, banner colour auto-matched off the
+  // PFP), reused wherever a specific wallet's OWN pigeon is the whole
+  // point of the screen (reported live as wanting it "when im clicked
+  // into a pigeon and i own this" and "if im in top 123") instead of
+  // just a plain wallet-tag short address there. One shared builder with
+  // a size modifier class (signature-banner-detail / -row) rather than
+  // two separate markups, so the CSS is the only thing that needs to
+  // change to fit a given page — same intent as walletTagHtml, just
+  // carrying the fuller identity instead of only username+avatar. ----
+  function signatureBannerHtml(wallet, size){
+    if (!wallet) return '';
+    queueProfileResolve(wallet);
+    var cached = profileCache[wallet];
+    var hasPfp = !!(cached && cached.pfpImage);
+    var username = (cached && cached.username) ? escapeHtml(cached.username) : escapeHtml(shortAddr(wallet));
+    var avatarImg = hasPfp ? '<img src="' + escapeHtml(cached.pfpImage) + '" alt="">' : '';
+    // QU0TE only on the bigger DETA!L-size banner — no room for it on the
+    // compact T0P 123 row version.
+    var quoteHtml = (size === 'detail' && cached && cached.quote)
+      ? '<div class="signature-banner-quote">' + escapeHtml(cached.quote) + '</div>'
+      : '';
+    return '<div class="signature-banner signature-banner-' + size + (hasPfp ? '' : ' signature-banner-empty') + '" data-wallet="' + escapeHtml(wallet) + '">' +
+      '<div class="signature-banner-avatar">' + avatarImg + '</div>' +
+      '<div class="signature-banner-info">' +
+        '<div class="signature-banner-username">' + username + '</div>' +
+        quoteHtml +
+      '</div>' +
+    '</div>';
+  }
+  // Companion to applyResolvedProfiles — patches every signatureBannerHtml
+  // instance already on screen for a wallet once its real profile lands,
+  // same "upgrade in place, never block the initial paint" pattern.
+  function applySignatureBanners(wallets){
+    wallets.forEach(function(w){
+      var profile = profileCache[w];
+      if (!profile) return;
+      document.querySelectorAll('.signature-banner[data-wallet="' + w + '"]').forEach(function(node){
+        if (profile.username) node.querySelector('.signature-banner-username').textContent = profile.username;
+        if (profile.pfpImage){
+          node.classList.remove('signature-banner-empty');
+          var avatarWrap = node.querySelector('.signature-banner-avatar');
+          if (avatarWrap && !avatarWrap.querySelector('img')){
+            var img = document.createElement('img');
+            img.src = profile.pfpImage;
+            img.alt = '';
+            avatarWrap.appendChild(img);
+          }
+          sampleBannerColor(profile.pfpImage, node);
+        }
+        var quoteEl = node.querySelector('.signature-banner-quote');
+        if (quoteEl && profile.quote) quoteEl.textContent = profile.quote;
       });
     });
   }
@@ -16646,7 +16769,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // coloured" instead of one flat matching colour). Silently gives up
   // (leaves whatever background-color was already there) on any failure —
   // a slow/broken image must never block or blank the banner.
-  function sampleBannerColor(imageUrl){
+  // targetEl defaults to el.profileBanner (its only caller for a long
+  // time) — now also used by every signatureBannerHtml instance (see its
+  // own comment) to colour-match a THIRD PARTY's banner off their own
+  // PFP, same as it always has for your own.
+  function sampleBannerColor(imageUrl, targetEl){
+    targetEl = targetEl || el.profileBanner;
     try {
       var img = new Image();
       img.onload = function(){
@@ -16660,7 +16788,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           var ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, crop, crop, 0, 0, 1, 1);
           var px = ctx.getImageData(0, 0, 1, 1).data;
-          el.profileBanner.style.backgroundColor = 'rgb(' + px[0] + ',' + px[1] + ',' + px[2] + ')';
+          targetEl.style.backgroundColor = 'rgb(' + px[0] + ',' + px[1] + ',' + px[2] + ')';
         } catch (e){}
       };
       img.src = '/api/nft-image-proxy?src=' + encodeURIComponent(imageUrl);
