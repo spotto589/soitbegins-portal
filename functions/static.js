@@ -6327,7 +6327,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Σκύλλα — logo + big heading together, one real button (reported live
      wanting no separate small "Σκύλλα" tab any more). */
   .global-top-scylla-btn{ display:flex; align-items:center; justify-content:center; gap:0.75rem; }
-  #globalTopBarLogo{ width:40px; height:40px; object-fit:contain; flex:0 0 auto; }
+  /* The source PNG itself is mostly solid black (lock body + background,
+     only thin cyan/magenta outline strokes and small white teeth actually
+     have any real color) — reported live as "unseen" against this bar's
+     own near-black --bg. It's not a sizing problem, it's a contrast
+     problem: no amount of upscaling makes a black-on-black silhouette
+     visible. A light chip behind it (padding-box shows through every
+     transparent/black pixel via object-fit's content-box) is what
+     actually makes the lock read as a shape instead of empty space. */
+  #globalTopBarLogo{
+    width:44px;
+    height:44px;
+    object-fit:contain;
+    flex:0 0 auto;
+    box-sizing:border-box;
+    padding:6px;
+    border-radius:50%;
+    background:radial-gradient(circle, #f2f2f0 0%, #cfd0d6 75%);
+    box-shadow:0 0 0 1px rgba(255,255,255,0.2);
+  }
   .global-top-scylla-text{ display:flex; flex-direction:column; align-items:center; min-width:0; }
   /* Σκύλλα://S!GNAL::0NL!NE — real large/centred text again (reported
      live — "i told you the title... should still be large writing, it
@@ -6356,7 +6374,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .global-top-scylla-status{ font-size:12px; letter-spacing:0.06em; color:var(--grey-dim); margin-top:0.15rem; }
   @media (max-width:700px){
     #globalTopBar .tab-btn{ padding:0.55em 0.6rem; }
-    #globalTopBarLogo{ width:26px; height:26px; }
+    #globalTopBarLogo{ width:30px; height:30px; padding:4px; }
     #globalTopBarHeading{ font-size:14px; }
     .global-top-scylla-status{ font-size:10px; }
   }
@@ -8964,13 +8982,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     // per-element JS toggle, so it can't be fought by anything else's own
     // async display writes running after this.
     document.body.classList.toggle('paws-view', tab === 'mypigeons');
-    // Trustline banner — DATABASE only now. Was shown on every tab
-    // (deliberately, per an earlier decision — "no more slimmed-down
-    // version") but reported live as belonging only on the collection
-    // page; login is still reachable from the Σκύλλα tab's own
-    // .flock-tab-login label either way, so this loses no real entry
+    // Trustline banner — DATABASE only now, and only once a real
+    // collection has actually been entered (reported live: "the banner
+    // should not be on the mainframe page at all" — the picker grid,
+    // state.databaseInPicker, is DATABASE's own landing content, not a
+    // collection view yet, so this has nothing real to summarize there).
+    // Was shown on every tab (deliberately, per an earlier decision — "no
+    // more slimmed-down version") but reported live as belonging only on
+    // the collection page; login is still reachable from the Σκύλλα tab's
+    // own .flock-tab-login label either way, so this loses no real entry
     // point.
-    el.pigeonsMergedPanel.style.display = tab === 'database' ? '' : 'none';
+    el.pigeonsMergedPanel.style.display = (tab === 'database' && !state.databaseInPicker) ? '' : 'none';
     // Covers every path that can leave/re-enter PλWS, including the
     // DATABASE tab click while scoped (exitWalletScope + startCollection-
     // Browse never call browseOwnerCollection, so its own call to this
@@ -10789,7 +10811,13 @@ const SWAP_HTML = `<!DOCTYPE html>
           price: acceptBtn.getAttribute('data-price'),
           buyer: acceptBtn.getAttribute('data-buyer'),
           number: acceptBtn.getAttribute('data-num') ? parseInt(acceptBtn.getAttribute('data-num'), 10) : null,
-          image: acceptBtn.getAttribute('data-image') || null
+          image: acceptBtn.getAttribute('data-image') || null,
+          // Real per-offer collection now (Σκύλλα's own 0FFERS RECE!VED is
+          // merged across every tradeable collection — see
+          // loadOffersReceived) — falls back to state.collection for the
+          // DATABASE-grid's own inline offer box, where every card is
+          // already that one collection anyway.
+          collection: acceptBtn.getAttribute('data-collection') || state.collection
         };
         openAcceptOfferConfirm();
         return;
@@ -11706,7 +11734,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="highest-offer-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + '</div>' +
         '<div class="highest-offer-buyer">FR0M ' + walletTagHtml(top.buyer, top.buyerShort) + '</div>' +
         '<div class="highest-offer-actions">' +
-          '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '">ACCEPT</button>' +
+          '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '" data-collection="' + escapeHtml(state.collection) + '">ACCEPT</button>' +
           '<button class="highest-offer-btn highest-offer-decline decline-offer-btn" data-offerid="' + escapeHtml(top.offerId) + '">DECL!NE</button>' +
           '<button class="highest-offer-btn highest-offer-counter" disabled title="C0M!NG S00N">C0UNTER</button>' +
         '</div>' +
@@ -11774,17 +11802,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     el.myOffersList.innerHTML = rows.map(function(row){
       var item = row.item, top = row.top;
+      // Merged across every tradeable collection now (loadOffersReceived's
+      // own comment) — item.collection is real per-row (defaults to
+      // 'pigeons' for any pre-merge cached shape), not just whatever
+      // state.collection happens to be for unrelated DATABASE browsing.
+      var itemCollection = item.collection || 'pigeons';
+      var itemMeta = COLLECTION_META[itemCollection] || COLLECTION_META.pigeons;
+      var numLabel = item.number !== null ? '#' + greenNum(item.number) : (item.name ? escapeHtml(item.name) : '...');
       return '<div class="my-offer-row">' +
         '<div class="my-offer-row-left">' +
           '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + row.img + '</div>' +
           '<div class="my-offer-row-info">' +
-            '<div class="my-offer-row-num">' + collectionItemLabel() + ' ' + itemNumberLabel(item) + '</div>' +
+            '<div class="my-offer-row-num">' + escapeHtml(itemMeta.itemLabel) + ' ' + numLabel + '</div>' +
             '<div class="my-offer-row-buyer">FR0M ' + walletTagHtml(top.buyer, top.buyerShort) + '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + '</div>' +
+        '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + ' ' + escapeHtml(itemMeta.tokenLabel) + '</div>' +
         '<div class="my-offer-row-actions">' +
-          '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '">ACCEPT</button>' +
+          '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '" data-collection="' + escapeHtml(itemCollection) + '">ACCEPT</button>' +
           '<button class="highest-offer-btn highest-offer-decline decline-offer-btn" data-offerid="' + escapeHtml(top.offerId) + '">DECL!NE</button>' +
           '<button class="highest-offer-btn highest-offer-counter" disabled title="C0M!NG S00N">C0UNTER</button>' +
         '</div>' +
@@ -12266,11 +12301,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // notification-dot badge for pending offers (if any) plus the real
     // pigeon count — same information, far less text to actually wrap,
     // and no redundant second "Σκύλλα" under the big heading above it.
+    // The pigeon count itself is gone from this line entirely (reported
+    // live) — it already shows inside SH0W MY FL0CK's own button (see
+    // renderTrustlineSummary above), no need for a second copy here too.
     var offersDot = offersReceivedTotal > 0 ? '<span class="flock-tab-offer-dot" title="' + offersReceivedTotal + ' 0FFER' + (offersReceivedTotal === 1 ? '' : 'S') + ' RECE!VED">' + offersReceivedTotal + '</span>' : '';
-    var parts = [];
-    if (offersDot) parts.push(offersDot);
-    if (trustlinePigeonCount !== null) parts.push('<span class="flock-tab-count">' + trustlinePigeonCount + ' P!GE0NS</span>');
-    el.flockTabLabel.innerHTML = parts.join(' ');
+    el.flockTabLabel.innerHTML = offersDot;
   }
   function loadTrustlineLoginState(){
     if (!MY_WALLET){
@@ -14043,16 +14078,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   // then going away, then coming up again" — that flicker was two (or
   // more) different snapshots of the same live data racing to be the
   // one shown last, not a single reliable answer arriving once.
+  // Every tradeable collection gets scanned, not just whichever one
+  // DATABASE happens to be browsing right now (state.collection) — a real
+  // offer sitting on a Pigeon was reported as invisible here specifically
+  // because DATABASE had been switched to a different collection first, so
+  // this can no longer depend on that browsing context at all.
+  var OFFERS_TRADEABLE_COLLECTIONS = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].tradeable; });
   var offersReceivedPromise = null;
   function loadOffersReceived(){
     if (!MY_WALLET) return; // the endpoint requires a real session anyway
     if (offersReceivedPromise) return offersReceivedPromise;
-    offersReceivedPromise = fetch('/api/swap-offers-received?collection=' + encodeURIComponent(state.collection)).then(function(r){ return r.json(); }).then(function(data){
-      offersReceivedData = data.items || [];
+    offersReceivedPromise = Promise.all(OFFERS_TRADEABLE_COLLECTIONS.map(function(coll){
+      return fetch('/api/swap-offers-received?collection=' + encodeURIComponent(coll)).then(function(r){ return r.json(); }).then(function(data){
+        return (data.items || []).map(function(item){ item.collection = coll; return item; });
+      }).catch(function(){ return []; });
+    })).then(function(perCollection){
+      offersReceivedData = [].concat.apply([], perCollection);
       offersByNftId = {};
       var totalOffers = 0;
       offersReceivedData.forEach(function(item){
-        offersByNftId[item.nftId] = item.offers;
+        if (item.collection === state.collection) offersByNftId[item.nftId] = item.offers;
         totalOffers += item.offers.length;
       });
       offersReceivedTotal = totalOffers;
@@ -14094,8 +14139,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   function loadOutgoingOffers(){
     if (!MY_WALLET) return;
     if (outgoingOffersPromise) return outgoingOffersPromise;
-    outgoingOffersPromise = fetch('/api/swap-offers-made?collection=' + encodeURIComponent(state.collection)).then(function(r){ return r.json(); }).then(function(data){
-      outgoingOffersData = data.items || [];
+    outgoingOffersPromise = Promise.all(OFFERS_TRADEABLE_COLLECTIONS.map(function(coll){
+      return fetch('/api/swap-offers-made?collection=' + encodeURIComponent(coll)).then(function(r){ return r.json(); }).then(function(data){
+        return (data.items || []).map(function(item){ item.collection = coll; return item; });
+      }).catch(function(){ return []; });
+    })).then(function(perCollection){
+      outgoingOffersData = [].concat.apply([], perCollection);
       renderOutgoingOffersList();
       outgoingOffersPromise = null;
     }).catch(function(){
@@ -14119,17 +14168,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.outgoingOffersList.innerHTML = outgoingOffersData.map(function(item){
       var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
       var countdown = listingCountdownText(item.expiration);
+      var itemCollection = item.collection || 'pigeons';
+      var itemMeta = COLLECTION_META[itemCollection] || COLLECTION_META.pigeons;
       return '<div class="my-offer-row">' +
         '<div class="my-offer-row-left">' +
           '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + img + '</div>' +
           '<div class="my-offer-row-info">' +
-            '<div class="my-offer-row-num">' + collectionItemLabel() + ' ' + itemNumberLabel(item) + '</div>' +
+            '<div class="my-offer-row-num">' + escapeHtml(itemMeta.itemLabel) + ' ' + itemNumberLabel(item) + '</div>' +
             '<div class="my-offer-row-buyer">T0 ' + walletTagHtml(item.ownerWallet, item.ownerShort) + (countdown ? ' :: ' + escapeHtml(countdown) : '') + '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(item.price)) + '</div>' +
+        '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(item.price)) + ' ' + escapeHtml(itemMeta.tokenLabel) + '</div>' +
         '<div class="my-offer-row-actions">' +
-          '<button class="highest-offer-btn cancel-my-offer-btn cancel-outgoing-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(item.offerId) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '" data-price="' + escapeHtml(item.price) + '">CANCEL</button>' +
+          '<button class="highest-offer-btn cancel-my-offer-btn cancel-outgoing-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(item.offerId) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '" data-price="' + escapeHtml(item.price) + '" data-collection="' + escapeHtml(itemCollection) + '">CANCEL</button>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -14142,7 +14193,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       offerId: btn.getAttribute('data-offerid'),
       number: btn.getAttribute('data-num') !== '' ? Number(btn.getAttribute('data-num')) : null,
       image: btn.getAttribute('data-image'),
-      price: btn.getAttribute('data-price')
+      price: btn.getAttribute('data-price'),
+      collection: btn.getAttribute('data-collection') || state.collection
     };
     startCancelOfferSign(btn);
   });
@@ -14163,7 +14215,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-canceloffer-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: cancelOfferTarget.nftId, collection: state.collection })
+      body: JSON.stringify({ nftId: cancelOfferTarget.nftId, collection: cancelOfferTarget.collection })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
@@ -14177,7 +14229,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return fetch('/api/swap-canceloffer-payload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nftId: cancelOfferTarget.nftId, collection: state.collection })
+        body: JSON.stringify({ nftId: cancelOfferTarget.nftId, collection: cancelOfferTarget.collection })
       }).then(function(r2){ return r2.json().then(function(data2){ return { ok: r2.ok, data: data2 }; }); })
       .then(function(res2){
         if (!res2.ok || !res2.data.ok){
@@ -14204,7 +14256,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function pollCancelOfferStatus(btn){
     if (cancelOfferPollTimer) clearTimeout(cancelOfferPollTimer);
     if (!cancelOfferUuid || !cancelOfferTarget) return;
-    fetch('/api/swap-canceloffer-status?uuid=' + encodeURIComponent(cancelOfferUuid) + '&nftId=' + encodeURIComponent(cancelOfferTarget.nftId) + '&collection=' + encodeURIComponent(state.collection))
+    fetch('/api/swap-canceloffer-status?uuid=' + encodeURIComponent(cancelOfferUuid) + '&nftId=' + encodeURIComponent(cancelOfferTarget.nftId) + '&collection=' + encodeURIComponent(cancelOfferTarget.collection))
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.status === 'cancelled'){
@@ -14440,7 +14492,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // thumb treatment the L!ST/0FFER/TRANSFER popup already shows.
     el.acceptOfferConfThumb.style.display = acceptOfferTarget.image ? '' : 'none';
     el.acceptOfferConfThumb.src = acceptOfferTarget.image || '';
-    el.acceptOfferConfPigeon.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(acceptOfferTarget);
+    el.acceptOfferConfPigeon.innerHTML = escapeHtml((COLLECTION_META[acceptOfferTarget.collection] || COLLECTION_META.pigeons).itemLabel) + ' ' + itemNumberLabel(acceptOfferTarget);
     setWalletText(el.acceptOfferConfBuyer, acceptOfferTarget.buyer, shortAddr(acceptOfferTarget.buyer));
     el.acceptOfferConfPrice.textContent = acceptOfferTarget.price ? fmtPigeons(acceptOfferTarget.price) : '';
     el.acceptOfferConfFee.textContent = '';
@@ -14460,7 +14512,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-acceptoffer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: acceptOfferTarget.nftId, offerId: acceptOfferTarget.offerId, collection: state.collection })
+      // acceptOfferTarget.collection, not state.collection — this offer
+      // can be on any tradeable collection now that Σκύλλα's own 0FFERS
+      // RECE!VED merges all of them (see loadOffersReceived), unrelated
+      // to whatever DATABASE happens to be browsing.
+      body: JSON.stringify({ nftId: acceptOfferTarget.nftId, offerId: acceptOfferTarget.offerId, collection: acceptOfferTarget.collection })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
