@@ -504,8 +504,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      Σκύλλα reads as a real hub of destinations (MY FL0CK, MESSAGE
      !NB0X, 0FFERS, BUY $P!GE0NS, ...) at a glance, same "boxed options,
      not a vertical strip" idea as the mobile tab hub above. */
-  #flockAccountBoxes{ display:grid; grid-template-columns:repeat(2, 1fr); gap:0.7rem; }
-  @media (max-width:480px){ #flockAccountBoxes{ grid-template-columns:1fr; } }
+  /* .flock-account-box* itself is still real — reused now by Σκύλλα's own
+     profileBoxGrid (V!EW PR0F!LE/0FFERS/C0LLECT!0NS/CR0WN/TRANSACT!0N
+     H!ST0RY/MESSAGES, see its own HTML comment) — only the old #flockMy-
+     FlockBox/#flockAccountBoxes/.flock-wallet-box ("the address bar"/"my
+     pigeons bar", both reported live as wanting removed now that
+     profileBoxGrid replaces them) are gone. */
   .flock-account-box{ padding:1.4rem 1.25rem; min-height:5rem; display:flex; align-items:center; }
   .flock-account-box-row{ display:flex; align-items:center; justify-content:center; gap:1rem; width:100%; text-align:center; }
   .flock-account-box-label{ font-size:14px; letter-spacing:0.18em; text-transform:uppercase; color:#fff; }
@@ -517,62 +521,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* A real, visible "still counting" state — the underscore alone reads as
      dead/broken otherwise. */
   @keyframes flock-count-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
-  .flock-count-loading{ animation:flock-count-pulse 1.1s ease-in-out infinite; }
-  @media (prefers-reduced-motion: reduce){ .flock-count-loading{ animation:none; opacity:0.6; } }
-  /* A real failed state, not the loading pulse left running forever —
-     see loadMyOwnPigeonsCache's own comment. Red (this site's
-     destructive/negative colour), no animation, so it visibly reads as
-     "stopped, needs a tap" instead of "still working". */
-  .flock-count-failed{ color:var(--red); animation:none; }
-  /* MY P!GE0NS — full-width (spans both grid columns) since it's the one
-     box on this tab actually about YOU. Real --collection-accent purple
-     (the current collection's own colour, same gradient the trustline
-     banner/FL00R tile already use) instead of the plain neutral panel
-     every other box here gets, and centered text like the rest of the
-     grid — was left-aligned from an earlier, wider padlock-background
-     version of this box that no longer applies. */
-  #flockMyFlockBox{
-    grid-column:1 / -1;
-    background:linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.55), rgba(var(--collection-accent-2-rgb),0.65));
-    border-color:var(--collection-accent);
-  }
-  #flockMyFlockBox:hover{ border-color:var(--collection-accent); background:linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.7), rgba(var(--collection-accent-2-rgb),0.8)); }
-  #flockMyFlockBox .flock-account-box-label{ text-shadow:0 1px 4px rgba(0,0,0,0.6); }
-
-  /* Your own connected wallet address — the WHOLE box is the copy button
-     now (reported live as wanting "one big cyan box thats clickable"),
-     not a plain row with a small button tacked on the side. Sits above
-     the account boxes. */
-  .flock-wallet-box{
-    display:flex; align-items:center; justify-content:space-between; gap:1rem;
-    padding:1em 1.1em; margin-bottom:0.75rem;
-    background-color:var(--cyan-faint);
-    border:1px solid var(--cyan);
-    border-radius:var(--radius);
-    cursor:pointer;
-    transition:background-color 0.15s ease, box-shadow 0.15s ease;
-  }
-  .flock-wallet-box:hover{ background-color:var(--cyan-dim); box-shadow:0 0 18px var(--cyan-glow); }
-  .flock-wallet-addr{
-    flex:1 1 auto;
-    text-align:center;
-    font-family:var(--mono, monospace);
-    font-size:14px; font-weight:700; color:var(--cyan);
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    letter-spacing:0.02em;
-  }
-  .flock-wallet-copy-hint{
-    flex:0 0 auto;
-    color:var(--cyan);
-    font-size:11px; font-weight:700; letter-spacing:0.08em;
-    text-transform:uppercase;
-    white-space:nowrap;
-  }
-  .flock-wallet-box.flock-wallet-copy-done{
-    background-color:var(--green); border-color:var(--green);
-  }
-  .flock-wallet-box.flock-wallet-copy-done .flock-wallet-addr,
-  .flock-wallet-box.flock-wallet-copy-done .flock-wallet-copy-hint{ color:#000; }
 
   /* ---- Σκύλλα (signed-in FL0CK) tab theme — the same faint circuit-
      glitch texture .sw-panel-signal/-target already use elsewhere on the
@@ -586,11 +534,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Was the same circuit-glitch image texture as .sw-panel-signal/-target
      above — removed for the same reason (site-wide: simple and easy to
      read comes first). Plain fill, keeps the hover motion below. */
-  .flock-account-box:not(#flockMyFlockBox){
+  .flock-account-box{
     background-color:rgba(8,9,11,0.9);
     transition:border-color 0.15s ease, box-shadow 0.25s ease, transform 0.15s ease;
   }
-  .flock-account-box-clickable:not(#flockMyFlockBox):hover{
+  .flock-account-box-clickable:hover{
     border-color:var(--cyan);
     box-shadow:0 0 22px var(--cyan-glow);
     transform:translateY(-2px);
@@ -604,7 +552,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     40%{ text-shadow:1px 0 var(--magenta), -1px 0 var(--cyan); }
     60%{ text-shadow:none; }
   }
-  .flock-account-box-clickable:not(#flockMyFlockBox):hover .flock-account-box-label{
+  .flock-account-box-clickable:hover .flock-account-box-label{
     animation:flock-box-glitch 0.35s steps(2, end);
   }
   #flockGridPanel{ background-color:rgba(8,9,11,0.92); }
@@ -618,8 +566,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-shadow:0 0 8px var(--cyan-glow);
   }
   @media (prefers-reduced-motion: reduce){
-    .flock-account-box-clickable:not(#flockMyFlockBox):hover{ transform:none; }
-    .flock-account-box-clickable:not(#flockMyFlockBox):hover .flock-account-box-label{ animation:none; }
+    .flock-account-box-clickable:hover{ transform:none; }
+    .flock-account-box-clickable:hover .flock-account-box-label{ animation:none; }
   }
 
   /* ---- collection details: token/issuer info ---- */
@@ -1101,7 +1049,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     padding:1.5rem;
     display:flex;
-    align-items:center;
+    /* Bottom-aligned, not centred — reported live (twice) as wanting the
+       thumbnail "fixed to the bottom of the banner", same flush-bottom
+       feel the DETA!L screen's own signature banner settled on. */
+    align-items:flex-end;
     gap:1.5rem;
     overflow:hidden;
   }
@@ -1162,7 +1113,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      no such edge to blend at all — corners included, so the previous
      ::after feather overlay is gone entirely, nothing left to fake. */
   .profile-avatar-wrap{ position:relative; flex:0 0 auto; margin-left:0.5rem; }
-  .profile-current-avatar{ width:150px; height:150px; border-radius:var(--radius); overflow:hidden; background:#000; cursor:pointer; }
+  .profile-current-avatar{ width:200px; height:200px; border-radius:var(--radius); overflow:hidden; background:#000; cursor:pointer; }
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
   .profile-avatar-edit-btn{
     position:absolute;
@@ -1278,7 +1229,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:600px){
     .profile-banner{ padding:1rem; gap:0.85rem; }
     .profile-avatar-wrap{ margin-left:0; }
-    .profile-current-avatar{ width:96px; height:96px; }
+    .profile-current-avatar{ width:120px; height:120px; }
     .profile-avatar-edit-btn{ width:28px; height:28px; font-size:16px; right:-6px; bottom:-6px; }
     .profile-current-username{ font-size:20px; }
   }
@@ -1346,33 +1297,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
   }
   .profile-watchlist-remove:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
-  /* PR0F!LE TABS — sits right under the banner, sorting 0FFERS and
-     C0LLECT!0NS into their own destinations instead of one long stacked
-     scroll (reported live). Same real tab-strip language the top-level
-     .tab-btn already uses (active = magenta underline), scaled down to
-     fit inside the profile card rather than the full top nav. */
-  .profile-tabs{ display:flex; gap:1.5rem; border-bottom:1px solid var(--border-dim); margin-bottom:1.25rem; }
-  .profile-tab-btn{
-    background:none;
-    border:none;
-    border-bottom:2px solid transparent;
-    color:var(--grey-dim);
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:14px;
-    letter-spacing:0.08em;
-    text-transform:uppercase;
-    padding:0.7em 0.1em;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    gap:0.4em;
-    transition:color 0.15s ease, border-color 0.15s ease;
-  }
-  .profile-tab-btn:hover{ color:var(--white); }
-  .profile-tab-btn.active{ color:var(--magenta); border-bottom-color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+  /* PR0F!LE B0X GR!D — sits right under the banner, a real menu of boxed
+     destinations (reported live wanting "boxed options... nothing should
+     be opened") instead of a tab strip that auto-opens one. Reuses the
+     exact same .flock-account-box visual language the old FL0CK-era
+     boxes always used (see that CSS's own comment) — 3 columns fits 6
+     boxes in two even rows on desktop, collapsing narrower on mobile. */
+  .profile-box-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.7rem; margin-bottom:1.5rem; }
+  @media (max-width:600px){ .profile-box-grid{ grid-template-columns:repeat(2, 1fr); } }
+  @media (max-width:400px){ .profile-box-grid{ grid-template-columns:1fr; } }
+  /* V!EW PR0F!LE/0FFERS/C0LLECT!0NS/CR0WN all use the same magenta
+     "currently open" highlight once picked — same active-state colour
+     .tab-btn's own underline uses elsewhere, applied as a border/glow
+     here instead since these are boxes, not an underlined strip. */
+  .flock-account-box-clickable.active{ border-color:var(--magenta); box-shadow:0 0 14px var(--magenta-glow); }
   /* Pending 0FFERS count — same real-number-or-hidden-entirely pattern
-     flockOffersCount already uses (never "0FFERS (0)"). */
+     this always used (never "0FFERS (0)"), now sitting inside the 0FFERS
+     box itself instead of a tab label. */
   .profile-tab-badge{
     display:inline-flex;
     align-items:center;
@@ -1385,7 +1326,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#08090b;
     font-size:11px;
   }
-  .profile-offers-section{ margin-bottom:1.5rem; }
+  /* Whichever box is picked (0FFERS/C0LLECT!0NS/CR0WN) reveals its own
+     real panel here — plain margin, same as every other stacked section
+     on this card. */
+  .profile-tab-panel{ margin-bottom:1.5rem; }
   .profile-coins-section{ margin-bottom:1.5rem; }
   .profile-coins-banner{
     display:flex;
@@ -4384,6 +4328,27 @@ const SWAP_HTML = `<!DOCTYPE html>
      see that shared selector group's own comment) instead of a small
      dropdown anchored under the toggle button. */
   #pigeonsCalcModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  /* T0P 123 H0LDERS/SALES H!ST0RY — same real overlay treatment as
+     #pigeonsCalcModal right above (reported live as wanting these off
+     their own top-level tabs and into the DATABASE banner instead), just
+     wider and taller since both hold a real scrollable list rather than
+     a single calculator row. */
+  #topHoldersModal, #salesModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  .top-holders-modal-panel, .sales-modal-panel{
+    width:min(640px, 100%);
+    max-height:min(80vh, 720px);
+    display:flex;
+    flex-direction:column;
+    text-align:left;
+    background:var(--panel-bg-solid);
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    box-shadow:0 10px 30px rgba(0,0,0,0.6);
+    padding:1.5rem;
+    animation:offer-confirm-pop 0.2s ease;
+  }
+  .top-holders-modal-panel #topHoldersList{ flex:1 1 auto; min-height:0; overflow-y:auto; }
+  .sales-modal-panel #salesScrollBox{ flex:1 1 auto; min-height:0; overflow-y:auto; }
   .pigeons-calc-panel{
     width:min(440px, 100%);
     text-align:center;
@@ -7087,13 +7052,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   <div class="page">
     <h1>Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub" id="mainframeReopenLabel">STAT!C :: MA!NFRAME</span></h1>
 
-    <!-- DATABASE/MY PIGEONS/TOP 100/SALES HISTORY/SWAP OFFERS — the real
-         top bar of the page; the trustline banner + whatever tab is
-         active both sit below it. DATABASE itself now carries the
-         collection picker (see .tab-db-select / dbSelectWrap) instead of
-         that living as its own separate row above the strip. -->
+    <!-- MA!NFRAME/DATABASE/Σκύλλα — only 3 real options now (reported
+         live), T0P 123 H0LDERS/SALES H!ST0RY/CR0WN all moved elsewhere
+         (the DATABASE banner's own vertical buttons, and Σκύλλα's own
+         profileBoxGrid, respectively — see their own comments). MA!NFRAME
+         itself doesn't switch state.activeTab at all — it just reopens
+         the existing #screenMainframe overlay (see the JS click handler),
+         same behaviour the old mainframeReopenLabel/mainframeProfileBtn
+         always had. DATABASE itself carries the collection picker (see
+         .tab-db-select / dbSelectWrap) instead of that living as its own
+         separate row above the strip. -->
     <div class="top-tabs-wrap" id="topTabsWrap">
     <div class="top-tabs" id="topTabs">
+      <button class="tab-btn" data-tab="mainframe">MA!NFRAME</button>
       <button class="tab-btn tab-btn-database" data-tab="database">
         DATABASE ::
         <div class="traits-hover-wrap tab-db-select" id="dbSelectWrap">
@@ -7113,9 +7084,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
       </button>
       <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;" id="flockTabLabel">Σκύλλα</span></button>
-      <button class="tab-btn" data-tab="topholders">T0P 123 H0LDERS</button>
-      <button class="tab-btn" data-tab="sales">SALES H!ST0RY</button>
-      <button class="tab-btn" data-tab="crown">CR0WN</button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
     </div>
     </div>
@@ -7176,10 +7144,17 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
 
+        <!-- T0P 123 H0LDERS/SALES H!ST0RY moved off their own top-level
+             tabs and in here now (reported live), stacked vertically with
+             the EXCHANGE CALCULAT0R — all three are real popups
+             (#topHoldersModal/#salesModal, same treatment as
+             #pigeonsCalcModal already had), not separate screens. -->
         <div class="pigeons-bar-calc-col" id="pigeonsBarCalc" style="display:none;">
           <button type="button" class="pigeons-calc-toggle-btn" id="pigeonsCalcToggleBtn">
             <span id="pigeonsCalcToggleLabel">EXCHANGE CALCULAT0R</span> <span class="pigeons-calc-toggle-arrow">▾</span>
           </button>
+          <button type="button" class="pigeons-calc-toggle-btn" id="openTopHoldersBtn">T0P 123 H0LDERS</button>
+          <button type="button" class="pigeons-calc-toggle-btn" id="openSalesBtn">SALES H!ST0RY</button>
         </div>
       </div>
     </div>
@@ -7293,40 +7268,41 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
 
 
-    <div class="sw-panel" id="topHoldersPanelWrap" style="display:none;">
-      <div class="panel-title">T0P 123 H0LDERS</div>
-      <div id="topHoldersList"></div>
-    </div>
-
-    <div class="sw-panel" id="salesPanelWrap" style="display:none;">
-      <div class="panel-title">SALES H!ST0RY</div>
-      <div class="sale-currency-toggle" id="salesCurrencyToggle">
-        <button class="sale-currency-btn sale-currency-btn-active" data-currency="XRP">XRP</button>
-        <button class="sale-currency-btn" data-currency="PIGEONS" id="salesCurrencyPigeonsBtn">$P!GE0NS</button>
-      </div>
-      <div class="sales-scrollbox" id="salesScrollBox">
-        <div class="sale-header-row"><span>NFT</span><span>PR!CE</span><span>FR0M</span><span>T0</span><span>T!ME</span></div>
-        <div id="salesArea"></div>
-        <div class="scroll-sentinel" id="salesScrollSentinel"></div>
-        <div class="load-more-note" id="salesLoadMoreNote" style="display:none;">L0AD!NG M0RE SALES...</div>
-        <div class="end-of-collection-note" id="salesEndNote" style="display:none;">// END 0F SALES H!ST0RY</div>
+    <!-- T0P 123 H0LDERS — moved off its own top-level tab into a real
+         popup (reported live), reached via the DATABASE banner's own
+         T0P 123 H0LDERS button now — same #topHoldersList/renderTop-
+         HoldersList this always had, just a different container. -->
+    <div id="topHoldersModal" style="display:none;">
+      <div class="pigeons-calc-panel top-holders-modal-panel">
+        <div class="simple-picker-header">
+          <span class="simple-picker-title">T0P 123 H0LDERS</span>
+          <button type="button" class="simple-picker-close" id="topHoldersCloseBtn" title="CL0SE">&times;</button>
+        </div>
+        <div id="topHoldersList"></div>
       </div>
     </div>
 
-    <!-- CR0WN — real $PIGEONS trading profit/loss leaderboard, realized
-         only (see crown-leaderboard.js's own comment). Read-only for now —
-         "eventually give out rewards for weekly and monthly winners" is a
-         later phase, not built yet. -->
-    <div class="sw-panel" id="crownPanelWrap" style="display:none;">
-      <div class="panel-title">CR0WN</div>
-      <div class="index-line" style="text-align:center; margin-bottom:0.75rem;">REAL $P!GE0NS TRAD!NG PR0F!T/L0SS — REAL!ZED 0NLY, TH!S S!TE 0NLY.</div>
-      <div class="search-row" style="justify-content:center;">
-        <select class="sort-select" id="crownPeriodSelect">
-          <option value="week" selected>TH!S WEEK</option>
-          <option value="month">TH!S M0NTH</option>
-        </select>
+    <!-- SALES H!ST0RY — same real popup treatment as T0P 123 H0LDERS
+         above, reached via the DATABASE banner's own SALES H!ST0RY
+         button now instead of a separate top-level tab. -->
+    <div id="salesModal" style="display:none;">
+      <div class="pigeons-calc-panel sales-modal-panel">
+        <div class="simple-picker-header">
+          <span class="simple-picker-title">SALES H!ST0RY</span>
+          <button type="button" class="simple-picker-close" id="salesCloseBtn" title="CL0SE">&times;</button>
+        </div>
+        <div class="sale-currency-toggle" id="salesCurrencyToggle">
+          <button class="sale-currency-btn sale-currency-btn-active" data-currency="XRP">XRP</button>
+          <button class="sale-currency-btn" data-currency="PIGEONS" id="salesCurrencyPigeonsBtn">$P!GE0NS</button>
+        </div>
+        <div class="sales-scrollbox" id="salesScrollBox">
+          <div class="sale-header-row"><span>NFT</span><span>PR!CE</span><span>FR0M</span><span>T0</span><span>T!ME</span></div>
+          <div id="salesArea"></div>
+          <div class="scroll-sentinel" id="salesScrollSentinel"></div>
+          <div class="load-more-note" id="salesLoadMoreNote" style="display:none;">L0AD!NG M0RE SALES...</div>
+          <div class="end-of-collection-note" id="salesEndNote" style="display:none;">// END 0F SALES H!ST0RY</div>
+        </div>
       </div>
-      <div id="crownLeaderboardList"></div>
     </div>
 
     <!-- PR0F!LE — a wallet's own chosen username + profile picture (one of
@@ -7371,31 +7347,50 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </div>
-      <!-- PR0F!LE TABS — sits right under the banner now (reported live),
-           sorting everything below it into two destinations instead of
-           one long stacked scroll: 0FFERS (received/outgoing, with a
-           real pending-count badge — same offersReceivedTotal
-           updateFlockTabLabel/el.flockOffersCount already track) and
-           C0LLECT!0NS (WATCHL!ST + MY C0!NS together — both are real
-           collection/NFT curation, just balances vs individual picks).
-           Exactly one profile-tab-panel visible at a time (see
-           switchProfileTab in the JS); OFFERS is first/default since
-           open offers are the more time-sensitive of the two. -->
-      <div class="profile-tabs" id="profileTabs">
-        <button type="button" class="profile-tab-btn active" data-profiletab="offers">
-          0FFERS<span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span>
-        </button>
-        <button type="button" class="profile-tab-btn" data-profiletab="collections">C0LLECT!0NS</button>
+      <!-- PR0F!LE B0X GR!D — sits right under the banner now (reported
+           live), a real menu of boxed destinations (same real
+           .flock-account-box visual language the old FL0CK-era boxes
+           always used, just reused here) instead of one long stacked
+           scroll. N0TH!NG opens by default — V!EW PR0F!LE is just "close
+           whatever's open", the neutral/first state; 0FFERS/C0LLECT!0NS/
+           CR0WN each reveal their own real panel below when clicked,
+           TRANSACT!0N H!ST0RY/MESSAGES stay inert (same C0M!NG S00N
+           treatment the old boxes always had — neither backend exists
+           yet). Exactly one panel (or none) visible at a time — see
+           switchProfileTab in the JS. -->
+      <div class="profile-box-grid" id="profileBoxGrid">
+        <div class="sw-panel flock-account-box flock-account-box-clickable active" role="button" tabindex="0" data-profilebox="profile">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">V!EW PR0F!LE</span></div>
+        </div>
+        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="offers">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">0FFERS<span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span></span></div>
+        </div>
+        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="collections">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">C0LLECT!0NS</span></div>
+        </div>
+        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="crown">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">CR0WN</span></div>
+        </div>
+        <!-- Paused (MESSAGES_DB was never bound in production — see the
+             swap-buy-prepare.js/HANDOFF.md history; messaging is fully
+             built and worked in local dev, but every real request in prod
+             500s). TRANSACT!0N H!ST0RY has no real backend yet either —
+             same inert "not yet" treatment as before. -->
+        <div class="sw-panel flock-account-box flock-account-box-soon">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">TRANSACT!0N H!ST0RY</span><span class="db-soon">C0M!NG S00N</span></div>
+        </div>
+        <div class="sw-panel flock-account-box flock-account-box-soon">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">MESSAGES</span><span class="db-soon">C0M!NG S00N</span></div>
+        </div>
       </div>
-      <div class="profile-tab-panel" id="profileTabPanelOffers">
+      <div class="profile-tab-panel" id="profileTabPanelOffers" style="display:none;">
         <!-- 0FFERS — same real 0FFERS RECE!VED/0UTG0!NG 0FFERS lists this
              always had (renderMyOffersList/renderOutgoingOffersList, fed
              by loadOffersReceived/loadOutgoingOffers which already run on
              wallet connect) — only where they live changed. The old
              standalone MY 0FFERS tab (myOffersPanelWrap) is gone; the
-             0FFERS quick-box (flockOffersBox, further down this same
-             page) now just switches to this profile tab instead of a
-             separate top-level one. -->
+             0FFERS box above now just opens this panel instead of a
+             separate top-level tab. -->
         <div class="panel-title">0FFERS RECE!VED</div>
         <div id="myOffersList"></div>
         <div class="panel-title outgoing-offers-title">0UTG0!NG 0FFERS</div>
@@ -7462,6 +7457,23 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
           </div>
         </div>
+      </div>
+      <!-- CR0WN — real $PIGEONS trading profit/loss leaderboard, realized
+           only (see crown-leaderboard.js's own comment). Read-only for now
+           — "eventually give out rewards for weekly and monthly winners"
+           is a later phase, not built yet. Moved onto Σκύλλα itself now
+           (reported live), opened by its own box in profileBoxGrid above
+           instead of a separate top-level tab. -->
+      <div class="profile-tab-panel" id="profileTabPanelCrown" style="display:none;">
+        <div class="panel-title">CR0WN</div>
+        <div class="index-line" style="text-align:center; margin-bottom:0.75rem;">REAL $P!GE0NS TRAD!NG PR0F!T/L0SS — REAL!ZED 0NLY, TH!S S!TE 0NLY.</div>
+        <div class="search-row" style="justify-content:center;">
+          <select class="sort-select" id="crownPeriodSelect">
+            <option value="week" selected>TH!S WEEK</option>
+            <option value="month">TH!S M0NTH</option>
+          </select>
+        </div>
+        <div id="crownLeaderboardList"></div>
       </div>
     </div>
 
@@ -7575,44 +7587,6 @@ const SWAP_HTML = `<!DOCTYPE html>
 
         <div style="text-align:center;">
           <a class="back-link" href="#" id="backToFullCollectionLink" style="margin:0;">← EX!T TARGET WALLET :: BACK T0 FULL C0LLECT!0N</a>
-        </div>
-      </div>
-
-      <!-- Your own connected wallet address, with a real one-tap copy —
-           reported live as wanting "a way to copy our own address when
-           we're in Σκύλλα", then "one big cyan box thats clickable" —
-           the whole box is the button now, not a small one tacked on the
-           side. Same visibility rule as flockAccountBoxes below (only on
-           FL0CK, scoped to your own wallet). -->
-      <div class="sw-panel flock-wallet-box" id="flockWalletBox" style="display:none;" role="button" tabindex="0">
-        <span class="flock-wallet-addr" id="flockWalletAddr"></span>
-        <span class="flock-wallet-copy-hint" id="flockWalletCopyHint">CL!CK T0 C0PY</span>
-      </div>
-
-      <!-- FL0CK's own account-page layout — separate stacked boxes, not a
-           dropdown-in-a-title (see flockAccountBoxes' own comment). Only
-           ever shown on FL0CK, scoped to your own wallet (see
-           updateSearchPanelTitleForPaws). -->
-      <div id="flockAccountBoxes" style="display:none;">
-        <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockMyFlockBox">
-          <div class="flock-account-box-row"><span class="flock-account-box-label flock-count-loading" id="flockMyFlockLabel">MY P!GE0NS :: L0AD!NG...</span></div>
-        </div>
-        <!-- Paused (MESSAGES_DB was never bound in production, see the
-             swap-buy-prepare.js/HANDOFF.md history — messaging is fully
-             built and worked in local dev, but every real request in prod
-             500s) — same inert "not yet" treatment as TRANSACTION
-             H!ST0RY/$CRWN REWARDS below, not a real destination right now. -->
-        <div class="sw-panel flock-account-box flock-account-box-soon">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">MESSAGE !NB0X</span><span class="db-soon">C0M!NG S00N</span></div>
-        </div>
-        <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockOffersBox">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">0FFERS<span class="flock-tab-offer-dot" id="flockOffersCount" style="display:none;"></span></span></div>
-        </div>
-        <div class="sw-panel flock-account-box flock-account-box-soon">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">TRANSACT!0N H!ST0RY</span><span class="db-soon">C0M!NG S00N</span></div>
-        </div>
-        <div class="sw-panel flock-account-box flock-account-box-soon">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">CR0WN REWARDS</span><span class="db-soon">C0M!NG S00N</span></div>
         </div>
       </div>
 
@@ -8641,7 +8615,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var state = {
     collection: 'pigeons',     // 'pigeons' | 'phnixs' | 'teddybg' — see COLLECTION SELECTION (dbSelectFlyout) and switchCollection()
     scope: null,              // null (whole collection) or { wallet, ownerShort }
-    flockCollapsed: true,     // MY FL0CK account-box starts minimised on FL0CK — click toggles (see updateSearchPanelTitleForPaws)
+    flockCollapsed: false,    // Always expanded now — its own toggle box (flockMyFlockBox) is gone (see updateSearchPanelTitleForPaws)
     skip: 0,                  // how many items already loaded, for infinite scroll
     editionRawSkip: 0,        // position in the underlying sorted collection, for edition LOW/HIGH scans
     hasMore: true,
@@ -8670,7 +8644,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // value, not this one) — this only governs the very first page load.
     sort: 'SCYLLA_PRICE_ASC',
     edition: 'ALL',            // 'ALL' | 'LOW' (1-1515) | 'HIGH' (1516-3015)
-    activeTab: null,           // null | 'database' | 'mypigeons' | 'topholders' | 'sales'
+    activeTab: null,           // null | 'database' | 'mypigeons' | 'swapoffers'
     databaseLoaded: false,
     statsLoaded: false,       // universal info box — loads once, on the first tab opened, regardless of which
     salesLoaded: false,
@@ -8755,17 +8729,17 @@ const SWAP_HTML = `<!DOCTYPE html>
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
-   'profileTabs','profileTabOffersBadge','profileTabPanelOffers','profileTabPanelCollections',
+   'profileBoxGrid','profileTabOffersBadge','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelCrown',
    'profileWatchlistSection','profileWatchlistGrid',
-   'topHoldersPanelWrap','topHoldersList',
-   'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
+   'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn',
+   'crownPeriodSelect','crownLeaderboardList',
    'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileAddressCopyBtn','profileAddressBithompLink','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
    'profileEditModal','profileEditTitle','profileEditClose','profileEditPaneUsername','profileEditPaneQuote','profileEditPaneTwitter','profileEditPanePfp',
    'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
    'profileCoinsEditBtn','profileCoinsEditPopover','profileCoinsEditList',
-   'salesPanelWrap',
+   'salesModal','salesCloseBtn','openSalesBtn',
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount','statScyllaListedLabel',
@@ -8776,8 +8750,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote','salesCurrencyToggle',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
-   'flockWalletBox','flockWalletAddr','flockWalletCopyHint',
-   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockGridPanel','flockOffersBox','flockOffersCount',
+   'flockGridPanel',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn','swapOffersTabBtn',
@@ -9056,9 +9029,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // skipScroll: the top tab strip's own Σκύλλα button opens PλWS just
   // like clicking it always has, but shouldn't ALSO jump the page down to
   // "SH0W!NG Y0UR P!GE0NS" — reported live as only wanting that jump from
-  // the "MY P!GE0NS :: N" box itself (which still scrolls there directly,
-  // see el.flockMyFlockBox's own click handler), not from opening the tab
-  // in the first place.
+  // a real destination further down, not from opening the tab itself.
   function showTab(tab, skipScroll){
     // 0FFER F0R picking mode (enterTheirsPickMode) legitimately visits
     // DATABASE mid-search, and comes back to PλWS itself once a pick is
@@ -9086,6 +9057,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     state.activeTab = tab;
+    // STAT!C :: MA!NFRAME/DATABASE title — reported live as wanting this
+    // to actually track the active tab instead of always reading
+    // MA!NFRAME, and to disappear outright on Σκύλλα (mainframeReopenLabel
+    // sits in .page, above topTabsWrap, so it's the one element every tab
+    // shares — updating it here covers every real path into a tab, not
+    // just direct tab-strip clicks). MA!NFRAME itself never reaches here
+    // (see topTabs' own click handler, which returns before calling
+    // showTab) — its own click sets this text directly instead.
+    el.mainframeReopenLabel.style.display = tab === 'mypigeons' ? 'none' : '';
+    if (tab === 'database') el.mainframeReopenLabel.textContent = 'STAT!C :: DATABASE';
     // .paws-view still exists purely to hide the # 0R WALLET search box
     // on PλWS (this page only ever shows your own Pigeons, see the
     // .paws-view CSS rule near the top of the file). A body class, not a
@@ -9137,9 +9118,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // sitting above screenBrowse. Hidden the instant screenBrowse itself
     // takes over, same condition as its own visibility above.
     el.myPigeonsPanel.style.display = (tab === 'mypigeons' && !isOwnWalletScope()) ? '' : 'none';
-    el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
-    el.salesPanelWrap.style.display = tab === 'sales' ? '' : 'none';
-    el.crownPanelWrap.style.display = tab === 'crown' ? '' : 'none';
+    // T0P 123 H0LDERS/SALES H!ST0RY/CR0WN are real popups/profile boxes
+    // now (openTopHoldersModal/openSalesModal, profileBoxGrid's own CR0WN
+    // box) — no longer separate top-level tabs, so showTab never needs to
+    // show/hide them.
     // Σκύλλα IS the profile/hub page now (reported live as "we dont need
     // both") — PR0F!LE's own content (banner/avatar/MY C0!NS) renders at
     // the top of the same 'mypigeons' tab regardless of scope (it
@@ -9207,14 +9189,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       loadOutgoingOffers();
       loadIncomingTransfers();
     }
-    if (tab === 'topholders' && topHoldersData === null){
-      loadTopHolders();
-    } else if (tab === 'sales' && !state.salesLoaded){
-      state.salesLoaded = true;
-      loadMoreSales();
-    } else if (tab === 'crown' && crownData === null){
-      loadCrownLeaderboard();
-    } else if (tab === 'swapoffers'){
+    if (tab === 'swapoffers'){
       // Always refetches (no "loaded once" guard like the others) — this
       // list changes as soon as the other side of a pending swap acts, so
       // a stale cached view would hide real progress.
@@ -9226,6 +9201,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     var btn = e.target.closest('.tab-btn');
     if (!btn) return;
     var tab = btn.getAttribute('data-tab');
+    // MA!NFRAME doesn't switch state.activeTab at all — it just reopens
+    // the existing full-screen overlay, same as mainframeReopenLabel/
+    // mainframeProfileBtn already do, so this returns before reaching
+    // showTab (which has no 'mainframe' case of its own).
+    if (tab === 'mainframe'){
+      el.screenMainframe.style.display = 'flex';
+      el.mainframeReopenLabel.textContent = 'STAT!C :: MA!NFRAME';
+      el.mainframeReopenLabel.style.display = '';
+      return;
+    }
     // MY PIGEONS with no active session goes straight into the real
     // Σκύλλα/Xaman login instead of requiring a second click on a CONNECT
     // button — but the tab itself still opens right away (no longer also
@@ -9349,9 +9334,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else {
       el.screenBrowse.style.display = 'none';
       el.myPigeonsPanel.style.display = 'none';
-      el.topHoldersPanelWrap.style.display = 'none';
-      el.salesPanelWrap.style.display = 'none';
       el.swapOffersPanelWrap.style.display = 'none';
+      el.topHoldersModal.style.display = 'none';
+      el.salesModal.style.display = 'none';
       // Nothing to sort/filter on a single-item screen (DETAIL/HIST0RY/
       // SUMMARY) — same reasoning as showTab's own bottom-bar toggle.
       el.bottomControlsBar.style.display = 'none';
@@ -10034,45 +10019,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? 'SH0W!NG Y0UR ' + collectionItemLabel() + 'S :: ' + state.scopeAllItems.length
       : 'SEARCH!NG ' + COLLECTION_META[state.collection].tokenLabel + ' DATABASE';
     el.searchPanelTitle.classList.toggle('search-panel-title-flock', onFlock);
-    el.flockAccountBoxes.style.display = onFlock ? '' : 'none';
-    el.flockWalletBox.style.display = onFlock ? '' : 'none';
-    if (onFlock && el.flockWalletAddr.textContent !== MY_WALLET){
-      el.flockWalletAddr.textContent = MY_WALLET;
-    }
-    if (onFlock){
-      // myOwnPigeonsCache stays null until the real held-Pigeons fetch
-      // actually resolves (see loadTrustlineLoginState) — state.scopeAllItems
-      // defaults to [] the whole time, so reading its .length here used to
-      // show "MY P!GE0NS :: 0" the instant this tab opened, indistinguishable
-      // from a genuinely empty wallet. The underscore is a real loading
-      // state, not a fake zero.
-      // myOwnPigeonsCacheFailed distinguishes "still loading" from "gave
-      // up" — a real XRPL account_nfts lookup for a big wallet can take
-      // long enough that apiWithRetry exhausts its own retries, and this
-      // used to just silently swallow that (a bare .catch(function(){}))
-      // and leave the underscore pulsing forever with no way to tell it
-      // had actually already failed for good, reported live as "it just
-      // shows MY P!GE0NS :: _ ... glitching". A real failed state now,
-      // with a tap-to-retry instead of a dead end.
-      // The underscore itself read as broken/glitchy rather than "in
-      // progress" — a real word, still pulsing via .flock-count-loading,
-      // actually reads as a loading state instead of cryptic leftover
-      // text.
-      el.flockMyFlockLabel.classList.toggle('flock-count-loading', myOwnPigeonsCache === null && !myOwnPigeonsCacheFailed);
-      el.flockMyFlockLabel.classList.toggle('flock-count-failed', myOwnPigeonsCacheFailed);
-      el.flockMyFlockLabel.textContent = 'MY P!GE0NS :: ' + (myOwnPigeonsCacheFailed ? 'TAP T0 RETRY' : myOwnPigeonsCache === null ? 'L0AD!NG...' : state.scopeAllItems.length);
-    }
+    // flockWalletBox ("the address bar") and flockAccountBoxes ("my
+    // pigeons bar" + its MESSAGE !NB0X/0FFERS/TRANSACT!0N H!ST0RY/CR0WN
+    // REWARDS siblings) are gone — reported live as wanting them removed
+    // now that Σκύλλα's own banner already shows the address, and 0FFERS/
+    // C0LLECT!0NS/CR0WN/TRANSACT!0N H!ST0RY/MESSAGES all live as real
+    // boxes directly under that banner instead (see profileBoxGrid).
+    // flockCollapsed defaults to false now (see state's own declaration)
+    // so #flockGridPanel below is never left permanently hidden with no
+    // toggle left to un-collapse it.
     // DATABASE's own grid panel never collapses — only MY FL0CK's copy of
     // it does, and only while actually on FL0CK.
-    // Reverted a bad fix here: #flockGridPanel is NOT vestigial — it
-    // directly wraps resultsBlock/resultsArea (the real grid), so this
-    // line alone already correctly hides it while flockCollapsed. An
-    // earlier attempt additionally hid el.screenBrowse itself, which
-    // ALSO contains flockWalletBox/flockAccountBoxes as siblings inside
-    // it — that bricked the whole Σκύλλα tab (wallet box, account boxes,
-    // everything) with nothing left visible to click to undo it. Confirmed
-    // live as "not loading Σκύλλα at all when logged in" — never do that
-    // again; only flockGridPanel should ever collapse here.
     el.flockGridPanel.style.display = (onFlock && state.flockCollapsed) ? 'none' : '';
   }
   // Shared by SELECT (auto-enters owner scope + auto-targets the pigeon
@@ -11875,9 +11832,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     var transferBtn = '<button class="bar-btn transfer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">TRANSFER</button>';
     return offersHtml + listedNote + '<div class="owned-stack-row">' + primaryBtn + transferBtn + '</div>';
   }
-  // 0FFERS RECE!VED — reached via the Σκύλλα tab's own 0FFERS box (see
-  // el.flockOffersBox's click handler), which used to do nothing at all
-  // when clicked. One horizontal row per listed Pigeon with a real
+  // 0FFERS RECE!VED — reached via Σκύλλα's own 0FFERS box (see
+  // profileBoxGrid's click handler). One horizontal row per listed Pigeon
+  // with a real
   // offer, thumbnail + number + buyer + price + ACCEPT/DECL!NE/C0UNTER —
   // "set it horizontally showing all the details of the offer" per the
   // explicit request. Just the highest offer per Pigeon, same as the
@@ -13146,91 +13103,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     }, BUYSWAP_REFRESH_MS);
   }
   el.pigeonsBalanceBuyBtn.addEventListener('click', function(){ openBuySwapPanel(state.collection); });
-  // navigator.clipboard needs a secure context (https, which this site
-  // always is), but its own permission can still be denied even when the
-  // API itself exists (confirmed live: some embedded/in-app browser
-  // contexts reject writeText with a real permission error) — falling
-  // back to the execCommand trick only when the API is missing entirely
-  // silently left the button dead with zero feedback in exactly that case.
-  // Now the fallback runs on ANY writeText failure, not just its absence.
-  var flockWalletCopyResetTimer = null;
-  function copyToClipboardFallback(text){
-    var tmp = document.createElement('textarea');
-    tmp.value = text;
-    tmp.style.position = 'fixed';
-    tmp.style.opacity = '0';
-    document.body.appendChild(tmp);
-    tmp.select();
-    var ok = false;
-    try { ok = document.execCommand('copy'); } catch (e) {}
-    document.body.removeChild(tmp);
-    return ok;
-  }
-  function handleFlockWalletCopy(){
-    if (!MY_WALLET) return;
-    function showCopied(){
-      el.flockWalletCopyHint.textContent = 'C0P!ED!';
-      el.flockWalletBox.classList.add('flock-wallet-copy-done');
-      clearTimeout(flockWalletCopyResetTimer);
-      flockWalletCopyResetTimer = setTimeout(function(){
-        el.flockWalletCopyHint.textContent = 'CL!CK T0 C0PY';
-        el.flockWalletBox.classList.remove('flock-wallet-copy-done');
-      }, 1500);
-    }
-    function showFailed(){
-      el.flockWalletCopyHint.textContent = 'C0PY FA!LED';
-      clearTimeout(flockWalletCopyResetTimer);
-      flockWalletCopyResetTimer = setTimeout(function(){
-        el.flockWalletCopyHint.textContent = 'CL!CK T0 C0PY';
-      }, 1500);
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(MY_WALLET).then(showCopied).catch(function(){
-        if (copyToClipboardFallback(MY_WALLET)) showCopied(); else showFailed();
-      });
-      return;
-    }
-    if (copyToClipboardFallback(MY_WALLET)) showCopied(); else showFailed();
-  }
-  el.flockWalletBox.addEventListener('click', handleFlockWalletCopy);
-  // role="button"/tabindex on the box (see its own markup comment) needs
-  // its own Enter/Space handling — a real <button> gets this for free,
-  // a plain <div> acting as one doesn't.
-  el.flockWalletBox.addEventListener('keydown', function(e){
-    if (e.key === 'Enter' || e.key === ' '){
-      e.preventDefault();
-      handleFlockWalletCopy();
-    }
-  });
-  el.flockMyFlockBox.addEventListener('click', function(){
-    // A previous attempt genuinely failed (see loadMyOwnPigeonsCache) —
-    // retry that instead of toggling collapse, which would otherwise
-    // just expand/collapse a grid that has no real data to show either
-    // way.
-    if (myOwnPigeonsCacheFailed){ loadMyOwnPigeonsCache(); return; }
-    state.flockCollapsed = !state.flockCollapsed;
-    updateSearchPanelTitleForPaws();
-    // Expanding (not collapsing) should actually bring the real grid
-    // into view — was just an in-place expand with no scroll at all, so
-    // on a page already scrolled down (or on a short viewport) it could
-    // expand entirely off-screen with nothing visible to suggest
-    // anything happened. Same landing spot scrollActiveTabPanelIntoView
-    // uses for every other way into MY PIGEONS (the SH0W MY NFTs button,
-    // the Σκύλλα top tab) — "SH0W!NG Y0UR P!GE0NS :: N" pinned to the
-    // top of the screen, not just centered on the grid below it.
-    if (!state.flockCollapsed) el.searchPanelTitle.scrollIntoView({ block: 'start', behavior: 'smooth' });
-  });
-  // Used to do nothing at all when clicked — reported live, now switches
-  // Σκύλλα's own OFFERS profile-tab (see switchProfileTab) and scrolls
-  // the banner back into view, since this box only ever shows while
-  // already scoped to your own wallet further down the same page.
-  el.flockOffersBox.addEventListener('click', function(){
-    switchProfileTab('offers');
-    el.profileBanner.scrollIntoView({ block: 'start', behavior: 'smooth' });
-  });
-  // Messaging paused — see the MESSAGE !NB0X box's own HTML comment.
-  // Nothing to wire up here any more (no click handler, no unread-badge
-  // fetch against an endpoint that only ever 500s in prod).
   // BUY $P!GE0NS is the one entry point everywhere now (FL0CK shows the
   // exact same banner as DATABASE, no more BALANCE-amount-as-buy-button
   // substitution — that only existed while FL0CK's banner was slimmed).
@@ -14272,16 +14144,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       offersReceivedTotal = totalOffers;
       updateFlockTabLabel();
       renderMyPigeonsList();
-      // The Σκύλλα tab's own 0FFERS box — a real count next to it now
-      // instead of a plain unlabelled "0FFERS" (reported live as wanting
-      // this), hidden entirely rather than showing "0FFERS :: 0" when
-      // there's genuinely nothing pending.
-      el.flockOffersCount.textContent = totalOffers || '';
-      el.flockOffersCount.style.display = totalOffers > 0 ? '' : 'none';
-      // Same real count, now on the 0FFERS profile-tab itself too
-      // (reported live wanting "a pending number if the address has
-      // them") — same hide-entirely-at-zero rule as flockOffersCount's
-      // own badge right above.
+      // The 0FFERS box's own real count (reported live wanting "a pending
+      // number if the address has them") — hidden entirely rather than
+      // showing "0FFERS :: 0" when there's genuinely nothing pending.
       el.profileTabOffersBadge.textContent = totalOffers || '';
       el.profileTabOffersBadge.style.display = totalOffers > 0 ? '' : 'none';
       // Also refresh the DATABASE grid when SH0W MY P!GE0NS is what's
@@ -15117,6 +14982,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.mainframeReopenLabel.addEventListener('click', function(){
     el.screenMainframe.style.display = 'flex';
+    el.mainframeReopenLabel.textContent = 'STAT!C :: MA!NFRAME';
   });
   // Σκύλλα IS the profile/hub page now (reported live as "we dont need
   // both") — always the same tab either way, connected or not.
@@ -15416,6 +15282,33 @@ const SWAP_HTML = `<!DOCTYPE html>
   // as #offerConfirmModal/#buySwapModal's own overlay click handlers.
   el.pigeonsCalcModal.addEventListener('click', function(e){
     if (e.target === el.pigeonsCalcModal) closeCalcPopover();
+  });
+  // T0P 123 H0LDERS/SALES H!ST0RY — same real popup pattern as the
+  // EXCHANGE CALCULAT0R right above (reported live as wanting these off
+  // their own top-level tabs and into the DATABASE banner instead), each
+  // lazy-loading its own real data on first open — same guards
+  // (topHoldersData === null / state.salesLoaded) the old top-level tabs
+  // used to gate this with.
+  el.openTopHoldersBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    el.topHoldersModal.style.display = 'flex';
+    if (topHoldersData === null) loadTopHolders();
+  });
+  el.topHoldersCloseBtn.addEventListener('click', function(){ el.topHoldersModal.style.display = 'none'; });
+  el.topHoldersModal.addEventListener('click', function(e){
+    if (e.target === el.topHoldersModal) el.topHoldersModal.style.display = 'none';
+  });
+  el.openSalesBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    el.salesModal.style.display = 'flex';
+    if (!state.salesLoaded){
+      state.salesLoaded = true;
+      loadMoreSales();
+    }
+  });
+  el.salesCloseBtn.addEventListener('click', function(){ el.salesModal.style.display = 'none'; });
+  el.salesModal.addEventListener('click', function(e){
+    if (e.target === el.salesModal) el.salesModal.style.display = 'none';
   });
   // Real link, destination doesn't exist yet — same "coming soon"
   // pattern as the BURNT link, honest about what's actually built.
@@ -16856,20 +16749,36 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (key !== state.collection) switchCollection(key);
     showTab('database');
   });
-  // ---- PR0F!LE TABS — 0FFERS/C0LLECT!0NS, right under the banner (see
-  // the HTML's own comment on .profile-tabs). Plain show/hide, exactly
-  // one panel visible — same pattern as every other tab strip on this
-  // site, just scoped to two elements instead of a whole screen. ----
+  // ---- PR0F!LE B0X GR!D — V!EW PR0F!LE/0FFERS/C0LLECT!0NS/CR0WN, right
+  // under the banner (see the HTML's own comment on .profile-box-grid).
+  // Plain show/hide, at most one real panel visible — V!EW PR0F!LE is
+  // just "none of them", the neutral/closed state (reported live as
+  // wanting "nothing should be opened" by default). CR0WN's own real
+  // leaderboard data is fetched lazily here, on first open — same
+  // crownData === null guard the old top-level CR0WN tab used to gate
+  // loadCrownLeaderboard() with. ----
   function switchProfileTab(tab){
     el.profileTabPanelOffers.style.display = tab === 'offers' ? '' : 'none';
     el.profileTabPanelCollections.style.display = tab === 'collections' ? '' : 'none';
-    el.profileTabs.querySelectorAll('.profile-tab-btn').forEach(function(btn){
-      btn.classList.toggle('active', btn.getAttribute('data-profiletab') === tab);
+    el.profileTabPanelCrown.style.display = tab === 'crown' ? '' : 'none';
+    el.profileBoxGrid.querySelectorAll('.flock-account-box-clickable').forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-profilebox') === tab);
     });
+    if (tab === 'crown' && crownData === null) loadCrownLeaderboard();
   }
-  el.profileTabs.addEventListener('click', function(e){
-    var btn = e.target.closest('.profile-tab-btn');
-    if (btn) switchProfileTab(btn.getAttribute('data-profiletab'));
+  el.profileBoxGrid.addEventListener('click', function(e){
+    var btn = e.target.closest('.flock-account-box-clickable[data-profilebox]');
+    if (btn) switchProfileTab(btn.getAttribute('data-profilebox'));
+  });
+  // role="button"/tabindex on each box (see the HTML's own markup) needs
+  // its own Enter/Space handling — a real <button> gets this for free, a
+  // plain <div> acting as one doesn't.
+  el.profileBoxGrid.addEventListener('keydown', function(e){
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var btn = e.target.closest('.flock-account-box-clickable[data-profilebox]');
+    if (!btn) return;
+    e.preventDefault();
+    switchProfileTab(btn.getAttribute('data-profilebox'));
   });
   function loadProfilePanel(){
     // Always starts open on a fresh visit to PR0F!LE, even if it was
@@ -16881,15 +16790,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderProfileCoins();
     // 0FFERS — whatever loadOffersReceived/loadOutgoingOffers already
     // resolved (they run independently on wallet connect, see their own
-    // comments) renders straight into the 0FFERS profile-tab panel here;
-    // still just "L0AD!NG..."/empty until those land if this is the very
-    // first paint after connecting. 0FFERS is also always the tab this
-    // lands back on — reported live as wanting it first/default since
-    // it's the more time-sensitive of the two.
+    // comments) renders straight into the 0FFERS panel here, ready the
+    // instant that box is actually clicked — still just "L0AD!NG..."/
+    // empty until those land if this is the very first paint after
+    // connecting.
     renderMyOffersList();
     renderOutgoingOffersList();
     renderProfileWatchlist();
-    switchProfileTab('offers');
+    // N0TH!NG open on a fresh visit (reported live) — V!EW PR0F!LE is
+    // the neutral/closed state every real destination box reveals from.
+    switchProfileTab('profile');
     if (!MY_WALLET){
       el.profileCurrentWallet.textContent = '';
       el.profileCurrentUsername.textContent = 'C0NNECT Y0UR WALLET F!RST.';
