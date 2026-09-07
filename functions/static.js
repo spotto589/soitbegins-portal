@@ -154,7 +154,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        screen) — a real variable, not a magic number repeated in both
        body's own padding-top and #screenMainframe/#screenDetail's own
        top offset, which otherwise have to agree by coincidence. */
-    --global-ticker-h:92px;
+    --global-ticker-h:78px;
   }
   /* PHN!X/TEDDY used to swap in two entirely different UNIVERSAL palettes
      here (every cyan/magenta on the page, not just the banner) — that was
@@ -6282,94 +6282,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   .placeholder-card .pc-title{ font-size:12px; letter-spacing:0.2em; color:var(--grey); margin-bottom:0.75rem; text-transform:uppercase; }
   .placeholder-card .pc-body{ font-family:var(--font-body); font-size:11.5px; letter-spacing:0.01em; color:var(--grey); line-height:1.7; text-transform:none; }
 
-  /* MA!NFRAME — a real landing page shown before DATABASE, pick a
-     collection to enter. Full-screen overlay (same z-index/position
-     pattern every confirm modal on this page already uses) rather than a
-     showTab name, since it sits BEFORE any tab exists to switch to. The
-     h1's own "STAT!C :: MA!NFRAME" sub-label (see #mainframeReopenLabel)
-     is the way back in, matching the site's existing branding instead of
-     adding new chrome for it. */
-  /* One static screen, genuinely never scrolls (reported live as wanting
-     this) — height:100dvh + overflow:hidden, flex column so the header
-     takes only what it needs and the carousel absorbs whatever's left,
-     regardless of viewport height. 100dvh over 100vh: on mobile Safari/
-     Chrome, 100vh includes the space the address bar temporarily covers,
-     which would make this taller than the ACTUAL visible viewport and
-     force exactly the scroll this is meant to never have; 100dvh tracks
-     the real visible area. display is toggled to 'flex' (not 'block') in
-     the script wherever this shows. */
+  /* MA!NFRAME — DATABASE's own real landing content now (reported live as
+     wanting the separate full-screen overlay gone) — a plain in-flow
+     block inside the DATABASE tab, shown/hidden by showTab exactly like
+     #screenBrowse itself, not its own fixed/opaque screen any more. */
   #screenMainframe{
     display:none;
-    position:fixed;
-    /* top instead of inset:0's implicit 0 — leaves #globalTopBar (a
-       higher z-index sibling, see its own comment) visible above this
-       overlay instead of covered by it, same "on every screen" real
-       estate #globalTopBar claims everywhere else. */
-    top:var(--global-ticker-h);
-    left:0;
-    right:0;
-    bottom:0;
-    z-index:2000;
-    /* Opaque (var(--bg)), same as #screenDetail's own identical situation
-       (see its own comment) — plain transparent here doesn't reveal just
-       #staticBg, it reveals the ENTIRE real page sitting behind this
-       screen (the DATABASE view, trustline banner, tabs — all of it, just
-       display:none's own children stay hidden, the page itself doesn't),
-       confirmed live as a ghosted double-exposure of both screens at
-       once. Opaque instead, with its own local TV-static canvas
-       (#mainframeStaticBg, .local-static-bg) + scanline layer
-       (::after below) — an exact copy of the page's own recipe, not a
-       window into it, same reasoning #screenDetail/#detailLightbox
-       already settled on. */
-    background:var(--bg);
-    overflow:hidden;
-    /* No explicit height any more — top+bottom above already pin this to
-       exactly "the rest of the viewport under #globalTopBar" (an
-       explicit height here would win over bottom and silently undo
-       that). */
-    padding:2rem 1.5rem;
     flex-direction:column;
   }
-  /* A faint, slow-drifting glow behind everything — the same trick as
-     .pigeons-bar-thumb's own accent gradient, just huge and centred
-     instead of boxed, so the very first screen anyone lands on reads as
-     alive rather than a flat black page with three boxes on it. Pure
-     decoration: fixed behind the grid, never intercepts clicks. Negative
-     z-index — paints above the opaque background + local static canvas
-     (both z-index:-1 too) but still behind the screen's real content. */
-  #screenMainframe::before{
-    content:'';
-    position:fixed;
-    inset:0;
-    z-index:-1;
-    pointer-events:none;
-    background:
-      radial-gradient(ellipse 900px 500px at 20% -10%, rgba(136,72,248,0.16), transparent 60%),
-      radial-gradient(ellipse 900px 500px at 85% 10%, rgba(52,255,133,0.10), transparent 60%);
-  }
-  /* CRT scanline layer — exact copy of body::before's own recipe, see
-     #screenDetail::before for the same pattern already established. */
-  #screenMainframe::after{
-    content:'';
-    position:fixed;
-    inset:0;
-    z-index:-1;
-    pointer-events:none;
-    background:repeating-linear-gradient(
-      to bottom,
-      rgba(255,255,255,0.018) 0px,
-      rgba(255,255,255,0.018) 1px,
-      transparent 1px,
-      transparent 3px
-    );
-    mix-blend-mode:overlay;
-  }
-  #screenMainframe > .local-static-bg{ z-index:-1; }
-  #screenMainframe > *:not(.local-static-bg){ position:relative; z-index:1; }
-  /* GL0BAL T0P BAR — see the HTML's own comment: ONE real banner now
-     (reported live as "we have two banners, just make it the one"),
-     replacing both the old separate ticker strip and #screenMainframe's
-     own duplicate hero. Fixed, full-width, ABOVE #screenMainframe
+  /* GL0BAL T0P BAR — see the HTML's own comment: ONE real banner, exactly
+     two equal halves now (reported live as wanting "only two buttons...
+     cleaner and less to click"). Fixed, full-width, ABOVE #screenMainframe
      (z-index:2000) so it's genuinely on every screen including that
      overlay, not just .page's own tabs. Solid background, no
      backdrop-filter — a blurred ancestor becomes the containing block
@@ -6383,48 +6306,59 @@ const SWAP_HTML = `<!DOCTYPE html>
     left:0;
     right:0;
     z-index:2200;
-    display:flex;
-    align-items:center;
-    gap:1.5rem;
-    padding:0.6rem 1.25rem;
     background:var(--bg);
     border-bottom:1px solid var(--border-mid);
   }
-  /* Σκύλλα://S!GNAL::0NL!NE — same real heading/glitch-text styling the
-     base h1 rule always gives it, just sized to actually fit this bar
-     alongside the tab strip instead of the clamp(24px,7vw,76px) a
-     full-width page hero needs. Pinned top-left (reported live wanting
-     it there specifically), never shrinks — the tab strip absorbs the
-     rest of the row's width instead. */
-  #globalTopBarHeading{
-    flex:0 0 auto;
-    margin:0;
-    font-size:20px;
-    line-height:1.1;
-  }
-  #globalTopBarHeading .h1-sub{ font-size:0.55em; cursor:pointer; }
-  /* The tab strip itself is unchanged (.top-tabs-wrap/.top-tabs/.tab-btn
-     all keep their own real styling) — only the vertical rhythm tuned
-     for sitting below a full-page hero (margin-top/-bottom, its own
-     divider line) needs resetting now that it's a compact row inside
-     this bar instead. */
-  #globalTopBar .top-tabs-wrap{ flex:1 1 auto; min-width:0; }
+  /* .top-tabs-wrap/.top-tabs are what actually hold the two real halves
+     now — no separate brand block any more, the Σκύλλα button itself
+     carries the logo+heading (see .global-top-scylla-btn below). Reset
+     flush to 0/no divider — that vertical rhythm assumed sitting below a
+     full-page hero, not being this bar's own only row. */
+  #globalTopBar .top-tabs-wrap{ width:100%; }
   #globalTopBar .top-tabs{ margin:0; border-bottom:none; }
-  /* .top-tabs-wrap's own scroll-fade hints assume the old vertical
-     margin context (bottom:1.75rem, stopping above .top-tabs' own
-     margin-bottom) — reset flush to 0 here since that margin is gone. */
   #globalTopBar .top-tabs-wrap::before, #globalTopBar .top-tabs-wrap::after{ bottom:0; }
-  /* Never wraps to a second line, at any width — #screenMainframe/
-     #screenDetail/body's own padding-top all key off one fixed
-     --global-ticker-h value for this bar's height; a wrapped second row
-     would silently grow past that and get overlapped. The tab strip's
-     own overflow-x:auto (same as it always had) is what actually
-     handles a narrow viewport instead, exactly like the DATABASE
-     dropdown always relied on. */
+  /* Exactly two equal halves (reported live) — flex:1 1 50% on both
+     real buttons (SWAP 0FFERS stays flag-gated/hidden, never part of
+     this split when it's actually shown). min-width:0 is the same
+     flex-child text-overflow gotcha this file documents elsewhere — lets
+     each half actually shrink below its content's natural width instead
+     of forcing the bar wider than the viewport. */
+  #globalTopBar .tab-btn{ flex:1 1 50%; min-width:0; padding:0.7em 1rem; }
+  /* Σκύλλα — logo + big heading together, one real button (reported live
+     wanting no separate small "Σκύλλα" tab any more). */
+  .global-top-scylla-btn{ display:flex; align-items:center; justify-content:center; gap:0.75rem; }
+  #globalTopBarLogo{ width:40px; height:40px; object-fit:contain; flex:0 0 auto; }
+  .global-top-scylla-text{ display:flex; flex-direction:column; align-items:center; min-width:0; }
+  /* Σκύλλα://S!GNAL::0NL!NE — real large/centred text again (reported
+     live — "i told you the title... should still be large writing, it
+     should be centred, the way it looked before"), same glitch-text
+     styling the base h1 rule always gives it, just capped smaller than a
+     full-page hero's own clamp(24px,7vw,76px) so it still fits this bar
+     alongside DATABASE. */
+  #globalTopBarHeading{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:clamp(18px, 2.4vw, 30px);
+    line-height:1.1;
+    letter-spacing:0.01em;
+    color:var(--white);
+    text-shadow:-2px 0 var(--cyan-dim), 2px 0 var(--magenta-dim);
+    text-transform:none;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:100%;
+  }
+  /* Real LOG !N/pigeon-count/offer-count status (updateFlockTabLabel in
+     the JS) — the same real feature the old small Σκύλλα tab always
+     showed, now a small line under the big heading instead of being the
+     whole button's content. */
+  .global-top-scylla-status{ font-size:12px; letter-spacing:0.06em; color:var(--grey-dim); margin-top:0.15rem; }
   @media (max-width:700px){
-    #globalTopBar{ gap:0.75rem; padding:0.5rem 1rem; }
-    #globalTopBarHeading{ font-size:15px; }
-    #globalTopBarHeading .h1-sub{ display:none; }
+    #globalTopBar .tab-btn{ padding:0.55em 0.6rem; }
+    #globalTopBarLogo{ width:26px; height:26px; }
+    #globalTopBarHeading{ font-size:14px; }
+    .global-top-scylla-status{ font-size:10px; }
   }
   /* SECT!0N HEADER — STAT!C :: MA!NFRAME/SELECT A C0LLECT!0N, now its own
      clearly separate block directly over the collection grid rather than
@@ -6493,17 +6427,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* ---- All 6 cards fit on one screen at once now (no carousel/arrows
      for now — see mainframeArrowPrev/Next's display:none below) — a real
      3-column x 2-row grid instead of a horizontally-scrolling row, so
-     every card is visible without scrolling or clicking through. flex:1 1
-     auto + min-height:0 is what actually lets this fill "whatever's left"
-     of the screen's own height instead of pushing it taller than the
-     viewport (min-height:0 is the same flex-child shrink gotcha this file
-     already documents elsewhere — a flex item defaults to min-height:auto,
-     which refuses to shrink below its content's natural size no matter
-     what flex:1 says). ---- */
+     every card is visible without scrolling or clicking through. No more
+     flex:1/height:100% here — those assumed the old fixed-viewport-height
+     overlay this used to be; now that it's plain in-flow DATABASE content
+     with no fixed height of its own, the grid just sizes to its cards'
+     own natural aspect-ratio height instead. ---- */
   .mainframe-carousel-wrap{
     position:relative;
-    flex:1 1 auto;
-    min-height:0;
     display:flex;
     align-items:stretch;
   }
@@ -6513,7 +6443,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     grid-template-rows:repeat(2, 1fr);
     gap:1.25rem;
     width:100%;
-    height:100%;
     padding:0 1rem;
   }
   .mainframe-card{
@@ -6813,30 +6742,38 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-arrow:hover{ border-color:var(--cyan-dim); background:rgba(20,21,26,0.95); transform:translateY(-50%) scale(1.08); }
   .mainframe-arrow-prev{ left:0.25rem; }
   .mainframe-arrow-next{ right:0.25rem; }
-  #mainframeReopenLabel{ cursor:pointer; }
 </style>
 </head>
 <body>
 
   <canvas id="staticBg"></canvas>
 
-  <!-- GL0BAL T0P BAR — ONE real banner now (reported live as "at the
-       moment were all over the place... we have two banners, just make
-       it the one"), replacing both the separate global ticker strip
-       this used to be AND #screenMainframe's own duplicate hero further
-       down. Σκύλλα://S!GNAL::0NL!NE (exactly the same heading/heading
-       styling as always) sits top-left, the real MA!NFRAME/DATABASE/
-       Σκύλλα tab strip (moved here from .page — same #topTabsWrap/
-       #topTabs, unchanged ids so none of its own wiring needed to
-       change) sits to its right. Fixed, z-index:2200 — ABOVE
-       #screenMainframe (z-index:2000) so it's genuinely the one banner
-       on every screen, including that overlay, not just .page's own
-       tabs. -->
+  <!-- GL0BAL T0P BAR — ONE real banner (reported live as "we have two
+       banners, just make it the one"), now exactly two equal halves
+       (reported live as wanting "only two buttons... cleaner and less to
+       click"): Σκύλλα://S!GNAL::0NL!NE (real big/centred text again, the
+       way the old page-hero looked, with Σκύλλα's own lockpad mark
+       beside it) IS the Σκύλλα tab button now — no separate small
+       "Σκύλλα" tab next to it any more — and DATABASE :: __ is the other
+       half. flockTabLabel (real LOG !N/pigeon-count/offer-count status,
+       see updateFlockTabLabel in the JS) still lives here too, now as a
+       small line under the big heading instead of being the button's
+       only content — that real feature didn't go away, it just isn't
+       what makes this "the Σκύλλα button" any more. Fixed, z-index:2200
+       — ABOVE #screenMainframe's old overlay z-index so it stayed the
+       one real banner even before that overlay was removed entirely;
+       kept the same z-index for any other modal still comparing
+       against it. -->
   <div id="globalTopBar">
-    <h1 id="globalTopBarHeading">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span><span class="h1-sub" id="mainframeReopenLabel">STAT!C :: MA!NFRAME</span></h1>
     <div class="top-tabs-wrap" id="topTabsWrap">
     <div class="top-tabs" id="topTabs">
-      <button class="tab-btn" data-tab="mainframe">MA!NFRAME</button>
+      <button class="tab-btn global-top-scylla-btn" data-tab="mypigeons">
+        <img id="globalTopBarLogo" src="/assets/xrp_vanity_lock_glitch_nft_clean.png" alt="">
+        <span class="global-top-scylla-text">
+          <span id="globalTopBarHeading">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></span>
+          <span id="flockTabLabel" class="global-top-scylla-status"></span>
+        </span>
+      </button>
       <button class="tab-btn tab-btn-database" data-tab="database">
         DATABASE ::
         <div class="traits-hover-wrap tab-db-select" id="dbSelectWrap">
@@ -6855,157 +6792,15 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </button>
-      <button class="tab-btn" data-tab="mypigeons"><span style="text-transform:none;" id="flockTabLabel">Σκύλλα</span></button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
     </div>
     </div>
   </div>
 
-  <!-- MA!NFRAME — landing page, shown first on a plain fresh load; pick a
-       collection to enter DATABASE scoped to it (see enterMainframeCollection
-       in static.js). TEDDY stays browse-only (matches its own tradeable:false
-       in COLLECTION_META) — clicking it still enters DATABASE, just without
-       BUY N0W/0FFER/trustline available once there, same as clicking it from
-       the DATABASE dropdown already does today. -->
-  <div id="screenMainframe">
-    <canvas class="local-static-bg" id="mainframeStaticBg"></canvas>
-    <!-- The old in-screen hero (headline + its own ticker) is gone —
-         #globalTopBar above now provides the one real Σκύλλα banner on
-         every screen including this one (reported live as "we have two
-         banners, just make it the one"). This section header is what's
-         left: a real sub-heading introducing the picker below, not a
-         caption glued to an identity headline any more. -->
-    <div class="mainframe-section-header">
-      <div class="mainframe-static-label">STAT!C :: MA!NFRAME</div>
-      <div class="mainframe-subtitle">SELECT A C0LLECT!0N</div>
-    </div>
-    <div class="mainframe-carousel-wrap">
-      <button type="button" class="mainframe-arrow mainframe-arrow-prev" id="mainframeArrowPrev" aria-label="PREV!0US">◂</button>
-      <div class="mainframe-grid" id="mainframeGrid">
-        <!-- Each card's own real artwork lives at /assets/mainframe/<name>.jpeg
-             (mainframe-card-art's background-image below). ?v=2 on each
-             URL is a plain cache-buster — these files get overwritten
-             in place at the same path/filename when art is updated
-             (confirmed live: a straight overwrite left visitors with
-             the OLD image for up to 4h, this asset's own real
-             Cache-Control max-age, even on a fresh tab/hard navigate,
-             since HTTP caching happens below any of that). Bump this
-             number the next time any of these six files changes. Also
-             a plain coloured tile in that same accent until a file
-             genuinely doesn't exist yet, never a blank/broken-image
-             box (see .mainframe-card-art's own CSS).
-             A plain div, not a <button> — it needs to contain a REAL button
-             of its own (mainframe-card-buy) below, and a <button> can never
-             validly contain another <button> (browsers silently hoist the
-             inner one out, breaking the DOM). role="button"/tabindex keep it
-             keyboard/screen-reader operable the way a real button is; see
-             mainframeGrid's own click+keydown handlers in the script.
-             BUY $T0KEN is a real button, not just part of the tag row —
-             reported live as wanting a direct path to buying each token
-             right from here; for now it enters the collection the same as
-             clicking the card itself, the actual straight-to-buy flow is
-             the next pass. stopPropagation keeps it from also double-firing
-             the card's own click. -->
-        <div class="mainframe-card" data-collection="pigeons" role="button" tabindex="0" style="--card-accent:136,72,248; --card-art:url('/assets/mainframe/pigeons.jpeg?v=2');">
-          <div class="mainframe-card-art">
-            <a class="mainframe-card-dex-link" id="mainframeDexPigeons" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
-              <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
-              <span>V!EW CHART</span>
-            </a>
-          </div>
-          <div class="mainframe-card-body">
-            <div class="mainframe-card-label">$P!GE0NS</div>
-            <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
-            <button type="button" class="mainframe-card-buy" data-collection="pigeons">BUY $P!GE0NS</button>
-          </div>
-        </div>
-        <!-- TEDDY/SEAL/FUZZY/C0NSP!RACY are all C0M!NG S00N and no longer
-             clickable (no data-collection — mainframeGrid's own click
-             handler below only matches [data-collection]). PHN!X is now a
-             real tradeable collection (see COLLECTION_META.phnixs) so it
-             gets the same active card treatment as Pigeons. -->
-        <div class="mainframe-card" data-collection="phnixs" role="button" tabindex="0" style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg?v=2');">
-          <div class="mainframe-card-art">
-            <a class="mainframe-card-dex-link" id="mainframeDexPhnixs" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
-              <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
-              <span>V!EW CHART</span>
-            </a>
-            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
-          </div>
-          <div class="mainframe-card-body">
-            <div class="mainframe-card-label">$PHN!X</div>
-            <div class="mainframe-card-stats" id="mainframeStatsPhnixs"></div>
-            <button type="button" class="mainframe-card-buy" data-collection="phnixs">BUY $PHN!X</button>
-          </div>
-        </div>
-        <!-- TEDDY/SEAL/FUZZY/C0NSP!RACY now have real tokens (see
-             TRADEABLE_COLLECTIONS in _shared.js) so BUY works via the same
-             openBuySwapPanel popup PIGEONS/PHNIX use — mainframe-card-soon
-             dropped (no longer "coming soon") since it dimmed the whole
-             card AND greyed the tag text. No real NFT issuer/taxon exists
-             for any of these four yet though, so the card root itself
-             stays non-clickable (no data-collection/role="button") — only
-             the BUY button is live, same as before. -->
-        <div class="mainframe-card mainframe-card-teddy" style="--card-accent:166,99,46; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
-          <div class="mainframe-card-art">
-            <a class="mainframe-card-dex-link" id="mainframeDexTeddybg" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
-              <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
-              <span>V!EW CHART</span>
-            </a>
-            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
-          </div>
-          <div class="mainframe-card-body">
-            <div class="mainframe-card-label">$TEDDY</div>
-            <div class="mainframe-card-stats" id="mainframeStatsTeddybg"></div>
-            <button type="button" class="mainframe-card-buy" data-collection="teddybg">BUY $TEDDY</button>
-          </div>
-        </div>
-        <div class="mainframe-card mainframe-card-seal" style="--card-accent:45,140,168; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
-          <div class="mainframe-card-art">
-            <a class="mainframe-card-dex-link" id="mainframeDexSeal" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
-              <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
-              <span>V!EW CHART</span>
-            </a>
-            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
-          </div>
-          <div class="mainframe-card-body">
-            <div class="mainframe-card-label">$SEAL</div>
-            <div class="mainframe-card-stats" id="mainframeStatsSeal"></div>
-            <button type="button" class="mainframe-card-buy" data-collection="seal">BUY $SEAL</button>
-          </div>
-        </div>
-        <div class="mainframe-card mainframe-card-fuzzy" style="--card-accent:122,66,26; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
-          <div class="mainframe-card-art">
-            <a class="mainframe-card-dex-link" id="mainframeDexFuzzy" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
-              <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
-              <span>V!EW CHART</span>
-            </a>
-            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
-          </div>
-          <div class="mainframe-card-body">
-            <div class="mainframe-card-label">$FUZZY</div>
-            <div class="mainframe-card-stats" id="mainframeStatsFuzzy"></div>
-            <button type="button" class="mainframe-card-buy" data-collection="fuzzy">BUY $FUZZY</button>
-          </div>
-        </div>
-        <div class="mainframe-card mainframe-card-conspiracy" style="--card-accent:240,0,228; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
-          <div class="mainframe-card-art">
-            <a class="mainframe-card-dex-link" id="mainframeDexConspiracy" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
-              <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
-              <span>V!EW CHART</span>
-            </a>
-            <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
-          </div>
-          <div class="mainframe-card-body">
-            <div class="mainframe-card-label">$C0NSP!RACY</div>
-            <div class="mainframe-card-stats" id="mainframeStatsConspiracy"></div>
-            <button type="button" class="mainframe-card-buy" data-collection="conspiracy">BUY $CNS</button>
-          </div>
-        </div>
-      </div>
-      <button type="button" class="mainframe-arrow mainframe-arrow-next" id="mainframeArrowNext" aria-label="NEXT">▸</button>
-    </div>
-  </div>
+  <!-- MA!NFRAME's own grid markup moved into DATABASE's own tab now (see
+       #screenMainframe just above #screenBrowse below) — reported live as
+       wanting it gone as its own separate destination/overlay; DATABASE
+       itself shows this collection picker first now instead. -->
 
   <!-- S0RT BY / F!LTER BY TRA!TS — real clickable buttons fixed to the
        bottom of the viewport (not sticky-in-flow any more — reported live
@@ -7482,6 +7277,149 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div id="profilePfpStatus" class="th-empty" style="display:none;"></div>
           <div class="simple-picker-grid" id="profilePfpGrid"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- MA!NFRAME — DATABASE's own landing content now (reported live as
+         wanting it gone as a separate destination/overlay): pick a
+         collection to actually browse it (see enterMainframeCollection in
+         static.js). Real in-flow content inside the DATABASE tab, not its
+         own fixed/full-screen overlay any more — showTab toggles this
+         alongside #screenBrowse, exactly one of the two visible at a time
+         on DATABASE (see showDatabaseCollectionPicker in the JS). TEDDY
+         stays browse-only (matches its own tradeable:false in
+         COLLECTION_META) — clicking it still enters the real grid, just
+         without BUY N0W/0FFER/trustline available once there, same as
+         clicking it from the DATABASE dropdown already does today. -->
+    <div id="screenMainframe" style="display:none;">
+      <div class="mainframe-section-header">
+        <div class="mainframe-subtitle">SELECT A C0LLECT!0N</div>
+      </div>
+      <div class="mainframe-carousel-wrap">
+        <button type="button" class="mainframe-arrow mainframe-arrow-prev" id="mainframeArrowPrev" aria-label="PREV!0US">◂</button>
+        <div class="mainframe-grid" id="mainframeGrid">
+          <!-- Each card's own real artwork lives at /assets/mainframe/<name>.jpeg
+               (mainframe-card-art's background-image below). ?v=2 on each
+               URL is a plain cache-buster — these files get overwritten
+               in place at the same path/filename when art is updated
+               (confirmed live: a straight overwrite left visitors with
+               the OLD image for up to 4h, this asset's own real
+               Cache-Control max-age, even on a fresh tab/hard navigate,
+               since HTTP caching happens below any of that). Bump this
+               number the next time any of these six files changes. Also
+               a plain coloured tile in that same accent until a file
+               genuinely doesn't exist yet, never a blank/broken-image
+               box (see .mainframe-card-art's own CSS).
+               A plain div, not a <button> — it needs to contain a REAL button
+               of its own (mainframe-card-buy) below, and a <button> can never
+               validly contain another <button> (browsers silently hoist the
+               inner one out, breaking the DOM). role="button"/tabindex keep it
+               keyboard/screen-reader operable the way a real button is; see
+               mainframeGrid's own click+keydown handlers in the script.
+               BUY $T0KEN is a real button, not just part of the tag row —
+               reported live as wanting a direct path to buying each token
+               right from here; for now it enters the collection the same as
+               clicking the card itself, the actual straight-to-buy flow is
+               the next pass. stopPropagation keeps it from also double-firing
+               the card's own click. -->
+          <div class="mainframe-card" data-collection="pigeons" role="button" tabindex="0" style="--card-accent:136,72,248; --card-art:url('/assets/mainframe/pigeons.jpeg?v=2');">
+            <div class="mainframe-card-art">
+              <a class="mainframe-card-dex-link" id="mainframeDexPigeons" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+                <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+                <span>V!EW CHART</span>
+              </a>
+            </div>
+            <div class="mainframe-card-body">
+              <div class="mainframe-card-label">$P!GE0NS</div>
+              <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
+              <button type="button" class="mainframe-card-buy" data-collection="pigeons">BUY $P!GE0NS</button>
+            </div>
+          </div>
+          <!-- TEDDY/SEAL/FUZZY/C0NSP!RACY are all C0M!NG S00N and no longer
+               clickable (no data-collection — mainframeGrid's own click
+               handler below only matches [data-collection]). PHN!X is now a
+               real tradeable collection (see COLLECTION_META.phnixs) so it
+               gets the same active card treatment as Pigeons. -->
+          <div class="mainframe-card" data-collection="phnixs" role="button" tabindex="0" style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg?v=2');">
+            <div class="mainframe-card-art">
+              <a class="mainframe-card-dex-link" id="mainframeDexPhnixs" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+                <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+                <span>V!EW CHART</span>
+              </a>
+              <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
+            </div>
+            <div class="mainframe-card-body">
+              <div class="mainframe-card-label">$PHN!X</div>
+              <div class="mainframe-card-stats" id="mainframeStatsPhnixs"></div>
+              <button type="button" class="mainframe-card-buy" data-collection="phnixs">BUY $PHN!X</button>
+            </div>
+          </div>
+          <!-- TEDDY/SEAL/FUZZY/C0NSP!RACY now have real tokens (see
+               TRADEABLE_COLLECTIONS in _shared.js) so BUY works via the same
+               openBuySwapPanel popup PIGEONS/PHNIX use — mainframe-card-soon
+               dropped (no longer "coming soon") since it dimmed the whole
+               card AND greyed the tag text. No real NFT issuer/taxon exists
+               for any of these four yet though, so the card root itself
+               stays non-clickable (no data-collection/role="button") — only
+               the BUY button is live, same as before. -->
+          <div class="mainframe-card mainframe-card-teddy" style="--card-accent:166,99,46; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
+            <div class="mainframe-card-art">
+              <a class="mainframe-card-dex-link" id="mainframeDexTeddybg" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+                <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+                <span>V!EW CHART</span>
+              </a>
+              <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
+            </div>
+            <div class="mainframe-card-body">
+              <div class="mainframe-card-label">$TEDDY</div>
+              <div class="mainframe-card-stats" id="mainframeStatsTeddybg"></div>
+              <button type="button" class="mainframe-card-buy" data-collection="teddybg">BUY $TEDDY</button>
+            </div>
+          </div>
+          <div class="mainframe-card mainframe-card-seal" style="--card-accent:45,140,168; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
+            <div class="mainframe-card-art">
+              <a class="mainframe-card-dex-link" id="mainframeDexSeal" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+                <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+                <span>V!EW CHART</span>
+              </a>
+              <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
+            </div>
+            <div class="mainframe-card-body">
+              <div class="mainframe-card-label">$SEAL</div>
+              <div class="mainframe-card-stats" id="mainframeStatsSeal"></div>
+              <button type="button" class="mainframe-card-buy" data-collection="seal">BUY $SEAL</button>
+            </div>
+          </div>
+          <div class="mainframe-card mainframe-card-fuzzy" style="--card-accent:122,66,26; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
+            <div class="mainframe-card-art">
+              <a class="mainframe-card-dex-link" id="mainframeDexFuzzy" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+                <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+                <span>V!EW CHART</span>
+              </a>
+              <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
+            </div>
+            <div class="mainframe-card-body">
+              <div class="mainframe-card-label">$FUZZY</div>
+              <div class="mainframe-card-stats" id="mainframeStatsFuzzy"></div>
+              <button type="button" class="mainframe-card-buy" data-collection="fuzzy">BUY $FUZZY</button>
+            </div>
+          </div>
+          <div class="mainframe-card mainframe-card-conspiracy" style="--card-accent:240,0,228; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
+            <div class="mainframe-card-art">
+              <a class="mainframe-card-dex-link" id="mainframeDexConspiracy" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+                <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+                <span>V!EW CHART</span>
+              </a>
+              <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
+            </div>
+            <div class="mainframe-card-body">
+              <div class="mainframe-card-label">$C0NSP!RACY</div>
+              <div class="mainframe-card-stats" id="mainframeStatsConspiracy"></div>
+              <button type="button" class="mainframe-card-buy" data-collection="conspiracy">BUY $CNS</button>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="mainframe-arrow mainframe-arrow-next" id="mainframeArrowNext" aria-label="NEXT">▸</button>
       </div>
     </div>
 
@@ -8573,6 +8511,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // myPigeonsPanel visibility on the mypigeons tab alongside
     // isOwnWalletScope(), which alone used to be enough.
     myPigeonsGridOpen: false,
+    // DATABASE now lands on the real collection picker first (the old
+    // MA!NFRAME grid, no longer its own separate destination — reported
+    // live as wanting it gone as its own tab/overlay) — true means the
+    // picker shows, false means a specific collection's real browsable
+    // grid does. enterMainframeCollection/the dbSelectFlyout's own click
+    // handler flip this false; clicking the word DATABASE itself always
+    // flips it back true (see the topTabs click handler).
+    databaseInPicker: true,
     skip: 0,                  // how many items already loaded, for infinite scroll
     editionRawSkip: 0,        // position in the underlying sorted collection, for edition LOW/HIGH scans
     hasMore: true,
@@ -8679,7 +8625,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
-   'screenMainframe','mainframeGrid','mainframeReopenLabel','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
+   'screenMainframe','mainframeGrid','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
    'globalTopBar','globalTopBarHeading',
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
@@ -9012,16 +8958,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     // switchProfileTab, which calls browseOwnerCollection itself once
     // that box is actually clicked). No auto-scoping here any more.
     state.activeTab = tab;
-    // STAT!C :: MA!NFRAME/DATABASE title — reported live as wanting this
-    // to actually track the active tab instead of always reading
-    // MA!NFRAME, and to disappear outright on Σκύλλα (mainframeReopenLabel
-    // sits in .page, above topTabsWrap, so it's the one element every tab
-    // shares — updating it here covers every real path into a tab, not
-    // just direct tab-strip clicks). MA!NFRAME itself never reaches here
-    // (see topTabs' own click handler, which returns before calling
-    // showTab) — its own click sets this text directly instead.
-    el.mainframeReopenLabel.style.display = tab === 'mypigeons' ? 'none' : '';
-    if (tab === 'database') el.mainframeReopenLabel.textContent = 'STAT!C :: DATABASE';
     // .paws-view still exists purely to hide the # 0R WALLET search box
     // on PλWS (this page only ever shows your own Pigeons, see the
     // .paws-view CSS rule near the top of the file). A body class, not a
@@ -9041,17 +8977,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     // wouldn't fire) — this title must never stay stuck once you're
     // actually looking at real DATABASE again.
     updateSearchPanelTitleForPaws();
+    // MA!NFRAME's own real collection picker — DATABASE's own landing
+    // content now (reported live), shown only while state.databaseInPicker
+    // is still true; picking a collection (a card, or the dropdown) flips
+    // it false and shows the real browsable grid below instead.
+    var showMainframePicker = tab === 'database' && state.databaseInPicker;
+    el.screenMainframe.style.display = showMainframePicker ? 'flex' : 'none';
     // DATABASE-only now — these FL00R/!TEMS/H0LDERS/24H numbers used to
     // sit above the trustline banner on every tab; moved to just above
-    // SEARCH!NG $P!GE0NS DATABASE, so only DATABASE itself shows it.
-    el.collectionDetailsPanel.style.display = tab === 'database' ? '' : 'none';
+    // SEARCH!NG $P!GE0NS DATABASE, so only DATABASE itself shows it, and
+    // only once a real collection is actually being browsed (not while
+    // still on the picker, which has no single collection's stats to
+    // show yet).
+    el.collectionDetailsPanel.style.display = (tab === 'database' && !state.databaseInPicker) ? '' : 'none';
     // screenBrowse (search/sort/filter row, results grid, detail overlay)
-    // is shared by DATABASE and PλWS now — only shown for 'mypigeons' once
-    // actually scoped to your own wallet AND the real C0LLECT!0NS box has
-    // actually been clicked (state.myPigeonsGridOpen — see switchProfile-
-    // Tab). Reported live as wanting Σκύλλα to "show nothing" on open
-    // rather than auto-scoping straight into this grid.
-    var showBrowseChrome = tab === 'database' || (tab === 'mypigeons' && isOwnWalletScope() && state.myPigeonsGridOpen);
+    // is shared by DATABASE and PλWS now — only shown for DATABASE once a
+    // collection is actually picked (not state.databaseInPicker), or for
+    // 'mypigeons' once actually scoped to your own wallet AND the real
+    // C0LLECT!0NS box has actually been clicked (state.myPigeonsGridOpen
+    // — see switchProfileTab). Reported live as wanting Σκύλλα to "show
+    // nothing" on open rather than auto-scoping straight into this grid.
+    var showBrowseChrome = (tab === 'database' && !state.databaseInPicker) || (tab === 'mypigeons' && isOwnWalletScope() && state.myPigeonsGridOpen);
     el.screenBrowse.style.display = showBrowseChrome ? '' : 'none';
     // S0RT BY / F!LTER BY TRA!TS — DATABASE only now, not MY P!GE0NS
     // (the Σκύλλα-connected wallet view) — reported live as not wanting
@@ -9062,7 +9008,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // fixed bottom bar get hidden — screenBrowse itself still shows for
     // MY P!GE0NS once scoped (the grid/detail overlay it shares with
     // DATABASE), just without either sort/filter entry point.
-    var showSortFilterChrome = tab === 'database';
+    var showSortFilterChrome = tab === 'database' && !state.databaseInPicker;
     el.dbControlsSticky.style.display = showSortFilterChrome ? '' : 'none';
     el.bottomControlsBar.style.display = showSortFilterChrome ? 'flex' : 'none';
     document.body.classList.toggle('has-bottom-bar', showSortFilterChrome);
@@ -9127,8 +9073,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     // Nothing else fetches until its own tab is actually opened for the
     // first time. Default landing view is the full collection, rarity-
-    // high first (state.sort's own default) — not the Σ SCYLLA LISTED filter.
-    if (tab === 'database' && !state.databaseLoaded){
+    // high first (state.sort's own default) — not the Σ SCYLLA LISTED
+    // filter. Gated on !databaseInPicker too now — DATABASE lands on the
+    // real collection picker first (reported live), so this shouldn't
+    // eagerly fetch the whole collection before a card's even been
+    // picked; enterMainframeCollection's own bootstrap covers the first
+    // real entry into a collection instead.
+    if (tab === 'database' && !state.databaseInPicker && !state.databaseLoaded){
       state.databaseLoaded = true;
       ensureTraitsLoaded();
       runQuery();
@@ -9158,14 +9109,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     var btn = e.target.closest('.tab-btn');
     if (!btn) return;
     var tab = btn.getAttribute('data-tab');
-    // MA!NFRAME doesn't switch state.activeTab at all — it just reopens
-    // the existing full-screen overlay, same as mainframeReopenLabel's
-    // own click handler already does, so this returns before reaching
-    // showTab (which has no 'mainframe' case of its own).
-    if (tab === 'mainframe'){
-      el.screenMainframe.style.display = 'flex';
-      el.mainframeReopenLabel.textContent = 'STAT!C :: MA!NFRAME';
-      el.mainframeReopenLabel.style.display = '';
+    // Clicking the word DATABASE always goes back to the real collection
+    // picker now (reported live as "when we click the word database,
+    // that takes us to the mainframe page") — regardless of whatever
+    // collection/scope you were mid-browsing. Picking a specific
+    // collection (a card here, or the dropdown) is what actually enters
+    // its real browsable grid — see enterMainframeCollection/the
+    // dbSelectFlyout click handler, both of which flip
+    // databaseInPicker back to false themselves.
+    if (tab === 'database' && !state.databaseInPicker){
+      state.databaseInPicker = true;
+      showTab('database');
+      scrollActiveTabPanelIntoView('database');
       return;
     }
     // MY PIGEONS with no active session goes straight into the real
@@ -12296,24 +12251,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   // left out rather than shown as a misleading 0.
   function updateFlockTabLabel(){
     if (!MY_WALLET){
-      // The tab itself is now named Σκύλλα (see terminal — the site's
-      // whole verification system, not just the /scylla page), so the
-      // logged-out sub-label just needs "L0G !N", not "W!TH Σκύλλα" again.
-      el.flockTabLabel.innerHTML = '<span class="flock-tab-brand">Σκύλλα</span> <span class="flock-tab-login">L0G !N</span>';
+      // The big Σκύλλα://S!GNAL::0NL!NE heading right above this already
+      // carries the brand name (see .global-top-scylla-btn) — no need to
+      // repeat "Σκύλλα" again in this small status line underneath it,
+      // just the real thing it's actually telling you.
+      el.flockTabLabel.innerHTML = '<span class="flock-tab-login">L0G !N</span>';
       return;
     }
     // Was three separate " :: "-joined text segments ("Σκύλλα :: 60
     // P!GE0NS :: 3 0FFERS") — confirmed live this wrapped to 2-3 broken
     // lines inside the mobile tab's own boxed grid (not enough room for
     // that much joined text at any reasonable size), splitting mid-
-    // phrase ("60" / "P!GE0NS" on separate lines). Down to one real
-    // segment (brand :: count) plus a small notification-dot badge for
-    // pending offers instead of a second joined phrase — same
-    // information, far less text to actually wrap.
+    // phrase ("60" / "P!GE0NS" on separate lines). Down to a small
+    // notification-dot badge for pending offers (if any) plus the real
+    // pigeon count — same information, far less text to actually wrap,
+    // and no redundant second "Σκύλλα" under the big heading above it.
     var offersDot = offersReceivedTotal > 0 ? '<span class="flock-tab-offer-dot" title="' + offersReceivedTotal + ' 0FFER' + (offersReceivedTotal === 1 ? '' : 'S') + ' RECE!VED">' + offersReceivedTotal + '</span>' : '';
-    var parts = ['<span class="flock-tab-brand">Σκύλλα' + offersDot + '</span>'];
+    var parts = [];
+    if (offersDot) parts.push(offersDot);
     if (trustlinePigeonCount !== null) parts.push('<span class="flock-tab-count">' + trustlinePigeonCount + ' P!GE0NS</span>');
-    el.flockTabLabel.innerHTML = parts.join(' :: ');
+    el.flockTabLabel.innerHTML = parts.join(' ');
   }
   function loadTrustlineLoginState(){
     if (!MY_WALLET){
@@ -14800,14 +14757,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       window.history.replaceState({}, '', url.pathname + url.search);
     } catch (e) {}
   }
-  // MA!NFRAME — landing page shown before DATABASE (see #screenMainframe
-  // in the HTML). Picking a card either switches collection (PHN!X/TEDDY)
-  // or, for P!GE0NS (already the default), just proceeds straight in —
+  // MA!NFRAME — DATABASE's own real collection picker now (see
+  // #screenMainframe in the HTML), no longer a separate destination.
+  // Picking a card either switches collection (PHN!X/TEDDY) or, for
+  // P!GE0NS (already the default), just proceeds straight in —
   // switchCollection's own no-op guard for "already this collection"
   // means enterMainframeCollection has to drive showTab itself either way.
-  function hideMainframe(){
-    el.screenMainframe.style.display = 'none';
-  }
   function enterMainframeCollection(key){
     if (key !== state.collection){
       // switchCollection's own end-of-function calls (ensureTraitsLoaded +
@@ -14832,7 +14787,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       ensureTraitsLoaded();
       runQuery();
     }
-    hideMainframe();
+    // Real grid instead of the picker now — see showTab's own
+    // showMainframePicker condition.
+    state.databaseInPicker = false;
     showTab('database');
   }
   // Drag-to-scroll (mouse) — trackpad/touch already scroll #mainframeGrid
@@ -14922,10 +14879,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.mainframeArrowNext.addEventListener('click', function(){
     el.mainframeGrid.scrollBy({ left: mainframeCardStep(), behavior: 'smooth' });
   });
-  el.mainframeReopenLabel.addEventListener('click', function(){
-    el.screenMainframe.style.display = 'flex';
-    el.mainframeReopenLabel.textContent = 'STAT!C :: MA!NFRAME';
-  });
   // Σκύλλα IS the profile/hub page now (reported live as "we dont need
   // both") — always the same tab either way, connected or not. Reached
   // through the real Σκύλλα tab button in #globalTopBar's own strip now
@@ -15000,8 +14953,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.dbSelectFlyout.addEventListener('click', function(e){
     e.stopPropagation();
     var opt = e.target.closest('.db-option[data-collection]');
-    if (opt) switchCollection(opt.getAttribute('data-collection'));
-    else closeDbSelectFlyout();
+    // "select a collection... takes us to the database of that
+    // collection" (reported live) — same real grid enterMainframeCollection
+    // itself enters, this dropdown is just the other way to pick one.
+    // Closed explicitly here too, not just via switchCollection's own
+    // call inside enterMainframeCollection — that one no-ops (never
+    // reaching its own closeDbSelectFlyout) when the picked collection
+    // is already the active one.
+    closeDbSelectFlyout();
+    if (opt) enterMainframeCollection(opt.getAttribute('data-collection'));
   });
 
 
@@ -17387,10 +17347,11 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   // A return from the CONNECT SCYLLA redirect always lands on MY PIGEONS —
   // that's where your pigeons and any received offers actually are; any
-  // other fresh page load (a plain refresh) shows MA!NFRAME instead of
-  // jumping straight into DATABASE — a mid-flow return (Xaman login, a
+  // other fresh page load (a plain refresh) lands on DATABASE instead,
+  // which itself shows the real collection picker first now (state.
+  // databaseInPicker's own default) — a mid-flow return (Xaman login, a
   // pending BUY) means the user's already committed to a specific
-  // collection/action, so those two skip the landing page entirely.
+  // collection/action, so those two skip the picker entirely.
   if (window.location.search.indexOf('connected=1') !== -1 || offerForMatch){
     showTab('mypigeons');
     // Strip the query param right after using it once — otherwise it
@@ -17399,7 +17360,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // the real default.
     window.history.replaceState({}, '', window.location.pathname);
   } else {
-    el.screenMainframe.style.display = 'flex';
+    showTab('database');
   }
 
   // The other half of openBuyConfirm's own "not logged in" redirect (see
@@ -17494,10 +17455,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   startStaticCanvas(document.getElementById('lightboxStaticBg'), function(){
     return document.getElementById('detailLightbox').style.display !== 'none';
   });
-  startStaticCanvas(document.getElementById('mainframeStaticBg'), function(){
-    return document.getElementById('screenMainframe').style.display !== 'none';
-  });
-
 })();
 </script>
 </body>
