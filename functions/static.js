@@ -6327,24 +6327,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Σκύλλα — logo + big heading together, one real button (reported live
      wanting no separate small "Σκύλλα" tab any more). */
   .global-top-scylla-btn{ display:flex; align-items:center; justify-content:center; gap:0.75rem; }
-  /* The source PNG itself is mostly solid black (lock body + background,
-     only thin cyan/magenta outline strokes and small white teeth actually
-     have any real color) — reported live as "unseen" against this bar's
-     own near-black --bg. It's not a sizing problem, it's a contrast
-     problem: no amount of upscaling makes a black-on-black silhouette
-     visible. A light chip behind it (padding-box shows through every
-     transparent/black pixel via object-fit's content-box) is what
-     actually makes the lock read as a shape instead of empty space. */
+  /* A light chip behind this (reported live as now "a big white circle" —
+     worse than the original invisibility) has been dropped entirely. Just
+     sized to actually fill the bar's own height now instead of sitting
+     tiny in a corner of it — object-fit:contain keeps the art's own
+     aspect ratio so it isn't stretched. */
   #globalTopBarLogo{
-    width:44px;
-    height:44px;
+    height:48px;
+    width:48px;
     object-fit:contain;
     flex:0 0 auto;
-    box-sizing:border-box;
-    padding:6px;
-    border-radius:50%;
-    background:radial-gradient(circle, #f2f2f0 0%, #cfd0d6 75%);
-    box-shadow:0 0 0 1px rgba(255,255,255,0.2);
   }
   .global-top-scylla-text{ display:flex; flex-direction:column; align-items:center; min-width:0; }
   /* Σκύλλα://S!GNAL::0NL!NE — real large/centred text again (reported
@@ -6374,7 +6366,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .global-top-scylla-status{ font-size:12px; letter-spacing:0.06em; color:var(--grey-dim); margin-top:0.15rem; }
   @media (max-width:700px){
     #globalTopBar .tab-btn{ padding:0.55em 0.6rem; }
-    #globalTopBarLogo{ width:30px; height:30px; padding:4px; }
+    #globalTopBarLogo{ width:32px; height:32px; }
     #globalTopBarHeading{ font-size:14px; }
     .global-top-scylla-status{ font-size:10px; }
   }
@@ -6785,13 +6777,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   <div id="globalTopBar">
     <div class="top-tabs-wrap" id="topTabsWrap">
     <div class="top-tabs" id="topTabs">
-      <button class="tab-btn global-top-scylla-btn" data-tab="mypigeons">
-        <img id="globalTopBarLogo" src="/assets/xrp_vanity_lock_glitch_nft_clean.png" alt="">
-        <span class="global-top-scylla-text">
-          <span id="globalTopBarHeading">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></span>
-          <span id="flockTabLabel" class="global-top-scylla-status"></span>
-        </span>
-      </button>
       <button class="tab-btn tab-btn-database" data-tab="database">
         DATABASE ::
         <div class="traits-hover-wrap tab-db-select" id="dbSelectWrap">
@@ -6809,6 +6794,13 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="db-option db-option-disabled db-option-fuzzy">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
           </div>
         </div>
+      </button>
+      <button class="tab-btn global-top-scylla-btn" data-tab="mypigeons">
+        <img id="globalTopBarLogo" src="/assets/xrp_vanity_lock_glitch_nft_clean.png" alt="">
+        <span class="global-top-scylla-text">
+          <span id="globalTopBarHeading">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></span>
+          <span id="flockTabLabel" class="global-top-scylla-status"></span>
+        </span>
       </button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
     </div>
