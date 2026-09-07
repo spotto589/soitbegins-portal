@@ -1073,93 +1073,64 @@ const SWAP_HTML = `<!DOCTYPE html>
      in ahead of it the moment that wallet's profile resolves. */
   .wallet-tag{ display:inline-flex; align-items:center; gap:0.35em; vertical-align:middle; }
   .wallet-avatar{ width:1.3em; height:1.3em; min-width:1.3em; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--border-mid); }
-  /* BANNER — just the coloured backdrop, background-color alone (set by
+  /* BANNER — the coloured backdrop, background-color alone (set by
      sampleBannerColor in the JS, off the chosen PFP) — confirmed live
      that even a dim blurred image on top of the right solid colour still
      read as "multi coloured", which defeats the actual point ("it all
-     looks like one"). Avatar sits fully INSIDE it now, vertically
-     centred (reported live as wanting it "in the middle of the banner")
-     — it used to overhang the bottom edge via a negative margin, which
-     put half the circle over the coloured banner and half over the plain
-     dark page background behind it, and THAT mismatched-background seam
-     is what actually read as an "outline" around the bottom half (not a
-     real border — there never was one). Keeping the whole avatar inside
-     one single background colour is what actually removes it. */
+     looks like one"). Now a real horizontal row (reported live) —
+     avatar on the left, every identity detail to its right, both inside
+     the same banner instead of the avatar alone in the banner and
+     everything else underneath/outside it. */
   .profile-banner{
     position:relative;
     width:100%;
-    height:260px;
     border-radius:var(--radius);
     background-color:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
+    padding:1.5rem;
     display:flex;
     align-items:center;
-    justify-content:center;
+    gap:1.5rem;
     overflow:hidden;
   }
   .profile-banner-empty{
     background-image:linear-gradient(120deg, rgba(136,72,248,0.35), rgba(61,243,236,0.2), rgba(240,0,228,0.3));
   }
-  /* Avatar — the crisp Pigeon image (background, not <img>, so it can sit
-     centred/cropped the same way every other round avatar on the site
-     does — object-fit:cover equivalent via background-size). No CSS
-     border/box-shadow of its own — reported live as still seeing a
-     visible ring even with the avatar fully inside the matching-colour
-     banner. Confirmed by actually sampling this specific artwork: the
-     circle's real edge pixels are the source square's four EDGE
-     MIDPOINTS, not its corners (sampleBannerColor only ever reads one
-     corner) — top/left/right midpoints on this Pigeon really were the
-     same flat yellow as the sampled corner, but the BOTTOM midpoint read
-     back a completely different orange/brown (the character's own scarf
-     reaches that far down in the source art). That's not a sampling bug
-     to fix — it's real image content, an orange scarf pixel can't
-     "actually be" the yellow background colour. A narrow feather (the
-     first version here, transparent 68%/colour 100%) still left that
-     real orange visible through most of the fade. Widened to
-     transparent 40%/colour 100% instead — a much bigger, slower vignette
-     that washes out a real ~30% band of the image into the exact same
-     --profile-banner-color CSS custom property sampleBannerColor sets
-     alongside backgroundColor (inherits straight down from
-     .profile-banner, no separate JS wiring here), so whatever's actually
-     sitting at the true edge — flat background or not — is fully
-     covered by 100% opaque banner colour by the time it gets there,
-     rather than assuming the source art is uniform all the way out. */
-  .profile-avatar-wrap{ position:relative; flex:0 0 auto; }
-  .profile-current-avatar{ position:relative; width:220px; height:220px; border-radius:50%; overflow:hidden; background:#000; cursor:pointer; }
+  /* Avatar — SQUARE now (was a circle), reported live as wanting it
+     "clean" instead of fighting a circular crop's own blend-into-the-
+     banner problem: a circle's visible edge is the source image's four
+     EDGE MIDPOINTS, and on real art those are rarely uniform flat
+     background all the way round (confirmed live on this Pigeon — its
+     own scarf reaches the bottom edge, a genuinely different colour no
+     amount of gradient feathering could fully disguise without also
+     washing out real art, which read as "a weird glow"). A square has
+     no such edge to blend at all — corners included, so the previous
+     ::after feather overlay is gone entirely, nothing left to fake. */
+  .profile-avatar-wrap{ position:relative; flex:0 0 auto; margin-left:0.5rem; }
+  .profile-current-avatar{ width:150px; height:150px; border-radius:var(--radius); overflow:hidden; background:#000; cursor:pointer; }
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .profile-current-avatar::after{
-    content:'';
-    position:absolute;
-    inset:0;
-    border-radius:50%;
-    background:radial-gradient(circle, transparent 40%, var(--profile-banner-color, transparent) 100%);
-    pointer-events:none;
-  }
   .profile-avatar-edit-btn{
     position:absolute;
-    right:8px; bottom:8px;
-    width:40px; height:40px;
+    right:-8px; bottom:-8px;
+    width:36px; height:36px;
     border-radius:50%;
     background:var(--green);
     color:#000;
     border:3px solid var(--bg);
     font-weight:700;
-    font-size:22px;
+    font-size:20px;
     line-height:1;
     cursor:pointer;
     display:flex;
     align-items:center;
     justify-content:center;
-    box-shadow:0 0 10px var(--green-glow);
   }
   .profile-avatar-edit-btn:hover{ filter:brightness(1.15); }
-  /* IDENT!TY — underneath the avatar now (reported live), centered:
-     the avatar sits fully inside the banner now (see its own comment),
-     so this no longer needs to clear any overhang — a plain margin-top
-     is enough. */
-  .profile-current-info{ text-align:center; margin-top:1rem; margin-bottom:1.5rem; }
-  .profile-current-username-row{ display:flex; align-items:center; justify-content:center; gap:0.5rem; }
-  .profile-current-username{ font-family:var(--font-display); font-size:32px; font-weight:700; color:var(--green); }
+  /* IDENT!TY — to the RIGHT of the avatar now (reported live), left-
+     aligned to match reading that way instead of centred under it. */
+  .profile-current-info{ text-align:left; flex:1 1 auto; min-width:0; }
+  .profile-current-username-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.5rem; }
+  .profile-current-username{ font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--green); }
   /* Small, quiet edit affordance next to any click-to-edit field — real
      hit target (not just a hover cue) that jumps to the matching input
      below, same reasoning as the avatar's own + badge. */
@@ -1173,8 +1144,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:color 0.15s ease;
   }
   .profile-field-edit-btn:hover{ color:var(--cyan); }
-  .profile-current-wallet-row{ display:flex; align-items:center; justify-content:center; gap:0.4rem; margin-top:0.3rem; }
-  .profile-current-wallet{ font-size:14px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; }
+  .profile-current-wallet-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.4rem; margin-top:0.3rem; }
+  .profile-current-wallet{ font-size:13px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; }
   /* Tiny real buttons next to the address — C0PY (clipboard, same
      pattern the issuer address' own COPY button already uses) and a
      direct link straight to this wallet's real B!TH0MP explorer page
@@ -1199,19 +1170,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* EST VALUE — mirrors MY C0!NS' own T0TAL P0RTF0L!0 VALUE number, right
      under the address so your net worth reads as part of your identity,
      not just buried in the collapsible coins section below. */
-  .profile-current-estvalue{ font-size:15px; letter-spacing:0.04em; color:var(--grey); text-transform:uppercase; margin-top:0.6rem; }
+  .profile-current-estvalue{ font-size:14px; letter-spacing:0.04em; color:var(--grey); text-transform:uppercase; margin-top:0.5rem; }
   .profile-current-estvalue span{ color:var(--green); font-weight:700; text-shadow:0 0 6px var(--green-glow); }
-  /* QU0TE — centered "in the middle" (reported live), real click-to-edit
-     target (a real value shows the text + a quiet ✎, an unset one shows
-     a dashed "+ ADD A B!0" invite instead of hiding outright — see
-     renderProfileCurrent in the JS). */
-  .profile-quote{ font-size:14px; font-style:italic; color:#fff; text-transform:none; cursor:pointer; margin-top:0.75rem; }
+  /* QU0TE — real click-to-edit target (a real value shows the text + a
+     quiet ✎, an unset one shows a dashed "+ ADD A B!0" invite instead of
+     hiding outright — see renderProfileCurrent in the JS). */
+  .profile-quote{ font-size:13px; font-style:italic; color:#fff; text-transform:none; cursor:pointer; margin-top:0.6rem; }
   .profile-quote .profile-field-edit-btn{ font-style:normal; }
   /* TW!TTER — real black-pill X/Twitter button styling (reported live as
      wanting it to "look like the actual twitter design") instead of a
      plain text link — black fill, white text, the 𝕏 mark, a real rounded
      pill, same shape X's own share/follow buttons use. */
-  .profile-twitter-row{ margin-top:0.75rem; }
+  .profile-twitter-row{ margin-top:0.6rem; }
   .profile-twitter-link{
     display:inline-flex;
     align-items:center;
@@ -1251,10 +1221,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profile-field-highlight{ animation:profileFieldHighlight 1.1s ease; }
   @media (max-width:600px){
-    .profile-banner{ height:190px; }
-    .profile-current-avatar{ width:150px; height:150px; }
-    .profile-avatar-edit-btn{ width:34px; height:34px; font-size:19px; }
-    .profile-current-username{ font-size:24px; }
+    .profile-banner{ padding:1rem; gap:0.85rem; }
+    .profile-avatar-wrap{ margin-left:0; }
+    .profile-current-avatar{ width:96px; height:96px; }
+    .profile-avatar-edit-btn{ width:28px; height:28px; font-size:16px; right:-6px; bottom:-6px; }
+    .profile-current-username{ font-size:20px; }
   }
   /* Currently-selected pfp in the picker grid — same green highlight the
      rest of the app uses for "this is the real/active one" (see
@@ -7081,27 +7052,27 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
           <button type="button" class="profile-avatar-edit-btn" id="profileAvatarEditBtn" title="CHANGE PR0F!LE P!CTURE">+</button>
         </div>
-      </div>
-      <!-- IDENT!TY — moved OUT of the banner and underneath the avatar
-           instead (reported live), centered: USERNAME, then ADDRESS (with
-           its own real COPY button + a direct B!TH0MP link), then EST
-           VALUE (mirrors MY C0!NS' own T0TAL P0RTF0L!0 VALUE — see
-           recomputeTotal in renderProfileCoins), then the QU0TE centered
-           in the middle, then TW!TTER styled like the real X button. -->
-      <div class="profile-current-info">
-        <div class="profile-current-username-row">
-          <span class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</span>
-          <button type="button" class="profile-field-edit-btn" id="profileUsernameEditBtn" title="EDIT USERNAME">✎</button>
-        </div>
-        <div class="profile-current-wallet-row">
-          <span class="profile-current-wallet" id="profileCurrentWallet"></span>
-          <button type="button" class="profile-mini-btn" id="profileAddressCopyBtn" title="C0PY ADDRESS">⧉</button>
-          <a class="profile-mini-btn" id="profileAddressBithompLink" target="_blank" rel="noopener" title="V!EW 0N B!TH0MP">↗</a>
-        </div>
-        <div class="profile-current-estvalue">EST VALUE :: <span id="profileCurrentEstValue">--</span></div>
-        <div class="profile-quote" id="profileCurrentQuote"></div>
-        <div class="profile-twitter-row">
-          <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener"></a>
+        <!-- IDENT!TY — to the RIGHT of the avatar, both inside the same
+             banner (reported live), left-aligned: USERNAME, then ADDRESS
+             (with its own real COPY button + a direct B!TH0MP link), then
+             EST VALUE (mirrors MY C0!NS' own T0TAL P0RTF0L!0 VALUE — see
+             recomputeTotal in renderProfileCoins), then the QU0TE, then
+             TW!TTER styled like the real X button. -->
+        <div class="profile-current-info">
+          <div class="profile-current-username-row">
+            <span class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</span>
+            <button type="button" class="profile-field-edit-btn" id="profileUsernameEditBtn" title="EDIT USERNAME">✎</button>
+          </div>
+          <div class="profile-current-wallet-row">
+            <span class="profile-current-wallet" id="profileCurrentWallet"></span>
+            <button type="button" class="profile-mini-btn" id="profileAddressCopyBtn" title="C0PY ADDRESS">⧉</button>
+            <a class="profile-mini-btn" id="profileAddressBithompLink" target="_blank" rel="noopener" title="V!EW 0N B!TH0MP">↗</a>
+          </div>
+          <div class="profile-current-estvalue">EST VALUE :: <span id="profileCurrentEstValue">--</span></div>
+          <div class="profile-quote" id="profileCurrentQuote"></div>
+          <div class="profile-twitter-row">
+            <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener"></a>
+          </div>
         </div>
       </div>
       <!-- MY C0!NS — real balance + trustline status for every collection
@@ -16269,7 +16240,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileCurrentEstValue.textContent = '--';
       el.profileCurrentAvatar.innerHTML = '';
       el.profileBanner.style.backgroundColor = '';
-      el.profileBanner.style.removeProperty('--profile-banner-color');
       el.profileBanner.classList.add('profile-banner-empty');
       el.profileCurrentQuote.style.display = 'none';
       el.profileCurrentTwitterLink.style.display = 'none';
@@ -16382,16 +16352,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           var ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, crop, crop, 0, 0, 1, 1);
           var px = ctx.getImageData(0, 0, 1, 1).data;
-          var colorStr = 'rgb(' + px[0] + ',' + px[1] + ',' + px[2] + ')';
-          el.profileBanner.style.backgroundColor = colorStr;
-          // Real CSS custom property, not just the plain background-color
-          // — .profile-current-avatar's own ::after feather (see its CSS
-          // comment) reads this same exact value via var(), inherited
-          // straight down from this element, so the avatar's soft edge
-          // blend always matches the banner's real colour exactly, never
-          // a second, separately-maintained value that could drift out
-          // of sync with it.
-          el.profileBanner.style.setProperty('--profile-banner-color', colorStr);
+          el.profileBanner.style.backgroundColor = 'rgb(' + px[0] + ',' + px[1] + ',' + px[2] + ')';
         } catch (e){}
       };
       img.src = '/api/nft-image-proxy?src=' + encodeURIComponent(imageUrl);
@@ -16407,7 +16368,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       sampleBannerColor(profile.pfpImage);
     } else {
       el.profileBanner.style.backgroundColor = '';
-      el.profileBanner.style.removeProperty('--profile-banner-color');
       el.profileBanner.classList.add('profile-banner-empty');
     }
     // QU0TE — a real value shows the text + a quiet ✎ (click jumps to the
