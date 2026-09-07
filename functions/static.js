@@ -7263,19 +7263,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockOffersBox">
           <div class="flock-account-box-row"><span class="flock-account-box-label">0FFERS<span class="flock-tab-offer-dot" id="flockOffersCount" style="display:none;"></span></span></div>
         </div>
-        <!-- Username + pfp, set from one of your own Pigeons — lives here
-             inside Σκύλλα (reported live as wanting it here, not as its
-             own separate top-level tab) rather than as a sibling of
-             DATABASE/FL0CK/T0P H0LDERS/etc. -->
-        <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockProfileBox">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">PR0F!LE</span></div>
-        </div>
-        <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockBuyPigeonsBox">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">BUY $P!GE0NS</span></div>
-        </div>
-        <div class="sw-panel flock-account-box flock-account-box-clickable" id="flockChangeCollectionBox">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">CHANGE C0LLECT!0N</span></div>
-        </div>
         <div class="sw-panel flock-account-box flock-account-box-soon">
           <div class="flock-account-box-row"><span class="flock-account-box-label">TRANSACT!0N H!ST0RY</span><span class="db-soon">C0M!NG S00N</span></div>
         </div>
@@ -8434,7 +8421,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote','salesCurrencyToggle',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
    'flockWalletBox','flockWalletAddr','flockWalletCopyHint',
-   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockBuyPigeonsBox','flockChangeCollectionBox','flockGridPanel','flockOffersBox','flockOffersCount','flockProfileBox',
+   'flockAccountBoxes','flockMyFlockBox','flockMyFlockLabel','flockGridPanel','flockOffersBox','flockOffersCount',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
    'tradeBuilderPanel','offerPile','offerCount','wantPile','wantCount','completeTradeBtn','swapOffersTabBtn',
@@ -8799,8 +8786,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
     el.salesPanelWrap.style.display = tab === 'sales' ? '' : 'none';
     el.crownPanelWrap.style.display = tab === 'crown' ? '' : 'none';
-    el.profilePanelWrap.style.display = tab === 'profile' ? '' : 'none';
-    if (tab === 'profile') loadProfilePanel();
+    // Σκύλλα IS the profile/hub page now (reported live as "we dont need
+    // both") — PR0F!LE's own content (banner/avatar/MY C0!NS) renders at
+    // the top of the same 'mypigeons' tab regardless of scope (it
+    // handles its own "not connected yet" state internally already), with
+    // MY P!GE0NS/0FFERS sitting below it via the exact same
+    // myPigeonsPanel/screenBrowse elements this tab already used.
+    el.profilePanelWrap.style.display = tab === 'mypigeons' ? '' : 'none';
+    if (tab === 'mypigeons') loadProfilePanel();
     el.swapOffersPanelWrap.style.display = tab === 'swapoffers' ? '' : 'none';
     // The trustline banner itself stays up across every tab, but the
     // $PIGEONS thumbnail is DATABASE-only — it's collection artwork, not
@@ -12721,7 +12714,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     }, BUYSWAP_REFRESH_MS);
   }
   el.pigeonsBalanceBuyBtn.addEventListener('click', function(){ openBuySwapPanel(state.collection); });
-  el.flockBuyPigeonsBox.addEventListener('click', function(){ openBuySwapPanel(state.collection); });
   // navigator.clipboard needs a secure context (https, which this site
   // always is), but its own permission can still be denied even when the
   // API itself exists (confirmed live: some embedded/in-app browser
@@ -12796,17 +12788,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // top of the screen, not just centered on the grid below it.
     if (!state.flockCollapsed) el.searchPanelTitle.scrollIntoView({ block: 'start', behavior: 'smooth' });
   });
-  el.flockChangeCollectionBox.addEventListener('click', function(){
-    showTab('database');
-    openDbSelectFlyout();
-  });
   // Used to do nothing at all when clicked — reported live, now goes to
   // the real 0FFERS RECE!VED view (renderMyOffersList).
   el.flockOffersBox.addEventListener('click', function(){
     showTab('myoffers');
-  });
-  el.flockProfileBox.addEventListener('click', function(){
-    showTab('profile');
   });
   // Messaging paused — see the MESSAGE !NB0X box's own HTML comment.
   // Nothing to wire up here any more (no click handler, no unread-badge
@@ -14685,21 +14670,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.mainframeReopenLabel.addEventListener('click', function(){
     el.screenMainframe.style.display = 'flex';
   });
-  // Logged in already -> straight to PR0F!LE (the real multi-coin balance
-  // view). Not logged in -> the same auto-login FL0CK already triggers
-  // from topTabs' own click handler; PR0F!LE itself has no interactive
-  // CONNECT flow of its own (its "not logged in" state is just static
-  // text), so this reuses that existing real flow rather than building a
-  // second one — MY C0!NS/username/pfp are all one click away on FL0CK's
-  // own PR0F!LE box once signed in.
+  // Σκύλλα IS the profile/hub page now (reported live as "we dont need
+  // both") — always the same tab either way, connected or not.
+  // PR0F!LE's own content (banner/avatar/MY C0!NS) now renders right at
+  // the top of this same tab (see showTab's own profilePanelWrap
+  // condition) — no separate destination to branch to any more.
   el.mainframeProfileBtn.addEventListener('click', function(){
     hideMainframe();
-    if (!MY_WALLET){
-      showTab('mypigeons', true);
-      startAuthorize();
-    } else {
-      showTab('profile');
-    }
+    showTab('mypigeons', true);
+    if (!MY_WALLET) startAuthorize();
   });
   // Keyboard equivalent — #mainframeProfileBtn is the headline itself now
   // (role="button"/tabindex, see the HTML's own comment on why this
