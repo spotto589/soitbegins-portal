@@ -1246,6 +1246,51 @@ const SWAP_HTML = `<!DOCTYPE html>
      (not collapsible — it's the time-sensitive one, always visible),
      reusing the exact same .my-offer-row cards this always rendered
      with, just relocated onto Σκύλλα itself instead of its own tab. */
+  /* WATCHL!ST — small square tiles, more than MY C0!NS' 2-3 across since
+     these are just thumbnails (no balance/action row under them) —
+     reported live as wanting starred NFTs to "show up in Σκύλλα", not a
+     big heavy card per item. */
+  .profile-watchlist-section{ margin-bottom:1.5rem; }
+  .profile-watchlist-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:0.75rem; }
+  @media (min-width:601px){ .profile-watchlist-grid{ grid-template-columns:repeat(6, 1fr); } }
+  .profile-watchlist-tile{
+    position:relative;
+    aspect-ratio:1;
+    border-radius:var(--radius);
+    overflow:hidden;
+    background:#000;
+    cursor:pointer;
+    border:1px solid var(--border-mid);
+  }
+  .profile-watchlist-tile img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-watchlist-tile:hover{ border-color:var(--cyan-dim); }
+  .profile-watchlist-num{
+    position:absolute;
+    left:0.3rem;
+    bottom:0.3rem;
+    background:rgba(8,9,11,0.85);
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    padding:0.2em 0.45em;
+    border-radius:var(--radius);
+  }
+  .profile-watchlist-remove{
+    position:absolute;
+    top:0.25rem;
+    right:0.25rem;
+    width:1.5em;
+    height:1.5em;
+    line-height:1.5em;
+    text-align:center;
+    background:rgba(8,9,11,0.85);
+    border:1px solid var(--border-mid);
+    color:var(--grey);
+    border-radius:50%;
+    font-size:12px;
+    cursor:pointer;
+  }
+  .profile-watchlist-remove:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
   .profile-offers-section{ margin-bottom:1.5rem; }
   .profile-coins-section{ margin-bottom:1.5rem; }
   .profile-coins-banner{
@@ -3194,6 +3239,34 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-select-toggle:hover, .my-pigeon-offer-toggle:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
   .card-select-toggle.selected, .my-pigeon-offer-toggle.selected{ background:var(--magenta); color:#08090b; border-color:var(--magenta); animation:flicker-in 0.3s ease-out; }
   .my-pigeon-offer-toggle.at-cap{ opacity:0.35; cursor:not-allowed; }
+  /* WATCHL!ST — a real star on every DATABASE card now (reported live as
+     wanting "a watchlist button for nfts to choose from the database
+     which show up in Σκύλλα as well"), sitting in the same top-right
+     corner .card-select-toggle used before that feature got shelved
+     (see its own comment) — free real estate while that stays hidden.
+     Personal, per-wallet, localStorage-only (see WATCHLIST_KEY in the
+     JS) — never sent anywhere, so it can never leak into anyone else's
+     view of this card. */
+  .watchlist-toggle{
+    position:absolute;
+    top:0.3rem;
+    right:0.3rem;
+    z-index:2;
+    width:1.6em;
+    height:1.6em;
+    line-height:1.6em;
+    padding:0;
+    background:rgba(8,9,11,0.8);
+    border:1px solid var(--border-mid);
+    color:var(--grey);
+    font-size:15px;
+    cursor:pointer;
+    text-align:center;
+    border-radius:var(--radius);
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .watchlist-toggle:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  .watchlist-toggle.watching{ background:rgba(8,9,11,0.9); color:#ffd23d; border-color:#ffd23d; text-shadow:0 0 6px rgba(255,210,61,0.6); }
   /* Listing price — moved here (bottom-right corner of the picture
      itself) off the purple action box below, which used to carry this
      text and grow/shrink depending on whether a Pigeon was listed. Same
@@ -7105,6 +7178,20 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </div>
+      <!-- WATCHL!ST — any NFT starred from DATABASE (the ☆/★ on every
+           card, see .watchlist-toggle) shows up here (reported live as
+           wanting "a watchlist button for nfts to choose from the
+           database which show up in Σκύλλα as well"). Personal, per-
+           wallet, localStorage-only (see watchlistKey in the JS) —
+           renderProfileWatchlist builds this straight from the real
+           snapshot kept per entry (image/number/collection), no live
+           re-fetch needed just to show the grid. Hidden entirely (not
+           just empty) while there's nothing watched — see its own
+           display toggle in loadProfilePanel. -->
+      <div class="profile-watchlist-section" id="profileWatchlistSection" style="display:none;">
+        <div class="panel-title">WATCHL!ST</div>
+        <div class="profile-watchlist-grid" id="profileWatchlistGrid"></div>
+      </div>
       <!-- 0FFERS — moved directly onto Σκύλλα now (reported live), sitting
            above MY C0!NS since open offers are more time-sensitive than
            balances. Same real 0FFERS RECE!VED/0UTG0!NG 0FFERS lists this
@@ -8450,6 +8537,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList','profileOffersSection',
+   'profileWatchlistSection','profileWatchlistGrid',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
    'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileAddressCopyBtn','profileAddressBithompLink','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
@@ -10092,6 +10180,51 @@ const SWAP_HTML = `<!DOCTYPE html>
       '</div>' +
     '</div>';
   }
+  // ---- WATCHL!ST — pick any NFT straight off DATABASE (the star on every
+  // card, see .watchlist-toggle) and it shows up on Σκύλλα too (see
+  // renderProfileWatchlist). Personal, per-wallet, localStorage-only —
+  // never sent to the server, so this can never leak into anyone else's
+  // view of a card or of your profile. A small real snapshot (image/
+  // number/name/collection) is kept per entry rather than just the bare
+  // nftId, so Σκύλλα can render the grid instantly without a live re-
+  // fetch for every watched item on every profile visit. ----
+  function watchlistKey(){ return 'scylla_watchlist:' + (MY_WALLET || 'guest'); }
+  var WATCHLIST_MAX = 24;
+  function getWatchlist(){
+    try {
+      var raw = localStorage.getItem(watchlistKey());
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e){ return []; }
+  }
+  function setWatchlist(list){
+    try { localStorage.setItem(watchlistKey(), JSON.stringify(list)); } catch (e){}
+  }
+  function isWatchlisted(nftId){
+    return getWatchlist().some(function(w){ return w.nftId === nftId; });
+  }
+  // Returns the new membership state (true = now watching) so the caller
+  // can flip every matching button's own look in place instead of a full
+  // re-render.
+  function toggleWatchlist(p){
+    var list = getWatchlist();
+    var idx = list.findIndex(function(w){ return w.nftId === p.nftId; });
+    if (idx !== -1){
+      list.splice(idx, 1);
+      setWatchlist(list);
+      return false;
+    }
+    list.unshift({ nftId: p.nftId, collection: state.collection, image: p.image || null, number: (p.number !== null && p.number !== undefined) ? p.number : null, name: p.name || null });
+    // Capped so a very enthusiastic watcher can't grow this without
+    // bound — oldest (least recently added) drops off first, same
+    // "most recent first" ordering renderProfileWatchlist shows.
+    if (list.length > WATCHLIST_MAX) list = list.slice(0, WATCHLIST_MAX);
+    setWatchlist(list);
+    return true;
+  }
+  function removeFromWatchlist(nftId){
+    setWatchlist(getWatchlist().filter(function(w){ return w.nftId !== nftId; }));
+  }
   function resultCardHtml(p){
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : 'IMAGE';
     var num = itemNumberLabel(p);
@@ -10165,6 +10298,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
             img +
             '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
+            '<button class="watchlist-toggle' + (isWatchlisted(p.nftId) ? ' watching' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="' + (isWatchlisted(p.nftId) ? 'REM0VE FR0M WATCHL!ST' : 'ADD T0 WATCHL!ST') + '">' + (isWatchlisted(p.nftId) ? '★' : '☆') + '</button>' +
           '</div>' +
           pigeonsActionHtml +
         '</div>' +
@@ -10233,11 +10367,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? '<div class="thumb-listing-badge' + (p.owner === MY_WALLET ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>'
       : '';
     var ownedBadge = (p.owner === MY_WALLET && !p.scyllaListing) ? '<div class="thumb-owned-badge">0WNED</div>' : '';
+    var watching = isWatchlisted(p.nftId);
+    var watchlistBtn = '<button class="watchlist-toggle' + (watching ? ' watching' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="' + (watching ? 'REM0VE FR0M WATCHL!ST' : 'ADD T0 WATCHL!ST') + '">' + (watching ? '★' : '☆') + '</button>';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">' + collectionItemLabel() + ' ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         img +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
+        watchlistBtn +
         listingBadge +
         ownedBadge +
       '</div>' +
@@ -10482,6 +10619,20 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (buyBtn){
         var bp = source().filter(function(x){ return x.nftId === buyBtn.getAttribute('data-nftid'); })[0];
         if (bp) openBuyConfirm(bp);
+        return;
+      }
+      var watchBtn = e.target.closest('.watchlist-toggle');
+      if (watchBtn){
+        e.stopPropagation();
+        var wp = source().filter(function(x){ return x.nftId === watchBtn.getAttribute('data-nftid'); })[0];
+        if (wp){
+          var nowWatching = toggleWatchlist(wp);
+          document.querySelectorAll('.watchlist-toggle[data-nftid="' + wp.nftId + '"]').forEach(function(btn){
+            btn.classList.toggle('watching', nowWatching);
+            btn.textContent = nowWatching ? '★' : '☆';
+            btn.title = nowWatching ? 'REM0VE FR0M WATCHL!ST' : 'ADD T0 WATCHL!ST';
+          });
+        }
         return;
       }
       var toggle = e.target.closest('.card-select-toggle');
@@ -16145,6 +16296,52 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<input type="checkbox" data-collection="' + key + '"' + (checked ? ' checked' : '') + '></label>';
     }).join('');
   }
+  // ---- WATCHL!ST — renders straight off the local snapshot (getWatch-
+  // list), no live re-fetch needed just to show the grid. Most-recently-
+  // starred first (toggleWatchlist unshifts). Hidden entirely rather than
+  // showing an empty section when there's nothing watched yet. ----
+  function renderProfileWatchlist(){
+    var list = getWatchlist();
+    el.profileWatchlistSection.style.display = list.length ? '' : 'none';
+    if (!list.length) return;
+    el.profileWatchlistGrid.innerHTML = list.map(function(w){
+      var img = w.image ? '<img src="' + escapeHtml(w.image) + '" alt="" loading="lazy">' : '';
+      var label = w.number !== null && w.number !== undefined ? '#' + w.number : (w.name ? escapeHtml(w.name) : '');
+      return '<div class="profile-watchlist-tile" data-nftid="' + escapeHtml(w.nftId) + '" data-collection="' + escapeHtml(w.collection || '') + '">' +
+        img +
+        (label ? '<div class="profile-watchlist-num">' + label + '</div>' : '') +
+        '<button type="button" class="profile-watchlist-remove" data-nftid="' + escapeHtml(w.nftId) + '" title="REM0VE">&times;</button>' +
+      '</div>';
+    }).join('');
+  }
+  el.profileWatchlistGrid.addEventListener('click', function(e){
+    var removeBtn = e.target.closest('.profile-watchlist-remove');
+    if (removeBtn){
+      e.stopPropagation();
+      removeFromWatchlist(removeBtn.getAttribute('data-nftid'));
+      renderProfileWatchlist();
+      // Keep every matching card's own star in sync if DATABASE happens
+      // to already have it rendered underneath (e.g. removed here, then
+      // scrolled down to the same collection still open from before).
+      document.querySelectorAll('.watchlist-toggle[data-nftid="' + removeBtn.getAttribute('data-nftid') + '"]').forEach(function(btn){
+        btn.classList.remove('watching');
+        btn.textContent = '☆';
+        btn.title = 'ADD T0 WATCHL!ST';
+      });
+      return;
+    }
+    var tile = e.target.closest('.profile-watchlist-tile');
+    if (!tile) return;
+    var nftId = tile.getAttribute('data-nftid');
+    var collection = tile.getAttribute('data-collection');
+    // openDetail's own follow-up api({detail}) call defaults to
+    // state.collection (see api()'s own comment) — has to actually match
+    // this item's real collection first, or it fetches the wrong
+    // collection's data for this nftId.
+    if (collection && collection !== state.collection) switchCollection(collection);
+    showTab('database');
+    openDetail(nftId);
+  });
   function renderProfileCoins(){
     if (!MY_WALLET){
       el.profileCoinsList.innerHTML = '';
@@ -16344,6 +16541,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // paint after connecting.
     renderMyOffersList();
     renderOutgoingOffersList();
+    renderProfileWatchlist();
     if (!MY_WALLET){
       el.profileCurrentWallet.textContent = '';
       el.profileCurrentUsername.textContent = 'C0NNECT Y0UR WALLET F!RST.';
