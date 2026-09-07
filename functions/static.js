@@ -1242,6 +1242,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      needing an extra click, but collapsible via its own header banner for
      anyone who wants the rest of PR0F!LE (username/pfp) without scrolling
      past a big coin grid every time. */
+  /* 0FFERS — sits above MY C0!NS now (reported live), a plain section
+     (not collapsible — it's the time-sensitive one, always visible),
+     reusing the exact same .my-offer-row cards this always rendered
+     with, just relocated onto Σκύλλα itself instead of its own tab. */
+  .profile-offers-section{ margin-bottom:1.5rem; }
   .profile-coins-section{ margin-bottom:1.5rem; }
   .profile-coins-banner{
     display:flex;
@@ -1260,11 +1265,52 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.6em 0;
     border-bottom:1px solid var(--border-dim);
     margin-bottom:1rem;
+    position:relative;
   }
   .profile-coins-banner:hover{ color:var(--cyan); }
   .profile-coins-banner-arrow{ display:inline-block; transition:transform 0.15s ease; color:var(--grey); }
   .profile-coins-section.collapsed .profile-coins-banner-arrow{ transform:rotate(-90deg); }
   .profile-coins-section.collapsed .profile-coins-body{ display:none; }
+  /* EDIT — lets you pick which of the six collections' balances actually
+     show in MY C0!NS (reported live wanting it "customisable"), not the
+     coins-banner's own expand/collapse toggle — stopPropagation in the JS
+     keeps a click here from also collapsing the section. Hidden choices
+     persist in localStorage per wallet (PROFILE_COINS_HIDDEN_KEY), a
+     personal display preference, not shared profile data. */
+  .profile-coins-edit-btn{
+    position:absolute;
+    right:0.5rem;
+    font-size:11px;
+    letter-spacing:0.12em;
+    color:var(--grey-dim);
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    padding:0.25em 0.6em;
+    cursor:pointer;
+  }
+  .profile-coins-edit-btn:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
+  .profile-coins-edit-popover{
+    background:var(--panel-bg-solid);
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    padding:0.85rem 1rem;
+    margin-bottom:1rem;
+  }
+  .profile-coins-edit-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:0.75rem;
+    padding:0.4em 0;
+    font-family:var(--font-mono);
+    font-size:13px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    color:var(--grey);
+    cursor:pointer;
+    user-select:none;
+  }
+  .profile-coins-edit-row input{ accent-color:var(--green); cursor:pointer; }
   /* WALLET BALANCE (real native XRP, straight from account_info) up top,
      T0TAL P0RTF0L!0 VALUE (every coin balance converted to XRP via its own
      real AMM pool rate, see pigeonsRate, plus the wallet balance above)
@@ -6980,22 +7026,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div id="myPigeonsList"></div>
     </div>
 
-    <!-- 0FFERS RECE!VED — every real buy-offer sitting on a Pigeon you
-         currently have listed, one horizontal row per Pigeon (thumbnail +
-         number + buyer + price + ACCEPT/DECL!NE/C0UNTER), reached via the
-         Σκύλλα tab's own 0FFERS box (see flockOffersBox's click handler)
-         instead of that box doing nothing, which it used to. -->
-    <div class="sw-panel" id="myOffersPanelWrap" style="display:none;">
-      <div class="panel-title">0FFERS RECE!VED</div>
-      <div id="myOffersList"></div>
-      <!-- Every real $PIGEONS buy-offer THIS wallet has made on someone
-           else's Pigeon, with a real CANCEL — reported live as important
-           to get right specifically so cancelling actually works, rather
-           than only being discoverable by revisiting each Pigeon one at
-           a time. Same row layout as 0FFERS RECE!VED above. -->
-      <div class="panel-title outgoing-offers-title">0UTG0!NG 0FFERS</div>
-      <div id="outgoingOffersList"></div>
-    </div>
 
     <div class="sw-panel" id="topHoldersPanelWrap" style="display:none;">
       <div class="panel-title">T0P 123 H0LDERS</div>
@@ -7075,6 +7105,21 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </div>
+      <!-- 0FFERS — moved directly onto Σκύλλα now (reported live), sitting
+           above MY C0!NS since open offers are more time-sensitive than
+           balances. Same real 0FFERS RECE!VED/0UTG0!NG 0FFERS lists this
+           always had (renderMyOffersList/renderOutgoingOffersList,
+           fed by loadOffersReceived/loadOutgoingOffers which already run
+           on wallet connect) — only where they live changed. The old
+           standalone MY 0FFERS tab (myOffersPanelWrap) is gone; the
+           0FFERS quick-box (flockOffersBox, further down this same tab)
+           now just scrolls to this section instead of switching tabs. -->
+      <div class="profile-offers-section" id="profileOffersSection">
+        <div class="panel-title">0FFERS RECE!VED</div>
+        <div id="myOffersList"></div>
+        <div class="panel-title outgoing-offers-title">0UTG0!NG 0FFERS</div>
+        <div id="outgoingOffersList"></div>
+      </div>
       <!-- MY C0!NS — real balance + trustline status for every collection
            with a real token (see COLLECTION_META's own tokenIssuer),
            reported live as wanting one place to see every coin at a
@@ -7085,7 +7130,10 @@ const SWAP_HTML = `<!DOCTYPE html>
            already offered for all of them. Built by renderProfileCoins()
            below, not static — it has to iterate COLLECTION_META itself so
            a future collection just needs its own entry there, nothing
-           here changes. -->
+           here changes. EDIT opens profileCoinsEditPopover — reported
+           live as wanting to choose which collections' balances actually
+           show here (see PROFILE_COINS_HIDDEN_KEY in the JS), not forced
+           to always see all six. -->
       <!-- Collapsible — profileCoinsBanner toggles the "collapsed" class on
            profileCoinsSection (see the CSS above); open by default every
            time PR0F!LE loads (loadProfilePanel never adds "collapsed"
@@ -7094,7 +7142,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="profile-coins-section" id="profileCoinsSection">
         <div class="profile-coins-banner" id="profileCoinsBanner">
           <span>MY C0!NS</span>
+          <span class="profile-coins-edit-btn" id="profileCoinsEditBtn" title="CH00SE WH!CH C0!NS SH0W">EDIT</span>
           <span class="profile-coins-banner-arrow" id="profileCoinsBannerArrow">▾</span>
+        </div>
+        <div class="profile-coins-edit-popover" id="profileCoinsEditPopover" style="display:none;">
+          <div class="index-line" style="margin-bottom:0.5rem;">SH0W !N MY C0!NS ::</div>
+          <div id="profileCoinsEditList"></div>
         </div>
         <div class="profile-coins-body" id="profileCoinsBody">
           <div class="profile-coins-wallet-row" id="profileCoinsWalletRow">
@@ -8396,7 +8449,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'mainframeTicker','mainframeTickerMcPigeons','mainframeTickerMcPhnixs','mainframeTickerMcTeddybg','mainframeTickerMcSeal','mainframeTickerMcFuzzy','mainframeTickerMcConspiracy',
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeProfileBtn',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
-   'myOffersPanelWrap','myOffersList','outgoingOffersList',
+   'myOffersList','outgoingOffersList','profileOffersSection',
    'topHoldersPanelWrap','topHoldersList',
    'crownPanelWrap','crownPeriodSelect','crownLeaderboardList',
    'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileAddressCopyBtn','profileAddressBithompLink','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
@@ -8404,6 +8457,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
+   'profileCoinsEditBtn','profileCoinsEditPopover','profileCoinsEditList',
    'salesPanelWrap',
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
@@ -8776,8 +8830,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     // sitting above screenBrowse. Hidden the instant screenBrowse itself
     // takes over, same condition as its own visibility above.
     el.myPigeonsPanel.style.display = (tab === 'mypigeons' && !isOwnWalletScope()) ? '' : 'none';
-    el.myOffersPanelWrap.style.display = tab === 'myoffers' ? '' : 'none';
-    if (tab === 'myoffers'){ renderMyOffersList(); renderOutgoingOffersList(); }
     el.topHoldersPanelWrap.style.display = tab === 'topholders' ? '' : 'none';
     el.salesPanelWrap.style.display = tab === 'sales' ? '' : 'none';
     el.crownPanelWrap.style.display = tab === 'crown' ? '' : 'none';
@@ -8990,7 +9042,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else {
       el.screenBrowse.style.display = 'none';
       el.myPigeonsPanel.style.display = 'none';
-      el.myOffersPanelWrap.style.display = 'none';
       el.topHoldersPanelWrap.style.display = 'none';
       el.salesPanelWrap.style.display = 'none';
       el.swapOffersPanelWrap.style.display = 'none';
@@ -10515,7 +10566,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         persistDeclinedOfferIds();
         if (isOwnWalletScope()) runScopedQuery();
         if (el.screenDetail.style.display !== 'none') updateScyllaListing(state.currentDetail);
-        if (el.myOffersPanelWrap.style.display !== 'none') renderMyOffersList();
+        renderMyOffersList();
         return;
       }
     });
@@ -12783,10 +12834,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     // top of the screen, not just centered on the grid below it.
     if (!state.flockCollapsed) el.searchPanelTitle.scrollIntoView({ block: 'start', behavior: 'smooth' });
   });
-  // Used to do nothing at all when clicked — reported live, now goes to
-  // the real 0FFERS RECE!VED view (renderMyOffersList).
+  // Used to do nothing at all when clicked — reported live, now scrolls
+  // straight to the real 0FFERS RECE!VED/0UTG0!NG 0FFERS section, which
+  // lives on Σκύλλα itself now (profileOffersSection) rather than its own
+  // separate tab — no tab switch needed, this box only ever shows while
+  // already scoped to your own wallet on the same tab.
   el.flockOffersBox.addEventListener('click', function(){
-    showTab('myoffers');
+    el.profileOffersSection.scrollIntoView({ block: 'start', behavior: 'smooth' });
   });
   // Messaging paused — see the MESSAGE !NB0X box's own HTML comment.
   // Nothing to wire up here any more (no click handler, no unread-badge
@@ -13842,7 +13896,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // showing (ownedPigeonActionHtml reads offersByNftId there too), and
       // the dedicated 0FFERS RECE!VED view if that's what's open.
       if (isOwnWalletScope()) runScopedQuery();
-      if (el.myOffersPanelWrap.style.display !== 'none') renderMyOffersList();
+      renderMyOffersList();
       offersReceivedPromise = null;
     }).catch(function(){
       offersReceivedPromise = null;
@@ -13871,7 +13925,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (outgoingOffersPromise) return outgoingOffersPromise;
     outgoingOffersPromise = fetch('/api/swap-offers-made?collection=' + encodeURIComponent(state.collection)).then(function(r){ return r.json(); }).then(function(data){
       outgoingOffersData = data.items || [];
-      if (el.myOffersPanelWrap.style.display !== 'none') renderOutgoingOffersList();
+      renderOutgoingOffersList();
       outgoingOffersPromise = null;
     }).catch(function(){
       outgoingOffersPromise = null;
@@ -14001,7 +14055,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               }
             });
           }
-          if (el.myOffersPanelWrap.style.display !== 'none') renderMyOffersList();
+          renderMyOffersList();
           if (isOwnWalletScope()) runScopedQuery();
           if (el.screenDetail.style.display !== 'none') updateScyllaListing(state.currentDetail);
           cancelOfferTarget = null;
@@ -15391,6 +15445,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.traitsFlyoutVals.innerHTML = '';
     }
     if (el.dbSelectFlyout.style.display === 'block' && !el.dbSelectWrap.contains(e.target)) closeDbSelectFlyout();
+    if (el.profileCoinsEditPopover.style.display !== 'none' && e.target !== el.profileCoinsEditBtn && !el.profileCoinsEditPopover.contains(e.target)) el.profileCoinsEditPopover.style.display = 'none';
     // Same pattern for the pigeon DETAIL screen itself — a click anywhere
     // outside it (a different tab, the trustline banner, anywhere) closes
     // it back to the grid, instead of it staying stuck open underneath
@@ -16066,6 +16121,30 @@ const SWAP_HTML = `<!DOCTYPE html>
   // of its own. A future collection just needs one more entry here for
   // its MY C0!NS row to pick up its real colour instead of the fallback.
   var PROFILE_COIN_ACCENTS = { pigeons: '136,72,248', phnixs: '255,90,31', teddybg: '166,99,46', seal: '45,140,168', fuzzy: '122,66,26', conspiracy: '240,0,228' };
+  // ---- MY C0!NS — which collections show, per wallet (reported live as
+  // wanting it "customisable" rather than always all six) — a personal
+  // display preference, not shared profile data, so localStorage is
+  // enough (no server round-trip, and it can never leak into someone
+  // else's view of this profile since profiles-batch never reads it). ----
+  function profileCoinsHiddenKey(){ return 'scylla_profile_coins_hidden:' + MY_WALLET; }
+  function getHiddenCoinKeys(){
+    try {
+      var raw = localStorage.getItem(profileCoinsHiddenKey());
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e){ return []; }
+  }
+  function setHiddenCoinKeys(keys){
+    try { localStorage.setItem(profileCoinsHiddenKey(), JSON.stringify(keys)); } catch (e){}
+  }
+  function renderProfileCoinsEditList(){
+    var hidden = getHiddenCoinKeys();
+    el.profileCoinsEditList.innerHTML = Object.keys(COLLECTION_META).map(function(key){
+      var checked = hidden.indexOf(key) === -1;
+      return '<label class="profile-coins-edit-row"><span>' + escapeHtml(COLLECTION_META[key].tokenLabel) + '</span>' +
+        '<input type="checkbox" data-collection="' + key + '"' + (checked ? ' checked' : '') + '></label>';
+    }).join('');
+  }
   function renderProfileCoins(){
     if (!MY_WALLET){
       el.profileCoinsList.innerHTML = '';
@@ -16073,8 +16152,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileCoinsTotalValue.textContent = '--';
       return;
     }
-    var keys = Object.keys(COLLECTION_META);
-    el.profileCoinsList.innerHTML = keys.map(function(key){
+    renderProfileCoinsEditList();
+    var hiddenKeys = getHiddenCoinKeys();
+    var keys = Object.keys(COLLECTION_META).filter(function(k){ return hiddenKeys.indexOf(k) === -1; });
+    el.profileCoinsList.innerHTML = !keys.length ? '<div class="th-empty">N0 C0!NS SH0WN — CL!CK ED!T T0 P!CK S0ME.</div>' : keys.map(function(key){
       var meta = COLLECTION_META[key];
       var accent = PROFILE_COIN_ACCENTS[key] || '61,243,236';
       // BUY only for $P!GE0NS right now (the only collection with a real
@@ -16199,6 +16280,28 @@ const SWAP_HTML = `<!DOCTYPE html>
     var collapsed = el.profileCoinsSection.classList.toggle('collapsed');
     el.profileCoinsBannerArrow.textContent = collapsed ? '▸' : '▾';
   });
+  // ED!T — a real button sitting on the same banner, so this needs its
+  // own stopPropagation or every click would also fire the banner's own
+  // collapse/expand toggle above.
+  el.profileCoinsEditBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    var opening = el.profileCoinsEditPopover.style.display === 'none';
+    el.profileCoinsEditPopover.style.display = opening ? '' : 'none';
+    if (opening) renderProfileCoinsEditList();
+  });
+  el.profileCoinsEditList.addEventListener('click', function(e){ e.stopPropagation(); });
+  el.profileCoinsEditList.addEventListener('change', function(e){
+    var box = e.target.closest('input[type="checkbox"][data-collection]');
+    if (!box) return;
+    var key = box.getAttribute('data-collection');
+    var hidden = getHiddenCoinKeys();
+    var idx = hidden.indexOf(key);
+    if (box.checked && idx !== -1) hidden.splice(idx, 1);
+    else if (!box.checked && idx === -1) hidden.push(key);
+    setHiddenCoinKeys(hidden);
+    renderProfileCoins();
+    el.profileCoinsEditPopover.style.display = '';
+  });
   // BUY opens the real swap panel; clicking anywhere else on a row jumps
   // to that collection's own DATABASE view — but only for P!GE0NS right
   // now. Every other collection is deliberately not reachable through the
@@ -16234,6 +16337,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.profileCoinsSection.classList.remove('collapsed');
     el.profileCoinsBannerArrow.textContent = '▾';
     renderProfileCoins();
+    // 0FFERS — whatever loadOffersReceived/loadOutgoingOffers already
+    // resolved (they run independently on wallet connect, see their own
+    // comments) renders straight into profileOffersSection here; still
+    // just "L0AD!NG..."/empty until those land if this is the very first
+    // paint after connecting.
+    renderMyOffersList();
+    renderOutgoingOffersList();
     if (!MY_WALLET){
       el.profileCurrentWallet.textContent = '';
       el.profileCurrentUsername.textContent = 'C0NNECT Y0UR WALLET F!RST.';
