@@ -1073,25 +1073,27 @@ const SWAP_HTML = `<!DOCTYPE html>
      in ahead of it the moment that wallet's profile resolves. */
   .wallet-tag{ display:inline-flex; align-items:center; gap:0.35em; vertical-align:middle; }
   .wallet-avatar{ width:1.3em; height:1.3em; min-width:1.3em; border-radius:50%; object-fit:cover; flex:0 0 auto; border:1px solid var(--border-mid); }
-  /* BANNER — just the coloured backdrop now, sized to fit snugly to the
-     avatar's own bottom edge (reported live) instead of a tall card
-     holding the whole identity. background-color alone (set by
-     sampleBannerColor in the JS, off the chosen PFP) is the entire
-     background — confirmed live that even a dim blurred image on top of
-     the right solid colour still read as "multi coloured", which defeats
-     the actual point ("it all looks like one"). Zero bottom padding +
-     the avatar as the only/last child is what makes the banner's own
-     bottom edge land exactly at the avatar's bottom — see
-     .profile-avatar-wrap's own negative margin below for the "fits to
-     the bottom of the thumbnail" part. */
+  /* BANNER — just the coloured backdrop, background-color alone (set by
+     sampleBannerColor in the JS, off the chosen PFP) — confirmed live
+     that even a dim blurred image on top of the right solid colour still
+     read as "multi coloured", which defeats the actual point ("it all
+     looks like one"). Avatar sits fully INSIDE it now, vertically
+     centred (reported live as wanting it "in the middle of the banner")
+     — it used to overhang the bottom edge via a negative margin, which
+     put half the circle over the coloured banner and half over the plain
+     dark page background behind it, and THAT mismatched-background seam
+     is what actually read as an "outline" around the bottom half (not a
+     real border — there never was one). Keeping the whole avatar inside
+     one single background colour is what actually removes it. */
   .profile-banner{
     position:relative;
     width:100%;
+    height:260px;
     border-radius:var(--radius);
     background-color:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
-    padding:1.5rem 1.5rem 0;
     display:flex;
+    align-items:center;
     justify-content:center;
     overflow:hidden;
   }
@@ -1101,14 +1103,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Avatar — the crisp Pigeon image (background, not <img>, so it can sit
      centred/cropped the same way every other round avatar on the site
      does — object-fit:cover equivalent via background-size). No outline/
-     ring of its own (was border+box-shadow) — it sits flush against the
-     now-matching banner colour so the two genuinely read as one shape,
-     not two overlapping ones. Half its own height pokes below the
-     banner's padding-bottom:0 (negative margin-bottom), which is what
-     "fits to the bottom of the thumbnail" actually means here — the
-     coloured banner ends right at the avatar's own visual centre/bottom
-     instead of trailing empty space under it. */
-  .profile-avatar-wrap{ position:relative; flex:0 0 auto; margin-bottom:-56px; }
+     ring of its own (was border+box-shadow) — sits flush against the
+     now-matching banner colour, fully inside it, so the two genuinely
+     read as one shape, not two overlapping ones. */
+  .profile-avatar-wrap{ position:relative; flex:0 0 auto; }
   .profile-current-avatar{ width:220px; height:220px; border-radius:50%; overflow:hidden; background:#000; cursor:pointer; }
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
   .profile-avatar-edit-btn{
@@ -1130,9 +1128,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profile-avatar-edit-btn:hover{ filter:brightness(1.15); }
   /* IDENT!TY — underneath the avatar now (reported live), centered:
-     margin-top clears the avatar's own negative-margin overhang from the
-     banner above it. */
-  .profile-current-info{ text-align:center; padding-top:72px; margin-bottom:1.5rem; }
+     the avatar sits fully inside the banner now (see its own comment),
+     so this no longer needs to clear any overhang — a plain margin-top
+     is enough. */
+  .profile-current-info{ text-align:center; margin-top:1rem; margin-bottom:1.5rem; }
   .profile-current-username-row{ display:flex; align-items:center; justify-content:center; gap:0.5rem; }
   .profile-current-username{ font-family:var(--font-display); font-size:32px; font-weight:700; color:var(--green); }
   /* Small, quiet edit affordance next to any click-to-edit field — real
@@ -1226,9 +1225,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profile-field-highlight{ animation:profileFieldHighlight 1.1s ease; }
   @media (max-width:600px){
+    .profile-banner{ height:190px; }
     .profile-current-avatar{ width:150px; height:150px; }
-    .profile-avatar-wrap{ margin-bottom:-40px; }
-    .profile-current-info{ padding-top:52px; }
     .profile-avatar-edit-btn{ width:34px; height:34px; font-size:19px; }
     .profile-current-username{ font-size:24px; }
   }
