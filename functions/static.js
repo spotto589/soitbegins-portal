@@ -47,7 +47,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
 
   /* ==========================================================================
      Σκύλλα SWAP — colour + type system, v4: "corrupted industrial system,"
@@ -135,7 +135,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     --grey-dim:rgba(230,225,211,0.34);
     --grey-disabled:rgba(230,225,211,0.22);
 
-    --font-display:'Anton',Impact,'Arial Narrow',sans-serif;
+    /* Site-wide swap to the terminal mono font (reported live: "use that
+       font everywhere all over the website, i love it" — the top bar
+       headings switched off Anton in the same session, since Anton's
+       Google Fonts @import only ever loads its single 400 weight, so
+       every font-weight:700/800 var(--font-display) rule site-wide
+       (prices, usernames, detail numbers, etc.) was quietly getting the
+       BROWSER's synthetic/faux bold, not a real one — same squeezed-
+       counter "blurry" look everywhere, not just the top bar. Pointing
+       the variable itself at JetBrains Mono (which has real weights up
+       to 800 loaded) fixes every one of those call sites at once, no
+       per-rule changes needed. */
+    --font-display:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
     --font-mono:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
     --font-body:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
 
