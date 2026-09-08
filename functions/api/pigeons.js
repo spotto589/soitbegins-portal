@@ -3,7 +3,7 @@
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue, getFloorIndex,
-  resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops,
+  resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG,
   getCachedCrownHolder, mapWithConcurrency
 } from '../_shared.js';
@@ -506,6 +506,26 @@ export async function onRequestGet(context) {
 
     const total = ownTotal + deeptideTotal;
     return json({ items, total, hasMore: (salesSkip + items.length) < total, skip: salesSkip, limit: salesLimit });
+  }
+
+  // T0P 3 NFT H0LD!NGS (Σκύλλα banner) — real per-collection NFT counts
+  // for one wallet, across every collection with a real nftIssuer/
+  // nftTaxon configured (TEDDY/SEAL/FUZZY/C0NSP!RACY have none yet — see
+  // TRADEABLE_COLLECTIONS' own comment on why — so they never contribute
+  // a count here). Same cached fetchAllAccountNftsCheckedCached every
+  // other per-wallet NFT lookup in this file already shares for this
+  // wallet within the same 20s window — no extra live ledger call.
+  if (params.get('myNftCounts') === '1') {
+    const wallet = params.get('wallet');
+    if (!wallet) return json({ error: 'missing_wallet' }, 400);
+    const { nfts, ok } = await fetchAllAccountNftsCheckedCached(context, wallet);
+    if (!ok) return json({ error: 'ledger_lookup_failed' }, 502);
+    const counts = {};
+    for (const key of Object.keys(TRADEABLE_COLLECTIONS)) {
+      if (!TRADEABLE_COLLECTIONS[key].nftIssuer) continue;
+      counts[key] = findAllCollectionNfts(nfts, key).length;
+    }
+    return json({ counts });
   }
 
   // A wallet's full real holdings — used by the SELECT -> owner's

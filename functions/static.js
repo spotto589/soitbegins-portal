@@ -1264,6 +1264,9 @@ const SWAP_HTML = `<!DOCTYPE html>
      bottom offset below so it stays fully inside the banner's
      overflow:hidden instead of getting clipped now that the avatar
      itself sits flush against the true edge. */
+  /* Nameplate/address/holdings all moved out of here — .profile-avatar-
+     wrap is just the avatar + its edit button again (see
+     .profile-banner-main below for everything right of the thumbnail). */
   .profile-avatar-wrap{ position:relative; flex:0 0 auto; margin-left:0.5rem; margin-bottom:calc(-1.5rem - 1px); }
   .profile-current-avatar{ width:260px; height:260px; border-radius:var(--radius); overflow:hidden; background:#000; cursor:pointer; }
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
@@ -1284,41 +1287,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:center;
   }
   .profile-avatar-edit-btn:hover{ filter:brightness(1.15); }
-  /* ADDRESS cluster — right of the thumbnail (reported live), bottom-
-     aligned to the exact same baseline as the avatar itself (both plain
-     flex children of a flex-end banner). */
-  .profile-current-identity{ text-align:left; flex:0 0 auto; min-width:0; }
-  /* USERNAME/QU0TE — right of the thumbnail, roughly at eye height
-     (reported live), not centred across the banner any more. A child of
-     .profile-avatar-wrap (position:relative) now, so top:38% anchors to
-     the AVATAR's own box — a real vertical position tied to the art
-     itself, not the banner's overall height. left:100% + a gap sits it
-     just clear of the thumbnail; white-space:nowrap + max-width keeps a
-     long username from wrapping awkwardly this close to the avatar's
-     edge (ellipsis past that width instead). */
-  .profile-current-center{
-    position:absolute;
-    left:calc(100% + 1rem);
-    top:38%;
-    transform:translateY(-50%);
-    min-width:0;
-    max-width:260px;
-    text-align:left;
-  }
-  .profile-current-username-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.5rem; }
-  /* Dark drop-shadow "halo" — takes over from the banner's old flat
-     scrim (see .profile-banner's own comment) as the guard against an
-     unpredictable sampled background colour, without darkening the
-     banner itself to get it. white-space/ellipsis so a long username
-     doesn't wrap awkwardly this close to the avatar's edge. */
-  /* Black text on the banner now (reported live), not green/white/grey —
-     the light-coloured halo below is what replaces the old DARK
-     drop-shadow as the contrast guard, since black text needs a LIGHT
-     edge to stay legible on a darker sampled colour, not a dark one. */
+  /* Everything right of the thumbnail — a centred identity column next
+     to a right-hand holdings column (reported live). Row on desktop,
+     stacks to a column on mobile (see the max-width:600px override
+     further down). flex:1 1 auto so it soaks up whatever width the
+     avatar doesn't use. */
+  .profile-banner-main{ display:flex; flex:1 1 auto; align-items:flex-end; gap:1.5rem; min-width:0; }
+  /* IDENTITY — TW!TTER/name/quote/address/EST C0!N, all centred now
+     (reported live), stacked as one column instead of address sitting
+     apart from the centred username/quote block like before. */
+  .profile-banner-identity{ flex:1 1 auto; min-width:0; text-align:center; display:flex; flex-direction:column; align-items:center; }
+  .profile-current-username-row{ display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-top:0.5rem; }
+  /* Black text on the banner (reported live), not green/white/grey — the
+     light-coloured halo is the contrast guard against an unpredictable
+     sampled background colour (see .profile-banner's own comment on why
+     there's no dark scrim any more), since black text needs a LIGHT edge
+     to stay legible on a darker sampled colour, not a dark one. */
   .profile-current-username{
     font-family:var(--font-display); font-size:28px; font-weight:700; color:#000;
     text-shadow:0 1px 2px rgba(255,255,255,0.55), 0 0 8px rgba(255,255,255,0.35);
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; max-width:100%; vertical-align:bottom;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
   }
   /* Small, quiet edit affordance next to any click-to-edit field — real
      hit target (not just a hover cue) that jumps to the matching input
@@ -1334,7 +1322,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:color 0.15s ease;
   }
   .profile-field-edit-btn:hover{ color:var(--cyan); }
-  .profile-current-wallet-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.4rem; }
+  .profile-current-wallet-row{ display:flex; align-items:center; justify-content:center; gap:0.4rem; margin-top:0.75rem; }
   .profile-current-wallet{ font-size:13px; letter-spacing:0.03em; color:#000; text-transform:uppercase; word-break:break-all; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
   /* Tiny real buttons next to the address — C0PY (clipboard, same
      pattern the issuer address' own COPY button already uses) and a
@@ -1367,37 +1355,62 @@ const SWAP_HTML = `<!DOCTYPE html>
      hiding outright — see renderProfileCurrent in the JS). */
   .profile-quote{ font-size:13px; font-style:italic; color:#000; text-transform:none; cursor:pointer; margin-top:0.6rem; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
   .profile-quote .profile-field-edit-btn{ font-style:normal; }
-  /* TW!TTER — top-right corner of the banner now (reported live), real
-     black-pill X/Twitter button styling (reported live as wanting it to
-     "look like the actual twitter design") instead of a plain text link
-     — black fill, white text, the 𝕏 mark, a real rounded pill, same
-     shape X's own share/follow buttons use. Absolutely positioned (not a
-     flex child) so it sits in its own corner regardless of the avatar/
-     identity/username layout below it. */
-  /* Right column of the banner — TW!TTER on top, the compact MY C0!NS
-     mini-list underneath it (reported live). One flex column now instead
-     of .profile-twitter-row being independently absolutely positioned,
-     so the coins list just stacks below the button without either
-     needing to know the other's height. */
-  .profile-banner-right{ position:absolute; top:1rem; right:1rem; display:flex; flex-direction:column; align-items:flex-end; gap:0.6rem; }
-  .profile-twitter-row{ position:static; }
-  /* Compact per-coin balances, right in the banner — same real data
-     renderProfileCoins() already fetches for the full MY C0!NS list
-     below (see its own comment), just a thumbnail + abbreviated amount
-     per row instead of the full card. formatCompactAmount in the JS caps
-     it at 3 digits + a K/M suffix (e.g. "123K", "4M") — the full-
-     precision number still lives in the real MY C0!NS list, this is
-     just a glance. */
-  .profile-banner-coins{
+  /* TW!TTER — now the FIRST item in the centred identity column
+     (reported live), not its own corner badge any more. Real black-pill
+     X/Twitter button styling (reported live as wanting it to "look like
+     the actual twitter design") — black fill, white text, a real rounded
+     pill, same shape X's own share/follow buttons use. */
+  .profile-twitter-row{ display:flex; justify-content:center; }
+  /* H0LD!NGS — right-hand column, T0P 3 H0LD!NGS (coins) stacked above
+     T0P 3 NFT H0LD!NGS (reported live), each its own boxed card with a
+     V!EW M0RE that swaps BOTH this column and the identity column next
+     to it out for #profileBannerExpanded (see renderBannerHoldings/
+     openBannerHoldingsExpanded in the JS). */
+  .profile-banner-holdings{ flex:0 0 auto; display:flex; flex-direction:column; gap:0.6rem; }
+  .profile-holdings-box{
     display:flex;
     flex-direction:column;
     gap:0.4rem;
     background:rgba(0,0,0,0.4);
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    padding:0.5rem 0.7rem;
-    min-width:150px;
+    padding:0.6rem 0.7rem;
+    min-width:170px;
   }
+  .profile-holdings-title{ font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:0.08em; color:var(--grey); text-transform:uppercase; }
+  .profile-holdings-viewmore{
+    background:transparent;
+    border:1px solid var(--border-mid);
+    color:var(--cyan);
+    font-family:var(--font-mono);
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:0.35em 0.5em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    margin-top:0.2rem;
+    transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .profile-holdings-viewmore:hover{ background:var(--cyan); color:#000; border-color:var(--cyan); }
+  /* EXPANDED — replaces BOTH .profile-banner-identity AND
+     .profile-banner-holdings (see .profile-banner-main's own children)
+     while a V!EW M0RE is open; #profileExpandedBack returns to them.
+     Reuses the exact same row markup/classes .profile-banner-coins rows
+     already use (thumb+name+amount) for every entry, not just the top
+     3 — see renderBannerHoldings' own comment in the JS. */
+  .profile-banner-expanded{ flex:1 1 auto; min-width:0; }
+  .profile-banner-expanded-list{ display:flex; flex-direction:column; gap:0.5rem; margin:0.5rem 0; max-height:180px; overflow-y:auto; }
+  /* Compact per-coin balances/NFT counts inside a .profile-holdings-box
+     (which already provides the box's own background/border — these two
+     just supply the row list itself, reused for BOTH T0P 3 H0LD!NGS
+     (coins) and T0P 3 NFT H0LD!NGS, and again inside
+     #profileExpandedList for the "V!EW M0RE" full versions of either.
+     formatCompactAmount in the JS caps a coin balance at 3 digits + a
+     K/M suffix (e.g. "123K", "4M"); NFT counts are small enough to just
+     show as-is. */
+  .profile-banner-coins, .profile-banner-nfts{ display:flex; flex-direction:column; gap:0.4rem; }
   .profile-banner-coin-row{ display:flex; align-items:center; gap:0.5rem; }
   .profile-banner-coin-thumb{
     width:26px; height:26px; flex:0 0 auto;
@@ -1468,35 +1481,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profile-field-highlight{ animation:profileFieldHighlight 1.1s ease; }
   @media (max-width:600px){
-    /* Wraps to a second row (the centred username/quote block) instead
-       of cramming avatar+address+username all into one line — same real
+    /* Wraps to a second row (everything right of the thumbnail) instead
+       of cramming avatar+identity+holdings into one line — same real
        content, just stacked once there's genuinely not enough width for
-       all three side by side. */
+       it all side by side. */
     .profile-banner{ padding:1rem; gap:0.6rem; flex-wrap:wrap; }
     .profile-avatar-wrap{ margin-left:0; margin-bottom:calc(-1rem - 1px); }
     .profile-current-avatar{ width:150px; height:150px; }
-    /* top: not bottom: — .profile-avatar-wrap is taller than just the
-       avatar now that the nameplate stacks inside it below the avatar
-       (see .profile-current-center's own mobile override), so a
-       bottom-relative offset landed the button down near the nameplate
-       text instead of the avatar's own corner. 150px avatar - 28px
-       button - 2px overlap keeps the same "hangs slightly off the
-       corner" look bottom:5px gave it on desktop, just anchored to a
-       fixed pixel position instead. */
-    .profile-avatar-edit-btn{ width:28px; height:28px; font-size:16px; right:-6px; top:120px; bottom:auto; }
+    /* Nameplate/address/holdings all live in .profile-banner-main now,
+       not nested inside .profile-avatar-wrap any more, so the wrap's own
+       height is just the avatar's again — back to a plain bottom offset
+       instead of needing a fixed top: pixel position. */
+    .profile-avatar-edit-btn{ width:28px; height:28px; font-size:16px; right:-6px; bottom:5px; }
     .profile-current-username{ font-size:20px; }
-    /* No longer absolutely positioned off to the side at this width —
-       not enough room right of a 150px avatar for a nameplate without
-       it running straight into the address cluster/twitter corner.
-       Drops into normal flow instead, stacked under the avatar+edit
-       button inside .profile-avatar-wrap (whose own width already
-       matches the avatar, since the edit button is absolutely
-       positioned and doesn't contribute to it), same "second row" idea
-       the old flex-basis:100% version had. */
-    .profile-current-center{ position:static; transform:none; max-width:none; width:150px; margin-top:0.5rem; text-align:center; }
-    .profile-current-username-row{ justify-content:center; }
-    .profile-banner-right{ top:0.65rem; right:0.65rem; }
-    .profile-banner-coins{ min-width:120px; padding:0.4rem 0.55rem; }
+    /* Full-width second row, identity above holdings (reported-live
+       side-by-side columns don't fit a phone width) — both centred. */
+    .profile-banner-main{ flex-basis:100%; flex-direction:column; align-items:center; margin-top:0.5rem; gap:0.75rem; }
+    .profile-banner-holdings{ flex-direction:row; width:100%; }
+    .profile-holdings-box{ flex:1 1 0; min-width:0; }
   }
   /* Currently-selected pfp in the picker grid — same green highlight the
      rest of the app uses for "this is the real/active one" (see
@@ -7360,45 +7362,53 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="profile-avatar-wrap">
           <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
           <button type="button" class="profile-avatar-edit-btn" id="profileAvatarEditBtn" title="CHANGE PR0F!LE P!CTURE">+</button>
-          <!-- NAMEPLATE — moved to sit directly right of the thumbnail,
-               roughly at eye height on the avatar art (reported live),
-               instead of centred across the banner's own remaining width.
-               A child of .profile-avatar-wrap (not a flex sibling any
-               more) so it can anchor to the avatar's own box via
-               top:38% — exact eye position obviously varies per real
-               Pigeon, but this lands in the upper-middle of the crop for
-               the vast majority of pieces. -->
-          <div class="profile-current-center">
+        </div>
+        <!-- Everything right of the thumbnail — a centred identity column
+             (TW!TTER/name/quote/address, all centred now — reported live)
+             plus a right-hand holdings column (T0P 3 H0LD!NGS/T0P 3 NFT
+             H0LD!NGS, each reported live), side by side. V!EW M0RE on
+             either holdings box swaps THIS WHOLE AREA (both columns) out
+             for #profileBannerExpanded showing that wallet's full real
+             list instead of just the top 3 — see renderBannerHoldings/
+             openBannerHoldingsExpanded in the JS. -->
+        <div class="profile-banner-main" id="profileBannerMain">
+          <div class="profile-banner-identity" id="profileBannerIdentity">
+            <div class="profile-twitter-row">
+              <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener"></a>
+            </div>
             <div class="profile-current-username-row">
               <span class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</span>
               <button type="button" class="profile-field-edit-btn" id="profileUsernameEditBtn" title="EDIT USERNAME">✎</button>
             </div>
             <div class="profile-quote" id="profileCurrentQuote"></div>
+            <div class="profile-current-wallet-row">
+              <span class="profile-current-wallet" id="profileCurrentWallet"></span>
+              <button type="button" class="profile-mini-btn" id="profileAddressCopyBtn" title="C0PY ADDRESS">⧉</button>
+              <a class="profile-mini-btn" id="profileAddressBithompLink" target="_blank" rel="noopener" title="V!EW 0N B!TH0MP">↗</a>
+            </div>
+            <div class="profile-current-estvalue">EST C0!N :: <span id="profileCurrentEstValue">--</span></div>
           </div>
-        </div>
-        <!-- ADDRESS — right of the thumbnail now (reported live), same
-             bottom-aligned baseline as the avatar itself (both plain flex
-             children of the banner, align-items:flex-end). EST C0!N sits
-             right under it — the other real "fact about this wallet",
-             not personal branding like the username/quote. -->
-        <div class="profile-current-identity">
-          <div class="profile-current-wallet-row">
-            <span class="profile-current-wallet" id="profileCurrentWallet"></span>
-            <button type="button" class="profile-mini-btn" id="profileAddressCopyBtn" title="C0PY ADDRESS">⧉</button>
-            <a class="profile-mini-btn" id="profileAddressBithompLink" target="_blank" rel="noopener" title="V!EW 0N B!TH0MP">↗</a>
+          <div class="profile-banner-holdings" id="profileBannerHoldings">
+            <div class="profile-holdings-box">
+              <div class="profile-holdings-title">T0P 3 H0LD!NGS</div>
+              <div class="profile-banner-coins" id="profileBannerCoins"></div>
+              <button type="button" class="profile-holdings-viewmore" data-kind="coins">V!EW M0RE</button>
+            </div>
+            <div class="profile-holdings-box">
+              <div class="profile-holdings-title">T0P 3 NFT H0LD!NGS</div>
+              <div class="profile-banner-nfts" id="profileBannerNfts"></div>
+              <button type="button" class="profile-holdings-viewmore" data-kind="nfts">V!EW M0RE</button>
+            </div>
           </div>
-          <div class="profile-current-estvalue">EST C0!N :: <span id="profileCurrentEstValue">--</span></div>
-        </div>
-        <!-- TW!TTER — top right corner of the banner now (reported live),
-             with a compact MY C0!NS mini-list stacked underneath it
-             (also reported live) — same real balances renderProfileCoins
-             already fetches for the full list below, just thumbnail +
-             abbreviated amount per row (see renderProfileBannerCoins). -->
-        <div class="profile-banner-right">
-          <div class="profile-twitter-row">
-            <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener"></a>
+          <!-- Hidden until V!EW M0RE opens it — replaces BOTH columns
+               above (not just the one box clicked), per "all the
+               information to the right of the profile picture is
+               replaced with the view more selection" (reported live). -->
+          <div class="profile-banner-expanded" id="profileBannerExpanded" style="display:none;">
+            <div class="profile-holdings-title" id="profileExpandedTitle">H0LD!NGS</div>
+            <div class="profile-banner-expanded-list" id="profileExpandedList"></div>
+            <button type="button" class="profile-holdings-viewmore" id="profileExpandedBack">← BACK</button>
           </div>
-          <div class="profile-banner-coins" id="profileBannerCoins"></div>
         </div>
       </div>
       <!-- PR0F!LE B0X GR!D — sits right under the banner now (reported
@@ -8973,6 +8983,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileAddressCopyBtn','profileAddressBithompLink','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
    'profileEditModal','profileEditTitle','profileEditClose','profileEditPaneUsername','profileEditPaneQuote','profileEditPaneTwitter','profileEditPanePfp',
    'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList','profileBannerCoins',
+   'profileBannerMain','profileBannerIdentity','profileBannerHoldings','profileBannerNfts','profileBannerExpanded','profileExpandedTitle','profileExpandedList','profileExpandedBack',
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
    'profileCoinsEditBtn','profileCoinsEditPopover','profileCoinsEditList',
@@ -16750,6 +16761,80 @@ const SWAP_HTML = `<!DOCTYPE html>
   // of its own. A future collection just needs one more entry here for
   // its MY C0!NS row to pick up its real colour instead of the fallback.
   var PROFILE_COIN_ACCENTS = { pigeons: '136,72,248', phnixs: '255,90,31', teddybg: '166,99,46', seal: '45,140,168', fuzzy: '122,66,26', conspiracy: '240,0,228' };
+  // ---- Banner H0LD!NGS (T0P 3 H0LD!NGS/T0P 3 NFT H0LD!NGS + their V!EW
+  // M0RE full lists, reported live) — module-scope (not trapped inside
+  // renderProfileCoins' own closure like before) since the V!EW M0RE/
+  // BACK click handlers set up once at page-init need the same live data
+  // renderProfileCoins/renderProfileBannerNfts keep filling in. ----
+  var bannerCoinHeld = {}; // key -> { bal, thumbUrl }
+  var bannerNftHeld = {};  // key -> { count, thumbUrl }
+  var bannerHoldingsExpandedKind = null; // null | 'coins' | 'nfts'
+  function holdingRowHtml(key, amountText, thumbUrl, useCoinLabel){
+    var meta = COLLECTION_META[key];
+    var accent = PROFILE_COIN_ACCENTS[key] || '61,243,236';
+    var art = thumbUrl || (meta && meta.thumb) || '';
+    // Coins show the $-prefixed tokenLabel ("$P!GE0NS"); NFT counts show
+    // the plain collection label ("P!GE0NS") — "$P!GE0NS: 5" read like a
+    // price, not a count.
+    var name = meta ? (useCoinLabel ? meta.tokenLabel : meta.label) : key;
+    return '<div class="profile-banner-coin-row" style="--card-accent:' + accent + ';">' +
+      '<div class="profile-banner-coin-thumb"' + (art ? ' style="background-image:url(' + art + ')"' : '') + '></div>' +
+      '<div class="profile-banner-coin-text">' +
+        '<div class="profile-banner-coin-name">' + escapeHtml(name) + '</div>' +
+        '<div class="profile-banner-coin-amount">' + amountText + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  // heldObj: {key: {..., [amountField]: number}}. Real holdings only
+  // (amount > 0), richest-first.
+  function sortedHeldEntries(heldObj, amountField){
+    return Object.keys(heldObj)
+      .map(function(key){ return Object.assign({ key: key }, heldObj[key]); })
+      .filter(function(c){ return c[amountField] > 0; })
+      .sort(function(a, b){ return b[amountField] - a[amountField]; });
+  }
+  // Rebuilds BOTH T0P 3 boxes from whatever's resolved so far — called
+  // every time one more collection's coin balance or NFT count lands,
+  // since the top-3 ranking can only be known once enough of them are in.
+  function renderBannerTop3(){
+    var coins = sortedHeldEntries(bannerCoinHeld, 'bal').slice(0, 3);
+    el.profileBannerCoins.innerHTML = !coins.length ? '<div class="th-empty" style="font-size:10px;">N0NE YET</div>' : coins.map(function(c){
+      return holdingRowHtml(c.key, formatCompactAmount(c.bal), c.thumbUrl, true);
+    }).join('');
+    var nfts = sortedHeldEntries(bannerNftHeld, 'count').slice(0, 3);
+    el.profileBannerNfts.innerHTML = !nfts.length ? '<div class="th-empty" style="font-size:10px;">N0NE YET</div>' : nfts.map(function(n){
+      return holdingRowHtml(n.key, String(n.count), n.thumbUrl, false);
+    }).join('');
+    // Live-refresh whichever full list is currently open too — a
+    // V!EW M0RE opened before every balance/count landed shouldn't stay
+    // stuck showing only the ones that had already resolved.
+    if (bannerHoldingsExpandedKind) renderBannerHoldingsExpanded(bannerHoldingsExpandedKind);
+  }
+  // V!EW M0RE — swaps BOTH .profile-banner-identity AND
+  // .profile-banner-holdings out for #profileBannerExpanded showing
+  // EVERY real holding of that kind (not just the top 3). BACK
+  // (openBannerHoldingsExpanded(null)) restores the two normal columns.
+  function renderBannerHoldingsExpanded(kind){
+    var entries = kind === 'nfts' ? sortedHeldEntries(bannerNftHeld, 'count') : sortedHeldEntries(bannerCoinHeld, 'bal');
+    el.profileExpandedTitle.textContent = kind === 'nfts' ? 'ALL NFT H0LD!NGS' : 'ALL C0!N H0LD!NGS';
+    el.profileExpandedList.innerHTML = !entries.length
+      ? '<div class="th-empty">N0THING HELD YET.</div>'
+      : entries.map(function(e){
+          return holdingRowHtml(e.key, kind === 'nfts' ? String(e.count) : formatCompactAmount(e.bal), e.thumbUrl, kind !== 'nfts');
+        }).join('');
+  }
+  function openBannerHoldingsExpanded(kind){
+    bannerHoldingsExpandedKind = kind;
+    el.profileBannerIdentity.style.display = kind ? 'none' : '';
+    el.profileBannerHoldings.style.display = kind ? 'none' : '';
+    el.profileBannerExpanded.style.display = kind ? '' : 'none';
+    if (kind) renderBannerHoldingsExpanded(kind);
+  }
+  el.profileBannerHoldings.addEventListener('click', function(e){
+    var btn = e.target.closest('.profile-holdings-viewmore[data-kind]');
+    if (btn) openBannerHoldingsExpanded(btn.getAttribute('data-kind'));
+  });
+  el.profileExpandedBack.addEventListener('click', function(){ openBannerHoldingsExpanded(null); });
   // ---- MY C0!NS — which collections show, per wallet (reported live as
   // wanting it "customisable" rather than always all six) — a personal
   // display preference, not shared profile data, so localStorage is
@@ -16883,33 +16968,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!thumbEl || !thumbMeta || !thumbMeta.thumb) return;
       thumbEl.style.backgroundImage = 'url("' + thumbMeta.thumb + '")';
     });
-    // ---- Compact MY C0!NS mini-list, right in the banner (reported
-    // live) — TOP 3 coins actually HELD (real balance > 0), sorted
-    // richest-first, not the full list of every collection like the
-    // real MY C0!NS section below. Rebuilt from scratch (bannerHeld)
-    // every time one more collection's balance resolves, since they all
-    // land at different times and the top-3 ranking can only be known
-    // once enough of them are in.
-    var bannerHeld = {};
-    function renderBannerTop3(){
-      var held = Object.keys(bannerHeld)
-        .map(function(key){ return Object.assign({ key: key }, bannerHeld[key]); })
-        .filter(function(c){ return c.bal > 0; })
-        .sort(function(a, b){ return b.bal - a.bal; })
-        .slice(0, 3);
-      el.profileBannerCoins.innerHTML = !held.length ? '' : held.map(function(c){
-        var meta = COLLECTION_META[c.key];
-        var accent = PROFILE_COIN_ACCENTS[c.key] || '61,243,236';
-        var art = c.thumbUrl || meta.thumb || '';
-        return '<div class="profile-banner-coin-row" style="--card-accent:' + accent + ';">' +
-          '<div class="profile-banner-coin-thumb"' + (art ? ' style="background-image:url(' + art + ')"' : '') + '></div>' +
-          '<div class="profile-banner-coin-text">' +
-            '<div class="profile-banner-coin-name">' + escapeHtml(meta.tokenLabel) + '</div>' +
-            '<div class="profile-banner-coin-amount">' + formatCompactAmount(c.bal) + '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('');
-    }
+    // ---- T0P 3 H0LD!NGS box, right in the banner (reported live) — real
+    // coin balances (> 0), richest-first, fed into the SHARED
+    // bannerCoinHeld/renderBannerTop3 (see their own comment above) so
+    // the same data backs both this compact box and its V!EW M0RE full
+    // list. Rebuilt every time one more collection's balance resolves,
+    // since they land at different times and the top-3 ranking can only
+    // be known once enough of them are in.
+    bannerCoinHeld = {};
     renderBannerTop3();
     // ---- T0TAL P0RTF0L!0 VALUE — the big feature here: one real XRP
     // number for everything this wallet holds, not just its native XRP.
@@ -16979,10 +17045,10 @@ const SWAP_HTML = `<!DOCTYPE html>
           var bal = line.balance || 0;
           balEl.innerHTML = '<span class="hi">' + bal.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</span> ' + escapeHtml(meta.tokenLabel);
           balEl.classList.remove('profile-coin-warn');
-          // Feeds the banner's own top-3-held mini-list (see
-          // renderBannerTop3 above) — re-ranked every time one more
+          // Feeds the shared bannerCoinHeld/renderBannerTop3 (see their
+          // own comment above) — re-ranked every time one more
           // collection's balance lands, not just this one's own row.
-          bannerHeld[key] = { bal: bal, thumbUrl: rate && rate.tokenImageUrl };
+          bannerCoinHeld[key] = { bal: bal, thumbUrl: rate && rate.tokenImageUrl };
           renderBannerTop3();
           if (valEl && rate && typeof rate.xrpPerPigeon === 'number'){
             var value = bal * rate.xrpPerPigeon;
@@ -16999,6 +17065,28 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (balEl){ balEl.textContent = 'ERR://C0ULDN T CHECK BALANCE'; balEl.classList.add('profile-coin-warn'); }
       });
     });
+  }
+  // ---- T0P 3 NFT H0LD!NGS box (reported live) — real per-collection NFT
+  // counts for this wallet (myNftCounts, see api/pigeons.js — only
+  // collections with a real nftIssuer/nftTaxon ever come back non-zero;
+  // TEDDY/SEAL/FUZZY/C0NSP!RACY have none configured yet). One request
+  // for every collection at once (unlike renderProfileCoins' own per-
+  // collection balance calls) since the server already has to scan this
+  // wallet's full NFT list regardless of how many collections it checks
+  // against — same cached fetchAllAccountNftsCheckedCached every other
+  // per-wallet NFT lookup already shares. ----
+  function renderProfileBannerNfts(){
+    bannerNftHeld = {};
+    if (!MY_WALLET){ el.profileBannerNfts.innerHTML = ''; if (bannerHoldingsExpandedKind === 'nfts') openBannerHoldingsExpanded(null); return; }
+    renderBannerTop3();
+    apiWithRetry({ myNftCounts: 1, wallet: MY_WALLET }).then(function(data){
+      if (!data || !data.counts) throw new Error('no counts');
+      Object.keys(data.counts).forEach(function(key){
+        var count = data.counts[key];
+        if (count > 0) bannerNftHeld[key] = { count: count, thumbUrl: null };
+      });
+      renderBannerTop3();
+    }).catch(function(){});
   }
   // MY C0!NS banner — collapses/expands profileCoinsBody, open by default
   // (loadProfilePanel never adds "collapsed" itself). trait-row-label's own
@@ -17114,7 +17202,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     // while-you're-here convenience, not a remembered preference.
     el.profileCoinsSection.classList.remove('collapsed');
     el.profileCoinsBannerArrow.textContent = '▾';
+    openBannerHoldingsExpanded(null);
     renderProfileCoins();
+    renderProfileBannerNfts();
     // 0FFERS — whatever loadOffersReceived/loadOutgoingOffers already
     // resolved (they run independently on wallet connect, see their own
     // comments) renders straight into the 0FFERS panel here, ready the
