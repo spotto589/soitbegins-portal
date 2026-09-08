@@ -925,7 +925,28 @@ async function fetchXrplClusterJson(body) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
         });
-        return await res.json();
+        const data = await res.json();
+        // fetch() only throws on a network-level failure (DNS, connection
+        // refused) — it does NOT throw on an HTTP error status, and a
+        // rippled node under load routinely answers with a perfectly
+        // valid 200 OK JSON body shaped like {"result":{"error":
+        // "tooBusy"}} instead of real data. Before this check, either of
+        // those cases fell through as if it were a genuine success:
+        // `return await res.json()` handed the caller a null/undefined
+        // account_data (etc.), which every caller's own shape-check then
+        // turned into a 502 — and it did that on the VERY FIRST attempt,
+        // never touching this function's own retries or the s1/s2.
+        // ripple.com fallbacks below. One flaky response from
+        // xrplcluster.com (the free public node, prone to rate-limiting)
+        // took down every ledger-backed feature on the site at once —
+        // NFT counts, balances, trustlines, offers — since they all
+        // funnel through this one helper. Confirmed live: repeated 502s
+        // from api/pigeons's xrpBalance branch with nothing else in the
+        // response.
+        if (!res.ok || (data && data.result && data.result.error)) {
+          throw new Error('bad response ' + res.status + (data && data.result && data.result.error ? ' rippled:' + data.result.error : ''));
+        }
+        return data;
       } catch (e) {
         console.log('fetchXrplClusterJson failed', endpoint, 'attempt', attempt, String(e && e.message || e), 'method:', body && body.method);
       }
