@@ -6586,10 +6586,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     left:-10%;
     width:120%;
     transform:translateY(-50%) rotate(-8deg);
-    background:rgba(10,10,11,0.88);
-    border-top:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
-    border-bottom:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
-    color:#e8e8e8;
+    /* Construction/caution-tape look (reported live) — repeating diagonal
+       black/yellow stripes instead of the old plain dark ribbon, same
+       rotate(-8deg) placement so it still reads as tape stuck across the
+       art at an angle. */
+    background:repeating-linear-gradient(45deg, #1a1a1a, #1a1a1a 12px, #f5c518 12px, #f5c518 24px);
+    border-top:2px solid #0a0a0a;
+    border-bottom:2px solid #0a0a0a;
+    box-shadow:0 2px 8px rgba(0,0,0,0.5);
+    color:#1a1a1a;
+    text-shadow:0 1px 0 rgba(255,255,255,0.35);
     font-family:var(--font-mono);
     font-size:11px;
     font-weight:700;
@@ -7448,12 +7454,16 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="pigeons">BUY $P!GE0NS</button>
             </div>
           </div>
-          <!-- TEDDY/SEAL/FUZZY/C0NSP!RACY are all C0M!NG S00N and no longer
-               clickable (no data-collection — mainframeGrid's own click
-               handler below only matches [data-collection]). PHN!X is now a
-               real tradeable collection (see COLLECTION_META.phnixs) so it
-               gets the same active card treatment as Pigeons. -->
-          <div class="mainframe-card" data-collection="phnixs" role="button" tabindex="0" style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg?v=2');">
+          <!-- $P!GE0NS is the only card you can click into for now (reported
+               live) — PHN!X/TEDDY/SEAL/FUZZY/C0NSP!RACY all get the same
+               greyed-out, C0M!NG S00N tape treatment and no
+               data-collection/role="button" on the card root, so the
+               mainframeGrid click handler (which only matches
+               .mainframe-card[data-collection]) never enters them. BUY
+               stays fully live on all of them (the button reads its own
+               data-collection, not the card's) — only the "walk into the
+               collection" path is Pigeons-only. -->
+          <div class="mainframe-card mainframe-card-soon" style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg?v=2');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexPhnixs" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -7467,15 +7477,14 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="phnixs">BUY $PHN!X</button>
             </div>
           </div>
-          <!-- TEDDY/SEAL/FUZZY/C0NSP!RACY now have real tokens (see
-               TRADEABLE_COLLECTIONS in _shared.js) so BUY works via the same
-               openBuySwapPanel popup PIGEONS/PHNIX use — mainframe-card-soon
-               dropped (no longer "coming soon") since it dimmed the whole
-               card AND greyed the tag text. No real NFT issuer/taxon exists
-               for any of these four yet though, so the card root itself
-               stays non-clickable (no data-collection/role="button") — only
-               the BUY button is live, same as before. -->
-          <div class="mainframe-card mainframe-card-teddy" style="--card-accent:166,99,46; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
+          <!-- TEDDY/SEAL/FUZZY/C0NSP!RACY have real tokens (see
+               TRADEABLE_COLLECTIONS in _shared.js) so BUY still works via
+               the same openBuySwapPanel popup PIGEONS/PHNIX use — but the
+               card itself stays greyed out (.mainframe-card-soon) and
+               non-clickable (no data-collection/role="button") since
+               $P!GE0NS is the only collection you can walk into for now
+               (reported live). -->
+          <div class="mainframe-card mainframe-card-soon mainframe-card-teddy" style="--card-accent:166,99,46; --card-art:url('/assets/mainframe/teddy.jpeg?v=2');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexTeddybg" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -7489,7 +7498,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="teddybg">BUY $TEDDY</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-seal" style="--card-accent:45,140,168; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
+          <div class="mainframe-card mainframe-card-soon mainframe-card-seal" style="--card-accent:45,140,168; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexSeal" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -7503,7 +7512,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="seal">BUY $SEAL</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-fuzzy" style="--card-accent:122,66,26; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
+          <div class="mainframe-card mainframe-card-soon mainframe-card-fuzzy" style="--card-accent:122,66,26; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexFuzzy" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -7517,7 +7526,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="fuzzy">BUY $FUZZY</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-conspiracy" style="--card-accent:240,0,228; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
+          <div class="mainframe-card mainframe-card-soon mainframe-card-conspiracy" style="--card-accent:240,0,228; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexConspiracy" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
