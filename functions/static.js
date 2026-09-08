@@ -1361,22 +1361,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      the actual twitter design") — black fill, white text, a real rounded
      pill, same shape X's own share/follow buttons use. */
   .profile-twitter-row{ display:flex; justify-content:center; }
-  /* H0LD!NGS — right-hand column, T0P 3 H0LD!NGS (coins) stacked above
-     T0P 3 NFT H0LD!NGS (reported live), each its own boxed card with a
-     V!EW M0RE that swaps BOTH this column and the identity column next
-     to it out for #profileBannerExpanded (see renderBannerHoldings/
-     openBannerHoldingsExpanded in the JS). */
-  .profile-banner-holdings{ flex:0 0 auto; display:flex; flex-direction:column; gap:0.6rem; }
-  .profile-holdings-box{
-    display:flex;
-    flex-direction:column;
-    gap:0.4rem;
-    background:rgba(0,0,0,0.4);
-    border:1px solid var(--border-mid);
-    border-radius:var(--radius);
-    padding:0.6rem 0.7rem;
-    min-width:170px;
-  }
+  /* H0LD!NGS — right-hand column, now just two real buttons (reported
+     live — dropped the T0P 3 preview lists entirely): V!EW C0!NS/V!EW
+     NFTS, each swapping BOTH this column and the identity column next
+     to it out for #profileBannerExpanded showing that wallet's full
+     real list (see openBannerHoldingsExpanded in the JS). */
+  .profile-banner-holdings{ flex:0 0 auto; display:flex; flex-direction:column; gap:0.6rem; justify-content:center; }
   .profile-holdings-title{ font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:0.08em; color:var(--grey); text-transform:uppercase; }
   .profile-holdings-viewmore{
     background:transparent;
@@ -1394,23 +1384,30 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
   .profile-holdings-viewmore:hover{ background:var(--cyan); color:#000; border-color:var(--cyan); }
+  /* The two real V!EW C0!NS/V!EW NFTS buttons — bigger/bolder than the
+     plain .profile-holdings-viewmore base (still shared with
+     #profileExpandedBack, which stays small) since these are now the
+     ONLY thing in the holdings column, not a small link under a preview
+     list any more. */
+  .profile-holdings-btn{
+    background:rgba(0,0,0,0.4);
+    font-size:12px;
+    padding:0.7em 1.1em;
+    min-width:150px;
+    margin-top:0;
+  }
   /* EXPANDED — replaces BOTH .profile-banner-identity AND
      .profile-banner-holdings (see .profile-banner-main's own children)
-     while a V!EW M0RE is open; #profileExpandedBack returns to them.
-     Reuses the exact same row markup/classes .profile-banner-coins rows
-     already use (thumb+name+amount) for every entry, not just the top
-     3 — see renderBannerHoldings' own comment in the JS. */
+     while V!EW C0!NS/V!EW NFTS is open; #profileExpandedBack returns to
+     them. Reuses the exact same row markup/classes .profile-banner-coin
+     rows already use (thumb+name+amount) for every real holding of that
+     kind — see renderBannerHoldingsExpanded's own comment in the JS. */
   .profile-banner-expanded{ flex:1 1 auto; min-width:0; }
   .profile-banner-expanded-list{ display:flex; flex-direction:column; gap:0.5rem; margin:0.5rem 0; max-height:180px; overflow-y:auto; }
-  /* Compact per-coin balances/NFT counts inside a .profile-holdings-box
-     (which already provides the box's own background/border — these two
-     just supply the row list itself, reused for BOTH T0P 3 H0LD!NGS
-     (coins) and T0P 3 NFT H0LD!NGS, and again inside
-     #profileExpandedList for the "V!EW M0RE" full versions of either.
-     formatCompactAmount in the JS caps a coin balance at 3 digits + a
-     K/M suffix (e.g. "123K", "4M"); NFT counts are small enough to just
-     show as-is. */
-  .profile-banner-coins, .profile-banner-nfts{ display:flex; flex-direction:column; gap:0.4rem; }
+  /* Per-holding row — thumb+name+amount, used inside #profileExpandedList
+     for both V!EW C0!NS and V!EW NFTS (see holdingRowHtml in the JS).
+     formatCompactAmount caps a coin balance at 3 digits + a K/M suffix
+     (e.g. "123K", "4M"); NFT counts are small enough to just show as-is. */
   .profile-banner-coin-row{ display:flex; align-items:center; gap:0.5rem; }
   .profile-banner-coin-thumb{
     width:26px; height:26px; flex:0 0 auto;
@@ -1498,7 +1495,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        side-by-side columns don't fit a phone width) — both centred. */
     .profile-banner-main{ flex-basis:100%; flex-direction:column; align-items:center; margin-top:0.5rem; gap:0.75rem; }
     .profile-banner-holdings{ flex-direction:row; width:100%; }
-    .profile-holdings-box{ flex:1 1 0; min-width:0; }
+    .profile-holdings-btn{ flex:1 1 0; min-width:0; }
   }
   /* Currently-selected pfp in the picker grid — same green highlight the
      rest of the app uses for "this is the real/active one" (see
@@ -7388,17 +7385,12 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
             <div class="profile-current-estvalue">EST C0!N :: <span id="profileCurrentEstValue">--</span></div>
           </div>
+          <!-- Just two buttons now (reported live — dropped the T0P 3
+               preview lists entirely), each opening #profileBannerExpanded
+               straight to that wallet's full real coin/NFT holdings. -->
           <div class="profile-banner-holdings" id="profileBannerHoldings">
-            <div class="profile-holdings-box">
-              <div class="profile-holdings-title">T0P 3 H0LD!NGS</div>
-              <div class="profile-banner-coins" id="profileBannerCoins"></div>
-              <button type="button" class="profile-holdings-viewmore" data-kind="coins">V!EW M0RE</button>
-            </div>
-            <div class="profile-holdings-box">
-              <div class="profile-holdings-title">T0P 3 NFT H0LD!NGS</div>
-              <div class="profile-banner-nfts" id="profileBannerNfts"></div>
-              <button type="button" class="profile-holdings-viewmore" data-kind="nfts">V!EW M0RE</button>
-            </div>
+            <button type="button" class="profile-holdings-viewmore profile-holdings-btn" data-kind="coins">V!EW C0!NS</button>
+            <button type="button" class="profile-holdings-viewmore profile-holdings-btn" data-kind="nfts">V!EW NFTS</button>
           </div>
           <!-- Hidden until V!EW M0RE opens it — replaces BOTH columns
                above (not just the one box clicked), per "all the
@@ -8982,8 +8974,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'crownPeriodSelect','crownLeaderboardList',
    'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileAddressCopyBtn','profileAddressBithompLink','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
    'profileEditModal','profileEditTitle','profileEditClose','profileEditPaneUsername','profileEditPaneQuote','profileEditPaneTwitter','profileEditPanePfp',
-   'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList','profileBannerCoins',
-   'profileBannerMain','profileBannerIdentity','profileBannerHoldings','profileBannerNfts','profileBannerExpanded','profileExpandedTitle','profileExpandedList','profileExpandedBack',
+   'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
+   'profileBannerMain','profileBannerIdentity','profileBannerHoldings','profileBannerExpanded','profileExpandedTitle','profileExpandedList','profileExpandedBack',
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
    'profileCoinsEditBtn','profileCoinsEditPopover','profileCoinsEditList',
@@ -16793,27 +16785,20 @@ const SWAP_HTML = `<!DOCTYPE html>
       .filter(function(c){ return c[amountField] > 0; })
       .sort(function(a, b){ return b[amountField] - a[amountField]; });
   }
-  // Rebuilds BOTH T0P 3 boxes from whatever's resolved so far — called
-  // every time one more collection's coin balance or NFT count lands,
-  // since the top-3 ranking can only be known once enough of them are in.
-  function renderBannerTop3(){
-    var coins = sortedHeldEntries(bannerCoinHeld, 'bal').slice(0, 3);
-    el.profileBannerCoins.innerHTML = !coins.length ? '<div class="th-empty" style="font-size:10px;">N0NE YET</div>' : coins.map(function(c){
-      return holdingRowHtml(c.key, formatCompactAmount(c.bal), c.thumbUrl, true);
-    }).join('');
-    var nfts = sortedHeldEntries(bannerNftHeld, 'count').slice(0, 3);
-    el.profileBannerNfts.innerHTML = !nfts.length ? '<div class="th-empty" style="font-size:10px;">N0NE YET</div>' : nfts.map(function(n){
-      return holdingRowHtml(n.key, String(n.count), n.thumbUrl, false);
-    }).join('');
-    // Live-refresh whichever full list is currently open too — a
-    // V!EW M0RE opened before every balance/count landed shouldn't stay
-    // stuck showing only the ones that had already resolved.
+  // No more T0P 3 preview lists in the banner itself (reported live —
+  // just the two V!EW C0!NS/V!EW NFTS buttons now) — this just live-
+  // refreshes whichever full list is currently open, called every time
+  // one more collection's coin balance or NFT count resolves, since a
+  // V!EW M0RE/V!EW C0!NS opened before every one of them landed
+  // shouldn't stay stuck showing only the ones that had already
+  // resolved at that moment.
+  function onBannerHoldingsDataChanged(){
     if (bannerHoldingsExpandedKind) renderBannerHoldingsExpanded(bannerHoldingsExpandedKind);
   }
-  // V!EW M0RE — swaps BOTH .profile-banner-identity AND
+  // V!EW C0!NS/V!EW NFTS — swaps BOTH .profile-banner-identity AND
   // .profile-banner-holdings out for #profileBannerExpanded showing
-  // EVERY real holding of that kind (not just the top 3). BACK
-  // (openBannerHoldingsExpanded(null)) restores the two normal columns.
+  // EVERY real holding of that kind. BACK (openBannerHoldingsExpanded
+  // (null)) restores the two normal columns.
   function renderBannerHoldingsExpanded(kind){
     var entries = kind === 'nfts' ? sortedHeldEntries(bannerNftHeld, 'count') : sortedHeldEntries(bannerCoinHeld, 'bal');
     el.profileExpandedTitle.textContent = kind === 'nfts' ? 'ALL NFT H0LD!NGS' : 'ALL C0!N H0LD!NGS';
@@ -16927,7 +16912,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderProfileCoins(){
     if (!MY_WALLET){
       el.profileCoinsList.innerHTML = '';
-      el.profileBannerCoins.innerHTML = '';
+      bannerCoinHeld = {};
+      if (bannerHoldingsExpandedKind === 'coins') openBannerHoldingsExpanded(null);
       el.profileCoinsWalletBalance.textContent = '--';
       el.profileCoinsTotalValue.textContent = '--';
       return;
@@ -16968,15 +16954,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!thumbEl || !thumbMeta || !thumbMeta.thumb) return;
       thumbEl.style.backgroundImage = 'url("' + thumbMeta.thumb + '")';
     });
-    // ---- T0P 3 H0LD!NGS box, right in the banner (reported live) — real
-    // coin balances (> 0), richest-first, fed into the SHARED
-    // bannerCoinHeld/renderBannerTop3 (see their own comment above) so
-    // the same data backs both this compact box and its V!EW M0RE full
-    // list. Rebuilt every time one more collection's balance resolves,
-    // since they land at different times and the top-3 ranking can only
-    // be known once enough of them are in.
+    // Fresh scan into the shared bannerCoinHeld (see its own comment
+    // above) — the V!EW C0!NS button's expanded list reads straight off
+    // this as each collection's balance resolves below.
     bannerCoinHeld = {};
-    renderBannerTop3();
+    onBannerHoldingsDataChanged();
     // ---- T0TAL P0RTF0L!0 VALUE — the big feature here: one real XRP
     // number for everything this wallet holds, not just its native XRP.
     // walletXrp is the wallet's own real native balance (xrpBalance:1,
@@ -17045,11 +17027,10 @@ const SWAP_HTML = `<!DOCTYPE html>
           var bal = line.balance || 0;
           balEl.innerHTML = '<span class="hi">' + bal.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</span> ' + escapeHtml(meta.tokenLabel);
           balEl.classList.remove('profile-coin-warn');
-          // Feeds the shared bannerCoinHeld/renderBannerTop3 (see their
-          // own comment above) — re-ranked every time one more
-          // collection's balance lands, not just this one's own row.
+          // Feeds the shared bannerCoinHeld (see its own comment above) —
+          // live-refreshes the V!EW C0!NS expanded list if it's open.
           bannerCoinHeld[key] = { bal: bal, thumbUrl: rate && rate.tokenImageUrl };
-          renderBannerTop3();
+          onBannerHoldingsDataChanged();
           if (valEl && rate && typeof rate.xrpPerPigeon === 'number'){
             var value = bal * rate.xrpPerPigeon;
             coinValuesXrp[key] = value;
@@ -17077,15 +17058,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // per-wallet NFT lookup already shares. ----
   function renderProfileBannerNfts(){
     bannerNftHeld = {};
-    if (!MY_WALLET){ el.profileBannerNfts.innerHTML = ''; if (bannerHoldingsExpandedKind === 'nfts') openBannerHoldingsExpanded(null); return; }
-    renderBannerTop3();
+    if (!MY_WALLET){ if (bannerHoldingsExpandedKind === 'nfts') openBannerHoldingsExpanded(null); return; }
+    onBannerHoldingsDataChanged();
     apiWithRetry({ myNftCounts: 1, wallet: MY_WALLET }).then(function(data){
       if (!data || !data.counts) throw new Error('no counts');
       Object.keys(data.counts).forEach(function(key){
         var count = data.counts[key];
         if (count > 0) bannerNftHeld[key] = { count: count, thumbUrl: null };
       });
-      renderBannerTop3();
+      onBannerHoldingsDataChanged();
     }).catch(function(){});
   }
   // MY C0!NS banner — collapses/expands profileCoinsBody, open by default
