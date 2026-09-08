@@ -521,7 +521,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      active-vs-disabled, via .db-option-disabled. */
   .db-option-active{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); cursor:default; }
   .db-option-disabled{ cursor:not-allowed; opacity:0.75; }
-  .db-soon{ font-size:9px; letter-spacing:0.1em; border:1px solid var(--border-mid); color:var(--grey-dim); padding:0.2em 0.4em; }
+  /* Bumped from var(--grey-dim) (0.34 alpha) to var(--grey) (0.56) —
+     reported live as still unreadable even after the MAINFRAME tape
+     fix. Same root cause as that one: this badge used to sit inside a
+     blanket opacity:0.6 parent too (.flock-account-box-soon, see its
+     own comment below) which compounded with the already-dim text
+     colour down to ~0.2 effective alpha. */
+  .db-soon{ font-size:9px; letter-spacing:0.1em; border:1px solid var(--border-mid); color:var(--grey); padding:0.2em 0.4em; }
 
   /* ---- FL0CK account-page boxes — a stack of separate .sw-panel cards
      (same terminal/glitch panel look as everything else on the site, not
@@ -545,7 +551,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   .flock-account-box-arrow{ font-size:16px; color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); flex:0 0 auto; }
   .flock-account-box-clickable{ cursor:pointer; transition:border-color 0.15s ease; }
   .flock-account-box-clickable:hover{ border-color:var(--pigeon-purple); }
-  .flock-account-box-soon{ opacity:0.6; cursor:not-allowed; }
+  /* NOT a blanket opacity any more — same fix as the MAINFRAME tape
+     banner's own (see .mainframe-card-soon's comment): dimming the
+     whole box compounds with the label/badge's own already-dim colour
+     and crushes the C0M!NG S00N badge down to near-unreadable. Border
+     muted directly instead so the box still reads as "inactive"
+     without touching its children's own contrast. */
+  .flock-account-box-soon{ cursor:not-allowed; border-color:var(--border-mid); }
   .flock-account-box-soon .flock-account-box-label{ color:var(--grey-dim); }
   /* A real, visible "still counting" state — the underscore alone reads as
      dead/broken otherwise. */
@@ -1697,10 +1709,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:none;
     box-shadow:0 0 16px rgba(var(--card-accent, 61,243,236), 0.5);
   }
+  /* var(--grey) not var(--grey-dim) — same C0M!NG S00N contrast fix as
+     .db-soon/.flock-account-box-soon above (reported live). */
   .profile-coin-action.profile-coin-action-soon{
-    background:transparent; color:var(--grey-dim); border-color:var(--border-mid); cursor:default;
+    background:transparent; color:var(--grey); border-color:var(--border-mid); cursor:default;
   }
-  .profile-coin-action.profile-coin-action-soon:hover{ background:transparent; color:var(--grey-dim); }
+  .profile-coin-action.profile-coin-action-soon:hover{ background:transparent; color:var(--grey); }
 
   /* ---- sales history ---- */
   /* XRP / $P!GE0NS — each its own independent feed/pagination (see the
@@ -17186,16 +17200,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderProfileCurrent(profile){
     el.profileCurrentAvatar.innerHTML = (profile && profile.pfpImage) ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
     el.profileCurrentUsername.textContent = (profile && profile.username) ? profile.username : 'N0 USERNAME SET';
-    // Banner background is the fixed $P!GE0NS purple gradient
-    // (.profile-banner-empty) always now, PFP or not — reported live as
-    // "it used to be like it for some reason it changed": sampling a
-    // pixel off your own PFP (sampleBannerColor, still used for OTHER
-    // people's signature banners — see signatureBannerHtml) could land
-    // on literally any colour off the image, which is what changed this
-    // away from the pigeon-purple look. Never call sampleBannerColor for
-    // your OWN banner any more.
-    el.profileBanner.style.backgroundColor = '';
-    el.profileBanner.classList.add('profile-banner-empty');
+    // Banner background matches the SELECTED PIGEON's own background
+    // exactly (reported live) — sampleBannerColor grabs a real pixel off
+    // the top-left corner of your chosen PFP's actual image, which is
+    // where that piece's own flat background colour lives (the
+    // character sits centred in every real Pigeon image). Only falls
+    // back to the fixed gradient placeholder when there's no PFP at all
+    // yet to sample from.
+    if (profile && profile.pfpImage){
+      el.profileBanner.classList.remove('profile-banner-empty');
+      sampleBannerColor(profile.pfpImage);
+    } else {
+      el.profileBanner.style.backgroundColor = '';
+      el.profileBanner.classList.add('profile-banner-empty');
+    }
     // QU0TE — a real value shows the text + a quiet ✎ (click jumps to the
     // real input); unset shows a dashed "+ ADD A B!0..." invite instead of
     // hiding outright, so the banner itself teaches you it's editable.
