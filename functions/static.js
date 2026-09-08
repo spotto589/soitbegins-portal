@@ -1256,12 +1256,20 @@ const SWAP_HTML = `<!DOCTYPE html>
      it despite align-items:flex-end — reported live (three times) as
      wanting it "lined up with the very bottom of the banner". Banner's
      own overflow:hidden clips this cleanly at that edge. */
-  .profile-avatar-wrap{ position:relative; flex:0 0 auto; margin-left:0.5rem; margin-bottom:-1.5rem; }
+  /* calc(...- 1px) not a flat -1.5rem — box-sizing:border-box puts the
+     banner's 1px border INSIDE the box, so an exact -1.5rem cancels the
+     padding but still leaves the avatar sitting 1px shy of the real
+     outer edge (that sliver of visible border-colour gap, reported
+     live from a screenshot). Also subtracted from the edit button's own
+     bottom offset below so it stays fully inside the banner's
+     overflow:hidden instead of getting clipped now that the avatar
+     itself sits flush against the true edge. */
+  .profile-avatar-wrap{ position:relative; flex:0 0 auto; margin-left:0.5rem; margin-bottom:calc(-1.5rem - 1px); }
   .profile-current-avatar{ width:260px; height:260px; border-radius:var(--radius); overflow:hidden; background:#000; cursor:pointer; }
   .profile-current-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
   .profile-avatar-edit-btn{
     position:absolute;
-    right:-8px; bottom:-8px;
+    right:-8px; bottom:6px;
     width:36px; height:36px;
     border-radius:50%;
     background:var(--green);
@@ -1280,37 +1288,54 @@ const SWAP_HTML = `<!DOCTYPE html>
      aligned to the exact same baseline as the avatar itself (both plain
      flex children of a flex-end banner). */
   .profile-current-identity{ text-align:left; flex:0 0 auto; min-width:0; }
-  /* USERNAME/QU0TE — centred "in the middle of the banner" (reported
-     live), meaning the real remaining width once the avatar+address
-     cluster on the left and the TW!TTER badge in the corner are
-     accounted for — a literal full-banner-width centre would either
-     overlap the avatar or force the banner much taller to clear it.
-     flex:1 1 auto soaks up whatever's left; align-self:center overrides
-     the banner's own align-items:flex-end just for this one piece, so
-     it reads as the banner's own centrepiece regardless of how tall the
-     avatar is. */
-  .profile-current-center{ flex:1 1 auto; align-self:center; min-width:0; text-align:center; }
-  .profile-current-username-row{ display:flex; align-items:center; justify-content:center; gap:0.5rem; }
+  /* USERNAME/QU0TE — right of the thumbnail, roughly at eye height
+     (reported live), not centred across the banner any more. A child of
+     .profile-avatar-wrap (position:relative) now, so top:38% anchors to
+     the AVATAR's own box — a real vertical position tied to the art
+     itself, not the banner's overall height. left:100% + a gap sits it
+     just clear of the thumbnail; white-space:nowrap + max-width keeps a
+     long username from wrapping awkwardly this close to the avatar's
+     edge (ellipsis past that width instead). */
+  .profile-current-center{
+    position:absolute;
+    left:calc(100% + 1rem);
+    top:38%;
+    transform:translateY(-50%);
+    min-width:0;
+    max-width:260px;
+    text-align:left;
+  }
+  .profile-current-username-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.5rem; }
   /* Dark drop-shadow "halo" — takes over from the banner's old flat
      scrim (see .profile-banner's own comment) as the guard against an
      unpredictable sampled background colour, without darkening the
-     banner itself to get it. */
-  .profile-current-username{ font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--green); text-shadow:0 1px 4px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.5); }
+     banner itself to get it. white-space/ellipsis so a long username
+     doesn't wrap awkwardly this close to the avatar's edge. */
+  /* Black text on the banner now (reported live), not green/white/grey —
+     the light-coloured halo below is what replaces the old DARK
+     drop-shadow as the contrast guard, since black text needs a LIGHT
+     edge to stay legible on a darker sampled colour, not a dark one. */
+  .profile-current-username{
+    font-family:var(--font-display); font-size:28px; font-weight:700; color:#000;
+    text-shadow:0 1px 2px rgba(255,255,255,0.55), 0 0 8px rgba(255,255,255,0.35);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; max-width:100%; vertical-align:bottom;
+  }
   /* Small, quiet edit affordance next to any click-to-edit field — real
      hit target (not just a hover cue) that jumps to the matching input
      below, same reasoning as the avatar's own + badge. */
   .profile-field-edit-btn{
     background:transparent;
     border:none;
-    color:var(--grey-dim);
+    color:#000;
     font-size:13px;
     cursor:pointer;
     padding:0.1em 0.3em;
+    text-shadow:0 1px 2px rgba(255,255,255,0.55);
     transition:color 0.15s ease;
   }
   .profile-field-edit-btn:hover{ color:var(--cyan); }
   .profile-current-wallet-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.4rem; }
-  .profile-current-wallet{ font-size:13px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; text-shadow:0 1px 4px rgba(0,0,0,0.85); }
+  .profile-current-wallet{ font-size:13px; letter-spacing:0.03em; color:#000; text-transform:uppercase; word-break:break-all; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
   /* Tiny real buttons next to the address — C0PY (clipboard, same
      pattern the issuer address' own COPY button already uses) and a
      direct link straight to this wallet's real B!TH0MP explorer page
@@ -1335,12 +1360,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* EST VALUE — mirrors MY C0!NS' own T0TAL P0RTF0L!0 VALUE number, right
      under the address so your net worth reads as part of your identity,
      not just buried in the collapsible coins section below. */
-  .profile-current-estvalue{ font-size:14px; letter-spacing:0.04em; color:var(--grey); text-transform:uppercase; margin-top:0.5rem; text-shadow:0 1px 4px rgba(0,0,0,0.85); }
-  .profile-current-estvalue span{ color:var(--green); font-weight:700; text-shadow:0 0 6px var(--green-glow); }
+  .profile-current-estvalue{ font-size:14px; letter-spacing:0.04em; color:#000; text-transform:uppercase; margin-top:0.5rem; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
+  .profile-current-estvalue span{ color:#000; font-weight:700; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
   /* QU0TE — real click-to-edit target (a real value shows the text + a
      quiet ✎, an unset one shows a dashed "+ ADD A B!0" invite instead of
      hiding outright — see renderProfileCurrent in the JS). */
-  .profile-quote{ font-size:13px; font-style:italic; color:#fff; text-transform:none; cursor:pointer; margin-top:0.6rem; text-shadow:0 1px 4px rgba(0,0,0,0.85); }
+  .profile-quote{ font-size:13px; font-style:italic; color:#000; text-transform:none; cursor:pointer; margin-top:0.6rem; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
   .profile-quote .profile-field-edit-btn{ font-style:normal; }
   /* TW!TTER — top-right corner of the banner now (reported live), real
      black-pill X/Twitter button styling (reported live as wanting it to
@@ -1448,11 +1473,28 @@ const SWAP_HTML = `<!DOCTYPE html>
        content, just stacked once there's genuinely not enough width for
        all three side by side. */
     .profile-banner{ padding:1rem; gap:0.6rem; flex-wrap:wrap; }
-    .profile-avatar-wrap{ margin-left:0; margin-bottom:-1rem; }
+    .profile-avatar-wrap{ margin-left:0; margin-bottom:calc(-1rem - 1px); }
     .profile-current-avatar{ width:150px; height:150px; }
-    .profile-avatar-edit-btn{ width:28px; height:28px; font-size:16px; right:-6px; bottom:-6px; }
+    /* top: not bottom: — .profile-avatar-wrap is taller than just the
+       avatar now that the nameplate stacks inside it below the avatar
+       (see .profile-current-center's own mobile override), so a
+       bottom-relative offset landed the button down near the nameplate
+       text instead of the avatar's own corner. 150px avatar - 28px
+       button - 2px overlap keeps the same "hangs slightly off the
+       corner" look bottom:5px gave it on desktop, just anchored to a
+       fixed pixel position instead. */
+    .profile-avatar-edit-btn{ width:28px; height:28px; font-size:16px; right:-6px; top:120px; bottom:auto; }
     .profile-current-username{ font-size:20px; }
-    .profile-current-center{ flex-basis:100%; align-self:auto; order:1; margin-top:0.5rem; }
+    /* No longer absolutely positioned off to the side at this width —
+       not enough room right of a 150px avatar for a nameplate without
+       it running straight into the address cluster/twitter corner.
+       Drops into normal flow instead, stacked under the avatar+edit
+       button inside .profile-avatar-wrap (whose own width already
+       matches the avatar, since the edit button is absolutely
+       positioned and doesn't contribute to it), same "second row" idea
+       the old flex-basis:100% version had. */
+    .profile-current-center{ position:static; transform:none; max-width:none; width:150px; margin-top:0.5rem; text-align:center; }
+    .profile-current-username-row{ justify-content:center; }
     .profile-banner-right{ top:0.65rem; right:0.65rem; }
     .profile-banner-coins{ min-width:120px; padding:0.4rem 0.55rem; }
   }
@@ -7318,10 +7360,25 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="profile-avatar-wrap">
           <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
           <button type="button" class="profile-avatar-edit-btn" id="profileAvatarEditBtn" title="CHANGE PR0F!LE P!CTURE">+</button>
+          <!-- NAMEPLATE — moved to sit directly right of the thumbnail,
+               roughly at eye height on the avatar art (reported live),
+               instead of centred across the banner's own remaining width.
+               A child of .profile-avatar-wrap (not a flex sibling any
+               more) so it can anchor to the avatar's own box via
+               top:38% — exact eye position obviously varies per real
+               Pigeon, but this lands in the upper-middle of the crop for
+               the vast majority of pieces. -->
+          <div class="profile-current-center">
+            <div class="profile-current-username-row">
+              <span class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</span>
+              <button type="button" class="profile-field-edit-btn" id="profileUsernameEditBtn" title="EDIT USERNAME">✎</button>
+            </div>
+            <div class="profile-quote" id="profileCurrentQuote"></div>
+          </div>
         </div>
         <!-- ADDRESS — right of the thumbnail now (reported live), same
              bottom-aligned baseline as the avatar itself (both plain flex
-             children of the banner, align-items:flex-end). EST VALUE sits
+             children of the banner, align-items:flex-end). EST C0!N sits
              right under it — the other real "fact about this wallet",
              not personal branding like the username/quote. -->
         <div class="profile-current-identity">
@@ -7330,19 +7387,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="profile-mini-btn" id="profileAddressCopyBtn" title="C0PY ADDRESS">⧉</button>
             <a class="profile-mini-btn" id="profileAddressBithompLink" target="_blank" rel="noopener" title="V!EW 0N B!TH0MP">↗</a>
           </div>
-          <div class="profile-current-estvalue">EST VALUE :: <span id="profileCurrentEstValue">--</span></div>
-        </div>
-        <!-- USERNAME — centred in the banner now (reported live), the
-             QU0TE directly underneath it — both absolutely positioned so
-             they read as the banner's own centrepiece regardless of how
-             wide the avatar/address cluster on the left or the TW!TTER
-             badge in the corner happen to be. -->
-        <div class="profile-current-center">
-          <div class="profile-current-username-row">
-            <span class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</span>
-            <button type="button" class="profile-field-edit-btn" id="profileUsernameEditBtn" title="EDIT USERNAME">✎</button>
-          </div>
-          <div class="profile-quote" id="profileCurrentQuote"></div>
+          <div class="profile-current-estvalue">EST C0!N :: <span id="profileCurrentEstValue">--</span></div>
         </div>
         <!-- TW!TTER — top right corner of the banner now (reported live),
              with a compact MY C0!NS mini-list stacked underneath it
@@ -16826,28 +16871,33 @@ const SWAP_HTML = `<!DOCTYPE html>
       thumbEl.style.backgroundImage = 'url("' + thumbMeta.thumb + '")';
     });
     // ---- Compact MY C0!NS mini-list, right in the banner (reported
-    // live) — same keys/accents as the full list above, just a
-    // thumbnail + formatCompactAmount()'d balance per row, name centred
-    // beside the thumb (see .profile-banner-coin-row's own comment in
-    // the CSS). Balances/thumbs below fill in via the SAME real fetch
-    // the full list's own balEl/thumbEl updates use, not a second call. ----
-    el.profileBannerCoins.innerHTML = !keys.length ? '' : keys.map(function(key){
-      var meta = COLLECTION_META[key];
-      var accent = PROFILE_COIN_ACCENTS[key] || '61,243,236';
-      return '<div class="profile-banner-coin-row" style="--card-accent:' + accent + ';">' +
-        '<div class="profile-banner-coin-thumb" id="profileBannerCoinThumb-' + key + '"></div>' +
-        '<div class="profile-banner-coin-text">' +
-          '<div class="profile-banner-coin-name">' + escapeHtml(meta.tokenLabel) + '</div>' +
-          '<div class="profile-banner-coin-amount" id="profileBannerCoinAmount-' + key + '">' + (meta.tokenIssuer ? '--' : 'S00N') + '</div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-    keys.forEach(function(key){
-      var bannerThumbEl = document.getElementById('profileBannerCoinThumb-' + key);
-      var thumbMeta = COLLECTION_META[key];
-      if (!bannerThumbEl || !thumbMeta || !thumbMeta.thumb) return;
-      bannerThumbEl.style.backgroundImage = 'url("' + thumbMeta.thumb + '")';
-    });
+    // live) — TOP 3 coins actually HELD (real balance > 0), sorted
+    // richest-first, not the full list of every collection like the
+    // real MY C0!NS section below. Rebuilt from scratch (bannerHeld)
+    // every time one more collection's balance resolves, since they all
+    // land at different times and the top-3 ranking can only be known
+    // once enough of them are in.
+    var bannerHeld = {};
+    function renderBannerTop3(){
+      var held = Object.keys(bannerHeld)
+        .map(function(key){ return Object.assign({ key: key }, bannerHeld[key]); })
+        .filter(function(c){ return c.bal > 0; })
+        .sort(function(a, b){ return b.bal - a.bal; })
+        .slice(0, 3);
+      el.profileBannerCoins.innerHTML = !held.length ? '' : held.map(function(c){
+        var meta = COLLECTION_META[c.key];
+        var accent = PROFILE_COIN_ACCENTS[c.key] || '61,243,236';
+        var art = c.thumbUrl || meta.thumb || '';
+        return '<div class="profile-banner-coin-row" style="--card-accent:' + accent + ';">' +
+          '<div class="profile-banner-coin-thumb"' + (art ? ' style="background-image:url(' + art + ')"' : '') + '></div>' +
+          '<div class="profile-banner-coin-text">' +
+            '<div class="profile-banner-coin-name">' + escapeHtml(meta.tokenLabel) + '</div>' +
+            '<div class="profile-banner-coin-amount">' + formatCompactAmount(c.bal) + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+    renderBannerTop3();
     // ---- T0TAL P0RTF0L!0 VALUE — the big feature here: one real XRP
     // number for everything this wallet holds, not just its native XRP.
     // walletXrp is the wallet's own real native balance (xrpBalance:1,
@@ -16908,21 +16958,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         // fetch anyway — no separate request just for the image.
         var thumbEl = document.getElementById('profileCoinThumb-' + key);
         if (thumbEl && rate && rate.tokenImageUrl) thumbEl.style.backgroundImage = 'url("' + rate.tokenImageUrl + '")';
-        // Same swap for the banner's own mini thumbnail — no separate
-        // fetch, just mirroring whatever this call already resolved.
-        var bannerThumbEl = document.getElementById('profileBannerCoinThumb-' + key);
-        if (bannerThumbEl && rate && rate.tokenImageUrl) bannerThumbEl.style.backgroundImage = 'url("' + rate.tokenImageUrl + '")';
-        var bannerAmountEl = document.getElementById('profileBannerCoinAmount-' + key);
         if (!balEl) return;
         if (line && line.hasTrustline === false){
           balEl.textContent = 'TRUSTL!NE N0T SET';
           balEl.classList.add('profile-coin-warn');
-          if (bannerAmountEl) bannerAmountEl.textContent = 'N0NE';
         } else if (line && line.hasTrustline){
           var bal = line.balance || 0;
           balEl.innerHTML = '<span class="hi">' + bal.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</span> ' + escapeHtml(meta.tokenLabel);
           balEl.classList.remove('profile-coin-warn');
-          if (bannerAmountEl) bannerAmountEl.textContent = formatCompactAmount(bal);
+          // Feeds the banner's own top-3-held mini-list (see
+          // renderBannerTop3 above) — re-ranked every time one more
+          // collection's balance lands, not just this one's own row.
+          bannerHeld[key] = { bal: bal, thumbUrl: rate && rate.tokenImageUrl };
+          renderBannerTop3();
           if (valEl && rate && typeof rate.xrpPerPigeon === 'number'){
             var value = bal * rate.xrpPerPigeon;
             coinValuesXrp[key] = value;
@@ -16932,13 +16980,10 @@ const SWAP_HTML = `<!DOCTYPE html>
         } else {
           balEl.textContent = 'ERR://C0ULDN T CHECK BALANCE';
           balEl.classList.add('profile-coin-warn');
-          if (bannerAmountEl) bannerAmountEl.textContent = 'ERR';
         }
       }).catch(function(){
         var balEl = document.getElementById('profileCoinBalance-' + key);
         if (balEl){ balEl.textContent = 'ERR://C0ULDN T CHECK BALANCE'; balEl.classList.add('profile-coin-warn'); }
-        var bannerAmountEl = document.getElementById('profileBannerCoinAmount-' + key);
-        if (bannerAmountEl) bannerAmountEl.textContent = 'ERR';
       });
     });
   }
