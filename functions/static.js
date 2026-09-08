@@ -1171,23 +1171,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-banner-empty{
     background-image:linear-gradient(120deg, rgba(136,72,248,0.35), rgba(61,243,236,0.2), rgba(240,0,228,0.3));
   }
-  /* SCR!M — the banner's own background-color is sampled straight off
-     your PFP (sampleBannerColor), so it can land on genuinely ANY real
-     colour, including ones close enough to the username's green or the
-     address/EST VALUE's grey that the text became unreadable (reported
-     live). A flat dark overlay behind every child guarantees enough
-     contrast for any text colour this banner ever uses, regardless of
-     what the sampled colour happens to be, without giving up the "one
-     matching colour" effect entirely (the sampled colour still shows
-     through, just darkened). Same negative-z-index-behind-real-content
-     trick #screenMainframe's own local-static-bg already uses. */
-  .profile-banner::before{
-    content:'';
-    position:absolute;
-    inset:0;
-    background:rgba(0,0,0,0.4);
-    z-index:-1;
-  }
+  /* NO scrim any more — reported live as wanting the banner to be
+     "exactly the same colour as the pigeon background", and a flat
+     rgba(0,0,0,0.4) layer sitting on top of the sampled colour is
+     precisely what read as "always slightly darker". Text-safety
+     against an unpredictable sampled colour now lives on each text
+     element itself (a dark drop-shadow "halo" — see
+     .profile-current-username/-wallet/-estvalue/.profile-quote's own
+     text-shadow below) instead of darkening the whole banner. */
   .profile-banner > *{ position:relative; z-index:1; }
   /* S!GNATURE BANNER — same real identity (avatar/username/quote,
      colour-matched banner) Σκύλλα itself shows, reused wherever a
@@ -1300,7 +1291,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      avatar is. */
   .profile-current-center{ flex:1 1 auto; align-self:center; min-width:0; text-align:center; }
   .profile-current-username-row{ display:flex; align-items:center; justify-content:center; gap:0.5rem; }
-  .profile-current-username{ font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--green); }
+  /* Dark drop-shadow "halo" — takes over from the banner's old flat
+     scrim (see .profile-banner's own comment) as the guard against an
+     unpredictable sampled background colour, without darkening the
+     banner itself to get it. */
+  .profile-current-username{ font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--green); text-shadow:0 1px 4px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.5); }
   /* Small, quiet edit affordance next to any click-to-edit field — real
      hit target (not just a hover cue) that jumps to the matching input
      below, same reasoning as the avatar's own + badge. */
@@ -1315,7 +1310,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profile-field-edit-btn:hover{ color:var(--cyan); }
   .profile-current-wallet-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.4rem; }
-  .profile-current-wallet{ font-size:13px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; }
+  .profile-current-wallet{ font-size:13px; letter-spacing:0.03em; color:var(--grey-dim); text-transform:uppercase; word-break:break-all; text-shadow:0 1px 4px rgba(0,0,0,0.85); }
   /* Tiny real buttons next to the address — C0PY (clipboard, same
      pattern the issuer address' own COPY button already uses) and a
      direct link straight to this wallet's real B!TH0MP explorer page
@@ -1327,7 +1322,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:center;
     width:22px; height:22px;
     border-radius:var(--radius);
-    background:transparent;
+    background:rgba(0,0,0,0.35);
     border:1px solid var(--border-mid);
     color:var(--grey-dim);
     font-size:12px;
@@ -1340,12 +1335,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* EST VALUE — mirrors MY C0!NS' own T0TAL P0RTF0L!0 VALUE number, right
      under the address so your net worth reads as part of your identity,
      not just buried in the collapsible coins section below. */
-  .profile-current-estvalue{ font-size:14px; letter-spacing:0.04em; color:var(--grey); text-transform:uppercase; margin-top:0.5rem; }
+  .profile-current-estvalue{ font-size:14px; letter-spacing:0.04em; color:var(--grey); text-transform:uppercase; margin-top:0.5rem; text-shadow:0 1px 4px rgba(0,0,0,0.85); }
   .profile-current-estvalue span{ color:var(--green); font-weight:700; text-shadow:0 0 6px var(--green-glow); }
   /* QU0TE — real click-to-edit target (a real value shows the text + a
      quiet ✎, an unset one shows a dashed "+ ADD A B!0" invite instead of
      hiding outright — see renderProfileCurrent in the JS). */
-  .profile-quote{ font-size:13px; font-style:italic; color:#fff; text-transform:none; cursor:pointer; margin-top:0.6rem; }
+  .profile-quote{ font-size:13px; font-style:italic; color:#fff; text-transform:none; cursor:pointer; margin-top:0.6rem; text-shadow:0 1px 4px rgba(0,0,0,0.85); }
   .profile-quote .profile-field-edit-btn{ font-style:normal; }
   /* TW!TTER — top-right corner of the banner now (reported live), real
      black-pill X/Twitter button styling (reported live as wanting it to
@@ -1430,6 +1425,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     font-style:normal;
     transition:color 0.15s ease, border-color 0.15s ease;
+    /* Own small dark backing + text-shadow — same reasoning as the
+       banner's other text (see .profile-banner's own comment): this
+       sits directly on the exact-match sampled colour now, with no
+       banner-wide scrim to fall back on, so this one small chip carries
+       its own contrast instead. */
+    background:rgba(0,0,0,0.45);
+    text-shadow:0 1px 3px rgba(0,0,0,0.7);
   }
   .profile-field-placeholder:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
   /* Brief highlight flash on whichever real input a banner click jumps
