@@ -1487,7 +1487,18 @@ const SWAP_HTML = `<!DOCTYPE html>
        content, just stacked once there's genuinely not enough width for
        it all side by side. */
     .profile-banner{ padding:1rem; gap:0.6rem; flex-wrap:wrap; }
-    .profile-avatar-wrap{ margin-left:0; margin-bottom:calc(-1rem - 1px); }
+    /* NOT the desktop flush-bottom trick any more (reported live: still
+       showing a real, large gap on mobile) — .profile-banner-main now
+       wraps to its OWN full-width second line below the avatar at this
+       width (flex-basis:100%, see its own mobile rule), so avatar-wrap
+       is no longer the container's last/bottom-most flex line. The
+       negative margin was calibrated to cancel the CONTAINER's own
+       padding-bottom, which now sits below that entire second line
+       instead of directly under the avatar — pulling the avatar up by
+       that same amount just opened a gap under it instead of closing
+       one. Plain margin-bottom on mobile; the avatar is simply the
+       first stacked block now, not a bottom-anchored one. */
+    .profile-avatar-wrap{ margin-left:0; margin-bottom:0; }
     .profile-current-avatar{ width:150px; height:150px; }
     /* Nameplate/address/holdings all live in .profile-banner-main now,
        not nested inside .profile-avatar-wrap any more, so the wrap's own
