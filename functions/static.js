@@ -1355,6 +1355,21 @@ const SWAP_HTML = `<!DOCTYPE html>
      hiding outright — see renderProfileCurrent in the JS). */
   .profile-quote{ font-size:13px; font-style:italic; color:#000; text-transform:none; cursor:pointer; margin-top:0.6rem; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
   .profile-quote .profile-field-edit-btn{ font-style:normal; }
+  /* Black text goes invisible on a genuinely dark sampled banner colour
+     (reported live) — .banner-on-dark (toggled in sampleBannerColor by
+     real perceptual luminance, or forced on for the dark empty-state
+     gradient — see renderProfileCurrent) flips every one of these to
+     white with a DARK halo instead, the mirror image of the light halo
+     black text uses. */
+  .profile-banner.banner-on-dark .profile-current-username,
+  .profile-banner.banner-on-dark .profile-current-wallet,
+  .profile-banner.banner-on-dark .profile-current-estvalue,
+  .profile-banner.banner-on-dark .profile-current-estvalue span,
+  .profile-banner.banner-on-dark .profile-quote,
+  .profile-banner.banner-on-dark .profile-field-edit-btn{
+    color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,0.75), 0 0 8px rgba(0,0,0,0.5);
+  }
   /* TW!TTER — now the FIRST item in the centred identity column
      (reported live), not its own corner badge any more. Real black-pill
      X/Twitter button styling (reported live as wanting it to "look like
@@ -17339,6 +17354,15 @@ const SWAP_HTML = `<!DOCTYPE html>
           ctx.drawImage(img, 0, 0, crop, crop, 0, 0, 1, 1);
           var px = ctx.getImageData(0, 0, 1, 1).data;
           targetEl.style.backgroundColor = 'rgb(' + px[0] + ',' + px[1] + ',' + px[2] + ')';
+          // Black banner text (see .profile-current-username etc.) reads
+          // fine against most sampled colours, but goes invisible on a
+          // genuinely dark one (reported live) — perceptual luminance
+          // (ITU-R BT.601) decides whether THIS banner needs the light-
+          // text variant instead. .banner-on-dark is a plain toggle class,
+          // not a colour itself, so both .profile-banner and
+          // .signature-banner can react to it however each already needs.
+          var luminance = 0.299 * px[0] + 0.587 * px[1] + 0.114 * px[2];
+          targetEl.classList.toggle('banner-on-dark', luminance < 130);
         } catch (e){}
       };
       img.src = '/api/nft-image-proxy?src=' + encodeURIComponent(imageUrl);
@@ -17360,6 +17384,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else {
       el.profileBanner.style.backgroundColor = '';
       el.profileBanner.classList.add('profile-banner-empty');
+      // The empty-state gradient (.profile-banner-empty) sits over the
+      // panel's own dark base — no sampled pixel to measure here, but
+      // it's dark enough that black text would go invisible just like a
+      // genuinely dark sampled colour does (see sampleBannerColor's own
+      // luminance check), so this always gets the light-text variant.
+      el.profileBanner.classList.add('banner-on-dark');
     }
     // QU0TE — a real value shows the text + a quiet ✎ (click jumps to the
     // real input); unset shows a dashed "+ ADD A B!0..." invite instead of
