@@ -931,7 +931,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-family:var(--font-display);
     font-weight:700;
     font-size:clamp(18px, 2.4vw, 30px);
-    letter-spacing:0.01em;
+    /* Matches #globalTopBarHeading's own bumped-up spacing (see its
+       comment) — the two sit side by side as one deliberate pair, so
+       they need to stay in lockstep. */
+    letter-spacing:0.08em;
     color:var(--white);
     text-shadow:-2px 0 var(--cyan-dim), 2px 0 var(--magenta-dim);
     white-space:nowrap;
@@ -940,11 +943,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-family:var(--font-display);
     font-weight:700;
     font-size:clamp(18px, 2.4vw, 30px);
-    letter-spacing:0.01em;
+    letter-spacing:0.08em;
     text-shadow:none;
   }
   @media (max-width:700px){
-    #globalTopBar .tab-db-heading, #globalTopBar .tab-db-select .trait-row-label{ font-size:14px; }
+    #globalTopBar .tab-db-heading, #globalTopBar .tab-db-select .trait-row-label{ font-size:14px; letter-spacing:0.04em; }
   }
   /* Mobile: a boxed grid "hub" instead of a horizontally-scrolling strip —
      every tab visible and tappable at once up top, nothing to swipe
@@ -6491,7 +6494,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-weight:700;
     font-size:clamp(18px, 2.4vw, 30px);
     line-height:1.1;
-    letter-spacing:0.01em;
+    /* Bumped up from 0.01em (reported live as reading cramped/messy,
+       especially with the chromatic-aberration text-shadow — the cyan/
+       magenta ghost copies need more room between letters to actually
+       read as a clean glitch effect instead of a smear). */
+    letter-spacing:0.08em;
     color:var(--white);
     text-shadow:-2px 0 var(--cyan-dim), 2px 0 var(--magenta-dim);
     text-transform:none;
@@ -6508,7 +6515,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:700px){
     #globalTopBar .tab-btn{ padding:0.55em 0.6rem; }
     #globalTopBarLogo{ width:22px; }
-    #globalTopBarHeading{ font-size:14px; }
+    #globalTopBarHeading{ font-size:14px; letter-spacing:0.04em; }
     .global-top-scylla-status{ font-size:10px; }
   }
   /* SECT!0N HEADER — STAT!C :: MA!NFRAME/SELECT A C0LLECT!0N, now its own
