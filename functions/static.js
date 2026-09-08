@@ -6827,10 +6827,23 @@ const SWAP_HTML = `<!DOCTYPE html>
        detail screen, so nothing is actually lost. */
     .mainframe-card-dex-link{ display:none !important; }
   }
-  .mainframe-card-soon{ opacity:0.6; cursor:default; }
+  /* NOT a blanket opacity on the card root — that dims the whole
+     subtree as ONE compositing group, which includes the coming-soon
+     tape banner nested inside .mainframe-card-art, and crushed its
+     black/yellow contrast down to unreadable grey-on-grey (reported
+     live). Grey each piece out individually instead, via plain color/
+     background changes that don't touch the banner at all, so the tape
+     stays at full, readable contrast while everything else dims. */
+  .mainframe-card-soon{ cursor:default; }
   .mainframe-card-soon:hover{ border-color:var(--border-mid); transform:none; box-shadow:none; }
   .mainframe-card-soon:hover .mainframe-card-art{ transform:none; }
   .mainframe-card-soon .mainframe-card-tag{ color:var(--grey-dim); border-color:var(--border-mid); background:transparent; }
+  .mainframe-card-soon .mainframe-card-art{
+    background-image:linear-gradient(180deg, rgba(150,150,150,0.16) 0%, rgba(6,6,7,0.95) 100%), var(--card-art, none);
+    background-color:rgba(150,150,150,0.1);
+  }
+  .mainframe-card-soon .mainframe-card-label{ color:var(--grey); text-shadow:none; }
+  .mainframe-card-soon .mainframe-card-stats{ color:var(--grey-dim); }
   /* PREV/NEXT — not needed for now (all 6 cards fit on one screen at
      once, see .mainframe-grid's own comment), hidden rather than removed
      so they're a one-line revert if the grid ever goes back to a
