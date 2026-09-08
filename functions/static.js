@@ -314,6 +314,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     45%{ opacity:0.55; }
     100%{ opacity:1; }
   }
+  /* Top bar headings (Σκύλλα://S!GNAL/STAT!C://DATABASE) — reported live
+     as wanting an actual "computer terminal glitch/static" look, not
+     just a flat chromatic-aberration text-shadow sitting there doing
+     nothing. Spends almost the whole 7s cycle at rest (the same crisp
+     1px cyan/magenta fringe as before), then briefly kicks into a fast
+     RGB-split/jitter burst — like a CRT signal hiccup — before settling
+     back down. Disabled entirely below 700px (see the heading's own
+     mobile override) and by prefers-reduced-motion (site-wide rule
+     already collapses every animation's duration/iteration-count). */
+  @keyframes topbar-terminal-glitch{
+    0%, 91%, 100%{ text-shadow:-1px 0 var(--cyan-dim), 1px 0 var(--magenta-dim); transform:translate(0,0); }
+    91.5%{ text-shadow:-3px 0 var(--cyan-dim), 3px 0 var(--magenta-dim); transform:translate(-2px,0) skewX(-2deg); }
+    92%{ text-shadow:2px 0 var(--magenta-dim), -2px 0 var(--cyan-dim); transform:translate(2px,0) skewX(2deg); }
+    92.5%{ text-shadow:-1px 0 var(--cyan-dim), 1px 0 var(--magenta-dim); transform:translate(0,0); }
+    93%{ text-shadow:3px 0 var(--cyan-dim), -3px 0 var(--magenta-dim); transform:translate(-1px,0); }
+    93.5%{ text-shadow:-2px 0 var(--magenta-dim), 2px 0 var(--cyan-dim); transform:translate(1px,0); }
+    94%{ text-shadow:-1px 0 var(--cyan-dim), 1px 0 var(--magenta-dim); transform:translate(0,0); }
+  }
   @media (prefers-reduced-motion: reduce){
     canvas#staticBg{ animation:none; }
     *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
@@ -928,24 +946,29 @@ const SWAP_HTML = `<!DOCTYPE html>
      pair instead of one side looking like an afterthought next to the
      other's big glitch-text heading. */
   #globalTopBar .tab-db-heading{
-    font-family:var(--font-display);
+    /* Same swap to var(--font-mono) as #globalTopBarHeading, same reason
+       — Anton only has the one 400 weight loaded, so font-weight:700 on
+       it was the browser's own faux-bold, closing up the counters in
+       a/o/p (reported live). */
+    font-family:var(--font-mono);
     font-weight:700;
-    font-size:clamp(18px, 2.4vw, 30px);
-    /* Matches #globalTopBarHeading's own bumped-up spacing (see its
-       comment) — the two sit side by side as one deliberate pair, so
-       they need to stay in lockstep. */
-    letter-spacing:0.08em;
+    font-size:clamp(16px, 2.2vw, 26px);
+    /* Matches #globalTopBarHeading's own spacing — the two sit side by
+       side as one deliberate pair, so they need to stay in lockstep. */
+    letter-spacing:0.04em;
     color:var(--white);
-    /* Matches #globalTopBarHeading's own cut from a 2px to 1px offset —
-       same "blurry on the eyes" report applied to both. */
+    /* Matches #globalTopBarHeading's own resting glitch state + burst
+       animation — same terminal-glitch look on both halves of the bar. */
     text-shadow:-1px 0 var(--cyan-dim), 1px 0 var(--magenta-dim);
+    animation:topbar-terminal-glitch 7s infinite;
+    animation-delay:-2s;
     white-space:nowrap;
   }
   #globalTopBar .tab-db-select .trait-row-label{
-    font-family:var(--font-display);
+    font-family:var(--font-mono);
     font-weight:700;
-    font-size:clamp(18px, 2.4vw, 30px);
-    letter-spacing:0.08em;
+    font-size:clamp(16px, 2.2vw, 26px);
+    letter-spacing:0.04em;
     text-shadow:none;
   }
   @media (max-width:700px){
@@ -955,7 +978,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        think so") — even 1px is a big chunk of a 14px glyph's own
        stroke width. Dropped entirely below this breakpoint instead of
        just shrinking further; plain white text stays crisp instead. */
-    #globalTopBar .tab-db-heading, #globalTopBar .tab-db-select .trait-row-label{ font-size:14px; letter-spacing:0.04em; text-shadow:none; }
+    #globalTopBar .tab-db-heading, #globalTopBar .tab-db-select .trait-row-label{ font-size:14px; letter-spacing:0.04em; text-shadow:none; animation:none; }
   }
   /* Mobile: a boxed grid "hub" instead of a horizontally-scrolling strip —
      every tab visible and tappable at once up top, nothing to swipe
@@ -6498,25 +6521,27 @@ const SWAP_HTML = `<!DOCTYPE html>
      full-page hero's own clamp(24px,7vw,76px) so it still fits this bar
      alongside DATABASE. */
   #globalTopBarHeading{
-    font-family:var(--font-display);
+    /* Switched from var(--font-display) (Anton) to var(--font-mono)
+       (JetBrains Mono) — reported live as the real culprit behind the
+       "blurry" complaint: the Google Fonts @import only ever pulls
+       Anton's single 400 weight, so font-weight:700 on it was forcing
+       the BROWSER's synthetic/faux bold, which squeezes the counters in
+       a/o/p closed on an already ultra-condensed display face. JetBrains
+       Mono has a real 700 in the same @import, so this bold is an
+       actual bold weight, not a faux one — and monospace reads more
+       "terminal" anyway, which is the actual look being gone for here. */
+    font-family:var(--font-mono);
     font-weight:700;
-    font-size:clamp(18px, 2.4vw, 30px);
+    font-size:clamp(16px, 2.2vw, 26px);
     line-height:1.1;
-    /* Bumped up from 0.01em (reported live as reading cramped/messy,
-       especially with the chromatic-aberration text-shadow — the cyan/
-       magenta ghost copies need more room between letters to actually
-       read as a clean glitch effect instead of a smear). */
-    letter-spacing:0.08em;
+    letter-spacing:0.04em;
     color:var(--white);
-    /* Cut from a 2px chromatic-aberration offset down to 1px — reported
-       live as reading "blurry on the eyes" at the wider offset,
-       especially at this heading's smaller sizes where the cyan/
-       magenta ghosts landed far enough off the glyph to read as a
-       smear rather than a deliberate glitch fringe. Still var(--cyan-
-       dim)/var(--magenta-dim), not hardcoded — some collection themes
-       remap --cyan-dim to --magenta-dim (see :root's own comment), and
-       this needs to keep tracking that. */
+    /* Resting state matches topbar-terminal-glitch's own 0%/91%/100%
+       keyframe (see its comment) — this is what's visible whenever the
+       animation is off (prefers-reduced-motion, or just between glitch
+       bursts) and what the animation itself cycles back to. */
     text-shadow:-1px 0 var(--cyan-dim), 1px 0 var(--magenta-dim);
+    animation:topbar-terminal-glitch 7s infinite;
     text-transform:none;
     white-space:nowrap;
     overflow:hidden;
@@ -6533,7 +6558,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     #globalTopBarLogo{ width:22px; }
     /* Same "blurry small" call as .tab-db-heading's own comment — drop
        the chromatic shadow entirely below this breakpoint. */
-    #globalTopBarHeading{ font-size:14px; letter-spacing:0.04em; text-shadow:none; }
+    #globalTopBarHeading{ font-size:14px; letter-spacing:0.04em; text-shadow:none; animation:none; }
     .global-top-scylla-status{ font-size:10px; }
   }
   /* SECT!0N HEADER — STAT!C :: MA!NFRAME/SELECT A C0LLECT!0N, now its own
