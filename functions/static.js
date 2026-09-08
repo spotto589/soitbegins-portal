@@ -6327,16 +6327,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Σκύλλα — logo + big heading together, one real button (reported live
      wanting no separate small "Σκύλλα" tab any more). */
   .global-top-scylla-btn{ display:flex; align-items:center; justify-content:center; gap:0.75rem; }
-  /* A light chip behind this (reported live as now "a big white circle" —
-     worse than the original invisibility) has been dropped entirely. Just
-     sized to actually fill the bar's own height now instead of sitting
-     tiny in a corner of it — object-fit:contain keeps the art's own
-     aspect ratio so it isn't stretched. */
+  /* A light chip behind this (reported live as "a big white circle" —
+     worse than the original invisibility) has been dropped entirely. The
+     source PNG's own background isn't transparent, it's a flat near-black
+     square — a visibly different shade than this bar's own --bg square
+     around it (reported live as still not fitting the banner). mix-blend-
+     mode:screen is the standard trick for exactly this: screen-blending a
+     pure/near-black pixel against ANY backdrop leaves that backdrop's own
+     colour completely unchanged (screen(0,bg) = bg), so the icon's own
+     background square vanishes into whatever's actually behind it —
+     while the real lock art (the lighter cyan/magenta/white pixels) still
+     screens through and shows on top, same as it does normally. */
   #globalTopBarLogo{
     height:48px;
     width:48px;
     object-fit:contain;
     flex:0 0 auto;
+    mix-blend-mode:screen;
   }
   .global-top-scylla-text{ display:flex; flex-direction:column; align-items:center; min-width:0; }
   /* Σκύλλα://S!GNAL::0NL!NE — real large/centred text again (reported
@@ -6451,8 +6458,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     display:grid;
     grid-template-columns:repeat(3, 1fr);
     grid-template-rows:repeat(2, 1fr);
-    gap:1.25rem;
+    gap:1.75rem;
     width:100%;
+    max-width:1300px;
+    margin:0 auto;
     padding:0 1rem;
   }
   .mainframe-card{
@@ -6507,6 +6516,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        never fit legibly at phone width, and this still shows all 6 with
        no scrolling/arrows needed, same as desktop. */
     .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.75rem; padding:0 0.5rem; }
+    .mainframe-card-art{ min-height:150px; }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
@@ -6531,7 +6541,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-art{
     position:relative;
     flex:1 1 auto;
-    min-height:60px;
+    min-height:220px;
     background-size:cover;
     /* Cards are much shorter now (3x2 grid, not a full-height carousel
        card) — plain center crops most character art around the torso/
@@ -6571,7 +6581,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      page reads as six distinct identities, not one repeated template. */
   .mainframe-card-label{
     font-family:var(--font-display);
-    font-size:clamp(18px, 1.8vw, 24px);
+    font-size:clamp(20px, 2.1vw, 28px);
     font-weight:700;
     color:#fff;
     letter-spacing:0.06em;
@@ -7303,7 +7313,7 @@ const SWAP_HTML = `<!DOCTYPE html>
          clicking it from the DATABASE dropdown already does today. -->
     <div id="screenMainframe" style="display:none;">
       <div class="mainframe-section-header">
-        <div class="mainframe-subtitle">SELECT A C0LLECT!0N</div>
+        <div class="mainframe-subtitle">SELECT A DATABASE</div>
       </div>
       <div class="mainframe-carousel-wrap">
         <button type="button" class="mainframe-arrow mainframe-arrow-prev" id="mainframeArrowPrev" aria-label="PREV!0US">◂</button>
