@@ -949,7 +949,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:none;
   }
   @media (max-width:700px){
-    #globalTopBar .tab-db-heading, #globalTopBar .tab-db-select .trait-row-label{ font-size:14px; letter-spacing:0.04em; }
+    /* The chromatic-aberration text-shadow reads great big (desktop's
+       clamp(18px, 2.4vw, 30px)) but turns to mush at this small a size
+       (reported live: "looked good when it was big but smaller I dont
+       think so") — even 1px is a big chunk of a 14px glyph's own
+       stroke width. Dropped entirely below this breakpoint instead of
+       just shrinking further; plain white text stays crisp instead. */
+    #globalTopBar .tab-db-heading, #globalTopBar .tab-db-select .trait-row-label{ font-size:14px; letter-spacing:0.04em; text-shadow:none; }
   }
   /* Mobile: a boxed grid "hub" instead of a horizontally-scrolling strip —
      every tab visible and tappable at once up top, nothing to swipe
@@ -6525,7 +6531,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:700px){
     #globalTopBar .tab-btn{ padding:0.55em 0.6rem; }
     #globalTopBarLogo{ width:22px; }
-    #globalTopBarHeading{ font-size:14px; letter-spacing:0.04em; }
+    /* Same "blurry small" call as .tab-db-heading's own comment — drop
+       the chromatic shadow entirely below this breakpoint. */
+    #globalTopBarHeading{ font-size:14px; letter-spacing:0.04em; text-shadow:none; }
     .global-top-scylla-status{ font-size:10px; }
   }
   /* SECT!0N HEADER — STAT!C :: MA!NFRAME/SELECT A C0LLECT!0N, now its own
