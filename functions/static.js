@@ -1384,18 +1384,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
   .profile-holdings-viewmore:hover{ background:var(--cyan); color:#000; border-color:var(--cyan); }
-  /* The two real V!EW C0!NS/V!EW NFTS buttons — bigger/bolder than the
-     plain .profile-holdings-viewmore base (still shared with
-     #profileExpandedBack, which stays small) since these are now the
-     ONLY thing in the holdings column, not a small link under a preview
-     list any more. */
+  /* The two real V!EW C0!NS/V!EW NFTS buttons — bigger and matching the
+     avatar's own + edit button's colour/design now (reported live): the
+     same solid --green fill, black text, and thick --bg-coloured border
+     as .profile-avatar-edit-btn, not the plain outlined
+     .profile-holdings-viewmore look (#profileExpandedBack still uses
+     that smaller/plainer base). */
   .profile-holdings-btn{
-    background:rgba(0,0,0,0.4);
-    font-size:12px;
-    padding:0.7em 1.1em;
-    min-width:150px;
+    background:var(--green);
+    color:#000;
+    border:3px solid var(--bg);
+    font-size:14px;
+    padding:0.85em 1.3em;
+    min-width:170px;
     margin-top:0;
   }
+  .profile-holdings-btn:hover{ background:var(--green); color:#000; border-color:var(--bg); filter:brightness(1.15); }
   /* EXPANDED — replaces BOTH .profile-banner-identity AND
      .profile-banner-holdings (see .profile-banner-main's own children)
      while V!EW C0!NS/V!EW NFTS is open; #profileExpandedBack returns to
