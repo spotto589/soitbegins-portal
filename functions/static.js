@@ -7406,35 +7406,45 @@ const SWAP_HTML = `<!DOCTYPE html>
            .flock-account-box visual language the old FL0CK-era boxes
            always used, just reused here) instead of one long stacked
            scroll. N0TH!NG opens by default — V!EW PR0F!LE is just "close
-           whatever's open", the neutral/first state; 0FFERS/C0LLECT!0NS/
-           CR0WN each reveal their own real panel below when clicked,
-           TRANSACT!0N H!ST0RY/MESSAGES stay inert (same C0M!NG S00N
-           treatment the old boxes always had — neither backend exists
-           yet). Exactly one panel (or none) visible at a time — see
-           switchProfileTab in the JS. -->
+           whatever's open", the neutral/first state; !NB0X/MY NFTs/
+           WATCHL!ST/CR0WN each reveal their own real panel below when
+           clicked, TRANSACT!0N H!ST0RY stays inert (same C0M!NG S00N
+           treatment the old boxes always had — no real backend yet).
+           Exactly one panel (or none) visible at a time — see
+           switchProfileTab in the JS.
+           !NB0X (reported live) is 0FFERS relabelled, with the old
+           separate MESSAGES box folded into it — MESSAGES_DB was never
+           bound in production (see the swap-buy-prepare.js/HANDOFF.md
+           history; messaging worked in local dev, every real request in
+           prod 500s) so there was never a second real inbox to actually
+           merge content from, just one label covering both ideas now.
+           data-profilebox stays "offers" internally — same panel/content,
+           only the box's own visible label changed. -->
       <div class="profile-box-grid" id="profileBoxGrid">
         <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="profile">
           <div class="flock-account-box-row"><span class="flock-account-box-label">V!EW PR0F!LE</span></div>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="offers">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">0FFERS<span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span></span></div>
+          <div class="flock-account-box-row"><span class="flock-account-box-label">!NB0X<span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span></span></div>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="collections">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">C0LLECT!0NS</span></div>
+          <div class="flock-account-box-row"><span class="flock-account-box-label">MY NFTS</span></div>
+        </div>
+        <!-- WATCHL!ST — split out of the MY NFTs/C0LLECT!0NS panel into
+             its own real destination box (reported live) — same real
+             renderProfileWatchlist/profileWatchlistGrid, just its own
+             profileTabPanelWatchlist now instead of living inside
+             profileTabPanelCollections. -->
+        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="watchlist">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">WATCHL!ST</span></div>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="crown">
           <div class="flock-account-box-row"><span class="flock-account-box-label">CR0WN</span></div>
         </div>
-        <!-- Paused (MESSAGES_DB was never bound in production — see the
-             swap-buy-prepare.js/HANDOFF.md history; messaging is fully
-             built and worked in local dev, but every real request in prod
-             500s). TRANSACT!0N H!ST0RY has no real backend yet either —
-             same inert "not yet" treatment as before. -->
+        <!-- TRANSACT!0N H!ST0RY has no real backend yet — same inert
+             "not yet" treatment as before. -->
         <div class="sw-panel flock-account-box flock-account-box-soon">
           <div class="flock-account-box-row"><span class="flock-account-box-label">TRANSACT!0N H!ST0RY</span><span class="db-soon">C0M!NG S00N</span></div>
-        </div>
-        <div class="sw-panel flock-account-box flock-account-box-soon">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">MESSAGES</span><span class="db-soon">C0M!NG S00N</span></div>
         </div>
       </div>
       <div class="profile-tab-panel" id="profileTabPanelOffers" style="display:none;">
@@ -7450,21 +7460,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="panel-title outgoing-offers-title">0UTG0!NG 0FFERS</div>
         <div id="outgoingOffersList"></div>
       </div>
-      <div class="profile-tab-panel" id="profileTabPanelCollections" style="display:none;">
-        <!-- WATCHL!ST — any NFT starred from DATABASE (the ☆/★ on every
-             card, see .watchlist-toggle) shows up here (reported live as
-             wanting "a watchlist button for nfts to choose from the
-             database which show up in Σκύλλα as well"). Personal, per-
-             wallet, localStorage-only (see watchlistKey in the JS) —
-             renderProfileWatchlist builds this straight from the real
-             snapshot kept per entry (image/number/collection), no live
-             re-fetch needed just to show the grid. Hidden entirely (not
-             just empty) while there's nothing watched — see its own
-             display toggle in loadProfilePanel. -->
-        <div class="profile-watchlist-section" id="profileWatchlistSection" style="display:none;">
-          <div class="panel-title">WATCHL!ST</div>
+      <!-- WATCHL!ST — its own real destination now (reported live), split
+           out of MY NFTs/C0LLECT!0NS. Any NFT starred from DATABASE (the
+           ☆/★ on every card, see .watchlist-toggle) shows up here.
+           Personal, per-wallet, localStorage-only (see watchlistKey in
+           the JS) — renderProfileWatchlist builds this straight from the
+           real snapshot kept per entry (image/number/collection), no
+           live re-fetch needed just to show the grid. -->
+      <div class="profile-tab-panel" id="profileTabPanelWatchlist" style="display:none;">
+        <div class="profile-watchlist-section" id="profileWatchlistSection">
           <div class="profile-watchlist-grid" id="profileWatchlistGrid"></div>
         </div>
+      </div>
+      <div class="profile-tab-panel" id="profileTabPanelCollections" style="display:none;">
         <!-- MY C0!NS — real balance + trustline status for every collection
              with a real token (see COLLECTION_META's own tokenIssuer),
              reported live as wanting one place to see every coin at a
@@ -8958,7 +8966,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
-   'profileBoxGrid','profileTabOffersBadge','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelCrown',
+   'profileBoxGrid','profileTabOffersBadge','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
    'profileWatchlistSection','profileWatchlistGrid',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -16768,12 +16776,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   // ---- WATCHL!ST — renders straight off the local snapshot (getWatch-
   // list), no live re-fetch needed just to show the grid. Most-recently-
-  // starred first (toggleWatchlist unshifts). Hidden entirely rather than
-  // showing an empty section when there's nothing watched yet. ----
+  // starred first (toggleWatchlist unshifts). Now its own real
+  // destination tab (see profileTabPanelWatchlist) rather than a section
+  // nested inside MY NFTs — a real empty-state message shows when
+  // there's nothing watched instead of just hiding, since landing on an
+  // entirely blank tab would read as broken, not "nothing here yet". ----
   function renderProfileWatchlist(){
     var list = getWatchlist();
-    el.profileWatchlistSection.style.display = list.length ? '' : 'none';
-    if (!list.length) return;
+    if (!list.length){
+      el.profileWatchlistGrid.innerHTML = '<div class="th-empty">N0 P!GE0NS WATCHED YET — CL!CK ☆ 0N ANY CARD !N DATABASE T0 ADD 0NE.</div>';
+      return;
+    }
     el.profileWatchlistGrid.innerHTML = list.map(function(w){
       var img = w.image ? '<img src="' + escapeHtml(w.image) + '" alt="" loading="lazy">' : '';
       var label = w.number !== null && w.number !== undefined ? '#' + w.number : (w.name ? escapeHtml(w.name) : '');
@@ -17055,6 +17068,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function switchProfileTab(tab){
     el.profileTabPanelOffers.style.display = tab === 'offers' ? '' : 'none';
     el.profileTabPanelCollections.style.display = tab === 'collections' ? '' : 'none';
+    el.profileTabPanelWatchlist.style.display = tab === 'watchlist' ? '' : 'none';
     el.profileTabPanelCrown.style.display = tab === 'crown' ? '' : 'none';
     el.profileBoxGrid.querySelectorAll('.flock-account-box-clickable').forEach(function(btn){
       btn.classList.toggle('active', btn.getAttribute('data-profilebox') === tab);
