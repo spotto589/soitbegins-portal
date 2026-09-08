@@ -6283,12 +6283,31 @@ const SWAP_HTML = `<!DOCTYPE html>
   .placeholder-card .pc-body{ font-family:var(--font-body); font-size:11.5px; letter-spacing:0.01em; color:var(--grey); line-height:1.7; text-transform:none; }
 
   /* MA!NFRAME — DATABASE's own real landing content now (reported live as
-     wanting the separate full-screen overlay gone) — a plain in-flow
-     block inside the DATABASE tab, shown/hidden by showTab exactly like
-     #screenBrowse itself, not its own fixed/opaque screen any more. */
+     wanting the separate full-screen overlay gone) — shown/hidden by
+     showTab exactly like #screenBrowse itself (a plain display:none/flex
+     toggle, not a separate destination), but reported live as needing to
+     "fit the page, it shouldn't be able to scroll" — the 3x2 card grid at
+     a real readable size doesn't reliably fit under body's own generic
+     top/bottom page padding on every viewport. position:fixed here (below
+     #globalTopBar's own fixed bar, above ordinary .page content, below
+     every real modal at 2100+) pins it to exactly the viewport space
+     under the bar and takes it out of .page's own document flow entirely
+     — so it can never itself be the thing that grows .page taller than
+     the viewport, and its own grid can safely size itself against a real
+     fixed height instead of guessing at available room. */
   #screenMainframe{
     display:none;
     flex-direction:column;
+    position:fixed;
+    top:var(--global-ticker-h);
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:1500;
+    background:var(--bg);
+    padding:1.25rem 1rem;
+    box-sizing:border-box;
+    overflow:hidden;
   }
   /* GL0BAL T0P BAR — see the HTML's own comment: ONE real banner, exactly
      two equal halves now (reported live as wanting "only two buttons...
@@ -6327,21 +6346,29 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Σκύλλα — logo + big heading together, one real button (reported live
      wanting no separate small "Σκύλλα" tab any more). */
   .global-top-scylla-btn{ display:flex; align-items:center; justify-content:center; gap:0.75rem; }
-  /* A light chip behind this (reported live as "a big white circle" —
-     worse than the original invisibility) has been dropped entirely. The
-     source PNG's own background isn't transparent, it's a flat near-black
-     square — a visibly different shade than this bar's own --bg square
-     around it (reported live as still not fitting the banner). mix-blend-
-     mode:screen is the standard trick for exactly this: screen-blending a
-     pure/near-black pixel against ANY backdrop leaves that backdrop's own
-     colour completely unchanged (screen(0,bg) = bg), so the icon's own
-     background square vanishes into whatever's actually behind it —
-     while the real lock art (the lighter cyan/magenta/white pixels) still
-     screens through and shows on top, same as it does normally. */
+  /* The real problem this whole time (confirmed by actually looking at the
+     source PNG's real pixels): the lock itself only occupies a small
+     centred region of a much bigger canvas, surrounded by a huge margin
+     of flat near-black padding — at any normal icon display size,
+     object-fit:contain shows mostly that empty padding with the lock
+     itself shrunk down to an illegible smudge. No amount of chip
+     backgrounds or blend modes fixes that; it was never a contrast
+     problem alone, it was a "the icon is 90% empty space" problem. Now a
+     background-image instead of an <img>, zoomed in (background-size)
+     and offset (background-position) to crop tight to just the lock's
+     own real bounding box, at a container aspect ratio (36:55) matching
+     that cropped content's own aspect ratio so nothing stretches. The
+     lock's own background is still a flat near-black square even
+     cropped this tight — mix-blend-mode:screen still carries its own
+     weight here, same reasoning as before, just now on content that's
+     actually big enough to read once it's not screened out entirely. */
   #globalTopBarLogo{
-    height:48px;
-    width:48px;
-    object-fit:contain;
+    width:36px;
+    height:55px;
+    background-image:url(/assets/xrp_vanity_lock_glitch_nft_clean.png);
+    background-repeat:no-repeat;
+    background-size:225% auto;
+    background-position:50% 34%;
     flex:0 0 auto;
     mix-blend-mode:screen;
   }
@@ -6373,7 +6400,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .global-top-scylla-status{ font-size:12px; letter-spacing:0.06em; color:var(--grey-dim); margin-top:0.15rem; }
   @media (max-width:700px){
     #globalTopBar .tab-btn{ padding:0.55em 0.6rem; }
-    #globalTopBarLogo{ width:32px; height:32px; }
+    #globalTopBarLogo{ width:26px; height:40px; }
     #globalTopBarHeading{ font-size:14px; }
     .global-top-scylla-status{ font-size:10px; }
   }
@@ -6453,14 +6480,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:relative;
     display:flex;
     align-items:stretch;
+    flex:1 1 auto;
+    min-height:0;
   }
   .mainframe-grid{
     display:grid;
     grid-template-columns:repeat(3, 1fr);
     grid-template-rows:repeat(2, 1fr);
-    gap:1.75rem;
+    gap:1.25rem;
     width:100%;
     max-width:1300px;
+    height:100%;
     margin:0 auto;
     padding:0 1rem;
   }
@@ -6515,8 +6545,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     /* 2 columns x 3 rows on narrow screens — 3 columns of real cards
        never fit legibly at phone width, and this still shows all 6 with
        no scrolling/arrows needed, same as desktop. */
-    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.75rem; padding:0 0.5rem; }
-    .mainframe-card-art{ min-height:150px; }
+    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.6rem; padding:0 0.5rem; }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
@@ -6541,7 +6570,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-art{
     position:relative;
     flex:1 1 auto;
-    min-height:220px;
+    min-height:0;
     background-size:cover;
     /* Cards are much shorter now (3x2 grid, not a full-height carousel
        card) — plain center crops most character art around the torso/
@@ -6806,7 +6835,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
       </button>
       <button class="tab-btn global-top-scylla-btn" data-tab="mypigeons">
-        <img id="globalTopBarLogo" src="/assets/xrp_vanity_lock_glitch_nft_clean.png" alt="">
+        <div id="globalTopBarLogo" role="img" aria-label="Σκύλλα"></div>
         <span class="global-top-scylla-text">
           <span id="globalTopBarHeading">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></span>
           <span id="flockTabLabel" class="global-top-scylla-status"></span>
