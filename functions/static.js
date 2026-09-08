@@ -936,7 +936,9 @@ const SWAP_HTML = `<!DOCTYPE html>
        they need to stay in lockstep. */
     letter-spacing:0.08em;
     color:var(--white);
-    text-shadow:-2px 0 var(--cyan-dim), 2px 0 var(--magenta-dim);
+    /* Matches #globalTopBarHeading's own cut from a 2px to 1px offset —
+       same "blurry on the eyes" report applied to both. */
+    text-shadow:-1px 0 var(--cyan-dim), 1px 0 var(--magenta-dim);
     white-space:nowrap;
   }
   #globalTopBar .tab-db-select .trait-row-label{
@@ -6500,7 +6502,15 @@ const SWAP_HTML = `<!DOCTYPE html>
        read as a clean glitch effect instead of a smear). */
     letter-spacing:0.08em;
     color:var(--white);
-    text-shadow:-2px 0 var(--cyan-dim), 2px 0 var(--magenta-dim);
+    /* Cut from a 2px chromatic-aberration offset down to 1px — reported
+       live as reading "blurry on the eyes" at the wider offset,
+       especially at this heading's smaller sizes where the cyan/
+       magenta ghosts landed far enough off the glyph to read as a
+       smear rather than a deliberate glitch fringe. Still var(--cyan-
+       dim)/var(--magenta-dim), not hardcoded — some collection themes
+       remap --cyan-dim to --magenta-dim (see :root's own comment), and
+       this needs to keep tracking that. */
+    text-shadow:-1px 0 var(--cyan-dim), 1px 0 var(--magenta-dim);
     text-transform:none;
     white-space:nowrap;
     overflow:hidden;
