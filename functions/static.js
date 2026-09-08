@@ -1297,7 +1297,54 @@ const SWAP_HTML = `<!DOCTYPE html>
      shape X's own share/follow buttons use. Absolutely positioned (not a
      flex child) so it sits in its own corner regardless of the avatar/
      identity/username layout below it. */
-  .profile-twitter-row{ position:absolute; top:1rem; right:1rem; }
+  /* Right column of the banner — TW!TTER on top, the compact MY C0!NS
+     mini-list underneath it (reported live). One flex column now instead
+     of .profile-twitter-row being independently absolutely positioned,
+     so the coins list just stacks below the button without either
+     needing to know the other's height. */
+  .profile-banner-right{ position:absolute; top:1rem; right:1rem; display:flex; flex-direction:column; align-items:flex-end; gap:0.6rem; }
+  .profile-twitter-row{ position:static; }
+  /* Compact per-coin balances, right in the banner — same real data
+     renderProfileCoins() already fetches for the full MY C0!NS list
+     below (see its own comment), just a thumbnail + abbreviated amount
+     per row instead of the full card. formatCompactAmount in the JS caps
+     it at 3 digits + a K/M suffix (e.g. "123K", "4M") — the full-
+     precision number still lives in the real MY C0!NS list, this is
+     just a glance. */
+  .profile-banner-coins{
+    display:flex;
+    flex-direction:column;
+    gap:0.4rem;
+    background:rgba(0,0,0,0.4);
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    padding:0.5rem 0.7rem;
+    min-width:150px;
+  }
+  .profile-banner-coin-row{ display:flex; align-items:center; gap:0.5rem; }
+  .profile-banner-coin-thumb{
+    width:26px; height:26px; flex:0 0 auto;
+    border-radius:6px;
+    border:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
+    background-size:cover; background-position:center;
+    background-color:rgba(var(--card-accent, 61,243,236), 0.18);
+  }
+  /* Name centred (vertically, against the thumbnail) on the right of it
+     — a flex column with no top/bottom padding of its own inside a row
+     that's align-items:center reads as "centred beside the thumb"
+     regardless of whether the amount line underneath is present. */
+  .profile-banner-coin-text{ display:flex; flex-direction:column; justify-content:center; min-width:0; }
+  .profile-banner-coin-name{
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.02em;
+    color:#fff;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .profile-banner-coin-amount{ font-family:var(--font-mono); font-size:10px; color:var(--grey); margin-top:0.1rem; }
   .profile-twitter-link{
     display:inline-flex;
     align-items:center;
@@ -1347,7 +1394,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     .profile-avatar-edit-btn{ width:28px; height:28px; font-size:16px; right:-6px; bottom:-6px; }
     .profile-current-username{ font-size:20px; }
     .profile-current-center{ flex-basis:100%; align-self:auto; order:1; margin-top:0.5rem; }
-    .profile-twitter-row{ top:0.65rem; right:0.65rem; }
+    .profile-banner-right{ top:0.65rem; right:0.65rem; }
+    .profile-banner-coins{ min-width:120px; padding:0.4rem 0.55rem; }
   }
   /* Currently-selected pfp in the picker grid — same green highlight the
      rest of the app uses for "this is the real/active one" (see
@@ -6895,7 +6943,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="top-tabs-wrap" id="topTabsWrap">
     <div class="top-tabs" id="topTabs">
       <button class="tab-btn tab-btn-database" data-tab="database">
-        <span class="tab-db-heading">DATABASE ::</span>
+        <span class="tab-db-heading">STAT!C://DATABASE ::</span>
         <div class="traits-hover-wrap tab-db-select" id="dbSelectWrap">
           <span class="trait-row-label" id="dbSelectLabel">P!GE0NS ▾</span>
           <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
@@ -7219,9 +7267,16 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div class="profile-quote" id="profileCurrentQuote"></div>
         </div>
-        <!-- TW!TTER — top right corner of the banner now (reported live). -->
-        <div class="profile-twitter-row">
-          <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener"></a>
+        <!-- TW!TTER — top right corner of the banner now (reported live),
+             with a compact MY C0!NS mini-list stacked underneath it
+             (also reported live) — same real balances renderProfileCoins
+             already fetches for the full list below, just thumbnail +
+             abbreviated amount per row (see renderProfileBannerCoins). -->
+        <div class="profile-banner-right">
+          <div class="profile-twitter-row">
+            <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener"></a>
+          </div>
+          <div class="profile-banner-coins" id="profileBannerCoins"></div>
         </div>
       </div>
       <!-- PR0F!LE B0X GR!D — sits right under the banner now (reported
@@ -8787,7 +8842,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'crownPeriodSelect','crownLeaderboardList',
    'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileAddressCopyBtn','profileAddressBithompLink','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
    'profileEditModal','profileEditTitle','profileEditClose','profileEditPaneUsername','profileEditPaneQuote','profileEditPaneTwitter','profileEditPanePfp',
-   'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
+   'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList','profileBannerCoins',
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
    'profileCoinsEditBtn','profileCoinsEditPopover','profileCoinsEditList',
@@ -16635,9 +16690,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     showTab('database');
     openDetail(nftId);
   });
+  // Caps a real balance down to at most 3 digits + a K/M suffix for the
+  // banner's compact mini-list (reported live as "we dont need to show
+  // the full coin amount in this section") — e.g. 123456 -> "123K",
+  // 4200000 -> "4M". The full-precision number still shows in the real
+  // MY C0!NS list below (.profile-coin-balance), this is only for the
+  // glance-sized row in the banner.
+  function formatCompactAmount(n){
+    if (typeof n !== 'number' || isNaN(n)) return '--';
+    n = Math.floor(n);
+    if (n < 1000) return String(n);
+    if (n < 1e6) return Math.round(n / 1e3) + 'K';
+    if (n < 1e9) return Math.round(n / 1e6) + 'M';
+    return Math.round(n / 1e9) + 'B';
+  }
   function renderProfileCoins(){
     if (!MY_WALLET){
       el.profileCoinsList.innerHTML = '';
+      el.profileBannerCoins.innerHTML = '';
       el.profileCoinsWalletBalance.textContent = '--';
       el.profileCoinsTotalValue.textContent = '--';
       return;
@@ -16677,6 +16747,29 @@ const SWAP_HTML = `<!DOCTYPE html>
       var thumbMeta = COLLECTION_META[key];
       if (!thumbEl || !thumbMeta || !thumbMeta.thumb) return;
       thumbEl.style.backgroundImage = 'url("' + thumbMeta.thumb + '")';
+    });
+    // ---- Compact MY C0!NS mini-list, right in the banner (reported
+    // live) — same keys/accents as the full list above, just a
+    // thumbnail + formatCompactAmount()'d balance per row, name centred
+    // beside the thumb (see .profile-banner-coin-row's own comment in
+    // the CSS). Balances/thumbs below fill in via the SAME real fetch
+    // the full list's own balEl/thumbEl updates use, not a second call. ----
+    el.profileBannerCoins.innerHTML = !keys.length ? '' : keys.map(function(key){
+      var meta = COLLECTION_META[key];
+      var accent = PROFILE_COIN_ACCENTS[key] || '61,243,236';
+      return '<div class="profile-banner-coin-row" style="--card-accent:' + accent + ';">' +
+        '<div class="profile-banner-coin-thumb" id="profileBannerCoinThumb-' + key + '"></div>' +
+        '<div class="profile-banner-coin-text">' +
+          '<div class="profile-banner-coin-name">' + escapeHtml(meta.tokenLabel) + '</div>' +
+          '<div class="profile-banner-coin-amount" id="profileBannerCoinAmount-' + key + '">' + (meta.tokenIssuer ? '--' : 'S00N') + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    keys.forEach(function(key){
+      var bannerThumbEl = document.getElementById('profileBannerCoinThumb-' + key);
+      var thumbMeta = COLLECTION_META[key];
+      if (!bannerThumbEl || !thumbMeta || !thumbMeta.thumb) return;
+      bannerThumbEl.style.backgroundImage = 'url("' + thumbMeta.thumb + '")';
     });
     // ---- T0TAL P0RTF0L!0 VALUE — the big feature here: one real XRP
     // number for everything this wallet holds, not just its native XRP.
@@ -16738,14 +16831,21 @@ const SWAP_HTML = `<!DOCTYPE html>
         // fetch anyway — no separate request just for the image.
         var thumbEl = document.getElementById('profileCoinThumb-' + key);
         if (thumbEl && rate && rate.tokenImageUrl) thumbEl.style.backgroundImage = 'url("' + rate.tokenImageUrl + '")';
+        // Same swap for the banner's own mini thumbnail — no separate
+        // fetch, just mirroring whatever this call already resolved.
+        var bannerThumbEl = document.getElementById('profileBannerCoinThumb-' + key);
+        if (bannerThumbEl && rate && rate.tokenImageUrl) bannerThumbEl.style.backgroundImage = 'url("' + rate.tokenImageUrl + '")';
+        var bannerAmountEl = document.getElementById('profileBannerCoinAmount-' + key);
         if (!balEl) return;
         if (line && line.hasTrustline === false){
           balEl.textContent = 'TRUSTL!NE N0T SET';
           balEl.classList.add('profile-coin-warn');
+          if (bannerAmountEl) bannerAmountEl.textContent = 'N0NE';
         } else if (line && line.hasTrustline){
           var bal = line.balance || 0;
           balEl.innerHTML = '<span class="hi">' + bal.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</span> ' + escapeHtml(meta.tokenLabel);
           balEl.classList.remove('profile-coin-warn');
+          if (bannerAmountEl) bannerAmountEl.textContent = formatCompactAmount(bal);
           if (valEl && rate && typeof rate.xrpPerPigeon === 'number'){
             var value = bal * rate.xrpPerPigeon;
             coinValuesXrp[key] = value;
@@ -16755,10 +16855,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         } else {
           balEl.textContent = 'ERR://C0ULDN T CHECK BALANCE';
           balEl.classList.add('profile-coin-warn');
+          if (bannerAmountEl) bannerAmountEl.textContent = 'ERR';
         }
       }).catch(function(){
         var balEl = document.getElementById('profileCoinBalance-' + key);
         if (balEl){ balEl.textContent = 'ERR://C0ULDN T CHECK BALANCE'; balEl.classList.add('profile-coin-warn'); }
+        var bannerAmountEl = document.getElementById('profileBannerCoinAmount-' + key);
+        if (bannerAmountEl) bannerAmountEl.textContent = 'ERR';
       });
     });
   }
@@ -17022,15 +17125,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderProfileCurrent(profile){
     el.profileCurrentAvatar.innerHTML = (profile && profile.pfpImage) ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
     el.profileCurrentUsername.textContent = (profile && profile.username) ? profile.username : 'N0 USERNAME SET';
-    // Banner colour is auto-chosen from the PFP itself now — no separate
-    // banner image/selection at all (see sampleBannerColor's own comment).
-    if (profile && profile.pfpImage){
-      el.profileBanner.classList.remove('profile-banner-empty');
-      sampleBannerColor(profile.pfpImage);
-    } else {
-      el.profileBanner.style.backgroundColor = '';
-      el.profileBanner.classList.add('profile-banner-empty');
-    }
+    // Banner background is the fixed $P!GE0NS purple gradient
+    // (.profile-banner-empty) always now, PFP or not — reported live as
+    // "it used to be like it for some reason it changed": sampling a
+    // pixel off your own PFP (sampleBannerColor, still used for OTHER
+    // people's signature banners — see signatureBannerHtml) could land
+    // on literally any colour off the image, which is what changed this
+    // away from the pigeon-purple look. Never call sampleBannerColor for
+    // your OWN banner any more.
+    el.profileBanner.style.backgroundColor = '';
+    el.profileBanner.classList.add('profile-banner-empty');
     // QU0TE — a real value shows the text + a quiet ✎ (click jumps to the
     // real input); unset shows a dashed "+ ADD A B!0..." invite instead of
     // hiding outright, so the banner itself teaches you it's editable.
