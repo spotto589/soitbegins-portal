@@ -922,6 +922,30 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* DATABASE carries the collection picker inline now, instead of that
      living as its own row above the whole tab strip. */
   .tab-btn-database{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; }
+  /* Matches #globalTopBarHeading's own size/weight/style exactly (reported
+     live as wanting DATABASE :: to "suit the other tab") — this button is
+     the other equal half of the same bar, so it reads as one deliberate
+     pair instead of one side looking like an afterthought next to the
+     other's big glitch-text heading. */
+  #globalTopBar .tab-db-heading{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:clamp(18px, 2.4vw, 30px);
+    letter-spacing:0.01em;
+    color:var(--white);
+    text-shadow:-2px 0 var(--cyan-dim), 2px 0 var(--magenta-dim);
+    white-space:nowrap;
+  }
+  #globalTopBar .tab-db-select .trait-row-label{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:clamp(18px, 2.4vw, 30px);
+    letter-spacing:0.01em;
+    text-shadow:none;
+  }
+  @media (max-width:700px){
+    #globalTopBar .tab-db-heading, #globalTopBar .tab-db-select .trait-row-label{ font-size:14px; }
+  }
   /* Mobile: a boxed grid "hub" instead of a horizontally-scrolling strip —
      every tab visible and tappable at once up top, nothing to swipe
      through or guess is off-screen. DATABASE spans the full width of its
@@ -2184,6 +2208,47 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     background:linear-gradient(160deg, var(--cyan-faint), transparent 65%);
     text-align:center;
+  }
+  /* While a real Xaman sign request is actually in flight (CONNECT!NG/
+     WA!T!NG — see renderConnectPanel's own body.xaman-signing-in toggle),
+     nothing else should be reachable or even visible — reported live as
+     wanting ONLY the connection page up, not the banner or any other
+     button (the profile banner/box grid sitting behind this panel in
+     .myPigeonsPanel's own normal flow, specifically — confirmed live a
+     transparent panel here still let those show through underneath it).
+     #globalTopBar display:none takes it fully out of the layout; the
+     panel itself goes fixed/full-viewport with a real solid background,
+     genuinely covering everything else on the page rather than just
+     sitting on top of it, at a z-index above ordinary page content but
+     below any real modal (2100+) and below the Xaman popup itself (a
+     separate real browser tab/window either way). */
+  body.xaman-signing-in #globalTopBar{ display:none; }
+  /* #myPigeonsPanel's own backdrop-filter:blur(7px) — same "a blurred
+     ancestor becomes the containing block for any position:fixed
+     descendant" CSS-spec gotcha openSortFlyout/openTraitsFlyout's own
+     comment already warns about elsewhere in this file, confirmed live
+     here too (connectPanel's fixed inset:0 was resolving against
+     myPigeonsPanel's own box instead of the viewport, showing up as an
+     oddly offset, un-full-screen panel with everything else still
+     visible around it). Just switching it off while this state is up
+     removes the hijack entirely; nothing else is visible behind it to
+     blur anyway once this panel takes over the whole screen. */
+  body.xaman-signing-in #myPigeonsPanel{ backdrop-filter:none; }
+  body.xaman-signing-in .connect-panel{
+    position:fixed;
+    inset:0;
+    z-index:1800;
+    margin:0;
+    max-width:none;
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    border:none;
+    border-radius:0;
+    background:var(--bg);
   }
   /* Signal-strength bars — low and dim at rest (IDLE/ERR0R), climbing in
      a staggered pulse once a real sign request is in flight
@@ -6295,6 +6360,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      — so it can never itself be the thing that grows .page taller than
      the viewport, and its own grid can safely size itself against a real
      fixed height instead of guessing at available room. */
+  /* Transparent, deliberately — canvas#staticBg (the page's own noise
+     texture, fixed/z-index:0) sits behind everything, and a solid
+     background here would just paint over it. Reported live as "we lost
+     our static background on database" the one time this had
+     background:var(--bg) — it does not need one anyway since nothing
+     else is visible behind it on this screen. */
   #screenMainframe{
     display:none;
     flex-direction:column;
@@ -6304,7 +6375,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     right:0;
     bottom:0;
     z-index:1500;
-    background:var(--bg);
     padding:1.25rem 1rem;
     box-sizing:border-box;
     overflow:hidden;
@@ -6346,31 +6416,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Σκύλλα — logo + big heading together, one real button (reported live
      wanting no separate small "Σκύλλα" tab any more). */
   .global-top-scylla-btn{ display:flex; align-items:center; justify-content:center; gap:0.75rem; }
-  /* The real problem this whole time (confirmed by actually looking at the
-     source PNG's real pixels): the lock itself only occupies a small
-     centred region of a much bigger canvas, surrounded by a huge margin
-     of flat near-black padding — at any normal icon display size,
-     object-fit:contain shows mostly that empty padding with the lock
-     itself shrunk down to an illegible smudge. No amount of chip
-     backgrounds or blend modes fixes that; it was never a contrast
-     problem alone, it was a "the icon is 90% empty space" problem. Now a
-     background-image instead of an <img>, zoomed in (background-size)
-     and offset (background-position) to crop tight to just the lock's
-     own real bounding box, at a container aspect ratio (36:55) matching
-     that cropped content's own aspect ratio so nothing stretches. The
-     lock's own background is still a flat near-black square even
-     cropped this tight — mix-blend-mode:screen still carries its own
-     weight here, same reasoning as before, just now on content that's
-     actually big enough to read once it's not screened out entirely. */
+  /* The source PNG (huge empty padding around a tiny centred lock, plus a
+     flat near-black background baked into the pixels) never held up at
+     banner size no matter how it was cropped/blended — reported live as
+     still looking "awful" even cropped tight. Replaced with a plain
+     inline SVG drawn to fill its own viewBox exactly (no wasted padding,
+     nothing to crop), using the same cyan/magenta glitch drop-shadow
+     offset #globalTopBarHeading's own text-shadow already uses, so the
+     two halves of this bar read as one consistent visual language instead
+     of a flat-white icon next to glitchy text. */
   #globalTopBarLogo{
-    width:36px;
-    height:55px;
-    background-image:url(/assets/xrp_vanity_lock_glitch_nft_clean.png);
-    background-repeat:no-repeat;
-    background-size:225% auto;
-    background-position:50% 34%;
+    width:32px;
+    height:auto;
     flex:0 0 auto;
-    mix-blend-mode:screen;
+    filter:drop-shadow(-2px 0 var(--cyan-dim)) drop-shadow(2px 0 var(--magenta-dim));
   }
   .global-top-scylla-text{ display:flex; flex-direction:column; align-items:center; min-width:0; }
   /* Σκύλλα://S!GNAL::0NL!NE — real large/centred text again (reported
@@ -6400,7 +6459,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .global-top-scylla-status{ font-size:12px; letter-spacing:0.06em; color:var(--grey-dim); margin-top:0.15rem; }
   @media (max-width:700px){
     #globalTopBar .tab-btn{ padding:0.55em 0.6rem; }
-    #globalTopBarLogo{ width:26px; height:40px; }
+    #globalTopBarLogo{ width:22px; }
     #globalTopBarHeading{ font-size:14px; }
     .global-top-scylla-status{ font-size:10px; }
   }
@@ -6445,7 +6504,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-subtitle{
     position:relative;
     text-align:center;
-    font-size:10px;
+    font-size:clamp(16px, 2vw, 22px);
     letter-spacing:0.25em;
     color:var(--grey);
     text-transform:uppercase;
@@ -6817,7 +6876,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="top-tabs-wrap" id="topTabsWrap">
     <div class="top-tabs" id="topTabs">
       <button class="tab-btn tab-btn-database" data-tab="database">
-        DATABASE ::
+        <span class="tab-db-heading">DATABASE ::</span>
         <div class="traits-hover-wrap tab-db-select" id="dbSelectWrap">
           <span class="trait-row-label" id="dbSelectLabel">P!GE0NS ▾</span>
           <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
@@ -6835,7 +6894,12 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
       </button>
       <button class="tab-btn global-top-scylla-btn" data-tab="mypigeons">
-        <div id="globalTopBarLogo" role="img" aria-label="Σκύλλα"></div>
+        <svg id="globalTopBarLogo" viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Σκύλλα">
+          <path d="M16 30 V22 a16 16 0 0 1 32 0 V30" fill="none" stroke="#f2f2f0" stroke-width="6" stroke-linecap="round"/>
+          <rect x="8" y="30" width="48" height="42" rx="8" fill="#f2f2f0"/>
+          <circle cx="32" cy="48" r="5" fill="#0b0b09"/>
+          <rect x="29" y="50" width="6" height="13" rx="2" fill="#0b0b09"/>
+        </svg>
         <span class="global-top-scylla-text">
           <span id="globalTopBarHeading">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></span>
           <span id="flockTabLabel" class="global-top-scylla-status"></span>
@@ -12089,6 +12153,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderConnectPanel(mode, opts){
     opts = opts || {};
     el.connectPanel.className = 'connect-panel' + (mode === 'error' ? ' connect-panel-error' : (mode === 'idle' ? '' : ' connect-panel-active'));
+    // Reported live as wanting nothing else on screen while an actual
+    // Xaman request is in flight (CONNECT!NG/WA!T!NG only — not !DLE's own
+    // first CONNECT button, and not ERR0R, which still needs the rest of
+    // the page reachable so a failed attempt isn't a dead end) — see the
+    // body.xaman-signing-in rules, which take the whole bar/page out of
+    // view and let this one panel take over the full screen instead.
+    document.body.classList.toggle('xaman-signing-in', mode === 'connecting' || mode === 'waiting');
     if (mode === 'idle'){
       el.connectPanelTitle.innerHTML = 'CONNECT <span style="text-transform:none;">Σκύλλα</span>';
       el.connectPanelSub.textContent = 'S!GN !N W!TH XAMAN T0 TRADE, L!ST, AND TRACK Y0UR FL0CK.';
