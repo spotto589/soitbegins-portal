@@ -1680,6 +1680,52 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-search-row-text{ display:flex; flex-direction:column; min-width:0; }
   .profile-search-row-name{ font-family:var(--font-mono); font-size:13px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .profile-search-row-wallet{ font-family:var(--font-mono); font-size:11px; color:var(--grey); word-break:break-all; }
+  /* MESSAGES — real wallet-to-wallet D1-backed messaging (see
+     functions/api/messages-*.js), wired straight into !NB0X instead of
+     living as its own /messages page any more. Needs the MESSAGES_DB D1
+     binding added in the Cloudflare Pages dashboard before it works in
+     prod (see HANDOFF.md) — every call below fails clean with a real
+     ERR0R message (not a silent hang) until that's done. */
+  .profile-messages-newbtn{ margin-bottom:1rem; }
+  .profile-messages-list{ display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem; }
+  .profile-msg-row{
+    display:flex; align-items:center; gap:0.75rem;
+    padding:0.6em 0.8em;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .profile-msg-row:hover{ border-color:var(--cyan-dim); background:rgba(61,243,236,0.06); }
+  .profile-msg-row.unread{ border-color:var(--magenta-dim); }
+  .profile-msg-row-text{ flex:1 1 auto; min-width:0; }
+  .profile-msg-row-wallet{ font-family:var(--font-mono); font-size:13px; font-weight:700; color:#fff; }
+  .profile-msg-row-preview{ font-family:var(--font-mono); font-size:12px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:0.2rem; }
+  .profile-msg-row-meta{ display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem; flex:0 0 auto; }
+  .profile-msg-row-time{ font-family:var(--font-mono); font-size:10px; color:var(--grey-dim); }
+  .profile-msg-row-unread{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:1.4em; height:1.4em; padding:0 0.3em;
+    border-radius:999px; background:var(--magenta); color:#000;
+    font-size:10px; font-weight:700;
+  }
+  .profile-msg-new-prompt{ display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap; }
+  .profile-msg-new-prompt .profile-search-input{ flex:1 1 220px; margin-bottom:0; }
+  .profile-msg-thread-list{ display:flex; flex-direction:column; gap:0.5rem; max-height:320px; overflow-y:auto; margin-bottom:1rem; padding:0.25rem; }
+  .profile-msg-bubble{
+    max-width:75%;
+    padding:0.6em 0.85em;
+    border-radius:var(--radius);
+    font-family:var(--font-mono);
+    font-size:13px;
+    word-break:break-word;
+    border:1px solid var(--border-mid);
+  }
+  .profile-msg-bubble-mine{ align-self:flex-end; background:rgba(61,243,236,0.1); border-color:var(--cyan-dim); }
+  .profile-msg-bubble-theirs{ align-self:flex-start; background:rgba(255,255,255,0.05); }
+  .profile-msg-bubble-time{ font-size:10px; color:var(--grey-dim); margin-top:0.3rem; }
+  .profile-msg-compose{ display:flex; gap:0.5rem; }
+  .profile-msg-compose .profile-search-input{ margin-bottom:0; }
   .profile-coins-section{ margin-bottom:1.5rem; }
   .profile-coins-banner{
     display:flex;
@@ -6721,11 +6767,40 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-section-header{
     flex:0 0 auto;
     display:flex;
-    flex-direction:column;
+    flex-direction:row;
     align-items:center;
+    justify-content:center;
+    gap:1rem;
     margin-top:1.5rem;
     padding-top:1.25rem;
+    padding-left:1rem;
+    padding-right:1rem;
     position:relative;
+  }
+  /* Sits to the right of SELECT A DATABASE (reported live) — client-side
+     filter over the carousel's own real cards (see mainframeSearchInput's
+     own JS), same input styling as every other plain text field on the
+     page (.transfer-wallet-input) rather than a new one. ml-auto pushes
+     it to the right edge instead of sitting glued to the centred title. */
+  .mainframe-search-input{
+    margin-left:auto;
+    width:min(240px, 40vw);
+    background:rgba(8,9,11,0.6);
+    border:1px solid var(--border-mid);
+    color:var(--white);
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    padding:0.6em 0.85em;
+    border-radius:var(--radius);
+  }
+  .mainframe-search-input:focus{ outline:none; border-color:var(--cyan); }
+  .mainframe-search-input::placeholder{ color:var(--grey-disabled); }
+  @media (max-width:760px){
+    .mainframe-section-header{ flex-wrap:wrap; justify-content:center; }
+    .mainframe-subtitle{ flex:1 1 100%; }
+    .mainframe-search-input{ margin-left:0; width:100%; }
   }
   .mainframe-section-header::before{
     content:'';
@@ -6774,14 +6849,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     width:64px; height:2px; background:linear-gradient(90deg, transparent, var(--cyan), transparent);
     box-shadow:0 0 8px var(--cyan-glow);
   }
-  /* ---- All 6 cards fit on one screen at once now (no carousel/arrows
-     for now — see mainframeArrowPrev/Next's display:none below) — a real
-     3-column x 2-row grid instead of a horizontally-scrolling row, so
-     every card is visible without scrolling or clicking through. No more
-     flex:1/height:100% here — those assumed the old fixed-viewport-height
-     overlay this used to be; now that it's plain in-flow DATABASE content
-     with no fixed height of its own, the grid just sizes to its cards'
-     own natural aspect-ratio height instead. ---- */
+  /* ---- Real horizontal carousel again (reported live — wanting room to
+     "add a few more in soon" beyond the current 6 without the grid just
+     growing taller forever): a single scroll-snapping row, 3 cards wide
+     on desktop, PREV/NEXT (mainframeArrowPrev/Next) paging by 3 cards at
+     a time via scrollBy (see the JS). Was a plain 3x2 wrapping grid with
+     the arrows hidden — that only worked because exactly 6 collections
+     happened to fill it evenly; a 7th would've had nowhere to go but an
+     awkward half-empty 3rd row. ---- */
   .mainframe-carousel-wrap{
     position:relative;
     display:flex;
@@ -6790,21 +6865,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     min-height:0;
   }
   .mainframe-grid{
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    grid-template-rows:repeat(2, 1fr);
+    display:flex;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    scrollbar-width:none;
     gap:1.25rem;
     width:100%;
     max-width:1300px;
-    height:100%;
     margin:0 auto;
     padding:0 1rem;
   }
+  .mainframe-grid::-webkit-scrollbar{ display:none; }
   .mainframe-card{
     position:relative;
+    flex:0 0 calc((100% - 2.5rem) / 3);
     min-width:0;
-    min-height:0;
-    height:100%;
+    scroll-snap-align:start;
     display:flex;
     flex-direction:column;
     background:var(--panel-bg-solid);
@@ -6816,6 +6893,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     transition:border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
+  .mainframe-card[hidden]{ display:none; }
   /* Diagonal "C0M!NG S00N" ribbon laid over the art on PHN!X/TEDDY/SEAL/
      FUZZY/C0NSP!RACY — BUY stays fully live underneath (reported live as
      wanting the buy path kept open), this is purely a visual banner over
@@ -6854,10 +6932,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     pointer-events:none;
   }
   @media (max-width:760px){
-    /* 2 columns x 3 rows on narrow screens — 3 columns of real cards
-       never fit legibly at phone width, and this still shows all 6 with
-       no scrolling/arrows needed, same as desktop. */
-    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.6rem; padding:0 0.5rem; }
+    /* 2 cards per view on narrow screens — 3 columns of real cards never
+       fit legibly at phone width — same PREV/NEXT carousel as desktop,
+       just a smaller page size. */
+    .mainframe-grid{ gap:0.6rem; padding:0 0.5rem; }
+    .mainframe-card{ flex-basis:calc((100% - 0.6rem) / 2); }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
@@ -6881,8 +6960,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      carousel, not a fixed small thumbnail strip. */
   .mainframe-card-art{
     position:relative;
-    flex:1 1 auto;
-    min-height:0;
+    flex:0 0 auto;
+    /* A fixed real height via aspect-ratio, not flex:1-into-the-parent's-
+       height any more — the carousel row (see .mainframe-grid's own
+       comment on going horizontal) no longer gives .mainframe-card a
+       defined height to grow into the way the old fixed-row 3x2 grid
+       did, so the art needs its own intrinsic size instead of relying on
+       a flex-grow context that no longer exists. */
+    aspect-ratio:4 / 3;
     background-size:cover;
     /* Cards are much shorter now (3x2 grid, not a full-height carousel
        card) — plain center crops most character art around the torso/
@@ -7096,7 +7181,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      so they're a one-line revert if the grid ever goes back to a
      horizontally-scrolling carousel. */
   .mainframe-arrow{
-    display:none;
+    display:flex;
     position:absolute;
     top:50%;
     transform:translateY(-50%);
@@ -7556,17 +7641,39 @@ const SWAP_HTML = `<!DOCTYPE html>
            SEARCH PR0F!LE: the banner AND the box grid both hide while
            this is open (see switchProfileTab in the JS), just this panel
            + a BACK button. Reads top-to-bottom as MESSAGES, then 0FFERS
-           RECE!VED, then 0UTG0!NG 0FFERS at the bottom. MESSAGES itself
-           stays C0M!NG S00N — MESSAGES_DB was never bound in production
-           (see the profile-box-grid's own comment further up), so
-           there's no real inbox/compose to wire up yet, just the section
-           reserved at the top for when there is. 0FFERS RECE!VED/
-           0UTG0!NG 0FFERS are unchanged — same real renderMyOffersList/
-           renderOutgoingOffersList, fed by loadOffersReceived/
-           loadOutgoingOffers which already run on wallet connect. -->
+           RECE!VED, then 0UTG0!NG 0FFERS at the bottom. MESSAGES is now
+           real, wallet-to-wallet, D1-backed (functions/api/messages-
+           inbox.js/-thread.js/-send.js, wired up in loadMessagesInbox/
+           openMessageThread/sendMessage below) instead of the placeholder
+           it was — see those files' own comments and HANDOFF.md for the
+           one remaining manual step (the MESSAGES_DB binding in the
+           Cloudflare Pages dashboard) before this works in production;
+           every call fails with a real visible error, not a silent hang,
+           until that's done. 0FFERS RECE!VED/0UTG0!NG 0FFERS are
+           unchanged — same real renderMyOffersList/renderOutgoingOffersList,
+           fed by loadOffersReceived/loadOutgoingOffers which already run
+           on wallet connect. -->
       <div class="profile-tab-panel" id="profileTabPanelOffers" style="display:none;">
-        <div class="panel-title">MESSAGES<span class="db-soon">C0M!NG S00N</span></div>
-        <div class="th-empty">D!RECT MESSAG!NG ISN'T L!VE YET — CHECK BACK S00N.</div>
+        <div class="panel-title">MESSAGES</div>
+        <div id="profileMessagesListView">
+          <button type="button" class="action-btn profile-messages-newbtn" id="profileMessagesNewBtn">+ NEW MESSAGE</button>
+          <div class="profile-msg-new-prompt" id="profileMessagesNewPrompt" style="display:none;">
+            <input type="text" class="profile-search-input" id="profileMessagesNewWalletInput" placeholder="REC!P!ENT WALLET ADDRESS (r...)" autocomplete="off">
+            <button type="button" class="action-btn" id="profileMessagesNewStartBtn">START</button>
+            <button type="button" class="secondary-btn" id="profileMessagesNewCancelBtn">CANCEL</button>
+          </div>
+          <div class="profile-messages-list" id="profileMessagesList"></div>
+        </div>
+        <div id="profileMessagesThreadView" style="display:none;">
+          <button type="button" class="profile-holdings-viewmore" id="profileMessagesThreadBack">← BACK T0 MESSAGES</button>
+          <div class="panel-title" id="profileMessagesThreadTitle"></div>
+          <div class="profile-msg-thread-list" id="profileMessagesThreadList"></div>
+          <div class="profile-msg-compose">
+            <input type="text" class="profile-search-input" id="profileMessagesComposeInput" placeholder="TYPE A MESSAGE..." maxlength="1000" autocomplete="off">
+            <button type="button" class="action-btn" id="profileMessagesComposeSend">SEND</button>
+          </div>
+          <div class="th-empty" id="profileMessagesThreadStatus" style="display:none;"></div>
+        </div>
         <div class="panel-title">0FFERS RECE!VED</div>
         <div id="myOffersList"></div>
         <div class="panel-title outgoing-offers-title">0UTG0!NG 0FFERS</div>
@@ -7724,6 +7831,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div id="screenMainframe" style="display:none;">
       <div class="mainframe-section-header">
         <div class="mainframe-subtitle">SELECT A DATABASE</div>
+        <input type="text" class="mainframe-search-input" id="mainframeSearchInput" placeholder="SEARCH C0LLECT!0NS..." autocomplete="off">
       </div>
       <div class="mainframe-carousel-wrap">
         <button type="button" class="mainframe-arrow mainframe-arrow-prev" id="mainframeArrowPrev" aria-label="PREV!0US">◂</button>
@@ -9076,11 +9184,13 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'screenMainframe','mainframeGrid','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
    'globalTopBar','globalTopBarHeading',
-   'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext',
+   'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeSearchInput',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
    'profileBoxGrid','profileTabOffersBadge','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
    'profileTabPanelSearch','profileSearchInput','profileSearchResults','profileSearchBack','profileOffersBack',
+   'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
+   'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -15371,20 +15481,41 @@ const SWAP_HTML = `<!DOCTYPE html>
     e.preventDefault();
     enterMainframeCollection(card.getAttribute('data-collection'));
   });
-  // PREV/NEXT — THREE card-widths (+ gaps) per click, same distance
-  // regardless of which card happens to be first, so this always lands
-  // exactly on a card's own scroll-snap point three cards over.
+  // PREV/NEXT — one full page (however many cards are actually visible
+  // at once — 3 on desktop, 2 on mobile, see the CSS's own breakpoint)
+  // per click, so this always lands exactly on a card's own scroll-snap
+  // point a whole page over, on any screen size.
   function mainframeCardStep(){
-    var card = el.mainframeGrid.querySelector('.mainframe-card');
+    var card = el.mainframeGrid.querySelector('.mainframe-card:not([hidden])');
     if (!card) return 960;
     var gap = parseFloat(getComputedStyle(el.mainframeGrid).columnGap) || 0;
-    return (card.getBoundingClientRect().width + gap) * 3;
+    var cardWidth = card.getBoundingClientRect().width + gap;
+    var visibleCount = Math.max(1, Math.round(el.mainframeGrid.clientWidth / cardWidth));
+    return cardWidth * visibleCount;
   }
   el.mainframeArrowPrev.addEventListener('click', function(){
     el.mainframeGrid.scrollBy({ left: -mainframeCardStep(), behavior: 'smooth' });
   });
   el.mainframeArrowNext.addEventListener('click', function(){
     el.mainframeGrid.scrollBy({ left: mainframeCardStep(), behavior: 'smooth' });
+  });
+  // SEARCH C0LLECT!0NS (reported live) — plain client-side filter over
+  // the carousel's own real cards, matched against each card's own label
+  // text (the $-prefixed name, e.g. "$P!GE0NS") since that's the only
+  // real per-card name available (COLLECTION_META isn't populated for
+  // the browse-only C0M!NG S00N ones this filters just as well). Hiding
+  // non-matches with the real `hidden` attribute (see .mainframe-card
+  // [hidden] in the CSS) rather than removing them keeps every card's own
+  // DOM state (stats, thumbs already resolved) intact for when the
+  // search is cleared again.
+  el.mainframeSearchInput.addEventListener('input', function(){
+    var q = el.mainframeSearchInput.value.trim().toLowerCase();
+    el.mainframeGrid.querySelectorAll('.mainframe-card').forEach(function(card){
+      var label = card.querySelector('.mainframe-card-label');
+      var text = label ? label.textContent.toLowerCase() : '';
+      card.hidden = !!q && text.indexOf(q) === -1;
+    });
+    el.mainframeGrid.scrollTo({ left: 0, behavior: 'auto' });
   });
   // Σκύλλα IS the profile/hub page now (reported live as "we dont need
   // both") — always the same tab either way, connected or not. Reached
@@ -17292,6 +17423,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       btn.classList.toggle('active', btn.getAttribute('data-profilebox') === tab);
     });
     if (tab === 'crown' && crownData === null) loadCrownLeaderboard();
+    // !NB0X always lands on the conversation LIST, never wherever a
+    // previous visit's thread happened to leave things — closeMessageThread
+    // just resets that view state, loadMessagesInbox does the real fetch.
+    if (tab === 'offers' && MY_WALLET){
+      closeMessageThread();
+      loadMessagesInbox();
+    }
     // C0LLECT!0NS is the one real destination that also reveals your own
     // NFT grid (reported live as "we only view our own collections
     // through collection") — browseOwnerCollection sets the scope, does
@@ -17369,6 +17507,130 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.profileSearchBack.addEventListener('click', function(){ switchProfileTab(null); });
   el.profileOffersBack.addEventListener('click', function(){ switchProfileTab(null); });
+  // ---- MESSAGES — real wallet-to-wallet D1-backed messaging (functions/
+  // api/messages-inbox.js/-thread.js/-send.js). The XRPL address format
+  // the send/thread endpoints themselves check against — kept here too so
+  // a bad address never even reaches the network as an obviously-doomed
+  // request. ----
+  var MSG_WALLET_RE = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
+  var currentMessageThreadWallet = null;
+  function messagesErrorText(err){
+    if (err === 'server_misconfigured') return 'MESSAG!NG !SN T SET UP YET 0N TH!S SERVER.';
+    if (err === 'no_session' || err === 'invalid_session') return 'S!GN !N T0 USE MESSAG!NG.';
+    if (err === 'rate_limited') return 'T00 MANY MESSAGES — WA!T A M0MENT.';
+    if (err === 'message_too_long') return 'MESSAGE T00 L0NG.';
+    if (err === 'invalid_to_wallet' || err === 'invalid_wallet') return 'N0T A VAL!D WALLET ADDRESS.';
+    if (err === 'cannot_message_self') return 'CAN T MESSAGE Y0UR 0WN WALLET.';
+    return 'ERR0R — TRY AGA!N.';
+  }
+  function renderMessagesList(items){
+    el.profileMessagesList.innerHTML = !items.length ? '<div class="th-empty">N0 MESSAGES YET.</div>' : items.map(function(row){
+      var preview = (row.lastFromMe ? 'Y0U: ' : '') + row.lastMessage;
+      return '<div class="profile-msg-row' + (row.unreadCount > 0 ? ' unread' : '') + '" data-wallet="' + escapeHtml(row.wallet) + '">' +
+        '<div class="profile-msg-row-text">' +
+          '<div class="profile-msg-row-wallet">' + escapeHtml(row.walletShort) + '</div>' +
+          '<div class="profile-msg-row-preview">' + escapeHtml(preview) + '</div>' +
+        '</div>' +
+        '<div class="profile-msg-row-meta">' +
+          '<div class="profile-msg-row-time">' + relativeTimeText(new Date(row.lastAt * 1000)) + '</div>' +
+          (row.unreadCount > 0 ? '<div class="profile-msg-row-unread">' + row.unreadCount + '</div>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+  function loadMessagesInbox(){
+    el.profileMessagesList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+    fetch('/api/messages-inbox').then(function(r){ return r.json(); }).then(function(data){
+      if (!data || data.error){ el.profileMessagesList.innerHTML = '<div class="th-empty">' + messagesErrorText(data && data.error) + '</div>'; return; }
+      renderMessagesList(data.items || []);
+    }).catch(function(){
+      el.profileMessagesList.innerHTML = '<div class="th-empty">ERR0R L0AD!NG MESSAGES.</div>';
+    });
+  }
+  function renderMessageThread(items){
+    el.profileMessagesThreadList.innerHTML = !items.length ? '<div class="th-empty">N0 MESSAGES YET — SAY H!.</div>' : items.map(function(m){
+      return '<div class="profile-msg-bubble ' + (m.fromMe ? 'profile-msg-bubble-mine' : 'profile-msg-bubble-theirs') + '">' +
+        escapeHtml(m.body) +
+        '<div class="profile-msg-bubble-time">' + relativeTimeText(new Date(m.createdAt * 1000)) + '</div>' +
+      '</div>';
+    }).join('');
+    el.profileMessagesThreadList.scrollTop = el.profileMessagesThreadList.scrollHeight;
+  }
+  function openMessageThread(wallet){
+    currentMessageThreadWallet = wallet;
+    el.profileMessagesListView.style.display = 'none';
+    el.profileMessagesThreadView.style.display = '';
+    el.profileMessagesThreadTitle.textContent = shortAddr(wallet);
+    el.profileMessagesThreadStatus.style.display = 'none';
+    el.profileMessagesThreadList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+    fetch('/api/messages-thread?wallet=' + encodeURIComponent(wallet)).then(function(r){ return r.json(); }).then(function(data){
+      if (currentMessageThreadWallet !== wallet) return;
+      if (!data || data.error){ el.profileMessagesThreadList.innerHTML = '<div class="th-empty">' + messagesErrorText(data && data.error) + '</div>'; return; }
+      renderMessageThread(data.items || []);
+    }).catch(function(){
+      if (currentMessageThreadWallet === wallet) el.profileMessagesThreadList.innerHTML = '<div class="th-empty">ERR0R L0AD!NG MESSAGES.</div>';
+    });
+  }
+  function closeMessageThread(){
+    currentMessageThreadWallet = null;
+    el.profileMessagesThreadView.style.display = 'none';
+    el.profileMessagesListView.style.display = '';
+    el.profileMessagesNewPrompt.style.display = 'none';
+    el.profileMessagesNewWalletInput.value = '';
+  }
+  el.profileMessagesList.addEventListener('click', function(e){
+    var row = e.target.closest('.profile-msg-row');
+    if (row) openMessageThread(row.getAttribute('data-wallet'));
+  });
+  el.profileMessagesNewBtn.addEventListener('click', function(){
+    el.profileMessagesNewPrompt.style.display = '';
+    el.profileMessagesNewWalletInput.focus();
+  });
+  el.profileMessagesNewCancelBtn.addEventListener('click', function(){
+    el.profileMessagesNewPrompt.style.display = 'none';
+    el.profileMessagesNewWalletInput.value = '';
+  });
+  el.profileMessagesNewStartBtn.addEventListener('click', function(){
+    var wallet = el.profileMessagesNewWalletInput.value.trim();
+    if (!MSG_WALLET_RE.test(wallet)){ alert('N0T A VAL!D WALLET ADDRESS.'); return; }
+    if (wallet === MY_WALLET){ alert('CAN T MESSAGE Y0UR 0WN WALLET.'); return; }
+    el.profileMessagesNewPrompt.style.display = 'none';
+    el.profileMessagesNewWalletInput.value = '';
+    openMessageThread(wallet);
+  });
+  el.profileMessagesThreadBack.addEventListener('click', closeMessageThread);
+  function sendCurrentMessage(){
+    var text = el.profileMessagesComposeInput.value.trim();
+    var wallet = currentMessageThreadWallet;
+    if (!text || !wallet) return;
+    el.profileMessagesComposeInput.disabled = true;
+    el.profileMessagesComposeSend.disabled = true;
+    fetch('/api/messages-send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ toWallet: wallet, body: text })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      el.profileMessagesComposeInput.disabled = false;
+      el.profileMessagesComposeSend.disabled = false;
+      if (!data || data.error){
+        el.profileMessagesThreadStatus.style.display = '';
+        el.profileMessagesThreadStatus.textContent = messagesErrorText(data && data.error);
+        return;
+      }
+      el.profileMessagesThreadStatus.style.display = 'none';
+      el.profileMessagesComposeInput.value = '';
+      if (currentMessageThreadWallet === wallet) openMessageThread(wallet);
+    }).catch(function(){
+      el.profileMessagesComposeInput.disabled = false;
+      el.profileMessagesComposeSend.disabled = false;
+      el.profileMessagesThreadStatus.style.display = '';
+      el.profileMessagesThreadStatus.textContent = 'ERR0R SEND!NG — TRY AGA!N.';
+    });
+  }
+  el.profileMessagesComposeSend.addEventListener('click', sendCurrentMessage);
+  el.profileMessagesComposeInput.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') sendCurrentMessage();
+  });
   function loadProfilePanel(){
     // Always starts open on a fresh visit to PR0F!LE, even if it was
     // collapsed last time this session — reported live as wanting MY
