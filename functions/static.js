@@ -7206,12 +7206,21 @@ const SWAP_HTML = `<!DOCTYPE html>
      (nothing behind it to go back to — reported live, "for the first
      page we only need one right arrow"); NEXT hides the same way once
      you're on the last page. */
+  /* Capped to the same max-width as .mainframe-grid (was uncapped, so
+     the arrows below — position:absolute against THIS element's own
+     edges, not the grid's — sat pinned to the far edge of the viewport
+     on any screen wider than 1300px, way out past the actual card row.
+     Matching the cap here keeps them right next to the real thumbnails
+     at any width, and lets the offsets below be small on purpose. */
   .mainframe-carousel-wrap{
     position:relative;
     display:flex;
     align-items:stretch;
     flex:1 1 auto;
     min-height:0;
+    width:100%;
+    max-width:1300px;
+    margin:0 auto;
   }
   .mainframe-grid{
     display:grid;
@@ -7219,9 +7228,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     grid-template-rows:repeat(2, 1fr);
     gap:1.25rem;
     width:100%;
-    max-width:1300px;
     height:100%;
-    margin:0 auto;
     padding:0 1rem;
     overflow:hidden;
   }
@@ -7546,8 +7553,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
   }
   .mainframe-arrow:hover{ border-color:var(--cyan-dim); background:rgba(20,21,26,0.95); transform:translateY(-50%) scale(1.08); }
-  .mainframe-arrow-prev{ left:0.25rem; }
-  .mainframe-arrow-next{ right:0.25rem; }
+  /* Sit inside the grid's own 1rem side padding, close to the actual
+     card edge (was 0.25rem off the carousel-wrap's outer edge — reported
+     live as wanting them closer to the thumbnails). */
+  .mainframe-arrow-prev{ left:0.5rem; }
+  .mainframe-arrow-next{ right:0.5rem; }
   .mainframe-arrow[hidden]{ display:none; }
 </style>
 </head>
