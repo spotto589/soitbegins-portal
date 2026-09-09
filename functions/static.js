@@ -273,10 +273,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      keep working — their own scrollbar-width:none/::-webkit-scrollbar{
      display:none} rules are scoped to a specific element, which beats
      this unscoped, universal one regardless of source order. */
-  *{ scrollbar-width:thin; scrollbar-color:var(--cyan-dim) rgba(255,255,255,0.04); }
-  ::-webkit-scrollbar{ width:10px; height:10px; }
+  *{ scrollbar-width:auto; scrollbar-color:var(--cyan-dim) rgba(255,255,255,0.04); }
+  ::-webkit-scrollbar{ width:16px; height:16px; }
   ::-webkit-scrollbar-track{ background:rgba(255,255,255,0.04); }
-  ::-webkit-scrollbar-thumb{ background:var(--cyan-dim); border-radius:6px; border:2px solid transparent; background-clip:padding-box; }
+  ::-webkit-scrollbar-thumb{ background:var(--cyan-dim); border-radius:8px; border:3px solid transparent; background-clip:padding-box; }
   ::-webkit-scrollbar-thumb:hover{ background:var(--cyan); }
   ::-webkit-scrollbar-corner{ background:transparent; }
   /* overflow-x:hidden on BOTH html and body — body alone isn't enough on
