@@ -6849,12 +6849,19 @@ const SWAP_HTML = `<!DOCTYPE html>
      the headline. A top divider (the same glowing-line device the
      subtitle below already uses via ::after) visually splits it from the
      hero block above. */
+  /* Grid, not flex: a real empty 1fr column on the left mirrors the 1fr
+     column SEARCH C0LLECT!0NS sits in on the right, so SELECT A DATABASE
+     (the auto-sized middle column) lands genuinely centred on the row
+     regardless of the search box's own width — a flex ml-auto push here
+     only shoves the title off-centre instead (reported live). The right
+     column's right edge lines up with the grid's own right edge below
+     (same 1rem side padding as .mainframe-grid), so the search box ends
+     up in line with the rightmost card. */
   .mainframe-section-header{
     flex:0 0 auto;
-    display:flex;
-    flex-direction:row;
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
     align-items:center;
-    justify-content:center;
     gap:1rem;
     margin-top:1.5rem;
     padding-top:1.25rem;
@@ -6862,13 +6869,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding-right:1rem;
     position:relative;
   }
-  /* Sits to the right of SELECT A DATABASE (reported live) — client-side
-     filter over the carousel's own real cards (see mainframeSearchInput's
-     own JS), same input styling as every other plain text field on the
-     page (.transfer-wallet-input) rather than a new one. ml-auto pushes
-     it to the right edge instead of sitting glued to the centred title. */
+  .mainframe-subtitle{ grid-column:2; justify-self:center; }
+  /* Right column, pinned to its own right edge (see the header comment
+     above) — client-side filter over the carousel's own real cards (see
+     mainframeSearchInput's own JS), same input styling as every other
+     plain text field on the page (.transfer-wallet-input) rather than a
+     new one. */
   .mainframe-search-input{
-    margin-left:auto;
+    grid-column:3;
+    justify-self:end;
     width:min(240px, 40vw);
     background:rgba(8,9,11,0.6);
     border:1px solid var(--border-mid);
@@ -6883,9 +6892,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-search-input:focus{ outline:none; border-color:var(--cyan); }
   .mainframe-search-input::placeholder{ color:var(--grey-disabled); }
   @media (max-width:760px){
-    .mainframe-section-header{ flex-wrap:wrap; justify-content:center; }
-    .mainframe-subtitle{ flex:1 1 100%; }
-    .mainframe-search-input{ margin-left:0; width:100%; }
+    .mainframe-section-header{ grid-template-columns:1fr; justify-items:center; }
+    .mainframe-subtitle{ grid-column:1; }
+    .mainframe-search-input{ grid-column:1; justify-self:stretch; width:100%; }
   }
   .mainframe-section-header::before{
     content:'';
