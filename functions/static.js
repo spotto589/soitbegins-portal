@@ -7197,19 +7197,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     width:64px; height:2px; background:linear-gradient(90deg, transparent, var(--cyan), transparent);
     box-shadow:0 0 8px var(--cyan-glow);
   }
-  /* ---- Vertical list, not a horizontal carousel any more (reported
-     live — "list the collections vertically, add a scroll bar"). PREV/
-     NEXT (mainframeArrowPrev/Next) are hidden below since a real themed
-     scrollbar on #mainframeGrid now does that job directly; their JS
-     handlers are left wired (harmless no-ops with nothing horizontal
-     left to scroll) rather than ripped out, same reasoning any other
-     "hidden, not deleted" control on this page already follows. Cards
-     kept their original portrait look (art on top, text below) — a first
-     pass here switched to landscape thumbnail-left rows instead, which
-     changed the page's whole look more than asked and got reverted
-     (reported live: "why did the entire design change") — this is just
-     the same cards as before, one to a row instead of three, in a single
-     centred column. */
+  /* ---- Back to the original 3-wide wrapping grid (the "plain 3x2
+     grid" this was before it briefly became a horizontal carousel to
+     fit 10 cards, and briefly a single column after that — reported
+     live both times as changing the look more than asked: "why did the
+     entire design change"/"it was 3 collections wide"). Same 3-per-row
+     card grid as always, just genuinely scrollable DOWN now (overflow-y,
+     real themed scrollbar) instead of being capped to whatever fit one
+     screen or paged sideways — this is the one actual change: vertical
+     scroll instead of horizontal. PREV/NEXT (mainframeArrowPrev/Next)
+     are hidden below since the scrollbar does that job now; their JS
+     handlers are left wired (harmless no-ops) rather than ripped out. */
   .mainframe-carousel-wrap{
     position:relative;
     display:block;
@@ -7217,15 +7215,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     min-height:0;
   }
   .mainframe-grid{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:1.1rem;
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    grid-auto-rows:340px;
+    gap:1.25rem;
     width:100%;
-    max-width:460px;
+    max-width:1300px;
     height:100%;
     margin:0 auto;
-    padding:0 0.75rem 1rem;
+    padding:0 1rem 1rem;
     overflow-y:auto;
     overflow-x:hidden;
     /* Themed scrollbar — cyan to match the rest of the page's accent
@@ -7241,9 +7239,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:relative;
     min-width:0;
     min-height:0;
-    flex:0 0 auto;
-    width:100%;
-    height:340px;
+    height:100%;
     display:flex;
     flex-direction:column;
     background:var(--panel-bg-solid);
@@ -7294,8 +7290,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     pointer-events:none;
   }
   @media (max-width:760px){
-    .mainframe-grid{ gap:0.7rem; padding:0 0.4rem 0.75rem; }
-    .mainframe-card{ height:260px; }
+    /* 2 columns on phone width — 3 real cards never fit legibly narrower
+       than that, same call the old fixed 3x2/2x3 grid always made. */
+    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-auto-rows:260px; gap:0.6rem; padding:0 0.5rem 0.75rem; }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
