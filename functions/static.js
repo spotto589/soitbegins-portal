@@ -703,10 +703,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* Prev/next arrows flank the viewport; the row itself is the flex
      container that lays out [arrow][viewport][arrow]. */
-  /* Attached to the top of #flockGridPanel now (not its own separate
-     panel) — a divider + spacing below it is what actually separates it
-     from SEARCH!NG $P!GE0NS DATABASE underneath. */
-  #collectionDetailsPanel{ margin-bottom:1.25rem; padding-bottom:1.25rem; border-bottom:1px solid var(--border-dim); }
+  /* Attached to the BOTTOM of the trustline banner now (reported live —
+     "merge this with the bottom of the trustline banner"; not its own
+     separate box, and no longer the top of #flockGridPanel either) — a
+     divider + spacing ABOVE it is what separates it from the rest of
+     the banner now, flush against the panel's own bottom edge/rounded
+     corners since nothing follows it inside #pigeonsMergedPanel any
+     more. SEARCH!NG $P!GE0NS DATABASE gets its own slight gap from
+     #pigeonsMergedPanel's real margin-bottom instead. */
+  #collectionDetailsPanel{ margin-top:1.25rem; padding-top:1.25rem; border-top:1px solid var(--border-dim); }
   .stats-carousel-row{ display:flex; align-items:center; gap:0.5rem; }
   /* Darker purple fill (not transparent) so these read as real buttons
      against the panel's own mid-purple gradient background, instead of
@@ -7458,6 +7463,52 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button type="button" class="pigeons-calc-close-btn" id="pigeonsCalcCloseBtn">CL0SE</button>
       </div>
     </div>
+
+    <!-- DATABASE-only stats carousel, merged onto the BOTTOM of the
+         trustline banner now (reported live — was its own separate box
+         sitting above SEARCH!NG $P!GE0NS DATABASE with a visible gap on
+         both sides; used to live at the TOP of this same banner even
+         earlier than that, see .pigeons-merged-panel's own comment) —
+         these FL00R/!TEMS/H0LDERS/24H numbers are DATABASE-specific, not
+         relevant chrome on FL0CK/T0P H0LDERS/SALES/CR0WN, so it's hidden
+         there via showTab()'s own dbOnly condition (same id, same JS,
+         just moved again). Still inside #pigeonsMergedPanel (its closing
+         tag is right below this), so it shares that box's own border/
+         shadow/rounded corners instead of looking like a second box. -->
+    <div id="collectionDetailsPanel" style="display:none;">
+      <!-- Auto-rotating strip — one page visible at a time, cycling on
+           a timer instead of three stacked bars, to keep this area
+           compact. -->
+      <div class="stats-carousel" id="statsCarousel">
+      <div class="stats-carousel-row">
+      <button class="stats-carousel-arrow" id="statsPrevBtn" aria-label="PREV!0US">◂</button>
+      <div class="stats-carousel-viewport">
+      <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
+        <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
+        <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY L!STED THR0UGH SCYLLA"><div class="stat-label" id="statScyllaListedLabel">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+        <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
+      </div>
+      <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
+        <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
+        <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
+        <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
+        <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
+      </div>
+      <div class="stats-strip stats-strip-activity stats-page" id="statsStripActivity">
+        <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
+        <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
+        <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES H!ST0RY"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
+      </div>
+      </div>
+      <button class="stats-carousel-arrow" id="statsNextBtn" aria-label="NEXT">▸</button>
+      </div>
+      <div class="stats-carousel-dots" id="statsCarouselDots">
+        <span class="stats-dot active"></span>
+        <span class="stats-dot"></span>
+        <span class="stats-dot"></span>
+      </div>
+      </div>
+    </div>
     </div>
 
     <div class="sw-panel" id="swapOffersPanelWrap" style="display:none;">
@@ -8091,46 +8142,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
 
       <div class="sw-panel" id="flockGridPanel">
-        <!-- DATABASE-only stats carousel, attached to the top of this same
-             box (not its own separate panel) — these FL00R/!TEMS/H0LDERS/
-             24H numbers are DATABASE-specific, not relevant chrome on
-             FL0CK/T0P H0LDERS/SALES/CR0WN, so it's hidden there via
-             showTab()'s own dbOnly condition (same id, same JS, just
-             nested here now instead of sitting above as a sibling). -->
-        <div id="collectionDetailsPanel" style="display:none;">
-          <!-- Auto-rotating strip — one page visible at a time, cycling on
-               a timer instead of three stacked bars, to keep this area
-               compact. -->
-          <div class="stats-carousel" id="statsCarousel">
-          <div class="stats-carousel-row">
-          <button class="stats-carousel-arrow" id="statsPrevBtn" aria-label="PREV!0US">◂</button>
-          <div class="stats-carousel-viewport">
-          <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
-            <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
-            <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY L!STED THR0UGH SCYLLA"><div class="stat-label" id="statScyllaListedLabel">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
-            <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
-          </div>
-          <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
-            <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
-            <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
-            <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
-            <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
-          </div>
-          <div class="stats-strip stats-strip-activity stats-page" id="statsStripActivity">
-            <div class="stat-tile"><div class="stat-label">24H NFTS TRADED</div><div class="stat-value" id="statTraded24h">…</div></div>
-            <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
-            <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES H!ST0RY"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
-          </div>
-          </div>
-          <button class="stats-carousel-arrow" id="statsNextBtn" aria-label="NEXT">▸</button>
-          </div>
-          <div class="stats-carousel-dots" id="statsCarouselDots">
-            <span class="stats-dot active"></span>
-            <span class="stats-dot"></span>
-            <span class="stats-dot"></span>
-          </div>
-          </div>
-        </div>
+        <!-- The DATABASE-only stats carousel (#collectionDetailsPanel)
+             moved back onto the BOTTOM of the trustline banner itself
+             (reported live — "merge this with the bottom of the trustline
+             banner") — see it now sitting inside #pigeonsMergedPanel,
+             right after #pigeonsCalcModal, instead of living here at the
+             top of this box. Only a slight gap (this panel's own real
+             margin-top, see .sw-panel/.pigeons-merged-panel spacing)
+             separates that merged banner+carousel from SEARCH!NG
+             $P!GE0NS DATABASE below now. -->
         <div class="panel-title search-panel-title" id="searchPanelTitle">SEARCH!NG $P!GE0NS DATABASE</div>
         <div class="search-panel-subtitle" id="searchPanelSubtitle" style="display:none;"></div>
         <!-- WALLET SC0PE BANNER — reported live as wanting to actually see a
