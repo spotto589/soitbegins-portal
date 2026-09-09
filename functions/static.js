@@ -6911,25 +6911,26 @@ const SWAP_HTML = `<!DOCTYPE html>
      the headline. A top divider (the same glowing-line device the
      subtitle below already uses via ::after) visually splits it from the
      hero block above. */
-  /* Grid, not flex: a real empty 1fr column on the left mirrors the 1fr
-     column SEARCH C0LLECT!0NS sits in on the right, so SELECT A DATABASE
-     (the auto-sized middle column) lands genuinely centred on the row
-     regardless of the search box's own width — a flex ml-auto push here
-     only shoves the title off-centre instead (reported live). The right
-     column's right edge needs to line up with the grid's own right edge
-     below — same max-width:1300px/margin:0 auto/padding:0 1rem as
-     .mainframe-grid, not just the same SIDE padding: past ~1332px
-     viewport width .mainframe-grid caps out and centres itself with real
-     side margins while this header (padding alone, no cap) kept spanning
-     the full width, so the search box drifted past the last card's own
-     right edge the wider the screen got (confirmed live — still visibly
-     off at a normal 1920px desktop width even after matching the 1rem
-     side padding alone). */
+  /* Flex, with the title taken clean out of flow (position:absolute,
+     centred on the header's own box) rather than relying on the two side
+     controls being equal width — S0RT BY (left, plain native select) and
+     SEARCH C0LLECT!0NS (right, ~240px text input) are never actually the
+     same width as each other, and a symmetric 1fr/auto/1fr grid trick
+     (an earlier pass here) only truly centres the middle column when its
+     neighbours match — asymmetric content just drags the "centre" toward
+     the wider side. Absolute + left:50%/translateX(-50%) centres against
+     the header box itself regardless of what either side control weighs.
+     justify-content:space-between then only has the two real flex items
+     (S0RT BY, SEARCH) left to place, pinning them to opposite edges —
+     same max-width:1300px/margin:0 auto cap as .mainframe-grid so those
+     edges line up with the grid's own left/right edges at every viewport
+     width (see the grid's own comment on why the cap specifically
+     matters, not just matching side padding). */
   .mainframe-section-header{
     flex:0 0 auto;
-    display:grid;
-    grid-template-columns:1fr auto 1fr;
+    display:flex;
     align-items:center;
+    justify-content:space-between;
     gap:1rem;
     width:100%;
     max-width:1300px;
@@ -6939,15 +6940,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding-right:1rem;
     position:relative;
   }
-  .mainframe-subtitle{ grid-column:2; justify-self:center; }
-  /* Right column, pinned to its own right edge (see the header comment
-     above) — client-side filter over the carousel's own real cards (see
+  .mainframe-sort-select{ flex:0 0 auto; }
+  /* Client-side filter over the carousel's own real cards (see
      mainframeSearchInput's own JS), same input styling as every other
      plain text field on the page (.transfer-wallet-input) rather than a
      new one. */
   .mainframe-search-input{
-    grid-column:3;
-    justify-self:end;
+    flex:0 0 auto;
     width:min(240px, 40vw);
     background:rgba(8,9,11,0.6);
     border:1px solid var(--border-mid);
@@ -6962,9 +6961,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-search-input:focus{ outline:none; border-color:var(--cyan); }
   .mainframe-search-input::placeholder{ color:var(--grey-disabled); }
   @media (max-width:760px){
-    .mainframe-section-header{ grid-template-columns:1fr; justify-items:center; }
-    .mainframe-subtitle{ grid-column:1; }
-    .mainframe-search-input{ grid-column:1; justify-self:stretch; width:100%; }
+    /* The absolute-centred title only works while it can float over side
+       controls with room to spare — stacked and centred in normal flow
+       instead once genuinely narrow, same as the old grid fallback did.
+       #screenMainframe-scoped (id + class beats the plain-class
+       .mainframe-subtitle rule below regardless of source order) — that
+       rule sits AFTER this media block in the file, so a same-specificity
+       version here previously lost to it even inside the sub-760px range
+       it's meant to own (confirmed live: SORT BY and SELECT A DATABASE
+       rendered stacked on top of each other, position never actually
+       left "absolute"). */
+    .mainframe-section-header{ flex-direction:column; flex-wrap:wrap; }
+    #screenMainframe .mainframe-subtitle{ position:static; transform:none; order:-1; }
+    .mainframe-sort-select, .mainframe-search-input{ width:100%; }
   }
   .mainframe-section-header::before{
     content:'';
@@ -6987,14 +6996,29 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* SELECT A C0LLECT!0N — the smaller of the two lines, flashes slowly
      rather than sitting static, nudging you toward actually picking one
      of the six cards below rather than just labelling them. */
+  /* position:absolute + centred against .mainframe-section-header's own
+     box (see that rule's own comment on why — S0RT BY/SEARCH C0LLECT!0NS
+     are different widths, so a flex/grid trick relying on symmetric
+     neighbours doesn't truly centre this). This rule's position/left/top/
+     transform/margin used to instead live in a separate, earlier block
+     right after .mainframe-section-header itself — same selector, same
+     specificity, so THIS later block (source order, not specificity)
+     silently won and put the title back in normal flow (confirmed live:
+     computed position came back "relative", not "absolute", title landed
+     off-centre next to S0RT BY instead of centred over the row). Kept as
+     one single rule now so there's only one place this can be set. */
   .mainframe-subtitle{
-    position:relative;
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%, -50%);
     text-align:center;
     font-size:clamp(16px, 2vw, 22px);
     letter-spacing:0.25em;
     color:var(--grey);
     text-transform:uppercase;
-    margin:0.75rem 0 1.25rem;
+    margin:0;
+    white-space:nowrap;
     padding-bottom:0.75rem;
     animation:mainframe-subtitle-flash 2.6s ease-in-out infinite;
   }
@@ -8031,6 +8055,22 @@ const SWAP_HTML = `<!DOCTYPE html>
          clicking it from the DATABASE dropdown already does today. -->
     <div id="screenMainframe" style="display:none;">
       <div class="mainframe-section-header">
+        <!-- S0RT BY on the left, mirroring SEARCH C0LLECT!0NS on the right
+             (reported live) — a plain native select, same .sort-select
+             styling/pattern as VIEW ::/DATABASE's own dropdowns elsewhere
+             on the page, not a new custom flyout. AGE stays disabled/
+             "C0M!NG S00N" until real per-collection mint-date data exists
+             to sort by (same treatment B0XED V!EW's own option already
+             gets on #dbViewSelect). Re-sorts mainframeGrid's own cards in
+             place — see mainframeSortSelect's own JS. -->
+        <select class="sort-select mainframe-sort-select" id="mainframeSortSelect">
+          <option value="" selected disabled>S0RT BY</option>
+          <option value="az">A-Z</option>
+          <option value="marketcap">MARKETCAP</option>
+          <option value="liquidity">L!QU!D!TY</option>
+          <option value="holders">H0LDER C0UNT</option>
+          <option value="age" disabled>AGE (C0M!NG S00N)</option>
+        </select>
         <div class="mainframe-subtitle">SELECT A DATABASE</div>
         <input type="text" class="mainframe-search-input" id="mainframeSearchInput" placeholder="SEARCH C0LLECT!0NS..." autocomplete="off">
       </div>
@@ -9379,7 +9419,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'screenMainframe','mainframeGrid','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
    'globalTopBar','globalTopBarHeading',
-   'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeSearchInput',
+   'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeSearchInput','mainframeSortSelect',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
    'profileBoxGrid','profileTabOffersBadge','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
@@ -15836,6 +15876,44 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
     el.mainframeGrid.scrollTo({ left: 0, behavior: 'auto' });
   });
+  // S0RT BY (reported live, mirroring SEARCH C0LLECT!0NS on the other
+  // side) — re-orders the real card elements in place (appendChild on an
+  // already-attached node moves it, doesn't clone it), so every card's
+  // own resolved stats/thumb stay intact same as SEARCH's hide-don't-
+  // remove approach just above. MARKETCAP/L!QU!D!TY/H0LDER C0UNT read off
+  // each card's own data-marketcap/-liquidity/-holders (set once real
+  // numbers come back from the stats/DexScreener fetch below — see that
+  // block's own comment), highest first; a collection with no real number
+  // yet (SEAL/FUZZY/C0NSP!RACY have no holders, C0NSP!RACY has no indexed
+  // DexScreener pool at all — see that fetch's own comment) sorts to the
+  // bottom rather than colliding with real 0s. A-Z reads the card's own
+  // visible $LABEL text, always present regardless of any fetch.
+  function sortMainframeCards(mode){
+    if (!mode) return;
+    var cards = Array.prototype.slice.call(el.mainframeGrid.querySelectorAll('.mainframe-card'));
+    var cmp;
+    if (mode === 'az'){
+      cmp = function(a, b){
+        var la = (a.querySelector('.mainframe-card-label') || {}).textContent || '';
+        var lb = (b.querySelector('.mainframe-card-label') || {}).textContent || '';
+        return la.localeCompare(lb);
+      };
+    } else {
+      cmp = function(a, b){
+        var va = a.dataset[mode] ? parseFloat(a.dataset[mode]) : null;
+        var vb = b.dataset[mode] ? parseFloat(b.dataset[mode]) : null;
+        if (va === null && vb === null) return 0;
+        if (va === null) return 1;
+        if (vb === null) return -1;
+        return vb - va;
+      };
+    }
+    cards.sort(cmp).forEach(function(card){ el.mainframeGrid.appendChild(card); });
+    el.mainframeGrid.scrollTo({ left: 0, behavior: 'auto' });
+  }
+  el.mainframeSortSelect.addEventListener('change', function(){
+    sortMainframeCards(el.mainframeSortSelect.value);
+  });
   // Σκύλλα IS the profile/hub page now (reported live as "we dont need
   // both") — always the same tab either way, connected or not. Reached
   // through the real Σκύλλα tab button in #globalTopBar's own strip now
@@ -15905,6 +15983,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (rate.liquidityUsd != null) comboParts.push(stat(formatUsdAbbrev(rate.liquidityUsd), 'L!QU!D!TY'));
       if (comboParts.length) html += '<div class="stat-row">' + comboParts.join(' :: ') + '</div>';
       el[cfg.target].innerHTML = html;
+      // S0RT BY's own real numbers (see sortMainframeCards) — stashed on
+      // the card itself, not just rendered as text, so re-sorting doesn't
+      // need to re-parse the formatted "$1.2M" strings back into numbers.
+      var cardEl = el[cfg.target].closest('.mainframe-card');
+      if (cardEl){
+        if (rate.marketCapUsd != null) cardEl.dataset.marketcap = rate.marketCapUsd;
+        if (rate.liquidityUsd != null) cardEl.dataset.liquidity = rate.liquidityUsd;
+        if (stats.holders != null) cardEl.dataset.holders = stats.holders;
+      }
     });
   });
   el.dbSelectFlyout.addEventListener('click', function(e){
