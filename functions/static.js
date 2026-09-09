@@ -15604,7 +15604,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // text (the $-prefixed name, e.g. "$P!GE0NS") since that's the only
   // real per-card name available (COLLECTION_META isn't populated for
   // the browse-only C0M!NG S00N ones this filters just as well). Hiding
-  // non-matches with the real `hidden` attribute (see .mainframe-card
+  // non-matches with the real 'hidden' attribute (see .mainframe-card
   // [hidden] in the CSS) rather than removing them keeps every card's own
   // DOM state (stats, thumbs already resolved) intact for when the
   // search is cleared again.
