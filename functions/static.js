@@ -11115,6 +11115,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   function isWatchlisted(nftId){
     return getWatchlist().some(function(w){ return w.nftId === nftId; });
   }
+  // Signed-out visitors get no ☆ at all now (reported live — watchlisting
+  // should be a logged-in feature only), not just a working-but-"guest"-
+  // scoped one: watchlistKey's own 'guest' fallback let a signed-out
+  // visitor start a list that would silently orphan the moment they
+  // logged in (a real wallet key is never 'guest'), and Σκύλλα (where the
+  // list actually shows, see renderProfileWatchlist) already requires a
+  // connected wallet to reach at all. Both result-card renderers below
+  // call this instead of building the button inline, so there's one
+  // single place gating it.
+  function watchlistToggleHtml(p){
+    if (!MY_WALLET) return '';
+    var watching = isWatchlisted(p.nftId);
+    return '<button class="watchlist-toggle' + (watching ? ' watching' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="' + (watching ? 'REM0VE FR0M WATCHL!ST' : 'ADD T0 WATCHL!ST') + '">' + (watching ? '★' : '☆') + '</button>';
+  }
   // Returns the new membership state (true = now watching) so the caller
   // can flip every matching button's own look in place instead of a full
   // re-render.
@@ -11210,7 +11224,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
             img +
             '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
-            '<button class="watchlist-toggle' + (isWatchlisted(p.nftId) ? ' watching' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="' + (isWatchlisted(p.nftId) ? 'REM0VE FR0M WATCHL!ST' : 'ADD T0 WATCHL!ST') + '">' + (isWatchlisted(p.nftId) ? '★' : '☆') + '</button>' +
+            watchlistToggleHtml(p) +
           '</div>' +
           pigeonsActionHtml +
         '</div>' +
@@ -11279,8 +11293,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? '<div class="thumb-listing-badge' + (p.owner === MY_WALLET ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>'
       : '';
     var ownedBadge = (p.owner === MY_WALLET && !p.scyllaListing) ? '<div class="thumb-owned-badge">0WNED</div>' : '';
-    var watching = isWatchlisted(p.nftId);
-    var watchlistBtn = '<button class="watchlist-toggle' + (watching ? ' watching' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="' + (watching ? 'REM0VE FR0M WATCHL!ST' : 'ADD T0 WATCHL!ST') + '">' + (watching ? '★' : '☆') + '</button>';
+    var watchlistBtn = watchlistToggleHtml(p);
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">' + collectionItemLabel() + ' ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
