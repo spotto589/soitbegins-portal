@@ -3916,6 +3916,31 @@ const SWAP_HTML = `<!DOCTYPE html>
      "the number is the point" treatment SALES H!ST0RY's own price gets. */
   .thumb-buy-label{ font-size:13px; letter-spacing:0.08em; opacity:0.85; }
   .thumb-buy-price{ font-family:var(--font-display); font-size:19px; font-weight:800; letter-spacing:0.01em; }
+  /* BUY N0W stacked above 0FFER (reported live, was side by side — see
+     pigeonsActionBoxHtml's own comment) — column instead of row, and BUY
+     N0W's label+price now sit on ONE line ("BUY N0W :: 123K $P!GE0NS")
+     instead of stacked inside the button itself, with the real price in
+     --green (the site's own "an amount, not just a label" colour
+     language — same reasoning as formatCompactAmount's green elsewhere)
+     rather than the collection accent it inherited by just being inside
+     the accent-coloured button. 0FFER drops out of the shared flex:1 1 0
+     row-split (.owned-action-row's own rule, further up) to become a
+     small, plain, centred secondary control underneath instead of a
+     second full-width bar — it's the slower, non-committal path, so it
+     should read as clearly secondary next to BUY N0W now that they're no
+     longer competing for the same row's width. */
+  .owned-action-row-buy{ flex-direction:column; align-items:center; }
+  .owned-action-row-buy .thumb-buy-btn{ flex:0 0 auto; width:100%; flex-direction:row; justify-content:center; gap:0.4em; }
+  .owned-action-row-buy .thumb-buy-price{ color:var(--green); text-shadow:0 0 8px var(--green-glow); }
+  .owned-action-row-buy .offer-open-modal-btn-secondary{
+    flex:0 0 auto;
+    width:auto;
+    font-size:12px;
+    padding:0.5em 1.4em;
+    border-color:var(--border-mid);
+    color:var(--grey);
+  }
+  .owned-action-row-buy .offer-open-modal-btn-secondary:hover{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
   /* 0FFER — same Σκύλλα-button recipe as BUY N0W (see its own comment
      above), same per-collection accent, just without BUY N0W's own
      glow/pulse: BUY N0W is the real, immediate action here (a live
@@ -10819,17 +10844,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     // that opens the shared amount-entry popup (see openAmountEntryModal
     // and .offer-open-modal-btn in wireResultClicks) to actually type
     // the number.
-    // BUY N0W + 0FFER sit side by side (.owned-action-row, same pairing
-    // CANCEL/TRANSFER already uses) instead of stacked — when there's no
-    // real listing (canBuy false) 0FFER is still wrapped in the same row
-    // alone, so its width behaves identically either way.
+    // BUY N0W stacked above 0FFER now (reported live), not side by side —
+    // .owned-action-row-buy (see the CSS) makes BUY N0W the one real full-
+    // width bar with its price inline in green, 0FFER a smaller secondary
+    // control centred underneath. When there's no real listing (canBuy
+    // false) 0FFER is still wrapped in the plain .owned-action-row alone,
+    // full width, same as before.
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      '<div class="owned-action-row">' +
+      '<div class="owned-action-row' + (canBuy ? ' owned-action-row-buy' : '') + '">' +
         (canBuy ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<span class="thumb-buy-label">BUY N0W</span>' +
+          '<span class="thumb-buy-label">BUY N0W ::</span>' +
           '<span class="thumb-buy-price">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</span>' +
         '</button>' : '') +
-        '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">0FFER</button>' +
+        '<button class="bar-btn offer-open-modal-btn' + (canBuy ? ' offer-open-modal-btn-secondary' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">0FFER</button>' +
       '</div>' +
     '</div>';
   }
