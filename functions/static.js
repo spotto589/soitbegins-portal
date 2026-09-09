@@ -6916,16 +6916,24 @@ const SWAP_HTML = `<!DOCTYPE html>
      (the auto-sized middle column) lands genuinely centred on the row
      regardless of the search box's own width — a flex ml-auto push here
      only shoves the title off-centre instead (reported live). The right
-     column's right edge lines up with the grid's own right edge below
-     (same 1rem side padding as .mainframe-grid), so the search box ends
-     up in line with the rightmost card. */
+     column's right edge needs to line up with the grid's own right edge
+     below — same max-width:1300px/margin:0 auto/padding:0 1rem as
+     .mainframe-grid, not just the same SIDE padding: past ~1332px
+     viewport width .mainframe-grid caps out and centres itself with real
+     side margins while this header (padding alone, no cap) kept spanning
+     the full width, so the search box drifted past the last card's own
+     right edge the wider the screen got (confirmed live — still visibly
+     off at a normal 1920px desktop width even after matching the 1rem
+     side padding alone). */
   .mainframe-section-header{
     flex:0 0 auto;
     display:grid;
     grid-template-columns:1fr auto 1fr;
     align-items:center;
     gap:1rem;
-    margin-top:1.5rem;
+    width:100%;
+    max-width:1300px;
+    margin:1.5rem auto 0;
     padding-top:1.25rem;
     padding-left:1rem;
     padding-right:1rem;
