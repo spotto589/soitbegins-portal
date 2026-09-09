@@ -7203,11 +7203,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      scrollbar on #mainframeGrid now does that job directly; their JS
      handlers are left wired (harmless no-ops with nothing horizontal
      left to scroll) rather than ripped out, same reasoning any other
-     "hidden, not deleted" control on this page already follows. Each row
-     is now landscape (art thumbnail left, name/stats/BUY right) instead
-     of the old full-height portrait card — reads as a real scannable
-     list instead of a wall of tall cards to scroll through one at a
-     time. */
+     "hidden, not deleted" control on this page already follows. Cards
+     kept their original portrait look (art on top, text below) — a first
+     pass here switched to landscape thumbnail-left rows instead, which
+     changed the page's whole look more than asked and got reverted
+     (reported live: "why did the entire design change") — this is just
+     the same cards as before, one to a row instead of three, in a single
+     centred column. */
   .mainframe-carousel-wrap{
     position:relative;
     display:block;
@@ -7217,9 +7219,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-grid{
     display:flex;
     flex-direction:column;
-    gap:0.85rem;
+    align-items:center;
+    gap:1.1rem;
     width:100%;
-    max-width:760px;
+    max-width:460px;
     height:100%;
     margin:0 auto;
     padding:0 0.75rem 1rem;
@@ -7239,15 +7242,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     min-width:0;
     min-height:0;
     flex:0 0 auto;
+    width:100%;
+    height:340px;
     display:flex;
-    flex-direction:row;
-    align-items:stretch;
+    flex-direction:column;
     background:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
     padding:0;
     overflow:hidden;
-    text-align:left;
+    text-align:center;
     cursor:pointer;
     transition:border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
@@ -7290,10 +7294,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     pointer-events:none;
   }
   @media (max-width:760px){
-    /* Same vertical list as desktop, just a narrower thumbnail so the
-       name/stats/BUY column keeps enough room on a phone-width row. */
-    .mainframe-grid{ gap:0.6rem; padding:0 0.4rem 0.75rem; }
-    .mainframe-card-art{ flex-basis:92px; }
+    .mainframe-grid{ gap:0.7rem; padding:0 0.4rem 0.75rem; }
+    .mainframe-card{ height:260px; }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
@@ -7307,23 +7309,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* The collection's own artwork — a real photo/logo dropped in under
      /assets/mainframe/ (see mainframe-card-art's background-image,
-     per-card in the HTML), with a side gradient in that same accent
-     colour so the label/tag beside it stay readable over any image
+     per-card in the HTML), with a bottom gradient in that same accent
+     colour so the label/tag underneath stay readable over any image
      without a separate dark strip breaking the art. Until real art is in
      place for a card, the gradient alone still reads fine as a coloured
-     tile — never a blank/broken-image box. Fixed square thumbnail on the
-     left of each row now (list layout, not a full-height portrait card
-     any more) — flex:0 0 <width> instead of the old flex:1 1 auto that
-     filled whatever vertical room a tall carousel card had. */
+     tile — never a blank/broken-image box. flex:1 1 auto fills whatever
+     vertical room is left in the card's own fixed height (see
+     .mainframe-card) above the body below it. */
   .mainframe-card-art{
     position:relative;
-    flex:0 0 128px;
+    flex:1 1 auto;
     min-height:0;
     background-size:cover;
     background-position:center top;
     background-color:rgba(var(--card-accent, 61,243,236), 0.14);
-    background-image:linear-gradient(90deg, rgba(var(--card-accent, 61,243,236),0.08) 0%, rgba(6,6,7,0.92) 100%), var(--card-art, none);
-    border-right:1px solid rgba(var(--card-accent, 61,243,236), 0.35);
+    background-image:linear-gradient(180deg, rgba(var(--card-accent, 61,243,236),0.08) 0%, rgba(6,6,7,0.92) 100%), var(--card-art, none);
+    border-bottom:1px solid rgba(var(--card-accent, 61,243,236), 0.35);
     transition:transform 0.4s ease;
   }
   .mainframe-card:hover .mainframe-card-art{ transform:scale(1.05); }
@@ -7357,11 +7358,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      (reported live). Zoomed in specifically for this one so the circle
      itself fills the whole card edge to edge instead. */
   .mainframe-card-bear .mainframe-card-art{ background-size:180%; }
-  /* Body sits to the right of the fixed-width art thumbnail now (list
-     row layout) — flex:1 so it takes whatever width the row has left,
-     min-width:0 so long stats text can still ellipsis/wrap instead of
-     forcing the row wider than the list. */
-  .mainframe-card-body{ flex:1 1 auto; min-width:0; padding:0.6rem 0.9rem; display:flex; flex-direction:column; justify-content:center; }
+  .mainframe-card-body{ flex:0 0 auto; padding:0.75rem 1rem 0.85rem; }
   /* Letter-spacing bumped from 0.02em to 0.06em and a soft glow in the
      card's own accent colour added — reported live as reading cramped/
      hard to scan at the tighter spacing, especially with "!"/"0" glyphs
@@ -7370,11 +7367,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      page reads as six distinct identities, not one repeated template. */
   .mainframe-card-label{
     font-family:var(--font-display);
-    font-size:clamp(15px, 1.6vw, 19px);
+    font-size:clamp(20px, 2.1vw, 28px);
     font-weight:700;
     color:#fff;
-    letter-spacing:0.05em;
-    line-height:1.25;
+    letter-spacing:0.06em;
+    line-height:1.3;
     text-shadow:0 0 14px rgba(var(--card-accent, 61,243,236), 0.65);
   }
   /* Real, live numbers (items/holders/volume — see the stats fetch loop),
@@ -7395,14 +7392,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-stats{
     display:flex;
     flex-direction:column;
-    gap:0.2rem;
+    gap:0.25rem;
     font-family:var(--font-mono);
     font-size:10px;
     letter-spacing:0.05em;
     color:var(--grey);
-    margin-top:0.25rem;
+    margin-top:0.3rem;
   }
-  .mainframe-card-stats .stat-row{ text-align:left; }
+  .mainframe-card-stats .stat-row{ text-align:center; }
   .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
   /* Real per-collection DexScreener link — hidden until its own fetch
      resolves a real dexUrl (see the stats-fetch loop in the script), same
@@ -7492,7 +7489,9 @@ const SWAP_HTML = `<!DOCTYPE html>
      file already uses) keeps the tighter sizing tuned for its own real
      width instead of also getting the desktop bump. */
   @media (min-width:761px){
-    .mainframe-card-stats{ font-size:11px; }
+    .mainframe-card-label{ font-size:clamp(20px, 2vw, 30px); }
+    .mainframe-card-stats{ font-size:14px; }
+    .mainframe-card-buy{ font-size:16px; }
   }
   /* At 2 cols x 3 rows (the phone grid, see the max-width:760px switch
      above), each card's actual height on a real phone works out to
