@@ -107,6 +107,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     --pigeon-purple-faint:var(--cyan-faint);
     --pigeon-purple-glow:var(--cyan-glow);
 
+    /* One deliberate off-palette colour, not an alias of --cyan — reported
+       live as wanting the signed-in address itself to stand out in actual
+       blue, distinct from the site's own magenta/cyan/green/red four-
+       colour rule above. Scoped to just the wallet-switch control. */
+    --wallet-blue:#4d9dff;
+    --wallet-blue-glow:rgba(77,157,255,0.5);
+
     /* Started as the ONE deliberate exception to the four-colour rule
        above (just the trustline banner's own background) — now also
        what every real Σκύλλα BUY button site-wide (thumb-buy-btn,
@@ -744,7 +751,24 @@ const SWAP_HTML = `<!DOCTYPE html>
      corners since nothing follows it inside #pigeonsMergedPanel any
      more. SEARCH!NG $P!GE0NS DATABASE gets its own slight gap from
      #pigeonsMergedPanel's real margin-bottom instead. */
-  #collectionDetailsPanel{ margin-top:1.25rem; padding-top:1.25rem; border-top:1px solid var(--border-dim); }
+  /* Same collection-accent gradient as .pigeons-bar-issuer right above it
+     (reported live — the carousel shared that row's border/shadow via
+     #pigeonsMergedPanel already, per this file's own comment on that
+     panel, but never actually picked up its BACKGROUND, so it fell back
+     to the plain page --bg and read as a bolted-on second box instead of
+     one continuous banner). border-top is a translucent white seam now
+     (matches .pigeons-bar-issuer .bar-btn's own border treatment) instead
+     of --border-dim, which was a flat grey line that itself looked like
+     the edge between two different boxes. Horizontal padding now matches
+     .pigeons-bar's own 1.25rem so the carousel's content lines up with
+     the identity row's edges above it instead of running flush to the
+     panel's own edge. */
+  #collectionDetailsPanel{
+    margin-top:0;
+    padding:1.1rem 1.25rem 1rem;
+    background:linear-gradient(90deg, rgba(var(--collection-accent-rgb),0.85), rgba(var(--collection-accent-2-rgb),0.85));
+    border-top:1px solid rgba(255,255,255,0.25);
+  }
   .stats-carousel-row{ display:flex; align-items:center; gap:0.5rem; }
   /* Darker purple fill (not transparent) so these read as real buttons
      against the panel's own mid-purple gradient background, instead of
@@ -833,6 +857,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   .stat-tile-link:hover{ background:var(--cyan-faint); border-color:var(--cyan-dim); }
   .stat-label{ font-size:11.5px; letter-spacing:0.1em; color:var(--grey-dim); margin-bottom:0.5rem; text-transform:uppercase; }
   .stat-value{ font-size:16px; letter-spacing:0.03em; color:var(--white); }
+  /* Now that #collectionDetailsPanel carries the same purple gradient as
+     the trustline banner above it (see that rule's own comment), plain
+     --grey-dim labels lose too much contrast against it — brighter here,
+     scoped to just this panel so .result-stat-stack and other reuses of
+     the same .stat-label/.stat-value classes elsewhere (flat --bg behind
+     them) keep their original, already-readable colours. */
+  #collectionDetailsPanel .stat-label{ color:rgba(255,255,255,0.75); }
+  #collectionDetailsPanel .stat-value{ color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
+  #collectionDetailsPanel .stat-tile-link .stat-value{ color:rgba(255,255,255,0.85); }
   .stat-tile-link .stat-value{ color:var(--grey); }
   .stat-tile-link:hover .stat-value{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
   /* Σκύλλα-native listings — magenta, matching the SCYLLA/target colour language */
@@ -978,8 +1011,68 @@ const SWAP_HTML = `<!DOCTYPE html>
      to it (also grey) blur into one flat, lifeless line. */
   .flock-tab-brand{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
   .flock-tab-count{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
-  .flock-tab-wallet{ color:var(--grey-dim); font-family:var(--font-mono); }
-  .flock-tab-switch-arrow{ display:inline-block; margin-left:0.3em; color:var(--grey-dim); }
+  .flock-tab-wallet{ color:var(--wallet-blue); text-shadow:0 0 6px var(--wallet-blue-glow); font-family:var(--font-mono); font-size:1.15em; font-weight:700; }
+  /* Bigger + a real hit target now that it's an actual switch-account
+     control (see #walletSwitchDropdown below) rather than the old no-op
+     placeholder — was a plain inline glyph too small to reliably tap. */
+  .flock-tab-switch-arrow{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin-left:0.35em;
+    padding:0.1em 0.3em;
+    font-size:1.4em;
+    line-height:1;
+    color:var(--wallet-blue);
+    cursor:pointer;
+    transition:color 0.15s ease, transform 0.15s ease;
+  }
+  .flock-tab-switch-arrow:hover{ color:var(--cyan); }
+  .flock-tab-switch-arrow.wallet-dropdown-open{ transform:rotate(180deg); color:var(--cyan); }
+  #scyllaWalletWrap{ position:relative; display:inline-block; }
+  .wallet-switch-dropdown{
+    position:absolute;
+    top:calc(100% + 0.6em);
+    left:0;
+    min-width:240px;
+    background:var(--panel-bg-solid);
+    border:1px solid var(--border-mid);
+    box-shadow:0 8px 24px rgba(0,0,0,0.5);
+    z-index:40;
+    text-align:left;
+    padding:0.4rem;
+  }
+  .wallet-switch-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:0.6em;
+    padding:0.6em 0.7em;
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--white);
+    cursor:pointer;
+  }
+  .wallet-switch-row:hover{ background:var(--cyan-faint); }
+  .wallet-switch-row-active{ color:var(--wallet-blue); cursor:default; }
+  .wallet-switch-row-active:hover{ background:transparent; }
+  .wallet-switch-row-tag{ font-size:10px; letter-spacing:0.1em; color:var(--grey-dim); }
+  .wallet-switch-add{
+    display:block;
+    width:100%;
+    margin-top:0.2rem;
+    padding:0.6em 0.7em;
+    background:transparent;
+    border:none;
+    border-top:1px solid var(--border-dim);
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:0.06em;
+    color:var(--magenta);
+    text-align:left;
+    cursor:pointer;
+  }
+  .wallet-switch-add:hover{ background:var(--magenta-faint); }
   /* Small notification-dot badge, not a second joined text phrase (see
      updateFlockTabLabel's own comment on why that wrapped badly on
      mobile) — a real count, just compact enough to never itself need to
@@ -7514,9 +7607,10 @@ const SWAP_HTML = `<!DOCTYPE html>
           <circle cx="32" cy="48" r="5" fill="#0b0b09"/>
           <rect x="29" y="50" width="6" height="13" rx="2" fill="#0b0b09"/>
         </svg>
-        <span class="global-top-scylla-text">
+        <span class="global-top-scylla-text" id="scyllaWalletWrap">
           <span id="globalTopBarHeading">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></span>
           <span id="flockTabLabel" class="global-top-scylla-status"></span>
+          <div class="wallet-switch-dropdown" id="walletSwitchDropdown" style="display:none;"></div>
         </span>
       </button>
       <button class="tab-btn" id="swapOffersTabBtn" data-tab="swapoffers">SWAP 0FFERS</button>
@@ -9591,7 +9685,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'globalTopBar','globalTopBarHeading',
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeSearchInput','mainframeSortSelect',
    'mainframeDexThirdeye','mainframeDexBear','mainframeDexCult','mainframeDexSmoki',
-   'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
+   'topTabs','topTabsWrap','flockTabLabel','scyllaWalletWrap','walletSwitchDropdown','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
    'profileBoxGrid','profileTabOffersBadge','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
    'profileTabPanelSearch','profileSearchInput','profileSearchResults','profileSearchBack','profileOffersBack',
@@ -13392,19 +13486,101 @@ const SWAP_HTML = `<!DOCTYPE html>
     // The pigeon count itself is gone from this line entirely (reported
     // live) — it already shows inside SH0W MY FL0CK's own button (see
     // renderTrustlineSummary above), no need for a second copy here too.
-    // Sh0rt address + a ▾ switcher arrow (reported live as wanting to be
-    // able to tell, and later switch, which of several signed-in wallets
-    // is active — the arrow is the real hook for that; only one wallet is
-    // ever actually signed in today, see MY_WALLET's own declaration, so
-    // it's a no-op menu for now rather than pretending multi-wallet
-    // session support already exists server-side). The offer/inbox dot
-    // sits right after the address on the SAME line now (reported live —
-    // was its own line underneath with nothing else on it), not a
-    // separate line of its own.
+    // Sh0rt address (now real blue + a size bump, reported live) + a
+    // bigger, real ▾ switcher arrow — opens #walletSwitchDropdown (see
+    // below) listing every address this browser has signed in as before,
+    // plus a SIGN !NT0 AN0THER entry. The server only ever holds one
+    // active pigeon_session at a time (see connect.js/xaman-signin-status),
+    // so picking a remembered address still runs a real Xaman sign-in —
+    // this remembers WHICH addresses to offer, it doesn't skip the
+    // signature step. The offer/inbox dot sits right after the address on
+    // the SAME line (reported live — was its own line underneath with
+    // nothing else on it), not a separate line of its own.
     var offersDot = offersReceivedTotal > 0 ? '<span class="flock-tab-offer-dot" title="' + offersReceivedTotal + ' 0FFER' + (offersReceivedTotal === 1 ? '' : 'S') + ' RECE!VED">' + offersReceivedTotal + '</span>' : '';
     el.flockTabLabel.innerHTML = '<span class="flock-tab-wallet">' + shortAddr(MY_WALLET) + '</span>' +
       '<span class="flock-tab-switch-arrow" title="SW!TCH WALLET">▾</span>' + offersDot;
   }
+  // ---- Wallet-switch dropdown — remembers every address this browser has
+  // signed in as (address only, never the session token — the token stays
+  // HttpOnly server-side, see connect.js/xaman-signin-status.js, so this
+  // list can never itself grant access to an account) so the ▾ arrow can
+  // offer them again instead of always being a one-shot "sign in" no-op. ----
+  var KNOWN_WALLETS_KEY = 'skylla_known_wallets';
+  var KNOWN_WALLETS_MAX = 6;
+  function getKnownWallets(){
+    try {
+      var list = JSON.parse(localStorage.getItem(KNOWN_WALLETS_KEY) || '[]');
+      return Array.isArray(list) ? list : [];
+    } catch(e){ return []; }
+  }
+  function rememberKnownWallet(addr){
+    if (!addr) return;
+    try {
+      var list = getKnownWallets().filter(function(a){ return a !== addr; });
+      list.unshift(addr);
+      localStorage.setItem(KNOWN_WALLETS_KEY, JSON.stringify(list.slice(0, KNOWN_WALLETS_MAX)));
+    } catch(e){}
+  }
+  function closeWalletSwitchDropdown(){
+    el.walletSwitchDropdown.style.display = 'none';
+    var arrow = el.flockTabLabel.querySelector('.flock-tab-switch-arrow');
+    if (arrow) arrow.classList.remove('wallet-dropdown-open');
+  }
+  function openWalletSwitchDropdown(){
+    var others = getKnownWallets().filter(function(a){ return a !== MY_WALLET; });
+    var rows = '';
+    if (MY_WALLET){
+      rows += '<div class="wallet-switch-row wallet-switch-row-active">' + shortAddr(MY_WALLET) +
+        '<span class="wallet-switch-row-tag">ACT!VE</span></div>';
+    }
+    others.forEach(function(addr){
+      rows += '<div class="wallet-switch-row" data-switch-wallet="' + escapeHtml(addr) + '">' + shortAddr(addr) + '</div>';
+    });
+    // A div, not a <button> — this whole dropdown lives inside the
+    // Σκύλλα tab's own <button> (see #scyllaWalletWrap's parent markup),
+    // and a nested <button> there is invalid HTML that browsers silently
+    // "fix" by breaking the DOM structure instead of throwing.
+    el.walletSwitchDropdown.innerHTML = rows +
+      '<div class="wallet-switch-add" id="walletSwitchAddBtn">+ S!GN !NT0 AN0THER ACC0UNT</div>';
+    el.walletSwitchDropdown.style.display = 'block';
+    var arrow = el.flockTabLabel.querySelector('.flock-tab-switch-arrow');
+    if (arrow) arrow.classList.add('wallet-dropdown-open');
+  }
+  el.flockTabLabel.addEventListener('click', function(e){
+    var arrow = e.target.closest('.flock-tab-switch-arrow');
+    if (!arrow) return;
+    // Stops this from also bubbling into el.topTabs' own delegated click
+    // handler, which would otherwise treat it as a normal tap on the
+    // Σκύλλα tab button (switching tabs, or re-triggering login) right
+    // underneath the dropdown it just opened.
+    e.stopPropagation();
+    e.preventDefault();
+    if (el.walletSwitchDropdown.style.display === 'block') closeWalletSwitchDropdown();
+    else openWalletSwitchDropdown();
+  });
+  el.walletSwitchDropdown.addEventListener('click', function(e){
+    // Own listener, not folded into topTabs' delegated one — this panel
+    // sits visually below the tab strip but is still a DOM child of the
+    // same button, so its clicks would otherwise bubble into the same
+    // tab-switch/login handling the arrow above already has to dodge.
+    e.stopPropagation();
+    var addBtn = e.target.closest('#walletSwitchAddBtn');
+    if (addBtn){
+      closeWalletSwitchDropdown();
+      startAuthorize();
+      return;
+    }
+    var row = e.target.closest('[data-switch-wallet]');
+    if (row){
+      closeWalletSwitchDropdown();
+      startAuthorize();
+    }
+  });
+  document.addEventListener('click', function(e){
+    if (el.walletSwitchDropdown.style.display !== 'block') return;
+    if (e.target.closest('#scyllaWalletWrap')) return;
+    closeWalletSwitchDropdown();
+  });
   function loadTrustlineLoginState(){
     if (!MY_WALLET){
       el.pigeonsBarLoggedOut.style.display = '';
@@ -13419,6 +13595,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.pigeonsBalanceLoginWrap.style.display = 'none';
     el.pigeonsBalanceValue.style.display = '';
     el.pigeonsLoggedInWallet.textContent = 'S!GNED !N AS :: ' + MY_WALLET.slice(0, 9) + '...' + MY_WALLET.slice(-4);
+    rememberKnownWallet(MY_WALLET);
     trustlinePigeonCount = null;
     trustlineBalanceNum = null;
     renderTrustlineSummary();
