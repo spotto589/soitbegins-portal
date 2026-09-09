@@ -3324,10 +3324,72 @@ const SWAP_HTML = `<!DOCTYPE html>
   .traits-flyout-val.tfv-disabled{ cursor:not-allowed; opacity:0.6; }
   .traits-flyout-val.tfv-disabled:hover{ border-color:var(--border-dim); color:var(--grey); }
 
+  /* S0RT (RAR!TY %/A-Z) + SEARCH toolbar — sits above the category strip/
+     value list at every width (reported live as wanting these "up the
+     top"). Wraps on genuinely narrow widths (see the media query below)
+     rather than ever squeezing the search input to unreadable width. */
+  .traits-flyout-toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:0.5rem;
+    width:100%;
+  }
+  .traits-flyout-sort-toggle{
+    display:inline-flex;
+    flex:0 0 auto;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .tfs-toggle-btn{
+    background:transparent;
+    border:none;
+    color:var(--grey);
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    padding:0.6em 0.85em;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .tfs-toggle-btn + .tfs-toggle-btn{ border-left:1px solid var(--border-mid); }
+  .tfs-toggle-btn:hover{ color:var(--white); }
+  .tfs-toggle-btn.active{ background:var(--cyan); color:#04141a; }
+  /* Same field styling as every other plain text input on the page
+     (.transfer-wallet-input/.mainframe-search-input) — flex:1 so it takes
+     whatever room the sort toggle doesn't need instead of a fixed width
+     that's either cramped in the narrow desktop dropdown or tiny in the
+     wide mobile popup. */
+  .traits-flyout-search-input{
+    flex:1 1 160px;
+    min-width:0;
+    background:rgba(8,9,11,0.6);
+    border:1px solid var(--border-mid);
+    color:var(--white);
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    padding:0.6em 0.85em;
+    border-radius:var(--radius);
+  }
+  .traits-flyout-search-input:focus{ outline:none; border-color:var(--cyan); }
+  .traits-flyout-search-input::placeholder{ color:var(--grey-disabled); }
+  /* Searching matches trait VALUES (and category names) across every
+     category at once (see renderTraitsFlyoutSearch in the JS) — the
+     category strip stops meaning anything mid-search (results already
+     carry their own category label, see traitValButtonHtml), so it's
+     hidden rather than left sitting there unrelated to what's showing
+     underneath it. */
+  #traitsFlyout.flyout-searching .traits-flyout-cats-row{ display:none; }
   /* ADD TRA!TS' own categories/values now just inherit the shared white/
      magenta scheme above — no separate cyan-idle override any more (see
      this block's own history if that's ever needed again). */
   #traitsFlyoutVals .th-empty{ font-size:16px; color:var(--white); }
+  #traitsFlyoutVals .tfv-search-cat{ color:var(--grey-dim); font-size:12px; letter-spacing:0.06em; margin-right:0.4em; }
+  #traitsFlyoutVals .traits-flyout-val.has-preview .tfv-search-cat{ color:rgba(255,255,255,0.75); }
   #traitsFlyoutCats .traits-flyout-cat{ box-shadow:inset 0 0 0 1px transparent; }
   #traitsFlyoutCats .traits-flyout-cat:hover{ box-shadow:inset 0 0 0 1px var(--cyan-dim); }
   #traitsFlyoutVals .traits-flyout-val{ font-size:16px; }
@@ -8249,6 +8311,20 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <div class="traits-flyout" id="traitsFlyout" style="display:none;">
                   <button type="button" class="flyout-popup-close-btn" id="traitsFlyoutClose" aria-label="CL0SE">✕</button>
                   <button type="button" class="flyout-back-btn" id="traitsFlyoutBack">◂ CATEG0R!ES</button>
+                  <!-- S0RT (RAR!TY %/A-Z) + SEARCH — sits above the category
+                       strip/value list (reported live as wanting these "up
+                       the top"). S0RT re-orders whichever value list is
+                       currently showing; SEARCH matches a trait VALUE (or
+                       its category name) across every category in this
+                       collection at once, not just the one currently open —
+                       see renderTraitsFlyoutSearch in the JS. -->
+                  <div class="traits-flyout-toolbar" id="traitsFlyoutToolbar">
+                    <div class="traits-flyout-sort-toggle" id="traitsFlyoutSortToggle">
+                      <button type="button" class="tfs-toggle-btn active" id="traitsFlyoutSortRarity" data-sort="rarity">RAR!TY %</button>
+                      <button type="button" class="tfs-toggle-btn" id="traitsFlyoutSortAz" data-sort="az">A-Z</button>
+                    </div>
+                    <input type="text" class="traits-flyout-search-input" id="traitsFlyoutSearchInput" placeholder="SEARCH TRA!TS..." autocomplete="off">
+                  </div>
                   <!-- Desktop only (see .traits-flyout-cats' own CSS) — a
                        horizontal row of every trait category (Background,
                        Eyewear, ...) instead of the vertical list mobile
@@ -9203,6 +9279,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     salesLoaded: false,
     traitFilters: [],         // [{ id, category, value }]
     nextTraitRowId: 1,
+    traitsFlyoutSort: 'rarity', // 'rarity' | 'az' — orders whichever value list the flyout is showing
+    traitsFlyoutQuery: '',      // live text in the flyout's own SEARCH TRA!TS box
     traitCategories: null,     // [name, name, ...] — cheap, loaded once
     traitValuesCache: {},      // category -> [{value, count, percent}], fetched lazily per category
     collectionSizeApprox: 3015,
@@ -9318,6 +9396,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statTraded24h','statVolume24h','statSalesTile','statSales24h','statBurntLink',
    'traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals','traitsFlyoutBack','traitsCatsScrollPrevBtn','traitsCatsScrollNextBtn',
+   'traitsFlyoutSortRarity','traitsFlyoutSortAz','traitsFlyoutSearchInput',
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote','salesCurrencyToggle',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle','walletScopeBanner',
@@ -11962,59 +12041,101 @@ const SWAP_HTML = `<!DOCTYPE html>
   var TRAIT_PREVIEW_CORNER_POSITION = {
     Background: 'top left'
   };
+  // Shared by both the normal single-category view and the cross-category
+  // SEARCH TRA!TS results (renderTraitsFlyoutSearch below) — a value button
+  // looks and behaves identically either way, it just also carries its own
+  // category label when isSearchResult is true (a flat list mixing every
+  // category needs that context; a single open category never did).
+  function traitValButtonHtml(category, v, isSearchResult){
+    var exampleImages = (state.traitExamples && state.traitExamples[category]) || {};
+    var exampleImg = exampleImages[v.value];
+    // Photo-backed boxes get their numbers greened (see .has-preview CSS
+    // for the cyan label colour) — only the digits, not the % or the
+    // surrounding "::" — plain boxes keep the original plain-grey count.
+    var pct = v.percent !== null && v.percent !== undefined
+      ? (exampleImg ? greenNum(v.percent.toFixed(3)) + '%' : v.percent.toFixed(3) + '%')
+      : '—';
+    var count = v.count !== null && v.count !== undefined
+      ? (exampleImg ? greenNum(v.count) : v.count)
+      : '—';
+    var previewPos = TRAIT_PREVIEW_CORNER_POSITION[category] || TRAIT_PREVIEW_POSITION[category];
+    var previewSize = TRAIT_PREVIEW_SIZE[category];
+    // A zoomed background-only corner crop is already a plain patch of
+    // colour — needs a lighter overlay than a full busy character photo
+    // to still read as "the real colour", not just "dark".
+    var overlay = previewSize
+      ? 'rgba(8,9,11,0.3),rgba(8,9,11,0.45)'
+      : 'rgba(8,9,11,0.55),rgba(8,9,11,0.8)';
+    // Dark gradient layered UNDER the image (declared first, painted on
+    // top) so the label/count text stays readable over any photo.
+    var style = exampleImg
+      ? ' style="background-image:linear-gradient(' + overlay + '),url(&quot;' + escapeHtml(exampleImg) + '&quot;);' +
+        (previewSize ? 'background-size:' + previewSize + ';' : '') +
+        (previewPos ? 'background-position:' + previewPos + ';' : '') + '"'
+      : '';
+    var isSelected = isTraitSelected(category, v.value);
+    // Photo-backed cells get the exact same corner checkmark badge a
+    // selected Pigeon thumbnail does (.card-select-toggle.selected) —
+    // plain-text cells keep the inline ✓ prefix since there's no photo
+    // corner to badge.
+    // Photo-backed values get their label+count wrapped in a solid
+    // static box (.tfv-text) instead of just a text-shadow floating
+    // over the crop — the crop underneath is often busy/light enough
+    // that shadow alone still clashed and was hard to read.
+    var textOpen = exampleImg ? '<span class="tfv-text">' : '';
+    var textClose = exampleImg ? '</span>' : '';
+    // Search results prefix the category (e.g. "BACKGROUND ::") ahead of
+    // the value itself — a flat cross-category list is meaningless without
+    // it, since the value alone no longer implies which category it's from.
+    var catPrefix = isSearchResult ? '<span class="tfv-search-cat">' + escapeHtml(category.toUpperCase()) + ' ::</span>' : '';
+    return '<button type="button" class="traits-flyout-val' + (exampleImg ? ' has-preview' : '') + (isSelected ? ' selected' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
+      (exampleImg && isSelected ? '<span class="tfv-select-badge">✓</span>' : '') +
+      textOpen +
+      '<span>' + (!exampleImg && isSelected ? '✓ ' : '') + catPrefix + escapeHtml(v.value.toUpperCase()) + '</span>' +
+      '<span class="tfv-count">' + count + ' :: ' + pct + '</span>' +
+      textClose +
+    '</button>';
+  }
+  // RAR!TY % (default) sorts rarest-first (lowest real %) same as it always
+  // has; A-Z is a plain alphabetical sort on the value's own name — see the
+  // S0RT/SEARCH toolbar wired further down.
+  function sortTraitVals(vals){
+    return state.traitsFlyoutSort === 'az'
+      ? vals.slice().sort(function(a, b){ return a.value.localeCompare(b.value); })
+      : vals.slice().sort(function(a, b){ return (a.percent || 0) - (b.percent || 0); });
+  }
   function renderTraitsFlyoutVals(category){
     el.traitsFlyoutCats.querySelectorAll('.traits-flyout-cat').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-cat') === category);
     });
-    var vals = ((category && state.traitCategories[category]) || []).slice().sort(function(a, b){
-      return (a.percent || 0) - (b.percent || 0);
+    var vals = sortTraitVals((category && state.traitCategories[category]) || []);
+    el.traitsFlyoutVals.innerHTML = vals.map(function(v){ return traitValButtonHtml(category, v, false); }).join('');
+  }
+  // SEARCH TRA!TS — matches against every category's own values AT ONCE
+  // (not just whichever one happens to be open), so typing e.g. "gold"
+  // surfaces a Gold Chain under Clothing and Gold Eyes under Eyewear side
+  // by side. Category name itself also matches (typing "eyewear" lists
+  // every Eyewear value) since that's a real, useful way to jump straight
+  // to a category without going back to the strip.
+  function renderTraitsFlyoutSearch(query){
+    var q = query.trim().toLowerCase();
+    var cats = state.traitCategories || {};
+    var matches = [];
+    Object.keys(cats).forEach(function(cat){
+      (cats[cat] || []).forEach(function(v){
+        if (v.value.toLowerCase().indexOf(q) !== -1 || cat.toLowerCase().indexOf(q) !== -1){
+          matches.push({ category: cat, val: v });
+        }
+      });
     });
-    var exampleImages = (state.traitExamples && state.traitExamples[category]) || {};
-    el.traitsFlyoutVals.innerHTML = vals.map(function(v){
-      var exampleImg = exampleImages[v.value];
-      // Photo-backed boxes get their numbers greened (see .has-preview CSS
-      // for the cyan label colour) — only the digits, not the % or the
-      // surrounding "::" — plain boxes keep the original plain-grey count.
-      var pct = v.percent !== null && v.percent !== undefined
-        ? (exampleImg ? greenNum(v.percent.toFixed(3)) + '%' : v.percent.toFixed(3) + '%')
-        : '—';
-      var count = v.count !== null && v.count !== undefined
-        ? (exampleImg ? greenNum(v.count) : v.count)
-        : '—';
-      var previewPos = TRAIT_PREVIEW_CORNER_POSITION[category] || TRAIT_PREVIEW_POSITION[category];
-      var previewSize = TRAIT_PREVIEW_SIZE[category];
-      // A zoomed background-only corner crop is already a plain patch of
-      // colour — needs a lighter overlay than a full busy character photo
-      // to still read as "the real colour", not just "dark".
-      var overlay = previewSize
-        ? 'rgba(8,9,11,0.3),rgba(8,9,11,0.45)'
-        : 'rgba(8,9,11,0.55),rgba(8,9,11,0.8)';
-      // Dark gradient layered UNDER the image (declared first, painted on
-      // top) so the label/count text stays readable over any photo.
-      var style = exampleImg
-        ? ' style="background-image:linear-gradient(' + overlay + '),url(&quot;' + escapeHtml(exampleImg) + '&quot;);' +
-          (previewSize ? 'background-size:' + previewSize + ';' : '') +
-          (previewPos ? 'background-position:' + previewPos + ';' : '') + '"'
-        : '';
-      var isSelected = isTraitSelected(category, v.value);
-      // Photo-backed cells get the exact same corner checkmark badge a
-      // selected Pigeon thumbnail does (.card-select-toggle.selected) —
-      // plain-text cells keep the inline ✓ prefix since there's no photo
-      // corner to badge.
-      // Photo-backed values get their label+count wrapped in a solid
-      // static box (.tfv-text) instead of just a text-shadow floating
-      // over the crop — the crop underneath is often busy/light enough
-      // that shadow alone still clashed and was hard to read.
-      var textOpen = exampleImg ? '<span class="tfv-text">' : '';
-      var textClose = exampleImg ? '</span>' : '';
-      return '<button type="button" class="traits-flyout-val' + (exampleImg ? ' has-preview' : '') + (isSelected ? ' selected' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
-        (exampleImg && isSelected ? '<span class="tfv-select-badge">✓</span>' : '') +
-        textOpen +
-        '<span>' + (!exampleImg && isSelected ? '✓ ' : '') + escapeHtml(v.value.toUpperCase()) + '</span>' +
-        '<span class="tfv-count">' + count + ' :: ' + pct + '</span>' +
-        textClose +
-      '</button>';
-    }).join('');
+    matches.sort(function(a, b){
+      return state.traitsFlyoutSort === 'az'
+        ? (a.val.value.localeCompare(b.val.value) || a.category.localeCompare(b.category))
+        : ((a.val.percent || 0) - (b.val.percent || 0));
+    });
+    el.traitsFlyoutVals.innerHTML = matches.length
+      ? matches.map(function(m){ return traitValButtonHtml(m.category, m.val, true); }).join('')
+      : '<div class="th-empty">N0 TRA!TS MATCH "' + escapeHtml(query.toUpperCase()) + '"</div>';
   }
   // Whether a trait value is currently an active filter — drives the
   // ✓/selected state in the flyout so ticked traits stay visibly ticked
@@ -12055,8 +12176,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.traitsHoverWrap.classList.add('open');
       showFlyoutBackdrop();
       // Always reopens on the category list, never mid-drill from
-      // wherever it was left last time.
-      el.traitsFlyout.classList.remove('flyout-drilled');
+      // wherever it was left last time — search resets right along with
+      // it, same reasoning.
+      el.traitsFlyout.classList.remove('flyout-drilled', 'flyout-searching');
+      el.traitsFlyoutSearchInput.value = '';
+      state.traitsFlyoutQuery = '';
     });
   }
   function closeTraitsFlyout(){
@@ -12114,6 +12238,46 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.traitsFlyoutBack.addEventListener('click', function(){
     el.traitsFlyout.classList.remove('flyout-drilled');
     el.traitsFlyout.scrollTop = 0;
+  });
+  // RAR!TY %/A-Z re-sorts whatever's currently showing — the live search
+  // results if SEARCH TRA!TS has text in it, otherwise the open category's
+  // own value list (a no-op if neither, nothing to sort yet).
+  function setTraitsFlyoutSort(mode){
+    state.traitsFlyoutSort = mode;
+    el.traitsFlyoutSortRarity.classList.toggle('active', mode === 'rarity');
+    el.traitsFlyoutSortAz.classList.toggle('active', mode === 'az');
+    if (state.traitsFlyoutQuery.trim()){
+      renderTraitsFlyoutSearch(state.traitsFlyoutQuery);
+      return;
+    }
+    var activeCat = el.traitsFlyoutCats.querySelector('.traits-flyout-cat.active');
+    if (activeCat) renderTraitsFlyoutVals(activeCat.getAttribute('data-cat'));
+  }
+  el.traitsFlyoutSortRarity.addEventListener('click', function(){ setTraitsFlyoutSort('rarity'); });
+  el.traitsFlyoutSortAz.addEventListener('click', function(){ setTraitsFlyoutSort('az'); });
+  // Typing a trait name (or a category name) searches across every
+  // category at once — see renderTraitsFlyoutSearch's own comment.
+  // Clearing the box falls back to whatever category was already open
+  // (or the empty "pick a category" state if none was).
+  el.traitsFlyoutSearchInput.addEventListener('input', function(){
+    state.traitsFlyoutQuery = el.traitsFlyoutSearchInput.value;
+    var activeCat = el.traitsFlyoutCats.querySelector('.traits-flyout-cat.active');
+    if (state.traitsFlyoutQuery.trim()){
+      // Also flip on flyout-drilled: the mobile popup's own CSS keeps
+      // .traits-flyout-vals hidden until that class is set (built for the
+      // categories -> values drill, but search results are shown in that
+      // exact same vals pane, so they need the same class to be visible).
+      el.traitsFlyout.classList.add('flyout-searching', 'flyout-drilled');
+      renderTraitsFlyoutSearch(state.traitsFlyoutQuery);
+      return;
+    }
+    el.traitsFlyout.classList.remove('flyout-searching');
+    if (activeCat){
+      renderTraitsFlyoutVals(activeCat.getAttribute('data-cat'));
+    } else {
+      el.traitsFlyoutVals.innerHTML = '';
+      el.traitsFlyout.classList.remove('flyout-drilled');
+    }
   });
   // Desktop's horizontal category row (see .traits-flyout-cats' own CSS,
   // min-width:701px) — scroll it along if there are more categories than
