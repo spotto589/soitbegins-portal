@@ -15216,6 +15216,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).catch(function(){
       offersReceivedPromise = null;
     });
+    // Safety valve: every individual per-collection fetch above already
+    // swallows its own failure (.catch -> []), so in the normal case this
+    // guard always clears itself the instant Promise.all settles. But a
+    // fetch that started right as the tab backgrounded/navigated away for
+    // a mobile Xaman sign flow (see navigateXamanPopup's own comment) can
+    // apparently just never settle at all rather than rejecting — reported
+    // live as "0FFERS RECE!VED won't load" after returning from Xaman,
+    // and since this guard stays set forever in that case, every later
+    // call just returns the same dead promise and does nothing, even a
+    // fresh page load's own bootstrap call. Force-clearing it after a
+    // generous timeout means the NEXT call (the visibilitychange resume
+    // above, or just switching tabs again) gets a real retry instead of
+    // silently doing nothing until a hard refresh.
+    (function(thisPromise){
+      setTimeout(function(){
+        if (offersReceivedPromise === thisPromise) offersReceivedPromise = null;
+      }, 15000);
+    })(offersReceivedPromise);
     return offersReceivedPromise;
   }
 
@@ -15249,6 +15267,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).catch(function(){
       outgoingOffersPromise = null;
     });
+    // Safety valve — same reasoning as loadOffersReceived's own (see its
+    // comment): a fetch that never settles at all (rather than rejecting)
+    // leaves this guard stuck forever, and every later call becomes a
+    // silent no-op until a hard refresh.
+    (function(thisPromise){
+      setTimeout(function(){
+        if (outgoingOffersPromise === thisPromise) outgoingOffersPromise = null;
+      }, 15000);
+    })(outgoingOffersPromise);
     return outgoingOffersPromise;
   }
   function renderOutgoingOffersList(){
@@ -15383,21 +15410,32 @@ const SWAP_HTML = `<!DOCTYPE html>
           cancelOfferTarget = null;
           return;
         }
+        // btn can be null here on the visibilitychange-triggered resume
+        // path below (the mobile CANCEL flow navigates the whole tab away
+        // to Xaman and back — see navigateXamanPopup's own comment — so
+        // the exact button reference this poll started with may not be
+        // the one re-queried by nftId on return, or may not exist at all
+        // if the list re-rendered meanwhile). Every real branch below
+        // still needs to fire (the alert, the state reset) even when
+        // there's no live button left to visually reset.
         if (data.status === 'rejected'){
-          btn.textContent = 'CANCEL';
-          btn.disabled = false;
+          if (btn){ btn.textContent = 'CANCEL'; btn.disabled = false; }
+          cancelOfferUuid = null;
+          cancelOfferTarget = null;
           alert('CANCELLAT!0N REJECTED !N XAMAN.');
           return;
         }
         if (data.status === 'expired'){
-          btn.textContent = 'CANCEL';
-          btn.disabled = false;
+          if (btn){ btn.textContent = 'CANCEL'; btn.disabled = false; }
+          cancelOfferUuid = null;
+          cancelOfferTarget = null;
           alert('S!GN REQUEST EXP!RED. TRY AGA!N.');
           return;
         }
         if (data.status === 'failed'){
-          btn.textContent = 'CANCEL';
-          btn.disabled = false;
+          if (btn){ btn.textContent = 'CANCEL'; btn.disabled = false; }
+          cancelOfferUuid = null;
+          cancelOfferTarget = null;
           alert('XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').');
           return;
         }
@@ -15406,6 +15444,30 @@ const SWAP_HTML = `<!DOCTYPE html>
         cancelOfferPollTimer = setTimeout(function(){ pollCancelOfferStatus(btn); }, 3000);
       });
   }
+  // Re-checks the instant the tab is actually visible again, rather than
+  // however much longer a possibly-throttled background setTimeout chain
+  // takes to fire on its own — mobile CANCEL 0FFER leaves the app
+  // entirely for Xaman via a real top-level navigation (see
+  // navigateXamanPopup's own comment on why), and how aggressively a
+  // backgrounded mobile tab throttles timers is inconsistent enough that
+  // "signed in Xaman, came back, still says WA!T!NG..." was reported live
+  // — the button never updated until a hard refresh. Re-querying the
+  // button by nftId rather than trusting whatever reference the poll
+  // chain started with, since the tab may have fully reloaded (or the
+  // list re-rendered from some other refresh) while it was away. Also
+  // covers every other sign flow that could leave 0FFERS RECE!VED/
+  // 0UTG0!NG stale the same way — cheap enough to just always re-fetch
+  // both on return rather than needing this same wiring repeated per flow.
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) return;
+    if (cancelOfferUuid && cancelOfferTarget){
+      if (cancelOfferPollTimer) clearTimeout(cancelOfferPollTimer);
+      var liveBtn = document.querySelector('.cancel-outgoing-offer-btn[data-nftid="' + cancelOfferTarget.nftId + '"]');
+      pollCancelOfferStatus(liveBtn);
+    }
+    loadOffersReceived();
+    loadOutgoingOffers();
+  });
 
   // ---- NFT 0FFERED T0 Y0U (FL0CK) — real TRANSFER sell-offers sent to
   // this wallet. See swap-incoming-transfers.js's own comment for why this
