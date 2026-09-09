@@ -7229,7 +7229,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:1.25rem;
     width:100%;
     height:100%;
-    padding:0 1rem;
+    /* Side padding wide enough that PREV/NEXT (2.75em ≈ 44px, see
+       .mainframe-arrow) actually fit in the gutter instead of sitting on
+       top of the last/first card's own art — reported live ("now its on
+       top") after a first pass moved them in without checking that. */
+    padding:0 3.25rem;
     overflow:hidden;
   }
   .mainframe-card{
@@ -7290,7 +7294,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     /* 2 columns x 3 rows visible on narrow screens — 3 columns of real
        cards never fit legibly at phone width. Still 6 cards a page (see
        MAINFRAME_PAGE_SIZE in the JS), just 2-and-3 instead of 3-and-2. */
-    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.6rem; padding:0 0.5rem; }
+    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.6rem; padding:0 2.5rem; }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
@@ -7553,11 +7557,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
   }
   .mainframe-arrow:hover{ border-color:var(--cyan-dim); background:rgba(20,21,26,0.95); transform:translateY(-50%) scale(1.08); }
-  /* Sit inside the grid's own 1rem side padding, close to the actual
-     card edge (was 0.25rem off the carousel-wrap's outer edge — reported
-     live as wanting them closer to the thumbnails). */
-  .mainframe-arrow-prev{ left:0.5rem; }
-  .mainframe-arrow-next{ right:0.5rem; }
+  /* Flush with the grid's own (now widened, see .mainframe-grid's own
+     padding) side gutter — close to the card edge without sitting on top
+     of the art itself (reported live: a tighter 0.5rem inset here,
+     without first widening that gutter, put almost the whole circle over
+     the last/first card's own artwork). */
+  .mainframe-arrow-prev{ left:0.4rem; }
+  .mainframe-arrow-next{ right:0.4rem; }
   .mainframe-arrow[hidden]{ display:none; }
 </style>
 </head>
