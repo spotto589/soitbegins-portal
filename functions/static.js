@@ -6699,7 +6699,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     z-index:2200;
     background:var(--bg);
     border-bottom:1px solid var(--border-mid);
+    transition:transform 0.2s ease;
   }
+  /* Slides up out of view the instant the fixed bottom S0RT BY/F!LTER BY
+     TRA!TS bar reveals itself (reported live) — same "scrolled past
+     #dbControlsSticky" trigger as .bottom-controls-bar-revealed (see
+     dbControlsStickyObserver in the JS), toggled together so one scroll
+     position swaps which fixed bar you get instead of both stacking up
+     and eating viewport height at once. */
+  #globalTopBar.global-top-bar-hidden{ transform:translateY(-100%); }
   /* .top-tabs-wrap/.top-tabs are what actually hold the two real halves
      now — no separate brand block any more, the Σκύλλα button itself
      carries the logo+heading (see .global-top-scylla-btn below). Reset
@@ -8087,6 +8095,15 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
         <div class="panel-title search-panel-title" id="searchPanelTitle">SEARCH!NG $P!GE0NS DATABASE</div>
         <div class="search-panel-subtitle" id="searchPanelSubtitle" style="display:none;"></div>
+        <!-- WALLET SC0PE BANNER — reported live as wanting to actually see a
+             looked-up wallet's own profile customisation (avatar/username/
+             quote/banner colour), not just their short address, ANY time
+             you land on their collection — reuses the exact same real
+             signatureBannerHtml identity card DETA!L/T0P 123 already show
+             (see browseOwnerCollection in the JS), including its own
+             default gradient/"no username" empty state for a wallet that
+             never set one up. Hidden outside wallet scope (exitWalletScope). -->
+        <div id="walletScopeBanner" style="display:none; margin-bottom:1.25rem;"></div>
         <div class="results-block" id="resultsBlock">
           <!-- One line: SEARCH (left), SORT BY (middle), VIEW (right). -->
           <div class="results-header-row">
@@ -9236,7 +9253,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals','traitsFlyoutBack','traitsCatsScrollPrevBtn','traitsCatsScrollNextBtn',
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote','salesCurrencyToggle',
-   'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle',
+   'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle','walletScopeBanner',
    'flockGridPanel',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
@@ -9602,7 +9619,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.dbControlsSticky.style.display = showSortFilterChrome ? '' : 'none';
     el.bottomControlsBar.style.display = showSortFilterChrome ? 'flex' : 'none';
     document.body.classList.toggle('has-bottom-bar', showSortFilterChrome);
-    if (!showSortFilterChrome){ closeSortFlyout(); closeTraitsFlyout(); }
+    if (!showSortFilterChrome){
+      closeSortFlyout();
+      closeTraitsFlyout();
+      // Leaving DATABASE entirely must never strand #globalTopBar hidden
+      // (see dbControlsStickyObserver) — there's no more scroll position
+      // on this tab that would ever un-hide it again otherwise.
+      el.bottomControlsBar.classList.remove('bottom-controls-bar-revealed');
+      el.globalTopBar.classList.remove('global-top-bar-hidden');
+    }
     // myPigeonsPanel only has real content left (connect status, CONNECT
     // button) for a genuinely disconnected wallet — loadMyPigeons' own
     // comment confirms there's nothing left to show once MY_WALLET is
@@ -9842,6 +9867,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Nothing to sort/filter on a single-item screen (DETAIL/HIST0RY/
       // SUMMARY) — same reasoning as showTab's own bottom-bar toggle.
       el.bottomControlsBar.style.display = 'none';
+      el.bottomControlsBar.classList.remove('bottom-controls-bar-revealed');
+      el.globalTopBar.classList.remove('global-top-bar-hidden');
       document.body.classList.remove('has-bottom-bar');
       closeSortFlyout();
       closeTraitsFlyout();
@@ -10563,6 +10590,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.nodeHeaderPanel.style.display = 'none';
     el.nodeAddr.textContent = state.scope.ownerShort;
     refreshSearchPanelSubtitle();
+    // This wallet's own real profile customisation — same identity card
+    // signatureBannerHtml already builds for DETA!L/T0P 123 (avatar/
+    // username/quote, banner colour sampled off the pfp, or its own
+    // default gradient + "N0 USERNAME SET" empty state for a wallet that
+    // never set one up) — every path into browseOwnerCollection (SEARCH
+    // PR0F!LE, a wallet link in offers/sales/owner, SH0W MY P!GE0NS…)
+    // shows it now, not just DETA!L/T0P 123.
+    el.walletScopeBanner.innerHTML = signatureBannerHtml(wallet, 'detail');
+    el.walletScopeBanner.style.display = '';
     if (targetPigeon){
       el.targetPigeonCard.style.display = '';
       el.targetPigeonImg.innerHTML = targetPigeon.image ? '<img src="' + escapeHtml(targetPigeon.image) + '" alt="">' : 'IMAGE';
@@ -10722,6 +10758,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.traitFilters = [];
     renderTraitRows();
     el.nodeHeaderPanel.style.display = 'none';
+    el.walletScopeBanner.style.display = 'none';
+    el.walletScopeBanner.innerHTML = '';
     refreshSearchPanelSubtitle();
     el.searchInput.value = '';
     renderTradeBuilder();
@@ -11712,6 +11750,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     var entry = entries[0];
     var scrolledPast = !entry.isIntersecting && entry.boundingClientRect.top < 0;
     el.bottomControlsBar.classList.toggle('bottom-controls-bar-revealed', scrolledPast);
+    // Same trigger hides #globalTopBar (reported live) — the fixed top
+    // and bottom bars never both sit on screen at once this way.
+    el.globalTopBar.classList.toggle('global-top-bar-hidden', scrolledPast);
   }, { threshold: 0 });
   dbControlsStickyObserver.observe(el.dbControlsSticky);
 
