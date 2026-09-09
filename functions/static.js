@@ -7488,18 +7488,18 @@ const SWAP_HTML = `<!DOCTYPE html>
            live), a real menu of boxed destinations (same real
            .flock-account-box visual language the old FL0CK-era boxes
            always used, just reused here) instead of one long stacked
-           scroll. SEARCH PR0F!LE (reported live, was V!EW PR0F!LE — the
-           old neutral/"close whatever's open" state) now opens its own
-           real panel too instead of doing nothing — see
-           profileTabPanelSearch below and switchProfileTab in the JS,
-           which also hides this whole grid while it's open so the banner
-           + search bar are "by themselves" instead of sitting above a
-           grid of unrelated destinations. !NB0X/MY NFTs/WATCHL!ST/CR0WN
-           each reveal their own real panel below when clicked (grid stays
-           visible for those), TRANSACT!0N H!ST0RY stays inert (same
-           C0M!NG S00N treatment the old boxes always had — no real
-           backend yet). Exactly one panel (or none) visible at a time.
-           !NB0X (reported live) is 0FFERS relabelled, with the old
+           scroll. SEARCH PR0F!LE and !NB0X (reported live) both go
+           full-page — switchProfileTab hides BOTH this grid AND the
+           banner above it while either is open, leaving just that one
+           panel + its own BACK button, instead of opening below the
+           banner/grid the way every other box still does (MY NFTs/
+           WATCHL!ST/CR0WN reveal their own real panel below when
+           clicked, grid+banner stay visible for those). SEARCH PR0F!LE
+           was V!EW PR0F!LE, the old neutral/"close whatever's open"
+           state — see profileTabPanelSearch below. TRANSACT!0N H!ST0RY
+           stays inert (same C0M!NG S00N treatment the old boxes always
+           had — no real backend yet). Exactly one panel (or none)
+           visible at a time. !NB0X (reported live) is 0FFERS relabelled, with the old
            separate MESSAGES box folded into it — MESSAGES_DB was never
            bound in production (see the swap-buy-prepare.js/HANDOFF.md
            history; messaging worked in local dev, every real request in
@@ -7552,23 +7552,26 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="profile-search-results" id="profileSearchResults"></div>
         <button type="button" class="profile-holdings-viewmore" id="profileSearchBack">← BACK</button>
       </div>
+      <!-- !NB0X — its own real full page now (reported live), same as
+           SEARCH PR0F!LE: the banner AND the box grid both hide while
+           this is open (see switchProfileTab in the JS), just this panel
+           + a BACK button. Reads top-to-bottom as MESSAGES, then 0FFERS
+           RECE!VED, then 0UTG0!NG 0FFERS at the bottom. MESSAGES itself
+           stays C0M!NG S00N — MESSAGES_DB was never bound in production
+           (see the profile-box-grid's own comment further up), so
+           there's no real inbox/compose to wire up yet, just the section
+           reserved at the top for when there is. 0FFERS RECE!VED/
+           0UTG0!NG 0FFERS are unchanged — same real renderMyOffersList/
+           renderOutgoingOffersList, fed by loadOffersReceived/
+           loadOutgoingOffers which already run on wallet connect. -->
       <div class="profile-tab-panel" id="profileTabPanelOffers" style="display:none;">
-        <!-- !NB0X now reads top-to-bottom as MESSAGES, then 0FFERS
-             RECE!VED, then 0UTG0!NG 0FFERS at the bottom (reported live).
-             MESSAGES itself stays C0M!NG S00N — MESSAGES_DB was never
-             bound in production (see this panel's own history further up
-             in the HTML), so there's no real inbox/compose to wire up yet,
-             just the section reserved at the top for when there is.
-             0FFERS RECE!VED/0UTG0!NG 0FFERS are unchanged — same real
-             renderMyOffersList/renderOutgoingOffersList, fed by
-             loadOffersReceived/loadOutgoingOffers which already run on
-             wallet connect. -->
         <div class="panel-title">MESSAGES<span class="db-soon">C0M!NG S00N</span></div>
         <div class="th-empty">D!RECT MESSAG!NG ISN'T L!VE YET — CHECK BACK S00N.</div>
         <div class="panel-title">0FFERS RECE!VED</div>
         <div id="myOffersList"></div>
         <div class="panel-title outgoing-offers-title">0UTG0!NG 0FFERS</div>
         <div id="outgoingOffersList"></div>
+        <button type="button" class="profile-holdings-viewmore" id="profileOffersBack">← BACK</button>
       </div>
       <!-- WATCHL!ST — its own real destination now (reported live), split
            out of MY NFTs/C0LLECT!0NS. Any NFT starred from DATABASE (the
@@ -9077,7 +9080,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
    'profileBoxGrid','profileTabOffersBadge','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
-   'profileTabPanelSearch','profileSearchInput','profileSearchResults','profileSearchBack',
+   'profileTabPanelSearch','profileSearchInput','profileSearchResults','profileSearchBack','profileOffersBack',
    'profileWatchlistSection','profileWatchlistGrid',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -17271,11 +17274,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.profileTabPanelCollections.style.display = tab === 'collections' ? '' : 'none';
     el.profileTabPanelWatchlist.style.display = tab === 'watchlist' ? '' : 'none';
     el.profileTabPanelCrown.style.display = tab === 'crown' ? '' : 'none';
-    // SEARCH PR0F!LE hides the whole box grid too (reported live as
-    // wanting "our profile banner by itself" plus the search bar), unlike
-    // every other box which just opens its panel below the grid.
+    // SEARCH PR0F!LE and !NB0X both go full-page (reported live) — the
+    // banner AND the box grid hide while either is open, unlike every
+    // other box which just opens its panel below the grid+banner as
+    // normal. Each panel carries its own BACK button back to null/neutral.
     el.profileTabPanelSearch.style.display = tab === 'profile' ? '' : 'none';
-    el.profileBoxGrid.style.display = tab === 'profile' ? 'none' : '';
+    var fullPage = tab === 'profile' || tab === 'offers';
+    el.profileBoxGrid.style.display = fullPage ? 'none' : '';
+    el.profileBanner.style.display = fullPage ? 'none' : '';
     if (tab === 'profile'){
       el.profileSearchInput.focus();
     } else {
@@ -17362,6 +17368,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     browseOwnerCollection(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
   });
   el.profileSearchBack.addEventListener('click', function(){ switchProfileTab(null); });
+  el.profileOffersBack.addEventListener('click', function(){ switchProfileTab(null); });
   function loadProfilePanel(){
     // Always starts open on a fresh visit to PR0F!LE, even if it was
     // collapsed last time this session — reported live as wanting MY
