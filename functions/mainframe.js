@@ -8,8 +8,17 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
-  html, body{ min-height:100%; background:#050506; }
+  html{
+    min-height:100%;
+    background:#050506;
+    overflow-x:hidden;
+    overflow-y:auto;
+    scrollbar-color:rgba(57,255,20,0.6) #0a0a0c;
+    scrollbar-width:auto;
+  }
   body{
+    min-height:100%;
+    background:#050506;
     font-family:'Chakra Petch',sans-serif;
     color:#e8e8e8;
     display:flex;
@@ -17,6 +26,20 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
     padding:8vh 6vw 10vh;
     position:relative;
     overflow-x:hidden;
+  }
+  html::-webkit-scrollbar{ width:16px; }
+  html::-webkit-scrollbar-track{
+    background:#0a0a0c;
+    border-left:1px solid rgba(57,255,20,0.15);
+  }
+  html::-webkit-scrollbar-thumb{
+    background-color:rgba(57,255,20,0.5);
+    border-radius:8px;
+    border:3px solid #0a0a0c;
+    box-shadow:0 0 6px rgba(57,255,20,0.4);
+  }
+  html::-webkit-scrollbar-thumb:hover{
+    background-color:rgba(57,255,20,0.75);
   }
   canvas#staticBg{
     position:fixed;
