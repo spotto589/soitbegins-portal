@@ -107,12 +107,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     --pigeon-purple-faint:var(--cyan-faint);
     --pigeon-purple-glow:var(--cyan-glow);
 
-    /* One deliberate off-palette colour, not an alias of --cyan — reported
-       live as wanting the signed-in address itself to stand out in actual
-       blue, distinct from the site's own magenta/cyan/green/red four-
-       colour rule above. Scoped to just the wallet-switch control. */
-    --wallet-blue:#4d9dff;
-    --wallet-blue-glow:rgba(77,157,255,0.5);
+    /* Kept the --wallet-blue name (scoped to just the wallet-switch
+       control) but retinted to the site's real --green/--green-glow
+       tokens — reported live as wanting the signed-in address to read
+       ON-LINE green like "0NL!NE" right above it, not a one-off blue
+       outside the site's own magenta/cyan/green/red palette. */
+    --wallet-blue:var(--green);
+    --wallet-blue-glow:var(--green-glow);
 
     /* Started as the ONE deliberate exception to the four-colour rule
        above (just the trustline banner's own background) — now also
@@ -7071,13 +7072,35 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:1rem;
     width:100%;
     max-width:1300px;
-    margin:1.5rem auto 0;
-    padding-top:1.25rem;
+    /* Raised a bit (was 1.5rem/1.25rem — reported live as wanting S0RT
+       BY sitting higher) now that S0RT BY matches SEARCH C0LLECT!0NS'
+       own smaller size, so the row as a whole reads tighter. */
+    margin:0.85rem auto 0;
+    padding-top:0.6rem;
     padding-left:1rem;
     padding-right:1rem;
     position:relative;
   }
-  .mainframe-sort-select{ flex:0 0 auto; }
+  /* S0RT BY reused .sort-select's own much bigger/heavier styling
+     (padding:0.85em 1em, font-size:15px) — reported live as wanting it
+     the same look as SEARCH C0LLECT!0NS beside it. select.mainframe-
+     sort-select (element+class) matches select.sort-select's own
+     specificity, so this wins purely by coming later in the file. */
+  select.mainframe-sort-select{
+    flex:0 0 auto;
+    width:min(200px, 40vw);
+    background:rgba(8,9,11,0.6);
+    border:1px solid var(--border-mid);
+    color:var(--white);
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    padding:0.6em 0.85em;
+    border-radius:var(--radius);
+  }
+  select.mainframe-sort-select:hover{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
+  select.mainframe-sort-select:focus{ outline:none; border-color:var(--cyan); }
   /* Client-side filter over the carousel's own real cards (see
      mainframeSearchInput's own JS), same input styling as every other
      plain text field on the page (.transfer-wallet-input) rather than a
@@ -7174,61 +7197,58 @@ const SWAP_HTML = `<!DOCTYPE html>
     width:64px; height:2px; background:linear-gradient(90deg, transparent, var(--cyan), transparent);
     box-shadow:0 0 8px var(--cyan-glow);
   }
-  /* ---- The plain 3x2 wrapping grid (a previous pass here) fit all 6
-     original collections evenly with PREV/NEXT left inert — "ready for
-     whenever a 7th collection actually needs somewhere to page to", per
-     that pass's own comment. 3RD EYE/BEAR/CULT/SM0K! are exactly that:
-     10 cards total now genuinely don't fit one screen, so this is back to
-     a real horizontal scroll-snap carousel — grid-auto-flow:column keeps
-     the same 2-row shape (auto-placement fills each column's 2 row slots
-     top-to-bottom before starting the next column) while grid-auto-columns
-     sizes each column to a fixed fraction of the visible width, same 3-
-     visible-at-once (2-on-mobile) framing the old fixed grid had, just
-     scrollable past that instead of wrapping to more rows. PREV/NEXT
-     (mainframeArrowPrev/Next, already wired to scrollBy in the JS — see
-     mainframeCardStep) do real work again from here. */
+  /* ---- Vertical list, not a horizontal carousel any more (reported
+     live — "list the collections vertically, add a scroll bar"). PREV/
+     NEXT (mainframeArrowPrev/Next) are hidden below since a real themed
+     scrollbar on #mainframeGrid now does that job directly; their JS
+     handlers are left wired (harmless no-ops with nothing horizontal
+     left to scroll) rather than ripped out, same reasoning any other
+     "hidden, not deleted" control on this page already follows. Each row
+     is now landscape (art thumbnail left, name/stats/BUY right) instead
+     of the old full-height portrait card — reads as a real scannable
+     list instead of a wall of tall cards to scroll through one at a
+     time. */
   .mainframe-carousel-wrap{
     position:relative;
-    display:flex;
-    align-items:stretch;
+    display:block;
     flex:1 1 auto;
     min-height:0;
   }
   .mainframe-grid{
-    display:grid;
-    grid-auto-flow:column;
-    grid-template-rows:repeat(2, 1fr);
-    grid-auto-columns:calc((100% - 2 * 1.25rem) / 3);
-    gap:1.25rem;
+    display:flex;
+    flex-direction:column;
+    gap:0.85rem;
     width:100%;
-    max-width:1300px;
+    max-width:760px;
     height:100%;
     margin:0 auto;
-    padding:0 1rem;
-    overflow-x:auto;
-    scroll-snap-type:x mandatory;
-    /* PREV/NEXT are the real controls — no visible native scrollbar
-       cluttering the strip underneath them, same treatment the FILTER BY
-       TRAITS category strip already uses for the same reason. */
-    scrollbar-width:none;
-    -ms-overflow-style:none;
+    padding:0 0.75rem 1rem;
+    overflow-y:auto;
+    overflow-x:hidden;
+    /* Themed scrollbar — cyan to match the rest of the page's accent
+       language instead of the browser's flat default grey. */
+    scrollbar-width:thin;
+    scrollbar-color:rgba(61,243,236,0.5) rgba(255,255,255,0.05);
   }
-  .mainframe-grid::-webkit-scrollbar{ display:none; }
+  .mainframe-grid::-webkit-scrollbar{ width:8px; }
+  .mainframe-grid::-webkit-scrollbar-track{ background:rgba(255,255,255,0.05); border-radius:4px; }
+  .mainframe-grid::-webkit-scrollbar-thumb{ background:rgba(61,243,236,0.5); border-radius:4px; }
+  .mainframe-grid::-webkit-scrollbar-thumb:hover{ background:rgba(61,243,236,0.85); }
   .mainframe-card{
     position:relative;
     min-width:0;
     min-height:0;
-    height:100%;
+    flex:0 0 auto;
     display:flex;
-    flex-direction:column;
+    flex-direction:row;
+    align-items:stretch;
     background:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
     padding:0;
     overflow:hidden;
-    text-align:center;
+    text-align:left;
     cursor:pointer;
-    scroll-snap-align:start;
     transition:border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
   .mainframe-card[hidden]{ display:none; }
@@ -7270,11 +7290,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     pointer-events:none;
   }
   @media (max-width:760px){
-    /* 2 columns x 3 rows visible on narrow screens — 3 columns of real
-       cards never fit legibly at phone width. Same scroll-snap carousel
-       as desktop (see .mainframe-grid's own comment above), just 2
-       visible columns and 3 row slots per column instead of 3-and-2. */
-    .mainframe-grid{ grid-template-rows:repeat(3, 1fr); grid-auto-columns:calc((100% - 0.6rem) / 2); gap:0.6rem; padding:0 0.5rem; }
+    /* Same vertical list as desktop, just a narrower thumbnail so the
+       name/stats/BUY column keeps enough room on a phone-width row. */
+    .mainframe-grid{ gap:0.6rem; padding:0 0.4rem 0.75rem; }
+    .mainframe-card-art{ flex-basis:92px; }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
@@ -7288,28 +7307,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* The collection's own artwork — a real photo/logo dropped in under
      /assets/mainframe/ (see mainframe-card-art's background-image,
-     per-card in the HTML), with a bottom gradient in that same accent
-     colour so the label/tag underneath stay readable over any image
+     per-card in the HTML), with a side gradient in that same accent
+     colour so the label/tag beside it stay readable over any image
      without a separate dark strip breaking the art. Until real art is in
      place for a card, the gradient alone still reads fine as a coloured
-     tile — never a blank/broken-image box. flex:1 1 auto (not a fixed
-     height like this used to be) — the art fills however much vertical
-     room the card actually has now that cards are as tall as the whole
-     carousel, not a fixed small thumbnail strip. */
+     tile — never a blank/broken-image box. Fixed square thumbnail on the
+     left of each row now (list layout, not a full-height portrait card
+     any more) — flex:0 0 <width> instead of the old flex:1 1 auto that
+     filled whatever vertical room a tall carousel card had. */
   .mainframe-card-art{
     position:relative;
-    flex:1 1 auto;
+    flex:0 0 128px;
     min-height:0;
     background-size:cover;
-    /* Cards are much shorter now (3x2 grid, not a full-height carousel
-       card) — plain center crops most character art around the torso/
-       logo text instead of the face, so default to the top of the image
-       (where each collection's mascot head sits) unless a collection
-       needs its own tuned offset, same as $P!GE0NS' own override below. */
     background-position:center top;
     background-color:rgba(var(--card-accent, 61,243,236), 0.14);
-    background-image:linear-gradient(180deg, rgba(var(--card-accent, 61,243,236),0.08) 0%, rgba(6,6,7,0.92) 100%), var(--card-art, none);
-    border-bottom:1px solid rgba(var(--card-accent, 61,243,236), 0.35);
+    background-image:linear-gradient(90deg, rgba(var(--card-accent, 61,243,236),0.08) 0%, rgba(6,6,7,0.92) 100%), var(--card-art, none);
+    border-right:1px solid rgba(var(--card-accent, 61,243,236), 0.35);
     transition:transform 0.4s ease;
   }
   .mainframe-card:hover .mainframe-card-art{ transform:scale(1.05); }
@@ -7343,11 +7357,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      (reported live). Zoomed in specifically for this one so the circle
      itself fills the whole card edge to edge instead. */
   .mainframe-card-bear .mainframe-card-art{ background-size:180%; }
-  /* Cards are much shorter now (3x2 grid, not a full-height carousel
-     card) — body padding/spacing tightened throughout so the art above
-     it keeps a real, visible chunk of the card instead of getting
-     squeezed to a sliver by six lines of body content. */
-  .mainframe-card-body{ flex:0 0 auto; padding:0.75rem 1rem 0.85rem; }
+  /* Body sits to the right of the fixed-width art thumbnail now (list
+     row layout) — flex:1 so it takes whatever width the row has left,
+     min-width:0 so long stats text can still ellipsis/wrap instead of
+     forcing the row wider than the list. */
+  .mainframe-card-body{ flex:1 1 auto; min-width:0; padding:0.6rem 0.9rem; display:flex; flex-direction:column; justify-content:center; }
   /* Letter-spacing bumped from 0.02em to 0.06em and a soft glow in the
      card's own accent colour added — reported live as reading cramped/
      hard to scan at the tighter spacing, especially with "!"/"0" glyphs
@@ -7356,11 +7370,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      page reads as six distinct identities, not one repeated template. */
   .mainframe-card-label{
     font-family:var(--font-display);
-    font-size:clamp(20px, 2.1vw, 28px);
+    font-size:clamp(15px, 1.6vw, 19px);
     font-weight:700;
     color:#fff;
-    letter-spacing:0.06em;
-    line-height:1.3;
+    letter-spacing:0.05em;
+    line-height:1.25;
     text-shadow:0 0 14px rgba(var(--card-accent, 61,243,236), 0.65);
   }
   /* Real, live numbers (items/holders/volume — see the stats fetch loop),
@@ -7381,14 +7395,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-stats{
     display:flex;
     flex-direction:column;
-    gap:0.25rem;
+    gap:0.2rem;
     font-family:var(--font-mono);
     font-size:10px;
     letter-spacing:0.05em;
     color:var(--grey);
-    margin-top:0.3rem;
+    margin-top:0.25rem;
   }
-  .mainframe-card-stats .stat-row{ text-align:center; }
+  .mainframe-card-stats .stat-row{ text-align:left; }
   .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
   /* Real per-collection DexScreener link — hidden until its own fetch
      resolves a real dexUrl (see the stats-fetch loop in the script), same
@@ -7478,9 +7492,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      file already uses) keeps the tighter sizing tuned for its own real
      width instead of also getting the desktop bump. */
   @media (min-width:761px){
-    .mainframe-card-label{ font-size:clamp(20px, 2vw, 30px); }
-    .mainframe-card-stats{ font-size:14px; }
-    .mainframe-card-buy{ font-size:16px; }
+    .mainframe-card-stats{ font-size:11px; }
   }
   /* At 2 cols x 3 rows (the phone grid, see the max-width:760px switch
      above), each card's actual height on a real phone works out to
@@ -7525,13 +7537,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .mainframe-card-soon .mainframe-card-label{ color:var(--grey); text-shadow:none; }
   .mainframe-card-soon .mainframe-card-stats{ color:var(--grey-dim); }
-  /* PREV/NEXT — real scroll controls again now that .mainframe-grid is
-     back to a horizontal carousel (10 cards, see that rule's own
-     comment). Stayed visible (if inert) even while the grid was a fixed
-     3x2/2x3 grid with nothing to scroll — scrollBy on a non-scrolling
-     grid was always a harmless no-op, never worth hiding these over. */
+  /* PREV/NEXT — hidden now that .mainframe-grid is a vertical list with
+     its own real themed scrollbar (see .mainframe-carousel-wrap's own
+     comment) instead of a horizontal carousel. Kept, not deleted — the
+     underlying position/sizing survives if a horizontal layout ever
+     comes back, same "hidden, not deleted" treatment as any other inert
+     control on this page. */
   .mainframe-arrow{
-    display:flex;
+    display:none;
     position:absolute;
     top:50%;
     transform:translateY(-50%);
