@@ -1422,35 +1422,42 @@ const SWAP_HTML = `<!DOCTYPE html>
      rows already use (thumb+name+amount) for every real holding of that
      kind — see renderBannerHoldingsExpanded's own comment in the JS. */
   .profile-banner-expanded{ flex:1 1 auto; min-width:0; }
-  .profile-banner-expanded-list{ display:flex; flex-direction:column; gap:0.5rem; margin:0.5rem 0; max-height:180px; overflow-y:auto; }
-  /* Per-holding row — thumb+name+amount, used inside #profileExpandedList
-     for both V!EW C0!NS and V!EW NFTS (see holdingRowHtml in the JS).
-     formatCompactAmount caps a coin balance at 3 digits + a K/M suffix
-     (e.g. "123K", "4M"); NFT counts are small enough to just show as-is. */
-  .profile-banner-coin-row{ display:flex; align-items:center; gap:0.5rem; }
+  /* Cards laid out left-to-right, wrapping into rows, instead of one
+     stacked column — same card markup for both V!EW C0!NS and V!EW NFTS
+     (see coinHoldingCardHtml/nftHoldingCardHtml in the JS). */
+  .profile-banner-expanded-list{ display:flex; flex-wrap:wrap; gap:0.6rem; margin:0.5rem 0; max-height:220px; overflow-y:auto; }
+  .profile-banner-coin-row{
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+    gap:0.3rem; width:86px; flex:0 0 auto;
+    padding:0.55em 0.4em;
+    border:1px solid rgba(var(--card-accent, 61,243,236), 0.35);
+    border-radius:var(--radius);
+    background:rgba(var(--card-accent, 61,243,236), 0.08);
+  }
   .profile-banner-coin-thumb{
-    width:26px; height:26px; flex:0 0 auto;
+    width:36px; height:36px; flex:0 0 auto;
     border-radius:6px;
     border:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
     background-size:cover; background-position:center;
     background-color:rgba(var(--card-accent, 61,243,236), 0.18);
   }
-  /* Name centred (vertically, against the thumbnail) on the right of it
-     — a flex column with no top/bottom padding of its own inside a row
-     that's align-items:center reads as "centred beside the thumb"
-     regardless of whether the amount line underneath is present. */
-  .profile-banner-coin-text{ display:flex; flex-direction:column; justify-content:center; min-width:0; }
+  .profile-banner-coin-text{ display:flex; flex-direction:column; align-items:center; min-width:0; width:100%; }
   .profile-banner-coin-name{
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:10px;
     font-weight:700;
     letter-spacing:0.02em;
     color:#fff;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    max-width:100%;
   }
-  .profile-banner-coin-amount{ font-family:var(--font-mono); font-size:10px; color:var(--grey); margin-top:0.1rem; }
+  /* Coin amount; the XRP estimate (coins only) sits in its own line right
+     underneath. NFT cards reuse .profile-banner-coin-amount for the count
+     and never render a .profile-banner-coin-xrp line. */
+  .profile-banner-coin-amount{ font-family:var(--font-mono); font-size:10px; color:var(--grey); }
+  .profile-banner-coin-xrp{ font-family:var(--font-mono); font-size:9px; color:var(--cyan); }
   .profile-twitter-link{
     display:inline-flex;
     align-items:center;
@@ -16791,19 +16798,33 @@ const SWAP_HTML = `<!DOCTYPE html>
   var bannerCoinHeld = {}; // key -> { bal, thumbUrl }
   var bannerNftHeld = {};  // key -> { count, thumbUrl }
   var bannerHoldingsExpandedKind = null; // null | 'coins' | 'nfts'
-  function holdingRowHtml(key, amountText, thumbUrl, useCoinLabel){
+  // Coin card — amount, then the estimated XRP value underneath (bal *
+  // that collection's own live AMM rate, stashed onto bannerCoinHeld
+  // alongside bal by renderProfileCoins — see its own comment there).
+  function coinHoldingCardHtml(key, bal, xrpValue, thumbUrl){
     var meta = COLLECTION_META[key];
     var accent = PROFILE_COIN_ACCENTS[key] || '61,243,236';
     var art = thumbUrl || (meta && meta.thumb) || '';
-    // Coins show the $-prefixed tokenLabel ("$P!GE0NS"); NFT counts show
-    // the plain collection label ("P!GE0NS") — "$P!GE0NS: 5" read like a
-    // price, not a count.
-    var name = meta ? (useCoinLabel ? meta.tokenLabel : meta.label) : key;
+    var xrpText = typeof xrpValue === 'number' ? '≈ ' + xrpValue.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '';
     return '<div class="profile-banner-coin-row" style="--card-accent:' + accent + ';">' +
       '<div class="profile-banner-coin-thumb"' + (art ? ' style="background-image:url(' + art + ')"' : '') + '></div>' +
       '<div class="profile-banner-coin-text">' +
-        '<div class="profile-banner-coin-name">' + escapeHtml(name) + '</div>' +
-        '<div class="profile-banner-coin-amount">' + amountText + '</div>' +
+        '<div class="profile-banner-coin-name">' + escapeHtml(meta ? meta.tokenLabel : key) + '</div>' +
+        '<div class="profile-banner-coin-amount">' + formatCompactAmount(bal) + '</div>' +
+        (xrpText ? '<div class="profile-banner-coin-xrp">' + xrpText + '</div>' : '') +
+      '</div>' +
+    '</div>';
+  }
+  // NFT card — collection name, then the owned count underneath.
+  function nftHoldingCardHtml(key, count, thumbUrl){
+    var meta = COLLECTION_META[key];
+    var accent = PROFILE_COIN_ACCENTS[key] || '61,243,236';
+    var art = thumbUrl || (meta && meta.thumb) || '';
+    return '<div class="profile-banner-coin-row" style="--card-accent:' + accent + ';">' +
+      '<div class="profile-banner-coin-thumb"' + (art ? ' style="background-image:url(' + art + ')"' : '') + '></div>' +
+      '<div class="profile-banner-coin-text">' +
+        '<div class="profile-banner-coin-name">' + escapeHtml(meta ? meta.label : key) + '</div>' +
+        '<div class="profile-banner-coin-amount">' + count + '</div>' +
       '</div>' +
     '</div>';
   }
@@ -16835,7 +16856,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.profileExpandedList.innerHTML = !entries.length
       ? '<div class="th-empty">N0THING HELD YET.</div>'
       : entries.map(function(e){
-          return holdingRowHtml(e.key, kind === 'nfts' ? String(e.count) : formatCompactAmount(e.bal), e.thumbUrl, kind !== 'nfts');
+          return kind === 'nfts' ? nftHoldingCardHtml(e.key, e.count, e.thumbUrl) : coinHoldingCardHtml(e.key, e.bal, e.xrpValue, e.thumbUrl);
         }).join('');
   }
   function openBannerHoldingsExpanded(kind){
@@ -17057,14 +17078,14 @@ const SWAP_HTML = `<!DOCTYPE html>
           var bal = line.balance || 0;
           balEl.innerHTML = '<span class="hi">' + bal.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</span> ' + escapeHtml(meta.tokenLabel);
           balEl.classList.remove('profile-coin-warn');
+          var xrpValue = (rate && typeof rate.xrpPerPigeon === 'number') ? bal * rate.xrpPerPigeon : null;
           // Feeds the shared bannerCoinHeld (see its own comment above) —
           // live-refreshes the V!EW C0!NS expanded list if it's open.
-          bannerCoinHeld[key] = { bal: bal, thumbUrl: rate && rate.tokenImageUrl };
+          bannerCoinHeld[key] = { bal: bal, xrpValue: xrpValue, thumbUrl: rate && rate.tokenImageUrl };
           onBannerHoldingsDataChanged();
-          if (valEl && rate && typeof rate.xrpPerPigeon === 'number'){
-            var value = bal * rate.xrpPerPigeon;
-            coinValuesXrp[key] = value;
-            valEl.textContent = '≈ ' + value.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+          if (valEl && xrpValue != null){
+            coinValuesXrp[key] = xrpValue;
+            valEl.textContent = '≈ ' + xrpValue.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
             recomputeTotal();
           }
         } else {
