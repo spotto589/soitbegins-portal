@@ -940,6 +940,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      to it (also grey) blur into one flat, lifeless line. */
   .flock-tab-brand{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
   .flock-tab-count{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
+  .flock-tab-wallet{ color:var(--grey-dim); font-family:var(--font-mono); }
+  .flock-tab-switch-arrow{ display:inline-block; margin-left:0.3em; color:var(--grey-dim); }
   /* Small notification-dot badge, not a second joined text phrase (see
      updateFlockTabLabel's own comment on why that wrapped badly on
      mobile) — a real count, just compact enough to never itself need to
@@ -1292,7 +1294,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      stacks to a column on mobile (see the max-width:600px override
      further down). flex:1 1 auto so it soaks up whatever width the
      avatar doesn't use. */
-  .profile-banner-main{ display:flex; flex:1 1 auto; align-items:flex-end; gap:1.5rem; min-width:0; }
+  .profile-banner-main{ display:flex; flex:1 1 auto; align-items:stretch; gap:1.5rem; min-width:0; }
   /* IDENTITY — TW!TTER/name/quote/address/EST C0!N, all centred now
      (reported live), stacked as one column instead of address sitting
      apart from the centred username/quote block like before. */
@@ -1381,21 +1383,24 @@ const SWAP_HTML = `<!DOCTYPE html>
      NFTS, each swapping BOTH this column and the identity column next
      to it out for #profileBannerExpanded showing that wallet's full
      real list (see openBannerHoldingsExpanded in the JS). */
-  .profile-banner-holdings{ flex:0 0 auto; display:flex; flex-direction:column; gap:0.6rem; justify-content:center; }
-  .profile-holdings-title{ font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:0.08em; color:var(--grey); text-transform:uppercase; }
+  .profile-banner-holdings{ flex:0 0 220px; display:flex; flex-direction:column; align-items:stretch; gap:0.6rem; justify-content:space-evenly; }
+  .profile-holdings-title{ font-family:var(--font-mono); font-size:20px; font-weight:700; letter-spacing:0.08em; color:#fff; text-transform:uppercase; text-align:center; margin-bottom:0.4rem; }
   .profile-holdings-viewmore{
     background:transparent;
     border:1px solid var(--border-mid);
     color:var(--cyan);
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:15px;
     font-weight:700;
     letter-spacing:0.06em;
     text-transform:uppercase;
-    padding:0.35em 0.5em;
+    padding:0.6em 1.1em;
     border-radius:var(--radius);
     cursor:pointer;
-    margin-top:0.2rem;
+    margin-top:0.6rem;
+    display:block;
+    margin-left:auto;
+    margin-right:auto;
     transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
   .profile-holdings-viewmore:hover{ background:var(--cyan); color:#000; border-color:var(--cyan); }
@@ -1409,9 +1414,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:var(--green);
     color:#000;
     border:3px solid var(--bg);
-    font-size:14px;
-    padding:0.85em 1.3em;
+    font-size:18px;
+    padding:1.2em 1.3em;
     min-width:170px;
+    width:100%;
     margin-top:0;
   }
   .profile-holdings-btn:hover{ background:var(--green); color:#000; border-color:var(--bg); filter:brightness(1.15); }
@@ -1426,18 +1432,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      many collections a wallet holds, instead of wrapping into a grid.
      Same card markup for both V!EW C0!NS and V!EW NFTS (see
      coinHoldingCardHtml/nftHoldingCardHtml in the JS). */
-  .profile-banner-expanded-list{ display:flex; flex-wrap:nowrap; gap:0.8rem; margin:0.5rem 0; padding-bottom:0.3rem; overflow-x:auto; overflow-y:hidden; }
+  .profile-banner-expanded-list{ display:flex; flex-wrap:nowrap; gap:1rem; margin:0.5rem 0; padding-bottom:0.3rem; overflow-x:auto; overflow-y:hidden; }
   .profile-banner-coin-row{
     display:flex; flex-direction:column; align-items:center; text-align:center;
-    gap:0.4rem; width:120px; flex:0 0 auto;
-    padding:0.8em 0.6em;
+    gap:0.5rem; width:160px; flex:0 0 auto;
+    padding:1.1em 0.8em;
     border:1px solid rgba(var(--card-accent, 61,243,236), 0.35);
     border-radius:var(--radius);
     background:rgba(var(--card-accent, 61,243,236), 0.08);
   }
   .profile-banner-coin-thumb{
-    width:56px; height:56px; flex:0 0 auto;
-    border-radius:8px;
+    width:80px; height:80px; flex:0 0 auto;
+    border-radius:10px;
     border:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
     background-size:cover; background-position:center;
     background-color:rgba(var(--card-accent, 61,243,236), 0.18);
@@ -1445,7 +1451,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-banner-coin-text{ display:flex; flex-direction:column; align-items:center; min-width:0; width:100%; }
   .profile-banner-coin-name{
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:16px;
     font-weight:700;
     letter-spacing:0.02em;
     color:#fff;
@@ -1457,8 +1463,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Coin amount; the XRP estimate (coins only) sits in its own line right
      underneath. NFT cards reuse .profile-banner-coin-amount for the count
      and never render a .profile-banner-coin-xrp line. */
-  .profile-banner-coin-amount{ font-family:var(--font-mono); font-size:13px; color:var(--grey); }
-  .profile-banner-coin-xrp{ font-family:var(--font-mono); font-size:11px; color:var(--cyan); }
+  .profile-banner-coin-amount{ font-family:var(--font-mono); font-size:16px; color:var(--grey); }
+  .profile-banner-coin-xrp{ font-family:var(--font-mono); font-size:13px; color:var(--cyan); }
   .profile-twitter-link{
     display:inline-flex;
     align-items:center;
@@ -1637,6 +1643,43 @@ const SWAP_HTML = `<!DOCTYPE html>
      real panel here — plain margin, same as every other stacked section
      on this card. */
   .profile-tab-panel{ margin-bottom:1.5rem; }
+  /* SEARCH PR0F!LE — plain input + results list, same visual language as
+     every other profile field (see .transfer-wallet-input) rather than a
+     new input style. */
+  .profile-search-input{
+    width:100%;
+    background:rgba(8,9,11,0.6);
+    border:1px solid rgba(255,255,255,0.6);
+    color:var(--white);
+    font-family:var(--font-mono);
+    font-size:15px;
+    font-weight:700;
+    padding:0.85em 1em;
+    border-radius:var(--radius);
+    margin-bottom:1rem;
+  }
+  .profile-search-input:focus{ outline:none; border-color:var(--cyan); }
+  .profile-search-input::placeholder{ color:rgba(255,255,255,0.5); }
+  .profile-search-results{ display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem; }
+  .profile-search-row{
+    display:flex; align-items:center; gap:0.75rem;
+    padding:0.6em 0.8em;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .profile-search-row:hover{ border-color:var(--cyan-dim); background:rgba(61,243,236,0.06); }
+  .profile-search-row-thumb{
+    width:36px; height:36px; flex:0 0 auto;
+    border-radius:50%;
+    background-size:cover; background-position:center;
+    background-color:rgba(255,255,255,0.08);
+    border:1px solid var(--border-mid);
+  }
+  .profile-search-row-text{ display:flex; flex-direction:column; min-width:0; }
+  .profile-search-row-name{ font-family:var(--font-mono); font-size:13px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .profile-search-row-wallet{ font-family:var(--font-mono); font-size:11px; color:var(--grey); word-break:break-all; }
   .profile-coins-section{ margin-bottom:1.5rem; }
   .profile-coins-banner{
     display:flex;
@@ -7445,13 +7488,17 @@ const SWAP_HTML = `<!DOCTYPE html>
            live), a real menu of boxed destinations (same real
            .flock-account-box visual language the old FL0CK-era boxes
            always used, just reused here) instead of one long stacked
-           scroll. N0TH!NG opens by default — V!EW PR0F!LE is just "close
-           whatever's open", the neutral/first state; !NB0X/MY NFTs/
-           WATCHL!ST/CR0WN each reveal their own real panel below when
-           clicked, TRANSACT!0N H!ST0RY stays inert (same C0M!NG S00N
-           treatment the old boxes always had — no real backend yet).
-           Exactly one panel (or none) visible at a time — see
-           switchProfileTab in the JS.
+           scroll. SEARCH PR0F!LE (reported live, was V!EW PR0F!LE — the
+           old neutral/"close whatever's open" state) now opens its own
+           real panel too instead of doing nothing — see
+           profileTabPanelSearch below and switchProfileTab in the JS,
+           which also hides this whole grid while it's open so the banner
+           + search bar are "by themselves" instead of sitting above a
+           grid of unrelated destinations. !NB0X/MY NFTs/WATCHL!ST/CR0WN
+           each reveal their own real panel below when clicked (grid stays
+           visible for those), TRANSACT!0N H!ST0RY stays inert (same
+           C0M!NG S00N treatment the old boxes always had — no real
+           backend yet). Exactly one panel (or none) visible at a time.
            !NB0X (reported live) is 0FFERS relabelled, with the old
            separate MESSAGES box folded into it — MESSAGES_DB was never
            bound in production (see the swap-buy-prepare.js/HANDOFF.md
@@ -7462,7 +7509,7 @@ const SWAP_HTML = `<!DOCTYPE html>
            only the box's own visible label changed. -->
       <div class="profile-box-grid" id="profileBoxGrid">
         <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="profile">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">V!EW PR0F!LE</span></div>
+          <div class="flock-account-box-row"><span class="flock-account-box-label">SEARCH PR0F!LE</span></div>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="offers">
           <div class="flock-account-box-row"><span class="flock-account-box-label">!NB0X<span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span></span></div>
@@ -7478,8 +7525,14 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="watchlist">
           <div class="flock-account-box-row"><span class="flock-account-box-label">WATCHL!ST</span></div>
         </div>
-        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="crown">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">CR0WN</span></div>
+        <!-- CR0WN REWARDS (reported live, was the real CR0WN P/L
+             leaderboard box) — relabelled and made inert, same C0M!NG
+             S00N treatment as TRANSACT!0N H!ST0RY below. profileTabPanelCrown
+             and its real renderCrownLeaderboard data stay in the markup/JS
+             unused rather than ripped out, in case CR0WN comes back as its
+             own destination later. -->
+        <div class="sw-panel flock-account-box flock-account-box-soon">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">CR0WN REWARDS</span><span class="db-soon">C0M!NG S00N</span></div>
         </div>
         <!-- TRANSACT!0N H!ST0RY has no real backend yet — same inert
              "not yet" treatment as before. -->
@@ -7487,14 +7540,31 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="flock-account-box-row"><span class="flock-account-box-label">TRANSACT!0N H!ST0RY</span><span class="db-soon">C0M!NG S00N</span></div>
         </div>
       </div>
+      <!-- SEARCH PR0F!LE — a plain search bar under the (by-itself) banner,
+           hitting the profileSearch mode on /api/pigeons (username or
+           wallet substring match, see pigeons.js) as you type. Picking a
+           result jumps straight to that wallet's real collection the exact same way
+           every other wallet link on the site already does
+           (browseOwnerCollection — see renderProfileSearchResults in the
+           JS), rather than inventing a second "view their profile" flow. -->
+      <div class="profile-tab-panel" id="profileTabPanelSearch" style="display:none;">
+        <input type="text" class="profile-search-input" id="profileSearchInput" placeholder="SEARCH BY NAME 0R WALLET ADDRESS..." autocomplete="off">
+        <div class="profile-search-results" id="profileSearchResults"></div>
+        <button type="button" class="profile-holdings-viewmore" id="profileSearchBack">← BACK</button>
+      </div>
       <div class="profile-tab-panel" id="profileTabPanelOffers" style="display:none;">
-        <!-- 0FFERS — same real 0FFERS RECE!VED/0UTG0!NG 0FFERS lists this
-             always had (renderMyOffersList/renderOutgoingOffersList, fed
-             by loadOffersReceived/loadOutgoingOffers which already run on
-             wallet connect) — only where they live changed. The old
-             standalone MY 0FFERS tab (myOffersPanelWrap) is gone; the
-             0FFERS box above now just opens this panel instead of a
-             separate top-level tab. -->
+        <!-- !NB0X now reads top-to-bottom as MESSAGES, then 0FFERS
+             RECE!VED, then 0UTG0!NG 0FFERS at the bottom (reported live).
+             MESSAGES itself stays C0M!NG S00N — MESSAGES_DB was never
+             bound in production (see this panel's own history further up
+             in the HTML), so there's no real inbox/compose to wire up yet,
+             just the section reserved at the top for when there is.
+             0FFERS RECE!VED/0UTG0!NG 0FFERS are unchanged — same real
+             renderMyOffersList/renderOutgoingOffersList, fed by
+             loadOffersReceived/loadOutgoingOffers which already run on
+             wallet connect. -->
+        <div class="panel-title">MESSAGES<span class="db-soon">C0M!NG S00N</span></div>
+        <div class="th-empty">D!RECT MESSAG!NG ISN'T L!VE YET — CHECK BACK S00N.</div>
         <div class="panel-title">0FFERS RECE!VED</div>
         <div id="myOffersList"></div>
         <div class="panel-title outgoing-offers-title">0UTG0!NG 0FFERS</div>
@@ -9007,6 +9077,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
    'profileBoxGrid','profileTabOffersBadge','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
+   'profileTabPanelSearch','profileSearchInput','profileSearchResults','profileSearchBack',
    'profileWatchlistSection','profileWatchlistGrid',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -12670,8 +12741,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     // The pigeon count itself is gone from this line entirely (reported
     // live) — it already shows inside SH0W MY FL0CK's own button (see
     // renderTrustlineSummary above), no need for a second copy here too.
+    // Sh0rt address + a ▾ switcher arrow (reported live as wanting to be
+    // able to tell, and later switch, which of several signed-in wallets
+    // is active — the arrow is the real hook for that; only one wallet is
+    // ever actually signed in today, see MY_WALLET's own declaration, so
+    // it's a no-op menu for now rather than pretending multi-wallet
+    // session support already exists server-side). The offer/inbox dot
+    // sits right after the address on the SAME line now (reported live —
+    // was its own line underneath with nothing else on it), not a
+    // separate line of its own.
     var offersDot = offersReceivedTotal > 0 ? '<span class="flock-tab-offer-dot" title="' + offersReceivedTotal + ' 0FFER' + (offersReceivedTotal === 1 ? '' : 'S') + ' RECE!VED">' + offersReceivedTotal + '</span>' : '';
-    el.flockTabLabel.innerHTML = offersDot;
+    el.flockTabLabel.innerHTML = '<span class="flock-tab-wallet">' + shortAddr(MY_WALLET) + '</span>' +
+      '<span class="flock-tab-switch-arrow" title="SW!TCH WALLET">▾</span>' + offersDot;
   }
   function loadTrustlineLoginState(){
     if (!MY_WALLET){
@@ -16853,7 +16934,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // (null)) restores the two normal columns.
   function renderBannerHoldingsExpanded(kind){
     var entries = kind === 'nfts' ? sortedHeldEntries(bannerNftHeld, 'count') : sortedHeldEntries(bannerCoinHeld, 'bal');
-    el.profileExpandedTitle.textContent = kind === 'nfts' ? 'ALL NFT H0LD!NGS' : 'ALL C0!N H0LD!NGS';
+    el.profileExpandedTitle.textContent = kind === 'nfts' ? 'NFT H0LD!NGS' : 'C0!N H0LD!NGS';
     el.profileExpandedList.innerHTML = !entries.length
       ? '<div class="th-empty">N0THING HELD YET.</div>'
       : entries.map(function(e){
@@ -17178,19 +17259,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (key !== state.collection) switchCollection(key);
     showTab('database');
   });
-  // ---- PR0F!LE B0X GR!D — V!EW PR0F!LE/0FFERS/C0LLECT!0NS/CR0WN, right
-  // under the banner (see the HTML's own comment on .profile-box-grid).
-  // Plain show/hide, at most one real panel visible — V!EW PR0F!LE is
-  // just "none of them", the neutral/closed state (reported live as
-  // wanting "nothing should be opened" by default). CR0WN's own real
-  // leaderboard data is fetched lazily here, on first open — same
-  // crownData === null guard the old top-level CR0WN tab used to gate
-  // loadCrownLeaderboard() with. ----
+  // ---- PR0F!LE B0X GR!D — SEARCH PR0F!LE/0FFERS/C0LLECT!0NS/WATCHL!ST,
+  // right under the banner (see the HTML's own comment on
+  // .profile-box-grid). Plain show/hide, at most one real panel visible —
+  // null (nothing picked, or BACK from SEARCH PR0F!LE) is the neutral/
+  // closed state. CR0WN's own real leaderboard data/loadCrownLeaderboard
+  // are unused dead code now that CR0WN REWARDS is inert (see the HTML's
+  // own comment) — left in case that box comes back to life later. ----
   function switchProfileTab(tab){
     el.profileTabPanelOffers.style.display = tab === 'offers' ? '' : 'none';
     el.profileTabPanelCollections.style.display = tab === 'collections' ? '' : 'none';
     el.profileTabPanelWatchlist.style.display = tab === 'watchlist' ? '' : 'none';
     el.profileTabPanelCrown.style.display = tab === 'crown' ? '' : 'none';
+    // SEARCH PR0F!LE hides the whole box grid too (reported live as
+    // wanting "our profile banner by itself" plus the search bar), unlike
+    // every other box which just opens its panel below the grid.
+    el.profileTabPanelSearch.style.display = tab === 'profile' ? '' : 'none';
+    el.profileBoxGrid.style.display = tab === 'profile' ? 'none' : '';
+    if (tab === 'profile'){
+      el.profileSearchInput.focus();
+    } else {
+      el.profileSearchInput.value = '';
+      el.profileSearchResults.innerHTML = '';
+    }
     el.profileBoxGrid.querySelectorAll('.flock-account-box-clickable').forEach(function(btn){
       btn.classList.toggle('active', btn.getAttribute('data-profilebox') === tab);
     });
@@ -17228,6 +17319,49 @@ const SWAP_HTML = `<!DOCTYPE html>
     e.preventDefault();
     switchProfileTab(btn.getAttribute('data-profilebox'));
   });
+  // SEARCH PR0F!LE — debounced-as-you-type lookup against the profileSearch
+  // mode on /api/pigeons (matches a stored username or wallet address, see
+  // pigeons.js's own comment). Each keystroke cancels whatever request is still in
+  // flight (searchReqId) so a slow earlier response can never overwrite a
+  // newer one's results.
+  var profileSearchReqId = 0;
+  function renderProfileSearchResults(results){
+    if (!results.length){
+      el.profileSearchResults.innerHTML = el.profileSearchInput.value.trim() ? '<div class="th-empty">N0 MATCHES.</div>' : '';
+      return;
+    }
+    el.profileSearchResults.innerHTML = results.map(function(r){
+      var short = r.wallet.slice(0, 9) + '...' + r.wallet.slice(-4);
+      return '<div class="profile-search-row" data-wallet="' + escapeHtml(r.wallet) + '" data-short="' + escapeHtml(short) + '">' +
+        '<div class="profile-search-row-thumb"' + (r.pfpImage ? ' style="background-image:url(' + escapeHtml(r.pfpImage) + ')"' : '') + '></div>' +
+        '<div class="profile-search-row-text">' +
+          '<div class="profile-search-row-name">' + escapeHtml(r.username || short) + '</div>' +
+          '<div class="profile-search-row-wallet">' + escapeHtml(r.wallet) + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+  el.profileSearchInput.addEventListener('input', function(){
+    var q = el.profileSearchInput.value.trim();
+    var reqId = ++profileSearchReqId;
+    if (!q){ el.profileSearchResults.innerHTML = ''; return; }
+    setTimeout(function(){
+      if (reqId !== profileSearchReqId) return;
+      api({ profileSearch: 1, query: q }).then(function(data){
+        if (reqId !== profileSearchReqId) return;
+        renderProfileSearchResults((data && data.results) || []);
+      }).catch(function(){
+        if (reqId === profileSearchReqId) el.profileSearchResults.innerHTML = '<div class="th-empty">SEARCH FA!LED — TRY AGA!N.</div>';
+      });
+    }, 250);
+  });
+  el.profileSearchResults.addEventListener('click', function(e){
+    var row = e.target.closest('.profile-search-row');
+    if (!row) return;
+    switchProfileTab(null);
+    browseOwnerCollection(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
+  });
+  el.profileSearchBack.addEventListener('click', function(){ switchProfileTab(null); });
   function loadProfilePanel(){
     // Always starts open on a fresh visit to PR0F!LE, even if it was
     // collapsed last time this session — reported live as wanting MY

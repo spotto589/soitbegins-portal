@@ -5,7 +5,7 @@
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue, getFloorIndex,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG,
-  getCachedCrownHolder, mapWithConcurrency
+  getCachedCrownHolder, mapWithConcurrency, getProfilesMap
 } from '../_shared.js';
 
 // Deeptide's own item page — the real place to buy a listed Pigeon.
@@ -526,6 +526,28 @@ export async function onRequestGet(context) {
       counts[key] = findAllCollectionNfts(nfts, key).length;
     }
     return json({ counts });
+  }
+
+  // SEARCH PR0F!LE — matches a stored username (substring, case-
+  // insensitive) or wallet address (substring, case-insensitive — an
+  // XRPL address itself is case-sensitive on-ledger, but typing/pasting a
+  // partial one shouldn't require exact case) against the same profiles
+  // map profiles-batch.js already reads. Same public, no-session-needed
+  // reasoning as that endpoint — a username is meant to be found this
+  // way, not just displayed once you already have the wallet.
+  if (params.get('profileSearch') === '1') {
+    const query = (params.get('query') || '').trim().toLowerCase();
+    if (!query) return json({ results: [] });
+    const map = await getProfilesMap(env.coin);
+    const results = [];
+    for (const w of Object.keys(map)) {
+      const p = map[w];
+      const usernameMatch = p && p.username && p.username.toLowerCase().includes(query);
+      const walletMatch = w.toLowerCase().includes(query);
+      if (usernameMatch || walletMatch) results.push({ wallet: w, username: p.username || null, pfpImage: p.pfpImage || null });
+      if (results.length >= 20) break;
+    }
+    return json({ results });
   }
 
   // A wallet's full real holdings — used by the SELECT -> owner's
