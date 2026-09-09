@@ -220,32 +220,32 @@ const SWAP_HTML = `<!DOCTYPE html>
      comment) carries the same colour once one of these becomes reachable
      through DATABASE, not just on MAINFRAME's own cards. */
   body.collection-thirdeye{
-    --collection-accent:#00b8a9;
-    --collection-accent-rgb:0,184,169;
-    --collection-accent-dim:rgba(0,184,169,0.4);
-    --collection-accent-glow:rgba(0,184,169,0.4);
-    --collection-accent-2-rgb:0,138,127;
+    --collection-accent:#ff4fa3;
+    --collection-accent-rgb:255,79,163;
+    --collection-accent-dim:rgba(255,79,163,0.4);
+    --collection-accent-glow:rgba(255,79,163,0.4);
+    --collection-accent-2-rgb:196,61,126;
   }
   body.collection-bear{
-    --collection-accent:#3f6b35;
-    --collection-accent-rgb:63,107,53;
-    --collection-accent-dim:rgba(63,107,53,0.4);
-    --collection-accent-glow:rgba(63,107,53,0.4);
-    --collection-accent-2-rgb:48,82,40;
+    --collection-accent:#f5c518;
+    --collection-accent-rgb:245,197,24;
+    --collection-accent-dim:rgba(245,197,24,0.4);
+    --collection-accent-glow:rgba(245,197,24,0.4);
+    --collection-accent-2-rgb:189,152,18;
   }
   body.collection-cult{
-    --collection-accent:#b3182c;
-    --collection-accent-rgb:179,24,44;
-    --collection-accent-dim:rgba(179,24,44,0.4);
-    --collection-accent-glow:rgba(179,24,44,0.4);
-    --collection-accent-2-rgb:140,19,35;
+    --collection-accent:#22c55e;
+    --collection-accent-rgb:34,197,94;
+    --collection-accent-dim:rgba(34,197,94,0.4);
+    --collection-accent-glow:rgba(34,197,94,0.4);
+    --collection-accent-2-rgb:26,152,72;
   }
   body.collection-smoki{
-    --collection-accent:#7d8797;
-    --collection-accent-rgb:125,135,151;
-    --collection-accent-dim:rgba(125,135,151,0.4);
-    --collection-accent-glow:rgba(125,135,151,0.4);
-    --collection-accent-2-rgb:96,104,116;
+    --collection-accent:#4fd1f9;
+    --collection-accent-rgb:79,209,249;
+    --collection-accent-dim:rgba(79,209,249,0.4);
+    --collection-accent-glow:rgba(79,209,249,0.4);
+    --collection-accent-2-rgb:61,161,192;
   }
   /* EDITION (1-1515/1516-3015) and the # 0R WALLET search box both depend
      on the $PIGEONS-only number-map crawl (search resolves a number via
@@ -7222,15 +7222,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-seal .mainframe-card-art{ background-position:center 40%; }
   .mainframe-card-fuzzy .mainframe-card-art{ background-position:center 55%; }
   .mainframe-card-conspiracy .mainframe-card-art{ background-position:center 45%; }
-  /* 3RD EYE/BEAR/CULT/SM0K! — these four are plain centered icon logos
-     (mascot/emblem square in the middle of a mostly-empty canvas), not
-     the tall character portraits every crop above was tuned for — the
-     shared center-top default crops straight into the empty space above
-     the actual logo. Plain center (both axes) instead of a % offset. */
+  /* 3RD EYE/CULT/SM0K! are plain centered icon logos/full-bleed square art
+     (mascot/emblem centered in frame), not the tall character portraits
+     every crop above was tuned for — the shared center-top default crops
+     straight into empty space above the actual art. Plain center (both
+     axes) instead of a % offset. */
   .mainframe-card-thirdeye .mainframe-card-art,
-  .mainframe-card-bear .mainframe-card-art,
   .mainframe-card-cult .mainframe-card-art,
   .mainframe-card-smoki .mainframe-card-art{ background-position:center center; }
+  /* BEAR's own art (a real NFT card, not the collection's round logo
+     badge — see COLLECTION_META's own comment on why) is a square
+     portrait like PIGEONS/PHNIX/etc above, just centred rather than
+     needing a specific head-height % offset. */
+  .mainframe-card-bear .mainframe-card-art{ background-position:center center; }
   /* Cards are much shorter now (3x2 grid, not a full-height carousel
      card) — body padding/spacing tightened throughout so the art above
      it keeps a real, visible chunk of the card instead of getting
@@ -8268,7 +8272,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                10 cards total now means the grid genuinely overflows one
                screen (PREV/NEXT, dormant since it was a plain 3x2 6-card
                grid, do real work again from here). -->
-          <div class="mainframe-card mainframe-card-soon mainframe-card-thirdeye" style="--card-accent:0,184,169; --card-art:url('/assets/mainframe/thirdeye.webp?v=1');">
+          <div class="mainframe-card mainframe-card-soon mainframe-card-thirdeye" style="--card-accent:255,79,163; --card-art:url('/assets/mainframe/thirdeye.webp?v=1');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexThirdeye" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -8282,7 +8286,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="thirdeye">BUY $3RDEYE</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-soon mainframe-card-bear" style="--card-accent:63,107,53; --card-art:url('/assets/mainframe/bear.webp?v=1');">
+          <div class="mainframe-card mainframe-card-soon mainframe-card-bear" style="--card-accent:245,197,24; --card-art:url('/assets/mainframe/bear.webp?v=2');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexBear" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -8296,7 +8300,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="bear">BUY $BEAR</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-soon mainframe-card-cult" style="--card-accent:179,24,44; --card-art:url('/assets/mainframe/cult.webp?v=1');">
+          <div class="mainframe-card mainframe-card-soon mainframe-card-cult" style="--card-accent:34,197,94; --card-art:url('/assets/mainframe/cult.webp?v=1');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexCult" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -8310,7 +8314,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="cult">BUY $CULT</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-soon mainframe-card-smoki" style="--card-accent:125,135,151; --card-art:url('/assets/mainframe/smoki.webp?v=1');">
+          <div class="mainframe-card mainframe-card-soon mainframe-card-smoki" style="--card-accent:79,209,249; --card-art:url('/assets/mainframe/smoki.webp?v=1');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexSmoki" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -9518,20 +9522,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: true, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' },
     // 3RD EYE/BEAR/CULT/SM0K! — same C0M!NG S00N, token-only shape as
     // TEDDY/SEAL/FUZZY/C0NSP!RACY above (see TRADEABLE_COLLECTIONS in
-    // _shared.js for the matching backend entries). thumb is each
-    // collection's own real logo (BEAR/CULT/SM0K! straight off their
-    // DeepTide collection pages, 3RD EYE off Bithomp's issued-token icon
-    // for its real token issuer — none of the four are indexed on
-    // DeepTide) — a .webp, not .jpeg like the original six, since that's
-    // the format every one of these actually came in as and re-encoding
-    // wasn't worth doing (every modern browser renders it fine). accent/
-    // accentRgb are still placeholder colours (not sampled off the real
-    // logo the way PIGEONS/PHNIX/etc's own accents were) — worth revisiting
-    // to match each logo's own palette.
-    thirdeye: { label: '3RD EYE', itemLabel: '3RD EYE', tradeable: false, tokenLabel: '$3RDEYE', tokenIssuer: 'rHjyBqFM5oQvXu1soWtATC4r1V6GBnhCQQ', hasAmm: true, accent: '#00b8a9', accentRgb: '0,184,169', thumb: '/assets/mainframe/thirdeye.webp?v=1' },
-    bear: { label: 'BEAR', itemLabel: 'BEAR', tradeable: false, tokenLabel: '$BEAR', tokenIssuer: 'rBEARGUAsyu7tUw53rufQzFdWmJHpJEqFW', hasAmm: true, accent: '#3f6b35', accentRgb: '63,107,53', thumb: '/assets/mainframe/bear.webp?v=1' },
-    cult: { label: 'CULT', itemLabel: 'CULT', tradeable: false, tokenLabel: '$CULT', tokenIssuer: 'rCULtAKrKbQjk1Tpmg5hkw4dpcf9S9KCs', hasAmm: true, accent: '#b3182c', accentRgb: '179,24,44', thumb: '/assets/mainframe/cult.webp?v=1' },
-    smoki: { label: 'SM0K!', itemLabel: 'SM0K!', tradeable: false, tokenLabel: '$SM0K!', tokenIssuer: 'rpHyEYhaL9edeXWr7spsGUbo8n13ivzzty', hasAmm: true, accent: '#7d8797', accentRgb: '125,135,151', thumb: '/assets/mainframe/smoki.webp?v=1' }
+    // _shared.js for the matching backend entries). thumb is real art for
+    // all four — BEAR is one of its own actual NFT cards (pulled off its
+    // DeepTide collection page; the collection's round logo badge read as
+    // "just a plain yellow circle" once cropped to fill a card, reported
+    // live), CULT/SM0K! are their own DeepTide collection logos, 3RD EYE
+    // is Bithomp's issued-token icon for its real token issuer (not
+    // indexed on DeepTide at all). All four are .webp, not .jpeg like the
+    // original six, since that's the format they actually came in as and
+    // re-encoding wasn't worth doing (every modern browser renders it
+    // fine). accent/accentRgb are real per-collection colours now, picked
+    // live (green/yellow/pink/light-blue) rather than sampled off each
+    // logo's own palette the way PIGEONS/PHNIX/etc's original six were.
+    thirdeye: { label: '3RD EYE', itemLabel: '3RD EYE', tradeable: false, tokenLabel: '$3RDEYE', tokenIssuer: 'rHjyBqFM5oQvXu1soWtATC4r1V6GBnhCQQ', hasAmm: true, accent: '#ff4fa3', accentRgb: '255,79,163', thumb: '/assets/mainframe/thirdeye.webp?v=1' },
+    bear: { label: 'BEAR', itemLabel: 'BEAR', tradeable: false, tokenLabel: '$BEAR', tokenIssuer: 'rBEARGUAsyu7tUw53rufQzFdWmJHpJEqFW', hasAmm: true, accent: '#f5c518', accentRgb: '245,197,24', thumb: '/assets/mainframe/bear.webp?v=2' },
+    cult: { label: 'CULT', itemLabel: 'CULT', tradeable: false, tokenLabel: '$CULT', tokenIssuer: 'rCULtAKrKbQjk1Tpmg5hkw4dpcf9S9KCs', hasAmm: true, accent: '#22c55e', accentRgb: '34,197,94', thumb: '/assets/mainframe/cult.webp?v=1' },
+    smoki: { label: 'SM0K!', itemLabel: 'SM0K!', tradeable: false, tokenLabel: '$SM0K!', tokenIssuer: 'rpHyEYhaL9edeXWr7spsGUbo8n13ivzzty', hasAmm: true, accent: '#4fd1f9', accentRgb: '79,209,249', thumb: '/assets/mainframe/smoki.webp?v=1' }
   };
   // Every tradeable collection gets scanned for offers, not just whichever
   // one DATABASE happens to be browsing (state.collection) — see
@@ -17573,7 +17579,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // than read off COLLECTION_META, which doesn't carry a display accent
   // of its own. A future collection just needs one more entry here for
   // its MY C0!NS row to pick up its real colour instead of the fallback.
-  var PROFILE_COIN_ACCENTS = { pigeons: '136,72,248', phnixs: '255,90,31', teddybg: '166,99,46', seal: '45,140,168', fuzzy: '122,66,26', conspiracy: '240,0,228', thirdeye: '0,184,169', bear: '63,107,53', cult: '179,24,44', smoki: '125,135,151' };
+  var PROFILE_COIN_ACCENTS = { pigeons: '136,72,248', phnixs: '255,90,31', teddybg: '166,99,46', seal: '45,140,168', fuzzy: '122,66,26', conspiracy: '240,0,228', thirdeye: '255,79,163', bear: '245,197,24', cult: '34,197,94', smoki: '79,209,249' };
   // ---- Banner H0LD!NGS (T0P 3 H0LD!NGS/T0P 3 NFT H0LD!NGS + their V!EW
   // M0RE full lists, reported live) — module-scope (not trapped inside
   // renderProfileCoins' own closure like before) since the V!EW M0RE/
