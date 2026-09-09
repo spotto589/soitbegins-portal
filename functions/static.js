@@ -989,7 +989,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     animation-delay:-2s;
     white-space:nowrap;
   }
-  #globalTopBar .tab-db-select .trait-row-label{
+  #globalTopBar .tab-db-select .trait-row-label,
+  #globalTopBar .tab-db-select .db-select-arrow{
     font-family:var(--font-mono);
     font-weight:700;
     font-size:clamp(16px, 2.2vw, 26px);
@@ -1003,7 +1004,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        think so") — even 1px is a big chunk of a 14px glyph's own
        stroke width. Dropped entirely below this breakpoint instead of
        just shrinking further; plain white text stays crisp instead. */
-    #globalTopBar .tab-db-heading, #globalTopBar .tab-db-select .trait-row-label{ font-size:14px; letter-spacing:0.04em; text-shadow:none; animation:none; }
+    #globalTopBar .tab-db-heading, #globalTopBar .tab-db-select .trait-row-label, #globalTopBar .tab-db-select .db-select-arrow{ font-size:14px; letter-spacing:0.04em; text-shadow:none; animation:none; }
   }
   /* Mobile: a boxed grid "hub" instead of a horizontally-scrolling strip —
      every tab visible and tappable at once up top, nothing to swipe
@@ -1072,6 +1073,24 @@ const SWAP_HTML = `<!DOCTYPE html>
      the flyout's own .db-option-active/-fuzzy/-phnix). */
   #dbSelectWrap{ border:none !important; background:none !important; }
   .tab-db-select .trait-row-label{ padding:0.3em 0.2em; font-size:13px; letter-spacing:0.05em; color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); }
+  /* The ▾ arrow only (reported live — "only show the drop down box if
+     the arrow is clicked"), split out of the label itself: clicking the
+     collection NAME now jumps straight into that collection (see
+     dbSelectLabel's own click handler in the JS), the flyout only opens
+     off this. Same tap-target gotchas as .trait-row-label's own comment
+     (a plain <span>, needs user-select:none or a touch tap registers as
+     text selection instead of a click) since this is now its own
+     separate real tap target, not just decoration glued onto the label. */
+  .db-select-arrow{
+    display:inline-block;
+    cursor:pointer;
+    padding:0.3em 0.3em 0.3em 0;
+    color:var(--pigeon-purple);
+    text-shadow:0 0 5px var(--pigeon-purple-glow);
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+  }
   /* !important: the generic .traits-hover-wrap:hover/.open rule (shared
      with SORT/ADD TRAITS) comes later in the cascade and would otherwise
      override this back to plain cyan on hover — this stays the
@@ -7262,7 +7281,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button class="tab-btn tab-btn-database" data-tab="database">
         <span class="tab-db-heading">STAT!C://DATABASE ::</span>
         <div class="traits-hover-wrap tab-db-select" id="dbSelectWrap">
-          <span class="trait-row-label" id="dbSelectLabel">P!GE0NS ▾</span>
+          <span class="trait-row-label" id="dbSelectLabel">P!GE0NS</span>
+          <span class="db-select-arrow" id="dbSelectArrow">▾</span>
           <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
             <div class="db-option db-option-active" data-collection="pigeons">P!GE0NS</div>
             <!-- PHN!X/TEDDY pulled back to C0M!NG S00N (matching FUZZY's own
@@ -9220,7 +9240,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
    'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','bottomControlsBar','bottomSortBtn','bottomTraitsBtn',
-   'dbSelectWrap','dbSelectLabel','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn',
+   'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
@@ -15281,7 +15301,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.dbSelectFlyout.style.display = 'none';
     el.dbSelectWrap.classList.remove('open');
   }
+  // The collection NAME itself now jumps straight into that collection
+  // (reported live — "click the text of the collection... make it go to
+  // the collection"), same as picking it from the dropdown or a MAINFRAME
+  // card would; the dropdown only opens off a click on the ▾ arrow
+  // specifically now, not anywhere on the label. stopPropagation on both
+  // still matters — without it either click would also bubble up into
+  // topTabs' own DATABASE handler, which sends you back to the picker
+  // instead (see its own comment on "clicking the word DATABASE").
   el.dbSelectLabel.addEventListener('click', function(e){
+    e.stopPropagation();
+    enterMainframeCollection(state.collection);
+  });
+  el.dbSelectArrow.addEventListener('click', function(e){
     e.stopPropagation();
     if (el.dbSelectFlyout.style.display === 'block') closeDbSelectFlyout();
     else openDbSelectFlyout();
@@ -15369,7 +15401,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var meta = COLLECTION_META[newCollection];
     if (!meta || newCollection === state.collection) return;
     state.collection = newCollection;
-    el.dbSelectLabel.textContent = meta.label + ' ▾';
+    el.dbSelectLabel.textContent = meta.label;
     el.dbSelectFlyout.querySelectorAll('.db-option[data-collection]').forEach(function(opt){
       opt.classList.toggle('db-option-active', opt.getAttribute('data-collection') === newCollection);
     });
