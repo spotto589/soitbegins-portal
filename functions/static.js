@@ -7197,44 +7197,34 @@ const SWAP_HTML = `<!DOCTYPE html>
     width:64px; height:2px; background:linear-gradient(90deg, transparent, var(--cyan), transparent);
     box-shadow:0 0 8px var(--cyan-glow);
   }
-  /* ---- Back to the original 3-wide wrapping grid (the "plain 3x2
-     grid" this was before it briefly became a horizontal carousel to
-     fit 10 cards, and briefly a single column after that — reported
-     live both times as changing the look more than asked: "why did the
-     entire design change"/"it was 3 collections wide"). Same 3-per-row
-     card grid as always, just genuinely scrollable DOWN now (overflow-y,
-     real themed scrollbar) instead of being capped to whatever fit one
-     screen or paged sideways — this is the one actual change: vertical
-     scroll instead of horizontal. PREV/NEXT (mainframeArrowPrev/Next)
-     are hidden below since the scrollbar does that job now; their JS
-     handlers are left wired (harmless no-ops) rather than ripped out. */
+  /* ---- Back to the original 3x2 wrapping grid, no scrollbar at all
+     now (reported live: "revert back before the scroll bar, and instead
+     we scroll by clicking the arrows") — PREV/NEXT page through the 10
+     cards 6 at a time (see mainframePage/renderMainframePage in the JS),
+     each click a full instant swap to the next set of cards, not the old
+     smooth scroll-across carousel. PREV starts hidden on the first page
+     (nothing behind it to go back to — reported live, "for the first
+     page we only need one right arrow"); NEXT hides the same way once
+     you're on the last page. */
   .mainframe-carousel-wrap{
     position:relative;
-    display:block;
+    display:flex;
+    align-items:stretch;
     flex:1 1 auto;
     min-height:0;
   }
   .mainframe-grid{
     display:grid;
     grid-template-columns:repeat(3, 1fr);
-    grid-auto-rows:340px;
+    grid-template-rows:repeat(2, 1fr);
     gap:1.25rem;
     width:100%;
     max-width:1300px;
     height:100%;
     margin:0 auto;
-    padding:0 1rem 1rem;
-    overflow-y:auto;
-    overflow-x:hidden;
-    /* Themed scrollbar — cyan to match the rest of the page's accent
-       language instead of the browser's flat default grey. */
-    scrollbar-width:thin;
-    scrollbar-color:rgba(61,243,236,0.5) rgba(255,255,255,0.05);
+    padding:0 1rem;
+    overflow:hidden;
   }
-  .mainframe-grid::-webkit-scrollbar{ width:8px; }
-  .mainframe-grid::-webkit-scrollbar-track{ background:rgba(255,255,255,0.05); border-radius:4px; }
-  .mainframe-grid::-webkit-scrollbar-thumb{ background:rgba(61,243,236,0.5); border-radius:4px; }
-  .mainframe-grid::-webkit-scrollbar-thumb:hover{ background:rgba(61,243,236,0.85); }
   .mainframe-card{
     position:relative;
     min-width:0;
@@ -7290,9 +7280,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     pointer-events:none;
   }
   @media (max-width:760px){
-    /* 2 columns on phone width — 3 real cards never fit legibly narrower
-       than that, same call the old fixed 3x2/2x3 grid always made. */
-    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-auto-rows:260px; gap:0.6rem; padding:0 0.5rem 0.75rem; }
+    /* 2 columns x 3 rows visible on narrow screens — 3 columns of real
+       cards never fit legibly at phone width. Still 6 cards a page (see
+       MAINFRAME_PAGE_SIZE in the JS), just 2-and-3 instead of 3-and-2. */
+    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.6rem; padding:0 0.5rem; }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
@@ -7533,14 +7524,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .mainframe-card-soon .mainframe-card-label{ color:var(--grey); text-shadow:none; }
   .mainframe-card-soon .mainframe-card-stats{ color:var(--grey-dim); }
-  /* PREV/NEXT — hidden now that .mainframe-grid is a vertical list with
-     its own real themed scrollbar (see .mainframe-carousel-wrap's own
-     comment) instead of a horizontal carousel. Kept, not deleted — the
-     underlying position/sizing survives if a horizontal layout ever
-     comes back, same "hidden, not deleted" treatment as any other inert
-     control on this page. */
+  /* PREV/NEXT — real paging controls again (see renderMainframePage in
+     the JS for the show/hide-by-page logic; each one's own [hidden] at
+     the start/end of the page range is set there, not here). */
   .mainframe-arrow{
-    display:none;
+    display:flex;
     position:absolute;
     top:50%;
     transform:translateY(-50%);
@@ -7560,6 +7548,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-arrow:hover{ border-color:var(--cyan-dim); background:rgba(20,21,26,0.95); transform:translateY(-50%) scale(1.08); }
   .mainframe-arrow-prev{ left:0.25rem; }
   .mainframe-arrow-next{ right:0.25rem; }
+  .mainframe-arrow[hidden]{ display:none; }
 </style>
 </head>
 <body>
@@ -16207,50 +16196,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.databaseInPicker = false;
     showTab('database');
   }
-  // Drag-to-scroll (mouse) — trackpad/touch already scroll #mainframeGrid
-  // natively via its own overflow-x:auto, this is just the desktop-mouse
-  // equivalent ("drag and scroll through", reported live). Tracks total
-  // movement so a genuine drag (past mainframeDragThreshold) suppresses
-  // the click that would otherwise fire on mouseup and open whatever
-  // card the cursor happened to land on — a real drag is a navigation
-  // gesture, not a pick.
-  var mainframeDragThreshold = 6;
-  var mainframeDragState = null; // { startX, startScrollLeft, moved }
-  el.mainframeGrid.addEventListener('mousedown', function(e){
-    mainframeDragState = { startX: e.pageX, startScrollLeft: el.mainframeGrid.scrollLeft, moved: false };
-    el.mainframeGrid.classList.add('dragging');
-  });
-  window.addEventListener('mousemove', function(e){
-    if (!mainframeDragState) return;
-    var dx = e.pageX - mainframeDragState.startX;
-    if (Math.abs(dx) > mainframeDragThreshold) mainframeDragState.moved = true;
-    if (mainframeDragState.moved){
-      e.preventDefault();
-      el.mainframeGrid.scrollLeft = mainframeDragState.startScrollLeft - dx;
-    }
-  });
-  window.addEventListener('mouseup', function(){
-    if (mainframeDragState) el.mainframeGrid.classList.remove('dragging');
-    // Left set (not cleared) until the next click's own capture-phase
-    // check below reads it — clearing here would race the click event
-    // that's about to fire from this same mouseup.
-  });
-  // Capture phase, ahead of the plain click handler below — stops a
-  // just-finished drag's own mouseup-triggered click from reaching it at
-  // all, rather than trying to distinguish "drag" from "pick" inside that
-  // handler itself.
-  el.mainframeGrid.addEventListener('click', function(e){
-    if (mainframeDragState && mainframeDragState.moved){
-      // stopImmediatePropagation, not just stopPropagation — this and the
-      // real pick/buy handler right below are two SEPARATE listeners on
-      // this SAME element, and plain stopPropagation only ever stops an
-      // event moving to the NEXT node in the DOM, not sibling listeners
-      // already registered on the node it's currently at.
-      e.stopImmediatePropagation();
-      e.preventDefault();
-    }
-    mainframeDragState = null;
-  }, true);
   el.mainframeGrid.addEventListener('click', function(e){
     var buyBtn = e.target.closest('.mainframe-card-buy');
     if (buyBtn){
@@ -16279,41 +16224,56 @@ const SWAP_HTML = `<!DOCTYPE html>
     e.preventDefault();
     enterMainframeCollection(card.getAttribute('data-collection'));
   });
-  // PREV/NEXT — one full page (however many cards are actually visible
-  // at once — 3 on desktop, 2 on mobile, see the CSS's own breakpoint)
-  // per click, so this always lands exactly on a card's own scroll-snap
-  // point a whole page over, on any screen size.
-  function mainframeCardStep(){
-    var card = el.mainframeGrid.querySelector('.mainframe-card:not([hidden])');
-    if (!card) return 960;
-    var gap = parseFloat(getComputedStyle(el.mainframeGrid).columnGap) || 0;
-    var cardWidth = card.getBoundingClientRect().width + gap;
-    var visibleCount = Math.max(1, Math.round(el.mainframeGrid.clientWidth / cardWidth));
-    return cardWidth * visibleCount;
+  // PREV/NEXT page through the 10 real cards 6 at a time (3x2 desktop,
+  // 2x3 mobile — both 6 slots, see the CSS's own breakpoint) — a full
+  // instant swap to the next set of cards (reported live: "everytime it
+  // swaps page, completely swap... before it was just scrolling
+  // across", rejecting the old smooth scroll-snap carousel this
+  // replaced). SEARCH filters into the same real 'hidden' attribute
+  // renderMainframePage uses for paging (see its own comment) rather
+  // than a second, separate hide mechanism — a card matching neither is
+  // never shown regardless of which page it'd otherwise fall on.
+  var MAINFRAME_PAGE_SIZE = 6;
+  var mainframePage = 0;
+  function renderMainframePage(){
+    var cards = Array.prototype.slice.call(el.mainframeGrid.querySelectorAll('.mainframe-card'));
+    var matching = cards.filter(function(card){ return card.dataset.searchHidden !== '1'; });
+    var maxPage = Math.max(0, Math.ceil(matching.length / MAINFRAME_PAGE_SIZE) - 1);
+    if (mainframePage > maxPage) mainframePage = maxPage;
+    var start = mainframePage * MAINFRAME_PAGE_SIZE;
+    var end = start + MAINFRAME_PAGE_SIZE;
+    cards.forEach(function(card){ card.hidden = true; });
+    matching.slice(start, end).forEach(function(card){ card.hidden = false; });
+    // Only one arrow showing on the first page (reported live — "for the
+    // first page we only need one right arrow"), same idea at the last.
+    el.mainframeArrowPrev.hidden = mainframePage <= 0;
+    el.mainframeArrowNext.hidden = mainframePage >= maxPage;
   }
   el.mainframeArrowPrev.addEventListener('click', function(){
-    el.mainframeGrid.scrollBy({ left: -mainframeCardStep(), behavior: 'smooth' });
+    mainframePage--;
+    renderMainframePage();
   });
   el.mainframeArrowNext.addEventListener('click', function(){
-    el.mainframeGrid.scrollBy({ left: mainframeCardStep(), behavior: 'smooth' });
+    mainframePage++;
+    renderMainframePage();
   });
   // SEARCH C0LLECT!0NS (reported live) — plain client-side filter over
   // the carousel's own real cards, matched against each card's own label
   // text (the $-prefixed name, e.g. "$P!GE0NS") since that's the only
   // real per-card name available (COLLECTION_META isn't populated for
-  // the browse-only C0M!NG S00N ones this filters just as well). Hiding
-  // non-matches with the real 'hidden' attribute (see .mainframe-card
-  // [hidden] in the CSS) rather than removing them keeps every card's own
-  // DOM state (stats, thumbs already resolved) intact for when the
-  // search is cleared again.
+  // the browse-only C0M!NG S00N ones this filters just as well). Marked
+  // via data-search-hidden rather than the real 'hidden' attribute
+  // directly — renderMainframePage (above) owns 'hidden' now, since a
+  // card can be off the current PAGE without failing the search at all.
   el.mainframeSearchInput.addEventListener('input', function(){
     var q = el.mainframeSearchInput.value.trim().toLowerCase();
     el.mainframeGrid.querySelectorAll('.mainframe-card').forEach(function(card){
       var label = card.querySelector('.mainframe-card-label');
       var text = label ? label.textContent.toLowerCase() : '';
-      card.hidden = !!q && text.indexOf(q) === -1;
+      card.dataset.searchHidden = (!!q && text.indexOf(q) === -1) ? '1' : '0';
     });
-    el.mainframeGrid.scrollTo({ left: 0, behavior: 'auto' });
+    mainframePage = 0;
+    renderMainframePage();
   });
   // S0RT BY (reported live, mirroring SEARCH C0LLECT!0NS on the other
   // side) — re-orders the real card elements in place (appendChild on an
@@ -16348,11 +16308,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       };
     }
     cards.sort(cmp).forEach(function(card){ el.mainframeGrid.appendChild(card); });
-    el.mainframeGrid.scrollTo({ left: 0, behavior: 'auto' });
+    mainframePage = 0;
+    renderMainframePage();
   }
   el.mainframeSortSelect.addEventListener('change', function(){
     sortMainframeCards(el.mainframeSortSelect.value);
   });
+  renderMainframePage();
   // Σκύλλα IS the profile/hub page now (reported live as "we dont need
   // both") — always the same tab either way, connected or not. Reached
   // through the real Σκύλλα tab button in #globalTopBar's own strip now
