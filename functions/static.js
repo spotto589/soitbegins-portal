@@ -4925,12 +4925,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     vertical-align:middle;
   }
   .pigeons-bar-copy-btn:hover{ background:rgba(255,255,255,0.15); }
-  /* SIGN OUT — a real, destructive-feeling action (ends the session), so
-     it gets the real --red token instead of the plain white every other
-     bar-btn in this box uses (was pointing at magenta, not actually red,
-     despite the comment always saying red). */
-  #swapSignOutBtn{ color:var(--red); border-color:var(--red); }
-  #swapSignOutBtn:hover{ background:var(--red); color:#000; }
   /* LOGIN — green (the real, positive action here) instead of plain
      white like every other .bar-btn in this box. */
   #pigeonsLoginBtn{ color:var(--green); border-color:var(--green); text-shadow:0 0 6px var(--green-glow); }
@@ -5039,6 +5033,34 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .pigeons-calc-toggle-btn:hover, .pigeons-calc-toggle-btn.open{ border-color:#fff; background:rgba(0,0,0,0.3); }
   .pigeons-calc-toggle-arrow{ font-size:11px; opacity:0.8; }
+  /* Every clickable button on the trustline banner reads green now
+     (reported live) — scoped to #pigeonsMergedPanel (the whole banner's
+     own wrapper) rather than these classes' bare selectors, since
+     .pigeons-bar-copy-btn specifically is reused as-is inside the BUY
+     SWAP modal elsewhere on the page, which should keep its own plain
+     white look. .pigeons-bar-balance-buy loses its per-collection
+     --collection-accent tint here specifically — BUY $TOKEN, V!EW 0N
+     DEXSCREENER and V!EW NFTs all read as the same green action now
+     instead of BUY alone shifting colour per collection. */
+  #pigeonsMergedPanel .pigeons-bar-copy-btn,
+  #pigeonsMergedPanel .pigeons-bar-help-box,
+  #pigeonsMergedPanel .pigeons-calc-toggle-btn,
+  #pigeonsMergedPanel .pigeons-bar-balance-buy{
+    color:var(--green);
+    border-color:var(--green);
+    text-shadow:0 0 6px var(--green-glow);
+  }
+  #pigeonsMergedPanel .pigeons-bar-balance-buy{ background:rgba(52,255,133,0.12); }
+  #pigeonsMergedPanel .pigeons-bar-help-mark{ border-color:currentColor; }
+  #pigeonsMergedPanel .pigeons-bar-copy-btn:hover,
+  #pigeonsMergedPanel .pigeons-bar-help-box:hover,
+  #pigeonsMergedPanel .pigeons-calc-toggle-btn:hover,
+  #pigeonsMergedPanel .pigeons-calc-toggle-btn.open,
+  #pigeonsMergedPanel .pigeons-bar-balance-buy:hover{
+    background:var(--green);
+    color:#000;
+    text-shadow:none;
+  }
   /* A real centered popup now, same purple/exciting overlay treatment as
      0FFER/BUY $P!GE0NS's own confirm modals (#offerConfirmModal etc. —
      see that shared selector group's own comment) instead of a small
@@ -7692,11 +7714,10 @@ const SWAP_HTML = `<!DOCTYPE html>
              fabricated placeholders. -->
         <div class="pigeons-bar-left" id="pigeonsBarLoggedIn" style="display:none;">
           <div class="pigeons-bar-left-body">
-            <span class="pigeons-bar-text" id="pigeonsLoggedInWallet"></span>
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
             <div class="pigeons-bar-identity-actions">
-              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">SH0W MY NFTs<span id="showMyPigeonsCount"></span></button>
-              <button class="bar-btn ci-copy-btn" id="swapSignOutBtn">S!GN 0UT</button>
+              <a class="pigeons-bar-balance-buy" id="pigeonsBarDexBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER</a>
+              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">V!EW NFTs</button>
             </div>
           </div>
         </div>
@@ -8263,7 +8284,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <option value="holders">H0LDER C0UNT</option>
           <option value="age" disabled>AGE (C0M!NG S00N)</option>
         </select>
-        <div class="mainframe-subtitle">SELECT A DATABASE</div>
+        <div class="mainframe-subtitle" id="mainframeSubtitle">SELECT A DATABASE</div>
         <input type="text" class="mainframe-search-input" id="mainframeSearchInput" placeholder="SEARCH C0LLECT!0NS..." autocomplete="off">
       </div>
       <div class="mainframe-carousel-wrap">
@@ -9691,10 +9712,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
    'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','bottomControlsBar','bottomSortBtn','bottomTraitsBtn',
    'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
-   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
+   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','pigeonsBarDexBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
-   'screenMainframe','mainframeGrid','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
+   'screenMainframe','mainframeGrid','mainframeSubtitle','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
    'mainframeStatsThirdeye','mainframeStatsBear','mainframeStatsCult','mainframeStatsSmoki',
    'globalTopBar','globalTopBarHeading',
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeSearchInput','mainframeSortSelect',
@@ -10213,6 +10234,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // dbSelectFlyout click handler, both of which flip
     // databaseInPicker back to false themselves.
     if (tab === 'database' && !state.databaseInPicker){
+      // A plain DATABASE click always means the real picker, never a
+      // V!EW NFTs one left over from an abandoned trip through it (opened
+      // V!EW NFTs, then navigated away without picking a collection).
+      mainframeMyNftsMode = false;
+      el.mainframeSubtitle.textContent = 'SELECT A DATABASE';
       state.databaseInPicker = true;
       showTab('database');
       scrollActiveTabPanelIntoView('database');
@@ -13348,15 +13374,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.pigeonsLoginBtn.textContent = 'C0NNECT!NG...';
     startAuthorize();
   });
-  el.swapSignOutBtn.addEventListener('click', function(){
-    el.swapSignOutBtn.disabled = true;
-    el.swapSignOutBtn.textContent = 'S!GN!NG 0UT...';
-    fetch('/api/disconnect', { method: 'POST' }).then(function(){
-      window.location.href = '/static';
-    }).catch(function(){
-      window.location.href = '/static';
-    });
-  });
 
   // ---- Trustline banner LOGIN state — real held-Pigeons count + real
   // $PIGEONS trustline/balance from account_lines (fetchPigeonsAccountLine
@@ -13451,13 +13468,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   // was the only time anyone would want to buy — real feedback: someone
   // already holding a real balance still wants a quick way to buy more).
   function renderTrustlineSummary(){
-    // The pigeon count only ever shows once now, inside SH0W MY FL0CK
-    // itself — used to also have its own standalone "58" line right
-    // above it (pigeonsLoggedInCount), showing the exact same number
-    // twice in the same small identity block. Left blank rather
-    // than showing a placeholder while still loading, since the button
-    // reads fine on its own either way ("SH0W MY FL0CK").
-    el.showMyPigeonsCount.textContent = trustlinePigeonCount === null ? '' : ' :: ' + trustlinePigeonCount.toLocaleString();
     var meta = COLLECTION_META[state.collection];
     if (trustlineBalanceNum === null){
       el.pigeonsBalanceValue.innerHTML = '…';
@@ -13608,7 +13618,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.pigeonsBarLoggedIn.style.display = '';
     el.pigeonsBalanceLoginWrap.style.display = 'none';
     el.pigeonsBalanceValue.style.display = '';
-    el.pigeonsLoggedInWallet.textContent = 'S!GNED !N AS :: ' + MY_WALLET.slice(0, 9) + '...' + MY_WALLET.slice(-4);
     rememberKnownWallet(MY_WALLET);
     trustlinePigeonCount = null;
     trustlineBalanceNum = null;
@@ -13636,11 +13645,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   loadOffersReceived();
   loadOutgoingOffers();
   loadIncomingTransfers();
-  // Lands on FL0CK now (was: DATABASE, self-scoped) — "SH0W MY FL0CK"
-  // should actually take you to the FL0CK tab, not just filter DATABASE
-  // down to your own wallet while leaving you on it.
+  // V!EW NFTs (trustline banner) — same real MAINFRAME collection picker
+  // DATABASE itself uses (reported live: "should pop up and show a
+  // selection of the collections to choose from... i think we had this
+  // set up before"), just tagged so picking a collection scopes straight
+  // to YOUR held items in it (browseOwnerCollection) instead of the
+  // normal full browsable grid — see mainframeMyNftsMode's own use in
+  // enterMainframeCollection below.
+  var mainframeMyNftsMode = false;
   el.showMyPigeonsBtn.addEventListener('click', function(){
-    if (MY_WALLET) browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
+    if (!MY_WALLET) return;
+    mainframeMyNftsMode = true;
+    el.mainframeSubtitle.textContent = 'SELECT A C0LLECT!0N T0 V!EW Y0UR NFTs';
+    state.databaseInPicker = true;
+    showTab('database');
+    scrollActiveTabPanelIntoView('database');
   });
 
   // ---- LIST A PIGEON — first real Σκύλλα listing test: create-offer
@@ -16184,6 +16203,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   // switchCollection's own no-op guard for "already this collection"
   // means enterMainframeCollection has to drive showTab itself either way.
   function enterMainframeCollection(key){
+    if (mainframeMyNftsMode){
+      // Picking a collection while in V!EW NFTs mode scopes straight to
+      // YOUR held items in it (SORT BY/FILTER BY TRAITS still work —
+      // runScopedQuery, the same real query path a plain SH0W MY FL0CK
+      // already used, just narrowed to whichever collection got picked
+      // here) instead of entering the normal full browsable grid.
+      mainframeMyNftsMode = false;
+      el.mainframeSubtitle.textContent = 'SELECT A DATABASE';
+      if (key !== state.collection) switchCollection(key);
+      browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
+      return;
+    }
     if (key !== state.collection){
       // switchCollection's own end-of-function calls (ensureTraitsLoaded +
       // runQuery) already do the first real fetch for the new collection —
@@ -16487,9 +16518,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (data && data.dexUrl){
         el.pigeonsDexLink.href = data.dexUrl;
         el.pigeonsCalcDexBtn.href = data.dexUrl;
+        el.pigeonsBarDexBtn.href = data.dexUrl;
         el.pigeonsDexLink.style.display = '';
+        el.pigeonsBarDexBtn.style.display = MY_WALLET ? '' : 'none';
       } else {
         el.pigeonsDexLink.style.display = 'none';
+        el.pigeonsBarDexBtn.style.display = 'none';
       }
     }).catch(function(){});
   }
