@@ -7222,6 +7222,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-seal .mainframe-card-art{ background-position:center 40%; }
   .mainframe-card-fuzzy .mainframe-card-art{ background-position:center 55%; }
   .mainframe-card-conspiracy .mainframe-card-art{ background-position:center 45%; }
+  /* 3RD EYE/BEAR/CULT/SM0K! — these four are plain centered icon logos
+     (mascot/emblem square in the middle of a mostly-empty canvas), not
+     the tall character portraits every crop above was tuned for — the
+     shared center-top default crops straight into the empty space above
+     the actual logo. Plain center (both axes) instead of a % offset. */
+  .mainframe-card-thirdeye .mainframe-card-art,
+  .mainframe-card-bear .mainframe-card-art,
+  .mainframe-card-cult .mainframe-card-art,
+  .mainframe-card-smoki .mainframe-card-art{ background-position:center center; }
   /* Cards are much shorter now (3x2 grid, not a full-height carousel
      card) — body padding/spacing tightened throughout so the art above
      it keeps a real, visible chunk of the card instead of getting
@@ -8259,7 +8268,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                10 cards total now means the grid genuinely overflows one
                screen (PREV/NEXT, dormant since it was a plain 3x2 6-card
                grid, do real work again from here). -->
-          <div class="mainframe-card mainframe-card-soon mainframe-card-thirdeye" style="--card-accent:0,184,169; --card-art:url('/assets/mainframe/thirdeye.jpeg?v=1');">
+          <div class="mainframe-card mainframe-card-soon mainframe-card-thirdeye" style="--card-accent:0,184,169; --card-art:url('/assets/mainframe/thirdeye.webp?v=1');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexThirdeye" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -8273,7 +8282,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="thirdeye">BUY $3RDEYE</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-soon mainframe-card-bear" style="--card-accent:63,107,53; --card-art:url('/assets/mainframe/bear.jpeg?v=1');">
+          <div class="mainframe-card mainframe-card-soon mainframe-card-bear" style="--card-accent:63,107,53; --card-art:url('/assets/mainframe/bear.webp?v=1');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexBear" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -8287,7 +8296,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="bear">BUY $BEAR</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-soon mainframe-card-cult" style="--card-accent:179,24,44; --card-art:url('/assets/mainframe/cult.jpeg?v=1');">
+          <div class="mainframe-card mainframe-card-soon mainframe-card-cult" style="--card-accent:179,24,44; --card-art:url('/assets/mainframe/cult.webp?v=1');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexCult" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -8301,7 +8310,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="cult">BUY $CULT</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-soon mainframe-card-smoki" style="--card-accent:125,135,151; --card-art:url('/assets/mainframe/smoki.jpeg?v=1');">
+          <div class="mainframe-card mainframe-card-soon mainframe-card-smoki" style="--card-accent:125,135,151; --card-art:url('/assets/mainframe/smoki.webp?v=1');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexSmoki" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -9509,17 +9518,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: true, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' },
     // 3RD EYE/BEAR/CULT/SM0K! — same C0M!NG S00N, token-only shape as
     // TEDDY/SEAL/FUZZY/C0NSP!RACY above (see TRADEABLE_COLLECTIONS in
-    // _shared.js for the matching backend entries). accent/accentRgb are
-    // placeholder colours (no real brand palette given for any of these
-    // four yet) — swap for the real thing whenever art actually lands;
-    // thumb points at art that doesn't exist yet either, which is fine —
-    // .mainframe-card-art already falls back to a plain accent-coloured
-    // tile until the real jpeg is uploaded to that path (see its own CSS
-    // comment), same as every collection does before its art is ready.
-    thirdeye: { label: '3RD EYE', itemLabel: '3RD EYE', tradeable: false, tokenLabel: '$3RDEYE', tokenIssuer: 'rHjyBqFM5oQvXu1soWtATC4r1V6GBnhCQQ', hasAmm: true, accent: '#00b8a9', accentRgb: '0,184,169', thumb: '/assets/mainframe/thirdeye.jpeg?v=1' },
-    bear: { label: 'BEAR', itemLabel: 'BEAR', tradeable: false, tokenLabel: '$BEAR', tokenIssuer: 'rBEARGUAsyu7tUw53rufQzFdWmJHpJEqFW', hasAmm: true, accent: '#3f6b35', accentRgb: '63,107,53', thumb: '/assets/mainframe/bear.jpeg?v=1' },
-    cult: { label: 'CULT', itemLabel: 'CULT', tradeable: false, tokenLabel: '$CULT', tokenIssuer: 'rCULtAKrKbQjk1Tpmg5hkw4dpcf9S9KCs', hasAmm: true, accent: '#b3182c', accentRgb: '179,24,44', thumb: '/assets/mainframe/cult.jpeg?v=1' },
-    smoki: { label: 'SM0K!', itemLabel: 'SM0K!', tradeable: false, tokenLabel: '$SM0K!', tokenIssuer: 'rpHyEYhaL9edeXWr7spsGUbo8n13ivzzty', hasAmm: true, accent: '#7d8797', accentRgb: '125,135,151', thumb: '/assets/mainframe/smoki.jpeg?v=1' }
+    // _shared.js for the matching backend entries). thumb is each
+    // collection's own real logo (BEAR/CULT/SM0K! straight off their
+    // DeepTide collection pages, 3RD EYE off Bithomp's issued-token icon
+    // for its real token issuer — none of the four are indexed on
+    // DeepTide) — a .webp, not .jpeg like the original six, since that's
+    // the format every one of these actually came in as and re-encoding
+    // wasn't worth doing (every modern browser renders it fine). accent/
+    // accentRgb are still placeholder colours (not sampled off the real
+    // logo the way PIGEONS/PHNIX/etc's own accents were) — worth revisiting
+    // to match each logo's own palette.
+    thirdeye: { label: '3RD EYE', itemLabel: '3RD EYE', tradeable: false, tokenLabel: '$3RDEYE', tokenIssuer: 'rHjyBqFM5oQvXu1soWtATC4r1V6GBnhCQQ', hasAmm: true, accent: '#00b8a9', accentRgb: '0,184,169', thumb: '/assets/mainframe/thirdeye.webp?v=1' },
+    bear: { label: 'BEAR', itemLabel: 'BEAR', tradeable: false, tokenLabel: '$BEAR', tokenIssuer: 'rBEARGUAsyu7tUw53rufQzFdWmJHpJEqFW', hasAmm: true, accent: '#3f6b35', accentRgb: '63,107,53', thumb: '/assets/mainframe/bear.webp?v=1' },
+    cult: { label: 'CULT', itemLabel: 'CULT', tradeable: false, tokenLabel: '$CULT', tokenIssuer: 'rCULtAKrKbQjk1Tpmg5hkw4dpcf9S9KCs', hasAmm: true, accent: '#b3182c', accentRgb: '179,24,44', thumb: '/assets/mainframe/cult.webp?v=1' },
+    smoki: { label: 'SM0K!', itemLabel: 'SM0K!', tradeable: false, tokenLabel: '$SM0K!', tokenIssuer: 'rpHyEYhaL9edeXWr7spsGUbo8n13ivzzty', hasAmm: true, accent: '#7d8797', accentRgb: '125,135,151', thumb: '/assets/mainframe/smoki.webp?v=1' }
   };
   // Every tradeable collection gets scanned for offers, not just whichever
   // one DATABASE happens to be browsing (state.collection) — see
@@ -13092,7 +13104,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.connectPanelActions.innerHTML = '';
     } else if (mode === 'waiting'){
       el.connectPanelTitle.textContent = 'WA!T!NG F0R S!GNATURE';
-      el.connectPanelSub.innerHTML = 'CHECK Y0UR PH0NE F0R THE <span style="text-transform:none;">Σκύλλα</span> REQUEST !N XAMAN.';
+      el.connectPanelSub.innerHTML = '';
       el.connectPanelActions.innerHTML = '<a href="' + escapeHtml(opts.url) + '" target="_blank" rel="noopener" class="connect-panel-btn connect-panel-btn-outline xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE</a>';
     } else if (mode === 'error'){
       el.connectPanelTitle.textContent = opts.title || 'ERR://C0NNECT!0N FA!LED';
