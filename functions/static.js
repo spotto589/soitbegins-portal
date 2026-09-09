@@ -1422,21 +1422,22 @@ const SWAP_HTML = `<!DOCTYPE html>
      rows already use (thumb+name+amount) for every real holding of that
      kind — see renderBannerHoldingsExpanded's own comment in the JS. */
   .profile-banner-expanded{ flex:1 1 auto; min-width:0; }
-  /* Cards laid out left-to-right, wrapping into rows, instead of one
-     stacked column — same card markup for both V!EW C0!NS and V!EW NFTS
-     (see coinHoldingCardHtml/nftHoldingCardHtml in the JS). */
-  .profile-banner-expanded-list{ display:flex; flex-wrap:wrap; gap:0.6rem; margin:0.5rem 0; max-height:220px; overflow-y:auto; }
+  /* One real horizontal row, no wrapping — scrolls sideways past however
+     many collections a wallet holds, instead of wrapping into a grid.
+     Same card markup for both V!EW C0!NS and V!EW NFTS (see
+     coinHoldingCardHtml/nftHoldingCardHtml in the JS). */
+  .profile-banner-expanded-list{ display:flex; flex-wrap:nowrap; gap:0.8rem; margin:0.5rem 0; padding-bottom:0.3rem; overflow-x:auto; overflow-y:hidden; }
   .profile-banner-coin-row{
     display:flex; flex-direction:column; align-items:center; text-align:center;
-    gap:0.3rem; width:86px; flex:0 0 auto;
-    padding:0.55em 0.4em;
+    gap:0.4rem; width:120px; flex:0 0 auto;
+    padding:0.8em 0.6em;
     border:1px solid rgba(var(--card-accent, 61,243,236), 0.35);
     border-radius:var(--radius);
     background:rgba(var(--card-accent, 61,243,236), 0.08);
   }
   .profile-banner-coin-thumb{
-    width:36px; height:36px; flex:0 0 auto;
-    border-radius:6px;
+    width:56px; height:56px; flex:0 0 auto;
+    border-radius:8px;
     border:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
     background-size:cover; background-position:center;
     background-color:rgba(var(--card-accent, 61,243,236), 0.18);
@@ -1444,7 +1445,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-banner-coin-text{ display:flex; flex-direction:column; align-items:center; min-width:0; width:100%; }
   .profile-banner-coin-name{
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:13px;
     font-weight:700;
     letter-spacing:0.02em;
     color:#fff;
@@ -1456,8 +1457,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Coin amount; the XRP estimate (coins only) sits in its own line right
      underneath. NFT cards reuse .profile-banner-coin-amount for the count
      and never render a .profile-banner-coin-xrp line. */
-  .profile-banner-coin-amount{ font-family:var(--font-mono); font-size:10px; color:var(--grey); }
-  .profile-banner-coin-xrp{ font-family:var(--font-mono); font-size:9px; color:var(--cyan); }
+  .profile-banner-coin-amount{ font-family:var(--font-mono); font-size:13px; color:var(--grey); }
+  .profile-banner-coin-xrp{ font-family:var(--font-mono); font-size:11px; color:var(--cyan); }
   .profile-twitter-link{
     display:inline-flex;
     align-items:center;
