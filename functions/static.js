@@ -1035,6 +1035,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     letter-spacing:0.04em;
     text-shadow:none;
   }
+  /* DATABASE (still on the MA!NFRAME picker) vs the current collection
+     name (a real collection actually being browsed) — whichever one the
+     tab is actually showing gets underlined, toggled in showTab (see
+     tab-db-word-active's own JS comment there). Same offset/thickness on
+     both words even though one sits in a plain span and the other in a
+     button label, so the underline reads identically either way. */
+  .tab-db-word-active{
+    text-decoration:underline;
+    text-underline-offset:0.2em;
+    text-decoration-thickness:2px;
+  }
   @media (max-width:700px){
     /* The chromatic-aberration text-shadow reads great big (desktop's
        clamp(18px, 2.4vw, 30px)) but turns to mush at this small a size
@@ -7222,19 +7233,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-seal .mainframe-card-art{ background-position:center 40%; }
   .mainframe-card-fuzzy .mainframe-card-art{ background-position:center 55%; }
   .mainframe-card-conspiracy .mainframe-card-art{ background-position:center 45%; }
-  /* 3RD EYE/CULT/SM0K! are plain centered icon logos/full-bleed square art
-     (mascot/emblem centered in frame), not the tall character portraits
-     every crop above was tuned for — the shared center-top default crops
-     straight into empty space above the actual art. Plain center (both
-     axes) instead of a % offset. */
+  /* 3RD EYE/BEAR/CULT/SM0K! are plain centered icon logos (mascot/emblem
+     circle in the middle of a mostly-empty canvas), not the tall
+     character portraits every crop above was tuned for — the shared
+     center-top default crops straight into the empty space above the
+     actual logo. Plain center (both axes) instead of a % offset. */
   .mainframe-card-thirdeye .mainframe-card-art,
+  .mainframe-card-bear .mainframe-card-art,
   .mainframe-card-cult .mainframe-card-art,
   .mainframe-card-smoki .mainframe-card-art{ background-position:center center; }
-  /* BEAR's own art (a real NFT card, not the collection's round logo
-     badge — see COLLECTION_META's own comment on why) is a square
-     portrait like PIGEONS/PHNIX/etc above, just centred rather than
-     needing a specific head-height % offset. */
-  .mainframe-card-bear .mainframe-card-art{ background-position:center center; }
+  /* BEAR's badge specifically is a small circle with a lot of flat empty
+     margin around it (unlike 3RD EYE/CULT/SM0K!'s own logos, which are
+     closer to full-bleed already) — plain cover left that margin visible
+     as blank gutters either side of the circle, reading as "just a small
+     yellow circle floating in whitespace" rather than a filled card
+     (reported live). Zoomed in specifically for this one so the circle
+     itself fills the whole card edge to edge instead. */
+  .mainframe-card-bear .mainframe-card-art{ background-size:180%; }
   /* Cards are much shorter now (3x2 grid, not a full-height carousel
      card) — body padding/spacing tightened throughout so the art above
      it keeps a real, visible chunk of the card instead of getting
@@ -7469,9 +7484,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div class="top-tabs-wrap" id="topTabsWrap">
     <div class="top-tabs" id="topTabs">
       <button class="tab-btn tab-btn-database" data-tab="database">
-        <span class="tab-db-heading">STAT!C://DATABASE ::</span>
+        <!-- DATABASE vs the current collection name (P!GE0NS below) —
+             whichever one the tab is actually showing right now gets the
+             underline (reported live), toggled by showTab's own
+             showMainframePicker check via the .tab-db-word-active/
+             #dbSelectLabel.tab-db-word-active classes. -->
+        <span class="tab-db-heading">STAT!C://<span class="tab-db-word" id="tabDbWord">DATABASE</span> ::</span>
         <div class="traits-hover-wrap tab-db-select" id="dbSelectWrap">
-          <span class="trait-row-label" id="dbSelectLabel">P!GE0NS</span>
+          <span class="trait-row-label tab-db-word" id="dbSelectLabel">P!GE0NS</span>
           <span class="db-select-arrow" id="dbSelectArrow">▾</span>
           <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
             <div class="db-option db-option-active" data-collection="pigeons">P!GE0NS</div>
@@ -8286,7 +8306,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="thirdeye">BUY $3RDEYE</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-soon mainframe-card-bear" style="--card-accent:245,197,24; --card-art:url('/assets/mainframe/bear.webp?v=2');">
+          <div class="mainframe-card mainframe-card-soon mainframe-card-bear" style="--card-accent:245,197,24; --card-art:url('/assets/mainframe/bear.webp?v=3');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexBear" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -9522,20 +9542,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: true, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' },
     // 3RD EYE/BEAR/CULT/SM0K! — same C0M!NG S00N, token-only shape as
     // TEDDY/SEAL/FUZZY/C0NSP!RACY above (see TRADEABLE_COLLECTIONS in
-    // _shared.js for the matching backend entries). thumb is real art for
-    // all four — BEAR is one of its own actual NFT cards (pulled off its
-    // DeepTide collection page; the collection's round logo badge read as
-    // "just a plain yellow circle" once cropped to fill a card, reported
-    // live), CULT/SM0K! are their own DeepTide collection logos, 3RD EYE
-    // is Bithomp's issued-token icon for its real token issuer (not
-    // indexed on DeepTide at all). All four are .webp, not .jpeg like the
+    // _shared.js for the matching backend entries). thumb is each
+    // collection's own real logo — BEAR/CULT/SM0K! straight off their
+    // DeepTide collection pages, 3RD EYE off Bithomp's issued-token icon
+    // for its real token issuer (not indexed on DeepTide at all). A real
+    // NFT card was tried for BEAR specifically instead of its round logo
+    // badge (reported live as reading "just a plain yellow circle" once
+    // cropped to fill a card) but reverted — wanted back to the real
+    // collection logo, just zoomed in enough to fill the card (see
+    // .mainframe-card-bear .mainframe-card-art's own background-size).
+    // All four are .webp, not .jpeg like the
     // original six, since that's the format they actually came in as and
     // re-encoding wasn't worth doing (every modern browser renders it
     // fine). accent/accentRgb are real per-collection colours now, picked
     // live (green/yellow/pink/light-blue) rather than sampled off each
     // logo's own palette the way PIGEONS/PHNIX/etc's original six were.
     thirdeye: { label: '3RD EYE', itemLabel: '3RD EYE', tradeable: false, tokenLabel: '$3RDEYE', tokenIssuer: 'rHjyBqFM5oQvXu1soWtATC4r1V6GBnhCQQ', hasAmm: true, accent: '#ff4fa3', accentRgb: '255,79,163', thumb: '/assets/mainframe/thirdeye.webp?v=1' },
-    bear: { label: 'BEAR', itemLabel: 'BEAR', tradeable: false, tokenLabel: '$BEAR', tokenIssuer: 'rBEARGUAsyu7tUw53rufQzFdWmJHpJEqFW', hasAmm: true, accent: '#f5c518', accentRgb: '245,197,24', thumb: '/assets/mainframe/bear.webp?v=2' },
+    bear: { label: 'BEAR', itemLabel: 'BEAR', tradeable: false, tokenLabel: '$BEAR', tokenIssuer: 'rBEARGUAsyu7tUw53rufQzFdWmJHpJEqFW', hasAmm: true, accent: '#f5c518', accentRgb: '245,197,24', thumb: '/assets/mainframe/bear.webp?v=3' },
     cult: { label: 'CULT', itemLabel: 'CULT', tradeable: false, tokenLabel: '$CULT', tokenIssuer: 'rCULtAKrKbQjk1Tpmg5hkw4dpcf9S9KCs', hasAmm: true, accent: '#22c55e', accentRgb: '34,197,94', thumb: '/assets/mainframe/cult.webp?v=1' },
     smoki: { label: 'SM0K!', itemLabel: 'SM0K!', tradeable: false, tokenLabel: '$SM0K!', tokenIssuer: 'rpHyEYhaL9edeXWr7spsGUbo8n13ivzzty', hasAmm: true, accent: '#4fd1f9', accentRgb: '79,209,249', thumb: '/assets/mainframe/smoki.webp?v=1' }
   };
@@ -9559,7 +9582,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
    'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','bottomControlsBar','bottomSortBtn','bottomTraitsBtn',
-   'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn',
+   'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInWallet','pigeonsLoggedInTrustline','showMyPigeonsBtn','showMyPigeonsCount','swapSignOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
@@ -9931,6 +9954,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     // is still true; picking a collection (a card, or the dropdown) flips
     // it false and shows the real browsable grid below instead.
     var showMainframePicker = tab === 'database' && state.databaseInPicker;
+    // DATABASE gets the underline while still on the picker grid; the
+    // current collection name (P!GE0NS etc, #dbSelectLabel) gets it once
+    // a real collection is actually being browsed instead (reported
+    // live). Neither underlines off the DATABASE tab entirely — nothing
+    // in the top bar changes there either.
+    el.tabDbWord.classList.toggle('tab-db-word-active', tab === 'database' && showMainframePicker);
+    el.dbSelectLabel.classList.toggle('tab-db-word-active', tab === 'database' && !showMainframePicker);
     el.screenMainframe.style.display = showMainframePicker ? 'flex' : 'none';
     // DATABASE-only now — these FL00R/!TEMS/H0LDERS/24H numbers used to
     // sit above the trustline banner on every tab; moved to just above
