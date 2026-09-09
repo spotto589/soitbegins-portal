@@ -437,6 +437,52 @@ export const TRADEABLE_COLLECTIONS = {
     tokenConfig: { currency: 'CNS', issuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', configured: true },
     deeptideShopSlug: null,
     tradeable: true
+  },
+  // 3RD EYE/BEAR/CULT/SM0K!, added as MAINFRAME "C0M!NG S00N" tiles same
+  // as TEDDY/SEAL/FUZZY/C0NSP!RACY above — token currency/issuer only, no
+  // real NFT issuer/taxon given for any of these four yet (a real xrp.cafe
+  // collection exists for all four, and BEAR also gave a real NFT issuer —
+  // rBEARbo4Prn33894evmvYcAf9yAQjp4VJF — but with no taxon alongside it,
+  // there's nothing findAllCollectionNfts could actually filter on, so it
+  // stays unused here rather than half-wired). BEAR/CULT do have a real
+  // deeptideShopSlug (confirmed live URLs), so their MAINFRAME tiles get
+  // real holders/volume stats same as TEDDY; 3RD EYE/SM0K! don't have one
+  // given, so their tiles skip stats same as SEAL/FUZZY/C0NSP!RACY do.
+  thirdeye: {
+    key: 'thirdeye',
+    label: '3RD EYE',
+    nftIssuer: null,
+    nftTaxon: null,
+    tokenConfig: { currency: '3RDEYE', issuer: 'rHjyBqFM5oQvXu1soWtATC4r1V6GBnhCQQ', configured: true },
+    deeptideShopSlug: null,
+    tradeable: true
+  },
+  bear: {
+    key: 'bear',
+    label: 'BEAR',
+    nftIssuer: null,
+    nftTaxon: null,
+    tokenConfig: { currency: 'BEAR', issuer: 'rBEARGUAsyu7tUw53rufQzFdWmJHpJEqFW', configured: true },
+    deeptideShopSlug: 'bearxrpl',
+    tradeable: true
+  },
+  cult: {
+    key: 'cult',
+    label: 'CULT',
+    nftIssuer: null,
+    nftTaxon: null,
+    tokenConfig: { currency: 'CULT', issuer: 'rCULtAKrKbQjk1Tpmg5hkw4dpcf9S9KCs', configured: true },
+    deeptideShopSlug: 'cultorigin',
+    tradeable: true
+  },
+  smoki: {
+    key: 'smoki',
+    label: 'SM0K!',
+    nftIssuer: null,
+    nftTaxon: null,
+    tokenConfig: { currency: 'SMOKI', issuer: 'rpHyEYhaL9edeXWr7spsGUbo8n13ivzzty', configured: true },
+    deeptideShopSlug: null,
+    tradeable: true
   }
 };
 

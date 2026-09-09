@@ -214,6 +214,39 @@ const SWAP_HTML = `<!DOCTYPE html>
     --collection-accent-glow:rgba(240,0,228,0.4);
     --collection-accent-2-rgb:184,0,175;
   }
+  /* 3RD EYE/BEAR/CULT/SM0K! — same COLLECTION_META accent/accentRgb pair
+     each MAINFRAME card already uses, just also applied here so the
+     trustline banner (the one exception, see this block's own opening
+     comment) carries the same colour once one of these becomes reachable
+     through DATABASE, not just on MAINFRAME's own cards. */
+  body.collection-thirdeye{
+    --collection-accent:#00b8a9;
+    --collection-accent-rgb:0,184,169;
+    --collection-accent-dim:rgba(0,184,169,0.4);
+    --collection-accent-glow:rgba(0,184,169,0.4);
+    --collection-accent-2-rgb:0,138,127;
+  }
+  body.collection-bear{
+    --collection-accent:#3f6b35;
+    --collection-accent-rgb:63,107,53;
+    --collection-accent-dim:rgba(63,107,53,0.4);
+    --collection-accent-glow:rgba(63,107,53,0.4);
+    --collection-accent-2-rgb:48,82,40;
+  }
+  body.collection-cult{
+    --collection-accent:#b3182c;
+    --collection-accent-rgb:179,24,44;
+    --collection-accent-dim:rgba(179,24,44,0.4);
+    --collection-accent-glow:rgba(179,24,44,0.4);
+    --collection-accent-2-rgb:140,19,35;
+  }
+  body.collection-smoki{
+    --collection-accent:#7d8797;
+    --collection-accent-rgb:125,135,151;
+    --collection-accent-dim:rgba(125,135,151,0.4);
+    --collection-accent-glow:rgba(125,135,151,0.4);
+    --collection-accent-2-rgb:96,104,116;
+  }
   /* EDITION (1-1515/1516-3015) and the # 0R WALLET search box both depend
      on the $PIGEONS-only number-map crawl (search resolves a number via
      that map; EDITION is a hardcoded $PIGEONS mint-era number range) —
@@ -7037,13 +7070,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     width:64px; height:2px; background:linear-gradient(90deg, transparent, var(--cyan), transparent);
     box-shadow:0 0 8px var(--cyan-glow);
   }
-  /* ---- Back to the plain 3x2 wrapping grid (reported live — the
-     horizontal scroll-snap carousel this briefly became moved/resized
-     every card for no reason, since all 6 real collections still fit
-     exactly evenly). PREV/NEXT (mainframeArrowPrev/Next) stay in the
-     markup/CSS, just genuinely inert for now — scrollBy on a grid with
-     nothing to scroll is a harmless no-op — ready for whenever a 7th
-     collection actually needs somewhere to page to, not wired live yet. ---- */
+  /* ---- The plain 3x2 wrapping grid (a previous pass here) fit all 6
+     original collections evenly with PREV/NEXT left inert — "ready for
+     whenever a 7th collection actually needs somewhere to page to", per
+     that pass's own comment. 3RD EYE/BEAR/CULT/SM0K! are exactly that:
+     10 cards total now genuinely don't fit one screen, so this is back to
+     a real horizontal scroll-snap carousel — grid-auto-flow:column keeps
+     the same 2-row shape (auto-placement fills each column's 2 row slots
+     top-to-bottom before starting the next column) while grid-auto-columns
+     sizes each column to a fixed fraction of the visible width, same 3-
+     visible-at-once (2-on-mobile) framing the old fixed grid had, just
+     scrollable past that instead of wrapping to more rows. PREV/NEXT
+     (mainframeArrowPrev/Next, already wired to scrollBy in the JS — see
+     mainframeCardStep) do real work again from here. */
   .mainframe-carousel-wrap{
     position:relative;
     display:flex;
@@ -7053,15 +7092,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .mainframe-grid{
     display:grid;
-    grid-template-columns:repeat(3, 1fr);
+    grid-auto-flow:column;
     grid-template-rows:repeat(2, 1fr);
+    grid-auto-columns:calc((100% - 2 * 1.25rem) / 3);
     gap:1.25rem;
     width:100%;
     max-width:1300px;
     height:100%;
     margin:0 auto;
     padding:0 1rem;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    /* PREV/NEXT are the real controls — no visible native scrollbar
+       cluttering the strip underneath them, same treatment the FILTER BY
+       TRAITS category strip already uses for the same reason. */
+    scrollbar-width:none;
+    -ms-overflow-style:none;
   }
+  .mainframe-grid::-webkit-scrollbar{ display:none; }
   .mainframe-card{
     position:relative;
     min-width:0;
@@ -7076,6 +7124,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     overflow:hidden;
     text-align:center;
     cursor:pointer;
+    scroll-snap-align:start;
     transition:border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
   .mainframe-card[hidden]{ display:none; }
@@ -7117,10 +7166,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     pointer-events:none;
   }
   @media (max-width:760px){
-    /* 2 columns x 3 rows on narrow screens — 3 columns of real cards
-       never fit legibly at phone width, and this still shows all 6 with
-       no scrolling/arrows needed, same as desktop. */
-    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.6rem; padding:0 0.5rem; }
+    /* 2 columns x 3 rows visible on narrow screens — 3 columns of real
+       cards never fit legibly at phone width. Same scroll-snap carousel
+       as desktop (see .mainframe-grid's own comment above), just 2
+       visible columns and 3 row slots per column instead of 3-and-2. */
+    .mainframe-grid{ grid-template-rows:repeat(3, 1fr); grid-auto-columns:calc((100% - 0.6rem) / 2); gap:0.6rem; padding:0 0.5rem; }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
@@ -7354,10 +7404,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .mainframe-card-soon .mainframe-card-label{ color:var(--grey); text-shadow:none; }
   .mainframe-card-soon .mainframe-card-stats{ color:var(--grey-dim); }
-  /* PREV/NEXT — not needed for now (all 6 cards fit on one screen at
-     once, see .mainframe-grid's own comment), hidden rather than removed
-     so they're a one-line revert if the grid ever goes back to a
-     horizontally-scrolling carousel. */
+  /* PREV/NEXT — real scroll controls again now that .mainframe-grid is
+     back to a horizontal carousel (10 cards, see that rule's own
+     comment). Stayed visible (if inert) even while the grid was a fixed
+     3x2/2x3 grid with nothing to scroll — scrollBy on a non-scrolling
+     grid was always a harmless no-op, never worth hiding these over. */
   .mainframe-arrow{
     display:flex;
     position:absolute;
@@ -8198,6 +8249,70 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="mainframe-card-label">$C0NSP!RACY</div>
               <div class="mainframe-card-stats" id="mainframeStatsConspiracy"></div>
               <button type="button" class="mainframe-card-buy" data-collection="conspiracy">BUY $CNS</button>
+            </div>
+          </div>
+          <!-- 3RD EYE/BEAR/CULT/SM0K! — same C0M!NG S00N treatment as
+               PHN!X/TEDDY/SEAL/FUZZY/C0NSP!RACY above (no data-collection/
+               role="button" on the card root, so mainframeGrid's click
+               handler can't walk into any of these yet either — BUY stays
+               fully live, same reasoning as that block's own comment).
+               10 cards total now means the grid genuinely overflows one
+               screen (PREV/NEXT, dormant since it was a plain 3x2 6-card
+               grid, do real work again from here). -->
+          <div class="mainframe-card mainframe-card-soon mainframe-card-thirdeye" style="--card-accent:0,184,169; --card-art:url('/assets/mainframe/thirdeye.jpeg?v=1');">
+            <div class="mainframe-card-art">
+              <a class="mainframe-card-dex-link" id="mainframeDexThirdeye" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+                <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+                <span>V!EW CHART</span>
+              </a>
+              <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
+            </div>
+            <div class="mainframe-card-body">
+              <div class="mainframe-card-label">$3RD EYE</div>
+              <div class="mainframe-card-stats" id="mainframeStatsThirdeye"></div>
+              <button type="button" class="mainframe-card-buy" data-collection="thirdeye">BUY $3RDEYE</button>
+            </div>
+          </div>
+          <div class="mainframe-card mainframe-card-soon mainframe-card-bear" style="--card-accent:63,107,53; --card-art:url('/assets/mainframe/bear.jpeg?v=1');">
+            <div class="mainframe-card-art">
+              <a class="mainframe-card-dex-link" id="mainframeDexBear" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+                <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+                <span>V!EW CHART</span>
+              </a>
+              <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
+            </div>
+            <div class="mainframe-card-body">
+              <div class="mainframe-card-label">$BEAR</div>
+              <div class="mainframe-card-stats" id="mainframeStatsBear"></div>
+              <button type="button" class="mainframe-card-buy" data-collection="bear">BUY $BEAR</button>
+            </div>
+          </div>
+          <div class="mainframe-card mainframe-card-soon mainframe-card-cult" style="--card-accent:179,24,44; --card-art:url('/assets/mainframe/cult.jpeg?v=1');">
+            <div class="mainframe-card-art">
+              <a class="mainframe-card-dex-link" id="mainframeDexCult" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+                <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+                <span>V!EW CHART</span>
+              </a>
+              <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
+            </div>
+            <div class="mainframe-card-body">
+              <div class="mainframe-card-label">$CULT</div>
+              <div class="mainframe-card-stats" id="mainframeStatsCult"></div>
+              <button type="button" class="mainframe-card-buy" data-collection="cult">BUY $CULT</button>
+            </div>
+          </div>
+          <div class="mainframe-card mainframe-card-soon mainframe-card-smoki" style="--card-accent:125,135,151; --card-art:url('/assets/mainframe/smoki.jpeg?v=1');">
+            <div class="mainframe-card-art">
+              <a class="mainframe-card-dex-link" id="mainframeDexSmoki" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
+                <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
+                <span>V!EW CHART</span>
+              </a>
+              <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
+            </div>
+            <div class="mainframe-card-body">
+              <div class="mainframe-card-label">$SM0K!</div>
+              <div class="mainframe-card-stats" id="mainframeStatsSmoki"></div>
+              <button type="button" class="mainframe-card-buy" data-collection="smoki">BUY $SM0K!</button>
             </div>
           </div>
         </div>
@@ -9391,7 +9506,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: true, accent: '#a6632e', accentRgb: '166,99,46', thumb: '/assets/mainframe/teddy.jpeg?v=2' },
     seal: { label: 'SEAL', itemLabel: 'SEAL', tradeable: false, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', hasAmm: true, accent: '#2d8ca8', accentRgb: '45,140,168', thumb: '/assets/mainframe/seal.jpeg?v=2' },
     fuzzy: { label: 'FUZZY', itemLabel: 'FUZZY', tradeable: false, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2' },
-    conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: true, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' }
+    conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: true, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' },
+    // 3RD EYE/BEAR/CULT/SM0K! — same C0M!NG S00N, token-only shape as
+    // TEDDY/SEAL/FUZZY/C0NSP!RACY above (see TRADEABLE_COLLECTIONS in
+    // _shared.js for the matching backend entries). accent/accentRgb are
+    // placeholder colours (no real brand palette given for any of these
+    // four yet) — swap for the real thing whenever art actually lands;
+    // thumb points at art that doesn't exist yet either, which is fine —
+    // .mainframe-card-art already falls back to a plain accent-coloured
+    // tile until the real jpeg is uploaded to that path (see its own CSS
+    // comment), same as every collection does before its art is ready.
+    thirdeye: { label: '3RD EYE', itemLabel: '3RD EYE', tradeable: false, tokenLabel: '$3RDEYE', tokenIssuer: 'rHjyBqFM5oQvXu1soWtATC4r1V6GBnhCQQ', hasAmm: true, accent: '#00b8a9', accentRgb: '0,184,169', thumb: '/assets/mainframe/thirdeye.jpeg?v=1' },
+    bear: { label: 'BEAR', itemLabel: 'BEAR', tradeable: false, tokenLabel: '$BEAR', tokenIssuer: 'rBEARGUAsyu7tUw53rufQzFdWmJHpJEqFW', hasAmm: true, accent: '#3f6b35', accentRgb: '63,107,53', thumb: '/assets/mainframe/bear.jpeg?v=1' },
+    cult: { label: 'CULT', itemLabel: 'CULT', tradeable: false, tokenLabel: '$CULT', tokenIssuer: 'rCULtAKrKbQjk1Tpmg5hkw4dpcf9S9KCs', hasAmm: true, accent: '#b3182c', accentRgb: '179,24,44', thumb: '/assets/mainframe/cult.jpeg?v=1' },
+    smoki: { label: 'SM0K!', itemLabel: 'SM0K!', tradeable: false, tokenLabel: '$SM0K!', tokenIssuer: 'rpHyEYhaL9edeXWr7spsGUbo8n13ivzzty', hasAmm: true, accent: '#7d8797', accentRgb: '125,135,151', thumb: '/assets/mainframe/smoki.jpeg?v=1' }
   };
   // Every tradeable collection gets scanned for offers, not just whichever
   // one DATABASE happens to be browsing (state.collection) — see
@@ -9418,8 +9546,10 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'screenMainframe','mainframeGrid','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
+   'mainframeStatsThirdeye','mainframeStatsBear','mainframeStatsCult','mainframeStatsSmoki',
    'globalTopBar','globalTopBarHeading',
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeSearchInput','mainframeSortSelect',
+   'mainframeDexThirdeye','mainframeDexBear','mainframeDexCult','mainframeDexSmoki',
    'topTabs','topTabsWrap','flockTabLabel','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
    'profileBoxGrid','profileTabOffersBadge','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
@@ -15687,7 +15817,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // once PHN!X flipped to tradeable: meta.tradeable became true, so this
     // class never got added and the trustline banner stayed purple instead
     // of PHN!X's own real orange/red (#ff5a1f) — confirmed live.
-    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy');
+    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy', 'collection-thirdeye', 'collection-bear', 'collection-cult', 'collection-smoki');
     if (newCollection !== 'pigeons') document.body.classList.add('collection-' + newCollection);
     document.body.classList.toggle('collection-browse-only', !meta.tradeable);
     // ED!T!ON/# 0R WALLET search (see their own CSS comment) are
@@ -15965,7 +16095,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     { collection: 'teddybg', target: 'mainframeStatsTeddybg', dexTarget: 'mainframeDexTeddybg', hasShopSlug: true },
     { collection: 'seal', target: 'mainframeStatsSeal', dexTarget: 'mainframeDexSeal', hasShopSlug: false },
     { collection: 'fuzzy', target: 'mainframeStatsFuzzy', dexTarget: 'mainframeDexFuzzy', hasShopSlug: false },
-    { collection: 'conspiracy', target: 'mainframeStatsConspiracy', dexTarget: 'mainframeDexConspiracy', hasShopSlug: false }
+    { collection: 'conspiracy', target: 'mainframeStatsConspiracy', dexTarget: 'mainframeDexConspiracy', hasShopSlug: false },
+    // BEAR/CULT have a real confirmed Deeptide shop slug (see COLLECTIONS
+    // in pigeons.js), same reasoning as TEDDY above — real holders.
+    // 3RD EYE/SM0K! don't, same as SEAL/FUZZY/C0NSP!RACY.
+    { collection: 'thirdeye', target: 'mainframeStatsThirdeye', dexTarget: 'mainframeDexThirdeye', hasShopSlug: false },
+    { collection: 'bear', target: 'mainframeStatsBear', dexTarget: 'mainframeDexBear', hasShopSlug: true },
+    { collection: 'cult', target: 'mainframeStatsCult', dexTarget: 'mainframeDexCult', hasShopSlug: true },
+    { collection: 'smoki', target: 'mainframeStatsSmoki', dexTarget: 'mainframeDexSmoki', hasShopSlug: false }
   ].forEach(function(cfg){
     Promise.all([
       cfg.hasShopSlug ? api({ stats: 1, collection: cfg.collection }).catch(function(){ return {}; }) : Promise.resolve({}),
@@ -17424,7 +17561,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // than read off COLLECTION_META, which doesn't carry a display accent
   // of its own. A future collection just needs one more entry here for
   // its MY C0!NS row to pick up its real colour instead of the fallback.
-  var PROFILE_COIN_ACCENTS = { pigeons: '136,72,248', phnixs: '255,90,31', teddybg: '166,99,46', seal: '45,140,168', fuzzy: '122,66,26', conspiracy: '240,0,228' };
+  var PROFILE_COIN_ACCENTS = { pigeons: '136,72,248', phnixs: '255,90,31', teddybg: '166,99,46', seal: '45,140,168', fuzzy: '122,66,26', conspiracy: '240,0,228', thirdeye: '0,184,169', bear: '63,107,53', cult: '179,24,44', smoki: '125,135,151' };
   // ---- Banner H0LD!NGS (T0P 3 H0LD!NGS/T0P 3 NFT H0LD!NGS + their V!EW
   // M0RE full lists, reported live) — module-scope (not trapped inside
   // renderProfileCoins' own closure like before) since the V!EW M0RE/

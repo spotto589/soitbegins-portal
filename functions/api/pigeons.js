@@ -78,7 +78,21 @@ const COLLECTIONS = {
   // is ever called for these three, only the BUY-with-XRP swap endpoints.
   seal: { key: 'seal', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: null, tradeable: true },
   fuzzy: { key: 'fuzzy', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: null, tradeable: true },
-  conspiracy: { key: 'conspiracy', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: null, tradeable: true }
+  conspiracy: { key: 'conspiracy', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: null, tradeable: true },
+  // 3RD EYE/BEAR/CULT/SM0K! — same token-only reasoning as SEAL/FUZZY/
+  // C0NSP!RACY's own comment above (still needed here even though none of
+  // these four are browsable yet, purely so resolveCollection() doesn't
+  // silently fall back to $PIGEONS and quote a Pigeons-denominated swap
+  // for one of their BUY buttons by mistake). BEAR/CULT have a real
+  // confirmed xrp.cafe + Deeptide shop slug, so those two get real
+  // shopSlug/vanitySlug/xrpCafeUrl (MAINFRAME can show real holders/
+  // volume for them, same as TEDDY); 3RD EYE/SM0K! only had an xrp.cafe
+  // collection link given, no Deeptide shop slug confirmed, so those two
+  // stay null same as SEAL/FUZZY/C0NSP!RACY.
+  thirdeye: { key: 'thirdeye', shopSlug: null, vanitySlug: null, xrpCafeUrl: 'https://xrp.cafe/collection/3rdeyemiracles33', sizeApprox: null, tradeable: true },
+  bear: { key: 'bear', shopSlug: 'bearxrpl', vanitySlug: 'bearxrpl', xrpCafeUrl: 'https://xrp.cafe/collection/bearxrpl', sizeApprox: null, tradeable: true },
+  cult: { key: 'cult', shopSlug: 'cultorigin', vanitySlug: 'cultorigin', xrpCafeUrl: 'https://xrp.cafe/collection/cultorigin', sizeApprox: null, tradeable: true },
+  smoki: { key: 'smoki', shopSlug: null, vanitySlug: null, xrpCafeUrl: 'https://xrp.cafe/collection/smoki', sizeApprox: null, tradeable: true }
 };
 function resolveCollection(params) {
   const key = params.get('collection');
