@@ -3078,34 +3078,37 @@ const SWAP_HTML = `<!DOCTYPE html>
     width:min(640px, 94vw) !important;
   }
   .traits-flyout.flyout-popup .traits-flyout-cats-row{ flex-direction:column !important; }
+  /* CATEG0R!ES listed vertically now, one per line (reported live —
+     "the same way S0RT BY is set up"), matching S0RT BY's own
+     #sortFlyoutVals stacked-list treatment right below instead of a
+     centred, wrapped row of variable-width chips. */
   .traits-flyout.flyout-popup .traits-flyout-cats{
     display:flex !important;
-    flex-direction:row !important;
-    flex-wrap:wrap !important;
-    justify-content:center !important;
-    gap:0.6rem !important;
+    flex-direction:column !important;
+    gap:0.4rem !important;
     overflow-x:visible !important;
     border-right:none !important;
     border-bottom:none !important;
     width:100% !important;
   }
   .traits-flyout.flyout-popup .traits-flyout-cats .traits-flyout-cat{
-    /* !important on flex/min-width — #traitsFlyoutCats .traits-flyout-cat
-       (an ID selector elsewhere in this file, higher specificity than
-       this 3-class one) sets flex:1 1 0/min-width:0 for the old fixed-
-       width horizontal-strip layout, which otherwise wins here regardless
-       of source order and stretches every chip to the same equal width
-       (confirmed live: BACKGROUND and AURA rendering at the same 83px)
-       instead of sizing to its own label. */
-    width:auto !important;
+    /* !important on flex/min-width/width — #traitsFlyoutCats
+       .traits-flyout-cat (an ID selector elsewhere in this file, higher
+       specificity than this 3-class one) sets flex:1 1 0/min-width:0 for
+       the old fixed-width horizontal-strip layout, which otherwise wins
+       here regardless of source order. width:100% here is the same
+       one-per-line treatment .traits-flyout.flyout-popup
+       .traits-flyout-vals .traits-flyout-val gets just below. */
+    width:100% !important;
     flex:0 0 auto !important;
     min-width:0 !important;
     text-align:center !important;
-    white-space:nowrap !important;
+    white-space:normal !important;
     padding:0.7em 1.1em !important;
     font-size:16px !important;
     border:1px solid var(--border-dim) !important;
     border-radius:var(--radius);
+    margin-bottom:0;
   }
   .traits-flyout.flyout-popup .traits-flyout-vals{
     position:static !important;
@@ -4795,7 +4798,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      price all sit on one line above the calculator itself; the calculator
      row underneath is deliberately bare — two type-in boxes and a swap
      arrow between them, no unit labels or "=" sign cluttering it up. */
-  .pigeons-bar-calc-col{ grid-column:3; justify-self:end; display:flex; flex-direction:column; align-items:center; gap:0.4rem; min-width:0; }
+  /* align-items:stretch (not :center) + width:100% on each button below —
+     reported live as the three boxes ("looks off") sitting at three
+     different widths since each one's text is a different length. Now
+     every button stretches to match whichever of the three needs the
+     most room, so they read as one consistent column of equal-sized
+     boxes instead of a ragged stack. */
+  .pigeons-bar-calc-col{ grid-column:3; justify-self:end; display:flex; flex-direction:column; align-items:stretch; gap:0.4rem; min-width:0; }
   /* Collapsed to a single button by default — used to be the calculator
      itself sitting permanently open in the banner, eating space next to
      BALANCE even for anyone who never touches it. Click opens the popover
@@ -4805,6 +4814,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-calc-toggle-btn{
     display:inline-flex;
     align-items:center;
+    justify-content:center;
+    width:100%;
     gap:0.4rem;
     background:rgba(0,0,0,0.18);
     border:1px solid rgba(255,255,255,0.6);
