@@ -3938,28 +3938,37 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* BUY N0W stacked above 0FFER (reported live, was side by side — see
      pigeonsActionBoxHtml's own comment) — column instead of row, and BUY
      N0W's label+price now sit on ONE line ("BUY N0W :: 123K $P!GE0NS")
-     instead of stacked inside the button itself, with the real price in
-     --green (the site's own "an amount, not just a label" colour
-     language — same reasoning as formatCompactAmount's green elsewhere)
-     rather than the collection accent it inherited by just being inside
-     the accent-coloured button. 0FFER drops out of the shared flex:1 1 0
-     row-split (.owned-action-row's own rule, further up) to become a
-     small, plain, centred secondary control underneath instead of a
-     second full-width bar — it's the slower, non-committal path, so it
-     should read as clearly secondary next to BUY N0W now that they're no
-     longer competing for the same row's width. */
-  .owned-action-row-buy{ flex-direction:column; align-items:center; }
-  .owned-action-row-buy .thumb-buy-btn{ flex:0 0 auto; width:100%; flex-direction:row; justify-content:center; gap:0.4em; }
-  .owned-action-row-buy .thumb-buy-price{ color:var(--green); text-shadow:0 0 8px var(--green-glow); }
+     instead of stacked inside the button itself, both the label AND the
+     real price in --green now (reported live — was price-only) since
+     the whole line reads as one real amount now, not just a plain label
+     glued in front of it. 0FFER is the same full-width size as BUY N0W
+     now too (reported live — was a smaller secondary pill), just plain/
+     grey rather than accent-coloured, so it still reads as the calmer
+     second option without looking like a lesser button. min-width:0 +
+     ellipsis on the price (not the label — "BUY N0W ::" must never
+     itself truncate) keeps a long real price from ever breaking the
+     button's own single line. */
+  .owned-action-row-buy{ flex-direction:column; align-items:stretch; }
+  .owned-action-row-buy .thumb-buy-btn{ flex:0 0 auto; width:100%; flex-direction:row; justify-content:center; align-items:center; gap:0.35em; overflow:hidden; }
+  .owned-action-row-buy .thumb-buy-label{ flex:0 0 auto; white-space:nowrap; opacity:1; color:var(--green); text-shadow:0 0 8px var(--green-glow); }
+  .owned-action-row-buy .thumb-buy-price{ flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--green); text-shadow:0 0 8px var(--green-glow); }
   .owned-action-row-buy .offer-open-modal-btn-secondary{
     flex:0 0 auto;
-    width:auto;
-    font-size:12px;
-    padding:0.5em 1.4em;
+    width:100%;
+    padding:0.7em 0.8em;
+    font-size:15px;
     border-color:var(--border-mid);
     color:var(--grey);
   }
   .owned-action-row-buy .offer-open-modal-btn-secondary:hover{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
+  @media (max-width:700px){
+    /* Same reasoning as the old side-by-side breakpoint fix (see
+       .owned-action-row .thumb-buy-btn's own comment further down) —
+       "BUY N0W :: 123K $P!GE0NS" is a lot of text for a narrow 2-across
+       mobile card even on one full-width line; shrink the price (never
+       the "BUY N0W ::" label) before it has to ellipsis. */
+    .owned-action-row-buy .thumb-buy-price{ font-size:15px; }
+  }
   /* 0FFER — same Σκύλλα-button recipe as BUY N0W (see its own comment
      above), same per-collection accent, just without BUY N0W's own
      glow/pulse: BUY N0W is the real, immediate action here (a live
@@ -4405,6 +4414,14 @@ const SWAP_HTML = `<!DOCTYPE html>
        the two-button state. */
     .owned-action-row .thumb-buy-btn,
     .owned-action-row .offer-open-modal-btn{ font-size:11px; letter-spacing:0.01em; padding:0.7em 0.3em; }
+    /* .owned-action-row-buy (BUY N0W stacked above 0FFER, both full-width
+       — see that rule's own comment) never had the side-by-side problem
+       above this fixed in the first place, and needs to keep BUY N0W/
+       0FFER matching each other's size — overridden back to the same
+       15px/0.7em 0.8em both share on desktop instead of inheriting the
+       11px/0.3em shrink meant for the old two-buttons-in-one-row layout. */
+    .owned-action-row-buy .thumb-buy-btn,
+    .owned-action-row-buy .offer-open-modal-btn-secondary{ font-size:15px; letter-spacing:0.04em; padding:0.7em 0.8em; }
   }
 
   /* ---- old grid-tile card, still used by MY PIGEONS (myPigeonCardHtml) ---- */
@@ -6901,14 +6918,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     width:64px; height:2px; background:linear-gradient(90deg, transparent, var(--cyan), transparent);
     box-shadow:0 0 8px var(--cyan-glow);
   }
-  /* ---- Real horizontal carousel again (reported live — wanting room to
-     "add a few more in soon" beyond the current 6 without the grid just
-     growing taller forever): a single scroll-snapping row, 3 cards wide
-     on desktop, PREV/NEXT (mainframeArrowPrev/Next) paging by 3 cards at
-     a time via scrollBy (see the JS). Was a plain 3x2 wrapping grid with
-     the arrows hidden — that only worked because exactly 6 collections
-     happened to fill it evenly; a 7th would've had nowhere to go but an
-     awkward half-empty 3rd row. ---- */
+  /* ---- Back to the plain 3x2 wrapping grid (reported live — the
+     horizontal scroll-snap carousel this briefly became moved/resized
+     every card for no reason, since all 6 real collections still fit
+     exactly evenly). PREV/NEXT (mainframeArrowPrev/Next) stay in the
+     markup/CSS, just genuinely inert for now — scrollBy on a grid with
+     nothing to scroll is a harmless no-op — ready for whenever a 7th
+     collection actually needs somewhere to page to, not wired live yet. ---- */
   .mainframe-carousel-wrap{
     position:relative;
     display:flex;
@@ -6917,23 +6933,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     min-height:0;
   }
   .mainframe-grid{
-    display:flex;
-    flex-wrap:nowrap;
-    overflow-x:auto;
-    scroll-snap-type:x mandatory;
-    scrollbar-width:none;
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    grid-template-rows:repeat(2, 1fr);
     gap:1.25rem;
     width:100%;
     max-width:1300px;
+    height:100%;
     margin:0 auto;
     padding:0 1rem;
   }
-  .mainframe-grid::-webkit-scrollbar{ display:none; }
   .mainframe-card{
     position:relative;
-    flex:0 0 calc((100% - 2.5rem) / 3);
     min-width:0;
-    scroll-snap-align:start;
+    min-height:0;
+    height:100%;
     display:flex;
     flex-direction:column;
     background:var(--panel-bg-solid);
@@ -6984,11 +6998,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     pointer-events:none;
   }
   @media (max-width:760px){
-    /* 2 cards per view on narrow screens — 3 columns of real cards never
-       fit legibly at phone width — same PREV/NEXT carousel as desktop,
-       just a smaller page size. */
-    .mainframe-grid{ gap:0.6rem; padding:0 0.5rem; }
-    .mainframe-card{ flex-basis:calc((100% - 0.6rem) / 2); }
+    /* 2 columns x 3 rows on narrow screens — 3 columns of real cards
+       never fit legibly at phone width, and this still shows all 6 with
+       no scrolling/arrows needed, same as desktop. */
+    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.6rem; padding:0 0.5rem; }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
@@ -7012,14 +7025,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      carousel, not a fixed small thumbnail strip. */
   .mainframe-card-art{
     position:relative;
-    flex:0 0 auto;
-    /* A fixed real height via aspect-ratio, not flex:1-into-the-parent's-
-       height any more — the carousel row (see .mainframe-grid's own
-       comment on going horizontal) no longer gives .mainframe-card a
-       defined height to grow into the way the old fixed-row 3x2 grid
-       did, so the art needs its own intrinsic size instead of relying on
-       a flex-grow context that no longer exists. */
-    aspect-ratio:4 / 3;
+    flex:1 1 auto;
+    min-height:0;
     background-size:cover;
     /* Cards are much shorter now (3x2 grid, not a full-height carousel
        card) — plain center crops most character art around the torso/
