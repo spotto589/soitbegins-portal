@@ -10158,15 +10158,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   // "SH0W!NG Y0UR P!GE0NS" — reported live as only wanting that jump from
   // a real destination further down, not from opening the tab itself.
   function showTab(tab, skipScroll){
-    // A genuinely fresh arrival on Σκύλλα (coming from a different tab),
-    // not a re-entrant call from something already ON this tab (e.g.
-    // switchProfileTab's own browseOwnerCollection call once C0LLECT!0NS
-    // is clicked — that also lands back on showTab('mypigeons') as part
-    // of the exact same click, and must NOT reset the box grid selection
-    // it just made). Captured before state.activeTab is overwritten
-    // below — loadProfilePanel only resets to the neutral/nothing-open
-    // state on a real fresh arrival.
-    var enteringFreshMyPigeons = tab === 'mypigeons' && state.activeTab !== 'mypigeons';
     // 0FFER F0R picking mode (enterTheirsPickMode) legitimately visits
     // DATABASE mid-search, and comes back to PλWS itself once a pick is
     // made — cancel it only when heading somewhere unrelated (T0P 123,
@@ -10281,7 +10272,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     // MY P!GE0NS/0FFERS sitting below it via the exact same
     // myPigeonsPanel/screenBrowse elements this tab already used.
     el.profilePanelWrap.style.display = tab === 'mypigeons' ? '' : 'none';
-    if (tab === 'mypigeons') loadProfilePanel();
+    // NOT just `tab === 'mypigeons'` any more — that used to call this on
+    // EVERY showTab('mypigeons'), including the re-entrant one
+    // switchProfileTab('collections')/browseOwnerCollection make as part
+    // of the SAME click that just opened your NFT grid (they set
+    // state.myPigeonsGridOpen = true, then call showTab('mypigeons')
+    // themselves). loadProfilePanel's own switchProfileTab(null) call
+    // resets that flag straight back to false every single time it ran,
+    // so screenBrowse's own showBrowseChrome check never saw it stay true
+    // long enough to actually show anything — confirmed live as "both my
+    // nft buttons don't work" (V!EW NFTs on the trustline banner, and the
+    // profile's own MY NFTS box). Skip the neutral-state reset whenever
+    // the grid is the reason this call is happening in the first place.
+    if (!state.myPigeonsGridOpen) loadProfilePanel();
     el.swapOffersPanelWrap.style.display = tab === 'swapoffers' ? '' : 'none';
     // The trustline banner itself stays up across every tab, but the
     // $PIGEONS thumbnail is DATABASE-only — it's collection artwork, not
