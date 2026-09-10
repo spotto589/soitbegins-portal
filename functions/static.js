@@ -2438,7 +2438,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      against CANCEL's own deliberate red; white matches the rest of the
      card's real (non-muted) text instead of looking disabled. */
   .list-open-modal-btn, .transfer-open-modal-btn{ color:var(--white); }
-  .delist-pigeon-btn, #detailScyllaDelistBtn{ border-color:var(--red); color:var(--red); text-shadow:0 0 6px var(--red-glow); }
+  /* Solid red fill, not just a red outline (reported live as wanting
+     CANCEL "completely red") — white text/no glow instead of the
+     ghost-fill red-on-dark treatment every other action button here
+     uses, so CANCEL reads as a filled stop/delete action rather than
+     matching BUY N0W/0FFER's own ghost-fill shape. */
+  .delist-pigeon-btn, #detailScyllaDelistBtn{ background:var(--red); border-color:var(--red); color:#fff; text-shadow:none; }
+  .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ background:#c22a3e; border-color:#c22a3e; color:#fff; }
   /* ownedPigeonActionHtml's own CANCEL/L!ST + TRANSFER pair — side by
      side, not each stacked full-width, so a listed Pigeon (CANCEL +
      TRANSFER) and an unlisted one (L!ST + TRANSFER) take up the exact
@@ -4197,18 +4203,18 @@ const SWAP_HTML = `<!DOCTYPE html>
        the "BUY N0W ::" label) before it has to ellipsis. */
     .owned-action-row-buy .thumb-buy-price{ font-size:15px; }
   }
-  /* 0FFER — same Σκύλλα-button recipe as BUY N0W (see its own comment
-     above), same per-collection accent, just without BUY N0W's own
-     glow/pulse: BUY N0W is the real, immediate action here (a live
-     listing, one click to buy); 0FFER is a slower secondary path (submit
-     a price, wait for the owner), so it stays a plain ghost fill rather
-     than competing for the same urgent attention. */
+  /* 0FFER — reported live as wanting the same green BUY $P!GE0NS/BUY N0W
+     already reads (#pigeonsMergedPanel .pigeons-bar-balance-buy's own
+     recipe), not the per-collection accent colour it used to inherit —
+     same ghost-fill-at-rest/solid-fill-on-hover shape either way, just
+     green now on every collection instead of shifting with
+     --collection-accent. */
   .offer-open-modal-btn{
     width:100%;
-    background:rgba(var(--collection-accent-rgb), 0.12);
-    border:1px solid var(--collection-accent);
-    color:var(--collection-accent);
-    text-shadow:0 0 6px var(--collection-accent-glow);
+    background:rgba(52,255,133,0.12);
+    border:1px solid var(--green);
+    color:var(--green);
+    text-shadow:0 0 6px var(--green-glow);
     font-family:var(--font-mono);
     font-weight:700;
     font-size:17px;
@@ -4219,7 +4225,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     transition:background 0.15s ease, color 0.15s ease;
   }
-  .offer-open-modal-btn:hover{ background:var(--collection-accent); color:#000; text-shadow:none; }
+  .offer-open-modal-btn:hover{ background:var(--green); color:#000; text-shadow:none; }
   /* L!ST — same box size as a lone 0FFER button (17px, full width),
      not the smaller shared .list-open-modal-btn default (15px, used
      when it's paired with TRANSFER in the scoped MY PIGEONS view) —
@@ -4547,11 +4553,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     .my-offer-row-actions .highest-offer-btn{ flex:1 1 0; }
   }
   .outgoing-offers-title{ margin-top:1.5rem; padding-top:1.5rem; border-top:1px dashed var(--border-dim); }
-  /* CANCEL — same red treatment DELIST already uses for a listing (see
-     .delist-pigeon-btn:hover) rather than the row's own accept/decline
-     colours, since this is the one destructive action here. */
-  .my-offer-row-actions .cancel-my-offer-btn{ border:1px solid var(--red); color:var(--red); background:transparent; }
-  .my-offer-row-actions .cancel-my-offer-btn:hover{ background:var(--red); color:#000; }
+  /* CANCEL — same red treatment DELIST uses for a listing (see
+     .delist-pigeon-btn's own comment — solid fill, not just outline,
+     reported live as wanting CANCEL "completely red") rather than the
+     row's own accept/decline colours, since this is the one destructive
+     action here. */
+  .my-offer-row-actions .cancel-my-offer-btn{ border:1px solid var(--red); background:var(--red); color:#fff; }
+  .my-offer-row-actions .cancel-my-offer-btn:hover{ background:#c22a3e; border-color:#c22a3e; color:#fff; }
   .result-row-right{
     flex:1;
     min-width:0;
