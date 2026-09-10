@@ -2438,7 +2438,10 @@ async function fetchDeeptideTraitCards(skip, limit, shopSlug = DEEPTIDE_PIGEON_S
 // dropped before caching — a v2 cache entry already computed and stored
 // before this change would otherwise keep serving the polluted category
 // list for up to an hour after deploy.
-const TRAIT_CARDS_CACHE_KEY_PREFIX = 'pswap:traitcards:v3:';
+// Bumped v3 -> v4: NAKED/BALD (Clothing/Headwear's own `__no_trait__`)
+// now included with a `label` — same reasoning, a v3 entry already cached
+// would otherwise keep hiding them for up to an hour after deploy.
+const TRAIT_CARDS_CACHE_KEY_PREFIX = 'pswap:traitcards:v4:';
 const TRAIT_CARDS_CACHE_TTL_SECONDS = 3600;
 export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX) {
   const cacheKey = TRAIT_CARDS_CACHE_KEY_PREFIX + shopSlug;
@@ -2464,18 +2467,34 @@ export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGE
     }
   }
 
+  // Deeptide's own "no trait" placeholder (value `__no_trait__`, its own
+  // `label: "None"`) is real, countable data — NAKED Pigeons are exactly
+  // as much a Clothing value as any jacket is, same for BALD/Headwear —
+  // but the raw value has to stay `__no_trait__` (the literal string
+  // Deeptide's own filter API expects back — confirmed live: sending
+  // `{trait_type:'Clothing', value:'__no_trait__'}` correctly returns
+  // exactly the 313 Clothing-less Pigeons). `label` carries the friendly
+  // display text instead, read by the client wherever a value renders.
+  // Only surfaced for these two categories (the ones actually wanted);
+  // every other category's `__no_trait__` (Eyewear, Aura, ...) is still
+  // dropped exactly as before, unchanged.
+  const NO_TRAIT_LABELS = { Clothing: 'Naked', Headwear: 'Bald' };
   const grouped = {};
   for (const t of all) {
-    if (!t.trait_type || !t.value || t.value.startsWith('__')) continue; // Deeptide's internal "no trait" placeholder
+    if (!t.trait_type || !t.value) continue;
+    const isNoTrait = t.value.startsWith('__');
+    const noTraitLabel = isNoTrait ? NO_TRAIT_LABELS[t.trait_type] : undefined;
+    if (isNoTrait && !noTraitLabel) continue; // Deeptide's internal "no trait" placeholder, uncovered category
 
     if (!grouped[t.trait_type]) grouped[t.trait_type] = [];
     grouped[t.trait_type].push({
       value: t.value,
+      label: noTraitLabel || t.value,
       count: t.count,
       percent: Math.round((t.count / collectionSizeApprox) * 100000) / 1000,
     });
   }
-  for (const cat of Object.keys(grouped)) grouped[cat].sort((a, b) => a.value.localeCompare(b.value));
+  for (const cat of Object.keys(grouped)) grouped[cat].sort((a, b) => a.label.localeCompare(b.label));
 
   // A real shared trait dimension (head, outfits, Background, ...) always
   // has many distinct values across the collection — a "category" with

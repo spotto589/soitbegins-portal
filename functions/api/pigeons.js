@@ -197,35 +197,32 @@ export async function onRequestGet(context) {
   const tradeCfg = tradeable ? getTradeConfig(coll.key) : null;
   const tokenCurrency = tradeCfg ? tradeCfg.tokenConfig.currency : PIGEONS_TOKEN_CONFIG.currency;
 
-  // Highest-ever sale price per token — one cheap KV read, reused for
-  // every item below (cards' "HIGH SALE" line and the highest-sale sort).
-  // Empty for a non-tradeable collection (see COLLECTIONS' own comment) —
-  // no crawl exists for these yet. Namespaced by coll.key (see
-  // getHighSaleMap's own comment in _shared.js) — this used to always
-  // read $PIGEONS' own map regardless of the active collection.
-  const highSaleMap = tradeable ? await getHighSaleMap(env.coin, coll.key) : {};
+  // Highest-ever sale price per token, Σκύλλα SWAP listings, and the
+  // $PIGEONS-denominated sales log — three independent KV reads, reused
+  // for every item below (cards' "HIGH SALE" line/highest-sale sort, the
+  // Σ LISTED badge/LISTED filter, and "HIGHEST RECORDED"/"AVG SALE").
+  // Fired together instead of one-after-another — each `await` here used
+  // to block the next read even though none of the three depend on each
+  // other, adding a KV round-trip's worth of latency to every single
+  // /api/pigeons call for no reason. Empty for a non-tradeable collection
+  // (see COLLECTIONS' own comment) — no crawl exists for these yet.
+  // Namespaced by coll.key (see getHighSaleMap's own comment in
+  // _shared.js) — this used to always read $PIGEONS' own map regardless
+  // of the active collection.
+  const [highSaleMap, scyllaListingsMap, salesLog] = await Promise.all([
+    tradeable ? getHighSaleMap(env.coin, coll.key) : Promise.resolve({}),
+    tradeable ? getSwapListingsMap(env.coin, coll.key) : Promise.resolve({}),
+    (tradeable && env.coin) ? getSwapSalesLog(env.coin, coll.key) : Promise.resolve([])
+  ]);
 
-  // Σκύλλα SWAP listings — one cheap KV read, reused for every item below
-  // (the Σ LISTED badge on ordinary browse cards, and the LISTED filter's
-  // own $PIGEONS sort). No per-card cost beyond this single read.
-  const scyllaListingsMap = tradeable ? await getSwapListingsMap(env.coin, coll.key) : {};
-
-  // Real $PIGEONS-denominated sales, straight from the same capped log the
-  // SALES DATA tab already reads (getSwapSalesLog) — grouped here by NFT
-  // so "HIGHEST RECORDED"/"AVG SALE" can show a real $PIGEONS figure next
-  // to the XRP one instead of always reading 0. One KV read, reused for
-  // every item below, same pattern as highSaleMap.
   const pigeonsSalesMap = {};
-  if (tradeable && env.coin) {
-    const salesLog = await getSwapSalesLog(env.coin, coll.key);
-    for (const sale of salesLog) {
-      const value = parseFloat(sale.priceValue);
-      if (!sale.nftId || !Number.isFinite(value)) continue;
-      const entry = pigeonsSalesMap[sale.nftId] || (pigeonsSalesMap[sale.nftId] = { highest: 0, total: 0, count: 0 });
-      entry.highest = Math.max(entry.highest, value);
-      entry.total += value;
-      entry.count += 1;
-    }
+  for (const sale of salesLog) {
+    const value = parseFloat(sale.priceValue);
+    if (!sale.nftId || !Number.isFinite(value)) continue;
+    const entry = pigeonsSalesMap[sale.nftId] || (pigeonsSalesMap[sale.nftId] = { highest: 0, total: 0, count: 0 });
+    entry.highest = Math.max(entry.highest, value);
+    entry.total += value;
+    entry.count += 1;
   }
 
   // Trait category/value/percentage discovery for the TRAITS stack filter

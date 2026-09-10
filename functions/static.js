@@ -9691,6 +9691,28 @@ const SWAP_HTML = `<!DOCTYPE html>
     cult: { label: 'CULT', itemLabel: 'CULT', tradeable: false, tokenLabel: '$CULT', tokenIssuer: 'rCULtAKrKbQjk1Tpmg5hkw4dpcf9S9KCs', hasAmm: true, accent: '#22c55e', accentRgb: '34,197,94', thumb: '/assets/mainframe/cult.webp?v=1' },
     smoki: { label: 'SM0K!', itemLabel: 'SM0K!', tradeable: false, tokenLabel: '$SM0K!', tokenIssuer: 'rpHyEYhaL9edeXWr7spsGUbo8n13ivzzty', hasAmm: true, accent: '#4fd1f9', accentRgb: '79,209,249', thumb: '/assets/mainframe/smoki.webp?v=1' }
   };
+  // Resolve the pretty per-collection route (SERVER_COLLECTION, set only
+  // by /phnixs, /teddybg etc. — see its own comment above) into state
+  // immediately, here, rather than waiting for the enterMainframeCollection
+  // call much further down this script (the one that used to be the only
+  // place this got resolved). The bootstrap's own first showTab('database')
+  // call happens before that later call — with state.databaseInPicker
+  // still at its true default at that point, showTab treated the
+  // picker grid as the visible screen for one real call and eagerly fired
+  // loadMainframeCardStats' full ~20-call fan-out (stats+pigeonsRate for
+  // all ~10 collections) even though a pretty-route landing (e.g.
+  // soitbegins.xyz/pigeons) never actually shows that picker at all —
+  // confirmed live as a real chunk of why DATABASE felt slow to load.
+  // Setting both here means that first showTab call already sees the
+  // right collection/picker state, so the picker (and its stats fan-out)
+  // only ever loads for a genuine plain-refresh landing that actually
+  // shows it. The later call further down is still what does the real
+  // ensureTraitsLoaded/runQuery bootstrap for the resolved collection —
+  // this block only fixes the state read before that point.
+  if (SERVER_COLLECTION && COLLECTION_META[SERVER_COLLECTION]) {
+    state.collection = SERVER_COLLECTION;
+    state.databaseInPicker = false;
+  }
   // Every tradeable collection gets scanned for offers, not just whichever
   // one DATABASE happens to be browsing (state.collection) — see
   // loadOffersReceived/loadOutgoingOffers further down. Declared here,
@@ -10083,6 +10105,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // is still true; picking a collection (a card, or the dropdown) flips
     // it false and shows the real browsable grid below instead.
     var showMainframePicker = tab === 'database' && state.databaseInPicker;
+    // Lazy — see loadMainframeCardStats' own comment for why this used to
+    // fire unconditionally at page load instead of only once the picker
+    // grid is actually the visible screen.
+    if (showMainframePicker) loadMainframeCardStats();
     // DATABASE gets the underline while still on the picker grid; the
     // current collection name (P!GE0NS etc, #dbSelectLabel) gets it once
     // a real collection is actually being browsed instead (reported
@@ -12212,8 +12238,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       } else if (filters.length === 0){
         el.statusLine.innerHTML = '<div class="results-trait-note">STAT!C://QUERY :: <span class="hi">' + resultCount + '</span> ' + escapeHtml(COLLECTION_META[state.collection].label) + ' F0UND</div>';
       } else if (filters.length === 1){
+        var filterDisplayVal = ((state.traitCategories[filters[0].trait] || []).find(function(v){ return v.value === filters[0].value; }) || {}).label || filters[0].value;
         el.statusLine.innerHTML = '<div class="results-trait-note">SH0W!NG RESULTS F0R <span class="hi">' + resultCount + '</span> ' +
-          escapeHtml(filters[0].trait.toUpperCase()) + ': ' + escapeHtml(filters[0].value.toUpperCase()) + '</div>';
+          escapeHtml(filters[0].trait.toUpperCase()) + ': ' + escapeHtml(filterDisplayVal.toUpperCase()) + '</div>';
       } else if (filters.every(function(f){ return f.trait === filters[0].trait; })){
         // Multiple VALUES of the SAME trait (e.g. Background: Yellow +
         // Background: Blue) — not a cross-trait combination, just a wider
@@ -12290,8 +12317,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       // below, or the TRAITS hover flyout), collapse straight down to a
       // compact applied tag — not the value list again.
       if (row.category && row.value){
+        var appliedVal = ((state.traitCategories[row.category] || []).find(function(v){ return v.value === row.value; }) || {}).label || row.value;
         return '<div class="trait-row trait-row-tag" data-id="' + row.id + '">' +
-          '<span class="trait-tag-label">' + escapeHtml(row.category.toUpperCase()) + ' :: ' + escapeHtml(row.value.toUpperCase()) + '</span>' +
+          '<span class="trait-tag-label">' + escapeHtml(row.category.toUpperCase()) + ' :: ' + escapeHtml(appliedVal.toUpperCase()) + '</span>' +
           '<button class="trait-row-remove" data-id="' + row.id + '">&times;</button>' +
         '</div>';
       }
@@ -12303,7 +12331,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
       var chips = vals.map(function(v){
         var pct = v.percent !== null && v.percent !== undefined ? ' (' + v.percent.toFixed(3) + '%)' : '';
-        return '<button type="button" class="trait-chip' + (row.value === v.value ? ' selected' : '') + '" data-id="' + row.id + '" data-value="' + escapeHtml(v.value) + '">' + escapeHtml(v.value.toUpperCase()) + pct + '</button>';
+        return '<button type="button" class="trait-chip' + (row.value === v.value ? ' selected' : '') + '" data-id="' + row.id + '" data-value="' + escapeHtml(v.value) + '">' + escapeHtml((v.label || v.value).toUpperCase()) + pct + '</button>';
       }).join('');
       return '<div class="trait-row" data-id="' + row.id + '">' +
         '<select class="trait-cat-select" data-id="' + row.id + '"><option value="">CATEG0RY ▼</option>' + catOptions + '</select>' +
@@ -12464,7 +12492,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     return '<button type="button" class="traits-flyout-val' + (exampleImg ? ' has-preview' : '') + (isSelected ? ' selected' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
       (exampleImg && isSelected ? '<span class="tfv-select-badge">✓</span>' : '') +
       textOpen +
-      '<span>' + (!exampleImg && isSelected ? '✓ ' : '') + catPrefix + escapeHtml(v.value.toUpperCase()) + '</span>' +
+      '<span>' + (!exampleImg && isSelected ? '✓ ' : '') + catPrefix + escapeHtml((v.label || v.value).toUpperCase()) + '</span>' +
       '<span class="tfv-count">' + count + ' :: ' + pct + '</span>' +
       textClose +
     '</button>';
@@ -12474,7 +12502,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // S0RT/SEARCH toolbar wired further down.
   function sortTraitVals(vals){
     return state.traitsFlyoutSort === 'az'
-      ? vals.slice().sort(function(a, b){ return a.value.localeCompare(b.value); })
+      ? vals.slice().sort(function(a, b){ return (a.label || a.value).localeCompare(b.label || b.value); })
       : vals.slice().sort(function(a, b){ return (a.percent || 0) - (b.percent || 0); });
   }
   function renderTraitsFlyoutVals(category){
@@ -12496,14 +12524,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     var matches = [];
     Object.keys(cats).forEach(function(cat){
       (cats[cat] || []).forEach(function(v){
-        if (v.value.toLowerCase().indexOf(q) !== -1 || cat.toLowerCase().indexOf(q) !== -1){
+        if ((v.label || v.value).toLowerCase().indexOf(q) !== -1 || cat.toLowerCase().indexOf(q) !== -1){
           matches.push({ category: cat, val: v });
         }
       });
     });
     matches.sort(function(a, b){
       return state.traitsFlyoutSort === 'az'
-        ? (a.val.value.localeCompare(b.val.value) || a.category.localeCompare(b.category))
+        ? ((a.val.label || a.val.value).localeCompare(b.val.label || b.val.value) || a.category.localeCompare(b.category))
         : ((a.val.percent || 0) - (b.val.percent || 0));
     });
     el.traitsFlyoutVals.innerHTML = matches.length
@@ -16372,22 +16400,36 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Real, live numbers on every card (see .mainframe-card-stats' own
   // comment in the CSS) — same fields, same order, on every tradeable
   // collection, so the bottom-of-card line reads identically everywhere.
-  // Fires once, at load, regardless of whether MAINFRAME is the visible
-  // screen right now — cheap, and means the numbers are already there the
-  // instant you land back on it. Line reads <N> NFT H0LDERS :: MARKETCAP
-  // :: L!QU!D!TY — holders comes from the NFT-collection stats endpoint
-  // (only real for collections with a Deeptide shop slug, see hasShopSlug
-  // below), marketcap/liquidity are DexScreener's own USD figures, taken
-  // straight off the same pair fetchPigeonsXrpRate already resolves (see
-  // _shared.js) with NO unit conversion — reported live as the previous
-  // XRP-converted numbers reading as "wrong" against the real DexScreener
-  // page, so this now shows exactly what that page shows, and each card
-  // links straight to it (mainframeDex* below) to make that checkable.
+  // Used to fire once, unconditionally, at page load regardless of
+  // whether MAINFRAME's own picker grid was even the visible screen —
+  // confirmed live as a real chunk of why DATABASE felt slow to load:
+  // landing straight on a collection (e.g. /pigeons, which skips the
+  // picker entirely) still fired stats+pigeonsRate for all ~10
+  // collections, ~20 extra live /api/pigeons round trips (several of
+  // which fan out into their own multi-fetch Deeptide/xrp.cafe/DexScreener
+  // calls) competing with the actual grid request for the same Worker's
+  // subrequest budget. Now lazy — loadMainframeCardStats() below only
+  // fires the first time the picker grid actually becomes the visible
+  // screen (see showTab's own showMainframePicker branch), guarded by
+  // mainframeStatsLoaded so revisiting it doesn't refire. Line reads
+  // <N> NFT H0LDERS :: MARKETCAP :: L!QU!D!TY — holders comes from the
+  // NFT-collection stats endpoint (only real for collections with a
+  // Deeptide shop slug, see hasShopSlug below), marketcap/liquidity are
+  // DexScreener's own USD figures, taken straight off the same pair
+  // fetchPigeonsXrpRate already resolves (see _shared.js) with NO unit
+  // conversion — reported live as the previous XRP-converted numbers
+  // reading as "wrong" against the real DexScreener page, so this now
+  // shows exactly what that page shows, and each card links straight to
+  // it (mainframeDex* below) to make that checkable.
   function formatUsdAbbrev(n){
     if (n >= 1000000) return '$' + (n / 1000000).toLocaleString(undefined, { maximumFractionDigits: 2 }) + 'M';
     if (n >= 1000) return '$' + (n / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'K';
     return '$' + Math.round(n).toLocaleString();
   }
+  var mainframeStatsLoaded = false;
+  function loadMainframeCardStats(){
+    if (mainframeStatsLoaded) return;
+    mainframeStatsLoaded = true;
   [
     { collection: 'pigeons', target: 'mainframeStatsPigeons', dexTarget: 'mainframeDexPigeons', hasShopSlug: true },
     { collection: 'phnixs', target: 'mainframeStatsPhnixs', dexTarget: 'mainframeDexPhnixs', hasShopSlug: true },
@@ -16448,7 +16490,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (stats.holders != null) cardEl.dataset.holders = stats.holders;
       }
     });
-  });
+    });
+  }
   el.dbSelectFlyout.addEventListener('click', function(e){
     e.stopPropagation();
     var opt = e.target.closest('.db-option[data-collection]');
