@@ -1727,6 +1727,17 @@ const SWAP_HTML = `<!DOCTYPE html>
      reported live as wanting starred NFTs to "show up in Σκύλλα", not a
      big heavy card per item. */
   .profile-watchlist-section{ margin-bottom:1.5rem; }
+  /* Empty when unfiltered (renderProfileWatchlist leaves it as ''), so
+     these two collapse to nothing rather than an empty heading/gap. */
+  .profile-watchlist-header:empty{ display:none; }
+  .profile-watchlist-header{ font-size:13px; font-weight:700; letter-spacing:0.08em; color:var(--cyan); margin-bottom:0.5rem; }
+  .profile-watchlist-clear-filter{
+    display:inline-block; margin-bottom:0.75rem; padding:0.5em 1em;
+    background:transparent; border:1px solid var(--grey-dim); border-radius:var(--radius);
+    color:var(--grey-dim); font-family:var(--font-mono); font-size:11px; letter-spacing:0.06em;
+    text-transform:uppercase; cursor:pointer; appearance:none;
+  }
+  .profile-watchlist-clear-filter:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
   .profile-watchlist-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:0.75rem; }
   @media (min-width:601px){ .profile-watchlist-grid{ grid-template-columns:repeat(6, 1fr); } }
   .profile-watchlist-tile{
@@ -7718,6 +7729,14 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="pigeons-bar-identity-actions">
               <a class="pigeons-bar-balance-buy" id="pigeonsBarDexBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER</a>
               <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">V!EW NFTs</button>
+              <!-- WATCHL!ST for THIS collection specifically (reported live)
+                   — unlike V!EW NFTs above (which reopens the MA!NFRAME
+                   picker to pick a collection first), this one already knows
+                   which collection it's on, so it jumps straight to the real
+                   WATCHL!ST panel (Σκύλλα's own profileTabPanelWatchlist,
+                   see renderProfileWatchlist) pre-filtered to state.collection
+                   — see showWatchlistBtn's own click handler in the JS. -->
+              <button class="pigeons-bar-balance-buy" id="showCollectionWatchlistBtn">WATCHL!ST</button>
             </div>
           </div>
         </div>
@@ -8127,6 +8146,14 @@ const SWAP_HTML = `<!DOCTYPE html>
            live re-fetch needed just to show the grid. -->
       <div class="profile-tab-panel" id="profileTabPanelWatchlist" style="display:none;">
         <div class="profile-watchlist-section" id="profileWatchlistSection">
+          <!-- Title/CLEAR only actually show while a collection-scoped
+               entry (showCollectionWatchlistBtn, DATABASE's own WATCHL!ST
+               button) is active — see renderProfileWatchlist. Reaching this
+               tab through the plain profileBoxGrid box instead always
+               resets state.watchlistFilterCollection to null first, so
+               both stay hidden and this reads exactly as it always did. -->
+          <div class="profile-watchlist-header" id="profileWatchlistTitle"></div>
+          <button type="button" class="profile-watchlist-clear-filter" id="profileWatchlistClearFilter" style="display:none;">SH0W ALL C0LLECT!0NS</button>
           <div class="profile-watchlist-grid" id="profileWatchlistGrid"></div>
         </div>
       </div>
@@ -9591,6 +9618,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     seenNftIds: {},
     scopeAllItems: [],         // full resolved list for the current wallet scope (client-side filtered)
     mode: 'browse',            // 'browse' | 'search' | 'scoped'
+    // Set by showCollectionWatchlistBtn (the collection page's own
+    // WATCHL!ST button, underneath V!EW NFTs) so renderProfileWatchlist
+    // shows only THIS collection's watched items instead of every
+    // collection at once. null means "show everything" — the generic
+    // profileBoxGrid WATCHL!ST box (data-profilebox="watchlist") always
+    // resets it back to null so that entry point keeps its original,
+    // unfiltered behavior.
+    watchlistFilterCollection: null,
     // Default landing sort is FL00R $P!GE0NS (lowest listed price first),
     // not RAR!TY — see scyllaListedOnly below and loadMoreCollection's own
     // chain-to-average-sale-price once the floor listings run out.
@@ -9734,7 +9769,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
    'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','bottomControlsBar','bottomSortBtn','bottomTraitsBtn',
    'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
-   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','pigeonsBarDexBtn',
+   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','showCollectionWatchlistBtn','pigeonsBarDexBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'screenMainframe','mainframeGrid','mainframeSubtitle','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
@@ -9748,7 +9783,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileTabPanelSearch','profileSearchInput','profileSearchResults','profileSearchBack','profileOffersBack',
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
-   'profileWatchlistSection','profileWatchlistGrid',
+   'profileWatchlistSection','profileWatchlistGrid','profileWatchlistTitle','profileWatchlistClearFilter',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn',
    'crownPeriodSelect','crownLeaderboardList',
    'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileAddressCopyBtn','profileAddressBithompLink','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
@@ -12080,6 +12115,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.resetDbBtn.style.display = 'none';
     loadMoreCollection();
   }
+  // Speculative prefetch for the guaranteed AVG_SALE_XRP_ASC fallback (see
+  // loadMoreCollection's own scyllaListedOnly branch below and the
+  // exhaustion-fallback further down) — right now $PIGEONS has only a
+  // handful of real Scylla-native listings (well under one page), so that
+  // fallback fires on essentially every fresh landing. It used to fire only
+  // AFTER the listed-page's own response came back, making the two live
+  // per-item Deeptide lookups sequential (directly measured: several
+  // seconds each, summing to 10+ on a cold cache — confirmed as a real
+  // chunk of DATABASE's own load time). Firing both together instead (see
+  // the scyllaListedOnly branch below) means the fallback's own request is
+  // already in flight, or already resolved, by the time it's actually
+  // needed — total wait becomes whichever of the two is slower, not their
+  // sum. One-shot: consumed (and cleared) the moment it's used, or dropped
+  // if the shape it was fetched for stops matching (a filter/edition pick
+  // in between, say).
+  var scyllaFallbackPrefetch = null;
   function loadMoreCollection(onDone){
     // onDone (optional) — used by detail-screen NEXT to continue past the
     // currently-loaded page: fires once this call's own fetch settles
@@ -12097,6 +12148,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     var isSalesSort = state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_XRP_ASC' || state.sort === 'AVG_SALE_XRP_DESC' || state.sort === 'AVG_SALE_PIGEONS_ASC';
     var isNumericSort = state.sort === 'NAME_ASC' || state.sort === 'NAME_DESC';
     var isCrossListing = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC';
+    // The exact shape the exhaustion-fallback below always uses (skip 0,
+    // no filters/edition — the first-page-of-a-fresh-landing case). Used
+    // both to decide whether to kick off the speculative prefetch just
+    // below, and later to confirm a stored prefetch still actually matches
+    // before reusing it.
+    var isDefaultFallbackShape = state.skip === 0 && !filters.length && !isEdition;
     var reqParams;
     if (state.scyllaListedOnly){
       // Only Pigeons actually listed through Scylla itself, sorted by real
@@ -12111,6 +12168,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       // collection instead of just that edition's slice, since only the
       // two dedicated edition branches further down ever sent it.
       reqParams = { skip: state.skip, limit: PAGE_SIZE, scyllaListed: 1, dir: state.sort === 'SCYLLA_PRICE_DESC' ? 'desc' : 'asc', filters: filters.length ? JSON.stringify(filters) : undefined, numberRange: isEdition ? (state.edition === 'LOW' ? 'low' : 'high') : undefined };
+      // Kick the guaranteed-next fallback off in parallel right now,
+      // rather than waiting for this request to come back small/empty
+      // first — see scyllaFallbackPrefetch's own comment above. Only for
+      // the plain default-landing shape this specific fallback always
+      // uses; a filtered/edition-scoped listed browse has no matching
+      // fallback shape to prefetch.
+      if (isDefaultFallbackShape) {
+        scyllaFallbackPrefetch = api({ skip: 0, limit: PAGE_SIZE, highestSale: 1, dir: 'asc', metric: 'avg' });
+      }
     } else if (isSalesSort){
       // filters was previously dropped here — picking a trait while a
       // H!ST0R!CAL SALES sort was active silently showed every Pigeon's
@@ -12140,7 +12206,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else {
       reqParams = { skip: state.skip, limit: PAGE_SIZE, sort: state.sort, filters: filters.length ? JSON.stringify(filters) : undefined };
     }
-    api(reqParams).then(function(data){
+    // Reuse the speculative prefetch (see its own comment above) exactly
+    // when this request is the guaranteed-fallback shape it was kicked off
+    // for — same params, byte for byte. Anything else (a filter/edition
+    // pick landed in between, say) just lets it fall out of scope unused;
+    // its own response is still harmless, just never rendered.
+    var usePrefetch = scyllaFallbackPrefetch && reqParams.highestSale === 1 &&
+      reqParams.dir === 'asc' && reqParams.metric === 'avg' && reqParams.skip === 0 &&
+      !reqParams.filters && !reqParams.numberRange;
+    var responsePromise = usePrefetch ? scyllaFallbackPrefetch : api(reqParams);
+    scyllaFallbackPrefetch = null;
+    responsePromise.then(function(data){
       // A newer query has since started (see startCollectionBrowse's own
       // comment on the race this fixes) — this response is for a sort/
       // filter the user has already moved on from. Never render it, and
@@ -13688,6 +13764,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.databaseInPicker = true;
     showTab('database');
     scrollActiveTabPanelIntoView('database');
+  });
+  // WATCHL!ST for THIS collection (reported live) — already knows
+  // state.collection, so unlike V!EW NFTs above it never needs the
+  // MA!NFRAME picker: straight to Σκύλλα's real WATCHL!ST panel,
+  // pre-filtered (see switchProfileTab's own keepWatchlistFilter param).
+  el.showCollectionWatchlistBtn.addEventListener('click', function(){
+    if (!MY_WALLET) return;
+    state.watchlistFilterCollection = state.collection;
+    showTab('mypigeons', true);
+    switchProfileTab('watchlist', true);
+    scrollActiveTabPanelIntoView('mypigeons');
   });
 
   // ---- LIST A PIGEON — first real Σκύλλα listing test: create-offer
@@ -18027,8 +18114,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   // entirely blank tab would read as broken, not "nothing here yet". ----
   function renderProfileWatchlist(){
     var list = getWatchlist();
+    var filterKey = state.watchlistFilterCollection;
+    if (filterKey) list = list.filter(function(w){ return w.collection === filterKey; });
+    var filterLabel = filterKey && COLLECTION_META[filterKey] ? COLLECTION_META[filterKey].label : null;
+    if (el.profileWatchlistTitle){
+      el.profileWatchlistTitle.textContent = filterLabel ? filterLabel + ' WATCHL!ST' : 'WATCHL!ST';
+      el.profileWatchlistClearFilter.style.display = filterLabel ? '' : 'none';
+    }
     if (!list.length){
-      el.profileWatchlistGrid.innerHTML = '<div class="th-empty">N0 P!GE0NS WATCHED YET — CL!CK ☆ 0N ANY CARD !N DATABASE T0 ADD 0NE.</div>';
+      el.profileWatchlistGrid.innerHTML = '<div class="th-empty">' + (filterLabel
+        ? 'N0 ' + escapeHtml(filterLabel) + ' WATCHED YET — CL!CK ☆ 0N ANY ' + escapeHtml(filterLabel) + ' CARD T0 ADD 0NE.'
+        : 'N0 P!GE0NS WATCHED YET — CL!CK ☆ 0N ANY CARD !N DATABASE T0 ADD 0NE.') + '</div>';
       return;
     }
     el.profileWatchlistGrid.innerHTML = list.map(function(w){
@@ -18041,6 +18137,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       '</div>';
     }).join('');
   }
+  el.profileWatchlistClearFilter.addEventListener('click', function(){
+    state.watchlistFilterCollection = null;
+    renderProfileWatchlist();
+  });
   el.profileWatchlistGrid.addEventListener('click', function(e){
     var removeBtn = e.target.closest('.profile-watchlist-remove');
     if (removeBtn){
@@ -18307,11 +18407,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   // closed state. CR0WN's own real leaderboard data/loadCrownLeaderboard
   // are unused dead code now that CR0WN REWARDS is inert (see the HTML's
   // own comment) — left in case that box comes back to life later. ----
-  function switchProfileTab(tab){
+  // keepWatchlistFilter — true only when showCollectionWatchlistBtn's own
+  // handler already set state.watchlistFilterCollection right before
+  // calling this; every other path into 'watchlist' (the plain
+  // profileBoxGrid box below) resets it back to null, same as it always
+  // showed — everything, every collection.
+  function switchProfileTab(tab, keepWatchlistFilter){
     el.profileTabPanelOffers.style.display = tab === 'offers' ? '' : 'none';
     el.profileTabPanelCollections.style.display = tab === 'collections' ? '' : 'none';
     el.profileTabPanelWatchlist.style.display = tab === 'watchlist' ? '' : 'none';
     el.profileTabPanelCrown.style.display = tab === 'crown' ? '' : 'none';
+    if (tab === 'watchlist'){
+      if (!keepWatchlistFilter) state.watchlistFilterCollection = null;
+      renderProfileWatchlist();
+    }
     // SEARCH PR0F!LE and !NB0X both go full-page (reported live) — the
     // banner AND the box grid hide while either is open, unlike every
     // other box which just opens its panel below the grid+banner as
