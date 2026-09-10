@@ -13500,6 +13500,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     authorizeTimeoutTimer = null;
   }
   function startAuthorize(){
+    // #myPigeonsPanel starts display:none (it's the M!GE0NS/Σκύλλα tab's
+    // own panel) — .connect-panel lives INSIDE it (see its own CSS
+    // comment on why: var(--cyan) resolves to her real neon pink only in
+    // there). The one call site that goes through showTab('mypigeons')
+    // first (the topTabs click handler, logged-out M!GE0NS click)
+    // already made this visible before ever reaching here — every OTHER
+    // real entry point into sign-in (L0G!N T0 V!EW BALANCE on the
+    // trustline banner, BUY N0W/0FFER's own "not logged in" redirects,
+    // the wallet-switch dropdown's own rows) calls this function
+    // directly, from whatever tab the user actually has open — DATABASE,
+    // almost always, now that pretty collection URLs land there by
+    // default. #myPigeonsPanel stayed display:none the whole time in
+    // that case, so .connect-panel's own fullscreen/pink treatment
+    // (body.xaman-signing-in's own CSS) never had anything to actually
+    // show — confirmed live as "the pink loading page... got removed",
+    // when what actually happened is this stopped being reachable from
+    // anywhere except the one tab most real sign-ins no longer start
+    // from. Calling showTab here directly (not just at the one call site
+    // that already did) means every path in gets it, not just that one.
+    showTab('mypigeons', true);
     clearAuthorizeTimeout();
     renderConnectPanel('connecting');
     authorizeTimeoutTimer = setTimeout(function(){
