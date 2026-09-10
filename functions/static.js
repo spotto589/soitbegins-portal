@@ -913,21 +913,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .stat-tile-soon{ opacity:0.55; border-style:dashed; }
   .stat-tile-soon:hover{ opacity:0.85; }
   .stat-tile-soon .stat-value{ letter-spacing:0.1em; }
-  /* BURNT count — folded into the ITEMS tile instead of its own tile; the
-     burn list itself doesn't exist yet (later system), so this is a
-     placeholder link, styled quieter than the number it sits next to. */
-  .stat-burnt-link{
-    background:transparent;
-    border:none;
-    font:inherit;
-    font-size:11px;
-    letter-spacing:0.03em;
-    color:var(--grey-dim);
-    cursor:pointer;
-    text-decoration:none;
-    padding:0;
-  }
-  .stat-burnt-link:hover{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
   .card-scylla-listed{ margin-top:0.4rem; font-size:10px; letter-spacing:0.05em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); text-align:center; text-transform:uppercase; }
 
   /* ---- top 10 holders (expandable) ---- */
@@ -2588,6 +2573,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     white-space:normal;
   }
+  /* The (1-1515)-style range — its own line underneath the edition name
+     now (reported live), same "smaller sub-line under the main label"
+     shape as .wallet-box-sub. */
+  .edition-btn-range{ display:inline-block; margin-top:0.25em; font-size:0.8em; opacity:0.75; }
   .edition-btn:last-child{ border-right:none; }
   .edition-btn:hover{ color:var(--cyan); background:var(--cyan-faint); }
   /* Purple, not magenta — this reflects the currently-viewed collection's
@@ -3228,6 +3217,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .bottom-controls-btn:first-child{ border-left:none; }
   .bottom-controls-btn:hover, .bottom-controls-btn.open{ background:var(--cyan-faint); text-shadow:0 0 5px var(--cyan-glow); }
+  /* BACK T0 T0P — sits between S0RT BY/F!LTER BY TRA!TS on the same fixed
+     bar (reported live), narrower than its two flex:1 neighbours since it's
+     just an icon+word, not a full label. */
+  .bottom-controls-btn-top{ flex:0 0 auto; padding:1em 1.2em; }
   /* Own bottom padding on the page's actual scrollable content so the
      last row of result cards never sits underneath this fixed bar with
      no way to see it — #screenBrowse is the shared DATABASE/PλWS grid
@@ -3437,22 +3430,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-sizing:border-box;
   }
   /* ---- ONE consistent colour language across SORT BY + FILTER BY
-     TRAITS (previously three different, partly self-contradicting
-     schemes stacked on the same shared classes — plain grey text here,
-     forced cyan there, a header comment claiming "filled pink when
-     selected" that the actual .selected rule directly contradicted two
-     lines below it): white text at rest (readable against the new
-     cyan-glow panel backgrounds, unlike the old cyan-on-cyan idle text),
-     magenta/pink is the one "this is chosen" signal everywhere — a
-     category, a sort option, a trait value — and cyan stays reserved for
-     the passive hover border glow every other box on the page already
-     uses, never as body text. ---- */
-  /* 15px, matching F!LTER BY TRA!TS/S0RT BY's own label pill (see
-     .traits-hover-wrap .trait-row-label) — these options were 13px,
-     smaller than the label sitting right next to them, which put more
-     visual weight on the row's caption than on the actual clickable
-     content. Letter-spacing eased off too: tight tracking on all-caps
-     mono reads dense at speed even before size is the problem. */
+     TRAITS: cyan text at rest (reported live — was plain white, wanted
+     cyan to match the rest of the site's interactive-control language),
+     magenta/pink is still the one "this is chosen" signal everywhere — a
+     category, a sort option, a trait value. ---- */
+  /* 17px (reported live as wanting these bigger, was 15px), matching
+     F!LTER BY TRA!TS/S0RT BY's own label pill (see .traits-hover-wrap
+     .trait-row-label). Letter-spacing eased off too: tight tracking on
+     all-caps mono reads dense at speed even before size is the problem. */
   .traits-flyout-cat{
     display:block;
     width:auto;
@@ -3462,16 +3447,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:transparent;
     border:none;
     border-right:1px solid var(--border-dim);
-    color:var(--white);
+    color:var(--cyan);
     font-family:var(--font-mono);
-    font-size:15px;
+    font-size:17px;
     letter-spacing:0.03em;
     padding:0.9em 1.1em;
     cursor:pointer;
     text-transform:uppercase;
     transition:background 0.15s ease, color 0.15s ease;
   }
-  .traits-flyout-cat:hover{ background:var(--cyan-faint); color:var(--white); }
+  .traits-flyout-cat:hover{ background:var(--cyan-faint); color:var(--cyan); }
   .traits-flyout-cat.active{ background:var(--magenta-faint); color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
   .traits-flyout-val{
     position:relative;
@@ -3482,9 +3467,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.5rem;
     background:transparent;
     border:1px solid var(--border-dim);
-    color:var(--white);
+    color:var(--cyan);
     font-family:var(--font-mono);
-    font-size:15px;
+    font-size:17px;
     letter-spacing:0.02em;
     padding:0.8em 1em;
     margin-bottom:0.4rem;
@@ -3494,7 +3479,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
   }
-  .traits-flyout-val:hover{ border-color:var(--cyan-dim); color:var(--white); }
+  .traits-flyout-val:hover{ border-color:var(--cyan-dim); color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   .traits-flyout-val.selected{ background:var(--magenta-faint); border-color:var(--magenta); color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
   .traits-flyout-val .tfv-count{ color:var(--grey-dim); font-size:13px; flex:0 0 auto; }
   /* Not-yet-built sort options — same disabled/"C0M!NG S00N" treatment as
@@ -3571,7 +3556,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   #traitsFlyoutVals .traits-flyout-val.has-preview .tfv-search-cat{ color:rgba(255,255,255,0.75); }
   #traitsFlyoutCats .traits-flyout-cat{ box-shadow:inset 0 0 0 1px transparent; }
   #traitsFlyoutCats .traits-flyout-cat:hover{ box-shadow:inset 0 0 0 1px var(--cyan-dim); }
-  #traitsFlyoutVals .traits-flyout-val{ font-size:16px; }
+  #traitsFlyoutVals .traits-flyout-val{ font-size:18px; }
   #traitsFlyoutVals .tfv-count{ font-size:15px; }
   /* A real Pigeon preview as the button's own background (see
      renderTraitsFlyoutVals — the dark gradient is baked into the same
@@ -4079,10 +4064,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     grid-template-columns:repeat(2, 1fr);
     gap:0.9rem;
   }
-  /* THUMBNAILS view — 5 across, reuses the compact .result-card tile
-     (image + number + rarity only) instead of the wide detail row. */
+  /* THUMBNAILS view — 6 across (reported live as looking slightly blurry
+     at 5-across on a wide/high-DPI screen — the source art is native
+     1280x1280, but displaying it noticeably bigger than before made the
+     browser's downscale read as soft; one more column shrinks each tile
+     back down, and the card text below got a size bump to compensate,
+     see .result-num/.result-rarity-line/.result-stat-stack .stat-value/
+     .thumb-buy-label/.thumb-buy-price further down). Reuses the compact
+     .result-card tile (image + number + rarity only) instead of the wide
+     detail row. */
   .result-list.view-thumbnails{
-    grid-template-columns:repeat(5, 1fr);
+    grid-template-columns:repeat(6, 1fr);
     gap:0.7rem;
   }
   .result-row{
@@ -4182,8 +4174,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      the picture, easy to miss entirely at the actual moment of deciding
      to buy. Bigger and bolder than the "BUY N0W" label above it, same
      "the number is the point" treatment SALES H!ST0RY's own price gets. */
-  .thumb-buy-label{ font-size:13px; letter-spacing:0.08em; opacity:0.85; }
-  .thumb-buy-price{ font-family:var(--font-display); font-size:19px; font-weight:800; letter-spacing:0.01em; }
+  .thumb-buy-label{ font-size:14px; letter-spacing:0.08em; opacity:0.85; }
+  .thumb-buy-price{ font-family:var(--font-display); font-size:20px; font-weight:800; letter-spacing:0.01em; }
   /* BUY N0W stacked above 0FFER (reported live, was side by side — see
      pigeonsActionBoxHtml's own comment) — column instead of row, and BUY
      N0W's label+price now sit on ONE line ("BUY N0W :: 123K $P!GE0NS")
@@ -4644,7 +4636,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-page-next:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
   @media (max-width:1100px){
     .result-list{ grid-template-columns:1fr; }
-    .result-list.view-thumbnails{ grid-template-columns:repeat(3, 1fr); }
+    .result-list.view-thumbnails{ grid-template-columns:repeat(4, 1fr); }
   }
   @media (max-width:700px){
     .result-row{ flex-direction:column; align-items:center; text-align:center; }
@@ -4719,8 +4711,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-num{
     /* Bumped up from the old 15px (matched to button text) — direct
        instruction: text on the Pigeon cards themselves reads too small,
-       make all of it bigger. */
-    font-size:18px;
+       make all of it bigger. Bumped again to 19px alongside the 5->6
+       column shrink above (see .result-list.view-thumbnails' own
+       comment) — smaller pictures, bigger text, not just smaller cards
+       overall. */
+    font-size:19px;
     font-weight:700;
     letter-spacing:0.03em;
     color:var(--white);
@@ -4729,13 +4724,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-bottom:1px solid var(--border-dim);
     transition:color 0.15s ease;
   }
-  .result-rarity-line{ font-size:17px; letter-spacing:0.03em; color:var(--white); text-align:center; }
+  .result-rarity-line{ font-size:18px; letter-spacing:0.03em; color:var(--white); text-align:center; }
   /* AVG SALE PR!CE / COND!T!ON label above its own value, not side by
      side on one line — same stacked shape as .stat-label/.stat-value
      elsewhere on the page, just sized down to fit a thumbnail card. */
   .result-stat-stack{ display:flex; flex-direction:column; align-items:center; gap:0.1rem; }
-  .result-stat-stack .stat-label{ font-size:11px; margin-bottom:0; color:var(--white); }
-  .result-stat-stack .stat-value{ font-size:16px; color:var(--white); }
+  .result-stat-stack .stat-label{ font-size:12px; margin-bottom:0; color:var(--white); }
+  .result-stat-stack .stat-value{ font-size:17px; color:var(--white); }
   .card-listings{ display:flex; gap:0.4rem; margin-top:0.45rem; }
   /* Neither marketplace has a real listing — one shared full-width bar
      naming both markets, instead of two separate washed-out boxes. */
@@ -4986,7 +4981,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     min-width:220px;
     display:flex;
     flex-direction:row;
-    align-items:center;
+    align-items:flex-end;
     justify-content:center;
     gap:1rem;
   }
@@ -5013,14 +5008,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-balance-buy{
     display:inline-block;
     margin-top:0.4rem;
-    padding:0.85em 1.8em;
+    padding:1.05em 2.4em;
     border:1px solid var(--collection-accent);
     border-radius:var(--radius);
     background:rgba(var(--collection-accent-rgb), 0.12);
     color:var(--collection-accent);
     text-shadow:none;
     font-family:var(--font-mono);
-    font-size:17px;
+    font-size:20px;
     font-weight:700;
     letter-spacing:0.05em;
     text-decoration:none;
@@ -7738,6 +7733,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   <div class="flyout-popup-backdrop" id="flyoutPopupBackdrop"></div>
   <div class="bottom-controls-bar" id="bottomControlsBar" style="display:none;">
     <button type="button" class="bottom-controls-btn" id="bottomSortBtn">S0RT BY ▾</button>
+    <button type="button" class="bottom-controls-btn bottom-controls-btn-top" id="backToTopBtn" aria-label="BACK T0 T0P">▲ T0P</button>
     <button type="button" class="bottom-controls-btn" id="bottomTraitsBtn">F!LTER BY TRA!TS ▾</button>
   </div>
 
@@ -7875,7 +7871,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
       </div>
       <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
-        <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span> <button class="stat-burnt-link" id="statBurntLink" title="V!EW BURN L!ST">(15 BURNT)</button></div></div>
+        <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span></div></div>
         <div class="stat-tile"><div class="stat-label">H0LDERS</div><div class="stat-value" id="statHolders">…</div></div>
         <div class="stat-tile"><div class="stat-label">T0TAL V0LUME</div><div class="stat-value" id="statVolume">…</div></div>
         <div class="stat-tile"><div class="stat-label">L!STED</div><div class="stat-value" id="statListed">…</div></div>
@@ -8648,9 +8644,9 @@ const SWAP_HTML = `<!DOCTYPE html>
                  — swapped with it, see below. -->
             <div class="sort-field sort-field-inline">
               <div class="edition-toggle" id="editionSelect">
-                <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
-                <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
-                <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
+                <button type="button" class="edition-btn active" data-value="ALL">ALL<br><span class="edition-btn-range">(1-3015)</span></button>
+                <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N<br><span class="edition-btn-range">(1-1515)</span></button>
+                <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N<br><span class="edition-btn-range">(1516-3015)</span></button>
               </div>
             </div>
             <div class="sort-field">
@@ -9823,7 +9819,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
-   'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','bottomControlsBar','bottomSortBtn','bottomTraitsBtn',
+   'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','bottomControlsBar','bottomSortBtn','bottomTraitsBtn','backToTopBtn',
    'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','showCollectionWatchlistBtn','pigeonsBarDexBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
@@ -9854,7 +9850,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount','statScyllaListedLabel',
    'statsCarousel','statsCarouselDots','statsPrevBtn','statsNextBtn',
-   'statTraded24h','statVolume24h','statSalesTile','statSales24h','statBurntLink',
+   'statTraded24h','statVolume24h','statSalesTile','statSales24h',
    'traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals','traitsFlyoutBack','traitsCatsScrollPrevBtn','traitsCatsScrollNextBtn',
    'traitsFlyoutSortRarity','traitsFlyoutSortAz','traitsFlyoutSearchInput',
@@ -17112,6 +17108,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'AVG_SALE_PIGEONS_ASC', label: 'L0WEST AVG SALE PR!CE $P!GE0NS' },
       { value: 'PRICE_ASC', label: 'L0WEST (XRP)' }
     ],
+    'H!ST0R!CAL SALES': [
+      { value: 'HIGHEST_SALE', label: 'H!GHEST REC0RDED SALES' }
+    ],
     'RAR!TY': [
       { value: 'RARITY_ASC', label: 'H!GHEST' },
       { value: 'RARITY_DESC', label: 'L0WEST' }
@@ -17119,9 +17118,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     'ALPHABET!CAL': [
       { value: 'NAME_ASC', label: 'A-Z' },
       { value: 'NAME_DESC', label: 'Z-A' }
-    ],
-    'H!ST0R!CAL SALES': [
-      { value: 'HIGHEST_SALE', label: 'H!GHEST REC0RDED SALES' }
     ]
   };
   // The 3 PR!CE labels that name the token directly ("L0WEST $P!GE0NS"
@@ -17226,10 +17222,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     var tradeable = COLLECTION_META[state.collection].tradeable;
     var rows = [];
     var placed = {};
-    // L0WEST $P!GE0NS then H!GHEST RAR!TY lead the whole list — reported
-    // live as wanting these two specific options first and second, not
-    // just each first within its own category further down.
-    (tradeable ? ['SCYLLA_PRICE_ASC', 'RARITY_ASC'] : ['RARITY_ASC']).forEach(function(value){
+    // L0WEST $P!GE0NS leads the whole list when tradeable — reported live
+    // as wanting every PR!CE option grouped together first (then H!ST0R!CAL
+    // SALES, then RAR!TY, then ALPHABET!CAL last — see SORT_CATEGORIES' own
+    // key order above, which this whole function otherwise just follows),
+    // so H!GHEST RAR!TY no longer jumps the rest of PR!CE the way it used
+    // to.
+    (tradeable ? ['SCYLLA_PRICE_ASC'] : ['RARITY_ASC']).forEach(function(value){
       var cat = sortCategoryOf(value);
       var found = cat && SORT_CATEGORIES[cat].filter(function(o){ return o.value === value; })[0];
       if (!found) return;
@@ -17313,6 +17312,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     e.stopPropagation();
     el.bottomSortBtn.classList.toggle('open', el.sortFlyout.style.display !== 'block');
     el.sortDropLabel.click();
+  });
+  el.backToTopBtn.addEventListener('click', function(){
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
   el.sortFlyoutVals.addEventListener('click', function(e){
     var valBtn = e.target.closest('.traits-flyout-val');
@@ -19422,13 +19424,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.statSalesTile.addEventListener('click', function(){
     state.activeTab = 'sales';
     showScreen('browse');
-  });
-  // BURNS aren't live-tracked anywhere in this codebase yet — the count
-  // shown is a manually-set figure, not a real crawl. The burn LIST this
-  // links to doesn't exist yet either (a later system) — this click note
-  // makes that honest instead of implying a broken link.
-  el.statBurntLink.addEventListener('click', function(){
-    alert('BURN L!ST C0M!NG S00N — C0UNT !S MANUALLY SET F0R N0W.');
   });
 
   // ---- Σκύλλα LISTED filter — toggled from the stat tile, or implicitly
