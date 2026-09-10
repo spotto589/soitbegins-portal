@@ -7110,8 +7110,13 @@ const SWAP_HTML = `<!DOCTYPE html>
        own smaller size, so the row as a whole reads tighter. */
     margin:0.85rem auto 0;
     padding-top:0.6rem;
-    padding-left:1rem;
-    padding-right:1rem;
+    /* Matches .mainframe-grid's own side padding (3.25rem, the PREV/NEXT
+       arrow gutter — see its own comment) exactly, not a smaller 1rem —
+       reported live as wanting S0RT BY/SEARCH C0LLECT!0NS lined up with
+       where the actual cards start/end below, not the wider outer header
+       box that includes the arrow gutter no card ever occupies. */
+    padding-left:3.25rem;
+    padding-right:3.25rem;
     position:relative;
   }
   /* S0RT BY reused .sort-select's own much bigger/heavier styling
@@ -7141,12 +7146,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-search-input{
     flex:0 0 auto;
     width:min(240px, 40vw);
-    /* Nudged in from the header's own right edge (reported live as
-       sitting too flush against it) — .mainframe-section-header is
-       justify-content:space-between, so margin-right on this, its last
-       flex item, pulls it inward without disturbing S0RT BY's own
-       symmetric spacing on the left. */
-    margin-right:0.75rem;
     background:rgba(8,9,11,0.6);
     border:1px solid var(--border-mid);
     color:var(--white);
