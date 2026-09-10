@@ -5,7 +5,7 @@
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue, getFloorIndex,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG,
-  getCachedCrownHolder, mapWithConcurrency, getProfilesMap
+  getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut
 } from '../_shared.js';
 
 // Deeptide's own item page — the real place to buy a listed Pigeon.
@@ -814,7 +814,26 @@ export async function onRequestGet(context) {
   // worth asking for), but every page after that fires in parallel instead
   // of one-at-a-time — total wait becomes roughly two round trips (first
   // page, then whichever of the rest is slowest) instead of up to ten.
+  // Same "60s display-only staleness is fine" cache every other real-but-
+  // slow-if-live lookup in this file already uses (fetchDeeptideNftDetailCached/
+  // fetchDeeptideRealFloor in _shared.js) — a given trait combo gets re-scanned
+  // by every visitor who picks it, or scrolls/re-sorts within the same
+  // filtered browse, so this is the difference between "pays the ~1-2s scan
+  // once per minute per trait combo" and "every single request pays it".
+  const FILTERED_SCAN_CACHE_PREFIX = 'pswap:filteredscan:';
+  const FILTERED_SCAN_CACHE_TTL_SECONDS = 60;
   async function scanFilteredCandidates(traitFilters) {
+    const kv = env.coin;
+    // Sorted so the same trait combo in a different pick order shares one
+    // cache entry instead of two.
+    const sortedFilters = traitFilters.slice().sort((a, b) => (a.trait + a.value).localeCompare(b.trait + b.value));
+    const cacheKey = FILTERED_SCAN_CACHE_PREFIX + coll.shopSlug + ':' + JSON.stringify(sortedFilters);
+    if (kv) {
+      const cached = await kv.get(cacheKey);
+      if (cached !== null) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
     const perPage = 60;
     const listingsParams = { limit: perPage, sort: 'rarity-asc', traits: traitFilters, shopSlug: coll.shopSlug };
     const first = await fetchDeeptideListings(Object.assign({ skip: 0 }, listingsParams));
@@ -838,7 +857,9 @@ export async function onRequestGet(context) {
       }
       exhausted = true;
     }
-    return { items: items.slice(0, FILTERED_SCAN_CAP_ITEMS), exhausted };
+    const result = { items: items.slice(0, FILTERED_SCAN_CAP_ITEMS), exhausted };
+    if (kv) context.waitUntil(safeKvPut(kv, cacheKey, JSON.stringify(result), { expirationTtl: FILTERED_SCAN_CACHE_TTL_SECONDS }));
+    return result;
   }
 
   // Σκύλλα SWAP LISTED filter — only Pigeons actually listed through this
