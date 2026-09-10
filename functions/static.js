@@ -659,7 +659,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .ci-value{ color:var(--white); word-break:break-all; }
   .ci-value-big{ font-size:14px; letter-spacing:0.02em; }
   .ci-copy-btn{ font-size:12px; padding:0.65em 1.1em; flex:0 0 auto; }
-  .pigeons-bar-identity-actions{ display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; justify-content:center; }
+  .pigeons-bar-identity-actions{ display:flex; flex-direction:column; align-items:stretch; gap:0.6rem; justify-content:center; }
   /* SH0W MY P!GE0NS reuses BUY $P!GE0NS's own styling (same juicy green
      treatment) — its margin-top was meant for sitting under the balance
      value in that other context, not needed (and visually misaligning
@@ -5019,10 +5019,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:rgba(0,0,0,0.18);
     border:1px solid rgba(255,255,255,0.6);
     border-radius:var(--radius);
-    padding:0.55em 1em;
+    padding:0.85em 1.8em;
     color:#fff;
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:17px;
     font-weight:700;
     letter-spacing:0.08em;
     text-transform:uppercase;
