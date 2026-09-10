@@ -5014,14 +5014,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-bar-balance-buy{
     display:inline-block;
     margin-top:0.4rem;
-    padding:1.05em 2.4em;
+    padding:0.85em 1.8em;
     border:1px solid var(--collection-accent);
     border-radius:var(--radius);
     background:rgba(var(--collection-accent-rgb), 0.12);
     color:var(--collection-accent);
     text-shadow:none;
     font-family:var(--font-mono);
-    font-size:20px;
+    font-size:17px;
     font-weight:700;
     letter-spacing:0.05em;
     text-decoration:none;
@@ -5031,6 +5031,15 @@ const SWAP_HTML = `<!DOCTYPE html>
        it renders identically to the old link. */
     appearance:none;
     cursor:pointer;
+  }
+  /* BUY $P!GE0NS specifically (reported live) — bigger than its three
+     siblings on this shared class (V!EW 0N DEXSCREENER/V!EW NFTs/
+     WATCHL!ST, back to matching EXCHANGE CALCULAT0R/T0P 123 H0LDERS/
+     SALES H!ST0RY's own size above), since it's this banner's one real
+     money action. */
+  #pigeonsBalanceBuyBtn{
+    padding:1.05em 2.4em;
+    font-size:20px;
   }
   /* Simple fill-on-hover, no offset shadow/transform — the harder
      brutalist hover (translate + hard drop shadow) read as messy on a
