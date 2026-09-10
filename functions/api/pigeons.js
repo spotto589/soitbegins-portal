@@ -110,7 +110,7 @@ function bithompTxUrl(txHash) {
   return `https://bithomp.com/explorer/${txHash}`;
 }
 
-function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap) {
+function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent) {
   const owner = ownerOverride !== undefined ? ownerOverride : meta.owner;
   const priceDrops = typeof meta.priceDrops === 'number' ? meta.priceDrops : null;
   const highSaleEntry = highSaleMap ? highSaleMap[nftId] : undefined;
@@ -126,6 +126,35 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pige
   // additive fields; null on every item until this collection's first
   // crawl pass completes (see getRarityStats' own inProgress/count).
   const rarityEntry = rarityMap ? rarityMap[nftId] : undefined;
+  // NAKED/BALD as real rows on the Pigeon's OWN attribute list — reported
+  // live as "still aren't showing as traits": Deeptide's own per-item
+  // trait array just OMITS a category entirely when there's nothing in
+  // it (confirmed live: a real naked Pigeon's own attributes never
+  // mention Clothing at all), so every place that renders "this Pigeon's
+  // own traits" straight off `attributes` (card trait chips, INSPECT)
+  // silently skipped it — the FILTER panel fix alone (getTraitCategories-
+  // WithPercent) never touched THIS list. Synthesized here, once, so
+  // every consumer of `attributes` gets it for free without its own
+  // special-case. Value stays the raw `__no_trait__` Deeptide's own
+  // filter API expects back (same reasoning as getTraitCategoriesWith-
+  // Percent's own value/label split) — clicking this cell on a card
+  // filters the browse view by trait_type+value, and that round-trip
+  // has to keep working; the client's own cardTraitsHtml/traitCellHtml
+  // already cross-reference state.traitCategories by raw value to read
+  // the friendly label (and real percent/count) for display, same as
+  // every other trait cell already does. Skipped only if noTraitPercent's
+  // own lookup came back empty (no trait crawl data yet for this
+  // collection).
+  const attributes = (meta.attributes || []).slice();
+  if (noTraitPercent) {
+    for (const category of Object.keys(noTraitPercent)) {
+      const percent = noTraitPercent[category];
+      if (percent === undefined) continue;
+      if (!attributes.some(a => a.trait_type === category)) {
+        attributes.push({ trait_type: category, value: '__no_trait__', percent });
+      }
+    }
+  }
   return {
     nftId,
     number: meta.number,
@@ -136,7 +165,7 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pige
     // so the card can show that instead of a meaningless "#????".
     name: meta.name || null,
     image: displayImage(meta.image),
-    attributes: meta.attributes,
+    attributes,
     rarityRank: meta.rarityRank || null,
     rarityTotal: meta.rarityTotal || null,
     ourRarityRank: rarityEntry ? rarityEntry.rank : null,
@@ -234,7 +263,7 @@ export async function onRequestGet(context) {
   // Namespaced by coll.key (see getHighSaleMap's own comment in
   // _shared.js) — this used to always read $PIGEONS' own map regardless
   // of the active collection.
-  const [highSaleMap, scyllaListingsMap, salesLog, rarityMap] = await Promise.all([
+  const [highSaleMap, scyllaListingsMap, salesLog, rarityMap, traitCategoriesForSynth] = await Promise.all([
     tradeable ? getHighSaleMap(env.coin, coll.key) : Promise.resolve({}),
     tradeable ? getSwapListingsMap(env.coin, coll.key) : Promise.resolve({}),
     (tradeable && env.coin) ? getSwapSalesLog(env.coin, coll.key) : Promise.resolve([]),
@@ -242,8 +271,21 @@ export async function onRequestGet(context) {
     // module comment in _shared.js. Empty (real map fields all null,
     // toItem falls back to Deeptide's own rarityRank/rarityTotal) until
     // this collection's first full crawl pass completes.
-    tradeable ? getRarityMap(env.coin, coll.key) : Promise.resolve({})
+    tradeable ? getRarityMap(env.coin, coll.key) : Promise.resolve({}),
+    // NAKED/BALD's own real percentages (see getTraitCategoriesWithPercent's
+    // own comment on the __no_trait__ synthesis) — reused below so toItem
+    // can add a real Clothing/Headwear ROW to an item's own attributes
+    // list when it's missing one, same as any other trait. 1hr-cached, so
+    // this is a cheap KV read on every request except a rare cold rebuild.
+    tradeable ? getTraitCategoriesWithPercent(env.coin, coll.shopSlug, coll.sizeApprox) : Promise.resolve({})
   ]);
+  // Just the two values toItem actually needs (NAKED's/BALD's own real
+  // percent) — pulled out once here rather than making every toItem call
+  // re-scan the whole categories object for its own value.
+  const noTraitPercent = {
+    Clothing: ((traitCategoriesForSynth.Clothing || []).find(v => v.label === 'Naked') || {}).percent,
+    Headwear: ((traitCategoriesForSynth.Headwear || []).find(v => v.label === 'Bald') || {}).percent
+  };
 
   const pigeonsSalesMap = {};
   for (const sale of salesLog) {
@@ -630,7 +672,7 @@ export async function onRequestGet(context) {
       const wantIds = new Set(resolveIds.split(',').filter(Boolean));
       const wantedLedgerItems = ledgerItems.filter(it => wantIds.has(it.nftId));
       const resolvedPending = await resolveOwnerCollectionPending(wantedLedgerItems);
-      const items = resolvedPending.map(r => toItem(r.nftId, r.meta, wallet, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap));
+      const items = resolvedPending.map(r => toItem(r.nftId, r.meta, wallet, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
       return json({ items });
     }
     // Fast phase — only whatever Deeptide's own bulk index already has
@@ -641,7 +683,7 @@ export async function onRequestGet(context) {
     // resolveIds= follow-up (see above) instead of waiting on it here.
     const { resolved, pendingIds } = await resolveOwnerCollectionFast(env.coin, wallet, ledgerItems, coll.shopSlug);
     const items = resolved
-      .map(r => toItem(r.nftId, r.meta, wallet, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap))
+      .map(r => toItem(r.nftId, r.meta, wallet, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent))
       .sort((a, b) => (a.number || 0) - (b.number || 0));
     return json({ items, owner: wallet, ownerShort: shortenAddr(wallet), pendingIds });
   }
@@ -684,7 +726,7 @@ export async function onRequestGet(context) {
       const match = (categories[a.trait_type] || []).find(v => v.value === a.value);
       return { trait_type: a.trait_type, value: a.value, percent: match ? match.percent : (a.percent != null ? a.percent : null), count: match ? match.count : null };
     });
-    const result = toItem(item.nftId, item, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap);
+    const result = toItem(item.nftId, item, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent);
     // Per-marketplace listings — each platform has its own separate sell
     // offers, so a Pigeon can be listed on one, both, or neither.
     result.listings = {
@@ -711,7 +753,7 @@ export async function onRequestGet(context) {
     }
     const item = await fetchDeeptideNftDetail(nftId);
     if (!item) return json({ items: [], notIndexed: true, query: num });
-    return json({ items: [toItem(item.nftId, item, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap)] });
+    return json({ items: [toItem(item.nftId, item, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent)] });
   }
 
   // Trait filters (# 0R WALLET's own F!LTER BY TRA!TS) — parsed once here
@@ -820,7 +862,7 @@ export async function onRequestGet(context) {
     });
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await mapWithConcurrency(pageIds, DETAIL_FETCH_CONCURRENCY, id => fetchDeeptideNftDetailCached(context, id));
-    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap));
+    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
 
     // Deeptide's own current-owner field, reused from the detail fetch
     // above (no extra request) — lets the background self-heal below catch
@@ -914,7 +956,7 @@ export async function onRequestGet(context) {
     const sortedIds = idPool.sort((a, b) => asc ? metricOf(a) - metricOf(b) : metricOf(b) - metricOf(a));
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await mapWithConcurrency(pageIds, DETAIL_FETCH_CONCURRENCY, id => fetchDeeptideNftDetailCached(context, id));
-    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap));
+    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
     await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
     return json({
       items,
@@ -961,7 +1003,7 @@ export async function onRequestGet(context) {
       nums.sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
       const pageNums = nums.slice(skip, skip + limit);
       const resolved = await mapWithConcurrency(pageNums, DETAIL_FETCH_CONCURRENCY, n => fetchDeeptideNftDetailCached(context, map[n]));
-      const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap));
+      const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
       await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
       return json({
         items,
@@ -993,7 +1035,7 @@ export async function onRequestGet(context) {
       if (matched.length >= limit) break;
       if (!page.hasMore) { exhausted = true; break; }
     }
-    const items = matched.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap));
+    const items = matched.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
     await attachListings(env.coin, items);
     return json({
       items,
@@ -1029,7 +1071,7 @@ export async function onRequestGet(context) {
     nums.sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
     const pageNums = nums.slice(skip, skip + limit);
     const resolved = await mapWithConcurrency(pageNums, DETAIL_FETCH_CONCURRENCY, n => fetchDeeptideNftDetailCached(context, map[n]));
-    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap));
+    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
     await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
     return json({
       items,
@@ -1074,7 +1116,7 @@ export async function onRequestGet(context) {
       candidates = candidates.filter(c => matchSet.has(c.nftId));
     }
     const details = await mapWithConcurrency(candidates, DETAIL_FETCH_CONCURRENCY, c => fetchDeeptideNftDetailCached(context, c.nftId));
-    let items = candidates.map((c, i) => toItem(c.nftId, details[i] || { number: c.number, attributes: [], image: null }, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap));
+    let items = candidates.map((c, i) => toItem(c.nftId, details[i] || { number: c.number, attributes: [], image: null }, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
     await attachListings(env.coin, items, items.length);
     items.forEach(it => {
       const dt = it.listings.deeptide.priceXrp;
@@ -1133,7 +1175,7 @@ export async function onRequestGet(context) {
     const sortedIds = idPool.sort((a, b) => asc ? rarityMap[a].rank - rarityMap[b].rank : rarityMap[b].rank - rarityMap[a].rank);
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await mapWithConcurrency(pageIds, DETAIL_FETCH_CONCURRENCY, id => fetchDeeptideNftDetailCached(context, id));
-    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap));
+    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
     await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
     return json({
       items,
@@ -1155,7 +1197,7 @@ export async function onRequestGet(context) {
   const sort = SORT_MAP[params.get('sort')] || 'rarity-asc';
 
   const page = await fetchDeeptideListings({ skip, limit, sort, traits: filters, shopSlug: coll.shopSlug });
-  const items = page.items.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap));
+  const items = page.items.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
   // attachListings is per-nftId (xrp.cafe's own token lookup), not
   // collection-scoped by anything that needs coll here — safe as-is for
   // every collection, tradeable or not (still useful: it's real

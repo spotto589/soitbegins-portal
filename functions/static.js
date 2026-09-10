@@ -8768,7 +8768,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               </div>
               <div class="trait-cell">
                 <div class="tc-label">RAR!TY SC0RE</div>
-                <div class="tc-value">C0M!NG S00N</div>
+                <div class="tc-value" id="detailRarityScore"></div>
               </div>
             </div>
             <div class="scylla-listing-block">
@@ -9827,7 +9827,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
-   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
+   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailHistoryList','historyNum','historyModal','historyModalClose',
    'backToBrowseBtn',
@@ -11409,7 +11409,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       var pctHtml = match
         ? '<div class="card-tc-pct">' + match.percent.toFixed(3) + '%' + (match.count !== null && match.count !== undefined ? '<span class="card-tc-count">(' + match.count + ')</span>' : '') + '</div>'
         : '';
-      return '<div class="card-trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '" title="SH0W 0NLY P!GE0NS W!TH TH!S TRA!T, RAREST F!RST"><div class="card-tc-label">' + escapeHtml(a.trait_type) + '</div><div class="card-tc-value">' + escapeHtml(a.value) + '</div>' + pctHtml + '</div>';
+      // match.label (falls back to a.value) — NAKED/BALD's own real
+      // attribute entries carry the raw __no_trait__ value (so the
+      // click-to-filter round-trip below still works against Deeptide's
+      // own filter API), same value/label split as the F!LTER BY TRA!TS
+      // panel's own NAKED/BALD chips (see getTraitCategoriesWithPercent).
+      var displayValue = match && match.label ? match.label : a.value;
+      return '<div class="card-trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '" title="SH0W 0NLY P!GE0NS W!TH TH!S TRA!T, RAREST F!RST"><div class="card-tc-label">' + escapeHtml(a.trait_type) + '</div><div class="card-tc-value">' + escapeHtml(displayValue) + '</div>' + pctHtml + '</div>';
     }).join('') + '</div>';
   }
   // Full-width OFFER $PIGEONS strip, shared by both the boxed and
@@ -11613,8 +11619,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Above the traits boxes (not inside the carousel's own rarity page,
     // which stays as-is for the flick-through) — rarity is visible
     // immediately without a NEXT click.
+    // Real Σκύλλα rarity SCORE now (see updateDetailRarity's own comment
+    // on scoreAgainstDistribution) — was a permanent C0M!NG S00N here
+    // until the crawl behind it existed.
+    var rarityScoreLine = (rarityInfo && p.ourRarityScore !== null && p.ourRarityScore !== undefined)
+      ? greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 }))
+      : 'C0M!NG S00N';
     var rarityAboveTraitsHtml = rarityLine
-      ? '<div class="card-rarity-summary"><span class="css-item"><span class="css-label">RAR!TY</span>' + rarityLine + '</span><span class="css-item"><span class="css-label">RAR!TY SC0RE</span>C0M!NG S00N</span></div>'
+      ? '<div class="card-rarity-summary"><span class="css-item"><span class="css-label">RAR!TY</span>' + rarityLine + '</span><span class="css-item"><span class="css-label">RAR!TY SC0RE</span>' + rarityScoreLine + '</span></div>'
       : '';
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-row">' +
@@ -17402,12 +17414,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     // clashed with plain shadowed text.
     var textOpen = exampleImg ? '<div class="tc-text">' : '';
     var textClose = exampleImg ? '</div>' : '';
+    // Same value/label split as cardTraitsHtml's own trait cells — NAKED/
+    // BALD's real attribute entry carries the raw __no_trait__ value (so
+    // the click-to-filter handler right below still round-trips correctly
+    // against Deeptide's own filter API), state.traitCategories has the
+    // friendly label to actually show.
+    var catValuesForCell = state.traitCategories && state.traitCategories[a.trait_type];
+    var cellMatch = catValuesForCell ? catValuesForCell.filter(function(v){ return v.value === a.value; })[0] : null;
+    var cellDisplayValue = cellMatch && cellMatch.label ? cellMatch.label : a.value;
     return '<div class="trait-cell' + (exampleImg ? ' has-preview' : '') + '" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' + style +
       ' title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
       textOpen +
       // Value first, category second — "G0LDEN FEATHERS" reads as one
       // phrase describing the trait, not a label/value form field.
-      '<div class="tc-value">' + escapeHtml(a.value) + '</div><div class="tc-label">' + escapeHtml(a.trait_type) + '</div>' + sub +
+      '<div class="tc-value">' + escapeHtml(cellDisplayValue) + '</div><div class="tc-label">' + escapeHtml(a.trait_type) + '</div>' + sub +
       textClose +
     '</div>';
   }
@@ -17448,6 +17468,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     var info = p ? rarityDisplay(p) : null;
     if (info){ el.detailRarityRow.style.display = ''; el.detailRarity.innerHTML = greenNum(info.rank) + ' / ' + info.total; }
     else el.detailRarityRow.style.display = 'none';
+    // Real Σκύλλα rarity SCORE (see scoreAgainstDistribution's own module
+    // comment in _shared.js — sum of 1/(each trait's own real share of
+    // the collection), higher = rarer) — was a permanent "C0M!NG S00N"
+    // placeholder until the crawl behind it (maybeRefreshRarityScores)
+    // actually existed. Null only until this collection's first crawl
+    // pass completes (same gating as RARITY's own rank/total above).
+    el.detailRarityScore.innerHTML = (p && p.ourRarityScore !== null && p.ourRarityScore !== undefined)
+      ? greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 }))
+      : 'C0M!NG S00N';
   }
   function updateDetailPrice(p){
     if (p && p.priceXrp !== null && p.priceXrp !== undefined){
