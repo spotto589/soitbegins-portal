@@ -10545,13 +10545,29 @@ const SWAP_HTML = `<!DOCTYPE html>
   // 'pigeons') rather than added to every individual call site across the
   // file — api()/apiWithRetry() below are the only two places any
   // /api/pigeons request actually goes out.
+  // In-flight de-dup: two call sites (ensureTraitsLoaded() alone has 7 —
+  // see its own call sites) can genuinely fire the exact same request
+  // within the same tick before either's response has landed (confirmed
+  // live: a fresh DATABASE landing fired traits=1 AND the highestSale=1
+  // prefetch twice each, doubling that real, non-cheap Deeptide work for
+  // no reason). Sharing the one in-flight promise for an identical
+  // querystring costs nothing for the normal case (different params every
+  // time) and just collapses genuine accidental duplicates into one real
+  // request. Cleared the moment it settles — this is not a response cache,
+  // a request fired a moment later still hits the network/KV cache layer
+  // normally.
+  var inFlightApiRequests = {};
   function api(params){
     params = Object.assign({ collection: state.collection }, params);
     var qs = Object.keys(params)
       .filter(function(k){ return params[k] !== undefined && params[k] !== null; })
       .map(function(k){ return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
       .join('&');
-    return fetch('/api/pigeons?' + qs).then(function(r){ return r.json(); });
+    if (inFlightApiRequests[qs]) return inFlightApiRequests[qs];
+    var req = fetch('/api/pigeons?' + qs).then(function(r){ return r.json(); });
+    req.finally(function(){ delete inFlightApiRequests[qs]; });
+    inFlightApiRequests[qs] = req;
+    return req;
   }
   // The wallet-list lookup (fetchAllAccountNfts -> real XRPL pagination,
   // no caching by design) genuinely takes several seconds for a wallet
