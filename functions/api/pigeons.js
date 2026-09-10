@@ -1,5 +1,5 @@
 ﻿import {
-  fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftDetailCached, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent,
+  fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent, resolveDetailsCached,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap, getRarityMap, getRarityStats, maybeRefreshRarityScores,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue, getFloorIndex,
@@ -210,17 +210,10 @@ function json(body, status = 200) {
 const LISTINGS_ENRICH_CAP = 40;
 const LISTINGS_ENRICH_CAP_LOW = 36;
 // Per-item Deeptide detail-fetch concurrency for a browse page (SCYLLA
-// LISTED/HIGHEST SALE/numeric/edition/cross-listing sorts, each one
-// detail fetch per item on the page). Was 15 — a cold-cache page of the
-// common 36-item size (PAGE_SIZE, see static.js) needed 3 sequential
-// rounds of up to 15 concurrent Deeptide calls each, directly measured
-// (local dev, cold cache) taking several seconds to 10+ on a slow round.
-// Raised to cover a full page (up to DEEPTIDE_LISTINGS_MAX_LIMIT/60) in
-// ONE round instead — same real headroom already established above for
-// xrp.cafe (LISTINGS_ENRICH_CAP's own comment: swap-listing-owned.js
-// already fires up to 45 concurrent XRPL calls in a single request
-// without issue).
-const DETAIL_FETCH_CONCURRENCY = 60;
+// LISTED/HIGHEST SALE/numeric/edition/cross-listing sorts) moved into
+// resolveDetailsCached (_shared.js) alongside the bulk PIGEON_DETAIL_MAP_KEY
+// lookup it now checks first — see that function's own comment for why a
+// live per-item fetch is the rare fallback case now, not the normal path.
 async function attachListings(kv, items, cap = LISTINGS_ENRICH_CAP) {
   const capped = items.slice(0, cap);
   await Promise.all(capped.map(async (it) => {
@@ -930,7 +923,7 @@ export async function onRequestGet(context) {
       return asc ? av - bv : bv - av;
     });
     const pageIds = sortedIds.slice(skip, skip + limit);
-    const resolved = await mapWithConcurrency(pageIds, DETAIL_FETCH_CONCURRENCY, id => fetchDeeptideNftDetailCached(context, id));
+    const resolved = await resolveDetailsCached(context, coll.key, pageIds);
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
 
     // Deeptide's own current-owner field, reused from the detail fetch
@@ -1024,7 +1017,7 @@ export async function onRequestGet(context) {
     }
     const sortedIds = idPool.sort((a, b) => asc ? metricOf(a) - metricOf(b) : metricOf(b) - metricOf(a));
     const pageIds = sortedIds.slice(skip, skip + limit);
-    const resolved = await mapWithConcurrency(pageIds, DETAIL_FETCH_CONCURRENCY, id => fetchDeeptideNftDetailCached(context, id));
+    const resolved = await resolveDetailsCached(context, coll.key, pageIds);
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
     await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
     return json({
@@ -1071,7 +1064,7 @@ export async function onRequestGet(context) {
       }
       nums.sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
       const pageNums = nums.slice(skip, skip + limit);
-      const resolved = await mapWithConcurrency(pageNums, DETAIL_FETCH_CONCURRENCY, n => fetchDeeptideNftDetailCached(context, map[n]));
+      const resolved = await resolveDetailsCached(context, coll.key, pageNums.map(n => map[n]));
       const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
       await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
       return json({
@@ -1139,7 +1132,7 @@ export async function onRequestGet(context) {
     }
     nums.sort((a, b) => numericOrder === 'asc' ? a - b : b - a);
     const pageNums = nums.slice(skip, skip + limit);
-    const resolved = await mapWithConcurrency(pageNums, DETAIL_FETCH_CONCURRENCY, n => fetchDeeptideNftDetailCached(context, map[n]));
+    const resolved = await resolveDetailsCached(context, coll.key, pageNums.map(n => map[n]));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
     await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
     return json({
@@ -1184,7 +1177,7 @@ export async function onRequestGet(context) {
       const matchSet = new Set(scan.items.map(it => it.nftId));
       candidates = candidates.filter(c => matchSet.has(c.nftId));
     }
-    const details = await mapWithConcurrency(candidates, DETAIL_FETCH_CONCURRENCY, c => fetchDeeptideNftDetailCached(context, c.nftId));
+    const details = await resolveDetailsCached(context, coll.key, candidates.map(c => c.nftId));
     let items = candidates.map((c, i) => toItem(c.nftId, details[i] || { number: c.number, attributes: [], image: null }, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
     await attachListings(env.coin, items, items.length);
     items.forEach(it => {
@@ -1243,7 +1236,7 @@ export async function onRequestGet(context) {
     }
     const sortedIds = idPool.sort((a, b) => asc ? rarityMap[a].rank - rarityMap[b].rank : rarityMap[b].rank - rarityMap[a].rank);
     const pageIds = sortedIds.slice(skip, skip + limit);
-    const resolved = await mapWithConcurrency(pageIds, DETAIL_FETCH_CONCURRENCY, id => fetchDeeptideNftDetailCached(context, id));
+    const resolved = await resolveDetailsCached(context, coll.key, pageIds);
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
     await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
     return json({

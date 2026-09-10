@@ -2371,6 +2371,34 @@ export async function fetchDeeptideNftDetailCached(context, nftId) {
   return item;
 }
 
+// Batch version every RARITY/scyllaListed/H!ST0R!CAL SALES/EDITION page in
+// pigeons.js now uses instead of mapWithConcurrency(ids, ..., id =>
+// fetchDeeptideNftDetailCached(context, id)) directly — that pattern was a
+// live, uncached-the-first-time external Deeptide call for every single
+// item on the page (up to 36-60 of them), directly measured as a real
+// 10-15s cold page load with no trait filter involved at all. Almost every
+// id here is already sitting in getPigeonDetailMap (built for free by the
+// same background crawl as the number map/trait index, see
+// PIGEON_DETAIL_MAP_KEY's own comment) — this reads that map ONCE, answers
+// whatever it can from it instantly, and only live-fetches (still through
+// the existing per-item 60s cache) whatever it doesn't have yet, e.g. a
+// brand-new mint the last completed crawl pass predates.
+export async function resolveDetailsCached(context, collectionKey, ids) {
+  const kv = context.env.coin;
+  const bulk = kv ? await getPigeonDetailMap(kv, collectionKey) : {};
+  const missing = ids.filter(id => !bulk[id]);
+  const live = missing.length
+    ? await mapWithConcurrency(missing, DETAIL_FETCH_CONCURRENCY, id => fetchDeeptideNftDetailCached(context, id))
+    : [];
+  const liveById = {};
+  missing.forEach((id, i) => { if (live[i]) liveById[id] = live[i]; });
+  return ids.map(id => bulk[id] || liveById[id] || null);
+}
+// Same concurrency cap pigeons.js's own DETAIL_FETCH_CONCURRENCY used —
+// kept here too since resolveDetailsCached's live-fallback path needs it
+// and this file has no reason to import a constant back out of pigeons.js.
+const DETAIL_FETCH_CONCURRENCY = 60;
+
 // The real, buyable Deeptide floor — the listings feed's own cached
 // `lowestSellDrops` (used for card sort/price display) doesn't carry
 // enough per-offer detail to know if that cheapest offer is actually
@@ -2720,13 +2748,11 @@ const PIGEON_NUMBER_MAP_KEY = 'pswap:numbermap:v1';
 // though they'd been correctly indexed moments before the recrawl
 // started. Staging fixes it: readers always see the last COMPLETE map.
 const PIGEON_NUMBER_MAP_STAGING_KEY = 'pswap:numbermap:staging:v1';
-// Bumped v2 -> v3: the crawl this stats key gates now also builds the full
-// trait -> [nftIds] index below (see TRAIT_INDEX_MAP_KEY) as a side effect,
-// same reasoning as the v1 -> v2 bump for trait examples right above — a
-// v2 "completed" stats entry would otherwise block a fresh crawl for
-// NUMBER_MAP_REFRESH_STALE_SECONDS (6h) and the trait index would stay
-// empty that whole time, which is exactly the thing it exists to fix.
-const PIGEON_NUMBER_MAP_STATS_KEY = 'pswap:numbermapstats:v3';
+// Bumped v3 -> v4: the crawl this stats key gates now also builds the full
+// per-item detail map (see PIGEON_DETAIL_MAP_KEY) as a side effect, same
+// "force an immediate fresh crawl instead of waiting out the old stats
+// entry's 6h staleness window" reasoning as every previous bump here.
+const PIGEON_NUMBER_MAP_STATS_KEY = 'pswap:numbermapstats:v4';
 const NUMBER_MAP_REFRESH_STALE_SECONDS = 6 * 3600;
 const NUMBER_MAP_CONCURRENT_GUARD_SECONDS = 10;
 const NUMBER_MAP_PAGES_PER_RUN = 15; // 15 * 60 = 900 tokens/run, ~15 fetches — safely under the subrequest budget
@@ -2739,6 +2765,22 @@ const NUMBER_MAP_PAGES_PER_RUN = 15; // 15 * 60 = 900 tokens/run, ~15 fetches �
 // first image seen for each trait_type/value pair as the crawl runs.
 const TRAIT_EXAMPLE_MAP_KEY = 'pswap:traitexamples:v1';
 const TRAIT_EXAMPLE_MAP_STAGING_KEY = 'pswap:traitexamples:staging:v1';
+
+// Full per-item detail (image/attributes/rarityRank/owner/priceDrops —
+// the exact shape fetchDeeptideNftDetail returns, since deeptideListingToPigeon
+// already builds items in that same shape) keyed by nftId, built for free
+// off the same crawl loop as everything else here. Real fix for a directly
+// measured 10-15s cold RARITY H!GH!EST/L0WEST page load with no trait
+// filter involved at all: that path (and scyllaListed/H!ST0R!CAL SALES/
+// EDITION+A-Z) all had to live-fetch full detail for every item on the
+// page one request at a time (fetchDeeptideNftDetailCached, 60s TTL but
+// genuinely uncached the first time any given nftId's detail was needed)
+// — up to 36-60 of them per page, all real external Deeptide calls. This
+// map lets resolveDetailsCached (pigeons.js) answer almost all of those
+// from one KV read instead, live-fetching only whatever this map hasn't
+// reached yet.
+const PIGEON_DETAIL_MAP_KEY = 'pswap:detailmap:v1';
+const PIGEON_DETAIL_MAP_STAGING_KEY = 'pswap:detailmap:staging:v1';
 
 // Real trait_type+value -> [nftIds] index, e.g. index['Eyewear']['Classic
 // Gaze'] = ['0008...', ...] — the actual answer to "which NFTs have this
@@ -2801,6 +2843,20 @@ async function getTraitIndexMapStaging(kv, collectionKey) {
   return raw ? JSON.parse(raw) : {};
 }
 
+// resolveDetailsCached in pigeons.js reads this — see PIGEON_DETAIL_MAP_KEY's
+// own comment. Empty ({}) just means the crawl hasn't reached a complete
+// pass yet; that function already falls back to a live per-item fetch for
+// anything missing here.
+export async function getPigeonDetailMap(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(PIGEON_DETAIL_MAP_KEY, collectionKey));
+  return raw ? JSON.parse(raw) : {};
+}
+
+async function getPigeonDetailMapStaging(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(PIGEON_DETAIL_MAP_STAGING_KEY, collectionKey));
+  return raw ? JSON.parse(raw) : {};
+}
+
 export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
   const cfg = getTradeConfig(collectionKey);
   // No real Deeptide shop for this collection (SEAL/FUZZY/C0NSP!RACY
@@ -2823,6 +2879,7 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
   const map = stats && stats.inProgress ? await getPigeonNumberMapStaging(kv, collectionKey) : {};
   const traitExamples = stats && stats.inProgress ? await getTraitExampleMapStaging(kv, collectionKey) : {};
   const traitIndex = stats && stats.inProgress ? await getTraitIndexMapStaging(kv, collectionKey) : {};
+  const detailMap = stats && stats.inProgress ? await getPigeonDetailMapStaging(kv, collectionKey) : {};
   // Real total, once the first page below reports it — this is just a
   // safe starting guess so the very first iteration's skip>=lastTotal
   // check has something to compare against before that.
@@ -2833,6 +2890,10 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
     if (page.error || !page.items.length) break;
     for (const it of page.items) {
       if (it.number !== null) map[it.number] = it.nftId;
+      // See PIGEON_DETAIL_MAP_KEY's own comment — `it` is already in the
+      // exact shape fetchDeeptideNftDetail returns (deeptideListingToPigeon
+      // builds both the same way), so this is a straight cache of it.
+      detailMap[it.nftId] = it;
       if (Array.isArray(it.attributes)) {
         for (const a of it.attributes) {
           if (!a.trait_type || !a.value) continue;
@@ -2858,6 +2919,7 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
       await safeKvPut(kv, kvKeyFor(PIGEON_NUMBER_MAP_KEY, collectionKey), JSON.stringify(map));
       await safeKvPut(kv, kvKeyFor(TRAIT_EXAMPLE_MAP_KEY, collectionKey), JSON.stringify(traitExamples));
       await safeKvPut(kv, kvKeyFor(TRAIT_INDEX_MAP_KEY, collectionKey), JSON.stringify(traitIndex));
+      await safeKvPut(kv, kvKeyFor(PIGEON_DETAIL_MAP_KEY, collectionKey), JSON.stringify(detailMap));
       await safeKvPut(kv, statsKey, JSON.stringify({
         inProgress: false, completedAt: now, updatedAt: now, count: Object.keys(map).length,
       }));
@@ -2870,6 +2932,7 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
   await safeKvPut(kv, kvKeyFor(PIGEON_NUMBER_MAP_STAGING_KEY, collectionKey), JSON.stringify(map));
   await safeKvPut(kv, kvKeyFor(TRAIT_EXAMPLE_MAP_STAGING_KEY, collectionKey), JSON.stringify(traitExamples));
   await safeKvPut(kv, kvKeyFor(TRAIT_INDEX_MAP_STAGING_KEY, collectionKey), JSON.stringify(traitIndex));
+  await safeKvPut(kv, kvKeyFor(PIGEON_DETAIL_MAP_STAGING_KEY, collectionKey), JSON.stringify(detailMap));
   await safeKvPut(kv, statsKey, JSON.stringify({
     inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(map).length,
   }));

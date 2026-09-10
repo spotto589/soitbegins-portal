@@ -3224,7 +3224,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* BACK T0 T0P — sits between S0RT BY/F!LTER BY TRA!TS on the same fixed
      bar (reported live), narrower than its two flex:1 neighbours since it's
      just an icon+word, not a full label. */
-  .bottom-controls-btn-top{ flex:0 0 auto; padding:1em 1.2em; }
+  .bottom-controls-btn-top{ flex:0 0 auto; padding:1.1em 1.4em; font-size:17px; }
   /* Own bottom padding on the page's actual scrollable content so the
      last row of result cards never sits underneath this fixed bar with
      no way to see it — #screenBrowse is the shared DATABASE/PλWS grid
