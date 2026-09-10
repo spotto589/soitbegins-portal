@@ -13435,6 +13435,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   var signinXamanTab = null;
   var signinUuid = null;
   var signinPollTimer = null;
+  // Whichever tab was actually active before startAuthorize() switched to
+  // M!GE0NS to show the connect panel (see its own comment) — reported
+  // live as "click sign in, then click out of it, the titles disappear":
+  // switching to M!GE0NS is real navigation (state.activeTab, every other
+  // tab's own content actually hidden), so a failed/cancelled/rejected
+  // sign-in used to just strand whoever started from DATABASE there,
+  // with nothing to bring its own titles back. resetLoginButtons restores
+  // this on every failure path; a SUCCESSFUL sign-in still deliberately
+  // lands on M!GE0NS regardless (existing behaviour, not this bug).
+  var tabBeforeSignin = null;
   // One real panel, one state at a time — replaces the old bare button +
   // a single line of status text that kept growing ("Σκύλλα://S!GNAL ::
   // WA!T!NG F0R S!GNATURE... Σκύλλα D!DN T 0PEN? TAP HERE." all run
@@ -13488,6 +13498,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     // is still the one actually showing it (see loadMyPigeons — it stays
     // hidden entirely once a session exists).
     if (!MY_WALLET) renderConnectPanel(mode || 'error', opts);
+    // Back to whichever tab sign-in actually started from (see
+    // tabBeforeSignin's own comment) — a failed/rejected/timed-out/
+    // cancelled attempt shouldn't leave DATABASE (or wherever) stranded
+    // with its own titles gone just because M!GE0NS is still the
+    // technically-active tab underneath. Only fires once per attempt
+    // (cleared right after) and only when this really was a redirect
+    // startAuthorize itself made — the one caller that was ALREADY on
+    // M!GE0NS before calling it never set this, so this is a no-op there.
+    if (tabBeforeSignin && !MY_WALLET){
+      var restoreTab = tabBeforeSignin;
+      tabBeforeSignin = null;
+      showTab(restoreTab, true);
+    }
   }
   // A real timeout backstop so CONNECT!NG can never sit stuck forever
   // with no way to retry short of a full reload, regardless of which
@@ -13519,6 +13542,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // anywhere except the one tab most real sign-ins no longer start
     // from. Calling showTab here directly (not just at the one call site
     // that already did) means every path in gets it, not just that one.
+    // Remembered BEFORE the switch below, only when this really is a
+    // real navigation away from something else — see tabBeforeSignin's
+    // own comment (the one caller already on M!GE0NS leaves this null,
+    // resetLoginButtons' own restore is correctly a no-op there).
+    if (state.activeTab && state.activeTab !== 'mypigeons') tabBeforeSignin = state.activeTab;
     showTab('mypigeons', true);
     clearAuthorizeTimeout();
     renderConnectPanel('connecting');
