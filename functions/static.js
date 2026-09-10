@@ -14062,21 +14062,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   loadOffersReceived();
   loadOutgoingOffers();
   loadIncomingTransfers();
-  // V!EW NFTs (trustline banner) — same real MAINFRAME collection picker
-  // DATABASE itself uses (reported live: "should pop up and show a
-  // selection of the collections to choose from... i think we had this
-  // set up before"), just tagged so picking a collection scopes straight
-  // to YOUR held items in it (browseOwnerCollection) instead of the
-  // normal full browsable grid — see mainframeMyNftsMode's own use in
-  // enterMainframeCollection below.
+  // V!EW NFTs (trustline banner) — used to pop the real MAINFRAME
+  // collection picker (same one DATABASE itself uses) and wait for a pick,
+  // but P!GE0NS is the only collection that picker ever lets you actually
+  // walk into (every other card is C0M!NG S00N/non-clickable — see
+  // #mainframeGrid's own HTML comment) — that extra "pick a collection"
+  // step when there's only ever one real choice was pure friction.
+  // Reported live as wanting this to land exactly where Σκύλλα's own MY
+  // NFTS box -> P!GE0NS does: your profile, your Pigeons underneath it —
+  // so it now just runs that same real path directly (isOwnWalletScope's
+  // own branch, same as switchProfileTab('collections') uses) instead of
+  // detouring through the picker at all.
   var mainframeMyNftsMode = false;
   el.showMyPigeonsBtn.addEventListener('click', function(){
     if (!MY_WALLET) return;
-    mainframeMyNftsMode = true;
-    el.mainframeSubtitle.textContent = 'SELECT A C0LLECT!0N T0 V!EW Y0UR NFTs';
-    state.databaseInPicker = true;
-    showTab('database');
-    scrollActiveTabPanelIntoView('database');
+    if (state.collection !== 'pigeons') switchCollection('pigeons');
+    state.myPigeonsGridOpen = true;
+    if (!isOwnWalletScope()) browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
+    else showTab('mypigeons', true);
+    scrollActiveTabPanelIntoView('mypigeons');
   });
   // WATCHL!ST for THIS collection (reported live) — already knows
   // state.collection, so unlike V!EW NFTs above it never needs the
