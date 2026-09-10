@@ -9203,13 +9203,18 @@ const SWAP_HTML = `<!DOCTYPE html>
               </div>
             </div>
           </div>
+          <!-- QU0TE UPDATED :: Ns AG0 — moved directly under the P!GE0NS
+               amount it's actually describing (reported live as reading
+               wrong sitting all the way down at the bottom of the quote
+               block, past RATE/M!N!MUM RECE!VED/SL!PPAGE, disconnected
+               from the number it's a freshness readout for). -->
+          <div class="index-line" id="buySwapStatus">QU0TE C0M!NG S00N — SWAP N0T YET L!VE.</div>
           <div class="buyswap-divider"></div>
           <div class="detail-field"><span class="df-label">RATE</span><span class="df-value" id="buySwapRate">—</span></div>
           <div class="detail-field"><span class="df-label">M!N!MUM RECE!VED</span><span class="df-value" id="buySwapMinReceived">—</span></div>
           <div class="detail-field"><span class="df-label">SL!PPAGE</span><span class="df-value" id="buySwapSlippage">0.5%</span></div>
           <div class="buyswap-divider"></div>
           </div>
-          <div class="index-line" id="buySwapStatus">QU0TE C0M!NG S00N — SWAP N0T YET L!VE.</div>
           <div class="detail-actions">
             <button class="secondary-btn" id="buySwapBackBtn">← BACK</button>
             <button class="action-btn" id="buySwapSignBtn" disabled title="QU0TE N0T YET AVA!LABLE">S!GN AND SWAP</button>
