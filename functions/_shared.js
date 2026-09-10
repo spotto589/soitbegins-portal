@@ -2944,6 +2944,186 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Σκύλλα's OWN rarity score — real "statistical rarity" (the rarity.tools/
+// moonrank formula: for every trait category, score += 1 / (that item's own
+// value's real share of the collection); rarer values contribute more, and
+// having several rare traits at once compounds instead of averaging out).
+// Same self-resuming crawl pattern as the number map/high-sale map above,
+// walking the same rarity-asc listings pages, but needs a genuinely
+// different two-phase shape: PHASE 1 (once per pass, cheap — a handful of
+// trait-cards page fetches, not per-item) builds the real value->count
+// distribution for every category; PHASE 2 (the per-item crawl loop) scores
+// each item against that fixed distribution. Rank can only be assigned once
+// the WHOLE collection has been scored — unlike the running max/sum maps
+// above, a rank is relative to everyone else's score, not derivable
+// incrementally — so this only ever writes the live map in one atomic swap
+// on the pass's last page, exactly like the number map's own live/staging
+// split, just with no partial "live" reads possible at all in between (the
+// old map stays authoritative the entire time a new pass is computing).
+//
+// The one deliberate departure from Deeptide's own rarityRank (still shown
+// as a fallback until this collection's first pass completes, see toItem's
+// own ourRarityRank/rarityRank precedence): a Pigeon with NO value in a
+// category (no Clothing, no Headwear, no Aura, ...) is scored against that
+// category's real "how many Pigeons have nothing here" share, same as any
+// other value — not silently skipped. Confirmed live: Deeptide's own
+// per-item trait list just omits an absent category entirely, so its own
+// rarityRank never gave a NAKED (no Clothing, 313/3015) or BALD (no
+// Headwear, 444/3015) Pigeon any credit for that — genuinely rare states
+// (AURA is missing on 82.6% of the collection, so actually HAVING one is
+// the rare case there) went uncounted. This crawl treats "no value" as its
+// own real value in every category that has one, using the exact same
+// Deeptide `__no_trait__` counts NAKED/BALD's own display values come
+// from (see getTraitCategoriesWithPercent) — just for every category, not
+// only the two surfaced as filterable NAKED/BALD chips.
+// ─────────────────────────────────────────────────────────────────────────
+const RARITY_MAP_KEY = 'pswap:rarity:v1';
+const RARITY_STATS_KEY = 'pswap:raritystats:v1';
+const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
+const RARITY_CONCURRENT_GUARD_SECONDS = 10;
+const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
+
+export async function getRarityMap(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(RARITY_MAP_KEY, collectionKey));
+  return raw ? JSON.parse(raw) : {};
+}
+
+export async function getRarityStats(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(RARITY_STATS_KEY, collectionKey));
+  return raw ? JSON.parse(raw) : null;
+}
+
+// Real value->count for every trait category, INCLUDING every `__no_trait__`
+// placeholder as its own real value (unlike getTraitCategoriesWithPercent,
+// which only keeps `__no_trait__` for Clothing/Headwear — real for the
+// FILTER panel's own NAKED/BALD chips, wrong for score math, which needs
+// every category's "nothing here" state accounted for, not just two of
+// them). Not cached on its own — only ever called once per rarity crawl
+// PASS (not once per item), and that pass is already gated 6h apart by
+// RARITY_REFRESH_STALE_SECONDS, so the real cost (a handful of trait-cards
+// page fetches) is already amortized to roughly the same rarity as the
+// number-map crawl's own per-pass cost.
+async function fetchFullTraitDistribution(shopSlug, collectionSizeApprox) {
+  const first = await fetchDeeptideTraitCards(0, DEEPTIDE_LISTINGS_MAX_LIMIT, shopSlug);
+  const total = first.total || 0;
+  const all = [...(first.traits || [])];
+  const remainingSkips = [];
+  for (let skip = DEEPTIDE_LISTINGS_MAX_LIMIT; skip < Math.min(total, 600); skip += DEEPTIDE_LISTINGS_MAX_LIMIT) {
+    remainingSkips.push(skip);
+  }
+  if (first.traits && first.traits.length) {
+    const pages = await Promise.all(remainingSkips.map(skip => fetchDeeptideTraitCards(skip, DEEPTIDE_LISTINGS_MAX_LIMIT, shopSlug)));
+    for (const page of pages) {
+      if (page.traits && page.traits.length) all.push(...page.traits);
+    }
+  }
+  const dist = {};
+  for (const t of all) {
+    if (!t.trait_type || !t.value) continue;
+    if (!dist[t.trait_type]) dist[t.trait_type] = {};
+    dist[t.trait_type][t.value] = t.count;
+  }
+  return dist;
+}
+
+// One item's real score against a fixed distribution (see the module
+// comment above for the full formula/reasoning) — exported on its own so
+// the INSPECT screen's own per-trait breakdown (each row's real
+// contribution to the total) can use the identical per-category math the
+// crawl itself uses, not a second, potentially-drifting copy of it.
+export function scoreAgainstDistribution(attributes, dist, collectionSizeApprox) {
+  let score = 0;
+  const breakdown = [];
+  for (const category of Object.keys(dist)) {
+    const attr = (attributes || []).find(a => a.trait_type === category);
+    const value = attr ? attr.value : '__no_trait__';
+    const count = dist[category][value];
+    if (!count) continue; // category genuinely has no "no value" case and this item has no entry either — nothing to score
+    const contribution = collectionSizeApprox / count;
+    score += contribution;
+    breakdown.push({ category, value, count, contribution });
+  }
+  return { score, breakdown };
+}
+
+export async function maybeRefreshRarityScores(kv, collectionKey, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX) {
+  const cfg = getTradeConfig(collectionKey);
+  const shopSlug = cfg && cfg.deeptideShopSlug ? cfg.deeptideShopSlug : (collectionKey ? null : DEEPTIDE_PIGEON_SHOP_SLUG);
+  if (!shopSlug) return;
+  const statsKey = kvKeyFor(RARITY_STATS_KEY, collectionKey);
+  const statsRaw = await kv.get(statsKey);
+  const stats = statsRaw ? JSON.parse(statsRaw) : null;
+  const now = Math.floor(Date.now() / 1000);
+  if (stats && stats.inProgress && now - stats.updatedAt < RARITY_CONCURRENT_GUARD_SECONDS) return;
+  if (stats && !stats.inProgress && now - stats.completedAt < RARITY_REFRESH_STALE_SECONDS) return;
+
+  let skip = stats && stats.inProgress ? stats.nextSkip : 0;
+  // Raw per-item scores accumulate in KV directly (staging key) across
+  // ticks — same reasoning as the number map's own staging copy, just
+  // holding { score } instead of a finished { score, rank } yet, since
+  // rank can't exist until the whole pass (and therefore every item's raw
+  // score) is done.
+  const rawKey = kvKeyFor(RARITY_MAP_KEY + ':raw', collectionKey);
+  let raw = {};
+  // dist (the fixed value->count snapshot every tick of THIS pass scores
+  // against) is carried in-memory from here rather than round-tripped
+  // through KV right after writing it — Cloudflare KV is only eventually
+  // consistent, so reading a key back immediately after writing it is not
+  // guaranteed to see that same write.
+  let dist;
+  if (stats && stats.inProgress) {
+    const rawStored = await kv.get(rawKey);
+    raw = rawStored ? JSON.parse(rawStored) : {};
+    dist = stats.dist;
+  } else {
+    // Fresh pass — real distribution recomputed from scratch each time
+    // (collection-wide counts do drift slowly as new sales/mints happen).
+    dist = await fetchFullTraitDistribution(shopSlug, collectionSizeApprox);
+  }
+  let lastTotal = Infinity;
+
+  for (let i = 0; i < RARITY_PAGES_PER_RUN; i++) {
+    const page = await fetchDeeptideListings({ skip, limit: DEEPTIDE_LISTINGS_MAX_LIMIT, sort: 'rarity-asc', shopSlug });
+    if (page.error || !page.items.length) break;
+    for (const it of page.items) {
+      if (!it.nftId || !Array.isArray(it.attributes)) continue;
+      raw[it.nftId] = scoreAgainstDistribution(it.attributes, dist, collectionSizeApprox).score;
+    }
+    lastTotal = page.total || lastTotal;
+    skip += DEEPTIDE_LISTINGS_MAX_LIMIT;
+    if (skip >= lastTotal) {
+      // Pass genuinely complete — only now can rank exist at all (it's
+      // relative to every other item's score, not derivable per-item).
+      // Higher score = rarer, same convention as rarity.tools/moonrank —
+      // rank 1 is the single rarest Pigeon in the collection.
+      const sorted = Object.keys(raw).sort((a, b) => raw[b] - raw[a]);
+      const finalMap = {};
+      sorted.forEach((nftId, idx) => {
+        // total carried per-entry (not just in the stats blob) so a
+        // reader (toItem below) can build a real "RANK / TOTAL" line off
+        // one single KV read, same shape as Deeptide's own rarityRank/
+        // rarityTotal pair it's replacing.
+        finalMap[nftId] = { score: Math.round(raw[nftId] * 1000) / 1000, rank: idx + 1, total: sorted.length };
+      });
+      await safeKvPut(kv, kvKeyFor(RARITY_MAP_KEY, collectionKey), JSON.stringify(finalMap));
+      await safeKvPut(kv, statsKey, JSON.stringify({
+        inProgress: false, completedAt: now, updatedAt: now, count: sorted.length, total: sorted.length,
+      }));
+      await kv.delete(rawKey).catch(() => {});
+      return;
+    }
+  }
+  // Still mid-pass — checkpoint the raw scores, and the stats blob keeps
+  // carrying `dist` forward so the next tick scores against the same
+  // snapshot rather than re-fetching (and potentially getting a slightly
+  // different) distribution every single tick.
+  await safeKvPut(kv, rawKey, JSON.stringify(raw));
+  await safeKvPut(kv, statsKey, JSON.stringify({
+    inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(raw).length, dist,
+  }));
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Σκύλλα SWAP listings index — nftId -> { price, currency, issuer, offerId,
 // seller, listedAt }, written the moment swap-listing-status.js confirms a
 // listing on-ledger. Unlike the number-search/highest-sale maps above, this

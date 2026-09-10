@@ -9921,6 +9921,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     return '<span class="pigeons-green-num">' + n + '</span>';
   }
 
+  // Σκύλλα's OWN rarity rank/total (ourRarityRank/ourRarityTotal — see
+  // toItem's own comment in pigeons.js) when this collection's crawl has
+  // reached this Pigeon, else Deeptide's own rarityRank/rarityTotal as a
+  // fallback — never both shown at once, and never a silent mismatch
+  // (a stray ourRarityRank without its own ourRarityTotal, say) that
+  // could read as "N / 3015" using one system's rank against the other's
+  // total. Every RARITY display in the app reads through this one
+  // function so they can never drift out of sync with each other.
+  function rarityDisplay(p){
+    if (p.ourRarityRank && p.ourRarityTotal) return { rank: p.ourRarityRank, total: p.ourRarityTotal };
+    if (p.rarityRank) return { rank: p.rarityRank, total: p.rarityTotal || 3015 };
+    return null;
+  }
+
   // XRP amount <-> exact integer drops, via string splitting/BigInt only —
   // never a float multiplication (0.1 * 1000000 style drift is exactly
   // what XRP's own 6-decimal-place drops unit exists to avoid). Used by
@@ -11553,9 +11567,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     var bottomListingsHtml = p.listings
       ? '<div class="card-bottom-bar card-listings-bottom' + (hasAnyListing ? '' : ' card-no-listings') + '">' + xcBottomHtml + dtBottomHtml + '</div>'
       : '';
-    // RARITY SCORE isn't computed yet — deliberately left as a placeholder
-    // (real rank/total already exist, the score itself is a later system).
-    var rarityLine = p.rarityRank ? greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) : null;
+    // Σκύλλα's OWN rarity score system (see rarityDisplay's own comment) —
+    // this box's own RARITY line now reads it, same RANK/TOTAL shape as
+    // before either way.
+    var rarityInfo = rarityDisplay(p);
+    var rarityLine = rarityInfo ? greenNum(rarityInfo.rank) + '/' + rarityInfo.total : null;
     // Flick-through pages in the right column — TRAITS, then sale stats,
     // then the sales history itself (fetched lazily once this page is
     // reached — see the .card-page-next handler) — one at a time instead
@@ -11616,7 +11632,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   function thumbnailCardHtml(p){
     var img = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : 'IMAGE';
     var num = itemNumberLabel(p);
-    var rarityLine = p.rarityRank ? '<div class="result-rarity-line">RAR!TY ' + greenNum(p.rarityRank) + '/' + (p.rarityTotal || 3015) + '</div>' : '';
+    var thumbRarityInfo = rarityDisplay(p);
+    var rarityLine = thumbRarityInfo ? '<div class="result-rarity-line">RAR!TY ' + greenNum(thumbRarityInfo.rank) + '/' + thumbRarityInfo.total + '</div>' : '';
     // Real XRP sale history (highSaleEntry, see toItem in api/pigeons.js)
     // is null (not 0) when a Pigeon genuinely has no recorded sale, distinct
     // from an actual free/near-free past sale — that's the "never resold
@@ -17418,7 +17435,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     browseOwnerCollection(link.getAttribute('data-wallet'), link.getAttribute('data-short'));
   });
   function updateDetailRarity(p){
-    if (p && p.rarityRank){ el.detailRarityRow.style.display = ''; el.detailRarity.innerHTML = greenNum(p.rarityRank) + (p.rarityTotal ? ' / ' + p.rarityTotal : ''); }
+    var info = p ? rarityDisplay(p) : null;
+    if (info){ el.detailRarityRow.style.display = ''; el.detailRarity.innerHTML = greenNum(info.rank) + ' / ' + info.total; }
     else el.detailRarityRow.style.display = 'none';
   }
   function updateDetailPrice(p){
