@@ -107,13 +107,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     --pigeon-purple-faint:var(--cyan-faint);
     --pigeon-purple-glow:var(--cyan-glow);
 
-    /* Kept the --wallet-blue name (scoped to just the wallet-switch
-       control) but retinted to the site's real --green/--green-glow
-       tokens — reported live as wanting the signed-in address to read
-       ON-LINE green like "0NL!NE" right above it, not a one-off blue
-       outside the site's own magenta/cyan/green/red palette. */
-    --wallet-blue:var(--green);
-    --wallet-blue-glow:var(--green-glow);
+    /* Back to a real, distinct blue (reported live) — a separate hue
+       from --cyan (#3df3ec, a teal-leaning cyan) so the signed-in
+       address reads as its own real colour, not folded into the site's
+       existing four-colour rule. */
+    --wallet-blue:#4d94ff;
+    --wallet-blue-glow:rgba(77,148,255,0.45);
 
     /* Started as the ONE deliberate exception to the four-colour rule
        above (just the trustline banner's own background) — now also
@@ -1031,7 +1030,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:center;
     margin-left:0.35em;
     padding:0.1em 0.3em;
-    font-size:1.4em;
+    /* Bumped again (reported live) — was 1.4em. */
+    font-size:2em;
     line-height:1;
     color:var(--wallet-blue);
     cursor:pointer;
@@ -1040,15 +1040,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   .flock-tab-switch-arrow:hover{ color:var(--cyan); }
   .flock-tab-switch-arrow.wallet-dropdown-open{ transform:rotate(180deg); color:var(--cyan); }
   #scyllaWalletWrap{ position:relative; display:inline-block; }
+  /* position:fixed, not absolute (reported live as "not working and
+     viewable" — confirmed live: #topTabsWrap, a real ancestor of this
+     box, is overflow:hidden for its own unrelated reason — the tab
+     strip's own glow underline needs clipping, see .top-tabs-wrap's own
+     comment — which was silently clipping this dropdown down to an
+     unreadable sliver, since an absolutely-positioned box still gets
+     clipped by any overflow:hidden ancestor between it and the
+     viewport. Fixed escapes that entirely (its containing block is the
+     viewport itself, not #scyllaWalletWrap, as long as no ancestor sets
+     a transform/filter — none here do); openWalletSwitchDropdown() sets
+     the real top/left from #scyllaWalletWrap's own live position each
+     time it opens, right below the wallet address, same spot this was
+     always meant to appear. */
   .wallet-switch-dropdown{
-    position:absolute;
-    top:calc(100% + 0.6em);
-    left:0;
+    position:fixed;
     min-width:240px;
     background:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
     box-shadow:0 8px 24px rgba(0,0,0,0.5);
-    z-index:40;
+    z-index:2500;
     text-align:left;
     padding:0.4rem;
   }
@@ -13726,6 +13737,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     // "fix" by breaking the DOM structure instead of throwing.
     el.walletSwitchDropdown.innerHTML = rows +
       '<div class="wallet-switch-add" id="walletSwitchAddBtn">+ S!GN !NT0 AN0THER ACC0UNT</div>';
+    // Real viewport position, computed fresh each open — see
+    // .wallet-switch-dropdown's own CSS comment on why this is
+    // position:fixed (escaping #topTabsWrap's own overflow:hidden) and
+    // therefore needs its top/left set here in JS instead of a plain
+    // CSS top:100%/left:0 anchored to the wrap. Right-edge aware: on a
+    // narrow screen, left-aligning a 240px-wide box under an address
+    // sitting near the right edge of the tab bar would push it off-
+    // screen, so this clamps to the viewport's own right edge instead.
+    var wrapRect = el.scyllaWalletWrap.getBoundingClientRect();
+    var ddWidth = Math.max(240, el.walletSwitchDropdown.offsetWidth || 240);
+    var left = Math.min(wrapRect.left, window.innerWidth - ddWidth - 8);
+    el.walletSwitchDropdown.style.left = Math.max(8, left) + 'px';
+    el.walletSwitchDropdown.style.top = (wrapRect.bottom + 8) + 'px';
     el.walletSwitchDropdown.style.display = 'block';
     var arrow = el.flockTabLabel.querySelector('.flock-tab-switch-arrow');
     if (arrow) arrow.classList.add('wallet-dropdown-open');
@@ -13765,6 +13789,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (e.target.closest('#scyllaWalletWrap')) return;
     closeWalletSwitchDropdown();
   });
+  // position:fixed (see the CSS's own comment) means this no longer
+  // scrolls along with the page the way an absolutely-positioned child
+  // of the wrap used to — closing on scroll instead of leaving it
+  // floating in a now-wrong spot once #globalTopBar itself slides away
+  // (see .global-top-bar-hidden). passive: true — this never calls
+  // preventDefault, no reason to block the scroll on it.
+  window.addEventListener('scroll', function(){
+    if (el.walletSwitchDropdown.style.display === 'block') closeWalletSwitchDropdown();
+  }, { passive: true });
   function loadTrustlineLoginState(){
     if (!MY_WALLET){
       el.pigeonsBarLoggedOut.style.display = '';
