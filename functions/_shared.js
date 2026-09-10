@@ -2378,16 +2378,32 @@ export async function fetchDeeptideNftDetailCached(context, nftId) {
 // this walks price-asc order and detail-fetches each candidate until it
 // finds one whose price survives that same validation. Usually 1-2 fetches
 // since invalid offers are the exception, not the rule; capped at 10.
-export async function fetchDeeptideRealFloor(shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG) {
+// This used to run live, uncached, on every single stats=1 call —
+// directly measured at a reliable ~1s on every load (never faster, cache
+// or no cache, since there was none), confirmed as a real chunk of
+// DATABASE's own load time. Same 60s "display-only, staleness is an
+// acceptable tradeoff" reasoning as fetchDeeptideNftDetailCached above
+// now applies here too.
+const DEEPTIDE_REAL_FLOOR_CACHE_PREFIX = 'pswap:deeptidefloor:';
+const DEEPTIDE_REAL_FLOOR_CACHE_TTL_SECONDS = 60;
+export async function fetchDeeptideRealFloor(shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG, kv = null) {
+  const cacheKey = DEEPTIDE_REAL_FLOOR_CACHE_PREFIX + shopSlug;
+  if (kv) {
+    const cached = await kv.get(cacheKey);
+    if (cached !== null) return JSON.parse(cached);
+  }
   const page = await fetchDeeptideListings({ skip: 0, limit: 10, sort: 'price-asc', shopSlug });
+  let result = null;
   for (const it of page.items) {
     if (it.priceDrops === null || it.priceDrops === undefined) continue;
     const detail = await fetchDeeptideNftDetail(it.nftId);
     if (detail && detail.priceDrops !== null) {
-      return { nftId: detail.nftId, priceDrops: detail.priceDrops };
+      result = { nftId: detail.nftId, priceDrops: detail.priceDrops };
+      break;
     }
   }
-  return null;
+  if (kv) await safeKvPut(kv, cacheKey, JSON.stringify(result), { expirationTtl: DEEPTIDE_REAL_FLOOR_CACHE_TTL_SECONDS });
+  return result;
 }
 
 // Full real event history for one token — mint, transfers, and sales, each
