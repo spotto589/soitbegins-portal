@@ -7132,7 +7132,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:space-between;
     gap:1rem;
     width:100%;
-    max-width:1300px;
+    /* Matches .mainframe-carousel-wrap's own max-width exactly (1600 —
+       bumped alongside the 4-across columns change, see its own
+       comment) so this stays aligned with the real card edges below. */
+    max-width:1600px;
     /* Raised a bit (was 1.5rem/1.25rem — reported live as wanting S0RT
        BY sitting higher) now that S0RT BY matches SEARCH C0LLECT!0NS'
        own smaller size, so the row as a whole reads tighter. */
@@ -7285,12 +7288,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex:1 1 auto;
     min-height:0;
     width:100%;
-    max-width:1300px;
+    /* Bumped 1300 -> 1600 alongside the 3 -> 4 columns change below
+       (reported live: "make the database page bigger... 4 across") —
+       keeps each card roughly its old width instead of shrinking just
+       to fit a 4th column into the old cap. .mainframe-section-header's
+       own max-width matches this exactly (see its own comment) so
+       S0RT BY/SEARCH C0LLECT!0NS stay aligned with the real card edges. */
+    max-width:1600px;
     margin:0 auto;
   }
   .mainframe-grid{
     display:grid;
-    grid-template-columns:repeat(3, 1fr);
+    grid-template-columns:repeat(4, 1fr);
     grid-template-rows:repeat(2, 1fr);
     gap:1.25rem;
     width:100%;
@@ -7357,10 +7366,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     pointer-events:none;
   }
   @media (max-width:760px){
-    /* 2 columns x 3 rows visible on narrow screens — 3 columns of real
-       cards never fit legibly at phone width. Still 6 cards a page (see
-       MAINFRAME_PAGE_SIZE in the JS), just 2-and-3 instead of 3-and-2. */
-    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.6rem; padding:0 2.5rem; }
+    /* 2 columns x 4 rows visible on narrow screens — 4 columns of real
+       cards never fit legibly at phone width. Still MAINFRAME_PAGE_SIZE
+       (8) cards a page, just 2-and-4 instead of 4-and-2. */
+    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(4, 1fr); gap:0.6rem; padding:0 2.5rem; }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
@@ -16484,7 +16493,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // renderMainframePage uses for paging (see its own comment) rather
   // than a second, separate hide mechanism — a card matching neither is
   // never shown regardless of which page it'd otherwise fall on.
-  var MAINFRAME_PAGE_SIZE = 6;
+  // 4 across x 2 rows (was 3 x 2 = 6 — reported live: "make it 4
+  // collections across") — see .mainframe-grid's own comment.
+  var MAINFRAME_PAGE_SIZE = 8;
   var mainframePage = 0;
   function renderMainframePage(){
     var cards = Array.prototype.slice.call(el.mainframeGrid.querySelectorAll('.mainframe-card'));
