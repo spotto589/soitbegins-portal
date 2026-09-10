@@ -804,19 +804,41 @@ export async function onRequestGet(context) {
   // own comment) — a correct sort over a bounded set beats an incorrect
   // one over the whole collection.
   const FILTERED_SCAN_CAP_ITEMS = 600;
+  // Used to be a plain `while` loop awaiting each page in turn (up to 10
+  // sequential round trips to Deeptide's own listings API, which this
+  // function has no caching in front of) — directly measured as the real
+  // cause of a filtered browse taking ~10s on a fresh landing, since every
+  // one of those round trips is a live external call, not a KV read. The
+  // first page still has to go first (it's the only way to learn the real
+  // filtered `total`, which decides how many more pages are actually
+  // worth asking for), but every page after that fires in parallel instead
+  // of one-at-a-time — total wait becomes roughly two round trips (first
+  // page, then whichever of the rest is slowest) instead of up to ten.
   async function scanFilteredCandidates(traitFilters) {
     const perPage = 60;
-    let skip = 0;
-    const items = [];
-    let exhausted = false;
-    while (items.length < FILTERED_SCAN_CAP_ITEMS) {
-      const page = await fetchDeeptideListings({ skip, limit: perPage, sort: 'rarity-asc', traits: traitFilters, shopSlug: coll.shopSlug });
-      if (!page.items.length) { exhausted = true; break; }
-      items.push(...page.items);
-      skip += page.items.length;
-      if (!page.hasMore) { exhausted = true; break; }
+    const listingsParams = { limit: perPage, sort: 'rarity-asc', traits: traitFilters, shopSlug: coll.shopSlug };
+    const first = await fetchDeeptideListings(Object.assign({ skip: 0 }, listingsParams));
+    const items = first.items.slice();
+    let exhausted = !first.hasMore || !first.items.length;
+    if (!exhausted) {
+      // Trust the filtered `total` Deeptide's own listings API reports for
+      // this exact traits query when it looks sane; fall back to the full
+      // cap otherwise (over-fetching a few empty pages in parallel costs
+      // nothing latency-wise, unlike the old sequential version where it
+      // cost a full extra round trip each).
+      const totalNeeded = Math.min(FILTERED_SCAN_CAP_ITEMS, typeof first.total === 'number' && first.total > perPage ? first.total : FILTERED_SCAN_CAP_ITEMS);
+      const remainingSkips = [];
+      for (let skip = perPage; skip < totalNeeded; skip += perPage) remainingSkips.push(skip);
+      if (remainingSkips.length) {
+        const pages = await mapWithConcurrency(remainingSkips, remainingSkips.length, skip => fetchDeeptideListings(Object.assign({ skip }, listingsParams)));
+        for (const page of pages) {
+          if (!page || !page.items.length) continue;
+          items.push(...page.items);
+        }
+      }
+      exhausted = true;
     }
-    return { items, exhausted };
+    return { items: items.slice(0, FILTERED_SCAN_CAP_ITEMS), exhausted };
   }
 
   // Σκύλλα SWAP LISTED filter — only Pigeons actually listed through this
