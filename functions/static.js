@@ -11319,6 +11319,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     // the rest of the session. Called directly here instead so it fires
     // regardless of entry path; harmless/no-op if it already loaded.
     ensureTraitsLoaded();
+    // showTab's own showBrowseChrome condition for the 'mypigeons' tab
+    // requires state.myPigeonsGridOpen, not just isOwnWalletScope() — that
+    // flag normally only gets set by switchProfileTab('collections') (the
+    // Σκύλλα profile's own MY NFTS box). V!EW NFTs on the trustline banner
+    // (showMyPigeonsBtn -> enterMainframeCollection -> here, with
+    // landOnTab 'mypigeons') never went through that box at all, so it
+    // landed on 'mypigeons' with the grid itself still hidden — confirmed
+    // live as the real cause of "pick a collection and nothing shows".
+    // Setting it here instead of at every landOnTab==='mypigeons' call
+    // site covers all of them at once, and is a harmless no-op for a call
+    // that already set it itself.
+    if (landOnTab === 'mypigeons') state.myPigeonsGridOpen = true;
     showTab(landOnTab || 'database');
     // state.activeTab (set by showTab just above) is what this checks —
     // must run after, not before, or it'd still see the previous tab.
