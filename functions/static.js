@@ -388,7 +388,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     canvas#staticBg{ animation:none; }
     *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
   }
-  .page{ max-width:1500px; width:100%; position:relative; z-index:1; }
+  /* Bumped 1500 -> 1700 (reported live: "we have more room" on
+     DATABASE's own THUMBNAILS grid) — .result-list.view-thumbnails is
+     the one real piece of UI that actually stretches to fill this cap
+     (still repeat(5, 1fr), each of the 5 columns just gets a bigger
+     share of the wider row); everything else under .page that could
+     have grown too already carries its own tighter max-width (the
+     trustline banner, .results-header-row, .mainframe-section-header/
+     -grid all cap at 1300px on their own), so this reads as a targeted
+     THUMBNAILS change in practice, not a site-wide relayout. */
+  .page{ max-width:1700px; width:100%; position:relative; z-index:1; }
   a.back-link{
     display:inline-block;
     font-family:var(--font-body);
