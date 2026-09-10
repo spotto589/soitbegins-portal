@@ -4072,17 +4072,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     grid-template-columns:repeat(2, 1fr);
     gap:0.9rem;
   }
-  /* THUMBNAILS view — 6 across (reported live as looking slightly blurry
-     at 5-across on a wide/high-DPI screen — the source art is native
-     1280x1280, but displaying it noticeably bigger than before made the
-     browser's downscale read as soft; one more column shrinks each tile
-     back down, and the card text below got a size bump to compensate,
-     see .result-num/.result-rarity-line/.result-stat-stack .stat-value/
-     .thumb-buy-label/.thumb-buy-price further down). Reuses the compact
-     .result-card tile (image + number + rarity only) instead of the wide
-     detail row. */
+  /* THUMBNAILS view — 5 across (reverted back from a 6-across trial —
+     reported live as wanting 5 back). Reuses the compact .result-card tile
+     (image + number + rarity only) instead of the wide detail row. */
   .result-list.view-thumbnails{
-    grid-template-columns:repeat(6, 1fr);
+    grid-template-columns:repeat(5, 1fr);
     gap:0.7rem;
   }
   .result-row{
@@ -4224,12 +4218,16 @@ const SWAP_HTML = `<!DOCTYPE html>
      same ghost-fill-at-rest/solid-fill-on-hover shape either way, just
      green now on every collection instead of shifting with
      --collection-accent. */
+  /* Filled at rest now (reported live), not just on hover — solid green
+     fill/black text, same look every other ghost-at-rest BUY control on
+     the site only reached on hover, but 0FFER specifically reads better
+     as an already-obvious, always-on green action. */
   .offer-open-modal-btn{
     width:100%;
-    background:rgba(52,255,133,0.12);
+    background:var(--green);
     border:1px solid var(--green);
-    color:var(--green);
-    text-shadow:0 0 6px var(--green-glow);
+    color:#000;
+    text-shadow:none;
     font-family:var(--font-mono);
     font-weight:700;
     font-size:17px;
@@ -4238,9 +4236,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
-    transition:background 0.15s ease, color 0.15s ease;
+    transition:box-shadow 0.15s ease;
   }
-  .offer-open-modal-btn:hover{ background:var(--green); color:#000; text-shadow:none; }
+  .offer-open-modal-btn:hover{ box-shadow:0 0 14px var(--green-glow); }
   /* L!ST — same box size as a lone 0FFER button (17px, full width),
      not the smaller shared .list-open-modal-btn default (15px, used
      when it's paired with TRANSFER in the scoped MY PIGEONS view) —
@@ -4644,7 +4642,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-page-next:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
   @media (max-width:1100px){
     .result-list{ grid-template-columns:1fr; }
-    .result-list.view-thumbnails{ grid-template-columns:repeat(4, 1fr); }
+    .result-list.view-thumbnails{ grid-template-columns:repeat(3, 1fr); }
   }
   @media (max-width:700px){
     .result-row{ flex-direction:column; align-items:center; text-align:center; }
