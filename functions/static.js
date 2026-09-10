@@ -2501,7 +2501,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      not .delist-pigeon-btn's own smaller shared 15px default (still used
      as-is on the detail screen's #detailScyllaDelistBtn, a different
      context this doesn't touch). */
-  .owned-action-row .delist-pigeon-btn{ font-size:17px; padding:1em 0.8em; }
+  .owned-action-row .delist-pigeon-btn{ font-size:15px; padding:0.8em 0.7em; }
   .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:var(--red); background:var(--red); color:#000; text-shadow:none; }
   /* Red, same accent as CLEAR TRAITS — resetting every filter is a
      destructive-feeling action, worth calling out differently from the
@@ -4213,10 +4213,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-family:var(--font-mono);
     font-weight:700;
     letter-spacing:0.03em;
-    /* Same 1em 0.8em every other action button on the card (L!ST/0FFER/
+    /* Same 0.8em 0.7em every other action button on the card (L!ST/0FFER/
        CANCEL) uses — reported live as wanting all of them the same size,
-       not just BUY N0W's own label/price spans reading big. */
-    padding:1em 0.8em;
+       not just BUY N0W's own label/price spans reading big, then reported
+       again as all of them (including this) reading a bit too big overall. */
+    padding:0.8em 0.7em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
@@ -4241,8 +4242,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      the picture, easy to miss entirely at the actual moment of deciding
      to buy. Bigger and bolder than the "BUY N0W" label above it, same
      "the number is the point" treatment SALES H!ST0RY's own price gets. */
-  .thumb-buy-label{ font-size:14px; letter-spacing:0.08em; opacity:0.85; }
-  .thumb-buy-price{ font-family:var(--font-display); font-size:20px; font-weight:800; letter-spacing:0.01em; }
+  .thumb-buy-label{ font-size:13px; letter-spacing:0.08em; opacity:0.85; }
+  .thumb-buy-price{ font-family:var(--font-display); font-size:18px; font-weight:800; letter-spacing:0.01em; }
   /* BUY N0W stacked above 0FFER (reported live, was side by side — see
      pigeonsActionBoxHtml's own comment) — column instead of row, and BUY
      N0W's label+price now sit on ONE line ("BUY N0W :: 123K $P!GE0NS")
@@ -4263,8 +4264,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .owned-action-row-buy .offer-open-modal-btn-secondary{
     flex:0 0 auto;
     width:100%;
-    padding:1em 0.8em;
-    font-size:17px;
+    padding:0.8em 0.7em;
+    font-size:15px;
     border-color:var(--border-mid);
     color:var(--grey);
   }
@@ -4295,9 +4296,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:none;
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:17px;
+    font-size:15px;
     letter-spacing:0.03em;
-    padding:1em 0.8em;
+    padding:0.8em 0.7em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
@@ -4317,9 +4318,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--cyan);
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:17px;
+    font-size:15px;
     letter-spacing:0.03em;
-    padding:1em 0.8em;
+    padding:0.8em 0.7em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
