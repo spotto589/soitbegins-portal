@@ -2471,15 +2471,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      above, which is exactly what a column flex parent needs to make
      each one a full-width bar. */
   .owned-stack-row{ display:flex; flex-direction:column; gap:0.4rem; width:100%; }
-  /* A slim strip, not a tall block — two buttons genuinely fit side by
-     side in a 5-across thumbnail card at this size, the 17px/1em default
-     every one of these buttons normally uses on its own full-width line
-     is too big once it's sharing a row. Was shrunk all the way to 11px
-     here to force-fit "BUY N0W" onto one line — turned out the actual
-     cause of it wrapping was a hardcoded <br> in the markup (see
-     ownedPigeonActionHtml/pigeonsActionBoxHtml's own BUY N0W button),
-     nothing to do with available width at all; now that that's gone,
-     13px is plenty and reads far less cramped. */
+  /* Was a forced-compact 13px/tight-padding shrink here, for when BUY
+     N0W and 0FFER genuinely shared one row side by side — that layout is
+     gone now (.owned-action-row-buy stacks them in a column instead, see
+     its own rule below), so a LONE button in this row (CANCEL, or 0FFER
+     alone with no real listing to buy) was still getting needlessly
+     shrunk to that old side-by-side size for no reason — confirmed live
+     as "0FFER/CANCEL/BUY should all be the same size as L!ST", which
+     already used its own natural 17px/1em 0.8em size untouched by this
+     rule. Removed: every button here now just uses its own normal full
+     size (.bar-btn/.delist-pigeon-btn/.offer-open-modal-btn's own base
+     rules, all already 17px/1em 0.8em) unless a more specific rule below
+     (the real paired -buy case) says otherwise. */
   .owned-action-row .bar-btn,
   .owned-action-row .thumb-buy-btn,
   .owned-action-row .offer-open-modal-btn{
@@ -2487,17 +2490,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     min-width:0;
     width:auto;
     margin-bottom:0;
-    font-size:13px;
-    letter-spacing:0.02em;
-    padding:0.75em 0.4em;
-    /* One line, always — BUY N0W wrapping while 0FFER stayed one made
-       the two states in this row look like different components
-       entirely, not just different labels. Ellipsis is just a safety
-       net for an extreme-narrow viewport, not the normal case. */
+    /* One line, always — a safety net against wrapping at an extreme-
+       narrow viewport, not a font-size/padding change. */
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
   }
+  /* CANCEL specifically stands alone in its row (never paired with
+     anything else), same reasoning as L!ST above — full 17px/1em 0.8em,
+     not .delist-pigeon-btn's own smaller shared 15px default (still used
+     as-is on the detail screen's #detailScyllaDelistBtn, a different
+     context this doesn't touch). */
+  .owned-action-row .delist-pigeon-btn{ font-size:17px; padding:1em 0.8em; }
   .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:var(--red); background:var(--red); color:#000; text-shadow:none; }
   /* Red, same accent as CLEAR TRAITS — resetting every filter is a
      destructive-feeling action, worth calling out differently from the
@@ -4151,7 +4155,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-family:var(--font-mono);
     font-weight:700;
     letter-spacing:0.03em;
-    padding:0.7em 0.8em;
+    /* Same 1em 0.8em every other action button on the card (L!ST/0FFER/
+       CANCEL) uses — reported live as wanting all of them the same size,
+       not just BUY N0W's own label/price spans reading big. */
+    padding:1em 0.8em;
     cursor:pointer;
     text-transform:uppercase;
     border-radius:var(--radius);
@@ -4198,8 +4205,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .owned-action-row-buy .offer-open-modal-btn-secondary{
     flex:0 0 auto;
     width:100%;
-    padding:0.7em 0.8em;
-    font-size:15px;
+    padding:1em 0.8em;
+    font-size:17px;
     border-color:var(--border-mid);
     color:var(--grey);
   }
