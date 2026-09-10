@@ -7303,13 +7303,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .mainframe-grid{
     display:grid;
-    /* Back to 3 columns (reported live), now 3 rows too (9 a page,
-       up from the original 3x2's own 6) — width per card still grows
-       from the original 3-across layout since the container itself
-       stayed at the wider 1600px cap (see .mainframe-carousel-wrap's
-       own comment) rather than reverting that too. */
+    /* Back to the original 3x2 (6 a page) — a brief detour through 4x2
+       then 3x3 along the way, reported live as wanting plain 3x2 back.
+       Cards still bigger than the ORIGINAL 3x2 ever was, though: the
+       container itself stayed at the wider 1600px cap (see .mainframe-
+       carousel-wrap's own comment) rather than reverting that too. */
     grid-template-columns:repeat(3, 1fr);
-    grid-template-rows:repeat(3, 1fr);
+    grid-template-rows:repeat(2, 1fr);
     gap:1.25rem;
     width:100%;
     height:100%;
@@ -7375,11 +7375,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     pointer-events:none;
   }
   @media (max-width:760px){
-    /* 2 columns x 5 rows visible on narrow screens — 3 columns of real
-       cards never fit legibly at phone width. MAINFRAME_PAGE_SIZE (9)
-       cards a page needs 5 rows of 2 to fit them all (the 10th slot
-       just stays empty on a page with a full 9). */
-    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(5, 1fr); gap:0.6rem; padding:0 2.5rem; }
+    /* 2 columns x 3 rows visible on narrow screens — 3 columns of real
+       cards never fit legibly at phone width. Still 6 cards a page (see
+       MAINFRAME_PAGE_SIZE in the JS), just 2-and-3 instead of 3-and-2. */
+    .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.6rem; padding:0 2.5rem; }
   }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
@@ -16507,10 +16506,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // renderMainframePage uses for paging (see its own comment) rather
   // than a second, separate hide mechanism — a card matching neither is
   // never shown regardless of which page it'd otherwise fall on.
-  // 3 across x 3 rows = 9 a page (reported live — back to 3 across from
-  // a brief 4-across pass, now 3 rows instead of the original 2) — see
-  // .mainframe-grid's own comment.
-  var MAINFRAME_PAGE_SIZE = 9;
+  // Original 3 across x 2 rows = 6 a page — see .mainframe-grid's own
+  // comment on the brief 4x2/3x3 detour before landing back here.
+  var MAINFRAME_PAGE_SIZE = 6;
   var mainframePage = 0;
   function renderMainframePage(){
     var cards = Array.prototype.slice.call(el.mainframeGrid.querySelectorAll('.mainframe-card'));
