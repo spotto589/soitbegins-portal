@@ -3834,20 +3834,8 @@ const SWAP_HTML = `<!DOCTYPE html>
        which was blowing this row wider than the viewport on mobile and
        dragging the VIEW field (justify-self:end) off the right edge,
        forcing the whole page to scroll horizontally. minmax(0, ...)
-       caps the track at the container width no matter what's inside.
-       Middle track bumped from a bare auto to minmax(0,2.4fr) — S0RT
-       BY moving in next to C0LLECT!0N (reported live) widened this
-       column's own unwrapped content past ~870px; a plain auto track
-       sizes to that full max-content regardless of what's left for the
-       other two, squeezing SEARCH/VIEW below their own min-content and
-       overlapping them (confirmed live). minmax(0,...) lets it shrink
-       and wrap its own two children (.sort-field-inline's flex-wrap)
-       onto two lines instead once real space is tight, same fix already
-       applied to the side columns above for the identical reason. The
-       2.4fr weighting (vs 1fr on each side) keeps C0LLECT!0N/S0RT BY
-       comfortably unwrapped at typical widths — only kicking in below
-       that. */
-    grid-template-columns:minmax(0,1fr) minmax(0,2.4fr) minmax(0,1fr);
+       caps the track at the container width no matter what's inside. */
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
     align-items:center;
     gap:0.9rem 1.25rem;
     border:1px solid var(--border-mid);
@@ -3856,26 +3844,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:0.85rem;
   }
   .results-header-row .search-row{ margin-bottom:0; justify-self:start; flex-wrap:nowrap; }
-  /* min-width:0 — without it this grid item refuses to shrink below its
-     own unwrapped content width (the default min-width:auto every grid/
-     flex item gets), which was forcing the WHOLE row wider than the
-     container and overlapping the search box/VIEW:: dropdown on either
-     side instead of letting C0LLECT!0N/S0RT BY wrap onto their own line
-     when there isn't room for both side by side. */
-  .results-header-row .sort-field-inline{ justify-self:center; align-items:flex-start; min-width:0; }
+  .results-header-row .sort-field-inline{ justify-self:center; }
   .results-header-row .sort-field:last-child{ justify-self:end; }
-  /* S0RT BY, back in line with C0LLECT!0N (the edition toggle) — its own
-     trigger box + applied tag stack vertically together (same "tag right
-     underneath its own box" shape #sortRows always had), sitting beside
-     the edition toggle rather than under it. align-items:flex-start on
-     the row above keeps both starting at the same top edge even once an
-     applied tag makes this column taller than the toggle beside it. */
-  .sort-field-inline-sort{ display:flex; flex-direction:column; align-items:center; gap:0.4rem; }
   @media (max-width:700px){
     .results-header-row{ grid-template-columns:minmax(0,1fr); justify-items:center; }
     .results-header-row .search-row{ justify-self:center; flex-wrap:wrap; }
     .results-header-row .sort-field:last-child{ justify-self:center; }
-    .results-header-row .sort-field-inline{ align-items:center; }
   }
   /* ---- results status line — its own line, directly above the pigeons
      list. ---- */
@@ -8625,39 +8599,13 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
               <button class="bar-btn" id="searchBtn">GO</button>
             </div>
-            <!-- S0RT BY back in line with C0LLECT!0N again (reported live)
-                 — same centered top-row slot the two used to swap places
-                 in (see the HANDOFF history on this row), just side by
-                 side now instead of one replacing the other. The trigger
-                 box itself (#sortDropWrap, including its #sortFlyout
-                 popup) and its applied tag (#sortRows) are the exact same
-                 real elements renderSortTag/openSortFlyout already write
-                 into — this is purely a layout move, out of
-                 #dbControlsSticky below (which now holds only F!LTER BY
-                 TRA!TS) and in here instead. -->
+            <!-- COLLECTION sits where S0RT BY used to (centered, top row)
+                 — swapped with it, see below. -->
             <div class="sort-field sort-field-inline">
               <div class="edition-toggle" id="editionSelect">
                 <button type="button" class="edition-btn active" data-value="ALL">ALL (1-3015)</button>
                 <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N (1-1515)</button>
                 <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N (1516-3015)</button>
-              </div>
-              <div class="sort-field-inline-sort">
-                <div class="traits-hover-wrap" id="sortDropWrap">
-                  <span class="trait-row-label" id="sortDropLabel">S0RT BY <span class="thl-arrow">▾</span></span>
-                  <div class="traits-flyout flyout-flat" id="sortFlyout" style="display:none;">
-                    <!-- flyout-flat's own permanently-visible desktop strip
-                         is retired (see its CSS) — S0RT BY now opens as the
-                         same centered popup at every width, so these two
-                         PREV/NEXT arrows are effectively dead (kept, not
-                         removed, in case the strip layout is ever wanted
-                         back for a wide value list). -->
-                    <button type="button" class="flyout-popup-close-btn" id="sortFlyoutClose" aria-label="CL0SE">✕</button>
-                    <button type="button" class="hscroll-arrow hscroll-arrow-prev" id="sortScrollPrevBtn" aria-label="PREV!0US">◂</button>
-                    <div class="traits-flyout-vals" id="sortFlyoutVals"></div>
-                    <button type="button" class="hscroll-arrow hscroll-arrow-next" id="sortScrollNextBtn" aria-label="NEXT">▸</button>
-                  </div>
-                </div>
-                <div id="sortRows"></div>
               </div>
             </div>
             <div class="sort-field">
@@ -8669,22 +8617,51 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- F!LTER BY TRA!TS' own trigger box — shown here again
-               (inline, directly above RESET below), alongside the same
-               trigger in the fixed #bottomControlsBar (see #screenMainframe's
-               own sibling further up) — both open the exact same flyout,
-               this is just a second, always-in-flow entry point to it
-               rather than only the floating bottom bar. This block is
-               also the real machinery renderTraitsFlyoutCats/openTraitsFlyout
-               write into and reparent from (the popup itself,
-               #traitsFlyoutCats, etc.). S0RT BY's own matching trigger
-               used to live here too — moved up into the C0LLECT!0N row
-               above (reported live), so this now holds only F!LTER BY
-               TRA!TS; #dbControlsSticky's own flex row happily holds just
-               the one group. -->
+          <!-- S0RT BY / F!LTER BY TRA!TS' own trigger boxes — shown here
+               again (inline, directly above RESET below), alongside the
+               same two triggers in the fixed #bottomControlsBar (see
+               #screenMainframe's own sibling further up) — both open the
+               exact same flyout, this is just a second, always-in-flow
+               entry point to it rather than only the floating bottom bar.
+               This block is also the real machinery
+               renderSortFlyoutList/renderTraitsFlyoutCats/openSortFlyout/
+               openTraitsFlyout write into and reparent from (the popup
+               itself, #sortFlyoutVals, #traitsFlyoutCats, etc.). -->
           <div class="db-controls-sticky" id="dbControlsSticky">
-          <!-- ADD TRAITS — its own box, left-aligned to line up with the
-               search bar above (#searchInput). -->
+          <!-- S0RT BY sits directly underneath now, in COLLECTION's old
+               spot — same static-label + stacked-applied-tag treatment as
+               F!LTER BY TRA!TS below it (#sortRows is #traitRows' own
+               pattern, just always exactly one tag — picking a new value
+               replaces it instead of adding a second one). -->
+          <div class="db-config-group db-config-traits-group">
+            <div class="db-config-traits-section">
+              <div class="traits-hover-wrap" id="sortDropWrap">
+                <span class="trait-row-label" id="sortDropLabel">S0RT BY <span class="thl-arrow">▾</span></span>
+                <div class="traits-flyout flyout-flat" id="sortFlyout" style="display:none;">
+                  <!-- flyout-flat's own permanently-visible desktop strip
+                       is retired (see its CSS) — S0RT BY now opens as the
+                       same centered popup at every width, so these two
+                       PREV/NEXT arrows are effectively dead (kept, not
+                       removed, in case the strip layout is ever wanted
+                       back for a wide value list). -->
+                  <button type="button" class="flyout-popup-close-btn" id="sortFlyoutClose" aria-label="CL0SE">✕</button>
+                  <button type="button" class="hscroll-arrow hscroll-arrow-prev" id="sortScrollPrevBtn" aria-label="PREV!0US">◂</button>
+                  <div class="traits-flyout-vals" id="sortFlyoutVals"></div>
+                  <button type="button" class="hscroll-arrow hscroll-arrow-next" id="sortScrollNextBtn" aria-label="NEXT">▸</button>
+                </div>
+              </div>
+            </div>
+            <!-- The applied S0RT BY tag — directly underneath its own
+                 trigger box now, not off in a shared row under BOTH
+                 boxes (reported live as wanting the selection to "come
+                 up underneath the box" it belongs to). Real ID, so
+                 renderSortTag's own el.sortRows reference needs no
+                 change — this is purely a layout move. -->
+            <div id="sortRows"></div>
+          </div>
+
+          <!-- ADD TRAITS — its own box underneath S0RT BY, left-aligned
+               to line up with the search bar above (#searchInput). -->
           <div class="db-config-group db-config-traits-group">
             <div class="db-config-traits-section">
               <div class="traits-hover-wrap" id="traitsHoverWrap">
