@@ -3318,7 +3318,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   .traits-flyout.flyout-popup .flyout-back-btn{ display:none; }
   .traits-flyout.flyout-popup:not(.flyout-flat):not(.flyout-drilled) .traits-flyout-vals{ display:none !important; }
   .traits-flyout.flyout-popup.flyout-drilled .traits-flyout-cats-row{ display:none !important; }
-  .traits-flyout.flyout-popup.flyout-drilled .flyout-back-btn{ display:block !important; }
+  /* Sticky, not just static at the top — the popup itself is the scroll
+     container (.traits-flyout.flyout-popup's own overflow-y:auto), and a
+     category with a long value list used to scroll ◂ CATEG0R!ES straight
+     off the top, meaning a scroll back UP just to leave the category
+     again. A solid background (not transparent) so scrolled-past values
+     don't show through underneath it, z-index above them, and its own
+     bottom border doubling as the visual seam between it and the list. */
+  .traits-flyout.flyout-popup.flyout-drilled .flyout-back-btn{
+    display:block !important;
+    position:sticky;
+    top:0;
+    z-index:2;
+    background:var(--panel-bg-solid);
+  }
   /* Currently-applied trait chips — CATEG0R!ES step only, same reasoning
      as the cats row itself above (nothing to show once you're already
      looking at one category's own values, or a cross-category search). */
