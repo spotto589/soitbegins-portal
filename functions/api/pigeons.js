@@ -1099,8 +1099,57 @@ export async function onRequestGet(context) {
     });
   }
 
+  // Σκύλλα's OWN rarity sort — real statistical rarity (see
+  // maybeRefreshRarityScores' own module comment in _shared.js), not
+  // Deeptide's bulk rarity-asc/desc. This IS the site's own rarity system
+  // now, not a second opinion sitting alongside Deeptide's — every
+  // category's "no value" state (NAKED/BALD/no-Aura/...) is scored as a
+  // real value here, which Deeptide's own ranking silently skips, so this
+  // is the CORRECT rarity ordering, not just a different one. Falls
+  // through to Deeptide's own bulk sort (the final default branch below)
+  // only when this collection's rarity crawl hasn't completed its very
+  // first pass yet (rarityMap empty) — a clean one-time fallback until
+  // real ranks exist, never a partial/half-computed ordering.
+  const sortParam = params.get('sort');
+  const isOurRaritySort = !sortParam || sortParam === 'RARITY_ASC' || sortParam === 'RARITY_DESC';
+  if (isOurRaritySort && Object.keys(rarityMap).length) {
+    const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
+    const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
+    // ASC (default, same as no sort picked at all — see isOurRaritySort
+    // above) = rank 1 (the single rarest Pigeon) first, same convention
+    // Deeptide's own rarity-asc always used, so RESET/the plain landing
+    // sort reads exactly the same either way.
+    const asc = sortParam !== 'RARITY_DESC';
+    let idPool = Object.keys(rarityMap);
+    if (filters.length) {
+      const scan = await scanFilteredCandidates(filters);
+      const matchSet = new Set(scan.items.map(it => it.nftId));
+      idPool = idPool.filter(id => matchSet.has(id));
+    }
+    if (numberRange === 'low' || numberRange === 'high') {
+      const editionSet = await idsInEditionRange();
+      idPool = idPool.filter(id => editionSet.has(id));
+    }
+    const sortedIds = idPool.sort((a, b) => asc ? rarityMap[a].rank - rarityMap[b].rank : rarityMap[b].rank - rarityMap[a].rank);
+    const pageIds = sortedIds.slice(skip, skip + limit);
+    const resolved = await mapWithConcurrency(pageIds, DETAIL_FETCH_CONCURRENCY, id => fetchDeeptideNftDetailCached(context, id));
+    const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap));
+    await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
+    return json({
+      items,
+      total: sortedIds.length,
+      hasMore: skip + pageIds.length < sortedIds.length,
+      skip: skip + pageIds.length,
+      limit,
+      collectionSizeApprox: coll.sizeApprox
+    });
+  }
+
   // Default: the real, complete, live collection — paginated, sorted
   // (rarity by default), optionally AND-filtered by trait. No KV involved.
+  // Only ever reached now for a non-rarity sort, or a collection whose
+  // rarity crawl hasn't completed its first pass yet (see the branch
+  // just above) — every OTHER sort still lands here exactly as before.
   const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
   const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
   const sort = SORT_MAP[params.get('sort')] || 'rarity-asc';
