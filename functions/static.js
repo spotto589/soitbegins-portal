@@ -3243,6 +3243,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--cyan-dim);
     box-shadow:0 20px 50px rgba(0,0,0,0.7);
   }
+  /* S0RT BY's own popup specifically (#sortFlyout, .flyout-flat) — its
+     "CATEG0RY :: VALUE" labels (sortLabelOf) run noticeably longer than a
+     single trait value ("PR!CE :: L0WEST AVG SALE PR!CE $P!GE0NS"), so the
+     shared 380px popup width wrapped most of them across three or four
+     short lines instead of the one or two it takes at this width —
+     reported live as wanting these "long enough to read the whole thing".
+     Still capped at 92vw so it never overflows a narrow phone screen. */
+  .traits-flyout.flyout-popup.flyout-flat{ width:min(480px, 92vw) !important; }
   /* The CATEG0R!ES step (not yet drilled into one category's values) gets
      real room — a plain 380px popup crammed every category into a single
      narrow column, one full-width row each, which read as "stacked on
