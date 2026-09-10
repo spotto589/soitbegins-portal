@@ -107,12 +107,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     --pigeon-purple-faint:var(--cyan-faint);
     --pigeon-purple-glow:var(--cyan-glow);
 
-    /* Back to a real, distinct blue (reported live) — a separate hue
-       from --cyan (#3df3ec, a teal-leaning cyan) so the signed-in
-       address reads as its own real colour, not folded into the site's
-       existing four-colour rule. */
-    --wallet-blue:#4d94ff;
-    --wallet-blue-glow:rgba(77,148,255,0.45);
+    /* Cyan (reported live — the standalone #4d94ff blue this started as
+       didn't read right, wanted the site's own --cyan instead). Kept
+       the --wallet-blue name (scoped to just the wallet-switch control)
+       since that's what every rule below already reads. */
+    --wallet-blue:var(--cyan);
+    --wallet-blue-glow:var(--cyan-glow);
 
     /* Started as the ONE deliberate exception to the four-colour rule
        above (just the trustline banner's own background) — now also
@@ -1020,7 +1020,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      to it (also grey) blur into one flat, lifeless line. */
   .flock-tab-brand{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
   .flock-tab-count{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
-  .flock-tab-wallet{ color:var(--wallet-blue); text-shadow:0 0 6px var(--wallet-blue-glow); font-family:var(--font-mono); font-size:1.15em; font-weight:700; }
+  /* Bumped again (reported live) — was 1.15em. */
+  .flock-tab-wallet{ color:var(--wallet-blue); text-shadow:0 0 6px var(--wallet-blue-glow); font-family:var(--font-mono); font-size:1.35em; font-weight:700; }
   /* Bigger + a real hit target now that it's an actual switch-account
      control (see #walletSwitchDropdown below) rather than the old no-op
      placeholder — was a plain inline glyph too small to reliably tap. */
@@ -1030,15 +1031,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:center;
     margin-left:0.35em;
     padding:0.1em 0.3em;
-    /* Bumped again (reported live) — was 1.4em. */
-    font-size:2em;
+    /* Bumped again (reported live) — was 2em, before that 1.4em. */
+    font-size:2.6em;
     line-height:1;
     color:var(--wallet-blue);
     cursor:pointer;
     transition:color 0.15s ease, transform 0.15s ease;
   }
-  .flock-tab-switch-arrow:hover{ color:var(--cyan); }
-  .flock-tab-switch-arrow.wallet-dropdown-open{ transform:rotate(180deg); color:var(--cyan); }
+  /* --wallet-blue is --cyan itself now (see its own comment) — hover/open
+     used to shift to --cyan for contrast, which is a no-op color-wise
+     now; white instead, so there's still real visible feedback. */
+  .flock-tab-switch-arrow:hover{ color:var(--white); }
+  .flock-tab-switch-arrow.wallet-dropdown-open{ transform:rotate(180deg); color:var(--white); }
   #scyllaWalletWrap{ position:relative; display:inline-block; }
   /* position:fixed, not absolute (reported live as "not working and
      viewable" — confirmed live: #topTabsWrap, a real ancestor of this
@@ -13750,15 +13754,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     // .wallet-switch-dropdown's own CSS comment on why this is
     // position:fixed (escaping #topTabsWrap's own overflow:hidden) and
     // therefore needs its top/left set here in JS instead of a plain
-    // CSS top:100%/left:0 anchored to the wrap. Right-edge aware: on a
-    // narrow screen, left-aligning a 240px-wide box under an address
-    // sitting near the right edge of the tab bar would push it off-
+    // CSS top:100%/left:0 anchored to the wrap. Anchored to the ▾ arrow
+    // itself now (reported live as wanting it "directly underneath
+    // where we click"), not the whole wrap's own left edge (which
+    // starts back at the address text, well left of the actual click).
+    // Right-edge aware: right-aligning a 240px box under an arrow
+    // sitting near the viewport's own right edge would push it off-
     // screen, so this clamps to the viewport's own right edge instead.
-    var wrapRect = el.scyllaWalletWrap.getBoundingClientRect();
+    var arrowForPos = el.flockTabLabel.querySelector('.flock-tab-switch-arrow');
+    var anchorRect = (arrowForPos || el.scyllaWalletWrap).getBoundingClientRect();
     var ddWidth = Math.max(240, el.walletSwitchDropdown.offsetWidth || 240);
-    var left = Math.min(wrapRect.left, window.innerWidth - ddWidth - 8);
+    var left = Math.min(anchorRect.right - ddWidth, window.innerWidth - ddWidth - 8);
     el.walletSwitchDropdown.style.left = Math.max(8, left) + 'px';
-    el.walletSwitchDropdown.style.top = (wrapRect.bottom + 8) + 'px';
+    el.walletSwitchDropdown.style.top = (anchorRect.bottom + 8) + 'px';
     el.walletSwitchDropdown.style.display = 'block';
     var arrow = el.flockTabLabel.querySelector('.flock-tab-switch-arrow');
     if (arrow) arrow.classList.add('wallet-dropdown-open');
