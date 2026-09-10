@@ -10281,7 +10281,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // MY P!GE0NS/0FFERS sitting below it via the exact same
     // myPigeonsPanel/screenBrowse elements this tab already used.
     el.profilePanelWrap.style.display = tab === 'mypigeons' ? '' : 'none';
-    // NOT just `tab === 'mypigeons'` any more — that used to call this on
+    // NOT just tab === 'mypigeons' any more — that used to call this on
     // EVERY showTab('mypigeons'), including the re-entrant one
     // switchProfileTab('collections')/browseOwnerCollection make as part
     // of the SAME click that just opened your NFT grid (they set
