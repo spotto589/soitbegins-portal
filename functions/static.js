@@ -3319,6 +3319,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .traits-flyout.flyout-popup:not(.flyout-flat):not(.flyout-drilled) .traits-flyout-vals{ display:none !important; }
   .traits-flyout.flyout-popup.flyout-drilled .traits-flyout-cats-row{ display:none !important; }
   .traits-flyout.flyout-popup.flyout-drilled .flyout-back-btn{ display:block !important; }
+  /* Currently-applied trait chips — CATEG0R!ES step only, same reasoning
+     as the cats row itself above (nothing to show once you're already
+     looking at one category's own values, or a cross-category search). */
+  .traits-flyout.flyout-popup.flyout-drilled .traits-flyout-selected{ display:none !important; }
   /* A visible X reads clearer than "tap the dimmed backdrop" on desktop,
      where there's no established "tap outside a sheet to close it"
      convention the way there is on mobile — the backdrop still closes it
@@ -3523,10 +3527,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:none;
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:16px;
     font-weight:700;
     letter-spacing:0.04em;
-    padding:0.6em 0.85em;
+    padding:0.75em 1em;
     cursor:pointer;
     white-space:nowrap;
   }
@@ -3545,10 +3549,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:16px;
     font-weight:700;
     letter-spacing:0.04em;
-    padding:0.6em 0.85em;
+    padding:0.75em 1em;
     border-radius:var(--radius);
   }
   .traits-flyout-search-input:focus{ outline:none; border-color:var(--cyan); }
@@ -3560,6 +3564,47 @@ const SWAP_HTML = `<!DOCTYPE html>
      hidden rather than left sitting there unrelated to what's showing
      underneath it. */
   #traitsFlyout.flyout-searching .traits-flyout-cats-row{ display:none; }
+  #traitsFlyout.flyout-searching .traits-flyout-selected{ display:none; }
+  /* Currently-applied trait chips, sitting above the category strip —
+     empty (:empty, no rows) collapses to nothing rather than an empty
+     bordered gap when nothing's selected yet. */
+  .traits-flyout-selected{ display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:0.6rem; }
+  .traits-flyout-selected:empty{ display:none; margin-bottom:0; }
+  .tfs-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:0.4em;
+    background:var(--magenta-faint);
+    border:1px solid var(--magenta);
+    border-radius:var(--radius);
+    color:var(--magenta);
+    text-shadow:0 0 5px var(--magenta-glow);
+    font-family:var(--font-mono);
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    padding:0.5em 0.4em 0.5em 0.8em;
+    cursor:pointer;
+  }
+  .tfs-chip:hover{ background:var(--magenta); color:#08090b; text-shadow:none; }
+  .tfs-chip-remove{ font-size:14px; opacity:0.8; }
+  /* Same "this category already has a pick" signal as the applied chips
+     above, right on the category button itself — a magenta dot, not a
+     full recolour, since .active (currently viewing this category) still
+     needs its own distinct highlight. */
+  .traits-flyout-cat.has-selection{ box-shadow:inset 0 0 0 1px var(--magenta); }
+  .traits-flyout-cat.has-selection::after{
+    content:'';
+    display:inline-block;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:var(--magenta);
+    box-shadow:0 0 4px var(--magenta-glow);
+    margin-left:0.5em;
+    vertical-align:middle;
+  }
   /* ADD TRA!TS' own categories/values now just inherit the shared white/
      magenta scheme above — no separate cyan-idle override any more (see
      this block's own history if that's ever needed again). */
@@ -8756,6 +8801,14 @@ const SWAP_HTML = `<!DOCTYPE html>
                        desktop — #traitsFlyout itself just stacks THIS row
                        above the values row, two children, no ambiguity
                        about which one wraps. -->
+                  <!-- Currently-applied trait chips — shown above the
+                       category strip on the CATEG0R!ES step only (hidden
+                       once drilled into a category's values, or mid-
+                       search — see the CSS). Picking a value now returns
+                       here instead of closing the whole popup, so this is
+                       what actually answers "what's selected already"
+                       while you're picking more. -->
+                  <div class="traits-flyout-selected" id="traitsFlyoutSelected"></div>
                   <div class="traits-flyout-cats-row" id="traitsFlyoutCatsRow">
                     <button type="button" class="hscroll-arrow hscroll-arrow-prev cats-scroll-arrow" id="traitsCatsScrollPrevBtn" aria-label="PREV!0US">◂</button>
                     <div class="traits-flyout-cats" id="traitsFlyoutCats"></div>
@@ -9874,7 +9927,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'statsCarousel','statsCarouselDots','statsPrevBtn','statsNextBtn',
    'statTraded24h','statVolume24h','statSalesTile','statSales24h',
    'traitRows','clearTraitsBtn',
-   'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutCats','traitsFlyoutVals','traitsFlyoutBack','traitsCatsScrollPrevBtn','traitsCatsScrollNextBtn',
+   'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutSelected','traitsFlyoutCats','traitsFlyoutVals','traitsFlyoutBack','traitsCatsScrollPrevBtn','traitsCatsScrollNextBtn',
    'traitsFlyoutSortRarity','traitsFlyoutSortAz','traitsFlyoutSearchInput',
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote','salesCurrencyToggle',
@@ -12593,10 +12646,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   // hover + click). ----
   function renderTraitsFlyoutCats(){
     var cats = state.traitCategories ? Object.keys(state.traitCategories).sort(function(a, b){ return a.localeCompare(b); }) : [];
+    var selectedCats = {};
+    state.traitFilters.forEach(function(r){ if (r.category) selectedCats[r.category] = true; });
     el.traitsFlyoutCats.innerHTML = cats.map(function(c){
-      return '<button type="button" class="traits-flyout-cat" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c.toUpperCase()) + '</button>';
+      return '<button type="button" class="traits-flyout-cat' + (selectedCats[c] ? ' has-selection' : '') + '" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c.toUpperCase()) + '</button>';
     }).join('');
     updateTraitsCatsHscrollArrows();
+  }
+  // Currently-applied trait chips, shown above the category strip (see
+  // .traits-flyout-selected's own CSS) — the real answer to "what's
+  // already selected" while picking more, now that choosing a value
+  // returns here instead of closing the whole popup. Clicking a chip
+  // removes that filter, same as re-clicking its own value would.
+  function renderTraitsFlyoutSelected(){
+    var rows = state.traitFilters.filter(function(r){ return r.category; });
+    el.traitsFlyoutSelected.innerHTML = rows.map(function(r){
+      return '<button type="button" class="tfs-chip" data-cat="' + escapeHtml(r.category) + '" data-value="' + escapeHtml(r.value) + '">' +
+        '<span>' + escapeHtml(r.category.toUpperCase()) + ' :: ' + escapeHtml(r.value.toUpperCase()) + '</span>' +
+        '<span class="tfs-chip-remove">✕</span>' +
+      '</button>';
+    }).join('');
   }
   // Different trait categories sit at different heights (or, for
   // Background, need a totally different crop strategy) on the portrait —
@@ -12781,6 +12850,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       closeSortFlyout();
       document.body.appendChild(el.traitsFlyout);
       renderTraitsFlyoutCats();
+      renderTraitsFlyoutSelected();
       el.traitsFlyoutVals.innerHTML = '';
       el.traitsFlyout.style.display = 'block';
       el.traitsFlyout.classList.add('flyout-popup');
@@ -12849,6 +12919,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.traitsFlyoutBack.addEventListener('click', function(){
     el.traitsFlyout.classList.remove('flyout-drilled');
     el.traitsFlyout.scrollTop = 0;
+  });
+  // A chip here removes that filter — same toggle-off the value's own
+  // button in traitsFlyoutVals already does when re-clicked.
+  el.traitsFlyoutSelected.addEventListener('click', function(e){
+    var chip = e.target.closest('.tfs-chip');
+    if (!chip) return;
+    var category = chip.getAttribute('data-cat');
+    var value = chip.getAttribute('data-value');
+    state.traitFilters = state.traitFilters.filter(function(r){ return !(r.category === category && r.value === value); });
+    renderTraitRows();
+    renderTraitsFlyoutCats();
+    renderTraitsFlyoutSelected();
+    pendingTraitScroll = true;
+    runQuery();
   });
   // RAR!TY %/A-Z re-sorts whatever's currently showing — the live search
   // results if SEARCH TRA!TS has text in it, otherwise the open category's
@@ -12934,14 +13018,21 @@ const SWAP_HTML = `<!DOCTYPE html>
       target.value = value;
     }
     renderTraitRows();
-    renderTraitsFlyoutVals(category);
     pendingTraitScroll = true;
-    // Reported live as wanting the picker to close on pick regardless of
-    // screen size — it should just show the trait as selected and show
-    // the matching Pigeons, not stay open blocking the results that are
-    // already loading behind it. Was mobile-only before (desktop's own
-    // strip used to stay open on purpose); now closes everywhere.
-    closeTraitsFlyout();
+    // Back to the CATEG0R!ES step now, not closed outright (reported live)
+    // — the just-picked value shows as a chip up top (renderTraitsFlyoutSelected)
+    // and its category gets the has-selection dot, so picking a second
+    // trait (or seeing what's already applied) doesn't mean reopening the
+    // whole popup from scratch. Closing (the ✕, or clicking outside) is
+    // still how you actually go look at the results — either way the
+    // query itself already started below, so there's nothing left waiting
+    // on that close.
+    renderTraitsFlyoutCats();
+    renderTraitsFlyoutSelected();
+    el.traitsFlyout.classList.remove('flyout-drilled', 'flyout-searching');
+    el.traitsFlyoutSearchInput.value = '';
+    state.traitsFlyoutQuery = '';
+    el.traitsFlyout.scrollTop = 0;
     runQuery();
   });
 
