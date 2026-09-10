@@ -5,7 +5,7 @@
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue, getFloorIndex,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG,
-  getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut
+  getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap
 } from '../_shared.js';
 
 // Deeptide's own item page — the real place to buy a listed Pigeon.
@@ -822,8 +822,34 @@ export async function onRequestGet(context) {
   // once per minute per trait combo" and "every single request pays it".
   const FILTERED_SCAN_CACHE_PREFIX = 'pswap:filteredscan:';
   const FILTERED_SCAN_CACHE_TTL_SECONDS = 60;
+  // Real fix for the filtered-browse slowness above: every call site of
+  // scanFilteredCandidates only ever reads `.items.map(it => it.nftId)` —
+  // trait matching is a pure membership question, nothing here has ever
+  // needed the full listing object the old live scan fetched. That's
+  // exactly what maybeRefreshPigeonNumberMap's own background crawl now
+  // builds for free (see TRAIT_INDEX_MAP_KEY's comment in _shared.js) —
+  // one KV read + an in-memory Set intersection, no live Deeptide calls at
+  // all, once that crawl has completed at least one full pass. Falls back
+  // to the live scan below only while the index is still warming up after
+  // a fresh deploy, or for a brand-new trait value the last completed pass
+  // predates.
   async function scanFilteredCandidates(traitFilters) {
     const kv = env.coin;
+    const indexMap = kv ? await getTraitIndexMap(kv, coll.key) : {};
+    if (indexMap && Object.keys(indexMap).length) {
+      let matchIds = null;
+      let indexCoversEveryFilter = true;
+      for (const f of traitFilters) {
+        const ids = indexMap[f.trait] && indexMap[f.trait][f.value];
+        if (!ids) { indexCoversEveryFilter = false; break; }
+        const idSet = new Set(ids);
+        matchIds = matchIds === null ? idSet : new Set(Array.from(matchIds).filter(id => idSet.has(id)));
+      }
+      if (indexCoversEveryFilter) {
+        const ids = matchIds ? Array.from(matchIds).slice(0, FILTERED_SCAN_CAP_ITEMS) : [];
+        return { items: ids.map(id => ({ nftId: id })), exhausted: true };
+      }
+    }
     // Sorted so the same trait combo in a different pick order shares one
     // cache entry instead of two.
     const sortedFilters = traitFilters.slice().sort((a, b) => (a.trait + a.value).localeCompare(b.trait + b.value));

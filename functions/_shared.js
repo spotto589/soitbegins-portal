@@ -2720,13 +2720,13 @@ const PIGEON_NUMBER_MAP_KEY = 'pswap:numbermap:v1';
 // though they'd been correctly indexed moments before the recrawl
 // started. Staging fixes it: readers always see the last COMPLETE map.
 const PIGEON_NUMBER_MAP_STAGING_KEY = 'pswap:numbermap:staging:v1';
-// Bumped v1 -> v2: the crawl this stats key gates now also builds the
-// trait-example map below as a side effect. A v1 "completed" stats entry
-// would otherwise block a fresh crawl for NUMBER_MAP_REFRESH_STALE_SECONDS
-// (6h) and trait examples would stay empty that whole time — bumping the
-// key makes it start a real crawl on next call, same one-time-cost
-// pattern as every other KV shape change in this file.
-const PIGEON_NUMBER_MAP_STATS_KEY = 'pswap:numbermapstats:v2';
+// Bumped v2 -> v3: the crawl this stats key gates now also builds the full
+// trait -> [nftIds] index below (see TRAIT_INDEX_MAP_KEY) as a side effect,
+// same reasoning as the v1 -> v2 bump for trait examples right above — a
+// v2 "completed" stats entry would otherwise block a fresh crawl for
+// NUMBER_MAP_REFRESH_STALE_SECONDS (6h) and the trait index would stay
+// empty that whole time, which is exactly the thing it exists to fix.
+const PIGEON_NUMBER_MAP_STATS_KEY = 'pswap:numbermapstats:v3';
 const NUMBER_MAP_REFRESH_STALE_SECONDS = 6 * 3600;
 const NUMBER_MAP_CONCURRENT_GUARD_SECONDS = 10;
 const NUMBER_MAP_PAGES_PER_RUN = 15; // 15 * 60 = 900 tokens/run, ~15 fetches — safely under the subrequest budget
@@ -2739,6 +2739,20 @@ const NUMBER_MAP_PAGES_PER_RUN = 15; // 15 * 60 = 900 tokens/run, ~15 fetches �
 // first image seen for each trait_type/value pair as the crawl runs.
 const TRAIT_EXAMPLE_MAP_KEY = 'pswap:traitexamples:v1';
 const TRAIT_EXAMPLE_MAP_STAGING_KEY = 'pswap:traitexamples:staging:v1';
+
+// Real trait_type+value -> [nftIds] index, e.g. index['Eyewear']['Classic
+// Gaze'] = ['0008...', ...] — the actual answer to "which NFTs have this
+// trait", built for free from the exact same per-item attribute loop the
+// trait-example map above already runs (zero extra Deeptide calls). Lets
+// FILTER BY TRAITS become one KV read + an in-memory Set intersection
+// (scanFilteredCandidates in pigeons.js) instead of that endpoint's old
+// approach of live-paging Deeptide's own listings API with this exact
+// filter on every single request — directly measured as a multi-second
+// cost on a cold filtered browse (each page a fresh live external call,
+// completely uncached), since membership was the ONLY thing any caller
+// ever used the scan result for.
+const TRAIT_INDEX_MAP_KEY = 'pswap:traitindex:v1';
+const TRAIT_INDEX_MAP_STAGING_KEY = 'pswap:traitindex:staging:v1';
 
 // Every reader/writer below takes an explicit collectionKey and goes
 // through kvKeyFor (same Pigeons-keeps-its-original-key, everyone-else-
@@ -2773,6 +2787,20 @@ async function getTraitExampleMapStaging(kv, collectionKey) {
   return raw ? JSON.parse(raw) : {};
 }
 
+// scanFilteredCandidates in pigeons.js reads this — empty ({}) just means
+// the crawl hasn't reached a complete pass yet (fresh deploy, or this
+// collection's very first request), which that function's own fallback
+// already handles by live-scanning instead.
+export async function getTraitIndexMap(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(TRAIT_INDEX_MAP_KEY, collectionKey));
+  return raw ? JSON.parse(raw) : {};
+}
+
+async function getTraitIndexMapStaging(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(TRAIT_INDEX_MAP_STAGING_KEY, collectionKey));
+  return raw ? JSON.parse(raw) : {};
+}
+
 export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
   const cfg = getTradeConfig(collectionKey);
   // No real Deeptide shop for this collection (SEAL/FUZZY/C0NSP!RACY
@@ -2794,6 +2822,7 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
   // own comment above).
   const map = stats && stats.inProgress ? await getPigeonNumberMapStaging(kv, collectionKey) : {};
   const traitExamples = stats && stats.inProgress ? await getTraitExampleMapStaging(kv, collectionKey) : {};
+  const traitIndex = stats && stats.inProgress ? await getTraitIndexMapStaging(kv, collectionKey) : {};
   // Real total, once the first page below reports it — this is just a
   // safe starting guess so the very first iteration's skip>=lastTotal
   // check has something to compare against before that.
@@ -2804,11 +2833,19 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
     if (page.error || !page.items.length) break;
     for (const it of page.items) {
       if (it.number !== null) map[it.number] = it.nftId;
-      if (it.image && Array.isArray(it.attributes)) {
+      if (Array.isArray(it.attributes)) {
         for (const a of it.attributes) {
           if (!a.trait_type || !a.value) continue;
-          if (!traitExamples[a.trait_type]) traitExamples[a.trait_type] = {};
-          if (!traitExamples[a.trait_type][a.value]) traitExamples[a.trait_type][a.value] = it.image;
+          if (it.image) {
+            if (!traitExamples[a.trait_type]) traitExamples[a.trait_type] = {};
+            if (!traitExamples[a.trait_type][a.value]) traitExamples[a.trait_type][a.value] = it.image;
+          }
+          // See TRAIT_INDEX_MAP_KEY's own comment above — this is the real
+          // trait_type+value -> [nftIds] membership index, built for free
+          // off the exact same per-item loop as traitExamples right above.
+          if (!traitIndex[a.trait_type]) traitIndex[a.trait_type] = {};
+          if (!traitIndex[a.trait_type][a.value]) traitIndex[a.trait_type][a.value] = [];
+          traitIndex[a.trait_type][a.value].push(it.nftId);
         }
       }
     }
@@ -2820,6 +2857,7 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
       // gradual, visibly-incomplete rebuild this used to be.
       await safeKvPut(kv, kvKeyFor(PIGEON_NUMBER_MAP_KEY, collectionKey), JSON.stringify(map));
       await safeKvPut(kv, kvKeyFor(TRAIT_EXAMPLE_MAP_KEY, collectionKey), JSON.stringify(traitExamples));
+      await safeKvPut(kv, kvKeyFor(TRAIT_INDEX_MAP_KEY, collectionKey), JSON.stringify(traitIndex));
       await safeKvPut(kv, statsKey, JSON.stringify({
         inProgress: false, completedAt: now, updatedAt: now, count: Object.keys(map).length,
       }));
@@ -2831,6 +2869,7 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
   // completed pass until this one actually finishes above.
   await safeKvPut(kv, kvKeyFor(PIGEON_NUMBER_MAP_STAGING_KEY, collectionKey), JSON.stringify(map));
   await safeKvPut(kv, kvKeyFor(TRAIT_EXAMPLE_MAP_STAGING_KEY, collectionKey), JSON.stringify(traitExamples));
+  await safeKvPut(kv, kvKeyFor(TRAIT_INDEX_MAP_STAGING_KEY, collectionKey), JSON.stringify(traitIndex));
   await safeKvPut(kv, statsKey, JSON.stringify({
     inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(map).length,
   }));
