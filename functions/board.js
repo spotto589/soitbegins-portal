@@ -67,15 +67,6 @@ const LOCKED_SIGNAL_BINARY = '01111011 00001101 101000001 00001101 01111011 0000
 // separately in levelRequirementText below.
 const LEVEL_MIN_PIGEONS = { 1: 1, 3: 5, 6: 16, 9: 50, 12: 100 };
 
-// Each level's network-identity name — TERMINAL/NETWORK/ENCRYPTED/SYSTEM/
-// ROOT/CORE — shown alongside the numeric level everywhere it appears so
-// the level reads as a distinct identity, not just a rank number.
-const LEVEL_NAMES = { 12: '0VERR!DE', 15: 'C0RE' };
-function levelNameSuffix(level) {
-  const name = LEVEL_NAMES[level];
-  return name ? ` (${name})` : '';
-}
-
 function levelRequirementText(level) {
   if (level === 15) return 'CR0WN REQU!RED';
   const min = LEVEL_MIN_PIGEONS[level];
@@ -116,8 +107,8 @@ function renderMessageRow(msg, canDecode, glitchTs, viewerAccessLevel) {
         </div>
         <div class="msg-lock-detail" hidden>
           <div class="ld-title">// S!GNAL L0CKED</div>
-          <div class="ld-line">ACCESS LEVEL REQU!RED :: <span class="ld-num">${signalLevelLabel}</span>${levelNameSuffix(signalLevel)}</div>
-          <div class="ld-line">Y0UR ACCESS LEVEL :: <span class="ld-num">${String(viewerAccessLevel || 0).padStart(2, '0')}</span>${levelNameSuffix(viewerAccessLevel || 0)}</div>
+          <div class="ld-line">ACCESS LEVEL REQU!RED :: <span class="ld-num">${signalLevelLabel}</span></div>
+          <div class="ld-line">Y0UR ACCESS LEVEL :: <span class="ld-num">${String(viewerAccessLevel || 0).padStart(2, '0')}</span></div>
           <div class="ld-line ld-req">${levelRequirementText(signalLevel)}</div>
           <div class="ld-timer">RETURN!NG !N <span class="ld-timer-count">13</span><span class="ld-timer-unit">s</span></div>
         </div>
@@ -2332,8 +2323,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
       3: { cls: 'll-network', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 03', 'ACCESS :: GRANTED'] },
       6: { cls: 'll-encrypted', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 06', 'ACCESS :: GRANTED'] },
       9: { cls: 'll-system', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 09', 'ACCESS :: GRANTED'] },
-      12: { cls: 'll-root', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 12', '0VERR!DE AUTHENT!CAT!0N', '0VERR!DE ACCESS :: GRANTED'] },
-      15: { cls: 'll-core', lines: ['// S!GNAL DETECTED', 'CR0WN H0LDER', 'ACCESS LEVEL :: 15', 'C0RE ACCESS :: GRANTED'] },
+      12: { cls: 'll-root', lines: ['// S!GNAL DETECTED', 'ACCESS LEVEL :: 12', 'ACCESS :: GRANTED'] },
+      15: { cls: 'll-core', lines: ['// S!GNAL DETECTED', 'CR0WN H0LDER', 'ACCESS LEVEL :: 15', 'ACCESS :: GRANTED'] },
     };
     const seq = SEQUENCES[ACCESS_LEVEL];
     if (!seq) return;
