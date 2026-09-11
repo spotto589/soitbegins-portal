@@ -106,6 +106,22 @@ function displayImage(url) {
   return url.startsWith('https://ipfs.io/') ? proxyIpfsImage(url) : url;
 }
 
+// Manual overrides for trait EXAMPLE images (used by FILTER BY TRAITS'
+// preview crop) — the crawl in maybeRefreshPigeonNumberMap just takes
+// whichever Pigeon it happens to reach FIRST for a given trait_type+value,
+// with no regard for whether that specific Pigeon's OTHER traits actually
+// obscure the one being illustrated. Reported live for Feathers::Murakami:
+// the auto-picked example (#27) wears a full "Box Logo" hoodie that hides
+// the feathers entirely, so its crop showed hat/hoodie instead of the
+// actual Murakami pattern. #727 has no Clothing/Headwear at all, so its
+// feathers are fully visible — same "manual adjusting" precedent the
+// rarity-score work is headed toward, just for this one spot for now.
+const TRAIT_EXAMPLE_OVERRIDES = {
+  pigeons: {
+    Feathers: { Murakami: 'https://cdn.deeptide.co/products/xrpigeons/00081388145D9B828F16D70AC849B2BDF5964EEF91CD4CC75B7ADE4005C74EA6.png' },
+  },
+};
+
 function bithompTxUrl(txHash) {
   return `https://bithomp.com/explorer/${txHash}`;
 }
@@ -310,6 +326,15 @@ export async function onRequestGet(context) {
         examples[cat] = {};
         for (const val of Object.keys(rawExamples[cat])) {
           examples[cat][val] = displayImage(rawExamples[cat][val]);
+        }
+      }
+      const overrides = TRAIT_EXAMPLE_OVERRIDES[coll.key];
+      if (overrides) {
+        for (const cat of Object.keys(overrides)) {
+          if (!examples[cat]) examples[cat] = {};
+          for (const val of Object.keys(overrides[cat])) {
+            examples[cat][val] = displayImage(overrides[cat][val]);
+          }
         }
       }
     }
