@@ -4190,28 +4190,30 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     justify-content:center;
   }
-  /* BUY N0W — the Σκύλλα button: ghost at rest (faint accent fill,
-     accent border/text/glow), fills solid accent with black text on
-     hover — same recipe as every other real BUY control site-wide now
-     (mainframe-card-buy, offer-open-modal-btn, scylla-buy-btn,
-     pigeons-bar-balance-buy, profile-coin-action), in the CURRENT
-     collection's own real colour (--collection-accent-rgb, the same
-     variable the trustline banner's background already swaps per
-     collection) rather than one flat --green regardless of which
-     collection's Pigeon/PHN!X/etc. this actually is. Still the one
-     truly one-click "spend real money right now" action on the card,
-     so it stays the boldest thing in the box — not blending in at the
-     same visual weight as 0FFER (a slower, non-committal path). Full
-     width, sitting above the offer row within the same box. Only
-     rendered when the item actually carries a real Σκύλλα listing. */
+  /* BUY N0W — the Σκύλλα button: solid accent fill with black text AT
+     REST now, not just on hover (reported live as wanting it "really
+     make the user want to click" — a faint 12%-tint ghost box barely
+     read as a real button at all, and this is a touch-first site where
+     most people never see a :hover state anyway). A slow pulse on the
+     glow keeps drawing the eye without being obnoxious; hover just
+     intensifies it further. Still uses the CURRENT collection's own
+     real colour (--collection-accent-rgb, the same variable the
+     trustline banner's background already swaps per collection) rather
+     than one flat --green regardless of which collection's Pigeon/
+     PHN!X/etc. this actually is. Still the one truly one-click "spend
+     real money right now" action on the card, so it stays the boldest
+     thing in the box — not blending in at the same visual weight as
+     0FFER (a slower, non-committal path). Full width, sitting above the
+     offer row within the same box. Only rendered when the item actually
+     carries a real Σκύλλα listing. */
   .thumb-buy-btn{
     width:100%;
-    background:rgba(var(--collection-accent-rgb), 0.12);
+    background:var(--collection-accent);
     border:1px solid var(--collection-accent);
-    color:var(--collection-accent);
-    text-shadow:0 0 8px var(--collection-accent-glow);
+    color:#000;
+    text-shadow:none;
     font-family:var(--font-mono);
-    font-weight:700;
+    font-weight:800;
     letter-spacing:0.03em;
     /* Same 0.8em 0.7em every other action button on the card (L!ST/0FFER/
        CANCEL) uses — reported live as wanting all of them the same size,
@@ -4222,62 +4224,57 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
     border-radius:var(--radius);
     margin-bottom:0.5rem;
-    box-shadow:0 0 14px var(--collection-accent-glow);
-    transition:background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+    animation:thumb-buy-pulse 2.2s ease-in-out infinite;
+    transition:transform 0.1s ease;
     display:flex;
     flex-direction:column;
     align-items:center;
     gap:0.1rem;
     line-height:1.15;
   }
-  .thumb-buy-btn:hover{
-    background:var(--collection-accent);
-    color:#000;
-    text-shadow:none;
-    box-shadow:0 0 20px var(--collection-accent-glow);
-    transform:translateY(-1px);
+  @keyframes thumb-buy-pulse{
+    0%, 100%{ box-shadow:0 0 12px var(--collection-accent-glow); }
+    50%{ box-shadow:0 0 22px var(--collection-accent-glow); }
   }
-  /* The real price, right on the button — reported live as BUY N0W not
-     feeling "enticing" with the price only ever a small corner badge on
-     the picture, easy to miss entirely at the actual moment of deciding
-     to buy. Bigger and bolder than the "BUY N0W" label above it, same
-     "the number is the point" treatment SALES H!ST0RY's own price gets. */
-  .thumb-buy-label{ font-size:13px; letter-spacing:0.08em; opacity:0.85; }
-  .thumb-buy-price{ font-family:var(--font-display); font-size:18px; font-weight:800; letter-spacing:0.01em; }
+  .thumb-buy-btn:hover{
+    transform:translateY(-1px);
+    animation-play-state:paused;
+    box-shadow:0 0 26px var(--collection-accent-glow);
+  }
+  /* Label and price now the SAME size/weight (reported live — used to be
+     a small dim 13px label next to an 18px display-font price, and
+     "make it so it really makes the user want to click" reads better as
+     one confident, uniform line than a mismatched label+number). Black
+     on the solid accent fill above, same "the number is the point"
+     prominence BUY N0W has always wanted, just without the size jump. */
+  .thumb-buy-label{ font-size:16px; letter-spacing:0.04em; opacity:1; }
+  .thumb-buy-price{ font-family:var(--font-mono); font-size:16px; font-weight:800; letter-spacing:0.01em; }
   /* BUY N0W stacked above 0FFER (reported live, was side by side — see
      pigeonsActionBoxHtml's own comment) — column instead of row, and BUY
      N0W's label+price now sit on ONE line ("BUY N0W :: 123K $P!GE0NS")
-     instead of stacked inside the button itself, both the label AND the
-     real price in --green now (reported live — was price-only) since
-     the whole line reads as one real amount now, not just a plain label
-     glued in front of it. 0FFER is the same full-width size as BUY N0W
-     now too (reported live — was a smaller secondary pill), just plain/
-     grey rather than accent-coloured, so it still reads as the calmer
-     second option without looking like a lesser button. min-width:0 +
-     ellipsis on the price (not the label — "BUY N0W ::" must never
-     itself truncate) keeps a long real price from ever breaking the
-     button's own single line. */
+     instead of stacked inside the button itself. 0FFER is the same
+     full-width size as BUY N0W now too (reported live — was a smaller
+     secondary pill), filled light/neutral with black text (reported
+     live — used to be var(--grey), which is a pale, near-white tint
+     that read as flat-out white text) so it stays legible without
+     competing with BUY N0W's own accent-coloured fill above it.
+     min-width:0 + ellipsis on the price (not the label — "BUY N0W ::"
+     must never itself truncate) keeps a long real price from ever
+     breaking the button's own single line. */
   .owned-action-row-buy{ flex-direction:column; align-items:stretch; }
   .owned-action-row-buy .thumb-buy-btn{ flex:0 0 auto; width:100%; flex-direction:row; justify-content:center; align-items:center; gap:0.35em; overflow:hidden; }
-  .owned-action-row-buy .thumb-buy-label{ flex:0 0 auto; white-space:nowrap; opacity:1; color:var(--green); text-shadow:0 0 8px var(--green-glow); }
-  .owned-action-row-buy .thumb-buy-price{ flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--green); text-shadow:0 0 8px var(--green-glow); }
+  .owned-action-row-buy .thumb-buy-label{ flex:0 0 auto; white-space:nowrap; }
+  .owned-action-row-buy .thumb-buy-price{ flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .owned-action-row-buy .offer-open-modal-btn-secondary{
     flex:0 0 auto;
     width:100%;
     padding:0.8em 0.7em;
     font-size:15px;
-    border-color:var(--border-mid);
-    color:var(--grey);
+    background:var(--white);
+    border-color:var(--white);
+    color:#000;
   }
-  .owned-action-row-buy .offer-open-modal-btn-secondary:hover{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
-  @media (max-width:700px){
-    /* Same reasoning as the old side-by-side breakpoint fix (see
-       .owned-action-row .thumb-buy-btn's own comment further down) —
-       "BUY N0W :: 123K $P!GE0NS" is a lot of text for a narrow 2-across
-       mobile card even on one full-width line; shrink the price (never
-       the "BUY N0W ::" label) before it has to ellipsis. */
-    .owned-action-row-buy .thumb-buy-price{ font-size:15px; }
-  }
+  .owned-action-row-buy .offer-open-modal-btn-secondary:hover{ border-color:var(--cyan); background:var(--cyan-faint); color:#000; }
   /* 0FFER — reported live as wanting the same green BUY $P!GE0NS/BUY N0W
      already reads (#pigeonsMergedPanel .pigeons-bar-balance-buy's own
      recipe), not the per-collection accent colour it used to inherit —
