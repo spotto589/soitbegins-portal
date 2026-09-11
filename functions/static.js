@@ -5246,19 +5246,20 @@ const SWAP_HTML = `<!DOCTYPE html>
      out past the panel's right edge instead of wrapping down. */
   .pigeons-calc-panel .pigeons-bar-calc{ padding:1.1em 1.1em; flex-wrap:wrap; justify-content:center; row-gap:0.6em; }
   .pigeons-calc-panel .pigeons-bar-calc-input{ font-size:22px; }
-  /* VIEW 0N DEX — a real second action underneath the calculator itself,
-     not just the small icon-link next to the rate above (kept as-is, a
-     quick glance rather than a deliberate click). Same treatment as
-     .offer-confirm-xaman-btn's own purple call-to-action elsewhere. */
+  /* BUY <T0KEN> — a real second action underneath the calculator itself
+     (replaced the old V!EW 0N DEX link here). Green fill/black text
+     (reported live as wanting it green, not purple) — same always-on
+     filled-CTA language .offer-open-modal-btn/BUY $P!GE0NS already use
+     site-wide, not the per-collection accent purple. */
   .pigeons-calc-dex-btn{
     display:block;
     width:100%;
     margin-top:1.25rem;
-    background:var(--pigeon-purple);
-    border:1px solid var(--pigeon-purple);
+    background:var(--green);
+    border:1px solid var(--green);
     border-radius:var(--radius);
     padding:0.85em 1em;
-    color:#fff;
+    color:#000;
     font-family:var(--font-mono);
     font-size:14px;
     font-weight:700;
@@ -5267,9 +5268,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-decoration:none;
     text-align:center;
     cursor:pointer;
-    transition:background 0.15s ease, border-color 0.15s ease;
+    transition:box-shadow 0.15s ease;
   }
-  .pigeons-calc-dex-btn:hover{ background:var(--magenta); border-color:var(--magenta); }
+  .pigeons-calc-dex-btn:hover{ box-shadow:0 0 14px var(--green-glow); }
   .pigeons-calc-close-btn{
     display:block;
     width:100%;
@@ -5346,7 +5347,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      each side (XRP / $PIGEONS) needs to scope :placeholder-shown ~
      .input-clear-btn to ONLY its own input, not the other side's, since
      both live in the same outer .pigeons-bar-calc flex row. */
-  .pigeons-calc-input-wrap{ display:inline-flex; align-items:baseline; gap:0.35em; }
+  .pigeons-calc-input-wrap{ display:inline-flex; align-items:center; gap:0.35em; }
   /* Static "XRP" / "$PIGEONS" unit next to the typed number (reported
      live as wanting "100 XRP" / "458,000 $PIGEONS" instead of a bare
      number with the unit only implied by the empty-state placeholder) —
