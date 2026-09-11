@@ -2265,8 +2265,8 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
           <div class="msg-row tl-row tier-pink">${NETWORK_NODES}<div class="msg-plain tl-text tier-pink">5-15 P!GE0NS :: LEVEL 03</div></div>
           <div class="msg-row tl-row tier-red">${ENCRYPTED_FRAGMENTS}<div class="msg-plain tl-text tier-red">16-49 P!GE0NS :: LEVEL 06</div></div>
           <div class="msg-row tl-row tier-purple">${SYSTEM_NODES}<div class="msg-plain tl-text tier-purple">50-99 P!GE0NS :: LEVEL 09</div></div>
-          <div class="msg-row tl-row tier-gold">${ROOT_SPARKLES}<div class="msg-plain tl-text tier-gold">100+ P!GE0NS :: LEVEL 12 :: 0VERR!DE</div></div>
-          <div class="msg-row tl-row tier-diamond">${CORE_SPARKLES}<div class="msg-plain tl-text tier-diamond">CR0WN :: LEVEL 15 :: C0RE</div></div>
+          <div class="msg-row tl-row tier-gold">${ROOT_SPARKLES}<div class="msg-plain tl-text tier-gold">100+ P!GE0NS :: LEVEL 12</div></div>
+          <div class="msg-row tl-row tier-diamond">${CORE_SPARKLES}<div class="msg-plain tl-text tier-diamond">CR0WN :: LEVEL 15</div></div>
         </div>
       </details>
       <details class="tier-legend protocol-panel">
