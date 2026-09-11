@@ -13624,11 +13624,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else if (mode === 'connecting'){
       el.connectPanelTitle.textContent = 'Σκύλλα://S!GNAL';
       el.connectPanelSub.textContent = 'C0NNECT!NG...';
-      el.connectPanelActions.innerHTML = '';
+      el.connectPanelActions.innerHTML = '<button type="button" class="connect-panel-btn connect-panel-btn-outline" id="connectCancelBtn">CANCEL</button>';
     } else if (mode === 'waiting'){
       el.connectPanelTitle.textContent = 'WA!T!NG F0R S!GNATURE';
       el.connectPanelSub.innerHTML = '';
-      el.connectPanelActions.innerHTML = '<a href="' + escapeHtml(opts.url) + '" target="_blank" rel="noopener" class="connect-panel-btn connect-panel-btn-outline xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE</a>';
+      el.connectPanelActions.innerHTML = '<a href="' + escapeHtml(opts.url) + '" target="_blank" rel="noopener" class="connect-panel-btn connect-panel-btn-outline xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE</a>' +
+        '<button type="button" class="connect-panel-btn connect-panel-btn-outline" id="connectCancelBtn">CANCEL</button>';
     } else if (mode === 'error'){
       el.connectPanelTitle.textContent = opts.title || 'ERR://C0NNECT!0N FA!LED';
       el.connectPanelSub.textContent = opts.sub || 'S0METH!NG BR0KE ON THE WAY T0 XAMAN.';
@@ -13639,11 +13640,31 @@ const SWAP_HTML = `<!DOCTYPE html>
   // (see renderConnectPanel above), so a listener bound directly to it
   // would silently stop working the moment IDLE/ERR0R swap it back in.
   el.connectPanelActions.addEventListener('click', function(e){
+    if (e.target.closest('#connectCancelBtn')){
+      cancelAuthorize();
+      return;
+    }
     var btn = e.target.closest('#connectScyllaBtn');
     if (!btn) return;
     btn.disabled = true;
     startAuthorize();
   });
+  // Backing out of the Xaman popup (closing it, or just never signing)
+  // instead of actually rejecting the request in the app used to leave
+  // nothing to tell this page the attempt was abandoned — the top bar
+  // (hidden by body.xaman-signing-in while CONNECT!NG/WA!T!NG) stayed
+  // gone until AUTHORIZE_TIMEOUT_MS finally fired, reported live as
+  // "click sign in, then click off and cancel it... the tab at the top
+  // goes away for a while." This CANCEL button gives an immediate way
+  // out instead of waiting on that timeout.
+  function cancelAuthorize(){
+    clearAuthorizeTimeout();
+    if (signinPollTimer){ clearTimeout(signinPollTimer); signinPollTimer = null; }
+    signinUuid = null;
+    closeXamanTabAndFocus(signinXamanTab);
+    signinXamanTab = null;
+    resetLoginButtons('idle');
+  }
   function resetLoginButtons(mode, opts){
     el.pigeonsLoginBtn.disabled = false;
     el.pigeonsLoginBtn.textContent = 'L0G!N';
