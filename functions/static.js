@@ -8213,20 +8213,25 @@ const SWAP_HTML = `<!DOCTYPE html>
            state — see profileTabPanelSearch below. TRANSACT!0N H!ST0RY
            stays inert (same C0M!NG S00N treatment the old boxes always
            had — no real backend yet). Exactly one panel (or none)
-           visible at a time. !NB0X (reported live) is 0FFERS relabelled, with the old
-           separate MESSAGES box folded into it — MESSAGES_DB was never
-           bound in production (see the swap-buy-prepare.js/HANDOFF.md
-           history; messaging worked in local dev, every real request in
-           prod 500s) so there was never a second real inbox to actually
-           merge content from, just one label covering both ideas now.
-           data-profilebox stays "offers" internally — same panel/content,
-           only the box's own visible label changed. -->
+           visible at a time. !NB0X and 0FFERS were one merged box/panel
+           for a while (MESSAGES_DB was never bound in production, so
+           there was never a second real inbox to justify its own box —
+           see the swap-buy-prepare.js/HANDOFF.md history) — split back
+           into two real destinations now that messaging actually works,
+           reported live as wanting them separate again. MESSAGE !NB0X
+           (data-profilebox="messages") is just MESSAGES; 0FFERS
+           (data-profilebox="offers", reclaiming the value the merged box
+           used to sit under) is just 0FFERS RECE!VED/0UTG0!NG 0FFERS —
+           see profileTabPanelMessages/profileTabPanelOffers below. -->
       <div class="profile-box-grid" id="profileBoxGrid">
         <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="profile">
           <div class="flock-account-box-row"><span class="flock-account-box-label">SEARCH PR0F!LE</span></div>
         </div>
+        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="messages">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">MESSAGE !NB0X</span></div>
+        </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="offers">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">!NB0X<span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span></span></div>
+          <div class="flock-account-box-row"><span class="flock-account-box-label">0FFERS<span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span></span></div>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="collections">
           <div class="flock-account-box-row"><span class="flock-account-box-label">MY NFTS</span></div>
@@ -8266,24 +8271,21 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="profile-search-results" id="profileSearchResults"></div>
         <button type="button" class="profile-holdings-viewmore" id="profileSearchBack">← BACK</button>
       </div>
-      <!-- !NB0X — its own real full page now (reported live), same as
-           SEARCH PR0F!LE: the banner AND the box grid both hide while
+      <!-- MESSAGE !NB0X — its own real full page now (reported live), same
+           as SEARCH PR0F!LE: the banner AND the box grid both hide while
            this is open (see switchProfileTab in the JS), just this panel
-           + a BACK button. Reads top-to-bottom as MESSAGES, then 0FFERS
-           RECE!VED, then 0UTG0!NG 0FFERS at the bottom. MESSAGES is now
-           real, wallet-to-wallet, D1-backed (functions/api/messages-
-           inbox.js/-thread.js/-send.js, wired up in loadMessagesInbox/
-           openMessageThread/sendMessage below) instead of the placeholder
-           it was — see those files' own comments and HANDOFF.md for the
-           one remaining manual step (the MESSAGES_DB binding in the
-           Cloudflare Pages dashboard) before this works in production;
-           every call fails with a real visible error, not a silent hang,
-           until that's done. 0FFERS RECE!VED/0UTG0!NG 0FFERS are
-           unchanged — same real renderMyOffersList/renderOutgoingOffersList,
-           fed by loadOffersReceived/loadOutgoingOffers which already run
-           on wallet connect. -->
-      <div class="profile-tab-panel" id="profileTabPanelOffers" style="display:none;">
-        <div class="panel-title">MESSAGES</div>
+           + a BACK button. Real, wallet-to-wallet, D1-backed (functions/
+           api/messages-inbox.js/-thread.js/-send.js, wired up in
+           loadMessagesInbox/openMessageThread/sendMessage below) — see
+           those files' own comments and HANDOFF.md for the one remaining
+           manual step (the MESSAGES_DB binding in the Cloudflare Pages
+           dashboard) before this works in production; every call fails
+           with a real visible error, not a silent hang, until that's
+           done. Was folded into the 0FFERS box/panel for a while (see
+           profileTabPanelOffers's own comment on why) — split back into
+           its own destination now that messaging actually works. -->
+      <div class="profile-tab-panel" id="profileTabPanelMessages" style="display:none;">
+        <div class="panel-title">MESSAGE !NB0X</div>
         <div id="profileMessagesListView">
           <button type="button" class="action-btn profile-messages-newbtn" id="profileMessagesNewBtn">+ NEW MESSAGE</button>
           <div class="profile-msg-new-prompt" id="profileMessagesNewPrompt" style="display:none;">
@@ -8303,6 +8305,19 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div class="th-empty" id="profileMessagesThreadStatus" style="display:none;"></div>
         </div>
+        <button type="button" class="profile-holdings-viewmore" id="profileMessagesBack">← BACK</button>
+      </div>
+      <!-- 0FFERS — its own real full page again (reported live as wanting
+           it split back out of MESSAGE !NB0X, which it had been merged
+           into for a while — see that panel's own comment for why: with
+           MESSAGES_DB never bound in production there was never a second
+           real inbox to justify separate boxes, so one label briefly
+           covered both). 0FFERS RECE!VED/0UTG0!NG 0FFERS are unchanged —
+           same real renderMyOffersList/renderOutgoingOffersList, fed by
+           loadOffersReceived/loadOutgoingOffers which already run on
+           wallet connect (no lazy-load-on-open needed here, unlike
+           MESSAGE !NB0X). -->
+      <div class="profile-tab-panel" id="profileTabPanelOffers" style="display:none;">
         <div class="panel-title">0FFERS RECE!VED</div>
         <div id="myOffersList"></div>
         <div class="panel-title outgoing-offers-title">0UTG0!NG 0FFERS</div>
@@ -9964,8 +9979,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'mainframeDexThirdeye','mainframeDexBear','mainframeDexCult','mainframeDexSmoki',
    'topTabs','topTabsWrap','flockTabLabel','scyllaWalletWrap','walletSwitchDropdown','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
-   'profileBoxGrid','profileTabOffersBadge','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
-   'profileTabPanelSearch','profileSearchInput','profileSearchResults','profileSearchBack','profileOffersBack',
+   'profileBoxGrid','profileTabOffersBadge','profileTabPanelMessages','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
+   'profileTabPanelSearch','profileSearchInput','profileSearchResults','profileSearchBack','profileMessagesBack','profileOffersBack',
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistTitle','profileWatchlistClearFilter',
@@ -18832,6 +18847,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // profileBoxGrid box below) resets it back to null, same as it always
   // showed — everything, every collection.
   function switchProfileTab(tab, keepWatchlistFilter){
+    el.profileTabPanelMessages.style.display = tab === 'messages' ? '' : 'none';
     el.profileTabPanelOffers.style.display = tab === 'offers' ? '' : 'none';
     el.profileTabPanelCollections.style.display = tab === 'collections' ? '' : 'none';
     el.profileTabPanelWatchlist.style.display = tab === 'watchlist' ? '' : 'none';
@@ -18840,12 +18856,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!keepWatchlistFilter) state.watchlistFilterCollection = null;
       renderProfileWatchlist();
     }
-    // SEARCH PR0F!LE and !NB0X both go full-page (reported live) — the
-    // banner AND the box grid hide while either is open, unlike every
-    // other box which just opens its panel below the grid+banner as
-    // normal. Each panel carries its own BACK button back to null/neutral.
+    // SEARCH PR0F!LE, MESSAGE !NB0X and 0FFERS all go full-page (reported
+    // live) — the banner AND the box grid hide while any of them is open,
+    // unlike every other box which just opens its panel below the
+    // grid+banner as normal. Each panel carries its own BACK button back
+    // to null/neutral.
     el.profileTabPanelSearch.style.display = tab === 'profile' ? '' : 'none';
-    var fullPage = tab === 'profile' || tab === 'offers';
+    var fullPage = tab === 'profile' || tab === 'messages' || tab === 'offers';
     el.profileBoxGrid.style.display = fullPage ? 'none' : '';
     el.profileBanner.style.display = fullPage ? 'none' : '';
     if (tab === 'profile'){
@@ -18858,10 +18875,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       btn.classList.toggle('active', btn.getAttribute('data-profilebox') === tab);
     });
     if (tab === 'crown' && crownData === null) loadCrownLeaderboard();
-    // !NB0X always lands on the conversation LIST, never wherever a
-    // previous visit's thread happened to leave things — closeMessageThread
+    // MESSAGE !NB0X always lands on the conversation LIST, never wherever
+    // a previous visit's thread happened to leave things — closeMessageThread
     // just resets that view state, loadMessagesInbox does the real fetch.
-    if (tab === 'offers' && MY_WALLET){
+    if (tab === 'messages' && MY_WALLET){
       closeMessageThread();
       loadMessagesInbox();
     }
@@ -18941,6 +18958,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     browseOwnerCollection(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
   });
   el.profileSearchBack.addEventListener('click', function(){ switchProfileTab(null); });
+  el.profileMessagesBack.addEventListener('click', function(){ switchProfileTab(null); });
   el.profileOffersBack.addEventListener('click', function(){ switchProfileTab(null); });
   // ---- MESSAGES — real wallet-to-wallet D1-backed messaging (functions/
   // api/messages-inbox.js/-thread.js/-send.js). The XRPL address format
