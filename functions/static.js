@@ -11865,20 +11865,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Real XRP sale history (highSaleEntry, see toItem in api/pigeons.js)
     // is null (not 0) when a Pigeon genuinely has no recorded sale, distinct
     // from an actual free/near-free past sale — that's the "never resold
-    // since mint" case, shown as COND!T!ON :: M!NT instead of a blank line
+    // since mint" case, shown as M!NT COND!T!0N instead of a blank line
     // (per explicit confirmation — no separate "mint" data field exists,
     // this reuses the exact same avgSaleXrp null-check already driving
-    // whether AVG SALE PR!CE shows at all). Both lines render label/value
-    // stacked (.result-stat-stack), not side by side on one line.
+    // whether AVG SALE PR!CE shows at all) — same wording the detail
+    // screen's own M!NT COND!T!0N readout already uses (detailHighSale/
+    // detailRecentSale), reported live as wanting them to match instead
+    // of this one reading backwards as "COND!T!ON :: M!NT". A single
+    // plain line now, not the AVG SALE PR!CE line's own label/value
+    // stack (.result-stat-stack) — there's no separate label/value pair
+    // here, just the one phrase.
     // No sale-history crawl exists for a browse-only collection at all
     // (see COLLECTION_META) — avgSaleXrp is always null for one, which
-    // would otherwise show every single card as COND!T!ON :: M!NT
+    // would otherwise show every single card as M!NT COND!T!0N
     // regardless of its real history. Blank instead of a guaranteed-wrong
     // label.
     var hasAvgSale = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
     var avgSaleLine = !COLLECTION_META[state.collection].tradeable ? '' : hasAvgSale
       ? '<div class="result-rarity-line result-stat-stack"><span class="stat-label">AVG SALE PR!CE ::</span><span class="stat-value">' + greenNum(fmtXrp(p.avgSaleXrp)) + ' XRP</span></div>'
-      : '<div class="result-rarity-line result-stat-stack"><span class="stat-label">COND!T!ON ::</span><span class="stat-value">' + greenNum('M!NT') + '</span></div>';
+      : '<div class="result-rarity-line">' + greenNum('M!NT C0ND!T!0N') + '</div>';
     // Real cross-market floor price (see PRICE_ASC/crossListing in
     // startCollectionBrowse) — only set on items returned by that sort,
     // so this stays blank for every other sort instead of guessing.
