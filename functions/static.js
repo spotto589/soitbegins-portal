@@ -172,7 +172,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        screen) — a real variable, not a magic number repeated in both
        body's own padding-top and #screenMainframe/#screenDetail's own
        top offset, which otherwise have to agree by coincidence. */
-    --global-ticker-h:78px;
+    --global-ticker-h:66px;
   }
   /* PHN!X/TEDDY used to swap in two entirely different UNIVERSAL palettes
      here (every cyan/magenta on the page, not just the banner) — that was
@@ -1138,6 +1138,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     letter-spacing:0.04em;
     text-shadow:none;
   }
+  /* The real culprit behind "a lot of dead space" in the top bar: the
+     generic .traits-hover-wrap .trait-row-label rule (further down this
+     file, tuned for SORT BY/FILTER BY TRAITS at their own small 15px
+     font-size) happens to share this same specificity and comes later in
+     the file, so its padding:0.75em 1em was winning here — and at THIS
+     label's much bigger clamped font-size (up to 26px), 0.75em/1em
+     inflates to ~19.5px/26px of padding alone, ballooning the whole bar
+     well past what its actual content needs. Explicit padding here
+     (same specificity, but this is the more semantically specific rule)
+     overrides it back down to something sane. */
+  #globalTopBar .tab-db-select .trait-row-label{ padding:0.2em 0; }
   /* DATABASE (still on the MA!NFRAME picker) vs the current collection
      name (a real collection actually being browsed) — whichever one the
      tab is actually showing gets underlined, toggled in showTab (see
@@ -7153,7 +7164,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      flex-child text-overflow gotcha this file documents elsewhere — lets
      each half actually shrink below its content's natural width instead
      of forcing the bar wider than the viewport. */
-  #globalTopBar .tab-btn{ flex:1 1 50%; min-width:0; padding:0.7em 1rem; }
+  /* Padding trimmed from 0.7em (reported live as "a lot of dead space" —
+     the bar's fixed --global-ticker-h height was sized to fit this, not
+     the other way round, so shrinking this and re-measuring the real
+     rendered height into that variable is what actually reclaims the
+     space instead of just clipping content). */
+  #globalTopBar .tab-btn{ flex:1 1 50%; min-width:0; padding:0.4em 1rem; }
   /* Σκύλλα — logo + big heading together, one real button (reported live
      wanting no separate small "Σκύλλα" tab any more). */
   .global-top-scylla-btn{ display:flex; align-items:center; justify-content:center; gap:0.75rem; }
@@ -7213,7 +7229,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      whole button's content. */
   .global-top-scylla-status{ font-size:12px; letter-spacing:0.06em; color:var(--grey-dim); margin-top:0.15rem; }
   @media (max-width:700px){
-    #globalTopBar .tab-btn{ padding:0.55em 0.6rem; }
+    #globalTopBar .tab-btn{ padding:0.35em 0.6rem; }
     #globalTopBarLogo{ width:22px; }
     /* Same "blurry small" call as .tab-db-heading's own comment — drop
        the chromatic shadow entirely below this breakpoint. */
