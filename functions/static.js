@@ -4444,7 +4444,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:color 0.15s ease;
   }
   .input-clear-btn:hover{ color:var(--magenta); }
-  input:placeholder-shown + .input-clear-btn{ display:none; }
+  /* ~ (general sibling), not + (immediate next sibling) — the two
+     calculator inputs now have a .pigeons-calc-unit label sitting between
+     the input and its own clear button (see the calc panel's own markup),
+     so + would never match there; ~ still matches every other input on
+     the page where the clear button really is the immediate next sibling,
+     so this is a pure generalisation, not a behaviour change elsewhere. */
+  input:placeholder-shown ~ .input-clear-btn{ display:none; }
   /* Lighter default color for inputs sitting on the trustline banner's
      purple gradient, where the plain grey-dim default would be nearly
      invisible. */
@@ -5217,9 +5223,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     animation:offer-confirm-pop 0.2s ease;
   }
   .pigeons-calc-panel .node-eyebrow{ color:var(--grey); margin-bottom:1.25rem; }
-  .pigeons-calc-panel .pigeons-bar-rate-row{ justify-content:center; margin-bottom:1.1rem; }
-  .pigeons-calc-panel .pigeons-bar-rate-value{ font-size:15px; }
-  .pigeons-calc-panel .pigeons-bar-calc{ padding:1.1em 1.1em; }
+  .pigeons-calc-panel .pigeons-bar-rate-row{ justify-content:center; margin-bottom:1.1rem; gap:0.75rem; }
+  /* Bumped up from the shared 12px/22px defaults (reported live as wanting
+     the rate readout + its DEXSCREENER icon bigger in here specifically —
+     scoped to .pigeons-calc-panel so the small versions used elsewhere,
+     like the stats carousel tile, are untouched). */
+  .pigeons-calc-panel .pigeons-bar-rate-value{ font-size:22px; }
+  .pigeons-calc-panel .pigeons-bar-dex-btn{ width:38px; height:38px; padding:5px; }
+  .pigeons-calc-panel .pigeons-bar-dex-icon{ width:26px; height:26px; }
+  /* flex-wrap always on here (not just under the existing <500px media
+     query below) — the two unit labels + bigger clear buttons added
+     alongside the number inputs push this row wider than the panel's own
+     max-width even on desktop, confirmed live as "$PIGEONS ×" spilling
+     out past the panel's right edge instead of wrapping down. */
+  .pigeons-calc-panel .pigeons-bar-calc{ padding:1.1em 1.1em; flex-wrap:wrap; justify-content:center; row-gap:0.6em; }
   .pigeons-calc-panel .pigeons-bar-calc-input{ font-size:22px; }
   /* VIEW 0N DEX — a real second action underneath the calculator itself,
      not just the small icon-link next to the rate above (kept as-is, a
@@ -5311,7 +5328,31 @@ const SWAP_HTML = `<!DOCTYPE html>
      minimum width so a typed number doesn't clip. */
   .pigeons-bar-calc-input-wide{ width:14ch; min-width:14ch; }
   .pigeons-bar-calc-input::placeholder{ color:rgba(255,255,255,0.6); text-transform:uppercase; }
-  .pigeons-bar-calc-arrow{ color:rgba(255,255,255,0.7); font-size:18px; }
+  /* flex-basis:100% forces this onto its own centered row once the two
+     input groups wrap onto separate lines (see .pigeons-calc-panel
+     .pigeons-bar-calc's own flex-wrap comment) — without it the arrow
+     tacks onto the end of the first row instead of sitting centered
+     between the two. */
+  .pigeons-bar-calc-arrow{ color:rgba(255,255,255,0.7); font-size:18px; flex:1 0 100%; text-align:center; margin:0.15em 0; }
+  /* Groups one calculator input with its own unit label + clear button —
+     each side (XRP / $PIGEONS) needs to scope :placeholder-shown ~
+     .input-clear-btn to ONLY its own input, not the other side's, since
+     both live in the same outer .pigeons-bar-calc flex row. */
+  .pigeons-calc-input-wrap{ display:inline-flex; align-items:baseline; gap:0.35em; }
+  /* Static "XRP" / "$PIGEONS" unit next to the typed number (reported
+     live as wanting "100 XRP" / "458,000 $PIGEONS" instead of a bare
+     number with the unit only implied by the empty-state placeholder) —
+     a fixed label, not part of the input's own value, so the existing
+     parse/format functions never have to strip it back out. */
+  .pigeons-calc-unit{
+    font-family:var(--font-mono);
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    color:rgba(255,255,255,0.55);
+    text-transform:uppercase;
+    white-space:nowrap;
+  }
   /* DEXSCREENER icon inside its stat-tile up in the carousel now (see
      the RATE page) — sizing only, the tile/link styling comes from
      .stat-tile/.stat-tile-link. */
@@ -7908,7 +7949,7 @@ const SWAP_HTML = `<!DOCTYPE html>
          overflow:hidden the way the old anchored popover did. -->
     <div id="pigeonsCalcModal" style="display:none;">
       <div class="pigeons-calc-panel">
-        <div class="node-eyebrow">// XRP :: $P!GE0NS EXCHANGE</div>
+        <div class="node-eyebrow">// EXCHANGE CALCULAT0R</div>
         <div class="pigeons-bar-rate-row">
           <a class="pigeons-bar-dex-btn" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
             <img class="pigeons-bar-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -7916,13 +7957,19 @@ const SWAP_HTML = `<!DOCTYPE html>
           <span class="pigeons-bar-rate-value" id="pigeonsBarRateValue" style="display:none;"></span>
         </div>
         <div class="pigeons-bar-calc">
-          <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="XRP">
-          <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
+          <span class="pigeons-calc-input-wrap">
+            <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="0">
+            <span class="pigeons-calc-unit">XRP</span>
+            <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
+          </span>
           <span class="pigeons-bar-calc-arrow">⇄</span>
-          <input class="pigeons-bar-calc-input pigeons-bar-calc-input-wide" id="pigeonsCalcPigeonsInput" type="text" inputmode="decimal" placeholder="$P!GE0NS">
-          <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
+          <span class="pigeons-calc-input-wrap">
+            <input class="pigeons-bar-calc-input pigeons-bar-calc-input-wide" id="pigeonsCalcPigeonsInput" type="text" inputmode="decimal" placeholder="0">
+            <span class="pigeons-calc-unit" id="pigeonsCalcPigeonsUnit">$P!GE0NS</span>
+            <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
+          </span>
         </div>
-        <a class="pigeons-calc-dex-btn" id="pigeonsCalcDexBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener">V!EW 0N DEX</a>
+        <button type="button" class="pigeons-calc-dex-btn" id="pigeonsCalcBuyBtn">BUY $P!GE0NS</button>
         <button type="button" class="pigeons-calc-close-btn" id="pigeonsCalcCloseBtn">CL0SE</button>
       </div>
     </div>
@@ -9912,7 +9959,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','showCollectionWatchlistBtn','pigeonsBarDexBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
-   'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcDexBtn','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
+   'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcBuyBtn','pigeonsCalcPigeonsUnit','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'screenMainframe','mainframeGrid','mainframeSubtitle','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
    'mainframeStatsThirdeye','mainframeStatsBear','mainframeStatsCult','mainframeStatsSmoki',
    'globalTopBar','globalTopBarHeading',
@@ -16537,6 +16584,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.ciIssuerAddr.textContent = 'N/A';
     }
     el.pigeonsBalanceBuyBtn.textContent = 'BUY ' + meta.tokenLabel;
+    el.pigeonsCalcBuyBtn.textContent = 'BUY ' + meta.tokenLabel;
+    el.pigeonsCalcPigeonsUnit.textContent = meta.tokenLabel;
     el.salesCurrencyPigeonsBtn.textContent = meta.tokenLabel;
     el.statScyllaListedLabel.textContent = meta.tokenLabel + ' FL00R';
     updateTrustlineThumb(collectionKey);
@@ -16987,7 +17036,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       // last, or the hardcoded $PIGEONS default from the HTML.
       if (data && data.dexUrl){
         el.pigeonsDexLink.href = data.dexUrl;
-        el.pigeonsCalcDexBtn.href = data.dexUrl;
         el.pigeonsBarDexBtn.href = data.dexUrl;
         el.pigeonsDexLink.style.display = '';
         el.pigeonsBarDexBtn.style.display = MY_WALLET ? '' : 'none';
@@ -17012,18 +17060,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // computed (pigeons -> XRP) result gets clamped to as well, so the box
   // never shows something bigger than you could've typed directly.
   var CALC_MAX_XRP = 100000;
-  // Past this many $PIGEONS, the box shows a rounded-down "Nk" instead of
-  // the full digit string (234596 -> "234k") — same threshold a k-shorthand
-  // entry naturally lands on too, see formatPigeonsCalcValue below.
-  var CALC_PIGEONS_COMPACT_THRESHOLD = 100000;
-  // $PIGEONS side accepts k/m shorthand, each handled differently:
-  // trailing k/K expands to the full comma-grouped number ("123k" ->
-  // "123,000") exactly like formatThousandsInput elsewhere on this page;
-  // trailing m/M stays typed as-is ("123m" never expands — spelling out
-  // a nine-digit number doesn't make a $PIGEONS amount easier to read).
-  // Whatever the box currently shows, this pulls out the real underlying
-  // number for the XRP conversion — including re-parsing a "Nk" the box
-  // itself put there via the compacting rule below.
+  // $PIGEONS side accepts k/m shorthand as a quick way to type a big
+  // number (typing "500k" or "1.2m") but always fully expands it to the
+  // real comma-grouped digit string right away — it used to instead
+  // collapse ANY number past 100k down to a rounded "Nk" (234596 -> "234k")
+  // and stay that way, which is what made going past that into the
+  // millions impossible to actually see/type: reported live as wanting
+  // "458,000 $PIGEONS" instead of "458k" and the box "automatically puts
+  // the k and you can't go to M". Whatever the box currently shows, this
+  // pulls out the real underlying number for the XRP conversion.
   function parsePigeonsCalcValue(raw){
     var s = raw.trim();
     var shorthand = s.match(/^([0-9]*\.?[0-9]+)[kKmM]$/);
@@ -17033,23 +17078,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     return Number(s.replace(/,/g, ''));
   }
-  // Reformats the $PIGEONS box in place: k always expands, m always stays
-  // put, and any plain number past CALC_PIGEONS_COMPACT_THRESHOLD collapses
-  // to a rounded-down "Nk" instead of a long digit string. A k-shorthand
-  // entry that itself expands past the threshold (e.g. "123k" -> 123,000)
-  // immediately re-collapses to the same "123k" it started as — stable,
-  // not a back-and-forth toggle — since floor(123000 / 1000) is exactly 123.
+  // Reformats the $PIGEONS box in place: k/m shorthand always expands to
+  // the full number, and any plain typed number just gets comma-grouped
+  // as-is, at any magnitude — same "normal" behaviour as every other
+  // amount field on this page (see formatThousandsInput).
   function formatPigeonsCalcValue(raw){
     var s = raw.trim();
-    var mMatch = s.match(/^([0-9]*\.?[0-9]+)[mM]$/);
-    if (mMatch) return mMatch[1] + 'm';
-    var kMatch = s.match(/^([0-9]*\.?[0-9]+)[kK]$/);
-    var value = kMatch ? parseFloat(kMatch[1]) * 1000 : Number(s.replace(/,/g, ''));
-    if (!isFinite(value)) value = 0;
-    if (value > CALC_PIGEONS_COMPACT_THRESHOLD) return Math.floor(value / 1000) + 'k';
-    // A k-shorthand entry under the threshold expands to the real
-    // multiplied number ("5k" -> "5,000"), not the raw typed text.
-    if (kMatch) return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    var shorthand = s.match(/^([0-9]*\.?[0-9]+)[kKmM]$/);
+    if (shorthand){
+      var mult = /[mM]$/.test(s) ? 1000000 : 1000;
+      return (parseFloat(shorthand[1]) * mult).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    }
     // Plain typed digits — comma-group the raw string in place (not a
     // round-trip through Number/toLocaleString) so an in-progress decimal
     // like "123." isn't mangled mid-type.
@@ -17087,9 +17126,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     var pigeonsOut = xrpValue / trustlineXrpPerPigeon;
-    el.pigeonsCalcPigeonsInput.value = pigeonsOut > CALC_PIGEONS_COMPACT_THRESHOLD
-      ? Math.floor(pigeonsOut / 1000) + 'k'
-      : pigeonsOut.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    el.pigeonsCalcPigeonsInput.value = pigeonsOut.toLocaleString(undefined, { maximumFractionDigits: 2 });
     resizeCalcInput(el.pigeonsCalcPigeonsInput, 14);
     updateCalcToggleLabel();
   }
@@ -17123,6 +17160,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     openCalcPopover();
   });
   el.pigeonsCalcCloseBtn.addEventListener('click', closeCalcPopover);
+  // Replaces the old V!EW 0N DEX link here — the actual BUY $P!GE0NS flow
+  // (openBuySwapPanel, same one the trustline banner's own BUY button
+  // opens) is the real next action after using the calculator, not a
+  // second way to reach DexScreener when the rate readout + icon-link up
+  // top already cover that.
+  el.pigeonsCalcBuyBtn.addEventListener('click', function(){
+    closeCalcPopover();
+    openBuySwapPanel(state.collection);
+  });
   // Click the dark overlay itself (not the panel) to close — same pattern
   // as #offerConfirmModal/#buySwapModal's own overlay click handlers.
   el.pigeonsCalcModal.addEventListener('click', function(e){
@@ -17536,16 +17582,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.statScyllaListedTile.classList.toggle('scylla-active', state.scyllaListedOnly);
   // One delegated handler for every .input-clear-btn on the page (search,
   // offer amount, list price, both XRP calculator inputs) — see its own
-  // CSS comment for why it must sit as the input's next sibling in
-  // markup. Clears the value, refocuses the input, and dispatches a real
-  // 'input' event so whatever that specific input's own listener already
-  // does (re-validate, re-query, reformat, recompute a quote) fires
-  // exactly as if the user had deleted the text themselves — no
-  // per-input clear logic needed anywhere else.
+  // CSS comment for why it must sit somewhere after the input as a
+  // sibling in markup. Clears the value, refocuses the input, and
+  // dispatches a real 'input' event so whatever that specific input's own
+  // listener already does (re-validate, re-query, reformat, recompute a
+  // quote) fires exactly as if the user had deleted the text themselves —
+  // no per-input clear logic needed anywhere else.
   document.addEventListener('click', function(e){
     var clearBtn = e.target.closest('.input-clear-btn');
     if (!clearBtn) return;
+    // Usually the immediate previous sibling, but the two calculator
+    // inputs now have a .pigeons-calc-unit label sitting in between (see
+    // the calc panel's own markup) — walk back past any non-input
+    // siblings to find it instead of assuming direct adjacency.
     var input = clearBtn.previousElementSibling;
+    while (input && input.tagName !== 'INPUT' && input.tagName !== 'TEXTAREA'){
+      input = input.previousElementSibling;
+    }
     if (!input || (input.tagName !== 'INPUT' && input.tagName !== 'TEXTAREA')) return;
     input.value = '';
     input.focus();
