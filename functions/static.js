@@ -18092,18 +18092,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       renderOwnerLink(null, null);
     });
   }
-  // S!GNATURE BANNER at the top of DETA!L — this Pigeon's real owner
-  // (reported live wanting it "when im clicked into a pigeon and i own
-  // this"), same signatureBannerHtml Σκύλλα/T0P 123 use. Hidden entirely
-  // rather than showing an empty card while the owner isn't known yet.
+  // S!GNATURE BANNER at the top of DETA!L — was added showing this
+  // Pigeon's real owner (reported live wanting it "when im clicked into
+  // a pigeon and i own this"), same signatureBannerHtml Σκύλλα/T0P 123
+  // use, now removed again (reported live). A no-op instead of ripping
+  // out both call sites (openDetail/the owner-fetch callback) or the
+  // #detailOwnerBanner element itself — either could come back easily if
+  // this is ever wanted again.
   function updateDetailOwnerBanner(owner){
-    if (!owner){
-      el.detailOwnerBanner.style.display = 'none';
-      el.detailOwnerBanner.innerHTML = '';
-      return;
-    }
-    el.detailOwnerBanner.innerHTML = signatureBannerHtml(owner, 'detail');
-    el.detailOwnerBanner.style.display = '';
+    el.detailOwnerBanner.style.display = 'none';
+    el.detailOwnerBanner.innerHTML = '';
   }
 
   // ---- PREV/NEXT — walks whichever list this Pigeon was opened from, in
