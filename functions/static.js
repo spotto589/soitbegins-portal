@@ -11498,6 +11498,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   // a specific Pigeon (owner-links, top holders, MY PIGEONS etc. browse a
   // wallet directly with no "target" pigeon that led here).
   function browseOwnerCollection(wallet, ownerShort, targetPigeon, landOnTab){
+    // Close any open overlay popup first — this fills in the DATABASE tab
+    // underneath (via showTab below), but SALES H!ST0RY/T0P 123 H0LDERS
+    // are position:fixed, z-index:1000 modals sitting ON TOP of it, so
+    // without this the tab genuinely changes underneath and the click
+    // just looks like it did nothing (reported live: clicking a wallet
+    // from inside SALES H!ST0RY "couldn't click into the wallet"). Same
+    // close showScreen's own non-'browse' branch already does for a full
+    // DETA!L/H!ST0RY screen — this covers the other real entry point,
+    // browsing straight from a modal without going through a screen.
+    el.topHoldersModal.style.display = 'none';
+    el.salesModal.style.display = 'none';
     state.scope = { wallet: wallet, ownerShort: ownerShort || wallet };
     state.targetAssets = {};
     state.traitFilters = [];
