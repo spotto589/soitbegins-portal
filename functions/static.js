@@ -7740,16 +7740,89 @@ const SWAP_HTML = `<!DOCTYPE html>
      live). Grey each piece out individually instead, via plain color/
      background changes that don't touch the banner at all, so the tape
      stays at full, readable contrast while everything else dims. */
-  .mainframe-card-soon{ cursor:default; }
+  .mainframe-card-soon{ cursor:not-allowed; }
   .mainframe-card-soon:hover{ border-color:var(--border-mid); transform:none; box-shadow:none; }
   .mainframe-card-soon:hover .mainframe-card-art{ transform:none; }
   .mainframe-card-soon .mainframe-card-tag{ color:var(--grey-dim); border-color:var(--border-mid); background:transparent; }
+  /* Desaturated on top of the existing grey tint (was tint-only) — the
+     goal is for the whole locked row to visibly drain of colour next to
+     P!GE0NS' own full-colour pulsing card below, so "everyone else is
+     locked out" reads at a glance before you even notice the tape. */
   .mainframe-card-soon .mainframe-card-art{
     background-image:linear-gradient(180deg, rgba(150,150,150,0.16) 0%, rgba(6,6,7,0.95) 100%), var(--card-art, none);
     background-color:rgba(150,150,150,0.1);
+    filter:grayscale(0.8) brightness(0.6);
   }
   .mainframe-card-soon .mainframe-card-label{ color:var(--grey); text-shadow:none; }
   .mainframe-card-soon .mainframe-card-stats{ color:var(--grey-dim); }
+  /* Persistent padlock badge (not just the diagonal tape) — sits opposite
+     the dex-link corner so it never collides, and stays visible even once
+     a real dexUrl shows that badge on the other side. pointer-events:none,
+     same reasoning as the tape: purely a visual "this one's locked" cue,
+     never worth intercepting a click meant for BUY underneath it. */
+  .mainframe-card-lock-badge{
+    position:absolute;
+    top:0.5rem;
+    right:0.5rem;
+    z-index:3;
+    width:1.9em;
+    height:1.9em;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(6,6,7,0.78);
+    border:1px solid rgba(255,255,255,0.22);
+    border-radius:50%;
+    font-size:13px;
+    pointer-events:none;
+  }
+  /* Shake feedback on clicking INTO a locked card (see mainframeGrid's own
+     click handler) — reinforces "you tried to walk in and got bounced"
+     rather than the old silent no-op, which read as broken rather than
+     deliberately locked. */
+  @keyframes mainframeCardShake{
+    0%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-6px); }
+    40%{ transform:translateX(5px); }
+    60%{ transform:translateX(-3px); }
+    80%{ transform:translateX(2px); }
+  }
+  .mainframe-card-shake{ animation:mainframeCardShake 0.4s ease; }
+  /* P!GE0NS' own card breathes — a slow pulsing glow in its real accent
+     colour, paused on hover so the existing hover glow (brighter, static)
+     takes over cleanly instead of the two fighting. The point is contrast:
+     every other card in the grid sits flat and grey, P!GE0NS is visibly
+     the one alive thing on the screen. */
+  @keyframes mainframePulseGlow{
+    0%,100%{ box-shadow:0 12px 0 -12px transparent, 0 0 0 1px rgba(var(--card-accent, 61,243,236), 0.45), 0 0 18px rgba(var(--card-accent, 61,243,236), 0.22); }
+    50%{ box-shadow:0 12px 0 -12px transparent, 0 0 0 1px rgba(var(--card-accent, 61,243,236), 0.8), 0 0 36px rgba(var(--card-accent, 61,243,236), 0.45); }
+  }
+  .mainframe-card[data-collection="pigeons"]{ animation:mainframePulseGlow 2.6s ease-in-out infinite; }
+  .mainframe-card[data-collection="pigeons"]:hover{ animation-play-state:paused; }
+  /* "● L!VE" badge on P!GE0NS only — same .mainframe-card-tag styling
+     every other collection's tag already greys out via .mainframe-card-
+     soon above, so this is the one card where it still reads in real
+     green instead of dimmed grey. */
+  .mainframe-card-live-tag{
+    display:inline-block;
+    font-family:var(--font-mono);
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.12em;
+    color:var(--green);
+    text-transform:uppercase;
+    margin-top:0.35rem;
+    padding:0.25em 0.7em;
+    border:1px solid rgba(52,255,133,0.45);
+    border-radius:var(--radius);
+    background:rgba(52,255,133,0.08);
+  }
+  /* Briefly recolours mainframeSubtitle to the same caution yellow as the
+     tape when a locked card gets clicked (see the click handler) — ties
+     the text feedback back to the visual "coming soon" language already
+     used everywhere else on the grid, instead of introducing a new colour
+     just for this one message. */
+  .mainframe-subtitle-locked{ color:#f5c518 !important; }
   /* PREV/NEXT — real paging controls again (see renderMainframePage in
      the JS for the show/hide-by-page logic; each one's own [hidden] at
      the start/end of the page range is set there, not here). */
@@ -8554,6 +8627,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
             <div class="mainframe-card-body">
               <div class="mainframe-card-label">$P!GE0NS</div>
+              <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
               <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
               <button type="button" class="mainframe-card-buy" data-collection="pigeons">BUY $P!GE0NS</button>
             </div>
@@ -8573,6 +8647,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
                 <span>V!EW CHART</span>
               </a>
+              <div class="mainframe-card-lock-badge">&#128274;</div>
               <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
             </div>
             <div class="mainframe-card-body">
@@ -8594,6 +8669,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
                 <span>V!EW CHART</span>
               </a>
+              <div class="mainframe-card-lock-badge">&#128274;</div>
               <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
             </div>
             <div class="mainframe-card-body">
@@ -8608,6 +8684,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
                 <span>V!EW CHART</span>
               </a>
+              <div class="mainframe-card-lock-badge">&#128274;</div>
               <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
             </div>
             <div class="mainframe-card-body">
@@ -8622,6 +8699,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
                 <span>V!EW CHART</span>
               </a>
+              <div class="mainframe-card-lock-badge">&#128274;</div>
               <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
             </div>
             <div class="mainframe-card-body">
@@ -8636,6 +8714,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
                 <span>V!EW CHART</span>
               </a>
+              <div class="mainframe-card-lock-badge">&#128274;</div>
               <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
             </div>
             <div class="mainframe-card-body">
@@ -8658,6 +8737,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
                 <span>V!EW CHART</span>
               </a>
+              <div class="mainframe-card-lock-badge">&#128274;</div>
               <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
             </div>
             <div class="mainframe-card-body">
@@ -8672,6 +8752,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
                 <span>V!EW CHART</span>
               </a>
+              <div class="mainframe-card-lock-badge">&#128274;</div>
               <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
             </div>
             <div class="mainframe-card-body">
@@ -8686,6 +8767,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
                 <span>V!EW CHART</span>
               </a>
+              <div class="mainframe-card-lock-badge">&#128274;</div>
               <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
             </div>
             <div class="mainframe-card-body">
@@ -8700,6 +8782,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
                 <span>V!EW CHART</span>
               </a>
+              <div class="mainframe-card-lock-badge">&#128274;</div>
               <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
             </div>
             <div class="mainframe-card-body">
@@ -16779,6 +16862,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.databaseInPicker = false;
     showTab('database');
   }
+  // Shown briefly on mainframeSubtitle when a locked card gets clicked
+  // (see the click handler below) — cleared on a timer, restoring
+  // whatever the subtitle said before.
+  var mainframeLockedTimer = null;
   el.mainframeGrid.addEventListener('click', function(e){
     var buyBtn = e.target.closest('.mainframe-card-buy');
     if (buyBtn){
@@ -16795,7 +16882,35 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     var card = e.target.closest('.mainframe-card[data-collection]');
-    if (card) enterMainframeCollection(card.getAttribute('data-collection'));
+    if (card){
+      enterMainframeCollection(card.getAttribute('data-collection'));
+      return;
+    }
+    // Clicking INTO one of the locked (.mainframe-card-soon) cards used to
+    // be a silent no-op — no data-collection means the block above never
+    // matches. That read as broken rather than deliberate, so give it a
+    // real reaction instead: a shake on the card itself plus a "LOCKED"
+    // message swapped into mainframeSubtitle for a couple seconds, same
+    // caution-yellow as the C0M!NG S00N tape (see .mainframe-subtitle-
+    // locked). Reinforces that P!GE0NS is the only one you can actually
+    // walk into right now, rather than leaving it to the greyed-out
+    // styling alone to imply that.
+    var soonCard = e.target.closest('.mainframe-card-soon');
+    if (soonCard){
+      soonCard.classList.remove('mainframe-card-shake');
+      void soonCard.offsetWidth;
+      soonCard.classList.add('mainframe-card-shake');
+      if (!mainframeLockedTimer){
+        var prevSubtitle = el.mainframeSubtitle.textContent;
+        el.mainframeSubtitle.textContent = '🔒 LOCKED — $P!GE0NS IS THE ONLY L!VE DATABASE RIGHT NOW';
+        el.mainframeSubtitle.classList.add('mainframe-subtitle-locked');
+        mainframeLockedTimer = setTimeout(function(){
+          el.mainframeSubtitle.textContent = prevSubtitle;
+          el.mainframeSubtitle.classList.remove('mainframe-subtitle-locked');
+          mainframeLockedTimer = null;
+        }, 2200);
+      }
+    }
   });
   // Keyboard equivalent for the card itself (role="button"/tabindex, see
   // the HTML's own comment on why this can't be a real <button> any
