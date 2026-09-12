@@ -6650,6 +6650,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   .dh-time{ color:var(--grey-dim); font-size:10px; letter-spacing:0.05em; text-transform:uppercase; }
   .dh-tx{ color:var(--grey-dim); font-size:10px; letter-spacing:0.06em; text-decoration:none; text-transform:uppercase; }
   .dh-tx:hover{ color:var(--cyan); text-decoration:underline; }
+  /* SOLD FOR's own FROM/TO — a labeled chip per wallet either side of an
+     arrow, not folded into the plain one-line sentence the way MINTED/
+     TRANSFERRED read. A sale genuinely has two parties that matter (who
+     sold it, who bought it) — reported live as wanting this laid out
+     clearly, since the old single-sentence "S0LD F0R x XRP T0 buyer"
+     never named the seller at all. */
+  .dh-parties{ display:flex; align-items:center; flex-wrap:wrap; gap:0.5em; margin-bottom:0.4em; font-size:13px; }
+  .dh-party{ display:flex; align-items:center; gap:0.4em; }
+  .dh-party-label{ font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; color:var(--grey-dim); }
+  .dh-party a{ color:var(--white); text-decoration:underline; font-weight:600; }
+  .dh-party a:hover{ color:var(--cyan); }
+  .dh-party-arrow{ color:var(--grey-dim); }
+  .dh-unknown{ color:var(--grey-dim); }
   .detail-actions{ display:flex; justify-content:center; gap:0.75rem; flex-wrap:wrap; margin-top:1.5rem; }
   .secondary-btn{
     background:transparent;
@@ -18171,23 +18184,44 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!full) return '';
     return '<a data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '">' + walletTagHtml(full, short) + '</a>';
   }
-  // Reads as a plain sentence per event — SOLD FOR x XRP TO wallet,
-  // TRANSFERRED TO wallet, MINTED BY wallet — instead of a cramped data
-  // table. Deeptide's history is newest-first, so MINTED BY naturally
-  // lands last without any re-sorting.
+  // Reads as a plain sentence per event — TRANSFERRED TO wallet, MINTED
+  // BY wallet — instead of a cramped data table. Deeptide's history is
+  // newest-first, so MINTED BY naturally lands last without any
+  // re-sorting. SOLD is the one exception: it gets its own labeled
+  // FROM/TO row instead of a sentence (see below) since who sold it
+  // matters as much as who bought it and the price, and folding all
+  // three into one line was burying the seller entirely.
   function historyRowHtml(e){
-    var line;
+    var when = e.date ? new Date(e.date).toLocaleDateString() : '';
+    var txLink = e.txUrl ? '<a class="dh-tx" href="' + escapeHtml(e.txUrl) + '" target="_blank" rel="noopener">TXN</a>' : '';
     if (e.type === 'sale'){
       var price = e.priceXrp !== null && e.priceXrp !== undefined
         ? '<span class="dh-price">' + e.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</span>' : '?';
-      line = '<span class="dh-verb">S0LD</span> F0R ' + price + (e.buyer ? ' T0 ' + walletLinkHtml(e.buyer, e.buyerShort) : '');
-    } else if (e.type === 'mint'){
+      // e.account is the wallet that TRANSFERRED the NFT out for this
+      // event (same field MINTED BY already reads for a mint event) —
+      // for a sale, that's the seller. The per-token history endpoint
+      // (fetchDeeptideNftHistory in _shared.js) never labelled it
+      // "seller" explicitly, which is why this got missed the first time
+      // round and the line only ever showed the buyer (reported live:
+      // "this doesn't show who sold it").
+      var seller = e.account ? walletLinkHtml(e.account, e.accountShort) : '<span class="dh-unknown">UNKN0WN</span>';
+      var buyer = e.buyer ? walletLinkHtml(e.buyer, e.buyerShort) : '<span class="dh-unknown">UNKN0WN</span>';
+      return '<div class="dh-row">' +
+        '<div class="dh-line"><span class="dh-verb">S0LD</span> F0R ' + price + '</div>' +
+        '<div class="dh-parties">' +
+          '<span class="dh-party"><span class="dh-party-label">FR0M</span> ' + seller + '</span>' +
+          '<span class="dh-party-arrow">&rarr;</span>' +
+          '<span class="dh-party"><span class="dh-party-label">T0</span> ' + buyer + '</span>' +
+        '</div>' +
+        '<div class="dh-meta"><span class="dh-time">' + escapeHtml(when) + '</span>' + txLink + '</div>' +
+      '</div>';
+    }
+    var line;
+    if (e.type === 'mint'){
       line = '<span class="dh-verb">M!NTED</span> BY ' + (e.account ? walletLinkHtml(e.account, e.accountShort) : '?');
     } else {
       line = '<span class="dh-verb">TRANSFERRED</span> T0 ' + (e.receiver ? walletLinkHtml(e.receiver, e.receiverShort) : '?');
     }
-    var when = e.date ? new Date(e.date).toLocaleDateString() : '';
-    var txLink = e.txUrl ? '<a class="dh-tx" href="' + escapeHtml(e.txUrl) + '" target="_blank" rel="noopener">TXN</a>' : '';
     return '<div class="dh-row">' +
       '<div class="dh-line">' + line + '</div>' +
       '<div class="dh-meta"><span class="dh-time">' + escapeHtml(when) + '</span>' + txLink + '</div>' +
@@ -18205,7 +18239,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
   el.detailHistoryList.addEventListener('click', function(e){
-    var walletLink = e.target.closest('.dh-parties a[data-wallet]');
+    // .dh-parties (S0LD's FR0M/T0 chips) never actually existed in the
+    // markup until this same fix added it — this selector matched
+    // nothing at all before, so MINTED BY/TRANSFERRED T0's own wallet
+    // links (rendered inside .dh-line, not .dh-parties) were just as
+    // dead. Widened to cover both now that walletLinkHtml's real output
+    // lives in either container depending on event type.
+    var walletLink = e.target.closest('.dh-line a[data-wallet], .dh-parties a[data-wallet]');
     if (walletLink) browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short'));
   });
 
