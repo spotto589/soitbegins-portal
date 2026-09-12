@@ -5218,8 +5218,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:1.5rem;
     animation:offer-confirm-pop 0.2s ease;
   }
+  /* SALES H!ST0RY specifically gets its own, much wider/taller sizing
+     (was sharing T0P 123 H0LDERS' cramped 640px box) — reported live as
+     wanting this to read as "a clear page you click into" for actually
+     researching every $P!GE0NS sale, not a small popup you skim and
+     close. T0P 123 H0LDERS stays at the original size; only this one's
+     shared .pigeons-calc-panel/.top-holders-modal-panel base above gets
+     overridden here, after it in source order so the wider numbers win. */
+  .sales-modal-panel{
+    width:min(1100px, 96vw);
+    max-height:min(92vh, 900px);
+  }
   .top-holders-modal-panel #topHoldersList{ flex:1 1 auto; min-height:0; overflow-y:auto; }
   .sales-modal-panel #salesScrollBox{ flex:1 1 auto; min-height:0; overflow-y:auto; }
+  /* Plain-language subtitle under the SALES H!ST0RY title — makes the
+     "this is a real research tool, not a decorative popup" intent explicit
+     rather than leaving the currency toggle to imply it on its own. */
+  .sales-modal-subtitle{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:0.04em;
+    color:var(--grey);
+    margin:-0.5rem 0 1rem;
+  }
   .pigeons-calc-panel{
     width:min(440px, 100%);
     text-align:center;
@@ -8212,6 +8233,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <span class="simple-picker-title">SALES H!ST0RY</span>
           <button type="button" class="simple-picker-close" id="salesCloseBtn" title="CL0SE">&times;</button>
         </div>
+        <div class="sales-modal-subtitle">EVERY REC0RDED $P!GE0NS SALE, !N XRP 0R $P!GE0NS — SCR0LL T0 RESEARCH THE FULL H!ST0RY.</div>
         <div class="sale-currency-toggle" id="salesCurrencyToggle">
           <button class="sale-currency-btn sale-currency-btn-active" data-currency="XRP">XRP</button>
           <button class="sale-currency-btn" data-currency="PIGEONS" id="salesCurrencyPigeonsBtn">$P!GE0NS</button>
