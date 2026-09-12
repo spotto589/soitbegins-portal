@@ -2909,6 +2909,30 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
           traitIndex[a.trait_type][a.value].push(it.nftId);
         }
       }
+      // NAKED/BALD synthesis — mirrors toItem's own '__no_trait__' addition
+      // in api/pigeons.js (same reasoning: Deeptide's real per-item
+      // attributes array just OMITS Clothing/Headwear entirely when
+      // there's nothing there, it's never an explicit "no trait" entry).
+      // toItem only adds that synthetic row at request time, for display —
+      // it never feeds back into THIS crawl, so traitExamples/traitIndex
+      // never learned a naked/bald Pigeon exists at all, even though every
+      // viewer-facing trait cell looks itself up by the exact same raw
+      // '__no_trait__' value. Reported live as NAKED/BALD "showing up with
+      // nothing" both on the detail screen's own trait cell (no preview
+      // photo) and in FILTER BY TRAITS (same missing photo, plus no
+      // membership list to filter by). Only these two categories, same as
+      // every other '__no_trait__' consumer in this file.
+      const noTraitCategories = Array.isArray(it.attributes) ? it.attributes.map(a => a.trait_type) : [];
+      for (const category of ['Clothing', 'Headwear']) {
+        if (noTraitCategories.includes(category)) continue;
+        if (it.image) {
+          if (!traitExamples[category]) traitExamples[category] = {};
+          if (!traitExamples[category].__no_trait__) traitExamples[category].__no_trait__ = it.image;
+        }
+        if (!traitIndex[category]) traitIndex[category] = {};
+        if (!traitIndex[category].__no_trait__) traitIndex[category].__no_trait__ = [];
+        traitIndex[category].__no_trait__.push(it.nftId);
+      }
     }
     lastTotal = page.total || lastTotal;
     skip += DEEPTIDE_LISTINGS_MAX_LIMIT;
