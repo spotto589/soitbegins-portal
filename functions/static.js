@@ -7768,11 +7768,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Desaturated on top of the existing grey tint (was tint-only) — the
      goal is for the whole locked row to visibly drain of colour next to
      P!GE0NS' own full-colour pulsing card below, so "everyone else is
-     locked out" reads at a glance before you even notice the tape. */
+     locked out" reads at a glance before you even notice the tape.
+     background-blend-mode (blends this element's OWN background layers
+     against each other) instead of the filter property (which composites
+     the whole subtree, banner/lock-badge children included) — a plain
+     filter here crushed the black/yellow C0M!NG S00N tape and the lock badge to
+     unreadable grey-on-grey right along with the art, the exact bug this
+     rule's own comment already warned about further down (reported live:
+     "i still cant read them"). Blend mode only ever touches this
+     element's two background layers, never anything nested inside it. */
   .mainframe-card-soon .mainframe-card-art{
-    background-image:linear-gradient(180deg, rgba(150,150,150,0.16) 0%, rgba(6,6,7,0.95) 100%), var(--card-art, none);
+    background-image:linear-gradient(180deg, rgba(140,140,140,0.55) 0%, rgba(6,6,7,0.95) 100%), var(--card-art, none);
     background-color:rgba(150,150,150,0.1);
-    filter:grayscale(0.8) brightness(0.6);
+    background-blend-mode:saturation, normal;
   }
   .mainframe-card-soon .mainframe-card-label{ color:var(--grey); text-shadow:none; }
   .mainframe-card-soon .mainframe-card-stats{ color:var(--grey-dim); }
