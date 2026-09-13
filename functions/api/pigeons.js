@@ -3,7 +3,7 @@
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap, getRarityMap, getRarityStats, maybeRefreshRarityScores,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue, getFloorIndex,
-  resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops, TRADEABLE_COLLECTIONS,
+  resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG,
   getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap
 } from '../_shared.js';
@@ -403,6 +403,26 @@ export async function onRequestGet(context) {
     // pages, offers, etc.), computed here so the client never has to
     // guess it — see accountReserveDrops in _shared.js.
     return json({ drops: info.drops, reserveDrops: accountReserveDrops(info.ownerCount).toString() });
+  }
+
+  // Wallet PR0F!LE — every tradeable collection's real token balance for
+  // an arbitrary wallet (not just the logged-in user's own MY C0!NS,
+  // which is all fetchPigeonsAccountLine's other callers ever needed).
+  // One account_lines call total (fetchAllAccountLines, no peer filter),
+  // matched against every TRADEABLE_COLLECTIONS entry client-side of the
+  // XRPL call — cheap regardless of how many collections exist.
+  if (params.get('walletProfileCoins') === '1') {
+    const wallet = params.get('wallet');
+    if (!wallet) return json({ error: 'missing_wallet' }, 400);
+    const [lines, xrpInfo] = await Promise.all([
+      fetchAllAccountLines(wallet),
+      fetchXrpBalanceDrops(wallet)
+    ]);
+    return json({
+      wallet,
+      xrpDrops: xrpInfo ? xrpInfo.drops : null,
+      coins: matchAccountLinesToCollections(lines)
+    });
   }
 
   // BUY $PIGEONS swap — Stage 3 live quote (walks the real order book, see

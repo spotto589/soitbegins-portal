@@ -2052,6 +2052,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-coin-balance .hi{ color:var(--green); font-weight:600; }
   .profile-coin-balance.profile-coin-warn{ color:var(--red); }
   .profile-coin-value{ font-family:var(--font-mono); font-size:12px; letter-spacing:0.03em; color:var(--cyan); margin-top:0.15rem; }
+  /* ---- WALLET SC0PE C0!NS — compact chips, one per collection this
+     wallet actually holds a trustline for, shown right under the
+     signature banner any time you land on someone's wallet scope (see
+     browseOwnerCollection/loadWalletScopeCoins in the JS). Deliberately
+     smaller/denser than .profile-coin-row above (MY C0!NS' own big
+     thumbnail cards) — this sits above a whole NFT grid, not as its own
+     dedicated tab, so it reads as a quick strip, not another full
+     section to scroll past. ---- */
+  .wallet-scope-coins{ display:flex; flex-wrap:wrap; gap:0.6rem; margin:0 0 1.25rem; }
+  .wallet-scope-coin{
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+    padding:0.5rem 0.85rem;
+    border:1px solid rgba(var(--coin-accent, 61,243,236), 0.4);
+    border-radius:var(--radius);
+    background:rgba(var(--coin-accent, 61,243,236), 0.1);
+  }
+  .wallet-scope-coin-label{ font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:0.05em; color:rgb(var(--coin-accent, 61,243,236)); text-transform:uppercase; }
+  .wallet-scope-coin-balance{ font-family:var(--font-display); font-size:15px; font-weight:700; color:#fff; }
   /* Σκύλλα BUY button — ghost at rest (ties this button to whichever
      collection's own real coin it's for, --card-accent, same as the
      thumb right next to it), fills solid on hover. Same recipe as every
@@ -9046,6 +9066,15 @@ const SWAP_HTML = `<!DOCTYPE html>
              default gradient/"no username" empty state for a wallet that
              never set one up. Hidden outside wallet scope (exitWalletScope). -->
         <div id="walletScopeBanner" style="display:none; margin-bottom:1.25rem;"></div>
+        <!-- WALLET SC0PE C0!NS — this wallet's own real token balance
+             across every tradeable collection (walletProfileCoins in
+             pigeons.js), not just the NFT grid below it. Every wallet
+             gets this for free the moment you land on their scope (a
+             wallet that never customised a profile still gets a real
+             one here — signatureBannerHtml's own default-gradient empty
+             state right above it is the only thing "default" about it,
+             the coin data itself is always live). -->
+        <div class="wallet-scope-coins" id="walletScopeCoins" style="display:none;"></div>
         <div class="results-block" id="resultsBlock">
           <!-- One line: SEARCH (left), SORT BY (middle), VIEW (right). -->
           <div class="results-header-row">
@@ -10286,7 +10315,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'traitsFlyoutSortRarity','traitsFlyoutSortAz','traitsFlyoutSearchInput',
    'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote','salesCurrencyToggle',
-   'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle','walletScopeBanner',
+   'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle','walletScopeBanner','walletScopeCoins',
    'flockGridPanel',
    'nodeEyebrowText','walletBoxTitleMain','walletBoxTitleSub',
    'targetPigeonCard','targetPigeonImg','targetPigeonNum','targetPigeonOwner',
@@ -11691,6 +11720,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // shows it now, not just DETA!L/T0P 123.
     el.walletScopeBanner.innerHTML = signatureBannerHtml(wallet, 'detail');
     el.walletScopeBanner.style.display = '';
+    loadWalletScopeCoins(wallet);
     if (targetPigeon){
       el.targetPigeonCard.style.display = '';
       el.targetPigeonImg.innerHTML = targetPigeon.image ? '<img src="' + escapeHtml(targetPigeon.image) + '" alt="">' : 'IMAGE';
@@ -11841,6 +11871,54 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
   }
 
+  // ---- WALLET SC0PE C0!NS — every wallet's own real token balance
+  // across every tradeable collection (reported live: clicking a wallet
+  // anywhere should show "that wallet's coins and NFTs", not just its
+  // NFTs — the DATABASE grid this scope already scopes). No caching:
+  // walletProfileCoins is one cheap account_lines call server-side (see
+  // its own comment in pigeons.js), and a balance genuinely changing
+  // between visits is exactly the case that would make a cached figure
+  // wrong. Guarded against having since exited/switched scope by the
+  // time a slow response lands, same pattern the NFT fetch above uses. ----
+  var walletScopeCoinsReqWallet = null;
+  function loadWalletScopeCoins(wallet){
+    walletScopeCoinsReqWallet = wallet;
+    el.walletScopeCoins.style.display = '';
+    el.walletScopeCoins.innerHTML = '<div class="th-empty">L0AD!NG C0!NS...</div>';
+    api({ walletProfileCoins: 1, wallet: wallet }).then(function(data){
+      if (walletScopeCoinsReqWallet !== wallet) return; // navigated away already
+      renderWalletScopeCoins((data && data.coins) || null);
+    }).catch(function(){
+      if (walletScopeCoinsReqWallet !== wallet) return;
+      el.walletScopeCoins.innerHTML = '<div class="th-empty">C0ULD N0T L0AD C0!NS.</div>';
+    });
+  }
+  function renderWalletScopeCoins(coins){
+    // hasTrustline === null on every row means the ledger lookup itself
+    // failed (see matchAccountLinesToCollections in _shared.js) — never
+    // silently rendered as "holds nothing".
+    if (!coins || !coins.length || coins[0].hasTrustline === null){
+      el.walletScopeCoins.innerHTML = '<div class="th-empty">C0ULD N0T L0AD C0!NS.</div>';
+      return;
+    }
+    // Only ever show what this wallet actually holds — a real trustline
+    // with a real (even if 0) balance. A collection it never set a
+    // trustline for at all is just noise here, same reasoning MY C0!NS
+    // already uses for the logged-in user's own list.
+    var held = coins.filter(function(c){ return c.hasTrustline; });
+    if (!held.length){
+      el.walletScopeCoins.innerHTML = '<div class="th-empty">TH!S WALLET H0LDS N0 TRACKED C0!NS.</div>';
+      return;
+    }
+    el.walletScopeCoins.innerHTML = held.map(function(c){
+      var accent = PROFILE_COIN_ACCENTS[c.key] || '61,243,236';
+      return '<div class="wallet-scope-coin" style="--coin-accent:' + accent + ';">' +
+        '<span class="wallet-scope-coin-label">' + escapeHtml(c.label) + '</span>' +
+        '<span class="wallet-scope-coin-balance">' + greenNum(c.balance.toLocaleString(undefined, { maximumFractionDigits: 2 })) + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
   function enterOwnerScope(targetPigeon){
     if (!targetPigeon.owner){
       alert('OWNER N0T !NDEXED F0R TH!S P!GE0N YET — TRY ANOTHER, OR !NSPECT !T AGA!N SH0RTLY.');
@@ -11864,6 +11942,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.nodeHeaderPanel.style.display = 'none';
     el.walletScopeBanner.style.display = 'none';
     el.walletScopeBanner.innerHTML = '';
+    el.walletScopeCoins.style.display = 'none';
+    el.walletScopeCoins.innerHTML = '';
     refreshSearchPanelSubtitle();
     el.searchInput.value = '';
     renderTradeBuilder();

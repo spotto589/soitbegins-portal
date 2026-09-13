@@ -1419,6 +1419,40 @@ export async function fetchPigeonsAccountLine(account, tokenConfig = PIGEONS_TOK
   return { hasTrustline: true, balance: parseFloat(line.balance) || 0 };
 }
 
+// All of a wallet's real trustlines in ONE account_lines call (no peer
+// filter) — used by the wallet PROFILE view's own COINS section, which
+// needs every tradeable collection's balance for an arbitrary wallet
+// (not just the logged-in user's own, which is all fetchPigeonsAccountLine's
+// existing callers ever needed). One XRPL call regardless of how many
+// collections exist, instead of one fetchPigeonsAccountLine call per
+// collection. Returns null (never []) on a genuine lookup failure, same
+// null-means-"couldn't check" convention fetchPigeonsAccountLine uses.
+export async function fetchAllAccountLines(account) {
+  const data = await fetchXrplClusterJson({
+    method: 'account_lines',
+    params: [{ account }]
+  });
+  if (!data) return null;
+  return (data.result && data.result.lines) || [];
+}
+
+// Matches a wallet's real trustlines (fetchAllAccountLines above) against
+// every TRADEABLE_COLLECTIONS entry — one row per collection with its
+// real balance/trustline state, the wallet PROFILE view's COINS list.
+// lines === null means the ledger lookup itself failed; every row comes
+// back with hasTrustline/balance both null (never fabricated as "no
+// trustline") so the client can render "COULDN'T LOAD" instead of a
+// false 0 for a wallet that actually holds a real balance.
+export function matchAccountLinesToCollections(lines) {
+  return Object.values(TRADEABLE_COLLECTIONS).map(cfg => {
+    if (lines === null) return { key: cfg.key, label: cfg.label, hasTrustline: null, balance: null };
+    const wantCurrency = encodeCurrencyCode(cfg.tokenConfig.currency);
+    const line = lines.find(l => l.currency === wantCurrency && l.account === cfg.tokenConfig.issuer);
+    if (!line) return { key: cfg.key, label: cfg.label, hasTrustline: false, balance: 0 };
+    return { key: cfg.key, label: cfg.label, hasTrustline: true, balance: parseFloat(line.balance) || 0 };
+  });
+}
+
 // Native XRP balance for one wallet, in exact integer drops (never a
 // parsed float) — account_info's own Balance field is already a drops
 // string, so this is a straight pass-through, no unit conversion done
