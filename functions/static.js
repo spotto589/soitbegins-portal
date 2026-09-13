@@ -1286,17 +1286,16 @@ const SWAP_HTML = `<!DOCTYPE html>
      (337px on a 375px phone) — confirmed live, that's what pushed its
      right edge off-screen. Two classes here outranks both. */
   .tab-db-select .db-select-flyout{ position:fixed; top:0; left:0; width:220px; }
-  /* Grid, not flex — RANK and COUNT sit in equal (1fr) side columns, so
-     the middle WALLET column always lands on the row's true center
-     regardless of how wide the rank/count text on either side happens to
-     be (a fixed-width rank column next to an auto-width count column,
-     the old flex setup, only centered the wallet within its own leftover
-     space — not the same thing once count's text got wider than rank's). */
+  /* Real table columns now (reported live wanting T0P 123 H0LDERS "in a
+     set up table", not the old centered 3-across layout that wrapped
+     HELD/% onto their own lines) — same fixed-rank/flexible-middle/
+     fixed-right shape as .sale-row uses for SALES H!ST0RY, and matches
+     .th-header-row's own grid-template-columns exactly above. */
   .th-row{
     display:grid;
-    grid-template-columns:1fr auto 1fr;
+    grid-template-columns:90px 1fr 220px;
     align-items:center;
-    gap:0.75rem;
+    gap:1rem;
     padding:0.9em 0.6em;
     border-bottom:1px solid var(--border-dim);
     cursor:pointer;
@@ -1309,12 +1308,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Top 15 read as a cut above the rest of the list — same layout, just
      a step up in size. */
   .th-row-top{ font-size:19px; padding:1.1em 0.6em; }
-  .th-rank{ color:var(--cyan); text-align:right; display:flex; align-items:center; justify-content:flex-end; gap:0.5rem; }
+  .th-rank{ color:var(--cyan); text-align:left; display:flex; align-items:center; justify-content:flex-start; gap:0.5rem; }
   /* Rarest-held-Pigeon thumbnail, top 15 rows only. */
   .th-thumb{ width:34px; height:34px; border-radius:var(--radius); object-fit:cover; flex:0 0 auto; border:1px solid var(--border-mid); }
-  .th-wallet{ min-width:0; color:var(--white); word-break:break-all; text-align:center; }
-  .th-count{ color:var(--white); text-transform:uppercase; text-align:left; }
+  .th-wallet{ min-width:0; color:var(--white); word-break:break-all; text-align:left; }
+  .th-count{ color:var(--white); text-transform:uppercase; text-align:right; white-space:nowrap; }
   .th-empty{ text-align:center; font-size:11px; letter-spacing:0.08em; color:var(--grey-dim); padding:0.5rem 0; text-transform:uppercase; }
+  /* Below the desktop table breakpoint, the fixed 220px HELD/% column is
+     too cramped next to a shrunk HOLDER column — stack rank+wallet on
+     one line and let count take the full row beneath, same idea as
+     .sale-row's own <820px collapse. */
+  @media (max-width:820px){
+    .th-row{ grid-template-columns:1fr; row-gap:0.3rem; }
+    .th-count{ text-align:left; }
+  }
 
   /* Every address-display spot site-wide (walletTagHtml/setWalletText) —
      starts as plain short-address text, an avatar/username silently slots
@@ -5218,18 +5225,43 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:1.5rem;
     animation:offer-confirm-pop 0.2s ease;
   }
-  /* SALES H!ST0RY specifically gets its own, much wider/taller sizing
-     (was sharing T0P 123 H0LDERS' cramped 640px box) — reported live as
-     wanting this to read as "a clear page you click into" for actually
-     researching every $P!GE0NS sale, not a small popup you skim and
-     close. T0P 123 H0LDERS stays at the original size; only this one's
-     shared .pigeons-calc-panel/.top-holders-modal-panel base above gets
-     overridden here, after it in source order so the wider numbers win. */
-  .sales-modal-panel{
+  /* T0P 123 H0LDERS and SALES H!ST0RY now share the same wide/tall
+     sizing (reported live: "make top 123 holders way bigger too, same as
+     sales history" — the old 640px box crushed HOLDER/HELD/% into three
+     cramped, wrapping lines per row). Qualified with the modal's own #id
+     (not just the bare .sales-modal-panel/.top-holders-modal-panel class
+     used before) so this reliably beats .pigeons-calc-panel's own
+     width:440px below on specificity — same class-vs-class specificity,
+     source order alone decided it before, and .pigeons-calc-panel being
+     defined after this block meant its 440px silently won every time.
+     Confirmed live: neither modal was EVER actually rendering at the
+     wider size, this whole block was dead weight. */
+  #salesModal .sales-modal-panel, #topHoldersModal .top-holders-modal-panel{
     width:min(1100px, 96vw);
     max-height:min(92vh, 900px);
   }
   .top-holders-modal-panel #topHoldersList{ flex:1 1 auto; min-height:0; overflow-y:auto; }
+  /* Column titles above the list, sharing .th-row's own grid-template-
+     columns so every title lines up exactly over its column — same
+     pattern as .sale-header-row for SALES H!ST0RY right below. Desktop
+     only: the <820px breakpoint that collapses .th-row to a stacked
+     layout (see its own media query) doesn't map onto real columns. */
+  .th-header-row{
+    display:grid;
+    grid-template-columns:90px 1fr 220px;
+    gap:1rem;
+    padding:0 0.6rem 0.6rem;
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.15em;
+    color:var(--grey-dim);
+    text-transform:uppercase;
+    border-bottom:1px solid var(--border-dim);
+    margin-bottom:0.25rem;
+  }
+  .th-header-row span:last-child{ text-align:right; }
+  @media (max-width:820px){ .th-header-row{ display:none; } }
   .sales-modal-panel #salesScrollBox{ flex:1 1 auto; min-height:0; overflow-y:auto; }
   /* Plain-language subtitle under the SALES H!ST0RY title — makes the
      "this is a real research tool, not a decorative popup" intent explicit
@@ -7527,8 +7559,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-top:2px solid #0a0a0a;
     border-bottom:2px solid #0a0a0a;
     box-shadow:0 2px 8px rgba(0,0,0,0.5);
-    color:#1a1a1a;
-    text-shadow:0 1px 0 rgba(255,255,255,0.35);
+    /* White, not the old near-black #1a1a1a — that blended straight into
+       the tape's own black stripes and was unreadable (reported live).
+       A real black text-shadow (not the old white 0.35-alpha one, which
+       only helped against the yellow stripes) keeps it legible against
+       both stripe colours. */
+    color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.6);
     font-family:var(--font-mono);
     font-size:11px;
     font-weight:700;
@@ -7581,7 +7618,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      or the shoulders/body below) — same idea as $SEAL/$TEDDY below,
      confirmed live as the reference "perfect" crop to match. */
   .mainframe-card[data-collection="pigeons"] .mainframe-card-art{ background-position:center 48%; }
-  .mainframe-card[data-collection="phnixs"] .mainframe-card-art{ background-position:center 30%; }
+  /* Was scoped to [data-collection="phnixs"], which the PHN!X card never
+     actually carries (it's a .mainframe-card-soon card — data-collection
+     only ever gets set on the walk-in-able P!GE0NS card — see its own
+     HTML comment), so this rule never applied and PHN!X fell back to the
+     shared "center top" default, cropping the head (reported live as
+     wanting it "moved up more"). Scoped to the real .mainframe-card-phnix
+     class now, same pattern as -teddy/-seal/-fuzzy/-conspiracy below. */
+  .mainframe-card-phnix .mainframe-card-art{ background-position:center 12%; }
   .mainframe-card-teddy .mainframe-card-art{ background-position:center 30%; }
   /* $SEAL's own art is a square image with the face sitting roughly
      mid-height (starry sky above it) — plain top crop showed almost
@@ -8241,6 +8285,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <span class="simple-picker-title">T0P 123 H0LDERS</span>
           <button type="button" class="simple-picker-close" id="topHoldersCloseBtn" title="CL0SE">&times;</button>
         </div>
+        <div class="th-header-row"><span>RANK</span><span>H0LDER</span><span>HELD</span></div>
         <div id="topHoldersList"></div>
       </div>
     </div>
@@ -8684,7 +8729,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                stays fully live on all of them (the button reads its own
                data-collection, not the card's) — only the "walk into the
                collection" path is Pigeons-only. -->
-          <div class="mainframe-card mainframe-card-soon" style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg?v=2');">
+          <div class="mainframe-card mainframe-card-soon mainframe-card-phnix" style="--card-accent:255,90,31; --card-art:url('/assets/mainframe/phnix.jpeg?v=2');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexPhnixs" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
