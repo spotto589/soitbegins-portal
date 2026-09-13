@@ -915,22 +915,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .stat-tile-soon .stat-value{ letter-spacing:0.1em; }
   .card-scylla-listed{ margin-top:0.4rem; font-size:10px; letter-spacing:0.05em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); text-align:center; text-transform:uppercase; }
 
-  /* ---- top 10 holders (expandable) ---- */
-  .th-toggle{
-    display:block;
-    width:100%;
-    text-align:center;
-    background:transparent;
-    border:none;
-    font-family:var(--font-mono);
-    font-size:12px;
-    letter-spacing:0.18em;
-    color:var(--cyan);
-    text-shadow:0 0 5px var(--cyan-glow);
-    text-transform:uppercase;
-    cursor:pointer;
-    padding:0;
-  }
   .th-list{ margin-top:1rem; border-top:1px dashed var(--border-dim); padding-top:0.5rem; }
 
   /* ---- horizontal top tabs (DATABASE / MY PIGEONS / TOP 10 / SALES HISTORY)
@@ -1312,7 +1296,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Rarest-held-Pigeon thumbnail, top 15 rows only. */
   .th-thumb{ width:34px; height:34px; border-radius:var(--radius); object-fit:cover; flex:0 0 auto; border:1px solid var(--border-mid); }
   .th-wallet{ min-width:0; color:var(--white); word-break:break-all; text-align:left; }
-  .th-count{ color:var(--white); text-transform:uppercase; text-align:right; white-space:nowrap; }
+  /* Fixed-width AMT/PCT slots (reported live: "the pigeon counter numbers
+     should all line up") — a single right-aligned string ("151 P!GE0NS ::
+     5%") only ever lines up its own last character across rows, since
+     rows with different digit counts (127 vs 5, "4.2%" vs "5%") are
+     different total lengths. Two separate right-aligned columns, each a
+     fixed width regardless of that row's own content, line up for real. */
+  .th-count{ color:var(--white); text-transform:uppercase; text-align:right; white-space:nowrap; display:flex; align-items:baseline; justify-content:flex-end; gap:0.5rem; }
+  .th-count-amt{ min-width:130px; text-align:right; }
+  .th-count-pct{ min-width:56px; text-align:right; }
   .th-empty{ text-align:center; font-size:11px; letter-spacing:0.08em; color:var(--grey-dim); padding:0.5rem 0; text-transform:uppercase; }
   /* Below the desktop table breakpoint, the fixed 220px HELD/% column is
      too cramped next to a shrunk HOLDER column — stack rank+wallet on
@@ -1320,7 +1312,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      .sale-row's own <820px collapse. */
   @media (max-width:820px){
     .th-row{ grid-template-columns:1fr; row-gap:0.3rem; }
-    .th-count{ text-align:left; }
+    .th-count{ justify-content:flex-start; }
+    .th-count-amt, .th-count-pct{ min-width:0; text-align:left; }
   }
 
   /* Every address-display spot site-wide (walletTagHtml/setWalletText) —
@@ -1423,7 +1416,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* R0W — compact inline version for T0P 123 H0LDERS, replacing that
      list's plain wallet-tag short address with the same real identity
      card, just small enough to fit one per leaderboard row. */
-  .signature-banner-row{ gap:0.6rem; padding:0.4rem 0.6rem; border-radius:calc(var(--radius) - 2px); }
+  /* Capped width (was stretching to fill T0P 123 H0LDERS' entire, now
+     much wider, HOLDER column — reported live as "the banner doesn't
+     need to be that long") — reads as a compact identity chip again,
+     left-aligned in its column instead of stretched edge to edge. */
+  .signature-banner-row{ gap:0.6rem; padding:0.4rem 0.6rem; border-radius:calc(var(--radius) - 2px); max-width:280px; width:fit-content; }
   .signature-banner-row .signature-banner-avatar{ width:32px; height:32px; }
   .signature-banner-row .signature-banner-username{ font-size:14px; }
   @media (max-width:600px){
@@ -5887,8 +5884,42 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-sales-section .detail-field{ display:flex; flex-direction:column; align-items:center; gap:0.2rem; margin:0; max-width:100%; font-size:17px; text-align:center; }
   #screenDetail .detail-sales-section .df-label{ font-size:12px; }
   #screenDetail .detail-sales-section .df-value{ font-weight:700; text-align:center; }
+  /* REC0RD/RECENT/AVERAGE SALE's own row (see the HTML's own comment) —
+     3-across instead of PRICE's plain single-field style right above,
+     each number noticeably bigger + glowing so the row reads as the
+     headline stat it is, not a fine-print detail. Still cheaper on
+     vertical space overall than the old 3-stacked-rows version, which is
+     what actually pays for the bigger text within DETAIL's own one-page,
+     no-scroll budget. */
+  #screenDetail .detail-sale-stats-row{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.6rem; margin:0.5rem 0 0; max-width:100%; }
+  #screenDetail .detail-sale-stats-row .detail-field{ background:var(--panel-bg-solid); border:1px solid var(--border-mid); border-radius:var(--radius); padding:0.6rem 0.4rem; gap:0.3rem; }
+  #screenDetail .detail-sale-stats-row .df-label{ font-size:11px; letter-spacing:0.06em; }
+  #screenDetail .detail-sale-stats-row .df-value{ font-size:22px; color:var(--green); text-shadow:0 0 8px rgba(52,255,133,0.4); display:flex; flex-direction:column; align-items:center; line-height:1.2; }
+  #screenDetail .detail-sale-stats-row .df-value-sub{ font-size:10px; color:var(--grey-dim); text-shadow:none; font-weight:400; letter-spacing:0.06em; }
   #screenDetail .detail-history{ margin-top:0.75rem; max-width:100%; }
-  #screenDetail .detail-history .th-toggle{ font-size:14px; }
+  /* A real button now (reported live: "make transaction history a clear
+     button" — it used to be plain underline-free link text, easy to miss
+     against the busy page). Same visual language as .bar-btn elsewhere
+     in DETAIL (L!ST/TRANSFER/CANCEL) rather than introducing a new look. */
+  #screenDetail .detail-history-btn{
+    display:block;
+    width:100%;
+    text-align:center;
+    background:transparent;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    font-family:var(--font-mono);
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:0.1em;
+    color:var(--cyan);
+    text-shadow:0 0 5px var(--cyan-glow);
+    text-transform:uppercase;
+    cursor:pointer;
+    padding:0.8em 1em;
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  #screenDetail .detail-history-btn:hover{ border-color:var(--cyan-dim); background:var(--cyan-faint); }
   /* RECORD SALE / AVERAGE SALE stacked, same label/value row style as
      every other .detail-field (OWNER, PRICE, etc). */
   #screenDetail .tech-meta-title{ font-size:12px; }
@@ -6668,19 +6699,47 @@ const SWAP_HTML = `<!DOCTYPE html>
      small centred pill. */
   .scylla-listing-row #detailScyllaDelistBtn{ width:100%; }
   .detail-history{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed var(--border-dim); padding-top:1rem; }
+  /* Real DATE/TYPE/DETAILS/TXN columns now (reported live wanting
+     TRANSACT!0N H!ST0RY "sorted cleanly... titles at the top e.g date,
+     transaction type") — same header-row-above-a-grid-of-matching-rows
+     pattern as .sale-header-row/.sale-row and .th-header-row/.th-row use
+     elsewhere, instead of the old stacked sentence-per-row layout. */
+  .dh-header-row{
+    display:grid;
+    grid-template-columns:110px 130px 1fr 70px;
+    gap:1rem;
+    padding:0 0.6rem 0.6rem;
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.15em;
+    color:var(--grey-dim);
+    text-transform:uppercase;
+    border-bottom:1px solid var(--border-dim);
+    margin-bottom:0.25rem;
+  }
+  .dh-header-row span:last-child{ text-align:right; }
+  @media (max-width:700px){ .dh-header-row{ display:none; } }
+  /* .th-list's own border-top/margin-top (shared with other lists that
+     have no header row of their own) would just double up the divider
+     .dh-header-row already draws right above this one. */
+  #detailHistoryList.th-list{ margin-top:0; border-top:none; padding-top:0; }
   .dh-row{
-    padding:0.7em 0.3em;
+    display:grid;
+    grid-template-columns:110px 130px 1fr 70px;
+    gap:1rem;
+    align-items:center;
+    padding:0.85em 0.6em;
     border-bottom:1px solid var(--border-dim);
   }
   .dh-row:last-child{ border-bottom:none; }
-  .dh-line{ font-size:12px; letter-spacing:0.02em; color:var(--grey); margin-bottom:0.35em; }
-  .dh-verb{ color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; font-weight:700; }
-  .dh-price{ color:var(--white); }
-  .dh-line a{ color:var(--white); text-decoration:underline; }
-  .dh-line a:hover{ color:var(--cyan); }
-  .dh-meta{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; }
-  .dh-time{ color:var(--grey-dim); font-size:10px; letter-spacing:0.05em; text-transform:uppercase; }
-  .dh-tx{ color:var(--grey-dim); font-size:10px; letter-spacing:0.06em; text-decoration:none; text-transform:uppercase; }
+  .dh-date{ color:var(--grey-dim); font-size:13px; letter-spacing:0.03em; text-transform:uppercase; }
+  .dh-verb{ color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; font-weight:700; font-size:13px; }
+  .dh-price{ color:var(--white); font-weight:700; }
+  .dh-details{ font-size:13px; color:var(--grey); display:flex; flex-direction:column; gap:0.3em; min-width:0; }
+  .dh-details a{ color:var(--white); text-decoration:underline; }
+  .dh-details a:hover{ color:var(--cyan); }
+  .dh-tx{ color:var(--grey-dim); font-size:10px; letter-spacing:0.06em; text-decoration:none; text-transform:uppercase; text-align:right; }
   .dh-tx:hover{ color:var(--cyan); text-decoration:underline; }
   /* SOLD FOR's own FROM/TO — a labeled chip per wallet either side of an
      arrow, not folded into the plain one-line sentence the way MINTED/
@@ -6688,13 +6747,17 @@ const SWAP_HTML = `<!DOCTYPE html>
      sold it, who bought it) — reported live as wanting this laid out
      clearly, since the old single-sentence "S0LD F0R x XRP T0 buyer"
      never named the seller at all. */
-  .dh-parties{ display:flex; align-items:center; flex-wrap:wrap; gap:0.5em; margin-bottom:0.4em; font-size:13px; }
+  .dh-parties{ display:flex; align-items:center; flex-wrap:wrap; gap:0.5em; font-size:13px; }
   .dh-party{ display:flex; align-items:center; gap:0.4em; }
   .dh-party-label{ font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; color:var(--grey-dim); }
   .dh-party a{ color:var(--white); text-decoration:underline; font-weight:600; }
   .dh-party a:hover{ color:var(--cyan); }
   .dh-party-arrow{ color:var(--grey-dim); }
   .dh-unknown{ color:var(--grey-dim); }
+  @media (max-width:700px){
+    .dh-row{ grid-template-columns:1fr; row-gap:0.35rem; }
+    .dh-tx{ text-align:left; }
+  }
   .detail-actions{ display:flex; justify-content:center; gap:0.75rem; flex-wrap:wrap; margin-top:1.5rem; }
   .secondary-btn{
     background:transparent;
@@ -6991,9 +7054,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:center;
     padding:2rem 1rem;
   }
+  /* Widened to match T0P 123 H0LDERS/SALES H!ST0RY's own table treatment
+     (reported live wanting TRANSACT!0N H!ST0RY "sorted cleanly... look so
+     clean so we can get the information easily") — the old 640px box is
+     what forced .dh-row into a cramped stacked layout instead of real
+     DATE/TYPE/DETAILS/TXN columns. */
   .history-modal-panel{
-    width:min(640px, 100%);
-    max-height:85vh;
+    width:min(900px, 96vw);
+    max-height:min(88vh, 780px);
     overflow-y:auto;
     margin-bottom:0;
   }
@@ -9195,12 +9263,20 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="detail-sales-section">
             <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
             <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
-            <div class="detail-field" id="detailHighSaleRow"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
-            <div class="detail-field" id="detailRecentSaleRow"><span class="df-label">RECENT SALE</span><span class="df-value price" id="detailRecentSale"></span></div>
-            <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVERAGE SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
+            <!-- REC0RD/RECENT/AVERAGE SALE — one row of 3 now instead of 3
+                 stacked full-width rows (reported live wanting these
+                 bigger, but the whole DETAIL screen also has to keep
+                 fitting one page with no scroll — a 3-across row makes
+                 each number bigger AND takes less total height than the
+                 old stack, not a tradeoff between the two). -->
+            <div class="detail-sale-stats-row">
+              <div class="detail-field" id="detailHighSaleRow"><span class="df-label">REC0RD SALE</span><span class="df-value price" id="detailHighSale"></span></div>
+              <div class="detail-field" id="detailRecentSaleRow"><span class="df-label">RECENT SALE</span><span class="df-value price" id="detailRecentSale"></span></div>
+              <div class="detail-field" id="detailAvgSaleRow" style="display:none;"><span class="df-label">AVERAGE SALE</span><span class="df-value price" id="detailAvgSale"></span></div>
+            </div>
           </div>
           <div class="detail-history">
-            <button class="th-toggle" id="detailHistoryToggle">TRANSACT!0N H!ST0RY</button>
+            <button class="detail-history-btn" id="detailHistoryToggle">TRANSACT!0N H!ST0RY</button>
           </div>
         </div>
       </div>
@@ -9327,6 +9403,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button type="button" class="simple-picker-close history-modal-close" id="historyModalClose" title="CL0SE">&times;</button>
         <div class="detail-eyebrow">// TRANSACT!0N H!ST0RY</div>
         <div class="detail-num" id="historyNum"></div>
+        <div class="dh-header-row"><span>DATE</span><span>TYPE</span><span>DETA!LS</span><span>TXN</span></div>
         <div class="th-list" id="detailHistoryList"></div>
       </div>
     </div>
@@ -13456,7 +13533,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return '<div class="th-row' + (i < 15 ? ' th-row-top' : '') + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
         '<span class="th-rank">' + thumb + '<span>#' + greenNum(i + 1) + '</span></span>' +
         '<span class="th-wallet">' + signatureBannerHtml(h.wallet, 'row') + '</span>' +
-        '<span class="th-count">' + greenNum(h.count) + ' P!GE0NS' + (percentStr ? '  ::  ' + greenNum(percentStr + '%') : '') + '</span>' +
+        '<span class="th-count"><span class="th-count-amt">' + greenNum(h.count) + ' P!GE0NS</span><span class="th-count-pct">' + (percentStr ? greenNum(percentStr + '%') : '') + '</span></span>' +
       '</div>';
     }).join('');
   }
@@ -17922,7 +17999,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     // to also fire this and exit DETAIL entirely underneath it — a real
     // regression once TRANSACT!0N H!ST0RY stopped being its own full
     // screen swap and became a popup sitting outside #screenDetail's DOM.
-    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !el.historyModal.contains(e.target) && !e.target.closest('.pigeon-img-box') && !e.target.closest('.simple-picker-view-btn')){
+    // .sale-row is the same story again — SALES H!ST0RY's own capture-
+    // phase click handler (further down, opens DETAIL for the clicked
+    // sale's Pigeon) runs BEFORE this bubble-phase handler on the exact
+    // same click, so without this exclusion this immediately saw DETAIL
+    // now open + the click's real target (inside #salesModal, not
+    // #screenDetail) and closed straight back out again underneath it —
+    // confirmed live as "clicking a thumbnail/number in sales history
+    // does nothing".
+    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !el.historyModal.contains(e.target) && !e.target.closest('.pigeon-img-box') && !e.target.closest('.simple-picker-view-btn') && !e.target.closest('.sale-row')){
       goBackFromDetail();
     }
   });
@@ -18115,7 +18200,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     if (p && p.avgSaleXrp !== null && p.avgSaleXrp !== undefined){
       el.detailAvgSaleRow.style.display = '';
-      el.detailAvgSale.innerHTML = greenNum(p.avgSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' XRP' + (p.saleCount ? ' (' + p.saleCount + ' SALES)' : '');
+      // Sale count as its own smaller sub-line (not appended inline to
+      // the big price) — inline was overflowing/word-wrapping mid-word
+      // ("SALE" / "S") now that this sits in a narrower 3-across column
+      // instead of a full-width row.
+      el.detailAvgSale.innerHTML = greenNum(p.avgSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' XRP' + (p.saleCount ? '<span class="df-value-sub">' + p.saleCount + ' SALES</span>' : '');
     } else {
       el.detailAvgSaleRow.style.display = 'none';
     }
@@ -18241,7 +18330,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var txLink = e.txUrl ? '<a class="dh-tx" href="' + escapeHtml(e.txUrl) + '" target="_blank" rel="noopener">TXN</a>' : '';
     if (e.type === 'sale'){
       var price = e.priceXrp !== null && e.priceXrp !== undefined
-        ? '<span class="dh-price">' + e.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</span>' : '?';
+        ? e.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?';
       // e.account is the wallet that TRANSFERRED the NFT out for this
       // event (same field MINTED BY already reads for a mint event) —
       // for a sale, that's the seller. The per-token history endpoint
@@ -18252,24 +18341,32 @@ const SWAP_HTML = `<!DOCTYPE html>
       var seller = e.account ? walletLinkHtml(e.account, e.accountShort) : '<span class="dh-unknown">UNKN0WN</span>';
       var buyer = e.buyer ? walletLinkHtml(e.buyer, e.buyerShort) : '<span class="dh-unknown">UNKN0WN</span>';
       return '<div class="dh-row">' +
-        '<div class="dh-line"><span class="dh-verb">S0LD</span> F0R ' + price + '</div>' +
-        '<div class="dh-parties">' +
-          '<span class="dh-party"><span class="dh-party-label">FR0M</span> ' + seller + '</span>' +
-          '<span class="dh-party-arrow">&rarr;</span>' +
-          '<span class="dh-party"><span class="dh-party-label">T0</span> ' + buyer + '</span>' +
+        '<div class="dh-date">' + escapeHtml(when) + '</div>' +
+        '<div><span class="dh-verb">S0LD</span></div>' +
+        '<div class="dh-details">' +
+          '<span class="dh-price">' + price + '</span>' +
+          '<span class="dh-parties">' +
+            '<span class="dh-party"><span class="dh-party-label">FR0M</span> ' + seller + '</span>' +
+            '<span class="dh-party-arrow">&rarr;</span>' +
+            '<span class="dh-party"><span class="dh-party-label">T0</span> ' + buyer + '</span>' +
+          '</span>' +
         '</div>' +
-        '<div class="dh-meta"><span class="dh-time">' + escapeHtml(when) + '</span>' + txLink + '</div>' +
+        '<div>' + txLink + '</div>' +
       '</div>';
     }
-    var line;
+    var verb, details;
     if (e.type === 'mint'){
-      line = '<span class="dh-verb">M!NTED</span> BY ' + (e.account ? walletLinkHtml(e.account, e.accountShort) : '?');
+      verb = 'M!NTED';
+      details = '<span class="dh-parties"><span class="dh-party"><span class="dh-party-label">BY</span> ' + (e.account ? walletLinkHtml(e.account, e.accountShort) : '?') + '</span></span>';
     } else {
-      line = '<span class="dh-verb">TRANSFERRED</span> T0 ' + (e.receiver ? walletLinkHtml(e.receiver, e.receiverShort) : '?');
+      verb = 'TRANSFERRED';
+      details = '<span class="dh-parties"><span class="dh-party"><span class="dh-party-label">T0</span> ' + (e.receiver ? walletLinkHtml(e.receiver, e.receiverShort) : '?') + '</span></span>';
     }
     return '<div class="dh-row">' +
-      '<div class="dh-line">' + line + '</div>' +
-      '<div class="dh-meta"><span class="dh-time">' + escapeHtml(when) + '</span>' + txLink + '</div>' +
+      '<div class="dh-date">' + escapeHtml(when) + '</div>' +
+      '<div><span class="dh-verb">' + verb + '</span></div>' +
+      '<div class="dh-details">' + details + '</div>' +
+      '<div>' + txLink + '</div>' +
     '</div>';
   }
   function loadDetailHistory(nftId){
@@ -18284,13 +18381,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
   el.detailHistoryList.addEventListener('click', function(e){
-    // .dh-parties (S0LD's FR0M/T0 chips) never actually existed in the
-    // markup until this same fix added it — this selector matched
-    // nothing at all before, so MINTED BY/TRANSFERRED T0's own wallet
-    // links (rendered inside .dh-line, not .dh-parties) were just as
-    // dead. Widened to cover both now that walletLinkHtml's real output
-    // lives in either container depending on event type.
-    var walletLink = e.target.closest('.dh-line a[data-wallet], .dh-parties a[data-wallet]');
+    // Every event type (S0LD/M!NTED/TRANSFERRED) renders its wallet
+    // link(s) inside .dh-parties now (see historyRowHtml's own table
+    // layout) — one shared selector covers all three.
+    var walletLink = e.target.closest('.dh-parties a[data-wallet]');
     if (walletLink) browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short'));
   });
 
@@ -18502,10 +18596,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!img) return;
     el.detailLightboxImg.src = img.src;
     el.detailLightbox.style.display = 'flex';
+    // #globalTopBar is z-index:2200, way above the lightbox's own 1000
+    // (needs to sit over #screenDetail underneath it too) — left alone it
+    // just sat on top of the zoomed picture eating real estate off the
+    // top instead of getting out of the way (reported live: "the top
+    // banner bar should clear, the NFT should be as large as it possibly
+    // can be"). Reuses the exact same class the scroll-hide behavior
+    // already slides it away with (see #globalTopBar.global-top-bar-hidden
+    // and dbControlsStickyObserver), not a new mechanism.
+    el.globalTopBar.classList.add('global-top-bar-hidden');
   });
   el.detailLightbox.addEventListener('click', function(){
     el.detailLightbox.style.display = 'none';
     el.detailLightboxImg.src = '';
+    el.globalTopBar.classList.remove('global-top-bar-hidden');
   });
   // Lightbox's own PREV/NEXT — same navigateDetail walk as the detail
   // screen's buttons, just stopped from bubbling up to the lightbox's own
