@@ -3266,9 +3266,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   .bottom-controls-btn:first-child{ border-left:none; }
   .bottom-controls-btn:hover, .bottom-controls-btn.open{ background:var(--cyan-faint); text-shadow:0 0 5px var(--cyan-glow); }
   /* BACK T0 T0P — sits between S0RT BY/F!LTER BY TRA!TS on the same fixed
-     bar (reported live), narrower than its two flex:1 neighbours since it's
-     just an icon+word, not a full label. */
-  .bottom-controls-btn-top{ flex:0 0 auto; padding:1.1em 1.4em; font-size:17px; }
+     bar (reported live), narrower than its two flex:1 neighbours since
+     it's a short fixed label, not something that needs to grow with
+     content the way S0RT BY/F!LTER BY TRA!TS's own dropdowns do. Bumped
+     padding/font-size (was "▲ T0P") to actually suit the fuller "▲ BACK
+     T0 T0P" label (reported live) instead of leaving it sized for the
+     old, shorter text. */
+  .bottom-controls-btn-top{ flex:0 0 auto; padding:1.2em 1.8em; font-size:19px; font-weight:800; }
   /* Own bottom padding on the page's actual scrollable content so the
      last row of result cards never sits underneath this fixed bar with
      no way to see it — #screenBrowse is the shared DATABASE/PλWS grid
@@ -8134,7 +8138,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   <div class="flyout-popup-backdrop" id="flyoutPopupBackdrop"></div>
   <div class="bottom-controls-bar" id="bottomControlsBar" style="display:none;">
     <button type="button" class="bottom-controls-btn" id="bottomSortBtn">S0RT BY ▾</button>
-    <button type="button" class="bottom-controls-btn bottom-controls-btn-top" id="backToTopBtn" aria-label="BACK T0 T0P">▲ T0P</button>
+    <button type="button" class="bottom-controls-btn bottom-controls-btn-top" id="backToTopBtn" aria-label="BACK T0 T0P">▲ BACK T0 T0P</button>
     <button type="button" class="bottom-controls-btn" id="bottomTraitsBtn">F!LTER BY TRA!TS ▾</button>
   </div>
 
