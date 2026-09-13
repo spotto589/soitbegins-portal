@@ -1293,9 +1293,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      a step up in size. */
   .th-row-top{ font-size:19px; padding:1.1em 0.6em; }
   .th-rank{ color:var(--cyan); text-align:left; display:flex; align-items:center; justify-content:flex-start; gap:0.5rem; }
-  /* Rarest-held-Pigeon thumbnail, top 15 rows only. */
-  .th-thumb{ width:34px; height:34px; border-radius:var(--radius); object-fit:cover; flex:0 0 auto; border:1px solid var(--border-mid); }
-  .th-wallet{ min-width:0; color:var(--white); word-break:break-all; text-align:left; }
+  /* Rarest-held-Pigeon thumbnail, top 15 rows only. Bumped up from 34px
+     (reported live: "make the thumbnail pigeons bigger"). */
+  .th-thumb{ width:48px; height:48px; border-radius:var(--radius); object-fit:cover; flex:0 0 auto; border:1px solid var(--border-mid); }
+  /* Centered, not left — the HOLDER column is wide now (T0P 123 H0LDERS'
+     own bigger table), and the banner itself is capped to a fixed
+     max-width (see .signature-banner-row), so left-aligning it just
+     left it stranded against the RANK column instead of sitting in the
+     middle of its own header. margin:0 auto on the banner (below) is
+     what actually centers it; this text-align is the fallback for
+     anything that isn't the banner (e.g. a plain address before its
+     profile resolves). */
+  .th-wallet{ min-width:0; color:var(--white); word-break:break-all; text-align:center; }
   /* Fixed-width AMT/PCT slots (reported live: "the pigeon counter numbers
      should all line up") — a single right-aligned string ("151 P!GE0NS ::
      5%") only ever lines up its own last character across rows, since
@@ -1420,7 +1429,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      much wider, HOLDER column — reported live as "the banner doesn't
      need to be that long") — reads as a compact identity chip again,
      left-aligned in its column instead of stretched edge to edge. */
-  .signature-banner-row{ gap:0.6rem; padding:0.4rem 0.6rem; border-radius:calc(var(--radius) - 2px); max-width:280px; width:fit-content; }
+  .signature-banner-row{ gap:0.6rem; padding:0.4rem 0.6rem; border-radius:calc(var(--radius) - 2px); max-width:280px; width:fit-content; margin:0 auto; }
   .signature-banner-row .signature-banner-avatar{ width:32px; height:32px; }
   .signature-banner-row .signature-banner-username{ font-size:14px; }
   @media (max-width:600px){
@@ -5570,13 +5579,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     z-index:70;
     margin:0;
     border-radius:0;
-    overflow-y:auto;
-    /* Was unset (defaults to visible) — #screenDetail is its own fixed,
-       self-scrolling box (overflow-y:auto above), entirely separate from
-       body's own overflow-x:hidden, so anything inside wider than the
-       viewport could pan the whole detail page sideways regardless of
-       the site-wide fix. Reported live as "shouldn't be able to scroll
-       across on the detail page". */
+    /* No scrolling at all now (reported live: "we cant scroll at all on
+       the detailed page") — used to be overflow-y:auto as a safety net
+       for tall content, but that safety net is exactly what let this
+       screen quietly grow past one page instead of forcing every change
+       here to actually fit. The redundant full-width BACK strip that
+       used to sit at the very bottom (duplicating the BACK already at
+       the top of the screen) is gone for the same reason — one BACK,
+       always on-screen, no scroll needed to reach it. */
+    overflow-y:hidden;
     overflow-x:hidden;
     -webkit-overflow-scrolling:touch;
     /* .sw-panel's own background+blur (background:var(--panel-bg),
@@ -6699,64 +6710,86 @@ const SWAP_HTML = `<!DOCTYPE html>
      small centred pill. */
   .scylla-listing-row #detailScyllaDelistBtn{ width:100%; }
   .detail-history{ max-width:560px; margin:1.25rem auto 0; border-top:1px dashed var(--border-dim); padding-top:1rem; }
-  /* Real DATE/TYPE/DETAILS/TXN columns now (reported live wanting
-     TRANSACT!0N H!ST0RY "sorted cleanly... titles at the top e.g date,
-     transaction type") — same header-row-above-a-grid-of-matching-rows
-     pattern as .sale-header-row/.sale-row and .th-header-row/.th-row use
-     elsewhere, instead of the old stacked sentence-per-row layout. */
+  /* Bigger/clearer heading inside the popup specifically (reported live:
+     "make it bigger, make the titles clearer") — .detail-eyebrow/
+     .detail-num's shared base sizing (11px/22px) is tuned for the small
+     confirm/result screens that reuse them elsewhere in this file; this
+     is a real research table now and reads as one at a bigger size. */
+  #historyModal .detail-eyebrow{ font-size:14px; letter-spacing:0.24em; }
+  #historyModal .detail-num{ font-size:26px; margin-bottom:1.5rem; }
+  /* Real DATE/TYPE/FROM/TO/(explorer link) columns — FROM and TO get
+     their own columns now instead of being folded together into one
+     "DETAILS" cell (reported live wanting addresses "separately"), and
+     the old plain "TXN" text link is a real BITHOMP button (see
+     .dh-bithomp-btn) instead. Same header-row-above-a-grid-of-matching-
+     rows pattern as .sale-header-row/.sale-row and .th-header-row/.th-row
+     use elsewhere. */
   .dh-header-row{
     display:grid;
-    grid-template-columns:110px 130px 1fr 70px;
+    grid-template-columns:100px 110px 1fr 1fr 130px;
     gap:1rem;
-    padding:0 0.6rem 0.6rem;
+    padding:0 0.6rem 0.7rem;
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12px;
     font-weight:700;
-    letter-spacing:0.15em;
+    letter-spacing:0.16em;
     color:var(--grey-dim);
     text-transform:uppercase;
     border-bottom:1px solid var(--border-dim);
     margin-bottom:0.25rem;
   }
   .dh-header-row span:last-child{ text-align:right; }
-  @media (max-width:700px){ .dh-header-row{ display:none; } }
+  @media (max-width:760px){ .dh-header-row{ display:none; } }
   /* .th-list's own border-top/margin-top (shared with other lists that
      have no header row of their own) would just double up the divider
      .dh-header-row already draws right above this one. */
   #detailHistoryList.th-list{ margin-top:0; border-top:none; padding-top:0; }
   .dh-row{
     display:grid;
-    grid-template-columns:110px 130px 1fr 70px;
+    grid-template-columns:100px 110px 1fr 1fr 130px;
     gap:1rem;
     align-items:center;
-    padding:0.85em 0.6em;
+    padding:1em 0.6em;
     border-bottom:1px solid var(--border-dim);
   }
   .dh-row:last-child{ border-bottom:none; }
-  .dh-date{ color:var(--grey-dim); font-size:13px; letter-spacing:0.03em; text-transform:uppercase; }
-  .dh-verb{ color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; font-weight:700; font-size:13px; }
-  .dh-price{ color:var(--white); font-weight:700; }
-  .dh-details{ font-size:13px; color:var(--grey); display:flex; flex-direction:column; gap:0.3em; min-width:0; }
-  .dh-details a{ color:var(--white); text-decoration:underline; }
-  .dh-details a:hover{ color:var(--cyan); }
-  .dh-tx{ color:var(--grey-dim); font-size:10px; letter-spacing:0.06em; text-decoration:none; text-transform:uppercase; text-align:right; }
-  .dh-tx:hover{ color:var(--cyan); text-decoration:underline; }
-  /* SOLD FOR's own FROM/TO — a labeled chip per wallet either side of an
-     arrow, not folded into the plain one-line sentence the way MINTED/
-     TRANSFERRED read. A sale genuinely has two parties that matter (who
-     sold it, who bought it) — reported live as wanting this laid out
-     clearly, since the old single-sentence "S0LD F0R x XRP T0 buyer"
-     never named the seller at all. */
-  .dh-parties{ display:flex; align-items:center; flex-wrap:wrap; gap:0.5em; font-size:13px; }
-  .dh-party{ display:flex; align-items:center; gap:0.4em; }
-  .dh-party-label{ font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; color:var(--grey-dim); }
+  .dh-date{ color:var(--grey-dim); font-size:14px; letter-spacing:0.03em; text-transform:uppercase; }
+  .dh-type{ display:flex; flex-direction:column; gap:0.25em; }
+  .dh-verb{ color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; font-weight:700; font-size:15px; }
+  .dh-price{ color:var(--white); font-weight:700; font-size:13px; }
+  /* FROM/TO — same wallet-chip look either side used to share
+     (.dh-party), now each sitting in its own real column so a sale's
+     seller and buyer (or a mint's "—"/minter, a transfer's sender/
+     receiver) line up under their own header instead of being read off
+     one combined sentence. */
+  .dh-party{ font-size:14px; min-width:0; }
   .dh-party a{ color:var(--white); text-decoration:underline; font-weight:600; }
   .dh-party a:hover{ color:var(--cyan); }
-  .dh-party-arrow{ color:var(--grey-dim); }
   .dh-unknown{ color:var(--grey-dim); }
-  @media (max-width:700px){
-    .dh-row{ grid-template-columns:1fr; row-gap:0.35rem; }
-    .dh-tx{ text-align:left; }
+  .dh-dash{ color:var(--grey-dim); }
+  /* Real button, not a plain text link — links straight to this
+     transaction's own Bithomp explorer page (bithompTxUrl server-side),
+     replacing the old bare "TXN" text (reported live). */
+  .dh-bithomp-btn{
+    display:inline-block;
+    width:100%;
+    text-align:center;
+    background:transparent;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    color:var(--cyan);
+    text-decoration:none;
+    text-transform:uppercase;
+    padding:0.5em 0.6em;
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .dh-bithomp-btn:hover{ border-color:var(--cyan-dim); background:var(--cyan-faint); }
+  @media (max-width:760px){
+    .dh-row{ grid-template-columns:1fr; row-gap:0.4rem; }
   }
   .detail-actions{ display:flex; justify-content:center; gap:0.75rem; flex-wrap:wrap; margin-top:1.5rem; }
   .secondary-btn{
@@ -6773,31 +6806,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, color 0.15s ease;
   }
   .secondary-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
-  /* Detail screen's own BACK — a full-width strip, the very last thing on
-     the page, not a trait-grid cell any more. Full width of the same
-     content column the $PIGEONS L!ST!NG/N0T L!STED box sits in, so its
-     left/right edges line up with that box's instead of just filling
-     whatever room a trait grid cell left over. */
-  #screenDetail .detail-back-btn{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    width:100%;
-    margin:0.85rem 0 0;
-    padding:0.75em 1.4em;
-    font-family:var(--font-mono);
-    font-size:16px;
-    font-weight:700;
-    letter-spacing:0.08em;
-    color:var(--cyan);
-    background:transparent;
-    border:1px solid var(--border-mid);
-    border-radius:var(--radius);
-    cursor:pointer;
-    appearance:none;
-    transition:border-color 0.15s ease, background 0.15s ease;
-  }
-  #screenDetail .detail-back-btn:hover{ background:var(--cyan-faint); border-color:var(--cyan-dim); }
   .action-btn{
     background:transparent;
     border:1px solid var(--cyan-dim);
@@ -7002,6 +7010,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
   }
   .simple-picker-close:hover{ border-color:var(--magenta-dim); color:var(--magenta); }
+  /* T0P 123 H0LDERS' own title, centered (reported live) — the shared
+     .simple-picker-header is space-between (title left, ✕ right) for
+     every other popup using it, so this is scoped here rather than
+     changed globally. position:relative + the ✕ pinned absolute to the
+     right edge is what lets the title's own text-align:center actually
+     center against the FULL row width instead of just the leftover
+     space next to the ✕. */
+  #topHoldersModal .simple-picker-header{ position:relative; justify-content:center; }
+  #topHoldersModal .simple-picker-title{ flex:1; text-align:center; }
+  #topHoldersModal .simple-picker-close{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
 
   /* ---- Shared L!ST/0FFER/TRANSFER popup — same overlay/panel pattern
      as #simpleOfferPickerModal above, just a single input+button instead
@@ -9280,7 +9298,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
       </div>
-      <button class="detail-back-btn" id="backToBrowseBtn">← BACK</button>
     </div>
 
     <!-- Fullscreen picture lightbox — click the detail picture to open,
@@ -9403,7 +9420,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button type="button" class="simple-picker-close history-modal-close" id="historyModalClose" title="CL0SE">&times;</button>
         <div class="detail-eyebrow">// TRANSACT!0N H!ST0RY</div>
         <div class="detail-num" id="historyNum"></div>
-        <div class="dh-header-row"><span>DATE</span><span>TYPE</span><span>DETA!LS</span><span>TXN</span></div>
+        <div class="dh-header-row"><span>DATE</span><span>TYPE</span><span>FR0M</span><span>T0</span><span>EXPL0RER</span></div>
         <div class="th-list" id="detailHistoryList"></div>
       </div>
     </div>
@@ -10285,7 +10302,6 @@ const SWAP_HTML = `<!DOCTYPE html>
    'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailHistoryList','historyNum','historyModal','historyModalClose',
-   'backToBrowseBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
    'connectPanel','connectPanelTitle','connectPanelSub','connectPanelActions',
@@ -18327,10 +18343,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // three into one line was burying the seller entirely.
   function historyRowHtml(e){
     var when = e.date ? new Date(e.date).toLocaleDateString() : '';
-    var txLink = e.txUrl ? '<a class="dh-tx" href="' + escapeHtml(e.txUrl) + '" target="_blank" rel="noopener">TXN</a>' : '';
+    // Real button now, not a plain "TXN" text link (reported live) —
+    // links to this exact transaction's own Bithomp explorer page
+    // (bithompTxUrl, set server-side in pigeons.js).
+    var bithompBtn = e.txUrl ? '<a class="dh-bithomp-btn" href="' + escapeHtml(e.txUrl) + '" target="_blank" rel="noopener">B!TH0MP ↗</a>' : '';
+    var verb, price, from, to;
     if (e.type === 'sale'){
-      var price = e.priceXrp !== null && e.priceXrp !== undefined
-        ? e.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?';
+      verb = 'S0LD';
+      price = e.priceXrp !== null && e.priceXrp !== undefined
+        ? '<span class="dh-price">' + e.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</span>' : '';
       // e.account is the wallet that TRANSFERRED the NFT out for this
       // event (same field MINTED BY already reads for a mint event) —
       // for a sale, that's the seller. The per-token history endpoint
@@ -18338,35 +18359,27 @@ const SWAP_HTML = `<!DOCTYPE html>
       // "seller" explicitly, which is why this got missed the first time
       // round and the line only ever showed the buyer (reported live:
       // "this doesn't show who sold it").
-      var seller = e.account ? walletLinkHtml(e.account, e.accountShort) : '<span class="dh-unknown">UNKN0WN</span>';
-      var buyer = e.buyer ? walletLinkHtml(e.buyer, e.buyerShort) : '<span class="dh-unknown">UNKN0WN</span>';
-      return '<div class="dh-row">' +
-        '<div class="dh-date">' + escapeHtml(when) + '</div>' +
-        '<div><span class="dh-verb">S0LD</span></div>' +
-        '<div class="dh-details">' +
-          '<span class="dh-price">' + price + '</span>' +
-          '<span class="dh-parties">' +
-            '<span class="dh-party"><span class="dh-party-label">FR0M</span> ' + seller + '</span>' +
-            '<span class="dh-party-arrow">&rarr;</span>' +
-            '<span class="dh-party"><span class="dh-party-label">T0</span> ' + buyer + '</span>' +
-          '</span>' +
-        '</div>' +
-        '<div>' + txLink + '</div>' +
-      '</div>';
-    }
-    var verb, details;
-    if (e.type === 'mint'){
+      from = e.account ? walletLinkHtml(e.account, e.accountShort) : '<span class="dh-unknown">UNKN0WN</span>';
+      to = e.buyer ? walletLinkHtml(e.buyer, e.buyerShort) : '<span class="dh-unknown">UNKN0WN</span>';
+    } else if (e.type === 'mint'){
       verb = 'M!NTED';
-      details = '<span class="dh-parties"><span class="dh-party"><span class="dh-party-label">BY</span> ' + (e.account ? walletLinkHtml(e.account, e.accountShort) : '?') + '</span></span>';
+      price = '';
+      // Nothing sensible to put in FR0M — the NFT didn't exist a moment
+      // before this, so there's no prior holder to name.
+      from = '<span class="dh-dash">—</span>';
+      to = e.account ? walletLinkHtml(e.account, e.accountShort) : '?';
     } else {
       verb = 'TRANSFERRED';
-      details = '<span class="dh-parties"><span class="dh-party"><span class="dh-party-label">T0</span> ' + (e.receiver ? walletLinkHtml(e.receiver, e.receiverShort) : '?') + '</span></span>';
+      price = '';
+      from = e.account ? walletLinkHtml(e.account, e.accountShort) : '<span class="dh-unknown">UNKN0WN</span>';
+      to = e.receiver ? walletLinkHtml(e.receiver, e.receiverShort) : '?';
     }
     return '<div class="dh-row">' +
       '<div class="dh-date">' + escapeHtml(when) + '</div>' +
-      '<div><span class="dh-verb">' + verb + '</span></div>' +
-      '<div class="dh-details">' + details + '</div>' +
-      '<div>' + txLink + '</div>' +
+      '<div class="dh-type"><span class="dh-verb">' + verb + '</span>' + price + '</div>' +
+      '<div class="dh-party">' + from + '</div>' +
+      '<div class="dh-party">' + to + '</div>' +
+      '<div>' + bithompBtn + '</div>' +
     '</div>';
   }
   function loadDetailHistory(nftId){
@@ -18382,9 +18395,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.detailHistoryList.addEventListener('click', function(e){
     // Every event type (S0LD/M!NTED/TRANSFERRED) renders its wallet
-    // link(s) inside .dh-parties now (see historyRowHtml's own table
-    // layout) — one shared selector covers all three.
-    var walletLink = e.target.closest('.dh-parties a[data-wallet]');
+    // link(s) inside their own .dh-party FR0M/T0 cell now (see
+    // historyRowHtml's own table layout) — one shared selector covers
+    // all three.
+    var walletLink = e.target.closest('.dh-party a[data-wallet]');
     if (walletLink) browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short'));
   });
 
@@ -18573,7 +18587,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       scrollBeforeDetail = null;
     }
   }
-  el.backToBrowseBtn.addEventListener('click', goBackFromDetail);
   el.backToBrowseBtnTop.addEventListener('click', goBackFromDetail);
   // Copies a real, working ?pigeon=N link (see the deep-link handler near
   // the bottom of this script) — the number, not the NFT ID, since that's
