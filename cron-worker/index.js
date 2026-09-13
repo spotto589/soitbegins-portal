@@ -11,7 +11,7 @@
 // reached yet showed as "not indexed" to whoever searched for it first.
 // This worker just keeps both indexes warm on its own, independent of
 // whether anyone is on the site.
-import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshFloorIndex } from '../functions/_shared.js';
+import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshFloorIndex, recomputeCrownHolder } from '../functions/_shared.js';
 
 // xaman-proxy (../xaman-proxy, deployed separately on Render) spins down
 // after ~15 minutes with no HTTP traffic on Render's free tier. The first
@@ -44,6 +44,18 @@ export default {
       // maybeRefreshPigeonNumberMap call, same as every other independent
       // crawl here.
       maybeRefreshFloorIndex(env.coin),
+      // T0P 123 H0LDERS/CR0WN — its own background recompute-on-stale
+      // trigger was deliberately removed from the request path (see
+      // pigeons.js's own comment on the topHolders handler, "to stop the
+      // recurring KV writes"), which left the snapshot frozen at whatever
+      // it was the last time someone manually ran it — reported live as
+      // "hasnt been updated in a long time". Belongs here instead: this
+      // worker already exists specifically to keep the other indexes warm
+      // independent of site traffic, and recomputeCrownHolder's own
+      // internal CROWN_RECOMPUTE_MIN_INTERVAL_SECONDS (60s) means this
+      // 10-minute tick calling it unconditionally is still just 1 real
+      // recompute (2 KV writes) per tick, not per request.
+      recomputeCrownHolder(env.coin),
       pingXamanProxy(env),
     ]));
   },
