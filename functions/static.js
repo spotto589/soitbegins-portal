@@ -3253,8 +3253,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-left:1px solid var(--border-dim);
     color:var(--cyan);
     font-family:var(--font-mono);
-    font-weight:700;
-    font-size:14px;
+    /* Same size/weight as BACK T0 T0P now (reported live: "make sort by
+       and filter by traits the same size text") — was 14px/700, sized
+       down from BACK T0 T0P's own 19px/800 for no real reason once that
+       button got bumped up to suit its fuller label. */
+    font-weight:800;
+    font-size:19px;
     letter-spacing:0.06em;
     text-transform:uppercase;
     padding:1em 0.5em;
@@ -3268,11 +3272,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* BACK T0 T0P — sits between S0RT BY/F!LTER BY TRA!TS on the same fixed
      bar (reported live), narrower than its two flex:1 neighbours since
      it's a short fixed label, not something that needs to grow with
-     content the way S0RT BY/F!LTER BY TRA!TS's own dropdowns do. Bumped
-     padding/font-size (was "▲ T0P") to actually suit the fuller "▲ BACK
-     T0 T0P" label (reported live) instead of leaving it sized for the
-     old, shorter text. */
-  .bottom-controls-btn-top{ flex:0 0 auto; padding:1.2em 1.8em; font-size:19px; font-weight:800; }
+     content the way S0RT BY/F!LTER BY TRA!TS's own dropdowns do. Font
+     size/weight now come from the shared .bottom-controls-btn base (all
+     three read the same size) — this only overrides layout/spacing. */
+  .bottom-controls-btn-top{ flex:0 0 auto; padding:1.2em 1.8em; }
   /* Own bottom padding on the page's actual scrollable content so the
      last row of result cards never sits underneath this fixed bar with
      no way to see it — #screenBrowse is the shared DATABASE/PλWS grid
