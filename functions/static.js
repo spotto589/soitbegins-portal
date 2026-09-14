@@ -1635,7 +1635,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid rgba(var(--card-accent, 61,243,236), 0.35);
     border-radius:var(--radius);
     background:rgba(var(--card-accent, 61,243,236), 0.08);
+    transition:background 0.15s ease, border-color 0.15s ease;
   }
+  /* NFT H0LD!NGS cards specifically are a real "pick a collection" picker
+     now (reported live) — cursor+hover say so; C0!N H0LD!NGS reuses the
+     same base card but stays inert, so this is scoped to the extra class
+     nftHoldingCardHtml adds, not the shared one. */
+  .profile-banner-nft-row{ cursor:pointer; }
+  .profile-banner-nft-row:hover{ background:rgba(var(--card-accent, 61,243,236), 0.16); border-color:rgba(var(--card-accent, 61,243,236), 0.6); }
   .profile-banner-coin-thumb{
     width:80px; height:80px; flex:0 0 auto;
     border-radius:10px;
@@ -11855,7 +11862,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // shows it now, not just DETA!L/T0P 123.
     el.walletScopeBanner.innerHTML = signatureBannerHtml(wallet, 'detail');
     el.walletScopeBanner.style.display = '';
-    loadWalletScopeCoins(wallet);
+    // Skipped for your OWN wallet (reported live: "when i click my nfts,
+    // my coins should not load") — MY C0!NS already covers this exact
+    // data on the very same profile, one tab over; fetching+showing it a
+    // second time here was pure redundant weight specific to browsing
+    // your own NFTs. Still loads for any OTHER wallet you browse into,
+    // where this is the only place that wallet's coin holdings show.
+    if (wallet !== MY_WALLET) loadWalletScopeCoins(wallet);
+    else { el.walletScopeCoins.style.display = 'none'; el.walletScopeCoins.innerHTML = ''; }
     if (targetPigeon){
       el.targetPigeonCard.style.display = '';
       el.targetPigeonImg.innerHTML = targetPigeon.image ? '<img src="' + escapeHtml(targetPigeon.image) + '" alt="">' : 'IMAGE';
@@ -19074,18 +19088,35 @@ const SWAP_HTML = `<!DOCTYPE html>
       '</div>' +
     '</div>';
   }
-  // NFT card — collection name, then the owned count underneath.
+  // NFT card — collection name, then the owned count underneath. Clickable
+  // now (reported live wanting NFT H0LD!NGS to actually work as a "pick a
+  // collection, see how many you own, click in" picker, not just a
+  // read-only count list) — see the delegated click handler below.
   function nftHoldingCardHtml(key, count, thumbUrl){
     var meta = COLLECTION_META[key];
     var accent = PROFILE_COIN_ACCENTS[key] || '61,243,236';
     var art = thumbUrl || (meta && meta.thumb) || '';
-    return '<div class="profile-banner-coin-row" style="--card-accent:' + accent + ';">' +
+    return '<div class="profile-banner-coin-row profile-banner-nft-row" data-collection="' + escapeHtml(key) + '" style="--card-accent:' + accent + ';" title="V!EW Y0UR ' + escapeHtml(meta ? meta.label : key) + '">' +
       '<div class="profile-banner-coin-thumb"' + (art ? ' style="background-image:url(' + art + ')"' : '') + '></div>' +
       '<div class="profile-banner-coin-text">' +
         '<div class="profile-banner-coin-name">' + escapeHtml(meta ? meta.label : key) + '</div>' +
         '<div class="profile-banner-coin-amount">' + count + '</div>' +
       '</div>' +
     '</div>';
+  }
+  // Same path SH0W MY P!GE0NS (el.showMyPigeonsBtn) already uses, just
+  // parametrized to whichever collection's NFT H0LD!NGS card got clicked
+  // instead of always 'pigeons' — switchCollection resets state.scope to
+  // null, so isOwnWalletScope() correctly comes back false right after,
+  // same as a real first-time entry into that collection.
+  function enterMyNftsForCollection(key){
+    if (!MY_WALLET) return;
+    openBannerHoldingsExpanded(null);
+    if (state.collection !== key) switchCollection(key);
+    state.myPigeonsGridOpen = true;
+    if (!isOwnWalletScope()) browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
+    else showTab('mypigeons', true);
+    scrollActiveTabPanelIntoView('mypigeons');
   }
   // heldObj: {key: {..., [amountField]: number}}. Real holdings only
   // (amount > 0), richest-first.
@@ -19130,6 +19161,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (btn) openBannerHoldingsExpanded(btn.getAttribute('data-kind'));
   });
   el.profileExpandedBack.addEventListener('click', function(){ openBannerHoldingsExpanded(null); });
+  // Clicking a card in the NFT H0LD!NGS expanded list (only .profile-
+  // banner-nft-row is clickable — the C0!N H0LD!NGS list reuses the same
+  // .profile-banner-coin-row base class but was never meant to navigate
+  // anywhere) jumps straight into that collection's owned grid.
+  el.profileExpandedList.addEventListener('click', function(e){
+    var row = e.target.closest('.profile-banner-nft-row[data-collection]');
+    if (row) enterMyNftsForCollection(row.getAttribute('data-collection'));
+  });
   // ---- MY C0!NS — which collections show, per wallet (reported live as
   // wanting it "customisable" rather than always all six) — a personal
   // display preference, not shared profile data, so localStorage is
