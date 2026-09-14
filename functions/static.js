@@ -6005,6 +6005,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, background 0.15s ease;
   }
   #screenDetail .detail-history-btn:hover{ border-color:var(--cyan-dim); background:var(--cyan-faint); }
+  /* Second way back to the browse grid, sitting directly under
+     TRANSACT!0N H!ST0RY at the bottom of DETAIL's own right column
+     (reported live) — same .detail-history-btn shape/size, just the
+     neutral BACK color (matching .detail-back-btn-top) instead of
+     TRANSACT!0N H!ST0RY's cyan, so the two don't read as the same kind
+     of action. */
+  #screenDetail .detail-back-btn-bottom{ margin-top:0.5rem; color:var(--grey); text-shadow:none; }
+  #screenDetail .detail-back-btn-bottom:hover{ border-color:var(--border-mid); background:rgba(255,255,255,0.06); color:#fff; }
   /* RECORD SALE / AVERAGE SALE stacked, same label/value row style as
      every other .detail-field (OWNER, PRICE, etc). */
   #screenDetail .tech-meta-title{ font-size:12px; }
@@ -7158,7 +7166,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:0;
   }
   .history-modal-close{ position:absolute; top:1rem; right:1rem; }
-  .history-modal-back-btn{ margin-top:1rem; }
   /* PR0F!LE ED!T popup — its own id (not #amountEntryModal, so it needs
      the same fixed-overlay shell spelled out again here rather than
      inheriting it), .profile-edit-panel reuses .amount-entry-panel's own
@@ -9386,6 +9393,11 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div class="detail-history">
             <button class="detail-history-btn" id="detailHistoryToggle">TRANSACT!0N H!ST0RY</button>
+            <!-- Second way back to the browse grid, right under TRANSACT!0N
+                 H!ST0RY at the bottom of DETAIL's own right column (reported
+                 live) — same goBackFromDetail() the top BACK button already
+                 uses. -->
+            <button class="detail-history-btn detail-back-btn-bottom" id="detailBackBtnBottom">← BACK</button>
           </div>
         </div>
       </div>
@@ -9513,10 +9525,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="detail-num" id="historyNum"></div>
         <div class="dh-header-row"><span>DATE</span><span>TYPE</span><span>FR0M</span><span>T0</span><span>EXPL0RER</span></div>
         <div class="th-list" id="detailHistoryList"></div>
-        <!-- Second way back to DETAIL underneath the list itself (reported
-             live wanting a back button here, not just the ✕ up top) — same
-             closeHistoryModal() the ✕ already uses. -->
-        <button type="button" class="detail-history-btn history-modal-back-btn" id="historyModalBack">← BACK</button>
       </div>
     </div>
 
@@ -10396,7 +10404,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
    'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
-   'detailHistoryToggle','detailHistoryList','historyNum','historyModal','historyModalClose','historyModalBack',
+   'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
    'connectPanel','connectPanelTitle','connectPanelSub','connectPanelActions',
@@ -10879,15 +10887,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     var btn = e.target.closest('.tab-btn');
     if (!btn) return;
     var tab = btn.getAttribute('data-tab');
-    // Clicking the word DATABASE always goes back to the real collection
-    // picker now (reported live as "when we click the word database,
-    // that takes us to the mainframe page") — regardless of whatever
-    // collection/scope you were mid-browsing. Picking a specific
-    // collection (a card here, or the dropdown) is what actually enters
-    // its real browsable grid — see enterMainframeCollection/the
-    // dbSelectFlyout click handler, both of which flip
-    // databaseInPicker back to false themselves.
-    if (tab === 'database' && !state.databaseInPicker){
+    // Clicking the word DATABASE while ALREADY on DATABASE mid-browse
+    // always goes back to the real collection picker (reported live as
+    // "when we click the word database, that takes us to the mainframe
+    // page") — regardless of whatever collection/scope you were mid-
+    // browsing. Picking a specific collection (a card here, or the
+    // dropdown) is what actually enters its real browsable grid — see
+    // enterMainframeCollection/the dbSelectFlyout click handler, both of
+    // which flip databaseInPicker back to false themselves. Scoped to
+    // state.activeTab === 'database' (reported live wanting DATABASE to
+    // instead remember your last-browsed collection when you click back
+    // into it FROM another tab, e.g. MY PIGEONS) — only a repeat click
+    // while already there still means "take me to the picker"; the plain
+    // fall-through to showTab(tab) below handles the "coming from
+    // elsewhere" case by just re-showing whatever databaseInPicker/scope
+    // already were, unchanged.
+    if (tab === 'database' && state.activeTab === 'database' && !state.databaseInPicker){
       // A plain DATABASE click always means the real picker, never a
       // V!EW NFTs one left over from an abandoned trip through it (opened
       // V!EW NFTs, then navigated away without picking a collection).
@@ -10927,27 +10942,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       scrollActiveTabPanelIntoView('database');
       return;
     }
-    // Returning to DATABASE from another tab should show the real default
-    // landing state (listed Pigeons, cheapest first) again, not wherever
-    // browsing happened to drift to — reported live as listed Pigeons not
-    // coming up first when navigating back in. showTab's own "only fetch
-    // the first time" guard (state.databaseLoaded) means a plain tab
-    // switch back normally does nothing but toggle visibility, so a sort
-    // change from earlier (a manual pick, or loadMoreCollection's own
-    // auto-fallback once floor listings ran out — see its own comment)
-    // would otherwise just sit there instead of resetting. Only refetches
-    // when something has actually drifted, not on every return.
-    if (tab === 'database' && state.activeTab !== 'database' && !state.scope &&
-        (state.sort !== 'SCYLLA_PRICE_ASC' || !state.scyllaListedOnly)){
-      state.sort = 'SCYLLA_PRICE_ASC';
-      state.scyllaListedOnly = true;
-      renderSortTag();
-      el.statScyllaListedTile.classList.toggle('scylla-active', true);
-      showTab('database');
-      startCollectionBrowse();
-      scrollActiveTabPanelIntoView('database');
-      return;
-    }
+    // Returning to DATABASE from another tab now keeps whatever
+    // collection/sort/filter you had going instead of forcing the
+    // default landing state back (reported live wanting DATABASE to
+    // "remember what tab you were in before" once you click back into it
+    // from MY PIGEONS/elsewhere) — showTab's own "only fetch the first
+    // time" guard (state.databaseLoaded) already means a plain tab switch
+    // back does nothing but toggle visibility, so there's nothing left to
+    // re-trigger here.
     showTab(tab, tab === 'mypigeons');
   });
 
@@ -18702,6 +18704,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (el.amountEntryModal.style.display !== 'none'){ closeAmountEntryModal(); return true; }
     if (el.historyModal.style.display !== 'none'){ closeHistoryModal(); return true; }
     if (el.screenDetail.style.display !== 'none'){ goBackFromDetail(); return true; }
+    // MY PIGEONS' own C0LLECT!0NS grid (your own wallet, scoped) unwinds
+    // differently from a DATABASE wallet scope — reported live: pressing
+    // the mouse back button while inside MY PIGEONS' C0LLECT!0NS grid
+    // called exitWalletScope+startCollectionBrowse below, which loads
+    // the full unscoped DATABASE collection into the very same shared
+    // screenBrowse grid while MY PIGEONS' own tab chrome was still up.
+    // Same un-open switchProfileTab('collections') already does when you
+    // leave C0LLECT!0NS for another profile box — just close the grid
+    // back to the profile view, never touch state.scope/load the full
+    // collection at all.
+    if (state.activeTab === 'mypigeons' && state.myPigeonsGridOpen){
+      state.myPigeonsGridOpen = false;
+      showTab('mypigeons', true);
+      return true;
+    }
     if (state.scope){ exitWalletScope(); startCollectionBrowse(); return true; }
     if (state.activeTab && state.activeTab !== 'database'){ showTab('database'); return true; }
     return false;
@@ -18722,7 +18739,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   function closeHistoryModal(){ el.historyModal.style.display = 'none'; }
   el.historyModalClose.addEventListener('click', closeHistoryModal);
-  el.historyModalBack.addEventListener('click', closeHistoryModal);
   el.historyModal.addEventListener('click', function(e){ if (e.target === el.historyModal) closeHistoryModal(); });
   function goBackFromDetail(){
     showScreen('browse');
@@ -18735,6 +18751,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
   }
   el.backToBrowseBtnTop.addEventListener('click', goBackFromDetail);
+  el.detailBackBtnBottom.addEventListener('click', goBackFromDetail);
   // Copies a real, working ?pigeon=N link (see the deep-link handler near
   // the bottom of this script) — the number, not the NFT ID, since that's
   // what anyone sharing/reading it actually recognizes.
@@ -20197,9 +20214,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
     startAutoRotate();
   })();
+  // 24H SALES stat tile (title="G0 T0 SALES H!ST0RY") used to set a
+  // state.activeTab value ('sales') nothing else ever reads and call
+  // showScreen('browse') — neither of which actually opens SALES
+  // H!ST0RY, so the tile did nothing visible (reported live). Same real
+  // popup el.openSalesBtn already opens, just triggered from here too.
   el.statSalesTile.addEventListener('click', function(){
-    state.activeTab = 'sales';
-    showScreen('browse');
+    el.salesModal.style.display = 'flex';
+    if (!state.salesLoaded){
+      state.salesLoaded = true;
+      loadMoreSales();
+    }
   });
 
   // ---- Σκύλλα LISTED filter — toggled from the stat tile, or implicitly
