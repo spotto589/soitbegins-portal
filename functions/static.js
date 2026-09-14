@@ -5703,13 +5703,33 @@ const SWAP_HTML = `<!DOCTYPE html>
      uses), same reasoning as .detail-num-row{position:relative}. */
   .profile-screen-top-row{ position:relative; min-height:2.4rem; margin-bottom:0.5rem; }
   .profile-screen-banner-wrap{ max-width:560px; margin:0 auto 1.5rem; }
+  /* Real CTA (reported live wanting "the option to message that
+     wallet"), centred under the banner — cyan, not the neutral grey
+     .bar-btn default, so it reads as an inviting action rather than a
+     piece of fine print. Hidden on your own profile/while logged out —
+     see openWalletProfile's own updateProfileScreenMessageBtn call. */
+  .profile-screen-message-btn{ display:block; margin:0 auto 1.5rem; color:var(--cyan); border-color:var(--cyan-dim); }
+  .profile-screen-message-btn:hover{ background:var(--cyan-faint); border-color:var(--cyan); color:var(--cyan); }
   .profile-screen-eyebrow{ text-align:center; font-size:13px; letter-spacing:0.14em; color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); text-transform:uppercase; margin:0 0 1rem; }
-  .profile-collection-grid{
+  /* NFT C0LLECT!0NS (left) / C0!NS HELD (right) — reported live wanting
+     these side by side instead of one long stacked scroll. Stacks back
+     to one column on narrow viewports, same breakpoint language the
+     rest of this file already uses for two-column layouts. */
+  .profile-screen-columns{
     display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
-    gap:1rem;
+    grid-template-columns:1fr 1fr;
+    gap:2rem;
     max-width:900px;
     margin:0 auto;
+    align-items:start;
+  }
+  @media (max-width:700px){
+    .profile-screen-columns{ grid-template-columns:1fr; gap:2rem; }
+  }
+  .profile-collection-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
+    gap:1rem;
   }
   /* Same card language .profile-banner-nft-row already uses (cyan accent
      border/bg themed per --card-accent) — laid out as a real grid here
@@ -9555,12 +9575,15 @@ const SWAP_HTML = `<!DOCTYPE html>
          (reported live: "this will be where every wallet link on the
          website goes to... the prize attraction") instead of dropping
          straight into a single collection's scoped grid: a real public
-         "show off your NFTs" page — banner, then a picker of every
-         collection this wallet holds NFTs in with real counts, click one
-         to browse it (openWalletProfile in the JS). Same fixed full-
-         screen treatment as DETAIL, its own local TV-static canvas —
-         unlike DETAIL this one scrolls (however many collections a
-         wallet holds has no fixed budget to design around). -->
+         "show off your NFTs" page — the wallet's own edited banner (same
+         signatureBannerHtml/sampleBannerColor every other wallet-facing
+         spot already uses), a MESSAGE button, then NFT C0LLECT!0NS (a
+         real picker of every collection this wallet holds, with counts —
+         click one to browse it) on the left and C0!NS HELD on the right
+         (reported live, see openWalletProfile/renderProfileScreenCoins in
+         the JS). Same fixed full-screen treatment as DETAIL, its own
+         local TV-static canvas — unlike DETAIL this one scrolls (however
+         much a wallet holds has no fixed budget to design around). -->
     <div class="sw-panel" id="screenProfile" style="display:none;">
       <canvas class="local-static-bg" id="profileStaticBg"></canvas>
       <div class="profile-screen-top-row">
@@ -9568,8 +9591,23 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button class="detail-share-btn" id="profileScreenShareBtn" title="C0PY A SHAREABLE L!NK T0 TH!S PR0F!LE">SHARE</button>
       </div>
       <div class="profile-screen-banner-wrap" id="profileScreenBanner"></div>
-      <div class="profile-screen-eyebrow">// NFT C0LLECT!0NS</div>
-      <div class="profile-collection-grid" id="profileScreenCollections"></div>
+      <!-- Real Σκύλλα D1-backed messaging (functions/api/messages-*.js —
+           same thread the MESSAGE !NB0X box already sends through),
+           hidden on your own profile (openMessageFromProfile guards
+           against messaging yourself, same as profileMessagesNewStartBtn
+           already does) and while logged out (asks you to connect
+           first, same pattern SH0W MY P!GE0NS already uses). -->
+      <button class="bar-btn profile-screen-message-btn" id="profileScreenMessageBtn" style="display:none;">✉ MESSAGE</button>
+      <div class="profile-screen-columns">
+        <div class="profile-screen-col">
+          <div class="profile-screen-eyebrow">// NFT C0LLECT!0NS</div>
+          <div class="profile-collection-grid" id="profileScreenCollections"></div>
+        </div>
+        <div class="profile-screen-col">
+          <div class="profile-screen-eyebrow">// C0!NS HELD</div>
+          <div class="wallet-scope-coins" id="profileScreenCoins"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Fullscreen picture lightbox — click the detail picture to open,
@@ -10581,7 +10619,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose',
-   'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections',
+   'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections','profileScreenCoins','profileScreenMessageBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
    'connectPanel','connectPanelTitle','connectPanelSub','connectPanelActions',
@@ -19277,6 +19315,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     currentProfileOwnerShort = ownerShort;
     el.profileScreenBanner.innerHTML = signatureBannerHtml(wallet, 'detail');
     el.profileScreenCollections.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+    el.profileScreenCoins.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+    // MESSAGE — hidden on your own profile (nothing to message yourself
+    // about, same guard profileMessagesNewStartBtn already enforces) and
+    // while logged out (openMessageFromProfile asks you to connect first
+    // rather than hiding outright, so it still teaches you the feature
+    // exists).
+    el.profileScreenMessageBtn.style.display = (wallet === MY_WALLET) ? 'none' : '';
     // #screenMainframe (the DATABASE collection picker) is z-index:1500 —
     // well above #screenProfile's own 70 (same as #screenDetail) — and a
     // plain page load always shows it first via showTab('database')
@@ -19322,6 +19367,33 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).catch(function(){
       el.profileScreenCollections.innerHTML = '<div class="th-empty">C0ULD N0T L0AD NFTS F0R TH!S WALLET.</div>';
     });
+    // Same walletProfileCoins call/response shape loadWalletScopeCoins
+    // already uses for any wallet you browse into — reused directly here
+    // rather than duplicating the fetch, just rendered into this screen's
+    // own C0!NS HELD column instead of the scoped-grid banner.
+    api({ walletProfileCoins: 1, wallet: wallet }).then(function(data){
+      renderProfileScreenCoins((data && data.coins) || null);
+    }).catch(function(){
+      el.profileScreenCoins.innerHTML = '<div class="th-empty">C0ULD N0T L0AD C0!NS.</div>';
+    });
+  }
+  function renderProfileScreenCoins(coins){
+    if (!coins || !coins.length || coins[0].hasTrustline === null){
+      el.profileScreenCoins.innerHTML = '<div class="th-empty">C0ULD N0T L0AD C0!NS.</div>';
+      return;
+    }
+    var held = coins.filter(function(c){ return c.hasTrustline; });
+    if (!held.length){
+      el.profileScreenCoins.innerHTML = '<div class="th-empty">TH!S WALLET H0LDS N0 TRACKED C0!NS.</div>';
+      return;
+    }
+    el.profileScreenCoins.innerHTML = held.map(function(c){
+      var accent = PROFILE_COIN_ACCENTS[c.key] || '61,243,236';
+      return '<div class="wallet-scope-coin" style="--coin-accent:' + accent + ';">' +
+        '<span class="wallet-scope-coin-label">' + escapeHtml(c.label) + '</span>' +
+        '<span class="wallet-scope-coin-balance">' + greenNum(c.balance.toLocaleString(undefined, { maximumFractionDigits: 2 })) + '</span>' +
+      '</div>';
+    }).join('');
   }
   function renderProfileScreenCollections(wallet, ownerShort, held){
     var entries = sortedHeldEntries(held, 'count');
@@ -19348,6 +19420,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     profileScreenReturnPath = null;
   }
   el.profileScreenBackBtn.addEventListener('click', closeWalletProfile);
+  // MESSAGE — closes PR0F!LE the same way BACK does, then lands
+  // straight inside a real message thread with this wallet (same
+  // openMessageThread the MESSAGE !NB0X box's own row-click/START button
+  // already use), skipping the "type a wallet address" prompt entirely
+  // since we already know exactly who.
+  el.profileScreenMessageBtn.addEventListener('click', function(){
+    if (!currentProfileWallet) return;
+    if (!MY_WALLET){
+      alert('C0NNECT Σκύλλα F!RST T0 SEND A MESSAGE.');
+      return;
+    }
+    var wallet = currentProfileWallet;
+    closeWalletProfile();
+    showTab('mypigeons', true);
+    switchProfileTab('messages');
+    openMessageThread(wallet);
+  });
   el.profileScreenShareBtn.addEventListener('click', function(){
     var showCopied = function(){
       el.profileScreenShareBtn.textContent = 'C0P!ED';
