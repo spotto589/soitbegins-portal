@@ -669,6 +669,12 @@ export async function onRequestGet(context) {
     const results = [];
     for (const w of Object.keys(map)) {
       const p = map[w];
+      // PR!VATE PR0F!LEs (isPublic:false) never surface here — a private
+      // profile shouldn't be findABLE by username search any more than
+      // its username should show up elsewhere (see profiles-batch.js's
+      // own matching gate). A raw wallet-address match still works
+      // through the plain wallet= lookup below regardless, same as today.
+      if (p && p.isPublic === false) continue;
       const usernameMatch = p && p.username && p.username.toLowerCase().includes(query);
       const walletMatch = w.toLowerCase().includes(query);
       if (usernameMatch || walletMatch) results.push({ wallet: w, username: p.username || null, pfpImage: p.pfpImage || null });

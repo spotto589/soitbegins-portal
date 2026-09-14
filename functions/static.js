@@ -1552,6 +1552,28 @@ const SWAP_HTML = `<!DOCTYPE html>
      hiding outright — see renderProfileCurrent in the JS). */
   .profile-quote{ font-size:13px; font-style:italic; color:#000; text-transform:none; cursor:pointer; margin-top:0.6rem; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
   .profile-quote .profile-field-edit-btn{ font-style:normal; }
+  /* CUST0M!ZE row — BANNER/SH0WCASE/THEME/PR!VACY, the four Phase 1
+     identity pieces with no obvious click-on-the-banner-itself target the
+     way PFP/USERNAME/QU0TE/TW!TTER already have (see the HTML's own
+     comment). Small outlined pills, same restrained language as
+     .profile-mini-btn right above rather than a full .bar-btn each. */
+  .profile-customize-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:0.4rem; margin-top:0.75rem; }
+  .profile-customize-btn{
+    background:rgba(0,0,0,0.35);
+    border:1px solid var(--border-mid);
+    color:#000;
+    font-family:var(--font-mono);
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    padding:0.4em 0.7em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    text-transform:uppercase;
+    text-shadow:0 1px 2px rgba(255,255,255,0.55);
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .profile-customize-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); text-shadow:none; }
   /* Black text goes invisible on a genuinely dark sampled banner colour
      (reported live) — .banner-on-dark (toggled in sampleBannerColor by
      real perceptual luminance, or forced on for the dark empty-state
@@ -1563,7 +1585,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-banner.banner-on-dark .profile-current-estvalue,
   .profile-banner.banner-on-dark .profile-current-estvalue span,
   .profile-banner.banner-on-dark .profile-quote,
-  .profile-banner.banner-on-dark .profile-field-edit-btn{
+  .profile-banner.banner-on-dark .profile-field-edit-btn,
+  .profile-banner.banner-on-dark .profile-customize-btn{
     color:#fff;
     text-shadow:0 1px 2px rgba(0,0,0,0.75), 0 0 8px rgba(0,0,0,0.5);
   }
@@ -5698,19 +5721,59 @@ const SWAP_HTML = `<!DOCTYPE html>
     );
     mix-blend-mode:overlay;
   }
+  /* ---- PR0F!LE THEMES — pure visual presets (see PROFILE_THEMES in the
+     JS, kept in lockstep with PROFILE_THEME_KEYS in _shared.js by hand).
+     'static' is the default/unset case, already covered by every rule's
+     own var(--profile-accent-rgb, 61,243,236) fallback above — no block
+     needed for it. Each of the rest just repoints that one custom
+     property plus, where it actually reads as a distinct "mode" rather
+     than just a different colour, one small extra flourish (CRT's
+     heavier scanlines, GL!TCH's flicker, S!GNAL's pulse) reusing effects
+     already in this file's own vocabulary, not new assets. ---- */
+  #screenProfile[data-profile-theme="crt"]{ --profile-accent-rgb:52,255,133; }
+  #screenProfile[data-profile-theme="crt"]::before{ background-size:100% 3px; opacity:0.6; }
+  #screenProfile[data-profile-theme="crt"] .profile-code-block{ box-shadow:inset 0 0 24px rgba(52,255,133,0.08); }
+  #screenProfile[data-profile-theme="terminal"]{ --profile-accent-rgb:52,255,133; }
+  #screenProfile[data-profile-theme="terminal"] .profile-code-block{ background:#040504; }
+  #screenProfile[data-profile-theme="terminal"] .profile-code-title::after{ content:'_'; animation:profileThemeCursorBlink 1s step-end infinite; }
+  @keyframes profileThemeCursorBlink{ 50%{ opacity:0; } }
+  #screenProfile[data-profile-theme="glitch"]{ --profile-accent-rgb:255,63,208; }
+  #screenProfile[data-profile-theme="glitch"] .profile-screen-eyebrow{ animation:profileThemeGlitchFlicker 6s ease-in-out infinite; }
+  @keyframes profileThemeGlitchFlicker{
+    0%, 92%, 100%{ text-shadow:0 0 5px rgba(255,63,208,0.5); transform:none; }
+    93%{ text-shadow:-2px 0 var(--cyan), 2px 0 var(--magenta); transform:translateX(-1px); }
+    95%{ text-shadow:2px 0 var(--cyan), -2px 0 var(--magenta); transform:translateX(1px); }
+    97%{ text-shadow:0 0 5px rgba(255,63,208,0.5); transform:none; }
+  }
+  #screenProfile[data-profile-theme="void"]{ --profile-accent-rgb:136,72,248; }
+  #screenProfile[data-profile-theme="void"]{ background:#020103; }
+  #screenProfile[data-profile-theme="void"] .profile-code-block{ border-style:dashed; background:rgba(0,0,0,0.5); }
+  #screenProfile[data-profile-theme="signal"]{ --profile-accent-rgb:255,71,87; }
+  #screenProfile[data-profile-theme="signal"] .profile-screen-message-btn{ animation:profileThemeSignalPulse 2s ease-in-out infinite; }
+  @keyframes profileThemeSignalPulse{
+    0%, 100%{ box-shadow:0 0 6px rgba(255,71,87,0.3); }
+    50%{ box-shadow:0 0 18px rgba(255,71,87,0.7); }
+  }
+  #screenProfile[data-profile-theme="database"]{ --profile-accent-rgb:61,243,236; }
+  #screenProfile[data-profile-theme="database"] .profile-collection-grid,
+  #screenProfile[data-profile-theme="database"] .profile-screen-columns{ background-image:linear-gradient(rgba(61,243,236,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(61,243,236,0.06) 1px, transparent 1px); background-size:24px 24px; }
   /* Positioned container for the absolute BACK/SHARE buttons (same
      .detail-back-btn-top/.detail-share-btn classes DETAIL's own top row
      uses), same reasoning as .detail-num-row{position:relative}. */
   .profile-screen-top-row{ position:relative; min-height:2.4rem; margin-bottom:0.5rem; }
   .profile-screen-banner-wrap{ max-width:560px; margin:0 auto 1.5rem; }
   /* Real CTA (reported live wanting "the option to message that
-     wallet"), centred under the banner — cyan, not the neutral grey
-     .bar-btn default, so it reads as an inviting action rather than a
-     piece of fine print. Hidden on your own profile/while logged out —
-     see openWalletProfile's own updateProfileScreenMessageBtn call. */
-  .profile-screen-message-btn{ display:block; margin:0 auto 1.5rem; color:var(--cyan); border-color:var(--cyan-dim); }
-  .profile-screen-message-btn:hover{ background:var(--cyan-faint); border-color:var(--cyan); color:var(--cyan); }
-  .profile-screen-eyebrow{ text-align:center; font-size:13px; letter-spacing:0.14em; color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); text-transform:uppercase; margin:0 0 1rem; }
+     wallet"), centred under the banner — themed accent, not the neutral
+     grey .bar-btn default, so it reads as an inviting action rather than
+     a piece of fine print. Hidden on your own profile/while logged out —
+     see openWalletProfile's own updateProfileScreenMessageBtn call.
+     --profile-accent-rgb (set on #screenProfile per THEME, see PR0F!LE
+     THEMES further down) drives every themed chrome element on this
+     screen — 'static' (the default, unset) falls back to the plain cyan
+     this screen always used before themes existed. */
+  .profile-screen-message-btn{ display:block; margin:0 auto 1.5rem; color:rgb(var(--profile-accent-rgb, 61,243,236)); border-color:rgba(var(--profile-accent-rgb, 61,243,236),0.5); }
+  .profile-screen-message-btn:hover{ background:rgba(var(--profile-accent-rgb, 61,243,236),0.12); border-color:rgb(var(--profile-accent-rgb, 61,243,236)); color:rgb(var(--profile-accent-rgb, 61,243,236)); }
+  .profile-screen-eyebrow{ text-align:center; font-size:13px; letter-spacing:0.14em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 5px rgba(var(--profile-accent-rgb, 61,243,236),0.5); text-transform:uppercase; margin:0 0 1rem; }
   /* NFT C0LLECT!0NS (left) / C0!NS HELD (right) — reported live wanting
      these side by side instead of one long stacked scroll. Stacks back
      to one column on narrow viewports, same breakpoint language the
@@ -5755,6 +5818,66 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profile-collection-label{ font-family:var(--font-mono); font-size:15px; font-weight:700; color:#fff; }
   .profile-collection-count{ font-family:var(--font-mono); font-size:13px; color:var(--green); text-shadow:0 0 5px var(--green-glow); }
+  /* Σκύλλα://!DENT!TY — a small generated code block, monospace label ::
+     value rows (real fields only — see renderProfileCode's own comment on
+     why CLASS/T!TLE/TRUST read PEND!NG instead of a fabricated number). */
+  .profile-code-block{
+    max-width:420px;
+    margin:0 auto 1.5rem;
+    padding:0.9rem 1.1rem;
+    border:1px solid rgba(var(--profile-accent-rgb, 61,243,236),0.35);
+    border-radius:var(--radius);
+    background:var(--panel-bg-solid);
+    font-family:var(--font-mono);
+    font-size:12px;
+    line-height:1.7;
+  }
+  .profile-code-title{ color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 5px rgba(var(--profile-accent-rgb, 61,243,236),0.5); font-weight:700; letter-spacing:0.06em; margin-bottom:0.4rem; }
+  .profile-code-row{ display:flex; justify-content:space-between; gap:1rem; color:var(--grey-dim); white-space:nowrap; overflow:hidden; }
+  .profile-code-row span:last-child{ color:var(--green); font-weight:700; text-overflow:ellipsis; overflow:hidden; }
+  .profile-code-row.pending span:last-child{ color:var(--grey-dim); font-weight:400; }
+  .profile-private-notice{ max-width:420px; margin:2rem auto; text-align:center; }
+  /* DATABASE M0DE / SH0WCASE M0DE — a real toggle, not a stored owner
+     preference (see the HTML's own comment) — same two-button active-
+     state language SALES H!ST0RY's XRP/$P!GE0NS toggle already uses. */
+  .profile-mode-toggle{ display:flex; justify-content:center; gap:0.5rem; margin:0 0 1.5rem; }
+  .profile-mode-btn{
+    background:transparent;
+    border:1px solid var(--border-mid);
+    color:var(--grey);
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.05em;
+    padding:0.6em 1.1em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    text-transform:uppercase;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .profile-mode-btn:hover{ border-color:rgba(var(--profile-accent-rgb, 61,243,236),0.5); color:rgb(var(--profile-accent-rgb, 61,243,236)); }
+  .profile-mode-btn.active{ background:rgba(var(--profile-accent-rgb, 61,243,236),0.12); border-color:rgb(var(--profile-accent-rgb, 61,243,236)); color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 5px rgba(var(--profile-accent-rgb, 61,243,236),0.5); }
+  /* SH0WCASE — bigger cards than the practical NFT C0LLECT!0NS picker
+     (this IS the whole point of the screen in this mode), real art doing
+     the talking rather than dense stat rows. */
+  .profile-showcase-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+    gap:1.25rem;
+    max-width:900px;
+    margin:0 auto;
+  }
+  .profile-showcase-card{
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    overflow:hidden;
+    background:var(--panel-bg-solid);
+    transition:border-color 0.15s ease, transform 0.15s ease;
+  }
+  .profile-showcase-card:hover{ border-color:var(--cyan-dim); transform:translateY(-3px); }
+  .profile-showcase-card-img{ aspect-ratio:1; background:#000; }
+  .profile-showcase-card-img img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-showcase-card-num{ padding:0.6em 0.4em; text-align:center; font-family:var(--font-mono); font-size:13px; color:var(--white); }
   /* PREV/NEXT — fixed to the screen's own left/right edges (position:fixed,
      same containing block as #screenDetail itself since that's also
      fixed), vertically centered, so they stay put regardless of scroll
@@ -7454,6 +7577,85 @@ const SWAP_HTML = `<!DOCTYPE html>
   #profilePfpGrid .simple-picker-card-selected{ border-color:var(--green); box-shadow:0 0 0 2px var(--green), 0 0 16px var(--green-glow); }
   #profilePfpGrid .simple-picker-card-picking{ opacity:0.6; pointer-events:none; }
   #profilePfpGrid .simple-picker-card-picking .simple-picker-card-num::after{ content:' :: SETT!NG...'; color:var(--green); }
+  /* BANNER/FEATURED pickers share every one of PFP's own grid rules above
+     (cross-collection cards, same "feel interactive" hover/picking
+     treatment) — listed together since it's identical behaviour, just a
+     different save target per pane. */
+  #profileBannerGrid, #profileFeaturedGrid{ overflow-y:visible; max-height:none; }
+  #profileBannerGrid .simple-picker-card, #profileFeaturedGrid .simple-picker-card{ cursor:pointer; transition:border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease; }
+  #profileBannerGrid .simple-picker-card:hover, #profileFeaturedGrid .simple-picker-card:hover{ border-color:var(--green); transform:translateY(-3px); box-shadow:0 0 14px var(--green-glow); }
+  #profileBannerGrid .simple-picker-card-selected, #profileFeaturedGrid .simple-picker-card-selected{ border-color:var(--green); box-shadow:0 0 0 2px var(--green), 0 0 16px var(--green-glow); }
+  #profileBannerGrid .simple-picker-card-picking{ opacity:0.6; pointer-events:none; }
+  #profileBannerGrid .simple-picker-card-picking .simple-picker-card-num::after{ content:' :: SETT!NG...'; color:var(--green); }
+  /* Collection badge — a mixed cross-collection grid (BANNER/PFP/FEATURED
+     all pick from any collection now, not just P!GE0NS) needs to say
+     which collection each card is from; a plain corner chip rather than
+     a second text line keeps every card's own footprint the same. */
+  .picker-card-collection-badge{
+    position:absolute;
+    top:0.3rem;
+    left:0.3rem;
+    z-index:2;
+    background:rgba(8,9,11,0.85);
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    padding:0.15em 0.45em;
+    font-family:var(--font-mono);
+    font-size:9px;
+    font-weight:700;
+    letter-spacing:0.05em;
+    color:var(--cyan);
+    text-transform:uppercase;
+  }
+  .simple-picker-card-img{ position:relative; }
+  /* THEME swatches — one row, every option visible/comparable at once
+     (same "no dropdown, real buttons" language the L!ST duration row
+     already uses). Each swatch previews its own theme's accent colour so
+     picking one isn't just reading plain text labels. */
+  .profile-theme-swatch-row{ display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:0.6rem; }
+  .profile-theme-swatch{
+    display:flex; flex-direction:column; align-items:center; gap:0.4rem;
+    padding:0.9em 0.5em;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    background:var(--panel-bg-solid);
+    cursor:pointer;
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.05em;
+    color:var(--grey);
+    text-transform:uppercase;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .profile-theme-swatch:hover{ border-color:var(--theme-swatch-accent, var(--cyan-dim)); color:var(--theme-swatch-accent, var(--cyan)); }
+  .profile-theme-swatch.active{ border-color:var(--theme-swatch-accent, var(--cyan)); color:var(--theme-swatch-accent, var(--cyan)); box-shadow:0 0 12px var(--theme-swatch-accent, var(--cyan-glow)); }
+  .profile-theme-swatch-dot{ width:28px; height:28px; border-radius:50%; background:var(--theme-swatch-accent, var(--cyan)); box-shadow:0 0 10px var(--theme-swatch-accent, var(--cyan-glow)); }
+  /* PR!VACY — a real switch, not a checkbox (this app has no native form
+     controls anywhere else, same reasoning list-duration-btn's own
+     button-row exists instead of a <select>). */
+  .profile-privacy-row{ display:flex; align-items:center; justify-content:center; gap:1rem; }
+  .profile-privacy-label{ font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:0.06em; color:var(--white); text-transform:uppercase; }
+  .profile-privacy-toggle{
+    position:relative;
+    width:52px; height:28px;
+    border-radius:14px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid var(--border-mid);
+    cursor:pointer;
+    transition:background 0.15s ease, border-color 0.15s ease;
+  }
+  .profile-privacy-toggle::after{
+    content:'';
+    position:absolute;
+    top:2px; left:2px;
+    width:22px; height:22px;
+    border-radius:50%;
+    background:var(--grey);
+    transition:transform 0.15s ease, background 0.15s ease;
+  }
+  .profile-privacy-toggle.on{ border-color:var(--green); background:rgba(52,255,133,0.12); }
+  .profile-privacy-toggle.on::after{ transform:translateX(24px); background:var(--green); box-shadow:0 0 8px var(--green-glow); }
   .swap-nonatomic-note{
     max-width:520px;
     margin:0 auto 1.25rem;
@@ -8690,6 +8892,18 @@ const SWAP_HTML = `<!DOCTYPE html>
               <a class="profile-mini-btn" id="profileAddressBithompLink" target="_blank" rel="noopener" title="V!EW 0N B!TH0MP">↗</a>
             </div>
             <div class="profile-current-estvalue">EST C0!N :: <span id="profileCurrentEstValue">--</span></div>
+            <!-- CUST0M!ZE — the four new Phase 1 identity pieces
+                 (BANNER/SH0WCASE/THEME/PR!VACY) that don't have an
+                 obvious click-on-the-banner-itself target the way PFP/
+                 USERNAME/QU0TE/TW!TTER already do, so they get one small
+                 explicit row instead. Opens the same #profileEditModal,
+                 just a different pane each. -->
+            <div class="profile-customize-row">
+              <button type="button" class="profile-customize-btn" id="profileBannerEditBtn">BANNER</button>
+              <button type="button" class="profile-customize-btn" id="profileFeaturedEditBtn">SH0WCASE</button>
+              <button type="button" class="profile-customize-btn" id="profileThemeEditBtn">THEME</button>
+              <button type="button" class="profile-customize-btn" id="profilePrivacyEditBtn">PR!VACY</button>
+            </div>
           </div>
           <!-- Just two buttons now (reported live — dropped the T0P 3
                preview lists entirely), each opening #profileBannerExpanded
@@ -8966,15 +9180,54 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div class="index-line" id="profileTwitterStatus" style="text-align:center; margin-top:0.5rem;"></div>
         </div>
-        <!-- PFP — hidden outright (not a "Y0U D0N T 0WN ANY P!GE0NS YET"
-             message) once a real owned-Pigeons count comes back at 0 —
-             reported live as wanting that removed. Still shows normally
-             while loading/not-yet-connected (renderProfilePfpGrid only
-             hides the grid itself on the genuine "checked, owns zero"
-             case — see its own comment). -->
+        <!-- PFP/BANNER/FEATURED all pick from the SAME cross-collection
+             owned-NFT grid now (loadCrossCollectionOwnedNfts) — was
+             Pigeons-only (myOwnPigeonsCache, bound to whatever
+             state.collection happened to be); widened Phase 1, see
+             profile-set.js's own comment. Each card carries its own
+             collection badge since a mixed grid can span more than one.
+             Hidden outright (not a "Y0U D0N T 0WN ANY NFTS YET" message)
+             once a real owned-NFT count comes back at 0 — reported live as
+             wanting that removed for the original PFP-only version, same
+             reasoning applies now it covers more than Pigeons. -->
         <div class="profile-edit-pane" id="profileEditPanePfp" style="display:none;">
           <div id="profilePfpStatus" class="th-empty" style="display:none;"></div>
           <div class="simple-picker-grid" id="profilePfpGrid"></div>
+        </div>
+        <div class="profile-edit-pane" id="profileEditPaneBanner" style="display:none;">
+          <div id="profileBannerPickStatus" class="th-empty" style="display:none;"></div>
+          <div class="simple-picker-grid" id="profileBannerGrid"></div>
+        </div>
+        <!-- SH0WCASE M0DE's own featured set — up to FEATURED_NFTS_MAX (6,
+             see _shared.js), multi-select (tap to toggle, unlike PFP/
+             BANNER's pick-one-and-save-instantly) so a real SAVE step
+             makes sense here. -->
+        <div class="profile-edit-pane" id="profileEditPaneFeatured" style="display:none;">
+          <div id="profileFeaturedStatus" class="th-empty" style="display:none;"></div>
+          <div class="simple-picker-grid" id="profileFeaturedGrid"></div>
+          <div class="search-row" style="justify-content:center; margin-top:0.75rem;">
+            <button class="bar-btn" id="profileFeaturedSaveBtn">SAVE FEATURED</button>
+          </div>
+          <div class="index-line" id="profileFeaturedSaveStatus" style="text-align:center; margin-top:0.5rem;"></div>
+        </div>
+        <!-- THEME — a pure visual preset (PROFILE_THEMES), not any real
+             wallet data — swatches, not a dropdown, so every option is
+             visible/comparable at once (same interaction language the
+             L!ST duration row already uses). -->
+        <div class="profile-edit-pane" id="profileEditPaneTheme" style="display:none;">
+          <div class="profile-theme-swatch-row" id="profileThemeSwatchRow"></div>
+          <div class="index-line" id="profileThemeStatus" style="text-align:center; margin-top:0.5rem;"></div>
+        </div>
+        <!-- PR!VACY — one coarse switch (see profile-set.js's own comment
+             on why not per-field yet). Off hides this wallet's whole
+             PR0F!LE screen from everyone but you, and its username/pfp
+             from SEARCH PR0F!LE and every other wallet's view. -->
+        <div class="profile-edit-pane" id="profileEditPanePrivacy" style="display:none;">
+          <div class="profile-privacy-row">
+            <div class="profile-privacy-label">PUBL!C PR0F!LE</div>
+            <button type="button" class="profile-privacy-toggle" id="profilePrivacyToggle" role="switch"></button>
+          </div>
+          <div class="index-line" id="profilePrivacyStatus" style="text-align:center; margin-top:0.5rem;"></div>
         </div>
       </div>
     </div>
@@ -9591,21 +9844,53 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button class="detail-share-btn" id="profileScreenShareBtn" title="C0PY A SHAREABLE L!NK T0 TH!S PR0F!LE">SHARE</button>
       </div>
       <div class="profile-screen-banner-wrap" id="profileScreenBanner"></div>
-      <!-- Real Σκύλλα D1-backed messaging (functions/api/messages-*.js —
-           same thread the MESSAGE !NB0X box already sends through),
-           hidden on your own profile (openMessageFromProfile guards
-           against messaging yourself, same as profileMessagesNewStartBtn
-           already does) and while logged out (asks you to connect
-           first, same pattern SH0W MY P!GE0NS already uses). -->
-      <button class="bar-btn profile-screen-message-btn" id="profileScreenMessageBtn" style="display:none;">✉ MESSAGE</button>
-      <div class="profile-screen-columns">
-        <div class="profile-screen-col">
-          <div class="profile-screen-eyebrow">// NFT C0LLECT!0NS</div>
-          <div class="profile-collection-grid" id="profileScreenCollections"></div>
+      <!-- Σκύλλα://!DENT!TY — a small generated code block (real fields
+           only: NODE/NFTS/C0LLECT!0NS/STATUS/S!GNAL; CLASS/T!TLE/TRUST
+           read PEND!NG until Phases 2/3/6 build the real data behind
+           them — never fabricated, see renderProfileCode). -->
+      <div class="profile-code-block" id="profileScreenCode"></div>
+      <!-- PR!VATE PR0F!LE placeholder — replaces everything below when
+           this wallet has isPublic:false and you're not viewing your own
+           (see openWalletProfile's own gating). -->
+      <div class="profile-private-notice" id="profileScreenPrivateNotice" style="display:none;">
+        <div class="th-empty">🔒 TH!S PR0F!LE !S PR!VATE.</div>
+      </div>
+      <div id="profileScreenPublicContent">
+        <!-- Real Σκύλλα D1-backed messaging (functions/api/messages-*.js —
+             same thread the MESSAGE !NB0X box already sends through),
+             hidden on your own profile (openMessageFromProfile guards
+             against messaging yourself, same as profileMessagesNewStartBtn
+             already does) and while logged out (asks you to connect
+             first, same pattern SH0W MY P!GE0NS already uses). -->
+        <button class="bar-btn profile-screen-message-btn" id="profileScreenMessageBtn" style="display:none;">✉ MESSAGE</button>
+        <!-- DATABASE M0DE (today's practical collections+coins layout,
+             default) / SH0WCASE M0DE (visual, curated — see the HTML
+             comment on #profileScreenShowcase below) — a real view toggle
+             anyone looking at this profile can flip, not a stored owner
+             preference (see openWalletProfile's own comment). -->
+        <div class="profile-mode-toggle" id="profileModeToggle">
+          <button type="button" class="profile-mode-btn active" data-mode="database">DATABASE M0DE</button>
+          <button type="button" class="profile-mode-btn" data-mode="showcase">SH0WCASE M0DE</button>
         </div>
-        <div class="profile-screen-col">
-          <div class="profile-screen-eyebrow">// C0!NS HELD</div>
-          <div class="wallet-scope-coins" id="profileScreenCoins"></div>
+        <div id="profileScreenDatabaseView">
+          <div class="profile-screen-columns">
+            <div class="profile-screen-col">
+              <div class="profile-screen-eyebrow">// NFT C0LLECT!0NS</div>
+              <div class="profile-collection-grid" id="profileScreenCollections"></div>
+            </div>
+            <div class="profile-screen-col">
+              <div class="profile-screen-eyebrow">// C0!NS HELD</div>
+              <div class="wallet-scope-coins" id="profileScreenCoins"></div>
+            </div>
+          </div>
+        </div>
+        <!-- SH0WCASE M0DE — the owner's own curated identity card
+             (avatar/bio/featured NFTs, see FEATURED in the edit modal)
+             instead of the practical DATABASE view — "someone might own
+             100 NFTs but only want to showcase 5" (reported live). -->
+        <div id="profileScreenShowcase" style="display:none;">
+          <div class="profile-screen-eyebrow">// FEATURED</div>
+          <div class="profile-showcase-grid" id="profileScreenFeatured"></div>
         </div>
       </div>
     </div>
@@ -10586,7 +10871,12 @@ const SWAP_HTML = `<!DOCTYPE html>
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn',
    'crownPeriodSelect','crownLeaderboardList',
    'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileAddressCopyBtn','profileAddressBithompLink','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
+   'profileBannerEditBtn','profileFeaturedEditBtn','profileThemeEditBtn','profilePrivacyEditBtn',
    'profileEditModal','profileEditTitle','profileEditClose','profileEditPaneUsername','profileEditPaneQuote','profileEditPaneTwitter','profileEditPanePfp',
+   'profileEditPaneBanner','profileBannerPickStatus','profileBannerGrid',
+   'profileEditPaneFeatured','profileFeaturedStatus','profileFeaturedGrid','profileFeaturedSaveBtn','profileFeaturedSaveStatus',
+   'profileEditPaneTheme','profileThemeSwatchRow','profileThemeStatus',
+   'profileEditPanePrivacy','profilePrivacyToggle','profilePrivacyStatus',
    'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
    'profileBannerMain','profileBannerIdentity','profileBannerHoldings','profileBannerExpanded','profileExpandedTitle','profileExpandedList','profileExpandedBack',
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus',
@@ -10620,6 +10910,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose',
    'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections','profileScreenCoins','profileScreenMessageBtn',
+   'profileScreenCode','profileScreenPrivateNotice','profileScreenPublicContent','profileModeToggle','profileScreenDatabaseView','profileScreenShowcase','profileScreenFeatured',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
    'connectPanel','connectPanelTitle','connectPanelSub','connectPanelActions',
@@ -19226,6 +19517,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // markup OFFER F0R's own picker already uses (openSimpleOfferPicker),
   // just a different grid element and no view-detail button. ----
   var profileSelectedPfpNftId = null;
+  var profileSelectedBannerNftId = null;
+  var profileSelectedFeaturedIds = []; // up to PROFILE_FEATURED_MAX, toggled in the FEATURED pane, saved as one batch
   // r,g,b triplets — same values MAINFRAME's own --card-accent uses per
   // collection (see its own cards' inline style) — kept here too rather
   // than read off COLLECTION_META, which doesn't carry a display accent
@@ -19309,19 +19602,45 @@ const SWAP_HTML = `<!DOCTYPE html>
   var profileScreenReturnPath = null;
   var currentProfileWallet = null;
   var currentProfileOwnerShort = null;
+  var profileScreenMode = 'database';
   function openWalletProfile(wallet, ownerShort){
     if (!wallet) return;
     currentProfileWallet = wallet;
     currentProfileOwnerShort = ownerShort;
+    profileScreenMode = 'database';
+    el.profileModeToggle.querySelectorAll('.profile-mode-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-mode') === 'database'); });
+    el.profileScreenDatabaseView.style.display = '';
+    el.profileScreenShowcase.style.display = 'none';
     el.profileScreenBanner.innerHTML = signatureBannerHtml(wallet, 'detail');
+    el.profileScreenCode.innerHTML = '';
     el.profileScreenCollections.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     el.profileScreenCoins.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+    el.profileScreenFeatured.innerHTML = '';
+    el.profileScreenPrivateNotice.style.display = 'none';
+    el.profileScreenPublicContent.style.display = '';
     // MESSAGE — hidden on your own profile (nothing to message yourself
     // about, same guard profileMessagesNewStartBtn already enforces) and
     // while logged out (openMessageFromProfile asks you to connect first
     // rather than hiding outright, so it still teaches you the feature
     // exists).
     el.profileScreenMessageBtn.style.display = (wallet === MY_WALLET) ? 'none' : '';
+    // Full profile (not just the async signatureBannerHtml patch-in) —
+    // isPublic gating, THEME, and the real BANNER-NFT colour sample all
+    // need this synchronously-ish rather than waiting on whatever else on
+    // screen happens to also queueProfileResolve this same wallet.
+    // profiles-batch already exempts your own wallet from its own privacy
+    // filter (see that file's own comment), so this works identically
+    // whether you're viewing yourself or someone else.
+    fetch('/api/profiles-batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wallets: [wallet] })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if (currentProfileWallet !== wallet) return; // navigated away already
+      var profile = (data.profiles && data.profiles[wallet]) || null;
+      profileCache[wallet] = profile;
+      applyProfileScreenIdentity(wallet, profile);
+    }).catch(function(){});
     // #screenMainframe (the DATABASE collection picker) is z-index:1500 —
     // well above #screenProfile's own 70 (same as #screenDetail) — and a
     // plain page load always shows it first via showTab('database')
@@ -19359,23 +19678,85 @@ const SWAP_HTML = `<!DOCTYPE html>
       profileScreenReturnPath = curPath.indexOf('/profile/') === 0 ? '/static' : curPath;
     }
     try { window.history.replaceState({}, '', '/profile/' + encodeURIComponent(wallet)); } catch (e){}
+  }
+  // Runs once the real profile (isPublic/theme/bannerImage/featuredNfts)
+  // has resolved — everything here depends on knowing isPublic first, so
+  // it's kept out of openWalletProfile's own synchronous body rather than
+  // firing the NFT/coin fetches unconditionally before that's known.
+  function applyProfileScreenIdentity(wallet, profile){
+    el.screenProfile.setAttribute('data-profile-theme', (profile && profile.theme) || 'static');
+    var isPublic = !profile || profile.isPublic !== false;
+    if (!isPublic && wallet !== MY_WALLET){
+      el.profileScreenPublicContent.style.display = 'none';
+      el.profileScreenPrivateNotice.style.display = '';
+      return;
+    }
+    // BANNER — same sampled-colour-only treatment (no image layered on
+    // top) el.profileBanner uses for your own hub, applied to the real
+    // .signature-banner node signatureBannerHtml already rendered into
+    // #profileScreenBanner — overrides whatever plain PFP-only sample
+    // applySignatureBanners' own async patch would otherwise land here,
+    // since this profile fetch already has the real BANNER NFT (if any).
+    var bannerNode = el.profileScreenBanner.querySelector('.signature-banner');
+    var bannerSampleSrc = profile && (profile.bannerImage || profile.pfpImage);
+    if (bannerNode && bannerSampleSrc) sampleBannerColor(bannerSampleSrc, bannerNode);
+    // NFT counts feed BOTH the C0LLECT!0NS picker and the !DENT!TY code
+    // block's own NFTS/C0LLECT!0NS lines — one fetch, not two.
     apiWithRetry({ myNftCounts: 1, wallet: wallet }).then(function(data){
+      if (currentProfileWallet !== wallet) return;
       var counts = (data && data.counts) || {};
       var held = {};
-      Object.keys(counts).forEach(function(key){ if (counts[key] > 0) held[key] = { count: counts[key] }; });
-      renderProfileScreenCollections(wallet, ownerShort, held);
+      var totalNfts = 0;
+      Object.keys(counts).forEach(function(key){ if (counts[key] > 0){ held[key] = { count: counts[key] }; totalNfts += counts[key]; } });
+      renderProfileScreenCollections(wallet, currentProfileOwnerShort, held);
+      renderProfileCode(wallet, profile, totalNfts, Object.keys(held).length);
     }).catch(function(){
       el.profileScreenCollections.innerHTML = '<div class="th-empty">C0ULD N0T L0AD NFTS F0R TH!S WALLET.</div>';
+      renderProfileCode(wallet, profile, null, null);
     });
     // Same walletProfileCoins call/response shape loadWalletScopeCoins
     // already uses for any wallet you browse into — reused directly here
     // rather than duplicating the fetch, just rendered into this screen's
     // own C0!NS HELD column instead of the scoped-grid banner.
     api({ walletProfileCoins: 1, wallet: wallet }).then(function(data){
+      if (currentProfileWallet !== wallet) return;
       renderProfileScreenCoins((data && data.coins) || null);
     }).catch(function(){
       el.profileScreenCoins.innerHTML = '<div class="th-empty">C0ULD N0T L0AD C0!NS.</div>';
     });
+    renderProfileScreenFeatured((profile && profile.featuredNfts) || []);
+  }
+  // Σκύλλα://!DENT!TY — see the plan's own comment on why CLASS/T!TLE/
+  // TRUST are PEND!NG: no Wallet DNA/Titles/Trust system exists yet
+  // (Phases 2/3/6), and this never fabricates a number to fill the gap.
+  // NFTS/C0LLECT!0NS are null (renders PEND!NG too) only if the live
+  // myNftCounts lookup itself failed, not if the wallet genuinely holds 0.
+  function renderProfileCode(wallet, profile, totalNfts, totalCollections){
+    function row(label, value, isPending){
+      return '<div class="profile-code-row' + (isPending ? ' pending' : '') + '"><span>' + label + '</span><span>' + value + '</span></div>';
+    }
+    el.profileScreenCode.innerHTML =
+      '<div class="profile-code-title">Σκύλλα://!DENT!TY</div>' +
+      row('N0DE', escapeHtml(wallet.slice(-4).toUpperCase())) +
+      row('STATUS', wallet === MY_WALLET ? 'ACT!VE' : 'UNKN0WN', wallet !== MY_WALLET) +
+      row('CLASS', 'PEND!NG', true) +
+      row('T!TLE', 'PEND!NG', true) +
+      row('NFTS', totalNfts === null ? 'PEND!NG' : totalNfts, totalNfts === null) +
+      row('C0LLECT!0NS', totalCollections === null ? 'PEND!NG' : totalCollections, totalCollections === null) +
+      row('TRUST', 'PEND!NG', true) +
+      row('S!GNAL', 'STABLE');
+  }
+  // SH0WCASE — the owner's own curated set (see FEATURED in the edit
+  // modal), real art at a bigger size than the practical picker cards.
+  function renderProfileScreenFeatured(featuredNfts){
+    el.profileScreenFeatured.innerHTML = !featuredNfts.length
+      ? '<div class="th-empty">N0TH!NG FEATURED YET.</div>'
+      : featuredNfts.map(function(f){
+          return '<div class="profile-showcase-card">' +
+            '<div class="profile-showcase-card-img">' + (f.image ? '<img src="' + escapeHtml(f.image) + '" alt="" loading="lazy">' : '') + '</div>' +
+            '<div class="profile-showcase-card-num">' + itemNumberLabel(f) + '</div>' +
+          '</div>';
+        }).join('');
   }
   function renderProfileScreenCoins(coins){
     if (!coins || !coins.length || coins[0].hasTrustline === null){
@@ -19449,6 +19830,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     var card = e.target.closest('.profile-collection-card[data-collection]');
     if (!card || !currentProfileWallet) return;
     enterProfileCollection(currentProfileWallet, currentProfileOwnerShort, card.getAttribute('data-collection'));
+  });
+  el.profileModeToggle.addEventListener('click', function(e){
+    var btn = e.target.closest('.profile-mode-btn');
+    if (!btn) return;
+    var mode = btn.getAttribute('data-mode');
+    if (mode === profileScreenMode) return;
+    profileScreenMode = mode;
+    el.profileModeToggle.querySelectorAll('.profile-mode-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-mode') === mode); });
+    el.profileScreenDatabaseView.style.display = mode === 'database' ? '' : 'none';
+    el.profileScreenShowcase.style.display = mode === 'showcase' ? '' : 'none';
   });
   // No more T0P 3 preview lists in the banner itself (reported live —
   // just the two V!EW C0!NS/V!EW NFTS buttons now) — this just live-
@@ -20123,23 +20514,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       profileCache[MY_WALLET] = profile;
       renderProfileCurrent(profile);
     }).catch(function(){});
-    // myOwnPigeonsCache (see loadMyOwnPigeonsCache) is the same real
-    // owned-Pigeons list the FL0CK tab and OFFER F0R's own picker already
-    // use — reused here rather than a separate fetch, but PR0F!LE can be
-    // the very first tab opened this session, so this still has to kick
-    // the fetch off itself rather than assuming it's already in flight.
-    if (myOwnPigeonsCache !== null){
-      renderProfilePfpGrid(myOwnPigeonsCache);
-    } else {
-      el.profilePfpGrid.innerHTML = '';
-      el.profilePfpStatus.style.display = '';
-      el.profilePfpStatus.textContent = 'L0AD!NG Y0UR P!GE0NS...';
-      loadMyOwnPigeonsCache().then(function(items){
-        if (el.profilePanelWrap.style.display !== 'none'){
-          renderProfilePfpGrid(items);
-        }
-      });
-    }
+    // PFP/BANNER/FEATURED's own cross-collection NFT grids are lazy now
+    // (see ensureCrossCollectionNftsLoaded, called from openProfileEditModal)
+    // — no eager fetch here any more. Was myOwnPigeonsCache-only (Pigeons,
+    // whatever state.collection happened to be) fetched unconditionally on
+    // every PR0F!LE visit even if the picker was never opened; the real
+    // cross-collection version fans out to every held collection, which is
+    // real extra work worth deferring until someone actually clicks in.
+    // crossCollectionNftsCache itself persists across visits (session-
+    // lifetime, same as myOwnPigeonsCache) rather than resetting here.
   }
   // ---- PR0F!LE ED!T popup — one shared overlay, re-paned per field
   // (reported live as wanting the inline SAVE rows and the two picker
@@ -20151,7 +20534,31 @@ const SWAP_HTML = `<!DOCTYPE html>
     pfp: { pane: 'profileEditPanePfp', title: 'CH00SE PR0F!LE P!CTURE', focus: null },
     username: { pane: 'profileEditPaneUsername', title: 'USERNAME', focus: 'profileUsernameInput' },
     quote: { pane: 'profileEditPaneQuote', title: 'B!0', focus: 'profileQuoteInput' },
-    twitter: { pane: 'profileEditPaneTwitter', title: 'TW!TTER/X', focus: 'profileTwitterInput' }
+    twitter: { pane: 'profileEditPaneTwitter', title: 'TW!TTER/X', focus: 'profileTwitterInput' },
+    banner: { pane: 'profileEditPaneBanner', title: 'CH00SE BANNER NFT', focus: null },
+    featured: { pane: 'profileEditPaneFeatured', title: 'SH0WCASE :: FEATURED NFTS', focus: null },
+    theme: { pane: 'profileEditPaneTheme', title: 'PR0F!LE THEME', focus: null },
+    privacy: { pane: 'profileEditPanePrivacy', title: 'PR!VACY', focus: null }
+  };
+  // PROFILE_THEMES — pure visual presets, zero wallet data behind any of
+  // them (see _shared.js's own PROFILE_THEME_KEYS, kept in lockstep with
+  // these keys by hand). accent drives both the swatch preview here and
+  // the actual --profile-accent/--profile-glow custom properties applied
+  // via data-profile-theme on #screenProfile/#profilePanelWrap — one new
+  // entry + one new CSS block is the whole cost of adding a theme later.
+  // Kept in lockstep with FEATURED_NFTS_MAX in _shared.js by hand (same
+  // reasoning PROFILE_THEMES/PROFILE_THEME_KEYS below are) — server-side
+  // is the real enforcement, this just stops the UI letting you pick a
+  // 7th and then finding out it's rejected on SAVE.
+  var PROFILE_FEATURED_MAX = 6;
+  var PROFILE_THEMES = {
+    static:   { label: 'STAT!C',   accent: '61,243,236' },
+    crt:      { label: 'CRT',      accent: '52,255,133' },
+    terminal: { label: 'TERM!NAL', accent: '52,255,133' },
+    glitch:   { label: 'GL!TCH',   accent: '255,63,208' },
+    void:     { label: 'V0!D',     accent: '136,72,248' },
+    signal:   { label: 'S!GNAL',   accent: '255,71,87'  },
+    database: { label: 'DATABASE', accent: '61,243,236' }
   };
   function openProfileEditModal(field){
     var cfg = PROFILE_EDIT_PANES[field];
@@ -20162,6 +20569,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.profileEditTitle.textContent = cfg.title;
     el.profileEditModal.style.display = 'flex';
     if (cfg.focus) el[cfg.focus].focus();
+    // Lazy per-pane setup — same "only do the work once this specific
+    // pane is actually opened" reasoning the PFP grid's own load already
+    // followed, just extended to the three new panes that need it.
+    if (field === 'pfp' || field === 'banner' || field === 'featured') ensureCrossCollectionNftsLoaded();
+    if (field === 'theme') renderProfileThemeSwatches();
+    if (field === 'privacy') renderProfilePrivacyToggle();
   }
   function closeProfileEditModal(){
     el.profileEditModal.style.display = 'none';
@@ -20227,16 +20640,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderProfileCurrent(profile){
     el.profileCurrentAvatar.innerHTML = (profile && profile.pfpImage) ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
     el.profileCurrentUsername.textContent = (profile && profile.username) ? profile.username : 'N0 USERNAME SET';
-    // Banner background matches the SELECTED PIGEON's own background
-    // exactly (reported live) — sampleBannerColor grabs a real pixel off
-    // the top-left corner of your chosen PFP's actual image, which is
-    // where that piece's own flat background colour lives (the
-    // character sits centred in every real Pigeon image). Only falls
-    // back to the fixed gradient placeholder when there's no PFP at all
-    // yet to sample from.
-    if (profile && profile.pfpImage){
+    // Banner background samples off the chosen BANNER NFT now if one's
+    // set (Phase 1: banner is its own real pick, see BANNER pane below),
+    // falling back to the PFP's own image same as before that existed —
+    // still just a single sampled colour, no image layered on top (see
+    // sampleBannerColor's own comment on why that was tried and dropped).
+    var bannerSampleSrc = profile && (profile.bannerImage || profile.pfpImage);
+    if (bannerSampleSrc){
       el.profileBanner.classList.remove('profile-banner-empty');
-      sampleBannerColor(profile.pfpImage);
+      sampleBannerColor(bannerSampleSrc);
     } else {
       el.profileBanner.style.backgroundColor = '';
       el.profileBanner.classList.add('profile-banner-empty');
@@ -20247,6 +20659,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       // luminance check), so this always gets the light-text variant.
       el.profileBanner.classList.add('banner-on-dark');
     }
+    // THEME — a pure CSS preset, applied straight to the panel (see
+    // PROFILE_THEMES's own comment); 'static' (today's plain look) is the
+    // default for every profile that predates this feature.
+    el.profilePanelWrap.setAttribute('data-profile-theme', (profile && profile.theme) || 'static');
     // QU0TE — a real value shows the text + a quiet ✎ (click jumps to the
     // real input); unset shows a dashed "+ ADD A B!0..." invite instead of
     // hiding outright, so the banner itself teaches you it's editable.
@@ -20265,33 +20681,103 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileCurrentTwitterLink.classList.add('profile-field-placeholder');
     }
     profileSelectedPfpNftId = (profile && profile.pfpNftId) || null;
-    highlightSelectedPfpCard();
+    profileSelectedBannerNftId = (profile && profile.bannerNftId) || null;
+    profileSelectedFeaturedIds = (profile && profile.featuredNfts) ? profile.featuredNfts.map(function(f){ return f.nftId; }) : [];
+    if (crossCollectionNftsCache !== null) renderAllNftPickerGrids(crossCollectionNftsCache);
   }
-  function renderProfilePfpGrid(items){
-    // This whole grid now lives inside profileEditModal's own PFP pane,
-    // only ever visible after a deliberate click to open it — showing a
-    // real "Y0U D0N T 0WN ANY P!GE0NS YET." message here is fine again
-    // (it's no longer permanently sitting on the page itself, which is
-    // what the earlier "hide outright" fix was actually about).
-    if (!items.length){
-      el.profilePfpStatus.style.display = '';
-      el.profilePfpStatus.textContent = 'Y0U D0N T 0WN ANY P!GE0NS YET.';
-      el.profilePfpGrid.innerHTML = '';
+  // ---- Cross-collection owned-NFT picker — feeds PFP/BANNER/FEATURED
+  // alike (Phase 1: widened from Pigeons-only). myNftCounts (already built
+  // for #screenProfile's own NFT-C0LLECT!0NS picker) says which
+  // collections are even worth asking; a real per-collection scoped query
+  // (the exact api({wallet,collection}) call MY PIGEONS/FL0CK already
+  // uses — see loadMyOwnPigeonsCache) then fetches each one's own real
+  // items/images. No new backend endpoint — just calling existing ones
+  // for more than one collection instead of only whichever state.
+  // collection happens to be active. ----
+  var crossCollectionNftsCache = null;
+  var crossCollectionNftsPromise = null;
+  function loadCrossCollectionOwnedNfts(){
+    if (crossCollectionNftsCache !== null) return Promise.resolve(crossCollectionNftsCache);
+    if (crossCollectionNftsPromise) return crossCollectionNftsPromise;
+    if (!MY_WALLET) return Promise.resolve([]);
+    crossCollectionNftsPromise = apiWithRetry({ myNftCounts: 1, wallet: MY_WALLET }).then(function(data){
+      var counts = (data && data.counts) || {};
+      var keys = Object.keys(counts).filter(function(k){ return counts[k] > 0; });
+      if (!keys.length) return [];
+      return Promise.all(keys.map(function(key){
+        return apiWithRetry({ wallet: MY_WALLET, collection: key }).then(function(d){
+          return (d.items || []).map(function(it){
+            var copy = Object.assign({}, it);
+            copy.collectionKey = key;
+            return copy;
+          });
+        }).catch(function(){ return []; });
+      }));
+    }).then(function(lists){
+      crossCollectionNftsCache = (lists || []).reduce(function(a, b){ return a.concat(b); }, []);
+      crossCollectionNftsPromise = null;
+      return crossCollectionNftsCache;
+    }).catch(function(){
+      crossCollectionNftsPromise = null;
+      crossCollectionNftsCache = [];
+      return crossCollectionNftsCache;
+    });
+    return crossCollectionNftsPromise;
+  }
+  function ensureCrossCollectionNftsLoaded(){
+    if (crossCollectionNftsCache !== null){
+      renderAllNftPickerGrids(crossCollectionNftsCache);
       return;
     }
-    el.profilePfpStatus.style.display = 'none';
-    el.profilePfpGrid.innerHTML = items.map(function(p){
-      return '<div class="simple-picker-card' + (p.nftId === profileSelectedPfpNftId ? ' simple-picker-card-selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
-        '<div class="simple-picker-card-img profile-pfp-pick" data-nftid="' + escapeHtml(p.nftId) + '">' + (p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '') + '</div>' +
-        '<div class="simple-picker-card-num">' + escapeHtml(collectionItemLabel()) + ' ' + itemNumberLabel(p) + '</div>' +
-      '</div>';
+    [el.profilePfpStatus, el.profileBannerPickStatus, el.profileFeaturedStatus].forEach(function(s){
+      s.style.display = '';
+      s.textContent = 'L0AD!NG Y0UR NFTS...';
+    });
+    loadCrossCollectionOwnedNfts().then(renderAllNftPickerGrids);
+  }
+  function nftPickerCardHtml(p, selectedIds, mode){
+    var meta = COLLECTION_META[p.collectionKey];
+    var badge = meta ? '<span class="picker-card-collection-badge">' + escapeHtml(meta.label) + '</span>' : '';
+    var selected = selectedIds.indexOf(p.nftId) !== -1;
+    return '<div class="simple-picker-card' + (selected ? ' simple-picker-card-selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
+      '<div class="simple-picker-card-img profile-nft-pick" data-nftid="' + escapeHtml(p.nftId) + '" data-mode="' + mode + '">' + badge + (p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '') + '</div>' +
+      '<div class="simple-picker-card-num">' + (meta ? escapeHtml(meta.itemLabel) : '') + ' ' + itemNumberLabel(p) + '</div>' +
+    '</div>';
+  }
+  function renderNftPickerGrid(gridEl, statusEl, items, selectedIds, mode){
+    if (!items.length){
+      statusEl.style.display = '';
+      statusEl.textContent = 'Y0U D0N T 0WN ANY NFTS YET.';
+      gridEl.innerHTML = '';
+      return;
+    }
+    statusEl.style.display = 'none';
+    gridEl.innerHTML = items.map(function(p){ return nftPickerCardHtml(p, selectedIds, mode); }).join('');
+  }
+  function renderAllNftPickerGrids(items){
+    renderNftPickerGrid(el.profilePfpGrid, el.profilePfpStatus, items, profileSelectedPfpNftId ? [profileSelectedPfpNftId] : [], 'pfp');
+    renderNftPickerGrid(el.profileBannerGrid, el.profileBannerPickStatus, items, profileSelectedBannerNftId ? [profileSelectedBannerNftId] : [], 'banner');
+    renderNftPickerGrid(el.profileFeaturedGrid, el.profileFeaturedStatus, items, profileSelectedFeaturedIds, 'featured');
+  }
+  // THEME — swatches, not a dropdown (see the CSS's own comment). Posts
+  // straight on click, same instant-save language PFP/BANNER use, since
+  // there's no ownership check to wait on for a pure visual preset.
+  function renderProfileThemeSwatches(){
+    var current = (profileCache[MY_WALLET] && profileCache[MY_WALLET].theme) || 'static';
+    el.profileThemeSwatchRow.innerHTML = Object.keys(PROFILE_THEMES).map(function(key){
+      var t = PROFILE_THEMES[key];
+      return '<button type="button" class="profile-theme-swatch' + (key === current ? ' active' : '') + '" data-theme="' + key + '" style="--theme-swatch-accent:' + t.accent + ';">' +
+        '<span class="profile-theme-swatch-dot"></span>' + escapeHtml(t.label) +
+      '</button>';
     }).join('');
   }
-  function highlightSelectedPfpCard(){
-    var cards = el.profilePfpGrid.querySelectorAll('.simple-picker-card');
-    cards.forEach(function(card){
-      card.classList.toggle('simple-picker-card-selected', card.getAttribute('data-nftid') === profileSelectedPfpNftId);
-    });
+  // PR!VACY — a real switch, current state read off the same profileCache
+  // entry loadProfilePanel already populated (isPublic defaults true when
+  // unset — every profile that predates this feature is public, unchanged).
+  function renderProfilePrivacyToggle(){
+    var isPublic = !profileCache[MY_WALLET] || profileCache[MY_WALLET].isPublic !== false;
+    el.profilePrivacyToggle.classList.toggle('on', isPublic);
+    el.profilePrivacyToggle.setAttribute('aria-checked', isPublic ? 'true' : 'false');
   }
   // ---- Click-to-edit on the banner itself — reported live as wanting to
   // "edit everything through clicking stuff on our own banner" instead of
@@ -20311,6 +20797,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.profileUsernameEditBtn.addEventListener('click', function(){
     openProfileEditModal('username');
   });
+  el.profileBannerEditBtn.addEventListener('click', function(){ openProfileEditModal('banner'); });
+  el.profileFeaturedEditBtn.addEventListener('click', function(){ openProfileEditModal('featured'); });
+  el.profileThemeEditBtn.addEventListener('click', function(){ openProfileEditModal('theme'); });
+  el.profilePrivacyEditBtn.addEventListener('click', function(){ openProfileEditModal('privacy'); });
   // Address C0PY — same real clipboard pattern the issuer address' own
   // COPY button already uses (copyIssuerBtn). B!TH0MP itself is a plain
   // real link (href set once MY_WALLET is known, see loadProfilePanel) —
@@ -20340,44 +20830,149 @@ const SWAP_HTML = `<!DOCTYPE html>
       openProfileEditModal('twitter');
     }
   });
-  el.profilePfpGrid.addEventListener('click', function(e){
-    var pick = e.target.closest('.profile-pfp-pick');
-    if (!pick) return;
-    var nftId = pick.getAttribute('data-nftid');
-    if (nftId === profileSelectedPfpNftId) return;
-    // Instant feedback the moment you click — a "picking" state right on
-    // that card (dimmed + :: SETT!NG..., see the CSS) — instead of the
-    // grid just sitting there unchanged until the save request happens to
-    // come back.
-    var card = el.profilePfpGrid.querySelector('.simple-picker-card[data-nftid="' + nftId + '"]');
+  // Shared by PFP and BANNER — both are "pick one NFT, save instantly"
+  // (unlike FEATURED's own multi-select + explicit SAVE, see below).
+  // patchKey is the profile-set.js field name ('pfpNftId'/'bannerNftId').
+  function saveSingleNftPick(gridEl, statusEl, patchKey, nftId){
+    var card = gridEl.querySelector('.simple-picker-card[data-nftid="' + nftId + '"]');
     if (card) card.classList.add('simple-picker-card-picking');
-    el.profilePfpStatus.style.display = '';
-    el.profilePfpStatus.textContent = 'SETT!NG PR0F!LE P!C...';
+    statusEl.style.display = '';
+    statusEl.textContent = 'SETT!NG :: SAV!NG...';
+    var patch = {};
+    patch[patchKey] = nftId;
     fetch('/api/profile-set', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pfpNftId: nftId })
+      body: JSON.stringify(patch)
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (card) card.classList.remove('simple-picker-card-picking');
       if (!res.ok || !res.data.ok){
-        el.profilePfpStatus.style.display = '';
-        el.profilePfpStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        statusEl.style.display = '';
+        statusEl.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
-      el.profilePfpStatus.style.display = 'none';
+      statusEl.style.display = 'none';
       renderProfileCurrent(res.data.profile);
-      // Every .wallet-tag already on screen showing THIS wallet's old
-      // avatar (or none) needs the new one right away, not just the
+      // Every .wallet-tag/signature-banner already on screen showing THIS
+      // wallet's old identity needs the new one right away, not just the
       // profile panel itself — same live-patch resolver every other
-      // address display already goes through.
-      profileCache[MY_WALLET] = { username: res.data.profile.username || null, pfpImage: res.data.profile.pfpImage || null };
+      // address display already goes through. Kept as the FULL returned
+      // profile now (was pfp/username-only before, silently dropping
+      // quote/twitter/theme/etc from the cache on every pfp save).
+      profileCache[MY_WALLET] = res.data.profile;
       applyResolvedProfiles([MY_WALLET]);
+      applySignatureBanners([MY_WALLET]);
       closeProfileEditModal();
     }).catch(function(){
       if (card) card.classList.remove('simple-picker-card-picking');
-      el.profilePfpStatus.style.display = '';
-      el.profilePfpStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+      statusEl.style.display = '';
+      statusEl.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  }
+  el.profilePfpGrid.addEventListener('click', function(e){
+    var pick = e.target.closest('.profile-nft-pick');
+    if (!pick) return;
+    var nftId = pick.getAttribute('data-nftid');
+    if (nftId === profileSelectedPfpNftId) return;
+    saveSingleNftPick(el.profilePfpGrid, el.profilePfpStatus, 'pfpNftId', nftId);
+  });
+  el.profileBannerGrid.addEventListener('click', function(e){
+    var pick = e.target.closest('.profile-nft-pick');
+    if (!pick) return;
+    var nftId = pick.getAttribute('data-nftid');
+    if (nftId === profileSelectedBannerNftId) return;
+    saveSingleNftPick(el.profileBannerGrid, el.profileBannerPickStatus, 'bannerNftId', nftId);
+  });
+  // FEATURED — tap to toggle (up to PROFILE_FEATURED_MAX), one real SAVE
+  // step since this is a set, not a single instant pick. Re-renders just
+  // this grid on every toggle so the selected-state highlight/count
+  // updates immediately without a round-trip.
+  el.profileFeaturedGrid.addEventListener('click', function(e){
+    var pick = e.target.closest('.profile-nft-pick');
+    if (!pick) return;
+    var nftId = pick.getAttribute('data-nftid');
+    var idx = profileSelectedFeaturedIds.indexOf(nftId);
+    if (idx !== -1){
+      profileSelectedFeaturedIds.splice(idx, 1);
+    } else {
+      if (profileSelectedFeaturedIds.length >= PROFILE_FEATURED_MAX){
+        el.profileFeaturedSaveStatus.textContent = 'MAX!MUM ' + PROFILE_FEATURED_MAX + ' FEATURED NFTS.';
+        return;
+      }
+      profileSelectedFeaturedIds.push(nftId);
+    }
+    el.profileFeaturedSaveStatus.textContent = '';
+    if (crossCollectionNftsCache !== null){
+      renderNftPickerGrid(el.profileFeaturedGrid, el.profileFeaturedStatus, crossCollectionNftsCache, profileSelectedFeaturedIds, 'featured');
+    }
+  });
+  el.profileFeaturedSaveBtn.addEventListener('click', function(){
+    el.profileFeaturedSaveBtn.disabled = true;
+    el.profileFeaturedSaveBtn.textContent = 'SAV!NG...';
+    el.profileFeaturedSaveStatus.textContent = '';
+    fetch('/api/profile-set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ featuredNftIds: profileSelectedFeaturedIds })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      el.profileFeaturedSaveBtn.disabled = false;
+      el.profileFeaturedSaveBtn.textContent = 'SAVE FEATURED';
+      if (!res.ok || !res.data.ok){
+        el.profileFeaturedSaveStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      profileCache[MY_WALLET] = res.data.profile;
+      el.profileFeaturedSaveStatus.textContent = 'SAVED.';
+      setTimeout(function(){ el.profileFeaturedSaveStatus.textContent = ''; }, 1500);
+    }).catch(function(){
+      el.profileFeaturedSaveBtn.disabled = false;
+      el.profileFeaturedSaveBtn.textContent = 'SAVE FEATURED';
+      el.profileFeaturedSaveStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+  el.profileThemeSwatchRow.addEventListener('click', function(e){
+    var btn = e.target.closest('.profile-theme-swatch');
+    if (!btn) return;
+    var theme = btn.getAttribute('data-theme');
+    el.profileThemeStatus.textContent = 'SAV!NG...';
+    fetch('/api/profile-set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ theme: theme })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        el.profileThemeStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      profileCache[MY_WALLET] = res.data.profile;
+      renderProfileThemeSwatches();
+      el.profilePanelWrap.setAttribute('data-profile-theme', theme);
+      el.profileThemeStatus.textContent = '';
+    }).catch(function(){
+      el.profileThemeStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+  el.profilePrivacyToggle.addEventListener('click', function(){
+    var next = !el.profilePrivacyToggle.classList.contains('on');
+    el.profilePrivacyStatus.textContent = 'SAV!NG...';
+    fetch('/api/profile-set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isPublic: next })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        el.profilePrivacyStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      profileCache[MY_WALLET] = res.data.profile;
+      renderProfilePrivacyToggle();
+      el.profilePrivacyStatus.textContent = next ? 'PR0F!LE !S PUBL!C.' : 'PR0F!LE !S PR!VATE.';
+    }).catch(function(){
+      el.profilePrivacyStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
   el.profileUsernameSaveBtn.addEventListener('click', function(){

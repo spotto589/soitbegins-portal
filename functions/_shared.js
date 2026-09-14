@@ -3453,6 +3453,29 @@ export function isValidTwitterHandle(handle) {
   return handle === '' || TWITTER_HANDLE_PATTERN.test(handle);
 }
 
+// THEME — a pure visual preset (see PROFILE_THEMES in static.js, the one
+// place the actual CSS/labels for each of these live) rather than any real
+// wallet behaviour, so validation here is just "is this a key we actually
+// ship" — a fixed, deliberately small enum kept in lockstep with that
+// object by hand, same reasoning COLLECTION_META's own keys aren't
+// generated from anywhere either.
+export const PROFILE_THEME_KEYS = ['static', 'crt', 'terminal', 'glitch', 'void', 'signal', 'database'];
+export function isValidProfileTheme(theme) {
+  return typeof theme === 'string' && PROFILE_THEME_KEYS.includes(theme);
+}
+
+// FEATURED — up to 6 owned NFTs a wallet has chosen to headline SH0WCASE
+// M0DE (openWalletProfile's own showcase layout) — shape-checked here,
+// ownership-checked in profile-set.js the same live way pfp/banner already
+// are (see fetchAllAccountNftsChecked there), since this endpoint has no
+// access to a fresh NFT list of its own.
+export const FEATURED_NFTS_MAX = 6;
+const NFT_ID_PATTERN = /^[0-9A-Fa-f]{64}$/;
+export function isValidFeaturedList(list) {
+  if (!Array.isArray(list) || list.length > FEATURED_NFTS_MAX) return false;
+  return list.every(nftId => typeof nftId === 'string' && NFT_ID_PATTERN.test(nftId));
+}
+
 // Case-insensitive — "Pigeon" and "pigeon" would otherwise both render
 // distinctly but be indistinguishable at a glance everywhere this shows up.
 export async function isUsernameTaken(kv, username, exceptWallet) {
