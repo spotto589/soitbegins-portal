@@ -73,6 +73,7 @@ export async function onRequestPost(context) {
       quote: p.quote || null,
       twitter: p.twitter || null,
       theme: p.theme || null,
+      nodeCode: p.nodeCode || null,
       featuredNfts: p.featuredNfts || [],
       isPublic: p.isPublic !== false
     } : null;

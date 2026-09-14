@@ -3464,6 +3464,16 @@ export function isValidProfileTheme(theme) {
   return typeof theme === 'string' && PROFILE_THEME_KEYS.includes(theme);
 }
 
+// N0DE C0DE — which slice of the wallet's own real address shows as N0DE
+// on the Σκύλλα://!DENT!TY code block (reported live wanting a choice
+// rather than always the last 4) — still always a real, literal piece of
+// the wallet's own address, never a made-up id, just which end and how
+// many characters. Same small fixed-enum validation as THEME above.
+export const NODE_CODE_KEYS = ['first4', 'first5', 'first6', 'last4', 'last5', 'last6'];
+export function isValidNodeCode(code) {
+  return typeof code === 'string' && NODE_CODE_KEYS.includes(code);
+}
+
 // FEATURED — up to 6 owned NFTs a wallet has chosen to headline SH0WCASE
 // M0DE (openWalletProfile's own showcase layout) — shape-checked here,
 // ownership-checked in profile-set.js the same live way pfp/banner already

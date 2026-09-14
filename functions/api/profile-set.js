@@ -2,7 +2,7 @@ import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNftsChecked,
   fetchDeeptideNftDetail, isValidUsername, isUsernameTaken, setProfile,
   isValidQuote, normalizeTwitterHandle, isValidTwitterHandle,
-  isValidProfileTheme, isValidFeaturedList, FEATURED_NFTS_MAX
+  isValidProfileTheme, isValidFeaturedList, FEATURED_NFTS_MAX, isValidNodeCode
 } from '../_shared.js';
 
 // Lets a wallet set its own display name, profile picture, banner, quote,
@@ -44,7 +44,8 @@ export async function onRequestPost(context) {
   const hasTheme = typeof body.theme === 'string';
   const hasFeatured = Array.isArray(body.featuredNftIds);
   const hasIsPublic = typeof body.isPublic === 'boolean';
-  if (!hasUsername && !hasPfp && !hasBanner && !hasQuote && !hasTwitter && !hasTheme && !hasFeatured && !hasIsPublic) {
+  const hasNodeCode = typeof body.nodeCode === 'string';
+  if (!hasUsername && !hasPfp && !hasBanner && !hasQuote && !hasTwitter && !hasTheme && !hasFeatured && !hasIsPublic && !hasNodeCode) {
     return new Response(JSON.stringify({ error: 'nothing_to_update' }), { status: 400 });
   }
 
@@ -86,6 +87,13 @@ export async function onRequestPost(context) {
 
   if (hasIsPublic) {
     patch.isPublic = body.isPublic;
+  }
+
+  if (hasNodeCode) {
+    if (!isValidNodeCode(body.nodeCode)) {
+      return new Response(JSON.stringify({ error: 'invalid_node_code' }), { status: 400 });
+    }
+    patch.nodeCode = body.nodeCode;
   }
 
   if (hasFeatured && !isValidFeaturedList(body.featuredNftIds)) {

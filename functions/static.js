@@ -1521,6 +1521,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-field-edit-btn:hover{ color:var(--cyan); }
   .profile-current-wallet-row{ display:flex; align-items:center; justify-content:center; gap:0.4rem; margin-top:0.75rem; }
   .profile-current-wallet{ font-size:13px; letter-spacing:0.03em; color:#000; text-transform:uppercase; word-break:break-all; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
+  /* Real click target on YOUR OWN hub specifically (#profilePanelWrap) —
+     jumps to your own PR0F!LE screen (reported live: "click the address
+     at the top it takes us to our profile link"). Scoped to this one
+     banner, not the shared .profile-current-wallet class in general —
+     #screenProfile's own copy (profileScreenBannerHtml) reuses the same
+     class for visual consistency but has no click handler, since you're
+     either already viewing that exact profile or someone else's (no
+     "our profile" destination to jump to from there). */
+  #profilePanelWrap .profile-current-wallet{ cursor:pointer; transition:opacity 0.15s ease; }
+  #profilePanelWrap .profile-current-wallet:hover{ opacity:0.75; text-decoration:underline; }
   /* Tiny real buttons next to the address — C0PY (clipboard, same
      pattern the issuer address' own COPY button already uses) and a
      direct link straight to this wallet's real B!TH0MP explorer page
@@ -7656,6 +7666,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profile-privacy-toggle.on{ border-color:var(--green); background:rgba(52,255,133,0.12); }
   .profile-privacy-toggle.on::after{ transform:translateX(24px); background:var(--green); box-shadow:0 0 8px var(--green-glow); }
+  /* N0DE C0DE — two labelled groups (F!RST/LAST) of three length buttons
+     each, same real-button-row language as THEME's own swatches/PR!VACY's
+     switch rather than a <select>. */
+  .profile-node-code-row{ display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; }
+  .profile-node-code-group{ display:flex; align-items:center; gap:0.4rem; }
+  .profile-node-code-group-label{ font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.06em; color:var(--grey-dim); text-transform:uppercase; margin-right:0.2rem; }
+  .profile-node-code-btn{
+    width:36px; height:36px;
+    background:transparent;
+    border:1px solid var(--border-mid);
+    color:var(--grey);
+    font-family:var(--font-mono);
+    font-size:14px;
+    font-weight:700;
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .profile-node-code-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  .profile-node-code-btn.active{ background:var(--cyan-faint); border-color:var(--cyan); color:var(--cyan); box-shadow:0 0 8px var(--cyan-glow); }
   .swap-nonatomic-note{
     max-width:520px;
     margin:0 auto 1.25rem;
@@ -8903,6 +8933,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="profile-customize-btn" id="profileFeaturedEditBtn">SH0WCASE</button>
               <button type="button" class="profile-customize-btn" id="profileThemeEditBtn">THEME</button>
               <button type="button" class="profile-customize-btn" id="profilePrivacyEditBtn">PR!VACY</button>
+              <button type="button" class="profile-customize-btn" id="profileNodeCodeEditBtn">N0DE C0DE</button>
             </div>
           </div>
           <!-- Just two buttons now (reported live — dropped the T0P 3
@@ -9228,6 +9259,28 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="profile-privacy-toggle" id="profilePrivacyToggle" role="switch"></button>
           </div>
           <div class="index-line" id="profilePrivacyStatus" style="text-align:center; margin-top:0.5rem;"></div>
+        </div>
+        <!-- N0DE C0DE — which slice of your OWN real wallet address shows
+             as N0DE on Σκύλλα://!DENT!TY (reported live wanting a choice
+             instead of always the last 4) — still always a literal piece
+             of the real address, just FIRST or LAST, 4-6 characters. -->
+        <div class="profile-edit-pane" id="profileEditPaneNodeCode" style="display:none;">
+          <div class="index-line" style="text-align:center; margin-bottom:0.75rem;" id="profileNodeCodePreview"></div>
+          <div class="profile-node-code-row">
+            <div class="profile-node-code-group">
+              <div class="profile-node-code-group-label">F!RST</div>
+              <button type="button" class="profile-node-code-btn" data-node-code="first4">4</button>
+              <button type="button" class="profile-node-code-btn" data-node-code="first5">5</button>
+              <button type="button" class="profile-node-code-btn" data-node-code="first6">6</button>
+            </div>
+            <div class="profile-node-code-group">
+              <div class="profile-node-code-group-label">LAST</div>
+              <button type="button" class="profile-node-code-btn" data-node-code="last4">4</button>
+              <button type="button" class="profile-node-code-btn" data-node-code="last5">5</button>
+              <button type="button" class="profile-node-code-btn" data-node-code="last6">6</button>
+            </div>
+          </div>
+          <div class="index-line" id="profileNodeCodeStatus" style="text-align:center; margin-top:0.75rem;"></div>
         </div>
       </div>
     </div>
@@ -10877,6 +10930,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileEditPaneFeatured','profileFeaturedStatus','profileFeaturedGrid','profileFeaturedSaveBtn','profileFeaturedSaveStatus',
    'profileEditPaneTheme','profileThemeSwatchRow','profileThemeStatus',
    'profileEditPanePrivacy','profilePrivacyToggle','profilePrivacyStatus',
+   'profileEditPaneNodeCode','profileNodeCodePreview','profileNodeCodeStatus','profileNodeCodeEditBtn',
    'profileUsernameInput','profileUsernameSaveBtn','profileUsernameStatus','profilePfpStatus','profilePfpGrid','profileCoinsList',
    'profileBannerMain','profileBannerIdentity','profileBannerHoldings','profileBannerExpanded','profileExpandedTitle','profileExpandedList','profileExpandedBack',
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus',
@@ -19798,7 +19852,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     el.profileScreenCode.innerHTML =
       '<div class="profile-code-title">Σκύλλα://!DENT!TY</div>' +
-      row('N0DE', escapeHtml(wallet.slice(-4).toUpperCase())) +
+      row('N0DE', escapeHtml(computeNodeCode(wallet, profile && profile.nodeCode))) +
       row('STATUS', wallet === MY_WALLET ? 'ACT!VE' : 'UNKN0WN', wallet !== MY_WALLET) +
       row('CLASS', 'PEND!NG', true) +
       row('T!TLE', 'PEND!NG', true) +
@@ -20599,7 +20653,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     banner: { pane: 'profileEditPaneBanner', title: 'CH00SE BANNER NFT', focus: null },
     featured: { pane: 'profileEditPaneFeatured', title: 'SH0WCASE :: FEATURED NFTS', focus: null },
     theme: { pane: 'profileEditPaneTheme', title: 'PR0F!LE THEME', focus: null },
-    privacy: { pane: 'profileEditPanePrivacy', title: 'PR!VACY', focus: null }
+    privacy: { pane: 'profileEditPanePrivacy', title: 'PR!VACY', focus: null },
+    nodeCode: { pane: 'profileEditPaneNodeCode', title: 'N0DE C0DE', focus: null }
   };
   // PROFILE_THEMES — pure visual presets, zero wallet data behind any of
   // them (see _shared.js's own PROFILE_THEME_KEYS, kept in lockstep with
@@ -20636,6 +20691,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (field === 'pfp' || field === 'banner' || field === 'featured') ensureCrossCollectionNftsLoaded();
     if (field === 'theme') renderProfileThemeSwatches();
     if (field === 'privacy') renderProfilePrivacyToggle();
+    if (field === 'nodeCode') renderProfileNodeCodePicker();
   }
   function closeProfileEditModal(){
     el.profileEditModal.style.display = 'none';
@@ -20840,6 +20896,28 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.profilePrivacyToggle.classList.toggle('on', isPublic);
     el.profilePrivacyToggle.setAttribute('aria-checked', isPublic ? 'true' : 'false');
   }
+  // N0DE C0DE — always a literal slice of the wallet's own real address
+  // (never invented), just FIRST/LAST and how many characters (4-6),
+  // reported live wanting a choice instead of always the last 4. Shared
+  // by the edit picker's own live preview and renderProfileCode (the real
+  // Σκύλλα://!DENT!TY block on #screenProfile) so both ever compute this
+  // one way. 'last4' matches the fixed behaviour every profile had before
+  // this setting existed, so an unset nodeCode changes nothing.
+  function computeNodeCode(wallet, nodeCode){
+    var m = /^(first|last)([456])$/.exec(nodeCode || 'last4');
+    if (!m) m = ['last4', 'last', '4'];
+    var len = parseInt(m[2], 10);
+    var slice = m[1] === 'first' ? wallet.slice(0, len) : wallet.slice(-len);
+    return slice.toUpperCase();
+  }
+  function renderProfileNodeCodePicker(){
+    if (!MY_WALLET) return;
+    var current = (profileCache[MY_WALLET] && profileCache[MY_WALLET].nodeCode) || 'last4';
+    el.profileEditPaneNodeCode.querySelectorAll('.profile-node-code-btn').forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-node-code') === current);
+    });
+    el.profileNodeCodePreview.innerHTML = 'N0DE :: <span class="hi">' + escapeHtml(computeNodeCode(MY_WALLET, current)) + '</span>';
+  }
   // ---- Click-to-edit on the banner itself — reported live as wanting to
   // "edit everything through clicking stuff on our own banner" instead of
   // hunting down a matching box on the page. Every trigger now opens
@@ -20862,6 +20940,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.profileFeaturedEditBtn.addEventListener('click', function(){ openProfileEditModal('featured'); });
   el.profileThemeEditBtn.addEventListener('click', function(){ openProfileEditModal('theme'); });
   el.profilePrivacyEditBtn.addEventListener('click', function(){ openProfileEditModal('privacy'); });
+  el.profileNodeCodeEditBtn.addEventListener('click', function(){ openProfileEditModal('nodeCode'); });
   // Address C0PY — same real clipboard pattern the issuer address' own
   // COPY button already uses (copyIssuerBtn). B!TH0MP itself is a plain
   // real link (href set once MY_WALLET is known, see loadProfilePanel) —
@@ -20874,6 +20953,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(MY_WALLET).then(done, done);
     else done();
+  });
+  // Clicking the address itself (not the COPY/B!TH0MP mini-buttons right
+  // next to it) opens your own real PR0F!LE screen — reported live as
+  // "click the address at the top it takes us to our profile link". The
+  // COPY/B!TH0MP buttons are separate elements so this never fights them.
+  el.profileCurrentWallet.addEventListener('click', function(){
+    if (!MY_WALLET) return;
+    openWalletProfile(MY_WALLET, 'Y0U');
   });
   // Delegated (quote's own edit ✎/placeholder are rebuilt by
   // renderProfileCurrent's own innerHTML, so a direct listener on either
@@ -21034,6 +21121,28 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profilePrivacyStatus.textContent = next ? 'PR0F!LE !S PUBL!C.' : 'PR0F!LE !S PR!VATE.';
     }).catch(function(){
       el.profilePrivacyStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  });
+  el.profileEditPaneNodeCode.addEventListener('click', function(e){
+    var btn = e.target.closest('.profile-node-code-btn');
+    if (!btn) return;
+    var nodeCode = btn.getAttribute('data-node-code');
+    el.profileNodeCodeStatus.textContent = 'SAV!NG...';
+    fetch('/api/profile-set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nodeCode: nodeCode })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        el.profileNodeCodeStatus.textContent = listingErrorMessage(res.data && res.data.error);
+        return;
+      }
+      profileCache[MY_WALLET] = res.data.profile;
+      renderProfileNodeCodePicker();
+      el.profileNodeCodeStatus.textContent = '';
+    }).catch(function(){
+      el.profileNodeCodeStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
   el.profileUsernameSaveBtn.addEventListener('click', function(){
