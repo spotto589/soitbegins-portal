@@ -5699,7 +5699,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      has no fixed content budget to design around (a wallet could hold
      anywhere from 0 to all 10 collections), so it scrolls instead of
      needing every pixel accounted for. ---- */
-  #screenProfile{
+  /* #screenWalletHistory shares this exact shell (same reasoning
+     screenDetail/screenProfile already share theirs) — same fixed full-
+     viewport overlay, own TV-static canvas, scrolls (neither screen has
+     a fixed content budget the way DETAIL does). */
+  #screenProfile, #screenWalletHistory{
     position:fixed;
     top:var(--global-ticker-h);
     left:0;
@@ -5716,7 +5720,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     -webkit-backdrop-filter:none;
     padding:clamp(0.5rem, 1.8vh, 1.25rem) clamp(1rem, 4vw, 3rem) 2.5rem;
   }
-  #screenProfile::before{
+  #screenProfile::before, #screenWalletHistory::before{
     content:'';
     position:fixed;
     inset:0;
@@ -5781,8 +5785,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      THEMES further down) drives every themed chrome element on this
      screen — 'static' (the default, unset) falls back to the plain cyan
      this screen always used before themes existed. */
-  .profile-screen-message-btn{ display:block; margin:0 auto 1.5rem; color:rgb(var(--profile-accent-rgb, 61,243,236)); border-color:rgba(var(--profile-accent-rgb, 61,243,236),0.5); }
+  .profile-screen-action-row{ display:flex; justify-content:center; gap:0.75rem; flex-wrap:wrap; margin:0 0 1.5rem; }
+  .profile-screen-message-btn{ color:rgb(var(--profile-accent-rgb, 61,243,236)); border-color:rgba(var(--profile-accent-rgb, 61,243,236),0.5); }
   .profile-screen-message-btn:hover{ background:rgba(var(--profile-accent-rgb, 61,243,236),0.12); border-color:rgb(var(--profile-accent-rgb, 61,243,236)); color:rgb(var(--profile-accent-rgb, 61,243,236)); }
+  /* WALLET H!ST0RY — neutral grey like a normal .bar-btn (not themed
+     cyan/accent like MESSAGE) so the one real "put real XRP behind this"
+     CTA on the screen still stands out on its own. */
+  .profile-screen-history-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
   .profile-screen-eyebrow{ text-align:center; font-size:13px; letter-spacing:0.14em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 5px rgba(var(--profile-accent-rgb, 61,243,236),0.5); text-transform:uppercase; margin:0 0 1rem; }
   /* NFT C0LLECT!0NS (left) / C0!NS HELD (right) — reported live wanting
      these side by side instead of one long stacked scroll. Stacks back
@@ -5847,6 +5856,68 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-code-row span:last-child{ color:var(--green); font-weight:700; text-overflow:ellipsis; overflow:hidden; }
   .profile-code-row.pending span:last-child{ color:var(--grey-dim); font-weight:400; }
   .profile-private-notice{ max-width:420px; margin:2rem auto; text-align:center; }
+  /* ---- WALLET H!ST0RY — #screenWalletHistory's own content, everything
+     below the shared .profile-banner it reuses from #screenProfile. ---- */
+  .wallet-history-note{ max-width:900px; margin:0 auto 1rem; padding:0.6em 1em; border:1px dashed var(--border-dim); border-radius:var(--radius); text-align:center; font-size:12px; color:var(--grey-dim); letter-spacing:0.04em; }
+  /* WALLET DNA — the exact ████████░░ bar-glyph language from spec, one
+     row per signal, PEND!NG (not a fabricated bar) for anything we can't
+     honestly compute yet (see computeWalletDna's own comment). */
+  .wallet-dna-block{ max-width:520px; margin:0 auto 2rem; }
+  .wallet-dna-row{ display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem; font-family:var(--font-mono); font-size:12px; }
+  .wallet-dna-label{ flex:0 0 128px; color:var(--grey-dim); letter-spacing:0.05em; text-transform:uppercase; }
+  .wallet-dna-bar{ color:var(--green); text-shadow:0 0 5px var(--green-glow); letter-spacing:1px; }
+  .wallet-dna-row.pending .wallet-dna-bar{ color:var(--grey-dim); text-shadow:none; }
+  .wallet-dna-classification{ text-align:center; margin-top:1rem; padding-top:1rem; border-top:1px dashed var(--border-dim); }
+  .wallet-dna-classification-label{ font-family:var(--font-display); font-size:22px; font-weight:700; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 8px rgba(var(--profile-accent-rgb, 61,243,236),0.5); letter-spacing:0.04em; }
+  .wallet-dna-disclaimer{ font-size:10px; color:var(--grey-dim); letter-spacing:0.03em; margin-top:0.4rem; text-transform:none; }
+  .wallet-history-graph{ display:block; width:100%; max-width:900px; height:120px; margin:0 auto 2rem; }
+  /* F!LTERS — real client-side filters over the already-fetched event
+     list (no re-fetch per click), same active-state button language
+     .profile-mode-btn already uses. */
+  .wallet-history-filters{ display:flex; flex-wrap:wrap; justify-content:center; gap:0.5rem; max-width:900px; margin:0 auto 1.5rem; }
+  .wallet-history-filter-btn{
+    background:transparent;
+    border:1px solid var(--border-mid);
+    color:var(--grey);
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    padding:0.5em 0.9em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    text-transform:uppercase;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .wallet-history-filter-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  .wallet-history-filter-btn.active{ background:rgba(var(--profile-accent-rgb, 61,243,236),0.12); border-color:rgb(var(--profile-accent-rgb, 61,243,236)); color:rgb(var(--profile-accent-rgb, 61,243,236)); }
+  .wallet-history-timeline{ max-width:900px; margin:0 auto 3rem; }
+  .wallet-history-day-heading{ font-family:var(--font-mono); font-size:11px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; margin:1.25rem 0 0.5rem; padding-bottom:0.3rem; border-bottom:1px dashed var(--border-dim); }
+  .wallet-history-event{
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    background:var(--panel-bg-solid);
+    margin-bottom:0.5rem;
+    overflow:hidden;
+  }
+  .wallet-history-event-row{
+    display:flex;
+    align-items:center;
+    gap:0.75rem;
+    padding:0.7em 0.9em;
+    cursor:pointer;
+    transition:background 0.15s ease;
+  }
+  .wallet-history-event-row:hover{ background:rgba(255,255,255,0.03); }
+  .wallet-history-event-icon{ flex:0 0 auto; font-size:16px; color:rgb(var(--profile-accent-rgb, 61,243,236)); }
+  .wallet-history-event-label{ flex:1 1 auto; min-width:0; font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--white); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .wallet-history-event-scylla{ flex:0 0 auto; font-size:9px; font-weight:700; letter-spacing:0.05em; color:var(--green); border:1px solid var(--green); border-radius:var(--radius); padding:0.15em 0.4em; }
+  .wallet-history-event-time{ flex:0 0 auto; font-size:11px; color:var(--grey-dim); }
+  .wallet-history-event-detail{ display:none; padding:0 0.9em 0.9em; font-size:12px; color:var(--grey-dim); border-top:1px dashed var(--border-dim); }
+  .wallet-history-event-detail.open{ display:block; padding-top:0.7em; }
+  .wallet-history-event-detail-row{ display:flex; justify-content:space-between; gap:1rem; padding:0.2em 0; }
+  .wallet-history-event-detail-row span:last-child{ color:var(--white); text-align:right; word-break:break-all; }
+  .wallet-history-event-detail-row a{ color:var(--cyan); }
   /* DATABASE M0DE / SH0WCASE M0DE — a real toggle, not a stored owner
      preference (see the HTML's own comment) — same two-button active-
      state language SALES H!ST0RY's XRP/$P!GE0NS toggle already uses. */
@@ -9915,7 +9986,14 @@ const SWAP_HTML = `<!DOCTYPE html>
              against messaging yourself, same as profileMessagesNewStartBtn
              already does) and while logged out (asks you to connect
              first, same pattern SH0W MY P!GE0NS already uses). -->
-        <button class="bar-btn profile-screen-message-btn" id="profileScreenMessageBtn" style="display:none;">✉ MESSAGE</button>
+        <div class="profile-screen-action-row">
+          <button class="bar-btn profile-screen-message-btn" id="profileScreenMessageBtn" style="display:none;">✉ MESSAGE</button>
+          <!-- WALLET H!ST0RY — Phase 2's own strongest feature per the
+               user's own roadmap notes: real capped/classified recent
+               activity (openWalletHistory in the JS), not a plain tx
+               list. -->
+          <button class="bar-btn profile-screen-history-btn" id="profileScreenHistoryBtn">📜 WALLET H!ST0RY</button>
+        </div>
         <!-- DATABASE M0DE (today's practical collections+coins layout,
              default) / SH0WCASE M0DE (visual, curated — see the HTML
              comment on #profileScreenShowcase below) — a real view toggle
@@ -9946,6 +10024,41 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="profile-showcase-grid" id="profileScreenFeatured"></div>
         </div>
       </div>
+    </div>
+
+    <!-- SCREEN: WALLET H!ST0RY — Phase 2's own strongest feature per the
+         user's own direction: a real interactive archive of a wallet's
+         RECENT on-ledger activity (account_tx, capped — see
+         fetchRecentAccountTxCached's own comment in _shared.js — never
+         claimed as full lifetime history), classified into plain events,
+         filterable, each expandable for real tx detail. Plus WALLET DNA,
+         a simple transparent behaviour read (not an objective score, see
+         computeWalletDna's own comment) derived from this same data. Same
+         fixed full-screen shell as #screenProfile (reuses the exact
+         .profile-banner markup for a consistent look), reached from
+         #screenProfile's own WALLET H!ST0RY button. -->
+    <div class="sw-panel" id="screenWalletHistory" style="display:none;">
+      <canvas class="local-static-bg" id="walletHistoryStaticBg"></canvas>
+      <div class="profile-screen-top-row">
+        <button class="detail-back-btn-top" id="walletHistoryBackBtn">← BACK</button>
+      </div>
+      <div class="profile-screen-banner-wrap" id="walletHistoryBanner"></div>
+      <div class="wallet-history-note" id="walletHistoryNote" style="display:none;"></div>
+      <div class="profile-screen-eyebrow">// WALLET DNA</div>
+      <div class="wallet-dna-block" id="walletDnaBlock"></div>
+      <div class="profile-screen-eyebrow">// ACT!V!TY</div>
+      <canvas class="wallet-history-graph" id="walletHistoryGraph" width="700" height="120"></canvas>
+      <div class="profile-screen-eyebrow">// T!MEL!NE</div>
+      <div class="wallet-history-filters" id="walletHistoryFilters">
+        <button type="button" class="wallet-history-filter-btn active" data-filter="all">ALL</button>
+        <button type="button" class="wallet-history-filter-btn" data-filter="nft">NFT</button>
+        <button type="button" class="wallet-history-filter-btn" data-filter="tokens">T0KENS</button>
+        <button type="button" class="wallet-history-filter-btn" data-filter="trades">TRADES</button>
+        <button type="button" class="wallet-history-filter-btn" data-filter="transfers">TRANSFERS</button>
+        <button type="button" class="wallet-history-filter-btn" data-filter="scylla">ΣΚΥΛΛΑ</button>
+        <button type="button" class="wallet-history-filter-btn" data-filter="collections">C0LLECT!0NS</button>
+      </div>
+      <div class="wallet-history-timeline" id="walletHistoryTimeline"></div>
     </div>
 
     <!-- Fullscreen picture lightbox — click the detail picture to open,
@@ -10964,7 +11077,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose',
    'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections','profileScreenCoins','profileScreenMessageBtn',
-   'profileScreenCode','profileScreenPrivateNotice','profileScreenPublicContent','profileModeToggle','profileScreenDatabaseView','profileScreenShowcase','profileScreenFeatured',
+   'profileScreenCode','profileScreenPrivateNotice','profileScreenPublicContent','profileModeToggle','profileScreenDatabaseView','profileScreenShowcase','profileScreenFeatured','profileScreenHistoryBtn',
+   'screenWalletHistory','walletHistoryBackBtn','walletHistoryBanner','walletHistoryNote','walletDnaBlock','walletHistoryGraph','walletHistoryFilters','walletHistoryTimeline',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
    'connectPanel','connectPanelTitle','connectPanelSub','connectPanelActions',
@@ -11614,7 +11728,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // treatment DETAIL already uses (same class, see body{} — both are
     // full-viewport fixed overlays with nothing real underneath moving).
     el.screenProfile.style.display = name === 'profile' ? '' : 'none';
-    document.body.classList.toggle('detail-open', name === 'detail' || name === 'profile');
+    // WALLET H!ST0RY — same fixed-overlay shell as PR0F!LE/DETAIL, same
+    // freeze-the-page-underneath treatment.
+    el.screenWalletHistory.style.display = name === 'walletHistory' ? '' : 'none';
+    document.body.classList.toggle('detail-open', name === 'detail' || name === 'profile' || name === 'walletHistory');
     el.screenSummary.style.display = name === 'summary' ? '' : 'none';
     el.screenSwapReview.style.display = name === 'swapreview' ? '' : 'none';
     el.screenSwapOfferConfirm.style.display = name === 'swapofferconfirm' ? '' : 'none';
@@ -19309,6 +19426,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (el.amountEntryModal.style.display !== 'none'){ closeAmountEntryModal(); return true; }
     if (el.historyModal.style.display !== 'none'){ closeHistoryModal(); return true; }
     if (el.screenDetail.style.display !== 'none'){ goBackFromDetail(); return true; }
+    // WALLET H!ST0RY checked BEFORE PR0F!LE — it's the innermost overlay
+    // (opened from PR0F!LE, sits on top of it), so a back press should
+    // close it back to PR0F!LE first, not skip straight past to
+    // whichever screen PR0F!LE itself closes to.
+    if (el.screenWalletHistory.style.display !== 'none'){ closeWalletHistory(); return true; }
     if (el.screenProfile.style.display !== 'none'){ closeWalletProfile(); return true; }
     // MY PIGEONS' own C0LLECT!0NS grid (your own wallet, scoped) unwinds
     // differently from a DATABASE wallet scope — reported live: pressing
@@ -19847,19 +19969,34 @@ const SWAP_HTML = `<!DOCTYPE html>
   // NFTS/C0LLECT!0NS are null (renders PEND!NG too) only if the live
   // myNftCounts lookup itself failed, not if the wallet genuinely holds 0.
   function renderProfileCode(wallet, profile, totalNfts, totalCollections){
-    function row(label, value, isPending){
-      return '<div class="profile-code-row' + (isPending ? ' pending' : '') + '"><span>' + label + '</span><span>' + value + '</span></div>';
+    function row(label, value, isPending, key){
+      return '<div class="profile-code-row' + (isPending ? ' pending' : '') + '"' + (key ? ' data-row="' + key + '"' : '') + '><span>' + label + '</span><span>' + value + '</span></div>';
     }
     el.profileScreenCode.innerHTML =
       '<div class="profile-code-title">Σκύλλα://!DENT!TY</div>' +
       row('N0DE', escapeHtml(computeNodeCode(wallet, profile && profile.nodeCode))) +
       row('STATUS', wallet === MY_WALLET ? 'ACT!VE' : 'UNKN0WN', wallet !== MY_WALLET) +
-      row('CLASS', 'PEND!NG', true) +
+      // CLASS starts PEND!NG (no Wallet DNA computed yet — that only
+      // happens once WALLET H!ST0RY is actually opened, see openWallet-
+      // History/renderProfileCodeClass) and gets patched in place rather
+      // than re-rendering this whole block, so it never clobbers whatever
+      // the user's since clicked elsewhere on this card.
+      row('CLASS', 'PEND!NG', true, 'class') +
       row('T!TLE', 'PEND!NG', true) +
       row('NFTS', totalNfts === null ? 'PEND!NG' : totalNfts, totalNfts === null) +
       row('C0LLECT!0NS', totalCollections === null ? 'PEND!NG' : totalCollections, totalCollections === null) +
       row('TRUST', 'PEND!NG', true) +
       row('S!GNAL', 'STABLE');
+  }
+  // Patches just the CLASS row once Wallet DNA actually computes (WALLET
+  // H!ST0RY is opened lazily, so this is genuinely unknown until then) —
+  // only touches the DOM if this is still the profile currently on screen.
+  function renderProfileCodeClass(wallet, classification){
+    if (currentProfileWallet !== wallet) return;
+    var rowEl = el.profileScreenCode.querySelector('[data-row="class"]');
+    if (!rowEl) return;
+    rowEl.classList.toggle('pending', !classification);
+    rowEl.querySelector('span:last-child').textContent = classification || 'PEND!NG';
   }
   // SH0WCASE — the owner's own curated set (see FEATURED in the edit
   // modal), real art at a bigger size than the practical picker cards.
@@ -19956,6 +20093,222 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.profileScreenDatabaseView.style.display = mode === 'database' ? '' : 'none';
     el.profileScreenShowcase.style.display = mode === 'showcase' ? '' : 'none';
   });
+  // ---- WALLET H!ST0RY (#screenWalletHistory) — Phase 2. Real, capped,
+  // classified recent activity (see fetchRecentAccountTxCached's own
+  // comment in _shared.js) + a simple, transparent WALLET DNA read. Every
+  // number here is either real ledger data or an honestly-labelled PEND!NG
+  // — nothing is invented to fill a gap. ----
+  var walletHistoryEvents = [];
+  var walletHistoryFilter = 'all';
+  var WALLET_HISTORY_TYPE_META = {
+    NFT_MINT: { icon: '◆', label: function(e){ return 'M!NTED' + (e.collection && COLLECTION_META[e.collection] ? ' ' + COLLECTION_META[e.collection].label : ' NFT'); } },
+    NFT_BURN: { icon: '✕', label: function(){ return 'BURNED NFT'; } },
+    NFT_LISTING: { icon: '▲', label: function(e){ return e.direction === 'sell' ? 'L!STED NFT F0R SALE' : 'MADE AN 0FFER'; } },
+    NFT_LISTING_CANCEL: { icon: '−', label: function(){ return 'CANCELLED A L!ST!NG/0FFER'; } },
+    NFT_TRADE: { icon: '⇄', label: function(){ return 'NFT TRADE SETTLED'; } },
+    XRP_TRANSFER: { icon: '↔', label: function(e){ return (e.direction === 'sent' ? 'SENT ' : 'RECE!VED ') + (e.amount != null ? e.amount.toLocaleString(undefined,{maximumFractionDigits:2}) + ' XRP' : 'XRP'); } },
+    TOKEN_TRANSFER: { icon: '↔', label: function(e){ return (e.direction === 'sent' ? 'SENT ' : 'RECE!VED ') + (e.amount != null ? e.amount.toLocaleString(undefined,{maximumFractionDigits:2}) : '') + ' ' + (e.collection && COLLECTION_META[e.collection] ? COLLECTION_META[e.collection].tokenLabel : (e.currency || 'T0KENS')); } },
+    TRUSTLINE: { icon: '☆', label: function(e){ return 'TRUSTL!NE SET' + (e.collection && COLLECTION_META[e.collection] ? ' :: ' + COLLECTION_META[e.collection].label : ''); } },
+    OTHER: { icon: '•', label: function(e){ return e.rawType || 'ACT!V!TY'; } }
+  };
+  function walletHistoryEventMeta(e){ return WALLET_HISTORY_TYPE_META[e.type] || WALLET_HISTORY_TYPE_META.OTHER; }
+  function walletHistoryMatchesFilter(e, filter){
+    switch (filter){
+      case 'all': return true;
+      case 'nft': return e.type.indexOf('NFT_') === 0;
+      case 'tokens': return e.type === 'TOKEN_TRANSFER' || e.type === 'TRUSTLINE';
+      case 'trades': return e.type === 'NFT_TRADE';
+      case 'transfers': return e.type === 'XRP_TRANSFER' || e.type === 'TOKEN_TRANSFER';
+      case 'scylla': return !!e.viaScylla;
+      case 'collections': return e.type === 'TRUSTLINE';
+      default: return true;
+    }
+  }
+  function openWalletHistory(){
+    if (!currentProfileWallet) return;
+    var wallet = currentProfileWallet;
+    walletHistoryEvents = [];
+    walletHistoryFilter = 'all';
+    el.walletHistoryFilters.querySelectorAll('.wallet-history-filter-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-filter') === 'all'); });
+    // Same real banner PR0F!LE uses, same cached profile data (already
+    // resolved by openWalletProfile just before this screen is ever
+    // reachable) — no second profile fetch needed.
+    el.walletHistoryBanner.innerHTML = profileScreenBannerHtml(wallet, profileCache[wallet] || null);
+    var bannerNode = el.walletHistoryBanner.querySelector('.profile-banner');
+    var bannerSampleSrc = profileCache[wallet] && (profileCache[wallet].bannerImage || profileCache[wallet].pfpImage);
+    if (bannerNode && bannerSampleSrc) sampleBannerColor(bannerSampleSrc, bannerNode);
+    var themeKey = (profileCache[wallet] && profileCache[wallet].theme) || 'static';
+    el.screenWalletHistory.style.setProperty('--profile-accent-rgb', (PROFILE_THEMES[themeKey] || PROFILE_THEMES.static).accent);
+    el.walletDnaBlock.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+    el.walletHistoryTimeline.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+    el.walletHistoryNote.style.display = 'none';
+    var ctx = el.walletHistoryGraph.getContext('2d');
+    ctx.clearRect(0, 0, el.walletHistoryGraph.width, el.walletHistoryGraph.height);
+    showScreen('walletHistory');
+    apiWithRetry({ walletHistory: 1, wallet: wallet }).then(function(data){
+      if (currentProfileWallet !== wallet) return;
+      walletHistoryEvents = (data && data.events) || [];
+      if (data && !data.reachedGenesis){
+        el.walletHistoryNote.style.display = '';
+        el.walletHistoryNote.textContent = 'SH0W!NG RECENT ACT!V!TY 0NLY — N0T TH!S WALLET S FULL H!ST0RY.';
+      }
+      renderWalletHistoryTimeline();
+      renderWalletHistoryGraph(walletHistoryEvents);
+      apiWithRetry({ myNftCounts: 1, wallet: wallet }).then(function(countsData){
+        if (currentProfileWallet !== wallet) return;
+        var counts = (countsData && countsData.counts) || {};
+        var collectionsHeld = Object.keys(counts).filter(function(k){ return counts[k] > 0; }).length;
+        var dna = computeWalletDna(walletHistoryEvents, collectionsHeld, !!(data && data.reachedGenesis));
+        renderWalletDna(dna);
+        renderProfileCodeClass(wallet, dna.classification);
+      }).catch(function(){
+        renderWalletDna(computeWalletDna(walletHistoryEvents, null, !!(data && data.reachedGenesis)));
+      });
+    }).catch(function(){
+      el.walletHistoryTimeline.innerHTML = '<div class="th-empty">C0ULD N0T L0AD WALLET H!ST0RY.</div>';
+      el.walletDnaBlock.innerHTML = '<div class="th-empty">C0ULD N0T L0AD WALLET DNA.</div>';
+    });
+  }
+  function closeWalletHistory(){
+    showScreen('profile');
+  }
+  el.profileScreenHistoryBtn.addEventListener('click', openWalletHistory);
+  el.walletHistoryBackBtn.addEventListener('click', closeWalletHistory);
+  el.walletHistoryFilters.addEventListener('click', function(e){
+    var btn = e.target.closest('.wallet-history-filter-btn');
+    if (!btn) return;
+    walletHistoryFilter = btn.getAttribute('data-filter');
+    el.walletHistoryFilters.querySelectorAll('.wallet-history-filter-btn').forEach(function(b){ b.classList.toggle('active', b === btn); });
+    renderWalletHistoryTimeline();
+  });
+  // Groups by calendar day (local time), each event a real clickable row
+  // that expands in place — same "click to expand" interaction language
+  // .card-history-list's own rows already use elsewhere in this file.
+  function renderWalletHistoryTimeline(){
+    var filtered = walletHistoryEvents.filter(function(e){ return walletHistoryMatchesFilter(e, walletHistoryFilter); });
+    if (!filtered.length){
+      el.walletHistoryTimeline.innerHTML = '<div class="th-empty">N0 ACT!V!TY F0UND F0R TH!S F!LTER.</div>';
+      return;
+    }
+    var html = '';
+    var lastDayKey = null;
+    filtered.forEach(function(e, idx){
+      var d = e.dateMs ? new Date(e.dateMs) : null;
+      var dayKey = d ? d.toDateString() : 'UNKN0WN DATE';
+      if (dayKey !== lastDayKey){
+        html += '<div class="wallet-history-day-heading">' + escapeHtml(d ? d.toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' }) : 'UNKN0WN DATE') + '</div>';
+        lastDayKey = dayKey;
+      }
+      var meta = walletHistoryEventMeta(e);
+      var timeStr = d ? d.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' }) : '';
+      html += '<div class="wallet-history-event" data-idx="' + idx + '">' +
+        '<div class="wallet-history-event-row">' +
+          '<span class="wallet-history-event-icon">' + meta.icon + '</span>' +
+          '<span class="wallet-history-event-label">' + escapeHtml(meta.label(e)) + '</span>' +
+          (e.viaScylla ? '<span class="wallet-history-event-scylla">Σκύλλα</span>' : '') +
+          '<span class="wallet-history-event-time">' + escapeHtml(timeStr) + '</span>' +
+        '</div>' +
+        '<div class="wallet-history-event-detail" id="walletHistoryDetail' + idx + '">' + walletHistoryEventDetailHtml(e) + '</div>' +
+      '</div>';
+    });
+    el.walletHistoryTimeline.innerHTML = html;
+    walletHistoryTimelineFilteredEvents = filtered;
+  }
+  var walletHistoryTimelineFilteredEvents = [];
+  function walletHistoryEventDetailHtml(e){
+    var rows = '';
+    function row(label, value){ rows += '<div class="wallet-history-event-detail-row"><span>' + label + '</span><span>' + value + '</span></div>'; }
+    if (e.collection && COLLECTION_META[e.collection]) row('C0LLECT!0N', escapeHtml(COLLECTION_META[e.collection].label));
+    if (e.nftId) row('NFT', escapeHtml(e.nftId.slice(0, 8)) + '…' + escapeHtml(e.nftId.slice(-6)));
+    if (e.counterparty) row('C0UNTERPARTY', walletTagHtml(e.counterparty));
+    if (e.account) row('S!GNED BY', walletTagHtml(e.account));
+    row('TXN', '<a href="https://bithomp.com/explorer/' + escapeHtml(e.txHash) + '" target="_blank" rel="noopener">' + escapeHtml(e.txHash.slice(0,10)) + '… ↗</a>');
+    return rows;
+  }
+  el.walletHistoryTimeline.addEventListener('click', function(e){
+    var row = e.target.closest('.wallet-history-event-row');
+    if (!row || e.target.closest('a')) return;
+    var detail = row.parentElement.querySelector('.wallet-history-event-detail');
+    if (detail) detail.classList.toggle('open');
+  });
+  // ACT!V!TY graph — real transaction counts per week, bucketed straight
+  // off the same fetched events (no fabricated historical balances — see
+  // this feature's own plan/comment on why a true point-in-time holdings
+  // graph isn't attempted yet). Hand-drawn on a plain canvas, same raw
+  // technique startStaticCanvas/drawStatic already use elsewhere in this
+  // file — no charting library anywhere in this codebase to reuse.
+  function renderWalletHistoryGraph(events){
+    var canvas = el.walletHistoryGraph;
+    var ctx = canvas.getContext('2d');
+    var w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    var dated = events.filter(function(e){ return e.dateMs; });
+    if (!dated.length) return;
+    var WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    var now = Date.now();
+    var WEEKS = 12;
+    var buckets = new Array(WEEKS).fill(0);
+    dated.forEach(function(e){
+      var weeksAgo = Math.floor((now - e.dateMs) / WEEK_MS);
+      if (weeksAgo >= 0 && weeksAgo < WEEKS) buckets[WEEKS - 1 - weeksAgo]++;
+    });
+    var max = Math.max.apply(null, buckets.concat([1]));
+    var barGap = 4;
+    var barW = (w - barGap * (WEEKS - 1)) / WEEKS;
+    var accentRgb = getComputedStyle(el.screenWalletHistory).getPropertyValue('--profile-accent-rgb').trim() || '61,243,236';
+    ctx.fillStyle = 'rgba(' + accentRgb + ',0.75)';
+    buckets.forEach(function(count, i){
+      var barH = max ? Math.max(2, (count / max) * (h - 4)) : 2;
+      ctx.fillRect(i * (barW + barGap), h - barH, barW, barH);
+    });
+  }
+  // WALLET DNA — simple, transparent signals from the same recent-activity
+  // window (never claimed as lifetime behaviour unless reachedGenesis is
+  // true) + the current live collections-held count. Deliberately basic
+  // formulas per the user's own direction ("do not pretend the
+  // classification is objectively scientific... a Σκύλλα wallet profile
+  // derived from observable behaviour") — every score is a plain 0-10
+  // scale computed one obvious way, not a hidden weighted model.
+  function computeWalletDna(events, collectionsHeld, reachedGenesis){
+    var total = events.length;
+    function pct(matchFn){ return total ? events.filter(matchFn).length / total : 0; }
+    var collector = collectionsHeld === null ? null : Math.min(10, Math.round((collectionsHeld / 5) * 10));
+    var trader = total ? Math.round(pct(function(e){ return e.type === 'NFT_TRADE'; }) * 10) : null;
+    var accumulate = events.filter(function(e){ return e.type === 'NFT_MINT' || (e.type === 'TOKEN_TRANSFER' && e.direction === 'received') || (e.type === 'XRP_TRANSFER' && e.direction === 'received'); }).length;
+    var disperse = events.filter(function(e){ return e.type === 'NFT_BURN' || (e.type === 'TOKEN_TRANSFER' && e.direction === 'sent') || (e.type === 'XRP_TRANSFER' && e.direction === 'sent'); }).length;
+    var holder = (accumulate + disperse) ? Math.round((accumulate / (accumulate + disperse)) * 10) : null;
+    var nftFocused = total ? Math.round(pct(function(e){ return e.type.indexOf('NFT_') === 0; }) * 10) : null;
+    var earlyAdopter = null;
+    if (reachedGenesis && total){
+      var earliest = events.reduce(function(min, e){ return (e.dateMs && (!min || e.dateMs < min)) ? e.dateMs : min; }, null);
+      if (earliest){
+        var yearsAgo = (Date.now() - earliest) / (365 * 24 * 60 * 60 * 1000);
+        earlyAdopter = Math.max(0, Math.min(10, Math.round(yearsAgo * 5)));
+      }
+    }
+    var scores = { C0LLECT0R: collector, TRADER: trader, H0LDER: holder, 'NFT F0CUSED': nftFocused, 'EARLY AD0PTER': earlyAdopter };
+    var classification = 'UNCLASS!F!ED';
+    var best = -1;
+    Object.keys(scores).forEach(function(k){
+      if (scores[k] !== null && scores[k] > best){ best = scores[k]; classification = k.replace(/0/g, 'O').replace(/!/g, 'I'); }
+    });
+    return { scores: scores, classification: best >= 0 ? classification : null };
+  }
+  function renderWalletDna(dna){
+    var html = '';
+    Object.keys(dna.scores).forEach(function(label){
+      var score = dna.scores[label];
+      var pending = score === null;
+      var filled = pending ? 0 : score;
+      var bar = '█'.repeat(filled) + '░'.repeat(10 - filled);
+      html += '<div class="wallet-dna-row' + (pending ? ' pending' : '') + '"><span class="wallet-dna-label">' + escapeHtml(label) + '</span><span class="wallet-dna-bar">' + (pending ? 'PEND!NG' : bar) + '</span></div>';
+    });
+    html += '<div class="wallet-dna-classification">' +
+      '<div class="wallet-dna-classification-label">' + (dna.classification ? escapeHtml(dna.classification) : 'PEND!NG') + '</div>' +
+      '<div class="wallet-dna-disclaimer">A Σκύλλα WALLET READ DER!VED FR0M 0BSERVABLE RECENT ACT!V!TY — N0T AN 0BJECT!VE SC0RE.</div>' +
+    '</div>';
+    el.walletDnaBlock.innerHTML = html;
+  }
   // No more T0P 3 preview lists in the banner itself (reported live —
   // just the two V!EW C0!NS/V!EW NFTS buttons now) — this just live-
   // refreshes whichever full list is currently open, called every time

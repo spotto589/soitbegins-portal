@@ -5,7 +5,8 @@
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue, getFloorIndex,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG,
-  getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap
+  getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
+  fetchRecentAccountTxCached
 } from '../_shared.js';
 
 // Deeptide's own item page — the real place to buy a listed Pigeon.
@@ -653,6 +654,22 @@ export async function onRequestGet(context) {
       counts[key] = findAllCollectionNfts(nfts, key).length;
     }
     return json({ counts });
+  }
+
+  // WALLET H!ST0RY — PR0F!LE's own recent-activity timeline (see
+  // fetchRecentAccountTxCached's own comment in _shared.js for exactly
+  // what this is/isn't: capped to recent activity, not full lifetime
+  // history, and conservative about what it classifies rather than
+  // guessing). Public, no session — same reasoning myNftCounts/
+  // walletProfileCoins above are public: this is display data about a
+  // wallet's own on-ledger activity, same as everything else PR0F!LE
+  // already shows for any wallet.
+  if (params.get('walletHistory') === '1') {
+    const wallet = params.get('wallet');
+    if (!wallet) return json({ error: 'missing_wallet' }, 400);
+    const { events, ok, reachedGenesis } = await fetchRecentAccountTxCached(context, wallet);
+    if (!ok) return json({ error: 'ledger_lookup_failed' }, 502);
+    return json({ events, reachedGenesis });
   }
 
   // SEARCH PR0F!LE — matches a stored username (substring, case-

@@ -496,6 +496,159 @@ export function getTradeConfig(collectionKey) {
   return cfg;
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// WALLET H!ST0RY — a wallet's own recent real on-ledger activity, classified
+// into plain event types for PR0F!LE's own WALLET H!ST0RY screen (static.js,
+// see openWalletHistory). Deliberately capped, not full lifetime history —
+// ACCOUNT_TX_MAX_PAGES keeps this to a handful of subrequests, well inside
+// Cloudflare's per-request budget (see HANDOFF.md's own subrequest-budget
+// gotcha) — a very old/active wallet's true full history is NOT what this
+// returns, see reachedGenesis below. Also deliberately conservative about
+// WHAT it classifies: only ever reads fields the XRPL spec guarantees sit
+// directly on the transaction itself, never a custom NFTokenID -> issuer
+// byte-decode (this app has no way to verify that kind of thing against a
+// live ledger in every environment it runs in, and a wrong collection tag
+// is worse than no tag) — an event that can't be classified from direct
+// fields alone still shows (real date, real hash, real type), just without
+// item-level detail, rather than guessing.
+// ─────────────────────────────────────────────────────────────────────────
+const ACCOUNT_TX_PAGE_LIMIT = 200;
+const ACCOUNT_TX_MAX_PAGES = 3; // <=600 tx
+const RIPPLE_EPOCH_OFFSET = 946684800; // seconds between the Unix epoch and the Ripple epoch (2000-01-01T00:00:00Z)
+
+async function fetchAccountTxPage(account, marker) {
+  const params = { account, limit: ACCOUNT_TX_PAGE_LIMIT, forward: false };
+  if (marker) params.marker = marker;
+  return await fetchXrplClusterJson({ method: 'account_tx', params: [params] });
+}
+
+// Same MemoData swapOfferSourceMemo() already attaches to every real
+// NFTokenCreateOffer this app builds (LIST/MAKE AN OFFER/the swap
+// builder) — reused here read-only to tag which timeline events genuinely
+// went through Σκύλλα's own flow, a real signal rather than a guess.
+function txHasScyllaMemo(tx) {
+  return Array.isArray(tx.Memos) && tx.Memos.some(m => m.Memo && m.Memo.MemoData === stringToHex('https://soitbegins.xyz/static'));
+}
+
+// Matches a mint's own real Issuer(-or-Account)+NFTokenTaxon fields — the
+// exact same issuer/taxon pair findAllCollectionNfts already filters live
+// holdings by — against every configured collection.
+function collectionKeyForIssuerTaxon(issuer, taxon) {
+  if (!issuer || taxon === undefined || taxon === null) return null;
+  for (const key of Object.keys(TRADEABLE_COLLECTIONS)) {
+    const cfg = TRADEABLE_COLLECTIONS[key];
+    if (cfg.nftIssuer === issuer && cfg.nftTaxon === taxon) return key;
+  }
+  return null;
+}
+function collectionKeyForTokenIssuer(currency, issuer) {
+  if (!issuer) return null;
+  for (const key of Object.keys(TRADEABLE_COLLECTIONS)) {
+    const tc = TRADEABLE_COLLECTIONS[key].tokenConfig;
+    if (tc && tc.configured && tc.issuer === issuer && (!currency || tc.currency === currency || encodeCurrencyCode(tc.currency) === currency)) return key;
+  }
+  return null;
+}
+
+// Classifies one raw account_tx entry into a plain event WALLET H!ST0RY's
+// timeline renders directly. Returns null only for a malformed entry
+// (missing hash/type) — every real transaction type still comes back as
+// at least type:'OTHER' so the ALL filter really does mean all.
+function classifyAccountTxEntry(wallet, entry) {
+  const tx = entry.tx || entry.tx_json || {};
+  if (!tx.TransactionType || !tx.hash) return null;
+  const base = {
+    txHash: tx.hash,
+    dateMs: typeof tx.date === 'number' ? (tx.date + RIPPLE_EPOCH_OFFSET) * 1000 : null,
+    viaScylla: txHasScyllaMemo(tx),
+    account: tx.Account || null
+  };
+  switch (tx.TransactionType) {
+    case 'NFTokenMint':
+      return Object.assign(base, { type: 'NFT_MINT', collection: collectionKeyForIssuerTaxon(tx.Issuer || tx.Account, tx.NFTokenTaxon) });
+    case 'NFTokenBurn':
+      return Object.assign(base, { type: 'NFT_BURN', nftId: tx.NFTokenID || null, collection: null });
+    case 'NFTokenCreateOffer':
+      // tfSellNFToken = 0x00000001 — a real, documented XRPL flag bit, not
+      // a guess: set means this is a SELL offer, unset means a BUY offer.
+      return Object.assign(base, { type: 'NFT_LISTING', nftId: tx.NFTokenID || null, collection: null, direction: (tx.Flags & 1) ? 'sell' : 'buy' });
+    case 'NFTokenCancelOffer':
+      return Object.assign(base, { type: 'NFT_LISTING_CANCEL', collection: null });
+    case 'NFTokenAcceptOffer':
+      // No item-level detail (see this section's own top comment) — real
+      // date/hash/type, but which NFT/collection changed hands would need
+      // either a meta.AffectedNodes walk or a second live lookup per
+      // event, both skipped for this first pass.
+      return Object.assign(base, { type: 'NFT_TRADE', collection: null });
+    case 'Payment': {
+      const isXrp = typeof tx.Amount === 'string';
+      const sent = tx.Account === wallet;
+      return Object.assign(base, {
+        type: isXrp ? 'XRP_TRANSFER' : 'TOKEN_TRANSFER',
+        direction: sent ? 'sent' : 'received',
+        counterparty: sent ? (tx.Destination || null) : (tx.Account || null),
+        amount: isXrp ? (Number(tx.Amount) / 1e6) : (tx.Amount ? Number(tx.Amount.value) : null),
+        currency: isXrp ? 'XRP' : ((tx.Amount && tx.Amount.currency) || null),
+        collection: isXrp ? null : collectionKeyForTokenIssuer(tx.Amount && tx.Amount.currency, tx.Amount && tx.Amount.issuer)
+      });
+    }
+    case 'TrustSet': {
+      const limit = tx.LimitAmount || {};
+      return Object.assign(base, { type: 'TRUSTLINE', currency: limit.currency || null, collection: collectionKeyForTokenIssuer(limit.currency, limit.issuer) });
+    }
+    default:
+      return Object.assign(base, { type: 'OTHER', rawType: tx.TransactionType });
+  }
+}
+
+// reachedGenesis is only true when the real account_tx pagination ended on
+// its own (no marker left) within the page cap — i.e. this wallet's ENTIRE
+// history fit, not just however much this happened to fetch. Callers (the
+// WALLET H!ST0RY UI, Wallet DNA's own EARLY AD0PTER signal) must never
+// claim "wallet age"/"first activity" from this data unless true.
+export async function fetchRecentAccountTx(wallet) {
+  let events = [];
+  let marker;
+  let ok = true;
+  let pages = 0;
+  let reachedGenesis = false;
+  do {
+    const data = await fetchAccountTxPage(wallet, marker);
+    if (!data) { ok = false; break; }
+    const txs = (data.result && data.result.transactions) || [];
+    for (const entry of txs) {
+      const ev = classifyAccountTxEntry(wallet, entry);
+      if (ev) events.push(ev);
+    }
+    marker = data.result && data.result.marker;
+    pages++;
+    if (!marker) { reachedGenesis = true; break; }
+  } while (pages < ACCOUNT_TX_MAX_PAGES);
+  events.sort((a, b) => (b.dateMs || 0) - (a.dateMs || 0));
+  return { events, ok, reachedGenesis };
+}
+
+// Much heavier than the 20s NFT-list cache (a full, potentially 3-page
+// account_tx scan vs one page of account_nfts) — 5 minutes is a real
+// tradeoff between "fresh enough" and "don't re-pay this on every PR0F!LE
+// -> WALLET H!ST0RY open", never written on a failed/partial scan (same
+// reasoning fetchAllAccountNftsCheckedCached already follows).
+const ACCOUNT_TX_CACHE_PREFIX = 'pswap:accounttx:v1:';
+const ACCOUNT_TX_CACHE_TTL_SECONDS = 300;
+export async function fetchRecentAccountTxCached(context, wallet) {
+  const kv = context.env.coin;
+  const cacheKey = ACCOUNT_TX_CACHE_PREFIX + wallet;
+  if (kv) {
+    const cached = await kv.get(cacheKey);
+    if (cached !== null) {
+      try { return JSON.parse(cached); } catch (e) {}
+    }
+  }
+  const result = await fetchRecentAccountTx(wallet);
+  if (result.ok && kv) context.waitUntil(safeKvPut(kv, cacheKey, JSON.stringify(result), { expirationTtl: ACCOUNT_TX_CACHE_TTL_SECONDS }));
+  return result;
+}
+
 // XRPL currency codes are exactly 3 ASCII chars ("standard") or, for
 // anything else, a 40-hex-char string: the code's ASCII bytes, left-
 // justified and zero-padded to 20 bytes ("non-standard"/hex currency
