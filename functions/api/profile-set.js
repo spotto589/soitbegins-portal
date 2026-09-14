@@ -3,7 +3,7 @@ import {
   fetchDeeptideNftDetail, isValidUsername, isUsernameTaken, setProfile,
   isValidQuote, normalizeTwitterHandle, isValidTwitterHandle,
   isValidProfileTheme, isValidFeaturedList, FEATURED_NFTS_MAX, isValidNodeCode,
-  getWalletAchievements, isValidEquippedTitle
+  getWalletAchievements, isValidEquippedTitle, isValidRoomsShape
 } from '../_shared.js';
 
 // Lets a wallet set its own display name, profile picture, banner, quote,
@@ -47,7 +47,8 @@ export async function onRequestPost(context) {
   const hasIsPublic = typeof body.isPublic === 'boolean';
   const hasNodeCode = typeof body.nodeCode === 'string';
   const hasEquippedTitle = typeof body.equippedTitle === 'string' || body.equippedTitle === null;
-  if (!hasUsername && !hasPfp && !hasBanner && !hasQuote && !hasTwitter && !hasTheme && !hasFeatured && !hasIsPublic && !hasNodeCode && !hasEquippedTitle) {
+  const hasRooms = Array.isArray(body.rooms);
+  if (!hasUsername && !hasPfp && !hasBanner && !hasQuote && !hasTwitter && !hasTheme && !hasFeatured && !hasIsPublic && !hasNodeCode && !hasEquippedTitle && !hasRooms) {
     return new Response(JSON.stringify({ error: 'nothing_to_update' }), { status: 400 });
   }
 
@@ -113,6 +114,13 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_featured' }), { status: 400 });
   }
 
+  // R00MS — shape only here (name length, room/item counts); real
+  // ownership is checked below in the same shared NFT-scan block pfp/
+  // banner/featured already use.
+  if (hasRooms && !isValidRoomsShape(body.rooms)) {
+    return new Response(JSON.stringify({ error: 'invalid_rooms' }), { status: 400 });
+  }
+
   // pfp/banner/featured all share the exact same "must be an NFT this
   // wallet actually owns right now" real on-ledger check — fetched once
   // (one fetchAllAccountNftsChecked call) rather than per-field when a save
@@ -123,7 +131,7 @@ export async function onRequestPost(context) {
   // NFT this wallet holds across every collection in one XRPL scan, so
   // this is just checking straight against that full list instead of a
   // Pigeons-narrowed subset of it.
-  if (hasPfp || hasBanner || hasFeatured) {
+  if (hasPfp || hasBanner || hasFeatured || hasRooms) {
     const pfpNftId = hasPfp ? body.pfpNftId : null;
     const bannerNftId = hasBanner ? body.bannerNftId : null;
     const featuredIds = hasFeatured ? body.featuredNftIds : null;
@@ -178,6 +186,28 @@ export async function onRequestPost(context) {
         return new Response(JSON.stringify({ error: 'pfp_unavailable' }), { status: 503 });
       }
       patch.featuredNfts = resolved;
+    }
+    if (hasRooms) {
+      // Same real-ownership check as pfp/banner/featured, just against the
+      // union of every room's ids — one wallet-owns-this-right-now scan
+      // for the whole save, not one per room.
+      const allRoomIds = body.rooms.flatMap(r => r.nftIds);
+      if (!allRoomIds.every(id => ownedIds.has(id))) {
+        return new Response(JSON.stringify({ error: 'not_owned' }), { status: 403 });
+      }
+      // Resolved per room (same fetchDeeptideNftDetail resolve featured
+      // already does) so each room keeps its own real art + item order.
+      const resolvedRooms = await Promise.all(body.rooms.map(async r => {
+        const items = await Promise.all(r.nftIds.map(async id => {
+          const item = await fetchDeeptideNftDetail(id);
+          return item && item.image ? { nftId: id, image: item.image, number: item.number != null ? item.number : null } : null;
+        }));
+        return { name: r.name.trim(), items, allResolved: items.every(i => !!i) };
+      }));
+      if (resolvedRooms.some(r => !r.allResolved)) {
+        return new Response(JSON.stringify({ error: 'pfp_unavailable' }), { status: 503 });
+      }
+      patch.showcaseRooms = resolvedRooms.map(r => ({ name: r.name, items: r.items }));
     }
   }
 

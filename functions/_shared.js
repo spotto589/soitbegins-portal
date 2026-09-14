@@ -3772,6 +3772,26 @@ export function isValidFeaturedList(list) {
   return list.every(nftId => typeof nftId === 'string' && NFT_ID_PATTERN.test(nftId));
 }
 
+// R00MS — Phase 4's "My Wallet Custom Rooms": the SH0WCASE grid organized
+// into up to SHOWCASE_ROOM_MAX named, owner-labelled groups (a curated
+// layout builder, not a new XRPL capability or spatial concept — every
+// item in a room is still just a real, currently-owned NFT the same
+// ownership check pfp/banner/featured already run through). Shape-checked
+// here, real ownership checked in profile-set.js exactly like FEATURED
+// above, since this file has no access to a fresh NFT list of its own.
+export const SHOWCASE_ROOM_MAX = 4;
+export const SHOWCASE_ROOM_ITEMS_MAX = 13;
+export const SHOWCASE_ROOM_NAME_MAX_LEN = 24;
+export function isValidRoomName(name) {
+  return typeof name === 'string' && name.trim().length >= 1 && name.trim().length <= SHOWCASE_ROOM_NAME_MAX_LEN;
+}
+export function isValidRoomsShape(rooms) {
+  if (!Array.isArray(rooms) || rooms.length > SHOWCASE_ROOM_MAX) return false;
+  return rooms.every(r => r && isValidRoomName(r.name)
+    && Array.isArray(r.nftIds) && r.nftIds.length <= SHOWCASE_ROOM_ITEMS_MAX
+    && r.nftIds.every(id => typeof id === 'string' && NFT_ID_PATTERN.test(id)));
+}
+
 // Case-insensitive — "Pigeon" and "pigeon" would otherwise both render
 // distinctly but be indistinguishable at a glance everywhere this shows up.
 export async function isUsernameTaken(kv, username, exceptWallet) {

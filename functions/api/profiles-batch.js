@@ -76,6 +76,7 @@ export async function onRequestPost(context) {
       nodeCode: p.nodeCode || null,
       equippedTitle: p.equippedTitle || null,
       featuredNfts: p.featuredNfts || [],
+      showcaseRooms: p.showcaseRooms || [],
       isPublic: p.isPublic !== false
     } : null;
   });

@@ -5997,8 +5997,33 @@ const SWAP_HTML = `<!DOCTYPE html>
     grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
     gap:1.25rem;
     max-width:900px;
-    margin:0 auto;
+    margin:0 auto 2rem;
   }
+  /* R00MS (Phase 4) — tab row switching which room's name/grid is being
+     edited in the R00MS pane, same active-state chip language
+     .wallet-history-filter-btn already uses. */
+  .showcase-room-tabs{ display:flex; flex-wrap:wrap; justify-content:center; gap:0.5rem; margin:0 0 1rem; }
+  .showcase-room-tab{
+    background:transparent;
+    border:1px solid var(--border-mid);
+    color:var(--grey);
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    padding:0.5em 0.9em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    text-transform:uppercase;
+    max-width:160px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .showcase-room-tab:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  .showcase-room-tab.active{ background:var(--cyan-faint); border-color:var(--cyan); color:var(--cyan); }
+  .showcase-room-tab-add{ border-style:dashed; }
   .profile-showcase-card{
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
@@ -9351,15 +9376,26 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div id="profileBannerPickStatus" class="th-empty" style="display:none;"></div>
           <div class="simple-picker-grid" id="profileBannerGrid"></div>
         </div>
-        <!-- SH0WCASE M0DE's own featured set — up to FEATURED_NFTS_MAX (6,
-             see _shared.js), multi-select (tap to toggle, unlike PFP/
-             BANNER's pick-one-and-save-instantly) so a real SAVE step
-             makes sense here. -->
-        <div class="profile-edit-pane" id="profileEditPaneFeatured" style="display:none;">
-          <div id="profileFeaturedStatus" class="th-empty" style="display:none;"></div>
-          <div class="simple-picker-grid" id="profileFeaturedGrid"></div>
+        <!-- SH0WCASE M0DE's own R00MS (Phase 4) — up to SHOWCASE_ROOM_MAX
+             (4, see _shared.js) named groups, each holding up to
+             SHOWCASE_ROOM_ITEMS_MAX (13) NFTs, multi-select per room (tap
+             to toggle, unlike PFP/BANNER's pick-one-and-save-instantly) so
+             a real SAVE step makes sense here. Tabs switch which room's
+             own name/grid is being edited; SAVE R00MS posts the whole
+             draft at once (same "save the whole list" pattern the old
+             single-list FEATURED pane already used). -->
+        <div class="profile-edit-pane" id="profileEditPaneRooms" style="display:none;">
+          <div class="showcase-room-tabs" id="showcaseRoomTabs"></div>
+          <div id="showcaseRoomEditor">
+            <div class="search-row" style="justify-content:center;">
+              <input class="transfer-wallet-input" id="showcaseRoomNameInput" type="text" maxlength="24" placeholder="R00M NAME (E.G. TRAD!NG FL00R)">
+              <button class="bar-btn" id="showcaseRoomRemoveBtn">REM0VE R00M</button>
+            </div>
+            <div id="profileFeaturedStatus" class="th-empty" style="display:none;"></div>
+            <div class="simple-picker-grid" id="profileFeaturedGrid"></div>
+          </div>
           <div class="search-row" style="justify-content:center; margin-top:0.75rem;">
-            <button class="bar-btn" id="profileFeaturedSaveBtn">SAVE FEATURED</button>
+            <button class="bar-btn" id="profileFeaturedSaveBtn">SAVE R00MS</button>
           </div>
           <div class="index-line" id="profileFeaturedSaveStatus" style="text-align:center; margin-top:0.5rem;"></div>
         </div>
@@ -10071,12 +10107,13 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
         <!-- SH0WCASE M0DE — the owner's own curated identity card
-             (avatar/bio/featured NFTs, see FEATURED in the edit modal)
-             instead of the practical DATABASE view — "someone might own
-             100 NFTs but only want to showcase 5" (reported live). -->
+             (avatar/bio/R00MS, see R00MS in the edit modal) instead of the
+             practical DATABASE view — "someone might own 100 NFTs but only
+             want to showcase 5" (reported live). Phase 4: organized into
+             named rooms now, each rendering its own eyebrow + grid (see
+             renderProfileScreenRooms) — this wrapper just holds them. -->
         <div id="profileScreenShowcase" style="display:none;">
-          <div class="profile-screen-eyebrow">// FEATURED</div>
-          <div class="profile-showcase-grid" id="profileScreenFeatured"></div>
+          <div id="profileScreenFeatured"></div>
         </div>
       </div>
     </div>
@@ -11116,7 +11153,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileBannerEditBtn','profileFeaturedEditBtn','profileThemeEditBtn','profilePrivacyEditBtn',
    'profileEditModal','profileEditTitle','profileEditClose','profileEditPaneUsername','profileEditPaneQuote','profileEditPaneTwitter','profileEditPanePfp',
    'profileEditPaneBanner','profileBannerPickStatus','profileBannerGrid',
-   'profileEditPaneFeatured','profileFeaturedStatus','profileFeaturedGrid','profileFeaturedSaveBtn','profileFeaturedSaveStatus',
+   'profileEditPaneRooms','showcaseRoomTabs','showcaseRoomEditor','showcaseRoomNameInput','showcaseRoomRemoveBtn','profileFeaturedStatus','profileFeaturedGrid','profileFeaturedSaveBtn','profileFeaturedSaveStatus',
    'profileEditPaneTheme','profileThemeSwatchRow','profileThemeStatus',
    'profileEditPanePrivacy','profilePrivacyToggle','profilePrivacyStatus',
    'profileEditPaneNodeCode','profileNodeCodePreview','profileNodeCodeStatus','profileNodeCodeEditBtn',
@@ -19778,7 +19815,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // just a different grid element and no view-detail button. ----
   var profileSelectedPfpNftId = null;
   var profileSelectedBannerNftId = null;
-  var profileSelectedFeaturedIds = []; // up to PROFILE_FEATURED_MAX, toggled in the FEATURED pane, saved as one batch
+  var profileRoomsDraft = []; // [{name, nftIds}] — up to SHOWCASE_ROOM_MAX rooms, toggled per-room in the R00MS pane, saved as one batch
+  var profileActiveRoomIdx = 0;
   // r,g,b triplets — same values MAINFRAME's own --card-accent uses per
   // collection (see its own cards' inline style) — kept here too rather
   // than read off COLLECTION_META, which doesn't carry a display accent
@@ -20051,7 +20089,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).catch(function(){
       el.profileScreenCoins.innerHTML = '<div class="th-empty">C0ULD N0T L0AD C0!NS.</div>';
     });
-    renderProfileScreenFeatured((profile && profile.featuredNfts) || []);
+    renderProfileScreenRooms((profile && profile.showcaseRooms) || []);
   }
   // Σκύλλα://!DENT!TY — see the plan's own comment on why CLASS/T!TLE/
   // TRUST are PEND!NG: no Wallet DNA/Titles/Trust system exists yet
@@ -20095,17 +20133,28 @@ const SWAP_HTML = `<!DOCTYPE html>
     rowEl.classList.toggle('pending', !classification);
     rowEl.querySelector('span:last-child').textContent = classification || 'PEND!NG';
   }
-  // SH0WCASE — the owner's own curated set (see FEATURED in the edit
-  // modal), real art at a bigger size than the practical picker cards.
-  function renderProfileScreenFeatured(featuredNfts){
-    el.profileScreenFeatured.innerHTML = !featuredNfts.length
-      ? '<div class="th-empty">N0TH!NG FEATURED YET.</div>'
-      : featuredNfts.map(function(f){
+  // SH0WCASE — Phase 4's R00MS: the owner's own curated set organized
+  // into up to SHOWCASE_ROOM_MAX named groups (see R00MS in the edit
+  // modal), each rendered as its own labelled section, real art at a
+  // bigger size than the practical picker cards. Was a single flat list
+  // (renderProfileScreenFeatured/profile.featuredNfts) before Phase 4 —
+  // that field/endpoint support still exists server-side but nothing
+  // writes to it any more, so no legacy-render fallback is needed here.
+  function showcaseRoomHtml(room){
+    return '<div class="profile-screen-eyebrow">// ' + escapeHtml((room.name || '').toUpperCase()) + '</div>' +
+      '<div class="profile-showcase-grid">' +
+        room.items.map(function(f){
           return '<div class="profile-showcase-card">' +
             '<div class="profile-showcase-card-img">' + (f.image ? '<img src="' + escapeHtml(f.image) + '" alt="" loading="lazy">' : '') + '</div>' +
             '<div class="profile-showcase-card-num">' + itemNumberLabel(f) + '</div>' +
           '</div>';
-        }).join('');
+        }).join('') +
+      '</div>';
+  }
+  function renderProfileScreenRooms(rooms){
+    el.profileScreenFeatured.innerHTML = !rooms.length
+      ? '<div class="th-empty">N0TH!NG FEATURED YET.</div>'
+      : rooms.map(showcaseRoomHtml).join('');
   }
   function renderProfileScreenCoins(coins){
     if (!coins || !coins.length || coins[0].hasTrustline === null){
@@ -21229,7 +21278,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     quote: { pane: 'profileEditPaneQuote', title: 'B!0', focus: 'profileQuoteInput' },
     twitter: { pane: 'profileEditPaneTwitter', title: 'TW!TTER/X', focus: 'profileTwitterInput' },
     banner: { pane: 'profileEditPaneBanner', title: 'CH00SE BANNER NFT', focus: null },
-    featured: { pane: 'profileEditPaneFeatured', title: 'SH0WCASE :: FEATURED NFTS', focus: null },
+    rooms: { pane: 'profileEditPaneRooms', title: 'SH0WCASE :: R00MS', focus: null },
     theme: { pane: 'profileEditPaneTheme', title: 'PR0F!LE THEME', focus: null },
     privacy: { pane: 'profileEditPanePrivacy', title: 'PR!VACY', focus: null },
     nodeCode: { pane: 'profileEditPaneNodeCode', title: 'N0DE C0DE', focus: null }
@@ -21244,7 +21293,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // reasoning PROFILE_THEMES/PROFILE_THEME_KEYS below are) — server-side
   // is the real enforcement, this just stops the UI letting you pick a
   // 7th and then finding out it's rejected on SAVE.
-  var PROFILE_FEATURED_MAX = 6;
+  // Kept in lockstep with SHOWCASE_ROOM_MAX/SHOWCASE_ROOM_ITEMS_MAX in
+  // _shared.js by hand — server-side is the real enforcement, this just
+  // stops the UI letting you build a 5th room/14th item and then finding
+  // out it's rejected on SAVE.
+  var SHOWCASE_ROOM_MAX = 4;
+  var SHOWCASE_ROOM_ITEMS_MAX = 13;
   var PROFILE_THEMES = {
     static:   { label: 'STAT!C',   accent: '61,243,236' },
     crt:      { label: 'CRT',      accent: '52,255,133' },
@@ -21266,7 +21320,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Lazy per-pane setup — same "only do the work once this specific
     // pane is actually opened" reasoning the PFP grid's own load already
     // followed, just extended to the three new panes that need it.
-    if (field === 'pfp' || field === 'banner' || field === 'featured') ensureCrossCollectionNftsLoaded();
+    if (field === 'pfp' || field === 'banner' || field === 'rooms') ensureCrossCollectionNftsLoaded();
+    if (field === 'rooms'){ renderShowcaseRoomTabs(); renderShowcaseRoomEditor(); }
     if (field === 'theme') renderProfileThemeSwatches();
     if (field === 'privacy') renderProfilePrivacyToggle();
     if (field === 'nodeCode') renderProfileNodeCodePicker();
@@ -21377,7 +21432,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     profileSelectedPfpNftId = (profile && profile.pfpNftId) || null;
     profileSelectedBannerNftId = (profile && profile.bannerNftId) || null;
-    profileSelectedFeaturedIds = (profile && profile.featuredNfts) ? profile.featuredNfts.map(function(f){ return f.nftId; }) : [];
+    profileRoomsDraft = (profile && profile.showcaseRooms) ? profile.showcaseRooms.map(function(r){ return { name: r.name, nftIds: r.items.map(function(i){ return i.nftId; }) }; }) : [];
+    profileActiveRoomIdx = 0;
     if (crossCollectionNftsCache !== null) renderAllNftPickerGrids(crossCollectionNftsCache);
   }
   // ---- Cross-collection owned-NFT picker — feeds PFP/BANNER/FEATURED
@@ -21452,8 +21508,65 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderAllNftPickerGrids(items){
     renderNftPickerGrid(el.profilePfpGrid, el.profilePfpStatus, items, profileSelectedPfpNftId ? [profileSelectedPfpNftId] : [], 'pfp');
     renderNftPickerGrid(el.profileBannerGrid, el.profileBannerPickStatus, items, profileSelectedBannerNftId ? [profileSelectedBannerNftId] : [], 'banner');
-    renderNftPickerGrid(el.profileFeaturedGrid, el.profileFeaturedStatus, items, profileSelectedFeaturedIds, 'featured');
+    // R00MS' own grid is driven by whichever room tab is active, not a
+    // single global selection list — see renderShowcaseRoomEditor.
+    renderShowcaseRoomEditor();
   }
+  // ---- SH0WCASE R00MS (Phase 4) — tabs switch which room's own name +
+  // NFT picker is being edited; profileRoomsDraft/profileActiveRoomIdx
+  // hold the whole in-progress edit, only sent to the server on SAVE
+  // R00MS (see the save handler below), same "edit locally, save as one
+  // batch" pattern the old single-list FEATURED pane already used. ----
+  function renderShowcaseRoomTabs(){
+    var tabsHtml = profileRoomsDraft.map(function(r, idx){
+      return '<button type="button" class="showcase-room-tab' + (idx === profileActiveRoomIdx ? ' active' : '') + '" data-room-idx="' + idx + '">' + (escapeHtml(r.name) || 'R00M ' + (idx + 1)) + '</button>';
+    }).join('');
+    if (profileRoomsDraft.length < SHOWCASE_ROOM_MAX){
+      tabsHtml += '<button type="button" class="showcase-room-tab showcase-room-tab-add" id="showcaseRoomAddBtn">+ ADD R00M</button>';
+    }
+    el.showcaseRoomTabs.innerHTML = tabsHtml;
+  }
+  function renderShowcaseRoomEditor(){
+    var room = profileRoomsDraft[profileActiveRoomIdx];
+    if (!room){
+      el.showcaseRoomEditor.style.display = 'none';
+      return;
+    }
+    el.showcaseRoomEditor.style.display = '';
+    el.showcaseRoomNameInput.value = room.name;
+    if (crossCollectionNftsCache !== null){
+      renderNftPickerGrid(el.profileFeaturedGrid, el.profileFeaturedStatus, crossCollectionNftsCache, room.nftIds, 'room');
+    }
+  }
+  el.showcaseRoomTabs.addEventListener('click', function(e){
+    if (e.target.closest('#showcaseRoomAddBtn')){
+      if (profileRoomsDraft.length >= SHOWCASE_ROOM_MAX) return;
+      profileRoomsDraft.push({ name: '', nftIds: [] });
+      profileActiveRoomIdx = profileRoomsDraft.length - 1;
+      renderShowcaseRoomTabs();
+      renderShowcaseRoomEditor();
+      el.showcaseRoomNameInput.focus();
+      return;
+    }
+    var tab = e.target.closest('.showcase-room-tab[data-room-idx]');
+    if (!tab) return;
+    profileActiveRoomIdx = parseInt(tab.getAttribute('data-room-idx'), 10);
+    renderShowcaseRoomTabs();
+    renderShowcaseRoomEditor();
+  });
+  el.showcaseRoomNameInput.addEventListener('input', function(){
+    var room = profileRoomsDraft[profileActiveRoomIdx];
+    if (!room) return;
+    room.name = el.showcaseRoomNameInput.value;
+    renderShowcaseRoomTabs();
+  });
+  el.showcaseRoomRemoveBtn.addEventListener('click', function(){
+    if (!profileRoomsDraft.length) return;
+    profileRoomsDraft.splice(profileActiveRoomIdx, 1);
+    profileActiveRoomIdx = Math.max(0, profileActiveRoomIdx - 1);
+    renderShowcaseRoomTabs();
+    renderShowcaseRoomEditor();
+  });
   // THEME — swatches, not a dropdown (see the CSS's own comment). Posts
   // straight on click, same instant-save language PFP/BANNER use, since
   // there's no ownership check to wait on for a pure visual preset.
@@ -21515,7 +21628,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     openProfileEditModal('username');
   });
   el.profileBannerEditBtn.addEventListener('click', function(){ openProfileEditModal('banner'); });
-  el.profileFeaturedEditBtn.addEventListener('click', function(){ openProfileEditModal('featured'); });
+  el.profileFeaturedEditBtn.addEventListener('click', function(){ openProfileEditModal('rooms'); });
   el.profileThemeEditBtn.addEventListener('click', function(){ openProfileEditModal('theme'); });
   el.profilePrivacyEditBtn.addEventListener('click', function(){ openProfileEditModal('privacy'); });
   el.profileNodeCodeEditBtn.addEventListener('click', function(){ openProfileEditModal('nodeCode'); });
@@ -21610,51 +21723,65 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (nftId === profileSelectedBannerNftId) return;
     saveSingleNftPick(el.profileBannerGrid, el.profileBannerPickStatus, 'bannerNftId', nftId);
   });
-  // FEATURED — tap to toggle (up to PROFILE_FEATURED_MAX), one real SAVE
-  // step since this is a set, not a single instant pick. Re-renders just
-  // this grid on every toggle so the selected-state highlight/count
-  // updates immediately without a round-trip.
+  // R00MS — tap to toggle within whichever room tab is active (up to
+  // SHOWCASE_ROOM_ITEMS_MAX per room), one real SAVE step since this is a
+  // set per room, not a single instant pick. Re-renders just this grid on
+  // every toggle so the selected-state highlight/count updates
+  // immediately without a round-trip.
   el.profileFeaturedGrid.addEventListener('click', function(e){
     var pick = e.target.closest('.profile-nft-pick');
-    if (!pick) return;
+    var room = profileRoomsDraft[profileActiveRoomIdx];
+    if (!pick || !room) return;
     var nftId = pick.getAttribute('data-nftid');
-    var idx = profileSelectedFeaturedIds.indexOf(nftId);
+    var idx = room.nftIds.indexOf(nftId);
     if (idx !== -1){
-      profileSelectedFeaturedIds.splice(idx, 1);
+      room.nftIds.splice(idx, 1);
     } else {
-      if (profileSelectedFeaturedIds.length >= PROFILE_FEATURED_MAX){
-        el.profileFeaturedSaveStatus.textContent = 'MAX!MUM ' + PROFILE_FEATURED_MAX + ' FEATURED NFTS.';
+      if (room.nftIds.length >= SHOWCASE_ROOM_ITEMS_MAX){
+        el.profileFeaturedSaveStatus.textContent = 'MAX!MUM ' + SHOWCASE_ROOM_ITEMS_MAX + ' NFTS PER R00M.';
         return;
       }
-      profileSelectedFeaturedIds.push(nftId);
+      room.nftIds.push(nftId);
     }
     el.profileFeaturedSaveStatus.textContent = '';
     if (crossCollectionNftsCache !== null){
-      renderNftPickerGrid(el.profileFeaturedGrid, el.profileFeaturedStatus, crossCollectionNftsCache, profileSelectedFeaturedIds, 'featured');
+      renderNftPickerGrid(el.profileFeaturedGrid, el.profileFeaturedStatus, crossCollectionNftsCache, room.nftIds, 'room');
     }
   });
   el.profileFeaturedSaveBtn.addEventListener('click', function(){
+    var rooms = profileRoomsDraft.map(function(r){ return { name: (r.name || '').trim(), nftIds: r.nftIds }; });
+    if (rooms.some(function(r){ return !r.name; })){
+      el.profileFeaturedSaveStatus.textContent = 'EVERY R00M NEEDS A NAME.';
+      return;
+    }
     el.profileFeaturedSaveBtn.disabled = true;
     el.profileFeaturedSaveBtn.textContent = 'SAV!NG...';
     el.profileFeaturedSaveStatus.textContent = '';
     fetch('/api/profile-set', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ featuredNftIds: profileSelectedFeaturedIds })
+      body: JSON.stringify({ rooms: rooms })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       el.profileFeaturedSaveBtn.disabled = false;
-      el.profileFeaturedSaveBtn.textContent = 'SAVE FEATURED';
+      el.profileFeaturedSaveBtn.textContent = 'SAVE R00MS';
       if (!res.ok || !res.data.ok){
         el.profileFeaturedSaveStatus.textContent = listingErrorMessage(res.data && res.data.error);
         return;
       }
       profileCache[MY_WALLET] = res.data.profile;
+      // Re-seed the draft off the server's real resolved rooms (real
+      // images/order), same "trust what came back" reasoning the pfp/
+      // banner save already follows via applyResolvedProfiles.
+      profileRoomsDraft = (res.data.profile.showcaseRooms || []).map(function(r){ return { name: r.name, nftIds: r.items.map(function(i){ return i.nftId; }) }; });
+      profileActiveRoomIdx = Math.min(profileActiveRoomIdx, Math.max(0, profileRoomsDraft.length - 1));
+      renderShowcaseRoomTabs();
+      renderShowcaseRoomEditor();
       el.profileFeaturedSaveStatus.textContent = 'SAVED.';
       setTimeout(function(){ el.profileFeaturedSaveStatus.textContent = ''; }, 1500);
     }).catch(function(){
       el.profileFeaturedSaveBtn.disabled = false;
-      el.profileFeaturedSaveBtn.textContent = 'SAVE FEATURED';
+      el.profileFeaturedSaveBtn.textContent = 'SAVE R00MS';
       el.profileFeaturedSaveStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
