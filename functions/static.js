@@ -10856,6 +10856,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   // immediately. Consumed once results actually land (loadMoreCollection's
   // first page, or runScopedQuery's synchronous filter) instead.
   var pendingTraitScroll = false;
+  // Marks whichever top-strip button matches the given tab name (used by
+  // both a real
+  // showTab call AND openWalletProfile/closeWalletProfile below, which
+  // move the PR0F!LE screen in and out without actually changing
+  // state.activeTab or any underlying tab content — just the highlight,
+  // so it stops reading as "still on DATABASE" while a wallet's PR0F!LE
+  // is actually on screen, reported live as confusing).
+  function setActiveTabButton(tab){
+    var buttons = el.topTabs.querySelectorAll('.tab-btn');
+    for (var i = 0; i < buttons.length; i++){
+      var isActiveBtn = buttons[i].getAttribute('data-tab') === tab;
+      buttons[i].classList.toggle('active', isActiveBtn);
+      // On mobile the tab strip itself scrolls horizontally (see
+      // .top-tabs-wrap's fade hints below) — without this, switching to a
+      // tab that happens to sit off-screen leaves its own newly-active
+      // underline invisible until the user thinks to swipe first.
+      // inline:'nearest' keeps this from also dragging the whole PAGE
+      // vertically, which a plain scrollIntoView() would do.
+      if (isActiveBtn) buttons[i].scrollIntoView({ behavior:'smooth', inline:'nearest', block:'nearest' });
+    }
+  }
   // skipScroll: the top tab strip's own Σκύλλα button opens PλWS just
   // like clicking it always has, but shouldn't ALSO jump the page down to
   // "SH0W!NG Y0UR P!GE0NS" — reported live as only wanting that jump from
@@ -11005,20 +11026,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Collection -> showTab, never touching showScreen) left the class
     // stuck forever, permanently scroll-locking the whole page.
     el.screenDetail.style.display = 'none';
+    // PR0F!LE (#screenProfile) is the same class of stuck-overlay bug as
+    // screenDetail right above — normally only ever hidden by showScreen,
+    // which a direct tab click bypasses.
+    el.screenProfile.style.display = 'none';
     el.historyModal.style.display = 'none';
     document.body.classList.remove('detail-open');
-    var buttons = el.topTabs.querySelectorAll('.tab-btn');
-    for (var i = 0; i < buttons.length; i++){
-      var isActiveBtn = buttons[i].getAttribute('data-tab') === tab;
-      buttons[i].classList.toggle('active', isActiveBtn);
-      // On mobile the tab strip itself scrolls horizontally (see
-      // .top-tabs-wrap's fade hints below) — without this, switching to a
-      // tab that happens to sit off-screen leaves its own newly-active
-      // underline invisible until the user thinks to swipe first.
-      // inline:'nearest' keeps this from also dragging the whole PAGE
-      // vertically, which a plain scrollIntoView() would do.
-      if (isActiveBtn) buttons[i].scrollIntoView({ behavior:'smooth', inline:'nearest', block:'nearest' });
-    }
+    setActiveTabButton(tab);
     // The universal info box loads once, the very first time any tab is
     // opened — not gated to DATABASE any more, since it's visible on all
     // of them now.
@@ -19275,6 +19289,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // then regardless.
     el.screenMainframe.style.display = 'none';
     showScreen('profile');
+    // Highlights the Σκύλλα tab up top while PR0F!LE is open (reported
+    // live: whatever tab was actually active before — DATABASE, most
+    // often — stayed highlighted underneath, reading as "still on
+    // DATABASE" even though a wallet's PR0F!LE was genuinely on screen).
+    // Doesn't touch state.activeTab itself — nothing about the
+    // underlying tab's content changes, this is purely the highlight;
+    // closeWalletProfile puts it back.
+    setActiveTabButton('mypigeons');
     // Real shareable URL the instant this opens — replaceState (not
     // pushState), same reasoning switchCollection's own ?collection=
     // update already uses: this is a same-page state change, not a new
