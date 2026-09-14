@@ -19591,14 +19591,57 @@ const SWAP_HTML = `<!DOCTYPE html>
   // ---- PR0F!LE screen (#screenProfile) — every wallet link on the site
   // opens here now (reported live: "this will be where every wallet link
   // on the website goes to... the prize attraction") instead of dropping
-  // straight into a single collection's scoped grid. Banner (same
-  // signatureBannerHtml every other wallet-facing spot already uses —
-  // read-only, no edit buttons, unlike #profileBannerIdentity which is
-  // your OWN editable hub) + a real picker of every collection this
-  // wallet holds NFTs in with real counts (myNftCounts is already public/
-  // wallet-agnostic, see functions/api/pigeons.js). Click a card to
-  // browse it — reuses browseOwnerCollection exactly as it already
-  // worked, just arrived at via this screen first. ----
+  // straight into a single collection's scoped grid. Banner is the SAME
+  // real .profile-banner markup the Σκύλλα tab's own hub uses (reported
+  // live: "the same banner inside scylla is what should be at the top of
+  // the profile... look exactly like the scylla page except its a
+  // profile") — not the smaller signature-banner card this used before —
+  // just read-only (no avatar +/username ✎/customize row; those belong to
+  // #profilePanelWrap, your own editing surface, never this screen). Plus
+  // a real picker of every collection this wallet holds NFTs in with real
+  // counts (myNftCounts is already public/wallet-agnostic, see functions/
+  // api/pigeons.js). Click a card to browse it — reuses browseOwnerCollection
+  // exactly as it already worked, just arrived at via this screen first.
+  // XRP BALANCE stands in for the hub's own EST C0!N line — a real,
+  // already-fetched number (walletProfileCoins' own xrpDrops) rather than
+  // the hub's full per-token-XRP-value total, which needs live AMM rate
+  // lookups per token this screen has no reason to pay for on every
+  // profile view. ----
+  function profileScreenBannerHtml(wallet, profile){
+    var hasPfp = !!(profile && profile.pfpImage);
+    var avatarImg = hasPfp ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
+    var username = (profile && profile.username) ? escapeHtml(profile.username) : 'N0 USERNAME SET';
+    var quoteHtml = (profile && profile.quote) ? '<div class="profile-quote">“' + escapeHtml(profile.quote) + '”</div>' : '';
+    var twitterHtml = (profile && profile.twitter)
+      ? '<div class="profile-twitter-row"><a class="profile-twitter-link" href="https://x.com/' + encodeURIComponent(profile.twitter) + '" target="_blank" rel="noopener">𝕏 @' + escapeHtml(profile.twitter) + '</a></div>'
+      : '';
+    return '<div class="profile-banner' + (hasPfp ? '' : ' profile-banner-empty banner-on-dark') + '" data-wallet="' + escapeHtml(wallet) + '">' +
+      '<div class="profile-avatar-wrap"><div class="profile-current-avatar">' + avatarImg + '</div></div>' +
+      '<div class="profile-banner-main">' +
+        '<div class="profile-banner-identity">' +
+          twitterHtml +
+          '<div class="profile-current-username-row"><span class="profile-current-username">' + username + '</span></div>' +
+          quoteHtml +
+          '<div class="profile-current-wallet-row">' +
+            '<span class="profile-current-wallet">' + escapeHtml(shortAddr(wallet)) + '</span>' +
+            '<button type="button" class="profile-mini-btn profile-screen-banner-copy" title="C0PY ADDRESS">⧉</button>' +
+            '<a class="profile-mini-btn" href="https://bithomp.com/explorer/' + escapeHtml(wallet) + '" target="_blank" rel="noopener" title="V!EW 0N B!TH0MP">↗</a>' +
+          '</div>' +
+          '<div class="profile-current-estvalue">XRP BALANCE :: <span id="profileScreenXrpBalance">--</span></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  el.profileScreenBanner.addEventListener('click', function(e){
+    var btn = e.target.closest('.profile-screen-banner-copy');
+    if (!btn || !currentProfileWallet) return;
+    var done = function(){
+      btn.textContent = '✓';
+      setTimeout(function(){ btn.textContent = '⧉'; }, 1200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(currentProfileWallet).then(done, done);
+    else done();
+  });
   var profileScreenReturnPath = null;
   var currentProfileWallet = null;
   var currentProfileOwnerShort = null;
@@ -19611,7 +19654,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.profileModeToggle.querySelectorAll('.profile-mode-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-mode') === 'database'); });
     el.profileScreenDatabaseView.style.display = '';
     el.profileScreenShowcase.style.display = 'none';
-    el.profileScreenBanner.innerHTML = signatureBannerHtml(wallet, 'detail');
+    // Instant paint off whatever's already cached (could be nothing yet)
+    // — applyProfileScreenIdentity below re-renders with the real fetched
+    // profile the moment it lands, same "never block the initial paint"
+    // reasoning queueProfileResolve's own async patch pattern already
+    // uses elsewhere.
+    el.profileScreenBanner.innerHTML = profileScreenBannerHtml(wallet, profileCache[wallet] || null);
     el.profileScreenCode.innerHTML = '';
     el.profileScreenCollections.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     el.profileScreenCoins.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
@@ -19691,13 +19739,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileScreenPrivateNotice.style.display = '';
       return;
     }
-    // BANNER — same sampled-colour-only treatment (no image layered on
-    // top) el.profileBanner uses for your own hub, applied to the real
-    // .signature-banner node signatureBannerHtml already rendered into
-    // #profileScreenBanner — overrides whatever plain PFP-only sample
-    // applySignatureBanners' own async patch would otherwise land here,
-    // since this profile fetch already has the real BANNER NFT (if any).
-    var bannerNode = el.profileScreenBanner.querySelector('.signature-banner');
+    // Real banner now — the exact same .profile-banner markup/CSS the
+    // Σκύλλα tab's own hub uses (reported live: "the same banner inside
+    // scylla is what should be at the top of the profile... it should
+    // look exactly like the scylla page except its a profile"), not the
+    // smaller signature-banner card this used before. Read-only (no
+    // avatar +/username ✎/customize row) since this screen is never the
+    // editing surface, even on your own wallet.
+    el.profileScreenBanner.innerHTML = profileScreenBannerHtml(wallet, profile);
+    var bannerNode = el.profileScreenBanner.querySelector('.profile-banner');
     var bannerSampleSrc = profile && (profile.bannerImage || profile.pfpImage);
     if (bannerNode && bannerSampleSrc) sampleBannerColor(bannerSampleSrc, bannerNode);
     // NFT counts feed BOTH the C0LLECT!0NS picker and the !DENT!TY code
@@ -19721,6 +19771,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     api({ walletProfileCoins: 1, wallet: wallet }).then(function(data){
       if (currentProfileWallet !== wallet) return;
       renderProfileScreenCoins((data && data.coins) || null);
+      // XRP BALANCE — the banner's own real number (see
+      // profileScreenBannerHtml's own comment on why this, not EST C0!N).
+      // The banner may have already been re-rendered again by the time
+      // this lands (a fast follow-up openWalletProfile call), so this
+      // looks the span up fresh rather than trusting a closed-over node.
+      var xrpEl = document.getElementById('profileScreenXrpBalance');
+      if (xrpEl){
+        xrpEl.textContent = (data && data.xrpDrops != null)
+          ? (Number(data.xrpDrops) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP'
+          : '--';
+      }
     }).catch(function(){
       el.profileScreenCoins.innerHTML = '<div class="th-empty">C0ULD N0T L0AD C0!NS.</div>';
     });
