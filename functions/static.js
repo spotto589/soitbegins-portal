@@ -5826,52 +5826,76 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:760px){
     .detail-two-col{ grid-template-columns:1fr; grid-template-areas:"num" "owner" "left" "right"; gap:0.75rem; }
   }
-  #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0 0 0.75rem; cursor:zoom-in; }
+  #screenDetail .detail-col-left .detail-img-large{ width:100%; max-width:100%; margin:0 0 0.6rem; cursor:zoom-in; }
   /* Plain wrapper for RAR!TY/RAR!TY SC0RE + the $PIGEONS LISTING block,
      sitting directly underneath the picture — no decorative frame, just
      spacing between the two. */
-  .detail-under-pic-box{ margin-top:0.5rem; }
+  .detail-under-pic-box{ margin-top:0.4rem; }
   #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 0.6rem; }
   /* Plain neutral panel, not pink — same fix as .thumb-offer on the
      DATABASE card grid (see that rule's own comment): this is just a
      container for whichever real buttons/inputs it holds (BUY N0W
      green, CANCEL red, the OFFER AMOUNT field), painting it solid pink
-     regardless of what's inside drowned all of that out. */
+     regardless of what's inside drowned all of that out. Padding trimmed
+     down (reported live: N0 L!ST!NG's own box was eating space the real
+     MAKE AN 0FFER box below it needed to stay on screen) — this block's
+     own border already does the framing job, the extra breathing room on
+     top of it wasn't pulling weight. */
   #screenDetail .scylla-listing-block{
     max-width:100%;
     margin:0;
     background:var(--panel-bg-solid);
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    padding:0.9rem 1rem;
+    padding:0.5rem 0.8rem;
   }
+  /* N0 L!ST!NG/N0T L!STED itself is plain centred text now (see
+     .scylla-listing-row.not-listed below) — its own padding/margin was
+     still sized for the boxed BUY N0W/price pairing it doesn't have here,
+     same excess-space issue as the block padding above. */
+  #screenDetail .scylla-listing-row.not-listed{ padding:0.3em 0.6em; margin-bottom:0.3rem; }
   #screenDetail .scylla-listing-block .tech-meta-title{ color:#fff; opacity:0.9; }
   #screenDetail .scylla-listing-price{ font-size:17px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
-  /* Its own bordered box now, same panel treatment as .scylla-listing-block
-     right above it (reported live wanting this "cleaned up... more
-     enticing to click" — it used to be a bare input+button floating
-     directly under N0 L!ST!NG with no visual container of its own,
-     easy to miss as its own distinct action). Cyan, not the neutral
-     grey border everything else here uses, so it reads as an inviting
-     call-to-action rather than just more fine print. */
+  /* detailMakeOfferRow already lives inside .scylla-listing-block's own
+     bordered panel (see the HTML) — a second full border/background/
+     padding box just around this part (an earlier pass, reported live
+     wanting it "cleaned up... more enticing") was redundant weight that
+     pushed this tall enough to cut itself off the bottom of the screen
+     on shorter viewports. A thin dashed top divider (matching the same
+     divider language .detail-sales-section already uses) marks it as
+     its own distinct action without the extra height. */
   #screenDetail #detailMakeOfferRow{
-    margin-top:0.75rem;
-    background:var(--panel-bg-solid);
-    border:1px solid var(--cyan-dim);
-    border-radius:var(--radius);
-    padding:0.8rem 0.9rem;
-    box-shadow:0 0 14px rgba(61,243,236,0.1);
+    margin-top:0.6rem;
+    padding-top:0.5rem;
+    border-top:1px dashed var(--border-dim);
   }
   .make-offer-box-title{
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:11px;
     font-weight:700;
-    letter-spacing:0.12em;
+    letter-spacing:0.1em;
     color:var(--cyan);
-    text-shadow:0 0 5px var(--cyan-glow);
     text-transform:uppercase;
-    margin-bottom:0.6rem;
+    margin-bottom:0.35rem;
   }
+  /* .make-offer-input/.make-offer-send's shared base sizing (font-size:36px,
+     padding:0.6em 3.6em at desktop widths) is tuned for the wide, dedicated
+     amountEntryModal popup — crammed into this narrow sidebar column
+     instead, the input alone demanded more width than the column had,
+     which pushed SUBM!T onto its own wrapped second line (144px total for
+     what should be one ~50px row) and was the real reason this box no
+     longer fit on screen, not just the box-around-a-box padding fixed
+     above. Scoped down to sizing that actually fits ~500px, one line,
+     input+button side by side same as before this ever wrapped. */
+  #screenDetail #detailMakeOfferRow .make-offer-input{ font-size:20px; padding:0.55em 2.2em; }
+  #screenDetail #detailMakeOfferRow .make-offer-input-coin{ width:30px; height:30px; left:0.5em; }
+  #screenDetail #detailMakeOfferRow .make-offer-send{ flex:0 0 auto; font-size:13px; padding:0.6em 1em; }
+  /* Same reasoning as the input/button above — the 1DAY/3DAYS/.../∞ row's
+     shared desktop sizing (list-duration-forever alone goes to 32px) added
+     real height nothing else in this compact sidebar box needs. */
+  #screenDetail #detailMakeOfferDuration{ margin:0.5rem 0 0; }
+  #screenDetail #detailMakeOfferDuration .list-duration-btn{ font-size:11px; padding:0.5em 0.3em; }
+  #screenDetail #detailMakeOfferDuration .list-duration-forever{ font-size:18px; padding:0.2em 0.3em; }
   /* Solid filled green + hover-invert, same "juicy, obvious CTA" language
      as #amountEntryListBtn's own comment — SUBM!T is a real action (put
      real XRP behind a real offer), not a neutral form button. */
@@ -5929,7 +5953,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      Neither is clickable. Spread across the full column width with a
      wider gap than the trait grid's own — reads as its own row, not just
      the first two cells of a 3-across grid. */
-  #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(2, 1fr); gap:1rem; margin:0 0 0.6rem; max-width:100%; }
+  #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(2, 1fr); gap:1rem; margin:0 0 0.4rem; max-width:100%; }
   #screenDetail .detail-rarity-row .trait-cell{ cursor:default; text-align:center; min-width:0; }
   #screenDetail .detail-rarity-row .trait-cell:hover{ background:transparent; border-color:var(--border-dim); }
   /* PRICE / RECORD SALE / RECENT SALE / AVERAGE SALE — stacked directly
@@ -5967,7 +5991,16 @@ const SWAP_HTML = `<!DOCTYPE html>
      what actually pays for the bigger text within DETAIL's own one-page,
      no-scroll budget. */
   #screenDetail .detail-sale-stats-row{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.6rem; margin:0.5rem 0 0; max-width:100%; }
-  #screenDetail .detail-sale-stats-row .detail-field{ background:var(--panel-bg-solid); border:1px solid var(--border-mid); border-radius:var(--radius); padding:0.6rem 0.4rem; gap:0.3rem; }
+  /* justify-content:center overrides the base .detail-field's own
+     space-between (meant for a horizontal label/value row elsewhere in
+     DETAIL) — in this column-direction 3-across grid, space-between
+     pushed REC0RD/RECENT SALE's single-line value all the way to the
+     bottom of the (grid-stretched, equal-height) cell, leaving a big
+     gap under the label, while AVERAGE SALE's own 3-line value (number +
+     XRP + N SALES) filled the same cell and so never showed the gap —
+     reported live as the three looking inconsistent. Centered now,
+     regardless of how many lines a given cell's value wraps to. */
+  #screenDetail .detail-sale-stats-row .detail-field{ background:var(--panel-bg-solid); border:1px solid var(--border-mid); border-radius:var(--radius); padding:0.6rem 0.4rem; gap:0.3rem; justify-content:center; }
   #screenDetail .detail-sale-stats-row .df-label{ font-size:11px; letter-spacing:0.06em; }
   #screenDetail .detail-sale-stats-row .df-value{ font-size:22px; color:var(--green); text-shadow:0 0 8px rgba(52,255,133,0.4); display:flex; flex-direction:column; align-items:center; line-height:1.2; }
   #screenDetail .detail-sale-stats-row .df-value-sub{ font-size:10px; color:var(--grey-dim); text-shadow:none; font-weight:400; letter-spacing:0.06em; }
@@ -6005,14 +6038,41 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, background 0.15s ease;
   }
   #screenDetail .detail-history-btn:hover{ border-color:var(--cyan-dim); background:var(--cyan-faint); }
-  /* Second way back to the browse grid, sitting directly under
-     TRANSACT!0N H!ST0RY at the bottom of DETAIL's own right column
-     (reported live) — same .detail-history-btn shape/size, just the
-     neutral BACK color (matching .detail-back-btn-top) instead of
-     TRANSACT!0N H!ST0RY's cyan, so the two don't read as the same kind
-     of action. */
-  #screenDetail .detail-back-btn-bottom{ margin-top:0.5rem; color:var(--grey); text-shadow:none; }
-  #screenDetail .detail-back-btn-bottom:hover{ border-color:var(--border-mid); background:rgba(255,255,255,0.06); color:#fff; }
+  /* Second way back to the browse grid, pinned to the very bottom edge of
+     DETAIL (reported live) — #screenDetail is itself position:fixed, so
+     it's this button's own containing block, meaning "bottom:0" here
+     really does mean the bottom of the screen, not just wherever the
+     traits/sales content happens to end. Same cyan as the top BACK
+     button (.detail-back-btn-top), not TRANSACT!0N H!ST0RY's own
+     treatment, since they're the same action. */
+  #screenDetail .detail-back-btn-bottom{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    z-index:5;
+    display:block;
+    width:100%;
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--cyan);
+    background:var(--bg);
+    border:none;
+    border-top:1px solid var(--border-mid);
+    border-radius:0;
+    cursor:pointer;
+    appearance:none;
+    padding:0.7em 1em;
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  #screenDetail .detail-back-btn-bottom:hover{ background:var(--cyan-faint); border-top-color:var(--cyan-dim); }
+  /* Reserves real space for the bar above so it never sits on top of/
+     hides the last row of content (the MAKE AN 0FFER box, most often) —
+     it's position:absolute now, so it no longer takes up layout space
+     of its own the way an in-flow button would. */
+  #screenDetail .detail-two-col{ padding-bottom:2.6rem; }
   /* RECORD SALE / AVERAGE SALE stacked, same label/value row style as
      every other .detail-field (OWNER, PRICE, etc). */
   #screenDetail .tech-meta-title{ font-size:12px; }
@@ -9341,10 +9401,14 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <button class="bar-btn" id="detailScyllaTransferBtn">TRANSFER</button>
               </div>
               <div id="detailMakeOfferRow" style="display:none;">
-                <!-- Real heading (reported live wanting this box "cleaned
-                     up... more enticing to click") — it used to be just a
-                     bare input+SUBM!T sitting under N0 L!ST!NG with nothing
-                     saying what it's for. -->
+                <!-- Thin cyan divider + small label instead of a second
+                     nested bordered box (reported live: the earlier
+                     bordered-box treatment made this tall enough to push
+                     itself, and everything after it, off the bottom of
+                     the screen — this already lives inside
+                     .scylla-listing-block's own panel/border, so a second
+                     full box around just this part was redundant weight,
+                     not real distinction). -->
                 <div class="make-offer-box-title">MAKE AN 0FFER</div>
                 <div class="thumb-offer-row">
                   <div class="make-offer-input-wrap">
@@ -9393,14 +9457,14 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div class="detail-history">
             <button class="detail-history-btn" id="detailHistoryToggle">TRANSACT!0N H!ST0RY</button>
-            <!-- Second way back to the browse grid, right under TRANSACT!0N
-                 H!ST0RY at the bottom of DETAIL's own right column (reported
-                 live) — same goBackFromDetail() the top BACK button already
-                 uses. -->
-            <button class="detail-history-btn detail-back-btn-bottom" id="detailBackBtnBottom">← BACK</button>
           </div>
         </div>
       </div>
+      <!-- Second way back to the browse grid, pinned to the very bottom
+           of the DETAIL screen itself now (reported live), not just
+           sitting in-flow under TRANSACT!0N H!ST0RY — same cyan as the
+           top BACK button, same goBackFromDetail(). -->
+      <button class="detail-back-btn-bottom" id="detailBackBtnBottom">← BACK</button>
     </div>
 
     <!-- Fullscreen picture lightbox — click the detail picture to open,
