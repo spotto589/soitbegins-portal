@@ -2,7 +2,8 @@ import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNftsChecked,
   fetchDeeptideNftDetail, isValidUsername, isUsernameTaken, setProfile,
   isValidQuote, normalizeTwitterHandle, isValidTwitterHandle,
-  isValidProfileTheme, isValidFeaturedList, FEATURED_NFTS_MAX, isValidNodeCode
+  isValidProfileTheme, isValidFeaturedList, FEATURED_NFTS_MAX, isValidNodeCode,
+  getWalletAchievements, isValidEquippedTitle
 } from '../_shared.js';
 
 // Lets a wallet set its own display name, profile picture, banner, quote,
@@ -45,7 +46,8 @@ export async function onRequestPost(context) {
   const hasFeatured = Array.isArray(body.featuredNftIds);
   const hasIsPublic = typeof body.isPublic === 'boolean';
   const hasNodeCode = typeof body.nodeCode === 'string';
-  if (!hasUsername && !hasPfp && !hasBanner && !hasQuote && !hasTwitter && !hasTheme && !hasFeatured && !hasIsPublic && !hasNodeCode) {
+  const hasEquippedTitle = typeof body.equippedTitle === 'string' || body.equippedTitle === null;
+  if (!hasUsername && !hasPfp && !hasBanner && !hasQuote && !hasTwitter && !hasTheme && !hasFeatured && !hasIsPublic && !hasNodeCode && !hasEquippedTitle) {
     return new Response(JSON.stringify({ error: 'nothing_to_update' }), { status: 400 });
   }
 
@@ -94,6 +96,17 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: 'invalid_node_code' }), { status: 400 });
     }
     patch.nodeCode = body.nodeCode;
+  }
+
+  if (hasEquippedTitle) {
+    // Must be a real title-kind ACHIEVEMENT_RULES id this wallet has
+    // actually unlocked (or null, to un-equip) — never trust the client's
+    // own say-so on which titles it's "earned".
+    const achievements = await getWalletAchievements(env.coin, wallet);
+    if (!isValidEquippedTitle(body.equippedTitle, achievements.unlocked)) {
+      return new Response(JSON.stringify({ error: 'title_not_unlocked' }), { status: 403 });
+    }
+    patch.equippedTitle = body.equippedTitle;
   }
 
   if (hasFeatured && !isValidFeaturedList(body.featuredNftIds)) {

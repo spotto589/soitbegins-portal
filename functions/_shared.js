@@ -649,6 +649,139 @@ export async function fetchRecentAccountTxCached(context, wallet) {
   return result;
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// ACH!EVEMENTS/T!TLES — Phase 3. Every rule's check() is a pure function
+// over REAL on-ledger state (current holdings + Phase 2's own capped
+// recent-activity window) — nothing here is a "generic meaningless badge"
+// (per the user's own direction), and nothing is ever granted on a
+// client's say-so; achievements-sync.js is the only writer, and it always
+// re-derives ctx itself from the same cached fetchers everything else in
+// this file already uses. Deliberately NOT secret/hidden (that's Phase
+// 6) — every rule's real requirement is visible even locked. Extensible
+// by design: adding a rule later is one more array entry, never a rewrite
+// of the engine itself.
+// ─────────────────────────────────────────────────────────────────────────
+export const ACHIEVEMENT_RULES = [
+  { id: 'first_signal', kind: 'achievement', label: 'F!RST S!GNAL', description: 'CONNECTED T0 Σκύλλα.',
+    check: () => true },
+  { id: 'first_nft', kind: 'achievement', label: 'F!RST NFT', description: 'H0LD AT LEAST 1 TRACKED NFT.',
+    check: ctx => ctx.totalNfts >= 1 },
+  { id: 'first_token', kind: 'achievement', label: 'F!RST T0KEN', description: 'H0LD A BALANCE 0F ANY TRACKED T0KEN.',
+    check: ctx => ctx.coinBalancesByCollection.some(c => c.balance > 0) },
+  { id: 'multi_collector', kind: 'achievement', label: 'MULT!-C0LLECT0R', description: 'H0LD NFTS ACR0SS 3+ C0LLECT!0NS S!MULTANE0USLY.',
+    check: ctx => ctx.collectionsHeld >= 3 },
+  { id: 'archivist', kind: 'achievement', label: 'ARCH!V!ST', description: 'H0LD AT LEAST 1 NFT FR0M EVERY CURRENTLY-L!VE C0LLECT!0N.',
+    check: ctx => ctx.liveCollectionCount > 0 && ctx.collectionsHeld >= ctx.liveCollectionCount },
+  { id: 'pigeon_keeper_10', kind: 'achievement', label: 'P!GE0N KEEPER', description: 'H0LD 10+ P!GE0NS AT 0NCE.',
+    check: ctx => (ctx.nftCountsByCollection.pigeons || 0) >= 10 },
+  { id: 'signal_scout', kind: 'achievement', label: 'S!GNAL SC0UT', description: 'SET A TRUSTL!NE F0R A TRACKED C0LLECT!0N (SEEN !N RECENT ACT!V!TY).',
+    check: ctx => ctx.events.some(e => e.type === 'TRUSTLINE') },
+  { id: 'trader_5', kind: 'achievement', label: 'TRADER', description: '5+ NFT TRADES SETTLED !N RECENT ACT!V!TY.',
+    check: ctx => ctx.events.filter(e => e.type === 'NFT_TRADE').length >= 5 },
+  { id: 'whale_pigeons', kind: 'achievement', label: 'WHALE', description: 'H0LD 1,000,000+ $P!GE0NS.',
+    check: ctx => (ctx.coinBalancesByCollection.find(c => c.key === 'pigeons') || {}).balance >= 1000000 },
+  // T!TLES — same engine, wearable next to the username once earned (see
+  // equippedTitle in profile-set.js). Distinct ids from their achievement
+  // cousins above even where the underlying condition is identical, so
+  // "earned the achievement" and "chose to wear the title" stay separate
+  // concepts even though several share a threshold today.
+  { id: 'title_collector', kind: 'title', label: 'C0LLECT0R', description: 'H0LD NFTS ACR0SS 3+ C0LLECT!0NS S!MULTANE0USLY.',
+    check: ctx => ctx.collectionsHeld >= 3 },
+  { id: 'title_archivist', kind: 'title', label: 'ARCH!V!ST', description: 'H0LD AT LEAST 1 NFT FR0M EVERY CURRENTLY-L!VE C0LLECT!0N.',
+    check: ctx => ctx.liveCollectionCount > 0 && ctx.collectionsHeld >= ctx.liveCollectionCount },
+  { id: 'title_dealer', kind: 'title', label: 'DEALER', description: '10+ NFT TRADE/L!ST!NG EVENTS !N RECENT ACT!V!TY.',
+    check: ctx => ctx.events.filter(e => e.type === 'NFT_TRADE' || e.type === 'NFT_LISTING').length >= 10 },
+  { id: 'title_diamond_hand', kind: 'title', label: 'D!AM0ND HAND', description: 'H0LDS NFTS W!TH N0 SELL-S!DE ACT!V!TY !N RECENT H!ST0RY.',
+    check: ctx => ctx.totalNfts >= 1 && !ctx.events.some(e => e.type === 'NFT_TRADE' || (e.type === 'NFT_LISTING' && e.direction === 'sell')) },
+  { id: 'title_whale', kind: 'title', label: 'WHALE', description: 'H0LD 1,000,000+ $P!GE0NS.',
+    check: ctx => (ctx.coinBalancesByCollection.find(c => c.key === 'pigeons') || {}).balance >= 1000000 },
+  { id: 'title_pigeon_keeper', kind: 'title', label: 'P!GE0N KEEPER', description: 'H0LD 10+ P!GE0NS AT 0NCE.',
+    check: ctx => (ctx.nftCountsByCollection.pigeons || 0) >= 10 },
+  { id: 'title_early_signal', kind: 'title', label: 'EARLY S!GNAL', description: 'REAL WALLET AGE CONF!RMED (NOT JUST RECENT ACT!V!TY) AND GENU!NELY 0LD.',
+    // Only ever true when reachedGenesis is real (Phase 2's own honesty
+    // guarantee) — never guessed from a truncated recent-activity window.
+    check: ctx => ctx.reachedGenesis && ctx.earliestEventMs !== null && (Date.now() - ctx.earliestEventMs) > (2 * 365 * 24 * 60 * 60 * 1000) },
+];
+
+// equippedTitle itself lives on the PR0F!LE record (pswap:profiles:v1,
+// see profile-set.js), not here — it's read alongside every other
+// display field (theme/username/etc) in one profiles-batch fetch instead
+// of needing a second achievements-map read just to know which title is
+// worn. This map only ever tracks the real, server-verified unlock state.
+const ACHIEVEMENTS_MAP_KEY = 'pswap:achievements:v1';
+export async function getAchievementsMap(kv) {
+  const raw = await kv.get(ACHIEVEMENTS_MAP_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+export async function getWalletAchievements(kv, wallet) {
+  const map = await getAchievementsMap(kv);
+  return map[wallet] || { unlocked: {} };
+}
+export function isValidEquippedTitle(titleId, unlocked) {
+  if (titleId === null) return true;
+  const rule = ACHIEVEMENT_RULES.find(r => r.id === titleId);
+  return !!(rule && rule.kind === 'title' && unlocked && unlocked[titleId]);
+}
+// Builds the real ctx every rule's check() reads, from the exact same
+// cached fetchers the rest of this file (and PR0F!LE/WALLET H!ST0RY)
+// already use — no separate/duplicate XRPL calls, and (thanks to those
+// fetchers' own KV caches) calling this shortly after PR0F!LE's own
+// fetches ran costs nothing extra in practice.
+export async function buildAchievementContext(context, wallet) {
+  const { nfts, ok: nftsOk } = await fetchAllAccountNftsCheckedCached(context, wallet);
+  const lines = await fetchAllAccountLines(wallet);
+  const { events, ok: txOk, reachedGenesis } = await fetchRecentAccountTxCached(context, wallet);
+  if (!nftsOk || !txOk) return null;
+  const nftCountsByCollection = {};
+  let collectionsHeld = 0;
+  let liveCollectionCount = 0;
+  for (const key of Object.keys(TRADEABLE_COLLECTIONS)) {
+    const cfg = TRADEABLE_COLLECTIONS[key];
+    if (!cfg.nftIssuer) continue;
+    liveCollectionCount++;
+    const count = findAllCollectionNfts(nfts, key).length;
+    nftCountsByCollection[key] = count;
+    if (count > 0) collectionsHeld++;
+  }
+  const earliestEventMs = events.reduce((min, e) => (e.dateMs && (!min || e.dateMs < min)) ? e.dateMs : min, null);
+  return {
+    totalNfts: nfts.length,
+    collectionsHeld,
+    liveCollectionCount,
+    nftCountsByCollection,
+    coinBalancesByCollection: matchAccountLinesToCollections(lines),
+    events,
+    reachedGenesis,
+    earliestEventMs
+  };
+}
+// The only writer of pswap:achievements:v1 — evaluates every not-yet-
+// unlocked rule against a freshly-built ctx, writes ONLY the genuinely
+// newly-unlocked ones (a wallet with nothing new to unlock costs a single
+// KV read, no write — keeps this well inside the daily KV write cap even
+// if synced on every WALLET H!ST0RY/ACH!EVEMENTS open). Returns the full
+// unlocked map either way.
+export async function syncWalletAchievements(context, wallet) {
+  const kv = context.env.coin;
+  const ctx = await buildAchievementContext(context, wallet);
+  if (!ctx) return null;
+  const current = await getWalletAchievements(kv, wallet);
+  const newlyUnlocked = [];
+  const now = Date.now();
+  for (const rule of ACHIEVEMENT_RULES) {
+    if (current.unlocked[rule.id]) continue;
+    let met = false;
+    try { met = !!rule.check(ctx); } catch (e) { met = false; }
+    if (met) { current.unlocked[rule.id] = now; newlyUnlocked.push(rule.id); }
+  }
+  if (newlyUnlocked.length) {
+    const map = await getAchievementsMap(kv);
+    map[wallet] = current;
+    await safeKvPut(kv, ACHIEVEMENTS_MAP_KEY, JSON.stringify(map));
+  }
+  return { unlocked: current.unlocked, newlyUnlocked };
+}
+
 // XRPL currency codes are exactly 3 ASCII chars ("standard") or, for
 // anything else, a 40-hex-char string: the code's ASCII bytes, left-
 // justified and zero-padded to 20 bytes ("non-standard"/hex currency

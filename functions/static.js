@@ -5703,7 +5703,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      screenDetail/screenProfile already share theirs) — same fixed full-
      viewport overlay, own TV-static canvas, scrolls (neither screen has
      a fixed content budget the way DETAIL does). */
-  #screenProfile, #screenWalletHistory{
+  #screenProfile, #screenWalletHistory, #screenAchievements{
     position:fixed;
     top:var(--global-ticker-h);
     left:0;
@@ -5720,7 +5720,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     -webkit-backdrop-filter:none;
     padding:clamp(0.5rem, 1.8vh, 1.25rem) clamp(1rem, 4vw, 3rem) 2.5rem;
   }
-  #screenProfile::before, #screenWalletHistory::before{
+  #screenProfile::before, #screenWalletHistory::before, #screenAchievements::before{
     content:'';
     position:fixed;
     inset:0;
@@ -5918,6 +5918,57 @@ const SWAP_HTML = `<!DOCTYPE html>
   .wallet-history-event-detail-row{ display:flex; justify-content:space-between; gap:1rem; padding:0.2em 0; }
   .wallet-history-event-detail-row span:last-child{ color:var(--white); text-align:right; word-break:break-all; }
   .wallet-history-event-detail-row a{ color:var(--cyan); }
+  /* ---- ACH!EVEMENTS/T!TLES — #screenAchievements's own content, same
+     shared shell/banner as #screenWalletHistory. Unlocked cards are lit
+     with the real earn date; locked ones stay visible (never hidden —
+     that's Phase 6's job) greyed out with their real requirement text, so
+     this reads as "a real collectible you can see the next step toward,"
+     not a generic badge wall. ---- */
+  .achievements-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:1rem;
+    max-width:900px;
+    margin:0 auto 2.5rem;
+  }
+  .achievement-card{
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    background:var(--panel-bg-solid);
+    padding:0.9em 1em;
+  }
+  .achievement-card.unlocked{ border-color:rgba(var(--profile-accent-rgb, 61,243,236),0.5); box-shadow:0 0 12px rgba(var(--profile-accent-rgb, 61,243,236),0.12); }
+  .achievement-card.locked{ opacity:0.5; }
+  .achievement-card-row{ display:flex; align-items:center; gap:0.6rem; margin-bottom:0.35rem; }
+  .achievement-card-icon{ flex:0 0 auto; font-size:16px; }
+  .achievement-card.unlocked .achievement-card-icon{ color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.6); }
+  .achievement-card.locked .achievement-card-icon{ color:var(--grey-dim); }
+  .achievement-card-label{ font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:0.04em; color:var(--white); text-transform:uppercase; }
+  .achievement-card-desc{ font-size:11px; color:var(--grey-dim); letter-spacing:0.02em; }
+  .achievement-card-date{ margin-top:0.4em; font-size:10px; color:rgb(var(--profile-accent-rgb, 61,243,236)); letter-spacing:0.03em; }
+  /* T!TLES — earned title-kind rules as chips; only clickable/equippable
+     on your own profile (isOwnProfile gate in renderTitlesSection), a
+     visitor just sees whichever one (if any) is currently worn, read-only. */
+  .titles-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:0.6rem; max-width:900px; margin:0 auto 2.5rem; }
+  .title-chip{
+    background:transparent;
+    border:1px solid var(--border-mid);
+    color:var(--grey);
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    padding:0.5em 0.9em;
+    border-radius:var(--radius);
+    text-transform:uppercase;
+  }
+  .title-chip.earned{ cursor:pointer; border-color:rgba(var(--profile-accent-rgb, 61,243,236),0.5); color:rgb(var(--profile-accent-rgb, 61,243,236)); transition:background 0.15s ease, border-color 0.15s ease; }
+  .title-chip.earned:hover{ background:rgba(var(--profile-accent-rgb, 61,243,236),0.12); }
+  .title-chip.equipped{ background:rgba(var(--profile-accent-rgb, 61,243,236),0.18); border-color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 5px rgba(var(--profile-accent-rgb, 61,243,236),0.5); }
+  /* Worn title badge — small pill next to the username on the shared
+     .profile-banner (profileScreenBannerHtml), same "the worn identity"
+     the user asked for. */
+  .profile-title-badge{ display:inline-block; margin-left:0.5em; padding:0.15em 0.5em; border:1px solid rgb(var(--profile-accent-rgb, 61,243,236)); border-radius:var(--radius); font-size:10px; font-weight:700; letter-spacing:0.05em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 5px rgba(var(--profile-accent-rgb, 61,243,236),0.5); vertical-align:middle; }
   /* DATABASE M0DE / SH0WCASE M0DE — a real toggle, not a stored owner
      preference (see the HTML's own comment) — same two-button active-
      state language SALES H!ST0RY's XRP/$P!GE0NS toggle already uses. */
@@ -9993,6 +10044,10 @@ const SWAP_HTML = `<!DOCTYPE html>
                activity (openWalletHistory in the JS), not a plain tx
                list. -->
           <button class="bar-btn profile-screen-history-btn" id="profileScreenHistoryBtn">📜 WALLET H!ST0RY</button>
+          <!-- ACH!EVEMENTS/T!TLES — Phase 3, same "richer screen, richer
+               data" boundary as WALLET H!ST0RY (openAchievements in the
+               JS syncs real unlocks before rendering). -->
+          <button class="bar-btn profile-screen-history-btn" id="profileScreenAchievementsBtn">🏆 ACH!EVEMENTS</button>
         </div>
         <!-- DATABASE M0DE (today's practical collections+coins layout,
              default) / SH0WCASE M0DE (visual, curated — see the HTML
@@ -10059,6 +10114,27 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button type="button" class="wallet-history-filter-btn" data-filter="collections">C0LLECT!0NS</button>
       </div>
       <div class="wallet-history-timeline" id="walletHistoryTimeline"></div>
+    </div>
+
+    <!-- SCREEN: ACH!EVEMENTS/T!TLES — Phase 3. Real, server-verified
+         unlocks over the same on-chain state WALLET H!ST0RY/DNA already
+         read (see ACHIEVEMENT_RULES in _shared.js) — nothing here is a
+         generic meaningless badge, every card maps to one inspectable
+         condition, and locked ones stay visible with their real
+         requirement text rather than being hidden (that's Phase 6's
+         "secret achievements" job, not this). Same fixed full-screen
+         shell + shared .profile-banner as #screenWalletHistory, reached
+         from #screenProfile's own ACH!EVEMENTS button. -->
+    <div class="sw-panel" id="screenAchievements" style="display:none;">
+      <canvas class="local-static-bg" id="achievementsStaticBg"></canvas>
+      <div class="profile-screen-top-row">
+        <button class="detail-back-btn-top" id="achievementsBackBtn">← BACK</button>
+      </div>
+      <div class="profile-screen-banner-wrap" id="achievementsBanner"></div>
+      <div class="profile-screen-eyebrow">// ACH!EVEMENTS</div>
+      <div class="achievements-grid" id="achievementsGrid"></div>
+      <div class="profile-screen-eyebrow">// T!TLES</div>
+      <div class="titles-row" id="achievementsTitlesRow"></div>
     </div>
 
     <!-- Fullscreen picture lightbox — click the detail picture to open,
@@ -11079,6 +11155,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections','profileScreenCoins','profileScreenMessageBtn',
    'profileScreenCode','profileScreenPrivateNotice','profileScreenPublicContent','profileModeToggle','profileScreenDatabaseView','profileScreenShowcase','profileScreenFeatured','profileScreenHistoryBtn',
    'screenWalletHistory','walletHistoryBackBtn','walletHistoryBanner','walletHistoryNote','walletDnaBlock','walletHistoryGraph','walletHistoryFilters','walletHistoryTimeline',
+   'screenAchievements','achievementsBackBtn','achievementsBanner','achievementsGrid','achievementsTitlesRow','profileScreenAchievementsBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
    'connectPanel','connectPanelTitle','connectPanelSub','connectPanelActions',
@@ -11731,7 +11808,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // WALLET H!ST0RY — same fixed-overlay shell as PR0F!LE/DETAIL, same
     // freeze-the-page-underneath treatment.
     el.screenWalletHistory.style.display = name === 'walletHistory' ? '' : 'none';
-    document.body.classList.toggle('detail-open', name === 'detail' || name === 'profile' || name === 'walletHistory');
+    // ACH!EVEMENTS — same fixed-overlay shell/freeze treatment as PR0F!LE/
+    // WALLET H!ST0RY.
+    el.screenAchievements.style.display = name === 'achievements' ? '' : 'none';
+    document.body.classList.toggle('detail-open', name === 'detail' || name === 'profile' || name === 'walletHistory' || name === 'achievements');
     el.screenSummary.style.display = name === 'summary' ? '' : 'none';
     el.screenSwapReview.style.display = name === 'swapreview' ? '' : 'none';
     el.screenSwapOfferConfirm.style.display = name === 'swapofferconfirm' ? '' : 'none';
@@ -19431,6 +19511,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // close it back to PR0F!LE first, not skip straight past to
     // whichever screen PR0F!LE itself closes to.
     if (el.screenWalletHistory.style.display !== 'none'){ closeWalletHistory(); return true; }
+    // ACH!EVEMENTS is the same kind of innermost overlay opened straight
+    // from PR0F!LE (like WALLET H!ST0RY above) — close back to PR0F!LE
+    // first, not past it.
+    if (el.screenAchievements.style.display !== 'none'){ closeAchievements(); return true; }
     if (el.screenProfile.style.display !== 'none'){ closeWalletProfile(); return true; }
     // MY PIGEONS' own C0LLECT!0NS grid (your own wallet, scoped) unwinds
     // differently from a DATABASE wallet scope — reported live: pressing
@@ -19787,6 +19871,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     var hasPfp = !!(profile && profile.pfpImage);
     var avatarImg = hasPfp ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
     var username = (profile && profile.username) ? escapeHtml(profile.username) : 'N0 USERNAME SET';
+    // Worn title badge — real equipped title (must be a title-kind rule
+    // this wallet has actually unlocked, enforced server-side by
+    // profile-set.js), never invented. Looked up from ACHIEVEMENT_DEFS,
+    // not re-fetched here.
+    var titleDef = (profile && profile.equippedTitle) ? ACHIEVEMENT_DEFS.find(function(d){ return d.id === profile.equippedTitle && d.kind === 'title'; }) : null;
+    var titleBadgeHtml = titleDef ? '<span class="profile-title-badge">' + escapeHtml(titleDef.label) + '</span>' : '';
     var quoteHtml = (profile && profile.quote) ? '<div class="profile-quote">“' + escapeHtml(profile.quote) + '”</div>' : '';
     var twitterHtml = (profile && profile.twitter)
       ? '<div class="profile-twitter-row"><a class="profile-twitter-link" href="https://x.com/' + encodeURIComponent(profile.twitter) + '" target="_blank" rel="noopener">𝕏 @' + escapeHtml(profile.twitter) + '</a></div>'
@@ -19796,7 +19886,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       '<div class="profile-banner-main">' +
         '<div class="profile-banner-identity">' +
           twitterHtml +
-          '<div class="profile-current-username-row"><span class="profile-current-username">' + username + '</span></div>' +
+          '<div class="profile-current-username-row"><span class="profile-current-username">' + username + '</span>' + titleBadgeHtml + '</div>' +
           quoteHtml +
           '<div class="profile-current-wallet-row">' +
             '<span class="profile-current-wallet">' + escapeHtml(shortAddr(wallet)) + '</span>' +
@@ -19982,7 +20072,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       // than re-rendering this whole block, so it never clobbers whatever
       // the user's since clicked elsewhere on this card.
       row('CLASS', 'PEND!NG', true, 'class') +
-      row('T!TLE', 'PEND!NG', true) +
+      // T!TLE — the real equipped title (see profileScreenBannerHtml's
+      // own titleDef lookup), already known the moment the profile itself
+      // resolves — no separate sync needed just to fill this row in, only
+      // to unlock NEW titles (see openAchievements).
+      row('T!TLE', (function(){
+        var def = (profile && profile.equippedTitle) ? ACHIEVEMENT_DEFS.find(function(d){ return d.id === profile.equippedTitle && d.kind === 'title'; }) : null;
+        return def ? escapeHtml(def.label) : 'N0NE SET';
+      })(), !(profile && profile.equippedTitle)) +
       row('NFTS', totalNfts === null ? 'PEND!NG' : totalNfts, totalNfts === null) +
       row('C0LLECT!0NS', totalCollections === null ? 'PEND!NG' : totalCollections, totalCollections === null) +
       row('TRUST', 'PEND!NG', true) +
@@ -20309,6 +20406,134 @@ const SWAP_HTML = `<!DOCTYPE html>
     '</div>';
     el.walletDnaBlock.innerHTML = html;
   }
+  // ---- ACH!EVEMENTS/T!TLES (#screenAchievements) — Phase 3. Pure display
+  // metadata (id/kind/label/description) mirroring ACHIEVEMENT_RULES in
+  // _shared.js by hand (same "kept in lockstep" pattern PROFILE_THEMES
+  // already uses against PROFILE_THEME_KEYS) — the actual unlock LOGIC
+  // only ever runs server-side (achievements-sync.js), this is just what's
+  // needed to render a card/chip for each one. ----
+  var ACHIEVEMENT_DEFS = [
+    { id: 'first_signal', kind: 'achievement', label: 'F!RST S!GNAL', description: 'CONNECTED T0 Σκύλλα.' },
+    { id: 'first_nft', kind: 'achievement', label: 'F!RST NFT', description: 'H0LD AT LEAST 1 TRACKED NFT.' },
+    { id: 'first_token', kind: 'achievement', label: 'F!RST T0KEN', description: 'H0LD A BALANCE 0F ANY TRACKED T0KEN.' },
+    { id: 'multi_collector', kind: 'achievement', label: 'MULT!-C0LLECT0R', description: 'H0LD NFTS ACR0SS 3+ C0LLECT!0NS S!MULTANE0USLY.' },
+    { id: 'archivist', kind: 'achievement', label: 'ARCH!V!ST', description: 'H0LD AT LEAST 1 NFT FR0M EVERY CURRENTLY-L!VE C0LLECT!0N.' },
+    { id: 'pigeon_keeper_10', kind: 'achievement', label: 'P!GE0N KEEPER', description: 'H0LD 10+ P!GE0NS AT 0NCE.' },
+    { id: 'signal_scout', kind: 'achievement', label: 'S!GNAL SC0UT', description: 'SET A TRUSTL!NE F0R A TRACKED C0LLECT!0N (SEEN !N RECENT ACT!V!TY).' },
+    { id: 'trader_5', kind: 'achievement', label: 'TRADER', description: '5+ NFT TRADES SETTLED !N RECENT ACT!V!TY.' },
+    { id: 'whale_pigeons', kind: 'achievement', label: 'WHALE', description: 'H0LD 1,000,000+ $P!GE0NS.' },
+    { id: 'title_collector', kind: 'title', label: 'C0LLECT0R', description: 'H0LD NFTS ACR0SS 3+ C0LLECT!0NS S!MULTANE0USLY.' },
+    { id: 'title_archivist', kind: 'title', label: 'ARCH!V!ST', description: 'H0LD AT LEAST 1 NFT FR0M EVERY CURRENTLY-L!VE C0LLECT!0N.' },
+    { id: 'title_dealer', kind: 'title', label: 'DEALER', description: '10+ NFT TRADE/L!ST!NG EVENTS !N RECENT ACT!V!TY.' },
+    { id: 'title_diamond_hand', kind: 'title', label: 'D!AM0ND HAND', description: 'H0LDS NFTS W!TH N0 SELL-S!DE ACT!V!TY !N RECENT H!ST0RY.' },
+    { id: 'title_whale', kind: 'title', label: 'WHALE', description: 'H0LD 1,000,000+ $P!GE0NS.' },
+    { id: 'title_pigeon_keeper', kind: 'title', label: 'P!GE0N KEEPER', description: 'H0LD 10+ P!GE0NS AT 0NCE.' },
+    { id: 'title_early_signal', kind: 'title', label: 'EARLY S!GNAL', description: 'REAL WALLET AGE CONF!RMED (NOT JUST RECENT ACT!V!TY) AND GENU!NELY 0LD.' }
+  ];
+  var achievementsUnlocked = {};
+  function openAchievements(){
+    if (!currentProfileWallet) return;
+    var wallet = currentProfileWallet;
+    el.achievementsBanner.innerHTML = profileScreenBannerHtml(wallet, profileCache[wallet] || null);
+    var bannerNode = el.achievementsBanner.querySelector('.profile-banner');
+    var bannerSampleSrc = profileCache[wallet] && (profileCache[wallet].bannerImage || profileCache[wallet].pfpImage);
+    if (bannerNode && bannerSampleSrc) sampleBannerColor(bannerSampleSrc, bannerNode);
+    var themeKey = (profileCache[wallet] && profileCache[wallet].theme) || 'static';
+    el.screenAchievements.style.setProperty('--profile-accent-rgb', (PROFILE_THEMES[themeKey] || PROFILE_THEMES.static).accent);
+    el.achievementsGrid.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+    el.achievementsTitlesRow.innerHTML = '';
+    showScreen('achievements');
+    // Real sync every time this opens — same "richer screen, richer data"
+    // boundary WALLET H!ST0RY already established (see openWalletHistory);
+    // syncWalletAchievements is a cheap read when nothing's newly unlocked
+    // (see its own comment in _shared.js — only writes KV for genuinely
+    // new unlocks), so re-syncing on every visit is fine.
+    fetch('/api/achievements-sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wallet: wallet })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if (currentProfileWallet !== wallet) return;
+      if (!data || data.error){ throw new Error('sync_failed'); }
+      achievementsUnlocked = data.unlocked || {};
+      renderAchievementsGrid(wallet);
+      renderTitlesSection(wallet);
+    }).catch(function(){
+      el.achievementsGrid.innerHTML = '<div class="th-empty">C0ULD N0T L0AD ACH!EVEMENTS.</div>';
+    });
+  }
+  function closeAchievements(){
+    showScreen('profile');
+  }
+  el.profileScreenAchievementsBtn.addEventListener('click', openAchievements);
+  el.achievementsBackBtn.addEventListener('click', closeAchievements);
+  function renderAchievementsGrid(wallet){
+    var defs = ACHIEVEMENT_DEFS.filter(function(d){ return d.kind === 'achievement'; });
+    el.achievementsGrid.innerHTML = defs.map(function(d){
+      var earnedAt = achievementsUnlocked[d.id];
+      var unlocked = !!earnedAt;
+      var dateHtml = unlocked ? '<div class="achievement-card-date">UNL0CKED ' + escapeHtml(new Date(earnedAt).toLocaleDateString()) + '</div>' : '';
+      return '<div class="achievement-card ' + (unlocked ? 'unlocked' : 'locked') + '">' +
+        '<div class="achievement-card-row"><span class="achievement-card-icon">' + (unlocked ? '✓' : '🔒') + '</span><span class="achievement-card-label">' + escapeHtml(d.label) + '</span></div>' +
+        '<div class="achievement-card-desc">' + escapeHtml(d.description) + '</div>' +
+        dateHtml +
+      '</div>';
+    }).join('');
+  }
+  // T!TLES — every earned title-kind rule as a chip. Equip/un-equip is
+  // owner-only (clicking does nothing for a visitor — see the click
+  // handler's own isOwnProfile check); a visitor still sees every chip the
+  // OWNER has earned, just not clickable, with whichever one is actually
+  // equipped highlighted.
+  function renderTitlesSection(wallet){
+    var isOwnProfile = wallet === MY_WALLET;
+    var defs = ACHIEVEMENT_DEFS.filter(function(d){ return d.kind === 'title'; });
+    var earned = defs.filter(function(d){ return !!achievementsUnlocked[d.id]; });
+    if (!earned.length){
+      el.achievementsTitlesRow.innerHTML = '<div class="th-empty">N0 T!TLES EARNED YET.</div>';
+      return;
+    }
+    var equipped = (profileCache[wallet] && profileCache[wallet].equippedTitle) || null;
+    el.achievementsTitlesRow.innerHTML = earned.map(function(d){
+      return '<button type="button" class="title-chip earned' + (d.id === equipped ? ' equipped' : '') + '" data-title-id="' + escapeHtml(d.id) + '"' + (isOwnProfile ? '' : ' disabled') + '>' + escapeHtml(d.label) + '</button>';
+    }).join('');
+  }
+  el.achievementsTitlesRow.addEventListener('click', function(e){
+    var chip = e.target.closest('.title-chip');
+    if (!chip || chip.disabled || !currentProfileWallet || currentProfileWallet !== MY_WALLET) return;
+    var wallet = currentProfileWallet;
+    var titleId = chip.getAttribute('data-title-id');
+    var alreadyEquipped = chip.classList.contains('equipped');
+    var nextTitleId = alreadyEquipped ? null : titleId;
+    fetch('/api/profile-set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ equippedTitle: nextTitleId })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok) return;
+      var profile = res.data.profile;
+      profileCache[wallet] = profile;
+      renderTitlesSection(wallet);
+      // Re-fetch NFT counts just to keep NFTS/C0LLECT!0NS accurate rather
+      // than passing null — renderProfileCode's own two trailing args are
+      // only ever used for those two rows, not T!TLE (already correct off
+      // the fresh profile above).
+      apiWithRetry({ myNftCounts: 1, wallet: wallet }).then(function(data){
+        if (currentProfileWallet !== wallet) return;
+        var counts = (data && data.counts) || {};
+        var totalNfts = 0;
+        Object.keys(counts).forEach(function(key){ if (counts[key] > 0) totalNfts += counts[key]; });
+        renderProfileCode(wallet, profile, totalNfts, Object.keys(counts).filter(function(k){ return counts[k] > 0; }).length);
+      }).catch(function(){
+        renderProfileCode(wallet, profile, null, null);
+      });
+      el.profileScreenBanner.innerHTML = profileScreenBannerHtml(wallet, profile);
+      var bannerNode = el.profileScreenBanner.querySelector('.profile-banner');
+      var bannerSampleSrc = profile && (profile.bannerImage || profile.pfpImage);
+      if (bannerNode && bannerSampleSrc) sampleBannerColor(bannerSampleSrc, bannerNode);
+    }).catch(function(){});
+  });
   // No more T0P 3 preview lists in the banner itself (reported live —
   // just the two V!EW C0!NS/V!EW NFTS buttons now) — this just live-
   // refreshes whichever full list is currently open, called every time
@@ -21996,6 +22221,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   startStaticCanvas(document.getElementById('profileStaticBg'), function(){
     return document.getElementById('screenProfile').style.display !== 'none';
+  });
+  startStaticCanvas(document.getElementById('achievementsStaticBg'), function(){
+    return document.getElementById('screenAchievements').style.display !== 'none';
   });
 })();
 </script>

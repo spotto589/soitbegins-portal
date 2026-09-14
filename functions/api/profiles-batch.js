@@ -74,6 +74,7 @@ export async function onRequestPost(context) {
       twitter: p.twitter || null,
       theme: p.theme || null,
       nodeCode: p.nodeCode || null,
+      equippedTitle: p.equippedTitle || null,
       featuredNfts: p.featuredNfts || [],
       isPublic: p.isPublic !== false
     } : null;
