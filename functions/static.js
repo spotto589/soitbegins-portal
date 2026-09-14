@@ -3256,12 +3256,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     /* Same size/weight as BACK T0 T0P now (reported live: "make sort by
        and filter by traits the same size text") — was 14px/700, sized
        down from BACK T0 T0P's own 19px/800 for no real reason once that
-       button got bumped up to suit its fuller label. */
+       button got bumped up to suit its fuller label. Whole bar trimmed a
+       little smaller again after that (reported live) — 19px/1em padding
+       was reading as oversized once it was sitting fixed at the bottom
+       of every scroll. */
     font-weight:800;
-    font-size:19px;
+    font-size:16px;
     letter-spacing:0.06em;
     text-transform:uppercase;
-    padding:1em 0.5em;
+    padding:0.75em 0.5em;
     cursor:pointer;
     white-space:nowrap;
     overflow:hidden;
@@ -3275,7 +3278,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      content the way S0RT BY/F!LTER BY TRA!TS's own dropdowns do. Font
      size/weight now come from the shared .bottom-controls-btn base (all
      three read the same size) — this only overrides layout/spacing. */
-  .bottom-controls-btn-top{ flex:0 0 auto; padding:1.2em 1.8em; }
+  .bottom-controls-btn-top{ flex:0 0 auto; padding:0.9em 1.4em; }
   /* Own bottom padding on the page's actual scrollable content so the
      last row of result cards never sits underneath this fixed bar with
      no way to see it — #screenBrowse is the shared DATABASE/PλWS grid
@@ -5844,7 +5847,41 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   #screenDetail .scylla-listing-block .tech-meta-title{ color:#fff; opacity:0.9; }
   #screenDetail .scylla-listing-price{ font-size:17px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
-  #screenDetail #detailMakeOfferRow{ margin-top:0.75rem; }
+  /* Its own bordered box now, same panel treatment as .scylla-listing-block
+     right above it (reported live wanting this "cleaned up... more
+     enticing to click" — it used to be a bare input+button floating
+     directly under N0 L!ST!NG with no visual container of its own,
+     easy to miss as its own distinct action). Cyan, not the neutral
+     grey border everything else here uses, so it reads as an inviting
+     call-to-action rather than just more fine print. */
+  #screenDetail #detailMakeOfferRow{
+    margin-top:0.75rem;
+    background:var(--panel-bg-solid);
+    border:1px solid var(--cyan-dim);
+    border-radius:var(--radius);
+    padding:0.8rem 0.9rem;
+    box-shadow:0 0 14px rgba(61,243,236,0.1);
+  }
+  .make-offer-box-title{
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.12em;
+    color:var(--cyan);
+    text-shadow:0 0 5px var(--cyan-glow);
+    text-transform:uppercase;
+    margin-bottom:0.6rem;
+  }
+  /* Solid filled green + hover-invert, same "juicy, obvious CTA" language
+     as #amountEntryListBtn's own comment — SUBM!T is a real action (put
+     real XRP behind a real offer), not a neutral form button. */
+  #screenDetail #detailMakeOfferSend{
+    background:var(--green);
+    border-color:var(--green);
+    color:#000;
+    box-shadow:0 0 14px var(--green-glow);
+  }
+  #screenDetail #detailMakeOfferSend:hover{ background:#000; color:var(--green); border-color:var(--green); box-shadow:0 0 20px var(--green-glow); }
   #screenDetail .detail-num{ font-size:28px; }
   #screenDetail .trait-grid{ max-width:100%; margin:0.4rem 0 0; grid-template-columns:repeat(3, 1fr); gap:0.4rem; }
   @media (max-width:520px){
@@ -5934,6 +5971,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-sale-stats-row .df-label{ font-size:11px; letter-spacing:0.06em; }
   #screenDetail .detail-sale-stats-row .df-value{ font-size:22px; color:var(--green); text-shadow:0 0 8px rgba(52,255,133,0.4); display:flex; flex-direction:column; align-items:center; line-height:1.2; }
   #screenDetail .detail-sale-stats-row .df-value-sub{ font-size:10px; color:var(--grey-dim); text-shadow:none; font-weight:400; letter-spacing:0.06em; }
+  /* REC0RD SALE/RECENT SALE wrap their number in a .owner-link <a> when a
+     tx URL exists (see updateDetailPrice) — .df-value a.owner-link's own
+     grey/underline styling (meant for the plain OWNED BY row) was winning
+     over the green set above since it targets the <a> directly, so a
+     Pigeon with real sale history showed grey numbers here while a
+     never-sold one (plain text, no link) showed green — same figure,
+     inconsistent color depending on data. Green wins here regardless of
+     whether it's a link. */
+  #screenDetail .detail-sale-stats-row .df-value a.owner-link{ color:var(--green); text-decoration:none; }
+  #screenDetail .detail-sale-stats-row .df-value a.owner-link:hover{ text-decoration:underline; }
   #screenDetail .detail-history{ margin-top:0.75rem; max-width:100%; }
   /* A real button now (reported live: "make transaction history a clear
      button" — it used to be plain underline-free link text, easy to miss
@@ -7111,6 +7158,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:0;
   }
   .history-modal-close{ position:absolute; top:1rem; right:1rem; }
+  .history-modal-back-btn{ margin-top:1rem; }
   /* PR0F!LE ED!T popup — its own id (not #amountEntryModal, so it needs
      the same fixed-overlay shell spelled out again here rather than
      inheriting it), .profile-edit-panel reuses .amount-entry-panel's own
@@ -9285,13 +9333,20 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <button class="bar-btn" id="detailScyllaListBtn">L!ST</button>
                 <button class="bar-btn" id="detailScyllaTransferBtn">TRANSFER</button>
               </div>
-              <div class="thumb-offer-row" id="detailMakeOfferRow" style="display:none;">
-                <div class="make-offer-input-wrap">
-                  <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
-                  <input class="make-offer-input" id="detailMakeOfferInput" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">
-                  <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
+              <div id="detailMakeOfferRow" style="display:none;">
+                <!-- Real heading (reported live wanting this box "cleaned
+                     up... more enticing to click") — it used to be just a
+                     bare input+SUBM!T sitting under N0 L!ST!NG with nothing
+                     saying what it's for. -->
+                <div class="make-offer-box-title">MAKE AN 0FFER</div>
+                <div class="thumb-offer-row">
+                  <div class="make-offer-input-wrap">
+                    <img class="make-offer-input-coin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
+                    <input class="make-offer-input" id="detailMakeOfferInput" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">
+                    <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
+                  </div>
+                  <button class="make-offer-send" id="detailMakeOfferSend">SUBM!T</button>
                 </div>
-                <button class="make-offer-send" id="detailMakeOfferSend">SUBM!T</button>
                 <!-- Same duration row/reasoning as amountEntryOfferDuration. -->
                 <div class="list-duration-row" id="detailMakeOfferDuration">
                   <button type="button" class="list-duration-btn" data-days="1">1 DAY</button>
@@ -9458,6 +9513,10 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="detail-num" id="historyNum"></div>
         <div class="dh-header-row"><span>DATE</span><span>TYPE</span><span>FR0M</span><span>T0</span><span>EXPL0RER</span></div>
         <div class="th-list" id="detailHistoryList"></div>
+        <!-- Second way back to DETAIL underneath the list itself (reported
+             live wanting a back button here, not just the ✕ up top) — same
+             closeHistoryModal() the ✕ already uses. -->
+        <button type="button" class="detail-history-btn history-modal-back-btn" id="historyModalBack">← BACK</button>
       </div>
     </div>
 
@@ -10337,7 +10396,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
    'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
-   'detailHistoryToggle','detailHistoryList','historyNum','historyModal','historyModalClose',
+   'detailHistoryToggle','detailHistoryList','historyNum','historyModal','historyModalClose','historyModalBack',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
    'connectPanel','connectPanelTitle','connectPanelSub','connectPanelActions',
@@ -18663,6 +18722,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   function closeHistoryModal(){ el.historyModal.style.display = 'none'; }
   el.historyModalClose.addEventListener('click', closeHistoryModal);
+  el.historyModalBack.addEventListener('click', closeHistoryModal);
   el.historyModal.addEventListener('click', function(e){ if (e.target === el.historyModal) closeHistoryModal(); });
   function goBackFromDetail(){
     showScreen('browse');
