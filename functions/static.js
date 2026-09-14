@@ -4113,7 +4113,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:rgba(8,9,11,0.8);
     border:1px solid var(--border-mid);
     color:var(--grey);
-    font-size:15px;
+    /* Bumped up from 15px (reported live wanting it "a bit bigger") — the
+       box itself (width/height:1.6em) scales up with it automatically
+       since both are em-relative to this same font-size. */
+    font-size:19px;
     cursor:pointer;
     text-align:center;
     border-radius:var(--radius);
@@ -12636,6 +12639,11 @@ const SWAP_HTML = `<!DOCTYPE html>
           renderSortTag();
           el.searchInput.value = '';
           showScreen('browse');
+          // Same pendingTraitScroll flag the other trait-click paths set
+          // (see el.detailTraits' own handler) — without it this landed
+          // wherever the scroll happened to already be, not above the
+          // freshly filtered grid (reported live).
+          pendingTraitScroll = true;
           runQuery();
         });
         return;
@@ -18365,6 +18373,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       renderTraitRows();
       el.searchInput.value = '';
       showScreen('browse');
+      // Same pendingTraitScroll flag every other trait-click path already
+      // sets (traitsFlyoutSelected's chip click, picking a value in the
+      // flyout) — without it, runQuery's own results just render wherever
+      // showScreen('browse') happened to leave the scroll position,
+      // instead of landing right above the filtered grid (reported live).
+      pendingTraitScroll = true;
       runQuery();
     });
   });
