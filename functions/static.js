@@ -5660,6 +5660,81 @@ const SWAP_HTML = `<!DOCTYPE html>
     );
     mix-blend-mode:overlay;
   }
+  /* ---- PR0F!LE screen — same fixed, full-viewport, opaque treatment as
+     #screenDetail directly above (own TV-static canvas + scanline
+     overlay), but overflow-y:auto instead of hidden — unlike DETAIL this
+     has no fixed content budget to design around (a wallet could hold
+     anywhere from 0 to all 10 collections), so it scrolls instead of
+     needing every pixel accounted for. ---- */
+  #screenProfile{
+    position:fixed;
+    top:var(--global-ticker-h);
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:70;
+    margin:0;
+    border-radius:0;
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    background:var(--bg);
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+    padding:clamp(0.5rem, 1.8vh, 1.25rem) clamp(1rem, 4vw, 3rem) 2.5rem;
+  }
+  #screenProfile::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.018) 0px,
+      rgba(255,255,255,0.018) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode:overlay;
+  }
+  /* Positioned container for the absolute BACK/SHARE buttons (same
+     .detail-back-btn-top/.detail-share-btn classes DETAIL's own top row
+     uses), same reasoning as .detail-num-row{position:relative}. */
+  .profile-screen-top-row{ position:relative; min-height:2.4rem; margin-bottom:0.5rem; }
+  .profile-screen-banner-wrap{ max-width:560px; margin:0 auto 1.5rem; }
+  .profile-screen-eyebrow{ text-align:center; font-size:13px; letter-spacing:0.14em; color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); text-transform:uppercase; margin:0 0 1rem; }
+  .profile-collection-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
+    gap:1rem;
+    max-width:900px;
+    margin:0 auto;
+  }
+  /* Same card language .profile-banner-nft-row already uses (cyan accent
+     border/bg themed per --card-accent) — laid out as a real grid here
+     instead of a horizontal scroller since this IS the screen's main
+     content, not a side list. */
+  .profile-collection-card{
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+    gap:0.6rem;
+    padding:1.2em 0.8em;
+    cursor:pointer;
+    border:1px solid rgba(var(--card-accent, 61,243,236), 0.35);
+    border-radius:var(--radius);
+    background:rgba(var(--card-accent, 61,243,236), 0.08);
+    transition:background 0.15s ease, border-color 0.15s ease;
+  }
+  .profile-collection-card:hover{ background:rgba(var(--card-accent, 61,243,236), 0.16); border-color:rgba(var(--card-accent, 61,243,236), 0.6); }
+  .profile-collection-thumb{
+    width:84px; height:84px;
+    border-radius:10px;
+    border:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
+    background-size:cover; background-position:center;
+    background-color:rgba(var(--card-accent, 61,243,236), 0.18);
+  }
+  .profile-collection-label{ font-family:var(--font-mono); font-size:15px; font-weight:700; color:#fff; }
+  .profile-collection-count{ font-family:var(--font-mono); font-size:13px; color:var(--green); text-shadow:0 0 5px var(--green-glow); }
   /* PREV/NEXT — fixed to the screen's own left/right edges (position:fixed,
      same containing block as #screenDetail itself since that's also
      fixed), vertically centered, so they stay put regardless of scroll
@@ -8678,10 +8753,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       <!-- SEARCH PR0F!LE — a plain search bar under the (by-itself) banner,
            hitting the profileSearch mode on /api/pigeons (username or
            wallet substring match, see pigeons.js) as you type. Picking a
-           result jumps straight to that wallet's real collection the exact same way
-           every other wallet link on the site already does
-           (browseOwnerCollection — see renderProfileSearchResults in the
-           JS), rather than inventing a second "view their profile" flow. -->
+           result opens that wallet's real PR0F!LE screen (openWalletProfile
+           — see renderProfileSearchResults in the JS), the exact same
+           destination every other wallet link on the site now opens too. -->
       <div class="profile-tab-panel" id="profileTabPanelSearch" style="display:none;">
         <input type="text" class="profile-search-input" id="profileSearchInput" placeholder="SEARCH BY NAME 0R WALLET ADDRESS..." autocomplete="off">
         <div class="profile-search-results" id="profileSearchResults"></div>
@@ -9477,6 +9551,27 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button class="detail-back-btn-bottom" id="detailBackBtnBottom">← BACK</button>
     </div>
 
+    <!-- SCREEN: PR0F!LE — every wallet link on the site opens here now
+         (reported live: "this will be where every wallet link on the
+         website goes to... the prize attraction") instead of dropping
+         straight into a single collection's scoped grid: a real public
+         "show off your NFTs" page — banner, then a picker of every
+         collection this wallet holds NFTs in with real counts, click one
+         to browse it (openWalletProfile in the JS). Same fixed full-
+         screen treatment as DETAIL, its own local TV-static canvas —
+         unlike DETAIL this one scrolls (however many collections a
+         wallet holds has no fixed budget to design around). -->
+    <div class="sw-panel" id="screenProfile" style="display:none;">
+      <canvas class="local-static-bg" id="profileStaticBg"></canvas>
+      <div class="profile-screen-top-row">
+        <button class="detail-back-btn-top" id="profileScreenBackBtn">← BACK</button>
+        <button class="detail-share-btn" id="profileScreenShareBtn" title="C0PY A SHAREABLE L!NK T0 TH!S PR0F!LE">SHARE</button>
+      </div>
+      <div class="profile-screen-banner-wrap" id="profileScreenBanner"></div>
+      <div class="profile-screen-eyebrow">// NFT C0LLECT!0NS</div>
+      <div class="profile-collection-grid" id="profileScreenCollections"></div>
+    </div>
+
     <!-- Fullscreen picture lightbox — click the detail picture to open,
          click anywhere to close back to the detail screen underneath. -->
     <div id="detailLightbox" style="display:none;">
@@ -10209,6 +10304,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // back to the ?collection= query-string handling further down (and, if
   // neither is present, plain P!GE0NS via state's own default above).
   var SERVER_COLLECTION = "__SWAP_COLLECTION__";
+  // Set server-side only by the /profile/<wallet> route (functions/
+  // profile/[wallet].js — see renderProfile below) so a shared profile
+  // link lands directly on that wallet's PR0F!LE screen without a
+  // client-side redirect flash — same reasoning/pattern as
+  // SERVER_COLLECTION just above, just for openWalletProfile instead of
+  // switchCollection. null everywhere else.
+  var SERVER_PROFILE_WALLET = "__SWAP_PROFILE_WALLET__";
 
   // BETA — the NFT-for-NFT swap builder (CREATE AN OFFER box, MY PIGEONS'
   // + toggle, SWAP OFFERS tab) is fully built and working, just hidden for
@@ -10479,6 +10581,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose',
+   'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
    'connectPanel','connectPanelTitle','connectPanelSub','connectPanelActions',
@@ -11110,7 +11213,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       closeTraitsFlyout();
     }
     el.screenDetail.style.display = name === 'detail' ? '' : 'none';
-    document.body.classList.toggle('detail-open', name === 'detail');
+    // PR0F!LE gets the same body.detail-open freeze-the-page-underneath
+    // treatment DETAIL already uses (same class, see body{} — both are
+    // full-viewport fixed overlays with nothing real underneath moving).
+    el.screenProfile.style.display = name === 'profile' ? '' : 'none';
+    document.body.classList.toggle('detail-open', name === 'detail' || name === 'profile');
     el.screenSummary.style.display = name === 'summary' ? '' : 'none';
     el.screenSwapReview.style.display = name === 'swapreview' ? '' : 'none';
     el.screenSwapOfferConfirm.style.display = name === 'swapofferconfirm' ? '' : 'none';
@@ -11831,6 +11938,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     // browsing straight from a modal without going through a screen.
     el.topHoldersModal.style.display = 'none';
     el.salesModal.style.display = 'none';
+    // Same reasoning — PR0F!LE (#screenProfile) is the new entry point
+    // most wallet clicks land on first (openWalletProfile), and its
+    // collection-picker cards call straight through to this function to
+    // drill in; it's a position:fixed, full-viewport overlay too, so
+    // without hiding it here the DATABASE tab filled in underneath while
+    // PR0F!LE just sat on top looking like nothing happened.
+    el.screenProfile.style.display = 'none';
+    document.body.classList.remove('detail-open');
+    profileScreenReturnPath = null;
     state.scope = { wallet: wallet, ownerShort: ownerShort || wallet };
     state.targetAssets = {};
     state.traitFilters = [];
@@ -12692,7 +12808,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       var histWalletLink = e.target.closest('.card-history-list a[data-wallet]');
       if (histWalletLink){
-        browseOwnerCollection(histWalletLink.getAttribute('data-wallet'), histWalletLink.getAttribute('data-short'));
+        openWalletProfile(histWalletLink.getAttribute('data-wallet'), histWalletLink.getAttribute('data-short'));
         return;
       }
       // 0FFER — just a button now, no inline amount input on the card
@@ -13697,18 +13813,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   // filter through the same AND-filter mechanism as the TRAITS stack.
   // One combined search box — a value that looks like an XRPL wallet
   // address (starts with "r", right length) resolves via the same
-  // browseOwnerCollection path a Top 10/sales-history wallet click
-  // already uses (a wallet with zero Pigeons is a valid, real result,
-  // handled inside browseOwnerCollection with an explicit "owns no
-  // Pigeons" message, not the generic no-match state below); otherwise
-  // it's treated as a Pigeon number and resolved via the number->NFTokenID
+  // openWalletProfile path every other wallet click on the site now
+  // uses (a wallet with zero Pigeons is a valid, real result — reported
+  // live wanting this treated as a real "look this wallet up" action,
+  // same intent as clicking a wallet link anywhere else); otherwise it's
+  // treated as a Pigeon number and resolved via the number->NFTokenID
   // index. Trait filtering already has its own dedicated UI (the TRAITS
   // stack), so this box only ever does one of these two lookups.
   function runSearchBox(){
     var q = el.searchInput.value.trim();
     if (!q){ runQuery(); return; }
     if (/^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(q)){
-      browseOwnerCollection(q, q.slice(0, 9) + '...' + q.slice(-4));
+      openWalletProfile(q, q.slice(0, 9) + '...' + q.slice(-4));
       return;
     }
     var isNumber = /^#?\\d+$/.test(q);
@@ -13790,7 +13906,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.topHoldersList.addEventListener('click', function(e){
     var row = e.target.closest('.th-row');
     if (!row) return;
-    browseOwnerCollection(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
+    openWalletProfile(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
   });
 
   // ---- CR0WN — real $PIGEONS trading profit/loss leaderboard (realized
@@ -13830,7 +13946,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.crownLeaderboardList.addEventListener('click', function(e){
     var row = e.target.closest('.th-row');
     if (!row) return;
-    browseOwnerCollection(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
+    openWalletProfile(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
   });
   el.crownPeriodSelect.addEventListener('change', loadCrownLeaderboard);
 
@@ -17884,7 +18000,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   document.addEventListener('click', function(e){
     if (!el.salesArea.contains(e.target)) return;
     var walletLink = e.target.closest('.sale-from a, .sale-to a');
-    if (walletLink){ browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short')); return; }
+    if (walletLink){ openWalletProfile(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short')); return; }
     var row = e.target.closest('.sale-row');
     if (row) openDetail(row.getAttribute('data-nftid'));
   }, true);
@@ -18404,14 +18520,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // comment), so this would only ever dead-end at a broken page.
     el.detailOwner.innerHTML = '<span class="do-label">0WNED BY</span><a class="owner-link" href="#" data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '" title="V!EW TH!S WALLET\\'S FULL P!GE0N C0LLECT!0N">' + walletTagHtml(full, short) + '</a>';
   }
-  // Clicking the owner address on INSPECT jumps straight into that wallet's
-  // full real Pigeon collection (same browse UI as SELECT), not an external
-  // explorer.
+  // Clicking the owner address on INSPECT jumps straight into that
+  // wallet's real PR0F!LE now (same as every other wallet link on the
+  // site), not an external explorer.
   el.detailOwner.addEventListener('click', function(e){
     var link = e.target.closest('.owner-link');
     if (!link) return;
     e.preventDefault();
-    browseOwnerCollection(link.getAttribute('data-wallet'), link.getAttribute('data-short'));
+    openWalletProfile(link.getAttribute('data-wallet'), link.getAttribute('data-short'));
   });
   function updateDetailRarity(p){
     var info = p ? rarityDisplay(p) : null;
@@ -18639,7 +18755,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // historyRowHtml's own table layout) — one shared selector covers
     // all three.
     var walletLink = e.target.closest('.dh-party a[data-wallet]');
-    if (walletLink) browseOwnerCollection(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short'));
+    if (walletLink) openWalletProfile(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short'));
   });
 
   // Where the grid was scrolled to right before opening a Pigeon's detail
@@ -18796,6 +18912,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (el.amountEntryModal.style.display !== 'none'){ closeAmountEntryModal(); return true; }
     if (el.historyModal.style.display !== 'none'){ closeHistoryModal(); return true; }
     if (el.screenDetail.style.display !== 'none'){ goBackFromDetail(); return true; }
+    if (el.screenProfile.style.display !== 'none'){ closeWalletProfile(); return true; }
     // MY PIGEONS' own C0LLECT!0NS grid (your own wallet, scoped) unwinds
     // differently from a DATABASE wallet scope — reported live: pressing
     // the mouse back button while inside MY PIGEONS' C0LLECT!0NS grid
@@ -19126,6 +19243,102 @@ const SWAP_HTML = `<!DOCTYPE html>
       .filter(function(c){ return c[amountField] > 0; })
       .sort(function(a, b){ return b[amountField] - a[amountField]; });
   }
+  // ---- PR0F!LE screen (#screenProfile) — every wallet link on the site
+  // opens here now (reported live: "this will be where every wallet link
+  // on the website goes to... the prize attraction") instead of dropping
+  // straight into a single collection's scoped grid. Banner (same
+  // signatureBannerHtml every other wallet-facing spot already uses —
+  // read-only, no edit buttons, unlike #profileBannerIdentity which is
+  // your OWN editable hub) + a real picker of every collection this
+  // wallet holds NFTs in with real counts (myNftCounts is already public/
+  // wallet-agnostic, see functions/api/pigeons.js). Click a card to
+  // browse it — reuses browseOwnerCollection exactly as it already
+  // worked, just arrived at via this screen first. ----
+  var profileScreenReturnPath = null;
+  var currentProfileWallet = null;
+  var currentProfileOwnerShort = null;
+  function openWalletProfile(wallet, ownerShort){
+    if (!wallet) return;
+    currentProfileWallet = wallet;
+    currentProfileOwnerShort = ownerShort;
+    el.profileScreenBanner.innerHTML = signatureBannerHtml(wallet, 'detail');
+    el.profileScreenCollections.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+    // #screenMainframe (the DATABASE collection picker) is z-index:1500 —
+    // well above #screenProfile's own 70 (same as #screenDetail) — and a
+    // plain page load always shows it first via showTab('database')
+    // before this ever runs (state.databaseInPicker defaults true, only
+    // ever pre-cleared for the pretty per-COLLECTION routes' own
+    // SERVER_COLLECTION, not this one). Without this, a real /profile/
+    // <wallet> deep link rendered PR0F!LE correctly underneath, fully
+    // invisible behind the still-showing picker. Harmless to call when
+    // opened from an in-app click too — the picker's already hidden by
+    // then regardless.
+    el.screenMainframe.style.display = 'none';
+    showScreen('profile');
+    // Real shareable URL the instant this opens — replaceState (not
+    // pushState), same reasoning switchCollection's own ?collection=
+    // update already uses: this is a same-page state change, not a new
+    // history entry to pile up behind the mouse-back button (see
+    // closeTopmostOverlayForBack/closeWalletProfile, which already own
+    // unwinding this screen). Remembers whatever path was actually
+    // current before this call so closeWalletProfile can restore it
+    // exactly, instead of guessing '/static' — except when THIS call is
+    // itself what a fresh /profile/<wallet> deep link landed on (the
+    // boot IIFE calling this before any client navigation has happened),
+    // where the "current path" is already /profile/... and isn't a real
+    // place to go back to.
+    if (profileScreenReturnPath === null){
+      var curPath = window.location.pathname + window.location.search;
+      profileScreenReturnPath = curPath.indexOf('/profile/') === 0 ? '/static' : curPath;
+    }
+    try { window.history.replaceState({}, '', '/profile/' + encodeURIComponent(wallet)); } catch (e){}
+    apiWithRetry({ myNftCounts: 1, wallet: wallet }).then(function(data){
+      var counts = (data && data.counts) || {};
+      var held = {};
+      Object.keys(counts).forEach(function(key){ if (counts[key] > 0) held[key] = { count: counts[key] }; });
+      renderProfileScreenCollections(wallet, ownerShort, held);
+    }).catch(function(){
+      el.profileScreenCollections.innerHTML = '<div class="th-empty">C0ULD N0T L0AD NFTS F0R TH!S WALLET.</div>';
+    });
+  }
+  function renderProfileScreenCollections(wallet, ownerShort, held){
+    var entries = sortedHeldEntries(held, 'count');
+    el.profileScreenCollections.innerHTML = !entries.length
+      ? '<div class="th-empty">TH!S WALLET H0LDS N0 TRACKED NFTS YET.</div>'
+      : entries.map(function(e){
+          var meta = COLLECTION_META[e.key];
+          var accent = PROFILE_COIN_ACCENTS[e.key] || '61,243,236';
+          var art = (meta && meta.thumb) || '';
+          return '<div class="profile-collection-card" data-collection="' + escapeHtml(e.key) + '" style="--card-accent:' + accent + ';">' +
+            '<div class="profile-collection-thumb"' + (art ? ' style="background-image:url(' + art + ')"' : '') + '></div>' +
+            '<div class="profile-collection-label">' + escapeHtml(meta ? meta.label : e.key) + '</div>' +
+            '<div class="profile-collection-count">' + e.count + ' 0WNED</div>' +
+          '</div>';
+        }).join('');
+  }
+  function enterProfileCollection(wallet, ownerShort, key){
+    if (state.collection !== key) switchCollection(key);
+    browseOwnerCollection(wallet, ownerShort);
+  }
+  function closeWalletProfile(){
+    showScreen('browse');
+    try { window.history.replaceState({}, '', profileScreenReturnPath || '/static'); } catch (e){}
+    profileScreenReturnPath = null;
+  }
+  el.profileScreenBackBtn.addEventListener('click', closeWalletProfile);
+  el.profileScreenShareBtn.addEventListener('click', function(){
+    var showCopied = function(){
+      el.profileScreenShareBtn.textContent = 'C0P!ED';
+      setTimeout(function(){ el.profileScreenShareBtn.textContent = 'SHARE'; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(window.location.href).then(showCopied, showCopied);
+    else showCopied();
+  });
+  el.profileScreenCollections.addEventListener('click', function(e){
+    var card = e.target.closest('.profile-collection-card[data-collection]');
+    if (!card || !currentProfileWallet) return;
+    enterProfileCollection(currentProfileWallet, currentProfileOwnerShort, card.getAttribute('data-collection'));
+  });
   // No more T0P 3 preview lists in the banner itself (reported live —
   // just the two V!EW C0!NS/V!EW NFTS buttons now) — this just live-
   // refreshes whichever full list is currently open, called every time
@@ -19609,7 +19822,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var row = e.target.closest('.profile-search-row');
     if (!row) return;
     switchProfileTab(null);
-    browseOwnerCollection(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
+    openWalletProfile(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
   });
   el.profileSearchBack.addEventListener('click', function(){ switchProfileTab(null); });
   el.profileMessagesBack.addEventListener('click', function(){ switchProfileTab(null); });
@@ -20538,6 +20751,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (item) openDetail(item.nftId);
     }).catch(function(){});
   })();
+  // Shareable PR0F!LE link — same SERVER_-wins/?wallet=-fallback pattern
+  // as the collection one just above, just for openWalletProfile instead
+  // of switchCollection (see functions/profile/[wallet].js/renderProfile).
+  (function(){
+    var wallet = SERVER_PROFILE_WALLET || new URLSearchParams(window.location.search).get('wallet');
+    if (wallet) openWalletProfile(wallet, shortAddr(wallet));
+  })();
   startStaticCanvas(document.getElementById('staticBg'));
   startStaticCanvas(document.getElementById('detailStaticBg'), function(){
     return document.getElementById('screenDetail').style.display !== 'none';
@@ -20545,19 +20765,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   startStaticCanvas(document.getElementById('lightboxStaticBg'), function(){
     return document.getElementById('detailLightbox').style.display !== 'none';
   });
+  startStaticCanvas(document.getElementById('profileStaticBg'), function(){
+    return document.getElementById('screenProfile').style.display !== 'none';
+  });
 })();
 </script>
 </body>
 </html>`;
 
-// Shared by the plain /static route below and by the pretty per-collection
-// routes (functions/pigeons.js, functions/phnixs.js, etc.) — same page,
+// Shared by the plain /static route below, the pretty per-collection
+// routes (functions/pigeons.js, functions/phnixs.js, etc.), and the
+// per-wallet PR0F!LE route (functions/profile/[wallet].js) — same page,
 // same handler, same underlying data (one KV binding namespaced by
 // collection key, see COLLECTIONS in functions/api/pigeons.js), just a
-// different collection baked in server-side instead of left for the
-// client's own ?collection= handling to pick up. presetCollection is null
-// from plain /static (client falls back to ?collection= / plain P!GE0NS).
-export async function renderSwap(context, presetCollection) {
+// different collection/profile-wallet baked in server-side instead of
+// left for the client's own ?collection=/?wallet= handling to pick up.
+// Both preset params are null from plain /static.
+export async function renderSwap(context, presetCollection, presetProfileWallet) {
   const { request, env } = context;
   let wallet = null;
   if (env.Σκύλλα) {
@@ -20569,8 +20793,17 @@ export async function renderSwap(context, presetCollection) {
   }
   const html = SWAP_HTML
     .replace('"__SWAP_WALLET__"', JSON.stringify(wallet))
-    .replace('"__SWAP_COLLECTION__"', JSON.stringify(presetCollection || null));
+    .replace('"__SWAP_COLLECTION__"', JSON.stringify(presetCollection || null))
+    .replace('"__SWAP_PROFILE_WALLET__"', JSON.stringify(presetProfileWallet || null));
   return new Response(html, { headers: { 'Content-Type': 'text/html' } });
+}
+
+// /profile/<wallet> — see functions/profile/[wallet].js. Own real
+// shareable route (reported live: "every wallet link on the website
+// [should go] to" a real profile page) instead of the profile screen
+// only ever being reachable through an in-app click.
+export async function renderProfile(context, wallet) {
+  return renderSwap(context, null, wallet);
 }
 
 export async function onRequestGet(context) {
