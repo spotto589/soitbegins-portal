@@ -417,7 +417,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     animation:static-shake 0.4s steps(2) infinite;
   }
   .scylla-boot-content{ position:relative; text-align:center; }
-  .scylla-boot-lockpad{ width:140px; height:auto; animation:scylla-boot-glitch 1.1s ease-in-out 1; }
+  /* The real saved Σκύλλα mark (assets/xrp_vanity_lock_glitch_nft_clean.png
+     — fanged padlock, cyan/magenta dual-tone outline already baked into
+     the art itself) replaces the old hand-drawn placeholder SVG here.
+     Sized up from the SVG's old 140px since this is real detailed art
+     that deserves presence, not a minimal icon. */
+  .scylla-boot-lockpad{ width:240px; max-width:70vw; height:auto; animation:scylla-boot-glitch 1.1s ease-in-out 1; }
   @keyframes scylla-boot-glitch{
     0%, 100%{ filter:drop-shadow(-2px 0 var(--cyan)) drop-shadow(2px 0 var(--magenta)); transform:translate(0,0); }
     10%{ filter:drop-shadow(-6px 0 var(--cyan)) drop-shadow(5px 0 var(--magenta)); transform:translate(-3px,1px) skewX(-3deg); }
@@ -8913,6 +8918,15 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
       </button>
       <button class="tab-btn global-top-scylla-btn" data-tab="mypigeons">
+        <!-- Stays this plain SVG, not the real saved lockpad art
+             (assets/xrp_vanity_lock_glitch_nft_clean.png, now used for the
+             Σκύλλα B00T reveal below) — tested live at this bar's actual
+             32px size and the detailed art just read as a near-invisible
+             dark blob, the exact "still looking awful even cropped tight"
+             problem a past raster-logo attempt already hit here (see the
+             CSS's own comment on #globalTopBarLogo). The boot screen is
+             where the real art gets to be seen properly; this stays a
+             small, crisp, purpose-drawn icon. -->
         <svg id="globalTopBarLogo" viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Σκύλλα">
           <path d="M16 30 V22 a16 16 0 0 1 32 0 V30" fill="none" stroke="#f2f2f0" stroke-width="6" stroke-linecap="round"/>
           <rect x="8" y="30" width="48" height="42" rx="8" fill="#f2f2f0"/>
@@ -8942,22 +8956,19 @@ const SWAP_HTML = `<!DOCTYPE html>
        overlay rendered BEHIND #globalTopBar until moved out here) so
        9000 actually wins against #globalTopBar's own 2200 and genuinely
        covers everything, including the top bar, for its one moment. The
-       lockpad is a second copy of the exact same mark #globalTopBarLogo
-       already uses (see the HTML just above) — same real Σκύλλα identity,
-       not a new asset — scaled up and given the same chromatic-aberration
-       glitch rhythm topbar-terminal-glitch already established elsewhere
-       in this file (mostly at rest, a brief RGB-split burst, settles),
-       just via filter:drop-shadow instead of text-shadow since this is an
-       SVG shape, not text. -->
+       lockpad is the real saved Σκύλλα mark now (assets/xrp_vanity_lock_
+       glitch_nft_clean.png — a fanged padlock with cyan/magenta dual-tone
+       already baked into the art), not the old hand-drawn placeholder SVG
+       — replaces it here, given the same chromatic-aberration glitch
+       rhythm topbar-terminal-glitch already established elsewhere in this
+       file (mostly at rest, a brief RGB-split burst, settles) layered on
+       top of the art's own built-in fringing. #globalTopBarLogo stays the
+       small hand-drawn SVG (see its own comment on why the real art
+       doesn't work at that tiny size). -->
   <div id="scyllaBootScreen" style="display:none;">
     <canvas class="scylla-boot-static" id="scyllaBootStaticBg"></canvas>
     <div class="scylla-boot-content">
-      <svg class="scylla-boot-lockpad" viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Σκύλλα">
-        <path d="M16 30 V22 a16 16 0 0 1 32 0 V30" fill="none" stroke="#f2f2f0" stroke-width="6" stroke-linecap="round"/>
-        <rect x="8" y="30" width="48" height="42" rx="8" fill="#f2f2f0"/>
-        <circle cx="32" cy="48" r="5" fill="#0b0b09"/>
-        <rect x="29" y="50" width="6" height="13" rx="2" fill="#0b0b09"/>
-      </svg>
+      <img class="scylla-boot-lockpad" src="/assets/xrp_vanity_lock_glitch_nft_clean.png" alt="Σκύλλα">
       <div class="scylla-boot-status">Σκύλλα://!N!T!AL!Z!NG SYSTEM...</div>
     </div>
   </div>
