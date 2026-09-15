@@ -319,6 +319,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      able to drag the page behind it around while the fixed box sits still. */
   body.detail-open{ overflow:hidden; }
   body.scylla-boot-open{ overflow:hidden; }
+  /* Σκύλλα tab (.paws-view, already toggled exactly on tab==='mypigeons')
+     — "that new static i love, thats Σκύλλα from now on" (reported live):
+     the old sitewide grey/white #staticBg texture outside the nav panel's
+     own border read as leftover legacy chrome once the panel itself went
+     black+cyan/magenta glitch, so it's hidden here in favour of a plain
+     black page background — see #profilePanelWrap's own new outer frame
+     border below for the replacement "black border" design. */
+  body.paws-view{ background:#000; }
+  body.paws-view canvas#staticBg{ display:none; }
   canvas#staticBg{
     position:fixed;
     inset:0;
@@ -1932,6 +1941,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      just a bolder opacity here since static is meant to read as part of
      the furniture on this panel, not a rare accent), and the same
      body::before scanline trick layered on top via its own ::before. ---- */
+  /* #profilePanelWrap's own outer frame — the "new design" black border
+     replacing the old sitewide grey static as the backdrop for this whole
+     tab (see body.paws-view above): sharp brutalist edges, no blur/inset-
+     shadow/panel-texture (overriding .sw-panel's own defaults for just
+     this one wrap), a plain black frame around the real .scylla-nav-panel
+     card inside it. */
+  #profilePanelWrap{ border:1px solid var(--cyan-dim); border-radius:0; background:#000; backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none; }
+  #profilePanelWrap::before{ display:none; }
   .scylla-nav-panel{ position:relative; border:1px solid var(--cyan-dim); border-radius:0; background:#000; padding:1.25rem 1rem 1.5rem; overflow:hidden; }
   .scylla-nav-static{ position:absolute; inset:0; width:100%; height:100%; opacity:0.9; mix-blend-mode:screen; animation:static-shake 0.4s steps(2) infinite; }
   .scylla-nav-panel::before{
@@ -1960,14 +1977,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      (magenta-leaning) to match the reference's own energy without
      duplicating the top bar's identical heading redundantly on this page. */
   .scylla-system-header{ text-align:center; margin:0.5rem 0 1.25rem; }
-  .scylla-system-header-title{ font-family:var(--font-mono); font-size:18px; font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
+  .scylla-system-header-title{ font-family:var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
   @keyframes scylla-header-glitch{
     0%, 92%, 100%{ text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); transform:translate(0,0); }
     92.5%{ text-shadow:-3px 0 var(--magenta), 3px 0 var(--cyan); transform:translate(-2px,0) skewX(-2deg); }
     93.5%{ text-shadow:3px 0 var(--magenta), -3px 0 var(--cyan); transform:translate(2px,0) skewX(2deg); }
     94.5%{ text-shadow:-2px 0 var(--magenta), 2px 0 var(--cyan); transform:translate(0,0); }
   }
-  .scylla-system-header-sub{ margin-top:0.3rem; font-size:11px; letter-spacing:0.14em; color:var(--grey-dim); text-transform:uppercase; }
   .profile-box-grid{ display:flex; flex-direction:column; gap:0.5rem; margin-top:1.25rem; margin-bottom:1.25rem; }
   /* PR0F!LES/0FFERS/C0LLECT!0NS/CR0WN etc all use the same strong magenta
      "currently open" glitch treatment once picked — the reference's own
@@ -9204,7 +9220,6 @@ const SWAP_HTML = `<!DOCTYPE html>
              Σκύλλα://!DENT!TY code block already uses it. -->
         <div class="scylla-system-header">
           <div class="scylla-system-header-title">Σκύλλα://SYSTEM</div>
-          <div class="scylla-system-header-sub">WALLET C0NTR0L PANEL</div>
         </div>
         <!-- PR0F!LE B0X GR!D — a real menu of boxed destinations (same real
              .flock-account-box visual language the old FL0CK-era boxes
