@@ -677,7 +677,16 @@ const SWAP_HTML = `<!DOCTYPE html>
      claiming its own fixed padding-driven height and letting the total
      overflow the panel; this is the actual "fit to one page" mechanism,
      not just a smaller number. */
-  .flock-account-box{ flex:1 1 0; min-height:0; padding:0.6rem 1.1rem; display:flex; align-items:center; border-radius:0; background:rgba(2,3,4,0.88); }
+  /* Reported live as "too generic... just rectangle boxes" (round 2) —
+     chamfered right edge (a pointed chevron cut, not a plain rectangle)
+     instead of border-radius:0's own plain square corners. Left edge
+     deliberately stays a clean straight line — that's where the accent
+     bar (::before, see .flock-account-box-clickable below) already runs
+     full-height, and chamfering that side too would visually clip it.
+     clip-path clips the row's real border along with it, so the new
+     angled corners get a real outline for free. Extra right padding so
+     the › arrow clears the cut instead of crowding it. */
+  .flock-account-box{ flex:1 1 0; min-height:0; padding:0.6rem 1.5rem 0.6rem 1.1rem; display:flex; align-items:center; border-radius:0; background:rgba(2,3,4,0.88); clip-path:polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%); }
   .flock-account-box-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.7rem; width:100%; text-align:left; }
   /* Reported live as "too generic... just rectangle boxes" — one real
      icon per destination (a person badge for PR0F!LES, an envelope for
@@ -687,8 +696,39 @@ const SWAP_HTML = `<!DOCTYPE html>
      row's own state already sets (cyan/brighter-cyan/magenta) — zero new
      colour rules needed. */
   .flock-account-box-icon{ width:18px; height:18px; flex:0 0 auto; color:var(--cyan); }
-  .flock-account-box-prefix{ font-family:var(--font-mono); font-size:13px; color:var(--cyan); opacity:0.75; flex:0 0 auto; }
-  .flock-account-box-label{ font-family:var(--font-mono); font-size:14px; letter-spacing:0.14em; text-transform:uppercase; color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  /* Reported live as "too generic" (round 2, this time the TEXT itself,
+     not just the row) — the label/prefix glyphs are filled with a fine
+     animated noise-band gradient instead of flat colour (real "glitch
+     static text," not just an RGB-shadow trick), plus a brief ambient
+     chromatic flicker on the same topbar-terminal-glitch rhythm/cadence
+     already established, staggered per row via nth-child (see further
+     down) so 7 rows never flicker in lockstep. .active/.flock-account-
+     box-soon both cancel this back to a plain solid fill (see their own
+     rules) — the noise-text look is specifically the row's own idle/cyan
+     state, not something layered under the louder magenta active
+     treatment or the deliberately inert C0M!NG S00N rows. */
+  .flock-account-box-prefix, .flock-account-box-label{
+    background-image:repeating-linear-gradient(0deg, rgb(61,243,236) 0 2px, rgba(190,245,243,0.95) 2px 3px, rgba(61,243,236,0.55) 3px 4px);
+    background-size:100% 7px;
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    -webkit-text-fill-color:transparent;
+    animation:scylla-label-static 0.8s steps(4) infinite, scylla-label-ambient-flicker 8s ease-in-out infinite;
+  }
+  .flock-account-box-prefix{ font-family:var(--font-mono); font-size:13px; opacity:0.85; flex:0 0 auto; }
+  .flock-account-box-label{ font-family:var(--font-mono); font-size:14px; letter-spacing:0.14em; text-transform:uppercase; }
+  @keyframes scylla-label-static{ 0%{ background-position:0 0; } 100%{ background-position:0 28px; } }
+  @keyframes scylla-label-ambient-flicker{
+    0%, 92%, 100%{ text-shadow:0 0 4px rgba(61,243,236,0.4); transform:translate(0,0); }
+    92.5%{ text-shadow:-2px 0 var(--cyan), 2px 0 var(--magenta); transform:translate(-1px,0); }
+    93.5%{ text-shadow:2px 0 var(--cyan), -2px 0 var(--magenta); transform:translate(1px,0); }
+    94.5%{ text-shadow:0 0 4px rgba(61,243,236,0.4); transform:translate(0,0); }
+  }
+  .flock-account-box-clickable:nth-child(2) .flock-account-box-prefix, .flock-account-box-clickable:nth-child(2) .flock-account-box-label{ animation-delay:0s, -1.6s; }
+  .flock-account-box-clickable:nth-child(3) .flock-account-box-prefix, .flock-account-box-clickable:nth-child(3) .flock-account-box-label{ animation-delay:0s, -3.2s; }
+  .flock-account-box-clickable:nth-child(4) .flock-account-box-prefix, .flock-account-box-clickable:nth-child(4) .flock-account-box-label{ animation-delay:0s, -4.8s; }
+  .flock-account-box-clickable:nth-child(5) .flock-account-box-prefix, .flock-account-box-clickable:nth-child(5) .flock-account-box-label{ animation-delay:0s, -6.4s; }
   .flock-account-box-arrow{ font-size:16px; color:var(--cyan); flex:0 0 auto; margin-left:auto; }
   .flock-account-box-clickable{ position:relative; overflow:hidden; cursor:pointer; border-color:var(--border-mid); transition:border-color 0.15s ease, background 0.15s ease; }
   /* Left accent bar — the row's own state indicator (reference image's
@@ -803,7 +843,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      muted directly instead so the box still reads as "inactive"
      without touching its children's own contrast. */
   .flock-account-box-soon{ cursor:not-allowed; border-color:var(--border-mid); border-radius:0; background:rgba(2,3,4,0.88); }
-  .flock-account-box-soon .flock-account-box-label, .flock-account-box-soon .flock-account-box-prefix, .flock-account-box-soon .flock-account-box-icon{ color:var(--grey-dim); text-shadow:none; }
+  /* Same cancel-the-noise-text-fill reasoning as .active above — these two
+     rows are deliberately inert (no backend yet), so they get a plain flat
+     dim fill and no animation at all, not the idle rows' own texture/
+     flicker. */
+  .flock-account-box-soon .flock-account-box-label, .flock-account-box-soon .flock-account-box-prefix{ background:none; -webkit-background-clip:initial; background-clip:initial; color:var(--grey-dim); -webkit-text-fill-color:var(--grey-dim); text-shadow:none; animation:none; }
+  .flock-account-box-soon .flock-account-box-icon{ color:var(--grey-dim); text-shadow:none; }
   /* A real, visible "still counting" state — the underscore alone reads as
      dead/broken otherwise. */
   @keyframes flock-count-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
@@ -2142,42 +2187,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      whatever vertical space is left (or is tight on), same reasoning as
      .scylla-nav-panel's own min-height:0 above. */
   .scylla-nav-panel > .profile-box-grid{ flex:1 1 auto; min-height:0; overflow:hidden; }
-  /* Σκύλλα://SYSTEM — the branded header for this whole tab (reported live
-     wanting it to feel like "her own branded system page"), same
-     .profile-code-title look the Σκύλλα://!DENT!TY block on #screenProfile
-     already uses — reads off --profile-accent-rgb too, so it automatically
-     matches whatever THEME is set on #profilePanelWrap, no new plumbing.
-     Glitch pushed harder than the plain topbar-terminal-glitch fringe
-     (magenta-leaning) to match the reference's own energy without
-     duplicating the top bar's identical heading redundantly on this page. */
+  /* Σκύλλα://SYSTEM — reported live wanting this to actually look like
+     "how we used to have the Σκύλλα:// signal button" (the real top-bar
+     heading, #globalTopBarHeading) — crisp white text with a subtle 1px
+     cyan-dim/magenta-dim fringe at rest, reusing that exact same
+     topbar-terminal-glitch keyframe (not a separate copy) so the two
+     headings genuinely match rather than two different takes on "a
+     glitchy title." Replaces this pass's earlier heavier solid-cyan/
+     magenta-glow treatment + its own signal-tear overlay — the old signal
+     button never had a tear effect, so this doesn't either, to stay a
+     faithful match rather than a bigger version of it. */
   .scylla-system-header{ text-align:center; margin:0.25rem 0 0.75rem; }
-  .scylla-system-header-title{ position:relative; display:inline-block; font-family:var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
-  @keyframes scylla-header-glitch{
-    0%, 92%, 100%{ text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); transform:translate(0,0); }
-    92.5%{ text-shadow:-3px 0 var(--magenta), 3px 0 var(--cyan); transform:translate(-2px,0) skewX(-2deg); }
-    93.5%{ text-shadow:3px 0 var(--magenta), -3px 0 var(--cyan); transform:translate(2px,0) skewX(2deg); }
-    94.5%{ text-shadow:-2px 0 var(--magenta), 2px 0 var(--cyan); transform:translate(0,0); }
-  }
-  /* S!GNAL-TEAR on the title too, synced to the same 7s cycle/percentages
-     as scylla-header-glitch above so the RGB-split burst and the torn
-     slice happen together, not as two competing effects. */
-  .scylla-system-header-title::after{
-    content:'';
-    position:absolute;
-    inset:0;
-    background:repeating-linear-gradient(0deg, rgba(61,243,236,0.45) 0 2px, rgba(255,63,208,0.45) 2px 4px, transparent 4px 9px);
-    mix-blend-mode:screen;
-    opacity:0;
-    clip-path:inset(0 0 100% 0);
-    pointer-events:none;
-    animation:scylla-header-tear 7s steps(1) infinite;
-  }
-  @keyframes scylla-header-tear{
-    0%, 92%, 100%{ opacity:0; clip-path:inset(0 0 100% 0); transform:translateX(0); }
-    92.5%{ opacity:1; clip-path:inset(15% 0 65% 0); transform:translateX(-6px); }
-    93.5%{ opacity:1; clip-path:inset(60% 0 15% 0); transform:translateX(6px); }
-    94.5%{ opacity:0; clip-path:inset(0 0 100% 0); transform:translateX(0); }
-  }
+  .scylla-system-header-title{ font-family:var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:var(--white); text-shadow:-1px 0 var(--cyan-dim), 1px 0 var(--magenta-dim); animation:topbar-terminal-glitch 7s infinite; }
   .profile-box-grid{ display:flex; flex-direction:column; gap:0.4rem; margin-top:0.75rem; margin-bottom:0.75rem; }
   /* PR0F!LES/0FFERS/C0LLECT!0NS/CR0WN etc all use the same strong magenta
      "currently open" glitch treatment once picked — the reference's own
@@ -2185,8 +2206,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      profileThemeGlitchFlicker's already-established "occasional, not
      constant" rhythm elsewhere in this file), not a distracting shake. */
   .flock-account-box-clickable.active{ border-color:var(--magenta); background:rgba(255,63,208,0.08); box-shadow:0 0 14px var(--magenta-glow); }
+  /* Cancels the idle noise-text fill (background-clip:text +
+     -webkit-text-fill-color:transparent from the base rule) back to a
+     plain solid magenta fill — the louder, already-established active
+     treatment, not the idle state's texture. */
   .flock-account-box-clickable.active .flock-account-box-prefix,
-  .flock-account-box-clickable.active .flock-account-box-label{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); animation:scylla-row-active-flicker 6s ease-in-out infinite; }
+  .flock-account-box-clickable.active .flock-account-box-label{ background:none; -webkit-background-clip:initial; background-clip:initial; color:var(--magenta); -webkit-text-fill-color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); animation:scylla-row-active-flicker 6s ease-in-out infinite; }
   .flock-account-box-clickable.active .flock-account-box-icon{ color:var(--magenta); }
   .flock-account-box-clickable.active .flock-account-box-arrow{ color:var(--magenta); }
   @keyframes scylla-row-active-flicker{
