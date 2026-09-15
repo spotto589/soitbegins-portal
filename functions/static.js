@@ -1862,6 +1862,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      bottom edge (see .profile-avatar-wrap's own negative margin) and
      would otherwise sit right against these boxes with zero breathing
      room. */
+  /* Σκύλλα://SYSTEM — the branded header for this whole tab (reported live
+     wanting it to feel like "her own branded system page"), same
+     .profile-code-title look the Σκύλλα://!DENT!TY block on #screenProfile
+     already uses — reads off --profile-accent-rgb too, so it automatically
+     matches whatever THEME is set on #profilePanelWrap, no new plumbing. */
+  .scylla-system-header{ text-align:center; margin:0.5rem 0 1.25rem; }
+  .scylla-system-header-title{ font-family:var(--font-mono); font-size:18px; font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); }
+  .scylla-system-header-sub{ margin-top:0.3rem; font-size:11px; letter-spacing:0.14em; color:var(--grey-dim); text-transform:uppercase; }
   .profile-box-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.7rem; margin-top:1.25rem; margin-bottom:1.5rem; }
   @media (max-width:600px){ .profile-box-grid{ grid-template-columns:repeat(2, 1fr); } }
   @media (max-width:400px){ .profile-box-grid{ grid-template-columns:1fr; } }
@@ -9030,105 +9038,49 @@ const SWAP_HTML = `<!DOCTYPE html>
          its own Pigeons), shown everywhere an address used to just print
          its own short form (see walletTagHtml/setWalletText). -->
     <div class="sw-panel" id="profilePanelWrap" style="display:none;">
-      <!-- BANNER — just the coloured backdrop now, sized to fit snugly to
-           the bottom of the avatar (reported live) instead of a tall card
-           holding everything. No banner image/picker of its own — the
-           colour is auto-sampled straight off your PFP (sampleBannerColor
-           in the JS, called with profile.pfpImage) and NOTHING else
-           layered on top, so it's one flat matching colour end to end.
-           A plain gradient placeholder (.profile-banner-empty) shows
-           before a pfp's ever been set. The avatar has no border/ring any
-           more either — it sits flush against the banner so the two
-           genuinely blend into one shape, not two overlapping ones. -->
-      <div class="profile-banner profile-banner-empty" id="profileBanner">
-        <div class="profile-avatar-wrap">
-          <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
-          <button type="button" class="profile-avatar-edit-btn" id="profileAvatarEditBtn" title="CHANGE PR0F!LE P!CTURE">+</button>
-        </div>
-        <!-- Everything right of the thumbnail — a centred identity column
-             (TW!TTER/name/quote/address, all centred now — reported live)
-             plus a right-hand holdings column (T0P 3 H0LD!NGS/T0P 3 NFT
-             H0LD!NGS, each reported live), side by side. V!EW M0RE on
-             either holdings box swaps THIS WHOLE AREA (both columns) out
-             for #profileBannerExpanded showing that wallet's full real
-             list instead of just the top 3 — see renderBannerHoldings/
-             openBannerHoldingsExpanded in the JS. -->
-        <div class="profile-banner-main" id="profileBannerMain">
-          <div class="profile-banner-identity" id="profileBannerIdentity">
-            <div class="profile-twitter-row">
-              <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener"></a>
-            </div>
-            <div class="profile-current-username-row">
-              <span class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</span>
-              <button type="button" class="profile-field-edit-btn" id="profileUsernameEditBtn" title="EDIT USERNAME">✎</button>
-            </div>
-            <div class="profile-quote" id="profileCurrentQuote"></div>
-            <div class="profile-current-wallet-row">
-              <span class="profile-current-wallet" id="profileCurrentWallet"></span>
-              <button type="button" class="profile-mini-btn" id="profileAddressCopyBtn" title="C0PY ADDRESS">⧉</button>
-              <a class="profile-mini-btn" id="profileAddressBithompLink" target="_blank" rel="noopener" title="V!EW 0N B!TH0MP">↗</a>
-            </div>
-            <div class="profile-current-estvalue">EST C0!N :: <span id="profileCurrentEstValue">--</span></div>
-            <!-- CUST0M!ZE — the four new Phase 1 identity pieces
-                 (BANNER/SH0WCASE/THEME/PR!VACY) that don't have an
-                 obvious click-on-the-banner-itself target the way PFP/
-                 USERNAME/QU0TE/TW!TTER already do, so they get one small
-                 explicit row instead. Opens the same #profileEditModal,
-                 just a different pane each. -->
-            <div class="profile-customize-row">
-              <button type="button" class="profile-customize-btn" id="profileBannerEditBtn">BANNER</button>
-              <button type="button" class="profile-customize-btn" id="profileFeaturedEditBtn">SH0WCASE</button>
-              <button type="button" class="profile-customize-btn" id="profileThemeEditBtn">THEME</button>
-              <button type="button" class="profile-customize-btn" id="profilePrivacyEditBtn">PR!VACY</button>
-              <button type="button" class="profile-customize-btn" id="profileNodeCodeEditBtn">N0DE C0DE</button>
-            </div>
-          </div>
-          <!-- Just two buttons now (reported live — dropped the T0P 3
-               preview lists entirely), each opening #profileBannerExpanded
-               straight to that wallet's full real coin/NFT holdings. -->
-          <div class="profile-banner-holdings" id="profileBannerHoldings">
-            <button type="button" class="profile-holdings-viewmore profile-holdings-btn" data-kind="coins">V!EW C0!NS</button>
-            <button type="button" class="profile-holdings-viewmore profile-holdings-btn" data-kind="nfts">V!EW NFTS</button>
-          </div>
-          <!-- Hidden until V!EW M0RE opens it — replaces BOTH columns
-               above (not just the one box clicked), per "all the
-               information to the right of the profile picture is
-               replaced with the view more selection" (reported live). -->
-          <div class="profile-banner-expanded" id="profileBannerExpanded" style="display:none;">
-            <div class="profile-holdings-title" id="profileExpandedTitle">H0LD!NGS</div>
-            <div class="profile-banner-expanded-list" id="profileExpandedList"></div>
-            <button type="button" class="profile-holdings-viewmore" id="profileExpandedBack">← BACK</button>
-          </div>
-        </div>
+      <!-- Σκύλλα://SYSTEM — a real branded header for this whole tab
+           (reported live wanting it to read as "her own branded system
+           page," not a generic dashboard), reusing .profile-code-title's
+           exact look so it automatically inherits whichever THEME accent
+           is already set on this wrap (data-profile-theme, see
+           renderProfileCurrent/renderProfileThemeSwatches) — no new
+           colour plumbing, just applied one level higher than the
+           Σκύλλα://!DENT!TY code block already uses it. -->
+      <div class="scylla-system-header">
+        <div class="scylla-system-header-title">Σκύλλα://SYSTEM</div>
+        <div class="scylla-system-header-sub">WALLET C0NTR0L PANEL</div>
       </div>
-      <!-- PR0F!LE B0X GR!D — sits right under the banner now (reported
-           live), a real menu of boxed destinations (same real
+      <!-- PR0F!LE B0X GR!D — a real menu of boxed destinations (same real
            .flock-account-box visual language the old FL0CK-era boxes
            always used, just reused here) instead of one long stacked
-           scroll. SEARCH PR0F!LE and !NB0X (reported live) both go
-           full-page — switchProfileTab hides BOTH this grid AND the
-           banner above it while either is open, leaving just that one
-           panel + its own BACK button, instead of opening below the
-           banner/grid the way every other box still does (MY NFTs/
-           WATCHL!ST/CR0WN reveal their own real panel below when
-           clicked, grid+banner stay visible for those). SEARCH PR0F!LE
-           was V!EW PR0F!LE, the old neutral/"close whatever's open"
-           state — see profileTabPanelSearch below. TRANSACT!0N H!ST0RY
-           stays inert (same C0M!NG S00N treatment the old boxes always
-           had — no real backend yet). Exactly one panel (or none)
-           visible at a time. !NB0X and 0FFERS were one merged box/panel
-           for a while (MESSAGES_DB was never bound in production, so
-           there was never a second real inbox to justify its own box —
-           see the swap-buy-prepare.js/HANDOFF.md history) — split back
-           into two real destinations now that messaging actually works,
-           reported live as wanting them separate again. MESSAGE !NB0X
-           (data-profilebox="messages") is just MESSAGES; 0FFERS
-           (data-profilebox="offers", reclaiming the value the merged box
-           used to sit under) is just 0FFERS RECE!VED/0UTG0!NG 0FFERS —
-           see profileTabPanelMessages/profileTabPanelOffers below. -->
+           scroll. PR0F!LES/!NB0X/0FFERS (reported live) all go full-page —
+           switchProfileTab hides this grid while any of them is open,
+           leaving just that one panel + its own BACK button, instead of
+           opening below the grid the way every other box still does (MY
+           NFTs/WATCHL!ST/CR0WN reveal their own real panel below when
+           clicked, grid stays visible for those). PR0F!LES was SEARCH
+           PR0F!LE, a plain search-only box — reworked (reported live) into
+           three real destinations (V!EW MY PR0F!LE/ED!T MY PR0F!LE/SEARCH
+           PR0F!LE, see profileTabPanelProfiles below); the identity
+           banner that used to sit permanently above this grid moved into
+           ED!T MY PR0F!LE's own sub-view, since V!EW MY PR0F!LE now opens
+           the real #screenProfile instead of a second, lesser mini-view.
+           TRANSACT!0N H!ST0RY stays inert (same C0M!NG S00N treatment the
+           old boxes always had — no real backend yet). Exactly one panel
+           (or none) visible at a time. !NB0X and 0FFERS were one merged
+           box/panel for a while (MESSAGES_DB was never bound in
+           production, so there was never a second real inbox to justify
+           its own box — see the swap-buy-prepare.js/HANDOFF.md history) —
+           split back into two real destinations now that messaging
+           actually works, reported live as wanting them separate again.
+           MESSAGE !NB0X (data-profilebox="messages") is just MESSAGES;
+           0FFERS (data-profilebox="offers", reclaiming the value the
+           merged box used to sit under) is just 0FFERS RECE!VED/0UTG0!NG
+           0FFERS — see profileTabPanelMessages/profileTabPanelOffers
+           below. -->
       <div class="profile-box-grid" id="profileBoxGrid">
-        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="profile">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">SEARCH PR0F!LE</span></div>
+        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="profiles">
+          <div class="flock-account-box-row"><span class="flock-account-box-label">PR0F!LES</span></div>
         </div>
         <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="messages">
           <div class="flock-account-box-row"><span class="flock-account-box-label">MESSAGE !NB0X</span></div>
@@ -9162,16 +9114,82 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="flock-account-box-row"><span class="flock-account-box-label">TRANSACT!0N H!ST0RY</span><span class="db-soon">C0M!NG S00N</span></div>
         </div>
       </div>
-      <!-- SEARCH PR0F!LE — a plain search bar under the (by-itself) banner,
-           hitting the profileSearch mode on /api/pigeons (username or
-           wallet substring match, see pigeons.js) as you type. Picking a
-           result opens that wallet's real PR0F!LE screen (openWalletProfile
-           — see renderProfileSearchResults in the JS), the exact same
-           destination every other wallet link on the site now opens too. -->
-      <div class="profile-tab-panel" id="profileTabPanelSearch" style="display:none;">
-        <input type="text" class="profile-search-input" id="profileSearchInput" placeholder="SEARCH BY NAME 0R WALLET ADDRESS..." autocomplete="off">
-        <div class="profile-search-results" id="profileSearchResults"></div>
-        <button type="button" class="profile-holdings-viewmore" id="profileSearchBack">← BACK</button>
+      <!-- PR0F!LES — three real destinations (reported live), none active
+           on open (same "wait for a real click before showing anything"
+           rule loadProfilePanel's own comment already states for this
+           exact box). V!EW MY PR0F!LE never opens a sub-view here at
+           all — it calls openWalletProfile(MY_WALLET,...) directly (see
+           switchProfilesSubView in the JS), the exact same real
+           #screenProfile every other wallet click on the site already
+           opens. ED!T/SEARCH toggle the two sub-views below. -->
+      <div class="profile-tab-panel" id="profileTabPanelProfiles" style="display:none;">
+        <div class="profile-mode-toggle" id="profilesSubNav">
+          <button type="button" class="profile-mode-btn" data-profiles-view="view">V!EW MY PR0F!LE</button>
+          <button type="button" class="profile-mode-btn" data-profiles-view="edit">ED!T MY PR0F!LE</button>
+          <button type="button" class="profile-mode-btn" data-profiles-view="search">SEARCH PR0F!LE</button>
+        </div>
+        <!-- ED!T MY PR0F!LE — the exact identity card this whole tab used
+             to show permanently above the box grid (avatar/username/quote/
+             twitter/wallet row/CUST0M!ZE row/V!EW C0!NS/V!EW NFTS holdings
+             preview), relocated here unchanged — every element id inside
+             is identical, so renderProfileCurrent/loadProfilePanel/
+             sampleBannerColor/renderProfileCoins/renderProfileBannerNfts
+             need zero code changes, they just populate a block that isn't
+             mounted-visible by default any more. -->
+        <div id="profilesEditView" style="display:none;">
+          <div class="profile-banner profile-banner-empty" id="profileBanner">
+            <div class="profile-avatar-wrap">
+              <div class="profile-current-avatar" id="profileCurrentAvatar"></div>
+              <button type="button" class="profile-avatar-edit-btn" id="profileAvatarEditBtn" title="CHANGE PR0F!LE P!CTURE">+</button>
+            </div>
+            <div class="profile-banner-main" id="profileBannerMain">
+              <div class="profile-banner-identity" id="profileBannerIdentity">
+                <div class="profile-twitter-row">
+                  <a class="profile-twitter-link" id="profileCurrentTwitterLink" target="_blank" rel="noopener"></a>
+                </div>
+                <div class="profile-current-username-row">
+                  <span class="profile-current-username" id="profileCurrentUsername">N0 USERNAME SET</span>
+                  <button type="button" class="profile-field-edit-btn" id="profileUsernameEditBtn" title="EDIT USERNAME">✎</button>
+                </div>
+                <div class="profile-quote" id="profileCurrentQuote"></div>
+                <div class="profile-current-wallet-row">
+                  <span class="profile-current-wallet" id="profileCurrentWallet"></span>
+                  <button type="button" class="profile-mini-btn" id="profileAddressCopyBtn" title="C0PY ADDRESS">⧉</button>
+                  <a class="profile-mini-btn" id="profileAddressBithompLink" target="_blank" rel="noopener" title="V!EW 0N B!TH0MP">↗</a>
+                </div>
+                <div class="profile-current-estvalue">EST C0!N :: <span id="profileCurrentEstValue">--</span></div>
+                <div class="profile-customize-row">
+                  <button type="button" class="profile-customize-btn" id="profileBannerEditBtn">BANNER</button>
+                  <button type="button" class="profile-customize-btn" id="profileFeaturedEditBtn">SH0WCASE</button>
+                  <button type="button" class="profile-customize-btn" id="profileThemeEditBtn">THEME</button>
+                  <button type="button" class="profile-customize-btn" id="profilePrivacyEditBtn">PR!VACY</button>
+                  <button type="button" class="profile-customize-btn" id="profileNodeCodeEditBtn">N0DE C0DE</button>
+                </div>
+              </div>
+              <div class="profile-banner-holdings" id="profileBannerHoldings">
+                <button type="button" class="profile-holdings-viewmore profile-holdings-btn" data-kind="coins">V!EW C0!NS</button>
+                <button type="button" class="profile-holdings-viewmore profile-holdings-btn" data-kind="nfts">V!EW NFTS</button>
+              </div>
+              <div class="profile-banner-expanded" id="profileBannerExpanded" style="display:none;">
+                <div class="profile-holdings-title" id="profileExpandedTitle">H0LD!NGS</div>
+                <div class="profile-banner-expanded-list" id="profileExpandedList"></div>
+                <button type="button" class="profile-holdings-viewmore" id="profileExpandedBack">← BACK</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- SEARCH PR0F!LE — a plain search bar, hitting the profileSearch
+             mode on /api/pigeons (username or wallet substring match, see
+             pigeons.js) as you type. Picking a result opens that wallet's
+             real PR0F!LE screen (openWalletProfile — see
+             renderProfileSearchResults in the JS), the exact same
+             destination every other wallet link on the site now opens
+             too. -->
+        <div id="profilesSearchView" style="display:none;">
+          <input type="text" class="profile-search-input" id="profileSearchInput" placeholder="SEARCH BY NAME 0R WALLET ADDRESS..." autocomplete="off">
+          <div class="profile-search-results" id="profileSearchResults"></div>
+        </div>
+        <button type="button" class="profile-holdings-viewmore" id="profilesBackBtn">← BACK</button>
       </div>
       <!-- MESSAGE !NB0X — its own real full page now (reported live), same
            as SEARCH PR0F!LE: the banner AND the box grid both hide while
@@ -11143,7 +11161,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'topTabs','topTabsWrap','flockTabLabel','scyllaWalletWrap','walletSwitchDropdown','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
    'profileBoxGrid','profileTabOffersBadge','profileTabPanelMessages','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
-   'profileTabPanelSearch','profileSearchInput','profileSearchResults','profileSearchBack','profileMessagesBack','profileOffersBack',
+   'profileTabPanelProfiles','profilesSubNav','profilesEditView','profilesSearchView','profilesBackBtn','profileSearchInput','profileSearchResults','profileMessagesBack','profileOffersBack',
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistTitle','profileWatchlistClearFilter',
@@ -20967,21 +20985,18 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!keepWatchlistFilter) state.watchlistFilterCollection = null;
       renderProfileWatchlist();
     }
-    // SEARCH PR0F!LE, MESSAGE !NB0X and 0FFERS all go full-page (reported
-    // live) — the banner AND the box grid hide while any of them is open,
-    // unlike every other box which just opens its panel below the
-    // grid+banner as normal. Each panel carries its own BACK button back
-    // to null/neutral.
-    el.profileTabPanelSearch.style.display = tab === 'profile' ? '' : 'none';
-    var fullPage = tab === 'profile' || tab === 'messages' || tab === 'offers';
+    // PR0F!LES, MESSAGE !NB0X and 0FFERS all go full-page (reported live) —
+    // the box grid hides while any of them is open, unlike every other box
+    // which just opens its panel below the grid as normal. Each panel
+    // carries its own BACK button back to null/neutral.
+    el.profileTabPanelProfiles.style.display = tab === 'profiles' ? '' : 'none';
+    var fullPage = tab === 'profiles' || tab === 'messages' || tab === 'offers';
     el.profileBoxGrid.style.display = fullPage ? 'none' : '';
-    el.profileBanner.style.display = fullPage ? 'none' : '';
-    if (tab === 'profile'){
-      el.profileSearchInput.focus();
-    } else {
-      el.profileSearchInput.value = '';
-      el.profileSearchResults.innerHTML = '';
-    }
+    // PR0F!LES always opens neutral (no sub-view picked yet — same "wait
+    // for a real click" rule as the box grid itself) rather than resuming
+    // whatever was open last visit; leaving PR0F!LES for any other box (or
+    // back to neutral) resets it the exact same way.
+    switchProfilesSubView(null);
     el.profileBoxGrid.querySelectorAll('.flock-account-box-clickable').forEach(function(btn){
       btn.classList.toggle('active', btn.getAttribute('data-profilebox') === tab);
     });
@@ -21026,6 +21041,39 @@ const SWAP_HTML = `<!DOCTYPE html>
     e.preventDefault();
     switchProfileTab(btn.getAttribute('data-profilebox'));
   });
+  // PR0F!LES' own 3-way sub-nav — V!EW MY PR0F!LE never opens a sub-view
+  // here at all, it leaves this panel entirely for the real #screenProfile
+  // (openWalletProfile), same destination every other wallet click on the
+  // site already opens. ED!T/SEARCH just toggle which of the two relocated
+  // sub-views (profilesEditView/profilesSearchView) is visible — null
+  // (nothing picked) is the neutral state switchProfileTab resets to on
+  // every entry/exit, same "wait for a real click" rule the box grid
+  // itself already follows.
+  function switchProfilesSubView(view){
+    el.profilesEditView.style.display = view === 'edit' ? '' : 'none';
+    el.profilesSearchView.style.display = view === 'search' ? '' : 'none';
+    el.profilesSubNav.querySelectorAll('.profile-mode-btn').forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-profiles-view') === view);
+    });
+    if (view === 'search'){
+      el.profileSearchInput.focus();
+    } else {
+      el.profileSearchInput.value = '';
+      el.profileSearchResults.innerHTML = '';
+    }
+  }
+  el.profilesSubNav.addEventListener('click', function(e){
+    var btn = e.target.closest('.profile-mode-btn[data-profiles-view]');
+    if (!btn) return;
+    var view = btn.getAttribute('data-profiles-view');
+    if (view === 'view'){
+      switchProfileTab(null);
+      openWalletProfile(MY_WALLET, shortAddr(MY_WALLET));
+      return;
+    }
+    switchProfilesSubView(view);
+  });
+  el.profilesBackBtn.addEventListener('click', function(){ switchProfileTab(null); });
   // SEARCH PR0F!LE — debounced-as-you-type lookup against the profileSearch
   // mode on /api/pigeons (matches a stored username or wallet address, see
   // pigeons.js's own comment). Each keystroke cancels whatever request is still in
@@ -21068,7 +21116,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     switchProfileTab(null);
     openWalletProfile(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
   });
-  el.profileSearchBack.addEventListener('click', function(){ switchProfileTab(null); });
   el.profileMessagesBack.addEventListener('click', function(){ switchProfileTab(null); });
   el.profileOffersBack.addEventListener('click', function(){ switchProfileTab(null); });
   // ---- MESSAGES — real wallet-to-wallet D1-backed messaging (functions/
