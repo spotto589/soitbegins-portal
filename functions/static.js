@@ -2181,12 +2181,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .scylla-nav-panel > .scylla-system-header,
   .scylla-nav-panel > .profile-box-grid,
-  .scylla-nav-panel > .scylla-nav-readout{ position:relative; flex:0 0 auto; }
+  .scylla-nav-panel > .scylla-nav-readout,
+  .scylla-nav-panel > .profile-tab-panel{ position:relative; flex:0 0 auto; }
   /* The only one of the 3 that should actually grow/shrink — header and
      readout keep their own natural content height, the row list absorbs
      whatever vertical space is left (or is tight on), same reasoning as
      .scylla-nav-panel's own min-height:0 above. */
   .scylla-nav-panel > .profile-box-grid{ flex:1 1 auto; min-height:0; overflow:hidden; }
+  /* PR0F!LES/MESSAGES/0FFERS/WATCHL!ST/MY NFTS/CR0WN — moved inside
+     .scylla-nav-panel (see the HTML's own comment) so they render within
+     the same bordered/static/corner-framed box instead of as plain
+     content below it. Each one fills whatever height is actually left in
+     the panel's fixed budget (shared with .profile-box-grid when a box
+     like WATCHL!ST reveals its panel alongside the still-visible grid,
+     rather than replacing it — see switchProfileTab) and scrolls
+     internally if its own content is taller than that, instead of ever
+     pushing the whole page past one screen. */
+  .scylla-nav-panel > .profile-tab-panel{ flex:1 1 auto; min-height:0; overflow-y:auto; }
   /* Σκύλλα://SYSTEM — reported live wanting this to actually look like
      "how we used to have the Σκύλλα:// signal button" (the real top-bar
      heading, #globalTopBarHeading) — crisp white text with a subtle 1px
@@ -2219,6 +2230,28 @@ const SWAP_HTML = `<!DOCTYPE html>
     90.5%{ text-shadow:-2px 0 var(--cyan), 2px 0 var(--magenta); transform:translate(-1px,0); }
     91.5%{ text-shadow:2px 0 var(--cyan), -2px 0 var(--magenta); transform:translate(1px,0); }
     92.5%{ text-shadow:0 0 6px var(--magenta-glow); transform:translate(0,0); }
+  }
+  /* WATCHL!ST clicked with nothing on it — reported live wanting a real
+     "no" reaction on the button itself instead of opening a panel just to
+     show an empty-state message (see shakeEmptyWatchlistButton in the
+     JS): a real shake + red flash, label swapped to N0 NFTS 0N WATCHL!ST
+     for a moment, same cancel-the-idle-noise-fill approach .active/
+     .flock-account-box-soon already use so the label reads as solid red,
+     not the ambient cyan static texture. */
+  .flock-account-box-clickable.shake-empty{ animation:scylla-row-shake 0.5s ease-in-out; border-color:var(--red); }
+  .flock-account-box-clickable.shake-empty::before{ background:var(--red); box-shadow:0 0 10px var(--red-glow); width:5px; }
+  .flock-account-box-clickable.shake-empty .flock-account-box-prefix,
+  .flock-account-box-clickable.shake-empty .flock-account-box-label{ background:none; -webkit-background-clip:initial; background-clip:initial; color:var(--red); -webkit-text-fill-color:var(--red); text-shadow:0 0 6px var(--red-glow); animation:none; }
+  .flock-account-box-clickable.shake-empty .flock-account-box-icon{ color:var(--red); }
+  .flock-account-box-clickable.shake-empty .flock-account-box-arrow{ color:var(--red); }
+  @keyframes scylla-row-shake{
+    0%, 100%{ transform:translateX(0); }
+    15%{ transform:translateX(-6px); }
+    30%{ transform:translateX(5px); }
+    45%{ transform:translateX(-4px); }
+    60%{ transform:translateX(3px); }
+    75%{ transform:translateX(-2px); }
+    90%{ transform:translateX(1px); }
   }
   /* Real-data footer readout — see the HTML's own comment on
      #scyllaNavReadout for why every value here is real, never invented. */
@@ -9565,7 +9598,15 @@ const SWAP_HTML = `<!DOCTYPE html>
              for ED!T!0N paging elsewhere) — see renderScyllaNavReadout in
              the JS. -->
         <div class="scylla-nav-readout" id="scyllaNavReadout"></div>
-      </div>
+      <!-- The 6 profile-tab-panel destinations below used to be siblings
+           of .scylla-nav-panel instead of children of it — reported live
+           as "all the information is sitting at the bottom of the page
+           outside the box... not integrated with our new system design."
+           Moved inside so PR0F!LES/MESSAGES/0FFERS/WATCHL!ST/MY NFTS/
+           CR0WN all render within the same bordered/static/corner-framed
+           panel instead of as plain unstyled content below it — see the
+           CSS's own comment on .scylla-nav-panel > .profile-tab-panel for
+           how each one now shares the panel's fixed-height flex budget. -->
       <!-- PR0F!LES — three real destinations (reported live), none active
            on open (same "wait for a real click before showing anything"
            rule loadProfilePanel's own comment already states for this
@@ -9780,6 +9821,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           </select>
         </div>
         <div id="crownLeaderboardList"></div>
+      </div>
       </div>
     </div>
 
@@ -21495,9 +21537,37 @@ const SWAP_HTML = `<!DOCTYPE html>
       showTab('mypigeons', true);
     }
   }
+  // WATCHL!ST with nothing on it — reported live wanting a real "no"
+  // reaction on the button itself (shake + red + N0 NFTS 0N WATCHL!ST)
+  // instead of opening a whole panel just to show an empty-state message.
+  // getWatchlist() is synchronous (localStorage-only, see its own
+  // comment), so this check costs nothing extra before deciding whether
+  // to actually switch tabs.
+  var watchlistShakeTimeout = null;
+  function shakeEmptyWatchlistButton(btn){
+    var labelEl = btn.querySelector('.flock-account-box-label');
+    if (!labelEl) return;
+    clearTimeout(watchlistShakeTimeout);
+    btn.classList.remove('shake-empty');
+    void btn.offsetWidth; // forces a reflow so re-adding the class below replays the animation even on a repeat click mid-shake
+    labelEl.textContent = 'N0 NFTS 0N WATCHL!ST';
+    btn.classList.add('shake-empty');
+    watchlistShakeTimeout = setTimeout(function(){
+      btn.classList.remove('shake-empty');
+      labelEl.textContent = 'WATCHL!ST';
+    }, 1400);
+  }
+  function handleProfileBoxActivate(btn){
+    var tab = btn.getAttribute('data-profilebox');
+    if (tab === 'watchlist' && !getWatchlist().length){
+      shakeEmptyWatchlistButton(btn);
+      return;
+    }
+    switchProfileTab(tab);
+  }
   el.profileBoxGrid.addEventListener('click', function(e){
     var btn = e.target.closest('.flock-account-box-clickable[data-profilebox]');
-    if (btn) switchProfileTab(btn.getAttribute('data-profilebox'));
+    if (btn) handleProfileBoxActivate(btn);
   });
   // role="button"/tabindex on each box (see the HTML's own markup) needs
   // its own Enter/Space handling — a real <button> gets this for free, a
@@ -21507,7 +21577,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var btn = e.target.closest('.flock-account-box-clickable[data-profilebox]');
     if (!btn) return;
     e.preventDefault();
-    switchProfileTab(btn.getAttribute('data-profilebox'));
+    handleProfileBoxActivate(btn);
   });
   // PR0F!LES' own 3-way sub-nav — V!EW MY PR0F!LE never opens a sub-view
   // here at all, it leaves this panel entirely for the real #screenProfile
