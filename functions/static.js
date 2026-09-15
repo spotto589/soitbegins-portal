@@ -653,7 +653,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .flock-account-box-prefix{ font-family:var(--font-mono); font-size:13px; color:var(--cyan); opacity:0.75; flex:0 0 auto; }
   .flock-account-box-label{ font-family:var(--font-mono); font-size:14px; letter-spacing:0.14em; text-transform:uppercase; color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   .flock-account-box-arrow{ font-size:16px; color:var(--cyan); flex:0 0 auto; margin-left:auto; }
-  .flock-account-box-clickable{ cursor:pointer; border-color:var(--border-mid); transition:border-color 0.15s ease, background 0.15s ease; }
+  .flock-account-box-clickable{ position:relative; overflow:hidden; cursor:pointer; border-color:var(--border-mid); transition:border-color 0.15s ease, background 0.15s ease; }
   /* Hover — a short, controlled RGB-split burst on the row's own text
      (reported live wanting "a glitch flickered when you touched it," not
      a conventional hover animation), same chromatic-aberration rhythm
@@ -670,6 +670,50 @@ const SWAP_HTML = `<!DOCTYPE html>
     60%{ text-shadow:-2px 0 var(--cyan), 2px 0 var(--magenta); transform:translate(0,0); }
     80%{ text-shadow:0 0 5px var(--cyan-glow); transform:translate(0,0); }
   }
+  /* ---- "a bit generic" escalation, reported live — 4 new layers on top
+     of what already existed above, all keyed off the same :hover/.active
+     states, no new JS. ----
+     1. S!GNAL-TEAR — a striped cyan/magenta band, invisible/clipped to
+        nothing at rest, briefly reveals a displaced horizontal slice of
+        itself (VHS-tracking-error look) instead of just RGB text-shadow
+        fringing. Rows: one shot per hover, parallel to the existing
+        scylla-row-hover-glitch. Active row: same tear on a slow loop
+        (matches scylla-row-active-flicker's own "occasional, not
+        constant" 6s cadence) so an open destination occasionally glitches
+        on its own — "still live," not just tinted magenta. */
+  .flock-account-box-clickable::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(0deg, rgba(61,243,236,0.4) 0 2px, rgba(255,63,208,0.4) 2px 4px, transparent 4px 9px);
+    mix-blend-mode:screen;
+    opacity:0;
+    clip-path:inset(0 0 100% 0);
+    pointer-events:none;
+  }
+  .flock-account-box-clickable:hover::after{ animation:scylla-row-tear 0.5s steps(1) 1; }
+  .flock-account-box-clickable.active::after{ animation:scylla-row-tear 6s steps(1) infinite; }
+  @keyframes scylla-row-tear{
+    0%, 88%, 100%{ opacity:0; clip-path:inset(0 0 100% 0); transform:translateX(0); }
+    89%{ opacity:1; clip-path:inset(22% 0 58% 0); transform:translateX(-6px); }
+    90.5%{ opacity:1; clip-path:inset(55% 0 18% 0); transform:translateX(5px); }
+    92%{ opacity:0; clip-path:inset(0 0 100% 0); transform:translateX(0); }
+  }
+  /* 2. SCAN SWEEP — active row only, a thin bright bar sweeping top to
+     bottom on a loop, so the currently-open destination reads as
+     "transmitting," not just a static tint. Always in the DOM (see the
+     HTML's own .flock-account-box-scanbar span) but opacity:0/no
+     animation unless .active, so it costs nothing on inactive rows. */
+  .flock-account-box-scanbar{ position:absolute; left:0; top:0; width:100%; height:2px; opacity:0; pointer-events:none; background:linear-gradient(90deg, transparent, var(--magenta), transparent); box-shadow:0 0 8px var(--magenta-glow); }
+  .flock-account-box-clickable.active .flock-account-box-scanbar{ opacity:1; animation:scylla-scan-sweep 2.5s linear infinite; }
+  @keyframes scylla-scan-sweep{ 0%{ top:0; } 100%{ top:100%; } }
+  /* 4. HUD C0RNER BRACKETS — active row only, two opposite corners (the
+     common "selection bracket" sci-fi HUD convention), same real .active
+     trigger as everything else here. */
+  .flock-account-box-corner{ position:absolute; width:9px; height:9px; opacity:0; pointer-events:none; border-color:var(--magenta); }
+  .flock-account-box-corner-tl{ top:-1px; left:-1px; border-top:2px solid; border-left:2px solid; }
+  .flock-account-box-corner-br{ bottom:-1px; right:-1px; border-bottom:2px solid; border-right:2px solid; }
+  .flock-account-box-clickable.active .flock-account-box-corner{ opacity:1; }
   /* NOT a blanket opacity any more — same fix as the MAINFRAME tape
      banner's own (see .mainframe-card-soon's comment): dimming the
      whole box compounds with the label/badge's own already-dim colour
@@ -691,30 +735,16 @@ const SWAP_HTML = `<!DOCTYPE html>
      this covers the REST of the account boxes and the P!GE0NS grid
      underneath, so the tab reads as one themed page, not two looks stapled
      together. */
-  /* Was the same circuit-glitch image texture as .sw-panel-signal/-target
-     above — removed for the same reason (site-wide: simple and easy to
-     read comes first). Plain fill, keeps the hover motion below. */
-  .flock-account-box{
-    background-color:rgba(8,9,11,0.9);
-    transition:border-color 0.15s ease, box-shadow 0.25s ease, transform 0.15s ease;
-  }
-  .flock-account-box-clickable:hover{
-    border-color:var(--cyan);
-    box-shadow:0 0 22px var(--cyan-glow);
-    transform:translateY(-2px);
-  }
-  /* A quick flicker on hover — one shot, not a loop, so it reads as a
-     glitchy "system responding to you" beat rather than ambient noise
-     someone has to stare at while deciding what to click. */
-  @keyframes flock-box-glitch{
-    0%, 100%{ text-shadow:none; }
-    20%{ text-shadow:-1px 0 var(--magenta), 1px 0 var(--cyan); }
-    40%{ text-shadow:1px 0 var(--magenta), -1px 0 var(--cyan); }
-    60%{ text-shadow:none; }
-  }
-  .flock-account-box-clickable:hover .flock-account-box-label{
-    animation:flock-box-glitch 0.35s steps(2, end);
-  }
+  /* The old FLOCK-era hover treatment that used to live here (a
+     translateY(-2px) lift + generic cyan box-shadow + its own
+     flock-box-glitch keyframe) was silently fighting the real CRT hover
+     design above it in the cascade — same elements, later rules, so parts
+     of the legacy look (the lift, a different glitch flicker) kept
+     winning even though .flock-account-box-clickable:hover above was
+     supposed to be the whole story. Removed rather than merged — reported
+     live as "this is a bit generic," and this leftover collision was a
+     real contributor. #flockGridPanel is unrelated (a different, unused
+     legacy element), left alone. */
   #flockGridPanel{ background-color:rgba(8,9,11,0.92); }
   /* Ties SH0W!NG Y0UR P!GE0NS :: N (see .search-panel-title-flock above)
      to the rest of the theme — a live cyan underline instead of just
@@ -1949,6 +1979,34 @@ const SWAP_HTML = `<!DOCTYPE html>
      card inside it. */
   #profilePanelWrap{ border:1px solid var(--cyan-dim); border-radius:0; background:#000; backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none; }
   #profilePanelWrap::before{ display:none; }
+  /* Decorative edge-noise columns — present in the reference image,
+     deferred earlier as a stretch goal ("this is a bit generic" brought
+     it back into scope). CSS-only rather than a 3rd/4th live canvas —
+     cheaper for a purely decorative accent than true per-pixel random
+     noise, same cyan/magenta/black palette as everything else on this
+     tab. Hidden below 900px (see the media query further down) — no
+     spare width to sacrifice on a phone-width panel. */
+  .scylla-frame-edge{
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:16px;
+    pointer-events:none;
+    background:
+      repeating-linear-gradient(115deg, rgba(61,243,236,0.5) 0 2px, transparent 2px 7px),
+      repeating-linear-gradient(65deg, rgba(255,63,208,0.45) 0 1px, transparent 1px 11px),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 3px);
+    background-size:100% 40px, 100% 55px, 100% 6px;
+    opacity:0.8;
+    animation:scylla-edge-scroll 3.5s linear infinite;
+  }
+  .scylla-frame-edge-left{ left:0; }
+  .scylla-frame-edge-right{ right:0; }
+  @keyframes scylla-edge-scroll{
+    0%{ background-position:0 0, 0 0, 0 0; }
+    100%{ background-position:0 160px, 0 -220px, 0 60px; }
+  }
+  @media (max-width:900px){ .scylla-frame-edge{ display:none; } }
   .scylla-nav-panel{ position:relative; border:1px solid var(--cyan-dim); border-radius:0; background:#000; padding:1.25rem 1rem 1.5rem; overflow:hidden; }
   .scylla-nav-static{ position:absolute; inset:0; width:100%; height:100%; opacity:0.9; mix-blend-mode:screen; animation:static-shake 0.4s steps(2) infinite; }
   .scylla-nav-panel::before{
@@ -1977,12 +2035,32 @@ const SWAP_HTML = `<!DOCTYPE html>
      (magenta-leaning) to match the reference's own energy without
      duplicating the top bar's identical heading redundantly on this page. */
   .scylla-system-header{ text-align:center; margin:0.5rem 0 1.25rem; }
-  .scylla-system-header-title{ font-family:var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
+  .scylla-system-header-title{ position:relative; display:inline-block; font-family:var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
   @keyframes scylla-header-glitch{
     0%, 92%, 100%{ text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); transform:translate(0,0); }
     92.5%{ text-shadow:-3px 0 var(--magenta), 3px 0 var(--cyan); transform:translate(-2px,0) skewX(-2deg); }
     93.5%{ text-shadow:3px 0 var(--magenta), -3px 0 var(--cyan); transform:translate(2px,0) skewX(2deg); }
     94.5%{ text-shadow:-2px 0 var(--magenta), 2px 0 var(--cyan); transform:translate(0,0); }
+  }
+  /* S!GNAL-TEAR on the title too, synced to the same 7s cycle/percentages
+     as scylla-header-glitch above so the RGB-split burst and the torn
+     slice happen together, not as two competing effects. */
+  .scylla-system-header-title::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(0deg, rgba(61,243,236,0.45) 0 2px, rgba(255,63,208,0.45) 2px 4px, transparent 4px 9px);
+    mix-blend-mode:screen;
+    opacity:0;
+    clip-path:inset(0 0 100% 0);
+    pointer-events:none;
+    animation:scylla-header-tear 7s steps(1) infinite;
+  }
+  @keyframes scylla-header-tear{
+    0%, 92%, 100%{ opacity:0; clip-path:inset(0 0 100% 0); transform:translateX(0); }
+    92.5%{ opacity:1; clip-path:inset(15% 0 65% 0); transform:translateX(-6px); }
+    93.5%{ opacity:1; clip-path:inset(60% 0 15% 0); transform:translateX(6px); }
+    94.5%{ opacity:0; clip-path:inset(0 0 100% 0); transform:translateX(0); }
   }
   .profile-box-grid{ display:flex; flex-direction:column; gap:0.5rem; margin-top:1.25rem; margin-bottom:1.25rem; }
   /* PR0F!LES/0FFERS/C0LLECT!0NS/CR0WN etc all use the same strong magenta
@@ -9208,6 +9286,8 @@ const SWAP_HTML = `<!DOCTYPE html>
            .active (magenta, toggled by switchProfileTab already) is
            already exactly "the currently selected page" this reference
            calls for — no new state needed for that part. -->
+      <div class="scylla-frame-edge scylla-frame-edge-left" aria-hidden="true"></div>
+      <div class="scylla-frame-edge scylla-frame-edge-right" aria-hidden="true"></div>
       <div class="scylla-nav-panel">
         <canvas class="scylla-nav-static" id="scyllaNavStaticBg"></canvas>
         <!-- Σκύλλα://SYSTEM — a real branded header for this whole tab
@@ -9252,15 +9332,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="profile-box-grid" id="profileBoxGrid">
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="profiles">
             <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">PR0F!LES</span><span class="flock-account-box-arrow">›</span></div>
+            <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="messages">
             <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">MESSAGE !NB0X</span><span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span><span class="flock-account-box-arrow">›</span></div>
+            <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="offers">
             <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">0FFERS</span><span class="flock-account-box-arrow">›</span></div>
+            <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="collections">
             <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">MY NFTS</span><span class="flock-account-box-arrow">›</span></div>
+            <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
           <!-- WATCHL!ST — split out of the MY NFTs/C0LLECT!0NS panel into
                its own real destination box (reported live) — same real
@@ -9269,6 +9353,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                profileTabPanelCollections. -->
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="watchlist">
             <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">WATCHL!ST</span><span class="flock-account-box-arrow">›</span></div>
+            <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
           <!-- CR0WN REWARDS (reported live, was the real CR0WN P/L
                leaderboard box) — relabelled and made inert, same C0M!NG
