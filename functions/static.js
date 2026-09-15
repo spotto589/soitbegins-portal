@@ -403,7 +403,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     inset:0;
     width:100%;
     height:100%;
-    opacity:0.55;
+    opacity:0.9;
     mix-blend-mode:screen;
     animation:static-shake 0.4s steps(2) infinite;
   }
@@ -639,7 +639,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      // LABEL › rows, sharp edges (no border-radius — brutalist per the
      reference, overriding .sw-panel's usual rounded corners for just
      these), cyan by default. */
-  .flock-account-box{ padding:0.9rem 1.1rem; min-height:auto; display:flex; align-items:center; border-radius:0; background:rgba(4,6,8,0.55); }
+  .flock-account-box{ padding:0.9rem 1.1rem; min-height:auto; display:flex; align-items:center; border-radius:0; background:rgba(2,3,4,0.88); }
   .flock-account-box-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.7rem; width:100%; text-align:left; }
   .flock-account-box-prefix{ font-family:var(--font-mono); font-size:13px; color:var(--cyan); opacity:0.75; flex:0 0 auto; }
   .flock-account-box-label{ font-family:var(--font-mono); font-size:14px; letter-spacing:0.14em; text-transform:uppercase; color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
@@ -667,7 +667,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      and crushes the C0M!NG S00N badge down to near-unreadable. Border
      muted directly instead so the box still reads as "inactive"
      without touching its children's own contrast. */
-  .flock-account-box-soon{ cursor:not-allowed; border-color:var(--border-mid); border-radius:0; background:rgba(4,6,8,0.55); }
+  .flock-account-box-soon{ cursor:not-allowed; border-color:var(--border-mid); border-radius:0; background:rgba(2,3,4,0.88); }
   .flock-account-box-soon .flock-account-box-label, .flock-account-box-soon .flock-account-box-prefix{ color:var(--grey-dim); text-shadow:none; }
   /* A real, visible "still counting" state — the underscore alone reads as
      dead/broken otherwise. */
@@ -1932,8 +1932,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      just a bolder opacity here since static is meant to read as part of
      the furniture on this panel, not a rare accent), and the same
      body::before scanline trick layered on top via its own ::before. ---- */
-  .scylla-nav-panel{ position:relative; border:1px solid var(--cyan-dim); border-radius:0; background:#020304; padding:1.25rem 1rem 1.5rem; overflow:hidden; }
-  .scylla-nav-static{ position:absolute; inset:0; width:100%; height:100%; opacity:0.35; mix-blend-mode:screen; animation:static-shake 0.4s steps(2) infinite; }
+  .scylla-nav-panel{ position:relative; border:1px solid var(--cyan-dim); border-radius:0; background:#000; padding:1.25rem 1rem 1.5rem; overflow:hidden; }
+  .scylla-nav-static{ position:absolute; inset:0; width:100%; height:100%; opacity:0.9; mix-blend-mode:screen; animation:static-shake 0.4s steps(2) infinite; }
   .scylla-nav-panel::before{
     content:'';
     position:absolute;
@@ -22518,7 +22518,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // isVisible is skipped (and the pixel buffer work with it) while that
   // screen is hidden — checked live against the real element each frame
   // rather than cached, since display gets toggled from many places.
-  function startStaticCanvas(canvas, isVisible){
+  // mode 'glitch' (opt-in — every existing caller keeps the plain
+  // grayscale TV static untouched) is the Σκύλλα B00T look (reported live
+  // as wanting this style reused more often): mostly near-black pixels
+  // with sparse cyan/magenta flecks instead of a uniform grey wash — on
+  // mix-blend-mode:screen (screen blend keeps black basically inert,
+  // black+anything=anything), the dark base all but disappears and only
+  // the coloured flecks actually read, which is exactly "black background,
+  // pink/cyan glitch noise" rather than a bright grey TV.
+  function startStaticCanvas(canvas, isVisible, mode){
     var ctx = canvas.getContext('2d');
     function resize(){
       canvas.width = Math.max(1, Math.floor(window.innerWidth / 3));
@@ -22536,8 +22544,26 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       ctx.putImageData(imageData, 0, 0);
     }
+    function drawGlitchStatic(){
+      var w = canvas.width, h = canvas.height;
+      var imageData = ctx.createImageData(w, h);
+      var buffer = imageData.data;
+      for (var i = 0; i < buffer.length; i += 4){
+        var r = Math.random();
+        if (r < 0.045){
+          buffer[i] = 255; buffer[i+1] = 40; buffer[i+2] = 200; // magenta fleck
+        } else if (r < 0.11){
+          buffer[i] = 40; buffer[i+1] = 225; buffer[i+2] = 225; // cyan fleck
+        } else {
+          var shade = Math.random() * 26; // near-black grain, not grey
+          buffer[i] = shade; buffer[i+1] = shade; buffer[i+2] = shade;
+        }
+        buffer[i+3] = 255;
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
     function loop(){
-      if (!isVisible || isVisible()) drawStatic();
+      if (!isVisible || isVisible()) (mode === 'glitch' ? drawGlitchStatic : drawStatic)();
       requestAnimationFrame(loop);
     }
     loop();
@@ -22611,14 +22637,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   startStaticCanvas(document.getElementById('scyllaBootStaticBg'), function(){
     return document.getElementById('scyllaBootScreen').style.display !== 'none';
-  });
+  }, 'glitch');
   // Dense static behind the Σκύλλα nav panel itself (see the CRT terminal
   // nav's own CSS comment) — same isVisible-gated pattern as every other
   // local static canvas, just gated on the whole tab being open rather
-  // than one specific screen.
+  // than one specific screen. 'glitch' mode matches the boot screen's own
+  // look (reported live wanting it reused more often) instead of the
+  // plain grey TV static every other local canvas still uses.
   startStaticCanvas(document.getElementById('scyllaNavStaticBg'), function(){
     return state.activeTab === 'mypigeons';
-  });
+  }, 'glitch');
 })();
 </script>
 </body>
