@@ -686,6 +686,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      clip-path clips the row's real border along with it, so the new
      angled corners get a real outline for free. Extra right padding so
      the › arrow clears the cut instead of crowding it. */
+  /* flex:1 1 0/min-height:0 are leftover from when .profile-box-grid was
+     a single flex column (each row sharing the panel's fixed height) —
+     harmless now that the grid is back to a real CSS Grid (flex
+     properties are simply inert on grid items), left in rather than
+     stripped out to keep this diff about the chamfer, not a cleanup. */
   .flock-account-box{ flex:1 1 0; min-height:0; padding:0.6rem 1.5rem 0.6rem 1.1rem; display:flex; align-items:center; border-radius:0; background:rgba(2,3,4,0.88); clip-path:polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%); }
   .flock-account-box-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.7rem; width:100%; text-align:left; }
   /* Reported live as "too generic... just rectangle boxes" — one real
@@ -2198,19 +2203,47 @@ const SWAP_HTML = `<!DOCTYPE html>
      internally if its own content is taller than that, instead of ever
      pushing the whole page past one screen. */
   .scylla-nav-panel > .profile-tab-panel{ flex:1 1 auto; min-height:0; overflow-y:auto; }
-  /* Σκύλλα://SYSTEM — reported live wanting this to actually look like
-     "how we used to have the Σκύλλα:// signal button" (the real top-bar
-     heading, #globalTopBarHeading) — crisp white text with a subtle 1px
-     cyan-dim/magenta-dim fringe at rest, reusing that exact same
-     topbar-terminal-glitch keyframe (not a separate copy) so the two
-     headings genuinely match rather than two different takes on "a
-     glitchy title." Replaces this pass's earlier heavier solid-cyan/
-     magenta-glow treatment + its own signal-tear overlay — the old signal
-     button never had a tear effect, so this doesn't either, to stay a
-     faithful match rather than a bigger version of it. */
+  /* Σκύλλα://SYSTEM — briefly matched to the old, subtler top-bar signal-
+     button look (white text, faint 1px fringe); reported live straight
+     afterward as "this text had a glitching effect and now its gone" —
+     confirmed via direct question the subtle version reads as no glitch
+     at a glance, so this restores the heavier, more frequent burst
+     verbatim (solid accent-coloured glow at rest + a magenta-leaning
+     RGB-split/skew burst + its own signal-tear overlay), not the plain
+     topbar-terminal-glitch fringe. */
   .scylla-system-header{ text-align:center; margin:0.25rem 0 0.75rem; }
-  .scylla-system-header-title{ font-family:var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:var(--white); text-shadow:-1px 0 var(--cyan-dim), 1px 0 var(--magenta-dim); animation:topbar-terminal-glitch 7s infinite; }
-  .profile-box-grid{ display:flex; flex-direction:column; gap:0.4rem; margin-top:0.75rem; margin-bottom:0.75rem; }
+  .scylla-system-header-title{ position:relative; display:inline-block; font-family:var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
+  @keyframes scylla-header-glitch{
+    0%, 92%, 100%{ text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); transform:translate(0,0); }
+    92.5%{ text-shadow:-3px 0 var(--magenta), 3px 0 var(--cyan); transform:translate(-2px,0) skewX(-2deg); }
+    93.5%{ text-shadow:3px 0 var(--magenta), -3px 0 var(--cyan); transform:translate(2px,0) skewX(2deg); }
+    94.5%{ text-shadow:-2px 0 var(--magenta), 2px 0 var(--cyan); transform:translate(0,0); }
+  }
+  .scylla-system-header-title::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(0deg, rgba(61,243,236,0.45) 0 2px, rgba(255,63,208,0.45) 2px 4px, transparent 4px 9px);
+    mix-blend-mode:screen;
+    opacity:0;
+    clip-path:inset(0 0 100% 0);
+    pointer-events:none;
+    animation:scylla-header-tear 7s steps(1) infinite;
+  }
+  @keyframes scylla-header-tear{
+    0%, 92%, 100%{ opacity:0; clip-path:inset(0 0 100% 0); transform:translateX(0); }
+    92.5%{ opacity:1; clip-path:inset(15% 0 65% 0); transform:translateX(-6px); }
+    93.5%{ opacity:1; clip-path:inset(60% 0 15% 0); transform:translateX(6px); }
+    94.5%{ opacity:0; clip-path:inset(0 0 100% 0); transform:translateX(0); }
+  }
+  /* "make the buttons 3 across again and make them stack vertically"
+     (reported live) — back to a real grid (was the single-column CRT-nav
+     list this pass had built up to), multiple rows of 3 as boxes wrap.
+     Every per-box effect (icon/accent-bar/chamfer/noise-text/active/
+     hover) is untouched — this is purely the container's own layout. */
+  .profile-box-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.5rem; margin-top:0.75rem; margin-bottom:0.75rem; }
+  @media (max-width:700px){ .profile-box-grid{ grid-template-columns:repeat(2, 1fr); } }
+  @media (max-width:460px){ .profile-box-grid{ grid-template-columns:1fr; } }
   /* PR0F!LES/0FFERS/C0LLECT!0NS/CR0WN etc all use the same strong magenta
      "currently open" glitch treatment once picked — the reference's own
      "active page" look. A continuous but subtle flicker (reusing
@@ -9563,7 +9596,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 2.5h6a1.5 1.5 0 0 1 1.5 1.5v6L9 16.5 1.5 9 8 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="12" cy="6" r="1.2" stroke="currentColor" stroke-width="1.3"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">0FFERS</span><span class="flock-account-box-arrow">›</span></div>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
-          <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="collections">
+          <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="mynfts">
             <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="2" width="6" height="6" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="2" width="6" height="6" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="10" width="6" height="6" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="10" width="6" height="6" stroke="currentColor" stroke-width="1.5"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">MY NFTS</span><span class="flock-account-box-arrow">›</span></div>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
@@ -9736,6 +9769,33 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="panel-title outgoing-offers-title">0UTG0!NG 0FFERS</div>
         <div id="outgoingOffersList"></div>
         <button type="button" class="profile-holdings-viewmore" id="profileOffersBack">← BACK</button>
+      </div>
+      <!-- MY NFTS — reported live wanting this to first ask which
+           collection, show real counts, then show that collection's real
+           owned NFTs, all "inside this page" — used to instead detour
+           through browseOwnerCollection/#screenBrowse (the shared
+           DATABASE grid), which rendered on top of this same panel at the
+           same time (two unrelated full screens at once — the actual
+           cause of the reported "glitching") and visibly left this page
+           for DATABASE. Two sub-views, toggled by myNftsPickedCollection
+           in the JS: #myNftsPicker (real counts via myNftCounts, same
+           .profile-collection-card markup #screenProfile's own NFT
+           C0LLECT!0NS section already uses) and #myNftsGrid (that one
+           collection's real items, via the same nftPickerCardHtml/
+           renderNftPickerGrid pfp/banner/R00MS pickers already use, mode
+           'view' so nothing shows as selected — it's just a real list).
+           Clicking an NFT opens the real #screenDetail overlay
+           (openDetail), never #screenBrowse. -->
+      <div class="profile-tab-panel" id="profileTabPanelMyNfts" style="display:none;">
+        <div id="myNftsPicker">
+          <div class="profile-collection-grid" id="myNftsPickerGrid"></div>
+        </div>
+        <div id="myNftsGrid" style="display:none;">
+          <button type="button" class="profile-holdings-viewmore" id="myNftsGridBackBtn">← C0LLECT!0NS</button>
+          <div id="myNftsGridStatus" class="th-empty" style="display:none;"></div>
+          <div class="simple-picker-grid" id="myNftsGridItems"></div>
+        </div>
+        <button type="button" class="profile-holdings-viewmore" id="myNftsBackBtn">← BACK</button>
       </div>
       <!-- WATCHL!ST — its own real destination now (reported live), split
            out of MY NFTs/C0LLECT!0NS. Any NFT starred from DATABASE (the
@@ -11656,6 +11716,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myOffersList','outgoingOffersList',
    'scyllaNavStaticBg','scyllaNavReadout',
    'profileBoxGrid','profileTabOffersBadge','profileTabPanelMessages','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
+   'profileTabPanelMyNfts','myNftsPicker','myNftsPickerGrid','myNftsGrid','myNftsGridBackBtn','myNftsGridStatus','myNftsGridItems','myNftsBackBtn',
    'profileTabPanelProfiles','profilesSubNav','profilesEditView','profilesSearchView','profilesBackBtn','profileSearchInput','profileSearchResults','profileMessagesBack','profileOffersBack',
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
@@ -19532,7 +19593,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     // #screenDetail) and closed straight back out again underneath it —
     // confirmed live as "clicking a thumbnail/number in sales history
     // does nothing".
-    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !el.historyModal.contains(e.target) && !e.target.closest('.pigeon-img-box') && !e.target.closest('.simple-picker-view-btn') && !e.target.closest('.sale-row')){
+    // .profile-nft-pick is the same story again — MY NFTS' own real
+    // owned-item grid (nftPickerCardHtml/renderNftPickerGrid in 'view'
+    // mode) opens DETAIL straight from a click on this same document-level
+    // handler's own click event, same as .pigeon-img-box/.sale-row already
+    // needed — without this exclusion, DETAIL opened correctly then closed
+    // itself again in the same tick since the click's real target (inside
+    // #myNftsGridItems) isn't inside #screenDetail yet at the moment
+    // DETAIL just opened.
+    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !el.historyModal.contains(e.target) && !e.target.closest('.pigeon-img-box') && !e.target.closest('.simple-picker-view-btn') && !e.target.closest('.sale-row') && !e.target.closest('.profile-nft-pick')){
       goBackFromDetail();
     }
   });
@@ -20343,6 +20412,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   // just a different grid element and no view-detail button. ----
   var profileSelectedPfpNftId = null;
   var profileSelectedBannerNftId = null;
+  // MY NFTS box's own picker/grid state — null means the collection picker
+  // is showing, else the key of the collection whose real owned items are
+  // currently loaded into #myNftsGridItems (see switchProfileTab's 'mynfts'
+  // branch and openMyNftsCollection/backToMyNftsPicker below).
+  var myNftsPickedCollection = null;
   var profileRoomsDraft = []; // [{name, nftIds}] — up to SHOWCASE_ROOM_MAX rooms, toggled per-room in the R00MS pane, saved as one batch
   var profileActiveRoomIdx = 0;
   // r,g,b triplets — same values MAINFRAME's own --card-accent uses per
@@ -20717,6 +20791,82 @@ const SWAP_HTML = `<!DOCTYPE html>
           '</div>';
         }).join('');
   }
+  // MY NFTS — real in-page picker (reported live: pick a collection first,
+  // see real counts, click in, see your own NFTs inside this page, never
+  // detour to DATABASE). Same card markup as renderProfileScreenCollections
+  // above, but only collections actually held (count > 0) show a card —
+  // nothing to click into otherwise.
+  function renderMyNftsPicker(){
+    if (!MY_WALLET) return;
+    el.myNftsPickerGrid.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+    apiWithRetry({ myNftCounts: 1, wallet: MY_WALLET }).then(function(data){
+      var counts = (data && data.counts) || {};
+      var held = {};
+      Object.keys(counts).forEach(function(key){ held[key] = { count: counts[key] }; });
+      var entries = sortedHeldEntries(held, 'count');
+      el.myNftsPickerGrid.innerHTML = !entries.length
+        ? '<div class="th-empty">Y0U D0N T 0WN ANY TRACKED NFTS YET.</div>'
+        : entries.map(function(e){
+            var meta = COLLECTION_META[e.key];
+            var accent = PROFILE_COIN_ACCENTS[e.key] || '61,243,236';
+            var art = (meta && meta.thumb) || '';
+            return '<div class="profile-collection-card" data-collection="' + escapeHtml(e.key) + '" style="--card-accent:' + accent + ';">' +
+              '<div class="profile-collection-thumb"' + (art ? ' style="background-image:url(' + art + ')"' : '') + '></div>' +
+              '<div class="profile-collection-label">' + escapeHtml(meta ? meta.label : e.key) + '</div>' +
+              '<div class="profile-collection-count">' + e.count + ' 0WNED</div>' +
+            '</div>';
+          }).join('');
+    }).catch(function(){
+      el.myNftsPickerGrid.innerHTML = '<div class="th-empty">ERR://S!GNAL_L0ST — TRY AGA!N.</div>';
+    });
+  }
+  function openMyNftsCollection(key){
+    if (!MY_WALLET) return;
+    myNftsPickedCollection = key;
+    el.myNftsPicker.style.display = 'none';
+    el.myNftsGrid.style.display = '';
+    el.myNftsGridStatus.style.display = '';
+    el.myNftsGridStatus.textContent = 'L0AD!NG...';
+    el.myNftsGridItems.innerHTML = '';
+    if (state.collection !== key) switchCollection(key);
+    api({ wallet: MY_WALLET, collection: key }).then(function(data){
+      if (myNftsPickedCollection !== key) return;
+      var items = ((data && data.items) || []).map(function(p){ p.collectionKey = key; return p; });
+      renderNftPickerGrid(el.myNftsGridItems, el.myNftsGridStatus, items, [], 'view');
+    }).catch(function(){
+      if (myNftsPickedCollection !== key) return;
+      el.myNftsGridStatus.style.display = '';
+      el.myNftsGridStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  }
+  function backToMyNftsPicker(){
+    myNftsPickedCollection = null;
+    el.myNftsGrid.style.display = 'none';
+    el.myNftsPicker.style.display = '';
+  }
+  el.myNftsPickerGrid.addEventListener('click', function(e){
+    var card = e.target.closest('.profile-collection-card');
+    if (!card) return;
+    openMyNftsCollection(card.getAttribute('data-collection'));
+  });
+  el.myNftsGridItems.addEventListener('click', function(e){
+    var pick = e.target.closest('.profile-nft-pick');
+    if (!pick) return;
+    var nftId = pick.getAttribute('data-nftid');
+    // Same pattern el.profileWatchlistGrid's own tile click already uses —
+    // openDetail/#screenDetail expects state.collection to already match
+    // and is opened from the 'database' tab context. databaseInPicker has
+    // to be forced false here too (not just left to switchCollection's own
+    // side effect) since DATABASE may never have been visited yet this
+    // session — its default true would show the collection-select root
+    // instead of the detail overlay openDetail just opened.
+    if (myNftsPickedCollection && myNftsPickedCollection !== state.collection) switchCollection(myNftsPickedCollection);
+    state.databaseInPicker = false;
+    showTab('database');
+    openDetail(nftId);
+  });
+  el.myNftsGridBackBtn.addEventListener('click', backToMyNftsPicker);
+  el.myNftsBackBtn.addEventListener('click', function(){ switchProfileTab(null); });
   function enterProfileCollection(wallet, ownerShort, key){
     if (state.collection !== key) switchCollection(key);
     browseOwnerCollection(wallet, ownerShort);
@@ -21489,6 +21639,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.profileTabPanelMessages.style.display = tab === 'messages' ? '' : 'none';
     el.profileTabPanelOffers.style.display = tab === 'offers' ? '' : 'none';
     el.profileTabPanelCollections.style.display = tab === 'collections' ? '' : 'none';
+    el.profileTabPanelMyNfts.style.display = tab === 'mynfts' ? '' : 'none';
     el.profileTabPanelWatchlist.style.display = tab === 'watchlist' ? '' : 'none';
     el.profileTabPanelCrown.style.display = tab === 'crown' ? '' : 'none';
     if (tab === 'watchlist'){
@@ -21518,23 +21669,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       closeMessageThread();
       loadMessagesInbox();
     }
-    // C0LLECT!0NS is the one real destination that also reveals your own
-    // NFT grid (reported live as "we only view our own collections
-    // through collection") — browseOwnerCollection sets the scope, does
-    // the real fetch, and calls showTab('mypigeons') itself, which reads
-    // myPigeonsGridOpen (set true just below) to actually let screenBrowse
-    // show this time. Once already scoped, no need to re-fetch — just
-    // let showTab's own chrome conditions re-evaluate against the flag.
-    if (tab === 'collections' && MY_WALLET){
-      state.myPigeonsGridOpen = true;
-      if (!isOwnWalletScope()) browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
-      else showTab('mypigeons', true);
-    } else if (state.myPigeonsGridOpen){
-      // Leaving C0LLECT!0NS for any other box (or back to the neutral
-      // V!EW PR0F!LE state) hides the grid again — same "wait for a
-      // click" rule applies to un-opening it, not just opening it.
-      state.myPigeonsGridOpen = false;
-      showTab('mypigeons', true);
+    // MY NFTS stays entirely on this page now (reported live: "at the
+    // moment it goes to database, it shouldnt do this") — no more
+    // browseOwnerCollection/screenBrowse detour. Reset back to the picker
+    // sub-view every time it's opened fresh, then kick off the real counts
+    // fetch; picking a collection card is what loads that collection's
+    // actual owned items (see openMyNftsCollection).
+    if (tab === 'mynfts' && MY_WALLET){
+      myNftsPickedCollection = null;
+      el.myNftsPicker.style.display = '';
+      el.myNftsGrid.style.display = 'none';
+      renderMyNftsPicker();
     }
   }
   // WATCHL!ST with nothing on it — reported live wanting a real "no"
