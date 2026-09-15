@@ -326,7 +326,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      black+cyan/magenta glitch, so it's hidden here in favour of a plain
      black page background — see #profilePanelWrap's own new outer frame
      border below for the replacement "black border" design. */
-  body.paws-view{ background:#000; }
+  /* "it should all fit to one page, no scroll bars" (reported live) — this
+     tab's own vertical rhythm is now fixed to the real viewport height
+     instead of the base body{} rule's generous 8vh/10vh top/bottom
+     padding (sized for DATABASE's own long scrollable grid, not this
+     panel). #profilePanelWrap below turns into a flex column sized to
+     exactly what's left after this smaller padding, so its own content
+     (header/rows/readout) shares that fixed height instead of pushing the
+     page taller. */
+  body.paws-view{ background:#000; overflow:hidden; height:100vh; padding:calc(var(--global-ticker-h) + 0.75rem) 3vw 0.75rem; }
   body.paws-view canvas#staticBg{ display:none; }
   canvas#staticBg{
     position:fixed;
@@ -653,7 +661,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      // LABEL › rows, sharp edges (no border-radius — brutalist per the
      reference, overriding .sw-panel's usual rounded corners for just
      these), cyan by default. */
-  .flock-account-box{ padding:0.9rem 1.1rem; min-height:auto; display:flex; align-items:center; border-radius:0; background:rgba(2,3,4,0.88); }
+  /* flex:1 1 0 + min-height:0 — all 7 rows evenly share whatever height
+     .profile-box-grid actually has (see its own comment) instead of each
+     claiming its own fixed padding-driven height and letting the total
+     overflow the panel; this is the actual "fit to one page" mechanism,
+     not just a smaller number. */
+  .flock-account-box{ flex:1 1 0; min-height:0; padding:0.6rem 1.1rem; display:flex; align-items:center; border-radius:0; background:rgba(2,3,4,0.88); }
   .flock-account-box-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.7rem; width:100%; text-align:left; }
   .flock-account-box-prefix{ font-family:var(--font-mono); font-size:13px; color:var(--cyan); opacity:0.75; flex:0 0 auto; }
   .flock-account-box-label{ font-family:var(--font-mono); font-size:14px; letter-spacing:0.14em; text-transform:uppercase; color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
@@ -2010,7 +2023,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      shadow/panel-texture (overriding .sw-panel's own defaults for just
      this one wrap), a plain black frame around the real .scylla-nav-panel
      card inside it. */
-  #profilePanelWrap{ border:1px solid var(--cyan-dim); border-radius:0; background:#000; backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none; }
+  /* Fixed to the real leftover viewport height (100vh minus
+     body.paws-view's own smaller padding above) and turned into a flex
+     column — .scylla-nav-panel inside it (and that panel's own
+     header/rows/readout) shares this exact height instead of growing the
+     page taller, which is what was causing the scrollbar. */
+  #profilePanelWrap{ height:calc(100vh - var(--global-ticker-h) - 1.5rem); display:flex; flex-direction:column; border:1px solid var(--cyan-dim); border-radius:0; background:#000; backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none; }
   #profilePanelWrap::before{ display:none; }
   /* Decorative edge-noise columns — present in the reference image,
      deferred earlier as a stretch goal ("this is a bit generic" brought
@@ -2050,7 +2068,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     100%{ background-position:160px 0, -220px 0, 60px 0; }
   }
   @media (max-width:900px){ .scylla-frame-edge{ display:none; } }
-  .scylla-nav-panel{ position:relative; border:1px solid var(--cyan-dim); border-radius:0; background:#000; padding:1.25rem 1rem 1.5rem; overflow:hidden; }
+  /* flex:1 1 auto + min-height:0 lets this genuinely fill #profilePanelWrap's
+     fixed height (min-height:0 overrides flex's default "never shrink
+     below content size" — without it, 7 rows' natural content height
+     would just overflow and force the scrollbar right back). Its own
+     header/grid/readout children flex the same way below. */
+  .scylla-nav-panel{ position:relative; display:flex; flex-direction:column; flex:1 1 auto; min-height:0; border:1px solid var(--cyan-dim); border-radius:0; background:#000; padding:1.25rem 1rem 1.5rem; overflow:hidden; }
   /* Shake slowed from the shared static-shake's own default 0.4s (still
      used by .scylla-boot-static and every plain-mode local canvas) —
      reported live as too fast specifically here, next to text people
@@ -2072,7 +2095,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .scylla-nav-panel > .scylla-system-header,
   .scylla-nav-panel > .profile-box-grid,
-  .scylla-nav-panel > .scylla-nav-readout{ position:relative; }
+  .scylla-nav-panel > .scylla-nav-readout{ position:relative; flex:0 0 auto; }
+  /* The only one of the 3 that should actually grow/shrink — header and
+     readout keep their own natural content height, the row list absorbs
+     whatever vertical space is left (or is tight on), same reasoning as
+     .scylla-nav-panel's own min-height:0 above. */
+  .scylla-nav-panel > .profile-box-grid{ flex:1 1 auto; min-height:0; overflow:hidden; }
   /* Σκύλλα://SYSTEM — the branded header for this whole tab (reported live
      wanting it to feel like "her own branded system page"), same
      .profile-code-title look the Σκύλλα://!DENT!TY block on #screenProfile
@@ -2081,7 +2109,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      Glitch pushed harder than the plain topbar-terminal-glitch fringe
      (magenta-leaning) to match the reference's own energy without
      duplicating the top bar's identical heading redundantly on this page. */
-  .scylla-system-header{ text-align:center; margin:0.5rem 0 1.25rem; }
+  .scylla-system-header{ text-align:center; margin:0.25rem 0 0.75rem; }
   .scylla-system-header-title{ position:relative; display:inline-block; font-family:var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
   @keyframes scylla-header-glitch{
     0%, 92%, 100%{ text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); transform:translate(0,0); }
@@ -2109,7 +2137,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     93.5%{ opacity:1; clip-path:inset(60% 0 15% 0); transform:translateX(6px); }
     94.5%{ opacity:0; clip-path:inset(0 0 100% 0); transform:translateX(0); }
   }
-  .profile-box-grid{ display:flex; flex-direction:column; gap:0.5rem; margin-top:1.25rem; margin-bottom:1.25rem; }
+  .profile-box-grid{ display:flex; flex-direction:column; gap:0.4rem; margin-top:0.75rem; margin-bottom:0.75rem; }
   /* PR0F!LES/0FFERS/C0LLECT!0NS/CR0WN etc all use the same strong magenta
      "currently open" glitch treatment once picked — the reference's own
      "active page" look. A continuous but subtle flicker (reusing
