@@ -695,7 +695,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     opacity:0;
     clip-path:inset(0 0 100% 0);
     pointer-events:none;
+    /* AMB!ENT — reported live wanting the page to feel "corrupted" even
+       at rest, not just on hover/active: every row occasionally tears on
+       its own, same keyframe, just a much longer/rarer cycle (16s) than
+       the active row's own 6s loop below. :hover/.active still fully
+       replace this (the whole animation shorthand gets overridden
+       wholesale, not merged) the instant either state is true. Staggered
+       per row via negative
+       animation-delay so 5 rows never glitch in lockstep — that would
+       read as mechanical, staggered reads as organic. */
+    animation:scylla-row-tear 16s steps(1) infinite;
   }
+  .flock-account-box-clickable:nth-child(2)::after{ animation-delay:-3.2s; }
+  .flock-account-box-clickable:nth-child(3)::after{ animation-delay:-6.4s; }
+  .flock-account-box-clickable:nth-child(4)::after{ animation-delay:-9.6s; }
+  .flock-account-box-clickable:nth-child(5)::after{ animation-delay:-12.8s; }
   .flock-account-box-clickable:hover::after{ animation:scylla-row-tear 0.5s steps(1) 1; }
   .flock-account-box-clickable.active::after{ animation:scylla-row-tear 6s steps(1) infinite; }
   @keyframes scylla-row-tear{
@@ -715,10 +729,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* 4. HUD C0RNER BRACKETS — active row only, two opposite corners (the
      common "selection bracket" sci-fi HUD convention), same real .active
      trigger as everything else here. */
-  .flock-account-box-corner{ position:absolute; width:9px; height:9px; opacity:0; pointer-events:none; border-color:var(--magenta); }
-  .flock-account-box-corner-tl{ top:-1px; left:-1px; border-top:2px solid; border-left:2px solid; }
-  .flock-account-box-corner-br{ bottom:-1px; right:-1px; border-bottom:2px solid; border-right:2px solid; }
+  /* Colour goes directly in each border-side shorthand, not a separate
+     border-color declaration — a shorthand with the colour omitted resets
+     that side back to currentColor (the element's own inherited text
+     colour, not var(--magenta)), silently overriding an earlier
+     border-color rule. Confirmed live: corners rendered off-white instead
+     of the intended accent until this was inlined. */
+  .flock-account-box-corner{ position:absolute; width:9px; height:9px; opacity:0; pointer-events:none; }
+  .flock-account-box-corner-tl{ top:-1px; left:-1px; border-top:2px solid var(--magenta); border-left:2px solid var(--magenta); }
+  .flock-account-box-corner-br{ bottom:-1px; right:-1px; border-bottom:2px solid var(--magenta); border-right:2px solid var(--magenta); }
   .flock-account-box-clickable.active .flock-account-box-corner{ opacity:1; }
+  /* Panel-level version of the same corner bracket — all 4 corners, always
+     on (see the HTML's own comment on .scylla-nav-panel), scaled up since
+     it's framing the whole panel, not one row. */
+  .scylla-panel-corner{ position:absolute; z-index:1; width:18px; height:18px; pointer-events:none; }
+  .scylla-panel-corner-tl{ top:6px; left:6px; border-top:2px solid var(--cyan); border-left:2px solid var(--cyan); }
+  .scylla-panel-corner-tr{ top:6px; right:6px; border-top:2px solid var(--cyan); border-right:2px solid var(--cyan); }
+  .scylla-panel-corner-bl{ bottom:6px; left:6px; border-bottom:2px solid var(--cyan); border-left:2px solid var(--cyan); }
+  .scylla-panel-corner-br{ bottom:6px; right:6px; border-bottom:2px solid var(--cyan); border-right:2px solid var(--cyan); }
   /* NOT a blanket opacity any more — same fix as the MAINFRAME tape
      banner's own (see .mainframe-card-soon's comment): dimming the
      whole box compounds with the label/badge's own already-dim colour
@@ -2011,6 +2039,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     0%{ background-position:0 0, 0 0, 0 0; }
     100%{ background-position:0 160px, 0 -220px, 0 60px; }
   }
+  /* Completes the frame — top/bottom, same technique as the left/right
+     bars, just laid out across instead of down (reported live wanting
+     more of these "all over"). */
+  .scylla-frame-edge-h{ top:0; bottom:auto; left:0; right:0; width:auto; height:16px; animation:scylla-edge-scroll-h 3.5s linear infinite; }
+  .scylla-frame-edge-top{ top:0; }
+  .scylla-frame-edge-bottom{ top:auto; bottom:0; }
+  @keyframes scylla-edge-scroll-h{
+    0%{ background-position:0 0, 0 0, 0 0; }
+    100%{ background-position:160px 0, -220px 0, 60px 0; }
+  }
   @media (max-width:900px){ .scylla-frame-edge{ display:none; } }
   .scylla-nav-panel{ position:relative; border:1px solid var(--cyan-dim); border-radius:0; background:#000; padding:1.25rem 1rem 1.5rem; overflow:hidden; }
   /* Shake slowed from the shared static-shake's own default 0.4s (still
@@ -2089,8 +2127,37 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* Real-data footer readout — see the HTML's own comment on
      #scyllaNavReadout for why every value here is real, never invented. */
-  .scylla-nav-readout{ margin-top:0.5rem; padding-top:0.9rem; border-top:1px dashed var(--border-mid); font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; color:var(--grey-dim); line-height:1.7; }
+  /* Same tear+RGB-split combo as the header title above (reported live as
+     the other favourite effect) — an independent 9s cycle, deliberately
+     offset from the header's own 7s so the two never glitch in perfect
+     unison (reads as two live things, not one mirrored effect). Brings
+     the one remaining plain-text element on this panel in line with
+     everything else instead of looking untouched by comparison. */
+  .scylla-nav-readout{ position:relative; margin-top:0.5rem; padding-top:0.9rem; border-top:1px dashed var(--border-mid); font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; color:var(--grey-dim); line-height:1.7; animation:scylla-readout-glitch 9s ease-in-out infinite; }
   .scylla-nav-readout-line span{ color:var(--cyan); }
+  @keyframes scylla-readout-glitch{
+    0%, 94%, 100%{ text-shadow:none; transform:translate(0,0); }
+    94.5%{ text-shadow:-2px 0 var(--cyan), 2px 0 var(--magenta); transform:translate(-1px,0); }
+    95.5%{ text-shadow:2px 0 var(--magenta), -2px 0 var(--cyan); transform:translate(1px,0); }
+    96.5%{ text-shadow:none; transform:translate(0,0); }
+  }
+  .scylla-nav-readout::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(0deg, rgba(61,243,236,0.4) 0 2px, rgba(255,63,208,0.4) 2px 4px, transparent 4px 9px);
+    mix-blend-mode:screen;
+    opacity:0;
+    clip-path:inset(0 0 100% 0);
+    pointer-events:none;
+    animation:scylla-readout-tear 9s steps(1) infinite;
+  }
+  @keyframes scylla-readout-tear{
+    0%, 94%, 100%{ opacity:0; clip-path:inset(0 0 100% 0); transform:translateX(0); }
+    94.5%{ opacity:1; clip-path:inset(20% 0 55% 0); transform:translateX(-5px); }
+    95.5%{ opacity:1; clip-path:inset(58% 0 15% 0); transform:translateX(5px); }
+    96.5%{ opacity:0; clip-path:inset(0 0 100% 0); transform:translateX(0); }
+  }
   /* Pending 0FFERS count — same real-number-or-hidden-entirely pattern
      this always used (never "0FFERS (0)"), now sitting inside the 0FFERS
      box itself instead of a tab label. */
@@ -9303,8 +9370,19 @@ const SWAP_HTML = `<!DOCTYPE html>
            calls for — no new state needed for that part. -->
       <div class="scylla-frame-edge scylla-frame-edge-left" aria-hidden="true"></div>
       <div class="scylla-frame-edge scylla-frame-edge-right" aria-hidden="true"></div>
+      <div class="scylla-frame-edge scylla-frame-edge-h scylla-frame-edge-top" aria-hidden="true"></div>
+      <div class="scylla-frame-edge scylla-frame-edge-h scylla-frame-edge-bottom" aria-hidden="true"></div>
       <div class="scylla-nav-panel">
         <canvas class="scylla-nav-static" id="scyllaNavStaticBg"></canvas>
+        <!-- Panel-level HUD corners — always on (this frame isn't
+             "active/inactive," it's what everything else sits inside),
+             same two-border-side technique the row corners already use,
+             just scaled up. Reinforces "a deliberately designed
+             instrument panel" per the "better designing job" ask. -->
+        <span class="scylla-panel-corner scylla-panel-corner-tl" aria-hidden="true"></span>
+        <span class="scylla-panel-corner scylla-panel-corner-tr" aria-hidden="true"></span>
+        <span class="scylla-panel-corner scylla-panel-corner-bl" aria-hidden="true"></span>
+        <span class="scylla-panel-corner scylla-panel-corner-br" aria-hidden="true"></span>
         <!-- Σκύλλα://SYSTEM — a real branded header for this whole tab
              (reported live wanting it to read as "her own branded system
              page," not a generic dashboard), reusing .profile-code-title's
