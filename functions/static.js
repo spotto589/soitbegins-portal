@@ -459,6 +459,17 @@ const SWAP_HTML = `<!DOCTYPE html>
      -grid all cap at 1300px on their own), so this reads as a targeted
      THUMBNAILS change in practice, not a site-wide relayout. */
   .page{ max-width:1700px; width:100%; position:relative; z-index:1; }
+  /* Fit-to-one-screen (see body.paws-view above) has to account for
+     #myPigeonsPanel too, not just #profilePanelWrap — confirmed live: a
+     logged-out visitor sees BOTH the CONNECT prompt (#myPigeonsPanel,
+     shown whenever !MY_WALLET on this tab) and the system panel stacked,
+     which on its own still overflowed the screen even after
+     #profilePanelWrap alone was capped. .page becomes the real flex
+     column here, sized to the same leftover-viewport-height math;
+     #myPigeonsPanel takes its own natural content height (flex:0 0 auto,
+     just below), #profilePanelWrap absorbs whatever's left. */
+  body.paws-view .page{ height:calc(100vh - var(--global-ticker-h) - 1.5rem); display:flex; flex-direction:column; }
+  #myPigeonsPanel{ flex:0 0 auto; }
   a.back-link{
     display:inline-block;
     font-family:var(--font-body);
@@ -668,10 +679,35 @@ const SWAP_HTML = `<!DOCTYPE html>
      not just a smaller number. */
   .flock-account-box{ flex:1 1 0; min-height:0; padding:0.6rem 1.1rem; display:flex; align-items:center; border-radius:0; background:rgba(2,3,4,0.88); }
   .flock-account-box-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.7rem; width:100%; text-align:left; }
+  /* Reported live as "too generic... just rectangle boxes" — one real
+     icon per destination (a person badge for PR0F!LES, an envelope for
+     MESSAGE !NB0X, etc — see the HTML's own comment on each row), plain
+     inline SVG the same way #globalTopBarLogo already is, sized small and
+     stroke="currentColor" so it automatically follows whatever colour the
+     row's own state already sets (cyan/brighter-cyan/magenta) — zero new
+     colour rules needed. */
+  .flock-account-box-icon{ width:18px; height:18px; flex:0 0 auto; color:var(--cyan); }
   .flock-account-box-prefix{ font-family:var(--font-mono); font-size:13px; color:var(--cyan); opacity:0.75; flex:0 0 auto; }
   .flock-account-box-label{ font-family:var(--font-mono); font-size:14px; letter-spacing:0.14em; text-transform:uppercase; color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   .flock-account-box-arrow{ font-size:16px; color:var(--cyan); flex:0 0 auto; margin-left:auto; }
   .flock-account-box-clickable{ position:relative; overflow:hidden; cursor:pointer; border-color:var(--border-mid); transition:border-color 0.15s ease, background 0.15s ease; }
+  /* Left accent bar — the row's own state indicator (reference image's
+     own language: thin/dim at rest, brighter on hover, thick/solid on the
+     open destination), on ::before since ::after is already the
+     signal-tear overlay. */
+  .flock-account-box-clickable::before{
+    content:'';
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    width:2px;
+    background:var(--border-mid);
+    transition:width 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    pointer-events:none;
+  }
+  .flock-account-box-clickable:hover::before{ width:3px; background:var(--cyan); box-shadow:0 0 6px var(--cyan-glow); }
+  .flock-account-box-clickable.active::before{ width:5px; background:var(--magenta); box-shadow:0 0 10px var(--magenta-glow); }
   /* Hover — a short, controlled RGB-split burst on the row's own text
      (reported live wanting "a glitch flickered when you touched it," not
      a conventional hover animation), same chromatic-aberration rhythm
@@ -767,7 +803,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      muted directly instead so the box still reads as "inactive"
      without touching its children's own contrast. */
   .flock-account-box-soon{ cursor:not-allowed; border-color:var(--border-mid); border-radius:0; background:rgba(2,3,4,0.88); }
-  .flock-account-box-soon .flock-account-box-label, .flock-account-box-soon .flock-account-box-prefix{ color:var(--grey-dim); text-shadow:none; }
+  .flock-account-box-soon .flock-account-box-label, .flock-account-box-soon .flock-account-box-prefix, .flock-account-box-soon .flock-account-box-icon{ color:var(--grey-dim); text-shadow:none; }
   /* A real, visible "still counting" state — the underscore alone reads as
      dead/broken otherwise. */
   @keyframes flock-count-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
@@ -2028,7 +2064,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      column — .scylla-nav-panel inside it (and that panel's own
      header/rows/readout) shares this exact height instead of growing the
      page taller, which is what was causing the scrollbar. */
-  #profilePanelWrap{ height:calc(100vh - var(--global-ticker-h) - 1.5rem); display:flex; flex-direction:column; border:1px solid var(--cyan-dim); border-radius:0; background:#000; backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none; }
+  /* flex:1 1 auto (was a direct height:calc()) — now sized by .page's own
+     flex distribution above instead, so it correctly shrinks to leave
+     room for #myPigeonsPanel's own real height whenever that's ALSO
+     visible (logged out), and still fills the entire leftover height
+     when it's the only thing showing (logged in). */
+  #profilePanelWrap{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; border:1px solid var(--cyan-dim); border-radius:0; background:#000; backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none; }
   #profilePanelWrap::before{ display:none; }
   /* Decorative edge-noise columns — present in the reference image,
      deferred earlier as a stretch goal ("this is a bit generic" brought
@@ -2146,6 +2187,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .flock-account-box-clickable.active{ border-color:var(--magenta); background:rgba(255,63,208,0.08); box-shadow:0 0 14px var(--magenta-glow); }
   .flock-account-box-clickable.active .flock-account-box-prefix,
   .flock-account-box-clickable.active .flock-account-box-label{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); animation:scylla-row-active-flicker 6s ease-in-out infinite; }
+  .flock-account-box-clickable.active .flock-account-box-icon{ color:var(--magenta); }
   .flock-account-box-clickable.active .flock-account-box-arrow{ color:var(--magenta); }
   @keyframes scylla-row-active-flicker{
     0%, 90%, 100%{ text-shadow:0 0 6px var(--magenta-glow); transform:translate(0,0); }
@@ -9452,19 +9494,19 @@ const SWAP_HTML = `<!DOCTYPE html>
              below. -->
         <div class="profile-box-grid" id="profileBoxGrid">
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="profiles">
-            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">PR0F!LES</span><span class="flock-account-box-arrow">›</span></div>
+            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="9" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M3 15c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">PR0F!LES</span><span class="flock-account-box-arrow">›</span></div>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="messages">
-            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">MESSAGE !NB0X</span><span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span><span class="flock-account-box-arrow">›</span></div>
+            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M2.5 4.5l6.5 5 6.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">MESSAGE !NB0X</span><span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span><span class="flock-account-box-arrow">›</span></div>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="offers">
-            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">0FFERS</span><span class="flock-account-box-arrow">›</span></div>
+            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 2.5h6a1.5 1.5 0 0 1 1.5 1.5v6L9 16.5 1.5 9 8 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="12" cy="6" r="1.2" stroke="currentColor" stroke-width="1.3"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">0FFERS</span><span class="flock-account-box-arrow">›</span></div>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="collections">
-            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">MY NFTS</span><span class="flock-account-box-arrow">›</span></div>
+            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="2" width="6" height="6" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="2" width="6" height="6" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="10" width="6" height="6" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="10" width="6" height="6" stroke="currentColor" stroke-width="1.5"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">MY NFTS</span><span class="flock-account-box-arrow">›</span></div>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
           <!-- WATCHL!ST — split out of the MY NFTs/C0LLECT!0NS panel into
@@ -9473,7 +9515,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                profileTabPanelWatchlist now instead of living inside
                profileTabPanelCollections. -->
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="watchlist">
-            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">WATCHL!ST</span><span class="flock-account-box-arrow">›</span></div>
+            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 1.5l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.5 5-.7L9 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">WATCHL!ST</span><span class="flock-account-box-arrow">›</span></div>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
           <!-- CR0WN REWARDS (reported live, was the real CR0WN P/L
@@ -9483,12 +9525,12 @@ const SWAP_HTML = `<!DOCTYPE html>
                unused rather than ripped out, in case CR0WN comes back as its
                own destination later. -->
           <div class="sw-panel flock-account-box flock-account-box-soon">
-            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">CR0WN REWARDS</span><span class="db-soon">C0M!NG S00N</span></div>
+            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 14l-1-8 4 3 4-5 4 5 4-3-1 8H2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">CR0WN REWARDS</span><span class="db-soon">C0M!NG S00N</span></div>
           </div>
           <!-- TRANSACT!0N H!ST0RY has no real backend yet — same inert
                "not yet" treatment as before. -->
           <div class="sw-panel flock-account-box flock-account-box-soon">
-            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">TRANSACT!0N H!ST0RY</span><span class="db-soon">C0M!NG S00N</span></div>
+            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M9 5v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">TRANSACT!0N H!ST0RY</span><span class="db-soon">C0M!NG S00N</span></div>
           </div>
         </div>
         <!-- Real-data footer readout, reference-flavoured but never
