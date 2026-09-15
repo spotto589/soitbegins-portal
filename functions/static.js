@@ -318,6 +318,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      the underlying page must stop scrolling while it's up, or you'd be
      able to drag the page behind it around while the fixed box sits still. */
   body.detail-open{ overflow:hidden; }
+  body.scylla-boot-open{ overflow:hidden; }
   canvas#staticBg{
     position:fixed;
     inset:0;
@@ -383,7 +384,46 @@ const SWAP_HTML = `<!DOCTYPE html>
     93.5%{ text-shadow:-2px 0 var(--magenta-dim), 2px 0 var(--cyan-dim); transform:translate(1px,0); }
     94%{ text-shadow:-1px 0 var(--cyan-dim), 1px 0 var(--magenta-dim); transform:translate(0,0); }
   }
+  /* ---- Σκύλλα B00T — one-time full-screen glitch/static reveal, see the
+     HTML's own comment on #scyllaBootScreen for why/when this plays. Same
+     fixed-overlay shell every other screen already uses, just its own
+     z-index (9000) so it covers #globalTopBar (2200) too, for its one
+     moment. ---- */
+  #scyllaBootScreen{
+    position:fixed;
+    inset:0;
+    z-index:9000;
+    background:#000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .scylla-boot-static{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    opacity:0.55;
+    mix-blend-mode:screen;
+    animation:static-shake 0.4s steps(2) infinite;
+  }
+  .scylla-boot-content{ position:relative; text-align:center; }
+  .scylla-boot-lockpad{ width:140px; height:auto; animation:scylla-boot-glitch 1.1s ease-in-out 1; }
+  @keyframes scylla-boot-glitch{
+    0%, 100%{ filter:drop-shadow(-2px 0 var(--cyan)) drop-shadow(2px 0 var(--magenta)); transform:translate(0,0); }
+    10%{ filter:drop-shadow(-6px 0 var(--cyan)) drop-shadow(5px 0 var(--magenta)); transform:translate(-3px,1px) skewX(-3deg); }
+    20%{ filter:drop-shadow(5px 0 var(--magenta)) drop-shadow(-5px 0 var(--cyan)); transform:translate(3px,-1px) skewX(3deg); }
+    30%{ filter:drop-shadow(-2px 0 var(--cyan)) drop-shadow(2px 0 var(--magenta)); transform:translate(0,0); }
+    45%{ filter:drop-shadow(-7px 0 var(--cyan)) drop-shadow(6px 0 var(--magenta)); transform:translate(-2px,2px); }
+    55%{ filter:drop-shadow(4px 0 var(--magenta)) drop-shadow(-4px 0 var(--cyan)); transform:translate(2px,-2px); }
+    65%{ filter:drop-shadow(-2px 0 var(--cyan)) drop-shadow(2px 0 var(--magenta)); transform:translate(0,0); }
+    80%{ filter:drop-shadow(-5px 0 var(--cyan)) drop-shadow(4px 0 var(--magenta)); transform:translate(-2px,0); }
+    90%{ filter:drop-shadow(-2px 0 var(--cyan)) drop-shadow(2px 0 var(--magenta)); transform:translate(0,0); }
+  }
+  .scylla-boot-status{ margin-top:1.25rem; font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:0.08em; color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
   @media (prefers-reduced-motion: reduce){
+    .scylla-boot-static{ animation:none; }
+    .scylla-boot-lockpad{ animation:none; }
     canvas#staticBg{ animation:none; }
     *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
   }
@@ -594,20 +634,41 @@ const SWAP_HTML = `<!DOCTYPE html>
      FlockBox/#flockAccountBoxes/.flock-wallet-box ("the address bar"/"my
      pigeons bar", both reported live as wanting removed now that
      profileBoxGrid replaces them) are gone. */
-  .flock-account-box{ padding:1.4rem 1.25rem; min-height:5rem; display:flex; align-items:center; }
-  .flock-account-box-row{ display:flex; align-items:center; justify-content:center; gap:1rem; width:100%; text-align:center; }
-  .flock-account-box-label{ font-size:14px; letter-spacing:0.18em; text-transform:uppercase; color:#fff; }
-  .flock-account-box-arrow{ font-size:16px; color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); flex:0 0 auto; }
-  .flock-account-box-clickable{ cursor:pointer; transition:border-color 0.15s ease; }
-  .flock-account-box-clickable:hover{ border-color:var(--pigeon-purple); }
+  /* CRT terminal row (reworked from the plain centred tile these used to
+     be, see the HTML's own comment on .scylla-nav-panel) — left-aligned
+     // LABEL › rows, sharp edges (no border-radius — brutalist per the
+     reference, overriding .sw-panel's usual rounded corners for just
+     these), cyan by default. */
+  .flock-account-box{ padding:0.9rem 1.1rem; min-height:auto; display:flex; align-items:center; border-radius:0; background:rgba(4,6,8,0.55); }
+  .flock-account-box-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.7rem; width:100%; text-align:left; }
+  .flock-account-box-prefix{ font-family:var(--font-mono); font-size:13px; color:var(--cyan); opacity:0.75; flex:0 0 auto; }
+  .flock-account-box-label{ font-family:var(--font-mono); font-size:14px; letter-spacing:0.14em; text-transform:uppercase; color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
+  .flock-account-box-arrow{ font-size:16px; color:var(--cyan); flex:0 0 auto; margin-left:auto; }
+  .flock-account-box-clickable{ cursor:pointer; border-color:var(--border-mid); transition:border-color 0.15s ease, background 0.15s ease; }
+  /* Hover — a short, controlled RGB-split burst on the row's own text
+     (reported live wanting "a glitch flickered when you touched it," not
+     a conventional hover animation), same chromatic-aberration rhythm
+     topbar-terminal-glitch already established, just via text-shadow on
+     the label/prefix instead of the whole box. Non-looping (plays once
+     per hover, settles) so it never fights legibility. */
+  .flock-account-box-clickable:hover{ border-color:var(--cyan); background:rgba(61,243,236,0.05); }
+  .flock-account-box-clickable:hover .flock-account-box-prefix,
+  .flock-account-box-clickable:hover .flock-account-box-label{ animation:scylla-row-hover-glitch 0.5s ease-in-out 1; }
+  @keyframes scylla-row-hover-glitch{
+    0%, 100%{ text-shadow:0 0 5px var(--cyan-glow); transform:translate(0,0); }
+    20%{ text-shadow:-3px 0 var(--cyan), 3px 0 var(--magenta); transform:translate(-1px,0); }
+    40%{ text-shadow:3px 0 var(--magenta), -3px 0 var(--cyan); transform:translate(1px,0); }
+    60%{ text-shadow:-2px 0 var(--cyan), 2px 0 var(--magenta); transform:translate(0,0); }
+    80%{ text-shadow:0 0 5px var(--cyan-glow); transform:translate(0,0); }
+  }
   /* NOT a blanket opacity any more — same fix as the MAINFRAME tape
      banner's own (see .mainframe-card-soon's comment): dimming the
      whole box compounds with the label/badge's own already-dim colour
      and crushes the C0M!NG S00N badge down to near-unreadable. Border
      muted directly instead so the box still reads as "inactive"
      without touching its children's own contrast. */
-  .flock-account-box-soon{ cursor:not-allowed; border-color:var(--border-mid); }
-  .flock-account-box-soon .flock-account-box-label{ color:var(--grey-dim); }
+  .flock-account-box-soon{ cursor:not-allowed; border-color:var(--border-mid); border-radius:0; background:rgba(4,6,8,0.55); }
+  .flock-account-box-soon .flock-account-box-label, .flock-account-box-soon .flock-account-box-prefix{ color:var(--grey-dim); text-shadow:none; }
   /* A real, visible "still counting" state — the underscore alone reads as
      dead/broken otherwise. */
   @keyframes flock-count-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
@@ -1862,22 +1923,71 @@ const SWAP_HTML = `<!DOCTYPE html>
      bottom edge (see .profile-avatar-wrap's own negative margin) and
      would otherwise sit right against these boxes with zero breathing
      room. */
+  /* ---- Σκύλλα CRT TERM!NAL NAV — the panel wrapping the branded header +
+     box grid + readout (see the HTML's own comment on .scylla-nav-panel
+     for the reference this matches). Sharp brutalist edges (border-radius
+     overridden to 0, "no rounded modern SaaS UI" per the reference), a
+     dense static-noise canvas behind everything (startStaticCanvas, same
+     technique every other screen's own local static canvas already uses,
+     just a bolder opacity here since static is meant to read as part of
+     the furniture on this panel, not a rare accent), and the same
+     body::before scanline trick layered on top via its own ::before. ---- */
+  .scylla-nav-panel{ position:relative; border:1px solid var(--cyan-dim); border-radius:0; background:#020304; padding:1.25rem 1rem 1.5rem; overflow:hidden; }
+  .scylla-nav-static{ position:absolute; inset:0; width:100%; height:100%; opacity:0.35; mix-blend-mode:screen; animation:static-shake 0.4s steps(2) infinite; }
+  .scylla-nav-panel::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.035) 0px,
+      rgba(255,255,255,0.035) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode:overlay;
+  }
+  .scylla-nav-panel > .scylla-system-header,
+  .scylla-nav-panel > .profile-box-grid,
+  .scylla-nav-panel > .scylla-nav-readout{ position:relative; }
   /* Σκύλλα://SYSTEM — the branded header for this whole tab (reported live
      wanting it to feel like "her own branded system page"), same
      .profile-code-title look the Σκύλλα://!DENT!TY block on #screenProfile
      already uses — reads off --profile-accent-rgb too, so it automatically
-     matches whatever THEME is set on #profilePanelWrap, no new plumbing. */
+     matches whatever THEME is set on #profilePanelWrap, no new plumbing.
+     Glitch pushed harder than the plain topbar-terminal-glitch fringe
+     (magenta-leaning) to match the reference's own energy without
+     duplicating the top bar's identical heading redundantly on this page. */
   .scylla-system-header{ text-align:center; margin:0.5rem 0 1.25rem; }
-  .scylla-system-header-title{ font-family:var(--font-mono); font-size:18px; font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); }
+  .scylla-system-header-title{ font-family:var(--font-mono); font-size:18px; font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
+  @keyframes scylla-header-glitch{
+    0%, 92%, 100%{ text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); transform:translate(0,0); }
+    92.5%{ text-shadow:-3px 0 var(--magenta), 3px 0 var(--cyan); transform:translate(-2px,0) skewX(-2deg); }
+    93.5%{ text-shadow:3px 0 var(--magenta), -3px 0 var(--cyan); transform:translate(2px,0) skewX(2deg); }
+    94.5%{ text-shadow:-2px 0 var(--magenta), 2px 0 var(--cyan); transform:translate(0,0); }
+  }
   .scylla-system-header-sub{ margin-top:0.3rem; font-size:11px; letter-spacing:0.14em; color:var(--grey-dim); text-transform:uppercase; }
-  .profile-box-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.7rem; margin-top:1.25rem; margin-bottom:1.5rem; }
-  @media (max-width:600px){ .profile-box-grid{ grid-template-columns:repeat(2, 1fr); } }
-  @media (max-width:400px){ .profile-box-grid{ grid-template-columns:1fr; } }
-  /* V!EW PR0F!LE/0FFERS/C0LLECT!0NS/CR0WN all use the same magenta
-     "currently open" highlight once picked — same active-state colour
-     .tab-btn's own underline uses elsewhere, applied as a border/glow
-     here instead since these are boxes, not an underlined strip. */
-  .flock-account-box-clickable.active{ border-color:var(--magenta); box-shadow:0 0 14px var(--magenta-glow); }
+  .profile-box-grid{ display:flex; flex-direction:column; gap:0.5rem; margin-top:1.25rem; margin-bottom:1.25rem; }
+  /* PR0F!LES/0FFERS/C0LLECT!0NS/CR0WN etc all use the same strong magenta
+     "currently open" glitch treatment once picked — the reference's own
+     "active page" look. A continuous but subtle flicker (reusing
+     profileThemeGlitchFlicker's already-established "occasional, not
+     constant" rhythm elsewhere in this file), not a distracting shake. */
+  .flock-account-box-clickable.active{ border-color:var(--magenta); background:rgba(255,63,208,0.08); box-shadow:0 0 14px var(--magenta-glow); }
+  .flock-account-box-clickable.active .flock-account-box-prefix,
+  .flock-account-box-clickable.active .flock-account-box-label{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); animation:scylla-row-active-flicker 6s ease-in-out infinite; }
+  .flock-account-box-clickable.active .flock-account-box-arrow{ color:var(--magenta); }
+  @keyframes scylla-row-active-flicker{
+    0%, 90%, 100%{ text-shadow:0 0 6px var(--magenta-glow); transform:translate(0,0); }
+    90.5%{ text-shadow:-2px 0 var(--cyan), 2px 0 var(--magenta); transform:translate(-1px,0); }
+    91.5%{ text-shadow:2px 0 var(--cyan), -2px 0 var(--magenta); transform:translate(1px,0); }
+    92.5%{ text-shadow:0 0 6px var(--magenta-glow); transform:translate(0,0); }
+  }
+  /* Real-data footer readout — see the HTML's own comment on
+     #scyllaNavReadout for why every value here is real, never invented. */
+  .scylla-nav-readout{ margin-top:0.5rem; padding-top:0.9rem; border-top:1px dashed var(--border-mid); font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; color:var(--grey-dim); line-height:1.7; }
+  .scylla-nav-readout-line span{ color:var(--cyan); }
   /* Pending 0FFERS count — same real-number-or-hidden-entirely pattern
      this always used (never "0FFERS (0)"), now sitting inside the 0FFERS
      box itself instead of a tab label. */
@@ -8726,6 +8836,38 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
   </div>
 
+  <!-- Σκύλλα B00T — a one-time glitch/static reveal the first time this
+       session someone actually enters the Σκύλλα tab (see
+       playScyllaBootScreen/the guard clause at the top of showTab in the
+       JS) — not a splash you wait through on every visit, once per
+       session only. Same fixed full-screen shell every other overlay in
+       this file already uses, just its own z-index (9000) — and, unlike
+       those, deliberately kept OUTSIDE .page (which sets its own
+       position:relative;z-index:1, a real stacking context every element
+       nested inside it is trapped under, confirmed live: this exact
+       overlay rendered BEHIND #globalTopBar until moved out here) so
+       9000 actually wins against #globalTopBar's own 2200 and genuinely
+       covers everything, including the top bar, for its one moment. The
+       lockpad is a second copy of the exact same mark #globalTopBarLogo
+       already uses (see the HTML just above) — same real Σκύλλα identity,
+       not a new asset — scaled up and given the same chromatic-aberration
+       glitch rhythm topbar-terminal-glitch already established elsewhere
+       in this file (mostly at rest, a brief RGB-split burst, settles),
+       just via filter:drop-shadow instead of text-shadow since this is an
+       SVG shape, not text. -->
+  <div id="scyllaBootScreen" style="display:none;">
+    <canvas class="scylla-boot-static" id="scyllaBootStaticBg"></canvas>
+    <div class="scylla-boot-content">
+      <svg class="scylla-boot-lockpad" viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Σκύλλα">
+        <path d="M16 30 V22 a16 16 0 0 1 32 0 V30" fill="none" stroke="#f2f2f0" stroke-width="6" stroke-linecap="round"/>
+        <rect x="8" y="30" width="48" height="42" rx="8" fill="#f2f2f0"/>
+        <circle cx="32" cy="48" r="5" fill="#0b0b09"/>
+        <rect x="29" y="50" width="6" height="13" rx="2" fill="#0b0b09"/>
+      </svg>
+      <div class="scylla-boot-status">Σκύλλα://!N!T!AL!Z!NG SYSTEM...</div>
+    </div>
+  </div>
+
   <!-- MA!NFRAME's own grid markup moved into DATABASE's own tab now (see
        #screenMainframe just above #screenBrowse below) — reported live as
        wanting it gone as its own separate destination/overlay; DATABASE
@@ -9038,81 +9180,103 @@ const SWAP_HTML = `<!DOCTYPE html>
          its own Pigeons), shown everywhere an address used to just print
          its own short form (see walletTagHtml/setWalletText). -->
     <div class="sw-panel" id="profilePanelWrap" style="display:none;">
-      <!-- Σκύλλα://SYSTEM — a real branded header for this whole tab
-           (reported live wanting it to read as "her own branded system
-           page," not a generic dashboard), reusing .profile-code-title's
-           exact look so it automatically inherits whichever THEME accent
-           is already set on this wrap (data-profile-theme, see
-           renderProfileCurrent/renderProfileThemeSwatches) — no new
-           colour plumbing, just applied one level higher than the
-           Σκύλλα://!DENT!TY code block already uses it. -->
-      <div class="scylla-system-header">
-        <div class="scylla-system-header-title">Σκύλλα://SYSTEM</div>
-        <div class="scylla-system-header-sub">WALLET C0NTR0L PANEL</div>
-      </div>
-      <!-- PR0F!LE B0X GR!D — a real menu of boxed destinations (same real
-           .flock-account-box visual language the old FL0CK-era boxes
-           always used, just reused here) instead of one long stacked
-           scroll. PR0F!LES/!NB0X/0FFERS (reported live) all go full-page —
-           switchProfileTab hides this grid while any of them is open,
-           leaving just that one panel + its own BACK button, instead of
-           opening below the grid the way every other box still does (MY
-           NFTs/WATCHL!ST/CR0WN reveal their own real panel below when
-           clicked, grid stays visible for those). PR0F!LES was SEARCH
-           PR0F!LE, a plain search-only box — reworked (reported live) into
-           three real destinations (V!EW MY PR0F!LE/ED!T MY PR0F!LE/SEARCH
-           PR0F!LE, see profileTabPanelProfiles below); the identity
-           banner that used to sit permanently above this grid moved into
-           ED!T MY PR0F!LE's own sub-view, since V!EW MY PR0F!LE now opens
-           the real #screenProfile instead of a second, lesser mini-view.
-           TRANSACT!0N H!ST0RY stays inert (same C0M!NG S00N treatment the
-           old boxes always had — no real backend yet). Exactly one panel
-           (or none) visible at a time. !NB0X and 0FFERS were one merged
-           box/panel for a while (MESSAGES_DB was never bound in
-           production, so there was never a second real inbox to justify
-           its own box — see the swap-buy-prepare.js/HANDOFF.md history) —
-           split back into two real destinations now that messaging
-           actually works, reported live as wanting them separate again.
-           MESSAGE !NB0X (data-profilebox="messages") is just MESSAGES;
-           0FFERS (data-profilebox="offers", reclaiming the value the
-           merged box used to sit under) is just 0FFERS RECE!VED/0UTG0!NG
-           0FFERS — see profileTabPanelMessages/profileTabPanelOffers
-           below. -->
-      <div class="profile-box-grid" id="profileBoxGrid">
-        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="profiles">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">PR0F!LES</span></div>
+      <!-- Σκύλλα CRT TERM!NAL NAV — the whole header+box-grid+readout,
+           reworked to match a corrupted-CRT-terminal reference the user
+           supplied directly (dense static, scanlines, RGB-split glitch
+           text, brutalist sharp edges, monospace // rows) — visual/layout
+           only, every box below still opens the exact same real
+           destination it always did (see switchProfileTab in the JS), and
+           this reuses effects already established elsewhere in this file
+           (startStaticCanvas, the topbar-terminal-glitch rhythm, the
+           body::before scanline trick) rather than inventing a new look.
+           .active (magenta, toggled by switchProfileTab already) is
+           already exactly "the currently selected page" this reference
+           calls for — no new state needed for that part. -->
+      <div class="scylla-nav-panel">
+        <canvas class="scylla-nav-static" id="scyllaNavStaticBg"></canvas>
+        <!-- Σκύλλα://SYSTEM — a real branded header for this whole tab
+             (reported live wanting it to read as "her own branded system
+             page," not a generic dashboard), reusing .profile-code-title's
+             exact look so it automatically inherits whichever THEME accent
+             is already set on this wrap (data-profile-theme, see
+             renderProfileCurrent/renderProfileThemeSwatches) — no new
+             colour plumbing, just applied one level higher than the
+             Σκύλλα://!DENT!TY code block already uses it. -->
+        <div class="scylla-system-header">
+          <div class="scylla-system-header-title">Σκύλλα://SYSTEM</div>
+          <div class="scylla-system-header-sub">WALLET C0NTR0L PANEL</div>
         </div>
-        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="messages">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">MESSAGE !NB0X</span></div>
+        <!-- PR0F!LE B0X GR!D — a real menu of boxed destinations (same real
+             .flock-account-box visual language the old FL0CK-era boxes
+             always used, just reused here) instead of one long stacked
+             scroll. PR0F!LES/!NB0X/0FFERS (reported live) all go full-page —
+             switchProfileTab hides this grid while any of them is open,
+             leaving just that one panel + its own BACK button, instead of
+             opening below the grid the way every other box still does (MY
+             NFTs/WATCHL!ST/CR0WN reveal their own real panel below when
+             clicked, grid stays visible for those). PR0F!LES was SEARCH
+             PR0F!LE, a plain search-only box — reworked (reported live) into
+             three real destinations (V!EW MY PR0F!LE/ED!T MY PR0F!LE/SEARCH
+             PR0F!LE, see profileTabPanelProfiles below); the identity
+             banner that used to sit permanently above this grid moved into
+             ED!T MY PR0F!LE's own sub-view, since V!EW MY PR0F!LE now opens
+             the real #screenProfile instead of a second, lesser mini-view.
+             TRANSACT!0N H!ST0RY stays inert (same C0M!NG S00N treatment the
+             old boxes always had — no real backend yet). Exactly one panel
+             (or none) visible at a time. !NB0X and 0FFERS were one merged
+             box/panel for a while (MESSAGES_DB was never bound in
+             production, so there was never a second real inbox to justify
+             its own box — see the swap-buy-prepare.js/HANDOFF.md history) —
+             split back into two real destinations now that messaging
+             actually works, reported live as wanting them separate again.
+             MESSAGE !NB0X (data-profilebox="messages") is just MESSAGES;
+             0FFERS (data-profilebox="offers", reclaiming the value the
+             merged box used to sit under) is just 0FFERS RECE!VED/0UTG0!NG
+             0FFERS — see profileTabPanelMessages/profileTabPanelOffers
+             below. -->
+        <div class="profile-box-grid" id="profileBoxGrid">
+          <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="profiles">
+            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">PR0F!LES</span><span class="flock-account-box-arrow">›</span></div>
+          </div>
+          <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="messages">
+            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">MESSAGE !NB0X</span><span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span><span class="flock-account-box-arrow">›</span></div>
+          </div>
+          <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="offers">
+            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">0FFERS</span><span class="flock-account-box-arrow">›</span></div>
+          </div>
+          <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="collections">
+            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">MY NFTS</span><span class="flock-account-box-arrow">›</span></div>
+          </div>
+          <!-- WATCHL!ST — split out of the MY NFTs/C0LLECT!0NS panel into
+               its own real destination box (reported live) — same real
+               renderProfileWatchlist/profileWatchlistGrid, just its own
+               profileTabPanelWatchlist now instead of living inside
+               profileTabPanelCollections. -->
+          <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="watchlist">
+            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">WATCHL!ST</span><span class="flock-account-box-arrow">›</span></div>
+          </div>
+          <!-- CR0WN REWARDS (reported live, was the real CR0WN P/L
+               leaderboard box) — relabelled and made inert, same C0M!NG
+               S00N treatment as TRANSACT!0N H!ST0RY below. profileTabPanelCrown
+               and its real renderCrownLeaderboard data stay in the markup/JS
+               unused rather than ripped out, in case CR0WN comes back as its
+               own destination later. -->
+          <div class="sw-panel flock-account-box flock-account-box-soon">
+            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">CR0WN REWARDS</span><span class="db-soon">C0M!NG S00N</span></div>
+          </div>
+          <!-- TRANSACT!0N H!ST0RY has no real backend yet — same inert
+               "not yet" treatment as before. -->
+          <div class="sw-panel flock-account-box flock-account-box-soon">
+            <div class="flock-account-box-row"><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">TRANSACT!0N H!ST0RY</span><span class="db-soon">C0M!NG S00N</span></div>
+          </div>
         </div>
-        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="offers">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">0FFERS<span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span></span></div>
-        </div>
-        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="collections">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">MY NFTS</span></div>
-        </div>
-        <!-- WATCHL!ST — split out of the MY NFTs/C0LLECT!0NS panel into
-             its own real destination box (reported live) — same real
-             renderProfileWatchlist/profileWatchlistGrid, just its own
-             profileTabPanelWatchlist now instead of living inside
-             profileTabPanelCollections. -->
-        <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="watchlist">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">WATCHL!ST</span></div>
-        </div>
-        <!-- CR0WN REWARDS (reported live, was the real CR0WN P/L
-             leaderboard box) — relabelled and made inert, same C0M!NG
-             S00N treatment as TRANSACT!0N H!ST0RY below. profileTabPanelCrown
-             and its real renderCrownLeaderboard data stay in the markup/JS
-             unused rather than ripped out, in case CR0WN comes back as its
-             own destination later. -->
-        <div class="sw-panel flock-account-box flock-account-box-soon">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">CR0WN REWARDS</span><span class="db-soon">C0M!NG S00N</span></div>
-        </div>
-        <!-- TRANSACT!0N H!ST0RY has no real backend yet — same inert
-             "not yet" treatment as before. -->
-        <div class="sw-panel flock-account-box flock-account-box-soon">
-          <div class="flock-account-box-row"><span class="flock-account-box-label">TRANSACT!0N H!ST0RY</span><span class="db-soon">C0M!NG S00N</span></div>
-        </div>
+        <!-- Real-data footer readout, reference-flavoured but never
+             fabricated — N0DE is computeNodeCode's own real wallet-address
+             slice (same one Σκύλλα://!DENT!TY uses), P!GE0NS is the real
+             live collection size (state.collectionSizeApprox, already used
+             for ED!T!0N paging elsewhere) — see renderScyllaNavReadout in
+             the JS. -->
+        <div class="scylla-nav-readout" id="scyllaNavReadout"></div>
       </div>
       <!-- PR0F!LES — three real destinations (reported live), none active
            on open (same "wait for a real click before showing anything"
@@ -11160,6 +11324,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'mainframeDexThirdeye','mainframeDexBear','mainframeDexCult','mainframeDexSmoki',
    'topTabs','topTabsWrap','flockTabLabel','scyllaWalletWrap','walletSwitchDropdown','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
+   'scyllaNavStaticBg','scyllaNavReadout',
    'profileBoxGrid','profileTabOffersBadge','profileTabPanelMessages','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
    'profileTabPanelProfiles','profilesSubNav','profilesEditView','profilesSearchView','profilesBackBtn','profileSearchInput','profileSearchResults','profileMessagesBack','profileOffersBack',
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
@@ -11210,6 +11375,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections','profileScreenCoins','profileScreenMessageBtn',
    'profileScreenCode','profileScreenPrivateNotice','profileScreenPublicContent','profileModeToggle','profileScreenDatabaseView','profileScreenShowcase','profileScreenFeatured','profileScreenHistoryBtn',
    'screenWalletHistory','walletHistoryBackBtn','walletHistoryBanner','walletHistoryNote','walletDnaBlock','walletHistoryGraph','walletHistoryFilters','walletHistoryTimeline',
+   'scyllaBootScreen','scyllaBootStaticBg',
    'screenAchievements','achievementsBackBtn','achievementsBanner','achievementsGrid','achievementsTitlesRow','profileScreenAchievementsBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
@@ -11506,11 +11672,25 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (isActiveBtn) buttons[i].scrollIntoView({ behavior:'smooth', inline:'nearest', block:'nearest' });
     }
   }
+  var scyllaBootPlayed = false;
   // skipScroll: the top tab strip's own Σκύλλα button opens PλWS just
   // like clicking it always has, but shouldn't ALSO jump the page down to
   // "SH0W!NG Y0UR P!GE0NS" — reported live as only wanting that jump from
   // a real destination further down, not from opening the tab itself.
   function showTab(tab, skipScroll){
+    // Σκύλλα B00T — a one-time glitch/static reveal, only on the real
+    // first entry into this tab this session (state.activeTab !== tab
+    // guards against the internal re-entrant showTab('mypigeons', true)
+    // calls switchProfileTab's C0LLECT!0NS branch already makes while
+    // already on this tab — same reasoning state.myPigeonsGridOpen exists
+    // as a guard elsewhere). scyllaBootPlayed is a plain in-memory flag —
+    // a hard refresh replaying it once more is the expected/desired
+    // behaviour for a boot moment, not something worth persisting.
+    if (tab === 'mypigeons' && state.activeTab !== 'mypigeons' && !scyllaBootPlayed){
+      scyllaBootPlayed = true;
+      playScyllaBootScreen(function(){ showTab(tab, skipScroll); });
+      return;
+    }
     // 0FFER F0R picking mode (enterTheirsPickMode) legitimately visits
     // DATABASE mid-search, and comes back to PλWS itself once a pick is
     // made — cancel it only when heading somewhere unrelated (T0P 123,
@@ -21266,6 +21446,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // anything") — null matches no real box's data-profilebox, so every
     // box (V!EW PR0F!LE included) starts perfectly neutral.
     switchProfileTab(null);
+    renderScyllaNavReadout();
     if (!MY_WALLET){
       el.profileCurrentWallet.textContent = '';
       el.profileCurrentUsername.textContent = 'C0NNECT Y0UR WALLET F!RST.';
@@ -21302,6 +21483,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       var profile = (data.profiles && data.profiles[MY_WALLET]) || null;
       profileCache[MY_WALLET] = profile;
       renderProfileCurrent(profile);
+      renderScyllaNavReadout();
     }).catch(function(){});
     // PFP/BANNER/FEATURED's own cross-collection NFT grids are lazy now
     // (see ensureCrossCollectionNftsLoaded, called from openProfileEditModal)
@@ -21312,6 +21494,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     // real extra work worth deferring until someone actually clicks in.
     // crossCollectionNftsCache itself persists across visits (session-
     // lifetime, same as myOwnPigeonsCache) rather than resetting here.
+  }
+  // Σκύλλα CRT nav's own footer readout — real data only (see the HTML's
+  // own comment on #scyllaNavReadout): N0DE reuses computeNodeCode's own
+  // literal wallet-address slice (same function Σκύλλα://!DENT!TY already
+  // calls), never fabricated; P!GE0NS reuses state.collectionSizeApprox,
+  // the real live Pigeons collection size already used for ED!T!0N paging
+  // elsewhere. Called once synchronously (works off whatever's cached
+  // already) and again once the real profile fetch in loadProfilePanel
+  // lands (picks up a chosen N0DE C0DE preference, if any).
+  function renderScyllaNavReadout(){
+    var nodeLine = MY_WALLET ? computeNodeCode(MY_WALLET, profileCache[MY_WALLET] && profileCache[MY_WALLET].nodeCode) : '--';
+    el.scyllaNavReadout.innerHTML =
+      '<div class="scylla-nav-readout-line">S!GNAL N0DE // <span>' + escapeHtml(nodeLine) + '</span></div>' +
+      '<div class="scylla-nav-readout-line">SESS!0N ACT!VE :: <span>' + state.collectionSizeApprox + '</span> P!GE0NS</div>';
   }
   // ---- PR0F!LE ED!T popup — one shared overlay, re-paned per field
   // (reported live as wanting the inline SAVE rows and the two picker
@@ -22346,6 +22542,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     loop();
   }
+  // Σκύλλα B00T — see showTab's own guard clause for when this actually
+  // fires (once per session, real first entry only). A deliberately short,
+  // punchy reveal — the point is "the system is waking up," not a splash
+  // screen people wait through — so this is a plain timeout, not tied to
+  // any real loading state.
+  function playScyllaBootScreen(onDone){
+    el.scyllaBootScreen.style.display = 'flex';
+    document.body.classList.add('scylla-boot-open');
+    setTimeout(function(){
+      el.scyllaBootScreen.style.display = 'none';
+      document.body.classList.remove('scylla-boot-open');
+      onDone();
+    }, 1300);
+  }
   // Shareable per-collection link. SERVER_COLLECTION (set only by the
   // pretty /phnixs, /teddybg etc. routes — see renderSwap) wins when
   // present; ?collection=phnixs on plain /static is the fallback for
@@ -22398,6 +22608,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   startStaticCanvas(document.getElementById('achievementsStaticBg'), function(){
     return document.getElementById('screenAchievements').style.display !== 'none';
+  });
+  startStaticCanvas(document.getElementById('scyllaBootStaticBg'), function(){
+    return document.getElementById('scyllaBootScreen').style.display !== 'none';
+  });
+  // Dense static behind the Σκύλλα nav panel itself (see the CRT terminal
+  // nav's own CSS comment) — same isVisible-gated pattern as every other
+  // local static canvas, just gated on the whole tab being open rather
+  // than one specific screen.
+  startStaticCanvas(document.getElementById('scyllaNavStaticBg'), function(){
+    return state.activeTab === 'mypigeons';
   });
 })();
 </script>
