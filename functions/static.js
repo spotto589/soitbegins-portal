@@ -2013,7 +2013,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   @media (max-width:900px){ .scylla-frame-edge{ display:none; } }
   .scylla-nav-panel{ position:relative; border:1px solid var(--cyan-dim); border-radius:0; background:#000; padding:1.25rem 1rem 1.5rem; overflow:hidden; }
-  .scylla-nav-static{ position:absolute; inset:0; width:100%; height:100%; opacity:0.9; mix-blend-mode:screen; animation:static-shake 0.4s steps(2) infinite; }
+  /* Shake slowed from the shared static-shake's own default 0.4s (still
+     used by .scylla-boot-static and every plain-mode local canvas) —
+     reported live as too fast specifically here, next to text people
+     actually read. */
+  .scylla-nav-static{ position:absolute; inset:0; width:100%; height:100%; opacity:0.9; mix-blend-mode:screen; animation:static-shake 1.1s steps(2) infinite; }
   .scylla-nav-panel::before{
     content:'';
     position:absolute;
@@ -22655,26 +22659,44 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       ctx.putImageData(imageData, 0, 0);
     }
-    function drawGlitchStatic(){
+    // magentaP/cyanP/shadeMax control density ("grainy-ness"), frameSkip
+    // controls redraw speed (1 = every frame/~60fps, 3 = every 3rd/~20fps).
+    function drawGlitchStatic(magentaP, cyanP, shadeMax){
       var w = canvas.width, h = canvas.height;
       var imageData = ctx.createImageData(w, h);
       var buffer = imageData.data;
       for (var i = 0; i < buffer.length; i += 4){
         var r = Math.random();
-        if (r < 0.045){
+        if (r < magentaP){
           buffer[i] = 255; buffer[i+1] = 40; buffer[i+2] = 200; // magenta fleck
-        } else if (r < 0.11){
+        } else if (r < cyanP){
           buffer[i] = 40; buffer[i+1] = 225; buffer[i+2] = 225; // cyan fleck
         } else {
-          var shade = Math.random() * 26; // near-black grain, not grey
+          var shade = Math.random() * shadeMax; // near-black grain, not grey
           buffer[i] = shade; buffer[i+1] = shade; buffer[i+2] = shade;
         }
         buffer[i+3] = 255;
       }
       ctx.putImageData(imageData, 0, 0);
     }
+    // 'glitch' (Σκύλλα B00T) keeps its original density/full-rate flicker —
+    // a short, punchy one-time reveal. 'glitch-calm' (the Σκύλλα://SYSTEM
+    // nav panel) is reported live as too grainy/fast for something sat
+    // next to and stared at while reading — flecks roughly halved and the
+    // near-black base capped lower (0-14, was 0-26), redrawn only every
+    // 3rd frame (~20fps, was ~60fps) instead of a full-rate flicker.
+    var glitchFrameSkip = 0;
     function loop(){
-      if (!isVisible || isVisible()) (mode === 'glitch' ? drawGlitchStatic : drawStatic)();
+      if (!isVisible || isVisible()){
+        if (mode === 'glitch'){
+          drawGlitchStatic(0.045, 0.11, 26);
+        } else if (mode === 'glitch-calm'){
+          glitchFrameSkip = (glitchFrameSkip + 1) % 3;
+          if (glitchFrameSkip === 0) drawGlitchStatic(0.02, 0.045, 14);
+        } else {
+          drawStatic();
+        }
+      }
       requestAnimationFrame(loop);
     }
     loop();
@@ -22749,15 +22771,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   startStaticCanvas(document.getElementById('scyllaBootStaticBg'), function(){
     return document.getElementById('scyllaBootScreen').style.display !== 'none';
   }, 'glitch');
-  // Dense static behind the Σκύλλα nav panel itself (see the CRT terminal
-  // nav's own CSS comment) — same isVisible-gated pattern as every other
-  // local static canvas, just gated on the whole tab being open rather
-  // than one specific screen. 'glitch' mode matches the boot screen's own
-  // look (reported live wanting it reused more often) instead of the
-  // plain grey TV static every other local canvas still uses.
+  // Static behind the Σκύλλα nav panel itself (see the CRT terminal nav's
+  // own CSS comment) — same isVisible-gated pattern as every other local
+  // static canvas, just gated on the whole tab being open rather than one
+  // specific screen. 'glitch-calm' (not 'glitch' — see startStaticCanvas's
+  // own comment) since this sits behind text people actually read, not a
+  // one-time full-screen reveal — reported live as too grainy/fast at the
+  // boot screen's own density/speed.
   startStaticCanvas(document.getElementById('scyllaNavStaticBg'), function(){
     return state.activeTab === 'mypigeons';
-  }, 'glitch');
+  }, 'glitch-calm');
 })();
 </script>
 </body>
