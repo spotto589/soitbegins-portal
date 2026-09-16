@@ -23301,6 +23301,66 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (key && COLLECTION_META[key]) enterMainframeCollection(key);
   })();
 
+  // ---- Middle-click / ctrl+click "open in a new tab" (reported live: no
+  // way to middle-click-open cards the way any real link works elsewhere on
+  // the web) — every NFT card/row and wallet link on the site is a plain
+  // div/span with a JS click handler, not a real <a href>, so the browser
+  // never offers this on its own. Rather than rewriting every one of the
+  // ~15 card templates into real anchors (result-card, thumb-offer,
+  // simple-picker-card, th-row, sale-row, profile-*-row, etc. — all already
+  // carry data-nftid/data-wallet for their own delegated click handlers,
+  // see openDetail/openWalletProfile's own callers), one global listener
+  // here reads those same data attributes and opens the equivalent real
+  // deep-link URL (/static?collection=X&pigeon=N or /profile/<wallet>) in a
+  // new tab — same coverage, none of the per-template risk. A real <a
+  // href> already on the page (marketplace buy links, etc.) is left alone —
+  // the browser already handles those correctly. ----
+  function findItemByNftId(nftId){
+    var pools = [state.items, state.scopeAllItems, myNftsAllItems];
+    for (var i = 0; i < pools.length; i++){
+      if (!pools[i]) continue;
+      for (var j = 0; j < pools[i].length; j++){
+        if (pools[i][j].nftId === nftId) return pools[i][j];
+      }
+    }
+    if (state.currentDetail && state.currentDetail.nftId === nftId) return state.currentDetail;
+    return null;
+  }
+  function openInNewTabIfEligible(e){
+    var realLink = e.target.closest('a[href]');
+    if (realLink && realLink.getAttribute('href') && realLink.getAttribute('href') !== '#') return; // already a real link — let the browser handle it
+    var walletNode = e.target.closest('[data-wallet]');
+    if (walletNode){
+      var wallet = walletNode.getAttribute('data-wallet');
+      if (wallet){
+        e.preventDefault();
+        e.stopPropagation(); // ctrl/cmd+click opens a new tab only — doesn't also navigate the current page via the plain 'click' handler underneath
+        window.open('/profile/' + encodeURIComponent(wallet), '_blank', 'noopener');
+        return;
+      }
+    }
+    var nftNode = e.target.closest('[data-nftid]');
+    if (nftNode){
+      var nftId = nftNode.getAttribute('data-nftid');
+      var item = nftId && findItemByNftId(nftId);
+      var num = item ? item.number : null;
+      var key = (item && item.collectionKey) || state.collection;
+      if (num !== null && num !== undefined && key){
+        e.preventDefault();
+        e.stopPropagation();
+        window.open('/static?collection=' + encodeURIComponent(key) + '&pigeon=' + num, '_blank', 'noopener');
+      }
+    }
+  }
+  document.addEventListener('auxclick', function(e){
+    if (e.button !== 1) return; // middle mouse button only
+    openInNewTabIfEligible(e);
+  });
+  document.addEventListener('click', function(e){
+    if (!e.ctrlKey && !e.metaKey) return;
+    openInNewTabIfEligible(e);
+  }, true);
+
   // Shareable Pigeon link — ?pigeon=<number> jumps straight to that
   // Pigeon's detail screen on load, instead of requiring whoever clicks a
   // shared link to search for it themselves. Runs after everything else
