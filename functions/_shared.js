@@ -3316,9 +3316,24 @@ const HIGH_SALE_MAP_KEY = 'pswap:highsale:v4';
 // collection's genuine sale history was invisible, not actually gone.
 const HIGH_SALE_MAP_STAGING_KEY = 'pswap:highsale:staging:v4';
 const HIGH_SALE_STATS_KEY = 'pswap:highsalestats:v4';
-const HIGH_SALE_REFRESH_STALE_SECONDS = 6 * 3600;
+// Was 6h — reported live: a Pigeon that had genuinely just sold still
+// showed "COND!T!ON :: M!NT"/stale avg-sale price for hours afterward.
+// The live map only ever promotes atomically once a FULL pass finishes
+// (see the safeKvPut below — deliberate, so real requests never see a
+// half-rebuilt map, per this file's own HIGH_SALE_MAP_STAGING_KEY
+// comment), so the real latency for a brand-new sale to show up is
+// "time until the next pass starts" (this constant) PLUS "time for that
+// pass to walk the whole sales history" (HIGH_SALE_PAGES_PER_RUN below,
+// paced by the cron-worker's 10-min tick) — cutting only this constant
+// still left a ~70min floor once a pass finally does start, hence
+// HIGH_SALE_PAGES_PER_RUN also being raised alongside it here.
+const HIGH_SALE_REFRESH_STALE_SECONDS = 45 * 60;
 const HIGH_SALE_CONCURRENT_GUARD_SECONDS = 10;
-const HIGH_SALE_PAGES_PER_RUN = 10;
+// Was 10 (500 sales/cron tick, ~7 ticks/~70min to walk ~3200+ sales) —
+// raised to shorten that same completion floor to ~4 ticks/~40min. Keep
+// an eye on Deeptide's own rate limits if this ever needs to go higher —
+// each page here is one real fetchDeeptideSalesHistory call.
+const HIGH_SALE_PAGES_PER_RUN = 16;
 const HIGH_SALE_PAGE_LIMIT = 50; // server-enforced cap on /api/sales/recent
 
 // Same collectionKey/kvKeyFor namespacing as the number map above — this
