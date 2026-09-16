@@ -1518,6 +1518,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-size:17px;
     letter-spacing:0.03em;
     transition:background 0.15s ease;
+    /* Real <a href> now (see walletHrefFor in the JS) so middle-click/
+       ctrl-click "open in new tab" just works — reset the browser's own
+       default link styling since every child span here already sets its
+       own colour. */
+    text-decoration:none;
+    color:inherit;
   }
   .th-row:last-child{ border-bottom:none; }
   .th-row:hover{ background:var(--cyan-faint); }
@@ -2363,6 +2369,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     cursor:pointer;
     transition:border-color 0.15s ease, background 0.15s ease;
+    text-decoration:none; color:inherit;
   }
   .profile-search-row:hover{ border-color:var(--cyan-dim); background:rgba(61,243,236,0.06); }
   .profile-search-row-thumb{
@@ -2690,7 +2697,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .sale-row:hover{ background:var(--cyan-faint); }
   .sale-row:last-child{ border-bottom:none; }
-  .sale-thumb-wrap{ display:flex; align-items:center; gap:0.6rem; min-width:0; }
+  /* Real <a href> when a deep link is available (see nftHrefFor in the
+     JS) — reset link styling since .sale-thumb/.sale-num-box already set
+     their own look. */
+  .sale-thumb-wrap{ display:flex; align-items:center; gap:0.6rem; min-width:0; text-decoration:none; color:inherit; }
   .sale-thumb{ flex:0 0 auto; width:72px; height:72px; border:1px solid var(--border-dim); }
   .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
   .sale-num-box{
@@ -4545,6 +4555,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--grey-disabled);
   }
   .pigeon-img-box img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.25s ease; }
+  /* Real <a href> around just the image (see linkWrap/nftHrefFor in the
+     JS) so middle-click/ctrl-click "open in new tab" works on the card —
+     display:contents so the anchor itself takes no part in .pigeon-img-box's
+     own flex layout, same as if the img were still a direct child; the
+     nested card-select-toggle/watchlist-toggle buttons stay OUTSIDE this
+     anchor as siblings (a real <a> can't validly contain other interactive
+     content like a <button>). */
+  .pigeon-img-link{ display:contents; }
   /* PHN!X art is a real 1200x1403 portrait crop (Deeptide's own source
      images — confirmed live), not the 1024x1024/1080x1080 square every
      other collection's images actually are. The shared box above is a
@@ -8174,7 +8192,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease;
   }
   .simple-picker-card:hover{ border-color:var(--cyan-dim); }
-  .simple-picker-card-img{ aspect-ratio:1; background:#000; cursor:pointer; }
+  /* Real <a href> in mode 'view' only (see nftPickerCardHtml in the JS) —
+     display:block/text-decoration reset covers that case since a plain
+     div is unaffected by either. */
+  .simple-picker-card-img{ aspect-ratio:1; background:#000; cursor:pointer; display:block; text-decoration:none; color:inherit; }
   .simple-picker-card-img img{ width:100%; height:100%; object-fit:cover; display:block; }
   .simple-picker-card-num{ padding:0.5em 0.2em 0.3em; font-size:12px; letter-spacing:0.03em; color:var(--white); }
   .simple-picker-view-btn{
@@ -8838,6 +8859,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      itself fills the whole card edge to edge instead. */
   .mainframe-card-bear .mainframe-card-art{ background-size:180%; }
   .mainframe-card-body{ flex:0 0 auto; padding:0.75rem 1rem 0.85rem; }
+  /* Real <a href> around the label/tag/stats block (PIGEONS card only, see
+     the HTML's own comment) — display:contents so it takes no part in
+     .mainframe-card-body's own block layout, same as if these were still
+     direct children; text-decoration/color reset since each child already
+     sets its own look. */
+  .mainframe-card-label-link{ display:contents; text-decoration:none; color:inherit; }
   /* Letter-spacing bumped from 0.02em to 0.06em and a soft glow in the
      card's own accent colour added — reported live as reading cramped/
      hard to scan at the tighter spacing, especially with "!"/"0" glyphs
@@ -10133,9 +10160,19 @@ const SWAP_HTML = `<!DOCTYPE html>
               </a>
             </div>
             <div class="mainframe-card-body">
-              <div class="mainframe-card-label">$P!GE0NS</div>
-              <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
-              <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
+              <!-- Real <a href> around just the label/tag/stats text (not
+                   the whole card — BUY is a real <button> and the art layer
+                   has its own real <a> DEX link, neither of which can
+                   validly nest inside another <a>) so middle-click/
+                   ctrl-click "open in new tab" works here too, same as the
+                   card's own click-to-enter already does via
+                   enterMainframeCollection/mainframeGrid's delegated
+                   handler. -->
+              <a class="mainframe-card-label-link" href="/static?collection=pigeons">
+                <div class="mainframe-card-label">$P!GE0NS</div>
+                <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
+                <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
+              </a>
               <button type="button" class="mainframe-card-buy" data-collection="pigeons">BUY $P!GE0NS</button>
             </div>
           </div>
@@ -13763,7 +13800,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="result-row-left">' +
           '<div class="result-num">' + collectionItemLabel() + ' ' + num + '</div>' +
           '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
-            img +
+            linkWrap(nftHrefFor(p), 'pigeon-img-link', img) +
             '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
             watchlistToggleHtml(p) +
           '</div>' +
@@ -13844,7 +13881,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">' + collectionItemLabel() + ' ' + num + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
-        img +
+        linkWrap(nftHrefFor(p), 'pigeon-img-link', img) +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
         watchlistBtn +
         listingBadge +
@@ -14008,6 +14045,14 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   function wireResultClicks(container, source){
     container.addEventListener('click', function(e){
+      // .pigeon-img-box now wraps a real <a href> (.pigeon-img-link, see
+      // resultCardHtml/thumbnailCardHtml) so ctrl/cmd+click and middle-
+      // click can open that Pigeon's own deep link in a new tab like any
+      // ordinary link — bail out of every branch below (0FFER F0R picking
+      // included) for a modified click so the browser's native new-tab
+      // open is the only thing that happens, not also whatever this
+      // handler would otherwise do with a plain click.
+      if (e.ctrlKey || e.metaKey) return;
       // 0FFER F0R picking mode (see enterTheirsPickMode) — a click on the
       // image or the "+" toggle selects that Pigeon straight into CREATE
       // OFFER instead of opening the detail screen or the old trade
@@ -14016,6 +14061,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (state.simpleOfferPickingTheirs){
         var pickTarget = e.target.closest('.pigeon-img-box') || e.target.closest('.card-select-toggle');
         if (pickTarget){
+          e.preventDefault();
           var pickedNftId = pickTarget.getAttribute('data-nftid');
           var pickedP = source().filter(function(x){ return x.nftId === pickedNftId; })[0];
           if (pickedP){
@@ -14145,7 +14191,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       var imgBox = e.target.closest('.pigeon-img-box');
-      if (imgBox){ openDetail(imgBox.getAttribute('data-nftid')); return; }
+      if (imgBox){ e.preventDefault(); openDetail(imgBox.getAttribute('data-nftid')); return; }
       // LIST/TRANSFER/DELIST/ACCEPT OFFER — rendered by ownedPigeonAction-
       // Html (own-wallet scope, shared by pigeonsActionBoxHtml/DATABASE
       // and the FL0CK tab so both containers behave identically). LIST
@@ -15168,16 +15214,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       // im in top 123, it should show the banner") — the compact -row
       // size of the same signatureBannerHtml Σκύλλα/DETA!L use, not just
       // a plain wallet-tag short address.
-      return '<div class="th-row' + (i < 15 ? ' th-row-top' : '') + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
+      return '<a class="th-row' + (i < 15 ? ' th-row-top' : '') + '" href="' + escapeHtml(walletHrefFor(h.wallet)) + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
         '<span class="th-rank">' + thumb + '<span>#' + greenNum(i + 1) + '</span></span>' +
         '<span class="th-wallet">' + signatureBannerHtml(h.wallet, 'row') + '</span>' +
         '<span class="th-count"><span class="th-count-amt">' + greenNum(h.count) + ' P!GE0NS</span><span class="th-count-pct">' + (percentStr ? greenNum(percentStr + '%') : '') + '</span></span>' +
-      '</div>';
+      '</a>';
     }).join('');
   }
   el.topHoldersList.addEventListener('click', function(e){
     var row = e.target.closest('.th-row');
-    if (!row) return;
+    if (!row || e.ctrlKey || e.metaKey) return; // ctrl/cmd+click — let the real href open a new tab natively
+    e.preventDefault();
     openWalletProfile(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
   });
 
@@ -15208,16 +15255,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.crownLeaderboardList.innerHTML = crownData.map(function(w, i){
       var isProfit = w.netProfit >= 0;
       var profitStr = (isProfit ? '+' : '−') + Math.abs(w.netProfit).toLocaleString(undefined, { maximumFractionDigits: 2 });
-      return '<div class="th-row" data-wallet="' + escapeHtml(w.wallet) + '" data-short="' + escapeHtml(w.walletShort) + '">' +
+      return '<a class="th-row" href="' + escapeHtml(walletHrefFor(w.wallet)) + '" data-wallet="' + escapeHtml(w.wallet) + '" data-short="' + escapeHtml(w.walletShort) + '">' +
         '<span class="th-rank"><span>#' + greenNum(i + 1) + '</span></span>' +
         '<span class="th-wallet">' + escapeHtml(w.walletShort) + '</span>' +
         '<span class="th-count" style="color:' + (isProfit ? 'var(--green)' : 'var(--magenta)') + '; text-shadow:none;">' + escapeHtml(profitStr) + ' $P!GE0NS</span>' +
-      '</div>';
+      '</a>';
     }).join('');
   }
   el.crownLeaderboardList.addEventListener('click', function(e){
     var row = e.target.closest('.th-row');
-    if (!row) return;
+    if (!row || e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
     openWalletProfile(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
   });
   el.crownPeriodSelect.addEventListener('change', loadCrownLeaderboard);
@@ -18695,6 +18743,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       e.stopPropagation();
       return;
     }
+    // ctrl/cmd+click on the real .mainframe-card-label-link href — let the
+    // browser open it in a new tab natively instead of also SPA-navigating
+    // this tab via enterMainframeCollection below.
+    if (e.ctrlKey || e.metaKey) return;
+    var labelLink = e.target.closest('.mainframe-card-label-link');
+    if (labelLink) e.preventDefault();
     var card = e.target.closest('.mainframe-card[data-collection]');
     if (card){
       enterMainframeCollection(card.getAttribute('data-collection'));
@@ -19201,17 +19255,23 @@ const SWAP_HTML = `<!DOCTYPE html>
       : (s.priceXrp !== null ? s.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?');
     var via = s.via === 'scylla' ? 'Σ SWAP' : (s.via === 'xrpcafe' ? 'XRP.CAFE' : (s.via === 'deeptide' ? 'DEEPT!DE' : ''));
     var when = s.createdAt ? relativeTimeText(s.createdAt) : '';
+    var thumbHref = nftHrefFor({ number: s.number, collectionKey: s.collectionKey });
     return '<div class="sale-row" data-nftid="' + escapeHtml(s.nftId) + '">' +
-      '<div class="sale-thumb-wrap">' +
-        '<div class="sale-thumb" data-nftid="' + escapeHtml(s.nftId) + '">' + thumb + '</div>' +
-        '<div class="sale-num-box" data-nftid="' + escapeHtml(s.nftId) + '">P!GE0N ' + num + '</div>' +
-      '</div>' +
+      (thumbHref
+        ? '<a class="sale-thumb-wrap" href="' + escapeHtml(thumbHref) + '" data-nftid="' + escapeHtml(s.nftId) + '">' +
+            '<div class="sale-thumb">' + thumb + '</div>' +
+            '<div class="sale-num-box">P!GE0N ' + num + '</div>' +
+          '</a>'
+        : '<div class="sale-thumb-wrap">' +
+            '<div class="sale-thumb">' + thumb + '</div>' +
+            '<div class="sale-num-box">P!GE0N ' + num + '</div>' +
+          '</div>') +
       '<div class="sale-price-cell">' +
         '<div class="sale-price">' + price + '</div>' +
         (via ? '<div class="sale-via">' + via + '</div>' : '') +
       '</div>' +
       '<div class="sale-from">' +
-        (s.seller ? '<a data-wallet="' + escapeHtml(s.seller) + '" data-short="' + escapeHtml(s.sellerShort || s.seller) + '">' + walletTagHtml(s.seller, s.sellerShort) + '</a>' : '?') +
+        (s.seller ? '<a href="' + escapeHtml(walletHrefFor(s.seller)) + '" data-wallet="' + escapeHtml(s.seller) + '" data-short="' + escapeHtml(s.sellerShort || s.seller) + '">' + walletTagHtml(s.seller, s.sellerShort) + '</a>' : '?') +
       '</div>' +
       '<div class="sale-to">' +
         (s.buyer ? '<a data-wallet="' + escapeHtml(s.buyer) + '" data-short="' + escapeHtml(s.buyerShort || s.buyer) + '">' + walletTagHtml(s.buyer, s.buyerShort) + '</a>' : '?') +
@@ -19272,7 +19332,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   document.addEventListener('click', function(e){
     if (!el.salesArea.contains(e.target)) return;
     var walletLink = e.target.closest('.sale-from a, .sale-to a');
-    if (walletLink){ openWalletProfile(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short')); return; }
+    if (walletLink){
+      if (e.ctrlKey || e.metaKey) return; // let the real href open a new tab natively
+      e.preventDefault();
+      openWalletProfile(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short'));
+      return;
+    }
+    var thumbLink = e.target.closest('.sale-thumb-wrap');
+    if (thumbLink && thumbLink.tagName === 'A'){
+      if (e.ctrlKey || e.metaKey) return;
+      e.preventDefault();
+      openDetail(thumbLink.getAttribute('data-nftid'));
+      return;
+    }
     var row = e.target.closest('.sale-row');
     if (row) openDetail(row.getAttribute('data-nftid'));
   }, true);
@@ -19798,14 +19870,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // MESSAGE link removed — messaging is paused (MESSAGES_DB was never
     // bound in production, see the MESSAGE !NB0X account box's own
     // comment), so this would only ever dead-end at a broken page.
-    el.detailOwner.innerHTML = '<span class="do-label">0WNED BY</span><a class="owner-link" href="#" data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '" title="V!EW TH!S WALLET\\'S FULL P!GE0N C0LLECT!0N">' + walletTagHtml(full, short) + '</a>';
+    el.detailOwner.innerHTML = '<span class="do-label">0WNED BY</span><a class="owner-link" href="' + escapeHtml(walletHrefFor(full)) + '" data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '" title="V!EW TH!S WALLET\\'S FULL P!GE0N C0LLECT!0N">' + walletTagHtml(full, short) + '</a>';
   }
   // Clicking the owner address on INSPECT jumps straight into that
   // wallet's real PR0F!LE now (same as every other wallet link on the
   // site), not an external explorer.
   el.detailOwner.addEventListener('click', function(e){
     var link = e.target.closest('.owner-link');
-    if (!link) return;
+    if (!link || e.ctrlKey || e.metaKey) return; // ctrl/cmd+click — let the real href open a new tab natively
     e.preventDefault();
     openWalletProfile(link.getAttribute('data-wallet'), link.getAttribute('data-short'));
   });
@@ -19968,7 +20040,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Deeptide's per-token history endpoint) ----
   function walletLinkHtml(full, short){
     if (!full) return '';
-    return '<a data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '">' + walletTagHtml(full, short) + '</a>';
+    return '<a href="' + escapeHtml(walletHrefFor(full)) + '" data-wallet="' + escapeHtml(full) + '" data-short="' + escapeHtml(short || full) + '">' + walletTagHtml(full, short) + '</a>';
   }
   // Reads as a plain sentence per event — TRANSFERRED TO wallet, MINTED
   // BY wallet — instead of a cramped data table. Deeptide's history is
@@ -20035,7 +20107,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     // historyRowHtml's own table layout) — one shared selector covers
     // all three.
     var walletLink = e.target.closest('.dh-party a[data-wallet]');
-    if (walletLink) openWalletProfile(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short'));
+    if (!walletLink || e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
+    openWalletProfile(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short'));
   });
 
   // Where the grid was scrolled to right before opening a Pigeon's detail
@@ -20986,7 +21060,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.myNftsGridItems.addEventListener('click', function(e){
     var pick = e.target.closest('.profile-nft-pick');
-    if (!pick) return;
+    if (!pick || e.ctrlKey || e.metaKey) return; // ctrl/cmd+click — let the real href open a new tab natively
+    e.preventDefault();
     var nftId = pick.getAttribute('data-nftid');
     // Same pattern el.profileWatchlistGrid's own tile click already uses —
     // openDetail/#screenDetail expects state.collection to already match
@@ -21949,13 +22024,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     el.profileSearchResults.innerHTML = results.map(function(r){
       var short = r.wallet.slice(0, 9) + '...' + r.wallet.slice(-4);
-      return '<div class="profile-search-row" data-wallet="' + escapeHtml(r.wallet) + '" data-short="' + escapeHtml(short) + '">' +
+      return '<a class="profile-search-row" href="' + escapeHtml(walletHrefFor(r.wallet)) + '" data-wallet="' + escapeHtml(r.wallet) + '" data-short="' + escapeHtml(short) + '">' +
         '<div class="profile-search-row-thumb"' + (r.pfpImage ? ' style="background-image:url(' + escapeHtml(r.pfpImage) + ')"' : '') + '></div>' +
         '<div class="profile-search-row-text">' +
           '<div class="profile-search-row-name">' + escapeHtml(r.username || short) + '</div>' +
           '<div class="profile-search-row-wallet">' + escapeHtml(r.wallet) + '</div>' +
         '</div>' +
-      '</div>';
+      '</a>';
     }).join('');
   }
   el.profileSearchInput.addEventListener('input', function(){
@@ -21974,7 +22049,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.profileSearchResults.addEventListener('click', function(e){
     var row = e.target.closest('.profile-search-row');
-    if (!row) return;
+    if (!row || e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
     switchProfileTab(null);
     openWalletProfile(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
   });
@@ -22415,8 +22491,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     var meta = COLLECTION_META[p.collectionKey];
     var badge = meta ? '<span class="picker-card-collection-badge">' + escapeHtml(meta.label) + '</span>' : '';
     var selected = selectedIds.indexOf(p.nftId) !== -1;
+    // Only mode 'view' (MY NFTS' own owned grid) is "click to look at this
+    // NFT" — pfp/banner/select modes are pickers where a click should
+    // choose the image, not navigate away, so those stay plain divs.
+    var imgTag = 'view' === mode ? 'a' : 'div';
+    var hrefAttr = 'view' === mode ? ' href="' + escapeHtml(nftHrefFor(p)) + '"' : '';
     return '<div class="simple-picker-card' + (selected ? ' simple-picker-card-selected' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      '<div class="simple-picker-card-img profile-nft-pick" data-nftid="' + escapeHtml(p.nftId) + '" data-mode="' + mode + '">' + badge + (p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '') + '</div>' +
+      '<' + imgTag + ' class="simple-picker-card-img profile-nft-pick" data-nftid="' + escapeHtml(p.nftId) + '" data-mode="' + mode + '"' + hrefAttr + '>' + badge + (p.image ? '<img src="' + escapeHtml(p.image) + '" alt="" loading="lazy">' : '') + '</' + imgTag + '>' +
       '<div class="simple-picker-card-num">' + (meta ? escapeHtml(meta.itemLabel) : '') + ' ' + itemNumberLabel(p) + '</div>' +
     '</div>';
   }
@@ -23301,65 +23382,33 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (key && COLLECTION_META[key]) enterMainframeCollection(key);
   })();
 
-  // ---- Middle-click / ctrl+click "open in a new tab" (reported live: no
-  // way to middle-click-open cards the way any real link works elsewhere on
-  // the web) — every NFT card/row and wallet link on the site is a plain
-  // div/span with a JS click handler, not a real <a href>, so the browser
-  // never offers this on its own. Rather than rewriting every one of the
-  // ~15 card templates into real anchors (result-card, thumb-offer,
-  // simple-picker-card, th-row, sale-row, profile-*-row, etc. — all already
-  // carry data-nftid/data-wallet for their own delegated click handlers,
-  // see openDetail/openWalletProfile's own callers), one global listener
-  // here reads those same data attributes and opens the equivalent real
-  // deep-link URL (/static?collection=X&pigeon=N or /profile/<wallet>) in a
-  // new tab — same coverage, none of the per-template risk. A real <a
-  // href> already on the page (marketplace buy links, etc.) is left alone —
-  // the browser already handles those correctly. ----
-  function findItemByNftId(nftId){
-    var pools = [state.items, state.scopeAllItems, myNftsAllItems];
-    for (var i = 0; i < pools.length; i++){
-      if (!pools[i]) continue;
-      for (var j = 0; j < pools[i].length; j++){
-        if (pools[i][j].nftId === nftId) return pools[i][j];
-      }
-    }
-    if (state.currentDetail && state.currentDetail.nftId === nftId) return state.currentDetail;
-    return null;
+  // Real deep-link href for an NFT card/row — used to turn the plain
+  // data-nftid divs/anchors below into genuine <a href> elements (see the
+  // "real links, not a global click hack" note further down) so
+  // middle-click/ctrl-click/right-click "open in new tab" all just work,
+  // the same as any ordinary link on the web. Falls back to the currently
+  // active collection when a specific item doesn't carry its own
+  // collectionKey (most in-DATABASE cards don't need one — they're already
+  // all the same collection).
+  function nftHrefFor(p){
+    if (!p || p.number === null || p.number === undefined) return null;
+    var key = p.collectionKey || state.collection;
+    return key ? ('/static?collection=' + encodeURIComponent(key) + '&pigeon=' + p.number) : null;
   }
-  function openInNewTabIfEligible(e){
-    var realLink = e.target.closest('a[href]');
-    if (realLink && realLink.getAttribute('href') && realLink.getAttribute('href') !== '#') return; // already a real link — let the browser handle it
-    var walletNode = e.target.closest('[data-wallet]');
-    if (walletNode){
-      var wallet = walletNode.getAttribute('data-wallet');
-      if (wallet){
-        e.preventDefault();
-        e.stopPropagation(); // ctrl/cmd+click opens a new tab only — doesn't also navigate the current page via the plain 'click' handler underneath
-        window.open('/profile/' + encodeURIComponent(wallet), '_blank', 'noopener');
-        return;
-      }
-    }
-    var nftNode = e.target.closest('[data-nftid]');
-    if (nftNode){
-      var nftId = nftNode.getAttribute('data-nftid');
-      var item = nftId && findItemByNftId(nftId);
-      var num = item ? item.number : null;
-      var key = (item && item.collectionKey) || state.collection;
-      if (num !== null && num !== undefined && key){
-        e.preventDefault();
-        e.stopPropagation();
-        window.open('/static?collection=' + encodeURIComponent(key) + '&pigeon=' + num, '_blank', 'noopener');
-      }
-    }
+  function walletHrefFor(wallet){
+    return wallet ? ('/profile/' + encodeURIComponent(wallet)) : null;
   }
-  document.addEventListener('auxclick', function(e){
-    if (e.button !== 1) return; // middle mouse button only
-    openInNewTabIfEligible(e);
-  });
-  document.addEventListener('click', function(e){
-    if (!e.ctrlKey && !e.metaKey) return;
-    openInNewTabIfEligible(e);
-  }, true);
+  // Wraps innerHtml in a real <a href> when href resolves, else leaves it
+  // as a plain <span> — used for the primary "view this card" thumbnail
+  // inside a card that also has its own nested buttons (select/watchlist
+  // toggles etc.), so those buttons stay outside the anchor (real <a>
+  // elements can't validly contain other interactive content like
+  // <button>) while the thumbnail itself is still a genuine link.
+  function linkWrap(href, className, innerHtml){
+    return href
+      ? '<a class="' + className + '" href="' + escapeHtml(href) + '">' + innerHtml + '</a>'
+      : '<span class="' + className + '">' + innerHtml + '</span>';
+  }
 
   // Shareable Pigeon link — ?pigeon=<number> jumps straight to that
   // Pigeon's detail screen on load, instead of requiring whoever clicks a
