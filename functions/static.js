@@ -29,10 +29,25 @@ const SWAP_HTML = `<!DOCTYPE html>
 <title>Σκύλλα</title>
 <!-- Browser-tab title above, and og:title/twitter:title below for the
      shareable-link preview (Discord/X/iMessage etc unfurl these, not the
-     <title> tag) — both just "Σκύλλα", not "Σκύλλα :: SWAP". -->
-<meta property="og:title" content="Σκύλλα">
+     <title> tag) — plain "Σκύλλα" site-wide by default, but renderSwap
+     (see the bottom of this file) substitutes these __SWAP_OG_*__ tokens
+     with a specific NFT's own title/image/description whenever the
+     request carries a real ?collection=X&pigeon=N (reported live: "each
+     nft doesn't have its own link" / "share button isn't working
+     properly" — the URL itself already deep-linked correctly once opened,
+     but every shared link unfurled with the same generic site branding
+     since these tags never varied per request before). Crawlers
+     (Discord/X/iMessage/Slack) only ever read this server-rendered HTML,
+     never the client JS, so this substitution has to happen here, not by
+     updating the tags after the page loads. -->
+<meta property="og:title" content="__SWAP_OG_TITLE__">
 <meta property="og:site_name" content="Σκύλλα">
-<meta name="twitter:title" content="Σκύλλα">
+<meta property="og:description" content="__SWAP_OG_DESC__">
+<meta property="og:image" content="__SWAP_OG_IMAGE__">
+<meta name="twitter:card" content="__SWAP_OG_CARD__">
+<meta name="twitter:title" content="__SWAP_OG_TITLE__">
+<meta name="twitter:description" content="__SWAP_OG_DESC__">
+<meta name="twitter:image" content="__SWAP_OG_IMAGE__">
 <!-- Home-screen icon when saved as an app on mobile — previously had no
      icon/manifest tags at all, so iOS/Android fell back to a screenshot
      thumbnail of whatever was on screen. apple-touch-icon covers iOS
@@ -2061,6 +2076,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
   }
   .profile-watchlist-tile img{ width:100%; height:100%; object-fit:cover; display:block; }
+  /* Real <a href> around the image/label (see linkWrap/nftHrefFor in the
+     JS) — display:contents so it takes no part in the tile's own layout;
+     .profile-watchlist-remove stays a sibling outside it. */
+  .profile-watchlist-tile-link{ display:contents; text-decoration:none; color:inherit; }
   .profile-watchlist-tile:hover{ border-color:var(--cyan-dim); }
   .profile-watchlist-num{
     position:absolute;
@@ -4553,6 +4572,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-size:10px;
     letter-spacing:0.1em;
     color:var(--grey-disabled);
+    /* .my-offer-row-img (MY PIGEONS' OFFERS RECEIVED list) is this same
+       class on a real <a> now when it has a deep link — text-decoration
+       reset covers that case, harmless for every other plain-div use. */
+    text-decoration:none;
   }
   .pigeon-img-box img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.25s ease; }
   /* Real <a href> around just the image (see linkWrap/nftHrefFor in the
@@ -15393,9 +15416,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       var itemCollection = item.collection || 'pigeons';
       var itemMeta = COLLECTION_META[itemCollection] || COLLECTION_META.pigeons;
       var numLabel = item.number !== null ? '#' + greenNum(item.number) : (item.name ? escapeHtml(item.name) : '...');
+      var offerRowHref = nftHrefFor({ number: item.number, collectionKey: itemCollection });
       return '<div class="my-offer-row">' +
         '<div class="my-offer-row-left">' +
-          '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + row.img + '</div>' +
+          '<' + (offerRowHref ? 'a' : 'div') + ' class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '"' + (offerRowHref ? ' href="' + escapeHtml(offerRowHref) + '"' : '') + '>' + row.img + '</' + (offerRowHref ? 'a' : 'div') + '>' +
           '<div class="my-offer-row-info">' +
             '<div class="my-offer-row-num">' + escapeHtml(itemMeta.itemLabel) + ' ' + numLabel + '</div>' +
             '<div class="my-offer-row-buyer">FR0M ' + walletTagHtml(top.buyer, top.buyerShort) + '</div>' +
@@ -17985,9 +18009,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       var countdown = listingCountdownText(item.expiration);
       var itemCollection = item.collection || 'pigeons';
       var itemMeta = COLLECTION_META[itemCollection] || COLLECTION_META.pigeons;
+      var outgoingRowHref = nftHrefFor({ number: item.number, collectionKey: itemCollection });
       return '<div class="my-offer-row">' +
         '<div class="my-offer-row-left">' +
-          '<div class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '">' + img + '</div>' +
+          '<' + (outgoingRowHref ? 'a' : 'div') + ' class="pigeon-img-box my-offer-row-img" data-nftid="' + escapeHtml(item.nftId) + '"' + (outgoingRowHref ? ' href="' + escapeHtml(outgoingRowHref) + '"' : '') + '>' + img + '</' + (outgoingRowHref ? 'a' : 'div') + '>' +
           '<div class="my-offer-row-info">' +
             '<div class="my-offer-row-num">' + escapeHtml(itemMeta.itemLabel) + ' ' + itemNumberLabel(item) + '</div>' +
             '<div class="my-offer-row-buyer">T0 ' + walletTagHtml(item.ownerWallet, item.ownerShort) + (countdown ? ' :: ' + escapeHtml(countdown) : '') + '</div>' +
@@ -18001,6 +18026,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).join('');
   }
   el.outgoingOffersList.addEventListener('click', function(e){
+    // .pigeon-img-box here now carries a real deep-link href (see
+    // nftHrefFor above) — previously a dead click with no handler at all;
+    // wire it the same way wireResultClicks' own .pigeon-img-box branch
+    // does, or a plain click would fall through to the browser's own full
+    // navigation instead of opening the in-app detail overlay.
+    if (e.ctrlKey || e.metaKey) return;
+    var imgBox = e.target.closest('.pigeon-img-box');
+    if (imgBox){
+      e.preventDefault();
+      var nftId = imgBox.getAttribute('data-nftid');
+      var matchItem = outgoingOffersData && outgoingOffersData.filter(function(x){ return x.nftId === nftId; })[0];
+      var itemColl = (matchItem && matchItem.collection) || 'pigeons';
+      if (itemColl !== state.collection) switchCollection(itemColl);
+      openDetail(nftId);
+      return;
+    }
     var btn = e.target.closest('.cancel-outgoing-offer-btn');
     if (!btn || btn.disabled) return;
     cancelOfferTarget = {
@@ -20324,13 +20365,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.backToBrowseBtnTop.addEventListener('click', goBackFromDetail);
   el.detailBackBtnBottom.addEventListener('click', goBackFromDetail);
-  // Copies a real, working ?pigeon=N link (see the deep-link handler near
-  // the bottom of this script) — the number, not the NFT ID, since that's
-  // what anyone sharing/reading it actually recognizes.
+  // Copies a real, working ?collection=X&pigeon=N link (see the deep-link
+  // handler near the bottom of this script) — the number, not the NFT ID,
+  // since that's what anyone sharing/reading it actually recognizes. Was
+  // missing &collection= entirely (reported live as "share button isn't
+  // working properly") — worked by accident only for the default
+  // collection; sharing a Pigeon from any other collection silently
+  // resolved against the wrong one (or nothing) once opened fresh.
   el.detailShareBtn.addEventListener('click', function(){
     var num = state.currentDetail && state.currentDetail.number;
     if (!num) return;
-    var url = window.location.origin + '/static?pigeon=' + num;
+    var key = (state.currentDetail && state.currentDetail.collectionKey) || state.collection;
+    var url = window.location.origin + '/static?collection=' + encodeURIComponent(key) + '&pigeon=' + num;
     var showCopied = function(){
       el.detailShareBtn.textContent = 'C0P!ED';
       setTimeout(function(){ el.detailShareBtn.textContent = 'SHARE'; }, 1500);
@@ -21607,9 +21653,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.profileWatchlistGrid.innerHTML = list.map(function(w){
       var img = w.image ? '<img src="' + escapeHtml(w.image) + '" alt="" loading="lazy">' : '';
       var label = w.number !== null && w.number !== undefined ? '#' + w.number : (w.name ? escapeHtml(w.name) : '');
+      var tileHref = nftHrefFor({ number: w.number, collectionKey: w.collection });
       return '<div class="profile-watchlist-tile" data-nftid="' + escapeHtml(w.nftId) + '" data-collection="' + escapeHtml(w.collection || '') + '">' +
-        img +
-        (label ? '<div class="profile-watchlist-num">' + label + '</div>' : '') +
+        linkWrap(tileHref, 'profile-watchlist-tile-link', img + (label ? '<div class="profile-watchlist-num">' + label + '</div>' : '')) +
         '<button type="button" class="profile-watchlist-remove" data-nftid="' + escapeHtml(w.nftId) + '" title="REM0VE">&times;</button>' +
       '</div>';
     }).join('');
@@ -21635,7 +21681,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     var tile = e.target.closest('.profile-watchlist-tile');
-    if (!tile) return;
+    if (!tile || e.ctrlKey || e.metaKey) return; // ctrl/cmd+click — let the real href open a new tab natively
+    e.preventDefault();
     var nftId = tile.getAttribute('data-nftid');
     var collection = tile.getAttribute('data-collection');
     // openDetail's own follow-up api({detail}) call defaults to
@@ -23462,6 +23509,50 @@ const SWAP_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+function escapeHtmlAttr(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+const DEFAULT_OG_IMAGE_PATH = '/assets/icons/icon-512.png';
+
+// A shared link (SHARE on the detail screen, or any ?collection=X&pigeon=N
+// URL, see nftHrefFor/detailShareBtn in the client script above) used to
+// unfurl with plain site-wide branding every time — reported live as
+// "each nft doesn't have its own link" / "share button isn't working
+// properly." The URL itself already deep-linked to the right Pigeon once
+// opened; what was missing is that Discord/X/iMessage/Slack link previews
+// only ever read THIS server-rendered HTML's og:/twitter: tags, never the
+// client JS that would otherwise update them after load — so every shared
+// link looked identical no matter which Pigeon it pointed to. One extra
+// same-origin fetch, only when a real ?pigeon= is present (a plain /static
+// visit or a pretty collection route never pays this cost).
+async function resolveOgTags(request, presetCollection) {
+  const url = new URL(request.url);
+  const pigeonParam = url.searchParams.get('pigeon');
+  const num = pigeonParam ? parseInt(pigeonParam, 10) : null;
+  if (!num || num < 1) {
+    return { title: 'Σκύλλα', desc: 'Σκύλλα :: MA!NFRAME — real-time NFT collection database, floor prices, rarity and trades.', image: url.origin + DEFAULT_OG_IMAGE_PATH, card: 'summary' };
+  }
+  const collection = presetCollection || url.searchParams.get('collection') || 'pigeons';
+  try {
+    const apiUrl = new URL('/api/pigeons', url.origin);
+    apiUrl.searchParams.set('collection', collection);
+    apiUrl.searchParams.set('number', String(num));
+    const r = await fetch(apiUrl.toString());
+    const data = await r.json();
+    const item = data && data.items && data.items[0];
+    if (item && item.image) {
+      return {
+        title: '#' + num + ' — Σκύλλα',
+        desc: 'View real-time floor price, rarity and trade history for this NFT on Σκύλλα.',
+        image: item.image,
+        card: 'summary_large_image'
+      };
+    }
+  } catch (e) { /* falls through to the generic default below */ }
+  return { title: 'Σκύλλα', desc: 'Σκύλλα :: MA!NFRAME — real-time NFT collection database, floor prices, rarity and trades.', image: url.origin + DEFAULT_OG_IMAGE_PATH, card: 'summary' };
+}
+
 // Shared by the plain /static route below, the pretty per-collection
 // routes (functions/pigeons.js, functions/phnixs.js, etc.), and the
 // per-wallet PR0F!LE route (functions/profile/[wallet].js) — same page,
@@ -23480,10 +23571,15 @@ export async function renderSwap(context, presetCollection, presetProfileWallet)
       if (payload && payload.acct) wallet = payload.acct;
     }
   }
+  const og = await resolveOgTags(request, presetCollection);
   const html = SWAP_HTML
     .replace('"__SWAP_WALLET__"', JSON.stringify(wallet))
     .replace('"__SWAP_COLLECTION__"', JSON.stringify(presetCollection || null))
-    .replace('"__SWAP_PROFILE_WALLET__"', JSON.stringify(presetProfileWallet || null));
+    .replace('"__SWAP_PROFILE_WALLET__"', JSON.stringify(presetProfileWallet || null))
+    .replace(/__SWAP_OG_TITLE__/g, escapeHtmlAttr(og.title))
+    .replace(/__SWAP_OG_DESC__/g, escapeHtmlAttr(og.desc))
+    .replace(/__SWAP_OG_IMAGE__/g, escapeHtmlAttr(og.image))
+    .replace('__SWAP_OG_CARD__', escapeHtmlAttr(og.card));
   return new Response(html, { headers: { 'Content-Type': 'text/html' } });
 }
 
