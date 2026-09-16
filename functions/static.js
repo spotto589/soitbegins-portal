@@ -692,7 +692,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      properties are simply inert on grid items), left in rather than
      stripped out to keep this diff about the chamfer, not a cleanup. */
   .flock-account-box{ flex:1 1 0; min-height:0; padding:0.6rem 1.5rem 0.6rem 1.1rem; display:flex; align-items:center; border-radius:0; background:rgba(2,3,4,0.88); clip-path:polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%); }
-  .flock-account-box-row{ display:flex; align-items:center; justify-content:flex-start; gap:0.7rem; width:100%; text-align:left; }
+  .flock-account-box-row{ display:flex; align-items:center; justify-content:center; gap:0.7rem; width:100%; text-align:center; }
   /* Reported live as "too generic... just rectangle boxes" — one real
      icon per destination (a person badge for PR0F!LES, an envelope for
      MESSAGE !NB0X, etc — see the HTML's own comment on each row), plain
@@ -734,7 +734,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .flock-account-box-clickable:nth-child(3) .flock-account-box-prefix, .flock-account-box-clickable:nth-child(3) .flock-account-box-label{ animation-delay:0s, -3.2s; }
   .flock-account-box-clickable:nth-child(4) .flock-account-box-prefix, .flock-account-box-clickable:nth-child(4) .flock-account-box-label{ animation-delay:0s, -4.8s; }
   .flock-account-box-clickable:nth-child(5) .flock-account-box-prefix, .flock-account-box-clickable:nth-child(5) .flock-account-box-label{ animation-delay:0s, -6.4s; }
-  .flock-account-box-arrow{ font-size:16px; color:var(--cyan); flex:0 0 auto; margin-left:auto; }
+  .flock-account-box-arrow{ font-size:16px; color:var(--cyan); flex:0 0 auto; }
   .flock-account-box-clickable{ position:relative; overflow:hidden; cursor:pointer; border-color:var(--border-mid); transition:border-color 0.15s ease, background 0.15s ease; }
   /* Left accent bar — the row's own state indicator (reference image's
      own language: thin/dim at rest, brighter on hover, thick/solid on the
@@ -3748,12 +3748,16 @@ const SWAP_HTML = `<!DOCTYPE html>
        button got bumped up to suit its fuller label. Whole bar trimmed a
        little smaller again after that (reported live) — 19px/1em padding
        was reading as oversized once it was sitting fixed at the bottom
-       of every scroll. */
+       of every scroll. Bumped back up again (reported live: "make the
+       button text way bigger") — 16px was reading as too small once it
+       had settled in at the bottom of the page; ellipsis (below) still
+       catches F!LTER BY TRA!TS ▾ if it ever runs out of room at this
+       size on a narrow phone. */
     font-weight:800;
-    font-size:16px;
+    font-size:22px;
     letter-spacing:0.06em;
     text-transform:uppercase;
-    padding:0.75em 0.5em;
+    padding:0.7em 0.35em;
     cursor:pointer;
     white-space:nowrap;
     overflow:hidden;
