@@ -8133,6 +8133,28 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Fixed scroll height (not just overflow:auto with no bound) — 4 across,
      tall enough to read each thumbnail clearly, scrolling down through
      the rest rather than the whole modal growing past the viewport. */
+  /* MY NFTS' own owned-only sort/filter/search row (renderMyNftsControls in
+     the JS) — plain flex-wrap of the same select.sort-select/.edition-toggle
+     controls DATABASE already uses, just laid out compactly above the
+     in-page owned grid instead of DATABASE's own dedicated config box. */
+  .my-nfts-controls{ flex-wrap:wrap; gap:0.6rem; margin-bottom:0.75rem; }
+  .my-nfts-controls .search-row{ flex:1 1 200px; }
+  .my-nfts-controls select.sort-select{ flex:1 1 220px; width:auto; }
+  .my-nfts-traits-row{ display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.6rem; }
+  .my-nfts-traits-row select.sort-select{ flex:1 1 160px; width:auto; }
+  .my-nfts-trait-chips{ display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem; }
+  .my-nfts-trait-chips:empty{ margin-bottom:0; }
+  .my-nfts-trait-chip{
+    display:inline-flex; align-items:center; gap:0.4rem;
+    border:1px solid var(--cyan-dim); border-radius:var(--radius);
+    background:var(--cyan-faint); color:var(--cyan);
+    font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em;
+    text-transform:uppercase; padding:0.4em 0.5em 0.4em 0.7em;
+  }
+  .my-nfts-trait-chip button{
+    background:none; border:none; color:var(--cyan); cursor:pointer;
+    font-size:14px; line-height:1; padding:0;
+  }
   .simple-picker-grid{
     overflow-y:auto;
     max-height:min(58vh, 640px);
@@ -9796,6 +9818,31 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
         <div id="myNftsGrid" style="display:none;">
           <button type="button" class="profile-holdings-viewmore" id="myNftsGridBackBtn">← C0LLECT!0NS</button>
+          <!-- Owned-only sort/filter/search — real filtering over the
+               already-fetched owned list (myNftsAllItems), same comparator/
+               trait-match logic DATABASE's own wallet-scope query uses
+               (sortComparatorFor), just kept independent from state/el so
+               picking a collection here can never clobber DATABASE's own
+               in-progress browse. See renderMyNftsControls/applyMyNftsQuery
+               in the JS. -->
+          <div class="results-header-row my-nfts-controls">
+            <div class="search-row">
+              <input class="search-input" id="myNftsSearchInput" placeholder="# 0R TRA!T">
+              <button class="input-clear-btn" type="button" id="myNftsSearchClearBtn" title="CLEAR">×</button>
+            </div>
+            <div class="edition-toggle" id="myNftsEditionToggle">
+              <button type="button" class="edition-btn active" data-value="ALL">ALL</button>
+              <button type="button" class="edition-btn" data-value="LOW">1ST ED!T!0N</button>
+              <button type="button" class="edition-btn" data-value="HIGH">2ND ED!T!0N</button>
+            </div>
+            <select class="sort-select" id="myNftsSortSelect"></select>
+          </div>
+          <div class="my-nfts-traits-row">
+            <select class="sort-select" id="myNftsTraitCatSelect"><option value="">TRA!T CATEG0RY</option></select>
+            <select class="sort-select" id="myNftsTraitValSelect" disabled><option value="">TRA!T VALUE</option></select>
+            <button type="button" class="bar-btn" id="myNftsTraitAddBtn">ADD F!LTER</button>
+          </div>
+          <div id="myNftsTraitChips" class="my-nfts-trait-chips"></div>
           <div id="myNftsGridStatus" class="th-empty" style="display:none;"></div>
           <div class="simple-picker-grid" id="myNftsGridItems"></div>
         </div>
@@ -11721,6 +11768,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'scyllaNavStaticBg','scyllaNavReadout',
    'profileBoxGrid','profileTabOffersBadge','profileTabPanelMessages','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
    'profileTabPanelMyNfts','myNftsPicker','myNftsPickerGrid','myNftsGrid','myNftsGridBackBtn','myNftsGridStatus','myNftsGridItems','myNftsBackBtn',
+   'myNftsSearchInput','myNftsSearchClearBtn','myNftsEditionToggle','myNftsSortSelect','myNftsTraitCatSelect','myNftsTraitValSelect','myNftsTraitAddBtn','myNftsTraitChips',
    'profileTabPanelProfiles','profilesSubNav','profilesEditView','profilesSearchView','profilesBackBtn','profileSearchInput','profileSearchResults','profileMessagesBack','profileOffersBack',
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
@@ -20421,6 +20469,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // currently loaded into #myNftsGridItems (see switchProfileTab's 'mynfts'
   // branch and openMyNftsCollection/backToMyNftsPicker below).
   var myNftsPickedCollection = null;
+  // Owned-only sort/filter/search state for the MY NFTS in-page grid — kept
+  // entirely separate from the global state/searchInput object DATABASE
+  // uses so opening a collection here never touches an in-progress DATABASE
+  // browse underneath. myNftsAllItems is the raw fetch (unfiltered); the
+  // rest describe the current query over it (see applyMyNftsQuery below).
+  var myNftsAllItems = [];
+  var myNftsQuery = { search: '', sort: '', edition: 'ALL', traitFilters: [] };
   var profileRoomsDraft = []; // [{name, nftIds}] — up to SHOWCASE_ROOM_MAX rooms, toggled per-room in the R00MS pane, saved as one batch
   var profileActiveRoomIdx = 0;
   // r,g,b triplets — same values MAINFRAME's own --card-accent uses per
@@ -20827,21 +20882,97 @@ const SWAP_HTML = `<!DOCTYPE html>
   function openMyNftsCollection(key){
     if (!MY_WALLET) return;
     myNftsPickedCollection = key;
+    myNftsQuery = { search: '', sort: '', edition: 'ALL', traitFilters: [] };
     el.myNftsPicker.style.display = 'none';
     el.myNftsGrid.style.display = '';
     el.myNftsGridStatus.style.display = '';
     el.myNftsGridStatus.textContent = 'L0AD!NG...';
     el.myNftsGridItems.innerHTML = '';
+    el.myNftsSearchInput.value = '';
     if (state.collection !== key) switchCollection(key);
+    renderMyNftsControls();
     api({ wallet: MY_WALLET, collection: key }).then(function(data){
       if (myNftsPickedCollection !== key) return;
-      var items = ((data && data.items) || []).map(function(p){ p.collectionKey = key; return p; });
-      renderNftPickerGrid(el.myNftsGridItems, el.myNftsGridStatus, items, [], 'view');
+      myNftsAllItems = ((data && data.items) || []).map(function(p){ p.collectionKey = key; return p; });
+      renderMyNftsTraitCategories();
+      applyMyNftsQuery();
     }).catch(function(){
       if (myNftsPickedCollection !== key) return;
       el.myNftsGridStatus.style.display = '';
       el.myNftsGridStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
+  }
+  // SORT BY — same options/comparators DATABASE's own wallet-scope query
+  // uses (sortComparatorFor is a pure function of the sort value, so it's
+  // safe to reuse here without touching the global state's own sort field).
+  function renderMyNftsControls(){
+    updateSortLabelsForCollection();
+    var optionsHtml = '<option value="">S0RT BY</option>';
+    Object.keys(SORT_CATEGORIES).forEach(function(cat){
+      SORT_CATEGORIES[cat].forEach(function(o){
+        if (!sortComparatorFor(o.value)) return; // SCYLLA_PRICE etc — live-collection-only, not in the owned list
+        optionsHtml += '<option value="' + escapeHtml(o.value) + '">' + escapeHtml(cat + ' :: ' + o.label) + '</option>';
+      });
+    });
+    el.myNftsSortSelect.innerHTML = optionsHtml;
+    el.myNftsSortSelect.value = myNftsQuery.sort;
+    el.myNftsEditionToggle.querySelectorAll('.edition-btn').forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-value') === myNftsQuery.edition);
+    });
+  }
+  // TRA!T CATEG0RY/VALUE selects — built off myNftsAllItems' own real
+  // attributes (this wallet's owned items only), not the full collection's
+  // trait manifest, so every option shown is guaranteed to match something.
+  function renderMyNftsTraitCategories(){
+    var cats = {};
+    myNftsAllItems.forEach(function(p){
+      (p.attributes || []).forEach(function(a){
+        if (!cats[a.trait_type]) cats[a.trait_type] = {};
+        cats[a.trait_type][a.value] = true;
+      });
+    });
+    var catNames = Object.keys(cats).sort();
+    el.myNftsTraitCatSelect.innerHTML = '<option value="">TRA!T CATEG0RY</option>' +
+      catNames.map(function(c){ return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>'; }).join('');
+    el.myNftsTraitCatSelect.value = '';
+    el.myNftsTraitCatSelect.dataset.catValues = JSON.stringify(cats);
+    el.myNftsTraitValSelect.innerHTML = '<option value="">TRA!T VALUE</option>';
+    el.myNftsTraitValSelect.disabled = true;
+  }
+  function renderMyNftsTraitChips(){
+    el.myNftsTraitChips.innerHTML = myNftsQuery.traitFilters.map(function(f, i){
+      return '<span class="my-nfts-trait-chip" data-idx="' + i + '">' + escapeHtml(f.trait) + ' :: ' + escapeHtml(f.value) + ' <button type="button" data-idx="' + i + '" title="REM0VE">×</button></span>';
+    }).join('');
+  }
+  // The actual owned-only filter/sort — a client-side pass over
+  // myNftsAllItems (already the whole owned+collection list, same "small
+  // enough to filter in memory" reasoning runScopedQuery's own DATABASE
+  // wallet-scope comparator uses), then paints via the same
+  // renderNftPickerGrid/nftPickerCardHtml 'view' mode the simple list
+  // already used.
+  function applyMyNftsQuery(){
+    var q = myNftsQuery.search.trim().toLowerCase();
+    var list = myNftsAllItems.filter(function(p){
+      if (myNftsQuery.traitFilters.length && !myNftsQuery.traitFilters.every(function(f){
+        return (p.attributes || []).some(function(a){ return a.trait_type === f.trait && a.value === f.value; });
+      })) return false;
+      if (myNftsQuery.edition === 'LOW' && !(p.number !== null && p.number <= 1515)) return false;
+      if (myNftsQuery.edition === 'HIGH' && !(p.number !== null && p.number > 1515)) return false;
+      if (q){
+        var numMatch = p.number !== null && String(p.number).indexOf(q.replace('#', '')) !== -1;
+        var traitMatch = (p.attributes || []).some(function(a){ return a.value.toLowerCase().indexOf(q) !== -1 || a.trait_type.toLowerCase().indexOf(q) !== -1; });
+        if (!numMatch && !traitMatch) return false;
+      }
+      return true;
+    });
+    var cmp = sortComparatorFor(myNftsQuery.sort);
+    if (cmp) list = list.slice().sort(cmp);
+    renderMyNftsTraitChips();
+    renderNftPickerGrid(el.myNftsGridItems, el.myNftsGridStatus, list, [], 'view');
+    if (myNftsAllItems.length && !list.length){
+      el.myNftsGridStatus.style.display = '';
+      el.myNftsGridStatus.textContent = 'N0 0WNED ' + collectionItemLabel() + 'S MATCH TH!S QUERY.';
+    }
   }
   function backToMyNftsPicker(){
     myNftsPickedCollection = null;
@@ -20871,6 +21002,50 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.myNftsGridBackBtn.addEventListener('click', backToMyNftsPicker);
   el.myNftsBackBtn.addEventListener('click', function(){ switchProfileTab(null); });
+  el.myNftsSearchInput.addEventListener('input', function(){
+    myNftsQuery.search = el.myNftsSearchInput.value;
+    applyMyNftsQuery();
+  });
+  el.myNftsSearchClearBtn.addEventListener('click', function(){
+    el.myNftsSearchInput.value = '';
+    myNftsQuery.search = '';
+    applyMyNftsQuery();
+  });
+  el.myNftsEditionToggle.addEventListener('click', function(e){
+    var btn = e.target.closest('.edition-btn');
+    if (!btn) return;
+    myNftsQuery.edition = btn.getAttribute('data-value');
+    el.myNftsEditionToggle.querySelectorAll('.edition-btn').forEach(function(b){ b.classList.toggle('active', b === btn); });
+    applyMyNftsQuery();
+  });
+  el.myNftsSortSelect.addEventListener('change', function(){
+    myNftsQuery.sort = el.myNftsSortSelect.value;
+    applyMyNftsQuery();
+  });
+  el.myNftsTraitCatSelect.addEventListener('change', function(){
+    var cats = JSON.parse(el.myNftsTraitCatSelect.dataset.catValues || '{}');
+    var vals = Object.keys(cats[el.myNftsTraitCatSelect.value] || {}).sort();
+    el.myNftsTraitValSelect.innerHTML = '<option value="">TRA!T VALUE</option>' +
+      vals.map(function(v){ return '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + '</option>'; }).join('');
+    el.myNftsTraitValSelect.disabled = !el.myNftsTraitCatSelect.value;
+  });
+  el.myNftsTraitAddBtn.addEventListener('click', function(){
+    var trait = el.myNftsTraitCatSelect.value, value = el.myNftsTraitValSelect.value;
+    if (!trait || !value) return;
+    if (!myNftsQuery.traitFilters.some(function(f){ return f.trait === trait && f.value === value; })){
+      myNftsQuery.traitFilters.push({ trait: trait, value: value });
+      applyMyNftsQuery();
+    }
+    el.myNftsTraitCatSelect.value = '';
+    el.myNftsTraitValSelect.innerHTML = '<option value="">TRA!T VALUE</option>';
+    el.myNftsTraitValSelect.disabled = true;
+  });
+  el.myNftsTraitChips.addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-idx]');
+    if (!btn) return;
+    myNftsQuery.traitFilters.splice(parseInt(btn.getAttribute('data-idx'), 10), 1);
+    applyMyNftsQuery();
+  });
   function enterProfileCollection(wallet, ownerShort, key){
     if (state.collection !== key) switchCollection(key);
     browseOwnerCollection(wallet, ownerShort);
