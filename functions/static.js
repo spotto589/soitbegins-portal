@@ -4562,7 +4562,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      nested card-select-toggle/watchlist-toggle buttons stay OUTSIDE this
      anchor as siblings (a real <a> can't validly contain other interactive
      content like a <button>). */
-  .pigeon-img-link{ display:contents; }
+  .pigeon-img-link{ display:contents; text-decoration:none; color:inherit; }
   /* PHN!X art is a real 1200x1403 portrait crop (Deeptide's own source
      images — confirmed live), not the 1024x1024/1080x1080 square every
      other collection's images actually are. The shared box above is a
