@@ -3441,7 +3441,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      and the GO button) instead of the generic cyan every other hover
      dropdown uses — always-on, not just hover/open, same reasoning as
      .tab-db-select above. */
-  #traitsHoverLabel{ color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); letter-spacing:0.1em; font-size:17.5px; }
+  /* No font-size override here any more — it was pinning F!LTER BY
+     TRA!TS to a smaller size than S0RT BY right next to it (reported
+     live: "these should be mirrored and same size"), even though both
+     share the exact same .traits-hover-wrap .trait-row-label base rule
+     (20.5px) and #sortDropLabel never overrode it. Letter-spacing/colour
+     still differ deliberately from the shared base, size no longer does. */
+  #traitsHoverLabel{ color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); letter-spacing:0.1em; }
   /* S0RT BY matches F!LTER BY TRA!TS' own always-on purple, not the
      generic cyan hover every other dropdown gets — same collection-colour
      reasoning as ADD TRA!TS above. */
