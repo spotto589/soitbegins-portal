@@ -225,8 +225,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     --font-numeric:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
     /* Big hero/section headings only (reported live — picked CF Glitch
        City over Hacked specifically for these after a side-by-side
-       preview). Not used anywhere else. */
-    --font-hero:'Glitchcrafty','CF Glitch City','Hacked','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+       preview). Scoped to the STAT!C/DATABASE side of the site — Σκύλλα
+       gets her own face below instead (reported live: loved Glitchcrafty
+       for Σκύλλα specifically, wanted the database side left on this
+       one, not a single site-wide hero swap). */
+    --font-hero:'CF Glitch City','Hacked','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+    /* Σκύλλα's own face — every screen inside .scylla-nav-panel (the
+       whole Σκύλλα system tab: header, box grid, every sub-tab/panel)
+       plus the boot-screen reveal, so Σκύλλα reads as her own distinct
+       cyberpunk system rather than sharing the database's CF Glitch
+       City. No Greek coverage, so Σκύλλα:// itself still falls through
+       to Hacked/JetBrains Mono same as before. */
+    --font-scylla:'Glitchcrafty','Hacked','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
 
     /* Sharp corners, not soft ones — every rounded box on the site pulls
        from this one value. */
@@ -485,6 +495,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     display:flex;
     align-items:center;
     justify-content:center;
+    font-family:var(--font-scylla);
   }
   .scylla-boot-static{
     position:fixed;
@@ -513,7 +524,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     80%{ filter:drop-shadow(-5px 0 var(--cyan)) drop-shadow(4px 0 var(--magenta)); transform:translate(-2px,0); }
     90%{ filter:drop-shadow(-2px 0 var(--cyan)) drop-shadow(2px 0 var(--magenta)); transform:translate(0,0); }
   }
-  .scylla-boot-status{ margin-top:1.25rem; font-family:var(--font-mono); font-size:17.5px; font-weight:700; letter-spacing:0.08em; color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
+  .scylla-boot-status{ margin-top:1.25rem; font-family:var(--font-scylla); font-size:17.5px; font-weight:700; letter-spacing:0.08em; color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
   @media (prefers-reduced-motion: reduce){
     .scylla-boot-static{ animation:none; }
     .scylla-boot-lockpad{ animation:none; }
@@ -2245,7 +2256,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      below content size" — without it, 7 rows' natural content height
      would just overflow and force the scrollbar right back). Its own
      header/grid/readout children flex the same way below. */
-  .scylla-nav-panel{ position:relative; display:flex; flex-direction:column; flex:1 1 auto; min-height:0; border:1px solid var(--cyan-dim); border-radius:0; background:#000; padding:1.25rem 1rem 1.5rem; overflow:hidden; }
+  .scylla-nav-panel{ position:relative; display:flex; flex-direction:column; flex:1 1 auto; min-height:0; border:1px solid var(--cyan-dim); border-radius:0; background:#000; padding:1.25rem 1rem 1.5rem; overflow:hidden; font-family:var(--font-scylla); }
   /* Shake slowed from the shared static-shake's own default 0.4s (still
      used by .scylla-boot-static and every plain-mode local canvas) —
      reported live as too fast specifically here, next to text people
@@ -2293,7 +2304,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      RGB-split/skew burst + its own signal-tear overlay), not the plain
      topbar-terminal-glitch fringe. */
   .scylla-system-header{ text-align:center; margin:0.25rem 0 0.75rem; }
-  .scylla-system-header-title{ position:relative; display:inline-block; font-family:var(--font-hero); font-size:clamp(38px, 6vw, 54.5px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
+  .scylla-system-header-title{ position:relative; display:inline-block; font-family:var(--font-scylla); font-size:clamp(38px, 6vw, 54.5px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
   @keyframes scylla-header-glitch{
     0%, 92%, 100%{ text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); transform:translate(0,0); }
     92.5%{ text-shadow:-3px 0 var(--magenta), 3px 0 var(--cyan); transform:translate(-2px,0) skewX(-2deg); }
