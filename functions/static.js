@@ -5860,10 +5860,91 @@ const SWAP_HTML = `<!DOCTYPE html>
     width:min(1100px, 96vw);
     max-height:min(92vh, 900px);
   }
-  .top-holders-modal-panel #topHoldersList{ flex:1 1 auto; min-height:0; overflow-y:auto; }
+  /* The scrollable region is now #thFullListWrap (podium + EXPAND button
+     above it stay fixed in place, never scroll away) — #topHoldersList
+     itself is just a plain block inside that wrapper. */
+  .top-holders-modal-panel #thFullListWrap{ flex:1 1 auto; min-height:0; overflow-y:auto; }
+  /* A real page title now (reported live: "make the title at the top
+     actually a bigger title for the page") — the shared
+     .simple-picker-title default (13px, sized for a plain utility popup
+     header) read as an afterthought above a page-sized podium. */
+  #topHoldersModal .th-page-title{ font-size:26px; font-weight:700; letter-spacing:0.08em; text-shadow:0 0 8px rgba(230,225,211,0.25); }
+  /* PODIUM — #1/#2/#3 as three real spotlight cards instead of just the
+     top of the plain ranked table (reported live: "the page should
+     first show the top 3 holders... like a podium sort of thing").
+     #1 in the middle and taller than #2/#3 either side, same visual
+     hierarchy an actual awards podium uses — built via podiumCardHtml in
+     the JS, ordered [#2, #1, #3] in markup so the DOM's own natural
+     left-to-right order already reads correctly, no CSS order: tricks
+     needed. align-items:flex-end anchors all three to one shared
+     baseline regardless of #1's own extra height. */
+  .th-podium{ display:flex; align-items:flex-end; justify-content:center; gap:0.85rem; margin-bottom:1.25rem; }
+  .th-podium-card{
+    flex:1 1 0;
+    min-width:0;
+    max-width:220px;
+    text-align:center;
+    text-decoration:none;
+    color:inherit;
+    background:rgba(0,0,0,0.3);
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    padding:1rem 0.6rem 0.9rem;
+    transition:border-color 0.15s ease, transform 0.15s ease;
+  }
+  .th-podium-card:hover{ border-color:var(--cyan); transform:translateY(-2px); }
+  .th-podium-top{ display:flex; flex-direction:column; align-items:center; gap:0.4rem; }
+  .th-podium-card-1 .th-thumb{ width:64px; height:64px; }
+  .th-podium-card .signature-banner-row{ margin:0.6rem auto; max-width:100%; }
+  /* #1 gets real extra presence, not just a bigger rank number — taller
+     padding (reads as literally standing on a taller podium step) plus
+     gold border/glow, same "the winner should look like the winner"
+     reasoning #2/#3's silver/bronze rank colour below carries too. */
+  .th-podium-card-1{ padding:1.5rem 0.75rem 1.15rem; border-color:rgba(245,197,24,0.5); box-shadow:0 0 22px rgba(245,197,24,0.16); }
+  .th-podium-rank{ font-family:var(--font-display); font-weight:700; font-size:26px; color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
+  .th-podium-card-1 .th-podium-rank{ font-size:36px; color:#f5c518; text-shadow:0 0 10px rgba(245,197,24,0.55); }
+  .th-podium-card-2 .th-podium-rank{ color:#d5d5d5; text-shadow:0 0 6px rgba(213,213,213,0.4); }
+  .th-podium-card-3 .th-podium-rank{ color:#cd7f32; text-shadow:0 0 6px rgba(205,127,50,0.4); }
+  .th-podium-stats{ font-family:var(--font-mono); display:flex; flex-direction:column; gap:0.15rem; }
+  .th-podium-amt{ font-size:14px; font-weight:700; color:var(--white); }
+  .th-podium-pct{ font-size:11px; letter-spacing:0.04em; color:var(--grey-dim); text-transform:uppercase; }
+  @media (max-width:600px){
+    /* #2/#1/#3 side-by-side genuinely doesn't fit three real identity
+       cards at once below ~600px — stacked, #1 still first/biggest by
+       DOM order alone once the row layout drops. */
+    .th-podium{ flex-direction:column; align-items:stretch; }
+    .th-podium-card{ max-width:none; }
+  }
+  /* EXPAND — the full ranked table starts collapsed (see #thFullListWrap
+     above); this is the only way into it. Same toggle-button language
+     .pigeons-calc-toggle-btn already established elsewhere on this page. */
+  .th-expand-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.5rem;
+    width:100%;
+    background:rgba(0,0,0,0.18);
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    padding:0.75em 1em;
+    margin-bottom:1rem;
+    color:var(--white);
+    font-family:var(--font-mono);
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .th-expand-btn:hover, .th-expand-btn.open{ border-color:#fff; background:rgba(0,0,0,0.3); }
+  .th-expand-arrow{ font-size:11px; opacity:0.8; transition:transform 0.15s ease; }
+  .th-expand-btn.open .th-expand-arrow{ transform:rotate(180deg); }
   /* Column titles above the list, sharing .th-row's own grid-template-
      columns so every title lines up exactly over its column — same
-     pattern as .sale-header-row for SALES H!ST0RY right below. Desktop
+     pattern as .sale-header-row for SALES H!ST0RY right below. Sticky so
+     it stays put as the table itself scrolls underneath it. Desktop
      only: the <820px breakpoint that collapses .th-row to a stacked
      layout (see its own media query) doesn't map onto real columns. */
   .th-header-row{
@@ -5879,6 +5960,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-transform:uppercase;
     border-bottom:1px solid var(--border-dim);
     margin-bottom:0.25rem;
+    position:sticky;
+    top:0;
+    background:var(--panel-bg-solid);
+    z-index:1;
   }
   .th-header-row span:last-child{ text-align:right; }
   @media (max-width:820px){ .th-header-row{ display:none; } }
@@ -9515,16 +9600,26 @@ const SWAP_HTML = `<!DOCTYPE html>
 
     <!-- T0P 123 H0LDERS — moved off its own top-level tab into a real
          popup (reported live), reached via the DATABASE banner's own
-         T0P 123 H0LDERS button now — same #topHoldersList/renderTop-
-         HoldersList this always had, just a different container. -->
+         T0P 123 H0LDERS button now. Leads with a real podium (#1-#3,
+         reported live: "make this like a podium sort of thing") instead
+         of dropping straight into the full ranked table — the full
+         table (still the same #topHoldersList/renderTopHoldersList this
+         always had, just ranks 4+ now, #1-#3 live in the podium instead)
+         stays collapsed behind an EXPAND toggle until asked for. -->
     <div id="topHoldersModal" style="display:none;">
       <div class="pigeons-calc-panel top-holders-modal-panel">
         <div class="simple-picker-header">
-          <span class="simple-picker-title">T0P 123 H0LDERS</span>
+          <span class="simple-picker-title th-page-title">T0P 123 H0LDERS</span>
           <button type="button" class="simple-picker-close" id="topHoldersCloseBtn" title="CL0SE">&times;</button>
         </div>
-        <div class="th-header-row"><span>RANK</span><span>H0LDER</span><span>HELD</span></div>
-        <div id="topHoldersList"></div>
+        <div class="th-podium" id="thPodium"></div>
+        <button type="button" class="th-expand-btn" id="thExpandBtn">
+          <span id="thExpandLabel">V!EW FULL L!ST</span> <span class="th-expand-arrow" id="thExpandArrow">▾</span>
+        </button>
+        <div class="th-full-list-wrap" id="thFullListWrap" style="display:none;">
+          <div class="th-header-row"><span>RANK</span><span>H0LDER</span><span>HELD</span></div>
+          <div id="topHoldersList"></div>
+        </div>
       </div>
     </div>
 
@@ -11804,7 +11899,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistTitle','profileWatchlistClearFilter',
-   'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn',
+   'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thPodium','thExpandBtn','thExpandLabel','thFullListWrap',
    'crownPeriodSelect','crownLeaderboardList',
    'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileAddressCopyBtn','profileAddressBithompLink','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
    'profileBannerEditBtn','profileFeaturedEditBtn','profileThemeEditBtn','profilePrivacyEditBtn',
@@ -15177,7 +15272,9 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   // ---- Top 10 holders (network-wide, cached snapshot) — an expandable
   // panel at the top of the page; clicking a wallet browses their real
-  // collection the same way the owner-link on INSPECT does. ----
+  // collection the same way the owner-link on INSPECT does. #1-#3 get
+  // their own podium spotlight, ranks 4+ live in the collapsed full
+  // table behind the EXPAND button (see the markup's own comment). ----
   var topHoldersData = null;
   function loadTopHolders(){
     api({ topHolders: 1 }).then(function(data){
@@ -15185,41 +15282,79 @@ const SWAP_HTML = `<!DOCTYPE html>
       renderTopHoldersList();
     }).catch(function(){ topHoldersData = []; renderTopHoldersList(); });
   }
+  function thPercentStr(h){
+    return h.percent !== null && h.percent !== undefined
+      ? h.percent.toLocaleString(undefined, { maximumFractionDigits: h.percent < 1 ? 2 : 1 })
+      : null;
+  }
+  // Rarest-held-Pigeon thumbnail — only ever populated for the top 15
+  // (see doRecomputeCrownHolder in _shared.js), computed once during the
+  // periodic background Crown recompute, not per page load.
+  function thThumbHtml(h, rank){
+    return (rank < 15 && h.rarestPigeon && h.rarestPigeon.image)
+      ? '<img class="th-thumb" src="' + escapeHtml(h.rarestPigeon.image) + '" alt="" loading="lazy" title="RAREST P!GE0N HELD :: RAR!TY #' + escapeHtml(h.rarestPigeon.rarityRank) + '">'
+      : '';
+  }
+  // T0P 123's own real identity card (reported live wanting "if im in
+  // top 123, it should show the banner") — the compact -row size of the
+  // same signatureBannerHtml Σκύλλα/DETA!L use, not just a plain
+  // wallet-tag short address. Shared by both the podium cards and the
+  // full-table rows below.
+  function topHolderRowHtml(h, rank){
+    var percentStr = thPercentStr(h);
+    return '<a class="th-row' + (rank < 15 ? ' th-row-top' : '') + '" href="' + escapeHtml(walletHrefFor(h.wallet)) + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
+      '<span class="th-rank">' + thThumbHtml(h, rank) + '<span>#' + greenNum(rank + 1) + '</span></span>' +
+      '<span class="th-wallet">' + signatureBannerHtml(h.wallet, 'row') + '</span>' +
+      '<span class="th-count"><span class="th-count-amt">' + greenNum(h.count) + ' P!GE0NS</span><span class="th-count-pct">' + (percentStr ? greenNum(percentStr + '%') : '') + '</span></span>' +
+    '</a>';
+  }
+  // PODIUM card — #1/#2/#3 only (rank is a 0-based index, same as every
+  // other call site here). th-podium-card-<1/2/3> is what CSS hangs the
+  // gold/silver/bronze treatment off; DOM order for these three is
+  // [#2, #1, #3] (see renderTopHoldersList), not rank order, so the
+  // podium's own visual hierarchy doesn't need a separate CSS order:.
+  function podiumCardHtml(h, rank){
+    var percentStr = thPercentStr(h);
+    return '<a class="th-podium-card th-podium-card-' + (rank + 1) + '" href="' + escapeHtml(walletHrefFor(h.wallet)) + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
+      '<div class="th-podium-top">' + thThumbHtml(h, rank) + '<div class="th-podium-rank">#' + (rank + 1) + '</div></div>' +
+      signatureBannerHtml(h.wallet, 'row') +
+      '<div class="th-podium-stats"><span class="th-podium-amt">' + greenNum(h.count) + ' P!GE0NS</span>' + (percentStr ? '<span class="th-podium-pct">' + percentStr + '% 0F SUPPLY</span>' : '') + '</div>' +
+    '</a>';
+  }
   function renderTopHoldersList(){
     if (topHoldersData === null){
-      el.topHoldersList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+      el.thPodium.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+      el.topHoldersList.innerHTML = '';
       return;
     }
     if (!topHoldersData.length){
-      el.topHoldersList.innerHTML = '<div class="th-empty">N0T READY YET — TRY AGA!N SH0RTLY.</div>';
+      el.thPodium.innerHTML = '<div class="th-empty">N0T READY YET — TRY AGA!N SH0RTLY.</div>';
+      el.topHoldersList.innerHTML = '';
       return;
     }
-    el.topHoldersList.innerHTML = topHoldersData.map(function(h, i){
-      var percentStr = h.percent !== null && h.percent !== undefined
-        ? h.percent.toLocaleString(undefined, { maximumFractionDigits: h.percent < 1 ? 2 : 1 })
-        : null;
-      // Rarest-held-Pigeon thumbnail — only ever populated for the top 15
-      // (see doRecomputeCrownHolder in _shared.js), computed once during
-      // the periodic background Crown recompute, not per page load.
-      var thumb = (i < 15 && h.rarestPigeon && h.rarestPigeon.image)
-        ? '<img class="th-thumb" src="' + escapeHtml(h.rarestPigeon.image) + '" alt="" loading="lazy" title="RAREST P!GE0N HELD :: RAR!TY #' + escapeHtml(h.rarestPigeon.rarityRank) + '">'
-        : '';
-      // T0P 123's own real identity card now (reported live wanting "if
-      // im in top 123, it should show the banner") — the compact -row
-      // size of the same signatureBannerHtml Σκύλλα/DETA!L use, not just
-      // a plain wallet-tag short address.
-      return '<a class="th-row' + (i < 15 ? ' th-row-top' : '') + '" href="' + escapeHtml(walletHrefFor(h.wallet)) + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
-        '<span class="th-rank">' + thumb + '<span>#' + greenNum(i + 1) + '</span></span>' +
-        '<span class="th-wallet">' + signatureBannerHtml(h.wallet, 'row') + '</span>' +
-        '<span class="th-count"><span class="th-count-amt">' + greenNum(h.count) + ' P!GE0NS</span><span class="th-count-pct">' + (percentStr ? greenNum(percentStr + '%') : '') + '</span></span>' +
-      '</a>';
-    }).join('');
+    var podiumOrder = [1, 0, 2].filter(function(i){ return topHoldersData[i]; });
+    el.thPodium.innerHTML = podiumOrder.map(function(i){ return podiumCardHtml(topHoldersData[i], i); }).join('');
+    var rest = topHoldersData.slice(3);
+    el.topHoldersList.innerHTML = rest.length
+      ? rest.map(function(h, i){ return topHolderRowHtml(h, i + 3); }).join('')
+      : '<div class="th-empty">N0 M0RE H0LDERS.</div>';
   }
-  el.topHoldersList.addEventListener('click', function(e){
-    var row = e.target.closest('.th-row');
+  function thRowClickHandler(e){
+    var row = e.target.closest('.th-row, .th-podium-card');
     if (!row || e.ctrlKey || e.metaKey) return; // ctrl/cmd+click — let the real href open a new tab natively
     e.preventDefault();
     openWalletProfile(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
+  }
+  el.topHoldersList.addEventListener('click', thRowClickHandler);
+  el.thPodium.addEventListener('click', thRowClickHandler);
+  // EXPAND — the full ranked table (#4 onward) starts collapsed; #1-#3
+  // already have their own podium spotlight above (see the markup's own
+  // comment on #thFullListWrap).
+  el.thExpandBtn.addEventListener('click', function(){
+    var opening = el.thFullListWrap.style.display === 'none';
+    el.thFullListWrap.style.display = opening ? '' : 'none';
+    el.thExpandBtn.classList.toggle('open', opening);
+    el.thExpandLabel.textContent = opening ? 'H!DE FULL L!ST' : 'V!EW FULL L!ST';
   });
 
   // ---- CR0WN — real $PIGEONS trading profit/loss leaderboard (realized
