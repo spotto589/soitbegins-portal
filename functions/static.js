@@ -63,6 +63,25 @@ const SWAP_HTML = `<!DOCTYPE html>
 
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+    /* Chakra Petch — every other page on the site (index.html, begin.js,
+       board.js, glitch.js, mainframe.js, vault.js) already uses this as
+       its base font; this was the one file still left on JetBrains Mono
+       (reported live: "whatever text this is, use it everywhere").
+       Self-hosted with an explicit 400–800 WEIGHT RANGE on this one real
+       (700) file, same fix already applied once before for Hacked — the
+       Google Fonts @import above only ever offers up to 700, so without
+       the range every font-weight:800 rule site-wide (prices, etc.)
+       would quietly get the browser's synthetic/faux bold instead of a
+       real one. JetBrains Mono stays loaded and in the fallback stack
+       below — Chakra Petch has no Greek coverage, so Σκύλλα:// itself
+       still needs it. */
+    @font-face{
+      font-family:'Chakra Petch';
+      src:url('/assets/fonts/chakra-petch.woff2') format('woff2');
+      font-weight:400 800;
+      font-style:normal;
+      font-display:swap;
+    }
 
   /* ==========================================================================
      Σκύλλα SWAP — colour + type system, v4: "corrupted industrial system,"
@@ -168,9 +187,9 @@ const SWAP_HTML = `<!DOCTYPE html>
        the variable itself at JetBrains Mono (which has real weights up
        to 800 loaded) fixes every one of those call sites at once, no
        per-rule changes needed. */
-    --font-display:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
-    --font-mono:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
-    --font-body:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+    --font-display:'Chakra Petch','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+    --font-mono:'Chakra Petch','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+    --font-body:'Chakra Petch','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
 
     /* Sharp corners, not soft ones — every rounded box on the site pulls
        from this one value. */
