@@ -329,6 +329,13 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
 <title>STAT!C_N0DE:://S!GNAL_RELAY</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');
+  @font-face{
+    font-family:'CF Glitch City';
+    src:url('/assets/fonts/cf-glitch-city.ttf') format('truetype');
+    font-weight:400;
+    font-style:normal;
+    font-display:swap;
+  }
   /* Single source of truth for the P!GE0N Access Level system. Each level
      is its own network-penetration identity — SIGNAL (01), BEACON (03),
      VECTOR (06), RESONANCE (09), OVERRIDE (12), CR0WN (15) — not a
@@ -390,6 +397,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .page{ max-width:760px; width:100%; position:relative; z-index:1; }
   h1{
+    font-family:'CF Glitch City','Chakra Petch',sans-serif;
     font-size:clamp(16px,4vw,28px);
     font-weight:700;
     letter-spacing:0.14em;

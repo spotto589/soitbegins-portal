@@ -80,6 +80,18 @@ const SWAP_HTML = `<!DOCTYPE html>
       font-style:normal;
       font-display:swap;
     }
+    /* CF Glitch City (Cloutierfontes, freeware/non-commercial) — reserved
+       for big hero/section headings only (--font-hero), not the general
+       type swap Hacked did above. Heavier and more jagged than Hacked at
+       body/button sizes, which is exactly why it's kept scoped to the
+       few large statement headings instead of applied everywhere. */
+    @font-face{
+      font-family:'CF Glitch City';
+      src:url('/assets/fonts/cf-glitch-city.ttf') format('truetype');
+      font-weight:400;
+      font-style:normal;
+      font-display:swap;
+    }
 
   /* ==========================================================================
      Σκύλλα SWAP — colour + type system, v4: "corrupted industrial system,"
@@ -188,6 +200,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     --font-display:'Hacked','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
     --font-mono:'Hacked','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
     --font-body:'Hacked','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+    /* Numbers specifically stay on JetBrains Mono, not Hacked (reported
+       live — wanted every number on the site reading clean/legible like
+       a binary readout, not run through Hacked's own corrosion; the
+       leetspeak 0/! substitutions already baked into the copy itself
+       carry the "corrupted" read, so the digits don't also need to). See
+       the [class*="price"]/[class*="-num"]/etc. override block below,
+       which applies this to every numeric-display element site-wide
+       without touching each one's own rule. */
+    --font-numeric:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+    /* Big hero/section headings only (reported live — picked CF Glitch
+       City over Hacked specifically for these after a side-by-side
+       preview). Not used anywhere else. */
+    --font-hero:'CF Glitch City','Hacked','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
 
     /* Sharp corners, not soft ones — every rounded box on the site pulls
        from this one value. */
@@ -523,7 +548,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      smaller subtitle line underneath it via .h1-sub) instead of one flat
      block of equal-weight text. */
   h1{
-    font-family:var(--font-display);
+    font-family:var(--font-hero);
     font-weight:700;
     /* 40px used to be a hard floor regardless of viewport — fine down to
        roughly tablet width, but on an actual phone (~375px) 9vw only
@@ -2254,7 +2279,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      RGB-split/skew burst + its own signal-tear overlay), not the plain
      topbar-terminal-glitch fringe. */
   .scylla-system-header{ text-align:center; margin:0.25rem 0 0.75rem; }
-  .scylla-system-header-title{ position:relative; display:inline-block; font-family:var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
+  .scylla-system-header-title{ position:relative; display:inline-block; font-family:var(--font-hero); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
   @keyframes scylla-header-glitch{
     0%, 92%, 100%{ text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); transform:translate(0,0); }
     92.5%{ text-shadow:-3px 0 var(--magenta), 3px 0 var(--cyan); transform:translate(-2px,0) skewX(-2deg); }
@@ -4843,22 +4868,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.1rem;
     line-height:1.15;
   }
-  /* Diagonal shine sweeping across the fill on a loop — the "juicy,
-     wants to be pressed" cue a flat single-colour CTA didn't have. Purely
-     decorative layer, doesn't intercept clicks. */
+  /* A soft glint that ghosts across the fill every few seconds, then
+     rests — the "juicy, wants to be pressed" cue a flat single-colour
+     CTA didn't have, without reading as a repeating loading-bar wipe
+     (reported live: liked the idea, not a hard skewed stripe on a
+     constant loop). Narrower, lower-opacity, blurred-soft edges via
+     multiple gradient stops, and a long hold between passes (the
+     keyframe reaches the far side by 22% then just sits off-screen
+     until the cycle repeats) so it reads as an occasional gleam, not
+     motion the eye has to keep tracking. */
   .thumb-buy-btn::after{
     content:'';
     position:absolute;
-    top:0; left:-60%;
-    width:40%; height:100%;
-    background:linear-gradient(115deg, transparent, rgba(255,255,255,0.55), transparent);
-    transform:skewX(-20deg);
-    animation:thumb-buy-shine 2.8s ease-in-out infinite;
+    top:0; left:-35%;
+    width:22%; height:100%;
+    background:linear-gradient(100deg, transparent, rgba(255,255,255,0.16) 35%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.16) 65%, transparent);
+    filter:blur(1.5px);
+    transform:skewX(-14deg);
+    animation:thumb-buy-shine 4.6s ease-in-out infinite;
     pointer-events:none;
   }
   @keyframes thumb-buy-shine{
-    0%{ left:-60%; }
-    35%, 100%{ left:130%; }
+    0%{ left:-35%; }
+    22%, 100%{ left:115%; }
   }
   @keyframes thumb-buy-pulse{
     0%, 100%{ box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.3), 0 0 14px var(--collection-accent-glow); }
@@ -9211,6 +9243,32 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-arrow-prev{ left:0.4rem; }
   .mainframe-arrow-next{ right:0.4rem; }
   .mainframe-arrow[hidden]{ display:none; }
+
+  /* Every numeric readout site-wide (prices, balances, ranks, pigeon
+     numbers, detail stats, etc.) forced to --font-numeric (JetBrains
+     Mono) instead of whatever font-family its own rule set — reported
+     live as wanting numbers "cleaner," reading like a binary readout,
+     not run through Hacked. One attribute-selector sweep instead of
+     editing every one of these rules individually; the `body` prefix
+     bumps specificity (0,1,1) past every single-class rule above
+     (0,1,0) that sets font-family on these same elements, so it wins
+     regardless of source order. Matches by class-name substring, so
+     new numeric elements pick this up automatically as long as they
+     keep naming conventions like -num/-price/-amount/-balance/-rank.
+     Deliberately NOT matching "stat"/"xrp" — "stat" collides with
+     status/state classes (STATUS: GL!TCH!NG etc., not numbers) and
+     "xrp" collides with non-numeric labels like the xrpcafe link. */
+  body [class*="price"],
+  body [class*="-num"],
+  body [class*="amount"],
+  body [class*="balance"],
+  body [class*="coin-value"],
+  body [class*="coin-amount"],
+  body [class*="coin-balance"],
+  body [class*="holdings"],
+  body [class*="rank"]{
+    font-family:var(--font-numeric);
+  }
 </style>
 </head>
 <body>
