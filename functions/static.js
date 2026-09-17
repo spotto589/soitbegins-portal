@@ -474,7 +474,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     80%{ filter:drop-shadow(-5px 0 var(--cyan)) drop-shadow(4px 0 var(--magenta)); transform:translate(-2px,0); }
     90%{ filter:drop-shadow(-2px 0 var(--cyan)) drop-shadow(2px 0 var(--magenta)); transform:translate(0,0); }
   }
-  .scylla-boot-status{ margin-top:1.25rem; font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:0.08em; color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
+  .scylla-boot-status{ margin-top:1.25rem; font-family:var(--font-mono); font-size:15px; font-weight:700; letter-spacing:0.08em; color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
   @media (prefers-reduced-motion: reduce){
     .scylla-boot-static{ animation:none; }
     .scylla-boot-lockpad{ animation:none; }
@@ -505,7 +505,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   a.back-link{
     display:inline-block;
     font-family:var(--font-body);
-    font-size:10.5px;
+    font-size:12px;
     letter-spacing:0.1em;
     color:var(--grey);
     text-decoration:none;
@@ -549,7 +549,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .h1-sub{
     display:block;
-    font-size:0.42em;
+    font-size:0.48em;
     letter-spacing:0.14em;
     color:var(--grey);
     -webkit-text-stroke:0;
@@ -588,7 +588,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .panel-title{
     text-align:center;
-    font-size:12.5px;
+    font-size:14.5px;
     font-weight:500;
     letter-spacing:0.24em;
     color:var(--white);
@@ -613,7 +613,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      that one class is enough on its own. */
   /* Way bigger than a regular panel-title — this is the headline of the
      whole DATABASE screen, not a section label. */
-  .search-panel-title{ font-size:24px; font-weight:700; margin-bottom:0.4rem; text-shadow:0 0 10px var(--cyan-glow); }
+  .search-panel-title{ font-size:27.5px; font-weight:700; margin-bottom:0.4rem; text-shadow:0 0 10px var(--cyan-glow); }
   /* SH0W!NG Y0UR P!GE0NS :: N — the FL0CK-scoped version of this title —
      reads as YOUR real count, worth calling out in the same live cyan as
      every other real number on this page (MY P!GE0NS ::, P!GE0NS HELD ::)
@@ -621,7 +621,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .search-panel-title-flock{ color:var(--cyan); }
   .search-panel-subtitle{
     text-align:center;
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.15em;
     color:var(--cyan);
     text-shadow:0 0 6px var(--cyan-glow);
@@ -642,7 +642,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      DATABASE tab button itself (see .tab-db-select above). COLLECTION ::
      is the same hover-flyout component as SORTING BY — hover to reveal,
      not a click-toggle full-width menu. ---- */
-  #dbSelectWrap{ font-size:13px; }
+  #dbSelectWrap{ font-size:15px; }
   .db-select-flyout{
     display:block;
     width:220px;
@@ -657,7 +657,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .db-option{
     padding:0.65em 1em;
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.1em;
     text-transform:uppercase;
     border-bottom:1px solid var(--border-dim);
@@ -681,7 +681,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      blanket opacity:0.6 parent too (.flock-account-box-soon, see its
      own comment below) which compounded with the already-dim text
      colour down to ~0.2 effective alpha. */
-  .db-soon{ font-size:9px; letter-spacing:0.1em; border:1px solid var(--border-mid); color:var(--grey); padding:0.2em 0.4em; }
+  .db-soon{ font-size:10.5px; letter-spacing:0.1em; border:1px solid var(--border-mid); color:var(--grey); padding:0.2em 0.4em; }
 
   /* ---- FL0CK account-page boxes — a stack of separate .sw-panel cards
      (same terminal/glitch panel look as everything else on the site, not
@@ -753,8 +753,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     -webkit-text-fill-color:transparent;
     animation:scylla-label-static 0.8s steps(4) infinite, scylla-label-ambient-flicker 8s ease-in-out infinite;
   }
-  .flock-account-box-prefix{ font-family:var(--font-mono); font-size:13px; opacity:0.85; flex:0 0 auto; }
-  .flock-account-box-label{ font-family:var(--font-mono); font-size:14px; letter-spacing:0.14em; text-transform:uppercase; }
+  .flock-account-box-prefix{ font-family:var(--font-mono); font-size:15px; opacity:0.85; flex:0 0 auto; }
+  .flock-account-box-label{ font-family:var(--font-mono); font-size:16px; letter-spacing:0.14em; text-transform:uppercase; }
   @keyframes scylla-label-static{ 0%{ background-position:0 0; } 100%{ background-position:0 28px; } }
   @keyframes scylla-label-ambient-flicker{
     0%, 92%, 100%{ text-shadow:0 0 4px rgba(61,243,236,0.4); transform:translate(0,0); }
@@ -766,7 +766,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .flock-account-box-clickable:nth-child(3) .flock-account-box-prefix, .flock-account-box-clickable:nth-child(3) .flock-account-box-label{ animation-delay:0s, -3.2s; }
   .flock-account-box-clickable:nth-child(4) .flock-account-box-prefix, .flock-account-box-clickable:nth-child(4) .flock-account-box-label{ animation-delay:0s, -4.8s; }
   .flock-account-box-clickable:nth-child(5) .flock-account-box-prefix, .flock-account-box-clickable:nth-child(5) .flock-account-box-label{ animation-delay:0s, -6.4s; }
-  .flock-account-box-arrow{ font-size:16px; color:var(--cyan); flex:0 0 auto; }
+  .flock-account-box-arrow{ font-size:18.5px; color:var(--cyan); flex:0 0 auto; }
   .flock-account-box-clickable{ position:relative; overflow:hidden; cursor:pointer; border-color:var(--border-mid); transition:border-color 0.15s ease, background 0.15s ease; }
   /* Left accent bar — the row's own state indicator (reference image's
      own language: thin/dim at rest, brighter on hover, thick/solid on the
@@ -926,11 +926,11 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   /* ---- collection details: token/issuer info ---- */
   .collection-info{ max-width:620px; margin:0 auto 1.25rem; text-align:center; }
-  .ci-label{ font-size:10px; letter-spacing:0.15em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.6rem; }
+  .ci-label{ font-size:11.5px; letter-spacing:0.15em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.6rem; }
   .ci-addr-row{ display:flex; align-items:center; justify-content:center; gap:1rem; flex-wrap:wrap; }
   .ci-value{ color:var(--white); word-break:break-all; }
-  .ci-value-big{ font-size:14px; letter-spacing:0.02em; }
-  .ci-copy-btn{ font-size:12px; padding:0.65em 1.1em; flex:0 0 auto; }
+  .ci-value-big{ font-size:16px; letter-spacing:0.02em; }
+  .ci-copy-btn{ font-size:14px; padding:0.65em 1.1em; flex:0 0 auto; }
   .pigeons-bar-identity-actions{ display:flex; flex-direction:column; align-items:stretch; gap:0.6rem; justify-content:center; }
   /* SH0W MY P!GE0NS reuses BUY $P!GE0NS's own styling (same juicy green
      treatment) — its margin-top was meant for sitting under the balance
@@ -1004,15 +1004,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     /* !important on font-size here too — same shape of bug this block's
        own comment already describes for .stats-carousel-dots/.stats-page
-       (a later, unconditional .stat-value{font-size:16px} rule further
+       (a later, unconditional .stat-value{font-size:18.5px} rule further
        down this file, same specificity, silently won on source order
        regardless of viewport). Confirmed live: the carousel's flex/
        overflow layout collapsed to the compact strip correctly, but
        $P!GE0NS FL00R's own number stayed at the full 16px+ desktop size
        and ran off the right edge of its own tile, clipped by the
        viewport. */
-    .stat-label{ font-size:8px !important; margin-bottom:0.15rem; white-space:nowrap; }
-    .stat-value{ font-size:11px !important; white-space:nowrap; }
+    .stat-label{ font-size:9px !important; margin-bottom:0.15rem; white-space:nowrap; }
+    .stat-value{ font-size:12.5px !important; white-space:nowrap; }
   }
   /* Prev/next arrows flank the viewport; the row itself is the flex
      container that lays out [arrow][viewport][arrow]. */
@@ -1051,7 +1051,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:rgba(15,16,20,0.75);
     border:1px solid rgba(255,255,255,0.4);
     color:#fff;
-    font-size:18px;
+    font-size:20.5px;
     line-height:1;
     width:2.2em;
     height:2.2em;
@@ -1128,8 +1128,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .stat-tile-link{ width:100%; text-decoration:none; cursor:pointer; font:inherit; transition:border-color 0.15s ease, background 0.15s ease; }
   .stat-tile-link:hover{ background:var(--cyan-faint); border-color:var(--cyan-dim); }
-  .stat-label{ font-size:11.5px; letter-spacing:0.1em; color:var(--grey-dim); margin-bottom:0.5rem; text-transform:uppercase; }
-  .stat-value{ font-size:16px; letter-spacing:0.03em; color:var(--white); }
+  .stat-label{ font-size:13px; letter-spacing:0.1em; color:var(--grey-dim); margin-bottom:0.5rem; text-transform:uppercase; }
+  .stat-value{ font-size:18.5px; letter-spacing:0.03em; color:var(--white); }
   /* Now that #collectionDetailsPanel carries the same purple gradient as
      the trustline banner above it (see that rule's own comment), plain
      --grey-dim labels lose too much contrast against it — brighter here,
@@ -1177,7 +1177,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .stat-tile-soon{ opacity:0.55; border-style:dashed; }
   .stat-tile-soon:hover{ opacity:0.85; }
   .stat-tile-soon .stat-value{ letter-spacing:0.1em; }
-  .card-scylla-listed{ margin-top:0.4rem; font-size:10px; letter-spacing:0.05em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); text-align:center; text-transform:uppercase; }
+  .card-scylla-listed{ margin-top:0.4rem; font-size:11.5px; letter-spacing:0.05em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); text-align:center; text-transform:uppercase; }
 
   .th-list{ margin-top:1rem; border-top:1px dashed var(--border-dim); padding-top:0.5rem; }
 
@@ -1229,7 +1229,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:none;
     border-bottom:2px solid transparent;
     font-family:var(--font-mono);
-    font-size:15px;
+    font-size:17.5px;
     font-weight:700;
     letter-spacing:0.08em;
     color:var(--grey-dim);
@@ -1254,7 +1254,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .flock-tab-brand{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
   .flock-tab-count{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
   /* Bumped again (reported live) — was 1.15em. */
-  .flock-tab-wallet{ color:var(--wallet-blue); text-shadow:0 0 6px var(--wallet-blue-glow); font-family:var(--font-mono); font-size:1.35em; font-weight:700; }
+  .flock-tab-wallet{ color:var(--wallet-blue); text-shadow:0 0 6px var(--wallet-blue-glow); font-family:var(--font-mono); font-size:1.55em; font-weight:700; }
   /* Bigger + a real hit target now that it's an actual switch-account
      control (see #walletSwitchDropdown below) rather than the old no-op
      placeholder — was a plain inline glyph too small to reliably tap. */
@@ -1265,7 +1265,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-left:0.35em;
     padding:0.1em 0.3em;
     /* Bumped again (reported live) — was 2em, before that 1.4em. */
-    font-size:2.6em;
+    font-size:2.99em;
     line-height:1;
     color:var(--wallet-blue);
     cursor:pointer;
@@ -1307,14 +1307,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.6em;
     padding:0.6em 0.7em;
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     color:var(--white);
     cursor:pointer;
   }
   .wallet-switch-row:hover{ background:var(--cyan-faint); }
   .wallet-switch-row-active{ color:var(--wallet-blue); cursor:default; }
   .wallet-switch-row-active:hover{ background:transparent; }
-  .wallet-switch-row-tag{ font-size:10px; letter-spacing:0.1em; color:var(--grey-dim); }
+  .wallet-switch-row-tag{ font-size:11.5px; letter-spacing:0.1em; color:var(--grey-dim); }
   .wallet-switch-add{
     display:block;
     width:100%;
@@ -1324,7 +1324,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:none;
     border-top:1px solid var(--border-dim);
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.06em;
     color:var(--magenta);
     text-align:left;
@@ -1346,7 +1346,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:999px;
     background:var(--magenta);
     color:#000;
-    font-size:0.65em;
+    font-size:0.75em;
     font-weight:700;
     text-shadow:none;
     vertical-align:middle;
@@ -1415,7 +1415,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        think so") — even 1px is a big chunk of a 14px glyph's own
        stroke width. Dropped entirely below this breakpoint instead of
        just shrinking further; plain white text stays crisp instead. */
-    #globalTopBar .tab-db-heading, #globalTopBar .tab-db-select .trait-row-label, #globalTopBar .tab-db-select .db-select-arrow{ font-size:14px; letter-spacing:0.04em; text-shadow:none; animation:none; }
+    #globalTopBar .tab-db-heading, #globalTopBar .tab-db-select .trait-row-label, #globalTopBar .tab-db-select .db-select-arrow{ font-size:16px; letter-spacing:0.04em; text-shadow:none; animation:none; }
   }
   /* Mobile: a boxed grid "hub" instead of a horizontally-scrolling strip —
      every tab visible and tappable at once up top, nothing to swipe
@@ -1442,7 +1442,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     .tab-btn{
       flex:none;
       white-space:normal;
-      font-size:13px;
+      font-size:15px;
       letter-spacing:0.05em;
       border:1px solid var(--border-mid);
       border-radius:var(--radius);
@@ -1478,12 +1478,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     #globalTopBar .tab-btn-database{ grid-column:auto; }
   }
-  .tab-db-select{ font-size:13px; }
+  .tab-db-select{ font-size:15px; }
   /* Plain text, no boxed-dropdown look — just the label itself, coloured
      to match whichever collection is actually selected (same colours as
      the flyout's own .db-option-active/-fuzzy/-phnix). */
   #dbSelectWrap{ border:none !important; background:none !important; }
-  .tab-db-select .trait-row-label{ padding:0.3em 0.2em; font-size:13px; letter-spacing:0.05em; color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); }
+  .tab-db-select .trait-row-label{ padding:0.3em 0.2em; font-size:15px; letter-spacing:0.05em; color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); }
   /* The ▾ arrow only (reported live — "only show the drop down box if
      the arrow is clicked"), split out of the label itself: clicking the
      collection NAME now jumps straight into that collection (see
@@ -1547,7 +1547,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.9em 0.6em;
     border-bottom:1px solid var(--border-dim);
     cursor:pointer;
-    font-size:17px;
+    font-size:19.5px;
     letter-spacing:0.03em;
     transition:background 0.15s ease;
     /* Real <a href> now (see walletHrefFor in the JS) so middle-click/
@@ -1561,7 +1561,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .th-row:hover{ background:var(--cyan-faint); }
   /* Top 15 read as a cut above the rest of the list — same layout, just
      a step up in size. */
-  .th-row-top{ font-size:19px; padding:1.1em 0.6em; }
+  .th-row-top{ font-size:22px; padding:1.1em 0.6em; }
   .th-rank{ color:var(--cyan); text-align:left; display:flex; align-items:center; justify-content:flex-start; gap:0.5rem; }
   /* Rarest-held-Pigeon thumbnail, top 15 rows only. Bumped up from 34px
      (reported live: "make the thumbnail pigeons bigger"). */
@@ -1584,7 +1584,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .th-count{ color:var(--white); text-transform:uppercase; text-align:right; white-space:nowrap; display:flex; align-items:baseline; justify-content:flex-end; gap:0.5rem; }
   .th-count-amt{ min-width:130px; text-align:right; }
   .th-count-pct{ min-width:56px; text-align:right; }
-  .th-empty{ text-align:center; font-size:11px; letter-spacing:0.08em; color:var(--grey-dim); padding:0.5rem 0; text-transform:uppercase; }
+  .th-empty{ text-align:center; font-size:12.5px; letter-spacing:0.08em; color:var(--grey-dim); padding:0.5rem 0; text-transform:uppercase; }
   /* Below the desktop table breakpoint, the fixed 220px HELD/% column is
      too cramped next to a shrunk HOLDER column — stack rank+wallet on
      one line and let count take the full row beneath, same idea as
@@ -1690,8 +1690,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      Σκύλλα's own banner settled on, rather than centred). */
   .signature-banner-detail{ gap:1rem; padding:1rem; margin-bottom:1rem; align-items:flex-end; }
   .signature-banner-detail .signature-banner-avatar{ width:96px; height:96px; }
-  .signature-banner-detail .signature-banner-username{ font-size:20px; }
-  .signature-banner-detail .signature-banner-quote{ font-size:13px; }
+  .signature-banner-detail .signature-banner-username{ font-size:23px; }
+  .signature-banner-detail .signature-banner-quote{ font-size:15px; }
   /* R0W — compact inline version for T0P 123 H0LDERS, replacing that
      list's plain wallet-tag short address with the same real identity
      card, just small enough to fit one per leaderboard row. */
@@ -1701,11 +1701,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      left-aligned in its column instead of stretched edge to edge. */
   .signature-banner-row{ gap:0.6rem; padding:0.4rem 0.6rem; border-radius:calc(var(--radius) - 2px); max-width:280px; width:fit-content; margin:0 auto; }
   .signature-banner-row .signature-banner-avatar{ width:32px; height:32px; }
-  .signature-banner-row .signature-banner-username{ font-size:14px; }
+  .signature-banner-row .signature-banner-username{ font-size:16px; }
   @media (max-width:600px){
     .signature-banner-detail{ padding:0.75rem; gap:0.75rem; }
     .signature-banner-detail .signature-banner-avatar{ width:72px; height:72px; }
-    .signature-banner-detail .signature-banner-username{ font-size:17px; }
+    .signature-banner-detail .signature-banner-username{ font-size:19.5px; }
   }
   /* Avatar — SQUARE now (was a circle), reported live as wanting it
      "clean" instead of fighting a circular crop's own blend-into-the-
@@ -1746,7 +1746,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#000;
     border:3px solid var(--bg);
     font-weight:700;
-    font-size:20px;
+    font-size:23px;
     line-height:1;
     cursor:pointer;
     display:flex;
@@ -1771,7 +1771,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      there's no dark scrim any more), since black text needs a LIGHT edge
      to stay legible on a darker sampled colour, not a dark one. */
   .profile-current-username{
-    font-family:var(--font-display); font-size:28px; font-weight:700; color:#000;
+    font-family:var(--font-display); font-size:32px; font-weight:700; color:#000;
     text-shadow:0 1px 2px rgba(255,255,255,0.55), 0 0 8px rgba(255,255,255,0.35);
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
   }
@@ -1782,7 +1782,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:transparent;
     border:none;
     color:#000;
-    font-size:13px;
+    font-size:15px;
     cursor:pointer;
     padding:0.1em 0.3em;
     text-shadow:0 1px 2px rgba(255,255,255,0.55);
@@ -1790,7 +1790,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profile-field-edit-btn:hover{ color:var(--cyan); }
   .profile-current-wallet-row{ display:flex; align-items:center; justify-content:center; gap:0.4rem; margin-top:0.75rem; }
-  .profile-current-wallet{ font-size:13px; letter-spacing:0.03em; color:#000; text-transform:uppercase; word-break:break-all; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
+  .profile-current-wallet{ font-size:15px; letter-spacing:0.03em; color:#000; text-transform:uppercase; word-break:break-all; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
   /* Real click target on YOUR OWN hub specifically (#profilePanelWrap) —
      jumps to your own PR0F!LE screen (reported live: "click the address
      at the top it takes us to our profile link"). Scoped to this one
@@ -1815,7 +1815,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:rgba(0,0,0,0.35);
     border:1px solid var(--border-mid);
     color:var(--grey-dim);
-    font-size:12px;
+    font-size:14px;
     line-height:1;
     cursor:pointer;
     text-decoration:none;
@@ -1825,12 +1825,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* EST VALUE — mirrors MY C0!NS' own T0TAL P0RTF0L!0 VALUE number, right
      under the address so your net worth reads as part of your identity,
      not just buried in the collapsible coins section below. */
-  .profile-current-estvalue{ font-size:14px; letter-spacing:0.04em; color:#000; text-transform:uppercase; margin-top:0.5rem; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
+  .profile-current-estvalue{ font-size:16px; letter-spacing:0.04em; color:#000; text-transform:uppercase; margin-top:0.5rem; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
   .profile-current-estvalue span{ color:#000; font-weight:700; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
   /* QU0TE — real click-to-edit target (a real value shows the text + a
      quiet ✎, an unset one shows a dashed "+ ADD A B!0" invite instead of
      hiding outright — see renderProfileCurrent in the JS). */
-  .profile-quote{ font-size:13px; font-style:italic; color:#000; text-transform:none; cursor:pointer; margin-top:0.6rem; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
+  .profile-quote{ font-size:15px; font-style:italic; color:#000; text-transform:none; cursor:pointer; margin-top:0.6rem; text-shadow:0 1px 2px rgba(255,255,255,0.55); }
   .profile-quote .profile-field-edit-btn{ font-style:normal; }
   /* CUST0M!ZE row — BANNER/SH0WCASE/THEME/PR!VACY, the four Phase 1
      identity pieces with no obvious click-on-the-banner-itself target the
@@ -1843,7 +1843,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:#000;
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:11.5px;
     font-weight:700;
     letter-spacing:0.06em;
     padding:0.4em 0.7em;
@@ -1882,13 +1882,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      to it out for #profileBannerExpanded showing that wallet's full
      real list (see openBannerHoldingsExpanded in the JS). */
   .profile-banner-holdings{ flex:0 0 220px; display:flex; flex-direction:column; align-items:stretch; gap:0.6rem; justify-content:space-evenly; }
-  .profile-holdings-title{ font-family:var(--font-mono); font-size:20px; font-weight:700; letter-spacing:0.08em; color:#fff; text-transform:uppercase; text-align:center; margin-bottom:0.4rem; }
+  .profile-holdings-title{ font-family:var(--font-mono); font-size:23px; font-weight:700; letter-spacing:0.08em; color:#fff; text-transform:uppercase; text-align:center; margin-bottom:0.4rem; }
   .profile-holdings-viewmore{
     background:transparent;
     border:1px solid var(--border-mid);
     color:var(--cyan);
     font-family:var(--font-mono);
-    font-size:15px;
+    font-size:17.5px;
     font-weight:700;
     letter-spacing:0.06em;
     text-transform:uppercase;
@@ -1912,7 +1912,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:var(--green);
     color:#000;
     border:3px solid var(--bg);
-    font-size:18px;
+    font-size:20.5px;
     padding:1.2em 1.3em;
     min-width:170px;
     width:100%;
@@ -1956,7 +1956,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-banner-coin-text{ display:flex; flex-direction:column; align-items:center; min-width:0; width:100%; }
   .profile-banner-coin-name{
     font-family:var(--font-mono);
-    font-size:16px;
+    font-size:18.5px;
     font-weight:700;
     letter-spacing:0.02em;
     color:#fff;
@@ -1968,8 +1968,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Coin amount; the XRP estimate (coins only) sits in its own line right
      underneath. NFT cards reuse .profile-banner-coin-amount for the count
      and never render a .profile-banner-coin-xrp line. */
-  .profile-banner-coin-amount{ font-family:var(--font-mono); font-size:16px; color:var(--grey); }
-  .profile-banner-coin-xrp{ font-family:var(--font-mono); font-size:13px; color:var(--cyan); }
+  .profile-banner-coin-amount{ font-family:var(--font-mono); font-size:18.5px; color:var(--grey); }
+  .profile-banner-coin-xrp{ font-family:var(--font-mono); font-size:15px; color:var(--cyan); }
   .profile-twitter-link{
     display:inline-flex;
     align-items:center;
@@ -1978,7 +1978,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#fff;
     border:1px solid #000;
     font-weight:700;
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.02em;
     text-transform:none;
     text-decoration:none;
@@ -2038,8 +2038,8 @@ const SWAP_HTML = `<!DOCTYPE html>
        not nested inside .profile-avatar-wrap any more, so the wrap's own
        height is just the avatar's again — back to a plain bottom offset
        instead of needing a fixed top: pixel position. */
-    .profile-avatar-edit-btn{ width:28px; height:28px; font-size:16px; right:-6px; bottom:5px; }
-    .profile-current-username{ font-size:20px; }
+    .profile-avatar-edit-btn{ width:28px; height:28px; font-size:18.5px; right:-6px; bottom:5px; }
+    .profile-current-username{ font-size:23px; }
     /* Full-width second row, identity above holdings (reported-live
        side-by-side columns don't fit a phone width) — both centred. */
     .profile-banner-main{ flex-basis:100%; flex-direction:column; align-items:center; margin-top:0.5rem; gap:0.75rem; }
@@ -2073,11 +2073,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Empty when unfiltered (renderProfileWatchlist leaves it as ''), so
      these two collapse to nothing rather than an empty heading/gap. */
   .profile-watchlist-header:empty{ display:none; }
-  .profile-watchlist-header{ font-size:13px; font-weight:700; letter-spacing:0.08em; color:var(--cyan); margin-bottom:0.5rem; }
+  .profile-watchlist-header{ font-size:15px; font-weight:700; letter-spacing:0.08em; color:var(--cyan); margin-bottom:0.5rem; }
   .profile-watchlist-clear-filter{
     display:inline-block; margin-bottom:0.75rem; padding:0.5em 1em;
     background:transparent; border:1px solid var(--grey-dim); border-radius:var(--radius);
-    color:var(--grey-dim); font-family:var(--font-mono); font-size:11px; letter-spacing:0.06em;
+    color:var(--grey-dim); font-family:var(--font-mono); font-size:12.5px; letter-spacing:0.06em;
     text-transform:uppercase; cursor:pointer; appearance:none;
   }
   .profile-watchlist-clear-filter:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
@@ -2104,7 +2104,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     bottom:0.3rem;
     background:rgba(8,9,11,0.85);
     color:#fff;
-    font-size:11px;
+    font-size:12.5px;
     font-weight:700;
     padding:0.2em 0.45em;
     border-radius:var(--radius);
@@ -2121,7 +2121,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     border-radius:50%;
-    font-size:12px;
+    font-size:14px;
     cursor:pointer;
   }
   .profile-watchlist-remove:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
@@ -2336,7 +2336,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      unison (reads as two live things, not one mirrored effect). Brings
      the one remaining plain-text element on this panel in line with
      everything else instead of looking untouched by comparison. */
-  .scylla-nav-readout{ position:relative; margin-top:0.5rem; padding-top:0.9rem; border-top:1px dashed var(--border-mid); font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; color:var(--grey-dim); line-height:1.7; animation:scylla-readout-glitch 9s ease-in-out infinite; }
+  .scylla-nav-readout{ position:relative; margin-top:0.5rem; padding-top:0.9rem; border-top:1px dashed var(--border-mid); font-family:var(--font-mono); font-size:12.5px; letter-spacing:0.04em; color:var(--grey-dim); line-height:1.7; animation:scylla-readout-glitch 9s ease-in-out infinite; }
   .scylla-nav-readout-line span{ color:var(--cyan); }
   @keyframes scylla-readout-glitch{
     0%, 94%, 100%{ text-shadow:none; transform:translate(0,0); }
@@ -2374,7 +2374,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:50%;
     background:var(--magenta);
     color:#08090b;
-    font-size:11px;
+    font-size:12.5px;
   }
   /* Whichever box is picked (0FFERS/C0LLECT!0NS/CR0WN) reveals its own
      real panel here — plain margin, same as every other stacked section
@@ -2389,7 +2389,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid rgba(255,255,255,0.6);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:15px;
+    font-size:17.5px;
     font-weight:700;
     padding:0.85em 1em;
     border-radius:var(--radius);
@@ -2416,8 +2416,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
   }
   .profile-search-row-text{ display:flex; flex-direction:column; min-width:0; }
-  .profile-search-row-name{ font-family:var(--font-mono); font-size:13px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .profile-search-row-wallet{ font-family:var(--font-mono); font-size:11px; color:var(--grey); word-break:break-all; }
+  .profile-search-row-name{ font-family:var(--font-mono); font-size:15px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .profile-search-row-wallet{ font-family:var(--font-mono); font-size:12.5px; color:var(--grey); word-break:break-all; }
   /* MESSAGES — real wallet-to-wallet D1-backed messaging (see
      functions/api/messages-*.js), wired straight into !NB0X instead of
      living as its own /messages page any more. Needs the MESSAGES_DB D1
@@ -2437,15 +2437,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-msg-row:hover{ border-color:var(--cyan-dim); background:rgba(61,243,236,0.06); }
   .profile-msg-row.unread{ border-color:var(--magenta-dim); }
   .profile-msg-row-text{ flex:1 1 auto; min-width:0; }
-  .profile-msg-row-wallet{ font-family:var(--font-mono); font-size:13px; font-weight:700; color:#fff; }
-  .profile-msg-row-preview{ font-family:var(--font-mono); font-size:12px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:0.2rem; }
+  .profile-msg-row-wallet{ font-family:var(--font-mono); font-size:15px; font-weight:700; color:#fff; }
+  .profile-msg-row-preview{ font-family:var(--font-mono); font-size:14px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:0.2rem; }
   .profile-msg-row-meta{ display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem; flex:0 0 auto; }
-  .profile-msg-row-time{ font-family:var(--font-mono); font-size:10px; color:var(--grey-dim); }
+  .profile-msg-row-time{ font-family:var(--font-mono); font-size:11.5px; color:var(--grey-dim); }
   .profile-msg-row-unread{
     display:inline-flex; align-items:center; justify-content:center;
     min-width:1.4em; height:1.4em; padding:0 0.3em;
     border-radius:999px; background:var(--magenta); color:#000;
-    font-size:10px; font-weight:700;
+    font-size:11.5px; font-weight:700;
   }
   .profile-msg-new-prompt{ display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap; }
   .profile-msg-new-prompt .profile-search-input{ flex:1 1 220px; margin-bottom:0; }
@@ -2455,13 +2455,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.6em 0.85em;
     border-radius:var(--radius);
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     word-break:break-word;
     border:1px solid var(--border-mid);
   }
   .profile-msg-bubble-mine{ align-self:flex-end; background:rgba(61,243,236,0.1); border-color:var(--cyan-dim); }
   .profile-msg-bubble-theirs{ align-self:flex-start; background:rgba(255,255,255,0.05); }
-  .profile-msg-bubble-time{ font-size:10px; color:var(--grey-dim); margin-top:0.3rem; }
+  .profile-msg-bubble-time{ font-size:11.5px; color:var(--grey-dim); margin-top:0.3rem; }
   .profile-msg-compose{ display:flex; gap:0.5rem; }
   .profile-msg-compose .profile-search-input{ margin-bottom:0; }
   .profile-coins-section{ margin-bottom:1.5rem; }
@@ -2474,7 +2474,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     user-select:none;
     -webkit-tap-highlight-color:transparent;
     text-align:center;
-    font-size:13px;
+    font-size:15px;
     font-weight:500;
     letter-spacing:0.24em;
     color:var(--white);
@@ -2497,7 +2497,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-coins-edit-btn{
     position:absolute;
     right:0.5rem;
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:0.12em;
     color:var(--grey-dim);
     border:1px solid var(--border-mid);
@@ -2520,7 +2520,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.75rem;
     padding:0.4em 0;
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.03em;
     text-transform:uppercase;
     color:var(--grey);
@@ -2541,7 +2541,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:space-between;
     gap:1rem;
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.03em;
     text-transform:uppercase;
     color:var(--grey);
@@ -2579,11 +2579,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     background-color:rgba(var(--card-accent, 61,243,236), 0.18);
   }
   .profile-coin-info{ min-width:0; text-align:center; width:100%; }
-  .profile-coin-label{ font-family:var(--font-display); font-size:19px; font-weight:700; color:#fff; }
-  .profile-coin-balance{ font-family:var(--font-mono); font-size:13px; letter-spacing:0.03em; color:var(--grey); margin-top:0.2rem; }
+  .profile-coin-label{ font-family:var(--font-display); font-size:22px; font-weight:700; color:#fff; }
+  .profile-coin-balance{ font-family:var(--font-mono); font-size:15px; letter-spacing:0.03em; color:var(--grey); margin-top:0.2rem; }
   .profile-coin-balance .hi{ color:var(--green); font-weight:600; }
   .profile-coin-balance.profile-coin-warn{ color:var(--red); }
-  .profile-coin-value{ font-family:var(--font-mono); font-size:12px; letter-spacing:0.03em; color:var(--cyan); margin-top:0.15rem; }
+  .profile-coin-value{ font-family:var(--font-mono); font-size:14px; letter-spacing:0.03em; color:var(--cyan); margin-top:0.15rem; }
   /* ---- WALLET SC0PE C0!NS — compact chips, one per collection this
      wallet actually holds a trustline for, shown right under the
      signature banner any time you land on someone's wallet scope (see
@@ -2602,8 +2602,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     background:rgba(var(--coin-accent, 61,243,236), 0.1);
   }
-  .wallet-scope-coin-label{ font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:0.05em; color:rgb(var(--coin-accent, 61,243,236)); text-transform:uppercase; }
-  .wallet-scope-coin-balance{ font-family:var(--font-display); font-size:15px; font-weight:700; color:#fff; }
+  .wallet-scope-coin-label{ font-family:var(--font-mono); font-size:14px; font-weight:700; letter-spacing:0.05em; color:rgb(var(--coin-accent, 61,243,236)); text-transform:uppercase; }
+  .wallet-scope-coin-balance{ font-family:var(--font-display); font-size:17.5px; font-weight:700; color:#fff; }
   /* Σκύλλα BUY button — ghost at rest (ties this button to whichever
      collection's own real coin it's for, --card-accent, same as the
      thumb right next to it), fills solid on hover. Same recipe as every
@@ -2622,7 +2622,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:0 0 6px rgba(var(--card-accent, 61,243,236), 0.5);
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.03em;
     text-transform:uppercase;
     padding:0.75em 0.9em;
@@ -2657,7 +2657,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:16px;
+    font-size:18.5px;
     font-weight:700;
     letter-spacing:0.05em;
     padding:0.7em 1.4em;
@@ -2699,7 +2699,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:1rem;
     padding:0 0.6rem 0.6rem;
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     font-weight:700;
     letter-spacing:0.15em;
     color:var(--grey-dim);
@@ -2726,7 +2726,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:1rem;
     padding:1.1rem 0.6rem;
     border-bottom:1px solid var(--border-dim);
-    font-size:16px;
+    font-size:18.5px;
     letter-spacing:0.03em;
     cursor:pointer;
     transition:background 0.15s ease;
@@ -2740,7 +2740,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sale-thumb{ flex:0 0 auto; width:72px; height:72px; border:1px solid var(--border-dim); }
   .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
   .sale-num-box{
-    font-size:16px;
+    font-size:18.5px;
     letter-spacing:0.05em;
     color:var(--white);
     border:1px solid var(--border-mid);
@@ -2753,14 +2753,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      one number every sale is really "about"), with a soft glow behind
      it — reported live as small green text being hard to read; the glow
      is what actually fixes that at small sizes, not just going bigger. */
-  .sale-price{ font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--green); text-shadow:0 0 10px rgba(0,255,140,0.45); white-space:nowrap; }
-  .sale-via{ font-family:var(--font-body); font-size:13px; letter-spacing:0.08em; color:var(--white); text-transform:uppercase; }
+  .sale-price{ font-family:var(--font-display); font-size:32px; font-weight:700; color:var(--green); text-shadow:0 0 10px rgba(0,255,140,0.45); white-space:nowrap; }
+  .sale-via{ font-family:var(--font-body); font-size:15px; letter-spacing:0.08em; color:var(--white); text-transform:uppercase; }
   /* FR0M/T0 were one combined "seller → buyer" cell — split into their
      own columns so each can line up under its own header. */
-  .sale-from, .sale-to{ font-family:var(--font-body); font-size:18px; color:var(--white); text-transform:none; text-align:center; min-width:0; overflow-wrap:anywhere; }
+  .sale-from, .sale-to{ font-family:var(--font-body); font-size:20.5px; color:var(--white); text-transform:none; text-align:center; min-width:0; overflow-wrap:anywhere; }
   .sale-from a, .sale-to a{ color:var(--white); text-decoration:underline; cursor:pointer; }
   .sale-from a:hover, .sale-to a:hover{ color:var(--cyan); }
-  .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:15px; text-align:right; }
+  .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:17.5px; text-align:right; }
   /* Icon-left/details-right list layout, not a full stack — a plain
      top-to-bottom stack (the previous version) read as an unrelated pile
      of text lines rather than one grouped row, especially once the tall
@@ -2786,7 +2786,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     .sale-from{ grid-area:from; text-align:left; }
     .sale-to{ grid-area:to; text-align:right; }
     .sale-thumb-wrap{ grid-area:thumb; flex-direction:column; align-items:flex-start; gap:0.4rem; align-self:start; }
-    .sale-num-box{ font-size:13px; padding:0.3em 0.5em; }
+    .sale-num-box{ font-size:15px; padding:0.3em 0.5em; }
     .sale-price-cell{ grid-area:price; align-self:end; }
     .sale-time{ grid-area:time; text-align:left; }
   }
@@ -2794,7 +2794,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* ---- target node header (owner-scope) — SCYLLA / MAGENTA system ---- */
   .node-eyebrow{
     text-align:center;
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:0.2em;
     color:var(--magenta);
     text-shadow:0 0 7px var(--magenta-glow);
@@ -2811,7 +2811,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .tp-label{
     text-align:center;
-    font-size:10px;
+    font-size:11.5px;
     letter-spacing:0.2em;
     color:var(--grey);
     margin-bottom:0.75rem;
@@ -2820,9 +2820,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   .tp-body{ display:flex; align-items:center; gap:1rem; }
   .tp-img{ flex:0 0 76px; width:76px; height:76px; border:1px solid var(--magenta-dim); }
   .tp-info{ flex:1; min-width:0; }
-  .tp-num{ font-size:16px; color:var(--white); margin-bottom:0.5rem; }
-  .tp-owner-label{ font-size:9px; letter-spacing:0.15em; color:var(--grey-dim); text-transform:uppercase; }
-  .tp-owner{ font-size:12px; color:var(--grey); word-break:break-all; }
+  .tp-num{ font-size:18.5px; color:var(--white); margin-bottom:0.5rem; }
+  .tp-owner-label{ font-size:10.5px; letter-spacing:0.15em; color:var(--grey-dim); text-transform:uppercase; }
+  .tp-owner{ font-size:14px; color:var(--grey); word-break:break-all; }
   .wallet-box{
     position:relative;
     text-align:center;
@@ -2835,7 +2835,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     animation:flicker-in 0.5s ease-out;
   }
   .wallet-box-title{
-    font-size:14px;
+    font-size:16px;
     font-weight:700;
     letter-spacing:0.18em;
     color:var(--magenta);
@@ -2843,9 +2843,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:0.75rem;
     text-transform:uppercase;
   }
-  .wallet-box-sub{ font-size:10px; letter-spacing:0.2em; color:var(--grey-dim); font-weight:400; }
-  .wallet-box-addr{ font-size:16px; color:var(--white); margin-bottom:0.6rem; word-break:break-all; letter-spacing:0.02em; }
-  .wallet-box-count{ font-size:12.5px; letter-spacing:0.1em; color:var(--grey); text-transform:uppercase; }
+  .wallet-box-sub{ font-size:11.5px; letter-spacing:0.2em; color:var(--grey-dim); font-weight:400; }
+  .wallet-box-addr{ font-size:18.5px; color:var(--white); margin-bottom:0.6rem; word-break:break-all; letter-spacing:0.02em; }
+  .wallet-box-count{ font-size:14.5px; letter-spacing:0.1em; color:var(--grey); text-transform:uppercase; }
 
   /* ---- search / sort bar — VIEW and SORTING BY now sit right in this
      row next to SEARCH, and everything here (input, GO, VIEW, SORT,
@@ -2948,7 +2948,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      grid, not its own two pieces relative to each other once wrapped. */
   .sort-field{ display:flex; align-items:center; justify-content:center; gap:0.6rem; flex-wrap:wrap; }
   .sort-field-label{
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.1em;
     color:var(--white);
     text-transform:uppercase;
@@ -2960,7 +2960,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.05em;
     padding:0.75em 0.8em;
     border-radius:var(--radius);
@@ -2968,7 +2968,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   input.search-input:focus{ outline:none; border-color:var(--cyan); box-shadow:0 0 0 1px var(--cyan-dim); }
   input.search-input::placeholder{ color:var(--grey-disabled); text-transform:uppercase; }
-  .search-row .bar-btn{ padding:0.75em 1em; font-size:12px; }
+  .search-row .bar-btn{ padding:0.75em 1em; font-size:14px; }
   /* Same fixed width as every other config control (var(--ctrl-w)) —
      shorter placeholder below so it still reads at this width instead of
      clipping mid-word. */
@@ -2984,7 +2984,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:15px;
+    font-size:17.5px;
     font-weight:700;
     letter-spacing:0.04em;
     padding:0.95em 1.3em;
@@ -3008,7 +3008,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      button on a card is the same size regardless of which ones a given
      card happens to show, and a grid of them lines up cleanly. */
   .delist-pigeon-btn, #detailScyllaDelistBtn, .list-open-modal-btn, .transfer-open-modal-btn{
-    font-size:15px;
+    font-size:17.5px;
     padding:0.85em 0.7em;
     font-weight:700;
     letter-spacing:0.05em;
@@ -3080,7 +3080,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      not .delist-pigeon-btn's own smaller shared 15px default (still used
      as-is on the detail screen's #detailScyllaDelistBtn, a different
      context this doesn't touch). */
-  .owned-action-row .delist-pigeon-btn{ font-size:15px; padding:0.8em 0.7em; }
+  .owned-action-row .delist-pigeon-btn{ font-size:17.5px; padding:0.8em 0.7em; }
   .delist-pigeon-btn:hover, #detailScyllaDelistBtn:hover{ border-color:var(--red); background:var(--red); color:#000; text-shadow:none; }
   /* Red, same accent as CLEAR TRAITS — resetting every filter is a
      destructive-feeling action, worth calling out differently from the
@@ -3114,7 +3114,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:15px;
+    font-size:17.5px;
     letter-spacing:0.03em;
     padding:0.85em 1em;
     text-transform:uppercase;
@@ -3128,7 +3128,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Same fixed width as ADD TRA!TS (var(--ctrl-w)) so every config
      control reads as one uniform row of boxes. */
   #sortDropWrap{ padding:0; width:var(--ctrl-w); flex:0 0 auto; }
-  #sortDropWrap .trait-row-label{ padding:0.85em 1em; font-size:15px; width:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #sortDropWrap .trait-row-label{ padding:0.85em 1em; font-size:17.5px; width:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   #dbViewSelect{ width:var(--ctrl-w); text-align:center; text-align-last:center; }
   .edition-toggle{
     flex:0 0 auto;
@@ -3143,7 +3143,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-right:1px solid var(--border-mid);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:15px;
+    font-size:17.5px;
     letter-spacing:0.03em;
     padding:0.85em 1.1em;
     text-transform:uppercase;
@@ -3159,7 +3159,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* The (1-1515)-style range — its own line underneath the edition name
      now (reported live), same "smaller sub-line under the main label"
      shape as .wallet-box-sub. */
-  .edition-btn-range{ display:inline-block; margin-top:0.25em; font-size:0.8em; opacity:0.75; }
+  .edition-btn-range{ display:inline-block; margin-top:0.25em; font-size:0.92em; opacity:0.75; }
   .edition-btn:last-child{ border-right:none; }
   .edition-btn:hover{ color:var(--cyan); background:var(--cyan-faint); }
   /* Purple, not magenta — this reflects the currently-viewed collection's
@@ -3185,7 +3185,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        "2ND ED!T!0N (1516-3015)" cut off on the right). width:100% here
        is what makes flex:1 1 0 below mean anything. */
     .edition-toggle{ width:100%; }
-    .edition-btn{ width:auto; flex:1 1 0; padding:0.7em 0.3em; font-size:11px; }
+    .edition-btn{ width:auto; flex:1 1 0; padding:0.7em 0.3em; font-size:12.5px; }
     /* SORT BY/ADD TRAITS centering on mobile lives with
        .db-config-traits-group's own definition above (near line 828), not
        here — two sessions independently fixed the same issue and this
@@ -3196,7 +3196,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .index-line{
     text-align:center;
     font-family:var(--font-body);
-    font-size:9.5px;
+    font-size:11px;
     letter-spacing:0.06em;
     color:var(--grey-dim);
     margin-top:0.5rem;
@@ -3215,7 +3215,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .xaman-manual-link{
     display:inline-block;
     margin-top:0.5rem;
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.03em;
     color:var(--cyan);
     text-decoration:underline;
@@ -3342,13 +3342,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .connect-panel-error .connect-panel-title{ color:var(--red); text-shadow:0 0 10px var(--red-glow); }
   .connect-panel-sub{
-    font-family:var(--font-body); font-size:12px; letter-spacing:0.03em;
+    font-family:var(--font-body); font-size:14px; letter-spacing:0.03em;
     color:var(--grey); margin-top:0.6rem; line-height:1.5;
   }
   .connect-panel-actions{ margin-top:1.5rem; display:flex; flex-direction:column; align-items:center; gap:0.6rem; }
   .connect-panel-btn{
     display:inline-block; font-family:var(--font-body); font-weight:600;
-    font-size:13px; letter-spacing:0.05em; text-transform:uppercase;
+    font-size:15px; letter-spacing:0.05em; text-transform:uppercase;
     text-decoration:none; color:#000; background:var(--cyan);
     border:1px solid var(--cyan); border-radius:var(--radius);
     padding:0.85em 1.75em; cursor:pointer;
@@ -3393,7 +3393,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex-wrap:wrap;
   }
   .trait-row-label{
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.2em;
     color:var(--grey);
     text-transform:uppercase;
@@ -3411,12 +3411,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     -webkit-tap-highlight-color:transparent;
   }
   .traits-hover-wrap{ position:relative; display:inline-flex; }
-  .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.75em 1em; font-size:15px; }
+  .traits-hover-wrap .trait-row-label{ cursor:pointer; padding:0.75em 1em; font-size:17.5px; }
   /* ADD TRA!TS matches the collection's own purple (same as ALL (1-3015)
      and the GO button) instead of the generic cyan every other hover
      dropdown uses — always-on, not just hover/open, same reasoning as
      .tab-db-select above. */
-  #traitsHoverLabel{ color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); letter-spacing:0.1em; font-size:13px; }
+  #traitsHoverLabel{ color:var(--pigeon-purple); text-shadow:0 0 5px var(--pigeon-purple-glow); letter-spacing:0.1em; font-size:15px; }
   /* S0RT BY matches F!LTER BY TRA!TS' own always-on purple, not the
      generic cyan hover every other dropdown gets — same collection-colour
      reasoning as ADD TRA!TS above. */
@@ -3425,7 +3425,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      clickable ▾ was easy to miss at the same size as the label. em-based
      so it scales with #traitsHoverLabel's own font-size above rather
      than needing its own fixed px value kept in sync. */
-  .thl-arrow{ display:inline-block; font-size:1.5em; line-height:1; vertical-align:middle; margin-left:0.1em; }
+  .thl-arrow{ display:inline-block; font-size:1.72em; line-height:1; vertical-align:middle; margin-left:0.1em; }
   /* Fixed width (var(--ctrl-w)) so this box never resizes when traits get
      selected — #traitRows renders as a separate sibling to its right
      (see .db-config-traits-section below), not inside this wrap. */
@@ -3705,7 +3705,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       border:1px solid var(--border-mid);
       border-radius:50%;
       color:var(--white);
-      font-size:14px;
+      font-size:16px;
       cursor:pointer;
       transition:border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
     }
@@ -3726,7 +3726,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-bottom:1px solid var(--border-dim);
     color:var(--cyan);
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.06em;
     padding:0.9em 1em;
     cursor:pointer;
@@ -3800,7 +3800,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        catches F!LTER BY TRA!TS ▾ if it ever runs out of room at this
        size on a narrow phone. */
     font-weight:800;
-    font-size:22px;
+    font-size:25.5px;
     letter-spacing:0.06em;
     text-transform:uppercase;
     padding:0.7em 0.35em;
@@ -3887,7 +3887,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center !important;
     white-space:normal !important;
     padding:0.7em 1.1em !important;
-    font-size:16px !important;
+    font-size:18.5px !important;
     border:1px solid var(--border-dim) !important;
     border-radius:var(--radius);
     margin-bottom:0;
@@ -3937,7 +3937,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     display:none;
     position:absolute; top:0.5rem; right:0.6rem;
     background:none; border:none; color:var(--grey);
-    font-size:20px; line-height:1; cursor:pointer; padding:0.35em;
+    font-size:23px; line-height:1; cursor:pointer; padding:0.35em;
   }
   .traits-flyout.flyout-popup .flyout-popup-close-btn{ display:block; }
   .flyout-popup-close-btn:hover{ color:var(--cyan); }
@@ -4071,7 +4071,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-right:1px solid var(--border-dim);
     color:var(--cyan);
     font-family:var(--font-mono);
-    font-size:17px;
+    font-size:19.5px;
     letter-spacing:0.03em;
     padding:0.9em 1.1em;
     cursor:pointer;
@@ -4091,7 +4091,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-dim);
     color:var(--cyan);
     font-family:var(--font-mono);
-    font-size:17px;
+    font-size:19.5px;
     letter-spacing:0.02em;
     padding:0.8em 1em;
     margin-bottom:0.4rem;
@@ -4103,7 +4103,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .traits-flyout-val:hover{ border-color:var(--cyan-dim); color:var(--cyan); text-shadow:0 0 5px var(--cyan-glow); }
   .traits-flyout-val.selected{ background:var(--magenta-faint); border-color:var(--magenta); color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
-  .traits-flyout-val .tfv-count{ color:var(--grey-dim); font-size:13px; flex:0 0 auto; }
+  .traits-flyout-val .tfv-count{ color:var(--grey-dim); font-size:15px; flex:0 0 auto; }
   /* Not-yet-built sort options — same disabled/"C0M!NG S00N" treatment as
      FUZZY/PHN!X in the C0LLECT!0N SELECT!0N list (.db-option-disabled/
      .db-soon), just on a .traits-flyout-val instead of a .db-option. */
@@ -4133,7 +4133,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:none;
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:16px;
+    font-size:18.5px;
     font-weight:700;
     letter-spacing:0.04em;
     padding:0.75em 1em;
@@ -4155,7 +4155,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:16px;
+    font-size:18.5px;
     font-weight:700;
     letter-spacing:0.04em;
     padding:0.75em 1em;
@@ -4186,7 +4186,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--magenta);
     text-shadow:0 0 5px var(--magenta-glow);
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     font-weight:700;
     letter-spacing:0.03em;
     text-transform:uppercase;
@@ -4194,7 +4194,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
   }
   .tfs-chip:hover{ background:var(--magenta); color:#08090b; text-shadow:none; }
-  .tfs-chip-remove{ font-size:14px; opacity:0.8; }
+  .tfs-chip-remove{ font-size:16px; opacity:0.8; }
   /* Same "this category already has a pick" signal as the applied chips
      above, right on the category button itself — a magenta dot, not a
      full recolour, since .active (currently viewing this category) still
@@ -4214,13 +4214,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* ADD TRA!TS' own categories/values now just inherit the shared white/
      magenta scheme above — no separate cyan-idle override any more (see
      this block's own history if that's ever needed again). */
-  #traitsFlyoutVals .th-empty{ font-size:16px; color:var(--white); }
-  #traitsFlyoutVals .tfv-search-cat{ color:var(--grey-dim); font-size:12px; letter-spacing:0.06em; margin-right:0.4em; }
+  #traitsFlyoutVals .th-empty{ font-size:18.5px; color:var(--white); }
+  #traitsFlyoutVals .tfv-search-cat{ color:var(--grey-dim); font-size:14px; letter-spacing:0.06em; margin-right:0.4em; }
   #traitsFlyoutVals .traits-flyout-val.has-preview .tfv-search-cat{ color:rgba(255,255,255,0.75); }
   #traitsFlyoutCats .traits-flyout-cat{ box-shadow:inset 0 0 0 1px transparent; }
   #traitsFlyoutCats .traits-flyout-cat:hover{ box-shadow:inset 0 0 0 1px var(--cyan-dim); }
-  #traitsFlyoutVals .traits-flyout-val{ font-size:18px; }
-  #traitsFlyoutVals .tfv-count{ font-size:15px; }
+  #traitsFlyoutVals .traits-flyout-val{ font-size:20.5px; }
+  #traitsFlyoutVals .tfv-count{ font-size:17.5px; }
   /* A real Pigeon preview as the button's own background (see
      renderTraitsFlyoutVals — the dark gradient is baked into the same
      inline background-image so it always covers the actual photo
@@ -4236,7 +4236,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#fff;
     text-shadow:0 1px 3px rgba(0,0,0,0.9);
   }
-  #traitsFlyoutVals .traits-flyout-val.has-preview .tfv-count{ color:#fff; font-size:16px; }
+  #traitsFlyoutVals .traits-flyout-val.has-preview .tfv-count{ color:#fff; font-size:18.5px; }
   /* Static solid box behind the value + count together — the crop
      underneath is often busy/light enough that text-shadow alone still
      clashed and was hard to read at a glance. */
@@ -4310,7 +4310,7 @@ const SWAP_HTML = `<!DOCTYPE html>
          still hardcoding the old 13px after the base class was bumped,
          so F!LTER BY TRA!TS' own chips silently stayed smaller than
          S0RT BY's right next to them. */
-      font-size:15px;
+      font-size:17.5px;
       padding:0.6em 0.9em;
       white-space:nowrap;
       overflow:hidden;
@@ -4366,7 +4366,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:var(--magenta);
     color:#08090b;
     border:1px solid var(--magenta);
-    font-size:13px;
+    font-size:15px;
     text-align:center;
     border-radius:var(--radius);
     animation:flicker-in 0.3s ease-out;
@@ -4376,7 +4376,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:0.05em;
     padding:0.55em 0.7em;
     text-transform:uppercase;
@@ -4404,7 +4404,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:0.05em;
     padding:0.55em 0.8em;
     cursor:pointer;
@@ -4432,7 +4432,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:transparent;
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    font-size:17px;
+    font-size:19.5px;
     padding:0.75em 0.9em;
     transition:border-color 0.15s ease;
   }
@@ -4440,7 +4440,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .trait-tag-label{
     color:var(--green);
     font-family:var(--font-mono);
-    font-size:17px;
+    font-size:19.5px;
     font-weight:700;
     letter-spacing:0.03em;
     text-shadow:0 0 5px var(--green-glow);
@@ -4456,7 +4456,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--magenta-dim);
     color:var(--magenta);
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:14px;
     width:2em;
     height:2em;
     cursor:pointer;
@@ -4479,7 +4479,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--red);
     text-shadow:0 0 5px var(--red-dim);
     font-family:var(--font-mono);
-    font-size:15px;
+    font-size:17.5px;
     font-weight:700;
     letter-spacing:0.1em;
     padding:0.75em 1em;
@@ -4536,7 +4536,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     display:inline-block;
     text-align:center;
     font-family:var(--font-body);
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:0.08em;
     color:var(--grey-dim);
     text-transform:uppercase;
@@ -4545,12 +4545,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Bigger, more prominent than the plain RESULTS :: N line — this is the
      headline of the search, not a status footnote. */
   .results-trait-note{
-    font-size:16px;
+    font-size:18.5px;
     font-weight:700;
     letter-spacing:0.04em;
     color:var(--white);
   }
-  .results-trait-note .hi{ font-size:20px; }
+  .results-trait-note .hi{ font-size:23px; }
 
   /* ---- empty state (attention = magenta) ---- */
   /* Fills the results area (see #resultsArea's own min-height) instead of
@@ -4559,7 +4559,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      you have to notice. */
   .empty-state{ text-align:center; min-height:60vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem 1rem; }
   .empty-state .es-title{
-    font-size:22px;
+    font-size:25.5px;
     letter-spacing:0.12em;
     color:var(--magenta);
     text-shadow:0 0 8px var(--magenta-glow);
@@ -4568,7 +4568,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .empty-state .es-line{
     font-family:var(--font-body);
-    font-size:15px;
+    font-size:17.5px;
     letter-spacing:0.03em;
     color:var(--grey);
     margin-bottom:0.5rem;
@@ -4586,7 +4586,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     overflow:hidden;
     background:repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 6px, transparent 6px, transparent 12px);
     border:1px dashed var(--border-dim);
-    font-size:10px;
+    font-size:11.5px;
     letter-spacing:0.1em;
     color:var(--grey-disabled);
     /* .my-offer-row-img (MY PIGEONS' OFFERS RECEIVED list) is this same
@@ -4635,7 +4635,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:rgba(8,9,11,0.8);
     border:1px solid var(--border-mid);
     color:var(--grey);
-    font-size:13px;
+    font-size:15px;
     cursor:pointer;
     text-align:center;
     border-radius:var(--radius);
@@ -4667,7 +4667,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     /* Bumped up from 15px (reported live wanting it "a bit bigger") — the
        box itself (width/height:1.6em) scales up with it automatically
        since both are em-relative to this same font-size. */
-    font-size:19px;
+    font-size:22px;
     cursor:pointer;
     text-align:center;
     border-radius:var(--radius);
@@ -4699,7 +4699,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--green);
     color:#fff;
     font-weight:700;
-    font-size:16px;
+    font-size:18.5px;
     letter-spacing:0.02em;
     padding:0.4em 0.6em;
     border-radius:var(--radius);
@@ -4726,7 +4726,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--cyan);
     text-shadow:0 0 4px var(--cyan-glow);
     font-weight:700;
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.06em;
     padding:0.3em 0.5em;
     border-radius:var(--radius);
@@ -4764,7 +4764,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.5rem;
   }
   .result-row-left .pigeon-img-box{ width:100%; }
-  .result-row-left .result-num{ border-bottom:none; padding:0; font-size:20px; }
+  .result-row-left .result-num{ border-bottom:none; padding:0; font-size:23px; }
   /* Full-width strip below the thumbnail — the AMOUNT field is always
      visible and typeable, no click-to-reveal step. Same strip in both
      the boxed and THUMBNAILS card layouts. */
@@ -4877,8 +4877,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      the point" prominence BUY N0W has always wanted, just without the
      size jump — and readable across every collection accent colour,
      unlike flat black text was starting to feel on the brighter ones. */
-  .thumb-buy-label{ font-size:16px; letter-spacing:0.04em; opacity:1; }
-  .thumb-buy-price{ font-family:var(--font-mono); font-size:16px; font-weight:800; letter-spacing:0.01em; }
+  .thumb-buy-label{ font-size:18.5px; letter-spacing:0.04em; opacity:1; }
+  .thumb-buy-price{ font-family:var(--font-mono); font-size:18.5px; font-weight:800; letter-spacing:0.01em; }
   /* BUY N0W stacked above 0FFER (reported live, was side by side — see
      pigeonsActionBoxHtml's own comment) — column instead of row, and BUY
      N0W's label+price now sit on ONE line ("BUY N0W :: 123K $P!GE0NS")
@@ -4899,7 +4899,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex:0 0 auto;
     width:100%;
     padding:0.8em 0.7em;
-    font-size:15px;
+    font-size:17.5px;
   }
   /* 0FFER — reported live as wanting the same green BUY $P!GE0NS/BUY N0W
      already reads (#pigeonsMergedPanel .pigeons-bar-balance-buy's own
@@ -4919,7 +4919,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:none;
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:15px;
+    font-size:17.5px;
     letter-spacing:0.03em;
     padding:0.8em 0.7em;
     cursor:pointer;
@@ -4941,7 +4941,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--cyan);
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:15px;
+    font-size:17.5px;
     letter-spacing:0.03em;
     padding:0.8em 0.7em;
     cursor:pointer;
@@ -4970,7 +4970,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#fff;
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:17px;
+    font-size:19.5px;
     letter-spacing:0.03em;
     text-transform:uppercase;
   }
@@ -4978,7 +4978,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      listingCountdownText) — fine print under the price, not competing
      with it, same fine-print grey used for the issuer address/trustline
      status elsewhere. */
-  .listing-countdown{ color:var(--grey-dim); font-size:10px; letter-spacing:0.08em; text-transform:uppercase; margin-top:0.15rem; }
+  .listing-countdown{ color:var(--grey-dim); font-size:11.5px; letter-spacing:0.08em; text-transform:uppercase; margin-top:0.15rem; }
   .thumb-offer-row{ display:flex; flex-wrap:wrap; gap:0.4rem; width:100%; }
   /* NFT 0FFERED T0 Y0U (FL0CK) — purple like every other real TRANSFER
      surface on this site, since it IS the recipient half of that same
@@ -4997,8 +4997,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .incoming-transfer-thumb{ width:52px; height:52px; border-radius:6px; object-fit:cover; flex:0 0 auto; background:rgba(255,255,255,0.06); }
   .incoming-transfer-info{ flex:1 1 auto; min-width:0; }
-  .incoming-transfer-num{ font-family:var(--font-display); font-weight:700; font-size:15px; color:#fff; }
-  .incoming-transfer-from{ font-size:11px; color:var(--grey-dim); letter-spacing:0.05em; margin-top:0.2rem; text-transform:uppercase; }
+  .incoming-transfer-num{ font-family:var(--font-display); font-weight:700; font-size:17.5px; color:#fff; }
+  .incoming-transfer-from{ font-size:12.5px; color:var(--grey-dim); letter-spacing:0.05em; margin-top:0.2rem; text-transform:uppercase; }
   .incoming-transfer-accept-btn{ flex:0 0 auto; background:var(--pigeon-purple); border-color:var(--pigeon-purple); color:#fff; text-shadow:none; }
   .incoming-transfer-accept-btn:hover{ background:var(--magenta); border-color:var(--magenta); }
   /* L!ST duration — same collection-purple active state as .edition-btn,
@@ -5013,7 +5013,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:14px;
     font-weight:700;
     letter-spacing:0.05em;
     padding:0.6em 0.3em;
@@ -5027,7 +5027,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Bigger than the other four — a bare ∞ glyph at the same 12px as
      "30 DAYS" reads as an afterthought/typo next to real words, not a
      deliberate FOREVER option. */
-  .list-duration-forever{ font-size:26px; padding:0.3em 0.3em; }
+  .list-duration-forever{ font-size:30px; padding:0.3em 0.3em; }
   /* $PIGEONS coin sits inside the input itself (not just the placeholder)
      so it stays put once you start typing a number, instead of
      disappearing along with the placeholder text. */
@@ -5060,7 +5060,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:none;
     color:var(--grey-dim);
     font-family:var(--font-mono);
-    font-size:18px;
+    font-size:20.5px;
     line-height:1;
     padding:0 0.3em;
     cursor:pointer;
@@ -5118,7 +5118,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid rgba(255,255,255,0.75);
     color:var(--green);
     font-family:var(--font-mono);
-    font-size:28px;
+    font-size:32px;
     font-weight:700;
     text-align:center;
     padding:0.6em 3.3em;
@@ -5134,13 +5134,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      rather than risking the same overflow class of bug already fixed
      elsewhere in this file for other controls. */
   @media (min-width:701px){
-    .make-offer-input, .list-price-input{ font-size:36px; padding:0.6em 3.6em; }
+    .make-offer-input, .list-price-input{ font-size:41.5px; padding:0.6em 3.6em; }
     /* Bigger again specifically — reported live as wanting the collection
        coin bigger too, not just the popup around it. */
     .make-offer-input-coin{ width:54px; height:54px; }
-    .make-offer-send, .list-inline-btn{ font-size:17px; padding:0.85em 0.85em; }
-    .list-duration-btn{ font-size:14px; padding:0.75em 0.4em; }
-    .list-duration-forever{ font-size:32px; }
+    .make-offer-send, .list-inline-btn{ font-size:19.5px; padding:0.85em 0.85em; }
+    .list-duration-btn{ font-size:16px; padding:0.75em 0.4em; }
+    .list-duration-forever{ font-size:37px; }
   }
   .make-offer-send, .list-inline-btn{
     flex:1 1 auto;
@@ -5149,7 +5149,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#fff;
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:15px;
+    font-size:17.5px;
     letter-spacing:0.04em;
     padding:0.75em 0.75em;
     cursor:pointer;
@@ -5176,7 +5176,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      (price input, then duration picker, then this) instead of sitting
      beside the price input — reported live as not wanting it crammed in
      next to the number any more. */
-  .list-inline-btn-bottom{ width:100%; margin-top:0.9rem; padding:0.9em; font-size:16px; }
+  .list-inline-btn-bottom{ width:100%; margin-top:0.9rem; padding:0.9em; font-size:18.5px; }
   /* Offers received, embedded directly on the pigeon's own card (see
      myPigeonOffersHtml) — sits above the LIST/DELIST action box. */
   .my-pigeon-offers{ display:flex; flex-direction:column; gap:0.4rem; margin-top:0.5rem; }
@@ -5191,15 +5191,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.9rem 0.8rem;
     text-align:center;
   }
-  .highest-offer-label{ font-size:11px; letter-spacing:0.14em; color:var(--grey); text-transform:uppercase; }
-  .highest-offer-price{ font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--green); margin:0.25rem 0; }
-  .highest-offer-buyer{ font-size:12px; letter-spacing:0.04em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.7rem; }
+  .highest-offer-label{ font-size:12.5px; letter-spacing:0.14em; color:var(--grey); text-transform:uppercase; }
+  .highest-offer-price{ font-family:var(--font-display); font-size:30px; font-weight:700; color:var(--green); margin:0.25rem 0; }
+  .highest-offer-buyer{ font-size:14px; letter-spacing:0.04em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.7rem; }
   .highest-offer-actions{ display:flex; gap:0.4rem; }
   .highest-offer-btn{
     flex:1 1 0;
     min-width:0;
     font-family:var(--font-mono);
-    font-size:14px;
+    font-size:16px;
     font-weight:700;
     letter-spacing:0.03em;
     padding:0.8em 0.4em;
@@ -5244,19 +5244,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   .my-offer-row-img{ width:96px; height:96px; flex:0 0 auto; border-radius:var(--radius); overflow:hidden; }
   .my-offer-row-img img{ width:100%; height:100%; object-fit:cover; }
   .my-offer-row-info{ flex:1 1 auto; min-width:0; }
-  .my-offer-row-num{ font-size:28px; font-weight:700; color:var(--white); }
+  .my-offer-row-num{ font-size:32px; font-weight:700; color:var(--white); }
   /* Reported live as wanting OFFERS RECE!VED/0UTG0!NG 0FFERS text white
      and bigger — this was grey-dim (hard to read, same complaint already
      fixed elsewhere on the site), now full white and a size up. */
-  .my-offer-row-buyer{ font-size:18px; letter-spacing:0.03em; color:var(--white); text-transform:uppercase; margin-top:0.3rem; }
-  .my-offer-row-price{ font-family:var(--font-display); font-size:38px; font-weight:700; color:var(--green); text-align:center; white-space:nowrap; }
+  .my-offer-row-buyer{ font-size:20.5px; letter-spacing:0.03em; color:var(--white); text-transform:uppercase; margin-top:0.3rem; }
+  .my-offer-row-price{ font-family:var(--font-display); font-size:43.5px; font-weight:700; color:var(--green); text-align:center; white-space:nowrap; }
   .my-offer-row-actions{ display:flex; flex-direction:row; gap:0.5rem; justify-self:end; }
-  .my-offer-row-actions .highest-offer-btn{ flex:0 0 auto; padding:0.85em 1.2em; font-size:16px; }
+  .my-offer-row-actions .highest-offer-btn{ flex:0 0 auto; padding:0.85em 1.2em; font-size:18.5px; }
   @media (max-width:700px){
     .my-offer-row{ grid-template-columns:1fr; row-gap:0.75rem; padding:1.2rem 0.6rem; }
     .my-offer-row-img{ width:72px; height:72px; }
-    .my-offer-row-num{ font-size:20px; }
-    .my-offer-row-price{ text-align:left; font-size:26px; }
+    .my-offer-row-num{ font-size:23px; }
+    .my-offer-row-price{ text-align:left; font-size:30px; }
     .my-offer-row-actions{ justify-self:start; width:100%; }
     .my-offer-row-actions .highest-offer-btn{ flex:1 1 0; }
   }
@@ -5327,7 +5327,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     color:var(--cyan-dim);
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:11.5px;
     letter-spacing:0.12em;
     text-transform:uppercase;
     cursor:pointer;
@@ -5346,7 +5346,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     /* CANCEL/L!ST + TRANSFER side by side get tight in a narrow 2-across
        mobile card at the full 15px size — same shrink other card
        controls already get at this breakpoint. */
-    .owned-action-row .bar-btn{ font-size:11px; padding:0.7em 0.4em; }
+    .owned-action-row .bar-btn{ font-size:12.5px; padding:0.7em 0.4em; }
     /* Smaller than the desktop 13px default (see that rule's own comment),
        not bigger — confirmed live on an actual 2-across mobile card:
        "BUY N0W" sharing a row with 0FFER truncated to "BUY …" at 13px,
@@ -5357,7 +5357,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        width via flex:1 1 0 either way, so this only really matters for
        the two-button state. */
     .owned-action-row .thumb-buy-btn,
-    .owned-action-row .offer-open-modal-btn{ font-size:11px; letter-spacing:0.01em; padding:0.7em 0.3em; }
+    .owned-action-row .offer-open-modal-btn{ font-size:12.5px; letter-spacing:0.01em; padding:0.7em 0.3em; }
     /* .owned-action-row-buy (BUY N0W stacked above 0FFER, both full-width
        — see that rule's own comment) never had the side-by-side problem
        above this fixed in the first place, and needs to keep BUY N0W/
@@ -5365,7 +5365,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        15px/0.7em 0.8em both share on desktop instead of inheriting the
        11px/0.3em shrink meant for the old two-buttons-in-one-row layout. */
     .owned-action-row-buy .thumb-buy-btn,
-    .owned-action-row-buy .offer-open-modal-btn-secondary{ font-size:15px; letter-spacing:0.04em; padding:0.7em 0.8em; }
+    .owned-action-row-buy .offer-open-modal-btn-secondary{ font-size:17.5px; letter-spacing:0.04em; padding:0.7em 0.8em; }
   }
 
   /* ---- old grid-tile card, still used by MY PIGEONS (myPigeonCardHtml) ---- */
@@ -5416,7 +5416,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        column shrink above (see .result-list.view-thumbnails' own
        comment) — smaller pictures, bigger text, not just smaller cards
        overall. */
-    font-size:19px;
+    font-size:22px;
     font-weight:700;
     letter-spacing:0.03em;
     color:var(--white);
@@ -5425,13 +5425,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-bottom:1px solid var(--border-dim);
     transition:color 0.15s ease;
   }
-  .result-rarity-line{ font-size:18px; letter-spacing:0.03em; color:var(--white); text-align:center; }
+  .result-rarity-line{ font-size:20.5px; letter-spacing:0.03em; color:var(--white); text-align:center; }
   /* AVG SALE PR!CE / COND!T!ON label above its own value, not side by
      side on one line — same stacked shape as .stat-label/.stat-value
      elsewhere on the page, just sized down to fit a thumbnail card. */
   .result-stat-stack{ display:flex; flex-direction:column; align-items:center; gap:0.1rem; }
-  .result-stat-stack .stat-label{ font-size:12px; margin-bottom:0; color:var(--white); }
-  .result-stat-stack .stat-value{ font-size:17px; color:var(--white); }
+  .result-stat-stack .stat-label{ font-size:14px; margin-bottom:0; color:var(--white); }
+  .result-stat-stack .stat-value{ font-size:19.5px; color:var(--white); }
   .card-listings{ display:flex; gap:0.4rem; margin-top:0.45rem; }
   /* Neither marketplace has a real listing — one shared full-width bar
      naming both markets, instead of two separate washed-out boxes. */
@@ -5456,9 +5456,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     text-decoration:none;
   }
-  .cl-market{ font-size:9px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.35rem; }
-  .cl-price{ font-size:12px; font-weight:700; letter-spacing:0.02em; color:var(--green); text-shadow:0 0 6px var(--green-glow); }
-  .cl-price.cl-none{ color:var(--grey-disabled); font-size:10px; font-weight:400; text-shadow:none; text-transform:uppercase; }
+  .cl-market{ font-size:10.5px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.35rem; }
+  .cl-price{ font-size:14px; font-weight:700; letter-spacing:0.02em; color:var(--green); text-shadow:0 0 6px var(--green-glow); }
+  .cl-price.cl-none{ color:var(--grey-disabled); font-size:11.5px; font-weight:400; text-shadow:none; text-transform:uppercase; }
   /* The whole box IS the buy action when a real listing exists — filled
      green, not just a border, so it reads as clickable at a glance. */
   .cl-block-buy{
@@ -5470,8 +5470,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .cl-block-buy:hover{ background:rgba(52,255,133,0.28); box-shadow:0 0 14px var(--green-glow); }
   .cl-block-buy .cl-price{ color:var(--bg); text-shadow:none; }
   .cl-block-buy .cl-market{ color:rgba(8,9,11,0.65); }
-  .css-item{ font-size:13px; letter-spacing:0.02em; color:var(--white); text-align:center; font-weight:600; }
-  .css-label{ display:inline-block; min-width:110px; color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.05em; margin-right:0.4em; font-size:10px; font-weight:400; }
+  .css-item{ font-size:15px; letter-spacing:0.02em; color:var(--white); text-align:center; font-weight:600; }
+  .css-label{ display:inline-block; min-width:110px; color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.05em; margin-right:0.4em; font-size:11.5px; font-weight:400; }
 
   /* ---- Universal $PIGEONS statement bar — a big bold purple bar with
      the collection coin icon, for any "here's the real $PIGEONS number"
@@ -5489,9 +5489,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-shadow:0 0 16px var(--magenta-glow);
   }
   .pigeons-bar-coin{ width:32px; height:32px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.6); flex:0 0 auto; }
-  .pigeons-bar-text{ font-size:16px; font-weight:700; letter-spacing:0.02em; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-align:center; text-transform:uppercase; }
+  .pigeons-bar-text{ font-size:18.5px; font-weight:700; letter-spacing:0.02em; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-align:center; text-transform:uppercase; }
   @media (max-width:500px){
-    .pigeons-bar-text{ font-size:13px; }
+    .pigeons-bar-text{ font-size:15px; }
   }
   /* Trustline banner (.pigeons-merged-panel) — sitting above the
      DATABASE/MY PIGEONS/etc tabs: the identity row (thumb + SET
@@ -5613,7 +5613,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.3em 0.6em;
     color:rgba(255,255,255,0.7);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:0.01em;
     text-transform:none;
     cursor:pointer;
@@ -5630,17 +5630,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     height:1.3em;
     border-radius:50%;
     border:1px solid currentColor;
-    font-size:10px;
+    font-size:11.5px;
     font-weight:700;
   }
-  .pigeons-bar-sublabel{ font-size:12px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
+  .pigeons-bar-sublabel{ font-size:14px; letter-spacing:0.15em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
   .pigeons-bar-issuer .bar-btn{ border-color:rgba(255,255,255,0.6); color:#fff; background:rgba(0,0,0,0.18); }
   .pigeons-bar-issuer .bar-btn:hover{ border-color:#fff; background:rgba(0,0,0,0.3); color:#fff; }
-  .pigeons-bar-issuer .pigeons-bar-text{ font-size:14px; text-align:left; }
+  .pigeons-bar-issuer .pigeons-bar-text{ font-size:16px; text-align:left; }
   /* SET TRUSTLINE TO TRADE — the real headline of the logged-out left
      column, so it (and its COPY button) get bumped noticeably bigger
      than the plain .pigeons-bar-text default. */
-  .pigeons-bar-issuer .pigeons-bar-text-lg{ font-size:18px; }
+  .pigeons-bar-issuer .pigeons-bar-text-lg{ font-size:20.5px; }
   /* Small inline COPY button sitting right next to SET TRUSTLINE TO
      TRADE — the actual issuer address is now just plain reference text
      underneath (.pigeons-bar-sublabel), not the click target itself. */
@@ -5657,7 +5657,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-left:0.3rem;
     color:#fff;
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.05em;
     text-transform:uppercase;
     cursor:pointer;
@@ -5690,8 +5690,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      balance number above it, and flex-start left both edges flush
      instead of the button actually sitting centered underneath it. */
   .pigeons-bar-balance-info{ display:flex; flex-direction:column; align-items:center; gap:0.3rem; text-align:center; }
-  .pigeons-bar-balance-label{ font-size:13px; letter-spacing:0.25em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
-  .pigeons-bar-balance-value{ font-size:28px; font-weight:700; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-transform:uppercase; letter-spacing:0.02em; }
+  .pigeons-bar-balance-label{ font-size:15px; letter-spacing:0.25em; color:rgba(255,255,255,0.8); text-transform:uppercase; }
+  .pigeons-bar-balance-value{ font-size:32px; font-weight:700; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); text-transform:uppercase; letter-spacing:0.02em; }
   /* Bigger, filled (not just outlined) and gently pulsing at rest — this
      is the site's actual real-money call-to-action, worth standing out
      rather than blending in with every other plain outline .bar-btn. */
@@ -5716,7 +5716,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--collection-accent);
     text-shadow:none;
     font-family:var(--font-mono);
-    font-size:17px;
+    font-size:19.5px;
     font-weight:700;
     letter-spacing:0.05em;
     text-decoration:none;
@@ -5734,7 +5734,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      money action. */
   #pigeonsBalanceBuyBtn{
     padding:1.05em 2.4em;
-    font-size:20px;
+    font-size:23px;
   }
   /* Simple fill-on-hover, no offset shadow/transform — the harder
      brutalist hover (translate + hard drop shadow) read as messy on a
@@ -5770,7 +5770,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.85em 1.8em;
     color:#fff;
     font-family:var(--font-mono);
-    font-size:17px;
+    font-size:19.5px;
     font-weight:700;
     letter-spacing:0.08em;
     text-transform:uppercase;
@@ -5780,7 +5780,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:border-color 0.15s ease, background 0.15s ease;
   }
   .pigeons-calc-toggle-btn:hover, .pigeons-calc-toggle-btn.open{ border-color:#fff; background:rgba(0,0,0,0.3); }
-  .pigeons-calc-toggle-arrow{ font-size:11px; opacity:0.8; }
+  .pigeons-calc-toggle-arrow{ font-size:12.5px; opacity:0.8; }
   /* Every clickable button on the trustline banner reads green now
      (reported live) — scoped to #pigeonsMergedPanel (the whole banner's
      own wrapper) rather than these classes' bare selectors, since
@@ -5860,7 +5860,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:1rem;
     padding:0 0.6rem 0.6rem;
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     font-weight:700;
     letter-spacing:0.15em;
     color:var(--grey-dim);
@@ -5876,7 +5876,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      rather than leaving the currency toggle to imply it on its own. */
   .sales-modal-subtitle{
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.04em;
     color:var(--grey);
     margin:-0.5rem 0 1rem;
@@ -5897,7 +5897,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      the rate readout + its DEXSCREENER icon bigger in here specifically —
      scoped to .pigeons-calc-panel so the small versions used elsewhere,
      like the stats carousel tile, are untouched). */
-  .pigeons-calc-panel .pigeons-bar-rate-value{ font-size:22px; }
+  .pigeons-calc-panel .pigeons-bar-rate-value{ font-size:25.5px; }
   .pigeons-calc-panel .pigeons-bar-dex-btn{ width:38px; height:38px; padding:5px; }
   .pigeons-calc-panel .pigeons-bar-dex-icon{ width:26px; height:26px; }
   /* flex-wrap always on here (not just under the existing <500px media
@@ -5906,7 +5906,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      max-width even on desktop, confirmed live as "$PIGEONS ×" spilling
      out past the panel's right edge instead of wrapping down. */
   .pigeons-calc-panel .pigeons-bar-calc{ padding:1.1em 1.1em; flex-wrap:wrap; justify-content:center; row-gap:0.6em; }
-  .pigeons-calc-panel .pigeons-bar-calc-input{ font-size:22px; }
+  .pigeons-calc-panel .pigeons-bar-calc-input{ font-size:25.5px; }
   /* BUY <T0KEN> — a real second action underneath the calculator itself
      (replaced the old V!EW 0N DEX link here). Green fill/black text
      (reported live as wanting it green, not purple) — same always-on
@@ -5922,7 +5922,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.85em 1em;
     color:#000;
     font-family:var(--font-mono);
-    font-size:14px;
+    font-size:16px;
     font-weight:700;
     letter-spacing:0.08em;
     text-transform:uppercase;
@@ -5942,7 +5942,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.7em 1em;
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.06em;
     text-transform:uppercase;
     cursor:pointer;
@@ -5950,10 +5950,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .pigeons-calc-close-btn:hover{ border-color:#fff; color:#fff; }
   @media (max-width:500px){
     .pigeons-calc-panel .pigeons-bar-calc{ flex-wrap:wrap; justify-content:center; }
-    .pigeons-calc-panel .pigeons-bar-calc-input{ font-size:18px; }
+    .pigeons-calc-panel .pigeons-bar-calc-input{ font-size:20.5px; }
   }
   .pigeons-bar-rate-row{ display:flex; align-items:center; gap:0.5rem; }
-  .pigeons-bar-rate-value{ font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--green); text-shadow:0 0 6px var(--green-glow); white-space:nowrap; }
+  .pigeons-bar-rate-value{ font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--green); text-shadow:0 0 6px var(--green-glow); white-space:nowrap; }
   .pigeons-bar-dex-btn{
     display:inline-flex;
     align-items:center;
@@ -5988,7 +5988,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:none;
     color:#fff;
     font-family:var(--font-mono);
-    font-size:17px;
+    font-size:19.5px;
     text-align:center;
     padding:0.2em 0;
     transition:width 0.1s ease;
@@ -6003,7 +6003,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      .pigeons-bar-calc's own flex-wrap comment) — without it the arrow
      tacks onto the end of the first row instead of sitting centered
      between the two. */
-  .pigeons-bar-calc-arrow{ color:rgba(255,255,255,0.7); font-size:18px; flex:1 0 100%; text-align:center; margin:0.15em 0; }
+  .pigeons-bar-calc-arrow{ color:rgba(255,255,255,0.7); font-size:20.5px; flex:1 0 100%; text-align:center; margin:0.15em 0; }
   /* Groups one calculator input with its own unit label + clear button —
      each side (XRP / $PIGEONS) needs to scope :placeholder-shown ~
      .input-clear-btn to ONLY its own input, not the other side's, since
@@ -6016,7 +6016,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      parse/format functions never have to strip it back out. */
   .pigeons-calc-unit{
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     font-weight:700;
     letter-spacing:0.06em;
     color:rgba(255,255,255,0.55);
@@ -6059,16 +6059,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .card-trait-cell{ background:rgba(61,243,236,0.05); border:1px solid var(--cyan-dim); border-radius:var(--radius); padding:0.85rem 0.5rem; text-align:center; cursor:pointer; transition:background 0.15s ease, border-color 0.15s ease; }
   .card-trait-cell:hover{ background:rgba(61,243,236,0.14); border-color:var(--cyan); }
-  .card-tc-label{ font-size:10px; font-weight:700; letter-spacing:0.1em; color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; margin-bottom:0.3rem; }
-  .card-tc-value{ font-size:14px; font-weight:700; letter-spacing:0.02em; color:var(--white); }
+  .card-tc-label{ font-size:11.5px; font-weight:700; letter-spacing:0.1em; color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; margin-bottom:0.3rem; }
+  .card-tc-value{ font-size:16px; font-weight:700; letter-spacing:0.02em; color:var(--white); }
   /* The percent is the important number here — same visual weight as the
      value itself, not a tiny grey afterthought. */
-  .card-tc-pct{ font-size:17px; font-weight:800; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); margin-top:0.45rem; padding-top:0.45rem; border-top:1px dashed var(--border-dim); }
-  .card-tc-count{ display:block; font-size:10px; font-weight:400; letter-spacing:0.06em; color:var(--grey); margin-top:0.15rem; text-transform:uppercase; }
+  .card-tc-pct{ font-size:19.5px; font-weight:800; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); margin-top:0.45rem; padding-top:0.45rem; border-top:1px dashed var(--border-dim); }
+  .card-tc-count{ display:block; font-size:11.5px; font-weight:400; letter-spacing:0.06em; color:var(--grey); margin-top:0.15rem; text-transform:uppercase; }
   @media (max-width:500px){
     .card-trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
-  .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
+  .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:18.5px; }
 
   @media (max-width:900px){
     .result-grid{ grid-template-columns:repeat(3, 1fr); }
@@ -6080,14 +6080,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     .result-grid{ grid-template-columns:repeat(2, 1fr); gap:0.7rem; }
     .result-card-body{ padding:0.6rem 0.5rem; }
     .result-num{ padding:0.5rem 0.35rem; }
-    .card-select-toggle, .my-pigeon-offer-toggle{ width:1.7em; height:1.7em; line-height:1.7em; font-size:14px; }
+    .card-select-toggle, .my-pigeon-offer-toggle{ width:1.7em; height:1.7em; line-height:1.7em; font-size:16px; }
   }
 
   /* ---- infinite scroll ---- */
   .scroll-sentinel{ height:1px; }
   .load-more-note{
     text-align:center;
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:0.1em;
     color:var(--cyan-dim);
     padding:1.5rem 0;
@@ -6096,7 +6096,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .end-of-collection-note{
     text-align:center;
     font-family:var(--font-body);
-    font-size:10px;
+    font-size:11.5px;
     letter-spacing:0.06em;
     color:var(--grey-disabled);
     padding:1.5rem 0;
@@ -6111,7 +6111,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:0.1em;
     padding:0.65em 1.3em;
     cursor:pointer;
@@ -6134,7 +6134,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:22px;
+    font-size:25.5px;
     letter-spacing:0.12em;
     color:var(--cyan);
     text-shadow:0 0 8px var(--cyan-glow);
@@ -6147,7 +6147,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     50%{ opacity:0.5; }
   }
   @media (max-width:760px){
-    .loading-note{ font-size:16px; min-height:40vh; padding:1.5rem 1rem; }
+    .loading-note{ font-size:18.5px; min-height:40vh; padding:1.5rem 1rem; }
   }
 
   /* ---- detail screen — picture sized to fit its own (now bigger) column
@@ -6321,7 +6321,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      cyan/accent like MESSAGE) so the one real "put real XRP behind this"
      CTA on the screen still stands out on its own. */
   .profile-screen-history-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
-  .profile-screen-eyebrow{ text-align:center; font-size:13px; letter-spacing:0.14em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 5px rgba(var(--profile-accent-rgb, 61,243,236),0.5); text-transform:uppercase; margin:0 0 1rem; }
+  .profile-screen-eyebrow{ text-align:center; font-size:15px; letter-spacing:0.14em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 5px rgba(var(--profile-accent-rgb, 61,243,236),0.5); text-transform:uppercase; margin:0 0 1rem; }
   /* NFT C0LLECT!0NS (left) / C0!NS HELD (right) — reported live wanting
      these side by side instead of one long stacked scroll. Stacks back
      to one column on narrow viewports, same breakpoint language the
@@ -6364,8 +6364,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     background-size:cover; background-position:center;
     background-color:rgba(var(--card-accent, 61,243,236), 0.18);
   }
-  .profile-collection-label{ font-family:var(--font-mono); font-size:15px; font-weight:700; color:#fff; }
-  .profile-collection-count{ font-family:var(--font-mono); font-size:13px; color:var(--green); text-shadow:0 0 5px var(--green-glow); }
+  .profile-collection-label{ font-family:var(--font-mono); font-size:17.5px; font-weight:700; color:#fff; }
+  .profile-collection-count{ font-family:var(--font-mono); font-size:15px; color:var(--green); text-shadow:0 0 5px var(--green-glow); }
   /* Σκύλλα://!DENT!TY — a small generated code block, monospace label ::
      value rows (real fields only — see renderProfileCode's own comment on
      why CLASS/T!TLE/TRUST read PEND!NG instead of a fabricated number). */
@@ -6377,7 +6377,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     background:var(--panel-bg-solid);
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:14px;
     line-height:1.7;
   }
   .profile-code-title{ color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 5px rgba(var(--profile-accent-rgb, 61,243,236),0.5); font-weight:700; letter-spacing:0.06em; margin-bottom:0.4rem; }
@@ -6387,18 +6387,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-private-notice{ max-width:420px; margin:2rem auto; text-align:center; }
   /* ---- WALLET H!ST0RY — #screenWalletHistory's own content, everything
      below the shared .profile-banner it reuses from #screenProfile. ---- */
-  .wallet-history-note{ max-width:900px; margin:0 auto 1rem; padding:0.6em 1em; border:1px dashed var(--border-dim); border-radius:var(--radius); text-align:center; font-size:12px; color:var(--grey-dim); letter-spacing:0.04em; }
+  .wallet-history-note{ max-width:900px; margin:0 auto 1rem; padding:0.6em 1em; border:1px dashed var(--border-dim); border-radius:var(--radius); text-align:center; font-size:14px; color:var(--grey-dim); letter-spacing:0.04em; }
   /* WALLET DNA — the exact ████████░░ bar-glyph language from spec, one
      row per signal, PEND!NG (not a fabricated bar) for anything we can't
      honestly compute yet (see computeWalletDna's own comment). */
   .wallet-dna-block{ max-width:520px; margin:0 auto 2rem; }
-  .wallet-dna-row{ display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem; font-family:var(--font-mono); font-size:12px; }
+  .wallet-dna-row{ display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem; font-family:var(--font-mono); font-size:14px; }
   .wallet-dna-label{ flex:0 0 128px; color:var(--grey-dim); letter-spacing:0.05em; text-transform:uppercase; }
   .wallet-dna-bar{ color:var(--green); text-shadow:0 0 5px var(--green-glow); letter-spacing:1px; }
   .wallet-dna-row.pending .wallet-dna-bar{ color:var(--grey-dim); text-shadow:none; }
   .wallet-dna-classification{ text-align:center; margin-top:1rem; padding-top:1rem; border-top:1px dashed var(--border-dim); }
-  .wallet-dna-classification-label{ font-family:var(--font-display); font-size:22px; font-weight:700; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 8px rgba(var(--profile-accent-rgb, 61,243,236),0.5); letter-spacing:0.04em; }
-  .wallet-dna-disclaimer{ font-size:10px; color:var(--grey-dim); letter-spacing:0.03em; margin-top:0.4rem; text-transform:none; }
+  .wallet-dna-classification-label{ font-family:var(--font-display); font-size:25.5px; font-weight:700; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 8px rgba(var(--profile-accent-rgb, 61,243,236),0.5); letter-spacing:0.04em; }
+  .wallet-dna-disclaimer{ font-size:11.5px; color:var(--grey-dim); letter-spacing:0.03em; margin-top:0.4rem; text-transform:none; }
   .wallet-history-graph{ display:block; width:100%; max-width:900px; height:120px; margin:0 auto 2rem; }
   /* F!LTERS — real client-side filters over the already-fetched event
      list (no re-fetch per click), same active-state button language
@@ -6409,7 +6409,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     font-weight:700;
     letter-spacing:0.04em;
     padding:0.5em 0.9em;
@@ -6421,7 +6421,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .wallet-history-filter-btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
   .wallet-history-filter-btn.active{ background:rgba(var(--profile-accent-rgb, 61,243,236),0.12); border-color:rgb(var(--profile-accent-rgb, 61,243,236)); color:rgb(var(--profile-accent-rgb, 61,243,236)); }
   .wallet-history-timeline{ max-width:900px; margin:0 auto 3rem; }
-  .wallet-history-day-heading{ font-family:var(--font-mono); font-size:11px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; margin:1.25rem 0 0.5rem; padding-bottom:0.3rem; border-bottom:1px dashed var(--border-dim); }
+  .wallet-history-day-heading{ font-family:var(--font-mono); font-size:12.5px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; margin:1.25rem 0 0.5rem; padding-bottom:0.3rem; border-bottom:1px dashed var(--border-dim); }
   .wallet-history-event{
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
@@ -6438,11 +6438,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:background 0.15s ease;
   }
   .wallet-history-event-row:hover{ background:rgba(255,255,255,0.03); }
-  .wallet-history-event-icon{ flex:0 0 auto; font-size:16px; color:rgb(var(--profile-accent-rgb, 61,243,236)); }
-  .wallet-history-event-label{ flex:1 1 auto; min-width:0; font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--white); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .wallet-history-event-scylla{ flex:0 0 auto; font-size:9px; font-weight:700; letter-spacing:0.05em; color:var(--green); border:1px solid var(--green); border-radius:var(--radius); padding:0.15em 0.4em; }
-  .wallet-history-event-time{ flex:0 0 auto; font-size:11px; color:var(--grey-dim); }
-  .wallet-history-event-detail{ display:none; padding:0 0.9em 0.9em; font-size:12px; color:var(--grey-dim); border-top:1px dashed var(--border-dim); }
+  .wallet-history-event-icon{ flex:0 0 auto; font-size:18.5px; color:rgb(var(--profile-accent-rgb, 61,243,236)); }
+  .wallet-history-event-label{ flex:1 1 auto; min-width:0; font-family:var(--font-mono); font-size:15px; font-weight:700; color:var(--white); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .wallet-history-event-scylla{ flex:0 0 auto; font-size:10.5px; font-weight:700; letter-spacing:0.05em; color:var(--green); border:1px solid var(--green); border-radius:var(--radius); padding:0.15em 0.4em; }
+  .wallet-history-event-time{ flex:0 0 auto; font-size:12.5px; color:var(--grey-dim); }
+  .wallet-history-event-detail{ display:none; padding:0 0.9em 0.9em; font-size:14px; color:var(--grey-dim); border-top:1px dashed var(--border-dim); }
   .wallet-history-event-detail.open{ display:block; padding-top:0.7em; }
   .wallet-history-event-detail-row{ display:flex; justify-content:space-between; gap:1rem; padding:0.2em 0; }
   .wallet-history-event-detail-row span:last-child{ color:var(--white); text-align:right; word-break:break-all; }
@@ -6469,12 +6469,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   .achievement-card.unlocked{ border-color:rgba(var(--profile-accent-rgb, 61,243,236),0.5); box-shadow:0 0 12px rgba(var(--profile-accent-rgb, 61,243,236),0.12); }
   .achievement-card.locked{ opacity:0.5; }
   .achievement-card-row{ display:flex; align-items:center; gap:0.6rem; margin-bottom:0.35rem; }
-  .achievement-card-icon{ flex:0 0 auto; font-size:16px; }
+  .achievement-card-icon{ flex:0 0 auto; font-size:18.5px; }
   .achievement-card.unlocked .achievement-card-icon{ color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.6); }
   .achievement-card.locked .achievement-card-icon{ color:var(--grey-dim); }
-  .achievement-card-label{ font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:0.04em; color:var(--white); text-transform:uppercase; }
-  .achievement-card-desc{ font-size:11px; color:var(--grey-dim); letter-spacing:0.02em; }
-  .achievement-card-date{ margin-top:0.4em; font-size:10px; color:rgb(var(--profile-accent-rgb, 61,243,236)); letter-spacing:0.03em; }
+  .achievement-card-label{ font-family:var(--font-mono); font-size:15px; font-weight:700; letter-spacing:0.04em; color:var(--white); text-transform:uppercase; }
+  .achievement-card-desc{ font-size:12.5px; color:var(--grey-dim); letter-spacing:0.02em; }
+  .achievement-card-date{ margin-top:0.4em; font-size:11.5px; color:rgb(var(--profile-accent-rgb, 61,243,236)); letter-spacing:0.03em; }
   /* T!TLES — earned title-kind rules as chips; only clickable/equippable
      on your own profile (isOwnProfile gate in renderTitlesSection), a
      visitor just sees whichever one (if any) is currently worn, read-only. */
@@ -6484,7 +6484,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     font-weight:700;
     letter-spacing:0.04em;
     padding:0.5em 0.9em;
@@ -6497,7 +6497,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Worn title badge — small pill next to the username on the shared
      .profile-banner (profileScreenBannerHtml), same "the worn identity"
      the user asked for. */
-  .profile-title-badge{ display:inline-block; margin-left:0.5em; padding:0.15em 0.5em; border:1px solid rgb(var(--profile-accent-rgb, 61,243,236)); border-radius:var(--radius); font-size:10px; font-weight:700; letter-spacing:0.05em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 5px rgba(var(--profile-accent-rgb, 61,243,236),0.5); vertical-align:middle; }
+  .profile-title-badge{ display:inline-block; margin-left:0.5em; padding:0.15em 0.5em; border:1px solid rgb(var(--profile-accent-rgb, 61,243,236)); border-radius:var(--radius); font-size:11.5px; font-weight:700; letter-spacing:0.05em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 5px rgba(var(--profile-accent-rgb, 61,243,236),0.5); vertical-align:middle; }
   /* DATABASE M0DE / SH0WCASE M0DE — a real toggle, not a stored owner
      preference (see the HTML's own comment) — same two-button active-
      state language SALES H!ST0RY's XRP/$P!GE0NS toggle already uses. */
@@ -6507,7 +6507,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:14px;
     font-weight:700;
     letter-spacing:0.05em;
     padding:0.6em 1.1em;
@@ -6537,7 +6537,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     font-weight:700;
     letter-spacing:0.04em;
     padding:0.5em 0.9em;
@@ -6563,7 +6563,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-showcase-card:hover{ border-color:var(--cyan-dim); transform:translateY(-3px); }
   .profile-showcase-card-img{ aspect-ratio:1; background:#000; }
   .profile-showcase-card-img img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .profile-showcase-card-num{ padding:0.6em 0.4em; text-align:center; font-family:var(--font-mono); font-size:13px; color:var(--white); }
+  .profile-showcase-card-num{ padding:0.6em 0.4em; text-align:center; font-family:var(--font-mono); font-size:15px; color:var(--white); }
   /* PREV/NEXT — fixed to the screen's own left/right edges (position:fixed,
      same containing block as #screenDetail itself since that's also
      fixed), vertically centered, so they stay put regardless of scroll
@@ -6582,7 +6582,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--cyan-dim);
     border-radius:50%;
     color:var(--cyan);
-    font-size:20px;
+    font-size:23px;
     text-shadow:0 0 6px var(--cyan-glow);
     cursor:pointer;
     transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
@@ -6596,7 +6596,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        small screens are tight enough that a 44px circle overlapping the
        picture is more in-the-way than useful; shrink and pull to the
        very edge instead of removing them outright. */
-    .detail-nav-btn{ width:36px; height:36px; font-size:16px; }
+    .detail-nav-btn{ width:36px; height:36px; font-size:18.5px; }
     .detail-nav-prev{ left:0.25rem; }
     .detail-nav-next{ right:0.25rem; }
   }
@@ -6636,7 +6636,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     z-index:2;
     padding:0.5em 1em;
     font-family:var(--font-mono);
-    font-size:14px;
+    font-size:16px;
     font-weight:700;
     letter-spacing:0.08em;
     color:var(--cyan);
@@ -6656,7 +6656,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     z-index:2;
     padding:0.5em 1em;
     font-family:var(--font-mono);
-    font-size:14px;
+    font-size:16px;
     font-weight:700;
     letter-spacing:0.08em;
     color:var(--green);
@@ -6669,8 +6669,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .detail-share-btn:hover{ background:rgba(52,255,133,0.1); border-color:var(--green); }
   @media (max-width:760px){
-    .detail-back-btn-top{ font-size:12px; padding:0.4em 0.7em; }
-    .detail-share-btn{ font-size:12px; padding:0.4em 0.7em; }
+    .detail-back-btn-top{ font-size:14px; padding:0.4em 0.7em; }
+    .detail-share-btn{ font-size:14px; padding:0.4em 0.7em; }
   }
   /* Local copy of canvas#staticBg's own look (see the drawStatic loop —
      both canvases run the identical draw function) — negative z-index so
@@ -6724,19 +6724,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   .detail-col-right{ grid-area:right; }
   /* Owner address sits flush with P!GE0N #N — same row, same text weight —
      instead of buried as a small label further down the right column. */
-  .detail-owner-top{ grid-area:owner; text-align:center; font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:0.04em; margin:0; }
-  #screenDetail .detail-owner-top{ font-size:28px; }
+  .detail-owner-top{ grid-area:owner; text-align:center; font-family:var(--font-display); font-weight:700; font-size:25.5px; letter-spacing:0.04em; margin:0; }
+  #screenDetail .detail-owner-top{ font-size:32px; }
   .detail-owner-top .owner-link{ color:var(--cyan); text-decoration:none; }
   .detail-owner-top .owner-link:hover{ text-decoration:underline; }
   .detail-owner-top .owner-message-link{
-    color:var(--green); font-family:var(--font-mono); font-weight:400; font-size:12px;
+    color:var(--green); font-family:var(--font-mono); font-weight:400; font-size:14px;
     letter-spacing:0.08em; text-decoration:none; border:1px solid var(--green); border-radius:3px;
     padding:0.15em 0.5em; vertical-align:middle; margin-left:0.5em;
   }
   .detail-owner-top .owner-message-link:hover{ background:var(--green); color:var(--bg); }
   /* Small label above the address itself — otherwise a bare wallet
      string up top read as an ID, not an ownership statement. */
-  .detail-owner-top .do-label{ display:block; font-family:var(--font-mono); font-weight:400; font-size:11px; letter-spacing:0.18em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.3rem; }
+  .detail-owner-top .do-label{ display:block; font-family:var(--font-mono); font-weight:400; font-size:12.5px; letter-spacing:0.18em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.3rem; }
   @media (max-width:760px){
     .detail-two-col{ grid-template-columns:1fr; grid-template-areas:"num" "owner" "left" "right"; gap:0.75rem; }
   }
@@ -6769,7 +6769,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      same excess-space issue as the block padding above. */
   #screenDetail .scylla-listing-row.not-listed{ padding:0.3em 0.6em; margin-bottom:0.3rem; }
   #screenDetail .scylla-listing-block .tech-meta-title{ color:#fff; opacity:0.9; }
-  #screenDetail .scylla-listing-price{ font-size:17px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
+  #screenDetail .scylla-listing-price{ font-size:19.5px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5); }
   /* detailMakeOfferRow already lives inside .scylla-listing-block's own
      bordered panel (see the HTML) — a second full border/background/
      padding box just around this part (an earlier pass, reported live
@@ -6785,14 +6785,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .make-offer-box-title{
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     font-weight:700;
     letter-spacing:0.1em;
     color:var(--cyan);
     text-transform:uppercase;
     margin-bottom:0.35rem;
   }
-  /* .make-offer-input/.make-offer-send's shared base sizing (font-size:36px,
+  /* .make-offer-input/.make-offer-send's shared base sizing (font-size:41.5px,
      padding:0.6em 3.6em at desktop widths) is tuned for the wide, dedicated
      amountEntryModal popup — crammed into this narrow sidebar column
      instead, the input alone demanded more width than the column had,
@@ -6801,15 +6801,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      longer fit on screen, not just the box-around-a-box padding fixed
      above. Scoped down to sizing that actually fits ~500px, one line,
      input+button side by side same as before this ever wrapped. */
-  #screenDetail #detailMakeOfferRow .make-offer-input{ font-size:20px; padding:0.55em 2.2em; }
+  #screenDetail #detailMakeOfferRow .make-offer-input{ font-size:23px; padding:0.55em 2.2em; }
   #screenDetail #detailMakeOfferRow .make-offer-input-coin{ width:30px; height:30px; left:0.5em; }
-  #screenDetail #detailMakeOfferRow .make-offer-send{ flex:0 0 auto; font-size:13px; padding:0.6em 1em; }
+  #screenDetail #detailMakeOfferRow .make-offer-send{ flex:0 0 auto; font-size:15px; padding:0.6em 1em; }
   /* Same reasoning as the input/button above — the 1DAY/3DAYS/.../∞ row's
      shared desktop sizing (list-duration-forever alone goes to 32px) added
      real height nothing else in this compact sidebar box needs. */
   #screenDetail #detailMakeOfferDuration{ margin:0.5rem 0 0; }
-  #screenDetail #detailMakeOfferDuration .list-duration-btn{ font-size:11px; padding:0.5em 0.3em; }
-  #screenDetail #detailMakeOfferDuration .list-duration-forever{ font-size:18px; padding:0.2em 0.3em; }
+  #screenDetail #detailMakeOfferDuration .list-duration-btn{ font-size:12.5px; padding:0.5em 0.3em; }
+  #screenDetail #detailMakeOfferDuration .list-duration-forever{ font-size:20.5px; padding:0.2em 0.3em; }
   /* Solid filled green + hover-invert, same "juicy, obvious CTA" language
      as #amountEntryListBtn's own comment — SUBM!T is a real action (put
      real XRP behind a real offer), not a neutral form button. */
@@ -6820,7 +6820,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-shadow:0 0 14px var(--green-glow);
   }
   #screenDetail #detailMakeOfferSend:hover{ background:#000; color:var(--green); border-color:var(--green); box-shadow:0 0 20px var(--green-glow); }
-  #screenDetail .detail-num{ font-size:28px; }
+  #screenDetail .detail-num{ font-size:32px; }
   #screenDetail .trait-grid{ max-width:100%; margin:0.4rem 0 0; grid-template-columns:repeat(3, 1fr); gap:0.4rem; }
   @media (max-width:520px){
     #screenDetail .trait-grid{ grid-template-columns:repeat(2, 1fr); }
@@ -6830,9 +6830,9 @@ const SWAP_HTML = `<!DOCTYPE html>
      was the single tallest section on the page at the old, roomier
      padding. */
   #screenDetail .trait-cell{ padding:0.45rem 0.6rem; }
-  #screenDetail .trait-cell .tc-label{ font-size:14px; }
-  #screenDetail .trait-cell .tc-value{ font-size:19px; }
-  #screenDetail .trait-cell .tc-sub{ font-size:14px; }
+  #screenDetail .trait-cell .tc-label{ font-size:16px; }
+  #screenDetail .trait-cell .tc-value{ font-size:22px; }
+  #screenDetail .trait-cell .tc-sub{ font-size:16px; }
   /* Real trait cells (not RARITY/RARITY SCORE, which keeps label-then-
      value) now render value-then-label — .tc-label's own margin-bottom
      (spacing meant for when it came first) would leave no gap here, so
@@ -6851,7 +6851,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .trait-cell.has-preview{ background-size:cover; background-position:center 20%; }
   #screenDetail .trait-cell.has-preview .tc-label{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
   #screenDetail .trait-cell.has-preview .tc-value{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
-  #screenDetail .trait-cell.has-preview .tc-sub{ color:#fff; font-size:16px; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+  #screenDetail .trait-cell.has-preview .tc-sub{ color:#fff; font-size:18.5px; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
   /* Static solid box behind value/label/sub together — text-shadow alone
      still clashed against a busy/light crop, this reads reliably over
      any of them. */
@@ -6860,7 +6860,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Constrained instead of stretching the field's label/value across the
      whole (wide) right column — that gap made label and value feel
      unrelated, like you had to hunt across the screen to match them up. */
-  #screenDetail .detail-field{ max-width:320px; margin:0 0 0.6rem; font-size:15px; }
+  #screenDetail .detail-field{ max-width:320px; margin:0 0 0.6rem; font-size:17.5px; }
   /* RARITY and RARITY SCORE, above the trait grid (not among the real
      trait cells below), same box treatment (label above value) — the
      actual score isn't computed yet, so that box just reads COMING SOON.
@@ -6894,8 +6894,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Centered, label above value — easier to read at a glance than a
      left/right split row, especially now they're stacked one after
      another rather than spread across a wider area. */
-  #screenDetail .detail-sales-section .detail-field{ display:flex; flex-direction:column; align-items:center; gap:0.2rem; margin:0; max-width:100%; font-size:17px; text-align:center; }
-  #screenDetail .detail-sales-section .df-label{ font-size:12px; }
+  #screenDetail .detail-sales-section .detail-field{ display:flex; flex-direction:column; align-items:center; gap:0.2rem; margin:0; max-width:100%; font-size:19.5px; text-align:center; }
+  #screenDetail .detail-sales-section .df-label{ font-size:14px; }
   #screenDetail .detail-sales-section .df-value{ font-weight:700; text-align:center; }
   /* REC0RD/RECENT/AVERAGE SALE's own row (see the HTML's own comment) —
      3-across instead of PRICE's plain single-field style right above,
@@ -6915,9 +6915,9 @@ const SWAP_HTML = `<!DOCTYPE html>
      reported live as the three looking inconsistent. Centered now,
      regardless of how many lines a given cell's value wraps to. */
   #screenDetail .detail-sale-stats-row .detail-field{ background:var(--panel-bg-solid); border:1px solid var(--border-mid); border-radius:var(--radius); padding:0.6rem 0.4rem; gap:0.3rem; justify-content:center; }
-  #screenDetail .detail-sale-stats-row .df-label{ font-size:11px; letter-spacing:0.06em; }
-  #screenDetail .detail-sale-stats-row .df-value{ font-size:22px; color:var(--green); text-shadow:0 0 8px rgba(52,255,133,0.4); display:flex; flex-direction:column; align-items:center; line-height:1.2; }
-  #screenDetail .detail-sale-stats-row .df-value-sub{ font-size:10px; color:var(--grey-dim); text-shadow:none; font-weight:400; letter-spacing:0.06em; }
+  #screenDetail .detail-sale-stats-row .df-label{ font-size:12.5px; letter-spacing:0.06em; }
+  #screenDetail .detail-sale-stats-row .df-value{ font-size:25.5px; color:var(--green); text-shadow:0 0 8px rgba(52,255,133,0.4); display:flex; flex-direction:column; align-items:center; line-height:1.2; }
+  #screenDetail .detail-sale-stats-row .df-value-sub{ font-size:11.5px; color:var(--grey-dim); text-shadow:none; font-weight:400; letter-spacing:0.06em; }
   /* REC0RD SALE/RECENT SALE wrap their number in a .owner-link <a> when a
      tx URL exists (see updateDetailPrice) — .df-value a.owner-link's own
      grey/underline styling (meant for the plain OWNED BY row) was winning
@@ -6941,7 +6941,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
     font-family:var(--font-mono);
-    font-size:14px;
+    font-size:16px;
     font-weight:700;
     letter-spacing:0.1em;
     color:var(--cyan);
@@ -6967,7 +6967,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     width:100%;
     text-align:center;
     font-family:var(--font-mono);
-    font-size:14px;
+    font-size:16px;
     font-weight:700;
     letter-spacing:0.08em;
     text-transform:uppercase;
@@ -6989,7 +6989,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-two-col{ padding-bottom:2.6rem; }
   /* RECORD SALE / AVERAGE SALE stacked, same label/value row style as
      every other .detail-field (OWNER, PRICE, etc). */
-  #screenDetail .tech-meta-title{ font-size:12px; }
+  #screenDetail .tech-meta-title{ font-size:14px; }
   /* Fullscreen picture lightbox — same opaque bg + local static-canvas
      layer as #screenDetail (see above), instead of near-solid black. */
   #detailLightbox{
@@ -7045,25 +7045,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   #detailLightbox .detail-nav-btn{ z-index:1001; cursor:pointer; }
   .detail-eyebrow{
     text-align:center;
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:0.2em;
     color:var(--cyan);
     text-shadow:0 0 6px var(--cyan-glow);
     margin-bottom:0.75rem;
     text-transform:uppercase;
   }
-  .detail-num{ text-align:center; font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:0.04em; color:var(--white); margin-bottom:1.25rem; }
+  .detail-num{ text-align:center; font-family:var(--font-display); font-weight:700; font-size:25.5px; letter-spacing:0.04em; color:var(--white); margin-bottom:1.25rem; }
   .detail-img-large{ width:100%; max-width:460px; margin:0 auto 0.75rem; border:1px solid var(--border-mid); }
   .detail-listings-row{ max-width:460px; margin:0 auto 1.25rem; }
   .detail-listings-row .cl-block{ padding:0.65rem 0.5rem; }
-  .detail-listings-row .cl-market{ font-size:10px; margin-bottom:0.45rem; }
-  .detail-listings-row .cl-price{ font-size:14px; }
+  .detail-listings-row .cl-market{ font-size:11.5px; margin-bottom:0.45rem; }
+  .detail-listings-row .cl-price{ font-size:16px; }
   .detail-field{
     display:flex;
     justify-content:space-between;
     max-width:460px;
     margin:0 auto 0.7rem;
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.05em;
   }
   .df-label{ color:var(--grey-dim); text-transform:uppercase; }
@@ -7080,8 +7080,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      Bigger and green (same "this is the good outcome" language status-ok
      already uses) so it can't be confused with an intermediate figure. */
   .detail-field.final-amount-row{ margin-top:0.9rem; padding-top:0.7rem; border-top:1px solid var(--border-mid); }
-  .detail-field.final-amount-row .df-label{ font-size:13px; }
-  .df-value.final-amount{ color:var(--green); text-shadow:0 0 6px var(--green-glow); font-weight:700; font-size:20px; }
+  .detail-field.final-amount-row .df-label{ font-size:15px; }
+  .df-value.final-amount{ color:var(--green); text-shadow:0 0 6px var(--green-glow); font-weight:700; font-size:23px; }
   /* BUY N0W/ACCEPT 0FFER/CANCEL's waiting-for-signature line — reported
      live as reading cluttered (a wall of plain grey text sitting flush
      against the price above it), so this gets real breathing room and a
@@ -7119,7 +7119,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:2px solid var(--green);
     border-radius:50%;
     color:var(--green);
-    font-size:32px;
+    font-size:37px;
     text-shadow:0 0 10px var(--green-glow);
     box-shadow:0 0 22px var(--green-glow);
   }
@@ -7141,13 +7141,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   .receipt-pigeon-num{
     font-family:var(--font-display);
     font-weight:700;
-    font-size:32px;
+    font-size:37px;
     letter-spacing:0.03em;
     color:var(--white);
   }
   .receipt-status-line{
     margin-top:0.4rem;
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.2em;
     color:var(--green);
     text-shadow:0 0 6px var(--green-glow);
@@ -7160,15 +7160,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     background:rgba(255,255,255,0.03);
   }
-  .receipt-price-label{ font-size:11px; letter-spacing:0.2em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.5rem; }
-  .receipt-price-value{ font-family:var(--font-display); font-weight:700; font-size:34px; letter-spacing:0.02em; color:var(--white); }
+  .receipt-price-label{ font-size:12.5px; letter-spacing:0.2em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.5rem; }
+  .receipt-price-value{ font-family:var(--font-display); font-weight:700; font-size:39px; letter-spacing:0.02em; color:var(--white); }
   .result-receipt .detail-actions{ margin-top:0.5rem; justify-content:center; }
   /* Real proof, one click away — small and out of the way instead of a
      raw hash competing with the price for attention. */
   .receipt-tx-link{
     display:inline-block;
     margin-top:1rem;
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:0.1em;
     color:var(--grey-dim);
     text-decoration:underline;
@@ -7176,8 +7176,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .receipt-tx-link:hover{ color:var(--cyan); }
   @media (max-width:480px){
-    .receipt-pigeon-num{ font-size:26px; }
-    .receipt-price-value{ font-size:28px; }
+    .receipt-pigeon-num{ font-size:30px; }
+    .receipt-price-value{ font-size:32px; }
   }
   /* ---- Clean confirm-screen layout — same "big, clean, only what
      matters" spirit as .result-receipt above, adapted for a confirm
@@ -7187,12 +7187,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      label/value pairs, each large enough to read at a glance. Shared by
      TRANSFER and 0FFER's own confirm screens. ---- */
   .confirm-clean{ max-width:440px; margin:0 auto; text-align:center; }
-  .confirm-clean .node-eyebrow{ font-size:15px; margin-bottom:1.75rem; }
-  .confirm-field-label{ font-size:11px; letter-spacing:0.2em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.5rem; }
+  .confirm-clean .node-eyebrow{ font-size:17.5px; margin-bottom:1.75rem; }
+  .confirm-field-label{ font-size:12.5px; letter-spacing:0.2em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.5rem; }
   .confirm-field-value{
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:16px;
+    font-size:18.5px;
     letter-spacing:0.02em;
     color:var(--white);
     word-break:break-all;
@@ -7201,14 +7201,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   .confirm-pigeon-num{
     font-family:var(--font-display);
     font-weight:700;
-    font-size:30px;
+    font-size:34.5px;
     letter-spacing:0.03em;
     color:var(--white);
     margin-bottom:1.75rem;
   }
   @media (max-width:480px){
-    .confirm-pigeon-num{ font-size:24px; }
-    .confirm-field-value{ font-size:14px; }
+    .confirm-pigeon-num{ font-size:27.5px; }
+    .confirm-field-value{ font-size:16px; }
   }
   /* ΣΚΥΛΛΑ://S!GNAL's own prompt body — was previously built entirely out
      of .index-line (9.5px, uppercase, meant for a single line of fine
@@ -7220,7 +7220,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .signal-heading{
     font-family:var(--font-display);
     font-weight:700;
-    font-size:16px;
+    font-size:18.5px;
     letter-spacing:0.04em;
     color:var(--white);
     text-transform:uppercase;
@@ -7228,16 +7228,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .signal-body{
     font-family:var(--font-body);
-    font-size:14px;
+    font-size:16px;
     line-height:1.5;
     letter-spacing:0.01em;
     color:var(--grey);
   }
   .signal-body strong{ color:var(--white); font-weight:700; }
-  .signal-body-dim{ color:var(--grey-dim); font-size:13px; }
+  .signal-body-dim{ color:var(--grey-dim); font-size:15px; }
   /* 0FFER CONFIRMATION's own big amount line + real clickable picture —
      "___ $PIGEONS / FOR / [picture] / PIGEON #N", nothing else. */
-  .confirm-field-value-big{ font-family:var(--font-display); font-size:26px; font-weight:700; }
+  .confirm-field-value-big{ font-family:var(--font-display); font-size:30px; font-weight:700; }
   .confirm-pigeon-thumb{
     display:block;
     width:140px;
@@ -7305,7 +7305,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .offer-confirm-panel .node-eyebrow{
     color:var(--collection-accent);
-    font-size:15px;
+    font-size:17.5px;
     letter-spacing:0.14em;
     margin-bottom:1.5rem;
     text-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.35);
@@ -7361,7 +7361,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      thing your eye lands on. */
   .buyswap-review-line{
     text-align:center;
-    font-size:14px;
+    font-size:16px;
     letter-spacing:0.04em;
     color:var(--grey);
     text-transform:uppercase;
@@ -7371,7 +7371,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-review-amount{
     text-align:center;
     font-family:var(--font-mono);
-    font-size:32px;
+    font-size:37px;
     font-weight:700;
     color:var(--green);
     text-shadow:0 0 8px var(--green-glow);
@@ -7384,8 +7384,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     margin:1.1rem auto 0;
   }
-  .buyswap-modal-panel #buySwapConfirmState .df-label{ font-size:11px; }
-  .buyswap-modal-panel #buySwapConfirmState .df-value{ font-size:19px; font-weight:700; }
+  .buyswap-modal-panel #buySwapConfirmState .df-label{ font-size:12.5px; }
+  .buyswap-modal-panel #buySwapConfirmState .df-value{ font-size:22px; font-weight:700; }
   /* Real coin thumbnail — same art MAINFRAME's own cards use, so the coin
      you're buying is recognisable rather than just a text label. Hidden
      until openBuySwapPanel sets a real src for the collection (never a
@@ -7411,20 +7411,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* ...except the account address and the liquidity-source label — an
      address isn't a number, and "AMM P00L"/"0RDER B00K" is a plain-text
      source name, not a figure, so both stay the panel's normal white. */
-  .buyswap-modal-panel .tx-val-addr{ color:var(--white); text-shadow:none; font-family:var(--font-mono); font-size:13px; }
+  .buyswap-modal-panel .tx-val-addr{ color:var(--white); text-shadow:none; font-family:var(--font-mono); font-size:15px; }
   #buySwapConfSource{ color:var(--white); text-shadow:none; }
   /* RESULT state — the exciting "you just bought $PIGEONS" receipt, not a
      dense field list. Big green number (matches every other real $PIGEONS
      amount on the site — greenNum), a plain-english unit underneath it
      instead of baked into the same line, and V!EW TRANSACT!0N as its own
      small dark-blue link instead of a raw 64-char tx hash. */
-  .buyswap-received-value{ font-size:40px; }
-  .buyswap-received-unit{ display:block; font-size:13px; font-weight:400; letter-spacing:0.15em; color:var(--grey-dim); text-transform:uppercase; margin-top:0.35rem; }
+  .buyswap-received-value{ font-size:46px; }
+  .buyswap-received-unit{ display:block; font-size:15px; font-weight:400; letter-spacing:0.15em; color:var(--grey-dim); text-transform:uppercase; margin-top:0.35rem; }
   .buyswap-tx-link{
     display:block;
     text-align:center;
     margin-top:1.25rem;
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.1em;
     color:var(--cyan);
     text-decoration:underline;
@@ -7436,7 +7436,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      Y0U PAY/Y0U RECE!VE are the two real steps of the swap, worth
      reading as clearly as the amounts themselves, and in the same real
      colour as everything else in this panel (border/glow/BUY button). */
-  .buyswap-label{ display:block; text-align:center; font-size:14px; font-weight:700; letter-spacing:0.15em; color:var(--collection-accent); text-shadow:0 0 6px rgba(var(--collection-accent-rgb), 0.5); text-transform:uppercase; margin-bottom:0.5rem; }
+  .buyswap-label{ display:block; text-align:center; font-size:16px; font-weight:700; letter-spacing:0.15em; color:var(--collection-accent); text-shadow:0 0 6px rgba(var(--collection-accent-rgb), 0.5); text-transform:uppercase; margin-bottom:0.5rem; }
   /* position:relative anchors .buyswap-trailing (the CLEAR ×/unit, on
      the PAY row; just the unit on RECE!VE) — pulled out of normal flow
      entirely now (see its own comment) so it can never compete with the
@@ -7472,7 +7472,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     outline:none;
     color:var(--green);
     font-family:var(--font-mono);
-    font-size:22px;
+    font-size:25.5px;
     font-weight:700;
     letter-spacing:0.02em;
     text-align:center;
@@ -7493,8 +7493,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     gap:0.3rem;
   }
-  .buyswap-unit{ flex:0 0 auto; font-size:13px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; }
-  .buyswap-input-error{ text-align:center; font-size:11px; letter-spacing:0.03em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); margin-top:0.5rem; }
+  .buyswap-unit{ flex:0 0 auto; font-size:15px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; }
+  .buyswap-input-error{ text-align:center; font-size:12.5px; letter-spacing:0.03em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); margin-top:0.5rem; }
   /* Both real balances, side by side, right at the top of the panel —
      see buySwapBalancesRow's own HTML comment for why this replaced the
      single standing "MAX :: X XRP AVAILABLE" caption. */
@@ -7512,8 +7512,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     padding:0.55em 0.5em;
   }
-  .buyswap-balance-label{ display:block; font-size:10px; letter-spacing:0.12em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.2rem; }
-  .buyswap-balance-value{ font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--green); text-shadow:0 0 5px var(--green-glow); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+  .buyswap-balance-label{ display:block; font-size:11.5px; letter-spacing:0.12em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.2rem; }
+  .buyswap-balance-value{ font-family:var(--font-mono); font-size:18.5px; font-weight:700; color:var(--green); text-shadow:0 0 5px var(--green-glow); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
   /* Every "things are actively working" status here — TRUSTL!NE SET ✓,
      GETT!NG QU0TE..., QU0TE UPDATED :: Ns AG0 — bigger and green instead
      of blending into the same tiny grey .index-line default, reported
@@ -7522,12 +7522,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      sites, always cleared first in clearBuySwapQuote so an ERROR message
      (QU0TE UNAVA!LABLE, EXCEEDS BALANCE, etc) never inherits it. */
   #buySwapStatus.buyswap-status-success{
-    font-size:15px;
+    font-size:17.5px;
     font-weight:700;
     color:var(--green);
     text-shadow:0 0 6px var(--green-glow);
   }
-  .buyswap-arrow{ text-align:center; font-size:22px; color:var(--collection-accent); text-shadow:0 0 6px rgba(var(--collection-accent-rgb), 0.5); margin:0.9rem 0; }
+  .buyswap-arrow{ text-align:center; font-size:25.5px; color:var(--collection-accent); text-shadow:0 0 6px rgba(var(--collection-accent-rgb), 0.5); margin:0.9rem 0; }
   .buyswap-receive-wrap{ border-color:var(--border-mid); }
   /* Pay row fades/slides in the instant the trustline gate actually opens
      it (display:none -> '' in applyBuySwapGate) — CSS animations replay
@@ -7568,7 +7568,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:center;
     gap:0.6em;
     min-height:180px;
-    font-size:16px;
+    font-size:18.5px;
     font-weight:700;
     letter-spacing:0.08em;
     color:var(--white);
@@ -7583,7 +7583,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Same fix as .buyswap-input above — the unit (CNS/P!GE0NS/etc) now
      lives in .buyswap-trailing, out of flow, so this is the only real
      flow content and centers against the row's true width. */
-  .buyswap-receive-value{ width:100%; min-width:0; font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:0.02em; color:var(--green); text-shadow:0 0 6px var(--green-glow); text-align:center; }
+  .buyswap-receive-value{ width:100%; min-width:0; font-family:var(--font-mono); font-size:25.5px; font-weight:700; letter-spacing:0.02em; color:var(--green); text-shadow:0 0 6px var(--green-glow); text-align:center; }
   .buyswap-divider{ border-top:1px dashed var(--border-dim); margin:1.25rem 0; }
   /* ---- transaction-review title + plain-English summary — every
      confirm screen shows the raw XRPL TransactionType up top now
@@ -7593,7 +7593,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .tx-type-badge{
     text-align:center;
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:11.5px;
     letter-spacing:0.15em;
     color:var(--grey-dim);
     text-transform:uppercase;
@@ -7603,7 +7603,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:center;
     font-family:var(--font-display);
     font-weight:700;
-    font-size:19px;
+    font-size:22px;
     letter-spacing:0.05em;
     color:var(--white);
     text-shadow:0 0 8px var(--pigeon-purple-glow);
@@ -7612,7 +7612,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .tx-summary{
     font-family:var(--font-body);
-    font-size:14px;
+    font-size:16px;
     line-height:1.75;
     letter-spacing:0.01em;
     color:var(--grey);
@@ -7627,7 +7627,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .tx-summary .tx-val-addr{
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:14px;
     font-weight:400;
     word-break:break-all;
   }
@@ -7644,7 +7644,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:1.25rem;
     text-align:center;
   }
-  .buyswap-trustline-warning-title{ font-size:13px; letter-spacing:0.1em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); text-transform:uppercase; margin-bottom:0.6rem; }
+  .buyswap-trustline-warning-title{ font-size:15px; letter-spacing:0.1em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); text-transform:uppercase; margin-bottom:0.6rem; }
   .buyswap-trustline-issuer-row{ justify-content:center; gap:0; }
   /* .pigeons-bar-dex-btn's own shared rule is a fixed 24x24 icon-only
      button (see pigeonsDexLink) — this reads as a real, labelled action
@@ -7657,7 +7657,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:0.75rem;
     padding:0.5em 1em;
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     font-weight:700;
     letter-spacing:0.05em;
     text-decoration:none;
@@ -7665,7 +7665,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .detail-traits-title{
     text-align:center;
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:0.2em;
     color:var(--grey);
     margin:1.25rem 0 0.75rem;
@@ -7680,10 +7680,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .trait-cell{ border:1px solid var(--border-dim); padding:0.6rem 0.75rem; text-align:center; cursor:pointer; border-radius:var(--radius); transition:border-color 0.15s ease, background 0.15s ease; }
   .trait-cell:hover{ background:var(--cyan-faint); border-color:var(--cyan-dim); }
-  .trait-cell .tc-label{ font-size:9px; letter-spacing:0.15em; color:var(--grey-dim); margin-bottom:0.35rem; text-transform:uppercase; }
-  .trait-cell .tc-value{ font-size:13px; letter-spacing:0.03em; color:var(--white); }
-  .trait-cell .tc-sub{ font-size:9px; letter-spacing:0.06em; color:var(--grey); margin-top:0.3rem; text-transform:uppercase; }
-  .tech-meta-title{ text-align:center; font-size:10px; letter-spacing:0.2em; color:var(--grey-dim); margin-bottom:0.6rem; text-transform:uppercase; }
+  .trait-cell .tc-label{ font-size:10.5px; letter-spacing:0.15em; color:var(--grey-dim); margin-bottom:0.35rem; text-transform:uppercase; }
+  .trait-cell .tc-value{ font-size:15px; letter-spacing:0.03em; color:var(--white); }
+  .trait-cell .tc-sub{ font-size:10.5px; letter-spacing:0.06em; color:var(--grey); margin-top:0.3rem; text-transform:uppercase; }
+  .tech-meta-title{ text-align:center; font-size:11.5px; letter-spacing:0.2em; color:var(--grey-dim); margin-bottom:0.6rem; text-transform:uppercase; }
   .listings-block{ max-width:460px; margin:1.25rem auto 0; }
   .listing-row{
     display:flex;
@@ -7693,19 +7693,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.5em 0.6em;
     border:1px solid var(--border-mid);
     margin-bottom:0.5rem;
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.03em;
     border-radius:var(--radius);
   }
-  .listing-market{ color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.1em; font-size:10px; }
+  .listing-market{ color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.1em; font-size:11.5px; }
   .listing-price{ color:var(--white); }
-  .offer-fee-breakdown{ font-size:9.5px; letter-spacing:0.05em; color:var(--grey-dim); text-transform:uppercase; }
+  .offer-fee-breakdown{ font-size:11px; letter-spacing:0.05em; color:var(--grey-dim); text-transform:uppercase; }
   .listing-buy{
     background:transparent;
     border:1px solid var(--cyan-dim);
     color:var(--cyan);
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:11.5px;
     letter-spacing:0.1em;
     padding:0.35em 0.7em;
     cursor:pointer;
@@ -7735,7 +7735,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Not-listed state has no price/buy-button pairing to justify the
      boxed currency-amount look — just plain centred text instead. */
   .scylla-listing-row.not-listed{ border:none; background:none; padding:0.5em 0.6em; }
-  .scylla-listing-price{ font-size:15px; font-weight:700; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
+  .scylla-listing-price{ font-size:17.5px; font-weight:700; letter-spacing:0.02em; color:var(--magenta); text-shadow:0 0 5px var(--magenta-glow); }
   /* Same green "real, clickable buy action" language + size as the
      DATABASE grid's own .thumb-buy-btn — this is the real $PIGEONS
      purchase, it should read like the most important thing in the box,
@@ -7752,7 +7752,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:0 0 5px var(--collection-accent-glow);
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:16px;
+    font-size:18.5px;
     letter-spacing:0.05em;
     padding:0.95em 0.8em;
     cursor:pointer;
@@ -7771,8 +7771,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      .detail-num's shared base sizing (11px/22px) is tuned for the small
      confirm/result screens that reuse them elsewhere in this file; this
      is a real research table now and reads as one at a bigger size. */
-  #historyModal .detail-eyebrow{ font-size:14px; letter-spacing:0.24em; }
-  #historyModal .detail-num{ font-size:26px; margin-bottom:1.5rem; }
+  #historyModal .detail-eyebrow{ font-size:16px; letter-spacing:0.24em; }
+  #historyModal .detail-num{ font-size:30px; margin-bottom:1.5rem; }
   /* Real DATE/TYPE/FROM/TO/(explorer link) columns — FROM and TO get
      their own columns now instead of being folded together into one
      "DETAILS" cell (reported live wanting addresses "separately"), and
@@ -7786,7 +7786,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:1rem;
     padding:0 0.6rem 0.7rem;
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:14px;
     font-weight:700;
     letter-spacing:0.16em;
     color:var(--grey-dim);
@@ -7809,16 +7809,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-bottom:1px solid var(--border-dim);
   }
   .dh-row:last-child{ border-bottom:none; }
-  .dh-date{ color:var(--grey-dim); font-size:14px; letter-spacing:0.03em; text-transform:uppercase; }
+  .dh-date{ color:var(--grey-dim); font-size:16px; letter-spacing:0.03em; text-transform:uppercase; }
   .dh-type{ display:flex; flex-direction:column; gap:0.25em; }
-  .dh-verb{ color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; font-weight:700; font-size:15px; }
-  .dh-price{ color:var(--white); font-weight:700; font-size:13px; }
+  .dh-verb{ color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); text-transform:uppercase; font-weight:700; font-size:17.5px; }
+  .dh-price{ color:var(--white); font-weight:700; font-size:15px; }
   /* FROM/TO — same wallet-chip look either side used to share
      (.dh-party), now each sitting in its own real column so a sale's
      seller and buyer (or a mint's "—"/minter, a transfer's sender/
      receiver) line up under their own header instead of being read off
      one combined sentence. */
-  .dh-party{ font-size:14px; min-width:0; }
+  .dh-party{ font-size:16px; min-width:0; }
   .dh-party a{ color:var(--white); text-decoration:underline; font-weight:600; }
   .dh-party a:hover{ color:var(--cyan); }
   .dh-unknown{ color:var(--grey-dim); }
@@ -7834,7 +7834,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:14px;
     font-weight:700;
     letter-spacing:0.06em;
     color:var(--cyan);
@@ -7853,7 +7853,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.1em;
     padding:0.75em 1.4em;
     cursor:pointer;
@@ -7868,7 +7868,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--cyan);
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:15px;
+    font-size:17.5px;
     letter-spacing:0.04em;
     padding:0.85em 1.4em;
     cursor:pointer;
@@ -7901,8 +7901,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:1rem;
     cursor:pointer;
   }
-  .target-bar .tb-label{ font-size:12px; letter-spacing:0.1em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); text-transform:uppercase; }
-  .target-bar .tb-toggle{ font-size:11px; color:var(--grey); text-transform:uppercase; }
+  .target-bar .tb-label{ font-size:14px; letter-spacing:0.1em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); text-transform:uppercase; }
+  .target-bar .tb-toggle{ font-size:12.5px; color:var(--grey); text-transform:uppercase; }
 
   /* ---- YOUR OFFER bundle builder — compact, lives inside the existing
      wallet-identity panel rather than as its own large panel ---- */
@@ -7912,7 +7912,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-top:1px dashed var(--border-mid);
     text-align:center;
   }
-  .ob-eyebrow{ font-size:11px; letter-spacing:0.2em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); text-transform:uppercase; margin-bottom:0.75rem; }
+  .ob-eyebrow{ font-size:12.5px; letter-spacing:0.2em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); text-transform:uppercase; margin-bottom:0.75rem; }
   .ob-pile{ display:flex; justify-content:center; align-items:center; }
   .ob-slot{
     position:relative;
@@ -7938,7 +7938,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:center;
     background:rgba(8,9,11,0.72);
     color:var(--white);
-    font-size:18px;
+    font-size:20.5px;
     opacity:0;
     transition:opacity 0.15s ease;
   }
@@ -7949,11 +7949,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     justify-content:center;
     color:var(--grey-dim);
-    font-size:16px;
+    font-size:18.5px;
     cursor:pointer;
   }
   .ob-slot.empty:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
-  .ob-count{ margin-top:0.75rem; font-size:11px; letter-spacing:0.15em; color:var(--grey); text-transform:uppercase; }
+  .ob-count{ margin-top:0.75rem; font-size:12.5px; letter-spacing:0.15em; color:var(--grey); text-transform:uppercase; }
   .ob-submit{ margin-top:0.9rem; }
   .ob-submit:disabled{ opacity:0.35; cursor:not-allowed; }
   .ob-submit:disabled:hover{ background:transparent; border-color:var(--cyan-dim); }
@@ -7966,7 +7966,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* ---- SWAP REVIEW — both sides, reusing the same pile look ---- */
   .swap-review-side{ max-width:420px; margin:1.1rem auto 0; text-align:center; }
   .swap-review-side .ob-pile{ margin-top:0.75rem; }
-  .swap-review-divider{ text-align:center; font-size:20px; color:var(--magenta); text-shadow:0 0 8px var(--magenta-glow); margin:0.6rem 0; }
+  .swap-review-divider{ text-align:center; font-size:23px; color:var(--magenta); text-shadow:0 0 8px var(--magenta-glow); margin:0.6rem 0; }
   .review-pile .ob-slot{ cursor:default; }
   .review-pile .ob-slot.filled:hover{ transform:none; box-shadow:0 2px 8px rgba(0,0,0,0.5); }
   .review-pile .ob-slot-remove{ display:none; }
@@ -7985,7 +7985,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     color:var(--grey-dim);
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.05em;
     cursor:pointer;
     transition:border-color 0.15s ease, color 0.15s ease;
@@ -8004,7 +8004,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .simple-offer-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
   .simple-offer-num{
     padding:0.5em 0.3em;
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:0.04em;
     color:var(--white);
     text-align:center;
@@ -8021,7 +8021,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:rgba(8,9,11,0.75);
     border:1px solid var(--magenta-dim);
     color:var(--magenta);
-    font-size:13px;
+    font-size:15px;
     border-radius:var(--radius);
     cursor:pointer;
   }
@@ -8054,14 +8054,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:1.25rem;
   }
   .simple-picker-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
-  .simple-picker-title{ font-size:13px; letter-spacing:0.15em; color:var(--white); text-transform:uppercase; }
+  .simple-picker-title{ font-size:15px; letter-spacing:0.15em; color:var(--white); text-transform:uppercase; }
   .simple-picker-close{
     width:2em;
     height:2em;
     background:transparent;
     border:1px solid var(--border-mid);
     color:var(--grey);
-    font-size:16px;
+    font-size:18.5px;
     border-radius:var(--radius);
     cursor:pointer;
   }
@@ -8100,7 +8100,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     box-shadow:0 10px 30px rgba(0,0,0,0.6);
     padding:2.25rem;
-    font-size:1.08em;
+    font-size:1.24em;
   }
   /* Bigger on desktop specifically — reported live as "the list box
      doesn't look good, make it bigger on pc" — mobile keeps the
@@ -8110,7 +8110,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (min-width:701px){
     .amount-entry-panel{ width:min(640px, 100%); padding:3rem; }
     .amount-entry-pigeon-thumb{ width:200px; height:200px; }
-    .amount-entry-pigeon-num{ font-size:44px; }
+    .amount-entry-pigeon-num{ font-size:50.5px; }
   }
   /* ---- TRANSACT!0N H!ST0RY — same dimmed-backdrop/✕-to-close popup
      pattern as #amountEntryModal above, opened over DETAIL instead of
@@ -8180,18 +8180,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      to actually be visible, not a 56px afterthought next to the title. */
   .amount-entry-pigeon-row{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.6rem; margin-bottom:1.5rem; }
   .amount-entry-pigeon-thumb{ width:140px; height:140px; border-radius:var(--radius); border:1px solid var(--border-mid); object-fit:cover; flex:0 0 auto; }
-  .amount-entry-pigeon-num{ font-family:var(--font-display); font-weight:700; font-size:36px; color:#fff; }
+  .amount-entry-pigeon-num{ font-family:var(--font-display); font-weight:700; font-size:41.5px; color:#fff; }
   .make-offer-balance-line{
     text-align:center;
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     letter-spacing:0.08em;
     color:var(--grey-dim);
     text-transform:uppercase;
     margin-bottom:1.25rem;
     line-height:1.6;
   }
-  .make-offer-balance-line .pigeons-green-num{ font-size:24px; font-weight:700; }
+  .make-offer-balance-line .pigeons-green-num{ font-size:27.5px; font-weight:700; }
   .transfer-wallet-input{
     flex:1 1 auto;
     min-width:0;
@@ -8199,7 +8199,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid rgba(255,255,255,0.6);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     font-weight:700;
     padding:0.65em 0.75em;
     border-radius:var(--radius);
@@ -8224,12 +8224,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     display:inline-flex; align-items:center; gap:0.4rem;
     border:1px solid var(--cyan-dim); border-radius:var(--radius);
     background:var(--cyan-faint); color:var(--cyan);
-    font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em;
+    font-family:var(--font-mono); font-size:14px; letter-spacing:0.04em;
     text-transform:uppercase; padding:0.4em 0.5em 0.4em 0.7em;
   }
   .my-nfts-trait-chip button{
     background:none; border:none; color:var(--cyan); cursor:pointer;
-    font-size:14px; line-height:1; padding:0;
+    font-size:16px; line-height:1; padding:0;
   }
   .simple-picker-grid{
     overflow-y:auto;
@@ -8255,7 +8255,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      div is unaffected by either. */
   .simple-picker-card-img{ aspect-ratio:1; background:#000; cursor:pointer; display:block; text-decoration:none; color:inherit; }
   .simple-picker-card-img img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .simple-picker-card-num{ padding:0.5em 0.2em 0.3em; font-size:12px; letter-spacing:0.03em; color:var(--white); }
+  .simple-picker-card-num{ padding:0.5em 0.2em 0.3em; font-size:14px; letter-spacing:0.03em; color:var(--white); }
   .simple-picker-view-btn{
     display:block;
     width:100%;
@@ -8264,7 +8264,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-top:1px solid var(--border-dim);
     color:var(--grey-dim);
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:11.5px;
     letter-spacing:0.08em;
     padding:0.5em 0;
     cursor:pointer;
@@ -8312,7 +8312,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     padding:0.15em 0.45em;
     font-family:var(--font-mono);
-    font-size:9px;
+    font-size:10.5px;
     font-weight:700;
     letter-spacing:0.05em;
     color:var(--cyan);
@@ -8332,7 +8332,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:var(--panel-bg-solid);
     cursor:pointer;
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     font-weight:700;
     letter-spacing:0.05em;
     color:var(--grey);
@@ -8346,7 +8346,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      controls anywhere else, same reasoning list-duration-btn's own
      button-row exists instead of a <select>). */
   .profile-privacy-row{ display:flex; align-items:center; justify-content:center; gap:1rem; }
-  .profile-privacy-label{ font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:0.06em; color:var(--white); text-transform:uppercase; }
+  .profile-privacy-label{ font-family:var(--font-mono); font-size:15px; font-weight:700; letter-spacing:0.06em; color:var(--white); text-transform:uppercase; }
   .profile-privacy-toggle{
     position:relative;
     width:52px; height:28px;
@@ -8372,14 +8372,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      switch rather than a <select>. */
   .profile-node-code-row{ display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; }
   .profile-node-code-group{ display:flex; align-items:center; gap:0.4rem; }
-  .profile-node-code-group-label{ font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.06em; color:var(--grey-dim); text-transform:uppercase; margin-right:0.2rem; }
+  .profile-node-code-group-label{ font-family:var(--font-mono); font-size:12.5px; font-weight:700; letter-spacing:0.06em; color:var(--grey-dim); text-transform:uppercase; margin-right:0.2rem; }
   .profile-node-code-btn{
     width:36px; height:36px;
     background:transparent;
     border:1px solid var(--border-mid);
     color:var(--grey);
     font-family:var(--font-mono);
-    font-size:14px;
+    font-size:16px;
     font-weight:700;
     border-radius:var(--radius);
     cursor:pointer;
@@ -8395,19 +8395,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:var(--magenta-faint);
     color:var(--magenta);
     text-shadow:none;
-    font-size:11px;
+    font-size:12.5px;
     line-height:1.6;
     text-transform:none;
   }
 
   /* ---- target summary / offer placeholder ---- */
   .target-summary-block{ max-width:480px; margin:0 auto; text-align:center; }
-  .ts-label{ font-size:10px; letter-spacing:0.2em; color:var(--grey-dim); margin:1.1rem 0 0.4rem; text-transform:uppercase; }
+  .ts-label{ font-size:11.5px; letter-spacing:0.2em; color:var(--grey-dim); margin:1.1rem 0 0.4rem; text-transform:uppercase; }
   .ts-label:first-child{ margin-top:0; }
-  .ts-value{ font-family:var(--font-body); font-size:13px; color:var(--white); line-height:1.7; }
+  .ts-value{ font-family:var(--font-body); font-size:15px; color:var(--white); line-height:1.7; }
   .ts-count{
     margin-top:1rem;
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.15em;
     color:var(--magenta);
     text-shadow:0 0 6px var(--magenta-glow);
@@ -8421,8 +8421,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     max-width:440px;
     margin:1.5rem auto 0;
   }
-  .placeholder-card .pc-title{ font-size:12px; letter-spacing:0.2em; color:var(--grey); margin-bottom:0.75rem; text-transform:uppercase; }
-  .placeholder-card .pc-body{ font-family:var(--font-body); font-size:11.5px; letter-spacing:0.01em; color:var(--grey); line-height:1.7; text-transform:none; }
+  .placeholder-card .pc-title{ font-size:14px; letter-spacing:0.2em; color:var(--grey); margin-bottom:0.75rem; text-transform:uppercase; }
+  .placeholder-card .pc-body{ font-family:var(--font-body); font-size:13px; letter-spacing:0.01em; color:var(--grey); line-height:1.7; text-transform:none; }
 
   /* MA!NFRAME — DATABASE's own real landing content now (reported live as
      wanting the separate full-screen overlay gone) — shown/hidden by
@@ -8560,14 +8560,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      the JS) — the same real feature the old small Σκύλλα tab always
      showed, now a small line under the big heading instead of being the
      whole button's content. */
-  .global-top-scylla-status{ font-size:12px; letter-spacing:0.06em; color:var(--grey-dim); margin-top:0.15rem; }
+  .global-top-scylla-status{ font-size:14px; letter-spacing:0.06em; color:var(--grey-dim); margin-top:0.15rem; }
   @media (max-width:700px){
     #globalTopBar .tab-btn{ padding:0.35em 0.6rem; }
     #globalTopBarLogo{ width:22px; }
     /* Same "blurry small" call as .tab-db-heading's own comment — drop
        the chromatic shadow entirely below this breakpoint. */
-    #globalTopBarHeading{ font-size:14px; letter-spacing:0.04em; text-shadow:none; animation:none; }
-    .global-top-scylla-status{ font-size:10px; }
+    #globalTopBarHeading{ font-size:16px; letter-spacing:0.04em; text-shadow:none; animation:none; }
+    .global-top-scylla-status{ font-size:11.5px; }
   }
   /* SECT!0N HEADER — STAT!C :: MA!NFRAME/SELECT A C0LLECT!0N, now its own
      clearly separate block directly over the collection grid rather than
@@ -8618,7 +8618,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:relative;
   }
   /* S0RT BY reused .sort-select's own much bigger/heavier styling
-     (padding:0.85em 1em, font-size:15px) — reported live as wanting it
+     (padding:0.85em 1em, font-size:17.5px) — reported live as wanting it
      the same look as SEARCH C0LLECT!0NS beside it. select.mainframe-
      sort-select (element+class) matches select.sort-select's own
      specificity, so this wins purely by coming later in the file. */
@@ -8629,7 +8629,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:14px;
     font-weight:700;
     letter-spacing:0.04em;
     padding:0.6em 0.85em;
@@ -8648,7 +8648,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:14px;
     font-weight:700;
     letter-spacing:0.04em;
     padding:0.6em 0.85em;
@@ -8833,7 +8833,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#fff;
     text-shadow:0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.6);
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     font-weight:700;
     letter-spacing:0.22em;
     text-align:center;
@@ -8958,7 +8958,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex-direction:column;
     gap:0.25rem;
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:11.5px;
     letter-spacing:0.05em;
     color:var(--grey);
     margin-top:0.3rem;
@@ -8984,7 +8984,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     left:0.5rem;
     z-index:3;
     font-family:var(--font-mono);
-    font-size:11px;
+    font-size:12.5px;
     font-weight:700;
     letter-spacing:0.05em;
     color:#fff;
@@ -9002,7 +9002,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-dex-icon{ width:14px; height:14px; border-radius:3px; flex:0 0 auto; }
   .mainframe-card-tag{
     display:inline-block;
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:0.12em;
     color:var(--green);
     text-transform:uppercase;
@@ -9031,7 +9031,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-shadow:0 0 6px rgba(var(--card-accent, 61,243,236), 0.5);
     font-family:var(--font-mono);
     font-weight:700;
-    font-size:14px;
+    font-size:16px;
     letter-spacing:0.04em;
     text-transform:uppercase;
     padding:0.55em 0.6em;
@@ -9054,8 +9054,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      width instead of also getting the desktop bump. */
   @media (min-width:761px){
     .mainframe-card-label{ font-size:clamp(20px, 2vw, 30px); }
-    .mainframe-card-stats{ font-size:14px; }
-    .mainframe-card-buy{ font-size:16px; }
+    .mainframe-card-stats{ font-size:16px; }
+    .mainframe-card-buy{ font-size:18.5px; }
   }
   /* At 2 cols x 3 rows (the phone grid, see the max-width:760px switch
      above), each card's actual height on a real phone works out to
@@ -9074,9 +9074,9 @@ const SWAP_HTML = `<!DOCTYPE html>
      let the later, unconditional base rule win even on a narrow screen. */
   @media (max-width:760px){
     .mainframe-card-body{ padding:0.5rem 0.6rem 0.55rem; }
-    .mainframe-card-label{ font-size:15px; line-height:1.2; }
-    .mainframe-card-stats{ font-size:9px; line-height:1.4; margin-top:0.25rem; gap:0.15rem; }
-    .mainframe-card-buy{ font-size:11px; letter-spacing:0.02em; padding:0.5em 0.3em; margin-top:0.4rem; }
+    .mainframe-card-label{ font-size:17.5px; line-height:1.2; }
+    .mainframe-card-stats{ font-size:10.5px; line-height:1.4; margin-top:0.25rem; gap:0.15rem; }
+    .mainframe-card-buy{ font-size:12.5px; letter-spacing:0.02em; padding:0.5em 0.3em; margin-top:0.4rem; }
     /* V!EW CHART badge dropped on phone — confirmed live as clutter at
        this width, and BUY (below, still live) is the action that matters
        here anyway. DexScreener is one tap away already via the collection
@@ -9131,7 +9131,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:rgba(6,6,7,0.78);
     border:1px solid rgba(255,255,255,0.22);
     border-radius:50%;
-    font-size:13px;
+    font-size:15px;
     pointer-events:none;
   }
   /* Shake feedback on clicking INTO a locked card (see mainframeGrid's own
@@ -9164,7 +9164,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-live-tag{
     display:inline-block;
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:11.5px;
     font-weight:700;
     letter-spacing:0.12em;
     color:var(--green);
@@ -9196,7 +9196,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     background:rgba(15,16,20,0.85);
     border:1px solid var(--border-mid);
     color:#fff;
-    font-size:18px;
+    font-size:20.5px;
     cursor:pointer;
     align-items:center;
     justify-content:center;
@@ -9570,7 +9570,7 @@ const SWAP_HTML = `<!DOCTYPE html>
            box, above the grid, not mixed into it — the Pigeon shown here
            isn't actually yours yet. -->
       <div id="incomingTransfersBox" style="display:none;">
-        <div class="panel-title" style="font-size:13px;">NFT 0FFERED T0 Y0U</div>
+        <div class="panel-title" style="font-size:15px;">NFT 0FFERED T0 Y0U</div>
         <div id="incomingTransfersList"></div>
       </div>
       <div class="search-row" id="myPigeonsSortRow" style="display:none; justify-content:center;">
@@ -11444,7 +11444,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="signal-body signal-body-dim" style="margin-top:0.6rem;">A <strong>123-DR0P XRP PAYMENT</strong> W!LL BE SENT T0 TH!S WALLET W!TH A UN!QUE MEM0 !DENT!FY!NG TH!S 0FFER.</div>
             <div class="receipt-price-row" style="margin-top:1rem;">
               <div class="receipt-price-label">C0ST</div>
-              <div class="receipt-price-value" style="font-size:20px;">0.000123 XRP</div>
+              <div class="receipt-price-value" style="font-size:23px;">0.000123 XRP</div>
             </div>
             <div class="index-line" id="offerSignalStatus" style="margin-top:0.75rem;"></div>
             <div class="detail-actions">
@@ -11498,7 +11498,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="receipt-status-line">TRANSFER 0FFER SENT</div>
       <div class="receipt-price-row">
         <div class="receipt-price-label">TRANSFERR!NG T0</div>
-        <div class="receipt-price-value" id="transferResultDestination" style="font-family:var(--font-mono); font-size:16px; word-break:break-all;"></div>
+        <div class="receipt-price-value" id="transferResultDestination" style="font-family:var(--font-mono); font-size:18.5px; word-break:break-all;"></div>
       </div>
       <div class="detail-actions">
         <button class="secondary-btn" id="transferResultDoneBtn">← BACK T0 MY FL0CK</button>
@@ -13039,7 +13039,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     return '<div class="result-card" style="display:flex; gap:0.75rem; padding:0.75rem; align-items:center;">' +
       '<div class="pigeon-img-box" style="width:64px; height:64px; flex:0 0 auto;">' + myImg + '</div>' +
-      '<div style="flex:0 0 auto; font-size:16px; color:var(--magenta);">⇄</div>' +
+      '<div style="flex:0 0 auto; font-size:18.5px; color:var(--magenta);">⇄</div>' +
       '<div class="pigeon-img-box" style="width:64px; height:64px; flex:0 0 auto;">' + otherImg + '</div>' +
       '<div style="flex:1; min-width:0;">' +
         '<div class="index-line" style="margin:0;">Y0U 0FFER #' + (row.myNumber !== null && row.myNumber !== undefined ? row.myNumber : '????') +
