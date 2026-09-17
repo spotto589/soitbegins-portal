@@ -2741,8 +2741,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sale-thumb-wrap{ display:flex; align-items:center; gap:0.6rem; min-width:0; text-decoration:none; color:inherit; }
   .sale-thumb{ flex:0 0 auto; width:72px; height:72px; border:1px solid var(--border-dim); }
   .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  /* Every text field on a sale row (P!GE0N #, PR!CE, FR0M/T0, T!ME) now
+     shares this one font-size (reported live as the mix of sizes — 16/28/
+     13/18/15px — reading inconsistent and hard to scan). Colour/weight
+     still differ per field to keep price/wallet/time visually distinct,
+     just not their size. */
   .sale-num-box{
-    font-size:16px;
+    font-size:15px;
     letter-spacing:0.05em;
     color:var(--white);
     border:1px solid var(--border-mid);
@@ -2751,15 +2756,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
   }
   .sale-price-cell{ display:flex; flex-direction:column; gap:0.2rem; min-width:0; }
-  /* Bigger and bolder than the rest of the row on purpose (this is the
-     one number every sale is really "about"), with a soft glow behind
-     it — reported live as small green text being hard to read; the glow
-     is what actually fixes that at small sizes, not just going bigger. */
-  .sale-price{ font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--green); text-shadow:0 0 10px rgba(0,255,140,0.45); white-space:nowrap; }
-  .sale-via{ font-family:var(--font-body); font-size:13px; letter-spacing:0.08em; color:var(--white); text-transform:uppercase; }
+  /* Was bigger/bolder than the rest of the row on purpose — reverted
+     (reported live as the row's mixed sizes being hard to read overall,
+     see .sale-row-text-size above) — the glow alone still keeps this
+     legible at the shared size, same reasoning as when it was first
+     added at the old 28px. */
+  .sale-price{ font-family:var(--font-display); font-size:15px; font-weight:700; color:var(--green); text-shadow:0 0 10px rgba(0,255,140,0.45); white-space:nowrap; }
+  .sale-via{ font-family:var(--font-body); font-size:15px; letter-spacing:0.08em; color:var(--white); text-transform:uppercase; }
   /* FR0M/T0 were one combined "seller → buyer" cell — split into their
      own columns so each can line up under its own header. */
-  .sale-from, .sale-to{ font-family:var(--font-body); font-size:18px; color:var(--white); text-transform:none; text-align:center; min-width:0; overflow-wrap:anywhere; }
+  .sale-from, .sale-to{ font-family:var(--font-body); font-size:15px; color:var(--white); text-transform:none; text-align:center; min-width:0; overflow-wrap:anywhere; }
   .sale-from a, .sale-to a{ color:var(--white); text-decoration:underline; cursor:pointer; }
   .sale-from a:hover, .sale-to a:hover{ color:var(--cyan); }
   .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:15px; text-align:right; }
@@ -2788,7 +2794,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     .sale-from{ grid-area:from; text-align:left; }
     .sale-to{ grid-area:to; text-align:right; }
     .sale-thumb-wrap{ grid-area:thumb; flex-direction:column; align-items:flex-start; gap:0.4rem; align-self:start; }
-    .sale-num-box{ font-size:13px; padding:0.3em 0.5em; }
+    .sale-num-box{ padding:0.3em 0.5em; }
     .sale-price-cell{ grid-area:price; align-self:end; }
     .sale-time{ grid-area:time; text-align:left; }
   }
@@ -5075,18 +5081,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:color 0.15s ease;
   }
   .input-clear-btn:hover{ color:var(--magenta); }
-  /* ~ (general sibling), not + (immediate next sibling) — the two
-     calculator inputs now have a .pigeons-calc-unit label sitting between
-     the input and its own clear button (see the calc panel's own markup),
-     so + would never match there; ~ still matches every other input on
-     the page where the clear button really is the immediate next sibling,
-     so this is a pure generalisation, not a behaviour change elsewhere. */
+  /* ~ (general sibling), not + (immediate next sibling) — matches every
+     input on the page where the clear button really is a sibling. Doesn't
+     reach into .buyswap-trailing (the BUY $P!GE0NS/EXCHANGE CALCULAT0R
+     inputs' own clear button lives one level deeper, nested inside that
+     wrapper alongside the unit label — see its own comment), so those
+     stay visible even when empty; that's already how BUY $P!GE0NS itself
+     behaves, not a regression from reusing its markup. */
   input:placeholder-shown ~ .input-clear-btn{ display:none; }
-  /* Lighter default color for inputs sitting on the trustline banner's
-     purple gradient, where the plain grey-dim default would be nearly
-     invisible. */
-  .input-clear-btn-light{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
-  .input-clear-btn-light:hover{ color:#fff; }
   /* A quick coin-flip bump every time the typed number changes (see
      repositionOfferCoin), so the coin reads as "attached" to the number,
      not just a static icon — the point being to make this feel like
@@ -5889,6 +5891,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:var(--grey);
     margin:-0.5rem 0 1rem;
   }
+  /* .pigeons-calc-panel (base box: width/bg/border/shadow/padding) is
+     still shared with #topHoldersModal/#salesModal — see those markup
+     comments. The calculator itself no longer uses this class: it now
+     reuses #buySwapModal's own .offer-confirm-panel/.buyswap-row swap-
+     card language (reported live as wanting it to "look exactly like
+     the buy token design" after this bespoke flat-row version never
+     landed right no matter how many times it got tweaked) — see the
+     calculator's own HTML comment. */
   .pigeons-calc-panel{
     width:min(440px, 100%);
     text-align:center;
@@ -5899,67 +5909,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:1.75rem 1.5rem;
     animation:offer-confirm-pop 0.2s ease;
   }
-  .pigeons-calc-panel .node-eyebrow{ color:var(--grey); margin-bottom:1.25rem; }
-  .pigeons-calc-panel .pigeons-bar-rate-row{ justify-content:center; margin-bottom:1.1rem; gap:0.75rem; }
-  /* Bumped up from the shared 12px/22px defaults (reported live as wanting
-     the rate readout + its DEXSCREENER icon bigger in here specifically —
-     scoped to .pigeons-calc-panel so the small versions used elsewhere,
-     like the stats carousel tile, are untouched). */
-  .pigeons-calc-panel .pigeons-bar-rate-value{ font-size:22px; }
-  .pigeons-calc-panel .pigeons-bar-dex-btn{ width:38px; height:38px; padding:5px; }
-  .pigeons-calc-panel .pigeons-bar-dex-icon{ width:26px; height:26px; }
-  /* flex-wrap always on here (not just under the existing <500px media
-     query below) — the two unit labels + bigger clear buttons added
-     alongside the number inputs push this row wider than the panel's own
-     max-width even on desktop, confirmed live as "$PIGEONS ×" spilling
-     out past the panel's right edge instead of wrapping down. */
-  .pigeons-calc-panel .pigeons-bar-calc{ padding:1.1em 1.1em; flex-wrap:wrap; justify-content:center; row-gap:0.6em; }
-  .pigeons-calc-panel .pigeons-bar-calc-input{ font-size:22px; }
-  /* BUY <T0KEN> — a real second action underneath the calculator itself
-     (replaced the old V!EW 0N DEX link here). Green fill/black text
-     (reported live as wanting it green, not purple) — same always-on
-     filled-CTA language .offer-open-modal-btn/BUY $P!GE0NS already use
-     site-wide, not the per-collection accent purple. */
-  .pigeons-calc-dex-btn{
-    display:block;
-    width:100%;
-    margin-top:1.25rem;
-    background:var(--green);
-    border:1px solid var(--green);
-    border-radius:var(--radius);
-    padding:0.85em 1em;
-    color:#000;
-    font-family:var(--font-mono);
-    font-size:14px;
-    font-weight:700;
-    letter-spacing:0.08em;
-    text-transform:uppercase;
-    text-decoration:none;
-    text-align:center;
-    cursor:pointer;
-    transition:box-shadow 0.15s ease;
-  }
-  .pigeons-calc-dex-btn:hover{ box-shadow:0 0 14px var(--green-glow); }
-  .pigeons-calc-close-btn{
-    display:block;
-    width:100%;
-    margin-top:0.6rem;
-    background:transparent;
-    border:1px solid var(--border-mid);
-    border-radius:var(--radius);
-    padding:0.7em 1em;
-    color:var(--grey);
-    font-family:var(--font-mono);
-    font-size:13px;
-    letter-spacing:0.06em;
-    text-transform:uppercase;
-    cursor:pointer;
-  }
-  .pigeons-calc-close-btn:hover{ border-color:#fff; color:#fff; }
-  @media (max-width:500px){
-    .pigeons-calc-panel .pigeons-bar-calc{ flex-wrap:wrap; justify-content:center; }
-    .pigeons-calc-panel .pigeons-bar-calc-input{ font-size:18px; }
-  }
+  /* Bumped up from the shared 12px/22px defaults, scoped to the
+     calculator modal specifically so the small versions used elsewhere
+     (the trustline banner's own link, the stats carousel tile) stay
+     untouched. */
+  #pigeonsCalcModal .pigeons-bar-rate-row{ justify-content:center; margin-bottom:1.5rem; gap:0.75rem; }
+  #pigeonsCalcModal .pigeons-bar-rate-value{ font-size:22px; }
+  #pigeonsCalcModal .pigeons-bar-dex-btn{ width:38px; height:38px; padding:5px; }
+  #pigeonsCalcModal .pigeons-bar-dex-icon{ width:26px; height:26px; }
   .pigeons-bar-rate-row{ display:flex; align-items:center; gap:0.5rem; }
   .pigeons-bar-rate-value{ font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--green); text-shadow:0 0 6px var(--green-glow); white-space:nowrap; }
   .pigeons-bar-dex-btn{
@@ -5975,62 +5932,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex:0 0 auto;
   }
   .pigeons-bar-dex-btn:hover{ border-color:#fff; }
-  .pigeons-bar-calc{
-    display:flex;
-    align-items:center;
-    gap:0.5rem;
-    background:rgba(0,0,0,0.18);
-    border:1px solid rgba(255,255,255,0.6);
-    border-radius:var(--radius);
-    padding:0.6em 0.9em;
-  }
-  .pigeons-bar-calc-input{
-    /* Base/minimum width — grown dynamically via updatePigeonsCalc's
-       resizeCalcInput as you type (ch units, monospace font, so 1ch really
-       is one typed character's width). Centered text + the whole box
-       being centered in its flex:1 slot means it grows evenly from both
-       sides, not anchored to one edge. */
-    width:10ch;
-    min-width:10ch;
-    background:transparent;
-    border:none;
-    color:#fff;
-    font-family:var(--font-mono);
-    font-size:17px;
-    text-align:center;
-    padding:0.2em 0;
-    transition:width 0.1s ease;
-  }
-  .pigeons-bar-calc-input:focus{ outline:none; }
-  /* $P!GE0NS side of the calculator — same input, just a wider base/
-     minimum width so a typed number doesn't clip. */
-  .pigeons-bar-calc-input-wide{ width:14ch; min-width:14ch; }
-  .pigeons-bar-calc-input::placeholder{ color:rgba(255,255,255,0.6); text-transform:uppercase; }
-  /* flex-basis:100% forces this onto its own centered row once the two
-     input groups wrap onto separate lines (see .pigeons-calc-panel
-     .pigeons-bar-calc's own flex-wrap comment) — without it the arrow
-     tacks onto the end of the first row instead of sitting centered
-     between the two. */
-  .pigeons-bar-calc-arrow{ color:rgba(255,255,255,0.7); font-size:18px; flex:1 0 100%; text-align:center; margin:0.15em 0; }
-  /* Groups one calculator input with its own unit label + clear button —
-     each side (XRP / $PIGEONS) needs to scope :placeholder-shown ~
-     .input-clear-btn to ONLY its own input, not the other side's, since
-     both live in the same outer .pigeons-bar-calc flex row. */
-  .pigeons-calc-input-wrap{ display:inline-flex; align-items:center; gap:0.35em; }
-  /* Static "XRP" / "$PIGEONS" unit next to the typed number (reported
-     live as wanting "100 XRP" / "458,000 $PIGEONS" instead of a bare
-     number with the unit only implied by the empty-state placeholder) —
-     a fixed label, not part of the input's own value, so the existing
-     parse/format functions never have to strip it back out. */
-  .pigeons-calc-unit{
-    font-family:var(--font-mono);
-    font-size:13px;
-    font-weight:700;
-    letter-spacing:0.06em;
-    color:rgba(255,255,255,0.55);
-    text-transform:uppercase;
-    white-space:nowrap;
-  }
   /* DEXSCREENER icon inside its stat-tile up in the carousel now (see
      the RATE page) — sizing only, the tile/link styling comes from
      .stat-tile/.stat-tile-link. */
@@ -9432,14 +9333,21 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- EXCHANGE CALCULAT0R — a real centered popup (#pigeonsCalcModal),
-         same purple/exciting treatment as 0FFER/BUY $P!GE0NS's own confirm
-         modals, instead of a small dropdown anchored under the toggle
-         button. Lives outside .pigeons-merged-panel entirely now — a
-         position:fixed overlay doesn't need to escape that panel's own
-         overflow:hidden the way the old anchored popover did. -->
+    <!-- EXCHANGE CALCULAT0R — reuses #buySwapModal's own Y0U PAY/Y0U
+         RECE!VE swap-card language (.offer-confirm-panel/.buyswap-row/
+         .buyswap-input-wrap/.buyswap-arrow) instead of its old bespoke
+         flat-row design, reported live as never looking right no matter
+         how many times that one got tweaked. Same panel chrome as BUY
+         $P!GE0NS's own entry screen, just both sides real editable
+         inputs (this is a two-way calculator, not a one-way quote) and
+         no balances/trustline/quote-freshness chrome, since this never
+         actually spends anything — BUY $P!GE0NS (below) is the real next
+         step once someone likes what they see here. Lives outside
+         .pigeons-merged-panel entirely — a position:fixed overlay
+         doesn't need to escape that panel's own overflow:hidden the way
+         the old anchored popover did. -->
     <div id="pigeonsCalcModal" style="display:none;">
-      <div class="pigeons-calc-panel">
+      <div class="offer-confirm-panel">
         <div class="node-eyebrow">// EXCHANGE CALCULAT0R</div>
         <div class="pigeons-bar-rate-row">
           <a class="pigeons-bar-dex-btn" id="pigeonsDexLink" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
@@ -9447,21 +9355,31 @@ const SWAP_HTML = `<!DOCTYPE html>
           </a>
           <span class="pigeons-bar-rate-value" id="pigeonsBarRateValue" style="display:none;"></span>
         </div>
-        <div class="pigeons-bar-calc">
-          <span class="pigeons-calc-input-wrap">
-            <input class="pigeons-bar-calc-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="0">
-            <span class="pigeons-calc-unit">XRP</span>
-            <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
-          </span>
-          <span class="pigeons-bar-calc-arrow">⇄</span>
-          <span class="pigeons-calc-input-wrap">
-            <input class="pigeons-bar-calc-input pigeons-bar-calc-input-wide" id="pigeonsCalcPigeonsInput" type="text" inputmode="decimal" placeholder="0">
-            <span class="pigeons-calc-unit" id="pigeonsCalcPigeonsUnit">$P!GE0NS</span>
-            <button class="input-clear-btn input-clear-btn-light" type="button" tabindex="-1" title="CLEAR">×</button>
-          </span>
+        <div class="buyswap-row">
+          <span class="buyswap-label">Y0U PAY</span>
+          <div class="buyswap-input-wrap">
+            <input class="buyswap-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="0" autocomplete="off">
+            <div class="buyswap-trailing">
+              <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
+              <span class="buyswap-unit">XRP</span>
+            </div>
+          </div>
         </div>
-        <button type="button" class="pigeons-calc-dex-btn" id="pigeonsCalcBuyBtn">BUY $P!GE0NS</button>
-        <button type="button" class="pigeons-calc-close-btn" id="pigeonsCalcCloseBtn">CL0SE</button>
+        <div class="buyswap-arrow" aria-hidden="true">↓</div>
+        <div class="buyswap-row">
+          <span class="buyswap-label">Y0U RECE!VE</span>
+          <div class="buyswap-input-wrap">
+            <input class="buyswap-input" id="pigeonsCalcPigeonsInput" type="text" inputmode="decimal" placeholder="0" autocomplete="off">
+            <div class="buyswap-trailing">
+              <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
+              <span class="buyswap-unit" id="pigeonsCalcPigeonsUnit">$P!GE0NS</span>
+            </div>
+          </div>
+        </div>
+        <div class="detail-actions">
+          <button type="button" class="secondary-btn" id="pigeonsCalcCloseBtn">CL0SE</button>
+          <button type="button" class="action-btn offer-confirm-xaman-btn" id="pigeonsCalcBuyBtn">BUY $P!GE0NS</button>
+        </div>
       </div>
     </div>
 
@@ -19148,14 +19066,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   refreshTrustlineRate();
   setInterval(refreshTrustlineRate, 60000);
-  // Grows an input to fit what's typed (ch units against the monospace
-  // font) instead of staying a fixed width — since the whole calc box is
-  // centered in its flex:1 slot (see .pigeons-bar-calc-col), this reads as
-  // growing outward from the center in both directions, not anchored left.
-  function resizeCalcInput(inputEl, baseCh){
-    var len = inputEl.value.length;
-    inputEl.style.width = Math.max(baseCh, len + 2) + 'ch';
-  }
   // Hard cap on the XRP side — matches whatever's actually reasonable to
   // type into a quick calculator, and doubles as the ceiling every
   // computed (pigeons -> XRP) result gets clamped to as well, so the box
@@ -19219,31 +19129,25 @@ const SWAP_HTML = `<!DOCTYPE html>
       xrpValue = CALC_MAX_XRP;
       el.pigeonsCalcXrpInput.value = CALC_MAX_XRP.toLocaleString();
     }
-    resizeCalcInput(el.pigeonsCalcXrpInput, 10);
     if (trustlineXrpPerPigeon === null || !el.pigeonsCalcXrpInput.value.trim() || !isFinite(xrpValue) || xrpValue <= 0){
       el.pigeonsCalcPigeonsInput.value = '';
-      resizeCalcInput(el.pigeonsCalcPigeonsInput, 14);
       updateCalcToggleLabel();
       return;
     }
     var pigeonsOut = xrpValue / trustlineXrpPerPigeon;
     el.pigeonsCalcPigeonsInput.value = pigeonsOut.toLocaleString(undefined, { maximumFractionDigits: 2 });
-    resizeCalcInput(el.pigeonsCalcPigeonsInput, 14);
     updateCalcToggleLabel();
   }
   function updateXrpCalcFromPigeons(){
     el.pigeonsCalcPigeonsInput.value = formatPigeonsCalcValue(el.pigeonsCalcPigeonsInput.value);
-    resizeCalcInput(el.pigeonsCalcPigeonsInput, 14);
     var pigeonsValue = parsePigeonsCalcValue(el.pigeonsCalcPigeonsInput.value);
     if (trustlineXrpPerPigeon === null || !el.pigeonsCalcPigeonsInput.value.trim() || !isFinite(pigeonsValue) || pigeonsValue <= 0){
       el.pigeonsCalcXrpInput.value = '';
-      resizeCalcInput(el.pigeonsCalcXrpInput, 10);
       updateCalcToggleLabel();
       return;
     }
     var xrpOut = Math.min(CALC_MAX_XRP, pigeonsValue * trustlineXrpPerPigeon);
     el.pigeonsCalcXrpInput.value = xrpOut.toLocaleString(undefined, { maximumFractionDigits: 2 });
-    resizeCalcInput(el.pigeonsCalcXrpInput, 10);
     updateCalcToggleLabel();
   }
   el.pigeonsCalcXrpInput.addEventListener('input', updatePigeonsCalcFromXrp);
