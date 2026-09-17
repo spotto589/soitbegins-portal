@@ -84,6 +84,31 @@ const SWAP_HTML = `<!DOCTYPE html>
       font-style:normal;
       font-display:swap;
     }
+    /* Jura — gives Σκύλλα:// itself a real styled face (reported live:
+       "can we use one of the texts for Σκύλλα text like this") instead
+       of silently falling back to JetBrains Mono the way it does under
+       every other display font tried on this page (Chakra Petch/Hacked/
+       CF Glitch City/Glitchcrafty all lack Greek glyphs entirely). Two
+       real Google-subset files, not one hand-picked-character subset —
+       .scylla-system-header-title now also shows PR0F!LES/MESSAGE
+       !NB0X/etc (see switchProfileTab), so this needs full latin
+       coverage too, not just the literal string "Σκύλλα://SYSTEM". */
+    @font-face{
+      font-family:'Jura';
+      src:url('/assets/fonts/jura-700-greek.woff2') format('woff2');
+      unicode-range:U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+      font-weight:700;
+      font-style:normal;
+      font-display:swap;
+    }
+    @font-face{
+      font-family:'Jura';
+      src:url('/assets/fonts/jura-700-latin.woff2') format('woff2');
+      unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      font-weight:700;
+      font-style:normal;
+      font-display:swap;
+    }
 
   /* ==========================================================================
      Σκύλλα SWAP — colour + type system, v4: "corrupted industrial system,"
@@ -2282,7 +2307,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      RGB-split/skew burst + its own signal-tear overlay), not the plain
      topbar-terminal-glitch fringe. */
   .scylla-system-header{ text-align:center; margin:0.25rem 0 0.75rem; }
-  .scylla-system-header-title{ position:relative; display:inline-block; font-family:var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
+  .scylla-system-header-title{ position:relative; display:inline-block; font-family:'Jura',var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
   @keyframes scylla-header-glitch{
     0%, 92%, 100%{ text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); transform:translate(0,0); }
     92.5%{ text-shadow:-3px 0 var(--magenta), 3px 0 var(--cyan); transform:translate(-2px,0) skewX(-2deg); }
