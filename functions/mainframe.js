@@ -66,14 +66,14 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
   }
   .page{ max-width:560px; width:100%; position:relative; z-index:2; text-align:center; }
   .eyebrow{
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.3em;
     color:rgba(232,232,232,0.4);
     text-transform:uppercase;
     margin-bottom:1rem;
   }
   h1{
-    font-size:clamp(23.5px,4vw,35.5px);
+    font-size:clamp(20px,4vw,30px);
     letter-spacing:0.1em;
     color:#fff;
     text-shadow:0 0 10px rgba(232,232,232,0.2);
@@ -81,7 +81,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
     line-height:1.3;
   }
   .intro{
-    font-size:15.5px;
+    font-size:13px;
     line-height:1.8;
     color:rgba(232,232,232,0.55);
     margin-bottom:2.5rem;
@@ -91,7 +91,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
     border:1px solid rgba(232,232,232,0.35);
     color:rgba(232,232,232,0.85);
     font-family:inherit;
-    font-size:15.5px;
+    font-size:13px;
     letter-spacing:0.15em;
     padding:0.9em 1.8em;
     cursor:pointer;
@@ -101,14 +101,14 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
   .scan-btn:disabled{ opacity:0.4; cursor:default; }
   .scan-status{
     margin-top:1.25rem;
-    font-size:14px;
+    font-size:12px;
     min-height:1.4em;
     color:rgba(232,232,232,0.6);
   }
   .scan-status.denied{ color:#ff003c; text-shadow:0 0 6px rgba(255,0,60,0.4); }
   .retry-line{
     margin-top:1.25rem;
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.1em;
     color:rgba(232,232,232,0.4);
   }
@@ -126,7 +126,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
   .scan-overlay.active{ display:flex; }
   .scan-overlay-inner{ max-width:480px; padding:6vw; }
   .scan-title{
-    font-size:clamp(19px,3.4vw,28.5px);
+    font-size:clamp(16px,3.4vw,24px);
     letter-spacing:0.12em;
     color:rgba(232,232,232,0.9);
     margin-bottom:2rem;
@@ -145,7 +145,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
     51%, 100%{ opacity:0; }
   }
   .scan-line{
-    font-size:15.5px;
+    font-size:13px;
     letter-spacing:0.08em;
     color:rgba(232,232,232,0.4);
     margin-bottom:0.75rem;
@@ -155,7 +155,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
   .scan-line.show{ opacity:1; color:rgba(232,232,232,0.75); }
   .scan-result{
     margin-top:1.5rem;
-    font-size:16.5px;
+    font-size:14px;
     letter-spacing:0.1em;
     min-height:1.6em;
   }
@@ -163,7 +163,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
   .scan-result.denied{ color:#ff003c; text-shadow:0 0 8px rgba(255,0,60,0.6); }
   .scan-result-sub{
     margin-top:0.5rem;
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.08em;
     color:rgba(232,232,232,0.5);
   }
@@ -176,7 +176,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
     margin-top:2rem;
   }
   .mf-flicker{
-    font-size:14px;
+    font-size:12px;
     letter-spacing:0.3em;
     color:#39ff14;
     text-shadow:0 0 8px rgba(57,255,20,0.6);
@@ -192,7 +192,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
     98%{ opacity:1; }
   }
   .mf-title{
-    font-size:clamp(23.5px,4.2vw,35.5px);
+    font-size:clamp(20px,4.2vw,30px);
     letter-spacing:0.1em;
     color:#fff;
     text-align:center;
@@ -211,14 +211,14 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
     to{ opacity:1; transform:translateY(0); }
   }
   .mf-label{
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.25em;
     color:rgba(0,255,242,0.8);
     text-shadow:0 0 6px rgba(0,255,242,0.4);
     margin-bottom:0.5rem;
   }
   .mf-heading{
-    font-size:clamp(21px,3.6vw,28.5px);
+    font-size:clamp(18px,3.6vw,24px);
     letter-spacing:0.1em;
     color:#fff;
     margin-bottom:1.5rem;
@@ -231,7 +231,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
   }
   .mf-king-tag{
     display:inline-block;
-    font-size:12px;
+    font-size:10px;
     letter-spacing:0.2em;
     padding:0.3em 0.7em;
     margin-bottom:0.6rem;
@@ -249,7 +249,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
   .mf-king.false .mf-king-img{ border:2px solid rgba(255,0,60,0.4); }
   .mf-king.true .mf-king-img{ border:2px solid rgba(57,255,20,0.4); }
   .mf-king-name{
-    font-size:19px;
+    font-size:16px;
     letter-spacing:0.08em;
     color:#e8e8e8;
     margin-bottom:0.75rem;
@@ -259,7 +259,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
     margin-bottom:1rem;
   }
   .mf-list li{
-    font-size:14px;
+    font-size:12px;
     line-height:1.8;
     color:rgba(232,232,232,0.55);
     padding-left:1em;
@@ -273,7 +273,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
   }
   .mf-link{
     display:inline-block;
-    font-size:14px;
+    font-size:12px;
     letter-spacing:0.1em;
     color:#00fff2;
     text-decoration:none;
@@ -287,13 +287,13 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
     text-align:center;
   }
   .mf-crwn-row{
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.1em;
     color:rgba(232,232,232,0.5);
     margin-bottom:0.5rem;
   }
   .mf-crwn-address{
-    font-size:15.5px;
+    font-size:13px;
     word-break:break-all;
     color:#39ff14;
     text-shadow:0 0 6px rgba(57,255,20,0.4);
@@ -304,7 +304,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
     border:1px solid rgba(57,255,20,0.5);
     color:#39ff14;
     font-family:inherit;
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.1em;
     padding:0.5em 1.1em;
     cursor:pointer;

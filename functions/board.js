@@ -329,13 +329,6 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
 <title>STAT!C_N0DE:://S!GNAL_RELAY</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');
-  @font-face{
-    font-family:'CF Glitch City';
-    src:url('/assets/fonts/cf-glitch-city.ttf') format('truetype');
-    font-weight:400;
-    font-style:normal;
-    font-display:swap;
-  }
   /* Single source of truth for the P!GE0N Access Level system. Each level
      is its own network-penetration identity — SIGNAL (01), BEACON (03),
      VECTOR (06), RESONANCE (09), OVERRIDE (12), CR0WN (15) — not a
@@ -397,8 +390,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .page{ max-width:760px; width:100%; position:relative; z-index:1; }
   h1{
-    font-family:'CF Glitch City','Chakra Petch',sans-serif;
-    font-size:clamp(19px,4vw,33px);
+    font-size:clamp(16px,4vw,28px);
     font-weight:700;
     letter-spacing:0.14em;
     color:#39ff14;
@@ -437,7 +429,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     align-items:center;
     justify-content:center;
     gap:0.4em;
-    font-size:clamp(14px,3.4vw,19px);
+    font-size:clamp(12px,3.4vw,16px);
     letter-spacing:0.1em;
     color:#ff003c;
     text-shadow:0 0 8px rgba(255,0,60,0.6);
@@ -451,7 +443,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     50%{ opacity:0.7; }
   }
   .cn-body{
-    font-size:14px;
+    font-size:12px;
     line-height:1.8;
     color:#39ff14;
     text-shadow:0 0 4px rgba(57,255,20,0.35);
@@ -471,28 +463,28 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-align:center;
   }
   .cn-body.cn-body-binary{
-    font-size:12px;
+    font-size:10px;
     letter-spacing:0.02em;
     text-transform:none;
     word-break:break-all;
     color:rgba(57,255,20,0.5);
   }
   .signed-counter-label{
-    font-size:12px;
+    font-size:10px;
     letter-spacing:0.12em;
     color:#39ff14;
     text-shadow:0 0 4px rgba(57,255,20,0.4);
     margin-bottom:0.4rem;
   }
   .signed-counter-value{
-    font-size:clamp(21px, 5vw, 28.5px);
+    font-size:clamp(18px, 5vw, 24px);
     font-weight:700;
     color:#39ff14;
     text-shadow:0 0 6px rgba(57,255,20,0.5);
     margin-bottom:0.6rem;
   }
   .signed-counter-total{
-    font-size:1em;
+    font-size:0.85em;
     color:#ff003c;
     text-shadow:0 0 6px rgba(255,0,60,0.5);
   }
@@ -512,7 +504,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     padding:0.7rem 0.9rem;
     border:1px solid rgba(255,0,60,0.3);
     background:#08080a;
-    font-size:13px;
+    font-size:11px;
     line-height:1.6;
     letter-spacing:0.03em;
     color:#e8e8e8;
@@ -523,7 +515,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-shadow:0 0 4px rgba(255,0,60,0.3);
   }
   .rules-heading{
-    font-size:17.5px;
+    font-size:15px;
     font-weight:700;
     letter-spacing:0.1em;
     color:#39ff14;
@@ -534,7 +526,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     display:flex;
     align-items:center;
     gap:0.4em;
-    font-size:16.5px;
+    font-size:14px;
     font-weight:700;
     letter-spacing:0.08em;
     color:#ff003c;
@@ -543,11 +535,11 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .rules-subhead::before, .rules-subhead::after{
     content:'⚠️';
-    font-size:0.94em;
+    font-size:0.8em;
     flex:0 0 auto;
   }
   .rules-body{
-    font-size:15.5px;
+    font-size:13px;
     line-height:1.6;
     color:#39ff14;
     text-shadow:0 0 3px rgba(57,255,20,0.3);
@@ -555,7 +547,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .rules-rule{
     display:flex;
     gap:0.6em;
-    font-size:15.5px;
+    font-size:13px;
     line-height:1.5;
     color:#39ff14;
     text-shadow:0 0 3px rgba(57,255,20,0.3);
@@ -587,7 +579,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     color:#39ff14;
     text-shadow:0 0 6px rgba(57,255,20,0.4);
     font-family:inherit;
-    font-size:14px;
+    font-size:12px;
     letter-spacing:0.1em;
     padding:0.65em 1.2em;
     text-transform:none;
@@ -598,7 +590,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .swap-proto-disabled{ opacity:0.5; cursor:default; color:rgba(232,232,232,0.4); text-shadow:none; border-color:rgba(232,232,232,0.25); }
   .swap-proto-disabled:hover{ background:transparent; }
   .swap-proto-btn .swap-proto-tag{
-    font-size:10.5px;
+    font-size:9px;
     letter-spacing:0.15em;
     color:rgba(0,255,242,0.7);
     border:1px solid rgba(0,255,242,0.35);
@@ -606,7 +598,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-shadow:none;
   }
   .cb-label-become{
-    font-size:1.53em;
+    font-size:1.3em;
     font-weight:900;
     letter-spacing:0.05em;
   }
@@ -624,7 +616,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border:2px solid #000;
     font-family:inherit;
     font-weight:700;
-    font-size:0.85em;
+    font-size:0.72em;
     letter-spacing:0.04em;
     text-decoration:none;
     transition:background 0.12s ease;
@@ -647,7 +639,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border:1px solid rgba(255,0,60,0.3);
     background:#08080a;
     color:#ff003c;
-    font-size:13px;
+    font-size:11px;
     font-weight:700;
     letter-spacing:0.12em;
     text-transform:uppercase;
@@ -682,7 +674,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border:1px solid rgba(255,0,60,0.3);
     background:#08080a;
     color:#ff003c;
-    font-size:13px;
+    font-size:11px;
     line-height:1.6;
     letter-spacing:0.03em;
     text-shadow:0 0 3px rgba(255,0,60,0.35);
@@ -697,7 +689,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     cursor:pointer;
     list-style:none;
     padding:0.75rem 1rem;
-    font-size:15.5px;
+    font-size:13px;
     letter-spacing:0.1em;
     color:#39ff14;
     text-shadow:0 0 6px rgba(57,255,20,0.4);
@@ -713,7 +705,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
      arrow so a drop-down box is unmistakable at a glance. */
   .dropdown-arrow{
     flex:0 0 auto;
-    font-size:23.5px;
+    font-size:20px;
     line-height:1;
     transition:transform 0.2s ease;
   }
@@ -728,10 +720,10 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     gap:0.4em;
     min-width:0;
     white-space:nowrap;
-    font-size:clamp(12px, 3.2vw, 15.5px);
+    font-size:clamp(10px, 3.2vw, 13px);
   }
   .legend-emoji{
-    font-size:1.89em;
+    font-size:1.6em;
     text-shadow:none;
     flex:0 0 auto;
   }
@@ -748,7 +740,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     align-items:center;
     justify-content:center;
   }
-  .tl-text{ font-size:15.5px; }
+  .tl-text{ font-size:13px; }
   .leaderboard{ border-top:1px solid rgba(255,0,60,0.25); }
   .leaderboard summary{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); }
   .lb-row{
@@ -759,7 +751,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     padding:0.55rem 0.9rem;
     border:1px solid rgba(255,0,60,0.25);
     background:#08080a;
-    font-size:14px;
+    font-size:12px;
   }
   .lb-rank{
     flex:0 0 auto;
@@ -798,12 +790,12 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     flex:0 0 auto;
     color:#39ff14;
     text-shadow:0 0 4px rgba(57,255,20,0.4);
-    font-size:13px;
+    font-size:11px;
   }
   .lb-empty{
     text-align:center;
     color:rgba(232,232,232,0.4);
-    font-size:14px;
+    font-size:12px;
     padding:0.5rem 0;
   }
   /* Same border treatment (width, glow-pulse, sweep overlay, animated
@@ -894,7 +886,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     flex-wrap:wrap;
     align-content:center;
     justify-content:center;
-    font-size:6px;
+    font-size:5px;
     line-height:1.3;
     letter-spacing:0.02em;
     color:#39ff14;
@@ -959,7 +951,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     margin:0.8rem 1.1rem;
     padding:0.7rem 0.9rem;
     border:1px solid rgba(57,255,20,0.15);
-    font-size:13px;
+    font-size:11px;
     line-height:1.7;
     color:rgba(57,255,20,0.6);
     word-break:break-all;
@@ -989,7 +981,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     cursor:default;
   }
   .msg-plain{
-    font-size:16.5px;
+    font-size:14px;
     white-space:pre-wrap;
     overflow-wrap:anywhere;
   }
@@ -1024,13 +1016,13 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     gap:0.3em;
     color:#ff003c;
     font-weight:700;
-    font-size:clamp(13px, 3.4vw, 19px);
+    font-size:clamp(11px, 3.4vw, 16px);
     letter-spacing:0.06em;
     text-shadow:0 0 10px rgba(255,0,60,0.6);
   }
   .msg-locked-head span{ white-space:nowrap; }
   .msg-locked-bar{
-    font-size:10.5px;
+    font-size:9px;
     line-height:1.2;
     letter-spacing:0.03em;
     color:rgba(255,0,60,0.35);
@@ -1039,7 +1031,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     overflow:hidden;
   }
   .msg-locked-note{
-    font-size:12px;
+    font-size:10px;
     letter-spacing:0.08em;
     color:rgba(57,255,20,0.75);
     text-transform:uppercase;
@@ -1049,7 +1041,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border:1px solid rgba(255,0,60,0.4);
     color:#ff003c;
     font-family:inherit;
-    font-size:12px;
+    font-size:10px;
     letter-spacing:0.08em;
     padding:0.4em 0.8em;
     cursor:pointer;
@@ -1062,7 +1054,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     padding:1.1rem 1.25rem;
     border:1px dashed rgba(255,0,60,0.4);
     background:#000;
-    font-size:15.5px;
+    font-size:13px;
     line-height:1.7;
     text-align:left;
     cursor:pointer;
@@ -1071,7 +1063,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .ld-title{
     color:#ff003c;
     font-weight:700;
-    font-size:16.5px;
+    font-size:14px;
     letter-spacing:0.1em;
     margin-bottom:0.7rem;
     padding-bottom:0.5rem;
@@ -1101,7 +1093,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     margin-top:0.6rem;
     padding-top:0.5rem;
     border-top:1px dashed rgba(255,0,60,0.3);
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.08em;
     color:#ff003c;
     text-transform:uppercase;
@@ -1259,7 +1251,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .msg-row.tier-red .msg-meta{ border-bottom-color:rgba(var(--tier-encrypted),0.35); }
   .msg-row.tier-red .msg-avatar{ border-width:2px; border-color:rgba(var(--tier-encrypted),0.45); }
   .encrypted-fragments span{
-    font-size:10.5px;
+    font-size:9px;
     font-family:'Chakra Petch',sans-serif;
     font-weight:700;
     color:rgba(var(--tier-encrypted),0.85);
@@ -1416,7 +1408,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .tier-sparkles span{
     position:absolute;
-    font-size:15.5px;
+    font-size:13px;
     filter:drop-shadow(0 0 5px rgba(255,255,255,0.9));
     animation:diamond-sparkle-twinkle 1.6s ease-in-out infinite;
   }
@@ -1512,7 +1504,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     top:0.5rem;
     right:0.5rem;
     z-index:2;
-    font-size:10.5px;
+    font-size:9px;
     letter-spacing:0.08em;
     color:#ff0033;
     background:#0a0005;
@@ -1530,7 +1522,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     top:0.5rem;
     left:0.5rem;
     z-index:2;
-    font-size:10.5px;
+    font-size:9px;
     letter-spacing:0.08em;
     color:#000;
     background:#ffd700;
@@ -1551,7 +1543,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     row-gap:0.35rem;
     padding:0.85rem 1.1rem 0.6rem;
     border-bottom:1px solid rgba(57,255,20,0.1);
-    font-size:14px;
+    font-size:12px;
     letter-spacing:0.05em;
     color:#39ff14;
     text-shadow:0 0 4px rgba(57,255,20,0.4);
@@ -1563,7 +1555,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .msg-meta-right{
     flex:0 0 auto;
-    font-size:12px;
+    font-size:10px;
   }
   .msg-order-level{
     display:flex;
@@ -1573,7 +1565,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     column-gap:0.8em;
     row-gap:0.2em;
     text-align:center;
-    font-size:12px;
+    font-size:10px;
     letter-spacing:0.06em;
     padding:0.4rem 1.1rem;
     border-bottom:1px solid rgba(57,255,20,0.1);
@@ -1598,7 +1590,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
       text-overflow:ellipsis;
       white-space:nowrap;
     }
-    .msg-meta-right{ font-size:14px; }
+    .msg-meta-right{ font-size:12px; }
   }
   .msg-signed-label{
     color:#ff003c;
@@ -1684,7 +1676,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     background:rgba(255,0,60,0.08);
     color:#ff003c;
     font-family:inherit;
-    font-size:16.5px;
+    font-size:14px;
     font-weight:700;
     letter-spacing:0.12em;
     text-transform:uppercase;
@@ -1738,14 +1730,14 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .pigeon-thumb.used:hover{ opacity:0.25; }
   .all-used-note{
     margin-top:0.75rem;
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.05em;
     color:rgba(255,0,60,0.75);
     text-align:center;
   }
   .mainframe-teaser{
     margin-top:0.5rem;
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.08em;
     color:#00fff2;
     text-shadow:0 0 8px rgba(0,255,242,0.5);
@@ -1754,7 +1746,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .keystone-note{
     margin-top:0.6rem;
-    font-size:12px;
+    font-size:10px;
     letter-spacing:0.08em;
     color:rgba(232,232,232,0.45);
     text-align:center;
@@ -1762,7 +1754,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .empty{
     text-align:center;
     color:rgba(232,232,232,0.4);
-    font-size:15.5px;
+    font-size:13px;
     padding:2rem 0;
   }
   .write-box{
@@ -1776,7 +1768,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-align:left;
   }
   .write-label{
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.1em;
     color:#39ff14;
     margin-bottom:0.75rem;
@@ -1787,7 +1779,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border:1px solid rgba(57,255,20,0.3);
     color:#e8e8e8;
     font-family:inherit;
-    font-size:15.5px;
+    font-size:13px;
     padding:0.75em;
   }
   textarea{
@@ -1796,14 +1788,14 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     margin-top:0.6rem;
   }
   .sig-label{
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.1em;
     color:#ff003c;
     text-shadow:0 0 6px rgba(255,0,60,0.4);
     margin-bottom:0.5rem;
   }
   .sig-label-below{
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.1em;
     color:#00fff2;
     text-shadow:0 0 6px rgba(0,255,242,0.4);
@@ -1816,13 +1808,13 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .word-count{
     margin-top:0.4rem;
-    font-size:12px;
+    font-size:10px;
     letter-spacing:0.05em;
     color:rgba(232,232,232,0.4);
   }
   .word-count.over{ color:#ff003c; }
   .preview-label{
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.1em;
     color:#39ff14;
     margin:1.25rem 0 0.6rem;
@@ -1845,7 +1837,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border:1px solid rgba(57,255,20,0.6);
     color:#39ff14;
     font-family:inherit;
-    font-size:15.5px;
+    font-size:13px;
     letter-spacing:0.12em;
     padding:0.7em 1.4em;
     cursor:pointer;
@@ -1866,7 +1858,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     color:#000;
     font-family:inherit;
     font-weight:700;
-    font-size:clamp(16.5px, 4.4vw, 21px);
+    font-size:clamp(14px, 4.4vw, 18px);
     letter-spacing:0.1em;
     padding:1.15em 2em;
     text-align:center;
@@ -1887,7 +1879,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     0%, 100%{ box-shadow:0 0 0 rgba(255,238,0,0.55), 4px 4px 0 #000; }
     50%{ box-shadow:0 0 22px 4px rgba(255,238,0,0.55), 4px 4px 0 #000; }
   }
-  .connect-btn .caution{ font-size:1.36em; }
+  .connect-btn .caution{ font-size:1.15em; }
   .cb-label{
     display:inline-flex;
     flex-wrap:wrap;
@@ -1904,7 +1896,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     justify-content:center;
     background:#000;
     color:#39ff14;
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.05em;
     text-shadow:0 0 8px rgba(57,255,20,0.8);
     white-space:nowrap;
@@ -1933,14 +1925,14 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .post-status, .connect-status{
     margin-top:0.6rem;
-    font-size:14px;
+    font-size:12px;
     min-height:1.4em;
     color:#39ff14;
   }
   .gate-note{
     margin-top:2rem;
     text-align:center;
-    font-size:clamp(21px, 5vw, 30.5px);
+    font-size:clamp(18px, 5vw, 26px);
     font-weight:700;
     letter-spacing:0.06em;
     line-height:1.4;
@@ -1949,7 +1941,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   }
   .retry-line{
     margin-top:1.25rem;
-    font-size:15.5px;
+    font-size:13px;
     letter-spacing:0.1em;
     color:#39ff14;
     text-shadow:0 0 6px rgba(57,255,20,0.4);
@@ -1969,7 +1961,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .access-gate-granted{ border:1px dashed rgba(57,255,20,0.5); }
   .access-gate-denied{ border:1px dashed rgba(255,0,60,0.5); }
   .ag-scan{
-    font-size:clamp(15.5px, 4vw, 19px);
+    font-size:clamp(13px, 4vw, 16px);
     letter-spacing:0.2em;
     text-transform:uppercase;
     color:rgba(232,232,232,0.4);
@@ -1989,7 +1981,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border:2px solid #000;
     color:#000;
     font-weight:700;
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.08em;
     text-transform:uppercase;
     box-shadow:3px 3px 0 #000;
@@ -2005,14 +1997,14 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     text-align:center;
   }
   .ag-level-box-label{
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.15em;
     color:rgba(57,255,20,0.75);
     text-transform:uppercase;
     margin-bottom:0.5rem;
   }
   .ag-level-box-value{
-    font-size:clamp(28.5px, 7vw, 42.5px);
+    font-size:clamp(24px, 7vw, 36px);
     font-weight:700;
     letter-spacing:0.1em;
   }
@@ -2031,7 +2023,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     align-items:baseline;
     justify-content:space-between;
     gap:1em;
-    font-size:clamp(17.5px, 4vw, 22.5px);
+    font-size:clamp(15px, 4vw, 19px);
     letter-spacing:0.06em;
     padding:0.5rem 0;
     border-bottom:1px dashed rgba(57,255,20,0.15);
@@ -2054,7 +2046,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     position:fixed;
     bottom:0.6rem;
     right:0.8rem;
-    font-size:10.5px;
+    font-size:9px;
     letter-spacing:0.08em;
     color:rgba(57,255,20,0.25);
     pointer-events:none;
@@ -2071,7 +2063,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border:1px solid rgba(57,255,20,0.4);
     color:#39ff14;
     font-family:inherit;
-    font-size:12px;
+    font-size:10px;
     letter-spacing:0.1em;
     padding:0.5em 1em;
     text-transform:uppercase;
@@ -2084,7 +2076,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
     border:1px solid rgba(232,232,232,0.25);
     color:rgba(232,232,232,0.55);
     font-family:inherit;
-    font-size:12px;
+    font-size:10px;
     letter-spacing:0.1em;
     padding:0.5em 1em;
     cursor:pointer;
@@ -2105,14 +2097,14 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .scan-overlay.active{ display:flex; }
   .scan-overlay-inner{ max-width:480px; padding:6vw; }
   .scan-title{
-    font-size:clamp(23.5px,4vw,38px);
+    font-size:clamp(20px,4vw,32px);
     letter-spacing:0.12em;
     color:#39ff14;
     text-shadow:0 0 14px rgba(57,255,20,0.5);
     margin-bottom:2rem;
   }
   .scan-line{
-    font-size:16.5px;
+    font-size:14px;
     letter-spacing:0.1em;
     color:rgba(232,232,232,0.5);
     margin-bottom:0.9rem;
@@ -2149,7 +2141,7 @@ function renderPage({ messages, signedCount, leaderboard, isPigeon, hasSession, 
   .level-login-inner{
     max-width:480px;
     padding:6vw;
-    font-size:clamp(16.5px,3.4vw,22.5px);
+    font-size:clamp(14px,3.4vw,19px);
     letter-spacing:0.1em;
     font-weight:700;
   }

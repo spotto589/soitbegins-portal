@@ -13,13 +13,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');
-  @font-face{
-    font-family:'CF Glitch City';
-    src:url('/assets/fonts/cf-glitch-city.ttf') format('truetype');
-    font-weight:400;
-    font-style:normal;
-    font-display:swap;
-  }
 
   :root{
     --bg: #08080a;
@@ -27,7 +20,7 @@
     --cyan: #00fff2;
     --magenta: #ff003c;
     --green: #39ff14;
-    --fs: clamp(15.5px, 2.4vw, 22.5px);
+    --fs: clamp(13px, 2vw, 19px);
   }
 
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -198,7 +191,6 @@
   .msg{
     position:relative;
     display:inline-block;
-    font-family:'CF Glitch City','Chakra Petch',sans-serif;
     font-size:var(--fs);
     font-weight:700;
     letter-spacing:0.1em;
@@ -321,7 +313,7 @@
     top:-1.7em;
     left:50%;
     transform:translateX(-50%);
-    font-size:0.59em;
+    font-size:0.5em;
     letter-spacing:0.3em;
     color:rgba(255,176,0,0.6);
     white-space:nowrap;
@@ -399,7 +391,7 @@
     justify-content:center;
     background:#000;
     color:#39ff14;
-    font-size:13px;
+    font-size:11px;
     letter-spacing:0.05em;
     text-shadow:0 0 8px rgba(57,255,20,0.8);
     white-space:nowrap;
