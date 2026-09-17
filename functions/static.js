@@ -63,6 +63,23 @@ const SWAP_HTML = `<!DOCTYPE html>
 
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+    /* Site-wide type swap to HACKED (David Libeau, CC-BY — credit required
+       if this ever needs to be defensible: "Hacked" font by David Libeau,
+       fontspace.com/hacked-font-f28425). Declared as a 400–800 WEIGHT
+       RANGE on this one real file, not a single fixed weight — same fix
+       already applied once before when Anton's single-weight @import was
+       quietly getting the browser's synthetic/faux bold on every
+       font-weight:700/800 var(--font-display) rule site-wide (blurry,
+       squeezed counters). Hacked only ships one real weight too, so
+       without the range the exact same bug would come right back the
+       moment this loaded under any bold rule. */
+    @font-face{
+      font-family:'Hacked';
+      src:url('/assets/fonts/hacked-kerx.ttf') format('truetype');
+      font-weight:400 800;
+      font-style:normal;
+      font-display:swap;
+    }
 
   /* ==========================================================================
      Σκύλλα SWAP — colour + type system, v4: "corrupted industrial system,"
@@ -168,9 +185,9 @@ const SWAP_HTML = `<!DOCTYPE html>
        the variable itself at JetBrains Mono (which has real weights up
        to 800 loaded) fixes every one of those call sites at once, no
        per-rule changes needed. */
-    --font-display:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
-    --font-mono:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
-    --font-body:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+    --font-display:'Hacked','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+    --font-mono:'Hacked','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+    --font-body:'Hacked','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
 
     /* Sharp corners, not soft ones — every rounded box on the site pulls
        from this one value. */
@@ -4798,11 +4815,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      offer row within the same box. Only rendered when the item actually
      carries a real Σκύλλα listing. */
   .thumb-buy-btn{
+    position:relative;
+    overflow:hidden;
     width:100%;
-    background:var(--collection-accent);
+    background:linear-gradient(155deg, var(--collection-accent) 0%, rgb(var(--collection-accent-2-rgb)) 100%);
     border:1px solid var(--collection-accent);
-    color:#000;
-    text-shadow:none;
+    color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,0.55);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.3), 0 0 12px var(--collection-accent-glow);
     font-family:var(--font-mono);
     font-weight:800;
     letter-spacing:0.03em;
@@ -4816,28 +4836,47 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     margin-bottom:0.5rem;
     animation:thumb-buy-pulse 2.2s ease-in-out infinite;
-    transition:transform 0.1s ease;
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
     display:flex;
     flex-direction:column;
     align-items:center;
     gap:0.1rem;
     line-height:1.15;
   }
+  /* Diagonal shine sweeping across the fill on a loop — the "juicy,
+     wants to be pressed" cue a flat single-colour CTA didn't have. Purely
+     decorative layer, doesn't intercept clicks. */
+  .thumb-buy-btn::after{
+    content:'';
+    position:absolute;
+    top:0; left:-60%;
+    width:40%; height:100%;
+    background:linear-gradient(115deg, transparent, rgba(255,255,255,0.55), transparent);
+    transform:skewX(-20deg);
+    animation:thumb-buy-shine 2.8s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes thumb-buy-shine{
+    0%{ left:-60%; }
+    35%, 100%{ left:130%; }
+  }
   @keyframes thumb-buy-pulse{
-    0%, 100%{ box-shadow:0 0 12px var(--collection-accent-glow); }
-    50%{ box-shadow:0 0 22px var(--collection-accent-glow); }
+    0%, 100%{ box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.3), 0 0 14px var(--collection-accent-glow); }
+    50%{ box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.3), 0 0 26px var(--collection-accent-glow); }
   }
   .thumb-buy-btn:hover{
-    transform:translateY(-1px);
+    transform:translateY(-1px) scale(1.015);
     animation-play-state:paused;
-    box-shadow:0 0 26px var(--collection-accent-glow);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.3), 0 0 30px var(--collection-accent-glow);
   }
   /* Label and price now the SAME size/weight (reported live — used to be
      a small dim 13px label next to an 18px display-font price, and
      "make it so it really makes the user want to click" reads better as
-     one confident, uniform line than a mismatched label+number). Black
-     on the solid accent fill above, same "the number is the point"
-     prominence BUY N0W has always wanted, just without the size jump. */
+     one confident, uniform line than a mismatched label+number). White
+     with a dark outline on the gradient fill above, same "the number is
+     the point" prominence BUY N0W has always wanted, just without the
+     size jump — and readable across every collection accent colour,
+     unlike flat black text was starting to feel on the brighter ones. */
   .thumb-buy-label{ font-size:16px; letter-spacing:0.04em; opacity:1; }
   .thumb-buy-price{ font-family:var(--font-mono); font-size:16px; font-weight:800; letter-spacing:0.01em; }
   /* BUY N0W stacked above 0FFER (reported live, was side by side — see
@@ -4861,11 +4900,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     width:100%;
     padding:0.8em 0.7em;
     font-size:15px;
-    background:var(--white);
-    border-color:var(--white);
-    color:#000;
   }
-  .owned-action-row-buy .offer-open-modal-btn-secondary:hover{ border-color:var(--cyan); background:var(--cyan-faint); color:#000; }
   /* 0FFER — reported live as wanting the same green BUY $P!GE0NS/BUY N0W
      already reads (#pigeonsMergedPanel .pigeons-bar-balance-buy's own
      recipe), not the per-collection accent colour it used to inherit —
