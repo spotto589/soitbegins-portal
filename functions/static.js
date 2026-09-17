@@ -9388,7 +9388,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
             <div class="pigeons-bar-identity-actions">
               <a class="pigeons-bar-balance-buy" id="pigeonsBarDexBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER</a>
-              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">V!EW NFTs</button>
+              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">V!EW MY P!GE0NS</button>
               <!-- WATCHL!ST for THIS collection specifically (reported live)
                    — unlike V!EW NFTs above (which reopens the MA!NFRAME
                    picker to pick a collection first), this one already knows
