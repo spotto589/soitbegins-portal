@@ -2061,6 +2061,22 @@ const CROWN_RECOMPUTE_LOCK_TTL_SECONDS = 120;
 // Paginates the full collection via Clio's nfts_by_issuer — the only
 // XRPL method that can answer "who owns these right now" collection-wide
 // rather than per-address like fetchAllAccountNfts.
+//
+// Throws on a failed page instead of silently stopping there — this used
+// to `break` and hand back whatever partial Map it had accumulated so
+// far, which doRecomputeCrownHolder then treated as a real, complete
+// scan and persisted straight into the Top 123/Crown snapshot everyone
+// sees. With a ~31-page sequential scan run fresh every 10 minutes (see
+// cron-worker/index.js), a single transient Clio error/timeout partway
+// through was enough to silently undercount every wallet scanned after
+// that point — reported live as Top 123 Holders' own counts reading
+// wrong/inconsistent between visits, confirmed by comparing two API
+// calls minutes apart against the same wallets (151/127/120 Pigeons one
+// call, 121/101/101 the next, no real trading activity to explain a drop
+// that size). Throwing here means doRecomputeCrownHolder's KV writes
+// never run at all for a bad scan (see its own call site below), so the
+// last known-GOOD snapshot keeps serving instead of getting overwritten
+// by a truncated one.
 async function fetchAllPigeonOwners() {
   const counts = new Map();
   let marker;
@@ -2074,7 +2090,9 @@ async function fetchAllPigeonOwners() {
     });
     const data = await res.json();
     const result = data && data.result;
-    if (!result || result.error) break;
+    if (!result || result.error) {
+      throw new Error('nfts_by_issuer scan failed mid-pagination: ' + (result && result.error ? JSON.stringify(result.error) : 'no result from Clio'));
+    }
     for (const nft of result.nfts || []) {
       if (nft.is_burned || !nft.owner) continue;
       counts.set(nft.owner, (counts.get(nft.owner) || 0) + 1);
@@ -2110,6 +2128,14 @@ export async function recomputeCrownHolder(kv) {
 
   try {
     return await doRecomputeCrownHolder(kv, now);
+  } catch (e) {
+    // A failed scan (see fetchAllPigeonOwners' own comment) never wrote
+    // anything to KV — keep serving the last known-good snapshot instead
+    // of surfacing an error to whatever's holding the cron worker's
+    // waitUntil(), which would otherwise wait out this scan's own many
+    // seconds of Clio pagination for nothing.
+    console.log('recomputeCrownHolder scan failed, keeping existing snapshot', String(e && e.message || e));
+    return existingSnapshot;
   } finally {
     // Release promptly on both success and failure — the lock's own TTL
     // is just a backstop for a hard crash that skips this entirely, not
