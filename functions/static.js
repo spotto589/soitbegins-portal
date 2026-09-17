@@ -32,8 +32,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      <title> tag) — plain "Σκύλλα" site-wide by default, but renderSwap
      (see the bottom of this file) substitutes these __SWAP_OG_*__ tokens
      with a specific NFT's own title/image/description whenever the
-     request carries a real ?collection=X&pigeon=N (reported live: "each
-     nft doesn't have its own link" / "share button isn't working
+     request is a real /<collection>/<number> route (functions/pigeons/
+     [number].js etc. — see renderNft) or carries the older
+     ?collection=X&pigeon=N query string (reported live: "each nft
+     doesn't have its own link" / "share button isn't working
      properly" — the URL itself already deep-linked correctly once opened,
      but every shared link unfurled with the same generic site branding
      since these tags never varied per request before). Crawlers
@@ -11557,6 +11559,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   // SERVER_COLLECTION just above, just for openWalletProfile instead of
   // switchCollection. null everywhere else.
   var SERVER_PROFILE_WALLET = "__SWAP_PROFILE_WALLET__";
+  // Set server-side only by the /<collection>/<number> routes (functions/
+  // pigeons/[number].js etc. — see renderNft below) so a shared per-NFT
+  // link lands directly on that Pigeon's detail screen without a
+  // client-side redirect flash — same reasoning/pattern as
+  // SERVER_COLLECTION/SERVER_PROFILE_WALLET above, just for the
+  // shareable-Pigeon-link handler instead. null everywhere else, which
+  // keeps falling back to the older ?pigeon= query-string handling.
+  var SERVER_PIGEON = "__SWAP_PIGEON__";
 
   // BETA — the NFT-for-NFT swap builder (CREATE AN OFFER box, MY PIGEONS'
   // + toggle, SWAP OFFERS tab) is fully built and working, just hidden for
@@ -20312,18 +20322,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.backToBrowseBtnTop.addEventListener('click', goBackFromDetail);
   el.detailBackBtnBottom.addEventListener('click', goBackFromDetail);
-  // Copies a real, working ?collection=X&pigeon=N link (see the deep-link
-  // handler near the bottom of this script) — the number, not the NFT ID,
-  // since that's what anyone sharing/reading it actually recognizes. Was
-  // missing &collection= entirely (reported live as "share button isn't
-  // working properly") — worked by accident only for the default
-  // collection; sharing a Pigeon from any other collection silently
-  // resolved against the wrong one (or nothing) once opened fresh.
+  // Copies a real, working /<collection>/<number> link (see nftHrefFor and
+  // the deep-link handler near the bottom of this script) — the number,
+  // not the NFT ID, since that's what anyone sharing/reading it actually
+  // recognizes. Was missing &collection= entirely (reported live as
+  // "share button isn't working properly") — worked by accident only for
+  // the default collection; sharing a Pigeon from any other collection
+  // silently resolved against the wrong one (or nothing) once opened
+  // fresh. Now a real per-collection pretty path (reported live: "we
+  // still don't have separate html links for collections and for each
+  // separate nft" — collections already had one each, see functions/
+  // pigeons.js etc.; this is what individual NFTs were missing) instead
+  // of a /static?collection=X&pigeon=N query string, though that older
+  // form still works (see resolveOgTags/the deep-link handler, both of
+  // which fall back to the query string when no pretty route set it).
   el.detailShareBtn.addEventListener('click', function(){
     var num = state.currentDetail && state.currentDetail.number;
     if (!num) return;
     var key = (state.currentDetail && state.currentDetail.collectionKey) || state.collection;
-    var url = window.location.origin + '/static?collection=' + encodeURIComponent(key) + '&pigeon=' + num;
+    var url = window.location.origin + '/' + encodeURIComponent(key) + '/' + num;
     var showCopied = function(){
       el.detailShareBtn.textContent = 'C0P!ED';
       setTimeout(function(){ el.detailShareBtn.textContent = 'SHARE'; }, 1500);
@@ -23387,7 +23404,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function nftHrefFor(p){
     if (!p || p.number === null || p.number === undefined) return null;
     var key = p.collectionKey || state.collection;
-    return key ? ('/static?collection=' + encodeURIComponent(key) + '&pigeon=' + p.number) : null;
+    return key ? ('/' + encodeURIComponent(key) + '/' + p.number) : null;
   }
   function walletHrefFor(wallet){
     return wallet ? ('/profile/' + encodeURIComponent(wallet)) : null;
@@ -23404,14 +23421,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       : '<span class="' + className + '">' + innerHtml + '</span>';
   }
 
-  // Shareable Pigeon link — ?pigeon=<number> jumps straight to that
-  // Pigeon's detail screen on load, instead of requiring whoever clicks a
-  // shared link to search for it themselves. Runs after everything else
-  // above (openDetail, api, showScreen) is already defined. Silently
-  // no-ops on a bad/unindexed number rather than showing an error page —
-  // worst case the visitor just lands on the normal DATABASE view.
+  // Shareable Pigeon link — SERVER_PIGEON (set only by the pretty
+  // /<collection>/<number> routes) or the older ?pigeon=<number> query
+  // string jumps straight to that Pigeon's detail screen on load, instead
+  // of requiring whoever clicks a shared link to search for it
+  // themselves. Runs after everything else above (openDetail, api,
+  // showScreen) is already defined. Silently no-ops on a bad/unindexed
+  // number rather than showing an error page — worst case the visitor
+  // just lands on the normal DATABASE view.
   (function(){
-    var num = parseInt(new URLSearchParams(window.location.search).get('pigeon'), 10);
+    var num = parseInt(SERVER_PIGEON || new URLSearchParams(window.location.search).get('pigeon'), 10);
     if (!num || num < 1) return;
     api({ number: num }).then(function(data){
       var item = data.items && data.items[0];
@@ -23473,9 +23492,9 @@ const DEFAULT_OG_IMAGE_PATH = '/assets/icons/icon-512.png';
 // link looked identical no matter which Pigeon it pointed to. One extra
 // same-origin fetch, only when a real ?pigeon= is present (a plain /static
 // visit or a pretty collection route never pays this cost).
-async function resolveOgTags(request, presetCollection) {
+async function resolveOgTags(request, presetCollection, presetPigeon) {
   const url = new URL(request.url);
-  const pigeonParam = url.searchParams.get('pigeon');
+  const pigeonParam = presetPigeon || url.searchParams.get('pigeon');
   const num = pigeonParam ? parseInt(pigeonParam, 10) : null;
   if (!num || num < 1) {
     return { title: 'Σκύλλα', desc: 'Σκύλλα :: MA!NFRAME — real-time NFT collection database, floor prices, rarity and trades.', image: url.origin + DEFAULT_OG_IMAGE_PATH, card: 'summary' };
@@ -23501,14 +23520,16 @@ async function resolveOgTags(request, presetCollection) {
 }
 
 // Shared by the plain /static route below, the pretty per-collection
-// routes (functions/pigeons.js, functions/phnixs.js, etc.), and the
-// per-wallet PR0F!LE route (functions/profile/[wallet].js) — same page,
-// same handler, same underlying data (one KV binding namespaced by
-// collection key, see COLLECTIONS in functions/api/pigeons.js), just a
-// different collection/profile-wallet baked in server-side instead of
-// left for the client's own ?collection=/?wallet= handling to pick up.
-// Both preset params are null from plain /static.
-export async function renderSwap(context, presetCollection, presetProfileWallet) {
+// routes (functions/pigeons.js, functions/phnixs.js, etc.), the
+// per-collection per-NFT routes (functions/pigeons/[number].js etc. —
+// see renderNft below), and the per-wallet PR0F!LE route (functions/
+// profile/[wallet].js) — same page, same handler, same underlying data
+// (one KV binding namespaced by collection key, see COLLECTIONS in
+// functions/api/pigeons.js), just a different collection/profile-wallet/
+// pigeon-number baked in server-side instead of left for the client's
+// own ?collection=/?wallet=/?pigeon= handling to pick up. All three
+// preset params are null from plain /static.
+export async function renderSwap(context, presetCollection, presetProfileWallet, presetPigeon) {
   const { request, env } = context;
   let wallet = null;
   if (env.Σκύλλα) {
@@ -23518,11 +23539,12 @@ export async function renderSwap(context, presetCollection, presetProfileWallet)
       if (payload && payload.acct) wallet = payload.acct;
     }
   }
-  const og = await resolveOgTags(request, presetCollection);
+  const og = await resolveOgTags(request, presetCollection, presetPigeon);
   const html = SWAP_HTML
     .replace('"__SWAP_WALLET__"', JSON.stringify(wallet))
     .replace('"__SWAP_COLLECTION__"', JSON.stringify(presetCollection || null))
     .replace('"__SWAP_PROFILE_WALLET__"', JSON.stringify(presetProfileWallet || null))
+    .replace('"__SWAP_PIGEON__"', JSON.stringify(presetPigeon || null))
     .replace(/__SWAP_OG_TITLE__/g, escapeHtmlAttr(og.title))
     .replace(/__SWAP_OG_DESC__/g, escapeHtmlAttr(og.desc))
     .replace(/__SWAP_OG_IMAGE__/g, escapeHtmlAttr(og.image))
@@ -23536,6 +23558,18 @@ export async function renderSwap(context, presetCollection, presetProfileWallet)
 // only ever being reachable through an in-app click.
 export async function renderProfile(context, wallet) {
   return renderSwap(context, null, wallet);
+}
+
+// /<collection>/<number> — see functions/pigeons/[number].js etc. Own
+// real per-NFT shareable route (reported live: "we still don't have
+// separate html links for collections and for each separate nft"), same
+// reasoning as renderProfile above — a shared link should land straight
+// on that exact Pigeon's detail screen and unfurl with its own real
+// title/image (see resolveOgTags), not the generic site branding every
+// /static?collection=X&pigeon=N link used to unfurl with before that
+// query-string form even existed as a real shareable link.
+export async function renderNft(context, collection, number) {
+  return renderSwap(context, collection, null, number);
 }
 
 export async function onRequestGet(context) {
