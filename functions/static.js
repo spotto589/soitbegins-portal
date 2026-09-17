@@ -92,6 +92,20 @@ const SWAP_HTML = `<!DOCTYPE html>
       font-style:normal;
       font-display:swap;
     }
+    /* Glitchcrafty (Michael W. Moss, CC-BY) — trial candidate for
+       --font-hero in place of CF Glitch City above. Kept as its own
+       @font-face and put first in --font-hero's stack rather than
+       replacing CF Glitch City's declaration, so the old face is still
+       one CSS edit away if this doesn't win out. No Greek coverage
+       either, so Σκύλλα itself still falls through the same stack to
+       Hacked/JetBrains Mono as it always did. */
+    @font-face{
+      font-family:'Glitchcrafty';
+      src:url('/assets/fonts/Glitchcrafty.ttf') format('truetype');
+      font-weight:400;
+      font-style:normal;
+      font-display:swap;
+    }
 
   /* ==========================================================================
      Σκύλλα SWAP — colour + type system, v4: "corrupted industrial system,"
@@ -212,7 +226,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     /* Big hero/section headings only (reported live — picked CF Glitch
        City over Hacked specifically for these after a side-by-side
        preview). Not used anywhere else. */
-    --font-hero:'CF Glitch City','Hacked','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+    --font-hero:'Glitchcrafty','CF Glitch City','Hacked','JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
 
     /* Sharp corners, not soft ones — every rounded box on the site pulls
        from this one value. */
@@ -9255,7 +9269,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      Mono) instead of whatever font-family its own rule set — reported
      live as wanting numbers "cleaner," reading like a binary readout,
      not run through Hacked. One attribute-selector sweep instead of
-     editing every one of these rules individually; the `body` prefix
+     editing every one of these rules individually; the \`body\` prefix
      bumps specificity (0,1,1) past every single-class rule above
      (0,1,0) that sets font-family on these same elements, so it wins
      regardless of source order. Matches by class-name substring, so
