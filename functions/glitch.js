@@ -18,7 +18,7 @@ const GLITCH_HTML = `<!DOCTYPE html>
   }
   .page{ max-width:520px; width:100%; padding:6vw; }
   .eyebrow{
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.3em;
     color:#ff003c;
     text-transform:uppercase;
@@ -27,7 +27,7 @@ const GLITCH_HTML = `<!DOCTYPE html>
     margin-bottom:0.75rem;
   }
   h1{
-    font-size:clamp(24px,4.5vw,38px);
+    font-size:clamp(28.5px,4.5vw,45px);
     letter-spacing:0.06em;
     color:#fff;
     text-shadow:0 0 12px rgba(255,0,60,0.35);
@@ -35,7 +35,7 @@ const GLITCH_HTML = `<!DOCTYPE html>
     line-height:1.2;
   }
   .intro{
-    font-size:14px;
+    font-size:16.5px;
     line-height:1.7;
     color:rgba(232,232,232,0.7);
     margin-bottom:2.5rem;
@@ -45,7 +45,7 @@ const GLITCH_HTML = `<!DOCTYPE html>
     border:1px solid rgba(255,0,60,0.6);
     color:#ff003c;
     font-family:inherit;
-    font-size:14px;
+    font-size:16.5px;
     letter-spacing:0.15em;
     padding:0.9em 1.8em;
     cursor:pointer;
@@ -56,7 +56,7 @@ const GLITCH_HTML = `<!DOCTYPE html>
   .scan-btn:disabled{ opacity:0.5; cursor:default; }
   .scan-status{
     margin-top:1.25rem;
-    font-size:13px;
+    font-size:15.5px;
     min-height:1.4em;
     color:#ff6b8a;
   }
@@ -74,14 +74,14 @@ const GLITCH_HTML = `<!DOCTYPE html>
   .scan-overlay.active{ display:flex; }
   .scan-overlay-inner{ max-width:480px; padding:6vw; }
   .scan-title{
-    font-size:clamp(20px,4vw,32px);
+    font-size:clamp(23.5px,4vw,38px);
     letter-spacing:0.12em;
     color:#ff003c;
     text-shadow:0 0 14px rgba(255,0,60,0.5);
     margin-bottom:2rem;
   }
   .scan-line{
-    font-size:14px;
+    font-size:16.5px;
     letter-spacing:0.1em;
     color:rgba(232,232,232,0.5);
     margin-bottom:0.9rem;

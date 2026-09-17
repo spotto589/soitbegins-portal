@@ -20,7 +20,7 @@ function renderBeginHtml(addr) {
   }
   .page{ max-width:520px; width:100%; }
   .eyebrow{
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.3em;
     color:#9a9a9a;
     text-transform:uppercase;
@@ -29,21 +29,21 @@ function renderBeginHtml(addr) {
     margin-bottom:0.75rem;
   }
   h1{
-    font-size:clamp(22px,4vw,34px);
+    font-size:clamp(26px,4vw,40px);
     letter-spacing:0.08em;
     color:#fff;
     text-shadow:0 0 10px rgba(154,154,154,0.25);
     margin-bottom:1.5rem;
   }
   .status-line{
-    font-size:13px;
+    font-size:15.5px;
     letter-spacing:0.2em;
     color:#9a9a9a;
     text-shadow:0 0 6px rgba(154,154,154,0.4);
     margin-bottom:1.25rem;
   }
   .addr{
-    font-size:13px;
+    font-size:15.5px;
     letter-spacing:0.05em;
     color:rgba(154,154,154,0.9);
     word-break:break-all;
@@ -52,7 +52,7 @@ function renderBeginHtml(addr) {
     margin-bottom:2.5rem;
   }
   .intro{
-    font-size:14px;
+    font-size:16.5px;
     line-height:1.7;
     color:rgba(232,232,232,0.7);
     margin-bottom:2.5rem;
@@ -66,7 +66,7 @@ function renderBeginHtml(addr) {
     margin-bottom:1.25rem;
     letter-spacing:0.12em;
     text-transform:uppercase;
-    font-size:14px;
+    font-size:16.5px;
     text-shadow:0 0 6px rgba(57,255,20,0.5);
     transition:background 0.15s ease;
   }
@@ -80,7 +80,7 @@ function renderBeginHtml(addr) {
   .cta .sub{
     display:block;
     margin-top:0.4em;
-    font-size:11px;
+    font-size:13px;
     letter-spacing:0.05em;
     color:rgba(232,232,232,0.5);
     text-transform:none;

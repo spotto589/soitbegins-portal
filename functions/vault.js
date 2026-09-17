@@ -23,7 +23,7 @@ function renderVaultHtml() {
     width:100%;
   }
   .eyebrow{
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.35em;
     color:#39ff14;
     text-transform:uppercase;
@@ -32,7 +32,7 @@ function renderVaultHtml() {
     margin-bottom:0.75rem;
   }
   h1{
-    font-size:clamp(24px,4.5vw,40px);
+    font-size:clamp(28.5px,4.5vw,47px);
     letter-spacing:0.08em;
     color:#fff;
     text-shadow:0 0 10px rgba(57,255,20,0.25);
@@ -40,14 +40,14 @@ function renderVaultHtml() {
     line-height:1.2;
   }
   .intro{
-    font-size:14px;
+    font-size:16.5px;
     line-height:1.8;
     color:rgba(232,232,232,0.75);
     margin-bottom:2.5rem;
     font-style:italic;
   }
   .section-label{
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.3em;
     color:#39ff14;
     text-transform:uppercase;
@@ -69,14 +69,14 @@ function renderVaultHtml() {
     margin-bottom:1.6rem;
   }
   .decrees h2{
-    font-size:13px;
+    font-size:15.5px;
     letter-spacing:0.2em;
     color:#39ff14;
     text-transform:uppercase;
     margin-bottom:0.6rem;
   }
   .decrees p{
-    font-size:14px;
+    font-size:16.5px;
     line-height:1.8;
     color:rgba(232,232,232,0.85);
   }
@@ -91,7 +91,7 @@ function renderVaultHtml() {
     color:#39ff14;
     text-decoration:none;
     letter-spacing:0.15em;
-    font-size:13px;
+    font-size:15.5px;
     text-transform:uppercase;
     transition:background 0.15s ease;
   }
@@ -104,7 +104,7 @@ function renderVaultHtml() {
     padding-top:0.5rem;
   }
   .private-notes p{
-    font-size:13px;
+    font-size:15.5px;
     line-height:1.85;
     font-style:italic;
     color:rgba(232,232,232,0.5);
@@ -114,7 +114,7 @@ function renderVaultHtml() {
   .sign-off{
     margin-top:3rem;
     text-align:right;
-    font-size:14px;
+    font-size:16.5px;
     letter-spacing:0.15em;
     color:rgba(232,232,232,0.6);
   }
@@ -123,7 +123,7 @@ function renderVaultHtml() {
     border:1px solid rgba(57,255,20,0.25);
     padding:1rem 1.25rem;
     margin-bottom:2rem;
-    font-size:12px;
+    font-size:14px;
     line-height:1.9;
     color:rgba(57,255,20,0.85);
   }
