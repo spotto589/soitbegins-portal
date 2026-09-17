@@ -17721,6 +17721,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // leaves the real offer completely untouched either way. ----
   var offerSignalUuid = null;
   var offerSignalPollTimer = null;
+  // Hoisted out of the SEND S!GNAL click handler's own closure (see
+  // pollOfferSignalStatus below) so the visibilitychange resume handler
+  // can get back to them too — same reasoning as every other flow's own
+  // module-scoped xTarget/xXamanTab.
+  var offerSignalTarget = null;
+  var offerSignalXamanTab = null;
   function checkAndMaybeShowSignal(){
     var target = offerTarget; // captured now — offerTarget could change if the popup closes before this resolves
     if (!target || !target.recipientWallet) return;
@@ -17751,20 +17757,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.offerSignalSendBtn.addEventListener('click', function(){
     if (!offerTarget) return;
-    var target = offerTarget;
+    offerSignalTarget = offerTarget;
     el.offerSignalSkipBtn.disabled = true;
     el.offerSignalSendBtn.disabled = true;
     el.offerSignalSendBtn.textContent = 'REQUEST!NG...';
     el.offerSignalStatus.textContent = '';
-    var signalXamanTab = openXamanPopup();
+    offerSignalXamanTab = openXamanPopup();
     fetch('/api/swap-signal-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: target.nftId, offerId: target.offerId, toWallet: target.recipientWallet, pigeonNumber: target.number })
+      body: JSON.stringify({ nftId: offerSignalTarget.nftId, offerId: offerSignalTarget.offerId, toWallet: offerSignalTarget.recipientWallet, pigeonNumber: offerSignalTarget.number })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
-        closeXamanTabAndFocus(signalXamanTab);
+        closeXamanTabAndFocus(offerSignalXamanTab);
+        offerSignalXamanTab = null;
         el.offerSignalSkipBtn.disabled = false;
         el.offerSignalSendBtn.disabled = false;
         el.offerSignalSendBtn.innerHTML = 'SEND S!GNAL';
@@ -17772,26 +17779,28 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       offerSignalUuid = res.data.uuid;
-      navigateXamanPopup(signalXamanTab, res.data.next.always);
+      navigateXamanPopup(offerSignalXamanTab, res.data.next.always);
       el.offerSignalSendBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.offerSignalStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
-      pollOfferSignalStatus(target, signalXamanTab);
+      pollOfferSignalStatus();
     }).catch(function(){
-      closeXamanTabAndFocus(signalXamanTab);
+      closeXamanTabAndFocus(offerSignalXamanTab);
+      offerSignalXamanTab = null;
       el.offerSignalSkipBtn.disabled = false;
       el.offerSignalSendBtn.disabled = false;
       el.offerSignalSendBtn.innerHTML = 'SEND S!GNAL';
       el.offerSignalStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     });
   });
-  function pollOfferSignalStatus(target, signalXamanTab){
+  function pollOfferSignalStatus(){
     if (offerSignalPollTimer) clearTimeout(offerSignalPollTimer);
-    if (!offerSignalUuid || !target || !target.offerId) return;
-    fetch('/api/swap-signal-status?uuid=' + encodeURIComponent(offerSignalUuid) + '&offerId=' + encodeURIComponent(target.offerId))
+    if (!offerSignalUuid || !offerSignalTarget || !offerSignalTarget.offerId) return;
+    fetch('/api/swap-signal-status?uuid=' + encodeURIComponent(offerSignalUuid) + '&offerId=' + encodeURIComponent(offerSignalTarget.offerId))
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.status === 'sent'){
-          closeXamanTabAndFocus(signalXamanTab);
+          closeXamanTabAndFocus(offerSignalXamanTab);
+          offerSignalXamanTab = null;
           offerSignalUuid = null;
           if (data.txHash){
             el.offerSignalTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
@@ -17809,7 +17818,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         // can retry or back out, same as every other Xaman flow's own
         // failure handling on this site.
         if (data.status === 'rejected' || data.status === 'expired' || data.status === 'failed'){
-          closeXamanTabAndFocus(signalXamanTab);
+          closeXamanTabAndFocus(offerSignalXamanTab);
+          offerSignalXamanTab = null;
           offerSignalUuid = null;
           el.offerSignalSkipBtn.disabled = false;
           el.offerSignalSendBtn.disabled = false;
@@ -17819,14 +17829,16 @@ const SWAP_HTML = `<!DOCTYPE html>
             : 'TRANSACT!0N FA!LED 0N-LEDGER.';
           return;
         }
-        offerSignalPollTimer = setTimeout(function(){ pollOfferSignalStatus(target, signalXamanTab); }, 2000);
+        offerSignalPollTimer = setTimeout(pollOfferSignalStatus, 2000);
       }).catch(function(){
-        offerSignalPollTimer = setTimeout(function(){ pollOfferSignalStatus(target, signalXamanTab); }, 3000);
+        offerSignalPollTimer = setTimeout(pollOfferSignalStatus, 3000);
       });
   }
   el.offerSignalDoneBtn.addEventListener('click', function(){
     if (offerSignalPollTimer) clearTimeout(offerSignalPollTimer);
     offerSignalUuid = null;
+    offerSignalTarget = null;
+    offerSignalXamanTab = null;
     closeOfferConfirmModal();
     if (isOwnWalletScope()) runScopedQuery();
   });
@@ -18339,10 +18351,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   // — the button never updated until a hard refresh. Re-querying the
   // button by nftId rather than trusting whatever reference the poll
   // chain started with, since the tab may have fully reloaded (or the
-  // list re-rendered from some other refresh) while it was away. Also
-  // covers every other sign flow that could leave 0FFERS RECE!VED/
-  // 0UTG0!NG stale the same way — cheap enough to just always re-fetch
-  // both on return rather than needing this same wiring repeated per flow.
+  // list re-rendered from some other refresh) while it was away.
+  //
+  // Originally only wired for CANCEL 0FFER — reported live again for
+  // DEL!ST specifically ("took ages, had to refresh loads of times,
+  // couldn't tell if it was delisted" / "xaman box didn't automatically
+  // close, delisting page still shows the same as before it was
+  // signed"), same root cause, and explicitly asked to never happen for
+  // ANY transaction. Every other live sign flow on this page has the
+  // exact same shape (a module-scoped xUuid + xTarget, a poll function
+  // that already no-ops via its own early-return guard when there's
+  // nothing in flight) — safe to just call all of them unconditionally
+  // here rather than repeating the cancel-offer-style manual guard per
+  // flow. Only SIGN-!N and DEL!ST/L!ST!NG/BUY/BUY-SWAP/MAKE 0FFER/
+  // S!GNAL/TRANSFER/ACCEPT 0FFER/ACCEPT TRANSFER are real, reachable
+  // flows — the NFT-for-NFT SWAP builder's own poll functions
+  // (pollSwapOfferStatus/pollSwapAcceptStatus) are deliberately excluded,
+  // since SWAP_BUILDER_ENABLED is false and neither is reachable from any
+  // UI right now.
   document.addEventListener('visibilitychange', function(){
     if (document.hidden) return;
     if (cancelOfferUuid && cancelOfferTarget){
@@ -18350,6 +18376,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       var liveBtn = document.querySelector('.cancel-outgoing-offer-btn[data-nftid="' + cancelOfferTarget.nftId + '"]');
       pollCancelOfferStatus(liveBtn);
     }
+    pollSigninStatus();
+    pollListingStatus();
+    pollBuyStatus();
+    pollBuySwapStatus();
+    pollDelistStatus();
+    pollOfferStatus();
+    pollOfferSignalStatus();
+    pollTransferStatus();
+    pollAcceptOfferStatus();
+    pollAcceptTransferStatus();
     loadOffersReceived();
     loadOutgoingOffers();
   });
