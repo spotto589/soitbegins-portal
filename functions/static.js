@@ -5927,36 +5927,46 @@ const SWAP_HTML = `<!DOCTYPE html>
      left-to-right order already reads correctly, no CSS order: tricks
      needed. align-items:flex-end anchors all three to one shared
      baseline regardless of #1's own extra height. */
-  .th-podium{ display:flex; align-items:flex-end; justify-content:center; gap:0.85rem; margin-bottom:1.25rem; }
+  /* Scaled way up (reported live: "make the podium section way bigger")
+     — bigger cards, thumbnails, avatars and every text size below, not
+     just more outer padding, so the podium actually reads as the page's
+     main event instead of a compact summary strip. */
+  .th-podium{ display:flex; align-items:flex-end; justify-content:center; gap:1.5rem; margin-bottom:2rem; }
   .th-podium-card{
     flex:1 1 0;
     min-width:0;
-    max-width:220px;
+    max-width:340px;
     text-align:center;
     text-decoration:none;
     color:inherit;
     background:rgba(0,0,0,0.3);
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    padding:1rem 0.6rem 0.9rem;
+    padding:1.75rem 1.25rem 1.5rem;
     transition:border-color 0.15s ease, transform 0.15s ease;
   }
   .th-podium-card:hover{ border-color:var(--cyan); transform:translateY(-2px); }
-  .th-podium-top{ display:flex; flex-direction:column; align-items:center; gap:0.4rem; }
-  .th-podium-card-1 .th-thumb{ width:64px; height:64px; }
-  .th-podium-card .signature-banner-row{ margin:0.6rem auto; max-width:100%; }
+  .th-podium-top{ display:flex; flex-direction:column; align-items:center; gap:0.6rem; }
+  .th-podium-card .th-thumb{ width:84px; height:84px; }
+  .th-podium-card-1 .th-thumb{ width:112px; height:112px; }
+  .th-podium-card .signature-banner-row{ margin:0.85rem auto; max-width:100%; }
+  .th-podium-card .signature-banner-avatar{ width:48px; height:48px; }
+  .th-podium-card .signature-banner-username{ font-size:18px; }
+  .th-podium-card-1 .signature-banner-avatar{ width:60px; height:60px; }
+  .th-podium-card-1 .signature-banner-username{ font-size:21px; }
   /* #1 gets real extra presence, not just a bigger rank number — taller
      padding (reads as literally standing on a taller podium step) plus
      gold border/glow, same "the winner should look like the winner"
      reasoning #2/#3's silver/bronze rank colour below carries too. */
-  .th-podium-card-1{ padding:1.5rem 0.75rem 1.15rem; border-color:rgba(245,197,24,0.5); box-shadow:0 0 22px rgba(245,197,24,0.16); }
-  .th-podium-rank{ font-family:var(--font-display); font-weight:700; font-size:26px; color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
-  .th-podium-card-1 .th-podium-rank{ font-size:36px; color:#f5c518; text-shadow:0 0 10px rgba(245,197,24,0.55); }
+  .th-podium-card-1{ padding:2.5rem 1.5rem 2rem; border-color:rgba(245,197,24,0.5); box-shadow:0 0 30px rgba(245,197,24,0.18); }
+  .th-podium-rank{ font-family:var(--font-display); font-weight:700; font-size:38px; color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
+  .th-podium-card-1 .th-podium-rank{ font-size:52px; color:#f5c518; text-shadow:0 0 12px rgba(245,197,24,0.55); }
   .th-podium-card-2 .th-podium-rank{ color:#d5d5d5; text-shadow:0 0 6px rgba(213,213,213,0.4); }
   .th-podium-card-3 .th-podium-rank{ color:#cd7f32; text-shadow:0 0 6px rgba(205,127,50,0.4); }
-  .th-podium-stats{ font-family:var(--font-mono); display:flex; flex-direction:column; gap:0.15rem; }
-  .th-podium-amt{ font-size:14px; font-weight:700; color:var(--white); }
-  .th-podium-pct{ font-size:11px; letter-spacing:0.04em; color:var(--grey-dim); text-transform:uppercase; }
+  .th-podium-stats{ font-family:var(--font-mono); display:flex; flex-direction:column; gap:0.25rem; margin-top:0.4rem; }
+  .th-podium-amt{ font-size:20px; font-weight:700; color:var(--white); }
+  .th-podium-card-1 .th-podium-amt{ font-size:24px; }
+  .th-podium-pct{ font-size:14px; letter-spacing:0.04em; color:var(--grey-dim); text-transform:uppercase; }
   @media (max-width:600px){
     /* #2/#1/#3 side-by-side genuinely doesn't fit three real identity
        cards at once below ~600px — stacked, #1 still first/biggest by
