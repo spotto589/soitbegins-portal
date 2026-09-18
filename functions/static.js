@@ -9020,6 +9020,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .mainframe-card-stats .stat-row{ text-align:center; }
   .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
+  /* Real per-wallet holdings count, injected only while MY NFTS mode has
+     this same picker open (renderMainframeHoldingsCounts) — cyan, not the
+     plain grey stat-rows above it, so YOU own this many reads as a
+     different, more personal kind of number than the collection-wide
+     marketcap/holders stats sitting right under it on the same card. */
+  .mainframe-card-holdings{
+    display:none;
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-align:center;
+    color:var(--cyan);
+    text-shadow:0 0 5px var(--cyan-glow);
+    margin-top:0.3rem;
+  }
   /* Real per-collection DexScreener link — hidden until its own fetch
      resolves a real dexUrl (see the stats-fetch loop in the script), same
      "never show as if verified before it's real" rule dexUrl's own
@@ -12368,6 +12383,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // fire unconditionally at page load instead of only once the picker
     // grid is actually the visible screen.
     if (showMainframePicker) loadMainframeCardStats();
+    if (showMainframePicker && mainframeMyNftsMode) renderMainframeHoldingsCounts();
     // DATABASE gets the underline while still on the picker grid; the
     // current collection name (P!GE0NS etc, #dbSelectLabel) gets it once
     // a real collection is actually being browsed instead (reported
@@ -12535,6 +12551,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // V!EW NFTs one left over from an abandoned trip through it (opened
       // V!EW NFTs, then navigated away without picking a collection).
       mainframeMyNftsMode = false;
+      clearMainframeHoldingsCounts();
       el.mainframeSubtitle.textContent = 'SELECT A DATABASE';
       state.databaseInPicker = true;
       showTab('database');
@@ -16317,6 +16334,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   // own branch, same as switchProfileTab('collections') uses) instead of
   // detouring through the picker at all.
   var mainframeMyNftsMode = false;
+  // Σκύλλα profile's own MY NFTS box (data-profilebox="mynfts", see
+  // handleProfileBoxActivate) — reported live wanting this to leave the
+  // profile panel entirely for a real full-screen "pick a collection, see
+  // your holdings under each one" step, then a real DATABASE-grade grid
+  // once one's picked (full cards, detail view, BUY/OFFER/L!ST, not the
+  // separate simplified myNftsPicker/myNftsGrid panel this used to open —
+  // that stayed inside the profile page and used the plainer view-only
+  // picker-grid card style instead of the real thing). This is the exact
+  // same real MAINFRAME picker + mainframeMyNftsMode + enterMainframeCollection
+  // path V!EW NFTs on the trustline banner used before P!GE0NS became the
+  // only real choice made that extra step pure friction (see this
+  // function's own neighboring comment) — now that there are real
+  // collections again to actually pick between, it's worth reviving here.
+  function enterMyNftsMainframeMode(){
+    if (!MY_WALLET) return;
+    mainframeMyNftsMode = true;
+    state.databaseInPicker = true;
+    el.mainframeSubtitle.textContent = 'SELECT A C0LLECT!0N — Y0UR H0LD!NGS BEL0W';
+    showTab('database');
+    scrollActiveTabPanelIntoView('database');
+  }
   el.showMyPigeonsBtn.addEventListener('click', function(){
     if (!MY_WALLET) return;
     if (state.collection !== 'pigeons') switchCollection('pigeons');
@@ -19034,6 +19072,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // already used, just narrowed to whichever collection got picked
       // here) instead of entering the normal full browsable grid.
       mainframeMyNftsMode = false;
+      clearMainframeHoldingsCounts();
       el.mainframeSubtitle.textContent = 'SELECT A DATABASE';
       if (key !== state.collection) switchCollection(key);
       browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
@@ -19327,6 +19366,51 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
     });
     });
+  }
+  // Real per-collection holdings counts on the MAINFRAME picker cards —
+  // only shown while MY NFTS mode has this same picker open (see
+  // handleProfileBoxActivate's own mynfts branch). myNftCounts already
+  // covers every tracked collection, not just P!GE0NS, so every card gets
+  // a real "Y0U 0WN: N" line even though only P!GE0NS can actually be
+  // walked into yet — seeing what you hold elsewhere is still useful on
+  // its own. Reuses each card's own #mainframeStats* anchor (loadMainframeCardStats'
+  // own target list) purely to find the right card element, never touches
+  // its content.
+  var MAINFRAME_HOLDINGS_TARGETS = {
+    pigeons: 'mainframeStatsPigeons', phnixs: 'mainframeStatsPhnixs', teddybg: 'mainframeStatsTeddybg',
+    seal: 'mainframeStatsSeal', fuzzy: 'mainframeStatsFuzzy', conspiracy: 'mainframeStatsConspiracy',
+    thirdeye: 'mainframeStatsThirdeye', bear: 'mainframeStatsBear', cult: 'mainframeStatsCult', smoki: 'mainframeStatsSmoki'
+  };
+  function renderMainframeHoldingsCounts(){
+    if (!MY_WALLET) return;
+    apiWithRetry({ myNftCounts: 1, wallet: MY_WALLET }).then(function(data){
+      if (!mainframeMyNftsMode) return; // left the mode before this resolved — never paint stale counts over whatever's shown now
+      var counts = (data && data.counts) || {};
+      Object.keys(MAINFRAME_HOLDINGS_TARGETS).forEach(function(key){
+        // counts only ever has an entry for a collection with a real
+        // nftIssuer configured (see myNftCounts' own comment in
+        // api/pigeons.js) — TEDDY/SEAL/FUZZY/C0NSP!RACY etc. are missing
+        // entirely rather than genuinely zero, so leave those cards alone
+        // instead of showing a real-looking "Y0U 0WN: 0" this lookup can't
+        // actually back up.
+        if (!(key in counts)) return;
+        var statsEl = el[MAINFRAME_HOLDINGS_TARGETS[key]];
+        var cardEl = statsEl && statsEl.closest('.mainframe-card');
+        var bodyEl = cardEl && cardEl.querySelector('.mainframe-card-body');
+        if (!bodyEl) return;
+        var holdingsEl = bodyEl.querySelector('.mainframe-card-holdings');
+        if (!holdingsEl){
+          holdingsEl = document.createElement('div');
+          holdingsEl.className = 'mainframe-card-holdings';
+          bodyEl.insertBefore(holdingsEl, statsEl);
+        }
+        holdingsEl.textContent = 'Y0U 0WN: ' + counts[key];
+        holdingsEl.style.display = '';
+      });
+    }).catch(function(){});
+  }
+  function clearMainframeHoldingsCounts(){
+    el.mainframeGrid.querySelectorAll('.mainframe-card-holdings').forEach(function(holdingsEl){ holdingsEl.style.display = 'none'; });
   }
   el.dbSelectFlyout.addEventListener('click', function(e){
     e.stopPropagation();
@@ -22316,6 +22400,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     var tab = btn.getAttribute('data-profilebox');
     if (tab === 'watchlist' && !getWatchlist().length){
       shakeEmptyWatchlistButton(btn);
+      return;
+    }
+    if (tab === 'mynfts'){
+      enterMyNftsMainframeMode();
       return;
     }
     switchProfileTab(tab);
