@@ -15991,6 +15991,13 @@ const SWAP_HTML = `<!DOCTYPE html>
           resetLoginButtons('error', { title: 'ERR://REQUEST EXP!RED', sub: 'TRY AGA!N.' });
           return;
         }
+        if (!data.status){
+          clearAuthorizeTimeout();
+          closeXamanTabAndFocus(signinXamanTab);
+          signinXamanTab = null;
+          resetLoginButtons('error', { title: 'ERR://S!GNAL L0ST', sub: pollFailureMessage(data) });
+          return;
+        }
         signinPollTimer = setTimeout(pollSigninStatus, 2000);
       }).catch(function(){
         signinPollTimer = setTimeout(pollSigninStatus, 3000);
@@ -16438,6 +16445,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     return (code && messages[code]) || 'ERR://C0ULD N0T PREPARE THE TRANSACT!0N.';
   }
 
+  // Every poll* status endpoint below returns either a known in-progress or
+  // terminal status (pending, signed_pending_ledger, rejected, expired,
+  // failed, or the flow's own success value) or an error code from a
+  // failed request — an expired session, a bad param, a XUMM lookup blip,
+  // the server itself being misconfigured — with no status field at all.
+  // That second case used to fall straight through every poll loop's
+  // unmatched final branch and just reschedule silently, forever: reported
+  // live for DEL!ST specifically as "signed in Xaman, Xaman box never
+  // closed, nothing changed on the page" — the transaction had genuinely
+  // gone through, the poll just never found out because the response
+  // wasn't shaped like any status it checked for. Shares listingErrorMessage's
+  // code->text map (same codes, same site) instead of a second copy.
+  function pollFailureMessage(data){
+    return listingErrorMessage(data && data.error);
+  }
+
   // Fast inline LIST — price input + button live directly on the pigeon's
   // own card (myPigeonCardHtml), same as DATABASE's OFFER AMOUNT box.
   // Clicking LIST goes straight to Xaman: swap-listing-payload.js already
@@ -16516,6 +16539,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         }
         if (data.status === 'failed'){
           if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').'; }
+          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = 'L!ST'; }
+          return;
+        }
+        if (!data.status){
+          closeXamanTabAndFocus(listingXamanTab);
+          listingXamanTab = null;
+          if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = pollFailureMessage(data); }
           if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = 'L!ST'; }
           return;
         }
@@ -17213,6 +17243,15 @@ const SWAP_HTML = `<!DOCTYPE html>
           el.buySwapOpenXamanBtn.style.display = '';
           return;
         }
+        if (!data.status){
+          closeXamanTabAndFocus(buySwapXamanTab);
+          buySwapXamanTab = null;
+          el.buySwapConfirmStatus.textContent = pollFailureMessage(data);
+          el.buySwapOpenXamanBtn.disabled = false;
+          el.buySwapOpenXamanBtn.textContent = 'TRY AGA!N';
+          el.buySwapOpenXamanBtn.style.display = '';
+          return;
+        }
         buySwapPollTimer = setTimeout(pollBuySwapStatus, 2000);
       }).catch(function(){
         buySwapPollTimer = setTimeout(pollBuySwapStatus, 3000);
@@ -17319,6 +17358,12 @@ const SWAP_HTML = `<!DOCTYPE html>
           el.buyConfirmStatus.textContent = 'OFFER C0NF!RMED — SETTL!NG SALE...';
         } else if (data.status === 'signed_pending_ledger'){
           el.buyConfirmStatus.textContent = 'S!GNED — WA!T!NG F0R LEDGER C0NF!RMAT!0N...';
+        } else if (!data.status){
+          closeXamanTabAndFocus(buyXamanTab);
+          buyXamanTab = null;
+          setWaitingPulse(el.buyConfirmStatus, false);
+          el.buyConfirmStatus.textContent = pollFailureMessage(data);
+          return;
         }
         buyPollTimer = setTimeout(pollBuyStatus, 2000);
       }).catch(function(){
@@ -17437,6 +17482,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (data.status === 'failed'){
           setWaitingPulse(el.delistConfirmStatus, false);
           el.delistConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
+          return;
+        }
+        if (!data.status){
+          closeXamanTabAndFocus(delistXamanTab);
+          delistXamanTab = null;
+          setWaitingPulse(el.delistConfirmStatus, false);
+          el.delistConfirmStatus.textContent = pollFailureMessage(data);
           return;
         }
         delistPollTimer = setTimeout(pollDelistStatus, 2000);
@@ -17696,6 +17748,14 @@ const SWAP_HTML = `<!DOCTYPE html>
           el.offerOpenXamanBtn.innerHTML = OFFER_CONFIRM_BTN_HTML;
           return;
         }
+        if (!data.status){
+          closeXamanTabAndFocus(offerXamanTab);
+          offerXamanTab = null;
+          el.offerConfirmStatus.textContent = pollFailureMessage(data);
+          el.offerOpenXamanBtn.disabled = false;
+          el.offerOpenXamanBtn.innerHTML = OFFER_CONFIRM_BTN_HTML;
+          return;
+        }
         offerPollTimer = setTimeout(pollOfferStatus, 2000);
       }).catch(function(){
         offerPollTimer = setTimeout(pollOfferStatus, 3000);
@@ -17837,6 +17897,16 @@ const SWAP_HTML = `<!DOCTYPE html>
           el.offerSignalStatus.textContent = data.status === 'rejected' ? 'S!GNATURE REJECTED !N XAMAN.'
             : data.status === 'expired' ? 'S!GN REQUEST EXP!RED. TRY AGA!N.'
             : 'TRANSACT!0N FA!LED 0N-LEDGER.';
+          return;
+        }
+        if (!data.status){
+          closeXamanTabAndFocus(offerSignalXamanTab);
+          offerSignalXamanTab = null;
+          offerSignalUuid = null;
+          el.offerSignalSkipBtn.disabled = false;
+          el.offerSignalSendBtn.disabled = false;
+          el.offerSignalSendBtn.innerHTML = 'SEND S!GNAL';
+          el.offerSignalStatus.textContent = pollFailureMessage(data);
           return;
         }
         offerSignalPollTimer = setTimeout(pollOfferSignalStatus, 2000);
@@ -18003,6 +18073,14 @@ const SWAP_HTML = `<!DOCTYPE html>
         }
         if (data.status === 'failed'){
           el.transferConfirmStatus.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').';
+          el.transferOpenXamanBtn.disabled = false;
+          el.transferOpenXamanBtn.innerHTML = TRANSFER_CONFIRM_BTN_HTML;
+          return;
+        }
+        if (!data.status){
+          closeXamanTabAndFocus(transferXamanTab);
+          transferXamanTab = null;
+          el.transferConfirmStatus.textContent = pollFailureMessage(data);
           el.transferOpenXamanBtn.disabled = false;
           el.transferOpenXamanBtn.innerHTML = TRANSFER_CONFIRM_BTN_HTML;
           return;
@@ -18346,6 +18424,15 @@ const SWAP_HTML = `<!DOCTYPE html>
           alert('XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').');
           return;
         }
+        if (!data.status){
+          if (btn){ btn.textContent = 'CANCEL'; btn.disabled = false; }
+          closeXamanTabAndFocus(cancelOfferXamanTab);
+          cancelOfferXamanTab = null;
+          cancelOfferUuid = null;
+          cancelOfferTarget = null;
+          alert(pollFailureMessage(data));
+          return;
+        }
         cancelOfferPollTimer = setTimeout(function(){ pollCancelOfferStatus(btn); }, 2000);
       }).catch(function(){
         cancelOfferPollTimer = setTimeout(function(){ pollCancelOfferStatus(btn); }, 3000);
@@ -18535,6 +18622,14 @@ const SWAP_HTML = `<!DOCTYPE html>
           el.acceptTransferOpenXamanBtn.textContent = 'C0NF!RM W!TH Σκύλλα';
           return;
         }
+        if (!data.status){
+          closeXamanTabAndFocus(acceptTransferXamanTab);
+          acceptTransferXamanTab = null;
+          el.acceptTransferConfirmStatus.textContent = pollFailureMessage(data);
+          el.acceptTransferOpenXamanBtn.disabled = false;
+          el.acceptTransferOpenXamanBtn.textContent = 'C0NF!RM W!TH Σκύλλα';
+          return;
+        }
         acceptTransferPollTimer = setTimeout(pollAcceptTransferStatus, 2000);
       }).catch(function(){
         acceptTransferPollTimer = setTimeout(pollAcceptTransferStatus, 2000);
@@ -18680,6 +18775,12 @@ const SWAP_HTML = `<!DOCTYPE html>
           el.acceptOfferConfirmStatus.textContent = 'SELL 0FFER C0NF!RMED — SETTL!NG BR0KERED SALE...';
         } else if (data.status === 'signed_pending_ledger'){
           el.acceptOfferConfirmStatus.textContent = 'S!GNED — WA!T!NG F0R LEDGER C0NF!RMAT!0N...';
+        } else if (!data.status){
+          closeXamanTabAndFocus(acceptOfferXamanTab);
+          acceptOfferXamanTab = null;
+          setWaitingPulse(el.acceptOfferConfirmStatus, false);
+          el.acceptOfferConfirmStatus.textContent = pollFailureMessage(data);
+          return;
         }
         acceptOfferPollTimer = setTimeout(pollAcceptOfferStatus, 2000);
       }).catch(function(){
