@@ -7347,6 +7347,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   #conspiracyPickerModal{ z-index:2100; }
   .conspiracy-picker-options{ display:flex; flex-direction:column; gap:0.75rem; margin:1.5rem 0; }
   .conspiracy-picker-btn.secondary-btn{ display:flex; align-items:center; justify-content:center; gap:0.5em; }
+  /* .action-btn's own color is a hardcoded var(--cyan), not
+     var(--collection-accent) — openConspiracyPicker's own
+     --collection-accent-rgb override on the modal has no effect on it, so
+     C0NSP!RACY's real pink is set directly here instead for its own two
+     real picker options. */
+  .action-btn.conspiracy-picker-btn{ color:var(--collection-accent); border-color:var(--collection-accent-dim); }
+  .action-btn.conspiracy-picker-btn:hover{ background:var(--collection-accent-dim); border-color:var(--collection-accent); }
   /* Every swap-family popup (0FFER/TRANSFER/ACCEPT TRANSFER/DELIST/ACCEPT
      0FFER/BUY) shares this shell — reported live as wanting all of them
      "clean, colourful, personalised" rather than the flat neutral-grey
@@ -19219,7 +19226,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // same "no collection is active yet" exception #buySwapModal's own
   // comment already documents for opening straight from MAINFRAME.
   function openConspiracyPicker(){
+    // .offer-confirm-panel/.action-btn read --collection-accent/-dim/-glow
+    // directly, not just the -rgb triplet body.collection-X normally also
+    // sets alongside them — all three set here explicitly since no
+    // collection is "active" yet at the point this opens (same reasoning
+    // openBuySwapPanel's own comment gives for its own local override).
+    el.conspiracyPickerModal.style.setProperty('--collection-accent', COLLECTION_META.conspiracy.accent);
     el.conspiracyPickerModal.style.setProperty('--collection-accent-rgb', COLLECTION_META.conspiracy.accentRgb);
+    el.conspiracyPickerModal.style.setProperty('--collection-accent-dim', 'rgba(' + COLLECTION_META.conspiracy.accentRgb + ',0.4)');
+    el.conspiracyPickerModal.style.setProperty('--collection-accent-glow', 'rgba(' + COLLECTION_META.conspiracy.accentRgb + ',0.4)');
     el.conspiracyPickerModal.style.display = 'flex';
   }
   function closeConspiracyPicker(){
