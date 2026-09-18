@@ -8511,6 +8511,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-sizing:border-box;
     overflow:hidden;
   }
+  /* MY NFTS mode's own Σκύλλα://SYSTEM framing (see this screen's own HTML
+     comment) — a real border so the whole picker reads as one boxed panel,
+     same var(--cyan-dim) .scylla-nav-panel already borders its own tab
+     with. Canvas/corners are position:absolute (their own base rules) so
+     they need no extra placement CSS here beyond a positioned ancestor —
+     #screenMainframe already is one (position:fixed above). The header
+     needs its own explicit position:relative so normal painting order
+     (DOM order, since neither it nor the static canvas set a z-index) puts
+     it visually above that canvas, exactly the same reasoning
+     ".scylla-nav-panel > .scylla-system-header{ position:relative }"
+     already relies on for the real Σκύλλα://SYSTEM tab. */
+  #screenMainframe.mainframe-mynfts-mode{ border:1px solid var(--cyan-dim); }
+  #screenMainframe .mainframe-scylla-header{ position:relative; flex:0 0 auto; }
   /* GL0BAL T0P BAR — see the HTML's own comment: ONE real banner, exactly
      two equal halves now (reported live as wanting "only two buttons...
      cleaner and less to click"). Fixed, full-width, ABOVE #screenMainframe
@@ -10260,6 +10273,26 @@ const SWAP_HTML = `<!DOCTYPE html>
          without BUY N0W/0FFER/trustline available once there, same as
          clicking it from the DATABASE dropdown already does today. -->
     <div id="screenMainframe" style="display:none;">
+      <!-- Σκύλλα://SYSTEM framing for MY NFTS mode only (mainframeMyNftsMode,
+           see enterMyNftsMainframeMode in the script) — reported live
+           wanting this picker to read as still being inside her own
+           branded system section, not the separate STAT!C database, so it
+           borrows the exact same bordered/corner-framed/static-noise
+           instrument-panel look .scylla-nav-panel already gives the rest
+           of that tab (same canvas/corner/header markup, just living here
+           too) instead of inventing a second "boxed" look. Every one of
+           these stays hidden until enterMyNftsMainframeMode shows them,
+           and its two exit points (a plain DATABASE click, or picking a
+           collection) hide them again — a normal STAT!C://DATABASE visit
+           never sees any of this. -->
+      <canvas class="scylla-nav-static mainframe-scylla-static" id="mainframeScyllaStaticBg" style="display:none;"></canvas>
+      <span class="scylla-panel-corner scylla-panel-corner-tl mainframe-scylla-corner" aria-hidden="true" style="display:none;"></span>
+      <span class="scylla-panel-corner scylla-panel-corner-tr mainframe-scylla-corner" aria-hidden="true" style="display:none;"></span>
+      <span class="scylla-panel-corner scylla-panel-corner-bl mainframe-scylla-corner" aria-hidden="true" style="display:none;"></span>
+      <span class="scylla-panel-corner scylla-panel-corner-br mainframe-scylla-corner" aria-hidden="true" style="display:none;"></span>
+      <div class="scylla-system-header mainframe-scylla-header" id="mainframeScyllaHeader" style="display:none;">
+        <div class="scylla-system-header-title">Σκύλλα://SYSTEM</div>
+      </div>
       <div class="mainframe-section-header">
         <!-- S0RT BY on the left, mirroring SEARCH C0LLECT!0NS on the right
              (reported live) — a plain native select, same .sort-select
@@ -11960,6 +11993,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcBuyBtn','pigeonsCalcPigeonsUnit','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'screenMainframe','mainframeGrid','mainframeSubtitle','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
    'mainframeStatsThirdeye','mainframeStatsBear','mainframeStatsCult','mainframeStatsSmoki',
+   'mainframeScyllaStaticBg','mainframeScyllaHeader',
    'globalTopBar','globalTopBarHeading',
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeSearchInput','mainframeSortSelect',
    'mainframeDexThirdeye','mainframeDexBear','mainframeDexCult','mainframeDexSmoki',
@@ -12552,6 +12586,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // V!EW NFTs, then navigated away without picking a collection).
       mainframeMyNftsMode = false;
       clearMainframeHoldingsCounts();
+      setMainframeScyllaFraming(false);
       el.mainframeSubtitle.textContent = 'SELECT A DATABASE';
       state.databaseInPicker = true;
       showTab('database');
@@ -16347,10 +16382,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   // only real choice made that extra step pure friction (see this
   // function's own neighboring comment) — now that there are real
   // collections again to actually pick between, it's worth reviving here.
+  // Toggles the Σκύλλα://SYSTEM framing added to #screenMainframe (canvas +
+  // corners + branded header, see its own HTML comment) — one place for
+  // both enterMyNftsMainframeMode and its two exit points (a plain
+  // DATABASE click, or picking a collection) to stay in sync, rather than
+  // repeating the same four-element toggle at each call site.
+  function setMainframeScyllaFraming(on){
+    el.screenMainframe.classList.toggle('mainframe-mynfts-mode', on);
+    el.screenMainframe.querySelectorAll('.mainframe-scylla-corner').forEach(function(corner){
+      corner.style.display = on ? '' : 'none';
+    });
+    el.mainframeScyllaHeader.style.display = on ? '' : 'none';
+    el.mainframeScyllaStaticBg.style.display = on ? '' : 'none';
+  }
   function enterMyNftsMainframeMode(){
     if (!MY_WALLET) return;
     mainframeMyNftsMode = true;
     state.databaseInPicker = true;
+    setMainframeScyllaFraming(true);
     el.mainframeSubtitle.textContent = 'SELECT A C0LLECT!0N — Y0UR H0LD!NGS BEL0W';
     showTab('database');
     scrollActiveTabPanelIntoView('database');
@@ -19073,6 +19122,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // here) instead of entering the normal full browsable grid.
       mainframeMyNftsMode = false;
       clearMainframeHoldingsCounts();
+      setMainframeScyllaFraming(false);
       el.mainframeSubtitle.textContent = 'SELECT A DATABASE';
       if (key !== state.collection) switchCollection(key);
       browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
@@ -23902,6 +23952,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // boot screen's own density/speed.
   startStaticCanvas(document.getElementById('scyllaNavStaticBg'), function(){
     return state.activeTab === 'mypigeons';
+  }, 'glitch-calm');
+  // Same static-behind-the-panel treatment for MY NFTS mode's own Σκύλλα://
+  // SYSTEM framing on #screenMainframe (see setMainframeScyllaFraming) —
+  // gated on the mode flag itself rather than a fixed tab name, since this
+  // screen is #screenMainframe regardless of activeTab.
+  startStaticCanvas(document.getElementById('mainframeScyllaStaticBg'), function(){
+    return mainframeMyNftsMode && document.getElementById('screenMainframe').style.display !== 'none';
   }, 'glitch-calm');
 })();
 </script>
