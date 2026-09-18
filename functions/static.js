@@ -8533,19 +8533,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     box-sizing:border-box;
     overflow:hidden;
   }
-  /* MY NFTS mode's own Σκύλλα://SYSTEM framing (see this screen's own HTML
-     comment) — a real border so the whole picker reads as one boxed panel,
-     same var(--cyan-dim) .scylla-nav-panel already borders its own tab
-     with. Canvas/corners are position:absolute (their own base rules) so
-     they need no extra placement CSS here beyond a positioned ancestor —
-     #screenMainframe already is one (position:fixed above). The header
-     needs its own explicit position:relative so normal painting order
-     (DOM order, since neither it nor the static canvas set a z-index) puts
-     it visually above that canvas, exactly the same reasoning
-     ".scylla-nav-panel > .scylla-system-header{ position:relative }"
-     already relies on for the real Σκύλλα://SYSTEM tab. */
-  #screenMainframe.mainframe-mynfts-mode{ border:1px solid var(--cyan-dim); }
-  #screenMainframe .mainframe-scylla-header{ position:relative; flex:0 0 auto; }
   /* GL0BAL T0P BAR — see the HTML's own comment: ONE real banner, exactly
      two equal halves now (reported live as wanting "only two buttons...
      cleaner and less to click"). Fixed, full-width, ABOVE #screenMainframe
@@ -9055,21 +9042,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .mainframe-card-stats .stat-row{ text-align:center; }
   .mainframe-card-stats .hi{ color:#fff; font-weight:600; }
-  /* Real per-wallet holdings count, injected only while MY NFTS mode has
-     this same picker open (renderMainframeHoldingsCounts) — cyan, not the
-     plain grey stat-rows above it, so YOU own this many reads as a
-     different, more personal kind of number than the collection-wide
-     marketcap/holders stats sitting right under it on the same card. */
-  .mainframe-card-holdings{
-    display:none;
-    font-family:var(--font-mono);
-    font-size:11px;
-    letter-spacing:0.05em;
-    text-align:center;
-    color:var(--cyan);
-    text-shadow:0 0 5px var(--cyan-glow);
-    margin-top:0.3rem;
-  }
   /* Real per-collection DexScreener link — hidden until its own fetch
      resolves a real dexUrl (see the stats-fetch loop in the script), same
      "never show as if verified before it's real" rule dexUrl's own
@@ -10295,26 +10267,6 @@ const SWAP_HTML = `<!DOCTYPE html>
          without BUY N0W/0FFER/trustline available once there, same as
          clicking it from the DATABASE dropdown already does today. -->
     <div id="screenMainframe" style="display:none;">
-      <!-- Σκύλλα://SYSTEM framing for MY NFTS mode only (mainframeMyNftsMode,
-           see enterMyNftsMainframeMode in the script) — reported live
-           wanting this picker to read as still being inside her own
-           branded system section, not the separate STAT!C database, so it
-           borrows the exact same bordered/corner-framed/static-noise
-           instrument-panel look .scylla-nav-panel already gives the rest
-           of that tab (same canvas/corner/header markup, just living here
-           too) instead of inventing a second "boxed" look. Every one of
-           these stays hidden until enterMyNftsMainframeMode shows them,
-           and its two exit points (a plain DATABASE click, or picking a
-           collection) hide them again — a normal STAT!C://DATABASE visit
-           never sees any of this. -->
-      <canvas class="scylla-nav-static mainframe-scylla-static" id="mainframeScyllaStaticBg" style="display:none;"></canvas>
-      <span class="scylla-panel-corner scylla-panel-corner-tl mainframe-scylla-corner" aria-hidden="true" style="display:none;"></span>
-      <span class="scylla-panel-corner scylla-panel-corner-tr mainframe-scylla-corner" aria-hidden="true" style="display:none;"></span>
-      <span class="scylla-panel-corner scylla-panel-corner-bl mainframe-scylla-corner" aria-hidden="true" style="display:none;"></span>
-      <span class="scylla-panel-corner scylla-panel-corner-br mainframe-scylla-corner" aria-hidden="true" style="display:none;"></span>
-      <div class="scylla-system-header mainframe-scylla-header" id="mainframeScyllaHeader" style="display:none;">
-        <div class="scylla-system-header-title">Σκύλλα://SYSTEM</div>
-      </div>
       <div class="mainframe-section-header">
         <!-- S0RT BY on the left, mirroring SEARCH C0LLECT!0NS on the right
              (reported live) — a plain native select, same .sort-select
@@ -12055,7 +12007,6 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcBuyBtn','pigeonsCalcPigeonsUnit','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'screenMainframe','mainframeGrid','mainframeSubtitle','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
    'mainframeStatsThirdeye','mainframeStatsBear','mainframeStatsCult','mainframeStatsSmoki',
-   'mainframeScyllaStaticBg','mainframeScyllaHeader',
    'conspiracyPickerModal','screenConspiracyPicker','conspiracyPickAreaBtn','conspiracyPickRabbitBtn','conspiracyPickerBackBtn',
    'globalTopBar','globalTopBarHeading',
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeSearchInput','mainframeSortSelect',
@@ -12480,7 +12431,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     // fire unconditionally at page load instead of only once the picker
     // grid is actually the visible screen.
     if (showMainframePicker) loadMainframeCardStats();
-    if (showMainframePicker && mainframeMyNftsMode) renderMainframeHoldingsCounts();
     // DATABASE gets the underline while still on the picker grid; the
     // current collection name (P!GE0NS etc, #dbSelectLabel) gets it once
     // a real collection is actually being browsed instead (reported
@@ -12683,13 +12633,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // elsewhere" case by just re-showing whatever databaseInPicker/scope
     // already were, unchanged.
     if (tab === 'database' && state.activeTab === 'database' && !state.databaseInPicker){
-      // A plain DATABASE click always means the real picker, never a
-      // V!EW NFTs one left over from an abandoned trip through it (opened
-      // V!EW NFTs, then navigated away without picking a collection).
-      mainframeMyNftsMode = false;
-      clearMainframeHoldingsCounts();
-      setMainframeScyllaFraming(false);
-      el.mainframeSubtitle.textContent = 'SELECT A DATABASE';
+      // A plain DATABASE click always means the real picker.
       state.databaseInPicker = true;
       showTab('database');
       scrollActiveTabPanelIntoView('database');
@@ -16459,61 +16403,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   loadOffersReceived();
   loadOutgoingOffers();
   loadIncomingTransfers();
-  // V!EW NFTs (trustline banner) — used to pop the real MAINFRAME
-  // collection picker (same one DATABASE itself uses) and wait for a pick,
-  // but P!GE0NS is the only collection that picker ever lets you actually
-  // walk into (every other card is C0M!NG S00N/non-clickable — see
-  // #mainframeGrid's own HTML comment) — that extra "pick a collection"
-  // step when there's only ever one real choice was pure friction.
-  // Reported live as wanting this to land exactly where Σκύλλα's own MY
-  // NFTS box -> P!GE0NS does: your profile, your Pigeons underneath it —
-  // so it now just runs that same real path directly (isOwnWalletScope's
-  // own branch, same as switchProfileTab('collections') uses) instead of
-  // detouring through the picker at all.
-  var mainframeMyNftsMode = false;
-  // Σκύλλα profile's own MY NFTS box (data-profilebox="mynfts", see
-  // handleProfileBoxActivate) — reported live wanting this to leave the
-  // profile panel entirely for a real full-screen "pick a collection, see
-  // your holdings under each one" step, then a real DATABASE-grade grid
-  // once one's picked (full cards, detail view, BUY/OFFER/L!ST, not the
-  // separate simplified myNftsPicker/myNftsGrid panel this used to open —
-  // that stayed inside the profile page and used the plainer view-only
-  // picker-grid card style instead of the real thing). This is the exact
-  // same real MAINFRAME picker + mainframeMyNftsMode + enterMainframeCollection
-  // path V!EW NFTs on the trustline banner used before P!GE0NS became the
-  // only real choice made that extra step pure friction (see this
-  // function's own neighboring comment) — now that there are real
-  // collections again to actually pick between, it's worth reviving here.
-  // Toggles the Σκύλλα://SYSTEM framing added to #screenMainframe (canvas +
-  // corners + branded header, see its own HTML comment) — one place for
-  // both enterMyNftsMainframeMode and its two exit points (a plain
-  // DATABASE click, or picking a collection) to stay in sync, rather than
-  // repeating the same four-element toggle at each call site.
-  function setMainframeScyllaFraming(on){
-    el.screenMainframe.classList.toggle('mainframe-mynfts-mode', on);
-    el.screenMainframe.querySelectorAll('.mainframe-scylla-corner').forEach(function(corner){
-      corner.style.display = on ? '' : 'none';
-    });
-    el.mainframeScyllaHeader.style.display = on ? '' : 'none';
-    el.mainframeScyllaStaticBg.style.display = on ? '' : 'none';
-  }
-  function enterMyNftsMainframeMode(){
+  // V!EW NFTs (trustline banner) and Σκύλλα's own MY NFTS box (data-
+  // profilebox="mynfts", see handleProfileBoxActivate) both land here now —
+  // the same real MY NFTS panel (myNftsPicker/myNftsGrid, inside
+  // .scylla-nav-panel via #profileTabPanelMyNfts) switchProfileTab('mynfts')
+  // already opens, never a detour through DATABASE/MAINFRAME. Reported live
+  // (repeatedly) as wanting this to stay clearly "inside Σκύλλα://SYSTEM" —
+  // same branded bordered panel, same tab still showing active up top —
+  // and to stay a simple, clean owned-items view, not the full DATABASE
+  // grid with all its sort/filter/buy chrome. A real DATABASE detour (the
+  // MAINFRAME collection picker -> enterMainframeCollection's own scoped
+  // grid) was tried here and reverted for exactly that reason.
+  function openMyNftsPage(){
     if (!MY_WALLET) return;
-    mainframeMyNftsMode = true;
-    state.databaseInPicker = true;
-    setMainframeScyllaFraming(true);
-    el.mainframeSubtitle.textContent = 'SELECT A C0LLECT!0N — Y0UR H0LD!NGS BEL0W';
-    showTab('database');
-    scrollActiveTabPanelIntoView('database');
-  }
-  el.showMyPigeonsBtn.addEventListener('click', function(){
-    if (!MY_WALLET) return;
-    if (state.collection !== 'pigeons') switchCollection('pigeons');
-    state.myPigeonsGridOpen = true;
-    if (!isOwnWalletScope()) browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
-    else showTab('mypigeons', true);
+    showTab('mypigeons', true);
+    switchProfileTab('mynfts');
     scrollActiveTabPanelIntoView('mypigeons');
-  });
+  }
+  el.showMyPigeonsBtn.addEventListener('click', openMyNftsPage);
   // WATCHL!ST for THIS collection (reported live) — already knows
   // state.collection, so unlike V!EW NFTs above it never needs the
   // MA!NFRAME picker: straight to Σκύλλα's real WATCHL!ST panel,
@@ -19216,20 +19123,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   // switchCollection's own no-op guard for "already this collection"
   // means enterMainframeCollection has to drive showTab itself either way.
   function enterMainframeCollection(key){
-    if (mainframeMyNftsMode){
-      // Picking a collection while in V!EW NFTs mode scopes straight to
-      // YOUR held items in it (SORT BY/FILTER BY TRAITS still work —
-      // runScopedQuery, the same real query path a plain SH0W MY FL0CK
-      // already used, just narrowed to whichever collection got picked
-      // here) instead of entering the normal full browsable grid.
-      mainframeMyNftsMode = false;
-      clearMainframeHoldingsCounts();
-      setMainframeScyllaFraming(false);
-      el.mainframeSubtitle.textContent = 'SELECT A DATABASE';
-      if (key !== state.collection) switchCollection(key);
-      browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
-      return;
-    }
     if (key !== state.collection){
       // switchCollection's own end-of-function calls (ensureTraitsLoaded +
       // runQuery) already do the first real fetch for the new collection —
@@ -19315,9 +19208,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var labelLink = e.target.closest('.mainframe-card-label-link');
     if (labelLink) e.preventDefault();
     // C0NSP!RACY's own card covers two real collections, not one — see its
-    // own HTML comment. openConspiracyPicker handles mainframeMyNftsMode
-    // itself (same "scope straight to your held items" behavior every
-    // other card's enterMainframeCollection already gives).
+    // own HTML comment.
     var pickerCard = e.target.closest('.mainframe-card[data-conspiracy-picker]');
     if (pickerCard){
       openConspiracyPicker();
@@ -19564,51 +19455,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
     });
     });
-  }
-  // Real per-collection holdings counts on the MAINFRAME picker cards —
-  // only shown while MY NFTS mode has this same picker open (see
-  // handleProfileBoxActivate's own mynfts branch). myNftCounts already
-  // covers every tracked collection, not just P!GE0NS, so every card gets
-  // a real "Y0U 0WN: N" line even though only P!GE0NS can actually be
-  // walked into yet — seeing what you hold elsewhere is still useful on
-  // its own. Reuses each card's own #mainframeStats* anchor (loadMainframeCardStats'
-  // own target list) purely to find the right card element, never touches
-  // its content.
-  var MAINFRAME_HOLDINGS_TARGETS = {
-    pigeons: 'mainframeStatsPigeons', phnixs: 'mainframeStatsPhnixs', teddybg: 'mainframeStatsTeddybg',
-    seal: 'mainframeStatsSeal', fuzzy: 'mainframeStatsFuzzy', conspiracy: 'mainframeStatsConspiracy',
-    thirdeye: 'mainframeStatsThirdeye', bear: 'mainframeStatsBear', cult: 'mainframeStatsCult', smoki: 'mainframeStatsSmoki'
-  };
-  function renderMainframeHoldingsCounts(){
-    if (!MY_WALLET) return;
-    apiWithRetry({ myNftCounts: 1, wallet: MY_WALLET }).then(function(data){
-      if (!mainframeMyNftsMode) return; // left the mode before this resolved — never paint stale counts over whatever's shown now
-      var counts = (data && data.counts) || {};
-      Object.keys(MAINFRAME_HOLDINGS_TARGETS).forEach(function(key){
-        // counts only ever has an entry for a collection with a real
-        // nftIssuer configured (see myNftCounts' own comment in
-        // api/pigeons.js) — TEDDY/SEAL/FUZZY/C0NSP!RACY etc. are missing
-        // entirely rather than genuinely zero, so leave those cards alone
-        // instead of showing a real-looking "Y0U 0WN: 0" this lookup can't
-        // actually back up.
-        if (!(key in counts)) return;
-        var statsEl = el[MAINFRAME_HOLDINGS_TARGETS[key]];
-        var cardEl = statsEl && statsEl.closest('.mainframe-card');
-        var bodyEl = cardEl && cardEl.querySelector('.mainframe-card-body');
-        if (!bodyEl) return;
-        var holdingsEl = bodyEl.querySelector('.mainframe-card-holdings');
-        if (!holdingsEl){
-          holdingsEl = document.createElement('div');
-          holdingsEl.className = 'mainframe-card-holdings';
-          bodyEl.insertBefore(holdingsEl, statsEl);
-        }
-        holdingsEl.textContent = 'Y0U 0WN: ' + counts[key];
-        holdingsEl.style.display = '';
-      });
-    }).catch(function(){});
-  }
-  function clearMainframeHoldingsCounts(){
-    el.mainframeGrid.querySelectorAll('.mainframe-card-holdings').forEach(function(holdingsEl){ holdingsEl.style.display = 'none'; });
   }
   el.dbSelectFlyout.addEventListener('click', function(e){
     e.stopPropagation();
@@ -22601,10 +22447,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       shakeEmptyWatchlistButton(btn);
       return;
     }
-    if (tab === 'mynfts'){
-      enterMyNftsMainframeMode();
-      return;
-    }
     switchProfileTab(tab);
   }
   el.profileBoxGrid.addEventListener('click', function(e){
@@ -24101,13 +23943,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   // boot screen's own density/speed.
   startStaticCanvas(document.getElementById('scyllaNavStaticBg'), function(){
     return state.activeTab === 'mypigeons';
-  }, 'glitch-calm');
-  // Same static-behind-the-panel treatment for MY NFTS mode's own Σκύλλα://
-  // SYSTEM framing on #screenMainframe (see setMainframeScyllaFraming) —
-  // gated on the mode flag itself rather than a fixed tab name, since this
-  // screen is #screenMainframe regardless of activeTab.
-  startStaticCanvas(document.getElementById('mainframeScyllaStaticBg'), function(){
-    return mainframeMyNftsMode && document.getElementById('screenMainframe').style.display !== 'none';
   }, 'glitch-calm');
 })();
 </script>
