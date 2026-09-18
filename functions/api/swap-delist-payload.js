@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, createXamanPayload, getXamanUserToken, findCollectionOffer, getTradeConfig
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, getXamanUserToken, findCollectionOffer, getTradeConfig, removeSwapListing
 } from '../_shared.js';
 
 // Called straight from the CANCEL click now — no separate confirm step
@@ -45,9 +45,25 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_nft_id' }), { status: 400 });
   }
 
-  const offers = await fetchNftSellOffers(nftId);
-  const ownOffer = findCollectionOffer(offers, collection, seller);
+  const offersOrNull = await fetchNftSellOffersOrNull(nftId);
+  const ownOffer = findCollectionOffer(offersOrNull || [], collection, seller);
   if (!ownOffer) {
+    // A confirmed-empty result (never a failed lookup, which also comes
+    // back as null here — see fetchNftSellOffersOrNull's own comment on why
+    // that distinction matters) means there is no real sell offer left on
+    // this NFT at all, by anyone, for any currency — not just "none from
+    // this seller". The KV listing map Σκύλλα SWAP itself wrote is stale:
+    // the real offer was cancelled or consumed through some route entirely
+    // outside this site. The LISTED browse view already self-heals this
+    // exact way for whatever page it happens to render (see
+    // removeSwapListing's own comment) — do it here too, since a single
+    // NFT's own detail page never re-verifies on its own and would
+    // otherwise keep showing a ghost BUY NOW/CANCEL forever (confirmed
+    // live on Pigeon #2630: real nft_sell_offers came back objectNotFound,
+    // but the site kept showing it listed and CANCEL kept 403ing).
+    if (offersOrNull !== null && offersOrNull.length === 0) {
+      context.waitUntil(removeSwapListing(env.coin, nftId, collection));
+    }
     return new Response(JSON.stringify({ error: 'not_listed_by_you' }), { status: 403 });
   }
 
