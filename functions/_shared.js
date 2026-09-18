@@ -2831,7 +2831,12 @@ async function fetchDeeptideTraitCards(skip, limit, shopSlug = DEEPTIDE_PIGEON_S
 // Bumped v3 -> v4: NAKED/BALD (Clothing/Headwear's own `__no_trait__`)
 // now included with a `label` — same reasoning, a v3 entry already cached
 // would otherwise keep hiding them for up to an hour after deploy.
-const TRAIT_CARDS_CACHE_KEY_PREFIX = 'pswap:traitcards:v4:';
+// Bumped v4 -> v5: deduped by trait_type+value — Deeptide's `sort=rarest`
+// isn't stable across ties and pages are fetched concurrently, so the same
+// card could land in two overlapping pages and double up in the FILTER BY
+// TRAITS dropdown. A v4 entry already cached would otherwise keep serving
+// the doubled-up list for up to an hour after deploy.
+const TRAIT_CARDS_CACHE_KEY_PREFIX = 'pswap:traitcards:v5:';
 const TRAIT_CARDS_CACHE_TTL_SECONDS = 3600;
 export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX) {
   const cacheKey = TRAIT_CARDS_CACHE_KEY_PREFIX + shopSlug;
@@ -2870,11 +2875,16 @@ export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGE
   // dropped exactly as before, unchanged.
   const NO_TRAIT_LABELS = { Clothing: 'Naked', Headwear: 'Bald' };
   const grouped = {};
+  const seen = new Set(); // trait_type+value can appear on more than one page — Deeptide's `sort=rarest` isn't stable across ties, and pages are fetched concurrently, so the same card can land in two overlapping pages and double up in the filter dropdown
   for (const t of all) {
     if (!t.trait_type || !t.value) continue;
     const isNoTrait = t.value.startsWith('__');
     const noTraitLabel = isNoTrait ? NO_TRAIT_LABELS[t.trait_type] : undefined;
     if (isNoTrait && !noTraitLabel) continue; // Deeptide's internal "no trait" placeholder, uncovered category
+
+    const dedupeKey = t.trait_type + ' ' + t.value;
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
 
     if (!grouped[t.trait_type]) grouped[t.trait_type] = [];
     grouped[t.trait_type].push({
