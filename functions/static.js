@@ -12409,7 +12409,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // switchProfileTab, which calls browseOwnerCollection itself once
     // that box is actually clicked). No auto-scoping here any more.
     state.activeTab = tab;
-    // .paws-view also locks body/`.page` to a fixed one-screen height with
+    // .paws-view also locks body/.page to a fixed one-screen height with
     // overflow:hidden (see its own CSS comment: "it should all fit to one
     // page, no scroll bars") — built for the short profile hub (PROFILES/
     // MESSAGES/MY NFTS picker/WATCHLIST/CROWN), never a real scrollable
@@ -12419,11 +12419,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // confirmed live as the actual reason it was structurally unscrollable
     // ("i cant scroll, it doesnt work the same as the normal database"),
     // not a small CSS tweak. Excluded here so that one sub-state drops
-    // .paws-view entirely and falls through to the plain body{}/.page{}
-    // rules DATABASE already relies on; every other mypigeons sub-view
-    // keeps the one-screen-fit treatment unchanged. A body class, not a
-    // per-element JS toggle, so it can't be fought by anything else's own
-    // async display writes running after this.
+    // .paws-view entirely and falls through to the plain body/.page rules
+    // DATABASE already relies on; every other mypigeons sub-view keeps the
+    // one-screen-fit treatment unchanged. A body class, not a per-element
+    // JS toggle, so it can't be fought by anything else's own async
+    // display writes running after this.
     document.body.classList.toggle('paws-view', tab === 'mypigeons' && !myNftsDatabaseOpen);
     // Trustline banner — DATABASE only now, and only once a real
     // collection has actually been entered (reported live: "the banner
