@@ -12620,6 +12620,16 @@ const SWAP_HTML = `<!DOCTYPE html>
         document.body.classList.add('collection-' + state.collection);
         document.body.classList.toggle('collection-browse-only', !presetMeta.tradeable);
         document.body.classList.add('collection-non-pigeons');
+        // state's own literal defaults (sort: 'SCYLLA_PRICE_ASC', scyllaListedOnly:
+        // true) are P!GE0NS-specific — a P!GE0NS-denominated ONLY SH0W
+        // L!STED filter against a collection with zero real Σκύλλα $CNS/
+        // etc listings yet returns nothing at all. Confirmed live:
+        // /whiterabbit's runQuery() below came back "N0 P!GE0N MATCH"
+        // until this reset was added, same reasoning switchCollection's
+        // own identical reset already documents.
+        state.sort = 'RARITY_ASC';
+        state.scyllaListedOnly = false;
+        el.statScyllaListedTile.classList.toggle('scylla-active', false);
         updateSortLabelsForCollection();
         updateTrustlineBannerChrome(state.collection);
       }
