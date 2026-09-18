@@ -12632,6 +12632,12 @@ const SWAP_HTML = `<!DOCTYPE html>
         el.statScyllaListedTile.classList.toggle('scylla-active', false);
         updateSortLabelsForCollection();
         updateTrustlineBannerChrome(state.collection);
+        // The visible SORT BY tag (the actual "PR!CE :: L0WEST $P!GE0NS"
+        // text on screen) is its own separate render off state.sort —
+        // updateSortLabelsForCollection above only relabels the dropdown's
+        // OWN option text, confirmed live as not enough on its own to
+        // update this.
+        renderSortTag();
       }
       ensureTraitsLoaded();
       runQuery();
