@@ -11,7 +11,7 @@
 // reached yet showed as "not indexed" to whoever searched for it first.
 // This worker just keeps both indexes warm on its own, independent of
 // whether anyone is on the site.
-import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshFloorIndex, recomputeCrownHolder } from '../functions/_shared.js';
+import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshFloorIndex, recomputeCrownHolder, TRADEABLE_COLLECTIONS } from '../functions/_shared.js';
 
 // xaman-proxy (../xaman-proxy, deployed separately on Render) spins down
 // after ~15 minutes with no HTTP traffic on Render's free tier. The first
@@ -35,14 +35,31 @@ async function pingXamanProxy(env) {
 
 export default {
   async scheduled(event, env, ctx) {
+    // Every real tradeable collection, not just P!GE0NS (the implicit
+    // default when collectionKey is undefined — see maybeRefreshHighSaleMap's
+    // own shopSlug fallback in _shared.js) — confirmed live as the actual
+    // reason a brand-new collection (WH!TE RABB!T/C0NSP!RACY AREA 589) never
+    // got real RECORD SALE/RECENT SALE data even with a correct
+    // deeptideShopSlug configured: this worker was the ONLY thing meant to
+    // keep that index warm independent of site traffic (see this file's own
+    // top comment), and it had literally never been extended past P!GE0NS
+    // since PHN!X was the only other real collection at the time. Each
+    // function still no-ops instantly for a collection with no real
+    // deeptideShopSlug (SEAL/FUZZY/3RD EYE/SM0K!), so looping every key here
+    // is cheap for those; HANDOFF.md's own subrequest-budget rule is the
+    // reason this doesn't also loop maybeRefreshFloorIndex the same way —
+    // that one's real per-item crawl cost is heavier and still Pigeons-only
+    // (its own separate, bigger lift).
+    const collectionKeys = Object.keys(TRADEABLE_COLLECTIONS);
     ctx.waitUntil(Promise.all([
-      maybeRefreshPigeonNumberMap(env.coin),
-      maybeRefreshHighSaleMap(env.coin),
+      ...collectionKeys.map(key => maybeRefreshPigeonNumberMap(env.coin, key)),
+      ...collectionKeys.map(key => maybeRefreshHighSaleMap(env.coin, key)),
       // Real cross-marketplace floor (see its own comment in _shared.js) —
       // depends on the number map above for its nftId list, but reads
       // whatever's already cached rather than waiting on this same tick's
       // maybeRefreshPigeonNumberMap call, same as every other independent
-      // crawl here.
+      // crawl here. Still P!GE0NS-only (see this function's own comment
+      // above on why it isn't looped here too).
       maybeRefreshFloorIndex(env.coin),
       // T0P 123 H0LDERS/CR0WN — its own background recompute-on-stale
       // trigger was deliberately removed from the request path (see
