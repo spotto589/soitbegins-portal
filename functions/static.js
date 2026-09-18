@@ -2318,6 +2318,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      topbar-terminal-glitch fringe. */
   .scylla-system-header{ text-align:center; margin:0.25rem 0 0.75rem; }
   .scylla-system-header-title{ position:relative; display:inline-block; font-family:'Jura',var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
+  /* MY NFTS' own scoped-collection header (see openMyNftsCollectionDatabase)
+     doubles as the real, visible way back out of it — there was previously
+     no way back at all short of the mobile back button or clicking Σκύλλα
+     again by trial and error. */
+  .scylla-system-header-title.scylla-header-clickable{ cursor:pointer; }
+  .scylla-system-header-title.scylla-header-clickable:hover{ text-decoration:underline; }
   @keyframes scylla-header-glitch{
     0%, 92%, 100%{ text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); transform:translate(0,0); }
     92.5%{ text-shadow:-3px 0 var(--magenta), 3px 0 var(--cyan); transform:translate(-2px,0) skewX(-2deg); }
@@ -12455,16 +12461,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // nothing" on open rather than auto-scoping straight into this grid.
     var showBrowseChrome = (tab === 'database' && !state.databaseInPicker) || (tab === 'mypigeons' && isOwnWalletScope() && state.myPigeonsGridOpen);
     el.screenBrowse.style.display = showBrowseChrome ? '' : 'none';
-    // S0RT BY / F!LTER BY TRA!TS — DATABASE only now, not MY P!GE0NS
-    // (the Σκύλλα-connected wallet view) — reported live as not wanting
-    // that popup there. MY P!GE0NS is always your own small, already-
-    // owned set, not the full 3015-item collection, so sorting/filtering
-    // it the same way as DATABASE never made as much sense there anyway.
-    // Both the always-in-flow inline controls (#dbControlsSticky) and the
-    // fixed bottom bar get hidden — screenBrowse itself still shows for
-    // MY P!GE0NS once scoped (the grid/detail overlay it shares with
-    // DATABASE), just without either sort/filter entry point.
-    var showSortFilterChrome = tab === 'database' && !state.databaseInPicker;
+    // S0RT BY / F!LTER BY TRA!TS now show for MY P!GE0NS too (reported live
+    // — "we should have sort by, traits etc, it should all be the same
+    // except it only shows my pigeons/nfts") — this used to be DATABASE-only
+    // (a smaller owned set was thought not to need it), but MY NFTS is now
+    // meant to feel like a real, full DATABASE view scoped to your own
+    // items, not a stripped-down one. Same showBrowseChrome condition
+    // exactly, so the two always show/hide together.
+    var showSortFilterChrome = showBrowseChrome;
     el.dbControlsSticky.style.display = showSortFilterChrome ? '' : 'none';
     el.bottomControlsBar.style.display = showSortFilterChrome ? 'flex' : 'none';
     document.body.classList.toggle('has-bottom-bar', showSortFilterChrome);
@@ -20756,6 +20760,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     // back to the profile view, never touch state.scope/load the full
     // collection at all.
     if (state.activeTab === 'mypigeons' && state.myPigeonsGridOpen){
+      // MY NFTS' own scoped-collection grid (openMyNftsCollectionDatabase)
+      // needs its own real exit (clears state.scope, restores the box
+      // grid/picker, resets the header) — the plain reset below only ever
+      // un-hides the grid, which would otherwise leave both the box grid
+      // AND the picker still hidden underneath it with nothing shown.
+      if (myNftsDatabaseOpen){ exitMyNftsCollectionDatabase(); return true; }
       state.myPigeonsGridOpen = false;
       showTab('mypigeons', true);
       return true;
@@ -21434,29 +21444,46 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.myNftsPickerGrid.innerHTML = '<div class="th-empty">ERR://S!GNAL_L0ST — TRY AGA!N.</div>';
     });
   }
-  function openMyNftsCollection(key){
+  // Picking a collection on the MY NFTS picker now walks into the exact
+  // same real DATABASE grid a plain DATABASE visit uses (full cards,
+  // detail view, S0RT BY/F!LTER BY TRA!TS, BUY N0W/0FFER/L!ST), scoped to
+  // just your own held items in it — reported live (repeatedly) as wanting
+  // this to feel exactly like being in the database, not a separate
+  // simplified view. Reuses browseOwnerCollection with landOnTab
+  // 'mypigeons', the exact same real path SH0W MY P!GE0NS already used for
+  // P!GE0NS specifically — this just lets MY NFTS reach it for any
+  // collection. The old openMyNftsCollection/myNftsGrid picker-grid view is
+  // no longer wired to anything (kept, unused, rather than torn out here).
+  var myNftsDatabaseOpen = false;
+  function openMyNftsCollectionDatabase(key){
     if (!MY_WALLET) return;
-    myNftsPickedCollection = key;
-    myNftsQuery = { search: '', sort: '', edition: 'ALL', traitFilters: [] };
-    el.myNftsPicker.style.display = 'none';
-    el.myNftsGrid.style.display = '';
-    el.myNftsGridStatus.style.display = '';
-    el.myNftsGridStatus.textContent = 'L0AD!NG...';
-    el.myNftsGridItems.innerHTML = '';
-    el.myNftsSearchInput.value = '';
+    myNftsDatabaseOpen = true;
+    el.profileBoxGrid.style.display = 'none';
+    el.profileTabPanelMyNfts.style.display = 'none';
+    // Reported live: "instead of showing the trustline banner, show the
+    // Σκύλλα://collection as the title at the top" — the trustline banner
+    // itself already never shows on this tab (pigeonsMergedPanel is
+    // DATABASE-only), so this just repoints the one real header this tab
+    // already has. Prefixed with a real back arrow and made clickable
+    // (see its own click listener below) since there was previously no
+    // visible way back out of a scoped MY P!GE0NS grid at all, only the
+    // mobile back-button/repeat-tab-click paths.
+    el.scyllaSystemHeaderTitle.textContent = '← Σκύλλα://' + (COLLECTION_META[key] ? COLLECTION_META[key].label : key);
+    el.scyllaSystemHeaderTitle.classList.add('scylla-header-clickable');
     if (state.collection !== key) switchCollection(key);
-    renderMyNftsControls();
-    api({ wallet: MY_WALLET, collection: key }).then(function(data){
-      if (myNftsPickedCollection !== key) return;
-      myNftsAllItems = ((data && data.items) || []).map(function(p){ p.collectionKey = key; return p; });
-      renderMyNftsTraitCategories();
-      applyMyNftsQuery();
-    }).catch(function(){
-      if (myNftsPickedCollection !== key) return;
-      el.myNftsGridStatus.style.display = '';
-      el.myNftsGridStatus.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
-    });
+    browseOwnerCollection(MY_WALLET, 'Y0U', undefined, 'mypigeons');
   }
+  function exitMyNftsCollectionDatabase(){
+    myNftsDatabaseOpen = false;
+    exitWalletScope();
+    state.myPigeonsGridOpen = false;
+    el.scyllaSystemHeaderTitle.classList.remove('scylla-header-clickable');
+    switchProfileTab('mynfts');
+    showTab('mypigeons', true);
+  }
+  el.scyllaSystemHeaderTitle.addEventListener('click', function(){
+    if (myNftsDatabaseOpen) exitMyNftsCollectionDatabase();
+  });
   // SORT BY — same options/comparators DATABASE's own wallet-scope query
   // uses (sortComparatorFor is a pure function of the sort value, so it's
   // safe to reuse here without touching the global state's own sort field).
@@ -21537,7 +21564,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.myNftsPickerGrid.addEventListener('click', function(e){
     var card = e.target.closest('.profile-collection-card');
     if (!card) return;
-    openMyNftsCollection(card.getAttribute('data-collection'));
+    openMyNftsCollectionDatabase(card.getAttribute('data-collection'));
   });
   el.myNftsGridItems.addEventListener('click', function(e){
     var pick = e.target.closest('.profile-nft-pick');
@@ -22385,6 +22412,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     crown: 'CR0WN REWARDS'
   };
   function switchProfileTab(tab, keepWatchlistFilter){
+    // Reset MY NFTS' own scoped-collection header override (see
+    // openMyNftsCollectionDatabase) — any real profile-tab switch means
+    // that scoped view is no longer what's on screen, so the header must
+    // never keep saying "← Σκύλλα://<COLLECTION>" once you've navigated
+    // away from it some other way (e.g. clicking a different profile box
+    // out of habit instead of the header itself).
+    myNftsDatabaseOpen = false;
+    el.scyllaSystemHeaderTitle.classList.remove('scylla-header-clickable');
     el.scyllaSystemHeaderTitle.textContent = 'Σκύλλα://' + (SCYLLA_TAB_TITLES[tab] || 'SYSTEM');
     el.profileTabPanelMessages.style.display = tab === 'messages' ? '' : 'none';
     el.profileTabPanelOffers.style.display = tab === 'offers' ? '' : 'none';
@@ -22401,7 +22436,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // which just opens its panel below the grid as normal. Each panel
     // carries its own BACK button back to null/neutral.
     el.profileTabPanelProfiles.style.display = tab === 'profiles' ? '' : 'none';
-    var fullPage = tab === 'profiles' || tab === 'messages' || tab === 'offers';
+    // MY NFTS joined this list too (reported live: "replace all the
+    // buttons with a selection of collections") — the box grid hides the
+    // instant you click in, replaced entirely by the real collection
+    // picker (myNftsPicker) instead of sitting above it.
+    var fullPage = tab === 'profiles' || tab === 'messages' || tab === 'offers' || tab === 'mynfts';
     el.profileBoxGrid.style.display = fullPage ? 'none' : '';
     // PR0F!LES always opens neutral (no sub-view picked yet — same "wait
     // for a real click" rule as the box grid itself) rather than resuming
