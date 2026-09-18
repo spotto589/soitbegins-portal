@@ -1246,7 +1246,7 @@ const PIGEONS_AMM_ACCOUNT = 'rn5vs1Q5pzwbpzFhK85sVsuXpieNitVCQg';
 // production issue shows up directly in `wrangler pages deployment tail`
 // instead of only being inferable from symptoms.
 const XRPL_ENDPOINTS = ['https://xrplcluster.com', 'https://s1.ripple.com:51234', 'https://s2.ripple.com:51234'];
-async function fetchXrplClusterJson(body) {
+async function fetchXrplClusterJson(body, okErrors) {
   for (const endpoint of XRPL_ENDPOINTS) {
     const attempts = endpoint === XRPL_ENDPOINTS[0] ? 3 : 1; // a couple of retries on the primary, one shot on each fallback
     for (let attempt = 0; attempt < attempts; attempt++) {
@@ -1275,6 +1275,25 @@ async function fetchXrplClusterJson(body) {
         // funnel through this one helper. Confirmed live: repeated 502s
         // from api/pigeons's xrpBalance branch with nothing else in the
         // response.
+        //
+        // okErrors: some rippled error codes are the real, correct answer
+        // for a specific method, not a failure to retry — nft_sell_offers/
+        // nft_buy_offers answer "objectNotFound" (not an empty array) when
+        // an NFT genuinely has zero offers. Before okErrors existed, that
+        // legitimate "confirmed empty" response was indistinguishable from
+        // a real rippled failure here: it got thrown/retried across every
+        // endpoint and ultimately came back as a flat null, which
+        // fetchNftSellOffersOrNull's own caller-side null-vs-[] check
+        // (see its own comment) reads as "couldn't verify" instead of
+        // "confirmed gone" — DELIST's poll never trusts that as a real
+        // delist, and the site's own detail page could never self-heal a
+        // stale listing either. Confirmed live on Pigeon #2630: a direct
+        // xrplcluster.com call answered objectNotFound (correct — no
+        // offers exist) but fetchNftSellOffersOrNull was still coming back
+        // null site-side.
+        if (data && data.result && data.result.error && okErrors && okErrors.includes(data.result.error)) {
+          return data;
+        }
         if (!res.ok || (data && data.result && data.result.error)) {
           throw new Error('bad response ' + res.status + (data && data.result && data.result.error ? ' rippled:' + data.result.error : ''));
         }
@@ -1860,7 +1879,7 @@ export function findSwapOffer(offers, owner, destination) {
 // discovery scan), so a rate-limited xrplcluster.com with nothing to fall
 // back to hit this one hardest.
 export async function fetchNftSellOffersOrNull(nftId) {
-  const data = await fetchXrplClusterJson({ method: 'nft_sell_offers', params: [{ nft_id: nftId }] });
+  const data = await fetchXrplClusterJson({ method: 'nft_sell_offers', params: [{ nft_id: nftId }] }, ['objectNotFound']);
   if (!data || !data.result || data.result.error) return data ? [] : null;
   return data.result.offers || [];
 }
@@ -1878,7 +1897,7 @@ export async function fetchNftSellOffers(nftId) {
 // Same migration as fetchNftSellOffersOrNull above — real endpoint
 // diversity instead of xrplcluster.com-only.
 export async function fetchNftBuyOffersOrNull(nftId) {
-  const data = await fetchXrplClusterJson({ method: 'nft_buy_offers', params: [{ nft_id: nftId }] });
+  const data = await fetchXrplClusterJson({ method: 'nft_buy_offers', params: [{ nft_id: nftId }] }, ['objectNotFound']);
   if (!data || !data.result || data.result.error) return data ? [] : null;
   return data.result.offers || [];
 }
