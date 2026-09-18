@@ -12600,6 +12600,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     // real entry into a collection instead.
     if (tab === 'database' && !state.databaseInPicker && !state.databaseLoaded){
       state.databaseLoaded = true;
+      // A fresh pretty-route landing (SERVER_COLLECTION, see its own
+      // comment near COLLECTION_META) sets state.collection directly
+      // instead of going through switchCollection — deliberately, to
+      // avoid switchCollection's own ensureTraitsLoaded/runQuery firing a
+      // second time right behind this same block's own call two lines
+      // below. That skipped switchCollection's cheap, DOM-only chrome
+      // updates too though, not just the real fetch — confirmed live on
+      // both /phnixs and /whiterabbit: real item data loaded correctly
+      // (SEARCH!NG $PHN!X/$CNS DATABASE, real stats), but the trustline
+      // banner/edition-toggle chrome stayed stuck on P!GE0NS' own
+      // hardcoded HTML defaults the whole time. Re-applying just those
+      // DOM-only bits here, once, for a non-P!GE0NS preset landing —
+      // same statements switchCollection itself runs, just without its
+      // own network calls this block already covers on the next two lines.
+      if (state.collection !== 'pigeons'){
+        var presetMeta = COLLECTION_META[state.collection];
+        el.dbSelectLabel.textContent = presetMeta.label;
+        document.body.classList.add('collection-' + state.collection);
+        document.body.classList.toggle('collection-browse-only', !presetMeta.tradeable);
+        document.body.classList.add('collection-non-pigeons');
+        updateSortLabelsForCollection();
+        updateTrustlineBannerChrome(state.collection);
+      }
       ensureTraitsLoaded();
       runQuery();
     } else if (tab === 'mypigeons' && !MY_WALLET){
