@@ -282,6 +282,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     --collection-accent-glow:rgba(240,0,228,0.4);
     --collection-accent-2-rgb:184,0,175;
   }
+  /* WH!TE RABB!T shares C0NSP!RACY AREA 589's exact palette deliberately —
+     same shared $CNS trading economy, see TRADEABLE_COLLECTIONS' own
+     comment in _shared.js. */
+  body.collection-whiterabbit{
+    --collection-accent:#f000e4;
+    --collection-accent-rgb:240,0,228;
+    --collection-accent-dim:rgba(240,0,228,0.4);
+    --collection-accent-glow:rgba(240,0,228,0.4);
+    --collection-accent-2-rgb:184,0,175;
+  }
   /* 3RD EYE/BEAR/CULT/SM0K! — same COLLECTION_META accent/accentRgb pair
      each MAINFRAME card already uses, just also applied here so the
      trustline banner (the one exception, see this block's own opening
@@ -7316,7 +7326,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     from{ transform:scale(0.9); opacity:0; }
     to{ transform:scale(1); opacity:1; }
   }
-  #offerConfirmModal, #transferConfirmModal, #acceptTransferConfirmModal, #buySwapModal, #buyConfirmModal, #delistConfirmModal, #acceptOfferConfirmModal{
+  #offerConfirmModal, #transferConfirmModal, #acceptTransferConfirmModal, #buySwapModal, #buyConfirmModal, #delistConfirmModal, #acceptOfferConfirmModal, #conspiracyPickerModal{
     display:none;
     position:fixed;
     inset:0;
@@ -7332,6 +7342,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      its own higher stacking the popup would render but be painted over
      by MAINFRAME itself. */
   #buySwapModal{ z-index:2100; }
+  /* Opens straight from the MAINFRAME grid too (z-index:1500), same reason
+     as #buySwapModal directly above. */
+  #conspiracyPickerModal{ z-index:2100; }
+  .conspiracy-picker-options{ display:flex; flex-direction:column; gap:0.75rem; margin:1.5rem 0; }
+  .conspiracy-picker-btn.secondary-btn{ display:flex; align-items:center; justify-content:center; gap:0.5em; }
   /* Every swap-family popup (0FFER/TRANSFER/ACCEPT TRANSFER/DELIST/ACCEPT
      0FFER/BUY) shares this shell — reported live as wanting all of them
      "clean, colourful, personalised" rather than the flat neutral-grey
@@ -10440,18 +10455,27 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="fuzzy">BUY $FUZZY</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-soon mainframe-card-conspiracy" style="--card-accent:240,0,228; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
+          <!-- C0NSP!RACY is now a real live entry point, but a dual one — it
+               covers two real, separately-tradeable Deeptide shops
+               (C0NSP!RACY AREA 589 and WH!TE RABB!T, see TRADEABLE_
+               COLLECTIONS in _shared.js), not one single collection like
+               every other card here. data-conspiracy-picker (not
+               data-collection) so mainframeGrid's own click handler opens
+               the real pick-a-collection popup (openConspiracyPicker)
+               instead of walking straight into either one. -->
+          <div class="mainframe-card mainframe-card-conspiracy" data-conspiracy-picker="1" role="button" tabindex="0" style="--card-accent:240,0,228; --card-art:url('/assets/mainframe/conspiracy.jpeg?v=2');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexConspiracy" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
                 <span>V!EW CHART</span>
               </a>
-              <div class="mainframe-card-lock-badge">&#128274;</div>
-              <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
             </div>
             <div class="mainframe-card-body">
-              <div class="mainframe-card-label">$C0NSP!RACY</div>
-              <div class="mainframe-card-stats" id="mainframeStatsConspiracy"></div>
+              <a class="mainframe-card-label-link" href="/conspiracy">
+                <div class="mainframe-card-label">$C0NSP!RACY</div>
+                <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
+                <div class="mainframe-card-stats" id="mainframeStatsConspiracy"></div>
+              </a>
               <button type="button" class="mainframe-card-buy" data-collection="conspiracy">BUY $CNS</button>
             </div>
           </div>
@@ -11499,6 +11523,30 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- C0NSP!RACY picker — the MAINFRAME C0NSP!RACY card's own click
+         handler (data-conspiracy-picker, see the card's own HTML comment)
+         opens this instead of walking straight into a collection like
+         every other live card, since it covers two real, separately-
+         tradeable Deeptide shops. Same shared modal shell every other
+         swap-family popup already uses (see offerConfirmModal's own
+         comment) — openConspiracyPicker sets --collection-accent-rgb
+         directly on it, same BUY-from-MAINFRAME exception #buySwapModal's
+         own comment describes, since no collection is "active" yet at the
+         point this opens. -->
+    <div id="conspiracyPickerModal" style="display:none;">
+      <div class="offer-confirm-panel" id="screenConspiracyPicker">
+        <div class="node-eyebrow">// SELECT A C0LLECT!0N</div>
+        <div class="conspiracy-picker-options">
+          <button type="button" class="action-btn conspiracy-picker-btn" id="conspiracyPickAreaBtn">C0NSP!RACY AREA 589</button>
+          <button type="button" class="action-btn conspiracy-picker-btn" id="conspiracyPickRabbitBtn">WH!TE RABB!T</button>
+          <button type="button" class="secondary-btn conspiracy-picker-btn" disabled title="C0M!NG S00N">SEE B0TH <span class="db-soon">C0M!NG S00N</span></button>
+        </div>
+        <div class="detail-actions">
+          <button class="secondary-btn" id="conspiracyPickerBackBtn">← BACK</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 0FFER CONFIRMATION — a real NFTokenCreateOffer BUY-offer (the
          reverse of LIST, which only the current owner can accept),
          entered via the shared amount-entry popup's 0FFER mode or the
@@ -11922,7 +11970,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: true, accent: '#a6632e', accentRgb: '166,99,46', thumb: '/assets/mainframe/teddy.jpeg?v=2' },
     seal: { label: 'SEAL', itemLabel: 'SEAL', tradeable: false, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', hasAmm: true, accent: '#2d8ca8', accentRgb: '45,140,168', thumb: '/assets/mainframe/seal.jpeg?v=2' },
     fuzzy: { label: 'FUZZY', itemLabel: 'FUZZY', tradeable: false, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2' },
-    conspiracy: { label: 'C0NSP!RACY', itemLabel: 'C0NSP!RACY', tradeable: false, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: true, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' },
+    conspiracy: { label: 'C0NSP!RACY AREA 589', itemLabel: 'C0NSP!RACY', tradeable: true, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: true, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' },
+    // WH!TE RABB!T — Deeptide's second real C0NSP!RACY-brand shop, shares
+    // C0NSP!RACY AREA 589's own $CNS token/accent deliberately (one shared
+    // C0NSP!RACY trading economy, see the matching TRADEABLE_COLLECTIONS
+    // comment in _shared.js) — not a separate token/colour per sub-
+    // collection. Reached only through the C0NSP!RACY MAINFRAME card's own
+    // picker (openConspiracyPicker), never its own MAINFRAME card.
+    whiterabbit: { label: 'WH!TE RABB!T', itemLabel: 'WH!TE RABB!T', tradeable: true, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: true, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/whiterabbit.png?v=1' },
     // 3RD EYE/BEAR/CULT/SM0K! — same C0M!NG S00N, token-only shape as
     // TEDDY/SEAL/FUZZY/C0NSP!RACY above (see TRADEABLE_COLLECTIONS in
     // _shared.js for the matching backend entries). thumb is each
@@ -11994,6 +12049,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenMainframe','mainframeGrid','mainframeSubtitle','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
    'mainframeStatsThirdeye','mainframeStatsBear','mainframeStatsCult','mainframeStatsSmoki',
    'mainframeScyllaStaticBg','mainframeScyllaHeader',
+   'conspiracyPickerModal','screenConspiracyPicker','conspiracyPickAreaBtn','conspiracyPickRabbitBtn','conspiracyPickerBackBtn',
    'globalTopBar','globalTopBarHeading',
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeSearchInput','mainframeSortSelect',
    'mainframeDexThirdeye','mainframeDexBear','mainframeDexCult','mainframeDexSmoki',
@@ -19048,7 +19104,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // once PHN!X flipped to tradeable: meta.tradeable became true, so this
     // class never got added and the trustline banner stayed purple instead
     // of PHN!X's own real orange/red (#ff5a1f) — confirmed live.
-    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy', 'collection-thirdeye', 'collection-bear', 'collection-cult', 'collection-smoki');
+    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy', 'collection-whiterabbit', 'collection-thirdeye', 'collection-bear', 'collection-cult', 'collection-smoki');
     if (newCollection !== 'pigeons') document.body.classList.add('collection-' + newCollection);
     document.body.classList.toggle('collection-browse-only', !meta.tradeable);
     // ED!T!ON/# 0R WALLET search (see their own CSS comment) are
@@ -19156,6 +19212,29 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.databaseInPicker = false;
     showTab('database');
   }
+  // C0NSP!RACY's own MAINFRAME card picker (see the card's own HTML
+  // comment) — real, separate CONSP!RACY AREA 589 and WH!TE RABB!T
+  // collections behind one card, SEE B0TH left disabled/C0M!NG S00N per
+  // how this was asked for. --collection-accent-rgb set directly here,
+  // same "no collection is active yet" exception #buySwapModal's own
+  // comment already documents for opening straight from MAINFRAME.
+  function openConspiracyPicker(){
+    el.conspiracyPickerModal.style.setProperty('--collection-accent-rgb', COLLECTION_META.conspiracy.accentRgb);
+    el.conspiracyPickerModal.style.display = 'flex';
+  }
+  function closeConspiracyPicker(){
+    el.conspiracyPickerModal.style.display = 'none';
+  }
+  el.conspiracyPickAreaBtn.addEventListener('click', function(){
+    closeConspiracyPicker();
+    enterMainframeCollection('conspiracy');
+  });
+  el.conspiracyPickRabbitBtn.addEventListener('click', function(){
+    closeConspiracyPicker();
+    enterMainframeCollection('whiterabbit');
+  });
+  el.conspiracyPickerBackBtn.addEventListener('click', closeConspiracyPicker);
+  el.conspiracyPickerModal.addEventListener('click', function(e){ if (e.target === el.conspiracyPickerModal) closeConspiracyPicker(); });
   // Shown briefly on mainframeSubtitle when a locked card gets clicked
   // (see the click handler below) — cleared on a timer, restoring
   // whatever the subtitle said before.
@@ -19181,6 +19260,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (e.ctrlKey || e.metaKey) return;
     var labelLink = e.target.closest('.mainframe-card-label-link');
     if (labelLink) e.preventDefault();
+    // C0NSP!RACY's own card covers two real collections, not one — see its
+    // own HTML comment. openConspiracyPicker handles mainframeMyNftsMode
+    // itself (same "scope straight to your held items" behavior every
+    // other card's enterMainframeCollection already gives).
+    var pickerCard = e.target.closest('.mainframe-card[data-conspiracy-picker]');
+    if (pickerCard){
+      openConspiracyPicker();
+      return;
+    }
     var card = e.target.closest('.mainframe-card[data-collection]');
     if (card){
       enterMainframeCollection(card.getAttribute('data-collection'));
@@ -19217,6 +19305,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // more) — Enter/Space activate it the same way a real button would.
   el.mainframeGrid.addEventListener('keydown', function(e){
     if (e.key !== 'Enter' && e.key !== ' ') return;
+    var pickerCard = e.target.closest('.mainframe-card[data-conspiracy-picker]');
+    if (pickerCard){
+      e.preventDefault();
+      openConspiracyPicker();
+      return;
+    }
     var card = e.target.closest('.mainframe-card[data-collection]');
     if (!card) return;
     e.preventDefault();
@@ -19367,7 +19461,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     { collection: 'teddybg', target: 'mainframeStatsTeddybg', dexTarget: 'mainframeDexTeddybg', hasShopSlug: true },
     { collection: 'seal', target: 'mainframeStatsSeal', dexTarget: 'mainframeDexSeal', hasShopSlug: false },
     { collection: 'fuzzy', target: 'mainframeStatsFuzzy', dexTarget: 'mainframeDexFuzzy', hasShopSlug: false },
-    { collection: 'conspiracy', target: 'mainframeStatsConspiracy', dexTarget: 'mainframeDexConspiracy', hasShopSlug: false },
+    { collection: 'conspiracy', target: 'mainframeStatsConspiracy', dexTarget: 'mainframeDexConspiracy', hasShopSlug: true },
     // BEAR/CULT have a real confirmed Deeptide shop slug (see COLLECTIONS
     // in pigeons.js), same reasoning as TEDDY above — real holders.
     // 3RD EYE/SM0K! don't, same as SEAL/FUZZY/C0NSP!RACY.
@@ -20725,6 +20819,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (el.buyConfirmModal.style.display !== 'none'){ closeBuyConfirmModal(); return true; }
     if (el.acceptOfferConfirmModal.style.display !== 'none'){ closeAcceptOfferConfirmModal(); return true; }
     if (el.delistConfirmModal.style.display !== 'none'){ closeDelistConfirmModal(); return true; }
+    if (el.conspiracyPickerModal.style.display !== 'none'){ closeConspiracyPicker(); return true; }
     if (el.pigeonsCalcModal.style.display !== 'none'){ closeCalcPopover(); return true; }
     if (el.amountEntryModal.style.display !== 'none'){ closeAmountEntryModal(); return true; }
     if (el.historyModal.style.display !== 'none'){ closeHistoryModal(); return true; }

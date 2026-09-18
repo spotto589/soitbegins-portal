@@ -79,7 +79,13 @@ const COLLECTIONS = {
   // is ever called for these three, only the BUY-with-XRP swap endpoints.
   seal: { key: 'seal', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: null, tradeable: true },
   fuzzy: { key: 'fuzzy', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: null, tradeable: true },
-  conspiracy: { key: 'conspiracy', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: null, tradeable: true },
+  // C0NSP!RACY AREA 589/WH!TE RABB!T — both real, live Deeptide shops now
+  // (see TRADEABLE_COLLECTIONS in _shared.js for the matching NFT issuer/
+  // taxon/token config), confirmed real shopSlug + xrp.cafe collection URL
+  // + real total item count (Deeptide's own listings total, same "approx"
+  // convention as PHN!X/TEDDY above) for each, live 2026-09-18.
+  conspiracy: { key: 'conspiracy', shopSlug: 'conspiracy-area-589', vanitySlug: 'conspiracy-area-589', xrpCafeUrl: 'https://xrp.cafe/collection/conspiracy-area-589', sizeApprox: 5088, tradeable: true },
+  whiterabbit: { key: 'whiterabbit', shopSlug: 'whiterabbit', vanitySlug: 'whiterabbit', xrpCafeUrl: 'https://xrp.cafe/collection/whiterabbit', sizeApprox: 1189, tradeable: true },
   // 3RD EYE/BEAR/CULT/SM0K! — same token-only reasoning as SEAL/FUZZY/
   // C0NSP!RACY's own comment above (still needed here even though none of
   // these four are browsable yet, purely so resolveCollection() doesn't

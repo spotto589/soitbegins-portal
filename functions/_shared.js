@@ -429,13 +429,44 @@ export const TRADEABLE_COLLECTIONS = {
     deeptideShopSlug: null,
     tradeable: true
   },
+  // C0NSP!RACY AREA 589 — real NFT collection (Deeptide shop
+  // conspiracy-area-589, issuer r447JrNyi61jstafY19bMsddhUxEhfJCSe, taxon 2,
+  // 5088 items, confirmed live 2026-09-18). Trades in the same $CNS token
+  // the MAINFRAME card's own BUY $CNS button already used — a fresh LIST
+  // through this site prices the new offer in $CNS exactly like Pigeons
+  // prices its own LIST in $PIGEONS; that's unrelated to whatever currency
+  // any existing Deeptide-native listing happens to use (confirmed live:
+  // real on-ledger sell offers for both this and WH!TE RABB!T below are
+  // plain-XRP NFTokenCreateOffers, same as any marketplace-native listing
+  // outside Σκύλλα SWAP — BUY N0W/0FFER here only ever look for the
+  // collection's own configured currency, same as they already do for
+  // Pigeons/Phnix). See [[project_conspiracy_dual_collection]].
   conspiracy: {
     key: 'conspiracy',
-    label: 'C0NSP!RACY',
-    nftIssuer: null,
-    nftTaxon: null,
+    label: 'C0NSP!RACY AREA 589',
+    nftIssuer: 'r447JrNyi61jstafY19bMsddhUxEhfJCSe',
+    nftTaxon: 2,
     tokenConfig: { currency: 'CNS', issuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', configured: true },
-    deeptideShopSlug: null,
+    deeptideShopSlug: 'conspiracy-area-589',
+    tradeable: true
+  },
+  // WH!TE RABB!T — Deeptide's own second real shop under the C0NSP!RACY
+  // brand ("Conspiracy - The White Rabbit" is literally the shop's own
+  // page title), shopSlug whiterabbit, issuer
+  // rLTjw8JXWZfVAXwAWy1SvvDTSjh2iG3icj, taxon 1, 1189 items, confirmed live
+  // 2026-09-18. Shares C0NSP!RACY AREA 589's own $CNS tokenConfig
+  // deliberately — one shared C0NSP!RACY trading economy across both real
+  // sub-collections, not a separate token per sub-collection, per how they
+  // were asked to be added ("add both of these into the conspiracy
+  // collection"). The MAINFRAME C0NSP!RACY card is the shared entry point
+  // for both (see conspiracyPickerModal/openConspiracyPicker in static.js).
+  whiterabbit: {
+    key: 'whiterabbit',
+    label: 'WH!TE RABB!T',
+    nftIssuer: 'rLTjw8JXWZfVAXwAWy1SvvDTSjh2iG3icj',
+    nftTaxon: 1,
+    tokenConfig: { currency: 'CNS', issuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', configured: true },
+    deeptideShopSlug: 'whiterabbit',
     tradeable: true
   },
   // 3RD EYE/BEAR/CULT/SM0K!, added as MAINFRAME "C0M!NG S00N" tiles same
