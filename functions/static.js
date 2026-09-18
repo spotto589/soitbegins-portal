@@ -19854,6 +19854,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       else if (o.value === 'SCYLLA_PRICE_DESC') o.label = 'H!GHEST ' + tokenLabel;
       else if (o.value === 'AVG_SALE_PIGEONS_ASC') o.label = 'L0WEST AVG SALE PR!CE ' + tokenLabel;
     });
+    // This only ever mutates the SORT_CATEGORIES data itself — the actual
+    // SORT BY dropdown strip (#sortFlyoutVals) is only re-rendered from it
+    // when a sort is picked (applySort's own renderSortFlyoutList call) or
+    // the flyout first opens after that. A fresh switchCollection (or a
+    // fresh pretty-route landing already on a non-P!GE0NS collection) never
+    // triggers either of those, so the dropdown kept showing "$P!GE0NS"
+    // labels on every other collection until the FIRST sort click of the
+    // session — confirmed live on /whiterabbit and every other collection
+    // dropdown alike. Re-rendering here too closes that gap at the source
+    // instead of needing every caller of this function to remember it.
+    renderSortFlyoutList();
   }
   function sortCategoryOf(value){
     for (var cat in SORT_CATEGORIES){
