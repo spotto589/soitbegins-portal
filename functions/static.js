@@ -6429,7 +6429,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profile-collection-card:hover{ background:rgba(var(--card-accent, 61,243,236), 0.16); border-color:rgba(var(--card-accent, 61,243,236), 0.6); }
   .profile-collection-thumb{
-    width:84px; height:84px;
+    /* Was a fixed 84x84px regardless of how wide the card's own grid
+       column ended up (auto-fill/minmax(140px,1fr) — often well over
+       84px) — reported live as "so much empty space" around it. Scales
+       with the card's own width instead, same square aspect ratio. */
+    width:100%; aspect-ratio:1/1;
     border-radius:10px;
     border:1px solid rgba(var(--card-accent, 61,243,236), 0.5);
     background-size:cover; background-position:center;
@@ -12405,12 +12409,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     // switchProfileTab, which calls browseOwnerCollection itself once
     // that box is actually clicked). No auto-scoping here any more.
     state.activeTab = tab;
-    // .paws-view still exists purely to hide the # 0R WALLET search box
-    // on PλWS (this page only ever shows your own Pigeons, see the
-    // .paws-view CSS rule near the top of the file). A body class, not a
+    // .paws-view also locks body/`.page` to a fixed one-screen height with
+    // overflow:hidden (see its own CSS comment: "it should all fit to one
+    // page, no scroll bars") — built for the short profile hub (PROFILES/
+    // MESSAGES/MY NFTS picker/WATCHLIST/CROWN), never a real scrollable
+    // grid. MY NFTS' own scoped-collection DATABASE-style grid
+    // (myNftsDatabaseOpen, see openMyNftsCollectionDatabase) needs the
+    // exact opposite — real page scroll, same as DATABASE itself gets —
+    // confirmed live as the actual reason it was structurally unscrollable
+    // ("i cant scroll, it doesnt work the same as the normal database"),
+    // not a small CSS tweak. Excluded here so that one sub-state drops
+    // .paws-view entirely and falls through to the plain body{}/.page{}
+    // rules DATABASE already relies on; every other mypigeons sub-view
+    // keeps the one-screen-fit treatment unchanged. A body class, not a
     // per-element JS toggle, so it can't be fought by anything else's own
     // async display writes running after this.
-    document.body.classList.toggle('paws-view', tab === 'mypigeons');
+    document.body.classList.toggle('paws-view', tab === 'mypigeons' && !myNftsDatabaseOpen);
     // Trustline banner — DATABASE only now, and only once a real
     // collection has actually been entered (reported live: "the banner
     // should not be on the mainframe page at all" — the picker grid,
@@ -22442,6 +22456,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     // picker (myNftsPicker) instead of sitting above it.
     var fullPage = tab === 'profiles' || tab === 'messages' || tab === 'offers' || tab === 'mynfts';
     el.profileBoxGrid.style.display = fullPage ? 'none' : '';
+    // Reported live: the S!GNAL N0DE/SESS!0N ACT!VE readout (decorative
+    // flavour text, hardcoded to P!GE0NS regardless of collection) reads as
+    // pure noise on MY NFTS specifically, whether still on the picker step
+    // or inside a real scoped collection grid — removed for this tab only,
+    // every other one keeps it.
+    el.scyllaNavReadout.style.display = tab === 'mynfts' ? 'none' : '';
     // PR0F!LES always opens neutral (no sub-view picked yet — same "wait
     // for a real click" rule as the box grid itself) rather than resuming
     // whatever was open last visit; leaving PR0F!LES for any other box (or
