@@ -2,7 +2,7 @@
   fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent, resolveDetailsCached,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap, getRarityMap, getRarityStats, maybeRefreshRarityScores,
-  getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, getSwapSalesLog, identifySaleVenue, getFloorIndex,
+  getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, findCollectionOffer, getSwapSalesLog, identifySaleVenue, getFloorIndex,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG,
   getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
@@ -788,6 +788,26 @@ export async function onRequestGet(context) {
       return { trait_type: a.trait_type, value: a.value, percent: match ? match.percent : (a.percent != null ? a.percent : null), count: match ? match.count : null };
     });
     const result = toItem(item.nftId, item, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent);
+    // Live re-verify + self-heal a Σκύλλα SWAP listing on this single
+    // item's own page — the browse-grid views (LISTED, badges elsewhere)
+    // only ever sample a handful of listings per page for this same check
+    // (see removeSwapListing's own comment), so a stale KV entry can sit
+    // unnoticed on a specific Pigeon's own detail page indefinitely
+    // (confirmed live on #2630: real nft_sell_offers came back
+    // objectNotFound, but this page kept reporting it listed until someone
+    // happened to attempt CANCEL or it landed in a background sample).
+    // One extra XRPL call is cheap here since this endpoint only ever
+    // resolves a single NFT, unlike the list views' N-per-page cost.
+    // Same confirmed-empty-vs-failed-lookup distinction as swap-delist-
+    // payload.js — only clears the entry when the lookup definitively
+    // found nothing, never on a rate-limit blip.
+    if (result.scyllaListing && tradeCfg) {
+      const offersOrNull = await fetchNftSellOffersOrNull(detailId);
+      if (offersOrNull !== null && !findCollectionOffer(offersOrNull, coll.key)) {
+        context.waitUntil(removeSwapListing(env.coin, detailId, coll.key));
+        result.scyllaListing = null;
+      }
+    }
     // Per-marketplace listings — each platform has its own separate sell
     // offers, so a Pigeon can be listed on one, both, or neither.
     result.listings = {
