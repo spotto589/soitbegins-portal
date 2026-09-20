@@ -2459,18 +2459,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* Pending 0FFERS count — same real-number-or-hidden-entirely pattern
      this always used (never "0FFERS (0)"), now sitting inside the 0FFERS
-     box itself instead of a tab label. */
+     box itself instead of a tab label. MESSAGE !NB0X gets its own real
+     one too now (profileTabMessagesBadge, summed from every
+     conversation's own unreadCount — see loadMessagesInbox), sharing
+     this same class. Sized up (reported live: "the pink dot should be
+     larger") — was easy to miss entirely against the box's own icon. */
   .profile-tab-badge{
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    min-width:1.4em;
-    height:1.4em;
-    padding:0 0.35em;
+    min-width:1.7em;
+    height:1.7em;
+    padding:0 0.4em;
     border-radius:50%;
     background:var(--magenta);
     color:#08090b;
-    font-size:11px;
+    font-size:13px;
+    font-weight:700;
+    box-shadow:0 0 8px var(--magenta-glow);
   }
   /* Whichever box is picked (0FFERS/C0LLECT!0NS/CR0WN) reveals its own
      real panel here — plain margin, same as every other stacked section
@@ -9877,11 +9883,11 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="messages">
-            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M2.5 4.5l6.5 5 6.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">MESSAGE !NB0X</span><span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span><span class="flock-account-box-arrow">›</span></div>
+            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M2.5 4.5l6.5 5 6.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">MESSAGE !NB0X</span><span class="profile-tab-badge" id="profileTabMessagesBadge" style="display:none;"></span><span class="flock-account-box-arrow">›</span></div>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="offers">
-            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 2.5h6a1.5 1.5 0 0 1 1.5 1.5v6L9 16.5 1.5 9 8 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="12" cy="6" r="1.2" stroke="currentColor" stroke-width="1.3"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">0FFERS</span><span class="flock-account-box-arrow">›</span></div>
+            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 2.5h6a1.5 1.5 0 0 1 1.5 1.5v6L9 16.5 1.5 9 8 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="12" cy="6" r="1.2" stroke="currentColor" stroke-width="1.3"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">0FFERS</span><span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span><span class="flock-account-box-arrow">›</span></div>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="mynfts">
@@ -12087,7 +12093,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'topTabs','topTabsWrap','flockTabLabel','scyllaWalletWrap','walletSwitchDropdown','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
    'scyllaNavStaticBg','scyllaNavReadout',
-   'profileBoxGrid','profileTabOffersBadge','profileTabPanelMessages','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
+   'profileBoxGrid','profileTabOffersBadge','profileTabMessagesBadge','profileTabPanelMessages','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
    'profileTabPanelMyNfts','myNftsPicker','myNftsPickerGrid','myNftsGrid','myNftsGridBackBtn','myNftsGridStatus','myNftsGridItems','myNftsBackBtn',
    'myNftsSearchInput','myNftsSearchClearBtn','myNftsEditionToggle','myNftsSortSelect','myNftsTraitCatSelect','myNftsTraitValSelect','myNftsTraitAddBtn','myNftsTraitChips',
    'profileTabPanelProfiles','profilesSubNav','profilesEditView','profilesSearchView','profilesBackBtn','profileSearchInput','profileSearchResults','profileMessagesBack','profileOffersBack',
@@ -16513,6 +16519,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   loadOffersReceived();
   loadOutgoingOffers();
   loadIncomingTransfers();
+  // Same reasoning as loadOffersReceived right above — MESSAGE !NB0X's
+  // own badge (profileTabMessagesBadge) should already show a real unread
+  // count the moment the page loads, not just once the tab is opened.
+  // Also no-ops with no session.
+  loadMessagesInbox();
   // V!EW NFTs (trustline banner) and Σκύλλα's own MY NFTS box (data-
   // profilebox="mynfts", see handleProfileBoxActivate) both land here now —
   // the same real MY NFTS panel (myNftsPicker/myNftsGrid, inside
@@ -22748,10 +22759,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     }).join('');
   }
   function loadMessagesInbox(){
+    if (!MY_WALLET) return; // the endpoint requires a real session anyway
     el.profileMessagesList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     fetch('/api/messages-inbox').then(function(r){ return r.json(); }).then(function(data){
       if (!data || data.error){ el.profileMessagesList.innerHTML = '<div class="th-empty">' + messagesErrorText(data && data.error) + '</div>'; return; }
-      renderMessagesList(data.items || []);
+      var items = data.items || [];
+      renderMessagesList(items);
+      // The MESSAGE !NB0X box's own real unread count (reported live,
+      // same "0FFERS box shows a pending number" treatment it never had
+      // before) — summed across every conversation's own real
+      // unreadCount (see renderMessagesList's row markup above), hidden
+      // entirely at zero rather than showing a stale/wrong number.
+      var totalUnread = items.reduce(function(sum, row){ return sum + (row.unreadCount || 0); }, 0);
+      el.profileTabMessagesBadge.textContent = totalUnread || '';
+      el.profileTabMessagesBadge.style.display = totalUnread > 0 ? '' : 'none';
     }).catch(function(){
       el.profileMessagesList.innerHTML = '<div class="th-empty">ERR0R L0AD!NG MESSAGES.</div>';
     });
