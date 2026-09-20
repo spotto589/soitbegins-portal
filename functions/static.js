@@ -2271,6 +2271,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      colour — the photo just needs to stay dark enough for text contrast,
      not be the only source of colour any more. */
   .scylla-nav-panel{
+    /* Main text in here reads pink now (reported live) — every element
+       inside that already keys off --profile-accent-rgb (the title,
+       PR0F!LES hub button hover, etc — same variable the separate full-
+       screen PR0F!LE/ACH!EVEMENTS THEME system uses, just never set out
+       here before so it fell back to its own hardcoded cyan default)
+       just needed this one variable set once, no per-rule colour swaps. */
+    --profile-accent-rgb:255,51,204;
     position:relative;
     display:flex;
     flex-direction:column;
