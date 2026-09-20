@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, getXamanUserToken, findCollectionOffer, getTradeConfig, removeSwapListing
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, getXamanUserToken, findCollectionOffer, findCollectionOffers, getTradeConfig, removeSwapListing
 } from '../_shared.js';
 
 // Called straight from the CANCEL click now — no separate confirm step
@@ -67,10 +67,18 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'not_listed_by_you' }), { status: 403 });
   }
 
+  // Cancel every one of the seller's own matching offers on this NFT, not
+  // just ownOffer — a leftover duplicate (see findCollectionOffers' own
+  // comment, and LIST's new already-listed guard in swap-listing-
+  // prepare.js) would otherwise still pass the LISTED self-heal check
+  // after this "successful" cancel, leaving the Pigeon stuck looking
+  // listed forever. NFTokenCancelOffer accepts multiple offer indexes in
+  // one transaction.
+  const ownOffers = findCollectionOffers(offersOrNull || [], collection, seller);
   const txjson = {
     TransactionType: 'NFTokenCancelOffer',
     Account: seller,
-    NFTokenOffers: [ownOffer.nft_offer_index]
+    NFTokenOffers: ownOffers.map(o => o.nft_offer_index)
   };
 
   const pushToken = await getXamanUserToken(env.coin, seller);

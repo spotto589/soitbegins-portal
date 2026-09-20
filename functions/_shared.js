@@ -1866,6 +1866,29 @@ export function findCollectionOffer(offers, collectionKey, owner, excludeOwner) 
   ) || null;
 }
 
+// All of this owner's own matching collection offers on one NFT, not just
+// the first — LIST used to have no guard against creating a second (or
+// sixth) NFTokenCreateOffer on a Pigeon that already had one live, and
+// DELIST only ever cancelled the single offer findCollectionOffer happened
+// to return, leaving any earlier duplicates live on-ledger. That's what let
+// a Pigeon (confirmed live on #1921 — six identical live offers from the
+// same seller, one per past LIST click) sit permanently "listed": every
+// self-heal check here just needs SOME matching offer to still exist,
+// which duplicates guarantee even after "successfully" cancelling one.
+// DELIST now cancels every one of these in a single NFTokenCancelOffer.
+export function findCollectionOffers(offers, collectionKey, owner, excludeOwner) {
+  const cfg = getTradeConfig(collectionKey);
+  if (!cfg) return [];
+  const currency = encodeCurrencyCode(cfg.tokenConfig.currency);
+  return offers.filter(o =>
+    (owner === undefined || o.owner === owner) &&
+    (excludeOwner === undefined || o.owner !== excludeOwner) &&
+    o.amount && typeof o.amount === 'object' &&
+    o.amount.currency === currency &&
+    o.amount.issuer === cfg.tokenConfig.issuer
+  );
+}
+
 // The Σκύλλα SWAP offer among a NFT's real sell offers — a free
 // (Amount "0" XRP, not a $PIGEONS/issued-currency object) transfer offer
 // restricted to a specific Destination wallet. Same "never match on owner

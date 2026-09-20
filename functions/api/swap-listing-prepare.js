@@ -2,7 +2,8 @@ import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNftsChecked,
   isTransferable, getTradeConfig,
   encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup, MARKETPLACE_BROKER_WALLET,
-  LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds
+  LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds,
+  fetchNftSellOffersOrNull, findCollectionOffer
 } from '../_shared.js';
 
 // Σκύλλα SWAP — LIST. This endpoint only builds and returns the exact
@@ -87,6 +88,23 @@ export async function onRequestPost(context) {
   }
   if (!isTransferable(nft)) {
     return new Response(JSON.stringify({ error: 'not_transferable' }), { status: 400 });
+  }
+
+  // Nothing here ever checked for a sell offer this seller already has
+  // live on this exact NFT — a retried/double-clicked LIST just built and
+  // returned another brand-new NFTokenCreateOffer every time, stacking up
+  // real duplicate offers on-ledger (confirmed live on Pigeon #1921: six
+  // identical live offers from one seller). DELIST only ever cancels one
+  // offer per attempt (see swap-delist-payload.js), so duplicates from
+  // here are what left it stuck looking listed no matter how many times
+  // it was "delisted". Blocking a second LIST while one is already live
+  // stops new duplicates from ever being created again.
+  const existingOffersOrNull = await fetchNftSellOffersOrNull(nftId);
+  if (existingOffersOrNull === null) {
+    return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 502 });
+  }
+  if (findCollectionOffer(existingOffersOrNull, collection, seller)) {
+    return new Response(JSON.stringify({ error: 'already_listed' }), { status: 409 });
   }
 
   const fee = computeMarketplaceMarkup(priceStr);
