@@ -2574,41 +2574,85 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-messages-newbtn{ margin-bottom:1rem; }
   .profile-messages-list{ display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem; }
   .profile-msg-row{
+    position:relative;
     display:flex; align-items:center; gap:0.75rem;
-    padding:0.6em 0.8em;
+    padding:0.7em 0.9em;
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
     cursor:pointer;
-    transition:border-color 0.15s ease, background 0.15s ease;
+    transition:border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
   }
-  .profile-msg-row:hover{ border-color:var(--cyan-dim); background:rgba(61,243,236,0.06); }
-  .profile-msg-row.unread{ border-color:var(--magenta-dim); }
+  .profile-msg-row:hover{ border-color:var(--cyan-dim); background:rgba(61,243,236,0.06); transform:translateX(2px); }
+  /* UNREAD — reported live wanting this to look "exciting," not just a
+     slightly different border colour: a real pulsing magenta glow plus a
+     tinted background, so a new message actually announces itself in the
+     list instead of blending in until you read the small print. */
+  .profile-msg-row.unread{
+    border-color:var(--magenta);
+    background:rgba(255,51,204,0.07);
+    animation:profile-msg-row-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes profile-msg-row-pulse{
+    0%, 100%{ box-shadow:0 0 0 rgba(255,51,204,0); }
+    50%{ box-shadow:0 0 14px var(--magenta-glow); }
+  }
   .profile-msg-row-text{ flex:1 1 auto; min-width:0; }
   .profile-msg-row-wallet{ font-family:var(--font-mono); font-size:13px; font-weight:700; color:#fff; }
-  .profile-msg-row-preview{ font-family:var(--font-mono); font-size:12px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:0.2rem; }
-  .profile-msg-row-meta{ display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem; flex:0 0 auto; }
+  .profile-msg-row-wallet .wallet-tag{ gap:0.45em; }
+  .profile-msg-row-wallet .wallet-avatar{ width:1.5em; height:1.5em; min-width:1.5em; }
+  .profile-msg-row.unread .profile-msg-row-wallet{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+  .profile-msg-row-preview{ font-family:var(--font-mono); font-size:12px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:0.25rem; }
+  .profile-msg-row.unread .profile-msg-row-preview{ color:var(--white); }
+  .profile-msg-row-meta{ display:flex; flex-direction:column; align-items:flex-end; gap:0.35rem; flex:0 0 auto; }
   .profile-msg-row-time{ font-family:var(--font-mono); font-size:10px; color:var(--grey-dim); }
   .profile-msg-row-unread{
     display:inline-flex; align-items:center; justify-content:center;
-    min-width:1.4em; height:1.4em; padding:0 0.3em;
+    min-width:1.6em; height:1.6em; padding:0 0.35em;
     border-radius:999px; background:var(--magenta); color:#000;
-    font-size:10px; font-weight:700;
+    font-size:11px; font-weight:700;
+    box-shadow:0 0 8px var(--magenta-glow);
+    animation:profile-msg-badge-bounce 1.8s ease-in-out infinite;
+  }
+  @keyframes profile-msg-badge-bounce{
+    0%, 100%{ transform:scale(1); }
+    50%{ transform:scale(1.15); }
   }
   .profile-msg-new-prompt{ display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap; }
   .profile-msg-new-prompt .profile-search-input{ flex:1 1 220px; margin-bottom:0; }
-  .profile-msg-thread-list{ display:flex; flex-direction:column; gap:0.5rem; max-height:320px; overflow-y:auto; margin-bottom:1rem; padding:0.25rem; }
+  .profile-msg-thread-list{ display:flex; flex-direction:column; gap:0.6rem; max-height:320px; overflow-y:auto; margin-bottom:1rem; padding:0.25rem; }
   .profile-msg-bubble{
+    position:relative;
     max-width:75%;
-    padding:0.6em 0.85em;
+    padding:0.65em 2em 0.65em 0.9em;
     border-radius:var(--radius);
     font-family:var(--font-mono);
     font-size:13px;
     word-break:break-word;
     border:1px solid var(--border-mid);
+    animation:offer-confirm-pop 0.2s ease;
   }
   .profile-msg-bubble-mine{ align-self:flex-end; background:rgba(61,243,236,0.1); border-color:var(--cyan-dim); }
-  .profile-msg-bubble-theirs{ align-self:flex-start; background:rgba(255,255,255,0.05); }
+  .profile-msg-bubble-theirs{ align-self:flex-start; background:rgba(255,255,255,0.05); padding-right:0.9em; }
   .profile-msg-bubble-time{ font-size:10px; color:var(--grey-dim); margin-top:0.3rem; }
+  .profile-msg-bubble.deleting{ opacity:0.35; pointer-events:none; }
+  /* DELETE — Y0UR 0WN bubbles only (see the JS's own fromMe check), a
+     quiet × that only really announces itself on hover so a dense thread
+     doesn't read as a wall of delete buttons. */
+  .profile-msg-bubble-delete{
+    position:absolute;
+    top:0.35em; right:0.4em;
+    width:1.4em; height:1.4em;
+    display:flex; align-items:center; justify-content:center;
+    background:transparent;
+    border:none;
+    color:var(--grey-dim);
+    font-size:14px;
+    line-height:1;
+    cursor:pointer;
+    border-radius:50%;
+    transition:color 0.15s ease, background 0.15s ease;
+  }
+  .profile-msg-bubble-delete:hover{ color:#fff; background:var(--red); }
   .profile-msg-compose{ display:flex; gap:0.5rem; }
   .profile-msg-compose .profile-search-input{ margin-bottom:0; }
   .profile-coins-section{ margin-bottom:1.5rem; }
@@ -22788,9 +22832,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderMessagesList(items){
     el.profileMessagesList.innerHTML = !items.length ? '<div class="th-empty">N0 MESSAGES YET.</div>' : items.map(function(row){
       var preview = (row.lastFromMe ? 'Y0U: ' : '') + row.lastMessage;
+      // walletTagHtml (real username + avatar once resolved, same as
+      // every other wallet mention on the site) instead of a plain short
+      // address — reported live wanting this to read as "talking to
+      // people," not a raw address list.
       return '<div class="profile-msg-row' + (row.unreadCount > 0 ? ' unread' : '') + '" data-wallet="' + escapeHtml(row.wallet) + '">' +
         '<div class="profile-msg-row-text">' +
-          '<div class="profile-msg-row-wallet">' + escapeHtml(row.walletShort) + '</div>' +
+          '<div class="profile-msg-row-wallet">' + walletTagHtml(row.wallet, row.walletShort) + '</div>' +
           '<div class="profile-msg-row-preview">' + escapeHtml(preview) + '</div>' +
         '</div>' +
         '<div class="profile-msg-row-meta">' +
@@ -22821,13 +22869,42 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function renderMessageThread(items){
     el.profileMessagesThreadList.innerHTML = !items.length ? '<div class="th-empty">N0 MESSAGES YET — SAY H!.</div>' : items.map(function(m){
-      return '<div class="profile-msg-bubble ' + (m.fromMe ? 'profile-msg-bubble-mine' : 'profile-msg-bubble-theirs') + '">' +
-        escapeHtml(m.body) +
+      // DELETE only ever shows on your own bubbles (messages-delete.js
+      // itself only lets you delete rows where sender = you, this just
+      // keeps the button from appearing somewhere it would always 404).
+      return '<div class="profile-msg-bubble ' + (m.fromMe ? 'profile-msg-bubble-mine' : 'profile-msg-bubble-theirs') + '" data-id="' + m.id + '">' +
+        (m.fromMe ? '<button type="button" class="profile-msg-bubble-delete" title="DELETE MESSAGE">×</button>' : '') +
+        '<div class="profile-msg-bubble-body">' + escapeHtml(m.body) + '</div>' +
         '<div class="profile-msg-bubble-time">' + relativeTimeText(new Date(m.createdAt * 1000)) + '</div>' +
       '</div>';
     }).join('');
     el.profileMessagesThreadList.scrollTop = el.profileMessagesThreadList.scrollHeight;
   }
+  function deleteMessage(id, bubbleEl){
+    if (!confirm('DELETE TH!S MESSAGE?')) return;
+    bubbleEl.classList.add('deleting');
+    fetch('/api/messages-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if (!data || data.error){ bubbleEl.classList.remove('deleting'); return; }
+      bubbleEl.remove();
+      // The inbox's own preview/unread badge might have been THIS exact
+      // message (the latest one in the conversation) — simplest correct
+      // fix is just re-fetching it, same as every other message-count-
+      // changing action already does (see loadMessagesInbox's own callers).
+      loadMessagesInbox();
+    }).catch(function(){
+      bubbleEl.classList.remove('deleting');
+    });
+  }
+  el.profileMessagesThreadList.addEventListener('click', function(e){
+    var btn = e.target.closest('.profile-msg-bubble-delete');
+    if (!btn) return;
+    var bubble = btn.closest('.profile-msg-bubble');
+    deleteMessage(Number(bubble.getAttribute('data-id')), bubble);
+  });
   function openMessageThread(wallet){
     currentMessageThreadWallet = wallet;
     el.profileMessagesListView.style.display = 'none';
