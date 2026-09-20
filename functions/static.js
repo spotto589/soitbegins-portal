@@ -1201,24 +1201,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   .stat-tile-pigeons:hover{ background:linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.7), rgba(var(--collection-accent-2-rgb),0.8)); border-color:var(--collection-accent); }
   .stat-tile-pigeons .stat-label{ color:#fff; opacity:0.9; }
   .stat-tile-pigeons .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.8); font-weight:700; }
-  /* Marketplace floor tiles — used two different shades of blue (their
-     own brand-ish colours) so FL00R :: XRP.CAFE and FL00R :: DEEPT!DE
-     read as distinct sources; now distinguished with the site's own two
-     accent colours instead — XRP.CAFE cyan, DEEPT!DE magenta. */
-  .stat-tile-xrpcafe{
-    border-color:var(--cyan-dim);
-    background:linear-gradient(160deg, var(--cyan-faint), rgba(8,9,11,0.8));
-  }
-  .stat-tile-xrpcafe:hover{ background:linear-gradient(160deg, var(--cyan-faint), rgba(8,9,11,0.9)); border-color:var(--cyan); }
-  .stat-tile-xrpcafe .stat-label{ color:#fff; opacity:0.9; }
-  .stat-tile-xrpcafe .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.6); font-weight:700; }
-  .stat-tile-deeptide{
-    border-color:var(--magenta-dim);
-    background:linear-gradient(160deg, var(--magenta-faint), rgba(8,9,11,0.8));
-  }
-  .stat-tile-deeptide:hover{ background:linear-gradient(160deg, var(--magenta-faint), rgba(8,9,11,0.9)); border-color:var(--magenta); }
-  .stat-tile-deeptide .stat-label{ color:#fff; opacity:0.9; }
-  .stat-tile-deeptide .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.6); font-weight:700; }
+  /* FL00R page is just the one $PIGEONS tile now (reported live: "we dont
+     need to advertise xrp cafe or deeptide anywhere" — the XRP.CAFE/
+     DEEPT!DE floor tiles that used to sit either side of it are gone) —
+     let it fill the row instead of sitting small and alone at the default
+     25% flex-basis every other (4-tile) page uses. */
+  .stats-strip-floor .stat-tile:only-child{ flex-basis:100%; max-width:320px; }
   /* Deliberate placeholder tile/link, real tracking is a later system */
   .stat-tile-soon{ opacity:0.55; border-style:dashed; }
   .stat-tile-soon:hover{ opacity:0.85; }
@@ -5544,23 +5532,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:flex-start;
     gap:0.5rem;
   }
-  .result-row-right .card-listings{ margin-top:0; }
-  /* Full-width bars stacked below the thumbnail/traits row — RARITY,
-     sale stats, the SALES HISTORY link, and (when unlisted) NO LISTINGS
-     all share this same horizontal-bar layout instead of being squeezed
-     as stacked lines into the narrow right column. */
-  .card-bottom-bar{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:1.5rem;
-    flex-wrap:wrap;
-    border-top:1px dashed var(--border-dim);
-    padding:0.55em 1rem;
-  }
   /* RARITY / RARITY SCORE, visible above the traits carousel without a
-     NEXT click — same horizontal-bar look as .card-bottom-bar, just
-     sitting above the content instead of below it. */
+     NEXT click. */
   .card-rarity-summary{
     display:flex;
     align-items:center;
@@ -5700,44 +5673,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-stat-stack{ display:flex; flex-direction:column; align-items:center; gap:0.1rem; }
   .result-stat-stack .stat-label{ font-size:12px; margin-bottom:0; color:var(--white); }
   .result-stat-stack .stat-value{ font-size:17px; color:var(--white); }
-  .card-listings{ display:flex; gap:0.4rem; margin-top:0.45rem; }
-  /* Neither marketplace has a real listing — one shared full-width bar
-     naming both markets, instead of two separate washed-out boxes. */
-  .card-no-listings .css-item{ color:var(--cyan-dim); }
-  .card-no-listings .css-label{ color:var(--grey-dim); }
-  /* Real marketplace listing on the bottom bar — a clickable buy link,
-     styled to stand out like the other bottom-bar css-items but green
-     to signal "this one's live and buyable". */
-  a.css-item.css-item-link{
-    color:var(--green);
-    text-shadow:0 0 6px var(--green-glow);
-    text-decoration:none;
-    cursor:pointer;
-  }
-  a.css-item.css-item-link:hover{ text-decoration:underline; }
-  .cl-block{
-    display:block;
-    flex:1;
-    min-width:0;
-    border:1px solid var(--border-dim);
-    padding:0.45rem 0.3rem;
-    text-align:center;
-    text-decoration:none;
-  }
-  .cl-market{ font-size:9px; letter-spacing:0.08em; color:var(--grey-dim); text-transform:uppercase; margin-bottom:0.35rem; }
-  .cl-price{ font-size:12px; font-weight:700; letter-spacing:0.02em; color:var(--green); text-shadow:0 0 6px var(--green-glow); }
-  .cl-price.cl-none{ color:var(--grey-disabled); font-size:10px; font-weight:400; text-shadow:none; text-transform:uppercase; }
-  /* The whole box IS the buy action when a real listing exists — filled
-     green, not just a border, so it reads as clickable at a glance. */
-  .cl-block-buy{
-    cursor:pointer;
-    background:var(--green-glow);
-    border-color:var(--green);
-    transition:background 0.15s ease, box-shadow 0.15s ease;
-  }
-  .cl-block-buy:hover{ background:rgba(52,255,133,0.28); box-shadow:0 0 14px var(--green-glow); }
-  .cl-block-buy .cl-price{ color:var(--bg); text-shadow:none; }
-  .cl-block-buy .cl-market{ color:rgba(8,9,11,0.65); }
   .css-item{ font-size:13px; letter-spacing:0.02em; color:var(--white); text-align:center; font-weight:600; }
   .css-label{ display:inline-block; min-width:110px; color:var(--grey-dim); text-transform:uppercase; letter-spacing:0.05em; margin-right:0.4em; font-size:10px; font-weight:400; }
 
@@ -7022,7 +6957,6 @@ const SWAP_HTML = `<!DOCTYPE html>
      sitting directly underneath the picture — no decorative frame, just
      spacing between the two. */
   .detail-under-pic-box{ margin-top:0.4rem; }
-  #screenDetail .detail-listings-row{ max-width:100%; margin:0 0 0.6rem; }
   /* Plain neutral panel, not pink — same fix as .thumb-offer on the
      DATABASE card grid (see that rule's own comment): this is just a
      container for whichever real buttons/inputs it holds (BUY N0W
@@ -7163,11 +7097,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding-top:0.6rem;
     border-top:1px dashed var(--border-dim);
   }
-  /* The listings row already carries its own bottom margin for the DATABASE
-     card context it's shared with — inside this flex column the gap above
-     already spaces it from what follows, so that margin would just double
-     up the same gap twice. */
-  #screenDetail .detail-sales-section .detail-listings-row{ margin:0; }
   /* Centered, label above value — easier to read at a glance than a
      left/right split row, especially now they're stacked one after
      another rather than spread across a wider area. */
@@ -7331,10 +7260,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .detail-num{ text-align:center; font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:0.04em; color:var(--white); margin-bottom:1.25rem; }
   .detail-img-large{ width:100%; max-width:460px; margin:0 auto 0.75rem; border:1px solid var(--border-mid); }
-  .detail-listings-row{ max-width:460px; margin:0 auto 1.25rem; }
-  .detail-listings-row .cl-block{ padding:0.65rem 0.5rem; }
-  .detail-listings-row .cl-market{ font-size:10px; margin-bottom:0.45rem; }
-  .detail-listings-row .cl-price{ font-size:14px; }
   .detail-field{
     display:flex;
     justify-content:space-between;
@@ -9783,9 +9708,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button class="stats-carousel-arrow" id="statsPrevBtn" aria-label="PREV!0US">◂</button>
       <div class="stats-carousel-viewport">
       <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
-        <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
         <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY L!STED THR0UGH SCYLLA"><div class="stat-label" id="statScyllaListedLabel">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
-        <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
       </div>
       <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
         <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span></div></div>
@@ -11079,7 +11002,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="detail-col-right">
           <div class="trait-grid" id="detailTraits"></div>
           <div class="detail-sales-section">
-            <div class="card-listings detail-listings-row" id="detailListingsRow"></div>
             <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
             <!-- REC0RD/RECENT/AVERAGE SALE — one row of 3 now instead of 3
                  stacked full-width rows (reported live wanting these
@@ -12278,7 +12200,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileCoinsEditBtn','profileCoinsEditPopover','profileCoinsEditList',
    'salesModal','salesCloseBtn','openSalesBtn',
    'swapOffersPanelWrap','swapOffersList',
-   'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
+   'statItems','statHolders','statVolume','statListed',
    'statScyllaListedTile','statScyllaListedCount','statScyllaListedLabel',
    'statsCarousel','statsCarouselDots','statsPrevBtn','statsNextBtn',
    'statTraded24h','statVolume24h','statSalesTile','statSales24h',
@@ -12301,7 +12223,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
    'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
-   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailListingsRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
+   'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose',
    'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections','profileScreenCoins','profileScreenMessageBtn',
    'profileScreenCode','profileScreenPrivateNotice','profileScreenPublicContent','profileModeToggle','profileScreenDatabaseView','profileScreenShowcase','profileScreenFeatured','profileScreenHistoryBtn',
@@ -14033,18 +13955,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   // ---- Card rendering (minimal chrome: image + number + rarity + a
   // corner select toggle — 6 columns doesn't leave room for more; tap the
   // image to INSPECT for the full trait set). ----
-  function listingBlockHtml(marketLabel, listing){
-    var hasPrice = listing && listing.priceXrp !== null && listing.priceXrp !== undefined;
-    var priceHtml = hasPrice
-      ? '<div class="cl-price">' + listing.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</div>'
-      : '<div class="cl-price cl-none">N0 L!ST!NG</div>';
-    var inner = '<div class="cl-market">' + marketLabel + '</div>' + priceHtml;
-    // The whole box is the buy link when there's a real listing — no
-    // separate BUY button, just a colored/clickable box.
-    return (hasPrice && listing.buyUrl)
-      ? '<a class="cl-block cl-block-buy" href="' + escapeHtml(listing.buyUrl) + '" target="_blank" rel="noopener" title="BUY 0N ' + escapeHtml(marketLabel) + '">' + inner + '</a>'
-      : '<div class="cl-block">' + inner + '</div>';
-  }
   // DATABASE cards: a wide row (thumbnail/number/rarity on the left,
   // every other detail on the right) instead of a grid tile — reuses
   // .result-card for all the existing selection-state/click-handling
@@ -14223,27 +14133,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     var atCap = offerCtxCard
       ? (!inTarget && offerCount() >= OFFER_MAX)
       : (!inTarget && targetCount() >= OFFER_MAX);
-    // Order: marketplace listings, then the $PIGEONS listing (styled like
-    // a currency — coin icon + amount), then traits, then a rarity-score
-    // placeholder, then a link through to the full sales history page,
-    // then (if unlisted) the NO LISTINGS strip pushed to the bottom.
-    var xcListing = p.listings && p.listings.xrpCafe;
-    var dtListing = p.listings && p.listings.deeptide;
-    var hasXcListing = xcListing && xcListing.priceXrp !== null && xcListing.priceXrp !== undefined;
-    var hasDtListing = dtListing && dtListing.priceXrp !== null && dtListing.priceXrp !== undefined;
-    var hasAnyListing = hasXcListing || hasDtListing;
-    // Marketplace listings live in one shared strip at the BOTTOM of the
-    // card (real price + buy link when listed, "NOT LISTED" otherwise) —
-    // not competing with traits/rarity up top.
-    var xcBottomHtml = hasXcListing
-      ? '<a class="css-item css-item-link" href="' + escapeHtml(xcListing.buyUrl || '#') + '" target="_blank" rel="noopener"><span class="css-label">XRP.CAFE</span>' + xcListing.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</a>'
-      : '<span class="css-item"><span class="css-label">XRP.CAFE</span>N0T L!STED</span>';
-    var dtBottomHtml = hasDtListing
-      ? '<a class="css-item css-item-link" href="' + escapeHtml(dtListing.buyUrl || '#') + '" target="_blank" rel="noopener"><span class="css-label">DEEPT!DE</span>' + dtListing.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</a>'
-      : '<span class="css-item"><span class="css-label">DEEPT!DE</span>N0T L!STED</span>';
-    var bottomListingsHtml = p.listings
-      ? '<div class="card-bottom-bar card-listings-bottom' + (hasAnyListing ? '' : ' card-no-listings') + '">' + xcBottomHtml + dtBottomHtml + '</div>'
-      : '';
     // Σκύλλα's OWN rarity score system (see rarityDisplay's own comment) —
     // this box's own RARITY line now reads it, same RANK/TOTAL shape as
     // before either way.
@@ -14305,7 +14194,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           carouselHtml +
         '</div>' +
       '</div>' +
-      bottomListingsHtml +
     '</div>';
   }
 
@@ -14339,22 +14227,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     var avgSaleLine = !COLLECTION_META[state.collection].tradeable ? '' : hasAvgSale
       ? '<div class="result-rarity-line result-stat-stack"><span class="stat-label">AVG SALE PR!CE ::</span><span class="stat-value">' + greenNum(fmtXrp(p.avgSaleXrp)) + ' XRP</span></div>'
       : '<div class="result-rarity-line">' + greenNum('M!NT C0ND!T!0N') + '</div>';
-    // Real cross-market floor price (see PRICE_ASC/crossListing in
-    // startCollectionBrowse) — only set on items returned by that sort,
-    // so this stays blank for every other sort instead of guessing.
-    // Boxed view (resultCardHtml, which already shows both marketplaces'
-    // prices via bottomListingsHtml) is disabled/coming soon, so THUMBNAILS
-    // is the only card ever rendered right now — without this line,
-    // L0WEST (XRP) sorted the results correctly but never actually showed
-    // the price being sorted on.
-    var hasBestListing = p.bestListingXrp !== null && p.bestListingXrp !== undefined;
-    var bestListingSourceLabel = p.bestListingSource === 'xrpCafe' ? 'XRP.CAFE' : 'DEEPT!DE';
-    var bestListingUrl = hasBestListing
-      ? (p.bestListingSource === 'xrpCafe' ? (p.listings && p.listings.xrpCafe && p.listings.xrpCafe.buyUrl) : (p.listings && p.listings.deeptide && p.listings.deeptide.buyUrl))
-      : null;
-    var bestListingLine = hasBestListing
-      ? '<a class="result-rarity-line result-stat-stack" href="' + escapeHtml(bestListingUrl || '#') + '" target="_blank" rel="noopener" title="BUY 0N ' + escapeHtml(bestListingSourceLabel) + '"><span class="stat-label">L!STED :: ' + escapeHtml(bestListingSourceLabel) + '</span><span class="stat-value">' + greenNum(fmtXrp(p.bestListingXrp)) + ' XRP</span></a>'
-      : '';
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
     var atCap = offerCtxCard
@@ -14381,7 +14253,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         listingBadge +
         ownedBadge +
       '</div>' +
-      '<div class="result-card-body">' + rarityLine + bestListingLine + avgSaleLine + '<div class="card-action-box">' + pigeonsActionHtml + '</div></div>' +
+      '<div class="result-card-body">' + rarityLine + avgSaleLine + '<div class="card-action-box">' + pigeonsActionHtml + '</div></div>' +
     '</div>';
   }
   function cardHtmlForView(p){
@@ -20823,12 +20695,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       b.classList.toggle('active', b === btn);
     });
   });
-  // Same DEEPTIDE/XRP.CAFE clickable-box component the DATABASE cards use
-  // (listingBlockHtml), side by side directly under the big image —
-  // instead of the old stacked market/price/buy-link rows.
-  function updateDetailListings(listings){
-    el.detailListingsRow.innerHTML = listingBlockHtml('XRP.CAFE', listings && listings.xrpCafe) + listingBlockHtml('DEEPT!DE', listings && listings.deeptide);
-  }
   function findKnown(nftId){
     return state.items.filter(function(p){ return p.nftId === nftId; })[0] ||
       state.scopeAllItems.filter(function(p){ return p.nftId === nftId; })[0];
@@ -20931,7 +20797,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.detailHistoryList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     updateDetailRarity(known);
     updateDetailPrice(known);
-    updateDetailListings(known && known.listings);
     updateScyllaListing(known);
     state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null, attributes: [] };
     // showScreen itself smooth-scrolls the tab strip back into view (see
@@ -20956,7 +20821,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.detailTraits.innerHTML = sortTraitsByRarity(p.attributes).map(traitCellHtml).join('');
       updateDetailRarity(p);
       updateDetailPrice(p);
-      updateDetailListings(p.listings);
       updateScyllaListing(p);
       renderOwnerLink(p.ownerShort, p.owner);
       updateDetailOwnerBanner(p.owner);
@@ -23972,10 +23836,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.statHolders.textContent = data.holders !== null && data.holders !== undefined ? data.holders.toLocaleString() : '—';
       el.statVolume.textContent = data.totalVolumeXrp !== null && data.totalVolumeXrp !== undefined ? fmtXrp(data.totalVolumeXrp) + ' XRP' : '—';
       el.statListed.textContent = data.listedPercent !== null && data.listedPercent !== undefined ? data.listedPercent + '%' : '—';
-      el.statFloorDeeptide.textContent = data.deeptideFloorXrp !== null && data.deeptideFloorXrp !== undefined ? fmtXrp(data.deeptideFloorXrp) + ' XRP' : '—';
-      el.statFloorXrpCafe.textContent = data.xrpCafeFloorXrp !== null && data.xrpCafeFloorXrp !== undefined ? fmtXrp(data.xrpCafeFloorXrp) + ' XRP' : '—';
-      if (data.deeptideBuyUrl) el.statFloorDeeptideTile.href = data.deeptideBuyUrl;
-      if (data.xrpCafeUrl) el.statFloorXrpCafeTile.href = data.xrpCafeUrl;
       el.statScyllaListedCount.innerHTML = data.scyllaFloorPigeons !== null && data.scyllaFloorPigeons !== undefined ? greenNum(data.scyllaFloorPigeons.toLocaleString()) + ' ' + COLLECTION_META[state.collection].tokenLabel : 'N0T L!STED';
       el.statTraded24h.textContent = data.traded24hCount !== null && data.traded24hCount !== undefined ? data.traded24hCount.toLocaleString() : '—';
       el.statVolume24h.textContent = data.volume24hXrp !== null && data.volume24hXrp !== undefined ? fmtXrp(data.volume24hXrp) + ' XRP' : '—';
