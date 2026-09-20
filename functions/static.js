@@ -2587,6 +2587,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      sized up to actually fit a page that only ever has these three
      things on it. */
   .profiles-hub{ max-width:640px; margin:0 auto; text-align:center; }
+  /* Centred in the middle of the page now, not just horizontally
+     (reported live) — safe center so a tall ED!T MY PR0F!LE form (the
+     other real thing this same panel shows) still scrolls to its own top
+     normally instead of clipping if it ever overflows. */
+  #profileTabPanelProfiles{ display:flex; flex-direction:column; justify-content:safe center; min-height:100%; }
   .profiles-hub-search-wrap{ margin-bottom:1.75rem; }
   /* Layers on top of .profile-search-input's own base look (shared with
      the MESSAGES compose/new-recipient inputs — see below) rather than
@@ -2596,11 +2601,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profiles-hub-search-input{ font-size:22px; font-weight:400; text-align:center; padding:1.2em 1.4em; margin-bottom:0; }
   .profiles-hub-search-input:focus{ box-shadow:0 0 14px var(--cyan-glow); }
   .profiles-hub-actions{ display:flex; flex-direction:column; gap:1rem; }
+  /* Same "coloured border/text even at rest" language the corner
+     S!GN 0UT/CHANGE ACC0UNT buttons elsewhere in Σκύλλα://SYSTEM already
+     use (reported live: "make the buttons the same as inside system"),
+     just scaled up to this panel's own big-button size. Colour comes
+     from --profile-accent-rgb (pink, see .scylla-nav-panel's own
+     comment) — automatic, no separate colour swap needed here. */
   .profiles-hub-btn{
     width:100%;
     background:rgba(0,0,0,0.25);
-    border:1px solid var(--border-mid);
-    color:var(--white);
+    border:1px solid rgba(var(--profile-accent-rgb, 61,243,236),0.5);
+    color:rgb(var(--profile-accent-rgb, 61,243,236));
     font-family:var(--font-mono);
     font-size:20px;
     font-weight:700;
@@ -2610,12 +2621,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     cursor:pointer;
     text-transform:uppercase;
     text-align:center;
-    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
   }
   .profiles-hub-btn:hover{
     border-color:rgb(var(--profile-accent-rgb, 61,243,236));
-    color:rgb(var(--profile-accent-rgb, 61,243,236));
-    background:rgba(var(--profile-accent-rgb, 61,243,236),0.1);
+    background:rgba(var(--profile-accent-rgb, 61,243,236),0.15);
+    box-shadow:0 0 14px rgba(var(--profile-accent-rgb, 61,243,236),0.35);
     transform:translateY(-1px);
   }
   @media (min-width:520px){
