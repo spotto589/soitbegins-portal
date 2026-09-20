@@ -16310,6 +16310,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   // instead of waiting on a second identical fetch — see browseOwnerCollection.
   // null = not fetched yet.
   var myOwnPigeonsCache = null;
+  // Per-collection snapshot of the same cache — switchCollection restores
+  // myOwnPigeonsCache from here instead of always nulling it out, so MY
+  // NFTS painting a collection you already viewed this session (isSelf's
+  // own cache-hit branch in browseOwnerCollection) is instant instead of
+  // re-running the same slow XRPL/Deeptide lookup every single click
+  // (reported live: "why do the collections take so long to come up when
+  // i click into my nfts... can we make this faster"). Still self-heals
+  // in the background exactly like it always did (loadMyOwnPigeonsCache
+  // itself is unchanged, just now writes here too) — this only removes
+  // the redundant wait on a REPEAT visit, never skips the real refresh.
+  var myOwnPigeonsCacheByCollection = {};
   var myOwnPigeonsCacheFailed = false; // true once apiWithRetry has genuinely given up, not just still trying
   // The in-flight request, while there is one — lets browseOwnerCollection
   // (SH0W MY P!GE0NS/the FL0CK tab) chain onto THIS same request instead
@@ -16347,8 +16358,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (myOwnPigeonsCachePromise) return myOwnPigeonsCachePromise;
     myOwnPigeonsCacheFailed = false;
     updateSearchPanelTitleForPaws();
+    // Captured now, not read fresh inside the .then() below — state.collection
+    // can change (switchCollection) before this request lands, and this
+    // fetch is always scoped to whichever collection it was actually
+    // fired for, never whatever's active by the time it resolves.
+    var forCollection = state.collection;
     myOwnPigeonsCachePromise = apiWithRetry({ wallet: MY_WALLET }).then(function(data){
       myOwnPigeonsCache = data.items || [];
+      myOwnPigeonsCacheByCollection[forCollection] = myOwnPigeonsCache;
       // The real total the instant the fast phase lands, not just
       // however many happened to resolve immediately — items.length
       // alone would undercount while anything's still in pendingIds.
@@ -16358,6 +16375,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       myOwnPigeonsCachePromise = null;
       resolvePendingWalletItems(MY_WALLET, data.pendingIds, function(extra){
         myOwnPigeonsCache = myOwnPigeonsCache.concat(extra).sort(function(a, b){ return (a.number || 0) - (b.number || 0); });
+        myOwnPigeonsCacheByCollection[forCollection] = myOwnPigeonsCache;
         trustlinePigeonCount = myOwnPigeonsCache.length;
         renderTrustlineSummary();
         // Only touch the live grid/count if this wallet's own scope is
@@ -19315,13 +19333,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     updateSortLabelsForCollection();
     updateTrustlineBannerChrome(newCollection);
     if (MY_WALLET){
-      // myOwnPigeonsCache is a single flat cache, not keyed by collection —
-      // without clearing it here, switching collection while logged in
-      // would keep showing the PREVIOUS collection's held-NFT list/count
-      // (SH0W MY NFTs, FL0CK tab) since loadMyOwnPigeonsCache's own
-      // promise-cache guard would just hand back the stale result instead
-      // of re-fetching scoped to the new collection.
-      myOwnPigeonsCache = null;
+      // Restored from the per-collection map (myOwnPigeonsCacheByCollection)
+      // instead of always nulling out — a collection already viewed this
+      // session paints instantly (browseOwnerCollection's own isSelf
+      // cache-hit branch) rather than re-running the same slow XRPL/
+      // Deeptide lookup on every single switch. Genuinely new collections
+      // still come back null here exactly like before, so they still show
+      // the real L0AD!NG state and fetch normally.
+      myOwnPigeonsCache = myOwnPigeonsCacheByCollection.hasOwnProperty(newCollection) ? myOwnPigeonsCacheByCollection[newCollection] : null;
       myOwnPigeonsCacheFailed = false;
       myOwnPigeonsCachePromise = null;
       loadTrustlineLoginState();
