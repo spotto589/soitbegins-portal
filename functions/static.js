@@ -2252,16 +2252,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      below content size" — without it, 7 rows' natural content height
      would just overflow and force the scrollbar right back). Its own
      header/grid/readout children flex the same way below. */
-  /* Σκύλλα://SYSTEM — completely redesigned around the real
-     digitalglitchpattern.png artwork (reported live) instead of the old
-     plain-black + JS canvas-noise backdrop: a real circuit-trace/data-
-     corruption texture behind everything, with a dark scrim layered
-     UNDER it (multiple backgrounds, image painted last = bottom layer)
-     so header/button/text contrast never depends on which exact patch of
-     a busy photo happens to sit behind them. cover+center so the image's
-     own bright spark nodes land roughly mid-panel regardless of viewport
-     size, same "always looks deliberate, never awkwardly cropped"
-     reasoning MA!NFRAME's own card art already uses. */
+  /* Σκύλλα://SYSTEM — the real digitalglitchpattern.png artwork as a base
+     layer (reported live) plus a genuinely animated cyan/pink static
+     canvas back on top of it (scyllaNavStaticBg, see its own JS comment)
+     — a still photo alone read as "just black" (reported live) since
+     large stretches of the source image are plain dark background
+     between its own glitch clusters, and background-size:cover can crop
+     straight into one of those stretches depending on the panel's real
+     aspect ratio. The live static guarantees real cyan/pink presence no
+     matter which patch of the photo ends up behind it. Scrim opacity
+     dropped (was 0.72) now that the moving static carries most of the
+     colour — the photo just needs to stay dark enough for text contrast,
+     not be the only source of colour any more. */
   .scylla-nav-panel{
     position:relative;
     display:flex;
@@ -2271,13 +2273,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:2px solid var(--cyan-dim);
     border-radius:0;
     background:
-      linear-gradient(rgba(5,5,6,0.72), rgba(5,5,6,0.72)),
+      linear-gradient(rgba(5,5,6,0.45), rgba(5,5,6,0.45)),
       url('/assets/digitalglitchpattern.png');
     background-size:cover;
     background-position:center;
     box-shadow:0 0 24px rgba(255,51,204,0.15), inset 0 0 60px rgba(0,0,0,0.55);
     padding:1.25rem 1rem 1.5rem;
     overflow:hidden;
+  }
+  .scylla-nav-static{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    opacity:0.8;
+    mix-blend-mode:screen;
+    animation:static-shake 1.1s steps(2) infinite;
   }
   /* Soft cyan/magenta corner glows echoing the source image's own bright
      "spark node" highlights — one per top corner, same colours the rest
@@ -9958,6 +9969,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="scylla-frame-edge scylla-frame-edge-h scylla-frame-edge-top" aria-hidden="true"></div>
       <div class="scylla-frame-edge scylla-frame-edge-h scylla-frame-edge-bottom" aria-hidden="true"></div>
       <div class="scylla-nav-panel">
+        <canvas class="scylla-nav-static" id="scyllaNavStaticBg"></canvas>
         <!-- Panel-level HUD corners — always on (this frame isn't
              "active/inactive," it's what everything else sits inside),
              same two-border-side technique the row corners already use,
@@ -12240,7 +12252,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'mainframeDexThirdeye','mainframeDexBear','mainframeDexCult','mainframeDexSmoki',
    'topTabs','topTabsWrap','flockTabLabel','scyllaWalletWrap','walletSwitchDropdown','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
-   'scyllaNavReadout',
+   'scyllaNavStaticBg','scyllaNavReadout',
    'profileBoxGrid','profileTabOffersBadge','profileTabMessagesBadge','profileTabPanelMessages','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
    'profileTabPanelMyNfts','myNftsPicker','myNftsPickerGrid','myNftsGrid','myNftsGridBackBtn','myNftsGridStatus','myNftsGridItems','myNftsBackBtn',
    'myNftsSearchInput','myNftsSearchClearBtn','myNftsEditionToggle','myNftsSortSelect','myNftsTraitCatSelect','myNftsTraitValSelect','myNftsTraitAddBtn','myNftsTraitChips',
@@ -24230,16 +24242,44 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       ctx.putImageData(imageData, 0, 0);
     }
-    // 'glitch' (Σκύλλα B00T) is the only mode left besides plain
-    // drawStatic() — a short, punchy one-time full-rate reveal. ('glitch-
-    // calm'/'color-calm', both built for the Σκύλλα://SYSTEM nav panel's
-    // old JS-canvas backdrop, were retired along with it — see
-    // .scylla-nav-panel's own CSS comment on the real digitalglitchpattern.png
-    // artwork that replaced it.)
+    // Same exact per-pixel density/structure as plain drawStatic() above —
+    // every pixel gets its own random brightness, no sparse flecks-on-
+    // black — just recoloured, each pixel a random 50/50 pick between a
+    // cyan and a magenta tint at that shade. Layered on top of the real
+    // digitalglitchpattern.png artwork behind .scylla-nav-panel (reported
+    // live: "add the cyan and pink static to the background... at the
+    // moment the background is just black" — a still photo alone can crop
+    // straight into one of its own large plain-dark stretches depending on
+    // the panel's aspect ratio; this guarantees real moving cyan/pink
+    // presence regardless of which patch of the photo is behind it).
+    function drawColorStatic(){
+      var w = canvas.width, h = canvas.height;
+      var imageData = ctx.createImageData(w, h);
+      var buffer = imageData.data;
+      for (var i = 0; i < buffer.length; i += 4){
+        var shade = Math.random() * 255;
+        if (Math.random() < 0.5){
+          buffer[i] = 0; buffer[i+1] = shade; buffer[i+2] = shade; // cyan
+        } else {
+          buffer[i] = shade; buffer[i+1] = 0; buffer[i+2] = shade; // magenta
+        }
+        buffer[i+3] = 255;
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+    // 'glitch' (Σκύλλα B00T) keeps its original density/full-rate flicker —
+    // a short, punchy one-time reveal. 'color-calm' (the Σκύλλα://SYSTEM
+    // nav panel) throttles to every 3rd frame (~20fps, not a full-rate
+    // flicker) — dense full-pixel colour noise redrawing every single
+    // frame next to text people are reading would be too busy.
+    var colorFrameSkip = 0;
     function loop(){
       if (!isVisible || isVisible()){
         if (mode === 'glitch'){
           drawGlitchStatic(0.045, 0.11, 26);
+        } else if (mode === 'color-calm'){
+          colorFrameSkip = (colorFrameSkip + 1) % 3;
+          if (colorFrameSkip === 0) drawColorStatic();
         } else {
           drawStatic();
         }
@@ -24348,10 +24388,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   startStaticCanvas(document.getElementById('scyllaBootStaticBg'), function(){
     return document.getElementById('scyllaBootScreen').style.display !== 'none';
   }, 'glitch');
-  // The Σκύλλα nav panel's own JS canvas-noise backdrop (scyllaNavStaticBg,
-  // 'color-calm' mode) was retired here — completely redesigned around the
-  // real digitalglitchpattern.png artwork instead (reported live), see
-  // .scylla-nav-panel's own CSS comment.
+  // Layered on top of the real digitalglitchpattern.png artwork behind
+  // .scylla-nav-panel (see its own CSS comment) — same isVisible-gated
+  // pattern as every other local static canvas, gated on the whole tab
+  // being open rather than one specific screen.
+  startStaticCanvas(document.getElementById('scyllaNavStaticBg'), function(){
+    return state.activeTab === 'mypigeons';
+  }, 'color-calm');
 })();
 </script>
 </body>
