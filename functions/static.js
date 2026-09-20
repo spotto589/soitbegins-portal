@@ -3528,9 +3528,9 @@ const SWAP_HTML = `<!DOCTYPE html>
      var(--cyan) here already resolves to her real neon pink (see that
      panel's own --cyan override above) — no separate colour to maintain. */
   .connect-panel{
-    max-width:420px;
+    max-width:520px;
     margin:2.5rem auto 1rem;
-    padding:2.25rem 1.5rem 2rem;
+    padding:2.75rem 1.75rem 2.5rem;
     border:1px solid var(--cyan-dim);
     border-radius:var(--radius);
     background:linear-gradient(160deg, var(--cyan-faint), transparent 65%);
@@ -3612,13 +3612,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .connect-panel-title{
     font-family:var(--font-display); font-weight:700;
-    font-size:clamp(19px, 3.6vw, 26px); letter-spacing:0.04em;
+    font-size:clamp(24px, 4.6vw, 34px); letter-spacing:0.04em;
     color:var(--white); text-shadow:0 0 12px var(--cyan-glow);
   }
   .connect-panel-error .connect-panel-title{ color:var(--red); text-shadow:0 0 10px var(--red-glow); }
   .connect-panel-sub{
-    font-family:var(--font-body); font-size:12px; letter-spacing:0.03em;
-    color:var(--grey); margin-top:0.6rem; line-height:1.5;
+    font-family:var(--font-body); font-size:15px; letter-spacing:0.03em;
+    color:var(--grey); margin:0.75rem auto 0; line-height:1.6; max-width:420px;
   }
   /* Real QR, scanned with the Xaman app — the desktop login flow's own
      page instead of a separate popup/tab (reported live). White padding
@@ -3626,22 +3626,22 @@ const SWAP_HTML = `<!DOCTYPE html>
      the raw PNG has none of its own) inside the same glowing-border
      language every other panel/card on the site already uses. */
   .connect-panel-qr{
-    margin-top:1.5rem;
-    padding:0.75rem;
+    margin-top:2rem;
+    padding:1.1rem;
     background:#fff;
     border:1px solid var(--cyan-dim);
     border-radius:var(--radius);
     box-shadow:0 0 20px var(--cyan-glow);
     display:inline-block;
   }
-  .connect-panel-qr img{ display:block; width:180px; height:180px; }
-  .connect-panel-actions{ margin-top:1.5rem; display:flex; flex-direction:column; align-items:center; gap:0.6rem; }
+  .connect-panel-qr img{ display:block; width:280px; height:280px; }
+  .connect-panel-actions{ margin-top:1.75rem; display:flex; flex-direction:column; align-items:center; gap:0.75rem; }
   .connect-panel-btn{
     display:inline-block; font-family:var(--font-body); font-weight:600;
-    font-size:13px; letter-spacing:0.05em; text-transform:uppercase;
+    font-size:15px; letter-spacing:0.05em; text-transform:uppercase;
     text-decoration:none; color:#000; background:var(--cyan);
     border:1px solid var(--cyan); border-radius:var(--radius);
-    padding:0.85em 1.75em; cursor:pointer;
+    padding:1em 2.1em; cursor:pointer;
     box-shadow:0 0 14px var(--cyan-glow);
     transition:transform 0.15s, box-shadow 0.15s;
   }
@@ -3653,6 +3653,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      AGAIN so it reads as the obvious next real step, not fine print. */
   .connect-panel-btn-outline{ background:transparent; color:var(--cyan); box-shadow:none; }
   .connect-panel-btn-outline:hover{ background:var(--cyan-faint); box-shadow:0 0 14px var(--cyan-glow); }
+  /* CANCEL backs all the way out of the sign request (see cancelAuthorize)
+     — red like every other destructive/abort action on the site, distinct
+     from the cyan "keep going" actions (TROUBLE SCANNING's manual link,
+     CONNECT/TRY AGAIN) it sits next to. */
+  .connect-panel-btn-cancel{ background:transparent; color:var(--red); border-color:var(--red); box-shadow:none; }
+  .connect-panel-btn-cancel:hover{ background:rgba(255,0,60,0.12); box-shadow:0 0 14px var(--red-glow); }
 
   /* ---- trait stack filter panel (active filter = cyan) ---- */
   .traits-block{
@@ -9812,7 +9818,7 @@ const SWAP_HTML = `<!DOCTYPE html>
              'waiting' state fills this in instead of ever opening a
              separate popup/tab now. Starts hidden — every other mode
              (!DLE/C0NNECT!NG/ERR0R) has nothing to show here. -->
-        <div class="connect-panel-qr" id="connectPanelQr" style="display:none;"><img id="connectPanelQrImg" alt="SCAN W!TH XAMAN"></div>
+        <div class="connect-panel-qr" id="connectPanelQr" style="display:none;"><img id="connectPanelQrImg" alt="S!GN !NT0 Σκύλλα W!TH XAMAN"></div>
         <div class="connect-panel-actions" id="connectPanelActions">
           <button type="button" class="connect-panel-btn" id="connectScyllaBtn">CONNECT <span style="text-transform:none;">Σκύλλα</span></button>
         </div>
@@ -16113,7 +16119,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // the page reachable so a failed attempt isn't a dead end) — see the
     // body.xaman-signing-in rules, which take the whole bar/page out of
     // view and let this one panel take over the full screen instead.
-    document.body.classList.toggle('xaman-signing-in', mode === 'connecting' || mode === 'waiting');
+    document.body.classList.toggle('xaman-signing-in', mode === 'connecting' || mode === 'waiting' || mode === 'error');
     if (mode === 'idle'){
       el.connectPanelTitle.innerHTML = 'CONNECT <span style="text-transform:none;">Σκύλλα</span>';
       el.connectPanelSub.textContent = 'S!GN !N W!TH XAMAN T0 TRADE, L!ST, AND TRACK Y0UR FL0CK.';
@@ -16121,7 +16127,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else if (mode === 'connecting'){
       el.connectPanelTitle.textContent = 'Σκύλλα://S!GNAL';
       el.connectPanelSub.textContent = 'C0NNECT!NG...';
-      el.connectPanelActions.innerHTML = '<button type="button" class="connect-panel-btn connect-panel-btn-outline" id="connectCancelBtn">CANCEL</button>';
+      el.connectPanelActions.innerHTML = '<button type="button" class="connect-panel-btn connect-panel-btn-cancel" id="connectCancelBtn">CANCEL</button>';
     } else if (mode === 'waiting'){
       // Desktop shows the real QR straight in this panel now (reported
       // live: "make the xaman login pop up on page, instead of in
@@ -16131,7 +16137,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // mid-redirect to the Universal Link by the time this even paints,
       // so it keeps the plain "waiting" copy + tap-through link instead.
       var showQr = opts.qr && window.innerWidth > 700;
-      el.connectPanelTitle.textContent = showQr ? 'SCAN W!TH XAMAN' : 'WA!T!NG F0R S!GNATURE';
+      el.connectPanelTitle.innerHTML = showQr ? 'S!GN !NT0 <span style="text-transform:none;">Σκύλλα</span> W!TH XAMAN' : 'WA!T!NG F0R S!GNATURE';
       el.connectPanelSub.textContent = showQr ? '0PEN THE XAMAN APP AND SCAN THE C0DE BEL0W.' : '';
       if (showQr){
         el.connectPanelQrImg.src = opts.qr;
@@ -16139,7 +16145,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       el.connectPanelActions.innerHTML = '<a href="' + escapeHtml(opts.url) + '" target="_blank" rel="noopener" class="connect-panel-btn connect-panel-btn-outline xaman-manual-link">' +
         (showQr ? 'TR0UBLE SCANN!NG? 0PEN L!NK !NSTEAD' : '<span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE') + '</a>' +
-        '<button type="button" class="connect-panel-btn connect-panel-btn-outline" id="connectCancelBtn">CANCEL</button>';
+        '<button type="button" class="connect-panel-btn connect-panel-btn-cancel" id="connectCancelBtn">CANCEL</button>';
     } else if (mode === 'error'){
       el.connectPanelTitle.textContent = opts.title || 'ERR://C0NNECT!0N FA!LED';
       el.connectPanelSub.textContent = opts.sub || 'S0METH!NG BR0KE ON THE WAY T0 XAMAN.';
