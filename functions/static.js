@@ -4092,14 +4092,15 @@ const SWAP_HTML = `<!DOCTYPE html>
        was reading as oversized once it was sitting fixed at the bottom
        of every scroll. Bumped back up again (reported live: "make the
        button text way bigger") — 16px was reading as too small once it
-       had settled in at the bottom of the page; ellipsis (below) still
-       catches F!LTER BY TRA!TS ▾ if it ever runs out of room at this
-       size on a narrow phone. */
+       had settled in at the bottom of the page. Trimmed back down again,
+       just a little (reported live) — ellipsis (below) still catches
+       F!LTER BY TRA!TS ▾ if it ever runs out of room at this size on a
+       narrow phone. */
     font-weight:800;
-    font-size:22px;
+    font-size:18px;
     letter-spacing:0.06em;
     text-transform:uppercase;
-    padding:0.7em 0.35em;
+    padding:0.6em 0.3em;
     cursor:pointer;
     white-space:nowrap;
     overflow:hidden;
@@ -4113,7 +4114,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      content the way S0RT BY/F!LTER BY TRA!TS's own dropdowns do. Font
      size/weight now come from the shared .bottom-controls-btn base (all
      three read the same size) — this only overrides layout/spacing. */
-  .bottom-controls-btn-top{ flex:0 0 auto; padding:0.9em 1.4em; }
+  .bottom-controls-btn-top{ flex:0 0 auto; padding:0.75em 1.1em; }
   /* Own bottom padding on the page's actual scrollable content so the
      last row of result cards never sits underneath this fixed bar with
      no way to see it — #screenBrowse is the shared DATABASE/PλWS grid
