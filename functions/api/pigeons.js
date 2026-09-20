@@ -808,10 +808,28 @@ export async function onRequestGet(context) {
     // payload.js — only clears the entry when the lookup definitively
     // found nothing, never on a rate-limit blip.
     if (result.scyllaListing && tradeCfg) {
-      const offersOrNull = await fetchNftSellOffersOrNull(detailId);
-      if (offersOrNull !== null && !findCollectionOffer(offersOrNull, coll.key)) {
+      // Same ownership-mismatch self-heal the LISTED browse-grid's own
+      // background sample already does (see its own comment on
+      // currentOwnerById) — reported live: Pigeon #1921 stuck permanently
+      // "listed" after being transferred away, because this page only
+      // ever checked "does the offer still exist on-ledger," never
+      // whether the NFT's real current owner still matches who created
+      // it. XRPL never auto-cancels a seller's own NFTokenCreateOffer
+      // just because the NFT later changed hands (see findPigeonsOffer's
+      // own excludeOwner comment), so that stale-but-present offer used
+      // to pass the check below forever. item.owner is already fetched
+      // above (fetchDeeptideNftDetail), no extra call needed for this half.
+      const listingEntry = scyllaListingsMap[detailId];
+      const ownerMismatch = listingEntry && listingEntry.seller && item.owner && item.owner !== listingEntry.seller;
+      if (ownerMismatch) {
         context.waitUntil(removeSwapListing(env.coin, detailId, coll.key));
         result.scyllaListing = null;
+      } else {
+        const offersOrNull = await fetchNftSellOffersOrNull(detailId);
+        if (offersOrNull !== null && !findCollectionOffer(offersOrNull, coll.key)) {
+          context.waitUntil(removeSwapListing(env.coin, detailId, coll.key));
+          result.scyllaListing = null;
+        }
       }
     }
     // Per-marketplace listings — each platform has its own separate sell

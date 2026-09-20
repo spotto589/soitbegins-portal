@@ -1,6 +1,6 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNftsChecked,
-  PIGEON_ISSUER, PIGEON_TAXON, isTransferable, swapOfferSourceMemo
+  PIGEON_ISSUER, PIGEON_TAXON, isTransferable, swapOfferSourceMemo, getSwapListingsMap
 } from '../_shared.js';
 
 const XRPL_ADDRESS_RE = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
@@ -68,6 +68,20 @@ export async function onRequestPost(context) {
   }
   if (!isTransferable(nft)) {
     return new Response(JSON.stringify({ error: 'not_transferable' }), { status: 400 });
+  }
+
+  // Reported live: a Pigeon transferred away while still listed left a
+  // real, permanently stale Σκύλλα sell offer on-ledger (#1921) — XRPL
+  // never auto-cancels a seller's own NFTokenCreateOffer just because the
+  // NFT later changed hands (see findPigeonsOffer's own comment), and
+  // DELIST only ever lets the ORIGINAL seller (who no longer holds it)
+  // cancel their own offer, so nobody could clear it again once
+  // transferred. Blocked outright here instead — refuse the transfer
+  // while a real Σκύλλα listing is still live rather than letting this
+  // happen again with no way to detect it.
+  const listingsMap = env.coin ? await getSwapListingsMap(env.coin) : {};
+  if (listingsMap[nftId]) {
+    return new Response(JSON.stringify({ error: 'currently_listed' }), { status: 409 });
   }
 
   const txjson = {

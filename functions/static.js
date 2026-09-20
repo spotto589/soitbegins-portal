@@ -16783,6 +16783,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       no_session: 'C0NNECT Y0UR WALLET F!RST.',
       invalid_session: 'S!GNAL EXP!RED — REC0NNECT Y0UR WALLET.',
       not_listed: 'TH!S P!GE0N !S N0T CURRENTLY L!STED.',
+      currently_listed: 'TH!S P!GE0N !S CURRENTLY L!STED — DEL!ST !T F!RST BEF0RE TRANSFERR!NG.',
       cannot_buy_own_listing: 'Y0U CAN\\'T BUY Y0UR 0WN L!ST!NG.',
       not_listed_by_you: 'TH!S P!GE0N !SN\\'T L!STED BY Y0UR WALLET.',
       lookup_failed: 'S!GNAL !NTERFERENCE — C0ULDN\\'T VER!FY THE L!ST!NG. TRY AGA!N.',
