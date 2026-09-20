@@ -2316,8 +2316,35 @@ const SWAP_HTML = `<!DOCTYPE html>
      verbatim (solid accent-coloured glow at rest + a magenta-leaning
      RGB-split/skew burst + its own signal-tear overlay), not the plain
      topbar-terminal-glitch fringe. */
-  .scylla-system-header{ text-align:center; margin:0.25rem 0 0.75rem; }
+  .scylla-system-header{ position:relative; text-align:center; margin:0.25rem 0 0.75rem; }
   .scylla-system-header-title{ position:relative; display:inline-block; font-family:'Jura',var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
+  /* S!GN 0UT/CHANGE ACC0UNT — top right of the header (reported live),
+     pinned independently of the title's own centered inline-block so a
+     longer/shorter title (PR0F!LES vs MESSAGE !NB0X vs SYSTEM) never
+     shifts these. Small/quiet by design — real actions, but not the
+     header's own main event. */
+  .scylla-header-account-actions{ position:absolute; top:0.15rem; right:0; display:flex; gap:0.5rem; z-index:2; }
+  .scylla-header-action-btn{
+    background:rgba(0,0,0,0.35);
+    border:1px solid var(--border-mid);
+    color:var(--grey-dim);
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.08em;
+    padding:0.4em 0.8em;
+    text-transform:uppercase;
+    white-space:nowrap;
+    cursor:pointer;
+    border-radius:var(--radius);
+    transition:color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .scylla-header-action-btn:hover{ color:var(--cyan); border-color:var(--cyan-dim); background:var(--cyan-faint); }
+  .scylla-header-action-btn-signout:hover{ color:var(--magenta); border-color:var(--magenta-dim); background:var(--magenta-faint); }
+  /* Stacks below the (now centered, unobstructed) title on narrow screens
+     rather than crowding beside it or forcing the title off-center. */
+  @media (max-width:640px){
+    .scylla-header-account-actions{ position:static; justify-content:center; margin-top:0.6rem; }
+  }
   /* MY NFTS' own scoped-collection header (see openMyNftsCollectionDatabase)
      doubles as the real, visible way back out of it — there was previously
      no way back at all short of the mobile back button or clicking Σκύλλα
@@ -2764,7 +2791,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      column headers don't map onto. */
   .sale-header-row{
     display:grid;
-    grid-template-columns:236px 150px 1fr 1fr 140px;
+    grid-template-columns:256px 150px 1fr 1fr 140px;
     gap:1rem;
     padding:0 0.6rem 0.6rem;
     font-family:var(--font-mono);
@@ -2788,9 +2815,12 @@ const SWAP_HTML = `<!DOCTYPE html>
        that badge is ~149px wide on its own. Grid doesn't clip an
        overflowing child, so it spilled ~30px into the price column next
        to it — reported live as the price sitting right on top of the
-       pigeon number. 236px covers the widest real number with room to
-       spare. Matches .sale-header-row's own columns above exactly. */
-    grid-template-columns:236px 150px 1fr 1fr 140px;
+       pigeon number. 256px covers the widest real number with room to
+       spare, widened again alongside .sale-thumb's own bump to 92px
+       (reported live: "make just the thumbnail bigger") so that room
+       doesn't shrink. Matches .sale-header-row's own columns above
+       exactly. */
+    grid-template-columns:256px 150px 1fr 1fr 140px;
     align-items:center;
     gap:1rem;
     padding:1.1rem 0.6rem;
@@ -2806,7 +2836,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      JS) — reset link styling since .sale-thumb/.sale-num-box already set
      their own look. */
   .sale-thumb-wrap{ display:flex; align-items:center; gap:0.6rem; min-width:0; text-decoration:none; color:inherit; }
-  .sale-thumb{ flex:0 0 auto; width:72px; height:72px; border:1px solid var(--border-dim); }
+  .sale-thumb{ flex:0 0 auto; width:92px; height:92px; border:1px solid var(--border-dim); }
   .sale-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
   /* Every text field on a sale row (P!GE0N #, PR!CE, FR0M/T0, T!ME) now
      shares this one font-size (reported live as the mix of sizes — 16/28/
@@ -2835,7 +2865,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sale-from, .sale-to{ font-family:var(--font-body); font-size:15px; color:var(--white); text-transform:none; text-align:center; min-width:0; overflow-wrap:anywhere; }
   .sale-from a, .sale-to a{ color:var(--white); text-decoration:underline; cursor:pointer; }
   .sale-from a:hover, .sale-to a:hover{ color:var(--cyan); }
-  .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:15px; text-align:right; }
+  .sale-time{ font-family:var(--font-body); color:var(--white); text-transform:uppercase; font-size:15px; text-align:right; display:flex; align-items:center; justify-content:flex-end; gap:0.5rem; }
+  /* Straight to this sale's own transaction on B!TH0MP (reported live) —
+     same target/rel and URL shape every other real TXN link on the site
+     already uses, just an icon-only arrow here since the T!ME column has
+     no room for a full "B!TH0MP" label next to it. */
+  .sale-tx-link{ color:var(--cyan); text-decoration:none; font-size:15px; line-height:1; opacity:0.8; }
+  .sale-tx-link:hover{ opacity:1; text-shadow:0 0 6px var(--cyan-glow); }
   /* Icon-left/details-right list layout, not a full stack — a plain
      top-to-bottom stack (the previous version) read as an unrelated pile
      of text lines rather than one grouped row, especially once the tall
@@ -2863,7 +2899,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     .sale-thumb-wrap{ grid-area:thumb; flex-direction:column; align-items:flex-start; gap:0.4rem; align-self:start; }
     .sale-num-box{ padding:0.3em 0.5em; }
     .sale-price-cell{ grid-area:price; align-self:end; }
-    .sale-time{ grid-area:time; text-align:left; }
+    .sale-time{ grid-area:time; text-align:left; justify-content:flex-start; }
   }
 
   /* ---- target node header (owner-scope) — SCYLLA / MAGENTA system ---- */
@@ -3218,7 +3254,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-right:1px solid var(--border-mid);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:15px;
+    font-size:18px;
     letter-spacing:0.03em;
     padding:0.85em 1.1em;
     text-transform:uppercase;
@@ -3233,8 +3269,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* The (1-1515)-style range — its own line underneath the edition name
      now (reported live), same "smaller sub-line under the main label"
-     shape as .wallet-box-sub. */
-  .edition-btn-range{ display:inline-block; margin-top:0.25em; font-size:0.8em; opacity:0.75; }
+     shape as .wallet-box-sub. Kept close to the main label's own size
+     (reported live: "make this text larger" — 0.8em of the old 15px read
+     as an afterthought) rather than scaling down as sharply as before. */
+  .edition-btn-range{ display:inline-block; margin-top:0.25em; font-size:0.85em; opacity:0.8; }
   .edition-btn:last-child{ border-right:none; }
   .edition-btn:hover{ color:var(--cyan); background:var(--cyan-faint); }
   /* Purple, not magenta — this reflects the currently-viewed collection's
@@ -3260,7 +3298,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        "2ND ED!T!0N (1516-3015)" cut off on the right). width:100% here
        is what makes flex:1 1 0 below mean anything. */
     .edition-toggle{ width:100%; }
-    .edition-btn{ width:auto; flex:1 1 0; padding:0.7em 0.3em; font-size:11px; }
+    .edition-btn{ width:auto; flex:1 1 0; padding:0.7em 0.3em; font-size:13px; }
     /* SORT BY/ADD TRAITS centering on mobile lives with
        .db-config-traits-group's own definition above (near line 828), not
        here — two sessions independently fixed the same issue and this
@@ -5956,25 +5994,31 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-decoration:none;
     color:inherit;
     background:rgba(0,0,0,0.3);
-    border:1px solid var(--border-mid);
+    border:2px solid var(--border-mid);
     border-radius:var(--radius);
     padding:1.75rem 1.25rem 1.5rem;
     transition:border-color 0.15s ease, transform 0.15s ease;
   }
-  .th-podium-card:hover{ border-color:var(--cyan); transform:translateY(-2px); }
+  .th-podium-card:hover{ transform:translateY(-2px); }
   .th-podium-top{ display:flex; flex-direction:column; align-items:center; gap:0.6rem; }
-  .th-podium-card .th-thumb{ width:84px; height:84px; }
-  .th-podium-card-1 .th-thumb{ width:112px; height:112px; }
+  .th-podium-card .th-thumb{ width:100px; height:100px; border-width:2px; }
+  .th-podium-card-1 .th-thumb{ width:132px; height:132px; border-width:3px; border-color:#f5c518; }
+  .th-podium-card-2 .th-thumb{ border-color:#d5d5d5; }
+  .th-podium-card-3 .th-thumb{ border-color:#cd7f32; }
   .th-podium-card .signature-banner-row{ margin:0.85rem auto; max-width:100%; }
   .th-podium-card .signature-banner-avatar{ width:48px; height:48px; }
   .th-podium-card .signature-banner-username{ font-size:18px; }
   .th-podium-card-1 .signature-banner-avatar{ width:60px; height:60px; }
   .th-podium-card-1 .signature-banner-username{ font-size:21px; }
-  /* #1 gets real extra presence, not just a bigger rank number — taller
-     padding (reads as literally standing on a taller podium step) plus
-     gold border/glow, same "the winner should look like the winner"
-     reasoning #2/#3's silver/bronze rank colour below carries too. */
-  .th-podium-card-1{ padding:2.5rem 1.5rem 2rem; border-color:rgba(245,197,24,0.5); box-shadow:0 0 30px rgba(245,197,24,0.18); }
+  /* #1/#2/#3 now get their medal colour on the card border + glow itself,
+     not just the rank number (reported live: "make it clear coloured 1st
+     2nd 3rd" — #2/#3 previously looked identical to any other card, only
+     #1 stood out). #1 also keeps real extra presence beyond colour alone —
+     taller padding (reads as literally standing on a taller podium step)
+     — the same "the winner should look like the winner" reasoning. */
+  .th-podium-card-1{ padding:2.5rem 1.5rem 2rem; border-color:#f5c518; box-shadow:0 0 30px rgba(245,197,24,0.25); }
+  .th-podium-card-2{ border-color:#d5d5d5; box-shadow:0 0 20px rgba(213,213,213,0.16); }
+  .th-podium-card-3{ border-color:#cd7f32; box-shadow:0 0 20px rgba(205,127,50,0.16); }
   .th-podium-rank{ font-family:var(--font-display); font-weight:700; font-size:38px; color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); }
   .th-podium-card-1 .th-podium-rank{ font-size:52px; color:#f5c518; text-shadow:0 0 12px rgba(245,197,24,0.55); }
   .th-podium-card-2 .th-podium-rank{ color:#d5d5d5; text-shadow:0 0 6px rgba(213,213,213,0.4); }
@@ -5982,7 +6026,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   .th-podium-stats{ font-family:var(--font-mono); display:flex; flex-direction:column; gap:0.25rem; margin-top:0.4rem; }
   .th-podium-amt{ font-size:20px; font-weight:700; color:var(--white); }
   .th-podium-card-1 .th-podium-amt{ font-size:24px; }
-  .th-podium-pct{ font-size:14px; letter-spacing:0.04em; color:var(--grey-dim); text-transform:uppercase; }
+  /* Bumped up from a dim, easy-to-miss 14px grey label (reported live:
+     "show the % of supply more clearly") — this is the stat that actually
+     sells "become a top holder", so it reads at a glance now instead of
+     as fine print underneath the count. */
+  .th-podium-pct{ font-size:17px; font-weight:700; letter-spacing:0.04em; color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); text-transform:uppercase; }
   @media (max-width:600px){
     /* #2/#1/#3 side-by-side genuinely doesn't fit three real identity
        cards at once below ~600px — stacked, #1 still first/biggest by
@@ -5999,22 +6047,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     justify-content:center;
     gap:0.5rem;
     width:100%;
-    background:rgba(0,0,0,0.18);
-    border:1px solid var(--border-mid);
+    background:var(--cyan-faint);
+    border:2px solid var(--cyan);
     border-radius:var(--radius);
-    padding:0.75em 1em;
+    padding:1em 1.5em;
     margin-bottom:1rem;
-    color:var(--white);
+    color:var(--cyan);
+    text-shadow:0 0 6px var(--cyan-glow);
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:16px;
     font-weight:700;
     letter-spacing:0.08em;
     text-transform:uppercase;
     cursor:pointer;
     transition:border-color 0.15s ease, background 0.15s ease;
   }
-  .th-expand-btn:hover, .th-expand-btn.open{ border-color:#fff; background:rgba(0,0,0,0.3); }
-  .th-expand-arrow{ font-size:11px; opacity:0.8; transition:transform 0.15s ease; }
+  .th-expand-btn:hover, .th-expand-btn.open{ border-color:#fff; color:#fff; text-shadow:none; background:rgba(0,0,0,0.3); }
+  .th-expand-arrow{ font-size:13px; opacity:0.9; transition:transform 0.15s ease; }
   .th-expand-btn.open .th-expand-arrow{ transform:rotate(180deg); }
   /* Column titles above the list, sharing .th-row's own grid-template-
      columns so every title lines up exactly over its column — same
@@ -9779,6 +9828,20 @@ const SWAP_HTML = `<!DOCTYPE html>
              Σκύλλα://!DENT!TY code block already uses it. -->
         <div class="scylla-system-header">
           <div class="scylla-system-header-title" id="scyllaSystemHeaderTitle">Σκύλλα://SYSTEM</div>
+          <!-- Account actions, top right of the header (reported live) —
+               CHANGE ACC0UNT just reuses startAuthorize (same real Xaman
+               sign-in the wallet-switch dropdown's own "+ S!GN !NT0
+               AN0THER ACC0UNT" row already calls); S!GN 0UT is the first
+               real frontend hookup for /api/disconnect (see its own
+               handler further down), which existed server-side already
+               but had no button anywhere calling it. Starts hidden — only
+               worth showing once MY_WALLET actually names a signed-in
+               session (see the init check near el.scyllaSignOutBtn's own
+               listener). -->
+          <div class="scylla-header-account-actions" id="scyllaHeaderAccountActions" style="display:none;">
+            <button type="button" class="scylla-header-action-btn" id="scyllaChangeAccountBtn">CHANGE ACC0UNT</button>
+            <button type="button" class="scylla-header-action-btn scylla-header-action-btn-signout" id="scyllaSignOutBtn">S!GN 0UT</button>
+          </div>
         </div>
         <!-- PR0F!LE B0X GR!D — a real menu of boxed destinations (same real
              .flock-account-box visual language the old FL0CK-era boxes
@@ -12032,6 +12095,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistTitle','profileWatchlistClearFilter',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thPodium','thExpandBtn','thExpandLabel','thFullListWrap','scyllaSystemHeaderTitle',
+   'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
    'crownPeriodSelect','crownLeaderboardList',
    'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileAddressCopyBtn','profileAddressBithompLink','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
    'profileBannerEditBtn','profileFeaturedEditBtn','profileThemeEditBtn','profilePrivacyEditBtn',
@@ -16381,6 +16445,34 @@ const SWAP_HTML = `<!DOCTYPE html>
   window.addEventListener('scroll', function(){
     if (el.walletSwitchDropdown.style.display === 'block') closeWalletSwitchDropdown();
   }, { passive: true });
+  // ---- S!GN 0UT / CHANGE ACC0UNT — Σκύλλα://SYSTEM header, top right
+  // (reported live). MY_WALLET only ever reflects the server-rendered
+  // session at page load (every sign-in already reloads to /static to
+  // pick up a fresh one, see pollSigninStatus's own 'signed' branch), so
+  // this shows/hides once here rather than wiring into every place a
+  // session could theoretically change. ----
+  if (MY_WALLET) el.scyllaHeaderAccountActions.style.display = '';
+  // Same real Xaman sign-in as the wallet-switch dropdown's own
+  // "+ S!GN !NT0 AN0THER ACC0UNT" row — the server only ever holds one
+  // active pigeon_session at a time, so authorizing a different account
+  // here simply replaces this one, no separate sign-out step needed first.
+  el.scyllaChangeAccountBtn.addEventListener('click', function(){
+    startAuthorize();
+  });
+  // /api/disconnect already existed server-side (clears the session
+  // cookie) but had no button anywhere actually calling it. Reloads in
+  // place afterward, same "let the server-rendered MY_WALLET drive
+  // everything" approach a fresh sign-in's own redirect already relies
+  // on, rather than manually unwinding every piece of client state that
+  // reads MY_WALLET across this whole file.
+  el.scyllaSignOutBtn.addEventListener('click', function(){
+    el.scyllaSignOutBtn.disabled = true;
+    fetch('/api/disconnect', { method: 'POST' }).then(function(){
+      window.location.reload();
+    }).catch(function(){
+      window.location.reload();
+    });
+  });
   function loadTrustlineLoginState(){
     if (!MY_WALLET){
       el.pigeonsBarLoggedOut.style.display = '';
@@ -16436,6 +16528,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!MY_WALLET) return;
     showTab('mypigeons', true);
     switchProfileTab('mynfts');
+    // V!EW MY P!GE0NS is a fixed shortcut to P!GE0NS specifically (not
+    // whichever collection you're currently browsing), so it walks straight
+    // through the MY NFTS picker into that collection's real scoped grid —
+    // the same openMyNftsCollectionDatabase a manual click on the P!GE0NS
+    // card in that picker already triggers — instead of leaving you on the
+    // picker to click it yourself.
+    openMyNftsCollectionDatabase('pigeons');
     scrollActiveTabPanelIntoView('mypigeons');
   }
   el.showMyPigeonsBtn.addEventListener('click', openMyNftsPage);
@@ -19751,7 +19850,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       '<div class="sale-to">' +
         (s.buyer ? '<a data-wallet="' + escapeHtml(s.buyer) + '" data-short="' + escapeHtml(s.buyerShort || s.buyer) + '">' + walletTagHtml(s.buyer, s.buyerShort) + '</a>' : '?') +
       '</div>' +
-      '<div class="sale-time">' + escapeHtml(when) + '</div>' +
+      '<div class="sale-time"><span>' + escapeHtml(when) + '</span>' +
+        (s.txHash ? '<a class="sale-tx-link" href="https://bithomp.com/explorer/' + escapeHtml(s.txHash) + '" target="_blank" rel="noopener" title="V!EW TRANSACT!0N 0N B!TH0MP">↗</a>' : '') +
+      '</div>' +
     '</div>';
   }
   function loadMoreSales(){
@@ -19806,6 +19907,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // of the way back up sidesteps whatever that is.
   document.addEventListener('click', function(e){
     if (!el.salesArea.contains(e.target)) return;
+    // B!TH0MP TXN link — native new-tab navigation only (target="_blank"),
+    // never the row's own openDetail underneath it (see the row fallback
+    // at the bottom of this handler).
+    if (e.target.closest('.sale-tx-link')) return;
     var walletLink = e.target.closest('.sale-from a, .sale-to a');
     if (walletLink){
       if (e.ctrlKey || e.metaKey) return; // let the real href open a new tab natively
