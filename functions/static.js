@@ -596,6 +596,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-top:0.3em;
   }
   .title-online{ color:var(--green); text-shadow:0 0 6px var(--green-glow); }
+  /* :: N0T F0UND — signed-out state of the same heading (reported live),
+     same "state colour" language ONLINE's own green already uses. */
+  .title-notfound{ color:var(--red); text-shadow:0 0 6px var(--red-glow); }
   /* $PIGEONS numbers — same green as the header's ONLINE, wherever a real
      $PIGEONS-denominated figure is shown (NFT count, balance, rate,
      calculator, floor). */
@@ -1293,9 +1296,9 @@ const SWAP_HTML = `<!DOCTYPE html>
      handler — clicking it with no session goes straight into a real
      Σκύλλα/Xaman login) — logged-out state spells that out directly on
      the tab instead of making you click in to discover a CONNECT
-     button. Logged-in state instead shows pigeon/offer counts, same
-     magenta Σκύλλα theme either way. */
-  .flock-tab-login{ color:var(--magenta); }
+     button (see .flock-tab-login-btn further down). Logged-in state
+     instead shows pigeon/offer counts, same magenta Σκύλλα theme either
+     way. */
   /* Σκύλλα itself always reads as the brand's own magenta/pink, active tab
      or not — was falling back to the plain .tab-btn colour (grey, or cyan
      only while this tab happened to be active), which made the count next
@@ -8790,6 +8793,28 @@ const SWAP_HTML = `<!DOCTYPE html>
      showed, now a small line under the big heading instead of being the
      whole button's content. */
   .global-top-scylla-status{ font-size:12px; letter-spacing:0.06em; color:var(--grey-dim); margin-top:0.15rem; }
+  /* Signed-out only (reported live: "put the log in button next to this")
+     — heading + L0G !N sit side by side instead of the logged-in state's
+     stacked heading/status-line layout. */
+  .global-top-scylla-text-loggedout{ flex-direction:row; align-items:center; gap:0.6rem; }
+  .global-top-scylla-text-loggedout .global-top-scylla-status{ margin-top:0; }
+  /* Real button look (not an actual <button> — see the JS's own comment
+     on why) so this reads as the obvious next step next to :: N0T F0UND,
+     not a plain status label like the logged-in line it replaces. */
+  .flock-tab-login-btn{
+    display:inline-block;
+    font-family:var(--font-body);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--magenta);
+    border:1px solid var(--magenta);
+    border-radius:var(--radius);
+    padding:0.35em 0.9em;
+    transition:background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .global-top-scylla-btn:hover .flock-tab-login-btn{ background:var(--magenta-faint); box-shadow:0 0 8px var(--magenta-glow); }
   @media (max-width:700px){
     #globalTopBar .tab-btn{ padding:0.35em 0.6rem; }
     #globalTopBarLogo{ width:22px; }
@@ -16395,13 +16420,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   // left out rather than shown as a misleading 0.
   function updateFlockTabLabel(){
     if (!MY_WALLET){
-      // The big Σκύλλα://S!GNAL::0NL!NE heading right above this already
-      // carries the brand name (see .global-top-scylla-btn) — no need to
-      // repeat "Σκύλλα" again in this small status line underneath it,
-      // just the real thing it's actually telling you.
-      el.flockTabLabel.innerHTML = '<span class="flock-tab-login">L0G !N</span>';
+      // Σκύλλα://S!GNAL :: N0T F0UND instead of :: 0NL!NE (reported live)
+      // — no real signature on file yet, so the signal genuinely isn't
+      // there. Real button-styled span next to it (not a <button> — this
+      // whole heading already lives inside .global-top-scylla-btn, itself
+      // a real <button>, and a nested one is invalid HTML browsers
+      // silently "fix" by breaking the DOM — see the wallet-switch
+      // dropdown's own identical comment elsewhere in this file) laid out
+      // in a row via .global-top-scylla-text's own logged-out modifier
+      // class below. Clicking it still just bubbles up to the same real
+      // topTabs 'mypigeons' + !MY_WALLET handler every other click on
+      // this whole bar already goes through — no separate wiring needed.
+      el.globalTopBarHeading.innerHTML = 'Σκύλλα://S!GNAL :: <span class="title-notfound">N0T F0UND</span>';
+      el.scyllaWalletWrap.classList.add('global-top-scylla-text-loggedout');
+      el.flockTabLabel.innerHTML = '<span class="flock-tab-login-btn">L0G !N</span>';
       return;
     }
+    el.globalTopBarHeading.innerHTML = 'Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span>';
+    el.scyllaWalletWrap.classList.remove('global-top-scylla-text-loggedout');
     // Was three separate " :: "-joined text segments ("Σκύλλα :: 60
     // P!GE0NS :: 3 0FFERS") — confirmed live this wrapped to 2-3 broken
     // lines inside the mobile tab's own boxed grid (not enough room for
