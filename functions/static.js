@@ -1201,12 +1201,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   .stat-tile-pigeons:hover{ background:linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.7), rgba(var(--collection-accent-2-rgb),0.8)); border-color:var(--collection-accent); }
   .stat-tile-pigeons .stat-label{ color:#fff; opacity:0.9; }
   .stat-tile-pigeons .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.8); font-weight:700; }
-  /* FL00R page is just the one $PIGEONS tile now (reported live: "we dont
-     need to advertise xrp cafe or deeptide anywhere" — the XRP.CAFE/
-     DEEPT!DE floor tiles that used to sit either side of it are gone) —
-     let it fill the row instead of sitting small and alone at the default
-     25% flex-basis every other (4-tile) page uses. */
-  .stats-strip-floor .stat-tile:only-child{ flex-basis:100%; max-width:320px; }
+  /* Marketplace floor tiles — kept in the banner only (reported live:
+     "we can keep the ones in the banner only" — every OTHER XRP.CAFE/
+     DEEPT!DE buy-link/advertising surface elsewhere on the site stays
+     removed). Two different shades of blue/magenta (their own brand-ish
+     colours) so FL00R :: XRP.CAFE and FL00R :: DEEPT!DE read as distinct
+     sources, using the site's own two accent colours — XRP.CAFE cyan,
+     DEEPT!DE magenta. */
+  .stat-tile-xrpcafe{
+    border-color:var(--cyan-dim);
+    background:linear-gradient(160deg, var(--cyan-faint), rgba(8,9,11,0.8));
+  }
+  .stat-tile-xrpcafe:hover{ background:linear-gradient(160deg, var(--cyan-faint), rgba(8,9,11,0.9)); border-color:var(--cyan); }
+  .stat-tile-xrpcafe .stat-label{ color:#fff; opacity:0.9; }
+  .stat-tile-xrpcafe .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.6); font-weight:700; }
+  .stat-tile-deeptide{
+    border-color:var(--magenta-dim);
+    background:linear-gradient(160deg, var(--magenta-faint), rgba(8,9,11,0.8));
+  }
+  .stat-tile-deeptide:hover{ background:linear-gradient(160deg, var(--magenta-faint), rgba(8,9,11,0.9)); border-color:var(--magenta); }
+  .stat-tile-deeptide .stat-label{ color:#fff; opacity:0.9; }
+  .stat-tile-deeptide .stat-value{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,0.6); font-weight:700; }
   /* Deliberate placeholder tile/link, real tracking is a later system */
   .stat-tile-soon{ opacity:0.55; border-style:dashed; }
   .stat-tile-soon:hover{ opacity:0.85; }
@@ -9708,7 +9723,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button class="stats-carousel-arrow" id="statsPrevBtn" aria-label="PREV!0US">◂</button>
       <div class="stats-carousel-viewport">
       <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
+        <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
         <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY L!STED THR0UGH SCYLLA"><div class="stat-label" id="statScyllaListedLabel">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+        <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
       </div>
       <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
         <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span></div></div>
@@ -12200,7 +12217,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileCoinsEditBtn','profileCoinsEditPopover','profileCoinsEditList',
    'salesModal','salesCloseBtn','openSalesBtn',
    'swapOffersPanelWrap','swapOffersList',
-   'statItems','statHolders','statVolume','statListed',
+   'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount','statScyllaListedLabel',
    'statsCarousel','statsCarouselDots','statsPrevBtn','statsNextBtn',
    'statTraded24h','statVolume24h','statSalesTile','statSales24h',
@@ -23836,6 +23853,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.statHolders.textContent = data.holders !== null && data.holders !== undefined ? data.holders.toLocaleString() : '—';
       el.statVolume.textContent = data.totalVolumeXrp !== null && data.totalVolumeXrp !== undefined ? fmtXrp(data.totalVolumeXrp) + ' XRP' : '—';
       el.statListed.textContent = data.listedPercent !== null && data.listedPercent !== undefined ? data.listedPercent + '%' : '—';
+      el.statFloorDeeptide.textContent = data.deeptideFloorXrp !== null && data.deeptideFloorXrp !== undefined ? fmtXrp(data.deeptideFloorXrp) + ' XRP' : '—';
+      el.statFloorXrpCafe.textContent = data.xrpCafeFloorXrp !== null && data.xrpCafeFloorXrp !== undefined ? fmtXrp(data.xrpCafeFloorXrp) + ' XRP' : '—';
+      if (data.deeptideBuyUrl) el.statFloorDeeptideTile.href = data.deeptideBuyUrl;
+      if (data.xrpCafeUrl) el.statFloorXrpCafeTile.href = data.xrpCafeUrl;
       el.statScyllaListedCount.innerHTML = data.scyllaFloorPigeons !== null && data.scyllaFloorPigeons !== undefined ? greenNum(data.scyllaFloorPigeons.toLocaleString()) + ' ' + COLLECTION_META[state.collection].tokenLabel : 'N0T L!STED';
       el.statTraded24h.textContent = data.traded24hCount !== null && data.traded24hCount !== undefined ? data.traded24hCount.toLocaleString() : '—';
       el.statVolume24h.textContent = data.volume24hXrp !== null && data.volume24hXrp !== undefined ? fmtXrp(data.volume24hXrp) + ' XRP' : '—';
