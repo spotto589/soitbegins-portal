@@ -2257,13 +2257,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      used by .scylla-boot-static and every plain-mode local canvas) —
      reported live as too fast specifically here, next to text people
      actually read. */
-  /* Masked to a border/frame now, not a full-bleed backdrop (reported
-     live: "i like the way the static looks but its too much of the
-     screen, it needs to be a border background of some sort, with the
-     buttons the main part of the page") — same canvas/opacity/animation
-     as before, just faded to fully transparent through the middle
-     (where the header + box grid actually live) and left at full
-     strength only in a band around the panel's own edges. */
+  /* Was masked down to just a border/frame for a while (radial-gradient
+     transparent through the middle, static only at the panel's own
+     edges) — reverted back to the normal full-panel static (reported
+     live: "add the normal static background... instead of the black" —
+     the masked-out middle was reading as flat black behind the header/
+     content instead of the same live static every other screen shows). */
   .scylla-nav-static{
     position:absolute;
     inset:0;
@@ -2272,8 +2271,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     opacity:0.9;
     mix-blend-mode:screen;
     animation:static-shake 1.1s steps(2) infinite;
-    -webkit-mask-image:radial-gradient(ellipse 72% 68% at 50% 50%, transparent 40%, black 88%);
-    mask-image:radial-gradient(ellipse 72% 68% at 50% 50%, transparent 40%, black 88%);
   }
   .scylla-nav-panel::before{
     content:'';
@@ -2424,16 +2421,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     75%{ transform:translateX(-2px); }
     90%{ transform:translateX(1px); }
   }
-  /* Real-data footer readout — see the HTML's own comment on
-     #scyllaNavReadout for why every value here is real, never invented. */
+  /* Real-data readout — see the HTML's own comment on #scyllaNavReadout
+     for why the value here is real, never invented. Moved from a footer
+     stat block to a single top-left command-prompt line (reported live:
+     "put this top left as if its the command prompt typing in") — order:-1
+     pulls it before .scylla-system-header/.profile-box-grid in this flex
+     column without touching its actual DOM position (still hidden on
+     MY NFTS specifically, see switchProfileTab). Left-aligned on purpose,
+     unlike the centered title below it. */
   /* Same tear+RGB-split combo as the header title above (reported live as
      the other favourite effect) — an independent 9s cycle, deliberately
      offset from the header's own 7s so the two never glitch in perfect
-     unison (reads as two live things, not one mirrored effect). Brings
-     the one remaining plain-text element on this panel in line with
-     everything else instead of looking untouched by comparison. */
-  .scylla-nav-readout{ position:relative; margin-top:0.5rem; padding-top:0.9rem; border-top:1px dashed var(--border-mid); font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; color:var(--grey-dim); line-height:1.7; animation:scylla-readout-glitch 9s ease-in-out infinite; }
+     unison (reads as two live things, not one mirrored effect). */
+  .scylla-nav-readout{ position:relative; order:-1; text-align:left; margin-bottom:0.6rem; font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; color:var(--grey-dim); animation:scylla-readout-glitch 9s ease-in-out infinite; }
   .scylla-nav-readout-line span{ color:var(--cyan); }
+  .scylla-nav-readout-prompt{ color:var(--cyan); font-weight:700; }
+  /* Blinking block cursor — same "actively typing" language the SCAN
+     pages' own .scan-cursor already established elsewhere on the site. */
+  .scylla-nav-readout-cursor{ display:inline-block; width:7px; height:1em; margin-left:3px; background:var(--cyan); vertical-align:-2px; animation:scylla-readout-cursor-blink 0.9s step-end infinite; }
+  @keyframes scylla-readout-cursor-blink{ 0%, 50%{ opacity:1; } 51%, 100%{ opacity:0; } }
   @keyframes scylla-readout-glitch{
     0%, 94%, 100%{ text-shadow:none; transform:translate(0,0); }
     94.5%{ text-shadow:-2px 0 var(--cyan), 2px 0 var(--magenta); transform:translate(-1px,0); }
@@ -2520,6 +2526,45 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-search-row-text{ display:flex; flex-direction:column; min-width:0; }
   .profile-search-row-name{ font-family:var(--font-mono); font-size:13px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .profile-search-row-wallet{ font-family:var(--font-mono); font-size:11px; color:var(--grey); word-break:break-all; }
+  /* PR0F!LES hub (reported live: "theres only three options here... make
+     search profile a full search bar in the middle of the page, with
+     view my profile and edit my profile underneath") — the search bar is
+     the page's main event now, real V!EW/ED!T buttons underneath it, both
+     sized up to actually fit a page that only ever has these three
+     things on it. */
+  .profiles-hub{ max-width:560px; margin:0 auto; }
+  .profiles-hub-search-wrap{ margin-bottom:1.5rem; }
+  /* Layers on top of .profile-search-input's own base look (shared with
+     the MESSAGES compose/new-recipient inputs — see below) rather than
+     replacing it, so this stays visually "the same kind of field," just
+     bigger. */
+  .profiles-hub-search-input{ font-size:17px; font-weight:400; padding:1.1em 1.3em; margin-bottom:0; }
+  .profiles-hub-search-input:focus{ box-shadow:0 0 14px var(--cyan-glow); }
+  .profiles-hub-actions{ display:flex; flex-direction:column; gap:0.85rem; }
+  .profiles-hub-btn{
+    width:100%;
+    background:rgba(0,0,0,0.25);
+    border:1px solid var(--border-mid);
+    color:var(--white);
+    font-family:var(--font-mono);
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    padding:1.1em 1.5em;
+    border-radius:var(--radius);
+    cursor:pointer;
+    text-transform:uppercase;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  }
+  .profiles-hub-btn:hover{
+    border-color:rgb(var(--profile-accent-rgb, 61,243,236));
+    color:rgb(var(--profile-accent-rgb, 61,243,236));
+    background:rgba(var(--profile-accent-rgb, 61,243,236),0.1);
+    transform:translateY(-1px);
+  }
+  @media (min-width:520px){
+    .profiles-hub-actions{ flex-direction:row; gap:1rem; }
+  }
   /* MESSAGES — real wallet-to-wallet D1-backed messaging (see
      functions/api/messages-*.js), wired straight into !NB0X instead of
      living as its own /messages page any more. Needs the MESSAGES_DB D1
@@ -9934,19 +9979,31 @@ const SWAP_HTML = `<!DOCTYPE html>
            panel instead of as plain unstyled content below it — see the
            CSS's own comment on .scylla-nav-panel > .profile-tab-panel for
            how each one now shares the panel's fixed-height flex budget. -->
-      <!-- PR0F!LES — three real destinations (reported live), none active
-           on open (same "wait for a real click before showing anything"
-           rule loadProfilePanel's own comment already states for this
-           exact box). V!EW MY PR0F!LE never opens a sub-view here at
-           all — it calls openWalletProfile(MY_WALLET,...) directly (see
+      <!-- PR0F!LES hub (reported live: "theres only three options here...
+           make search profile a full search bar in the middle of the
+           page, with view my profile and edit my profile underneath") —
+           SEARCH PR0F!LE is no longer a 3rd button gating a hidden
+           sub-view, it's a real always-on search bar right here (hits the
+           profileSearch mode on /api/pigeons as you type — username or
+           wallet substring match, see pigeons.js). V!EW MY PR0F!LE still
+           never opens a sub-view at all, it calls
+           openWalletProfile(MY_WALLET,...) directly (see
            switchProfilesSubView in the JS), the exact same real
            #screenProfile every other wallet click on the site already
-           opens. ED!T/SEARCH toggle the two sub-views below. -->
+           opens. ED!T is still the one real toggle — it replaces this
+           whole hub with profilesEditView below (see switchProfilesSubView),
+           there's genuinely no room to show both a big identity-edit card
+           and the search hub at once. -->
       <div class="profile-tab-panel" id="profileTabPanelProfiles" style="display:none;">
-        <div class="profile-mode-toggle" id="profilesSubNav">
-          <button type="button" class="profile-mode-btn" data-profiles-view="view">V!EW MY PR0F!LE</button>
-          <button type="button" class="profile-mode-btn" data-profiles-view="edit">ED!T MY PR0F!LE</button>
-          <button type="button" class="profile-mode-btn" data-profiles-view="search">SEARCH PR0F!LE</button>
+        <div class="profiles-hub" id="profilesSubNav">
+          <div class="profiles-hub-search-wrap">
+            <input type="text" class="profile-search-input profiles-hub-search-input" id="profileSearchInput" placeholder="SEARCH BY NAME 0R WALLET ADDRESS..." autocomplete="off">
+            <div class="profile-search-results" id="profileSearchResults"></div>
+          </div>
+          <div class="profiles-hub-actions">
+            <button type="button" class="profiles-hub-btn" data-profiles-view="view">V!EW MY PR0F!LE</button>
+            <button type="button" class="profiles-hub-btn" data-profiles-view="edit">ED!T MY PR0F!LE</button>
+          </div>
         </div>
         <!-- ED!T MY PR0F!LE — the exact identity card this whole tab used
              to show permanently above the box grid (avatar/username/quote/
@@ -9998,17 +10055,10 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
           </div>
         </div>
-        <!-- SEARCH PR0F!LE — a plain search bar, hitting the profileSearch
-             mode on /api/pigeons (username or wallet substring match, see
-             pigeons.js) as you type. Picking a result opens that wallet's
-             real PR0F!LE screen (openWalletProfile — see
-             renderProfileSearchResults in the JS), the exact same
-             destination every other wallet link on the site now opens
-             too. -->
-        <div id="profilesSearchView" style="display:none;">
-          <input type="text" class="profile-search-input" id="profileSearchInput" placeholder="SEARCH BY NAME 0R WALLET ADDRESS..." autocomplete="off">
-          <div class="profile-search-results" id="profileSearchResults"></div>
-        </div>
+        <!-- Picking a search result opens that wallet's real PR0F!LE
+             screen (openWalletProfile — see renderProfileSearchResults in
+             the JS), the exact same destination every other wallet link
+             on the site now opens too. -->
         <button type="button" class="profile-holdings-viewmore" id="profilesBackBtn">← BACK</button>
       </div>
       <!-- MESSAGE !NB0X — its own real full page now (reported live), same
@@ -12096,7 +12146,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileBoxGrid','profileTabOffersBadge','profileTabMessagesBadge','profileTabPanelMessages','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
    'profileTabPanelMyNfts','myNftsPicker','myNftsPickerGrid','myNftsGrid','myNftsGridBackBtn','myNftsGridStatus','myNftsGridItems','myNftsBackBtn',
    'myNftsSearchInput','myNftsSearchClearBtn','myNftsEditionToggle','myNftsSortSelect','myNftsTraitCatSelect','myNftsTraitValSelect','myNftsTraitAddBtn','myNftsTraitChips',
-   'profileTabPanelProfiles','profilesSubNav','profilesEditView','profilesSearchView','profilesBackBtn','profileSearchInput','profileSearchResults','profileMessagesBack','profileOffersBack',
+   'profileTabPanelProfiles','profilesSubNav','profilesEditView','profilesBackBtn','profileSearchInput','profileSearchResults','profileMessagesBack','profileOffersBack',
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistTitle','profileWatchlistClearFilter',
@@ -22649,29 +22699,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     e.preventDefault();
     handleProfileBoxActivate(btn);
   });
-  // PR0F!LES' own 3-way sub-nav — V!EW MY PR0F!LE never opens a sub-view
-  // here at all, it leaves this panel entirely for the real #screenProfile
+  // PR0F!LES hub — V!EW MY PR0F!LE never opens a sub-view here at all, it
+  // leaves this panel entirely for the real #screenProfile
   // (openWalletProfile), same destination every other wallet click on the
-  // site already opens. ED!T/SEARCH just toggle which of the two relocated
-  // sub-views (profilesEditView/profilesSearchView) is visible — null
-  // (nothing picked) is the neutral state switchProfileTab resets to on
-  // every entry/exit, same "wait for a real click" rule the box grid
+  // site already opens. SEARCH is always on (the hub's own search bar,
+  // never a toggled sub-view any more), so ED!T is the only real toggle
+  // left — it swaps the whole hub out for profilesEditView. null (nothing
+  // picked) is the neutral "just the hub" state switchProfileTab resets to
+  // on every entry/exit, same "wait for a real click" rule the box grid
   // itself already follows.
   function switchProfilesSubView(view){
     el.profilesEditView.style.display = view === 'edit' ? '' : 'none';
-    el.profilesSearchView.style.display = view === 'search' ? '' : 'none';
-    el.profilesSubNav.querySelectorAll('.profile-mode-btn').forEach(function(btn){
-      btn.classList.toggle('active', btn.getAttribute('data-profiles-view') === view);
-    });
-    if (view === 'search'){
-      el.profileSearchInput.focus();
-    } else {
-      el.profileSearchInput.value = '';
-      el.profileSearchResults.innerHTML = '';
-    }
+    el.profilesSubNav.style.display = view === 'edit' ? 'none' : '';
   }
   el.profilesSubNav.addEventListener('click', function(e){
-    var btn = e.target.closest('.profile-mode-btn[data-profiles-view]');
+    var btn = e.target.closest('.profiles-hub-btn[data-profiles-view]');
     if (!btn) return;
     var view = btn.getAttribute('data-profiles-view');
     if (view === 'view'){
@@ -22944,9 +22986,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   // lands (picks up a chosen N0DE C0DE preference, if any).
   function renderScyllaNavReadout(){
     var nodeLine = MY_WALLET ? computeNodeCode(MY_WALLET, profileCache[MY_WALLET] && profileCache[MY_WALLET].nodeCode) : '--';
+    // SESS!0N ACT!VE :: N P!GE0NS line removed (reported live). Restyled
+    // as a single command-prompt line (reordered to the panel's top left
+    // via .scylla-nav-readout's own order:-1 — see its CSS comment) with
+    // a real ">" prompt + blinking cursor instead of a plain footer stat.
     el.scyllaNavReadout.innerHTML =
-      '<div class="scylla-nav-readout-line">S!GNAL N0DE // <span>' + escapeHtml(nodeLine) + '</span></div>' +
-      '<div class="scylla-nav-readout-line">SESS!0N ACT!VE :: <span>' + state.collectionSizeApprox + '</span> P!GE0NS</div>';
+      '<div class="scylla-nav-readout-line"><span class="scylla-nav-readout-prompt">&gt;</span> S!GNAL N0DE // <span>' + escapeHtml(nodeLine) + '</span><span class="scylla-nav-readout-cursor"></span></div>';
   }
   // ---- PR0F!LE ED!T popup — one shared overlay, re-paned per field
   // (reported live as wanting the inline SAVE rows and the two picker
