@@ -2313,18 +2313,25 @@ const SWAP_HTML = `<!DOCTYPE html>
      verbatim (solid accent-coloured glow at rest + a magenta-leaning
      RGB-split/skew burst + its own signal-tear overlay), not the plain
      topbar-terminal-glitch fringe. */
-  .scylla-system-header{ position:relative; text-align:center; margin:0.25rem 0 0.75rem; }
+  .scylla-system-header{ text-align:center; margin:0.25rem 0 0.75rem; }
   .scylla-system-header-title{ position:relative; display:inline-block; font-family:'Jura',var(--font-mono); font-size:clamp(28px, 6vw, 40px); font-weight:700; letter-spacing:0.08em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 6px rgba(var(--profile-accent-rgb, 61,243,236),0.5); animation:scylla-header-glitch 7s ease-in-out infinite; }
   /* S!GN 0UT/CHANGE ACC0UNT — top right of the header (reported live),
      pinned independently of the title's own centered inline-block so a
      longer/shorter title (PR0F!LES vs MESSAGE !NB0X vs SYSTEM) never
      shifts these. Small/quiet by design — real actions, but not the
      header's own main event. */
-  .scylla-header-account-actions{ position:absolute; top:0.15rem; right:0; display:flex; gap:0.5rem; z-index:2; }
+  /* Pinned to the panel's own top-right corner now (reported live: "move
+     these into the top corner") — positioned off .scylla-nav-panel itself
+     (see its own position:relative), not the header row, and stacked so
+     the pair reads as one compact corner cluster rather than a wide bar
+     under the title. */
+  .scylla-header-account-actions{ position:absolute; top:0.75rem; right:0.75rem; display:flex; flex-direction:column; align-items:flex-end; gap:0.4rem; z-index:2; }
+  /* CHANGE ACC0UNT — cyan at rest now, not just on hover (reported live:
+     "make sign out red and change account cyan"). */
   .scylla-header-action-btn{
     background:rgba(0,0,0,0.35);
-    border:1px solid var(--border-mid);
-    color:var(--grey-dim);
+    border:1px solid var(--cyan-dim);
+    color:var(--cyan);
     font-family:var(--font-mono);
     font-size:11px;
     letter-spacing:0.08em;
@@ -2333,14 +2340,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     white-space:nowrap;
     cursor:pointer;
     border-radius:var(--radius);
-    transition:color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    transition:color 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
   }
-  .scylla-header-action-btn:hover{ color:var(--cyan); border-color:var(--cyan-dim); background:var(--cyan-faint); }
-  .scylla-header-action-btn-signout:hover{ color:var(--magenta); border-color:var(--magenta-dim); background:var(--magenta-faint); }
-  /* Stacks below the (now centered, unobstructed) title on narrow screens
-     rather than crowding beside it or forcing the title off-center. */
+  .scylla-header-action-btn:hover{ background:var(--cyan-faint); box-shadow:0 0 8px var(--cyan-glow); }
+  /* S!GN 0UT — red at rest, same reasoning. */
+  .scylla-header-action-btn-signout{ color:var(--red); border-color:var(--red); }
+  .scylla-header-action-btn-signout:hover{ background:rgba(232,56,79,0.12); box-shadow:0 0 8px var(--red-glow); }
+  /* Back to a plain horizontal pair below the (still centered) title on
+     narrow screens — a corner pin only makes sense once there's an
+     actual wide corner to pin it to. */
   @media (max-width:640px){
-    .scylla-header-account-actions{ position:static; justify-content:center; margin-top:0.6rem; }
+    .scylla-header-account-actions{ position:static; flex-direction:row; justify-content:center; margin-top:0.6rem; }
   }
   /* MY NFTS' own scoped-collection header (see openMyNftsCollectionDatabase)
      doubles as the real, visible way back out of it — there was previously
@@ -2532,28 +2542,30 @@ const SWAP_HTML = `<!DOCTYPE html>
      the page's main event now, real V!EW/ED!T buttons underneath it, both
      sized up to actually fit a page that only ever has these three
      things on it. */
-  .profiles-hub{ max-width:560px; margin:0 auto; }
-  .profiles-hub-search-wrap{ margin-bottom:1.5rem; }
+  .profiles-hub{ max-width:640px; margin:0 auto; text-align:center; }
+  .profiles-hub-search-wrap{ margin-bottom:1.75rem; }
   /* Layers on top of .profile-search-input's own base look (shared with
      the MESSAGES compose/new-recipient inputs — see below) rather than
      replacing it, so this stays visually "the same kind of field," just
-     bigger. */
-  .profiles-hub-search-input{ font-size:17px; font-weight:400; padding:1.1em 1.3em; margin-bottom:0; }
+     bigger. Centered text too now (reported live: "centre the search bar
+     and the buttons, make them all of it way bigger"). */
+  .profiles-hub-search-input{ font-size:22px; font-weight:400; text-align:center; padding:1.2em 1.4em; margin-bottom:0; }
   .profiles-hub-search-input:focus{ box-shadow:0 0 14px var(--cyan-glow); }
-  .profiles-hub-actions{ display:flex; flex-direction:column; gap:0.85rem; }
+  .profiles-hub-actions{ display:flex; flex-direction:column; gap:1rem; }
   .profiles-hub-btn{
     width:100%;
     background:rgba(0,0,0,0.25);
     border:1px solid var(--border-mid);
     color:var(--white);
     font-family:var(--font-mono);
-    font-size:16px;
+    font-size:20px;
     font-weight:700;
     letter-spacing:0.08em;
-    padding:1.1em 1.5em;
+    padding:1.3em 1.5em;
     border-radius:var(--radius);
     cursor:pointer;
     text-transform:uppercase;
+    text-align:center;
     transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease, transform 0.15s ease;
   }
   .profiles-hub-btn:hover{
@@ -2563,7 +2575,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     transform:translateY(-1px);
   }
   @media (min-width:520px){
-    .profiles-hub-actions{ flex-direction:row; gap:1rem; }
+    .profiles-hub-actions{ flex-direction:row; gap:1.25rem; }
   }
   /* MESSAGES — real wallet-to-wallet D1-backed messaging (see
      functions/api/messages-*.js), wired straight into !NB0X instead of
@@ -15870,7 +15882,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             '<div class="my-offer-row-buyer">FR0M ' + walletTagHtml(top.buyer, top.buyerShort) + '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + ' ' + escapeHtml(itemMeta.tokenLabel) + '</div>' +
+        '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(top.price, itemCollection)) + '</div>' +
         '<div class="my-offer-row-actions">' +
           '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '" data-collection="' + escapeHtml(itemCollection) + '">ACCEPT</button>' +
           '<button class="highest-offer-btn highest-offer-decline decline-offer-btn" data-offerid="' + escapeHtml(top.offerId) + '">DECL!NE</button>' +
@@ -18591,7 +18603,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             '<div class="my-offer-row-buyer">T0 ' + walletTagHtml(item.ownerWallet, item.ownerShort) + (countdown ? ' :: ' + escapeHtml(countdown) : '') + '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(item.price)) + ' ' + escapeHtml(itemMeta.tokenLabel) + '</div>' +
+        '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(item.price, itemCollection)) + '</div>' +
         '<div class="my-offer-row-actions">' +
           '<button class="highest-offer-btn cancel-my-offer-btn cancel-outgoing-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(item.offerId) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '" data-price="' + escapeHtml(item.price) + '" data-collection="' + escapeHtml(itemCollection) + '">CANCEL</button>' +
         '</div>' +
@@ -23831,8 +23843,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   // still needs its exact full value via fmtPigeons above; this is
   // purely a display cleanup for the one place a long comma-grouped
   // number was cluttering a small button ("BUY N0W :: 123K $P!GE0NS").
-  function fmtPigeonsCompact(n){
-    return compactPigeonsNumber(n) + ' ' + COLLECTION_META[state.collection].tokenLabel;
+  // collectionKey optional — defaults to whatever's currently being
+  // browsed (every original call site), but 0FFERS RECE!VED/0UTG0!NG
+  // 0FFERS merge offers across every tradeable collection now (see
+  // loadOffersReceived's own comment) and need THAT item's real
+  // collection here, not just whichever one DATABASE happens to be on —
+  // otherwise a $PHN!X offer could show "$P!GE0NS" while browsing that
+  // collection elsewhere. Callers there also used to append their own
+  // itemMeta.tokenLabel on top of this function's own (reported live:
+  // "$PIGEONS comes up twice in offers received") — this is the one and
+  // only place the token label gets appended now.
+  function fmtPigeonsCompact(n, collectionKey){
+    var meta = COLLECTION_META[collectionKey || state.collection];
+    return compactPigeonsNumber(n) + ' ' + meta.tokenLabel;
   }
   // Display-only mirror of computeMarketplaceFee() in _shared.js (1.023%)
   // — no active caller right now (myPigeonOffersHtml's own fee-breakdown
@@ -24110,6 +24133,26 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       ctx.putImageData(imageData, 0, 0);
     }
+    // Same exact per-pixel density/structure as plain drawStatic() above —
+    // every pixel gets its own random brightness, no sparse flecks-on-
+    // black — just recoloured (reported live: "make it look exactly like
+    // the black and white static... but cyan and pink"), each pixel a
+    // random 50/50 pick between a cyan and a magenta tint at that shade.
+    function drawColorStatic(){
+      var w = canvas.width, h = canvas.height;
+      var imageData = ctx.createImageData(w, h);
+      var buffer = imageData.data;
+      for (var i = 0; i < buffer.length; i += 4){
+        var shade = Math.random() * 255;
+        if (Math.random() < 0.5){
+          buffer[i] = 0; buffer[i+1] = shade; buffer[i+2] = shade; // cyan
+        } else {
+          buffer[i] = shade; buffer[i+1] = 0; buffer[i+2] = shade; // magenta
+        }
+        buffer[i+3] = 255;
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
     // magentaP/cyanP/shadeMax control density ("grainy-ness"), frameSkip
     // controls redraw speed (1 = every frame/~60fps, 3 = every 3rd/~20fps).
     function drawGlitchStatic(magentaP, cyanP, shadeMax){
@@ -24144,6 +24187,14 @@ const SWAP_HTML = `<!DOCTYPE html>
         } else if (mode === 'glitch-calm'){
           glitchFrameSkip = (glitchFrameSkip + 1) % 3;
           if (glitchFrameSkip === 0) drawGlitchStatic(0.02, 0.045, 14);
+        } else if (mode === 'color-calm'){
+          // Same throttled ~20fps redraw 'glitch-calm' already used here
+          // (reported live as too grainy/fast at a full-rate flicker next
+          // to text people are reading) — dense full-pixel colour noise
+          // redrawing every single frame would be even busier than the
+          // sparse flecks that comment was originally about.
+          glitchFrameSkip = (glitchFrameSkip + 1) % 3;
+          if (glitchFrameSkip === 0) drawColorStatic();
         } else {
           drawStatic();
         }
@@ -24261,7 +24312,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // boot screen's own density/speed.
   startStaticCanvas(document.getElementById('scyllaNavStaticBg'), function(){
     return state.activeTab === 'mypigeons';
-  }, 'glitch-calm');
+  }, 'color-calm');
 })();
 </script>
 </body>
