@@ -3585,6 +3585,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-family:var(--font-body); font-size:12px; letter-spacing:0.03em;
     color:var(--grey); margin-top:0.6rem; line-height:1.5;
   }
+  /* Real QR, scanned with the Xaman app — the desktop login flow's own
+     page instead of a separate popup/tab (reported live). White padding
+     around the code itself (QR readers need real quiet-zone margin, and
+     the raw PNG has none of its own) inside the same glowing-border
+     language every other panel/card on the site already uses. */
+  .connect-panel-qr{
+    margin-top:1.5rem;
+    padding:0.75rem;
+    background:#fff;
+    border:1px solid var(--cyan-dim);
+    border-radius:var(--radius);
+    box-shadow:0 0 20px var(--cyan-glow);
+    display:inline-block;
+  }
+  .connect-panel-qr img{ display:block; width:180px; height:180px; }
   .connect-panel-actions{ margin-top:1.5rem; display:flex; flex-direction:column; align-items:center; gap:0.6rem; }
   .connect-panel-btn{
     display:inline-block; font-family:var(--font-body); font-weight:600;
@@ -9795,6 +9810,14 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="connect-panel-icon"><span></span><span></span><span></span><span></span><span></span></div>
         <div class="connect-panel-title" id="connectPanelTitle">CONNECT <span style="text-transform:none;">Σκύλλα</span></div>
         <div class="connect-panel-sub" id="connectPanelSub">S!GN !N W!TH XAMAN T0 TRADE, L!ST, AND TRACK Y0UR FL0CK.</div>
+        <!-- Desktop login QR (reported live: "make the xaman login pop up
+             on page, instead of in another box popup") — xaman-signin-
+             prepare.js already returns a real QR PNG (xummData.refs.qr_png)
+             that just went unused before; renderConnectPanel's own
+             'waiting' state fills this in instead of ever opening a
+             separate popup/tab now. Starts hidden — every other mode
+             (!DLE/C0NNECT!NG/ERR0R) has nothing to show here. -->
+        <div class="connect-panel-qr" id="connectPanelQr" style="display:none;"><img id="connectPanelQrImg" alt="SCAN W!TH XAMAN"></div>
         <div class="connect-panel-actions" id="connectPanelActions">
           <button type="button" class="connect-panel-btn" id="connectScyllaBtn">CONNECT <span style="text-transform:none;">Σκύλλα</span></button>
         </div>
@@ -12275,7 +12298,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenAchievements','achievementsBackBtn','achievementsBanner','achievementsGrid','achievementsTitlesRow','profileScreenAchievementsBtn',
    'summaryOwner','summaryList','summaryCount','offerPlaceholder','backFromSummaryBtn','continueToOfferBtn',
    'targetBar','targetBarLabel',
-   'connectPanel','connectPanelTitle','connectPanelSub','connectPanelActions',
+   'connectPanel','connectPanelTitle','connectPanelSub','connectPanelQr','connectPanelQrImg','connectPanelActions',
    'myPigeonsSortRow','myPigeonsSortSelect',
    'screenListResult','listResultThumb','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
    'buyConfirmModal','screenBuyConfirm','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn',
@@ -16136,6 +16159,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderConnectPanel(mode, opts){
     opts = opts || {};
     el.connectPanel.className = 'connect-panel' + (mode === 'error' ? ' connect-panel-error' : (mode === 'idle' ? '' : ' connect-panel-active'));
+    // Reset every render — only 'waiting' on a real desktop width (see its
+    // own branch below) ever shows this.
+    el.connectPanelQr.style.display = 'none';
     // Reported live as wanting nothing else on screen while an actual
     // Xaman request is in flight (CONNECT!NG/WA!T!NG only — not !DLE's own
     // first CONNECT button, and not ERR0R, which still needs the rest of
@@ -16152,9 +16178,22 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.connectPanelSub.textContent = 'C0NNECT!NG...';
       el.connectPanelActions.innerHTML = '<button type="button" class="connect-panel-btn connect-panel-btn-outline" id="connectCancelBtn">CANCEL</button>';
     } else if (mode === 'waiting'){
-      el.connectPanelTitle.textContent = 'WA!T!NG F0R S!GNATURE';
-      el.connectPanelSub.innerHTML = '';
-      el.connectPanelActions.innerHTML = '<a href="' + escapeHtml(opts.url) + '" target="_blank" rel="noopener" class="connect-panel-btn connect-panel-btn-outline xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE</a>' +
+      // Desktop shows the real QR straight in this panel now (reported
+      // live: "make the xaman login pop up on page, instead of in
+      // another box popup") instead of ever opening a separate popup/
+      // tab — see startAuthorize's own comment. Mobile has no use for a
+      // QR (you're already on the device your wallet lives on) and is
+      // mid-redirect to the Universal Link by the time this even paints,
+      // so it keeps the plain "waiting" copy + tap-through link instead.
+      var showQr = opts.qr && window.innerWidth > 700;
+      el.connectPanelTitle.textContent = showQr ? 'SCAN W!TH XAMAN' : 'WA!T!NG F0R S!GNATURE';
+      el.connectPanelSub.textContent = showQr ? '0PEN THE XAMAN APP AND SCAN THE C0DE BEL0W.' : '';
+      if (showQr){
+        el.connectPanelQrImg.src = opts.qr;
+        el.connectPanelQr.style.display = '';
+      }
+      el.connectPanelActions.innerHTML = '<a href="' + escapeHtml(opts.url) + '" target="_blank" rel="noopener" class="connect-panel-btn connect-panel-btn-outline xaman-manual-link">' +
+        (showQr ? 'TR0UBLE SCANN!NG? 0PEN L!NK !NSTEAD' : '<span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE') + '</a>' +
         '<button type="button" class="connect-panel-btn connect-panel-btn-outline" id="connectCancelBtn">CANCEL</button>';
     } else if (mode === 'error'){
       el.connectPanelTitle.textContent = opts.title || 'ERR://C0NNECT!0N FA!LED';
@@ -16254,28 +16293,28 @@ const SWAP_HTML = `<!DOCTYPE html>
     authorizeTimeoutTimer = setTimeout(function(){
       resetLoginButtons('error', { title: 'ERR://T!MED 0UT', sub: 'THE S!GN REQUEST T00K T00 L0NG — TRY AGA!N.' });
     }, AUTHORIZE_TIMEOUT_MS);
-    // Opened synchronously in the original click handler (a real user
-    // gesture) so it's never popup-blocked — same pattern every other
-    // Xaman sign flow in this app already uses.
-    signinXamanTab = openXamanPopup();
+    // No popup/new tab on desktop any more (reported live: "make the
+    // xaman login pop up on page, instead of in another box popup") —
+    // renderConnectPanel's own 'waiting' state renders the real QR
+    // (xaman-signin-prepare.js already returns it) straight into this
+    // same panel below instead. Mobile still needs a real top-level
+    // navigation to the Universal Link (see its own check below) — a QR
+    // to scan makes no sense there, you're already on the device your
+    // wallet lives on.
     fetch('/api/xaman-signin-prepare', { method: 'POST' })
       .then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
       .then(function(res){
         if (!res.ok || !res.data.ok){
           clearAuthorizeTimeout();
-          closeXamanTabAndFocus(signinXamanTab);
-          signinXamanTab = null;
           resetLoginButtons('error', { title: 'ERR://C0NNECT!0N FA!LED', sub: 'C0ULDN T REACH THE SERVER — TRY AGA!N.' });
           return;
         }
         signinUuid = res.data.uuid;
-        navigateXamanPopup(signinXamanTab, res.data.next.always);
-        renderConnectPanel('waiting', { url: res.data.next.always });
+        if (window.innerWidth <= 700) window.location.href = res.data.next.always;
+        renderConnectPanel('waiting', { url: res.data.next.always, qr: res.data.qr });
         pollSigninStatus();
       }).catch(function(){
         clearAuthorizeTimeout();
-        closeXamanTabAndFocus(signinXamanTab);
-        signinXamanTab = null;
         resetLoginButtons('error', { title: 'ERR://S!GNAL_L0ST', sub: 'TRY AGA!N.' });
       });
   }
