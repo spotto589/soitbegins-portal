@@ -2351,12 +2351,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      longer/shorter title (PR0F!LES vs MESSAGE !NB0X vs SYSTEM) never
      shifts these. Small/quiet by design — real actions, but not the
      header's own main event. */
-  /* Pinned to the panel's own top-right corner now (reported live: "move
+  /* Pinned to the panel's own top-right corner (reported live: "move
      these into the top corner") — positioned off .scylla-nav-panel itself
-     (see its own position:relative), not the header row, and stacked so
-     the pair reads as one compact corner cluster rather than a wide bar
-     under the title. */
-  .scylla-header-account-actions{ position:absolute; top:0.75rem; right:0.75rem; display:flex; flex-direction:column; align-items:flex-end; gap:0.4rem; z-index:2; }
+     (see its own position:relative), not the header row. Laid out
+     horizontally, side by side (reported live: "lay these horizontally
+     in the top right corner" — was stacked). */
+  .scylla-header-account-actions{ position:absolute; top:0.75rem; right:0.75rem; display:flex; flex-direction:row; align-items:center; gap:0.5rem; z-index:2; }
   /* CHANGE ACC0UNT — cyan at rest now, not just on hover (reported live:
      "make sign out red and change account cyan"). */
   .scylla-header-action-btn{
