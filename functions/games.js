@@ -97,6 +97,20 @@ function renderHub() {
         </div>
         <span class="game-tag soon">C0M!NG S00N</span>
       </div>
+      <div class="game-card soon">
+        <div>
+          <div class="game-title">TEXAS H0LD'EM P0KER VS</div>
+          <div class="game-sub">Head-to-head Hold'em, straight up against the house</div>
+        </div>
+        <span class="game-tag soon">C0M!NG S00N</span>
+      </div>
+      <div class="game-card soon">
+        <div>
+          <div class="game-title">BACCARAT</div>
+          <div class="game-sub">Player vs Banker — closest hand to 9 wins</div>
+        </div>
+        <span class="game-tag soon">C0M!NG S00N</span>
+      </div>
     </div>
 
     <a class="back-link" href="/static">&larr; BACK T0 Σκύλλα</a>

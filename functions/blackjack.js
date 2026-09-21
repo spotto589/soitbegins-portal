@@ -25,7 +25,8 @@ function renderPage() {
     min-height:100vh;
     display:flex;
     justify-content:center;
-    padding:4vh 4vw 6vh;
+    align-items:flex-start;
+    padding:1vh 3vw;
   }
   canvas#staticCanvas{ position:fixed; inset:0; width:100%; height:100%; z-index:0; opacity:0.4; pointer-events:none; }
   .glow-blob{ position:fixed; width:56vw; height:56vw; max-width:640px; max-height:640px; border-radius:50%; filter:blur(90px); z-index:0; pointer-events:none; opacity:0.16; }
@@ -35,20 +36,19 @@ function renderPage() {
   @keyframes glowDrift{ 0%,100%{ transform:translate(0,0) scale(1); } 50%{ transform:translate(3vw,-2vw) scale(1.18); } }
   .page{ max-width:980px; width:100%; position:relative; z-index:1; margin:0 auto; transition:max-width 0.35s ease; }
   /* "restrict it to the middle of the screen" once a hand is actually in
-     play — narrows the whole column instead of leaving the full 980px
-     table width now that the action lives beside the cards, not spread
-     across a bottom bar. Toggled in the client script alongside the
-     bet-row/action-card show/hide, never during the idle betting screen. */
+     play — narrows the whole column, back to full width on the betting
+     screen. Toggled in the client script alongside the bet-row/action-row
+     show/hide. */
   .page.in-hand{ max-width:640px; }
 
   .session-chip{
-    border:1px solid rgba(57,255,20,0.45); padding:0.7em 1.4em; text-align:right;
+    border:1px solid rgba(57,255,20,0.45); padding:0.45em 1.1em; text-align:right;
     background:rgba(57,255,20,0.05); cursor:pointer; font-family:inherit;
     display:block; transition:border-color 0.15s ease, background 0.15s ease;
   }
   .session-chip:hover{ border-color:#39ff14; background:rgba(57,255,20,0.1); }
-  .session-chip .bl{ font-size:11px; letter-spacing:0.2em; color:rgba(57,255,20,0.75); margin-bottom:0.25rem; }
-  .session-chip .sv{ font-size:22px; line-height:1; font-weight:700; display:block; }
+  .session-chip .bl{ font-size:10px; letter-spacing:0.2em; color:rgba(57,255,20,0.75); margin-bottom:0.2rem; }
+  .session-chip .sv{ font-size:18px; line-height:1; font-weight:700; display:block; }
   .session-chip .sv.pos{ color:#39ff14; text-shadow:0 0 8px rgba(57,255,20,0.5); }
   .session-chip .sv.neg{ color:#ff3fb0; text-shadow:0 0 8px rgba(255,63,176,0.5); }
   .session-chip .sv.zero{ color:rgba(232,232,232,0.7); text-shadow:none; }
@@ -96,26 +96,26 @@ function renderPage() {
   .strat-split{ background:rgba(61,243,236,0.18); color:#3df3ec; }
   @media (max-width:600px){ .strat-table{ font-size:9.5px; } .strat-table th, .strat-table td{ padding:0.3em 0.1em; } }
 
-  .top-row{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.75rem; gap:1rem; flex-wrap:wrap; }
+  .top-row{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.85rem; gap:1rem; flex-wrap:wrap; }
   .eyebrow{
     font-size:13px; letter-spacing:0.3em; color:#39ff14; text-transform:uppercase;
     opacity:0.85; text-shadow:0 0 6px rgba(57,255,20,0.5); margin-bottom:0.4rem;
   }
   h1{
-    font-size:clamp(28px,5vw,46px); letter-spacing:0.06em; color:#fff;
+    font-size:clamp(24px,4vw,36px); letter-spacing:0.06em; color:#fff;
     text-shadow:0 0 12px rgba(57,255,20,0.25);
   }
   .back-link{ font-size:12px; letter-spacing:0.1em; color:rgba(232,232,232,0.5); text-decoration:none; }
   .back-link:hover{ color:#39ff14; }
 
   .balance-chip{
-    border:1px solid rgba(255,176,0,0.45); padding:0.7em 1.4em; text-align:right;
+    border:1px solid rgba(255,176,0,0.45); padding:0.45em 1.1em; text-align:right;
     background:rgba(255,176,0,0.05);
   }
-  .balance-chip .bl{ font-size:11px; letter-spacing:0.2em; color:rgba(255,176,0,0.75); margin-bottom:0.25rem; }
-  .balance-chip .bv{ font-size:34px; line-height:1; color:#ffb000; text-shadow:0 0 10px rgba(255,176,0,0.55); font-weight:700; }
+  .balance-chip .bl{ font-size:10px; letter-spacing:0.2em; color:rgba(255,176,0,0.75); margin-bottom:0.2rem; }
+  .balance-chip .bv{ font-size:26px; line-height:1; color:#ffb000; text-shadow:0 0 10px rgba(255,176,0,0.55); font-weight:700; }
 
-  .marquee-frame{ position:relative; padding:18px; margin-bottom:1.5rem; }
+  .marquee-frame{ position:relative; padding:10px; margin-bottom:0.5rem; }
   .bulbs{ position:absolute; inset:0; pointer-events:none; }
   .bulb{
     position:absolute; width:7px; height:7px; margin:-3.5px 0 0 -3.5px; border-radius:50%;
@@ -123,7 +123,7 @@ function renderPage() {
   }
   @keyframes bulbPulse{ 0%,100%{ opacity:0.28; transform:scale(0.8); } 50%{ opacity:1; transform:scale(1.25); } }
   .table{
-    border:1px solid rgba(57,255,20,0.3); padding:2rem 2rem 1.5rem; min-height:340px;
+    border:1px solid rgba(57,255,20,0.3); padding:0.7rem 1.1rem 0.55rem; min-height:195px;
     background:rgba(57,255,20,0.02); position:relative; z-index:1;
     animation:tableGlow 7s ease-in-out infinite;
   }
@@ -138,7 +138,7 @@ function renderPage() {
      Three overlapping card-backs drifting independently, sped up (see
      .active below) for a couple seconds right when DEAL is clicked
      before the real dealing sequence actually starts. */
-  .shuffle-deck{ display:flex; align-items:center; justify-content:center; position:relative; width:118px; height:170px; margin:1.5rem auto; }
+  .shuffle-deck{ display:flex; align-items:center; justify-content:center; position:relative; width:100px; height:144px; margin:0.4rem auto; }
   .shuffle-deck .sc{
     position:absolute; inset:0; border:3px solid rgba(232,232,232,0.35); border-radius:10px;
     background:repeating-linear-gradient(45deg,#151515,#151515 5px,#1c1c1c 5px,#1c1c1c 10px);
@@ -158,33 +158,19 @@ function renderPage() {
     animation:shuffleLabelPulse 1.4s ease-in-out infinite;
   }
   @keyframes shuffleLabelPulse{ 0%,100%{ opacity:0.5; } 50%{ opacity:1; } }
-  /* "put the three options in a card template next to the cards dealt" —
-     actionRow is moved (not rebuilt) into whichever hand's .cards row is
-     currently active, so it flows as a flex sibling right after the last
-     dealt card, styled to match the cards around it. */
-  .action-card{
-    flex-direction:column; gap:0.6rem; justify-content:center; align-items:stretch;
-    width:150px; min-height:170px; border:3px solid rgba(255,63,208,0.55); border-radius:10px;
-    padding:0.9rem; background:rgba(255,63,208,0.05);
-  }
-  .action-card .gbtn{ width:100%; padding:0.65em 0.4em; font-size:13px; letter-spacing:0.08em; }
-  @media (max-width:700px){
-    .action-card{ width:126px; min-height:126px; padding:0.6rem; gap:0.4rem; }
-    .action-card .gbtn{ font-size:11px; padding:0.5em 0.3em; }
-  }
-  .hand-block{ margin-bottom:1.75rem; flex:1 1 320px; min-width:300px; text-align:center; }
+  .hand-block{ margin-bottom:0.4rem; flex:1 1 320px; min-width:300px; text-align:center; }
   .hand-block.dealer-block{ flex-basis:100%; }
   .hand-block.active-hand{ outline:1px dashed rgba(255,63,208,0.6); outline-offset:8px; }
-  .hand-label-row{ display:flex; align-items:center; justify-content:center; margin-bottom:0.5rem; }
-  .hand-label{ font-size:15px; letter-spacing:0.2em; color:rgba(232,232,232,0.6); }
-  .hand-label .bet-tag{ font-size:16px; font-weight:700; color:#ffb000; margin-left:0.6em; letter-spacing:0.08em; text-shadow:0 0 6px rgba(255,176,0,0.4); }
-  .hand-count{ font-size:38px; line-height:1; font-weight:700; color:#39ff14; text-shadow:0 0 10px rgba(57,255,20,0.55); margin-bottom:0.85rem; }
+  .hand-label-row{ display:flex; align-items:center; justify-content:center; margin-bottom:0.3rem; }
+  .hand-label{ font-size:14px; letter-spacing:0.2em; color:rgba(232,232,232,0.6); }
+  .hand-label .bet-tag{ font-size:15px; font-weight:700; color:#ffb000; margin-left:0.6em; letter-spacing:0.08em; text-shadow:0 0 6px rgba(255,176,0,0.4); }
+  .hand-count{ font-size:32px; line-height:1; font-weight:700; color:#39ff14; text-shadow:0 0 10px rgba(57,255,20,0.55); margin-bottom:0.5rem; }
   .hand-count.bust{ color:#ff3fb0; text-shadow:0 0 10px rgba(255,63,176,0.55); }
-  .cards{ display:flex; gap:1rem; flex-wrap:wrap; min-height:190px; justify-content:center; }
+  .cards{ display:flex; gap:0.6rem; flex-wrap:wrap; min-height:132px; justify-content:center; }
   .card{
-    width:118px; height:170px; border:3px solid rgba(232,232,232,0.4); border-radius:10px;
+    width:100px; height:144px; border:3px solid rgba(232,232,232,0.4); border-radius:9px;
     background:#111; display:flex; align-items:center; justify-content:center;
-    font-size:48px; font-weight:700; position:relative; overflow:hidden;
+    font-size:40px; font-weight:700; position:relative; overflow:hidden;
   }
   .card.hidden{ background:repeating-linear-gradient(45deg,#151515,#151515 5px,#1c1c1c 5px,#1c1c1c 10px); color:transparent; border-color:rgba(232,232,232,0.25) !important; box-shadow:none !important; }
   /* Dealing pace — a card lands with a little drop/settle instead of just
@@ -205,37 +191,37 @@ function renderPage() {
      exist — see CARD_ART in the client script below. Until CARD_ART has a
      real URL for a rank, cardEl() never creates this element at all. */
   .card-art{ width:100%; height:100%; object-fit:cover; }
-  .card-art-suit{ position:absolute; bottom:4px; right:7px; font-size:24px; text-shadow:0 0 3px #000, 0 0 3px #000; }
-  .card-art-rank{ position:absolute; top:2px; left:6px; font-size:24px; color:#fff; text-shadow:0 0 3px #000, 0 0 3px #000; }
+  .card-art-suit{ position:absolute; bottom:3px; right:6px; font-size:20px; text-shadow:0 0 3px #000, 0 0 3px #000; }
+  .card-art-rank{ position:absolute; top:1px; left:5px; font-size:20px; color:#fff; text-shadow:0 0 3px #000, 0 0 3px #000; }
 
-  .status-line{ text-align:center; font-size:16px; letter-spacing:0.1em; min-height:1.8em; margin-bottom:1.25rem; }
+  .status-line{ text-align:center; font-size:15px; letter-spacing:0.1em; min-height:1.5em; margin-bottom:0.6rem; }
   .status-line.win{ color:#39ff14; text-shadow:0 0 8px rgba(57,255,20,0.5); }
   .status-line.lose{ color:#ff3fb0; text-shadow:0 0 8px rgba(255,63,176,0.5); }
   .status-line.push{ color:#ffb000; }
   .status-line.err{ color:#ff3fb0; }
 
-  .bet-row{ display:flex; gap:1rem; align-items:center; justify-content:center; margin-bottom:1.1rem; }
-  .bet-row .bet-row-label{ font-size:18px; letter-spacing:0.12em; color:rgba(232,232,232,0.75); font-weight:600; }
+  .bet-row{ display:flex; gap:1rem; align-items:center; justify-content:center; margin-bottom:0.6rem; }
+  .bet-row .bet-row-label{ font-size:17px; letter-spacing:0.12em; color:rgba(232,232,232,0.75); font-weight:600; }
   .bet-row input{
-    width:170px; background:#0a0a0c; border:2px solid rgba(57,255,20,0.5); color:#39ff14;
-    font-family:inherit; font-size:26px; font-weight:700; padding:0.5em 0.7em; text-align:center;
+    width:160px; background:#0a0a0c; border:2px solid rgba(57,255,20,0.5); color:#39ff14;
+    font-family:inherit; font-size:24px; font-weight:700; padding:0.4em 0.6em; text-align:center;
   }
   .bet-row input:focus{ outline:none; border-color:#39ff14; }
-  .side-bet-row{ display:flex; gap:1.25rem; justify-content:center; flex-wrap:wrap; margin-bottom:1.25rem; }
-  .side-bet-field{ display:flex; align-items:center; gap:0.7rem; border:1px dashed rgba(232,232,232,0.3); padding:0.7em 1em; }
-  .side-bet-field label{ font-size:14px; letter-spacing:0.05em; color:rgba(232,232,232,0.7); font-weight:600; }
+  .side-bet-row{ display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-bottom:0.6rem; }
+  .side-bet-field{ display:flex; align-items:center; gap:0.6rem; border:1px dashed rgba(232,232,232,0.3); padding:0.5em 0.85em; }
+  .side-bet-field label{ font-size:13px; letter-spacing:0.05em; color:rgba(232,232,232,0.7); font-weight:600; }
   .side-bet-field input{
-    width:86px; background:#0a0a0c; border:2px solid rgba(232,232,232,0.35); color:#e8e8e8;
-    font-family:inherit; font-size:19px; font-weight:700; padding:0.4em 0.5em; text-align:center;
+    width:78px; background:#0a0a0c; border:2px solid rgba(232,232,232,0.35); color:#e8e8e8;
+    font-family:inherit; font-size:17px; font-weight:700; padding:0.3em 0.5em; text-align:center;
   }
   .side-bet-field input:focus{ outline:none; border-color:#3df3ec; }
-  .side-bet-result{ text-align:center; font-size:12px; letter-spacing:0.05em; margin-bottom:0.75rem; min-height:1.3em; }
+  .side-bet-result{ text-align:center; font-size:12px; letter-spacing:0.05em; margin-bottom:0.4rem; min-height:1.3em; }
   .side-bet-result .hit{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); }
   .side-bet-result .miss{ color:rgba(232,232,232,0.35); }
   .btn-row{ display:flex; gap:0.85rem; justify-content:center; flex-wrap:wrap; }
   .gbtn{
     background:transparent; border:1px solid rgba(57,255,20,0.6); color:#39ff14;
-    font-family:inherit; font-size:14px; letter-spacing:0.12em; padding:0.9em 1.8em;
+    font-family:inherit; font-size:13px; letter-spacing:0.1em; padding:0.6em 1.5em;
     cursor:pointer; text-transform:uppercase; text-shadow:0 0 6px rgba(57,255,20,0.6);
   }
   .gbtn:hover:not(:disabled){ background:rgba(57,255,20,0.12); }
@@ -266,10 +252,10 @@ function renderPage() {
   }
 
   @media (max-width:700px){
-    .card{ width:88px; height:126px; font-size:36px; }
-    .card-art-suit, .card-art-rank{ font-size:18px; }
-    .hand-count{ font-size:30px; }
-    .balance-chip .bv{ font-size:26px; }
+    .card{ width:74px; height:106px; font-size:29px; }
+    .card-art-suit, .card-art-rank{ font-size:15px; }
+    .hand-count{ font-size:26px; }
+    .balance-chip .bv{ font-size:24px; }
   }
 </style>
 </head>
@@ -304,7 +290,7 @@ function renderPage() {
     <div class="marquee-frame">
       <div class="bulbs" id="bulbsLayer"></div>
       <div class="table">
-      <div class="hand-block dealer-block">
+      <div class="hand-block dealer-block" id="dealerBlock" style="display:none;">
         <div class="hand-label-row"><span class="hand-label">DEALER</span></div>
         <div class="hand-count" id="dealerValue">&nbsp;</div>
         <div class="cards" id="dealerCards"></div>
@@ -338,18 +324,12 @@ function renderPage() {
       </div>
     </div>
 
-    <!-- actionRow gets moved (appendChild, not rebuilt) into whichever
-         hand's .cards row is currently active, styled as its own card —
-         actionCardHolder is a safe, never-wiped parking spot for it
-         whenever it isn't mounted next to a hand (see mountActionCard /
-         parkActionCard in the client script). -->
-    <div class="action-card" id="actionRow" style="display:none;">
+    <div class="btn-row" id="actionRow" style="display:none;">
       <button class="gbtn" id="hitBtn">H!T</button>
       <button class="gbtn secondary" id="standBtn">STAND</button>
       <button class="gbtn accent" id="doubleBtn">D0UBLE</button>
       <button class="gbtn accent" id="splitBtn">SPL!T</button>
     </div>
-    <div id="actionCardHolder" style="display:none;"></div>
 
     <div class="btn-row" id="againRow" style="display:none;">
       <button class="gbtn" id="againBtn">PLAY AGA!N</button>
@@ -486,20 +466,9 @@ function renderPage() {
    'strategyBtn','strategyOverlay','strategyCloseBtn','strategyBody',
    'rulesBtn','rulesOverlay','rulesCloseBtn',
    'sessionBtn','sessionValue','historyOverlay','historyCloseBtn','historyEmpty','historyList',
-   'shuffleDeck','actionCardHolder','pageEl','winFlash','winFlashText'
+   'shuffleDeck','dealerBlock','pageEl','winFlash','winFlashText'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
-  // actionRow gets physically moved next to whichever hand is active
-  // rather than rebuilt — mountActionCard puts it beside that hand's
-  // cards, parkActionCard is called before anything wipes
-  // playerHandsContainer's innerHTML (which would otherwise destroy the
-  // button elements if they were still parented inside it).
-  function mountActionCard(handIndex){
-    if (handRefs[handIndex]) handRefs[handIndex].cards.appendChild(el.actionRow);
-  }
-  function parkActionCard(){
-    el.actionCardHolder.appendChild(el.actionRow);
-  }
   function setInHand(active){
     el.pageEl.classList.toggle('in-hand', active);
   }
@@ -790,7 +759,6 @@ function renderPage() {
       if (handRefs[i]) updateCount(handRefs[i].count, h.value, h.status === 'bust');
     });
     handRefs.forEach(function(ref){ ref.block.classList.remove('active-hand'); });
-    parkActionCard();
     el.actionRow.style.display = 'none';
     el.betRow.style.display = 'none';
     el.sideBetRow.style.display = 'none';
@@ -818,7 +786,6 @@ function renderPage() {
     currentRound = round;
     if (round.status === 'active') {
       applyActiveHighlight(round.activeHandIndex);
-      mountActionCard(round.activeHandIndex);
       setStatus('YOUR M0VE — HAND ' + (round.activeHandIndex + 1), '');
       el.doubleBtn.disabled = !round.canDouble;
       el.splitBtn.disabled = true;
@@ -870,7 +837,6 @@ function renderPage() {
   }
 
   async function sequenceDeal(round, sideBets){
-    parkActionCard();
     setInHand(true);
     // Shuffle burst — the idle deck (already visible on the betting
     // screen) speeds up for a beat before the table actually clears and
@@ -880,6 +846,7 @@ function renderPage() {
     await sleep(650);
     el.shuffleDeck.classList.remove('active');
     el.shuffleDeck.style.display = 'none';
+    el.dealerBlock.style.display = 'block';
 
     el.dealerCards.innerHTML = '';
     updateCount(el.dealerValue, null);
@@ -911,7 +878,6 @@ function renderPage() {
     currentRound = round;
     if (round.status === 'active') {
       applyActiveHighlight(0);
-      mountActionCard(0);
       el.betRow.style.display = 'none';
       el.sideBetRow.style.display = 'none';
       el.actionRow.style.display = 'flex';
@@ -948,7 +914,6 @@ function renderPage() {
   }
 
   async function sequenceSplit(round){
-    parkActionCard();
     el.playerHandsContainer.innerHTML = '';
     handRefs = round.hands.map(function(hand, i){
       var hb = buildHandBlock('HAND ' + (i + 1), hand.bet);
@@ -968,7 +933,6 @@ function renderPage() {
     currentRound = round;
     if (round.status === 'active') {
       applyActiveHighlight(round.activeHandIndex);
-      mountActionCard(round.activeHandIndex);
       el.betRow.style.display = 'none';
       el.sideBetRow.style.display = 'none';
       el.actionRow.style.display = 'flex';
@@ -986,9 +950,9 @@ function renderPage() {
   }
 
   function renderInstant(round){
-    parkActionCard();
     setInHand(true);
     el.shuffleDeck.style.display = 'none';
+    el.dealerBlock.style.display = 'block';
     el.dealerCards.innerHTML = '';
     el.dealerCards.appendChild(cardEl(round.dealerUp, false));
     el.dealerCards.appendChild(cardEl(null, true));
@@ -1003,7 +967,6 @@ function renderPage() {
       return hb;
     });
     applyActiveHighlight(round.activeHandIndex);
-    mountActionCard(round.activeHandIndex);
     currentRound = round;
     el.betRow.style.display = 'none';
     el.sideBetRow.style.display = 'none';
@@ -1016,9 +979,9 @@ function renderPage() {
   }
 
   function resetToBetting(){
-    parkActionCard();
     setInHand(false);
     el.shuffleDeck.style.display = 'flex';
+    el.dealerBlock.style.display = 'none';
     el.dealerCards.innerHTML = '';
     updateCount(el.dealerValue, null);
     el.playerHandsContainer.innerHTML = '';
