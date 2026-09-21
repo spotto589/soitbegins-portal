@@ -115,23 +115,30 @@ function renderPage() {
   .balance-chip .bl{ font-size:10px; letter-spacing:0.2em; color:rgba(255,176,0,0.75); margin-bottom:0.2rem; }
   .balance-chip .bv{ font-size:26px; line-height:1; color:#ffb000; text-shadow:0 0 10px rgba(255,176,0,0.55); font-weight:700; }
 
-  .marquee-frame{ position:relative; padding:10px; margin-bottom:0.5rem; }
-  .bulbs{ position:absolute; inset:0; pointer-events:none; }
-  .bulb{
-    position:absolute; width:7px; height:7px; margin:-3.5px 0 0 -3.5px; border-radius:50%;
-    animation:bulbPulse 1.6s ease-in-out infinite;
+  /* Cyberpunk chasing border — a big rotating conic-gradient "comet" (cyan
+     leading, pink trailing) clipped by the frame's overflow:hidden down to
+     just the thin padding ring around .table, so it reads as a light
+     chasing around the border rather than a bulb string. .table's own
+     z-index:1 stacking context keeps the ring (z-index -1, behind
+     .table's own background paint) from ever covering the cards. */
+  .marquee-frame{ position:relative; padding:4px; border-radius:8px; overflow:hidden; margin-bottom:0.5rem; }
+  .cyber-glow{
+    position:absolute; top:50%; left:50%; width:160%; height:160%;
+    transform:translate(-50%,-50%) rotate(0deg);
+    background:conic-gradient(from 0deg,
+      transparent 0deg, #3df3ec 6deg, rgba(61,243,236,0.35) 18deg, transparent 46deg,
+      transparent 176deg, #ff3fb0 186deg, rgba(255,63,208,0.35) 200deg, transparent 230deg,
+      transparent 360deg);
+    animation:cyberChase 2.6s linear infinite;
+    pointer-events:none;
   }
-  @keyframes bulbPulse{ 0%,100%{ opacity:0.28; transform:scale(0.8); } 50%{ opacity:1; transform:scale(1.25); } }
+  @keyframes cyberChase{ to{ transform:translate(-50%,-50%) rotate(360deg); } }
   .table{
     border:1px solid rgba(57,255,20,0.3); padding:0.7rem 1.1rem 0.55rem; min-height:195px;
     background:rgba(57,255,20,0.02); position:relative; z-index:1;
-    animation:tableGlow 7s ease-in-out infinite;
+    box-shadow:0 0 20px rgba(57,255,20,0.15);
   }
-  @keyframes tableGlow{
-    0%,100%{ box-shadow:0 0 20px rgba(57,255,20,0.22); border-color:rgba(57,255,20,0.35); }
-    33%{ box-shadow:0 0 24px rgba(61,243,236,0.28); border-color:rgba(61,243,236,0.4); }
-    66%{ box-shadow:0 0 24px rgba(255,63,208,0.28); border-color:rgba(255,63,208,0.4); }
-  }
+  #tableStaticCanvas{ position:absolute; inset:0; z-index:-1; opacity:0.55; pointer-events:none; }
   .hands-row{ display:flex; gap:1.5rem; flex-wrap:wrap; justify-content:center; }
   /* Deck-shuffling idle animation — sits centered in the table while
      nothing has been dealt yet (shown/hidden in lockstep with betRow).
@@ -200,16 +207,36 @@ function renderPage() {
   .status-line.push{ color:#ffb000; }
   .status-line.err{ color:#ff3fb0; }
 
-  .bet-row{ display:flex; gap:1rem; align-items:center; justify-content:center; margin-bottom:0.6rem; }
+  .bet-row{ display:flex; gap:1rem; align-items:center; justify-content:center; margin-bottom:0.4rem; }
   .bet-row .bet-row-label{ font-size:17px; letter-spacing:0.12em; color:rgba(232,232,232,0.75); font-weight:600; }
   .bet-row input{
     width:160px; background:#0a0a0c; border:2px solid rgba(57,255,20,0.5); color:#39ff14;
     font-family:inherit; font-size:24px; font-weight:700; padding:0.4em 0.6em; text-align:center;
   }
   .bet-row input:focus{ outline:none; border-color:#39ff14; }
+
+  /* Chip pads — click a denomination to ADD it onto whatever's already in
+     that bet field (real casino chip-stacking, not a replace), X clears
+     it to 0. Side-bet ("special") pads render smaller and sit above the
+     main bet's big pad, per the ask. */
+  .chip-pad{ display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap; }
+  .chip-pad.big{ margin-bottom:0.7rem; }
+  .chip{
+    border-radius:50%; border:2px solid #ffb000; cursor:pointer; font-family:inherit; font-weight:700;
+    background:radial-gradient(circle at 35% 30%, rgba(255,176,0,0.28), rgba(10,10,12,0.92));
+    color:#ffb000; text-shadow:0 0 5px rgba(255,176,0,0.5);
+    display:flex; align-items:center; justify-content:center;
+    transition:transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .chip:hover{ transform:translateY(-3px); box-shadow:0 5px 12px rgba(255,176,0,0.35); }
+  .chip:active{ transform:translateY(0); }
+  .chip.clear{ border-color:rgba(232,232,232,0.45); color:rgba(232,232,232,0.75); text-shadow:none; background:radial-gradient(circle at 35% 30%, rgba(232,232,232,0.1), rgba(10,10,12,0.92)); }
+  .chip:not(.small){ width:52px; height:52px; font-size:13px; }
+  .chip.small{ width:34px; height:34px; font-size:11px; border-width:1.5px; }
+
   .side-bet-row{ display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-bottom:0.6rem; }
-  .side-bet-field{ display:flex; align-items:center; gap:0.6rem; border:1px dashed rgba(232,232,232,0.3); padding:0.5em 0.85em; }
-  .side-bet-field label{ font-size:13px; letter-spacing:0.05em; color:rgba(232,232,232,0.7); font-weight:600; }
+  .side-bet-field{ display:flex; flex-direction:column; align-items:center; gap:0.4rem; border:1px dashed rgba(232,232,232,0.3); padding:0.6em 0.85em; }
+  .side-bet-field label{ font-size:12px; letter-spacing:0.05em; color:rgba(232,232,232,0.7); font-weight:600; }
   .side-bet-field input{
     width:78px; background:#0a0a0c; border:2px solid rgba(232,232,232,0.35); color:#e8e8e8;
     font-family:inherit; font-size:17px; font-weight:700; padding:0.3em 0.5em; text-align:center;
@@ -256,6 +283,8 @@ function renderPage() {
     .card-art-suit, .card-art-rank{ font-size:15px; }
     .hand-count{ font-size:26px; }
     .balance-chip .bv{ font-size:24px; }
+    .chip:not(.small){ width:44px; height:44px; font-size:11px; }
+    .chip.small{ width:30px; height:30px; font-size:10px; }
   }
 </style>
 </head>
@@ -288,8 +317,9 @@ function renderPage() {
     </div>
 
     <div class="marquee-frame">
-      <div class="bulbs" id="bulbsLayer"></div>
+      <div class="cyber-glow"></div>
       <div class="table">
+      <canvas id="tableStaticCanvas"></canvas>
       <div class="hand-block dealer-block" id="dealerBlock" style="display:none;">
         <div class="hand-label-row"><span class="hand-label">DEALER</span></div>
         <div class="hand-count" id="dealerValue">&nbsp;</div>
@@ -308,20 +338,44 @@ function renderPage() {
     <div class="status-line" id="statusLine"></div>
     <div class="side-bet-result" id="sideBetResult"></div>
 
+    <div class="side-bet-row" id="sideBetRow">
+      <div class="side-bet-field">
+        <label>PA!R B0NUS</label>
+        <input type="number" id="pairBetInput" min="0" step="1" value="0">
+        <div class="chip-pad small" id="pairChipPad">
+          <button type="button" class="chip small" data-add="5">5</button>
+          <button type="button" class="chip small" data-add="10">10</button>
+          <button type="button" class="chip small" data-add="25">25</button>
+          <button type="button" class="chip small" data-add="50">50</button>
+          <button type="button" class="chip small clear" data-clear>X</button>
+        </div>
+      </div>
+      <div class="side-bet-field">
+        <label>P0KER B0NUS</label>
+        <input type="number" id="pokerBetInput" min="0" step="1" value="0">
+        <div class="chip-pad small" id="pokerChipPad">
+          <button type="button" class="chip small" data-add="5">5</button>
+          <button type="button" class="chip small" data-add="10">10</button>
+          <button type="button" class="chip small" data-add="25">25</button>
+          <button type="button" class="chip small" data-add="50">50</button>
+          <button type="button" class="chip small clear" data-clear>X</button>
+        </div>
+      </div>
+    </div>
+
     <div class="bet-row" id="betRow">
       <span class="bet-row-label">BET</span>
       <input type="number" id="betInput" min="1" step="1" value="10">
       <button class="gbtn" id="dealBtn">DEAL</button>
     </div>
-    <div class="side-bet-row" id="sideBetRow">
-      <div class="side-bet-field">
-        <label>PA!R B0NUS</label>
-        <input type="number" id="pairBetInput" min="0" step="1" value="0">
-      </div>
-      <div class="side-bet-field">
-        <label>P0KER B0NUS</label>
-        <input type="number" id="pokerBetInput" min="0" step="1" value="0">
-      </div>
+    <div class="chip-pad big" id="betChipPad">
+      <button type="button" class="chip" data-add="5">5</button>
+      <button type="button" class="chip" data-add="10">10</button>
+      <button type="button" class="chip" data-add="25">25</button>
+      <button type="button" class="chip" data-add="50">50</button>
+      <button type="button" class="chip" data-add="100">100</button>
+      <button type="button" class="chip" data-add="250">250</button>
+      <button type="button" class="chip clear" data-clear>X</button>
     </div>
 
     <div class="btn-row" id="actionRow" style="display:none;">
@@ -409,19 +463,21 @@ function renderPage() {
 
 <script>
 (function(){
-  function startStaticCanvas(){
-    var c = document.getElementById('staticCanvas');
-    if (!c) return;
-    function size(){ c.width = window.innerWidth; c.height = window.innerHeight; }
+  // Same "glitch" static — sparse cyan/magenta flecks on black — reused
+  // for both the full-page ambient canvas and a second copy scoped to
+  // just the table (sized to that element's own box, not the viewport).
+  function startStaticCanvas(canvasEl, getSize){
+    if (!canvasEl) return;
+    function size(){ var s = getSize(); canvasEl.width = s.w; canvasEl.height = s.h; }
     size();
     window.addEventListener('resize', size);
-    var ctx = c.getContext('2d');
+    var ctx = canvasEl.getContext('2d');
     function frame(){
       ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, c.width, c.height);
-      var flecks = Math.floor((c.width * c.height) / 9000);
+      ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
+      var flecks = Math.floor((canvasEl.width * canvasEl.height) / 9000);
       for (var i = 0; i < flecks; i++) {
-        var x = Math.random() * c.width, y = Math.random() * c.height;
+        var x = Math.random() * canvasEl.width, y = Math.random() * canvasEl.height;
         ctx.fillStyle = Math.random() < 0.5 ? 'rgba(61,243,236,0.55)' : 'rgba(255,63,208,0.5)';
         ctx.fillRect(x, y, 1, 1);
       }
@@ -429,35 +485,13 @@ function renderPage() {
     }
     frame();
   }
-  startStaticCanvas();
-
-  // Chasing marquee-light bulbs around the table — plain divs placed at
-  // even intervals around the rectangle perimeter (clockwise from
-  // top-left), each with a staggered animation-delay so the pulse travels
-  // around the frame instead of firing all at once.
-  function buildMarqueeLights(){
-    var layer = document.getElementById('bulbsLayer');
-    if (!layer) return;
-    var colors = ['#ffb000', '#3df3ec', '#ff3fb0', '#39ff14'];
-    var count = 36;
-    var html = '';
-    for (var i = 0; i < count; i++) {
-      var t = i / count;
-      var seg = Math.floor(t * 4);
-      var localT = (t * 4) - seg;
-      var left, top;
-      if (seg === 0) { left = localT * 100; top = 0; }
-      else if (seg === 1) { left = 100; top = localT * 100; }
-      else if (seg === 2) { left = 100 - localT * 100; top = 100; }
-      else { left = 0; top = 100 - localT * 100; }
-      var color = colors[i % colors.length];
-      html += '<span class="bulb" style="left:' + left + '%;top:' + top + '%;background:' + color +
-        ';box-shadow:0 0 6px ' + color + ',0 0 12px ' + color +
-        ';animation-delay:' + (t * 1.6).toFixed(2) + 's;"></span>';
-    }
-    layer.innerHTML = html;
-  }
-  buildMarqueeLights();
+  startStaticCanvas(document.getElementById('staticCanvas'), function(){
+    return { w: window.innerWidth, h: window.innerHeight };
+  });
+  startStaticCanvas(document.getElementById('tableStaticCanvas'), function(){
+    var r = document.querySelector('.table').getBoundingClientRect();
+    return { w: Math.max(1, r.width), h: Math.max(1, r.height) };
+  });
 
   var el = {};
   ['balanceValue','dealerValue','dealerCards','playerHandsContainer','statusLine',
@@ -472,6 +506,33 @@ function renderPage() {
   function setInHand(active){
     el.pageEl.classList.toggle('in-hand', active);
   }
+
+  // Chip pads — a chip button ADDS its value onto whatever's already
+  // typed into that bet field (real casino chip-stacking), clamped to the
+  // input's own max (set once the real maxBet is known in init() below);
+  // the X chip clears it back to 0. Same wiring for the big main-bet pad
+  // and both smaller side-bet pads.
+  function wireChipPad(padId, inputEl){
+    var pad = document.getElementById(padId);
+    if (!pad || !inputEl) return;
+    pad.addEventListener('click', function(e){
+      var btn = e.target.closest('.chip');
+      if (!btn) return;
+      if (btn.hasAttribute('data-clear')) {
+        inputEl.value = 0;
+        return;
+      }
+      var add = parseInt(btn.getAttribute('data-add'), 10) || 0;
+      var current = parseInt(inputEl.value, 10) || 0;
+      var max = parseInt(inputEl.max, 10);
+      var next = current + add;
+      if (Number.isFinite(max) && max > 0) next = Math.min(next, max);
+      inputEl.value = next;
+    });
+  }
+  wireChipPad('betChipPad', el.betInput);
+  wireChipPad('pairChipPad', el.pairBetInput);
+  wireChipPad('pokerChipPad', el.pokerBetInput);
 
   var SUIT_SYM = { S: '\\u2660', H: '\\u2665', D: '\\u2666', C: '\\u2663' };
   // Diamonds cyan, hearts red, clubs green, spades "black" — spades uses
