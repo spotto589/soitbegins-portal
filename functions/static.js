@@ -816,7 +816,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   .flock-account-box-clickable:nth-child(4) .flock-account-box-prefix, .flock-account-box-clickable:nth-child(4) .flock-account-box-label{ animation-delay:0s, -4.8s; }
   .flock-account-box-clickable:nth-child(5) .flock-account-box-prefix, .flock-account-box-clickable:nth-child(5) .flock-account-box-label{ animation-delay:0s, -6.4s; }
   .flock-account-box-arrow{ font-size:22px; color:var(--cyan); flex:0 0 auto; }
-  .flock-account-box-clickable{ position:relative; overflow:hidden; cursor:pointer; border-color:var(--border-mid); transition:border-color 0.15s ease, background 0.15s ease; }
+  /* text-decoration:none/color:inherit are no-ops for the existing plain
+     <div> boxes (divs have neither by default) — only needed because
+     CR0WN REWARDS reuses this class on a real <a> now (see the HTML's own
+     comment on that box), and an anchor's default underline/link colour
+     would otherwise show through since the label/prefix text itself is
+     rendered via a transparent background-clip:text fill (see above),
+     which doesn't touch the parent anchor's own text-decoration colour. */
+  .flock-account-box-clickable{ position:relative; overflow:hidden; cursor:pointer; border-color:var(--border-mid); transition:border-color 0.15s ease, background 0.15s ease; text-decoration:none; color:inherit; }
   /* Left accent bar — the row's own state indicator (reference image's
      own language: thin/dim at rest, brighter on hover, thick/solid on the
      open destination), on ::before since ::after is already the
@@ -10048,15 +10055,21 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 1.5l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.5 5-.7L9 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">WATCHL!ST</span><span class="flock-account-box-arrow">›</span></div>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
-          <!-- CR0WN REWARDS (reported live, was the real CR0WN P/L
-               leaderboard box) — relabelled and made inert, same C0M!NG
-               S00N treatment as TRANSACT!0N H!ST0RY below. profileTabPanelCrown
-               and its real renderCrownLeaderboard data stay in the markup/JS
-               unused rather than ripped out, in case CR0WN comes back as its
-               own destination later. -->
-          <div class="sw-panel flock-account-box flock-account-box-soon">
-            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 14l-1-8 4 3 4-5 4 5 4-3-1 8H2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">CR0WN REWARDS</span><span class="db-soon">C0M!NG S00N</span></div>
-          </div>
+          <!-- CR0WN REWARDS — links out to /games (Σκύλλα://SYSTEM games
+               hub, functions/games.js), a real page but deliberately
+               unlisted anywhere else on the site (closed testing, per the
+               user's own instruction). Plain navigation, not a
+               data-profilebox tab — reuses .flock-account-box-clickable's
+               styling but has no data-profilebox attribute, so the
+               profileBoxGrid click-delegation handler further down in this
+               file (handleProfileBoxActivate) never matches it; the old
+               real CR0WN P/L leaderboard box (profileTabPanelCrown /
+               renderCrownLeaderboard) stays inert/unused underneath as
+               before, in case it comes back as its own destination later. -->
+          <a class="sw-panel flock-account-box flock-account-box-clickable" href="/games">
+            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 14l-1-8 4 3 4-5 4 5 4-3-1 8H2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">CR0WN REWARDS</span><span class="flock-account-box-arrow">›</span></div>
+            <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
+          </a>
           <!-- TRANSACT!0N H!ST0RY has no real backend yet — same inert
                "not yet" treatment as before. -->
           <div class="sw-panel flock-account-box flock-account-box-soon">
@@ -20166,9 +20179,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   // SORT_CATEGORIES option has one; returns null for anything else.
   function sortComparatorFor(value){
     if (value === 'RARITY_ASC' || value === 'RARITY_DESC'){
+      // Same ourRarityRank-first, rarityRank-fallback rule as rarityDisplay()
+      // (see its own comment above) — every RARITY number shown on a card
+      // already reads through that function, so sorting has to use the same
+      // rank or the order silently drifts from what's actually printed
+      // (reported live: sorted-by-rarity list "a little bit misplaced" after
+      // Σκύλλα's own rarity score replaced Deeptide's as the displayed one —
+      // this comparator was the one place still reading the old field).
       return function(a, b){
-        var ar = a.rarityRank === null || a.rarityRank === undefined ? Infinity : a.rarityRank;
-        var br = b.rarityRank === null || b.rarityRank === undefined ? Infinity : b.rarityRank;
+        var aDisp = rarityDisplay(a);
+        var bDisp = rarityDisplay(b);
+        var ar = aDisp ? aDisp.rank : Infinity;
+        var br = bDisp ? bDisp.rank : Infinity;
         return value === 'RARITY_DESC' ? br - ar : ar - br;
       };
     }

@@ -2495,6 +2495,122 @@ export async function safeKvPut(kv, key, value, opts) {
   }
 }
 
+// --- Crown Rewards wagering ledger (games section) --------------------
+// $CRWN is a real XRPL token users earn from trading on this site (see
+// mainframe.js's trustline box). This ledger is a SEPARATE, in-house
+// spendable balance for games only — nothing here ever touches XRPL, signs
+// a transaction, or moves real $CRWN. A win only ever credits this same KV
+// entry; there is no withdrawal path out of this ledger.
+//
+// No "earn real $CRWN from a completed trade" hook exists yet anywhere in
+// this codebase, so this ledger has nothing real to read a starting
+// balance from. CROWN_STARTING_GRANT seeds a small one-time test balance
+// the first time a wallet is ever seen here, purely so closed testing has
+// something to wager with — remove this before any real/public launch,
+// once balances are actually funded from real trade activity instead.
+const CROWN_STARTING_GRANT = 500;
+const CROWN_MAX_BET = 500;
+
+function crownBalanceKey(wallet) { return `crown:balance:${wallet}`; }
+function crownRoundKey(wallet) { return `crown:bj:round:${wallet}`; }
+function crownLockKey(wallet) { return `crown:lock:${wallet}`; }
+
+export async function getCrownBalance(kv, wallet) {
+  const raw = await kv.get(crownBalanceKey(wallet));
+  if (raw === null) {
+    await safeKvPut(kv, crownBalanceKey(wallet), String(CROWN_STARTING_GRANT));
+    return CROWN_STARTING_GRANT;
+  }
+  const n = parseInt(raw, 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
+export async function setCrownBalance(kv, wallet, value) {
+  const clamped = Math.max(0, Math.floor(value));
+  await safeKvPut(kv, crownBalanceKey(wallet), String(clamped));
+  return clamped;
+}
+
+export function getCrownMaxBet() { return CROWN_MAX_BET; }
+
+// Best-effort single-flight lock so a wallet can't double-submit an action
+// (two tabs, a double-tap) into two concurrent balance mutations. KV has no
+// real transactions, so this is not a hard guarantee against a determined
+// attacker — acceptable for a closed beta wagering a play-money balance,
+// not a substitute for a real ledger (e.g. D1) before any wider launch.
+export async function acquireCrownLock(kv, wallet) {
+  const key = crownLockKey(wallet);
+  const existing = await kv.get(key);
+  if (existing) return false;
+  await safeKvPut(kv, key, '1', { expirationTtl: 30 });
+  return true;
+}
+
+export async function releaseCrownLock(kv, wallet) {
+  try { await kv.delete(crownLockKey(wallet)); } catch (e) {}
+}
+
+export async function getBlackjackRound(kv, wallet) {
+  const raw = await kv.get(crownRoundKey(wallet));
+  return raw ? JSON.parse(raw) : null;
+}
+
+export async function saveBlackjackRound(kv, wallet, round) {
+  await safeKvPut(kv, crownRoundKey(wallet), JSON.stringify(round), { expirationTtl: 1800 });
+}
+
+export async function clearBlackjackRound(kv, wallet) {
+  try { await kv.delete(crownRoundKey(wallet)); } catch (e) {}
+}
+
+// --- Blackjack game logic (server-authoritative — client only ever sees
+// state this returns, never trusted for anything that affects payout) ---
+const CARD_SUITS = ['S', 'H', 'D', 'C'];
+const CARD_RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+const BLACKJACK_DECK_COUNT = 6; // standard multi-deck shoe
+
+export function freshBlackjackShoe() {
+  const shoe = [];
+  for (let d = 0; d < BLACKJACK_DECK_COUNT; d++) {
+    for (const s of CARD_SUITS) for (const r of CARD_RANKS) shoe.push(r + s);
+  }
+  // A real wager rides on this shuffle — Math.random() is not an
+  // acceptable entropy source here. Fisher-Yates with crypto.getRandomValues.
+  for (let i = shoe.length - 1; i > 0; i--) {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    const j = buf[0] % (i + 1);
+    const tmp = shoe[i]; shoe[i] = shoe[j]; shoe[j] = tmp;
+  }
+  return shoe;
+}
+
+export function blackjackHandValue(cards) {
+  let total = 0;
+  let aces = 0;
+  for (const c of cards) {
+    const rank = c.slice(0, -1);
+    if (rank === 'A') { aces++; total += 11; }
+    else if (rank === 'K' || rank === 'Q' || rank === 'J') total += 10;
+    else total += parseInt(rank, 10);
+  }
+  while (total > 21 && aces > 0) { total -= 10; aces--; }
+  return total;
+}
+
+export function isBlackjackHand(cards) {
+  return cards.length === 2 && blackjackHandValue(cards) === 21;
+}
+
+// Dealer stands on 17+ (including soft 17, the simpler/more player-friendly
+// of the two common house rules) — draws from the shoe in place.
+export function blackjackDealerPlay(shoe, dealerCards) {
+  while (blackjackHandValue(dealerCards) < 17) {
+    dealerCards.push(shoe.pop());
+  }
+  return dealerCards;
+}
+
 // Runs `fn` over `items` with at most `limit` in flight at once, rather
 // than Promise.all-ing everything simultaneously. xrplcluster.com
 // rate-limits under bursts of concurrent calls (confirmed live — a burst
