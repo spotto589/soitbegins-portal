@@ -28,6 +28,11 @@ function renderPage() {
     padding:4vh 4vw 6vh;
   }
   canvas#staticCanvas{ position:fixed; inset:0; width:100%; height:100%; z-index:0; opacity:0.4; pointer-events:none; }
+  .glow-blob{ position:fixed; width:56vw; height:56vw; max-width:640px; max-height:640px; border-radius:50%; filter:blur(90px); z-index:0; pointer-events:none; opacity:0.16; }
+  .glow-blob.a{ background:#3df3ec; top:-18vw; left:-14vw; animation:glowDrift 15s ease-in-out infinite; }
+  .glow-blob.b{ background:#ff3fb0; bottom:-18vw; right:-14vw; animation:glowDrift 19s ease-in-out infinite reverse; }
+  .glow-blob.c{ background:#ffb000; top:35%; left:40%; opacity:0.1; animation:glowDrift 23s ease-in-out infinite; }
+  @keyframes glowDrift{ 0%,100%{ transform:translate(0,0) scale(1); } 50%{ transform:translate(3vw,-2vw) scale(1.18); } }
   .page{ max-width:980px; width:100%; position:relative; z-index:1; }
 
   .top-row{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.75rem; gap:1rem; flex-wrap:wrap; }
@@ -49,7 +54,23 @@ function renderPage() {
   .balance-chip .bl{ font-size:11px; letter-spacing:0.2em; color:rgba(255,176,0,0.75); margin-bottom:0.25rem; }
   .balance-chip .bv{ font-size:34px; line-height:1; color:#ffb000; text-shadow:0 0 10px rgba(255,176,0,0.55); font-weight:700; }
 
-  .table{ border:1px solid rgba(57,255,20,0.3); padding:2rem 2rem 1.5rem; margin-bottom:1.5rem; min-height:340px; background:rgba(57,255,20,0.02); }
+  .marquee-frame{ position:relative; padding:18px; margin-bottom:1.5rem; }
+  .bulbs{ position:absolute; inset:0; pointer-events:none; }
+  .bulb{
+    position:absolute; width:7px; height:7px; margin:-3.5px 0 0 -3.5px; border-radius:50%;
+    animation:bulbPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes bulbPulse{ 0%,100%{ opacity:0.28; transform:scale(0.8); } 50%{ opacity:1; transform:scale(1.25); } }
+  .table{
+    border:1px solid rgba(57,255,20,0.3); padding:2rem 2rem 1.5rem; min-height:340px;
+    background:rgba(57,255,20,0.02); position:relative; z-index:1;
+    animation:tableGlow 7s ease-in-out infinite;
+  }
+  @keyframes tableGlow{
+    0%,100%{ box-shadow:0 0 20px rgba(57,255,20,0.22); border-color:rgba(57,255,20,0.35); }
+    33%{ box-shadow:0 0 24px rgba(61,243,236,0.28); border-color:rgba(61,243,236,0.4); }
+    66%{ box-shadow:0 0 24px rgba(255,63,208,0.28); border-color:rgba(255,63,208,0.4); }
+  }
   .hands-row{ display:flex; gap:1.5rem; flex-wrap:wrap; }
   .hand-block{ margin-bottom:1.75rem; flex:1 1 260px; min-width:240px; }
   .hand-block.dealer-block{ flex-basis:100%; }
@@ -63,11 +84,16 @@ function renderPage() {
   .card{
     width:64px; height:92px; border:1px solid rgba(232,232,232,0.4); border-radius:6px;
     background:#111; display:flex; align-items:center; justify-content:center;
-    font-size:26px; font-weight:700;
+    font-size:26px; font-weight:700; position:relative; overflow:hidden;
   }
   .card.red{ color:#ff3fb0; }
   .card.black{ color:#e8e8e8; }
   .card.hidden{ background:repeating-linear-gradient(45deg,#151515,#151515 4px,#1c1c1c 4px,#1c1c1c 8px); color:transparent; }
+  /* Custom face art (Jester/Phoenix/King) drops in here once the images
+     exist — see CARD_ART in the client script below. Until CARD_ART has a
+     real URL for a rank, cardEl() never creates this element at all. */
+  .card-art{ width:100%; height:100%; object-fit:cover; }
+  .card-art-suit{ position:absolute; bottom:2px; right:4px; font-size:13px; text-shadow:0 0 3px #000, 0 0 3px #000; }
 
   .status-line{ text-align:center; font-size:16px; letter-spacing:0.1em; min-height:1.8em; margin-bottom:1.25rem; }
   .status-line.win{ color:#39ff14; text-shadow:0 0 8px rgba(57,255,20,0.5); }
@@ -102,6 +128,9 @@ function renderPage() {
 </head>
 <body>
   <canvas id="staticCanvas"></canvas>
+  <div class="glow-blob a"></div>
+  <div class="glow-blob b"></div>
+  <div class="glow-blob c"></div>
   <div class="page">
     <div class="top-row">
       <div>
@@ -115,13 +144,16 @@ function renderPage() {
       </div>
     </div>
 
-    <div class="table">
+    <div class="marquee-frame">
+      <div class="bulbs" id="bulbsLayer"></div>
+      <div class="table">
       <div class="hand-block dealer-block">
         <div class="hand-label-row"><span class="hand-label">DEALER</span></div>
         <div class="hand-count" id="dealerValue">&nbsp;</div>
         <div class="cards" id="dealerCards"></div>
       </div>
       <div class="hands-row" id="playerHandsContainer"></div>
+      </div>
     </div>
 
     <div class="status-line" id="statusLine"></div>
@@ -170,12 +202,49 @@ function renderPage() {
   }
   startStaticCanvas();
 
+  // Chasing marquee-light bulbs around the table — plain divs placed at
+  // even intervals around the rectangle perimeter (clockwise from
+  // top-left), each with a staggered animation-delay so the pulse travels
+  // around the frame instead of firing all at once.
+  function buildMarqueeLights(){
+    var layer = document.getElementById('bulbsLayer');
+    if (!layer) return;
+    var colors = ['#ffb000', '#3df3ec', '#ff3fb0', '#39ff14'];
+    var count = 36;
+    var html = '';
+    for (var i = 0; i < count; i++) {
+      var t = i / count;
+      var seg = Math.floor(t * 4);
+      var localT = (t * 4) - seg;
+      var left, top;
+      if (seg === 0) { left = localT * 100; top = 0; }
+      else if (seg === 1) { left = 100; top = localT * 100; }
+      else if (seg === 2) { left = 100 - localT * 100; top = 100; }
+      else { left = 0; top = 100 - localT * 100; }
+      var color = colors[i % colors.length];
+      html += '<span class="bulb" style="left:' + left + '%;top:' + top + '%;background:' + color +
+        ';box-shadow:0 0 6px ' + color + ',0 0 12px ' + color +
+        ';animation-delay:' + (t * 1.6).toFixed(2) + 's;"></span>';
+    }
+    layer.innerHTML = html;
+  }
+  buildMarqueeLights();
+
   var el = {};
   ['balanceValue','dealerValue','dealerCards','playerHandsContainer','statusLine',
    'betRow','betInput','dealBtn','actionRow','hitBtn','standBtn','doubleBtn','splitBtn','againRow','againBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   var SUIT_SYM = { S: '\\u2660', H: '\\u2665', D: '\\u2666', C: '\\u2663' };
+  // Custom face art — drop an image URL in here once it exists (e.g.
+  // J: '/assets/cards/jester.png') and that rank starts rendering with
+  // the image instead of plain rank+suit text, everywhere it appears, no
+  // other change needed. Leave a rank null/absent to keep the plain look.
+  var CARD_ART = {
+    J: null, // Jester
+    A: null, // Phoenix
+    K: null  // The King
+  };
   function cardEl(card, hidden){
     var d = document.createElement('div');
     if (hidden) { d.className = 'card hidden'; d.textContent = '?'; return d; }
@@ -183,7 +252,21 @@ function renderPage() {
     var suit = card.slice(-1);
     var red = suit === 'H' || suit === 'D';
     d.className = 'card ' + (red ? 'red' : 'black');
-    d.textContent = rank + SUIT_SYM[suit];
+    var art = CARD_ART[rank];
+    if (art) {
+      var img = document.createElement('img');
+      img.className = 'card-art';
+      img.src = art;
+      img.alt = rank;
+      d.appendChild(img);
+      var badge = document.createElement('span');
+      badge.className = 'card-art-suit';
+      badge.textContent = SUIT_SYM[suit];
+      badge.style.color = red ? '#ff3fb0' : '#e8e8e8';
+      d.appendChild(badge);
+    } else {
+      d.textContent = rank + SUIT_SYM[suit];
+    }
     return d;
   }
   function renderCards(container, cards){
