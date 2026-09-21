@@ -244,7 +244,8 @@ function renderPage() {
   var CARD_ART = {
     J: '/assets/cards/jester.png', // Jester
     A: '/assets/cards/phoenix.png', // Phoenix
-    K: '/assets/cards/king.png'  // The King
+    K: '/assets/cards/king.png', // The King
+    Q: '/assets/cards/queen.png' // The Queen
   };
   function cardEl(card, hidden){
     var d = document.createElement('div');
