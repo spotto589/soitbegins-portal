@@ -83,6 +83,9 @@ function renderPage() {
   .strat-legend{ font-size:11px; letter-spacing:0.05em; color:rgba(232,232,232,0.6); margin-bottom:1.25rem; line-height:2.2; }
   .strat-legend b{ display:inline-block; min-width:1.6em; text-align:center; border-radius:3px; margin-right:0.3em; padding:0.1em 0.3em; }
   .strat-section-title{ font-size:12px; letter-spacing:0.2em; color:rgba(255,176,0,0.85); margin:1.25rem 0 0.6rem; }
+  .rules-list{ list-style:none; padding:0; margin:0 0 0.5rem; }
+  .rules-list li{ font-size:12.5px; line-height:1.7; color:rgba(232,232,232,0.75); padding-left:1.1em; position:relative; margin-bottom:0.4rem; }
+  .rules-list li::before{ content:'▸'; position:absolute; left:0; color:#39ff14; }
   .strat-table{ width:100%; border-collapse:collapse; font-size:11.5px; text-align:center; }
   .strat-table th, .strat-table td{ border:1px solid rgba(232,232,232,0.15); padding:0.4em 0.3em; }
   .strat-table thead th{ color:rgba(232,232,232,0.55); font-weight:600; }
@@ -221,7 +224,6 @@ function renderPage() {
   .side-bet-row{ display:flex; gap:1.25rem; justify-content:center; flex-wrap:wrap; margin-bottom:1.25rem; }
   .side-bet-field{ display:flex; align-items:center; gap:0.7rem; border:1px dashed rgba(232,232,232,0.3); padding:0.7em 1em; }
   .side-bet-field label{ font-size:14px; letter-spacing:0.05em; color:rgba(232,232,232,0.7); font-weight:600; }
-  .side-bet-field .pays{ display:block; font-size:11px; color:rgba(255,176,0,0.75); letter-spacing:0.03em; font-weight:400; margin-top:0.2em; }
   .side-bet-field input{
     width:86px; background:#0a0a0c; border:2px solid rgba(232,232,232,0.35); color:#e8e8e8;
     font-family:inherit; font-size:19px; font-weight:700; padding:0.4em 0.5em; text-align:center;
@@ -240,8 +242,6 @@ function renderPage() {
   .gbtn:disabled{ opacity:0.3; cursor:default; }
   .gbtn.secondary{ border-color:rgba(232,232,232,0.4); color:rgba(232,232,232,0.85); text-shadow:none; }
   .gbtn.accent{ border-color:rgba(255,63,208,0.6); color:#ff3fb0; text-shadow:0 0 6px rgba(255,63,208,0.5); }
-
-  .note{ margin-top:2rem; font-size:11px; letter-spacing:0.03em; color:rgba(232,232,232,0.35); line-height:1.7; }
 
   /* Side-bet win callout — a brief full-screen flash + bouncing text so a
      Pair/Poker Bonus hit is impossible to miss (reported live: "couldn't
@@ -287,6 +287,7 @@ function renderPage() {
         <a class="back-link" href="/games">&larr; GAMES</a>
         &nbsp;&nbsp;
         <button class="gbtn secondary strategy-btn" id="strategyBtn" style="padding:0.35em 0.9em; font-size:11px;">H0W T0 PLAY</button>
+        <button class="gbtn secondary strategy-btn" id="rulesBtn" style="padding:0.35em 0.9em; font-size:11px;">RULES</button>
       </div>
       <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.6rem;">
         <div class="balance-chip">
@@ -328,11 +329,11 @@ function renderPage() {
     </div>
     <div class="side-bet-row" id="sideBetRow">
       <div class="side-bet-field">
-        <label>PA!R B0NUS<span class="pays">M!XED 5:1 · C0L0RED 10:1 · PERFECT 30:1</span></label>
+        <label>PA!R B0NUS</label>
         <input type="number" id="pairBetInput" min="0" step="1" value="0">
       </div>
       <div class="side-bet-field">
-        <label>P0KER B0NUS<span class="pays">FLUSH 5:1 · STRA!GHT 10:1 · TR!PS 30:1 · STR.FLUSH 40:1 · SU!TED TR!PS 100:1</span></label>
+        <label>P0KER B0NUS</label>
         <input type="number" id="pokerBetInput" min="0" step="1" value="0">
       </div>
     </div>
@@ -353,8 +354,6 @@ function renderPage() {
     <div class="btn-row" id="againRow" style="display:none;">
       <button class="gbtn" id="againBtn">PLAY AGA!N</button>
     </div>
-
-    <p class="note">Server-dealt, 6-deck shoe reshuffled every hand · dealer stands on 17 · blackjack pays 3:2 · double down on the first two cards · split any matching pair (splitting Aces deals one card each, no further action) · PA!R B0NUS and P0KER B0NUS are optional side bets settled instantly off your opening 2 cards + the dealer's up card, win or lose independent of the main hand · this Crown balance is a closed-test in-house wager balance, separate from the real $CRWN token.</p>
   </div>
 
   <div class="modal-overlay" id="historyOverlay">
@@ -384,6 +383,47 @@ function renderPage() {
         <b class="strat-split">P</b>SPL!T
       </div>
       <div id="strategyBody"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="rulesOverlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>RULES</span>
+        <button class="modal-close-btn" id="rulesCloseBtn">✕</button>
+      </div>
+      <div class="strat-section-title">THE TABLE</div>
+      <ul class="rules-list">
+        <li>6-deck shoe, freshly built and reshuffled every hand.</li>
+        <li>Dealer stands on all 17s (soft 17 included).</li>
+        <li>Blackjack (a natural 21 on the first two cards) pays 3:2.</li>
+        <li>Double down on your first two cards, on any hand — including after a split.</li>
+        <li>Split any matching pair, once per round (no resplitting).</li>
+        <li>Splitting Aces deals exactly one card to each hand, then both are done — no further hits or doubles on either.</li>
+        <li>This Crown balance is a closed-test in-house wager balance — separate from the real $CRWN token, no withdrawal path.</li>
+      </ul>
+      <div class="strat-section-title">PA!R B0NUS</div>
+      <p class="modal-note">Wagered separately at deal time, settled instantly off your own opening two cards — wins or loses independent of how the main hand plays out.</p>
+      <table class="strat-table">
+        <thead><tr><th style="text-align:left;">RESULT</th><th>PAYS</th></tr></thead>
+        <tbody>
+          <tr><th style="text-align:left;">M!XED PA!R — same rank, different colour</th><td>5:1</td></tr>
+          <tr><th style="text-align:left;">C0L0RED PA!R — same rank, same colour, different suit</th><td>10:1</td></tr>
+          <tr><th style="text-align:left;">PERFECT PA!R — same rank AND suit</th><td>30:1</td></tr>
+        </tbody>
+      </table>
+      <div class="strat-section-title">P0KER B0NUS</div>
+      <p class="modal-note">Your opening two cards plus the dealer's up card, read as a 3-card poker hand — also settled instantly at deal time, independent of the main hand. A-2-3 and Q-K-A both count as straights.</p>
+      <table class="strat-table">
+        <thead><tr><th style="text-align:left;">RESULT</th><th>PAYS</th></tr></thead>
+        <tbody>
+          <tr><th style="text-align:left;">FLUSH — 3 cards, same suit</th><td>5:1</td></tr>
+          <tr><th style="text-align:left;">STRA!GHT — 3 cards in sequence</th><td>10:1</td></tr>
+          <tr><th style="text-align:left;">TR!PS — 3 of a kind</th><td>30:1</td></tr>
+          <tr><th style="text-align:left;">STRA!GHT FLUSH</th><td>40:1</td></tr>
+          <tr><th style="text-align:left;">SU!TED TR!PS — 3 of a kind, same suit</th><td>100:1</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
@@ -444,6 +484,7 @@ function renderPage() {
    'betRow','betInput','dealBtn','actionRow','hitBtn','standBtn','doubleBtn','splitBtn','againRow','againBtn',
    'sideBetRow','pairBetInput','pokerBetInput','sideBetResult',
    'strategyBtn','strategyOverlay','strategyCloseBtn','strategyBody',
+   'rulesBtn','rulesOverlay','rulesCloseBtn',
    'sessionBtn','sessionValue','historyOverlay','historyCloseBtn','historyEmpty','historyList',
    'shuffleDeck','actionCardHolder','pageEl','winFlash','winFlashText'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
@@ -585,7 +626,13 @@ function renderPage() {
   el.historyCloseBtn.addEventListener('click', closeHistory);
   el.historyOverlay.addEventListener('click', function(e){ if (e.target === el.historyOverlay) closeHistory(); });
 
-  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { closeStrategy(); closeHistory(); } });
+  function openRules(){ el.rulesOverlay.classList.add('open'); }
+  function closeRules(){ el.rulesOverlay.classList.remove('open'); }
+  el.rulesBtn.addEventListener('click', openRules);
+  el.rulesCloseBtn.addEventListener('click', closeRules);
+  el.rulesOverlay.addEventListener('click', function(e){ if (e.target === el.rulesOverlay) closeRules(); });
+
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { closeStrategy(); closeHistory(); closeRules(); } });
 
   // --- Session hand history + running net — in-memory only (clears on
   // reload), purely a client-side log of what actually happened; never
