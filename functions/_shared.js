@@ -2700,6 +2700,7 @@ export function publicBlackjackRound(round, balance) {
     cards: h.cards,
     value: blackjackHandValue(h.cards),
     bet: h.bet,
+    box: h.box || 0,
     status: h.status,
     result: h.result || null,
     fromSplit: !!h.fromSplit
@@ -2710,7 +2711,9 @@ export function publicBlackjackRound(round, balance) {
     const hand = round.hands[round.activeHandIndex];
     if (hand) {
       canDouble = hand.cards.length === 2 && !hand.fromSplitAces && balance >= hand.bet;
-      canSplit = round.hands.length === 1 && hand.cards.length === 2 &&
+      // Per-hand, not per-round — each box can split its own pair
+      // independently of how many hands other boxes have already split into.
+      canSplit = !hand.fromSplit && hand.cards.length === 2 &&
         blackjackCardRank(hand.cards[0]) === blackjackCardRank(hand.cards[1]) &&
         balance >= hand.bet;
     }
