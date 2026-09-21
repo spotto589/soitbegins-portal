@@ -2552,7 +2552,26 @@ export async function releaseCrownLock(kv, wallet) {
 
 export async function getBlackjackRound(kv, wallet) {
   const raw = await kv.get(crownRoundKey(wallet));
-  return raw ? JSON.parse(raw) : null;
+  if (!raw) return null;
+  const round = JSON.parse(raw);
+  // Defensive: a round saved under an older shape (this hit live once
+  // already — the hands[]/activeHandIndex refactor for double/split left
+  // a wallet's still-"active" round in the old flat `player` shape)
+  // would otherwise permanently strand the wallet: resuming crashes
+  // reading round.hands, and dealing fresh is refused because this same
+  // stale round still reads as in-progress. Refund whatever bet is
+  // recoverable and treat it as if there were no round at all instead of
+  // deadlocking the player — see project_crown_rewards_games.md.
+  if (!Array.isArray(round.hands) || typeof round.activeHandIndex !== 'number') {
+    await clearBlackjackRound(kv, wallet);
+    const refund = Number(round.bet) || 0;
+    if (refund > 0) {
+      const balance = await getCrownBalance(kv, wallet);
+      await setCrownBalance(kv, wallet, balance + refund);
+    }
+    return null;
+  }
+  return round;
 }
 
 export async function saveBlackjackRound(kv, wallet, round) {
