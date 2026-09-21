@@ -71,16 +71,16 @@ function renderPage() {
     33%{ box-shadow:0 0 24px rgba(61,243,236,0.28); border-color:rgba(61,243,236,0.4); }
     66%{ box-shadow:0 0 24px rgba(255,63,208,0.28); border-color:rgba(255,63,208,0.4); }
   }
-  .hands-row{ display:flex; gap:1.5rem; flex-wrap:wrap; }
-  .hand-block{ margin-bottom:1.75rem; flex:1 1 260px; min-width:240px; }
+  .hands-row{ display:flex; gap:1.5rem; flex-wrap:wrap; justify-content:center; }
+  .hand-block{ margin-bottom:1.75rem; flex:1 1 260px; min-width:240px; text-align:center; }
   .hand-block.dealer-block{ flex-basis:100%; }
   .hand-block.active-hand{ outline:1px dashed rgba(255,63,208,0.6); outline-offset:8px; }
-  .hand-label-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem; }
+  .hand-label-row{ display:flex; align-items:center; justify-content:center; margin-bottom:0.5rem; }
   .hand-label{ font-size:13px; letter-spacing:0.2em; color:rgba(232,232,232,0.6); }
   .hand-label .bet-tag{ font-size:10px; color:rgba(255,176,0,0.7); margin-left:0.6em; letter-spacing:0.1em; }
   .hand-count{ font-size:38px; line-height:1; font-weight:700; color:#39ff14; text-shadow:0 0 10px rgba(57,255,20,0.55); margin-bottom:0.85rem; }
   .hand-count.bust{ color:#ff3fb0; text-shadow:0 0 10px rgba(255,63,176,0.55); }
-  .cards{ display:flex; gap:0.6rem; flex-wrap:wrap; min-height:96px; }
+  .cards{ display:flex; gap:0.6rem; flex-wrap:wrap; min-height:96px; justify-content:center; }
   .card{
     width:64px; height:92px; border:1px solid rgba(232,232,232,0.4); border-radius:6px;
     background:#111; display:flex; align-items:center; justify-content:center;
@@ -89,6 +89,20 @@ function renderPage() {
   .card.red{ color:#ff3fb0; }
   .card.black{ color:#e8e8e8; }
   .card.hidden{ background:repeating-linear-gradient(45deg,#151515,#151515 4px,#1c1c1c 4px,#1c1c1c 8px); color:transparent; }
+  /* Dealing pace — a card lands with a little drop/settle instead of just
+     appearing, and the dealer's hole card gets a flip-swap when revealed.
+     Kept short (well under half a second each) so "slow enough to feel
+     like a hand being played" doesn't tip into "annoyingly sluggish". */
+  @keyframes cardDeal{
+    0%{ opacity:0; transform:translateY(-18px) scale(0.82) rotate(-8deg); }
+    70%{ opacity:1; transform:translateY(2px) scale(1.03) rotate(1deg); }
+    100%{ opacity:1; transform:translateY(0) scale(1) rotate(0); }
+  }
+  .card-deal{ animation:cardDeal 0.32s ease-out both; }
+  @keyframes cardFlipOut{ from{ transform:scaleX(1); } to{ transform:scaleX(0); } }
+  @keyframes cardFlipIn{ from{ transform:scaleX(0); } to{ transform:scaleX(1); } }
+  .card-flip-out{ animation:cardFlipOut 0.16s ease-in both; }
+  .card-flip-in{ animation:cardFlipIn 0.18s ease-out both; }
   /* Custom face art (Jester/Phoenix/King) drops in here once the images
      exist — see CARD_ART in the client script below. Until CARD_ART has a
      real URL for a rank, cardEl() never creates this element at all. */
@@ -275,149 +289,351 @@ function renderPage() {
     }
     return d;
   }
-  function renderCards(container, cards){
-    container.innerHTML = '';
-    cards.forEach(function(c){ container.appendChild(cardEl(c, false)); });
-  }
-
   function setStatus(text, cls){
     el.statusLine.textContent = text || '';
     el.statusLine.className = 'status-line' + (cls ? ' ' + cls : '');
   }
 
-  // Renders 1 or 2 player hand-blocks (2 only after a split), each with its
-  // own count-above-cards and its own DOUBLE/SPLIT-eligible highlighting —
-  // same shape whether this came from a live action or a page-load resume.
-  function renderPlayerHands(round){
-    el.playerHandsContainer.innerHTML = '';
-    var multi = round.hands.length > 1;
-    round.hands.forEach(function(hand, i){
-      var block = document.createElement('div');
-      block.className = 'hand-block' + (round.status === 'active' && i === round.activeHandIndex ? ' active-hand' : '');
-      var labelRow = document.createElement('div');
-      labelRow.className = 'hand-label-row';
-      var label = document.createElement('span');
-      label.className = 'hand-label';
-      label.textContent = multi ? ('HAND ' + (i + 1)) : 'Y0U';
-      var betTag = document.createElement('span');
-      betTag.className = 'bet-tag';
-      betTag.textContent = 'BET ' + hand.bet;
-      label.appendChild(betTag);
-      labelRow.appendChild(label);
-      block.appendChild(labelRow);
+  function sleep(ms){ return new Promise(function(resolve){ setTimeout(resolve, ms); }); }
+  var CARD_DELAY = 420;
 
-      var count = document.createElement('div');
-      count.className = 'hand-count' + (hand.status === 'bust' ? ' bust' : '');
-      count.textContent = hand.status === 'bust' ? hand.value + ' BUST' : hand.value;
-      block.appendChild(count);
-
-      var cardsDiv = document.createElement('div');
-      cardsDiv.className = 'cards';
-      hand.cards.forEach(function(c){ cardsDiv.appendChild(cardEl(c, false)); });
-      block.appendChild(cardsDiv);
-
-      el.playerHandsContainer.appendChild(block);
+  // Cosmetic only — purely so the count above a hand can climb as each
+  // card visually lands instead of jumping straight to the server's final
+  // number. Never used for any decision (buttons stay gated on the
+  // server's own canDouble/canSplit flags, and every payout/outcome comes
+  // from round.result, not from this). Same arithmetic as
+  // blackjackHandValue in _shared.js.
+  function handValueClient(cards){
+    var total = 0, aces = 0;
+    cards.forEach(function(c){
+      var r = c.slice(0, -1);
+      if (r === 'A') { aces++; total += 11; }
+      else if (r === 'K' || r === 'Q' || r === 'J') total += 10;
+      else total += parseInt(r, 10);
     });
+    while (total > 21 && aces > 0) { total -= 10; aces--; }
+    return total;
   }
 
-  function renderRound(round){
-    renderPlayerHands(round);
+  function updateCount(countEl, value, bust){
+    if (value === null || value === undefined) { countEl.innerHTML = '&nbsp;'; countEl.className = 'hand-count'; return; }
+    countEl.textContent = bust ? value + ' BUST' : value;
+    countEl.className = 'hand-count' + (bust ? ' bust' : '');
+  }
 
+  // Drops one card into a cards row with the deal animation, pausing
+  // afterward — the actual pacing of "the hand being played out" rather
+  // than everything appearing at once.
+  async function dealInto(cardsEl, card, hidden){
+    var c = cardEl(card, hidden);
+    c.classList.add('card-deal');
+    cardsEl.appendChild(c);
+    await sleep(CARD_DELAY);
+    return c;
+  }
+
+  function buildHandBlock(labelText, bet){
+    var block = document.createElement('div');
+    block.className = 'hand-block';
+    var labelRow = document.createElement('div');
+    labelRow.className = 'hand-label-row';
+    var label = document.createElement('span');
+    label.className = 'hand-label';
+    label.textContent = labelText;
+    var betTag = document.createElement('span');
+    betTag.className = 'bet-tag';
+    betTag.textContent = 'BET ' + bet;
+    label.appendChild(betTag);
+    labelRow.appendChild(label);
+    block.appendChild(labelRow);
+    var count = document.createElement('div');
+    count.className = 'hand-count';
+    count.innerHTML = '&nbsp;';
+    block.appendChild(count);
+    var cardsDiv = document.createElement('div');
+    cardsDiv.className = 'cards';
+    block.appendChild(cardsDiv);
+    return { block: block, label: label, count: count, cards: cardsDiv };
+  }
+
+  function applyActiveHighlight(index){
+    handRefs.forEach(function(ref, i){ ref.block.classList.toggle('active-hand', i === index); });
+  }
+
+  // Hole card's flip-reveal: the hidden placeholder scales out, the real
+  // card scales in — a small beat of drama for the one moment blackjack
+  // actually has (Insurance aside, which this doesn't implement).
+  async function flipRevealDealerHole(realCard){
+    var hiddenEl = el.dealerCards.children[1];
+    if (!hiddenEl) return;
+    hiddenEl.classList.add('card-flip-out');
+    await sleep(160);
+    var real = cardEl(realCard, false);
+    real.classList.add('card-flip-in');
+    el.dealerCards.replaceChild(real, hiddenEl);
+    await sleep(200);
+  }
+
+  // Reveals the dealer's hole card, then deals out any further draws one
+  // at a time — this is the exact sequence that used to just dump the
+  // whole final dealer hand in one instant paint.
+  async function playDealerReveal(round){
+    await flipRevealDealerHole(round.dealer[1]);
+    updateCount(el.dealerValue, handValueClient(round.dealer.slice(0, 2)));
+    for (var i = 2; i < round.dealer.length; i++) {
+      await dealInto(el.dealerCards, round.dealer[i], false);
+      updateCount(el.dealerValue, handValueClient(round.dealer.slice(0, i + 1)));
+    }
+    updateCount(el.dealerValue, round.dealerValue); // authoritative final value
+    await sleep(200);
+  }
+
+  function finishResolved(round){
+    round.hands.forEach(function(h, i){
+      if (handRefs[i]) updateCount(handRefs[i].count, h.value, h.status === 'bust');
+    });
+    handRefs.forEach(function(ref){ ref.block.classList.remove('active-hand'); });
+    el.actionRow.style.display = 'none';
+    el.betRow.style.display = 'none';
+    el.againRow.style.display = 'flex';
+    var labels = { blackjack: 'BLACKJACK!', win: 'W!N', push: 'PUSH', lose: 'L0SE' };
+    var classes = { blackjack: 'win', win: 'win', push: 'push', lose: 'lose' };
+    if (round.hands.length > 1) {
+      var summary = round.hands.map(function(h, i){ return 'HAND ' + (i + 1) + ': ' + labels[h.result]; }).join('  ·  ');
+      setStatus(summary, '');
+    } else {
+      var r = round.hands[0].result;
+      var text = r === 'blackjack' ? 'BLACKJACK! Y0U W!N ' + Math.floor(round.hands[0].bet * 1.5) + ' CR0WN'
+        : r === 'win' ? 'Y0U W!N ' + round.hands[0].bet + ' CR0WN'
+        : r === 'push' ? 'PUSH — BET RETURNED'
+        : 'Y0U L0SE';
+      setStatus(text, classes[r]);
+    }
+  }
+
+  // Called once a hand stops being playable (bust, stood, or a forced-done
+  // double) — either the next split hand takes over, or the round is
+  // resolved and the dealer's own turn plays out.
+  async function afterHandFinished(round){
+    currentRound = round;
     if (round.status === 'active') {
-      el.dealerCards.innerHTML = '';
-      el.dealerCards.appendChild(cardEl(round.dealerUp, false));
-      el.dealerCards.appendChild(cardEl(null, true));
-      el.dealerValue.innerHTML = '&nbsp;';
-      el.dealerValue.className = 'hand-count';
+      applyActiveHighlight(round.activeHandIndex);
+      setStatus('YOUR M0VE — HAND ' + (round.activeHandIndex + 1), '');
+      el.doubleBtn.disabled = !round.canDouble;
+      el.splitBtn.disabled = true;
+      el.splitBtn.style.display = 'none';
+    } else {
+      await sleep(200);
+      await playDealerReveal(round);
+      finishResolved(round);
+    }
+  }
+
+  async function sequenceDeal(round){
+    el.dealerCards.innerHTML = '';
+    updateCount(el.dealerValue, null);
+    el.playerHandsContainer.innerHTML = '';
+    var hb = buildHandBlock('Y0U', round.hands[0].bet);
+    el.playerHandsContainer.appendChild(hb.block);
+    handRefs = [hb];
+
+    var playerCards = round.hands[0].cards;
+    var dealerFirst = round.status === 'active' ? round.dealerUp : round.dealer[0];
+
+    // Classic dealing order: player, dealer, player, dealer(hidden).
+    await dealInto(hb.cards, playerCards[0], false);
+    updateCount(hb.count, handValueClient([playerCards[0]]));
+    await dealInto(el.dealerCards, dealerFirst, false);
+    await dealInto(hb.cards, playerCards[1], false);
+    updateCount(hb.count, handValueClient(playerCards));
+    await dealInto(el.dealerCards, null, true);
+
+    currentRound = round;
+    if (round.status === 'active') {
+      applyActiveHighlight(0);
       el.betRow.style.display = 'none';
       el.actionRow.style.display = 'flex';
       el.againRow.style.display = 'none';
       el.doubleBtn.disabled = !round.canDouble;
       el.splitBtn.disabled = !round.canSplit;
-      el.splitBtn.style.display = round.canSplit || round.hands.length === 1 ? 'inline-block' : 'none';
-      setStatus(round.hands.length > 1 ? 'YOUR M0VE — HAND ' + (round.activeHandIndex + 1) : 'YOUR M0VE', '');
+      el.splitBtn.style.display = 'inline-block';
+      setStatus('YOUR M0VE', '');
     } else {
-      renderCards(el.dealerCards, round.dealer);
-      el.dealerValue.textContent = round.dealerValue;
-      el.actionRow.style.display = 'none';
-      el.betRow.style.display = 'none';
-      el.againRow.style.display = 'flex';
-      var labels = { blackjack: 'BLACKJACK!', win: 'W!N', push: 'PUSH', lose: 'L0SE' };
-      var classes = { blackjack: 'win', win: 'win', push: 'push', lose: 'lose' };
-      if (round.hands.length > 1) {
-        var summary = round.hands.map(function(h, i){ return 'HAND ' + (i + 1) + ': ' + labels[h.result]; }).join('  ·  ');
-        setStatus(summary, '');
-      } else {
-        var r = round.hands[0].result;
-        var text = r === 'blackjack' ? 'BLACKJACK! Y0U W!N ' + Math.floor(round.hands[0].bet * 1.5) + ' CR0WN'
-          : r === 'win' ? 'Y0U W!N ' + round.hands[0].bet + ' CR0WN'
-          : r === 'push' ? 'PUSH — BET RETURNED'
-          : 'Y0U L0SE';
-        setStatus(text, classes[r]);
-      }
+      // Natural blackjack (player and/or dealer) — dealer's 2 starting
+      // cards are already final, no extra draws.
+      await sleep(300);
+      await playDealerReveal(round);
+      finishResolved(round);
     }
+  }
+
+  async function sequenceHitOrDouble(actingIndex, round){
+    var ref = handRefs[actingIndex];
+    var hand = round.hands[actingIndex];
+    var newCard = hand.cards[hand.cards.length - 1];
+    await dealInto(ref.cards, newCard, false);
+    updateCount(ref.count, hand.value, hand.status === 'bust');
+    var betTag = ref.label.querySelector('.bet-tag');
+    if (betTag) betTag.textContent = 'BET ' + hand.bet;
+    currentRound = round;
+    if (round.status !== 'active' || round.activeHandIndex !== actingIndex) {
+      await afterHandFinished(round);
+    }
+  }
+
+  async function sequenceStand(round){
+    await afterHandFinished(round);
+  }
+
+  async function sequenceSplit(round){
+    el.playerHandsContainer.innerHTML = '';
+    handRefs = round.hands.map(function(hand, i){
+      var hb = buildHandBlock('HAND ' + (i + 1), hand.bet);
+      el.playerHandsContainer.appendChild(hb.block);
+      // The first card in each new hand is half of the original pair —
+      // it already existed, so it snaps into place instead of animating.
+      hb.cards.appendChild(cardEl(hand.cards[0], false));
+      updateCount(hb.count, handValueClient([hand.cards[0]]));
+      return hb;
+    });
+    // Only the genuinely new second card deals in with the normal pacing.
+    for (var i = 0; i < round.hands.length; i++) {
+      var hand = round.hands[i];
+      await dealInto(handRefs[i].cards, hand.cards[1], false);
+      updateCount(handRefs[i].count, hand.value, hand.status === 'bust');
+    }
+    currentRound = round;
+    if (round.status === 'active') {
+      applyActiveHighlight(round.activeHandIndex);
+      el.betRow.style.display = 'none';
+      el.actionRow.style.display = 'flex';
+      el.againRow.style.display = 'none';
+      el.doubleBtn.disabled = !round.canDouble;
+      el.splitBtn.disabled = true;
+      el.splitBtn.style.display = 'none';
+      setStatus('YOUR M0VE — HAND ' + (round.activeHandIndex + 1), '');
+    } else {
+      // Split Aces — both hands were already done the instant they were dealt.
+      await sleep(250);
+      await playDealerReveal(round);
+      finishResolved(round);
+    }
+  }
+
+  function renderInstant(round){
+    el.dealerCards.innerHTML = '';
+    el.dealerCards.appendChild(cardEl(round.dealerUp, false));
+    el.dealerCards.appendChild(cardEl(null, true));
+    updateCount(el.dealerValue, null);
+    el.playerHandsContainer.innerHTML = '';
+    var multi = round.hands.length > 1;
+    handRefs = round.hands.map(function(hand, i){
+      var hb = buildHandBlock(multi ? 'HAND ' + (i + 1) : 'Y0U', hand.bet);
+      hand.cards.forEach(function(c){ hb.cards.appendChild(cardEl(c, false)); });
+      updateCount(hb.count, hand.value, hand.status === 'bust');
+      el.playerHandsContainer.appendChild(hb.block);
+      return hb;
+    });
+    applyActiveHighlight(round.activeHandIndex);
+    currentRound = round;
+    el.betRow.style.display = 'none';
+    el.actionRow.style.display = 'flex';
+    el.againRow.style.display = 'none';
+    el.doubleBtn.disabled = !round.canDouble;
+    el.splitBtn.disabled = !round.canSplit;
+    el.splitBtn.style.display = round.hands.length === 1 ? 'inline-block' : 'none';
+    setStatus('R0UND RESUMED — ' + (multi ? 'HAND ' + (round.activeHandIndex + 1) : 'YOUR M0VE'), '');
   }
 
   function resetToBetting(){
     el.dealerCards.innerHTML = '';
+    updateCount(el.dealerValue, null);
     el.playerHandsContainer.innerHTML = '';
-    el.dealerValue.innerHTML = '&nbsp;';
+    handRefs = [];
+    currentRound = null;
     el.betRow.style.display = 'flex';
     el.actionRow.style.display = 'none';
     el.againRow.style.display = 'none';
     setStatus('', '');
   }
 
-  var busy = false;
-  async function callAction(payload){
-    if (busy) return null;
-    busy = true;
-    [el.dealBtn, el.hitBtn, el.standBtn, el.doubleBtn, el.splitBtn].forEach(function(b){ b.disabled = true; });
+  var handRefs = [];
+  var currentRound = null;
+  var uiBusy = false;
+
+  function setButtonsBusy(isBusy){
+    [el.dealBtn, el.hitBtn, el.standBtn, el.doubleBtn, el.splitBtn, el.againBtn].forEach(function(b){ b.disabled = isBusy; });
+  }
+
+  async function postAction(payload){
+    var res = await fetch('/api/blackjack-action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    var data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'unknown');
+    el.balanceValue.textContent = data.balance;
+    return data;
+  }
+
+  // Buttons stay disabled for the full animated sequence, not just the
+  // network round-trip — otherwise a fast second click could fire mid-deal.
+  async function runAction(fn){
+    if (uiBusy) return;
+    uiBusy = true;
+    setButtonsBusy(true);
     try {
-      var res = await fetch('/api/blackjack-action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      var data = await res.json();
-      if (!res.ok || !data.ok) {
-        setStatus('ERR:: ' + (data.error || 'unknown').toUpperCase().replace(/_/g, ' '), 'err');
-        return null;
-      }
-      el.balanceValue.textContent = data.balance;
-      return data;
+      await fn();
     } catch (e) {
-      setStatus('ERR:: S!GNAL_L0ST', 'err');
-      return null;
+      setStatus('ERR:: ' + String((e && e.message) || e).toUpperCase().replace(/_/g, ' '), 'err');
     } finally {
-      busy = false;
-      [el.dealBtn, el.hitBtn, el.standBtn].forEach(function(b){ b.disabled = false; });
+      uiBusy = false;
+      setButtonsBusy(false);
+      if (currentRound && currentRound.status === 'active') {
+        el.doubleBtn.disabled = !currentRound.canDouble;
+        el.splitBtn.disabled = !currentRound.canSplit;
+      }
     }
   }
 
-  el.dealBtn.addEventListener('click', async function(){
-    var bet = parseInt(el.betInput.value, 10);
-    if (!bet || bet < 1) { setStatus('ENTER A VAL!D BET', 'err'); return; }
-    var data = await callAction({ action: 'deal', bet: bet });
-    if (data) renderRound(data.round);
+  el.dealBtn.addEventListener('click', function(){
+    runAction(async function(){
+      var bet = parseInt(el.betInput.value, 10);
+      if (!bet || bet < 1) { setStatus('ENTER A VAL!D BET', 'err'); return; }
+      var data = await postAction({ action: 'deal', bet: bet });
+      await sequenceDeal(data.round);
+    });
   });
-  el.hitBtn.addEventListener('click', async function(){
-    var data = await callAction({ action: 'hit' });
-    if (data) renderRound(data.round);
+  el.hitBtn.addEventListener('click', function(){
+    runAction(async function(){
+      var actingIndex = currentRound.activeHandIndex;
+      var data = await postAction({ action: 'hit' });
+      await sequenceHitOrDouble(actingIndex, data.round);
+    });
   });
-  el.standBtn.addEventListener('click', async function(){
-    var data = await callAction({ action: 'stand' });
-    if (data) renderRound(data.round);
+  el.standBtn.addEventListener('click', function(){
+    runAction(async function(){
+      var data = await postAction({ action: 'stand' });
+      await sequenceStand(data.round);
+    });
   });
-  el.doubleBtn.addEventListener('click', async function(){
-    var data = await callAction({ action: 'double' });
-    if (data) renderRound(data.round);
+  el.doubleBtn.addEventListener('click', function(){
+    runAction(async function(){
+      var actingIndex = currentRound.activeHandIndex;
+      var data = await postAction({ action: 'double' });
+      await sequenceHitOrDouble(actingIndex, data.round);
+    });
   });
-  el.splitBtn.addEventListener('click', async function(){
-    var data = await callAction({ action: 'split' });
-    if (data) renderRound(data.round);
+  el.splitBtn.addEventListener('click', function(){
+    runAction(async function(){
+      var data = await postAction({ action: 'split' });
+      await sequenceSplit(data.round);
+    });
   });
-  el.againBtn.addEventListener('click', resetToBetting);
+  el.againBtn.addEventListener('click', function(){
+    resetToBetting();
+  });
 
   (async function init(){
     try {
@@ -427,8 +643,7 @@ function renderPage() {
         el.balanceValue.textContent = data.balance;
         el.betInput.max = data.maxBet;
         if (data.round && data.round.status === 'active') {
-          renderRound(data.round);
-          setStatus('R0UND RESUMED — ' + (data.round.hands.length > 1 ? 'HAND ' + (data.round.activeHandIndex + 1) : 'YOUR M0VE'), '');
+          renderInstant(data.round);
         }
       } else {
         el.balanceValue.textContent = '—';
