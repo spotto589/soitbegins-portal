@@ -3,51 +3,71 @@ import {
   getCrownBalance, setCrownBalance, getCrownMaxBet,
   acquireCrownLock, releaseCrownLock,
   getBlackjackRound, saveBlackjackRound, clearBlackjackRound,
-  freshBlackjackShoe, blackjackHandValue, isBlackjackHand, blackjackDealerPlay
+  freshBlackjackShoe, blackjackHandValue, isBlackjackHand, blackjackDealerPlay,
+  blackjackCardRank, publicBlackjackRound
 } from '../_shared.js';
 
-// Everything a client sees about an in-progress round: the dealer's hole
-// card is never included until the round resolves — a client could
-// otherwise read it straight out of the response.
-function publicRound(round) {
-  const playerValue = blackjackHandValue(round.player);
-  if (round.status === 'active') {
-    return {
-      status: 'active',
-      player: round.player,
-      playerValue,
-      dealerUp: round.dealer[0],
-      dealer: null,
-      dealerValue: null,
-      bet: round.bet,
-      result: null
-    };
-  }
-  return {
-    status: 'resolved',
-    player: round.player,
-    playerValue,
-    dealerUp: round.dealer[0],
-    dealer: round.dealer,
-    dealerValue: blackjackHandValue(round.dealer),
-    bet: round.bet,
-    result: round.result
-  };
+function respond(round, balance) {
+  return new Response(JSON.stringify({ ok: true, balance, round: publicBlackjackRound(round, balance) }), {
+    headers: { 'Content-Type': 'application/json' }
+  });
 }
 
-// Settles a resolved round's payout against the balance, then clears the
-// round from KV. `outcome` is 'win' | 'blackjack' | 'push' | 'lose'.
-async function resolve(kv, wallet, round, outcome, balance) {
+function payoutFor(hand) {
+  if (hand.result === 'blackjack') return Math.floor(hand.bet * 2.5); // 3:2 + original bet back
+  if (hand.result === 'win') return hand.bet * 2; // 1:1 + original bet back
+  if (hand.result === 'push') return hand.bet; // bet returned
+  return 0; // lose — bet was already deducted when placed
+}
+
+// Resolves every hand against the dealer's FINAL hand. `drawDealer` is
+// false only for the natural-blackjack-at-deal path, where the dealer's
+// own 2 starting cards are already final (a real dealer never draws more
+// just because the player had blackjack). A hand that already has a
+// `result` (set by the natural-blackjack deal path) is left alone here —
+// every other hand gets its outcome decided against the dealer's total.
+async function settleRound(kv, wallet, round, balance, drawDealer) {
+  if (drawDealer) blackjackDealerPlay(round.shoe, round.dealer);
+  const dealerValue = blackjackHandValue(round.dealer);
+  const dealerBust = dealerValue > 21;
+  let totalPayout = 0;
+  for (const hand of round.hands) {
+    if (!hand.result) {
+      if (hand.status === 'bust') {
+        hand.result = 'lose';
+      } else {
+        const playerValue = blackjackHandValue(hand.cards);
+        if (dealerBust || playerValue > dealerValue) hand.result = 'win';
+        else if (playerValue === dealerValue) hand.result = 'push';
+        else hand.result = 'lose';
+      }
+    }
+    totalPayout += payoutFor(hand);
+  }
   round.status = 'resolved';
-  round.result = outcome;
-  let payout = 0;
-  if (outcome === 'blackjack') payout = Math.floor(round.bet * 2.5); // 3:2 + original bet back
-  else if (outcome === 'win') payout = round.bet * 2; // 1:1 + original bet back
-  else if (outcome === 'push') payout = round.bet; // bet returned
-  // 'lose' pays nothing — the bet was already deducted at deal time.
-  const newBalance = payout > 0 ? await setCrownBalance(kv, wallet, balance + payout) : balance;
+  const newBalance = totalPayout > 0 ? await setCrownBalance(kv, wallet, balance + totalPayout) : balance;
   await clearBlackjackRound(kv, wallet);
   return newBalance;
+}
+
+function findNextActiveHand(hands, afterIndex) {
+  for (let i = afterIndex + 1; i < hands.length; i++) {
+    if (hands[i].status === 'active') return i;
+  }
+  return -1;
+}
+
+// Called after a hand stops being playable (stood, bust, or forced-done by
+// a double) — moves to the next hand still in play (the split-hand case),
+// or settles the whole round against the dealer once none are left.
+async function advanceOrSettle(kv, wallet, round, balance) {
+  const next = findNextActiveHand(round.hands, round.activeHandIndex);
+  if (next !== -1) {
+    round.activeHandIndex = next;
+    await saveBlackjackRound(kv, wallet, round);
+    return balance;
+  }
+  return await settleRound(kv, wallet, round, balance, true);
 }
 
 export async function onRequestPost(context) {
@@ -74,7 +94,7 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'bad_json' }), { status: 400 });
   }
   const action = body && body.action;
-  if (!['deal', 'hit', 'stand'].includes(action)) {
+  if (!['deal', 'hit', 'stand', 'double', 'split'].includes(action)) {
     return new Response(JSON.stringify({ error: 'bad_action' }), { status: 400 });
   }
 
@@ -106,20 +126,19 @@ export async function onRequestPost(context) {
       const shoe = freshBlackjackShoe();
       const player = [shoe.pop(), shoe.pop()];
       const dealer = [shoe.pop(), shoe.pop()];
-      let round = { shoe, player, dealer, bet, status: 'active', result: null };
+      const hand = { cards: player, bet, status: 'active', result: null, fromSplit: false, fromSplitAces: false };
+      const round = { shoe, dealer, hands: [hand], activeHandIndex: 0, status: 'active' };
 
       const playerBJ = isBlackjackHand(player);
       const dealerBJ = isBlackjackHand(dealer);
       if (playerBJ || dealerBJ) {
-        const outcome = playerBJ && dealerBJ ? 'push' : (playerBJ ? 'blackjack' : 'lose');
-        balance = await resolve(kv, wallet, round, outcome, balance);
+        hand.status = 'stood';
+        hand.result = playerBJ && dealerBJ ? 'push' : (playerBJ ? 'blackjack' : 'lose');
+        balance = await settleRound(kv, wallet, round, balance, false);
       } else {
         await saveBlackjackRound(kv, wallet, round);
       }
-
-      return new Response(JSON.stringify({ ok: true, balance, round: publicRound(round) }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return respond(round, balance);
     }
 
     const round = await getBlackjackRound(kv, wallet);
@@ -127,32 +146,62 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: 'no_active_round' }), { status: 400 });
     }
     let balance = await getCrownBalance(kv, wallet);
-
-    if (action === 'hit') {
-      round.player.push(round.shoe.pop());
-      if (blackjackHandValue(round.player) > 21) {
-        balance = await resolve(kv, wallet, round, 'lose', balance);
-      } else {
-        await saveBlackjackRound(kv, wallet, round);
-      }
-      return new Response(JSON.stringify({ ok: true, balance, round: publicRound(round) }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
+    const hand = round.hands[round.activeHandIndex];
+    if (!hand || hand.status !== 'active') {
+      return new Response(JSON.stringify({ error: 'no_active_hand' }), { status: 400 });
     }
 
-    // action === 'stand'
-    blackjackDealerPlay(round.shoe, round.dealer);
-    const playerValue = blackjackHandValue(round.player);
-    const dealerValue = blackjackHandValue(round.dealer);
-    let outcome;
-    if (dealerValue > 21 || playerValue > dealerValue) outcome = 'win';
-    else if (playerValue === dealerValue) outcome = 'push';
-    else outcome = 'lose';
-    balance = await resolve(kv, wallet, round, outcome, balance);
+    if (action === 'hit') {
+      hand.cards.push(round.shoe.pop());
+      if (blackjackHandValue(hand.cards) > 21) hand.status = 'bust';
+      if (hand.status === 'active') {
+        await saveBlackjackRound(kv, wallet, round);
+      } else {
+        balance = await advanceOrSettle(kv, wallet, round, balance);
+      }
+      return respond(round, balance);
+    }
 
-    return new Response(JSON.stringify({ ok: true, balance, round: publicRound(round) }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    if (action === 'stand') {
+      hand.status = 'stood';
+      balance = await advanceOrSettle(kv, wallet, round, balance);
+      return respond(round, balance);
+    }
+
+    if (action === 'double') {
+      if (hand.cards.length !== 2 || hand.fromSplitAces) {
+        return new Response(JSON.stringify({ error: 'cannot_double' }), { status: 400 });
+      }
+      if (balance < hand.bet) {
+        return new Response(JSON.stringify({ error: 'insufficient_balance', balance }), { status: 400 });
+      }
+      balance = await setCrownBalance(kv, wallet, balance - hand.bet);
+      hand.bet *= 2;
+      hand.cards.push(round.shoe.pop());
+      hand.status = blackjackHandValue(hand.cards) > 21 ? 'bust' : 'stood';
+      balance = await advanceOrSettle(kv, wallet, round, balance);
+      return respond(round, balance);
+    }
+
+    // action === 'split'
+    if (round.hands.length !== 1 || hand.cards.length !== 2 ||
+        blackjackCardRank(hand.cards[0]) !== blackjackCardRank(hand.cards[1])) {
+      return new Response(JSON.stringify({ error: 'cannot_split' }), { status: 400 });
+    }
+    if (balance < hand.bet) {
+      return new Response(JSON.stringify({ error: 'insufficient_balance', balance }), { status: 400 });
+    }
+    balance = await setCrownBalance(kv, wallet, balance - hand.bet);
+    const isAces = blackjackCardRank(hand.cards[0]) === 'A';
+    const handA = { cards: [hand.cards[0], round.shoe.pop()], bet: hand.bet, status: 'active', result: null, fromSplit: true, fromSplitAces: isAces };
+    const handB = { cards: [hand.cards[1], round.shoe.pop()], bet: hand.bet, status: 'active', result: null, fromSplit: true, fromSplitAces: isAces };
+    // Split Aces is the one standard exception: one card each, no further
+    // action on either hand — both are done acting the instant they're dealt.
+    if (isAces) { handA.status = 'stood'; handB.status = 'stood'; }
+    round.hands = [handA, handB];
+    round.activeHandIndex = -1;
+    balance = await advanceOrSettle(kv, wallet, round, balance);
+    return respond(round, balance);
   } finally {
     await releaseCrownLock(kv, wallet);
   }

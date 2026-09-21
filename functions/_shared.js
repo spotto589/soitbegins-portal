@@ -2611,6 +2611,48 @@ export function blackjackDealerPlay(shoe, dealerCards) {
   return dealerCards;
 }
 
+export function blackjackCardRank(card) { return card.slice(0, -1); }
+
+// The single shape every blackjack-action/crown-balance response describes
+// a round in — kept in one place so the client only ever has to render one
+// shape, whether it just came from an action or from a page-load resume.
+// Never includes the dealer's hole card (or full dealer hand) until the
+// round is resolved. canDouble/canSplit are computed here (server-side,
+// against the real balance) rather than left for the client to guess —
+// the client only ever enables a button a flag here actually allows.
+export function publicBlackjackRound(round, balance) {
+  const resolved = round.status === 'resolved';
+  const hands = round.hands.map(h => ({
+    cards: h.cards,
+    value: blackjackHandValue(h.cards),
+    bet: h.bet,
+    status: h.status,
+    result: h.result || null,
+    fromSplit: !!h.fromSplit
+  }));
+  let canDouble = false;
+  let canSplit = false;
+  if (!resolved) {
+    const hand = round.hands[round.activeHandIndex];
+    if (hand) {
+      canDouble = hand.cards.length === 2 && !hand.fromSplitAces && balance >= hand.bet;
+      canSplit = round.hands.length === 1 && hand.cards.length === 2 &&
+        blackjackCardRank(hand.cards[0]) === blackjackCardRank(hand.cards[1]) &&
+        balance >= hand.bet;
+    }
+  }
+  return {
+    status: round.status,
+    activeHandIndex: resolved ? -1 : round.activeHandIndex,
+    hands,
+    dealerUp: round.dealer[0],
+    dealer: resolved ? round.dealer : null,
+    dealerValue: resolved ? blackjackHandValue(round.dealer) : null,
+    canDouble,
+    canSplit
+  };
+}
+
 // Runs `fn` over `items` with at most `limit` in flight at once, rather
 // than Promise.all-ing everything simultaneously. xrplcluster.com
 // rate-limits under bursts of concurrent calls (confirmed live — a burst

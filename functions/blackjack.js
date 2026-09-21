@@ -3,9 +3,11 @@ import { BOARD_COOKIE_NAME, getCookie, verifyToken } from './_shared.js';
 // BLACKJACK — first game in the Σκύλλα://SYSTEM games section (see
 // games.js for the hub). Wagers a KV-backed play balance, not real $CRWN —
 // see _shared.js's crown-ledger comment for the full context. All game
-// logic (shuffle, dealing, dealer play, payout) runs server-side in
-// /api/blackjack-action.js; this page only renders whatever that endpoint
-// returns and never computes an outcome itself.
+// logic (shuffle, dealing, dealer play, double/split, payout) runs
+// server-side in /api/blackjack-action.js (round shape shared via
+// publicBlackjackRound in _shared.js); this page only renders whatever
+// that endpoint (or /api/crown-balance's resume path) returns and never
+// computes an outcome, a legal-move flag, or a payout itself.
 function renderPage() {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -23,64 +25,79 @@ function renderPage() {
     min-height:100vh;
     display:flex;
     justify-content:center;
-    padding:6vh 5vw 8vh;
+    padding:4vh 4vw 6vh;
   }
-  canvas#staticCanvas{ position:fixed; inset:0; width:100%; height:100%; z-index:0; opacity:0.45; pointer-events:none; }
-  .page{ max-width:620px; width:100%; position:relative; z-index:1; }
+  canvas#staticCanvas{ position:fixed; inset:0; width:100%; height:100%; z-index:0; opacity:0.4; pointer-events:none; }
+  .page{ max-width:980px; width:100%; position:relative; z-index:1; }
+
+  .top-row{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.75rem; gap:1rem; flex-wrap:wrap; }
   .eyebrow{
-    font-size:12px; letter-spacing:0.3em; color:#39ff14; text-transform:uppercase;
-    opacity:0.85; text-shadow:0 0 6px rgba(57,255,20,0.5); margin-bottom:0.5rem;
+    font-size:13px; letter-spacing:0.3em; color:#39ff14; text-transform:uppercase;
+    opacity:0.85; text-shadow:0 0 6px rgba(57,255,20,0.5); margin-bottom:0.4rem;
   }
   h1{
-    font-size:clamp(24px,4vw,36px); letter-spacing:0.06em; color:#fff;
-    text-shadow:0 0 10px rgba(57,255,20,0.25); margin-bottom:1.5rem;
+    font-size:clamp(28px,5vw,46px); letter-spacing:0.06em; color:#fff;
+    text-shadow:0 0 12px rgba(57,255,20,0.25);
   }
-  .top-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; gap:1rem; flex-wrap:wrap; }
-  .balance-chip{
-    border:1px solid rgba(255,176,0,0.4); padding:0.5em 1em; font-size:13px;
-    color:#ffb000; text-shadow:0 0 6px rgba(255,176,0,0.4); white-space:nowrap;
-  }
-  .balance-chip span{ opacity:0.6; font-size:11px; margin-right:0.4em; }
-  .back-link{ font-size:11px; letter-spacing:0.1em; color:rgba(232,232,232,0.5); text-decoration:none; }
+  .back-link{ font-size:12px; letter-spacing:0.1em; color:rgba(232,232,232,0.5); text-decoration:none; }
   .back-link:hover{ color:#39ff14; }
 
-  .table{ border:1px solid rgba(57,255,20,0.3); padding:1.5rem; margin-bottom:1.5rem; min-height:260px; background:rgba(57,255,20,0.02); }
-  .hand-block{ margin-bottom:1.5rem; }
-  .hand-label{ font-size:11px; letter-spacing:0.2em; color:rgba(232,232,232,0.55); margin-bottom:0.6rem; display:flex; justify-content:space-between; }
-  .hand-value{ color:#39ff14; }
-  .cards{ display:flex; gap:0.5rem; flex-wrap:wrap; min-height:70px; }
+  .balance-chip{
+    border:1px solid rgba(255,176,0,0.45); padding:0.7em 1.4em; text-align:right;
+    background:rgba(255,176,0,0.05);
+  }
+  .balance-chip .bl{ font-size:11px; letter-spacing:0.2em; color:rgba(255,176,0,0.75); margin-bottom:0.25rem; }
+  .balance-chip .bv{ font-size:34px; line-height:1; color:#ffb000; text-shadow:0 0 10px rgba(255,176,0,0.55); font-weight:700; }
+
+  .table{ border:1px solid rgba(57,255,20,0.3); padding:2rem 2rem 1.5rem; margin-bottom:1.5rem; min-height:340px; background:rgba(57,255,20,0.02); }
+  .hands-row{ display:flex; gap:1.5rem; flex-wrap:wrap; }
+  .hand-block{ margin-bottom:1.75rem; flex:1 1 260px; min-width:240px; }
+  .hand-block.dealer-block{ flex-basis:100%; }
+  .hand-block.active-hand{ outline:1px dashed rgba(255,63,208,0.6); outline-offset:8px; }
+  .hand-label-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem; }
+  .hand-label{ font-size:13px; letter-spacing:0.2em; color:rgba(232,232,232,0.6); }
+  .hand-label .bet-tag{ font-size:10px; color:rgba(255,176,0,0.7); margin-left:0.6em; letter-spacing:0.1em; }
+  .hand-count{ font-size:38px; line-height:1; font-weight:700; color:#39ff14; text-shadow:0 0 10px rgba(57,255,20,0.55); margin-bottom:0.85rem; }
+  .hand-count.bust{ color:#ff3fb0; text-shadow:0 0 10px rgba(255,63,176,0.55); }
+  .cards{ display:flex; gap:0.6rem; flex-wrap:wrap; min-height:96px; }
   .card{
-    width:48px; height:68px; border:1px solid rgba(232,232,232,0.4); border-radius:4px;
+    width:64px; height:92px; border:1px solid rgba(232,232,232,0.4); border-radius:6px;
     background:#111; display:flex; align-items:center; justify-content:center;
-    font-size:18px; font-weight:700;
+    font-size:26px; font-weight:700;
   }
   .card.red{ color:#ff3fb0; }
   .card.black{ color:#e8e8e8; }
   .card.hidden{ background:repeating-linear-gradient(45deg,#151515,#151515 4px,#1c1c1c 4px,#1c1c1c 8px); color:transparent; }
 
-  .status-line{ text-align:center; font-size:13px; letter-spacing:0.1em; min-height:1.6em; margin-bottom:1rem; }
+  .status-line{ text-align:center; font-size:16px; letter-spacing:0.1em; min-height:1.8em; margin-bottom:1.25rem; }
   .status-line.win{ color:#39ff14; text-shadow:0 0 8px rgba(57,255,20,0.5); }
   .status-line.lose{ color:#ff3fb0; text-shadow:0 0 8px rgba(255,63,176,0.5); }
   .status-line.push{ color:#ffb000; }
   .status-line.err{ color:#ff3fb0; }
 
-  .bet-row{ display:flex; gap:0.75rem; align-items:center; justify-content:center; margin-bottom:1rem; }
+  .bet-row{ display:flex; gap:0.85rem; align-items:center; justify-content:center; margin-bottom:1.25rem; }
   .bet-row input{
-    width:100px; background:#0a0a0c; border:1px solid rgba(57,255,20,0.4); color:#e8e8e8;
-    font-family:inherit; font-size:14px; padding:0.6em 0.8em; text-align:center;
+    width:130px; background:#0a0a0c; border:1px solid rgba(57,255,20,0.4); color:#e8e8e8;
+    font-family:inherit; font-size:16px; padding:0.7em 0.9em; text-align:center;
   }
   .bet-row input:focus{ outline:none; border-color:#39ff14; }
-  .btn-row{ display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap; }
+  .btn-row{ display:flex; gap:0.85rem; justify-content:center; flex-wrap:wrap; }
   .gbtn{
     background:transparent; border:1px solid rgba(57,255,20,0.6); color:#39ff14;
-    font-family:inherit; font-size:13px; letter-spacing:0.12em; padding:0.8em 1.6em;
+    font-family:inherit; font-size:14px; letter-spacing:0.12em; padding:0.9em 1.8em;
     cursor:pointer; text-transform:uppercase; text-shadow:0 0 6px rgba(57,255,20,0.6);
   }
   .gbtn:hover:not(:disabled){ background:rgba(57,255,20,0.12); }
-  .gbtn:disabled{ opacity:0.35; cursor:default; }
+  .gbtn:disabled{ opacity:0.3; cursor:default; }
   .gbtn.secondary{ border-color:rgba(232,232,232,0.4); color:rgba(232,232,232,0.85); text-shadow:none; }
+  .gbtn.accent{ border-color:rgba(255,63,208,0.6); color:#ff3fb0; text-shadow:0 0 6px rgba(255,63,208,0.5); }
 
-  .note{ margin-top:2rem; font-size:10.5px; letter-spacing:0.03em; color:rgba(232,232,232,0.35); line-height:1.6; }
+  .note{ margin-top:2rem; font-size:11px; letter-spacing:0.03em; color:rgba(232,232,232,0.35); line-height:1.7; }
+  @media (max-width:700px){
+    .card{ width:52px; height:76px; font-size:21px; }
+    .hand-count{ font-size:30px; }
+    .balance-chip .bv{ font-size:26px; }
+  }
 </style>
 </head>
 <body>
@@ -89,29 +106,28 @@ function renderPage() {
     <div class="top-row">
       <div>
         <div class="eyebrow">Σκύλλα://SYSTEM</div>
-        <h1 style="margin-bottom:0;">BLACKJACK</h1>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
-        <div class="balance-chip"><span>CR0WN</span><span id="balanceValue">···</span></div>
+        <h1>BLACKJACK</h1>
         <a class="back-link" href="/games">&larr; GAMES</a>
+      </div>
+      <div class="balance-chip">
+        <div class="bl">SPENDABLE CR0WN</div>
+        <div class="bv" id="balanceValue">···</div>
       </div>
     </div>
 
     <div class="table">
-      <div class="hand-block">
-        <div class="hand-label"><span>DEALER</span><span class="hand-value" id="dealerValue"></span></div>
+      <div class="hand-block dealer-block">
+        <div class="hand-label-row"><span class="hand-label">DEALER</span></div>
+        <div class="hand-count" id="dealerValue">&nbsp;</div>
         <div class="cards" id="dealerCards"></div>
       </div>
-      <div class="hand-block" style="margin-bottom:0;">
-        <div class="hand-label"><span>Y0U</span><span class="hand-value" id="playerValue"></span></div>
-        <div class="cards" id="playerCards"></div>
-      </div>
+      <div class="hands-row" id="playerHandsContainer"></div>
     </div>
 
     <div class="status-line" id="statusLine"></div>
 
     <div class="bet-row" id="betRow">
-      <span style="font-size:12px;letter-spacing:0.1em;color:rgba(232,232,232,0.6);">BET</span>
+      <span style="font-size:13px;letter-spacing:0.1em;color:rgba(232,232,232,0.6);">BET</span>
       <input type="number" id="betInput" min="1" step="1" value="10">
       <button class="gbtn" id="dealBtn">DEAL</button>
     </div>
@@ -119,13 +135,15 @@ function renderPage() {
     <div class="btn-row" id="actionRow" style="display:none;">
       <button class="gbtn" id="hitBtn">H!T</button>
       <button class="gbtn secondary" id="standBtn">STAND</button>
+      <button class="gbtn accent" id="doubleBtn">D0UBLE</button>
+      <button class="gbtn accent" id="splitBtn">SPL!T</button>
     </div>
 
     <div class="btn-row" id="againRow" style="display:none;">
       <button class="gbtn" id="againBtn">PLAY AGA!N</button>
     </div>
 
-    <p class="note">Server-dealt, 6-deck shoe reshuffled every hand · dealer stands on 17 · blackjack pays 3:2 · this Crown balance is a closed-test in-house wager balance, separate from the real $CRWN token.</p>
+    <p class="note">Server-dealt, 6-deck shoe reshuffled every hand · dealer stands on 17 · blackjack pays 3:2 · double down on the first two cards · split any matching pair (splitting Aces deals one card each, no further action) · this Crown balance is a closed-test in-house wager balance, separate from the real $CRWN token.</p>
   </div>
 
 <script>
@@ -153,8 +171,8 @@ function renderPage() {
   startStaticCanvas();
 
   var el = {};
-  ['balanceValue','dealerValue','dealerCards','playerValue','playerCards','statusLine',
-   'betRow','betInput','dealBtn','actionRow','hitBtn','standBtn','againRow','againBtn'
+  ['balanceValue','dealerValue','dealerCards','playerHandsContainer','statusLine',
+   'betRow','betInput','dealBtn','actionRow','hitBtn','standBtn','doubleBtn','splitBtn','againRow','againBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   var SUIT_SYM = { S: '\\u2660', H: '\\u2665', D: '\\u2666', C: '\\u2663' };
@@ -178,41 +196,83 @@ function renderPage() {
     el.statusLine.className = 'status-line' + (cls ? ' ' + cls : '');
   }
 
+  // Renders 1 or 2 player hand-blocks (2 only after a split), each with its
+  // own count-above-cards and its own DOUBLE/SPLIT-eligible highlighting —
+  // same shape whether this came from a live action or a page-load resume.
+  function renderPlayerHands(round){
+    el.playerHandsContainer.innerHTML = '';
+    var multi = round.hands.length > 1;
+    round.hands.forEach(function(hand, i){
+      var block = document.createElement('div');
+      block.className = 'hand-block' + (round.status === 'active' && i === round.activeHandIndex ? ' active-hand' : '');
+      var labelRow = document.createElement('div');
+      labelRow.className = 'hand-label-row';
+      var label = document.createElement('span');
+      label.className = 'hand-label';
+      label.textContent = multi ? ('HAND ' + (i + 1)) : 'Y0U';
+      var betTag = document.createElement('span');
+      betTag.className = 'bet-tag';
+      betTag.textContent = 'BET ' + hand.bet;
+      label.appendChild(betTag);
+      labelRow.appendChild(label);
+      block.appendChild(labelRow);
+
+      var count = document.createElement('div');
+      count.className = 'hand-count' + (hand.status === 'bust' ? ' bust' : '');
+      count.textContent = hand.status === 'bust' ? hand.value + ' BUST' : hand.value;
+      block.appendChild(count);
+
+      var cardsDiv = document.createElement('div');
+      cardsDiv.className = 'cards';
+      hand.cards.forEach(function(c){ cardsDiv.appendChild(cardEl(c, false)); });
+      block.appendChild(cardsDiv);
+
+      el.playerHandsContainer.appendChild(block);
+    });
+  }
+
   function renderRound(round){
-    renderCards(el.playerCards, round.player);
-    el.playerValue.textContent = round.playerValue;
+    renderPlayerHands(round);
 
     if (round.status === 'active') {
       el.dealerCards.innerHTML = '';
       el.dealerCards.appendChild(cardEl(round.dealerUp, false));
       el.dealerCards.appendChild(cardEl(null, true));
-      el.dealerValue.textContent = '';
+      el.dealerValue.innerHTML = '&nbsp;';
+      el.dealerValue.className = 'hand-count';
       el.betRow.style.display = 'none';
       el.actionRow.style.display = 'flex';
       el.againRow.style.display = 'none';
-      setStatus('YOUR M0VE', '');
+      el.doubleBtn.disabled = !round.canDouble;
+      el.splitBtn.disabled = !round.canSplit;
+      el.splitBtn.style.display = round.canSplit || round.hands.length === 1 ? 'inline-block' : 'none';
+      setStatus(round.hands.length > 1 ? 'YOUR M0VE — HAND ' + (round.activeHandIndex + 1) : 'YOUR M0VE', '');
     } else {
       renderCards(el.dealerCards, round.dealer);
       el.dealerValue.textContent = round.dealerValue;
       el.actionRow.style.display = 'none';
       el.betRow.style.display = 'none';
       el.againRow.style.display = 'flex';
-      var msgs = {
-        blackjack: ['BLACKJACK! Y0U W!N ' + Math.floor(round.bet * 1.5) + ' CR0WN', 'win'],
-        win: ['Y0U W!N ' + round.bet + ' CR0WN', 'win'],
-        push: ['PUSH — BET RETURNED', 'push'],
-        lose: ['Y0U L0SE', 'lose']
-      };
-      var m = msgs[round.result] || ['R0UND RES0LVED', ''];
-      setStatus(m[0], m[1]);
+      var labels = { blackjack: 'BLACKJACK!', win: 'W!N', push: 'PUSH', lose: 'L0SE' };
+      var classes = { blackjack: 'win', win: 'win', push: 'push', lose: 'lose' };
+      if (round.hands.length > 1) {
+        var summary = round.hands.map(function(h, i){ return 'HAND ' + (i + 1) + ': ' + labels[h.result]; }).join('  ·  ');
+        setStatus(summary, '');
+      } else {
+        var r = round.hands[0].result;
+        var text = r === 'blackjack' ? 'BLACKJACK! Y0U W!N ' + Math.floor(round.hands[0].bet * 1.5) + ' CR0WN'
+          : r === 'win' ? 'Y0U W!N ' + round.hands[0].bet + ' CR0WN'
+          : r === 'push' ? 'PUSH — BET RETURNED'
+          : 'Y0U L0SE';
+        setStatus(text, classes[r]);
+      }
     }
   }
 
   function resetToBetting(){
     el.dealerCards.innerHTML = '';
-    el.playerCards.innerHTML = '';
-    el.dealerValue.textContent = '';
-    el.playerValue.textContent = '';
+    el.playerHandsContainer.innerHTML = '';
+    el.dealerValue.innerHTML = '&nbsp;';
     el.betRow.style.display = 'flex';
     el.actionRow.style.display = 'none';
     el.againRow.style.display = 'none';
@@ -223,7 +283,7 @@ function renderPage() {
   async function callAction(payload){
     if (busy) return null;
     busy = true;
-    el.dealBtn.disabled = true; el.hitBtn.disabled = true; el.standBtn.disabled = true;
+    [el.dealBtn, el.hitBtn, el.standBtn, el.doubleBtn, el.splitBtn].forEach(function(b){ b.disabled = true; });
     try {
       var res = await fetch('/api/blackjack-action', {
         method: 'POST',
@@ -242,7 +302,7 @@ function renderPage() {
       return null;
     } finally {
       busy = false;
-      el.dealBtn.disabled = false; el.hitBtn.disabled = false; el.standBtn.disabled = false;
+      [el.dealBtn, el.hitBtn, el.standBtn].forEach(function(b){ b.disabled = false; });
     }
   }
 
@@ -260,6 +320,14 @@ function renderPage() {
     var data = await callAction({ action: 'stand' });
     if (data) renderRound(data.round);
   });
+  el.doubleBtn.addEventListener('click', async function(){
+    var data = await callAction({ action: 'double' });
+    if (data) renderRound(data.round);
+  });
+  el.splitBtn.addEventListener('click', async function(){
+    var data = await callAction({ action: 'split' });
+    if (data) renderRound(data.round);
+  });
   el.againBtn.addEventListener('click', resetToBetting);
 
   (async function init(){
@@ -270,16 +338,8 @@ function renderPage() {
         el.balanceValue.textContent = data.balance;
         el.betInput.max = data.maxBet;
         if (data.round && data.round.status === 'active') {
-          // Resume an in-progress round (e.g. after a page refresh) — the
-          // dealer's hole card stays hidden, same as any other active round.
-          renderCards(el.playerCards, data.round.player);
-          el.playerValue.textContent = data.round.playerValue;
-          el.dealerCards.innerHTML = '';
-          el.dealerCards.appendChild(cardEl(data.round.dealerUp, false));
-          el.dealerCards.appendChild(cardEl(null, true));
-          el.betRow.style.display = 'none';
-          el.actionRow.style.display = 'flex';
-          setStatus('R0UND RESUMED — Y0UR M0VE', '');
+          renderRound(data.round);
+          setStatus('R0UND RESUMED — ' + (data.round.hands.length > 1 ? 'HAND ' + (data.round.activeHandIndex + 1) : 'YOUR M0VE'), '');
         }
       } else {
         el.balanceValue.textContent = '—';
