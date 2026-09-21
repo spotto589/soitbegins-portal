@@ -138,7 +138,7 @@ function renderPage() {
      the outer marquee-frame ring rather than replacing it. */
   .table-border{ position:relative; padding:2px; border-radius:6px; overflow:hidden; }
   .table{
-    border:1px solid rgba(57,255,20,0.3); padding:0.7rem 1.1rem 0.55rem; min-height:195px;
+    border:1px solid rgba(57,255,20,0.3); padding:0.7rem 1.1rem 0.9rem; min-height:195px;
     /* Needs to be near-opaque, not just tinted — a transparent background
        doesn't block the chase glow behind it regardless of paint order,
        so a mostly-see-through fill let both cyber-glow rings bleed across
@@ -146,7 +146,18 @@ function renderPage() {
        (reported live as "swirling in the middle of the cards"). */
     background:#0a0a0c; position:relative; z-index:1;
     box-shadow:0 0 20px rgba(57,255,20,0.15);
+    /* Faint HUD grid — the "playing inside a system" texture behind the
+       static flecks, not just a flat dark panel. */
+    background-image:
+      linear-gradient(rgba(61,243,236,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(61,243,236,0.05) 1px, transparent 1px);
+    background-size:28px 28px;
   }
+  /* The whole betting console + hands now live inside this one growing
+     box, so its static canvas must resize with it — done via a
+     ResizeObserver in the client script (not just window resize), which
+     is what actually fixes the old "black box cutoff" when a hand starts
+     or the table grows taller than its initial size. */
   #tableStaticCanvas{ position:absolute; inset:0; z-index:-1; opacity:0.85; pointer-events:none; }
   .hands-row{ display:flex; gap:1.5rem; flex-wrap:wrap; justify-content:center; }
   /* Deck-shuffling idle animation — sits centered in the table while
@@ -216,29 +227,87 @@ function renderPage() {
   .status-line.push{ color:#ffb000; }
   .status-line.err{ color:#ff3fb0; }
 
-  .bet-row{ display:flex; gap:1rem; align-items:center; justify-content:center; margin-bottom:0.4rem; }
-  .bet-row .bet-row-label{ font-size:17px; letter-spacing:0.12em; color:rgba(232,232,232,0.75); font-weight:600; }
-  .bet-row input{
-    width:160px; background:#0a0a0c; border:2px solid rgba(57,255,20,0.5); color:#39ff14;
-    font-family:inherit; font-size:24px; font-weight:700; padding:0.4em 0.6em; text-align:center;
-  }
-  .bet-row input:focus{ outline:none; border-color:#39ff14; }
+  /* Wager console — the whole betting area (plates + chip tray) now lives
+     INSIDE .table itself, per feedback: it used to be a separate plain
+     block below the neon-framed table, which read as a disconnected black
+     box rather than part of the same system. */
+  .wager-console{ display:flex; flex-direction:column; align-items:center; gap:1.1rem; margin:0.7rem 0 0.5rem; }
+  .side-plates{ display:flex; gap:2.4rem; justify-content:center; }
 
-  /* Chip pads — click a denomination to ADD it onto whatever's already in
-     that bet field (real casino chip-stacking, not a replace), X clears
-     it to 0. Side-bet ("special") pads render smaller and sit above the
-     main bet's big pad, per the ask. */
+  .bet-plate{ position:relative; display:flex; flex-direction:column; align-items:center; }
+  /* Two counter-rotating dashed rings around each plate — a slow HUD spin
+     so the betting circles feel like part of a live system, not static UI. */
+  .plate-ring{ position:absolute; inset:-6px; border-radius:50%; border:1px dashed rgba(61,243,236,0.5); animation:plateSpin 12s linear infinite; pointer-events:none; }
+  .plate-ring.outer{ inset:-13px; border-color:rgba(255,63,176,0.35); animation-duration:18s; animation-direction:reverse; }
+  @keyframes plateSpin{ to{ transform:rotate(360deg); } }
+  .plate-felt{
+    position:relative; border-radius:50%; overflow:visible;
+    background:radial-gradient(circle at 50% 38%, rgba(61,243,236,0.1), #060607 72%);
+    border:2px solid rgba(232,232,232,0.18);
+    box-shadow:inset 0 0 18px rgba(0,0,0,0.85), inset 0 0 0 1px rgba(61,243,236,0.08);
+  }
+  .side-plate .plate-felt{ width:74px; height:74px; }
+  .main-plate .plate-felt{ width:128px; height:128px; }
+  .chip-stack{ position:absolute; inset:0; }
+  .plate-placeholder{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); white-space:nowrap;
+    font-size:9px; letter-spacing:0.15em; color:rgba(232,232,232,0.3); pointer-events:none;
+  }
+  .plate-label{ font-size:10px; letter-spacing:0.18em; color:rgba(232,232,232,0.55); margin-top:0.55rem; }
+  .plate-readout{ font-size:15px; font-weight:700; color:#ffb000; text-shadow:0 0 6px rgba(255,176,0,0.5); margin-top:0.1rem; }
+  .plate-readout.main{ font-size:22px; }
+  .plate-readout .cr{ font-size:10px; font-weight:600; letter-spacing:0.1em; color:rgba(255,176,0,0.65); }
+
+  /* Physical chips piling up on a plate — a landed chip stays put (unlike
+     the old flying "coin" that just faded into a number field), stacking
+     upward with a little jitter/rotation so a bet reads as an actual pile,
+     not a counter. */
+  .stacked-chip{
+    position:absolute; left:50%; bottom:8px; border-radius:50%; border:2px solid currentColor;
+    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,0.18), rgba(10,10,12,0.94));
+    display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700;
+    color:currentColor; text-shadow:0 0 4px currentColor; box-shadow:0 3px 5px rgba(0,0,0,0.65), inset 0 0 0 3px rgba(0,0,0,0.5);
+    animation:chipLand 0.3s cubic-bezier(.34,1.56,.64,1) both;
+    transform:rotate(var(--r,0deg));
+  }
+  .side-plate .stacked-chip{ width:32px; height:32px; margin-left:-16px; }
+  .main-plate .stacked-chip{ width:42px; height:42px; margin-left:-21px; }
+  @keyframes chipLand{ 0%{ transform:translateY(-14px) rotate(var(--r,0deg)) scale(0.7); opacity:0.3; } 100%{ transform:translateY(0) rotate(var(--r,0deg)) scale(1); opacity:1; } }
+
+  .main-plate-wrap{ display:flex; align-items:center; gap:1.4rem; }
+  .deal-btn{
+    background:radial-gradient(circle at 35% 30%, rgba(57,255,20,0.25), rgba(10,10,12,0.95));
+    border:2px solid #39ff14; color:#39ff14; font-family:inherit; font-size:14px; letter-spacing:0.12em;
+    width:82px; height:82px; border-radius:50%; cursor:pointer; text-shadow:0 0 8px rgba(57,255,20,0.7);
+    box-shadow:0 0 16px rgba(57,255,20,0.25); transition:transform 0.12s ease, box-shadow 0.12s ease;
+    display:flex; align-items:center; justify-content:center; text-transform:uppercase;
+  }
+  .deal-btn:hover:not(:disabled){ transform:scale(1.06); box-shadow:0 0 26px rgba(57,255,20,0.45); }
+  .deal-btn:active:not(:disabled){ transform:scale(0.97); }
+  .deal-btn:disabled{ opacity:0.3; cursor:default; }
+
+  .chip-tray{ display:flex; flex-direction:column; align-items:center; gap:0.55rem; margin-bottom:0.3rem; }
+
+  /* Chip pads — click a denomination to ADD it onto whatever's already
+     wagered on that plate (real casino chip-stacking, not a replace); the
+     chip itself flies to the plate and stays there as part of the pile. X
+     clears the plate back to empty. Side-bet ("special") pads render
+     smaller and sit above the main bet's big pad, per the ask. */
   .chip-pad{ display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap; }
-  .chip-pad.big{ margin-bottom:0.7rem; }
+  .chip-pad.big{ margin-bottom:0.2rem; }
   .chip{
-    border-radius:50%; border:2px solid #ffb000; cursor:pointer; font-family:inherit; font-weight:700;
+    position:relative; border-radius:50%; border:2px solid #ffb000; cursor:pointer; font-family:inherit; font-weight:700;
     background:radial-gradient(circle at 35% 30%, rgba(255,176,0,0.28), rgba(10,10,12,0.92));
     color:#ffb000; text-shadow:0 0 5px currentColor;
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; line-height:1;
     transition:transform 0.12s ease, box-shadow 0.12s ease;
   }
-  .chip:hover{ transform:translateY(-3px); box-shadow:0 5px 12px currentColor; }
-  .chip:active{ transform:translateY(0); }
+  /* Dashed inner ring — reads as an actual chip edge rather than a plain
+     coin/button. */
+  .chip:not(.clear)::before{ content:''; position:absolute; inset:3px; border-radius:50%; border:1.5px dashed currentColor; opacity:0.55; pointer-events:none; }
+  .chip-crown, .chip-val{ position:relative; z-index:1; }
+  .chip:hover{ transform:translateY(-3px) rotate(-4deg); box-shadow:0 5px 12px currentColor; }
+  .chip:active{ transform:translateY(0) rotate(0deg); }
   .chip.clear{ border-color:rgba(232,232,232,0.45); color:rgba(232,232,232,0.75); text-shadow:none; background:radial-gradient(circle at 35% 30%, rgba(232,232,232,0.1), rgba(10,10,12,0.92)); }
   .chip:not(.small){ width:52px; height:52px; font-size:13px; }
   .chip.small{ width:34px; height:34px; font-size:11px; border-width:1.5px; }
@@ -255,22 +324,17 @@ function renderPage() {
   .chip[data-add="100"]{ border-color:#ff3fb0; color:#ff3fb0; background:radial-gradient(circle at 35% 30%, rgba(255,63,176,0.25), rgba(10,10,12,0.92)); }
   .chip[data-add="250"]{ border-color:#ffb000; color:#ffb000; background:radial-gradient(circle at 35% 30%, rgba(255,176,0,0.28), rgba(10,10,12,0.92)); }
 
-  .flying-coin{
-    position:fixed; width:26px; height:26px; border-radius:50%; z-index:400; pointer-events:none;
-    display:flex; align-items:center; justify-content:center;
+  /* Flying chip — a ghost disc travels from the clicked chip button to its
+     plate; once it arrives it's swapped for a real .stacked-chip that
+     stays there (see flyChip in the client script). */
+  .flying-chip{
+    position:fixed; width:34px; height:34px; border-radius:50%; z-index:400; pointer-events:none;
+    display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;
     background:rgba(10,10,12,0.95); border:2px solid currentColor; box-shadow:0 0 10px currentColor;
-    transition:left 0.5s cubic-bezier(.25,.65,.3,1), top 0.5s cubic-bezier(.25,.65,.3,1), opacity 0.4s ease 0.2s, transform 0.5s ease;
+    color:currentColor; text-shadow:0 0 4px currentColor;
+    transition:left 0.5s cubic-bezier(.25,.65,.3,1), top 0.5s cubic-bezier(.25,.65,.3,1), opacity 0.35s ease 0.4s, transform 0.5s ease;
   }
-  .flying-coin .chip-crown{ width:13px; }
 
-  .side-bet-row{ display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-bottom:0.6rem; }
-  .side-bet-field{ display:flex; flex-direction:column; align-items:center; gap:0.4rem; border:1px dashed rgba(232,232,232,0.3); padding:0.6em 0.85em; }
-  .side-bet-field label{ font-size:12px; letter-spacing:0.05em; color:rgba(232,232,232,0.7); font-weight:600; }
-  .side-bet-field input{
-    width:78px; background:#0a0a0c; border:2px solid rgba(232,232,232,0.35); color:#e8e8e8;
-    font-family:inherit; font-size:17px; font-weight:700; padding:0.3em 0.5em; text-align:center;
-  }
-  .side-bet-field input:focus{ outline:none; border-color:#3df3ec; }
   .side-bet-result{ text-align:center; font-size:12px; letter-spacing:0.05em; margin-bottom:0.4rem; min-height:1.3em; }
   .side-bet-result .hit{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.4); }
   .side-bet-result .miss{ color:rgba(232,232,232,0.35); }
@@ -314,6 +378,11 @@ function renderPage() {
     .balance-chip .bv{ font-size:24px; }
     .chip:not(.small){ width:44px; height:44px; font-size:11px; }
     .chip.small{ width:30px; height:30px; font-size:10px; }
+    .side-plates{ gap:1.4rem; }
+    .side-plate .plate-felt{ width:60px; height:60px; }
+    .main-plate .plate-felt{ width:104px; height:104px; }
+    .main-plate-wrap{ gap:0.9rem; }
+    .deal-btn{ width:70px; height:70px; font-size:12px; }
   }
 </style>
 </head>
@@ -363,17 +432,54 @@ function renderPage() {
         <div class="sc"></div>
         <div class="shuffle-label">SHUFFL!NG...</div>
       </div>
-      </div>
-      </div>
-    </div>
 
-    <div class="status-line" id="statusLine"></div>
-    <div class="side-bet-result" id="sideBetResult"></div>
+      <div class="status-line" id="statusLine"></div>
+      <div class="side-bet-result" id="sideBetResult"></div>
 
-    <div class="side-bet-row" id="sideBetRow">
-      <div class="side-bet-field">
-        <label>PA!R B0NUS</label>
-        <input type="number" id="pairBetInput" min="0" step="1" value="0">
+      <!-- Wager console — every betting box lives inside the table's own
+           glowing/static-textured frame now, styled as felt betting
+           circles with chips that physically stack, not input fields. -->
+      <div class="wager-console" id="wagerConsole">
+        <div class="side-plates">
+          <div class="bet-plate side-plate">
+            <div class="plate-ring"></div>
+            <div class="plate-felt">
+              <div class="chip-stack" id="pairChipStack"></div>
+              <div class="plate-placeholder" id="pairPlaceholder">PA!R B0NUS</div>
+            </div>
+            <div class="plate-label">PA!R B0NUS</div>
+            <div class="plate-readout"><span id="pairBetReadout">0</span></div>
+            <input type="hidden" id="pairBetInput" min="0" step="1" value="0">
+          </div>
+          <div class="bet-plate side-plate">
+            <div class="plate-ring"></div>
+            <div class="plate-felt">
+              <div class="chip-stack" id="pokerChipStack"></div>
+              <div class="plate-placeholder" id="pokerPlaceholder">P0KER B0NUS</div>
+            </div>
+            <div class="plate-label">P0KER B0NUS</div>
+            <div class="plate-readout"><span id="pokerBetReadout">0</span></div>
+            <input type="hidden" id="pokerBetInput" min="0" step="1" value="0">
+          </div>
+        </div>
+
+        <div class="main-plate-wrap">
+          <div class="bet-plate main-plate">
+            <div class="plate-ring"></div>
+            <div class="plate-ring outer"></div>
+            <div class="plate-felt">
+              <div class="chip-stack" id="mainChipStack"></div>
+              <div class="plate-placeholder" id="mainPlaceholder">PLACE WAGER</div>
+            </div>
+            <div class="plate-label">MA!N WAGER</div>
+            <div class="plate-readout main"><span id="betReadout">0</span> <span class="cr">CR0WN</span></div>
+            <input type="hidden" id="betInput" min="1" step="1" value="0">
+          </div>
+          <button class="deal-btn" id="dealBtn"><span>DEAL</span></button>
+        </div>
+      </div>
+
+      <div class="chip-tray" id="chipTray">
         <div class="chip-pad small" id="pairChipPad">
           <button type="button" class="chip small" data-add="5">5</button>
           <button type="button" class="chip small" data-add="10">10</button>
@@ -381,10 +487,15 @@ function renderPage() {
           <button type="button" class="chip small" data-add="50">50</button>
           <button type="button" class="chip small clear" data-clear>X</button>
         </div>
-      </div>
-      <div class="side-bet-field">
-        <label>P0KER B0NUS</label>
-        <input type="number" id="pokerBetInput" min="0" step="1" value="0">
+        <div class="chip-pad big" id="betChipPad">
+          <button type="button" class="chip" data-add="5">5</button>
+          <button type="button" class="chip" data-add="10">10</button>
+          <button type="button" class="chip" data-add="25">25</button>
+          <button type="button" class="chip" data-add="50">50</button>
+          <button type="button" class="chip" data-add="100">100</button>
+          <button type="button" class="chip" data-add="250">250</button>
+          <button type="button" class="chip clear" data-clear>X</button>
+        </div>
         <div class="chip-pad small" id="pokerChipPad">
           <button type="button" class="chip small" data-add="5">5</button>
           <button type="button" class="chip small" data-add="10">10</button>
@@ -393,32 +504,19 @@ function renderPage() {
           <button type="button" class="chip small clear" data-clear>X</button>
         </div>
       </div>
-    </div>
 
-    <div class="bet-row" id="betRow">
-      <span class="bet-row-label">BET</span>
-      <input type="number" id="betInput" min="1" step="1" value="10">
-      <button class="gbtn" id="dealBtn">DEAL</button>
-    </div>
-    <div class="chip-pad big" id="betChipPad">
-      <button type="button" class="chip" data-add="5">5</button>
-      <button type="button" class="chip" data-add="10">10</button>
-      <button type="button" class="chip" data-add="25">25</button>
-      <button type="button" class="chip" data-add="50">50</button>
-      <button type="button" class="chip" data-add="100">100</button>
-      <button type="button" class="chip" data-add="250">250</button>
-      <button type="button" class="chip clear" data-clear>X</button>
-    </div>
+      <div class="btn-row" id="actionRow" style="display:none;">
+        <button class="gbtn" id="hitBtn">H!T</button>
+        <button class="gbtn secondary" id="standBtn">STAND</button>
+        <button class="gbtn accent" id="doubleBtn">D0UBLE</button>
+        <button class="gbtn accent" id="splitBtn">SPL!T</button>
+      </div>
 
-    <div class="btn-row" id="actionRow" style="display:none;">
-      <button class="gbtn" id="hitBtn">H!T</button>
-      <button class="gbtn secondary" id="standBtn">STAND</button>
-      <button class="gbtn accent" id="doubleBtn">D0UBLE</button>
-      <button class="gbtn accent" id="splitBtn">SPL!T</button>
-    </div>
-
-    <div class="btn-row" id="againRow" style="display:none;">
-      <button class="gbtn" id="againBtn">PLAY AGA!N</button>
+      <div class="btn-row" id="againRow" style="display:none;">
+        <button class="gbtn" id="againBtn">PLAY AGA!N</button>
+      </div>
+      </div>
+      </div>
     </div>
   </div>
 
@@ -510,6 +608,16 @@ function renderPage() {
     function size(){ var s = getSize(); canvasEl.width = s.w; canvasEl.height = s.h; }
     size();
     window.addEventListener('resize', size);
+    // The table itself grows (in-hand narrowing, dealt cards, the wager
+    // console) without ever firing a window resize — a plain resize
+    // listener left the canvas's backing bitmap sized to whatever the
+    // table measured on load, so anything the table grew into afterward
+    // rendered as flat black instead of static (reported live as "cut
+    // off with a black box"). A ResizeObserver on the element that's
+    // actually changing size catches all of that.
+    if (opts.observe && typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(size).observe(opts.observe);
+    }
     var ctx = canvasEl.getContext('2d');
     function frame(){
       ctx.fillStyle = '#000';
@@ -527,19 +635,24 @@ function renderPage() {
   startStaticCanvas(document.getElementById('staticCanvas'), function(){
     return { w: window.innerWidth, h: window.innerHeight };
   });
+  var tableEl = document.querySelector('.table');
   startStaticCanvas(document.getElementById('tableStaticCanvas'), function(){
-    var r = document.querySelector('.table').getBoundingClientRect();
+    var r = tableEl.getBoundingClientRect();
     return { w: Math.max(1, r.width), h: Math.max(1, r.height) };
-  }, { divisor: 1400, fleckSize: 2 });
+  }, { divisor: 1400, fleckSize: 2, observe: tableEl });
 
   var el = {};
   ['balanceValue','dealerValue','dealerCards','playerHandsContainer','statusLine',
-   'betRow','betInput','dealBtn','actionRow','hitBtn','standBtn','doubleBtn','splitBtn','againRow','againBtn',
-   'sideBetRow','pairBetInput','pokerBetInput','sideBetResult',
+   'betInput','dealBtn','actionRow','hitBtn','standBtn','doubleBtn','splitBtn','againRow','againBtn',
+   'pairBetInput','pokerBetInput','sideBetResult',
    'strategyBtn','strategyOverlay','strategyCloseBtn','strategyBody',
    'rulesBtn','rulesOverlay','rulesCloseBtn',
    'sessionBtn','sessionValue','historyOverlay','historyCloseBtn','historyEmpty','historyList',
-   'shuffleDeck','dealerBlock','pageEl','winFlash','winFlashText','betChipPad'
+   'shuffleDeck','dealerBlock','pageEl','winFlash','winFlashText',
+   'wagerConsole','chipTray',
+   'mainChipStack','pairChipStack','pokerChipStack',
+   'mainPlaceholder','pairPlaceholder','pokerPlaceholder',
+   'betReadout','pairBetReadout','pokerBetReadout'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   function setInHand(active){
@@ -555,37 +668,64 @@ function renderPage() {
     btn.innerHTML = CROWN_ICON_SVG + '<span class="chip-val">' + val + '</span>';
   });
 
-  // "Coins going onto the table" — a small crowned coin, coloured to
-  // match the chip that spawned it, flies from the clicked chip to the
-  // bet field it's stacking onto, then shrinks/fades on arrival.
-  function flyCoin(sourceEl, targetEl, color){
+  // "Actually putting chips onto a betting plate" — a ghost chip, coloured
+  // to match the denomination clicked, flies from the chip tray to the
+  // plate's felt. On arrival it's swapped for a real .stacked-chip that
+  // stays there permanently, piling up on top of whatever's already down
+  // (see landChip) instead of fading into a number.
+  function flyChip(sourceEl, plateFeltEl, color, value, done){
     var sRect = sourceEl.getBoundingClientRect();
-    var tRect = targetEl.getBoundingClientRect();
-    var coin = document.createElement('div');
-    coin.className = 'flying-coin';
-    coin.style.color = color;
-    coin.innerHTML = CROWN_ICON_SVG;
-    coin.style.left = (sRect.left + sRect.width / 2 - 13) + 'px';
-    coin.style.top = (sRect.top + sRect.height / 2 - 13) + 'px';
-    coin.style.opacity = '1';
-    document.body.appendChild(coin);
+    var tRect = plateFeltEl.getBoundingClientRect();
+    var chip = document.createElement('div');
+    chip.className = 'flying-chip';
+    chip.style.color = color;
+    chip.textContent = value;
+    chip.style.left = (sRect.left + sRect.width / 2 - 17) + 'px';
+    chip.style.top = (sRect.top + sRect.height / 2 - 17) + 'px';
+    chip.style.opacity = '1';
+    document.body.appendChild(chip);
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){
-        coin.style.left = (tRect.left + tRect.width / 2 - 13) + 'px';
-        coin.style.top = (tRect.top + tRect.height / 2 - 13) + 'px';
-        coin.style.opacity = '0';
-        coin.style.transform = 'scale(0.4) rotate(300deg)';
+        chip.style.left = (tRect.left + tRect.width / 2 - 17) + 'px';
+        chip.style.top = (tRect.top + tRect.height / 2 - 17) + 'px';
+        chip.style.opacity = '0';
+        chip.style.transform = 'scale(0.85) rotate(120deg)';
       });
     });
-    setTimeout(function(){ coin.remove(); }, 560);
+    setTimeout(function(){
+      chip.remove();
+      done();
+    }, 500);
+  }
+
+  // Landed chip pile per plate — each new chip sits a little higher than
+  // the last, with a small random horizontal/rotation jitter so a stack
+  // reads as an actual pile of physical chips rather than a repeated icon.
+  var stackCounts = { main: 0, pair: 0, poker: 0 };
+  function landChip(stackEl, plateKey, color, value){
+    var count = stackCounts[plateKey]++;
+    var chip = document.createElement('div');
+    chip.className = 'stacked-chip';
+    chip.style.color = color;
+    var baseMargin = plateKey === 'main' ? -21 : -16;
+    chip.style.bottom = (Math.min(count, 16) * (plateKey === 'main' ? 5 : 4)) + 'px';
+    chip.style.marginLeft = (baseMargin + (Math.random() * 14 - 7)) + 'px';
+    chip.style.setProperty('--r', (Math.random() * 12 - 6) + 'deg');
+    chip.style.zIndex = String(count);
+    chip.textContent = value;
+    stackEl.appendChild(chip);
+  }
+  function clearStack(stackEl, plateKey){
+    stackEl.innerHTML = '';
+    stackCounts[plateKey] = 0;
   }
 
   // Chip pads — a chip button ADDS its value onto whatever's already
-  // typed into that bet field (real casino chip-stacking), clamped to the
+  // wagered on that plate (real casino chip-stacking), clamped to the
   // input's own max (set once the real maxBet is known in init() below);
-  // the X chip clears it back to 0. Same wiring for the big main-bet pad
-  // and both smaller side-bet pads.
-  function wireChipPad(padId, inputEl){
+  // the X chip sweeps the plate clear back to 0. Same wiring for the big
+  // main-bet pad and both smaller side-bet pads.
+  function wireChipPad(padId, inputEl, plateKey, stackEl, readoutEl, placeholderEl){
     var pad = document.getElementById(padId);
     if (!pad || !inputEl) return;
     pad.addEventListener('click', function(e){
@@ -593,6 +733,9 @@ function renderPage() {
       if (!btn) return;
       if (btn.hasAttribute('data-clear')) {
         inputEl.value = 0;
+        readoutEl.textContent = '0';
+        clearStack(stackEl, plateKey);
+        placeholderEl.style.display = 'block';
         return;
       }
       var add = parseInt(btn.getAttribute('data-add'), 10) || 0;
@@ -601,12 +744,15 @@ function renderPage() {
       var next = current + add;
       if (Number.isFinite(max) && max > 0) next = Math.min(next, max);
       inputEl.value = next;
-      flyCoin(btn, inputEl, getComputedStyle(btn).color);
+      readoutEl.textContent = next;
+      placeholderEl.style.display = 'none';
+      var color = getComputedStyle(btn).color;
+      flyChip(btn, stackEl, color, add, function(){ landChip(stackEl, plateKey, color, add); });
     });
   }
-  wireChipPad('betChipPad', el.betInput);
-  wireChipPad('pairChipPad', el.pairBetInput);
-  wireChipPad('pokerChipPad', el.pokerBetInput);
+  wireChipPad('betChipPad', el.betInput, 'main', el.mainChipStack, el.betReadout, el.mainPlaceholder);
+  wireChipPad('pairChipPad', el.pairBetInput, 'pair', el.pairChipStack, el.pairBetReadout, el.pairPlaceholder);
+  wireChipPad('pokerChipPad', el.pokerBetInput, 'poker', el.pokerChipStack, el.pokerBetReadout, el.pokerPlaceholder);
 
   var SUIT_SYM = { S: '\\u2660', H: '\\u2665', D: '\\u2666', C: '\\u2663' };
   // Diamonds cyan, hearts red, clubs green, spades "black" — spades uses
@@ -895,9 +1041,8 @@ function renderPage() {
     });
     handRefs.forEach(function(ref){ ref.block.classList.remove('active-hand'); });
     el.actionRow.style.display = 'none';
-    el.betRow.style.display = 'none';
-    el.betChipPad.style.display = 'none';
-    el.sideBetRow.style.display = 'none';
+    el.wagerConsole.style.display = 'none';
+    el.chipTray.style.display = 'none';
     el.againRow.style.display = 'flex';
     var labels = { blackjack: 'BLACKJACK!', win: 'W!N', push: 'PUSH', lose: 'L0SE' };
     var classes = { blackjack: 'win', win: 'win', push: 'push', lose: 'lose' };
@@ -1008,9 +1153,8 @@ function renderPage() {
     currentRound = round;
     if (round.status === 'active') {
       applyActiveHighlight(0);
-      el.betRow.style.display = 'none';
-      el.betChipPad.style.display = 'none';
-      el.sideBetRow.style.display = 'none';
+      el.wagerConsole.style.display = 'none';
+      el.chipTray.style.display = 'none';
       el.actionRow.style.display = 'flex';
       el.againRow.style.display = 'none';
       el.doubleBtn.disabled = !round.canDouble;
@@ -1064,9 +1208,8 @@ function renderPage() {
     currentRound = round;
     if (round.status === 'active') {
       applyActiveHighlight(round.activeHandIndex);
-      el.betRow.style.display = 'none';
-      el.betChipPad.style.display = 'none';
-      el.sideBetRow.style.display = 'none';
+      el.wagerConsole.style.display = 'none';
+      el.chipTray.style.display = 'none';
       el.actionRow.style.display = 'flex';
       el.againRow.style.display = 'none';
       el.doubleBtn.disabled = !round.canDouble;
@@ -1100,9 +1243,8 @@ function renderPage() {
     });
     applyActiveHighlight(round.activeHandIndex);
     currentRound = round;
-    el.betRow.style.display = 'none';
-    el.betChipPad.style.display = 'none';
-    el.sideBetRow.style.display = 'none';
+    el.wagerConsole.style.display = 'none';
+    el.chipTray.style.display = 'none';
     el.actionRow.style.display = 'flex';
     el.againRow.style.display = 'none';
     el.doubleBtn.disabled = !round.canDouble;
@@ -1120,11 +1262,14 @@ function renderPage() {
     el.playerHandsContainer.innerHTML = '';
     handRefs = [];
     currentRound = null;
-    el.betRow.style.display = 'flex';
-    el.betChipPad.style.display = 'flex';
-    el.sideBetRow.style.display = 'flex';
+    el.wagerConsole.style.display = 'flex';
+    el.chipTray.style.display = 'flex';
     el.actionRow.style.display = 'none';
     el.againRow.style.display = 'none';
+    // Sweep every plate clear for the next hand — chips don't carry over.
+    el.betInput.value = 0; el.betReadout.textContent = '0'; clearStack(el.mainChipStack, 'main'); el.mainPlaceholder.style.display = 'block';
+    el.pairBetInput.value = 0; el.pairBetReadout.textContent = '0'; clearStack(el.pairChipStack, 'pair'); el.pairPlaceholder.style.display = 'block';
+    el.pokerBetInput.value = 0; el.pokerBetReadout.textContent = '0'; clearStack(el.pokerChipStack, 'poker'); el.pokerPlaceholder.style.display = 'block';
     describeSideBets(null);
     setStatus('', '');
   }
