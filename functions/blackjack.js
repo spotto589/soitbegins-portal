@@ -33,7 +33,13 @@ function renderPage() {
   .glow-blob.b{ background:#ff3fb0; bottom:-18vw; right:-14vw; animation:glowDrift 19s ease-in-out infinite reverse; }
   .glow-blob.c{ background:#ffb000; top:35%; left:40%; opacity:0.1; animation:glowDrift 23s ease-in-out infinite; }
   @keyframes glowDrift{ 0%,100%{ transform:translate(0,0) scale(1); } 50%{ transform:translate(3vw,-2vw) scale(1.18); } }
-  .page{ max-width:980px; width:100%; position:relative; z-index:1; margin:0 auto; }
+  .page{ max-width:980px; width:100%; position:relative; z-index:1; margin:0 auto; transition:max-width 0.35s ease; }
+  /* "restrict it to the middle of the screen" once a hand is actually in
+     play — narrows the whole column instead of leaving the full 980px
+     table width now that the action lives beside the cards, not spread
+     across a bottom bar. Toggled in the client script alongside the
+     bet-row/action-card show/hide, never during the idle betting screen. */
+  .page.in-hand{ max-width:640px; }
 
   .session-chip{
     border:1px solid rgba(57,255,20,0.45); padding:0.7em 1.4em; text-align:right;
@@ -124,12 +130,51 @@ function renderPage() {
     66%{ box-shadow:0 0 24px rgba(255,63,208,0.28); border-color:rgba(255,63,208,0.4); }
   }
   .hands-row{ display:flex; gap:1.5rem; flex-wrap:wrap; justify-content:center; }
+  /* Deck-shuffling idle animation — sits centered in the table while
+     nothing has been dealt yet (shown/hidden in lockstep with betRow).
+     Three overlapping card-backs drifting independently, sped up (see
+     .active below) for a couple seconds right when DEAL is clicked
+     before the real dealing sequence actually starts. */
+  .shuffle-deck{ display:flex; align-items:center; justify-content:center; position:relative; width:118px; height:170px; margin:1.5rem auto; }
+  .shuffle-deck .sc{
+    position:absolute; inset:0; border:3px solid rgba(232,232,232,0.35); border-radius:10px;
+    background:repeating-linear-gradient(45deg,#151515,#151515 5px,#1c1c1c 5px,#1c1c1c 10px);
+  }
+  .shuffle-deck .sc:nth-child(1){ animation:shuffleCard1 1.4s ease-in-out infinite; }
+  .shuffle-deck .sc:nth-child(2){ animation:shuffleCard2 1.4s ease-in-out infinite; animation-delay:0.15s; }
+  .shuffle-deck .sc:nth-child(3){ animation:shuffleCard3 1.4s ease-in-out infinite; animation-delay:0.3s; }
+  .shuffle-deck.active .sc:nth-child(1){ animation-duration:0.4s; }
+  .shuffle-deck.active .sc:nth-child(2){ animation-duration:0.4s; }
+  .shuffle-deck.active .sc:nth-child(3){ animation-duration:0.4s; }
+  @keyframes shuffleCard1{ 0%,100%{ transform:translate(0,0) rotate(-4deg); } 50%{ transform:translate(-16px,-5px) rotate(-11deg); } }
+  @keyframes shuffleCard2{ 0%,100%{ transform:translate(0,0) rotate(2deg); } 50%{ transform:translate(7px,-7px) rotate(9deg); } }
+  @keyframes shuffleCard3{ 0%,100%{ transform:translate(0,0) rotate(-1deg); } 50%{ transform:translate(5px,5px) rotate(5deg); } }
+  .shuffle-label{
+    position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:0.8rem;
+    font-size:12px; letter-spacing:0.2em; color:rgba(57,255,20,0.7); white-space:nowrap;
+    animation:shuffleLabelPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes shuffleLabelPulse{ 0%,100%{ opacity:0.5; } 50%{ opacity:1; } }
+  /* "put the three options in a card template next to the cards dealt" —
+     actionRow is moved (not rebuilt) into whichever hand's .cards row is
+     currently active, so it flows as a flex sibling right after the last
+     dealt card, styled to match the cards around it. */
+  .action-card{
+    flex-direction:column; gap:0.6rem; justify-content:center; align-items:stretch;
+    width:150px; min-height:170px; border:3px solid rgba(255,63,208,0.55); border-radius:10px;
+    padding:0.9rem; background:rgba(255,63,208,0.05);
+  }
+  .action-card .gbtn{ width:100%; padding:0.65em 0.4em; font-size:13px; letter-spacing:0.08em; }
+  @media (max-width:700px){
+    .action-card{ width:126px; min-height:126px; padding:0.6rem; gap:0.4rem; }
+    .action-card .gbtn{ font-size:11px; padding:0.5em 0.3em; }
+  }
   .hand-block{ margin-bottom:1.75rem; flex:1 1 320px; min-width:300px; text-align:center; }
   .hand-block.dealer-block{ flex-basis:100%; }
   .hand-block.active-hand{ outline:1px dashed rgba(255,63,208,0.6); outline-offset:8px; }
   .hand-label-row{ display:flex; align-items:center; justify-content:center; margin-bottom:0.5rem; }
-  .hand-label{ font-size:13px; letter-spacing:0.2em; color:rgba(232,232,232,0.6); }
-  .hand-label .bet-tag{ font-size:10px; color:rgba(255,176,0,0.7); margin-left:0.6em; letter-spacing:0.1em; }
+  .hand-label{ font-size:15px; letter-spacing:0.2em; color:rgba(232,232,232,0.6); }
+  .hand-label .bet-tag{ font-size:16px; font-weight:700; color:#ffb000; margin-left:0.6em; letter-spacing:0.08em; text-shadow:0 0 6px rgba(255,176,0,0.4); }
   .hand-count{ font-size:38px; line-height:1; font-weight:700; color:#39ff14; text-shadow:0 0 10px rgba(57,255,20,0.55); margin-bottom:0.85rem; }
   .hand-count.bust{ color:#ff3fb0; text-shadow:0 0 10px rgba(255,63,176,0.55); }
   .cards{ display:flex; gap:1rem; flex-wrap:wrap; min-height:190px; justify-content:center; }
@@ -166,19 +211,20 @@ function renderPage() {
   .status-line.push{ color:#ffb000; }
   .status-line.err{ color:#ff3fb0; }
 
-  .bet-row{ display:flex; gap:0.85rem; align-items:center; justify-content:center; margin-bottom:1rem; }
+  .bet-row{ display:flex; gap:1rem; align-items:center; justify-content:center; margin-bottom:1.1rem; }
+  .bet-row .bet-row-label{ font-size:18px; letter-spacing:0.12em; color:rgba(232,232,232,0.75); font-weight:600; }
   .bet-row input{
-    width:130px; background:#0a0a0c; border:1px solid rgba(57,255,20,0.4); color:#e8e8e8;
-    font-family:inherit; font-size:16px; padding:0.7em 0.9em; text-align:center;
+    width:170px; background:#0a0a0c; border:2px solid rgba(57,255,20,0.5); color:#39ff14;
+    font-family:inherit; font-size:26px; font-weight:700; padding:0.5em 0.7em; text-align:center;
   }
   .bet-row input:focus{ outline:none; border-color:#39ff14; }
-  .side-bet-row{ display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-bottom:1.25rem; }
-  .side-bet-field{ display:flex; align-items:center; gap:0.5rem; border:1px dashed rgba(232,232,232,0.25); padding:0.5em 0.8em; }
-  .side-bet-field label{ font-size:11px; letter-spacing:0.06em; color:rgba(232,232,232,0.6); }
-  .side-bet-field .pays{ display:block; font-size:9px; color:rgba(255,176,0,0.7); letter-spacing:0.03em; }
+  .side-bet-row{ display:flex; gap:1.25rem; justify-content:center; flex-wrap:wrap; margin-bottom:1.25rem; }
+  .side-bet-field{ display:flex; align-items:center; gap:0.7rem; border:1px dashed rgba(232,232,232,0.3); padding:0.7em 1em; }
+  .side-bet-field label{ font-size:14px; letter-spacing:0.05em; color:rgba(232,232,232,0.7); font-weight:600; }
+  .side-bet-field .pays{ display:block; font-size:11px; color:rgba(255,176,0,0.75); letter-spacing:0.03em; font-weight:400; margin-top:0.2em; }
   .side-bet-field input{
-    width:66px; background:#0a0a0c; border:1px solid rgba(232,232,232,0.3); color:#e8e8e8;
-    font-family:inherit; font-size:13px; padding:0.4em 0.5em; text-align:center;
+    width:86px; background:#0a0a0c; border:2px solid rgba(232,232,232,0.35); color:#e8e8e8;
+    font-family:inherit; font-size:19px; font-weight:700; padding:0.4em 0.5em; text-align:center;
   }
   .side-bet-field input:focus{ outline:none; border-color:#3df3ec; }
   .side-bet-result{ text-align:center; font-size:12px; letter-spacing:0.05em; margin-bottom:0.75rem; min-height:1.3em; }
@@ -196,6 +242,29 @@ function renderPage() {
   .gbtn.accent{ border-color:rgba(255,63,208,0.6); color:#ff3fb0; text-shadow:0 0 6px rgba(255,63,208,0.5); }
 
   .note{ margin-top:2rem; font-size:11px; letter-spacing:0.03em; color:rgba(232,232,232,0.35); line-height:1.7; }
+
+  /* Side-bet win callout — a brief full-screen flash + bouncing text so a
+     Pair/Poker Bonus hit is impossible to miss (reported live: "couldn't
+     tell when I'd hit one"). Sits above the table (z-index 250) but below
+     the strategy/history modals (300), and never blocks clicks either way. */
+  .win-flash{ position:fixed; inset:0; z-index:250; pointer-events:none; display:flex; align-items:center; justify-content:center; opacity:0; }
+  .win-flash::before{ content:''; position:absolute; inset:0; background:radial-gradient(circle, rgba(255,176,0,0.4) 0%, rgba(57,255,20,0.18) 40%, transparent 72%); }
+  .win-flash span{
+    position:relative; font-family:'Chakra Petch',sans-serif; font-size:clamp(26px,5.5vw,52px); font-weight:700;
+    letter-spacing:0.08em; text-align:center; color:#ffb000; text-shadow:0 0 20px rgba(255,176,0,0.9), 0 0 44px rgba(255,176,0,0.55);
+    text-transform:uppercase;
+  }
+  .win-flash.play{ animation:winFlashFade 1.3s ease-out; }
+  .win-flash.play span{ animation:winFlashText 1.3s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes winFlashFade{ 0%{ opacity:0; } 8%{ opacity:1; } 75%{ opacity:1; } 100%{ opacity:0; } }
+  @keyframes winFlashText{
+    0%{ transform:scale(0.3) rotate(-6deg); }
+    20%{ transform:scale(1.2) rotate(2deg); }
+    35%{ transform:scale(1) rotate(0deg); }
+    85%{ transform:scale(1) rotate(0deg); }
+    100%{ transform:scale(1.15) rotate(0deg); }
+  }
+
   @media (max-width:700px){
     .card{ width:88px; height:126px; font-size:36px; }
     .card-art-suit, .card-art-rank{ font-size:18px; }
@@ -209,7 +278,8 @@ function renderPage() {
   <div class="glow-blob a"></div>
   <div class="glow-blob b"></div>
   <div class="glow-blob c"></div>
-  <div class="page">
+  <div class="win-flash" id="winFlash"><span id="winFlashText"></span></div>
+  <div class="page" id="pageEl">
     <div class="top-row">
       <div>
         <div class="eyebrow">Σκύλλα://SYSTEM</div>
@@ -239,6 +309,12 @@ function renderPage() {
         <div class="cards" id="dealerCards"></div>
       </div>
       <div class="hands-row" id="playerHandsContainer"></div>
+      <div class="shuffle-deck" id="shuffleDeck">
+        <div class="sc"></div>
+        <div class="sc"></div>
+        <div class="sc"></div>
+        <div class="shuffle-label">SHUFFL!NG...</div>
+      </div>
       </div>
     </div>
 
@@ -246,7 +322,7 @@ function renderPage() {
     <div class="side-bet-result" id="sideBetResult"></div>
 
     <div class="bet-row" id="betRow">
-      <span style="font-size:13px;letter-spacing:0.1em;color:rgba(232,232,232,0.6);">BET</span>
+      <span class="bet-row-label">BET</span>
       <input type="number" id="betInput" min="1" step="1" value="10">
       <button class="gbtn" id="dealBtn">DEAL</button>
     </div>
@@ -261,12 +337,18 @@ function renderPage() {
       </div>
     </div>
 
-    <div class="btn-row" id="actionRow" style="display:none;">
+    <!-- actionRow gets moved (appendChild, not rebuilt) into whichever
+         hand's .cards row is currently active, styled as its own card —
+         actionCardHolder is a safe, never-wiped parking spot for it
+         whenever it isn't mounted next to a hand (see mountActionCard /
+         parkActionCard in the client script). -->
+    <div class="action-card" id="actionRow" style="display:none;">
       <button class="gbtn" id="hitBtn">H!T</button>
       <button class="gbtn secondary" id="standBtn">STAND</button>
       <button class="gbtn accent" id="doubleBtn">D0UBLE</button>
       <button class="gbtn accent" id="splitBtn">SPL!T</button>
     </div>
+    <div id="actionCardHolder" style="display:none;"></div>
 
     <div class="btn-row" id="againRow" style="display:none;">
       <button class="gbtn" id="againBtn">PLAY AGA!N</button>
@@ -362,8 +444,24 @@ function renderPage() {
    'betRow','betInput','dealBtn','actionRow','hitBtn','standBtn','doubleBtn','splitBtn','againRow','againBtn',
    'sideBetRow','pairBetInput','pokerBetInput','sideBetResult',
    'strategyBtn','strategyOverlay','strategyCloseBtn','strategyBody',
-   'sessionBtn','sessionValue','historyOverlay','historyCloseBtn','historyEmpty','historyList'
+   'sessionBtn','sessionValue','historyOverlay','historyCloseBtn','historyEmpty','historyList',
+   'shuffleDeck','actionCardHolder','pageEl','winFlash','winFlashText'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
+
+  // actionRow gets physically moved next to whichever hand is active
+  // rather than rebuilt — mountActionCard puts it beside that hand's
+  // cards, parkActionCard is called before anything wipes
+  // playerHandsContainer's innerHTML (which would otherwise destroy the
+  // button elements if they were still parented inside it).
+  function mountActionCard(handIndex){
+    if (handRefs[handIndex]) handRefs[handIndex].cards.appendChild(el.actionRow);
+  }
+  function parkActionCard(){
+    el.actionCardHolder.appendChild(el.actionRow);
+  }
+  function setInHand(active){
+    el.pageEl.classList.toggle('in-hand', active);
+  }
 
   var SUIT_SYM = { S: '\\u2660', H: '\\u2665', D: '\\u2666', C: '\\u2663' };
   // Diamonds cyan, hearts red, clubs green, spades "black" — spades uses
@@ -645,6 +743,7 @@ function renderPage() {
       if (handRefs[i]) updateCount(handRefs[i].count, h.value, h.status === 'bust');
     });
     handRefs.forEach(function(ref){ ref.block.classList.remove('active-hand'); });
+    parkActionCard();
     el.actionRow.style.display = 'none';
     el.betRow.style.display = 'none';
     el.sideBetRow.style.display = 'none';
@@ -672,6 +771,7 @@ function renderPage() {
     currentRound = round;
     if (round.status === 'active') {
       applyActiveHighlight(round.activeHandIndex);
+      mountActionCard(round.activeHandIndex);
       setStatus('YOUR M0VE — HAND ' + (round.activeHandIndex + 1), '');
       el.doubleBtn.disabled = !round.canDouble;
       el.splitBtn.disabled = true;
@@ -683,6 +783,17 @@ function renderPage() {
     }
   }
 
+  // Restarts the flash/bounce animation even on a repeat trigger (two
+  // side-bet hits back to back would otherwise silently no-op the second
+  // time — a class that's already applied doesn't retrigger a CSS
+  // animation without a reflow in between).
+  function flashWin(text){
+    el.winFlashText.textContent = text;
+    el.winFlash.classList.remove('play');
+    void el.winFlash.offsetWidth;
+    el.winFlash.classList.add('play');
+  }
+
   function describeSideBets(sideBets){
     if (!sideBets) { el.sideBetResult.innerHTML = ''; return; }
     var tierLabels = {
@@ -690,20 +801,39 @@ function renderPage() {
       suitedTrips: 'SU!TED TR!PS', straightFlush: 'STRA!GHT FLUSH', trips: 'TR!PS', straight: 'STRA!GHT', flush: 'FLUSH'
     };
     var parts = [];
+    var wins = [];
     if (sideBets.pair) {
-      parts.push(sideBets.pair.payout > 0
-        ? '<span class="hit">PA!R B0NUS: ' + tierLabels[sideBets.pair.tier] + ' — W0N ' + sideBets.pair.payout + '</span>'
-        : '<span class="miss">PA!R B0NUS: N0 H!T</span>');
+      if (sideBets.pair.payout > 0) {
+        parts.push('<span class="hit">PA!R B0NUS: ' + tierLabels[sideBets.pair.tier] + ' — W0N ' + sideBets.pair.payout + '</span>');
+        wins.push(tierLabels[sideBets.pair.tier] + '! +' + sideBets.pair.payout);
+      } else {
+        parts.push('<span class="miss">PA!R B0NUS: N0 H!T</span>');
+      }
     }
     if (sideBets.poker) {
-      parts.push(sideBets.poker.payout > 0
-        ? '<span class="hit">P0KER B0NUS: ' + tierLabels[sideBets.poker.tier] + ' — W0N ' + sideBets.poker.payout + '</span>'
-        : '<span class="miss">P0KER B0NUS: N0 H!T</span>');
+      if (sideBets.poker.payout > 0) {
+        parts.push('<span class="hit">P0KER B0NUS: ' + tierLabels[sideBets.poker.tier] + ' — W0N ' + sideBets.poker.payout + '</span>');
+        wins.push(tierLabels[sideBets.poker.tier] + '! +' + sideBets.poker.payout);
+      } else {
+        parts.push('<span class="miss">P0KER B0NUS: N0 H!T</span>');
+      }
     }
     el.sideBetResult.innerHTML = parts.join(' &nbsp;·&nbsp; ');
+    if (wins.length) flashWin(wins.join(' + '));
   }
 
   async function sequenceDeal(round, sideBets){
+    parkActionCard();
+    setInHand(true);
+    // Shuffle burst — the idle deck (already visible on the betting
+    // screen) speeds up for a beat before the table actually clears and
+    // dealing starts, so "shuffling" reads as one continuous motion
+    // rather than an idle animation just vanishing.
+    el.shuffleDeck.classList.add('active');
+    await sleep(650);
+    el.shuffleDeck.classList.remove('active');
+    el.shuffleDeck.style.display = 'none';
+
     el.dealerCards.innerHTML = '';
     updateCount(el.dealerValue, null);
     el.playerHandsContainer.innerHTML = '';
@@ -715,10 +845,14 @@ function renderPage() {
     var playerCards = round.hands[0].cards;
     var dealerFirst = round.status === 'active' ? round.dealerUp : round.dealer[0];
 
-    // Classic dealing order: player, dealer, player, dealer(hidden).
+    // Classic dealing order: player, dealer, player, dealer(hidden). Extra
+    // pause after the dealer's own card specifically (reported live: felt
+    // "way too fast" right there) so it actually registers before the
+    // next card lands.
     await dealInto(hb.cards, playerCards[0], false);
     updateCount(hb.count, handValueClient([playerCards[0]]));
     await dealInto(el.dealerCards, dealerFirst, false);
+    await sleep(280);
     await dealInto(hb.cards, playerCards[1], false);
     updateCount(hb.count, handValueClient(playerCards));
     // Both player cards and the dealer's up card are down — side bets are
@@ -730,6 +864,7 @@ function renderPage() {
     currentRound = round;
     if (round.status === 'active') {
       applyActiveHighlight(0);
+      mountActionCard(0);
       el.betRow.style.display = 'none';
       el.sideBetRow.style.display = 'none';
       el.actionRow.style.display = 'flex';
@@ -766,6 +901,7 @@ function renderPage() {
   }
 
   async function sequenceSplit(round){
+    parkActionCard();
     el.playerHandsContainer.innerHTML = '';
     handRefs = round.hands.map(function(hand, i){
       var hb = buildHandBlock('HAND ' + (i + 1), hand.bet);
@@ -785,6 +921,7 @@ function renderPage() {
     currentRound = round;
     if (round.status === 'active') {
       applyActiveHighlight(round.activeHandIndex);
+      mountActionCard(round.activeHandIndex);
       el.betRow.style.display = 'none';
       el.sideBetRow.style.display = 'none';
       el.actionRow.style.display = 'flex';
@@ -802,6 +939,9 @@ function renderPage() {
   }
 
   function renderInstant(round){
+    parkActionCard();
+    setInHand(true);
+    el.shuffleDeck.style.display = 'none';
     el.dealerCards.innerHTML = '';
     el.dealerCards.appendChild(cardEl(round.dealerUp, false));
     el.dealerCards.appendChild(cardEl(null, true));
@@ -816,6 +956,7 @@ function renderPage() {
       return hb;
     });
     applyActiveHighlight(round.activeHandIndex);
+    mountActionCard(round.activeHandIndex);
     currentRound = round;
     el.betRow.style.display = 'none';
     el.sideBetRow.style.display = 'none';
@@ -828,6 +969,9 @@ function renderPage() {
   }
 
   function resetToBetting(){
+    parkActionCard();
+    setInHand(false);
+    el.shuffleDeck.style.display = 'flex';
     el.dealerCards.innerHTML = '';
     updateCount(el.dealerValue, null);
     el.playerHandsContainer.innerHTML = '';
