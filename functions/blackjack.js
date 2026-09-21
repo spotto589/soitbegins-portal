@@ -122,7 +122,7 @@ function renderPage() {
     66%{ box-shadow:0 0 24px rgba(255,63,208,0.28); border-color:rgba(255,63,208,0.4); }
   }
   .hands-row{ display:flex; gap:1.5rem; flex-wrap:wrap; justify-content:center; }
-  .hand-block{ margin-bottom:1.75rem; flex:1 1 260px; min-width:240px; text-align:center; }
+  .hand-block{ margin-bottom:1.75rem; flex:1 1 320px; min-width:300px; text-align:center; }
   .hand-block.dealer-block{ flex-basis:100%; }
   .hand-block.active-hand{ outline:1px dashed rgba(255,63,208,0.6); outline-offset:8px; }
   .hand-label-row{ display:flex; align-items:center; justify-content:center; margin-bottom:0.5rem; }
@@ -130,13 +130,13 @@ function renderPage() {
   .hand-label .bet-tag{ font-size:10px; color:rgba(255,176,0,0.7); margin-left:0.6em; letter-spacing:0.1em; }
   .hand-count{ font-size:38px; line-height:1; font-weight:700; color:#39ff14; text-shadow:0 0 10px rgba(57,255,20,0.55); margin-bottom:0.85rem; }
   .hand-count.bust{ color:#ff3fb0; text-shadow:0 0 10px rgba(255,63,176,0.55); }
-  .cards{ display:flex; gap:0.6rem; flex-wrap:wrap; min-height:96px; justify-content:center; }
+  .cards{ display:flex; gap:1rem; flex-wrap:wrap; min-height:190px; justify-content:center; }
   .card{
-    width:64px; height:92px; border:2px solid rgba(232,232,232,0.4); border-radius:6px;
+    width:118px; height:170px; border:3px solid rgba(232,232,232,0.4); border-radius:10px;
     background:#111; display:flex; align-items:center; justify-content:center;
-    font-size:26px; font-weight:700; position:relative; overflow:hidden;
+    font-size:48px; font-weight:700; position:relative; overflow:hidden;
   }
-  .card.hidden{ background:repeating-linear-gradient(45deg,#151515,#151515 4px,#1c1c1c 4px,#1c1c1c 8px); color:transparent; border-color:rgba(232,232,232,0.25) !important; box-shadow:none !important; }
+  .card.hidden{ background:repeating-linear-gradient(45deg,#151515,#151515 5px,#1c1c1c 5px,#1c1c1c 10px); color:transparent; border-color:rgba(232,232,232,0.25) !important; box-shadow:none !important; }
   /* Dealing pace — a card lands with a little drop/settle instead of just
      appearing, and the dealer's hole card gets a flip-swap when revealed.
      Kept short (well under half a second each) so "slow enough to feel
@@ -155,8 +155,8 @@ function renderPage() {
      exist — see CARD_ART in the client script below. Until CARD_ART has a
      real URL for a rank, cardEl() never creates this element at all. */
   .card-art{ width:100%; height:100%; object-fit:cover; }
-  .card-art-suit{ position:absolute; bottom:2px; right:4px; font-size:13px; text-shadow:0 0 3px #000, 0 0 3px #000; }
-  .card-art-rank{ position:absolute; top:1px; left:3px; font-size:13px; color:#fff; text-shadow:0 0 3px #000, 0 0 3px #000; }
+  .card-art-suit{ position:absolute; bottom:4px; right:7px; font-size:24px; text-shadow:0 0 3px #000, 0 0 3px #000; }
+  .card-art-rank{ position:absolute; top:2px; left:6px; font-size:24px; color:#fff; text-shadow:0 0 3px #000, 0 0 3px #000; }
 
   .status-line{ text-align:center; font-size:16px; letter-spacing:0.1em; min-height:1.8em; margin-bottom:1.25rem; }
   .status-line.win{ color:#39ff14; text-shadow:0 0 8px rgba(57,255,20,0.5); }
@@ -195,7 +195,8 @@ function renderPage() {
 
   .note{ margin-top:2rem; font-size:11px; letter-spacing:0.03em; color:rgba(232,232,232,0.35); line-height:1.7; }
   @media (max-width:700px){
-    .card{ width:52px; height:76px; font-size:21px; }
+    .card{ width:88px; height:126px; font-size:36px; }
+    .card-art-suit, .card-art-rank{ font-size:18px; }
     .hand-count{ font-size:30px; }
     .balance-chip .bv{ font-size:26px; }
   }
@@ -353,10 +354,10 @@ function renderPage() {
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   var SUIT_SYM = { S: '\\u2660', H: '\\u2665', D: '\\u2666', C: '\\u2663' };
-  // One distinct colour per suit (obvious at a glance, including on the
-  // picture cards below) — reuses the same neon palette as the marquee
-  // lights rather than the usual plain red/black.
-  var SUIT_COLOR = { S: '#3df3ec', C: '#39ff14', H: '#ff3fb0', D: '#ffb000' };
+  // Diamonds cyan, hearts red, clubs green, spades "black" — spades uses
+  // a near-white instead of literal black since true black would be
+  // invisible against the card's own dark background.
+  var SUIT_COLOR = { D: '#3df3ec', H: '#ff3b3b', C: '#39ff14', S: '#f2f2f2' };
   // Custom face art — drop an image URL in here once it exists (e.g.
   // J: '/assets/cards/jester.png') and that rank starts rendering with
   // the image instead of plain rank+suit text, everywhere it appears, no
