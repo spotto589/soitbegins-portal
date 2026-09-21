@@ -33,18 +33,23 @@ function renderPage() {
   .glow-blob.b{ background:#ff3fb0; bottom:-18vw; right:-14vw; animation:glowDrift 19s ease-in-out infinite reverse; }
   .glow-blob.c{ background:#ffb000; top:35%; left:40%; opacity:0.1; animation:glowDrift 23s ease-in-out infinite; }
   @keyframes glowDrift{ 0%,100%{ transform:translate(0,0) scale(1); } 50%{ transform:translate(3vw,-2vw) scale(1.18); } }
-  .layout{ display:flex; gap:1.75rem; align-items:flex-start; justify-content:center; width:100%; max-width:1300px; flex-wrap:wrap; }
-  .page{ max-width:980px; width:100%; position:relative; z-index:1; flex:1 1 700px; }
+  .page{ max-width:980px; width:100%; position:relative; z-index:1; margin:0 auto; }
 
-  .history-panel{
-    flex:0 1 280px; min-width:240px; max-width:320px; position:relative; z-index:1;
-    border:1px solid rgba(57,255,20,0.25); background:rgba(57,255,20,0.02);
-    padding:1.1rem 1.1rem 1.3rem; max-height:640px; display:flex; flex-direction:column;
+  .session-chip{
+    border:1px solid rgba(57,255,20,0.45); padding:0.7em 1.4em; text-align:right;
+    background:rgba(57,255,20,0.05); cursor:pointer; font-family:inherit;
+    display:block; transition:border-color 0.15s ease, background 0.15s ease;
   }
-  .history-title{ font-size:12px; letter-spacing:0.25em; color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.5); margin-bottom:0.9rem; }
+  .session-chip:hover{ border-color:#39ff14; background:rgba(57,255,20,0.1); }
+  .session-chip .bl{ font-size:11px; letter-spacing:0.2em; color:rgba(57,255,20,0.75); margin-bottom:0.25rem; }
+  .session-chip .sv{ font-size:22px; line-height:1; font-weight:700; display:block; }
+  .session-chip .sv.pos{ color:#39ff14; text-shadow:0 0 8px rgba(57,255,20,0.5); }
+  .session-chip .sv.neg{ color:#ff3fb0; text-shadow:0 0 8px rgba(255,63,176,0.5); }
+  .session-chip .sv.zero{ color:rgba(232,232,232,0.7); text-shadow:none; }
+
   .history-empty{ font-size:12px; color:rgba(232,232,232,0.4); font-style:italic; }
-  .history-list{ overflow-y:auto; flex:1 1 auto; display:flex; flex-direction:column; gap:0.6rem; }
-  .hist-row{ border-left:2px solid rgba(232,232,232,0.25); padding:0.35rem 0 0.35rem 0.7rem; font-size:11.5px; }
+  .history-list{ display:flex; flex-direction:column; gap:0.6rem; max-height:55vh; overflow-y:auto; }
+  .hist-row{ border-left:2px solid rgba(232,232,232,0.25); padding:0.35rem 0 0.35rem 0.7rem; font-size:12px; }
   .hist-row.hist-win{ border-left-color:#39ff14; }
   .hist-row.hist-lose{ border-left-color:#ff3fb0; }
   .hist-row.hist-push{ border-left-color:#ffb000; }
@@ -54,9 +59,6 @@ function renderPage() {
   .hist-row.hist-lose .hist-row-top span:nth-child(3){ color:#ff3fb0; }
   .hist-row.hist-push .hist-row-top span:nth-child(3){ color:#ffb000; }
   .hist-row-sub{ color:rgba(232,232,232,0.45); letter-spacing:0.02em; }
-  @media (max-width:1180px){
-    .history-panel{ flex-basis:100%; max-width:980px; max-height:260px; }
-  }
 
   .modal-overlay{
     position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:300;
@@ -207,7 +209,6 @@ function renderPage() {
   <div class="glow-blob a"></div>
   <div class="glow-blob b"></div>
   <div class="glow-blob c"></div>
-  <div class="layout">
   <div class="page">
     <div class="top-row">
       <div>
@@ -217,9 +218,15 @@ function renderPage() {
         &nbsp;&nbsp;
         <button class="gbtn secondary strategy-btn" id="strategyBtn" style="padding:0.35em 0.9em; font-size:11px;">H0W T0 PLAY</button>
       </div>
-      <div class="balance-chip">
-        <div class="bl">SPENDABLE CR0WN</div>
-        <div class="bv" id="balanceValue">···</div>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.6rem;">
+        <div class="balance-chip">
+          <div class="bl">SPENDABLE CR0WN</div>
+          <div class="bv" id="balanceValue">···</div>
+        </div>
+        <button class="session-chip" id="sessionBtn">
+          <span class="bl">SESS!0N H!ST0RY</span>
+          <span class="sv zero" id="sessionValue">+0</span>
+        </button>
       </div>
     </div>
 
@@ -268,11 +275,16 @@ function renderPage() {
     <p class="note">Server-dealt, 6-deck shoe reshuffled every hand · dealer stands on 17 · blackjack pays 3:2 · double down on the first two cards · split any matching pair (splitting Aces deals one card each, no further action) · PA!R B0NUS and P0KER B0NUS are optional side bets settled instantly off your opening 2 cards + the dealer's up card, win or lose independent of the main hand · this Crown balance is a closed-test in-house wager balance, separate from the real $CRWN token.</p>
   </div>
 
-  <aside class="history-panel">
-    <div class="history-title">SESS!0N H!ST0RY</div>
-    <div class="history-empty" id="historyEmpty">N0 HANDS PLAYED YET</div>
-    <div class="history-list" id="historyList"></div>
-  </aside>
+  <div class="modal-overlay" id="historyOverlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>SESS!0N H!ST0RY</span>
+        <button class="modal-close-btn" id="historyCloseBtn">✕</button>
+      </div>
+      <p class="modal-note">Running net for every hand played this session (clears on reload) — includes side bets.</p>
+      <div class="history-empty" id="historyEmpty">N0 HANDS PLAYED YET</div>
+      <div class="history-list" id="historyList"></div>
+    </div>
   </div>
 
   <div class="modal-overlay" id="strategyOverlay">
@@ -350,7 +362,7 @@ function renderPage() {
    'betRow','betInput','dealBtn','actionRow','hitBtn','standBtn','doubleBtn','splitBtn','againRow','againBtn',
    'sideBetRow','pairBetInput','pokerBetInput','sideBetResult',
    'strategyBtn','strategyOverlay','strategyCloseBtn','strategyBody',
-   'historyEmpty','historyList'
+   'sessionBtn','sessionValue','historyOverlay','historyCloseBtn','historyEmpty','historyList'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   var SUIT_SYM = { S: '\\u2660', H: '\\u2665', D: '\\u2666', C: '\\u2663' };
@@ -468,13 +480,35 @@ function renderPage() {
   el.strategyBtn.addEventListener('click', openStrategy);
   el.strategyCloseBtn.addEventListener('click', closeStrategy);
   el.strategyOverlay.addEventListener('click', function(e){ if (e.target === el.strategyOverlay) closeStrategy(); });
-  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeStrategy(); });
 
-  // --- Session hand history — in-memory only (clears on reload), purely
-  // a client-side log of what actually happened; never fed back into any
-  // game decision. Capped at the most recent 50 rows.
+  function openHistory(){ el.historyOverlay.classList.add('open'); }
+  function closeHistory(){ el.historyOverlay.classList.remove('open'); }
+  el.sessionBtn.addEventListener('click', openHistory);
+  el.historyCloseBtn.addEventListener('click', closeHistory);
+  el.historyOverlay.addEventListener('click', function(e){ if (e.target === el.historyOverlay) closeHistory(); });
+
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { closeStrategy(); closeHistory(); } });
+
+  // --- Session hand history + running net — in-memory only (clears on
+  // reload), purely a client-side log of what actually happened; never
+  // fed back into any game decision. Capped at the most recent 50 rows.
+  // sessionNet includes both main-hand results AND side bets, updated the
+  // moment each is actually known (side bets settle at deal time, well
+  // before the main hand might resolve).
   var handHistory = [];
   var handCounter = 0;
+  var sessionNet = 0;
+  function updateSessionChip(){
+    var cls = sessionNet > 0 ? 'pos' : sessionNet < 0 ? 'neg' : 'zero';
+    var sign = sessionNet > 0 ? '+' : '';
+    el.sessionValue.textContent = sign + sessionNet;
+    el.sessionValue.className = 'sv ' + cls;
+  }
+  function addSessionNet(delta){
+    if (!delta) return;
+    sessionNet += delta;
+    updateSessionChip();
+  }
   function renderHistory(){
     if (!handHistory.length) { el.historyEmpty.style.display = 'block'; el.historyList.innerHTML = ''; return; }
     el.historyEmpty.style.display = 'none';
@@ -499,8 +533,17 @@ function renderPage() {
         result: h.result,
         net: net
       });
+      addSessionNet(net);
     });
     renderHistory();
+  }
+  function sideBetNet(entry){
+    if (!entry) return 0;
+    return entry.payout > 0 ? entry.payout - entry.bet : -entry.bet;
+  }
+  function recordSideBetNet(sideBets){
+    if (!sideBets) return;
+    addSessionNet(sideBetNet(sideBets.pair) + sideBetNet(sideBets.poker));
   }
 
   function sleep(ms){ return new Promise(function(resolve){ setTimeout(resolve, ms); }); }
@@ -681,6 +724,7 @@ function renderPage() {
     // Both player cards and the dealer's up card are down — side bets are
     // fully determined now, safe to reveal their result.
     describeSideBets(sideBets);
+    recordSideBetNet(sideBets);
     await dealInto(el.dealerCards, null, true);
 
     currentRound = round;
