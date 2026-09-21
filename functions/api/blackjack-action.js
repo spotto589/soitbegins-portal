@@ -123,8 +123,9 @@ export async function onRequestPost(context) {
       }
 
       // Up to 3 simultaneous boxes — `bets` is an array of 1-3 stakes, one
-      // per box the player actually funded. Side bets stay single (they
-      // apply to box 0 only) to keep the bonus-bet UI from tripling.
+      // per box the player actually funded. `pairBets`/`pokerBets` (if
+      // present) line up with `bets` index-for-index — each box has its
+      // own independent Pair Bonus / Poker Bonus now, not just box 0.
       const betsRaw = Array.isArray(body.bets) ? body.bets : [body.bet];
       const maxBet = getCrownMaxBet();
       if (betsRaw.length < 1 || betsRaw.length > 3) {
@@ -134,14 +135,16 @@ export async function onRequestPost(context) {
       if (bets.some(b => !Number.isFinite(b) || b < 1 || b > maxBet)) {
         return new Response(JSON.stringify({ error: 'bad_bet', maxBet }), { status: 400 });
       }
-      const pairBetParsed = parseSideBet(body.pairBet, maxBet);
-      const pokerBetParsed = parseSideBet(body.pokerBet, maxBet);
-      if (!pairBetParsed.ok || !pokerBetParsed.ok) {
+      const pairBetsRaw = Array.isArray(body.pairBets) ? body.pairBets : [];
+      const pokerBetsRaw = Array.isArray(body.pokerBets) ? body.pokerBets : [];
+      const pairBetsParsed = bets.map((_, i) => parseSideBet(pairBetsRaw[i], maxBet));
+      const pokerBetsParsed = bets.map((_, i) => parseSideBet(pokerBetsRaw[i], maxBet));
+      if (pairBetsParsed.some(p => !p.ok) || pokerBetsParsed.some(p => !p.ok)) {
         return new Response(JSON.stringify({ error: 'bad_side_bet', maxBet }), { status: 400 });
       }
-      const pairBet = pairBetParsed.amount;
-      const pokerBet = pokerBetParsed.amount;
-      const totalStake = bets.reduce((a, b) => a + b, 0) + pairBet + pokerBet;
+      const pairAmounts = pairBetsParsed.map(p => p.amount);
+      const pokerAmounts = pokerBetsParsed.map(p => p.amount);
+      const totalStake = bets.reduce((a, b) => a + b, 0) + pairAmounts.reduce((a, b) => a + b, 0) + pokerAmounts.reduce((a, b) => a + b, 0);
 
       let balance = await getCrownBalance(kv, wallet);
       if (totalStake > balance) {
@@ -159,30 +162,32 @@ export async function onRequestPost(context) {
       boxHands.forEach(h => h.cards.push(shoe.pop()));
       dealer.push(shoe.pop());
 
-      // Side bets are fully determined by box 0's 2 cards + the dealer's up
-      // card alone and never affected by how any hand is later played, so
-      // they settle right here — "pays X:1" means total return (already
-      // includes the original stake) is bet*(mult+1), same convention
-      // blackjack's own 3:2 payout uses below.
-      let sideBets = null;
+      // Each box's side bets are fully determined by that box's own 2
+      // cards + the dealer's up card alone, never affected by how any hand
+      // is later played, so they all settle right here — "pays X:1" means
+      // total return (already includes the original stake) is
+      // bet*(mult+1), same convention blackjack's own 3:2 payout uses below.
       let sidePayout = 0;
-      if (pairBet > 0 || pokerBet > 0) {
-        const box0 = boxHands[0].cards;
-        sideBets = { pair: null, poker: null };
+      const sideBetsPerBox = boxHands.map((h, i) => {
+        const pairBet = pairAmounts[i], pokerBet = pokerAmounts[i];
+        if (pairBet <= 0 && pokerBet <= 0) return null;
+        const entry = { pair: null, poker: null };
         if (pairBet > 0) {
-          const hit = evaluateCrownPairBonus(box0[0], box0[1]);
+          const hit = evaluateCrownPairBonus(h.cards[0], h.cards[1]);
           const payout = hit ? pairBet * (hit.mult + 1) : 0;
-          sideBets.pair = { bet: pairBet, tier: hit ? hit.tier : null, mult: hit ? hit.mult : 0, payout };
+          entry.pair = { bet: pairBet, tier: hit ? hit.tier : null, mult: hit ? hit.mult : 0, payout };
           sidePayout += payout;
         }
         if (pokerBet > 0) {
-          const hit = evaluateCrownPokerBonus(box0[0], box0[1], dealer[0]);
+          const hit = evaluateCrownPokerBonus(h.cards[0], h.cards[1], dealer[0]);
           const payout = hit ? pokerBet * (hit.mult + 1) : 0;
-          sideBets.poker = { bet: pokerBet, tier: hit ? hit.tier : null, mult: hit ? hit.mult : 0, payout };
+          entry.poker = { bet: pokerBet, tier: hit ? hit.tier : null, mult: hit ? hit.mult : 0, payout };
           sidePayout += payout;
         }
-        if (sidePayout > 0) balance = await setCrownBalance(kv, wallet, balance + sidePayout);
-      }
+        return entry;
+      });
+      if (sidePayout > 0) balance = await setCrownBalance(kv, wallet, balance + sidePayout);
+      const sideBets = sideBetsPerBox.some(e => e) ? sideBetsPerBox : null;
 
       // Each box settles its own natural independently against the
       // dealer's natural — a box's blackjack still pays 3:2 even if
@@ -260,6 +265,11 @@ export async function onRequestPost(context) {
     if (balance < hand.bet) {
       return new Response(JSON.stringify({ error: 'insufficient_balance', balance }), { status: 400 });
     }
+    // Splitting doubles the total wager, it doesn't divide the original —
+    // an extra `hand.bet` is deducted here on top of what was already
+    // staked, and BOTH new hands carry the full original bet (not half
+    // each), so two hands of bet B replace one hand of bet B at a total
+    // cost of B more, not a wash.
     balance = await setCrownBalance(kv, wallet, balance - hand.bet);
     const isAces = blackjackCardRank(hand.cards[0]) === 'A';
     const handA = { cards: [hand.cards[0], round.shoe.pop()], bet: hand.bet, box: hand.box, status: 'active', result: null, fromSplit: true, fromSplitAces: isAces };
