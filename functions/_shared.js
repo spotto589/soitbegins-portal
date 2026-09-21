@@ -2631,6 +2631,61 @@ export function blackjackDealerPlay(shoe, dealerCards) {
 }
 
 export function blackjackCardRank(card) { return card.slice(0, -1); }
+export function blackjackCardSuit(card) { return card.slice(-1); }
+
+// --- Side bets, resolved at deal time off the 3 cards known before any
+// decision is made (the player's opening 2 + the dealer's up card) — never
+// affected by how the main hand is played, so they're settled and paid
+// immediately in the same 'deal' response rather than tracked in round
+// state. Standard published paytables ("pays X:1", total return = bet*
+// (X+1) including the original stake — same convention blackjack's own
+// 3:2 payout already uses elsewhere in this file).
+export const CROWN_PAIR_PAYTABLE = { perfect: 30, colored: 10, mixed: 5 };
+export const CROWN_POKER_PAYTABLE = { suitedTrips: 100, straightFlush: 40, trips: 30, straight: 10, flush: 5 };
+
+// Perfect Pairs: player's own first two cards.
+export function evaluateCrownPairBonus(c1, c2) {
+  const r1 = blackjackCardRank(c1), r2 = blackjackCardRank(c2);
+  if (r1 !== r2) return null;
+  const s1 = blackjackCardSuit(c1), s2 = blackjackCardSuit(c2);
+  if (s1 === s2) return { tier: 'perfect', mult: CROWN_PAIR_PAYTABLE.perfect };
+  const isRed = (s) => s === 'H' || s === 'D';
+  if (isRed(s1) === isRed(s2)) return { tier: 'colored', mult: CROWN_PAIR_PAYTABLE.colored };
+  return { tier: 'mixed', mult: CROWN_PAIR_PAYTABLE.mixed };
+}
+
+function crownRankValue(rank, aceLow) {
+  if (rank === 'A') return aceLow ? 1 : 14;
+  if (rank === 'K') return 13;
+  if (rank === 'Q') return 12;
+  if (rank === 'J') return 11;
+  return parseInt(rank, 10);
+}
+function crownIsStraightVals(vals) {
+  const sorted = vals.slice().sort((a, b) => a - b);
+  return sorted[1] === sorted[0] + 1 && sorted[2] === sorted[1] + 1;
+}
+
+// "21+3"-style poker bonus: player's first two cards + the dealer's up
+// card, read as a 3-card poker hand. A-2-3 and Q-K-A both count as
+// straights (ace low and high respectively) — checked both ways.
+export function evaluateCrownPokerBonus(c1, c2, c3) {
+  const cards = [c1, c2, c3];
+  const ranks = cards.map(blackjackCardRank);
+  const suits = cards.map(blackjackCardSuit);
+  const isFlush = suits[0] === suits[1] && suits[1] === suits[2];
+  const isTrips = ranks[0] === ranks[1] && ranks[1] === ranks[2];
+  const highVals = ranks.map((r) => crownRankValue(r, false));
+  const lowVals = ranks.map((r) => crownRankValue(r, true));
+  const isStraight = crownIsStraightVals(highVals) || crownIsStraightVals(lowVals);
+
+  if (isTrips && isFlush) return { tier: 'suitedTrips', mult: CROWN_POKER_PAYTABLE.suitedTrips };
+  if (isStraight && isFlush) return { tier: 'straightFlush', mult: CROWN_POKER_PAYTABLE.straightFlush };
+  if (isTrips) return { tier: 'trips', mult: CROWN_POKER_PAYTABLE.trips };
+  if (isStraight) return { tier: 'straight', mult: CROWN_POKER_PAYTABLE.straight };
+  if (isFlush) return { tier: 'flush', mult: CROWN_POKER_PAYTABLE.flush };
+  return null;
+}
 
 // The single shape every blackjack-action/crown-balance response describes
 // a round in — kept in one place so the client only ever has to render one

@@ -4,13 +4,24 @@ import {
   acquireCrownLock, releaseCrownLock,
   getBlackjackRound, saveBlackjackRound, clearBlackjackRound,
   freshBlackjackShoe, blackjackHandValue, isBlackjackHand, blackjackDealerPlay,
-  blackjackCardRank, publicBlackjackRound
+  blackjackCardRank, publicBlackjackRound,
+  evaluateCrownPairBonus, evaluateCrownPokerBonus
 } from '../_shared.js';
 
-function respond(round, balance) {
-  return new Response(JSON.stringify({ ok: true, balance, round: publicBlackjackRound(round, balance) }), {
+function respond(round, balance, sideBets) {
+  return new Response(JSON.stringify({ ok: true, balance, round: publicBlackjackRound(round, balance), sideBets: sideBets || null }), {
     headers: { 'Content-Type': 'application/json' }
   });
+}
+
+// Parses an optional side-bet amount from the deal request body — 0/absent
+// is always valid (side bets are optional), anything else must be a
+// positive integer within the same per-bet cap as the main bet.
+function parseSideBet(raw, maxBet) {
+  if (raw === undefined || raw === null || raw === 0 || raw === '0' || raw === '') return { ok: true, amount: 0 };
+  const n = Math.floor(Number(raw));
+  if (!Number.isFinite(n) || n < 0 || n > maxBet) return { ok: false };
+  return { ok: true, amount: n };
 }
 
 function payoutFor(hand) {
@@ -116,16 +127,49 @@ export async function onRequestPost(context) {
       if (!Number.isFinite(bet) || bet < 1 || bet > maxBet) {
         return new Response(JSON.stringify({ error: 'bad_bet', maxBet }), { status: 400 });
       }
+      const pairBetParsed = parseSideBet(body.pairBet, maxBet);
+      const pokerBetParsed = parseSideBet(body.pokerBet, maxBet);
+      if (!pairBetParsed.ok || !pokerBetParsed.ok) {
+        return new Response(JSON.stringify({ error: 'bad_side_bet', maxBet }), { status: 400 });
+      }
+      const pairBet = pairBetParsed.amount;
+      const pokerBet = pokerBetParsed.amount;
+      const totalStake = bet + pairBet + pokerBet;
 
       let balance = await getCrownBalance(kv, wallet);
-      if (bet > balance) {
+      if (totalStake > balance) {
         return new Response(JSON.stringify({ error: 'insufficient_balance', balance }), { status: 400 });
       }
-      balance = await setCrownBalance(kv, wallet, balance - bet);
+      balance = await setCrownBalance(kv, wallet, balance - totalStake);
 
       const shoe = freshBlackjackShoe();
       const player = [shoe.pop(), shoe.pop()];
       const dealer = [shoe.pop(), shoe.pop()];
+
+      // Side bets are fully determined by these 3 cards alone (player's 2 +
+      // dealer's up card) and never affected by how the hand is later
+      // played, so they settle right here — "pays X:1" means total return
+      // (already includes the original stake) is bet*(mult+1), same
+      // convention blackjack's own 3:2 payout uses below.
+      let sideBets = null;
+      let sidePayout = 0;
+      if (pairBet > 0 || pokerBet > 0) {
+        sideBets = { pair: null, poker: null };
+        if (pairBet > 0) {
+          const hit = evaluateCrownPairBonus(player[0], player[1]);
+          const payout = hit ? pairBet * (hit.mult + 1) : 0;
+          sideBets.pair = { bet: pairBet, tier: hit ? hit.tier : null, mult: hit ? hit.mult : 0, payout };
+          sidePayout += payout;
+        }
+        if (pokerBet > 0) {
+          const hit = evaluateCrownPokerBonus(player[0], player[1], dealer[0]);
+          const payout = hit ? pokerBet * (hit.mult + 1) : 0;
+          sideBets.poker = { bet: pokerBet, tier: hit ? hit.tier : null, mult: hit ? hit.mult : 0, payout };
+          sidePayout += payout;
+        }
+        if (sidePayout > 0) balance = await setCrownBalance(kv, wallet, balance + sidePayout);
+      }
+
       const hand = { cards: player, bet, status: 'active', result: null, fromSplit: false, fromSplitAces: false };
       const round = { shoe, dealer, hands: [hand], activeHandIndex: 0, status: 'active' };
 
@@ -138,7 +182,7 @@ export async function onRequestPost(context) {
       } else {
         await saveBlackjackRound(kv, wallet, round);
       }
-      return respond(round, balance);
+      return respond(round, balance, sideBets);
     }
 
     const round = await getBlackjackRound(kv, wallet);
