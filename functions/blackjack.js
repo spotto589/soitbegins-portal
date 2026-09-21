@@ -139,10 +139,15 @@ function renderPage() {
   .table-border{ position:relative; padding:2px; border-radius:6px; overflow:hidden; }
   .table{
     border:1px solid rgba(57,255,20,0.3); padding:0.7rem 1.1rem 0.55rem; min-height:195px;
-    background:rgba(57,255,20,0.02); position:relative; z-index:1;
+    /* Needs to be near-opaque, not just tinted — a transparent background
+       doesn't block the chase glow behind it regardless of paint order,
+       so a mostly-see-through fill let both cyber-glow rings bleed across
+       the whole table interior instead of staying a thin border ring
+       (reported live as "swirling in the middle of the cards"). */
+    background:#0a0a0c; position:relative; z-index:1;
     box-shadow:0 0 20px rgba(57,255,20,0.15);
   }
-  #tableStaticCanvas{ position:absolute; inset:0; z-index:-1; opacity:0.55; pointer-events:none; }
+  #tableStaticCanvas{ position:absolute; inset:0; z-index:-1; opacity:0.85; pointer-events:none; }
   .hands-row{ display:flex; gap:1.5rem; flex-wrap:wrap; justify-content:center; }
   /* Deck-shuffling idle animation — sits centered in the table while
      nothing has been dealt yet (shown/hidden in lockstep with betRow).
@@ -490,11 +495,18 @@ function renderPage() {
 
 <script>
 (function(){
-  // Same "glitch" static — sparse cyan/magenta flecks on black — reused
-  // for both the full-page ambient canvas and a second copy scoped to
-  // just the table (sized to that element's own box, not the viewport).
-  function startStaticCanvas(canvasEl, getSize){
+  // Same "glitch" static — cyan/magenta flecks on black — reused for both
+  // the full-page ambient canvas (kept subtle, density/fleck size as
+  // before) and a second copy scoped to just the table. The table one is
+  // deliberately much denser/bigger/brighter — the page-wide density was
+  // essentially imperceptible against the table's own solid background,
+  // reported live three times as "the static background hasn't been
+  // added" even though it technically was.
+  function startStaticCanvas(canvasEl, getSize, opts){
     if (!canvasEl) return;
+    opts = opts || {};
+    var divisor = opts.divisor || 9000;
+    var fleckSize = opts.fleckSize || 1;
     function size(){ var s = getSize(); canvasEl.width = s.w; canvasEl.height = s.h; }
     size();
     window.addEventListener('resize', size);
@@ -502,11 +514,11 @@ function renderPage() {
     function frame(){
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
-      var flecks = Math.floor((canvasEl.width * canvasEl.height) / 9000);
+      var flecks = Math.floor((canvasEl.width * canvasEl.height) / divisor);
       for (var i = 0; i < flecks; i++) {
         var x = Math.random() * canvasEl.width, y = Math.random() * canvasEl.height;
-        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(61,243,236,0.55)' : 'rgba(255,63,208,0.5)';
-        ctx.fillRect(x, y, 1, 1);
+        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(61,243,236,0.75)' : 'rgba(255,63,208,0.7)';
+        ctx.fillRect(x, y, fleckSize, fleckSize);
       }
       requestAnimationFrame(frame);
     }
@@ -518,7 +530,7 @@ function renderPage() {
   startStaticCanvas(document.getElementById('tableStaticCanvas'), function(){
     var r = document.querySelector('.table').getBoundingClientRect();
     return { w: Math.max(1, r.width), h: Math.max(1, r.height) };
-  });
+  }, { divisor: 1400, fleckSize: 2 });
 
   var el = {};
   ['balanceValue','dealerValue','dealerCards','playerHandsContainer','statusLine',
@@ -527,7 +539,7 @@ function renderPage() {
    'strategyBtn','strategyOverlay','strategyCloseBtn','strategyBody',
    'rulesBtn','rulesOverlay','rulesCloseBtn',
    'sessionBtn','sessionValue','historyOverlay','historyCloseBtn','historyEmpty','historyList',
-   'shuffleDeck','dealerBlock','pageEl','winFlash','winFlashText'
+   'shuffleDeck','dealerBlock','pageEl','winFlash','winFlashText','betChipPad'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
 
   function setInHand(active){
@@ -884,6 +896,7 @@ function renderPage() {
     handRefs.forEach(function(ref){ ref.block.classList.remove('active-hand'); });
     el.actionRow.style.display = 'none';
     el.betRow.style.display = 'none';
+    el.betChipPad.style.display = 'none';
     el.sideBetRow.style.display = 'none';
     el.againRow.style.display = 'flex';
     var labels = { blackjack: 'BLACKJACK!', win: 'W!N', push: 'PUSH', lose: 'L0SE' };
@@ -937,23 +950,17 @@ function renderPage() {
       perfect: 'PERFECT PA!R', colored: 'C0L0RED PA!R', mixed: 'M!XED PA!R',
       suitedTrips: 'SU!TED TR!PS', straightFlush: 'STRA!GHT FLUSH', trips: 'TR!PS', straight: 'STRA!GHT', flush: 'FLUSH'
     };
+    // Only worth a line when something actually hit — a miss on a side
+    // bet isn't news (per feedback, "this doesn't need to show").
     var parts = [];
     var wins = [];
-    if (sideBets.pair) {
-      if (sideBets.pair.payout > 0) {
-        parts.push('<span class="hit">PA!R B0NUS: ' + tierLabels[sideBets.pair.tier] + ' — W0N ' + sideBets.pair.payout + '</span>');
-        wins.push(tierLabels[sideBets.pair.tier] + '! +' + sideBets.pair.payout);
-      } else {
-        parts.push('<span class="miss">PA!R B0NUS: N0 H!T</span>');
-      }
+    if (sideBets.pair && sideBets.pair.payout > 0) {
+      parts.push('<span class="hit">PA!R B0NUS: ' + tierLabels[sideBets.pair.tier] + ' — W0N ' + sideBets.pair.payout + '</span>');
+      wins.push(tierLabels[sideBets.pair.tier] + '! +' + sideBets.pair.payout);
     }
-    if (sideBets.poker) {
-      if (sideBets.poker.payout > 0) {
-        parts.push('<span class="hit">P0KER B0NUS: ' + tierLabels[sideBets.poker.tier] + ' — W0N ' + sideBets.poker.payout + '</span>');
-        wins.push(tierLabels[sideBets.poker.tier] + '! +' + sideBets.poker.payout);
-      } else {
-        parts.push('<span class="miss">P0KER B0NUS: N0 H!T</span>');
-      }
+    if (sideBets.poker && sideBets.poker.payout > 0) {
+      parts.push('<span class="hit">P0KER B0NUS: ' + tierLabels[sideBets.poker.tier] + ' — W0N ' + sideBets.poker.payout + '</span>');
+      wins.push(tierLabels[sideBets.poker.tier] + '! +' + sideBets.poker.payout);
     }
     el.sideBetResult.innerHTML = parts.join(' &nbsp;·&nbsp; ');
     if (wins.length) flashWin(wins.join(' + '));
@@ -1002,6 +1009,7 @@ function renderPage() {
     if (round.status === 'active') {
       applyActiveHighlight(0);
       el.betRow.style.display = 'none';
+      el.betChipPad.style.display = 'none';
       el.sideBetRow.style.display = 'none';
       el.actionRow.style.display = 'flex';
       el.againRow.style.display = 'none';
@@ -1057,6 +1065,7 @@ function renderPage() {
     if (round.status === 'active') {
       applyActiveHighlight(round.activeHandIndex);
       el.betRow.style.display = 'none';
+      el.betChipPad.style.display = 'none';
       el.sideBetRow.style.display = 'none';
       el.actionRow.style.display = 'flex';
       el.againRow.style.display = 'none';
@@ -1092,6 +1101,7 @@ function renderPage() {
     applyActiveHighlight(round.activeHandIndex);
     currentRound = round;
     el.betRow.style.display = 'none';
+    el.betChipPad.style.display = 'none';
     el.sideBetRow.style.display = 'none';
     el.actionRow.style.display = 'flex';
     el.againRow.style.display = 'none';
@@ -1111,6 +1121,7 @@ function renderPage() {
     handRefs = [];
     currentRound = null;
     el.betRow.style.display = 'flex';
+    el.betChipPad.style.display = 'flex';
     el.sideBetRow.style.display = 'flex';
     el.actionRow.style.display = 'none';
     el.againRow.style.display = 'none';
@@ -1121,6 +1132,27 @@ function renderPage() {
   var handRefs = [];
   var currentRound = null;
   var uiBusy = false;
+
+  // Self-heal for "round_in_progress" — this means the server genuinely
+  // still has an active round (real bet already placed) that the client
+  // somehow lost track of, e.g. a crash/interruption mid-deal-animation
+  // left the UI showing the bet screen while the deal had already
+  // succeeded server-side. Re-fetch real state and resume it instead of
+  // just leaving the player stuck behind a red error line every time.
+  async function recoverFromDesync(){
+    try {
+      var res = await fetch('/api/crown-balance');
+      var data = await res.json();
+      if (data.ok && data.round && data.round.status === 'active') {
+        renderInstant(data.round);
+        setStatus('R0UND REC0VERED — Y0UR PREV!0US BET WAS ST!LL ACT!VE', '');
+      } else {
+        resetToBetting();
+      }
+    } catch (e) {
+      // Nothing more we can do here — leave the existing error message up.
+    }
+  }
 
   function setButtonsBusy(isBusy){
     [el.dealBtn, el.hitBtn, el.standBtn, el.doubleBtn, el.splitBtn, el.againBtn].forEach(function(b){ b.disabled = isBusy; });
@@ -1147,7 +1179,12 @@ function renderPage() {
     try {
       await fn();
     } catch (e) {
-      setStatus('ERR:: ' + String((e && e.message) || e).toUpperCase().replace(/_/g, ' '), 'err');
+      var msg = String((e && e.message) || e);
+      if (msg === 'round_in_progress') {
+        await recoverFromDesync();
+      } else {
+        setStatus('ERR:: ' + msg.toUpperCase().replace(/_/g, ' '), 'err');
+      }
     } finally {
       uiBusy = false;
       setButtonsBusy(false);
