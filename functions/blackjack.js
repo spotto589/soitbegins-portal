@@ -94,6 +94,7 @@ function renderPage() {
      real URL for a rank, cardEl() never creates this element at all. */
   .card-art{ width:100%; height:100%; object-fit:cover; }
   .card-art-suit{ position:absolute; bottom:2px; right:4px; font-size:13px; text-shadow:0 0 3px #000, 0 0 3px #000; }
+  .card-art-rank{ position:absolute; top:1px; left:3px; font-size:13px; color:#fff; text-shadow:0 0 3px #000, 0 0 3px #000; }
 
   .status-line{ text-align:center; font-size:16px; letter-spacing:0.1em; min-height:1.8em; margin-bottom:1.25rem; }
   .status-line.win{ color:#39ff14; text-shadow:0 0 8px rgba(57,255,20,0.5); }
@@ -241,9 +242,9 @@ function renderPage() {
   // the image instead of plain rank+suit text, everywhere it appears, no
   // other change needed. Leave a rank null/absent to keep the plain look.
   var CARD_ART = {
-    J: null, // Jester
-    A: null, // Phoenix
-    K: null  // The King
+    J: '/assets/cards/jester.png', // Jester
+    A: '/assets/cards/phoenix.png', // Phoenix
+    K: '/assets/cards/king.png'  // The King
   };
   function cardEl(card, hidden){
     var d = document.createElement('div');
@@ -259,6 +260,10 @@ function renderPage() {
       img.src = art;
       img.alt = rank;
       d.appendChild(img);
+      var rankBadge = document.createElement('span');
+      rankBadge.className = 'card-art-rank';
+      rankBadge.textContent = rank;
+      d.appendChild(rankBadge);
       var badge = document.createElement('span');
       badge.className = 'card-art-suit';
       badge.textContent = SUIT_SYM[suit];
