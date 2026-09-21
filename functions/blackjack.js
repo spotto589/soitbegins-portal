@@ -34,12 +34,10 @@ function renderPage() {
   .glow-blob.b{ background:#ff3fb0; bottom:-18vw; right:-14vw; animation:glowDrift 19s ease-in-out infinite reverse; }
   .glow-blob.c{ background:#ffb000; top:35%; left:40%; opacity:0.1; animation:glowDrift 23s ease-in-out infinite; }
   @keyframes glowDrift{ 0%,100%{ transform:translate(0,0) scale(1); } 50%{ transform:translate(3vw,-2vw) scale(1.18); } }
-  .page{ max-width:980px; width:100%; position:relative; z-index:1; margin:0 auto; transition:max-width 0.35s ease; }
-  /* "restrict it to the middle of the screen" once a hand is actually in
-     play — narrows the whole column, back to full width on the betting
-     screen. Toggled in the client script alongside the bet-row/action-row
-     show/hide. */
-  .page.in-hand{ max-width:640px; }
+  /* Fixed size regardless of betting vs. in-hand state — per feedback the
+     box narrowing/widening as a hand started was unwanted; only the
+     interface inside it should change. */
+  .page{ max-width:980px; width:100%; position:relative; z-index:1; margin:0 auto; }
 
   .session-chip{
     border:1px solid rgba(57,255,20,0.45); padding:0.45em 1.1em; text-align:right;
@@ -138,14 +136,17 @@ function renderPage() {
      the outer marquee-frame ring rather than replacing it. */
   .table-border{ position:relative; padding:2px; border-radius:6px; overflow:hidden; }
   .table{
-    border:1px solid rgba(57,255,20,0.3); padding:0.7rem 1.1rem 0.9rem; min-height:195px;
+    /* Deliberately neutral, not green — per feedback the green ring here
+       clashed, while the cyan/pink chase (marquee-frame/table-border
+       above) is the accent that should carry the colour. */
+    border:1px solid rgba(0,0,0,0.85); padding:0.7rem 1.1rem 0.9rem; min-height:195px;
     /* Needs to be near-opaque, not just tinted — a transparent background
        doesn't block the chase glow behind it regardless of paint order,
        so a mostly-see-through fill let both cyber-glow rings bleed across
        the whole table interior instead of staying a thin border ring
        (reported live as "swirling in the middle of the cards"). */
     background:#0a0a0c; position:relative; z-index:1;
-    box-shadow:0 0 20px rgba(57,255,20,0.15);
+    box-shadow:0 0 20px rgba(0,0,0,0.6);
     /* Faint HUD grid — the "playing inside a system" texture behind the
        static flecks, not just a flat dark panel. */
     background-image:
@@ -187,12 +188,14 @@ function renderPage() {
   @keyframes shuffleLabelPulse{ 0%,100%{ opacity:0.5; } 50%{ opacity:1; } }
   .hand-block{ margin-bottom:0.4rem; flex:1 1 320px; min-width:300px; text-align:center; }
   .hand-block.dealer-block{ flex-basis:100%; }
-  .hand-block.active-hand{ outline:1px dashed rgba(255,63,208,0.6); outline-offset:8px; }
   .hand-label-row{ display:flex; align-items:center; justify-content:center; margin-bottom:0.3rem; }
   .hand-label{ font-size:14px; letter-spacing:0.2em; color:rgba(232,232,232,0.6); }
+  /* Split hands only — which one is currently live, without the old
+     dashed-outline "box" around it. */
+  .hand-block.active-hand .hand-label{ color:#3df3ec; text-shadow:0 0 6px rgba(61,243,236,0.6); }
   .hand-label .bet-tag{ font-size:15px; font-weight:700; color:#ffb000; margin-left:0.6em; letter-spacing:0.08em; text-shadow:0 0 6px rgba(255,176,0,0.4); }
   .hand-count{ font-size:32px; line-height:1; font-weight:700; color:#39ff14; text-shadow:0 0 10px rgba(57,255,20,0.55); margin-bottom:0.5rem; }
-  .hand-count.bust{ color:#ff3fb0; text-shadow:0 0 10px rgba(255,63,176,0.55); }
+  .hand-count.bust{ color:#ff3b3b; text-shadow:0 0 10px rgba(255,59,59,0.55); }
   .cards{ display:flex; gap:0.6rem; flex-wrap:wrap; min-height:132px; justify-content:center; }
   .card{
     width:100px; height:144px; border:3px solid rgba(232,232,232,0.4); border-radius:9px;
@@ -200,20 +203,39 @@ function renderPage() {
     font-size:40px; font-weight:700; position:relative; overflow:hidden;
   }
   .card.hidden{ background:repeating-linear-gradient(45deg,#151515,#151515 5px,#1c1c1c 5px,#1c1c1c 10px); color:transparent; border-color:rgba(232,232,232,0.25) !important; box-shadow:none !important; }
+  /* Numbered cards (no custom face art) — real playing-card layout: a
+     rank+suit index in both the top-left and bottom-right corners (the
+     bottom-right one flipped, classic card convention) so the value reads
+     from either end when cards overlap in a hand, plus a bigger suit mark
+     centered. A single centered "7♦" didn't give any of that. */
+  .card-index{ position:absolute; font-size:15px; line-height:1.15; font-weight:700; text-align:center; }
+  .card-index.tl{ top:5px; left:7px; }
+  .card-index.br{ bottom:5px; right:7px; transform:rotate(180deg); }
+  .card-center-suit{ font-size:36px; }
+  /* A double-down's second card is dealt face down — click it to flip.
+     Pulses amber so it reads as "waiting on you", not just a stray hidden
+     card, and the hand can't be settled until it's revealed (enforced in
+     the client script, not just visually). */
+  .double-card{ cursor:pointer; border-color:rgba(255,176,0,0.6) !important; animation:doublePulse 1.4s ease-in-out infinite; }
+  @keyframes doublePulse{ 0%,100%{ box-shadow:0 0 8px rgba(255,176,0,0.35); } 50%{ box-shadow:0 0 18px rgba(255,176,0,0.75); } }
+  .double-card::after{
+    content:'TAP T0 REVEAL'; position:absolute; bottom:6px; left:50%; transform:translateX(-50%);
+    font-size:8px; letter-spacing:0.1em; color:#ffb000; text-shadow:0 0 4px rgba(255,176,0,0.8); white-space:nowrap;
+  }
   /* Dealing pace — a card lands with a little drop/settle instead of just
-     appearing, and the dealer's hole card gets a flip-swap when revealed.
-     Kept short (well under half a second each) so "slow enough to feel
-     like a hand being played" doesn't tip into "annoyingly sluggish". */
+     appearing, and every dealer card (hole card and any further draws)
+     gets the same flip-swap when revealed, so the whole dealer hand reads
+     consistently instead of the hole card alone doing something special. */
   @keyframes cardDeal{
     0%{ opacity:0; transform:translateY(-18px) scale(0.82) rotate(-8deg); }
     70%{ opacity:1; transform:translateY(2px) scale(1.03) rotate(1deg); }
     100%{ opacity:1; transform:translateY(0) scale(1) rotate(0); }
   }
-  .card-deal{ animation:cardDeal 0.32s ease-out both; }
+  .card-deal{ animation:cardDeal 0.4s ease-out both; }
   @keyframes cardFlipOut{ from{ transform:scaleX(1); } to{ transform:scaleX(0); } }
   @keyframes cardFlipIn{ from{ transform:scaleX(0); } to{ transform:scaleX(1); } }
-  .card-flip-out{ animation:cardFlipOut 0.16s ease-in both; }
-  .card-flip-in{ animation:cardFlipIn 0.18s ease-out both; }
+  .card-flip-out{ animation:cardFlipOut 0.2s ease-in both; }
+  .card-flip-in{ animation:cardFlipIn 0.22s ease-out both; }
   /* Custom face art (Jester/Phoenix/King) drops in here once the images
      exist — see CARD_ART in the client script below. Until CARD_ART has a
      real URL for a rank, cardEl() never creates this element at all. */
@@ -349,10 +371,11 @@ function renderPage() {
   .gbtn.secondary{ border-color:rgba(232,232,232,0.4); color:rgba(232,232,232,0.85); text-shadow:none; }
   .gbtn.accent{ border-color:rgba(255,63,208,0.6); color:#ff3fb0; text-shadow:0 0 6px rgba(255,63,208,0.5); }
 
-  /* Side-bet win callout — a brief full-screen flash + bouncing text so a
-     Pair/Poker Bonus hit is impossible to miss (reported live: "couldn't
-     tell when I'd hit one"). Sits above the table (z-index 250) but below
-     the strategy/history modals (300), and never blocks clicks either way. */
+  /* Win callout — a brief full-screen flash + bouncing text, shared by
+     Pair/Poker Bonus hits, a main-hand win/blackjack (bigger, with a +net
+     amount and the resulting balance underneath), and a small pulse for
+     hitting exactly 21. Sits above the table (z-index 250) but below the
+     strategy/history modals (300), and never blocks clicks either way. */
   .win-flash{ position:fixed; inset:0; z-index:250; pointer-events:none; display:flex; align-items:center; justify-content:center; opacity:0; }
   .win-flash::before{ content:''; position:absolute; inset:0; background:radial-gradient(circle, rgba(255,176,0,0.4) 0%, rgba(57,255,20,0.18) 40%, transparent 72%); }
   .win-flash span{
@@ -360,8 +383,20 @@ function renderPage() {
     letter-spacing:0.08em; text-align:center; color:#ffb000; text-shadow:0 0 20px rgba(255,176,0,0.9), 0 0 44px rgba(255,176,0,0.55);
     text-transform:uppercase;
   }
+  #winFlashText{ display:flex; flex-direction:column; align-items:center; gap:0.18em; }
+  /* ID-qualified so these beat the plain ".win-flash span" rule above on
+     specificity (a bare class alone would lose to class+type and never
+     actually shrink). */
+  #winFlashText .win-flash-amt{ font-size:0.55em; color:#39ff14; text-shadow:0 0 14px rgba(57,255,20,0.75); }
+  #winFlashText .win-flash-bal{ font-size:0.26em; letter-spacing:0.2em; color:rgba(232,232,232,0.8); text-shadow:none; }
   .win-flash.play{ animation:winFlashFade 1.3s ease-out; }
   .win-flash.play span{ animation:winFlashText 1.3s cubic-bezier(.34,1.56,.64,1); }
+  /* Small pulse for hitting 21 on the nose via hits — a nod, not the full
+     blackjack/win fanfare. */
+  .win-flash.small::before{ opacity:0.55; }
+  .win-flash.small span{ font-size:clamp(18px,3vw,28px); text-shadow:0 0 12px rgba(255,176,0,0.8); }
+  .win-flash.small.play{ animation:winFlashFade 0.85s ease-out; }
+  .win-flash.small.play span{ animation:winFlashText 0.85s cubic-bezier(.34,1.56,.64,1); }
   @keyframes winFlashFade{ 0%{ opacity:0; } 8%{ opacity:1; } 75%{ opacity:1; } 100%{ opacity:0; } }
   @keyframes winFlashText{
     0%{ transform:scale(0.3) rotate(-6deg); }
@@ -374,6 +409,10 @@ function renderPage() {
   @media (max-width:700px){
     .card{ width:74px; height:106px; font-size:29px; }
     .card-art-suit, .card-art-rank{ font-size:15px; }
+    .card-index{ font-size:11px; }
+    .card-index.tl{ top:3px; left:5px; }
+    .card-index.br{ bottom:3px; right:5px; }
+    .card-center-suit{ font-size:26px; }
     .hand-count{ font-size:26px; }
     .balance-chip .bv{ font-size:24px; }
     .chip:not(.small){ width:44px; height:44px; font-size:11px; }
@@ -608,10 +647,10 @@ function renderPage() {
     function size(){ var s = getSize(); canvasEl.width = s.w; canvasEl.height = s.h; }
     size();
     window.addEventListener('resize', size);
-    // The table itself grows (in-hand narrowing, dealt cards, the wager
-    // console) without ever firing a window resize — a plain resize
-    // listener left the canvas's backing bitmap sized to whatever the
-    // table measured on load, so anything the table grew into afterward
+    // The table's own height still grows as cards/hands get added (its
+    // width is fixed) without ever firing a window resize — a plain
+    // resize listener left the canvas's backing bitmap sized to whatever
+    // the table measured on load, so anything it grew into afterward
     // rendered as flat black instead of static (reported live as "cut
     // off with a black box"). A ResizeObserver on the element that's
     // actually changing size catches all of that.
@@ -648,16 +687,12 @@ function renderPage() {
    'strategyBtn','strategyOverlay','strategyCloseBtn','strategyBody',
    'rulesBtn','rulesOverlay','rulesCloseBtn',
    'sessionBtn','sessionValue','historyOverlay','historyCloseBtn','historyEmpty','historyList',
-   'shuffleDeck','dealerBlock','pageEl','winFlash','winFlashText',
+   'shuffleDeck','dealerBlock','winFlash','winFlashText',
    'wagerConsole','chipTray',
    'mainChipStack','pairChipStack','pokerChipStack',
    'mainPlaceholder','pairPlaceholder','pokerPlaceholder',
    'betReadout','pairBetReadout','pokerBetReadout'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
-
-  function setInHand(active){
-    el.pageEl.classList.toggle('in-hand', active);
-  }
 
   // Every denomination chip gets a little crown icon (colour follows the
   // chip via currentColor/stroke) instead of just a bare number — built
@@ -796,7 +831,22 @@ function renderPage() {
       d.appendChild(badge);
     } else {
       d.style.color = color;
-      d.textContent = rank + SUIT_SYM[suit];
+      // Real playing-card layout — a rank+suit index in the top-left AND
+      // bottom-right corners (the latter flipped, standard convention) so
+      // the value reads from either end, plus a bigger suit mark centered.
+      var idx = rank + '<br>' + SUIT_SYM[suit];
+      var tl = document.createElement('span');
+      tl.className = 'card-index tl';
+      tl.innerHTML = idx;
+      var br = document.createElement('span');
+      br.className = 'card-index br';
+      br.innerHTML = idx;
+      var centerSuit = document.createElement('span');
+      centerSuit.className = 'card-center-suit';
+      centerSuit.textContent = SUIT_SYM[suit];
+      d.appendChild(tl);
+      d.appendChild(centerSuit);
+      d.appendChild(br);
     }
     return d;
   }
@@ -919,7 +969,7 @@ function renderPage() {
     handCounter++;
     var multi = round.hands.length > 1;
     round.hands.forEach(function(h, i){
-      var net = h.result === 'blackjack' ? Math.floor(h.bet * 1.5) : h.result === 'win' ? h.bet : h.result === 'push' ? 0 : -h.bet;
+      var net = handNet(h);
       handHistory.unshift({
         id: handCounter + (multi ? String.fromCharCode(97 + i) : ''),
         bet: h.bet,
@@ -942,7 +992,7 @@ function renderPage() {
   }
 
   function sleep(ms){ return new Promise(function(resolve){ setTimeout(resolve, ms); }); }
-  var CARD_DELAY = 420;
+  var CARD_DELAY = 550;
 
   // Cosmetic only — purely so the count above a hand can climb as each
   // card visually lands instead of jumping straight to the server's final
@@ -1007,32 +1057,63 @@ function renderPage() {
     handRefs.forEach(function(ref, i){ ref.block.classList.toggle('active-hand', i === index); });
   }
 
+  // Generic flip-swap: a hidden card scales out, the real card scales in
+  // in its place — used for the dealer's hole card, every further dealer
+  // draw (same reveal, not a plain drop-in), and a player's double-down
+  // card once they click it.
+  function flipCard(hiddenEl, realCard){
+    return new Promise(function(resolve){
+      hiddenEl.classList.add('card-flip-out');
+      setTimeout(function(){
+        var real = cardEl(realCard, false);
+        real.classList.add('card-flip-in');
+        hiddenEl.replaceWith(real);
+        setTimeout(function(){ resolve(real); }, 220);
+      }, 200);
+    });
+  }
+
   // Hole card's flip-reveal: the hidden placeholder scales out, the real
   // card scales in — a small beat of drama for the one moment blackjack
   // actually has (Insurance aside, which this doesn't implement).
   async function flipRevealDealerHole(realCard){
     var hiddenEl = el.dealerCards.children[1];
     if (!hiddenEl) return;
-    hiddenEl.classList.add('card-flip-out');
-    await sleep(160);
-    var real = cardEl(realCard, false);
-    real.classList.add('card-flip-in');
-    el.dealerCards.replaceChild(real, hiddenEl);
+    await flipCard(hiddenEl, realCard);
+  }
+
+  // Any further dealer draw beyond the opening two cards gets dealt face
+  // down first, then flips — the same reveal as the hole card, so the
+  // whole dealer hand plays out consistently instead of the hole card
+  // alone doing something special.
+  async function dealDealerCardFlipped(card){
+    var hiddenEl = cardEl(null, true);
+    hiddenEl.classList.add('card-deal');
+    el.dealerCards.appendChild(hiddenEl);
+    await sleep(CARD_DELAY);
+    await flipCard(hiddenEl, card);
+  }
+
+  // Reveals the dealer's hole card, then plays out any further draws —
+  // unless every player hand already busted, in which case the dealer's
+  // total is moot and we just turn over the hole card rather than
+  // dragging out draws that can't change the outcome.
+  async function playDealerReveal(round){
+    var allBust = round.hands.every(function(h){ return h.status === 'bust'; });
+    await flipRevealDealerHole(round.dealer[1]);
+    updateCount(el.dealerValue, handValueClient(round.dealer.slice(0, 2)));
+    if (!allBust) {
+      for (var i = 2; i < round.dealer.length; i++) {
+        await dealDealerCardFlipped(round.dealer[i]);
+        updateCount(el.dealerValue, handValueClient(round.dealer.slice(0, i + 1)));
+      }
+      updateCount(el.dealerValue, round.dealerValue); // authoritative final value
+    }
     await sleep(200);
   }
 
-  // Reveals the dealer's hole card, then deals out any further draws one
-  // at a time — this is the exact sequence that used to just dump the
-  // whole final dealer hand in one instant paint.
-  async function playDealerReveal(round){
-    await flipRevealDealerHole(round.dealer[1]);
-    updateCount(el.dealerValue, handValueClient(round.dealer.slice(0, 2)));
-    for (var i = 2; i < round.dealer.length; i++) {
-      await dealInto(el.dealerCards, round.dealer[i], false);
-      updateCount(el.dealerValue, handValueClient(round.dealer.slice(0, i + 1)));
-    }
-    updateCount(el.dealerValue, round.dealerValue); // authoritative final value
-    await sleep(200);
+  function handNet(h){
+    return h.result === 'blackjack' ? Math.floor(h.bet * 1.5) : h.result === 'win' ? h.bet : h.result === 'push' ? 0 : -h.bet;
   }
 
   function finishResolved(round){
@@ -1056,6 +1137,20 @@ function renderPage() {
         : r === 'push' ? 'PUSH — BET RETURNED'
         : 'Y0U L0SE';
       setStatus(text, classes[r]);
+    }
+    // Big win flash — a blackjack or an ordinary win both get it (per
+    // feedback, blackjack should flash like the pair/poker bonuses do),
+    // bigger than those, with a +net amount and the resulting balance
+    // underneath so the payoff actually registers.
+    var net = round.hands.reduce(function(sum, h){ return sum + handNet(h); }, 0);
+    if (net > 0) {
+      var anyBlackjack = round.hands.some(function(h){ return h.result === 'blackjack'; });
+      var label = anyBlackjack ? 'BLACKJACK!' : 'Y0U W!N!';
+      flashWin(
+        '<span class="win-flash-main">' + label + '</span>' +
+        '<span class="win-flash-amt">+' + net + ' CR0WN</span>' +
+        '<span class="win-flash-bal">BALANCE ' + el.balanceValue.textContent + '</span>'
+      );
     }
     recordHistory(round);
   }
@@ -1082,10 +1177,12 @@ function renderPage() {
   // side-bet hits back to back would otherwise silently no-op the second
   // time — a class that's already applied doesn't retrigger a CSS
   // animation without a reflow in between).
-  function flashWin(text){
-    el.winFlashText.textContent = text;
-    el.winFlash.classList.remove('play');
+  function flashWin(html, opts){
+    opts = opts || {};
+    el.winFlashText.innerHTML = html;
+    el.winFlash.classList.remove('play', 'small');
     void el.winFlash.offsetWidth;
+    if (opts.small) el.winFlash.classList.add('small');
     el.winFlash.classList.add('play');
   }
 
@@ -1112,7 +1209,6 @@ function renderPage() {
   }
 
   async function sequenceDeal(round, sideBets){
-    setInHand(true);
     // Shuffle burst — the idle deck (already visible on the betting
     // screen) speeds up for a beat before the table actually clears and
     // dealing starts, so "shuffling" reads as one continuous motion
@@ -1170,14 +1266,42 @@ function renderPage() {
     }
   }
 
-  async function sequenceHitOrDouble(actingIndex, round){
+  // A double-down's card is dealt face down; the hand can't be settled
+  // (dealer revealed, payout shown) until the player actually clicks it
+  // to flip it over — this promise doesn't resolve until they do.
+  function dealDoubleCardFaceDown(ref, card){
+    return new Promise(function(resolve){
+      var hiddenEl = cardEl(null, true);
+      hiddenEl.classList.add('card-deal', 'double-card');
+      ref.cards.appendChild(hiddenEl);
+      setTimeout(function(){
+        function onFlip(){
+          hiddenEl.removeEventListener('click', onFlip);
+          hiddenEl.classList.remove('double-card');
+          flipCard(hiddenEl, card).then(resolve);
+        }
+        hiddenEl.addEventListener('click', onFlip);
+      }, CARD_DELAY);
+    });
+  }
+
+  async function sequenceHitOrDouble(actingIndex, round, isDouble){
     var ref = handRefs[actingIndex];
     var hand = round.hands[actingIndex];
     var newCard = hand.cards[hand.cards.length - 1];
-    await dealInto(ref.cards, newCard, false);
-    updateCount(ref.count, hand.value, hand.status === 'bust');
     var betTag = ref.label.querySelector('.bet-tag');
     if (betTag) betTag.textContent = 'BET ' + hand.bet;
+    if (isDouble) {
+      await dealDoubleCardFaceDown(ref, newCard);
+    } else {
+      await dealInto(ref.cards, newCard, false);
+    }
+    updateCount(ref.count, hand.value, hand.status === 'bust');
+    // A small pulse for landing on 21 via hits — the full blackjack/win
+    // flash still only fires once the hand actually resolves.
+    if (hand.value === 21 && hand.status !== 'bust') {
+      flashWin('<span class="win-flash-main">21!</span>', { small: true });
+    }
     currentRound = round;
     if (round.status !== 'active' || round.activeHandIndex !== actingIndex) {
       await afterHandFinished(round);
@@ -1225,7 +1349,6 @@ function renderPage() {
   }
 
   function renderInstant(round){
-    setInHand(true);
     el.shuffleDeck.style.display = 'none';
     el.dealerBlock.style.display = 'block';
     el.dealerCards.innerHTML = '';
@@ -1254,7 +1377,6 @@ function renderPage() {
   }
 
   function resetToBetting(){
-    setInHand(false);
     el.shuffleDeck.style.display = 'flex';
     el.dealerBlock.style.display = 'none';
     el.dealerCards.innerHTML = '';
@@ -1367,7 +1489,7 @@ function renderPage() {
     runAction(async function(){
       var actingIndex = currentRound.activeHandIndex;
       var data = await postAction({ action: 'double' });
-      await sequenceHitOrDouble(actingIndex, data.round);
+      await sequenceHitOrDouble(actingIndex, data.round, true);
     });
   });
   el.splitBtn.addEventListener('click', function(){
