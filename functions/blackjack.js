@@ -133,6 +133,10 @@ function renderPage() {
     pointer-events:none;
   }
   @keyframes cyberChase{ to{ transform:translate(-50%,-50%) rotate(360deg); } }
+  /* Same chase, nested one level deeper, directly on .table's own edge —
+     "the border of the table" specifically, per feedback, kept alongside
+     the outer marquee-frame ring rather than replacing it. */
+  .table-border{ position:relative; padding:2px; border-radius:6px; overflow:hidden; }
   .table{
     border:1px solid rgba(57,255,20,0.3); padding:0.7rem 1.1rem 0.55rem; min-height:195px;
     background:rgba(57,255,20,0.02); position:relative; z-index:1;
@@ -224,15 +228,35 @@ function renderPage() {
   .chip{
     border-radius:50%; border:2px solid #ffb000; cursor:pointer; font-family:inherit; font-weight:700;
     background:radial-gradient(circle at 35% 30%, rgba(255,176,0,0.28), rgba(10,10,12,0.92));
-    color:#ffb000; text-shadow:0 0 5px rgba(255,176,0,0.5);
-    display:flex; align-items:center; justify-content:center;
+    color:#ffb000; text-shadow:0 0 5px currentColor;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; line-height:1;
     transition:transform 0.12s ease, box-shadow 0.12s ease;
   }
-  .chip:hover{ transform:translateY(-3px); box-shadow:0 5px 12px rgba(255,176,0,0.35); }
+  .chip:hover{ transform:translateY(-3px); box-shadow:0 5px 12px currentColor; }
   .chip:active{ transform:translateY(0); }
   .chip.clear{ border-color:rgba(232,232,232,0.45); color:rgba(232,232,232,0.75); text-shadow:none; background:radial-gradient(circle at 35% 30%, rgba(232,232,232,0.1), rgba(10,10,12,0.92)); }
   .chip:not(.small){ width:52px; height:52px; font-size:13px; }
   .chip.small{ width:34px; height:34px; font-size:11px; border-width:1.5px; }
+  .chip-crown{ width:15px; height:auto; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linejoin:round; stroke-linecap:round; }
+  .chip.small .chip-crown{ width:11px; }
+  /* One colour per denomination (poker-chip convention, adapted to the
+     site's neon palette) — reused for the flying coin's colour too (read
+     back via getComputedStyle at click time, see flyCoin in the client
+     script), so a chip's colour and its coin's colour always match. */
+  .chip[data-add="5"]{ border-color:#e8e8e8; color:#e8e8e8; background:radial-gradient(circle at 35% 30%, rgba(232,232,232,0.25), rgba(10,10,12,0.92)); }
+  .chip[data-add="10"]{ border-color:#ff3b3b; color:#ff3b3b; background:radial-gradient(circle at 35% 30%, rgba(255,59,59,0.25), rgba(10,10,12,0.92)); }
+  .chip[data-add="25"]{ border-color:#39ff14; color:#39ff14; background:radial-gradient(circle at 35% 30%, rgba(57,255,20,0.25), rgba(10,10,12,0.92)); }
+  .chip[data-add="50"]{ border-color:#3df3ec; color:#3df3ec; background:radial-gradient(circle at 35% 30%, rgba(61,243,236,0.25), rgba(10,10,12,0.92)); }
+  .chip[data-add="100"]{ border-color:#ff3fb0; color:#ff3fb0; background:radial-gradient(circle at 35% 30%, rgba(255,63,176,0.25), rgba(10,10,12,0.92)); }
+  .chip[data-add="250"]{ border-color:#ffb000; color:#ffb000; background:radial-gradient(circle at 35% 30%, rgba(255,176,0,0.28), rgba(10,10,12,0.92)); }
+
+  .flying-coin{
+    position:fixed; width:26px; height:26px; border-radius:50%; z-index:400; pointer-events:none;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(10,10,12,0.95); border:2px solid currentColor; box-shadow:0 0 10px currentColor;
+    transition:left 0.5s cubic-bezier(.25,.65,.3,1), top 0.5s cubic-bezier(.25,.65,.3,1), opacity 0.4s ease 0.2s, transform 0.5s ease;
+  }
+  .flying-coin .chip-crown{ width:13px; }
 
   .side-bet-row{ display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-bottom:0.6rem; }
   .side-bet-field{ display:flex; flex-direction:column; align-items:center; gap:0.4rem; border:1px dashed rgba(232,232,232,0.3); padding:0.6em 0.85em; }
@@ -318,6 +342,8 @@ function renderPage() {
 
     <div class="marquee-frame">
       <div class="cyber-glow"></div>
+      <div class="table-border">
+      <div class="cyber-glow"></div>
       <div class="table">
       <canvas id="tableStaticCanvas"></canvas>
       <div class="hand-block dealer-block" id="dealerBlock" style="display:none;">
@@ -331,6 +357,7 @@ function renderPage() {
         <div class="sc"></div>
         <div class="sc"></div>
         <div class="shuffle-label">SHUFFL!NG...</div>
+      </div>
       </div>
       </div>
     </div>
@@ -507,6 +534,40 @@ function renderPage() {
     el.pageEl.classList.toggle('in-hand', active);
   }
 
+  // Every denomination chip gets a little crown icon (colour follows the
+  // chip via currentColor/stroke) instead of just a bare number — built
+  // once here rather than repeated per button in the template.
+  var CROWN_ICON_SVG = '<svg class="chip-crown" viewBox="0 0 24 16"><path d="M2 14 L1 4 L6 8 L12 2 L18 8 L23 4 L22 14 Z"/></svg>';
+  document.querySelectorAll('.chip[data-add]').forEach(function(btn){
+    var val = btn.textContent;
+    btn.innerHTML = CROWN_ICON_SVG + '<span class="chip-val">' + val + '</span>';
+  });
+
+  // "Coins going onto the table" — a small crowned coin, coloured to
+  // match the chip that spawned it, flies from the clicked chip to the
+  // bet field it's stacking onto, then shrinks/fades on arrival.
+  function flyCoin(sourceEl, targetEl, color){
+    var sRect = sourceEl.getBoundingClientRect();
+    var tRect = targetEl.getBoundingClientRect();
+    var coin = document.createElement('div');
+    coin.className = 'flying-coin';
+    coin.style.color = color;
+    coin.innerHTML = CROWN_ICON_SVG;
+    coin.style.left = (sRect.left + sRect.width / 2 - 13) + 'px';
+    coin.style.top = (sRect.top + sRect.height / 2 - 13) + 'px';
+    coin.style.opacity = '1';
+    document.body.appendChild(coin);
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        coin.style.left = (tRect.left + tRect.width / 2 - 13) + 'px';
+        coin.style.top = (tRect.top + tRect.height / 2 - 13) + 'px';
+        coin.style.opacity = '0';
+        coin.style.transform = 'scale(0.4) rotate(300deg)';
+      });
+    });
+    setTimeout(function(){ coin.remove(); }, 560);
+  }
+
   // Chip pads — a chip button ADDS its value onto whatever's already
   // typed into that bet field (real casino chip-stacking), clamped to the
   // input's own max (set once the real maxBet is known in init() below);
@@ -528,6 +589,7 @@ function renderPage() {
       var next = current + add;
       if (Number.isFinite(max) && max > 0) next = Math.min(next, max);
       inputEl.value = next;
+      flyCoin(btn, inputEl, getComputedStyle(btn).color);
     });
   }
   wireChipPad('betChipPad', el.betInput);
