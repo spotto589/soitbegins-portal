@@ -34,6 +34,17 @@ function renderPage() {
   .glow-blob.b{ background:#ff3fb0; bottom:-18vw; right:-14vw; animation:glowDrift 19s ease-in-out infinite reverse; }
   .glow-blob.c{ background:#ffb000; top:35%; left:40%; opacity:0.1; animation:glowDrift 23s ease-in-out infinite; }
   @keyframes glowDrift{ 0%,100%{ transform:translate(0,0) scale(1); } 50%{ transform:translate(3vw,-2vw) scale(1.18); } }
+  /* Full screen toggle — bottom-right, out of the way of everything else,
+     for anyone whose viewport is too short to see the whole table at once. */
+  .fullscreen-btn{
+    position:fixed; right:1.2rem; bottom:1.2rem; z-index:200;
+    width:42px; height:42px; border-radius:50%; cursor:pointer;
+    background:rgba(10,10,12,0.85); border:1px solid rgba(61,243,236,0.5); color:#3df3ec;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 10px rgba(61,243,236,0.25); transition:border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .fullscreen-btn:hover{ border-color:#3df3ec; box-shadow:0 0 16px rgba(61,243,236,0.5); }
+  .fullscreen-btn svg{ width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   /* Wide — the table is meant to fill the page, not sit as a small boxed
      card in the middle of the starfield. */
   .page{ max-width:1500px; width:96vw; position:relative; z-index:1; margin:0 auto; }
@@ -220,17 +231,17 @@ function renderPage() {
     font-size:40px; font-weight:700; position:relative; overflow:hidden;
   }
   .card.hidden{ background:repeating-linear-gradient(45deg,#151515,#151515 5px,#1c1c1c 5px,#1c1c1c 10px); color:transparent; border-color:rgba(232,232,232,0.25) !important; box-shadow:none !important; }
-  /* Numbered cards — the rank sits big in the middle with a soft dark
-     backdrop for legibility, and the suit is repeated around it in a real
-     per-rank pip layout (see PIP_LAYOUT in the client script) instead of
-     a single glyph or a generic grid. */
-  .card-main{
-    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:2;
-    font-size:32px; padding:0.05em 0.22em; border-radius:6px;
-    background:radial-gradient(circle, rgba(17,17,17,0.82) 0%, rgba(17,17,17,0.5) 62%, transparent 78%);
+  /* Numbered cards — a real per-rank pip layout (see PIP_LAYOUT in the
+     client script), bigger now since they're the primary read, plus a
+     small rank+suit index in the top-left and bottom-right corners (the
+     latter mirrored) like an actual deck. */
+  .card-corner{
+    position:absolute; z-index:2; font-size:15px; font-weight:700; line-height:1.05; text-align:center;
   }
+  .card-corner.tl{ top:5px; left:6px; }
+  .card-corner.br{ bottom:5px; right:6px; transform:rotate(180deg); }
   .card-pips{ position:absolute; inset:0; z-index:1; pointer-events:none; }
-  .card-pip{ position:absolute; transform:translate(-50%,-50%); font-size:19px; line-height:1; }
+  .card-pip{ position:absolute; transform:translate(-50%,-50%); font-size:25px; line-height:1; }
   /* A double-down's second card is dealt face down and only becomes
      revealable once the dealer's own hand has fully played out — you hold
      it down and peel it back to look (drag/press; a plain click/tap also
@@ -267,14 +278,13 @@ function renderPage() {
   .card-art-suit.tr{ top:1px; right:5px; }
   .card-art-suit.br{ bottom:2px; right:5px; }
   .card-art-suit.bl{ bottom:2px; left:5px; }
-  /* The rank corner badge IS the spelled-out name now (KING / QUEEN /
-     JESTER / PH0EN!X), one letter per line, same size/position a bare
-     "K" used to sit in — not a separate smaller label alongside it. */
-  .card-art-name{
-    position:absolute; top:1px; left:5px;
-    display:flex; flex-direction:column; align-items:center;
-    font-size:20px; font-weight:700; line-height:1; color:#fff; text-shadow:0 0 3px #000, 0 0 3px #000;
-  }
+  /* The rank corner badge IS the spelled-out name (KING / QUEEN / JESTER /
+     PH0EN!X) — just the capital first letter big (same size a bare "K"
+     used to be), the rest of the word smaller underneath it, one letter
+     per line, so a 7-letter word like PHOENIX doesn't blow up the badge. */
+  .card-art-name{ position:absolute; top:1px; left:5px; text-align:center; color:#fff; text-shadow:0 0 3px #000, 0 0 3px #000; }
+  .card-art-name-big{ display:block; font-size:20px; font-weight:700; line-height:1; }
+  .card-art-name-rest{ display:block; font-size:10px; font-weight:700; line-height:1.05; margin-top:1px; }
 
   .status-line{ text-align:center; font-size:15px; letter-spacing:0.1em; min-height:1.5em; margin-bottom:0.6rem; }
   .status-line.win{ color:#39ff14; text-shadow:0 0 8px rgba(57,255,20,0.5); }
@@ -293,10 +303,11 @@ function renderPage() {
   .side-mini-row{ display:flex; gap:1rem; }
 
   .bet-plate{ position:relative; display:flex; flex-direction:column; align-items:center; }
-  /* Two counter-rotating dashed rings around each plate — a slow HUD spin
-     so the betting circles feel like part of a live system, not static UI. */
-  .plate-ring{ position:absolute; inset:-6px; border-radius:50%; border:1px dashed rgba(61,243,236,0.5); animation:plateSpin 12s linear infinite; pointer-events:none; }
-  .plate-ring.outer{ inset:-13px; border-color:rgba(255,63,176,0.35); animation-duration:18s; animation-direction:reverse; }
+  /* Two counter-rotating dashed rings around each plate — smaller/tighter
+     now (per feedback the ovals were too big), still a slow HUD spin so
+     the betting circles feel like part of a live system, not static UI. */
+  .plate-ring{ position:absolute; inset:-3px; border-radius:50%; border:1px dashed rgba(61,243,236,0.5); animation:plateSpin 12s linear infinite; pointer-events:none; }
+  .plate-ring.outer{ inset:-6px; border-color:rgba(255,63,176,0.35); animation-duration:18s; animation-direction:reverse; }
   @keyframes plateSpin{ to{ transform:rotate(360deg); } }
   .plate-felt{
     position:relative; border-radius:50%; overflow:visible;
@@ -306,59 +317,83 @@ function renderPage() {
   }
   .mini-side .plate-felt{ width:60px; height:60px; }
   .box-plate .plate-felt{ width:96px; height:96px; }
-  /* A plate is where chips currently land — click one to make it the
-     target before tapping denominations, so one shared chip tray can
-     fund all 9 spots (3 boxes x main+PP+PB) instead of repeating the
-     chip UI everywhere. */
+  /* A plate is where chips currently land (click, or drop a dragged chip
+     on it directly) — click one to make it the target for plain chip
+     taps too, so one shared chip tray can fund all 9 spots (3 boxes x
+     main+PP+PB) instead of repeating the chip UI everywhere. */
   .bet-plate{ cursor:pointer; }
   .bet-plate .plate-label{ transition:color 0.15s ease; }
   .bet-plate.selected .plate-felt{ border-color:#39ff14; box-shadow:inset 0 0 18px rgba(0,0,0,0.85), inset 0 0 0 1px rgba(61,243,236,0.08), 0 0 12px rgba(57,255,20,0.45); }
   .bet-plate.selected .plate-label{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.5); }
+  /* A plate being dragged over — the drop target lights up so it's clear
+     where a dragged chip will land. */
+  .bet-plate.drag-over .plate-felt{ border-color:#ffb000; box-shadow:inset 0 0 18px rgba(0,0,0,0.85), inset 0 0 0 1px rgba(61,243,236,0.08), 0 0 16px rgba(255,176,0,0.6); }
   .plate-placeholder{
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); white-space:nowrap;
     font-size:9px; letter-spacing:0.15em; color:rgba(232,232,232,0.3); pointer-events:none;
   }
   .plate-label{ font-size:10px; letter-spacing:0.18em; color:rgba(232,232,232,0.55); margin-top:0.55rem; }
-  .plate-readout{ font-size:15px; font-weight:700; color:#ffb000; text-shadow:0 0 6px rgba(255,176,0,0.5); margin-top:0.1rem; }
-  .plate-readout.box{ font-size:17px; }
-  .plate-readout .cr{ font-size:10px; font-weight:600; letter-spacing:0.1em; color:rgba(255,176,0,0.65); }
 
-  /* Coins underneath the plate, not layered inside the felt circle — a
-     dedicated little tray directly below each plate's readout so the
-     circle itself stays clean and the pile reads as sitting in front of
-     the betting spot, like a real table. */
-  .chip-stack{ position:relative; width:100%; margin-top:0.5rem; }
-  .mini-side .chip-stack{ height:26px; }
-  .box-plate .chip-stack{ height:34px; }
-  /* Physical chips piling up in that tray — a landed chip stays put
-     (unlike the old flying "coin" that just faded into a number field),
-     stacking upward with a little jitter/rotation so a bet reads as an
-     actual pile, not a counter. */
-  .stacked-chip{
-    position:absolute; left:50%; bottom:0; border-radius:50%; border:2px solid currentColor;
-    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,0.18), rgba(10,10,12,0.94));
-    display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700;
-    color:currentColor; text-shadow:0 0 4px currentColor; box-shadow:0 3px 5px rgba(0,0,0,0.65), inset 0 0 0 3px rgba(0,0,0,0.5);
-    animation:chipLand 0.3s cubic-bezier(.34,1.56,.64,1) both;
-    transform:rotate(var(--r,0deg));
+  /* A wager is "swallowed" into the plate — a chip flies in and vanishes,
+     and the running total shows on one coin sitting in the middle of the
+     circle (instead of a number underneath, or a pile of individual
+     chips). The coin pops in on the first chip and bumps on every one
+     after. */
+  .plate-coin{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.2);
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,0.22), rgba(10,10,12,0.95));
+    border:2px solid #ffb000; color:#ffb000; font-weight:700; text-shadow:0 0 6px rgba(255,176,0,0.6);
+    box-shadow:0 0 12px rgba(255,176,0,0.4), inset 0 0 8px rgba(0,0,0,0.6);
+    opacity:0; pointer-events:none;
+    transition:transform 0.3s cubic-bezier(.34,1.56,.64,1), opacity 0.2s ease;
   }
-  .mini-side .stacked-chip{ width:28px; height:28px; margin-left:-14px; }
-  .box-plate .stacked-chip{ width:34px; height:34px; margin-left:-17px; }
-  @keyframes chipLand{ 0%{ transform:translateY(-14px) rotate(var(--r,0deg)) scale(0.7); opacity:0.3; } 100%{ transform:translateY(0) rotate(var(--r,0deg)) scale(1); opacity:1; } }
+  .plate-coin.visible{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+  .plate-coin.bump{ animation:coinBump 0.32s ease; }
+  @keyframes coinBump{ 0%{ transform:translate(-50%,-50%) scale(1); } 45%{ transform:translate(-50%,-50%) scale(1.22); } 100%{ transform:translate(-50%,-50%) scale(1); } }
+  .mini-side .plate-coin{ width:70%; height:70%; font-size:12px; }
+  .box-plate .plate-coin{ width:72%; height:72%; font-size:18px; }
 
   .main-plate-wrap{ display:flex; align-items:center; justify-content:center; margin-top:0.5rem; }
+  /* Bigger and a little more theatrical — a slow ambient pulse on top of
+     the usual hover/press feedback, per "make it juicier". */
   .deal-btn{
-    background:radial-gradient(circle at 35% 30%, rgba(57,255,20,0.25), rgba(10,10,12,0.95));
-    border:2px solid #39ff14; color:#39ff14; font-family:inherit; font-size:14px; letter-spacing:0.12em;
-    width:82px; height:82px; border-radius:50%; cursor:pointer; text-shadow:0 0 8px rgba(57,255,20,0.7);
-    box-shadow:0 0 16px rgba(57,255,20,0.25); transition:transform 0.12s ease, box-shadow 0.12s ease;
+    background:radial-gradient(circle at 35% 30%, rgba(57,255,20,0.3), rgba(10,10,12,0.95));
+    border:3px solid #39ff14; color:#39ff14; font-family:inherit; font-size:17px; letter-spacing:0.14em;
+    width:104px; height:104px; border-radius:50%; cursor:pointer; text-shadow:0 0 10px rgba(57,255,20,0.8);
+    box-shadow:0 0 22px rgba(57,255,20,0.35); transition:transform 0.12s ease, box-shadow 0.12s ease;
     display:flex; align-items:center; justify-content:center; text-transform:uppercase;
+    animation:dealBtnPulse 2.2s ease-in-out infinite;
   }
-  .deal-btn:hover:not(:disabled){ transform:scale(1.06); box-shadow:0 0 26px rgba(57,255,20,0.45); }
-  .deal-btn:active:not(:disabled){ transform:scale(0.97); }
-  .deal-btn:disabled{ opacity:0.3; cursor:default; }
+  @keyframes dealBtnPulse{ 0%,100%{ box-shadow:0 0 22px rgba(57,255,20,0.35); } 50%{ box-shadow:0 0 34px rgba(57,255,20,0.6); } }
+  .deal-btn:hover:not(:disabled){ transform:scale(1.08); box-shadow:0 0 40px rgba(57,255,20,0.7); animation-play-state:paused; }
+  .deal-btn:active:not(:disabled){ transform:scale(0.95); }
+  .deal-btn:disabled{ opacity:0.3; cursor:default; animation:none; }
 
-  .chip-tray{ display:flex; flex-direction:column; align-items:center; gap:0.55rem; margin-bottom:0.3rem; }
+  /* Fund-mode toggle — plain click on a chip normally funds whichever
+     plate is "selected"; these switch that to fund every box's main
+     wager, or every box's bonus bets, in one tap instead. Dragging a
+     chip always targets wherever it's dropped, regardless of this. */
+  .fund-mode-row{ display:flex; gap:0.5rem; }
+  .fund-mode-btn{
+    background:transparent; border:1px solid rgba(232,232,232,0.35); color:rgba(232,232,232,0.7);
+    font-family:inherit; font-size:10px; letter-spacing:0.1em; padding:0.35em 0.8em; cursor:pointer;
+    border-radius:3px; text-transform:uppercase; transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .fund-mode-btn:hover{ border-color:rgba(61,243,236,0.6); color:#3df3ec; }
+  .fund-mode-btn.selected{ border-color:#3df3ec; color:#3df3ec; text-shadow:0 0 6px rgba(61,243,236,0.5); background:rgba(61,243,236,0.08); }
+  .clear-all-btn{
+    background:transparent; border:1px solid rgba(255,63,176,0.45); color:rgba(255,63,176,0.85);
+    font-family:inherit; font-size:10px; letter-spacing:0.1em; padding:0.35em 0.8em; cursor:pointer;
+    border-radius:3px; text-transform:uppercase; transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .clear-all-btn:hover{ border-color:#ff3fb0; background:rgba(255,63,176,0.1); }
+
+  .chip-tray{ display:flex; flex-direction:column; align-items:center; gap:0.6rem; margin-bottom:0.3rem; }
+  /* A chip mid-drag — the source button dims slightly while its ghost
+     follows the pointer. */
+  .chip.dragging{ opacity:0.35; }
+  .chip-drag-ghost{ position:fixed; z-index:500; pointer-events:none; opacity:0.95; }
 
   /* Chip pad — click a denomination to ADD it onto whatever's already
      wagered on the currently-selected spot (real casino chip-stacking,
@@ -455,9 +490,10 @@ function renderPage() {
   @media (max-width:700px){
     .card{ width:74px; height:106px; font-size:29px; }
     .card-art-suit{ font-size:19px; }
-    .card-art-name{ font-size:15px; }
-    .card-main{ font-size:23px; }
-    .card-pip{ font-size:14px; }
+    .card-art-name-big{ font-size:15px; }
+    .card-art-name-rest{ font-size:8px; }
+    .card-corner{ font-size:11px; }
+    .card-pip{ font-size:18px; }
     .hand-count{ font-size:26px; }
     .balance-chip .bv{ font-size:24px; }
     .chip{ width:44px; height:44px; font-size:11px; }
@@ -466,7 +502,10 @@ function renderPage() {
     .side-mini-row{ gap:0.6rem; }
     .mini-side .plate-felt{ width:48px; height:48px; }
     .box-plate .plate-felt{ width:76px; height:76px; }
-    .deal-btn{ width:70px; height:70px; font-size:12px; }
+    .mini-side .plate-coin{ font-size:10px; }
+    .box-plate .plate-coin{ font-size:15px; }
+    .deal-btn{ width:82px; height:82px; font-size:14px; }
+    .fund-mode-row{ flex-wrap:wrap; justify-content:center; }
   }
 </style>
 </head>
@@ -476,6 +515,9 @@ function renderPage() {
   <div class="glow-blob b"></div>
   <div class="glow-blob c"></div>
   <div class="win-flash" id="winFlash"><span id="winFlashText"></span></div>
+  <button class="fullscreen-btn" id="fullscreenBtn" title="Full screen" aria-label="Toggle full screen">
+    <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+  </button>
   <div class="page" id="pageEl">
     <div class="top-row">
       <div>
@@ -534,6 +576,12 @@ function renderPage() {
       </div>
 
       <div class="chip-tray" id="chipTray">
+        <div class="fund-mode-row" id="fundModeRow">
+          <button type="button" class="fund-mode-btn selected" data-mode="single">1 SP0T</button>
+          <button type="button" class="fund-mode-btn" data-mode="allBoxes">ALL B0XES</button>
+          <button type="button" class="fund-mode-btn" data-mode="allBonus">ALL B0NUS</button>
+          <button type="button" class="clear-all-btn" id="clearAllBtn">CLEAR ALL</button>
+        </div>
         <div class="chip-pad big" id="betChipPad">
           <button type="button" class="chip" data-add="5">5</button>
           <button type="button" class="chip" data-add="10">10</button>
@@ -704,17 +752,19 @@ function renderPage() {
     var labelText = isBox ? ('B0X ' + (box + 1)) : (kind === 'pair' ? 'PA!R' : 'P0KER');
     plate.innerHTML =
       '<div class="plate-ring"></div>' + (isBox ? '<div class="plate-ring outer"></div>' : '') +
-      '<div class="plate-felt"><div class="plate-placeholder">' + labelText + '</div></div>' +
-      '<div class="plate-label">' + labelText + '</div>' +
-      '<div class="plate-readout' + (isBox ? ' box' : '') + '"><span>0</span></div>' +
-      '<div class="chip-stack"></div>';
+      '<div class="plate-felt">' +
+        '<div class="plate-placeholder">' + labelText + '</div>' +
+        '<div class="plate-coin"><span>0</span></div>' +
+      '</div>' +
+      '<div class="plate-label">' + labelText + '</div>';
     var input = document.createElement('input');
     input.type = 'hidden'; input.min = '0'; input.step = '1'; input.value = '0';
     plate.appendChild(input);
     return {
       key: kind + box, kind: kind, box: box, big: isBox, plate: plate, input: input,
-      stack: plate.querySelector('.chip-stack'),
-      readout: plate.querySelector('.plate-readout span'),
+      felt: plate.querySelector('.plate-felt'),
+      coin: plate.querySelector('.plate-coin'),
+      coinAmt: plate.querySelector('.plate-coin span'),
       placeholder: plate.querySelector('.plate-placeholder')
     };
   }
@@ -753,6 +803,30 @@ function renderPage() {
   spotsList.forEach(function(s){ s.plate.addEventListener('click', function(){ selectSpot(s.key); }); });
   selectSpot('box0');
   var lastBoxBets = [0, 0, 0];
+  var lastSideBets = { pair: [0, 0, 0], poker: [0, 0, 0] };
+
+  // 3 persistent card slots, one per UI box position — built once here
+  // instead of being torn down and rebuilt on every deal, so a box's
+  // cards always land in the exact same spot on screen instead of the
+  // whole layout reshuffling itself around new content (per feedback:
+  // "the page moves too much to compensate new cards").
+  var boxSlots = [];
+  for (var si = 0; si < BOX_COUNT; si++) {
+    var slotGroup = document.createElement('div');
+    slotGroup.className = 'box-group';
+    var slotLabel = document.createElement('div');
+    slotLabel.className = 'box-group-label';
+    slotLabel.textContent = 'B0X ' + (si + 1);
+    slotGroup.appendChild(slotLabel);
+    var slotRow = document.createElement('div');
+    slotRow.className = 'hands-row';
+    slotGroup.appendChild(slotRow);
+    el.playerHandsContainer.appendChild(slotGroup);
+    boxSlots.push({ group: slotGroup, row: slotRow });
+  }
+  function clearBoxSlots(){
+    boxSlots.forEach(function(s){ s.row.innerHTML = ''; });
+  }
 
   // Every denomination chip gets a little crown icon (colour follows the
   // chip via currentColor/stroke) instead of just a bare number — built
@@ -764,10 +838,9 @@ function renderPage() {
   });
 
   // "Actually putting chips onto a betting plate" — a ghost chip, coloured
-  // to match the denomination clicked, flies from the chip tray to the
-  // plate's felt. On arrival it's swapped for a real .stacked-chip that
-  // stays there permanently, piling up on top of whatever's already down
-  // (see landChip) instead of fading into a number.
+  // to match the denomination clicked, flies from wherever it started to
+  // the plate's felt and is "swallowed" there (fades out into the
+  // circle) instead of landing as a visible object.
   function flyChip(sourceEl, plateFeltEl, color, value, done){
     var sRect = sourceEl.getBoundingClientRect();
     var tRect = plateFeltEl.getBoundingClientRect();
@@ -784,81 +857,136 @@ function renderPage() {
         chip.style.left = (tRect.left + tRect.width / 2 - 17) + 'px';
         chip.style.top = (tRect.top + tRect.height / 2 - 17) + 'px';
         chip.style.opacity = '0';
-        chip.style.transform = 'scale(0.85) rotate(120deg)';
+        chip.style.transform = 'scale(0.3) rotate(120deg)';
       });
     });
     setTimeout(function(){
       chip.remove();
       done();
-    }, 500);
+    }, 480);
   }
 
-  // Chip colour per denomination — matches the CSS .chip[data-add] rules,
-  // needed here too so a bet can be rebuilt (remembered-bet restore) as a
-  // stack of real-looking chips without a button click to read the colour
-  // from.
-  var CHIP_COLORS = { 5: '#e8e8e8', 10: '#ff3b3b', 25: '#39ff14', 50: '#3df3ec', 100: '#ff3fb0', 250: '#ffb000' };
-  var CHIP_DENOMS = [250, 100, 50, 25, 10, 5];
-
-  // Landed chip pile per plate — each new chip sits a little higher than
-  // the last, with a small random horizontal/rotation jitter so a stack
-  // reads as an actual pile of physical chips rather than a repeated icon.
-  var stackCounts = {};
-  function landChip(stackEl, plateKey, color, value, big){
-    var count = stackCounts[plateKey] || 0;
-    stackCounts[plateKey] = count + 1;
-    var chip = document.createElement('div');
-    chip.className = 'stacked-chip';
-    chip.style.color = color;
-    var baseMargin = big ? -18 : -16;
-    chip.style.bottom = (Math.min(count, 16) * (big ? 5 : 4)) + 'px';
-    chip.style.marginLeft = (baseMargin + (Math.random() * 14 - 7)) + 'px';
-    chip.style.setProperty('--r', (Math.random() * 12 - 6) + 'deg');
-    chip.style.zIndex = String(count);
-    chip.textContent = value;
-    stackEl.appendChild(chip);
+  // The plate's own coin — shows the running total, pops in on the first
+  // chip and bumps on every one after (instead of a pile of individual
+  // chips, or a number sitting underneath).
+  function updateCoin(spot, amount){
+    spot.coinAmt.textContent = amount;
+    spot.coin.classList.toggle('visible', amount > 0);
+    spot.placeholder.style.display = amount > 0 ? 'none' : 'block';
   }
-  function clearStack(stackEl, plateKey){
-    stackEl.innerHTML = '';
-    stackCounts[plateKey] = 0;
+  function bumpCoin(spot){
+    spot.coin.classList.remove('bump');
+    void spot.coin.offsetWidth;
+    spot.coin.classList.add('bump');
   }
-  // Rebuilds a plate's chip pile from a total amount (greedy denomination
-  // breakdown) — used to restore a remembered bet without replaying every
-  // click that originally built it.
-  function rebuildStack(stackEl, plateKey, amount, big){
-    clearStack(stackEl, plateKey);
-    var remaining = amount;
-    CHIP_DENOMS.forEach(function(d){
-      while (remaining >= d) { landChip(stackEl, plateKey, CHIP_COLORS[d], d, big); remaining -= d; }
-    });
-  }
-
-  // One shared chip tray funds whichever of the 9 spots is currently
-  // selected — a chip ADDS its value onto whatever's already wagered
-  // there (real casino chip-stacking), clamped to the spot's own max (set
-  // once the real maxBet is known in init() below); the X chip sweeps
-  // that one spot clear back to 0.
-  el.chipTray.addEventListener('click', function(e){
-    var btn = e.target.closest('.chip');
-    if (!btn) return;
-    var spot = spotsByKey[selectedSpotKey];
-    if (btn.hasAttribute('data-clear')) {
-      spot.input.value = 0;
-      spot.readout.textContent = '0';
-      clearStack(spot.stack, spot.key);
-      spot.placeholder.style.display = 'block';
-      return;
-    }
-    var add = parseInt(btn.getAttribute('data-add'), 10) || 0;
+  function addToSpot(spot, amount){
     var current = parseInt(spot.input.value, 10) || 0;
     var max = parseInt(spot.input.max, 10);
-    var next = current + add;
+    var next = current + amount;
     if (Number.isFinite(max) && max > 0) next = Math.min(next, max);
     spot.input.value = next;
-    spot.readout.textContent = next;
-    spot.placeholder.style.display = 'none';
+    updateCoin(spot, next);
+    bumpCoin(spot);
+  }
+  function clearSpot(spot){
+    spot.input.value = 0;
+    updateCoin(spot, 0);
+  }
+  // Flies a chip from wherever it started to the spot's felt, then adds
+  // its value once "swallowed" — the one path every funding gesture
+  // (click, drag-drop, fund-all) goes through.
+  function flyAndFund(sourceEl, spot, color, amount){
+    flyChip(sourceEl, spot.felt, color, amount, function(){ addToSpot(spot, amount); });
+  }
+
+  // Fund-mode toggle — a plain click on a chip normally funds whichever
+  // spot is "selected"; switching mode funds every box's main wager, or
+  // every box's own Pair+Poker bonus, in one tap instead. A pair/poker
+  // spot only gets funded if its box already has money down.
+  var fundMode = 'single';
+  var fundModeRow = document.getElementById('fundModeRow');
+  fundModeRow.querySelectorAll('.fund-mode-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      fundMode = btn.getAttribute('data-mode');
+      fundModeRow.querySelectorAll('.fund-mode-btn').forEach(function(b){ b.classList.toggle('selected', b === btn); });
+    });
+  });
+  document.getElementById('clearAllBtn').addEventListener('click', function(){
+    spotsList.forEach(clearSpot);
+  });
+
+  function fundedBoxCount(box){ return (parseInt(spotsByKey['box' + box].input.value, 10) || 0) > 0; }
+
+  function handleChipTap(btn){
+    var add = parseInt(btn.getAttribute('data-add'), 10) || 0;
     var color = getComputedStyle(btn).color;
-    flyChip(btn, spot.stack, color, add, function(){ landChip(spot.stack, spot.key, color, add, spot.big); });
+    if (fundMode === 'allBoxes') {
+      for (var i = 0; i < BOX_COUNT; i++) flyAndFund(btn, spotsByKey['box' + i], color, add);
+    } else if (fundMode === 'allBonus') {
+      for (var j = 0; j < BOX_COUNT; j++) {
+        if (!fundedBoxCount(j)) continue;
+        flyAndFund(btn, spotsByKey['pair' + j], color, add);
+        flyAndFund(btn, spotsByKey['poker' + j], color, add);
+      }
+    } else {
+      flyAndFund(btn, spotsByKey[selectedSpotKey], color, add);
+    }
+  }
+
+  // Dragging a chip always targets wherever it's dropped, regardless of
+  // fund mode or the currently selected spot; a plain click (no real
+  // pointer movement) falls back to handleChipTap.
+  function wireChipDrag(btn){
+    var startX, startY, dragging = false, ghost = null;
+    function onMove(e){
+      var dx = e.clientX - startX, dy = e.clientY - startY;
+      if (!dragging && Math.hypot(dx, dy) > 8) {
+        dragging = true;
+        btn.classList.add('dragging');
+        ghost = btn.cloneNode(true);
+        ghost.className = 'chip chip-drag-ghost';
+        ghost.style.width = btn.offsetWidth + 'px';
+        ghost.style.height = btn.offsetHeight + 'px';
+        document.body.appendChild(ghost);
+      }
+      if (dragging && ghost) {
+        ghost.style.left = (e.clientX - ghost.offsetWidth / 2) + 'px';
+        ghost.style.top = (e.clientY - ghost.offsetHeight / 2) + 'px';
+        var under = document.elementFromPoint(e.clientX, e.clientY);
+        var plateEl = under && under.closest('.bet-plate');
+        spotsList.forEach(function(s){ s.plate.classList.toggle('drag-over', s.plate === plateEl); });
+      }
+    }
+    function onUp(e){
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      btn.classList.remove('dragging');
+      spotsList.forEach(function(s){ s.plate.classList.remove('drag-over'); });
+      if (dragging) {
+        if (ghost) ghost.remove();
+        var under = document.elementFromPoint(e.clientX, e.clientY);
+        var plateEl = under && under.closest('.bet-plate');
+        var spot = plateEl && spotsList.filter(function(s){ return s.plate === plateEl; })[0];
+        if (spot && btn.hasAttribute('data-add')) {
+          flyAndFund(btn, spot, getComputedStyle(btn).color, parseInt(btn.getAttribute('data-add'), 10) || 0);
+        }
+      } else if (btn.hasAttribute('data-add')) {
+        handleChipTap(btn);
+      }
+      dragging = false; ghost = null;
+    }
+    btn.addEventListener('pointerdown', function(e){
+      if (btn.hasAttribute('data-clear')) return;
+      startX = e.clientX; startY = e.clientY; dragging = false;
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    });
+  }
+  document.querySelectorAll('#betChipPad .chip[data-add]').forEach(wireChipDrag);
+  document.getElementById('betChipPad').addEventListener('click', function(e){
+    var btn = e.target.closest('.chip[data-clear]');
+    if (!btn) return;
+    clearSpot(spotsByKey[selectedSpotKey]);
   });
 
   var SUIT_SYM = { S: '\\u2660', H: '\\u2665', D: '\\u2666', C: '\\u2663' };
@@ -919,16 +1047,22 @@ function renderPage() {
         badge.style.color = color;
         d.appendChild(badge);
       });
-      // The corner "rank badge" IS the spelled-out name — no separate
-      // bare-letter badge alongside it.
+      // The corner "rank badge" IS the spelled-out name — just the
+      // capital first letter big (a bare "K"-sized badge), the rest of
+      // the word smaller underneath it so a long name like PHOENIX
+      // doesn't blow the badge up past the card itself.
+      var name = CARD_NAMES[rank] || rank;
       var nameEl = document.createElement('span');
       nameEl.className = 'card-art-name';
-      nameEl.innerHTML = (CARD_NAMES[rank] || rank).split('').join('<br>');
+      nameEl.innerHTML =
+        '<span class="card-art-name-big">' + name.charAt(0) + '</span>' +
+        '<span class="card-art-name-rest">' + name.slice(1).split('').join('<br>') + '</span>';
       d.appendChild(nameEl);
     } else {
       d.style.color = color;
-      // The rank sits big in the middle; the suit is repeated around it
-      // in a real per-rank pip arrangement instead of a generic grid.
+      // A real per-rank pip arrangement (bigger now — the suit is the
+      // primary read), plus a small rank+suit index in the top-left and
+      // bottom-right corners (the latter mirrored) like an actual deck.
       var layout = PIP_LAYOUT[parseInt(rank, 10)];
       if (layout) {
         var pips = document.createElement('div');
@@ -943,10 +1077,13 @@ function renderPage() {
         });
         d.appendChild(pips);
       }
-      var main = document.createElement('span');
-      main.className = 'card-main';
-      main.textContent = rank;
-      d.appendChild(main);
+      var idx = rank + '<br>' + SUIT_SYM[suit];
+      ['tl', 'br'].forEach(function(corner){
+        var cornerEl = document.createElement('span');
+        cornerEl.className = 'card-corner ' + corner;
+        cornerEl.innerHTML = idx;
+        d.appendChild(cornerEl);
+      });
     }
     return d;
   }
@@ -1033,6 +1170,22 @@ function renderPage() {
   el.rulesOverlay.addEventListener('click', function(e){ if (e.target === el.rulesOverlay) closeRules(); });
 
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { closeStrategy(); closeHistory(); closeRules(); } });
+
+  // Full screen — for a short viewport where the table can't all fit at
+  // once; the icon swaps to "shrink" once already full screen.
+  var fullscreenBtn = document.getElementById('fullscreenBtn');
+  var EXPAND_ICON = '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
+  var SHRINK_ICON = '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>';
+  fullscreenBtn.addEventListener('click', function(){
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(function(){});
+    }
+  });
+  document.addEventListener('fullscreenchange', function(){
+    fullscreenBtn.querySelector('svg').innerHTML = document.fullscreenElement ? SHRINK_ICON : EXPAND_ICON;
+  });
 
   // --- Session hand history + running net — in-memory only (clears on
   // reload), purely a client-side log of what actually happened; never
@@ -1321,18 +1474,24 @@ function renderPage() {
   // double) — either the next hand (another split hand, or the next box
   // entirely) takes over, or the round is resolved and the dealer's own
   // turn plays out.
+  // Never correct to stand on 9/10/11 (the basic-strategy chart has no
+  // "S" in those rows at all — it's always hit or double), so Stand is
+  // disabled there rather than left as a tempting wrong answer.
+  function updateActionButtons(round){
+    var hand = round.hands[round.activeHandIndex];
+    el.doubleBtn.disabled = !round.canDouble;
+    el.splitBtn.disabled = !round.canSplit;
+    el.splitBtn.style.display = round.canSplit ? 'inline-block' : 'none';
+    el.standBtn.disabled = hand.value >= 9 && hand.value <= 11;
+  }
+
   async function afterHandFinished(round){
     currentRound = round;
     if (round.status === 'active') {
       applyActiveHighlight(round.activeHandIndex);
       var activeHand = round.hands[round.activeHandIndex];
       setStatus('YOUR M0VE — ' + boxLabelFor(activeHand, round), '');
-      el.doubleBtn.disabled = !round.canDouble;
-      // A freshly active hand can be a brand new box's own 2-card deal
-      // (not just a split's second hand), so split has to stay live to
-      // round.canSplit rather than always hidden here.
-      el.splitBtn.disabled = !round.canSplit;
-      el.splitBtn.style.display = round.canSplit ? 'inline-block' : 'none';
+      updateActionButtons(round);
       await maybeAutoHit(round.activeHandIndex);
     } else {
       // The dealer's own hand plays out FIRST — any face-down double
@@ -1353,6 +1512,14 @@ function renderPage() {
     var round = currentRound;
     if (!round || round.status !== 'active' || round.activeHandIndex !== actingIndex) return;
     var hand = round.hands[actingIndex];
+    // 21 is never a decision — hit or split could only make it worse.
+    if (hand.value === 21) {
+      setStatus('AUT0 STAND — ' + boxLabelFor(hand, round), '');
+      await sleep(500);
+      var standData = await postAction({ action: 'stand' });
+      await sequenceStand(standData.round);
+      return;
+    }
     var shouldHit = hand.value <= 8 || (hand.value < 12 && !round.canDouble);
     if (!shouldHit) return;
     setStatus('AUT0 H!T — ' + boxLabelFor(hand, round), '');
@@ -1495,29 +1662,17 @@ function renderPage() {
 
     el.dealerCards.innerHTML = '';
     updateCount(el.dealerValue, null);
-    el.playerHandsContainer.innerHTML = '';
+    clearBoxSlots();
     describeSideBets(null);
 
-    // One box-group (with its own "BOX N" header) per funded box, each
-    // holding that box's hand-block(s) — normally just 1, 2 if it splits.
-    var boxGroups = round.hands.map(function(hand){
-      var group = document.createElement('div');
-      group.className = 'box-group';
-      var label = document.createElement('div');
-      label.className = 'box-group-label';
-      label.textContent = 'B0X ' + fundedBoxNumbers[hand.box];
-      group.appendChild(label);
-      var row = document.createElement('div');
-      row.className = 'hands-row';
-      group.appendChild(row);
-      el.playerHandsContainer.appendChild(group);
-      return { group: group, row: row };
-    });
-    handRefs = round.hands.map(function(hand, i){
+    // Each hand lands in its box's own persistent slot (normally just 1
+    // hand, 2 if that box splits) instead of the layout being rebuilt.
+    handRefs = round.hands.map(function(hand){
+      var slot = boxSlots[fundedBoxNumbers[hand.box] - 1];
       var hb = buildHandBlock('', hand.bet);
-      hb.boxGroupRow = boxGroups[i].row;
-      hb.boxGroupEl = boxGroups[i].group;
-      boxGroups[i].row.appendChild(hb.block);
+      hb.boxGroupRow = slot.row;
+      hb.boxGroupEl = slot.group;
+      slot.row.appendChild(hb.block);
       return hb;
     });
 
@@ -1550,9 +1705,7 @@ function renderPage() {
       el.chipTray.style.display = 'none';
       el.actionRow.style.display = 'flex';
       el.againRow.style.display = 'none';
-      el.doubleBtn.disabled = !round.canDouble;
-      el.splitBtn.disabled = !round.canSplit;
-      el.splitBtn.style.display = round.canSplit ? 'inline-block' : 'none';
+      updateActionButtons(round);
       setStatus('YOUR M0VE — ' + boxLabelFor(round.hands[round.activeHandIndex], round), '');
       await maybeAutoHit(round.activeHandIndex);
     } else {
@@ -1590,10 +1743,11 @@ function renderPage() {
     } else {
       await dealInto(ref.cards, newCard, false);
       updateCount(ref.count, hand.value, hand.status === 'bust');
-      // A small pulse for landing on 21 via hits — the full blackjack/win
-      // flash still only fires once the hand actually resolves.
+      // A small pulse for landing on 21 via hits — the full win flash
+      // (with the +net amount and balance) still only fires once the hand
+      // actually resolves.
       if (hand.value === 21 && hand.status !== 'bust') {
-        flashWin('<span class="win-flash-main">21!</span>', { small: true });
+        flashWin('<span class="win-flash-main">BLACKJACK</span>', { small: true });
       }
     }
     currentRound = round;
@@ -1641,9 +1795,7 @@ function renderPage() {
       el.chipTray.style.display = 'none';
       el.actionRow.style.display = 'flex';
       el.againRow.style.display = 'none';
-      el.doubleBtn.disabled = !round.canDouble;
-      el.splitBtn.disabled = !round.canSplit;
-      el.splitBtn.style.display = round.canSplit ? 'inline-block' : 'none';
+      updateActionButtons(round);
       setStatus('YOUR M0VE — ' + boxLabelFor(round.hands[round.activeHandIndex], round), '');
       await maybeAutoHit(round.activeHandIndex);
     } else {
@@ -1662,44 +1814,30 @@ function renderPage() {
     el.dealerCards.appendChild(cardEl(round.dealerUp, false));
     el.dealerCards.appendChild(cardEl(null, true));
     updateCount(el.dealerValue, null);
-    el.playerHandsContainer.innerHTML = '';
+    clearBoxSlots();
 
     // Rebuild the box numbering from whatever boxes are actually present
     // in the resumed round (best-effort — a page reload can't recover
     // which UI box number each one was, so they're just relabeled 1..N
-    // in order).
+    // in order, landing in that many of the 3 persistent slots).
     var boxIndices = [];
     round.hands.forEach(function(h){ if (boxIndices.indexOf(h.box) === -1) boxIndices.push(h.box); });
     boxIndices.sort(function(a, b){ return a - b; });
     fundedBoxNumbers = [];
     boxIndices.forEach(function(boxIdx, i){ fundedBoxNumbers[boxIdx] = i + 1; });
 
-    var boxGroupRows = {}, boxGroupEls = {};
-    boxIndices.forEach(function(boxIdx){
-      var group = document.createElement('div');
-      group.className = 'box-group';
-      var label = document.createElement('div');
-      label.className = 'box-group-label';
-      label.textContent = 'B0X ' + fundedBoxNumbers[boxIdx];
-      group.appendChild(label);
-      var row = document.createElement('div');
-      row.className = 'hands-row';
-      group.appendChild(row);
-      el.playerHandsContainer.appendChild(group);
-      boxGroupRows[boxIdx] = row;
-      boxGroupEls[boxIdx] = group;
-    });
     var perBox = {};
     round.hands.forEach(function(h){ (perBox[h.box] = perBox[h.box] || []).push(h); });
     handRefs = round.hands.map(function(hand){
+      var slot = boxSlots[fundedBoxNumbers[hand.box] - 1];
       var siblings = perBox[hand.box];
       var label = siblings.length > 1 ? ('HAND ' + String.fromCharCode(65 + siblings.indexOf(hand))) : '';
       var hb = buildHandBlock(label, hand.bet);
-      hb.boxGroupRow = boxGroupRows[hand.box];
-      hb.boxGroupEl = boxGroupEls[hand.box];
+      hb.boxGroupRow = slot.row;
+      hb.boxGroupEl = slot.group;
       hand.cards.forEach(function(c){ hb.cards.appendChild(cardEl(c, false)); });
       updateCount(hb.count, hand.value, hand.status === 'bust');
-      boxGroupRows[hand.box].appendChild(hb.block);
+      slot.row.appendChild(hb.block);
       return hb;
     });
     applyActiveHighlight(round.activeHandIndex);
@@ -1708,9 +1846,7 @@ function renderPage() {
     el.chipTray.style.display = 'none';
     el.actionRow.style.display = 'flex';
     el.againRow.style.display = 'none';
-    el.doubleBtn.disabled = !round.canDouble;
-    el.splitBtn.disabled = !round.canSplit;
-    el.splitBtn.style.display = round.canSplit ? 'inline-block' : 'none';
+    updateActionButtons(round);
     setStatus('R0UND RESUMED — ' + boxLabelFor(round.hands[round.activeHandIndex], round), '');
     maybeAutoHit(round.activeHandIndex);
   }
@@ -1720,28 +1856,24 @@ function renderPage() {
     el.dealerBlock.style.display = 'none';
     el.dealerCards.innerHTML = '';
     updateCount(el.dealerValue, null);
-    el.playerHandsContainer.innerHTML = '';
+    clearBoxSlots();
     handRefs = [];
     currentRound = null;
     el.wagerConsole.style.display = 'flex';
     el.chipTray.style.display = 'flex';
     el.actionRow.style.display = 'none';
     el.againRow.style.display = 'none';
-    // Side bets don't carry over — only the box wagers are remembered.
-    spotsList.forEach(function(spot){
-      if (spot.big) return;
-      spot.input.value = 0; spot.readout.textContent = '0';
-      clearStack(spot.stack, spot.key); spot.placeholder.style.display = 'block';
-    });
-    // Restore each box to whatever it was funded with last time — so
-    // clicking DEAL again just replays the same bet, per feedback.
+    // Restore every spot (boxes AND their bonus bets) to whatever it was
+    // funded with last time, so clicking DEAL again just replays the same
+    // bet — no chip pile to rebuild now, just set the coin straight to it.
     for (var bi2 = 0; bi2 < BOX_COUNT; bi2++) {
-      var boxSpot = spotsByKey['box' + bi2];
-      var amount = Math.min(lastBoxBets[bi2] || 0, parseInt(boxSpot.input.max, 10) || Infinity);
-      boxSpot.input.value = amount;
-      boxSpot.readout.textContent = String(amount);
-      if (amount > 0) { rebuildStack(boxSpot.stack, boxSpot.key, amount, true); boxSpot.placeholder.style.display = 'none'; }
-      else { clearStack(boxSpot.stack, boxSpot.key); boxSpot.placeholder.style.display = 'block'; }
+      ['box', 'pair', 'poker'].forEach(function(kind){
+        var spot = spotsByKey[kind + bi2];
+        var remembered = kind === 'box' ? lastBoxBets[bi2] : lastSideBets[kind][bi2];
+        var amount = Math.min(remembered || 0, parseInt(spot.input.max, 10) || Infinity);
+        spot.input.value = amount;
+        updateCoin(spot, amount);
+      });
     }
     selectSpot('box0');
     describeSideBets(null);
@@ -1811,16 +1943,19 @@ function renderPage() {
       uiBusy = false;
       setButtonsBusy(false);
       if (currentRound && currentRound.status === 'active') {
-        el.doubleBtn.disabled = !currentRound.canDouble;
-        el.splitBtn.disabled = !currentRound.canSplit;
+        updateActionButtons(currentRound);
       }
     }
   }
 
   el.dealBtn.addEventListener('click', function(){
     runAction(async function(){
-      var boxAmounts = [];
-      for (var i = 0; i < BOX_COUNT; i++) boxAmounts.push(parseInt(spotsByKey['box' + i].input.value, 10) || 0);
+      var boxAmounts = [], pairAmounts = [], pokerAmounts = [];
+      for (var i = 0; i < BOX_COUNT; i++) {
+        boxAmounts.push(parseInt(spotsByKey['box' + i].input.value, 10) || 0);
+        pairAmounts.push(parseInt(spotsByKey['pair' + i].input.value, 10) || 0);
+        pokerAmounts.push(parseInt(spotsByKey['poker' + i].input.value, 10) || 0);
+      }
       var bets = [], pairBets = [], pokerBets = [];
       // Map each funded box back to its UI number (1/2/3) so results and
       // status text can still say "BOX 2" even if box 1 was left empty —
@@ -1830,11 +1965,12 @@ function renderPage() {
         if (amount <= 0) return;
         bets.push(amount);
         fundedBoxNumbers.push(i + 1);
-        pairBets.push(parseInt(spotsByKey['pair' + i].input.value, 10) || 0);
-        pokerBets.push(parseInt(spotsByKey['poker' + i].input.value, 10) || 0);
+        pairBets.push(pairAmounts[i]);
+        pokerBets.push(pokerAmounts[i]);
       });
       if (!bets.length) { setStatus('FUND AT LEAST 0NE B0X', 'err'); return; }
       lastBoxBets = boxAmounts.slice();
+      lastSideBets = { pair: pairAmounts.slice(), poker: pokerAmounts.slice() };
       var data = await postAction({ action: 'deal', bets: bets, pairBets: pairBets, pokerBets: pokerBets });
       await sequenceDeal(data.round, data.sideBets);
     });
