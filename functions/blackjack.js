@@ -206,8 +206,13 @@ function renderPage() {
   @keyframes shuffleLabelPulse{ 0%,100%{ opacity:0.5; } 50%{ opacity:1; } }
   /* Sized for up to 3 boxes sharing the row now, not just one hand taking
      the full width. */
-  .hand-block{ margin-bottom:0.4rem; flex:1 1 230px; min-width:230px; text-align:center; }
+  .hand-block{ margin-bottom:0.4rem; flex:0 0 auto; text-align:center; }
   .box-group{ display:flex; flex-direction:column; align-items:center; border-radius:12px; padding:0.5rem 0.7rem; transition:box-shadow 0.2s ease, background 0.2s ease; }
+  /* Empty except while this box is the one being decided — el.actionRow
+     gets moved in here, so its Hit/Stand/Double/Split sit right under
+     that box's own cards instead of one shared row under everything. */
+  .box-action-slot{ margin-top:0.5rem; }
+  .box-action-slot:empty{ margin-top:0; }
   /* Whichever box you're currently deciding on — obvious at a glance,
      not just a colour change on the label text. */
   .box-group.active-group{
@@ -224,11 +229,15 @@ function renderPage() {
   .hand-label .bet-tag{ font-size:15px; font-weight:700; color:#ffb000; margin-left:0.6em; letter-spacing:0.08em; text-shadow:0 0 6px rgba(255,176,0,0.4); }
   .hand-count{ font-size:32px; line-height:1; font-weight:700; color:#39ff14; text-shadow:0 0 10px rgba(57,255,20,0.55); margin-bottom:0.5rem; }
   .hand-count.bust{ color:#ff3b3b; text-shadow:0 0 10px rgba(255,59,59,0.55); }
-  .cards{ display:flex; gap:0.6rem; flex-wrap:wrap; min-height:132px; justify-content:center; }
+  /* A fixed 5-card holder, like slots cut into a real card tray — a hand
+     never makes the box (or the page) any wider than this. A 6th+ card
+     just stacks on top of the 5th slot instead of growing the row. */
+  :root{ --card-w:72px; --card-h:104px; --card-gap:6px; }
+  .cards{ position:relative; width:calc(5 * var(--card-w) + 4 * var(--card-gap)); height:var(--card-h); margin:0 auto; }
   .card{
-    width:100px; height:144px; border:3px solid rgba(232,232,232,0.4); border-radius:9px;
+    position:absolute; top:0; width:var(--card-w); height:var(--card-h); border:3px solid rgba(232,232,232,0.4); border-radius:9px;
     background:#111; display:flex; align-items:center; justify-content:center;
-    font-size:40px; font-weight:700; position:relative; overflow:hidden;
+    font-size:28px; font-weight:700; overflow:hidden; transition:left 0.15s ease;
   }
   .card.hidden{ background:repeating-linear-gradient(45deg,#151515,#151515 5px,#1c1c1c 5px,#1c1c1c 10px); color:transparent; border-color:rgba(232,232,232,0.25) !important; box-shadow:none !important; }
   /* Numbered cards — a real per-rank pip layout (see PIP_LAYOUT in the
@@ -323,8 +332,22 @@ function renderPage() {
      main+PP+PB) instead of repeating the chip UI everywhere. */
   .bet-plate{ cursor:pointer; }
   .bet-plate .plate-label{ transition:color 0.15s ease; }
-  .bet-plate.selected .plate-felt{ border-color:#39ff14; box-shadow:inset 0 0 18px rgba(0,0,0,0.85), inset 0 0 0 1px rgba(61,243,236,0.08), 0 0 12px rgba(57,255,20,0.45); }
-  .bet-plate.selected .plate-label{ color:#39ff14; text-shadow:0 0 6px rgba(57,255,20,0.5); }
+  /* Selected — the same rotating chase used around the whole table
+     border, just faster and cyan-only, instead of a plain coloured ring.
+     Sits behind .plate-felt (same trick as .plate-ring): its own opaque
+     background covers the inner disc, leaving only a thin glowing ring
+     around the edge visible. */
+  .plate-select-glow{ position:absolute; inset:-4px; border-radius:50%; overflow:hidden; pointer-events:none; opacity:0; transition:opacity 0.15s ease; }
+  .plate-select-glow::before{
+    content:''; position:absolute; top:50%; left:50%; width:220%; height:220%;
+    transform:translate(-50%,-50%) rotate(0deg);
+    background:conic-gradient(from 0deg, transparent 0deg, #3df3ec 22deg, rgba(61,243,236,0.5) 55deg, transparent 100deg, transparent 360deg);
+    animation:plateChase 0.9s linear infinite;
+  }
+  @keyframes plateChase{ to{ transform:translate(-50%,-50%) rotate(360deg); } }
+  .bet-plate.selected .plate-select-glow{ opacity:1; }
+  .bet-plate.selected .plate-felt{ border-color:#3df3ec; box-shadow:inset 0 0 18px rgba(0,0,0,0.85), inset 0 0 0 1px rgba(61,243,236,0.08), 0 0 12px rgba(61,243,236,0.5); }
+  .bet-plate.selected .plate-label{ color:#3df3ec; text-shadow:0 0 6px rgba(61,243,236,0.6); }
   /* A plate being dragged over — the drop target lights up so it's clear
      where a dragged chip will land. */
   .bet-plate.drag-over .plate-felt{ border-color:#ffb000; box-shadow:inset 0 0 18px rgba(0,0,0,0.85), inset 0 0 0 1px rgba(61,243,236,0.08), 0 0 16px rgba(255,176,0,0.6); }
@@ -488,7 +511,8 @@ function renderPage() {
   }
 
   @media (max-width:700px){
-    .card{ width:74px; height:106px; font-size:29px; }
+    :root{ --card-w:52px; --card-h:76px; --card-gap:4px; }
+    .card{ font-size:20px; }
     .card-art-suit{ font-size:19px; }
     .card-art-name-big{ font-size:15px; }
     .card-art-name-rest{ font-size:8px; }
@@ -752,6 +776,7 @@ function renderPage() {
     var labelText = isBox ? ('B0X ' + (box + 1)) : (kind === 'pair' ? 'PA!R' : 'P0KER');
     plate.innerHTML =
       '<div class="plate-ring"></div>' + (isBox ? '<div class="plate-ring outer"></div>' : '') +
+      '<div class="plate-select-glow"></div>' +
       '<div class="plate-felt">' +
         '<div class="plate-placeholder">' + labelText + '</div>' +
         '<div class="plate-coin"><span>0</span></div>' +
@@ -786,6 +811,32 @@ function renderPage() {
   }
   var spotsByKey = {};
   spotsList.forEach(function(s){ spotsByKey[s.key] = s; });
+
+  // Fund-mode toggle — a plain click on a chip normally funds whichever
+  // single spot is "selected"; switching mode funds every box's main
+  // wager, or every box's own Pair+Poker bonus, in one tap instead. The
+  // cyan chase highlight always shows exactly what a chip tap would hit:
+  // one plate in "single" mode, all 3 boxes in "all boxes", all 6 side
+  // plates in "all bonus".
+  var fundMode = 'single';
+  var fundModeRow = document.getElementById('fundModeRow');
+  function updateSelectionVisuals(){
+    spotsList.forEach(function(s){
+      var isSel = fundMode === 'allBoxes' ? s.big : fundMode === 'allBonus' ? !s.big : s.key === selectedSpotKey;
+      s.plate.classList.toggle('selected', isSel);
+    });
+  }
+  fundModeRow.querySelectorAll('.fund-mode-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      fundMode = btn.getAttribute('data-mode');
+      fundModeRow.querySelectorAll('.fund-mode-btn').forEach(function(b){ b.classList.toggle('selected', b === btn); });
+      updateSelectionVisuals();
+    });
+  });
+  document.getElementById('clearAllBtn').addEventListener('click', function(){
+    spotsList.forEach(clearSpot);
+  });
+
   var selectedSpotKey = 'box0';
   function selectSpot(key){
     var spot = spotsByKey[key];
@@ -797,7 +848,10 @@ function renderPage() {
       }
     }
     selectedSpotKey = key;
-    spotsList.forEach(function(s){ s.plate.classList.toggle('selected', s.key === key); });
+    // Picking a specific plate directly always means "just this one".
+    fundMode = 'single';
+    fundModeRow.querySelectorAll('.fund-mode-btn').forEach(function(b){ b.classList.toggle('selected', b.getAttribute('data-mode') === 'single'); });
+    updateSelectionVisuals();
     setStatus('', '');
   }
   spotsList.forEach(function(s){ s.plate.addEventListener('click', function(){ selectSpot(s.key); }); });
@@ -821,11 +875,20 @@ function renderPage() {
     var slotRow = document.createElement('div');
     slotRow.className = 'hands-row';
     slotGroup.appendChild(slotRow);
+    // Where this box's own Hit/Stand/Double/Split row lives while it's
+    // the one being decided — el.actionRow physically moves in here
+    // instead of sitting in one fixed spot under the whole table.
+    var slotActions = document.createElement('div');
+    slotActions.className = 'box-action-slot';
+    slotGroup.appendChild(slotActions);
     el.playerHandsContainer.appendChild(slotGroup);
-    boxSlots.push({ group: slotGroup, row: slotRow });
+    boxSlots.push({ group: slotGroup, row: slotRow, actions: slotActions });
   }
   function clearBoxSlots(){
-    boxSlots.forEach(function(s){ s.row.innerHTML = ''; });
+    // Also drops any leftover 'active-group' glow — the group wrapper is
+    // persistent now, so without this the last hand's active box stayed
+    // highlighted cyan straight through into the next betting screen.
+    boxSlots.forEach(function(s){ s.row.innerHTML = ''; s.group.classList.remove('active-group'); });
   }
 
   // Every denomination chip gets a little crown icon (colour follows the
@@ -899,21 +962,6 @@ function renderPage() {
     flyChip(sourceEl, spot.felt, color, amount, function(){ addToSpot(spot, amount); });
   }
 
-  // Fund-mode toggle — a plain click on a chip normally funds whichever
-  // spot is "selected"; switching mode funds every box's main wager, or
-  // every box's own Pair+Poker bonus, in one tap instead. A pair/poker
-  // spot only gets funded if its box already has money down.
-  var fundMode = 'single';
-  var fundModeRow = document.getElementById('fundModeRow');
-  fundModeRow.querySelectorAll('.fund-mode-btn').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      fundMode = btn.getAttribute('data-mode');
-      fundModeRow.querySelectorAll('.fund-mode-btn').forEach(function(b){ b.classList.toggle('selected', b === btn); });
-    });
-  });
-  document.getElementById('clearAllBtn').addEventListener('click', function(){
-    spotsList.forEach(clearSpot);
-  });
 
   function fundedBoxCount(box){ return (parseInt(spotsByKey['box' + box].input.value, 10) || 0) > 0; }
 
@@ -1275,6 +1323,29 @@ function renderPage() {
     countEl.className = 'hand-count' + (bust ? ' bust' : '');
   }
 
+  // A hand's card row is a fixed 5-slot holder (see .cards/.card CSS) —
+  // this places a card at its slot by index, and any card past the 5th
+  // just stacks on top of the last slot with a small progressive offset
+  // and rising z-index instead of the row growing wider. Reads the actual
+  // --card-w/--card-h/--card-gap custom properties (rather than hardcoding
+  // the desktop numbers) so it stays correct under the mobile media query.
+  function cardMetrics(){
+    var cs = getComputedStyle(document.documentElement);
+    return {
+      w: parseFloat(cs.getPropertyValue('--card-w')) || 72,
+      h: parseFloat(cs.getPropertyValue('--card-h')) || 104,
+      gap: parseFloat(cs.getPropertyValue('--card-gap')) || 6
+    };
+  }
+  function positionCardInSlot(cardsEl, cardElement){
+    var m = cardMetrics();
+    var index = Array.prototype.indexOf.call(cardsEl.children, cardElement);
+    var slot = Math.min(index, 4);
+    var stackExtra = index > 4 ? (index - 4) * 4 : 0;
+    cardElement.style.left = (slot * (m.w + m.gap) + stackExtra) + 'px';
+    cardElement.style.zIndex = String(index + 1);
+  }
+
   // Drops one card into a cards row with the deal animation, pausing
   // afterward — the actual pacing of "the hand being played out" rather
   // than everything appearing at once.
@@ -1282,6 +1353,7 @@ function renderPage() {
     var c = cardEl(card, hidden);
     c.classList.add('card-deal');
     cardsEl.appendChild(c);
+    positionCardInSlot(cardsEl, c);
     await sleep(CARD_DELAY);
     return c;
   }
@@ -1291,10 +1363,11 @@ function renderPage() {
   // the shoe's own position to whichever box/dealer slot it's landing in,
   // then settles into the row with the normal card-deal animation.
   async function dealFromShoe(originRect, cardsEl, card, hidden){
+    var m = cardMetrics();
     var c = cardEl(card, hidden);
     c.style.position = 'fixed';
-    c.style.left = (originRect.left + originRect.width / 2 - 50) + 'px';
-    c.style.top = (originRect.top + originRect.height / 2 - 72) + 'px';
+    c.style.left = (originRect.left + originRect.width / 2 - m.w / 2) + 'px';
+    c.style.top = (originRect.top + originRect.height / 2 - m.h / 2) + 'px';
     c.style.margin = '0';
     c.style.zIndex = '360';
     c.style.transition = 'left 0.34s ease-out, top 0.34s ease-out';
@@ -1302,19 +1375,19 @@ function renderPage() {
     var tRect = cardsEl.getBoundingClientRect();
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){
-        c.style.left = (tRect.left + tRect.width / 2 - 50) + 'px';
+        c.style.left = (tRect.left + tRect.width / 2 - m.w / 2) + 'px';
         c.style.top = tRect.top + 'px';
       });
     });
     await sleep(340);
     c.style.position = '';
-    c.style.left = '';
     c.style.top = '';
     c.style.margin = '';
     c.style.zIndex = '';
     c.style.transition = '';
     c.classList.add('card-deal');
     cardsEl.appendChild(c);
+    positionCardInSlot(cardsEl, c);
     await sleep(160);
     return c;
   }
@@ -1374,6 +1447,9 @@ function renderPage() {
       setTimeout(function(){
         var real = cardEl(realCard, false);
         real.classList.add('card-flip-in');
+        // Same slot the hidden placeholder was already sitting in.
+        real.style.left = hiddenEl.style.left;
+        real.style.zIndex = hiddenEl.style.zIndex;
         hiddenEl.replaceWith(real);
         setTimeout(function(){ resolve(real); }, 220);
       }, 200);
@@ -1397,6 +1473,7 @@ function renderPage() {
     var hiddenEl = cardEl(null, true);
     hiddenEl.classList.add('card-deal');
     el.dealerCards.appendChild(hiddenEl);
+    positionCardInSlot(el.dealerCards, hiddenEl);
     await sleep(CARD_DELAY);
     await flipCard(hiddenEl, card);
   }
@@ -1483,6 +1560,10 @@ function renderPage() {
     el.splitBtn.disabled = !round.canSplit;
     el.splitBtn.style.display = round.canSplit ? 'inline-block' : 'none';
     el.standBtn.disabled = hand.value >= 9 && hand.value <= 11;
+    // The whole Hit/Stand/Double/Split row physically lives under
+    // whichever box is actually being decided right now.
+    var uiBoxNum = fundedBoxNumbers[hand.box];
+    if (uiBoxNum) boxSlots[uiBoxNum - 1].actions.appendChild(el.actionRow);
   }
 
   async function afterHandFinished(round){
@@ -1726,6 +1807,7 @@ function renderPage() {
     var hiddenEl = cardEl(null, true);
     hiddenEl.classList.add('card-deal');
     ref.cards.appendChild(hiddenEl);
+    positionCardInSlot(ref.cards, hiddenEl);
     await sleep(CARD_DELAY);
     pendingDoubleCards.push({ el: hiddenEl, card: card, hand: hand, ref: ref });
   }
@@ -1778,7 +1860,9 @@ function renderPage() {
       boxGroupRow.appendChild(hb.block);
       // The first card in each new hand is half of the original pair —
       // it already existed, so it snaps into place instead of animating.
-      hb.cards.appendChild(cardEl(hand.cards[0], false));
+      var firstCard = cardEl(hand.cards[0], false);
+      hb.cards.appendChild(firstCard);
+      positionCardInSlot(hb.cards, firstCard);
       updateCount(hb.count, handValueClient([hand.cards[0]]));
       return hb;
     });
@@ -1811,8 +1895,12 @@ function renderPage() {
     el.shuffleDeck.style.display = 'none';
     el.dealerBlock.style.display = 'block';
     el.dealerCards.innerHTML = '';
-    el.dealerCards.appendChild(cardEl(round.dealerUp, false));
-    el.dealerCards.appendChild(cardEl(null, true));
+    var dUp = cardEl(round.dealerUp, false);
+    var dHole = cardEl(null, true);
+    el.dealerCards.appendChild(dUp);
+    positionCardInSlot(el.dealerCards, dUp);
+    el.dealerCards.appendChild(dHole);
+    positionCardInSlot(el.dealerCards, dHole);
     updateCount(el.dealerValue, null);
     clearBoxSlots();
 
@@ -1835,7 +1923,11 @@ function renderPage() {
       var hb = buildHandBlock(label, hand.bet);
       hb.boxGroupRow = slot.row;
       hb.boxGroupEl = slot.group;
-      hand.cards.forEach(function(c){ hb.cards.appendChild(cardEl(c, false)); });
+      hand.cards.forEach(function(c){
+        var ce = cardEl(c, false);
+        hb.cards.appendChild(ce);
+        positionCardInSlot(hb.cards, ce);
+      });
       updateCount(hb.count, hand.value, hand.status === 'bust');
       slot.row.appendChild(hb.block);
       return hb;
