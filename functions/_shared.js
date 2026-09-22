@@ -4064,8 +4064,17 @@ function numberPatternFor(number) {
 // floor to count as a match at all — see namedSetMultiplierForItem for
 // how the actual multiplier is derived (not a flat tier — see its own
 // comment for why).
+// Keyed by this site's own internal collectionKey ('pigeons') — NOT
+// Deeptide's shop slug ('xrpigeons') — because that's what every real
+// caller (namedSetMatchForItem below, via maybeRefreshRarityScores'
+// collectionKey param) actually passes in. Confirmed live, the hard way:
+// this was keyed 'xrpigeons' for this whole session, which silently
+// missed the lookup on every single call (RARITY_NAMED_SETS['pigeons']
+// was always undefined) — not one Named Set ever actually matched
+// anything in production, despite every one of them being verified
+// correct in isolated testing the whole time.
 export const RARITY_NAMED_SETS = {
-  xrpigeons: [
+  pigeons: [
     { name: 'PR!NCE', pieces: [{ trait_type: 'Clothing', value: 'Prince' }, { trait_type: 'Headwear', value: 'Prince Hat' }] },
     { name: 'FULLY SU!TED', pieces: [{ trait_type: 'Clothing', value: 'Hazmat' }, { trait_type: 'Headwear', value: 'Biohazard' }] },
     { name: 'S0 !T BEG!NS', pieces: [{ trait_type: 'Clothing', value: 'Heart' }, { trait_type: 'Headwear', value: 'So It Begins' }] },
@@ -4136,7 +4145,7 @@ export const RARITY_NAMED_SETS = {
 // tested against every confirmed set above before shipping.
 const RARITY_NAMED_SET_K = 750;
 function namedSetMatchForItem(attrs, collectionKey) {
-  const sets = RARITY_NAMED_SETS[collectionKey || 'xrpigeons'];
+  const sets = RARITY_NAMED_SETS[collectionKey || 'pigeons'];
   if (!sets) return null;
   let best = null;
   for (const set of sets) {
