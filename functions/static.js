@@ -11041,7 +11041,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <div class="tc-value" id="detailRarity"></div>
               </div>
               <div class="trait-cell">
-                <div class="tc-label">RAR!TY SC0RE</div>
+                <div class="tc-label">RAR!TY SC0RE <a href="/rarity" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:inherit; text-decoration:underline; text-underline-offset:2px;" title="H0W RAR!TY W0RKS">(?)</a></div>
                 <div class="tc-value" id="detailRarityScore"></div>
               </div>
             </div>
