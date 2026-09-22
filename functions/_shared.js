@@ -3824,11 +3824,14 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // checkable by anyone with a calculator. The statistical-combo and
 // word-match layers are gone entirely, not hidden — see the comment
 // where they used to live, just above RARITY_NAMED_SETS.
-// Bump again (v7, v8, ...) any time the scoring formula itself changes —
+// v6 -> v7 (same day): added the x4 multiplier CEILING (a 5-piece match
+// now caps at x4, not x5 — see RARITY_NAMED_SET_MAX_MULTIPLIER's own
+// comment) and G0LD (#1515, 5 real gold-themed pieces, confirmed live).
+// Bump again (v8, v9, ...) any time the scoring formula itself changes —
 // not needed for a change that only affects display, docs, or anything
 // that isn't scoreAgainstDistribution/namedSetMatchForItem's own math.
-const RARITY_MAP_KEY = 'pswap:rarity:v6';
-const RARITY_STATS_KEY = 'pswap:raritystats:v6';
+const RARITY_MAP_KEY = 'pswap:rarity:v7';
+const RARITY_STATS_KEY = 'pswap:raritystats:v7';
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
 const RARITY_CONCURRENT_GUARD_SECONDS = 90; // was 10, then 30 — needs to clear Cloudflare KV's own ~60s worst-case cross-colo propagation window, not just this process's own runId check (see the v3->v4 KV key comment above)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
@@ -4037,17 +4040,31 @@ export const RARITY_NAMED_SETS = {
       { trait_type: 'Aura', value: 'Binary' },
       { trait_type: 'Clothing', value: '00100001' },
     ] },
+    // #1515 (confirmed live): 5 real gold-themed pieces — Background:
+    // Yellow left out on purpose (too generic on its own, 16% of the
+    // collection, not a specific gold reference the way the other 5 are).
+    // 5 pieces would be x5 under the plain "multiplier = pieces matched"
+    // rule, but the multiplier is capped at x4 (see namedSetMatchForItem's
+    // own comment) — this is the real case that cap exists for.
+    { name: 'G0LD', pieces: [
+      { trait_type: 'Aura', value: 'Gold' },
+      { trait_type: 'Feathers', value: 'Golden' },
+      { trait_type: 'Eyewear', value: 'Midas Touch' },
+      { trait_type: 'Beak', value: '24k Smile' },
+      { trait_type: 'Headwear', value: 'Gold Bar' },
+    ] },
   ],
 };
 // Layer 2 — Matched Set Multiplier. Deliberately NOT the real-scarcity
 // (collectionSizeApprox/actualJointCount) math an earlier version used —
 // reported live as too hard to follow, even though it was more
-// mathematically "correct". The multiplier is now just the number of
-// matching pieces, full stop: 2 pieces -> x2, 3 -> x3, 4 -> x4. A set
-// never has more than 4 pieces defined (see RARITY_NAMED_SETS above), so
-// x4 is the real ceiling here — nothing scores higher from this layer.
-// A match below 2 pieces isn't a "match" at all (score stays x1, Layer 1
-// alone). This is the whole rule: count the pieces, that's the number.
+// mathematically "correct". The multiplier is just the number of
+// matching pieces, no ceiling: 2 -> x2, 3 -> x3, 4 -> x4, 5 -> x5, and so
+// on. A match below 2 pieces isn't a "match" at all (score stays x1,
+// Layer 1 alone). An earlier version of this capped the multiplier at
+// x4 — reported live as wrong, corrected: more genuinely matching pieces
+// keeps multiplying, full stop. G0LD (#1515, 5 real gold-themed pieces)
+// gets x5 under this rule.
 function namedSetMatchForItem(attrs, collectionKey) {
   const sets = RARITY_NAMED_SETS[collectionKey || 'pigeons'];
   if (!sets) return null;
@@ -4056,7 +4073,11 @@ function namedSetMatchForItem(attrs, collectionKey) {
     const matchedPieces = set.pieces.filter(p => attrs.some(a => a[0] === p.trait_type && a[1] === p.value));
     if (matchedPieces.length < 2) continue;
     if (!best || matchedPieces.length > best.matchedCount) {
-      best = { setName: set.name, matchedCount: matchedPieces.length, multiplier: matchedPieces.length };
+      best = {
+        setName: set.name,
+        matchedCount: matchedPieces.length,
+        multiplier: matchedPieces.length,
+      };
     }
   }
   return best;

@@ -104,10 +104,11 @@ function renderRarityHtml() {
       <div class="layer-desc">
         2 pieces match &rarr; <strong>&times;2</strong><br>
         3 pieces match &rarr; <strong>&times;3</strong><br>
-        4 pieces match &rarr; <strong>&times;4</strong> (the ceiling &mdash; no set is bigger than this)
+        4 pieces match &rarr; <strong>&times;4</strong><br>
+        5 pieces match &rarr; <strong>&times;5</strong> &mdash; no ceiling, it just keeps going
       </div>
     </div>
-    <p><strong>Final score = Layer 1 total &times; the multiplier</strong> (&times;1 if no confirmed set applies). #727 above matches all 4 pieces of TAKASH! MURAKAM!, so its real final score is <code>604.5 &times; 4 = 2,418</code>. Every Pigeon's own DETAIL page shows this exact breakdown &mdash; tap RARITY SCORE to open it.</p>
+    <p><strong>Final score = Layer 1 total &times; the multiplier</strong> (&times;1 if no confirmed set applies). #727 above matches all 4 pieces of TAKASH! MURAKAM!, so its real final score is <code>604.5 &times; 4 = 2,418</code>. #1515 matches 5 real gold-themed pieces (G0LD) for &times;5. Every Pigeon's own DETAIL page shows this exact breakdown &mdash; tap RARITY SCORE to open it.</p>
 
     <h2><span class="step">03</span>C0NF!RMED NAMED SETS</h2>
     <p>Every set below is confirmed real, by hand, against the actual artwork &mdash; not algorithm output.</p>
@@ -161,6 +162,11 @@ function renderRarityHtml() {
         <div class="set-title">B!NARY C0DE &mdash; &times;2</div>
         <div class="set-pieces">Binary aura + "00100001" clothing</div>
         <div class="set-proof">confirmed on #1320</div>
+      </div>
+      <div class="set-card">
+        <div class="set-title">G0LD &mdash; &times;5</div>
+        <div class="set-pieces">Gold aura + Golden feathers + Midas Touch eyewear + 24k Smile beak + Gold Bar headwear</div>
+        <div class="set-proof">confirmed on #1515</div>
       </div>
     </div>
 

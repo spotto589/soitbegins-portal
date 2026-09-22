@@ -7154,23 +7154,27 @@ const SWAP_HTML = `<!DOCTYPE html>
      tapped, so it costs zero space for the vast majority of the time. */
   #screenDetail .detail-rarity-breakdown{
     margin:0 0 0.6rem;
-    padding:0.6rem 0.7rem;
+    padding:0.7rem 0.8rem;
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
     background:var(--panel-bg-solid);
-    max-height:200px;
+    max-height:260px;
     overflow-y:auto;
     font-size:12px;
+    text-align:left;
   }
-  #screenDetail .rb-row{ display:flex; justify-content:space-between; align-items:baseline; gap:0.5rem; padding:0.3rem 0; border-bottom:1px dashed var(--border-dim); }
+  /* Each trait is two stacked lines (what it is, then the literal math
+     that turned its % into a score) instead of one cramped side-by-side
+     row — reported live as not making clear WHY a trait got its number;
+     spelling out "100 ÷ X% = Y" on its own line is the actual answer. */
+  #screenDetail .rb-row{ padding:0.45rem 0; border-bottom:1px dashed var(--border-dim); }
   #screenDetail .rb-row:last-of-type{ border-bottom:none; }
-  #screenDetail .rb-trait{ color:var(--grey); text-transform:uppercase; letter-spacing:0.03em; }
-  #screenDetail .rb-trait .rb-value{ color:var(--white); }
-  #screenDetail .rb-pct{ color:var(--cyan); white-space:nowrap; }
-  #screenDetail .rb-math{ text-align:right; }
-  #screenDetail .rb-sum-row{ display:flex; justify-content:space-between; padding-top:0.5rem; margin-top:0.3rem; border-top:1px solid var(--border-mid); font-weight:700; }
-  #screenDetail .rb-mult-row{ display:flex; justify-content:space-between; padding:0.4rem 0 0; color:var(--magenta); font-weight:700; }
-  #screenDetail .rb-final-row{ display:flex; justify-content:space-between; padding-top:0.4rem; margin-top:0.3rem; border-top:1px solid var(--border-mid); color:var(--green); font-weight:700; font-size:14px; }
+  #screenDetail .rb-trait{ color:var(--white); text-transform:uppercase; letter-spacing:0.03em; margin-bottom:0.2rem; }
+  #screenDetail .rb-trait .rb-value{ color:var(--cyan); }
+  #screenDetail .rb-math{ color:var(--grey); font-size:11px; letter-spacing:0.02em; }
+  #screenDetail .rb-sum-row{ display:flex; justify-content:space-between; align-items:center; padding-top:0.6rem; margin-top:0.4rem; border-top:1px solid var(--border-mid); font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:0.03em; }
+  #screenDetail .rb-mult-row{ padding:0.5rem 0 0; color:var(--magenta); font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:0.03em; }
+  #screenDetail .rb-final-row{ display:flex; justify-content:space-between; align-items:center; padding-top:0.5rem; margin-top:0.4rem; border-top:1px solid var(--border-mid); color:var(--green); font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.03em; }
   /* PRICE / RECORD SALE / RECENT SALE / AVERAGE SALE — stacked directly
      underneath the trait grid (including its own BACK cell), inside the
      right column, not off in a separate full-width section — keeps the
@@ -20709,15 +20713,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   // just lays it out to read, doesn't compute anything new.
   function rarityBreakdownHtml(p){
     if (!p || !p.ourRarityBreakdown || !p.ourRarityBreakdown.length) return '';
+    // Every row spells out the actual division ("100 ÷ 0.40% = 250"), not
+    // just the % and the score sitting next to each other — reported
+    // live as not explaining WHY a trait got the number it did. This is
+    // the whole reason it got that number, written out.
     var rows = p.ourRarityBreakdown.map(function(r){
       var displayValue = r.value === '__no_trait__' ? 'N0NE' : r.value;
-      return '<div class="rb-row"><span class="rb-trait">' + escapeHtml(r.category) + ': <span class="rb-value">' + escapeHtml(displayValue) + '</span></span>' +
-        '<span class="rb-math"><span class="rb-pct">' + r.percent + '%</span> &rarr; ' + greenNum(r.contribution) + '</span></div>';
+      return '<div class="rb-row">' +
+        '<div class="rb-trait">' + escapeHtml(r.category) + ': <span class="rb-value">' + escapeHtml(displayValue) + '</span></div>' +
+        '<div class="rb-math">' + r.percent + '% 0F P!GE0NS &nbsp;&rarr;&nbsp; 100 &divide; ' + r.percent + ' &nbsp;=&nbsp; ' + greenNum(r.contribution) + '</div>' +
+      '</div>';
     }).join('');
-    var sumRow = '<div class="rb-sum-row"><span>LAYER 1 TOTAL (SUM)</span><span>' + greenNum(p.ourRarityBase.toLocaleString(undefined, { maximumFractionDigits: 1 })) + '</span></div>';
-    var multRow = p.ourRarityNamedSet
-      ? '<div class="rb-mult-row"><span>' + escapeHtml(p.ourRarityNamedSet.name) + ' SET (' + p.ourRarityNamedSet.matchedCount + ' P!ECES)</span><span>&times;' + p.ourRarityNamedSet.multiplier + '</span></div>'
-      : '';
+    var sumRow = '<div class="rb-sum-row"><span>LAYER 1 :: ADD EVERY TRA!T SC0RE AB0VE</span><span>' + greenNum(p.ourRarityBase.toLocaleString(undefined, { maximumFractionDigits: 1 })) + '</span></div>';
+    var multRow = '';
+    if (p.ourRarityNamedSet){
+      var ns = p.ourRarityNamedSet;
+      multRow = '<div class="rb-mult-row">LAYER 2 :: ' + escapeHtml(ns.name) + ' SET, ' + ns.matchedCount + ' MATCH!NG P!ECES &nbsp;&rarr;&nbsp; ' + greenNum(p.ourRarityBase.toLocaleString(undefined, { maximumFractionDigits: 1 })) + ' &times; ' + ns.multiplier + '</div>';
+    } else {
+      multRow = '<div class="rb-mult-row" style="color:var(--grey-dim);">LAYER 2 :: N0 C0NF!RMED SET &mdash; &times;1 (n0 change)</div>';
+    }
     var finalRow = '<div class="rb-final-row"><span>F!NAL SC0RE</span><span>' + greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + '</span></div>';
     return rows + sumRow + multRow + finalRow;
   }
