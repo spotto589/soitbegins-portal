@@ -20680,28 +20680,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     // placeholder until the crawl behind it (maybeRefreshRarityScores)
     // actually existed. Null only until this collection's first crawl
     // pass completes (same gating as RARITY's own rank/total above).
-    // Named Set badge takes priority when there is one (a real, hand-
-    // confirmed match — e.g. PR!NCE, FULLY SU!TED — see RARITY_NAMED_SETS
-    // in _shared.js) since it's a stronger, more specific claim than the
-    // generic pairing line below. Falls back to the plain "MATCHED SET"
-    // line (reported live, xrpigeons #727: a Takashi Murakami/KAWS
-    // art-world nod spread across 4 categories — unremarkable on any ONE
-    // category alone, but almost no other Pigeon shares more than one of
-    // those values together) when this item clears a real pairing bar
-    // without being part of a curated set — ourRarityMinPairCount is the
-    // rarest PAIRING this item's own real traits have anywhere in the
-    // collection (see comboScoreForItem's own comment in _shared.js);
-    // <=3 is the same "genuinely notable, not just statistically busy"
-    // bar a 1/1 single trait would clear on its own. Only ever adds a
-    // line, never removes the score itself — costs no extra height for
-    // the vast majority of Pigeons that don't clear either bar.
+    // Named Set badge ONLY — a real, hand-confirmed match (see
+    // RARITY_NAMED_SETS in _shared.js), never inferred. A generic
+    // "MATCHED SET" fallback used to show here whenever
+    // ourRarityMinPairCount <= 3 (no curated set required) — reported
+    // live as showing on nearly every Pigeon, and checked: with 6-7
+    // trait categories, ALMOST EVERY Pigeon has SOME pair of traits
+    // shared by only 1-2 others purely from combinatorial sparsity (a
+    // random 9-Pigeon sample found minPairCount <= 2 on 8 of them) —
+    // this is the exact "everyone looks rare" problem the combo SCORE
+    // itself was already fixed to avoid (see comboScoreForItem's own
+    // comment on the naive-sum version's rejection), just never applied
+    // to this badge. Removed rather than re-tuned — raw joint count
+    // alone was never a reliable "notable" signal on its own, only a
+    // confirmed set (or the real, lift-weighted score itself) is.
     var matchBadge = (p && p.ourRarityNamedSet)
       ? '<div class="tc-sub" style="color:var(--magenta); text-shadow:0 0 4px var(--magenta-glow);">' +
         escapeHtml(p.ourRarityNamedSet.name) + ' SET · ' + greenNum('x' + p.ourRarityNamedSet.multiplier) + '</div>'
-      : (p && p.ourRarityMinPairCount !== null && p.ourRarityMinPairCount !== undefined && p.ourRarityMinPairCount <= 3)
-      ? '<div class="tc-sub" style="color:var(--magenta); text-shadow:0 0 4px var(--magenta-glow);">MATCHED SET · ' +
-        (p.ourRarityMinPairCount === 1 ? 'UN!QUE PA!R!NG' : 'SHARED BY ' + greenNum(p.ourRarityMinPairCount) + ' 0THERS') +
-        '</div>'
       : '';
     el.detailRarityScore.innerHTML = (p && p.ourRarityScore !== null && p.ourRarityScore !== undefined)
       ? greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + matchBadge

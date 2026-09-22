@@ -3789,19 +3789,26 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // nothing about the code telling you that's what's happening. Bumping
 // the key version forces a genuinely fresh pass under the current code.
 // v2 -> v3 (same day): manual rapid-fire triggers used to force v2's own
-// fresh pass raced each other (see runId's own comment on
-// maybeRefreshRarityScores below) and left v2's data genuinely corrupted
-// (one real Pigeon's live score came out ~25x too high) — that race is
-// fixed now, but v2's already-written numbers aren't trustworthy, so v3
-// starts clean under the fix rather than trying to repair v2 in place.
-// Bump again (v4, v5, ...) any time the scoring formula itself changes —
+// fresh pass raced each other on the same KV checkpoint and left v2's
+// data genuinely corrupted (one real Pigeon's live score came out ~25x
+// too high). Added runId + assertStillOwnsPass to guard against it.
+// v3 -> v4 (same day): the SAME corruption reappeared even after that
+// fix, still reproducibly, from more manual rapid-fire triggering —
+// likely Cloudflare KV's own documented eventual consistency (a write
+// from one edge colo can take up to ~60s to become visible to a read
+// from another), which a same-process runId check can reduce but can't
+// fully close when requests land on different colos in quick succession.
+// v4 starts clean; RARITY_CONCURRENT_GUARD_SECONDS raised well past that
+// 60s window so this shouldn't reproduce under real, organically-paced
+// site traffic — only fast manual triggering ever exposed it.
+// Bump again (v5, v6, ...) any time the scoring formula itself changes —
 // not needed for a change that only affects display, docs, or anything
 // that isn't scoreAgainstDistribution/comboScoreForItem/
 // wordMatchScoreForItem/namedSetMatchForItem's own math.
-const RARITY_MAP_KEY = 'pswap:rarity:v3';
-const RARITY_STATS_KEY = 'pswap:raritystats:v3';
+const RARITY_MAP_KEY = 'pswap:rarity:v4';
+const RARITY_STATS_KEY = 'pswap:raritystats:v4';
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
-const RARITY_CONCURRENT_GUARD_SECONDS = 30; // was 10 — too tight in practice (see runId's own comment on maybeRefreshRarityScores)
+const RARITY_CONCURRENT_GUARD_SECONDS = 90; // was 10, then 30 — needs to clear Cloudflare KV's own ~60s worst-case cross-colo propagation window, not just this process's own runId check (see the v3->v4 KV key comment above)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
 
 export async function getRarityMap(kv, collectionKey) {
