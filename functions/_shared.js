@@ -3800,13 +3800,26 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // fully close when requests land on different colos in quick succession.
 // v4 starts clean; RARITY_CONCURRENT_GUARD_SECONDS raised well past that
 // 60s window so this shouldn't reproduce under real, organically-paced
-// site traffic — only fast manual triggering ever exposed it.
-// Bump again (v5, v6, ...) any time the scoring formula itself changes —
+// site traffic — only fast manual triggering ever exposed it. (That
+// "corruption" theory turned out to be a red herring anyway — the v4
+// numbers were correct the whole time; see the v4->v5 note below for
+// what was actually wrong.)
+// v4 -> v5 (same day): found the REAL bug by running the crawl in full
+// isolation (a Node harness against an in-memory KV mock, zero
+// possibility of any race) — it reproduced the exact same numbers
+// deterministically every time, proving v2/v3's "corruption" was never
+// a race or a KV consistency issue at all. RARITY_NAMED_SETS was keyed
+// 'xrpigeons' (Deeptide's shop slug) while every real call site passes
+// 'pigeons' (this site's own collectionKey) — the lookup always missed,
+// so not one Named Set ever actually applied all session, despite every
+// one of them testing correct in isolation. v5 is the first pass where
+// Named Sets genuinely work.
+// Bump again (v6, v7, ...) any time the scoring formula itself changes —
 // not needed for a change that only affects display, docs, or anything
 // that isn't scoreAgainstDistribution/comboScoreForItem/
 // wordMatchScoreForItem/namedSetMatchForItem's own math.
-const RARITY_MAP_KEY = 'pswap:rarity:v4';
-const RARITY_STATS_KEY = 'pswap:raritystats:v4';
+const RARITY_MAP_KEY = 'pswap:rarity:v5';
+const RARITY_STATS_KEY = 'pswap:raritystats:v5';
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
 const RARITY_CONCURRENT_GUARD_SECONDS = 90; // was 10, then 30 — needs to clear Cloudflare KV's own ~60s worst-case cross-colo propagation window, not just this process's own runId check (see the v3->v4 KV key comment above)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
