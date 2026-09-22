@@ -194,6 +194,14 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pige
     ourRarityRank: rarityEntry ? rarityEntry.rank : null,
     ourRarityScore: rarityEntry ? rarityEntry.score : null,
     ourRarityTotal: rarityEntry ? rarityEntry.total : null,
+    // Where ourRarityScore actually comes from — base (per-category,
+    // Statistical Rarity) vs combo (the pairwise "matching set" bonus,
+    // see comboScoreForItem's own comment in _shared.js). minPairCount is
+    // the rarest pairing this item itself has (e.g. "shared by only 1
+    // other Pigeon"), null once this item has fewer than 2 real traits.
+    ourRarityBase: rarityEntry ? rarityEntry.base : null,
+    ourRarityCombo: rarityEntry ? rarityEntry.combo : null,
+    ourRarityMinPairCount: rarityEntry && rarityEntry.minPairCount !== undefined ? rarityEntry.minPairCount : null,
     owner: owner || null,
     ownerShort: owner ? shortenAddr(owner) : null,
     ownerIndexed: !!owner,

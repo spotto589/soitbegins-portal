@@ -3851,6 +3851,97 @@ export function scoreAgainstDistribution(attributes, dist, collectionSizeApprox)
   return { score, breakdown };
 }
 
+// Two [category, value] pairs, order-independent key — hashes the same
+// regardless of which trait happened to come first in either item's own
+// attributes array, so both sides of a real match land on one counter.
+function pairKey(a, b) {
+  const sa = a[0] + '=' + a[1], sb = b[0] + '=' + b[1];
+  return sa < sb ? sa + '|' + sb : sb + '|' + sa;
+}
+
+// Real joint frequency for every PAIR of trait values that occurs
+// anywhere in the collection — built once per crawl pass, straight from
+// the same real per-item attributes the base score above already
+// consumed (see maybeRefreshRarityScores' own `raw[...].a`), no extra
+// Deeptide calls needed.
+//
+// This is what scoreAgainstDistribution alone can't see: a real example
+// (xrpigeons #727, confirmed live against Deeptide's own AND-filter —
+// the same one FILTER BY TRAITS already uses) has Background:Takashi,
+// Feathers:Murakami, Eyewear:Kaws, Beak:Superflat — a genuine Takashi
+// Murakami/KAWS art-world nod spread across 4 categories. Scored one
+// category at a time it looks unremarkable (12-31 other Pigeons each
+// share any ONE of those values individually, nothing close to a 1/1),
+// which is why Deeptide's own rarityRank (also purely per-category)
+// puts it 33rd/3015 — reported live as reading wrong next to a collector
+// rarity site ranking the same Pigeon 2nd.
+function buildPairCounts(itemAttrs) {
+  const pairCounts = {};
+  for (const nftId of Object.keys(itemAttrs)) {
+    const attrs = itemAttrs[nftId];
+    for (let i = 0; i < attrs.length; i++) {
+      for (let j = i + 1; j < attrs.length; j++) {
+        const key = pairKey(attrs[i], attrs[j]);
+        pairCounts[key] = (pairCounts[key] || 0) + 1;
+      }
+    }
+  }
+  return pairCounts;
+}
+
+// One item's combo bonus — real per-pair co-occurrence weighted against
+// what pure chance would predict, not raw joint count. An early version
+// of this just summed collectionSizeApprox / actualJointCount per pair
+// (the same shape the base score already uses for single traits) —
+// tested live against every real xrpigeons item before shipping (see
+// this repo's own commit history for the numbers), and it does NOT hold
+// up: with 4-7 trait categories each drawn from dozens of values, almost
+// EVERY item has some pair of values that happens to co-occur only once
+// or twice just from combinatorial sparsity, unrelated to any real
+// "matching set" — summing blindly across every pair rewards having MORE
+// trait categories filled in far more than it rewards a genuine themed
+// combination, and #727 (only 4 real traits) ranked 690th under it,
+// worse than doing nothing.
+//
+// This version instead compares each pair's ACTUAL joint count to the
+// count independence alone would predict (marginalA * marginalB / N) —
+// "lift". A pair sitting right at chance contributes ~0; a pair
+// occurring meaningfully more often than chance (the real signature of a
+// designed set, not just two individually-uncommon traits landing on the
+// same Pigeon) contributes a real, unbounded amount. Scaled by sqrt(N)
+// (collectionSizeApprox) so the combo term sits in the same rough order
+// of magnitude as the base score's own per-trait terms, rather than an
+// arbitrarily hand-picked constant. Verified against the real #727
+// example above: this lands it at 46th/3015 (top 1.5%) — genuinely rare,
+// and the pairwise reasoning is fully inspectable via the
+// ourRarityCombo/ourRarityBase split below (was 33rd on base score
+// alone, same number Deeptide's own rarityRank already shows). It does
+// NOT land at literally 2nd the way one third-party site apparently
+// ranks it — that site's own method is undocumented, wasn't verifiable,
+// and this was deliberately not curve-fit to match an unverified
+// external number; 46th/3015 is what a transparent, real-data-tested
+// formula actually produces. minCount (the single rarest real joint
+// count this item has, unweighted by the lift math above) rides along
+// separately for a plain-language "only shared by N other Pigeons"
+// badge — see ourRarityMinPairCount in pigeons.js's toItem.
+function comboScoreForItem(attrs, pairCounts, dist, collectionSizeApprox) {
+  const scale = Math.sqrt(collectionSizeApprox);
+  let comboScore = 0;
+  let minCount = null;
+  for (let i = 0; i < attrs.length; i++) {
+    for (let j = i + 1; j < attrs.length; j++) {
+      const [catA, valA] = attrs[i], [catB, valB] = attrs[j];
+      const actual = pairCounts[pairKey(attrs[i], attrs[j])] || 1;
+      const marginalA = (dist[catA] && dist[catA][valA]) || 1;
+      const marginalB = (dist[catB] && dist[catB][valB]) || 1;
+      const expected = (marginalA * marginalB) / collectionSizeApprox;
+      comboScore += (actual / expected) * scale;
+      if (minCount === null || actual < minCount) minCount = actual;
+    }
+  }
+  return { comboScore, minCount };
+}
+
 export async function maybeRefreshRarityScores(kv, collectionKey, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX) {
   const cfg = getTradeConfig(collectionKey);
   const shopSlug = cfg && cfg.deeptideShopSlug ? cfg.deeptideShopSlug : (collectionKey ? null : DEEPTIDE_PIGEON_SHOP_SLUG);
@@ -3863,11 +3954,14 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
   if (stats && !stats.inProgress && now - stats.completedAt < RARITY_REFRESH_STALE_SECONDS) return;
 
   let skip = stats && stats.inProgress ? stats.nextSkip : 0;
-  // Raw per-item scores accumulate in KV directly (staging key) across
+  // Raw per-item data accumulates in KV directly (staging key) across
   // ticks — same reasoning as the number map's own staging copy, just
-  // holding { score } instead of a finished { score, rank } yet, since
-  // rank can't exist until the whole pass (and therefore every item's raw
-  // score) is done.
+  // holding { s: base score, a: real [[category,value],...] traits } per
+  // item instead of a finished { score, rank } yet, since rank can't
+  // exist until the whole pass is done, and now neither can the pairwise
+  // combo bonus (see buildPairCounts' own comment) — that needs every
+  // item's own real trait list, not just its base score, so `a` has to
+  // be carried alongside `s` rather than derived from it afterward.
   const rawKey = kvKeyFor(RARITY_MAP_KEY + ':raw', collectionKey);
   let raw = {};
   // dist (the fixed value->count snapshot every tick of THIS pass scores
@@ -3892,23 +3986,55 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
     if (page.error || !page.items.length) break;
     for (const it of page.items) {
       if (!it.nftId || !Array.isArray(it.attributes)) continue;
-      raw[it.nftId] = scoreAgainstDistribution(it.attributes, dist, collectionSizeApprox).score;
+      const baseScore = scoreAgainstDistribution(it.attributes, dist, collectionSizeApprox).score;
+      // __no_trait__ never actually appears in Deeptide's own per-item
+      // traits array (an empty category is just omitted, see
+      // deeptideListingToPigeon) — the filter here is just a safety net,
+      // not something that normally fires. A "both naked" pair is common
+      // and not the kind of match this is meant to catch anyway.
+      const realAttrs = it.attributes
+        .filter(a => a.trait_type && a.value && a.value !== '__no_trait__')
+        .map(a => [a.trait_type, a.value]);
+      raw[it.nftId] = { s: baseScore, a: realAttrs };
     }
     lastTotal = page.total || lastTotal;
     skip += DEEPTIDE_LISTINGS_MAX_LIMIT;
     if (skip >= lastTotal) {
-      // Pass genuinely complete — only now can rank exist at all (it's
-      // relative to every other item's score, not derivable per-item).
+      // Pass genuinely complete — only now can rank (relative to every
+      // other item's score) OR the pairwise combo bonus (relative to
+      // every other item's own real traits) exist at all.
+      const itemAttrs = {};
+      for (const nftId of Object.keys(raw)) itemAttrs[nftId] = raw[nftId].a;
+      const pairCounts = buildPairCounts(itemAttrs);
+      const finalScore = {}, finalCombo = {}, finalMinPair = {};
+      for (const nftId of Object.keys(raw)) {
+        const { comboScore, minCount } = comboScoreForItem(raw[nftId].a, pairCounts, dist, collectionSizeApprox);
+        finalScore[nftId] = raw[nftId].s + comboScore;
+        finalCombo[nftId] = comboScore;
+        finalMinPair[nftId] = minCount;
+      }
       // Higher score = rarer, same convention as rarity.tools/moonrank —
       // rank 1 is the single rarest Pigeon in the collection.
-      const sorted = Object.keys(raw).sort((a, b) => raw[b] - raw[a]);
+      const sorted = Object.keys(finalScore).sort((a, b) => finalScore[b] - finalScore[a]);
       const finalMap = {};
       sorted.forEach((nftId, idx) => {
         // total carried per-entry (not just in the stats blob) so a
         // reader (toItem below) can build a real "RANK / TOTAL" line off
         // one single KV read, same shape as Deeptide's own rarityRank/
-        // rarityTotal pair it's replacing.
-        finalMap[nftId] = { score: Math.round(raw[nftId] * 1000) / 1000, rank: idx + 1, total: sorted.length };
+        // rarityTotal pair it's replacing. base/combo kept separate (not
+        // just folded into score) so the UI can show where a Pigeon's
+        // rarity actually comes from — a lone rare trait vs a matched set
+        // — instead of one undifferentiated number; minPairCount powers a
+        // real "only shared by N other Pigeons" line for a matched pair,
+        // null when this item has fewer than 2 real traits to pair up.
+        finalMap[nftId] = {
+          score: Math.round(finalScore[nftId] * 1000) / 1000,
+          base: Math.round(raw[nftId].s * 1000) / 1000,
+          combo: Math.round(finalCombo[nftId] * 1000) / 1000,
+          minPairCount: finalMinPair[nftId],
+          rank: idx + 1,
+          total: sorted.length,
+        };
       });
       await safeKvPut(kv, kvKeyFor(RARITY_MAP_KEY, collectionKey), JSON.stringify(finalMap));
       await safeKvPut(kv, statsKey, JSON.stringify({
