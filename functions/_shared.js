@@ -3970,11 +3970,20 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
   // consistent, so reading a key back immediately after writing it is not
   // guaranteed to see that same write.
   let dist;
-  if (stats && stats.inProgress) {
+  // A pass already `inProgress` when this shape changed (raw[nftId] used
+  // to be a plain number, now `{ s, a }`) would otherwise load old-shape
+  // entries and crash later on `raw[nftId].a` — checked here once (any
+  // real entry that isn't the new shape means this checkpoint predates
+  // the change) rather than restarting from skip 0 with a half-old,
+  // half-new raw map, which is the actual bug this guards against.
+  const freshPassNeeded = !stats || !stats.inProgress;
+  if (!freshPassNeeded) {
     const rawStored = await kv.get(rawKey);
     raw = rawStored ? JSON.parse(rawStored) : {};
-    dist = stats.dist;
-  } else {
+    const staleShape = Object.keys(raw).some(id => typeof raw[id] !== 'object' || raw[id] === null || !Array.isArray(raw[id].a));
+    if (staleShape) { raw = {}; skip = 0; } else { dist = stats.dist; }
+  }
+  if (freshPassNeeded || !dist) {
     // Fresh pass — real distribution recomputed from scratch each time
     // (collection-wide counts do drift slowly as new sales/mints happen).
     dist = await fetchFullTraitDistribution(shopSlug, collectionSizeApprox);
