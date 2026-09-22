@@ -124,8 +124,8 @@ function renderRarityHtml() {
         <div class="set-proof">confirmed on #92</div>
       </div>
       <div class="set-card">
-        <div class="set-title">S0 !T BEG!NS &mdash; &times;2</div>
-        <div class="set-pieces">Heart clothing + "So It Begins" headwear</div>
+        <div class="set-title">S0 !T BEG!NS &mdash; &times;3</div>
+        <div class="set-pieces">Heart clothing + "So It Begins" headwear + Pigeon #14 itself (Feb 14 = Valentine's Day)</div>
         <div class="set-proof">confirmed on #14</div>
       </div>
       <div class="set-card">

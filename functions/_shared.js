@@ -3824,14 +3824,21 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // checkable by anyone with a calculator. The statistical-combo and
 // word-match layers are gone entirely, not hidden — see the comment
 // where they used to live, just above RARITY_NAMED_SETS.
-// v6 -> v7 (same day): added the x4 multiplier CEILING (a 5-piece match
-// now caps at x4, not x5 — see RARITY_NAMED_SET_MAX_MULTIPLIER's own
-// comment) and G0LD (#1515, 5 real gold-themed pieces, confirmed live).
-// Bump again (v8, v9, ...) any time the scoring formula itself changes —
-// not needed for a change that only affects display, docs, or anything
-// that isn't scoreAgainstDistribution/namedSetMatchForItem's own math.
-const RARITY_MAP_KEY = 'pswap:rarity:v7';
-const RARITY_STATS_KEY = 'pswap:raritystats:v7';
+// v6 -> v7 (same day): added G0LD (#1515, 5 real gold-themed pieces,
+// confirmed live) — briefly shipped with a x4 multiplier ceiling, which
+// was wrong and corrected within the same version (no cap — 5 pieces is
+// genuinely x5, see namedSetMatchForItem's own comment).
+// v7 -> v8 (same day): added numberMeaningFor — a curated (not
+// mechanical) number significance, for a number like #14's own "14"
+// (Feb 14, Valentine's Day) that has no special shape a formula can
+// detect but is still a real part of a Named Set's theme. S0 !T BEG!NS
+// is now 3 pieces (x3), was 2 (x2).
+// Bump again (v9, v10, ...) any time the scoring formula itself changes
+// — not needed for a change that only affects display, docs, or
+// anything that isn't scoreAgainstDistribution/namedSetMatchForItem's
+// own math.
+const RARITY_MAP_KEY = 'pswap:rarity:v8';
+const RARITY_STATS_KEY = 'pswap:raritystats:v8';
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
 const RARITY_CONCURRENT_GUARD_SECONDS = 90; // was 10, then 30 — needs to clear Cloudflare KV's own ~60s worst-case cross-colo propagation window, not just this process's own runId check (see the v3->v4 KV key comment above)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
@@ -3965,6 +3972,25 @@ function numberPatternFor(number) {
   return null;
 }
 
+// A number's CULTURAL/CALENDAR meaning is not a mechanical fact the way
+// a repdigit or palindrome is — "14" has no special shape at all (not a
+// repdigit, not a palindrome, not a run) — so this is hand-curated, same
+// bar as a Named Set, never auto-detected. Confirmed live: #14's own
+// number is Feb 14 (Valentine's Day), which is WHY it's part of S0 !T
+// BEG!NS (Heart clothing + "So It Begins" headwear) rather than a
+// coincidence — the number completes the theme, same role a mechanical
+// pattern plays for K!NG & CR0WN/T0P HAT & TA!LS. Injected as its own
+// synthetic __NumberMean!ng__ trait (separate from __Number__ above) so
+// a Pigeon can carry a mechanical pattern AND a curated meaning at once
+// without one overwriting the other.
+const RARITY_CURATED_NUMBER_MEANINGS = {
+  14: 'VALENT!NES DAY',
+};
+function numberMeaningFor(number) {
+  if (number === null || number === undefined) return null;
+  return RARITY_CURATED_NUMBER_MEANINGS[number] || null;
+}
+
 // Curated "Named Sets" — the third layer, for a real match neither of
 // the two automatic layers above can infer on their own: no shared word,
 // and not necessarily numerically striking either, but a human looking
@@ -3990,7 +4016,14 @@ export const RARITY_NAMED_SETS = {
   pigeons: [
     { name: 'PR!NCE', pieces: [{ trait_type: 'Clothing', value: 'Prince' }, { trait_type: 'Headwear', value: 'Prince Hat' }] },
     { name: 'FULLY SU!TED', pieces: [{ trait_type: 'Clothing', value: 'Hazmat' }, { trait_type: 'Headwear', value: 'Biohazard' }] },
-    { name: 'S0 !T BEG!NS', pieces: [{ trait_type: 'Clothing', value: 'Heart' }, { trait_type: 'Headwear', value: 'So It Begins' }] },
+    // Confirmed live: #14's own number is the 3rd piece (Feb 14 =
+    // Valentine's Day, see numberMeaningFor's own comment) — a real part
+    // of the theme, not a coincidence. 3 pieces, x3.
+    { name: 'S0 !T BEG!NS', pieces: [
+      { trait_type: 'Clothing', value: 'Heart' },
+      { trait_type: 'Headwear', value: 'So It Begins' },
+      { trait_type: '__NumberMean!ng__', value: 'VALENT!NES DAY' },
+    ] },
     { name: 'TAKASH! MURAKAM!', pieces: [
       { trait_type: 'Background', value: 'Takashi' },
       { trait_type: 'Feathers', value: 'Murakami' },
@@ -4151,10 +4184,15 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
         .filter(a => a.trait_type && a.value && a.value !== '__no_trait__')
         .map(a => [a.trait_type, a.value]);
       // A Pigeon's own display number can itself be one of a Named Set's
-      // pieces (see numberPatternFor's own comment) — injected here as a
-      // synthetic trait so namedSetMatchForItem sees it for free.
+      // pieces (see numberPatternFor/numberMeaningFor's own comments) —
+      // injected here as synthetic traits so namedSetMatchForItem sees
+      // them for free. Two separate categories (a number can be both a
+      // mechanical pattern AND a curated meaning at once, without one
+      // overwriting the other).
       const numberPattern = numberPatternFor(it.number);
       if (numberPattern) realAttrs.push(['__Number__', numberPattern]);
+      const numberMeaning = numberMeaningFor(it.number);
+      if (numberMeaning) realAttrs.push(['__NumberMean!ng__', numberMeaning]);
       // Layer 2 (see namedSetMatchForItem's own comment) — the multiplier
       // is just the piece count, so this item's own final score is fully
       // known right now, no dependency on any other item.
