@@ -3782,22 +3782,26 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // from (see getTraitCategoriesWithPercent) — just for every category, not
 // only the two surfaced as filterable NAKED/BALD chips.
 // ─────────────────────────────────────────────────────────────────────────
-// Bumped v1 -> v2 (2026-09-22): the staleness check below only looks at
-// WHEN the last pass finished, never whether the algorithm that produced
-// it changed — so tonight's several scoring-formula changes (combo bonus,
-// word-match, Named Sets, the data-driven multiplier) would otherwise sit
-// invisible behind a pass that finished hours earlier, for up to another
-// 6h, with nothing about the code telling you that's what's happening.
-// Bumping the key version forces a genuinely fresh pass under the current
-// code with zero risk of mixing old-formula and new-formula scores in the
-// same map. Bump again (v3, v4, ...) any time the scoring formula itself
-// changes — not needed for a change that only affects display, docs, or
-// anything that isn't scoreAgainstDistribution/comboScoreForItem/
+// v1 -> v2 (2026-09-22): the staleness check below only looks at WHEN the
+// last pass finished, never whether the algorithm that produced it
+// changed — so a scoring-formula change would otherwise sit invisible
+// behind a pass that finished hours earlier, for up to another 6h, with
+// nothing about the code telling you that's what's happening. Bumping
+// the key version forces a genuinely fresh pass under the current code.
+// v2 -> v3 (same day): manual rapid-fire triggers used to force v2's own
+// fresh pass raced each other (see runId's own comment on
+// maybeRefreshRarityScores below) and left v2's data genuinely corrupted
+// (one real Pigeon's live score came out ~25x too high) — that race is
+// fixed now, but v2's already-written numbers aren't trustworthy, so v3
+// starts clean under the fix rather than trying to repair v2 in place.
+// Bump again (v4, v5, ...) any time the scoring formula itself changes —
+// not needed for a change that only affects display, docs, or anything
+// that isn't scoreAgainstDistribution/comboScoreForItem/
 // wordMatchScoreForItem/namedSetMatchForItem's own math.
-const RARITY_MAP_KEY = 'pswap:rarity:v2';
-const RARITY_STATS_KEY = 'pswap:raritystats:v2';
+const RARITY_MAP_KEY = 'pswap:rarity:v3';
+const RARITY_STATS_KEY = 'pswap:raritystats:v3';
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
-const RARITY_CONCURRENT_GUARD_SECONDS = 10;
+const RARITY_CONCURRENT_GUARD_SECONDS = 30; // was 10 — too tight in practice (see runId's own comment on maybeRefreshRarityScores)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
 
 export async function getRarityMap(kv, collectionKey) {
@@ -4085,6 +4089,23 @@ export const RARITY_NAMED_SETS = {
       { trait_type: 'Beak', value: 'Rocket' },
       { trait_type: 'Headwear', value: 'Interstellion' },
     ] },
+    // SANTA (2 pigeons: #973, #1225) and JESTER (4 pigeons: #610, #281,
+    // #904, #918) confirmed live in the SAME message — a deliberate real
+    // comparison: both are genuine matched sets, but SANTA's smaller
+    // jointCount earns a bigger multiplier than JESTER's under
+    // namedSetMultiplierForItem's own real-scarcity math (see that
+    // function's own comment) — x3.01 vs x2.005, not a guessed tier.
+    { name: 'SANTA', pieces: [
+      { trait_type: 'Clothing', value: 'Santa' },
+      { trait_type: 'Headwear', value: 'Merry Christmas' },
+    ] },
+    // Real value names are "Court Jester" (Clothing) and "Jester"
+    // (Headwear) — not "Jester"/"Jester Hat" as first described; checked
+    // against the actual trait vocabulary before adding.
+    { name: 'JESTER', pieces: [
+      { trait_type: 'Clothing', value: 'Court Jester' },
+      { trait_type: 'Headwear', value: 'Jester' },
+    ] },
     { name: 'B!NARY C0DE', pieces: [
       { trait_type: 'Aura', value: 'Binary' },
       { trait_type: 'Clothing', value: '00100001' },
@@ -4135,6 +4156,25 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
   if (stats && stats.inProgress && now - stats.updatedAt < RARITY_CONCURRENT_GUARD_SECONDS) return;
   if (stats && !stats.inProgress && now - stats.completedAt < RARITY_REFRESH_STALE_SECONDS) return;
 
+  // Confirmed live: rapid-fire manual triggers (well under
+  // RARITY_CONCURRENT_GUARD_SECONDS apart in real wall-clock terms, since
+  // that guard only blocks a NEW tick from starting close to the last
+  // one's START — it does nothing once two ticks are already both
+  // mid-flight) raced on the same rawKey checkpoint. Whichever tick wrote
+  // last won, silently discarding the other's progress and leaving a
+  // corrupted, inconsistent raw map (one real Pigeon's live combo score
+  // came out ~25x too high from it). runId is this tick's own claim on
+  // the current pass, checked again right before every write below
+  // (assertStillOwnsPass) — a tick that's been superseded by a newer
+  // pass bails out instead of clobbering it. This doesn't need Cloudflare
+  // KV to support real compare-and-swap (it doesn't) — it only needs the
+  // LAST write to be the one whose runId actually matches what's live.
+  let runId;
+  async function assertStillOwnsPass() {
+    const freshRaw = await kv.get(statsKey);
+    const fresh = freshRaw ? JSON.parse(freshRaw) : null;
+    return !fresh || !fresh.runId || fresh.runId === runId;
+  }
   let skip = stats && stats.inProgress ? stats.nextSkip : 0;
   // Raw per-item data accumulates in KV directly (staging key) across
   // ticks — same reasoning as the number map's own staging copy, just
@@ -4163,12 +4203,13 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
     const rawStored = await kv.get(rawKey);
     raw = rawStored ? JSON.parse(rawStored) : {};
     const staleShape = Object.keys(raw).some(id => typeof raw[id] !== 'object' || raw[id] === null || !Array.isArray(raw[id].a));
-    if (staleShape) { raw = {}; skip = 0; } else { dist = stats.dist; }
+    if (staleShape) { raw = {}; skip = 0; } else { dist = stats.dist; runId = stats.runId; }
   }
   if (freshPassNeeded || !dist) {
     // Fresh pass — real distribution recomputed from scratch each time
     // (collection-wide counts do drift slowly as new sales/mints happen).
     dist = await fetchFullTraitDistribution(shopSlug, collectionSizeApprox);
+    runId = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
   }
   let lastTotal = Infinity;
 
@@ -4265,9 +4306,14 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
           total: sorted.length,
         };
       });
+      // A newer pass (different runId) may have already started and
+      // possibly finished while this tick was working — writing this
+      // tick's own (now-stale) result over it would silently undo real
+      // progress. See runId's own comment above.
+      if (!(await assertStillOwnsPass())) return;
       await safeKvPut(kv, kvKeyFor(RARITY_MAP_KEY, collectionKey), JSON.stringify(finalMap));
       await safeKvPut(kv, statsKey, JSON.stringify({
-        inProgress: false, completedAt: now, updatedAt: now, count: sorted.length, total: sorted.length,
+        inProgress: false, completedAt: now, updatedAt: now, count: sorted.length, total: sorted.length, runId,
       }));
       await kv.delete(rawKey).catch(() => {});
       return;
@@ -4277,9 +4323,10 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
   // carrying `dist` forward so the next tick scores against the same
   // snapshot rather than re-fetching (and potentially getting a slightly
   // different) distribution every single tick.
+  if (!(await assertStillOwnsPass())) return;
   await safeKvPut(kv, rawKey, JSON.stringify(raw));
   await safeKvPut(kv, statsKey, JSON.stringify({
-    inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(raw).length, dist,
+    inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(raw).length, dist, runId,
   }));
 }
 
