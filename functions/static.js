@@ -5059,6 +5059,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     grid-template-columns:repeat(5, 1fr);
     gap:0.7rem;
   }
+  /* Wide desktop only (reported live: 1920x1080, thumbnails "slightly
+     blurry") — one more column than the 5-across default above, so each
+     tile renders smaller instead of stretching the same source image
+     across more pixels. Scoped to min-width:1400px so it never touches
+     the 5-across a normal/smaller desktop already got reverted back to
+     (see that rule's own comment) — this only kicks in once there's
+     genuinely extra width to spend on an extra column. */
+  @media (min-width:1400px){
+    .result-list.view-thumbnails{ grid-template-columns:repeat(6, 1fr); }
+  }
   .result-row{
     display:flex;
     align-items:stretch;
@@ -7161,16 +7171,24 @@ const SWAP_HTML = `<!DOCTYPE html>
      what actually pays for the bigger text within DETAIL's own one-page,
      no-scroll budget. */
   #screenDetail .detail-sale-stats-row{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.6rem; margin:0.5rem 0 0; max-width:100%; }
-  /* justify-content:center overrides the base .detail-field's own
+  /* justify-content:flex-start overrides the base .detail-field's own
      space-between (meant for a horizontal label/value row elsewhere in
-     DETAIL) — in this column-direction 3-across grid, space-between
-     pushed REC0RD/RECENT SALE's single-line value all the way to the
-     bottom of the (grid-stretched, equal-height) cell, leaving a big
-     gap under the label, while AVERAGE SALE's own 3-line value (number +
-     XRP + N SALES) filled the same cell and so never showed the gap —
-     reported live as the three looking inconsistent. Centered now,
-     regardless of how many lines a given cell's value wraps to. */
-  #screenDetail .detail-sale-stats-row .detail-field{ background:var(--panel-bg-solid); border:1px solid var(--border-mid); border-radius:var(--radius); padding:0.6rem 0.4rem; gap:0.3rem; justify-content:center; }
+     DETAIL) — a prior fix here used center instead, which fixed the
+     original complaint (space-between leaving a gap under REC0RD/RECENT
+     SALE's shorter single-line value) but broke a subtler thing: with
+     the whole label+value block centered as one unit, AVERAGE SALE's
+     taller block (number + XRP line + N SALES sub-line) centers around
+     a lower midpoint than REC0RD/RECENT's shorter block, so the actual
+     numbers across the row don't land on the same horizontal line —
+     reported live as "the numbers don't sit horizontally clean."
+     flex-start fixes both: every label sits flush at the same offset
+     from the cell's top regardless of cell height (grid already
+     stretches all three to the tallest), so the number directly under
+     it also lands on the same line in every cell — AVERAGE SALE's extra
+     N SALES sub-line just extends further down from there, same as
+     space-between's original gap but now explained by real content
+     instead of empty space. */
+  #screenDetail .detail-sale-stats-row .detail-field{ background:var(--panel-bg-solid); border:1px solid var(--border-mid); border-radius:var(--radius); padding:0.6rem 0.4rem; gap:0.3rem; justify-content:flex-start; }
   #screenDetail .detail-sale-stats-row .df-label{ font-size:11px; letter-spacing:0.06em; }
   #screenDetail .detail-sale-stats-row .df-value{ font-size:22px; color:var(--green); text-shadow:0 0 8px rgba(52,255,133,0.4); display:flex; flex-direction:column; align-items:center; line-height:1.2; }
   #screenDetail .detail-sale-stats-row .df-value-sub{ font-size:10px; color:var(--grey-dim); text-shadow:none; font-weight:400; letter-spacing:0.06em; }
@@ -20881,6 +20899,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   // screen — restored on BACK so you land back on the exact card you
   // clicked, not the top of the whole list.
   var scrollBeforeDetail = null;
+  // Address bar sync for DETAIL — separate from the popstate/back-button
+  // trick further down (which deliberately keeps a single synthetic
+  // history entry and never pushes real per-Pigeon entries, see that
+  // code's own comment). This only ever uses replaceState, so it never
+  // touches the back-button stack — it just makes the visible URL match
+  // whichever Pigeon is open (the real /<collection>/<number> route,
+  // same one SHARE already copies) so refreshing, copying the address
+  // bar, or opening in a new tab while browsing all land on the same
+  // Pigeon you're actually looking at, not the bare /static URL.
+  var urlBeforeDetail = null;
   function openDetail(nftId){
     scrollBeforeDetail = window.scrollY;
     var known = findKnown(nftId);
@@ -20901,6 +20929,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     updateDetailPrice(known);
     updateScyllaListing(known);
     state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null, attributes: [] };
+    // Only remember the pre-detail URL the first time (not on every
+    // PREV/NEXT hop between Pigeons while already inside DETAIL) — see
+    // urlBeforeDetail's own comment above.
+    if (el.screenDetail.style.display === 'none') urlBeforeDetail = location.pathname + location.search;
+    // known may not carry a number yet on a cold click (findKnown miss) —
+    // the api({ detail: nftId }) callback below re-syncs the URL once p
+    // (with its real number) comes back, same as it re-syncs everything
+    // else in that case.
+    var deepHref = known ? nftHrefFor(known) : null;
+    if (deepHref) history.replaceState({ skyllaNav: true }, '', deepHref);
     // showScreen itself smooth-scrolls the tab strip back into view (see
     // its own comment) — a thumbnail click deep in a long (up to
     // 3015-item) grid would otherwise leave the detail screen opening
@@ -20918,6 +20956,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       var p = data.item;
       state.currentDetail = p;
+      // Cold-click case (see deepHref above): known was null so the sync
+      // replaceState never ran — do it now that a real number is in.
+      // Harmless (same href) when known already handled it.
+      if (!known){
+        var lateHref = nftHrefFor(p);
+        if (lateHref) history.replaceState({ skyllaNav: true }, '', lateHref);
+      }
       el.detailNum.innerHTML = p.number !== null ? collectionItemLabel() + ' #' +greenNum(p.number) : (p.name ? collectionItemLabel() + ' ' + escapeHtml(p.name) : collectionItemLabel() + ' ...');
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : 'IMAGE';
       el.detailTraits.innerHTML = sortTraitsByRarity(p.attributes).map(traitCellHtml).join('');
@@ -21084,6 +21129,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.historyModal.addEventListener('click', function(e){ if (e.target === el.historyModal) closeHistoryModal(); });
   function goBackFromDetail(){
     showScreen('browse');
+    // Restores whatever the address bar showed before openDetail's own
+    // replaceState swapped it to the Pigeon's deep link — same
+    // replaceState-only approach (see urlBeforeDetail's own comment), so
+    // this never interacts with the real back-button entry either.
+    if (urlBeforeDetail !== null){
+      history.replaceState({ skyllaNav: true }, '', urlBeforeDetail);
+      urlBeforeDetail = null;
+    }
     // Overrides showScreen's own tab-strip-aligned scroll with the exact
     // card position remembered in openDetail — going back should land you
     // back on the specific Pigeon you clicked, not just near the top.
