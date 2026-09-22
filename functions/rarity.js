@@ -80,74 +80,91 @@ function renderRarityHtml() {
     <h1>H0W RAR!TY W0RKS</h1>
     <p class="intro">Every score here comes from real, disclosed math run against the collection's actual trait data — never a guess, and never hidden. This page explains exactly how a number gets calculated, so you can check our work the same way we did.</p>
 
-    <h2><span class="step">01</span>THE F0UR LAYERS</h2>
-    <p>A Pigeon's final rarity score is <code>(base + combo + word-match) &times; named-set multiplier</code>. Each layer catches something the others structurally can't:</p>
+    <h2><span class="step">01</span>LAYER 1 :: TRA!T RAR!TY SC0RE</h2>
+    <p>Every trait on a Pigeon has a real, published % of the collection. Turn that into a score with one rule &mdash; <code>100 &divide; %</code> &mdash; then ADD every one of that Pigeon's own trait scores together. Never averaged: averaging would punish a Pigeon for having more than one rare trait, and the whole point is that rare traits stack.</p>
+    <div class="layer-card">
+      <div class="layer-name">W0RKED EXAMPLE &mdash; P!GE0N #727</div>
+      <div class="layer-desc">
+        Background: Takashi (1.03%) &rarr; 100&divide;1.03 = <strong>97.1</strong><br>
+        Feathers: Murakami (0.83%) &rarr; 100&divide;0.83 = <strong>120.5</strong><br>
+        Eyewear: Kaws (0.40%) &rarr; 100&divide;0.40 = <strong>250.0</strong><br>
+        Beak: Superflat (0.83%) &rarr; 100&divide;0.83 = <strong>120.5</strong><br>
+        Clothing: none (10.38%) &rarr; 100&divide;10.38 = <strong>9.6</strong><br>
+        Headwear: none (14.73%) &rarr; 100&divide;14.73 = <strong>6.8</strong><br>
+        <span style="color:#34ff85;">Sum = 604.5 &mdash; this Pigeon's Layer 1 score.</span>
+      </div>
+    </div>
+    <p>Even "no clothing" or "no headwear" is a real, scored state &mdash; every category always contributes something, however small.</p>
 
+    <h2><span class="step">02</span>LAYER 2 :: MATCHED SET MULT!PL!ER</h2>
+    <p>Only ever a HAND-CONFIRMED match &mdash; never inferred by an algorithm. A human looks at the actual artwork and decides a combination is real and meaningful, using one bar: either 3 or fewer other Pigeons share the exact same match, or it's an unambiguous, specific reference (a real name, a brand nod, a literal object pairing) &mdash; never just a vague vibe.</p>
+    <p>Once confirmed, the multiplier is the simplest rule there is: <strong>it's just the number of matching pieces.</strong></p>
     <div class="layer-card">
-      <div class="layer-name">STAT!ST!CAL RAR!TY <span class="tag">AUT0MAT!C</span></div>
-      <div class="layer-desc">Every trait's own share of the collection, added up. A trait only 12 other Pigeons have is worth more than one 400 Pigeons share. This is the floor every Pigeon gets, always.</div>
+      <div class="layer-name">THE WH0LE RULE</div>
+      <div class="layer-desc">
+        2 pieces match &rarr; <strong>&times;2</strong><br>
+        3 pieces match &rarr; <strong>&times;3</strong><br>
+        4 pieces match &rarr; <strong>&times;4</strong> (the ceiling &mdash; no set is bigger than this)
+      </div>
     </div>
-    <div class="layer-card">
-      <div class="layer-name">STAT!ST!CAL C0MB0 <span class="tag">AUT0MAT!C</span></div>
-      <div class="layer-desc">Two traits that show up together far more often than pure chance would predict. Individually ordinary traits can still be a rare PAIRING &mdash; this catches that, with zero manual review.</div>
-      <div class="layer-example">e.g. #11's Moon Walker clothing + Interstellion headwear &mdash; a genuine 1-of-1 combination</div>
-    </div>
-    <div class="layer-card">
-      <div class="layer-name">W0RD MATCH <span class="tag">AUT0MAT!C</span></div>
-      <div class="layer-desc">Two trait VALUES that literally share a name, no matter how common each one is on its own &mdash; something statistics alone can undersell.</div>
-      <div class="layer-example">e.g. #1195's Prince clothing + Prince Hat headwear</div>
-    </div>
-    <div class="layer-card">
-      <div class="layer-name">NAMED SETS <span class="tag curated">HAND-CURATED</span></div>
-      <div class="layer-desc">A real match neither automatic layer can infer on its own &mdash; a brand reference, an art-world nod, a number that's part of the theme. Every one of these is confirmed by a human looking at the actual artwork, never assumed by an algorithm. The multiplier itself is still real data, though &mdash; it's set by how many OTHER Pigeons share that exact match, not a guessed number.</div>
-    </div>
+    <p><strong>Final score = Layer 1 total &times; the multiplier</strong> (&times;1 if no confirmed set applies). #727 above matches all 4 pieces of TAKASH! MURAKAM!, so its real final score is <code>604.5 &times; 4 = 2,418</code>. Every Pigeon's own DETAIL page shows this exact breakdown &mdash; tap RARITY SCORE to open it.</p>
 
-    <h2><span class="step">02</span>C0NF!RMED NAMED SETS</h2>
+    <h2><span class="step">03</span>C0NF!RMED NAMED SETS</h2>
     <p>Every set below is confirmed real, by hand, against the actual artwork &mdash; not algorithm output.</p>
     <div class="set-grid">
       <div class="set-card">
-        <div class="set-title">PR!NCE</div>
+        <div class="set-title">PR!NCE &mdash; &times;2</div>
         <div class="set-pieces">Prince clothing + Prince Hat headwear</div>
-        <div class="set-proof">1 of 3,015 &mdash; #1195</div>
+        <div class="set-proof">confirmed on #1195</div>
       </div>
       <div class="set-card">
-        <div class="set-title">FULLY SU!TED</div>
+        <div class="set-title">FULLY SU!TED &mdash; &times;2</div>
         <div class="set-pieces">Hazmat clothing + Biohazard headwear</div>
-        <div class="set-proof">1 of 3,015 &mdash; #92</div>
+        <div class="set-proof">confirmed on #92</div>
       </div>
       <div class="set-card">
-        <div class="set-title">S0 !T BEG!NS</div>
+        <div class="set-title">S0 !T BEG!NS &mdash; &times;2</div>
         <div class="set-pieces">Heart clothing + "So It Begins" headwear</div>
-        <div class="set-proof">1 of 3,015 &mdash; #14</div>
+        <div class="set-proof">confirmed on #14</div>
       </div>
       <div class="set-card">
-        <div class="set-title">TAKASH! MURAKAM!</div>
+        <div class="set-title">TAKASH! MURAKAM! &mdash; &times;4</div>
         <div class="set-pieces">Takashi background + Murakami feathers + Kaws eyewear + Superflat beak</div>
-        <div class="set-proof">1 of 3,015 &mdash; #727</div>
+        <div class="set-proof">confirmed on #727</div>
       </div>
       <div class="set-card">
-        <div class="set-title">K!NG & CR0WN</div>
+        <div class="set-title">K!NG & CR0WN &mdash; &times;3</div>
         <div class="set-pieces">King clothing + Crown headwear + a descending Pigeon number</div>
-        <div class="set-proof">1 of 3,015 &mdash; #321</div>
+        <div class="set-proof">confirmed on #321</div>
       </div>
       <div class="set-card">
-        <div class="set-title">T0P HAT & TA!LS</div>
+        <div class="set-title">T0P HAT & TA!LS &mdash; &times;3</div>
         <div class="set-pieces">Top Hat headwear + Famous Tuxedo clothing + an ascending Pigeon number</div>
-        <div class="set-proof">1 of 3,015 &mdash; #123</div>
+        <div class="set-proof">confirmed on #123</div>
       </div>
       <div class="set-card">
-        <div class="set-title">ASTR0NAUT</div>
+        <div class="set-title">ASTR0NAUT &mdash; &times;3</div>
         <div class="set-pieces">Moon Walker clothing + Rocket beak + Interstellion headwear</div>
-        <div class="set-proof">1 of 3,015 &mdash; #11</div>
+        <div class="set-proof">confirmed on #11</div>
       </div>
       <div class="set-card">
-        <div class="set-title">B!NARY C0DE</div>
+        <div class="set-title">SANTA &mdash; &times;2</div>
+        <div class="set-pieces">Santa clothing + "Merry Christmas" headwear</div>
+        <div class="set-proof">confirmed on #973</div>
+      </div>
+      <div class="set-card">
+        <div class="set-title">JESTER &mdash; &times;2</div>
+        <div class="set-pieces">Court Jester clothing + Jester headwear</div>
+        <div class="set-proof">confirmed on #610</div>
+      </div>
+      <div class="set-card">
+        <div class="set-title">B!NARY C0DE &mdash; &times;2</div>
         <div class="set-pieces">Binary aura + "00100001" clothing</div>
-        <div class="set-proof">1 of 3,015 &mdash; #1320</div>
+        <div class="set-proof">confirmed on #1320</div>
       </div>
     </div>
 
-    <h2><span class="step">03</span>THE BAR</h2>
+    <h2><span class="step">04</span>THE BAR</h2>
     <p>Without a real bar, "matched set" becomes whatever feels thematic. A candidate needs ONE of:</p>
     <div class="bar-box">
       <ol style="margin-left:1.2rem;">
