@@ -4062,6 +4062,21 @@ export const RARITY_NAMED_SETS = {
       { trait_type: 'Clothing', value: 'Famous Tuxedo' },
       { trait_type: '__Number__', value: 'SEQUENT!AL ASCEND!NG' },
     ] },
+    // #11 (confirmed live): already lands 5th/3015 on the automatic
+    // layers alone (Moon Walker is 0.36% of the collection, Interstellion
+    // 0.40%, and Moon Walker+Interstellion is a genuine 1-of-1 pairing —
+    // the statistical combo layer already catches it, no multiplier
+    // needed to rank it correctly). Added here anyway, tag-only, so the
+    // DETAIL screen shows a real name instead of just a big number.
+    { name: 'ASTR0NAUT', pieces: [
+      { trait_type: 'Clothing', value: 'Moon Walker' },
+      { trait_type: 'Beak', value: 'Rocket' },
+      { trait_type: 'Headwear', value: 'Interstellion' },
+    ] },
+    { name: 'B!NARY C0DE', pieces: [
+      { trait_type: 'Aura', value: 'Binary' },
+      { trait_type: 'Clothing', value: '00100001' },
+    ] },
   ],
 };
 // The multiplier a matched set gets is NOT a hand-picked flat tier
