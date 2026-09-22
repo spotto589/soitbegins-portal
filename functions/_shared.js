@@ -3782,8 +3782,20 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // from (see getTraitCategoriesWithPercent) — just for every category, not
 // only the two surfaced as filterable NAKED/BALD chips.
 // ─────────────────────────────────────────────────────────────────────────
-const RARITY_MAP_KEY = 'pswap:rarity:v1';
-const RARITY_STATS_KEY = 'pswap:raritystats:v1';
+// Bumped v1 -> v2 (2026-09-22): the staleness check below only looks at
+// WHEN the last pass finished, never whether the algorithm that produced
+// it changed — so tonight's several scoring-formula changes (combo bonus,
+// word-match, Named Sets, the data-driven multiplier) would otherwise sit
+// invisible behind a pass that finished hours earlier, for up to another
+// 6h, with nothing about the code telling you that's what's happening.
+// Bumping the key version forces a genuinely fresh pass under the current
+// code with zero risk of mixing old-formula and new-formula scores in the
+// same map. Bump again (v3, v4, ...) any time the scoring formula itself
+// changes — not needed for a change that only affects display, docs, or
+// anything that isn't scoreAgainstDistribution/comboScoreForItem/
+// wordMatchScoreForItem/namedSetMatchForItem's own math.
+const RARITY_MAP_KEY = 'pswap:rarity:v2';
+const RARITY_STATS_KEY = 'pswap:raritystats:v2';
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
 const RARITY_CONCURRENT_GUARD_SECONDS = 10;
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
