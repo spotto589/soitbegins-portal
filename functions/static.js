@@ -20680,19 +20680,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     // placeholder until the crawl behind it (maybeRefreshRarityScores)
     // actually existed. Null only until this collection's first crawl
     // pass completes (same gating as RARITY's own rank/total above).
-    // MATCHED SET line (reported live, xrpigeons #727: a Takashi
-    // Murakami/KAWS art-world nod spread across Background/Feathers/
-    // Eyewear/Beak — unremarkable on any ONE category alone, but almost
-    // no other Pigeon shares more than one of those values together) —
-    // ourRarityMinPairCount is the rarest PAIRING this item's own real
-    // traits have anywhere in the collection (see comboScoreForItem's own
-    // comment in _shared.js); <=3 is the same "genuinely notable, not
-    // just statistically busy" bar a 1/1 single trait would clear on its
-    // own, kept low on purpose so this stays rare enough to mean
-    // something. Only ever adds a line, never removes the score itself —
-    // costs no extra height for the vast majority of Pigeons that don't
-    // clear it.
-    var matchBadge = (p && p.ourRarityMinPairCount !== null && p.ourRarityMinPairCount !== undefined && p.ourRarityMinPairCount <= 3)
+    // Named Set badge takes priority when there is one (a real, hand-
+    // confirmed match — e.g. PR!NCE, FULLY SU!TED — see RARITY_NAMED_SETS
+    // in _shared.js) since it's a stronger, more specific claim than the
+    // generic pairing line below. Falls back to the plain "MATCHED SET"
+    // line (reported live, xrpigeons #727: a Takashi Murakami/KAWS
+    // art-world nod spread across 4 categories — unremarkable on any ONE
+    // category alone, but almost no other Pigeon shares more than one of
+    // those values together) when this item clears a real pairing bar
+    // without being part of a curated set — ourRarityMinPairCount is the
+    // rarest PAIRING this item's own real traits have anywhere in the
+    // collection (see comboScoreForItem's own comment in _shared.js);
+    // <=3 is the same "genuinely notable, not just statistically busy"
+    // bar a 1/1 single trait would clear on its own. Only ever adds a
+    // line, never removes the score itself — costs no extra height for
+    // the vast majority of Pigeons that don't clear either bar.
+    var matchBadge = (p && p.ourRarityNamedSet)
+      ? '<div class="tc-sub" style="color:var(--magenta); text-shadow:0 0 4px var(--magenta-glow);">' +
+        escapeHtml(p.ourRarityNamedSet.name) + ' SET · ' + greenNum('x' + p.ourRarityNamedSet.multiplier) + '</div>'
+      : (p && p.ourRarityMinPairCount !== null && p.ourRarityMinPairCount !== undefined && p.ourRarityMinPairCount <= 3)
       ? '<div class="tc-sub" style="color:var(--magenta); text-shadow:0 0 4px var(--magenta-glow);">MATCHED SET · ' +
         (p.ourRarityMinPairCount === 1 ? 'UN!QUE PA!R!NG' : 'SHARED BY ' + greenNum(p.ourRarityMinPairCount) + ' 0THERS') +
         '</div>'

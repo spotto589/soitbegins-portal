@@ -195,13 +195,20 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pige
     ourRarityScore: rarityEntry ? rarityEntry.score : null,
     ourRarityTotal: rarityEntry ? rarityEntry.total : null,
     // Where ourRarityScore actually comes from — base (per-category,
-    // Statistical Rarity) vs combo (the pairwise "matching set" bonus,
-    // see comboScoreForItem's own comment in _shared.js). minPairCount is
-    // the rarest pairing this item itself has (e.g. "shared by only 1
-    // other Pigeon"), null once this item has fewer than 2 real traits.
+    // Statistical Rarity), combo (the statistical pairwise bonus, see
+    // comboScoreForItem's own comment in _shared.js), and wordMatch (the
+    // literal-shared-name bonus, see sharesWord's own comment — catches
+    // e.g. Clothing:Prince + Headwear:Prince Hat, which combo's own lift
+    // math under-weights since both traits are individually common).
+    // minPairCount is the rarest pairing this item itself has (e.g.
+    // "shared by only 1 other Pigeon"), null once this item has fewer
+    // than 2 real traits. namedSet is only ever a hand-curated, confirmed
+    // match (see RARITY_NAMED_SETS in _shared.js) — never inferred.
     ourRarityBase: rarityEntry ? rarityEntry.base : null,
     ourRarityCombo: rarityEntry ? rarityEntry.combo : null,
+    ourRarityWordMatch: rarityEntry && rarityEntry.wordMatch !== undefined ? rarityEntry.wordMatch : null,
     ourRarityMinPairCount: rarityEntry && rarityEntry.minPairCount !== undefined ? rarityEntry.minPairCount : null,
+    ourRarityNamedSet: rarityEntry ? rarityEntry.namedSet || null : null,
     owner: owner || null,
     ownerShort: owner ? shortenAddr(owner) : null,
     ownerIndexed: !!owner,

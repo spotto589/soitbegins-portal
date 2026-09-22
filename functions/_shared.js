@@ -3942,6 +3942,108 @@ function comboScoreForItem(attrs, pairCounts, dist, collectionSizeApprox) {
   return { comboScore, minCount };
 }
 
+const RARITY_WORD_STOPWORDS = new Set(['the', 'of', 'and', 'in', 'on', 'with', 'to']);
+// Words under 4 letters are skipped — real trait names run long enough
+// ("Superflat", "Biohazard") that a short common word ("the", "of") is
+// never the actual signal, and excluding them avoids matching e.g. two
+// unrelated values that both happen to contain "war" or "art".
+function rarityWords(value) {
+  return String(value).toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length >= 4 && !RARITY_WORD_STOPWORDS.has(w));
+}
+// Two trait VALUES share a real name — "Prince" (Clothing) / "Prince Hat"
+// (Headwear), not just two traits that both happen to be individually
+// uncommon. Reported live (xrpigeons #1195: Clothing:Prince + Headwear:
+// Prince Hat — the ONLY Pigeon with both, out of 18 with Prince clothing
+// and 29 with a Prince Hat) as reading wrong under the lift-based combo
+// score above: each trait is common enough alone (18, 29) that even a
+// genuinely unique pairing only produces modest lift (~5.8x, well under
+// the ~13-27x range real designed sets showed in a discovery pass across
+// this collection) — lift measures numerical surprise, not the plain
+// fact that two things share a name, and those aren't the same thing.
+// This is a second, independent automatic signal for exactly that case:
+// zero curation, deterministic, and (checked live against the full
+// xrpigeons trait vocabulary before shipping) doesn't trip on generic
+// words — every word two DIFFERENT items' values shared collection-wide
+// turned out to belong to a genuinely small, distinctive cluster, not a
+// common word like "Classic" or "Gaze" appearing everywhere.
+function sharesWord(valA, valB) {
+  const wa = rarityWords(valA), wb = rarityWords(valB);
+  for (const a of wa) for (const b of wb) {
+    if (a === b || a.includes(b) || b.includes(a)) return true;
+  }
+  return false;
+}
+// Same shape as comboScoreForItem above (collectionSizeApprox / real
+// joint count per matched pair) but gated on sharesWord instead of lift —
+// restricted to the (much smaller) set of pairs that actually share a
+// name, so this doesn't inherit naive-sum's original flaw (see
+// comboScoreForItem's own comment) of rewarding every item just for
+// having more trait categories filled in.
+function wordMatchScoreForItem(attrs, pairCounts, collectionSizeApprox) {
+  let score = 0;
+  const matches = [];
+  for (let i = 0; i < attrs.length; i++) {
+    for (let j = i + 1; j < attrs.length; j++) {
+      if (!sharesWord(attrs[i][1], attrs[j][1])) continue;
+      const actual = pairCounts[pairKey(attrs[i], attrs[j])] || 1;
+      score += collectionSizeApprox / actual;
+      matches.push({ a: attrs[i], b: attrs[j], count: actual });
+    }
+  }
+  return { score, matches };
+}
+
+// Curated "Named Sets" — the third layer, for a real match neither of
+// the two automatic layers above can infer on their own: no shared word,
+// and not necessarily numerically striking either, but a human looking
+// at the actual pictures (or the collection's own lore/branding) can
+// tell it's intentional. Reported live, all confirmed real by the user
+// directly (not algorithm output): Hazmat clothing + Biohazard headwear
+// ("fully suited" — no shared word, so word-match misses it, though the
+// lift-based layer above does catch this one reasonably on its own,
+// ~15x); Heart clothing + "So It Begins" headwear (a literal reference
+// to this site's own name — no formula could ever infer that); and
+// #727's own Takashi/Murakami/Kaws/Superflat combo from the very first
+// pass at this (a real art-world nod, confirmed by the user, that
+// neither automatic layer fully credits since none of its 4 values share
+// a literal word). Added here explicitly, by hand, is the ONLY way a
+// case like these gets its rarity right — this list is meant to grow as
+// more are confirmed, never auto-populated. `pieces` are matched against
+// an item's own real attributes; `pieces.length` doesn't have to equal
+// how many an item actually has — 2+ of a larger set still counts (see
+// namedSetMultiplierForItem's own tiers).
+export const RARITY_NAMED_SETS = {
+  xrpigeons: [
+    { name: 'PR!NCE', pieces: [{ trait_type: 'Clothing', value: 'Prince' }, { trait_type: 'Headwear', value: 'Prince Hat' }] },
+    { name: 'FULLY SU!TED', pieces: [{ trait_type: 'Clothing', value: 'Hazmat' }, { trait_type: 'Headwear', value: 'Biohazard' }] },
+    { name: 'S0 !T BEG!NS', pieces: [{ trait_type: 'Clothing', value: 'Heart' }, { trait_type: 'Headwear', value: 'So It Begins' }] },
+    { name: 'TAKASH! MURAKAM!', pieces: [
+      { trait_type: 'Background', value: 'Takashi' },
+      { trait_type: 'Feathers', value: 'Murakami' },
+      { trait_type: 'Eyewear', value: 'Kaws' },
+      { trait_type: 'Beak', value: 'Superflat' },
+    ] },
+  ],
+};
+// 2 pieces of a set -> x1.5, 3 -> x2.5, 4+ -> x4 — escalating on purpose
+// (a full set should read as dramatically rarer than a partial one) but
+// capped at x4 so a curated set can never completely dwarf a genuinely
+// 1/1-trait Pigeon that isn't part of any named set at all.
+const RARITY_NAMED_SET_TIERS = { 2: 1.5, 3: 2.5, 4: 4 };
+function namedSetMultiplierForItem(attrs, collectionKey) {
+  const sets = RARITY_NAMED_SETS[collectionKey || 'xrpigeons'];
+  if (!sets) return { multiplier: 1, setName: null, matchedCount: 0 };
+  let best = { multiplier: 1, setName: null, matchedCount: 0 };
+  for (const set of sets) {
+    const matchedCount = set.pieces.filter(p => attrs.some(a => a[0] === p.trait_type && a[1] === p.value)).length;
+    if (matchedCount < 2) continue;
+    const tierKey = Math.min(matchedCount, 4);
+    const multiplier = RARITY_NAMED_SET_TIERS[tierKey] || 1;
+    if (multiplier > best.multiplier) best = { multiplier, setName: set.name, matchedCount };
+  }
+  return best;
+}
+
 export async function maybeRefreshRarityScores(kv, collectionKey, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX) {
   const cfg = getTradeConfig(collectionKey);
   const shopSlug = cfg && cfg.deeptideShopSlug ? cfg.deeptideShopSlug : (collectionKey ? null : DEEPTIDE_PIGEON_SHOP_SLUG);
@@ -4015,12 +4117,17 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
       const itemAttrs = {};
       for (const nftId of Object.keys(raw)) itemAttrs[nftId] = raw[nftId].a;
       const pairCounts = buildPairCounts(itemAttrs);
-      const finalScore = {}, finalCombo = {}, finalMinPair = {};
+      const finalScore = {}, finalCombo = {}, finalWordMatch = {}, finalMinPair = {}, finalSet = {};
       for (const nftId of Object.keys(raw)) {
-        const { comboScore, minCount } = comboScoreForItem(raw[nftId].a, pairCounts, dist, collectionSizeApprox);
-        finalScore[nftId] = raw[nftId].s + comboScore;
+        const attrs = raw[nftId].a;
+        const { comboScore, minCount } = comboScoreForItem(attrs, pairCounts, dist, collectionSizeApprox);
+        const { score: wordScore } = wordMatchScoreForItem(attrs, pairCounts, collectionSizeApprox);
+        const { multiplier, setName, matchedCount } = namedSetMultiplierForItem(attrs, collectionKey);
+        finalScore[nftId] = (raw[nftId].s + comboScore + wordScore) * multiplier;
         finalCombo[nftId] = comboScore;
+        finalWordMatch[nftId] = wordScore;
         finalMinPair[nftId] = minCount;
+        finalSet[nftId] = setName ? { name: setName, multiplier, matchedCount } : null;
       }
       // Higher score = rarer, same convention as rarity.tools/moonrank —
       // rank 1 is the single rarest Pigeon in the collection.
@@ -4030,17 +4137,23 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
         // total carried per-entry (not just in the stats blob) so a
         // reader (toItem below) can build a real "RANK / TOTAL" line off
         // one single KV read, same shape as Deeptide's own rarityRank/
-        // rarityTotal pair it's replacing. base/combo kept separate (not
-        // just folded into score) so the UI can show where a Pigeon's
-        // rarity actually comes from — a lone rare trait vs a matched set
-        // — instead of one undifferentiated number; minPairCount powers a
-        // real "only shared by N other Pigeons" line for a matched pair,
-        // null when this item has fewer than 2 real traits to pair up.
+        // rarityTotal pair it's replacing. base/combo/wordMatch kept
+        // separate (not just folded into score) so the UI can show where
+        // a Pigeon's rarity actually comes from — a lone rare trait, a
+        // statistically-surprising pairing, a literal name match, or a
+        // curated Named Set — instead of one undifferentiated number;
+        // minPairCount powers a real "only shared by N other Pigeons"
+        // line, null when this item has fewer than 2 real traits to pair
+        // up. namedSet is null unless this item matched a confirmed,
+        // hand-curated set (see RARITY_NAMED_SETS' own comment) — never
+        // inferred automatically.
         finalMap[nftId] = {
           score: Math.round(finalScore[nftId] * 1000) / 1000,
           base: Math.round(raw[nftId].s * 1000) / 1000,
           combo: Math.round(finalCombo[nftId] * 1000) / 1000,
+          wordMatch: Math.round(finalWordMatch[nftId] * 1000) / 1000,
           minPairCount: finalMinPair[nftId],
+          namedSet: finalSet[nftId],
           rank: idx + 1,
           total: sorted.length,
         };
