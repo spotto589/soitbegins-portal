@@ -194,20 +194,17 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pige
     ourRarityRank: rarityEntry ? rarityEntry.rank : null,
     ourRarityScore: rarityEntry ? rarityEntry.score : null,
     ourRarityTotal: rarityEntry ? rarityEntry.total : null,
-    // Where ourRarityScore actually comes from — base (per-category,
-    // Statistical Rarity), combo (the statistical pairwise bonus, see
-    // comboScoreForItem's own comment in _shared.js), and wordMatch (the
-    // literal-shared-name bonus, see sharesWord's own comment — catches
-    // e.g. Clothing:Prince + Headwear:Prince Hat, which combo's own lift
-    // math under-weights since both traits are individually common).
-    // minPairCount is the rarest pairing this item itself has (e.g.
-    // "shared by only 1 other Pigeon"), null once this item has fewer
-    // than 2 real traits. namedSet is only ever a hand-curated, confirmed
-    // match (see RARITY_NAMED_SETS in _shared.js) — never inferred.
+    // Two layers, both checkable by hand — see scoreAgainstDistribution
+    // and namedSetMatchForItem's own comments in _shared.js. ourRarityBase
+    // is Layer 1 (every real trait's own 100÷% score, summed);
+    // ourRarityBreakdown is that same sum's own per-trait rows (category,
+    // value, percent, contribution) so DETAIL can show the literal table
+    // instead of just the total. ourRarityNamedSet is Layer 2 — only ever
+    // a hand-curated, confirmed match (see RARITY_NAMED_SETS), never
+    // inferred — its multiplier is just the number of pieces matched.
+    // ourRarityScore = ourRarityBase * (namedSet ? multiplier : 1).
     ourRarityBase: rarityEntry ? rarityEntry.base : null,
-    ourRarityCombo: rarityEntry ? rarityEntry.combo : null,
-    ourRarityWordMatch: rarityEntry && rarityEntry.wordMatch !== undefined ? rarityEntry.wordMatch : null,
-    ourRarityMinPairCount: rarityEntry && rarityEntry.minPairCount !== undefined ? rarityEntry.minPairCount : null,
+    ourRarityBreakdown: rarityEntry ? rarityEntry.breakdown || null : null,
     ourRarityNamedSet: rarityEntry ? rarityEntry.namedSet || null : null,
     owner: owner || null,
     ownerShort: owner ? shortenAddr(owner) : null,

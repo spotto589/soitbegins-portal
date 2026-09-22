@@ -3814,12 +3814,21 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // so not one Named Set ever actually applied all session, despite every
 // one of them testing correct in isolation. v5 is the first pass where
 // Named Sets genuinely work.
-// Bump again (v6, v7, ...) any time the scoring formula itself changes —
+// v5 -> v6 (same day): reported live as too messy/hard to follow across
+// v1-v5's whole debugging arc — rebuilt as a genuinely simple 2-layer
+// system instead of 4. Layer 1 (scoreAgainstDistribution) unchanged in
+// substance, just now exposes percent alongside contribution. Layer 2
+// (namedSetMatchForItem) is now a plain "multiplier = pieces matched"
+// rule (x2/x3/x4) instead of the real-scarcity K-constant math v5 used —
+// less mathematically precise, deliberately, in exchange for being
+// checkable by anyone with a calculator. The statistical-combo and
+// word-match layers are gone entirely, not hidden — see the comment
+// where they used to live, just above RARITY_NAMED_SETS.
+// Bump again (v7, v8, ...) any time the scoring formula itself changes —
 // not needed for a change that only affects display, docs, or anything
-// that isn't scoreAgainstDistribution/comboScoreForItem/
-// wordMatchScoreForItem/namedSetMatchForItem's own math.
-const RARITY_MAP_KEY = 'pswap:rarity:v5';
-const RARITY_STATS_KEY = 'pswap:raritystats:v5';
+// that isn't scoreAgainstDistribution/namedSetMatchForItem's own math.
+const RARITY_MAP_KEY = 'pswap:rarity:v6';
+const RARITY_STATS_KEY = 'pswap:raritystats:v6';
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
 const RARITY_CONCURRENT_GUARD_SECONDS = 90; // was 10, then 30 — needs to clear Cloudflare KV's own ~60s worst-case cross-colo propagation window, not just this process's own runId check (see the v3->v4 KV key comment above)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
@@ -3872,6 +3881,20 @@ async function fetchFullTraitDistribution(shopSlug, collectionSizeApprox) {
 // the INSPECT screen's own per-trait breakdown (each row's real
 // contribution to the total) can use the identical per-category math the
 // crawl itself uses, not a second, potentially-drifting copy of it.
+// Layer 1 — Trait Rarity Score. Every trait gets its own real %
+// (collection-wide: count ÷ collectionSizeApprox), turned into a score
+// via 100 ÷ that % (a common trait like 25% scores 4; a rare one like
+// 0.4% scores 250) — then every one of the item's own traits' scores is
+// ADDED together, never averaged. Averaging would punish a Pigeon for
+// having more than one rare trait (it pulls toward the middle); summing
+// is what actually rewards individually-rare traits stacking, which is
+// the whole point — confirmed against the user's own worked example
+// (a 0.85% trait + a 0.40% trait, summed = 368, not averaged down to
+// ~184). "No trait" (naked, no headwear, etc) is its own real value with
+// its own % — every category always contributes something, even if
+// small. breakdown carries every trait's own row (category, value, %,
+// score) so the DETAIL screen can show this exact table, not just the
+// final number — see updateDetailRarity in static.js.
 export function scoreAgainstDistribution(attributes, dist, collectionSizeApprox) {
   let score = 0;
   const breakdown = [];
@@ -3880,154 +3903,28 @@ export function scoreAgainstDistribution(attributes, dist, collectionSizeApprox)
     const value = attr ? attr.value : '__no_trait__';
     const count = dist[category][value];
     if (!count) continue; // category genuinely has no "no value" case and this item has no entry either — nothing to score
-    const contribution = collectionSizeApprox / count;
+    const percent = (count / collectionSizeApprox) * 100;
+    const contribution = 100 / percent; // same value as collectionSizeApprox/count, just expressed the way it's shown on the page
     score += contribution;
-    breakdown.push({ category, value, count, contribution });
+    breakdown.push({
+      category, value, count,
+      percent: Math.round(percent * 1000) / 1000,
+      contribution: Math.round(contribution * 100) / 100,
+    });
   }
   return { score, breakdown };
 }
 
-// Two [category, value] pairs, order-independent key — hashes the same
-// regardless of which trait happened to come first in either item's own
-// attributes array, so both sides of a real match land on one counter.
-function pairKey(a, b) {
-  const sa = a[0] + '=' + a[1], sb = b[0] + '=' + b[1];
-  return sa < sb ? sa + '|' + sb : sb + '|' + sa;
-}
-
-// Real joint frequency for every PAIR of trait values that occurs
-// anywhere in the collection — built once per crawl pass, straight from
-// the same real per-item attributes the base score above already
-// consumed (see maybeRefreshRarityScores' own `raw[...].a`), no extra
-// Deeptide calls needed.
-//
-// This is what scoreAgainstDistribution alone can't see: a real example
-// (xrpigeons #727, confirmed live against Deeptide's own AND-filter —
-// the same one FILTER BY TRAITS already uses) has Background:Takashi,
-// Feathers:Murakami, Eyewear:Kaws, Beak:Superflat — a genuine Takashi
-// Murakami/KAWS art-world nod spread across 4 categories. Scored one
-// category at a time it looks unremarkable (12-31 other Pigeons each
-// share any ONE of those values individually, nothing close to a 1/1),
-// which is why Deeptide's own rarityRank (also purely per-category)
-// puts it 33rd/3015 — reported live as reading wrong next to a collector
-// rarity site ranking the same Pigeon 2nd.
-function buildPairCounts(itemAttrs) {
-  const pairCounts = {};
-  for (const nftId of Object.keys(itemAttrs)) {
-    const attrs = itemAttrs[nftId];
-    for (let i = 0; i < attrs.length; i++) {
-      for (let j = i + 1; j < attrs.length; j++) {
-        const key = pairKey(attrs[i], attrs[j]);
-        pairCounts[key] = (pairCounts[key] || 0) + 1;
-      }
-    }
-  }
-  return pairCounts;
-}
-
-// One item's combo bonus — real per-pair co-occurrence weighted against
-// what pure chance would predict, not raw joint count. An early version
-// of this just summed collectionSizeApprox / actualJointCount per pair
-// (the same shape the base score already uses for single traits) —
-// tested live against every real xrpigeons item before shipping (see
-// this repo's own commit history for the numbers), and it does NOT hold
-// up: with 4-7 trait categories each drawn from dozens of values, almost
-// EVERY item has some pair of values that happens to co-occur only once
-// or twice just from combinatorial sparsity, unrelated to any real
-// "matching set" — summing blindly across every pair rewards having MORE
-// trait categories filled in far more than it rewards a genuine themed
-// combination, and #727 (only 4 real traits) ranked 690th under it,
-// worse than doing nothing.
-//
-// This version instead compares each pair's ACTUAL joint count to the
-// count independence alone would predict (marginalA * marginalB / N) —
-// "lift". A pair sitting right at chance contributes ~0; a pair
-// occurring meaningfully more often than chance (the real signature of a
-// designed set, not just two individually-uncommon traits landing on the
-// same Pigeon) contributes a real, unbounded amount. Scaled by sqrt(N)
-// (collectionSizeApprox) so the combo term sits in the same rough order
-// of magnitude as the base score's own per-trait terms, rather than an
-// arbitrarily hand-picked constant. Verified against the real #727
-// example above: this lands it at 46th/3015 (top 1.5%) — genuinely rare,
-// and the pairwise reasoning is fully inspectable via the
-// ourRarityCombo/ourRarityBase split below (was 33rd on base score
-// alone, same number Deeptide's own rarityRank already shows). It does
-// NOT land at literally 2nd the way one third-party site apparently
-// ranks it — that site's own method is undocumented, wasn't verifiable,
-// and this was deliberately not curve-fit to match an unverified
-// external number; 46th/3015 is what a transparent, real-data-tested
-// formula actually produces. minCount (the single rarest real joint
-// count this item has, unweighted by the lift math above) rides along
-// separately for a plain-language "only shared by N other Pigeons"
-// badge — see ourRarityMinPairCount in pigeons.js's toItem.
-function comboScoreForItem(attrs, pairCounts, dist, collectionSizeApprox) {
-  const scale = Math.sqrt(collectionSizeApprox);
-  let comboScore = 0;
-  let minCount = null;
-  for (let i = 0; i < attrs.length; i++) {
-    for (let j = i + 1; j < attrs.length; j++) {
-      const [catA, valA] = attrs[i], [catB, valB] = attrs[j];
-      const actual = pairCounts[pairKey(attrs[i], attrs[j])] || 1;
-      const marginalA = (dist[catA] && dist[catA][valA]) || 1;
-      const marginalB = (dist[catB] && dist[catB][valB]) || 1;
-      const expected = (marginalA * marginalB) / collectionSizeApprox;
-      comboScore += (actual / expected) * scale;
-      if (minCount === null || actual < minCount) minCount = actual;
-    }
-  }
-  return { comboScore, minCount };
-}
-
-const RARITY_WORD_STOPWORDS = new Set(['the', 'of', 'and', 'in', 'on', 'with', 'to']);
-// Words under 4 letters are skipped — real trait names run long enough
-// ("Superflat", "Biohazard") that a short common word ("the", "of") is
-// never the actual signal, and excluding them avoids matching e.g. two
-// unrelated values that both happen to contain "war" or "art".
-function rarityWords(value) {
-  return String(value).toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length >= 4 && !RARITY_WORD_STOPWORDS.has(w));
-}
-// Two trait VALUES share a real name — "Prince" (Clothing) / "Prince Hat"
-// (Headwear), not just two traits that both happen to be individually
-// uncommon. Reported live (xrpigeons #1195: Clothing:Prince + Headwear:
-// Prince Hat — the ONLY Pigeon with both, out of 18 with Prince clothing
-// and 29 with a Prince Hat) as reading wrong under the lift-based combo
-// score above: each trait is common enough alone (18, 29) that even a
-// genuinely unique pairing only produces modest lift (~5.8x, well under
-// the ~13-27x range real designed sets showed in a discovery pass across
-// this collection) — lift measures numerical surprise, not the plain
-// fact that two things share a name, and those aren't the same thing.
-// This is a second, independent automatic signal for exactly that case:
-// zero curation, deterministic, and (checked live against the full
-// xrpigeons trait vocabulary before shipping) doesn't trip on generic
-// words — every word two DIFFERENT items' values shared collection-wide
-// turned out to belong to a genuinely small, distinctive cluster, not a
-// common word like "Classic" or "Gaze" appearing everywhere.
-function sharesWord(valA, valB) {
-  const wa = rarityWords(valA), wb = rarityWords(valB);
-  for (const a of wa) for (const b of wb) {
-    if (a === b || a.includes(b) || b.includes(a)) return true;
-  }
-  return false;
-}
-// Same shape as comboScoreForItem above (collectionSizeApprox / real
-// joint count per matched pair) but gated on sharesWord instead of lift —
-// restricted to the (much smaller) set of pairs that actually share a
-// name, so this doesn't inherit naive-sum's original flaw (see
-// comboScoreForItem's own comment) of rewarding every item just for
-// having more trait categories filled in.
-function wordMatchScoreForItem(attrs, pairCounts, collectionSizeApprox) {
-  let score = 0;
-  const matches = [];
-  for (let i = 0; i < attrs.length; i++) {
-    for (let j = i + 1; j < attrs.length; j++) {
-      if (!sharesWord(attrs[i][1], attrs[j][1])) continue;
-      const actual = pairCounts[pairKey(attrs[i], attrs[j])] || 1;
-      score += collectionSizeApprox / actual;
-      matches.push({ a: attrs[i], b: attrs[j], count: actual });
-    }
-  }
-  return { score, matches };
-}
+// The statistical-combo and word-match layers that used to live here
+// (pairKey/buildPairCounts/comboScoreForItem/sharesWord/
+// wordMatchScoreForItem) were removed on purpose, not lost — reported
+// live as making the system too hard to follow: two extra layers of real
+// math (lift-vs-chance, shared-word detection) that a visitor couldn't
+// verify by eye, on top of Layer 1's simple 100÷% and Layer 2's simple
+// piece-count multiplier. Everything they used to catch (e.g. #11's
+// Moon Walker/Interstellion pairing) is now covered by hand-confirming
+// it as a Named Set instead — see RARITY_NAMED_SETS below. Two layers,
+// both checkable with a calculator, is the whole system now.
 
 // A pigeon's own DISPLAY NUMBER can itself be part of a real match (e.g.
 // #321 in Clothing:King + Headwear:Crown — 321 counts down like a
@@ -4119,11 +4016,12 @@ export const RARITY_NAMED_SETS = {
       { trait_type: 'Headwear', value: 'Interstellion' },
     ] },
     // SANTA (2 pigeons: #973, #1225) and JESTER (4 pigeons: #610, #281,
-    // #904, #918) confirmed live in the SAME message — a deliberate real
-    // comparison: both are genuine matched sets, but SANTA's smaller
-    // jointCount earns a bigger multiplier than JESTER's under
-    // namedSetMultiplierForItem's own real-scarcity math (see that
-    // function's own comment) — x3.01 vs x2.005, not a guessed tier.
+    // #904, #918) confirmed live in the same message. Both are 2-piece
+    // sets, so both get x2 under the simple piece-count multiplier — an
+    // earlier, real-scarcity-based version of this deliberately scored
+    // them differently (x3.01 vs x2.005), which is more "correct" but was
+    // exactly the kind of thing reported as too hard to follow; the
+    // simple rule trades that precision away on purpose.
     { name: 'SANTA', pieces: [
       { trait_type: 'Clothing', value: 'Santa' },
       { trait_type: 'Headwear', value: 'Merry Christmas' },
@@ -4141,22 +4039,15 @@ export const RARITY_NAMED_SETS = {
     ] },
   ],
 };
-// The multiplier a matched set gets is NOT a hand-picked flat tier
-// (2 pieces = x1.5, etc, an earlier version of this) — reported live as
-// wanting the multiplier itself "determined by how many combinations of
-// that trait exist", i.e. real scarcity data, not a guessed number. This
-// does exactly that: it's the same collectionSizeApprox/actual-joint-
-// count shape every other layer already uses (see comboScoreForItem's
-// own comment), just applied to "how many OTHER Pigeons match this exact
-// same subset of this exact same set" instead of a plain trait pair.
-// Matching MORE of a set's pieces can only ever make that subset rarer
-// or equally rare (never more common) than matching fewer — so a fuller
-// match earning a bigger multiplier falls out of the real data on its
-// own, no separate "more pieces = more credit" rule needed on top.
-// K=750 (disclosed, not hidden) calibrates so a true 1-of-1 match lands
-// around x5, and a match 10 other Pigeons also have lands around x1.4 —
-// tested against every confirmed set above before shipping.
-const RARITY_NAMED_SET_K = 750;
+// Layer 2 — Matched Set Multiplier. Deliberately NOT the real-scarcity
+// (collectionSizeApprox/actualJointCount) math an earlier version used —
+// reported live as too hard to follow, even though it was more
+// mathematically "correct". The multiplier is now just the number of
+// matching pieces, full stop: 2 pieces -> x2, 3 -> x3, 4 -> x4. A set
+// never has more than 4 pieces defined (see RARITY_NAMED_SETS above), so
+// x4 is the real ceiling here — nothing scores higher from this layer.
+// A match below 2 pieces isn't a "match" at all (score stays x1, Layer 1
+// alone). This is the whole rule: count the pieces, that's the number.
 function namedSetMatchForItem(attrs, collectionKey) {
   const sets = RARITY_NAMED_SETS[collectionKey || 'pigeons'];
   if (!sets) return null;
@@ -4165,13 +4056,10 @@ function namedSetMatchForItem(attrs, collectionKey) {
     const matchedPieces = set.pieces.filter(p => attrs.some(a => a[0] === p.trait_type && a[1] === p.value));
     if (matchedPieces.length < 2) continue;
     if (!best || matchedPieces.length > best.matchedCount) {
-      best = { setName: set.name, matchedPieces, matchedCount: matchedPieces.length };
+      best = { setName: set.name, matchedCount: matchedPieces.length, multiplier: matchedPieces.length };
     }
   }
   return best;
-}
-function namedSetSubsetKey(setName, matchedPieces) {
-  return setName + '::' + matchedPieces.map(p => p.trait_type + '=' + p.value).sort().join('|');
 }
 
 export async function maybeRefreshRarityScores(kv, collectionKey, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX) {
@@ -4185,19 +4073,12 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
   if (stats && stats.inProgress && now - stats.updatedAt < RARITY_CONCURRENT_GUARD_SECONDS) return;
   if (stats && !stats.inProgress && now - stats.completedAt < RARITY_REFRESH_STALE_SECONDS) return;
 
-  // Confirmed live: rapid-fire manual triggers (well under
-  // RARITY_CONCURRENT_GUARD_SECONDS apart in real wall-clock terms, since
-  // that guard only blocks a NEW tick from starting close to the last
-  // one's START — it does nothing once two ticks are already both
-  // mid-flight) raced on the same rawKey checkpoint. Whichever tick wrote
-  // last won, silently discarding the other's progress and leaving a
-  // corrupted, inconsistent raw map (one real Pigeon's live combo score
-  // came out ~25x too high from it). runId is this tick's own claim on
-  // the current pass, checked again right before every write below
-  // (assertStillOwnsPass) — a tick that's been superseded by a newer
-  // pass bails out instead of clobbering it. This doesn't need Cloudflare
-  // KV to support real compare-and-swap (it doesn't) — it only needs the
-  // LAST write to be the one whose runId actually matches what's live.
+  // runId is this tick's own claim on the current pass, checked again
+  // right before every write below (assertStillOwnsPass) — a tick that's
+  // been superseded by a newer pass bails out instead of clobbering it.
+  // Confirmed live this was a real problem under rapid manual triggering
+  // (not normal traffic) even after this guard existed — see this file's
+  // own commit history if it ever needs revisiting.
   let runId;
   async function assertStillOwnsPass() {
     const freshRaw = await kv.get(statsKey);
@@ -4205,34 +4086,27 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
     return !fresh || !fresh.runId || fresh.runId === runId;
   }
   let skip = stats && stats.inProgress ? stats.nextSkip : 0;
-  // Raw per-item data accumulates in KV directly (staging key) across
-  // ticks — same reasoning as the number map's own staging copy, just
-  // holding { s: base score, a: real [[category,value],...] traits } per
-  // item instead of a finished { score, rank } yet, since rank can't
-  // exist until the whole pass is done, and now neither can the pairwise
-  // combo bonus (see buildPairCounts' own comment) — that needs every
-  // item's own real trait list, not just its base score, so `a` has to
-  // be carried alongside `s` rather than derived from it afterward.
+  // Each item's FINAL result (score, breakdown, namedSet) is computed
+  // immediately, per item, as it streams in — unlike the old combo/
+  // word-match layers, nothing here needs to know about any OTHER item
+  // to score this one, so there's no separate "raw" staging shape and no
+  // second pass needed. raw simply accumulates each item's own finished
+  // result across ticks; only RANK (relative to every other item) has to
+  // wait for the whole pass to complete.
   const rawKey = kvKeyFor(RARITY_MAP_KEY + ':raw', collectionKey);
   let raw = {};
-  // dist (the fixed value->count snapshot every tick of THIS pass scores
+  // dist (the fixed value->% snapshot every tick of THIS pass scores
   // against) is carried in-memory from here rather than round-tripped
   // through KV right after writing it — Cloudflare KV is only eventually
   // consistent, so reading a key back immediately after writing it is not
   // guaranteed to see that same write.
   let dist;
-  // A pass already `inProgress` when this shape changed (raw[nftId] used
-  // to be a plain number, now `{ s, a }`) would otherwise load old-shape
-  // entries and crash later on `raw[nftId].a` — checked here once (any
-  // real entry that isn't the new shape means this checkpoint predates
-  // the change) rather than restarting from skip 0 with a half-old,
-  // half-new raw map, which is the actual bug this guards against.
   const freshPassNeeded = !stats || !stats.inProgress;
   if (!freshPassNeeded) {
     const rawStored = await kv.get(rawKey);
     raw = rawStored ? JSON.parse(rawStored) : {};
-    const staleShape = Object.keys(raw).some(id => typeof raw[id] !== 'object' || raw[id] === null || !Array.isArray(raw[id].a));
-    if (staleShape) { raw = {}; skip = 0; } else { dist = stats.dist; runId = stats.runId; }
+    dist = stats.dist;
+    runId = stats.runId;
   }
   if (freshPassNeeded || !dist) {
     // Fresh pass — real distribution recomputed from scratch each time
@@ -4247,93 +4121,42 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
     if (page.error || !page.items.length) break;
     for (const it of page.items) {
       if (!it.nftId || !Array.isArray(it.attributes)) continue;
-      const baseScore = scoreAgainstDistribution(it.attributes, dist, collectionSizeApprox).score;
+      // Layer 1 (see scoreAgainstDistribution's own comment).
+      const { score: baseScore, breakdown } = scoreAgainstDistribution(it.attributes, dist, collectionSizeApprox);
       // __no_trait__ never actually appears in Deeptide's own per-item
       // traits array (an empty category is just omitted, see
-      // deeptideListingToPigeon) — the filter here is just a safety net,
-      // not something that normally fires. A "both naked" pair is common
-      // and not the kind of match this is meant to catch anyway.
+      // deeptideListingToPigeon) — the filter here is just a safety net.
       const realAttrs = it.attributes
         .filter(a => a.trait_type && a.value && a.value !== '__no_trait__')
         .map(a => [a.trait_type, a.value]);
-      // Injected as a synthetic trait, not scored separately — flows
-      // through combo/wordMatch/Named Sets for free (see
-      // numberPatternFor's own comment). Never touches the base score
-      // (dist comes from a real Deeptide fetch that has no idea numbers
-      // exist), only this item's own local attrs.
+      // A Pigeon's own display number can itself be one of a Named Set's
+      // pieces (see numberPatternFor's own comment) — injected here as a
+      // synthetic trait so namedSetMatchForItem sees it for free.
       const numberPattern = numberPatternFor(it.number);
       if (numberPattern) realAttrs.push(['__Number__', numberPattern]);
-      raw[it.nftId] = { s: baseScore, a: realAttrs };
+      // Layer 2 (see namedSetMatchForItem's own comment) — the multiplier
+      // is just the piece count, so this item's own final score is fully
+      // known right now, no dependency on any other item.
+      const match = namedSetMatchForItem(realAttrs, collectionKey);
+      const multiplier = match ? match.multiplier : 1;
+      raw[it.nftId] = {
+        score: Math.round(baseScore * multiplier * 1000) / 1000,
+        base: Math.round(baseScore * 1000) / 1000,
+        breakdown,
+        namedSet: match ? { name: match.setName, matchedCount: match.matchedCount, multiplier } : null,
+      };
     }
     lastTotal = page.total || lastTotal;
     skip += DEEPTIDE_LISTINGS_MAX_LIMIT;
     if (skip >= lastTotal) {
       // Pass genuinely complete — only now can rank (relative to every
-      // other item's score) OR the pairwise combo bonus (relative to
-      // every other item's own real traits) exist at all.
-      const itemAttrs = {};
-      for (const nftId of Object.keys(raw)) itemAttrs[nftId] = raw[nftId].a;
-      const pairCounts = buildPairCounts(itemAttrs);
-      // Named Sets need a first pass to find each item's own best match
-      // before any multiplier can be computed — the multiplier itself
-      // depends on how many OTHER items match that exact same subset
-      // (see namedSetMultiplierForItem's own comment), which isn't known
-      // until every item's match is in.
-      const setMatch = {};
-      for (const nftId of Object.keys(raw)) setMatch[nftId] = namedSetMatchForItem(raw[nftId].a, collectionKey);
-      const subsetCounts = {};
-      for (const nftId of Object.keys(setMatch)) {
-        const m = setMatch[nftId];
-        if (!m) continue;
-        const key = namedSetSubsetKey(m.setName, m.matchedPieces);
-        subsetCounts[key] = (subsetCounts[key] || 0) + 1;
-      }
-      const finalScore = {}, finalCombo = {}, finalWordMatch = {}, finalMinPair = {}, finalSet = {};
-      for (const nftId of Object.keys(raw)) {
-        const attrs = raw[nftId].a;
-        const { comboScore, minCount } = comboScoreForItem(attrs, pairCounts, dist, collectionSizeApprox);
-        const { score: wordScore } = wordMatchScoreForItem(attrs, pairCounts, collectionSizeApprox);
-        const m = setMatch[nftId];
-        let multiplier = 1, setInfo = null;
-        if (m) {
-          const jointCount = subsetCounts[namedSetSubsetKey(m.setName, m.matchedPieces)];
-          multiplier = 1 + (collectionSizeApprox / jointCount) / RARITY_NAMED_SET_K;
-          setInfo = { name: m.setName, multiplier: Math.round(multiplier * 100) / 100, matchedCount: m.matchedCount, jointCount };
-        }
-        finalScore[nftId] = (raw[nftId].s + comboScore + wordScore) * multiplier;
-        finalCombo[nftId] = comboScore;
-        finalWordMatch[nftId] = wordScore;
-        finalMinPair[nftId] = minCount;
-        finalSet[nftId] = setInfo;
-      }
+      // other item's own already-finished score) exist at all.
       // Higher score = rarer, same convention as rarity.tools/moonrank —
       // rank 1 is the single rarest Pigeon in the collection.
-      const sorted = Object.keys(finalScore).sort((a, b) => finalScore[b] - finalScore[a]);
+      const sorted = Object.keys(raw).sort((a, b) => raw[b].score - raw[a].score);
       const finalMap = {};
       sorted.forEach((nftId, idx) => {
-        // total carried per-entry (not just in the stats blob) so a
-        // reader (toItem below) can build a real "RANK / TOTAL" line off
-        // one single KV read, same shape as Deeptide's own rarityRank/
-        // rarityTotal pair it's replacing. base/combo/wordMatch kept
-        // separate (not just folded into score) so the UI can show where
-        // a Pigeon's rarity actually comes from — a lone rare trait, a
-        // statistically-surprising pairing, a literal name match, or a
-        // curated Named Set — instead of one undifferentiated number;
-        // minPairCount powers a real "only shared by N other Pigeons"
-        // line, null when this item has fewer than 2 real traits to pair
-        // up. namedSet is null unless this item matched a confirmed,
-        // hand-curated set (see RARITY_NAMED_SETS' own comment) — never
-        // inferred automatically.
-        finalMap[nftId] = {
-          score: Math.round(finalScore[nftId] * 1000) / 1000,
-          base: Math.round(raw[nftId].s * 1000) / 1000,
-          combo: Math.round(finalCombo[nftId] * 1000) / 1000,
-          wordMatch: Math.round(finalWordMatch[nftId] * 1000) / 1000,
-          minPairCount: finalMinPair[nftId],
-          namedSet: finalSet[nftId],
-          rank: idx + 1,
-          total: sorted.length,
-        };
+        finalMap[nftId] = { ...raw[nftId], rank: idx + 1, total: sorted.length };
       });
       // A newer pass (different runId) may have already started and
       // possibly finished while this tick was working — writing this
@@ -4348,10 +4171,10 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
       return;
     }
   }
-  // Still mid-pass — checkpoint the raw scores, and the stats blob keeps
-  // carrying `dist` forward so the next tick scores against the same
-  // snapshot rather than re-fetching (and potentially getting a slightly
-  // different) distribution every single tick.
+  // Still mid-pass — checkpoint each item's already-finished result, and
+  // the stats blob keeps carrying `dist` forward so the next tick scores
+  // against the same snapshot rather than re-fetching (and potentially
+  // getting a slightly different) distribution every single tick.
   if (!(await assertStillOwnsPass())) return;
   await safeKvPut(kv, rawKey, JSON.stringify(raw));
   await safeKvPut(kv, statsKey, JSON.stringify({

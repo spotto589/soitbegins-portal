@@ -7141,6 +7141,36 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(2, 1fr); gap:1rem; margin:0 0 0.4rem; max-width:100%; }
   #screenDetail .detail-rarity-row .trait-cell{ cursor:default; text-align:center; min-width:0; }
   #screenDetail .detail-rarity-row .trait-cell:hover{ background:transparent; border-color:var(--border-dim); }
+  /* RARITY SCORE cell only (not RARITY) — tap it to see the actual
+     Layer 1 + Layer 2 math for THIS Pigeon (see updateDetailRarity in
+     the client script and scoreAgainstDistribution's own comment in
+     _shared.js), not just the final number. */
+  #screenDetail .trait-cell-clickable{ cursor:pointer; }
+  #screenDetail .trait-cell-clickable:hover{ border-color:var(--cyan); background:rgba(61,243,236,0.05); }
+  /* Its own internal scroll (not the page's) — #screenDetail is
+     deliberately a fixed, no-scroll-at-all screen (see its own comment),
+     so a breakdown table long enough to overflow scrolls in its own box
+     instead of ever growing the page past one viewport. Hidden until
+     tapped, so it costs zero space for the vast majority of the time. */
+  #screenDetail .detail-rarity-breakdown{
+    margin:0 0 0.6rem;
+    padding:0.6rem 0.7rem;
+    border:1px solid var(--border-mid);
+    border-radius:var(--radius);
+    background:var(--panel-bg-solid);
+    max-height:200px;
+    overflow-y:auto;
+    font-size:12px;
+  }
+  #screenDetail .rb-row{ display:flex; justify-content:space-between; align-items:baseline; gap:0.5rem; padding:0.3rem 0; border-bottom:1px dashed var(--border-dim); }
+  #screenDetail .rb-row:last-of-type{ border-bottom:none; }
+  #screenDetail .rb-trait{ color:var(--grey); text-transform:uppercase; letter-spacing:0.03em; }
+  #screenDetail .rb-trait .rb-value{ color:var(--white); }
+  #screenDetail .rb-pct{ color:var(--cyan); white-space:nowrap; }
+  #screenDetail .rb-math{ text-align:right; }
+  #screenDetail .rb-sum-row{ display:flex; justify-content:space-between; padding-top:0.5rem; margin-top:0.3rem; border-top:1px solid var(--border-mid); font-weight:700; }
+  #screenDetail .rb-mult-row{ display:flex; justify-content:space-between; padding:0.4rem 0 0; color:var(--magenta); font-weight:700; }
+  #screenDetail .rb-final-row{ display:flex; justify-content:space-between; padding-top:0.4rem; margin-top:0.3rem; border-top:1px solid var(--border-mid); color:var(--green); font-weight:700; font-size:14px; }
   /* PRICE / RECORD SALE / RECENT SALE / AVERAGE SALE — stacked directly
      underneath the trait grid (including its own BACK cell), inside the
      right column, not off in a separate full-width section — keeps the
@@ -11040,11 +11070,12 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <div class="tc-label">RAR!TY</div>
                 <div class="tc-value" id="detailRarity"></div>
               </div>
-              <div class="trait-cell">
+              <div class="trait-cell trait-cell-clickable" id="detailRarityScoreCell" title="TAP T0 SEE H0W TH!S SC0RE !S W0RKED 0UT">
                 <div class="tc-label">RAR!TY SC0RE <a href="/rarity" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:inherit; text-decoration:underline; text-underline-offset:2px;" title="H0W RAR!TY W0RKS">(?)</a></div>
                 <div class="tc-value" id="detailRarityScore"></div>
               </div>
             </div>
+            <div class="detail-rarity-breakdown" id="detailRarityBreakdown" style="display:none;"></div>
             <div class="scylla-listing-block">
               <div class="scylla-listing-row" id="detailScyllaListingRow">
                 <span class="scylla-listing-price" id="detailScyllaPrice">N0 L!ST!NG</span>
@@ -12320,7 +12351,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
-   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
+   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailRarityScoreCell','detailRarityBreakdown','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose',
    'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections','profileScreenCoins','profileScreenMessageBtn',
@@ -20670,30 +20701,32 @@ const SWAP_HTML = `<!DOCTYPE html>
     e.preventDefault();
     openWalletProfile(link.getAttribute('data-wallet'), link.getAttribute('data-short'));
   });
+  // Builds the literal step-by-step math a tap on RARITY SCORE reveals —
+  // every real trait's own row (value, %, 100÷% score), the sum (Layer
+  // 1), then the Named Set multiplier row and final total (Layer 2) when
+  // one applies. Nothing here that isn't also in ourRarityBreakdown/
+  // ourRarityBase/ourRarityNamedSet already sent from the server — this
+  // just lays it out to read, doesn't compute anything new.
+  function rarityBreakdownHtml(p){
+    if (!p || !p.ourRarityBreakdown || !p.ourRarityBreakdown.length) return '';
+    var rows = p.ourRarityBreakdown.map(function(r){
+      var displayValue = r.value === '__no_trait__' ? 'N0NE' : r.value;
+      return '<div class="rb-row"><span class="rb-trait">' + escapeHtml(r.category) + ': <span class="rb-value">' + escapeHtml(displayValue) + '</span></span>' +
+        '<span class="rb-math"><span class="rb-pct">' + r.percent + '%</span> &rarr; ' + greenNum(r.contribution) + '</span></div>';
+    }).join('');
+    var sumRow = '<div class="rb-sum-row"><span>LAYER 1 TOTAL (SUM)</span><span>' + greenNum(p.ourRarityBase.toLocaleString(undefined, { maximumFractionDigits: 1 })) + '</span></div>';
+    var multRow = p.ourRarityNamedSet
+      ? '<div class="rb-mult-row"><span>' + escapeHtml(p.ourRarityNamedSet.name) + ' SET (' + p.ourRarityNamedSet.matchedCount + ' P!ECES)</span><span>&times;' + p.ourRarityNamedSet.multiplier + '</span></div>'
+      : '';
+    var finalRow = '<div class="rb-final-row"><span>F!NAL SC0RE</span><span>' + greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + '</span></div>';
+    return rows + sumRow + multRow + finalRow;
+  }
   function updateDetailRarity(p){
     var info = p ? rarityDisplay(p) : null;
     if (info){ el.detailRarityRow.style.display = ''; el.detailRarity.innerHTML = greenNum(info.rank) + ' / ' + info.total; }
     else el.detailRarityRow.style.display = 'none';
-    // Real Σκύλλα rarity SCORE (see scoreAgainstDistribution's own module
-    // comment in _shared.js — sum of 1/(each trait's own real share of
-    // the collection), higher = rarer) — was a permanent "C0M!NG S00N"
-    // placeholder until the crawl behind it (maybeRefreshRarityScores)
-    // actually existed. Null only until this collection's first crawl
-    // pass completes (same gating as RARITY's own rank/total above).
-    // Named Set badge ONLY — a real, hand-confirmed match (see
-    // RARITY_NAMED_SETS in _shared.js), never inferred. A generic
-    // "MATCHED SET" fallback used to show here whenever
-    // ourRarityMinPairCount <= 3 (no curated set required) — reported
-    // live as showing on nearly every Pigeon, and checked: with 6-7
-    // trait categories, ALMOST EVERY Pigeon has SOME pair of traits
-    // shared by only 1-2 others purely from combinatorial sparsity (a
-    // random 9-Pigeon sample found minPairCount <= 2 on 8 of them) —
-    // this is the exact "everyone looks rare" problem the combo SCORE
-    // itself was already fixed to avoid (see comboScoreForItem's own
-    // comment on the naive-sum version's rejection), just never applied
-    // to this badge. Removed rather than re-tuned — raw joint count
-    // alone was never a reliable "notable" signal on its own, only a
-    // confirmed set (or the real, lift-weighted score itself) is.
+    // Named Set badge — a real, hand-confirmed match only (see
+    // RARITY_NAMED_SETS in _shared.js), never inferred.
     var matchBadge = (p && p.ourRarityNamedSet)
       ? '<div class="tc-sub" style="color:var(--magenta); text-shadow:0 0 4px var(--magenta-glow);">' +
         escapeHtml(p.ourRarityNamedSet.name) + ' SET · ' + greenNum('x' + p.ourRarityNamedSet.multiplier) + '</div>'
@@ -20701,7 +20734,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.detailRarityScore.innerHTML = (p && p.ourRarityScore !== null && p.ourRarityScore !== undefined)
       ? greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + matchBadge
       : 'C0M!NG S00N';
+    // Closed on every fresh Pigeon (not left open carrying the PREVIOUS
+    // Pigeon's breakdown while this one's data loads in) — rebuilt fresh
+    // every time regardless of whether it's currently shown, so it's
+    // ready the instant it's tapped open.
+    el.detailRarityBreakdown.style.display = 'none';
+    el.detailRarityBreakdown.innerHTML = rarityBreakdownHtml(p);
   }
+  el.detailRarityScoreCell.addEventListener('click', function(){
+    if (!el.detailRarityBreakdown.innerHTML) return; // C0M!NG S00N / no data yet — nothing to expand
+    el.detailRarityBreakdown.style.display = el.detailRarityBreakdown.style.display === 'none' ? '' : 'none';
+  });
   function updateDetailPrice(p){
     if (p && p.priceXrp !== null && p.priceXrp !== undefined){
       el.detailPriceRow.style.display = '';
