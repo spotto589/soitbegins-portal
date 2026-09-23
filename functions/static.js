@@ -6374,25 +6374,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card .card-detail-traits .tc-value{ font-size:16px; letter-spacing:0; font-weight:700; line-height:1.2; width:100%; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:normal; }
   .result-card .card-detail-traits .tc-label{ font-size:12px; margin:0.2rem 0 0; font-style:italic; }
   .result-card .card-detail-traits .tc-sub{ font-size:14px; font-weight:700; margin-top:0.2rem; line-height:1.25; }
-  .result-card .card-detail-traits .trait-cell.has-preview{ padding:0; align-items:stretch; justify-content:flex-start; }
-  .result-card .card-detail-traits .trait-cell.has-preview .tc-text{ padding:0.3rem 2px 0.35rem; }
-  .result-card .card-detail-traits .trait-cell.has-preview .tc-art{ min-height:0; }
+  .result-card .card-detail-traits .trait-cell.has-preview{ padding:0; }
+  .result-card .card-detail-traits .trait-cell.has-preview .tc-text{ padding:0.3rem 2px; }
   /* The wide BACKGROUND box: name, category and % on one row, so the
      picture above gets most of the height. */
   .result-card .bc-bg .trait-cell.has-preview .tc-text{ display:flex; align-items:baseline; justify-content:center; gap:0.6rem; flex-wrap:nowrap; }
   .result-card .bc-bg .trait-cell.has-preview .tc-value{ width:auto; }
   .result-card .bc-bg .trait-cell.has-preview .tc-label, .result-card .bc-bg .trait-cell.has-preview .tc-sub{ margin:0; }
   .result-card .card-detail-traits .trait-cell.has-preview:hover{ border-color:var(--cyan); }
-  /* Trait box design B — picture on top, solid text strip underneath
-     (Pigeon page + BOXED VIEW). */
-  .trait-cell.has-preview{ display:flex; flex-direction:column; overflow:hidden; background:#0b0c0f; }
-  .trait-cell.has-preview .tc-art{ flex:1 1 auto; min-height:40px; background-size:cover; background-position:center 20%; background-repeat:no-repeat; }
-  .trait-cell.has-preview .tc-text{ flex:0 0 auto; background:#0b0c0f; border-top:1px solid var(--border-mid); border-radius:0; }
-  .trait-cell.has-preview .tc-value, .trait-cell.has-preview .tc-label, .trait-cell.has-preview .tc-sub{ color:#fff; text-shadow:none; }
-  /* NO <category> boxes — same picture-on-top / text-strip layout as
-     every other trait box, with plain Pigeons purple (the collection's
-     accent) where the picture would be. Pigeon page + BOXED VIEW. */
+  /* Trait box design C — the picture fills the whole box, dimmed by a
+     dark wash (a separate layer, not a CSS filter), with the text straight
+     on top and no box behind it. Pigeon page + BOXED VIEW. */
+  .trait-cell.has-preview{ position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; background:#0b0c0f; }
+  .trait-cell.has-preview .tc-art{ position:absolute; inset:0; background-size:cover; background-position:center 20%; background-repeat:no-repeat; }
+  .trait-cell.has-preview .tc-art::after{ content:''; position:absolute; inset:0; background:rgba(8,9,11,0.66); }
+  .trait-cell.has-preview:hover .tc-art::after{ background:rgba(8,9,11,0.55); }
+  .trait-cell.has-preview .tc-text{ position:relative; z-index:1; width:100%; box-sizing:border-box; background:none; border:none; border-radius:0; }
+  .trait-cell.has-preview .tc-value, .trait-cell.has-preview .tc-label, .trait-cell.has-preview .tc-sub{ color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.8); }
+  /* NO <category> boxes — same layout, plain Pigeons purple (the
+     collection's accent) instead of a picture, no dark wash. */
   .trait-cell.has-preview .tc-art.tc-art-none{ background:var(--collection-accent); }
+  .trait-cell.has-preview .tc-art.tc-art-none::after{ display:none; }
   /* SALES H!ST0RY — exactly the OFFER button's shape, in cyan. */
   .card-sales-history-btn{ width:100%; background:var(--cyan); border:1px solid var(--cyan); color:#000; text-shadow:none; font-family:var(--font-mono); font-weight:700; font-size:15px; letter-spacing:0.03em; padding:0.8em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:box-shadow 0.15s ease; }
   .card-sales-history-btn:hover{ box-shadow:0 0 14px var(--cyan-glow); }
@@ -7207,7 +7209,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      text, same font-size as plain cells (again, the flush-bottom sizing)
      except the percent/count line, which stays bigger as its own thing. */
   #screenDetail .trait-cell.has-preview{ padding:0; }
-  #screenDetail .trait-cell.has-preview .tc-art{ min-height:64px; }
+  #screenDetail .trait-cell.has-preview{ min-height:120px; }
   #screenDetail .trait-cell.has-preview .tc-sub{ font-size:16px; }
   /* Static solid box behind value/label/sub together — text-shadow alone
      still clashed against a busy/light crop, this reads reliably over
@@ -20890,16 +20892,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     var exampleImg = isNone ? null : ((state.traitExamples && state.traitExamples[a.trait_type] && state.traitExamples[a.trait_type][a.value]) || null);
     var previewPos = TRAIT_PREVIEW_CORNER_POSITION[a.trait_type] || TRAIT_PREVIEW_POSITION[a.trait_type];
     var previewSize = TRAIT_PREVIEW_SIZE[a.trait_type];
-    // Design B (picked live 2026-09-23): the trait picture fills the top of
-    // the box at full brightness (.tc-art) and the text sits in a solid
-    // dark strip underneath it (.tc-text), so text never sits on busy art.
+    // Design C (picked live 2026-09-23): the trait picture fills the whole
+    // box (.tc-art), dimmed by a dark wash, with the text straight on top
+    // (.tc-text) and no box behind it.
     var artHtml = exampleImg
       ? '<div class="tc-art" style="background-image:url(&quot;' + escapeHtml(exampleImg) + '&quot;);' +
         (previewSize ? 'background-size:' + previewSize + ';' : '') +
         (previewPos ? 'background-position:' + previewPos + ';' : '') + '"></div>'
       : '';
-    // NO boxes use the same layout, with plain Pigeons purple where the
-    // picture would be (reported live 2026-09-23).
+    // NO boxes use the same layout, plain Pigeons purple instead of a
+    // picture (reported live 2026-09-23).
     if (isNone) artHtml = '<div class="tc-art tc-art-none"></div>';
     var hasArt = !!artHtml;
     var style = '';
