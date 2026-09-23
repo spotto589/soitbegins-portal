@@ -5086,15 +5086,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.5rem;
   }
   .result-row-left .pigeon-img-box{ width:100%; }
-  /* BOXED VIEW headers: P!GE0N # on the left and RAR!TY / RAR!TY SC0RE on
-     the right are the same fixed height, so the trait boxes start exactly
-     level with the top of the picture (reported live 2026-09-23). */
-  .result-row-left .result-num{ border-bottom:none; padding:0; font-size:26px; height:48px; display:flex; align-items:center; justify-content:center; }
-  .result-row-right .card-rarity-summary{ height:48px; padding:0 0.5rem; gap:1.5rem; box-sizing:border-box; }
-  .result-row-right .card-rarity-summary .css-item{ font-size:22px; font-weight:700; }
-  .result-row-right .card-rarity-summary .css-label{ min-width:0; font-size:13px; margin-right:0.5em; }
-  .card-sales-history-btn{ width:100%; background:transparent; border:1px solid var(--cyan-dim); color:var(--cyan); font-family:var(--font-mono); font-weight:700; font-size:13px; letter-spacing:0.08em; padding:0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); }
-  .card-sales-history-btn:hover{ border-color:var(--cyan); background:rgba(61,243,236,0.08); }
   /* Full-width strip below the thumbnail — the AMOUNT field is always
      visible and typeable, no click-to-reveal step. Same strip in both
      the boxed and THUMBNAILS card layouts. */
@@ -6347,31 +6338,52 @@ const SWAP_HTML = `<!DOCTYPE html>
     .card-trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
   .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
-  /* BOXED VIEW traits — same boxes as the Pigeon page's trait grid
-     (#screenDetail .trait-grid), but every row a fixed height so every
-     card is exactly the same size and nothing ever scrolls inside it:
-     3 across, rarest first, BACKGROUND stretched along the bottom row. */
-  .result-card .card-detail-traits{ display:grid; max-width:100%; margin:0; grid-template-columns:repeat(3, 1fr); grid-auto-rows:112px; gap:0.4rem; }
-  .result-card .card-detail-traits .trait-cell{ padding:3px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-width:0; overflow:hidden; }
-  .result-card .card-detail-traits .tc-text{ width:100%; }
-  /* 12px, no letter-spacing: the collection's longest single word
-     (Burpocalypse, 79px) fits a box on one line without breaking. */
-  .result-card .card-detail-traits .tc-value{ font-size:12px; letter-spacing:0; font-weight:700; line-height:1.2; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:break-word; }
-  .result-card .card-detail-traits .tc-label{ font-size:10px; margin:0.2rem 0 0; font-style:italic; }
-  .result-card .card-detail-traits .tc-sub{ font-size:11px; margin-top:0.2rem; line-height:1.25; }
+  /* BOXED VIEW card — one grid, so both sides line up exactly:
+       row 1  P!GE0N #             | RAR!TY / RAR!TY SC0RE   (48px)
+       row 2  picture (264 square) | 6 trait boxes, 2 rows   (same 264px)
+       row 3  OFFER + SALES H!ST0RY| BACKGROUND              (same height)
+     Trait boxes are the Pigeon page's own (photo-backed, rarest first). */
+  .result-row.boxed-card{ display:grid; grid-template-columns:264px minmax(0, 1fr); grid-template-rows:48px 264px auto; column-gap:1.2rem; row-gap:0.5rem; padding:1rem; align-items:stretch; }
+  .boxed-card .bc-num{ grid-column:1; grid-row:1; border-bottom:none; padding:0; font-size:26px; display:flex; align-items:center; justify-content:center; }
+  .boxed-card .bc-summary{ grid-column:2; grid-row:1; min-width:0; }
+  .boxed-card .bc-summary .card-rarity-summary{ height:100%; padding:0 0.5rem; gap:1.5rem; box-sizing:border-box; }
+  .boxed-card .bc-summary .css-item{ font-size:22px; font-weight:700; }
+  .boxed-card .bc-summary .css-label{ min-width:0; font-size:13px; margin-right:0.5em; }
+  .boxed-card .bc-img{ grid-column:1; grid-row:2; width:264px; height:264px; }
+  .boxed-card .bc-traits{ grid-column:2; grid-row:2; height:264px; }
+  .boxed-card .bc-actions{ grid-column:1; grid-row:3; display:flex; flex-direction:column; gap:0.5rem; }
+  /* OFFER's own framed strip is dropped here so OFFER and SALES H!ST0RY
+     are exactly the same width and height. */
+  .boxed-card .bc-actions .thumb-offer{ padding:0; border:none; background:none; margin:0; }
+  .boxed-card .bc-bg{ grid-column:2; grid-row:3; display:grid; }
+  .result-card .card-detail-traits.bc-traits{ display:grid; max-width:100%; margin:0; grid-template-columns:repeat(3, minmax(0, 1fr)); grid-auto-rows:1fr; gap:0.5rem; }
+  .result-card .card-detail-traits .trait-cell{ padding:2px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-width:0; min-height:0; overflow:hidden; }
+  .result-card .card-detail-traits .tc-text{ width:100%; box-sizing:border-box; }
+  /* Biggest size first; fitBoxedTraitText() steps a name down only if it
+     wouldn't fit on whole words within 2 lines. */
+  .result-card .card-detail-traits .tc-value{ font-size:16px; letter-spacing:0; font-weight:700; line-height:1.2; width:100%; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:normal; }
+  .result-card .card-detail-traits .tc-label{ font-size:12px; margin:0.2rem 0 0; font-style:italic; }
+  .result-card .card-detail-traits .tc-sub{ font-size:14px; font-weight:700; margin-top:0.2rem; line-height:1.25; }
   .result-card .card-detail-traits .trait-cell.has-preview{ background-size:cover; background-position:center 20%; }
   .result-card .card-detail-traits .trait-cell.has-preview .tc-label,
   .result-card .card-detail-traits .trait-cell.has-preview .tc-value,
   .result-card .card-detail-traits .trait-cell.has-preview .tc-sub{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
   .result-card .card-detail-traits .trait-cell.has-preview .tc-text{ background:rgba(8,9,11,0.68); border-radius:calc(var(--radius) - 2px); padding:0.3rem 2px; }
   .result-card .card-detail-traits .trait-cell.has-preview:hover{ border-color:var(--cyan); }
-  .result-card .card-detail-traits .bg-span3-1{ grid-column:span 1; }
-  .result-card .card-detail-traits .bg-span3-2{ grid-column:span 2; }
-  .result-card .card-detail-traits .bg-span3-3{ grid-column:1 / -1; }
-  @media (max-width:520px){
-    .result-card .card-detail-traits{ grid-template-columns:repeat(2, 1fr); }
-    .result-card .card-detail-traits .bg-span2-1{ grid-column:span 1; }
-    .result-card .card-detail-traits .bg-span2-2{ grid-column:1 / -1; }
+  /* SALES H!ST0RY — exactly the OFFER button's shape, in cyan. */
+  .card-sales-history-btn{ width:100%; background:var(--cyan); border:1px solid var(--cyan); color:#000; text-shadow:none; font-family:var(--font-mono); font-weight:700; font-size:15px; letter-spacing:0.03em; padding:0.8em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:box-shadow 0.15s ease; }
+  .card-sales-history-btn:hover{ box-shadow:0 0 14px var(--cyan-glow); }
+  /* Phones: one column — number, picture, buttons, rarity, traits,
+     background. */
+  @media (max-width:700px){
+    .result-row.boxed-card{ grid-template-columns:minmax(0, 1fr); grid-template-rows:none; }
+    .boxed-card > *{ grid-column:1 !important; grid-row:auto !important; }
+    .boxed-card .bc-num{ order:1; height:48px; }
+    .boxed-card .bc-img{ order:2; justify-self:center; }
+    .boxed-card .bc-actions{ order:3; }
+    .boxed-card .bc-summary{ order:4; height:48px; }
+    .boxed-card .bc-traits{ order:5; height:auto; grid-auto-rows:120px; }
+    .boxed-card .bc-bg{ order:6; height:120px; }
   }
 
   @media (max-width:900px){
@@ -14193,7 +14205,26 @@ const SWAP_HTML = `<!DOCTYPE html>
       var match = catValues ? catValues.filter(function(v){ return v.value === a.value; })[0] : null;
       return match ? { trait_type: a.trait_type, value: a.value, percent: match.percent, count: match.count } : a;
     });
-    return '<div class="trait-grid card-detail-traits">' + detailTraitsHtml(attrs, 'card-trait-link') + '</div>';
+    var split = detailTraitCells(attrs);
+    return {
+      top: '<div class="trait-grid card-detail-traits bc-traits">' + split.rest.map(function(c){ return traitCellHtml(c, 'card-trait-link'); }).join('') + '</div>',
+      bg: '<div class="card-detail-traits bc-bg">' + (split.bg ? traitCellHtml(split.bg, 'card-trait-link') : '') + '</div>'
+    };
+  }
+  // Trait names get the biggest size that still fits their box: any name
+  // that would break mid-word or run past 2 lines steps down 1px at a
+  // time (never below 10px). Only BOXED VIEW's cards need this.
+  function fitBoxedTraitText(root){
+    if (state.dbView !== 'boxed' || !root) return;
+    root.querySelectorAll('.card-detail-traits .tc-value').forEach(function(v){
+      v.style.fontSize = '';
+      var size = parseFloat(getComputedStyle(v).fontSize);
+      var twoLines = function(){ return 2 * parseFloat(getComputedStyle(v).lineHeight) + 1; };
+      while (size > 10 && (v.scrollWidth > v.clientWidth + 0.5 || v.scrollHeight > twoLines())){
+        size -= 1;
+        v.style.fontSize = size + 'px';
+      }
+    });
   }
   function cardTraitsHtml(p){
     if (!p.attributes || !p.attributes.length) return '';
@@ -14380,22 +14411,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     var rarityAboveTraitsHtml = rarityLine
       ? '<div class="card-rarity-summary"><span class="css-item"><span class="css-label">RAR!TY</span>' + rarityLine + '</span><span class="css-item"><span class="css-label">RAR!TY SC0RE</span>' + rarityScoreLine + '</span></div>'
       : '';
+    // One grid, three rows, so both sides line up exactly (reported live
+    // 2026-09-23: symmetrical): headers / picture beside the first 6 trait
+    // boxes (same height) / OFFER + SALES H!ST0RY beside BACKGROUND (same
+    // height).
+    var traits = boxedTraitsHtml(p);
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      '<div class="result-row">' +
-        '<div class="result-row-left">' +
-          '<div class="result-num">' + collectionItemLabel() + ' ' + num + '</div>' +
-          '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
-            linkWrap(nftHrefFor(p), 'pigeon-img-link', img) +
-            '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
-            watchlistToggleHtml(p) +
-          '</div>' +
+      '<div class="result-row boxed-card">' +
+        '<div class="result-num bc-num">' + collectionItemLabel() + ' ' + num + '</div>' +
+        '<div class="bc-summary">' + rarityAboveTraitsHtml + '</div>' +
+        '<div class="pigeon-img-box bc-img" data-nftid="' + escapeHtml(p.nftId) + '">' +
+          linkWrap(nftHrefFor(p), 'pigeon-img-link', img) +
+          '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
+          watchlistToggleHtml(p) +
+        '</div>' +
+        traits.top +
+        '<div class="bc-actions">' +
           pigeonsActionHtml +
           '<button type="button" class="card-sales-history-btn" data-nftid="' + escapeHtml(p.nftId) + '">SALES H!ST0RY</button>' +
         '</div>' +
-        '<div class="result-row-right">' +
-          rarityAboveTraitsHtml +
-          boxedTraitsHtml(p) +
-        '</div>' +
+        traits.bg +
       '</div>' +
     '</div>';
   }
@@ -14476,10 +14511,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       list = el.resultsArea.querySelector('.result-list');
     }
     list.insertAdjacentHTML('beforeend', newItems.map(cardHtmlForView).join(''));
+    fitBoxedTraitText(list);
   }
   function renderResultsReplace(items){
     el.resultsArea.innerHTML = items.length ? '<div class="result-list' + (state.dbView === 'thumbnails' ? ' view-thumbnails' : '') + '">' + items.map(cardHtmlForView).join('') + '</div>' : '';
+    fitBoxedTraitText(el.resultsArea);
   }
+  // Box widths change with the window, and the font can finish loading
+  // after the first fit, so refit then too.
+  window.addEventListener('resize', function(){ fitBoxedTraitText(el.resultsArea); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ fitBoxedTraitText(el.resultsArea); });
 
   // ---- Shared L!ST/0FFER/TRANSFER popup (#amountEntryModal) — cards
   // across DATABASE only ever show a button now; this is the one place
@@ -20733,7 +20774,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // per-category __no_trait__ count (state.traitNoTraitCounts, see
   // getNoTraitCounts). Not collection size minus the listed values: that
   // came out 56 for Eyewear when only the 7 Ushankas really have none.
-  function detailTraitsHtml(attrs, cellClass){
+  // Every category's cell data for one Pigeon: "rest" rarest first, and
+  // BACKGROUND on its own (it always goes last / along the bottom).
+  function detailTraitCells(attrs){
     attrs = attrs || [];
     var cats = state.traitCategories ? Object.keys(state.traitCategories) : [];
     attrs.forEach(function(a){ if (cats.indexOf(a.trait_type) === -1) cats.push(a.trait_type); });
@@ -20748,9 +20791,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       return { trait_type: cat, value: noTrait ? '__no_trait__' : '', displayValue: 'NO', percent: percent, count: count };
     });
     var isBg = function(c){ return String(c.trait_type).toLowerCase() === 'background'; };
-    var rest = sortTraitsByRarity(cells.filter(function(c){ return !isBg(c); }));
+    return { rest: sortTraitsByRarity(cells.filter(function(c){ return !isBg(c); })), bg: cells.filter(isBg)[0] || null };
+  }
+  function detailTraitsHtml(attrs, cellClass){
+    var split = detailTraitCells(attrs);
+    var rest = split.rest, bg = split.bg;
     var html = rest.map(function(c){ return traitCellHtml(c, cellClass); }).join('');
-    var bg = cells.filter(isBg)[0];
     if (bg){
       var n = rest.length;
       html += traitCellHtml(bg, 'bg-span3-' + (3 - n % 3) + ' bg-span2-' + (2 - n % 2) + (cellClass ? ' ' + cellClass : ''));
