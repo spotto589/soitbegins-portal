@@ -6381,6 +6381,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card .bc-bg .trait-cell.has-preview .tc-text{ display:flex; align-items:baseline; justify-content:center; gap:0.6rem; flex-wrap:nowrap; }
   .result-card .bc-bg .trait-cell.has-preview .tc-value{ width:auto; }
   .result-card .bc-bg .trait-cell.has-preview .tc-label, .result-card .bc-bg .trait-cell.has-preview .tc-sub{ margin:0; }
+  .result-card .bc-bg .trait-cell.has-preview .tc-sub{ display:flex; gap:0.6rem; }
   .result-card .card-detail-traits .trait-cell.has-preview:hover{ border-color:var(--cyan); }
   /* Trait box design C — the picture fills the whole box, dimmed by a
      dark wash (a separate layer, not a CSS filter), with the text straight
@@ -20880,8 +20881,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
   function traitCellHtml(a, extraClass){
-    var sub = (a.percent !== null && a.percent !== undefined)
-      ? '<div class="tc-sub">' + greenNum(typeof a.percent === 'number' ? a.percent.toFixed(3) : a.percent) + '%' + (a.count !== null && a.count !== undefined ? ' (' + greenNum(a.count) + ')' : '') + '</div>'
+    // "TOTAL :: <count>" with the percentage on the line underneath
+    // (reported live 2026-09-23).
+    var hasPct = a.percent !== null && a.percent !== undefined;
+    var hasCount = a.count !== null && a.count !== undefined;
+    var sub = (hasPct || hasCount)
+      ? '<div class="tc-sub">' +
+          (hasCount ? '<div class="tc-total">TOTAL :: ' + greenNum(a.count) + '</div>' : '') +
+          (hasPct ? '<div class="tc-pct">' + greenNum(typeof a.percent === 'number' ? a.percent.toFixed(3) : a.percent) + '%</div>' : '') +
+        '</div>'
       : '';
     // Same real-photo-as-background treatment as the ADD TRAITS flyout's
     // own trait boxes (renderTraitsFlyoutVals) — same example image
