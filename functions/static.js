@@ -12496,6 +12496,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   // could read as "N / 3015" using one system's rank against the other's
   // total. Every RARITY display in the app reads through this one
   // function so they can never drift out of sync with each other.
+  // Rarity scores: no decimal at 1,000 and over (11,483 not 11,483.0),
+  // one decimal below that (607.3).
+  function fmtRarityScore(n){
+    return n.toLocaleString(undefined, { maximumFractionDigits: n >= 1000 ? 0 : 1 });
+  }
   function rarityDisplay(p){
     if (p.ourRarityRank && p.ourRarityTotal) return { rank: p.ourRarityRank, total: p.ourRarityTotal };
     if (p.rarityRank) return { rank: p.rarityRank, total: p.rarityTotal || 3015 };
@@ -14332,7 +14337,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // on scoreAgainstDistribution) — was a permanent C0M!NG S00N here
     // until the crawl behind it existed.
     var rarityScoreLine = (rarityInfo && p.ourRarityScore !== null && p.ourRarityScore !== undefined)
-      ? greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 }))
+      ? greenNum(fmtRarityScore(p.ourRarityScore))
       : 'C0M!NG S00N';
     var rarityAboveTraitsHtml = rarityLine
       ? '<div class="card-rarity-summary"><span class="css-item"><span class="css-label">RAR!TY</span>' + rarityLine + '</span><span class="css-item"><span class="css-label">RAR!TY SC0RE</span>' + rarityScoreLine + '</span></div>'
@@ -14390,7 +14395,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // rarity score instead of its average sale (falls back to the normal
     // line when there's no score yet).
     if ((state.sort === 'RARITY_ASC' || state.sort === 'RARITY_DESC') && p.ourRarityScore !== null && p.ourRarityScore !== undefined){
-      avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">RAR!TY SC0RE ::</span><span class="stat-value">' + greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + '</span></div>';
+      avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">RAR!TY SC0RE ::</span><span class="stat-value">' + greenNum(fmtRarityScore(p.ourRarityScore)) + '</span></div>';
     }
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
@@ -20795,7 +20800,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="rb-math">' + r.percent + '% 0F P!GE0NS &nbsp;&rarr;&nbsp; 100 &divide; ' + r.percent + ' &nbsp;=&nbsp; ' + greenNum(r.contribution) + '</div>' +
       '</div>';
     }).join('');
-    var sumRow = '<div class="rb-sum-row"><span>LAYER 1 :: ADD EVERY TRA!T SC0RE AB0VE</span><span>' + greenNum(p.ourRarityBase.toLocaleString(undefined, { maximumFractionDigits: 1 })) + '</span></div>';
+    var sumRow = '<div class="rb-sum-row"><span>LAYER 1 :: ADD EVERY TRA!T SC0RE AB0VE</span><span>' + greenNum(fmtRarityScore(p.ourRarityBase)) + '</span></div>';
     var multRow = '';
     if (p.ourRarityNamedSet){
       var ns = p.ourRarityNamedSet;
@@ -20827,7 +20832,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return escapeHtml(t.value) + ' (1 0F ' + t.of + ')';
       }).join(' + ') + ' &nbsp;&rarr;&nbsp; &times; ' + p.ourRarityRareTraits.multiplier + '</div>';
     }
-    var finalRow = '<div class="rb-final-row"><span>F!NAL SC0RE</span><span>' + greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + '</span></div>';
+    var finalRow = '<div class="rb-final-row"><span>F!NAL SC0RE</span><span>' + greenNum(fmtRarityScore(p.ourRarityScore)) + '</span></div>';
     return rows + sumRow + multRow + oneOfOneRow + rareRow + finalRow;
   }
   function updateDetailRarity(p){
@@ -20857,7 +20862,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Just the number under the picture — the badges and the full
     // step-by-step math live in the RAR!TY SC0RE popup (EXPAND).
     el.detailRarityScore.innerHTML = (p && p.ourRarityScore !== null && p.ourRarityScore !== undefined)
-      ? greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 }))
+      ? greenNum(fmtRarityScore(p.ourRarityScore))
       : 'C0M!NG S00N';
     // Closed on every fresh Pigeon (never left open showing the PREVIOUS
     // Pigeon's breakdown) — rebuilt every time so it's ready on EXPAND.
