@@ -1377,7 +1377,10 @@ export async function onRequestGet(context) {
   // first pass yet (rarityMap empty) — a clean one-time fallback until
   // real ranks exist, never a partial/half-computed ordering.
   const sortParam = params.get('sort');
-  const isOurRaritySort = !sortParam || sortParam === 'RARITY_ASC' || sortParam === 'RARITY_DESC';
+  // LORE_ASC/LORE_DESC rank by the Lore Score instead (the full layered
+  // formula, see scoreStoredTraits' loreRank) — same pool/filters/paging.
+  const isLoreSort = sortParam === 'LORE_ASC' || sortParam === 'LORE_DESC';
+  const isOurRaritySort = !sortParam || sortParam === 'RARITY_ASC' || sortParam === 'RARITY_DESC' || isLoreSort;
   if (isOurRaritySort && Object.keys(rarityMap).length) {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
@@ -1385,7 +1388,8 @@ export async function onRequestGet(context) {
     // above) = rank 1 (the single rarest Pigeon) first, same convention
     // Deeptide's own rarity-asc always used, so RESET/the plain landing
     // sort reads exactly the same either way.
-    const asc = sortParam !== 'RARITY_DESC';
+    const asc = sortParam !== 'RARITY_DESC' && sortParam !== 'LORE_DESC';
+    const rankOf = id => (isLoreSort && rarityMap[id].loreRank != null) ? rarityMap[id].loreRank : rarityMap[id].rank;
     let idPool = Object.keys(rarityMap);
     if (filters.length) {
       const scan = await scanFilteredCandidates(filters);
@@ -1396,7 +1400,7 @@ export async function onRequestGet(context) {
       const editionSet = await idsInEditionRange();
       idPool = idPool.filter(id => editionSet.has(id));
     }
-    const sortedIds = idPool.sort((a, b) => asc ? rarityMap[a].rank - rarityMap[b].rank : rarityMap[b].rank - rarityMap[a].rank);
+    const sortedIds = idPool.sort((a, b) => asc ? rankOf(a) - rankOf(b) : rankOf(b) - rankOf(a));
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await resolveDetailsCached(context, coll.key, pageIds);
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));

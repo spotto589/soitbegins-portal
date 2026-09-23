@@ -14554,7 +14554,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Sorted by RAR!TY — same label/value stack, but the Pigeon's own
     // rarity score instead of its average sale (falls back to the normal
     // line when there's no score yet).
-    if ((state.sort === 'RARITY_ASC' || state.sort === 'RARITY_DESC') && p.ourRarityScore !== null && p.ourRarityScore !== undefined){
+    if ((state.sort === 'LORE_ASC' || state.sort === 'LORE_DESC') && p.ourRarityLoreScore !== null && p.ourRarityLoreScore !== undefined){
+      avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">L0RE SC0RE ::</span><span class="stat-value">' + greenNum(fmtRarityScore(p.ourRarityLoreScore)) + '</span></div>';
+    } else if ((state.sort === 'RARITY_ASC' || state.sort === 'RARITY_DESC') && p.ourRarityScore !== null && p.ourRarityScore !== undefined){
       avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">RAR!TY SC0RE ::</span><span class="stat-value">' + greenNum(fmtRarityScore(p.ourRarityScore)) + '</span></div>';
     }
     var offerCtxCard = isOwnWalletScope();
@@ -20402,6 +20404,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     'RAR!TY': [
       { value: 'RARITY_ASC', label: 'H!GHEST' },
       { value: 'RARITY_DESC', label: 'L0WEST' }
+    ],
+    // Lore Score (the full layered formula: sets, number, 1 0F N, rare
+    // traits), kept separate from the RAR!TY ranking.
+    'L0RE': [
+      { value: 'LORE_ASC', label: 'H!GHEST' },
+      { value: 'LORE_DESC', label: 'L0WEST' }
     ],
     'ALPHABET!CAL': [
       { value: 'NAME_ASC', label: 'A-Z' },
