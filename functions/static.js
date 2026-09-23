@@ -8550,48 +8550,71 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-align:left;
   }
   .history-modal-close{ position:absolute; top:1rem; right:1rem; }
+  /* OFFER popup in the SALES H!ST0RY popup's style (reported live
+     2026-09-23): purple-edged panel, big centred Pigeon + title, purple
+     eyebrow, balance tile, then amount / duration / SUBM!T stacked. */
+  #amountEntryModal.mode-offer .amount-entry-panel{ position:relative; width:min(600px, 100%); padding:2.5rem 2.25rem; text-align:center; border:1px solid rgba(var(--collection-accent-rgb), 0.4); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 44px rgba(var(--collection-accent-rgb), 0.14); }
+  #amountEntryModal.mode-offer .simple-picker-header{ position:absolute; top:1rem; right:1rem; left:auto; margin:0; padding:0; border:none; }
+  #amountEntryModal.mode-offer .simple-picker-title{ display:none; }
+  #amountEntryModal.mode-offer #amountEntryOfferMode{ display:flex !important; flex-direction:column; align-items:stretch; gap:0.9rem; padding:0; margin:0; border:none; background:none; }
+  #amountEntryModal.mode-offer #amountEntryOfferMode .thumb-offer-row{ display:contents; }
+  #amountEntryModal.mode-offer .amount-entry-pigeon-row{ order:1; flex-direction:column; align-items:center; gap:0.6rem; }
+  #amountEntryModal.mode-offer .amount-entry-pigeon-thumb{ width:140px; height:140px; border-radius:var(--radius); border:2px solid rgba(var(--collection-accent-rgb), 0.5); box-shadow:0 0 22px rgba(var(--collection-accent-rgb), 0.35); }
+  #amountEntryModal.mode-offer .amount-entry-pigeon-num{ font-size:34px; }
+  #amountEntryModal.mode-offer .offer-eyebrow{ order:2; text-align:center; color:var(--collection-accent); font-size:18px; letter-spacing:0.12em; margin:-0.4rem 0 0.2rem; }
+  #amountEntryModal.mode-offer #amountEntryOfferBalanceLine{ order:3; text-align:center; background:rgba(var(--collection-accent-rgb), 0.08); border:1px solid rgba(var(--collection-accent-rgb), 0.3); border-radius:var(--radius); padding:0.8em 0.6em; }
+  #amountEntryModal.mode-offer #amountEntryOfferBalanceLine .buyswap-balance-label{ font-size:13px; margin-bottom:0.35rem; }
+  #amountEntryModal.mode-offer #amountEntryOfferBalanceLine .buyswap-balance-value{ font-size:26px; }
+  #amountEntryModal.mode-offer .make-offer-input-wrap{ order:4; width:100%; }
+  #amountEntryModal.mode-offer .make-offer-input{ width:100%; font-size:26px; padding:0.7em 0.8em; text-align:center; border:1px solid rgba(var(--collection-accent-rgb), 0.45); }
+  #amountEntryModal.mode-offer #amountEntryOfferDuration{ order:5; margin:0; }
+  #amountEntryModal.mode-offer #amountEntryOfferBtn{ order:6; width:100%; background:var(--green); border:1px solid var(--green); color:#000; font-size:18px; font-weight:700; letter-spacing:0.05em; padding:0.9em; border-radius:var(--radius); }
+  #amountEntryModal.mode-offer #amountEntryOfferBtn:hover{ box-shadow:0 0 14px var(--green-glow); }
+  #amountEntryModal:not(.mode-offer) .offer-eyebrow{ display:none; }
   .history-modal-panel .history-title{ text-align:center; font-size:26px; font-weight:700; letter-spacing:0.03em; color:var(--white); }
   .history-modal-panel .node-eyebrow{ text-align:center; margin:0.2rem 0 1.1rem; }
   .history-modal-panel .detail-field{ max-width:none; display:flex; justify-content:space-between; align-items:center; gap:1rem; margin:0.5rem 0 0; }
   .history-modal-panel .df-value{ text-align:right; }
-  /* One card per event, sales loud (big green price), transfers quiet. */
-  .hx-list{ display:flex; flex-direction:column; gap:0.5rem; }
-  .hx-row{ border:1px solid var(--border-dim); border-radius:var(--radius); padding:0.7rem 0.9rem; background:rgba(255,255,255,0.02); }
-  .hx-row.hx-sale{ border-color:rgba(52,255,133,0.45); background:rgba(52,255,133,0.06); }
-  .hx-top{ display:flex; justify-content:space-between; align-items:baseline; gap:0.75rem; }
-  .hx-verb{ font-size:12px; font-weight:700; letter-spacing:0.12em; color:var(--grey); text-transform:uppercase; }
+  /* Transactions as one clean table: header row + one row per event. */
+  .hx-head, .hx-row{ display:grid; grid-template-columns:96px 150px minmax(0,1fr) minmax(0,1fr) 170px 96px; align-items:center; gap:0.75rem; }
+  .hx-head{ padding:0 1rem 0.5rem; font-size:12px; letter-spacing:0.12em; color:var(--grey-dim); text-transform:uppercase; border-bottom:1px solid var(--border-mid); }
+  .hx-list{ display:flex; flex-direction:column; }
+  .hx-row{ padding:0.75rem 1rem; border-bottom:1px solid var(--border-dim); }
+  .hx-row.hx-sale{ background:rgba(52,255,133,0.06); border-left:3px solid var(--green); padding-left:calc(1rem - 3px); }
+  .hx-verb{ font-size:13px; font-weight:700; letter-spacing:0.1em; color:var(--grey); text-transform:uppercase; }
   .hx-sale .hx-verb{ color:var(--green); }
-  .hx-price{ font-family:var(--font-mono); font-size:24px; font-weight:700; color:var(--green); text-shadow:0 0 8px var(--green-glow); white-space:nowrap; }
-  .hx-parties{ display:flex; align-items:center; flex-wrap:wrap; gap:0.35rem 0.5rem; margin-top:0.45rem; font-size:14px; }
-  .hx-tag{ font-size:10px; letter-spacing:0.12em; color:var(--grey-dim); text-transform:uppercase; }
-  .hx-arrow{ color:var(--grey-dim); }
-  .hx-meta{ display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-top:0.45rem; font-size:12px; color:var(--grey-dim); letter-spacing:0.03em; }
-  .hx-meta > span{ white-space:nowrap; }
-  .hx-meta .dh-bithomp-btn{ width:auto; flex:0 0 auto; display:inline-block; padding:0.35em 0.8em; margin:0; }
+  .hx-price{ font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--green); text-shadow:0 0 8px var(--green-glow); white-space:nowrap; }
+  .hx-dash{ color:var(--grey-dim); }
+  .hx-cell{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hx-date{ font-size:14px; color:var(--grey); white-space:nowrap; }
+  .hx-link{ text-align:right; }
+  .hx-link .dh-bithomp-btn{ display:inline-block; width:auto; margin:0; padding:0.35em 0.7em; font-size:12px; white-space:nowrap; }
+  /* Mint up top: two cells side by side. */
+  .history-mint-row{ display:flex; gap:0.75rem; margin:0 0 0.9rem; }
+  .history-mint-cell{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:0.25rem; padding:0.6em 0.5em; border:1px solid var(--border-dim); border-radius:var(--radius); }
+  .history-mint-cell .df-value{ text-align:center; }
   /* Bigger everywhere (reported live 2026-09-23: "its so small how am i
-     supposed to read it"). */
-  .history-modal-panel{ width:min(720px, 100%); padding:2.5rem 2.25rem; font-size:16px; }
+     supposed to read it"), wide enough for the transactions table. */
+  .history-modal-panel{ width:min(940px, 100%); padding:2.5rem 2.25rem; font-size:16px; }
   .history-modal-panel .buyswap-thumb{ width:140px; height:140px; }
   .history-modal-panel .history-title{ font-size:34px; }
   .history-modal-panel .node-eyebrow{ font-size:18px; letter-spacing:0.12em; }
   .history-modal-panel .buyswap-balance-tile{ padding:0.8em 0.6em; }
   .history-modal-panel .buyswap-balance-label{ font-size:13px; margin-bottom:0.35rem; }
   .history-modal-panel .buyswap-balance-value{ font-size:26px; }
-  .history-modal-panel .hx-row{ padding:1rem 1.2rem; }
-  .history-modal-panel .hx-list{ gap:0.75rem; }
-  .history-modal-panel .hx-verb{ font-size:15px; }
-  .history-modal-panel .hx-price{ font-size:32px; }
-  .history-modal-panel .hx-parties{ font-size:18px; margin-top:0.6rem; }
-  .history-modal-panel .hx-parties a, .history-modal-panel .detail-field a,
-  .history-modal-panel .wallet-tag{ font-size:inherit !important; }
-  .history-modal-panel .hx-parties .dh-party{ font-size:18px !important; }
-  .history-modal-panel .hx-tag{ font-size:13px; }
-  .history-modal-panel .hx-meta{ font-size:15px; margin-top:0.6rem; }
-  .history-modal-panel .hx-meta .dh-bithomp-btn{ font-size:14px; padding:0.45em 0.9em; }
-  .history-modal-panel .detail-field{ margin-top:0.75rem; }
-  .history-modal-panel .df-label{ font-size:15px; letter-spacing:0.08em; }
-  .history-modal-panel .df-value{ font-size:18px; font-weight:700; }
+  .history-modal-panel .df-label{ font-size:13px; letter-spacing:0.1em; }
+  .history-modal-panel .df-value{ font-size:17px; font-weight:700; }
+  .history-modal-panel .dh-party, .history-modal-panel .dh-party a,
+  .history-modal-panel .wallet-tag{ font-size:17px !important; }
   .history-modal-panel .hx-empty{ font-size:16px; }
+  @media (max-width:760px){
+    .hx-head{ display:none; }
+    .hx-row{ grid-template-columns:1fr auto; grid-template-areas:"verb price" "from to" "date link"; row-gap:0.4rem; }
+    .hx-verb{ grid-area:verb; } .hx-price-cell{ grid-area:price; text-align:right; }
+    .hx-row > .hx-cell:nth-child(3){ grid-area:from; } .hx-row > .hx-cell:nth-child(4){ grid-area:to; text-align:right; }
+    .hx-date{ grid-area:date; } .hx-link{ grid-area:link; }
+    .history-mint-row{ flex-direction:column; }
+  }
   .hx-empty{ text-align:center; color:var(--grey-dim); font-size:13px; letter-spacing:0.05em; padding:1rem 0; }
   /* PR0F!LE ED!T popup — its own id (not #amountEntryModal, so it needs
      the same fixed-overlay shell spelled out again here rather than
@@ -11530,6 +11553,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <img class="amount-entry-pigeon-thumb" id="amountEntryOfferPigeonImg" src="" alt="">
             <div class="amount-entry-pigeon-num" id="amountEntryOfferPigeonNum"></div>
           </div>
+          <div class="node-eyebrow offer-eyebrow">MAKE AN 0FFER</div>
           <div class="make-offer-balance-line" id="amountEntryOfferBalanceLine" style="display:none;"></div>
           <div class="thumb-offer-row">
             <div class="make-offer-input-wrap">
@@ -11578,6 +11602,11 @@ const SWAP_HTML = `<!DOCTYPE html>
         <img class="buyswap-thumb" id="historyThumb" src="" alt="" style="display:none;">
         <div class="history-title" id="historyNum"></div>
         <div class="node-eyebrow">SALES H!ST0RY</div>
+        <!-- Mint up top (reported live 2026-09-23): when + who. -->
+        <div class="history-mint-row">
+          <div class="history-mint-cell"><span class="df-label">M!NTED</span><span class="df-value" id="historyMintDate">&mdash;</span></div>
+          <div class="history-mint-cell"><span class="df-label">M!NTED BY</span><span class="df-value dh-party" id="historyMintBy">&mdash;</span></div>
+        </div>
         <div class="buyswap-balances-row history-stats">
           <div class="buyswap-balance-tile">
             <span class="buyswap-balance-label">T0TAL V0LUME</span>
@@ -11588,10 +11617,8 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="buyswap-balance-value" id="historySaleCount">&mdash;</span>
           </div>
         </div>
+        <div class="hx-head"><span>TYPE</span><span>PR!CE</span><span>FR0M</span><span>T0</span><span>DATE</span><span></span></div>
         <div class="hx-list" id="detailHistoryList"></div>
-        <div class="buyswap-divider"></div>
-        <div class="detail-field"><span class="df-label">M!NTED</span><span class="df-value" id="historyMintDate">&mdash;</span></div>
-        <div class="detail-field"><span class="df-label">M!NTED BY</span><span class="df-value dh-party" id="historyMintBy">&mdash;</span></div>
       </div>
     </div>
 
@@ -14626,6 +14653,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.amountEntryListMode.style.display = mode === 'list' ? '' : 'none';
     el.amountEntryOfferMode.style.display = mode === 'offer' ? '' : 'none';
     el.amountEntryTransferMode.style.display = mode === 'transfer' ? '' : 'none';
+    // OFFER gets the SALES H!ST0RY popup's look (see #amountEntryModal.mode-offer).
+    el.amountEntryModal.classList.toggle('mode-offer', mode === 'offer');
     if (mode === 'list'){
       // No header text — the input's own "ENTER AM0UNT" placeholder and
       // the L!ST button already say what this is; reported live as
@@ -14688,7 +14717,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // means it hasn't loaded yet (or there's no session), in which case
       // this stays hidden rather than showing a stale/wrong 0.
       if (trustlineBalanceNum !== null){
-        el.amountEntryOfferBalanceLine.innerHTML = 'Y0UR BALANCE<br>' + greenNum(trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' ' + COLLECTION_META[state.collection].tokenLabel;
+        el.amountEntryOfferBalanceLine.innerHTML = '<span class="buyswap-balance-label">Y0UR BALANCE</span><span class="buyswap-balance-value">' + trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + COLLECTION_META[state.collection].tokenLabel + '</span>';
         el.amountEntryOfferBalanceLine.style.display = '';
       } else {
         el.amountEntryOfferBalanceLine.style.display = 'none';
@@ -21354,11 +21383,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     var price = isSale && e.priceXrp !== null && e.priceXrp !== undefined
       ? '<span class="hx-price">' + e.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</span>' : '';
     var bithomp = e.txUrl ? '<a class="dh-bithomp-btn" href="' + escapeHtml(e.txUrl) + '" target="_blank" rel="noopener">B!TH0MP ↗</a>' : '';
+    // One clean horizontal row per event, lined up under .hx-head's
+    // columns (reported live 2026-09-23: stacked cards were hard to scan).
     return '<div class="hx-row' + (isSale ? ' hx-sale' : '') + '">' +
-      '<div class="hx-top"><span class="hx-verb">' + (isSale ? 'S0LD' : 'TRANSFERRED') + '</span>' + price + '</div>' +
-      '<div class="hx-parties"><span class="hx-tag">FR0M</span>' + historyPartyHtml(e.from, e.fromShort) +
-        '<span class="hx-arrow">→</span><span class="hx-tag">T0</span>' + historyPartyHtml(to, toShort) + '</div>' +
-      '<div class="hx-meta"><span>' + escapeHtml(historyWhen(e.date)) + '</span>' + bithomp + '</div>' +
+      '<span class="hx-verb">' + (isSale ? 'S0LD' : 'TRANSFER') + '</span>' +
+      '<span class="hx-price-cell">' + (price || '<span class="hx-dash">—</span>') + '</span>' +
+      '<span class="hx-cell">' + historyPartyHtml(e.from, e.fromShort) + '</span>' +
+      '<span class="hx-cell">' + historyPartyHtml(to, toShort) + '</span>' +
+      '<span class="hx-date">' + escapeHtml(historyWhen(e.date)) + '</span>' +
+      '<span class="hx-link">' + bithomp + '</span>' +
     '</div>';
   }
   function setHistoryHeader(label, image){
