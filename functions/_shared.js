@@ -3880,8 +3880,10 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // not only an identical piece set — #27 (2 pieces) was wrongly a 1 0F 1
 // beside #727 (the same 2 plus a third).
 // v11 -> v12: Eyewear:Gold Rush added to G0LD (#15 now x4, was x3).
-const RARITY_MAP_KEY = 'pswap:rarity:v12';
-const RARITY_STATS_KEY = 'pswap:raritystats:v12';
+// v12 -> v13: F!RE + SAMURA! sets added, and a Pigeon matching more than
+// one set now stacks them (best + each extra's pieces minus one).
+const RARITY_MAP_KEY = 'pswap:rarity:v13';
+const RARITY_STATS_KEY = 'pswap:raritystats:v13';
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
 const RARITY_CONCURRENT_GUARD_SECONDS = 90; // was 10, then 30 — needs to clear Cloudflare KV's own ~60s worst-case cross-colo propagation window, not just this process's own runId check (see the v3->v4 KV key comment above)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
@@ -4162,6 +4164,20 @@ export const RARITY_NAMED_SETS = {
       { trait_type: 'Beak', value: '24k Smile' },
       { trait_type: 'Headwear', value: 'Gold Bar' },
     ] },
+    // #7 and #666 (reported live): Flames aura, Fire Spitter beak, Burn
+    // Sequence eyewear — plus Phoenix feathers, confirmed by the user as
+    // part of the same fire theme. Both match all 4 (x4).
+    { name: 'F!RE', pieces: [
+      { trait_type: 'Aura', value: 'Flames' },
+      { trait_type: 'Feathers', value: 'Phoenix' },
+      { trait_type: 'Eyewear', value: 'Burn Sequence' },
+      { trait_type: 'Beak', value: 'Fire Spitter' },
+    ] },
+    // #7 (reported live): Samurai clothing + Kabuto (a samurai helmet).
+    { name: 'SAMURA!', pieces: [
+      { trait_type: 'Clothing', value: 'Samurai' },
+      { trait_type: 'Headwear', value: 'Kabuto' },
+    ] },
   ],
 };
 // Layer 2 — Matched Set Multiplier. Deliberately NOT the real-scarcity
@@ -4174,25 +4190,36 @@ export const RARITY_NAMED_SETS = {
 // x4 — reported live as wrong, corrected: more genuinely matching pieces
 // keeps multiplying, full stop. G0LD (#1515, 5 real gold-themed pieces)
 // gets x5 under this rule.
+//
+// More than one set on the same Pigeon (#7: F!RE x4 + SAMURA! x2) —
+// reported live as rare enough to deserve a bonus, but NOT the full
+// product (x8 felt too much). The best set keeps its own multiplier and
+// each extra set adds its own piece count minus one: #7 = 4 + (2-1) = x5.
+// Layer 3 (1 0F 1) still only looks at the best set.
 function namedSetMatchForItem(attrs, collectionKey) {
   const sets = RARITY_NAMED_SETS[collectionKey || 'pigeons'];
   if (!sets) return null;
-  let best = null;
+  const matches = [];
   for (const set of sets) {
     const matchedPieces = set.pieces.filter(p => attrs.some(a => a[0] === p.trait_type && a[1] === p.value));
     if (matchedPieces.length < 2) continue;
-    if (!best || matchedPieces.length > best.matchedCount) {
-      best = {
-        setName: set.name,
-        matchedCount: matchedPieces.length,
-        multiplier: matchedPieces.length,
-        // The actual values matched (not just the count) — needed so
-        // Layer 3 can tell whether THIS Pigeon's own exact combination is
-        // shared by anyone else (see namedSetSubsetKey's own comment).
-        matchedValues: matchedPieces.map(p => p.trait_type + '=' + p.value),
-      };
-    }
+    matches.push({
+      setName: set.name,
+      matchedCount: matchedPieces.length,
+      // The actual values matched (not just the count) — needed so
+      // Layer 3 can tell whether any other Pigeon has all of this one's
+      // pieces too (see maybeRefreshRarityScores' own Layer 3 check).
+      matchedValues: matchedPieces.map(p => p.trait_type + '=' + p.value),
+    });
   }
+  if (!matches.length) return null;
+  // Stable: ties keep RARITY_NAMED_SETS order, same as the old
+  // first-strictly-bigger-wins loop did.
+  matches.sort((a, b) => b.matchedCount - a.matchedCount);
+  const best = matches[0];
+  const extraSets = matches.slice(1).map(x => ({ setName: x.setName, matchedCount: x.matchedCount }));
+  best.extraSets = extraSets;
+  best.multiplier = best.matchedCount + extraSets.reduce((sum, x) => sum + (x.matchedCount - 1), 0);
   return best;
 }
 
@@ -4329,7 +4356,7 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
           score: Math.round(item.finalScore * 1000) / 1000,
           base: Math.round(item.s * 1000) / 1000,
           breakdown: item.breakdown,
-          namedSet: item.match ? { name: item.match.setName, matchedCount: item.match.matchedCount, multiplier: item.setMultiplier } : null,
+          namedSet: item.match ? { name: item.match.setName, matchedCount: item.match.matchedCount, multiplier: item.setMultiplier, extraSets: (item.match.extraSets || []).map(x => ({ name: x.setName, matchedCount: x.matchedCount })) } : null,
           oneOfOne: item.oneOfOne,
           rank: idx + 1,
           total: sorted.length,

@@ -20776,7 +20776,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     var multRow = '';
     if (p.ourRarityNamedSet){
       var ns = p.ourRarityNamedSet;
-      multRow = '<div class="rb-mult-row">LAYER 2 :: ' + escapeHtml(ns.name) + ' SET, ' + ns.matchedCount + ' MATCH!NG P!ECES &nbsp;&rarr;&nbsp; &times; ' + ns.multiplier + '</div>';
+      // A second (third...) set on the same Pigeon adds its own pieces
+      // minus one on top of the best set's multiplier — see
+      // namedSetMatchForItem's own comment in _shared.js.
+      var extraSetsText = (ns.extraSets || []).map(function(x){
+        return ' + ' + escapeHtml(x.name) + ' SET, ' + x.matchedCount + ' P!ECES (+' + (x.matchedCount - 1) + ')';
+      }).join('');
+      multRow = '<div class="rb-mult-row">LAYER 2 :: ' + escapeHtml(ns.name) + ' SET, ' + ns.matchedCount + ' MATCH!NG P!ECES' + extraSetsText + ' &nbsp;&rarr;&nbsp; &times; ' + ns.multiplier + '</div>';
     } else {
       multRow = '<div class="rb-mult-row" style="color:var(--grey-dim);">LAYER 2 :: N0 C0NF!RMED SET &mdash; &times;1 (n0 change)</div>';
     }
@@ -20799,7 +20805,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // matching the set at all. Both can show at once.
     var matchBadge = (p && p.ourRarityNamedSet)
       ? '<div class="tc-sub" style="color:var(--magenta); text-shadow:0 0 4px var(--magenta-glow);">' +
-        escapeHtml(p.ourRarityNamedSet.name) + ' SET · ' + greenNum('x' + p.ourRarityNamedSet.multiplier) + '</div>'
+        [p.ourRarityNamedSet.name].concat((p.ourRarityNamedSet.extraSets || []).map(function(x){ return x.name; })).map(escapeHtml).join(' + ') +
+        ' SET · ' + greenNum('x' + p.ourRarityNamedSet.multiplier) + '</div>'
       : '';
     var oneOfOneBadge = (p && p.ourRarityOneOfOne)
       ? '<div class="tc-sub" style="color:var(--green); text-shadow:0 0 4px var(--green-glow);">1 0F 1 :: ' +
