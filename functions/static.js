@@ -8553,24 +8553,32 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* OFFER popup in the SALES H!ST0RY popup's style (reported live
      2026-09-23): purple-edged panel, big centred Pigeon + title, purple
      eyebrow, balance tile, then amount / duration / SUBM!T stacked. */
-  #amountEntryModal.mode-offer .amount-entry-panel{ position:relative; width:min(600px, 100%); padding:2.5rem 2.25rem; text-align:center; border:1px solid rgba(var(--collection-accent-rgb), 0.4); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 44px rgba(var(--collection-accent-rgb), 0.14); }
-  #amountEntryModal.mode-offer .simple-picker-header{ position:absolute; top:1rem; right:1rem; left:auto; margin:0; padding:0; border:none; }
-  #amountEntryModal.mode-offer .simple-picker-title{ display:none; }
-  #amountEntryModal.mode-offer #amountEntryOfferMode{ display:flex !important; flex-direction:column; align-items:stretch; gap:0.9rem; padding:0; margin:0; border:none; background:none; }
-  #amountEntryModal.mode-offer #amountEntryOfferMode .thumb-offer-row{ display:contents; }
-  #amountEntryModal.mode-offer .amount-entry-pigeon-row{ order:1; flex-direction:column; align-items:center; gap:0.6rem; }
-  #amountEntryModal.mode-offer .amount-entry-pigeon-thumb{ width:140px; height:140px; border-radius:var(--radius); border:2px solid rgba(var(--collection-accent-rgb), 0.5); box-shadow:0 0 22px rgba(var(--collection-accent-rgb), 0.35); }
-  #amountEntryModal.mode-offer .amount-entry-pigeon-num{ font-size:34px; }
-  #amountEntryModal.mode-offer .offer-eyebrow{ order:2; text-align:center; color:var(--collection-accent); font-size:18px; letter-spacing:0.12em; margin:-0.4rem 0 0.2rem; }
-  #amountEntryModal.mode-offer #amountEntryOfferBalanceLine{ order:3; text-align:center; background:rgba(var(--collection-accent-rgb), 0.08); border:1px solid rgba(var(--collection-accent-rgb), 0.3); border-radius:var(--radius); padding:0.8em 0.6em; }
-  #amountEntryModal.mode-offer #amountEntryOfferBalanceLine .buyswap-balance-label{ font-size:13px; margin-bottom:0.35rem; }
-  #amountEntryModal.mode-offer #amountEntryOfferBalanceLine .buyswap-balance-value{ font-size:26px; }
-  #amountEntryModal.mode-offer .make-offer-input-wrap{ order:4; width:100%; }
-  #amountEntryModal.mode-offer .make-offer-input{ width:100%; font-size:26px; padding:0.7em 0.8em; text-align:center; border:1px solid rgba(var(--collection-accent-rgb), 0.45); }
-  #amountEntryModal.mode-offer #amountEntryOfferDuration{ order:5; margin:0; }
-  #amountEntryModal.mode-offer #amountEntryOfferBtn{ order:6; width:100%; background:var(--green); border:1px solid var(--green); color:#000; font-size:18px; font-weight:700; letter-spacing:0.05em; padding:0.9em; border-radius:var(--radius); }
-  #amountEntryModal.mode-offer #amountEntryOfferBtn:hover{ box-shadow:0 0 14px var(--green-glow); }
-  #amountEntryModal:not(.mode-offer) .offer-eyebrow{ display:none; }
+  #amountEntryModal.styled .amount-entry-panel{ position:relative; width:min(600px, 100%); padding:2.5rem 2.25rem; text-align:center; border:1px solid rgba(var(--collection-accent-rgb), 0.4); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 44px rgba(var(--collection-accent-rgb), 0.14); }
+  #amountEntryModal.styled .simple-picker-header{ position:absolute; top:1rem; right:1rem; left:auto; margin:0; padding:0; border:none; }
+  #amountEntryModal.styled .simple-picker-title{ display:none; }
+  #amountEntryModal.styled .amount-entry-mode:not([style*="none"]){ display:flex !important; flex-direction:column; align-items:stretch; gap:0.9rem; padding:0; margin:0; border:none; background:none; }
+  #amountEntryModal.styled .amount-entry-mode .thumb-offer-row{ display:contents; }
+  #amountEntryModal.styled .amount-entry-pigeon-row{ order:1; flex-direction:column; align-items:center; gap:0.6rem; }
+  #amountEntryModal.styled .amount-entry-pigeon-thumb{ width:140px; height:140px; border-radius:var(--radius); border:2px solid rgba(var(--collection-accent-rgb), 0.5); box-shadow:0 0 22px rgba(var(--collection-accent-rgb), 0.35); }
+  #amountEntryModal.styled .amount-entry-pigeon-num{ font-size:34px; }
+  #amountEntryModal.styled .amount-entry-eyebrow{ order:2; text-align:center; color:var(--collection-accent); font-size:18px; letter-spacing:0.12em; margin:-0.4rem 0 0.2rem; }
+  #amountEntryModal.styled #amountEntryOfferBalanceLine{ order:3; text-align:center; background:rgba(var(--collection-accent-rgb), 0.08); border:1px solid rgba(var(--collection-accent-rgb), 0.3); border-radius:var(--radius); padding:0.8em 0.6em; }
+  #amountEntryModal.styled #amountEntryOfferBalanceLine .buyswap-balance-label{ font-size:13px; margin-bottom:0.35rem; }
+  #amountEntryModal.styled #amountEntryOfferBalanceLine .buyswap-balance-value{ font-size:26px; }
+  #amountEntryModal.styled .make-offer-input-wrap{ order:4; width:100%; }
+  #amountEntryModal.styled .make-offer-input,
+  #amountEntryModal.styled .list-price-input,
+  #amountEntryModal.styled .transfer-wallet-input{ order:4; width:100%; box-sizing:border-box; font-size:24px; padding:0.7em 0.8em; text-align:center; border:1px solid rgba(var(--collection-accent-rgb), 0.45); }
+  #amountEntryModal.styled .transfer-wallet-input{ font-size:18px; }
+  #amountEntryModal.styled .list-duration-row{ order:5; margin:0; }
+  #amountEntryModal.styled #amountEntryOfferBtn,
+  #amountEntryModal.styled #amountEntryListBtn,
+  #amountEntryModal.styled #amountEntryTransferBtn{ order:6; width:100%; margin:0; background:var(--green); border:1px solid var(--green); color:#000; font-size:18px; font-weight:700; letter-spacing:0.05em; padding:0.9em; border-radius:var(--radius); }
+  #amountEntryModal.styled #amountEntryOfferBtn:hover,
+  #amountEntryModal.styled #amountEntryListBtn:hover,
+  #amountEntryModal.styled #amountEntryTransferBtn:hover{ box-shadow:0 0 14px var(--green-glow); }
+  #amountEntryModal.styled #amountEntryListStatus,
+  #amountEntryModal.styled #amountEntryTransferStatus{ order:7; margin:0; }
   .history-modal-panel .history-title{ text-align:center; font-size:26px; font-weight:700; letter-spacing:0.03em; color:var(--white); }
   .history-modal-panel .node-eyebrow{ text-align:center; margin:0.2rem 0 1.1rem; }
   .history-modal-panel .detail-field{ max-width:none; display:flex; justify-content:space-between; align-items:center; gap:1rem; margin:0.5rem 0 0; }
@@ -11524,6 +11532,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <img class="amount-entry-pigeon-thumb" id="amountEntryListPigeonImg" src="" alt="">
             <div class="amount-entry-pigeon-num" id="amountEntryListPigeonNum"></div>
           </div>
+          <div class="node-eyebrow amount-entry-eyebrow">L!ST F0R SALE</div>
           <div class="thumb-offer-row">
             <div class="make-offer-input-wrap">
               <img class="make-offer-input-coin" id="amountEntryListCoin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
@@ -11553,7 +11562,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <img class="amount-entry-pigeon-thumb" id="amountEntryOfferPigeonImg" src="" alt="">
             <div class="amount-entry-pigeon-num" id="amountEntryOfferPigeonNum"></div>
           </div>
-          <div class="node-eyebrow offer-eyebrow">MAKE AN 0FFER</div>
+          <div class="node-eyebrow amount-entry-eyebrow">MAKE AN 0FFER</div>
           <div class="make-offer-balance-line" id="amountEntryOfferBalanceLine" style="display:none;"></div>
           <div class="thumb-offer-row">
             <div class="make-offer-input-wrap">
@@ -11575,6 +11584,11 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
         <div class="thumb-offer amount-entry-mode" id="amountEntryTransferMode" style="display:none;">
+          <div class="amount-entry-pigeon-row" id="amountEntryTransferPigeonRow" style="display:none;">
+            <img class="amount-entry-pigeon-thumb" id="amountEntryTransferPigeonImg" src="" alt="">
+            <div class="amount-entry-pigeon-num" id="amountEntryTransferPigeonNum"></div>
+          </div>
+          <div class="node-eyebrow amount-entry-eyebrow">TRANSFER T0 WALLET</div>
           <div class="thumb-offer-row">
             <input class="transfer-wallet-input" id="amountEntryTransferInput" type="text" placeholder="DEST!NAT!0N WALLET (r...)">
             <button class="list-inline-btn" id="amountEntryTransferBtn">TRANSFER</button>
@@ -12583,7 +12597,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultTxLink','transferResultDoneBtn',
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListPigeonRow','amountEntryListPigeonImg','amountEntryListPigeonNum','amountEntryListCoin','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
    'amountEntryOfferMode','amountEntryOfferPigeonRow','amountEntryOfferPigeonImg','amountEntryOfferPigeonNum','amountEntryOfferBalanceLine','amountEntryOfferInput','amountEntryOfferBtn','amountEntryOfferDuration',
-   'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferBtn','amountEntryTransferStatus',
+   'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferPigeonRow','amountEntryTransferPigeonImg','amountEntryTransferPigeonNum','amountEntryTransferBtn','amountEntryTransferStatus',
    'acceptOfferConfirmModal','screenAcceptOfferConfirm','acceptOfferConfThumb','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfRoyaltyRow','acceptOfferConfRoyaltyLabel','acceptOfferConfRoyalty','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn',
    'screenAcceptOfferResult','acceptOfferResultThumb','acceptOfferResultPigeonNum','acceptOfferResultPrice','acceptOfferResultFee','acceptOfferResultRoyaltyRow','acceptOfferResultRoyaltyLabel','acceptOfferResultRoyalty','acceptOfferResultSellerAmount','acceptOfferResultStatus','acceptOfferResultTxLink','acceptOfferResultDoneBtn'
   ].forEach(function(id){ el[id] = document.getElementById(id); });
@@ -14653,8 +14667,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.amountEntryListMode.style.display = mode === 'list' ? '' : 'none';
     el.amountEntryOfferMode.style.display = mode === 'offer' ? '' : 'none';
     el.amountEntryTransferMode.style.display = mode === 'transfer' ? '' : 'none';
-    // OFFER gets the SALES H!ST0RY popup's look (see #amountEntryModal.mode-offer).
-    el.amountEntryModal.classList.toggle('mode-offer', mode === 'offer');
+    // Every mode (L!ST / 0FFER / TRANSFER) gets the SALES H!ST0RY popup's
+    // look (see #amountEntryModal.styled).
+    el.amountEntryModal.classList.add('styled');
     if (mode === 'list'){
       // No header text — the input's own "ENTER AM0UNT" placeholder and
       // the L!ST button already say what this is; reported live as
@@ -14729,6 +14744,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.amountEntryTransferBtn.textContent = 'TRANSFER';
       el.amountEntryTransferStatus.style.display = 'none';
       el.amountEntryTransferStatus.textContent = '';
+      // Which Pigeon is being sent, same preview as L!ST/0FFER.
+      if (p && (p.number !== null || p.name)){
+        el.amountEntryTransferPigeonImg.src = p.image || '';
+        el.amountEntryTransferPigeonImg.style.display = p.image ? '' : 'none';
+        el.amountEntryTransferPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(p);
+        el.amountEntryTransferPigeonRow.style.display = '';
+      } else {
+        el.amountEntryTransferPigeonRow.style.display = 'none';
+      }
     }
     el.amountEntryModal.style.display = 'flex';
     (mode === 'list' ? el.amountEntryListInput : mode === 'offer' ? el.amountEntryOfferInput : el.amountEntryTransferInput).focus();
