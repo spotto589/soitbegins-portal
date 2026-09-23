@@ -11,7 +11,9 @@
 //
 // Restricted to a real allowlist of image hosts this app actually uses
 // (not a general-purpose proxy/SSRF vector) — every `imageUrl` field
-// Deeptide's API returns is one of these.
+// Deeptide's API returns is one of these. ipfs.io URLs are fetched via
+// fetchIpfs's gateway fallback list (ipfs.io itself 429s since 2026-09-23).
+import { fetchIpfs } from '../_shared.js';
 const ALLOWED_HOSTS = new Set(['cdn.deeptide.co', 'ipfs.io']);
 
 export async function onRequestGet(context) {
@@ -35,8 +37,15 @@ export async function onRequestGet(context) {
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
 
-  const upstream = await fetch(src, { headers: { Accept: 'image/*' } });
-  if (!upstream.ok) {
+  let upstream;
+  try {
+    upstream = parsed.hostname === 'ipfs.io'
+      ? await fetchIpfs(src, { headers: { Accept: 'image/*' } })
+      : await fetch(src, { headers: { Accept: 'image/*' } });
+  } catch (e) {
+    upstream = null;
+  }
+  if (!upstream || !upstream.ok) {
     return new Response('Image unavailable', { status: 502 });
   }
 

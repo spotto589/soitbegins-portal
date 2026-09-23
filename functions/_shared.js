@@ -279,7 +279,7 @@ export function findStaticVanityKey(nfts) {
 export async function getStaticVanityKeyInfo(nft) {
   try {
     const uri = resolveIpfsUri(hexToUtf8(nft.URI));
-    const res = await fetch(uri);
+    const res = await fetchIpfs(uri);
     if (!res.ok) return { number: null, address: null };
     const meta = await res.json();
     const name = meta && meta.name;
@@ -2345,6 +2345,11 @@ function hexToUtf8(hex) {
   return new TextDecoder().decode(bytes);
 }
 
+// Canonical form only: every ipfs:// URI becomes an https://ipfs.io/ipfs/
+// URL, which is what's already stored in KV (pigeonmeta/kingmeta caches)
+// and what proxyIpfsImage / ipfs-image.js / displayImage all key off. The
+// ipfs.io host itself is never actually fetched first any more — see
+// fetchIpfs below.
 function resolveIpfsUri(uri) {
   if (uri.startsWith('ipfs://')) {
     return 'https://ipfs.io/ipfs/' + uri.slice('ipfs://'.length);
@@ -2352,14 +2357,59 @@ function resolveIpfsUri(uri) {
   return uri;
 }
 
+// As of 2026-09-23 ipfs.io and dweb.link answer every server-side request
+// with HTTP 429 ("switching to a service worker gateway only"), so all
+// real IPFS fetches go through this list instead, in order. ipfs.io stays
+// last as a cheap (instant-429) last resort in case it ever comes back.
+export const IPFS_GATEWAYS = [
+  'https://ipfs.filebase.io/ipfs/',
+  'https://gateway.pinata.cloud/ipfs/',
+  'https://ipfs.io/ipfs/',
+];
+const IPFS_GATEWAY_PATH_RE = /^https:\/\/(?:ipfs\.io|dweb\.link|ipfs\.filebase\.io|gateway\.pinata\.cloud)\/ipfs\/([a-zA-Z0-9]+(?:\/[^?#]*)?)$/;
+
+// "<cid>[/path]" for any known-gateway IPFS URL (or ipfs:// URI), else null.
+export function ipfsPathOf(url) {
+  if (typeof url !== 'string') return null;
+  if (url.startsWith('ipfs://')) url = resolveIpfsUri(url);
+  const m = url.match(IPFS_GATEWAY_PATH_RE);
+  return m ? m[1] : null;
+}
+
+// Drop-in for fetch(url) on anything that might be IPFS: tries each
+// gateway in IPFS_GATEWAYS with its own timeout and returns the first ok
+// response. If every gateway fails, returns the last non-ok response (so
+// callers' own `!res.ok` checks behave as before) or rethrows the last
+// network error. Non-IPFS URLs are fetched once, unchanged.
+export async function fetchIpfs(url, { timeoutMs = 8000, headers } = {}) {
+  const path = ipfsPathOf(url);
+  const targets = path ? IPFS_GATEWAYS.map(g => g + path) : [url];
+  let lastRes = null;
+  let lastErr = null;
+  for (const target of targets) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(target, { headers, signal: controller.signal });
+      if (res.ok) return res;
+      lastRes = res;
+    } catch (e) {
+      lastErr = e;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  if (lastRes) return lastRes;
+  throw lastErr;
+}
+
 // ipfs.io now challenge-blocks image requests carrying browser Fetch
 // Metadata headers (Sec-Fetch-Site: cross-site), which is exactly what a
 // hotlinked <img src="https://ipfs.io/..."> sends — so every pigeon/king
 // picture embedded directly broke even though the underlying content is
-// fine. Routing through our own /api/ipfs-image endpoint means the ipfs.io
-// fetch happens server-to-server (no Fetch Metadata headers, same as a
-// plain curl request) and the browser only ever loads same-origin image
-// URLs, which ipfs.io has no reason to challenge.
+// fine. Routing through our own /api/ipfs-image endpoint means the IPFS
+// fetch happens server-to-server (via fetchIpfs's gateway fallback list)
+// and the browser only ever loads same-origin image URLs.
 export function proxyIpfsImage(url) {
   return url ? `/api/ipfs-image?src=${encodeURIComponent(url)}` : url;
 }
@@ -2367,7 +2417,7 @@ export function proxyIpfsImage(url) {
 async function fetchCrownTierIndexForNft(nft) {
   try {
     const uri = resolveIpfsUri(hexToUtf8(nft.URI));
-    const res = await fetch(uri);
+    const res = await fetchIpfs(uri);
     if (!res.ok) return -1;
     const meta = await res.json();
     const attrs = (meta && meta.attributes) || [];
@@ -2403,7 +2453,7 @@ export async function getBestCrownTier(kv, kingNfts) {
 async function fetchPigeonMeta(nft) {
   try {
     const uri = resolveIpfsUri(hexToUtf8(nft.URI));
-    const res = await fetch(uri);
+    const res = await fetchIpfs(uri);
     if (!res.ok) return { number: null, image: null };
     const meta = await res.json();
     const name = meta && meta.name;
@@ -2752,23 +2802,13 @@ export async function mapWithConcurrency(items, limit, fn) {
   return results;
 }
 
-async function fetchWithTimeout(url, ms) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), ms);
-  try {
-    return await fetch(url, { signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 // IPFS fallback for the rare token Deeptide hasn't synced yet — number,
 // image, and the complete `attributes` array, whatever shape the
 // collection's own metadata actually uses. Never invents a trait schema.
 async function fetchPigeonFullMeta(uriHex) {
   try {
     const uri = resolveIpfsUri(hexToUtf8(uriHex));
-    const res = await fetchWithTimeout(uri, 6000);
+    const res = await fetchIpfs(uri, { timeoutMs: 6000 });
     if (!res.ok) return null;
     const meta = await res.json();
     const name = meta && meta.name;
@@ -5289,7 +5329,7 @@ export async function recordSwapSignal(kv, offerId, entry) {
 async function fetchKingMeta(nft) {
   try {
     const uri = resolveIpfsUri(hexToUtf8(nft.URI));
-    const res = await fetch(uri);
+    const res = await fetchIpfs(uri);
     if (!res.ok) return { number: null, image: null };
     const meta = await res.json();
     const name = meta && meta.name;

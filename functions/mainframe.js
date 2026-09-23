@@ -347,7 +347,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
       <div class="mf-heading">THE TW0 K!NGS</div>
 
       <div class="mf-king false">
-        <img class="mf-king-img" src="https://ipfs.io/ipfs/bafybeib2kykxegfu3wllvngmbjl7igzyt5f5pnqi4k54lbwwlpryeermp4/297.png" alt="The False King" loading="lazy">
+        <img class="mf-king-img" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2Fbafybeib2kykxegfu3wllvngmbjl7igzyt5f5pnqi4k54lbwwlpryeermp4%2F297.png" alt="The False King" loading="lazy">
         <div class="mf-king-tag false">K!NG 0NE</div>
         <div class="mf-king-name">THE FALSE K!NG</div>
         <ul class="mf-list">
@@ -359,7 +359,7 @@ const MAINFRAME_HTML = `<!DOCTYPE html>
       </div>
 
       <div class="mf-king true">
-        <img class="mf-king-img" src="https://ipfs.io/ipfs/bafybeib2kykxegfu3wllvngmbjl7igzyt5f5pnqi4k54lbwwlpryeermp4/2394.png" alt="The True King" loading="lazy">
+        <img class="mf-king-img" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2Fbafybeib2kykxegfu3wllvngmbjl7igzyt5f5pnqi4k54lbwwlpryeermp4%2F2394.png" alt="The True King" loading="lazy">
         <div class="mf-king-tag true">K!NG TW0</div>
         <div class="mf-king-name">THE TRUE K!NG</div>
         <ul class="mf-list">
