@@ -3879,8 +3879,9 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // same set with at least all of this one's pieces (a superset counts),
 // not only an identical piece set — #27 (2 pieces) was wrongly a 1 0F 1
 // beside #727 (the same 2 plus a third).
-const RARITY_MAP_KEY = 'pswap:rarity:v11';
-const RARITY_STATS_KEY = 'pswap:raritystats:v11';
+// v11 -> v12: Eyewear:Gold Rush added to G0LD (#15 now x4, was x3).
+const RARITY_MAP_KEY = 'pswap:rarity:v12';
+const RARITY_STATS_KEY = 'pswap:raritystats:v12';
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
 const RARITY_CONCURRENT_GUARD_SECONDS = 90; // was 10, then 30 — needs to clear Cloudflare KV's own ~60s worst-case cross-colo propagation window, not just this process's own runId check (see the v3->v4 KV key comment above)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
@@ -4153,6 +4154,11 @@ export const RARITY_NAMED_SETS = {
       { trait_type: 'Aura', value: 'Gold' },
       { trait_type: 'Feathers', value: 'Golden' },
       { trait_type: 'Eyewear', value: 'Midas Touch' },
+      // Gold Rush (#15's own, also a 1-of-1 eyewear) — reported live:
+      // "pigeon 15 has 4 x gold" (Gold aura, Golden feathers, Gold Rush,
+      // 24k Smile) but only scored x3 with Midas Touch as the set's sole
+      // gold eyewear. One Eyewear per Pigeon, so this can't double-count.
+      { trait_type: 'Eyewear', value: 'Gold Rush' },
       { trait_type: 'Beak', value: '24k Smile' },
       { trait_type: 'Headwear', value: 'Gold Bar' },
     ] },
