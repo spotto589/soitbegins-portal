@@ -8623,6 +8623,26 @@ const SWAP_HTML = `<!DOCTYPE html>
     .hx-date{ grid-area:date; } .hx-link{ grid-area:link; }
     .history-mint-row{ flex-direction:column; }
   }
+  /* Collection SALES H!ST0RY (banner button) in the same style. */
+  #salesModal .sales-modal-panel.sales-styled{ position:relative; width:min(1000px, 96vw); padding:2.25rem 2.25rem 1.5rem; text-align:center; border:1px solid rgba(var(--collection-accent-rgb), 0.4); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 44px rgba(var(--collection-accent-rgb), 0.14); }
+  .sales-styled .sales-styled-close{ position:absolute; top:1rem; right:1rem; }
+  .sales-styled .buyswap-thumb{ width:110px; height:110px; }
+  .sales-styled .history-title{ text-align:center; font-size:34px; font-weight:700; letter-spacing:0.03em; color:var(--white); }
+  .sales-styled .node-eyebrow{ text-align:center; color:var(--collection-accent); font-size:18px; letter-spacing:0.12em; margin:0.2rem 0 1rem; }
+  .sales-styled .sales-stats-row{ margin:0 0 0.9rem; }
+  .sales-styled .buyswap-balance-tile{ padding:0.8em 0.6em; }
+  .sales-styled .buyswap-balance-label{ font-size:13px; margin-bottom:0.35rem; }
+  .sales-styled .buyswap-balance-value{ font-size:24px; }
+  .sales-styled .sale-currency-toggle{ margin:0 0 0.9rem; }
+  .sales-styled .sale-currency-btn{ font-size:15px; padding:0.6em 1.6em; }
+  .sales-styled .sales-scrollbox{ text-align:left; }
+  .sales-styled .sale-header-row{ font-size:12px; letter-spacing:0.12em; border-bottom:1px solid var(--border-mid); }
+  .sales-styled .sale-row{ border-left:3px solid var(--green); background:rgba(52,255,133,0.05); border-bottom:1px solid var(--border-dim); }
+  .sales-styled .sale-price{ font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--green); text-shadow:0 0 8px var(--green-glow); }
+  .sales-styled .sale-via{ font-size:12px; letter-spacing:0.08em; }
+  .sales-styled .sale-num-box{ font-size:16px; }
+  .sales-styled .sale-from, .sales-styled .sale-to, .sales-styled .sale-from .wallet-tag, .sales-styled .sale-to .wallet-tag{ font-size:17px !important; }
+  .sales-styled .sale-time{ font-size:15px; }
   .hx-empty{ text-align:center; color:var(--grey-dim); font-size:13px; letter-spacing:0.05em; padding:1rem 0; }
   /* PR0F!LE ED!T popup — its own id (not #amountEntryModal, so it needs
      the same fixed-overlay shell spelled out again here rather than
@@ -10156,12 +10176,19 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
     <div id="salesModal" style="display:none;">
-      <div class="pigeons-calc-panel sales-modal-panel">
-        <div class="simple-picker-header">
-          <span class="simple-picker-title">SALES H!ST0RY</span>
-          <button type="button" class="simple-picker-close" id="salesCloseBtn" title="CL0SE">&times;</button>
+      <!-- Same look as a Pigeon's own SALES H!ST0RY popup (reported live
+           2026-09-23): coin art + big title on top, stat tiles, then the
+           sales as one clean green-edged table. -->
+      <div class="pigeons-calc-panel sales-modal-panel sales-styled">
+        <button type="button" class="simple-picker-close sales-styled-close" id="salesCloseBtn" title="CL0SE">&times;</button>
+        <img class="buyswap-thumb" id="salesCoinThumb" src="" alt="" style="display:none;">
+        <div class="history-title">SALES H!ST0RY</div>
+        <div class="node-eyebrow" id="salesEyebrow">EVERY REC0RDED SALE</div>
+        <div class="buyswap-balances-row sales-stats-row">
+          <div class="buyswap-balance-tile"><span class="buyswap-balance-label">T0TAL V0LUME</span><span class="buyswap-balance-value" id="salesStatVolume">&mdash;</span></div>
+          <div class="buyswap-balance-tile"><span class="buyswap-balance-label">24H V0LUME</span><span class="buyswap-balance-value" id="salesStatVolume24h">&mdash;</span></div>
+          <div class="buyswap-balance-tile"><span class="buyswap-balance-label">24H SALES</span><span class="buyswap-balance-value" id="salesStatSales24h">&mdash;</span></div>
         </div>
-        <div class="sales-modal-subtitle">EVERY REC0RDED $P!GE0NS SALE, !N XRP 0R $P!GE0NS — SCR0LL T0 RESEARCH THE FULL H!ST0RY.</div>
         <div class="sale-currency-toggle" id="salesCurrencyToggle">
           <button class="sale-currency-btn sale-currency-btn-active" data-currency="XRP">XRP</button>
           <button class="sale-currency-btn" data-currency="PIGEONS" id="salesCurrencyPigeonsBtn">$P!GE0NS</button>
@@ -12542,7 +12569,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
    'profileCoinsEditBtn','profileCoinsEditPopover','profileCoinsEditList',
-   'salesModal','salesCloseBtn','openSalesBtn',
+   'salesModal','salesCloseBtn','openSalesBtn','salesCoinThumb','salesEyebrow','salesStatVolume','salesStatVolume24h','salesStatSales24h',
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount','statScyllaListedLabel',
@@ -20281,6 +20308,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.openSalesBtn.addEventListener('click', function(e){
     e.stopPropagation();
+    fillSalesModalHeader();
     el.salesModal.style.display = 'flex';
     if (!state.salesLoaded){
       state.salesLoaded = true;
@@ -20353,6 +20381,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         (s.txHash ? '<a class="sale-tx-link" href="https://bithomp.com/explorer/' + escapeHtml(s.txHash) + '" target="_blank" rel="noopener" title="V!EW TRANSACT!0N 0N B!TH0MP">↗</a>' : '') +
       '</div>' +
     '</div>';
+  }
+  // Coin art, eyebrow and the three stat tiles (the same figures the
+  // banner's stats strip already loaded) for the SALES H!ST0RY popup.
+  function fillSalesModalHeader(){
+    var meta = COLLECTION_META[state.collection] || {};
+    if (meta.thumb){ el.salesCoinThumb.src = meta.thumb; el.salesCoinThumb.style.display = ''; }
+    else el.salesCoinThumb.style.display = 'none';
+    el.salesEyebrow.textContent = (meta.tokenLabel ? meta.tokenLabel + ' :: ' : '') + 'EVERY REC0RDED SALE';
+    el.salesStatVolume.textContent = el.statVolume.textContent || '—';
+    el.salesStatVolume24h.textContent = el.statVolume24h.textContent || '—';
+    el.salesStatSales24h.textContent = el.statSales24h.textContent || '—';
   }
   function loadMoreSales(){
     if (state.sales.loading || !state.sales.hasMore) return;
@@ -24641,6 +24680,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // H!ST0RY, so the tile did nothing visible (reported live). Same real
   // popup el.openSalesBtn already opens, just triggered from here too.
   el.statSalesTile.addEventListener('click', function(){
+    fillSalesModalHeader();
     el.salesModal.style.display = 'flex';
     if (!state.salesLoaded){
       state.salesLoaded = true;
