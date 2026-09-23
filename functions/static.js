@@ -20776,11 +20776,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     var multRow = '';
     if (p.ourRarityNamedSet){
       var ns = p.ourRarityNamedSet;
-      // A second (third...) set on the same Pigeon adds its own pieces
+      // A second (third...) set on the same Pigeon adds its own multiplier
       // minus one on top of the best set's multiplier — see
       // namedSetMatchForItem's own comment in _shared.js.
       var extraSetsText = (ns.extraSets || []).map(function(x){
-        return ' + ' + escapeHtml(x.name) + ' SET, ' + x.matchedCount + ' P!ECES (+' + (x.matchedCount - 1) + ')';
+        return ' + ' + escapeHtml(x.name) + ' SET, ' + x.matchedCount + ' P!ECES (+' + (Math.round((x.multiplier - 1) * 100) / 100) + ')';
       }).join('');
       multRow = '<div class="rb-mult-row">LAYER 2 :: ' + escapeHtml(ns.name) + ' SET, ' + ns.matchedCount + ' MATCH!NG P!ECES' + extraSetsText + ' &nbsp;&rarr;&nbsp; &times; ' + ns.multiplier + '</div>';
     } else {

@@ -3899,10 +3899,19 @@ const RARITY_CRAWL_KEY = 'pswap:raritycrawl:v1';
 // '2': Layer 3 holder counts include each Pigeon's extra sets, not only
 // its best one.
 // '3': Layer 4 — rare single traits (1-3 holders) multiply too.
-const RARITY_FORMULA_VERSION = '3';
+// '4': Layer 2 multiplier is a lookup (RARITY_SET_MULTIPLIERS), not the
+// raw piece count; extra sets add their own multiplier minus one.
+const RARITY_FORMULA_VERSION = '4';
 // Layer 3 multiplier by how many Pigeons share a set combination (see
 // maybeRefreshRarityScores' own Layer 3 comment).
-const LAYER3_MULTIPLIERS = { 1: 2, 2: 1.5, 3: 1.25 };
+const LAYER3_MULTIPLIERS = { 1: 5.89, 2: 3.21, 3: 1.23 };
+// Layer 2 multiplier by how many pieces of a Named Set match (set by hand
+// 2026-09-23, was "multiplier = pieces matched"). No set has more than 5
+// pieces matched today — anything bigger uses the 5-piece value.
+const RARITY_SET_MULTIPLIERS = { 2: 1.23, 3: 3.21, 4: 5.89, 5: 8.88 };
+function setMultiplierForPieces(n) {
+  return RARITY_SET_MULTIPLIERS[Math.min(n, 5)] || 1;
+}
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
 const RARITY_CONCURRENT_GUARD_SECONDS = 90; // was 10, then 30 — needs to clear Cloudflare KV's own ~60s worst-case cross-colo propagation window, not just this process's own runId check (see the v3->v4 KV key comment above)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
@@ -4171,9 +4180,7 @@ export const RARITY_NAMED_SETS = {
     // #1515 (confirmed live): 5 real gold-themed pieces — Background:
     // Yellow left out on purpose (too generic on its own, 16% of the
     // collection, not a specific gold reference the way the other 5 are).
-    // 5 pieces would be x5 under the plain "multiplier = pieces matched"
-    // rule, but the multiplier is capped at x4 (see namedSetMatchForItem's
-    // own comment) — this is the real case that cap exists for.
+    // 5 pieces -> x8.88 (see RARITY_SET_MULTIPLIERS).
     { name: 'G0LD', pieces: [
       { trait_type: 'Aura', value: 'Gold' },
       { trait_type: 'Feathers', value: 'Golden' },
@@ -4217,18 +4224,15 @@ export const RARITY_NAMED_SETS = {
 // Layer 2 — Matched Set Multiplier. Deliberately NOT the real-scarcity
 // (collectionSizeApprox/actualJointCount) math an earlier version used —
 // reported live as too hard to follow, even though it was more
-// mathematically "correct". The multiplier is just the number of
-// matching pieces, no ceiling: 2 -> x2, 3 -> x3, 4 -> x4, 5 -> x5, and so
-// on. A match below 2 pieces isn't a "match" at all (score stays x1,
-// Layer 1 alone). An earlier version of this capped the multiplier at
-// x4 — reported live as wrong, corrected: more genuinely matching pieces
-// keeps multiplying, full stop. G0LD (#1515, 5 real gold-themed pieces)
-// gets x5 under this rule.
+// mathematically "correct". The multiplier is a fixed lookup by pieces
+// matched (RARITY_SET_MULTIPLIERS): 2 -> x1.23, 3 -> x3.21, 4 -> x5.89,
+// 5 -> x8.88. A match below 2 pieces isn't a "match" at all (score stays
+// x1, Layer 1 alone).
 //
-// More than one set on the same Pigeon (#7: F!RE x4 + SAMURA! x2) —
+// More than one set on the same Pigeon (#7: F!RE 4 pieces + SAMURA! 2) —
 // reported live as rare enough to deserve a bonus, but NOT the full
-// product (x8 felt too much). The best set keeps its own multiplier and
-// each extra set adds its own piece count minus one: #7 = 4 + (2-1) = x5.
+// product. The best set keeps its own multiplier and each extra set adds
+// its own multiplier minus one: #7 = 5.89 + (1.23-1) = x6.12.
 // Layer 3 (1 0F 1) still only looks at the best set.
 function namedSetMatchForItem(attrs, collectionKey) {
   const sets = RARITY_NAMED_SETS[collectionKey || 'pigeons'];
@@ -4253,7 +4257,7 @@ function namedSetMatchForItem(attrs, collectionKey) {
   const best = matches[0];
   const extraSets = matches.slice(1).map(x => ({ setName: x.setName, matchedCount: x.matchedCount, matchedValues: x.matchedValues }));
   best.extraSets = extraSets;
-  best.multiplier = best.matchedCount + extraSets.reduce((sum, x) => sum + (x.matchedCount - 1), 0);
+  best.multiplier = Math.round((setMultiplierForPieces(best.matchedCount) + extraSets.reduce((sum, x) => sum + (setMultiplierForPieces(x.matchedCount) - 1), 0)) * 100) / 100;
   return best;
 }
 
@@ -4384,6 +4388,7 @@ function rarityFormulaSignature(collectionKey) {
     v: RARITY_FORMULA_VERSION,
     sets: RARITY_NAMED_SETS[collectionKey || 'pigeons'] || null,
     l3: LAYER3_MULTIPLIERS,
+    l2: RARITY_SET_MULTIPLIERS,
     meanings: RARITY_CURATED_NUMBER_MEANINGS,
     patterns: RARITY_NUMBER_PATTERNS.map(p => p.name),
   });
@@ -4427,7 +4432,7 @@ function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
     if (numberMeaning) realAttrs.push(['__NumberMean!ng__', numberMeaning]);
     // Layer 4 — Rare Trait. Any single trait value only 1-3 Pigeons in
     // the whole collection have (reported live: #45's Gold Bar is 1 0F 2
-    // and should count for it), same x2/x1.5/x1.25 tiers as Layer 3.
+    // and should count for it), same LAYER3_MULTIPLIERS tiers as Layer 3.
     // Rarest first; several on one Pigeon combine the same way extra
     // Named Sets do — the rarest keeps its full multiplier, each other
     // one adds its own multiplier minus one.
@@ -4466,7 +4471,7 @@ function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
     const setMultiplier = m ? m.multiplier : 1;
     // Layer 3 — "1 0F N": how many Pigeons (this one included) match
     // this set with at least every piece this one has (same pieces or
-    // more). 1 0F 1 x2, 1 0F 2 x1.5, 1 0F 3 x1.25, nothing past 3
+    // more). 1 0F 1 x5.89, 1 0F 2 x3.21, 1 0F 3 x1.23 (LAYER3_MULTIPLIERS), nothing past 3
     // (reported live: "1 of 3 max", and a shared combo should count
     // for less than a true 1-of-1 — e.g. #7/#666's identical F!RE
     // sets are 1 0F 2 each). Badged with the SET's own name, not a
@@ -4494,7 +4499,7 @@ function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
       score: Math.round(item.finalScore * 1000) / 1000,
       base: Math.round(item.s * 1000) / 1000,
       breakdown: item.breakdown,
-      namedSet: item.match ? { name: item.match.setName, matchedCount: item.match.matchedCount, multiplier: item.setMultiplier, extraSets: (item.match.extraSets || []).map(x => ({ name: x.setName, matchedCount: x.matchedCount })) } : null,
+      namedSet: item.match ? { name: item.match.setName, matchedCount: item.match.matchedCount, multiplier: item.setMultiplier, extraSets: (item.match.extraSets || []).map(x => ({ name: x.setName, matchedCount: x.matchedCount, multiplier: setMultiplierForPieces(x.matchedCount) })) } : null,
       oneOfOne: item.oneOfOne,
       rareTraits: item.rare,
       rank: idx + 1,
