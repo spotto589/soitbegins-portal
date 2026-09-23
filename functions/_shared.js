@@ -4082,6 +4082,9 @@ const RARITY_CURATED_NUMBER_MEANINGS = {
   // #666 (reported live): the number of the beast completes F!RE the same
   // way 14 completes S0 !T BEG!NS.
   666: 'NUMBER 0F THE BEAST',
+  // #1 (reported live): Unit-01 is Pigeon #1 — the number completes
+  // EVANGEL!0N the same way 666 completes F!RE.
+  1: 'UN!T-01',
 };
 function numberMeaningFor(number) {
   if (number === null || number === undefined) return null;
@@ -4207,6 +4210,7 @@ export const RARITY_NAMED_SETS = {
     { name: 'EVANGEL!0N', pieces: [
       { trait_type: 'Clothing', value: 'Unit-01' },
       { trait_type: 'Headwear', value: 'Third Impact' },
+      { trait_type: '__NumberMean!ng__', value: 'UN!T-01' },
     ] },
     // #2121 (reported live): Mummy clothing + Nesyamun, the real Egyptian
     // mummy (the priest whose voice was recreated from his remains).
