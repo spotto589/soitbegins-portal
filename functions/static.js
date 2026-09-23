@@ -7101,6 +7101,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:520px){
     #screenDetail .trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
+  /* BACKGROUND is always the last box and stretches across whatever is
+     left of the bottom row (the whole row when the others fill theirs
+     exactly) so the grid ends flush — see detailTraitsHtml. One class
+     per column count, since the grid is 3 wide on desktop, 2 on phones. */
+  #screenDetail .trait-grid .bg-span3-1{ grid-column:span 1; }
+  #screenDetail .trait-grid .bg-span3-2{ grid-column:span 2; }
+  #screenDetail .trait-grid .bg-span3-3{ grid-column:1 / -1; }
+  @media (max-width:520px){
+    #screenDetail .trait-grid .bg-span2-1{ grid-column:span 1; }
+    #screenDetail .trait-grid .bg-span2-2{ grid-column:1 / -1; }
+  }
   /* Compact enough that a full 3-row grid (7 traits, the collection's max)
      doesn't push the whole detail screen into needing to scroll — this
      was the single tallest section on the page at the old, roomier
@@ -20667,7 +20678,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // DETAIL's trait grid — the SAME set of boxes for every Pigeon (reported
   // live: "exactly the same set of boxes every time we click into a
   // pigeon"), one per trait category the whole collection has
-  // (state.traitCategories), alphabetical by category. A category this
+  // (state.traitCategories), rarest first (lowest %), except BACKGROUND,
+  // which is always last and stretched to fill the bottom row (reported
+  // live: "so everything looks even"). A category this
   // Pigeon has nothing in (including the API's own synthesized
   // __no_trait__ rows) still gets its box, reading NO, with the real
   // share of the collection that also has none of it — Deeptide's own
@@ -20679,15 +20692,24 @@ const SWAP_HTML = `<!DOCTYPE html>
     var cats = state.traitCategories ? Object.keys(state.traitCategories) : [];
     attrs.forEach(function(a){ if (cats.indexOf(a.trait_type) === -1) cats.push(a.trait_type); });
     cats.sort(function(a, b){ return a.toLowerCase().localeCompare(b.toLowerCase()); });
-    return cats.map(function(cat){
+    var cells = cats.map(function(cat){
       var own = attrs.filter(function(a){ return a.trait_type === cat && a.value !== '__no_trait__'; })[0];
-      if (own) return traitCellHtml(own);
+      if (own) return own;
       var catValues = (state.traitCategories && state.traitCategories[cat]) || [];
       var noTrait = catValues.filter(function(v){ return v.value === '__no_trait__'; })[0];
       var real = (state.traitNoTraitCounts && state.traitNoTraitCounts[cat]) || noTrait || null;
       var count = real ? real.count : null, percent = real ? real.percent : null;
-      return traitCellHtml({ trait_type: cat, value: noTrait ? '__no_trait__' : '', displayValue: 'NO', percent: percent, count: count });
-    }).join('');
+      return { trait_type: cat, value: noTrait ? '__no_trait__' : '', displayValue: 'NO', percent: percent, count: count };
+    });
+    var isBg = function(c){ return String(c.trait_type).toLowerCase() === 'background'; };
+    var rest = sortTraitsByRarity(cells.filter(function(c){ return !isBg(c); }));
+    var html = rest.map(function(c){ return traitCellHtml(c); }).join('');
+    var bg = cells.filter(isBg)[0];
+    if (bg){
+      var n = rest.length;
+      html += traitCellHtml(bg, 'bg-span3-' + (3 - n % 3) + ' bg-span2-' + (2 - n % 2));
+    }
+    return html;
   }
   // Re-render once the collection's full category list arrives (first
   // DETAIL open can beat ensureTraitsLoaded) — only if still on the same
@@ -20700,7 +20722,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
     });
   }
-  function traitCellHtml(a){
+  function traitCellHtml(a, extraClass){
     var sub = (a.percent !== null && a.percent !== undefined)
       ? '<div class="tc-sub">' + greenNum(typeof a.percent === 'number' ? a.percent.toFixed(3) : a.percent) + '%' + (a.count !== null && a.count !== undefined ? '<br>(' + greenNum(a.count) + ')' : '') + '</div>'
       : '';
@@ -20731,7 +20753,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var catValuesForCell = state.traitCategories && state.traitCategories[a.trait_type];
     var cellMatch = catValuesForCell ? catValuesForCell.filter(function(v){ return v.value === a.value; })[0] : null;
     var cellDisplayValue = a.displayValue || (cellMatch && cellMatch.label ? cellMatch.label : a.value);
-    return '<div class="trait-cell' + (exampleImg ? ' has-preview' : '') + '" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' + style +
+    return '<div class="trait-cell' + (exampleImg ? ' has-preview' : '') + (extraClass ? ' ' + extraClass : '') + '" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' + style +
       ' title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
       textOpen +
       // Value first, category second — "G0LDEN FEATHERS" reads as one
