@@ -20636,6 +20636,38 @@ const SWAP_HTML = `<!DOCTYPE html>
       return ap - bp;
     });
   }
+  // DETAIL's trait grid — the SAME set of boxes for every Pigeon (reported
+  // live: "exactly the same set of boxes every time we click into a
+  // pigeon"), one per trait category the whole collection has
+  // (state.traitCategories), alphabetical by category. A category this
+  // Pigeon has nothing in still gets its box, reading N0NE — via the
+  // collection's own __no_trait__ entry when there is one (so it keeps
+  // its real percent/count and click-to-filter), else a plain N0NE box.
+  function detailTraitsHtml(attrs){
+    attrs = attrs || [];
+    var cats = state.traitCategories ? Object.keys(state.traitCategories) : [];
+    attrs.forEach(function(a){ if (cats.indexOf(a.trait_type) === -1) cats.push(a.trait_type); });
+    cats.sort(function(a, b){ return a.toLowerCase().localeCompare(b.toLowerCase()); });
+    return cats.map(function(cat){
+      var own = attrs.filter(function(a){ return a.trait_type === cat; })[0];
+      if (own) return traitCellHtml(own);
+      var catValues = (state.traitCategories && state.traitCategories[cat]) || [];
+      var noTrait = catValues.filter(function(v){ return v.value === '__no_trait__'; })[0];
+      if (noTrait) return traitCellHtml({ trait_type: cat, value: '__no_trait__', percent: noTrait.percent, count: noTrait.count });
+      return '<div class="trait-cell trait-cell-none"><div class="tc-value">N0NE</div><div class="tc-label">' + escapeHtml(cat) + '</div></div>';
+    }).join('');
+  }
+  // Re-render once the collection's full category list arrives (first
+  // DETAIL open can beat ensureTraitsLoaded) — only if still on the same
+  // Pigeon by then.
+  function refreshDetailTraitsWhenLoaded(nftId){
+    if (state.traitCategories) return;
+    ensureTraitsLoaded().then(function(){
+      if (state.currentDetail && state.currentDetail.nftId === nftId){
+        el.detailTraits.innerHTML = detailTraitsHtml(state.currentDetail.attributes);
+      }
+    });
+  }
   function traitCellHtml(a){
     var sub = (a.percent !== null && a.percent !== undefined)
       ? '<div class="tc-sub">' + greenNum(typeof a.percent === 'number' ? a.percent.toFixed(3) : a.percent) + '%' + (a.count !== null && a.count !== undefined ? '<br>(' + greenNum(a.count) + ')' : '') + '</div>'
@@ -21027,12 +21059,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (known && known.owner) renderOwnerLink(known.ownerShort, known.owner);
     else { el.detailOwner.textContent = '...'; el.detailOwner.classList.remove('not-indexed'); }
     updateDetailOwnerBanner(known && known.owner);
-    el.detailTraits.innerHTML = known ? sortTraitsByRarity(known.attributes).map(traitCellHtml).join('') : '';
+    el.detailTraits.innerHTML = detailTraitsHtml(known ? known.attributes : []);
     el.detailHistoryList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     updateDetailRarity(known);
     updateDetailPrice(known);
     updateScyllaListing(known);
     state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null, attributes: [] };
+    refreshDetailTraitsWhenLoaded(nftId);
     // Only remember the pre-detail URL the first time (not on every
     // PREV/NEXT hop between Pigeons while already inside DETAIL) — see
     // urlBeforeDetail's own comment above.
@@ -21069,7 +21102,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       el.detailNum.innerHTML = p.number !== null ? collectionItemLabel() + ' #' +greenNum(p.number) : (p.name ? collectionItemLabel() + ' ' + escapeHtml(p.name) : collectionItemLabel() + ' ...');
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : 'IMAGE';
-      el.detailTraits.innerHTML = sortTraitsByRarity(p.attributes).map(traitCellHtml).join('');
+      el.detailTraits.innerHTML = detailTraitsHtml(p.attributes);
       updateDetailRarity(p);
       updateDetailPrice(p);
       updateScyllaListing(p);
