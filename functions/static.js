@@ -20836,6 +20836,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else {
       multRow = '<div class="rb-mult-row" style="color:var(--grey-dim);">LAYER 2 :: N0 C0NF!RMED SET &mdash; &times;1 (n0 change)</div>';
     }
+    // Layer 3 — the Pigeon's own number completes its set (see
+    // RARITY_NUMBER_MULTIPLIER in _shared.js).
+    var numberRow = p.ourRarityNumberMatch
+      ? '<div class="rb-mult-row" style="color:var(--cyan);">LAYER 3 :: NUMBER MATCH &mdash; #' + escapeHtml(String(p.number)) + ' = ' + escapeHtml(p.ourRarityNumberMatch.value) + ' (' + escapeHtml(p.ourRarityNumberMatch.setName) + ') &nbsp;&rarr;&nbsp; &times; ' + p.ourRarityNumberMatch.multiplier + '</div>'
+      : '';
     var oneOfOneRow = '';
     if (p.ourRarityOneOfOne){
       // 1 0F 1/2/3 — see LAYER3_MULTIPLIERS in _shared.js. "of" missing
@@ -20844,18 +20849,18 @@ const SWAP_HTML = `<!DOCTYPE html>
       var l3Text = l3Of === 1
         ? 'N0 0THER P!GE0N MATCHES ' + escapeHtml(p.ourRarityOneOfOne.setName) + ' TH!S WAY'
         : 'ONLY ' + l3Of + ' P!GE0NS MATCH ' + escapeHtml(p.ourRarityOneOfOne.setName) + ' TH!S WAY';
-      oneOfOneRow = '<div class="rb-mult-row" style="color:var(--green);">LAYER 3 :: 1 0F ' + l3Of + ' &mdash; ' + l3Text + ' &nbsp;&rarr;&nbsp; &times; ' + p.ourRarityOneOfOne.multiplier + '</div>';
+      oneOfOneRow = '<div class="rb-mult-row" style="color:var(--green);">LAYER 4 :: 1 0F ' + l3Of + ' &mdash; ' + l3Text + ' &nbsp;&rarr;&nbsp; &times; ' + p.ourRarityOneOfOne.multiplier + '</div>';
     }
     // Layer 4 — single trait values only 1-3 Pigeons have (see
     // ourRarityRareTraits in pigeons.js).
     var rareRow = '';
     if (p.ourRarityRareTraits){
-      rareRow = '<div class="rb-mult-row" style="color:var(--green);">LAYER 4 :: RARE TRA!T ' + p.ourRarityRareTraits.traits.map(function(t){
+      rareRow = '<div class="rb-mult-row" style="color:var(--green);">LAYER 5 :: RARE TRA!T ' + p.ourRarityRareTraits.traits.map(function(t){
         return escapeHtml(t.value) + ' (1 0F ' + t.of + ')';
       }).join(' + ') + ' &nbsp;&rarr;&nbsp; &times; ' + p.ourRarityRareTraits.multiplier + '</div>';
     }
     var finalRow = '<div class="rb-final-row"><span>F!NAL SC0RE</span><span>' + greenNum(fmtRarityScore(p.ourRarityScore)) + '</span></div>';
-    return rows + sumRow + multRow + oneOfOneRow + rareRow + finalRow;
+    return rows + sumRow + multRow + numberRow + oneOfOneRow + rareRow + finalRow;
   }
   function updateDetailRarity(p){
     var info = p ? rarityDisplay(p) : null;
@@ -20871,6 +20876,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? '<div class="tc-sub" style="color:var(--magenta); text-shadow:0 0 4px var(--magenta-glow);">' +
         [p.ourRarityNamedSet.name].concat((p.ourRarityNamedSet.extraSets || []).map(function(x){ return x.name; })).map(escapeHtml).join(' + ') +
         ' SET · ' + greenNum('x' + p.ourRarityNamedSet.multiplier) + '</div>'
+      : '';
+    var numberBadge = (p && p.ourRarityNumberMatch)
+      ? '<div class="tc-sub" style="color:var(--cyan);">NUMBER :: ' + escapeHtml(p.ourRarityNumberMatch.value) + ' · ' + greenNum('x' + p.ourRarityNumberMatch.multiplier) + '</div>'
       : '';
     var oneOfOneBadge = (p && p.ourRarityOneOfOne)
       ? '<div class="tc-sub" style="color:var(--green); text-shadow:0 0 4px var(--green-glow);">1 0F ' + (p.ourRarityOneOfOne.of || 1) + ' :: ' +
@@ -20890,7 +20898,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Pigeon's breakdown) — rebuilt every time so it's ready on EXPAND.
     closeRarityModal();
     el.rarityModalTitle.innerHTML = 'RAR!TY SC0RE' + (p && p.number != null ? ' :: #' + escapeHtml(String(p.number)) : '');
-    el.rarityModalBadges.innerHTML = matchBadge + oneOfOneBadge + rareBadge;
+    el.rarityModalBadges.innerHTML = matchBadge + numberBadge + oneOfOneBadge + rareBadge;
     el.rarityModalBadges.style.display = el.rarityModalBadges.innerHTML ? '' : 'none';
     el.detailRarityBreakdown.innerHTML = rarityBreakdownHtml(p);
     el.detailRarityExpandBtn.style.display = el.detailRarityBreakdown.innerHTML ? '' : 'none';

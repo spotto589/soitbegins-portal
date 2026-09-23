@@ -3901,7 +3901,9 @@ const RARITY_CRAWL_KEY = 'pswap:raritycrawl:v1';
 // '3': Layer 4 — rare single traits (1-3 holders) multiply too.
 // '4': Layer 2 multiplier is a lookup (RARITY_SET_MULTIPLIERS), not the
 // raw piece count; extra sets add their own multiplier minus one.
-const RARITY_FORMULA_VERSION = '4';
+// '5': a Pigeon's number is no longer a Named Set PIECE — it's its own
+// flat layer (RARITY_NUMBER_MULTIPLIER), and doesn't count toward 1 0F N.
+const RARITY_FORMULA_VERSION = '5';
 // Layer 3 multiplier by how many Pigeons share a set combination (see
 // maybeRefreshRarityScores' own Layer 3 comment).
 const LAYER3_MULTIPLIERS = { 1: 5.89, 2: 3.21, 3: 1.23 };
@@ -3909,6 +3911,13 @@ const LAYER3_MULTIPLIERS = { 1: 5.89, 2: 3.21, 3: 1.23 };
 // 2026-09-23, was "multiplier = pieces matched"). No set has more than 5
 // pieces matched today — anything bigger uses the 5-piece value.
 const RARITY_SET_MULTIPLIERS = { 2: 1.23, 3: 3.21, 4: 5.89, 5: 8.88 };
+// Layer 3 — Number Match. Flat bonus when a Pigeon's own number completes
+// a Named Set it already matches (666 in F!RE, 1 in EVANGEL!0N, ...).
+// Reported live 2026-09-23: the number isn't a trait, so it no longer
+// counts as a set piece (that pushed a 2-piece x1.23 set to x3.21, and
+// made the combination "unique" for 1 0F N) — it's its own one-off x.
+const RARITY_NUMBER_MULTIPLIER = 1.589;
+const RARITY_NUMBER_TRAIT_TYPES = ['__Number__', '__NumberMean!ng__'];
 function setMultiplierForPieces(n) {
   return RARITY_SET_MULTIPLIERS[Math.min(n, 5)] || 1;
 }
@@ -4246,11 +4255,16 @@ function namedSetMatchForItem(attrs, collectionKey) {
   if (!sets) return null;
   const matches = [];
   for (const set of sets) {
-    const matchedPieces = set.pieces.filter(p => attrs.some(a => a[0] === p.trait_type && a[1] === p.value));
+    const hit = set.pieces.filter(p => attrs.some(a => a[0] === p.trait_type && a[1] === p.value));
+    // Only real traits are set pieces (and need 2+ to count as a match);
+    // a matching number piece is kept aside for Layer 3.
+    const matchedPieces = hit.filter(p => RARITY_NUMBER_TRAIT_TYPES.indexOf(p.trait_type) === -1);
+    const numberPiece = hit.filter(p => RARITY_NUMBER_TRAIT_TYPES.indexOf(p.trait_type) !== -1)[0] || null;
     if (matchedPieces.length < 2) continue;
     matches.push({
       setName: set.name,
       matchedCount: matchedPieces.length,
+      numberValue: numberPiece ? numberPiece.value : null,
       // The actual values matched (not just the count) — needed so
       // Layer 3 can tell whether any other Pigeon has all of this one's
       // pieces too (see maybeRefreshRarityScores' own Layer 3 check).
@@ -4264,6 +4278,10 @@ function namedSetMatchForItem(attrs, collectionKey) {
   const best = matches[0];
   const extraSets = matches.slice(1).map(x => ({ setName: x.setName, matchedCount: x.matchedCount, matchedValues: x.matchedValues }));
   best.extraSets = extraSets;
+  // Layer 3 — once per Pigeon, from whichever matched set its number
+  // completes (see RARITY_NUMBER_MULTIPLIER).
+  const numberSet = matches.filter(x => x.numberValue)[0];
+  best.numberMatch = numberSet ? { setName: numberSet.setName, value: numberSet.numberValue, multiplier: RARITY_NUMBER_MULTIPLIER } : null;
   best.multiplier = Math.round((setMultiplierForPieces(best.matchedCount) + extraSets.reduce((sum, x) => sum + (setMultiplierForPieces(x.matchedCount) - 1), 0)) * 100) / 100;
   return best;
 }
@@ -4396,6 +4414,7 @@ function rarityFormulaSignature(collectionKey) {
     sets: RARITY_NAMED_SETS[collectionKey || 'pigeons'] || null,
     l3: LAYER3_MULTIPLIERS,
     l2: RARITY_SET_MULTIPLIERS,
+    num: RARITY_NUMBER_MULTIPLIER,
     meanings: RARITY_CURATED_NUMBER_MEANINGS,
     patterns: RARITY_NUMBER_PATTERNS.map(p => p.name),
   });
@@ -4492,7 +4511,8 @@ function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
       }
     }
     const oneOfOneMultiplier = oneOfOne ? oneOfOne.multiplier : 1;
-    item.finalScore = item.s * setMultiplier * oneOfOneMultiplier * (item.rare ? item.rare.multiplier : 1);
+    const numberMultiplier = m && m.numberMatch ? m.numberMatch.multiplier : 1;
+    item.finalScore = item.s * setMultiplier * numberMultiplier * oneOfOneMultiplier * (item.rare ? item.rare.multiplier : 1);
     item.setMultiplier = setMultiplier;
     item.oneOfOne = oneOfOne;
   }
@@ -4507,6 +4527,7 @@ function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
       base: Math.round(item.s * 1000) / 1000,
       breakdown: item.breakdown,
       namedSet: item.match ? { name: item.match.setName, matchedCount: item.match.matchedCount, multiplier: item.setMultiplier, extraSets: (item.match.extraSets || []).map(x => ({ name: x.setName, matchedCount: x.matchedCount, multiplier: setMultiplierForPieces(x.matchedCount) })) } : null,
+      numberMatch: item.match ? item.match.numberMatch || null : null,
       oneOfOne: item.oneOfOne,
       rareTraits: item.rare,
       rank: idx + 1,
