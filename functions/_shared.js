@@ -3883,8 +3883,20 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // v12 -> v13: F!RE + SAMURA! sets added, and a Pigeon matching more than
 // one set now stacks them (best + each extra's pieces minus one).
 // v13 -> v14: Layer 3 is now 1 0F 1/2/3 (x2/x1.5/x1.25), not only 1 0F 1.
+//
+// No more key bumps after v14 — see maybeRefreshRarityScores' own comment:
+// the live map key stays put (its "v14" name is just historical, kept so
+// the scores already there keep showing until the first re-score replaces
+// them), and a formula change now re-scores instantly from stored traits
+// instead of needing a fresh key + full re-crawl. To change scoring:
+// edit RARITY_NAMED_SETS / LAYER3_MULTIPLIERS / RARITY_CURATED_NUMBER_
+// MEANINGS and push — picked up automatically. Only a change to the
+// scoring CODE itself needs RARITY_FORMULA_VERSION bumped.
 const RARITY_MAP_KEY = 'pswap:rarity:v14';
-const RARITY_STATS_KEY = 'pswap:raritystats:v14';
+const RARITY_STATS_KEY = 'pswap:raritystats:live';
+const RARITY_TRAITS_KEY = 'pswap:raritytraits:v1';
+const RARITY_CRAWL_KEY = 'pswap:raritycrawl:v1';
+const RARITY_FORMULA_VERSION = '1';
 // Layer 3 multiplier by how many Pigeons share a set combination (see
 // maybeRefreshRarityScores' own Layer 3 comment).
 const LAYER3_MULTIPLIERS = { 1: 2, 2: 1.5, 3: 1.25 };
@@ -4227,172 +4239,229 @@ function namedSetMatchForItem(attrs, collectionKey) {
   return best;
 }
 
+// Two separate jobs now (reported live: "im going to keep updating this
+// rarity system" — every formula change used to wipe every score and
+// re-download the whole collection from Deeptide, ~5+ minutes of
+// C0M!NG S00N, just to apply a one-line Named Set edit):
+//
+// 1. CRAWL — the slow part, and the only part that talks to Deeptide.
+//    Pages through every item once and stores its raw traits + number
+//    (plus the collection-wide distribution) under RARITY_TRAITS_KEY.
+//    Traits don't change, so this only re-runs every
+//    RARITY_REFRESH_STALE_SECONDS to pick up new mints / drifting counts.
+//    Checkpointed across requests (RARITY_CRAWL_KEY), same runId guard
+//    as before.
+// 2. SCORE — pure math over that stored snapshot (scoreStoredTraits), no
+//    network at all, a few thousand sums. Re-runs automatically whenever
+//    rarityFormulaSignature() changes, i.e. whenever RARITY_NAMED_SETS,
+//    LAYER3_MULTIPLIERS or RARITY_CURATED_NUMBER_MEANINGS are edited, or
+//    RARITY_FORMULA_VERSION is bumped by hand (only needed for a change
+//    to the scoring CODE itself). Written over the same live key, so the
+//    previous scores keep showing right up until the new ones replace
+//    them — never a blank gap.
 export async function maybeRefreshRarityScores(kv, collectionKey, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX) {
   const cfg = getTradeConfig(collectionKey);
   const shopSlug = cfg && cfg.deeptideShopSlug ? cfg.deeptideShopSlug : (collectionKey ? null : DEEPTIDE_PIGEON_SHOP_SLUG);
   if (!shopSlug) return;
-  const statsKey = kvKeyFor(RARITY_STATS_KEY, collectionKey);
-  const statsRaw = await kv.get(statsKey);
-  const stats = statsRaw ? JSON.parse(statsRaw) : null;
   const now = Math.floor(Date.now() / 1000);
-  if (stats && stats.inProgress && now - stats.updatedAt < RARITY_CONCURRENT_GUARD_SECONDS) return;
-  if (stats && !stats.inProgress && now - stats.completedAt < RARITY_REFRESH_STALE_SECONDS) return;
+  const statsKey = kvKeyFor(RARITY_STATS_KEY, collectionKey);
+  const traitsKey = kvKeyFor(RARITY_TRAITS_KEY, collectionKey);
+  const signature = rarityFormulaSignature(collectionKey);
 
-  // runId is this tick's own claim on the current pass, checked again
-  // right before every write below (assertStillOwnsPass) — a tick that's
-  // been superseded by a newer pass bails out instead of clobbering it.
+  // The snapshot itself is ~1MB — only its tiny :meta sibling (just
+  // completedAt) is read on every request; the full thing only when a
+  // re-score is actually due.
+  const [statsRaw, metaRaw] = await Promise.all([kv.get(statsKey), kv.get(traitsKey + ':meta')]);
+  const stats = statsRaw ? JSON.parse(statsRaw) : null;
+  const meta = metaRaw ? JSON.parse(metaRaw) : null;
+
+  // SCORE — instant re-score whenever the formula changed since the live
+  // scores were written (or they've never been written from this
+  // snapshot). Done before the crawl check so a formula edit lands on
+  // the very next request, not after a crawl.
+  if (meta && (!stats || stats.signature !== signature || stats.snapshotAt !== meta.completedAt)) {
+    const traitsRaw = await kv.get(traitsKey);
+    if (traitsRaw) await writeScoresFromSnapshot(kv, collectionKey, collectionSizeApprox, JSON.parse(traitsRaw), signature, now);
+  }
+
+  // CRAWL — only when there's no snapshot yet, or it's stale.
+  if (meta && now - meta.completedAt < RARITY_REFRESH_STALE_SECONDS) return;
+  const crawlKey = kvKeyFor(RARITY_CRAWL_KEY, collectionKey);
+  const crawlRaw = await kv.get(crawlKey);
+  const crawl = crawlRaw ? JSON.parse(crawlRaw) : null;
+  if (crawl && now - crawl.updatedAt < RARITY_CONCURRENT_GUARD_SECONDS) return;
+
+  // runId is this tick's own claim on the current crawl, checked again
+  // right before every write below (assertStillOwnsCrawl) — a tick that's
+  // been superseded by a newer crawl bails out instead of clobbering it.
   // Confirmed live this was a real problem under rapid manual triggering
-  // (not normal traffic) even after this guard existed — see this file's
-  // own commit history if it ever needs revisiting.
-  let runId;
-  async function assertStillOwnsPass() {
-    const freshRaw = await kv.get(statsKey);
+  // (not normal traffic), and Cloudflare KV is only eventually consistent
+  // across colos — see RARITY_CONCURRENT_GUARD_SECONDS.
+  let runId, skip, dist, items;
+  const itemsKey = crawlKey + ':items';
+  if (crawl) {
+    runId = crawl.runId;
+    skip = crawl.nextSkip;
+    dist = crawl.dist;
+    const stored = await kv.get(itemsKey);
+    items = stored ? JSON.parse(stored) : {};
+  }
+  if (!crawl || !dist) {
+    // Fresh crawl — real distribution recomputed from scratch each time
+    // (collection-wide counts do drift slowly as new sales/mints happen).
+    // Carried in-memory/in the crawl blob from here rather than re-read,
+    // so every tick of one crawl scores against the same snapshot.
+    dist = await fetchFullTraitDistribution(shopSlug, collectionSizeApprox);
+    runId = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    skip = 0;
+    items = {};
+  }
+  async function assertStillOwnsCrawl() {
+    const freshRaw = await kv.get(crawlKey);
     const fresh = freshRaw ? JSON.parse(freshRaw) : null;
     return !fresh || !fresh.runId || fresh.runId === runId;
   }
-  let skip = stats && stats.inProgress ? stats.nextSkip : 0;
-  // Each item's FINAL result (score, breakdown, namedSet) is computed
-  // immediately, per item, as it streams in — unlike the old combo/
-  // word-match layers, nothing here needs to know about any OTHER item
-  // to score this one, so there's no separate "raw" staging shape and no
-  // second pass needed. raw simply accumulates each item's own finished
-  // result across ticks; only RANK (relative to every other item) has to
-  // wait for the whole pass to complete.
-  const rawKey = kvKeyFor(RARITY_MAP_KEY + ':raw', collectionKey);
-  let raw = {};
-  // dist (the fixed value->% snapshot every tick of THIS pass scores
-  // against) is carried in-memory from here rather than round-tripped
-  // through KV right after writing it — Cloudflare KV is only eventually
-  // consistent, so reading a key back immediately after writing it is not
-  // guaranteed to see that same write.
-  let dist;
-  const freshPassNeeded = !stats || !stats.inProgress;
-  if (!freshPassNeeded) {
-    const rawStored = await kv.get(rawKey);
-    raw = rawStored ? JSON.parse(rawStored) : {};
-    dist = stats.dist;
-    runId = stats.runId;
-  }
-  if (freshPassNeeded || !dist) {
-    // Fresh pass — real distribution recomputed from scratch each time
-    // (collection-wide counts do drift slowly as new sales/mints happen).
-    dist = await fetchFullTraitDistribution(shopSlug, collectionSizeApprox);
-    runId = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
-  }
-  let lastTotal = Infinity;
 
+  let lastTotal = Infinity;
   for (let i = 0; i < RARITY_PAGES_PER_RUN; i++) {
     const page = await fetchDeeptideListings({ skip, limit: DEEPTIDE_LISTINGS_MAX_LIMIT, sort: 'rarity-asc', shopSlug });
     if (page.error || !page.items.length) break;
     for (const it of page.items) {
       if (!it.nftId || !Array.isArray(it.attributes)) continue;
-      // Layer 1 (see scoreAgainstDistribution's own comment).
-      const { score: baseScore, breakdown } = scoreAgainstDistribution(it.attributes, dist, collectionSizeApprox);
-      // __no_trait__ never actually appears in Deeptide's own per-item
-      // traits array (an empty category is just omitted, see
-      // deeptideListingToPigeon) — the filter here is just a safety net.
-      const realAttrs = it.attributes
-        .filter(a => a.trait_type && a.value && a.value !== '__no_trait__')
-        .map(a => [a.trait_type, a.value]);
-      // A Pigeon's own display number can itself be one of a Named Set's
-      // pieces (see numberPatternFor/numberMeaningFor's own comments) —
-      // injected here as synthetic traits so namedSetMatchForItem sees
-      // them for free. Two separate categories (a number can be both a
-      // mechanical pattern AND a curated meaning at once, without one
-      // overwriting the other).
-      const numberPattern = numberPatternFor(it.number);
-      if (numberPattern) realAttrs.push(['__Number__', numberPattern]);
-      const numberMeaning = numberMeaningFor(it.number);
-      if (numberMeaning) realAttrs.push(['__NumberMean!ng__', numberMeaning]);
-      // Layer 2's own match is known right now (see namedSetMatchForItem's
-      // own comment), but Layer 3 (is THIS Pigeon the only one with this
-      // exact matched combination?) genuinely can't be decided until every
-      // other Pigeon's own match is in too — held here as `match`, scored
-      // in the final step below once the whole pass is done.
-      const match = namedSetMatchForItem(realAttrs, collectionKey);
-      raw[it.nftId] = { s: baseScore, breakdown, match };
+      items[it.nftId] = {
+        number: it.number,
+        attributes: it.attributes
+          .filter(a => a.trait_type && a.value)
+          .map(a => ({ trait_type: a.trait_type, value: a.value })),
+      };
     }
     lastTotal = page.total || lastTotal;
     skip += DEEPTIDE_LISTINGS_MAX_LIMIT;
     if (skip >= lastTotal) {
-      // Pass genuinely complete — only now can rank, OR Layer 3's own
-      // "is my match unique" check (needs every other item's match to
-      // answer), exist at all.
-      // Every item's match grouped by set, so Layer 3 below can ask "does
-      // any OTHER Pigeon match at least all of my pieces?" — not just
-      // "does anyone match exactly my pieces". Exact-key counting called
-      // #27 (Takashi + Murakami, 2 pieces) a 1 0F 1 even though #727 has
-      // both of those plus a third piece (reported live: "#27 is not a
-      // one of one").
-      const matchesBySet = {};
-      for (const nftId of Object.keys(raw)) {
-        const m = raw[nftId].match;
-        if (!m) continue;
-        (matchesBySet[m.setName] || (matchesBySet[m.setName] = [])).push({ nftId, values: m.matchedValues });
-      }
-      const finalScore = {};
-      for (const nftId of Object.keys(raw)) {
-        const item = raw[nftId];
-        const m = item.match;
-        const setMultiplier = m ? m.multiplier : 1;
-        // Layer 3 — "1 0F N": how many Pigeons (this one included) match
-        // this set with at least every piece this one has (same pieces or
-        // more). 1 0F 1 x2, 1 0F 2 x1.5, 1 0F 3 x1.25, nothing past 3
-        // (reported live: "1 of 3 max", and a shared combo should count
-        // for less than a true 1-of-1 — e.g. #7/#666's identical F!RE
-        // sets are 1 0F 2 each). Badged with the SET's own name, not a
-        // raw trait value — the set is what's actually scarce here.
-        let oneOfOne = null;
-        if (m) {
-          const holders = matchesBySet[m.setName].filter(other =>
-            m.matchedValues.every(v => other.values.includes(v))).length;
-          if (LAYER3_MULTIPLIERS[holders]) {
-            oneOfOne = { setName: m.setName, of: holders, multiplier: LAYER3_MULTIPLIERS[holders] };
-          }
-        }
-        const oneOfOneMultiplier = oneOfOne ? oneOfOne.multiplier : 1;
-        item.finalScore = item.s * setMultiplier * oneOfOneMultiplier;
-        item.setMultiplier = setMultiplier;
-        item.oneOfOne = oneOfOne;
-      }
-      // Higher score = rarer, same convention as rarity.tools/moonrank —
-      // rank 1 is the single rarest Pigeon in the collection.
-      const sorted = Object.keys(raw).sort((a, b) => raw[b].finalScore - raw[a].finalScore);
-      const finalMap = {};
-      sorted.forEach((nftId, idx) => {
-        const item = raw[nftId];
-        finalMap[nftId] = {
-          score: Math.round(item.finalScore * 1000) / 1000,
-          base: Math.round(item.s * 1000) / 1000,
-          breakdown: item.breakdown,
-          namedSet: item.match ? { name: item.match.setName, matchedCount: item.match.matchedCount, multiplier: item.setMultiplier, extraSets: (item.match.extraSets || []).map(x => ({ name: x.setName, matchedCount: x.matchedCount })) } : null,
-          oneOfOne: item.oneOfOne,
-          rank: idx + 1,
-          total: sorted.length,
-        };
-      });
-      // A newer pass (different runId) may have already started and
-      // possibly finished while this tick was working — writing this
-      // tick's own (now-stale) result over it would silently undo real
-      // progress. See runId's own comment above.
-      if (!(await assertStillOwnsPass())) return;
-      await safeKvPut(kv, kvKeyFor(RARITY_MAP_KEY, collectionKey), JSON.stringify(finalMap));
-      await safeKvPut(kv, statsKey, JSON.stringify({
-        inProgress: false, completedAt: now, updatedAt: now, count: sorted.length, total: sorted.length, runId,
-      }));
-      await kv.delete(rawKey).catch(() => {});
+      if (!(await assertStillOwnsCrawl())) return;
+      const snapshot = { items, dist, completedAt: now };
+      await safeKvPut(kv, traitsKey, JSON.stringify(snapshot));
+      await safeKvPut(kv, traitsKey + ':meta', JSON.stringify({ completedAt: now }));
+      await writeScoresFromSnapshot(kv, collectionKey, collectionSizeApprox, snapshot, signature, now);
+      await kv.delete(crawlKey).catch(() => {});
+      await kv.delete(itemsKey).catch(() => {});
       return;
     }
   }
-  // Still mid-pass — checkpoint each item's already-finished result, and
-  // the stats blob keeps carrying `dist` forward so the next tick scores
-  // against the same snapshot rather than re-fetching (and potentially
-  // getting a slightly different) distribution every single tick.
-  if (!(await assertStillOwnsPass())) return;
-  await safeKvPut(kv, rawKey, JSON.stringify(raw));
-  await safeKvPut(kv, statsKey, JSON.stringify({
-    inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(raw).length, dist, runId,
+  // Still mid-crawl — checkpoint what's been fetched so far.
+  if (!(await assertStillOwnsCrawl())) return;
+  await safeKvPut(kv, itemsKey, JSON.stringify(items));
+  await safeKvPut(kv, crawlKey, JSON.stringify({ nextSkip: skip, updatedAt: now, dist, runId }));
+}
+
+// Everything that decides a score, in one string — any edit to these
+// changes the signature, which triggers an instant re-score (see
+// maybeRefreshRarityScores). Functions (RARITY_NUMBER_PATTERNS' tests,
+// scoreAgainstDistribution, namedSetMatchForItem) can't be fingerprinted
+// this way, so a change to scoring CODE still needs RARITY_FORMULA_VERSION
+// bumped by hand — but a data edit (a new set, a new piece, a multiplier)
+// never does.
+function rarityFormulaSignature(collectionKey) {
+  const s = JSON.stringify({
+    v: RARITY_FORMULA_VERSION,
+    sets: RARITY_NAMED_SETS[collectionKey || 'pigeons'] || null,
+    l3: LAYER3_MULTIPLIERS,
+    meanings: RARITY_CURATED_NUMBER_MEANINGS,
+    patterns: RARITY_NUMBER_PATTERNS.map(p => p.name),
+  });
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  return RARITY_FORMULA_VERSION + ':' + h.toString(36);
+}
+
+async function writeScoresFromSnapshot(kv, collectionKey, collectionSizeApprox, snapshot, signature, now) {
+  const finalMap = scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox);
+  const count = Object.keys(finalMap).length;
+  await safeKvPut(kv, kvKeyFor(RARITY_MAP_KEY, collectionKey), JSON.stringify(finalMap));
+  await safeKvPut(kv, kvKeyFor(RARITY_STATS_KEY, collectionKey), JSON.stringify({
+    inProgress: false, completedAt: now, updatedAt: now, count, total: count,
+    signature, snapshotAt: snapshot.completedAt,
   }));
+}
+
+// Pure scoring — every layer, over a stored traits snapshot, no network.
+function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
+  const raw = {};
+  for (const nftId of Object.keys(snapshot.items)) {
+    const it = snapshot.items[nftId];
+    // Layer 1 (see scoreAgainstDistribution's own comment).
+    const { score: baseScore, breakdown } = scoreAgainstDistribution(it.attributes, snapshot.dist, collectionSizeApprox);
+    // __no_trait__ never actually appears in Deeptide's own per-item
+    // traits array (an empty category is just omitted, see
+    // deeptideListingToPigeon) — the filter here is just a safety net.
+    const realAttrs = it.attributes
+      .filter(a => a.value !== '__no_trait__')
+      .map(a => [a.trait_type, a.value]);
+    // A Pigeon's own display number can itself be one of a Named Set's
+    // pieces (see numberPatternFor/numberMeaningFor's own comments) —
+    // injected here as synthetic traits so namedSetMatchForItem sees
+    // them for free. Two separate categories (a number can be both a
+    // mechanical pattern AND a curated meaning at once, without one
+    // overwriting the other).
+    const numberPattern = numberPatternFor(it.number);
+    if (numberPattern) realAttrs.push(['__Number__', numberPattern]);
+    const numberMeaning = numberMeaningFor(it.number);
+    if (numberMeaning) realAttrs.push(['__NumberMean!ng__', numberMeaning]);
+    // Layer 2 (see namedSetMatchForItem's own comment).
+    raw[nftId] = { s: baseScore, breakdown, match: namedSetMatchForItem(realAttrs, collectionKey) };
+  }
+  // Every item's match grouped by set, so Layer 3 below can ask "how many
+  // Pigeons match at least all of my pieces?" — not just "does anyone
+  // match exactly my pieces". Exact-key counting called #27 (Takashi +
+  // Murakami, 2 pieces) a 1 0F 1 even though #727 has both of those plus
+  // a third piece (reported live: "#27 is not a one of one").
+  const matchesBySet = {};
+  for (const nftId of Object.keys(raw)) {
+    const m = raw[nftId].match;
+    if (!m) continue;
+    (matchesBySet[m.setName] || (matchesBySet[m.setName] = [])).push({ nftId, values: m.matchedValues });
+  }
+  for (const nftId of Object.keys(raw)) {
+    const item = raw[nftId];
+    const m = item.match;
+    const setMultiplier = m ? m.multiplier : 1;
+    // Layer 3 — "1 0F N": how many Pigeons (this one included) match
+    // this set with at least every piece this one has (same pieces or
+    // more). 1 0F 1 x2, 1 0F 2 x1.5, 1 0F 3 x1.25, nothing past 3
+    // (reported live: "1 of 3 max", and a shared combo should count
+    // for less than a true 1-of-1 — e.g. #7/#666's identical F!RE
+    // sets are 1 0F 2 each). Badged with the SET's own name, not a
+    // raw trait value — the set is what's actually scarce here.
+    let oneOfOne = null;
+    if (m) {
+      const holders = matchesBySet[m.setName].filter(other =>
+        m.matchedValues.every(v => other.values.includes(v))).length;
+      if (LAYER3_MULTIPLIERS[holders]) {
+        oneOfOne = { setName: m.setName, of: holders, multiplier: LAYER3_MULTIPLIERS[holders] };
+      }
+    }
+    const oneOfOneMultiplier = oneOfOne ? oneOfOne.multiplier : 1;
+    item.finalScore = item.s * setMultiplier * oneOfOneMultiplier;
+    item.setMultiplier = setMultiplier;
+    item.oneOfOne = oneOfOne;
+  }
+  // Higher score = rarer, same convention as rarity.tools/moonrank —
+  // rank 1 is the single rarest Pigeon in the collection.
+  const sorted = Object.keys(raw).sort((a, b) => raw[b].finalScore - raw[a].finalScore);
+  const finalMap = {};
+  sorted.forEach((nftId, idx) => {
+    const item = raw[nftId];
+    finalMap[nftId] = {
+      score: Math.round(item.finalScore * 1000) / 1000,
+      base: Math.round(item.s * 1000) / 1000,
+      breakdown: item.breakdown,
+      namedSet: item.match ? { name: item.match.setName, matchedCount: item.match.matchedCount, multiplier: item.setMultiplier, extraSets: (item.match.extraSets || []).map(x => ({ name: x.setName, matchedCount: x.matchedCount })) } : null,
+      oneOfOne: item.oneOfOne,
+      rank: idx + 1,
+      total: sorted.length,
+    };
+  });
+  return finalMap;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
