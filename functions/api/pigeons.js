@@ -1,5 +1,5 @@
 ﻿import {
-  fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent, resolveDetailsCached,
+  fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent, getNoTraitCounts, resolveDetailsCached,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap, getRarityMap, getRarityStats, maybeRefreshRarityScores,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, findCollectionOffer, getSwapSalesLog, identifySaleVenue, getFloorIndex,
@@ -341,6 +341,9 @@ export async function onRequestGet(context) {
   // Phnix trait.
   if (params.get('traits') === '1') {
     const categories = await getTraitCategoriesWithPercent(env.coin, coll.shopSlug, coll.sizeApprox);
+    // DETAIL's "NO <category>" boxes — real per-category counts (see
+    // getNoTraitCounts), not collection size minus the listed values.
+    const noTraitCounts = await getNoTraitCounts(env.coin, coll.shopSlug, coll.sizeApprox);
     const examples = {};
     if (tradeable) {
       const rawExamples = await getTraitExampleMap(env.coin, coll.key);
@@ -372,6 +375,7 @@ export async function onRequestGet(context) {
     if (tradeable) context.waitUntil(maybeRefreshRarityScores(env.coin, coll.key, coll.sizeApprox));
     return json({
       categories,
+      noTraitCounts,
       examples,
       collectionSizeApprox: coll.sizeApprox,
       numberMapStats,

@@ -14791,6 +14791,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     return api({ traits: 1 }).then(function(data){
       state.traitCategories = data.categories || {};
       state.traitExamples = data.examples || {};
+      state.traitNoTraitCounts = data.noTraitCounts || {};
       state.collectionSizeApprox = data.collectionSizeApprox || state.collectionSizeApprox;
       // ensureTraitsLoaded() and runQuery() fire concurrently on first
       // DATABASE open (see showTab) — cards can finish rendering before
@@ -20642,9 +20643,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // (state.traitCategories), alphabetical by category. A category this
   // Pigeon has nothing in (including the API's own synthesized
   // __no_trait__ rows) still gets its box, reading NO, with the real
-  // share of the collection that also has none of it: the collection's
-  // own __no_trait__ count when it has one (Clothing/Headwear), else
-  // collection size minus every real value's count in that category.
+  // share of the collection that also has none of it — Deeptide's own
+  // per-category __no_trait__ count (state.traitNoTraitCounts, see
+  // getNoTraitCounts). Not collection size minus the listed values: that
+  // came out 56 for Eyewear when only the 7 Ushankas really have none.
   function detailTraitsHtml(attrs){
     attrs = attrs || [];
     var cats = state.traitCategories ? Object.keys(state.traitCategories) : [];
@@ -20655,14 +20657,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (own) return traitCellHtml(own);
       var catValues = (state.traitCategories && state.traitCategories[cat]) || [];
       var noTrait = catValues.filter(function(v){ return v.value === '__no_trait__'; })[0];
-      var count = null, percent = null;
-      if (noTrait){
-        count = noTrait.count; percent = noTrait.percent;
-      } else if (catValues.length && state.collectionSizeApprox){
-        var used = catValues.reduce(function(sum, v){ return sum + (v.count || 0); }, 0);
-        count = Math.max(0, state.collectionSizeApprox - used);
-        percent = Math.round((count / state.collectionSizeApprox) * 100000) / 1000;
-      }
+      var real = (state.traitNoTraitCounts && state.traitNoTraitCounts[cat]) || noTrait || null;
+      var count = real ? real.count : null, percent = real ? real.percent : null;
       return traitCellHtml({ trait_type: cat, value: noTrait ? '__no_trait__' : '', displayValue: 'NO', percent: percent, count: count });
     }).join('');
   }

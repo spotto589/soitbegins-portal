@@ -3144,12 +3144,32 @@ async function fetchDeeptideTraitCards(skip, limit, shopSlug = DEEPTIDE_PIGEON_S
 // card could land in two overlapping pages and double up in the FILTER BY
 // TRAITS dropdown. A v4 entry already cached would otherwise keep serving
 // the doubled-up list for up to an hour after deploy.
-const TRAIT_CARDS_CACHE_KEY_PREFIX = 'pswap:traitcards:v5:';
+// v5 -> v6: every category's real `__no_trait__` count is now also kept
+// (own key, NO_TRAIT_CACHE_KEY_PREFIX) for DETAIL's "NO <category>" boxes —
+// bumped so both keys rebuild together instead of v5's cached categories
+// sitting beside a missing no-trait key.
+const TRAIT_CARDS_CACHE_KEY_PREFIX = 'pswap:traitcards:v6:';
+const NO_TRAIT_CACHE_KEY_PREFIX = 'pswap:notraitcounts:v1:';
 const TRAIT_CARDS_CACHE_TTL_SECONDS = 3600;
-export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX) {
-  const cacheKey = TRAIT_CARDS_CACHE_KEY_PREFIX + shopSlug;
-  const cached = await kv.get(cacheKey);
+// Real per-category "has nothing here" count/percent, straight from
+// Deeptide's own `__no_trait__` trait cards — for EVERY category, not just
+// the Clothing/Headwear pair getTraitCategoriesWithPercent keeps as
+// filterable NAKED/BALD values. A category missing here genuinely has no
+// item without it (Deeptide emits no __no_trait__ card then). Built by
+// the same pass as getTraitCategoriesWithPercent, same TTL.
+export async function getNoTraitCounts(kv, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX) {
+  const cached = await kv.get(NO_TRAIT_CACHE_KEY_PREFIX + shopSlug);
   if (cached !== null) return JSON.parse(cached);
+  return getTraitCategoriesWithPercent(kv, shopSlug, collectionSizeApprox, true);
+}
+// returnNoTrait (getNoTraitCounts only): skip the cache read and return
+// the freshly built no-trait map instead of the categories.
+export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX, returnNoTrait = false) {
+  const cacheKey = TRAIT_CARDS_CACHE_KEY_PREFIX + shopSlug;
+  if (!returnNoTrait) {
+    const cached = await kv.get(cacheKey);
+    if (cached !== null) return JSON.parse(cached);
+  }
 
   // Page 0 first (sequentially) so we learn the real `total`, then fire
   // every remaining page at once instead of awaiting them one at a time —
@@ -3183,11 +3203,13 @@ export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGE
   // dropped exactly as before, unchanged.
   const NO_TRAIT_LABELS = { Clothing: 'Naked', Headwear: 'Bald' };
   const grouped = {};
+  const noTrait = {}; // every category's real __no_trait__ count — see getNoTraitCounts
   const seen = new Set(); // trait_type+value can appear on more than one page — Deeptide's `sort=rarest` isn't stable across ties, and pages are fetched concurrently, so the same card can land in two overlapping pages and double up in the filter dropdown
   for (const t of all) {
     if (!t.trait_type || !t.value) continue;
     const isNoTrait = t.value.startsWith('__');
     const noTraitLabel = isNoTrait ? NO_TRAIT_LABELS[t.trait_type] : undefined;
+    if (isNoTrait && !noTrait[t.trait_type]) noTrait[t.trait_type] = { count: t.count, percent: Math.round((t.count / collectionSizeApprox) * 100000) / 1000 };
     if (isNoTrait && !noTraitLabel) continue; // Deeptide's internal "no trait" placeholder, uncovered category
 
     const dedupeKey = t.trait_type + ' ' + t.value;
@@ -3222,6 +3244,8 @@ export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGE
   }
 
   await safeKvPut(kv, cacheKey, JSON.stringify(grouped), { expirationTtl: TRAIT_CARDS_CACHE_TTL_SECONDS });
+  await safeKvPut(kv, NO_TRAIT_CACHE_KEY_PREFIX + shopSlug, JSON.stringify(noTrait), { expirationTtl: TRAIT_CARDS_CACHE_TTL_SECONDS });
+  if (returnNoTrait) return noTrait;
   return grouped;
 }
 
