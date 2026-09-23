@@ -20781,7 +20781,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // just the % and the score sitting next to each other — reported
     // live as not explaining WHY a trait got the number it did. This is
     // the whole reason it got that number, written out.
-    var rows = p.ourRarityBreakdown.map(function(r){
+    // Rarest trait first (lowest %), not the server's category order.
+    var rows = p.ourRarityBreakdown.slice().sort(function(a, b){ return a.percent - b.percent; }).map(function(r){
       var displayValue = r.value === '__no_trait__' ? 'N0NE' : r.value;
       return '<div class="rb-row">' +
         '<div class="rb-trait">' + escapeHtml(r.category) + ': <span class="rb-value">' + escapeHtml(displayValue) + '</span></div>' +
