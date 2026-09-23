@@ -10948,7 +10948,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <span class="sort-field-label">V!EW ::</span>
               <select class="sort-select" id="dbViewSelect">
                 <option value="thumbnails" selected>THUMBNA!LS</option>
-                <option value="boxed" disabled>B0XED V!EW (C0M!NG S00N)</option>
+                <option value="boxed">B0XED V!EW</option>
               </select>
             </div>
           </div>
