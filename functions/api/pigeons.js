@@ -192,7 +192,11 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pige
     rarityRank: meta.rarityRank || null,
     rarityTotal: meta.rarityTotal || null,
     ourRarityRank: rarityEntry ? rarityEntry.rank : null,
-    ourRarityScore: rarityEntry ? rarityEntry.score : null,
+    ourRarityScore: rarityEntry ? rarityEntry.score : null, // Trait Score (Layer 1) — what rank sorts by
+    // Lore Score — the full layered formula (sets, number, 1 0F N, rare
+    // traits) and its own rank. Shown, never sorted by.
+    ourRarityLoreScore: rarityEntry && rarityEntry.loreScore != null ? rarityEntry.loreScore : null,
+    ourRarityLoreRank: rarityEntry && rarityEntry.loreRank != null ? rarityEntry.loreRank : null,
     ourRarityTotal: rarityEntry ? rarityEntry.total : null,
     // Three layers, all checkable by hand — see scoreAgainstDistribution/
     // namedSetMatchForItem/namedSetSubsetKey's own comments in

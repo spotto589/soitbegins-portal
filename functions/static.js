@@ -7180,6 +7180,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      everything else in this popup). Same overlay treatment as SALES. */
   #rarityModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
   #rarityModal .rarity-modal-panel{ width:min(560px, 100%); max-height:min(85vh, 820px); display:flex; flex-direction:column; text-align:left; background:var(--panel-bg-solid); border:1px solid var(--border-mid); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.6); padding:1.2rem 1.3rem; animation:offer-confirm-pop 0.2s ease; }
+  #rarityModal .rb-lore-head{ margin-top:1rem; padding-top:0.6rem; border-top:1px dashed var(--border-mid); color:var(--magenta); font-weight:700; font-size:11px; letter-spacing:0.03em; text-transform:uppercase; }
   #rarityModal .rarity-modal-badges{ margin:0 0 0.8rem; padding-bottom:0.6rem; border-bottom:1px solid var(--border-mid); font-size:12px; text-transform:uppercase; letter-spacing:0.04em; line-height:1.6; }
   #screenDetail .rarity-expand-btn{ margin-top:0.35rem; padding:0.2rem 0.6rem; font:inherit; font-size:10px; letter-spacing:0.08em; color:var(--cyan); background:transparent; border:1px solid var(--cyan); border-radius:var(--radius); cursor:pointer; }
   #screenDetail .rarity-expand-btn:hover{ background:rgba(61,243,236,0.1); }
@@ -20822,7 +20823,10 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="rb-math">' + r.percent + '% 0F P!GE0NS &nbsp;&rarr;&nbsp; 100 &divide; ' + r.percent + ' &nbsp;=&nbsp; ' + greenNum(r.contribution) + '</div>' +
       '</div>';
     }).join('');
-    var sumRow = '<div class="rb-sum-row"><span>LAYER 1 :: ADD EVERY TRA!T SC0RE AB0VE</span><span>' + greenNum(fmtRarityScore(p.ourRarityBase)) + '</span></div>';
+    // RAR!TY SC0RE (Layer 1, the trait maths) is the real score now — the one rank
+    // sorts by. Everything after it is the separate L0RE SC0RE.
+    var sumRow = '<div class="rb-final-row"><span>RAR!TY SC0RE :: ADD EVERY TRA!T AB0VE</span><span>' + greenNum(fmtRarityScore(p.ourRarityBase)) + '</span></div>' +
+      '<div class="rb-lore-head">L0RE SC0RE :: RAR!TY SC0RE &times; EVERY B0NUS BEL0W' + (p.ourRarityLoreRank ? ' &nbsp;(L0RE RANK ' + greenNum(p.ourRarityLoreRank) + ')' : '') + '</div>';
     var multRow = '';
     if (p.ourRarityNamedSet){
       var ns = p.ourRarityNamedSet;
@@ -20859,7 +20863,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         return escapeHtml(t.value) + ' (1 0F ' + t.of + ')';
       }).join(' + ') + ' &nbsp;&rarr;&nbsp; &times; ' + p.ourRarityRareTraits.multiplier + '</div>';
     }
-    var finalRow = '<div class="rb-final-row"><span>F!NAL SC0RE</span><span>' + greenNum(fmtRarityScore(p.ourRarityScore)) + '</span></div>';
+    var loreScore = (p.ourRarityLoreScore !== null && p.ourRarityLoreScore !== undefined) ? p.ourRarityLoreScore : p.ourRarityScore;
+    var finalRow = '<div class="rb-final-row" style="color:var(--magenta);"><span>L0RE SC0RE</span><span>' + fmtRarityScore(loreScore) + '</span></div>';
     return rows + sumRow + multRow + numberRow + oneOfOneRow + rareRow + finalRow;
   }
   function updateDetailRarity(p){
@@ -20891,8 +20896,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       : '';
     // Just the number under the picture — the badges and the full
     // step-by-step math live in the RAR!TY SC0RE popup (EXPAND).
+    var hasLore = p && p.ourRarityLoreScore !== null && p.ourRarityLoreScore !== undefined;
     el.detailRarityScore.innerHTML = (p && p.ourRarityScore !== null && p.ourRarityScore !== undefined)
-      ? greenNum(fmtRarityScore(p.ourRarityScore))
+      ? greenNum(fmtRarityScore(p.ourRarityScore)) +
+        (hasLore ? '<div class="tc-sub" style="color:var(--magenta);">L0RE SC0RE ' + fmtRarityScore(p.ourRarityLoreScore) + '</div>' : '')
       : 'C0M!NG S00N';
     // Closed on every fresh Pigeon (never left open showing the PREVIOUS
     // Pigeon's breakdown) — rebuilt every time so it's ready on EXPAND.

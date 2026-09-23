@@ -3903,7 +3903,9 @@ const RARITY_CRAWL_KEY = 'pswap:raritycrawl:v1';
 // raw piece count; extra sets add their own multiplier minus one.
 // '5': a Pigeon's number is no longer a Named Set PIECE — it's its own
 // flat layer (RARITY_NUMBER_MULTIPLIER), and doesn't count toward 1 0F N.
-const RARITY_FORMULA_VERSION = '5';
+// '6': RANK and headline score are now the Trait Score (Layer 1 only);
+// the full layered formula is kept as the separate Lore Score.
+const RARITY_FORMULA_VERSION = '6';
 // Layer 3 multiplier by how many Pigeons share a set combination (see
 // maybeRefreshRarityScores' own Layer 3 comment).
 const LAYER3_MULTIPLIERS = { 1: 5.89, 2: 3.21, 3: 1.23 };
@@ -4516,14 +4518,21 @@ function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
     item.setMultiplier = setMultiplier;
     item.oneOfOne = oneOfOne;
   }
-  // Higher score = rarer, same convention as rarity.tools/moonrank —
-  // rank 1 is the single rarest Pigeon in the collection.
-  const sorted = Object.keys(raw).sort((a, b) => raw[b].finalScore - raw[a].finalScore);
+  // Higher score = rarer — rank 1 is the single rarest Pigeon.
+  // Reported live 2026-09-23: rarity is ranked by the TRAIT SCORE alone
+  // (Layer 1, pure maths — item.s). The full layered formula (sets,
+  // number, 1 0F N, rare traits) is kept as the separate LORE SCORE,
+  // with its own rank, not used for sorting.
+  const sorted = Object.keys(raw).sort((a, b) => raw[b].s - raw[a].s);
+  const loreRank = {};
+  Object.keys(raw).sort((a, b) => raw[b].finalScore - raw[a].finalScore).forEach((nftId, idx) => { loreRank[nftId] = idx + 1; });
   const finalMap = {};
   sorted.forEach((nftId, idx) => {
     const item = raw[nftId];
     finalMap[nftId] = {
-      score: Math.round(item.finalScore * 1000) / 1000,
+      score: Math.round(item.s * 1000) / 1000,
+      loreScore: Math.round(item.finalScore * 1000) / 1000,
+      loreRank: loreRank[nftId],
       base: Math.round(item.s * 1000) / 1000,
       breakdown: item.breakdown,
       namedSet: item.match ? { name: item.match.setName, matchedCount: item.match.matchedCount, multiplier: item.setMultiplier, extraSets: (item.match.extraSets || []).map(x => ({ name: x.setName, matchedCount: x.matchedCount, multiplier: setMultiplierForPieces(x.matchedCount) })) } : null,
