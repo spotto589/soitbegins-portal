@@ -3875,8 +3875,12 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // — not needed for a change that only affects display, docs, or
 // anything that isn't scoreAgainstDistribution/namedSetMatchForItem/
 // namedSetSubsetKey's own math.
-const RARITY_MAP_KEY = 'pswap:rarity:v10';
-const RARITY_STATS_KEY = 'pswap:raritystats:v10';
+// v10 -> v11: Layer 3 1 0F 1 now fails if ANY other Pigeon matches the
+// same set with at least all of this one's pieces (a superset counts),
+// not only an identical piece set — #27 (2 pieces) was wrongly a 1 0F 1
+// beside #727 (the same 2 plus a third).
+const RARITY_MAP_KEY = 'pswap:rarity:v11';
+const RARITY_STATS_KEY = 'pswap:raritystats:v11';
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
 const RARITY_CONCURRENT_GUARD_SECONDS = 90; // was 10, then 30 — needs to clear Cloudflare KV's own ~60s worst-case cross-colo propagation window, not just this process's own runId check (see the v3->v4 KV key comment above)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
@@ -4277,24 +4281,31 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
       // Pass genuinely complete — only now can rank, OR Layer 3's own
       // "is my match unique" check (needs every other item's match to
       // answer), exist at all.
-      const subsetCounts = {};
+      // Every item's match grouped by set, so Layer 3 below can ask "does
+      // any OTHER Pigeon match at least all of my pieces?" — not just
+      // "does anyone match exactly my pieces". Exact-key counting called
+      // #27 (Takashi + Murakami, 2 pieces) a 1 0F 1 even though #727 has
+      // both of those plus a third piece (reported live: "#27 is not a
+      // one of one").
+      const matchesBySet = {};
       for (const nftId of Object.keys(raw)) {
         const m = raw[nftId].match;
         if (!m) continue;
-        const key = namedSetSubsetKey(m.setName, m.matchedValues);
-        subsetCounts[key] = (subsetCounts[key] || 0) + 1;
+        (matchesBySet[m.setName] || (matchesBySet[m.setName] = [])).push({ nftId, values: m.matchedValues });
       }
       const finalScore = {};
       for (const nftId of Object.keys(raw)) {
         const item = raw[nftId];
         const m = item.match;
         const setMultiplier = m ? m.multiplier : 1;
-        // Layer 3 — flat x2, only when this Pigeon is the ONLY one
-        // matching this exact set to this exact combination of pieces
-        // (subsetCounts === 1). Badged with the SET's own name, not a
-        // raw trait value — the set is what's actually unique here.
+        // Layer 3 — flat x2, only when NO other Pigeon matches this set
+        // with at least every piece this one has (same pieces or more).
+        // Badged with the SET's own name, not a raw trait value — the set
+        // is what's actually unique here.
         let oneOfOne = null;
-        if (m && subsetCounts[namedSetSubsetKey(m.setName, m.matchedValues)] === 1) {
+        const sharedByAnother = m && matchesBySet[m.setName].some(other =>
+          other.nftId !== nftId && m.matchedValues.every(v => other.values.includes(v)));
+        if (m && !sharedByAnother) {
           oneOfOne = { setName: m.setName, multiplier: 2 };
         }
         const oneOfOneMultiplier = oneOfOne ? oneOfOne.multiplier : 1;
