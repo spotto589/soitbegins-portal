@@ -5077,7 +5077,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .result-row-left{
     flex:0 0 auto;
-    width:280px;
+    /* 264 (was 280) gives BOXED VIEW's 3-across trait boxes just enough
+       width for the longest trait name (Burpocalypse) on one line. */
+    width:264px;
     display:flex;
     flex-direction:column;
     align-items:center;
@@ -6337,6 +6339,32 @@ const SWAP_HTML = `<!DOCTYPE html>
     .card-trait-grid{ grid-template-columns:repeat(2, 1fr); }
   }
   .card-select-toggle, .my-pigeon-offer-toggle{ width:1.9em; height:1.9em; line-height:1.9em; font-size:16px; }
+  /* BOXED VIEW traits — same boxes as the Pigeon page's trait grid
+     (#screenDetail .trait-grid), but every row a fixed height so every
+     card is exactly the same size and nothing ever scrolls inside it:
+     3 across, rarest first, BACKGROUND stretched along the bottom row. */
+  .result-card .card-detail-traits{ display:grid; max-width:100%; margin:0.4rem 0 0; grid-template-columns:repeat(3, 1fr); grid-auto-rows:112px; gap:0.4rem; }
+  .result-card .card-detail-traits .trait-cell{ padding:3px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-width:0; overflow:hidden; }
+  .result-card .card-detail-traits .tc-text{ width:100%; }
+  /* 12px, no letter-spacing: the collection's longest single word
+     (Burpocalypse, 79px) fits a box on one line without breaking. */
+  .result-card .card-detail-traits .tc-value{ font-size:12px; letter-spacing:0; font-weight:700; line-height:1.2; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:break-word; }
+  .result-card .card-detail-traits .tc-label{ font-size:10px; margin:0.2rem 0 0; font-style:italic; }
+  .result-card .card-detail-traits .tc-sub{ font-size:11px; margin-top:0.2rem; line-height:1.25; }
+  .result-card .card-detail-traits .trait-cell.has-preview{ background-size:cover; background-position:center 20%; }
+  .result-card .card-detail-traits .trait-cell.has-preview .tc-label,
+  .result-card .card-detail-traits .trait-cell.has-preview .tc-value,
+  .result-card .card-detail-traits .trait-cell.has-preview .tc-sub{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+  .result-card .card-detail-traits .trait-cell.has-preview .tc-text{ background:rgba(8,9,11,0.68); border-radius:calc(var(--radius) - 2px); padding:0.3rem 2px; }
+  .result-card .card-detail-traits .trait-cell.has-preview:hover{ border-color:var(--cyan); }
+  .result-card .card-detail-traits .bg-span3-1{ grid-column:span 1; }
+  .result-card .card-detail-traits .bg-span3-2{ grid-column:span 2; }
+  .result-card .card-detail-traits .bg-span3-3{ grid-column:1 / -1; }
+  @media (max-width:520px){
+    .result-card .card-detail-traits{ grid-template-columns:repeat(2, 1fr); }
+    .result-card .card-detail-traits .bg-span2-1{ grid-column:span 1; }
+    .result-card .card-detail-traits .bg-span2-2{ grid-column:1 / -1; }
+  }
 
   @media (max-width:900px){
     .result-grid{ grid-template-columns:repeat(3, 1fr); }
@@ -14145,6 +14173,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   // trait_type/value on each cell so a click can filter the browse view
   // down to exactly that trait (see wireResultClicks' .card-trait-cell
   // handler) — same real percent/count lookup as before.
+  // BOXED VIEW's traits — the exact same boxes as the Pigeon page
+  // (detailTraitsHtml: photo-backed, rarest first, BACKGROUND stretched
+  // along the bottom), reported live 2026-09-23. Bulk items carry no
+  // percent/count, so those are filled in from state.traitCategories
+  // first (they drive both the % line and the rarest-first order).
+  function boxedTraitsHtml(p){
+    var attrs = (p.attributes || []).map(function(a){
+      if (a.percent !== null && a.percent !== undefined) return a;
+      var catValues = state.traitCategories && state.traitCategories[a.trait_type];
+      var match = catValues ? catValues.filter(function(v){ return v.value === a.value; })[0] : null;
+      return match ? { trait_type: a.trait_type, value: a.value, percent: match.percent, count: match.count } : a;
+    });
+    return '<div class="trait-grid card-detail-traits">' + detailTraitsHtml(attrs, 'card-trait-link') + '</div>';
+  }
   function cardTraitsHtml(p){
     if (!p.attributes || !p.attributes.length) return '';
     return '<div class="card-trait-grid">' + p.attributes.map(function(a){
@@ -14335,7 +14377,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       '</div>';
     var carouselHtml =
       '<div class="card-pages" data-page="0">' +
-        '<div class="card-page card-page-traits">' + cardTraitsHtml(p) + '</div>' +
+        '<div class="card-page card-page-traits">' + boxedTraitsHtml(p) + '</div>' +
         salesPageHtml +
         historyPageHtml +
       '</div>' +
@@ -14623,7 +14665,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           return;
         }
       }
-      var traitCell = e.target.closest('.card-trait-cell');
+      var traitCell = e.target.closest('.card-trait-cell, .card-trait-link');
       if (traitCell){
         var trait = traitCell.getAttribute('data-trait');
         var value = traitCell.getAttribute('data-value');
@@ -20688,7 +20730,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // per-category __no_trait__ count (state.traitNoTraitCounts, see
   // getNoTraitCounts). Not collection size minus the listed values: that
   // came out 56 for Eyewear when only the 7 Ushankas really have none.
-  function detailTraitsHtml(attrs){
+  function detailTraitsHtml(attrs, cellClass){
     attrs = attrs || [];
     var cats = state.traitCategories ? Object.keys(state.traitCategories) : [];
     attrs.forEach(function(a){ if (cats.indexOf(a.trait_type) === -1) cats.push(a.trait_type); });
@@ -20704,11 +20746,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
     var isBg = function(c){ return String(c.trait_type).toLowerCase() === 'background'; };
     var rest = sortTraitsByRarity(cells.filter(function(c){ return !isBg(c); }));
-    var html = rest.map(function(c){ return traitCellHtml(c); }).join('');
+    var html = rest.map(function(c){ return traitCellHtml(c, cellClass); }).join('');
     var bg = cells.filter(isBg)[0];
     if (bg){
       var n = rest.length;
-      html += traitCellHtml(bg, 'bg-span3-' + (3 - n % 3) + ' bg-span2-' + (2 - n % 2));
+      html += traitCellHtml(bg, 'bg-span3-' + (3 - n % 3) + ' bg-span2-' + (2 - n % 2) + (cellClass ? ' ' + cellClass : ''));
     }
     return html;
   }
