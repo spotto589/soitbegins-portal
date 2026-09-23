@@ -3896,7 +3896,10 @@ const RARITY_MAP_KEY = 'pswap:rarity:v14';
 const RARITY_STATS_KEY = 'pswap:raritystats:live';
 const RARITY_TRAITS_KEY = 'pswap:raritytraits:v1';
 const RARITY_CRAWL_KEY = 'pswap:raritycrawl:v1';
-const RARITY_FORMULA_VERSION = '1';
+// '2': Layer 3 holder counts include each Pigeon's extra sets, not only
+// its best one.
+// '3': Layer 4 — rare single traits (1-3 holders) multiply too.
+const RARITY_FORMULA_VERSION = '3';
 // Layer 3 multiplier by how many Pigeons share a set combination (see
 // maybeRefreshRarityScores' own Layer 3 comment).
 const LAYER3_MULTIPLIERS = { 1: 2, 2: 1.5, 3: 1.25 };
@@ -4067,6 +4070,9 @@ function numberPatternFor(number) {
 // without one overwriting the other.
 const RARITY_CURATED_NUMBER_MEANINGS = {
   14: 'VALENT!NES DAY',
+  // #666 (reported live): the number of the beast completes F!RE the same
+  // way 14 completes S0 !T BEG!NS.
+  666: 'NUMBER 0F THE BEAST',
 };
 function numberMeaningFor(number) {
   if (number === null || number === undefined) return null;
@@ -4188,6 +4194,7 @@ export const RARITY_NAMED_SETS = {
       { trait_type: 'Feathers', value: 'Phoenix' },
       { trait_type: 'Eyewear', value: 'Burn Sequence' },
       { trait_type: 'Beak', value: 'Fire Spitter' },
+      { trait_type: '__NumberMean!ng__', value: 'NUMBER 0F THE BEAST' },
     ] },
     // #7 (reported live): Samurai clothing + Kabuto (a samurai helmet).
     { name: 'SAMURA!', pieces: [
@@ -4233,7 +4240,7 @@ function namedSetMatchForItem(attrs, collectionKey) {
   // first-strictly-bigger-wins loop did.
   matches.sort((a, b) => b.matchedCount - a.matchedCount);
   const best = matches[0];
-  const extraSets = matches.slice(1).map(x => ({ setName: x.setName, matchedCount: x.matchedCount }));
+  const extraSets = matches.slice(1).map(x => ({ setName: x.setName, matchedCount: x.matchedCount, matchedValues: x.matchedValues }));
   best.extraSets = extraSets;
   best.multiplier = best.matchedCount + extraSets.reduce((sum, x) => sum + (x.matchedCount - 1), 0);
   return best;
@@ -4407,19 +4414,40 @@ function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
     if (numberPattern) realAttrs.push(['__Number__', numberPattern]);
     const numberMeaning = numberMeaningFor(it.number);
     if (numberMeaning) realAttrs.push(['__NumberMean!ng__', numberMeaning]);
+    // Layer 4 — Rare Trait. Any single trait value only 1-3 Pigeons in
+    // the whole collection have (reported live: #45's Gold Bar is 1 0F 2
+    // and should count for it), same x2/x1.5/x1.25 tiers as Layer 3.
+    // Rarest first; several on one Pigeon combine the same way extra
+    // Named Sets do — the rarest keeps its full multiplier, each other
+    // one adds its own multiplier minus one.
+    const rareTraits = it.attributes
+      .filter(a => a.value !== '__no_trait__')
+      .map(a => ({ trait_type: a.trait_type, value: a.value, of: (snapshot.dist[a.trait_type] || {})[a.value] }))
+      .filter(x => LAYER3_MULTIPLIERS[x.of])
+      .sort((a, b) => a.of - b.of);
+    const rareMultiplier = rareTraits.length
+      ? LAYER3_MULTIPLIERS[rareTraits[0].of] + rareTraits.slice(1).reduce((sum, x) => sum + (LAYER3_MULTIPLIERS[x.of] - 1), 0)
+      : 1;
     // Layer 2 (see namedSetMatchForItem's own comment).
-    raw[nftId] = { s: baseScore, breakdown, match: namedSetMatchForItem(realAttrs, collectionKey) };
+    raw[nftId] = {
+      s: baseScore, breakdown, match: namedSetMatchForItem(realAttrs, collectionKey),
+      rare: rareTraits.length ? { traits: rareTraits, multiplier: rareMultiplier } : null,
+    };
   }
   // Every item's match grouped by set, so Layer 3 below can ask "how many
   // Pigeons match at least all of my pieces?" — not just "does anyone
   // match exactly my pieces". Exact-key counting called #27 (Takashi +
   // Murakami, 2 pieces) a 1 0F 1 even though #727 has both of those plus
   // a third piece (reported live: "#27 is not a one of one").
+  // Extra sets count as holders too (reported live: #604 showed 1 0F 1
+  // SAMURA! because #7's SAMURA! is only its second set, behind F!RE).
   const matchesBySet = {};
   for (const nftId of Object.keys(raw)) {
     const m = raw[nftId].match;
     if (!m) continue;
-    (matchesBySet[m.setName] || (matchesBySet[m.setName] = [])).push({ nftId, values: m.matchedValues });
+    for (const x of [m].concat(m.extraSets || [])) {
+      (matchesBySet[x.setName] || (matchesBySet[x.setName] = [])).push({ nftId, values: x.matchedValues });
+    }
   }
   for (const nftId of Object.keys(raw)) {
     const item = raw[nftId];
@@ -4441,7 +4469,7 @@ function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
       }
     }
     const oneOfOneMultiplier = oneOfOne ? oneOfOne.multiplier : 1;
-    item.finalScore = item.s * setMultiplier * oneOfOneMultiplier;
+    item.finalScore = item.s * setMultiplier * oneOfOneMultiplier * (item.rare ? item.rare.multiplier : 1);
     item.setMultiplier = setMultiplier;
     item.oneOfOne = oneOfOne;
   }
@@ -4457,6 +4485,7 @@ function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
       breakdown: item.breakdown,
       namedSet: item.match ? { name: item.match.setName, matchedCount: item.match.matchedCount, multiplier: item.setMultiplier, extraSets: (item.match.extraSets || []).map(x => ({ name: x.setName, matchedCount: x.matchedCount })) } : null,
       oneOfOne: item.oneOfOne,
+      rareTraits: item.rare,
       rank: idx + 1,
       total: sorted.length,
     };

@@ -20788,7 +20788,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     var oneOfOneRow = '';
     if (p.ourRarityOneOfOne){
-      // 1 0F 1/2/3 — see LAYER3_MULTIPLIERS in _shared.js. `of` missing
+      // 1 0F 1/2/3 — see LAYER3_MULTIPLIERS in _shared.js. "of" missing
       // on rarity data from before tiers existed means a true 1 0F 1.
       var l3Of = p.ourRarityOneOfOne.of || 1;
       var l3Text = l3Of === 1
@@ -20796,8 +20796,16 @@ const SWAP_HTML = `<!DOCTYPE html>
         : 'ONLY ' + l3Of + ' P!GE0NS MATCH ' + escapeHtml(p.ourRarityOneOfOne.setName) + ' TH!S WAY';
       oneOfOneRow = '<div class="rb-mult-row" style="color:var(--green);">LAYER 3 :: 1 0F ' + l3Of + ' &mdash; ' + l3Text + ' &nbsp;&rarr;&nbsp; &times; ' + p.ourRarityOneOfOne.multiplier + '</div>';
     }
+    // Layer 4 — single trait values only 1-3 Pigeons have (see
+    // ourRarityRareTraits in pigeons.js).
+    var rareRow = '';
+    if (p.ourRarityRareTraits){
+      rareRow = '<div class="rb-mult-row" style="color:var(--green);">LAYER 4 :: RARE TRA!T ' + p.ourRarityRareTraits.traits.map(function(t){
+        return escapeHtml(t.value) + ' (1 0F ' + t.of + ')';
+      }).join(' + ') + ' &nbsp;&rarr;&nbsp; &times; ' + p.ourRarityRareTraits.multiplier + '</div>';
+    }
     var finalRow = '<div class="rb-final-row"><span>F!NAL SC0RE</span><span>' + greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + '</span></div>';
-    return rows + sumRow + multRow + oneOfOneRow + finalRow;
+    return rows + sumRow + multRow + oneOfOneRow + rareRow + finalRow;
   }
   function updateDetailRarity(p){
     var info = p ? rarityDisplay(p) : null;
@@ -20818,8 +20826,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? '<div class="tc-sub" style="color:var(--green); text-shadow:0 0 4px var(--green-glow);">1 0F ' + (p.ourRarityOneOfOne.of || 1) + ' :: ' +
         escapeHtml(p.ourRarityOneOfOne.setName) + ' · ' + greenNum('x' + p.ourRarityOneOfOne.multiplier) + '</div>'
       : '';
+    var rareBadge = (p && p.ourRarityRareTraits)
+      ? '<div class="tc-sub" style="color:var(--green); text-shadow:0 0 4px var(--green-glow);">' +
+        p.ourRarityRareTraits.traits.map(function(t){ return '1 0F ' + t.of + ' :: ' + escapeHtml(t.value).toUpperCase(); }).join(' + ') +
+        ' · ' + greenNum('x' + p.ourRarityRareTraits.multiplier) + '</div>'
+      : '';
     el.detailRarityScore.innerHTML = (p && p.ourRarityScore !== null && p.ourRarityScore !== undefined)
-      ? greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + matchBadge + oneOfOneBadge
+      ? greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + matchBadge + oneOfOneBadge + rareBadge
       : 'C0M!NG S00N';
     // Closed on every fresh Pigeon (not left open carrying the PREVIOUS
     // Pigeon's breakdown while this one's data loads in) — rebuilt fresh

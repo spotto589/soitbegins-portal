@@ -212,6 +212,9 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pige
     ourRarityBreakdown: rarityEntry ? rarityEntry.breakdown || null : null,
     ourRarityNamedSet: rarityEntry ? rarityEntry.namedSet || null : null,
     ourRarityOneOfOne: rarityEntry ? rarityEntry.oneOfOne || null : null,
+    // Layer 4 — {traits: [{trait_type, value, of}], multiplier}, present
+    // only when this Pigeon has a trait value just 1-3 Pigeons have.
+    ourRarityRareTraits: rarityEntry ? rarityEntry.rareTraits || null : null,
     owner: owner || null,
     ownerShort: owner ? shortenAddr(owner) : null,
     ownerIndexed: !!owner,
