@@ -8646,6 +8646,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* BUY on the marketplace a listing lives on (card + Pigeon page). */
   .market-buy-link{ display:inline-block; margin-top:0.35rem; padding:0.3em 0.7em; border:1px solid var(--green); border-radius:var(--radius); color:var(--green); font-size:11px; font-weight:700; letter-spacing:0.06em; text-decoration:none; white-space:nowrap; }
   .market-buy-link:hover{ background:var(--green); color:#000; }
+  .market-buy-list{ display:flex; flex-direction:column; align-items:stretch; gap:0.35rem; width:100%; }
+  .market-buy-list .market-buy-link{ margin:0; text-align:center; white-space:normal; font-size:12px; padding:0.45em 0.5em; }
   .detail-markets{ margin:0.6rem 0; border:1px solid var(--border-mid); border-radius:var(--radius); padding:0.6rem 0.8rem; }
   .detail-markets-title{ font-size:11px; letter-spacing:0.12em; color:var(--grey-dim); margin-bottom:0.3rem; text-align:center; }
   .detail-market-row{ display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:0.75rem; padding:0.35rem 0; border-top:1px dashed var(--border-dim); font-size:15px; }
@@ -14637,13 +14639,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     // rarity score instead of its average sale (falls back to the normal
     // line when there's no score yet).
     var floorSort = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC' || state.sort === 'XRPCAFE_PRICE_ASC' || state.sort === 'XRPCAFE_PRICE_DESC';
-    if (floorSort && p.bestListingXrp !== null && p.bestListingXrp !== undefined){
-      // Marketplace + price, and a BUY button to that marketplace (a
-      // brokered listing can only be bought on its own marketplace).
-      var mLabel = p.bestListingLabel || (p.bestListingSource === 'xrpCafe' || p.bestListingSource === 'xrpcafe' ? 'XRP.CAFE' : 'DEEPT!DE');
-      avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">' + escapeHtml(mLabel) + ' ::</span><span class="stat-value">' + greenNum(fmtXrp(p.bestListingXrp)) + ' XRP</span>' +
-        (p.bestListingUrl ? '<a class="market-buy-link" href="' + escapeHtml(p.bestListingUrl) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY 0N ' + escapeHtml(mLabel) + ' ↗</a>' : '') +
-        '</div>';
+    if (floorSort && p.marketListings && p.marketListings.length){
+      // One button per marketplace it's listed on, cheapest first:
+      // "BUY 0N XRP.CAFE F0R 16 XRP" (a brokered listing can only be
+      // bought on its own marketplace, so each goes there).
+      avgSaleLine = '<div class="result-rarity-line market-buy-list">' + p.marketListings.map(function(l){
+        return '<a class="market-buy-link" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY 0N ' + escapeHtml(l.label) + ' F0R ' + fmtXrp(l.priceXrp) + ' XRP ↗</a>';
+      }).join('') + '</div>';
     } else if ((state.sort === 'LORE_ASC' || state.sort === 'LORE_DESC') && p.ourRarityLoreScore !== null && p.ourRarityLoreScore !== undefined){
       avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">L0RE SC0RE ::</span><span class="stat-value">' + greenNum(fmtRarityScore(p.ourRarityLoreScore)) + '</span></div>';
     } else if ((state.sort === 'RARITY_ASC' || state.sort === 'RARITY_DESC') && p.ourRarityScore !== null && p.ourRarityScore !== undefined){
@@ -20519,11 +20521,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'AVG_SALE_XRP_ASC', label: 'L0WEST AVG SALE PR!CE XRP' },
       { value: 'AVG_SALE_XRP_DESC', label: 'H!GHEST AVG SALE PR!CE XRP' },
       { value: 'AVG_SALE_PIGEONS_ASC', label: 'L0WEST AVG SALE PR!CE $P!GE0NS' },
+      // Every marketplace together (xrp.cafe, Bidds, direct, ...) — one
+      // floor, cheapest or dearest first (reported live 2026-09-23: keep
+      // it to these two, not per-marketplace sorts).
       { value: 'PRICE_ASC', label: 'L0WEST (XRP)' },
-      // xrp.cafe's own floor only (reported live 2026-09-23: xrp.cafe
-      // itself can't sort a 1st-edition floor) — pairs with 1ST ED!T!0N.
-      { value: 'XRPCAFE_PRICE_ASC', label: 'L0WEST XRP.CAFE' },
-      { value: 'XRPCAFE_PRICE_DESC', label: 'H!GHEST XRP.CAFE' }
+      { value: 'PRICE_DESC', label: 'H!GHEST (XRP)' }
     ],
     'H!ST0R!CAL SALES': [
       { value: 'HIGHEST_SALE', label: 'H!GHEST REC0RDED SALES' }
