@@ -6389,11 +6389,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .trait-cell.has-preview .tc-art{ flex:1 1 auto; min-height:40px; background-size:cover; background-position:center 20%; background-repeat:no-repeat; }
   .trait-cell.has-preview .tc-text{ flex:0 0 auto; background:#0b0c0f; border-top:1px solid var(--border-mid); border-radius:0; }
   .trait-cell.has-preview .tc-value, .trait-cell.has-preview .tc-label, .trait-cell.has-preview .tc-sub{ color:#fff; text-shadow:none; }
-  /* NO <category> boxes — plain Pigeons purple, everywhere trait boxes
-     show (Pigeon page + BOXED VIEW). */
-  .trait-cell.trait-cell-none{ background:var(--collection-accent); border-color:var(--collection-accent); }
-  .trait-cell.trait-cell-none .tc-value, .trait-cell.trait-cell-none .tc-label, .trait-cell.trait-cell-none .tc-sub, .trait-cell.trait-cell-none .tc-sub *{ color:#fff; text-shadow:none; }
-  .trait-cell.trait-cell-none:hover{ background:var(--collection-accent); border-color:#fff; }
+  /* NO <category> boxes — same picture-on-top / text-strip layout as
+     every other trait box, with plain Pigeons purple (the collection's
+     accent) where the picture would be. Pigeon page + BOXED VIEW. */
+  .trait-cell.has-preview .tc-art.tc-art-none{ background:var(--collection-accent); }
   /* SALES H!ST0RY — exactly the OFFER button's shape, in cyan. */
   .card-sales-history-btn{ width:100%; background:var(--cyan); border:1px solid var(--cyan); color:#000; text-shadow:none; font-family:var(--font-mono); font-weight:700; font-size:15px; letter-spacing:0.03em; padding:0.8em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:box-shadow 0.15s ease; }
   .card-sales-history-btn:hover{ box-shadow:0 0 14px var(--cyan-glow); }
@@ -20899,9 +20898,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         (previewSize ? 'background-size:' + previewSize + ';' : '') +
         (previewPos ? 'background-position:' + previewPos + ';' : '') + '"></div>'
       : '';
+    // NO boxes use the same layout, with plain Pigeons purple where the
+    // picture would be (reported live 2026-09-23).
+    if (isNone) artHtml = '<div class="tc-art tc-art-none"></div>';
+    var hasArt = !!artHtml;
     var style = '';
-    var textOpen = exampleImg ? artHtml + '<div class="tc-text">' : '';
-    var textClose = exampleImg ? '</div>' : '';
+    var textOpen = hasArt ? artHtml + '<div class="tc-text">' : '';
+    var textClose = hasArt ? '</div>' : '';
     // Same value/label split as cardTraitsHtml's own trait cells — NAKED/
     // BALD's real attribute entry carries the raw __no_trait__ value (so
     // the click-to-filter handler right below still round-trips correctly
@@ -20910,7 +20913,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var catValuesForCell = state.traitCategories && state.traitCategories[a.trait_type];
     var cellMatch = catValuesForCell ? catValuesForCell.filter(function(v){ return v.value === a.value; })[0] : null;
     var cellDisplayValue = a.displayValue || (cellMatch && cellMatch.label ? cellMatch.label : a.value);
-    return '<div class="trait-cell' + (exampleImg ? ' has-preview' : '') + (isNone ? ' trait-cell-none' : '') + (extraClass ? ' ' + extraClass : '') + '" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' + style +
+    return '<div class="trait-cell' + (hasArt ? ' has-preview' : '') + (isNone ? ' trait-cell-none' : '') + (extraClass ? ' ' + extraClass : '') + '" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' + style +
       ' title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
       textOpen +
       // Value first, category second — "G0LDEN FEATHERS" reads as one
