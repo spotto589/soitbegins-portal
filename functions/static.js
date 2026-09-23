@@ -8568,6 +8568,30 @@ const SWAP_HTML = `<!DOCTYPE html>
   .hx-meta{ display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-top:0.45rem; font-size:12px; color:var(--grey-dim); letter-spacing:0.03em; }
   .hx-meta > span{ white-space:nowrap; }
   .hx-meta .dh-bithomp-btn{ width:auto; flex:0 0 auto; display:inline-block; padding:0.35em 0.8em; margin:0; }
+  /* Bigger everywhere (reported live 2026-09-23: "its so small how am i
+     supposed to read it"). */
+  .history-modal-panel{ width:min(720px, 100%); padding:2.5rem 2.25rem; font-size:16px; }
+  .history-modal-panel .buyswap-thumb{ width:140px; height:140px; }
+  .history-modal-panel .history-title{ font-size:34px; }
+  .history-modal-panel .node-eyebrow{ font-size:18px; letter-spacing:0.12em; }
+  .history-modal-panel .buyswap-balance-tile{ padding:0.8em 0.6em; }
+  .history-modal-panel .buyswap-balance-label{ font-size:13px; margin-bottom:0.35rem; }
+  .history-modal-panel .buyswap-balance-value{ font-size:26px; }
+  .history-modal-panel .hx-row{ padding:1rem 1.2rem; }
+  .history-modal-panel .hx-list{ gap:0.75rem; }
+  .history-modal-panel .hx-verb{ font-size:15px; }
+  .history-modal-panel .hx-price{ font-size:32px; }
+  .history-modal-panel .hx-parties{ font-size:18px; margin-top:0.6rem; }
+  .history-modal-panel .hx-parties a, .history-modal-panel .detail-field a,
+  .history-modal-panel .wallet-tag{ font-size:inherit !important; }
+  .history-modal-panel .hx-parties .dh-party{ font-size:18px !important; }
+  .history-modal-panel .hx-tag{ font-size:13px; }
+  .history-modal-panel .hx-meta{ font-size:15px; margin-top:0.6rem; }
+  .history-modal-panel .hx-meta .dh-bithomp-btn{ font-size:14px; padding:0.45em 0.9em; }
+  .history-modal-panel .detail-field{ margin-top:0.75rem; }
+  .history-modal-panel .df-label{ font-size:15px; letter-spacing:0.08em; }
+  .history-modal-panel .df-value{ font-size:18px; font-weight:700; }
+  .history-modal-panel .hx-empty{ font-size:16px; }
   .hx-empty{ text-align:center; color:var(--grey-dim); font-size:13px; letter-spacing:0.05em; padding:1rem 0; }
   /* PR0F!LE ED!T popup — its own id (not #amountEntryModal, so it needs
      the same fixed-overlay shell spelled out again here rather than
