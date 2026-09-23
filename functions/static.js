@@ -15529,7 +15529,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // (~63%+) — feather colour+texture visible with the least other-
     // trait overlap of any band on the portrait.
     Eyewear: 'center 38%',
-    Feathers: 'center 40%',
+    // The belly (reported live 2026-09-23: the old 40% crop landed on
+    // the face) — checked against real no-clothing Pigeons, and the
+    // crawl now picks a no-clothing Pigeon as each Feathers example so
+    // the belly is actually feathers, not a shirt.
+    Feathers: 'center 95%',
     // Aura is a glow/halo effect around the whole character — the very
     // top edge of the frame, not the head-biased default.
     Aura: 'center top',
@@ -15548,7 +15552,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // treatment Background/Feathers already got.
   var TRAIT_PREVIEW_SIZE = {
     Background: '350%',
-    Feathers: '280%',
+    Feathers: '220%',
     Eyewear: '280%',
     Beak: '280%',
     Headwear: '220%',

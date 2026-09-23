@@ -3596,9 +3596,14 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
   const stats = statsRaw ? JSON.parse(statsRaw) : null;
   const now = Math.floor(Date.now() / 1000);
   if (stats && stats.inProgress && now - stats.updatedAt < NUMBER_MAP_CONCURRENT_GUARD_SECONDS) return;
-  if (stats && !stats.inProgress && now - stats.completedAt < NUMBER_MAP_REFRESH_STALE_SECONDS) return;
+  // A pass finished before Feathers examples preferred no-clothing
+  // Pigeons (no nakedFeathers on its stats) is treated as stale, so the
+  // examples rebuild once instead of waiting out the normal refresh.
+  if (stats && !stats.inProgress && stats.nakedFeathers && now - stats.completedAt < NUMBER_MAP_REFRESH_STALE_SECONDS) return;
 
   let skip = stats && stats.inProgress ? stats.nextSkip : 0;
+  // Feathers values that already have a no-clothing example this pass.
+  const nakedFeathers = stats && stats.inProgress && stats.nakedFeathers ? stats.nakedFeathers : {};
   // Resuming reads the STAGING copy (this pass's own in-progress work),
   // never the live map — starting a brand new pass starts genuinely
   // empty, same as before, but that emptiness now stays invisible to
@@ -3623,11 +3628,20 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
       // builds both the same way), so this is a straight cache of it.
       detailMap[it.nftId] = it;
       if (Array.isArray(it.attributes)) {
+        const wearsClothing = it.attributes.some(a => a.trait_type === 'Clothing' && a.value && a.value !== '__no_trait__');
         for (const a of it.attributes) {
           if (!a.trait_type || !a.value) continue;
           if (it.image) {
             if (!traitExamples[a.trait_type]) traitExamples[a.trait_type] = {};
             if (!traitExamples[a.trait_type][a.value]) traitExamples[a.trait_type][a.value] = it.image;
+            // Feathers: a Pigeon with no clothing shows its feathers on
+            // its belly (the example's crop), so one replaces a clothed
+            // example the first time one turns up (reported live
+            // 2026-09-23). Values with no unclothed Pigeon keep theirs.
+            if (a.trait_type === 'Feathers' && !wearsClothing && !nakedFeathers[a.value]) {
+              traitExamples.Feathers[a.value] = it.image;
+              nakedFeathers[a.value] = true;
+            }
           }
           // See TRAIT_INDEX_MAP_KEY's own comment above — this is the real
           // trait_type+value -> [nftIds] membership index, built for free
@@ -3673,7 +3687,7 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
       await safeKvPut(kv, kvKeyFor(TRAIT_INDEX_MAP_KEY, collectionKey), JSON.stringify(traitIndex));
       await safeKvPut(kv, kvKeyFor(PIGEON_DETAIL_MAP_KEY, collectionKey), JSON.stringify(detailMap));
       await safeKvPut(kv, statsKey, JSON.stringify({
-        inProgress: false, completedAt: now, updatedAt: now, count: Object.keys(map).length,
+        inProgress: false, completedAt: now, updatedAt: now, count: Object.keys(map).length, nakedFeathers,
       }));
       return;
     }
@@ -3686,7 +3700,7 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
   await safeKvPut(kv, kvKeyFor(TRAIT_INDEX_MAP_STAGING_KEY, collectionKey), JSON.stringify(traitIndex));
   await safeKvPut(kv, kvKeyFor(PIGEON_DETAIL_MAP_STAGING_KEY, collectionKey), JSON.stringify(detailMap));
   await safeKvPut(kv, statsKey, JSON.stringify({
-    inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(map).length,
+    inProgress: true, nextSkip: skip, updatedAt: now, count: Object.keys(map).length, nakedFeathers,
   }));
 }
 
