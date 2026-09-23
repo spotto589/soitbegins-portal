@@ -14640,10 +14640,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // line when there's no score yet).
     var floorSort = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC' || state.sort === 'XRPCAFE_PRICE_ASC' || state.sort === 'XRPCAFE_PRICE_DESC';
     if (floorSort && p.marketListings && p.marketListings.length){
-      // One button per marketplace it's listed on, cheapest first:
-      // "BUY 0N XRP.CAFE F0R 16 XRP" (a brokered listing can only be
-      // bought on its own marketplace, so each goes there).
-      avgSaleLine = '<div class="result-rarity-line market-buy-list">' + p.marketListings.map(function(l){
+      // Only the cheapest listing (reported live 2026-09-23), as one
+      // button: "BUY 0N XRP.CAFE F0R 16 XRP" (a brokered listing can only
+      // be bought on its own marketplace, so it goes there).
+      avgSaleLine = '<div class="result-rarity-line market-buy-list">' + p.marketListings.slice(0, 1).map(function(l){
         return '<a class="market-buy-link" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY 0N ' + escapeHtml(l.label) + ' F0R ' + fmtXrp(l.priceXrp) + ' XRP ↗</a>';
       }).join('') + '</div>';
     } else if ((state.sort === 'LORE_ASC' || state.sort === 'LORE_DESC') && p.ourRarityLoreScore !== null && p.ourRarityLoreScore !== undefined){
@@ -21274,8 +21274,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.rarityCloseBtn.addEventListener('click', closeRarityModal);
   el.rarityModal.addEventListener('click', function(e){ if (e.target === el.rarityModal) closeRarityModal(); });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && el.rarityModal.style.display === 'flex') closeRarityModal(); });
+  // Only the cheapest listing, same as the cards (reported live
+  // 2026-09-23) — marketListings arrives cheapest first.
   function detailMarketsHtml(list){
-    return '<div class="detail-markets-title">L!STED 0N</div>' + list.map(function(l, i){
+    return '<div class="detail-markets-title">L0WEST L!ST!NG</div>' + list.slice(0, 1).map(function(l, i){
       return '<div class="detail-market-row' + (i === 0 ? ' cheapest' : '') + '">' +
         '<span class="dm-name">' + escapeHtml(l.label) + '</span>' +
         '<span class="dm-price">' + greenNum(fmtXrp(l.priceXrp)) + ' XRP</span>' +
