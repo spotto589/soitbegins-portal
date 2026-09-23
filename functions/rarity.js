@@ -112,7 +112,15 @@ function renderRarityHtml() {
     </div>
     <p><strong>Final score = Layer 1 total &times; the multiplier</strong> (&times;1 if no confirmed set applies). #727 above matches all 3 pieces of TAKASH! MURAKAM! (Background+Feathers+Beak &mdash; Kaws isn't one of them), so its real final score is <code>607.3 &times; 3 = 1,822</code>. #1515 matches 5 real gold-themed pieces (G0LD) for &times;5. Every Pigeon's own DETAIL page shows this exact breakdown &mdash; tap RARITY SCORE to open it.</p>
 
-    <h2><span class="step">03</span>C0NF!RMED NAMED SETS</h2>
+    <h2><span class="step">03</span>LAYER 3 :: 1 0F 1 B0NUS</h2>
+    <p>A separate, stronger fact from just matching a Named Set at all: is THIS Pigeon the only one in the whole collection matching that set to that exact combination of pieces? SANTA and JESTER are both real confirmed sets, but more than one Pigeon has each of them &mdash; PR!NCE, S0 !T BEG!NS, and most of the others above are matched by exactly one Pigeon each. That's the difference this layer measures.</p>
+    <div class="layer-card">
+      <div class="layer-name">THE RULE</div>
+      <div class="layer-desc">If nobody else matches your exact combination &rarr; <strong>&times;2</strong>, on top of the Layer 2 multiplier. If anyone else shares it (like SANTA or JESTER) &rarr; no bonus, &times;1.</div>
+    </div>
+    <p>This can only be checked once every Pigeon's own Named Set match is known &mdash; it's not a fact about one Pigeon alone, it's a comparison against everyone else. Every Pigeon's own DETAIL page shows whether this applies to it.</p>
+
+    <h2><span class="step">04</span>C0NF!RMED NAMED SETS</h2>
     <p>Every set below is confirmed real, by hand, against the actual artwork &mdash; not algorithm output.</p>
     <div class="set-grid">
       <div class="set-card">
@@ -172,7 +180,7 @@ function renderRarityHtml() {
       </div>
     </div>
 
-    <h2><span class="step">04</span>THE BAR</h2>
+    <h2><span class="step">05</span>THE BAR</h2>
     <p>Without a real bar, "matched set" becomes whatever feels thematic. A candidate needs ONE of:</p>
     <div class="bar-box">
       <ol style="margin-left:1.2rem;">

@@ -3839,12 +3839,20 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // ALONE is already the same 1-of-1), and KAWS is a different real artist
 // from Takashi Murakami, not part of his name — reported live as
 // something that needed re-checking, and it was wrong. x3 now, was x4.
-// Bump again (v10, v11, ...) any time the scoring formula itself changes
+// v9 -> v10 (2026-09-23): added Layer 3 — x2 when a Pigeon is the ONLY
+// one matching its confirmed Named Set to that exact combination of
+// pieces (checked against every other Pigeon's own match, not a
+// per-item fact — see namedSetSubsetKey's own comment). First shipped as
+// a check on individual TRAITS being collection-wide 1-of-1s instead —
+// wrong, corrected before ever going live: reported live as meaning the
+// confirmed SETS themselves (Prince, So It Begins, Hazmat, etc) being
+// 1-of-1 combinations, not random single traits.
+// Bump again (v11, v12, ...) any time the scoring formula itself changes
 // — not needed for a change that only affects display, docs, or
-// anything that isn't scoreAgainstDistribution/namedSetMatchForItem's
-// own math.
-const RARITY_MAP_KEY = 'pswap:rarity:v9';
-const RARITY_STATS_KEY = 'pswap:raritystats:v9';
+// anything that isn't scoreAgainstDistribution/namedSetMatchForItem/
+// namedSetSubsetKey's own math.
+const RARITY_MAP_KEY = 'pswap:rarity:v10';
+const RARITY_STATS_KEY = 'pswap:raritystats:v10';
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
 const RARITY_CONCURRENT_GUARD_SECONDS = 90; // was 10, then 30 — needs to clear Cloudflare KV's own ~60s worst-case cross-colo propagation window, not just this process's own runId check (see the v3->v4 KV key comment above)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
@@ -3929,6 +3937,27 @@ export function scoreAgainstDistribution(attributes, dist, collectionSizeApprox)
     });
   }
   return { score, breakdown };
+}
+
+// Layer 3 — 1 0F 1 bonus. NOT about a single trait being rare on its own
+// (an earlier version of this checked that — reported live as wrong:
+// "theres plenty of 1 of 1s, the prince, so it begins, hazmat suit etc"
+// — those are already CONFIRMED SETS, and the point is that most of them
+// happen to also be the only Pigeon that matches that exact combination
+// of pieces, which is a different, stronger fact than any one piece
+// being individually unique). This checks THAT instead: once every
+// Pigeon's Named Set match is known (see maybeRefreshRarityScores' own
+// two-step final pass — this needs every OTHER Pigeon's match to know if
+// yours is unique, the one thing that can't be decided per-item alone),
+// count how many Pigeons match the exact same set to the exact same
+// pieces. Exactly 1 (itself) -> a real 1-of-1 combination, not just a
+// multi-piece match — badged with the SET's own name, not a raw trait
+// value, since the set is what's actually unique here. Flat x2, same
+// "simple number, no formula" rule as everything else — deliberately NOT
+// the old real-scarcity K-constant math (see namedSetMatchForItem's own
+// comment on why that was replaced).
+function namedSetSubsetKey(setName, matchedValues) {
+  return setName + '::' + matchedValues.slice().sort().join('|');
 }
 
 // The statistical-combo and word-match layers that used to live here
@@ -4123,6 +4152,10 @@ function namedSetMatchForItem(attrs, collectionKey) {
         setName: set.name,
         matchedCount: matchedPieces.length,
         multiplier: matchedPieces.length,
+        // The actual values matched (not just the count) — needed so
+        // Layer 3 can tell whether THIS Pigeon's own exact combination is
+        // shared by anyone else (see namedSetSubsetKey's own comment).
+        matchedValues: matchedPieces.map(p => p.trait_type + '=' + p.value),
       };
     }
   }
@@ -4206,29 +4239,60 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
       if (numberPattern) realAttrs.push(['__Number__', numberPattern]);
       const numberMeaning = numberMeaningFor(it.number);
       if (numberMeaning) realAttrs.push(['__NumberMean!ng__', numberMeaning]);
-      // Layer 2 (see namedSetMatchForItem's own comment) — the multiplier
-      // is just the piece count, so this item's own final score is fully
-      // known right now, no dependency on any other item.
+      // Layer 2's own match is known right now (see namedSetMatchForItem's
+      // own comment), but Layer 3 (is THIS Pigeon the only one with this
+      // exact matched combination?) genuinely can't be decided until every
+      // other Pigeon's own match is in too — held here as `match`, scored
+      // in the final step below once the whole pass is done.
       const match = namedSetMatchForItem(realAttrs, collectionKey);
-      const multiplier = match ? match.multiplier : 1;
-      raw[it.nftId] = {
-        score: Math.round(baseScore * multiplier * 1000) / 1000,
-        base: Math.round(baseScore * 1000) / 1000,
-        breakdown,
-        namedSet: match ? { name: match.setName, matchedCount: match.matchedCount, multiplier } : null,
-      };
+      raw[it.nftId] = { s: baseScore, breakdown, match };
     }
     lastTotal = page.total || lastTotal;
     skip += DEEPTIDE_LISTINGS_MAX_LIMIT;
     if (skip >= lastTotal) {
-      // Pass genuinely complete — only now can rank (relative to every
-      // other item's own already-finished score) exist at all.
+      // Pass genuinely complete — only now can rank, OR Layer 3's own
+      // "is my match unique" check (needs every other item's match to
+      // answer), exist at all.
+      const subsetCounts = {};
+      for (const nftId of Object.keys(raw)) {
+        const m = raw[nftId].match;
+        if (!m) continue;
+        const key = namedSetSubsetKey(m.setName, m.matchedValues);
+        subsetCounts[key] = (subsetCounts[key] || 0) + 1;
+      }
+      const finalScore = {};
+      for (const nftId of Object.keys(raw)) {
+        const item = raw[nftId];
+        const m = item.match;
+        const setMultiplier = m ? m.multiplier : 1;
+        // Layer 3 — flat x2, only when this Pigeon is the ONLY one
+        // matching this exact set to this exact combination of pieces
+        // (subsetCounts === 1). Badged with the SET's own name, not a
+        // raw trait value — the set is what's actually unique here.
+        let oneOfOne = null;
+        if (m && subsetCounts[namedSetSubsetKey(m.setName, m.matchedValues)] === 1) {
+          oneOfOne = { setName: m.setName, multiplier: 2 };
+        }
+        const oneOfOneMultiplier = oneOfOne ? oneOfOne.multiplier : 1;
+        item.finalScore = item.s * setMultiplier * oneOfOneMultiplier;
+        item.setMultiplier = setMultiplier;
+        item.oneOfOne = oneOfOne;
+      }
       // Higher score = rarer, same convention as rarity.tools/moonrank —
       // rank 1 is the single rarest Pigeon in the collection.
-      const sorted = Object.keys(raw).sort((a, b) => raw[b].score - raw[a].score);
+      const sorted = Object.keys(raw).sort((a, b) => raw[b].finalScore - raw[a].finalScore);
       const finalMap = {};
       sorted.forEach((nftId, idx) => {
-        finalMap[nftId] = { ...raw[nftId], rank: idx + 1, total: sorted.length };
+        const item = raw[nftId];
+        finalMap[nftId] = {
+          score: Math.round(item.finalScore * 1000) / 1000,
+          base: Math.round(item.s * 1000) / 1000,
+          breakdown: item.breakdown,
+          namedSet: item.match ? { name: item.match.setName, matchedCount: item.match.matchedCount, multiplier: item.setMultiplier } : null,
+          oneOfOne: item.oneOfOne,
+          rank: idx + 1,
+          total: sorted.length,
+        };
       });
       // A newer pass (different runId) may have already started and
       // possibly finished while this tick was working — writing this

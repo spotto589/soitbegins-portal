@@ -194,18 +194,24 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pige
     ourRarityRank: rarityEntry ? rarityEntry.rank : null,
     ourRarityScore: rarityEntry ? rarityEntry.score : null,
     ourRarityTotal: rarityEntry ? rarityEntry.total : null,
-    // Two layers, both checkable by hand — see scoreAgainstDistribution
-    // and namedSetMatchForItem's own comments in _shared.js. ourRarityBase
-    // is Layer 1 (every real trait's own 100÷% score, summed);
-    // ourRarityBreakdown is that same sum's own per-trait rows (category,
-    // value, percent, contribution) so DETAIL can show the literal table
-    // instead of just the total. ourRarityNamedSet is Layer 2 — only ever
-    // a hand-curated, confirmed match (see RARITY_NAMED_SETS), never
-    // inferred — its multiplier is just the number of pieces matched.
-    // ourRarityScore = ourRarityBase * (namedSet ? multiplier : 1).
+    // Three layers, all checkable by hand — see scoreAgainstDistribution/
+    // namedSetMatchForItem/namedSetSubsetKey's own comments in
+    // _shared.js. ourRarityBase is Layer 1 (every real trait's own
+    // 100÷% score, summed); ourRarityBreakdown is that same sum's own
+    // per-trait rows (category, value, percent, contribution) so DETAIL
+    // can show the literal table instead of just the total.
+    // ourRarityNamedSet is Layer 2 — only ever a hand-curated, confirmed
+    // match (see RARITY_NAMED_SETS), never inferred — its multiplier is
+    // just the number of pieces matched. ourRarityOneOfOne is Layer 3 —
+    // {setName, multiplier}, present only when this item is the ONLY
+    // Pigeon matching that confirmed set to that exact combination of
+    // pieces (checked against every other Pigeon's own match, not a
+    // per-item fact) — flat x2. ourRarityScore = ourRarityBase *
+    // (namedSet multiplier, default 1) * (oneOfOne multiplier, default 1).
     ourRarityBase: rarityEntry ? rarityEntry.base : null,
     ourRarityBreakdown: rarityEntry ? rarityEntry.breakdown || null : null,
     ourRarityNamedSet: rarityEntry ? rarityEntry.namedSet || null : null,
+    ourRarityOneOfOne: rarityEntry ? rarityEntry.oneOfOne || null : null,
     owner: owner || null,
     ownerShort: owner ? shortenAddr(owner) : null,
     ownerIndexed: !!owner,

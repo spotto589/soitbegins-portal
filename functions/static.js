@@ -20707,10 +20707,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   // Builds the literal step-by-step math a tap on RARITY SCORE reveals —
   // every real trait's own row (value, %, 100÷% score), the sum (Layer
-  // 1), then the Named Set multiplier row and final total (Layer 2) when
-  // one applies. Nothing here that isn't also in ourRarityBreakdown/
-  // ourRarityBase/ourRarityNamedSet already sent from the server — this
-  // just lays it out to read, doesn't compute anything new.
+  // 1), then the Named Set multiplier row (Layer 2) and the 1 0F 1 row
+  // (Layer 3) when either applies, then the final total. Nothing here
+  // that isn't also in ourRarityBreakdown/ourRarityBase/ourRarityNamedSet/
+  // ourRarityOneOfOne already sent from the server — this just lays it
+  // out to read, doesn't compute anything new.
   function rarityBreakdownHtml(p){
     if (!p || !p.ourRarityBreakdown || !p.ourRarityBreakdown.length) return '';
     // Every row spells out the actual division ("100 ÷ 0.40% = 250"), not
@@ -20728,25 +20729,37 @@ const SWAP_HTML = `<!DOCTYPE html>
     var multRow = '';
     if (p.ourRarityNamedSet){
       var ns = p.ourRarityNamedSet;
-      multRow = '<div class="rb-mult-row">LAYER 2 :: ' + escapeHtml(ns.name) + ' SET, ' + ns.matchedCount + ' MATCH!NG P!ECES &nbsp;&rarr;&nbsp; ' + greenNum(p.ourRarityBase.toLocaleString(undefined, { maximumFractionDigits: 1 })) + ' &times; ' + ns.multiplier + '</div>';
+      multRow = '<div class="rb-mult-row">LAYER 2 :: ' + escapeHtml(ns.name) + ' SET, ' + ns.matchedCount + ' MATCH!NG P!ECES &nbsp;&rarr;&nbsp; &times; ' + ns.multiplier + '</div>';
     } else {
       multRow = '<div class="rb-mult-row" style="color:var(--grey-dim);">LAYER 2 :: N0 C0NF!RMED SET &mdash; &times;1 (n0 change)</div>';
     }
+    var oneOfOneRow = '';
+    if (p.ourRarityOneOfOne){
+      oneOfOneRow = '<div class="rb-mult-row" style="color:var(--green);">LAYER 3 :: 1 0F 1 &mdash; N0 0THER P!GE0N MATCHES ' + escapeHtml(p.ourRarityOneOfOne.setName) + ' TH!S WAY &nbsp;&rarr;&nbsp; &times; ' + p.ourRarityOneOfOne.multiplier + '</div>';
+    }
     var finalRow = '<div class="rb-final-row"><span>F!NAL SC0RE</span><span>' + greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + '</span></div>';
-    return rows + sumRow + multRow + finalRow;
+    return rows + sumRow + multRow + oneOfOneRow + finalRow;
   }
   function updateDetailRarity(p){
     var info = p ? rarityDisplay(p) : null;
     if (info){ el.detailRarityRow.style.display = ''; el.detailRarity.innerHTML = greenNum(info.rank) + ' / ' + info.total; }
     else el.detailRarityRow.style.display = 'none';
     // Named Set badge — a real, hand-confirmed match only (see
-    // RARITY_NAMED_SETS in _shared.js), never inferred.
+    // RARITY_NAMED_SETS in _shared.js), never inferred. 1 0F 1 badge only
+    // shows when THIS Pigeon is the only one matching that confirmed set
+    // to that exact combination of pieces (see namedSetSubsetKey's own
+    // comment in _shared.js) — a stronger, separate fact from just
+    // matching the set at all. Both can show at once.
     var matchBadge = (p && p.ourRarityNamedSet)
       ? '<div class="tc-sub" style="color:var(--magenta); text-shadow:0 0 4px var(--magenta-glow);">' +
         escapeHtml(p.ourRarityNamedSet.name) + ' SET · ' + greenNum('x' + p.ourRarityNamedSet.multiplier) + '</div>'
       : '';
+    var oneOfOneBadge = (p && p.ourRarityOneOfOne)
+      ? '<div class="tc-sub" style="color:var(--green); text-shadow:0 0 4px var(--green-glow);">1 0F 1 :: ' +
+        escapeHtml(p.ourRarityOneOfOne.setName) + ' · ' + greenNum('x' + p.ourRarityOneOfOne.multiplier) + '</div>'
+      : '';
     el.detailRarityScore.innerHTML = (p && p.ourRarityScore !== null && p.ourRarityScore !== undefined)
-      ? greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + matchBadge
+      ? greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + matchBadge + oneOfOneBadge
       : 'C0M!NG S00N';
     // Closed on every fresh Pigeon (not left open carrying the PREVIOUS
     // Pigeon's breakdown while this one's data loads in) — rebuilt fresh
