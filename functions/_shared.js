@@ -5075,27 +5075,52 @@ export async function identifySaleVenue(kv, txHash) {
 // (already the full, current, non-burnt collection this same worker keeps
 // warm) instead of a separate Clio scan.
 // ─────────────────────────────────────────────────────────────────────────
-const FLOOR_INDEX_KEY = 'pswap:floorindex:v1';
-const FLOOR_INDEX_STAGING_KEY = 'pswap:floorindex:staging:v1';
-const FLOOR_INDEX_STATS_KEY = 'pswap:floorindexstats:v1';
-const FLOOR_INDEX_TOP_N = 36; // a display list (matches a normal page size), not the full collection
+// v2 (2026-09-23): keeps EVERY listed Pigeon (not just the cheapest 36
+// collection-wide) with its xrp.cafe and Deeptide price stored
+// separately, so 1ST/2ND ED!T!0N and the XRP.CAFE-only floor sort see
+// the real floor instead of whatever survived a collection-wide top-36
+// cut. New keys so a not-yet-redeployed cron worker writing the old v1
+// shape can't clobber it; readers fall back to v1 until v2's first pass.
+const FLOOR_INDEX_KEY = 'pswap:floorindex:v2';
+const FLOOR_INDEX_STAGING_KEY = 'pswap:floorindex:staging:v2';
+const FLOOR_INDEX_STATS_KEY = 'pswap:floorindexstats:v2';
+const FLOOR_INDEX_V1_KEY = 'pswap:floorindex:v1';
 // Tokens/run stays modest — this shares a single cron tick with the
 // number-map (up to 15 fetches) and high-sale (up to 10) crawls above, and
 // HANDOFF.md's own standing rule is "do the arithmetic before adding any
 // new per-item enrichment call" against Cloudflare's real subrequest budget.
-const FLOOR_INDEX_TOKENS_PER_RUN = 20;
+// 20 -> 60 (2026-09-23): at 20 a full 3015-Pigeon pass took ~25h of
+// 10-minute ticks; 60 is ~8.5h. Still well inside the paid Workers
+// subrequest budget this tick already relies on (crown recompute alone
+// is ~31 Clio pages).
+const FLOOR_INDEX_TOKENS_PER_RUN = 60;
 const FLOOR_INDEX_CONCURRENCY = 8;
 const FLOOR_INDEX_REFRESH_STALE_SECONDS = 3 * 3600; // floor items don't move minute to minute — re-scan every 3h once a pass completes
 const FLOOR_INDEX_CONCURRENT_GUARD_SECONDS = 10;
 
 export async function getFloorIndex(kv) {
-  const raw = await kv.get(FLOOR_INDEX_KEY);
+  const raw = await kv.get(FLOOR_INDEX_KEY) || await kv.get(FLOOR_INDEX_V1_KEY);
   return raw ? JSON.parse(raw) : null;
 }
 
 async function getFloorIndexStaging(kv) {
   const raw = await kv.get(FLOOR_INDEX_STAGING_KEY);
   return raw ? JSON.parse(raw) : { candidates: [] };
+}
+
+// Current owner via Clio's nft_info — null on any failure.
+async function fetchNftCurrentOwner(nftId) {
+  try {
+    const res = await fetch(CLIO_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'nft_info', params: [{ nft_id: nftId }] }),
+    });
+    const data = await res.json();
+    return data && data.result && !data.result.error && data.result.owner ? data.result.owner : null;
+  } catch (e) {
+    return null;
+  }
 }
 
 export async function maybeRefreshFloorIndex(kv) {
@@ -5131,26 +5156,43 @@ export async function maybeRefreshFloorIndex(kv) {
   const batch = allIds.slice(nextIndex, nextIndex + FLOOR_INDEX_TOKENS_PER_RUN);
   const found = await mapWithConcurrency(batch, FLOOR_INDEX_CONCURRENCY, async (nftId) => {
     const offers = await fetchNftSellOffers(nftId); // tolerant [] on failure/not-listed
-    let best = null;
+    // Cheapest XRP sell offer per marketplace (the offer's destination is
+    // the marketplace's broker account), kept separately so an xrp.cafe-
+    // only floor can be sorted without Deeptide prices mixed in.
+    let cafe = null, deep = null;
+    // XRPL never cancels a seller's old offer when the NFT changes hands,
+    // so a previous owner's dead listing can still sit on-ledger (found
+    // live on #75: a 13 XRP xrp.cafe offer from a wallet that no longer
+    // owns it). Only offers from the CURRENT owner count. Background scan
+    // only, so Clio's small sync lag is fine here (unlike BUY's live
+    // check — see findPigeonsOffer's comment); owner lookup failing keeps
+    // every offer rather than dropping real listings.
+    const marketOffers = offers.filter(o => o.destination === XRP_CAFE_BROKER_ACCOUNT || o.destination === DEEPTIDE_BROKER_ACCOUNT);
+    const owner = marketOffers.length ? await fetchNftCurrentOwner(nftId) : null;
     for (const o of offers) {
       if (typeof o.amount !== 'string') continue; // IOU-priced offers are an object, not a drops string — not XRP, skip
-      if (o.destination !== XRP_CAFE_BROKER_ACCOUNT && o.destination !== DEEPTIDE_BROKER_ACCOUNT) continue;
+      if (owner && o.owner !== owner) continue;
       const drops = parseInt(o.amount, 10);
       if (!Number.isFinite(drops)) continue;
-      if (!best || drops < best.drops) {
-        best = { drops, venue: o.destination === XRP_CAFE_BROKER_ACCOUNT ? 'xrpcafe' : 'deeptide' };
-      }
+      if (o.destination === XRP_CAFE_BROKER_ACCOUNT) { if (cafe === null || drops < cafe) cafe = drops; }
+      else if (o.destination === DEEPTIDE_BROKER_ACCOUNT) { if (deep === null || drops < deep) deep = drops; }
     }
-    if (!best) return null;
-    return { nftId, number: idToNumber[nftId] || null, priceXrp: best.drops / 1000000, venue: best.venue };
+    if (cafe === null && deep === null) return null;
+    const bestDrops = cafe === null ? deep : (deep === null ? cafe : Math.min(cafe, deep));
+    return {
+      nftId, number: idToNumber[nftId] || null,
+      priceXrp: bestDrops / 1000000, venue: bestDrops === cafe ? 'xrpcafe' : 'deeptide',
+      xrpcafeXrp: cafe === null ? null : cafe / 1000000,
+      deeptideXrp: deep === null ? null : deep / 1000000,
+    };
   });
   candidates = candidates.concat(found.filter(Boolean));
 
   nextIndex += batch.length;
   if (nextIndex >= allIds.length) {
+    // Every listed Pigeon, cheapest first (see FLOOR_INDEX_KEY's comment).
     candidates.sort((a, b) => a.priceXrp - b.priceXrp);
-    const top = candidates.slice(0, FLOOR_INDEX_TOP_N);
-    await safeKvPut(kv, FLOOR_INDEX_KEY, JSON.stringify({ items: top, updatedAt: now }));
+    await safeKvPut(kv, FLOOR_INDEX_KEY, JSON.stringify({ items: candidates, updatedAt: now }));
     await safeKvPut(kv, FLOOR_INDEX_STATS_KEY, JSON.stringify({ inProgress: false, completedAt: now, updatedAt: now }));
     await safeKvPut(kv, FLOOR_INDEX_STAGING_KEY, JSON.stringify({ candidates: [] }));
     return;

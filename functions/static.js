@@ -14622,7 +14622,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Sorted by RAR!TY — same label/value stack, but the Pigeon's own
     // rarity score instead of its average sale (falls back to the normal
     // line when there's no score yet).
-    if ((state.sort === 'LORE_ASC' || state.sort === 'LORE_DESC') && p.ourRarityLoreScore !== null && p.ourRarityLoreScore !== undefined){
+    var floorSort = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC' || state.sort === 'XRPCAFE_PRICE_ASC' || state.sort === 'XRPCAFE_PRICE_DESC';
+    if (floorSort && p.bestListingXrp !== null && p.bestListingXrp !== undefined){
+      avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">' + (p.bestListingSource === 'xrpCafe' ? 'XRP.CAFE' : 'DEEPT!DE') + ' ::</span><span class="stat-value">' + greenNum(fmtXrp(p.bestListingXrp)) + ' XRP</span></div>';
+    } else if ((state.sort === 'LORE_ASC' || state.sort === 'LORE_DESC') && p.ourRarityLoreScore !== null && p.ourRarityLoreScore !== undefined){
       avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">L0RE SC0RE ::</span><span class="stat-value">' + greenNum(fmtRarityScore(p.ourRarityLoreScore)) + '</span></div>';
     } else if ((state.sort === 'RARITY_ASC' || state.sort === 'RARITY_DESC') && p.ourRarityScore !== null && p.ourRarityScore !== undefined){
       avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">RAR!TY SC0RE ::</span><span class="stat-value">' + greenNum(fmtRarityScore(p.ourRarityScore)) + '</span></div>';
@@ -15171,7 +15174,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     var isEdition = state.edition === 'LOW' || state.edition === 'HIGH';
     var isSalesSort = state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_XRP_ASC' || state.sort === 'AVG_SALE_XRP_DESC' || state.sort === 'AVG_SALE_PIGEONS_ASC';
     var isNumericSort = state.sort === 'NAME_ASC' || state.sort === 'NAME_DESC';
-    var isCrossListing = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC';
+    var isXrpCafeFloor = state.sort === 'XRPCAFE_PRICE_ASC' || state.sort === 'XRPCAFE_PRICE_DESC';
+    var isCrossListing = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC' || isXrpCafeFloor;
     // The exact shape the exhaustion-fallback below always uses (skip 0,
     // no filters/edition — the first-page-of-a-fresh-landing case). Used
     // both to decide whether to kick off the speculative prefetch just
@@ -15215,7 +15219,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else if (isCrossListing){
       // Real lowest/highest across BOTH Deeptide and xrp.cafe, not just
       // whichever platform happens to have the cheaper API.
-      reqParams = { skip: state.skip, limit: 20, crossListing: state.sort === 'PRICE_ASC' ? 'asc' : 'desc', filters: filters.length ? JSON.stringify(filters) : undefined, numberRange: isEdition ? (state.edition === 'LOW' ? 'low' : 'high') : undefined };
+      reqParams = { skip: state.skip, limit: PAGE_SIZE, crossListing: (state.sort === 'PRICE_ASC' || state.sort === 'XRPCAFE_PRICE_ASC') ? 'asc' : 'desc', marketplace: isXrpCafeFloor ? 'xrpcafe' : undefined, filters: filters.length ? JSON.stringify(filters) : undefined, numberRange: isEdition ? (state.edition === 'LOW' ? 'low' : 'high') : undefined };
     } else if (isEdition && isNumericSort){
       // Direct slice of the number map restricted to this range — no scan needed.
       reqParams = { skip: state.skip, limit: PAGE_SIZE, numberRange: state.edition === 'LOW' ? 'low' : 'high', numericOrder: state.sort === 'NAME_DESC' ? 'desc' : 'asc', filters: filters.length ? JSON.stringify(filters) : undefined };
@@ -15263,7 +15267,11 @@ const SWAP_HTML = `<!DOCTYPE html>
         return true;
       });
       state.items = state.items.concat(newItems);
-      state.skip += rawItems.length;
+      // Floor sorts page by position in the server's sorted listed set
+      // (a Pigeon that sold since the last scan is dropped from a page,
+      // so counting returned items would repeat/skip Pigeons).
+      if (isCrossListing && typeof data.skip === 'number') state.skip = data.skip;
+      else state.skip += rawItems.length;
       if (isEdition && typeof data.rawSkip === 'number') state.editionRawSkip = data.rawSkip;
       state.total = typeof data.total === 'number' ? data.total : state.total;
       state.hasMore = !!data.hasMore && rawItems.length > 0;
@@ -20492,7 +20500,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'AVG_SALE_XRP_ASC', label: 'L0WEST AVG SALE PR!CE XRP' },
       { value: 'AVG_SALE_XRP_DESC', label: 'H!GHEST AVG SALE PR!CE XRP' },
       { value: 'AVG_SALE_PIGEONS_ASC', label: 'L0WEST AVG SALE PR!CE $P!GE0NS' },
-      { value: 'PRICE_ASC', label: 'L0WEST (XRP)' }
+      { value: 'PRICE_ASC', label: 'L0WEST (XRP)' },
+      // xrp.cafe's own floor only (reported live 2026-09-23: xrp.cafe
+      // itself can't sort a 1st-edition floor) — pairs with 1ST ED!T!0N.
+      { value: 'XRPCAFE_PRICE_ASC', label: 'L0WEST XRP.CAFE' },
+      { value: 'XRPCAFE_PRICE_DESC', label: 'H!GHEST XRP.CAFE' }
     ],
     'H!ST0R!CAL SALES': [
       { value: 'HIGHEST_SALE', label: 'H!GHEST REC0RDED SALES' }

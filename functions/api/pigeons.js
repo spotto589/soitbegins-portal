@@ -1203,7 +1203,15 @@ export async function onRequestGet(context) {
   // so nothing scanned-but-unused this request gets skipped or repeated
   // next request. Capped at 10 raw pages (~600 items) per request, which in
   // practice is 1-2 pages since ~half the collection matches either range.
-  if (numberRange === 'low' || numberRange === 'high') {
+  // The floor-price sorts (crossListing) and the site's own rarity/lore
+  // ranking both handle 1ST/2ND ED!T!0N themselves further down — this
+  // Deeptide-rarity edition scan used to catch them first and return, so
+  // "1ST EDITION + LOWEST XRP" silently came back in rarity order
+  // (reported live 2026-09-23).
+  const earlySort = params.get('sort');
+  const earlyOwnRank = (!earlySort || ['RARITY_ASC', 'RARITY_DESC', 'LORE_ASC', 'LORE_DESC'].includes(earlySort)) && Object.keys(rarityMap).length > 0;
+  const earlyCrossListing = params.get('crossListing');
+  if ((numberRange === 'low' || numberRange === 'high') && !earlyCrossListing && !(earlyOwnRank && !params.get('numericOrder'))) {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
 
     // Numeric order within a range starts from a direct slice of the
@@ -1320,12 +1328,16 @@ export async function onRequestGet(context) {
   const crossListing = params.get('crossListing');
   if (crossListing === 'asc' || crossListing === 'desc') {
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
-    if (skip > 0) {
-      // Already exhausted the bounded, correctly-sorted set below.
-      return json({ items: [], total: 0, hasMore: false, skip, limit: 0, collectionSizeApprox: coll.sizeApprox });
-    }
+    const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
+    // marketplace=xrpcafe / deeptide: that marketplace's own floor only.
+    const marketplace = params.get('marketplace');
+    const indexPrice = c => marketplace === 'xrpcafe'
+      ? (c.xrpcafeXrp !== undefined ? c.xrpcafeXrp : (c.venue === 'xrpcafe' ? c.priceXrp : null))
+      : marketplace === 'deeptide'
+        ? (c.deeptideXrp !== undefined ? c.deeptideXrp : (c.venue === 'deeptide' ? c.priceXrp : null))
+        : c.priceXrp;
     const floorIndex = await getFloorIndex(env.coin);
-    let candidates = (floorIndex && floorIndex.items) || [];
+    let candidates = ((floorIndex && floorIndex.items) || []).filter(c => indexPrice(c) !== null && indexPrice(c) !== undefined);
     if (numberRange === 'low' || numberRange === 'high') {
       candidates = candidates.filter(c =>
         numberRange === 'low' ? (c.number !== null && c.number <= PIGEON_LOW_EDITION_MAX) : (c.number !== null && c.number > PIGEON_LOW_EDITION_MAX)
@@ -1339,13 +1351,19 @@ export async function onRequestGet(context) {
       const matchSet = new Set(scan.items.map(it => it.nftId));
       candidates = candidates.filter(c => matchSet.has(c.nftId));
     }
-    const details = await resolveDetailsCached(context, coll.key, candidates.map(c => c.nftId));
-    let items = candidates.map((c, i) => toItem(c.nftId, details[i] || { number: c.number, attributes: [], image: null }, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
+    // Whole listed set sorted by the index's price, then one page at a
+    // time — only that page gets live details/listing lookups (the full
+    // listed set is hundreds of Pigeons, far past a request's budget).
+    candidates.sort((a, b) => crossListing === 'asc' ? indexPrice(a) - indexPrice(b) : indexPrice(b) - indexPrice(a));
+    const totalListed = candidates.length;
+    const pageCandidates = candidates.slice(skip, skip + limit);
+    const details = await resolveDetailsCached(context, coll.key, pageCandidates.map(c => c.nftId));
+    let items = pageCandidates.map((c, i) => toItem(c.nftId, details[i] || { number: c.number, attributes: [], image: null }, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
     await attachListings(env.coin, items, items.length);
     items.forEach(it => {
       const dt = it.listings.deeptide.priceXrp;
       const xc = it.listings.xrpCafe.priceXrp;
-      const useXrpCafe = xc !== null && (dt === null || xc < dt);
+      const useXrpCafe = marketplace === 'xrpcafe' ? true : marketplace === 'deeptide' ? false : (xc !== null && (dt === null || xc < dt));
       it.bestListingXrp = useXrpCafe ? xc : dt;
       it.bestListingSource = useXrpCafe ? 'xrpCafe' : 'deeptide';
     });
@@ -1355,12 +1373,15 @@ export async function onRequestGet(context) {
     // than show an impossible null-priced "lowest" result.
     items = items.filter(it => it.bestListingXrp !== null);
     items.sort((a, b) => crossListing === 'asc' ? a.bestListingXrp - b.bestListingXrp : b.bestListingXrp - a.bestListingXrp);
+    // skip is the position in the sorted listed set (not how many items
+    // survived the live check), so the next page never repeats or skips.
     return json({
       items,
-      total: items.length,
-      hasMore: false,
-      skip: items.length,
-      limit: items.length,
+      total: totalListed,
+      hasMore: skip + pageCandidates.length < totalListed,
+      skip: skip + pageCandidates.length,
+      limit,
+      floorUpdatedAt: floorIndex ? floorIndex.updatedAt : null,
       collectionSizeApprox: coll.sizeApprox
     });
   }
