@@ -12182,12 +12182,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // resets it back to null so that entry point keeps its original,
     // unfiltered behavior.
     watchlistFilterCollection: null,
-    // Default landing sort is FL00R $P!GE0NS (lowest listed price first),
-    // not RAR!TY — see scyllaListedOnly below and loadMoreCollection's own
-    // chain-to-average-sale-price once the floor listings run out.
-    // RESET still goes back to RARITY_ASC specifically (its own hardcoded
-    // value, not this one) — this only governs the very first page load.
-    sort: 'SCYLLA_PRICE_ASC',
+    // Default landing sort is H!GHEST RAR!TY for every collection
+    // (reported live 2026-09-23: "automatically sort by rarity instead of
+    // lowest $pigeons") — was FL00R $P!GE0NS with the LISTED filter on.
+    // The L!STED stat tile / PR!CE sorts still opt into listings.
+    sort: 'RARITY_ASC',
     edition: 'ALL',            // 'ALL' | 'LOW' (1-1515) | 'HIGH' (1516-3015)
     activeTab: null,           // null | 'database' | 'mypigeons' | 'swapoffers'
     databaseLoaded: false,
@@ -12203,7 +12202,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     currentDetail: null,
     targetAssets: {},         // nftId -> { nftId, number, image } — only while scope is a wallet
     sales: { skip: 0, hasMore: true, loading: false, opened: false, currency: 'XRP' },
-    scyllaListedOnly: true,   // whole-collection LISTED filter — Pigeons listed through Scylla itself; starts true to match the default FL00R $P!GE0NS landing sort above
+    scyllaListedOnly: false,  // whole-collection LISTED filter — Pigeons listed through Scylla itself; off by default now that the landing sort is RAR!TY
     offerAssets: {},          // nftId -> { nftId, number, image } — up to 4, YOUR pigeons in the persistent trade builder
     dbView: 'thumbnails',     // 'boxed' (full detail row) | 'thumbnails' (5-across, # + rarity only, default) — DATABASE grid only
     simpleOffer: { mine: null, theirs: null }, // V1 CREATE OFFER (PλWS tab) — { nftId, number, image, owner } or null per side, single pick each, separate from offerAssets/targetAssets above
@@ -19464,8 +19463,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // collection defaults to plain rarity browse instead (BUY N0W/0FFER
     // still work per-card regardless) — the L!STED stat tile is still
     // right there to opt into once it actually has real listings.
-    state.sort = (meta.tradeable && newCollection === 'pigeons') ? 'SCYLLA_PRICE_ASC' : 'RARITY_ASC';
-    state.scyllaListedOnly = meta.tradeable && newCollection === 'pigeons';
+    // Every collection, P!GE0NS included, lands on H!GHEST RAR!TY now
+    // (see state.sort's own default).
+    state.sort = 'RARITY_ASC';
+    state.scyllaListedOnly = false;
     el.statScyllaListedTile.classList.toggle('scylla-active', state.scyllaListedOnly);
     updateSortLabelsForCollection();
     updateTrustlineBannerChrome(newCollection);
@@ -20617,10 +20618,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.dbView = el.dbViewSelect.value;
     if (state.items && state.items.length) renderResultsReplace(state.items);
   });
-  // ALL editions, LOWEST LISTED $P!GE0NS, THUMBNAILS view, no traits — one
-  // click back to the default landing state (matches the initial page-load
-  // state at the top of this file: sort SCYLLA_PRICE_ASC, scyllaListedOnly
-  // true).
+  // ALL editions, H!GHEST RAR!TY, THUMBNAILS view, no traits — one click
+  // back to the default landing state (matches the initial page-load state
+  // at the top of this file: sort RARITY_ASC, scyllaListedOnly false).
   el.resetDbBtn.addEventListener('click', function(){
     state.edition = 'ALL';
     el.editionSelect.querySelectorAll('.edition-btn').forEach(function(b){
@@ -20630,7 +20630,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.dbView = 'thumbnails';
     state.traitFilters = [];
     renderTraitRows();
-    state.sort = 'SCYLLA_PRICE_ASC';
+    state.sort = 'RARITY_ASC';
     renderSortTag();
     if (state.activeTab === 'mypigeons'){
       // FL0CK only ever shows your own Pigeons, no exceptions — RESET
@@ -20645,7 +20645,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // that scope.
       var wasScoped = !!state.scope;
       if (wasScoped) exitWalletScope();
-      if (!state.scyllaListedOnly) setScyllaListedOnly(true); // also runs the query, forces sort to a SCYLLA_PRICE_* value (already ASC from above) and clears any scope
+      if (state.scyllaListedOnly) setScyllaListedOnly(false); // also runs the query (sort already RARITY_ASC from above)
       else if (wasScoped) startCollectionBrowse();
       else runQuery();
     }
