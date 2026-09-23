@@ -4085,6 +4085,8 @@ const RARITY_CURATED_NUMBER_MEANINGS = {
   // #1 (reported live): Unit-01 is Pigeon #1 — the number completes
   // EVANGEL!0N the same way 666 completes F!RE.
   1: 'UN!T-01',
+  // #11 (reported live): Apollo 11 — the number completes ASTR0NAUT.
+  11: 'AP0LL0 11',
 };
 function numberMeaningFor(number) {
   if (number === null || number === undefined) return null;
@@ -4157,6 +4159,7 @@ export const RARITY_NAMED_SETS = {
       { trait_type: 'Clothing', value: 'Moon Walker' },
       { trait_type: 'Beak', value: 'Rocket' },
       { trait_type: 'Headwear', value: 'Interstellion' },
+      { trait_type: '__NumberMean!ng__', value: 'AP0LL0 11' },
     ] },
     // SANTA (2 pigeons: #973, #1225) and JESTER (4 pigeons: #610, #281,
     // #904, #918) confirmed live in the same message. Both are 2-piece
