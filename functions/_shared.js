@@ -4196,6 +4196,17 @@ export const RARITY_NAMED_SETS = {
       { trait_type: 'Beak', value: 'Fire Spitter' },
       { trait_type: '__NumberMean!ng__', value: 'NUMBER 0F THE BEAST' },
     ] },
+    // #1 (reported live): Evangelion — the Unit-01 suit + Third Impact.
+    { name: 'EVANGEL!0N', pieces: [
+      { trait_type: 'Clothing', value: 'Unit-01' },
+      { trait_type: 'Headwear', value: 'Third Impact' },
+    ] },
+    // #2121 (reported live): Mummy clothing + Nesyamun, the real Egyptian
+    // mummy (the priest whose voice was recreated from his remains).
+    { name: 'MUMMY', pieces: [
+      { trait_type: 'Clothing', value: 'Mummy' },
+      { trait_type: 'Beak', value: 'Nesyamun' },
+    ] },
     // #7 (reported live): Samurai clothing + Kabuto (a samurai helmet).
     { name: 'SAMURA!', pieces: [
       { trait_type: 'Clothing', value: 'Samurai' },
