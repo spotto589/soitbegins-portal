@@ -6378,7 +6378,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card .card-detail-traits .trait-cell.has-preview .tc-label,
   .result-card .card-detail-traits .trait-cell.has-preview .tc-value,
   .result-card .card-detail-traits .trait-cell.has-preview .tc-sub{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
-  .result-card .card-detail-traits .trait-cell.has-preview .tc-text{ background:rgba(8,9,11,0.68); border-radius:calc(var(--radius) - 2px); padding:0.3rem 2px; }
+  .result-card .card-detail-traits .trait-cell.has-preview .tc-text{ background:rgba(8,9,11,0.82); border-radius:calc(var(--radius) - 2px); padding:0.3rem 2px; }
   .result-card .card-detail-traits .trait-cell.has-preview:hover{ border-color:var(--cyan); }
   /* NO <category> boxes — plain Pigeons purple, everywhere trait boxes
      show (Pigeon page + BOXED VIEW). */
@@ -7205,7 +7205,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Static solid box behind value/label/sub together — text-shadow alone
      still clashed against a busy/light crop, this reads reliably over
      any of them. */
-  #screenDetail .trait-cell.has-preview .tc-text{ background:rgba(8,9,11,0.68); border-radius:calc(var(--radius) - 2px); padding:0.5rem 0.4rem; }
+  #screenDetail .trait-cell.has-preview .tc-text{ background:rgba(8,9,11,0.82); border-radius:calc(var(--radius) - 2px); padding:0.5rem 0.4rem; }
   #screenDetail .trait-cell.has-preview:hover{ border-color:var(--cyan); }
   /* Constrained instead of stretching the field's label/value across the
      whole (wide) right column — that gap made label and value feel
