@@ -85,14 +85,16 @@ function renderRarityHtml() {
     <div class="layer-card">
       <div class="layer-name">W0RKED EXAMPLE &mdash; P!GE0N #727</div>
       <div class="layer-desc">
-        Background: Takashi (1.03%) &rarr; 100&divide;1.03 = <strong>97.1</strong><br>
-        Feathers: Murakami (0.83%) &rarr; 100&divide;0.83 = <strong>120.5</strong><br>
-        Eyewear: Kaws (0.40%) &rarr; 100&divide;0.40 = <strong>250.0</strong><br>
-        Beak: Superflat (0.83%) &rarr; 100&divide;0.83 = <strong>120.5</strong><br>
+        Background: Takashi (1.03%) &rarr; 100&divide;1.03 = <strong>97.3</strong><br>
+        Feathers: Murakami (0.83%) &rarr; 100&divide;0.83 = <strong>120.6</strong><br>
+        Eyewear: Kaws (0.40%) &rarr; 100&divide;0.40 = <strong>251.3</strong><br>
+        Beak: Superflat (0.83%) &rarr; 100&divide;0.83 = <strong>120.6</strong><br>
         Clothing: none (10.38%) &rarr; 100&divide;10.38 = <strong>9.6</strong><br>
         Headwear: none (14.73%) &rarr; 100&divide;14.73 = <strong>6.8</strong><br>
-        <span style="color:#34ff85;">Sum = 604.5 &mdash; this Pigeon's Layer 1 score.</span>
+        Aura: none (82.59%) &rarr; 100&divide;82.59 = <strong>1.2</strong><br>
+        <span style="color:#34ff85;">Sum = 607.3 &mdash; this Pigeon's Layer 1 score.</span>
       </div>
+      <div class="layer-example">Kaws is scored here in Layer 1 like any other trait &mdash; it's genuinely rare on its own (0.40%), it's just not part of the confirmed TAKASH! MURAKAM! set below (KAWS is a different real artist, not part of "Takashi Murakami").</div>
     </div>
     <p>Even "no clothing" or "no headwear" is a real, scored state &mdash; every category always contributes something, however small.</p>
 
@@ -108,7 +110,7 @@ function renderRarityHtml() {
         5 pieces match &rarr; <strong>&times;5</strong> &mdash; no ceiling, it just keeps going
       </div>
     </div>
-    <p><strong>Final score = Layer 1 total &times; the multiplier</strong> (&times;1 if no confirmed set applies). #727 above matches all 4 pieces of TAKASH! MURAKAM!, so its real final score is <code>604.5 &times; 4 = 2,418</code>. #1515 matches 5 real gold-themed pieces (G0LD) for &times;5. Every Pigeon's own DETAIL page shows this exact breakdown &mdash; tap RARITY SCORE to open it.</p>
+    <p><strong>Final score = Layer 1 total &times; the multiplier</strong> (&times;1 if no confirmed set applies). #727 above matches all 3 pieces of TAKASH! MURAKAM! (Background+Feathers+Beak &mdash; Kaws isn't one of them), so its real final score is <code>607.3 &times; 3 = 1,822</code>. #1515 matches 5 real gold-themed pieces (G0LD) for &times;5. Every Pigeon's own DETAIL page shows this exact breakdown &mdash; tap RARITY SCORE to open it.</p>
 
     <h2><span class="step">03</span>C0NF!RMED NAMED SETS</h2>
     <p>Every set below is confirmed real, by hand, against the actual artwork &mdash; not algorithm output.</p>
@@ -129,8 +131,8 @@ function renderRarityHtml() {
         <div class="set-proof">confirmed on #14</div>
       </div>
       <div class="set-card">
-        <div class="set-title">TAKASH! MURAKAM! &mdash; &times;4</div>
-        <div class="set-pieces">Takashi background + Murakami feathers + Kaws eyewear + Superflat beak</div>
+        <div class="set-title">TAKASH! MURAKAM! &mdash; &times;3</div>
+        <div class="set-pieces">Takashi background + Murakami feathers + Superflat beak (his own name + his own signature art movement)</div>
         <div class="set-proof">confirmed on #727</div>
       </div>
       <div class="set-card">

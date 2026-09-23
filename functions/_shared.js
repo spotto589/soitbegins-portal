@@ -3833,12 +3833,18 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // (Feb 14, Valentine's Day) that has no special shape a formula can
 // detect but is still a real part of a Named Set's theme. S0 !T BEG!NS
 // is now 3 pieces (x3), was 2 (x2).
-// Bump again (v9, v10, ...) any time the scoring formula itself changes
+// v8 -> v9 (2026-09-23): TAKASH! MURAKAM! corrected from 4 pieces to 3 —
+// Eyewear:Kaws was never actually needed to make the match unique
+// (checked live: Background:Takashi+Feathers:Murakami+Beak:Superflat
+// ALONE is already the same 1-of-1), and KAWS is a different real artist
+// from Takashi Murakami, not part of his name — reported live as
+// something that needed re-checking, and it was wrong. x3 now, was x4.
+// Bump again (v10, v11, ...) any time the scoring formula itself changes
 // — not needed for a change that only affects display, docs, or
 // anything that isn't scoreAgainstDistribution/namedSetMatchForItem's
 // own math.
-const RARITY_MAP_KEY = 'pswap:rarity:v8';
-const RARITY_STATS_KEY = 'pswap:raritystats:v8';
+const RARITY_MAP_KEY = 'pswap:rarity:v9';
+const RARITY_STATS_KEY = 'pswap:raritystats:v9';
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
 const RARITY_CONCURRENT_GUARD_SECONDS = 90; // was 10, then 30 — needs to clear Cloudflare KV's own ~60s worst-case cross-colo propagation window, not just this process's own runId check (see the v3->v4 KV key comment above)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
@@ -4024,10 +4030,17 @@ export const RARITY_NAMED_SETS = {
       { trait_type: 'Headwear', value: 'So It Begins' },
       { trait_type: '__NumberMean!ng__', value: 'VALENT!NES DAY' },
     ] },
+    // 3 pieces, not 4 — reported live: Eyewear:Kaws was originally
+    // included, but KAWS (Brian Donnelly) is a DIFFERENT real artist from
+    // Takashi Murakami, not part of his name. Checked live: Background:
+    // Takashi + Feathers:Murakami + Beak:Superflat ALONE is already a
+    // 1-of-1 (Deeptide's own AND-filter: total=1, identical whether or
+    // not Kaws is included) — Kaws was never needed to make this unique,
+    // it's just a second, real, separate rare trait riding along on the
+    // same Pigeon, scored normally by Layer 1 on its own merits.
     { name: 'TAKASH! MURAKAM!', pieces: [
       { trait_type: 'Background', value: 'Takashi' },
       { trait_type: 'Feathers', value: 'Murakami' },
-      { trait_type: 'Eyewear', value: 'Kaws' },
       { trait_type: 'Beak', value: 'Superflat' },
     ] },
     { name: 'K!NG & CR0WN', pieces: [
