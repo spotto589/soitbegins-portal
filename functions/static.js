@@ -20640,21 +20640,30 @@ const SWAP_HTML = `<!DOCTYPE html>
   // live: "exactly the same set of boxes every time we click into a
   // pigeon"), one per trait category the whole collection has
   // (state.traitCategories), alphabetical by category. A category this
-  // Pigeon has nothing in still gets its box, reading N0NE — via the
-  // collection's own __no_trait__ entry when there is one (so it keeps
-  // its real percent/count and click-to-filter), else a plain N0NE box.
+  // Pigeon has nothing in (including the API's own synthesized
+  // __no_trait__ rows) still gets its box, reading NO, with the real
+  // share of the collection that also has none of it: the collection's
+  // own __no_trait__ count when it has one (Clothing/Headwear), else
+  // collection size minus every real value's count in that category.
   function detailTraitsHtml(attrs){
     attrs = attrs || [];
     var cats = state.traitCategories ? Object.keys(state.traitCategories) : [];
     attrs.forEach(function(a){ if (cats.indexOf(a.trait_type) === -1) cats.push(a.trait_type); });
     cats.sort(function(a, b){ return a.toLowerCase().localeCompare(b.toLowerCase()); });
     return cats.map(function(cat){
-      var own = attrs.filter(function(a){ return a.trait_type === cat; })[0];
+      var own = attrs.filter(function(a){ return a.trait_type === cat && a.value !== '__no_trait__'; })[0];
       if (own) return traitCellHtml(own);
       var catValues = (state.traitCategories && state.traitCategories[cat]) || [];
       var noTrait = catValues.filter(function(v){ return v.value === '__no_trait__'; })[0];
-      if (noTrait) return traitCellHtml({ trait_type: cat, value: '__no_trait__', percent: noTrait.percent, count: noTrait.count });
-      return '<div class="trait-cell trait-cell-none"><div class="tc-value">N0NE</div><div class="tc-label">' + escapeHtml(cat) + '</div></div>';
+      var count = null, percent = null;
+      if (noTrait){
+        count = noTrait.count; percent = noTrait.percent;
+      } else if (catValues.length && state.collectionSizeApprox){
+        var used = catValues.reduce(function(sum, v){ return sum + (v.count || 0); }, 0);
+        count = Math.max(0, state.collectionSizeApprox - used);
+        percent = Math.round((count / state.collectionSizeApprox) * 100000) / 1000;
+      }
+      return traitCellHtml({ trait_type: cat, value: noTrait ? '__no_trait__' : '', displayValue: 'NO', percent: percent, count: count });
     }).join('');
   }
   // Re-render once the collection's full category list arrives (first
@@ -20698,7 +20707,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // friendly label to actually show.
     var catValuesForCell = state.traitCategories && state.traitCategories[a.trait_type];
     var cellMatch = catValuesForCell ? catValuesForCell.filter(function(v){ return v.value === a.value; })[0] : null;
-    var cellDisplayValue = cellMatch && cellMatch.label ? cellMatch.label : a.value;
+    var cellDisplayValue = a.displayValue || (cellMatch && cellMatch.label ? cellMatch.label : a.value);
     return '<div class="trait-cell' + (exampleImg ? ' has-preview' : '') + '" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' + style +
       ' title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
       textOpen +
