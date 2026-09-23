@@ -7157,29 +7157,33 @@ const SWAP_HTML = `<!DOCTYPE html>
      so a breakdown table long enough to overflow scrolls in its own box
      instead of ever growing the page past one viewport. Hidden until
      tapped, so it costs zero space for the vast majority of the time. */
-  #screenDetail .detail-rarity-breakdown{
-    margin:0 0 0.6rem;
-    padding:0.7rem 0.8rem;
-    border:1px solid var(--border-mid);
-    border-radius:var(--radius);
-    background:var(--panel-bg-solid);
-    max-height:260px;
+  #rarityModal .detail-rarity-breakdown{
+    flex:1 1 auto;
+    min-height:0;
     overflow-y:auto;
     font-size:12px;
     text-align:left;
   }
+  /* RARITY SCORE popup (reported live: the full breakdown + set badges
+     under the picture was too much — now just the number + EXPAND there,
+     everything else in this popup). Same overlay treatment as SALES. */
+  #rarityModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  #rarityModal .rarity-modal-panel{ width:min(560px, 100%); max-height:min(85vh, 820px); display:flex; flex-direction:column; text-align:left; background:var(--panel-bg-solid); border:1px solid var(--border-mid); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.6); padding:1.2rem 1.3rem; animation:offer-confirm-pop 0.2s ease; }
+  #rarityModal .rarity-modal-badges{ margin:0 0 0.8rem; padding-bottom:0.6rem; border-bottom:1px solid var(--border-mid); font-size:12px; text-transform:uppercase; letter-spacing:0.04em; line-height:1.6; }
+  #screenDetail .rarity-expand-btn{ margin-top:0.35rem; padding:0.2rem 0.6rem; font:inherit; font-size:10px; letter-spacing:0.08em; color:var(--cyan); background:transparent; border:1px solid var(--cyan); border-radius:var(--radius); cursor:pointer; }
+  #screenDetail .rarity-expand-btn:hover{ background:rgba(61,243,236,0.1); }
   /* Each trait is two stacked lines (what it is, then the literal math
      that turned its % into a score) instead of one cramped side-by-side
      row — reported live as not making clear WHY a trait got its number;
      spelling out "100 ÷ X% = Y" on its own line is the actual answer. */
-  #screenDetail .rb-row{ padding:0.45rem 0; border-bottom:1px dashed var(--border-dim); }
-  #screenDetail .rb-row:last-of-type{ border-bottom:none; }
-  #screenDetail .rb-trait{ color:var(--white); text-transform:uppercase; letter-spacing:0.03em; margin-bottom:0.2rem; }
-  #screenDetail .rb-trait .rb-value{ color:var(--cyan); }
-  #screenDetail .rb-math{ color:var(--grey); font-size:11px; letter-spacing:0.02em; }
-  #screenDetail .rb-sum-row{ display:flex; justify-content:space-between; align-items:center; padding-top:0.6rem; margin-top:0.4rem; border-top:1px solid var(--border-mid); font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:0.03em; }
-  #screenDetail .rb-mult-row{ padding:0.5rem 0 0; color:var(--magenta); font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:0.03em; }
-  #screenDetail .rb-final-row{ display:flex; justify-content:space-between; align-items:center; padding-top:0.5rem; margin-top:0.4rem; border-top:1px solid var(--border-mid); color:var(--green); font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.03em; }
+  #rarityModal .rb-row{ padding:0.45rem 0; border-bottom:1px dashed var(--border-dim); }
+  #rarityModal .rb-row:last-of-type{ border-bottom:none; }
+  #rarityModal .rb-trait{ color:var(--white); text-transform:uppercase; letter-spacing:0.03em; margin-bottom:0.2rem; }
+  #rarityModal .rb-trait .rb-value{ color:var(--cyan); }
+  #rarityModal .rb-math{ color:var(--grey); font-size:11px; letter-spacing:0.02em; }
+  #rarityModal .rb-sum-row{ display:flex; justify-content:space-between; align-items:center; padding-top:0.6rem; margin-top:0.4rem; border-top:1px solid var(--border-mid); font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:0.03em; }
+  #rarityModal .rb-mult-row{ padding:0.5rem 0 0; color:var(--magenta); font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:0.03em; }
+  #rarityModal .rb-final-row{ display:flex; justify-content:space-between; align-items:center; padding-top:0.5rem; margin-top:0.4rem; border-top:1px solid var(--border-mid); color:var(--green); font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.03em; }
   /* PRICE / RECORD SALE / RECENT SALE / AVERAGE SALE — stacked directly
      underneath the trait grid (including its own BACK cell), inside the
      right column, not off in a separate full-width section — keeps the
@@ -9986,6 +9990,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     <!-- SALES H!ST0RY — same real popup treatment as T0P 123 H0LDERS
          above, reached via the DATABASE banner's own SALES H!ST0RY
          button now instead of a separate top-level tab. -->
+    <!-- RAR!TY SC0RE breakdown — opened by DETAIL's EXPAND button. -->
+    <div id="rarityModal" style="display:none;">
+      <div class="pigeons-calc-panel rarity-modal-panel">
+        <div class="simple-picker-header">
+          <span class="simple-picker-title" id="rarityModalTitle">RAR!TY SC0RE</span>
+          <button type="button" class="simple-picker-close" id="rarityCloseBtn" title="CL0SE">&times;</button>
+        </div>
+        <div class="rarity-modal-badges" id="rarityModalBadges"></div>
+        <div class="detail-rarity-breakdown" id="detailRarityBreakdown"></div>
+      </div>
+    </div>
     <div id="salesModal" style="display:none;">
       <div class="pigeons-calc-panel sales-modal-panel">
         <div class="simple-picker-header">
@@ -11084,12 +11099,12 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <div class="tc-label">RAR!TY</div>
                 <div class="tc-value" id="detailRarity"></div>
               </div>
-              <div class="trait-cell trait-cell-clickable" id="detailRarityScoreCell" title="TAP T0 SEE H0W TH!S SC0RE !S W0RKED 0UT">
-                <div class="tc-label">RAR!TY SC0RE <a href="/rarity" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:inherit; text-decoration:underline; text-underline-offset:2px;" title="H0W RAR!TY W0RKS">(?)</a></div>
+              <div class="trait-cell" id="detailRarityScoreCell">
+                <div class="tc-label">RAR!TY SC0RE <a href="/rarity" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline; text-underline-offset:2px;" title="H0W RAR!TY W0RKS">(?)</a></div>
                 <div class="tc-value" id="detailRarityScore"></div>
+                <button type="button" class="rarity-expand-btn" id="detailRarityExpandBtn" style="display:none;" title="SEE H0W TH!S SC0RE !S W0RKED 0UT">EXPAND</button>
               </div>
             </div>
-            <div class="detail-rarity-breakdown" id="detailRarityBreakdown" style="display:none;"></div>
             <div class="scylla-listing-block">
               <div class="scylla-listing-row" id="detailScyllaListingRow">
                 <span class="scylla-listing-price" id="detailScyllaPrice">N0 L!ST!NG</span>
@@ -12365,7 +12380,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
-   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailRarityScoreCell','detailRarityBreakdown','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
+   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailRarityScoreCell','detailRarityExpandBtn','detailRarityBreakdown','rarityModal','rarityModalTitle','rarityModalBadges','rarityCloseBtn','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose',
    'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections','profileScreenCoins','profileScreenMessageBtn',
@@ -13057,6 +13072,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showScreen(name){
+    if (el.rarityModal) el.rarityModal.style.display = 'none';
     if (name === 'browse'){
       showTab(state.activeTab);
     } else {
@@ -20831,20 +20847,29 @@ const SWAP_HTML = `<!DOCTYPE html>
         p.ourRarityRareTraits.traits.map(function(t){ return '1 0F ' + t.of + ' :: ' + escapeHtml(t.value).toUpperCase(); }).join(' + ') +
         ' · ' + greenNum('x' + p.ourRarityRareTraits.multiplier) + '</div>'
       : '';
+    // Just the number under the picture — the badges and the full
+    // step-by-step math live in the RAR!TY SC0RE popup (EXPAND).
     el.detailRarityScore.innerHTML = (p && p.ourRarityScore !== null && p.ourRarityScore !== undefined)
-      ? greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + matchBadge + oneOfOneBadge + rareBadge
+      ? greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 }))
       : 'C0M!NG S00N';
-    // Closed on every fresh Pigeon (not left open carrying the PREVIOUS
-    // Pigeon's breakdown while this one's data loads in) — rebuilt fresh
-    // every time regardless of whether it's currently shown, so it's
-    // ready the instant it's tapped open.
-    el.detailRarityBreakdown.style.display = 'none';
+    // Closed on every fresh Pigeon (never left open showing the PREVIOUS
+    // Pigeon's breakdown) — rebuilt every time so it's ready on EXPAND.
+    closeRarityModal();
+    el.rarityModalTitle.innerHTML = 'RAR!TY SC0RE' + (p && p.number != null ? ' :: #' + escapeHtml(String(p.number)) : '');
+    el.rarityModalBadges.innerHTML = matchBadge + oneOfOneBadge + rareBadge;
+    el.rarityModalBadges.style.display = el.rarityModalBadges.innerHTML ? '' : 'none';
     el.detailRarityBreakdown.innerHTML = rarityBreakdownHtml(p);
+    el.detailRarityExpandBtn.style.display = el.detailRarityBreakdown.innerHTML ? '' : 'none';
   }
-  el.detailRarityScoreCell.addEventListener('click', function(){
+  function closeRarityModal(){ el.rarityModal.style.display = 'none'; }
+  el.detailRarityExpandBtn.addEventListener('click', function(){
     if (!el.detailRarityBreakdown.innerHTML) return; // C0M!NG S00N / no data yet — nothing to expand
-    el.detailRarityBreakdown.style.display = el.detailRarityBreakdown.style.display === 'none' ? '' : 'none';
+    el.rarityModal.style.display = 'flex';
+    el.detailRarityBreakdown.scrollTop = 0;
   });
+  el.rarityCloseBtn.addEventListener('click', closeRarityModal);
+  el.rarityModal.addEventListener('click', function(e){ if (e.target === el.rarityModal) closeRarityModal(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && el.rarityModal.style.display === 'flex') closeRarityModal(); });
   function updateDetailPrice(p){
     if (p && p.priceXrp !== null && p.priceXrp !== undefined){
       el.detailPriceRow.style.display = '';
