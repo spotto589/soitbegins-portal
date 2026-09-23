@@ -4194,11 +4194,11 @@ export const RARITY_NAMED_SETS = {
       { trait_type: 'Headwear', value: 'Gold Bar' },
     ] },
     // #7 and #666 (reported live): Flames aura, Fire Spitter beak, Burn
-    // Sequence eyewear — plus Phoenix feathers, confirmed by the user as
-    // part of the same fire theme. Both match all 4 (x4).
+    // Sequence eyewear (+ 666's number). Phoenix feathers are NOT a piece
+    // yet (reported live 2026-09-23: "do not count the phoenix in the
+    // flame set yet") — add it back here once confirmed.
     { name: 'F!RE', pieces: [
       { trait_type: 'Aura', value: 'Flames' },
-      { trait_type: 'Feathers', value: 'Phoenix' },
       { trait_type: 'Eyewear', value: 'Burn Sequence' },
       { trait_type: 'Beak', value: 'Fire Spitter' },
       { trait_type: '__NumberMean!ng__', value: 'NUMBER 0F THE BEAST' },
