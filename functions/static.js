@@ -6374,28 +6374,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card .card-detail-traits .tc-value{ font-size:16px; letter-spacing:0; font-weight:700; line-height:1.2; width:100%; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:normal; }
   .result-card .card-detail-traits .tc-label{ font-size:12px; margin:0.2rem 0 0; font-style:italic; }
   .result-card .card-detail-traits .tc-sub{ font-size:14px; font-weight:700; margin-top:0.2rem; line-height:1.25; }
-  .result-card .card-detail-traits .trait-cell.has-preview{ padding:0; }
-  .result-card .card-detail-traits .trait-cell.has-preview .tc-text{ padding:0.3rem 2px; }
-  /* The wide BACKGROUND box: name, category and % on one row, so the
-     picture above gets most of the height. */
-  .result-card .bc-bg .trait-cell.has-preview .tc-text{ display:flex; align-items:baseline; justify-content:center; gap:0.6rem; flex-wrap:nowrap; }
-  .result-card .bc-bg .trait-cell.has-preview .tc-value{ width:auto; }
-  .result-card .bc-bg .trait-cell.has-preview .tc-label, .result-card .bc-bg .trait-cell.has-preview .tc-sub{ margin:0; }
-  .result-card .bc-bg .trait-cell.has-preview .tc-sub{ display:flex; gap:0.6rem; }
+  .result-card .card-detail-traits .trait-cell.has-preview{ background-size:cover; background-position:center 20%; }
+  .result-card .card-detail-traits .trait-cell.has-preview .tc-label,
+  .result-card .card-detail-traits .trait-cell.has-preview .tc-value,
+  .result-card .card-detail-traits .trait-cell.has-preview .tc-sub{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+  .result-card .card-detail-traits .trait-cell.has-preview .tc-text{ background:rgba(8,9,11,0.82); border-radius:calc(var(--radius) - 2px); padding:0.3rem 2px; }
   .result-card .card-detail-traits .trait-cell.has-preview:hover{ border-color:var(--cyan); }
-  /* Trait box design C — the picture fills the whole box, dimmed by a
-     dark wash (a separate layer, not a CSS filter), with the text straight
-     on top and no box behind it. Pigeon page + BOXED VIEW. */
-  .trait-cell.has-preview{ position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; background:#0b0c0f; }
-  .trait-cell.has-preview .tc-art{ position:absolute; inset:0; background-size:cover; background-position:center 20%; background-repeat:no-repeat; }
-  .trait-cell.has-preview .tc-art::after{ content:''; position:absolute; inset:0; background:rgba(8,9,11,0.66); }
-  .trait-cell.has-preview:hover .tc-art::after{ background:rgba(8,9,11,0.55); }
-  .trait-cell.has-preview .tc-text{ position:relative; z-index:1; width:100%; box-sizing:border-box; background:none; border:none; border-radius:0; }
-  .trait-cell.has-preview .tc-value, .trait-cell.has-preview .tc-label, .trait-cell.has-preview .tc-sub{ color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.8); }
-  /* NO <category> boxes — same layout, plain Pigeons purple (the
-     collection's accent) instead of a picture, no dark wash. */
-  .trait-cell.has-preview .tc-art.tc-art-none{ background:var(--collection-accent); }
-  .trait-cell.has-preview .tc-art.tc-art-none::after{ display:none; }
+  /* NO <category> boxes — plain Pigeons purple, everywhere trait boxes
+     show (Pigeon page + BOXED VIEW). */
+  .trait-cell.trait-cell-none{ background:var(--collection-accent); border-color:var(--collection-accent); }
+  .trait-cell.trait-cell-none .tc-value, .trait-cell.trait-cell-none .tc-label, .trait-cell.trait-cell-none .tc-sub, .trait-cell.trait-cell-none .tc-sub *{ color:#fff; text-shadow:none; }
+  .trait-cell.trait-cell-none:hover{ background:var(--collection-accent); border-color:#fff; }
   /* SALES H!ST0RY — exactly the OFFER button's shape, in cyan. */
   .card-sales-history-btn{ width:100%; background:var(--cyan); border:1px solid var(--cyan); color:#000; text-shadow:none; font-family:var(--font-mono); font-weight:700; font-size:15px; letter-spacing:0.03em; padding:0.8em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:box-shadow 0.15s ease; }
   .card-sales-history-btn:hover{ box-shadow:0 0 14px var(--cyan-glow); }
@@ -7209,13 +7198,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      far more reliably over a busy photo than the site's default grey/cyan
      text, same font-size as plain cells (again, the flush-bottom sizing)
      except the percent/count line, which stays bigger as its own thing. */
-  #screenDetail .trait-cell.has-preview{ padding:0; }
-  #screenDetail .trait-cell.has-preview{ min-height:120px; }
-  #screenDetail .trait-cell.has-preview .tc-sub{ font-size:16px; }
+  #screenDetail .trait-cell.has-preview{ background-size:cover; background-position:center 20%; }
+  #screenDetail .trait-cell.has-preview .tc-label{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+  #screenDetail .trait-cell.has-preview .tc-value{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+  #screenDetail .trait-cell.has-preview .tc-sub{ color:#fff; font-size:16px; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
   /* Static solid box behind value/label/sub together — text-shadow alone
      still clashed against a busy/light crop, this reads reliably over
      any of them. */
-  #screenDetail .trait-cell.has-preview .tc-text{ padding:0.45rem 0.4rem 0.5rem; }
+  #screenDetail .trait-cell.has-preview .tc-text{ background:rgba(8,9,11,0.82); border-radius:calc(var(--radius) - 2px); padding:0.5rem 0.4rem; }
   #screenDetail .trait-cell.has-preview:hover{ border-color:var(--cyan); }
   /* Constrained instead of stretching the field's label/value across the
      whole (wide) right column — that gap made label and value feel
@@ -14242,22 +14232,19 @@ const SWAP_HTML = `<!DOCTYPE html>
       bg: '<div class="card-detail-traits bc-bg">' + (split.bg ? traitCellHtml(split.bg, 'card-trait-link') : '') + '</div>'
     };
   }
-  // Trait names get the biggest size that fits their box on whole words.
-  // One line is tried first (down to 13px) so the picture above keeps as
-  // much room as possible; only a name that can't manage one line goes
-  // back to full size and wraps onto two, shrinking only if even that
-  // won't fit (never below 10px). Only BOXED VIEW's cards need this.
+  // Trait names get the biggest size that still fits their box: any name
+  // that would break mid-word or run past 2 lines steps down 1px at a
+  // time (never below 10px). Only BOXED VIEW's cards need this.
   function fitBoxedTraitText(root){
     if (state.dbView !== 'boxed' || !root) return;
     root.querySelectorAll('.card-detail-traits .tc-value').forEach(function(v){
-      var lines = function(n){ return n * parseFloat(getComputedStyle(v).lineHeight) + 1; };
-      var fits = function(n){ return v.scrollWidth <= v.clientWidth + 0.5 && v.scrollHeight <= lines(n); };
       v.style.fontSize = '';
-      var full = parseFloat(getComputedStyle(v).fontSize), size = full;
-      while (size > 13 && !fits(1)){ size -= 1; v.style.fontSize = size + 'px'; }
-      if (fits(1)) return;
-      size = full; v.style.fontSize = '';
-      while (size > 10 && !fits(2)){ size -= 1; v.style.fontSize = size + 'px'; }
+      var size = parseFloat(getComputedStyle(v).fontSize);
+      var twoLines = function(){ return 2 * parseFloat(getComputedStyle(v).lineHeight) + 1; };
+      while (size > 10 && (v.scrollWidth > v.clientWidth + 0.5 || v.scrollHeight > twoLines())){
+        size -= 1;
+        v.style.fontSize = size + 'px';
+      }
     });
   }
   function cardTraitsHtml(p){
@@ -20900,21 +20887,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     var exampleImg = isNone ? null : ((state.traitExamples && state.traitExamples[a.trait_type] && state.traitExamples[a.trait_type][a.value]) || null);
     var previewPos = TRAIT_PREVIEW_CORNER_POSITION[a.trait_type] || TRAIT_PREVIEW_POSITION[a.trait_type];
     var previewSize = TRAIT_PREVIEW_SIZE[a.trait_type];
-    // Design C (picked live 2026-09-23): the trait picture fills the whole
-    // box (.tc-art), dimmed by a dark wash, with the text straight on top
-    // (.tc-text) and no box behind it.
-    var artHtml = exampleImg
-      ? '<div class="tc-art" style="background-image:url(&quot;' + escapeHtml(exampleImg) + '&quot;);' +
+    var overlay = previewSize
+      ? 'rgba(8,9,11,0.3),rgba(8,9,11,0.45)'
+      : 'rgba(8,9,11,0.55),rgba(8,9,11,0.8)';
+    var style = exampleImg
+      ? ' style="background-image:linear-gradient(' + overlay + '),url(&quot;' + escapeHtml(exampleImg) + '&quot;);' +
         (previewSize ? 'background-size:' + previewSize + ';' : '') +
-        (previewPos ? 'background-position:' + previewPos + ';' : '') + '"></div>'
+        (previewPos ? 'background-position:' + previewPos + ';' : '') + '"'
       : '';
-    // NO boxes use the same layout, plain Pigeons purple instead of a
-    // picture (reported live 2026-09-23).
-    if (isNone) artHtml = '<div class="tc-art tc-art-none"></div>';
-    var hasArt = !!artHtml;
-    var style = '';
-    var textOpen = hasArt ? artHtml + '<div class="tc-text">' : '';
-    var textClose = hasArt ? '</div>' : '';
+    // Photo-backed cells wrap value/label/sub in a static box (.tc-text)
+    // instead of relying on text-shadow alone — a busy/light crop still
+    // clashed with plain shadowed text.
+    var textOpen = exampleImg ? '<div class="tc-text">' : '';
+    var textClose = exampleImg ? '</div>' : '';
     // Same value/label split as cardTraitsHtml's own trait cells — NAKED/
     // BALD's real attribute entry carries the raw __no_trait__ value (so
     // the click-to-filter handler right below still round-trips correctly
@@ -20923,7 +20908,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var catValuesForCell = state.traitCategories && state.traitCategories[a.trait_type];
     var cellMatch = catValuesForCell ? catValuesForCell.filter(function(v){ return v.value === a.value; })[0] : null;
     var cellDisplayValue = a.displayValue || (cellMatch && cellMatch.label ? cellMatch.label : a.value);
-    return '<div class="trait-cell' + (hasArt ? ' has-preview' : '') + (isNone ? ' trait-cell-none' : '') + (extraClass ? ' ' + extraClass : '') + '" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' + style +
+    return '<div class="trait-cell' + (exampleImg ? ' has-preview' : '') + (isNone ? ' trait-cell-none' : '') + (extraClass ? ' ' + extraClass : '') + '" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' + style +
       ' title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
       textOpen +
       // Value first, category second — "G0LDEN FEATHERS" reads as one
