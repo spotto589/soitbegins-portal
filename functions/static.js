@@ -14386,6 +14386,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     var avgSaleLine = !COLLECTION_META[state.collection].tradeable ? '' : hasAvgSale
       ? '<div class="result-rarity-line result-stat-stack"><span class="stat-label">AVG SALE PR!CE ::</span><span class="stat-value">' + greenNum(fmtXrp(p.avgSaleXrp)) + ' XRP</span></div>'
       : '<div class="result-rarity-line">' + greenNum('M!NT C0ND!T!0N') + '</div>';
+    // Sorted by RAR!TY — same label/value stack, but the Pigeon's own
+    // rarity score instead of its average sale (falls back to the normal
+    // line when there's no score yet).
+    if ((state.sort === 'RARITY_ASC' || state.sort === 'RARITY_DESC') && p.ourRarityScore !== null && p.ourRarityScore !== undefined){
+      avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">RAR!TY SC0RE ::</span><span class="stat-value">' + greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + '</span></div>';
+    }
     var offerCtxCard = isOwnWalletScope();
     var inTarget = offerCtxCard ? !!state.offerAssets[p.nftId] : !!state.targetAssets[p.nftId];
     var atCap = offerCtxCard
