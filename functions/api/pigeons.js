@@ -382,7 +382,10 @@ export async function onRequestGet(context) {
     // comment in _shared.js. Piggybacks on the same "fires once, whenever
     // TRAITS is loaded" cadence as the number-map crawl right above.
     const rarityStats = tradeable ? await getRarityStats(env.coin, coll.key) : null;
-    if (tradeable) context.waitUntil(maybeRefreshRarityScores(env.coin, coll.key, coll.sizeApprox));
+    // loadAsset reads this site's own static files (the sealed XRPL+IPFS
+    // trait snapshot under /assets/rarity-data/).
+    const loadAsset = env.ASSETS ? (path => env.ASSETS.fetch(new URL(path, context.request.url))) : null;
+    if (tradeable) context.waitUntil(maybeRefreshRarityScores(env.coin, coll.key, coll.sizeApprox, loadAsset));
     return json({
       categories,
       noTraitCounts,

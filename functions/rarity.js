@@ -80,7 +80,8 @@ function renderRarityHtml() {
     <h1>H0W RAR!TY W0RKS</h1>
     <p class="intro">Every score here comes from real, disclosed math run against the collection's actual trait data — never a guess, and never hidden. This page explains exactly how a number gets calculated, so you can check our work the same way we did.</p>
 
-    <h2><span class="step">01</span>LAYER 1 :: TRA!T RAR!TY SC0RE</h2>
+    <h2><span class="step">01</span>RAR!TY SC0RE :: THE RANK!NG</h2>
+    <p><strong>This is the only number the ranking uses.</strong> Pure maths on the traits, nothing hand-picked.</p>
     <p>Every trait on a Pigeon has a real, published % of the collection. Turn that into a score with one rule &mdash; <code>100 &divide; %</code> &mdash; then ADD every one of that Pigeon's own trait scores together. Never averaged: averaging would punish a Pigeon for having more than one rare trait, and the whole point is that rare traits stack.</p>
     <div class="layer-card">
       <div class="layer-name">W0RKED EXAMPLE &mdash; P!GE0N #727</div>
@@ -97,6 +98,8 @@ function renderRarityHtml() {
       <div class="layer-example">Kaws is scored here in Layer 1 like any other trait &mdash; it's genuinely rare on its own (0.40%), it's just not part of the confirmed TAKASH! MURAKAM! set below (KAWS is a different real artist, not part of "Takashi Murakami").</div>
     </div>
     <p>Even "no clothing" or "no headwear" is a real, scored state &mdash; every category always contributes something, however small.</p>
+
+    <p style="margin-top:2.5rem; padding:0.8rem 1rem; border:1px dashed #ff3fd0; color:#ff3fd0;"><strong>L0RE SC0RE</strong> &mdash; everything below this line is the separate LORE SCORE: hand-confirmed sets and bonuses, multiplied onto the rarity score. It's shown on every Pigeon, but it does NOT change the ranking.</p>
 
     <h2><span class="step">02</span>LAYER 2 :: MATCHED SET MULT!PL!ER</h2>
     <p>Only ever a HAND-CONFIRMED match &mdash; never inferred by an algorithm. A human looks at the actual artwork and decides a combination is real and meaningful, using one bar: either 3 or fewer other Pigeons share the exact same match, or it's an unambiguous, specific reference (a real name, a brand nod, a literal object pairing) &mdash; never just a vague vibe.</p>
@@ -197,10 +200,26 @@ function renderRarityHtml() {
       <p style="margin-top:0.5rem; margin-bottom:0;">#92 also carries Reactor Bite beak + Night Vision eyewear &mdash; sounds thematic, but the real numbers say otherwise: 45 Pigeons have Reactor Bite, 36 have Night Vision, and 4 share both. That's barely above what pure chance predicts, and "sci-fi/military" covers a lot of ground &mdash; pairs like this turn up often by coincidence. It stayed out.</p>
     </div>
 
+    <h2><span class="step">06</span>CHECK !T Y0URSELF</h2>
+    <p>The traits behind the RARITY SCORE don't come from us or any marketplace. They're read straight from the <strong>XRP Ledger</strong> (every Pigeon ever minted) and each Pigeon's own metadata file on <strong>IPFS</strong>, then saved into one public file.</p>
+    <div class="layer-card">
+      <div class="layer-name">THE DATA</div>
+      <div class="layer-desc">
+        <a href="/assets/rarity-data/pigeons-traits.json" style="color:#3df3ec;">pigeons-traits.json</a> &mdash; every Pigeon's traits<br>
+        <a href="/assets/rarity-data/pigeons-traits.json.sha256" style="color:#3df3ec;">pigeons-traits.json.sha256</a> &mdash; its seal<br>
+        <span style="color:rgba(232,232,232,0.6);">SEAL ::</span> <code id="raritySeal" style="word-break:break-all;">loading&hellip;</code>
+      </div>
+      <div class="layer-example">The seal is a fingerprint of the file: change a single letter and it no longer matches. Anyone can rebuild the file from the ledger, check the seal, and recompute every score &mdash; the scripts are public in <code>scripts/rarity-data/</code> (build-snapshot.mjs and verify.mjs).</div>
+    </div>
+
     <a class="back-link" href="/static">&larr; BACK T0 Σκύλλα</a>
   </div>
 
 <script>
+fetch('/assets/rarity-data/pigeons-traits.json.sha256').then(function(r){ return r.ok ? r.text() : ''; }).then(function(t){
+  var el = document.getElementById('raritySeal');
+  if (el) el.textContent = (t || '').trim().split(' ')[0] || 'not published yet';
+}).catch(function(){});
 (function(){
   var c = document.getElementById('staticCanvas');
   if (!c) return;

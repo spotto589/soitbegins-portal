@@ -4308,7 +4308,56 @@ function namedSetMatchForItem(attrs, collectionKey) {
 //    to the scoring CODE itself). Written over the same live key, so the
 //    previous scores keep showing right up until the new ones replace
 //    them — never a blank gap.
-export async function maybeRefreshRarityScores(kv, collectionKey, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX) {
+// Collections whose traits come from a public, sealed snapshot built
+// straight from the XRP Ledger + IPFS (scripts/rarity-data/
+// build-snapshot.mjs) instead of Deeptide — anyone can download the file,
+// check its SHA-256 seal and recompute every score (verify.mjs). Rebuild
+// the file and push to update; the new seal triggers an instant re-score.
+const RARITY_SNAPSHOT_FILES = { pigeons: '/assets/rarity-data/pigeons-traits.json' };
+
+// The sealed file -> the same { items, dist, completedAt } shape the
+// Deeptide crawl produces. dist is counted from the file itself: every
+// category any NFT has, and a missing category counts as its own
+// __no_trait__ value.
+function snapshotFromSealedFile(file) {
+  const items = {};
+  const categories = new Set();
+  for (const it of file.items) for (const a of it.attributes) categories.add(a.trait_type);
+  const dist = {};
+  for (const c of categories) dist[c] = {};
+  for (const it of file.items) {
+    items[it.nftId] = { number: it.number, attributes: it.attributes };
+    for (const c of categories) {
+      const a = it.attributes.find(x => x.trait_type === c);
+      const v = a ? a.value : '__no_trait__';
+      dist[c][v] = (dist[c][v] || 0) + 1;
+    }
+  }
+  return { items, dist, completedAt: file.ledgerIndex };
+}
+
+async function maybeRescoreFromSealedFile(kv, collectionKey, loadAsset, now) {
+  const path = RARITY_SNAPSHOT_FILES[collectionKey || 'pigeons'];
+  if (!path || !loadAsset) return false;
+  const sealRes = await loadAsset(path + '.sha256').catch(() => null);
+  if (!sealRes || !sealRes.ok) return false;
+  const seal = (await sealRes.text()).trim().split(/\s+/)[0];
+  if (!/^[0-9a-f]{64}$/.test(seal)) return false;
+  const signature = rarityFormulaSignature(collectionKey) + ':' + seal.slice(0, 16);
+  const statsRaw = await kv.get(kvKeyFor(RARITY_STATS_KEY, collectionKey));
+  const stats = statsRaw ? JSON.parse(statsRaw) : null;
+  if (stats && stats.signature === signature) return true;
+  const fileRes = await loadAsset(path);
+  if (!fileRes.ok) return false;
+  const file = await fileRes.json();
+  await writeScoresFromSnapshot(kv, collectionKey, file.items.length, snapshotFromSealedFile(file), signature, now, { source: 'xrpl+ipfs', seal, ledgerIndex: file.ledgerIndex });
+  return true;
+}
+
+export async function maybeRefreshRarityScores(kv, collectionKey, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX, loadAsset = null) {
+  // Sealed XRPL+IPFS snapshot first (see RARITY_SNAPSHOT_FILES); the
+  // Deeptide crawl below is only for collections without one yet.
+  if (await maybeRescoreFromSealedFile(kv, collectionKey, loadAsset, Math.floor(Date.now() / 1000))) return;
   const cfg = getTradeConfig(collectionKey);
   const shopSlug = cfg && cfg.deeptideShopSlug ? cfg.deeptideShopSlug : (collectionKey ? null : DEEPTIDE_PIGEON_SHOP_SLUG);
   if (!shopSlug) return;
@@ -4425,13 +4474,13 @@ function rarityFormulaSignature(collectionKey) {
   return RARITY_FORMULA_VERSION + ':' + h.toString(36);
 }
 
-async function writeScoresFromSnapshot(kv, collectionKey, collectionSizeApprox, snapshot, signature, now) {
+async function writeScoresFromSnapshot(kv, collectionKey, collectionSizeApprox, snapshot, signature, now, extraStats) {
   const finalMap = scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox);
   const count = Object.keys(finalMap).length;
   await safeKvPut(kv, kvKeyFor(RARITY_MAP_KEY, collectionKey), JSON.stringify(finalMap));
   await safeKvPut(kv, kvKeyFor(RARITY_STATS_KEY, collectionKey), JSON.stringify({
     inProgress: false, completedAt: now, updatedAt: now, count, total: count,
-    signature, snapshotAt: snapshot.completedAt,
+    signature, snapshotAt: snapshot.completedAt, ...(extraStats || {}),
   }));
 }
 
@@ -4523,7 +4572,9 @@ function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
   // (Layer 1, pure maths — item.s). The full layered formula (sets,
   // number, 1 0F N, rare traits) is kept as the separate LORE SCORE,
   // with its own rank, not used for sorting.
-  const sorted = Object.keys(raw).sort((a, b) => raw[b].s - raw[a].s);
+  // Ties: lower number first (same rule as scripts/rarity-data/verify.mjs).
+  const numOf = id => { const n = snapshot.items[id] && snapshot.items[id].number; return n == null ? 1e9 : n; };
+  const sorted = Object.keys(raw).sort((a, b) => raw[b].s - raw[a].s || numOf(a) - numOf(b));
   const loreRank = {};
   Object.keys(raw).sort((a, b) => raw[b].finalScore - raw[a].finalScore).forEach((nftId, idx) => { loreRank[nftId] = idx + 1; });
   const finalMap = {};
