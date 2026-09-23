@@ -1,4 +1,4 @@
-﻿import {
+﻿import { marketListingsFromOffers, marketMeta,
   fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent, getNoTraitCounts, resolveDetailsCached,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap, getRarityMap, getRarityStats, maybeRefreshRarityScores,
@@ -891,6 +891,10 @@ export async function onRequestGet(context) {
         buyUrl: xrpCafeListing && xrpCafeListing.priceXrp !== null ? `https://xrp.cafe/nft/${detailId}` : null
       }
     };
+    // Every marketplace's listing, live from the ledger's sell offers
+    // (current owner only) — see NFT_MARKETPLACES in _shared.js.
+    const liveOffers = await fetchNftSellOffersOrNull(detailId);
+    result.marketListings = liveOffers === null ? null : marketListingsFromOffers(liveOffers, result.owner || null, detailId);
     return json({ item: result });
   }
 
@@ -1331,11 +1335,10 @@ export async function onRequestGet(context) {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
     // marketplace=xrpcafe / deeptide: that marketplace's own floor only.
     const marketplace = params.get('marketplace');
-    const indexPrice = c => marketplace === 'xrpcafe'
-      ? (c.xrpcafeXrp !== undefined ? c.xrpcafeXrp : (c.venue === 'xrpcafe' ? c.priceXrp : null))
-      : marketplace === 'deeptide'
-        ? (c.deeptideXrp !== undefined ? c.deeptideXrp : (c.venue === 'deeptide' ? c.priceXrp : null))
-        : c.priceXrp;
+    const indexPrice = c => !marketplace ? c.priceXrp
+      : (c.markets ? (c.markets[marketplace] !== undefined ? c.markets[marketplace] : null)
+        : (marketplace === 'xrpcafe' ? (c.xrpcafeXrp !== undefined ? c.xrpcafeXrp : (c.venue === 'xrpcafe' ? c.priceXrp : null))
+          : (c.venue === marketplace ? c.priceXrp : null)));
     const floorIndex = await getFloorIndex(env.coin);
     let candidates = ((floorIndex && floorIndex.items) || []).filter(c => indexPrice(c) !== null && indexPrice(c) !== undefined);
     if (numberRange === 'low' || numberRange === 'high') {
@@ -1360,12 +1363,25 @@ export async function onRequestGet(context) {
     const details = await resolveDetailsCached(context, coll.key, pageCandidates.map(c => c.nftId));
     let items = pageCandidates.map((c, i) => toItem(c.nftId, details[i] || { number: c.number, attributes: [], image: null }, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
     await attachListings(env.coin, items, items.length);
-    items.forEach(it => {
-      const dt = it.listings.deeptide.priceXrp;
-      const xc = it.listings.xrpCafe.priceXrp;
-      const useXrpCafe = marketplace === 'xrpcafe' ? true : marketplace === 'deeptide' ? false : (xc !== null && (dt === null || xc < dt));
-      it.bestListingXrp = useXrpCafe ? xc : dt;
-      it.bestListingSource = useXrpCafe ? 'xrpCafe' : 'deeptide';
+    // Every marketplace this Pigeon is listed on (from the owner-checked
+    // floor index), with xrp.cafe re-checked live; cheapest first. The
+    // card's BUY button goes to the first one (or the chosen marketplace).
+    items.forEach((it, i) => {
+      const c = pageCandidates[i];
+      const byKey = c.markets || (c.venue ? { [c.venue]: c.priceXrp } : {});
+      let list = Object.keys(byKey).map(key => {
+        const m = marketMeta(key);
+        return m ? { key, label: m.label, priceXrp: byKey[key], url: m.url(it.nftId) } : null;
+      }).filter(Boolean);
+      const liveCafe = it.listings && it.listings.xrpCafe ? it.listings.xrpCafe.priceXrp : null;
+      list = list.map(l => l.key === 'xrpcafe' ? (liveCafe === null ? null : { ...l, priceXrp: liveCafe }) : l).filter(Boolean);
+      list.sort((a, b) => a.priceXrp - b.priceXrp);
+      it.marketListings = list;
+      const pick = marketplace ? list.find(l => l.key === marketplace) : list[0];
+      it.bestListingXrp = pick ? pick.priceXrp : null;
+      it.bestListingSource = pick ? pick.key : null;
+      it.bestListingLabel = pick ? pick.label : null;
+      it.bestListingUrl = pick ? pick.url : null;
     });
     // A floor-index candidate whose real offer was cancelled/accepted
     // since the background scan last ran, and isn't currently showing a

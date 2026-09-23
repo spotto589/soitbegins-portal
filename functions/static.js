@@ -8643,6 +8643,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sales-styled .sale-num-box{ font-size:16px; }
   .sales-styled .sale-from, .sales-styled .sale-to, .sales-styled .sale-from .wallet-tag, .sales-styled .sale-to .wallet-tag{ font-size:17px !important; }
   .sales-styled .sale-time{ font-size:15px; }
+  /* BUY on the marketplace a listing lives on (card + Pigeon page). */
+  .market-buy-link{ display:inline-block; margin-top:0.35rem; padding:0.3em 0.7em; border:1px solid var(--green); border-radius:var(--radius); color:var(--green); font-size:11px; font-weight:700; letter-spacing:0.06em; text-decoration:none; white-space:nowrap; }
+  .market-buy-link:hover{ background:var(--green); color:#000; }
+  .detail-markets{ margin:0.6rem 0; border:1px solid var(--border-mid); border-radius:var(--radius); padding:0.6rem 0.8rem; }
+  .detail-markets-title{ font-size:11px; letter-spacing:0.12em; color:var(--grey-dim); margin-bottom:0.3rem; text-align:center; }
+  .detail-market-row{ display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:0.75rem; padding:0.35rem 0; border-top:1px dashed var(--border-dim); font-size:15px; }
+  .detail-market-row:first-of-type{ border-top:none; }
+  .detail-market-row .dm-name{ font-weight:700; letter-spacing:0.04em; }
+  .detail-market-row .dm-price{ font-weight:700; }
+  .detail-market-row .market-buy-link{ margin:0; font-size:12px; }
+  .detail-market-row.cheapest .dm-name{ color:var(--green); }
   .hx-empty{ text-align:center; color:var(--grey-dim); font-size:13px; letter-spacing:0.05em; padding:1rem 0; }
   /* PR0F!LE ED!T popup — its own id (not #amountEntryModal, so it needs
      the same fixed-overlay shell spelled out again here rather than
@@ -11348,6 +11359,9 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="trait-grid" id="detailTraits"></div>
           <div class="detail-sales-section">
             <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
+            <!-- Every marketplace this Pigeon is listed on right now (live
+                 from the ledger), cheapest first, each with its BUY link. -->
+            <div class="detail-markets" id="detailMarkets" style="display:none;"></div>
             <!-- REC0RD/RECENT/AVERAGE SALE — one row of 3 now instead of 3
                  stacked full-width rows (reported live wanting these
                  bigger, but the whole DETAIL screen also has to keep
@@ -12593,7 +12607,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
-   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailRarityScoreCell','detailRarityExpandBtn','detailRarityBreakdown','rarityModal','rarityModalTitle','rarityModalBadges','rarityCloseBtn','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
+   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailRarityScoreCell','detailRarityExpandBtn','detailRarityBreakdown','rarityModal','rarityModalTitle','rarityModalBadges','rarityCloseBtn','detailPriceRow','detailPrice','detailMarkets','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose','historyThumb','historyVolume','historySaleCount','historyMintDate','historyMintBy',
    'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections','profileScreenCoins','profileScreenMessageBtn',
@@ -14624,7 +14638,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     // line when there's no score yet).
     var floorSort = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC' || state.sort === 'XRPCAFE_PRICE_ASC' || state.sort === 'XRPCAFE_PRICE_DESC';
     if (floorSort && p.bestListingXrp !== null && p.bestListingXrp !== undefined){
-      avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">' + (p.bestListingSource === 'xrpCafe' ? 'XRP.CAFE' : 'DEEPT!DE') + ' ::</span><span class="stat-value">' + greenNum(fmtXrp(p.bestListingXrp)) + ' XRP</span></div>';
+      // Marketplace + price, and a BUY button to that marketplace (a
+      // brokered listing can only be bought on its own marketplace).
+      var mLabel = p.bestListingLabel || (p.bestListingSource === 'xrpCafe' || p.bestListingSource === 'xrpcafe' ? 'XRP.CAFE' : 'DEEPT!DE');
+      avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">' + escapeHtml(mLabel) + ' ::</span><span class="stat-value">' + greenNum(fmtXrp(p.bestListingXrp)) + ' XRP</span>' +
+        (p.bestListingUrl ? '<a class="market-buy-link" href="' + escapeHtml(p.bestListingUrl) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY 0N ' + escapeHtml(mLabel) + ' ↗</a>' : '') +
+        '</div>';
     } else if ((state.sort === 'LORE_ASC' || state.sort === 'LORE_DESC') && p.ourRarityLoreScore !== null && p.ourRarityLoreScore !== undefined){
       avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">L0RE SC0RE ::</span><span class="stat-value">' + greenNum(fmtRarityScore(p.ourRarityLoreScore)) + '</span></div>';
     } else if ((state.sort === 'RARITY_ASC' || state.sort === 'RARITY_DESC') && p.ourRarityScore !== null && p.ourRarityScore !== undefined){
@@ -21253,7 +21272,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.rarityCloseBtn.addEventListener('click', closeRarityModal);
   el.rarityModal.addEventListener('click', function(e){ if (e.target === el.rarityModal) closeRarityModal(); });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && el.rarityModal.style.display === 'flex') closeRarityModal(); });
+  function detailMarketsHtml(list){
+    return '<div class="detail-markets-title">L!STED 0N</div>' + list.map(function(l, i){
+      return '<div class="detail-market-row' + (i === 0 ? ' cheapest' : '') + '">' +
+        '<span class="dm-name">' + escapeHtml(l.label) + '</span>' +
+        '<span class="dm-price">' + greenNum(fmtXrp(l.priceXrp)) + ' XRP</span>' +
+        '<a class="market-buy-link" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener">BUY ↗</a>' +
+      '</div>';
+    }).join('');
+  }
   function updateDetailPrice(p){
+    var ml = p && p.marketListings;
+    if (ml && ml.length){
+      el.detailMarkets.innerHTML = detailMarketsHtml(ml);
+      el.detailMarkets.style.display = '';
+    } else {
+      el.detailMarkets.style.display = 'none';
+      el.detailMarkets.innerHTML = '';
+    }
     if (p && p.priceXrp !== null && p.priceXrp !== undefined){
       el.detailPriceRow.style.display = '';
       el.detailPrice.textContent = p.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';

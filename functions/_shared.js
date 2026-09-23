@@ -5108,6 +5108,44 @@ async function getFloorIndexStaging(kv) {
   return raw ? JSON.parse(raw) : { candidates: [] };
 }
 
+// Every marketplace a Pigeon can be listed on, keyed by the broker account
+// its sell offers are addressed to (a brokered offer can ONLY be filled by
+// that broker, so a listing can only be bought on its own marketplace —
+// buyUrl is where). Found live 2026-09-23 by grouping every Pigeon's
+// on-ledger sell offers by destination: rpZqTPC8 tags its transactions
+// "Created on nft.onxrp.com" (OnXRP, now bidds.com); rDEALS... has no
+// domain/memo, so it links to Bithomp. A sell offer with NO destination is
+// a direct listing anyone can accept (Bithomp's NFT page can do it).
+export const NFT_MARKETPLACES = {
+  rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC: { key: 'xrpcafe', label: 'XRP.CAFE', url: id => `https://xrp.cafe/nft/${id}` },
+  rpZqTPC8GvrSvEfFsUuHkmPCg29GdQuXhC: { key: 'bidds', label: 'B!DDS', url: id => `https://bidds.com/nft/${id}` },
+  rLGHuf125sJV9d6g2hcK2HzKrDH2j45dPQ: { key: 'deeptide', label: 'DEEPT!DE', url: id => `https://deeptide.co/nft/${id}` },
+  rDEALSphy6Jn6KgEtZzBEwxoyppC4hcuZa: { key: 'rdeals', label: 'rDEALS', url: id => `https://bithomp.com/en/nft/${id}` },
+};
+const DIRECT_MARKET = { key: 'direct', label: 'D!RECT', url: id => `https://bithomp.com/en/nft/${id}` };
+
+// Cheapest XRP listing per marketplace from raw sell offers — only the
+// current owner's offers (an old owner's offer never gets cancelled
+// automatically and can't be filled). owner null = can't tell, keep all.
+// Offers to any other destination are private to one buyer: skipped.
+export function marketListingsFromOffers(offers, owner, nftId) {
+  const best = {};
+  for (const o of offers || []) {
+    if (typeof o.amount !== 'string') continue;
+    if (owner && o.owner !== owner) continue;
+    const m = o.destination ? NFT_MARKETPLACES[o.destination] : DIRECT_MARKET;
+    if (!m) continue;
+    const xrp = parseInt(o.amount, 10) / 1000000;
+    if (!Number.isFinite(xrp)) continue;
+    if (!best[m.key] || xrp < best[m.key].priceXrp) best[m.key] = { key: m.key, label: m.label, priceXrp: xrp, url: m.url(nftId) };
+  }
+  return Object.values(best).sort((a, b) => a.priceXrp - b.priceXrp);
+}
+export function marketMeta(key) {
+  if (key === 'direct') return DIRECT_MARKET;
+  return Object.values(NFT_MARKETPLACES).find(m => m.key === key) || null;
+}
+
 // Current owner via Clio's nft_info — null on any failure.
 async function fetchNftCurrentOwner(nftId) {
   try {
@@ -5159,7 +5197,6 @@ export async function maybeRefreshFloorIndex(kv) {
     // Cheapest XRP sell offer per marketplace (the offer's destination is
     // the marketplace's broker account), kept separately so an xrp.cafe-
     // only floor can be sorted without Deeptide prices mixed in.
-    let cafe = null, deep = null;
     // XRPL never cancels a seller's old offer when the NFT changes hands,
     // so a previous owner's dead listing can still sit on-ledger (found
     // live on #75: a 13 XRP xrp.cafe offer from a wallet that no longer
@@ -5167,23 +5204,19 @@ export async function maybeRefreshFloorIndex(kv) {
     // only, so Clio's small sync lag is fine here (unlike BUY's live
     // check — see findPigeonsOffer's comment); owner lookup failing keeps
     // every offer rather than dropping real listings.
-    const marketOffers = offers.filter(o => o.destination === XRP_CAFE_BROKER_ACCOUNT || o.destination === DEEPTIDE_BROKER_ACCOUNT);
-    const owner = marketOffers.length ? await fetchNftCurrentOwner(nftId) : null;
-    for (const o of offers) {
-      if (typeof o.amount !== 'string') continue; // IOU-priced offers are an object, not a drops string — not XRP, skip
-      if (owner && o.owner !== owner) continue;
-      const drops = parseInt(o.amount, 10);
-      if (!Number.isFinite(drops)) continue;
-      if (o.destination === XRP_CAFE_BROKER_ACCOUNT) { if (cafe === null || drops < cafe) cafe = drops; }
-      else if (o.destination === DEEPTIDE_BROKER_ACCOUNT) { if (deep === null || drops < deep) deep = drops; }
-    }
-    if (cafe === null && deep === null) return null;
-    const bestDrops = cafe === null ? deep : (deep === null ? cafe : Math.min(cafe, deep));
+    const xrpOffers = offers.filter(o => typeof o.amount === 'string');
+    const owner = xrpOffers.length ? await fetchNftCurrentOwner(nftId) : null;
+    // Every marketplace (see NFT_MARKETPLACES), current owner's offers only.
+    const listings = marketListingsFromOffers(xrpOffers, owner, nftId);
+    if (!listings.length) return null;
+    const markets = {};
+    for (const l of listings) markets[l.key] = l.priceXrp;
     return {
       nftId, number: idToNumber[nftId] || null,
-      priceXrp: bestDrops / 1000000, venue: bestDrops === cafe ? 'xrpcafe' : 'deeptide',
-      xrpcafeXrp: cafe === null ? null : cafe / 1000000,
-      deeptideXrp: deep === null ? null : deep / 1000000,
+      priceXrp: listings[0].priceXrp, venue: listings[0].key,
+      markets,
+      xrpcafeXrp: markets.xrpcafe !== undefined ? markets.xrpcafe : null,
+      deeptideXrp: markets.deeptide !== undefined ? markets.deeptide : null,
     };
   });
   candidates = candidates.concat(found.filter(Boolean));
