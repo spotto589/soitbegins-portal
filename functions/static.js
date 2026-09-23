@@ -6456,8 +6456,13 @@ const SWAP_HTML = `<!DOCTYPE html>
        here to actually fit. The redundant full-width BACK strip that
        used to sit at the very bottom (duplicating the BACK already at
        the top of the screen) is gone for the same reason — one BACK,
-       always on-screen, no scroll needed to reach it. */
-    overflow-y:hidden;
+       always on-screen, no scroll needed to reach it.
+       Back to auto (reported live: the bottom-left — MAKE AN 0FFER etc —
+       was getting cut off on most screens): the one-page budget doesn't
+       hold on shorter viewports, and hidden made whatever fell past the
+       fold completely unreachable. Still no scrollbar whenever it does
+       fit; scrolls only when it genuinely doesn't. */
+    overflow-y:auto;
     overflow-x:hidden;
     -webkit-overflow-scrolling:touch;
     /* .sw-panel's own background+blur (background:var(--panel-bg),
@@ -7267,8 +7272,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      traits/sales content happens to end. Same cyan as the top BACK
      button (.detail-back-btn-top), not TRANSACT!0N H!ST0RY's own
      treatment, since they're the same action. */
+  /* position:fixed (not absolute) now that #screenDetail scrolls —
+     absolute would pin it to the bottom of the FIRST screenful and let
+     it scroll away with the content; fixed keeps it on the real bottom
+     edge (#screenDetail has no transform/filter, so fixed is still
+     viewport-relative). */
   #screenDetail .detail-back-btn-bottom{
-    position:absolute;
+    position:fixed;
     left:0; right:0; bottom:0;
     z-index:5;
     display:block;
@@ -20805,7 +20815,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       // the big price) — inline was overflowing/word-wrapping mid-word
       // ("SALE" / "S") now that this sits in a narrower 3-across column
       // instead of a full-width row.
-      el.detailAvgSale.innerHTML = greenNum(p.avgSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 })) + ' XRP' + (p.saleCount ? '<span class="df-value-sub">' + p.saleCount + ' SALES</span>' : '');
+      // Plain "N XRP" text, same as REC0RD/RECENT SALE beside it (reported
+      // live wanting all three identical) — the old greenNum span + bare
+      // " XRP" text node became two flex items in .df-value's column
+      // layout, stacking the number over "XRP", and the N SALES sub-line
+      // made the cell taller still. Sale count kept as a hover tooltip.
+      el.detailAvgSale.textContent = p.avgSaleXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+      el.detailAvgSale.title = p.saleCount ? p.saleCount + ' SALES' : '';
     } else {
       el.detailAvgSaleRow.style.display = 'none';
     }
