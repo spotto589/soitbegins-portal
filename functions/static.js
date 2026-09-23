@@ -5086,7 +5086,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     gap:0.5rem;
   }
   .result-row-left .pigeon-img-box{ width:100%; }
-  .result-row-left .result-num{ border-bottom:none; padding:0; font-size:20px; }
+  /* BOXED VIEW headers: P!GE0N # on the left and RAR!TY / RAR!TY SC0RE on
+     the right are the same fixed height, so the trait boxes start exactly
+     level with the top of the picture (reported live 2026-09-23). */
+  .result-row-left .result-num{ border-bottom:none; padding:0; font-size:26px; height:48px; display:flex; align-items:center; justify-content:center; }
+  .result-row-right .card-rarity-summary{ height:48px; padding:0 0.5rem; gap:1.5rem; box-sizing:border-box; }
+  .result-row-right .card-rarity-summary .css-item{ font-size:22px; font-weight:700; }
+  .result-row-right .card-rarity-summary .css-label{ min-width:0; font-size:13px; margin-right:0.5em; }
+  .card-sales-history-btn{ width:100%; background:transparent; border:1px solid var(--cyan-dim); color:var(--cyan); font-family:var(--font-mono); font-weight:700; font-size:13px; letter-spacing:0.08em; padding:0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); }
+  .card-sales-history-btn:hover{ border-color:var(--cyan); background:rgba(61,243,236,0.08); }
   /* Full-width strip below the thumbnail — the AMOUNT field is always
      visible and typeable, no click-to-reveal step. Same strip in both
      the boxed and THUMBNAILS card layouts. */
@@ -6343,7 +6351,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      (#screenDetail .trait-grid), but every row a fixed height so every
      card is exactly the same size and nothing ever scrolls inside it:
      3 across, rarest first, BACKGROUND stretched along the bottom row. */
-  .result-card .card-detail-traits{ display:grid; max-width:100%; margin:0.4rem 0 0; grid-template-columns:repeat(3, 1fr); grid-auto-rows:112px; gap:0.4rem; }
+  .result-card .card-detail-traits{ display:grid; max-width:100%; margin:0; grid-template-columns:repeat(3, 1fr); grid-auto-rows:112px; gap:0.4rem; }
   .result-card .card-detail-traits .trait-cell{ padding:3px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-width:0; overflow:hidden; }
   .result-card .card-detail-traits .tc-text{ width:100%; }
   /* 12px, no letter-spacing: the collection's longest single word
@@ -14355,33 +14363,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // before either way.
     var rarityInfo = rarityDisplay(p);
     var rarityLine = rarityInfo ? greenNum(rarityInfo.rank) + '/' + rarityInfo.total : null;
-    // Flick-through pages in the right column — TRAITS, then sale stats,
-    // then the sales history itself (fetched lazily once this page is
-    // reached — see the .card-page-next handler) — one at a time instead
-    // of every section stacked as its own bar. RARITY isn't a page here
-    // any more — it's the always-visible summary above the traits box.
-    var hasHigh = p.highSaleXrp !== null && p.highSaleXrp !== undefined;
-    var hasAvg = p.avgSaleXrp !== null && p.avgSaleXrp !== undefined;
-    var hasSaleCount = p.saleCount !== null && p.saleCount !== undefined;
-    var hasRecent = p.recentSaleXrp !== null && p.recentSaleXrp !== undefined;
-    var salesPageHtml = '<div class="card-page card-page-sales" style="display:none;">' +
-      ((hasHigh || hasAvg || hasSaleCount || hasRecent)
-        ? (hasHigh ? '<span class="css-item"><span class="css-label">H!GHEST REC0RDED</span>' + fmtXrp(p.highSaleXrp) + ' XRP / ' + fmtPigeons(p.highSalePigeons) + '</span>' : '') +
-          (hasAvg ? '<span class="css-item"><span class="css-label">AVG SALE</span>' + fmtXrp(p.avgSaleXrp) + ' XRP / ' + fmtPigeons(p.avgSalePigeons) + '</span>' : '') +
-          (hasRecent ? '<span class="css-item"><span class="css-label">RECENT SALE</span>' + fmtXrp(p.recentSaleXrp) + ' XRP</span>' : '') +
-          (hasSaleCount ? '<span class="css-item"><span class="css-label">T0TAL SALES</span>' + p.saleCount.toLocaleString() + '</span>' : '')
-        : '<div class="th-empty">N0 SALES YET</div>') +
-      '</div>';
-    var historyPageHtml = '<div class="card-page card-page-history" style="display:none;">' +
-        '<div class="card-history-list" data-nftid="' + escapeHtml(p.nftId) + '"><div class="th-empty">N0 H!ST0RY YET.</div></div>' +
-      '</div>';
-    var carouselHtml =
-      '<div class="card-pages" data-page="0">' +
-        '<div class="card-page card-page-traits">' + boxedTraitsHtml(p) + '</div>' +
-        salesPageHtml +
-        historyPageHtml +
-      '</div>' +
-      '<button class="card-page-next" data-nftid="' + escapeHtml(p.nftId) + '">NEXT ▸</button>';
+    // No flick-through pages any more (reported live 2026-09-23: remove
+    // NEXT) — the right column is just the trait boxes, and this Pigeon's
+    // own sales history opens in the TRANSACT!0N H!ST0RY popup from the
+    // SALES H!ST0RY button under OFFER (.card-sales-history-btn).
     var pigeonsActionHtml = pigeonsActionBoxHtml(p);
     // Above the traits boxes (not inside the carousel's own rarity page,
     // which stays as-is for the flick-through) — rarity is visible
@@ -14405,10 +14390,11 @@ const SWAP_HTML = `<!DOCTYPE html>
             watchlistToggleHtml(p) +
           '</div>' +
           pigeonsActionHtml +
+          '<button type="button" class="card-sales-history-btn" data-nftid="' + escapeHtml(p.nftId) + '">SALES H!ST0RY</button>' +
         '</div>' +
         '<div class="result-row-right">' +
           rarityAboveTraitsHtml +
-          carouselHtml +
+          boxedTraitsHtml(p) +
         '</div>' +
       '</div>' +
     '</div>';
@@ -14682,6 +14668,23 @@ const SWAP_HTML = `<!DOCTYPE html>
           // freshly filtered grid (reported live).
           pendingTraitScroll = true;
           runQuery();
+        });
+        return;
+      }
+      var salesHistBtn = e.target.closest('.card-sales-history-btn');
+      if (salesHistBtn){
+        var shId = salesHistBtn.getAttribute('data-nftid');
+        var shItem = source().filter(function(x){ return x.nftId === shId; })[0];
+        el.historyNum.innerHTML = collectionItemLabel() + ' ' + (shItem ? itemNumberLabel(shItem) : '');
+        el.detailHistoryList.innerHTML = '<div class="th-empty">L0AD!NG&hellip;</div>';
+        el.historyModal.style.display = 'flex';
+        api({ history: shId }).then(function(data){
+          var events = data.events || [];
+          el.detailHistoryList.innerHTML = events.length
+            ? events.map(historyRowHtml).join('')
+            : '<div class="th-empty">N0 H!ST0RY YET.</div>';
+        }).catch(function(){
+          el.detailHistoryList.innerHTML = '<div class="th-empty">C0ULD N0T L0AD H!ST0RY.</div>';
         });
         return;
       }
@@ -21175,6 +21178,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var walletLink = e.target.closest('.dh-party a[data-wallet]');
     if (!walletLink || e.ctrlKey || e.metaKey) return;
     e.preventDefault();
+    el.historyModal.style.display = 'none';
     openWalletProfile(walletLink.getAttribute('data-wallet'), walletLink.getAttribute('data-short'));
   });
 
