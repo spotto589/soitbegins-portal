@@ -3409,7 +3409,17 @@ const SWAP_HTML = `<!DOCTYPE html>
      control reads as one uniform row of boxes. */
   #sortDropWrap{ padding:0; width:var(--ctrl-w); flex:0 0 auto; }
   #sortDropWrap .trait-row-label{ padding:0.85em 1em; font-size:15px; width:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  #dbViewSelect{ width:var(--ctrl-w); text-align:center; text-align-last:center; }
+  /* V!EW dropdown — same box as the other controls (select.sort-select's
+     look), with its open list centred too. */
+  .db-view-drop{ position:relative; width:var(--ctrl-w); flex:0 0 auto; }
+  .db-view-btn{ width:100%; background:#000; border:1px solid var(--border-mid); color:var(--grey); font-family:var(--font-mono); font-size:15px; letter-spacing:0.03em; padding:0.85em 1em; text-transform:uppercase; cursor:pointer; border-radius:var(--radius); text-align:center; transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease; }
+  .db-view-btn::after{ content:' ▾'; }
+  .db-view-btn:hover, .db-view-drop.open .db-view-btn{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
+  .db-view-menu{ position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:50; background:var(--panel-bg-solid); border:1px solid var(--cyan); border-radius:var(--radius); overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,0.6); }
+  .db-view-opt{ display:block; width:100%; background:transparent; border:none; border-bottom:1px solid var(--border-dim); color:var(--white); font-family:var(--font-mono); font-size:15px; letter-spacing:0.03em; padding:0.8em 1em; text-transform:uppercase; text-align:center; cursor:pointer; }
+  .db-view-opt:last-child{ border-bottom:none; }
+  .db-view-opt:hover{ background:var(--cyan-faint); color:var(--cyan); }
+  .db-view-opt.selected{ color:var(--cyan); }
   .edition-toggle{
     flex:0 0 auto;
     display:flex;
@@ -6370,6 +6380,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card .card-detail-traits .trait-cell.has-preview .tc-sub{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
   .result-card .card-detail-traits .trait-cell.has-preview .tc-text{ background:rgba(8,9,11,0.68); border-radius:calc(var(--radius) - 2px); padding:0.3rem 2px; }
   .result-card .card-detail-traits .trait-cell.has-preview:hover{ border-color:var(--cyan); }
+  /* NO <category> boxes — plain Pigeons purple, everywhere trait boxes
+     show (Pigeon page + BOXED VIEW). */
+  .trait-cell.trait-cell-none{ background:var(--collection-accent); border-color:var(--collection-accent); }
+  .trait-cell.trait-cell-none .tc-value, .trait-cell.trait-cell-none .tc-label, .trait-cell.trait-cell-none .tc-sub, .trait-cell.trait-cell-none .tc-sub *{ color:#fff; text-shadow:none; }
+  .trait-cell.trait-cell-none:hover{ background:var(--collection-accent); border-color:#fff; }
   /* SALES H!ST0RY — exactly the OFFER button's shape, in cyan. */
   .card-sales-history-btn{ width:100%; background:var(--cyan); border:1px solid var(--cyan); color:#000; text-shadow:none; font-family:var(--font-mono); font-weight:700; font-size:15px; letter-spacing:0.03em; padding:0.8em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:box-shadow 0.15s ease; }
   .card-sales-history-btn:hover{ box-shadow:0 0 14px var(--cyan-glow); }
@@ -10994,10 +11009,16 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
             <div class="sort-field">
               <span class="sort-field-label">V!EW ::</span>
-              <select class="sort-select" id="dbViewSelect">
-                <option value="thumbnails" selected>THUMBNA!LS</option>
-                <option value="boxed">B0XED V!EW</option>
-              </select>
+              <!-- Own dropdown, not a native <select>: the browser draws a
+                   native select's open list itself and Chrome won't centre
+                   it (reported live). Same look, options centred. -->
+              <div class="db-view-drop" id="dbViewSelect">
+                <button type="button" class="db-view-btn" id="dbViewBtn" aria-haspopup="listbox" aria-expanded="false">THUMBNA!LS</button>
+                <div class="db-view-menu" id="dbViewMenu" role="listbox" style="display:none;">
+                  <button type="button" class="db-view-opt selected" role="option" data-value="thumbnails">THUMBNA!LS</button>
+                  <button type="button" class="db-view-opt" role="option" data-value="boxed">B0XED V!EW</button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -12377,7 +12398,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var OFFERS_TRADEABLE_COLLECTIONS = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].tradeable; });
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','dbViewSelect','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
+  ['searchInput','searchBtn','editionSelect','dbViewSelect','dbViewBtn','dbViewMenu','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
    'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','bottomControlsBar','bottomSortBtn','bottomTraitsBtn','backToTopBtn',
    'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','showCollectionWatchlistBtn','pigeonsBarDexBtn',
@@ -20701,9 +20722,41 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   // Pure re-render, no refetch — swapping views doesn't change the result
   // set, just how each card in it is drawn.
-  el.dbViewSelect.addEventListener('change', function(){
-    state.dbView = el.dbViewSelect.value;
+  function setDbViewUi(value){
+    var opts = el.dbViewMenu.querySelectorAll('.db-view-opt');
+    opts.forEach(function(o){
+      var on = o.getAttribute('data-value') === value;
+      o.classList.toggle('selected', on);
+      if (on) el.dbViewBtn.textContent = o.textContent;
+    });
+  }
+  function closeDbViewMenu(){
+    el.dbViewMenu.style.display = 'none';
+    el.dbViewSelect.classList.remove('open');
+    el.dbViewBtn.setAttribute('aria-expanded', 'false');
+  }
+  el.dbViewBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    var open = el.dbViewMenu.style.display === 'none';
+    el.dbViewMenu.style.display = open ? '' : 'none';
+    el.dbViewSelect.classList.toggle('open', open);
+    el.dbViewBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  el.dbViewMenu.addEventListener('click', function(e){
+    var opt = e.target.closest('.db-view-opt');
+    if (!opt) return;
+    closeDbViewMenu();
+    var value = opt.getAttribute('data-value');
+    setDbViewUi(value);
+    if (state.dbView === value) return;
+    state.dbView = value;
     if (state.items && state.items.length) renderResultsReplace(state.items);
+  });
+  document.addEventListener('click', function(e){
+    if (!el.dbViewSelect.contains(e.target)) closeDbViewMenu();
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') closeDbViewMenu();
   });
   // ALL editions, H!GHEST RAR!TY, THUMBNAILS view, no traits — one click
   // back to the default landing state (matches the initial page-load state
@@ -20713,7 +20766,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.editionSelect.querySelectorAll('.edition-btn').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-value') === 'ALL');
     });
-    el.dbViewSelect.value = 'thumbnails';
+    setDbViewUi('thumbnails');
     state.dbView = 'thumbnails';
     state.traitFilters = [];
     renderTraitRows();
@@ -20821,7 +20874,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Same real-photo-as-background treatment as the ADD TRAITS flyout's
     // own trait boxes (renderTraitsFlyoutVals) — same example image
     // source, same per-category crop position/size/overlay.
-    var exampleImg = (state.traitExamples && state.traitExamples[a.trait_type] && state.traitExamples[a.trait_type][a.value]) || null;
+    // "NO <category>" boxes are plain Pigeons purple (the collection's
+    // accent), no example photo (reported live 2026-09-23).
+    var isNone = a.displayValue === 'NO';
+    var exampleImg = isNone ? null : ((state.traitExamples && state.traitExamples[a.trait_type] && state.traitExamples[a.trait_type][a.value]) || null);
     var previewPos = TRAIT_PREVIEW_CORNER_POSITION[a.trait_type] || TRAIT_PREVIEW_POSITION[a.trait_type];
     var previewSize = TRAIT_PREVIEW_SIZE[a.trait_type];
     var overlay = previewSize
@@ -20845,7 +20901,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var catValuesForCell = state.traitCategories && state.traitCategories[a.trait_type];
     var cellMatch = catValuesForCell ? catValuesForCell.filter(function(v){ return v.value === a.value; })[0] : null;
     var cellDisplayValue = a.displayValue || (cellMatch && cellMatch.label ? cellMatch.label : a.value);
-    return '<div class="trait-cell' + (exampleImg ? ' has-preview' : '') + (extraClass ? ' ' + extraClass : '') + '" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' + style +
+    return '<div class="trait-cell' + (exampleImg ? ' has-preview' : '') + (isNone ? ' trait-cell-none' : '') + (extraClass ? ' ' + extraClass : '') + '" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '"' + style +
       ' title="V!EW ALL P!GE0NS W!TH TH!S TRA!T">' +
       textOpen +
       // Value first, category second — "G0LDEN FEATHERS" reads as one
