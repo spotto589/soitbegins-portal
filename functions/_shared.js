@@ -5113,14 +5113,17 @@ async function getFloorIndexStaging(kv) {
 // that broker, so a listing can only be bought on its own marketplace —
 // buyUrl is where). Found live 2026-09-23 by grouping every Pigeon's
 // on-ledger sell offers by destination: rpZqTPC8 tags its transactions
-// "Created on nft.onxrp.com" (OnXRP, now bidds.com); rDEALS... has no
-// domain/memo, so it links to Bithomp. A sell offer with NO destination is
-// a direct listing anyone can accept (Bithomp's NFT page can do it).
+// "Created on nft.onxrp.com" (OnXRP, now bidds.com). A sell offer with NO
+// destination is a direct listing anyone can accept (Bithomp's NFT page
+// can do it). Deliberately NOT listed: rDEALSphy6Jn6KgEtZzBEwxoyppC4hcuZa,
+// an unnamed private broker — checked live, every Pigeon offer to it was a
+// same-price duplicate of the owner's own xrp.cafe listing (#937 45 XRP,
+// #1496 66 XRP), and only rDEALS itself can fill it, so it's skipped like
+// any other private destination rather than shown as a dead BUY button.
 export const NFT_MARKETPLACES = {
   rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC: { key: 'xrpcafe', label: 'XRP.CAFE', url: id => `https://xrp.cafe/nft/${id}` },
   rpZqTPC8GvrSvEfFsUuHkmPCg29GdQuXhC: { key: 'bidds', label: 'B!DDS', url: id => `https://bidds.com/nft/${id}` },
   rLGHuf125sJV9d6g2hcK2HzKrDH2j45dPQ: { key: 'deeptide', label: 'DEEPT!DE', url: id => `https://deeptide.co/nft/${id}` },
-  rDEALSphy6Jn6KgEtZzBEwxoyppC4hcuZa: { key: 'rdeals', label: 'rDEALS', url: id => `https://bithomp.com/en/nft/${id}` },
 };
 const DIRECT_MARKET = { key: 'direct', label: 'D!RECT', url: id => `https://bithomp.com/en/nft/${id}` };
 
