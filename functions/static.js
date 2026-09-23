@@ -20788,7 +20788,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     var oneOfOneRow = '';
     if (p.ourRarityOneOfOne){
-      oneOfOneRow = '<div class="rb-mult-row" style="color:var(--green);">LAYER 3 :: 1 0F 1 &mdash; N0 0THER P!GE0N MATCHES ' + escapeHtml(p.ourRarityOneOfOne.setName) + ' TH!S WAY &nbsp;&rarr;&nbsp; &times; ' + p.ourRarityOneOfOne.multiplier + '</div>';
+      // 1 0F 1/2/3 — see LAYER3_MULTIPLIERS in _shared.js. `of` missing
+      // on rarity data from before tiers existed means a true 1 0F 1.
+      var l3Of = p.ourRarityOneOfOne.of || 1;
+      var l3Text = l3Of === 1
+        ? 'N0 0THER P!GE0N MATCHES ' + escapeHtml(p.ourRarityOneOfOne.setName) + ' TH!S WAY'
+        : 'ONLY ' + l3Of + ' P!GE0NS MATCH ' + escapeHtml(p.ourRarityOneOfOne.setName) + ' TH!S WAY';
+      oneOfOneRow = '<div class="rb-mult-row" style="color:var(--green);">LAYER 3 :: 1 0F ' + l3Of + ' &mdash; ' + l3Text + ' &nbsp;&rarr;&nbsp; &times; ' + p.ourRarityOneOfOne.multiplier + '</div>';
     }
     var finalRow = '<div class="rb-final-row"><span>F!NAL SC0RE</span><span>' + greenNum(p.ourRarityScore.toLocaleString(undefined, { maximumFractionDigits: 1 })) + '</span></div>';
     return rows + sumRow + multRow + oneOfOneRow + finalRow;
@@ -20809,7 +20815,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         ' SET · ' + greenNum('x' + p.ourRarityNamedSet.multiplier) + '</div>'
       : '';
     var oneOfOneBadge = (p && p.ourRarityOneOfOne)
-      ? '<div class="tc-sub" style="color:var(--green); text-shadow:0 0 4px var(--green-glow);">1 0F 1 :: ' +
+      ? '<div class="tc-sub" style="color:var(--green); text-shadow:0 0 4px var(--green-glow);">1 0F ' + (p.ourRarityOneOfOne.of || 1) + ' :: ' +
         escapeHtml(p.ourRarityOneOfOne.setName) + ' · ' + greenNum('x' + p.ourRarityOneOfOne.multiplier) + '</div>'
       : '';
     el.detailRarityScore.innerHTML = (p && p.ourRarityScore !== null && p.ourRarityScore !== undefined)

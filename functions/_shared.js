@@ -3882,8 +3882,12 @@ export async function maybeRefreshHighSaleMap(kv, collectionKey) {
 // v11 -> v12: Eyewear:Gold Rush added to G0LD (#15 now x4, was x3).
 // v12 -> v13: F!RE + SAMURA! sets added, and a Pigeon matching more than
 // one set now stacks them (best + each extra's pieces minus one).
-const RARITY_MAP_KEY = 'pswap:rarity:v13';
-const RARITY_STATS_KEY = 'pswap:raritystats:v13';
+// v13 -> v14: Layer 3 is now 1 0F 1/2/3 (x2/x1.5/x1.25), not only 1 0F 1.
+const RARITY_MAP_KEY = 'pswap:rarity:v14';
+const RARITY_STATS_KEY = 'pswap:raritystats:v14';
+// Layer 3 multiplier by how many Pigeons share a set combination (see
+// maybeRefreshRarityScores' own Layer 3 comment).
+const LAYER3_MULTIPLIERS = { 1: 2, 2: 1.5, 3: 1.25 };
 const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
 const RARITY_CONCURRENT_GUARD_SECONDS = 90; // was 10, then 30 — needs to clear Cloudflare KV's own ~60s worst-case cross-colo propagation window, not just this process's own runId check (see the v3->v4 KV key comment above)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
@@ -4331,15 +4335,20 @@ export async function maybeRefreshRarityScores(kv, collectionKey, collectionSize
         const item = raw[nftId];
         const m = item.match;
         const setMultiplier = m ? m.multiplier : 1;
-        // Layer 3 — flat x2, only when NO other Pigeon matches this set
-        // with at least every piece this one has (same pieces or more).
-        // Badged with the SET's own name, not a raw trait value — the set
-        // is what's actually unique here.
+        // Layer 3 — "1 0F N": how many Pigeons (this one included) match
+        // this set with at least every piece this one has (same pieces or
+        // more). 1 0F 1 x2, 1 0F 2 x1.5, 1 0F 3 x1.25, nothing past 3
+        // (reported live: "1 of 3 max", and a shared combo should count
+        // for less than a true 1-of-1 — e.g. #7/#666's identical F!RE
+        // sets are 1 0F 2 each). Badged with the SET's own name, not a
+        // raw trait value — the set is what's actually scarce here.
         let oneOfOne = null;
-        const sharedByAnother = m && matchesBySet[m.setName].some(other =>
-          other.nftId !== nftId && m.matchedValues.every(v => other.values.includes(v)));
-        if (m && !sharedByAnother) {
-          oneOfOne = { setName: m.setName, multiplier: 2 };
+        if (m) {
+          const holders = matchesBySet[m.setName].filter(other =>
+            m.matchedValues.every(v => other.values.includes(v))).length;
+          if (LAYER3_MULTIPLIERS[holders]) {
+            oneOfOne = { setName: m.setName, of: holders, multiplier: LAYER3_MULTIPLIERS[holders] };
+          }
         }
         const oneOfOneMultiplier = oneOfOne ? oneOfOne.multiplier : 1;
         item.finalScore = item.s * setMultiplier * oneOfOneMultiplier;
