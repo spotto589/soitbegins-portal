@@ -795,10 +795,25 @@ export async function onRequestGet(context) {
   const historyId = params.get('history');
   if (historyId) {
     const events = await fetchDeeptideNftHistory(historyId);
+    // Deeptide's history names who RECEIVED the NFT at each step (mint
+    // account, transfer receiver, sale buyer) but leaves the seller/sender
+    // off sales and transfers. The history covers the NFT's whole life
+    // from its mint, so whoever received it in the step before is who
+    // sold/sent it in this one — walked oldest-first to fill "from" in.
+    const fromByEvent = new Map();
+    let holder = null;
+    for (const e of events.slice().sort((a, b) => (a.date || 0) - (b.date || 0))) {
+      if (e.type === 'mint') { fromByEvent.set(e, null); holder = e.account || holder; continue; }
+      fromByEvent.set(e, e.account || holder);
+      const to = e.type === 'sale' ? e.buyer : e.receiver;
+      if (to) holder = to;
+    }
     return json({
       events: events.map(e => ({
         type: e.type,
         priceXrp: e.priceDrops !== null ? e.priceDrops / 1000000 : null,
+        from: fromByEvent.get(e) || null,
+        fromShort: shortenAddr(fromByEvent.get(e) || null),
         account: e.account,
         accountShort: shortenAddr(e.account),
         receiver: e.receiver,

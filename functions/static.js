@@ -6385,6 +6385,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .trait-cell.trait-cell-none{ background:var(--collection-accent); border-color:var(--collection-accent); }
   .trait-cell.trait-cell-none .tc-value, .trait-cell.trait-cell-none .tc-label, .trait-cell.trait-cell-none .tc-sub, .trait-cell.trait-cell-none .tc-sub *{ color:#fff; text-shadow:none; }
   .trait-cell.trait-cell-none:hover{ background:var(--collection-accent); border-color:#fff; }
+  .trait-cell.trait-cell-none .tc-text{ width:100%; box-sizing:border-box; background:rgba(8,9,11,0.82); border-radius:calc(var(--radius) - 2px); padding:0.3rem 2px; }
+  #screenDetail .trait-cell.trait-cell-none .tc-text{ padding:0.5rem 0.4rem; }
   /* SALES H!ST0RY — exactly the OFFER button's shape, in cyan. */
   .card-sales-history-btn{ width:100%; background:var(--cyan); border:1px solid var(--cyan); color:#000; text-shadow:none; font-family:var(--font-mono); font-weight:700; font-size:15px; letter-spacing:0.03em; padding:0.8em 0.7em; cursor:pointer; text-transform:uppercase; border-radius:var(--radius); transition:box-shadow 0.15s ease; }
   .card-sales-history-btn:hover{ box-shadow:0 0 14px var(--cyan-glow); }
@@ -8539,12 +8541,34 @@ const SWAP_HTML = `<!DOCTYPE html>
      what forced .dh-row into a cramped stacked layout instead of real
      DATE/TYPE/DETAILS/TXN columns. */
   .history-modal-panel{
-    width:min(900px, 96vw);
-    max-height:min(88vh, 780px);
+    position:relative;
+    width:min(560px, 100%);
+    max-height:min(88vh, 860px);
     overflow-y:auto;
     margin-bottom:0;
+    padding:2.25rem 2rem;
+    text-align:left;
   }
   .history-modal-close{ position:absolute; top:1rem; right:1rem; }
+  .history-modal-panel .history-title{ text-align:center; font-size:26px; font-weight:700; letter-spacing:0.03em; color:var(--white); }
+  .history-modal-panel .node-eyebrow{ text-align:center; margin:0.2rem 0 1.1rem; }
+  .history-modal-panel .detail-field{ max-width:none; display:flex; justify-content:space-between; align-items:center; gap:1rem; margin:0.5rem 0 0; }
+  .history-modal-panel .df-value{ text-align:right; }
+  /* One card per event, sales loud (big green price), transfers quiet. */
+  .hx-list{ display:flex; flex-direction:column; gap:0.5rem; }
+  .hx-row{ border:1px solid var(--border-dim); border-radius:var(--radius); padding:0.7rem 0.9rem; background:rgba(255,255,255,0.02); }
+  .hx-row.hx-sale{ border-color:rgba(52,255,133,0.45); background:rgba(52,255,133,0.06); }
+  .hx-top{ display:flex; justify-content:space-between; align-items:baseline; gap:0.75rem; }
+  .hx-verb{ font-size:12px; font-weight:700; letter-spacing:0.12em; color:var(--grey); text-transform:uppercase; }
+  .hx-sale .hx-verb{ color:var(--green); }
+  .hx-price{ font-family:var(--font-mono); font-size:24px; font-weight:700; color:var(--green); text-shadow:0 0 8px var(--green-glow); white-space:nowrap; }
+  .hx-parties{ display:flex; align-items:center; flex-wrap:wrap; gap:0.35rem 0.5rem; margin-top:0.45rem; font-size:14px; }
+  .hx-tag{ font-size:10px; letter-spacing:0.12em; color:var(--grey-dim); text-transform:uppercase; }
+  .hx-arrow{ color:var(--grey-dim); }
+  .hx-meta{ display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-top:0.45rem; font-size:12px; color:var(--grey-dim); letter-spacing:0.03em; }
+  .hx-meta > span{ white-space:nowrap; }
+  .hx-meta .dh-bithomp-btn{ width:auto; flex:0 0 auto; display:inline-block; padding:0.35em 0.8em; margin:0; }
+  .hx-empty{ text-align:center; color:var(--grey-dim); font-size:13px; letter-spacing:0.05em; padding:1rem 0; }
   /* PR0F!LE ED!T popup — its own id (not #amountEntryModal, so it needs
      the same fixed-overlay shell spelled out again here rather than
      inheriting it), .profile-edit-panel reuses .amount-entry-panel's own
@@ -11520,13 +11544,30 @@ const SWAP_HTML = `<!DOCTYPE html>
          whole DETAIL panel out for a separate-feeling "page". Click the
          dimmed backdrop or ✕ to close and land right back on DETAIL,
          exactly as it was. -->
+    <!-- Same look as the BUY $P!GE0NS panel (reported live 2026-09-23):
+         the Pigeon centred on top, two stat tiles, then every sale as its
+         own card with the price big and green, FR0M -> T0, and the mint
+         (date/time + who minted it) at the bottom. -->
     <div id="historyModal" style="display:none;">
-      <div class="sw-panel history-modal-panel" id="screenHistory">
+      <div class="offer-confirm-panel history-modal-panel" id="screenHistory">
         <button type="button" class="simple-picker-close history-modal-close" id="historyModalClose" title="CL0SE">&times;</button>
-        <div class="detail-eyebrow">// TRANSACT!0N H!ST0RY</div>
-        <div class="detail-num" id="historyNum"></div>
-        <div class="dh-header-row"><span>DATE</span><span>TYPE</span><span>FR0M</span><span>T0</span><span>EXPL0RER</span></div>
-        <div class="th-list" id="detailHistoryList"></div>
+        <img class="buyswap-thumb" id="historyThumb" src="" alt="" style="display:none;">
+        <div class="history-title" id="historyNum"></div>
+        <div class="node-eyebrow">SALES H!ST0RY</div>
+        <div class="buyswap-balances-row history-stats">
+          <div class="buyswap-balance-tile">
+            <span class="buyswap-balance-label">T0TAL V0LUME</span>
+            <span class="buyswap-balance-value" id="historyVolume">&mdash;</span>
+          </div>
+          <div class="buyswap-balance-tile">
+            <span class="buyswap-balance-label">T!MES S0LD</span>
+            <span class="buyswap-balance-value" id="historySaleCount">&mdash;</span>
+          </div>
+        </div>
+        <div class="hx-list" id="detailHistoryList"></div>
+        <div class="buyswap-divider"></div>
+        <div class="detail-field"><span class="df-label">M!NTED</span><span class="df-value" id="historyMintDate">&mdash;</span></div>
+        <div class="detail-field"><span class="df-label">M!NTED BY</span><span class="df-value dh-party" id="historyMintBy">&mdash;</span></div>
       </div>
     </div>
 
@@ -12462,7 +12503,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
    'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailRarityScoreCell','detailRarityExpandBtn','detailRarityBreakdown','rarityModal','rarityModalTitle','rarityModalBadges','rarityCloseBtn','detailPriceRow','detailPrice','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
-   'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose',
+   'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose','historyThumb','historyVolume','historySaleCount','historyMintDate','historyMintBy',
    'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections','profileScreenCoins','profileScreenMessageBtn',
    'profileScreenCode','profileScreenPrivateNotice','profileScreenPublicContent','profileModeToggle','profileScreenDatabaseView','profileScreenShowcase','profileScreenFeatured','profileScreenHistoryBtn',
    'screenWalletHistory','walletHistoryBackBtn','walletHistoryBanner','walletHistoryNote','walletDnaBlock','walletHistoryGraph','walletHistoryFilters','walletHistoryTimeline',
@@ -14737,16 +14778,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (salesHistBtn){
         var shId = salesHistBtn.getAttribute('data-nftid');
         var shItem = source().filter(function(x){ return x.nftId === shId; })[0];
-        el.historyNum.innerHTML = collectionItemLabel() + ' ' + (shItem ? itemNumberLabel(shItem) : '');
-        el.detailHistoryList.innerHTML = '<div class="th-empty">L0AD!NG&hellip;</div>';
+        setHistoryHeader(collectionItemLabel() + ' ' + (shItem ? itemNumberLabel(shItem) : ''), shItem && shItem.image);
+        setHistoryLoading('L0AD!NG&hellip;');
         el.historyModal.style.display = 'flex';
         api({ history: shId }).then(function(data){
-          var events = data.events || [];
-          el.detailHistoryList.innerHTML = events.length
-            ? events.map(historyRowHtml).join('')
-            : '<div class="th-empty">N0 H!ST0RY YET.</div>';
+          renderHistoryModal(data.events || []);
         }).catch(function(){
-          el.detailHistoryList.innerHTML = '<div class="th-empty">C0ULD N0T L0AD H!ST0RY.</div>';
+          setHistoryLoading('C0ULD N0T L0AD H!ST0RY.');
         });
         return;
       }
@@ -20868,13 +20906,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
   function traitCellHtml(a, extraClass){
-    // "TOTAL :: <count>" with the percentage on the line underneath
-    // (reported live 2026-09-23).
+    // "(<count>)" with the percentage on the line underneath (reported
+    // live 2026-09-23).
     var hasPct = a.percent !== null && a.percent !== undefined;
     var hasCount = a.count !== null && a.count !== undefined;
     var sub = (hasPct || hasCount)
       ? '<div class="tc-sub">' +
-          (hasCount ? '<div class="tc-total">TOTAL :: ' + greenNum(a.count) + '</div>' : '') +
+          (hasCount ? '<div class="tc-total">(' + greenNum(a.count) + ')</div>' : '') +
           (hasPct ? '<div class="tc-pct">' + greenNum(typeof a.percent === 'number' ? a.percent.toFixed(3) : a.percent) + '%</div>' : '') +
         '</div>'
       : '';
@@ -20898,8 +20936,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Photo-backed cells wrap value/label/sub in a static box (.tc-text)
     // instead of relying on text-shadow alone — a busy/light crop still
     // clashed with plain shadowed text.
-    var textOpen = exampleImg ? '<div class="tc-text">' : '';
-    var textClose = exampleImg ? '</div>' : '';
+    // NO boxes get the same dark label box as photo boxes (reported live
+    // 2026-09-23), on their plain purple.
+    var textOpen = (exampleImg || isNone) ? '<div class="tc-text">' : '';
+    var textClose = (exampleImg || isNone) ? '</div>' : '';
     // Same value/label split as cardTraitsHtml's own trait cells — NAKED/
     // BALD's real attribute entry carries the raw __no_trait__ value (so
     // the click-to-filter handler right below still round-trips correctly
@@ -21268,18 +21308,62 @@ const SWAP_HTML = `<!DOCTYPE html>
       '<div>' + bithompBtn + '</div>' +
     '</div>';
   }
+  // SALES H!ST0RY popup (see #historyModal) — header, stat tiles, one
+  // card per sale/transfer (newest first) and the mint at the bottom.
+  function historyWhen(ms){
+    return ms ? new Date(ms).toLocaleString(undefined, { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+  }
+  function historyPartyHtml(addr, short){
+    return '<span class="dh-party">' + (addr ? walletLinkHtml(addr, short) : '<span class="dh-unknown">UNKN0WN</span>') + '</span>';
+  }
+  function historyCardHtml(e){
+    var isSale = e.type === 'sale';
+    var to = isSale ? e.buyer : e.receiver, toShort = isSale ? e.buyerShort : e.receiverShort;
+    var price = isSale && e.priceXrp !== null && e.priceXrp !== undefined
+      ? '<span class="hx-price">' + e.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP</span>' : '';
+    var bithomp = e.txUrl ? '<a class="dh-bithomp-btn" href="' + escapeHtml(e.txUrl) + '" target="_blank" rel="noopener">B!TH0MP ↗</a>' : '';
+    return '<div class="hx-row' + (isSale ? ' hx-sale' : '') + '">' +
+      '<div class="hx-top"><span class="hx-verb">' + (isSale ? 'S0LD' : 'TRANSFERRED') + '</span>' + price + '</div>' +
+      '<div class="hx-parties"><span class="hx-tag">FR0M</span>' + historyPartyHtml(e.from, e.fromShort) +
+        '<span class="hx-arrow">→</span><span class="hx-tag">T0</span>' + historyPartyHtml(to, toShort) + '</div>' +
+      '<div class="hx-meta"><span>' + escapeHtml(historyWhen(e.date)) + '</span>' + bithomp + '</div>' +
+    '</div>';
+  }
+  function setHistoryHeader(label, image){
+    el.historyNum.innerHTML = label || '';
+    if (image){ el.historyThumb.src = image; el.historyThumb.style.display = ''; }
+    else { el.historyThumb.removeAttribute('src'); el.historyThumb.style.display = 'none'; }
+  }
+  function setHistoryLoading(text){
+    el.detailHistoryList.innerHTML = '<div class="hx-empty">' + text + '</div>';
+    el.historyVolume.innerHTML = '&mdash;';
+    el.historySaleCount.innerHTML = '&mdash;';
+    el.historyMintDate.innerHTML = '&mdash;';
+    el.historyMintBy.innerHTML = '&mdash;';
+  }
+  function renderHistoryModal(events){
+    var moves = events.filter(function(e){ return e.type !== 'mint'; });
+    var sales = events.filter(function(e){ return e.type === 'sale' && e.priceXrp !== null && e.priceXrp !== undefined; });
+    var volume = sales.reduce(function(sum, e){ return sum + e.priceXrp; }, 0);
+    el.historyVolume.textContent = volume.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+    el.historySaleCount.textContent = sales.length.toLocaleString();
+    el.detailHistoryList.innerHTML = moves.length
+      ? moves.map(historyCardHtml).join('')
+      : '<div class="hx-empty">N0 SALES YET</div>';
+    var mint = events.filter(function(e){ return e.type === 'mint'; })[0];
+    el.historyMintDate.textContent = mint ? historyWhen(mint.date) : '—';
+    el.historyMintBy.innerHTML = mint && mint.account ? walletLinkHtml(mint.account, mint.accountShort) : '—';
+  }
   function loadDetailHistory(nftId){
+    setHistoryLoading('L0AD!NG&hellip;');
     api({ history: nftId }).then(function(data){
       if (state.currentDetail && state.currentDetail.nftId !== nftId) return; // navigated away already
-      var events = data.events || [];
-      el.detailHistoryList.innerHTML = events.length
-        ? events.map(historyRowHtml).join('')
-        : '<div class="th-empty">N0 H!ST0RY YET.</div>';
+      renderHistoryModal(data.events || []);
     }).catch(function(){
-      el.detailHistoryList.innerHTML = '<div class="th-empty">C0ULD N0T L0AD H!ST0RY.</div>';
+      setHistoryLoading('C0ULD N0T L0AD H!ST0RY.');
     });
   }
-  el.detailHistoryList.addEventListener('click', function(e){
+  el.historyModal.addEventListener('click', function(e){
     // Every event type (S0LD/M!NTED/TRANSFERRED) renders its wallet
     // link(s) inside their own .dh-party FR0M/T0 cell now (see
     // historyRowHtml's own table layout) — one shared selector covers
@@ -21320,7 +21404,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     else { el.detailOwner.textContent = '...'; el.detailOwner.classList.remove('not-indexed'); }
     updateDetailOwnerBanner(known && known.owner);
     el.detailTraits.innerHTML = detailTraitsHtml(known ? known.attributes : []);
-    el.detailHistoryList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
+    setHistoryLoading('L0AD!NG&hellip;');
     updateDetailRarity(known);
     updateDetailPrice(known);
     updateScyllaListing(known);
@@ -21518,7 +21602,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // eager loadDetailHistory() call, so there's nothing left to fetch here,
   // just show/hide.
   el.detailHistoryToggle.addEventListener('click', function(){
-    el.historyNum.innerHTML = el.detailNum.innerHTML;
+    setHistoryHeader(el.detailNum.innerHTML, state.currentDetail && state.currentDetail.image);
     el.historyModal.style.display = 'flex';
   });
   function closeHistoryModal(){ el.historyModal.style.display = 'none'; }
