@@ -4221,12 +4221,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .traits-flyout.flyout-popup .traits-flyout-vals .traits-flyout-val{ width:100% !important; white-space:normal !important; margin-bottom:0.4rem; }
   /* S0RT BY's category headings (PR!CE / RAR!TY / ALPHABET!CAL). */
-  /* A solid tinted bar with rules either side, so it reads as a section
-     title rather than another option (reported live 2026-09-24). */
-  .sort-cat-heading{ display:flex; align-items:center; gap:0.7rem; font-size:15px; font-weight:700; letter-spacing:0.18em; color:var(--white); text-shadow:0 0 8px var(--pigeon-purple-glow); margin:1.1rem 0 0.55rem; padding:0.45em 0.8em; background:rgba(var(--collection-accent-rgb), 0.18); border:1px solid rgba(var(--collection-accent-rgb), 0.55); border-radius:var(--radius); }
-  .sort-cat-heading::before, .sort-cat-heading::after{ content:''; flex:1 1 0; height:1px; background:linear-gradient(90deg, transparent, var(--pigeon-purple)); }
-  .sort-cat-heading::after{ background:linear-gradient(90deg, var(--pigeon-purple), transparent); }
-  .sort-cat-heading:first-child{ margin-top:0.1rem; }
+  /* S0RT BY in the same look as the other popups (SALES H!ST0RY, 0FFER,
+     L!ST — reported live 2026-09-24): purple-edged panel, big centred
+     title, categories as the purple eyebrow text those popups use. */
+  #sortFlyout.traits-flyout.flyout-popup{ padding:2rem 1.25rem 1rem; border:1px solid rgba(var(--collection-accent-rgb), 0.4); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 44px rgba(var(--collection-accent-rgb), 0.14); }
+  .sort-popup-title{ display:none; }
+  #sortFlyout.flyout-popup .sort-popup-title{ display:block; text-align:center; font-size:30px; font-weight:700; letter-spacing:0.03em; color:var(--white); margin:0 0 0.4rem; }
+  .sort-cat-heading{ text-align:center; color:var(--collection-accent); font-size:16px; font-weight:700; letter-spacing:0.12em; margin:1rem 0 0.5rem; }
+  .sort-cat-heading:first-child{ margin-top:0.3rem; }
   .traits-flyout.flyout-popup .hscroll-arrow{ display:none !important; }
   /* F!LTER BY TRA!TS' own two-step drill (categories, then one category's
      values) still happens inside this same centered popup — categories
@@ -11191,6 +11193,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                        removed, in case the strip layout is ever wanted
                        back for a wide value list). -->
                   <button type="button" class="flyout-popup-close-btn" id="sortFlyoutClose" aria-label="CL0SE">✕</button>
+                  <div class="sort-popup-title">S0RT BY</div>
                   <button type="button" class="hscroll-arrow hscroll-arrow-prev" id="sortScrollPrevBtn" aria-label="PREV!0US">◂</button>
                   <div class="traits-flyout-vals" id="sortFlyoutVals"></div>
                   <button type="button" class="hscroll-arrow hscroll-arrow-next" id="sortScrollNextBtn" aria-label="NEXT">▸</button>
