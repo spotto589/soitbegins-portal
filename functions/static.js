@@ -6373,6 +6373,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      are exactly the same width and height. */
   .boxed-card .bc-actions .thumb-offer{ padding:0; border:none; background:none; margin:0; }
   .boxed-card .bc-bg{ grid-column:2; grid-row:3; display:grid; }
+  .result-card .card-detail-traits.bc-bg .tc-text{ width:calc((100% + 4px - 1rem) / 3 - 4px); }
   .result-card .card-detail-traits.bc-traits{ display:grid; max-width:100%; margin:0; grid-template-columns:repeat(3, minmax(0, 1fr)); grid-auto-rows:1fr; gap:0.5rem; }
   .result-card .card-detail-traits .trait-cell{ padding:2px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-width:0; min-height:0; overflow:hidden; }
   .result-card .card-detail-traits .tc-text{ width:100%; box-sizing:border-box; }
@@ -6390,7 +6391,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* NO <category> boxes — plain Pigeons purple, everywhere trait boxes
      show (Pigeon page + BOXED VIEW). */
   .trait-cell.trait-cell-none{ background:var(--collection-accent); border-color:var(--collection-accent); }
-  .trait-cell.trait-cell-none .tc-value, .trait-cell.trait-cell-none .tc-label, .trait-cell.trait-cell-none .tc-sub, .trait-cell.trait-cell-none .tc-sub *{ color:#fff; text-shadow:none; }
+  .trait-cell.trait-cell-none .tc-value, .trait-cell.trait-cell-none .tc-label, .trait-cell.trait-cell-none .tc-sub{ color:#fff; text-shadow:none; }
+  /* Numbers green, same as every other trait box (reported live 2026-09-24). */
+  .trait-cell.trait-cell-none .tc-sub .pigeons-green-num{ color:var(--green); }
   .trait-cell.trait-cell-none:hover{ background:var(--collection-accent); border-color:#fff; }
   .trait-cell.trait-cell-none .tc-text{ width:100%; box-sizing:border-box; background:rgba(8,9,11,0.82); border-radius:calc(var(--radius) - 2px); padding:0.3rem 2px; }
   #screenDetail .trait-cell.trait-cell-none .tc-text{ padding:0.5rem 0.4rem; }
@@ -7180,9 +7183,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .trait-grid .bg-span3-1{ grid-column:span 1; }
   #screenDetail .trait-grid .bg-span3-2{ grid-column:span 2; }
   #screenDetail .trait-grid .bg-span3-3{ grid-column:1 / -1; }
+  /* ...but its dark label box stays one ordinary box wide, centred
+     (reported live 2026-09-24). Cell side padding 0.6rem, grid gap 0.4rem. */
+  #screenDetail .trait-grid .bg-span3-2 .tc-text{ width:calc((100% + 1.2rem - 0.4rem) / 2 - 1.2rem); margin:0 auto; }
+  #screenDetail .trait-grid .bg-span3-3 .tc-text{ width:calc((100% + 1.2rem - 0.8rem) / 3 - 1.2rem); margin:0 auto; }
   @media (max-width:520px){
     #screenDetail .trait-grid .bg-span2-1{ grid-column:span 1; }
     #screenDetail .trait-grid .bg-span2-2{ grid-column:1 / -1; }
+    #screenDetail .trait-grid .bg-span2-1 .tc-text{ width:auto; }
+    #screenDetail .trait-grid .bg-span2-2 .tc-text{ width:calc((100% + 1.2rem - 0.4rem) / 2 - 1.2rem); }
   }
   /* Compact enough that a full 3-row grid (7 traits, the collection's max)
      doesn't push the whole detail screen into needing to scroll — this
