@@ -8586,9 +8586,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   #amountEntryModal.styled .amount-entry-pigeon-thumb{ width:140px; height:140px; border-radius:var(--radius); border:2px solid rgba(var(--collection-accent-rgb), 0.5); box-shadow:0 0 22px rgba(var(--collection-accent-rgb), 0.35); }
   #amountEntryModal.styled .amount-entry-pigeon-num{ font-size:34px; }
   #amountEntryModal.styled .amount-entry-eyebrow{ order:2; text-align:center; color:var(--collection-accent); font-size:18px; letter-spacing:0.12em; margin:-0.4rem 0 0.2rem; }
-  #amountEntryModal.styled #amountEntryOfferBalanceLine{ order:3; text-align:center; background:rgba(var(--collection-accent-rgb), 0.08); border:1px solid rgba(var(--collection-accent-rgb), 0.3); border-radius:var(--radius); padding:0.8em 0.6em; }
-  #amountEntryModal.styled #amountEntryOfferBalanceLine .buyswap-balance-label{ font-size:13px; margin-bottom:0.35rem; }
-  #amountEntryModal.styled #amountEntryOfferBalanceLine .buyswap-balance-value{ font-size:26px; }
+  #amountEntryModal.styled .amount-balance-line{ order:3; display:flex; justify-content:center; gap:1rem; text-align:center; background:rgba(var(--collection-accent-rgb), 0.08); border:1px solid rgba(var(--collection-accent-rgb), 0.3); border-radius:var(--radius); padding:0.8em 0.6em; }
+  #amountEntryModal.styled .amount-balance-line .amount-balance-part{ flex:1 1 0; display:flex; flex-direction:column; align-items:center; min-width:0; }
+  #amountEntryModal.styled .amount-balance-line .buyswap-balance-label{ font-size:13px; margin-bottom:0.35rem; }
+  #amountEntryModal.styled .amount-balance-line .buyswap-balance-value{ font-size:26px; }
   #amountEntryModal.styled .make-offer-input-wrap{ order:4; width:100%; }
   /* $TOKEN / XRP / B0TH tabs — the SALES H!ST0RY popup's own XRP/$P!GE0NS
      toggle, reused (2026-09-24). */
@@ -8675,17 +8676,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sales-styled .sale-from, .sales-styled .sale-to, .sales-styled .sale-from .wallet-tag, .sales-styled .sale-to .wallet-tag{ font-size:17px !important; }
   .sales-styled .sale-time{ font-size:15px; }
   /* BUY on the marketplace a listing lives on (card + Pigeon page). */
-  .market-buy-link{ display:inline-block; margin-top:0.35rem; padding:0.3em 0.7em; border:1px solid var(--green); border-radius:var(--radius); color:var(--green); font-size:11px; font-weight:700; letter-spacing:0.06em; text-decoration:none; white-space:nowrap; }
+  .market-buy-link{ display:inline-block; margin-top:0.35rem; padding:0.55em 0.9em; border:1px solid var(--green); border-radius:var(--radius); background:none; color:var(--green); font-family:inherit; font-size:14px; font-weight:700; letter-spacing:0.06em; text-decoration:none; white-space:nowrap; cursor:pointer; }
   .market-buy-link:hover{ background:var(--green); color:#000; }
   .market-buy-list{ display:flex; flex-direction:column; align-items:stretch; gap:0.35rem; width:100%; }
-  .market-buy-list .market-buy-link{ margin:0; text-align:center; white-space:normal; font-size:12px; padding:0.45em 0.5em; }
+  .market-buy-list .market-buy-link{ margin:0; text-align:center; white-space:normal; font-size:15px; padding:0.8em 0.6em; }
   .detail-markets{ margin:0.6rem 0; border:1px solid var(--border-mid); border-radius:var(--radius); padding:0.6rem 0.8rem; }
   .detail-markets-title{ font-size:11px; letter-spacing:0.12em; color:var(--grey-dim); margin-bottom:0.3rem; text-align:center; }
   .detail-market-row{ display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:0.75rem; padding:0.35rem 0; border-top:1px dashed var(--border-dim); font-size:15px; }
   .detail-market-row:first-of-type{ border-top:none; }
   .detail-market-row .dm-name{ font-weight:700; letter-spacing:0.04em; }
   .detail-market-row .dm-price{ font-weight:700; }
-  .detail-market-row .market-buy-link{ margin:0; font-size:12px; }
+  .detail-market-row .market-buy-link{ margin:0; font-size:15px; padding:0.65em 1.2em; }
   .detail-market-row.cheapest .dm-name{ color:var(--green); }
   .hx-empty{ text-align:center; color:var(--grey-dim); font-size:13px; letter-spacing:0.05em; padding:1rem 0; }
   /* PR0F!LE ED!T popup — its own id (not #amountEntryModal, so it needs
@@ -11616,6 +11617,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="sale-currency-btn" data-currency="xrp">XRP</button>
             <button type="button" class="sale-currency-btn" data-currency="both">B0TH</button>
           </div>
+          <div class="make-offer-balance-line amount-balance-line" id="amountEntryListBalanceLine" style="display:none;"></div>
           <div class="thumb-offer-row">
             <div class="make-offer-input-wrap" id="amountEntryListTokenWrap">
               <img class="make-offer-input-coin" id="amountEntryListCoin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
@@ -11655,7 +11657,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="sale-currency-btn sale-currency-btn-active" data-currency="token" id="amountEntryOfferTokenTab">$P!GE0NS</button>
             <button type="button" class="sale-currency-btn" data-currency="xrp">XRP</button>
           </div>
-          <div class="make-offer-balance-line" id="amountEntryOfferBalanceLine" style="display:none;"></div>
+          <div class="make-offer-balance-line amount-balance-line" id="amountEntryOfferBalanceLine" style="display:none;"></div>
           <div class="thumb-offer-row">
             <div class="make-offer-input-wrap">
               <input class="make-offer-input" id="amountEntryOfferInput" type="text" inputmode="decimal" placeholder="0FFER AM0UNT">
@@ -12688,7 +12690,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'acceptTransferConfirmReceipt','acceptTransferReceiptPigeonNum','acceptTransferResultDoneBtn',
    'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultTxLink','transferResultDoneBtn',
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListPigeonRow','amountEntryListPigeonImg','amountEntryListPigeonNum','amountEntryListCoin','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
-   'amountEntryListCurrency','amountEntryListTokenTab','amountEntryListTokenWrap','amountEntryListXrpWrap','amountEntryListXrpInput','amountEntryListFeeNote','amountEntryOfferCurrency','amountEntryOfferTokenTab',
+   'amountEntryListCurrency','amountEntryListTokenTab','amountEntryListTokenWrap','amountEntryListXrpWrap','amountEntryListXrpInput','amountEntryListFeeNote','amountEntryOfferCurrency','amountEntryOfferTokenTab','amountEntryListBalanceLine',
    'amountEntryOfferMode','amountEntryOfferPigeonRow','amountEntryOfferPigeonImg','amountEntryOfferPigeonNum','amountEntryOfferBalanceLine','amountEntryOfferInput','amountEntryOfferBtn','amountEntryOfferDuration',
    'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferPigeonRow','amountEntryTransferPigeonImg','amountEntryTransferPigeonNum','amountEntryTransferBtn','amountEntryTransferStatus',
    'acceptOfferConfirmModal','screenAcceptOfferConfirm','acceptOfferConfThumb','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfRoyaltyRow','acceptOfferConfRoyaltyLabel','acceptOfferConfRoyalty','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn',
@@ -14699,7 +14701,9 @@ const SWAP_HTML = `<!DOCTYPE html>
             ? '<span class="market-buy-link">L!STED 0N ' + marketLabelHtml(l) + ' F0R ' + fmtXrp(l.priceXrp) + ' XRP</span>'
             : '<button type="button" class="market-buy-link scylla-xrp-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY 0N ' + marketLabelHtml(l) + ' F0R ' + fmtXrp(l.priceXrp) + ' XRP</button>';
         }
-        return '<a class="market-buy-link" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY 0N ' + escapeHtml(l.label) + ' F0R ' + fmtXrp(l.priceXrp) + ' XRP ↗</a>';
+        // No exchange names on buy buttons (reported live 2026-09-24) —
+        // any other marketplace is just "EXTERNAL".
+        return '<a class="market-buy-link" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY EXTERNALLY F0R ' + fmtXrp(l.priceXrp) + ' XRP ↗</a>';
       }).join('') + '</div>';
     } else if ((state.sort === 'LORE_ASC' || state.sort === 'LORE_DESC') && p.ourRarityLoreScore !== null && p.ourRarityLoreScore !== undefined){
       avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">L0RE SC0RE ::</span><span class="stat-value">' + greenNum(fmtRarityScore(p.ourRarityLoreScore)) + '</span></div>';
@@ -14770,6 +14774,34 @@ const SWAP_HTML = `<!DOCTYPE html>
   var amountEntryOfferDurationDays = 0; // same real Expiration, for MAKE OFFER's own duration row
   var amountEntryListCurrency = 'token'; // 'token' | 'xrp' | 'both'
   var amountEntryOfferCurrency = 'token'; // 'token' | 'xrp'
+  // Balance for whichever currency tab is showing (reported live
+  // 2026-09-24: keep showing it on XRP too) — the token balance is the
+  // trustline banner's own trustlineBalanceNum, XRP comes from the same
+  // xrpBalance lookup MY C0!NS uses, fetched each time the popup opens.
+  var amountEntryXrpBalance = null;
+  function amountBalancePartHtml(cur){
+    var val = cur === 'xrp' ? amountEntryXrpBalance : trustlineBalanceNum;
+    var unit = cur === 'xrp' ? 'XRP' : COLLECTION_META[state.collection].tokenLabel;
+    return '<div class="amount-balance-part"><span class="buyswap-balance-label">Y0UR BALANCE</span><span class="buyswap-balance-value">' +
+      (val === null ? 'L0AD!NG...' : val.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + unit) + '</span></div>';
+  }
+  function renderAmountBalanceLine(lineEl, currencies){
+    if (!MY_WALLET){ lineEl.style.display = 'none'; return; }
+    lineEl.innerHTML = currencies.map(amountBalancePartHtml).join('');
+    lineEl.style.display = '';
+  }
+  function refreshAmountBalanceLines(){
+    renderAmountBalanceLine(el.amountEntryOfferBalanceLine, [amountEntryOfferCurrency]);
+    renderAmountBalanceLine(el.amountEntryListBalanceLine, amountEntryListCurrency === 'both' ? ['token', 'xrp'] : [amountEntryListCurrency]);
+  }
+  function loadAmountEntryXrpBalance(){
+    if (!MY_WALLET) return;
+    apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).then(function(data){
+      if (!data || data.drops == null) return;
+      amountEntryXrpBalance = Number(data.drops) / 1e6;
+      refreshAmountBalanceLines();
+    }).catch(function(){});
+  }
   function setTabActive(groupEl, value){
     groupEl.querySelectorAll('.sale-currency-btn').forEach(function(b){
       b.classList.toggle('sale-currency-btn-active', b.getAttribute('data-currency') === value);
@@ -14786,12 +14818,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       : value === 'xrp' ? 'BUYER PAYS A 1.3% FEE 0N T0P'
       : 'B0TH L!ST!NGS G0 L!VE — WH!CHEVER SELLS F!RST W!NS, THE 0THER !S CANCELLED F0R Y0U. ' + tokenLabel + ' FEE 1.023%, XRP FEE 1.3%';
     if (!dualListing) el.amountEntryListBtn.textContent = value === 'both' ? 'L!ST B0TH (2 S!GNATURES)' : 'L!ST';
+    refreshAmountBalanceLines();
   }
   function setOfferCurrency(value){
     amountEntryOfferCurrency = value;
     setTabActive(el.amountEntryOfferCurrency, value);
     el.amountEntryOfferInput.placeholder = value === 'xrp' ? '0FFER !N XRP' : '0FFER AM0UNT';
-    el.amountEntryOfferBalanceLine.style.display = (value === 'token' && trustlineBalanceNum !== null) ? '' : 'none';
+    refreshAmountBalanceLines();
   }
   el.amountEntryListCurrency.addEventListener('click', function(e){
     var b = e.target.closest('.sale-currency-btn');
@@ -14803,6 +14836,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   function openAmountEntryModal(mode, p){
     amountEntryPigeon = p;
+    if (mode === 'list' || mode === 'offer') loadAmountEntryXrpBalance();
     el.amountEntryListMode.style.display = mode === 'list' ? '' : 'none';
     el.amountEntryOfferMode.style.display = mode === 'offer' ? '' : 'none';
     el.amountEntryTransferMode.style.display = mode === 'transfer' ? '' : 'none';
@@ -14934,7 +14968,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     if (amountEntryListCurrency === 'both'){
-      if (!xrpVal || isNaN(Number(xrpVal)) || Number(xrpVal) <= 0 || !/^\d+(\.\d{1,6})?$/.test(xrpVal)){
+      if (!xrpVal || isNaN(Number(xrpVal)) || Number(xrpVal) <= 0 || !/^\\d+(\\.\\d{1,6})?$/.test(xrpVal)){
         alert('ENTER A VAL!D XRP PR!CE T00 (UP T0 6 DEC!MAL PLACES).');
         return;
       }
@@ -17371,7 +17405,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       alert('ENTER A VAL!D PR!CE GREATER THAN 0.');
       return;
     }
-    if (currency === 'xrp' && !/^\d+(\.\d{1,6})?$/.test(priceValue)){
+    if (currency === 'xrp' && !/^\\d+(\\.\\d{1,6})?$/.test(priceValue)){
       alert('XRP G0ES T0 6 DEC!MAL PLACES AT M0ST.');
       return;
     }
@@ -18492,8 +18526,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     // endpoint has no balance check of its own since a $PIGEONS buy-offer
     // doesn't require the offerer to hold anything until it's accepted —
     // this is purely a "don't let you promise more than you have" UI guard.
-    if (currency === 'xrp' && !/^\d+(\.\d{1,6})?$/.test(priceValue)){
+    if (currency === 'xrp' && !/^\\d+(\\.\\d{1,6})?$/.test(priceValue)){
       alert('XRP G0ES T0 6 DEC!MAL PLACES AT M0ST.');
+      return;
+    }
+    if (currency === 'xrp' && amountEntryXrpBalance !== null && Number(priceValue) > amountEntryXrpBalance){
+      alert('Y0U D0N\\'T HAVE EN0UGH XRP F0R TH!S 0FFER — BALANCE :: ' + amountEntryXrpBalance.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP.');
       return;
     }
     if (currency === 'token' && trustlineBalanceNum !== null && Number(priceValue) > trustlineBalanceNum){
@@ -21437,7 +21475,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           ? '<button type="button" class="market-buy-link detail-scylla-xrp-delist">DEL!ST</button>'
           : '<button type="button" class="market-buy-link detail-scylla-xrp-buy">BUY N0W</button>';
       return '<div class="detail-market-row' + (i === 0 ? ' cheapest' : '') + '">' +
-        '<span class="dm-name">' + marketLabelHtml(l) + '</span>' +
+        '<span class="dm-name">' + (l.internal ? marketLabelHtml(l) : 'EXTERNAL') + '</span>' +
         '<span class="dm-price">' + greenNum(fmtXrp(l.priceXrp)) + ' XRP</span>' +
         action +
       '</div>';
