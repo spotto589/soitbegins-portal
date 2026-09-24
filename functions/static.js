@@ -18,7 +18,7 @@
 // signature exists here to create one; /static only ever reads the cookie.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { BOARD_COOKIE_NAME, getCookie, verifyToken } from './_shared.js';
+import { BOARD_COOKIE_NAME, getCookie, verifyToken, getXamanUserToken } from './_shared.js';
 
 const SWAP_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -8678,6 +8678,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* BUY on the marketplace a listing lives on (card + Pigeon page). */
   .market-buy-link{ display:inline-block; margin-top:0.35rem; padding:0.55em 0.9em; border:1px solid var(--green); border-radius:var(--radius); background:none; color:var(--green); font-family:inherit; font-size:14px; font-weight:700; letter-spacing:0.06em; text-decoration:none; white-space:nowrap; cursor:pointer; }
   .market-buy-link:hover{ background:var(--green); color:#000; }
+  .xaman-push-toast{ position:fixed; left:50%; top:1.2rem; transform:translate(-50%, -150%); z-index:3000; max-width:92vw; padding:0.9em 1.3em; background:var(--panel-bg-solid); border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 30px rgba(var(--collection-accent-rgb), 0.25); color:var(--white); font-size:15px; font-weight:700; letter-spacing:0.05em; text-align:center; transition:transform 0.25s ease; pointer-events:none; }
+  .xaman-push-toast.show{ transform:translate(-50%, 0); }
   .market-buy-list{ display:flex; flex-direction:column; align-items:stretch; gap:0.35rem; width:100%; }
   .market-buy-list .market-buy-link{ margin:0; text-align:center; white-space:normal; font-size:15px; padding:0.8em 0.6em; }
   .detail-markets{ margin:0.6rem 0; border:1px solid var(--border-mid); border-radius:var(--radius); padding:0.6rem 0.8rem; }
@@ -12357,6 +12359,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // below reusing the exact same login) — read server-side, null if no
   // signature is on file.
   var MY_WALLET = "__SWAP_WALLET__";
+  // This wallet has a Xaman push token, so sign requests pop straight up in
+  // the Xaman app — no QR window on desktop (see openXamanPopup).
+  var MY_PUSH_READY = "__SWAP_PUSH_READY__" === "1";
   // Set server-side only by the pretty per-collection routes (functions/
   // pigeons.js, functions/phnixs.js, etc. — see renderSwap below) so
   // soitbegins.xyz/phnixs lands directly on PHN!X without a client-side
@@ -13745,7 +13750,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       swapOfferState.uuid = res.data.uuid;
-      navigateXamanPopup(xamanTab, res.data.next.always);
+      navigateXamanPopup(xamanTab, res.data.next.always, res.data.next.pushed);
       el.swapOfferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.swapConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollSwapOfferStatus();
@@ -13950,7 +13955,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       swapAcceptState.uuid = res.data.uuid;
-      navigateXamanPopup(xamanTab, res.data.next.always);
+      navigateXamanPopup(xamanTab, res.data.next.always, res.data.next.pushed);
       el.swapAcceptOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.acceptConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollSwapAcceptStatus();
@@ -17285,7 +17290,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   // No popup at all on mobile — see navigateXamanPopup's own comment for
   // why. Only relevant above the mobile breakpoint now.
   function openXamanPopup(){
+    if (MY_PUSH_READY) return null; // pushed to the phone instead — see navigateXamanPopup
     return window.innerWidth <= 700 ? null : window.open('', 'xamanSign', XAMAN_POPUP_FEATURES);
+  }
+  // "Check your phone" notice for a request Xaman pushed (xrp.cafe-style).
+  var pushToastTimer = null;
+  function showXamanPushToast(){
+    var t = document.getElementById('xamanPushToast');
+    if (!t){
+      t = document.createElement('div');
+      t.id = 'xamanPushToast';
+      t.className = 'xaman-push-toast';
+      t.innerHTML = 'S!GN REQUEST SENT T0 Y0UR <span style="text-transform:none;">Xaman</span> APP — CHECK Y0UR PH0NE';
+      document.body.appendChild(t);
+    }
+    t.classList.add('show');
+    if (pushToastTimer) clearTimeout(pushToastTimer);
+    pushToastTimer = setTimeout(function(){ t.classList.remove('show'); }, 6000);
   }
   // The real, remaining cause of "doesn't open Xaman" on mobile, even
   // after the null-tabRef popup fallback below was fixed: the URL XUMM
@@ -17305,8 +17326,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // existing "Σκύλλα D!DN T 0PEN? TAP HERE" fallback link and the
   // status-poll loop already assume you leave and come back, so this
   // matches the intended flow rather than fighting it.
-  function navigateXamanPopup(tabRef, url){
+  function navigateXamanPopup(tabRef, url, pushed){
     if (window.innerWidth <= 700){ window.location.href = url; return; }
+    // Desktop + Xaman pushed it to the phone: no QR window at all (the
+    // "D!DN T 0PEN? TAP HERE" link under each button still opens it).
+    if (pushed){
+      if (tabRef){ try { tabRef.close(); } catch (e){} }
+      showXamanPushToast();
+      return;
+    }
     // Desktop only past this point (mobile already returned above) — a
     // real popup-blocker denial is the only way tabRef comes back null
     // here now that openXamanPopup() itself only ever attempts a popup
@@ -17439,7 +17467,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       listingUuid = res.data.uuid;
-      navigateXamanPopup(listingXamanTab, res.data.next.always);
+      navigateXamanPopup(listingXamanTab, res.data.next.always, res.data.next.pushed);
       listingBtnEl.textContent = 'WA!T!NG F0R S!GNATURE...';
       if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>'; }
       pollListingStatus();
@@ -18142,7 +18170,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       buySwapUuid = res.data.uuid;
-      navigateXamanPopup(xamanTab, res.data.next.always);
+      navigateXamanPopup(xamanTab, res.data.next.always, res.data.next.pushed);
       buySwapXamanTab = xamanTab;
       // No "S!GN !N W!TH Σκύλλα, THEN RETURN HERE" line here — Xaman
       // already opened automatically the instant SIGN AND SWAP was
@@ -18264,7 +18292,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       buyUuid = res.data.uuid;
-      navigateXamanPopup(buyXamanTab, res.data.next.always);
+      navigateXamanPopup(buyXamanTab, res.data.next.always, res.data.next.pushed);
       if (res.data.display){
         setWalletText(el.buyConfSeller, res.data.display.seller, shortAddr(res.data.display.seller));
         el.buyConfPrice.textContent = fmtAmount(res.data.display.totalValue, res.data.display.offerCurrency);
@@ -18397,7 +18425,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       delistUuid = res.data.uuid;
-      navigateXamanPopup(delistXamanTab, res.data.next.always);
+      navigateXamanPopup(delistXamanTab, res.data.next.always, res.data.next.pushed);
       el.delistConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollDelistStatus();
     }).catch(function(){
@@ -18677,7 +18705,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       offerUuid = res.data.uuid;
-      navigateXamanPopup(offerXamanTab, res.data.next.always);
+      navigateXamanPopup(offerXamanTab, res.data.next.always, res.data.next.pushed);
       el.offerOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.offerConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollOfferStatus();
@@ -18822,7 +18850,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       offerSignalUuid = res.data.uuid;
-      navigateXamanPopup(offerSignalXamanTab, res.data.next.always);
+      navigateXamanPopup(offerSignalXamanTab, res.data.next.always, res.data.next.pushed);
       el.offerSignalSendBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.offerSignalStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollOfferSignalStatus();
@@ -19007,7 +19035,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       transferUuid = res.data.uuid;
-      navigateXamanPopup(transferXamanTab, res.data.next.always);
+      navigateXamanPopup(transferXamanTab, res.data.next.always, res.data.next.pushed);
       el.transferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.transferConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollTransferStatus();
@@ -19325,7 +19353,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           return;
         }
         cancelOfferUuid = res2.data.uuid;
-        navigateXamanPopup(cancelOfferXamanTab, res2.data.next.always);
+        navigateXamanPopup(cancelOfferXamanTab, res2.data.next.always, res2.data.next.pushed);
         btn.textContent = 'WA!T!NG...';
         pollCancelOfferStatus(btn);
       });
@@ -19553,7 +19581,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       acceptTransferUuid = res.data.uuid;
-      navigateXamanPopup(acceptTransferXamanTab, res.data.next.always);
+      navigateXamanPopup(acceptTransferXamanTab, res.data.next.always, res.data.next.pushed);
       el.acceptTransferOpenXamanBtn.textContent = 'WA!T!NG F0R S!GNATURE...';
       el.acceptTransferConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollAcceptTransferStatus();
@@ -19687,7 +19715,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       acceptOfferUuid = res.data.uuid;
-      navigateXamanPopup(acceptOfferXamanTab, res.data.next.always);
+      navigateXamanPopup(acceptOfferXamanTab, res.data.next.always, res.data.next.pushed);
       if (res.data.display){
         setWalletText(el.acceptOfferConfBuyer, res.data.display.buyer, shortAddr(res.data.display.buyer));
         el.acceptOfferConfPrice.textContent = fmtAmount(res.data.display.totalValue, res.data.display.offerCurrency);
@@ -25390,9 +25418,11 @@ export async function renderSwap(context, presetCollection, presetProfileWallet,
       if (payload && payload.acct) wallet = payload.acct;
     }
   }
+  const pushReady = wallet && env.coin ? !!(await getXamanUserToken(env.coin, wallet).catch(() => null)) : false;
   const og = await resolveOgTags(request, presetCollection, presetPigeon);
   const html = SWAP_HTML
     .replace('"__SWAP_WALLET__"', JSON.stringify(wallet))
+    .replace('"__SWAP_PUSH_READY__"', pushReady ? '"1"' : '"0"')
     .replace('"__SWAP_COLLECTION__"', JSON.stringify(presetCollection || null))
     .replace('"__SWAP_PROFILE_WALLET__"', JSON.stringify(presetProfileWallet || null))
     .replace('"__SWAP_PIGEON__"', JSON.stringify(presetPigeon || null))

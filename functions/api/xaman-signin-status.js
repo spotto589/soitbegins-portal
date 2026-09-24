@@ -1,4 +1,4 @@
-import { BOARD_COOKIE_NAME, signToken, getXamanPayloadStatus } from '../_shared.js';
+import { BOARD_COOKIE_NAME, signToken, getXamanPayloadStatus, storeXamanUserToken } from '../_shared.js';
 
 // Was 30 minutes — far too short for a wallet-ownership session that
 // doesn't hold any funds/keys itself (every real signing action still
@@ -59,6 +59,12 @@ export async function onRequestGet(context) {
     return json({ status: 'pending' });
   }
 
+  // The push token (what lets every later BUY/LIST/OFFER pop straight up
+  // in Xaman, xrp.cafe-style, instead of needing a QR scan) comes back on
+  // the payload itself as application.issued_user_token — saved here too,
+  // not only from xaman-webhook.js, so it never depends on the webhook.
+  const issued = xummData.application && xummData.application.issued_user_token;
+  if (issued && env.coin) context.waitUntil(storeXamanUserToken(env.coin, account, issued));
   const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
   const token = await signToken({ acct: account, exp }, env.Σκύλλα);
 

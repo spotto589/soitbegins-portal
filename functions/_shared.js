@@ -5423,6 +5423,11 @@ export async function createXamanPayload(env, txjson, options, userToken, attemp
       }
       return null;
     }
+    // Xaman says whether it pushed this request to the wallet's phone
+    // (only possible with a valid user_token). Riding on next{} means every
+    // swap-* endpoint forwards it untouched, and the page skips the QR
+    // window when it's true — see navigateXamanPopup in static.js.
+    if (data.next && typeof data.next === 'object') data.next.pushed = !!data.pushed;
     return data;
   } catch (e) {
     // A real AbortError means the proxy (or xumm.app behind it) was still
