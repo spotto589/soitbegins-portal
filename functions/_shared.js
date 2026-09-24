@@ -5428,14 +5428,10 @@ export async function createXamanPayload(env, txjson, options, userToken, attemp
     // swap-* endpoint forwards it untouched, and the page skips the QR
     // window when it's true — see navigateXamanPopup in static.js.
     if (data.next && typeof data.next === 'object') data.next.pushed = !!data.pushed;
-    console.log('XAMAN-PUSH payload', data.uuid, 'type', txjson && txjson.TransactionType, 'userToken', !!userToken, 'pushed', !!data.pushed);
-    // Sent with a token but Xaman didn't push = the token is stale (expired,
-    // or the app was reinstalled). Forget it so the page shows the QR again
-    // and the next login stores a fresh one (xaman-signin-status.js).
-    if (userToken && !data.pushed && env.coin && txjson && txjson.Account) {
-      await clearXamanUserToken(env.coin, txjson.Account).catch(() => {});
-      console.log('XAMAN-PUSH cleared stale token for', txjson.Account);
-    }
+    console.log('XAMAN-PUSH payload', data.uuid, 'type', txjson && txjson.TransactionType, 'userToken', !!userToken, 'raw pushed', JSON.stringify(data.pushed), 'keys', Object.keys(data).join(','), 'next keys', data.next ? Object.keys(data.next).join(',') : '-');
+    // (Not clearing the token on pushed:false — confirmed 2026-09-24 that
+    // Xaman refused a token it had issued seconds earlier, so it isn't
+    // necessarily stale; the page falls back to the QR either way.)
     return data;
   } catch (e) {
     // A real AbortError means the proxy (or xumm.app behind it) was still
