@@ -3,7 +3,8 @@ import {
   isTransferable, getTradeConfig,
   encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup, MARKETPLACE_BROKER_WALLET,
   LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds,
-  fetchNftSellOffersOrNull, findCollectionOffer
+  fetchNftSellOffersOrNull, findCollectionOffer,
+  normalizeOfferCurrency, isValidXrpValue, buildOfferAmount, feeBasisPointsFor
 } from '../_shared.js';
 
 // Σκύλλα SWAP — LIST. This endpoint only builds and returns the exact
@@ -66,7 +67,12 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
   }
 
-  if (!cfg.tokenConfig.configured) {
+  // 'token' (the collection's own coin, the default) or 'xrp'.
+  const offerCurrency = normalizeOfferCurrency(body && body.currency);
+  if (offerCurrency === 'xrp' && !isValidXrpValue(priceStr)) {
+    return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
+  }
+  if (offerCurrency === 'token' && !cfg.tokenConfig.configured) {
     return new Response(JSON.stringify({ error: 'not_configured' }), { status: 501 });
   }
 
@@ -103,11 +109,11 @@ export async function onRequestPost(context) {
   if (existingOffersOrNull === null) {
     return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 502 });
   }
-  if (findCollectionOffer(existingOffersOrNull, collection, seller)) {
+  if (findCollectionOffer(existingOffersOrNull, collection, seller, undefined, offerCurrency)) {
     return new Response(JSON.stringify({ error: 'already_listed' }), { status: 409 });
   }
 
-  const fee = computeMarketplaceMarkup(priceStr);
+  const fee = computeMarketplaceMarkup(priceStr, feeBasisPointsFor(offerCurrency));
   if (!fee) {
     return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
   }
@@ -121,11 +127,7 @@ export async function onRequestPost(context) {
     TransactionType: 'NFTokenCreateOffer',
     Account: seller,
     NFTokenID: nftId,
-    Amount: {
-      currency: encodeCurrencyCode(cfg.tokenConfig.currency),
-      issuer: cfg.tokenConfig.issuer,
-      value: fee.sellerValue
-    },
+    Amount: buildOfferAmount(cfg, offerCurrency, fee.sellerValue),
     Destination: MARKETPLACE_BROKER_WALLET,
     Flags: 1,
     // FOREVER (durationDays 0) -> null -> field omitted entirely, which
@@ -139,7 +141,7 @@ export async function onRequestPost(context) {
     ok: true,
     txjson,
     durationDays,
-    display: { totalValue: fee.totalValue, feeValue: fee.feeValue, sellerValue: fee.sellerValue }
+    display: { totalValue: fee.totalValue, feeValue: fee.feeValue, sellerValue: fee.sellerValue, offerCurrency }
   }), {
     headers: { 'Content-Type': 'application/json' }
   });

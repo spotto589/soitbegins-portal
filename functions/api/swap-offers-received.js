@@ -2,7 +2,9 @@ import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNftsCached, findAllCollectionNfts, getTradeConfig,
   getSwapBuyOffersMap, addSwapBuyOffer, removeSwapBuyOffer, fetchNftBuyOffersOrNull,
   getOwnerPigeonsViaDeeptide, getSwapListingsMap, encodeCurrencyCode,
-  mapWithConcurrency
+  mapWithConcurrency,
+  offerCurrencyOf, offerAmountValue,
+  MARKETPLACE_BROKER_WALLET
 } from '../_shared.js';
 
 function shortenAddr(addr) {
@@ -113,16 +115,20 @@ export async function onRequestGet(context) {
           buyer: s.buyer,
           buyerShort: shortenAddr(s.buyer),
           price: s.price,
+          offerCurrency: s.currency === 'xrp' ? 'xrp' : 'token',
           createdAt: s.createdAt || null
         }))
       };
     }
 
-    const live = liveOffers.filter(o =>
-      o.amount && typeof o.amount === 'object' &&
-      o.amount.currency === currency &&
-      o.amount.issuer === cfg.tokenConfig.issuer
-    );
+    // Token offers, plus XRP offers Σκύλλα can actually broker (no
+    // destination, or ours) — an XRP offer tied to another marketplace's
+    // broker is only fillable there.
+    const live = liveOffers.filter(o => {
+      const c = offerCurrencyOf(o.amount, cfg);
+      if (c === 'token') return true;
+      return c === 'xrp' && o.amount !== '0' && (!o.destination || o.destination === MARKETPLACE_BROKER_WALLET);
+    });
     // Prune any stored entry no longer actually on-ledger — never blocks
     // the response, just best-effort cleanup. Safe here specifically
     // because liveOffers is a confirmed real result, not a failed lookup.
@@ -136,7 +142,8 @@ export async function onRequestGet(context) {
         context.waitUntil(addSwapBuyOffer(env.coin, nftId, {
           offerId: o.nft_offer_index,
           buyer: o.owner,
-          price: o.amount.value,
+          price: offerAmountValue(o.amount),
+          currency: offerCurrencyOf(o.amount, cfg),
           createdAt: Math.floor(Date.now() / 1000)
         }, collection));
       }
@@ -151,7 +158,8 @@ export async function onRequestGet(context) {
         offerId: o.nft_offer_index,
         buyer: o.owner,
         buyerShort: shortenAddr(o.owner),
-        price: o.amount.value,
+        price: offerAmountValue(o.amount),
+        offerCurrency: offerCurrencyOf(o.amount, cfg),
         // Best-effort recency for "most recent first" sorting — the first
         // time we ever noticed this offer, not its true on-ledger creation
         // time (nft_buy_offers doesn't expose that). Missing for an entry

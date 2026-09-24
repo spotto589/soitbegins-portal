@@ -8582,6 +8582,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   #amountEntryModal.styled #amountEntryOfferBalanceLine .buyswap-balance-label{ font-size:13px; margin-bottom:0.35rem; }
   #amountEntryModal.styled #amountEntryOfferBalanceLine .buyswap-balance-value{ font-size:26px; }
   #amountEntryModal.styled .make-offer-input-wrap{ order:4; width:100%; }
+  /* $TOKEN / XRP / B0TH tabs — the SALES H!ST0RY popup's own XRP/$P!GE0NS
+     toggle, reused (2026-09-24). */
+  #amountEntryModal.styled .amount-currency-toggle{ order:3; margin:0; }
+  #amountEntryModal.styled .amount-currency-toggle .sale-currency-btn{ font-size:15px; padding:0.6em 1.4em; }
+  #amountEntryModal.styled .amount-fee-note{ order:5; text-align:center; font-size:13px; letter-spacing:0.06em; color:var(--grey); margin:-0.4rem 0 0; }
+  .amount-xrp-badge{ position:absolute; left:0.6em; top:50%; transform:translateY(-50%); font-weight:700; font-size:15px; letter-spacing:0.04em; color:#000; background:var(--white); border-radius:var(--radius); padding:0.35em 0.5em; pointer-events:none; }
   #amountEntryModal.styled .make-offer-input,
   #amountEntryModal.styled .list-price-input,
   #amountEntryModal.styled .transfer-wallet-input{ order:4; width:100%; box-sizing:border-box; font-size:24px; padding:0.7em 0.8em; text-align:center; border:1px solid rgba(var(--collection-accent-rgb), 0.45); }
@@ -11592,12 +11598,24 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="amount-entry-pigeon-num" id="amountEntryListPigeonNum"></div>
           </div>
           <div class="node-eyebrow amount-entry-eyebrow">L!ST F0R SALE</div>
+          <!-- List in the collection's token, XRP, or B0TH (two sell offers,
+               two Xaman signatures, one after the other). -->
+          <div class="sale-currency-toggle amount-currency-toggle" id="amountEntryListCurrency">
+            <button type="button" class="sale-currency-btn sale-currency-btn-active" data-currency="token" id="amountEntryListTokenTab">$P!GE0NS</button>
+            <button type="button" class="sale-currency-btn" data-currency="xrp">XRP</button>
+            <button type="button" class="sale-currency-btn" data-currency="both">B0TH</button>
+          </div>
           <div class="thumb-offer-row">
-            <div class="make-offer-input-wrap">
+            <div class="make-offer-input-wrap" id="amountEntryListTokenWrap">
               <img class="make-offer-input-coin" id="amountEntryListCoin" src="/api/ipfs-image?src=https%3A%2F%2Fipfs.io%2Fipfs%2FQmRbNvemLYjHuRZcpYRRSq5vqqozzjoy3aDR6eSzSoTFUs" alt="">
               <input class="list-price-input" id="amountEntryListInput" type="text" inputmode="decimal" placeholder="ENTER AM0UNT">
             </div>
+            <div class="make-offer-input-wrap" id="amountEntryListXrpWrap" style="display:none;">
+              <span class="amount-xrp-badge">XRP</span>
+              <input class="list-price-input" id="amountEntryListXrpInput" type="text" inputmode="decimal" placeholder="AM0UNT !N XRP">
+            </div>
           </div>
+          <div class="amount-fee-note" id="amountEntryListFeeNote"></div>
           <!-- Real XRPL NFTokenCreateOffer Expiration, not app-side
                enforcement — see listingExpirationRippleSeconds in
                _shared.js. F0REVER (∞) is P!GE0NS-only (see
@@ -11622,6 +11640,10 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="amount-entry-pigeon-num" id="amountEntryOfferPigeonNum"></div>
           </div>
           <div class="node-eyebrow amount-entry-eyebrow">MAKE AN 0FFER</div>
+          <div class="sale-currency-toggle amount-currency-toggle" id="amountEntryOfferCurrency">
+            <button type="button" class="sale-currency-btn sale-currency-btn-active" data-currency="token" id="amountEntryOfferTokenTab">$P!GE0NS</button>
+            <button type="button" class="sale-currency-btn" data-currency="xrp">XRP</button>
+          </div>
           <div class="make-offer-balance-line" id="amountEntryOfferBalanceLine" style="display:none;"></div>
           <div class="thumb-offer-row">
             <div class="make-offer-input-wrap">
@@ -12655,6 +12677,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'acceptTransferConfirmReceipt','acceptTransferReceiptPigeonNum','acceptTransferResultDoneBtn',
    'screenTransferResult','transferResultPigeonNum','transferResultDestination','transferResultTxLink','transferResultDoneBtn',
    'amountEntryModal','amountEntryTitle','amountEntryClose','amountEntryListMode','amountEntryListPigeonRow','amountEntryListPigeonImg','amountEntryListPigeonNum','amountEntryListCoin','amountEntryListInput','amountEntryListBtn','amountEntryListStatus','amountEntryListDuration',
+   'amountEntryListCurrency','amountEntryListTokenTab','amountEntryListTokenWrap','amountEntryListXrpWrap','amountEntryListXrpInput','amountEntryListFeeNote','amountEntryOfferCurrency','amountEntryOfferTokenTab',
    'amountEntryOfferMode','amountEntryOfferPigeonRow','amountEntryOfferPigeonImg','amountEntryOfferPigeonNum','amountEntryOfferBalanceLine','amountEntryOfferInput','amountEntryOfferBtn','amountEntryOfferDuration',
    'amountEntryTransferMode','amountEntryTransferInput','amountEntryTransferPigeonRow','amountEntryTransferPigeonImg','amountEntryTransferPigeonNum','amountEntryTransferBtn','amountEntryTransferStatus',
    'acceptOfferConfirmModal','screenAcceptOfferConfirm','acceptOfferConfThumb','acceptOfferConfPigeon','acceptOfferConfBuyer','acceptOfferConfPrice','acceptOfferConfFee','acceptOfferConfRoyaltyRow','acceptOfferConfRoyaltyLabel','acceptOfferConfRoyalty','acceptOfferConfSellerAmount','acceptOfferConfirmStatus','acceptOfferConfirmBackBtn',
@@ -14660,6 +14683,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       // button: "BUY 0N XRP.CAFE F0R 16 XRP" (a brokered listing can only
       // be bought on its own marketplace, so it goes there).
       avgSaleLine = '<div class="result-rarity-line market-buy-list">' + p.marketListings.slice(0, 1).map(function(l){
+        if (l.internal){
+          return p.owner && p.owner === MY_WALLET
+            ? '<span class="market-buy-link">L!STED 0N ' + marketLabelHtml(l) + ' F0R ' + fmtXrp(l.priceXrp) + ' XRP</span>'
+            : '<button type="button" class="market-buy-link scylla-xrp-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY 0N ' + marketLabelHtml(l) + ' F0R ' + fmtXrp(l.priceXrp) + ' XRP</button>';
+        }
         return '<a class="market-buy-link" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY 0N ' + escapeHtml(l.label) + ' F0R ' + fmtXrp(l.priceXrp) + ' XRP ↗</a>';
       }).join('') + '</div>';
     } else if ((state.sort === 'LORE_ASC' || state.sort === 'LORE_DESC') && p.ourRarityLoreScore !== null && p.ourRarityLoreScore !== undefined){
@@ -14729,6 +14757,39 @@ const SWAP_HTML = `<!DOCTYPE html>
   var amountEntryPigeon = null; // the Pigeon the currently-open popup is acting on
   var amountEntryListDurationDays = 0; // real NFTokenCreateOffer Expiration — see listingExpirationRippleSeconds in _shared.js. 0 = F0REVER, the default now (was 7)
   var amountEntryOfferDurationDays = 0; // same real Expiration, for MAKE OFFER's own duration row
+  var amountEntryListCurrency = 'token'; // 'token' | 'xrp' | 'both'
+  var amountEntryOfferCurrency = 'token'; // 'token' | 'xrp'
+  function setTabActive(groupEl, value){
+    groupEl.querySelectorAll('.sale-currency-btn').forEach(function(b){
+      b.classList.toggle('sale-currency-btn-active', b.getAttribute('data-currency') === value);
+    });
+  }
+  // Buyers pay the fee on top: 1.023% in the token, 1.3% in XRP.
+  function setListCurrency(value){
+    amountEntryListCurrency = value;
+    setTabActive(el.amountEntryListCurrency, value);
+    el.amountEntryListTokenWrap.style.display = value === 'xrp' ? 'none' : '';
+    el.amountEntryListXrpWrap.style.display = value === 'token' ? 'none' : '';
+    var tokenLabel = COLLECTION_META[state.collection].tokenLabel;
+    el.amountEntryListFeeNote.textContent = value === 'token' ? 'BUYER PAYS A 1.023% FEE 0N T0P'
+      : value === 'xrp' ? 'BUYER PAYS A 1.3% FEE 0N T0P'
+      : 'B0TH L!ST!NGS G0 L!VE — WH!CHEVER SELLS F!RST W!NS, THE 0THER !S CANCELLED F0R Y0U. ' + tokenLabel + ' FEE 1.023%, XRP FEE 1.3%';
+    if (!dualListing) el.amountEntryListBtn.textContent = value === 'both' ? 'L!ST B0TH (2 S!GNATURES)' : 'L!ST';
+  }
+  function setOfferCurrency(value){
+    amountEntryOfferCurrency = value;
+    setTabActive(el.amountEntryOfferCurrency, value);
+    el.amountEntryOfferInput.placeholder = value === 'xrp' ? '0FFER !N XRP' : '0FFER AM0UNT';
+    el.amountEntryOfferBalanceLine.style.display = (value === 'token' && trustlineBalanceNum !== null) ? '' : 'none';
+  }
+  el.amountEntryListCurrency.addEventListener('click', function(e){
+    var b = e.target.closest('.sale-currency-btn');
+    if (b && !dualListing) setListCurrency(b.getAttribute('data-currency'));
+  });
+  el.amountEntryOfferCurrency.addEventListener('click', function(e){
+    var b = e.target.closest('.sale-currency-btn');
+    if (b) setOfferCurrency(b.getAttribute('data-currency'));
+  });
   function openAmountEntryModal(mode, p){
     amountEntryPigeon = p;
     el.amountEntryListMode.style.display = mode === 'list' ? '' : 'none';
@@ -14743,8 +14804,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       // redundant.
       el.amountEntryTitle.textContent = '';
       el.amountEntryListInput.value = '';
+      el.amountEntryListXrpInput.value = '';
+      dualListing = null;
+      el.amountEntryListTokenTab.textContent = COLLECTION_META[state.collection].tokenLabel;
+      setListCurrency('token');
       el.amountEntryListBtn.disabled = false;
-      el.amountEntryListBtn.textContent = 'L!ST';
       el.amountEntryListStatus.style.display = 'none';
       el.amountEntryListStatus.textContent = '';
       // What you're actually about to list — same big-thumb treatment
@@ -14804,6 +14868,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       } else {
         el.amountEntryOfferBalanceLine.style.display = 'none';
       }
+      el.amountEntryOfferTokenTab.textContent = COLLECTION_META[state.collection].tokenLabel;
+      setOfferCurrency('token');
     } else {
       el.amountEntryTitle.textContent = 'TRANSFER T0 WALLET';
       el.amountEntryTransferInput.value = '';
@@ -14827,6 +14893,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function closeAmountEntryModal(){
     el.amountEntryModal.style.display = 'none';
     amountEntryPigeon = null;
+    dualListing = null;
   }
   el.amountEntryClose.addEventListener('click', closeAmountEntryModal);
   el.amountEntryModal.addEventListener('click', function(e){ if (e.target === el.amountEntryModal) closeAmountEntryModal(); });
@@ -14847,24 +14914,41 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   });
   el.amountEntryListBtn.addEventListener('click', function(){
-    if (amountEntryPigeon) submitInlineListing(amountEntryPigeon, el.amountEntryListInput.value.trim().replace(/,/g, ''), el.amountEntryListMode, amountEntryListDurationDays);
+    if (!amountEntryPigeon) return;
+    var tokenVal = el.amountEntryListInput.value.trim().replace(/,/g, '');
+    var xrpVal = el.amountEntryListXrpInput.value.trim().replace(/,/g, '');
+    if (dualListing && dualListing.stage === 'ready'){
+      dualListing.stage = 'second';
+      submitInlineListing(amountEntryPigeon, dualListing.xrpPrice, el.amountEntryListMode, dualListing.days, 'xrp');
+      return;
+    }
+    if (amountEntryListCurrency === 'both'){
+      if (!xrpVal || isNaN(Number(xrpVal)) || Number(xrpVal) <= 0 || !/^\d+(\.\d{1,6})?$/.test(xrpVal)){
+        alert('ENTER A VAL!D XRP PR!CE T00 (UP T0 6 DEC!MAL PLACES).');
+        return;
+      }
+      dualListing = { stage: 'first', xrpPrice: xrpVal, days: amountEntryListDurationDays };
+      submitInlineListing(amountEntryPigeon, tokenVal, el.amountEntryListMode, amountEntryListDurationDays, 'token');
+      return;
+    }
+    submitInlineListing(amountEntryPigeon, amountEntryListCurrency === 'xrp' ? xrpVal : tokenVal, el.amountEntryListMode, amountEntryListDurationDays, amountEntryListCurrency);
   });
   el.amountEntryOfferBtn.addEventListener('click', function(){
-    if (amountEntryPigeon) submitMakeOffer(amountEntryPigeon, el.amountEntryOfferInput.value.trim().replace(/,/g, ''), el.amountEntryOfferMode, amountEntryOfferDurationDays);
+    if (amountEntryPigeon) submitMakeOffer(amountEntryPigeon, el.amountEntryOfferInput.value.trim().replace(/,/g, ''), el.amountEntryOfferMode, amountEntryOfferDurationDays, amountEntryOfferCurrency);
   });
   el.amountEntryTransferBtn.addEventListener('click', function(){
     if (amountEntryPigeon) submitTransfer(amountEntryPigeon, el.amountEntryTransferInput.value.trim(), el.amountEntryTransferMode);
   });
   el.amountEntryModal.addEventListener('keydown', function(e){
     if (e.key !== 'Enter') return;
-    if (e.target === el.amountEntryListInput) el.amountEntryListBtn.click();
+    if (e.target === el.amountEntryListInput || e.target === el.amountEntryListXrpInput) el.amountEntryListBtn.click();
     else if (e.target === el.amountEntryOfferInput) el.amountEntryOfferBtn.click();
     else if (e.target === el.amountEntryTransferInput) el.amountEntryTransferBtn.click();
   });
   // Live thousands-separator formatting as you type, same helper the
   // other amount inputs use.
   el.amountEntryModal.addEventListener('input', function(e){
-    if (e.target === el.amountEntryListInput || e.target === el.amountEntryOfferInput) formatThousandsInput(e.target);
+    if (e.target === el.amountEntryListInput || e.target === el.amountEntryListXrpInput || e.target === el.amountEntryOfferInput) formatThousandsInput(e.target);
   });
 
   function wireResultClicks(container, source){
@@ -14899,6 +14983,13 @@ const SWAP_HTML = `<!DOCTYPE html>
           }
           return;
         }
+      }
+      var xrpBuyBtn = e.target.closest('.scylla-xrp-buy-btn');
+      if (xrpBuyBtn){
+        e.preventDefault();
+        var xbp = source().filter(function(x){ return x.nftId === xrpBuyBtn.getAttribute('data-nftid'); })[0];
+        if (xbp) openBuyConfirm(xbp, 'xrp');
+        return;
       }
       var traitCell = e.target.closest('.card-trait-cell, .card-trait-link');
       if (traitCell){
@@ -15060,6 +15151,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           nftId: acceptBtn.getAttribute('data-nftid'),
           offerId: acceptBtn.getAttribute('data-offerid'),
           price: acceptBtn.getAttribute('data-price'),
+          offerCurrency: acceptBtn.getAttribute('data-currency') === 'xrp' ? 'xrp' : 'token',
           buyer: acceptBtn.getAttribute('data-buyer'),
           number: acceptBtn.getAttribute('data-num') ? parseInt(acceptBtn.getAttribute('data-num'), 10) : null,
           image: acceptBtn.getAttribute('data-image') || null,
@@ -16199,14 +16291,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // wallet has made.
     var real = offers.filter(function(o){ return !declinedOfferIds[o.offerId] && o.buyer !== MY_WALLET; });
     if (!real.length) return '';
-    var top = real.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
+    var top = topOffer(real);
     return '<div class="my-pigeon-offers">' +
       '<div class="highest-offer-box">' +
         '<div class="highest-offer-label">H!GHEST 0FFER</div>' +
-        '<div class="highest-offer-price">' + escapeHtml(fmtPigeonsCompact(top.price)) + '</div>' +
+        '<div class="highest-offer-price">' + escapeHtml(fmtOfferCompact(top)) + '</div>' +
         '<div class="highest-offer-buyer">FR0M ' + walletTagHtml(top.buyer, top.buyerShort) + '</div>' +
         '<div class="highest-offer-actions">' +
-          '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '" data-collection="' + escapeHtml(state.collection) + '">ACCEPT</button>' +
+          '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(p.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-currency="' + (top.offerCurrency === 'xrp' ? 'xrp' : 'token') + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (p.number !== null ? p.number : '') + '" data-image="' + escapeHtml(p.image || '') + '" data-collection="' + escapeHtml(state.collection) + '">ACCEPT</button>' +
           '<button class="highest-offer-btn highest-offer-decline decline-offer-btn" data-offerid="' + escapeHtml(top.offerId) + '">DECL!NE</button>' +
           '<button class="highest-offer-btn highest-offer-counter" disabled title="C0M!NG S00N">C0UNTER</button>' +
         '</div>' +
@@ -16264,7 +16356,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var rows = offersReceivedData.map(function(item){
       var real = item.offers.filter(function(o){ return !declinedOfferIds[o.offerId] && o.buyer !== MY_WALLET; });
       if (!real.length) return null;
-      var top = real.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
+      var top = topOffer(real);
       var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
       return { item: item, top: top, img: img };
     }).filter(Boolean);
@@ -16290,9 +16382,9 @@ const SWAP_HTML = `<!DOCTYPE html>
             '<div class="my-offer-row-buyer">FR0M ' + walletTagHtml(top.buyer, top.buyerShort) + '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(top.price, itemCollection)) + '</div>' +
+        '<div class="my-offer-row-price">' + escapeHtml(fmtOfferCompact(top, itemCollection)) + '</div>' +
         '<div class="my-offer-row-actions">' +
-          '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '" data-collection="' + escapeHtml(itemCollection) + '">ACCEPT</button>' +
+          '<button class="highest-offer-btn highest-offer-accept accept-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(top.offerId) + '" data-price="' + escapeHtml(top.price) + '" data-currency="' + (top.offerCurrency === 'xrp' ? 'xrp' : 'token') + '" data-buyer="' + escapeHtml(top.buyer) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '" data-collection="' + escapeHtml(itemCollection) + '">ACCEPT</button>' +
           '<button class="highest-offer-btn highest-offer-decline decline-offer-btn" data-offerid="' + escapeHtml(top.offerId) + '">DECL!NE</button>' +
           '<button class="highest-offer-btn highest-offer-counter" disabled title="C0M!NG S00N">C0UNTER</button>' +
         '</div>' +
@@ -17255,13 +17347,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   // still gets the full screenListResult screen (tx hash link etc).
   var listingBtnEl = null;
   var listingStatusEl = null;
-  function submitInlineListing(p, priceValue, cardEl, durationDays){
+  function submitInlineListing(p, priceValue, cardEl, durationDays, currency){
+    currency = currency === 'xrp' ? 'xrp' : 'token';
     if (!priceValue || isNaN(Number(priceValue)) || Number(priceValue) <= 0){
+      if (dualListing && dualListing.stage === 'first') dualListing = null;
       alert('ENTER A VAL!D PR!CE GREATER THAN 0.');
+      return;
+    }
+    if (currency === 'xrp' && !/^\d+(\.\d{1,6})?$/.test(priceValue)){
+      alert('XRP G0ES T0 6 DEC!MAL PLACES AT M0ST.');
       return;
     }
     listingTarget = p;
     listingTarget.priceValue = priceValue;
+    listingTarget.offerCurrency = currency;
     listingBtnEl = cardEl.querySelector('.list-inline-btn');
     listingStatusEl = cardEl.querySelector('.list-inline-status');
     listingBtnEl.disabled = true;
@@ -17274,14 +17373,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-listing-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays, collection: state.collection })
+      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays, collection: state.collection, currency: currency })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
         closeXamanTabAndFocus(listingXamanTab);
         listingXamanTab = null;
         listingBtnEl.disabled = false;
-        listingBtnEl.textContent = 'L!ST';
+        listingBtnEl.textContent = listBtnIdleText();
         if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = listingErrorMessage(res.data && res.data.error); }
         return;
       }
@@ -17294,44 +17393,66 @@ const SWAP_HTML = `<!DOCTYPE html>
       closeXamanTabAndFocus(listingXamanTab);
       listingXamanTab = null;
       listingBtnEl.disabled = false;
-      listingBtnEl.textContent = 'L!ST';
+      listingBtnEl.textContent = listBtnIdleText();
       if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.'; }
     });
   }
 
+  // B0TH = two separate sell offers ($TOKEN first, then XRP), each its own
+  // Xaman signature. A browser only lets a click open the second Xaman
+  // window, so after the first lands the L!ST button becomes
+  // "S!GN XRP L!ST!NG (2 0F 2)" and the next click signs the XRP half.
+  // stage: 'first' (token half in flight) -> 'ready' -> 'second'.
+  var dualListing = null;
+  function listBtnIdleText(){
+    if (!dualListing) return 'L!ST';
+    if (dualListing.stage === 'first'){ dualListing = null; return 'L!ST'; }
+    dualListing.stage = 'ready';
+    return 'S!GN XRP L!ST!NG (2 0F 2)';
+  }
   function pollListingStatus(){
     if (listingPollTimer) clearTimeout(listingPollTimer);
     if (!listingUuid || !listingTarget) return;
-    fetch('/api/swap-listing-status?uuid=' + encodeURIComponent(listingUuid) + '&nftId=' + encodeURIComponent(listingTarget.nftId) + '&collection=' + encodeURIComponent(state.collection))
+    fetch('/api/swap-listing-status?uuid=' + encodeURIComponent(listingUuid) + '&nftId=' + encodeURIComponent(listingTarget.nftId) + '&collection=' + encodeURIComponent(state.collection) + '&currency=' + (listingTarget.offerCurrency || 'token'))
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.status === 'listed'){
-          myListedData[listingTarget.nftId] = { price: data.price, currency: data.currency, offerId: data.offerId, expiration: data.expiration || null };
+          if (data.offerCurrency !== 'xrp') myListedData[listingTarget.nftId] = { price: data.price, currency: data.currency, offerId: data.offerId, expiration: data.expiration || null };
           closeXamanTabAndFocus(listingXamanTab);
           listingXamanTab = null;
-          showListingResult(data);
+          if (dualListing && dualListing.stage === 'first'){
+            dualListing.stage = 'ready';
+            dualListing.firstData = data;
+            listingUuid = null;
+            if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = 'S!GN XRP L!ST!NG (2 0F 2)'; }
+            if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = fmtPigeons(data.price) + ' L!ST!NG D0NE (1 0F 2) — N0W S!GN THE XRP 0NE.'; }
+            return;
+          }
+          var firstHalf = dualListing && dualListing.firstData;
+          dualListing = null;
+          showListingResult(data, firstHalf);
           return;
         }
         if (data.status === 'rejected'){
           if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'S!GNATURE REJECTED !N XAMAN.'; }
-          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = 'L!ST'; }
+          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = listBtnIdleText(); }
           return;
         }
         if (data.status === 'expired'){
           if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'S!GN REQUEST EXP!RED. TRY AGA!N.'; }
-          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = 'L!ST'; }
+          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = listBtnIdleText(); }
           return;
         }
         if (data.status === 'failed'){
           if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = 'XRPL REJECTED THE TRANSACT!0N (' + (data.result || 'UNKN0WN') + ').'; }
-          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = 'L!ST'; }
+          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = listBtnIdleText(); }
           return;
         }
         if (!data.status){
           closeXamanTabAndFocus(listingXamanTab);
           listingXamanTab = null;
           if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.textContent = pollFailureMessage(data); }
-          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = 'L!ST'; }
+          if (listingBtnEl){ listingBtnEl.disabled = false; listingBtnEl.textContent = listBtnIdleText(); }
           return;
         }
         // 'pending' or 'signed_pending_ledger' — keep polling.
@@ -17341,7 +17462,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
   }
 
-  function showListingResult(data){
+  function showListingResult(data, firstHalf){
     // Every LIST now enters through the amount-entry popup (see
     // openAmountEntryModal) — close it here, the moment the full LISTED
     // result screen takes over, rather than leaving it sitting on top.
@@ -17356,7 +17477,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     // its own receipt, silently dropping the real 30,000 difference. Every
     // OTHER result/confirm screen (BUY N0W, ACCEPT 0FFER) already shows
     // the exact figure here — this was the one inconsistent one.
-    el.listResultPrice.textContent = fmtPigeons(data.price);
+    el.listResultPrice.textContent = firstHalf
+      ? fmtPigeons(firstHalf.price) + '  +  ' + fmtAmount(data.price, 'xrp')
+      : fmtAmount(data.price, data.offerCurrency);
     if (data.txHash){
       el.listResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
       el.listResultTxLink.style.display = '';
@@ -17403,13 +17526,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   // just a moment later once submitBuyPayload's own response lands (it
   // now returns the same seller/totalValue the old prepare-first screen
   // used to show up front) instead of gating Xaman behind them.
-  function openBuyConfirm(p){
+  function openBuyConfirm(p, currency){
     if (!MY_WALLET){
       try { sessionStorage.setItem(PENDING_BUY_STORAGE_KEY, p.nftId); } catch (e){}
       startAuthorize();
       return;
     }
     buyTarget = p;
+    buyTarget.buyCurrency = currency || null; // null = token listing first, else Σκύλλα XRP listing (server decides)
     el.buyConfPigeon.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(p);
     el.buyConfSeller.textContent = '';
     el.buyConfPrice.textContent = '';
@@ -18070,7 +18194,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-buy-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: buyTarget.nftId, collection: state.collection })
+      body: JSON.stringify({ nftId: buyTarget.nftId, collection: state.collection, currency: buyTarget.buyCurrency || undefined })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok && res.data && res.data.error === 'lookup_failed' && retriesLeft > 0){
@@ -18089,7 +18213,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       navigateXamanPopup(buyXamanTab, res.data.next.always);
       if (res.data.display){
         setWalletText(el.buyConfSeller, res.data.display.seller, shortAddr(res.data.display.seller));
-        el.buyConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
+        el.buyConfPrice.textContent = fmtAmount(res.data.display.totalValue, res.data.display.offerCurrency);
       }
       el.buyConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollBuyStatus();
@@ -18330,7 +18454,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Entered right in the DATABASE card's own MAKE AN OFFER strip (see
   // wireResultClicks' .make-offer-send handler) — no separate form screen,
   // straight from the inline number to the confirm screen below.
-  function submitMakeOffer(p, priceValue, stripEl, durationDays){
+  function submitMakeOffer(p, priceValue, stripEl, durationDays, currency){
+    currency = currency === 'xrp' ? 'xrp' : 'token';
     // The server-side prepare endpoint requires a real logged-in session
     // (it derives the offering wallet from the pigeon_session cookie) —
     // rather than let that fail with a confusing auth error, send an
@@ -18350,7 +18475,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // endpoint has no balance check of its own since a $PIGEONS buy-offer
     // doesn't require the offerer to hold anything until it's accepted —
     // this is purely a "don't let you promise more than you have" UI guard.
-    if (trustlineBalanceNum !== null && Number(priceValue) > trustlineBalanceNum){
+    if (currency === 'xrp' && !/^\d+(\.\d{1,6})?$/.test(priceValue)){
+      alert('XRP G0ES T0 6 DEC!MAL PLACES AT M0ST.');
+      return;
+    }
+    if (currency === 'token' && trustlineBalanceNum !== null && Number(priceValue) > trustlineBalanceNum){
       alert('Y0U D0N\\'T HAVE EN0UGH ' + COLLECTION_META[state.collection].tokenLabel + ' F0R TH!S 0FFER — BALANCE :: ' + trustlineBalanceNum.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + COLLECTION_META[state.collection].tokenLabel + '.');
       return;
     }
@@ -18366,7 +18495,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-makeoffer-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays, collection: state.collection })
+      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays, collection: state.collection, currency: currency })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       sendBtn.disabled = false;
@@ -18382,6 +18511,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       offerTarget = p;
       offerTarget.priceValue = priceValue;
       offerTarget.durationDays = durationDays;
+      offerTarget.offerCurrency = currency;
       showOfferConfirm(res.data.txjson);
       // Straight into the real Xaman request the instant the offer is
       // valid — reported live as not wanting a separate review screen
@@ -18429,7 +18559,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.offerConfPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(offerTarget);
     el.offerConfPigeonImg.src = offerTarget.image || '';
     el.offerConfPigeonImg.style.display = offerTarget.image ? '' : 'none';
-    el.offerConfValue.textContent = fmtPigeons(txjson.Amount.value);
+    el.offerConfValue.textContent = offerTarget.offerCurrency === 'xrp' ? fmtAmount(offerTarget.priceValue, 'xrp') : fmtPigeons(txjson.Amount.value);
     el.offerConfirmStatus.textContent = '';
     el.offerOpenXamanBtn.disabled = false;
     el.offerOpenXamanBtn.innerHTML = OFFER_CONFIRM_BTN_HTML;
@@ -18477,7 +18607,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/swap-makeoffer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: offerTarget.nftId, priceValue: offerTarget.priceValue, durationDays: offerTarget.durationDays, collection: state.collection })
+      body: JSON.stringify({ nftId: offerTarget.nftId, priceValue: offerTarget.priceValue, durationDays: offerTarget.durationDays, collection: state.collection, currency: offerTarget.offerCurrency || 'token' })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
@@ -18506,7 +18636,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function pollOfferStatus(){
     if (offerPollTimer) clearTimeout(offerPollTimer);
     if (!offerUuid || !offerTarget) return;
-    fetch('/api/swap-makeoffer-status?uuid=' + encodeURIComponent(offerUuid) + '&nftId=' + encodeURIComponent(offerTarget.nftId) + '&priceValue=' + encodeURIComponent(offerTarget.priceValue) + '&collection=' + encodeURIComponent(state.collection))
+    fetch('/api/swap-makeoffer-status?uuid=' + encodeURIComponent(offerUuid) + '&nftId=' + encodeURIComponent(offerTarget.nftId) + '&priceValue=' + encodeURIComponent(offerTarget.priceValue) + '&collection=' + encodeURIComponent(state.collection) + '&currency=' + (offerTarget.offerCurrency || 'token'))
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.status === 'offered'){
@@ -18552,7 +18682,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // in place (offerTarget stays set, still needs .number below).
     offerTarget.offerId = data.offerId;
     el.offerReceiptPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(offerTarget);
-    el.offerReceiptPrice.textContent = fmtPigeons(data.price);
+    el.offerReceiptPrice.textContent = fmtAmount(data.price, data.offerCurrency);
     if (data.txHash){
       el.offerResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
       el.offerResultTxLink.style.display = '';
@@ -19058,7 +19188,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             '<div class="my-offer-row-buyer">T0 ' + walletTagHtml(item.ownerWallet, item.ownerShort) + (countdown ? ' :: ' + escapeHtml(countdown) : '') + '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="my-offer-row-price">' + escapeHtml(fmtPigeonsCompact(item.price, itemCollection)) + '</div>' +
+        '<div class="my-offer-row-price">' + escapeHtml(fmtOfferCompact(item, itemCollection)) + '</div>' +
         '<div class="my-offer-row-actions">' +
           '<button class="highest-offer-btn cancel-my-offer-btn cancel-outgoing-offer-btn" data-nftid="' + escapeHtml(item.nftId) + '" data-offerid="' + escapeHtml(item.offerId) + '" data-num="' + (item.number !== null ? item.number : '') + '" data-image="' + escapeHtml(item.image || '') + '" data-price="' + escapeHtml(item.price) + '" data-collection="' + escapeHtml(itemCollection) + '">CANCEL</button>' +
         '</div>' +
@@ -19466,7 +19596,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.acceptOfferConfThumb.src = acceptOfferTarget.image || '';
     el.acceptOfferConfPigeon.innerHTML = escapeHtml((COLLECTION_META[acceptOfferTarget.collection] || COLLECTION_META.pigeons).itemLabel) + ' ' + itemNumberLabel(acceptOfferTarget);
     setWalletText(el.acceptOfferConfBuyer, acceptOfferTarget.buyer, shortAddr(acceptOfferTarget.buyer));
-    el.acceptOfferConfPrice.textContent = acceptOfferTarget.price ? fmtPigeons(acceptOfferTarget.price) : '';
+    el.acceptOfferConfPrice.textContent = acceptOfferTarget.price ? fmtAmount(acceptOfferTarget.price, acceptOfferTarget.offerCurrency) : '';
     el.acceptOfferConfFee.textContent = '';
     el.acceptOfferConfRoyaltyRow.style.display = 'none';
     el.acceptOfferConfSellerAmount.textContent = '';
@@ -19502,10 +19632,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       navigateXamanPopup(acceptOfferXamanTab, res.data.next.always);
       if (res.data.display){
         setWalletText(el.acceptOfferConfBuyer, res.data.display.buyer, shortAddr(res.data.display.buyer));
-        el.acceptOfferConfPrice.textContent = fmtPigeons(res.data.display.totalValue);
-        el.acceptOfferConfFee.textContent = fmtPigeons(res.data.display.feeValue);
+        el.acceptOfferConfPrice.textContent = fmtAmount(res.data.display.totalValue, res.data.display.offerCurrency);
+        el.acceptOfferConfFee.textContent = fmtAmount(res.data.display.feeValue, res.data.display.offerCurrency);
         showRoyaltyRow(el.acceptOfferConfRoyaltyRow, el.acceptOfferConfRoyaltyLabel, el.acceptOfferConfRoyalty, res.data.display.royaltyValue, res.data.display.royaltyPercent);
-        el.acceptOfferConfSellerAmount.textContent = fmtPigeons(res.data.display.sellerValue);
+        el.acceptOfferConfSellerAmount.textContent = fmtAmount(res.data.display.sellerValue, res.data.display.offerCurrency);
       }
       el.acceptOfferConfirmStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>';
       pollAcceptOfferStatus();
@@ -19577,10 +19707,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.acceptOfferResultThumb.style.display = acceptOfferTarget.image ? '' : 'none';
     el.acceptOfferResultThumb.src = acceptOfferTarget.image || '';
     el.acceptOfferResultPigeonNum.innerHTML = collectionItemLabel() + ' ' + itemNumberLabel(acceptOfferTarget);
-    el.acceptOfferResultPrice.textContent = fmtPigeons(data.totalValue !== undefined ? data.totalValue : acceptOfferTarget.price);
-    el.acceptOfferResultFee.textContent = data.feeValue !== undefined ? fmtPigeons(data.feeValue) : '—';
+    var acceptCur = data.offerCurrency || (acceptOfferTarget && acceptOfferTarget.offerCurrency);
+    el.acceptOfferResultPrice.textContent = fmtAmount(data.totalValue !== undefined ? data.totalValue : acceptOfferTarget.price, acceptCur);
+    el.acceptOfferResultFee.textContent = data.feeValue !== undefined ? fmtAmount(data.feeValue, acceptCur) : '—';
     showRoyaltyRow(el.acceptOfferResultRoyaltyRow, el.acceptOfferResultRoyaltyLabel, el.acceptOfferResultRoyalty, data.royaltyValue, data.royaltyPercent);
-    el.acceptOfferResultSellerAmount.textContent = data.sellerValue !== undefined ? fmtPigeons(data.sellerValue) : '—';
+    el.acceptOfferResultSellerAmount.textContent = data.sellerValue !== undefined ? fmtAmount(data.sellerValue, acceptCur) : '—';
     el.acceptOfferResultStatus.textContent = 'SETTLED';
     if (data.txHash){
       el.acceptOfferResultTxLink.href = 'https://bithomp.com/explorer/' + data.txHash;
@@ -20405,7 +20536,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       : (s.priceXrp !== null ? s.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?');
     // No tag for Σκύλλα's own sales (was "Σ SWAP") — every $P!GE0NS sale
     // goes through it, so the tag only pushed the price off-centre.
-    var via = s.via === 'xrpcafe' ? 'XRP.CAFE' : (s.via === 'deeptide' ? 'DEEPT!DE' : '');
+    // XRP sales Σκύλλα brokered do get it, to tell them from xrp.cafe's.
+    var via = s.via === 'xrpcafe' ? 'XRP.CAFE' : (s.via === 'deeptide' ? 'DEEPT!DE' : ((s.via === 'scylla' && s.currency === 'XRP') ? 'Σ SWAP' : ''));
     var when = s.createdAt ? relativeTimeText(s.createdAt) : '';
     var thumbHref = nftHrefFor({ number: s.number, collectionKey: s.collectionKey });
     return '<div class="sale-row" data-nftid="' + escapeHtml(s.nftId) + '">' +
@@ -21281,13 +21413,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   // 2026-09-23) — marketListings arrives cheapest first.
   function detailMarketsHtml(list){
     return '<div class="detail-markets-title">L0WEST L!ST!NG</div>' + list.slice(0, 1).map(function(l, i){
+      var own = !!(state.currentDetail && state.currentDetail.owner && state.currentDetail.owner === MY_WALLET);
+      var action = !l.internal
+        ? '<a class="market-buy-link" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener">BUY ↗</a>'
+        : own
+          ? '<button type="button" class="market-buy-link detail-scylla-xrp-delist">DEL!ST</button>'
+          : '<button type="button" class="market-buy-link detail-scylla-xrp-buy">BUY N0W</button>';
       return '<div class="detail-market-row' + (i === 0 ? ' cheapest' : '') + '">' +
-        '<span class="dm-name">' + escapeHtml(l.label) + '</span>' +
+        '<span class="dm-name">' + marketLabelHtml(l) + '</span>' +
         '<span class="dm-price">' + greenNum(fmtXrp(l.priceXrp)) + ' XRP</span>' +
-        '<a class="market-buy-link" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener">BUY ↗</a>' +
+        action +
       '</div>';
     }).join('');
   }
+  el.detailMarkets.addEventListener('click', function(e){
+    if (!state.currentDetail) return;
+    if (e.target.closest('.detail-scylla-xrp-buy')) openBuyConfirm(state.currentDetail, 'xrp');
+    else if (e.target.closest('.detail-scylla-xrp-delist')) openDelistConfirm(state.currentDetail);
+  });
   function updateDetailPrice(p){
     var ml = p && p.marketListings;
     if (ml && ml.length){
@@ -21895,6 +22038,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   function fmtPigeons(n){
     var num = typeof n === 'string' ? Number(n) : n;
     return (num || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + COLLECTION_META[state.collection].tokenLabel;
+  }
+  // Σκύλλα trades can be in XRP as well as the token now (2026-09-24) —
+  // exact to the drop for XRP, fmtPigeons for the token.
+  function fmtAmount(n, currency){
+    if (currency !== 'xrp') return fmtPigeons(n);
+    return (Number(n) || 0).toLocaleString(undefined, { maximumFractionDigits: 6 }) + ' XRP';
+  }
+  // Compact form for offer rows/boxes.
+  function fmtOfferCompact(o, collectionKey){
+    return o.offerCurrency === 'xrp' ? fmtXrp(Number(o.price)) + ' XRP' : fmtPigeonsCompact(o.price, collectionKey);
+  }
+  // Highest offer to feature: there's no fair XRP-vs-token exchange rate
+  // to compare with, so the best token offer wins, else the best XRP one.
+  function topOffer(offers){
+    var tok = offers.filter(function(o){ return o.offerCurrency !== 'xrp'; });
+    var pool = tok.length ? tok : offers;
+    return pool.slice().sort(function(a, b){ return Number(b.price) - Number(a.price); })[0];
+  }
+  // Σκύλλα must never render as uppercase ΣΚΥΛΛΑ.
+  function marketLabelHtml(l){
+    return l.key === 'scylla' ? '<span style="text-transform:none;">Σκύλλα</span>' : escapeHtml(l.label);
   }
   // Same r...XXXX shortening already used elsewhere (S!GNED !N AS, wallet
   // search) — a raw 34-char address sitting next to a clean price row was
@@ -24597,7 +24761,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     labelEl.textContent = 'NFT R0YALTY (' + percent + '%)';
-    valueEl.textContent = fmtPigeons(royaltyValue);
+    valueEl.textContent = fmtAmount(royaltyValue, acceptOfferTarget && acceptOfferTarget.offerCurrency);
     rowEl.style.display = '';
   }
   // Bare K/M-compacted number, no unit — shared by fmtPigeonsCompact below

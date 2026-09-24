@@ -1,7 +1,8 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, findCollectionOffer, getTradeConfig,
   encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup,
-  MARKETPLACE_BROKER_WALLET
+  MARKETPLACE_BROKER_WALLET,
+  normalizeOfferCurrency, buildOfferAmount, feeBasisPointsFor, offerAmountValue
 } from '../_shared.js';
 
 // Σκύλλα SWAP — BUY NOW. Builds and returns a txjson for the confirmation
@@ -75,7 +76,13 @@ export async function onRequestPost(context) {
   // seller's and get picked as "the" offer instead — confirmed live as the
   // cause of BUY NOW wrongly reporting cannot_buy_own_listing on someone
   // else's real, current listing.
-  const offer = findCollectionOffer(offers, collection, undefined, buyer);
+  // Which listing to buy: the currency asked for, or (none given) the
+  // collection's token listing first, then a Σκύλλα XRP listing.
+  const wanted = body && body.currency ? normalizeOfferCurrency(body.currency) : null;
+  const tokenOffer = wanted === 'xrp' ? null : findCollectionOffer(offers, collection, undefined, buyer);
+  const xrpOffer = (wanted === 'token' || tokenOffer) ? null : findCollectionOffer(offers, collection, undefined, buyer, 'xrp');
+  const offer = tokenOffer || xrpOffer;
+  const offerCurrency = xrpOffer ? 'xrp' : 'token';
   if (!offer) {
     return new Response(JSON.stringify({ error: 'not_listed' }), { status: 404 });
   }
@@ -87,7 +94,7 @@ export async function onRequestPost(context) {
   // a plain, fee-less direct accept exactly like before, so an existing
   // live listing never breaks out from under a seller mid-flight. Every
   // NEW listing goes through the fee-bearing branch below.
-  if (offer.destination !== MARKETPLACE_BROKER_WALLET) {
+  if (offerCurrency === 'token' && offer.destination !== MARKETPLACE_BROKER_WALLET) {
     const txjson = {
       TransactionType: 'NFTokenAcceptOffer',
       Account: buyer,
@@ -119,7 +126,7 @@ export async function onRequestPost(context) {
   // seller's real original typed price. Not unsafe (the seller still gets
   // exactly what their own signed offer says either way), just a one-time
   // price drift for any straggler until it's re-listed or sells.
-  const fee = computeMarketplaceMarkup(offer.amount.value);
+  const fee = computeMarketplaceMarkup(offerAmountValue(offer.amount), feeBasisPointsFor(offerCurrency));
   if (!fee) {
     return new Response(JSON.stringify({ error: 'listing_price_unavailable' }), { status: 409 });
   }
@@ -129,11 +136,7 @@ export async function onRequestPost(context) {
     Account: buyer,
     Owner: offer.owner,
     NFTokenID: nftId,
-    Amount: {
-      currency: tokenCurrency,
-      issuer: cfg.tokenConfig.issuer,
-      value: fee.totalValue
-    },
+    Amount: buildOfferAmount(cfg, offerCurrency, fee.totalValue),
     Memos: swapOfferSourceMemo()
   };
 
@@ -146,8 +149,9 @@ export async function onRequestPost(context) {
       totalValue: fee.totalValue,
       feeValue: fee.feeValue,
       sellerValue: fee.sellerValue,
-      currency: tokenCurrency,
-      issuer: cfg.tokenConfig.issuer,
+      offerCurrency,
+      currency: offerCurrency === 'xrp' ? 'XRP' : tokenCurrency,
+      issuer: offerCurrency === 'xrp' ? null : cfg.tokenConfig.issuer,
       sellOfferId: offer.nft_offer_index
     }
   }), { headers: { 'Content-Type': 'application/json' } });

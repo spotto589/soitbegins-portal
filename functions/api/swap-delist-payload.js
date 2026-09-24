@@ -1,5 +1,6 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, getXamanUserToken, findCollectionOffer, findCollectionOffers, getTradeConfig, removeSwapListing
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, getXamanUserToken, findCollectionOffer, findCollectionOffers, getTradeConfig, removeSwapListing,
+  normalizeOfferCurrency, removeSwapXrpListing
 } from '../_shared.js';
 
 // Called straight from the CANCEL click now — no separate confirm step
@@ -46,7 +47,9 @@ export async function onRequestPost(context) {
   }
 
   const offersOrNull = await fetchNftSellOffersOrNull(nftId);
-  const ownOffer = findCollectionOffer(offersOrNull || [], collection, seller);
+  // One currency if asked, otherwise every Σκύλλα listing (token + XRP).
+  const which = body && body.currency ? normalizeOfferCurrency(body.currency) : 'any';
+  const ownOffer = findCollectionOffer(offersOrNull || [], collection, seller, undefined, which);
   if (!ownOffer) {
     // A confirmed-empty result (never a failed lookup, which also comes
     // back as null here — see fetchNftSellOffersOrNull's own comment on why
@@ -63,6 +66,7 @@ export async function onRequestPost(context) {
     // but the site kept showing it listed and CANCEL kept 403ing).
     if (offersOrNull !== null && offersOrNull.length === 0) {
       context.waitUntil(removeSwapListing(env.coin, nftId, collection));
+      context.waitUntil(removeSwapXrpListing(env.coin, nftId, collection));
     }
     return new Response(JSON.stringify({ error: 'not_listed_by_you' }), { status: 403 });
   }
@@ -74,7 +78,7 @@ export async function onRequestPost(context) {
   // after this "successful" cancel, leaving the Pigeon stuck looking
   // listed forever. NFTokenCancelOffer accepts multiple offer indexes in
   // one transaction.
-  const ownOffers = findCollectionOffers(offersOrNull || [], collection, seller);
+  const ownOffers = findCollectionOffers(offersOrNull || [], collection, seller, undefined, which);
   const txjson = {
     TransactionType: 'NFTokenCancelOffer',
     Account: seller,

@@ -1,6 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffers, recordSwapListing, findCollectionOffer, getTradeConfig,
-  getXamanPayloadStatus, getPendingListing, clearPendingListing
+  getXamanPayloadStatus, getPendingListing, clearPendingListing,
+  normalizeOfferCurrency, offerAmountValue, recordSwapXrpListing
 } from '../_shared.js';
 
 // Polled by the browser after [ OPEN XAMAN ] while the user is signing.
@@ -31,6 +32,7 @@ export async function onRequestGet(context) {
   const uuid = url.searchParams.get('uuid');
   const nftId = url.searchParams.get('nftId');
   const collection = url.searchParams.get('collection') || 'pigeons';
+  const offerCurrency = normalizeOfferCurrency(url.searchParams.get('currency'));
   if (!uuid || !/^[0-9a-fA-F-]{10,60}$/.test(uuid) || !nftId || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
@@ -71,7 +73,7 @@ export async function onRequestGet(context) {
   // declare "listed" before the real new offer even exists on ledger.
   const seller = payload.acct;
   const offers = await fetchNftSellOffers(nftId);
-  const ownOffer = findCollectionOffer(offers, collection, seller);
+  const ownOffer = findCollectionOffer(offers, collection, seller, undefined, offerCurrency);
 
   if (!ownOffer) {
     // Signed successfully on Xaman's side but not yet visible via
@@ -88,18 +90,19 @@ export async function onRequestGet(context) {
   // signing time, so a stale/tampered pending record can never make the
   // displayed price disagree with what's actually on-ledger.
   const pending = await getPendingListing(env.coin, uuid);
-  const pendingValid = pending && pending.sellerValue === (ownOffer.amount && ownOffer.amount.value);
-  const displayPrice = pendingValid ? pending.sellerValue : (ownOffer.amount && ownOffer.amount.value);
+  const ledgerValue = offerAmountValue(ownOffer.amount);
+  const pendingValid = pending && pending.sellerValue === ledgerValue;
+  const displayPrice = pendingValid ? pending.sellerValue : ledgerValue;
 
   // Record it in the Σκύλλα listings index — this is what powers the
   // LISTED browse filter, the badges on ordinary browse cards, and (via
   // swap-buy-prepare.js) the live sell-offer amount BUY NOW marks its fee
   // up from. Doesn't block the response; a KV write failure here shouldn't
   // stop the user from seeing their own successful listing result.
-  context.waitUntil(recordSwapListing(env.coin, nftId, {
+  context.waitUntil((offerCurrency === 'xrp' ? recordSwapXrpListing : recordSwapListing)(env.coin, nftId, {
     price: displayPrice,
-    currency: ownOffer.amount && ownOffer.amount.currency,
-    issuer: ownOffer.amount && ownOffer.amount.issuer,
+    currency: offerCurrency === 'xrp' ? 'XRP' : ownOffer.amount.currency,
+    issuer: offerCurrency === 'xrp' ? null : ownOffer.amount.issuer,
     offerId: ownOffer.nft_offer_index,
     expiration: ownOffer.expiration || null,
     seller,
@@ -112,8 +115,9 @@ export async function onRequestGet(context) {
     txHash,
     offerId: ownOffer.nft_offer_index,
     price: displayPrice,
-    currency: ownOffer.amount && ownOffer.amount.currency,
-    issuer: ownOffer.amount && ownOffer.amount.issuer,
+    offerCurrency,
+    currency: offerCurrency === 'xrp' ? 'XRP' : ownOffer.amount.currency,
+    issuer: offerCurrency === 'xrp' ? null : ownOffer.amount.issuer,
     expiration: ownOffer.expiration || null
   }), { headers: { 'Content-Type': 'application/json' } });
 }

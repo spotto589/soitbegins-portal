@@ -2,7 +2,8 @@ import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, getXamanUserToken, findCollectionOffer, getTradeConfig,
   recordPendingBuy, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup,
   MARKETPLACE_BROKER_WALLET, acquireBrokerAcceptLock, releaseBrokerAcceptLock,
-  recordPendingBrokerAccept, fetchDeeptideNftDetail
+  recordPendingBrokerAccept, fetchDeeptideNftDetail,
+  normalizeOfferCurrency, buildOfferAmount, feeBasisPointsFor, offerAmountValue
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same txjson swap-buy-prepare.js
@@ -71,7 +72,13 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 503 });
   }
   console.log('BUY-PAYLOAD offers found:', offers.length);
-  const offer = findCollectionOffer(offers, collection, undefined, buyer);
+  // Which listing to buy: the currency asked for, or (none given) the
+  // collection's token listing first, then a Σκύλλα XRP listing.
+  const wanted = body && body.currency ? normalizeOfferCurrency(body.currency) : null;
+  const tokenOffer = wanted === 'xrp' ? null : findCollectionOffer(offers, collection, undefined, buyer);
+  const xrpOffer = (wanted === 'token' || tokenOffer) ? null : findCollectionOffer(offers, collection, undefined, buyer, 'xrp');
+  const offer = tokenOffer || xrpOffer;
+  const offerCurrency = xrpOffer ? 'xrp' : 'token';
   if (!offer) {
     console.log('BUY-PAYLOAD exit: not_listed (no non-buyer $PIGEONS offer among', offers.length, 'offers)');
     return new Response(JSON.stringify({ error: 'not_listed' }), { status: 404 });
@@ -83,7 +90,7 @@ export async function onRequestPost(context) {
   // Legacy (pre-rollout) listing: no Destination restriction, on-ledger
   // amount already IS the full price — stays the original plain, fee-less
   // direct accept.
-  if (offer.destination !== MARKETPLACE_BROKER_WALLET) {
+  if (offerCurrency === 'token' && offer.destination !== MARKETPLACE_BROKER_WALLET) {
     const txjson = {
       TransactionType: 'NFTokenAcceptOffer',
       Account: buyer,
@@ -115,7 +122,7 @@ export async function onRequestPost(context) {
 
   // The live sell offer's own Amount IS the real listed price now — see
   // swap-buy-prepare.js's identical comment.
-  const fee = computeMarketplaceMarkup(offer.amount.value);
+  const fee = computeMarketplaceMarkup(offerAmountValue(offer.amount), feeBasisPointsFor(offerCurrency));
   if (!fee) {
     console.log('BUY-PAYLOAD exit: listing_price_unavailable for', nftId);
     return new Response(JSON.stringify({ error: 'listing_price_unavailable' }), { status: 409 });
@@ -140,11 +147,7 @@ export async function onRequestPost(context) {
     Account: buyer,
     Owner: offer.owner,
     NFTokenID: nftId,
-    Amount: {
-      currency: encodeCurrencyCode(cfg.tokenConfig.currency),
-      issuer: cfg.tokenConfig.issuer,
-      value: fee.totalValue
-    },
+    Amount: buildOfferAmount(cfg, offerCurrency, fee.totalValue),
     Memos: swapOfferSourceMemo()
   };
 
@@ -165,6 +168,7 @@ export async function onRequestPost(context) {
       seller: offer.owner,
       buyer,
       collection,
+      offerCurrency,
       totalValue: fee.totalValue,
       feeValue: fee.feeValue,
       sellerValue: fee.sellerValue,
@@ -180,7 +184,7 @@ export async function onRequestPost(context) {
     ok: true,
     uuid: xummData.uuid,
     next: xummData.next,
-    display: { seller: offer.owner, totalValue: fee.totalValue }
+    display: { seller: offer.owner, totalValue: fee.totalValue, offerCurrency }
   }), {
     headers: { 'Content-Type': 'application/json' }
   });

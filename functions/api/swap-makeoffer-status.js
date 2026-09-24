@@ -1,6 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftBuyOffers,
-  getXamanPayloadStatus, addSwapBuyOffer, encodeCurrencyCode, getTradeConfig
+  getXamanPayloadStatus, addSwapBuyOffer, encodeCurrencyCode, getTradeConfig,
+  normalizeOfferCurrency, xrpToDrops, offerAmountValue
 } from '../_shared.js';
 
 // Polled by the browser after [ OPEN XAMAN ] while the offerer is signing.
@@ -35,6 +36,7 @@ export async function onRequestGet(context) {
   const nftId = url.searchParams.get('nftId');
   const priceValue = url.searchParams.get('priceValue');
   const collection = url.searchParams.get('collection') || 'pigeons';
+  const offerCurrency = normalizeOfferCurrency(url.searchParams.get('currency'));
   if (!uuid || !/^[0-9a-fA-F-]{10,60}$/.test(uuid) || !nftId || !/^[0-9A-Fa-f]{64}$/.test(nftId) || !priceValue) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
@@ -70,11 +72,12 @@ export async function onRequestGet(context) {
   const currency = encodeCurrencyCode(cfg.tokenConfig.currency);
   const offers = await fetchNftBuyOffers(nftId);
   const ownOffer = offers.find(o =>
-    o.owner === buyer &&
-    o.amount && typeof o.amount === 'object' &&
-    o.amount.currency === currency &&
-    o.amount.issuer === cfg.tokenConfig.issuer &&
-    o.amount.value === priceValue
+    o.owner === buyer && (offerCurrency === 'xrp'
+      ? typeof o.amount === 'string' && o.amount === xrpToDrops(priceValue)
+      : o.amount && typeof o.amount === 'object' &&
+        o.amount.currency === currency &&
+        o.amount.issuer === cfg.tokenConfig.issuer &&
+        o.amount.value === priceValue)
   );
 
   if (!ownOffer) {
@@ -88,7 +91,8 @@ export async function onRequestGet(context) {
   context.waitUntil(addSwapBuyOffer(env.coin, nftId, {
     offerId: ownOffer.nft_offer_index,
     buyer,
-    price: ownOffer.amount.value,
+    price: offerAmountValue(ownOffer.amount),
+    currency: offerCurrency,
     createdAt: Math.floor(Date.now() / 1000)
   }, collection));
 
@@ -96,6 +100,7 @@ export async function onRequestGet(context) {
     status: 'offered',
     txHash,
     offerId: ownOffer.nft_offer_index,
-    price: ownOffer.amount.value
+    price: offerAmountValue(ownOffer.amount),
+    offerCurrency
   }), { headers: { 'Content-Type': 'application/json' } });
 }

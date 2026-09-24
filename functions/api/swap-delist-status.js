@@ -1,6 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull,
-  getXamanPayloadStatus, removeSwapListing, findCollectionOffer, getTradeConfig
+  getXamanPayloadStatus, removeSwapListing, findCollectionOffer, getTradeConfig,
+  normalizeOfferCurrency, removeSwapXrpListing
 } from '../_shared.js';
 
 // Polled by the browser after [ OPEN XAMAN ] while the seller is signing.
@@ -31,6 +32,7 @@ export async function onRequestGet(context) {
   const uuid = url.searchParams.get('uuid');
   const nftId = url.searchParams.get('nftId');
   const collection = url.searchParams.get('collection') || 'pigeons';
+  const which = url.searchParams.get('currency') ? normalizeOfferCurrency(url.searchParams.get('currency')) : 'any';
   if (!uuid || !/^[0-9a-fA-F-]{10,60}$/.test(uuid) || !nftId || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
@@ -72,7 +74,7 @@ export async function onRequestGet(context) {
   // unrelated (e.g. XRP) offer from the same seller must never block a
   // real delist from ever resolving.
   const remainingOffers = await fetchNftSellOffersOrNull(nftId);
-  const stillThere = remainingOffers === null || !!findCollectionOffer(remainingOffers, collection, seller);
+  const stillThere = remainingOffers === null || !!findCollectionOffer(remainingOffers, collection, seller, undefined, which);
   if (stillThere) {
     // Signed successfully on Xaman's side but not yet reflected on ledger
     // reads (or the read itself failed) — caller should keep polling.
@@ -81,7 +83,8 @@ export async function onRequestGet(context) {
     });
   }
 
-  context.waitUntil(removeSwapListing(env.coin, nftId, collection));
+  if (which !== 'xrp') context.waitUntil(removeSwapListing(env.coin, nftId, collection));
+  if (which !== 'token') context.waitUntil(removeSwapXrpListing(env.coin, nftId, collection));
 
   return new Response(JSON.stringify({ status: 'delisted', txHash }), {
     headers: { 'Content-Type': 'application/json' }

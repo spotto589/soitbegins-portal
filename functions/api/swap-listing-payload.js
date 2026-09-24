@@ -3,7 +3,9 @@ import {
   isTransferable, getTradeConfig,
   encodeCurrencyCode, createXamanPayload, getXamanUserToken, swapOfferSourceMemo,
   LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds,
-  computeMarketplaceMarkup, MARKETPLACE_BROKER_WALLET, recordPendingListing
+  computeMarketplaceMarkup, MARKETPLACE_BROKER_WALLET, recordPendingListing,
+  normalizeOfferCurrency, isValidXrpValue, buildOfferAmount, feeBasisPointsFor,
+  fetchNftSellOffersOrNull, findCollectionOffer
 } from '../_shared.js';
 
 // Σκύλλα SWAP — first real listing test. Re-derives and re-validates the
@@ -60,7 +62,12 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
   }
 
-  if (!cfg.tokenConfig.configured) {
+  // 'token' (the collection's own coin, the default) or 'xrp'.
+  const offerCurrency = normalizeOfferCurrency(body && body.currency);
+  if (offerCurrency === 'xrp' && !isValidXrpValue(priceStr)) {
+    return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
+  }
+  if (offerCurrency === 'token' && !cfg.tokenConfig.configured) {
     return new Response(JSON.stringify({ error: 'not_configured' }), { status: 501 });
   }
 
@@ -91,7 +98,17 @@ export async function onRequestPost(context) {
   // being silently cut from what you listed for (see computeMarketplaceMarkup's
   // own comment in _shared.js for the real xrp.cafe transaction this
   // matches).
-  const fee = computeMarketplaceMarkup(priceStr);
+  // One live Σκύλλα listing per currency per NFT — same duplicate guard as
+  // swap-listing-prepare.js (a dual listing is one token + one XRP offer).
+  const existingOffersOrNull = await fetchNftSellOffersOrNull(nftId);
+  if (existingOffersOrNull === null) {
+    return new Response(JSON.stringify({ error: 'lookup_failed' }), { status: 502 });
+  }
+  if (findCollectionOffer(existingOffersOrNull, collection, seller, undefined, offerCurrency)) {
+    return new Response(JSON.stringify({ error: 'already_listed' }), { status: 409 });
+  }
+
+  const fee = computeMarketplaceMarkup(priceStr, feeBasisPointsFor(offerCurrency));
   if (!fee) {
     return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
   }
@@ -108,11 +125,7 @@ export async function onRequestPost(context) {
     TransactionType: 'NFTokenCreateOffer',
     Account: seller,
     NFTokenID: nftId,
-    Amount: {
-      currency: encodeCurrencyCode(cfg.tokenConfig.currency),
-      issuer: cfg.tokenConfig.issuer,
-      value: fee.sellerValue
-    },
+    Amount: buildOfferAmount(cfg, offerCurrency, fee.sellerValue),
     Destination: MARKETPLACE_BROKER_WALLET,
     Flags: 1,
     // FOREVER (durationDays 0) -> null -> field omitted entirely, which
@@ -138,6 +151,7 @@ export async function onRequestPost(context) {
       nftId,
       seller,
       collection,
+      offerCurrency,
       totalValue: fee.totalValue,
       feeValue: fee.feeValue,
       sellerValue: fee.sellerValue

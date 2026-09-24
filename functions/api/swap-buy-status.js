@@ -3,7 +3,8 @@ import {
   getXamanPayloadStatus, removeSwapListing, findCollectionOffer, getTradeConfig, takePendingBuy, recordSwapSale,
   peekPendingBrokerAccept, takePendingBrokerAccept, releaseBrokerAcceptLock,
   encodeCurrencyCode, MARKETPLACE_BROKER_WALLET,
-  swapOfferSourceMemo, brokeredSaleMemo, submitAsBroker, verifyBrokerFeeFromMeta, payBrokerReward, applyNftRoyalty
+  swapOfferSourceMemo, brokeredSaleMemo, submitAsBroker, verifyBrokerFeeFromMeta, payBrokerReward, applyNftRoyalty,
+  xrpToDrops, offerAmountValue, verifyBrokerXrpFeeFromMeta, cancelLeftoverBrokerOffers, removeSwapListingsAllCurrencies
 } from '../_shared.js';
 
 // Polled by the browser after [ OPEN XAMAN ] while the buyer is signing.
@@ -128,12 +129,14 @@ export async function onRequestGet(context) {
   }
   const tokenCurrency = encodeCurrencyCode(cfg.tokenConfig.currency);
   const buyOffers = await fetchNftBuyOffers(nftId);
+  const isXrp = feeFlow.offerCurrency === 'xrp';
   const buyOffer = buyOffers.find(o =>
-    o.owner === buyer &&
-    o.amount && typeof o.amount === 'object' &&
-    o.amount.currency === tokenCurrency &&
-    o.amount.issuer === cfg.tokenConfig.issuer &&
-    o.amount.value === feeFlow.totalValue
+    o.owner === buyer && (isXrp
+      ? typeof o.amount === 'string' && o.amount === xrpToDrops(feeFlow.totalValue)
+      : o.amount && typeof o.amount === 'object' &&
+        o.amount.currency === tokenCurrency &&
+        o.amount.issuer === cfg.tokenConfig.issuer &&
+        o.amount.value === feeFlow.totalValue)
   );
 
   if (!buyOffer) {
@@ -174,11 +177,10 @@ export async function onRequestGet(context) {
     TransactionType: 'NFTokenAcceptOffer',
     NFTokenBuyOffer: buyOffer.nft_offer_index,
     NFTokenSellOffer: pending.offerId,
-    NFTokenBrokerFee: {
-      currency: tokenCurrency,
-      issuer: cfg.tokenConfig.issuer,
-      value: pending.feeValue
-    },
+    // XRP: plain drops string; omitted when the fee rounds to 0 drops.
+    ...(isXrp
+      ? (xrpToDrops(pending.feeValue) ? { NFTokenBrokerFee: xrpToDrops(pending.feeValue) } : {})
+      : { NFTokenBrokerFee: { currency: tokenCurrency, issuer: cfg.tokenConfig.issuer, value: pending.feeValue } }),
     Memos: [...swapOfferSourceMemo(), brokeredSaleMemo(pending.pigeonNumber)]
   };
 
@@ -194,7 +196,9 @@ export async function onRequestGet(context) {
   // Confirm the 0.589% actually landed in the broker wallet, straight from
   // this settling transaction's own metadata — not just trusting the
   // proxy's tesSUCCESS.
-  const feeCheck = verifyBrokerFeeFromMeta(brokerResult.meta, MARKETPLACE_BROKER_WALLET, cfg.tokenConfig.issuer, tokenCurrency, pending.feeValue);
+  const feeCheck = isXrp
+    ? verifyBrokerXrpFeeFromMeta(brokerResult.meta, MARKETPLACE_BROKER_WALLET, xrpToDrops(pending.feeValue) || '0')
+    : verifyBrokerFeeFromMeta(brokerResult.meta, MARKETPLACE_BROKER_WALLET, cfg.tokenConfig.issuer, tokenCurrency, pending.feeValue);
 
   // A THIRD, separate deduction — see applyNftRoyalty's own comment in
   // _shared.js, and swap-acceptoffer-status.js's identical fix. Real,
@@ -205,8 +209,14 @@ export async function onRequestGet(context) {
   const royalty = applyNftRoyalty(pending.sellerValue, nftId);
 
   context.waitUntil(releaseBrokerAcceptLock(env.coin, pending.offerId));
-  context.waitUntil(removeSwapListing(env.coin, nftId, collection));
-  context.waitUntil(recordSwapSale(env.coin, {
+  context.waitUntil(removeSwapListingsAllCurrencies(env.coin, nftId, collection));
+  // The other half of a dual listing (and any other Σκύλλα listing this
+  // seller still had) can't be filled any more — cancel it so the seller
+  // gets their reserve back.
+  context.waitUntil(cancelLeftoverBrokerOffers(env, nftId, pending.seller).catch(() => {}));
+  // The sales log is the token feed; XRP sales already reach the XRP feed
+  // from the ledger itself.
+  if (!isXrp) context.waitUntil(recordSwapSale(env.coin, {
     txHash: brokerResult.hash,
     nftId,
     seller: pending.seller,
@@ -221,8 +231,11 @@ export async function onRequestGet(context) {
   }, collection));
   // $CRWN reward to both sides, TEST-PHASE flat amount — see
   // swap-acceptoffer-status.js's identical comment.
-  context.waitUntil(payBrokerReward(env, pending.buyer, 'Σκύλλα REWARD | BUYER | #' + (pending.pigeonNumber || '?')).catch(() => {}));
-  context.waitUntil(payBrokerReward(env, pending.seller, 'Σκύλλα REWARD | SELLER | #' + (pending.pigeonNumber || '?')).catch(() => {}));
+  // $CRWN reward is for token trades only — never XRP (user's rule, 2026-09-24).
+  if (!isXrp) {
+    context.waitUntil(payBrokerReward(env, pending.buyer, 'Σκύλλα REWARD | BUYER | #' + (pending.pigeonNumber || '?')).catch(() => {}));
+    context.waitUntil(payBrokerReward(env, pending.seller, 'Σκύλλα REWARD | SELLER | #' + (pending.pigeonNumber || '?')).catch(() => {}));
+  }
 
   return new Response(JSON.stringify({
     status: 'settled',
@@ -232,6 +245,7 @@ export async function onRequestGet(context) {
     sellerValue: royalty.finalSellerValue,
     royaltyValue: royalty.royaltyValue,
     royaltyPercent: royalty.royaltyPercent,
-    brokerFeeVerified: feeCheck.ok
+    brokerFeeVerified: feeCheck.ok,
+    offerCurrency: isXrp ? 'xrp' : 'token'
   }), { headers: { 'Content-Type': 'application/json' } });
 }

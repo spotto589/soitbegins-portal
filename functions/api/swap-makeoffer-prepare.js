@@ -1,7 +1,8 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchDeeptideNftDetail, getTradeConfig,
   encodeCurrencyCode, swapOfferSourceMemo,
-  LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds
+  LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds,
+  normalizeOfferCurrency, isValidXrpValue, buildOfferAmount
 } from '../_shared.js';
 
 // MAKE AN OFFER — the reverse of LIST. Builds and returns the exact
@@ -54,7 +55,12 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
   }
 
-  if (!cfg.tokenConfig.configured) {
+  // 'token' (the collection's own coin, the default) or 'xrp'.
+  const offerCurrency = normalizeOfferCurrency(body && body.currency);
+  if (offerCurrency === 'xrp' && !isValidXrpValue(priceStr)) {
+    return new Response(JSON.stringify({ error: 'invalid_price' }), { status: 400 });
+  }
+  if (offerCurrency === 'token' && !cfg.tokenConfig.configured) {
     return new Response(JSON.stringify({ error: 'not_configured' }), { status: 501 });
   }
 
@@ -78,11 +84,7 @@ export async function onRequestPost(context) {
     Account: buyer,
     Owner: item.owner,
     NFTokenID: nftId,
-    Amount: {
-      currency: encodeCurrencyCode(cfg.tokenConfig.currency),
-      issuer: cfg.tokenConfig.issuer,
-      value: priceStr
-    },
+    Amount: buildOfferAmount(cfg, offerCurrency, priceStr),
     // FOREVER (durationDays 0) -> null -> field omitted entirely, same as LIST.
     ...(expiration !== null ? { Expiration: expiration } : {}),
     Memos: swapOfferSourceMemo()

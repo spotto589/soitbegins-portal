@@ -1,6 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNftsChecked, fetchNftBuyOffers, getTradeConfig,
-  encodeCurrencyCode, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET, applyNftRoyalty
+  encodeCurrencyCode, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET, applyNftRoyalty,
+  offerCurrencyOf, offerAmountValue, buildOfferAmount, feeBasisPointsFor
 } from '../_shared.js';
 
 // Owner accepting an incoming MAKE AN OFFER buy-offer — now via XRPL
@@ -73,9 +74,11 @@ export async function onRequestPost(context) {
   if (offer.owner === owner) {
     return new Response(JSON.stringify({ error: 'cannot_accept_own_offer' }), { status: 400 });
   }
-  if (!offer.amount || typeof offer.amount !== 'object' ||
-      offer.amount.currency !== encodeCurrencyCode(cfg.tokenConfig.currency) ||
-      offer.amount.issuer !== cfg.tokenConfig.issuer) {
+  // The collection's token, or XRP. An XRP offer restricted to some other
+  // marketplace's broker can only be filled by that marketplace.
+  const offerCurrency = offerCurrencyOf(offer.amount, cfg);
+  if (!offerCurrency || offer.amount === '0' ||
+      (offerCurrency === 'xrp' && offer.destination && offer.destination !== MARKETPLACE_BROKER_WALLET)) {
     return new Response(JSON.stringify({ error: 'unexpected_offer_currency' }), { status: 400 });
   }
   // Expiration is ripple-epoch seconds — XRPL itself would refuse an
@@ -89,7 +92,7 @@ export async function onRequestPost(context) {
     }
   }
 
-  const fee = computeMarketplaceFee(offer.amount.value);
+  const fee = computeMarketplaceFee(offerAmountValue(offer.amount), feeBasisPointsFor(offerCurrency));
   if (!fee) {
     return new Response(JSON.stringify({ error: 'invalid_offer_amount' }), { status: 400 });
   }
@@ -98,11 +101,7 @@ export async function onRequestPost(context) {
     TransactionType: 'NFTokenCreateOffer',
     Account: owner,
     NFTokenID: nftId,
-    Amount: {
-      currency: encodeCurrencyCode(cfg.tokenConfig.currency),
-      issuer: cfg.tokenConfig.issuer,
-      value: fee.sellerValue
-    },
+    Amount: buildOfferAmount(cfg, offerCurrency, fee.sellerValue),
     Destination: MARKETPLACE_BROKER_WALLET,
     Flags: 1
   };
@@ -125,7 +124,8 @@ export async function onRequestPost(context) {
       feeValue: fee.feeValue,
       sellerValue: royalty.finalSellerValue,
       royaltyValue: royalty.royaltyValue,
-      royaltyPercent: royalty.royaltyPercent
+      royaltyPercent: royalty.royaltyPercent,
+      offerCurrency
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }

@@ -888,6 +888,13 @@ export const MARKETPLACE_BROKER_WALLET = 'rpigEoNV9KYjK6P9kzFmTqesbpqv7dpnzK';
 // 0.01023 as a float) so the fee math below never has to multiply by a
 // repeating binary fraction.
 export const MARKETPLACE_FEE_BASIS_POINTS = 1023;
+// XRP trades through Σκύλλα pay a higher 1.3% (user's call, 2026-09-24) —
+// the collection's own token keeps 1.023%, and only token trades earn the
+// $CRWN reward (payBrokerReward), never XRP ones.
+export const XRP_MARKETPLACE_FEE_BASIS_POINTS = 1300;
+export function feeBasisPointsFor(currency) {
+  return currency === 'xrp' ? XRP_MARKETPLACE_FEE_BASIS_POINTS : MARKETPLACE_FEE_BASIS_POINTS;
+}
 
 function decimalToMicroUnits(valueStr) {
   const n = Number(valueStr);
@@ -931,10 +938,10 @@ function microUnitsToDecimalStr(micro) {
 //   seller receives instead (sellerValue = totalValue − fee). Still used
 //   as-is by swap-acceptoffer-prepare.js/-payload.js for exactly that
 //   reason — not a design inconsistency, just which side moved first.
-export function computeMarketplaceFee(totalValueStr) {
+export function computeMarketplaceFee(totalValueStr, basisPoints = MARKETPLACE_FEE_BASIS_POINTS) {
   const totalMicro = decimalToMicroUnits(totalValueStr);
   if (!isFinite(totalMicro) || totalMicro <= 0) return null;
-  const feeMicro = Math.floor(totalMicro * MARKETPLACE_FEE_BASIS_POINTS / 100000);
+  const feeMicro = Math.floor(totalMicro * basisPoints / 100000);
   const sellerMicro = totalMicro - feeMicro;
   return {
     totalValue: microUnitsToDecimalStr(totalMicro),
@@ -943,10 +950,10 @@ export function computeMarketplaceFee(totalValueStr) {
   };
 }
 
-export function computeMarketplaceMarkup(listedValueStr) {
+export function computeMarketplaceMarkup(listedValueStr, basisPoints = MARKETPLACE_FEE_BASIS_POINTS) {
   const listedMicro = decimalToMicroUnits(listedValueStr);
   if (!isFinite(listedMicro) || listedMicro <= 0) return null;
-  const feeMicro = Math.floor(listedMicro * MARKETPLACE_FEE_BASIS_POINTS / 100000);
+  const feeMicro = Math.floor(listedMicro * basisPoints / 100000);
   const totalMicro = listedMicro + feeMicro;
   return {
     totalValue: microUnitsToDecimalStr(totalMicro),
@@ -1109,6 +1116,43 @@ export function verifyBrokerFeeFromMeta(meta, brokerWallet, issuer, currencyCode
     return { ok: Math.abs(delta - expected) < 1e-6, delta, expected };
   }
   return { ok: false, reason: 'broker_trustline_not_found_in_meta' };
+}
+
+// XRP version of verifyBrokerFeeFromMeta: the broker's own AccountRoot
+// balance, straight from the settling transaction's metadata. The broker
+// also pays that transaction's network fee out of the same balance, so the
+// increase is the broker fee minus a few drops — allow up to 0.01 XRP.
+export function verifyBrokerXrpFeeFromMeta(meta, brokerWallet, expectedFeeDrops) {
+  if (!meta || !Array.isArray(meta.AffectedNodes)) return { ok: false, reason: 'no_meta' };
+  for (const node of meta.AffectedNodes) {
+    const entry = node.ModifiedNode;
+    if (!entry || entry.LedgerEntryType !== 'AccountRoot') continue;
+    const fields = entry.FinalFields;
+    if (!fields || fields.Account !== brokerWallet) continue;
+    const prev = entry.PreviousFields && entry.PreviousFields.Balance;
+    if (prev === undefined) return { ok: false, reason: 'broker_balance_unchanged' };
+    const delta = parseInt(fields.Balance, 10) - parseInt(prev, 10);
+    const expected = parseInt(expectedFeeDrops, 10);
+    return { ok: delta <= expected && expected - delta <= 10000, delta, expected };
+  }
+  return { ok: false, reason: 'broker_account_not_found_in_meta' };
+}
+
+// After a Σκύλλα sale, any OTHER sell offers the seller still has
+// restricted to our broker (the other half of a dual token + XRP listing)
+// can never be filled — the seller doesn't own the NFT any more — but they
+// keep holding the seller's 0.2 XRP owner reserve. As those offers'
+// Destination, the broker is allowed to cancel them itself, so it does.
+// Best-effort: a failure here never affects the sale.
+export async function cancelLeftoverBrokerOffers(env, nftId, seller) {
+  const offers = await fetchNftSellOffersOrNull(nftId);
+  if (!offers) return { ok: false, error: 'lookup_failed' };
+  const ids = offers
+    .filter(o => o.owner === seller && o.destination === MARKETPLACE_BROKER_WALLET)
+    .map(o => o.nft_offer_index);
+  if (!ids.length) return { ok: true, cancelled: 0 };
+  const result = await submitAsBroker(env, { TransactionType: 'NFTokenCancelOffer', NFTokenOffers: ids });
+  return { ok: !!(result && result.ok), cancelled: ids.length, result };
 }
 
 // Bridges swap-acceptoffer-payload.js (which knows the buyer/fee/pigeon
@@ -1848,21 +1892,78 @@ export function findPigeonsOffer(offers, owner, excludeOwner) {
   return findCollectionOffer(offers, 'pigeons', owner, excludeOwner);
 }
 
+// ---- XRP alongside the collection's own token (2026-09-24) ----
+// Every Σκύλλα LIST/OFFER can now be priced in XRP ('xrp') as well as the
+// collection's token ('token'). XRP amounts on-ledger are integer drop
+// strings; everything above this layer works in plain XRP decimal strings
+// (same 6-decimal micro-unit math the fee helpers use — 1 micro-XRP is
+// exactly 1 drop), so the fee maths is shared unchanged.
+export function normalizeOfferCurrency(c) {
+  return c === 'xrp' ? 'xrp' : 'token';
+}
+export function xrpToDrops(xrpStr) {
+  const n = Number(xrpStr);
+  if (!isFinite(n) || n <= 0) return null;
+  const drops = Math.round(n * 1e6);
+  return drops > 0 ? String(drops) : null;
+}
+export function dropsToXrp(drops) {
+  const n = parseInt(drops, 10);
+  return Number.isFinite(n) ? microUnitsToDecimalStr(n) : null;
+}
+// More than 6 decimal places can't be represented in drops — refuse
+// rather than silently rounding what the user typed.
+export function isValidXrpValue(xrpStr) {
+  return /^\d+(\.\d{1,6})?$/.test(String(xrpStr)) && Number(xrpStr) > 0;
+}
+// The on-ledger Amount for a Σκύλλα offer in either currency.
+export function buildOfferAmount(cfg, currency, valueStr) {
+  if (currency === 'xrp') return xrpToDrops(valueStr);
+  return {
+    currency: encodeCurrencyCode(cfg.tokenConfig.currency),
+    issuer: cfg.tokenConfig.issuer,
+    value: valueStr
+  };
+}
+// 'xrp' / 'token' / null for an on-ledger Amount (null = some other token).
+export function offerCurrencyOf(amount, cfg) {
+  if (typeof amount === 'string') return 'xrp';
+  if (amount && typeof amount === 'object' && cfg &&
+      amount.currency === encodeCurrencyCode(cfg.tokenConfig.currency) &&
+      amount.issuer === cfg.tokenConfig.issuer) return 'token';
+  return null;
+}
+// Plain decimal value of an Amount (XRP drops -> XRP).
+export function offerAmountValue(amount) {
+  if (typeof amount === 'string') return dropsToXrp(amount);
+  return amount && amount.value;
+}
+// Does this sell offer count as a Σκύλλα listing in `currency`? Token:
+// the original rule (currency + issuer, any destination, so pre-broker
+// legacy listings still match). XRP: only offers restricted to Σκύλλα's
+// own broker — every other XRP listing belongs to xrp.cafe/Bidds/etc.
+// and "0" drops is a SWAP offer, never a sale.
+function isCollectionListing(o, cfg, currency) {
+  if (currency === 'any') return isCollectionListing(o, cfg, 'token') || isCollectionListing(o, cfg, 'xrp');
+  if (currency === 'xrp') {
+    return typeof o.amount === 'string' && o.amount !== '0' && o.destination === MARKETPLACE_BROKER_WALLET;
+  }
+  return offerCurrencyOf(o.amount, cfg) === 'token';
+}
+
 // Generic form of findPigeonsOffer — matches against whichever
 // collection's own tokenConfig collectionKey resolves to via
 // getTradeConfig, instead of always PIGEONS_TOKEN_CONFIG. Same
 // multiple-currencies-on-one-NFT reasoning as findPigeonsOffer's own
 // comment above applies per collection too.
-export function findCollectionOffer(offers, collectionKey, owner, excludeOwner) {
+// `currency` is 'token' (default — every original caller), 'xrp' or 'any'.
+export function findCollectionOffer(offers, collectionKey, owner, excludeOwner, currency = 'token') {
   const cfg = getTradeConfig(collectionKey);
   if (!cfg) return null;
-  const currency = encodeCurrencyCode(cfg.tokenConfig.currency);
   return offers.find(o =>
     (owner === undefined || o.owner === owner) &&
     (excludeOwner === undefined || o.owner !== excludeOwner) &&
-    o.amount && typeof o.amount === 'object' &&
-    o.amount.currency === currency &&
-    o.amount.issuer === cfg.tokenConfig.issuer
+    isCollectionListing(o, cfg, currency)
   ) || null;
 }
 
@@ -1876,16 +1977,13 @@ export function findCollectionOffer(offers, collectionKey, owner, excludeOwner) 
 // self-heal check here just needs SOME matching offer to still exist,
 // which duplicates guarantee even after "successfully" cancelling one.
 // DELIST now cancels every one of these in a single NFTokenCancelOffer.
-export function findCollectionOffers(offers, collectionKey, owner, excludeOwner) {
+export function findCollectionOffers(offers, collectionKey, owner, excludeOwner, currency = 'token') {
   const cfg = getTradeConfig(collectionKey);
   if (!cfg) return [];
-  const currency = encodeCurrencyCode(cfg.tokenConfig.currency);
   return offers.filter(o =>
     (owner === undefined || o.owner === owner) &&
     (excludeOwner === undefined || o.owner !== excludeOwner) &&
-    o.amount && typeof o.amount === 'object' &&
-    o.amount.currency === currency &&
-    o.amount.issuer === cfg.tokenConfig.issuer
+    isCollectionListing(o, cfg, currency)
   );
 }
 
@@ -4717,6 +4815,32 @@ export async function removeSwapListing(kv, nftId, collectionKey) {
   await safeKvPut(kv, kvKeyFor(SWAP_LISTINGS_MAP_KEY, collectionKey), JSON.stringify(map));
 }
 
+// Σκύλλα XRP listings — same shape as the token map above, kept in its own
+// KV key so every existing token-only reader (FL00R $P!GE0NS, the LISTED
+// filter, badges) is untouched. price is in XRP (decimal string).
+const SWAP_XRP_LISTINGS_MAP_KEY = 'pswap:listings-xrp:v1';
+
+export async function getSwapXrpListingsMap(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(SWAP_XRP_LISTINGS_MAP_KEY, collectionKey));
+  return raw ? JSON.parse(raw) : {};
+}
+export async function recordSwapXrpListing(kv, nftId, entry, collectionKey) {
+  const map = await getSwapXrpListingsMap(kv, collectionKey);
+  map[nftId] = entry;
+  await safeKvPut(kv, kvKeyFor(SWAP_XRP_LISTINGS_MAP_KEY, collectionKey), JSON.stringify(map));
+}
+export async function removeSwapXrpListing(kv, nftId, collectionKey) {
+  const map = await getSwapXrpListingsMap(kv, collectionKey);
+  if (!map[nftId]) return;
+  delete map[nftId];
+  await safeKvPut(kv, kvKeyFor(SWAP_XRP_LISTINGS_MAP_KEY, collectionKey), JSON.stringify(map));
+}
+// Both currencies at once, e.g. after a sale or a DEL!ST of both halves.
+export async function removeSwapListingsAllCurrencies(kv, nftId, collectionKey) {
+  await removeSwapListing(kv, nftId, collectionKey);
+  await removeSwapXrpListing(kv, nftId, collectionKey);
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // MAKE AN OFFER — the reverse of a listing: a non-owner proposes a
 // $PIGEONS price for a Pigeon (listed or not) via a real NFTokenCreateOffer
@@ -5046,6 +5170,7 @@ export async function identifySaleVenue(kv, txHash) {
     const account = data.result && data.result.Account;
     if (account === XRP_CAFE_BROKER_ACCOUNT) venue = 'xrpcafe';
     else if (account === DEEPTIDE_BROKER_ACCOUNT) venue = 'deeptide';
+    else if (account === MARKETPLACE_BROKER_WALLET) venue = 'scylla'; // Σκύλλα's own XRP sales
   } catch (e) {
     return null; // lookup failure - not cached, worth retrying next time
   }
@@ -5124,6 +5249,9 @@ export const NFT_MARKETPLACES = {
   rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC: { key: 'xrpcafe', label: 'XRP.CAFE', url: id => `https://xrp.cafe/nft/${id}` },
   rpZqTPC8GvrSvEfFsUuHkmPCg29GdQuXhC: { key: 'bidds', label: 'B!DDS', url: id => `https://bidds.com/nft/${id}` },
   rLGHuf125sJV9d6g2hcK2HzKrDH2j45dPQ: { key: 'deeptide', label: 'DEEPT!DE', url: id => `https://deeptide.co/nft/${id}` },
+  // Σκύλλα's own XRP listings — bought in-site (BUY N0W), so the page
+  // turns this one into a real buy button instead of an outbound link.
+  [MARKETPLACE_BROKER_WALLET]: { key: 'scylla', label: 'Σκύλλα', internal: true, url: id => `https://bithomp.com/en/nft/${id}` },
 };
 const DIRECT_MARKET = { key: 'direct', label: 'D!RECT', url: id => `https://bithomp.com/en/nft/${id}` };
 
@@ -5134,13 +5262,13 @@ const DIRECT_MARKET = { key: 'direct', label: 'D!RECT', url: id => `https://bith
 export function marketListingsFromOffers(offers, owner, nftId) {
   const best = {};
   for (const o of offers || []) {
-    if (typeof o.amount !== 'string') continue;
+    if (typeof o.amount !== 'string' || o.amount === '0') continue; // "0" = a swap offer, not a sale
     if (owner && o.owner !== owner) continue;
     const m = o.destination ? NFT_MARKETPLACES[o.destination] : DIRECT_MARKET;
     if (!m) continue;
     const xrp = parseInt(o.amount, 10) / 1000000;
     if (!Number.isFinite(xrp)) continue;
-    if (!best[m.key] || xrp < best[m.key].priceXrp) best[m.key] = { key: m.key, label: m.label, priceXrp: xrp, url: m.url(nftId) };
+    if (!best[m.key] || xrp < best[m.key].priceXrp) best[m.key] = { key: m.key, label: m.label, priceXrp: xrp, url: m.url(nftId), ...(m.internal ? { internal: true } : {}) };
   }
   return Object.values(best).sort((a, b) => a.priceXrp - b.priceXrp);
 }

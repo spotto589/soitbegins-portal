@@ -1,6 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, getSwapBuyOffersMap, fetchNftBuyOffersOrNull,
-  removeSwapBuyOffer, findCollectionOffer, getTradeConfig, fetchDeeptideNftDetailCached, mapWithConcurrency
+  removeSwapBuyOffer, findCollectionOffer, getTradeConfig, fetchDeeptideNftDetailCached, mapWithConcurrency,
+  offerCurrencyOf, offerAmountValue, getTradeConfig as getTradeConfigForMade
 } from '../_shared.js';
 
 function shortenAddr(addr) {
@@ -71,6 +72,7 @@ export async function onRequestGet(context) {
         nftId,
         offerId: storedEntry.offerId,
         price: storedEntry.price,
+        offerCurrency: storedEntry.currency === 'xrp' ? 'xrp' : 'token',
         createdAt: storedEntry.createdAt || null,
         number: item ? item.number : null,
         image: item ? item.image : null,
@@ -79,7 +81,10 @@ export async function onRequestGet(context) {
       };
     }
 
-    const myOffer = findCollectionOffer(liveOffers, collection, buyer);
+    // The exact offer we recorded (token OR XRP) if it's still live,
+    // otherwise any token offer from this wallet (older records).
+    const myOffer = (storedEntry && liveOffers.find(o => o.nft_offer_index === storedEntry.offerId && o.owner === buyer)) ||
+      findCollectionOffer(liveOffers, collection, buyer);
     if (!myOffer) {
       // Genuinely gone (accepted, cancelled, or expired) — prune the
       // stale tracked record so it doesn't show up again next time.
@@ -91,7 +96,8 @@ export async function onRequestGet(context) {
     return {
       nftId,
       offerId: myOffer.nft_offer_index,
-      price: myOffer.amount.value,
+      price: offerAmountValue(myOffer.amount),
+      offerCurrency: offerCurrencyOf(myOffer.amount, getTradeConfigForMade(collection)) || 'token',
       expiration: myOffer.expiration || null,
       createdAt: (storedEntry && storedEntry.createdAt) || null,
       number: item ? item.number : null,
