@@ -10065,9 +10065,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button class="stats-carousel-arrow" id="statsPrevBtn" aria-label="PREV!0US">◂</button>
       <div class="stats-carousel-viewport">
       <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
-        <a class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorXrpCafeTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: XRP.CAFE</div><div class="stat-value" id="statFloorXrpCafe">…</div></a>
+        <!-- Two tiles (reported live 2026-09-24): Σκύλλα's own token floor,
+             and one EXTERNAL FL00R — the cheapest XRP listing on any other
+             marketplace, never named. It sorts the grid by L0WEST (XRP)
+             instead of linking out. -->
         <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY L!STED THR0UGH SCYLLA"><div class="stat-label" id="statScyllaListedLabel">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
-        <a class="stat-tile stat-tile-link stat-tile-deeptide" id="statFloorDeeptideTile" target="_blank" rel="noopener"><div class="stat-label">FL00R :: DEEPT!DE</div><div class="stat-value" id="statFloorDeeptide">…</div></a>
+        <button class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorExternalTile" title="S0RT BY L0WEST (XRP)"><div class="stat-label">EXTERNAL FL00R</div><div class="stat-value" id="statFloorExternal">…</div></button>
       </div>
       <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
         <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span></div></div>
@@ -12638,7 +12641,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileCoinsEditBtn','profileCoinsEditPopover','profileCoinsEditList',
    'salesModal','salesCloseBtn','openSalesBtn','salesCoinThumb','salesStatVolume','salesStatVolume24h','salesStatSales24h',
    'swapOffersPanelWrap','swapOffersList',
-   'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
+   'statItems','statHolders','statVolume','statListed','statFloorExternal','statFloorExternalTile',
    'statScyllaListedTile','statScyllaListedCount','statScyllaListedLabel',
    'statsCarousel','statsCarouselDots','statsPrevBtn','statsNextBtn',
    'statTraded24h','statVolume24h','statSalesTile','statSales24h',
@@ -20592,7 +20595,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // No tag for Σκύλλα's own sales (was "Σ SWAP") — every $P!GE0NS sale
     // goes through it, so the tag only pushed the price off-centre.
     // XRP sales Σκύλλα brokered do get it, to tell them from xrp.cafe's.
-    var via = s.via === 'xrpcafe' ? 'XRP.CAFE' : (s.via === 'deeptide' ? 'DEEPT!DE' : ((s.via === 'scylla' && s.currency === 'XRP') ? 'Σ SWAP' : ''));
+    // Other marketplaces are never named (reported live 2026-09-24).
+    var via = (s.via === 'xrpcafe' || s.via === 'deeptide') ? 'EXTERNAL' : ((s.via === 'scylla' && s.currency === 'XRP') ? 'Σ SWAP' : '');
     var when = s.createdAt ? relativeTimeText(s.createdAt) : '';
     var thumbHref = nftHrefFor({ number: s.number, collectionKey: s.collectionKey });
     return '<div class="sale-row" data-nftid="' + escapeHtml(s.nftId) + '">' +
@@ -24888,16 +24892,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     var feeValue = Math.floor(total * 1e6 * 1023 / 100000) / 1e6;
     return { totalValue: total, feeValue: feeValue, sellerValue: total - feeValue };
   }
+  el.statFloorExternalTile.addEventListener('click', function(){ applySort('PRICE_ASC'); });
   function loadCollectionStats(){
     api({ stats: 1 }).then(function(data){
       el.statItems.textContent = data.items !== null && data.items !== undefined ? data.items.toLocaleString() : '—';
       el.statHolders.textContent = data.holders !== null && data.holders !== undefined ? data.holders.toLocaleString() : '—';
       el.statVolume.textContent = data.totalVolumeXrp !== null && data.totalVolumeXrp !== undefined ? fmtXrp(data.totalVolumeXrp) + ' XRP' : '—';
       el.statListed.textContent = data.listedPercent !== null && data.listedPercent !== undefined ? data.listedPercent + '%' : '—';
-      el.statFloorDeeptide.textContent = data.deeptideFloorXrp !== null && data.deeptideFloorXrp !== undefined ? fmtXrp(data.deeptideFloorXrp) + ' XRP' : '—';
-      el.statFloorXrpCafe.textContent = data.xrpCafeFloorXrp !== null && data.xrpCafeFloorXrp !== undefined ? fmtXrp(data.xrpCafeFloorXrp) + ' XRP' : '—';
-      if (data.deeptideBuyUrl) el.statFloorDeeptideTile.href = data.deeptideBuyUrl;
-      if (data.xrpCafeUrl) el.statFloorXrpCafeTile.href = data.xrpCafeUrl;
+      var externalFloors = [data.xrpCafeFloorXrp, data.deeptideFloorXrp].filter(function(v){ return typeof v === 'number' && isFinite(v); });
+      el.statFloorExternal.textContent = externalFloors.length ? fmtXrp(Math.min.apply(null, externalFloors)) + ' XRP' : '—';
       el.statScyllaListedCount.innerHTML = data.scyllaFloorPigeons !== null && data.scyllaFloorPigeons !== undefined ? greenNum(data.scyllaFloorPigeons.toLocaleString()) + ' ' + COLLECTION_META[state.collection].tokenLabel : 'N0T L!STED';
       el.statTraded24h.textContent = data.traded24hCount !== null && data.traded24hCount !== undefined ? data.traded24hCount.toLocaleString() : '—';
       el.statVolume24h.textContent = data.volume24hXrp !== null && data.volume24hXrp !== undefined ? fmtXrp(data.volume24hXrp) + ' XRP' : '—';
