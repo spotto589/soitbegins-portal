@@ -14821,10 +14821,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     setTabActive(el.amountEntryListCurrency, value);
     el.amountEntryListTokenWrap.style.display = value === 'xrp' ? 'none' : '';
     el.amountEntryListXrpWrap.style.display = value === 'token' ? 'none' : '';
-    var tokenLabel = COLLECTION_META[state.collection].tokenLabel;
-    el.amountEntryListFeeNote.textContent = value === 'token' ? 'BUYER PAYS A 1.023% FEE 0N T0P'
-      : value === 'xrp' ? 'BUYER PAYS A 1.3% FEE 0N T0P'
-      : 'B0TH L!ST!NGS G0 L!VE — WH!CHEVER SELLS F!RST W!NS, THE 0THER !S CANCELLED F0R Y0U. ' + tokenLabel + ' FEE 1.023%, XRP FEE 1.3%';
+    // No fee line (reported live 2026-09-24) — only B0TH gets a note.
+    el.amountEntryListFeeNote.textContent = value === 'both' ? 'B0TH L!ST!NGS G0 L!VE — WH!CHEVER SELLS F!RST W!NS, THE 0THER !S CANCELLED F0R Y0U.' : '';
+    el.amountEntryListFeeNote.style.display = value === 'both' ? '' : 'none';
     if (!dualListing) el.amountEntryListBtn.textContent = value === 'both' ? 'L!ST B0TH (2 S!GNATURES)' : 'L!ST';
     refreshAmountBalanceLines();
   }
