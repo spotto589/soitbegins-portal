@@ -4224,9 +4224,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* S0RT BY in the same look as the other popups (SALES H!ST0RY, 0FFER,
      L!ST — reported live 2026-09-24): purple-edged panel, big centred
      title, categories as the purple eyebrow text those popups use. */
-  #sortFlyout.traits-flyout.flyout-popup{ padding:2rem 1.25rem 1rem; border:1px solid rgba(var(--collection-accent-rgb), 0.4); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 44px rgba(var(--collection-accent-rgb), 0.14); }
-  .sort-popup-title{ display:none; }
-  #sortFlyout.flyout-popup .sort-popup-title{ display:block; text-align:center; font-size:30px; font-weight:700; letter-spacing:0.03em; color:var(--white); margin:0 0 0.4rem; }
+  /* F!LTER BY TRA!TS gets the same panel, title and eyebrow (reported
+     live 2026-09-24) — the eyebrow reads CATEG0R!ES, the open category's
+     name, or SEARCH RESULTS. */
+  #sortFlyout.traits-flyout.flyout-popup,
+  #traitsFlyout.traits-flyout.flyout-popup{ padding:2rem 1.25rem 1rem; border:1px solid rgba(var(--collection-accent-rgb), 0.4); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 44px rgba(var(--collection-accent-rgb), 0.14); }
+  .sort-popup-title, .traits-popup-eyebrow{ display:none; }
+  #sortFlyout.flyout-popup .sort-popup-title,
+  #traitsFlyout.flyout-popup .sort-popup-title{ display:block; text-align:center; font-size:30px; font-weight:700; letter-spacing:0.03em; color:var(--white); margin:0 0 0.4rem; }
+  #traitsFlyout.flyout-popup .traits-popup-eyebrow{ display:block; margin:0 0 0.8rem; }
   .sort-cat-heading{ text-align:center; color:var(--collection-accent); font-size:16px; font-weight:700; letter-spacing:0.12em; margin:1rem 0 0.5rem; }
   .sort-cat-heading:first-child{ margin-top:0.3rem; }
   .traits-flyout.flyout-popup .hscroll-arrow{ display:none !important; }
@@ -11217,6 +11223,8 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <span class="trait-row-label" id="traitsHoverLabel">F!LTER BY TRA!TS <span class="thl-arrow">▾</span></span>
                 <div class="traits-flyout" id="traitsFlyout" style="display:none;">
                   <button type="button" class="flyout-popup-close-btn" id="traitsFlyoutClose" aria-label="CL0SE">✕</button>
+                  <div class="sort-popup-title">F!LTER BY TRA!TS</div>
+                  <div class="sort-cat-heading traits-popup-eyebrow" id="traitsFlyoutEyebrow">CATEG0R!ES</div>
                   <button type="button" class="flyout-back-btn" id="traitsFlyoutBack">◂ CATEG0R!ES</button>
                   <!-- S0RT (RAR!TY %/A-Z) + SEARCH — sits above the category
                        strip/value list (reported live as wanting these "up
@@ -12589,7 +12597,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','dbViewBtn','dbViewMenu','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
-   'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','bottomControlsBar','bottomSortBtn','bottomTraitsBtn','backToTopBtn',
+   'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','traitsFlyoutEyebrow','bottomControlsBar','bottomSortBtn','bottomTraitsBtn','backToTopBtn',
    'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','showCollectionWatchlistBtn','pigeonsBarDexBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
@@ -15841,6 +15849,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // wherever it was left last time — search resets right along with
       // it, same reasoning.
       el.traitsFlyout.classList.remove('flyout-drilled', 'flyout-searching');
+      el.traitsFlyoutEyebrow.textContent = 'CATEG0R!ES';
       el.traitsFlyoutSearchInput.value = '';
       state.traitsFlyoutQuery = '';
     });
@@ -15894,11 +15903,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       // without this a long category list scrolled down would leave the
       // values step opening already scrolled past its own top.
       el.traitsFlyout.classList.add('flyout-drilled');
+      el.traitsFlyoutEyebrow.textContent = catBtn.textContent.trim();
       el.traitsFlyout.scrollTop = 0;
     }
   });
   el.traitsFlyoutBack.addEventListener('click', function(){
     el.traitsFlyout.classList.remove('flyout-drilled');
+    el.traitsFlyoutEyebrow.textContent = 'CATEG0R!ES';
     el.traitsFlyout.scrollTop = 0;
   });
   // A chip here removes that filter — same toggle-off the value's own
@@ -15944,13 +15955,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       // categories -> values drill, but search results are shown in that
       // exact same vals pane, so they need the same class to be visible).
       el.traitsFlyout.classList.add('flyout-searching', 'flyout-drilled');
+      el.traitsFlyoutEyebrow.textContent = 'SEARCH RESULTS';
       renderTraitsFlyoutSearch(state.traitsFlyoutQuery);
       return;
     }
     el.traitsFlyout.classList.remove('flyout-searching');
     if (activeCat){
+      el.traitsFlyoutEyebrow.textContent = activeCat.textContent.trim();
       renderTraitsFlyoutVals(activeCat.getAttribute('data-cat'));
     } else {
+      el.traitsFlyoutEyebrow.textContent = 'CATEG0R!ES';
       el.traitsFlyoutVals.innerHTML = '';
       el.traitsFlyout.classList.remove('flyout-drilled');
     }
