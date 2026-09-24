@@ -4221,7 +4221,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .traits-flyout.flyout-popup .traits-flyout-vals .traits-flyout-val{ width:100% !important; white-space:normal !important; margin-bottom:0.4rem; }
   /* S0RT BY's category headings (PR!CE / RAR!TY / ALPHABET!CAL). */
-  .sort-cat-heading{ font-size:13px; font-weight:700; letter-spacing:0.14em; color:var(--pigeon-purple); text-align:center; margin:0.9rem 0 0.45rem; padding-bottom:0.3rem; border-bottom:1px solid var(--border-dim); }
+  /* A solid tinted bar with rules either side, so it reads as a section
+     title rather than another option (reported live 2026-09-24). */
+  .sort-cat-heading{ display:flex; align-items:center; gap:0.7rem; font-size:15px; font-weight:700; letter-spacing:0.18em; color:var(--white); text-shadow:0 0 8px var(--pigeon-purple-glow); margin:1.1rem 0 0.55rem; padding:0.45em 0.8em; background:rgba(var(--collection-accent-rgb), 0.18); border:1px solid rgba(var(--collection-accent-rgb), 0.55); border-radius:var(--radius); }
+  .sort-cat-heading::before, .sort-cat-heading::after{ content:''; flex:1 1 0; height:1px; background:linear-gradient(90deg, transparent, var(--pigeon-purple)); }
+  .sort-cat-heading::after{ background:linear-gradient(90deg, var(--pigeon-purple), transparent); }
   .sort-cat-heading:first-child{ margin-top:0.1rem; }
   .traits-flyout.flyout-popup .hscroll-arrow{ display:none !important; }
   /* F!LTER BY TRA!TS' own two-step drill (categories, then one category's
@@ -20522,17 +20526,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     'PR!CE': [
       { value: 'SCYLLA_PRICE_ASC', label: 'L0WEST $P!GE0NS' },
       { value: 'SCYLLA_PRICE_DESC', label: 'H!GHEST $P!GE0NS' },
-      { value: 'AVG_SALE_XRP_ASC', label: 'L0WEST AVG SALE PR!CE XRP' },
-      { value: 'AVG_SALE_XRP_DESC', label: 'H!GHEST AVG SALE PR!CE XRP' },
-      { value: 'AVG_SALE_PIGEONS_ASC', label: 'L0WEST AVG SALE PR!CE $P!GE0NS' },
       // Every marketplace together (xrp.cafe, Bidds, direct, ...) — one
       // floor, cheapest or dearest first (reported live 2026-09-23: keep
       // it to these two, not per-marketplace sorts).
       { value: 'PRICE_ASC', label: 'L0WEST (XRP)' },
-      { value: 'PRICE_DESC', label: 'H!GHEST (XRP)' },
-      // Was its own H!ST0R!CAL SALES category — folded into PR!CE
-      // (reported live 2026-09-24: just PR!CE / RAR!TY / ALPHABET!CAL).
-      { value: 'HIGHEST_SALE', label: 'H!GHEST REC0RDED SALES' }
+      { value: 'PRICE_DESC', label: 'H!GHEST (XRP)' }
+    ],
+    // Past sales, not current listings (reported live 2026-09-24): every
+    // AVG SALE sort plus H!GHEST REC0RDED SALE.
+    'SALES': [
+      { value: 'HIGHEST_SALE', label: 'H!GHEST REC0RDED SALE' },
+      { value: 'AVG_SALE_XRP_DESC', label: 'H!GHEST AVG SALE (XRP)' },
+      { value: 'AVG_SALE_XRP_ASC', label: 'L0WEST AVG SALE (XRP)' },
+      { value: 'AVG_SALE_PIGEONS_ASC', label: 'L0WEST AVG SALE ($P!GE0NS)' }
     ],
     'RAR!TY': [
       { value: 'RARITY_ASC', label: 'H!GHEST' },
@@ -20555,10 +20561,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // with no other changes.
   function updateSortLabelsForCollection(){
     var tokenLabel = COLLECTION_META[state.collection].tokenLabel;
-    SORT_CATEGORIES['PR!CE'].forEach(function(o){
+    SORT_CATEGORIES['PR!CE'].concat(SORT_CATEGORIES['SALES']).forEach(function(o){
       if (o.value === 'SCYLLA_PRICE_ASC') o.label = 'L0WEST ' + tokenLabel;
       else if (o.value === 'SCYLLA_PRICE_DESC') o.label = 'H!GHEST ' + tokenLabel;
-      else if (o.value === 'AVG_SALE_PIGEONS_ASC') o.label = 'L0WEST AVG SALE PR!CE ' + tokenLabel;
+      else if (o.value === 'AVG_SALE_PIGEONS_ASC') o.label = 'L0WEST AVG SALE (' + tokenLabel + ')';
     });
     // This only ever mutates the SORT_CATEGORIES data itself — the actual
     // SORT BY dropdown strip (#sortFlyoutVals) is only re-rendered from it
