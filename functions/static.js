@@ -12342,6 +12342,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <span class="tb-toggle">V!EW ▲</span>
   </div>
 
+<script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
 <script>
 (function(){
 
@@ -12363,6 +12364,72 @@ const SWAP_HTML = `<!DOCTYPE html>
   // This wallet has a Xaman push token, so sign requests pop straight up in
   // the Xaman app — no QR window on desktop (see openXamanPopup).
   var MY_PUSH_READY = "__SWAP_PUSH_READY__" === "1";
+  // ---- Xaman browser session (2026-09-24) — xrp.cafe's way. Signing in
+  // through Xaman's own browser sign-in (XummPkce) gives this page a
+  // session; any sign request created FROM that session is pushed
+  // straight to the phone by Xaman. (Server-created requests carrying a
+  // stored user_token were refused: pushed:false.) Same public app key
+  // board.js already uses. xamanSdk is set once a session for THIS
+  // wallet exists; flows that support it build their txjson on the
+  // server, create it here, then register the uuid (xaman-register.js).
+  var XAMAN_BROWSER_KEY = 'c418ff7d-673f-4a7a-b797-3bb0413653f1';
+  var xamanPkce = null;
+  var xamanSdk = null;
+  var pkceLoginPending = false;
+  function getXamanPkce(){
+    if (!xamanPkce && window.XummPkce){
+      xamanPkce = new window.XummPkce(XAMAN_BROWSER_KEY, {
+        implicit: true,
+        rememberJwt: true,
+        redirectUrl: window.location.origin + window.location.pathname
+      });
+      xamanPkce.on('error', function(){
+        if (!pkceLoginPending) return;
+        pkceLoginPending = false;
+        clearAuthorizeTimeout();
+        resetLoginButtons('error', { title: 'ERR://L0G!N AB0RTED', sub: 'TRY AGA!N.' });
+      });
+      xamanPkce.on('success', function(){ adoptXamanSession(true); });
+      xamanPkce.on('retrieved', function(){ adoptXamanSession(false); });
+    }
+    return xamanPkce;
+  }
+  // fromLogin: a sign-in just finished (or a mobile redirect came back).
+  function adoptXamanSession(fromLogin){
+    xamanPkce.state().then(function(st){
+      var account = st && st.me && st.me.account;
+      if (!st || !st.jwt || !account) return;
+      if (MY_WALLET && account === MY_WALLET){
+        xamanSdk = st.sdk;
+        MY_PUSH_READY = true;
+        return;
+      }
+      if (!fromLogin && !pkceLoginPending) return; // a remembered session for some other wallet: ignore
+      pkceLoginPending = false;
+      fetch('/api/connect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jwt: st.jwt }) })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          clearAuthorizeTimeout();
+          if (data && data.ok) window.location.href = '/static?connected=1&tab=mypigeons';
+          else resetLoginButtons('error', { title: 'ERR://C0NNECT!0N FA!LED', sub: 'TRY AGA!N.' });
+        }).catch(function(){
+          clearAuthorizeTimeout();
+          resetLoginButtons('error', { title: 'ERR://S!GNAL_L0ST', sub: 'TRY AGA!N.' });
+        });
+    }).catch(function(){});
+  }
+  // Creates the request in the browser session and registers it. Resolves
+  // { uuid, next, pushed } or rejects (caller falls back to the server).
+  function createFromBrowser(txjson, intent){
+    return xamanSdk.payload.create({ txjson: txjson }).then(function(created){
+      if (!created || !created.uuid) throw new Error('create_failed');
+      return fetch('/api/xaman-register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uuid: created.uuid, intent: intent })
+      }).then(function(){ return created; }, function(){ return created; });
+    });
+  }
   // Set server-side only by the pretty per-collection routes (functions/
   // pigeons.js, functions/phnixs.js, etc. — see renderSwap below) so
   // soitbegins.xyz/phnixs lands directly on PHN!X without a client-side
@@ -16818,6 +16885,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // navigation to the Universal Link (see its own check below) — a QR
     // to scan makes no sense there, you're already on the device your
     // wallet lives on.
+    if (getXamanPkce()){
+      pkceLoginPending = true;
+      getXamanPkce().authorize();
+      return;
+    }
     fetch('/api/xaman-signin-prepare', { method: 'POST' })
       .then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
       .then(function(res){
@@ -17181,8 +17253,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // everything" approach a fresh sign-in's own redirect already relies
   // on, rather than manually unwinding every piece of client state that
   // reads MY_WALLET across this whole file.
+  if (getXamanPkce()) getXamanPkce().state().then(function(st){ if (st) adoptXamanSession(false); }).catch(function(){});
   el.scyllaSignOutBtn.addEventListener('click', function(){
     el.scyllaSignOutBtn.disabled = true;
+    try { if (getXamanPkce()) getXamanPkce().logout(); } catch (e){}
     fetch('/api/disconnect', { method: 'POST' }).then(function(){
       window.location.reload();
     }).catch(function(){
@@ -17472,11 +17546,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     // it once the fetch resolves — window.open() called inside the async
     // .then() below gets silently popup-blocked in most browsers.
     listingXamanTab = openXamanPopup();
+    var viaBrowser = !!xamanSdk;
     fetch('/api/swap-listing-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays, collection: state.collection, currency: currency })
+      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays, collection: state.collection, currency: currency, clientSign: viaBrowser || undefined })
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      // Browser session: create the request here so Xaman pushes it.
+      if (res.ok && res.data && res.data.clientSign){
+        return createFromBrowser(res.data.txjson, res.data.intent).then(function(created){
+          return { ok: true, data: { ok: true, uuid: created.uuid, next: created.next, pushedFlag: !!created.pushed } };
+        });
+      }
+      return res;
+    })
     .then(function(res){
       if (!res.ok || !res.data.ok){
         closeXamanTabAndFocus(listingXamanTab);
@@ -17487,7 +17571,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         return;
       }
       listingUuid = res.data.uuid;
-      navigateXamanPopup(listingXamanTab, res.data.next.always, res.data.next.pushed);
+      navigateXamanPopup(listingXamanTab, res.data.next.always, res.data.pushedFlag !== undefined ? res.data.pushedFlag : res.data.next.pushed);
       listingBtnEl.textContent = 'WA!T!NG F0R S!GNATURE...';
       if (listingStatusEl){ listingStatusEl.style.display = ''; listingStatusEl.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link"><span style="text-transform:none;">Σκύλλα</span> D!DN T 0PEN? TAP HERE.</a>'; }
       pollListingStatus();

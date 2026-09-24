@@ -3,7 +3,7 @@ import {
   isTransferable, getTradeConfig,
   encodeCurrencyCode, createXamanPayload, getXamanUserToken, swapOfferSourceMemo,
   LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds,
-  computeMarketplaceMarkup, MARKETPLACE_BROKER_WALLET, recordPendingListing,
+  computeMarketplaceMarkup, MARKETPLACE_BROKER_WALLET, recordPendingListing, signToken,
   normalizeOfferCurrency, isValidXrpValue, buildOfferAmount, feeBasisPointsFor,
   fetchNftSellOffersOrNull, findCollectionOffer
 } from '../_shared.js';
@@ -134,6 +134,20 @@ export async function onRequestPost(context) {
     ...(expiration !== null ? { Expiration: expiration } : {}),
     Memos: swapOfferSourceMemo()
   };
+
+  // Browser-created request (xrp.cafe-style push): hand back the txjson
+  // plus a signed intent; the page creates it from the user's own Xaman
+  // session and xaman-register.js links the uuid to the pending record.
+  if (body && body.clientSign) {
+    const intent = await signToken({
+      kind: 'list',
+      acct: seller,
+      txjson,
+      pending: { nftId, seller, collection, offerCurrency, totalValue: fee.totalValue, feeValue: fee.feeValue, sellerValue: fee.sellerValue },
+      exp: Math.floor(Date.now() / 1000) + 900
+    }, env.Σκύλλα + ':intent');
+    return new Response(JSON.stringify({ ok: true, clientSign: true, txjson, intent }), { headers: { 'Content-Type': 'application/json' } });
+  }
 
   const pushToken = await getXamanUserToken(env.coin, seller);
   const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
