@@ -65,6 +65,7 @@ export async function onRequestGet(context) {
   // not only from xaman-webhook.js, so it never depends on the webhook.
   const issued = xummData.application && xummData.application.issued_user_token;
   if (issued && env.coin) context.waitUntil(storeXamanUserToken(env.coin, account, issued));
+  console.log('XAMAN-PUSH signin', account, 'issued_user_token', !!issued, 'application keys', Object.keys(xummData.application || {}).join(','));
   const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
   const token = await signToken({ acct: account, exp }, env.Σκύλλα);
 

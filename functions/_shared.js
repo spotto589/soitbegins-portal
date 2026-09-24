@@ -5428,6 +5428,7 @@ export async function createXamanPayload(env, txjson, options, userToken, attemp
     // swap-* endpoint forwards it untouched, and the page skips the QR
     // window when it's true — see navigateXamanPopup in static.js.
     if (data.next && typeof data.next === 'object') data.next.pushed = !!data.pushed;
+    console.log('XAMAN-PUSH payload', data.uuid, 'type', txjson && txjson.TransactionType, 'userToken', !!userToken, 'pushed', !!data.pushed);
     return data;
   } catch (e) {
     // A real AbortError means the proxy (or xumm.app behind it) was still
