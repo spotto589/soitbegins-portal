@@ -12426,7 +12426,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return fetch('/api/xaman-register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uuid: created.uuid, intent: intent })
+        body: JSON.stringify({ uuid: created.uuid, intent: intent, pushed: created.pushed, createdKeys: Object.keys(created).join(',') })
       }).then(function(){ return created; }, function(){ return created; });
     });
   }

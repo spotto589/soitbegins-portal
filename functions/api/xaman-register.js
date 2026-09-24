@@ -39,7 +39,7 @@ export async function onRequestPost(context) {
 
   const status = await getXamanPayloadStatus(env, uuid);
   const req = status && status.payload && status.payload.request_json;
-  console.log('XAMAN-PUSH register', uuid, intent.kind, 'lookup', !!status, 'app', status && status.application && status.application.uuidv4, 'hasRequest', !!req);
+  console.log('XAMAN-PUSH register', uuid, intent.kind, 'lookup', !!status, 'app', status && status.application && status.application.uuidv4, 'hasRequest', !!req, 'browser pushed', JSON.stringify(body.pushed), 'created keys', String(body.createdKeys || '').slice(0, 200), 'opened', status && status.meta && status.meta.opened);
   if (!req) return json({ error: 'payload_not_found' }, 404);
 
   for (const k of COMPARE_FIELDS) {
