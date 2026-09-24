@@ -8604,6 +8604,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .history-mint-row{ display:flex; gap:0.75rem; margin:0 0 0.9rem; }
   .history-mint-cell{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:0.25rem; padding:0.6em 0.5em; border:1px solid var(--border-dim); border-radius:var(--radius); }
   .history-mint-cell .df-value{ text-align:center; }
+  #historyMintDate{ text-transform:none; }
   /* Bigger everywhere (reported live 2026-09-23: "its so small how am i
      supposed to read it"), wide enough for the transactions table. */
   .history-modal-panel{ width:min(940px, 100%); padding:2.5rem 2.25rem; font-size:16px; }
@@ -21480,6 +21481,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   function historyWhen(ms){
     return ms ? new Date(ms).toLocaleString(undefined, { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
   }
+  // Spelt out for the M!NTED tile, e.g. "8th August 2025, 05:05 AM"
+  // (reported live 2026-09-24), in the viewer's own time zone.
+  var MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function mintDateText(ms){
+    if (!ms) return '';
+    var d = new Date(ms);
+    if (isNaN(d.getTime())) return '';
+    var day = d.getDate();
+    var suffix = (day % 100 >= 11 && day % 100 <= 13) ? 'th' : (['th','st','nd','rd'][day % 10] || 'th');
+    var h = d.getHours(), ampm = h < 12 ? 'AM' : 'PM';
+    h = h % 12 || 12;
+    var pad = function(n){ return (n < 10 ? '0' : '') + n; };
+    return day + suffix + ' ' + MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear() + ', ' + pad(h) + ':' + pad(d.getMinutes()) + ' ' + ampm;
+  }
   function historyPartyHtml(addr, short){
     return '<span class="dh-party">' + (addr ? walletLinkHtml(addr, short) : '<span class="dh-unknown">UNKN0WN</span>') + '</span>';
   }
@@ -21522,7 +21537,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? moves.map(historyCardHtml).join('')
       : '<div class="hx-empty">N0 SALES YET</div>';
     var mint = events.filter(function(e){ return e.type === 'mint'; })[0];
-    el.historyMintDate.textContent = mint ? historyWhen(mint.date) : '—';
+    el.historyMintDate.textContent = mint ? mintDateText(mint.date) : '—';
     el.historyMintBy.innerHTML = mint && mint.account ? walletLinkHtml(mint.account, mint.accountShort) : '—';
   }
   function loadDetailHistory(nftId){
