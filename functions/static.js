@@ -4220,6 +4220,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.6rem !important;
   }
   .traits-flyout.flyout-popup .traits-flyout-vals .traits-flyout-val{ width:100% !important; white-space:normal !important; margin-bottom:0.4rem; }
+  /* S0RT BY's category headings (PR!CE / RAR!TY / ALPHABET!CAL). */
+  .sort-cat-heading{ font-size:13px; font-weight:700; letter-spacing:0.14em; color:var(--pigeon-purple); text-align:center; margin:0.9rem 0 0.45rem; padding-bottom:0.3rem; border-bottom:1px solid var(--border-dim); }
+  .sort-cat-heading:first-child{ margin-top:0.1rem; }
   .traits-flyout.flyout-popup .hscroll-arrow{ display:none !important; }
   /* F!LTER BY TRA!TS' own two-step drill (categories, then one category's
      values) still happens inside this same centered popup — categories
@@ -10196,7 +10199,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button type="button" class="simple-picker-close sales-styled-close" id="salesCloseBtn" title="CL0SE">&times;</button>
         <img class="buyswap-thumb" id="salesCoinThumb" src="" alt="" style="display:none;">
         <div class="history-title">SALES H!ST0RY</div>
-        <div class="node-eyebrow" id="salesEyebrow">EVERY REC0RDED SALE</div>
         <div class="buyswap-balances-row sales-stats-row">
           <div class="buyswap-balance-tile"><span class="buyswap-balance-label">T0TAL V0LUME</span><span class="buyswap-balance-value" id="salesStatVolume">&mdash;</span></div>
           <div class="buyswap-balance-tile"><span class="buyswap-balance-label">24H V0LUME</span><span class="buyswap-balance-value" id="salesStatVolume24h">&mdash;</span></div>
@@ -12585,7 +12587,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
    'profileCoinsEditBtn','profileCoinsEditPopover','profileCoinsEditList',
-   'salesModal','salesCloseBtn','openSalesBtn','salesCoinThumb','salesEyebrow','salesStatVolume','salesStatVolume24h','salesStatSales24h',
+   'salesModal','salesCloseBtn','openSalesBtn','salesCoinThumb','salesStatVolume','salesStatVolume24h','salesStatSales24h',
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorDeeptide','statFloorXrpCafe','statFloorDeeptideTile','statFloorXrpCafeTile',
    'statScyllaListedTile','statScyllaListedCount','statScyllaListedLabel',
@@ -20387,7 +20389,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     var price = s.currency !== 'XRP'
       ? (s.pigeonsPrice !== null && s.pigeonsPrice !== undefined ? s.pigeonsPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + COLLECTION_META[state.collection].tokenLabel : '?')
       : (s.priceXrp !== null ? s.priceXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '?');
-    var via = s.via === 'scylla' ? 'Σ SWAP' : (s.via === 'xrpcafe' ? 'XRP.CAFE' : (s.via === 'deeptide' ? 'DEEPT!DE' : ''));
+    // No tag for Σκύλλα's own sales (was "Σ SWAP") — every $P!GE0NS sale
+    // goes through it, so the tag only pushed the price off-centre.
+    var via = s.via === 'xrpcafe' ? 'XRP.CAFE' : (s.via === 'deeptide' ? 'DEEPT!DE' : '');
     var when = s.createdAt ? relativeTimeText(s.createdAt) : '';
     var thumbHref = nftHrefFor({ number: s.number, collectionKey: s.collectionKey });
     return '<div class="sale-row" data-nftid="' + escapeHtml(s.nftId) + '">' +
@@ -20421,7 +20425,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     var meta = COLLECTION_META[state.collection] || {};
     if (meta.thumb){ el.salesCoinThumb.src = meta.thumb; el.salesCoinThumb.style.display = ''; }
     else el.salesCoinThumb.style.display = 'none';
-    el.salesEyebrow.textContent = (meta.tokenLabel ? meta.tokenLabel + ' :: ' : '') + 'EVERY REC0RDED SALE';
     el.salesStatVolume.textContent = el.statVolume.textContent || '—';
     el.salesStatVolume24h.textContent = el.statVolume24h.textContent || '—';
     el.salesStatSales24h.textContent = el.statSales24h.textContent || '—';
@@ -20525,20 +20528,18 @@ const SWAP_HTML = `<!DOCTYPE html>
       // floor, cheapest or dearest first (reported live 2026-09-23: keep
       // it to these two, not per-marketplace sorts).
       { value: 'PRICE_ASC', label: 'L0WEST (XRP)' },
-      { value: 'PRICE_DESC', label: 'H!GHEST (XRP)' }
-    ],
-    'H!ST0R!CAL SALES': [
+      { value: 'PRICE_DESC', label: 'H!GHEST (XRP)' },
+      // Was its own H!ST0R!CAL SALES category — folded into PR!CE
+      // (reported live 2026-09-24: just PR!CE / RAR!TY / ALPHABET!CAL).
       { value: 'HIGHEST_SALE', label: 'H!GHEST REC0RDED SALES' }
     ],
     'RAR!TY': [
       { value: 'RARITY_ASC', label: 'H!GHEST' },
-      { value: 'RARITY_DESC', label: 'L0WEST' }
-    ],
-    // Lore Score (the full layered formula: sets, number, 1 0F N, rare
-    // traits), kept separate from the RAR!TY ranking.
-    'L0RE': [
-      { value: 'LORE_ASC', label: 'H!GHEST' },
-      { value: 'LORE_DESC', label: 'L0WEST' }
+      { value: 'RARITY_DESC', label: 'L0WEST' },
+      // Lore Score (the full layered formula: sets, number, 1 0F N, rare
+      // traits) — still its own ranking, just listed under RAR!TY now.
+      { value: 'LORE_ASC', label: 'L0RE H!GHEST' },
+      { value: 'LORE_DESC', label: 'L0RE L0WEST' }
     ],
     'ALPHABET!CAL': [
       { value: 'NAME_ASC', label: 'A-Z' },
@@ -20665,34 +20666,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     // (see COLLECTION_META) — RAR!TY/ALPHABET!CAL are the only categories
     // that're just a plain Deeptide sort, so those are all that's offered.
     var tradeable = COLLECTION_META[state.collection].tradeable;
-    var rows = [];
-    var placed = {};
-    // L0WEST $P!GE0NS leads the whole list when tradeable — reported live
-    // as wanting every PR!CE option grouped together first (then H!ST0R!CAL
-    // SALES, then RAR!TY, then ALPHABET!CAL last — see SORT_CATEGORIES' own
-    // key order above, which this whole function otherwise just follows),
-    // so H!GHEST RAR!TY no longer jumps the rest of PR!CE the way it used
-    // to.
-    (tradeable ? ['SCYLLA_PRICE_ASC'] : ['RARITY_ASC']).forEach(function(value){
-      var cat = sortCategoryOf(value);
-      var found = cat && SORT_CATEGORIES[cat].filter(function(o){ return o.value === value; })[0];
-      if (!found) return;
-      rows.push({ cat: cat, value: found.value, label: found.label, disabled: found.disabled });
-      placed[value] = true;
-    });
+    // Grouped under a heading per category (PR!CE, RAR!TY, ALPHABET!CAL —
+    // reported live 2026-09-24), in SORT_CATEGORIES' own key order.
+    var html = '';
     Object.keys(SORT_CATEGORIES).forEach(function(cat){
       if (!tradeable && cat !== 'RAR!TY' && cat !== 'ALPHABET!CAL') return;
+      html += '<div class="sort-cat-heading">' + escapeHtml(cat) + '</div>';
       SORT_CATEGORIES[cat].forEach(function(o){
-        if (placed[o.value]) return;
-        rows.push({ cat: cat, value: o.value, label: o.label, disabled: o.disabled });
+        html += '<button type="button" class="traits-flyout-val' + (state.sort === o.value ? ' selected' : '') + (o.disabled ? ' tfv-disabled' : '') + '" data-value="' + o.value + '"' + (o.disabled ? ' disabled' : '') + '>' +
+          '<span>' + escapeHtml(o.label) + '</span>' +
+          (o.disabled ? '<span class="db-soon">C0M!NG S00N</span>' : '') +
+        '</button>';
       });
     });
-    el.sortFlyoutVals.innerHTML = rows.map(function(o){
-      return '<button type="button" class="traits-flyout-val' + (state.sort === o.value ? ' selected' : '') + (o.disabled ? ' tfv-disabled' : '') + '" data-value="' + o.value + '"' + (o.disabled ? ' disabled' : '') + '>' +
-        '<span>' + escapeHtml(o.cat + ' :: ' + o.label) + '</span>' +
-        (o.disabled ? '<span class="db-soon">C0M!NG S00N</span>' : '') +
-      '</button>';
-    }).join('');
+    el.sortFlyoutVals.innerHTML = html;
     updateSortHscrollArrows();
   }
   // Reparented to <body> for the same reason #traitsFlyout is — see that
@@ -22500,10 +22487,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     updateSortLabelsForCollection();
     var optionsHtml = '<option value="">S0RT BY</option>';
     Object.keys(SORT_CATEGORIES).forEach(function(cat){
+      var group = '';
       SORT_CATEGORIES[cat].forEach(function(o){
         if (!sortComparatorFor(o.value)) return; // SCYLLA_PRICE etc — live-collection-only, not in the owned list
-        optionsHtml += '<option value="' + escapeHtml(o.value) + '">' + escapeHtml(cat + ' :: ' + o.label) + '</option>';
+        group += '<option value="' + escapeHtml(o.value) + '">' + escapeHtml(cat + ' :: ' + o.label) + '</option>';
       });
+      if (group) optionsHtml += '<optgroup label="' + escapeHtml(cat) + '">' + group + '</optgroup>';
     });
     el.myNftsSortSelect.innerHTML = optionsHtml;
     el.myNftsSortSelect.value = myNftsQuery.sort;
