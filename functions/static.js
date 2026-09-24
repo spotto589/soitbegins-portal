@@ -8680,6 +8680,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .market-buy-link:hover{ background:var(--green); color:#000; }
   .xaman-push-toast{ position:fixed; left:50%; top:1.2rem; transform:translate(-50%, -150%); z-index:3000; max-width:92vw; padding:0.9em 1.3em; background:var(--panel-bg-solid); border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 30px rgba(var(--collection-accent-rgb), 0.25); color:var(--white); font-size:15px; font-weight:700; letter-spacing:0.05em; text-align:center; transition:transform 0.25s ease; pointer-events:none; }
   .xaman-push-toast.show{ transform:translate(-50%, 0); }
+  .xaman-push-toast.clickable{ pointer-events:auto; cursor:pointer; color:var(--green); text-decoration:none; border-color:var(--green); }
   .market-buy-list{ display:flex; flex-direction:column; align-items:stretch; gap:0.35rem; width:100%; }
   .market-buy-list .market-buy-link{ margin:0; text-align:center; white-space:normal; font-size:15px; padding:0.8em 0.6em; }
   .detail-markets{ margin:0.6rem 0; border:1px solid var(--border-mid); border-radius:var(--radius); padding:0.6rem 0.8rem; }
@@ -17294,18 +17295,31 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   // "Check your phone" notice for a request Xaman pushed (xrp.cafe-style).
   var pushToastTimer = null;
-  function showXamanPushToast(){
+  // fallbackUrl set = the push didn't go through: the notice becomes a
+  // button that opens the QR (a click is allowed to open a window).
+  function showXamanPushToast(fallbackUrl){
     var t = document.getElementById('xamanPushToast');
     if (!t){
-      t = document.createElement('div');
+      t = document.createElement('a');
       t.id = 'xamanPushToast';
       t.className = 'xaman-push-toast';
-      t.innerHTML = 'S!GN REQUEST SENT T0 Y0UR <span style="text-transform:none;">Xaman</span> APP — CHECK Y0UR PH0NE';
+      t.target = '_blank';
+      t.rel = 'noopener';
+      t.addEventListener('click', function(){ t.classList.remove('show'); });
       document.body.appendChild(t);
+    }
+    if (fallbackUrl){
+      t.href = fallbackUrl;
+      t.classList.add('clickable');
+      t.innerHTML = 'C0ULDN\\'T PUSH T0 Y0UR PH0NE — CL!CK HERE T0 0PEN THE QR';
+    } else {
+      t.removeAttribute('href');
+      t.classList.remove('clickable');
+      t.innerHTML = 'S!GN REQUEST SENT T0 Y0UR <span style="text-transform:none;">Xaman</span> APP — CHECK Y0UR PH0NE';
     }
     t.classList.add('show');
     if (pushToastTimer) clearTimeout(pushToastTimer);
-    pushToastTimer = setTimeout(function(){ t.classList.remove('show'); }, 6000);
+    pushToastTimer = setTimeout(function(){ t.classList.remove('show'); }, fallbackUrl ? 20000 : 6000);
   }
   // The real, remaining cause of "doesn't open Xaman" on mobile, even
   // after the null-tabRef popup fallback below was fixed: the URL XUMM
@@ -17339,8 +17353,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     // here now that openXamanPopup() itself only ever attempts a popup
     // on desktop. Not XAMAN_POPUP_FEATURES again — a plain window.open
     // is enough for this rare fallback case.
-    if (tabRef) tabRef.location.href = url;
-    else window.open(url, '_blank');
+    if (tabRef){ tabRef.location.href = url; return; }
+    // No window was opened up front because this wallet was push-ready,
+    // but Xaman didn't push (stale token — the server has now forgotten
+    // it). Open windows the normal way from now on, and try this one; a
+    // popup blocker stops it outside a click, so the notice doubles as a
+    // CL!CK HERE button to the QR.
+    MY_PUSH_READY = false;
+    var w = window.open(url, '_blank');
+    if (!w) showXamanPushToast(url);
   }
 
   // Every .xaman-manual-link ("Σκύλλα D!DN T 0PEN? TAP HERE.") is marked
