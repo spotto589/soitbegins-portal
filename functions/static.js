@@ -5045,6 +5045,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     text-overflow:ellipsis;
   }
   .thumb-listing-badge-own{ border-color:var(--cyan); text-shadow:0 0 4px var(--cyan-glow); box-shadow:0 0 10px var(--cyan-glow); }
+  /* Token + XRP slips share the bottom-right corner, stacked. */
+  .thumb-listing-stack{ position:absolute; bottom:0.3rem; right:0.3rem; z-index:2; max-width:calc(100% - 0.6rem); display:flex; flex-direction:column; align-items:flex-end; gap:0.25rem; }
+  .thumb-listing-stack .thumb-listing-badge{ position:static; max-width:100%; }
   /* OWNED sticker — top-left corner (the price badge, when there's a
      real listing, already owns the bottom-right), shown on a Pigeon you
      hold but haven't listed, while browsing the general collection. Was
@@ -14775,11 +14778,11 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (l.internal){
           return p.owner && p.owner === MY_WALLET
             ? '<span class="market-buy-link">L!STED 0N ' + marketLabelHtml(l) + ' F0R ' + fmtXrp(l.priceXrp) + ' XRP</span>'
-            : '<button type="button" class="market-buy-link scylla-xrp-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY 0N ' + marketLabelHtml(l) + ' F0R ' + fmtXrp(l.priceXrp) + ' XRP</button>';
+            : '<button type="button" class="market-buy-link scylla-xrp-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY N0W ' + fmtXrp(l.priceXrp) + ' XRP</button>';
         }
         // No exchange names on buy buttons (reported live 2026-09-24) —
         // any other marketplace is just "EXTERNAL".
-        return '<a class="market-buy-link" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY 0FF-S!TE F0R ' + fmtXrp(l.priceXrp) + ' XRP ↗</a>';
+        return '<a class="market-buy-link" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY N0W 0FF-S!TE ' + fmtXrp(l.priceXrp) + ' XRP ↗</a>';
       }).join('') + '</div>';
     } else if ((state.sort === 'LORE_ASC' || state.sort === 'LORE_DESC') && p.ourRarityLoreScore !== null && p.ourRarityLoreScore !== undefined){
       avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">L0RE SC0RE ::</span><span class="stat-value">' + greenNum(fmtRarityScore(p.ourRarityLoreScore)) + '</span></div>';
@@ -14798,10 +14801,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     // regardless of state. Own-vs-others'-listing is just a border/glow
     // colour difference (cyan vs purple, this site's established "this
     // is yours" language) on the exact same badge, not separate markup.
-    var listingBadge = p.scyllaListing
-      ? '<div class="thumb-listing-badge' + (p.owner === MY_WALLET ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>'
+    // XRP slip (2026-09-25): the lowest XRP listing anywhere, same look as
+    // the token slip; both stack in the corner when a Pigeon has both.
+    var ownCard = p.owner === MY_WALLET;
+    var tokenSlip = p.scyllaListing
+      ? '<div class="thumb-listing-badge' + (ownCard ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>'
       : '';
-    var ownedBadge = (p.owner === MY_WALLET && !p.scyllaListing) ? '<div class="thumb-owned-badge">0WNED</div>' : '';
+    var xrpSlip = (p.xrpListing && p.xrpListing.priceXrp)
+      ? '<div class="thumb-listing-badge thumb-listing-badge-xrp' + (ownCard ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtXrp(p.xrpListing.priceXrp)) + ' XRP</div>'
+      : '';
+    var listingBadge = (tokenSlip || xrpSlip) ? '<div class="thumb-listing-stack">' + xrpSlip + tokenSlip + '</div>' : '';
+    var ownedBadge = (p.owner === MY_WALLET && !p.scyllaListing && !(p.xrpListing && p.xrpListing.priceXrp)) ? '<div class="thumb-owned-badge">0WNED</div>' : '';
     var watchlistBtn = watchlistToggleHtml(p);
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-num">' + collectionItemLabel() + ' ' + num + '</div>' +

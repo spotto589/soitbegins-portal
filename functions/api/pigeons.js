@@ -267,6 +267,18 @@ const LISTINGS_ENRICH_CAP_LOW = 36;
 // live per-item fetch is the rare fallback case now, not the normal path.
 async function attachListings(kv, items, cap = LISTINGS_ENRICH_CAP) {
   const capped = items.slice(0, cap);
+  // Lowest XRP listing anywhere, for the card's XRP slip (2026-09-25):
+  // the floor index (every marketplace, direct, Σκύλλα's own XRP) —
+  // one KV read for the whole page, Pigeons-only like the index itself.
+  const floorIndex = kv ? await getFloorIndex(kv).catch(() => null) : null;
+  const floorById = {};
+  ((floorIndex && floorIndex.items) || []).forEach(c => { floorById[c.nftId] = c; });
+  items.forEach(it => {
+    const c = floorById[it.nftId];
+    if (c && typeof c.priceXrp === 'number' && c.priceXrp > 0) {
+      it.xrpListing = { priceXrp: c.priceXrp, internal: !!(c.markets && c.markets.scylla === c.priceXrp) };
+    }
+  });
   await Promise.all(capped.map(async (it) => {
     const xc = await fetchXrpCafeNftListing(kv, it.nftId);
     it.listings = {
@@ -276,6 +288,12 @@ async function attachListings(kv, items, cap = LISTINGS_ENRICH_CAP) {
         buyUrl: xc && xc.priceXrp !== null && xc.priceXrp !== undefined ? `https://xrp.cafe/nft/${it.nftId}` : null
       }
     };
+    // xrp.cafe's live price is fresher than the index — use it when it's
+    // the cheaper one (or the index hasn't seen this listing yet).
+    const live = it.listings.xrpCafe.priceXrp;
+    if (typeof live === 'number' && live > 0 && (!it.xrpListing || live < it.xrpListing.priceXrp)) {
+      it.xrpListing = { priceXrp: live, internal: false };
+    }
   }));
   return items;
 }
@@ -1386,7 +1404,7 @@ export async function onRequestGet(context) {
       const byKey = c.markets || (c.venue ? { [c.venue]: c.priceXrp } : {});
       let list = Object.keys(byKey).map(key => {
         const m = marketMeta(key);
-        return m ? { key, label: m.label, priceXrp: byKey[key], url: m.url(it.nftId) } : null;
+        return m ? { key, label: m.label, priceXrp: byKey[key], url: m.url(it.nftId), ...(m.internal ? { internal: true } : {}) } : null;
       }).filter(Boolean);
       const liveCafe = it.listings && it.listings.xrpCafe ? it.listings.xrpCafe.priceXrp : null;
       list = list.map(l => l.key === 'xrpcafe' ? (liveCafe === null ? null : { ...l, priceXrp: liveCafe }) : l).filter(Boolean);
