@@ -10069,11 +10069,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="stats-carousel-viewport">
       <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
         <!-- Two tiles (reported live 2026-09-24): Σκύλλα's own token floor,
-             and one 0FF-S!TE FL00R — the cheapest XRP listing on any other
+             and one XRP FL00R — the cheapest XRP listing anywhere (any
              marketplace, never named. It sorts the grid by L0WEST (XRP)
              instead of linking out. -->
         <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY L!STED THR0UGH SCYLLA"><div class="stat-label" id="statScyllaListedLabel">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
-        <button class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorExternalTile" title="S0RT BY L0WEST (XRP)"><div class="stat-label">0FF-S!TE FL00R</div><div class="stat-value" id="statFloorExternal">…</div></button>
+        <button class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorExternalTile" title="S0RT BY L0WEST (XRP)"><div class="stat-label">XRP FL00R</div><div class="stat-value" id="statFloorExternal">…</div></button>
       </div>
       <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
         <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span></div></div>
@@ -14870,11 +14870,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderAmountBalanceLine(el.amountEntryOfferBalanceLine, [amountEntryOfferCurrency]);
     renderAmountBalanceLine(el.amountEntryListBalanceLine, amountEntryListCurrency === 'both' ? ['token', 'xrp'] : [amountEntryListCurrency]);
   }
+  // Spendable XRP (total minus the ledger's locked reserve) — what Xaman
+  // shows. Falls back to the total only if the server didn't send it.
+  function spendableXrpOf(data){
+    return Number(data.spendableDrops != null ? data.spendableDrops : data.drops) / 1e6;
+  }
   function loadAmountEntryXrpBalance(){
     if (!MY_WALLET) return;
     apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).then(function(data){
       if (!data || data.drops == null) return;
-      amountEntryXrpBalance = Number(data.drops) / 1e6;
+      amountEntryXrpBalance = spendableXrpOf(data);
       refreshAmountBalanceLines();
     }).catch(function(){});
   }
@@ -17767,6 +17772,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // collection genuinely has no indexed pair yet.
   var buySwapDexUrl = null;
   var buySwapMaxDrops = null; // null = no cap known yet (not logged in, or balance fetch pending/failed)
+  var buySwapSpendableDrops = null; // exact spendable XRP, for display (buySwapMaxDrops keeps the fee buffer, for validation)
   var buySwapTokenBalance = null; // null = not known yet — this collection's real token balance (pigeonsAccountLine's own balance field)
   // Fallback only — the real reserve (base + one owner-reserve increment
   // per owned ledger object: trustlines, NFT pages, offers, etc.) comes
@@ -17790,7 +17796,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     el.buySwapBalancesRow.style.display = '';
-    el.buySwapXrpBalanceValue.textContent = dropsToXrpString(buySwapMaxDrops) + ' XRP';
+    el.buySwapXrpBalanceValue.textContent = dropsToXrpString(buySwapSpendableDrops !== null ? buySwapSpendableDrops : buySwapMaxDrops) + ' XRP';
     el.buySwapTokenBalanceValue.textContent = compactPigeonsNumber(buySwapTokenBalance);
   }
   function showBuySwapInputError(msg){
@@ -18118,6 +18124,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           : BUYSWAP_RESERVE_BUFFER_DROPS;
         var max = bal - reserve;
         buySwapMaxDrops = max > 0n ? max : 0n;
+        buySwapSpendableDrops = (typeof data.spendableDrops === 'string' && /^\\d+$/.test(data.spendableDrops)) ? BigInt(data.spendableDrops) : buySwapMaxDrops;
         updateBuySwapBalancesRow();
         validateBuySwapInput();
       }).catch(function(){});
@@ -23631,8 +23638,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.profileCurrentEstValue.textContent = 'L0AD!NG...';
     apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).then(function(data){
       if (!data || data.drops == null) throw new Error('no drops');
+      // Portfolio value keeps the full total (reserve XRP is still yours);
+      // the balance shown is the spendable amount, matching Xaman.
       walletXrp = Number(data.drops) / 1e6;
-      el.profileCoinsWalletBalance.textContent = walletXrp.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+      el.profileCoinsWalletBalance.textContent = spendableXrpOf(data).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
       recomputeTotal();
     }).catch(function(){
       el.profileCoinsWalletBalance.textContent = 'ERR://C0ULDN T CHECK BALANCE';
@@ -25031,7 +25040,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.statHolders.textContent = data.holders !== null && data.holders !== undefined ? data.holders.toLocaleString() : '—';
       el.statVolume.textContent = data.totalVolumeXrp !== null && data.totalVolumeXrp !== undefined ? fmtXrp(data.totalVolumeXrp) + ' XRP' : '—';
       el.statListed.textContent = data.listedPercent !== null && data.listedPercent !== undefined ? data.listedPercent + '%' : '—';
-      var externalFloors = [data.xrpCafeFloorXrp, data.deeptideFloorXrp].filter(function(v){ return typeof v === 'number' && isFinite(v); });
+      // XRP FL00R: the lowest XRP listing anywhere (server's xrpFloorXrp).
+      var externalFloors = [data.xrpFloorXrp, data.xrpCafeFloorXrp, data.deeptideFloorXrp].filter(function(v){ return typeof v === 'number' && isFinite(v) && v > 0; });
       el.statFloorExternal.textContent = externalFloors.length ? fmtXrp(Math.min.apply(null, externalFloors)) + ' XRP' : '—';
       el.statScyllaListedCount.innerHTML = data.scyllaFloorPigeons !== null && data.scyllaFloorPigeons !== undefined ? greenNum(data.scyllaFloorPigeons.toLocaleString()) + ' ' + COLLECTION_META[state.collection].tokenLabel : 'N0T L!STED';
       el.statTraded24h.textContent = data.traded24hCount !== null && data.traded24hCount !== undefined ? data.traded24hCount.toLocaleString() : '—';

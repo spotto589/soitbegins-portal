@@ -3,7 +3,7 @@
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap, getRarityMap, getRarityStats, maybeRefreshRarityScores,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, findCollectionOffer, getSwapSalesLog, identifySaleVenue, getFloorIndex,
-  resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, quotePigeonsForXrpDrops, TRADEABLE_COLLECTIONS,
+  resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG,
   getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
   fetchRecentAccountTxCached
@@ -444,7 +444,11 @@ export async function onRequestGet(context) {
     // owner-reserve increment per owned ledger object — trustlines, NFT
     // pages, offers, etc.), computed here so the client never has to
     // guess it — see accountReserveDrops in _shared.js.
-    return json({ drops: info.drops, reserveDrops: accountReserveDrops(info.ownerCount).toString() });
+    // spendableDrops = total minus the real locked reserve — the balance
+    // Xaman itself shows, and the one the site displays (2026-09-25:
+    // showing the raw total read 32.28 XRP for a wallet with 3.67 usable).
+    const spendable = await spendableXrpDrops(info.drops, info.ownerCount);
+    return json({ drops: info.drops, reserveDrops: accountReserveDrops(info.ownerCount).toString(), spendableDrops: spendable.toString(), ownerCount: info.ownerCount });
   }
 
   // Wallet PR0F!LE — every tradeable collection's real token balance for
@@ -488,7 +492,7 @@ export async function onRequestGet(context) {
     // PIGEON_TAXON specifically — no equivalent scan exists for a
     // non-tradeable collection yet, comes back null rather than showing
     // $PIGEONS' own holder count on a different collection's tile.
-    const [deeptideFloor, xrpCafeStats, crownSnapshot, recentSales] = await Promise.all([
+    const [deeptideFloor, xrpCafeStats, crownSnapshot, recentSales, floorIndexForStats] = await Promise.all([
       fetchDeeptideRealFloor(coll.shopSlug, env.coin),
       fetchXrpCafeCollectionStats(env.coin, coll.vanitySlug),
       // Crown is a $PIGEONS-only feature (its own holder-tracking crawl is
@@ -497,8 +501,18 @@ export async function onRequestGet(context) {
       // harmless but pointless, since the real bug was down in `holders`
       // below always reading its count regardless of collection.
       coll.key === 'pigeons' ? getCachedCrownHolder(env.coin) : Promise.resolve(null),
-      fetchDeeptideSalesHistory({ limit: 50, sort: 'date-desc', shopSlug: coll.shopSlug })
+      fetchDeeptideSalesHistory({ limit: 50, sort: 'date-desc', shopSlug: coll.shopSlug }),
+      // Every marketplace + direct + Σκύλλa's own XRP listings (the same
+      // index the L0WEST (XRP) sort reads) — Pigeons-only, like the index.
+      coll.key === 'pigeons' && env.coin ? getFloorIndex(env.coin).catch(() => null) : Promise.resolve(null)
     ]);
+    // XRP FL00R (banner, 2026-09-25): the lowest XRP listing anywhere.
+    const xrpFloorCandidates = [
+      deeptideFloor ? deeptideFloor.priceDrops / 1000000 : null,
+      xrpCafeStats && xrpCafeStats.floorDrops !== null ? xrpCafeStats.floorDrops / 1000000 : null,
+      ...(((floorIndexForStats && floorIndexForStats.items) || []).map(c => c.priceXrp))
+    ].filter(v => typeof v === 'number' && isFinite(v) && v > 0);
+    const xrpFloorXrp = xrpFloorCandidates.length ? Math.min(...xrpFloorCandidates) : null;
     // 24h activity — real, computed from Deeptide's own sales feed (xrp.cafe's
     // collection API has no 24h-scoped fields of its own, just lifetime
     // totals) rather than a separate, less reliable source.
@@ -519,6 +533,7 @@ export async function onRequestGet(context) {
       holders: coll.key === 'pigeons'
         ? (crownSnapshot ? crownSnapshot.holderCount : (xrpCafeStats ? xrpCafeStats.holders : null))
         : (xrpCafeStats ? xrpCafeStats.holders : null),
+      xrpFloorXrp,
       deeptideFloorXrp: deeptideFloor ? deeptideFloor.priceDrops / 1000000 : null,
       deeptideBuyUrl: deeptideFloor ? deeptideBuyUrl(deeptideFloor.nftId) : null,
       xrpCafeFloorXrp: xrpCafeStats && xrpCafeStats.floorDrops !== null ? xrpCafeStats.floorDrops / 1000000 : null,

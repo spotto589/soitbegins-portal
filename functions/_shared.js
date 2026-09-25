@@ -1574,6 +1574,28 @@ const BUYSWAP_SLIPPAGE_BPS = 50; // 0.5% — matches the panel's own SL!PPAGE fi
 const XRPL_BASE_RESERVE_DROPS = 1000000n; // 1 XRP
 const XRPL_OWNER_RESERVE_DROPS = 200000n; // 0.2 XRP per owned object
 const BUYSWAP_FEE_BUFFER_DROPS = 100000n; // 0.1 XRP headroom for the tx fee itself, on top of the real reserve
+// The ledger's CURRENT reserve (base + per-owned-object), read live from
+// server_state (validators can vote these down, as they did in 2021 and
+// 2024) and cached for 10 minutes; falls back to the constants above.
+let ledgerReserveCache = null;
+export async function fetchLedgerReserveDrops() {
+  if (ledgerReserveCache && Date.now() - ledgerReserveCache.at < 600000) return ledgerReserveCache;
+  try {
+    const data = await fetchXrplClusterJson({ method: 'server_state', params: [{}] });
+    const v = data && data.result && data.result.state && data.result.state.validated_ledger;
+    if (v && v.reserve_base != null && v.reserve_inc != null) {
+      ledgerReserveCache = { base: BigInt(v.reserve_base), inc: BigInt(v.reserve_inc), at: Date.now() };
+      return ledgerReserveCache;
+    }
+  } catch (e) {}
+  return { base: XRPL_BASE_RESERVE_DROPS, inc: XRPL_OWNER_RESERVE_DROPS };
+}
+// What Xaman shows as the balance: total minus the locked reserve.
+export async function spendableXrpDrops(drops, ownerCount) {
+  const r = await fetchLedgerReserveDrops();
+  const spendable = BigInt(drops) - (r.base + r.inc * BigInt(ownerCount || 0));
+  return spendable > 0n ? spendable : 0n;
+}
 function accountReserveDrops(ownerCount) {
   return XRPL_BASE_RESERVE_DROPS + XRPL_OWNER_RESERVE_DROPS * BigInt(ownerCount || 0) + BUYSWAP_FEE_BUFFER_DROPS;
 }
