@@ -40,7 +40,7 @@ export default {
     // minute-fresh XRP floor, see functions/_ledgerwatch.js). Everything
     // else below stays on its own 10-minute schedule.
     if (event.cron === '* * * * *') {
-      ctx.waitUntil(runLedgerWatch(env.coin)
+      ctx.waitUntil(runLedgerWatch(env.coin, { vapid: env.VAPID_PRIVATE_JWK })
         .then(r => console.log('ledger-watch', JSON.stringify(r)))
         .catch(e => console.log('ledger-watch failed', String(e && e.message || e))));
       return;

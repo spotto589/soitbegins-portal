@@ -6128,6 +6128,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   .notify-row.on .notify-switch{ background:var(--green); box-shadow:0 0 10px var(--green-glow); }
   .notify-row.on .notify-switch::after{ left:27px; }
   .notify-note{ margin-top:1rem; font-size:13px; letter-spacing:0.05em; color:var(--grey); }
+  .notify-phone{ margin-top:1.1rem; padding-top:1rem; border-top:1px solid var(--border-dim); display:flex; flex-direction:column; gap:0.6rem; }
+  .notify-phone-title{ font-size:16px; font-weight:700; letter-spacing:0.08em; color:var(--white); }
+  .notify-phone-title.on{ color:var(--green); text-shadow:0 0 8px var(--green-glow); }
+  .notify-phone-help{ font-size:13px; letter-spacing:0.04em; color:var(--grey); line-height:1.5; }
+  .notify-phone-btns{ display:flex; gap:0.6rem; }
+  .notify-phone-btn{ flex:1 1 0; background:var(--green); border:1px solid var(--green); color:#000; font-family:inherit; font-size:15px; font-weight:700; letter-spacing:0.05em; padding:0.8em; border-radius:var(--radius); cursor:pointer; }
+  .notify-phone-btn:hover{ box-shadow:0 0 14px var(--green-glow); }
+  .notify-phone-btn.secondary{ background:none; color:var(--white); border-color:var(--border-mid); }
+  .notify-phone-btn:disabled{ opacity:0.6; cursor:default; }
   /* Pop-ups while the site is open — bottom-right stack, click to open. */
   .notify-toasts{ position:fixed; right:1rem; bottom:4.5rem; z-index:2500; display:flex; flex-direction:column; gap:0.5rem; width:min(360px, calc(100vw - 2rem)); pointer-events:none; }
   .notify-toast{ pointer-events:auto; display:flex; align-items:center; gap:0.75rem; padding:0.75em 0.9em; background:var(--panel-bg-solid); border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-left:4px solid var(--green); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.6); color:var(--white); text-decoration:none; font-size:14px; font-weight:700; letter-spacing:0.04em; animation:notifyIn 0.25s ease; cursor:pointer; }
@@ -10265,6 +10274,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="node-eyebrow" id="notifyEyebrow"></div>
         <div class="notify-toggles" id="notifyToggles"></div>
         <div class="notify-note" id="notifyNote"></div>
+        <div class="notify-phone" id="notifyPhone"></div>
       </div>
     </div>
     <div id="notifyToasts" class="notify-toasts"></div>
@@ -12754,7 +12764,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
    'profileCoinsEditBtn','profileCoinsEditPopover','profileCoinsEditList',
-   'notifyModal','notifyCloseBtn','openNotifyBtn','notifyCoinThumb','notifyEyebrow','notifyToggles','notifyNote','notifyToasts',
+   'notifyModal','notifyCloseBtn','openNotifyBtn','notifyCoinThumb','notifyEyebrow','notifyToggles','notifyNote','notifyToasts','notifyPhone',
    'salesModal','salesCloseBtn','openSalesBtn','salesCoinThumb','salesStatVolume','salesStatVolume24h','salesStatSales24h',
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorExternal','statFloorExternalTile',
@@ -20774,7 +20784,88 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (MY_WALLET){
       fetch('/api/notify-prefs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(notifyPrefs) }).catch(function(){});
     }
+    // This device's phone notifications follow the same switches.
+    if (pushSubscription) postPush({ subscription: pushSubscription.toJSON(), collections: notifyPrefs.collections });
   }
+
+  // ---- PH0NE N0T!F!CAT!0NS (2026-09-25) — Web Push to this device (the
+  // site is installable, see /manifest.json + /sw.js). The cron worker's
+  // ledger watcher sends one when something switched on above happens,
+  // even with the site closed. iPhone only allows it from the Home Screen
+  // app (iOS 16.4+). Public key = VAPID_PUBLIC_KEY in functions/_webpush.js.
+  var PUSH_PUBLIC_KEY = 'BGblth62SRHi74BjWnLX_uSKqlIuvBRR1JW-7qvvL2QC6do0YFFuPS_RYoxaO1mx5I9hRAHo8YR-N3wZMW5eBFI';
+  var pushSubscription = null;
+  var pushBusy = false;
+  function pushSupported(){ return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; }
+  function isIosDevice(){ return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+  function isStandaloneApp(){ return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; }
+  function b64ToBytes(b64){
+    var s = atob(b64.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((b64.length + 3) % 4));
+    var out = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+    return out;
+  }
+  function postPush(body){
+    return fetch('/api/push-subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function(r){ return r.json(); }).catch(function(){ return { ok: false }; });
+  }
+  function refreshPushState(){
+    if (!pushSupported()) return Promise.resolve();
+    return navigator.serviceWorker.getRegistration('/').then(function(reg){
+      return reg ? reg.pushManager.getSubscription() : null;
+    }).then(function(sub){ pushSubscription = sub || null; }).catch(function(){});
+  }
+  function renderPhoneSection(msg){
+    var SK = '<span style="text-transform:none;">Σκύλλα</span>';
+    var html = '<div class="notify-phone-title' + (pushSubscription ? ' on' : '') + '">PH0NE N0T!F!CAT!0NS' + (pushSubscription ? ' :: 0N' : '') + '</div>';
+    if (!pushSupported()){
+      html += isIosDevice() && !isStandaloneApp()
+        ? '<div class="notify-phone-help">0N !PH0NE: TAP THE SHARE BUTT0N → "ADD T0 H0ME SCREEN", 0PEN ' + SK + ' FR0M Y0UR H0ME SCREEN, THEN TURN THEM 0N HERE. (!0S 16.4 0R NEWER)</div>'
+        : '<div class="notify-phone-help">TH!S BR0WSER CAN\\'T D0 PUSH N0T!F!CAT!0NS — TRY CHR0ME, EDGE 0R F!REF0X.</div>';
+    } else if (Notification.permission === 'denied'){
+      html += '<div class="notify-phone-help">N0T!F!CAT!0NS ARE BL0CKED F0R TH!S S!TE — ALL0W THEM !N Y0UR BR0WSER/PH0NE SETT!NGS, THEN C0ME BACK.</div>';
+    } else if (pushSubscription){
+      html += '<div class="notify-phone-help">TH!S DEV!CE GETS A N0T!F!CAT!0N F0R EVERYTH!NG SW!TCHED 0N ABOVE, EVEN W!TH ' + SK + ' CL0SED.</div>' +
+        '<div class="notify-phone-btns"><button type="button" class="notify-phone-btn" data-act="test"' + (pushBusy ? ' disabled' : '') + '>SEND TEST</button>' +
+        '<button type="button" class="notify-phone-btn secondary" data-act="off"' + (pushBusy ? ' disabled' : '') + '>TURN 0FF</button></div>';
+    } else {
+      html += '<div class="notify-phone-help">GET A PH0NE N0T!F!CAT!0N F0R EVERYTH!NG SW!TCHED 0N ABOVE, EVEN W!TH ' + SK + ' CL0SED.</div>' +
+        '<div class="notify-phone-btns"><button type="button" class="notify-phone-btn" data-act="on"' + (pushBusy ? ' disabled' : '') + '>TURN 0N PH0NE N0T!F!CAT!0NS</button></div>';
+    }
+    if (msg) html += '<div class="notify-phone-help">' + msg + '</div>';
+    el.notifyPhone.innerHTML = html;
+  }
+  el.notifyPhone.addEventListener('click', function(e){
+    var b = e.target.closest('.notify-phone-btn');
+    if (!b || pushBusy) return;
+    var act = b.getAttribute('data-act');
+    pushBusy = true;
+    renderPhoneSection();
+    var done = function(msg){ pushBusy = false; renderPhoneSection(msg); };
+    if (act === 'on'){
+      Notification.requestPermission().then(function(perm){
+        if (perm !== 'granted') throw new Error('denied');
+        return navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      }).then(function(){ return navigator.serviceWorker.ready; })
+      .then(function(reg){ return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(PUSH_PUBLIC_KEY) }); })
+      .then(function(sub){
+        pushSubscription = sub;
+        return postPush({ subscription: sub.toJSON(), collections: notifyPrefs.collections });
+      }).then(function(r){ done(r && r.ok ? 'D0NE — TAP SEND TEST T0 CHECK !T ARR!VES.' : 'C0ULDN\\'T SAVE TH!S DEV!CE — TRY AGA!N.'); })
+      .catch(function(err){ done(err && err.message === 'denied' ? 'N0T!F!CAT!0NS WEREN\\'T ALL0WED.' : 'C0ULDN\\'T TURN THEM 0N 0N TH!S DEV!CE.'); });
+    } else if (act === 'test'){
+      postPush({ test: true, endpoint: pushSubscription.endpoint }).then(function(r){
+        done(r && r.ok ? 'TEST SENT — !T SH0ULD ARR!VE !N A FEW SEC0NDS.' : 'TEST FA!LED (' + ((r && (r.error || r.status)) || 'UNKN0WN') + ').');
+      });
+    } else if (act === 'off'){
+      var ep = pushSubscription.endpoint;
+      pushSubscription.unsubscribe().catch(function(){}).then(function(){
+        pushSubscription = null;
+        return postPush({ unsubscribe: true, endpoint: ep });
+      }).then(function(){ done('PH0NE N0T!F!CAT!0NS ARE 0FF 0N TH!S DEV!CE.'); });
+    }
+  });
+  refreshPushState();
   function renderNotifyModal(){
     var key = state.collection;
     var meta = COLLECTION_META[key] || {};
@@ -20785,6 +20876,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return '<div class="notify-row' + (on[o.type] ? ' on' : '') + '" data-type="' + o.type + '"><span>' + o.label + '<span class="notify-sub">' + o.sub + '</span></span><span class="notify-switch"></span></div>';
     }).join('');
     el.notifyNote.textContent = (MY_WALLET ? 'SAVED T0 Y0UR WALLET.' : 'SAVED 0N TH!S DEV!CE — L0G !N T0 KEEP THEM EVERYWHERE.') + ' P0P-UPS SH0W WH!LE TH!S S!TE !S 0PEN.';
+    refreshPushState().then(function(){ renderPhoneSection(); });
   }
   el.openNotifyBtn.addEventListener('click', function(e){
     e.stopPropagation();

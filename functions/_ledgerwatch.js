@@ -2,6 +2,7 @@ import {
   fetchXrplClusterJson, getPigeonNumberMap, TRADEABLE_COLLECTIONS, safeKvPut,
   mapWithConcurrency, floorEntryForNft, patchFloorIndex
 } from './_shared.js';
+import { pushEventsToDevices } from './_webpush.js';
 
 // ─────────────────────────────────────────────────────────────────────────
 // LEDGER WATCHER (2026-09-25) — runs every minute from cron-worker/.
@@ -182,11 +183,13 @@ export async function runLedgerWatch(kv, opts) {
     const idx = await collectionIndex(kv);
     const byCollection = eventsFromLedgers(got, idx);
 
+    const freshByCollection = {};
     for (const key of Object.keys(byCollection)) {
       const existing = await getCollectionEvents(kv, key);
       const seen = new Set(existing.map(e => e.hash + ':' + e.type + ':' + e.nftId));
       const fresh = byCollection[key].filter(e => !seen.has(e.hash + ':' + e.type + ':' + e.nftId));
       if (!fresh.length) continue;
+      freshByCollection[key] = fresh.slice();
       const list = fresh.reverse().concat(existing).slice(0, LW_EVENTS_MAX); // newest first
       await safeKvPut(kv, eventsKey(key), JSON.stringify(list));
     }
@@ -204,10 +207,21 @@ export async function runLedgerWatch(kv, opts) {
       await patchFloorIndex(kv, entries);
     }
 
+    // Phone/desktop notifications for devices that switched these on.
+    let push = null;
+    if (opts.vapid && Object.keys(freshByCollection).length) {
+      const labels = {};
+      Object.keys(TRADEABLE_COLLECTIONS).forEach(k => {
+        const c = TRADEABLE_COLLECTIONS[k];
+        labels[k] = { label: c.label, token: c.tokenConfig && c.tokenConfig.currency ? '$' + c.tokenConfig.currency : '' };
+      });
+      push = await pushEventsToDevices(kv, freshByCollection, opts.vapid, labels).catch(e => ({ error: String(e && e.message || e) }));
+    }
+
     await safeKvPut(kv, LW_CURSOR_KEY, String(got[got.length - 1].index));
     const counts = {};
     Object.keys(byCollection).forEach(k => { counts[k] = byCollection[k].length; });
-    return { from: cursor + 1, to: got[got.length - 1].index, events: counts, floorPatched: touched.size };
+    return { from: cursor + 1, to: got[got.length - 1].index, events: counts, floorPatched: touched.size, push };
   } finally {
     await kv.delete(LW_LOCK_KEY).catch(() => {});
   }
