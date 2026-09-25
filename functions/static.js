@@ -20024,7 +20024,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderDbSelectOptions(){
     var open = {};
     document.querySelectorAll('.mainframe-card[data-collection]').forEach(function(c){ open[c.getAttribute('data-collection')] = true; });
-    if (open.conspiracy && COLLECTION_META.whiterabbit) open.whiterabbit = true;
+    // C0NSP!RACY's card opens a picker (data-conspiracy-picker) for its
+    // two collections instead of carrying a data-collection itself.
+    if (document.querySelector('.mainframe-card[data-conspiracy-picker]')){
+      open.conspiracy = true;
+      if (COLLECTION_META.whiterabbit) open.whiterabbit = true;
+    }
     var keys = Object.keys(COLLECTION_META);
     var html = keys.filter(function(k){ return open[k]; }).map(function(k){
       return '<div class="db-option' + (k === state.collection ? ' db-option-active' : '') + '" data-collection="' + k + '">' + escapeHtml(COLLECTION_META[k].label) + '</div>';
