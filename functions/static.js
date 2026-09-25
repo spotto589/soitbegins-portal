@@ -6134,12 +6134,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   #notifyModal .notify-panel{ max-height:calc(100dvh - 2rem); overflow-y:auto; -webkit-overflow-scrolling:touch; }
   @media (max-width:700px){
     #notifyModal{ align-items:flex-start; padding:calc(env(safe-area-inset-top, 0px) + 0.75rem) 0.6rem calc(env(safe-area-inset-bottom, 0px) + 0.75rem); }
-    #notifyModal .notify-panel{ max-height:calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 1.5rem); padding:1.5rem 1rem 1rem; }
-    #notifyModal .buyswap-thumb{ width:64px; height:64px; }
-    #notifyModal .history-title{ font-size:24px; }
-    #notifyModal .node-eyebrow{ margin:0.1rem 0 0.7rem; }
-    .notify-row{ padding:0.55em 0.8em; font-size:15px; }
-    .notify-row .notify-sub{ font-size:11px; }
+    #notifyModal .notify-panel{ max-height:calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 1.5rem); padding:1.1rem 0.9rem 0.9rem; }
+    #notifyModal .buyswap-thumb{ width:48px; height:48px; }
+    #notifyModal .history-title{ font-size:22px; }
+    #notifyModal .node-eyebrow{ font-size:15px; margin:0 0 0.6rem; }
+    .notify-toggles{ gap:0.35rem; }
+    .notify-row{ padding:0.5em 0.8em; font-size:15px; }
+    .notify-switch{ width:44px; height:24px; }
+    .notify-switch::after{ width:18px; height:18px; }
+    .notify-row.on .notify-switch::after{ left:23px; }
+    .notify-phone{ margin-bottom:0.7rem; padding-bottom:0.7rem; gap:0.45rem; }
+    .notify-phone-help{ font-size:12px; line-height:1.4; }
+    .notify-phone-btn{ padding:0.65em; font-size:14px; }
+    .notify-note{ margin-top:0.6rem; font-size:11px; }
   }
   #notifyModal .notify-panel{ position:relative; width:min(520px, 96vw); padding:2.25rem 2rem 1.5rem; text-align:center; border:1px solid rgba(var(--collection-accent-rgb), 0.4); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 44px rgba(var(--collection-accent-rgb), 0.14); }
   #notifyModal .sales-styled-close{ position:absolute; top:1rem; right:1rem; }
@@ -20950,7 +20957,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (meta.thumb){ el.notifyCoinThumb.src = meta.thumb; el.notifyCoinThumb.style.display = ''; } else el.notifyCoinThumb.style.display = 'none';
     el.notifyEyebrow.textContent = meta.label || key;
     el.notifyToggles.innerHTML = NOTIFY_OPTIONS.map(function(o){
-      return '<div class="notify-row' + (on[o.type] ? ' on' : '') + '" data-type="' + o.type + '"><span>' + o.label + '<span class="notify-sub">' + o.sub + '</span></span><span class="notify-switch"></span></div>';
+      // Title only (reported live 2026-09-25: no descriptions, make it fit).
+      return '<div class="notify-row' + (on[o.type] ? ' on' : '') + '" data-type="' + o.type + '"><span>' + o.label + '</span><span class="notify-switch"></span></div>';
     }).join('');
     el.notifyNote.textContent = (MY_WALLET ? 'SAVED T0 Y0UR WALLET.' : 'SAVED 0N TH!S DEV!CE — L0G !N T0 KEEP THEM EVERYWHERE.') + ' P0P-UPS SH0W WH!LE TH!S S!TE !S 0PEN.';
     refreshPushState().then(function(){ renderPhoneSection(); });
