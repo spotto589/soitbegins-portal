@@ -9941,6 +9941,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     /* SORT BY / FILTER BY TRA!TS — identical boxes. */
     #sortDropWrap, #traitsHoverWrap{ flex:1 1 0 !important; width:auto !important; min-width:0; }
     #sortDropLabel, #traitsHoverLabel{ height:48px; display:flex !important; align-items:center; justify-content:center; white-space:nowrap; font-size:13px !important; padding:0 0.4rem !important; box-sizing:border-box; }
+
+    /* SELECT A DATABASE on phones is the page itself, NOT a layer on top
+       (reported live on iPhone, repeatedly: "an invisible page over the
+       top, when I scroll down I can see behind it"). Everything else in
+       the page is removed from the layout while it's open, and the list
+       sits in the normal page flow, so the phone scrolls the page itself
+       and there is nothing above or behind it. */
+    body.mainframe-open{ padding:var(--global-ticker-h) 0 0 !important; display:block !important; }
+    body.mainframe-open .page{ width:100% !important; max-width:none !important; margin:0 !important; padding:0 !important; }
+    body.mainframe-open .page > *:not(#screenMainframe):not(#notifyToasts):not([id$="Modal"]){ display:none !important; }
+    body.mainframe-open #screenMainframe{ position:relative !important; top:auto !important; bottom:auto !important; left:auto !important; right:auto !important; overflow:visible !important; height:auto !important; min-height:calc(100vh - var(--global-ticker-h)); z-index:1 !important; }
   }
 </style>
 </head>
