@@ -1737,6 +1737,30 @@ function dexscreenerPairFor(tokenConfig) {
 }
 const COLLECTION_DEXSCREENER_PAIRS = { pigeons: PIGEONS_DEXSCREENER_PAIR };
 
+// XRP's USD price, from an XRP pair the chart site does index (its
+// USD price / XRP price). Cached 10 min.
+async function fetchXrpUsd(kv) {
+  const key = 'pswap:xrpusd:v1';
+  if (kv) { const c = await kv.get(key); if (c !== null) return parseFloat(c); }
+  let v = null;
+  try {
+    const pair = dexscreenerPairFor(getTradeConfig('phnixs').tokenConfig);
+    const data = await (await fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + pair)).json();
+    const p = data && data.pairs && data.pairs[0];
+    if (p && parseFloat(p.priceNative) > 0 && parseFloat(p.priceUsd) > 0) v = parseFloat(p.priceUsd) / parseFloat(p.priceNative);
+  } catch (e) {}
+  if (v && kv) await safeKvPut(kv, key, String(v), { expirationTtl: 600 });
+  return v;
+}
+// Total issued supply of a token = the issuer's obligations for it.
+async function fetchTokenSupply(tokenConfig) {
+  const data = await fetchXrplClusterJson({ method: 'gateway_balances', params: [{ account: tokenConfig.issuer, ledger_index: 'validated' }] });
+  const ob = data && data.result && data.result.obligations;
+  if (!ob) return null;
+  const v = ob[encodeCurrencyCode(tokenConfig.currency)] || ob[tokenConfig.currency];
+  return v ? parseFloat(v) : null;
+}
+
 export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
   const cfg = getTradeConfig(collectionKey);
   if (!cfg || !cfg.tokenConfig) return { xrpPerPigeon: null, usdPerPigeon: null, dexUrl: null };
@@ -1782,6 +1806,25 @@ export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
   }
   if (result.xrpPerPigeon === null) {
     result.xrpPerPigeon = await fetchTokenXrpRateFromBookOffers(cfg.tokenConfig);
+  }
+  // Not indexed by the chart site (e.g. $PIGEONS, 2026-09-25): work the
+  // same two numbers out from the ledger itself so every SELECT A
+  // DATABASE card shows them — marketcap = token supply x price, and
+  // liquidity = both sides of the AMM pool (2 x its XRP side), in USD.
+  if ((result.marketCapUsd === null || result.liquidityUsd === null) && result.xrpPerPigeon > 0) {
+    try {
+      const xrpUsd = await fetchXrpUsd(kv);
+      if (xrpUsd > 0) {
+        if (result.marketCapUsd === null) {
+          const supply = await fetchTokenSupply(cfg.tokenConfig);
+          if (supply > 0) result.marketCapUsd = supply * result.xrpPerPigeon * xrpUsd;
+        }
+        if (result.liquidityUsd === null) {
+          const pool = await fetchTokenAmmPool(COLLECTION_AMM_ACCOUNTS[collectionKey], cfg.tokenConfig);
+          if (pool) result.liquidityUsd = 2 * (Number(pool.xrpReserveDrops) / 1e6) * xrpUsd;
+        }
+      }
+    } catch (e) { /* stays null — the card shows a dash */ }
   }
   if (kv) await safeKvPut(kv, cacheKey, JSON.stringify(result), { expirationTtl: PIGEONS_RATE_CACHE_TTL_SECONDS });
   return result;

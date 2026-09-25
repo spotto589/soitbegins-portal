@@ -9866,6 +9866,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      used everywhere else on the grid, instead of introducing a new colour
      just for this one message. */
   .mainframe-subtitle-locked{ color:#f5c518 !important; }
+  .mainframe-card-soon-tag{ color:#f5c518; border-color:rgba(245,197,24,0.45); background:rgba(245,197,24,0.08); }
   /* PREV/NEXT — real paging controls again (see renderMainframePage in
      the JS for the show/hide-by-page logic; each one's own [hidden] at
      the start/end of the page range is set there, not here). */
@@ -9948,9 +9949,43 @@ const SWAP_HTML = `<!DOCTYPE html>
        the page is removed from the layout while it's open, and the list
        sits in the normal page flow, so the phone scrolls the page itself
        and there is nothing above or behind it. */
-    body.mainframe-open{ padding:var(--global-ticker-h) 0 0 !important; display:block !important; }
+    body.mainframe-open{ padding:40px 0 0 !important; display:block !important; }
     body.mainframe-open .page{ width:100% !important; max-width:none !important; margin:0 !important; padding:0 !important; }
     body.mainframe-open .page > *:not(#screenMainframe):not(#notifyToasts):not([id$="Modal"]){ display:none !important; }
+    /* Top bar: the S!GNAL :: 0NL!NE / N0T F0UND words go on phones — the
+       address (logged in) or L0G !N (logged out) already says it — so
+       DATABASE :: <collection> ▾ and the wallet always fit on one row. */
+    #globalTopBarHeading{ display:none !important; }
+    #topTabs{ flex-wrap:nowrap !important; }
+    #topTabs .tab-btn-database{ flex:0 1 auto; min-width:0; display:flex !important; align-items:center; }
+    #dbSelectWrap{ min-width:0; display:inline-flex !important; align-items:center; }
+    #dbSelectArrow{ flex:0 0 auto; }
+    #dbSelectLabel{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    #topTabs .global-top-scylla-btn{ flex:0 0 auto; }
+    #flockTabLabel{ display:inline-flex !important; align-items:center; gap:0.25rem; white-space:nowrap; font-size:12px !important; }
+    #flockTabLabel .flock-tab-wallet{ font-size:12px !important; letter-spacing:0.02em; }
+    #flockTabLabel .flock-tab-switch-arrow{ font-size:14px !important; margin:0 !important; padding:0 0.1em !important; }
+    #flockTabLabel .flock-tab-offer-dot{ margin-left:0.15rem !important; }
+
+    /* SELECT A DATABASE — title at the top and bigger, then S0RT BY and
+       SEARCH side by side at the same size, then identical cards. */
+    body.mainframe-open #screenMainframe{ padding:0.9rem 0.75rem 1.5rem !important; }
+    #screenMainframe .mainframe-section-header{ display:grid !important; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:0.6rem; width:100% !important; box-sizing:border-box; margin:0 0 1rem !important; padding:0 !important; max-width:none; }
+    #screenMainframe .mainframe-section-header::before{ display:none !important; }
+    #screenMainframe .mainframe-subtitle{ grid-column:1 / -1; order:-1; position:relative !important; left:auto !important; top:auto !important; transform:none !important; font-size:clamp(17px, 6vw, 24px) !important; letter-spacing:0.14em; color:var(--white) !important; padding:0.1rem 0 0.7rem; margin:0 0 0.2rem; white-space:nowrap; animation:none; }
+    #screenMainframe .mainframe-subtitle::after{ left:50% !important; right:auto !important; top:auto !important; bottom:0 !important; transform:translateX(-50%) !important; width:90px; }
+    #screenMainframe select.mainframe-sort-select, #screenMainframe .mainframe-search-input{ width:100% !important; min-width:0; height:44px; box-sizing:border-box; margin:0 !important; font-size:12px !important; padding:0 0.8em !important; border-radius:var(--radius); }
+    #screenMainframe select.mainframe-sort-select{ padding-right:2em !important; }
+
+    #screenMainframe .mainframe-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)) !important; grid-auto-rows:1fr !important; gap:0.65rem !important; padding:0 !important; }
+    #screenMainframe .mainframe-card{ display:flex !important; flex-direction:column; height:100% !important; min-width:0; }
+    #screenMainframe .mainframe-card-art{ height:118px !important; }
+    #screenMainframe .mainframe-card-body{ flex:1 1 auto !important; display:flex; flex-direction:column; align-items:center; padding:0.6rem 0.55rem 0.65rem !important; text-align:center; }
+    #screenMainframe .mainframe-card-label{ font-size:16px !important; white-space:nowrap; }
+    #screenMainframe .mainframe-card-live-tag{ font-size:9px; margin-top:0.35rem; padding:0.2em 0.6em; }
+    #screenMainframe .mainframe-card-stats{ font-size:10px !important; line-height:1.35; gap:0.2rem !important; margin:0.5rem 0 0.6rem !important; }
+    #screenMainframe .mainframe-card-stats .stat-row{ white-space:nowrap; }
+    #screenMainframe .mainframe-card-buy{ margin-top:auto !important; font-size:12px !important; padding:0.6em 0.3em !important; }
     body.mainframe-open #screenMainframe{ position:relative !important; top:auto !important; bottom:auto !important; left:auto !important; right:auto !important; overflow:visible !important; height:auto !important; min-height:calc(100vh - var(--global-ticker-h)); z-index:1 !important; }
   }
 </style>
@@ -20633,6 +20668,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (n >= 1000) return '$' + (n / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'K';
     return '$' + Math.round(n).toLocaleString();
   }
+  function mainframeStatsHtml(holders, marketcap, liquidity){
+    function row(value, label){ return '<div class="stat-row"><span class="hi">' + (value == null ? '—' : value) + '</span> ' + label + '</div>'; }
+    return row(holders, 'NFT H0LDERS') + row(marketcap, 'MARKETCAP') + row(liquidity, 'L!QU!D!TY');
+  }
+  // Same layout on every card from the first paint: the three stat lines
+  // (dashes until the numbers land) and a status tag under the name —
+  // L!VE DATABASE on the open ones, C0M!NG S00N on the rest.
+  Array.prototype.forEach.call(el.mainframeGrid.querySelectorAll('.mainframe-card'), function(card){
+    var statsEl = card.querySelector('.mainframe-card-stats');
+    if (statsEl && !statsEl.innerHTML.trim()) statsEl.innerHTML = mainframeStatsHtml(null, null, null);
+    if (card.querySelector('.mainframe-card-live-tag')) return;
+    var label = card.querySelector('.mainframe-card-label');
+    if (!label) return;
+    var tag = document.createElement('div');
+    tag.className = 'mainframe-card-live-tag mainframe-card-soon-tag';
+    tag.textContent = 'C0M!NG S00N';
+    label.insertAdjacentElement('afterend', tag);
+  });
+  // The full SEARCH C0LLECT!0NS... doesn't fit its half-width box on
+  // small phones.
+  if (window.innerWidth <= 400) el.mainframeSearchInput.placeholder = 'SEARCH...';
   var mainframeStatsLoaded = false;
   function loadMainframeCardStats(){
     if (mainframeStatsLoaded) return;
@@ -20673,7 +20729,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         el[cfg.dexTarget].href = rate.dexUrl;
         el[cfg.dexTarget].style.display = '';
       }
-      if (stats.holders == null && rate.marketCapUsd == null && rate.liquidityUsd == null) return;
       // NFT H0LDERS is its own centered line; MARKETCAP + L!QU!D!TY share
       // the line under it, joined by " :: " — VALUE-then-LABEL reading
       // order (e.g. "289 NFT H0LDERS"), same as the site's original
@@ -20681,12 +20736,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       function stat(value, label){
         return '<span class="hi">' + value + '</span> ' + label;
       }
-      var html = stats.holders != null ? '<div class="stat-row">' + stat(stats.holders.toLocaleString(), 'NFT H0LDERS') + '</div>' : '';
-      var comboParts = [];
-      if (rate.marketCapUsd != null) comboParts.push(stat(formatUsdAbbrev(rate.marketCapUsd), 'MARKETCAP'));
-      if (rate.liquidityUsd != null) comboParts.push(stat(formatUsdAbbrev(rate.liquidityUsd), 'L!QU!D!TY'));
-      if (comboParts.length) html += '<div class="stat-row">' + comboParts.join(' :: ') + '</div>';
-      el[cfg.target].innerHTML = html;
+      // Every card shows the same three lines, in the same order (reported
+      // live: "the same information showing so it looks clean") — a
+      // number that isn't known reads as a dash, never a missing line.
+      el[cfg.target].innerHTML = mainframeStatsHtml(
+        stats.holders != null ? stats.holders.toLocaleString() : null,
+        rate.marketCapUsd != null ? formatUsdAbbrev(rate.marketCapUsd) : null,
+        rate.liquidityUsd != null ? formatUsdAbbrev(rate.liquidityUsd) : null);
       // S0RT BY's own real numbers (see sortMainframeCards) — stashed on
       // the card itself, not just rendered as text, so re-sorting doesn't
       // need to re-parse the formatted "$1.2M" strings back into numbers.
