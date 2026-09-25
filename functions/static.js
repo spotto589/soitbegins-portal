@@ -6114,6 +6114,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   #topHoldersModal, #salesModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
   /* N0T!F!CAT!0NS popup — SALES H!ST0RY's look, narrower. */
   #notifyModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  /* Fits and scrolls on a phone (reported live 2026-09-25: the phone
+     section was cut off on iPhone with no way to reach it). */
+  #notifyModal{ overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  #notifyModal .notify-panel{ max-height:calc(100dvh - 2rem); overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  @media (max-width:700px){
+    #notifyModal{ align-items:flex-start; padding:calc(env(safe-area-inset-top, 0px) + 0.75rem) 0.6rem calc(env(safe-area-inset-bottom, 0px) + 0.75rem); }
+    #notifyModal .notify-panel{ max-height:calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 1.5rem); padding:1.5rem 1rem 1rem; }
+    #notifyModal .buyswap-thumb{ width:64px; height:64px; }
+    #notifyModal .history-title{ font-size:24px; }
+    #notifyModal .node-eyebrow{ margin:0.1rem 0 0.7rem; }
+    .notify-row{ padding:0.55em 0.8em; font-size:15px; }
+    .notify-row .notify-sub{ font-size:11px; }
+  }
   #notifyModal .notify-panel{ position:relative; width:min(520px, 96vw); padding:2.25rem 2rem 1.5rem; text-align:center; border:1px solid rgba(var(--collection-accent-rgb), 0.4); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 44px rgba(var(--collection-accent-rgb), 0.14); }
   #notifyModal .sales-styled-close{ position:absolute; top:1rem; right:1rem; }
   #notifyModal .buyswap-thumb{ width:96px; height:96px; }
@@ -6128,7 +6141,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .notify-row.on .notify-switch{ background:var(--green); box-shadow:0 0 10px var(--green-glow); }
   .notify-row.on .notify-switch::after{ left:27px; }
   .notify-note{ margin-top:1rem; font-size:13px; letter-spacing:0.05em; color:var(--grey); }
-  .notify-phone{ margin-top:1.1rem; padding-top:1rem; border-top:1px solid var(--border-dim); display:flex; flex-direction:column; gap:0.6rem; }
+  .notify-phone{ margin:0 0 1rem; padding-bottom:1rem; border-bottom:1px solid var(--border-dim); display:flex; flex-direction:column; gap:0.6rem; }
   .notify-phone-title{ font-size:16px; font-weight:700; letter-spacing:0.08em; color:var(--white); }
   .notify-phone-title.on{ color:var(--green); text-shadow:0 0 8px var(--green-glow); }
   .notify-phone-help{ font-size:13px; letter-spacing:0.04em; color:var(--grey); line-height:1.5; }
@@ -10272,9 +10285,9 @@ const SWAP_HTML = `<!DOCTYPE html>
         <img class="buyswap-thumb" id="notifyCoinThumb" src="" alt="" style="display:none;">
         <div class="history-title">N0T!F!CAT!0NS</div>
         <div class="node-eyebrow" id="notifyEyebrow"></div>
+        <div class="notify-phone" id="notifyPhone"></div>
         <div class="notify-toggles" id="notifyToggles"></div>
         <div class="notify-note" id="notifyNote"></div>
-        <div class="notify-phone" id="notifyPhone"></div>
       </div>
     </div>
     <div id="notifyToasts" class="notify-toasts"></div>
