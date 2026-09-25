@@ -4362,7 +4362,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       max-height:70vh;
       overflow-y:auto;
       box-shadow:0 10px 30px rgba(0,0,0,0.6);
-      z-index:1000;
+      /* Was 1000 — below the popup's own backdrop (1900), so once a
+         category was opened on a phone the backdrop sat on top of the
+         trait list and swallowed every tap (reported live 2026-09-25:
+         "can't select a trait in filter by traits on mobile"). */
+      z-index:1950;
       margin-top:0;
     }
     /* Desktop-only scroll arrows (see the new desktop block below) —
@@ -9880,16 +9884,9 @@ const SWAP_HTML = `<!DOCTYPE html>
           <span class="trait-row-label tab-db-word" id="dbSelectLabel">P!GE0NS</span>
           <span class="db-select-arrow" id="dbSelectArrow">▾</span>
           <div class="traits-flyout db-select-flyout" id="dbSelectFlyout" style="display:none;">
+            <!-- Filled by renderDbSelectOptions() from the MAINFRAME cards
+                 (open ones selectable, C0M!NG S00N ones listed but not). -->
             <div class="db-option db-option-active" data-collection="pigeons">P!GE0NS</div>
-            <!-- PHN!X/TEDDY pulled back to C0M!NG S00N (matching FUZZY's own
-                 disabled pattern — no data-collection, so neither the flyout
-                 click handler nor switchCollection's own querySelectorAll
-                 above can ever select them) while Pigeons gets hardened
-                 into the real template first — see COLLECTION_META/
-                 TRADEABLE_COLLECTIONS' own comments on why. -->
-            <div class="db-option db-option-disabled db-option-phnix">PHN!X <span class="db-soon">C0M!NG S00N</span></div>
-            <div class="db-option db-option-disabled db-option-teddy">TEDDY <span class="db-soon">C0M!NG S00N</span></div>
-            <div class="db-option db-option-disabled db-option-fuzzy">FUZZY <span class="db-soon">C0M!NG S00N</span></div>
           </div>
         </div>
       </button>
@@ -20020,7 +20017,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   // else on the button still does the normal DATABASE tab switch. Every
   // handler here stops propagation so picking/opening/closing the
   // dropdown never also fires that tab switch. ----
+  // Same collections MAINFRAME lets you into (its non-C0M!NG S00N cards;
+  // WH!TE RABB!T comes with C0NSP!RACY, via its picker), then the rest
+  // as C0M!NG S00N — so this list can't drift out of date again
+  // (reported live 2026-09-25: it still offered only P!GE0NS).
+  function renderDbSelectOptions(){
+    var open = {};
+    document.querySelectorAll('.mainframe-card[data-collection]').forEach(function(c){ open[c.getAttribute('data-collection')] = true; });
+    if (open.conspiracy && COLLECTION_META.whiterabbit) open.whiterabbit = true;
+    var keys = Object.keys(COLLECTION_META);
+    var html = keys.filter(function(k){ return open[k]; }).map(function(k){
+      return '<div class="db-option' + (k === state.collection ? ' db-option-active' : '') + '" data-collection="' + k + '">' + escapeHtml(COLLECTION_META[k].label) + '</div>';
+    }).concat(keys.filter(function(k){ return !open[k]; }).map(function(k){
+      return '<div class="db-option db-option-disabled">' + escapeHtml(COLLECTION_META[k].label) + ' <span class="db-soon">C0M!NG S00N</span></div>';
+    })).join('');
+    el.dbSelectFlyout.innerHTML = html;
+  }
   function openDbSelectFlyout(){
+    renderDbSelectOptions();
     // position:fixed (see its own CSS comment for why) has no CSS-only way
     // to anchor to the trigger — computed fresh every open from its real
     // on-screen position instead, same as any other JS-positioned overlay.
@@ -20051,6 +20065,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // instead (see its own comment on "clicking the word DATABASE").
   el.dbSelectLabel.addEventListener('click', function(e){
     e.stopPropagation();
+    // Phones: the name opens the list — the ▾ on its own is a 12px target
+    // (reported live 2026-09-25: "select a database page doesn't work").
+    if (window.innerWidth <= 700){
+      if (el.dbSelectFlyout.style.display === 'block') closeDbSelectFlyout();
+      else openDbSelectFlyout();
+      return;
+    }
     enterMainframeCollection(state.collection);
   });
   el.dbSelectArrow.addEventListener('click', function(e){
