@@ -10069,11 +10069,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="stats-carousel-viewport">
       <div class="stats-strip stats-strip-floor stats-page stats-page-active" id="statsStripFloor">
         <!-- Two tiles (reported live 2026-09-24): Σκύλλα's own token floor,
-             and one EXTERNAL FL00R — the cheapest XRP listing on any other
+             and one 0FF-S!TE FL00R — the cheapest XRP listing on any other
              marketplace, never named. It sorts the grid by L0WEST (XRP)
              instead of linking out. -->
         <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY L!STED THR0UGH SCYLLA"><div class="stat-label" id="statScyllaListedLabel">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
-        <button class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorExternalTile" title="S0RT BY L0WEST (XRP)"><div class="stat-label">EXTERNAL FL00R</div><div class="stat-value" id="statFloorExternal">…</div></button>
+        <button class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorExternalTile" title="S0RT BY L0WEST (XRP)"><div class="stat-label">0FF-S!TE FL00R</div><div class="stat-value" id="statFloorExternal">…</div></button>
       </div>
       <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
         <div class="stat-tile"><div class="stat-label">!TEMS</div><div class="stat-value"><span id="statItems">…</span></div></div>
@@ -14779,7 +14779,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         }
         // No exchange names on buy buttons (reported live 2026-09-24) —
         // any other marketplace is just "EXTERNAL".
-        return '<a class="market-buy-link" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY EXTERNALLY F0R ' + fmtXrp(l.priceXrp) + ' XRP ↗</a>';
+        return '<a class="market-buy-link" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY 0FF-S!TE F0R ' + fmtXrp(l.priceXrp) + ' XRP ↗</a>';
       }).join('') + '</div>';
     } else if ((state.sort === 'LORE_ASC' || state.sort === 'LORE_DESC') && p.ourRarityLoreScore !== null && p.ourRarityLoreScore !== undefined){
       avgSaleLine = '<div class="result-rarity-line result-stat-stack"><span class="stat-label">L0RE SC0RE ::</span><span class="stat-value">' + greenNum(fmtRarityScore(p.ourRarityLoreScore)) + '</span></div>';
@@ -20728,7 +20728,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // goes through it, so the tag only pushed the price off-centre.
     // XRP sales Σκύλλα brokered do get it, to tell them from xrp.cafe's.
     // Other marketplaces are never named (reported live 2026-09-24).
-    var via = (s.via === 'xrpcafe' || s.via === 'deeptide') ? 'EXTERNAL' : ((s.via === 'scylla' && s.currency === 'XRP') ? 'Σ SWAP' : '');
+    var via = (s.via === 'xrpcafe' || s.via === 'deeptide') ? '0FF-S!TE' : ((s.via === 'scylla' && s.currency === 'XRP') ? 'Σ SWAP' : '');
     var when = s.createdAt ? relativeTimeText(s.createdAt) : '';
     var thumbHref = nftHrefFor({ number: s.number, collectionKey: s.collectionKey });
     return '<div class="sale-row" data-nftid="' + escapeHtml(s.nftId) + '">' +
@@ -21611,7 +21611,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           ? '<button type="button" class="market-buy-link detail-scylla-xrp-delist">DEL!ST</button>'
           : '<button type="button" class="market-buy-link detail-scylla-xrp-buy">BUY N0W</button>';
       return '<div class="detail-market-row' + (i === 0 ? ' cheapest' : '') + '">' +
-        '<span class="dm-name">' + (l.internal ? marketLabelHtml(l) : 'EXTERNAL') + '</span>' +
+        '<span class="dm-name">' + (l.internal ? marketLabelHtml(l) : '0FF-S!TE') + '</span>' +
         '<span class="dm-price">' + greenNum(fmtXrp(l.priceXrp)) + ' XRP</span>' +
         action +
       '</div>';
