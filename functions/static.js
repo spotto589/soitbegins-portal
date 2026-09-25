@@ -6165,8 +6165,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   @keyframes notifyIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
   /* Phone sizing — after the base rules above so it actually wins. */
   @media (max-width:700px){
-    #notifyModal{ align-items:flex-start; padding:calc(env(safe-area-inset-top, 0px) + 0.75rem) 0.6rem calc(env(safe-area-inset-bottom, 0px) + 0.75rem); }
-    #notifyModal .notify-panel{ max-height:calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 1.5rem); padding:1.1rem 0.9rem 0.9rem; }
+    /* Starts below the site's fixed top bar (it sits above this popup). */
+    #notifyModal{ align-items:flex-start; padding:calc(var(--global-ticker-h, 56px) + 0.5rem) 0.6rem calc(env(safe-area-inset-bottom, 0px) + 0.75rem); }
+    #notifyModal .notify-panel{ max-height:calc(100dvh - var(--global-ticker-h, 56px) - env(safe-area-inset-bottom, 0px) - 1.25rem); padding:1.1rem 0.9rem 0.9rem; }
     #notifyModal .buyswap-thumb{ width:48px; height:48px; }
     #notifyModal .history-title{ font-size:22px; }
     #notifyModal .node-eyebrow{ font-size:15px; margin:0 0 0.6rem; }
