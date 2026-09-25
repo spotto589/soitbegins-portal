@@ -3406,7 +3406,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     border-radius:var(--radius);
     transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
   }
-  select.sort-select:hover{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
+  select.sort-select:hover{ border-color:var(--cyan); color:var(--cyan); background-color:var(--cyan-faint); }
   select.sort-select:focus{ outline:none; border-color:var(--cyan); }
   select.sort-select option{ background:var(--panel-bg-solid); color:var(--white); }
   /* Same fixed width as ADD TRA!TS (var(--ctrl-w)) so every config
@@ -9293,7 +9293,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:0.6em 0.85em;
     border-radius:var(--radius);
   }
-  select.mainframe-sort-select:hover{ border-color:var(--cyan); color:var(--cyan); background:var(--cyan-faint); }
+  select.mainframe-sort-select:hover{ border-color:var(--cyan); color:var(--cyan); background-color:var(--cyan-faint); }
+  /* iPhone/Safari draws its own white native select unless told not to
+     (seen in WebKit 2026-09-25: SORT BY rendered white with pale text) —
+     switch that off and draw the arrow ourselves, for every .sort-select. */
+  select.sort-select{
+    -webkit-appearance:none;
+    appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M0 0h10L5 6z' fill='%233df3ec'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 0.75em center;
+    background-size:10px 6px;
+    padding-right:2.2em !important;
+  }
   select.mainframe-sort-select:focus{ outline:none; border-color:var(--cyan); }
   /* Client-side filter over the carousel's own real cards (see
      mainframeSearchInput's own JS), same input styling as every other
