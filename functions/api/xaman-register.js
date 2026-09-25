@@ -16,7 +16,7 @@ import {
 // real payload Xaman holds is exactly the txjson the server built.
 const INTENT_SECRET_SUFFIX = ':intent';
 // Fields that decide what the transaction does; Xaman may add others.
-const COMPARE_FIELDS = ['TransactionType', 'Account', 'NFTokenID', 'Amount', 'Destination', 'Owner', 'Flags', 'Expiration', 'NFTokenSellOffer', 'NFTokenBuyOffer', 'NFTokenOffers'];
+const COMPARE_FIELDS = ['TransactionType', 'Account', 'NFTokenID', 'Amount', 'Destination', 'Owner', 'Flags', 'Expiration', 'NFTokenSellOffer', 'NFTokenBuyOffer', 'NFTokenOffers', 'SendMax', 'LimitAmount'];
 
 function json(body, status) {
   return new Response(JSON.stringify(body), { status: status || 200, headers: { 'Content-Type': 'application/json' } });

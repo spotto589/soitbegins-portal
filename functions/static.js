@@ -12643,6 +12643,29 @@ const SWAP_HTML = `<!DOCTYPE html>
       }).then(function(){ return created; }, function(){ return created; });
     });
   }
+  // fetch() for a sign-request endpoint (*-payload). With a Xaman browser
+  // session it asks the server for the txjson instead (clientSign), creates
+  // the request from this session so it goes straight to the user's Xaman
+  // app (no QR), and answers like the server would have:
+  // { ok, uuid, next: { always, pushed:true } }. Anything going wrong on
+  // the browser side falls back to the normal server-created request.
+  function signFetch(url, init){
+    if (!xamanSdk) return fetch(url, init);
+    var body = {};
+    try { body = JSON.parse((init && init.body) || '{}'); } catch (e){ return fetch(url, init); }
+    body.clientSign = true;
+    var csInit = Object.assign({}, init, { body: JSON.stringify(body) });
+    return fetch(url, csInit).then(function(r){
+      if (!r.ok) return r;
+      return r.clone().json().then(function(data){
+        if (!data || !data.clientSign) return r;
+        return createFromBrowser(data.txjson, data.intent).then(function(created){
+          var out = { ok: true, uuid: created.uuid, next: { always: (created.next && created.next.always) || ('https://xumm.app/sign/' + created.uuid), pushed: true }, display: data.display };
+          return new Response(JSON.stringify(out), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        });
+      });
+    }).catch(function(){ return fetch(url, init); });
+  }
   // Set server-side only by the pretty per-collection routes (functions/
   // pigeons.js, functions/phnixs.js, etc. — see renderSwap below) so
   // soitbegins.xyz/phnixs lands directly on PHN!X without a client-side
@@ -17618,7 +17641,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else {
       t.removeAttribute('href');
       t.classList.remove('clickable');
-      t.innerHTML = 'S!GN REQUEST SENT T0 Y0UR <span style="text-transform:none;">Xaman</span> APP — CHECK Y0UR PH0NE';
+      t.innerHTML = 'S!GN REQUEST SENT — 0PEN <span style="text-transform:none;">Xaman</span> 0N Y0UR PH0NE T0 S!GN';
     }
     t.classList.add('show');
     if (pushToastTimer) clearTimeout(pushToastTimer);
@@ -18490,7 +18513,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.buySwapOpenXamanBtn.disabled = true;
     el.buySwapOpenXamanBtn.style.display = 'none';
     el.buySwapConfirmStatus.textContent = 'REQUEST!NG S!GN!NG REQUEST...';
-    fetch('/api/buyswap-payload', {
+    signFetch('/api/buyswap-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ xrpDrops: buySwapReviewDrops, collection: buySwapCollection })
