@@ -20813,7 +20813,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!pushSupported()) return Promise.resolve();
     return navigator.serviceWorker.getRegistration('/').then(function(reg){
       return reg ? reg.pushManager.getSubscription() : null;
-    }).then(function(sub){ pushSubscription = sub || null; }).catch(function(){});
+    }).then(function(sub){
+      pushSubscription = sub || null;
+      // Re-save a subscription this device already has, in case an earlier
+      // save never reached the server (the server can't push to a device
+      // it doesn't know about).
+      if (pushSubscription) return postPush({ subscription: pushSubscription.toJSON(), collections: notifyPrefs.collections });
+    }).catch(function(){});
   }
   function renderPhoneSection(msg){
     var SK = '<span style="text-transform:none;">Σκύλλα</span>';
@@ -20854,7 +20860,14 @@ const SWAP_HTML = `<!DOCTYPE html>
       }).then(function(r){ done(r && r.ok ? 'D0NE — TAP SEND TEST T0 CHECK !T ARR!VES.' : 'C0ULDN\\'T SAVE TH!S DEV!CE — TRY AGA!N.'); })
       .catch(function(err){ done(err && err.message === 'denied' ? 'N0T!F!CAT!0NS WEREN\\'T ALL0WED.' : 'C0ULDN\\'T TURN THEM 0N 0N TH!S DEV!CE.'); });
     } else if (act === 'test'){
-      postPush({ test: true, endpoint: pushSubscription.endpoint }).then(function(r){
+      var sendTest = function(){ return postPush({ test: true, endpoint: pushSubscription.endpoint }); };
+      sendTest().then(function(r){
+        // Not saved on the server yet: save this device, then try again.
+        if (r && r.error === 'not_subscribed'){
+          return postPush({ subscription: pushSubscription.toJSON(), collections: notifyPrefs.collections }).then(sendTest);
+        }
+        return r;
+      }).then(function(r){
         done(r && r.ok ? 'TEST SENT — !T SH0ULD ARR!VE !N A FEW SEC0NDS.' : 'TEST FA!LED (' + ((r && (r.error || r.status)) || 'UNKN0WN') + ').');
       });
     } else if (act === 'off'){
