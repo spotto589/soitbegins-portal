@@ -11,6 +11,7 @@ self.addEventListener('push', function (e) {
     body: d.body || '',
     icon: d.icon || '/assets/icons/icon-192.png',
     badge: '/assets/icons/icon-192.png',
+    image: d.image || undefined,
     tag: d.tag || undefined,
     data: { url: d.url || '/static' }
   }));

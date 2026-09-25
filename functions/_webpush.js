@@ -119,7 +119,8 @@ export function eventNotification(e, collectionLabel, tokenLabel) {
 // After the ledger watcher stores new events: push them to every device
 // that has that collection + type switched on. Up to 3 individual pushes
 // per device per tick, then one summary instead of a flood.
-export async function pushEventsToDevices(kv, freshByCollection, privateJwkJson, labels) {
+export async function pushEventsToDevices(kv, freshByCollection, privateJwkJson, labels, opts) {
+  opts = opts || {};
   if (!privateJwkJson) return { skipped: 'no_vapid_key' };
   const subs = await getPushSubs(kv);
   const ids = Object.keys(subs);
@@ -135,7 +136,14 @@ export async function pushEventsToDevices(kv, freshByCollection, privateJwkJson,
     });
     if (!matching.length) continue;
     const payloads = matching.length <= 3
-      ? matching.map(e => eventNotification(e, (labels[e.collection] || {}).label || e.collection, (labels[e.collection] || {}).token))
+      ? await Promise.all(matching.map(async e => {
+          const p = eventNotification(e, (labels[e.collection] || {}).label || e.collection, (labels[e.collection] || {}).token);
+          // The NFT's own picture (Android/desktop show it; iPhone only
+          // ever shows the home-screen app icon — Apple's rule).
+          const img = opts.imageFor ? await opts.imageFor(e).catch(() => null) : null;
+          if (img) { p.image = img; p.icon = img; }
+          return p;
+        }))
       : [{ title: 'Σκύλλα', body: matching.length + ' NEW EVENTS 0N Y0UR WATCHED C0LLECT!0NS', url: '/' + matching[0].collection, tag: 'summary', icon: '/assets/icons/icon-192.png' }];
     for (const p of payloads) {
       const r = await sendWebPush(d.sub, p, privateJwkJson);

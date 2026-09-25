@@ -1,6 +1,6 @@
 import {
   fetchXrplClusterJson, getPigeonNumberMap, TRADEABLE_COLLECTIONS, safeKvPut,
-  mapWithConcurrency, floorEntryForNft, patchFloorIndex
+  mapWithConcurrency, floorEntryForNft, patchFloorIndex, fetchDeeptideNftDetail
 } from './_shared.js';
 import { pushEventsToDevices } from './_webpush.js';
 
@@ -215,7 +215,20 @@ export async function runLedgerWatch(kv, opts) {
         const c = TRADEABLE_COLLECTIONS[k];
         labels[k] = { label: c.label, token: c.tokenConfig && c.tokenConfig.currency ? '$' + c.tokenConfig.currency : '' };
       });
-      push = await pushEventsToDevices(kv, freshByCollection, opts.vapid, labels).catch(e => ({ error: String(e && e.message || e) }));
+      // NFT picture for the notification, looked up once per NFT per tick;
+      // IPFS goes through the site's own image proxy (ipfs.io rate-limits).
+      const imgCache = {};
+      const imageFor = async e => {
+        if (!(e.nftId in imgCache)) {
+          imgCache[e.nftId] = fetchDeeptideNftDetail(e.nftId).then(d => {
+            const u = d && d.image;
+            if (!u) return null;
+            return /^ipfs:|\/ipfs\//.test(u) ? 'https://soitbegins.xyz/api/ipfs-image?src=' + encodeURIComponent(u) : u;
+          }).catch(() => null);
+        }
+        return imgCache[e.nftId];
+      };
+      push = await pushEventsToDevices(kv, freshByCollection, opts.vapid, labels, { imageFor }).catch(e => ({ error: String(e && e.message || e) }));
     }
 
     await safeKvPut(kv, LW_CURSOR_KEY, String(got[got.length - 1].index));
