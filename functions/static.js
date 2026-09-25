@@ -9506,6 +9506,21 @@ const SWAP_HTML = `<!DOCTYPE html>
        MAINFRAME_PAGE_SIZE in the JS), just 2-and-3 instead of 3-and-2. */
     .mainframe-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:0.6rem; padding:0 2.5rem; }
   }
+  /* Phones (reported live 2026-09-25 on iPhone: "can't see any of the
+     collections"): the desktop grid sizes itself through a chain of
+     100%/1fr/flex heights, which iPhone Safari can resolve to nothing —
+     and the card art was only ever getting the leftover space (~52px).
+     Here every height is plain and natural instead: fixed-height art,
+     cards as tall as their content, ALL collections in one list (no
+     pages/arrows, see renderMainframePage) and SELECT A DATABASE
+     scrolls like a normal page. */
+  @media (max-width:760px){
+    .mainframe-carousel-wrap{ flex:0 0 auto; min-height:auto; }
+    .mainframe-grid{ height:auto !important; grid-template-rows:none !important; grid-auto-rows:auto; overflow:visible !important; padding:0 0.2rem !important; }
+    .mainframe-card{ height:auto !important; }
+    .mainframe-card-art{ flex:0 0 auto !important; height:120px; }
+    .mainframe-arrow{ display:none !important; }
+  }
   /* --card-accent (set per card in the HTML, e.g. "136,72,248" for
      $PIGEONS' real purple) drives the art overlay + hover glow — same
      r,g,b-triplet convention --collection-accent-rgb already uses
@@ -20430,10 +20445,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderMainframePage(){
     var cards = Array.prototype.slice.call(el.mainframeGrid.querySelectorAll('.mainframe-card'));
     var matching = cards.filter(function(card){ return card.dataset.searchHidden !== '1'; });
-    var maxPage = Math.max(0, Math.ceil(matching.length / MAINFRAME_PAGE_SIZE) - 1);
+    // Phones show every collection in one scrolling list (see the
+    // max-width:760px .mainframe-grid rules) instead of pages of 6.
+    var pageSize = window.innerWidth <= 760 ? Math.max(1, matching.length) : MAINFRAME_PAGE_SIZE;
+    var maxPage = Math.max(0, Math.ceil(matching.length / pageSize) - 1);
     if (mainframePage > maxPage) mainframePage = maxPage;
-    var start = mainframePage * MAINFRAME_PAGE_SIZE;
-    var end = start + MAINFRAME_PAGE_SIZE;
+    var start = mainframePage * pageSize;
+    var end = start + pageSize;
     cards.forEach(function(card){ card.hidden = true; });
     matching.slice(start, end).forEach(function(card){ card.hidden = false; });
     // Only one arrow showing on the first page (reported live — "for the
@@ -20444,6 +20462,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.mainframeArrowPrev.addEventListener('click', function(){
     mainframePage--;
     renderMainframePage();
+  });
+  // Crossing the phone/desktop width (rotating a tablet, resizing) switches
+  // between the one-list and paged layouts.
+  var mainframeWasPhone = window.innerWidth <= 760;
+  window.addEventListener('resize', function(){
+    var isPhone = window.innerWidth <= 760;
+    if (isPhone !== mainframeWasPhone){ mainframeWasPhone = isPhone; mainframePage = 0; renderMainframePage(); }
   });
   el.mainframeArrowNext.addEventListener('click', function(){
     mainframePage++;
