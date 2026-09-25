@@ -6112,6 +6112,30 @@ const SWAP_HTML = `<!DOCTYPE html>
      wider and taller since both hold a real scrollable list rather than
      a single calculator row. */
   #topHoldersModal, #salesModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  /* N0T!F!CAT!0NS popup — SALES H!ST0RY's look, narrower. */
+  #notifyModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  #notifyModal .notify-panel{ position:relative; width:min(520px, 96vw); padding:2.25rem 2rem 1.5rem; text-align:center; border:1px solid rgba(var(--collection-accent-rgb), 0.4); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 44px rgba(var(--collection-accent-rgb), 0.14); }
+  #notifyModal .sales-styled-close{ position:absolute; top:1rem; right:1rem; }
+  #notifyModal .buyswap-thumb{ width:96px; height:96px; }
+  #notifyModal .history-title{ text-align:center; font-size:32px; font-weight:700; letter-spacing:0.03em; color:var(--white); }
+  #notifyModal .node-eyebrow{ text-align:center; color:var(--collection-accent); font-size:18px; letter-spacing:0.12em; margin:0.2rem 0 1rem; }
+  .notify-toggles{ display:flex; flex-direction:column; gap:0.5rem; text-align:left; }
+  .notify-row{ display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.75em 1em; border:1px solid var(--border-dim); border-radius:var(--radius); background:rgba(255,255,255,0.02); cursor:pointer; font-size:17px; font-weight:700; letter-spacing:0.05em; color:var(--white); }
+  .notify-row:hover{ border-color:rgba(var(--collection-accent-rgb), 0.6); }
+  .notify-row .notify-sub{ display:block; font-size:12px; font-weight:400; letter-spacing:0.04em; color:var(--grey); margin-top:0.15rem; }
+  .notify-switch{ flex:0 0 auto; width:52px; height:28px; border-radius:14px; background:var(--border-mid); position:relative; transition:background 0.15s ease; }
+  .notify-switch::after{ content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; transition:left 0.15s ease; }
+  .notify-row.on .notify-switch{ background:var(--green); box-shadow:0 0 10px var(--green-glow); }
+  .notify-row.on .notify-switch::after{ left:27px; }
+  .notify-note{ margin-top:1rem; font-size:13px; letter-spacing:0.05em; color:var(--grey); }
+  /* Pop-ups while the site is open — bottom-right stack, click to open. */
+  .notify-toasts{ position:fixed; right:1rem; bottom:4.5rem; z-index:2500; display:flex; flex-direction:column; gap:0.5rem; width:min(360px, calc(100vw - 2rem)); pointer-events:none; }
+  .notify-toast{ pointer-events:auto; display:flex; align-items:center; gap:0.75rem; padding:0.75em 0.9em; background:var(--panel-bg-solid); border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-left:4px solid var(--green); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.6); color:var(--white); text-decoration:none; font-size:14px; font-weight:700; letter-spacing:0.04em; animation:notifyIn 0.25s ease; cursor:pointer; }
+  .notify-toast img{ width:44px; height:44px; border-radius:var(--radius); object-fit:cover; flex:0 0 auto; }
+  .notify-toast .nt-sub{ display:block; font-size:12px; font-weight:400; color:var(--grey); margin-top:0.15rem; }
+  .notify-toast.nt-sale{ border-left-color:var(--cyan); }
+  .notify-toast.nt-burn, .notify-toast.nt-delist{ border-left-color:var(--magenta); }
+  @keyframes notifyIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
   .top-holders-modal-panel, .sales-modal-panel{
     width:min(640px, 100%);
     max-height:min(80vh, 720px);
@@ -9997,6 +10021,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           </button>
           <button type="button" class="pigeons-calc-toggle-btn" id="openTopHoldersBtn">T0P 123 H0LDERS</button>
           <button type="button" class="pigeons-calc-toggle-btn" id="openSalesBtn">SALES H!ST0RY</button>
+          <button type="button" class="pigeons-calc-toggle-btn" id="openNotifyBtn">&#128276; N0T!F!CAT!0NS</button>
         </div>
       </div>
     </div>
@@ -10229,6 +10254,20 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="detail-rarity-breakdown" id="detailRarityBreakdown"></div>
       </div>
     </div>
+    <!-- N0T!F!CAT!0NS (2026-09-25) — per-collection toggles for the ledger
+         watcher's activity feed (functions/_ledgerwatch.js). Same look as
+         the SALES H!ST0RY popup. -->
+    <div id="notifyModal" style="display:none;">
+      <div class="pigeons-calc-panel sales-modal-panel sales-styled notify-panel">
+        <button type="button" class="simple-picker-close sales-styled-close" id="notifyCloseBtn" title="CL0SE">&times;</button>
+        <img class="buyswap-thumb" id="notifyCoinThumb" src="" alt="" style="display:none;">
+        <div class="history-title">N0T!F!CAT!0NS</div>
+        <div class="node-eyebrow" id="notifyEyebrow"></div>
+        <div class="notify-toggles" id="notifyToggles"></div>
+        <div class="notify-note" id="notifyNote"></div>
+      </div>
+    </div>
+    <div id="notifyToasts" class="notify-toasts"></div>
     <div id="salesModal" style="display:none;">
       <!-- Same look as a Pigeon's own SALES H!ST0RY popup (reported live
            2026-09-23): coin art + big title on top, stat tiles, then the
@@ -12715,6 +12754,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileQuoteInput','profileQuoteSaveBtn','profileQuoteStatus','profileTwitterInput','profileTwitterSaveBtn','profileTwitterStatus',
    'profileCoinsSection','profileCoinsBanner','profileCoinsBannerArrow','profileCoinsBody','profileCoinsWalletBalance','profileCoinsTotalValue',
    'profileCoinsEditBtn','profileCoinsEditPopover','profileCoinsEditList',
+   'notifyModal','notifyCloseBtn','openNotifyBtn','notifyCoinThumb','notifyEyebrow','notifyToggles','notifyNote','notifyToasts',
    'salesModal','salesCloseBtn','openSalesBtn','salesCoinThumb','salesStatVolume','salesStatVolume24h','salesStatSales24h',
    'swapOffersPanelWrap','swapOffersList',
    'statItems','statHolders','statVolume','statListed','statFloorExternal','statFloorExternalTile',
@@ -20703,6 +20743,114 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
   });
   el.salesCloseBtn.addEventListener('click', function(){ el.salesModal.style.display = 'none'; });
+
+  // ---- N0T!F!CAT!0NS (2026-09-25) — per-collection toggles for the
+  // ledger watcher's activity feed (/api/pigeons?events=1). Saved to the
+  // wallet when logged in (/api/notify-prefs), on this device otherwise.
+  // While the site is open it polls every 30s and pops up anything new
+  // that's switched on; click a pop-up to open that NFT. ----
+  var NOTIFY_OPTIONS = [
+    { type: 'listing', label: 'L!ST!NGS', sub: 'S0METH!NG G0ES UP F0R SALE' },
+    { type: 'sale', label: 'SALES', sub: 'S0METH!NG SELLS' },
+    { type: 'offer', label: '0FFERS', sub: 'S0ME0NE BIDS 0N AN NFT' },
+    { type: 'delist', label: 'DEL!ST!NGS', sub: 'A L!ST!NG !S CANCELLED' },
+    { type: 'transfer', label: 'TRANSFERS', sub: 'AN NFT M0VES WALLETS W!TH0UT A SALE' },
+    { type: 'mint', label: 'M!NTS', sub: 'A NEW NFT !S M!NTED' },
+    { type: 'burn', label: 'BURNS', sub: 'AN NFT !S DESTR0YED' }
+  ];
+  var NOTIFY_PREFS_LS = 'skyllaNotifyPrefs';
+  var NOTIFY_SEEN_LS = 'skyllaNotifySeen';
+  function lsGet(k, fallback){ try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch (e){ return fallback; } }
+  function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e){} }
+  var notifyPrefs = lsGet(NOTIFY_PREFS_LS, { collections: {} });
+  var notifySeen = lsGet(NOTIFY_SEEN_LS, {});
+  if (MY_WALLET){
+    fetch('/api/notify-prefs').then(function(r){ return r.json(); }).then(function(d){
+      if (d && d.ok && d.prefs){ notifyPrefs = d.prefs; lsSet(NOTIFY_PREFS_LS, notifyPrefs); }
+    }).catch(function(){});
+  }
+  function saveNotifyPrefs(){
+    lsSet(NOTIFY_PREFS_LS, notifyPrefs);
+    if (MY_WALLET){
+      fetch('/api/notify-prefs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(notifyPrefs) }).catch(function(){});
+    }
+  }
+  function renderNotifyModal(){
+    var key = state.collection;
+    var meta = COLLECTION_META[key] || {};
+    var on = (notifyPrefs.collections && notifyPrefs.collections[key]) || {};
+    if (meta.thumb){ el.notifyCoinThumb.src = meta.thumb; el.notifyCoinThumb.style.display = ''; } else el.notifyCoinThumb.style.display = 'none';
+    el.notifyEyebrow.textContent = meta.label || key;
+    el.notifyToggles.innerHTML = NOTIFY_OPTIONS.map(function(o){
+      return '<div class="notify-row' + (on[o.type] ? ' on' : '') + '" data-type="' + o.type + '"><span>' + o.label + '<span class="notify-sub">' + o.sub + '</span></span><span class="notify-switch"></span></div>';
+    }).join('');
+    el.notifyNote.textContent = (MY_WALLET ? 'SAVED T0 Y0UR WALLET.' : 'SAVED 0N TH!S DEV!CE — L0G !N T0 KEEP THEM EVERYWHERE.') + ' P0P-UPS SH0W WH!LE TH!S S!TE !S 0PEN.';
+  }
+  el.openNotifyBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    renderNotifyModal();
+    el.notifyModal.style.display = 'flex';
+  });
+  el.notifyCloseBtn.addEventListener('click', function(){ el.notifyModal.style.display = 'none'; });
+  el.notifyModal.addEventListener('click', function(e){ if (e.target === el.notifyModal) el.notifyModal.style.display = 'none'; });
+  el.notifyToggles.addEventListener('click', function(e){
+    var row = e.target.closest('.notify-row');
+    if (!row) return;
+    var key = state.collection, type = row.getAttribute('data-type');
+    notifyPrefs.collections = notifyPrefs.collections || {};
+    var c = notifyPrefs.collections[key] = notifyPrefs.collections[key] || {};
+    if (c[type]) delete c[type]; else c[type] = true;
+    if (!Object.keys(c).length) delete notifyPrefs.collections[key];
+    // Start from now — no flood of older activity the moment it's switched on.
+    if (!notifySeen[key]){ notifySeen[key] = Math.floor(Date.now() / 1000); lsSet(NOTIFY_SEEN_LS, notifySeen); }
+    row.classList.toggle('on', !!c[type]);
+    saveNotifyPrefs();
+    pollNotifications();
+  });
+  function notifyPriceText(e, key){
+    if (!e.price) return '';
+    if (e.price.xrp !== undefined) return fmtXrp(e.price.xrp) + ' XRP';
+    var meta = COLLECTION_META[key] || {};
+    return compactPigeonsNumber(Number(e.price.value)) + ' ' + (meta.tokenLabel || '');
+  }
+  var NOTIFY_VERBS = { listing: 'L!STED F0R', sale: 'S0LD F0R', offer: 'G0T AN 0FFER 0F', delist: 'WAS DEL!STED', transfer: 'WAS TRANSFERRED', mint: 'WAS M!NTED', burn: 'WAS BURNED' };
+  function showNotifyToast(e, key){
+    var meta = COLLECTION_META[key] || {};
+    var href = nftHrefFor({ number: e.number, collectionKey: key });
+    var price = notifyPriceText(e, key);
+    var t = document.createElement(href ? 'a' : 'div');
+    t.className = 'notify-toast nt-' + e.type;
+    if (href) t.href = href;
+    t.innerHTML = (meta.thumb ? '<img src="' + escapeHtml(meta.thumb) + '" alt="">' : '') +
+      '<span>' + escapeHtml((meta.itemLabel || key) + (e.number ? ' #' + e.number : '')) + ' ' + NOTIFY_VERBS[e.type] + (price ? ' ' + escapeHtml(price) : '') +
+      '<span class="nt-sub">' + escapeHtml(meta.label || key) + ' :: ' + escapeHtml(relativeTimeText(new Date(e.time * 1000).toISOString())) + '</span></span>';
+    el.notifyToasts.appendChild(t);
+    while (el.notifyToasts.children.length > 4) el.notifyToasts.removeChild(el.notifyToasts.firstChild);
+    setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 15000);
+  }
+  var notifyPollTimer = null;
+  function pollNotifications(){
+    if (notifyPollTimer) clearTimeout(notifyPollTimer);
+    notifyPollTimer = setTimeout(pollNotifications, 30000);
+    if (document.hidden) return;
+    var cols = (notifyPrefs && notifyPrefs.collections) || {};
+    Object.keys(cols).forEach(function(key){
+      var types = Object.keys(cols[key] || {});
+      if (!types.length) return;
+      if (!notifySeen[key]){ notifySeen[key] = Math.floor(Date.now() / 1000); lsSet(NOTIFY_SEEN_LS, notifySeen); return; }
+      fetch('/api/pigeons?events=1&collection=' + encodeURIComponent(key) + '&since=' + notifySeen[key] + '&types=' + types.join(','))
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var items = (d && d.items) || [];
+          if (!items.length) return;
+          notifySeen[key] = Math.max.apply(null, items.map(function(x){ return x.time; }).concat([notifySeen[key]]));
+          lsSet(NOTIFY_SEEN_LS, notifySeen);
+          items.slice(0, 5).reverse().forEach(function(ev){ showNotifyToast(ev, key); });
+        }).catch(function(){});
+    });
+  }
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) pollNotifications(); });
+  pollNotifications();
   el.salesModal.addEventListener('click', function(e){
     if (e.target === el.salesModal) el.salesModal.style.display = 'none';
   });
