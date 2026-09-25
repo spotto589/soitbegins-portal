@@ -1067,6 +1067,10 @@ const SWAP_HTML = `<!DOCTYPE html>
        $P!GE0NS FL00R's own number stayed at the full 16px+ desktop size
        and ran off the right edge of its own tile, clipped by the
        viewport. */
+    /* .stat-tile-link's width:100% made each floor tile as wide as its
+       whole strip, so $P!GE0NS FL00R and XRP FL00R piled on top of each
+       other and over !TEMS (reported live 2026-09-25). */
+    .stats-strip .stat-tile-link{ width:auto; }
     .stat-label{ font-size:8px !important; margin-bottom:0.15rem; white-space:nowrap; }
     .stat-value{ font-size:11px !important; white-space:nowrap; }
   }
@@ -4138,6 +4142,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      size/weight now come from the shared .bottom-controls-btn base (all
      three read the same size) — this only overrides layout/spacing. */
   .bottom-controls-btn-top{ flex:0 0 auto; padding:0.75em 1.1em; }
+  /* Phones (reported live 2026-09-25: DATABASE "broken on mobile"):
+     18px labels cut off at 390px wide ("S0RT B...", "F!LTER ..."). */
+  @media (max-width:700px){
+    .bottom-controls-btn{ font-size:13px; letter-spacing:0.03em; white-space:normal; line-height:1.2; }
+    .bottom-controls-btn-top{ padding:0.6em 0.8em; }
+  }
   /* Own bottom padding on the page's actual scrollable content so the
      last row of result cards never sits underneath this fixed bar with
      no way to see it — #screenBrowse is the shared DATABASE/PλWS grid
