@@ -9884,6 +9884,52 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-arrow-prev{ left:0.4rem; }
   .mainframe-arrow-next{ right:0.4rem; }
   .mainframe-arrow[hidden]{ display:none; }
+  /* ================= PHONE DESIGN (2026-09-25) =================
+     Reported live: the top bar didn't fit, the trustline banner and its
+     stats strip "don't work" on mobile, SORT BY / FILTER BY TRAITS were
+     different sizes. Kept last in the stylesheet so it wins. */
+  @media (max-width:700px){
+    /* Top bar — one row that fits: DATABASE :: <collection> [▾] ... lock + status + LOG IN.
+       (STAT!C:// and Σκύλλα://S!GNAL :: are dropped on phones, size-0 text.) */
+    #topTabs{ justify-content:space-between; gap:0.4rem; padding:0 0.5rem; overflow-x:hidden !important; }
+    #topTabs .tab-btn-database{ flex:0 1 auto; min-width:0; padding:0.3rem 0.2rem !important; }
+    #topTabs .tab-db-heading{ font-size:0 !important; }
+    #topTabs .tab-db-heading #tabDbWord{ font-size:12px !important; letter-spacing:0.04em; }
+    #topTabs .tab-db-heading::after{ content:' ::'; font-size:12px; }
+    #dbSelectLabel{ font-size:13px !important; padding:0.3em 0.1em !important; }
+    #dbSelectArrow{ font-size:18px; padding:0.2em 0.55em; margin-left:0.15em; border:1px solid var(--border-mid); border-radius:var(--radius); line-height:1; }
+    #topTabs .global-top-scylla-btn{ flex:0 1 auto; min-width:0; padding:0.3rem 0.2rem !important; gap:0.3rem; }
+    #globalTopBarLogo{ width:20px !important; height:25px !important; }
+    #globalTopBarHeading{ font-size:0 !important; }
+    #globalTopBarHeading > span{ font-size:12px !important; }
+    .flock-tab-login-btn{ font-size:12px !important; padding:0.3em 0.5em !important; }
+
+    /* Trustline banner — thumbnail centred on top, then balance/BUY/
+       N0T!F!CAT!0NS, trustline info, then the buttons in a grid. */
+    #pigeonsMergedPanel .pigeons-bar-main-row{ gap:0.9rem !important; }
+    #pigeonsMergedPanel .pigeons-bar-balance{ order:1; align-items:center !important; width:100%; }
+    #pigeonsMergedPanel .pigeons-bar-thumb{ width:104px !important; height:104px !important; margin:0 auto !important; }
+    #pigeonsMergedPanel .pigeons-bar-balance-info{ width:100%; align-items:center !important; }
+    #pigeonsMergedPanel .pigeons-bar-balance-info .pigeons-bar-balance-buy{ width:100%; max-width:320px; box-sizing:border-box; }
+    #pigeonsMergedPanel .pigeons-bar-left{ order:2; width:100%; align-items:center; text-align:center; }
+    #pigeonsMergedPanel .pigeons-bar-identity-actions{ display:grid !important; grid-template-columns:1fr 1fr; gap:0.5rem; width:100%; }
+    #pigeonsMergedPanel .pigeons-bar-calc-col{ order:3; display:grid !important; grid-template-columns:1fr 1fr; gap:0.5rem; width:100%; }
+    #pigeonsMergedPanel .pigeons-bar-calc-col[style*="none"]{ display:none !important; }
+    #pigeonsMergedPanel .pigeons-bar-calc-col > :first-child{ grid-column:1 / -1; }
+    #pigeonsMergedPanel .pigeons-calc-toggle-btn{ font-size:13px !important; padding:0.75em 0.4em !important; width:100%; }
+
+    /* Stats — every tile at once in a 3-wide grid (was a sideways strip
+       that overlapped and cut off). */
+    .stats-carousel-viewport{ display:grid !important; grid-template-columns:repeat(3, 1fr); gap:0.4rem !important; overflow:visible !important; }
+    .stats-carousel-viewport .stats-page{ display:contents !important; }
+    .stats-carousel-viewport .stat-tile{ min-width:0 !important; width:auto !important; padding:0.45rem 0.3rem !important; }
+    .stats-carousel-viewport .stat-label{ font-size:9px !important; white-space:normal !important; }
+    .stats-carousel-viewport .stat-value{ font-size:12px !important; white-space:normal !important; overflow-wrap:anywhere; }
+
+    /* SORT BY / FILTER BY TRA!TS — identical boxes. */
+    #sortDropWrap, #traitsHoverWrap{ flex:1 1 0 !important; width:auto !important; min-width:0; }
+    #sortDropLabel, #traitsHoverLabel{ height:48px; display:flex !important; align-items:center; justify-content:center; white-space:nowrap; font-size:13px !important; padding:0 0.4rem !important; box-sizing:border-box; }
+  }
 </style>
 </head>
 <body>
@@ -10072,6 +10118,8 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">L0G!N T0 V!EW BALANCE</button>
             </div>
             <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;">BUY $P!GE0NS</button>
+            <!-- Under BUY $P!GE0NS (reported live 2026-09-25). -->
+            <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openNotifyBtn">&#128276; N0T!F!CAT!0NS</button>
           </div>
         </div>
 
@@ -10086,7 +10134,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           </button>
           <button type="button" class="pigeons-calc-toggle-btn" id="openTopHoldersBtn">T0P 123 H0LDERS</button>
           <button type="button" class="pigeons-calc-toggle-btn" id="openSalesBtn">SALES H!ST0RY</button>
-          <button type="button" class="pigeons-calc-toggle-btn" id="openNotifyBtn">&#128276; N0T!F!CAT!0NS</button>
         </div>
       </div>
     </div>
@@ -20109,13 +20156,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // instead (see its own comment on "clicking the word DATABASE").
   el.dbSelectLabel.addEventListener('click', function(e){
     e.stopPropagation();
-    // Phones: the name opens the list — the ▾ on its own is a 12px target
-    // (reported live 2026-09-25: "select a database page doesn't work").
-    if (window.innerWidth <= 700){
-      if (el.dbSelectFlyout.style.display === 'block') closeDbSelectFlyout();
-      else openDbSelectFlyout();
-      return;
-    }
+    // The name always goes to the collection; ▾ opens the list (reported
+    // live 2026-09-25 — the ▾ is a bigger boxed tap target on phones).
     enterMainframeCollection(state.collection);
   });
   el.dbSelectArrow.addEventListener('click', function(e){
