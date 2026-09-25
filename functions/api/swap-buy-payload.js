@@ -3,7 +3,8 @@ import {
   recordPendingBuy, encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup,
   MARKETPLACE_BROKER_WALLET, acquireBrokerAcceptLock, releaseBrokerAcceptLock,
   recordPendingBrokerAccept, fetchDeeptideNftDetail,
-  normalizeOfferCurrency, buildOfferAmount, feeBasisPointsFor, offerAmountValue
+  normalizeOfferCurrency, buildOfferAmount, feeBasisPointsFor, offerAmountValue,
+  clientSignResponse
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same txjson swap-buy-prepare.js
@@ -96,6 +97,9 @@ export async function onRequestPost(context) {
       Account: buyer,
       NFTokenSellOffer: offer.nft_offer_index
     };
+    if (body && body.clientSign) {
+      return clientSignResponse(env, body, buyer, txjson, 'buy_legacy', { nftId, seller: offer.owner, buyer, priceValue: offer.amount.value }, { seller: offer.owner, totalValue: offer.amount.value });
+    }
     const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
     if (!xummData || !xummData.uuid || !xummData.next) {
       console.log('BUY-PAYLOAD exit: xaman_request_failed (legacy)', JSON.stringify(xummData));
@@ -151,6 +155,14 @@ export async function onRequestPost(context) {
     Memos: swapOfferSourceMemo()
   };
 
+  if (body && body.clientSign) {
+    const itemCs = await fetchDeeptideNftDetail(nftId).catch(() => null);
+    return clientSignResponse(env, body, buyer, txjson, 'broker', {
+      nftId, offerId: sellOfferId, seller: offer.owner, buyer, collection, offerCurrency,
+      totalValue: fee.totalValue, feeValue: fee.feeValue, sellerValue: fee.sellerValue,
+      pigeonNumber: (itemCs && itemCs.number) || null
+    }, { seller: offer.owner, totalValue: fee.totalValue, offerCurrency });
+  }
   const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   if (!xummData || !xummData.uuid || !xummData.next) {
     console.log('BUY-PAYLOAD exit: xaman_request_failed', JSON.stringify(xummData));

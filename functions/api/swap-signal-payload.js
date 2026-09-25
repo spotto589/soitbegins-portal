@@ -1,5 +1,6 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, createXamanPayload, getXamanUserToken, stringToHex, recordSwapSignal
+  BOARD_COOKIE_NAME, getCookie, verifyToken, createXamanPayload, getXamanUserToken, stringToHex, recordSwapSignal,
+  clientSignResponse
 } from '../_shared.js';
 
 const XRPL_ADDRESS_RE = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
@@ -83,6 +84,8 @@ export async function onRequestPost(context) {
   };
 
   const pushToken = await getXamanUserToken(env.coin, sender);
+  const cs = await clientSignResponse(env, body, payload.acct, txjson, 'signal', { offerId, nftId, fromWallet: sender, toWallet, pigeonNumber });
+  if (cs) return cs;
   const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   if (!xummData || !xummData.uuid || !xummData.next) {
     return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });

@@ -3,7 +3,8 @@ import {
   fetchDeeptideNftDetail, createXamanPayload, getXamanUserToken, getTradeConfig,
   encodeCurrencyCode, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET,
   acquireBrokerAcceptLock, releaseBrokerAcceptLock, recordPendingBrokerAccept, applyNftRoyalty,
-  offerCurrencyOf, offerAmountValue, buildOfferAmount, feeBasisPointsFor
+  offerCurrencyOf, offerAmountValue, buildOfferAmount, feeBasisPointsFor,
+  clientSignResponse
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same seller sell-offer txjson
@@ -112,6 +113,18 @@ export async function onRequestPost(context) {
   };
 
   const pushToken = await getXamanUserToken(env.coin, owner);
+  if (body && body.clientSign) {
+    const itemCs = await fetchDeeptideNftDetail(nftId).catch(() => null);
+    const royaltyCs = applyNftRoyalty(fee.sellerValue, nftId);
+    return clientSignResponse(env, body, owner, txjson, 'broker', {
+      nftId, offerId, seller: owner, buyer: offer.owner, collection, offerCurrency,
+      totalValue: fee.totalValue, feeValue: fee.feeValue, sellerValue: fee.sellerValue,
+      pigeonNumber: (itemCs && itemCs.number) || null
+    }, {
+      buyer: offer.owner, totalValue: fee.totalValue, feeValue: fee.feeValue,
+      sellerValue: royaltyCs.finalSellerValue, royaltyValue: royaltyCs.royaltyValue, royaltyPercent: royaltyCs.royaltyPercent, offerCurrency
+    });
+  }
   const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   if (!xummData || !xummData.uuid || !xummData.next) {
     if (env.coin) context.waitUntil(releaseBrokerAcceptLock(env.coin, offerId));

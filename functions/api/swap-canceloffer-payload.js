@@ -1,5 +1,6 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftBuyOffers, createXamanPayload, getXamanUserToken, findCollectionOffer, getTradeConfig
+  BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftBuyOffers, createXamanPayload, getXamanUserToken, findCollectionOffer, getTradeConfig,
+  clientSignResponse
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same txjson swap-canceloffer-
@@ -56,6 +57,8 @@ export async function onRequestPost(context) {
   };
 
   const pushToken = await getXamanUserToken(env.coin, buyer);
+  const cs = await clientSignResponse(env, body, payload.acct, txjson, 'plain', null);
+  if (cs) return cs;
   const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   if (!xummData || !xummData.uuid || !xummData.next) {
     return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });

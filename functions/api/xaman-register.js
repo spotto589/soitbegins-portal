@@ -1,5 +1,6 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, getXamanPayloadStatus, recordPendingListing
+  BOARD_COOKIE_NAME, getCookie, verifyToken, getXamanPayloadStatus, recordPendingListing,
+  recordPendingBrokerAccept, recordPendingBuy, recordSwapSignal
 } from '../_shared.js';
 
 // Browser-created sign requests (xrp.cafe-style push, 2026-09-24).
@@ -49,8 +50,14 @@ export async function onRequestPost(context) {
     }
   }
 
-  if (intent.kind === 'list') {
-    await recordPendingListing(env.coin, uuid, intent.pending);
+  const p = intent.pending;
+  if (intent.kind === 'list') await recordPendingListing(env.coin, uuid, p);
+  else if (intent.kind === 'broker') await recordPendingBrokerAccept(env.coin, uuid, p);
+  else if (intent.kind === 'buy_legacy') await recordPendingBuy(env.coin, uuid, p);
+  else if (intent.kind === 'signal') {
+    await recordSwapSignal(env.coin, p.offerId, {
+      ...p, status: 'pending', uuid, txHash: null, createdAt: Math.floor(Date.now() / 1000), crwnEligible: true, crwnCredited: false
+    });
   }
   return json({ ok: true });
 }

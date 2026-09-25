@@ -1,6 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchNftSellOffersOrNull, createXamanPayload, getXamanUserToken, findCollectionOffer, findCollectionOffers, getTradeConfig, removeSwapListing,
-  normalizeOfferCurrency, removeSwapXrpListing
+  normalizeOfferCurrency, removeSwapXrpListing,
+  clientSignResponse
 } from '../_shared.js';
 
 // Called straight from the CANCEL click now — no separate confirm step
@@ -86,6 +87,8 @@ export async function onRequestPost(context) {
   };
 
   const pushToken = await getXamanUserToken(env.coin, seller);
+  const cs = await clientSignResponse(env, body, payload.acct, txjson, 'plain', null);
+  if (cs) return cs;
   const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   if (!xummData || !xummData.uuid || !xummData.next) {
     return new Response(JSON.stringify({ error: 'xaman_request_failed' }), { status: 502 });

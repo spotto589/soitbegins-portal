@@ -5514,6 +5514,20 @@ export async function createXamanPayload(env, txjson, options, userToken, attemp
   }
 }
 
+// Browser-created sign requests (2026-09-25) — xrp.cafe-style: when the
+// page has a Xaman browser session it sends clientSign, and instead of
+// creating the request here the endpoint returns the txjson it built plus
+// a signed intent. The page creates the request from its own session (so
+// Xaman delivers it straight to the phone) and api/xaman-register.js
+// checks Xaman's copy matches the txjson, then records `pending` for the
+// flows that need it (kind: 'broker' | 'buy_legacy' | 'signal' | 'list').
+// Returns null when the caller didn't ask for it (normal server path).
+export async function clientSignResponse(env, body, acct, txjson, kind, pending, display) {
+  if (!body || !body.clientSign || !env.Σκύλλα || !acct) return null;
+  const intent = await signToken({ kind: kind || 'plain', acct, txjson, pending: pending || null, exp: Math.floor(Date.now() / 1000) + 900 }, env.Σκύλλα + ':intent');
+  return new Response(JSON.stringify({ ok: true, clientSign: true, txjson, intent, display: display || undefined }), { headers: { 'Content-Type': 'application/json' } });
+}
+
 export async function getXamanPayloadStatus(env, uuid) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), XAMAN_FETCH_TIMEOUT_MS);

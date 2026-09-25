@@ -1,6 +1,7 @@
 import {
   BOARD_COOKIE_NAME, getCookie, verifyToken, fetchAllAccountNftsChecked,
-  PIGEON_ISSUER, PIGEON_TAXON, isTransferable, createXamanPayload, getXamanUserToken, swapOfferSourceMemo
+  PIGEON_ISSUER, PIGEON_TAXON, isTransferable, createXamanPayload, getXamanUserToken, swapOfferSourceMemo,
+  clientSignResponse
 } from '../_shared.js';
 
 const XRPL_ADDRESS_RE = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
@@ -79,6 +80,8 @@ export async function onRequestPost(context) {
   };
 
   const pushToken = await getXamanUserToken(env.coin, offerer);
+  const cs = await clientSignResponse(env, body, payload.acct, txjson, 'plain', null);
+  if (cs) return cs;
   const xummData = await createXamanPayload(env, txjson, undefined, pushToken);
   const uuid = xummData && xummData.uuid;
   const next = xummData && xummData.next;
