@@ -9058,6 +9058,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      our static background on database" the one time this had
      background:var(--bg) — it does not need one anyway since nothing
      else is visible behind it on this screen. */
+  /* SELECT A DATABASE is a fixed layer with a see-through background, on
+     top of the page — reported live 2026-09-25 on iPhone: "a layover over
+     the top, when I pull the page down I can see the information behind
+     it". While it's open, everything else in the page is hidden (popups,
+     *Modal, and the pop-up toasts excepted) and a pull-down can't drag
+     the page underneath. On phones the layer scrolls itself if it's
+     taller than the screen. */
+  body.mainframe-open .page > *:not(#screenMainframe):not(#notifyToasts):not([id$="Modal"]){ visibility:hidden !important; }
+  body.mainframe-open{ overscroll-behavior-y:none; }
+  @media (max-width:700px){
+    #screenMainframe{ overflow-y:auto !important; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding-bottom:calc(1.25rem + env(safe-area-inset-bottom, 0px)) !important; }
+  }
   #screenMainframe{
     display:none;
     flex-direction:column;
@@ -13204,6 +13216,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.tabDbWord.classList.toggle('tab-db-word-active', tab === 'database' && showMainframePicker);
     el.dbSelectLabel.classList.toggle('tab-db-word-active', tab === 'database' && !showMainframePicker);
     el.screenMainframe.style.display = showMainframePicker ? 'flex' : 'none';
+    // Hides whatever page content sits behind the SELECT A DATABASE layer
+    // (see body.mainframe-open in the CSS).
+    document.body.classList.toggle('mainframe-open', !!showMainframePicker);
     // DATABASE-only now — these FL00R/!TEMS/H0LDERS/24H numbers used to
     // sit above the trustline banner on every tab; moved to just above
     // SEARCH!NG $P!GE0NS DATABASE, so only DATABASE itself shows it, and
@@ -22930,6 +22945,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // opened from an in-app click too — the picker's already hidden by
     // then regardless.
     el.screenMainframe.style.display = 'none';
+    document.body.classList.remove('mainframe-open');
     showScreen('profile');
     // Highlights the Σκύλλα tab up top while PR0F!LE is open (reported
     // live: whatever tab was actually active before — DATABASE, most
