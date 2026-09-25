@@ -1,4 +1,5 @@
-﻿import { marketListingsFromOffers, marketMeta,
+﻿import { getCollectionEvents } from '../_ledgerwatch.js';
+import { marketListingsFromOffers, marketMeta,
   fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent, getNoTraitCounts, resolveDetailsCached,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap, getRarityMap, getRarityStats, maybeRefreshRarityScores,
@@ -453,6 +454,14 @@ export async function onRequestGet(context) {
   // swap panel to cap the YOU PAY input at what the wallet can actually
   // afford. Read-only ledger data, same trust level as pigeonsAccountLine
   // above.
+  // Collection activity feed from the ledger watcher (listings, sales,
+  // mints, burns, ...) — what notifications read. since = unix seconds.
+  if (params.get('events') === '1') {
+    const since = Number(params.get('since')) || 0;
+    const types = params.get('types') ? params.get('types').split(',') : null;
+    const list = (await getCollectionEvents(env.coin, coll.key)).filter(e => e.time > since && (!types || types.indexOf(e.type) !== -1));
+    return json({ items: list.slice(0, 100), now: Math.floor(Date.now() / 1000) });
+  }
   if (params.get('xrpBalance') === '1') {
     const wallet = params.get('wallet');
     if (!wallet) return json({ error: 'missing_wallet' }, 400);

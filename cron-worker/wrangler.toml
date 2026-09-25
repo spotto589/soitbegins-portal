@@ -12,7 +12,7 @@ compatibility_date = "2024-09-01"
 # index.js) lands with real margin inside Render's ~15-minute free-tier
 # idle-sleep window, instead of racing it every single tick.
 [triggers]
-crons = ["*/10 * * * *"]
+crons = ["*/10 * * * *", "* * * * *"]
 
 # Not secret (just a hostname) — safe to commit. Same value as the
 # XAMAN_PROXY_URL env var already set on the Pages project's dashboard for

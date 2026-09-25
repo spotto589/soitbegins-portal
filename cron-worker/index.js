@@ -12,6 +12,7 @@
 // This worker just keeps both indexes warm on its own, independent of
 // whether anyone is on the site.
 import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshFloorIndex, recomputeCrownHolder, TRADEABLE_COLLECTIONS } from '../functions/_shared.js';
+import { runLedgerWatch } from '../functions/_ledgerwatch.js';
 
 // xaman-proxy (../xaman-proxy, deployed separately on Render) spins down
 // after ~15 minutes with no HTTP traffic on Render's free tier. The first
@@ -35,6 +36,15 @@ async function pingXamanProxy(env) {
 
 export default {
   async scheduled(event, env, ctx) {
+    // Every minute: the ledger watcher (listings/sales/mints/burns feed +
+    // minute-fresh XRP floor, see functions/_ledgerwatch.js). Everything
+    // else below stays on its own 10-minute schedule.
+    if (event.cron === '* * * * *') {
+      ctx.waitUntil(runLedgerWatch(env.coin)
+        .then(r => console.log('ledger-watch', JSON.stringify(r)))
+        .catch(e => console.log('ledger-watch failed', String(e && e.message || e))));
+      return;
+    }
     // Every real tradeable collection, not just P!GE0NS (the implicit
     // default when collectionKey is undefined — see maybeRefreshHighSaleMap's
     // own shopSlug fallback in _shared.js) — confirmed live as the actual

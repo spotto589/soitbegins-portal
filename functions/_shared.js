@@ -1321,7 +1321,7 @@ const PIGEONS_AMM_ACCOUNT = 'rn5vs1Q5pzwbpzFhK85sVsuXpieNitVCQg';
 // production issue shows up directly in `wrangler pages deployment tail`
 // instead of only being inferable from symptoms.
 const XRPL_ENDPOINTS = ['https://xrplcluster.com', 'https://s1.ripple.com:51234', 'https://s2.ripple.com:51234'];
-async function fetchXrplClusterJson(body, okErrors) {
+export async function fetchXrplClusterJson(body, okErrors) {
   for (const endpoint of XRPL_ENDPOINTS) {
     const attempts = endpoint === XRPL_ENDPOINTS[0] ? 3 : 1; // a couple of retries on the primary, one shot on each fallback
     for (let attempt = 0; attempt < attempts; attempt++) {
@@ -5345,7 +5345,28 @@ export async function maybeRefreshFloorIndex(kv) {
   let candidates = staging.candidates || [];
 
   const batch = allIds.slice(nextIndex, nextIndex + FLOOR_INDEX_TOKENS_PER_RUN);
-  const found = await mapWithConcurrency(batch, FLOOR_INDEX_CONCURRENCY, async (nftId) => {
+  const found = await mapWithConcurrency(batch, FLOOR_INDEX_CONCURRENCY, nftId => floorEntryForNft(nftId, idToNumber[nftId] || null));
+  candidates = candidates.concat(found.filter(Boolean));
+
+  nextIndex += batch.length;
+  if (nextIndex >= allIds.length) {
+    // The ledger watcher (functions/_ledgerwatch.js) patched some Pigeons
+    // while this pass was running — those are fresher than what the pass
+    // saw earlier, so they win (see recordFloorPatches).
+    candidates = await applyRecentFloorPatches(kv, candidates, (stats && stats.startedAt) || 0);
+    // Every listed Pigeon, cheapest first (see FLOOR_INDEX_KEY's comment).
+    candidates.sort((a, b) => a.priceXrp - b.priceXrp);
+    await safeKvPut(kv, FLOOR_INDEX_KEY, JSON.stringify({ items: candidates, updatedAt: now }));
+    await safeKvPut(kv, FLOOR_INDEX_STATS_KEY, JSON.stringify({ inProgress: false, completedAt: now, updatedAt: now }));
+    await safeKvPut(kv, FLOOR_INDEX_STAGING_KEY, JSON.stringify({ candidates: [] }));
+    return;
+  }
+  await safeKvPut(kv, FLOOR_INDEX_STAGING_KEY, JSON.stringify({ candidates }));
+  await safeKvPut(kv, FLOOR_INDEX_STATS_KEY, JSON.stringify({ inProgress: true, nextIndex, startedAt: (stats && stats.inProgress && stats.startedAt) || now, updatedAt: now }));
+}
+
+// One Pigeon's floor entry (null = not listed in XRP by its current owner).
+export async function floorEntryForNft(nftId, number) {
     const offers = await fetchNftSellOffers(nftId); // tolerant [] on failure/not-listed
     // Cheapest XRP sell offer per marketplace (the offer's destination is
     // the marketplace's broker account), kept separately so an xrp.cafe-
@@ -5365,26 +5386,45 @@ export async function maybeRefreshFloorIndex(kv) {
     const markets = {};
     for (const l of listings) markets[l.key] = l.priceXrp;
     return {
-      nftId, number: idToNumber[nftId] || null,
+      nftId, number,
       priceXrp: listings[0].priceXrp, venue: listings[0].key,
       markets,
       xrpcafeXrp: markets.xrpcafe !== undefined ? markets.xrpcafe : null,
       deeptideXrp: markets.deeptide !== undefined ? markets.deeptide : null,
     };
-  });
-  candidates = candidates.concat(found.filter(Boolean));
+}
 
-  nextIndex += batch.length;
-  if (nextIndex >= allIds.length) {
-    // Every listed Pigeon, cheapest first (see FLOOR_INDEX_KEY's comment).
-    candidates.sort((a, b) => a.priceXrp - b.priceXrp);
-    await safeKvPut(kv, FLOOR_INDEX_KEY, JSON.stringify({ items: candidates, updatedAt: now }));
-    await safeKvPut(kv, FLOOR_INDEX_STATS_KEY, JSON.stringify({ inProgress: false, completedAt: now, updatedAt: now }));
-    await safeKvPut(kv, FLOOR_INDEX_STAGING_KEY, JSON.stringify({ candidates: [] }));
-    return;
-  }
-  await safeKvPut(kv, FLOOR_INDEX_STAGING_KEY, JSON.stringify({ candidates }));
-  await safeKvPut(kv, FLOOR_INDEX_STATS_KEY, JSON.stringify({ inProgress: true, nextIndex, updatedAt: now }));
+// ---- Minute-fresh floor (2026-09-25) — the ledger watcher re-checks just
+// the Pigeons whose offers changed and patches them into the index
+// straight away, instead of waiting hours for the full crawl to reach
+// them. Patches are also remembered for a while so a full pass that
+// started BEFORE the change can't overwrite it with older data.
+const FLOOR_PATCHES_KEY = 'pswap:floorpatches:v1';
+const FLOOR_PATCH_KEEP_SECONDS = 12 * 3600;
+// entries: { nftId: entry | null } (null = no longer listed in XRP).
+export async function patchFloorIndex(kv, entries) {
+  const ids = Object.keys(entries);
+  if (!ids.length) return;
+  const now = Math.floor(Date.now() / 1000);
+  const index = (await getFloorIndex(kv)) || { items: [] };
+  let items = (index.items || []).filter(c => !(c.nftId in entries));
+  ids.forEach(id => { if (entries[id]) items.push(entries[id]); });
+  items.sort((a, b) => a.priceXrp - b.priceXrp);
+  await safeKvPut(kv, FLOOR_INDEX_KEY, JSON.stringify({ items, updatedAt: index.updatedAt || now, patchedAt: now }));
+  const raw = await kv.get(FLOOR_PATCHES_KEY);
+  const patches = raw ? JSON.parse(raw) : {};
+  ids.forEach(id => { patches[id] = { entry: entries[id], at: now }; });
+  Object.keys(patches).forEach(id => { if (now - patches[id].at > FLOOR_PATCH_KEEP_SECONDS) delete patches[id]; });
+  await safeKvPut(kv, FLOOR_PATCHES_KEY, JSON.stringify(patches));
+}
+async function applyRecentFloorPatches(kv, candidates, passStartedAt) {
+  const raw = await kv.get(FLOOR_PATCHES_KEY);
+  const patches = raw ? JSON.parse(raw) : {};
+  const fresh = Object.keys(patches).filter(id => patches[id].at >= passStartedAt);
+  if (!fresh.length) return candidates;
+  const out = candidates.filter(c => fresh.indexOf(c.nftId) === -1);
+  fresh.forEach(id => { if (patches[id].entry) out.push(patches[id].entry); });
+  return out;
 }
 
 // Shared Xaman Payload API calls — used by every swap-*-payload.js and
