@@ -2607,19 +2607,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      left of the panel — banner at its natural (compacted) height, then
      the box rows share the rest, each up to the SYSTEM boxes' own height
      and shrinking below it only when the screen is too short. */
-  #profileTabPanelProfiles:not(.profiles-editing){ display:flex; flex-direction:column; overflow:hidden; }
-  #profileTabPanelProfiles:not(.profiles-editing) > .profiles-hub{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+  #profileTabPanelProfiles:not(.profiles-editing){ display:flex; flex-direction:column; overflow-y:auto; }
+  #profileTabPanelProfiles:not(.profiles-editing) > .profiles-hub{ flex:1 0 auto; display:flex; flex-direction:column; }
   #profileTabPanelProfiles:not(.profiles-editing) > #profilesBackBtn{ flex:0 0 auto; }
-  .profiles-hub-banner .profile-banner{ padding:1rem; gap:1rem; }
-  .profiles-hub-banner .profile-avatar-wrap{ margin-bottom:calc(-1rem - 1px); }
-  .profiles-hub-banner .profile-current-avatar{ width:140px; height:140px; }
-  .profiles-hub-banner .profile-banner-code{ line-height:1.5; padding:0.6rem 0.9rem; }
+  /* The banner keeps its full normal size here, profile picture included
+     (reported live: "i dont want the profile picture changing size") —
+     the search box is what gives way to fit the page. */
   /* Search across the top, V!EW/ED!T side by side underneath — on every
      width (they're short enough to share a phone row). */
   .profile-box-grid.profiles-hub-grid{
     flex:1 1 auto; min-height:0;
     grid-template-columns:repeat(2, minmax(0, 1fr));
-    grid-template-rows:minmax(0, calc(var(--sys-box-h, 5.5rem) - 28px)) auto minmax(0, calc(var(--sys-box-h, 5.5rem) - 28px));
+    grid-template-rows:3.6rem auto minmax(3.6rem, calc(var(--sys-box-h, 5.5rem) - 28px));
     align-content:start; row-gap:0.75rem;
   }
   .profiles-hub-grid > .flock-account-box{ margin-bottom:0; min-height:0; }
@@ -2630,13 +2629,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profiles-hub-grid > .profile-search-results{ grid-row:2; }
   .profiles-hub-grid > .profiles-hub-btn{ grid-row:3; }
   @media (max-width:640px){
-    .profiles-hub-banner .profile-current-avatar{ width:96px; height:96px; }
-    /* Phone: tighter banner, !DENT!TY in two columns, shorter button
-       labels (no // or arrow) so nothing wraps or gets clipped. */
-    .profiles-hub-banner .profile-banner{ padding:0.75rem; gap:0.6rem; }
+    /* Phone: !DENT!TY in two columns, shorter button labels (no // or
+       arrow) so nothing wraps or gets clipped. */
     .profiles-hub-banner .profile-banner-code{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); column-gap:1rem; font-size:11px; line-height:1.45; }
     .profiles-hub-banner .profile-banner-code .profile-code-title{ grid-column:1 / -1; }
-    .profile-box-grid.profiles-hub-grid{ grid-template-rows:minmax(3.25rem, calc(var(--sys-box-h, 5.5rem) - 28px)) auto minmax(3.25rem, calc(var(--sys-box-h, 5.5rem) - 28px)); }
+    .profile-box-grid.profiles-hub-grid{ grid-template-rows:3.25rem auto minmax(3.25rem, calc(var(--sys-box-h, 5.5rem) - 28px)); }
     .profiles-hub-grid > .flock-account-box{ padding:0.5rem 0.75rem; }
     .profiles-hub-grid .flock-account-box-row{ gap:0.5rem; }
     .profiles-hub-grid .flock-account-box-label{ font-size:13px; letter-spacing:0.04em; }
@@ -2646,7 +2643,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .profiles-hub-grid button.flock-account-box{ font:inherit; color:inherit; width:100%; -webkit-appearance:none; appearance:none; }
   .profiles-hub-search-box{ cursor:text; }
+  /* Search text centred in its box (reported live). */
+  .profiles-hub-search-box .flock-account-box-row{ position:relative; }
+  .profiles-hub-search-box .flock-account-box-icon, .profiles-hub-search-box .flock-account-box-prefix{ position:absolute; }
+  .profiles-hub-search-box .flock-account-box-icon{ left:0; }
+  .profiles-hub-search-box .flock-account-box-prefix{ left:2.1rem; }
   .profiles-hub-search-input{
+    text-align:center;
     flex:1 1 auto; min-width:0;
     background:transparent; border:none; outline:none; padding:0;
     color:var(--cyan); caret-color:var(--magenta);
@@ -7172,7 +7175,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Bordered boxes inside a pop-up that set no background of their own get
      the pop-up's solid colour (tagged by addPopupStatic), so the static
      only shows on the pop-up's own background. */
-  .popup-solid{ background-color:var(--panel-bg-solid); }
+  .popup-solid{ background-color:rgb(6, 6, 8); }
   /* Named grid areas so PIGEON #N sits in its own row above just the
      picture's column, while RARITY/RARITY SCORE (the right column's first
      row) starts level with the picture's own top — not pushed down by
@@ -23380,7 +23383,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // (reported live: the colour didn't work when you picked an NFT) —
     // the empty-banner gradient was covering the sampled colour whenever
     // there was no PFP, even though every caller samples bannerImage first.
-    var hasBannerColour = !!(profile && (profile.bannerImage || profile.pfpImage));
+    var hasBannerColour = !!(profile && (profile.pfpImage || profile.bannerImage));
     var avatarImg = hasPfp ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
     var username = (profile && profile.username) ? escapeHtml(profile.username) : 'N0 USERNAME SET';
     // Worn title badge — real equipped title (must be a title-kind rule
@@ -23529,7 +23532,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // editing surface, even on your own wallet.
     el.profileScreenBanner.innerHTML = profileScreenBannerHtml(wallet, profile);
     var bannerNode = el.profileScreenBanner.querySelector('.profile-banner');
-    var bannerSampleSrc = profile && (profile.bannerImage || profile.pfpImage);
+    var bannerSampleSrc = profile && (profile.pfpImage || profile.bannerImage);
     if (bannerNode && bannerSampleSrc) sampleBannerColor(bannerSampleSrc, bannerNode);
     // NFT counts feed BOTH the C0LLECT!0NS picker and the !DENT!TY code
     // block's own NFTS/C0LLECT!0NS lines — one fetch, not two.
@@ -23939,7 +23942,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // reachable) — no second profile fetch needed.
     el.walletHistoryBanner.innerHTML = profileScreenBannerHtml(wallet, profileCache[wallet] || null);
     var bannerNode = el.walletHistoryBanner.querySelector('.profile-banner');
-    var bannerSampleSrc = profileCache[wallet] && (profileCache[wallet].bannerImage || profileCache[wallet].pfpImage);
+    var bannerSampleSrc = profileCache[wallet] && (profileCache[wallet].pfpImage || profileCache[wallet].bannerImage);
     if (bannerNode && bannerSampleSrc) sampleBannerColor(bannerSampleSrc, bannerNode);
     var themeKey = (profileCache[wallet] && profileCache[wallet].theme) || 'static';
     el.screenWalletHistory.style.setProperty('--profile-accent-rgb', (PROFILE_THEMES[themeKey] || PROFILE_THEMES.static).accent);
@@ -24143,7 +24146,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var wallet = currentProfileWallet;
     el.achievementsBanner.innerHTML = profileScreenBannerHtml(wallet, profileCache[wallet] || null);
     var bannerNode = el.achievementsBanner.querySelector('.profile-banner');
-    var bannerSampleSrc = profileCache[wallet] && (profileCache[wallet].bannerImage || profileCache[wallet].pfpImage);
+    var bannerSampleSrc = profileCache[wallet] && (profileCache[wallet].pfpImage || profileCache[wallet].bannerImage);
     if (bannerNode && bannerSampleSrc) sampleBannerColor(bannerSampleSrc, bannerNode);
     var themeKey = (profileCache[wallet] && profileCache[wallet].theme) || 'static';
     el.screenAchievements.style.setProperty('--profile-accent-rgb', (PROFILE_THEMES[themeKey] || PROFILE_THEMES.static).accent);
@@ -24237,7 +24240,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       });
       el.profileScreenBanner.innerHTML = profileScreenBannerHtml(wallet, profile);
       var bannerNode = el.profileScreenBanner.querySelector('.profile-banner');
-      var bannerSampleSrc = profile && (profile.bannerImage || profile.pfpImage);
+      var bannerSampleSrc = profile && (profile.pfpImage || profile.bannerImage);
       if (bannerNode && bannerSampleSrc) sampleBannerColor(bannerSampleSrc, bannerNode);
     }).catch(function(){});
   });
@@ -24775,7 +24778,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var profile = profileCache[MY_WALLET] || null;
     el.profilesHubBanner.innerHTML = profileScreenBannerHtml(MY_WALLET, profile);
     var bannerNode = el.profilesHubBanner.querySelector('.profile-banner');
-    var src = profile && (profile.bannerImage || profile.pfpImage);
+    var src = profile && (profile.pfpImage || profile.bannerImage);
     if (bannerNode && src) sampleBannerColor(src, bannerNode);
     var st = identityOf(MY_WALLET);
     if (st.nfts == null && !st.countsLoading){
@@ -25241,12 +25244,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderProfileCurrent(profile){
     el.profileCurrentAvatar.innerHTML = (profile && profile.pfpImage) ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
     el.profileCurrentUsername.textContent = (profile && profile.username) ? profile.username : 'N0 USERNAME SET';
-    // Banner background samples off the chosen BANNER NFT now if one's
-    // set (Phase 1: banner is its own real pick, see BANNER pane below),
-    // falling back to the PFP's own image same as before that existed —
-    // still just a single sampled colour, no image layered on top (see
-    // sampleBannerColor's own comment on why that was tried and dropped).
-    var bannerSampleSrc = profile && (profile.bannerImage || profile.pfpImage);
+    // Banner background copies the PROFILE PICTURE's own background colour
+    // (reported live: "it's supposed to copy the colour background of the
+    // profile picture" — it was sampling the BANNER NFT first, so a
+    // grey-backed banner pick left every banner grey). The BANNER pick is
+    // only the fallback now, for a profile with no picture. Same order in
+    // every banner (profileScreenBannerHtml's callers too).
+    var bannerSampleSrc = profile && (profile.pfpImage || profile.bannerImage);
     if (bannerSampleSrc){
       el.profileBanner.classList.remove('profile-banner-empty');
       sampleBannerColor(bannerSampleSrc);
@@ -26678,10 +26682,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       var p = f.slice(f.indexOf('(') + 1, f.indexOf(')')).split(',');
       return [+p[0], +p[1], +p[2], p.length > 3 ? +p[3] : 1];
     }
+    // Every box inside a pop-up is one near-black (reported live: "all
+    // different colour boxes... no structure, i need darker boxes to out
+    // do the static") — a tint keeps only a faint trace of its colour
+    // (35% of its old strength) so an active/selected box still reads,
+    // but they all sit on the same dark base.
+    var BOX = [6, 6, 8], BOX_CSS = 'rgb(6, 6, 8)', TINT_KEEP = 0.35;
     var panel = rgba(getComputedStyle(document.documentElement).getPropertyValue('--panel-bg-solid')) || [16, 15, 12, 1];
     function solidOf(col){
-      var a = col[3];
-      return 'rgb(' + Math.round(col[0] * a + panel[0] * (1 - a)) + ', ' + Math.round(col[1] * a + panel[1] * (1 - a)) + ', ' + Math.round(col[2] * a + panel[2] * (1 - a)) + ')';
+      var a = col[3] * TINT_KEEP;
+      return 'rgb(' + Math.round(col[0] * a + BOX[0] * (1 - a)) + ', ' + Math.round(col[1] * a + BOX[1] * (1 - a)) + ', ' + Math.round(col[2] * a + BOX[2] * (1 - a)) + ')';
     }
     function hasBorderDecl(st){
       return ['top', 'right', 'bottom', 'left'].some(function(side){
@@ -26702,7 +26712,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         var rest = val.slice(close + 1).trim();
         if (rest.charAt(0) !== ',') return null;
         var a = parseFloat(rest.slice(1));
-        return a > 0 && a <= 0.7 ? 'color-mix(in srgb, rgb(' + val.slice(k + 1, close + 1) + ') ' + Math.round(a * 1000) / 10 + '%, var(--panel-bg-solid))' : null;
+        return a > 0 && a <= 0.7 ? 'color-mix(in srgb, rgb(' + val.slice(k + 1, close + 1) + ') ' + Math.round(a * TINT_KEEP * 1000) / 10 + '%, ' + BOX_CSS + ')' : null;
       }
       if (val.indexOf('var(') === 0){
         var resolved = rgba(rootStyle.getPropertyValue(val.slice(4, val.indexOf(')')).split(',')[0].trim()));
@@ -26738,7 +26748,9 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (pos !== 'absolute' && pos !== 'fixed' && !/overlay|backdrop|scrim/.test(r.selectorText)){
           var solid = solidTint(val), col = rgba(val);
           if (solid) val = solid;
-          else if (col && col[3] === 0 && (hasBorderDecl(st) || bgImg.indexOf('gradient') >= 0)) val = 'var(--panel-bg-solid)';
+          else if (col && col[3] === 0 && (hasBorderDecl(st) || bgImg.indexOf('gradient') >= 0)) val = BOX_CSS;
+          // Boxes filled with the pop-up's own colour go dark too.
+          else if (val.indexOf('--panel-bg-solid') >= 0 || (col && col[3] === 1 && col[0] === panel[0] && col[1] === panel[1] && col[2] === panel[2])) val = BOX_CSS;
         }
         out.push(splitTop(r.selectorText).map(scoped).join(',') + '{background-color:' + val + (st.getPropertyPriority('background-color') ? ' !important' : '') + '}');
       }
