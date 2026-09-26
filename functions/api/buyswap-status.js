@@ -89,7 +89,10 @@ export async function onRequestGet(context) {
     ? delivered.value
     : null;
 
-  return new Response(JSON.stringify({ status: 'settled', txHash, receivedPigeons }), {
+  // SELL delivers XRP (a drops string) instead of the token.
+  const receivedXrpDrops = typeof delivered === 'string' && /^\d+$/.test(delivered) ? delivered : null;
+
+  return new Response(JSON.stringify({ status: 'settled', txHash, receivedPigeons, receivedXrpDrops }), {
     headers: { 'Content-Type': 'application/json' }
   });
 }

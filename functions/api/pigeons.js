@@ -4,7 +4,7 @@ import { marketListingsFromOffers, marketMeta,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap, getRarityMap, getRarityStats, maybeRefreshRarityScores,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, findCollectionOffer, getSwapSalesLog, identifySaleVenue, getFloorIndex,
-  resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, TRADEABLE_COLLECTIONS,
+  resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, quoteXrpForTokenAmount, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG, isPopularCoinKey, ensurePopularCoinConfig,
   getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
   fetchRecentAccountTxCached
@@ -518,6 +518,13 @@ export async function onRequestGet(context) {
   // quotePigeonsForXrpDrops in _shared.js). No KV, no caching — a quote is
   // meant to reflect the book right now, not a minute-old snapshot.
   if (params.get('pigeonsQuote') === '1') {
+    // SWAP's SELL side: tokens -> XRP (see quoteXrpForTokenAmount).
+    if (params.get('direction') === 'sell') {
+      const tokenValue = params.get('tokenValue');
+      const sellQuote = await quoteXrpForTokenAmount(tokenValue, tradeKey);
+      if (sellQuote.error === 'bad_amount') return json({ error: 'bad_amount' }, 400);
+      return json(Object.assign({ quotedAt: Date.now(), direction: 'sell' }, sellQuote));
+    }
     const drops = params.get('xrpDrops');
     if (!drops || !/^[1-9][0-9]*$/.test(drops)) return json({ error: 'bad_amount' }, 400);
     const quote = await quotePigeonsForXrpDrops(drops, tradeKey);

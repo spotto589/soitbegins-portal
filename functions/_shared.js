@@ -1910,7 +1910,8 @@ export async function fetchPigeonsAccountLine(account, tokenConfig = PIGEONS_TOK
   const wantCurrency = encodeCurrencyCode(tokenConfig.currency);
   const line = lines.find(l => l.currency === wantCurrency);
   if (!line) return { hasTrustline: false, balance: 0 };
-  return { hasTrustline: true, balance: parseFloat(line.balance) || 0 };
+  // balanceStr: the ledger's exact string, for SELL's own balance check.
+  return { hasTrustline: true, balance: parseFloat(line.balance) || 0, balanceStr: line.balance };
 }
 
 // All of a wallet's real trustlines in ONE account_lines call (no peer
@@ -5862,4 +5863,156 @@ export async function getWalletIdentityDates(context, wallet) {
     titles = ACHIEVEMENT_RULES.filter(r => r.kind === 'title' && unlocked[r.id]).length;
   } catch (e) {}
   return { activated: activated || null, firstSignIn: firstSignIn || null, titles };
+}
+
+// ---- SWAP: SELL side (tokens -> XRP) ----------------------------------
+// The mirror image of the BUY swap above, same mechanism: a same-account
+// cross-currency Payment. SendMax is the EXACT token amount the user
+// chose to sell (never more), Amount is the slippage-floored MINIMUM XRP
+// in drops, and tfPartialPayment is deliberately omitted — so it either
+// delivers at least that much XRP for at most that many tokens, or fails
+// atomically with nothing moved. No fee is added, same as BUY.
+
+// The issuer's TransferRate as a multiplier (1 = no fee). A seller's
+// tokens pay it on the way into the book/AMM, so the quote has to price
+// only what actually arrives there. Cached per issuer for 10 minutes.
+const issuerTransferRateCache = {};
+async function fetchIssuerTransferRate(issuer) {
+  const hit = issuerTransferRateCache[issuer];
+  if (hit && Date.now() - hit.at < 600000) return hit.rate;
+  const data = await fetchXrplClusterJson({ method: 'account_info', params: [{ account: issuer, ledger_index: 'validated' }] });
+  const ad = data && data.result && data.result.account_data;
+  if (!ad) return null;
+  const raw = typeof ad.TransferRate === 'number' ? ad.TransferRate : 0;
+  const rate = raw > 1000000000 ? raw / 1000000000 : 1;
+  issuerTransferRateCache[issuer] = { rate, at: Date.now() };
+  return rate;
+}
+
+// Offers that GIVE XRP and TAKE the token — the book a seller fills.
+async function fetchTokenBidOffers(tokenConfig, limit) {
+  const data = await fetchXrplClusterJson({
+    method: 'book_offers',
+    params: [{
+      taker_gets: { currency: 'XRP' },
+      taker_pays: { currency: encodeCurrencyCode(tokenConfig.currency), issuer: tokenConfig.issuer },
+      limit: limit
+    }]
+  });
+  return (data && data.result && data.result.offers) || [];
+}
+
+async function quoteXrpFromOrderBook(tokenConfig, tokens) {
+  let offers;
+  try { offers = await fetchTokenBidOffers(tokenConfig, PIGEONS_QUOTE_BOOK_DEPTH); } catch (e) { return { filled: false, receiveDrops: 0 }; }
+  if (!Array.isArray(offers) || !offers.length) return { filled: false, receiveDrops: 0 };
+  let remaining = tokens;
+  let total = 0;
+  for (const o of offers) {
+    if (remaining <= 0) break;
+    if (typeof o.TakerGets !== 'string' || typeof o.TakerPays !== 'object') continue; // wrong side / malformed
+    const gets = o.taker_gets_funded !== undefined ? o.taker_gets_funded : o.TakerGets;
+    const pays = o.taker_pays_funded !== undefined ? o.taker_pays_funded : o.TakerPays;
+    const availDrops = Number(gets);
+    const availTokens = parseFloat(typeof pays === 'object' ? pays.value : pays);
+    if (!(availDrops > 0) || !(availTokens > 0)) continue;
+    if (remaining >= availTokens) {
+      total += availDrops;
+      remaining -= availTokens;
+    } else {
+      total += availDrops * (remaining / availTokens);
+      remaining = 0;
+    }
+  }
+  return { filled: remaining <= 1e-12, receiveDrops: total };
+}
+
+function quoteXrpFromAmmPool(pool, tokens) {
+  const feeFraction = pool.tradingFeeBps / 100000;
+  const effIn = tokens * (1 - feeFraction);
+  const x = Number(pool.xrpReserveDrops);
+  const y = pool.pigeonsReserve;
+  const out = (x * effIn) / (y + effIn);
+  return out > 0 ? out : 0;
+}
+
+// A token amount as the client sends it: plain decimal, up to 6 places.
+export function isValidTokenAmountStr(v) {
+  return typeof v === 'string' && /^(0|[1-9][0-9]{0,15})(\.[0-9]{1,6})?$/.test(v) && Number(v) > 0;
+}
+
+// tokenValueStr: the exact decimal token amount being sold. Returns
+//   { ok:true, receiveDrops (string, floored), receiveXrp, rate (tokens per XRP), source }
+//   { ok:false, insufficientLiquidity:true } / { ok:false, error }
+// Same AMM-must-answer rule as quotePigeonsForXrpDrops: a collection that
+// HAS an AMM never silently falls back to a thinner book-only price.
+export async function quoteXrpForTokenAmount(tokenValueStr, collectionKey = 'pigeons') {
+  const cfg = getTradeConfig(collectionKey);
+  if (!cfg || !cfg.tokenConfig) return { ok: false, error: 'invalid_collection' };
+  if (!isValidTokenAmountStr(tokenValueStr)) return { ok: false, error: 'bad_amount' };
+  const tokens = Number(tokenValueStr);
+
+  const ammAccount = cfg.ammAccount || COLLECTION_AMM_ACCOUNTS[collectionKey] || null;
+  const [transferRate, pool] = await Promise.all([
+    fetchIssuerTransferRate(cfg.tokenConfig.issuer),
+    fetchTokenAmmPool(ammAccount, cfg.tokenConfig)
+  ]);
+  if (transferRate === null) return { ok: false, error: 'quote_failed' };
+  if (ammAccount && !pool) return { ok: false, error: 'quote_failed' };
+  const arriving = tokens / transferRate;
+  const bookResult = await quoteXrpFromOrderBook(cfg.tokenConfig, arriving);
+
+  const ammDrops = pool ? quoteXrpFromAmmPool(pool, arriving) : 0;
+  const bookDrops = bookResult.filled ? bookResult.receiveDrops : 0;
+  const best = Math.floor(ammDrops >= bookDrops ? ammDrops : bookDrops);
+  const source = ammDrops >= bookDrops ? 'amm' : 'orderbook';
+  if (!(best > 0)) return { ok: false, insufficientLiquidity: true };
+  return { ok: true, receiveDrops: String(best), receiveXrp: best / 1e6, rate: tokens / (best / 1e6), soldTokens: tokenValueStr, transferRate, source };
+}
+
+// Single source of truth for the SELL txjson — used by buyswap-prepare.js
+// (review) and buyswap-payload.js (the real Xaman request) alike, same as
+// buildBuySwapTxjson. Re-derives everything live; only the token amount
+// itself comes from the client, as a request.
+export async function buildSellSwapTxjson(seller, tokenValueStr, collectionKey = 'pigeons') {
+  const cfg = getTradeConfig(collectionKey);
+  if (!cfg || !cfg.tokenConfig) return { ok: false, error: 'invalid_collection' };
+  if (!isValidTokenAmountStr(tokenValueStr)) return { ok: false, error: 'bad_amount' };
+
+  const line = await fetchPigeonsAccountLine(seller, cfg.tokenConfig);
+  if (!line || line.hasTrustline === null) return { ok: false, error: 'trustline_lookup_failed' };
+  if (line.hasTrustline !== true) return { ok: false, error: 'no_trustline' };
+  const held = Number(line.balanceStr != null ? line.balanceStr : line.balance);
+  if (!(held > 0) || Number(tokenValueStr) > held) return { ok: false, error: 'exceeds_balance' };
+
+  const quote = await quoteXrpForTokenAmount(tokenValueStr, collectionKey);
+  if (!quote.ok) return { ok: false, error: quote.insufficientLiquidity ? 'insufficient_liquidity' : 'quote_failed' };
+
+  const minDrops = (BigInt(quote.receiveDrops) * BigInt(10000 - BUYSWAP_SLIPPAGE_BPS)) / 10000n;
+  if (minDrops <= 0n) return { ok: false, error: 'quote_failed' };
+
+  const txjson = {
+    TransactionType: 'Payment',
+    Account: seller,
+    Destination: seller,
+    Amount: minDrops.toString(),
+    SendMax: {
+      currency: encodeCurrencyCode(cfg.tokenConfig.currency),
+      issuer: cfg.tokenConfig.issuer,
+      value: tokenValueStr
+    },
+    Memos: swapOfferSourceMemo()
+  };
+  return {
+    ok: true,
+    txjson,
+    display: {
+      direction: 'sell',
+      tokenValue: tokenValueStr,
+      minReceiveDrops: minDrops.toString(),
+      estimateReceiveDrops: quote.receiveDrops,
+      rate: quote.rate,
+      source: quote.source
+    }
+  };
 }

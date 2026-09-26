@@ -8207,6 +8207,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-modal-panel .buyswap-balance-label{ font-size:13px; }
   .buyswap-modal-panel .buyswap-balance-value{ font-size:22px; }
   .buyswap-modal-panel .buyswap-arrow{ font-size:28px; }
+  .buyswap-direction{ display:flex; justify-content:center; gap:0.5rem; margin:0 0 1rem; }
+  .buyswap-direction .sale-currency-btn{ flex:0 0 auto; min-width:7.5rem; font-size:16px; padding:0.55em 1.2em; }
+  .buyswap-modal-panel .buyswap-flip{ display:block; margin:0.9rem auto; padding:0; flex:none; max-width:2.6rem; background:none; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); width:2.6rem; height:2.6rem; line-height:1; cursor:pointer; transition:transform 0.2s ease, border-color 0.15s ease; }
+  .buyswap-modal-panel .buyswap-flip:hover{ border-color:var(--collection-accent); transform:rotate(180deg); }
+  #buySwapQuoteSection > .buyswap-flip{ width:2.6rem; max-width:2.6rem; }
   .buyswap-modal-panel .buyswap-receive-value{ font-size:28px; }
   .buyswap-modal-panel .buyswap-checking{ font-size:19px; }
   .buyswap-modal-panel .buyswap-received-value{ font-size:48px; }
@@ -10305,7 +10310,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="pigeons-bar-balance-login" id="pigeonsBalanceLoginWrap">
               <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">L0G!N T0 V!EW BALANCE</button>
             </div>
-            <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;">BUY $P!GE0NS</button>
+            <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;">SWAP $P!GE0NS</button>
             <!-- Under BUY $P!GE0NS (reported live 2026-09-25). -->
             <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openNotifyBtn">&#128276; N0T!F!CAT!0NS</button>
           </div>
@@ -11222,7 +11227,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
                 <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
               </a>
-              <button type="button" class="mainframe-card-buy" data-collection="pigeons">BUY $P!GE0NS</button>
+              <button type="button" class="mainframe-card-buy" data-collection="pigeons">SWAP $P!GE0NS</button>
             </div>
           </div>
           <!-- $P!GE0NS is the only card you can click into for now (reported
@@ -11246,7 +11251,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="mainframe-card-body">
               <div class="mainframe-card-label">$PHN!X</div>
               <div class="mainframe-card-stats" id="mainframeStatsPhnixs"></div>
-              <button type="button" class="mainframe-card-buy" data-collection="phnixs">BUY $PHN!X</button>
+              <button type="button" class="mainframe-card-buy" data-collection="phnixs">SWAP $PHN!X</button>
             </div>
           </div>
           <!-- TEDDY/SEAL/FUZZY/C0NSP!RACY have real tokens (see
@@ -11268,7 +11273,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="mainframe-card-body">
               <div class="mainframe-card-label">$TEDDY</div>
               <div class="mainframe-card-stats" id="mainframeStatsTeddybg"></div>
-              <button type="button" class="mainframe-card-buy" data-collection="teddybg">BUY $TEDDY</button>
+              <button type="button" class="mainframe-card-buy" data-collection="teddybg">SWAP $TEDDY</button>
             </div>
           </div>
           <div class="mainframe-card mainframe-card-soon mainframe-card-seal" style="--card-accent:45,140,168; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
@@ -11283,7 +11288,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="mainframe-card-body">
               <div class="mainframe-card-label">$SEAL</div>
               <div class="mainframe-card-stats" id="mainframeStatsSeal"></div>
-              <button type="button" class="mainframe-card-buy" data-collection="seal">BUY $SEAL</button>
+              <button type="button" class="mainframe-card-buy" data-collection="seal">SWAP $SEAL</button>
             </div>
           </div>
           <div class="mainframe-card mainframe-card-soon mainframe-card-fuzzy" style="--card-accent:122,66,26; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
@@ -11298,7 +11303,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="mainframe-card-body">
               <div class="mainframe-card-label">$FUZZY</div>
               <div class="mainframe-card-stats" id="mainframeStatsFuzzy"></div>
-              <button type="button" class="mainframe-card-buy" data-collection="fuzzy">BUY $FUZZY</button>
+              <button type="button" class="mainframe-card-buy" data-collection="fuzzy">SWAP $FUZZY</button>
             </div>
           </div>
           <!-- C0NSP!RACY is now a real live entry point, but a dual one — it
@@ -11322,7 +11327,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
                 <div class="mainframe-card-stats" id="mainframeStatsConspiracy"></div>
               </a>
-              <button type="button" class="mainframe-card-buy" data-collection="conspiracy">BUY $CNS</button>
+              <button type="button" class="mainframe-card-buy" data-collection="conspiracy">SWAP $CNS</button>
             </div>
           </div>
           <!-- 3RD EYE/BEAR/CULT/SM0K! — same C0M!NG S00N treatment as
@@ -11345,7 +11350,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="mainframe-card-body">
               <div class="mainframe-card-label">$3RD EYE</div>
               <div class="mainframe-card-stats" id="mainframeStatsThirdeye"></div>
-              <button type="button" class="mainframe-card-buy" data-collection="thirdeye">BUY $3RDEYE</button>
+              <button type="button" class="mainframe-card-buy" data-collection="thirdeye">SWAP $3RDEYE</button>
             </div>
           </div>
           <div class="mainframe-card mainframe-card-soon mainframe-card-bear" style="--card-accent:245,197,24; --card-art:url('/assets/mainframe/bear.webp?v=3');">
@@ -11360,7 +11365,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="mainframe-card-body">
               <div class="mainframe-card-label">$BEAR</div>
               <div class="mainframe-card-stats" id="mainframeStatsBear"></div>
-              <button type="button" class="mainframe-card-buy" data-collection="bear">BUY $BEAR</button>
+              <button type="button" class="mainframe-card-buy" data-collection="bear">SWAP $BEAR</button>
             </div>
           </div>
           <div class="mainframe-card mainframe-card-soon mainframe-card-cult" style="--card-accent:34,197,94; --card-art:url('/assets/mainframe/cult.webp?v=1');">
@@ -11375,7 +11380,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="mainframe-card-body">
               <div class="mainframe-card-label">$CULT</div>
               <div class="mainframe-card-stats" id="mainframeStatsCult"></div>
-              <button type="button" class="mainframe-card-buy" data-collection="cult">BUY $CULT</button>
+              <button type="button" class="mainframe-card-buy" data-collection="cult">SWAP $CULT</button>
             </div>
           </div>
           <div class="mainframe-card mainframe-card-soon mainframe-card-smoki" style="--card-accent:79,209,249; --card-art:url('/assets/mainframe/smoki.webp?v=1');">
@@ -11390,7 +11395,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="mainframe-card-body">
               <div class="mainframe-card-label">$SM0K!</div>
               <div class="mainframe-card-stats" id="mainframeStatsSmoki"></div>
-              <button type="button" class="mainframe-card-buy" data-collection="smoki">BUY $SM0K!</button>
+              <button type="button" class="mainframe-card-buy" data-collection="smoki">SWAP $SM0K!</button>
             </div>
           </div>
         </div>
@@ -12273,6 +12278,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="offer-confirm-panel buyswap-modal-panel">
         <div id="buySwapEntryState">
           <img class="buyswap-thumb" id="buySwapThumb" src="" alt="" style="display:none;">
+          <!-- SWAP (reported live: "change the buy to swap... flip between
+               buying and selling") — BUY trades XRP for the token, SELL the
+               token for XRP. The arrow between the two amounts flips it too. -->
+          <div class="buyswap-direction" id="buySwapDirection">
+            <button type="button" class="sale-currency-btn sale-currency-btn-active" data-dir="buy">BUY</button>
+            <button type="button" class="sale-currency-btn" data-dir="sell">SELL</button>
+          </div>
           <!-- Both real balances, right up top — the wallet's spendable
                XRP and its current holding of whichever token this panel
                is for, always visible together rather than a single
@@ -12325,12 +12337,12 @@ const SWAP_HTML = `<!DOCTYPE html>
               <input class="buyswap-input" id="buySwapXrpInput" type="text" inputmode="decimal" placeholder="0.00" autocomplete="off">
               <div class="buyswap-trailing">
                 <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
-                <span class="buyswap-unit">XRP</span>
+                <span class="buyswap-unit" id="buySwapPayUnit">XRP</span>
               </div>
             </div>
             <div class="buyswap-input-error" id="buySwapInputError" style="display:none;"></div>
           </div>
-          <div class="buyswap-arrow" aria-hidden="true">↓</div>
+          <button type="button" class="buyswap-arrow buyswap-flip" id="buySwapFlipBtn" title="FL!P BUY / SELL">⇅</button>
           <div class="buyswap-row">
             <span class="buyswap-label">Y0U RECE!VE</span>
             <div class="buyswap-input-wrap buyswap-receive-wrap">
@@ -12395,7 +12407,7 @@ const SWAP_HTML = `<!DOCTYPE html>
              estimate. -->
         <div id="buySwapResultState" style="display:none;">
           <div class="receipt-badge">✓</div>
-          <div class="receipt-status-line">$P!GE0NS ACQU!RED</div>
+          <div class="receipt-status-line" id="buySwapResultStatusLine">$P!GE0NS ACQU!RED</div>
           <div class="receipt-price-row">
             <div class="receipt-price-label">RECE!VED</div>
             <div class="receipt-price-value buyswap-received-value" id="buySwapResultReceived"></div>
@@ -13151,7 +13163,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenListResult','listResultThumb','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
    'buyConfirmModal','screenBuyConfirm','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
-   'buySwapModal','buySwapEntryState','buySwapThumb','buySwapChecking','buySwapCheckingText','buySwapQuoteSection','buySwapXrpInput','buySwapBalancesRow','buySwapXrpBalanceValue','buySwapTokenBalanceLabel','buySwapTokenBalanceValue','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
+   'buySwapModal','buySwapDirection','buySwapPayUnit','buySwapFlipBtn','buySwapResultStatusLine','buySwapEntryState','buySwapThumb','buySwapChecking','buySwapCheckingText','buySwapQuoteSection','buySwapXrpInput','buySwapBalancesRow','buySwapXrpBalanceValue','buySwapTokenBalanceLabel','buySwapTokenBalanceValue','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapDexLink','buySwapPayRow',
    'buySwapConfirmState','buySwapConfAccount','buySwapConfSendMax','buySwapConfAmount','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
    'buySwapResultState','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
@@ -18164,6 +18176,28 @@ const SWAP_HTML = `<!DOCTYPE html>
   // MAINFRAME now, where state.collection may not match whichever BUY
   // button was actually clicked).
   var buySwapCollection = 'pigeons';
+  // SWAP direction: 'buy' = XRP -> token (the original flow), 'sell' =
+  // token -> XRP (buildSellSwapTxjson server-side). Every open starts on BUY.
+  var buySwapDirection = 'buy';
+  function buySwapTokenShort(){ return buySwapMeta().tokenLabel.replace(/^\\$/, ''); }
+  function updateBuySwapDirectionUI(){
+    var selling = buySwapDirection === 'sell';
+    el.buySwapDirection.querySelectorAll('.sale-currency-btn').forEach(function(b){
+      b.classList.toggle('sale-currency-btn-active', b.getAttribute('data-dir') === buySwapDirection);
+    });
+    el.buySwapPayUnit.textContent = selling ? buySwapTokenShort() : 'XRP';
+    el.buySwapReceiveUnit.textContent = selling ? 'XRP' : buySwapTokenShort();
+  }
+  function setBuySwapDirection(dir){
+    if (dir !== 'buy' && dir !== 'sell') return;
+    buySwapDirection = dir;
+    el.buySwapXrpInput.value = '';
+    clearBuySwapInputError();
+    if (buySwapDebounceTimer){ clearTimeout(buySwapDebounceTimer); buySwapDebounceTimer = null; }
+    buySwapReqId++;
+    updateBuySwapDirectionUI();
+    applyBuySwapGate();
+  }
   // A collection's token, or a STAT!C://C0!NS popular coin.
   function buySwapMeta(){
     return COLLECTION_META[buySwapCollection] || POPULAR_COIN_META[buySwapCollection] || COLLECTION_META.pigeons;
@@ -18218,6 +18252,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   function validateBuySwapInput(){
     var raw = el.buySwapXrpInput.value.trim();
     if (!raw){ clearBuySwapInputError(); return null; }
+    if (buySwapDirection === 'sell'){
+      var m = raw.match(/^(\\d+)(\\.\\d{1,6})?$/);
+      if (!m){
+        showBuySwapInputError('ENTER A VAL!D ' + buySwapTokenShort() + ' AM0UNT (UP T0 6 DEC!MAL PLACES, N0 NEGAT!VES).');
+        return null;
+      }
+      var tokenStr = (m[1].replace(/^0+(?=\\d)/, '')) + (m[2] || '');
+      if (!(Number(tokenStr) > 0)){
+        showBuySwapInputError('ENTER AN AM0UNT GREATER THAN 0.');
+        return null;
+      }
+      if (buySwapTokenBalance !== null && Number(tokenStr) > buySwapTokenBalance){
+        showBuySwapInputError('EXCEEDS Y0UR ' + buySwapTokenShort() + ' BALANCE — QU0TE ST!LL SH0WN BEL0W.');
+      } else {
+        clearBuySwapInputError();
+      }
+      return tokenStr;
+    }
     var drops = dropsFromXrpString(raw);
     if (drops === null){
       showBuySwapInputError('ENTER A VAL!D XRP AM0UNT (UP T0 6 DEC!MAL PLACES, N0 NEGAT!VES).');
@@ -18245,6 +18297,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // the quote itself can keep working regardless (see validateBuySwapInput's
   // own comment above).
   function buySwapExceedsBalance(drops){
+    if (buySwapDirection === 'sell') return drops !== null && buySwapTokenBalance !== null && Number(drops) > buySwapTokenBalance;
     return buySwapMaxDrops !== null && drops !== null && drops > buySwapMaxDrops;
   }
 
@@ -18313,7 +18366,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.buySwapSignBtn.disabled = true;
     el.buySwapStatus.textContent = 'GETT!NG QU0TE...';
     el.buySwapStatus.classList.add('buyswap-status-success');
-    apiWithRetry({ pigeonsQuote: 1, xrpDrops: drops.toString(), collection: buySwapCollection }).then(function(data){
+    var quoteParams = buySwapDirection === 'sell'
+      ? { pigeonsQuote: 1, direction: 'sell', tokenValue: drops, collection: buySwapCollection }
+      : { pigeonsQuote: 1, xrpDrops: drops.toString(), collection: buySwapCollection };
+    var quoteDirection = buySwapDirection;
+    apiWithRetry(quoteParams).then(function(data){
+      if (quoteDirection !== buySwapDirection) return; // flipped while this was in flight
       if (myReq !== buySwapReqId) return; // superseded by a newer request
       if (el.buySwapXrpInput.value.trim() !== raw) return; // input changed while this was in flight
       if (!data || !data.ok){
@@ -18333,10 +18391,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       buySwapQuote = data;
       buySwapQuoteForRaw = raw;
       var quoteTokenLabel = buySwapMeta().tokenLabel;
-      el.buySwapReceiveValue.textContent = data.receivePigeons.toLocaleString(undefined, { maximumFractionDigits: 2 });
       el.buySwapRate.textContent = data.rate.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + quoteTokenLabel + ' / XRP';
-      var minReceived = data.receivePigeons * (10000 - BUYSWAP_SLIPPAGE_BPS) / 10000;
-      el.buySwapMinReceived.textContent = minReceived.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + quoteTokenLabel;
+      if (quoteDirection === 'sell'){
+        el.buySwapReceiveValue.textContent = data.receiveXrp.toLocaleString(undefined, { maximumFractionDigits: 6 });
+        el.buySwapMinReceived.textContent = (data.receiveXrp * (10000 - BUYSWAP_SLIPPAGE_BPS) / 10000).toLocaleString(undefined, { maximumFractionDigits: 6 }) + ' XRP';
+      } else {
+        el.buySwapReceiveValue.textContent = data.receivePigeons.toLocaleString(undefined, { maximumFractionDigits: 2 });
+        var minReceived = data.receivePigeons * (10000 - BUYSWAP_SLIPPAGE_BPS) / 10000;
+        el.buySwapMinReceived.textContent = minReceived.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + quoteTokenLabel;
+      }
       // STAGE 5: a valid, live, trustline-confirmed quote is finally
       // enough to let SIGN AND SWAP actually be clicked — but clicking it
       // only opens the REVIEW screen (buyswap-prepare.js re-derives
@@ -18347,7 +18410,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // only SIGNING needs the wallet to actually be able to afford it.
       if (buySwapExceedsBalance(drops)){
         el.buySwapSignBtn.disabled = true;
-        el.buySwapSignBtn.title = 'EXCEEDS Y0UR AVA!LABLE XRP BALANCE';
+        el.buySwapSignBtn.title = quoteDirection === 'sell' ? 'EXCEEDS Y0UR ' + buySwapTokenShort() + ' BALANCE' : 'EXCEEDS Y0UR AVA!LABLE XRP BALANCE';
       } else {
         el.buySwapSignBtn.disabled = false;
         el.buySwapSignBtn.title = 'REV!EW THE EXACT TRANSACT!0N BEF0RE ANYTH!NG !S S!GNED';
@@ -18389,7 +18452,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buySwapPayRow.style.display = 'none';
       el.buySwapTrustlineWarning.style.display = 'none';
       el.buySwapXrpInput.disabled = true;
-      clearBuySwapQuote('L0G !N T0 BUY ' + gateTokenLabel + '.');
+      clearBuySwapQuote('L0G !N T0 SWAP ' + gateTokenLabel + '.');
       return;
     }
     if (buySwapHasTrustline === null){
@@ -18405,6 +18468,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buySwapTrustlineWarning.style.display = 'none';
       el.buySwapXrpInput.disabled = true;
       clearBuySwapQuote('CHECK!NG Y0UR ' + gateTokenLabel + ' TRUSTL!NE...');
+      return;
+    }
+    if (buySwapHasTrustline === false && buySwapDirection === 'sell'){
+      // Nothing to sell without a trustline — no need for the set-up box.
+      el.buySwapChecking.style.display = 'none';
+      el.buySwapQuoteSection.style.display = '';
+      el.buySwapPayRow.style.display = 'none';
+      el.buySwapTrustlineWarning.style.display = 'none';
+      el.buySwapXrpInput.disabled = true;
+      clearBuySwapQuote('Y0U D0N\\'T H0LD ANY ' + gateTokenLabel + ' T0 SELL YET.');
       return;
     }
     if (buySwapHasTrustline === false){
@@ -18485,7 +18558,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else {
       el.buySwapThumb.style.display = 'none';
     }
-    el.buySwapReceiveUnit.textContent = meta.tokenLabel.replace(/^\\$/, '');
+    buySwapDirection = 'buy';
+    updateBuySwapDirectionUI();
     if (meta.tokenIssuer){
       el.buySwapIssuerAddr.setAttribute('data-full', meta.tokenIssuer);
       el.buySwapIssuerAddr.textContent = meta.tokenIssuer.slice(0, 5) + '...' + meta.tokenIssuer.slice(-3);
@@ -18571,6 +18645,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   // exact same banner as DATABASE, no more BALANCE-amount-as-buy-button
   // substitution — that only existed while FL0CK's banner was slimmed).
   el.buySwapXrpInput.addEventListener('input', scheduleBuySwapQuote);
+  el.buySwapDirection.addEventListener('click', function(e){
+    var b = e.target.closest('.sale-currency-btn');
+    if (b) setBuySwapDirection(b.getAttribute('data-dir'));
+  });
+  el.buySwapFlipBtn.addEventListener('click', function(){ setBuySwapDirection(buySwapDirection === 'buy' ? 'sell' : 'buy'); });
   el.buySwapCopyIssuerBtn.addEventListener('click', function(){
     var addr = el.buySwapIssuerAddr ? el.buySwapIssuerAddr.getAttribute('data-full') : '';
     var done = function(){
@@ -18590,15 +18669,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   // own numbers" rule every other transaction-prep endpoint follows) so
   // everything about to be signed is genuinely visible before Xaman opens
   // on top of it, it just no longer waits on its own click to proceed.
-  var buySwapReviewDrops = null; // the exact drops string requestBuySwapPayload will request a payload for
+  var buySwapReviewDrops = null; // the exact request body requestBuySwapPayload will send (BUY: xrpDrops, SELL: tokenValue)
   var buySwapUuid = null;
   var buySwapXamanTab = null;
   var buySwapPollTimer = null;
   el.buySwapSignBtn.addEventListener('click', function(){
     if (el.buySwapSignBtn.disabled) return;
-    var raw = el.buySwapXrpInput.value.trim();
-    var drops = dropsFromXrpString(raw);
+    var drops = validateBuySwapInput();
     if (drops === null) return; // shouldn't happen — button is only enabled after a valid quote
+    var signDirection = buySwapDirection;
+    var prepareBody = signDirection === 'sell'
+      ? { direction: 'sell', tokenValue: drops, collection: buySwapCollection }
+      : { xrpDrops: drops.toString(), collection: buySwapCollection };
     el.buySwapSignBtn.disabled = true;
     el.buySwapSignBtn.textContent = 'PREPAR!NG...';
     // Opened HERE, synchronously inside the real click handler — pointed
@@ -18609,7 +18691,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/buyswap-prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ xrpDrops: drops.toString(), collection: buySwapCollection })
+      body: JSON.stringify(prepareBody)
     }).then(function(r){ return r.json().then(function(data){ return { status: r.status, data: data }; }); }).then(function(res){
       el.buySwapSignBtn.disabled = false;
       el.buySwapSignBtn.textContent = 'S!GN AND SWAP';
@@ -18627,20 +18709,24 @@ const SWAP_HTML = `<!DOCTYPE html>
       var txjson = res.data.txjson;
       var display = res.data.display;
       var confTokenLabel = buySwapMeta().tokenLabel;
-      buySwapReviewDrops = drops.toString();
+      buySwapReviewDrops = prepareBody;
       // Address shortened the same way every other real address on the
       // site is (see buySwapIssuerAddr/ciIssuerAddr) — the full raw
       // string next to a big amount just read as clutter, and this is
       // never itself something a user needs to compare/copy character by
       // character before signing (Xaman shows the full real address).
       el.buySwapConfAccount.textContent = txjson.Account.slice(0, 5) + '...' + txjson.Account.slice(-3);
-      el.buySwapConfSendMax.textContent = dropsToXrpString(BigInt(txjson.SendMax)) + ' XRP';
+      el.buySwapConfSendMax.textContent = signDirection === 'sell'
+        ? Number(txjson.SendMax.value).toLocaleString(undefined, { maximumFractionDigits: 6 }) + ' ' + confTokenLabel
+        : dropsToXrpString(BigInt(txjson.SendMax)) + ' XRP';
       // Formatted the same way the PAY amount above it is (locale
       // thousands separator, 2 decimals) — used to show the raw
       // txjson.Amount.value string instead (e.g. "5086.089804"), reading
       // as a different, less-trustworthy number right next to a properly
       // formatted one for the same currency.
-      el.buySwapConfAmount.textContent = Number(txjson.Amount.value).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + confTokenLabel;
+      el.buySwapConfAmount.textContent = signDirection === 'sell'
+        ? dropsToXrpString(BigInt(txjson.Amount)) + ' XRP'
+        : Number(txjson.Amount.value).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + confTokenLabel;
       el.buySwapConfSource.textContent = display.source === 'amm' ? 'AMM P00L' : '0RDER B00K';
       el.buySwapConfirmStatus.textContent = '';
       showBuySwapState('confirm');
@@ -18676,7 +18762,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     signFetch('/api/buyswap-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ xrpDrops: buySwapReviewDrops, collection: buySwapCollection })
+      body: JSON.stringify(buySwapReviewDrops)
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       if (!res.ok || !res.data.ok){
@@ -18769,6 +18855,13 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   function showBuySwapResult(data){
     var resultTokenLabel = buySwapMeta().tokenLabel;
+    var sold = buySwapReviewDrops && buySwapReviewDrops.direction === 'sell';
+    el.buySwapResultStatusLine.textContent = sold ? resultTokenLabel + ' S0LD' : resultTokenLabel + ' ACQU!RED';
+    if (sold){
+      el.buySwapResultReceived.innerHTML = data.receivedXrpDrops
+        ? greenNum(dropsToXrpString(BigInt(data.receivedXrpDrops))) + ' <span class="buyswap-received-unit">XRP</span>'
+        : 'EXACT AM0UNT UNAVA!LABLE';
+    } else
     el.buySwapResultReceived.innerHTML = data.receivedPigeons !== null && data.receivedPigeons !== undefined
       ? greenNum(Number(data.receivedPigeons).toLocaleString(undefined, { maximumFractionDigits: 6 })) + ' <span class="buyswap-received-unit">' + resultTokenLabel + '</span>'
       : 'EXACT AM0UNT UNAVA!LABLE';
@@ -20458,8 +20551,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.ciIssuerAddr.setAttribute('data-full', '');
       el.ciIssuerAddr.textContent = 'N/A';
     }
-    el.pigeonsBalanceBuyBtn.textContent = 'BUY ' + meta.tokenLabel;
-    el.pigeonsCalcBuyBtn.textContent = 'BUY ' + meta.tokenLabel;
+    el.pigeonsBalanceBuyBtn.textContent = 'SWAP ' + meta.tokenLabel;
+    el.pigeonsCalcBuyBtn.textContent = 'SWAP ' + meta.tokenLabel;
     el.pigeonsCalcPigeonsUnit.textContent = meta.tokenLabel;
     el.salesCurrencyPigeonsBtn.textContent = meta.tokenLabel;
     el.statScyllaListedLabel.textContent = meta.tokenLabel + ' FL00R';
@@ -24316,7 +24409,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // C0M!NG S00N here instead of a live action, matching how every
       // other collection reads everywhere else on the site right now.
       var actionHtml = meta.hasAmm
-        ? '<button type="button" class="profile-coin-action" data-action="buy" data-collection="' + key + '">BUY ' + escapeHtml(meta.tokenLabel) + '</button>'
+        ? '<button type="button" class="profile-coin-action" data-action="buy" data-collection="' + key + '">SWAP ' + escapeHtml(meta.tokenLabel) + '</button>'
         : '<button type="button" class="profile-coin-action profile-coin-action-soon" disabled>C0M!NG S00N</button>';
       // profile-coin-value only exists for a real token — nothing to
       // convert to XRP for a collection with no tokenIssuer yet.
@@ -26248,7 +26341,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         ? '<button type="button" class="coin-buy coin-trust" disabled>S!GN !N XAMAN...</button>'
         : '<button type="button" class="coin-buy coin-trust" data-coin-trust="' + escapeHtml(key) + '">SET TRUSTL!NE</button>';
     } else {
-      action = '<button type="button" class="coin-buy" data-coin-buy="' + escapeHtml(key) + '">BUY $' + escapeHtml(c.name) + '</button>';
+      action = '<button type="button" class="coin-buy" data-coin-buy="' + escapeHtml(key) + '">SWAP $' + escapeHtml(c.name) + '</button>';
     }
     var reasons = '';
     if (open){
