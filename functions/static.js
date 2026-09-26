@@ -1596,7 +1596,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      .th-header-row's own grid-template-columns exactly above. */
   .th-row{
     display:grid;
-    grid-template-columns:90px 1fr 220px;
+    grid-template-columns:150px 1fr 220px;
     align-items:center;
     gap:1rem;
     padding:0.9em 0.6em;
@@ -1617,6 +1617,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Top 15 read as a cut above the rest of the list — same layout, just
      a step up in size. */
   .th-row-top{ font-size:19px; padding:1.1em 0.6em; }
+  /* #1/#2/#3 — gold, silver, bronze, each a step smaller than the one
+     above (reported live: "1st is the biggest and gold, 2nd is slightly
+     smaller silver, 3rd smaller bronze"). --medal drives the edge, glow,
+     rank and thumbnail border; --medal-scale sizes the whole row. */
+  .th-row-medal{ position:relative; border:1px solid rgba(var(--medal), 0.55); border-left-width:4px; margin-bottom:0.6rem; background:rgba(var(--medal), 0.07); box-shadow:0 0 18px rgba(var(--medal), 0.18); font-size:calc(19px * var(--medal-scale)); padding:calc(1.1em * var(--medal-scale)) 0.8em; }
+  .th-row-medal:hover{ background:rgba(var(--medal), 0.13); }
+  .th-row-medal-1{ --medal:245,197,24; --medal-scale:1.45; }
+  .th-row-medal-2{ --medal:213,213,213; --medal-scale:1.25; }
+  .th-row-medal-3{ --medal:205,127,50; --medal-scale:1.12; }
+  .th-row-medal .th-rank, .th-row-medal .th-rank .pigeons-green-num{ color:rgb(var(--medal)) !important; text-shadow:0 0 8px rgba(var(--medal), 0.55); font-weight:700; }
+  .th-row-medal .th-thumb{ width:calc(48px * var(--medal-scale) * var(--medal-scale)); height:calc(48px * var(--medal-scale) * var(--medal-scale)); border:2px solid rgb(var(--medal)); }
+  .th-row-medal .signature-banner-avatar{ width:calc(40px * var(--medal-scale)); height:calc(40px * var(--medal-scale)); }
+  .th-row-medal .signature-banner-username{ font-size:calc(16px * var(--medal-scale)); }
   .th-rank{ color:var(--cyan); text-align:left; display:flex; align-items:center; justify-content:flex-start; gap:0.5rem; }
   /* Rarest-held-Pigeon thumbnail, top 15 rows only. Bumped up from 34px
      (reported live: "make the thumbnail pigeons bigger"). */
@@ -6322,7 +6335,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      layout (see its own media query) doesn't map onto real columns. */
   .th-header-row{
     display:grid;
-    grid-template-columns:90px 1fr 220px;
+    grid-template-columns:150px 1fr 220px;
     gap:1rem;
     padding:0 0.6rem 0.6rem;
     font-family:var(--font-mono);
@@ -8184,6 +8197,37 @@ const SWAP_HTML = `<!DOCTYPE html>
     margin-bottom:1.25rem;
     text-align:center;
   }
+  /* BUY pages — every piece of text a step bigger (reported live: "all
+     text on the buy pages could be bigger"). Scoped to the BUY swap panel
+     and the NFT BUY confirm, higher specificity than each base rule. */
+  .buyswap-modal-panel .buyswap-label, #buyConfirmModal .detail-eyebrow, #buyConfirmModal .node-eyebrow{ font-size:17px; }
+  .buyswap-modal-panel .buyswap-input{ font-size:28px; }
+  .buyswap-modal-panel .buyswap-unit{ font-size:16px; }
+  .buyswap-modal-panel .buyswap-input-error{ font-size:14px; }
+  .buyswap-modal-panel .buyswap-balance-label{ font-size:13px; }
+  .buyswap-modal-panel .buyswap-balance-value{ font-size:22px; }
+  .buyswap-modal-panel .buyswap-arrow{ font-size:28px; }
+  .buyswap-modal-panel .buyswap-receive-value{ font-size:28px; }
+  .buyswap-modal-panel .buyswap-checking{ font-size:19px; }
+  .buyswap-modal-panel .buyswap-received-value{ font-size:48px; }
+  .buyswap-modal-panel .buyswap-received-unit{ font-size:16px; }
+  .buyswap-modal-panel .buyswap-tx-link{ font-size:14px; }
+  .buyswap-modal-panel .tx-type-badge{ font-size:12px; }
+  .buyswap-modal-panel .tx-review-title{ font-size:23px; }
+  .buyswap-modal-panel .tx-summary{ font-size:17px; }
+  .buyswap-modal-panel .tx-summary .tx-val-addr, .buyswap-modal-panel .tx-val-addr{ font-size:15px; }
+  .buyswap-modal-panel .buyswap-trustline-warning-title{ font-size:16px; }
+  .buyswap-modal-panel .buyswap-trustline-dex-btn{ font-size:13px; }
+  .buyswap-modal-panel #buySwapConfirmState .df-label, #buyConfirmModal .df-label{ font-size:14px; }
+  .buyswap-modal-panel #buySwapConfirmState .df-value, #buyConfirmModal .df-value{ font-size:23px; }
+  #buyConfirmModal .detail-num{ font-size:26px; }
+  .buyswap-modal-panel .df-label{ font-size:14px; }
+  .buyswap-modal-panel .df-value{ font-size:18px; }
+  .buyswap-modal-panel .index-line{ font-size:14px; }
+  .buyswap-modal-panel .buyswap-review-line{ font-size:17px; }
+  .buyswap-modal-panel .buyswap-review-amount{ font-size:38px; }
+  #buyConfirmModal .index-line{ font-size:15px; }
+  #buyConfirmModal .action-btn, #buyConfirmModal .secondary-btn, .buyswap-modal-panel .action-btn, .buyswap-modal-panel .secondary-btn{ font-size:17px; }
   .buyswap-trustline-warning-title{ font-size:13px; letter-spacing:0.1em; color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); text-transform:uppercase; margin-bottom:0.6rem; }
   .buyswap-trustline-issuer-row{ justify-content:center; gap:0; }
   /* .pigeons-bar-dex-btn's own shared rule is a fixed 24x24 icon-only
@@ -10485,11 +10529,10 @@ const SWAP_HTML = `<!DOCTYPE html>
           <span class="simple-picker-title th-page-title">T0P 123 H0LDERS</span>
           <button type="button" class="simple-picker-close" id="topHoldersCloseBtn" title="CL0SE">&times;</button>
         </div>
-        <div class="th-podium" id="thPodium"></div>
-        <button type="button" class="th-expand-btn" id="thExpandBtn">
-          <span id="thExpandLabel">V!EW FULL L!ST</span> <span class="th-expand-arrow" id="thExpandArrow">▾</span>
-        </button>
-        <div class="th-full-list-wrap" id="thFullListWrap" style="display:none;">
+        <!-- Back to one ranked list (reported live), scrollable inside the
+             pop-up — #1 biggest in gold, #2 a step smaller in silver, #3
+             smaller again in bronze, then everyone else. -->
+        <div class="th-full-list-wrap" id="thFullListWrap">
           <div class="th-header-row"><span>RANK</span><span>H0LDER</span><span>HELD</span></div>
           <div id="topHoldersList"></div>
         </div>
@@ -13052,7 +13095,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistTitle','profileWatchlistClearFilter',
-   'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thPodium','thExpandBtn','thExpandLabel','thFullListWrap','scyllaSystemHeaderTitle',
+   'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
    'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
    'crownPeriodSelect','crownLeaderboardList',
    'profilePanelWrap','profileBanner','profileAvatarEditBtn','profileCurrentAvatar','profileUsernameEditBtn','profileCurrentUsername','profileCurrentWallet','profileAddressCopyBtn','profileAddressBithompLink','profileCurrentEstValue','profileCurrentQuote','profileCurrentTwitterLink',
@@ -15235,7 +15278,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var val = cur === 'xrp' ? amountEntryXrpBalance : trustlineBalanceNum;
     var unit = cur === 'xrp' ? 'XRP' : COLLECTION_META[state.collection].tokenLabel;
     return '<div class="amount-balance-part"><span class="buyswap-balance-label">Y0UR BALANCE</span><span class="buyswap-balance-value">' +
-      (val === null ? 'L0AD!NG...' : val.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + unit) + '</span></div>';
+      (val === null ? 'L0AD!NG...' : cur === 'xrp' ? fmtXrpBalance(val) : val.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + unit) + '</span></div>';
   }
   function renderAmountBalanceLine(lineEl, currencies){
     if (!MY_WALLET){ lineEl.style.display = 'none'; return; }
@@ -15248,6 +15291,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   // Spendable XRP (total minus the ledger's locked reserve) — what Xaman
   // shows. Falls back to the total only if the server didn't send it.
+  // Every XRP balance on the site reads to exactly 2 decimals (reported
+  // live: "e.g 3.21 xrp"), rounded DOWN so a balance is never shown as
+  // more than you can actually spend.
+  function fmtXrpBalance(xrp){
+    var n = Math.floor(Number(xrp) * 100 + 1e-9) / 100;
+    return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' XRP';
+  }
   function spendableXrpOf(data){
     return Number(data.spendableDrops != null ? data.spendableDrops : data.drops) / 1e6;
   }
@@ -16664,60 +16714,30 @@ const SWAP_HTML = `<!DOCTYPE html>
   // full-table rows below.
   function topHolderRowHtml(h, rank){
     var percentStr = thPercentStr(h);
-    return '<a class="th-row' + (rank < 15 ? ' th-row-top' : '') + '" href="' + escapeHtml(walletHrefFor(h.wallet)) + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
+    return '<a class="th-row' + (rank < 15 ? ' th-row-top' : '') + (rank < 3 ? ' th-row-medal th-row-medal-' + (rank + 1) : '') + '" href="' + escapeHtml(walletHrefFor(h.wallet)) + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
       '<span class="th-rank">' + thThumbHtml(h, rank) + '<span>#' + greenNum(rank + 1) + '</span></span>' +
       '<span class="th-wallet">' + signatureBannerHtml(h.wallet, 'row') + '</span>' +
       '<span class="th-count"><span class="th-count-amt">' + greenNum(h.count) + ' P!GE0NS</span><span class="th-count-pct">' + (percentStr ? greenNum(percentStr + '%') : '') + '</span></span>' +
     '</a>';
   }
-  // PODIUM card — #1/#2/#3 only (rank is a 0-based index, same as every
-  // other call site here). th-podium-card-<1/2/3> is what CSS hangs the
-  // gold/silver/bronze treatment off; DOM order for these three is
-  // [#2, #1, #3] (see renderTopHoldersList), not rank order, so the
-  // podium's own visual hierarchy doesn't need a separate CSS order:.
-  function podiumCardHtml(h, rank){
-    var percentStr = thPercentStr(h);
-    return '<a class="th-podium-card th-podium-card-' + (rank + 1) + '" href="' + escapeHtml(walletHrefFor(h.wallet)) + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
-      '<div class="th-podium-top">' + thThumbHtml(h, rank) + '<div class="th-podium-rank">#' + (rank + 1) + '</div></div>' +
-      signatureBannerHtml(h.wallet, 'row') +
-      '<div class="th-podium-stats"><span class="th-podium-amt">' + greenNum(h.count) + ' P!GE0NS</span>' + (percentStr ? '<span class="th-podium-pct">' + percentStr + '% 0F SUPPLY</span>' : '') + '</div>' +
-    '</a>';
-  }
   function renderTopHoldersList(){
     if (topHoldersData === null){
-      el.thPodium.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
-      el.topHoldersList.innerHTML = '';
+      el.topHoldersList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
       return;
     }
     if (!topHoldersData.length){
-      el.thPodium.innerHTML = '<div class="th-empty">N0T READY YET — TRY AGA!N SH0RTLY.</div>';
-      el.topHoldersList.innerHTML = '';
+      el.topHoldersList.innerHTML = '<div class="th-empty">N0T READY YET — TRY AGA!N SH0RTLY.</div>';
       return;
     }
-    var podiumOrder = [1, 0, 2].filter(function(i){ return topHoldersData[i]; });
-    el.thPodium.innerHTML = podiumOrder.map(function(i){ return podiumCardHtml(topHoldersData[i], i); }).join('');
-    var rest = topHoldersData.slice(3);
-    el.topHoldersList.innerHTML = rest.length
-      ? rest.map(function(h, i){ return topHolderRowHtml(h, i + 3); }).join('')
-      : '<div class="th-empty">N0 M0RE H0LDERS.</div>';
+    el.topHoldersList.innerHTML = topHoldersData.map(function(h, i){ return topHolderRowHtml(h, i); }).join('');
   }
   function thRowClickHandler(e){
-    var row = e.target.closest('.th-row, .th-podium-card');
+    var row = e.target.closest('.th-row');
     if (!row || e.ctrlKey || e.metaKey) return; // ctrl/cmd+click — let the real href open a new tab natively
     e.preventDefault();
     openWalletProfile(row.getAttribute('data-wallet'), row.getAttribute('data-short'));
   }
   el.topHoldersList.addEventListener('click', thRowClickHandler);
-  el.thPodium.addEventListener('click', thRowClickHandler);
-  // EXPAND — the full ranked table (#4 onward) starts collapsed; #1-#3
-  // already have their own podium spotlight above (see the markup's own
-  // comment on #thFullListWrap).
-  el.thExpandBtn.addEventListener('click', function(){
-    var opening = el.thFullListWrap.style.display === 'none';
-    el.thFullListWrap.style.display = opening ? '' : 'none';
-    el.thExpandBtn.classList.toggle('open', opening);
-    el.thExpandLabel.textContent = opening ? 'H!DE FULL L!ST' : 'V!EW FULL L!ST';
-  });
 
   // ---- CR0WN — real $PIGEONS trading profit/loss leaderboard (realized
   // only, see crown-leaderboard.js's own comment). Same .th-row/.th-rank/
@@ -18180,7 +18200,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     el.buySwapBalancesRow.style.display = '';
-    el.buySwapXrpBalanceValue.textContent = dropsToXrpString(buySwapSpendableDrops !== null ? buySwapSpendableDrops : buySwapMaxDrops) + ' XRP';
+    el.buySwapXrpBalanceValue.textContent = fmtXrpBalance(Number(buySwapSpendableDrops !== null ? buySwapSpendableDrops : buySwapMaxDrops) / 1e6);
     el.buySwapTokenBalanceValue.textContent = compactPigeonsNumber(buySwapTokenBalance);
   }
   function showBuySwapInputError(msg){
@@ -19060,7 +19080,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     if (currency === 'xrp' && amountEntryXrpBalance !== null && Number(priceValue) > amountEntryXrpBalance){
-      alert('Y0U D0N\\'T HAVE EN0UGH XRP F0R TH!S 0FFER — BALANCE :: ' + amountEntryXrpBalance.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP.');
+      alert('Y0U D0N\\'T HAVE EN0UGH XRP F0R TH!S 0FFER — BALANCE :: ' + fmtXrpBalance(amountEntryXrpBalance) + '.');
       return;
     }
     if (currency === 'token' && trustlineBalanceNum !== null && Number(priceValue) > trustlineBalanceNum){
@@ -23253,7 +23273,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // on more than one screen's banner at once).
   function bannerXrpText(data){
     var drops = data && (data.xrpSpendableDrops != null ? data.xrpSpendableDrops : data.xrpDrops);
-    return drops != null ? (Number(drops) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '--';
+    return drops != null ? fmtXrpBalance(Number(drops) / 1e6) : '--';
   }
   function setBannerXrpBalance(wallet, text){
     document.querySelectorAll('.profile-banner-xrp').forEach(function(node){
@@ -24356,7 +24376,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Portfolio value keeps the full total (reserve XRP is still yours);
       // the balance shown is the spendable amount, matching Xaman.
       walletXrp = Number(data.drops) / 1e6;
-      el.profileCoinsWalletBalance.textContent = spendableXrpOf(data).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+      el.profileCoinsWalletBalance.textContent = fmtXrpBalance(spendableXrpOf(data));
       recomputeTotal();
     }).catch(function(){
       el.profileCoinsWalletBalance.textContent = 'ERR://C0ULDN T CHECK BALANCE';
