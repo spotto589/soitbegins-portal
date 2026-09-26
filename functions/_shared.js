@@ -1321,9 +1321,17 @@ const PIGEONS_AMM_ACCOUNT = 'rn5vs1Q5pzwbpzFhK85sVsuXpieNitVCQg';
 // production issue shows up directly in `wrangler pages deployment tail`
 // instead of only being inferable from symptoms.
 const XRPL_ENDPOINTS = ['https://xrplcluster.com', 'https://s1.ripple.com:51234', 'https://s2.ripple.com:51234'];
+// When xrplcluster.com says it's overloaded (slowDown/tooBusy — seen on
+// every call in live logs 2026-09-26, costing 3 wasted round trips + waits
+// each and making BUY feel slow), stop retrying it and send calls to the
+// Ripple nodes first for the next minute. Per isolate, reset on its own.
+const XRPL_BUSY_ERRORS = ['slowDown', 'tooBusy'];
+let xrplPrimaryBusyUntil = 0;
 export async function fetchXrplClusterJson(body, okErrors) {
-  for (const endpoint of XRPL_ENDPOINTS) {
-    const attempts = endpoint === XRPL_ENDPOINTS[0] ? 3 : 1; // a couple of retries on the primary, one shot on each fallback
+  const primaryBusy = Date.now() < xrplPrimaryBusyUntil;
+  const endpoints = primaryBusy ? XRPL_ENDPOINTS.slice(1).concat(XRPL_ENDPOINTS[0]) : XRPL_ENDPOINTS;
+  for (const endpoint of endpoints) {
+    const attempts = (endpoint === XRPL_ENDPOINTS[0] && !primaryBusy) ? 3 : 1; // a couple of retries on the primary, one shot on each fallback
     for (let attempt = 0; attempt < attempts; attempt++) {
       if (attempt > 0) await new Promise(r => setTimeout(r, 300 + attempt * 150));
       try {
@@ -1370,7 +1378,13 @@ export async function fetchXrplClusterJson(body, okErrors) {
           return data;
         }
         if (!res.ok || (data && data.result && data.result.error)) {
-          throw new Error('bad response ' + res.status + (data && data.result && data.result.error ? ' rippled:' + data.result.error : ''));
+          const rerr = data && data.result && data.result.error;
+          if (endpoint === XRPL_ENDPOINTS[0] && XRPL_BUSY_ERRORS.includes(rerr)) {
+            xrplPrimaryBusyUntil = Date.now() + 60000;
+            console.log('fetchXrplClusterJson: xrplcluster busy (' + rerr + '), using Ripple nodes first for 60s');
+            break;
+          }
+          throw new Error('bad response ' + res.status + (rerr ? ' rippled:' + rerr : ''));
         }
         return data;
       } catch (e) {
