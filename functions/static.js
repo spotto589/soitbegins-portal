@@ -10617,21 +10617,13 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 1.5l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.5 5-.7L9 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">WATCHL!ST</span><span class="flock-account-box-arrow">›</span></div>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
-          <!-- CR0WN REWARDS — links out to /games (Σκύλλα://SYSTEM games
-               hub, functions/games.js), a real page but deliberately
-               unlisted anywhere else on the site (closed testing, per the
-               user's own instruction). Plain navigation, not a
-               data-profilebox tab — reuses .flock-account-box-clickable's
-               styling but has no data-profilebox attribute, so the
-               profileBoxGrid click-delegation handler further down in this
-               file (handleProfileBoxActivate) never matches it; the old
-               real CR0WN P/L leaderboard box (profileTabPanelCrown /
-               renderCrownLeaderboard) stays inert/unused underneath as
-               before, in case it comes back as its own destination later. -->
-          <a class="sw-panel flock-account-box flock-account-box-clickable" href="/games">
-            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 14l-1-8 4 3 4-5 4 5 4-3-1 8H2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">CR0WN REWARDS</span><span class="flock-account-box-arrow">›</span></div>
-            <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
-          </a>
+          <!-- CR0WN REWARDS — C0M!NG S00N (reported live), same inert
+               treatment as TRANSACT!0N H!ST0RY below. It used to link out
+               to /games (functions/games.js, closed-beta, unlisted); that
+               page still exists at its URL, just no longer linked here. -->
+          <div class="sw-panel flock-account-box flock-account-box-soon">
+            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 14l-1-8 4 3 4-5 4 5 4-3-1 8H2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">CR0WN REWARDS</span><span class="db-soon">C0M!NG S00N</span></div>
+          </div>
           <!-- TRANSACT!0N H!ST0RY has no real backend yet — same inert
                "not yet" treatment as before. -->
           <div class="sw-panel flock-account-box flock-account-box-soon">
