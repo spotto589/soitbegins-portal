@@ -2145,7 +2145,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      each thumbnail, nothing else; a CREATE GR0UP row; each group a black
      box with its name/count/delete and its own grid you drag NFTs into. */
   #profileWatchlistGrid{ display:block; }
-  .wl-create{ display:flex; gap:0.5rem; max-width:520px; margin:0 auto 1.1rem; }
+  .wl-create{ display:flex; align-items:center; gap:0.5rem; max-width:620px; margin:0 auto 1.1rem; }
   .wl-create-input{ flex:1 1 auto; min-width:0; background:#000; border:1px solid rgba(var(--collection-accent-rgb, 136,72,248), 0.55); border-radius:10px; color:var(--white); font-family:var(--font-mono); font-size:14px; letter-spacing:0.06em; padding:0.65em 0.9em; text-transform:uppercase; }
   .wl-create-input:focus{ outline:none; border-color:var(--cyan); }
   .wl-create-btn{ flex:0 0 auto; background:#000; border:1px solid var(--cyan); border-radius:999px; color:var(--cyan); font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:0.08em; padding:0.6em 1.2em; cursor:pointer; }
@@ -2160,6 +2160,32 @@ const SWAP_HTML = `<!DOCTYPE html>
   .wl-group-delete:hover{ border-color:var(--red); color:var(--red); }
   .wl-grid{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:0.75rem; min-height:3rem; }
   @media (min-width:601px){ .wl-grid{ grid-template-columns:repeat(6, minmax(0, 1fr)); } }
+  /* S / M / L — more, smaller tiles per row or fewer, bigger ones. */
+  #profileWatchlistGrid[data-size="s"] .wl-grid{ grid-template-columns:repeat(6, minmax(0, 1fr)); gap:0.5rem; }
+  #profileWatchlistGrid[data-size="l"] .wl-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem; }
+  @media (min-width:601px){
+    #profileWatchlistGrid[data-size="s"] .wl-grid{ grid-template-columns:repeat(10, minmax(0, 1fr)); }
+    #profileWatchlistGrid[data-size="l"] .wl-grid{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+  }
+  #profileWatchlistGrid[data-size="s"] .wl-num{ font-size:11px; }
+  #profileWatchlistGrid[data-size="l"] .wl-num{ font-size:15px; }
+  .wl-size{ display:inline-flex; flex:0 0 auto; padding:3px; border:1px solid rgba(var(--collection-accent-rgb, 136,72,248), 0.55); border-radius:999px; background:#000; }
+  .wl-size-btn{ background:none; border:none; border-radius:999px; color:var(--white); font-family:var(--font-mono); font-size:13px; font-weight:700; width:2.1rem; padding:0.35em 0; cursor:pointer; }
+  .wl-size-btn.active{ background:rgba(var(--collection-accent-rgb, 136,72,248), 0.9); color:#fff; }
+  .wl-view-btn{ background:none; border:none; border-radius:999px; color:var(--white); font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:0.06em; padding:0.4em 0.8em; cursor:pointer; }
+  .wl-view-btn.active{ background:rgba(var(--collection-accent-rgb, 136,72,248), 0.9); color:#fff; }
+  .wl-coll{ display:none; }
+  /* L!ST view: one NFT per row — thumbnail, number, collection, remove —
+     with S / M / L setting the thumbnail size. Drag still arranges. */
+  #profileWatchlistGrid[data-view="list"] .wl-grid{ display:flex !important; flex-direction:column; gap:0.45rem; }
+  #profileWatchlistGrid[data-view="list"] .wl-item{ display:grid; grid-template-columns:var(--wl-row-thumb, 56px) 1fr auto; grid-template-areas:"thumb num move" "thumb coll move"; align-items:center; column-gap:0.9rem; padding:0.35rem 0.6rem 0.35rem 0.35rem; border:1px solid rgba(var(--collection-accent-rgb, 136,72,248), 0.3); border-radius:10px; background:#000; }
+  #profileWatchlistGrid[data-view="list"] .profile-watchlist-tile{ grid-area:thumb; width:var(--wl-row-thumb, 56px); }
+  #profileWatchlistGrid[data-view="list"] .wl-num{ grid-area:num; text-align:left; align-self:end; font-size:15px; }
+  #profileWatchlistGrid[data-view="list"] .wl-coll{ grid-area:coll; display:block; align-self:start; font-family:var(--font-mono); font-size:12px; letter-spacing:0.08em; color:var(--cyan); }
+  #profileWatchlistGrid[data-view="list"] .wl-move{ grid-area:move; width:auto; }
+  #profileWatchlistGrid[data-view="list"][data-size="s"]{ --wl-row-thumb:40px; }
+  #profileWatchlistGrid[data-view="list"][data-size="l"]{ --wl-row-thumb:88px; }
+  .wl-item.wl-drop-before .profile-watchlist-tile{ box-shadow:-4px 0 0 var(--cyan); }
   .wl-drop-hint{ grid-column:1 / -1; align-self:center; text-align:center; font-family:var(--font-mono); font-size:12px; letter-spacing:0.1em; color:var(--grey-dim); padding:0.8rem 0; }
   .wl-item{ display:flex; flex-direction:column; gap:0.3rem; min-width:0; }
   .wl-item[draggable="true"]{ cursor:grab; }
@@ -2337,6 +2363,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      internally if its own content is taller than that, instead of ever
      pushing the whole page past one screen. */
   .scylla-nav-panel > .profile-tab-panel{ flex:1 1 auto; min-height:0; overflow-y:auto; }
+  /* A tab's ← BACK, right under the S!GNAL N0DE readout (see
+     mountScyllaBackButtons). */
+  .scylla-nav-panel > .scylla-back-slot{ position:relative; order:-1; flex:0 0 auto; display:flex; justify-content:flex-start; margin:0 0 0.6rem; }
+  .scylla-nav-panel > .scylla-back-slot:empty, .scylla-back-slot.scylla-back-slot-idle{ display:none; }
+  .scylla-back-slot .profile-holdings-viewmore{ margin:0; }
   /* Σκύλλα://SYSTEM — briefly matched to the old, subtler top-bar signal-
      button look (white text, faint 1px fringe); reported live straight
      afterward as "this text had a glitching effect and now its gone" —
@@ -4350,11 +4381,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     font-size:15px;
     letter-spacing:0.1em;
   }
-  /* AURA rows: picture on the left, name and count beside it. */
-  #traitsFlyoutVals .traits-flyout-val.has-thumb{ justify-content:flex-start; gap:0.9rem; padding:0.45rem 0.9rem 0.45rem 0.45rem; }
-  #traitsFlyoutVals .traits-flyout-val.has-thumb .tfv-text{ flex:1 1 auto; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:0.75rem; }
-  #traitsFlyoutVals .traits-flyout-val.has-thumb .tfv-count{ flex:0 0 auto; color:var(--white); }
-  .tfv-thumb{ flex:0 0 auto; width:64px; height:64px; object-fit:cover; border-radius:10px; border:1px solid rgba(var(--collection-accent-rgb), 0.5); background:#111; }
+  /* F!LTER BY TRA!TS is exactly S0RT BY's size, and stays that size on
+     every step — categories, one category's values, search (reported
+     live). Both are pinned to the same width and a fixed height. */
+  #sortFlyout.traits-flyout.flyout-popup,
+  #traitsFlyout.traits-flyout.flyout-popup,
+  #traitsFlyout.traits-flyout.flyout-popup:not(.flyout-flat):not(.flyout-drilled){ width:min(480px, 92vw) !important; height:75vh !important; max-height:75vh !important; box-sizing:border-box; }
   /* A visible X reads clearer than "tap the dimmed backdrop" on desktop,
      where there's no established "tap outside a sheet to close it"
      convention the way there is on mobile — the backdrop still closes it
@@ -10881,6 +10913,10 @@ const SWAP_HTML = `<!DOCTYPE html>
              for ED!T!0N paging elsewhere) — see renderScyllaNavReadout in
              the JS. -->
         <div class="scylla-nav-readout" id="scyllaNavReadout"></div>
+        <!-- Inside any tab, its ← BACK sits right under the S!GNAL N0DE
+             readout at the top (reported live), not at the bottom of the
+             tab — mountScyllaBackButtons moves each tab's own button here. -->
+        <div class="scylla-back-slot" id="scyllaBackSlot"></div>
       <!-- The 6 profile-tab-panel destinations below used to be siblings
            of .scylla-nav-panel instead of children of it — reported live
            as "all the information is sitting at the bottom of the page
@@ -16445,11 +16481,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     var count = v.count !== null && v.count !== undefined
       ? (exampleImg ? greenNum(v.count) : v.count)
       : '—';
-    // AURA shows a small square picture of the whole Pigeon wearing it
-    // instead of a zoomed background crop (reported live: "hard to see
-    // which ones which" — an aura is a glow around the whole character, a
-    // crop of the frame's top edge barely showed it).
-    var thumbMode = !!exampleImg && category === 'Aura';
     var previewPos = TRAIT_PREVIEW_CORNER_POSITION[category] || TRAIT_PREVIEW_POSITION[category];
     var previewSize = TRAIT_PREVIEW_SIZE[category];
     // A zoomed background-only corner crop is already a plain patch of
@@ -16458,9 +16489,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     var overlay = previewSize
       ? 'rgba(8,9,11,0.3),rgba(8,9,11,0.45)'
       : 'rgba(8,9,11,0.55),rgba(8,9,11,0.8)';
+    // AURA in this list keeps the same photo-backed row, just easier to see
+    // (reported live): the full image width at head height, where the
+    // glow is strongest either side, under the lightest overlay (was a
+    // 200% zoom into the frame's top edge under a heavier one).
+    if (category === 'Aura'){
+      previewSize = 'cover';
+      previewPos = 'center 22%';
+      overlay = 'rgba(8,9,11,0.12),rgba(8,9,11,0.28)';
+    }
     // Dark gradient layered UNDER the image (declared first, painted on
     // top) so the label/count text stays readable over any photo.
-    var style = exampleImg && !thumbMode
+    var style = exampleImg
       ? ' style="background-image:linear-gradient(' + overlay + '),url(&quot;' + escapeHtml(exampleImg) + '&quot;);' +
         (previewSize ? 'background-size:' + previewSize + ';' : '') +
         (previewPos ? 'background-position:' + previewPos + ';' : '') + '"'
@@ -16480,9 +16520,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // the value itself — a flat cross-category list is meaningless without
     // it, since the value alone no longer implies which category it's from.
     var catPrefix = isSearchResult ? '<span class="tfv-search-cat">' + escapeHtml(category.toUpperCase()) + ' ::</span>' : '';
-    return '<button type="button" class="traits-flyout-val' + (exampleImg ? (thumbMode ? ' has-thumb' : ' has-preview') : '') + (isSelected ? ' selected' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
+    return '<button type="button" class="traits-flyout-val' + (exampleImg ? ' has-preview' : '') + (isSelected ? ' selected' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
       (exampleImg && isSelected ? '<span class="tfv-select-badge">✓</span>' : '') +
-      (thumbMode ? '<img class="tfv-thumb" src="' + escapeHtml(exampleImg) + '" alt="" loading="lazy">' : '') +
       textOpen +
       '<span>' + (!exampleImg && isSelected ? '✓ ' : '') + catPrefix + escapeHtml((v.label || v.value).toUpperCase()) + '</span>' +
       '<span class="tfv-count">' + count + ' :: ' + pct + '</span>' +
@@ -22192,7 +22231,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     // itself again in the same tick since the click's real target (inside
     // #myNftsGridItems) isn't inside #screenDetail yet at the moment
     // DETAIL just opened.
-    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !el.historyModal.contains(e.target) && !e.target.closest('.pigeon-img-box') && !e.target.closest('.simple-picker-view-btn') && !e.target.closest('.sale-row') && !e.target.closest('.profile-nft-pick')){
+    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !el.historyModal.contains(e.target) && !e.target.closest('.pigeon-img-box') && !e.target.closest('.simple-picker-view-btn') && !e.target.closest('.sale-row') && !e.target.closest('.profile-nft-pick') && !e.target.closest('.profile-watchlist-tile')){
+      // .profile-watchlist-tile too (reported live: clicking an NFT in
+      // WATCHL!ST should go straight to its expanded view — it opened and
+      // closed again in the same click, same story as above).
       goBackFromDetail();
     }
   });
@@ -24533,13 +24575,35 @@ const SWAP_HTML = `<!DOCTYPE html>
   function setWatchlistGroups(groups){
     try { localStorage.setItem(watchlistGroupsKey(), JSON.stringify(groups)); } catch (e){}
   }
-  function moveWatchlistItem(nftId, groupId){
+  // beforeId (optional): drop it just before that NFT, so tiles can be
+  // arranged, not only moved between groups. UNGR0UPED's own order is the
+  // watchlist's order itself.
+  function moveWatchlistItem(nftId, groupId, beforeId){
     var groups = getWatchlistGroups();
     groups.forEach(function(g){ g.items = (g.items || []).filter(function(id){ return id !== nftId; }); });
     var target = groupId ? groups.filter(function(g){ return g.id === groupId; })[0] : null;
-    if (target) target.items.push(nftId);
+    if (target){
+      var at = beforeId ? target.items.indexOf(beforeId) : -1;
+      if (at === -1) target.items.push(nftId); else target.items.splice(at, 0, nftId);
+    } else if (beforeId && beforeId !== nftId){
+      var list = getWatchlist();
+      var from = list.findIndex(function(w){ return w.nftId === nftId; });
+      if (from !== -1){
+        var entry = list.splice(from, 1)[0];
+        var to = list.findIndex(function(w){ return w.nftId === beforeId; });
+        if (to === -1) list.push(entry); else list.splice(to, 0, entry);
+        setWatchlist(list);
+      }
+    }
     setWatchlistGroups(groups);
   }
+  // S / M / L tile size (reported live: "3 different size selection when
+  // moving and arranging"), remembered per browser.
+  // GR!D / L!ST view (reported live), remembered per browser.
+  function getWatchlistView(){ try { return localStorage.getItem('scylla_watchlist_view') === 'list' ? 'list' : 'grid'; } catch (e){ return 'grid'; } }
+  function setWatchlistView(v){ try { localStorage.setItem('scylla_watchlist_view', v); } catch (e){} }
+  function getWatchlistSize(){ try { return localStorage.getItem('scylla_watchlist_size') || 'm'; } catch (e){ return 'm'; } }
+  function setWatchlistSize(v){ try { localStorage.setItem('scylla_watchlist_size', v); } catch (e){} }
   var WATCH_TOUCH = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
   function watchTileHtml(w, groups, groupId){
     var img = w.image ? '<img src="' + escapeHtml(w.image) + '" alt="" loading="lazy" draggable="false">' : '';
@@ -24553,6 +24617,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       : '';
     return '<div class="wl-item" draggable="' + (WATCH_TOUCH ? 'false' : 'true') + '" data-nftid="' + escapeHtml(w.nftId) + '">' +
       '<div class="wl-num">' + label + '</div>' +
+      '<div class="wl-coll">' + escapeHtml(COLLECTION_META[w.collection] ? COLLECTION_META[w.collection].label : (w.collection || '')) + '</div>' +
       '<div class="profile-watchlist-tile" data-nftid="' + escapeHtml(w.nftId) + '" data-collection="' + escapeHtml(w.collection || '') + '">' +
         linkWrap(tileHref, 'profile-watchlist-tile-link', img) +
         '<button type="button" class="profile-watchlist-remove" data-nftid="' + escapeHtml(w.nftId) + '" title="REM0VE">&times;</button>' +
@@ -24568,7 +24633,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.profileWatchlistTitle.textContent = filterLabel ? filterLabel + ' WATCHL!ST' : ''; // the page title already says WATCHL!ST
       el.profileWatchlistClearFilter.style.display = filterLabel ? '' : 'none';
     }
-    var createRow = '<div class="wl-create"><input type="text" class="wl-create-input" id="wlCreateInput" maxlength="24" placeholder="NEW GR0UP NAME" autocomplete="off"><button type="button" class="wl-create-btn" id="wlCreateBtn">+ CREATE GR0UP</button></div>';
+    var size = getWatchlistSize();
+    el.profileWatchlistGrid.setAttribute('data-size', size);
+    var view = getWatchlistView();
+    el.profileWatchlistGrid.setAttribute('data-view', view);
+    var viewToggle = '<div class="wl-size wl-view" role="group" aria-label="V!EW">' + [['grid', 'GR!D'], ['list', 'L!ST']].map(function(o){
+      return '<button type="button" class="wl-view-btn' + (o[0] === view ? ' active' : '') + '" data-view="' + o[0] + '">' + o[1] + '</button>';
+    }).join('') + '</div>';
+    var sizeToggle = '<div class="wl-size" role="group" aria-label="T!LE S!ZE">' + [['s', 'S'], ['m', 'M'], ['l', 'L']].map(function(o){
+      return '<button type="button" class="wl-size-btn' + (o[0] === size ? ' active' : '') + '" data-size="' + o[0] + '">' + o[1] + '</button>';
+    }).join('') + '</div>';
+    var createRow = '<div class="wl-create"><input type="text" class="wl-create-input" id="wlCreateInput" maxlength="24" placeholder="NEW GR0UP NAME" autocomplete="off"><button type="button" class="wl-create-btn" id="wlCreateBtn">+ CREATE GR0UP</button>' + viewToggle + sizeToggle + '</div>';
     if (!list.length){
       el.profileWatchlistGrid.innerHTML = '<div class="th-empty">' + (filterLabel
         ? 'N0 ' + escapeHtml(filterLabel) + ' WATCHED YET — CL!CK ☆ 0N ANY ' + escapeHtml(filterLabel) + ' CARD T0 ADD 0NE.'
@@ -24638,7 +24713,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.profileWatchlistGrid.addEventListener('dragend', function(e){
     var item = e.target.closest('.wl-item');
     if (item) item.classList.remove('wl-dragging');
-    el.profileWatchlistGrid.querySelectorAll('.wl-drop-over').forEach(function(n){ n.classList.remove('wl-drop-over'); });
+    el.profileWatchlistGrid.querySelectorAll('.wl-drop-over, .wl-drop-before').forEach(function(n){ n.classList.remove('wl-drop-over', 'wl-drop-before'); });
     wlDragId = null;
   });
   el.profileWatchlistGrid.addEventListener('dragover', function(e){
@@ -24648,12 +24723,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     try { e.dataTransfer.dropEffect = 'move'; } catch (err){}
     el.profileWatchlistGrid.querySelectorAll('.wl-drop-over').forEach(function(n){ if (n !== zone) n.classList.remove('wl-drop-over'); });
     zone.classList.add('wl-drop-over');
+    el.profileWatchlistGrid.querySelectorAll('.wl-drop-before').forEach(function(n){ n.classList.remove('wl-drop-before'); });
+    var overItem = e.target.closest('.wl-item');
+    if (overItem && overItem.getAttribute('data-nftid') !== wlDragId) overItem.classList.add('wl-drop-before');
   });
   el.profileWatchlistGrid.addEventListener('drop', function(e){
     var zone = e.target.closest('.wl-group');
     if (!zone || !wlDragId) return;
     e.preventDefault();
-    moveWatchlistItem(wlDragId, zone.getAttribute('data-group') || null);
+    var overItem = e.target.closest('.wl-item');
+    var beforeId = overItem && overItem.getAttribute('data-nftid') !== wlDragId ? overItem.getAttribute('data-nftid') : null;
+    moveWatchlistItem(wlDragId, zone.getAttribute('data-group') || null, beforeId);
     wlDragId = null;
     renderProfileWatchlist();
   });
@@ -24664,6 +24744,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.profileWatchlistGrid.addEventListener('click', function(e){
     if (e.target.closest('#wlCreateBtn')){ createWatchlistGroup(); return; }
+    var sizeBtn = e.target.closest('.wl-size-btn');
+    if (sizeBtn){ setWatchlistSize(sizeBtn.getAttribute('data-size')); renderProfileWatchlist(); return; }
+    var viewBtn = e.target.closest('.wl-view-btn');
+    if (viewBtn){ setWatchlistView(viewBtn.getAttribute('data-view')); renderProfileWatchlist(); return; }
     var delBtn = e.target.closest('.wl-group-delete');
     if (delBtn){
       setWatchlistGroups(getWatchlistGroups().filter(function(g){ return g.id !== delBtn.getAttribute('data-group'); }));
@@ -25094,6 +25178,33 @@ const SWAP_HTML = `<!DOCTYPE html>
     switchProfilesSubView(view);
   });
   el.profilesBackBtn.addEventListener('click', function(){ switchProfileTab(null); });
+  // Each tab's own ← BACK moves up under the S!GNAL N0DE readout (reported
+  // live) — same buttons, same listeners, just a new spot; only the one
+  // for whichever tab is open shows.
+  (function mountScyllaBackButtons(){
+    var slot = document.getElementById('scyllaBackSlot');
+    if (!slot) return;
+    var pairs = [['profilesBackBtn', 'profileTabPanelProfiles'], ['profileMessagesBack', 'profileTabPanelMessages'], ['profileOffersBack', 'profileTabPanelOffers'], ['myNftsBackBtn', 'profileTabPanelMyNfts'], ['profileWatchlistBack', 'profileTabPanelWatchlist']];
+    var mounted = [];
+    pairs.forEach(function(pair){
+      var btn = document.getElementById(pair[0]), panel = document.getElementById(pair[1]);
+      if (!btn || !panel) return;
+      slot.appendChild(btn);
+      mounted.push({ btn: btn, panel: panel });
+    });
+    function sync(){
+      var any = false;
+      mounted.forEach(function(m){
+        var open = m.panel.style.display !== 'none';
+        m.btn.style.display = open ? '' : 'none';
+        if (open) any = true;
+      });
+      slot.classList.toggle('scylla-back-slot-idle', !any);
+    }
+    var mo = new MutationObserver(sync);
+    mounted.forEach(function(m){ mo.observe(m.panel, { attributes: true, attributeFilter: ['style'] }); });
+    sync();
+  })();
   // PR0F!LES opens with your own banner on top (reported live) — the same
   // banner everyone else sees on your profile, !DENT!TY included. Counts
   // and XRP balance are fetched once, then reused.
