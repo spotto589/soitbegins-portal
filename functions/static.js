@@ -2412,26 +2412,45 @@ const SWAP_HTML = `<!DOCTYPE html>
      not the ambient cyan static texture. */
   /* Σκύλλα://SYSTEM buttons carry the digitalglitchpattern.png artwork
      (reported live: "add the picture background onto each button... really
-     faded and still dark but noticeable") under a heavy dark scrim, each
-     button showing a different slice of it. Three fixed layers so hover/
-     active only swap the top tint (--sys-tint) — the base rules' own
-     background shorthands would otherwise wipe the picture. */
+     faded and still dark but noticeable", then "make the picture darker")
+     under a heavy dark scrim. Each button crops a different, scattered
+     patch of it at its own zoom (reported live: the slices "all following
+     each other" when they were just stepped down the picture).
+     No grey border (reported live: didn't like it) — instead a cyan
+     hairline fading in from the top-left, a pink one fading in from the
+     bottom-right and a cyan left edge, all brightening on hover. Five
+     fixed layers so hover/active only change variables — the base rules'
+     own background shorthands would otherwise wipe the picture. */
   .profile-box-grid .flock-account-box{
     --sys-tint:transparent;
-    background-image:linear-gradient(var(--sys-tint), var(--sys-tint)), linear-gradient(rgba(2,3,4,0.8), rgba(2,3,4,0.8)), url('/assets/digitalglitchpattern.png');
-    background-size:auto, auto, cover;
+    --sys-top:rgba(61,243,236,0.45);
+    --sys-bot:rgba(255,51,204,0.4);
+    --sys-size:260%;
+    --sys-pos:20% 30%;
+    border-color:transparent;
+    box-shadow:inset 0 0 34px rgba(0,0,0,0.55);
+    background-image:
+      linear-gradient(var(--sys-tint), var(--sys-tint)),
+      linear-gradient(90deg, var(--sys-top), transparent 65%),
+      linear-gradient(270deg, var(--sys-bot), transparent 65%),
+      linear-gradient(rgba(2,3,4,0.88), rgba(2,3,4,0.88)),
+      url('/assets/digitalglitchpattern.png');
+    background-size:auto, 100% 1px, 100% 1px, auto, var(--sys-size) auto;
     background-repeat:no-repeat;
-    background-position:center, center, center 15%;
+    background-position:center, top left, bottom right, center, var(--sys-pos);
   }
-  .profile-box-grid .flock-account-box:nth-child(2){ background-position:center, center, center 32%; }
-  .profile-box-grid .flock-account-box:nth-child(3){ background-position:center, center, center 48%; }
-  .profile-box-grid .flock-account-box:nth-child(4){ background-position:center, center, center 62%; }
-  .profile-box-grid .flock-account-box:nth-child(5){ background-position:center, center, center 76%; }
-  .profile-box-grid .flock-account-box:nth-child(6){ background-position:center, center, center 88%; }
-  .profile-box-grid .flock-account-box:nth-child(7){ background-position:center, center, center 100%; }
-  .profile-box-grid .flock-account-box-clickable:hover{ --sys-tint:rgba(61,243,236,0.06); }
-  .profile-box-grid .flock-account-box-clickable.active{ --sys-tint:rgba(255,63,208,0.1); }
-  .profile-box-grid .flock-account-box-soon{ --sys-tint:rgba(2,3,4,0.35); }
+  .profile-box-grid .flock-account-box:nth-child(2){ --sys-size:210%; --sys-pos:88% 12%; }
+  .profile-box-grid .flock-account-box:nth-child(3){ --sys-size:300%; --sys-pos:55% 78%; }
+  .profile-box-grid .flock-account-box:nth-child(4){ --sys-size:180%; --sys-pos:5% 92%; }
+  .profile-box-grid .flock-account-box:nth-child(5){ --sys-size:280%; --sys-pos:95% 60%; }
+  .profile-box-grid .flock-account-box:nth-child(6){ --sys-size:230%; --sys-pos:40% 5%; }
+  .profile-box-grid .flock-account-box:nth-child(7){ --sys-size:320%; --sys-pos:70% 40%; }
+  .profile-box-grid .flock-account-box-clickable::before{ background:rgba(61,243,236,0.45); }
+  .profile-box-grid .flock-account-box-clickable:hover{ border-color:transparent; --sys-tint:rgba(61,243,236,0.05); --sys-top:rgba(61,243,236,0.9); --sys-bot:rgba(255,51,204,0.75); }
+  .profile-box-grid .flock-account-box-clickable:hover::before{ background:var(--cyan); }
+  .profile-box-grid .flock-account-box-clickable.active{ border-color:var(--magenta); --sys-tint:rgba(255,63,208,0.08); --sys-top:rgba(255,51,204,0.9); --sys-bot:rgba(255,51,204,0.9); }
+  .profile-box-grid .flock-account-box-clickable.active::before{ background:var(--magenta); }
+  .profile-box-grid .flock-account-box-soon{ border-color:transparent; --sys-tint:rgba(2,3,4,0.35); --sys-top:rgba(230,225,211,0.15); --sys-bot:rgba(230,225,211,0.1); }
   .flock-account-box-clickable.shake-empty{ animation:scylla-row-shake 0.5s ease-in-out; border-color:var(--red); }
   .flock-account-box-clickable.shake-empty::before{ background:var(--red); box-shadow:0 0 10px var(--red-glow); width:5px; }
   .flock-account-box-clickable.shake-empty .flock-account-box-prefix,
