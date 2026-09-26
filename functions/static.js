@@ -4296,6 +4296,36 @@ const SWAP_HTML = `<!DOCTYPE html>
      as the cats row itself above (nothing to show once you're already
      looking at one category's own values, or a cross-category search). */
   .traits-flyout.flyout-popup.flyout-drilled .traits-flyout-selected{ display:none !important; }
+  /* F!LTER BY TRA!TS layout (reported live): SEARCH TRA!TS on top at full
+     width, RAR!TY % / A-Z centred beneath it, a clear gap before the list;
+     trait boxes spaced apart instead of touching; ◂ BACK T0 CATEG0R!ES
+     pinned to the very top edge of the pop-up while it scrolls (it used to
+     stick a little below the top, under the pop-up's own padding). */
+  #traitsFlyout.flyout-popup .traits-flyout-toolbar{ flex-direction:column; align-items:stretch; gap:0.65rem; margin:0 0 1rem; }
+  #traitsFlyout.flyout-popup .traits-flyout-search-input{ order:-1; flex:0 0 auto; width:100%; text-align:center; }
+  #traitsFlyout.flyout-popup .traits-flyout-sort-toggle{ align-self:center; }
+  #traitsFlyout.flyout-popup .traits-flyout-vals{ display:flex !important; flex-direction:column; gap:0.55rem; padding:0.2rem 0 0.6rem !important; }
+  #traitsFlyout.flyout-popup .traits-flyout-vals .traits-flyout-val{ margin-bottom:0 !important; }
+  #traitsFlyout.flyout-popup .traits-flyout-cats{ gap:0.55rem; }
+  #traitsFlyout.traits-flyout.flyout-popup.flyout-drilled .flyout-back-btn{
+    top:-2rem;
+    margin:0 -1.25rem 1rem;
+    width:calc(100% + 2.5rem);
+    padding:0.9rem 1rem;
+    background:#000;
+    border:none;
+    border-bottom:1px solid rgba(var(--collection-accent-rgb), 0.6);
+    border-radius:14px 14px 0 0;
+    box-shadow:0 6px 14px rgba(0,0,0,0.6);
+    text-align:center;
+    font-size:15px;
+    letter-spacing:0.1em;
+  }
+  /* AURA rows: picture on the left, name and count beside it. */
+  #traitsFlyoutVals .traits-flyout-val.has-thumb{ justify-content:flex-start; gap:0.9rem; padding:0.45rem 0.9rem 0.45rem 0.45rem; }
+  #traitsFlyoutVals .traits-flyout-val.has-thumb .tfv-text{ flex:1 1 auto; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:0.75rem; }
+  #traitsFlyoutVals .traits-flyout-val.has-thumb .tfv-count{ flex:0 0 auto; color:var(--white); }
+  .tfv-thumb{ flex:0 0 auto; width:64px; height:64px; object-fit:cover; border-radius:10px; border:1px solid rgba(var(--collection-accent-rgb), 0.5); background:#111; }
   /* A visible X reads clearer than "tap the dimmed backdrop" on desktop,
      where there's no established "tap outside a sheet to close it"
      convention the way there is on mobile — the backdrop still closes it
@@ -11680,7 +11710,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                   <button type="button" class="flyout-popup-close-btn" id="traitsFlyoutClose" aria-label="CL0SE">✕</button>
                   <div class="sort-popup-title">F!LTER BY TRA!TS</div>
                   <div class="sort-cat-heading traits-popup-eyebrow" id="traitsFlyoutEyebrow">CATEG0R!ES</div>
-                  <button type="button" class="flyout-back-btn" id="traitsFlyoutBack">◂ CATEG0R!ES</button>
+                  <button type="button" class="flyout-back-btn" id="traitsFlyoutBack">◂ BACK T0 CATEG0R!ES</button>
                   <!-- S0RT (RAR!TY %/A-Z) + SEARCH — sits above the category
                        strip/value list (reported live as wanting these "up
                        the top"). S0RT re-orders whichever value list is
@@ -16378,6 +16408,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     var count = v.count !== null && v.count !== undefined
       ? (exampleImg ? greenNum(v.count) : v.count)
       : '—';
+    // AURA shows a small square picture of the whole Pigeon wearing it
+    // instead of a zoomed background crop (reported live: "hard to see
+    // which ones which" — an aura is a glow around the whole character, a
+    // crop of the frame's top edge barely showed it).
+    var thumbMode = !!exampleImg && category === 'Aura';
     var previewPos = TRAIT_PREVIEW_CORNER_POSITION[category] || TRAIT_PREVIEW_POSITION[category];
     var previewSize = TRAIT_PREVIEW_SIZE[category];
     // A zoomed background-only corner crop is already a plain patch of
@@ -16388,7 +16423,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       : 'rgba(8,9,11,0.55),rgba(8,9,11,0.8)';
     // Dark gradient layered UNDER the image (declared first, painted on
     // top) so the label/count text stays readable over any photo.
-    var style = exampleImg
+    var style = exampleImg && !thumbMode
       ? ' style="background-image:linear-gradient(' + overlay + '),url(&quot;' + escapeHtml(exampleImg) + '&quot;);' +
         (previewSize ? 'background-size:' + previewSize + ';' : '') +
         (previewPos ? 'background-position:' + previewPos + ';' : '') + '"'
@@ -16408,8 +16443,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     // the value itself — a flat cross-category list is meaningless without
     // it, since the value alone no longer implies which category it's from.
     var catPrefix = isSearchResult ? '<span class="tfv-search-cat">' + escapeHtml(category.toUpperCase()) + ' ::</span>' : '';
-    return '<button type="button" class="traits-flyout-val' + (exampleImg ? ' has-preview' : '') + (isSelected ? ' selected' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
+    return '<button type="button" class="traits-flyout-val' + (exampleImg ? (thumbMode ? ' has-thumb' : ' has-preview') : '') + (isSelected ? ' selected' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
       (exampleImg && isSelected ? '<span class="tfv-select-badge">✓</span>' : '') +
+      (thumbMode ? '<img class="tfv-thumb" src="' + escapeHtml(exampleImg) + '" alt="" loading="lazy">' : '') +
       textOpen +
       '<span>' + (!exampleImg && isSelected ? '✓ ' : '') + catPrefix + escapeHtml((v.label || v.value).toUpperCase()) + '</span>' +
       '<span class="tfv-count">' + count + ' :: ' + pct + '</span>' +
