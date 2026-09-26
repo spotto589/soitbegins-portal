@@ -2175,6 +2175,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   .wl-view-btn{ background:none; border:none; border-radius:999px; color:var(--white); font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:0.06em; padding:0.4em 0.8em; cursor:pointer; }
   .wl-view-btn.active{ background:rgba(var(--collection-accent-rgb, 136,72,248), 0.9); color:#fff; }
   .wl-coll{ display:none; }
+  /* NFTS / C0!NS switch, top of WATCHL!ST. */
+  .wl-kind{ display:flex; justify-content:center; gap:0; width:fit-content; margin:0 auto 0.9rem; padding:3px; border:1px solid rgba(var(--collection-accent-rgb, 136,72,248), 0.55); border-radius:999px; background:#000; }
+  .wl-kind-btn{ background:none; border:none; border-radius:999px; color:var(--white); font-family:var(--font-mono); font-size:15px; font-weight:700; letter-spacing:0.1em; padding:0.5em 1.6em; cursor:pointer; }
+  .wl-kind-btn.active{ background:rgba(var(--collection-accent-rgb, 136,72,248), 0.9); color:#fff; }
+  .wl-add-coin{ flex:1 1 auto; min-width:0; background:#000; border:1px solid var(--cyan); border-radius:10px; color:var(--cyan); font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:0.06em; padding:0.6em 0.7em; }
+  /* Coin logos are round art on transparent — fitted, not cropped. */
+  .wl-coin-tile{ cursor:pointer; }
+  .wl-coin-tile img{ object-fit:contain !important; padding:12%; box-sizing:border-box; }
+  .coin-watch{ background:none; border:1px solid var(--border-mid); border-radius:50%; width:2.2rem; height:2.2rem; color:var(--white); font-size:16px; cursor:pointer; line-height:1; flex:0 0 auto; }
+  .coin-watch.watching{ color:#ffd23f; border-color:#ffd23f; }
   /* L!ST view: one NFT per row — thumbnail, number, collection, remove —
      with S / M / L setting the thumbnail size. Drag still arranges. */
   #profileWatchlistGrid[data-view="list"] .wl-grid{ display:flex !important; flex-direction:column; gap:0.45rem; }
@@ -24563,70 +24573,120 @@ const SWAP_HTML = `<!DOCTYPE html>
   // entirely blank tab would read as broken, not "nothing here yet". ----
   // WATCHL!ST groups (reported live: "a fully customisable watch list
   // where we can place nfts into groups... just make it a create and a
-  // drag and drop"). Groups live in their own localStorage entry per
-  // wallet — [{ id, name, items:[nftId] }] — next to the watchlist itself;
-  // anything in no group shows under UNGR0UPED. Drag a tile onto a group
-  // (or back onto UNGR0UPED) to move it; on a touch screen, where drag and
-  // drop doesn't work, each tile has a small MOVE T0 menu instead.
-  function watchlistGroupsKey(){ return 'scylla_watchlist_groups:' + (MY_WALLET || 'guest'); }
+  // drag and drop"), for NFTS or C0!NS (reported live: "create option for
+  // nfts or coins in watch list"). Each kind keeps its own list, its own
+  // groups ([{ id, name, items:[id] }]) and its own order, per wallet in
+  // localStorage; anything in no group shows under UNGR0UPED. Drag a tile
+  // onto a group (or onto another tile, to place it there); on a touch
+  // screen, where drag and drop doesn't work, each tile has a MOVE T0 menu.
+  function wlGet(key, fallback){ try { var v = localStorage.getItem(key); return v === null ? fallback : v; } catch (e){ return fallback; } }
+  function wlSet(key, v){ try { localStorage.setItem(key, v); } catch (e){} }
+  function getWatchlistKind(){ return wlGet('scylla_watchlist_kind', 'nft') === 'coin' ? 'coin' : 'nft'; }
+  function setWatchlistKind(v){ wlSet('scylla_watchlist_kind', v); }
+  // C0!N watchlist entries: { key, name, image, issuer } — key is a
+  // collection key (its own token) or a STAT!C://C0!NS 'coin:<md5>' key.
+  function coinWatchKey(){ return 'scylla_coinwatch:' + (MY_WALLET || 'guest'); }
+  function getCoinWatch(){ try { var a = JSON.parse(wlGet(coinWatchKey(), '[]')); return Array.isArray(a) ? a : []; } catch (e){ return []; } }
+  function setCoinWatch(list){ wlSet(coinWatchKey(), JSON.stringify(list)); }
+  function isCoinWatched(key){ return getCoinWatch().some(function(c){ return c.key === key; }); }
+  function toggleCoinWatch(entry){
+    var list = getCoinWatch();
+    var idx = list.findIndex(function(c){ return c.key === entry.key; });
+    if (idx !== -1){ list.splice(idx, 1); setCoinWatch(list); return false; }
+    list.unshift(entry);
+    if (list.length > 50) list = list.slice(0, 50);
+    setCoinWatch(list);
+    return true;
+  }
+  // Every coin that can be watched: each collection's own token, then the
+  // STAT!C://C0!NS popular coins (once that list has loaded).
+  function watchableCoins(){
+    var out = [];
+    Object.keys(COLLECTION_META).forEach(function(k){
+      var m = COLLECTION_META[k];
+      if (m && m.tokenIssuer && m.tokenLabel) out.push({ key: k, name: m.tokenLabel.replace(/^\\$/, ''), image: m.thumb || null, issuer: m.tokenIssuer, sub: m.label });
+    });
+    ((coinsData && coinsData.coins) || []).forEach(function(c){
+      out.push({ key: c.key, name: c.name, image: c.image || null, issuer: c.issuer, sub: c.marketCapUsd ? 'MARKET CAP ' + formatUsdAbbrev(c.marketCapUsd) : 'P0PULAR C0!N' });
+    });
+    return out;
+  }
+  // The current kind's items, in one shape: { id, label, image, sub, collection, number }.
+  function wlItems(kind){
+    if (kind === 'coin'){
+      var known = {};
+      watchableCoins().forEach(function(c){ known[c.key] = c; });
+      return getCoinWatch().map(function(c){
+        var k = known[c.key];
+        return { id: c.key, label: '$' + (c.name || (k && k.name) || ''), image: c.image || (k && k.image) || null, sub: (k && k.sub) || '', coin: true };
+      });
+    }
+    return getWatchlist().map(function(w){
+      return { id: w.nftId, label: w.number !== null && w.number !== undefined ? '#' + w.number : (w.name ? w.name : ''), image: w.image, sub: COLLECTION_META[w.collection] ? COLLECTION_META[w.collection].label : (w.collection || ''), collection: w.collection, number: w.number };
+    });
+  }
+  function wlReorder(kind, id, beforeId){
+    var list = kind === 'coin' ? getCoinWatch() : getWatchlist();
+    var idOf = function(x){ return kind === 'coin' ? x.key : x.nftId; };
+    var from = list.findIndex(function(x){ return idOf(x) === id; });
+    if (from === -1) return;
+    var entry = list.splice(from, 1)[0];
+    var to = list.findIndex(function(x){ return idOf(x) === beforeId; });
+    if (to === -1) list.push(entry); else list.splice(to, 0, entry);
+    if (kind === 'coin') setCoinWatch(list); else setWatchlist(list);
+  }
+  function watchlistGroupsKey(){ return (getWatchlistKind() === 'coin' ? 'scylla_coinwatch_groups:' : 'scylla_watchlist_groups:') + (MY_WALLET || 'guest'); }
   function getWatchlistGroups(){
-    try { var g = JSON.parse(localStorage.getItem(watchlistGroupsKey()) || '[]'); return Array.isArray(g) ? g : []; } catch (e){ return []; }
+    try { var g = JSON.parse(wlGet(watchlistGroupsKey(), '[]')); return Array.isArray(g) ? g : []; } catch (e){ return []; }
   }
-  function setWatchlistGroups(groups){
-    try { localStorage.setItem(watchlistGroupsKey(), JSON.stringify(groups)); } catch (e){}
-  }
-  // beforeId (optional): drop it just before that NFT, so tiles can be
+  function setWatchlistGroups(groups){ wlSet(watchlistGroupsKey(), JSON.stringify(groups)); }
+  // beforeId (optional): drop it just before that tile, so tiles can be
   // arranged, not only moved between groups. UNGR0UPED's own order is the
-  // watchlist's order itself.
-  function moveWatchlistItem(nftId, groupId, beforeId){
+  // list's own order.
+  function moveWatchlistItem(id, groupId, beforeId){
     var groups = getWatchlistGroups();
-    groups.forEach(function(g){ g.items = (g.items || []).filter(function(id){ return id !== nftId; }); });
+    groups.forEach(function(g){ g.items = (g.items || []).filter(function(x){ return x !== id; }); });
     var target = groupId ? groups.filter(function(g){ return g.id === groupId; })[0] : null;
     if (target){
       var at = beforeId ? target.items.indexOf(beforeId) : -1;
-      if (at === -1) target.items.push(nftId); else target.items.splice(at, 0, nftId);
-    } else if (beforeId && beforeId !== nftId){
-      var list = getWatchlist();
-      var from = list.findIndex(function(w){ return w.nftId === nftId; });
-      if (from !== -1){
-        var entry = list.splice(from, 1)[0];
-        var to = list.findIndex(function(w){ return w.nftId === beforeId; });
-        if (to === -1) list.push(entry); else list.splice(to, 0, entry);
-        setWatchlist(list);
-      }
+      if (at === -1) target.items.push(id); else target.items.splice(at, 0, id);
+    } else if (beforeId && beforeId !== id){
+      wlReorder(getWatchlistKind(), id, beforeId);
     }
     setWatchlistGroups(groups);
   }
-  // S / M / L tile size (reported live: "3 different size selection when
-  // moving and arranging"), remembered per browser.
-  // GR!D / L!ST view (reported live), remembered per browser.
-  function getWatchlistView(){ try { return localStorage.getItem('scylla_watchlist_view') === 'list' ? 'list' : 'grid'; } catch (e){ return 'grid'; } }
-  function setWatchlistView(v){ try { localStorage.setItem('scylla_watchlist_view', v); } catch (e){} }
-  function getWatchlistSize(){ try { return localStorage.getItem('scylla_watchlist_size') || 'm'; } catch (e){ return 'm'; } }
-  function setWatchlistSize(v){ try { localStorage.setItem('scylla_watchlist_size', v); } catch (e){} }
+  // GR!D / L!ST view and S / M / L size (reported live), remembered per browser.
+  function getWatchlistView(){ return wlGet('scylla_watchlist_view', 'grid') === 'list' ? 'list' : 'grid'; }
+  function setWatchlistView(v){ wlSet('scylla_watchlist_view', v); }
+  function getWatchlistSize(){ return wlGet('scylla_watchlist_size', 'm'); }
+  function setWatchlistSize(v){ wlSet('scylla_watchlist_size', v); }
   var WATCH_TOUCH = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
   function watchTileHtml(w, groups, groupId){
     var img = w.image ? '<img src="' + escapeHtml(w.image) + '" alt="" loading="lazy" draggable="false">' : '';
-    var label = w.number !== null && w.number !== undefined ? '#' + w.number : (w.name ? escapeHtml(w.name) : '');
-    var tileHref = nftHrefFor({ number: w.number, collectionKey: w.collection });
     var move = (WATCH_TOUCH && groups.length)
-      ? '<select class="wl-move" data-nftid="' + escapeHtml(w.nftId) + '"><option value="">M0VE T0...</option>' +
+      ? '<select class="wl-move" data-nftid="' + escapeHtml(w.id) + '"><option value="">M0VE T0...</option>' +
           (groupId ? '<option value="__none">UNGR0UPED</option>' : '') +
           groups.filter(function(g){ return g.id !== groupId; }).map(function(g){ return '<option value="' + escapeHtml(g.id) + '">' + escapeHtml(g.name) + '</option>'; }).join('') +
         '</select>'
       : '';
-    return '<div class="wl-item" draggable="' + (WATCH_TOUCH ? 'false' : 'true') + '" data-nftid="' + escapeHtml(w.nftId) + '">' +
-      '<div class="wl-num">' + label + '</div>' +
-      '<div class="wl-coll">' + escapeHtml(COLLECTION_META[w.collection] ? COLLECTION_META[w.collection].label : (w.collection || '')) + '</div>' +
-      '<div class="profile-watchlist-tile" data-nftid="' + escapeHtml(w.nftId) + '" data-collection="' + escapeHtml(w.collection || '') + '">' +
-        linkWrap(tileHref, 'profile-watchlist-tile-link', img) +
-        '<button type="button" class="profile-watchlist-remove" data-nftid="' + escapeHtml(w.nftId) + '" title="REM0VE">&times;</button>' +
+    var inner = w.coin
+      ? img
+      : linkWrap(nftHrefFor({ number: w.number, collectionKey: w.collection }), 'profile-watchlist-tile-link', img);
+    return '<div class="wl-item" draggable="' + (WATCH_TOUCH ? 'false' : 'true') + '" data-nftid="' + escapeHtml(w.id) + '">' +
+      '<div class="wl-num">' + escapeHtml(w.label) + '</div>' +
+      '<div class="wl-coll">' + escapeHtml(w.sub || '') + '</div>' +
+      '<div class="profile-watchlist-tile' + (w.coin ? ' wl-coin-tile' : '') + '" data-nftid="' + escapeHtml(w.id) + '"' + (w.coin ? ' data-coin="' + escapeHtml(w.id) + '"' : ' data-collection="' + escapeHtml(w.collection || '') + '"') + '>' +
+        inner +
+        '<button type="button" class="profile-watchlist-remove" data-nftid="' + escapeHtml(w.id) + '" title="REM0VE">&times;</button>' +
       '</div>' + move +
     '</div>';
   }
   function renderProfileWatchlist(){
-    var list = getWatchlist();
     var filterKey = state.watchlistFilterCollection;
+    var kind = filterKey ? 'nft' : getWatchlistKind();
+    var coinMode = kind === 'coin';
+    if (coinMode && !coinsData) loadCoins(false); // fills the popular coins for ADD C0!N
+    var list = wlItems(kind);
     if (filterKey) list = list.filter(function(w){ return w.collection === filterKey; });
     var filterLabel = filterKey && COLLECTION_META[filterKey] ? COLLECTION_META[filterKey].label : null;
     if (el.profileWatchlistTitle){
@@ -24637,22 +24697,38 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.profileWatchlistGrid.setAttribute('data-size', size);
     var view = getWatchlistView();
     el.profileWatchlistGrid.setAttribute('data-view', view);
+    el.profileWatchlistGrid.setAttribute('data-kind', kind);
+    var kindToggle = filterKey ? '' : '<div class="wl-kind" role="group" aria-label="WATCH">' + [['nft', 'NFTS'], ['coin', 'C0!NS']].map(function(o){
+      return '<button type="button" class="wl-kind-btn' + (o[0] === kind ? ' active' : '') + '" data-kind="' + o[0] + '">' + o[1] + '</button>';
+    }).join('') + '</div>';
     var viewToggle = '<div class="wl-size wl-view" role="group" aria-label="V!EW">' + [['grid', 'GR!D'], ['list', 'L!ST']].map(function(o){
       return '<button type="button" class="wl-view-btn' + (o[0] === view ? ' active' : '') + '" data-view="' + o[0] + '">' + o[1] + '</button>';
     }).join('') + '</div>';
     var sizeToggle = '<div class="wl-size" role="group" aria-label="T!LE S!ZE">' + [['s', 'S'], ['m', 'M'], ['l', 'L']].map(function(o){
       return '<button type="button" class="wl-size-btn' + (o[0] === size ? ' active' : '') + '" data-size="' + o[0] + '">' + o[1] + '</button>';
     }).join('') + '</div>';
-    var createRow = '<div class="wl-create"><input type="text" class="wl-create-input" id="wlCreateInput" maxlength="24" placeholder="NEW GR0UP NAME" autocomplete="off"><button type="button" class="wl-create-btn" id="wlCreateBtn">+ CREATE GR0UP</button>' + viewToggle + sizeToggle + '</div>';
+    var addCoin = '';
+    if (coinMode){
+      var watched = {};
+      list.forEach(function(w){ watched[w.id] = true; });
+      var options = watchableCoins().filter(function(c){ return !watched[c.key]; });
+      addCoin = '<select class="wl-add-coin" id="wlAddCoin"><option value="">+ ADD C0!N...</option>' +
+        options.map(function(c){ return '<option value="' + escapeHtml(c.key) + '">$' + escapeHtml(c.name) + (c.sub ? ' — ' + escapeHtml(c.sub) : '') + '</option>'; }).join('') +
+        (coinsData ? '' : '<option value="" disabled>L0AD!NG P0PULAR C0!NS...</option>') +
+      '</select>';
+    }
+    var createRow = kindToggle + '<div class="wl-create">' + addCoin + '<input type="text" class="wl-create-input" id="wlCreateInput" maxlength="24" placeholder="NEW GR0UP NAME" autocomplete="off"><button type="button" class="wl-create-btn" id="wlCreateBtn">+ CREATE GR0UP</button>' + viewToggle + sizeToggle + '</div>';
     if (!list.length){
-      el.profileWatchlistGrid.innerHTML = '<div class="th-empty">' + (filterLabel
-        ? 'N0 ' + escapeHtml(filterLabel) + ' WATCHED YET — CL!CK ☆ 0N ANY ' + escapeHtml(filterLabel) + ' CARD T0 ADD 0NE.'
-        : 'N0 P!GE0NS WATCHED YET — CL!CK ☆ 0N ANY CARD !N DATABASE T0 ADD 0NE.') + '</div>';
+      el.profileWatchlistGrid.innerHTML = createRow + '<div class="th-empty">' + (coinMode
+        ? 'N0 C0!NS WATCHED YET — P!CK 0NE FR0M + ADD C0!N AB0VE, 0R TAP ☆ 0N ANY C0!N !N C0!NS.'
+        : filterLabel
+          ? 'N0 ' + escapeHtml(filterLabel) + ' WATCHED YET — CL!CK ☆ 0N ANY ' + escapeHtml(filterLabel) + ' CARD T0 ADD 0NE.'
+          : 'N0 P!GE0NS WATCHED YET — CL!CK ☆ 0N ANY CARD !N DATABASE T0 ADD 0NE.') + '</div>';
       return;
     }
-    // Drop group entries for anything no longer on the watchlist.
+    // Drop group entries for anything no longer on this list.
     var allIds = {};
-    getWatchlist().forEach(function(w){ allIds[w.nftId] = true; });
+    wlItems(kind).forEach(function(w){ allIds[w.id] = true; });
     var groups = getWatchlistGroups();
     var changed = false;
     groups.forEach(function(g){
@@ -24661,19 +24737,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
     if (changed) setWatchlistGroups(groups);
     var byId = {};
-    list.forEach(function(w){ byId[w.nftId] = w; });
+    list.forEach(function(w){ byId[w.id] = w; });
     var grouped = {};
+    var noun = coinMode ? 'C0!NS' : 'NFTS';
     var sections = groups.map(function(g){
       var items = (g.items || []).map(function(id){ grouped[id] = true; return byId[id]; }).filter(Boolean);
       return '<div class="wl-group" data-group="' + escapeHtml(g.id) + '">' +
         '<div class="wl-group-head"><span class="wl-group-name">' + escapeHtml(g.name) + '</span><span class="wl-group-count">' + items.length + '</span>' +
-          '<button type="button" class="wl-group-delete" data-group="' + escapeHtml(g.id) + '" title="DELETE GR0UP (NFTS G0 BACK T0 UNGR0UPED)">&times;</button></div>' +
+          '<button type="button" class="wl-group-delete" data-group="' + escapeHtml(g.id) + '" title="DELETE GR0UP (' + noun + ' G0 BACK T0 UNGR0UPED)">&times;</button></div>' +
         '<div class="wl-grid" data-group="' + escapeHtml(g.id) + '">' +
-          (items.length ? items.map(function(w){ return watchTileHtml(w, groups, g.id); }).join('') : '<div class="wl-drop-hint">' + (WATCH_TOUCH ? 'USE M0VE T0 0N AN NFT T0 ADD !T HERE' : 'DRAG NFTS HERE') + '</div>') +
+          (items.length ? items.map(function(w){ return watchTileHtml(w, groups, g.id); }).join('') : '<div class="wl-drop-hint">' + (WATCH_TOUCH ? 'USE M0VE T0 T0 ADD ' + noun + ' HERE' : 'DRAG ' + noun + ' HERE') + '</div>') +
         '</div>' +
       '</div>';
     }).join('');
-    var loose = list.filter(function(w){ return !grouped[w.nftId]; });
+    var loose = list.filter(function(w){ return !grouped[w.id]; });
     var ungrouped = '<div class="wl-group wl-group-loose" data-group="">' +
       (groups.length ? '<div class="wl-group-head"><span class="wl-group-name">UNGR0UPED</span><span class="wl-group-count">' + loose.length + '</span></div>' : '') +
       '<div class="wl-grid" data-group="">' +
@@ -24696,6 +24773,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (e.target.id === 'wlCreateInput' && e.key === 'Enter'){ e.preventDefault(); createWatchlistGroup(); }
   });
   el.profileWatchlistGrid.addEventListener('change', function(e){
+    var add = e.target.closest('#wlAddCoin');
+    if (add){
+      var pick = watchableCoins().filter(function(c){ return c.key === add.value; })[0];
+      if (pick && !isCoinWatched(pick.key)) toggleCoinWatch({ key: pick.key, name: pick.name, image: pick.image, issuer: pick.issuer });
+      renderProfileWatchlist();
+      return;
+    }
     var sel = e.target.closest('.wl-move');
     if (!sel || !sel.value) return;
     moveWatchlistItem(sel.getAttribute('data-nftid'), sel.value === '__none' ? null : sel.value);
@@ -24744,6 +24828,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.profileWatchlistGrid.addEventListener('click', function(e){
     if (e.target.closest('#wlCreateBtn')){ createWatchlistGroup(); return; }
+    var kindBtn = e.target.closest('.wl-kind-btn');
+    if (kindBtn){ setWatchlistKind(kindBtn.getAttribute('data-kind')); renderProfileWatchlist(); return; }
     var sizeBtn = e.target.closest('.wl-size-btn');
     if (sizeBtn){ setWatchlistSize(sizeBtn.getAttribute('data-size')); renderProfileWatchlist(); return; }
     var viewBtn = e.target.closest('.wl-view-btn');
@@ -24754,16 +24840,22 @@ const SWAP_HTML = `<!DOCTYPE html>
       renderProfileWatchlist();
       return;
     }
-    if (e.target.closest('.wl-move')) return;
+    if (e.target.closest('.wl-move') || e.target.closest('#wlAddCoin')) return;
     var removeBtn = e.target.closest('.profile-watchlist-remove');
     if (removeBtn){
       e.stopPropagation();
-      removeFromWatchlist(removeBtn.getAttribute('data-nftid'));
+      var removeId = removeBtn.getAttribute('data-nftid');
+      if (removeBtn.closest('.wl-coin-tile')){
+        setCoinWatch(getCoinWatch().filter(function(c){ return c.key !== removeId; }));
+        renderProfileWatchlist();
+        return;
+      }
+      removeFromWatchlist(removeId);
       renderProfileWatchlist();
       // Keep every matching card's own star in sync if DATABASE happens
       // to already have it rendered underneath (e.g. removed here, then
       // scrolled down to the same collection still open from before).
-      document.querySelectorAll('.watchlist-toggle[data-nftid="' + removeBtn.getAttribute('data-nftid') + '"]').forEach(function(btn){
+      document.querySelectorAll('.watchlist-toggle[data-nftid="' + removeId + '"]').forEach(function(btn){
         btn.classList.remove('watching');
         btn.textContent = '☆';
         btn.title = 'ADD T0 WATCHL!ST';
@@ -24773,6 +24865,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     var tile = e.target.closest('.profile-watchlist-tile');
     if (!tile || e.ctrlKey || e.metaKey) return; // ctrl/cmd+click — let the real href open a new tab natively
     e.preventDefault();
+    // A watched C0!N opens SWAP for it.
+    var coinKey = tile.getAttribute('data-coin');
+    if (coinKey){
+      if (coinKey.indexOf('coin:') === 0 && !POPULAR_COIN_META[coinKey]){
+        var saved = getCoinWatch().filter(function(c){ return c.key === coinKey; })[0] || {};
+        POPULAR_COIN_META[coinKey] = { label: saved.name, itemLabel: saved.name, tradeable: false, tokenLabel: '$' + saved.name, tokenIssuer: saved.issuer, hasAmm: false, accent: '#3df3ec', accentRgb: '61,243,236', thumb: saved.image };
+      }
+      openBuySwapPanel(coinKey);
+      return;
+    }
     var nftId = tile.getAttribute('data-nftid');
     var collection = tile.getAttribute('data-collection');
     // openDetail's own follow-up api({detail}) call defaults to
@@ -25131,10 +25233,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function handleProfileBoxActivate(btn){
     var tab = btn.getAttribute('data-profilebox');
-    if (tab === 'watchlist' && !getWatchlist().length){
-      shakeEmptyWatchlistButton(btn);
-      return;
-    }
+    // WATCHL!ST always opens now — C0!NS are added from inside it (its own
+    // + ADD C0!N picker), so an empty list has to be reachable. (The old
+    // empty-list shake, shakeEmptyWatchlistButton, is no longer used.)
     switchProfileTab(tab);
   }
   el.profileBoxGrid.addEventListener('click', function(e){
@@ -26753,6 +26854,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         POPULAR_COIN_META[c.key] = { label: c.name, itemLabel: c.name, tradeable: false, tokenLabel: '$' + c.name, tokenIssuer: c.issuer, hasAmm: !!c.ammAccount, accent: '#3df3ec', accentRgb: '61,243,236', thumb: c.image };
       });
       renderCoins();
+      if (el.profileTabPanelWatchlist.style.display !== 'none') renderProfileWatchlist();
     }).catch(function(){
       coinsLoading = false;
       coinsLoadFailed = true;
@@ -26796,6 +26898,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="coin-actions">' +
           '<button type="button" class="coin-badge coin-badge-' + b + '" data-coin-reasons="' + escapeHtml(key) + '">● ' + coinsBadgeLabel(b) + (open ? ' ▴' : ' ▾') + '</button>' +
           action +
+          (MY_WALLET ? '<button type="button" class="coin-watch' + (isCoinWatched(key) ? ' watching' : '') + '" data-coin-watch="' + escapeHtml(key) + '" title="' + (isCoinWatched(key) ? 'REM0VE FR0M WATCHL!ST' : 'ADD T0 WATCHL!ST') + '">' + (isCoinWatched(key) ? '★' : '☆') + '</button>' : '') +
         '</div>' +
       '</div>' +
       (coinsFlash[key] ? '<div class="coin-flash">' + escapeHtml(coinsFlash[key]) + '</div>' : '') +
@@ -26894,11 +26997,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     var screen = document.getElementById('screenCoins');
     if (!screen) return;
     screen.addEventListener('click', function(e){
-      var t = e.target.closest('[data-coin-reasons],[data-coin-buy],[data-coin-trust],[data-coins-login]');
+      var t = e.target.closest('[data-coin-reasons],[data-coin-buy],[data-coin-trust],[data-coins-login],[data-coin-watch]');
       if (!t) return;
       if (t.hasAttribute('data-coin-reasons')){
         var rk = t.getAttribute('data-coin-reasons');
         coinsOpenReasons[rk] = !coinsOpenReasons[rk];
+        renderCoins();
+      } else if (t.hasAttribute('data-coin-watch')){
+        var wk = t.getAttribute('data-coin-watch');
+        var wc = ((coinsData && coinsData.coins) || []).filter(function(c){ return c.key === wk; })[0];
+        if (wc) toggleCoinWatch({ key: wc.key, name: wc.name, image: wc.image || null, issuer: wc.issuer });
         renderCoins();
       } else if (t.hasAttribute('data-coin-buy')){
         var bk = t.getAttribute('data-coin-buy');
