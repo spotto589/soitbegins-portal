@@ -4004,12 +4004,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      always-visible-strip rules above (now disabled, kept only for
      reference) and the plain .traits-flyout/.flyout-flat base rules
      without having to edit either. ---- */
-  /* Opaque + its own DATABASE static canvas (addModalStaticBackgrounds),
-     same as every other pop-up's backdrop now. */
   .flyout-popup-backdrop{
     display:none;
     position:fixed; inset:0;
-    background:var(--bg);
+    background:rgba(4,4,6,0.72);
     z-index:1900;
   }
   .flyout-popup-backdrop.open{ display:block; }
@@ -6060,15 +6058,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      0FFER/BUY $P!GE0NS's own confirm modals (#offerConfirmModal etc. —
      see that shared selector group's own comment) instead of a small
      dropdown anchored under the toggle button. */
-  #pigeonsCalcModal{ display:none; position:fixed; inset:0; z-index:1000; background:var(--bg); align-items:center; justify-content:center; padding:2rem 1rem; }
+  #pigeonsCalcModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
   /* T0P 123 H0LDERS/SALES H!ST0RY — same real overlay treatment as
      #pigeonsCalcModal right above (reported live as wanting these off
      their own top-level tabs and into the DATABASE banner instead), just
      wider and taller since both hold a real scrollable list rather than
      a single calculator row. */
-  #topHoldersModal, #salesModal{ display:none; position:fixed; inset:0; z-index:1000; background:var(--bg); align-items:center; justify-content:center; padding:2rem 1rem; }
+  #topHoldersModal, #salesModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
   /* N0T!F!CAT!0NS popup — SALES H!ST0RY's look, narrower. */
-  #notifyModal{ display:none; position:fixed; inset:0; z-index:1000; background:var(--bg); align-items:center; justify-content:center; padding:2rem 1rem; }
+  #notifyModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
   /* Fits and scrolls on a phone (reported live 2026-09-25: the phone
      section was cut off on iPhone with no way to reach it). */
   #notifyModal{ overflow-y:auto; -webkit-overflow-scrolling:touch; }
@@ -7064,13 +7062,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (prefers-reduced-motion: reduce){
     .local-static-bg{ display:none; }
   }
-  /* Pop-ups: the backdrop around the (unchanged, solid) box is the same
-     TV static as DATABASE (reported live: "make the background the same
-     static background we have for the database") — an opaque var(--bg)
-     backdrop plus its own .local-static-bg canvas, injected at startup by
-     addModalStaticBackgrounds, instead of the old see-through dark tint
-     over the page. */
-  /* Named grid areas so PIGEON #N sits in its own row above just the
+  /* Pop-up boxes carry the DATABASE static INSIDE them (reported live:
+     "i wanted the static background inside the pop up box") — a faint
+     noise tile layered over each box's own solid colour, swapped a few
+     times a second by addPopupStatic so it flickers like the page's. As
+     the box's own background (not a separate layer) it stays put while a
+     long box scrolls. The see-through backdrop outside is unchanged. */
+  .popup-static-box{ background-image:var(--popup-static, none) !important; background-repeat:repeat !important; }  /* Named grid areas so PIGEON #N sits in its own row above just the
      picture's column, while RARITY/RARITY SCORE (the right column's first
      row) starts level with the picture's own top — not pushed down by
      the number, since the right column never occupies the "num" row at
@@ -7286,7 +7284,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* RARITY SCORE popup (reported live: the full breakdown + set badges
      under the picture was too much — now just the number + EXPAND there,
      everything else in this popup). Same overlay treatment as SALES. */
-  #rarityModal{ display:none; position:fixed; inset:0; z-index:1000; background:var(--bg); align-items:center; justify-content:center; padding:2rem 1rem; }
+  #rarityModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
   #rarityModal .rarity-modal-panel{ width:min(560px, 100%); max-height:min(85vh, 820px); display:flex; flex-direction:column; text-align:left; background:var(--panel-bg-solid); border:1px solid var(--border-mid); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.6); padding:1.2rem 1.3rem; animation:offer-confirm-pop 0.2s ease; }
   #rarityModal .rb-lore-head{ margin-top:1rem; padding-top:0.6rem; border-top:1px dashed var(--border-mid); color:var(--magenta); font-weight:700; font-size:11px; letter-spacing:0.03em; text-transform:uppercase; }
   #rarityModal .rarity-modal-badges{ margin:0 0 0.8rem; padding-bottom:0.6rem; border-bottom:1px solid var(--border-mid); font-size:12px; text-transform:uppercase; letter-spacing:0.04em; line-height:1.6; }
@@ -7704,7 +7702,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:fixed;
     inset:0;
     z-index:1000;
-    background:var(--bg);
+    background:rgba(5,5,6,0.88);
     align-items:center;
     justify-content:center;
     padding:2rem 1rem;
@@ -8487,7 +8485,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:fixed;
     inset:0;
     z-index:1000;
-    background:var(--bg);
+    background:rgba(5,5,6,0.88);
     align-items:center;
     justify-content:center;
     padding:2rem 1rem;
@@ -8538,7 +8536,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:fixed;
     inset:0;
     z-index:1000;
-    background:var(--bg);
+    background:rgba(5,5,6,0.88);
     align-items:center;
     justify-content:center;
     padding:2rem 1rem;
@@ -8573,7 +8571,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:fixed;
     inset:0;
     z-index:1000;
-    background:var(--bg);
+    background:rgba(5,5,6,0.88);
     align-items:center;
     justify-content:center;
     padding:2rem 1rem;
@@ -8722,7 +8720,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:fixed;
     inset:0;
     z-index:1000;
-    background:var(--bg);
+    background:rgba(5,5,6,0.88);
     align-items:center;
     justify-content:center;
     padding:2rem 1rem;
@@ -26241,26 +26239,46 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (wallet) openWalletProfile(wallet, shortAddr(wallet));
   })();
   startStaticCanvas(document.getElementById('staticBg'));
-  (function addModalStaticBackgrounds(){
+  (function addPopupStatic(){
+    // A few pre-drawn grey noise tiles (faint — alpha ~0.15), cycled.
+    var tiles = [];
+    for (var t = 0; t < 4; t++){
+      var c = document.createElement('canvas');
+      c.width = 160; c.height = 160;
+      var cx = c.getContext('2d');
+      var img = cx.createImageData(160, 160);
+      var d = img.data;
+      for (var i = 0; i < d.length; i += 4){
+        var v = Math.random() * 255;
+        d[i] = v; d[i+1] = v; d[i+2] = v; d[i+3] = 38;
+      }
+      cx.putImageData(img, 0, 0);
+      tiles.push('url(' + c.toDataURL() + ')');
+    }
+    var boxes = [];
     ['pigeonsCalcModal','topHoldersModal','salesModal','notifyModal','rarityModal','offerConfirmModal','transferConfirmModal',
      'acceptTransferConfirmModal','buySwapModal','buyConfirmModal','delistConfirmModal','acceptOfferConfirmModal',
      'conspiracyPickerModal','simpleOfferPickerModal','amountEntryModal','historyModal','profileEditModal'].forEach(function(id){
       var modal = document.getElementById(id);
-      if (!modal) return;
-      var c = document.createElement('canvas');
-      c.className = 'local-static-bg';
-      modal.insertBefore(c, modal.firstChild);
-      // Only draws while this pop-up is actually open.
-      startStaticCanvas(c, function(){ return modal.style.display !== '' && modal.style.display !== 'none'; });
+      var box = modal && modal.firstElementChild;
+      if (!box) return;
+      box.classList.add('popup-static-box');
+      box.style.setProperty('--popup-static', tiles[0]);
+      boxes.push({ box: box, isOpen: function(){ return modal.style.display !== '' && modal.style.display !== 'none'; } });
     });
-    // S0RT BY / F!LTER BY TRA!TS share one backdrop, shown via .open.
-    var fb = document.getElementById('flyoutPopupBackdrop');
-    if (fb){
-      var fc = document.createElement('canvas');
-      fc.className = 'local-static-bg';
-      fb.appendChild(fc);
-      startStaticCanvas(fc, function(){ return fb.classList.contains('open'); });
-    }
+    ['sortFlyout','traitsFlyout'].forEach(function(id){
+      var f = document.getElementById(id);
+      if (!f) return;
+      f.classList.add('popup-static-box');
+      f.style.setProperty('--popup-static', tiles[0]);
+      boxes.push({ box: f, isOpen: function(){ return getComputedStyle(f).display !== 'none'; } });
+    });
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var n = 0;
+    setInterval(function(){
+      n = (n + 1) % tiles.length;
+      boxes.forEach(function(b){ if (b.isOpen()) b.box.style.setProperty('--popup-static', tiles[n]); });
+    }, 90);
   })();
   startStaticCanvas(document.getElementById('detailStaticBg'), function(){
     return document.getElementById('screenDetail').style.display !== 'none';
