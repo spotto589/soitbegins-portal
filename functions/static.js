@@ -2410,6 +2410,28 @@ const SWAP_HTML = `<!DOCTYPE html>
      for a moment, same cancel-the-idle-noise-fill approach .active/
      .flock-account-box-soon already use so the label reads as solid red,
      not the ambient cyan static texture. */
+  /* Σκύλλα://SYSTEM buttons carry the digitalglitchpattern.png artwork
+     (reported live: "add the picture background onto each button... really
+     faded and still dark but noticeable") under a heavy dark scrim, each
+     button showing a different slice of it. Three fixed layers so hover/
+     active only swap the top tint (--sys-tint) — the base rules' own
+     background shorthands would otherwise wipe the picture. */
+  .profile-box-grid .flock-account-box{
+    --sys-tint:transparent;
+    background-image:linear-gradient(var(--sys-tint), var(--sys-tint)), linear-gradient(rgba(2,3,4,0.8), rgba(2,3,4,0.8)), url('/assets/digitalglitchpattern.png');
+    background-size:auto, auto, cover;
+    background-repeat:no-repeat;
+    background-position:center, center, center 15%;
+  }
+  .profile-box-grid .flock-account-box:nth-child(2){ background-position:center, center, center 32%; }
+  .profile-box-grid .flock-account-box:nth-child(3){ background-position:center, center, center 48%; }
+  .profile-box-grid .flock-account-box:nth-child(4){ background-position:center, center, center 62%; }
+  .profile-box-grid .flock-account-box:nth-child(5){ background-position:center, center, center 76%; }
+  .profile-box-grid .flock-account-box:nth-child(6){ background-position:center, center, center 88%; }
+  .profile-box-grid .flock-account-box:nth-child(7){ background-position:center, center, center 100%; }
+  .profile-box-grid .flock-account-box-clickable:hover{ --sys-tint:rgba(61,243,236,0.06); }
+  .profile-box-grid .flock-account-box-clickable.active{ --sys-tint:rgba(255,63,208,0.1); }
+  .profile-box-grid .flock-account-box-soon{ --sys-tint:rgba(2,3,4,0.35); }
   .flock-account-box-clickable.shake-empty{ animation:scylla-row-shake 0.5s ease-in-out; border-color:var(--red); }
   .flock-account-box-clickable.shake-empty::before{ background:var(--red); box-shadow:0 0 10px var(--red-glow); width:5px; }
   .flock-account-box-clickable.shake-empty .flock-account-box-prefix,
@@ -7064,22 +7086,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* Pop-up boxes carry the DATABASE static INSIDE them (reported live:
      "i wanted the static background inside the pop up box") — a faint
-     noise tile layered over each box's own solid colour, swapped a few
-     times a second so it flickers like the page's. As the box's own
-     background (not a separate layer) it stays put while a long box
-     scrolls. The see-through backdrop outside is unchanged. Every box
+     live canvas layer just behind each box (see .popup-static-layer).
+     The see-through backdrop outside is unchanged. Every box
      INSIDE a pop-up is solid (reported live: "all the boxes need to be
      solid colour if this is the background") — see addPopupStatic. */
-  /* The noise tile itself is injected by addPopupStatic (drawn once); this
-     just steps its position through a few offsets so it flickers. A plain
-     keyframe animation: no per-frame JS, no image swaps, and it only runs
-     while the box is actually shown. */
-  @keyframes popup-static-flicker{
-    0%{ background-position:0 0; }
-    25%{ background-position:-97px -151px; }
-    50%{ background-position:-181px -43px; }
-    75%{ background-position:-59px -211px; }
+  /* The static is the page's own recipe (canvas#staticBg): a canvas at a
+     third of the size, fresh noise every frame, same opacity/filter/blend
+     and shake — on a layer addPopupStatic keeps sized to the box, just
+     behind it (reported live: the stepped tile was slow and didn't move
+     like the page's static). The box itself goes see-through so the layer
+     shows; everything inside it stays solid. */
+  .popup-static-box{ background-color:transparent !important; background-image:none !important; }
+  .popup-static-layer{ position:absolute; pointer-events:none; overflow:hidden; isolation:isolate; background:var(--panel-bg-solid); }
+  .popup-static-layer canvas{
+    position:absolute; inset:0; width:100%; height:100%;
+    opacity:0.2; filter:brightness(0.7) contrast(1.3); mix-blend-mode:screen;
+    animation:static-shake 0.4s steps(2) infinite;
   }
+  /* Grey text didn't read on the solid boxes (reported live: "we need
+     white text") — secondary text inside pop-ups is white instead. */
+  .popup-static-box{ --grey:var(--white); --grey-dim:var(--white); }
   /* Bordered boxes inside a pop-up that set no background of their own get
      the pop-up's solid colour (tagged by addPopupStatic), so the static
      only shows on the pop-up's own background. */
@@ -26256,22 +26282,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   })();
   startStaticCanvas(document.getElementById('staticBg'));
   (function addPopupStatic(){
-    // One faint grey noise tile (alpha ~0.15), drawn once and stepped
-    // around by the popup-static-flicker keyframes. (The first version
-    // swapped a fresh data-URL into a custom property every 90ms, which
-    // restyled the whole box and re-decoded the image each time — slow,
-    // and it flashed blank frames.)
-    var c = document.createElement('canvas');
-    c.width = 256; c.height = 256;
-    var cx = c.getContext('2d');
-    var img = cx.createImageData(256, 256);
-    var d = img.data;
-    for (var i = 0; i < d.length; i += 4){
-      var v = Math.random() * 255;
-      d[i] = v; d[i+1] = v; d[i+2] = v; d[i+3] = 38;
-    }
-    cx.putImageData(img, 0, 0);
-    var css = ['.popup-static-box{background-image:url(' + c.toDataURL() + ') !important;background-repeat:repeat !important;}'];
+    var css = [];
 
     var boxes = [];
     ['pigeonsCalcModal','topHoldersModal','salesModal','notifyModal','rarityModal','offerConfirmModal','transferConfirmModal',
@@ -26299,19 +26310,85 @@ const SWAP_HTML = `<!DOCTYPE html>
       return out;
     }
 
-    // Flicker: added alongside any pop-in animation the box already has.
+    // The static: a layer just behind each box (a sibling after it, z-index
+    // one below, so a box that
+    // scrolls inside doesn't drag it along) holding a canvas drawn exactly
+    // like canvas#staticBg — a third of the size, fresh noise every frame.
+    // Kept on the box's rect and opacity each frame, so it follows the
+    // pop-in and anything that moves or resizes the box.
     var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    boxes.forEach(function(b){
+    var layers = boxes.map(function(b){
       b.classList.add('popup-static-box');
-      if (still) return;
-      var cs = getComputedStyle(b);
-      var props = { animationName:'popup-static-flicker', animationDuration:'0.36s', animationTimingFunction:'step-end',
-                    animationDelay:'0s', animationIterationCount:'infinite', animationDirection:'normal', animationFillMode:'none' };
-      var has = cs.animationName && cs.animationName !== 'none';
-      Object.keys(props).forEach(function(p){
-        b.style[p] = has ? splitTop(cs[p]).concat(props[p]).join(', ') : props[p];
-      });
+      var layer = document.createElement('div');
+      layer.className = 'popup-static-layer';
+      layer.style.display = 'none';
+      var cv = document.createElement('canvas');
+      layer.appendChild(cv);
+      b.parentNode.insertBefore(layer, b.nextSibling);
+      return { box: b, layer: layer, canvas: cv, ctx: cv.getContext('2d'), key: '' };
     });
+    function drawNoise(L){
+      var w = L.canvas.width, h = L.canvas.height;
+      var imageData = L.ctx.createImageData(w, h);
+      var buffer = imageData.data;
+      for (var i = 0; i < buffer.length; i += 4){
+        var shade = Math.random() * 255;
+        buffer[i] = shade; buffer[i+1] = shade; buffer[i+2] = shade; buffer[i+3] = 255;
+      }
+      L.ctx.putImageData(imageData, 0, 0);
+    }
+    // Returns whether this box is showing.
+    function syncLayer(L){
+      var b = L.box, layer = L.layer;
+      if (!b.getClientRects().length){
+        if (layer.style.display !== 'none') layer.style.display = 'none';
+        L.key = '';
+        return false;
+      }
+      if (layer.style.display === 'none') layer.style.display = 'block';
+      // S0RT BY moves itself to <body> when it opens as a pop-up.
+      if (layer.previousSibling !== b) b.parentNode.insertBefore(layer, b.nextSibling);
+      var cs = getComputedStyle(b);
+      var z = parseInt(cs.zIndex, 10);
+      var op = layer.offsetParent;
+      var r = b.getBoundingClientRect();
+      var left, top;
+      if (op && op !== document.body){
+        var pr = op.getBoundingClientRect();
+        left = r.left - pr.left - op.clientLeft + op.scrollLeft;
+        top = r.top - pr.top - op.clientTop + op.scrollTop;
+      } else {
+        left = r.left + window.scrollX;
+        top = r.top + window.scrollY;
+      }
+      var key = [Math.round(left), Math.round(top), Math.round(r.width), Math.round(r.height), isNaN(z) ? -1 : z - 1, cs.opacity].join('|');
+      if (key !== L.key){
+        L.key = key;
+        var k = key.split('|');
+        layer.style.left = k[0] + 'px'; layer.style.top = k[1] + 'px';
+        layer.style.width = k[2] + 'px'; layer.style.height = k[3] + 'px';
+        layer.style.zIndex = k[4];
+        layer.style.opacity = k[5];
+        var cw = Math.max(1, Math.round(r.width / 3)), ch = Math.max(1, Math.round(r.height / 3));
+        if (L.canvas.width !== cw || L.canvas.height !== ch){ L.canvas.width = cw; L.canvas.height = ch; drawNoise(L); }
+      }
+      return true;
+    }
+    var running = false;
+    function frame(){
+      var any = false;
+      layers.forEach(function(L){
+        if (syncLayer(L)){ any = true; if (!still) drawNoise(L); }
+      });
+      running = any;
+      if (any) requestAnimationFrame(frame);
+    }
+    function wake(){
+      if (running) return;
+      running = true;
+      requestAnimationFrame(frame);
+    }
+    window.addEventListener('resize', wake);
 
     // Solid boxes inside pop-ups. Every stylesheet rule that sets a
     // background colour gets a copy limited to pop-ups — same specificity
@@ -26431,7 +26508,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     boxes.forEach(function(box){
       var pending = false;
-      var mo = new MutationObserver(function(){
+      var mo = new MutationObserver(function(muts){
+        // The static layer's own per-frame moves don't count.
+        if (!muts.some(function(m){ return !m.target.closest || !m.target.closest('.popup-static-layer'); })) return;
+        wake();
         if (pending) return;
         pending = true;
         requestAnimationFrame(function(){ pending = false; sweep(box); });
