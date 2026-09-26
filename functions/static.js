@@ -2316,7 +2316,9 @@ const SWAP_HTML = `<!DOCTYPE html>
      (see its own position:relative), not the header row. Laid out
      horizontally, side by side (reported live: "lay these horizontally
      in the top right corner" — was stacked). */
-  .scylla-header-account-actions{ position:absolute; top:0.75rem; right:0.75rem; display:flex; flex-direction:row; align-items:center; gap:0.5rem; z-index:2; }
+  .scylla-header-account-actions{ position:absolute; top:1rem; right:1rem; display:flex; flex-direction:row; align-items:center; gap:0.5rem; z-index:2; }
+  /* The readout shares that top row — keeps its text clear of the pair. */
+  .scylla-nav-panel > .scylla-nav-readout{ padding-right:15rem; }
   /* CHANGE ACC0UNT — cyan at rest now, not just on hover (reported live:
      "make sign out red and change account cyan"). */
   .scylla-header-action-btn{
@@ -2340,8 +2342,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Back to a plain horizontal pair below the (still centered) title on
      narrow screens — a corner pin only makes sense once there's an
      actual wide corner to pin it to. */
+  /* Still the top-right corner on a phone (reported live), just smaller. */
   @media (max-width:640px){
-    .scylla-header-account-actions{ position:static; flex-direction:row; justify-content:center; margin-top:0.6rem; }
+    .scylla-header-account-actions{ top:0.85rem; right:0.75rem; gap:0.35rem; }
+    .scylla-header-action-btn{ font-size:10px; padding:0.35em 0.55em; }
+    .scylla-nav-panel > .scylla-nav-readout{ padding-right:11.5rem; }
   }
   /* MY NFTS' own scoped-collection header (see openMyNftsCollectionDatabase)
      doubles as the real, visible way back out of it — there was previously
@@ -2577,52 +2582,28 @@ const SWAP_HTML = `<!DOCTYPE html>
      the page's main event now, real V!EW/ED!T buttons underneath it, both
      sized up to actually fit a page that only ever has these three
      things on it. */
-  .profiles-hub{ max-width:640px; margin:0 auto; text-align:center; }
-  /* Centred in the middle of the page now, not just horizontally
-     (reported live) — safe center so a tall ED!T MY PR0F!LE form (the
-     other real thing this same panel shows) still scrolls to its own top
-     normally instead of clipping if it ever overflows. */
-  #profileTabPanelProfiles{ display:flex; flex-direction:column; justify-content:safe center; min-height:100%; }
-  .profiles-hub-search-wrap{ margin-bottom:1.75rem; }
-  /* Layers on top of .profile-search-input's own base look (shared with
-     the MESSAGES compose/new-recipient inputs — see below) rather than
-     replacing it, so this stays visually "the same kind of field," just
-     bigger. Centered text too now (reported live: "centre the search bar
-     and the buttons, make them all of it way bigger"). */
-  .profiles-hub-search-input{ font-size:22px; font-weight:400; text-align:center; padding:1.2em 1.4em; margin-bottom:0; }
-  .profiles-hub-search-input:focus{ box-shadow:0 0 14px var(--cyan-glow); }
-  .profiles-hub-actions{ display:flex; flex-direction:column; gap:1rem; }
-  /* Same "coloured border/text even at rest" language the corner
-     S!GN 0UT/CHANGE ACC0UNT buttons elsewhere in Σκύλλα://SYSTEM already
-     use (reported live: "make the buttons the same as inside system"),
-     just scaled up to this panel's own big-button size. Colour comes
-     from --profile-accent-rgb (pink, see .scylla-nav-panel's own
-     comment) — automatic, no separate colour swap needed here. */
-  .profiles-hub-btn{
-    width:100%;
-    background:rgba(0,0,0,0.25);
-    border:1px solid rgba(var(--profile-accent-rgb, 61,243,236),0.5);
-    color:rgb(var(--profile-accent-rgb, 61,243,236));
-    font-family:var(--font-mono);
-    font-size:20px;
-    font-weight:700;
-    letter-spacing:0.08em;
-    padding:1.3em 1.5em;
-    border-radius:var(--radius);
-    cursor:pointer;
-    text-transform:uppercase;
-    text-align:center;
-    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  /* PR0F!LES hub — the Σκύλλα://SYSTEM grid's own boxes (reported live:
+     "keep the same design as Σκύλλα://SYSTEM. buttons should be the same
+     size as well"): same classes, same grid, rows pinned to the height
+     the SYSTEM grid's boxes last measured at (--sys-box-h, kept by
+     trackSystemBoxHeight). Top-aligned like the SYSTEM grid. */
+  .profiles-hub{ text-align:left; }
+  .profiles-hub-grid{ grid-auto-rows:var(--sys-box-h, 5.5rem); }
+  .profiles-hub-grid button.flock-account-box{ font:inherit; color:inherit; width:100%; -webkit-appearance:none; appearance:none; }
+  .profiles-hub-search-box{ cursor:text; }
+  .profiles-hub-search-input{
+    flex:1 1 auto; min-width:0;
+    background:transparent; border:none; outline:none; padding:0;
+    color:var(--cyan); caret-color:var(--magenta);
+    font-family:var(--font-mono); font-size:18px; letter-spacing:0.08em; text-transform:uppercase;
   }
-  .profiles-hub-btn:hover{
-    border-color:rgb(var(--profile-accent-rgb, 61,243,236));
-    background:rgba(var(--profile-accent-rgb, 61,243,236),0.15);
-    box-shadow:0 0 14px rgba(var(--profile-accent-rgb, 61,243,236),0.35);
-    transform:translateY(-1px);
-  }
-  @media (min-width:520px){
-    .profiles-hub-actions{ flex-direction:row; gap:1.25rem; }
-  }
+  .profiles-hub-search-input::placeholder{ color:var(--cyan); opacity:0.75; }
+  .profile-box-grid .profiles-hub-search-box:focus-within{ --sys-tint:rgba(255,63,208,0.06); --sys-top:rgba(255,51,204,0.9); --sys-bot:rgba(255,51,204,0.9); }
+  .profile-box-grid .profiles-hub-search-box:focus-within::before{ width:3px; background:var(--magenta); }
+  /* Its own scattered crops, so it doesn't just repeat the SYSTEM grid's first row. */
+  .profile-box-grid.profiles-hub-grid .flock-account-box:nth-child(1){ --sys-size:240%; --sys-pos:75% 85%; }
+  .profile-box-grid.profiles-hub-grid .flock-account-box:nth-child(2){ --sys-size:290%; --sys-pos:15% 55%; }
+  .profile-box-grid.profiles-hub-grid .flock-account-box:nth-child(3){ --sys-size:200%; --sys-pos:60% 8%; }
   /* MESSAGES — real wallet-to-wallet D1-backed messaging (see
      functions/api/messages-*.js), wired straight into !NB0X instead of
      living as its own /messages page any more. Needs the MESSAGES_DB D1
@@ -10558,10 +10539,15 @@ const SWAP_HTML = `<!DOCTYPE html>
                worth showing once MY_WALLET actually names a signed-in
                session (see the init check near el.scyllaSignOutBtn's own
                listener). -->
-          <div class="scylla-header-account-actions" id="scyllaHeaderAccountActions" style="display:none;">
-            <button type="button" class="scylla-header-action-btn" id="scyllaChangeAccountBtn">CHANGE ACC0UNT</button>
-            <button type="button" class="scylla-header-action-btn scylla-header-action-btn-signout" id="scyllaSignOutBtn">S!GN 0UT</button>
-          </div>
+        </div>
+        <!-- Account actions sit in the panel's own top-right corner, level
+             with the S!GNAL N0DE readout (reported live: "put change
+             account and sign out in the top right") — a direct child of
+             the panel, not the header, so the header can't pull them down
+             under the title. -->
+        <div class="scylla-header-account-actions" id="scyllaHeaderAccountActions" style="display:none;">
+          <button type="button" class="scylla-header-action-btn" id="scyllaChangeAccountBtn">CHANGE ACC0UNT</button>
+          <button type="button" class="scylla-header-action-btn scylla-header-action-btn-signout" id="scyllaSignOutBtn">S!GN 0UT</button>
         </div>
         <!-- PR0F!LE B0X GR!D — a real menu of boxed destinations (same real
              .flock-account-box visual language the old FL0CK-era boxes
@@ -10662,15 +10648,27 @@ const SWAP_HTML = `<!DOCTYPE html>
            there's genuinely no room to show both a big identity-edit card
            and the search hub at once. -->
       <div class="profile-tab-panel" id="profileTabPanelProfiles" style="display:none;">
+        <!-- Same boxes as the Σκύλλα://SYSTEM grid itself, same size
+             (reported live: "inside profiles, keep the same design as
+             Σκύλλα://SYSTEM. buttons should be the same size as well") —
+             the search field lives inside its own box, results list
+             underneath at full width. -->
         <div class="profiles-hub" id="profilesSubNav">
-          <div class="profiles-hub-search-wrap">
-            <input type="text" class="profile-search-input profiles-hub-search-input" id="profileSearchInput" placeholder="SEARCH BY NAME 0R WALLET ADDRESS..." autocomplete="off">
-            <div class="profile-search-results" id="profileSearchResults"></div>
+          <div class="profile-box-grid profiles-hub-grid">
+            <label class="sw-panel flock-account-box flock-account-box-clickable profiles-hub-search-box">
+              <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="7.5" cy="7.5" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11.5 11.5l4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="flock-account-box-prefix">//</span><input type="text" class="profiles-hub-search-input" id="profileSearchInput" placeholder="SEARCH PR0F!LES" autocomplete="off"></div>
+              <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
+            </label>
+            <button type="button" class="sw-panel flock-account-box flock-account-box-clickable profiles-hub-btn" data-profiles-view="view">
+              <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.5 9s2.8-5 7.5-5 7.5 5 7.5 5-2.8 5-7.5 5-7.5-5-7.5-5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="9" cy="9" r="2.2" stroke="currentColor" stroke-width="1.4"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">V!EW MY PR0F!LE</span><span class="flock-account-box-arrow">›</span></div>
+              <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="sw-panel flock-account-box flock-account-box-clickable profiles-hub-btn" data-profiles-view="edit">
+              <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 15l1-4 8.5-8.5 3 3L7 14l-4 1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M10.5 4.5l3 3" stroke="currentColor" stroke-width="1.4"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">ED!T MY PR0F!LE</span><span class="flock-account-box-arrow">›</span></div>
+              <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
+            </button>
           </div>
-          <div class="profiles-hub-actions">
-            <button type="button" class="profiles-hub-btn" data-profiles-view="view">V!EW MY PR0F!LE</button>
-            <button type="button" class="profiles-hub-btn" data-profiles-view="edit">ED!T MY PR0F!LE</button>
-          </div>
+          <div class="profile-search-results" id="profileSearchResults"></div>
         </div>
         <!-- ED!T MY PR0F!LE — the exact identity card this whole tab used
              to show permanently above the box grid (avatar/username/quote/
@@ -24557,6 +24555,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     switchProfilesSubView(view);
   });
   el.profilesBackBtn.addEventListener('click', function(){ switchProfileTab(null); });
+  // Keeps the PR0F!LES hub's boxes the same height as the Σκύλλα://SYSTEM
+  // grid's — those stretch to fill the panel, so there's no fixed size to
+  // copy; this measures them whenever they change.
+  (function trackSystemBoxHeight(){
+    var first = el.profileBoxGrid && el.profileBoxGrid.querySelector('.flock-account-box');
+    var panel = first && first.closest('.scylla-nav-panel');
+    if (!first || !panel || !window.ResizeObserver) return;
+    new ResizeObserver(function(){
+      // Only the landing size — the grid shrinks while a panel like
+      // WATCHL!ST is open underneath it.
+      var openPanel = [].some.call(panel.querySelectorAll('.profile-tab-panel'), function(tp){ return tp.getClientRects().length > 0; });
+      if (openPanel) return;
+      var h = first.getBoundingClientRect().height;
+      var cs = getComputedStyle(first);  // row = box + its own margins
+      if (h > 0) panel.style.setProperty('--sys-box-h', Math.round(h + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom)) + 'px');
+    }).observe(first);
+  })();
   // SEARCH PR0F!LE — debounced-as-you-type lookup against the profileSearch
   // mode on /api/pigeons (matches a stored username or wallet address, see
   // pigeons.js's own comment). Each keystroke cancels whatever request is still in
