@@ -4,7 +4,7 @@ import {
   encodeCurrencyCode, computeMarketplaceFee, MARKETPLACE_BROKER_WALLET,
   acquireBrokerAcceptLock, releaseBrokerAcceptLock, recordPendingBrokerAccept, applyNftRoyalty,
   offerCurrencyOf, offerAmountValue, buildOfferAmount, feeBasisPointsFor,
-  clientSignResponse
+  clientSignResponse, holdsLockViaIntent
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same seller sell-offer txjson
@@ -97,7 +97,7 @@ export async function onRequestPost(context) {
   // retry on the same offer within that window got wrongly told
   // "already_processing".
   if (env.coin) {
-    const gotLock = await acquireBrokerAcceptLock(env.coin, offerId);
+    const gotLock = await acquireBrokerAcceptLock(env.coin, offerId) || await holdsLockViaIntent(env, body, owner, offerId);
     if (!gotLock) {
       return new Response(JSON.stringify({ error: 'already_processing' }), { status: 409 });
     }

@@ -5579,6 +5579,14 @@ export async function createXamanPayload(env, txjson, options, userToken, attemp
 // checks Xaman's copy matches the txjson, then records `pending` for the
 // flows that need it (kind: 'broker' | 'buy_legacy' | 'signal' | 'list').
 // Returns null when the caller didn't ask for it (normal server path).
+// The page's fallback retry after a browser-created request failed sends
+// the intent it was given (lockIntent). If it's this wallet's intent for
+// this same offer, the broker lock it already holds counts as its own.
+export async function holdsLockViaIntent(env, body, acct, offerId) {
+  if (!body || !body.lockIntent || !env.Σκύλλα) return false;
+  const it = await verifyToken(body.lockIntent, env.Σκύλλα + ':intent');
+  return !!(it && it.acct === acct && it.pending && it.pending.offerId === offerId);
+}
 export async function clientSignResponse(env, body, acct, txjson, kind, pending, display) {
   if (!body || !body.clientSign || !env.Σκύλλα || !acct) return null;
   const intent = await signToken({ kind: kind || 'plain', acct, txjson, pending: pending || null, exp: Math.floor(Date.now() / 1000) + 900 }, env.Σκύλλα + ':intent');

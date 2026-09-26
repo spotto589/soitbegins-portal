@@ -4,7 +4,7 @@ import {
   MARKETPLACE_BROKER_WALLET, acquireBrokerAcceptLock, releaseBrokerAcceptLock,
   recordPendingBrokerAccept, fetchDeeptideNftDetail,
   normalizeOfferCurrency, buildOfferAmount, feeBasisPointsFor, offerAmountValue,
-  clientSignResponse
+  clientSignResponse, holdsLockViaIntent
 } from '../_shared.js';
 
 // Re-derives and re-validates the exact same txjson swap-buy-prepare.js
@@ -139,7 +139,7 @@ export async function onRequestPost(context) {
   // itself (only one brokered accept can ever consume a given sell offer).
   const sellOfferId = offer.nft_offer_index;
   if (env.coin) {
-    const gotLock = await acquireBrokerAcceptLock(env.coin, sellOfferId);
+    const gotLock = await acquireBrokerAcceptLock(env.coin, sellOfferId) || await holdsLockViaIntent(env, body, buyer, sellOfferId);
     if (!gotLock) {
       console.log('BUY-PAYLOAD exit: already_processing for sell offer', sellOfferId);
       return new Response(JSON.stringify({ error: 'already_processing' }), { status: 409 });

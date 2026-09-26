@@ -12636,11 +12636,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   function createFromBrowser(txjson, intent){
     return xamanSdk.payload.create({ txjson: txjson }).then(function(created){
       if (!created || !created.uuid) throw new Error('create_failed');
-      return fetch('/api/xaman-register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uuid: created.uuid, intent: intent, pushed: created.pushed, createdKeys: Object.keys(created).join(',') })
-      }).then(function(){ return created; }, function(){ return created; });
+      // The server must hear about it (BUY N0W/ACCEPT/LIST need their
+      // pending record, or the sale can't complete) — a few tries, then
+      // give up so the caller falls back to a server-made request.
+      var tries = 0;
+      function register(){
+        tries++;
+        return fetch('/api/xaman-register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uuid: created.uuid, intent: intent, pushed: created.pushed, createdKeys: Object.keys(created).join(',') })
+        }).then(function(r){
+          if (r.ok) return created;
+          if (r.status >= 500 && tries < 3) return register();
+          throw new Error('register_failed');
+        }, function(){
+          if (tries < 3) return register();
+          throw new Error('register_failed');
+        });
+      }
+      return register();
     });
   }
   // fetch() for a sign-request endpoint (*-payload). With a Xaman browser
@@ -12662,6 +12677,14 @@ const SWAP_HTML = `<!DOCTYPE html>
         return createFromBrowser(data.txjson, data.intent).then(function(created){
           var out = { ok: true, uuid: created.uuid, next: { always: (created.next && created.next.always) || ('https://xumm.app/sign/' + created.uuid), pushed: true }, display: data.display };
           return new Response(JSON.stringify(out), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }, function(){
+          // Xaman refused it from the browser: the normal server request,
+          // carrying the intent so a listing lock this request already
+          // took (BUY N0W / ACCEPT) counts as ours.
+          var fb = {};
+          try { fb = JSON.parse((init && init.body) || '{}'); } catch (e){}
+          fb.lockIntent = data.intent;
+          return fetch(url, Object.assign({}, init, { body: JSON.stringify(fb) }));
         });
       });
     }).catch(function(){ return fetch(url, init); });
@@ -14044,7 +14067,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // safety anyway since the destination is our own trusted API response,
     // not user-supplied content.
     var xamanTab = openXamanPopup();
-    fetch('/api/swap-offer-payload', {
+    signFetch('/api/swap-offer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nftId: swapOfferState.nftId, toWallet: swapOfferState.toWallet })
@@ -14249,7 +14272,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.swapAcceptOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.acceptConfirmStatus.textContent = '';
     var xamanTab = openXamanPopup();
-    fetch('/api/swap-accept-payload', {
+    signFetch('/api/swap-accept-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ swapId: swapAcceptState.swapId })
@@ -18631,7 +18654,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   function submitBuyPayload(retriesLeft){
     if (retriesLeft === undefined) retriesLeft = 1;
-    fetch('/api/swap-buy-payload', {
+    signFetch('/api/swap-buy-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nftId: buyTarget.nftId, collection: state.collection, currency: buyTarget.buyCurrency || undefined })
@@ -18769,7 +18792,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // instead, which mobile browsers in particular treat as no longer a
     // trusted user gesture and silently refuse.
     delistXamanTab = openXamanPopup();
-    fetch('/api/swap-delist-payload', {
+    signFetch('/api/swap-delist-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nftId: p.nftId, collection: state.collection })
@@ -19048,7 +19071,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // itself a real user gesture, so opening fresh here is still safe
     // from popup-blocking in that case.
     if (!offerXamanTab) offerXamanTab = openXamanPopup();
-    fetch('/api/swap-makeoffer-payload', {
+    signFetch('/api/swap-makeoffer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nftId: offerTarget.nftId, priceValue: offerTarget.priceValue, durationDays: offerTarget.durationDays, collection: state.collection, currency: offerTarget.offerCurrency || 'token' })
@@ -19192,7 +19215,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.offerSignalSendBtn.textContent = 'REQUEST!NG...';
     el.offerSignalStatus.textContent = '';
     offerSignalXamanTab = openXamanPopup();
-    fetch('/api/swap-signal-payload', {
+    signFetch('/api/swap-signal-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nftId: offerSignalTarget.nftId, offerId: offerSignalTarget.offerId, toWallet: offerSignalTarget.recipientWallet, pigeonNumber: offerSignalTarget.number })
@@ -19378,7 +19401,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.transferOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.transferConfirmStatus.textContent = '';
     transferXamanTab = openXamanPopup();
-    fetch('/api/swap-offer-payload', {
+    signFetch('/api/swap-offer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nftId: transferTarget.nftId, toWallet: transferTarget.toWallet })
@@ -19696,7 +19719,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         alert(listingErrorMessage(res.data && res.data.error));
         return;
       }
-      return fetch('/api/swap-canceloffer-payload', {
+      return signFetch('/api/swap-canceloffer-payload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nftId: cancelOfferTarget.nftId, collection: cancelOfferTarget.collection })
@@ -19924,7 +19947,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.acceptTransferOpenXamanBtn.textContent = 'REQUEST!NG...';
     el.acceptTransferConfirmStatus.textContent = '';
     acceptTransferXamanTab = openXamanPopup();
-    fetch('/api/swap-transfer-accept-payload', {
+    signFetch('/api/swap-transfer-accept-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nftId: acceptTransferTarget.nftId, offerId: acceptTransferTarget.offerId })
@@ -20055,7 +20078,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // which mobile browsers in particular treat as no longer a trusted
     // user gesture and silently refuse.
     acceptOfferXamanTab = openXamanPopup();
-    fetch('/api/swap-acceptoffer-payload', {
+    signFetch('/api/swap-acceptoffer-payload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       // acceptOfferTarget.collection, not state.collection — this offer
