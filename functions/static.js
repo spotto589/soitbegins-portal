@@ -2141,6 +2141,31 @@ const SWAP_HTML = `<!DOCTYPE html>
      reported live as wanting starred NFTs to "show up in Σκύλλα", not a
      big heavy card per item. */
   .profile-watchlist-section{ margin-bottom:1.5rem; }
+  /* WATCHL!ST, simple and editable (reported live): the NFT number above
+     each thumbnail, nothing else; a CREATE GR0UP row; each group a black
+     box with its name/count/delete and its own grid you drag NFTs into. */
+  #profileWatchlistGrid{ display:block; }
+  .wl-create{ display:flex; gap:0.5rem; max-width:520px; margin:0 auto 1.1rem; }
+  .wl-create-input{ flex:1 1 auto; min-width:0; background:#000; border:1px solid rgba(var(--collection-accent-rgb, 136,72,248), 0.55); border-radius:10px; color:var(--white); font-family:var(--font-mono); font-size:14px; letter-spacing:0.06em; padding:0.65em 0.9em; text-transform:uppercase; }
+  .wl-create-input:focus{ outline:none; border-color:var(--cyan); }
+  .wl-create-btn{ flex:0 0 auto; background:#000; border:1px solid var(--cyan); border-radius:999px; color:var(--cyan); font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:0.08em; padding:0.6em 1.2em; cursor:pointer; }
+  .wl-create-btn:hover{ background:var(--cyan); color:#000; }
+  .wl-group{ background:#000; border:1px solid rgba(var(--collection-accent-rgb, 136,72,248), 0.45); border-radius:12px; padding:0.75rem; margin-bottom:0.9rem; transition:border-color 0.15s ease, box-shadow 0.15s ease; }
+  .wl-group-loose{ background:transparent; border-style:dashed; }
+  .wl-group.wl-drop-over{ border-color:var(--cyan); box-shadow:0 0 14px var(--cyan-glow); }
+  .wl-group-head{ display:flex; align-items:center; gap:0.6rem; margin-bottom:0.6rem; font-family:var(--font-mono); letter-spacing:0.08em; }
+  .wl-group-name{ font-size:15px; font-weight:700; color:#fff; }
+  .wl-group-count{ font-size:12px; color:var(--cyan); }
+  .wl-group-delete{ margin-left:auto; background:none; border:1px solid var(--border-mid); border-radius:50%; width:1.7rem; height:1.7rem; color:var(--white); cursor:pointer; line-height:1; }
+  .wl-group-delete:hover{ border-color:var(--red); color:var(--red); }
+  .wl-grid{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:0.75rem; min-height:3rem; }
+  @media (min-width:601px){ .wl-grid{ grid-template-columns:repeat(6, minmax(0, 1fr)); } }
+  .wl-drop-hint{ grid-column:1 / -1; align-self:center; text-align:center; font-family:var(--font-mono); font-size:12px; letter-spacing:0.1em; color:var(--grey-dim); padding:0.8rem 0; }
+  .wl-item{ display:flex; flex-direction:column; gap:0.3rem; min-width:0; }
+  .wl-item[draggable="true"]{ cursor:grab; }
+  .wl-item.wl-dragging{ opacity:0.4; }
+  .wl-num{ font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:0.06em; color:#fff; text-align:center; }
+  .wl-move{ width:100%; background:#000; color:var(--white); border:1px solid var(--border-mid); border-radius:8px; font-family:var(--font-mono); font-size:11px; padding:0.3em; }
   /* Empty when unfiltered (renderProfileWatchlist leaves it as ''), so
      these two collapse to nothing rather than an empty heading/gap. */
   .profile-watchlist-header:empty{ display:none; }
@@ -4304,7 +4329,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   #traitsFlyout.flyout-popup .traits-flyout-toolbar{ flex-direction:column; align-items:stretch; gap:0.65rem; margin:0 0 1rem; }
   #traitsFlyout.flyout-popup .traits-flyout-search-input{ order:-1; flex:0 0 auto; width:100%; text-align:center; }
   #traitsFlyout.flyout-popup .traits-flyout-sort-toggle{ align-self:center; }
-  #traitsFlyout.flyout-popup .traits-flyout-vals{ display:flex !important; flex-direction:column; gap:0.55rem; padding:0.2rem 0 0.6rem !important; }
+  /* Only while drilled into a category (or searching, which also sets
+     .flyout-drilled) — on the CATEG0R!ES step the list stays hidden
+     (reported live: after BACK T0 CATEG0R!ES the old values showed under
+     the categories). */
+  #traitsFlyout.flyout-popup.flyout-drilled .traits-flyout-vals{ display:flex !important; flex-direction:column; gap:0.55rem; padding:0.2rem 0 0.6rem !important; }
   #traitsFlyout.flyout-popup .traits-flyout-vals .traits-flyout-val{ margin-bottom:0 !important; }
   #traitsFlyout.flyout-popup .traits-flyout-cats{ gap:0.55rem; }
   #traitsFlyout.traits-flyout.flyout-popup.flyout-drilled .flyout-back-btn{
@@ -8952,6 +8981,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   .sales-styled .sales-scrollbox{ text-align:left; }
   .sales-styled .sale-header-row{ font-size:12px; letter-spacing:0.12em; border-bottom:1px solid var(--border-mid); }
   .sales-styled .sale-row{ border-left:3px solid var(--green); background:rgba(52,255,133,0.05); border-bottom:1px solid var(--border-dim); }
+  /* Each row exactly as tall as its thumbnail (reported live: a big gap
+     between thumbnails — the list should start and stop at the top and
+     bottom of each one): no vertical padding, the thumbnail flush against
+     the green edge, a small gap between rows instead. */
+  .sales-styled .sale-row{ padding:0 0.8rem 0 0; margin-bottom:0.5rem; border-bottom:none; align-items:center; }
+  .sales-styled .sale-row .sale-thumb{ border:none; }
+  @media (max-width:820px){ .sales-styled .sale-row{ padding:0 0.6rem 0 0; } }
   .sales-styled .sale-price{ font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--green); text-shadow:0 0 8px var(--green-glow); }
   .sales-styled .sale-via{ font-size:12px; letter-spacing:0.08em; }
   .sales-styled .sale-num-box{ font-size:16px; }
@@ -11072,6 +11108,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <button type="button" class="profile-watchlist-clear-filter" id="profileWatchlistClearFilter" style="display:none;">SH0W ALL C0LLECT!0NS</button>
           <div class="profile-watchlist-grid" id="profileWatchlistGrid"></div>
         </div>
+        <button type="button" class="profile-holdings-viewmore" id="profileWatchlistBack">← BACK</button>
       </div>
       <div class="profile-tab-panel" id="profileTabPanelCollections" style="display:none;">
         <!-- MY C0!NS — real balance + trustline status for every collection
@@ -13231,7 +13268,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileTabPanelProfiles','profilesSubNav','profilesHubBanner','profilesEditView','profilesBackBtn','profileSearchInput','profileSearchResults','profileMessagesBack','profileOffersBack',
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
-   'profileWatchlistSection','profileWatchlistGrid','profileWatchlistTitle','profileWatchlistClearFilter',
+   'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
    'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -24482,36 +24519,158 @@ const SWAP_HTML = `<!DOCTYPE html>
   // nested inside MY NFTs — a real empty-state message shows when
   // there's nothing watched instead of just hiding, since landing on an
   // entirely blank tab would read as broken, not "nothing here yet". ----
+  // WATCHL!ST groups (reported live: "a fully customisable watch list
+  // where we can place nfts into groups... just make it a create and a
+  // drag and drop"). Groups live in their own localStorage entry per
+  // wallet — [{ id, name, items:[nftId] }] — next to the watchlist itself;
+  // anything in no group shows under UNGR0UPED. Drag a tile onto a group
+  // (or back onto UNGR0UPED) to move it; on a touch screen, where drag and
+  // drop doesn't work, each tile has a small MOVE T0 menu instead.
+  function watchlistGroupsKey(){ return 'scylla_watchlist_groups:' + (MY_WALLET || 'guest'); }
+  function getWatchlistGroups(){
+    try { var g = JSON.parse(localStorage.getItem(watchlistGroupsKey()) || '[]'); return Array.isArray(g) ? g : []; } catch (e){ return []; }
+  }
+  function setWatchlistGroups(groups){
+    try { localStorage.setItem(watchlistGroupsKey(), JSON.stringify(groups)); } catch (e){}
+  }
+  function moveWatchlistItem(nftId, groupId){
+    var groups = getWatchlistGroups();
+    groups.forEach(function(g){ g.items = (g.items || []).filter(function(id){ return id !== nftId; }); });
+    var target = groupId ? groups.filter(function(g){ return g.id === groupId; })[0] : null;
+    if (target) target.items.push(nftId);
+    setWatchlistGroups(groups);
+  }
+  var WATCH_TOUCH = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  function watchTileHtml(w, groups, groupId){
+    var img = w.image ? '<img src="' + escapeHtml(w.image) + '" alt="" loading="lazy" draggable="false">' : '';
+    var label = w.number !== null && w.number !== undefined ? '#' + w.number : (w.name ? escapeHtml(w.name) : '');
+    var tileHref = nftHrefFor({ number: w.number, collectionKey: w.collection });
+    var move = (WATCH_TOUCH && groups.length)
+      ? '<select class="wl-move" data-nftid="' + escapeHtml(w.nftId) + '"><option value="">M0VE T0...</option>' +
+          (groupId ? '<option value="__none">UNGR0UPED</option>' : '') +
+          groups.filter(function(g){ return g.id !== groupId; }).map(function(g){ return '<option value="' + escapeHtml(g.id) + '">' + escapeHtml(g.name) + '</option>'; }).join('') +
+        '</select>'
+      : '';
+    return '<div class="wl-item" draggable="' + (WATCH_TOUCH ? 'false' : 'true') + '" data-nftid="' + escapeHtml(w.nftId) + '">' +
+      '<div class="wl-num">' + label + '</div>' +
+      '<div class="profile-watchlist-tile" data-nftid="' + escapeHtml(w.nftId) + '" data-collection="' + escapeHtml(w.collection || '') + '">' +
+        linkWrap(tileHref, 'profile-watchlist-tile-link', img) +
+        '<button type="button" class="profile-watchlist-remove" data-nftid="' + escapeHtml(w.nftId) + '" title="REM0VE">&times;</button>' +
+      '</div>' + move +
+    '</div>';
+  }
   function renderProfileWatchlist(){
     var list = getWatchlist();
     var filterKey = state.watchlistFilterCollection;
     if (filterKey) list = list.filter(function(w){ return w.collection === filterKey; });
     var filterLabel = filterKey && COLLECTION_META[filterKey] ? COLLECTION_META[filterKey].label : null;
     if (el.profileWatchlistTitle){
-      el.profileWatchlistTitle.textContent = filterLabel ? filterLabel + ' WATCHL!ST' : 'WATCHL!ST';
+      el.profileWatchlistTitle.textContent = filterLabel ? filterLabel + ' WATCHL!ST' : ''; // the page title already says WATCHL!ST
       el.profileWatchlistClearFilter.style.display = filterLabel ? '' : 'none';
     }
+    var createRow = '<div class="wl-create"><input type="text" class="wl-create-input" id="wlCreateInput" maxlength="24" placeholder="NEW GR0UP NAME" autocomplete="off"><button type="button" class="wl-create-btn" id="wlCreateBtn">+ CREATE GR0UP</button></div>';
     if (!list.length){
       el.profileWatchlistGrid.innerHTML = '<div class="th-empty">' + (filterLabel
         ? 'N0 ' + escapeHtml(filterLabel) + ' WATCHED YET — CL!CK ☆ 0N ANY ' + escapeHtml(filterLabel) + ' CARD T0 ADD 0NE.'
         : 'N0 P!GE0NS WATCHED YET — CL!CK ☆ 0N ANY CARD !N DATABASE T0 ADD 0NE.') + '</div>';
       return;
     }
-    el.profileWatchlistGrid.innerHTML = list.map(function(w){
-      var img = w.image ? '<img src="' + escapeHtml(w.image) + '" alt="" loading="lazy">' : '';
-      var label = w.number !== null && w.number !== undefined ? '#' + w.number : (w.name ? escapeHtml(w.name) : '');
-      var tileHref = nftHrefFor({ number: w.number, collectionKey: w.collection });
-      return '<div class="profile-watchlist-tile" data-nftid="' + escapeHtml(w.nftId) + '" data-collection="' + escapeHtml(w.collection || '') + '">' +
-        linkWrap(tileHref, 'profile-watchlist-tile-link', img + (label ? '<div class="profile-watchlist-num">' + label + '</div>' : '')) +
-        '<button type="button" class="profile-watchlist-remove" data-nftid="' + escapeHtml(w.nftId) + '" title="REM0VE">&times;</button>' +
+    // Drop group entries for anything no longer on the watchlist.
+    var allIds = {};
+    getWatchlist().forEach(function(w){ allIds[w.nftId] = true; });
+    var groups = getWatchlistGroups();
+    var changed = false;
+    groups.forEach(function(g){
+      var kept = (g.items || []).filter(function(id){ return allIds[id]; });
+      if (kept.length !== (g.items || []).length){ g.items = kept; changed = true; }
+    });
+    if (changed) setWatchlistGroups(groups);
+    var byId = {};
+    list.forEach(function(w){ byId[w.nftId] = w; });
+    var grouped = {};
+    var sections = groups.map(function(g){
+      var items = (g.items || []).map(function(id){ grouped[id] = true; return byId[id]; }).filter(Boolean);
+      return '<div class="wl-group" data-group="' + escapeHtml(g.id) + '">' +
+        '<div class="wl-group-head"><span class="wl-group-name">' + escapeHtml(g.name) + '</span><span class="wl-group-count">' + items.length + '</span>' +
+          '<button type="button" class="wl-group-delete" data-group="' + escapeHtml(g.id) + '" title="DELETE GR0UP (NFTS G0 BACK T0 UNGR0UPED)">&times;</button></div>' +
+        '<div class="wl-grid" data-group="' + escapeHtml(g.id) + '">' +
+          (items.length ? items.map(function(w){ return watchTileHtml(w, groups, g.id); }).join('') : '<div class="wl-drop-hint">' + (WATCH_TOUCH ? 'USE M0VE T0 0N AN NFT T0 ADD !T HERE' : 'DRAG NFTS HERE') + '</div>') +
+        '</div>' +
       '</div>';
     }).join('');
+    var loose = list.filter(function(w){ return !grouped[w.nftId]; });
+    var ungrouped = '<div class="wl-group wl-group-loose" data-group="">' +
+      (groups.length ? '<div class="wl-group-head"><span class="wl-group-name">UNGR0UPED</span><span class="wl-group-count">' + loose.length + '</span></div>' : '') +
+      '<div class="wl-grid" data-group="">' +
+        (loose.length ? loose.map(function(w){ return watchTileHtml(w, groups, null); }).join('') : '<div class="wl-drop-hint">' + (WATCH_TOUCH ? '' : 'DRAG HERE T0 UNGR0UP') + '</div>') +
+      '</div>' +
+    '</div>';
+    el.profileWatchlistGrid.innerHTML = createRow + sections + ungrouped;
   }
+  // Create / delete groups.
+  function createWatchlistGroup(){
+    var input = document.getElementById('wlCreateInput');
+    var name = input ? input.value.trim().toUpperCase() : '';
+    if (!name) { if (input) input.focus(); return; }
+    var groups = getWatchlistGroups();
+    groups.push({ id: 'g' + Date.now().toString(36), name: name.slice(0, 24), items: [] });
+    setWatchlistGroups(groups);
+    renderProfileWatchlist();
+  }
+  el.profileWatchlistGrid.addEventListener('keydown', function(e){
+    if (e.target.id === 'wlCreateInput' && e.key === 'Enter'){ e.preventDefault(); createWatchlistGroup(); }
+  });
+  el.profileWatchlistGrid.addEventListener('change', function(e){
+    var sel = e.target.closest('.wl-move');
+    if (!sel || !sel.value) return;
+    moveWatchlistItem(sel.getAttribute('data-nftid'), sel.value === '__none' ? null : sel.value);
+    renderProfileWatchlist();
+  });
+  // Drag and drop (desktop).
+  var wlDragId = null;
+  el.profileWatchlistGrid.addEventListener('dragstart', function(e){
+    var item = e.target.closest('.wl-item');
+    if (!item) return;
+    wlDragId = item.getAttribute('data-nftid');
+    item.classList.add('wl-dragging');
+    try { e.dataTransfer.setData('text/plain', wlDragId); e.dataTransfer.effectAllowed = 'move'; } catch (err){}
+  });
+  el.profileWatchlistGrid.addEventListener('dragend', function(e){
+    var item = e.target.closest('.wl-item');
+    if (item) item.classList.remove('wl-dragging');
+    el.profileWatchlistGrid.querySelectorAll('.wl-drop-over').forEach(function(n){ n.classList.remove('wl-drop-over'); });
+    wlDragId = null;
+  });
+  el.profileWatchlistGrid.addEventListener('dragover', function(e){
+    var zone = e.target.closest('.wl-group');
+    if (!zone || !wlDragId) return;
+    e.preventDefault();
+    try { e.dataTransfer.dropEffect = 'move'; } catch (err){}
+    el.profileWatchlistGrid.querySelectorAll('.wl-drop-over').forEach(function(n){ if (n !== zone) n.classList.remove('wl-drop-over'); });
+    zone.classList.add('wl-drop-over');
+  });
+  el.profileWatchlistGrid.addEventListener('drop', function(e){
+    var zone = e.target.closest('.wl-group');
+    if (!zone || !wlDragId) return;
+    e.preventDefault();
+    moveWatchlistItem(wlDragId, zone.getAttribute('data-group') || null);
+    wlDragId = null;
+    renderProfileWatchlist();
+  });
+  el.profileWatchlistBack.addEventListener('click', function(){ switchProfileTab(null); });
   el.profileWatchlistClearFilter.addEventListener('click', function(){
     state.watchlistFilterCollection = null;
     renderProfileWatchlist();
   });
   el.profileWatchlistGrid.addEventListener('click', function(e){
+    if (e.target.closest('#wlCreateBtn')){ createWatchlistGroup(); return; }
+    var delBtn = e.target.closest('.wl-group-delete');
+    if (delBtn){
+      setWatchlistGroups(getWatchlistGroups().filter(function(g){ return g.id !== delBtn.getAttribute('data-group'); }));
+      renderProfileWatchlist();
+      return;
+    }
+    if (e.target.closest('.wl-move')) return;
     var removeBtn = e.target.closest('.profile-watchlist-remove');
     if (removeBtn){
       e.stopPropagation();
@@ -24828,7 +24987,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // buttons with a selection of collections") — the box grid hides the
     // instant you click in, replaced entirely by the real collection
     // picker (myNftsPicker) instead of sitting above it.
-    var fullPage = tab === 'profiles' || tab === 'messages' || tab === 'offers' || tab === 'mynfts';
+    // WATCHL!ST too (reported live: it should replace the screen like every other tab).
+    var fullPage = tab === 'profiles' || tab === 'messages' || tab === 'offers' || tab === 'mynfts' || tab === 'watchlist';
     el.profileBoxGrid.style.display = fullPage ? 'none' : '';
     // Reported live: the S!GNAL N0DE/SESS!0N ACT!VE readout (decorative
     // flavour text, hardcoded to P!GE0NS regardless of collection) reads as
