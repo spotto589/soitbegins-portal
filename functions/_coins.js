@@ -9,15 +9,11 @@
 // xrpl.to only picks the coins and supplies the top-holder ranking and
 // the market-cap/price figures.
 //
-// Built in the background by cron-worker (its own "5-59/10" tick), ONE
-// coin per tick: a coin's checks cost ~20-25 subrequests, and Cloudflare's
-// per-invocation budget is 50 (HANDOFF.md gotcha 4), so two per tick would
-// be one slow xrplcluster retry away from blowing it. The in-progress
-// build lives in its own KV key and is only published as the real list
-// once every coin is done, so the page never shows a half-built list.
-// KV writes: one per tick while a build runs (~13 per build), one build
-// every POPULAR_COINS_MAX_AGE_MS — ~80/day against the account-wide
-// 1,000/day free-tier cap (HANDOFF.md).
+// Built in the background by cron-worker (its own "5-59/10" tick): the
+// whole list in one run once the published one is older than
+// POPULAR_COINS_MAX_AGE_MS. A coin's checks cost ~25 subrequests, so a
+// full build is ~300 — fine on the paid Workers plan (1,000 per
+// invocation), not on the free one (50). One KV write per build.
 //
 // Buying goes through the exact same BUY swap panel/endpoints as the
 // collection tokens — a coin's trade key is 'coin:<xrpl.to md5>' and the
@@ -27,8 +23,7 @@
 import { fetchXrplClusterJson, safeKvPut, POPULAR_COINS_KEY } from './_shared.js';
 
 export { POPULAR_COINS_KEY };
-const POPULAR_COINS_WIP_KEY = 'pcoins:wip:v1';
-const POPULAR_COINS_MAX_AGE_MS = 4 * 60 * 60 * 1000;
+const POPULAR_COINS_MAX_AGE_MS = 60 * 60 * 1000;
 const POPULAR_COINS_CANDIDATES = 12; // xrpl.to's top N by market cap
 const POPULAR_COINS_SHOWN = 10;      // published list size
 const MAX_ATTEMPTS_PER_COIN = 2;
@@ -256,37 +251,34 @@ async function fetchCandidates() {
 }
 
 // Called on every cron tick. No-ops (one KV read, no writes) while the
-// published list is fresh and no build is running.
+// published list is fresh.
 export async function stepPopularCoins(kv) {
   if (!kv) return { skipped: 'no_kv' };
-  const [listRaw, wipRaw] = await Promise.all([kv.get(POPULAR_COINS_KEY), kv.get(POPULAR_COINS_WIP_KEY)]);
+  const listRaw = await kv.get(POPULAR_COINS_KEY);
   const list = listRaw ? JSON.parse(listRaw) : null;
-  let wip = wipRaw ? JSON.parse(wipRaw) : null;
-  if (!wip) {
-    if (list && Date.now() - list.updatedAt < POPULAR_COINS_MAX_AGE_MS) return { skipped: 'fresh' };
-    const candidates = await fetchCandidates();
-    if (!candidates) return { error: 'candidates_failed' };
-    wip = { startedAt: Date.now(), candidates, next: 0, attempts: 0, done: [] };
+  if (list && Date.now() - list.updatedAt < POPULAR_COINS_MAX_AGE_MS) return { skipped: 'fresh' };
+  const candidates = await fetchCandidates();
+  if (!candidates) return { error: 'candidates_failed' };
+  const done = [];
+  const failed = [];
+  for (const c of candidates) {
+    let row = null;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS_PER_COIN && !row; attempt++) {
+      // A breather between coins (longer before a retry) — back-to-back
+      // coins are exactly what gets xrplcluster to answer slowDown.
+      if (done.length || failed.length || attempt) await new Promise(r => setTimeout(r, attempt ? 5000 : 2000));
+      try { row = await checkCoin(c); } catch (e) { row = null; }
+    }
+    if (row) done.push(row); else failed.push(c.name);
   }
-  const c = wip.candidates[wip.next];
-  let row = null;
-  try { row = await checkCoin(c); } catch (e) { row = null; }
-  if (row) {
-    wip.done.push(row);
-    wip.next++; wip.attempts = 0;
-  } else if (++wip.attempts >= MAX_ATTEMPTS_PER_COIN) {
-    wip.next++; wip.attempts = 0; // give up on this one for this build
-  }
-  if (wip.next >= wip.candidates.length) {
-    const coins = wip.done
-      .sort((a, b) => (b.marketCapUsd || 0) - (a.marketCapUsd || 0))
-      .slice(0, POPULAR_COINS_SHOWN);
-    if (coins.length) await safeKvPut(kv, POPULAR_COINS_KEY, JSON.stringify({ updatedAt: Date.now(), coins }));
-    await kv.delete(POPULAR_COINS_WIP_KEY).catch(() => {});
-    return { published: coins.length };
-  }
-  await safeKvPut(kv, POPULAR_COINS_WIP_KEY, JSON.stringify(wip));
-  return { checked: c.name, ok: !!row, progress: wip.next + '/' + wip.candidates.length };
+  // A mostly-failed run (ledger/xrpl.to trouble) keeps the old list up and
+  // tries again next tick, rather than publishing a thin one.
+  if (done.length < Math.min(POPULAR_COINS_SHOWN, candidates.length) / 2) return { error: 'too_many_failed', failed };
+  const coins = done
+    .sort((a, b) => (b.marketCapUsd || 0) - (a.marketCapUsd || 0))
+    .slice(0, POPULAR_COINS_SHOWN);
+  await safeKvPut(kv, POPULAR_COINS_KEY, JSON.stringify({ updatedAt: Date.now(), coins }));
+  return { published: coins.length, failed };
 }
 
 export async function getPopularCoins(kv) {
