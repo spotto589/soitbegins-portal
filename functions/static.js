@@ -921,14 +921,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .flock-account-box-corner-tl{ top:-1px; left:-1px; border-top:2px solid var(--magenta); border-left:2px solid var(--magenta); }
   .flock-account-box-corner-br{ bottom:-1px; right:-1px; border-bottom:2px solid var(--magenta); border-right:2px solid var(--magenta); }
   .flock-account-box-clickable.active .flock-account-box-corner{ opacity:1; }
-  /* Panel-level version of the same corner bracket — all 4 corners, always
-     on (see the HTML's own comment on .scylla-nav-panel), scaled up since
-     it's framing the whole panel, not one row. */
-  .scylla-panel-corner{ position:absolute; z-index:1; width:18px; height:18px; pointer-events:none; }
-  .scylla-panel-corner-tl{ top:6px; left:6px; border-top:2px solid var(--cyan); border-left:2px solid var(--cyan); }
-  .scylla-panel-corner-tr{ top:6px; right:6px; border-top:2px solid var(--cyan); border-right:2px solid var(--cyan); }
-  .scylla-panel-corner-bl{ bottom:6px; left:6px; border-bottom:2px solid var(--cyan); border-left:2px solid var(--cyan); }
-  .scylla-panel-corner-br{ bottom:6px; right:6px; border-bottom:2px solid var(--cyan); border-right:2px solid var(--cyan); }
   /* NOT a blanket opacity any more — same fix as the MAINFRAME tape
      banner's own (see .mainframe-card-soon's comment): dimming the
      whole box compounds with the label/badge's own already-dim colour
@@ -2224,63 +2216,19 @@ const SWAP_HTML = `<!DOCTYPE html>
      room for #myPigeonsPanel's own real height whenever that's ALSO
      visible (logged out), and still fills the entire leftover height
      when it's the only thing showing (logged in). */
-  #profilePanelWrap{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; border:1px solid var(--cyan-dim); border-radius:0; background:#000; backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none; }
+  #profilePanelWrap{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; border:none; border-radius:0; background:transparent; backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none; }
   #profilePanelWrap::before{ display:none; }
-  /* Decorative edge-noise columns — present in the reference image,
-     deferred earlier as a stretch goal ("this is a bit generic" brought
-     it back into scope). CSS-only rather than a 3rd/4th live canvas —
-     cheaper for a purely decorative accent than true per-pixel random
-     noise, same cyan/magenta/black palette as everything else on this
-     tab. Hidden below 900px (see the media query further down) — no
-     spare width to sacrifice on a phone-width panel. */
-  .scylla-frame-edge{
-    position:absolute;
-    top:0;
-    bottom:0;
-    width:16px;
-    pointer-events:none;
-    background:
-      repeating-linear-gradient(115deg, rgba(61,243,236,0.5) 0 2px, transparent 2px 7px),
-      repeating-linear-gradient(65deg, rgba(255,63,208,0.45) 0 1px, transparent 1px 11px),
-      repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 3px);
-    background-size:100% 40px, 100% 55px, 100% 6px;
-    opacity:0.8;
-    animation:scylla-edge-scroll 3.5s linear infinite;
-  }
-  .scylla-frame-edge-left{ left:0; }
-  .scylla-frame-edge-right{ right:0; }
-  @keyframes scylla-edge-scroll{
-    0%{ background-position:0 0, 0 0, 0 0; }
-    100%{ background-position:0 160px, 0 -220px, 0 60px; }
-  }
-  /* Completes the frame — top/bottom, same technique as the left/right
-     bars, just laid out across instead of down (reported live wanting
-     more of these "all over"). */
-  .scylla-frame-edge-h{ top:0; bottom:auto; left:0; right:0; width:auto; height:16px; animation:scylla-edge-scroll-h 3.5s linear infinite; }
-  .scylla-frame-edge-top{ top:0; }
-  .scylla-frame-edge-bottom{ top:auto; bottom:0; }
-  @keyframes scylla-edge-scroll-h{
-    0%{ background-position:0 0, 0 0, 0 0; }
-    100%{ background-position:160px 0, -220px 0, 60px 0; }
-  }
-  @media (max-width:900px){ .scylla-frame-edge{ display:none; } }
   /* flex:1 1 auto + min-height:0 lets this genuinely fill #profilePanelWrap's
      fixed height (min-height:0 overrides flex's default "never shrink
      below content size" — without it, 7 rows' natural content height
      would just overflow and force the scrollbar right back). Its own
      header/grid/readout children flex the same way below. */
-  /* Σκύλλα://SYSTEM — the real digitalglitchpattern.png artwork as a base
-     layer (reported live) plus a genuinely animated cyan/pink static
-     canvas back on top of it (scyllaNavStaticBg, see its own JS comment)
-     — a still photo alone read as "just black" (reported live) since
-     large stretches of the source image are plain dark background
-     between its own glitch clusters, and background-size:cover can crop
-     straight into one of those stretches depending on the panel's real
-     aspect ratio. The live static guarantees real cyan/pink presence no
-     matter which patch of the photo ends up behind it. Scrim opacity
-     dropped (was 0.72) now that the moving static carries most of the
-     colour — the photo just needs to stay dark enough for text contrast,
-     not be the only source of colour any more. */
+  /* Σκύλλα://SYSTEM — a plain dark terminal box: no border, no photo, no
+     static inside (reported live 2026-09-26: "i just dont like the
+     border, and the two backgrounds... put the coloured static on the
+     outside of the box, and keep the terminal background without the
+     static"). The coloured static is now the page around it — see
+     .scylla-nav-static below. Only the faint scanlines (::before) stay. */
   .scylla-nav-panel{
     /* Main text in here reads pink now (reported live) — every element
        inside that already keys off --profile-accent-rgb (the title,
@@ -2294,39 +2242,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     flex-direction:column;
     flex:1 1 auto;
     min-height:0;
-    border:2px solid var(--cyan-dim);
+    border:none;
     border-radius:0;
-    background:
-      linear-gradient(rgba(5,5,6,0.45), rgba(5,5,6,0.45)),
-      url('/assets/digitalglitchpattern.png');
-    background-size:cover;
-    background-position:center;
-    box-shadow:0 0 24px rgba(255,51,204,0.15), inset 0 0 60px rgba(0,0,0,0.55);
+    background:#050506;
     padding:1.25rem 1rem 1.5rem;
     overflow:hidden;
   }
+  /* The coloured cyan/pink static, as the page background AROUND the
+     Σκύλλα://SYSTEM box (body.paws-view — the Σκύλλα hub itself), behind
+     .page (z-index:1). */
   .scylla-nav-static{
-    position:absolute;
+    display:none;
+    position:fixed;
     inset:0;
     width:100%;
     height:100%;
-    opacity:0.8;
-    mix-blend-mode:screen;
+    z-index:0;
+    pointer-events:none;
+    opacity:0.55;
     animation:static-shake 1.1s steps(2) infinite;
   }
-  /* Soft cyan/magenta corner glows echoing the source image's own bright
-     "spark node" highlights — one per top corner, same colours the rest
-     of the panel's chrome already uses, nothing fabricated. */
-  .scylla-nav-panel::after{
-    content:'';
-    position:absolute;
-    inset:0;
-    pointer-events:none;
-    background:
-      radial-gradient(circle at 8% 4%, rgba(61,243,236,0.28), transparent 32%),
-      radial-gradient(circle at 96% 8%, rgba(255,51,204,0.24), transparent 30%);
-    mix-blend-mode:screen;
-  }
+  body.paws-view .scylla-nav-static{ display:block; }
   .scylla-nav-panel::before{
     content:'';
     position:absolute;
@@ -2441,9 +2377,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      list this pass had built up to), multiple rows of 3 as boxes wrap.
      Every per-box effect (icon/accent-bar/chamfer/noise-text/active/
      hover) is untouched — this is purely the container's own layout. */
-  .profile-box-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.5rem; margin-top:0.75rem; margin-bottom:0.75rem; }
-  @media (max-width:700px){ .profile-box-grid{ grid-template-columns:repeat(2, 1fr); } }
-  @media (max-width:460px){ .profile-box-grid{ grid-template-columns:1fr; } }
+  /* minmax(0, 1fr), not 1fr — a plain 1fr column grows to its row's own
+     text width, which pushed each row past the panel's edge on phones
+     (its chamfered right side got cut off by the grid's overflow). */
+  .profile-box-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0.5rem; margin-top:0.75rem; margin-bottom:0.75rem; }
+  @media (max-width:700px){ .profile-box-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+  @media (max-width:460px){ .profile-box-grid{ grid-template-columns:minmax(0, 1fr); } }
   /* PR0F!LES/0FFERS/C0LLECT!0NS/CR0WN etc all use the same strong magenta
      "currently open" glitch treatment once picked — the reference's own
      "active page" look. A continuous but subtle flicker (reusing
@@ -4065,10 +4004,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      always-visible-strip rules above (now disabled, kept only for
      reference) and the plain .traits-flyout/.flyout-flat base rules
      without having to edit either. ---- */
+  /* Opaque + its own DATABASE static canvas (addModalStaticBackgrounds),
+     same as every other pop-up's backdrop now. */
   .flyout-popup-backdrop{
     display:none;
     position:fixed; inset:0;
-    background:rgba(4,4,6,0.72);
+    background:var(--bg);
     z-index:1900;
   }
   .flyout-popup-backdrop.open{ display:block; }
@@ -6119,15 +6060,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      0FFER/BUY $P!GE0NS's own confirm modals (#offerConfirmModal etc. —
      see that shared selector group's own comment) instead of a small
      dropdown anchored under the toggle button. */
-  #pigeonsCalcModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  #pigeonsCalcModal{ display:none; position:fixed; inset:0; z-index:1000; background:var(--bg); align-items:center; justify-content:center; padding:2rem 1rem; }
   /* T0P 123 H0LDERS/SALES H!ST0RY — same real overlay treatment as
      #pigeonsCalcModal right above (reported live as wanting these off
      their own top-level tabs and into the DATABASE banner instead), just
      wider and taller since both hold a real scrollable list rather than
      a single calculator row. */
-  #topHoldersModal, #salesModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  #topHoldersModal, #salesModal{ display:none; position:fixed; inset:0; z-index:1000; background:var(--bg); align-items:center; justify-content:center; padding:2rem 1rem; }
   /* N0T!F!CAT!0NS popup — SALES H!ST0RY's look, narrower. */
-  #notifyModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  #notifyModal{ display:none; position:fixed; inset:0; z-index:1000; background:var(--bg); align-items:center; justify-content:center; padding:2rem 1rem; }
   /* Fits and scrolls on a phone (reported live 2026-09-25: the phone
      section was cut off on iPhone with no way to reach it). */
   #notifyModal{ overflow-y:auto; -webkit-overflow-scrolling:touch; }
@@ -7123,6 +7064,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (prefers-reduced-motion: reduce){
     .local-static-bg{ display:none; }
   }
+  /* Pop-ups: the backdrop around the (unchanged, solid) box is the same
+     TV static as DATABASE (reported live: "make the background the same
+     static background we have for the database") — an opaque var(--bg)
+     backdrop plus its own .local-static-bg canvas, injected at startup by
+     addModalStaticBackgrounds, instead of the old see-through dark tint
+     over the page. */
   /* Named grid areas so PIGEON #N sits in its own row above just the
      picture's column, while RARITY/RARITY SCORE (the right column's first
      row) starts level with the picture's own top — not pushed down by
@@ -7339,7 +7286,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* RARITY SCORE popup (reported live: the full breakdown + set badges
      under the picture was too much — now just the number + EXPAND there,
      everything else in this popup). Same overlay treatment as SALES. */
-  #rarityModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  #rarityModal{ display:none; position:fixed; inset:0; z-index:1000; background:var(--bg); align-items:center; justify-content:center; padding:2rem 1rem; }
   #rarityModal .rarity-modal-panel{ width:min(560px, 100%); max-height:min(85vh, 820px); display:flex; flex-direction:column; text-align:left; background:var(--panel-bg-solid); border:1px solid var(--border-mid); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.6); padding:1.2rem 1.3rem; animation:offer-confirm-pop 0.2s ease; }
   #rarityModal .rb-lore-head{ margin-top:1rem; padding-top:0.6rem; border-top:1px dashed var(--border-mid); color:var(--magenta); font-weight:700; font-size:11px; letter-spacing:0.03em; text-transform:uppercase; }
   #rarityModal .rarity-modal-badges{ margin:0 0 0.8rem; padding-bottom:0.6rem; border-bottom:1px solid var(--border-mid); font-size:12px; text-transform:uppercase; letter-spacing:0.04em; line-height:1.6; }
@@ -7757,7 +7704,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:fixed;
     inset:0;
     z-index:1000;
-    background:rgba(5,5,6,0.88);
+    background:var(--bg);
     align-items:center;
     justify-content:center;
     padding:2rem 1rem;
@@ -8540,7 +8487,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:fixed;
     inset:0;
     z-index:1000;
-    background:rgba(5,5,6,0.88);
+    background:var(--bg);
     align-items:center;
     justify-content:center;
     padding:2rem 1rem;
@@ -8591,7 +8538,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:fixed;
     inset:0;
     z-index:1000;
-    background:rgba(5,5,6,0.88);
+    background:var(--bg);
     align-items:center;
     justify-content:center;
     padding:2rem 1rem;
@@ -8626,7 +8573,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:fixed;
     inset:0;
     z-index:1000;
-    background:rgba(5,5,6,0.88);
+    background:var(--bg);
     align-items:center;
     justify-content:center;
     padding:2rem 1rem;
@@ -8775,7 +8722,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     position:fixed;
     inset:0;
     z-index:1000;
-    background:rgba(5,5,6,0.88);
+    background:var(--bg);
     align-items:center;
     justify-content:center;
     padding:2rem 1rem;
@@ -10041,6 +9988,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 <body>
 
   <canvas id="staticBg"></canvas>
+  <canvas class="scylla-nav-static" id="scyllaNavStaticBg"></canvas>
 
   <!-- GL0BAL T0P BAR — ONE real banner (reported live as "we have two
        banners, just make it the one"), now exactly two equal halves
@@ -10530,21 +10478,7 @@ const SWAP_HTML = `<!DOCTYPE html>
            .active (magenta, toggled by switchProfileTab already) is
            already exactly "the currently selected page" this reference
            calls for — no new state needed for that part. -->
-      <div class="scylla-frame-edge scylla-frame-edge-left" aria-hidden="true"></div>
-      <div class="scylla-frame-edge scylla-frame-edge-right" aria-hidden="true"></div>
-      <div class="scylla-frame-edge scylla-frame-edge-h scylla-frame-edge-top" aria-hidden="true"></div>
-      <div class="scylla-frame-edge scylla-frame-edge-h scylla-frame-edge-bottom" aria-hidden="true"></div>
       <div class="scylla-nav-panel">
-        <canvas class="scylla-nav-static" id="scyllaNavStaticBg"></canvas>
-        <!-- Panel-level HUD corners — always on (this frame isn't
-             "active/inactive," it's what everything else sits inside),
-             same two-border-side technique the row corners already use,
-             just scaled up. Reinforces "a deliberately designed
-             instrument panel" per the "better designing job" ask. -->
-        <span class="scylla-panel-corner scylla-panel-corner-tl" aria-hidden="true"></span>
-        <span class="scylla-panel-corner scylla-panel-corner-tr" aria-hidden="true"></span>
-        <span class="scylla-panel-corner scylla-panel-corner-bl" aria-hidden="true"></span>
-        <span class="scylla-panel-corner scylla-panel-corner-br" aria-hidden="true"></span>
         <!-- Σκύλλα://SYSTEM — a real branded header for this whole tab
              (reported live wanting it to read as "her own branded system
              page," not a generic dashboard), reusing .profile-code-title's
@@ -15963,8 +15897,12 @@ const SWAP_HTML = `<!DOCTYPE html>
           // absent from just the 1ST/2ND EDITION slice currently selected
           // — say so specifically instead of the generic "no match".
           el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', ['TRA!T D0ES N0T EX!ST !N TH!S C0LLECT!0N.'], true);
+          wireClearSearch();
         } else {
           el.resultsArea.innerHTML = emptyStateHtml('// N0 P!GE0N MATCH', filters.length ? ['0 C0MB!NAT!0NS 0F THESE TRA!TS EX!ST.'] : ['TRY AGA!N.'], filters.length > 0, 'RESET');
+          // The button was drawn but never wired (reported live: "the
+          // reset button doesnt work here").
+          wireClearSearch();
         }
       } else if (!state.hasMore){
         el.endOfCollectionNote.style.display = '';
@@ -26303,6 +26241,27 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (wallet) openWalletProfile(wallet, shortAddr(wallet));
   })();
   startStaticCanvas(document.getElementById('staticBg'));
+  (function addModalStaticBackgrounds(){
+    ['pigeonsCalcModal','topHoldersModal','salesModal','notifyModal','rarityModal','offerConfirmModal','transferConfirmModal',
+     'acceptTransferConfirmModal','buySwapModal','buyConfirmModal','delistConfirmModal','acceptOfferConfirmModal',
+     'conspiracyPickerModal','simpleOfferPickerModal','amountEntryModal','historyModal','profileEditModal'].forEach(function(id){
+      var modal = document.getElementById(id);
+      if (!modal) return;
+      var c = document.createElement('canvas');
+      c.className = 'local-static-bg';
+      modal.insertBefore(c, modal.firstChild);
+      // Only draws while this pop-up is actually open.
+      startStaticCanvas(c, function(){ return modal.style.display !== '' && modal.style.display !== 'none'; });
+    });
+    // S0RT BY / F!LTER BY TRA!TS share one backdrop, shown via .open.
+    var fb = document.getElementById('flyoutPopupBackdrop');
+    if (fb){
+      var fc = document.createElement('canvas');
+      fc.className = 'local-static-bg';
+      fb.appendChild(fc);
+      startStaticCanvas(fc, function(){ return fb.classList.contains('open'); });
+    }
+  })();
   startStaticCanvas(document.getElementById('detailStaticBg'), function(){
     return document.getElementById('screenDetail').style.display !== 'none';
   });
@@ -26323,7 +26282,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // pattern as every other local static canvas, gated on the whole tab
   // being open rather than one specific screen.
   startStaticCanvas(document.getElementById('scyllaNavStaticBg'), function(){
-    return state.activeTab === 'mypigeons';
+    return document.body.classList.contains('paws-view');
   }, 'color-calm');
 })();
 </script>
