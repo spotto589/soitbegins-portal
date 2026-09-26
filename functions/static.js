@@ -7209,6 +7209,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* Grey text didn't read on the solid boxes (reported live: "we need
      white text") — secondary text inside pop-ups is white instead. */
+  /* Softer shapes inside pop-ups (reported live: all-black boxes read as
+     "very square and rectangle everywhere") — the site's sharp --radius:0
+     becomes rounded corners for the pop-up and every box in it, and the
+     buttons are pills. The static layer behind follows the same corners. */
+  .popup-static-box{ --radius:14px; border-radius:14px; }
+  .popup-static-box :is(.action-btn, .secondary-btn, .bar-btn, .sale-currency-btn, .pigeons-calc-toggle-btn, .profile-holdings-viewmore, .th-expand-btn){ border-radius:999px; }
   .popup-static-box{ --grey:var(--white); --grey-dim:var(--white); --border-mid:rgba(var(--collection-accent-rgb, 136,72,248), 0.75); --border-dim:rgba(var(--collection-accent-rgb, 136,72,248), 0.45); }
   /* Bordered boxes inside a pop-up that set no background of their own get
      the pop-up's solid colour (tagged by addPopupStatic), so the static
@@ -8263,6 +8269,37 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-modal-panel .buyswap-trustline-warning,
   .buyswap-modal-panel .buyswap-direction .sale-currency-btn{ background-color:#000 !important; }
   .buyswap-stats-box{ border:1px solid var(--border-mid); border-radius:var(--radius); padding:0.75rem 1rem; margin:1rem auto; }
+  /* SWAP, less blocky (reported live): one column at one width, fewer
+     separate outlines. BUY/SELL is a single segmented switch, the balances
+     one split box, Y0U PAY/Y0U RECE!VE two cards with their labels inside
+     and a round flip button sitting on the seam between them, the quote
+     details one quiet box, BACK and S!GN AND SWAP sharing a row. Only the
+     pay/receive cards glow (more while typing) — the rest keep quiet
+     borders so the eye goes straight to the amounts. */
+  #buySwapModal .buyswap-modal-panel{ --swap-w:400px; }
+  #buySwapModal #buySwapQuoteSection > *,
+  #buySwapModal .buyswap-direction,
+  #buySwapModal .buyswap-balances-row,
+  #buySwapModal #buySwapEntryState > .detail-actions{ width:100%; max-width:var(--swap-w); margin-left:auto; margin-right:auto; box-sizing:border-box; }
+  #buySwapModal .popup-glow{ box-shadow:none; }
+  #buySwapModal .buyswap-direction{ display:flex; gap:0; padding:3px; margin-bottom:0.9rem; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); background:#000; }
+  #buySwapModal .buyswap-direction .sale-currency-btn{ flex:1 1 0; min-width:0; margin:0; border:none; border-radius:var(--radius); color:var(--white); font-size:15px; padding:0.55em 0; text-shadow:none; }
+  #buySwapModal .buyswap-direction .sale-currency-btn-active{ background-color:rgba(var(--collection-accent-rgb), 0.9) !important; color:#fff; }
+  #buySwapModal .buyswap-balances-row{ gap:0; margin-bottom:1.1rem; border:1px solid rgba(var(--collection-accent-rgb), 0.35); border-radius:var(--radius); background:#000; }
+  #buySwapModal .buyswap-balance-tile{ border:none; border-radius:0; padding:0.7em 0.5em; }
+  #buySwapModal .buyswap-balance-tile + .buyswap-balance-tile{ border-left:1px solid rgba(var(--collection-accent-rgb), 0.35); }
+  #buySwapModal .buyswap-row{ position:relative; }
+  #buySwapModal .buyswap-row .buyswap-label{ position:absolute; top:0.6rem; left:0.95rem; z-index:1; margin:0; text-align:left; font-size:12px; letter-spacing:0.14em; pointer-events:none; }
+  #buySwapModal .buyswap-input-wrap{ padding:1.9rem 1rem 0.8rem; border-color:rgba(var(--collection-accent-rgb), 0.55); box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.22); }
+  #buySwapModal .buyswap-input-wrap:focus-within{ border-color:var(--collection-accent); box-shadow:0 0 16px rgba(var(--collection-accent-rgb), 0.45); }
+  #buySwapModal #buySwapQuoteSection > .buyswap-flip{ position:relative; z-index:2; width:2.5rem; max-width:2.5rem; height:2.5rem; margin:-0.95rem auto; border-radius:50%; border:1px solid rgba(var(--collection-accent-rgb), 0.8); box-shadow:0 0 0 4px #000; font-size:20px; color:var(--collection-accent); }
+  #buySwapModal #buySwapQuoteSection > .buyswap-flip:hover{ border-color:var(--collection-accent); box-shadow:0 0 0 4px #000, 0 0 12px rgba(var(--collection-accent-rgb), 0.5); }
+  #buySwapModal #buySwapStatus{ margin:0.6rem auto 0; }
+  #buySwapModal .buyswap-stats-box{ margin:0.9rem auto 0.4rem; border-color:rgba(var(--collection-accent-rgb), 0.3); }
+  #buySwapModal .buyswap-stats-box .detail-field + .detail-field{ border-top:1px solid rgba(var(--collection-accent-rgb), 0.15); padding-top:0.3rem; }
+  #buySwapModal #buySwapEntryState > .detail-actions{ display:flex; gap:0.6rem; margin-top:1rem; }
+  #buySwapModal #buySwapEntryState > .detail-actions > button{ flex:1 1 0; margin:0; }
+  #buySwapModal #buySwapSignBtn:not(:disabled){ background-color:var(--collection-accent) !important; border-color:var(--collection-accent); color:#fff; text-shadow:none; }
   .buyswap-stats-box .detail-field{ margin:0.25rem 0; gap:0.75rem; align-items:baseline; }
   .buyswap-modal-panel .buyswap-stats-box .df-label{ font-size:12px; white-space:nowrap; }
   .buyswap-modal-panel .buyswap-stats-box .df-value{ font-size:15px; white-space:nowrap; text-align:right; }
@@ -26722,7 +26759,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         left = r.left + window.scrollX;
         top = r.top + window.scrollY;
       }
-      var key = [Math.round(left), Math.round(top), Math.round(r.width), Math.round(r.height), isNaN(z) ? -1 : z - 1, cs.opacity].join('|');
+      var key = [Math.round(left), Math.round(top), Math.round(r.width), Math.round(r.height), isNaN(z) ? -1 : z - 1, cs.opacity, cs.borderRadius].join('|');
       if (key !== L.key){
         L.key = key;
         var k = key.split('|');
@@ -26730,6 +26767,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         layer.style.width = k[2] + 'px'; layer.style.height = k[3] + 'px';
         layer.style.zIndex = k[4];
         layer.style.opacity = k[5];
+        layer.style.borderRadius = k[6];
         var cw = Math.max(1, Math.round(r.width / 3)), ch = Math.max(1, Math.round(r.height / 3));
         if (L.canvas.width !== cw || L.canvas.height !== ch){ L.canvas.width = cw; L.canvas.height = ch; drawNoise(L); }
       }
