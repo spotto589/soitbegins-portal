@@ -2588,15 +2588,49 @@ const SWAP_HTML = `<!DOCTYPE html>
      the SYSTEM grid's boxes last measured at (--sys-box-h, kept by
      trackSystemBoxHeight). Top-aligned like the SYSTEM grid. */
   .profiles-hub{ text-align:left; }
-  .profiles-hub-banner{ margin-top:0.75rem; }
+  .profiles-hub-banner{ margin-top:0.75rem; flex:0 0 auto; }
   .profiles-hub-banner:empty{ display:none; }
+  /* One page, no scroll (reported live): the hub fills exactly what's
+     left of the panel — banner at its natural (compacted) height, then
+     the box rows share the rest, each up to the SYSTEM boxes' own height
+     and shrinking below it only when the screen is too short. */
+  #profileTabPanelProfiles:not(.profiles-editing){ display:flex; flex-direction:column; overflow:hidden; }
+  #profileTabPanelProfiles:not(.profiles-editing) > .profiles-hub{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+  #profileTabPanelProfiles:not(.profiles-editing) > #profilesBackBtn{ flex:0 0 auto; }
+  .profiles-hub-banner .profile-banner{ padding:1rem; gap:1rem; }
+  .profiles-hub-banner .profile-avatar-wrap{ margin-bottom:calc(-1rem - 1px); }
+  .profiles-hub-banner .profile-current-avatar{ width:140px; height:140px; }
+  .profiles-hub-banner .profile-banner-code{ line-height:1.5; padding:0.6rem 0.9rem; }
   /* Search across the top, V!EW/ED!T side by side underneath — on every
      width (they're short enough to share a phone row). */
-  .profile-box-grid.profiles-hub-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); grid-auto-rows:auto; }
-  .profiles-hub-grid > .flock-account-box{ height:calc(var(--sys-box-h, 5.5rem) - 28px); }
+  .profile-box-grid.profiles-hub-grid{
+    flex:1 1 auto; min-height:0;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    grid-template-rows:minmax(0, calc(var(--sys-box-h, 5.5rem) - 28px)) auto minmax(0, calc(var(--sys-box-h, 5.5rem) - 28px));
+    align-content:start; row-gap:0.75rem;
+  }
+  .profiles-hub-grid > .flock-account-box{ margin-bottom:0; min-height:0; }
   .profiles-hub-search-box, .profiles-hub-grid > .profile-search-results{ grid-column:1 / -1; }
-  .profiles-hub-grid > .profile-search-results{ margin:-0.5rem 0 1rem; }
+  .profiles-hub-grid > .profile-search-results{ margin:0; max-height:14rem; overflow-y:auto; }
   .profiles-hub-grid > .profile-search-results:empty{ display:none; }
+  .profiles-hub-grid > .profiles-hub-search-box{ grid-row:1; }
+  .profiles-hub-grid > .profile-search-results{ grid-row:2; }
+  .profiles-hub-grid > .profiles-hub-btn{ grid-row:3; }
+  @media (max-width:640px){
+    .profiles-hub-banner .profile-current-avatar{ width:96px; height:96px; }
+    /* Phone: tighter banner, !DENT!TY in two columns, shorter button
+       labels (no // or arrow) so nothing wraps or gets clipped. */
+    .profiles-hub-banner .profile-banner{ padding:0.75rem; gap:0.6rem; }
+    .profiles-hub-banner .profile-banner-code{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); column-gap:1rem; font-size:11px; line-height:1.45; }
+    .profiles-hub-banner .profile-banner-code .profile-code-title{ grid-column:1 / -1; }
+    .profile-box-grid.profiles-hub-grid{ grid-template-rows:minmax(3.25rem, calc(var(--sys-box-h, 5.5rem) - 28px)) auto minmax(3.25rem, calc(var(--sys-box-h, 5.5rem) - 28px)); }
+    .profiles-hub-grid > .flock-account-box{ padding:0.5rem 0.75rem; }
+    .profiles-hub-grid .flock-account-box-row{ gap:0.5rem; }
+    .profiles-hub-grid .flock-account-box-label{ font-size:13px; letter-spacing:0.04em; }
+    .profiles-hub-grid .profiles-hub-btn .flock-account-box-prefix,
+    .profiles-hub-grid .profiles-hub-btn .flock-account-box-arrow{ display:none; }
+    .profiles-hub-search-input{ font-size:14px; }
+  }
   .profiles-hub-grid button.flock-account-box{ font:inherit; color:inherit; width:100%; -webkit-appearance:none; appearance:none; }
   .profiles-hub-search-box{ cursor:text; }
   .profiles-hub-search-input{
@@ -6905,6 +6939,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Worn title badge — small pill next to the username on the shared
      .profile-banner (profileScreenBannerHtml), same "the worn identity"
      the user asked for. */
+  .profile-title-badge.profile-avatar-title{ position:absolute; top:0; left:calc(100% + 4px); margin:0; writing-mode:vertical-rl; white-space:nowrap; background:rgba(5,5,6,0.72); padding:0.5em 0.15em; }
   .profile-title-badge{ display:inline-block; margin-left:0.5em; padding:0.15em 0.5em; border:1px solid rgb(var(--profile-accent-rgb, 61,243,236)); border-radius:var(--radius); font-size:10px; font-weight:700; letter-spacing:0.05em; color:rgb(var(--profile-accent-rgb, 61,243,236)); text-shadow:0 0 5px rgba(var(--profile-accent-rgb, 61,243,236),0.5); vertical-align:middle; }
   /* DATABASE M0DE / SH0WCASE M0DE — a real toggle, not a stored owner
      preference (see the HTML's own comment) — same two-button active-
@@ -23155,7 +23190,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Σκύλλα://!DENT!TY — lives inside every profile banner now (reported
   // live: "this part should be in the banner"), not as its own block under
   // it. Rows (reported live): N0DE, ACT!VATED (the wallet's real XRPL
-  // activation), !NCEPT!0N (first Σκύλλα sign-in), T!TLE, NFTS,
+  // activation), !NCEPT!0N (first Σκύλλα sign-in), T!TLES (count), NFTS,
   // C0LLECT!0NS. STATUS/CLASS/TRUST/S!GNAL were dropped — CLASS by request,
   // TRUST/S!GNAL were placeholders that never showed anything real.
   // State is per wallet and every banner showing that wallet is patched
@@ -23178,13 +23213,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     function row(label, value, isPending){
       return '<div class="profile-code-row' + (isPending ? ' pending' : '') + '"><span>' + label + '</span><span>' + value + '</span></div>';
     }
-    var titleDef = (profile && profile.equippedTitle) ? ACHIEVEMENT_DEFS.find(function(d){ return d.id === profile.equippedTitle && d.kind === 'title'; }) : null;
     var activated = identityDate(st.activated), inception = identityDate(st.firstSignIn);
     return '<div class="profile-code-title">Σκύλλα://!DENT!TY</div>' +
       row('N0DE', escapeHtml(computeNodeCode(wallet, profile && profile.nodeCode))) +
       row('ACT!VATED', activated || (st.datesLoaded ? 'UNKN0WN' : 'PEND!NG'), !activated) +
       row('!NCEPT!0N', inception || (st.datesLoaded ? 'N0T YET' : 'PEND!NG'), !inception) +
-      row('T!TLE', titleDef ? escapeHtml(titleDef.label) : 'N0NE SET', !titleDef) +
+      // How many titles this wallet has unlocked (reported live: a number,
+      // not the worn one — that sits beside the picture now).
+      row('T!TLES', st.titles == null ? 'PEND!NG' : st.titles, st.titles == null) +
       row('NFTS', st.nfts == null ? 'PEND!NG' : st.nfts, st.nfts == null) +
       row('C0LLECT!0NS', st.collections == null ? 'PEND!NG' : st.collections, st.collections == null);
   }
@@ -23200,6 +23236,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fetch('/api/wallet-dates?wallet=' + encodeURIComponent(wallet)).then(function(r){ return r.json(); }).then(function(d){
       st.activated = d && d.activated;
       st.firstSignIn = d && d.firstSignIn;
+      st.titles = d && typeof d.titles === 'number' ? d.titles : null;
     }).catch(function(){}).then(function(){
       st.datesLoading = false;
       st.datesLoaded = true;
@@ -23214,6 +23251,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   // Every banner showing this wallet's XRP balance (the same wallet can be
   // on more than one screen's banner at once).
+  function bannerXrpText(data){
+    var drops = data && (data.xrpSpendableDrops != null ? data.xrpSpendableDrops : data.xrpDrops);
+    return drops != null ? (Number(drops) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP' : '--';
+  }
   function setBannerXrpBalance(wallet, text){
     document.querySelectorAll('.profile-banner-xrp').forEach(function(node){
       if (node.getAttribute('data-wallet') === wallet) node.textContent = text;
@@ -23222,6 +23263,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   function profileScreenBannerHtml(wallet, profile){
     loadIdentityDates(wallet);
     var hasPfp = !!(profile && profile.pfpImage);
+    // A picked BANNER NFT colours the banner even with no profile picture
+    // (reported live: the colour didn't work when you picked an NFT) —
+    // the empty-banner gradient was covering the sampled colour whenever
+    // there was no PFP, even though every caller samples bannerImage first.
+    var hasBannerColour = !!(profile && (profile.bannerImage || profile.pfpImage));
     var avatarImg = hasPfp ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
     var username = (profile && profile.username) ? escapeHtml(profile.username) : 'N0 USERNAME SET';
     // Worn title badge — real equipped title (must be a title-kind rule
@@ -23229,17 +23275,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     // profile-set.js), never invented. Looked up from ACHIEVEMENT_DEFS,
     // not re-fetched here.
     var titleDef = (profile && profile.equippedTitle) ? ACHIEVEMENT_DEFS.find(function(d){ return d.id === profile.equippedTitle && d.kind === 'title'; }) : null;
-    var titleBadgeHtml = titleDef ? '<span class="profile-title-badge">' + escapeHtml(titleDef.label) + '</span>' : '';
+    // Beside the picture now (reported live: "put title next to the nfts
+    // head"), reading up its right edge.
+    var titleBadgeHtml = titleDef ? '<span class="profile-title-badge profile-avatar-title">' + escapeHtml(titleDef.label) + '</span>' : '';
     var quoteHtml = (profile && profile.quote) ? '<div class="profile-quote">“' + escapeHtml(profile.quote) + '”</div>' : '';
     var twitterHtml = (profile && profile.twitter)
       ? '<div class="profile-twitter-row"><a class="profile-twitter-link" href="https://x.com/' + encodeURIComponent(profile.twitter) + '" target="_blank" rel="noopener">𝕏 @' + escapeHtml(profile.twitter) + '</a></div>'
       : '';
-    return '<div class="profile-banner' + (hasPfp ? '' : ' profile-banner-empty banner-on-dark') + '" data-wallet="' + escapeHtml(wallet) + '">' +
-      '<div class="profile-avatar-wrap"><div class="profile-current-avatar">' + avatarImg + '</div></div>' +
+    return '<div class="profile-banner' + (hasBannerColour ? '' : ' profile-banner-empty banner-on-dark') + '" data-wallet="' + escapeHtml(wallet) + '">' +
+      '<div class="profile-avatar-wrap"><div class="profile-current-avatar">' + avatarImg + '</div>' + titleBadgeHtml + '</div>' +
       '<div class="profile-banner-main">' +
         '<div class="profile-banner-identity">' +
           twitterHtml +
-          '<div class="profile-current-username-row"><span class="profile-current-username">' + username + '</span>' + titleBadgeHtml + '</div>' +
+          '<div class="profile-current-username-row"><span class="profile-current-username">' + username + '</span></div>' +
           quoteHtml +
           '<div class="profile-current-wallet-row">' +
             '<span class="profile-current-wallet">' + escapeHtml(shortAddr(wallet)) + '</span>' +
@@ -23396,9 +23444,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // The banner may have already been re-rendered again by the time
       // this lands (a fast follow-up openWalletProfile call), so this
       // looks the span up fresh rather than trusting a closed-over node.
-      var xrpText = (data && data.xrpDrops != null)
-        ? (Number(data.xrpDrops) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP'
-        : '--';
+      var xrpText = bannerXrpText(data);
       identityOf(wallet).xrp = xrpText;
       setBannerXrpBalance(wallet, xrpText);
     }).catch(function(){
@@ -24593,6 +24639,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   function switchProfilesSubView(view){
     el.profilesEditView.style.display = view === 'edit' ? '' : 'none';
     el.profilesSubNav.style.display = view === 'edit' ? 'none' : '';
+    // The hub is fitted to one screen; ED!T scrolls normally.
+    el.profileTabPanelProfiles.classList.toggle('profiles-editing', view === 'edit');
   }
   el.profilesSubNav.addEventListener('click', function(e){
     var btn = e.target.closest('.profiles-hub-btn[data-profiles-view]');
@@ -24630,7 +24678,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       st.xrpLoading = true;
       api({ walletProfileCoins: 1, wallet: MY_WALLET }).then(function(data){
         if (data && data.xrpDrops != null){
-          st.xrp = (Number(data.xrpDrops) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+          st.xrp = bannerXrpText(data);
           setBannerXrpBalance(MY_WALLET, st.xrp);
         }
       }).catch(function(){}).then(function(){ st.xrpLoading = false; });

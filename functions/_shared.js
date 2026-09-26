@@ -5854,5 +5854,12 @@ export async function getWalletIdentityDates(context, wallet) {
     activated = await lookupWalletActivation(wallet).catch(() => null);
     if (activated) await safeKvPut(kv, IDENTITY_ACTIVATED_PREFIX + wallet, activated);
   }
-  return { activated: activated || null, firstSignIn: firstSignIn || null };
+  // T!TLES — how many titles this wallet has unlocked (the real,
+  // server-verified unlock map; synced whenever ACH!EVEMENTS is opened).
+  let titles = 0;
+  try {
+    const unlocked = (await getWalletAchievements(kv, wallet)).unlocked || {};
+    titles = ACHIEVEMENT_RULES.filter(r => r.kind === 'title' && unlocked[r.id]).length;
+  } catch (e) {}
+  return { activated: activated || null, firstSignIn: firstSignIn || null, titles };
 }

@@ -502,9 +502,14 @@ export async function onRequestGet(context) {
       fetchAllAccountLines(wallet),
       fetchXrpBalanceDrops(wallet)
     ]);
+    // xrpSpendableDrops = total minus the wallet's real locked reserve —
+    // what Xaman shows and what the PR0F!LE banner displays (reported
+    // live: the banner was showing the raw total, reserve included).
+    const xrpSpendable = xrpInfo ? await spendableXrpDrops(xrpInfo.drops, xrpInfo.ownerCount).catch(() => null) : null;
     return json({
       wallet,
       xrpDrops: xrpInfo ? xrpInfo.drops : null,
+      xrpSpendableDrops: xrpSpendable != null ? xrpSpendable.toString() : null,
       coins: matchAccountLinesToCollections(lines)
     });
   }
