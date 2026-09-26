@@ -157,44 +157,73 @@ export async function fetchAllAccountNftsChecked(account) {
 // of the real load time, and it's identical work done three times. A
 // wallet's holdings genuinely don't change within 20 seconds under normal
 // use, so sharing one fetch across that window is a safe, meaningful cut.
-const ACCOUNT_NFTS_CACHE_PREFIX = 'pswap:accountnfts:';
-const ACCOUNT_NFTS_CACHE_TTL_SECONDS = 20;
-// Takes the whole request `context` (not just `kv`) specifically so the
-// cache WRITE can go through context.waitUntil and never block the
-// response on it finishing — an earlier version here `await`ed the write
-// directly, which meant every cache-MISS request got slower (live fetch
-// PLUS a synchronous KV write) instead of faster. The read is still
-// awaited (needs the result to answer the request); only the write moves
-// to the background.
-export async function fetchAllAccountNftsCached(context, account) {
+const ACCOUNT_NFTS_CACHE_PREFIX = 'pswap:accountnfts:v2:';
+// Stale-while-revalidate (reported live: MY NFTS "takes wayyyy too long to
+// load... it needs to come up straight away"). A wallet's scan is kept for
+// up to ACCOUNT_NFTS_STALE_MS and answered instantly from KV; once it's
+// older than ACCOUNT_NFTS_FRESH_MS the same request also kicks off a
+// background re-scan (context.waitUntil) so the NEXT look is current. Only
+// a wallet never scanned before (or one untouched for longer than the stale
+// window) waits on the live multi-page XRPL scan. renderSwap warms this for
+// the signed-in wallet on every page load, so MY NFTS is normally a hit.
+// Display-only callers as before — never anything that signs.
+const ACCOUNT_NFTS_FRESH_MS = 20 * 1000;
+const ACCOUNT_NFTS_STALE_MS = 30 * 60 * 1000;
+const accountNftsRefreshing = {};
+function refreshAccountNftsInBackground(context, account) {
   const kv = context.env.coin;
-  const cacheKey = ACCOUNT_NFTS_CACHE_PREFIX + account;
-  if (kv) {
-    const cached = await kv.get(cacheKey);
-    if (cached !== null) {
-      try { return JSON.parse(cached); } catch (e) {}
-    }
-  }
+  if (!kv || accountNftsRefreshing[account]) return;
+  accountNftsRefreshing[account] = true;
+  context.waitUntil(fetchAllAccountNftsChecked(account).then(({ nfts, ok }) => {
+    if (ok) return safeKvPut(kv, ACCOUNT_NFTS_CACHE_PREFIX + account, JSON.stringify({ at: Date.now(), nfts }), { expirationTtl: Math.ceil(ACCOUNT_NFTS_STALE_MS / 1000) });
+  }).catch(() => {}).then(() => { delete accountNftsRefreshing[account]; }));
+}
+async function readAccountNftsCache(context, account) {
+  const kv = context.env.coin;
+  if (!kv) return null;
+  const raw = await kv.get(ACCOUNT_NFTS_CACHE_PREFIX + account).catch(() => null);
+  if (raw === null) return null;
+  try {
+    const entry = JSON.parse(raw);
+    if (!entry || !Array.isArray(entry.nfts) || typeof entry.at !== 'number') return null;
+    if (Date.now() - entry.at > ACCOUNT_NFTS_STALE_MS) return null;
+    if (Date.now() - entry.at > ACCOUNT_NFTS_FRESH_MS) refreshAccountNftsInBackground(context, account);
+    return entry.nfts;
+  } catch (e) { return null; }
+}
+function writeAccountNftsCache(context, account, nfts) {
+  const kv = context.env.coin;
+  if (kv) context.waitUntil(safeKvPut(kv, ACCOUNT_NFTS_CACHE_PREFIX + account, JSON.stringify({ at: Date.now(), nfts }), { expirationTtl: Math.ceil(ACCOUNT_NFTS_STALE_MS / 1000) }));
+}
+export async function fetchAllAccountNftsCached(context, account) {
+  const cached = await readAccountNftsCache(context, account);
+  if (cached) return cached;
   const nfts = await fetchAllAccountNfts(account);
-  if (kv) context.waitUntil(safeKvPut(kv, cacheKey, JSON.stringify(nfts), { expirationTtl: ACCOUNT_NFTS_CACHE_TTL_SECONDS }));
+  writeAccountNftsCache(context, account, nfts);
   return nfts;
 }
-// Same cached sharing, but preserves fetchAllAccountNftsChecked's own
-// real-failure signal — a cache hit is trivially "ok" (real data already
-// in hand), a miss falls through to the real checked fetch and only
-// caches a genuinely successful result, never a partial/failed scan.
+// Same, but preserves fetchAllAccountNftsChecked's real-failure signal —
+// a cache hit is "ok" (real data already in hand), a miss falls through to
+// the real checked scan and only a genuinely successful one is cached.
 export async function fetchAllAccountNftsCheckedCached(context, account) {
-  const kv = context.env.coin;
-  const cacheKey = ACCOUNT_NFTS_CACHE_PREFIX + account;
-  if (kv) {
-    const cached = await kv.get(cacheKey);
-    if (cached !== null) {
-      try { return { nfts: JSON.parse(cached), ok: true }; } catch (e) {}
-    }
-  }
+  const cached = await readAccountNftsCache(context, account);
+  if (cached) return { nfts: cached, ok: true };
   const { nfts, ok } = await fetchAllAccountNftsChecked(account);
-  if (ok && kv) context.waitUntil(safeKvPut(kv, cacheKey, JSON.stringify(nfts), { expirationTtl: ACCOUNT_NFTS_CACHE_TTL_SECONDS }));
+  if (ok) writeAccountNftsCache(context, account, nfts);
   return { nfts, ok };
+}
+// Page-load warm-up for the signed-in wallet: a no-op if a fresh scan is
+// already cached, otherwise one background scan.
+export async function warmAccountNftsCache(context, account) {
+  const kv = context.env.coin;
+  if (!kv || !account) return;
+  const raw = await kv.get(ACCOUNT_NFTS_CACHE_PREFIX + account).catch(() => null);
+  try {
+    const entry = raw && JSON.parse(raw);
+    if (entry && typeof entry.at === 'number' && Date.now() - entry.at <= ACCOUNT_NFTS_FRESH_MS) return;
+  } catch (e) {}
+  const { nfts, ok } = await fetchAllAccountNftsChecked(account);
+  if (ok) await safeKvPut(kv, ACCOUNT_NFTS_CACHE_PREFIX + account, JSON.stringify({ at: Date.now(), nfts }), { expirationTtl: Math.ceil(ACCOUNT_NFTS_STALE_MS / 1000) });
 }
 
 export function hasAccessKey(nfts) {

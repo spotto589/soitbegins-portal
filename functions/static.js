@@ -18,7 +18,7 @@
 // signature exists here to create one; /static only ever reads the cookie.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { BOARD_COOKIE_NAME, getCookie, verifyToken, getXamanUserToken, recordFirstSignIn } from './_shared.js';
+import { BOARD_COOKIE_NAME, getCookie, verifyToken, getXamanUserToken, recordFirstSignIn, warmAccountNftsCache } from './_shared.js';
 
 const SWAP_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -6784,6 +6784,31 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:700px){
     .profile-screen-columns{ grid-template-columns:1fr; gap:2rem; }
   }
+  /* MY NFTS collection picker (reported live: "the collection layout here
+     is also not good") — the site's box design: black boxes, white text,
+     each box's border glowing in its own collection's colour, the
+     collection's art on the left, owned count, arrow. */
+  .mynfts-summary{ display:flex; justify-content:center; gap:0.75rem; margin:0.25rem 0 1rem; font-family:var(--font-mono); font-size:15px; letter-spacing:0.08em; color:var(--white); }
+  .mynfts-summary-sep{ color:rgba(var(--collection-accent-rgb, 136,72,248), 0.9); }
+  .mynfts-coll-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0.9rem; }
+  @media (max-width:900px){ .mynfts-coll-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+  @media (max-width:520px){ .mynfts-coll-grid{ grid-template-columns:minmax(0, 1fr); } }
+  #myNftsPickerGrid{ display:block; }
+  .mynfts-coll-card.profile-collection-card{
+    display:flex; flex-direction:row; align-items:center; gap:1rem; width:100%; text-align:left;
+    padding:0.9rem 1rem; background:#000; color:var(--white); font:inherit; cursor:pointer;
+    border:1px solid rgba(var(--card-accent), 0.75); border-radius:var(--radius);
+    box-shadow:0 0 10px rgba(var(--card-accent), 0.3);
+    transition:box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  .mynfts-coll-card.profile-collection-card:hover{ background:#000; border-color:rgb(var(--card-accent)); box-shadow:0 0 18px rgba(var(--card-accent), 0.55); transform:translateY(-1px); }
+  .mynfts-coll-thumb{ flex:0 0 72px; width:72px; height:72px; border-radius:var(--radius); background:#111 center / cover no-repeat; border:1px solid rgba(var(--card-accent, 136,72,248), 0.5); }
+  .mynfts-coll-text{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:0.35rem; }
+  .mynfts-coll-label{ font-family:var(--font-mono); font-size:18px; font-weight:700; letter-spacing:0.06em; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mynfts-coll-count{ font-family:var(--font-mono); font-size:14px; letter-spacing:0.06em; color:var(--white); }
+  .mynfts-coll-arrow{ flex:0 0 auto; font-size:26px; color:rgb(var(--card-accent, 136,72,248)); }
+  .mynfts-coll-skeleton{ --card-accent:136,72,248; cursor:default; opacity:0.6; animation:mynfts-skeleton-pulse 1.2s ease-in-out infinite; }
+  @keyframes mynfts-skeleton-pulse{ 0%, 100%{ opacity:0.35; } 50%{ opacity:0.7; } }
   .profile-collection-grid{
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
@@ -23653,30 +23678,62 @@ const SWAP_HTML = `<!DOCTYPE html>
   // detour to DATABASE). Same card markup as renderProfileScreenCollections
   // above, but only collections actually held (count > 0) show a card —
   // nothing to click into otherwise.
+  // MY NFTS comes up straight away (reported live: "takes wayyyy too long
+  // to load... it needs to come up straight away"): the last counts seen for
+  // this wallet paint instantly from localStorage, the live myNftCounts
+  // (itself a server-side stale-while-revalidate cache hit, warmed on page
+  // load) replaces them the moment it lands, and the counts are prefetched
+  // as soon as a signed-in page loads so there's usually nothing to wait on.
+  var myNftCountsPromise = null;
+  function myNftCountsKey(){ return 'scylla:mynftcounts:v1:' + MY_WALLET; }
+  function readMyNftCountsCache(){
+    try { var raw = localStorage.getItem(myNftCountsKey()); return raw ? JSON.parse(raw) : null; } catch (e){ return null; }
+  }
+  function fetchMyNftCounts(){
+    if (!MY_WALLET) return Promise.resolve(null);
+    if (!myNftCountsPromise){
+      myNftCountsPromise = apiWithRetry({ myNftCounts: 1, wallet: MY_WALLET }).then(function(data){
+        var counts = (data && data.counts) || null;
+        if (counts){ try { localStorage.setItem(myNftCountsKey(), JSON.stringify(counts)); } catch (e){} }
+        return counts;
+      });
+      // A later open re-asks the server (cheap now), never reuses this forever.
+      myNftCountsPromise.then(function(){ setTimeout(function(){ myNftCountsPromise = null; }, 15000); }, function(){ myNftCountsPromise = null; });
+    }
+    return myNftCountsPromise;
+  }
+  function myNftsPickerHtml(counts){
+    var held = {};
+    Object.keys(counts || {}).forEach(function(key){ held[key] = { count: counts[key] }; });
+    var entries = sortedHeldEntries(held, 'count');
+    if (!entries.length) return '<div class="th-empty">Y0U D0N T 0WN ANY TRACKED NFTS YET.</div>';
+    var total = entries.reduce(function(sum, e){ return sum + e.count; }, 0);
+    return '<div class="mynfts-summary"><span>' + greenNum(total.toLocaleString()) + ' NFTS</span><span class="mynfts-summary-sep">//</span><span>' + greenNum(entries.length) + ' C0LLECT!0N' + (entries.length === 1 ? '' : 'S') + '</span></div>' +
+      '<div class="mynfts-coll-grid">' + entries.map(function(e){
+        var meta = COLLECTION_META[e.key];
+        var accent = PROFILE_COIN_ACCENTS[e.key] || '61,243,236';
+        var art = (meta && meta.thumb) || '';
+        return '<button type="button" class="mynfts-coll-card profile-collection-card" data-collection="' + escapeHtml(e.key) + '" style="--card-accent:' + accent + ';">' +
+          '<span class="mynfts-coll-thumb"' + (art ? ' style="background-image:url(' + art + ')"' : '') + '></span>' +
+          '<span class="mynfts-coll-text"><span class="mynfts-coll-label">' + escapeHtml(meta ? meta.label : e.key) + '</span>' +
+          '<span class="mynfts-coll-count">' + greenNum(e.count.toLocaleString()) + ' 0WNED</span></span>' +
+          '<span class="mynfts-coll-arrow">›</span>' +
+        '</button>';
+      }).join('') + '</div>';
+  }
   function renderMyNftsPicker(){
     if (!MY_WALLET) return;
-    el.myNftsPickerGrid.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
-    apiWithRetry({ myNftCounts: 1, wallet: MY_WALLET }).then(function(data){
-      var counts = (data && data.counts) || {};
-      var held = {};
-      Object.keys(counts).forEach(function(key){ held[key] = { count: counts[key] }; });
-      var entries = sortedHeldEntries(held, 'count');
-      el.myNftsPickerGrid.innerHTML = !entries.length
-        ? '<div class="th-empty">Y0U D0N T 0WN ANY TRACKED NFTS YET.</div>'
-        : entries.map(function(e){
-            var meta = COLLECTION_META[e.key];
-            var accent = PROFILE_COIN_ACCENTS[e.key] || '61,243,236';
-            var art = (meta && meta.thumb) || '';
-            return '<div class="profile-collection-card" data-collection="' + escapeHtml(e.key) + '" style="--card-accent:' + accent + ';">' +
-              '<div class="profile-collection-thumb"' + (art ? ' style="background-image:url(' + art + ')"' : '') + '></div>' +
-              '<div class="profile-collection-label">' + escapeHtml(meta ? meta.label : e.key) + '</div>' +
-              '<div class="profile-collection-count">' + e.count + ' 0WNED</div>' +
-            '</div>';
-          }).join('');
+    var cached = readMyNftCountsCache();
+    el.myNftsPickerGrid.innerHTML = cached
+      ? myNftsPickerHtml(cached)
+      : '<div class="mynfts-coll-grid">' + [0, 1, 2].map(function(){ return '<div class="mynfts-coll-card mynfts-coll-skeleton"><span class="mynfts-coll-thumb"></span><span class="mynfts-coll-text"><span class="mynfts-coll-label">L0AD!NG...</span></span></div>'; }).join('') + '</div>';
+    fetchMyNftCounts().then(function(counts){
+      if (counts) el.myNftsPickerGrid.innerHTML = myNftsPickerHtml(counts);
     }).catch(function(){
-      el.myNftsPickerGrid.innerHTML = '<div class="th-empty">ERR://S!GNAL_L0ST — TRY AGA!N.</div>';
+      if (!cached) el.myNftsPickerGrid.innerHTML = '<div class="th-empty">ERR://S!GNAL_L0ST — TRY AGA!N.</div>';
     });
   }
+  if (MY_WALLET) setTimeout(function(){ fetchMyNftCounts().catch(function(){}); }, 1500);
   // Picking a collection on the MY NFTS picker now walks into the exact
   // same real DATABASE grid a plain DATABASE visit uses (full cards,
   // detail view, S0RT BY/F!LTER BY TRA!TS, BUY N0W/0FFER/L!ST), scoped to
@@ -26917,6 +26974,9 @@ export async function renderSwap(context, presetCollection, presetProfileWallet,
   const pushReady = wallet && env.coin ? !!(await getXamanUserToken(env.coin, wallet).catch(() => null)) : false;
   // Sessions from before !NCEPT!0N was recorded at sign-in get it here.
   if (wallet && env.coin) context.waitUntil(recordFirstSignIn(env.coin, wallet));
+  // MY NFTS comes up straight away: the wallet's NFT scan is warmed in
+  // the background the moment the page loads (see warmAccountNftsCache).
+  if (wallet && env.coin) context.waitUntil(warmAccountNftsCache(context, wallet).catch(() => {}));
   const og = await resolveOgTags(request, presetCollection, presetPigeon);
   const html = SWAP_HTML
     .replace('"__SWAP_WALLET__"', JSON.stringify(wallet))
