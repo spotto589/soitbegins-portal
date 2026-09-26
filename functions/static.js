@@ -6061,6 +6061,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     padding:1.05em 2.4em;
     font-size:20px;
   }
+  /* Thumbnail + SWAP + N0T!F!CAT!0NS as one tidy block (reported live:
+     "all different sizes and it's not working properly"): the two buttons
+     share one width and height, stacked 8px apart, and together match the
+     thumbnail's height exactly. The thumbnail is a real button too — it
+     opens SWAP, same as the button beside it. */
+  .pigeons-bar-balance-info{ gap:8px; }
+  #pigeonsBarThumb{ width:112px; height:112px; cursor:pointer; transition:box-shadow 0.15s ease, border-color 0.15s ease; }
+  #pigeonsBarThumb:hover, #pigeonsBarThumb:focus-visible{ border-color:var(--green); box-shadow:0 0 12px var(--green-glow); outline:none; }
+  #pigeonsBalanceBuyBtn, #openNotifyBtn{
+    display:flex; align-items:center; justify-content:center; gap:0.4em;
+    width:240px; height:52px; margin:0; padding:0 1em; box-sizing:border-box;
+    font-size:17px; white-space:nowrap;
+  }
   /* Simple fill-on-hover, no offset shadow/transform — the harder
      brutalist hover (translate + hard drop shadow) read as messy on a
      small button rather than deliberate, so this stays plain: same
@@ -10344,7 +10357,7 @@ const SWAP_HTML = `<!DOCTYPE html>
              so this reads as "come trade the token" rather than a
              wallet-status readout. -->
         <div class="pigeons-bar-balance">
-          <div class="pigeons-bar-thumb" id="pigeonsBarThumb" title="$P!GE0NS"></div>
+          <div class="pigeons-bar-thumb" id="pigeonsBarThumb" title="SWAP" role="button" tabindex="0"></div>
           <div class="pigeons-bar-balance-info">
             <div class="pigeons-bar-balance-label">BALANCE:</div>
             <div class="pigeons-bar-balance-value" id="pigeonsBalanceValue" style="display:none;">…</div>
@@ -18683,6 +18696,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     }, BUYSWAP_REFRESH_MS);
   }
   el.pigeonsBalanceBuyBtn.addEventListener('click', function(){ openBuySwapPanel(state.collection); });
+  // The coin thumbnail beside it opens SWAP too (reported live: it looked
+  // like a button but did nothing).
+  el.pigeonsBarThumb.addEventListener('click', function(){ openBuySwapPanel(state.collection); });
+  el.pigeonsBarThumb.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openBuySwapPanel(state.collection); } });
   // BUY $P!GE0NS is the one entry point everywhere now (FL0CK shows the
   // exact same banner as DATABASE, no more BALANCE-amount-as-buy-button
   // substitution — that only existed while FL0CK's banner was slimmed).
@@ -20585,7 +20602,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function updateTrustlineBannerChrome(collectionKey){
     var meta = COLLECTION_META[collectionKey];
     el.trustlineTitleLabel.textContent = 'SET ' + meta.tokenLabel + ' TRUSTL!NE';
-    el.pigeonsBarThumb.title = meta.tokenLabel;
+    el.pigeonsBarThumb.title = 'SWAP ' + meta.tokenLabel;
     if (meta.tokenIssuer){
       el.ciIssuerAddr.setAttribute('data-full', meta.tokenIssuer);
       el.ciIssuerAddr.textContent = meta.tokenIssuer.slice(0, 5) + '...' + meta.tokenIssuer.slice(-3);
