@@ -7065,10 +7065,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Pop-up boxes carry the DATABASE static INSIDE them (reported live:
      "i wanted the static background inside the pop up box") — a faint
      noise tile layered over each box's own solid colour, swapped a few
-     times a second by addPopupStatic so it flickers like the page's. As
-     the box's own background (not a separate layer) it stays put while a
-     long box scrolls. The see-through backdrop outside is unchanged. */
-  .popup-static-box{ background-image:var(--popup-static, none) !important; background-repeat:repeat !important; }  /* Named grid areas so PIGEON #N sits in its own row above just the
+     times a second so it flickers like the page's. As the box's own
+     background (not a separate layer) it stays put while a long box
+     scrolls. The see-through backdrop outside is unchanged. Every box
+     INSIDE a pop-up is solid (reported live: "all the boxes need to be
+     solid colour if this is the background") — see addPopupStatic. */
+  /* The noise tile itself is injected by addPopupStatic (drawn once); this
+     just steps its position through a few offsets so it flickers. A plain
+     keyframe animation: no per-frame JS, no image swaps, and it only runs
+     while the box is actually shown. */
+  @keyframes popup-static-flicker{
+    0%{ background-position:0 0; }
+    25%{ background-position:-97px -151px; }
+    50%{ background-position:-181px -43px; }
+    75%{ background-position:-59px -211px; }
+  }
+  /* Bordered boxes inside a pop-up that set no background of their own get
+     the pop-up's solid colour (tagged by addPopupStatic), so the static
+     only shows on the pop-up's own background. */
+  .popup-solid{ background-color:var(--panel-bg-solid); }
+  /* Named grid areas so PIGEON #N sits in its own row above just the
      picture's column, while RARITY/RARITY SCORE (the right column's first
      row) starts level with the picture's own top — not pushed down by
      the number, since the right column never occupies the "num" row at
@@ -26240,45 +26256,188 @@ const SWAP_HTML = `<!DOCTYPE html>
   })();
   startStaticCanvas(document.getElementById('staticBg'));
   (function addPopupStatic(){
-    // A few pre-drawn grey noise tiles (faint — alpha ~0.15), cycled.
-    var tiles = [];
-    for (var t = 0; t < 4; t++){
-      var c = document.createElement('canvas');
-      c.width = 160; c.height = 160;
-      var cx = c.getContext('2d');
-      var img = cx.createImageData(160, 160);
-      var d = img.data;
-      for (var i = 0; i < d.length; i += 4){
-        var v = Math.random() * 255;
-        d[i] = v; d[i+1] = v; d[i+2] = v; d[i+3] = 38;
-      }
-      cx.putImageData(img, 0, 0);
-      tiles.push('url(' + c.toDataURL() + ')');
+    // One faint grey noise tile (alpha ~0.15), drawn once and stepped
+    // around by the popup-static-flicker keyframes. (The first version
+    // swapped a fresh data-URL into a custom property every 90ms, which
+    // restyled the whole box and re-decoded the image each time — slow,
+    // and it flashed blank frames.)
+    var c = document.createElement('canvas');
+    c.width = 256; c.height = 256;
+    var cx = c.getContext('2d');
+    var img = cx.createImageData(256, 256);
+    var d = img.data;
+    for (var i = 0; i < d.length; i += 4){
+      var v = Math.random() * 255;
+      d[i] = v; d[i+1] = v; d[i+2] = v; d[i+3] = 38;
     }
+    cx.putImageData(img, 0, 0);
+    var css = ['.popup-static-box{background-image:url(' + c.toDataURL() + ') !important;background-repeat:repeat !important;}'];
+
     var boxes = [];
     ['pigeonsCalcModal','topHoldersModal','salesModal','notifyModal','rarityModal','offerConfirmModal','transferConfirmModal',
      'acceptTransferConfirmModal','buySwapModal','buyConfirmModal','delistConfirmModal','acceptOfferConfirmModal',
      'conspiracyPickerModal','simpleOfferPickerModal','amountEntryModal','historyModal','profileEditModal'].forEach(function(id){
       var modal = document.getElementById(id);
-      var box = modal && modal.firstElementChild;
-      if (!box) return;
-      box.classList.add('popup-static-box');
-      box.style.setProperty('--popup-static', tiles[0]);
-      boxes.push({ box: box, isOpen: function(){ return modal.style.display !== '' && modal.style.display !== 'none'; } });
+      if (modal && modal.firstElementChild) boxes.push(modal.firstElementChild);
     });
     ['sortFlyout','traitsFlyout'].forEach(function(id){
       var f = document.getElementById(id);
-      if (!f) return;
-      f.classList.add('popup-static-box');
-      f.style.setProperty('--popup-static', tiles[0]);
-      boxes.push({ box: f, isOpen: function(){ return getComputedStyle(f).display !== 'none'; } });
+      if (f) boxes.push(f);
     });
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    var n = 0;
-    setInterval(function(){
-      n = (n + 1) % tiles.length;
-      boxes.forEach(function(b){ if (b.isOpen()) b.box.style.setProperty('--popup-static', tiles[n]); });
-    }, 90);
+
+    // Split a comma list at the top level only (not inside parens) — for
+    // selector lists and animation longhands like cubic-bezier(a, b, c, d).
+    function splitTop(s){
+      var out = [], depth = 0, start = 0;
+      for (var i = 0; i < s.length; i++){
+        var ch = s.charAt(i);
+        if (ch === '(' || ch === '[') depth++;
+        else if (ch === ')' || ch === ']') depth--;
+        else if (ch === ',' && depth === 0){ out.push(s.slice(start, i).trim()); start = i + 1; }
+      }
+      out.push(s.slice(start).trim());
+      return out;
+    }
+
+    // Flicker: added alongside any pop-in animation the box already has.
+    var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    boxes.forEach(function(b){
+      b.classList.add('popup-static-box');
+      if (still) return;
+      var cs = getComputedStyle(b);
+      var props = { animationName:'popup-static-flicker', animationDuration:'0.36s', animationTimingFunction:'step-end',
+                    animationDelay:'0s', animationIterationCount:'infinite', animationDirection:'normal', animationFillMode:'none' };
+      var has = cs.animationName && cs.animationName !== 'none';
+      Object.keys(props).forEach(function(p){
+        b.style[p] = has ? splitTop(cs[p]).concat(props[p]).join(', ') : props[p];
+      });
+    });
+
+    // Solid boxes inside pop-ups. Every stylesheet rule that sets a
+    // background colour gets a copy limited to pop-ups — same specificity
+    // and order as the original, so hover/active states cascade exactly as
+    // before — with see-through tints (alpha <= 0.7) pre-blended onto the
+    // pop-up's own colour, and bordered transparent boxes filled with it.
+    // Absolutely-placed layers (overlays on pictures) are left alone.
+    var probe = document.createElement('canvas').getContext('2d');
+    function rgba(s){
+      if (!s || s.indexOf('var(') >= 0) return null;
+      s = s.trim();
+      if (s === 'transparent' || s === 'initial' || s === 'none') return [0, 0, 0, 0];
+      probe.fillStyle = 'rgba(1, 2, 3, 0.5)';
+      probe.fillStyle = s;
+      var f = probe.fillStyle;
+      if (f === 'rgba(1, 2, 3, 0.5)') return null;
+      if (f.charAt(0) === '#') return [parseInt(f.substr(1, 2), 16), parseInt(f.substr(3, 2), 16), parseInt(f.substr(5, 2), 16), 1];
+      var p = f.slice(f.indexOf('(') + 1, f.indexOf(')')).split(',');
+      return [+p[0], +p[1], +p[2], p.length > 3 ? +p[3] : 1];
+    }
+    var panel = rgba(getComputedStyle(document.documentElement).getPropertyValue('--panel-bg-solid')) || [16, 15, 12, 1];
+    function solidOf(col){
+      var a = col[3];
+      return 'rgb(' + Math.round(col[0] * a + panel[0] * (1 - a)) + ', ' + Math.round(col[1] * a + panel[1] * (1 - a)) + ', ' + Math.round(col[2] * a + panel[2] * (1 - a)) + ')';
+    }
+    function hasBorderDecl(st){
+      return ['top', 'right', 'bottom', 'left'].some(function(side){
+        var sty = st.getPropertyValue('border-' + side + '-style'), w = st.getPropertyValue('border-' + side + '-width');
+        return sty && sty !== 'none' && sty !== 'hidden' && w !== '0' && w !== '0px';
+      });
+    }
+    var rootStyle = getComputedStyle(document.documentElement);
+    // The solid version of a see-through tint, or null if it isn't one.
+    // Handles plain colours, rgba(var(--x-rgb), a) (mixed live, so it
+    // follows each collection's accent) and var(--x).
+    function solidTint(val){
+      var col = rgba(val);
+      if (col) return col[3] > 0 && col[3] <= 0.7 ? solidOf(col) : null;
+      var k = val.indexOf('(var(');
+      if (k > 0 && val.slice(0, k).trim().toLowerCase().indexOf('rgb') === 0){
+        var close = val.indexOf(')', k + 5);
+        var rest = val.slice(close + 1).trim();
+        if (rest.charAt(0) !== ',') return null;
+        var a = parseFloat(rest.slice(1));
+        return a > 0 && a <= 0.7 ? 'color-mix(in srgb, rgb(' + val.slice(k + 1, close + 1) + ') ' + Math.round(a * 1000) / 10 + '%, var(--panel-bg-solid))' : null;
+      }
+      if (val.indexOf('var(') === 0){
+        var resolved = rgba(rootStyle.getPropertyValue(val.slice(4, val.indexOf(')')).split(',')[0].trim()));
+        return resolved && resolved[3] > 0 && resolved[3] <= 0.7 ? solidOf(resolved) : null;
+      }
+      return null;
+    }
+    function scoped(sel){
+      var cut = sel.indexOf('::');
+      if (cut < 0){ var m = sel.match(/:(before|after|first-line|first-letter)$/); if (m) cut = m.index; }
+      var base = cut < 0 ? sel : sel.slice(0, cut);
+      return (base || '*') + ':where(.popup-static-box *)' + (cut < 0 ? '' : sel.slice(cut));
+    }
+    function walk(rules, out){
+      for (var i = 0; i < rules.length; i++){
+        var r = rules[i];
+        if (r.cssRules && (r.media || r.conditionText !== undefined) && !r.selectorText){
+          var inner = [];
+          walk(r.cssRules, inner);
+          if (inner.length) out.push((r.media ? '@media ' + r.media.mediaText : '@supports ' + r.conditionText) + '{' + inner.join('') + '}');
+          continue;
+        }
+        if (!r.selectorText || !r.style) continue;
+        var st = r.style, val = st.getPropertyValue('background-color'), bgImg = st.getPropertyValue('background-image');
+        if (!val){
+          // A background shorthand with a var() in it only reads back whole.
+          var sh = st.getPropertyValue('background');
+          if (!sh) continue;
+          if (sh.indexOf('url(') >= 0 || sh.indexOf('gradient') >= 0){ val = 'transparent'; bgImg = sh; }
+          else val = sh;
+        }
+        var pos = st.getPropertyValue('position');
+        if (pos !== 'absolute' && pos !== 'fixed' && !/overlay|backdrop|scrim/.test(r.selectorText)){
+          var solid = solidTint(val), col = rgba(val);
+          if (solid) val = solid;
+          else if (col && col[3] === 0 && (hasBorderDecl(st) || bgImg.indexOf('gradient') >= 0)) val = 'var(--panel-bg-solid)';
+        }
+        out.push(splitTop(r.selectorText).map(scoped).join(',') + '{background-color:' + val + (st.getPropertyPriority('background-color') ? ' !important' : '') + '}');
+      }
+    }
+    for (var s = 0; s < document.styleSheets.length; s++){
+      try { walk(document.styleSheets[s].cssRules, css); } catch (e) {}  // cross-origin (fonts)
+    }
+    var styleEl = document.createElement('style');
+    styleEl.textContent = css.join('');
+    document.head.appendChild(styleEl);
+
+    // Bordered boxes with no background rule at all, and inline tints set
+    // from script, are caught when their pop-up is shown / filled in.
+    var SKIP = { IMG:1, svg:1, CANVAS:1, VIDEO:1, INPUT:1, TEXTAREA:1, SELECT:1 };
+    var seen = new WeakSet();
+    function sweep(box){
+      if (!box.getClientRects().length) return;  // not shown
+      var els = box.getElementsByTagName('*');
+      for (var i = 0; i < els.length; i++){
+        var el = els[i];
+        var inl = el.style && el.style.backgroundColor;
+        if (inl){
+          var ic = rgba(inl);
+          if (ic && ic[3] > 0 && ic[3] <= 0.7 && getComputedStyle(el).position !== 'absolute') el.style.backgroundColor = solidOf(ic);
+        }
+        if (seen.has(el) || SKIP[el.tagName]) continue;
+        seen.add(el);
+        var cs = getComputedStyle(el);
+        if (cs.backgroundImage !== 'none' || cs.position === 'absolute' || (rgba(cs.backgroundColor) || [0, 0, 0, 1])[3] !== 0) continue;
+        var sides = 0;
+        ['Top', 'Right', 'Bottom', 'Left'].forEach(function(side){
+          if (parseFloat(cs['border' + side + 'Width']) > 0 && cs['border' + side + 'Style'] !== 'none' && (rgba(cs['border' + side + 'Color']) || [0, 0, 0, 0])[3] > 0) sides++;
+        });
+        if (sides >= 3) el.classList.add('popup-solid');
+      }
+    }
+    boxes.forEach(function(box){
+      var pending = false;
+      var mo = new MutationObserver(function(){
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(function(){ pending = false; sweep(box); });
+      });
+      mo.observe(box.parentElement, { childList:true, subtree:true, attributes:true, attributeFilter:['style', 'class'] });
+    });
   })();
   startStaticCanvas(document.getElementById('detailStaticBg'), function(){
     return document.getElementById('screenDetail').style.display !== 'none';
