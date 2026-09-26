@@ -1,4 +1,4 @@
-import { BOARD_COOKIE_NAME, signToken } from '../_shared.js';
+import { BOARD_COOKIE_NAME, signToken, recordFirstSignIn } from '../_shared.js';
 
 // Was 30 minutes — far too short for a wallet-ownership session that
 // doesn't hold any funds/keys itself (every real signing action still
@@ -45,6 +45,8 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: 'no_account' }), { status: 401 });
   }
 
+  // Σκύλλα://!DENT!TY's !NCEPT!0N date (kept only the first time).
+  if (env.coin) context.waitUntil(recordFirstSignIn(env.coin, account));
   const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
   const token = await signToken({ acct: account, exp }, env.Σκύλλα);
 

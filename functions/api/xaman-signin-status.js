@@ -1,4 +1,4 @@
-import { BOARD_COOKIE_NAME, signToken, getXamanPayloadStatus, storeXamanUserToken } from '../_shared.js';
+import { BOARD_COOKIE_NAME, signToken, getXamanPayloadStatus, storeXamanUserToken, recordFirstSignIn } from '../_shared.js';
 
 // Was 30 minutes — far too short for a wallet-ownership session that
 // doesn't hold any funds/keys itself (every real signing action still
@@ -66,6 +66,8 @@ export async function onRequestGet(context) {
   const issued = xummData.application && xummData.application.issued_user_token;
   if (issued && env.coin) context.waitUntil(storeXamanUserToken(env.coin, account, issued));
   console.log('XAMAN-PUSH signin', account, 'issued_user_token', !!issued, 'application keys', Object.keys(xummData.application || {}).join(','));
+  // Σκύλλα://!DENT!TY's !NCEPT!0N date (kept only the first time).
+  if (env.coin) context.waitUntil(recordFirstSignIn(env.coin, account));
   const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
   const token = await signToken({ acct: account, exp }, env.Σκύλλα);
 

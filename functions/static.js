@@ -18,7 +18,7 @@
 // signature exists here to create one; /static only ever reads the cookie.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { BOARD_COOKIE_NAME, getCookie, verifyToken, getXamanUserToken } from './_shared.js';
+import { BOARD_COOKIE_NAME, getCookie, verifyToken, getXamanUserToken, recordFirstSignIn } from './_shared.js';
 
 const SWAP_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -2588,7 +2588,15 @@ const SWAP_HTML = `<!DOCTYPE html>
      the SYSTEM grid's boxes last measured at (--sys-box-h, kept by
      trackSystemBoxHeight). Top-aligned like the SYSTEM grid. */
   .profiles-hub{ text-align:left; }
-  .profiles-hub-grid{ grid-auto-rows:var(--sys-box-h, 5.5rem); }
+  .profiles-hub-banner{ margin-top:0.75rem; }
+  .profiles-hub-banner:empty{ display:none; }
+  /* Search across the top, V!EW/ED!T side by side underneath — on every
+     width (they're short enough to share a phone row). */
+  .profile-box-grid.profiles-hub-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); grid-auto-rows:auto; }
+  .profiles-hub-grid > .flock-account-box{ height:calc(var(--sys-box-h, 5.5rem) - 28px); }
+  .profiles-hub-search-box, .profiles-hub-grid > .profile-search-results{ grid-column:1 / -1; }
+  .profiles-hub-grid > .profile-search-results{ margin:-0.5rem 0 1rem; }
+  .profiles-hub-grid > .profile-search-results:empty{ display:none; }
   .profiles-hub-grid button.flock-account-box{ font:inherit; color:inherit; width:100%; -webkit-appearance:none; appearance:none; }
   .profiles-hub-search-box{ cursor:text; }
   .profiles-hub-search-input{
@@ -6693,7 +6701,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      .detail-back-btn-top/.detail-share-btn classes DETAIL's own top row
      uses), same reasoning as .detail-num-row{position:relative}. */
   .profile-screen-top-row{ position:relative; min-height:2.4rem; margin-bottom:0.5rem; }
-  .profile-screen-banner-wrap{ max-width:560px; margin:0 auto 1.5rem; }
+  .profile-screen-banner-wrap{ max-width:820px; margin:0 auto 1.5rem; }
   /* Real CTA (reported live wanting "the option to message that
      wallet"), centred under the banner — themed accent, not the neutral
      grey .bar-btn default, so it reads as an inviting action rather than
@@ -6777,6 +6785,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-code-row{ display:flex; justify-content:space-between; gap:1rem; color:var(--grey-dim); white-space:nowrap; overflow:hidden; }
   .profile-code-row span:last-child{ color:var(--green); font-weight:700; text-overflow:ellipsis; overflow:hidden; }
   .profile-code-row.pending span:last-child{ color:var(--grey-dim); font-weight:400; }
+  /* Inside the banner (reported live: "this part should be in the
+     banner") — its own column on the right, below everything on a phone. */
+  .profile-banner .profile-banner-code{ flex:0 0 240px; max-width:none; margin:0 0 0 auto; align-self:flex-end; background:rgba(5,5,6,0.72); }
+  @media (max-width:640px){
+    .profile-banner[data-wallet]{ flex-wrap:wrap; }
+    .profile-banner .profile-banner-code{ flex:1 1 100%; margin:0; }
+  }
   .profile-private-notice{ max-width:420px; margin:2rem auto; text-align:center; }
   /* ---- WALLET H!ST0RY — #screenWalletHistory's own content, everything
      below the shared .profile-banner it reuses from #screenProfile. ---- */
@@ -10648,19 +10663,20 @@ const SWAP_HTML = `<!DOCTYPE html>
            there's genuinely no room to show both a big identity-edit card
            and the search hub at once. -->
       <div class="profile-tab-panel" id="profileTabPanelProfiles" style="display:none;">
-        <!-- Same boxes as the Σκύλλα://SYSTEM grid itself, same size
-             (reported live: "inside profiles, keep the same design as
-             Σκύλλα://SYSTEM. buttons should be the same size as well") —
-             the search field lives inside its own box, results list
-             underneath at full width. -->
+        <!-- Your own banner on top (the same one everyone else sees on your
+             profile, Σκύλλα://!DENT!TY included), then the search bar full
+             width, then the two buttons underneath (reported live). Same
+             boxes as the Σκύλλα://SYSTEM grid, same height. -->
         <div class="profiles-hub" id="profilesSubNav">
+          <div class="profiles-hub-banner" id="profilesHubBanner"></div>
           <div class="profile-box-grid profiles-hub-grid">
             <label class="sw-panel flock-account-box flock-account-box-clickable profiles-hub-search-box">
               <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="7.5" cy="7.5" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11.5 11.5l4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="flock-account-box-prefix">//</span><input type="text" class="profiles-hub-search-input" id="profileSearchInput" placeholder="SEARCH PR0F!LES" autocomplete="off"></div>
               <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
             </label>
+            <div class="profile-search-results" id="profileSearchResults"></div>
             <button type="button" class="sw-panel flock-account-box flock-account-box-clickable profiles-hub-btn" data-profiles-view="view">
-              <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.5 9s2.8-5 7.5-5 7.5 5 7.5 5-2.8 5-7.5 5-7.5-5-7.5-5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="9" cy="9" r="2.2" stroke="currentColor" stroke-width="1.4"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">V!EW MY PR0F!LE</span><span class="flock-account-box-arrow">›</span></div>
+              <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.5 9s2.8-5 7.5-5 7.5 5 7.5 5-2.8 5-7.5 5-7.5-5-7.5-5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="9" cy="9" r="2.2" stroke="currentColor" stroke-width="1.4"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">V!EW MY FULL PR0F!LE</span><span class="flock-account-box-arrow">›</span></div>
               <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
             </button>
             <button type="button" class="sw-panel flock-account-box flock-account-box-clickable profiles-hub-btn" data-profiles-view="edit">
@@ -10668,7 +10684,6 @@ const SWAP_HTML = `<!DOCTYPE html>
               <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
             </button>
           </div>
-          <div class="profile-search-results" id="profileSearchResults"></div>
         </div>
         <!-- ED!T MY PR0F!LE — the exact identity card this whole tab used
              to show permanently above the box grid (avatar/username/quote/
@@ -11708,7 +11723,7 @@ const SWAP_HTML = `<!DOCTYPE html>
            only: NODE/NFTS/C0LLECT!0NS/STATUS/S!GNAL; CLASS/T!TLE/TRUST
            read PEND!NG until Phases 2/3/6 build the real data behind
            them — never fabricated, see renderProfileCode). -->
-      <div class="profile-code-block" id="profileScreenCode"></div>
+      <div class="profile-code-block" id="profileScreenCode" style="display:none;"></div>
       <!-- PR!VATE PR0F!LE placeholder — replaces everything below when
            this wallet has isPublic:false and you're not viewing your own
            (see openWalletProfile's own gating). -->
@@ -12998,7 +13013,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileBoxGrid','profileTabOffersBadge','profileTabMessagesBadge','profileTabPanelMessages','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
    'profileTabPanelMyNfts','myNftsPicker','myNftsPickerGrid','myNftsGrid','myNftsGridBackBtn','myNftsGridStatus','myNftsGridItems','myNftsBackBtn',
    'myNftsSearchInput','myNftsSearchClearBtn','myNftsEditionToggle','myNftsSortSelect','myNftsTraitCatSelect','myNftsTraitValSelect','myNftsTraitAddBtn','myNftsTraitChips',
-   'profileTabPanelProfiles','profilesSubNav','profilesEditView','profilesBackBtn','profileSearchInput','profileSearchResults','profileMessagesBack','profileOffersBack',
+   'profileTabPanelProfiles','profilesSubNav','profilesHubBanner','profilesEditView','profilesBackBtn','profileSearchInput','profileSearchResults','profileMessagesBack','profileOffersBack',
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistTitle','profileWatchlistClearFilter',
@@ -23137,7 +23152,75 @@ const SWAP_HTML = `<!DOCTYPE html>
   // the hub's full per-token-XRP-value total, which needs live AMM rate
   // lookups per token this screen has no reason to pay for on every
   // profile view. ----
+  // Σκύλλα://!DENT!TY — lives inside every profile banner now (reported
+  // live: "this part should be in the banner"), not as its own block under
+  // it. Rows (reported live): N0DE, ACT!VATED (the wallet's real XRPL
+  // activation), !NCEPT!0N (first Σκύλλα sign-in), T!TLE, NFTS,
+  // C0LLECT!0NS. STATUS/CLASS/TRUST/S!GNAL were dropped — CLASS by request,
+  // TRUST/S!GNAL were placeholders that never showed anything real.
+  // State is per wallet and every banner showing that wallet is patched
+  // in place as each piece lands (dates from /api/wallet-dates, counts
+  // from myNftCounts), so a banner re-render never loses what's known.
+  var identityState;
+  function identityOf(wallet){
+    identityState = identityState || {};
+    return identityState[wallet] || (identityState[wallet] = {});
+  }
+  function identityDate(iso){
+    if (!iso) return null;
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    return d.getUTCFullYear() + '.' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '.' + ('0' + d.getUTCDate()).slice(-2);
+  }
+  function identityRowsHtml(wallet){
+    var st = identityOf(wallet);
+    var profile = profileCache[wallet] || null;
+    function row(label, value, isPending){
+      return '<div class="profile-code-row' + (isPending ? ' pending' : '') + '"><span>' + label + '</span><span>' + value + '</span></div>';
+    }
+    var titleDef = (profile && profile.equippedTitle) ? ACHIEVEMENT_DEFS.find(function(d){ return d.id === profile.equippedTitle && d.kind === 'title'; }) : null;
+    var activated = identityDate(st.activated), inception = identityDate(st.firstSignIn);
+    return '<div class="profile-code-title">Σκύλλα://!DENT!TY</div>' +
+      row('N0DE', escapeHtml(computeNodeCode(wallet, profile && profile.nodeCode))) +
+      row('ACT!VATED', activated || (st.datesLoaded ? 'UNKN0WN' : 'PEND!NG'), !activated) +
+      row('!NCEPT!0N', inception || (st.datesLoaded ? 'N0T YET' : 'PEND!NG'), !inception) +
+      row('T!TLE', titleDef ? escapeHtml(titleDef.label) : 'N0NE SET', !titleDef) +
+      row('NFTS', st.nfts == null ? 'PEND!NG' : st.nfts, st.nfts == null) +
+      row('C0LLECT!0NS', st.collections == null ? 'PEND!NG' : st.collections, st.collections == null);
+  }
+  function refreshIdentity(wallet){
+    document.querySelectorAll('.profile-banner-code').forEach(function(node){
+      if (node.getAttribute('data-wallet') === wallet) node.innerHTML = identityRowsHtml(wallet);
+    });
+  }
+  function loadIdentityDates(wallet){
+    var st = identityOf(wallet);
+    if (st.datesLoading || st.datesLoaded) return;
+    st.datesLoading = true;
+    fetch('/api/wallet-dates?wallet=' + encodeURIComponent(wallet)).then(function(r){ return r.json(); }).then(function(d){
+      st.activated = d && d.activated;
+      st.firstSignIn = d && d.firstSignIn;
+    }).catch(function(){}).then(function(){
+      st.datesLoading = false;
+      st.datesLoaded = true;
+      refreshIdentity(wallet);
+    });
+  }
+  function setIdentityCounts(wallet, totalNfts, totalCollections){
+    var st = identityOf(wallet);
+    st.nfts = totalNfts;
+    st.collections = totalCollections;
+    refreshIdentity(wallet);
+  }
+  // Every banner showing this wallet's XRP balance (the same wallet can be
+  // on more than one screen's banner at once).
+  function setBannerXrpBalance(wallet, text){
+    document.querySelectorAll('.profile-banner-xrp').forEach(function(node){
+      if (node.getAttribute('data-wallet') === wallet) node.textContent = text;
+    });
+  }
   function profileScreenBannerHtml(wallet, profile){
+    loadIdentityDates(wallet);
     var hasPfp = !!(profile && profile.pfpImage);
     var avatarImg = hasPfp ? '<img src="' + escapeHtml(profile.pfpImage) + '" alt="">' : '';
     var username = (profile && profile.username) ? escapeHtml(profile.username) : 'N0 USERNAME SET';
@@ -23163,9 +23246,10 @@ const SWAP_HTML = `<!DOCTYPE html>
             '<button type="button" class="profile-mini-btn profile-screen-banner-copy" title="C0PY ADDRESS">⧉</button>' +
             '<a class="profile-mini-btn" href="https://bithomp.com/explorer/' + escapeHtml(wallet) + '" target="_blank" rel="noopener" title="V!EW 0N B!TH0MP">↗</a>' +
           '</div>' +
-          '<div class="profile-current-estvalue">XRP BALANCE :: <span id="profileScreenXrpBalance">--</span></div>' +
+          '<div class="profile-current-estvalue">XRP BALANCE :: <span class="profile-banner-xrp" data-wallet="' + escapeHtml(wallet) + '">' + (identityOf(wallet).xrp || '--') + '</span></div>' +
         '</div>' +
       '</div>' +
+      '<div class="profile-code-block profile-banner-code" data-wallet="' + escapeHtml(wallet) + '">' + identityRowsHtml(wallet) + '</div>' +
     '</div>';
   }
   el.profileScreenBanner.addEventListener('click', function(e){
@@ -23196,7 +23280,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     // reasoning queueProfileResolve's own async patch pattern already
     // uses elsewhere.
     el.profileScreenBanner.innerHTML = profileScreenBannerHtml(wallet, profileCache[wallet] || null);
-    el.profileScreenCode.innerHTML = '';
     el.profileScreenCollections.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     el.profileScreenCoins.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
     el.profileScreenFeatured.innerHTML = '';
@@ -23313,59 +23396,26 @@ const SWAP_HTML = `<!DOCTYPE html>
       // The banner may have already been re-rendered again by the time
       // this lands (a fast follow-up openWalletProfile call), so this
       // looks the span up fresh rather than trusting a closed-over node.
-      var xrpEl = document.getElementById('profileScreenXrpBalance');
-      if (xrpEl){
-        xrpEl.textContent = (data && data.xrpDrops != null)
-          ? (Number(data.xrpDrops) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP'
-          : '--';
-      }
+      var xrpText = (data && data.xrpDrops != null)
+        ? (Number(data.xrpDrops) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP'
+        : '--';
+      identityOf(wallet).xrp = xrpText;
+      setBannerXrpBalance(wallet, xrpText);
     }).catch(function(){
       el.profileScreenCoins.innerHTML = '<div class="th-empty">C0ULD N0T L0AD C0!NS.</div>';
     });
     renderProfileScreenRooms((profile && profile.showcaseRooms) || []);
   }
-  // Σκύλλα://!DENT!TY — see the plan's own comment on why CLASS/T!TLE/
-  // TRUST are PEND!NG: no Wallet DNA/Titles/Trust system exists yet
-  // (Phases 2/3/6), and this never fabricates a number to fill the gap.
-  // NFTS/C0LLECT!0NS are null (renders PEND!NG too) only if the live
-  // myNftCounts lookup itself failed, not if the wallet genuinely holds 0.
+  // Σκύλλα://!DENT!TY — rendered inside the banner now (see
+  // identityRowsHtml); this just hands it the NFT counts. null (renders
+  // PEND!NG) only if the live myNftCounts lookup itself failed, not if the
+  // wallet genuinely holds 0.
   function renderProfileCode(wallet, profile, totalNfts, totalCollections){
-    function row(label, value, isPending, key){
-      return '<div class="profile-code-row' + (isPending ? ' pending' : '') + '"' + (key ? ' data-row="' + key + '"' : '') + '><span>' + label + '</span><span>' + value + '</span></div>';
-    }
-    el.profileScreenCode.innerHTML =
-      '<div class="profile-code-title">Σκύλλα://!DENT!TY</div>' +
-      row('N0DE', escapeHtml(computeNodeCode(wallet, profile && profile.nodeCode))) +
-      row('STATUS', wallet === MY_WALLET ? 'ACT!VE' : 'UNKN0WN', wallet !== MY_WALLET) +
-      // CLASS starts PEND!NG (no Wallet DNA computed yet — that only
-      // happens once WALLET H!ST0RY is actually opened, see openWallet-
-      // History/renderProfileCodeClass) and gets patched in place rather
-      // than re-rendering this whole block, so it never clobbers whatever
-      // the user's since clicked elsewhere on this card.
-      row('CLASS', 'PEND!NG', true, 'class') +
-      // T!TLE — the real equipped title (see profileScreenBannerHtml's
-      // own titleDef lookup), already known the moment the profile itself
-      // resolves — no separate sync needed just to fill this row in, only
-      // to unlock NEW titles (see openAchievements).
-      row('T!TLE', (function(){
-        var def = (profile && profile.equippedTitle) ? ACHIEVEMENT_DEFS.find(function(d){ return d.id === profile.equippedTitle && d.kind === 'title'; }) : null;
-        return def ? escapeHtml(def.label) : 'N0NE SET';
-      })(), !(profile && profile.equippedTitle)) +
-      row('NFTS', totalNfts === null ? 'PEND!NG' : totalNfts, totalNfts === null) +
-      row('C0LLECT!0NS', totalCollections === null ? 'PEND!NG' : totalCollections, totalCollections === null) +
-      row('TRUST', 'PEND!NG', true) +
-      row('S!GNAL', 'STABLE');
+    setIdentityCounts(wallet, totalNfts, totalCollections);
   }
-  // Patches just the CLASS row once Wallet DNA actually computes (WALLET
-  // H!ST0RY is opened lazily, so this is genuinely unknown until then) —
-  // only touches the DOM if this is still the profile currently on screen.
-  function renderProfileCodeClass(wallet, classification){
-    if (currentProfileWallet !== wallet) return;
-    var rowEl = el.profileScreenCode.querySelector('[data-row="class"]');
-    if (!rowEl) return;
-    rowEl.classList.toggle('pending', !classification);
-    rowEl.querySelector('span:last-child').textContent = classification || 'PEND!NG';
-  }
+  // CLASS was dropped from !DENT!TY (reported live) — Wallet DNA still
+  // computes it for WALLET H!ST0RY's own block, nothing to patch here.
+  function renderProfileCodeClass(){}
   // SH0WCASE — Phase 4's R00MS: the owner's own curated set organized
   // into up to SHOWCASE_ROOM_MAX named groups (see R00MS in the edit
   // modal), each rendered as its own labelled section, real art at a
@@ -24447,6 +24497,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // which just opens its panel below the grid as normal. Each panel
     // carries its own BACK button back to null/neutral.
     el.profileTabPanelProfiles.style.display = tab === 'profiles' ? '' : 'none';
+    if (tab === 'profiles') renderProfilesHubBanner();
     // MY NFTS joined this list too (reported live: "replace all the
     // buttons with a selection of collections") — the box grid hides the
     // instant you click in, replaced entirely by the real collection
@@ -24555,6 +24606,36 @@ const SWAP_HTML = `<!DOCTYPE html>
     switchProfilesSubView(view);
   });
   el.profilesBackBtn.addEventListener('click', function(){ switchProfileTab(null); });
+  // PR0F!LES opens with your own banner on top (reported live) — the same
+  // banner everyone else sees on your profile, !DENT!TY included. Counts
+  // and XRP balance are fetched once, then reused.
+  function renderProfilesHubBanner(){
+    if (!MY_WALLET){ el.profilesHubBanner.innerHTML = ''; return; }
+    var profile = profileCache[MY_WALLET] || null;
+    el.profilesHubBanner.innerHTML = profileScreenBannerHtml(MY_WALLET, profile);
+    var bannerNode = el.profilesHubBanner.querySelector('.profile-banner');
+    var src = profile && (profile.bannerImage || profile.pfpImage);
+    if (bannerNode && src) sampleBannerColor(src, bannerNode);
+    var st = identityOf(MY_WALLET);
+    if (st.nfts == null && !st.countsLoading){
+      st.countsLoading = true;
+      apiWithRetry({ myNftCounts: 1, wallet: MY_WALLET }).then(function(data){
+        var counts = (data && data.counts) || {};
+        var total = 0, held = 0;
+        Object.keys(counts).forEach(function(key){ if (counts[key] > 0){ total += counts[key]; held++; } });
+        setIdentityCounts(MY_WALLET, total, held);
+      }).catch(function(){}).then(function(){ st.countsLoading = false; });
+    }
+    if (!st.xrp && !st.xrpLoading){
+      st.xrpLoading = true;
+      api({ walletProfileCoins: 1, wallet: MY_WALLET }).then(function(data){
+        if (data && data.xrpDrops != null){
+          st.xrp = (Number(data.xrpDrops) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' XRP';
+          setBannerXrpBalance(MY_WALLET, st.xrp);
+        }
+      }).catch(function(){}).then(function(){ st.xrpLoading = false; });
+    }
+  }
   // Keeps the PR0F!LES hub's boxes the same height as the Σκύλλα://SYSTEM
   // grid's — those stretch to fill the panel, so there's no fixed size to
   // copy; this measures them whenever they change.
@@ -24846,6 +24927,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       profileCache[MY_WALLET] = profile;
       renderProfileCurrent(profile);
       renderScyllaNavReadout();
+      if (el.profileTabPanelProfiles.style.display !== 'none') renderProfilesHubBanner();
     }).catch(function(){});
     // PFP/BANNER/FEATURED's own cross-collection NFT grids are lazy now
     // (see ensureCrossCollectionNftsLoaded, called from openProfileEditModal)
@@ -26637,6 +26719,8 @@ export async function renderSwap(context, presetCollection, presetProfileWallet,
     }
   }
   const pushReady = wallet && env.coin ? !!(await getXamanUserToken(env.coin, wallet).catch(() => null)) : false;
+  // Sessions from before !NCEPT!0N was recorded at sign-in get it here.
+  if (wallet && env.coin) context.waitUntil(recordFirstSignIn(env.coin, wallet));
   const og = await resolveOgTags(request, presetCollection, presetPigeon);
   const html = SWAP_HTML
     .replace('"__SWAP_WALLET__"', JSON.stringify(wallet))

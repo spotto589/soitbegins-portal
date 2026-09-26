@@ -5802,3 +5802,57 @@ export async function getTopKingRarity(address, kingNftIds) {
     return null;
   }
 }
+
+// Σκύλλα://!DENT!TY dates — shown in every profile banner.
+// !NCEPT!0N: the first time a wallet signed in to Σκύλλα. Written once and
+// never overwritten; sessions from before this existed get it on their
+// first page load while signed in (see renderSwap in static.js).
+// ACT!VATED: the wallet's real activation on the XRPL — the earliest
+// transaction touching it, accepted only if it genuinely CREATED the
+// account (a node without full history could otherwise hand back some
+// later transaction), then cached for good since it can never change.
+const IDENTITY_FIRST_SIGNIN_PREFIX = 'identity:firstsignin:v1:';
+const IDENTITY_ACTIVATED_PREFIX = 'identity:activated:v1:';
+
+export async function recordFirstSignIn(kv, wallet) {
+  if (!kv || !wallet) return;
+  try {
+    const key = IDENTITY_FIRST_SIGNIN_PREFIX + wallet;
+    if (await kv.get(key)) return;
+    await kv.put(key, new Date().toISOString());
+  } catch (e) {
+    // Not worth failing a sign-in or page load over.
+  }
+}
+
+async function lookupWalletActivation(wallet) {
+  const data = await fetchXrplClusterJson({
+    method: 'account_tx',
+    params: [{ account: wallet, ledger_index_min: -1, ledger_index_max: -1, forward: true, limit: 1 }]
+  }, ['actNotFound']);
+  const entry = data && data.result && Array.isArray(data.result.transactions) ? data.result.transactions[0] : null;
+  if (!entry) return null;
+  const meta = entry.meta || entry.metaData;
+  const nodes = (meta && meta.AffectedNodes) || [];
+  const created = nodes.some(n => n.CreatedNode && n.CreatedNode.LedgerEntryType === 'AccountRoot' &&
+    n.CreatedNode.NewFields && n.CreatedNode.NewFields.Account === wallet);
+  if (!created) return null;
+  if (entry.close_time_iso) return entry.close_time_iso;
+  const tx = entry.tx || entry.tx_json;
+  if (tx && typeof tx.date === 'number') return new Date((tx.date + RIPPLE_EPOCH_OFFSET_SECONDS) * 1000).toISOString();
+  return null;
+}
+
+export async function getWalletIdentityDates(context, wallet) {
+  const kv = context.env.coin;
+  const [firstSignIn, cachedActivated] = await Promise.all([
+    kv.get(IDENTITY_FIRST_SIGNIN_PREFIX + wallet).catch(() => null),
+    kv.get(IDENTITY_ACTIVATED_PREFIX + wallet).catch(() => null)
+  ]);
+  let activated = cachedActivated;
+  if (!activated) {
+    activated = await lookupWalletActivation(wallet).catch(() => null);
+    if (activated) await safeKvPut(kv, IDENTITY_ACTIVATED_PREFIX + wallet, activated);
+  }
+  return { activated: activated || null, firstSignIn: firstSignIn || null };
+}
