@@ -13,6 +13,7 @@
 // whether anyone is on the site.
 import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshFloorIndex, recomputeCrownHolder, TRADEABLE_COLLECTIONS } from '../functions/_shared.js';
 import { runLedgerWatch } from '../functions/_ledgerwatch.js';
+import { stepPopularCoins } from '../functions/_coins.js';
 
 // xaman-proxy (../xaman-proxy, deployed separately on Render) spins down
 // after ~15 minutes with no HTTP traffic on Render's free tier. The first
@@ -43,6 +44,15 @@ export default {
       ctx.waitUntil(runLedgerWatch(env.coin, { vapid: env.VAPID_PRIVATE_JWK })
         .then(r => console.log('ledger-watch', JSON.stringify(r)))
         .catch(e => console.log('ledger-watch failed', String(e && e.message || e))));
+      return;
+    }
+    // STAT!C://C0!NS — its own tick (5, 15, 25... past the hour), so it
+    // gets its own 50-subrequest budget instead of sharing the */10
+    // tick's. One coin checked per tick; see stepPopularCoins.
+    if (event.cron === '5-59/10 * * * *') {
+      ctx.waitUntil(stepPopularCoins(env.coin)
+        .then(r => console.log('popular-coins', JSON.stringify(r)))
+        .catch(e => console.log('popular-coins failed', String(e && e.message || e))));
       return;
     }
     // Every real tradeable collection, not just P!GE0NS (the implicit

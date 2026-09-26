@@ -521,7 +521,37 @@ export const TRADEABLE_COLLECTIONS = {
 // null for an unknown key or a collection that isn't (yet) tradeable, so
 // callers can 400 with a real "invalid_collection"/"not_tradeable" error
 // instead of silently falling back to Pigeons.
+// STAT!C://C0!NS popular coins (see _coins.js) — trade keys 'coin:<md5>'.
+// Not part of TRADEABLE_COLLECTIONS (nothing that loops over collections
+// — cron crawls, offer scans, profile coins — should pick these up); only
+// the BUY swap path resolves them, and only after ensurePopularCoinConfig
+// has loaded the CURRENT published list, so a coin that has dropped off
+// the list can no longer be bought through the site.
+export const POPULAR_COINS_KEY = 'pcoins:list:v1';
+const POPULAR_COIN_TRADE_CONFIGS = {};
+export function isPopularCoinKey(key) {
+  return typeof key === 'string' && /^coin:[0-9a-f]{32}$/.test(key);
+}
+export async function ensurePopularCoinConfig(kv, key) {
+  if (!isPopularCoinKey(key) || !kv) return null;
+  let list = null;
+  try { const raw = await kv.get(POPULAR_COINS_KEY); list = raw ? JSON.parse(raw) : null; } catch (e) { list = null; }
+  const coin = list && Array.isArray(list.coins) ? list.coins.find(c => c.key === key) : null;
+  if (!coin) { delete POPULAR_COIN_TRADE_CONFIGS[key]; return null; }
+  POPULAR_COIN_TRADE_CONFIGS[key] = {
+    key,
+    label: coin.name,
+    tokenConfig: { currency: coin.currency, issuer: coin.issuer, configured: true },
+    ammAccount: coin.ammAccount || null,
+    xrplToUrl: coin.xrplToUrl || null,
+    isPopularCoin: true,
+    tradeable: true
+  };
+  return POPULAR_COIN_TRADE_CONFIGS[key];
+}
+
 export function getTradeConfig(collectionKey) {
+  if (isPopularCoinKey(collectionKey)) return POPULAR_COIN_TRADE_CONFIGS[collectionKey] || null;
   const cfg = TRADEABLE_COLLECTIONS[collectionKey];
   if (!cfg || !cfg.tradeable) return null;
   return cfg;
@@ -820,6 +850,8 @@ export async function syncWalletAchievements(context, wallet) {
 // that encoding exactly rather than requiring it be pre-encoded by hand.
 export function encodeCurrencyCode(code) {
   if (!code) return code;
+  // Already the on-ledger 40-hex form (popular coins are stored that way).
+  if (/^[0-9A-F]{40}$/.test(code)) return code;
   if (code.length === 3 && code.toUpperCase() !== 'XRP') return code;
   const bytes = new Uint8Array(20);
   bytes.set(new TextEncoder().encode(code).slice(0, 20));
@@ -1540,7 +1572,7 @@ export async function quotePigeonsForXrpDrops(xrpDropsStr, collectionKey = 'pige
   try { xrpDrops = BigInt(xrpDropsStr); } catch (e) { return { ok: false, error: 'bad_amount' }; }
   if (xrpDrops <= 0n) return { ok: false, error: 'bad_amount' };
 
-  const ammAccount = COLLECTION_AMM_ACCOUNTS[collectionKey] || null;
+  const ammAccount = cfg.ammAccount || COLLECTION_AMM_ACCOUNTS[collectionKey] || null;
   const [bookResult, pool] = await Promise.all([
     quoteFromOrderBook(cfg.tokenConfig, xrpDrops),
     fetchTokenAmmPool(ammAccount, cfg.tokenConfig)
@@ -1778,6 +1810,9 @@ async function fetchTokenSupply(tokenConfig) {
 export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
   const cfg = getTradeConfig(collectionKey);
   if (!cfg || !cfg.tokenConfig) return { xrpPerPigeon: null, usdPerPigeon: null, dexUrl: null };
+  // Popular coins: the BUY panel only needs a link to check the coin
+  // before trusting it — its xrpl.to page. No KV cache write per coin.
+  if (cfg.isPopularCoin) return { xrpPerPigeon: null, usdPerPigeon: null, marketCapUsd: null, liquidityUsd: null, tokenImageUrl: null, dexUrl: cfg.xrplToUrl };
   const cacheKey = collectionKey === 'pigeons' ? PIGEONS_RATE_CACHE_KEY : PIGEONS_RATE_CACHE_KEY + ':' + collectionKey;
   if (kv) {
     const cached = await kv.get(cacheKey);

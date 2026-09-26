@@ -9988,6 +9988,54 @@ const SWAP_HTML = `<!DOCTYPE html>
     #screenMainframe .mainframe-card-buy{ margin-top:auto !important; font-size:12px !important; padding:0.6em 0.3em !important; }
     body.mainframe-open #screenMainframe{ position:relative !important; top:auto !important; bottom:auto !important; left:auto !important; right:auto !important; overflow:visible !important; height:auto !important; min-height:calc(100vh - var(--global-ticker-h)); z-index:1 !important; }
   }
+  /* STAT!C://C0!NS — the popular XRPL meme coins list (renderCoins in the
+     script, functions/api/coins.js, functions/_coins.js). The same screen
+     is the Σκύλλα tab's own MY C0!NS view while STAT!C is on C0!NS. While
+     it's showing, everything else in .page is out of the layout (same
+     idea as body.mainframe-open above, popups/toasts excepted). */
+  body.coins-open .page > *:not(#screenCoins):not(#notifyToasts):not([id$="Modal"]){ display:none !important; }
+  #screenCoins{ max-width:760px; margin:0 auto; padding:1rem 0.25rem 2rem; font-family:var(--font-mono); }
+  .coins-head{ text-align:center; margin-bottom:1rem; }
+  .coins-title{ font-family:var(--font-display); font-size:26px; font-weight:700; letter-spacing:0.08em; color:var(--cyan); text-shadow:0 0 8px var(--cyan-glow); }
+  .coins-sub{ font-size:12px; letter-spacing:0.08em; opacity:0.75; margin-top:0.35rem; text-transform:uppercase; }
+  .coins-sub a{ color:inherit; text-transform:none; }
+  .coins-foot{ text-align:center; margin-top:1.25rem; }
+  .coins-list{ display:flex; flex-direction:column; gap:0.6rem; }
+  .coins-empty{ text-align:center; padding:2rem 1rem; border:1px solid var(--border-dim); background:var(--panel-bg); letter-spacing:0.08em; }
+  .coins-empty .coin-buy{ display:inline-block; width:auto; margin-top:1rem; padding:0.55em 1.4em; }
+  .coin-row{ background:var(--panel-bg); border:1px solid var(--border-mid); padding:0.75rem; }
+  .coin-main{ display:grid; grid-template-columns:44px 1fr auto; gap:0.75rem; align-items:center; }
+  .coin-icon{ width:44px; height:44px; border-radius:50%; object-fit:cover; background:var(--panel-bg-solid); }
+  .coin-name{ font-size:16px; font-weight:700; letter-spacing:0.05em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .coin-meta{ font-size:12px; opacity:0.8; margin-top:0.2rem; letter-spacing:0.04em; }
+  .coin-meta b{ color:var(--green); text-shadow:0 0 6px var(--green-glow); }
+  .coin-actions{ display:flex; flex-direction:column; gap:0.4rem; min-width:140px; }
+  .coin-badge, .coin-buy{
+    display:block; width:100%; box-sizing:border-box; padding:0.45em 0.6em; background:transparent; border:1px solid;
+    font-family:var(--font-mono); font-weight:700; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer;
+    user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent;
+  }
+  .coin-badge-green{ color:var(--green); border-color:var(--green); }
+  .coin-badge-yellow{ color:#ffd23f; border-color:#ffd23f; }
+  .coin-badge-red{ color:var(--red); border-color:var(--red); }
+  .coin-buy{ color:var(--green); border-color:var(--green); background:rgba(52,255,133,0.1); text-shadow:0 0 6px var(--green-glow); }
+  .coin-buy:disabled{ opacity:0.6; cursor:default; }
+  .coin-trust{ color:var(--cyan); border-color:var(--cyan); background:var(--cyan-faint); text-shadow:0 0 6px var(--cyan-glow); }
+  .coin-flash{ margin-top:0.5rem; font-size:12px; letter-spacing:0.05em; color:var(--cyan); }
+  .coin-reasons{ margin-top:0.65rem; padding-top:0.65rem; border-top:1px solid var(--border-dim); font-size:13px; line-height:1.5; display:flex; flex-direction:column; gap:0.3rem; }
+  .coin-reason{ display:flex; gap:0.5rem; align-items:baseline; }
+  .coin-dot-green{ color:var(--green); } .coin-dot-yellow{ color:#ffd23f; } .coin-dot-red{ color:var(--red); }
+  .coin-reasons a{ color:var(--cyan); font-size:12px; letter-spacing:0.05em; margin-top:0.2rem; }
+  @media (max-width:700px){
+    .coin-main{ grid-template-columns:40px 1fr; }
+    .coin-icon{ width:40px; height:40px; }
+    .coin-actions{ grid-column:1 / -1; flex-direction:row; min-width:0; }
+    .coin-actions > *{ flex:1 1 0; }
+  }
+  /* DATABASE | C0!NS — the STAT!C:// page switch at the top of the ▾ list. */
+  .db-page-row{ display:flex; border-bottom:1px solid var(--border-mid); }
+  .db-page-opt{ flex:1; text-align:center; padding:0.65em 0.5em; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
+  .db-page-opt-active{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); background:var(--cyan-faint); cursor:default; }
 </style>
 </head>
 <body>
@@ -11275,6 +11323,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
 
     <!-- SCREEN 1: COLLECTION BROWSER (whole collection OR one owner's, per scope) -->
+    <!-- STAT!C://C0!NS — popular XRPL meme coins, and the Σκύλλα tab's
+         own MY C0!NS view of the same list (see renderCoins in the
+         script). xrpl.to's terms require the visible "Data by xrpl.to"
+         link below wherever its data shows. -->
+    <div id="screenCoins" style="display:none;">
+      <div class="coins-head">
+        <div class="coins-title" id="coinsTitle">P0PULAR C0!NS</div>
+        <div class="coins-sub" id="coinsSub"></div>
+      </div>
+      <div class="coins-list" id="coinsList"></div>
+      <div class="coins-sub coins-foot">SAFETY CHECKS READ FR0M THE XRPL LEDGER · EST!MATES, N0T F!NANC!AL ADV!CE · <a href="https://xrpl.to" target="_blank" rel="noopener">Data by xrpl.to</a></div>
+    </div>
     <div id="screenBrowse" style="display:none;">
       <!-- Persistent trade builder, always visible on DATABASE — this is
            the single place that starts/continues a trade now (no more
@@ -12930,6 +12990,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // this exact bug made a signed-in session look like "the entire website"
   // had broken, while signed-out looked fine (loadOffersReceived's own
   // MY_WALLET check skips the bad line entirely when logged out).
+  // STAT!C://C0!NS coins, keyed 'coin:<md5>' — filled by loadCoins, read
+  // only by the BUY swap panel (buySwapMeta). Deliberately separate from
+  // COLLECTION_META, which several screens loop over as "the collections".
+  var POPULAR_COIN_META = {};
   var OFFERS_TRADEABLE_COLLECTIONS = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].tradeable; });
 
   var el = {};
@@ -13259,6 +13323,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // invalidated by anything loading later, so it's the only version of
   // this that's actually predictable.
   function scrollActiveTabPanelIntoView(tab){
+    if (isCoinsPage()){ window.scrollTo({ top: 0, behavior: 'auto' }); return; }
     // MY PIGEONS specifically lands right at its own "SH0W!NG Y0UR
     // P!GE0NS :: N" title instead of literal page top — reported live
     // (with a screenshot showing that exact line pinned to the very top
@@ -13356,7 +13421,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // one-screen-fit treatment unchanged. A body class, not a per-element
     // JS toggle, so it can't be fought by anything else's own async
     // display writes running after this.
-    document.body.classList.toggle('paws-view', tab === 'mypigeons' && !myNftsDatabaseOpen);
+    document.body.classList.toggle('paws-view', tab === 'mypigeons' && !myNftsDatabaseOpen && !isCoinsPage());
     // Trustline banner — DATABASE only now, and only once a real
     // collection has actually been entered (reported live: "the banner
     // should not be on the mainframe page at all" — the picker grid,
@@ -13378,7 +13443,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // content now (reported live), shown only while state.databaseInPicker
     // is still true; picking a collection (a card, or the dropdown) flips
     // it false and shows the real browsable grid below instead.
-    var showMainframePicker = tab === 'database' && state.databaseInPicker;
+    var showMainframePicker = tab === 'database' && state.databaseInPicker && !isCoinsPage();
     // Lazy — see loadMainframeCardStats' own comment for why this used to
     // fire unconditionally at page load instead of only once the picker
     // grid is actually the visible screen.
@@ -13461,7 +13526,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // nft buttons don't work" (V!EW NFTs on the trustline banner, and the
     // profile's own MY NFTS box). Skip the neutral-state reset whenever
     // the grid is the reason this call is happening in the first place.
-    if (!state.myPigeonsGridOpen) loadProfilePanel();
+    if (!state.myPigeonsGridOpen && !isCoinsPage()) loadProfilePanel();
     el.swapOffersPanelWrap.style.display = tab === 'swapoffers' ? '' : 'none';
     // The trustline banner itself stays up across every tab, but the
     // $PIGEONS thumbnail is DATABASE-only — it's collection artwork, not
@@ -13501,7 +13566,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // eagerly fetch the whole collection before a card's even been
     // picked; enterMainframeCollection's own bootstrap covers the first
     // real entry into a collection instead.
-    if (tab === 'database' && !state.databaseInPicker && !state.databaseLoaded){
+    if (tab === 'database' && !state.databaseInPicker && !state.databaseLoaded && !isCoinsPage()){
       state.databaseLoaded = true;
       // A fresh pretty-route landing (SERVER_COLLECTION, see its own
       // comment near COLLECTION_META) sets state.collection directly
@@ -13564,12 +13629,20 @@ const SWAP_HTML = `<!DOCTYPE html>
       // a stale cached view would hide real progress.
       loadSwapOffersMine();
     }
+    // STAT!C://C0!NS (and Σκύλλα's MY C0!NS) — see applyCoinsMode.
+    applyCoinsMode(tab);
     if (!skipScroll) scrollActiveTabPanelIntoView(tab);
   }
   el.topTabs.addEventListener('click', function(e){
     var btn = e.target.closest('.tab-btn');
     if (!btn) return;
     var tab = btn.getAttribute('data-tab');
+    // On STAT!C://C0!NS the STAT!C half just shows C0!NS — no collection
+    // picker behind it (switching pages is the ▾ list's DATABASE | C0!NS).
+    if (tab === 'database' && isCoinsPage()){
+      showTab('database');
+      return;
+    }
     // Clicking the word DATABASE while ALREADY on DATABASE mid-browse
     // always goes back to the real collection picker (reported live as
     // "when we click the word database, that takes us to the mainframe
@@ -18034,6 +18107,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // MAINFRAME now, where state.collection may not match whichever BUY
   // button was actually clicked).
   var buySwapCollection = 'pigeons';
+  // A collection's token, or a STAT!C://C0!NS popular coin.
+  function buySwapMeta(){
+    return COLLECTION_META[buySwapCollection] || POPULAR_COIN_META[buySwapCollection] || COLLECTION_META.pigeons;
+  }
   // The current panel's real DexScreener link, if one exists (see
   // pigeonsRate's own dexUrl, fetched fresh in openBuySwapPanel below) —
   // shown inside the TRUSTL!NE REQU!RED gate so someone can verify the
@@ -18198,7 +18275,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       buySwapQuote = data;
       buySwapQuoteForRaw = raw;
-      var quoteTokenLabel = COLLECTION_META[buySwapCollection].tokenLabel;
+      var quoteTokenLabel = buySwapMeta().tokenLabel;
       el.buySwapReceiveValue.textContent = data.receivePigeons.toLocaleString(undefined, { maximumFractionDigits: 2 });
       el.buySwapRate.textContent = data.rate.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + quoteTokenLabel + ' / XRP';
       var minReceived = data.receivePigeons * (10000 - BUYSWAP_SLIPPAGE_BPS) / 10000;
@@ -18248,7 +18325,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // true, never assumed true by default or on a failed check). ----
   var buySwapHasTrustline = null;
   function applyBuySwapGate(){
-    var gateTokenLabel = COLLECTION_META[buySwapCollection].tokenLabel;
+    var gateTokenLabel = buySwapMeta().tokenLabel;
     if (!MY_WALLET){
       el.buySwapChecking.style.display = 'none';
       el.buySwapQuoteSection.style.display = '';
@@ -18281,6 +18358,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.buySwapTrustlineWarning.style.display = '';
       if (buySwapDexUrl){
         el.buySwapDexLink.href = buySwapDexUrl;
+        el.buySwapDexLink.textContent = buySwapDexUrl.indexOf('https://xrpl.to/') === 0 ? 'V!EW 0N XRPL.T0 ↗' : 'V!EW 0N DEXSCREENER ↗';
         el.buySwapDexLink.style.display = '';
       } else {
         el.buySwapDexLink.style.display = 'none';
@@ -18316,6 +18394,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   function closeBuySwapModal(){
     el.buySwapModal.style.display = 'none';
     stopBuySwapTimers();
+    // A coin bought from C0!NS: refresh the holdings shown behind it.
+    if (POPULAR_COIN_META[buySwapCollection] && isCoinsPage()) loadCoins(true);
   }
   el.buySwapModal.addEventListener('click', function(e){ if (e.target === el.buySwapModal) closeBuySwapModal(); });
   // collectionKey: which token this session buys — defaults to 'pigeons'
@@ -18327,7 +18407,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // currently active in DATABASE.
   function openBuySwapPanel(collectionKey){
     buySwapCollection = collectionKey || 'pigeons';
-    var meta = COLLECTION_META[buySwapCollection];
+    var meta = buySwapMeta();
     // Local override, scoped to this modal only — BUY can open for a
     // collection that ISN'T the one currently active in DATABASE (see
     // this function's own comment above), so it can't just rely on the
@@ -18489,7 +18569,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
       var txjson = res.data.txjson;
       var display = res.data.display;
-      var confTokenLabel = COLLECTION_META[buySwapCollection].tokenLabel;
+      var confTokenLabel = buySwapMeta().tokenLabel;
       buySwapReviewDrops = drops.toString();
       // Address shortened the same way every other real address on the
       // site is (see buySwapIssuerAddr/ciIssuerAddr) — the full raw
@@ -18631,7 +18711,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
 
   function showBuySwapResult(data){
-    var resultTokenLabel = COLLECTION_META[buySwapCollection].tokenLabel;
+    var resultTokenLabel = buySwapMeta().tokenLabel;
     el.buySwapResultReceived.innerHTML = data.receivedPigeons !== null && data.receivedPigeons !== undefined
       ? greenNum(Number(data.receivedPigeons).toLocaleString(undefined, { maximumFractionDigits: 6 })) + ' <span class="buyswap-received-unit">' + resultTokenLabel + '</span>'
       : 'EXACT AM0UNT UNAVA!LABLE';
@@ -20220,8 +20300,16 @@ const SWAP_HTML = `<!DOCTYPE html>
       open.conspiracy = true;
       if (COLLECTION_META.whiterabbit) open.whiterabbit = true;
     }
+    var pageRow = '<div class="db-page-row">' +
+      '<div class="db-page-opt' + (isCoinsPage() ? '' : ' db-page-opt-active') + '" data-static-page="database">DATABASE</div>' +
+      '<div class="db-page-opt' + (isCoinsPage() ? ' db-page-opt-active' : '') + '" data-static-page="coins">C0!NS</div>' +
+      '</div>';
+    if (isCoinsPage()){
+      el.dbSelectFlyout.innerHTML = pageRow + '<div class="db-option db-option-active" data-coins-popular="1">P0PULAR</div>';
+      return;
+    }
     var keys = Object.keys(COLLECTION_META);
-    var html = keys.filter(function(k){ return open[k]; }).map(function(k){
+    var html = pageRow + keys.filter(function(k){ return open[k]; }).map(function(k){
       return '<div class="db-option' + (k === state.collection ? ' db-option-active' : '') + '" data-collection="' + k + '">' + escapeHtml(COLLECTION_META[k].label) + '</div>';
     }).concat(keys.filter(function(k){ return !open[k]; }).map(function(k){
       return '<div class="db-option db-option-disabled">' + escapeHtml(COLLECTION_META[k].label) + ' <span class="db-soon">C0M!NG S00N</span></div>';
@@ -20260,6 +20348,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // instead (see its own comment on "clicking the word DATABASE").
   el.dbSelectLabel.addEventListener('click', function(e){
     e.stopPropagation();
+    if (isCoinsPage()){ showTab('database'); return; }
     // The name always goes to the collection; ▾ opens the list (reported
     // live 2026-09-25 — the ▾ is a bigger boxed tap target on phones).
     enterMainframeCollection(state.collection);
@@ -20437,6 +20526,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // switchCollection's own no-op guard for "already this collection"
   // means enterMainframeCollection has to drive showTab itself either way.
   function enterMainframeCollection(key){
+    // Picking a collection always means STAT!C://DATABASE.
+    if (isCoinsPage()){ state.staticPage = 'database'; updateStaticTopBar(); setStaticPageInUrl(); }
     if (key !== state.collection){
       // switchCollection's own end-of-function calls (ensureTraitsLoaded +
       // runQuery) already do the first real fetch for the new collection —
@@ -20803,6 +20894,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.dbSelectFlyout.addEventListener('click', function(e){
     e.stopPropagation();
+    var pageOpt = e.target.closest('[data-static-page]');
+    if (pageOpt){
+      closeDbSelectFlyout();
+      setStaticPage(pageOpt.getAttribute('data-static-page'));
+      return;
+    }
+    if (e.target.closest('[data-coins-popular]')){
+      closeDbSelectFlyout();
+      showTab('database');
+      return;
+    }
     var opt = e.target.closest('.db-option[data-collection]');
     // "select a collection... takes us to the database of that
     // collection" (reported live) — same real grid enterMainframeCollection
@@ -25900,6 +26002,234 @@ const SWAP_HTML = `<!DOCTYPE html>
       onDone();
     }, 1300);
   }
+  // ---- STAT!C://C0!NS — popular XRPL meme coins -------------------------
+  // STAT!C:// is the browsing side and Σκύλλα the wallet side of whichever
+  // page is picked: on C0!NS the STAT!C half shows the popular coins list
+  // (badge + plain-English reasons, BUY), and the Σκύλλα half shows the
+  // same coins as MY C0!NS (what this wallet holds, trustline, BUY). The
+  // list itself is built in the background (functions/_coins.js); buying
+  // reuses the BUY swap panel under the coin's 'coin:<md5>' key.
+  var coinsData = null;         // last /api/coins response
+  var coinsLoadedAt = 0;
+  var coinsLoading = false;
+  var coinsLoadFailed = false;
+  var coinsView = 'market';     // 'market' (STAT!C) | 'mine' (Σκύλλα)
+  var coinsOpenReasons = {};    // coin key -> reasons expanded
+  var coinsTrustBusy = {};      // coin key -> a trustline request is out
+  var coinsFlash = {};          // coin key -> one-line status under the row
+  function isCoinsPage(){ return state.staticPage === 'coins'; }
+  function updateStaticTopBar(){
+    if (isCoinsPage()){
+      el.tabDbWord.textContent = 'C0!NS';
+      el.dbSelectLabel.textContent = 'P0PULAR';
+    } else {
+      el.tabDbWord.textContent = 'DATABASE';
+      el.dbSelectLabel.textContent = COLLECTION_META[state.collection] ? COLLECTION_META[state.collection].label : 'P!GE0NS';
+    }
+  }
+  function setStaticPageInUrl(){
+    try {
+      var u = new URL(window.location.href);
+      if (isCoinsPage()) u.searchParams.set('static', 'coins');
+      else u.searchParams.delete('static');
+      history.replaceState(history.state, '', u.toString());
+    } catch (e){}
+  }
+  function setStaticPage(page){
+    state.staticPage = page === 'coins' ? 'coins' : 'database';
+    updateStaticTopBar();
+    setStaticPageInUrl();
+    showTab(state.activeTab === 'mypigeons' ? 'mypigeons' : 'database');
+  }
+  function applyCoinsMode(tab){
+    var on = isCoinsPage() && (tab === 'database' || tab === 'mypigeons');
+    var screen = document.getElementById('screenCoins');
+    if (!screen) return;
+    screen.style.display = on ? '' : 'none';
+    document.body.classList.toggle('coins-open', on);
+    if (!on) return;
+    coinsView = tab === 'mypigeons' ? 'mine' : 'market';
+    renderCoins();
+    loadCoins(false);
+  }
+  // force: refetch even if the last load is recent (after a buy/trustline).
+  function loadCoins(force){
+    if (coinsLoading) return;
+    if (!force && coinsData && Date.now() - coinsLoadedAt < 60000) return;
+    coinsLoading = true;
+    fetch('/api/coins' + (MY_WALLET ? '?mine=1' : ''), { credentials: 'same-origin' }).then(function(r){ return r.json(); }).then(function(data){
+      coinsLoading = false;
+      if (!data || !Array.isArray(data.coins)) throw new Error('bad_response');
+      coinsData = data;
+      coinsLoadedAt = Date.now();
+      coinsLoadFailed = false;
+      data.coins.forEach(function(c){
+        POPULAR_COIN_META[c.key] = { label: c.name, itemLabel: c.name, tradeable: false, tokenLabel: '$' + c.name, tokenIssuer: c.issuer, hasAmm: !!c.ammAccount, accent: '#3df3ec', accentRgb: '61,243,236', thumb: c.image };
+      });
+      renderCoins();
+    }).catch(function(){
+      coinsLoading = false;
+      coinsLoadFailed = true;
+      renderCoins();
+    });
+  }
+  function coinsBadgeLabel(b){ return b === 'green' ? 'L0W R!SK' : (b === 'yellow' ? 'CAUT!0N' : 'H!GH R!SK'); }
+  function coinsAgo(ts){
+    var m = Math.round((Date.now() - ts) / 60000);
+    if (m < 1) return 'JUST N0W';
+    if (m < 60) return m + 'M AG0';
+    return Math.round(m / 60) + 'H AG0';
+  }
+  function coinRowHtml(c, holding){
+    var key = c.key;
+    var b = c.badge === 'green' || c.badge === 'yellow' ? c.badge : 'red';
+    var open = !!coinsOpenReasons[key];
+    var meta = 'MARKET CAP ' + (c.marketCapUsd ? formatUsdAbbrev(c.marketCapUsd) : '—');
+    if (coinsView === 'mine' && holding && holding.hasTrustline !== null){
+      meta += ' · Y0U H0LD <b>' + escapeHtml(compactPigeonsNumber(holding.balance || 0)) + '</b>';
+    }
+    var action;
+    if (MY_WALLET && holding && holding.hasTrustline === false){
+      action = coinsTrustBusy[key]
+        ? '<button type="button" class="coin-buy coin-trust" disabled>S!GN !N XAMAN...</button>'
+        : '<button type="button" class="coin-buy coin-trust" data-coin-trust="' + escapeHtml(key) + '">SET TRUSTL!NE</button>';
+    } else {
+      action = '<button type="button" class="coin-buy" data-coin-buy="' + escapeHtml(key) + '">BUY $' + escapeHtml(c.name) + '</button>';
+    }
+    var reasons = '';
+    if (open){
+      reasons = '<div class="coin-reasons">' + (c.reasons || []).map(function(r){
+        var lvl = r.level === 'green' || r.level === 'yellow' ? r.level : 'red';
+        return '<div class="coin-reason"><span class="coin-dot-' + lvl + '">●</span><span>' + escapeHtml(r.text) + '</span></div>';
+      }).join('') + (c.xrplToUrl ? '<a href="' + escapeHtml(c.xrplToUrl) + '" target="_blank" rel="noopener">V!EW 0N XRPL.T0 ↗</a>' : '') + '</div>';
+    }
+    return '<div class="coin-row">' +
+      '<div class="coin-main">' +
+        '<img class="coin-icon" src="' + escapeHtml(c.image || '') + '" alt="" loading="lazy">' +
+        '<div style="min-width:0;"><div class="coin-name">$' + escapeHtml(c.name) + '</div><div class="coin-meta">' + meta + '</div></div>' +
+        '<div class="coin-actions">' +
+          '<button type="button" class="coin-badge coin-badge-' + b + '" data-coin-reasons="' + escapeHtml(key) + '">● ' + coinsBadgeLabel(b) + (open ? ' ▴' : ' ▾') + '</button>' +
+          action +
+        '</div>' +
+      '</div>' +
+      (coinsFlash[key] ? '<div class="coin-flash">' + escapeHtml(coinsFlash[key]) + '</div>' : '') +
+      reasons +
+    '</div>';
+  }
+  function renderCoins(){
+    var list = document.getElementById('coinsList');
+    var title = document.getElementById('coinsTitle');
+    var sub = document.getElementById('coinsSub');
+    if (!list) return;
+    var mine = coinsView === 'mine';
+    title.innerHTML = mine ? '<span style="text-transform:none;">Σκύλλα</span>://MY C0!NS' : 'STAT!C://P0PULAR C0!NS';
+    if (mine && !MY_WALLET){
+      sub.textContent = '';
+      list.innerHTML = '<div class="coins-empty">L0G !N T0 SEE Y0UR C0!NS.<br><button type="button" class="coin-buy" data-coins-login="1">L0G !N</button></div>';
+      return;
+    }
+    if (!coinsData){
+      sub.textContent = '';
+      list.innerHTML = '<div class="coins-empty">' + (coinsLoadFailed ? 'C0ULD N0T L0AD THE C0!NS — TRY AGA!N SH0RTLY.' : 'L0AD!NG C0!NS...') + '</div>';
+      return;
+    }
+    if (!coinsData.coins.length){
+      sub.textContent = '';
+      list.innerHTML = '<div class="coins-empty">THE C0!NS L!ST !S BE!NG BU!LT — CHECK BACK SH0RTLY.</div>';
+      return;
+    }
+    var holdings = coinsData.mine || {};
+    sub.textContent = mine
+      ? 'Y0UR H0LD!NGS 0F THE T0P ' + coinsData.coins.length + ' XRPL MEME C0!NS'
+      : 'T0P ' + coinsData.coins.length + ' XRPL MEME C0!NS BY MARKET CAP · TAP A BADGE F0R WHY · UPDATED ' + coinsAgo(coinsData.updatedAt);
+    var coins = coinsData.coins.slice();
+    if (mine){
+      // Held coins first, biggest market cap first within each group.
+      coins.sort(function(a, b){
+        var ha = holdings[a.key] && holdings[a.key].balance > 0 ? 1 : 0;
+        var hb = holdings[b.key] && holdings[b.key].balance > 0 ? 1 : 0;
+        return hb - ha;
+      });
+    }
+    list.innerHTML = coins.map(function(c){ return coinRowHtml(c, holdings[c.key]); }).join('');
+  }
+  function startCoinTrust(key){
+    if (!MY_WALLET){ startAuthorize(); return; }
+    if (coinsTrustBusy[key]) return;
+    coinsTrustBusy[key] = true;
+    coinsFlash[key] = 'APPR0VE THE TRUSTL!NE !N Y0UR XAMAN APP.';
+    renderCoins();
+    var tabRef = openXamanPopup();
+    signFetch('/api/coins', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trust: key }) })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (!data || !data.ok || !data.uuid || !data.next) throw new Error((data && data.error) || 'failed');
+        navigateXamanPopup(tabRef, data.next.always, data.next.pushed);
+        pollCoinTrust(key, data.uuid, tabRef, 0);
+      }).catch(function(){
+        if (tabRef){ try { tabRef.close(); } catch (e){} }
+        coinsTrustBusy[key] = false;
+        coinsFlash[key] = 'C0ULD N0T CREATE THE S!GN REQUEST — TRY AGA!N.';
+        renderCoins();
+      });
+  }
+  // Same status endpoint BUY uses — it only reports 'settled' once the
+  // transaction is validated on the ledger.
+  function pollCoinTrust(key, uuid, tabRef, n){
+    if (n > 120){
+      coinsTrustBusy[key] = false;
+      coinsFlash[key] = 'N0 ANSWER FR0M XAMAN YET — TAP SET TRUSTL!NE T0 TRY AGA!N.';
+      renderCoins();
+      return;
+    }
+    setTimeout(function(){
+      fetch('/api/buyswap-status?uuid=' + encodeURIComponent(uuid) + '&collection=' + encodeURIComponent(key), { credentials: 'same-origin' })
+        .then(function(r){ return r.json(); })
+        .then(function(s){
+          var st = s && s.status;
+          if (st === 'settled'){
+            closeXamanTabAndFocus(tabRef);
+            coinsTrustBusy[key] = false;
+            coinsFlash[key] = 'TRUSTL!NE SET ✓ — Y0U CAN BUY N0W.';
+            loadCoins(true);
+            return;
+          }
+          if (st === 'rejected' || st === 'expired' || st === 'failed'){
+            coinsTrustBusy[key] = false;
+            coinsFlash[key] = st === 'failed' ? 'THE TRUSTL!NE D!D N0T G0 THR0UGH — TRY AGA!N.' : 'TRUSTL!NE N0T S!GNED.';
+            renderCoins();
+            return;
+          }
+          pollCoinTrust(key, uuid, tabRef, n + 1);
+        }).catch(function(){ pollCoinTrust(key, uuid, tabRef, n + 1); });
+    }, 2500);
+  }
+  (function(){
+    var screen = document.getElementById('screenCoins');
+    if (!screen) return;
+    screen.addEventListener('click', function(e){
+      var t = e.target.closest('[data-coin-reasons],[data-coin-buy],[data-coin-trust],[data-coins-login]');
+      if (!t) return;
+      if (t.hasAttribute('data-coin-reasons')){
+        var rk = t.getAttribute('data-coin-reasons');
+        coinsOpenReasons[rk] = !coinsOpenReasons[rk];
+        renderCoins();
+      } else if (t.hasAttribute('data-coin-buy')){
+        var bk = t.getAttribute('data-coin-buy');
+        if (POPULAR_COIN_META[bk]) openBuySwapPanel(bk);
+      } else if (t.hasAttribute('data-coin-trust')){
+        startCoinTrust(t.getAttribute('data-coin-trust'));
+      } else {
+        startAuthorize();
+      }
+    });
+    // A coin whose icon won't load shows the plain dark circle instead of
+    // a broken-image box.
+    screen.addEventListener('error', function(e){
+      if (e.target && e.target.classList && e.target.classList.contains('coin-icon')) e.target.style.visibility = 'hidden';
+    }, true);
+  })();
+
   // Shareable per-collection link. SERVER_COLLECTION (set only by the
   // pretty /phnixs, /teddybg etc. routes — see renderSwap) wins when
   // present; ?collection=phnixs on plain /static is the fallback for
@@ -25918,6 +26248,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // just the right card highlighted underneath it.
     if (key && COLLECTION_META[key]) enterMainframeCollection(key);
   })();
+  // Shareable STAT!C://C0!NS link (?static=coins).
+  if (new URLSearchParams(window.location.search).get('static') === 'coins') setStaticPage('coins');
 
   // Real deep-link href for an NFT card/row — used to turn the plain
   // data-nftid divs/anchors below into genuine <a href> elements (see the

@@ -5,7 +5,7 @@ import { marketListingsFromOffers, marketMeta,
   getHighSaleMap, maybeRefreshHighSaleMap, getRarityMap, getRarityStats, maybeRefreshRarityScores,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, findCollectionOffer, getSwapSalesLog, identifySaleVenue, getFloorIndex,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, TRADEABLE_COLLECTIONS,
-  proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG,
+  proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG, isPopularCoinKey, ensurePopularCoinConfig,
   getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
   fetchRecentAccountTxCached
 } from '../_shared.js';
@@ -420,8 +420,19 @@ export async function onRequestGet(context) {
   // indicator shown while listing and the trustline banner's rate/
   // calculator (a convenience readout only, never used to set/validate a
   // price).
+  // STAT!C://C0!NS popular coins ride the same BUY panel calls below
+  // (rate/trustline/quote) under a 'coin:<md5>' key — resolveCollection
+  // would quietly turn that into P!GE0NS, so they get their own key,
+  // valid only while the coin is on the current published list.
+  const rawCollection = params.get('collection');
+  const coinKey = isPopularCoinKey(rawCollection) ? rawCollection : null;
+  if (coinKey && (params.get('pigeonsRate') === '1' || params.get('pigeonsAccountLine') === '1' || params.get('pigeonsQuote') === '1')) {
+    if (!(await ensurePopularCoinConfig(env.coin, coinKey))) return json({ error: 'not_tradeable' }, 400);
+  }
+  const tradeKey = coinKey || coll.key;
+
   if (params.get('pigeonsRate') === '1') {
-    const rate = await fetchPigeonsXrpRate(env.coin, coll.key);
+    const rate = await fetchPigeonsXrpRate(env.coin, tradeKey);
     return json({ xrpPerPigeon: rate.xrpPerPigeon, usdPerPigeon: rate.usdPerPigeon, marketCapUsd: rate.marketCapUsd, liquidityUsd: rate.liquidityUsd, tokenImageUrl: rate.tokenImageUrl, dexUrl: rate.dexUrl });
   }
 
@@ -435,7 +446,7 @@ export async function onRequestGet(context) {
     // getTradeConfig/TRADEABLE_COLLECTIONS in _shared.js. Falls back to
     // $PIGEONS for an unknown/non-tradeable collection param rather than
     // 400ing, since this banner always needs to render something.
-    const lineCfg = getTradeConfig(coll.key);
+    const lineCfg = getTradeConfig(tradeKey);
     const line = await fetchPigeonsAccountLine(wallet, lineCfg ? lineCfg.tokenConfig : PIGEONS_TOKEN_CONFIG);
     // hasTrustline === null means the live lookup itself failed (even
     // after fetchPigeonsAccountLine's own retries) — never a fabricated
@@ -504,7 +515,7 @@ export async function onRequestGet(context) {
   if (params.get('pigeonsQuote') === '1') {
     const drops = params.get('xrpDrops');
     if (!drops || !/^[1-9][0-9]*$/.test(drops)) return json({ error: 'bad_amount' }, 400);
-    const quote = await quotePigeonsForXrpDrops(drops, coll.key);
+    const quote = await quotePigeonsForXrpDrops(drops, tradeKey);
     return json(Object.assign({ quotedAt: Date.now() }, quote));
   }
 

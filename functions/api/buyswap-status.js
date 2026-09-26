@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, getXamanPayloadStatus, fetchValidatedTxResult, encodeCurrencyCode, PIGEONS_TOKEN_CONFIG, getTradeConfig
+  BOARD_COOKIE_NAME, getCookie, verifyToken, getXamanPayloadStatus, fetchValidatedTxResult, encodeCurrencyCode, PIGEONS_TOKEN_CONFIG, getTradeConfig, ensurePopularCoinConfig
 } from '../_shared.js';
 
 // Polled by the browser after [ OPEN XAMAN ] while the buyer is signing.
@@ -36,6 +36,7 @@ export async function onRequestGet(context) {
     return new Response(JSON.stringify({ error: 'bad_request' }), { status: 400 });
   }
   const collection = url.searchParams.get('collection') || 'pigeons';
+  await ensurePopularCoinConfig(env.coin, collection); // no-op unless a STAT!C://C0!NS 'coin:' key
   const cfg = getTradeConfig(collection);
   const tokenConfig = cfg ? cfg.tokenConfig : PIGEONS_TOKEN_CONFIG;
 

@@ -84,6 +84,32 @@ Entry points wired in: `/board`'s session controls (MESSAGES link) and the
 SWAP detail screen's owner line (MESSAGE link, hidden for your own
 Pigeons) — both link to `/messages?to=<wallet>`.
 
+## ⚠️ STAT!C://C0!NS (popular coins) — needs the cron worker redeployed
+
+The ▾ list in the STAT!C half of the top bar now starts with a
+**DATABASE | C0!NS** switch. C0!NS shows the top 10 XRPL meme coins
+(xrpl.to's "Memes" category, by market cap) with a 🟢🟡🔴 badge you can
+tap for plain-English reasons, and BUY through the normal swap panel
+(key `coin:<xrpl.to md5>`). While STAT!C is on C0!NS, the Σκύλλα half
+shows the same coins as MY C0!NS (holdings, SET TRUSTL!NE, BUY).
+Shareable as `/static?static=coins`.
+
+- List builder: `functions/_coins.js` (`stepPopularCoins`), run by
+  cron-worker's new `5-59/10` tick, one coin per tick (~25 subrequests
+  each), full rebuild every 4h, ~80 KV writes/day. The badge checks are
+  read off the ledger (issuer locked/freeze/clawback/fee, XRP pool depth,
+  top-10 wallets excluding pools and burned wallets, who owns the pool);
+  xrpl.to supplies the coin pick, top-holder ranking and market cap.
+  xrpl.to's terms require the visible "Data by xrpl.to" link on the page.
+- Page API: `functions/api/coins.js` (list, `?mine=1` holdings, POST
+  TrustSet). BUY/quote/status resolve coin keys via
+  `ensurePopularCoinConfig` in `_shared.js` — only coins on the current
+  list are accepted.
+- **Until cron-worker is redeployed (`cd cron-worker && npx wrangler
+  deploy`) the page says the list is being built** — nothing else fills
+  `pcoins:list:v1`. The first full list lands ~2 hours after deploying
+  (12 coins, one per 10-minute tick).
+
 ## This session's real bug fixes (not just UI)
 
 1. **FILTER BY TRAITS was completely unusable on mobile — a real tap

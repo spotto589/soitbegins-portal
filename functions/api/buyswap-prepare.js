@@ -1,5 +1,5 @@
 import {
-  BOARD_COOKIE_NAME, getCookie, verifyToken, buildBuySwapTxjson
+  BOARD_COOKIE_NAME, getCookie, verifyToken, buildBuySwapTxjson, ensurePopularCoinConfig
 } from '../_shared.js';
 
 // BUY $PIGEONS swap — builds and returns the exact Payment txjson, for the
@@ -38,6 +38,7 @@ export async function onRequestPost(context) {
   // that actually goes into the txjson from live ledger/liquidity state.
   const xrpDrops = body && body.xrpDrops;
   const collection = (body && body.collection) || 'pigeons';
+  await ensurePopularCoinConfig(env.coin, collection); // no-op unless a STAT!C://C0!NS 'coin:' key
   const result = await buildBuySwapTxjson(buyer, xrpDrops, collection);
   if (!result.ok) {
     return new Response(JSON.stringify({ error: result.error }), { status: 400 });
