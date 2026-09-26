@@ -486,14 +486,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     align-items:center;
     justify-content:center;
   }
+  /* The exact coloured cyan/pink static Σκύλλα://SYSTEM itself sits in
+     (reported live: the boot static should match the one inside SYSTEM) —
+     same 'color-calm' drawing mode, opacity and shake as
+     .scylla-nav-static, so the boot hands over to SYSTEM seamlessly. */
   .scylla-boot-static{
     position:fixed;
     inset:0;
     width:100%;
     height:100%;
-    opacity:0.9;
-    mix-blend-mode:screen;
-    animation:static-shake 0.4s steps(2) infinite;
+    opacity:0.55;
+    animation:static-shake 1.1s steps(2) infinite;
   }
   .scylla-boot-content{ position:relative; text-align:center; }
   /* The real saved Σκύλλα mark (assets/xrp_vanity_lock_glitch_nft_clean.png
@@ -26949,7 +26952,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   startStaticCanvas(document.getElementById('scyllaBootStaticBg'), function(){
     return document.getElementById('scyllaBootScreen').style.display !== 'none';
-  }, 'glitch');
+  }, 'color-calm');
   // Layered on top of the real digitalglitchpattern.png artwork behind
   // .scylla-nav-panel (see its own CSS comment) — same isVisible-gated
   // pattern as every other local static canvas, gated on the whole tab
