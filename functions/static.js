@@ -7171,11 +7171,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   /* Grey text didn't read on the solid boxes (reported live: "we need
      white text") — secondary text inside pop-ups is white instead. */
-  .popup-static-box{ --grey:var(--white); --grey-dim:var(--white); }
+  .popup-static-box{ --grey:var(--white); --grey-dim:var(--white); --border-mid:rgba(var(--collection-accent-rgb, 136,72,248), 0.75); --border-dim:rgba(var(--collection-accent-rgb, 136,72,248), 0.45); }
   /* Bordered boxes inside a pop-up that set no background of their own get
      the pop-up's solid colour (tagged by addPopupStatic), so the static
      only shows on the pop-up's own background. */
-  .popup-solid{ background-color:rgb(6, 6, 8); }
+  .popup-solid{ background-color:#000; }
+  .popup-glow{ box-shadow:0 0 8px rgba(var(--collection-accent-rgb, 136,72,248), 0.35); }
   /* Named grid areas so PIGEON #N sits in its own row above just the
      picture's column, while RARITY/RARITY SCORE (the right column's first
      row) starts level with the picture's own top — not pushed down by
@@ -8215,6 +8216,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   .buyswap-modal-panel .buyswap-flip{ display:block; margin:0.9rem auto; padding:0; flex:none; max-width:2.6rem; background:none; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); width:2.6rem; height:2.6rem; line-height:1; cursor:pointer; transition:transform 0.2s ease, border-color 0.15s ease; }
   .buyswap-modal-panel .buyswap-flip:hover{ border-color:var(--collection-accent); transform:rotate(180deg); }
   #buySwapQuoteSection > .buyswap-flip{ width:2.6rem; max-width:2.6rem; }
+  /* SWAP: every box solid black, the flip button included (reported
+     live), and RATE/M!N!MUM RECE!VED/SL!PPAGE grouped in one box. */
+  .buyswap-modal-panel .buyswap-flip,
+  .buyswap-modal-panel .buyswap-input-wrap,
+  .buyswap-modal-panel .buyswap-balance-tile,
+  .buyswap-modal-panel .buyswap-stats-box,
+  .buyswap-modal-panel .buyswap-trustline-warning,
+  .buyswap-modal-panel .buyswap-direction .sale-currency-btn{ background-color:#000 !important; }
+  .buyswap-stats-box{ border:1px solid var(--border-mid); border-radius:var(--radius); padding:0.75rem 1rem; margin:1rem auto; }
+  .buyswap-stats-box .detail-field{ margin:0.25rem 0; gap:0.75rem; align-items:baseline; }
+  .buyswap-modal-panel .buyswap-stats-box .df-label{ font-size:12px; white-space:nowrap; }
+  .buyswap-modal-panel .buyswap-stats-box .df-value{ font-size:15px; white-space:nowrap; text-align:right; }
   .buyswap-modal-panel .buyswap-receive-value{ font-size:28px; }
   .buyswap-modal-panel .buyswap-checking{ font-size:19px; }
   .buyswap-modal-panel .buyswap-received-value{ font-size:48px; }
@@ -12361,11 +12374,12 @@ const SWAP_HTML = `<!DOCTYPE html>
                block, past RATE/M!N!MUM RECE!VED/SL!PPAGE, disconnected
                from the number it's a freshness readout for). -->
           <div class="index-line" id="buySwapStatus">QU0TE C0M!NG S00N — SWAP N0T YET L!VE.</div>
-          <div class="buyswap-divider"></div>
-          <div class="detail-field"><span class="df-label">RATE</span><span class="df-value" id="buySwapRate">—</span></div>
-          <div class="detail-field"><span class="df-label">M!N!MUM RECE!VED</span><span class="df-value" id="buySwapMinReceived">—</span></div>
-          <div class="detail-field"><span class="df-label">SL!PPAGE</span><span class="df-value" id="buySwapSlippage">0.5%</span></div>
-          <div class="buyswap-divider"></div>
+          <!-- Its own box (reported live). -->
+          <div class="buyswap-stats-box">
+            <div class="detail-field"><span class="df-label">RATE</span><span class="df-value" id="buySwapRate">—</span></div>
+            <div class="detail-field"><span class="df-label">M!N!MUM RECE!VED</span><span class="df-value" id="buySwapMinReceived">—</span></div>
+            <div class="detail-field"><span class="df-label">SL!PPAGE</span><span class="df-value" id="buySwapSlippage">0.5%</span></div>
+          </div>
           </div>
           <div class="detail-actions">
             <button class="secondary-btn" id="buySwapBackBtn">← BACK</button>
@@ -26687,7 +26701,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // do the static") — a tint keeps only a faint trace of its colour
     // (35% of its old strength) so an active/selected box still reads,
     // but they all sit on the same dark base.
-    var BOX = [6, 6, 8], BOX_CSS = 'rgb(6, 6, 8)', TINT_KEEP = 0.35;
+    var BOX = [0, 0, 0], BOX_CSS = '#000', TINT_KEEP = 0.35;
     var panel = rgba(getComputedStyle(document.documentElement).getPropertyValue('--panel-bg-solid')) || [16, 15, 12, 1];
     function solidOf(col){
       var a = col[3] * TINT_KEEP;
@@ -26765,6 +26779,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Bordered boxes with no background rule at all, and inline tints set
     // from script, are caught when their pop-up is shown / filled in.
     var SKIP = { IMG:1, svg:1, CANVAS:1, VIDEO:1, INPUT:1, TEXTAREA:1, SELECT:1 };
+    var NOT_A_BOX = { IMG:1, svg:1, CANVAS:1, VIDEO:1 };
     var seen = new WeakSet();
     function sweep(box){
       if (!box.getClientRects().length) return;  // not shown
@@ -26776,15 +26791,23 @@ const SWAP_HTML = `<!DOCTYPE html>
           var ic = rgba(inl);
           if (ic && ic[3] > 0 && ic[3] <= 0.7 && getComputedStyle(el).position !== 'absolute') el.style.backgroundColor = solidOf(ic);
         }
-        if (seen.has(el) || SKIP[el.tagName]) continue;
+        if (seen.has(el) || NOT_A_BOX[el.tagName]) continue;
         seen.add(el);
         var cs = getComputedStyle(el);
-        if (cs.backgroundImage !== 'none' || cs.position === 'absolute' || (rgba(cs.backgroundColor) || [0, 0, 0, 1])[3] !== 0) continue;
-        var sides = 0;
+        if (cs.position === 'absolute') continue;
+        var sides = 0, borderCol = null;
         ['Top', 'Right', 'Bottom', 'Left'].forEach(function(side){
-          if (parseFloat(cs['border' + side + 'Width']) > 0 && cs['border' + side + 'Style'] !== 'none' && (rgba(cs['border' + side + 'Color']) || [0, 0, 0, 0])[3] > 0) sides++;
+          var bc = rgba(cs['border' + side + 'Color']);
+          if (parseFloat(cs['border' + side + 'Width']) > 0 && cs['border' + side + 'Style'] !== 'none' && bc && bc[3] > 0){ sides++; borderCol = bc; }
         });
-        if (sides >= 3) el.classList.add('popup-solid');
+        if (sides < 3) continue;
+        // The pop-up design (reported live): black boxes, white text, and
+        // borders glowing in the colour of the collection you're in. Every
+        // box gets the glow; the grey border variables are redefined to the
+        // collection colour on .popup-static-box, while coloured borders
+        // (green active, red errors) keep theirs.
+        el.classList.add('popup-glow');
+        if (!SKIP[el.tagName] && cs.backgroundImage === 'none' && (rgba(cs.backgroundColor) || [0, 0, 0, 1])[3] === 0) el.classList.add('popup-solid');
       }
     }
     boxes.forEach(function(box){
