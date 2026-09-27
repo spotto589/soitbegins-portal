@@ -5144,8 +5144,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   .cart-sweep-note:empty, .cart-status:empty{ display:none; }
   .cart-list{ flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:0.4rem; }
   .cart-empty{ text-align:center; color:#fff; opacity:0.7; padding:1rem 0; font-size:14px; }
-  .cart-row{ display:grid; grid-template-columns:48px 1fr auto auto; align-items:center; gap:0.7rem; padding:0.35rem 0.5rem 0.35rem 0.35rem; border:1px solid rgba(var(--collection-accent-rgb, 136,72,248), 0.35); border-radius:10px; background:#000; }
-  .cart-row img{ width:48px; height:48px; object-fit:cover; border-radius:6px; }
+  .cart-topbar{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; flex-wrap:wrap; }
+  .cart-balances{ color:#fff; font-size:12px; font-weight:700; letter-spacing:0.05em; line-height:1.5; }
+  .cart-balances .cb-val{ color:rgb(52,255,133); }
+  .cart-topbar-right{ display:flex; align-items:center; gap:0.6rem; margin-left:auto; }
+  .cart-count{ color:#fff; font-size:12px; font-weight:700; letter-spacing:0.06em; opacity:0.8; }
+  .cart-topbar .cart-clear-btn{ padding:0.5em 0.9em; font-size:12px; border-color:rgba(255,59,92,0.85); color:#ff3b5c; }
+  .cart-topbar .cart-clear-btn:hover{ background:#ff3b5c; color:#000; }
+  .cart-group{ color:var(--cyan); font-size:12px; font-weight:700; letter-spacing:0.1em; margin:0.3rem 0 0; padding-left:0.2rem; }
+  .cart-row{ display:grid; grid-template-columns:64px 1fr auto auto; align-items:center; gap:0.7rem; padding:0.35rem 0.5rem 0.35rem 0.35rem; border:1px solid rgba(var(--collection-accent-rgb, 136,72,248), 0.35); border-radius:10px; background:#000; }
+  .cart-row img{ width:64px; height:64px; object-fit:cover; border-radius:8px; }
   .cart-row > div{ text-align:left; }
   .cart-row-name{ color:#fff; font-weight:700; font-size:14px; letter-spacing:0.04em; }
   .cart-row-coll{ color:var(--cyan); font-size:11px; letter-spacing:0.08em; }
@@ -5154,7 +5162,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .cart-row-state.ok{ color:rgb(52,255,133); }
   .cart-row-state.bad{ color:#ff4d6d; }
   .cart-row-state.now{ color:var(--cyan); }
-  .cart-row.cart-row-offer{ grid-template-columns:48px 1fr auto auto; }
+  .cart-row.cart-row-offer{ grid-template-columns:64px 1fr auto auto; }
   .cart-offer{ display:flex; align-items:center; gap:0.35rem; }
   .cart-offer-input{ width:6.5rem; background:#000; border:1px solid rgba(52,255,133,0.7); border-radius:8px; color:#fff; font-family:inherit; font-size:14px; font-weight:700; padding:0.45em 0.5em; text-align:right; }
   .cart-offer-unit{ color:rgb(52,255,133); font-weight:700; font-size:13px; }
@@ -5164,9 +5172,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .cart-duration{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:0.35rem; }
   .cart-duration-label{ color:#fff; font-size:12px; font-weight:700; letter-spacing:0.08em; margin-right:0.3rem; }
   @media (max-width:600px){
-    .cart-row.cart-row-offer{ grid-template-columns:40px 1fr auto; }
+    .cart-row.cart-row-offer{ grid-template-columns:52px 1fr auto; }
     .cart-row.cart-row-offer .cart-offer{ grid-column:1 / -1; justify-content:flex-end; }
-    .cart-row.cart-row-offer img{ width:40px; height:40px; }
+    .cart-row.cart-row-offer img, .cart-row img{ width:52px; height:52px; }
+    .cart-row{ grid-template-columns:52px 1fr auto auto; }
   }
   .cart-row-remove{ background:none; border:1px solid var(--border-mid); border-radius:8px; color:#fff; width:2rem; height:2rem; cursor:pointer; font-size:16px; }
   .cart-total{ text-align:center; color:#fff; font-size:16px; font-weight:700; letter-spacing:0.05em; }
@@ -10901,6 +10910,13 @@ const SWAP_HTML = `<!DOCTYPE html>
           <span class="simple-picker-title cart-title">CART</span>
           <button type="button" class="simple-picker-close" id="cartCloseBtn" title="CL0SE">&times;</button>
         </div>
+        <div class="cart-topbar">
+          <div class="cart-balances" id="cartBalances"></div>
+          <div class="cart-topbar-right">
+            <span class="cart-count" id="cartCount"></span>
+            <button type="button" class="cart-clear-btn" id="cartClearBtn">CLEAR ALL</button>
+          </div>
+        </div>
         <div class="cart-list" id="cartList"></div>
         <div class="cart-duration" id="cartDuration" style="display:none;">
           <span class="cart-duration-label">0FFERS LAST</span>
@@ -10913,7 +10929,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="cart-total" id="cartTotal"></div>
         <div class="cart-status" id="cartStatus"></div>
         <div class="cart-actions">
-          <button type="button" class="cart-clear-btn" id="cartClearBtn">EMPTY CART</button>
           <button type="button" class="cart-buy-btn" id="cartBuyBtn">SUBM!T ALL</button>
         </div>
       </div>
@@ -13522,7 +13537,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
-   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','sweepModal','sweepCloseBtn','openSweepBtn',
+   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartCount','sweepModal','sweepCloseBtn','openSweepBtn',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
    'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -19492,6 +19507,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // marketplace can only be filled there, so those never go in as BUY.
   // Per wallet, kept in this browser only. ----
   function cartKey(){ return 'scylla_cart:' + (MY_WALLET || 'anon'); }
+  // One cart per wallet across every collection (each item remembers its
+  // own). 25 max — every item is its own Xaman signature, and 25 is about
+  // as many as anyone wants to sign in one go.
+  var CART_MAX = 25;
   function getCart(){
     try {
       var v = JSON.parse(localStorage.getItem(cartKey()) || '[]');
@@ -19532,6 +19551,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     var list = getCart();
     var idx = list.findIndex(function(c){ return c.nftId === p.nftId; });
     if (idx !== -1) list.splice(idx, 1);
+    else if (list.length >= CART_MAX){
+      alert('Y0UR CART !S FULL — ' + CART_MAX + ' NFTS MAX.');
+      return;
+    }
     else if (mode === 'offer'){
       if (p.owner === MY_WALLET) return;
       list.push(cartOfferEntryFor(p));
@@ -19622,6 +19645,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.cartBuyBtn.disabled = !rows.length;
       el.cartBuyBtn.textContent = rows.length ? 'SUBM!T ALL (' + rows.length + ')' : 'SUBM!T ALL';
       el.cartClearBtn.style.display = rows.length ? '' : 'none';
+      el.cartClearBtn.disabled = false;
     }
   }
   function renderCart(){
@@ -19630,16 +19654,63 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!list.length && !running){
       el.cartList.innerHTML = '<div class="cart-empty">Y0UR CART !S EMPTY — TAP + 0N ANY NFT L!STED 0N Σκύλλα T0 BUY !T, ADD T0 CART 0N ANY 0THER T0 MAKE AN 0FFER, 0R USE SWEEP !N THE BANNER.</div>';
     } else {
-      el.cartList.innerHTML = (running ? cartRun.items : list).map(function(c){ return cartRowHtml(c, running); }).join('');
+      var rows = running ? cartRun.items : list;
+      var colls = [];
+      rows.forEach(function(c){ if (colls.indexOf(c.collection) === -1) colls.push(c.collection); });
+      el.cartList.innerHTML = colls.length > 1
+        ? colls.map(function(k){
+            return '<div class="cart-group">' + escapeHtml((COLLECTION_META[k] || {}).label || k) + '</div>' +
+              rows.filter(function(c){ return c.collection === k; }).map(function(c){ return cartRowHtml(c, running); }).join('');
+          }).join('')
+        : rows.map(function(c){ return cartRowHtml(c, running); }).join('');
     }
     el.cartDuration.querySelectorAll('.list-duration-btn').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-days') === String(cartOfferDays));
     });
+    el.cartCount.textContent = (running ? cartRun.items.length : list.length) + ' / ' + CART_MAX;
     renderCartTotals();
+    renderCartBalances();
+  }
+  // Y0UR BALANCE — spendable XRP plus the token of every collection with
+  // a token item in the cart (and the one you're browsing). Fetched when
+  // the cart opens; the numbers are the same live ones the banner uses.
+  var cartBalances = { xrp: null, tokens: {} };
+  function cartTokenCollections(){
+    var keys = [];
+    var cur = COLLECTION_META[state.collection] || {};
+    if (!cur.xrpOnly && cur.tokenIssuer) keys.push(state.collection);
+    getCart().forEach(function(c){
+      var m = COLLECTION_META[c.collection] || {};
+      if (c.currency === 'token' && !m.xrpOnly && m.tokenIssuer && keys.indexOf(c.collection) === -1) keys.push(c.collection);
+    });
+    return keys;
+  }
+  function renderCartBalances(){
+    var parts = [];
+    parts.push('<span class="cb-val">' + (cartBalances.xrp === null ? '…' : fmtXrp(cartBalances.xrp)) + '</span> XRP');
+    cartTokenCollections().forEach(function(k){
+      var v = cartBalances.tokens[k];
+      parts.push('<span class="cb-val">' + (v === undefined || v === null ? '…' : escapeHtml(compactPigeonsNumber(v))) + '</span> ' + escapeHtml(COLLECTION_META[k].tokenLabel));
+    });
+    el.cartBalances.innerHTML = 'Y0UR BALANCE :: ' + parts.join(' · ');
+  }
+  function loadCartBalances(){
+    if (!MY_WALLET) return;
+    apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).then(function(data){
+      cartBalances.xrp = data && data.drops != null ? Math.floor(spendableXrpOf(data) * 100) / 100 : null;
+      renderCartBalances();
+    }).catch(function(){});
+    cartTokenCollections().forEach(function(k){
+      apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET, collection: k }).then(function(line){
+        cartBalances.tokens[k] = line && line.hasTrustline ? (line.balance || 0) : 0;
+        renderCartBalances();
+      }).catch(function(){});
+    });
   }
   function openCart(){
     if (!MY_WALLET){ startAuthorize(); return; }
     renderCart();
+    loadCartBalances();
     el.cartModal.style.display = 'flex';
   }
   function openSweep(){
@@ -19683,7 +19754,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (cartRun) return;
     var n = parseInt(String(el.cartSweepInput.value).replace(/[^0-9]/g, ''), 10);
     if (!(n >= 1)){ el.cartSweepNote.textContent = 'ENTER H0W MANY T0 SWEEP.'; return; }
-    n = Math.min(n, 50);
+    var room = CART_MAX - getCart().length;
+    if (room <= 0){ el.cartSweepNote.textContent = 'Y0UR CART !S FULL — ' + CART_MAX + ' NFTS MAX.'; return; }
+    n = Math.min(n, room);
     var cur = COLLECTION_META[state.collection].xrpOnly ? 'xrp' : cartSweepCurrency;
     var curLabel = cur === 'xrp' ? 'XRP' : COLLECTION_META[state.collection].tokenLabel;
     el.cartSweepNote.textContent = 'F!ND!NG THE FL00R...';
