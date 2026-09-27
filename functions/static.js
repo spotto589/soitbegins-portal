@@ -5120,6 +5120,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-cart-toggle{ position:absolute; top:0.3rem; left:0.3rem; z-index:2; width:1.9em; height:1.9em; line-height:1.9em; padding:0; background:rgba(0,0,0,0.85); border:1px solid rgba(52,255,133,0.85); border-radius:8px; box-shadow:0 0 8px rgba(52,255,133,0.3); color:#fff; font-size:16px; font-weight:700; text-align:center; cursor:pointer; }
   .card-cart-toggle:hover{ background:rgba(52,255,133,0.25); }
   .card-cart-toggle.in-cart{ background:rgb(52,255,133); color:#000; }
+  #sweepModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  #sweepModal .sweep-modal-panel{ width:min(520px, 94vw); display:flex; flex-direction:column; gap:0.8rem; }
+  #sweepModal .simple-picker-header{ position:relative; justify-content:center; }
+  #sweepModal .simple-picker-title{ flex:1; text-align:center; font-size:22px; font-weight:700; letter-spacing:0.1em; }
+  #sweepModal .simple-picker-close{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
+  .sweep-sub{ text-align:center; color:#fff; font-size:12px; letter-spacing:0.06em; opacity:0.85; }
   #cartModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
   #cartModal .cart-modal-panel{ width:min(560px, 94vw); max-height:88vh; display:flex; flex-direction:column; gap:0.8rem; }
   #cartModal .simple-picker-header{ position:relative; justify-content:center; }
@@ -10646,6 +10652,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <!-- Under BUY $P!GE0NS (reported live 2026-09-25). -->
             <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openNotifyBtn">&#128276; N0T!F!CAT!0NS</button>
             <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openCartBtn">&#128722; CART <span id="openCartCount"></span></button>
+            <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openSweepBtn">&#129529; SWEEP</button>
           </div>
         </div>
 
@@ -10865,14 +10872,17 @@ const SWAP_HTML = `<!DOCTYPE html>
          (anything else can only be bought on its own marketplace). SWEEP
          adds the N cheapest Σκύλλa listings; BUY ALL sends one Xaman sign
          request per NFT, one after another. -->
-    <div id="cartModal" style="display:none;">
-      <div class="pigeons-calc-panel cart-modal-panel">
+    <!-- SWEEP THE FL00R — its own pop-up (reported live: not inside the
+         cart), opened from the banner's SWEEP button. Adds the N cheapest
+         Σκύλλa listings to the cart, then opens the cart. -->
+    <div id="sweepModal" style="display:none;">
+      <div class="pigeons-calc-panel sweep-modal-panel">
         <div class="simple-picker-header">
-          <span class="simple-picker-title cart-title">CART</span>
-          <button type="button" class="simple-picker-close" id="cartCloseBtn" title="CL0SE">&times;</button>
+          <span class="simple-picker-title cart-title">SWEEP THE FL00R</span>
+          <button type="button" class="simple-picker-close" id="sweepCloseBtn" title="CL0SE">&times;</button>
         </div>
+        <div class="sweep-sub">ADDS THE CHEAPEST NFTS L!STED 0N Σκύλλα T0 Y0UR CART.</div>
         <div class="cart-sweep">
-          <div class="cart-sweep-label">SWEEP THE FL00R</div>
           <div class="cart-sweep-row">
             <div class="sale-currency-toggle cart-sweep-currency" id="cartSweepCurrency">
               <button type="button" class="sale-currency-btn sale-currency-btn-active" data-currency="token" id="cartSweepTokenTab">$T0KEN</button>
@@ -10882,6 +10892,14 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button type="button" class="cart-sweep-btn" id="cartSweepBtn">SWEEP</button>
           </div>
           <div class="cart-sweep-note" id="cartSweepNote"></div>
+        </div>
+      </div>
+    </div>
+    <div id="cartModal" style="display:none;">
+      <div class="pigeons-calc-panel cart-modal-panel">
+        <div class="simple-picker-header">
+          <span class="simple-picker-title cart-title">CART</span>
+          <button type="button" class="simple-picker-close" id="cartCloseBtn" title="CL0SE">&times;</button>
         </div>
         <div class="cart-list" id="cartList"></div>
         <div class="cart-duration" id="cartDuration" style="display:none;">
@@ -13504,7 +13522,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
-   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration',
+   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','sweepModal','sweepCloseBtn','openSweepBtn',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
    'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -19610,7 +19628,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var list = getCart();
     var running = !!cartRun;
     if (!list.length && !running){
-      el.cartList.innerHTML = '<div class="cart-empty">Y0UR CART !S EMPTY — TAP + 0N ANY NFT L!STED 0N Σκύλλα T0 BUY !T, ADD T0 CART 0N ANY 0THER T0 MAKE AN 0FFER, 0R SWEEP THE FL00R ABOVE.</div>';
+      el.cartList.innerHTML = '<div class="cart-empty">Y0UR CART !S EMPTY — TAP + 0N ANY NFT L!STED 0N Σκύλλα T0 BUY !T, ADD T0 CART 0N ANY 0THER T0 MAKE AN 0FFER, 0R USE SWEEP !N THE BANNER.</div>';
     } else {
       el.cartList.innerHTML = (running ? cartRun.items : list).map(function(c){ return cartRowHtml(c, running); }).join('');
     }
@@ -19621,15 +19639,21 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function openCart(){
     if (!MY_WALLET){ startAuthorize(); return; }
+    renderCart();
+    el.cartModal.style.display = 'flex';
+  }
+  function openSweep(){
+    if (!MY_WALLET){ startAuthorize(); return; }
     var meta = COLLECTION_META[state.collection] || {};
     // Sweep currency: this collection's token or XRP (K!NG: XRP only).
     el.cartSweepTokenTab.textContent = meta.tokenLabel || '$T0KEN';
     el.cartSweepTokenTab.style.display = meta.xrpOnly ? 'none' : '';
-    if (meta.xrpOnly) setCartSweepCurrency('xrp');
+    setCartSweepCurrency(meta.xrpOnly ? 'xrp' : cartSweepCurrency);
     el.cartSweepNote.textContent = '';
-    renderCart();
-    el.cartModal.style.display = 'flex';
+    el.sweepModal.style.display = 'flex';
+    setTimeout(function(){ try { el.cartSweepInput.focus(); } catch (e){} }, 50);
   }
+  function closeSweep(){ el.sweepModal.style.display = 'none'; }
   function closeCart(){
     el.cartModal.style.display = 'none';
     if (cartRun && cartRun.finished) finishCartRun();
@@ -19686,6 +19710,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         : 'ADDED THE ' + added + ' CHEAPEST.';
       refreshCartBadges();
       renderCart();
+      if (added){ closeSweep(); openCart(); }
     }).catch(function(){
       el.cartSweepNote.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
     }).then(function(){ el.cartSweepBtn.disabled = false; });
@@ -19854,6 +19879,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderCartTotals();
   });
   el.openCartBtn.addEventListener('click', openCart);
+  el.openSweepBtn.addEventListener('click', openSweep);
+  el.sweepCloseBtn.addEventListener('click', closeSweep);
+  el.sweepModal.addEventListener('click', function(e){ if (e.target === el.sweepModal) closeSweep(); });
   el.cartPill.addEventListener('click', openCart);
   el.cartCloseBtn.addEventListener('click', closeCart);
   el.cartModal.addEventListener('click', function(e){ if (e.target === el.cartModal) closeCart(); });
@@ -27757,7 +27785,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var boxes = [];
     ['pigeonsCalcModal','topHoldersModal','salesModal','notifyModal','rarityModal','offerConfirmModal','transferConfirmModal',
      'acceptTransferConfirmModal','buySwapModal','buyConfirmModal','delistConfirmModal','acceptOfferConfirmModal',
-     'conspiracyPickerModal','simpleOfferPickerModal','amountEntryModal','historyModal','profileEditModal','cartModal'].forEach(function(id){
+     'conspiracyPickerModal','simpleOfferPickerModal','amountEntryModal','historyModal','profileEditModal','cartModal','sweepModal'].forEach(function(id){
       var modal = document.getElementById(id);
       if (modal && modal.firstElementChild) boxes.push(modal.firstElementChild);
     });
