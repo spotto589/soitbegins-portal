@@ -9368,8 +9368,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   .coin-hero-change.up{ color:rgb(52,255,133); }
   .coin-hero-change.down{ color:#ff3b5c; }
   .coin-hero-change:empty{ display:none; }
-  .coin-chart{ border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); overflow:hidden; background:#000; height:380px; }
-  .coin-chart iframe{ width:100%; height:100%; border:0; display:block; }
+  .coin-chart{ border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); background:#000; padding:0.6rem 0.7rem 0.4rem; }
+  .coin-chart-bar{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; margin-bottom:0.4rem; }
+  .coin-chart-ranges{ display:inline-flex; padding:3px; gap:2px; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:999px; }
+  .coin-chart-ranges button{ border:none; border-radius:999px; background:none; color:#fff; font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.06em; padding:0.4em 0.9em; cursor:pointer; }
+  .coin-chart-ranges button.active{ background:rgba(var(--collection-accent-rgb), 0.9); }
+  .coin-chart-change{ font-size:13px; font-weight:700; letter-spacing:0.05em; }
+  .coin-chart-change.up{ color:rgb(52,255,133); }
+  .coin-chart-change.down{ color:#ff3b5c; }
+  .coin-chart-plot{ position:relative; height:260px; }
+  .coin-chart-msg{ height:100%; display:flex; align-items:center; justify-content:center; color:#fff; opacity:0.6; font-size:13px; font-weight:700; letter-spacing:0.1em; }
+  .cc-svg{ width:100%; height:100%; display:block; overflow:visible; }
+  .cc-grid{ stroke:rgba(255,255,255,0.08); stroke-width:1; }
+  .cc-axis{ fill:rgba(255,255,255,0.55); font-size:11px; font-family:inherit; }
+  .cc-line{ fill:none; stroke:var(--collection-accent); stroke-width:2; vector-effect:non-scaling-stroke; stroke-linejoin:round; stroke-linecap:round; }
+  .cc-stop-a{ stop-color:var(--collection-accent); stop-opacity:0.35; }
+  .cc-stop-b{ stop-color:var(--collection-accent); stop-opacity:0; }
+  .cc-dot, .cc-hover-dot{ fill:var(--collection-accent); stroke:#000; stroke-width:2; }
+  .cc-cross{ stroke:rgba(255,255,255,0.35); stroke-width:1; stroke-dasharray:3 3; vector-effect:non-scaling-stroke; }
+  .cc-tip{ position:absolute; top:0; transform:translateX(-50%); background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.8); border-radius:8px; padding:0.35em 0.6em; pointer-events:none; text-align:center; white-space:nowrap; }
+  .cc-tip b{ display:block; color:#fff; font-size:13px; }
+  .cc-tip span{ display:block; color:rgba(255,255,255,0.6); font-size:11px; }
   .coin-stats{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0.5rem; }
   .coin-stat{ border:1px solid rgba(var(--collection-accent-rgb), 0.3); border-radius:10px; background:#000; padding:0.55rem 0.6rem; text-align:center; min-width:0; }
   .coin-stat-label{ display:block; color:#fff; opacity:0.75; font-size:10px; font-weight:700; letter-spacing:0.12em; }
@@ -9380,7 +9399,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   #coinModal .cx-submit{ width:100%; margin:0; font-size:17px !important; padding:0.9em 1em !important; border-radius:999px; background:rgba(var(--collection-accent-rgb), 0.95); border:1px solid var(--collection-accent); color:#fff; }
   @media (max-width:600px){
     .coin-stats{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
-    .coin-chart{ height:300px; }
+    .coin-chart-plot{ height:210px; }
     .coin-hero-price{ font-size:20px; }
   }
   /* SWEEP picker */
@@ -11209,7 +11228,20 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div class="coin-hero-change" id="coinChange"></div>
         </div>
-        <div class="coin-chart"><iframe id="coinChart" title="CHART" loading="lazy" src="about:blank"></iframe></div>
+        <!-- Our own chart (price history from GeckoTerminal's public API) —
+             DexScreener's embed wouldn't load inside the pop-up. -->
+        <div class="coin-chart" id="coinChart">
+          <div class="coin-chart-bar">
+            <div class="coin-chart-ranges" id="coinChartRanges">
+              <button type="button" data-range="1D">1D</button>
+              <button type="button" data-range="7D" class="active">7D</button>
+              <button type="button" data-range="1M">1M</button>
+              <button type="button" data-range="3M">3M</button>
+            </div>
+            <span class="coin-chart-change" id="coinChartChange"></span>
+          </div>
+          <div class="coin-chart-plot" id="coinChartPlot"><div class="coin-chart-msg">L0AD!NG CHART...</div></div>
+        </div>
         <div class="coin-stats" id="coinStats"></div>
         <div class="coin-links" id="coinLinks"></div>
         <button type="button" class="cart-buy-btn cx-submit" id="coinSwapBtn">SWAP</button>
@@ -13919,7 +13951,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
    'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartSortBar','sweepModal','sweepCloseBtn','sweepSub','sweepAvail','sweepN','sweepMinus','sweepPlus','sweepMax',
-   'coinModal','coinCloseBtn','coinTitle','coinImg','coinPrice','coinPriceSub','coinChange','coinChart','coinStats','coinLinks','coinSwapBtn',
+   'coinModal','coinCloseBtn','coinTitle','coinImg','coinPrice','coinPriceSub','coinChange','coinChart','coinChartRanges','coinChartChange','coinChartPlot','coinStats','coinLinks','coinSwapBtn',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
    'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -22644,7 +22676,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.coinLinks.innerHTML = '';
     el.coinSwapBtn.textContent = 'SWAP ' + meta.tokenLabel;
     var pair = coinPageDexUrl.split('/').pop();
-    el.coinChart.src = 'https://dexscreener.com/xrpl/' + pair + '?embed=1&theme=dark&trades=0&info=0';
+    coinChartPool = null;
+    el.coinChartPlot.innerHTML = '<div class="coin-chart-msg">L0AD!NG CHART...</div>';
+    el.coinChartChange.textContent = '';
     el.coinModal.style.display = 'flex';
     function stat(label, value, cls){ return '<div class="coin-stat"><span class="coin-stat-label">' + label + '</span><span class="coin-stat-val' + (cls ? ' ' + cls : '') + '">' + value + '</span></div>'; }
     Promise.all([
@@ -22655,6 +22689,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       var d = res[0] && res[0].pairs && res[0].pairs[0];
       var line = res[1], xb = res[2];
       if (d){
+        coinChartPool = d.pairAddress || pair;
+        loadCoinChart(coinChartRange);
         if (d.info && d.info.imageUrl) el.coinImg.src = d.info.imageUrl;
         el.coinPrice.textContent = Number(d.priceNative).toPrecision(4) + ' XRP';
         el.coinPriceSub.textContent = fmtUsd(Number(d.priceUsd)) + ' USD';
@@ -22692,8 +22728,103 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function closeCoinPage(){
     el.coinModal.style.display = 'none';
-    el.coinChart.src = 'about:blank';
+    coinChartPool = null;
   }
+  // ---- Price chart: one line (price in XRP) over the picked range, soft
+  // fill, quiet grid, crosshair + tooltip on hover. ----
+  var coinChartPool = null;
+  var coinChartRange = '7D';
+  var COIN_CHART_RANGES = { '1D': ['hour', 1, 24], '7D': ['hour', 4, 42], '1M': ['day', 1, 30], '3M': ['day', 1, 90] };
+  function fmtCoinPrice(v){ return Number(v).toPrecision(4) + ' XRP'; }
+  function loadCoinChart(range){
+    if (!coinChartPool) return;
+    coinChartRange = range;
+    el.coinChartRanges.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-range') === range); });
+    var cfg = COIN_CHART_RANGES[range];
+    var pool = coinChartPool;
+    fetch('https://api.geckoterminal.com/api/v2/networks/xrpl/pools/' + encodeURIComponent(pool) + '/ohlcv/' + cfg[0] + '?aggregate=' + cfg[1] + '&limit=' + cfg[2] + '&currency=token')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (pool !== coinChartPool || range !== coinChartRange) return; // a newer pick won
+        var list = ((d && d.data && d.data.attributes && d.data.attributes.ohlcv_list) || []).slice().reverse();
+        drawCoinChart(list);
+      }).catch(function(){
+        el.coinChartPlot.innerHTML = '<div class="coin-chart-msg">C0ULDN' + String.fromCharCode(39) + 'T L0AD THE CHART</div>';
+      });
+  }
+  function drawCoinChart(list){
+    if (list.length < 2){
+      el.coinChartPlot.innerHTML = '<div class="coin-chart-msg">N0T EN0UGH TRAD!NG !N TH!S RANGE</div>';
+      el.coinChartChange.textContent = '';
+      return;
+    }
+    var W = 700, H = 260, L = 8, R = 78, T = 12, B = 26;
+    var closes = list.map(function(c){ return Number(c[4]); });
+    var lo = Math.min.apply(null, closes), hi = Math.max.apply(null, closes);
+    if (hi === lo){ hi = hi * 1.01; lo = lo * 0.99; }
+    var pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+    var t0 = list[0][0], t1 = list[list.length - 1][0];
+    function x(t){ return L + (t - t0) / (t1 - t0) * (W - L - R); }
+    function y(v){ return T + (hi - v) / (hi - lo) * (H - T - B); }
+    var pts = list.map(function(c){ return [x(c[0]), y(Number(c[4]))]; });
+    var line = pts.map(function(pt, i){ return (i ? 'L' : 'M') + pt[0].toFixed(1) + ' ' + pt[1].toFixed(1); }).join(' ');
+    var area = line + ' L' + pts[pts.length - 1][0].toFixed(1) + ' ' + (H - B) + ' L' + pts[0][0].toFixed(1) + ' ' + (H - B) + ' Z';
+    var grid = '', labels = '';
+    for (var g = 0; g < 4; g++){
+      var gv = lo + (hi - lo) * (g + 0.5) / 4, gy = y(gv);
+      grid += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + gy.toFixed(1) + '" y2="' + gy.toFixed(1) + '" class="cc-grid"/>';
+      labels += '<text x="' + (W - R + 8) + '" y="' + (gy + 4).toFixed(1) + '" class="cc-axis">' + Number(gv).toPrecision(3) + '</text>';
+    }
+    var hourly = COIN_CHART_RANGES[coinChartRange][0] === 'hour' && coinChartRange === '1D';
+    function when(t){ var dt = new Date(t * 1000); return hourly ? dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : dt.toLocaleDateString([], { day: 'numeric', month: 'short' }); }
+    for (var k = 0; k < 4; k++){
+      var tt = t0 + (t1 - t0) * (k + 0.5) / 4;
+      labels += '<text x="' + x(tt).toFixed(1) + '" y="' + (H - 7) + '" class="cc-axis" text-anchor="middle">' + escapeHtml(when(tt)) + '</text>';
+    }
+    var last = pts[pts.length - 1];
+    el.coinChartPlot.innerHTML =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" class="cc-svg">' +
+        '<defs><linearGradient id="ccFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="cc-stop-a"/><stop offset="1" class="cc-stop-b"/></linearGradient></defs>' +
+        grid +
+        '<path d="' + area + '" fill="url(#ccFill)"/>' +
+        '<path d="' + line + '" class="cc-line"/>' +
+        '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="4" class="cc-dot"/>' +
+        labels +
+        '<line class="cc-cross" id="ccCross" x1="0" x2="0" y1="' + T + '" y2="' + (H - B) + '" style="display:none"/>' +
+        '<circle class="cc-hover-dot" id="ccHoverDot" r="5" style="display:none"/>' +
+        '<rect x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - T - B) + '" fill="transparent" id="ccHit"/>' +
+      '</svg>' +
+      '<div class="cc-tip" id="ccTip" style="display:none"></div>';
+    var first = closes[0], lastV = closes[closes.length - 1];
+    var chg = (lastV - first) / first * 100;
+    el.coinChartChange.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '% ' + coinChartRange;
+    el.coinChartChange.className = 'coin-chart-change ' + (chg >= 0 ? 'up' : 'down');
+    var svg = el.coinChartPlot.querySelector('svg');
+    var cross = svg.querySelector('#ccCross'), hdot = svg.querySelector('#ccHoverDot'), tip = el.coinChartPlot.querySelector('#ccTip');
+    function onMove(ev){
+      var rect = svg.getBoundingClientRect();
+      var cx = ((ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left) / rect.width * W;
+      var best = 0;
+      for (var i = 1; i < pts.length; i++) if (Math.abs(pts[i][0] - cx) < Math.abs(pts[best][0] - cx)) best = i;
+      var pt = pts[best];
+      cross.setAttribute('x1', pt[0]); cross.setAttribute('x2', pt[0]); cross.style.display = '';
+      hdot.setAttribute('cx', pt[0]); hdot.setAttribute('cy', pt[1]); hdot.style.display = '';
+      tip.innerHTML = '<b>' + escapeHtml(fmtCoinPrice(closes[best])) + '</b><span>' + escapeHtml(new Date(list[best][0] * 1000).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) + '</span>';
+      tip.style.display = '';
+      var px = pt[0] / W * rect.width;
+      tip.style.left = Math.min(Math.max(px, 70), rect.width - 70) + 'px';
+    }
+    function onLeave(){ cross.style.display = 'none'; hdot.style.display = 'none'; tip.style.display = 'none'; }
+    var hit = svg.querySelector('#ccHit');
+    hit.addEventListener('mousemove', onMove);
+    hit.addEventListener('touchmove', onMove, { passive: true });
+    hit.addEventListener('mouseleave', onLeave);
+    hit.addEventListener('touchend', onLeave);
+  }
+  el.coinChartRanges.addEventListener('click', function(e){
+    var b = e.target.closest('button');
+    if (b) loadCoinChart(b.getAttribute('data-range'));
+  });
   el.pigeonsBarDexBtn.addEventListener('click', function(e){
     if (e.ctrlKey || e.metaKey) return;
     e.preventDefault();
