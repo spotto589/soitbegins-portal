@@ -11072,9 +11072,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     #buySwapModal #buySwapEntryState > .detail-actions{ margin-top:0.7rem; }
     #buySwapModal .detail-actions > button{ font-size:15px !important; padding:0.7em 0.5em !important; white-space:nowrap; }
     #buySwapModal .buyswap-checking{ font-size:16px; }
-  }
-  @media (max-width:700px) and (max-height:640px){
-    #buySwapModal .buyswap-thumb{ display:none !important; }
 
     /* Trustline banner — compact on phones: coin + balance + SWAP/SATCHEL
        side by side, the trustline on one short line, then one row of
@@ -11130,6 +11127,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     #collectionDetailsPanel .stats-carousel-viewport .stat-tile{ flex:1 1 0 !important; min-width:0 !important; width:auto !important; min-height:58px; box-sizing:border-box; padding:0.5rem 0.25rem !important; background:rgba(0,0,0,0.35); border-color:rgba(255,255,255,0.16); }
     #collectionDetailsPanel .stats-carousel-viewport .stat-label{ font-size:9.5px !important; letter-spacing:0.08em; line-height:1.25; margin-bottom:0.25rem; white-space:normal !important; max-width:100%; }
     #collectionDetailsPanel .stats-carousel-viewport .stat-value{ font-size:13px !important; font-weight:700; line-height:1.2; white-space:normal !important; overflow-wrap:anywhere; max-width:100%; }
+  }
+  /* Very short phones: drop the SWAP box's coin picture so it still fits. */
+  @media (max-width:700px) and (max-height:640px){
+    #buySwapModal .buyswap-thumb{ display:none !important; }
   }
 </style>
 </head>
