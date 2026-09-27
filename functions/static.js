@@ -5127,7 +5127,76 @@ const SWAP_HTML = `<!DOCTYPE html>
   #sweepModal .simple-picker-close{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
   .sweep-sub{ text-align:center; color:#fff; font-size:12px; letter-spacing:0.06em; opacity:0.85; }
   #cartModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
-  #cartModal .cart-modal-panel{ width:min(560px, 94vw); max-height:88vh; display:flex; flex-direction:column; gap:0.8rem; }
+  #cartModal .cart-modal-panel{ width:min(560px, 94vw); max-height:90vh; display:flex; flex-direction:column; gap:0.9rem; padding:1.6rem 1.5rem; }
+  /* ---- CART, SWAP-style (2026-09-27) ---- */
+  /* Only the list scrolls/shrinks — balances, totals and buttons keep
+     their full size. */
+  #cartModal .cart-modal-panel > :not(.cart-list){ flex-shrink:0; }
+  #cartModal .cart-modal-panel{ overflow-y:auto; }
+  #cartModal .cart-modal-panel > .cart-list{ flex:0 0 auto; overflow:visible; max-height:none; }
+  #cartModal .cart-row > div:nth-child(2){ min-width:0; }
+  #cartModal .cart-row-name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #cartModal .cx-balances{ display:flex; flex-wrap:wrap; border:1px solid rgba(var(--collection-accent-rgb), 0.35); border-radius:var(--radius); background:#000; overflow:hidden; }
+  #cartModal .cx-bal{ flex:1 1 0; min-width:9rem; text-align:center; padding:0.75em 0.5em; }
+  #cartModal .cx-bal + .cx-bal{ border-left:1px solid rgba(var(--collection-accent-rgb), 0.35); }
+  #cartModal .cx-bal-label{ display:block; font-size:12px; font-weight:700; letter-spacing:0.12em; color:#fff; opacity:0.85; margin-bottom:0.25rem; }
+  #cartModal .cx-bal-value{ display:block; font-size:21px; font-weight:700; color:rgb(52,255,133); text-shadow:0 0 6px rgba(52,255,133,0.35); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #cartModal .cx-bar{ display:flex; align-items:center; justify-content:space-between; }
+  #cartModal .cx-count{ color:#fff; font-size:14px; font-weight:700; letter-spacing:0.08em; }
+  #cartModal .cx-clear{ background:none; border:1px solid rgba(255,59,92,0.85); border-radius:999px; color:#ff3b5c; font-family:inherit; font-size:13px; font-weight:700; letter-spacing:0.08em; padding:0.45em 1.1em; cursor:pointer; }
+  #cartModal .cx-clear:hover{ background:#ff3b5c; color:#000; }
+  #cartModal .cart-list{ gap:0.6rem; padding-right:0.2rem; }
+  #cartModal .cart-group{ font-size:13px; margin:0.4rem 0 0; }
+  #cartModal .cart-row{ grid-template-columns:72px 1fr auto 2.2rem; gap:0.9rem; padding:0.55rem 0.6rem 0.55rem 0.55rem; border:1px solid rgba(var(--collection-accent-rgb), 0.55); border-radius:var(--radius); box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.18); }
+  #cartModal .cart-row img, #cartModal .cart-row > span:first-child{ width:72px; height:72px; border-radius:10px; object-fit:cover; background:#111; }
+  #cartModal .cart-row-name{ font-size:17px; }
+  #cartModal .cx-tag{ display:inline-block; margin-top:0.3rem; font-size:11px; font-weight:700; letter-spacing:0.12em; padding:0.2em 0.6em; border-radius:999px; border:1px solid currentColor; }
+  #cartModal .cx-tag-buy{ color:rgb(52,255,133); }
+  #cartModal .cx-tag-offer{ color:var(--cyan); }
+  #cartModal .cart-row-state{ margin-top:0.3rem; font-size:12px; }
+  #cartModal .cart-row-price{ font-size:18px; text-align:right; }
+  #cartModal .cart-row-remove{ width:2.2rem; height:2.2rem; border-radius:50%; }
+  #cartModal .cx-offer-box{ position:relative; border:1px solid rgba(var(--collection-accent-rgb), 0.55); border-radius:10px; padding:1.25rem 0.6rem 0.4rem; background:#000; }
+  #cartModal .cx-offer-box:focus-within{ border-color:var(--collection-accent); box-shadow:0 0 12px rgba(var(--collection-accent-rgb), 0.4); }
+  #cartModal .cx-offer-label{ position:absolute; top:0.35rem; left:0.6rem; font-size:10px; font-weight:700; letter-spacing:0.14em; color:#fff; opacity:0.75; }
+  #cartModal .cx-offer-line{ display:flex; align-items:center; gap:0.45rem; }
+  #cartModal .cart-offer-input{ width:4.6rem; border:none; background:transparent; font-size:20px; padding:0; text-align:right; }
+  #cartModal .cart-offer-input:focus{ outline:none; }
+  #cartModal .cart-offer-unit{ font-size:14px; }
+  #cartModal .cx-duration{ display:flex; flex-direction:column; gap:0.4rem; }
+  #cartModal .cx-small-label{ font-size:12px; font-weight:700; letter-spacing:0.14em; color:#fff; opacity:0.85; text-align:center; }
+  #cartModal .cx-seg{ display:flex; padding:3px; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); background:#000; }
+  #cartModal .cx-seg .list-duration-btn{ flex:1 1 0; min-width:0; margin:0; border:none !important; border-radius:var(--radius); background:none; box-shadow:none; color:#fff; font-size:14px; font-weight:700; padding:0.6em 0; }
+  #cartModal .cx-seg .list-duration-btn.active{ background:rgba(var(--collection-accent-rgb), 0.9) !important; color:#fff; }
+  #cartModal .cx-summary{ border:1px solid rgba(var(--collection-accent-rgb), 0.3); border-radius:var(--radius); background:#000; padding:0.5rem 0.9rem; }
+  #cartModal .cx-summary:empty{ display:none; }
+  #cartModal .cx-sum-row{ display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:0.35rem 0; font-size:13px; font-weight:700; letter-spacing:0.08em; color:#fff; }
+  #cartModal .cx-sum-row + .cx-sum-row{ border-top:1px solid rgba(var(--collection-accent-rgb), 0.15); }
+  #cartModal .cx-sum-row .cx-sum-val{ color:rgb(52,255,133); font-size:15px; text-align:right; }
+  #cartModal .cx-sum-row.cx-sum-total .cx-sum-val{ font-size:18px; }
+  #cartModal .cx-actions{ display:flex; gap:0.6rem; }
+  #cartModal .cx-actions > button{ flex:1 1 0; margin:0; }
+  #cartModal .cx-back{ background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:999px; color:#fff; font-family:inherit; font-size:15px; font-weight:700; letter-spacing:0.08em; padding:0.8em 1em; cursor:pointer; }
+  #cartModal .cx-back:hover{ border-color:var(--collection-accent); }
+  #cartModal .cart-buy-btn{ border-radius:999px; font-size:16px; padding:0.8em 1em; background:rgba(var(--collection-accent-rgb), 0.95); border-color:var(--collection-accent); color:#fff; box-shadow:0 0 14px rgba(var(--collection-accent-rgb), 0.45); }
+  #cartModal .cart-buy-btn:hover:not(:disabled){ background:rgb(52,255,133); border-color:rgb(52,255,133); color:#000; }
+  #cartModal .cart-status{ font-size:14px; }
+  @media (max-width:600px){
+    #cartModal .cart-modal-panel{ padding:1.2rem 0.9rem; }
+    #cartModal .cart-row{ grid-template-columns:56px 1fr 2rem; }
+    #cartModal .cart-row img, #cartModal .cart-row > span:first-child{ width:56px; height:56px; }
+    #cartModal .cart-row > div:nth-child(3){ grid-column:2 / 3; justify-self:start; }
+    #cartModal .cart-row > div.cx-offer-box{ grid-column:1 / -1; justify-self:stretch; }
+    #cartModal .cx-offer-line{ justify-content:flex-end; }
+    #cartModal .cart-row > :last-child{ grid-column:3; grid-row:1; }
+    #cartModal .cx-bal-value{ font-size:17px; }
+    #cartModal .cx-seg .list-duration-btn{ font-size:11px; letter-spacing:0; padding:0.65em 0; }
+    #cartModal .cx-sum-row{ font-size:11px; letter-spacing:0.04em; }
+    #cartModal .cx-sum-row .cx-sum-val{ font-size:13px; }
+    #cartModal .cx-sum-row.cx-sum-total .cx-sum-val{ font-size:15px; }
+  }
+  #cartModal .cx-sum-row > span:first-child{ text-align:left; }
+  #cartModal .cx-sum-row .cx-sum-val{ white-space:nowrap; }
   #cartModal .simple-picker-header{ position:relative; justify-content:center; }
   #cartModal .simple-picker-title{ flex:1; text-align:center; font-size:24px; font-weight:700; letter-spacing:0.1em; }
   #cartModal .simple-picker-close{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
@@ -10907,28 +10976,32 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div id="cartModal" style="display:none;">
       <div class="pigeons-calc-panel cart-modal-panel">
         <div class="simple-picker-header">
-          <span class="simple-picker-title cart-title">CART</span>
+          <span class="simple-picker-title cart-title">&#128722; CART</span>
           <button type="button" class="simple-picker-close" id="cartCloseBtn" title="CL0SE">&times;</button>
         </div>
-        <div class="cart-topbar">
-          <div class="cart-balances" id="cartBalances"></div>
-          <div class="cart-topbar-right">
-            <span class="cart-count" id="cartCount"></span>
-            <button type="button" class="cart-clear-btn" id="cartClearBtn">CLEAR ALL</button>
-          </div>
+        <!-- Same layout language as SWAP (reported live as the guide):
+             balance tiles up top, rounded boxes, small labels inside,
+             a summary box, then BACK + the main button. -->
+        <div class="cx-balances" id="cartBalances"></div>
+        <div class="cx-bar">
+          <span class="cx-count" id="cartCount"></span>
+          <button type="button" class="cx-clear" id="cartClearBtn">CLEAR ALL</button>
         </div>
         <div class="cart-list" id="cartList"></div>
-        <div class="cart-duration" id="cartDuration" style="display:none;">
-          <span class="cart-duration-label">0FFERS LAST</span>
-          <button type="button" class="list-duration-btn" data-days="1">1 DAY</button>
-          <button type="button" class="list-duration-btn" data-days="3">3 DAYS</button>
-          <button type="button" class="list-duration-btn active" data-days="7">7 DAYS</button>
-          <button type="button" class="list-duration-btn" data-days="30">30 DAYS</button>
-          <button type="button" class="list-duration-btn" data-days="0">∞</button>
+        <div class="cx-duration" id="cartDuration" style="display:none;">
+          <div class="cx-small-label">0FFERS LAST</div>
+          <div class="cx-seg">
+            <button type="button" class="list-duration-btn" data-days="1">1 DAY</button>
+            <button type="button" class="list-duration-btn" data-days="3">3 DAYS</button>
+            <button type="button" class="list-duration-btn active" data-days="7">7 DAYS</button>
+            <button type="button" class="list-duration-btn" data-days="30">30 DAYS</button>
+            <button type="button" class="list-duration-btn" data-days="0">&#8734;</button>
+          </div>
         </div>
-        <div class="cart-total" id="cartTotal"></div>
+        <div class="cx-summary" id="cartTotal"></div>
         <div class="cart-status" id="cartStatus"></div>
-        <div class="cart-actions">
+        <div class="cx-actions">
+          <button type="button" class="cx-back" id="cartBackBtn">&larr; BACK</button>
           <button type="button" class="cart-buy-btn" id="cartBuyBtn">SUBM!T ALL</button>
         </div>
       </div>
@@ -13537,7 +13610,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
-   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartCount','sweepModal','sweepCloseBtn','openSweepBtn',
+   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartCount','cartBackBtn','sweepModal','sweepCloseBtn','openSweepBtn',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
    'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -15453,8 +15526,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Modal exactly as ownedPigeonActionHtml's own L!ST button does —
       // only needs p itself, not myListedData (see this function's own
       // comment on why that isn't loaded here).
+      // TRANSFER above L!ST on your own unlisted NFT (reported live).
       return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
-        '<button class="bar-btn list-open-modal-btn thumb-list-btn" data-nftid="' + escapeHtml(p.nftId) + '">L!ST</button>' +
+        '<div class="owned-action-row has-market-buy">' +
+          '<button class="bar-btn transfer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">TRANSFER</button>' +
+          '<button class="bar-btn list-open-modal-btn thumb-list-btn" data-nftid="' + escapeHtml(p.nftId) + '">L!ST</button>' +
+        '</div>' +
       '</div>';
     }
     var canBuy = !!p.scyllaListing && p.owner !== MY_WALLET;
@@ -19599,7 +19676,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var st = cartRowState[c.nftId];
     var meta = COLLECTION_META[c.collection] || {};
     var sub = st ? '<div class="cart-row-state ' + st.cls + '">' + escapeHtml(st.text) + '</div>'
-      : '<div class="cart-row-coll">' + escapeHtml(meta.label || '') + ' :: ' + (c.mode === 'offer' ? '0FFER' : 'BUY') + '</div>';
+      : (c.mode === 'offer' ? '<div class="cx-tag cx-tag-offer">0FFER</div>' : '<div class="cx-tag cx-tag-buy">BUY N0W</div>');
     var right;
     if (c.mode === 'offer'){
       var curToggle = meta.xrpOnly ? '<span class="cart-offer-unit">XRP</span>'
@@ -19607,9 +19684,9 @@ const SWAP_HTML = `<!DOCTYPE html>
             '<button type="button" class="' + (c.currency === 'token' ? 'active' : '') + '" data-offer-cur="token" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>' + escapeHtml(cartTokenLabel(c)) + '</button>' +
             '<button type="button" class="' + (c.currency === 'xrp' ? 'active' : '') + '" data-offer-cur="xrp" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>XRP</button>' +
           '</span>';
-      right = '<div class="cart-offer">' +
-        '<input class="cart-offer-input" type="text" inputmode="decimal" placeholder="0FFER" data-nftid="' + escapeHtml(c.nftId) + '" value="' + escapeHtml(c.price || '') + '"' + (running ? ' disabled' : '') + '>' +
-        curToggle + '</div>';
+      right = '<div class="cx-offer-box"><span class="cx-offer-label">Y0UR 0FFER</span><div class="cx-offer-line">' +
+        '<input class="cart-offer-input" type="text" inputmode="decimal" placeholder="0" data-nftid="' + escapeHtml(c.nftId) + '" value="' + escapeHtml(c.price || '') + '"' + (running ? ' disabled' : '') + '>' +
+        curToggle + '</div></div>';
     } else {
       right = '<div class="cart-row-price">' + escapeHtml(cartAmountText(c, c.price)) + '</div>';
     }
@@ -19630,16 +19707,20 @@ const SWAP_HTML = `<!DOCTYPE html>
       var k = c.currency === 'xrp' ? 'xrp' : 'token:' + c.collection;
       sums[k] = (sums[k] || 0) + v;
     });
-    var parts = Object.keys(sums).map(function(k){
-      return k === 'xrp' ? fmtXrp(sums[k]) + ' XRP' : fmtPigeonsCompact(sums[k], k.slice(6));
-    });
     var buys = rows.filter(function(c){ return c.mode !== 'offer'; }).length;
     var offers = rows.length - buys;
-    el.cartTotal.innerHTML = rows.length
-      ? (parts.length ? 'T0TAL :: ' + escapeHtml(parts.join(' + ')) : '') +
-        '<span class="cart-fee">' + (buys ? buys + ' T0 BUY' : '') + (buys && offers ? ' · ' : '') + (offers ? offers + ' 0FFER' + (offers === 1 ? '' : 'S') : '') +
-        ' · BUYS PAY THE Σκύλλα FEE (1.3% XRP · 1.023% T0KEN) · 0NE XAMAN S!GNATURE PER NFT</span>'
-      : '';
+    function row(label, value, cls){ return '<div class="cx-sum-row' + (cls ? ' ' + cls : '') + '"><span>' + label + '</span><span class="cx-sum-val">' + value + '</span></div>'; }
+    var html = '';
+    if (rows.length){
+      if (buys) html += row('BUY!NG', buys + ' NFT' + (buys === 1 ? '' : 'S'));
+      if (offers) html += row('0FFER!NG 0N', offers + ' NFT' + (offers === 1 ? '' : 'S'));
+      Object.keys(sums).forEach(function(k){
+        html += row(k === 'xrp' ? 'T0TAL XRP' : 'T0TAL ' + escapeHtml(COLLECTION_META[k.slice(6)].tokenLabel), escapeHtml(k === 'xrp' ? fmtXrp(sums[k]) + ' XRP' : fmtPigeonsCompact(sums[k], k.slice(6))), 'cx-sum-total');
+      });
+      if (buys) html += row('Σκύλλα FEE (BUYS)', '1.3% XRP · 1.023% T0KEN');
+      html += row('XAMAN S!GNATURES', String(rows.length));
+    }
+    el.cartTotal.innerHTML = html;
     el.cartDuration.style.display = offers ? '' : 'none';
     if (!running){
       el.cartBuyBtn.disabled = !rows.length;
@@ -19667,7 +19748,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.cartDuration.querySelectorAll('.list-duration-btn').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-days') === String(cartOfferDays));
     });
-    el.cartCount.textContent = (running ? cartRun.items.length : list.length) + ' / ' + CART_MAX;
+    el.cartCount.textContent = (running ? cartRun.items.length : list.length) + ' / ' + CART_MAX + ' NFTS';
     renderCartTotals();
     renderCartBalances();
   }
@@ -19686,13 +19767,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     return keys;
   }
   function renderCartBalances(){
-    var parts = [];
-    parts.push('<span class="cb-val">' + (cartBalances.xrp === null ? '…' : fmtXrp(cartBalances.xrp)) + '</span> XRP');
+    function tile(label, value){ return '<div class="cx-bal"><span class="cx-bal-label">' + label + '</span><span class="cx-bal-value">' + value + '</span></div>'; }
+    var html = tile('XRP BALANCE', cartBalances.xrp === null ? '…' : escapeHtml(fmtXrp(cartBalances.xrp)) + ' XRP');
     cartTokenCollections().forEach(function(k){
       var v = cartBalances.tokens[k];
-      parts.push('<span class="cb-val">' + (v === undefined || v === null ? '…' : escapeHtml(compactPigeonsNumber(v))) + '</span> ' + escapeHtml(COLLECTION_META[k].tokenLabel));
+      var lbl = COLLECTION_META[k].tokenLabel.replace(/^[$]/, '');
+      html += tile(escapeHtml(lbl) + ' BALANCE', v === undefined || v === null ? '…' : escapeHtml(compactPigeonsNumber(v)));
     });
-    el.cartBalances.innerHTML = 'Y0UR BALANCE :: ' + parts.join(' · ');
+    el.cartBalances.innerHTML = html;
   }
   function loadCartBalances(){
     if (!MY_WALLET) return;
@@ -19957,6 +20039,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.sweepModal.addEventListener('click', function(e){ if (e.target === el.sweepModal) closeSweep(); });
   el.cartPill.addEventListener('click', openCart);
   el.cartCloseBtn.addEventListener('click', closeCart);
+  el.cartBackBtn.addEventListener('click', closeCart);
   el.cartModal.addEventListener('click', function(e){ if (e.target === el.cartModal) closeCart(); });
   refreshCartBadges();
 
