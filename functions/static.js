@@ -5909,6 +5909,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn):hover :is(.mbl-price, .thumb-buy-price){ color:#000; }
   @media (max-width:600px){
     .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn){ height:40px; padding:0 0.35em; font-size:10.5px; letter-spacing:0.01em; gap:0.3em; }
+    /* Phone cards are ~130px — "0FF-S!TE" drops, the ↗ still says it. */
+    .result-card .card-market-buy .mbl-off{ display:none; }
   }
   .result-num{
     /* Bumped up from the old 15px (matched to button text) — direct
@@ -15463,7 +15465,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       var priceHtml = '<span class="mbl-price">' + fmtXrp(cheapest.priceXrp) + ' XRP</span>';
       marketBuyHtml = cheapest.internal
         ? '<button type="button" class="market-buy-link card-market-buy scylla-xrp-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY N0W ' + priceHtml + '</button>'
-        : '<a class="market-buy-link card-market-buy" href="' + escapeHtml(cheapest.url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY N0W ' + priceHtml + ' 0FF-S!TE ↗</a>';
+        : '<a class="market-buy-link card-market-buy" href="' + escapeHtml(cheapest.url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY N0W ' + priceHtml + ' <span class="mbl-off">0FF-S!TE</span> ↗</a>';
       avgSaleLine = '';
     } else if (floorSort && p.marketListings && p.marketListings.length){
       // Only the cheapest listing (reported live 2026-09-23), as one
