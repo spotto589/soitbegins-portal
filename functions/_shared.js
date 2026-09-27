@@ -970,10 +970,10 @@ export const MARKETPLACE_BROKER_WALLET = 'rpigEoNV9KYjK6P9kzFmTqesbpqv7dpnzK';
 // 0.01023 as a float) so the fee math below never has to multiply by a
 // repeating binary fraction.
 export const MARKETPLACE_FEE_BASIS_POINTS = 1023;
-// XRP trades through Σκύλλα pay a higher 1.3% (user's call, 2026-09-24) —
+// XRP trades through Σκύλλα pay 1.23% (was 1.3% from 2026-09-24; user changed it 2026-09-27) —
 // the collection's own token keeps 1.023%, and only token trades earn the
 // $CRWN reward (payBrokerReward), never XRP ones.
-export const XRP_MARKETPLACE_FEE_BASIS_POINTS = 1300;
+export const XRP_MARKETPLACE_FEE_BASIS_POINTS = 1230;
 export function feeBasisPointsFor(currency) {
   return currency === 'xrp' ? XRP_MARKETPLACE_FEE_BASIS_POINTS : MARKETPLACE_FEE_BASIS_POINTS;
 }
@@ -1849,7 +1849,7 @@ async function fetchXrpUsd(kv) {
   return v;
 }
 // Total issued supply of a token = the issuer's obligations for it.
-async function fetchTokenSupply(tokenConfig) {
+export async function fetchTokenSupply(tokenConfig) {
   const data = await fetchXrplClusterJson({ method: 'gateway_balances', params: [{ account: tokenConfig.issuer, ledger_index: 'validated' }] });
   const ob = data && data.result && data.result.obligations;
   if (!ob) return null;
@@ -1998,6 +1998,244 @@ export async function fetchTopTokenHolders(collectionKey, n = 10) {
     circulating,
     ammAccount
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// C0!N page numbers, read off the XRPL itself (reported live 2026-09-27:
+// "we need to make sure this information is always correct").
+//
+// Price history: every trade against the collection's AMM changes its
+// reserves, so the price after each transaction is simply
+// XRP reserve / token reserve (read from that transaction's own metadata).
+// Folded into daily candles (whole life of the pool) and hourly candles
+// (last 9 days), kept in KV and topped up with only the new transactions
+// at most every 30 minutes. GeckoTerminal was missing the pool's first ten
+// months, which is what made ALL and the ATHs wrong.
+// ─────────────────────────────────────────────────────────────────────────
+const COIN_HIST_KEY = 'coinhist:v1';
+const COIN_HIST_REFRESH_MS = 30 * 60 * 1000;
+const COIN_HIST_PAGES_PER_STEP = 8;
+const COIN_HIST_HOURS_KEPT = 9 * 24;
+const RIPPLE_EPOCH = 946684800;
+
+export function coinHistoryAmmAccount(collectionKey) {
+  const cfg = getTradeConfig(collectionKey);
+  if (!hasCollectionToken(cfg) || cfg.isPopularCoin) return null;
+  return cfg.ammAccount || COLLECTION_AMM_ACCOUNTS[collectionKey] || null;
+}
+
+// The AMM's reserves after one transaction: { xrp, token } — either side
+// null when the transaction didn't touch it.
+export function coinReservesFromMeta(meta, amm, tokenConfig) {
+  const out = { xrp: null, token: null };
+  const want = encodeCurrencyCode(tokenConfig.currency);
+  for (const n of (meta && meta.AffectedNodes) || []) {
+    const node = n.ModifiedNode || n.CreatedNode;
+    if (!node) continue;
+    const f = node.FinalFields || node.NewFields;
+    if (!f) continue;
+    if (node.LedgerEntryType === 'AccountRoot' && f.Account === amm && f.Balance !== undefined) {
+      out.xrp = Number(f.Balance) / 1e6;
+    } else if (node.LedgerEntryType === 'RippleState' && f.Balance && f.Balance.currency === want) {
+      const lo = f.LowLimit && f.LowLimit.issuer, hi = f.HighLimit && f.HighLimit.issuer;
+      if (lo === amm && hi === tokenConfig.issuer) out.token = Number(f.Balance.value);
+      else if (hi === amm && lo === tokenConfig.issuer) out.token = -Number(f.Balance.value);
+    }
+  }
+  return out;
+}
+
+function addCoinCandle(list, bucket, p) {
+  const last = list[list.length - 1];
+  if (last && last[0] === bucket) {
+    if (p > last[2]) last[2] = p;
+    if (p < last[3]) last[3] = p;
+    last[4] = p;
+  } else if (!last || bucket > last[0]) {
+    list.push([bucket, p, p, p, p]);
+  }
+}
+
+// Folds account_tx entries (oldest first) into the history object.
+export function foldCoinHistory(h, entries, tokenConfig) {
+  for (const t of entries) {
+    const tx = t.tx || t.tx_json;
+    const meta = t.meta || t.metaData;
+    if (!tx || !meta || meta.TransactionResult !== 'tesSUCCESS') continue;
+    const r = coinReservesFromMeta(meta, h.amm, tokenConfig);
+    if (r.xrp !== null) h.xrp = r.xrp;
+    if (r.token !== null) h.tok = r.token;
+    const ledger = t.ledger_index || tx.ledger_index;
+    if (ledger > h.lastLedger) h.lastLedger = ledger;
+    const date = tx.date !== undefined ? tx.date : t.date;
+    if (!(h.xrp > 0) || !(h.tok > 0) || date === undefined) continue;
+    const ts = date + RIPPLE_EPOCH;
+    const p = h.xrp / h.tok;
+    if (!h.firstTs) h.firstTs = ts;
+    h.lastTs = ts;
+    addCoinCandle(h.days, Math.floor(ts / 86400) * 86400, p);
+    addCoinCandle(h.hours, Math.floor(ts / 3600) * 3600, p);
+  }
+  const cutoff = (h.lastTs || 0) - COIN_HIST_HOURS_KEPT * 3600;
+  while (h.hours.length && h.hours[0][0] < cutoff) h.hours.shift();
+  return h;
+}
+
+export function newCoinHistory(amm) {
+  return { v: 1, amm, lastLedger: 0, marker: null, complete: false, updatedAt: 0, xrp: null, tok: null, firstTs: null, lastTs: null, days: [], hours: [] };
+}
+
+// One step of the scan: a few account_tx pages from where it left off.
+export async function stepCoinHistory(h, tokenConfig, pages = COIN_HIST_PAGES_PER_STEP) {
+  for (let i = 0; i < pages; i++) {
+    const params = { account: h.amm, limit: 400, forward: true };
+    if (h.marker) params.marker = h.marker;
+    else if (h.lastLedger) params.ledger_index_min = h.lastLedger + 1;
+    const data = await fetchXrplClusterJson({ method: 'account_tx', params: [params] });
+    const res = data && data.result;
+    if (!res || !Array.isArray(res.transactions)) return false;
+    foldCoinHistory(h, res.transactions, tokenConfig);
+    h.marker = res.marker || null;
+    if (!h.marker) { h.complete = true; break; }
+  }
+  h.updatedAt = Date.now();
+  return true;
+}
+
+export async function getCoinHistory(kv, collectionKey, ctx) {
+  const amm = coinHistoryAmmAccount(collectionKey);
+  if (!amm || !kv) return null;
+  const key = COIN_HIST_KEY + ':' + collectionKey;
+  let h = null;
+  try { const raw = await kv.get(key); h = raw ? JSON.parse(raw) : null; } catch (e) { h = null; }
+  if (!h || h.amm !== amm) h = newCoinHistory(amm);
+  const tc = getTradeConfig(collectionKey).tokenConfig;
+  if (!h.complete) {
+    // Still building (a first scan is tens of thousands of transactions):
+    // one step in the background after the response, never making anyone
+    // wait for it. The caller shows the fallback history meanwhile.
+    const run = (async () => {
+      if (await stepCoinHistory(h, tc)) await safeKvPut(kv, key, JSON.stringify(h));
+    })();
+    if (ctx && ctx.waitUntil) ctx.waitUntil(run.catch(() => {})); else await run.catch(() => {});
+    return h;
+  }
+  // Built: just the new transactions, at most every 30 minutes (keeps KV
+  // writes low); written only when something new came in.
+  if (Date.now() - h.updatedAt > COIN_HIST_REFRESH_MS) {
+    const before = h.lastLedger;
+    const ok = await stepCoinHistory(h, tc, 2);
+    if (ok && h.lastLedger !== before) await safeKvPut(kv, key, JSON.stringify(h));
+  }
+  return h;
+}
+
+// XRP/USD: Bitstamp's live ticker, falling back to the chart site's own
+// rate. Daily closes (for past USD prices) from Bitstamp too.
+export async function fetchXrpUsdLive() {
+  try {
+    const d = await (await fetch('https://www.bitstamp.net/api/v2/ticker/xrpusd/')).json();
+    const v = parseFloat(d && d.last);
+    if (v > 0) return { usd: v, source: 'bitstamp' };
+  } catch (e) {}
+  const v = await fetchXrpUsd(null);
+  return v > 0 ? { usd: v, source: 'dexscreener' } : null;
+}
+export async function fetchXrpUsdDailyCloses() {
+  try {
+    const d = await (await fetch('https://www.bitstamp.net/api/v2/ohlc/xrpusd/?step=86400&limit=1000')).json();
+    const out = {};
+    for (const c of (d && d.data && d.data.ohlc) || []) out[Number(c.timestamp)] = parseFloat(c.close);
+    return out;
+  } catch (e) { return {}; }
+}
+
+// A website counts as live when it answers at all (any status under 500).
+async function isSiteLive(url) {
+  try {
+    const r = await fetch(url, { method: 'GET', redirect: 'follow', signal: AbortSignal.timeout(5000) });
+    return r.status < 500;
+  } catch (e) { return false; }
+}
+
+// Everything the C0!N page shows right now. Price, pool and supply come
+// from the ledger (amm_info + gateway_balances); the chart site is only
+// used for 24h activity and as a cross-check on the price.
+export async function fetchCoinStats(collectionKey) {
+  const cfg = getTradeConfig(collectionKey);
+  if (!hasCollectionToken(cfg) || cfg.isPopularCoin) return null;
+  const tc = cfg.tokenConfig;
+  const amm = coinHistoryAmmAccount(collectionKey);
+  const dexPair = COLLECTION_DEXSCREENER_PAIRS[collectionKey] || dexscreenerPairFor(tc);
+  const [pool, supplyData, xrpUsd, dexData] = await Promise.all([
+    fetchTokenAmmPool(amm, tc),
+    fetchXrplClusterJson({ method: 'gateway_balances', params: [{ account: tc.issuer, ledger_index: 'validated' }] }),
+    fetchXrpUsdLive(),
+    dexPair ? fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + dexPair).then(r => r.json()).catch(() => null) : null
+  ]);
+  const ob = supplyData && supplyData.result && supplyData.result.obligations;
+  const supplyStr = ob ? (ob[encodeCurrencyCode(tc.currency)] || ob[tc.currency] || null) : null;
+  const supply = supplyStr ? parseFloat(supplyStr) : null;
+  const d = dexData && dexData.pairs && dexData.pairs[0];
+  const dexPrice = d && parseFloat(d.priceNative) > 0 ? parseFloat(d.priceNative) : null;
+  let priceXrp = null, priceSource = null;
+  if (pool) { priceXrp = (Number(pool.xrpReserveDrops) / 1e6) / pool.pigeonsReserve; priceSource = 'amm'; }
+  else if (dexPrice) { priceXrp = dexPrice; priceSource = 'dexscreener'; }
+  else { priceXrp = await fetchTokenXrpRateFromBookOffers(tc); priceSource = priceXrp ? 'orderbook' : null; }
+  const usd = xrpUsd ? xrpUsd.usd : null;
+  const poolXrp = pool ? Number(pool.xrpReserveDrops) / 1e6 : null;
+  const websites = [];
+  for (const w of (d && d.info && d.info.websites) || []) {
+    if (!w || !w.url) continue;
+    websites.push({ url: w.url, live: await isSiteLive(w.url) });
+  }
+  return {
+    priceXrp, priceSource,
+    priceUsd: priceXrp && usd ? priceXrp * usd : null,
+    xrpUsd: usd, xrpUsdSource: xrpUsd ? xrpUsd.source : null,
+    supply, supplyStr,
+    marketCapUsd: supply && priceXrp && usd ? supply * priceXrp * usd : null,
+    liquidityUsd: poolXrp && usd ? 2 * poolXrp * usd : null,
+    pool: pool ? { account: amm, xrp: poolXrp, token: pool.pigeonsReserve, tradingFeePct: pool.tradingFeeBps / 1000 } : null,
+    dexPriceXrp: dexPrice,
+    priceDiffPct: dexPrice && priceXrp ? Math.abs(dexPrice - priceXrp) / priceXrp * 100 : null,
+    change24h: d && d.priceChange ? d.priceChange.h24 : null,
+    volume24hUsd: d && d.volume ? d.volume.h24 : null,
+    txns24h: d && d.txns ? d.txns.h24 : null,
+    imageUrl: d && d.info ? d.info.imageUrl || null : null,
+    socials: ((d && d.info && d.info.socials) || []).map(s => ({ type: s.type, url: s.url })),
+    websites,
+    dexPair: d && d.pairAddress ? d.pairAddress : dexPair,
+    asOf: Date.now()
+  };
+}
+
+// Collections without an AMM (or whose ledger scan is still building):
+// GeckoTerminal's candles, fetched here so every visitor shares one cached
+// copy (it rate-limits per caller).
+export async function fetchGeckoCoinHistory(collectionKey) {
+  const cfg = getTradeConfig(collectionKey);
+  if (!hasCollectionToken(cfg)) return null;
+  // GeckoTerminal's pool id is case-sensitive: hex currency upper-case,
+  // the issuer exactly as it is.
+  const cur = encodeCurrencyCode(cfg.tokenConfig.currency);
+  const pair = (cur.length === 40 ? cur.toUpperCase() : cur) + '.' + cfg.tokenConfig.issuer + '_XRP';
+  const base = 'https://api.geckoterminal.com/api/v2/networks/xrpl/pools/' + encodeURIComponent(pair) + '/ohlcv/';
+  async function get(tf) {
+    for (let i = 0; i < 3; i++) {
+      const r = await fetch(base + tf + '?aggregate=1&limit=1000&currency=token');
+      if (r.status === 429) { await new Promise(res => setTimeout(res, 1500 * (i + 1))); continue; }
+      const d = await r.json().catch(() => null);
+      const list = (d && d.data && d.data.attributes && d.data.attributes.ohlcv_list) || [];
+      return list.map(c => [c[0], +c[1], +c[2], +c[3], +c[4]]).sort((a, b) => a[0] - b[0]);
+    }
+    return null;
+  }
+  const days = await get('day');
+  const hours = await get('hour');
+  if (!days) return null;
+  const lastTs = Math.max(days.length ? days[days.length - 1][0] : 0, hours && hours.length ? hours[hours.length - 1][0] : 0);
+  return { source: 'geckoterminal', days, hours: (hours || []).filter(c => c[0] >= lastTs - COIN_HIST_HOURS_KEPT * 3600), firstTs: days.length ? days[0][0] : null };
 }
 
 // All of a wallet's real trustlines in ONE account_lines call (no peer

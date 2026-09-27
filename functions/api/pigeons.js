@@ -7,7 +7,7 @@ import { marketListingsFromOffers, marketMeta,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, quoteXrpForTokenAmount, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG, isPopularCoinKey, ensurePopularCoinConfig,
   getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
-  fetchRecentAccountTxCached, fetchTopTokenHolders
+  fetchRecentAccountTxCached, fetchTopTokenHolders, fetchCoinStats, getCoinHistory, fetchGeckoCoinHistory, fetchXrpUsdDailyCloses, fetchTokenSupply
 } from '../_shared.js';
 
 // Deeptide's own item page — the real place to buy a listed Pigeon.
@@ -443,6 +443,47 @@ export async function onRequestGet(context) {
   if (params.get('pigeonsRate') === '1') {
     const rate = await fetchPigeonsXrpRate(env.coin, tradeKey);
     return json({ xrpPerPigeon: rate.xrpPerPigeon, usdPerPigeon: rate.usdPerPigeon, marketCapUsd: rate.marketCapUsd, liquidityUsd: rate.liquidityUsd, tokenImageUrl: rate.tokenImageUrl, dexUrl: rate.dexUrl });
+  }
+
+  // C0!N page: live numbers (60s) and price history + ATHs (5 min), both
+  // edge-cached so every visitor shares one copy (Cache API, not KV).
+  if (params.get('coinStats') === '1' || params.get('coinHistory') === '1') {
+    const isStats = params.get('coinStats') === '1';
+    const cacheKey = new Request('https://soitbegins.xyz/__cache/coin-' + (isStats ? 'stats' : 'history') + '/v1/' + tradeKey);
+    const cache = typeof caches !== 'undefined' ? caches.default : null;
+    const hit = cache ? await cache.match(cacheKey) : null;
+    if (hit) return hit;
+    let body;
+    if (isStats) {
+      body = await fetchCoinStats(tradeKey);
+      if (!body) return json({ error: 'no_coin' }, 404);
+    } else {
+      const cfg = getTradeConfig(tradeKey);
+      if (!cfg || !cfg.tokenConfig || !cfg.tokenConfig.currency) return json({ error: 'no_coin' }, 404);
+      const h = await getCoinHistory(env.coin, tradeKey, context);
+      let hist = h && h.complete && h.days.length ? { source: 'ledger', days: h.days, hours: h.hours, firstTs: h.firstTs } : null;
+      if (!hist) hist = await fetchGeckoCoinHistory(tradeKey);
+      if (!hist) return json({ error: 'history_unavailable' }, 502);
+      if (h && !h.complete) hist.building = true;
+      // ATHs: the highest price the pool ever traded at (a day's high), in
+      // XRP; in USD that day's high x that day's XRP/USD close (Bitstamp);
+      // market cap ATH = USD ATH x today's exact supply.
+      const [closes, supply] = await Promise.all([fetchXrpUsdDailyCloses(), fetchTokenSupply(cfg.tokenConfig)]);
+      let athXrp = null, athUsd = null, lastClose = null;
+      for (const c of hist.days) {
+        if (!athXrp || c[2] > athXrp.price) athXrp = { price: c[2], t: c[0] };
+        const close = closes[c[0]] || lastClose;
+        if (closes[c[0]]) lastClose = closes[c[0]];
+        if (close && (!athUsd || c[2] * close > athUsd.price)) athUsd = { price: c[2] * close, t: c[0], xrpUsd: close };
+      }
+      body = Object.assign(hist, { athXrp, athUsd, supply, marketCapAthUsd: athUsd && supply ? athUsd.price * supply : null, asOf: Date.now() });
+    }
+    // A history that's still building is cached only briefly, so the next
+    // visit runs the next build step.
+    const ttl = isStats ? 60 : (body.building ? 20 : 300);
+    const res = new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=' + ttl } });
+    if (cache) context.waitUntil(cache.put(cacheKey, res.clone()));
+    return res;
   }
 
   // T0P 10 wallets for the collection's token (C0!N page). Edge-cached

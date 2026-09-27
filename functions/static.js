@@ -5303,7 +5303,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   .cart-sweep-note, .cart-status{ text-align:center; font-size:13px; color:var(--cyan); min-height:1em; }
   .cart-sweep-note:empty, .cart-status:empty{ display:none; }
   .cart-list{ flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:0.4rem; }
-  .cart-empty{ text-align:center; color:#fff; opacity:0.7; padding:1rem 0; font-size:14px; }
+  .cart-empty{ text-align:center; color:#fff; padding:1.4rem 0.5rem; }
+  .cart-empty-title{ font-size:22px; font-weight:700; letter-spacing:0.1em; }
+  .cart-empty-sub{ font-size:16px; font-weight:700; letter-spacing:0.04em; opacity:0.75; margin-top:0.5rem; line-height:1.4; }
+  .sk-word{ text-transform:none; }
   .cart-topbar{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; flex-wrap:wrap; }
   .cart-balances{ color:#fff; font-size:12px; font-weight:700; letter-spacing:0.05em; line-height:1.5; }
   .cart-balances .cb-val{ color:rgb(52,255,133); }
@@ -9374,9 +9377,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   #coinModal .simple-picker-header{ position:relative; justify-content:center; }
   #coinModal .simple-picker-title{ flex:1; text-align:center; font-size:24px; font-weight:700; letter-spacing:0.1em; }
   #coinModal .simple-picker-close{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
-  .coin-hero{ display:flex; align-items:center; gap:0.9rem; }
-  .coin-hero-img{ width:56px; height:56px; border-radius:50%; object-fit:cover; border:1px solid rgba(var(--collection-accent-rgb), 0.6); }
-  .coin-hero-main{ flex:1 1 auto; min-width:0; }
+  /* Picture, price and 24h stacked and centred with the socials under
+     them (reported live 2026-09-27). */
+  .coin-hero{ display:flex; flex-direction:column; align-items:center; text-align:center; gap:0.45rem; }
+  .coin-hero-img{ width:104px; height:104px; box-shadow:0 0 18px rgba(var(--collection-accent-rgb), 0.45); border-radius:50%; object-fit:cover; border:1px solid rgba(var(--collection-accent-rgb), 0.6); }
+  .coin-hero-main{ min-width:0; }
   .coin-hero-price{ color:rgb(52,255,133); font-size:26px; font-weight:700; text-shadow:0 0 8px rgba(52,255,133,0.35); }
   .coin-hero-sub{ color:#fff; opacity:0.8; font-size:13px; font-weight:700; letter-spacing:0.06em; }
   .coin-hero-change{ font-size:16px; font-weight:700; padding:0.35em 0.8em; border-radius:999px; border:1px solid currentColor; }
@@ -9412,6 +9417,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      "put all the socials at the top"). */
   .coin-links{ display:flex; flex-wrap:wrap; gap:0.55rem; justify-content:center; }
   .coin-links:empty{ display:none; }
+  .coin-social-off{ opacity:0.4; cursor:not-allowed; box-shadow:none; }
+  .coin-social-off:hover{ transform:none; color:#fff; border-color:rgba(var(--collection-accent-rgb), 0.55); box-shadow:none; }
+  #coinModal .coin-modal-panel{ position:relative; }
+  .coin-verify{ grid-column:1 / -1; color:#fff; opacity:0.6; font-size:10.5px; font-weight:700; letter-spacing:0.05em; line-height:1.5; text-align:center; padding-top:0.15rem; }
+  .coin-verify.warn{ color:#ffd23d; opacity:0.9; }
+  .coin-stat-link{ color:inherit; text-decoration:none; }
+  .coin-stat-link:hover{ color:var(--cyan); }
   .coin-social{ width:40px; height:40px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.55); color:#fff; box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.18); transition:transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease; }
   .coin-social svg{ width:18px; height:18px; fill:currentColor; }
   .coin-social svg[fill="none"]{ fill:none; }
@@ -9431,7 +9443,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   .coin-action-main{ color:#fff; border:1px solid rgba(255,255,255,0.35); background:linear-gradient(135deg, rgba(var(--collection-accent-rgb), 1), rgba(var(--collection-accent-2-rgb), 1)); box-shadow:0 6px 22px rgba(var(--collection-accent-rgb), 0.45), inset 0 1px 0 rgba(255,255,255,0.25); text-shadow:0 1px 3px rgba(0,0,0,0.45); }
   .coin-action-main:hover{ transform:translateY(-1px); box-shadow:0 8px 28px rgba(var(--collection-accent-rgb), 0.65), inset 0 1px 0 rgba(255,255,255,0.3); }
   /* T0P 10 WALLETS */
-  .coin-holders{ border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); background:#000; padding:0.6rem 0.8rem; display:flex; flex-direction:column; gap:0.15rem; }
+  /* T0P 10 WALLETS opens over the chart + numbers, not below them. */
+  .coin-holders{ position:absolute; left:1.4rem; right:1.4rem; z-index:6; overflow-y:auto; border:1px solid rgba(var(--collection-accent-rgb), 0.7); border-radius:var(--radius); background:#000; box-shadow:0 12px 40px rgba(0,0,0,0.8), 0 0 24px rgba(var(--collection-accent-rgb), 0.3); padding:0.6rem 0.8rem; display:flex; flex-direction:column; gap:0.15rem; }
+  .coin-holders-x{ background:none; border:1px solid rgba(255,255,255,0.3); border-radius:50%; width:1.8em; height:1.8em; color:#fff; font-size:14px; line-height:1; cursor:pointer; margin-left:0.6rem; }
+  .coin-holders-head{ align-items:center; }
+  .coin-holders-head > span:first-child{ flex:1; }
+  .ch-lp-link{ margin-left:0.5em; color:#6fdcff; font-size:11px; letter-spacing:0.06em; text-decoration:none; border:1px solid rgba(111,220,255,0.5); border-radius:999px; padding:0.15em 0.6em; white-space:nowrap; }
+  .ch-lp-link:hover{ background:rgba(111,220,255,0.15); }
   .coin-holders-msg{ height:auto; padding:1.2rem 0; }
   .coin-holders-head{ display:flex; justify-content:space-between; color:#fff; font-size:12px; font-weight:700; letter-spacing:0.12em; opacity:0.8; padding:0.1rem 0 0.4rem; border-bottom:1px solid rgba(255,255,255,0.08); margin-bottom:0.2rem; }
   .ch-row{ display:grid; grid-template-columns:2rem minmax(0, 1fr) auto; align-items:center; gap:0.7rem; padding:0.45rem 0.1rem; border-bottom:1px solid rgba(255,255,255,0.05); }
@@ -9481,7 +9499,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:600px){
     .coin-stats{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
     .coin-chart-plot{ height:210px; }
-    .coin-hero-price{ font-size:20px; }
+    .coin-hero-price{ font-size:22px; }
+    .coin-hero-img{ width:88px; height:88px; }
+    .coin-holders{ left:0.9rem; right:0.9rem; }
   }
   /* Stats carousel, tighter (reported live 2026-09-27: "remove dead space
      ... smaller and cleaner"): tiles fill the row instead of floating in
@@ -16399,7 +16419,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       b.classList.toggle('sale-currency-btn-active', b.getAttribute('data-currency') === value);
     });
   }
-  // Buyers pay the fee on top: 1.023% in the token, 1.3% in XRP.
+  // Buyers pay the fee on top: 1.023% in the token, 1.23% in XRP.
   function setListCurrency(value){
     amountEntryListCurrency = value;
     setTabActive(el.amountEntryListCurrency, value);
@@ -20291,14 +20311,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     var running = !!cartRun;
     var rows = running ? cartRun.items : getCart();
     // What it will cost, per currency: buys include the Σκύλλa fee paid on
-    // top (1.3% XRP, 1.023% token); offers are the amount offered.
+    // top (1.23% XRP, 1.023% token); offers are the amount offered.
     var cost = {};
     rows.forEach(function(c){
       var v = Number(c.price);
       if (!(v > 0)) return;
       var isXrp = c.currency === 'xrp';
       var k = isXrp ? 'xrp' : 'token:' + c.collection;
-      var withFee = c.mode === 'offer' ? v : v * (1 + (isXrp ? 0.013 : 0.01023));
+      var withFee = c.mode === 'offer' ? v : v * (1 + (isXrp ? 0.0123 : 0.01023));
       cost[k] = (cost[k] || 0) + withFee;
     });
     var buys = rows.filter(function(c){ return c.mode !== 'offer'; }).length;
@@ -20317,7 +20337,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           '<div class="cx-cost-val">' + keys.map(function(k){
             return escapeHtml(k === 'xrp' ? fmtXrp(Math.round(cost.xrp * 100) / 100) + ' XRP' : fmtPigeonsCompact(cost[k], k.slice(6)));
           }).join('<span class="cx-plus">+</span>') + '</div>' +
-          '<div class="cx-cost-note">' + (buys ? '!NCLUDES THE Σκύλλα FEE 0N BUYS (1.3% XRP · 1.023% T0KEN)' : '') +
+          '<div class="cx-cost-note">' + (buys ? '!NCLUDES THE Σκύλλα FEE 0N BUYS (1.23% XRP · 1.023% T0KEN)' : '') +
             (buys && offers ? ' · ' : '') + (offers ? '0FFERS 0NLY C0ST THE!R AM0UNT !F ACCEPTED' : '') + '</div>' +
         '</div>';
       }
@@ -20336,7 +20356,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var list = getCart();
     var running = !!cartRun;
     if (!list.length && !running){
-      el.cartList.innerHTML = '<div class="cart-empty">Y0UR CART !S EMPTY — TAP + 0N ANY NFT L!STED 0N Σκύλλα T0 BUY !T, ADD T0 CART 0N ANY 0THER T0 MAKE AN 0FFER, 0R USE SWEEP !N THE BANNER.</div>';
+      el.cartList.innerHTML = '<div class="cart-empty"><div class="cart-empty-title">Y0UR CART !S EMPTY</div><div class="cart-empty-sub">ADD NFTS L!STED 0N <span class="sk-word">Σκύλλα</span>, THEN S!GN F0R THEM ALL !N 0NE G0.</div></div>';
     } else {
       var rows = (running ? cartRun.items : list).slice();
       // S0RT: buys first or offers first (stable within each kind).
@@ -23161,18 +23181,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     statsCarouselSetPageOff(page, false);
     var key = state.collection;
     document.getElementById('statCoinLabel').textContent = meta.tokenLabel + ' PR!CE';
-    document.getElementById('statCoinPrice').textContent = typeof rate.xrpPerPigeon === 'number' ? Number(rate.xrpPerPigeon).toPrecision(4) + ' XRP' : '—';
-    document.getElementById('statCoinMcap').textContent = rate.marketCapUsd != null ? fmtUsd(rate.marketCapUsd) : '—';
-    document.getElementById('statCoinLiq').textContent = rate.liquidityUsd != null ? fmtUsd(rate.liquidityUsd) : '—';
-    fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + String(rate.dexUrl).split('/').pop())
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        if (state.collection !== key) return;
-        var ch = d && d.pairs && d.pairs[0] && d.pairs[0].priceChange ? d.pairs[0].priceChange.h24 : null;
-        var cEl = document.getElementById('statCoinChange');
-        cEl.textContent = ch === null || ch === undefined ? '—' : (ch >= 0 ? '+' : '') + ch + '%';
-        cEl.className = 'stat-value ' + (ch === null || ch === undefined ? '' : ch >= 0 ? 'stat-up' : 'stat-down');
-      }).catch(function(){});
+    // Same ledger-read numbers as the C0!N page itself.
+    api({ coinStats: 1 }).then(function(c){
+      if (state.collection !== key || !c || c.error) return;
+      document.getElementById('statCoinPrice').textContent = c.priceXrp ? fmtCoinPrice(c.priceXrp) : '—';
+      document.getElementById('statCoinMcap').textContent = c.marketCapUsd ? fmtUsd(c.marketCapUsd) : '—';
+      document.getElementById('statCoinLiq').textContent = c.liquidityUsd ? fmtUsd(c.liquidityUsd) : '—';
+      var ch = c.change24h;
+      var cEl = document.getElementById('statCoinChange');
+      cEl.textContent = ch === null || ch === undefined ? '—' : (ch >= 0 ? '+' : '') + ch + '%';
+      cEl.className = 'stat-value ' + (ch === null || ch === undefined ? '' : ch >= 0 ? 'stat-up' : 'stat-down');
+    }).catch(function(){});
   }
   document.getElementById('statsStripCoin').addEventListener('click', function(e){
     if (e.target.closest('[data-coin-open]')) openCoinPage();
@@ -23191,14 +23210,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   };
   // Websites that don't actually load — left off (reported live).
   var COIN_DEAD_SITES = /(^|[.])gold-rush[.]gold$/i;
-  var coinAth = {}; // pool -> { xrp, usd, t } all-time highs, fetched once per pool (null = unavailable)
-  function coinSocialHtml(url, kind, title){
+  function coinSocialHtml(url, kind, title, dead){
+    // A site that doesn't load is shown but can't be clicked (the same
+    // dimmed "unavailable" look as an empty WATCHL!ST).
+    if (dead) return '<span class="coin-social coin-social-off" title="' + escapeHtml(title) + ' — N0T L!VE">' + (COIN_SOCIAL_ICONS[kind] || COIN_SOCIAL_ICONS.web) + '</span>';
     return '<a class="coin-social" href="' + escapeHtml(url) + '" target="_blank" rel="noopener" title="' + escapeHtml(title) + '">' + (COIN_SOCIAL_ICONS[kind] || COIN_SOCIAL_ICONS.web) + '</a>';
   }
+  // Every number on this page comes from our own server: price, pool and
+  // exact supply straight off the XRPL (coinStats), price history rebuilt
+  // from the AMM's own transactions (coinHistory).
+  var coinStatsData = null, coinHistData = null, coinOpenKey = null;
+  function fmtExact(n, dp){ return Number(n).toLocaleString(undefined, { maximumFractionDigits: dp }); }
+  function coinDate(t){ return new Date(t * 1000).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' }); }
   function openCoinPage(){
     var key = state.collection;
     var meta = COLLECTION_META[key] || {};
     if (!coinPageDexUrl || meta.xrpOnly) return;
+    coinOpenKey = key;
+    coinStatsData = null;
+    coinHistData = null;
     el.coinTitle.textContent = meta.tokenLabel + ' C0!N';
     el.coinImg.src = meta.thumb || '';
     el.coinPrice.textContent = '…';
@@ -23206,93 +23236,97 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.coinChange.textContent = '';
     el.coinStats.innerHTML = '';
     el.coinLinks.innerHTML = '';
-    el.coinHolders.style.display = 'none';
+    closeCoinHolders();
     el.coinHolders.innerHTML = '';
-    el.coinHoldersBtnLabel.textContent = 'T0P 10 WALLETS';
     el.coinSwapBtnLabel.textContent = 'SWAP ' + meta.tokenLabel;
-    var pair = coinPageDexUrl.split('/').pop();
-    coinChartPool = null;
     el.coinChartPlot.innerHTML = '<div class="coin-chart-msg">L0AD!NG CHART...</div>';
     el.coinChartChange.textContent = '';
     el.coinModal.style.display = 'flex';
-    function stat(label, value, sub){ return '<div class="coin-stat"><span class="coin-stat-label">' + label + '</span><span class="coin-stat-val">' + value + '</span>' + (sub ? '<span class="coin-stat-sub">' + sub + '</span>' : '') + '</div>'; }
-    fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + pair).then(function(r){ return r.json(); }).catch(function(){ return null; }).then(function(res){
-      if (el.coinModal.style.display !== 'flex' || state.collection !== key) return;
-      var d = res && res.pairs && res.pairs[0];
-      if (!d){
-        el.coinPrice.textContent = '—';
-        el.coinStats.innerHTML = '<div class="coin-stat coin-stat-wide"><span class="coin-stat-label">C0ULDN\\'T L0AD THE C0!N DATA — TRY AGA!N</span></div>';
-        return;
-      }
-      coinChartPool = d.pairAddress || pair;
-      loadCoinChart(coinChartRange);
-      if (d.info && d.info.imageUrl) el.coinImg.src = d.info.imageUrl;
-      el.coinPrice.textContent = Number(d.priceNative).toPrecision(4) + ' XRP';
-      el.coinPriceSub.textContent = fmtUsd(Number(d.priceUsd)) + ' USD';
-      var ch = d.priceChange && d.priceChange.h24;
+    api({ coinStats: 1 }).then(function(s){
+      if (coinOpenKey !== key || el.coinModal.style.display !== 'flex') return;
+      if (!s || s.error) throw new Error('stats');
+      coinStatsData = s;
+      if (s.imageUrl) el.coinImg.src = s.imageUrl;
+      el.coinPrice.textContent = s.priceXrp ? fmtCoinPrice(s.priceXrp) : '—';
+      el.coinPriceSub.textContent = s.priceUsd ? fmtUsd(s.priceUsd) + ' USD' : '';
+      var ch = s.change24h;
       if (ch !== undefined && ch !== null){
         el.coinChange.textContent = (ch >= 0 ? '+' : '') + ch + '% 24H';
         el.coinChange.className = 'coin-hero-change ' + (ch >= 0 ? 'up' : 'down');
       }
-      var mcap = d.marketCap || d.fdv;
-      var supply = mcap && Number(d.priceUsd) ? mcap / Number(d.priceUsd) : null;
-      var t = (d.txns && d.txns.h24) || {};
-      var pool = coinChartPool;
-      function renderStats(){
-        if (pool !== coinChartPool) return;
-        var ath = coinAth[pool];
-        var html = '';
-        html += stat('MARKET CAP', fmtUsd(mcap));
-        html += stat('L!QU!D!TY', fmtUsd(d.liquidity && d.liquidity.usd));
-        html += stat('24H V0LUME', fmtUsd(d.volume && d.volume.h24));
-        html += stat('PR!CE ATH', ath === undefined ? '…' : ath ? escapeHtml(fmtCoinPrice(ath.xrp)) : '—',
-          ath ? escapeHtml((ath.usd ? fmtUsd(ath.usd) + ' · ' : '') + new Date(ath.t * 1000).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })) : '');
-        html += stat('MARKET CAP ATH', ath === undefined ? '…' : (ath && ath.usd && supply) ? fmtUsd(ath.usd * supply) : '—');
-        html += stat('24H BUYS / SELLS', '<span class="up">' + (t.buys || 0) + '</span> / <span class="down">' + (t.sells || 0) + '</span>');
-        html += stat('P00L', d.liquidity ? escapeHtml(compactPigeonsNumber(Math.round(d.liquidity.base))) + ' + ' + escapeHtml(fmtXrp(Math.round(d.liquidity.quote))) + ' XRP' : '—');
-        if (supply) html += stat('SUPPLY', escapeHtml(compactPigeonsNumber(Math.round(supply))));
-        html += stat('!SSUER', escapeHtml(shortAddr(meta.tokenIssuer || '')));
-        el.coinStats.innerHTML = html;
-      }
-      renderStats();
-      if (coinAth[pool] === undefined) loadCoinAth(pool, renderStats);
       var links = [];
-      ((d.info && d.info.socials) || []).forEach(function(w){
+      (s.socials || []).forEach(function(w){
         var kind = String(w.type || '').toLowerCase();
         links.push(coinSocialHtml(w.url, kind === 'x' ? 'twitter' : kind, kind.toUpperCase()));
       });
-      ((d.info && d.info.websites) || []).forEach(function(w){
+      (s.websites || []).forEach(function(w){
         var host = String(w.url || '').replace(/^https?:[/][/](www[.])?/i, '').split('/')[0];
         if (!host || COIN_DEAD_SITES.test(host)) return;
-        links.push(coinSocialHtml(w.url, 'web', host.toUpperCase()));
+        links.push(coinSocialHtml(w.url, 'web', host.toUpperCase(), !w.live));
       });
       el.coinLinks.innerHTML = links.join('');
+      renderCoinStats();
+      if (coinHistData) loadCoinChart(coinChartRange);
+    }).catch(function(){
+      if (coinOpenKey !== key) return;
+      el.coinPrice.textContent = '—';
+      el.coinStats.innerHTML = '<div class="coin-stat coin-stat-wide"><span class="coin-stat-label">C0ULDN\\'T L0AD THE C0!N DATA — TRY AGA!N</span></div>';
+    });
+    api({ coinHistory: 1 }).then(function(h){
+      if (coinOpenKey !== key || el.coinModal.style.display !== 'flex') return;
+      if (!h || h.error) throw new Error('history');
+      coinHistData = h;
+      loadCoinChart(coinChartRange);
+      renderCoinStats();
+    }).catch(function(){
+      if (coinOpenKey === key) el.coinChartPlot.innerHTML = '<div class="coin-chart-msg">C0ULDN' + String.fromCharCode(39) + 'T L0AD THE CHART — TRY AGA!N</div>';
     });
   }
-  // All-time highs: GeckoTerminal daily candles (up to 1000 days) in XRP
-  // and in USD, the highest wick of each.
-  function loadCoinAth(pool, done){
-    function daily(cur){
-      return fetch('https://api.geckoterminal.com/api/v2/networks/xrpl/pools/' + encodeURIComponent(pool) + '/ohlcv/day?aggregate=1&limit=1000&currency=' + cur)
-        .then(function(r){ return r.json(); })
-        .then(function(d){ return (d && d.data && d.data.attributes && d.data.attributes.ohlcv_list) || []; });
-    }
-    Promise.all([daily('token'), daily('usd').catch(function(){ return []; })]).then(function(r){
-      var best = null;
-      r[0].forEach(function(c){ if (!best || Number(c[2]) > best.xrp) best = { xrp: Number(c[2]), t: c[0] }; });
-      var usd = 0;
-      r[1].forEach(function(c){ if (Number(c[2]) > usd) usd = Number(c[2]); });
-      coinAth[pool] = best ? { xrp: best.xrp, usd: usd || null, t: best.t } : null;
-    }).catch(function(){ coinAth[pool] = null; }).then(done);
+  function renderCoinStats(){
+    var s = coinStatsData, h = coinHistData;
+    if (!s) return;
+    var meta = COLLECTION_META[coinOpenKey] || {};
+    function stat(label, value, sub){ return '<div class="coin-stat"><span class="coin-stat-label">' + label + '</span><span class="coin-stat-val">' + value + '</span>' + (sub ? '<span class="coin-stat-sub">' + sub + '</span>' : '') + '</div>'; }
+    var wait = h ? '—' : '…';
+    // Never a partial ATH: while the full ledger history is still being
+    // read, say so instead of showing a number that could be too low.
+    if (h && h.building) h = { building: true, source: h.source, firstTs: h.firstTs, athXrp: null, athUsd: null, marketCapAthUsd: null };
+    if (h && h.building) wait = 'BU!LD!NG…';
+    var t = s.txns24h || {};
+    var html = '';
+    html += stat('MARKET CAP', s.marketCapUsd ? fmtUsd(s.marketCapUsd) : '—', 'SUPPLY × PR!CE');
+    html += stat('L!QU!D!TY', s.liquidityUsd ? fmtUsd(s.liquidityUsd) : '—', 'B0TH S!DES 0F THE P00L');
+    html += stat('24H V0LUME', s.volume24hUsd != null ? fmtUsd(s.volume24hUsd) : '—');
+    html += stat('PR!CE ATH', h && h.athXrp ? escapeHtml(fmtCoinPrice(h.athXrp.price)) : wait,
+      h && h.athXrp ? escapeHtml((h.athUsd ? fmtUsd(h.athUsd.price) + ' · ' : '') + coinDate(h.athXrp.t)) : '');
+    html += stat('MARKET CAP ATH', h && h.marketCapAthUsd ? fmtUsd(h.marketCapAthUsd) : wait, h && h.athUsd ? escapeHtml(coinDate(h.athUsd.t)) : '');
+    html += stat('24H BUYS / SELLS', '<span class="up">' + (t.buys || 0) + '</span> / <span class="down">' + (t.sells || 0) + '</span>');
+    html += stat('P00L', s.pool ? escapeHtml(compactPigeonsNumber(s.pool.token)) + ' + ' + escapeHtml(fmtXrp(Math.round(s.pool.xrp))) + ' XRP' : '—', s.pool ? escapeHtml(s.pool.tradingFeePct + '% TRAD!NG FEE') : '');
+    html += stat('SUPPLY', s.supply ? escapeHtml(fmtExact(s.supply, 0)) : '—', 'EXACT, FR0M THE !SSUER');
+    html += stat('!SSUER', '<a class="coin-stat-link" href="https://bithomp.com/explorer/' + escapeHtml(meta.tokenIssuer || '') + '" target="_blank" rel="noopener">' + escapeHtml(shortAddr(meta.tokenIssuer || '')) + ' ↗</a>');
+    // Where the numbers came from, and whether the chart site agrees.
+    var agree = s.priceDiffPct == null ? '' : s.priceDiffPct <= 2
+      ? ' · MATCHES THE CHART S!TES (' + s.priceDiffPct.toFixed(1) + '%)'
+      : ' · CHART S!TES D!FFER BY ' + s.priceDiffPct.toFixed(1) + '%';
+    var src = s.priceSource === 'amm' ? '✓ PR!CE, P00L + SUPPLY READ FR0M THE XRPL' : '✓ SUPPLY READ FR0M THE XRPL';
+    var usdSrc = s.xrpUsd ? ' · XRP = $' + Number(s.xrpUsd).toFixed(4) + (s.xrpUsdSource === 'bitstamp' ? ' (B!TSTAMP)' : '') : '';
+    var histSrc = h ? (h.source === 'ledger' ? ' · H!ST0RY: EVERY P00L TRADE S!NCE ' + coinDate(h.firstTs).toUpperCase() : ' · H!ST0RY S!NCE ' + coinDate(h.firstTs).toUpperCase() + (h.building ? ' (FULL LEDGER H!ST0RY ST!LL BU!LD!NG)' : '')) : '';
+    html += '<div class="coin-verify' + (s.priceDiffPct > 2 ? ' warn' : '') + '">' + escapeHtml(src + agree + usdSrc + histSrc) + '</div>';
+    el.coinStats.innerHTML = html;
   }
-  // T0P 10 WALLETS — the coin's biggest holders; the AMM pool shows as the
-  // LP with a drop, not as a wallet.
+  // T0P 10 WALLETS — opens over the chart + numbers (reported live), the
+  // pool shown as the LP with a drop and a B!TH0MP link.
+  function closeCoinHolders(){
+    el.coinHolders.style.display = 'none';
+    el.coinHoldersBtnLabel.textContent = 'T0P 10 WALLETS';
+  }
   function toggleCoinHolders(){
-    if (el.coinHolders.style.display !== 'none'){
-      el.coinHolders.style.display = 'none';
-      el.coinHoldersBtnLabel.textContent = 'T0P 10 WALLETS';
-      return;
-    }
+    if (el.coinHolders.style.display !== 'none'){ closeCoinHolders(); return; }
+    // Cover from the chart down to just above the buttons.
+    var top = el.coinChart.offsetTop;
+    var bottom = el.coinHoldersBtn.parentNode.offsetTop - 10;
+    el.coinHolders.style.top = top + 'px';
+    el.coinHolders.style.height = Math.max(240, bottom - top) + 'px';
     el.coinHolders.style.display = '';
     el.coinHoldersBtnLabel.textContent = 'H!DE WALLETS';
     var key = state.collection;
@@ -23305,15 +23339,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       var shown = 0;
       var list = (data.holders || []).filter(function(h){ return h.isLp || shown++ < 10; });
       if (!list.length){ el.coinHolders.innerHTML = '<div class="coin-chart-msg coin-holders-msg">N0 H0LDERS F0UND</div>'; return; }
-      var top = list[0].pct || 1;
+      var top1 = list[0].pct || 1;
       var rank = 0;
       el.coinHolders.innerHTML =
-        '<div class="coin-holders-head"><span>T0P 10 WALLETS</span><span>' + (data.holderCount ? escapeHtml(data.holderCount.toLocaleString()) + ' H0LDERS' : '') + '</span></div>' +
+        '<div class="coin-holders-head"><span>T0P 10 WALLETS</span><span>' + (data.holderCount ? escapeHtml(data.holderCount.toLocaleString()) + ' H0LDERS' : '') + '</span><button type="button" class="coin-holders-x" data-holders-close="1" title="CL0SE">&times;</button></div>' +
         list.map(function(h){
           var who = h.isLp
-            ? '<span class="ch-lp">L!QU!D!TY P00L</span>'
+            ? '<span class="ch-lp">L!QU!D!TY P00L <a class="ch-lp-link" href="https://bithomp.com/explorer/' + escapeHtml(h.account) + '" target="_blank" rel="noopener" title="V!EW THE P00L 0N B!TH0MP">B!TH0MP ↗</a></span>'
             : '<a class="ch-wallet" href="' + escapeHtml(walletHrefFor(h.account)) + '" data-wallet="' + escapeHtml(h.account) + '">' + walletTagHtml(h.account, shortAddr(h.account)) + '</a>';
-          var bar = Math.max(2, Math.min(100, (h.pct || 0) / top * 100));
+          var bar = Math.max(2, Math.min(100, (h.pct || 0) / top1 * 100));
           return '<div class="ch-row' + (h.isLp ? ' ch-row-lp' : '') + '">' +
             '<span class="ch-rank">' + (h.isLp ? '<span class="ch-drop" title="L!QU!D!TY P00L">&#128167;</span>' : String(++rank)) + '</span>' +
             '<span class="ch-who">' + who + '<span class="ch-bar"><i style="width:' + bar.toFixed(1) + '%"></i></span></span>' +
@@ -23327,6 +23361,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.coinHoldersBtn.addEventListener('click', toggleCoinHolders);
   el.coinHolders.addEventListener('click', function(e){
+    if (e.target.closest('[data-holders-close]')){ closeCoinHolders(); return; }
     var a = e.target.closest('a.ch-wallet');
     if (!a || e.ctrlKey || e.metaKey) return;
     e.preventDefault();
@@ -23335,29 +23370,37 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   function closeCoinPage(){
     el.coinModal.style.display = 'none';
-    coinChartPool = null;
+    coinOpenKey = null;
   }
   // ---- Price chart: one line (price in XRP) over the picked range, soft
-  // fill, quiet grid, crosshair + tooltip on hover. ----
-  var coinChartPool = null;
+  // fill, quiet grid, crosshair + tooltip on hover. The range is a real
+  // time window (hours with no trades still count), cut from the cached
+  // history, with the flat line carried in from before the window and out
+  // to the live price now. ----
   var coinChartRange = '7D';
-  var COIN_CHART_RANGES = { '1D': ['hour', 1, 24], '7D': ['hour', 4, 42], '1M': ['day', 1, 30], '3M': ['day', 1, 90], '6M': ['day', 1, 182], '1Y': ['day', 1, 365], 'ALL': ['day', 1, 1000] };
+  var COIN_CHART_RANGES = { '1D': ['hour', 86400], '7D': ['hour', 7 * 86400], '1M': ['day', 30 * 86400], '3M': ['day', 91 * 86400], '6M': ['day', 182 * 86400], '1Y': ['day', 365 * 86400], 'ALL': ['day', 0] };
   function fmtCoinPrice(v){ return Number(v).toPrecision(4) + ' XRP'; }
+  function coinWindowPoints(range){
+    var cfg = COIN_CHART_RANGES[range];
+    var src = (cfg[0] === 'hour' ? coinHistData.hours : coinHistData.days) || [];
+    var now = Math.floor(Date.now() / 1000);
+    var start = cfg[1] ? now - cfg[1] : (src.length ? src[0][0] : now);
+    var before = null, pts = [];
+    src.forEach(function(c){
+      if (c[0] < start) before = c;
+      else pts.push([c[0], c[1], c[2], c[3], c[4]]);
+    });
+    if (before) pts.unshift([start, before[4], before[4], before[4], before[4]]);
+    var live = coinStatsData && coinStatsData.priceXrp;
+    var lastP = pts.length ? pts[pts.length - 1][4] : null;
+    if (live || lastP) pts.push([now, live || lastP, live || lastP, live || lastP, live || lastP]);
+    return pts;
+  }
   function loadCoinChart(range){
-    if (!coinChartPool) return;
     coinChartRange = range;
     el.coinChartRanges.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-range') === range); });
-    var cfg = COIN_CHART_RANGES[range];
-    var pool = coinChartPool;
-    fetch('https://api.geckoterminal.com/api/v2/networks/xrpl/pools/' + encodeURIComponent(pool) + '/ohlcv/' + cfg[0] + '?aggregate=' + cfg[1] + '&limit=' + cfg[2] + '&currency=token')
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        if (pool !== coinChartPool || range !== coinChartRange) return; // a newer pick won
-        var list = ((d && d.data && d.data.attributes && d.data.attributes.ohlcv_list) || []).slice().reverse();
-        drawCoinChart(list);
-      }).catch(function(){
-        el.coinChartPlot.innerHTML = '<div class="coin-chart-msg">C0ULDN' + String.fromCharCode(39) + 'T L0AD THE CHART</div>';
-      });
+    if (!coinHistData){ el.coinChartPlot.innerHTML = '<div class="coin-chart-msg">L0AD!NG CHART...</div>'; return; }
+    drawCoinChart(coinWindowPoints(range));
   }
   function drawCoinChart(list){
     if (list.length < 2){
@@ -23482,7 +23525,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.extBuyText.innerHTML = 'Y0U' + String.fromCharCode(39) + 'RE AB0UT T0 BE SENT T0 <span class="hi">' + escapeHtml(m.name) + '</span> T0 BUY TH!S — !T' + String.fromCharCode(39) + 'S L!STED THERE, S0 !T CAN 0NLY BE B0UGHT THERE.';
     el.extBuyFees.innerHTML =
       '<div class="ext-fee"><span class="ext-fee-label">' + escapeHtml(m.name) + ' FEE</span><span class="ext-fee-val">' + escapeHtml(m.fee) + '</span><span class="ext-fee-sub">' + escapeHtml(m.sub) + '</span></div>' +
-      '<div class="ext-fee ext-fee-us"><span class="ext-fee-label">Σκύλλα FEE</span><span class="ext-fee-val">1.3%</span><span class="ext-fee-sub">!N XRP · 1.023% !N ' + escapeHtml((COLLECTION_META[state.collection] || {}).tokenLabel || '$T0KEN') + '</span></div>';
+      '<div class="ext-fee ext-fee-us"><span class="ext-fee-label">Σκύλλα FEE</span><span class="ext-fee-val">1.23%</span><span class="ext-fee-sub">!N XRP · 1.023% !N ' + escapeHtml((COLLECTION_META[state.collection] || {}).tokenLabel || '$T0KEN') + '</span></div>';
     el.extBuyTip.textContent = 'THE CREAT0R R0YALTY !S THE SAME EVERYWHERE. 0R MAKE THE 0WNER AN 0FFER 0N Σκύλλα !NSTEAD — !F THEY ACCEPT, !T SETTLES HERE F0R 0UR FEE.';
     el.extBuyOfferBtn.style.display = (p && COLLECTION_META[state.collection].tradeable && MY_WALLET !== p.owner) ? '' : 'none';
     el.extBuyGoBtn.href = a.href;
