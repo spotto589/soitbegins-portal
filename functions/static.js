@@ -6186,6 +6186,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   @container (max-width:150px){
     .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn, .card-add-cart-btn, .card-not-listed){ font-size:9.5px; letter-spacing:0; }
   }
+  /* Bigger button text (reported live 2026-09-27: "still too small") —
+     sized to the card's own width (the action box is a size container),
+     so it's as big as fits: ~19px on desktop cards, ~12px on phones. The
+     buy line may wrap its price under the label rather than cut off. */
+  .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn, .card-add-cart-btn, .card-not-listed, .delist-pigeon-btn, .list-open-modal-btn, .transfer-open-modal-btn){
+    font-size:clamp(12px, 8cqi, 19px) !important; letter-spacing:0.03em !important; height:auto !important; min-height:clamp(42px, 22cqi, 54px) !important;
+    white-space:normal !important; line-height:1.1; flex-wrap:wrap; column-gap:0.35em; row-gap:0.1em; padding-top:0.3em !important; padding-bottom:0.3em !important; text-align:center;
+  }
+  .result-card .card-action-box :is(.thumb-buy-label, .thumb-buy-price, .mbl-price){ font-size:inherit !important; }
+  :is(#detailScyllaBuyBtn, #detailScyllaDelistBtn, #detailScyllaListBtn, #detailScyllaTransferBtn, .detail-market-row .market-buy-link, #detailMakeOfferSend){ font-size:18px !important; min-height:50px; letter-spacing:0.05em; }
   .result-num{
     /* Bumped up from the old 15px (matched to button text) — direct
        instruction: text on the Pigeon cards themselves reads too small,
@@ -7830,6 +7840,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-rarity-row{ display:grid; grid-template-columns:repeat(2, 1fr); gap:1rem; margin:0 0 0.4rem; max-width:100%; }
   #screenDetail .detail-rarity-row .trait-cell{ cursor:default; text-align:center; min-width:0; }
   #screenDetail .detail-rarity-row .trait-cell:hover{ background:transparent; border-color:var(--border-dim); }
+  /* Smaller rarity boxes (reported live 2026-09-27) so MAKE AN 0FFER fits
+     under them; L0RE SC0RE + EXPAND left off for now. */
+  #screenDetail .detail-rarity-row{ gap:0.5rem; margin:0 0 0.3rem; }
+  #screenDetail .detail-rarity-row .trait-cell{ padding:0.3rem 0.4rem !important; min-height:0 !important; }
+  #screenDetail .detail-rarity-row .tc-label{ font-size:11px !important; margin:0 !important; }
+  #screenDetail .detail-rarity-row .tc-value{ font-size:17px !important; margin:0.1rem 0 0 !important; }
+  #detailRarityExpandBtn{ display:none !important; }
+  /* Picture capped by the screen's height so the offer box under it fits
+     without scrolling (full 560px on tall screens). */
+  @media (min-width:701px){
+    #screenDetail #detailImgBox{ width:min(100%, max(300px, calc(100vh - 435px))) !important; height:auto !important; aspect-ratio:1 / 1; margin-left:auto; margin-right:auto; }
+  }
+  /* DESCR!PT!0N fills the rest of the right column. */
+  #screenDetail .detail-col-right{ display:flex; flex-direction:column; align-self:stretch; }
+  #screenDetail .detail-description{ flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.5rem; margin-top:0.75rem; padding:1rem; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); background:#000; box-shadow:0 0 14px rgba(var(--collection-accent-rgb), 0.18); text-align:center; }
+  #screenDetail .detail-description[style*="none"]{ display:none !important; }
+  .detail-description-label{ color:#fff; opacity:0.6; font-size:13px; font-weight:700; letter-spacing:0.16em; }
+  .detail-description-text{ color:#fff; font-size:clamp(20px, 2.2vw, 32px); font-weight:700; letter-spacing:0.04em; line-height:1.35; text-transform:none; overflow-wrap:anywhere; }
   /* RARITY SCORE cell only (not RARITY) — tap it to see the actual
      Layer 1 + Layer 2 math for THIS Pigeon (see updateDetailRarity in
      the client script and scoreAgainstDistribution's own comment in
@@ -12719,6 +12747,12 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="detail-history">
             <button class="detail-history-btn" id="detailHistoryToggle">TRANSACT!0N H!ST0RY</button>
           </div>
+          <!-- The NFT's own description, from its metadata (reported live
+               2026-09-27: fill the empty space under TRANSACT!0N H!ST0RY). -->
+          <div class="detail-description" id="detailDescription" style="display:none;">
+            <div class="detail-description-label">DESCR!PT!0N</div>
+            <div class="detail-description-text" id="detailDescriptionText"></div>
+          </div>
         </div>
       </div>
       <!-- Second way back to the browse grid, pinned to the very bottom
@@ -14198,7 +14232,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
-   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailRarityScoreCell','detailRarityExpandBtn','detailRarityBreakdown','rarityModal','rarityModalTitle','rarityModalBadges','rarityCloseBtn','detailPriceRow','detailPrice','detailMarkets','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
+   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailRarityScoreCell','detailRarityExpandBtn','detailDescription','detailDescriptionText','detailRarityBreakdown','rarityModal','rarityModalTitle','rarityModalBadges','rarityCloseBtn','detailPriceRow','detailPrice','detailMarkets','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose','historyThumb','historyVolume','historySaleCount','historyMintDate','historyMintBy',
    'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections','profileScreenCoins','profileScreenMessageBtn',
@@ -24792,9 +24826,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Just the number under the picture — the badges and the full
     // step-by-step math live in the RAR!TY SC0RE popup (EXPAND).
     var hasLore = p && p.ourRarityLoreScore !== null && p.ourRarityLoreScore !== undefined;
+    // L0RE SC0RE left off here for now (reported live 2026-09-27).
     el.detailRarityScore.innerHTML = (p && p.ourRarityScore !== null && p.ourRarityScore !== undefined)
-      ? greenNum(fmtRarityScore(p.ourRarityScore)) +
-        (hasLore ? '<div class="tc-sub" style="color:var(--magenta);">L0RE SC0RE ' + fmtRarityScore(p.ourRarityLoreScore) + '</div>' : '')
+      ? greenNum(fmtRarityScore(p.ourRarityScore))
       : 'C0M!NG S00N';
     // Closed on every fresh Pigeon (never left open showing the PREVIOUS
     // Pigeon's breakdown) — rebuilt every time so it's ready on EXPAND.
@@ -25139,6 +25173,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   // bar, or opening in a new tab while browsing all land on the same
   // Pigeon you're actually looking at, not the bare /static URL.
   var urlBeforeDetail = null;
+  // The NFT's own description, straight from its metadata (server-cached).
+  var detailDescriptions = {};
+  function showDetailDescription(text){
+    el.detailDescriptionText.textContent = text || '';
+    el.detailDescription.style.display = text ? '' : 'none';
+  }
+  function loadDetailDescription(nftId){
+    if (detailDescriptions[nftId] !== undefined){ showDetailDescription(detailDescriptions[nftId]); return; }
+    showDetailDescription('');
+    api({ nftDescription: 1, nftId: nftId }).then(function(d){
+      detailDescriptions[nftId] = (d && d.description) || '';
+      if (state.currentDetail && state.currentDetail.nftId === nftId) showDetailDescription(detailDescriptions[nftId]);
+    }).catch(function(){});
+  }
   function openDetail(nftId){
     scrollBeforeDetail = window.scrollY;
     var known = findKnown(nftId);
@@ -25158,6 +25206,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     updateDetailRarity(known);
     updateDetailPrice(known);
     updateScyllaListing(known);
+    loadDetailDescription(nftId);
     state.currentDetail = known || { nftId: nftId, number: null, owner: null, ownerShort: null, attributes: [] };
     refreshDetailTraitsWhenLoaded(nftId);
     // Only remember the pre-detail URL the first time (not on every

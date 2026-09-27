@@ -3339,6 +3339,30 @@ export async function mapWithConcurrency(items, limit, fn) {
   return results;
 }
 
+// The NFT's own description, from its metadata file (URI on the ledger ->
+// IPFS). Shown under TRANSACT!0N H!ST0RY on the NFT's page. null when it
+// has none or can't be read.
+export async function fetchNftDescription(nftId) {
+  try {
+    let uriHex = null;
+    for (const endpoint of [CLIO_ENDPOINT, 'https://xrplcluster.com']) {
+      try {
+        const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ method: 'nft_info', params: [{ nft_id: nftId }] }) });
+        const data = await res.json();
+        if (data && data.result && data.result.uri) { uriHex = data.result.uri; break; }
+      } catch (e) {}
+    }
+    if (!uriHex) return null;
+    const res = await fetchIpfs(resolveIpfsUri(hexToUtf8(uriHex)), { timeoutMs: 6000 });
+    if (!res.ok) return null;
+    const meta = await res.json();
+    const d = meta && typeof meta.description === 'string' ? meta.description.trim() : '';
+    return d ? d.slice(0, 1000) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // IPFS fallback for the rare token Deeptide hasn't synced yet — number,
 // image, and the complete `attributes` array, whatever shape the
 // collection's own metadata actually uses. Never invents a trait schema.

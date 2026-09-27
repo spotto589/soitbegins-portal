@@ -7,7 +7,7 @@ import { marketListingsFromOffers, marketMeta,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, quoteXrpForTokenAmount, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG, isPopularCoinKey, ensurePopularCoinConfig,
   getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
-  fetchRecentAccountTxCached, fetchTopTokenHolders, fetchCoinStats, getCoinHistory, fetchGeckoCoinHistory, fetchXrpUsdDailyCloses, fetchTokenSupply
+  fetchRecentAccountTxCached, fetchTopTokenHolders, fetchCoinStats, getCoinHistory, fetchGeckoCoinHistory, fetchXrpUsdDailyCloses, fetchTokenSupply, fetchNftDescription
 } from '../_shared.js';
 
 // Deeptide's own item page — the real place to buy a listed Pigeon.
@@ -443,6 +443,20 @@ export async function onRequestGet(context) {
   if (params.get('pigeonsRate') === '1') {
     const rate = await fetchPigeonsXrpRate(env.coin, tradeKey);
     return json({ xrpPerPigeon: rate.xrpPerPigeon, usdPerPigeon: rate.usdPerPigeon, marketCapUsd: rate.marketCapUsd, liquidityUsd: rate.liquidityUsd, tokenImageUrl: rate.tokenImageUrl, dexUrl: rate.dexUrl });
+  }
+
+  // An NFT's own description (its metadata never changes, so cached for a day).
+  if (params.get('nftDescription') === '1') {
+    const nftId = params.get('nftId') || '';
+    if (!/^[0-9A-Fa-f]{64}$/.test(nftId)) return json({ error: 'bad_nft' }, 400);
+    const cacheKey = new Request('https://soitbegins.xyz/__cache/nft-desc/v1/' + nftId.toUpperCase());
+    const cache = typeof caches !== 'undefined' ? caches.default : null;
+    const hit = cache ? await cache.match(cacheKey) : null;
+    if (hit) return hit;
+    const description = await fetchNftDescription(nftId);
+    const res = new Response(JSON.stringify({ description }), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=' + (description ? 86400 : 600) } });
+    if (cache) context.waitUntil(cache.put(cacheKey, res.clone()));
+    return res;
   }
 
   // C0!N page: live numbers (60s) and price history + ATHs (5 min), both
