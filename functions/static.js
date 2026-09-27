@@ -5117,6 +5117,13 @@ const SWAP_HTML = `<!DOCTYPE html>
      intact and this is a one-line revert when that's ready. */
   .card-select-toggle{ display:none; }
   /* CART "+" (top-left of the picture) — only on NFTs listed on Σκύλλa. */
+  /* 🛒 beside a Σκύλλa BUY N0W on a card. */
+  .result-card .card-buy-split{ display:flex; gap:0.45rem; }
+  .result-card .card-buy-split > :first-child{ flex:1 1 auto; min-width:0; }
+  .result-card .card-buy-cart-btn{ flex:0 0 46px; height:46px; display:flex; align-items:center; justify-content:center; background:#000; border:1px solid rgba(52,255,133,0.85); border-radius:10px; box-shadow:0 0 10px rgba(52,255,133,0.28); color:#fff; font-size:18px; cursor:pointer; padding:0; }
+  .result-card .card-buy-cart-btn:hover{ background:rgba(52,255,133,0.25); }
+  .result-card .card-buy-cart-btn.in-cart{ background:rgb(52,255,133); color:#000; font-weight:700; }
+  @media (max-width:600px){ .result-card .card-buy-cart-btn{ flex-basis:40px; height:40px; font-size:15px; } }
   .card-cart-toggle{ position:absolute; top:0.3rem; left:0.3rem; z-index:2; width:1.9em; height:1.9em; line-height:1.9em; padding:0; background:rgba(0,0,0,0.85); border:1px solid rgba(52,255,133,0.85); border-radius:8px; box-shadow:0 0 8px rgba(52,255,133,0.3); color:#fff; font-size:16px; font-weight:700; text-align:center; cursor:pointer; }
   .card-cart-toggle:hover{ background:rgba(52,255,133,0.25); }
   .card-cart-toggle.in-cart{ background:rgb(52,255,133); color:#000; }
@@ -5198,6 +5205,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:600px){
     #cartModal .cx-offer-field .cart-offer-input{ font-size:18px; }
     #cartModal .cx-unit-seg button{ font-size:10px; padding:0.45em 0.55em; }
+  }
+  #cartModal .cx-name-wrap{ display:flex; align-items:center; gap:0.55rem; min-width:0; }
+  #cartModal .cx-name-wrap .cx-tag{ margin:0; flex:0 0 auto; }
+  #cartModal .cart-row-state:empty{ display:none; }
+  #cartModal .cx-price-box{ padding:0.55rem 0.8rem; }
+  #cartModal .cx-sortbar{ display:flex; align-items:center; gap:0.6rem; }
+  #cartModal .cx-sortbar .cx-small-label{ flex:0 0 auto; }
+  #cartModal .cx-sortbar .cx-seg{ flex:1 1 auto; }
+  #cartModal .cx-sort-btn{ flex:1 1 0; min-width:0; margin:0; border:none; border-radius:var(--radius); background:none; color:#fff; font-family:inherit; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:0.55em 0; cursor:pointer; }
+  #cartModal .cx-sort-btn.active{ background:rgba(var(--collection-accent-rgb), 0.9); color:#fff; }
+  #cartModal .cx-cost{ text-align:center; padding:0.6rem 0 0.2rem; }
+  #cartModal .cx-cost-label{ font-size:12px; font-weight:700; letter-spacing:0.16em; color:#fff; opacity:0.85; }
+  #cartModal .cx-cost-val{ font-size:26px; font-weight:700; color:rgb(52,255,133); text-shadow:0 0 8px rgba(52,255,133,0.35); line-height:1.3; }
+  #cartModal .cx-plus{ color:#fff; opacity:0.6; margin:0 0.45em; font-size:20px; }
+  #cartModal .cx-cost-note{ font-size:11px; color:#fff; opacity:0.7; letter-spacing:0.05em; margin-top:0.2rem; }
+  #cartModal .cx-cost-note:empty{ display:none; }
+  #cartModal .cx-submit{ width:100%; margin:0; font-size:17px !important; padding:0.95em 1em !important; letter-spacing:0.08em; }
+  @media (max-width:600px){
+    #cartModal .cx-cost-val{ font-size:20px; }
+    #cartModal .cx-sort-btn{ font-size:11px; }
+    #cartModal .cx-submit{ font-size:14px !important; }
   }
   #cartModal .cx-sentence{ text-align:center; color:#fff; font-size:13px; font-weight:700; letter-spacing:0.05em; white-space:nowrap; padding:0.35rem 0 0.5rem; border-bottom:1px solid rgba(var(--collection-accent-rgb), 0.15); }
   #cartModal .cx-sentence span{ color:var(--cyan); }
@@ -11029,6 +11057,13 @@ const SWAP_HTML = `<!DOCTYPE html>
              balance tiles up top, rounded boxes, small labels inside,
              a summary box, then BACK + the main button. -->
         <div class="cx-balances" id="cartBalances"></div>
+        <div class="cx-sortbar" id="cartSortBar">
+          <span class="cx-small-label">S0RT</span>
+          <div class="cx-seg">
+            <button type="button" class="cx-sort-btn active" data-sort="buy">BUY N0W F!RST</button>
+            <button type="button" class="cx-sort-btn" data-sort="offer">0FFERS F!RST</button>
+          </div>
+        </div>
         <div class="cart-list" id="cartList"></div>
         <div class="cx-duration" id="cartDuration" style="display:none;">
           <div class="cx-small-label">0FFERS LAST</div>
@@ -11042,10 +11077,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
         <div class="cx-summary" id="cartTotal"></div>
         <div class="cart-status" id="cartStatus"></div>
-        <div class="cx-actions">
-          <button type="button" class="cx-back" id="cartBackBtn">&larr; BACK</button>
-          <button type="button" class="cart-buy-btn" id="cartBuyBtn">SUBM!T ALL</button>
-        </div>
+        <button type="button" class="cart-buy-btn cx-submit" id="cartBuyBtn">SUBM!T ALL S!GNATURES</button>
       </div>
     </div>
     <button type="button" class="cart-pill" id="cartPill" style="display:none;">&#128722; <span id="cartPillCount">0</span> :: V!EW CART</button>
@@ -13717,7 +13749,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
-   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartBackBtn','sweepModal','sweepCloseBtn','openSweepBtn',
+   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartSortBar','sweepModal','sweepCloseBtn','openSweepBtn',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
    'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -15657,13 +15689,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     // cart); listed only off-site -> BUY N0W ... 0FF-S!TE ↗; not listed ->
     // ADD T0 CART, as an offer. 0FFER always underneath.
     var topHtml;
+    // A Σκύλλa listing can go in the cart too (🛒 beside BUY N0W); an
+    // off-site one can't — it can only be bought on its own marketplace.
+    var cartSide = '';
+    if (cartListingOf(p)){
+      var inCartBuy = isInCart(p.nftId);
+      cartSide = '<button type="button" class="card-buy-cart-btn' + (inCartBuy ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="' + (inCartBuy ? 'REM0VE FR0M CART' : 'ADD T0 CART') + '">' + (inCartBuy ? '✓' : '&#128722;') + '</button>';
+    }
     if (canBuy){
-      topHtml = '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">' +
+      topHtml = '<div class="card-buy-split"><button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">' +
         '<span class="thumb-buy-label">BUY N0W</span>' +
         '<span class="thumb-buy-price">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</span>' +
-      '</button>';
+      '</button>' + cartSide + '</div>';
     } else if (marketBuyHtml){
-      topHtml = marketBuyHtml;
+      topHtml = cartSide ? '<div class="card-buy-split">' + marketBuyHtml + cartSide + '</div>' : marketBuyHtml;
     } else {
       // Not listed anywhere: into the cart as an 0FFER (amount typed in
       // the cart, sent with everything else from there).
@@ -16304,7 +16343,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         }
         return;
       }
-      var cartBtn = e.target.closest('.card-cart-toggle, .card-add-cart-btn');
+      var cartBtn = e.target.closest('.card-cart-toggle, .card-add-cart-btn, .card-buy-cart-btn');
       if (cartBtn){
         e.preventDefault();
         var cp = source().filter(function(x){ return x.nftId === cartBtn.getAttribute('data-nftid'); })[0];
@@ -19768,6 +19807,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       b.textContent = on ? '✓' : '+';
       b.title = on ? 'REM0VE FR0M CART' : 'ADD T0 CART';
     });
+    document.querySelectorAll('.card-buy-cart-btn').forEach(function(b){
+      var on = !!ids[b.getAttribute('data-nftid')];
+      b.classList.toggle('in-cart', on);
+      b.innerHTML = on ? '✓' : '&#128722;';
+      b.title = on ? 'REM0VE FR0M CART' : 'ADD T0 CART';
+    });
     document.querySelectorAll('.card-add-cart-btn').forEach(function(b){
       var on = !!ids[b.getAttribute('data-nftid')];
       b.classList.toggle('in-cart', on);
@@ -19786,14 +19831,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function cartTokenLabel(c){ return (COLLECTION_META[c.collection] || {}).tokenLabel || '$T0KEN'; }
   var cartRowState = {}; // nftId -> { cls, text } while/after SUBM!T ALL runs
+  var cartSortFirst = 'buy';
   function cartRowHtml(c, running){
     var st = cartRowState[c.nftId];
     var meta = COLLECTION_META[c.collection] || {};
     var isOffer = c.mode === 'offer';
     // Second line: BUY N0W / 0FFER tag + collection — or, while SUBM!T ALL
     // runs, how this one is going (setCartRow rewrites this same element).
-    var sub = st ? '<div class="cart-row-state ' + st.cls + '">' + escapeHtml(st.text) + '</div>'
-      : '<div class="cx-sub"><span class="cx-tag ' + (isOffer ? 'cx-tag-offer' : 'cx-tag-buy') + '">' + (isOffer ? '0FFER' : 'BUY N0W') + '</span><span class="cx-coll">' + escapeHtml(meta.label || '') + '</span></div>';
+    // State line (empty until SUBM!T ALL runs — setCartRow fills it).
+    var sub = '<div class="cart-row-state' + (st ? ' ' + st.cls : '') + '">' + (st ? escapeHtml(st.text) : '') + '</div>';
+    var tag = '<span class="cx-tag ' + (isOffer ? 'cx-tag-offer' : 'cx-tag-buy') + '">' + (isOffer ? '0FFER' : 'BUY N0W') + '</span>';
     var body;
     if (isOffer){
       var curToggle = meta.xrpOnly ? '<span class="cx-unit-fixed">XRP</span>'
@@ -19802,19 +19849,18 @@ const SWAP_HTML = `<!DOCTYPE html>
             '<button type="button" class="' + (c.currency === 'xrp' ? 'active' : '') + '" data-offer-cur="xrp" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>XRP</button>' +
           '</span>';
       body = '<div class="cx-offer">' +
-        '<div class="cx-offer-title">Y0UR 0FFER</div>' +
         '<label class="cx-offer-field">' +
           '<input class="cart-offer-input" type="text" inputmode="decimal" placeholder="0.00" data-nftid="' + escapeHtml(c.nftId) + '" value="' + escapeHtml(c.price || '') + '"' + (running ? ' disabled' : '') + '>' +
           curToggle +
         '</label>' +
       '</div>';
     } else {
-      body = '<div class="cx-price-box"><span class="cx-offer-label">PR!CE</span><span class="cart-row-price">' + escapeHtml(cartAmountText(c, c.price)) + '</span></div>';
+      body = '<div class="cx-price-box"><span class="cart-row-price">' + escapeHtml(cartAmountText(c, c.price)) + '</span></div>';
     }
     return '<div class="cart-row' + (isOffer ? ' cart-row-offer' : '') + '" data-nftid="' + escapeHtml(c.nftId) + '">' +
       (c.image ? '<img src="' + escapeHtml(c.image) + '" alt="">' : '<span class="cx-noimg"></span>') +
       '<div class="cx-main">' +
-        '<div class="cx-head"><span class="cart-row-name">' + cartItemLabel(c) + '</span>' +
+        '<div class="cx-head"><span class="cx-name-wrap"><span class="cart-row-name">' + cartItemLabel(c) + '</span>' + tag + '</span>' +
           (running ? '' : '<button type="button" class="cart-row-remove" data-nftid="' + escapeHtml(c.nftId) + '" title="REM0VE">&times;</button>') +
         '</div>' +
         sub +
@@ -19825,34 +19871,45 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderCartTotals(){
     var running = !!cartRun;
     var rows = running ? cartRun.items : getCart();
-    var sums = {};
+    // What it will cost, per currency: buys include the Σκύλλa fee paid on
+    // top (1.3% XRP, 1.023% token); offers are the amount offered.
+    var cost = {};
     rows.forEach(function(c){
       var v = Number(c.price);
       if (!(v > 0)) return;
-      var k = c.currency === 'xrp' ? 'xrp' : 'token:' + c.collection;
-      sums[k] = (sums[k] || 0) + v;
+      var isXrp = c.currency === 'xrp';
+      var k = isXrp ? 'xrp' : 'token:' + c.collection;
+      var withFee = c.mode === 'offer' ? v : v * (1 + (isXrp ? 0.013 : 0.01023));
+      cost[k] = (cost[k] || 0) + withFee;
     });
     var buys = rows.filter(function(c){ return c.mode !== 'offer'; }).length;
     var offers = rows.length - buys;
-    function row(label, value, cls){ return '<div class="cx-sum-row' + (cls ? ' ' + cls : '') + '"><span>' + label + '</span><span class="cx-sum-val">' + value + '</span></div>'; }
-    var html = '';
     function nfts(k){ return k + ' NFT' + (k === 1 ? '' : 'S'); }
+    var html = '';
     if (rows.length){
       // One line, e.g. "BUY!NG 2 NFTS AND 0FFER!NG 0N 1 NFT · 3 XAMAN S!GNATURES".
       var what = [];
       if (buys) what.push('BUY!NG ' + nfts(buys));
       if (offers) what.push('0FFER!NG 0N ' + nfts(offers));
       html += '<div class="cx-sentence">' + what.join(' AND ') + ' <span>·</span> ' + rows.length + ' XAMAN S!GNATURE' + (rows.length === 1 ? '' : 'S') + '</div>';
-      Object.keys(sums).forEach(function(k){
-        html += row(k === 'xrp' ? 'T0TAL XRP' : 'T0TAL ' + escapeHtml(COLLECTION_META[k.slice(6)].tokenLabel), escapeHtml(k === 'xrp' ? fmtXrp(sums[k]) + ' XRP' : fmtPigeonsCompact(sums[k], k.slice(6))), 'cx-sum-total');
-      });
-      if (buys) html += row('Σκύλλα FEE (BUYS)', '1.3% XRP · 1.023% T0KEN');
+      var keys = Object.keys(cost).sort(function(a, b){ return a === 'xrp' ? -1 : b === 'xrp' ? 1 : 0; });
+      if (keys.length){
+        html += '<div class="cx-cost">' +
+          '<div class="cx-cost-label">T0TAL C0ST</div>' +
+          '<div class="cx-cost-val">' + keys.map(function(k){
+            return escapeHtml(k === 'xrp' ? fmtXrp(Math.round(cost.xrp * 100) / 100) + ' XRP' : fmtPigeonsCompact(cost[k], k.slice(6)));
+          }).join('<span class="cx-plus">+</span>') + '</div>' +
+          '<div class="cx-cost-note">' + (buys ? '!NCLUDES THE Σκύλλα FEE 0N BUYS (1.3% XRP · 1.023% T0KEN)' : '') +
+            (buys && offers ? ' · ' : '') + (offers ? '0FFERS 0NLY C0ST THE!R AM0UNT !F ACCEPTED' : '') + '</div>' +
+        '</div>';
+      }
     }
     el.cartTotal.innerHTML = html;
     el.cartDuration.style.display = offers ? '' : 'none';
+    el.cartSortBar.style.display = (buys && offers) ? '' : 'none';
     if (!running){
       el.cartBuyBtn.disabled = !rows.length;
-      el.cartBuyBtn.textContent = rows.length ? 'SUBM!T ALL (' + rows.length + ')' : 'SUBM!T ALL';
+      el.cartBuyBtn.textContent = 'SUBM!T ALL S!GNATURES (' + rows.length + ')';
       el.cartClearBtn.style.display = rows.length ? '' : 'none';
       el.cartClearBtn.disabled = false;
     }
@@ -19863,7 +19920,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!list.length && !running){
       el.cartList.innerHTML = '<div class="cart-empty">Y0UR CART !S EMPTY — TAP + 0N ANY NFT L!STED 0N Σκύλλα T0 BUY !T, ADD T0 CART 0N ANY 0THER T0 MAKE AN 0FFER, 0R USE SWEEP !N THE BANNER.</div>';
     } else {
-      var rows = running ? cartRun.items : list;
+      var rows = (running ? cartRun.items : list).slice();
+      // S0RT: buys first or offers first (stable within each kind).
+      var firstMode = cartSortFirst;
+      rows.sort(function(a, b){
+        var ka = (a.mode === 'offer' ? 'offer' : 'buy') === firstMode ? 0 : 1;
+        var kb = (b.mode === 'offer' ? 'offer' : 'buy') === firstMode ? 0 : 1;
+        return ka - kb;
+      });
       var colls = [];
       rows.forEach(function(c){ if (colls.indexOf(c.collection) === -1) colls.push(c.collection); });
       el.cartList.innerHTML = colls.length > 1
@@ -20031,6 +20095,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     cartRowState = {};
+    items = items.slice().sort(function(a, b){
+      var ka = (a.mode === 'offer' ? 'offer' : 'buy') === cartSortFirst ? 0 : 1;
+      var kb = (b.mode === 'offer' ? 'offer' : 'buy') === cartSortFirst ? 0 : 1;
+      return ka - kb;
+    });
     cartRun = { items: items.slice(), i: 0, tab: null, uuid: null, timer: null, pushed: false, done: 0, finished: false, days: cartOfferDays };
     items.forEach(function(c){ cartRowState[c.nftId] = { cls: '', text: 'WA!T!NG' }; });
     el.cartClearBtn.style.display = 'none';
@@ -20161,12 +20230,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderCartTotals();
   });
   el.openCartBtn.addEventListener('click', openCart);
+  el.cartSortBar.addEventListener('click', function(e){
+    var b = e.target.closest('.cx-sort-btn');
+    if (!b) return;
+    cartSortFirst = b.getAttribute('data-sort');
+    el.cartSortBar.querySelectorAll('.cx-sort-btn').forEach(function(x){ x.classList.toggle('active', x === b); });
+    renderCart();
+  });
   el.openSweepBtn.addEventListener('click', openSweep);
   el.sweepCloseBtn.addEventListener('click', closeSweep);
   el.sweepModal.addEventListener('click', function(e){ if (e.target === el.sweepModal) closeSweep(); });
   el.cartPill.addEventListener('click', openCart);
   el.cartCloseBtn.addEventListener('click', closeCart);
-  el.cartBackBtn.addEventListener('click', closeCart);
   el.cartModal.addEventListener('click', function(e){ if (e.target === el.cartModal) closeCart(); });
   refreshCartBadges();
 
