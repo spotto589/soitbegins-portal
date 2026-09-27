@@ -9348,6 +9348,76 @@ const SWAP_HTML = `<!DOCTYPE html>
     #pigeonsMergedPanel :is(#pigeonsBarLoggedIn .pigeons-bar-identity-actions, #pigeonsBarCalc){ gap:0.4rem; }
     #collectionDetailsPanel .stats-carousel{ margin-top:0.1rem; }
   }
+  /* Banner: bell on the coin picture; SWAP + CART side by side. */
+  .pigeons-bar-thumb-wrap{ position:relative; flex:0 0 auto; }
+  .bar-bell{ position:absolute; top:-8px; right:-8px; z-index:2; width:30px; height:30px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%; background:#000; border:1px solid rgba(52,255,133,0.85); box-shadow:0 0 8px rgba(52,255,133,0.35); font-size:14px; cursor:pointer; }
+  .bar-bell:hover{ background:rgba(52,255,133,0.25); }
+  #openNotifyBtn.bar-bell{ width:30px; height:30px; padding:0; margin:0; font-size:14px; }
+  /* $TOKEN C0!N page */
+  #coinModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:1.5rem 1rem; }
+  #coinModal .coin-modal-panel{ width:min(760px, 96vw); max-height:92vh; overflow-y:auto; display:flex; flex-direction:column; gap:0.9rem; padding:1.4rem 1.4rem; }
+  #coinModal .simple-picker-header{ position:relative; justify-content:center; }
+  #coinModal .simple-picker-title{ flex:1; text-align:center; font-size:24px; font-weight:700; letter-spacing:0.1em; }
+  #coinModal .simple-picker-close{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
+  .coin-hero{ display:flex; align-items:center; gap:0.9rem; }
+  .coin-hero-img{ width:56px; height:56px; border-radius:50%; object-fit:cover; border:1px solid rgba(var(--collection-accent-rgb), 0.6); }
+  .coin-hero-main{ flex:1 1 auto; min-width:0; }
+  .coin-hero-price{ color:rgb(52,255,133); font-size:26px; font-weight:700; text-shadow:0 0 8px rgba(52,255,133,0.35); }
+  .coin-hero-sub{ color:#fff; opacity:0.8; font-size:13px; font-weight:700; letter-spacing:0.06em; }
+  .coin-hero-change{ font-size:16px; font-weight:700; padding:0.35em 0.8em; border-radius:999px; border:1px solid currentColor; }
+  .coin-hero-change.up{ color:rgb(52,255,133); }
+  .coin-hero-change.down{ color:#ff3b5c; }
+  .coin-hero-change:empty{ display:none; }
+  .coin-chart{ border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); overflow:hidden; background:#000; height:380px; }
+  .coin-chart iframe{ width:100%; height:100%; border:0; display:block; }
+  .coin-stats{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0.5rem; }
+  .coin-stat{ border:1px solid rgba(var(--collection-accent-rgb), 0.3); border-radius:10px; background:#000; padding:0.55rem 0.6rem; text-align:center; min-width:0; }
+  .coin-stat-label{ display:block; color:#fff; opacity:0.75; font-size:10px; font-weight:700; letter-spacing:0.12em; }
+  .coin-stat-val{ display:block; color:rgb(52,255,133); font-size:15px; font-weight:700; margin-top:0.2rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .coin-links{ display:flex; flex-wrap:wrap; gap:0.45rem; justify-content:center; }
+  .coin-links a{ border:1px solid rgba(var(--collection-accent-rgb), 0.5); border-radius:999px; color:#fff; text-decoration:none; font-size:12px; font-weight:700; letter-spacing:0.08em; padding:0.45em 0.9em; }
+  .coin-links a:hover{ border-color:var(--cyan); color:var(--cyan); }
+  #coinModal .cx-submit{ width:100%; margin:0; font-size:17px !important; padding:0.9em 1em !important; border-radius:999px; background:rgba(var(--collection-accent-rgb), 0.95); border:1px solid var(--collection-accent); color:#fff; }
+  @media (max-width:600px){
+    .coin-stats{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .coin-chart{ height:300px; }
+    .coin-hero-price{ font-size:20px; }
+  }
+  /* SWEEP picker */
+  #sweepModal .cart-sweep-currency{ display:flex; justify-content:center; margin:0; }
+  .sweep-avail{ text-align:center; color:#fff; font-size:15px; font-weight:700; letter-spacing:0.06em; }
+  .sweep-avail .hi{ color:rgb(52,255,133); font-size:22px; }
+  .sweep-stepper{ display:flex; align-items:center; justify-content:center; gap:0.7rem; }
+  .sweep-step{ width:3rem; height:3rem; border-radius:50%; background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.7); color:#fff; font-family:inherit; font-size:22px; font-weight:700; cursor:pointer; }
+  .sweep-step:disabled, .sweep-max:disabled{ opacity:0.35; cursor:default; }
+  .sweep-n{ min-width:3.5rem; text-align:center; color:rgb(52,255,133); font-size:34px; font-weight:700; }
+  .sweep-max{ background:none; border:1px solid rgba(52,255,133,0.8); border-radius:999px; color:rgb(52,255,133); font-family:inherit; font-size:13px; font-weight:700; letter-spacing:0.1em; padding:0.55em 1em; cursor:pointer; }
+  #sweepModal .cx-submit{ width:100%; margin:0; font-size:17px !important; padding:0.9em 1em !important; border-radius:999px; background:rgba(var(--collection-accent-rgb), 0.95); border:1px solid var(--collection-accent); color:#fff; }
+  #sweepModal .cx-submit:disabled{ opacity:0.45; }
+  /* Cart rows open the NFT */
+  #cartModal .cart-row img, #cartModal .cx-head .cart-row-name{ cursor:pointer; }
+  /* T0P 123 H0LDERS — one clean block per holder: rank | picture | name /
+     quote / address | count. */
+  .th2-row{ grid-template-columns:64px 64px 1fr 220px !important; }
+  .th2-rank{ color:var(--cyan); font-weight:700; }
+  .th2-avatar{ width:56px; height:56px; border-radius:12px; overflow:hidden; background:#111; border:1px solid rgba(var(--collection-accent-rgb), 0.5); }
+  .th2-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .th2-id{ display:flex; flex-direction:column; gap:0.15rem; min-width:0; text-align:left; }
+  .th2-name{ color:#fff; font-weight:700; font-size:0.95em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .th2-quote{ color:var(--cyan); font-size:0.62em; letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; opacity:0.85; }
+  .th2-addr{ color:#fff; opacity:0.55; font-size:0.62em; letter-spacing:0.06em; }
+  .th2-bin{ font-family:var(--font-mono); letter-spacing:0.08em; }
+  .th-row-medal .th2-avatar{ width:calc(56px * var(--medal-scale)); height:calc(56px * var(--medal-scale)); border:2px solid rgb(var(--medal)); box-shadow:0 0 12px rgba(var(--medal), 0.4); }
+  .th-row-medal.th2-row{ grid-template-columns:calc(64px * var(--medal-scale)) calc(64px * var(--medal-scale)) 1fr 220px !important; }
+  .th-row-medal .th2-rank{ color:rgb(var(--medal)); text-shadow:0 0 8px rgba(var(--medal), 0.55); }
+  .th-row-medal .th2-rank .pigeons-green-num{ color:rgb(var(--medal)) !important; }
+  #thFullListWrap .th-header-row{ display:none; }
+  @media (max-width:820px){
+    .th2-row, .th-row-medal.th2-row{ grid-template-columns:40px 52px 1fr !important; row-gap:0.2rem; }
+    .th2-avatar{ width:48px; height:48px; }
+    .th-row-medal .th2-avatar{ width:52px; height:52px; }
+    .th2-row .th-count{ grid-column:2 / -1; }
+  }
   #xamanDailyModal{ display:none; position:fixed; inset:0; z-index:3500; background:rgba(5,5,6,0.8); align-items:center; justify-content:center; padding:1rem; }
   #xamanDailyModal.show{ display:flex; }
   #xamanDailyModal .xd-panel{ width:min(420px, 92vw); background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.8); border-radius:14px; box-shadow:0 0 24px rgba(var(--collection-accent-rgb), 0.35); padding:1.5rem 1.3rem; text-align:center; display:flex; flex-direction:column; gap:0.9rem; }
@@ -10828,7 +10898,11 @@ const SWAP_HTML = `<!DOCTYPE html>
              so this reads as "come trade the token" rather than a
              wallet-status readout. -->
         <div class="pigeons-bar-balance">
-          <div class="pigeons-bar-thumb" id="pigeonsBarThumb" title="SWAP" role="button" tabindex="0"></div>
+          <div class="pigeons-bar-thumb-wrap">
+            <div class="pigeons-bar-thumb" id="pigeonsBarThumb" title="SWAP" role="button" tabindex="0"></div>
+            <!-- N0T!F!CAT!0NS as a small bell on the coin picture (reported live). -->
+            <button type="button" class="bar-bell" id="openNotifyBtn" title="N0T!F!CAT!0NS">&#128276;</button>
+          </div>
           <div class="pigeons-bar-balance-info">
             <div class="pigeons-bar-balance-label">BALANCE:</div>
             <div class="pigeons-bar-balance-value" id="pigeonsBalanceValue" style="display:none;">…</div>
@@ -10837,9 +10911,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
             <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;">SWAP $P!GE0NS</button>
             <!-- Under BUY $P!GE0NS (reported live 2026-09-25). -->
-            <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openNotifyBtn">&#128276; N0T!F!CAT!0NS</button>
             <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openCartBtn">&#128722; CART <span id="openCartCount"></span></button>
-            <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openSweepBtn">&#129529; SWEEP</button>
           </div>
         </div>
 
@@ -11068,22 +11140,20 @@ const SWAP_HTML = `<!DOCTYPE html>
           <span class="simple-picker-title cart-title">SWEEP THE FL00R</span>
           <button type="button" class="simple-picker-close" id="sweepCloseBtn" title="CL0SE">&times;</button>
         </div>
-        <div class="sweep-sub" id="sweepSub">ADDS THE CHEAPEST NFTS L!STED 0N Σκύλλα T0 Y0UR CART.</div>
-        <div class="cx-seg sweep-scope" id="sweepScope">
-          <button type="button" class="sweep-scope-btn active" data-scope="view">TH!S V!EW</button>
-          <button type="button" class="sweep-scope-btn" data-scope="all">WH0LE C0LLECT!0N</button>
+        <div class="sweep-sub" id="sweepSub"></div>
+        <div class="sale-currency-toggle cart-sweep-currency" id="cartSweepCurrency">
+          <button type="button" class="sale-currency-btn sale-currency-btn-active" data-currency="token" id="cartSweepTokenTab">$T0KEN</button>
+          <button type="button" class="sale-currency-btn" data-currency="xrp">XRP</button>
         </div>
-        <div class="cart-sweep">
-          <div class="cart-sweep-row">
-            <div class="sale-currency-toggle cart-sweep-currency" id="cartSweepCurrency">
-              <button type="button" class="sale-currency-btn sale-currency-btn-active" data-currency="token" id="cartSweepTokenTab">$T0KEN</button>
-              <button type="button" class="sale-currency-btn" data-currency="xrp">XRP</button>
-            </div>
-            <input class="cart-sweep-input" id="cartSweepInput" type="text" inputmode="numeric" placeholder="H0W MANY" autocomplete="off">
-            <button type="button" class="cart-sweep-btn" id="cartSweepBtn">SWEEP</button>
-          </div>
-          <div class="cart-sweep-note" id="cartSweepNote"></div>
+        <div class="sweep-avail" id="sweepAvail">…</div>
+        <div class="sweep-stepper">
+          <button type="button" class="sweep-step" id="sweepMinus">&minus;</button>
+          <span class="sweep-n" id="sweepN">1</span>
+          <button type="button" class="sweep-step" id="sweepPlus">+</button>
+          <button type="button" class="sweep-max" id="sweepMax">MAX</button>
         </div>
+        <button type="button" class="cart-buy-btn cx-submit" id="cartSweepBtn">ADD T0 CART</button>
+        <div class="cart-sweep-note" id="cartSweepNote"></div>
       </div>
     </div>
     <div id="cartModal" style="display:none;">
@@ -11121,6 +11191,30 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
     <button type="button" class="cart-pill" id="cartPill" style="display:none;">&#128722; <span id="cartPillCount">0</span> :: V!EW CART</button>
+
+    <!-- $TOKEN C0!N — the collection's coin on its own page (reported live:
+         instead of linking out to DexScreener): live chart (DexScreener's
+         embed) + every number we have on it. -->
+    <div id="coinModal" style="display:none;">
+      <div class="pigeons-calc-panel coin-modal-panel">
+        <div class="simple-picker-header">
+          <span class="simple-picker-title" id="coinTitle">C0!N</span>
+          <button type="button" class="simple-picker-close" id="coinCloseBtn" title="CL0SE">&times;</button>
+        </div>
+        <div class="coin-hero">
+          <img class="coin-hero-img" id="coinImg" src="" alt="">
+          <div class="coin-hero-main">
+            <div class="coin-hero-price" id="coinPrice">…</div>
+            <div class="coin-hero-sub" id="coinPriceSub"></div>
+          </div>
+          <div class="coin-hero-change" id="coinChange"></div>
+        </div>
+        <div class="coin-chart"><iframe id="coinChart" title="CHART" loading="lazy" src="about:blank"></iframe></div>
+        <div class="coin-stats" id="coinStats"></div>
+        <div class="coin-links" id="coinLinks"></div>
+        <button type="button" class="cart-buy-btn cx-submit" id="coinSwapBtn">SWAP</button>
+      </div>
+    </div>
 
     <div id="topHoldersModal" style="display:none;">
       <div class="pigeons-calc-panel top-holders-modal-panel">
@@ -13824,7 +13918,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
-   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartSortBar','sweepModal','sweepCloseBtn','openSweepBtn','sweepSub','sweepScope',
+   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartSortBar','sweepModal','sweepCloseBtn','sweepSub','sweepAvail','sweepN','sweepMinus','sweepPlus','sweepMax',
+   'coinModal','coinCloseBtn','coinTitle','coinImg','coinPrice','coinPriceSub','coinChange','coinChart','coinStats','coinLinks','coinSwapBtn',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
    'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -17512,11 +17607,35 @@ const SWAP_HTML = `<!DOCTYPE html>
   // same signatureBannerHtml Σκύλλα/DETA!L use, not just a plain
   // wallet-tag short address. Shared by both the podium cards and the
   // full-table rows below.
+  // DEFAULT PR0F!LE (2026-09-27) — any wallet with no profile of its own:
+  // picture = its rarest Pigeon, name = that Pigeon's number in binary,
+  // quote = "What if?" in binary. The address always stays. A real
+  // profile (username / picture / quote) always wins.
+  var DEFAULT_PROFILE_QUOTE = 'What if?';
+  function toBinaryText(t){
+    return String(t).split('').map(function(ch){ var b = ch.charCodeAt(0).toString(2); return '00000000'.slice(b.length) + b; }).join(' ');
+  }
+  function defaultProfileName(wallet, rarest){
+    if (rarest && rarest.number !== null && rarest.number !== undefined) return Number(rarest.number).toString(2);
+    var h = 0;
+    for (var i = 0; i < wallet.length; i++) h = (h * 31 + wallet.charCodeAt(i)) >>> 0;
+    return (h & 0xffff).toString(2);
+  }
   function topHolderRowHtml(h, rank){
     var percentStr = thPercentStr(h);
-    return '<a class="th-row' + (rank < 15 ? ' th-row-top' : '') + (rank < 3 ? ' th-row-medal th-row-medal-' + (rank + 1) : '') + '" href="' + escapeHtml(walletHrefFor(h.wallet)) + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
-      '<span class="th-rank">' + thThumbHtml(h, rank) + '<span>#' + greenNum(rank + 1) + '</span></span>' +
-      '<span class="th-wallet">' + signatureBannerHtml(h.wallet, 'row') + '</span>' +
+    queueProfileResolve(h.wallet);
+    var prof = profileCache[h.wallet] || null;
+    var img = (prof && prof.pfpImage) || (h.rarestPigeon && h.rarestPigeon.image) || '';
+    var name = prof && prof.username ? escapeHtml(prof.username) : '<span class="th2-bin">' + escapeHtml(defaultProfileName(h.wallet, h.rarestPigeon)) + '</span>';
+    var quote = prof && prof.quote ? escapeHtml(prof.quote) : '<span class="th2-bin">' + escapeHtml(toBinaryText(DEFAULT_PROFILE_QUOTE)) + '</span>';
+    return '<a class="th-row th2-row' + (rank < 15 ? ' th-row-top' : '') + (rank < 3 ? ' th-row-medal th-row-medal-' + (rank + 1) : '') + '" href="' + escapeHtml(walletHrefFor(h.wallet)) + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
+      '<span class="th2-rank">#' + greenNum(rank + 1) + '</span>' +
+      '<span class="th2-avatar">' + (img ? '<img src="' + escapeHtml(img) + '" alt="" loading="lazy">' : '') + '</span>' +
+      '<span class="th2-id">' +
+        '<span class="th2-name">' + name + '</span>' +
+        '<span class="th2-quote">' + quote + '</span>' +
+        '<span class="th2-addr">' + escapeHtml(shortAddr(h.wallet)) + '</span>' +
+      '</span>' +
       '<span class="th-count"><span class="th-count-amt">' + greenNum(h.count) + ' P!GE0NS</span><span class="th-count-pct">' + (percentStr ? greenNum(percentStr + '%') : '') + '</span></span>' +
     '</a>';
   }
@@ -19967,7 +20086,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       var what = [];
       if (buys) what.push('BUY!NG ' + nfts(buys));
       if (offers) what.push('0FFER!NG 0N ' + nfts(offers));
-      html += '<div class="cx-sentence">' + what.join(' AND ') + ' <span>·</span> ' + rows.length + ' XAMAN S!GNATURE' + (rows.length === 1 ? '' : 'S') + '</div>';
       var keys = Object.keys(cost).sort(function(a, b){ return a === 'xrp' ? -1 : b === 'xrp' ? 1 : 0; });
       if (keys.length){
         html += '<div class="cx-cost">' +
@@ -20065,18 +20183,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   function openSweep(){
     if (!MY_WALLET){ startAuthorize(); return; }
     var meta = COLLECTION_META[state.collection] || {};
-    // Sweep currency: this collection's token or XRP (K!NG: XRP only).
     el.cartSweepTokenTab.textContent = meta.tokenLabel || '$T0KEN';
     el.cartSweepTokenTab.style.display = meta.xrpOnly ? 'none' : '';
-    setCartSweepCurrency(meta.xrpOnly ? 'xrp' : cartSweepCurrency);
     el.cartSweepNote.textContent = '';
-    // TH!S V!EW = whatever traits / edition you're looking at right now
-    // (e.g. one trait with 3 listed); only offered when something is picked.
-    var viewDesc = sweepViewDesc();
-    el.sweepScope.style.display = viewDesc ? '' : 'none';
-    setSweepScope(viewDesc ? 'view' : 'all'); // something selected: sweep that by default
+    var desc = sweepViewDesc();
+    el.sweepSub.innerHTML = 'THE CHEAPEST Σκύλλα L!ST!NGS ' + (desc ? '!N <span class="hi">' + escapeHtml(desc) + '</span>' : '!N THE WH0LE C0LLECT!0N');
     el.sweepModal.style.display = 'flex';
-    setTimeout(function(){ try { el.cartSweepInput.focus(); } catch (e){} }, 50);
+    setCartSweepCurrency(meta.xrpOnly ? 'xrp' : cartSweepCurrency);
   }
   function closeSweep(){ el.sweepModal.style.display = 'none'; }
   function closeCart(){
@@ -20089,6 +20202,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.cartSweepCurrency.querySelectorAll('.sale-currency-btn').forEach(function(b){
       b.classList.toggle('sale-currency-btn-active', b.getAttribute('data-currency') === v);
     });
+    if (el.sweepModal.style.display === 'flex') loadSweepCandidates();
   }
   el.cartSweepCurrency.addEventListener('click', function(e){
     var b = e.target.closest('.sale-currency-btn');
@@ -20102,9 +20216,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     cartOfferDays = parseInt(b.getAttribute('data-days'), 10) || 0;
     renderCart();
   });
-  // SWEEP: the N cheapest Σκύλλa listings in this collection (in the chosen
-  // currency), skipping your own and anything already in the cart.
-  var sweepScope = 'view';
+  // SWEEP: what you're viewing right now (traits / edition, or the whole
+  // collection when nothing's picked) — how many are listed on Σκύλλa, pick
+  // a number, add them all at once, cheapest first.
   function sweepViewDesc(){
     var f = activeFilters();
     var parts = f.map(function(x){ return String(x.trait).toUpperCase() + ': ' + String(x.value).toUpperCase(); });
@@ -20112,64 +20226,65 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (state.edition === 'HIGH') parts.push('2ND ED!T!0N');
     return parts.join(' · ');
   }
-  function setSweepScope(v){
-    sweepScope = v;
-    el.sweepScope.querySelectorAll('.sweep-scope-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-scope') === v); });
-    var desc = sweepViewDesc();
-    el.sweepSub.innerHTML = v === 'view' && desc
-      ? 'THE CHEAPEST Σκύλλα L!ST!NGS !N <span class="hi">' + escapeHtml(desc) + '</span>'
-      : 'THE CHEAPEST Σκύλλα L!ST!NGS !N THE WH0LE C0LLECT!0N';
+  var sweepCandidates = [];
+  var sweepN = 1;
+  function sweepRoom(){ return Math.max(0, CART_MAX - getCart().length); }
+  function renderSweepPicker(){
+    var max = Math.min(sweepCandidates.length, sweepRoom());
+    if (sweepN > max) sweepN = max;
+    if (sweepN < 1 && max > 0) sweepN = 1;
+    el.sweepN.textContent = String(sweepN);
+    el.sweepMinus.disabled = sweepN <= 1;
+    el.sweepPlus.disabled = sweepN >= max;
+    el.sweepMax.disabled = !max;
+    el.cartSweepBtn.disabled = !max;
+    el.cartSweepBtn.textContent = max ? 'ADD ' + sweepN + ' T0 CART' : 'N0TH!NG T0 ADD';
   }
-  el.sweepScope.addEventListener('click', function(e){
-    var b = e.target.closest('.sweep-scope-btn');
-    if (b) setSweepScope(b.getAttribute('data-scope'));
-  });
-  function sweepFloor(){
-    if (cartRun) return;
-    var n = parseInt(String(el.cartSweepInput.value).replace(/[^0-9]/g, ''), 10);
-    if (!(n >= 1)){ el.cartSweepNote.textContent = 'ENTER H0W MANY T0 SWEEP.'; return; }
-    var room = CART_MAX - getCart().length;
-    if (room <= 0){ el.cartSweepNote.textContent = 'Y0UR CART !S FULL — ' + CART_MAX + ' NFTS MAX.'; return; }
-    n = Math.min(n, room);
+  function loadSweepCandidates(){
     var cur = COLLECTION_META[state.collection].xrpOnly ? 'xrp' : cartSweepCurrency;
     var curLabel = cur === 'xrp' ? 'XRP' : COLLECTION_META[state.collection].tokenLabel;
-    el.cartSweepNote.textContent = 'F!ND!NG THE FL00R...';
-    el.cartSweepBtn.disabled = true;
-    var scoped = sweepScope === 'view' && sweepViewDesc();
-    var f = scoped ? activeFilters() : [];
+    var f = activeFilters();
     var extra = {
       filters: f.length ? JSON.stringify(f) : undefined,
-      numberRange: scoped && (state.edition === 'LOW' || state.edition === 'HIGH') ? (state.edition === 'LOW' ? 'low' : 'high') : undefined
+      numberRange: (state.edition === 'LOW' || state.edition === 'HIGH') ? (state.edition === 'LOW' ? 'low' : 'high') : undefined
     };
+    sweepCandidates = [];
+    el.sweepAvail.textContent = 'F!ND!NG THE FL00R...';
+    renderSweepPicker();
     var req = cur === 'xrp'
       ? api(Object.assign({ crossListing: 'asc', marketplace: 'scylla', skip: 0, limit: 60 }, extra))
       : api(Object.assign({ scyllaListed: 1, dir: 'asc', skip: 0, limit: 60 }, extra));
     req.then(function(data){
-      var list = getCart();
       var have = {};
-      list.forEach(function(c){ have[c.nftId] = true; });
-      var added = 0;
-      (data.items || []).forEach(function(p){
-        if (added >= n || have[p.nftId]) return;
-        var l = cartListingOf(p, cur);
-        if (!l) return;
-        list.push(cartEntryFor(p, l));
-        have[p.nftId] = true;
-        added++;
-      });
-      setCart(list);
-      el.cartSweepNote.textContent = !added ? 'N0TH!NG M0RE L!STED 0N Σκύλλα !N ' + curLabel + (scoped ? ' F0R TH!S V!EW' : '') + '.'
-        : added < n ? 'ADDED ' + added + ' — THAT\\'S EVERY 0THER ' + curLabel + ' L!ST!NG 0N Σκύλλα.'
-        : 'ADDED THE ' + added + ' CHEAPEST.';
-      refreshCartBadges();
-      renderCart();
-      if (added){ closeSweep(); openCart(); }
+      getCart().forEach(function(c){ have[c.nftId] = true; });
+      sweepCandidates = (data.items || []).filter(function(p){ return !have[p.nftId] && cartListingOf(p, cur); });
+      el.sweepAvail.innerHTML = '<span class="hi">' + sweepCandidates.length + '</span> L!STED 0N Σκύλλα !N ' + escapeHtml(curLabel) +
+        (sweepRoom() < sweepCandidates.length ? ' · Y0UR CART HAS R00M F0R ' + sweepRoom() : '');
+      sweepN = Math.min(sweepCandidates.length, sweepRoom());
+      renderSweepPicker();
     }).catch(function(){
-      el.cartSweepNote.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
-    }).then(function(){ el.cartSweepBtn.disabled = false; });
+      el.sweepAvail.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    });
+  }
+  el.sweepMinus.addEventListener('click', function(){ sweepN = Math.max(1, sweepN - 1); renderSweepPicker(); });
+  el.sweepPlus.addEventListener('click', function(){ sweepN = sweepN + 1; renderSweepPicker(); });
+  el.sweepMax.addEventListener('click', function(){ sweepN = 1e9; renderSweepPicker(); });
+  function sweepFloor(){
+    if (cartRun || !sweepCandidates.length) return;
+    var cur = COLLECTION_META[state.collection].xrpOnly ? 'xrp' : cartSweepCurrency;
+    var list = getCart();
+    var added = 0;
+    sweepCandidates.slice(0, Math.min(sweepN, sweepRoom())).forEach(function(p){
+      var l = cartListingOf(p, cur);
+      if (!l) return;
+      list.push(cartEntryFor(p, l));
+      added++;
+    });
+    setCart(list);
+    refreshCartBadges();
+    if (added){ closeSweep(); openCart(); }
   }
   el.cartSweepBtn.addEventListener('click', sweepFloor);
-  el.cartSweepInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') sweepFloor(); });
 
   // SUBM!T ALL — one NFT at a time: create its sign request (a buy or an
   // offer), wait for it to settle (or fail), then the next. When Xaman
@@ -20311,6 +20426,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderCart();
   });
   el.cartList.addEventListener('click', function(e){
+    // Click the NFT itself (not its ×, amount box or currency switch):
+    // straight to its detail view.
+    var rowEl = e.target.closest('.cart-row');
+    if (rowEl && !e.target.closest('button, input, label, .cx-offer, .cx-price-box')){
+      var ci = getCart().filter(function(c){ return c.nftId === rowEl.getAttribute('data-nftid'); })[0];
+      if (ci){
+        closeCart();
+        if (ci.collection === state.collection){ showTab('database'); openDetail(ci.nftId); }
+        else if (ci.number !== null && ci.number !== undefined) window.location.href = '/' + ci.collection + '/' + ci.number;
+        else window.location.href = '/static?collection=' + encodeURIComponent(ci.collection);
+      }
+      return;
+    }
     if (cartRun) return;
     var rm = e.target.closest('.cart-row-remove');
     if (rm){
@@ -20344,7 +20472,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.cartSortBar.querySelectorAll('.cx-sort-btn').forEach(function(x){ x.classList.toggle('active', x === b); });
     renderCart();
   });
-  el.openSweepBtn.addEventListener('click', openSweep);
   el.quickCartBtn.addEventListener('click', openCart);
   el.quickSweepBtn.addEventListener('click', openSweep);
   el.sweepCloseBtn.addEventListener('click', closeSweep);
@@ -22485,6 +22612,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (data && data.dexUrl){
         el.pigeonsDexLink.href = data.dexUrl;
         el.pigeonsBarDexBtn.href = data.dexUrl;
+        el.pigeonsBarDexBtn.textContent = COLLECTION_META[state.collection].tokenLabel + ' C0!N';
+        coinPageDexUrl = data.dexUrl;
         el.pigeonsDexLink.style.display = '';
         el.pigeonsBarDexBtn.style.display = MY_WALLET ? '' : 'none';
       } else {
@@ -22495,6 +22624,85 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   refreshTrustlineRate();
   setInterval(refreshTrustlineRate, 60000);
+  // ---- $TOKEN C0!N page ----
+  var coinPageDexUrl = null;
+  function fmtUsd(n){
+    if (n === null || n === undefined || !isFinite(n)) return '—';
+    if (n >= 1) return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    return '$' + Number(n).toPrecision(3);
+  }
+  function openCoinPage(){
+    var key = state.collection;
+    var meta = COLLECTION_META[key] || {};
+    if (!coinPageDexUrl || meta.xrpOnly) return;
+    el.coinTitle.textContent = meta.tokenLabel;
+    el.coinImg.src = meta.thumb || '';
+    el.coinPrice.textContent = '…';
+    el.coinPriceSub.textContent = '';
+    el.coinChange.textContent = '';
+    el.coinStats.innerHTML = '';
+    el.coinLinks.innerHTML = '';
+    el.coinSwapBtn.textContent = 'SWAP ' + meta.tokenLabel;
+    var pair = coinPageDexUrl.split('/').pop();
+    el.coinChart.src = 'https://dexscreener.com/xrpl/' + pair + '?embed=1&theme=dark&trades=0&info=0';
+    el.coinModal.style.display = 'flex';
+    function stat(label, value, cls){ return '<div class="coin-stat"><span class="coin-stat-label">' + label + '</span><span class="coin-stat-val' + (cls ? ' ' + cls : '') + '">' + value + '</span></div>'; }
+    Promise.all([
+      fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + pair).then(function(r){ return r.json(); }).catch(function(){ return null; }),
+      MY_WALLET ? apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET, collection: key }).catch(function(){ return null; }) : Promise.resolve(null),
+      MY_WALLET ? apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).catch(function(){ return null; }) : Promise.resolve(null)
+    ]).then(function(res){
+      var d = res[0] && res[0].pairs && res[0].pairs[0];
+      var line = res[1], xb = res[2];
+      if (d){
+        if (d.info && d.info.imageUrl) el.coinImg.src = d.info.imageUrl;
+        el.coinPrice.textContent = Number(d.priceNative).toPrecision(4) + ' XRP';
+        el.coinPriceSub.textContent = fmtUsd(Number(d.priceUsd)) + ' USD';
+        var ch = d.priceChange && d.priceChange.h24;
+        if (ch !== undefined && ch !== null){
+          el.coinChange.textContent = (ch >= 0 ? '+' : '') + ch + '% 24H';
+          el.coinChange.className = 'coin-hero-change ' + (ch >= 0 ? 'up' : 'down');
+        }
+        var t = (d.txns && d.txns.h24) || {};
+        var html = '';
+        html += stat('MARKET CAP', fmtUsd(d.marketCap || d.fdv));
+        html += stat('L!QU!D!TY', fmtUsd(d.liquidity && d.liquidity.usd));
+        html += stat('24H V0LUME', fmtUsd(d.volume && d.volume.h24));
+        html += stat('24H BUYS / SELLS', (t.buys || 0) + ' / ' + (t.sells || 0));
+        html += stat('6H CHANGE', d.priceChange && d.priceChange.h6 !== undefined ? (d.priceChange.h6 >= 0 ? '+' : '') + d.priceChange.h6 + '%' : '—');
+        html += stat('P00L', d.liquidity ? Math.round(d.liquidity.base).toLocaleString() + ' + ' + Math.round(d.liquidity.quote).toLocaleString() + ' XRP' : '—');
+        if (d.marketCap && Number(d.priceUsd)) html += stat('SUPPLY', Math.round(d.marketCap / Number(d.priceUsd)).toLocaleString());
+        if (d.pairCreatedAt) html += stat('P00L CREATED', new Date(d.pairCreatedAt).toLocaleDateString());
+        el.coinStats.innerHTML = html;
+        var links = [];
+        ((d.info && d.info.websites) || []).forEach(function(w){ links.push('<a href="' + escapeHtml(w.url) + '" target="_blank" rel="noopener">' + escapeHtml(((w.label && w.label.length > 1) ? w.label : (String(w.url).replace(/^https?:[/][/](www[.])?/, '').split('/')[0] || 'WEBS!TE')).toUpperCase()) + ' ↗</a>'); });
+        ((d.info && d.info.socials) || []).forEach(function(w){ links.push('<a href="' + escapeHtml(w.url) + '" target="_blank" rel="noopener">' + escapeHtml(String(w.type || 'S0C!AL').toUpperCase()) + ' ↗</a>'); });
+        links.push('<a href="' + escapeHtml(coinPageDexUrl) + '" target="_blank" rel="noopener">CHART ↗</a>');
+        el.coinLinks.innerHTML = links.join('');
+      } else {
+        el.coinPrice.textContent = '—';
+        el.coinStats.innerHTML = '<div class="coin-stat"><span class="coin-stat-label">C0ULDN\\'T L0AD THE C0!N DATA — TRY AGA!N</span></div>';
+      }
+      var mine = '';
+      mine += stat('!SSUER', escapeHtml(shortAddr(meta.tokenIssuer || '')));
+      if (line) mine += stat('Y0UR ' + escapeHtml(meta.tokenLabel), line.hasTrustline ? escapeHtml(Number(line.balance || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })) : 'N0 TRUSTL!NE');
+      if (xb && xb.drops != null) mine += stat('Y0UR XRP', escapeHtml(fmtXrp(Math.floor(spendableXrpOf(xb) * 100) / 100)));
+      el.coinStats.insertAdjacentHTML('beforeend', mine);
+    });
+  }
+  function closeCoinPage(){
+    el.coinModal.style.display = 'none';
+    el.coinChart.src = 'about:blank';
+  }
+  el.pigeonsBarDexBtn.addEventListener('click', function(e){
+    if (e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
+    openCoinPage();
+  });
+  el.coinCloseBtn.addEventListener('click', closeCoinPage);
+  el.coinModal.addEventListener('click', function(e){ if (e.target === el.coinModal) closeCoinPage(); });
+  el.coinSwapBtn.addEventListener('click', function(){ closeCoinPage(); openBuySwapPanel(state.collection); });
+
   // Hard cap on the XRP side — matches whatever's actually reasonable to
   // type into a quick calculator, and doubles as the ceiling every
   // computed (pigeons -> XRP) result gets clamped to as well, so the box
@@ -23386,7 +23594,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // itself again in the same tick since the click's real target (inside
     // #myNftsGridItems) isn't inside #screenDetail yet at the moment
     // DETAIL just opened.
-    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !el.historyModal.contains(e.target) && !e.target.closest('.pigeon-img-box') && !e.target.closest('.simple-picker-view-btn') && !e.target.closest('.sale-row') && !e.target.closest('.profile-nft-pick') && !e.target.closest('.profile-watchlist-tile')){
+    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !el.historyModal.contains(e.target) && !e.target.closest('.pigeon-img-box') && !e.target.closest('.simple-picker-view-btn') && !e.target.closest('.sale-row') && !e.target.closest('.profile-nft-pick') && !e.target.closest('.profile-watchlist-tile') && !e.target.closest('#cartModal')){
       // .profile-watchlist-tile too (reported live: clicking an NFT in
       // WATCHL!ST should go straight to its expanded view — it opened and
       // closed again in the same click, same story as above).
@@ -24509,6 +24717,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // instance already on screen for a wallet once its real profile lands,
   // same "upgrade in place, never block the initial paint" pattern.
   function applySignatureBanners(wallets){
+    if (el.topHoldersModal && el.topHoldersModal.style.display !== 'none' && topHoldersData && topHoldersData.some(function(h){ return wallets.indexOf(h.wallet) !== -1; })) renderTopHoldersList();
     wallets.forEach(function(w){
       var profile = profileCache[w];
       if (!profile) return;
@@ -28252,7 +28461,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var boxes = [];
     ['pigeonsCalcModal','topHoldersModal','salesModal','notifyModal','rarityModal','offerConfirmModal','transferConfirmModal',
      'acceptTransferConfirmModal','buySwapModal','buyConfirmModal','delistConfirmModal','acceptOfferConfirmModal',
-     'conspiracyPickerModal','simpleOfferPickerModal','amountEntryModal','historyModal','profileEditModal','cartModal','sweepModal'].forEach(function(id){
+     'conspiracyPickerModal','simpleOfferPickerModal','amountEntryModal','historyModal','profileEditModal','cartModal','sweepModal','coinModal'].forEach(function(id){
       var modal = document.getElementById(id);
       if (modal && modal.firstElementChild) boxes.push(modal.firstElementChild);
     });
