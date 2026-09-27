@@ -5141,9 +5141,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   #cartModal .cx-bal + .cx-bal{ border-left:1px solid rgba(var(--collection-accent-rgb), 0.35); }
   #cartModal .cx-bal-label{ display:block; font-size:12px; font-weight:700; letter-spacing:0.12em; color:#fff; opacity:0.85; margin-bottom:0.25rem; }
   #cartModal .cx-bal-value{ display:block; font-size:21px; font-weight:700; color:rgb(52,255,133); text-shadow:0 0 6px rgba(52,255,133,0.35); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #cartModal .cx-bar{ display:flex; align-items:center; justify-content:space-between; }
+  #cartModal .simple-picker-header .cx-clear{ position:absolute; left:0; top:50%; transform:translateY(-50%); }
   #cartModal .cx-count{ color:#fff; font-size:14px; font-weight:700; letter-spacing:0.08em; }
-  #cartModal .cx-clear{ background:none; border:1px solid rgba(255,59,92,0.85); border-radius:999px; color:#ff3b5c; font-family:inherit; font-size:13px; font-weight:700; letter-spacing:0.08em; padding:0.45em 1.1em; cursor:pointer; }
+  #cartModal .cx-clear{ background:none; border:1px solid rgba(255,59,92,0.85); border-radius:999px; color:#ff3b5c; font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.08em; padding:0.45em 0.95em; cursor:pointer; }
   #cartModal .cx-clear:hover{ background:#ff3b5c; color:#000; }
   #cartModal .cart-list{ gap:0.6rem; padding-right:0.2rem; }
   #cartModal .cart-group{ font-size:13px; margin:0.4rem 0 0; }
@@ -5163,6 +5163,35 @@ const SWAP_HTML = `<!DOCTYPE html>
   #cartModal .cart-offer-input{ width:4.6rem; border:none; background:transparent; font-size:20px; padding:0; text-align:right; }
   #cartModal .cart-offer-input:focus{ outline:none; }
   #cartModal .cart-offer-unit{ font-size:14px; }
+  /* Row (2026-09-27 redesign): big picture | name + × / tag + collection /
+     price or Y0UR 0FFER box. */
+  #cartModal .cart-row{ display:grid; grid-template-columns:88px 1fr !important; align-items:start; gap:0.9rem; padding:0.65rem; }
+  #cartModal .cart-row img, #cartModal .cart-row .cx-noimg{ width:88px !important; height:88px !important; border-radius:12px; object-fit:cover; background:#111; display:block; }
+  #cartModal .cx-main{ display:flex; flex-direction:column; gap:0.45rem; min-width:0; }
+  #cartModal .cx-head{ display:flex; align-items:center; justify-content:space-between; gap:0.5rem; }
+  #cartModal .cx-head .cart-row-name{ font-size:18px; }
+  #cartModal .cx-head .cart-row-remove{ flex:0 0 auto; width:1.9rem; height:1.9rem; border-radius:50%; font-size:15px; line-height:1; }
+  #cartModal .cx-sub{ display:flex; align-items:center; gap:0.5rem; min-width:0; }
+  #cartModal .cx-sub .cx-tag{ margin:0; }
+  #cartModal .cx-coll{ color:#fff; opacity:0.7; font-size:12px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #cartModal .cart-row-state{ margin:0; }
+  #cartModal .cx-price-box, #cartModal .cx-offer-box{ position:relative; display:block; border:1px solid rgba(var(--collection-accent-rgb), 0.5); border-radius:10px; background:#000; padding:1.3rem 0.7rem 0.45rem; cursor:text; }
+  #cartModal .cx-price-box{ cursor:default; }
+  #cartModal .cx-offer-box:focus-within{ border-color:var(--collection-accent); box-shadow:0 0 12px rgba(var(--collection-accent-rgb), 0.4); }
+  #cartModal .cx-price-box .cart-row-price{ display:block; text-align:right; font-size:19px; }
+  #cartModal .cx-offer-line{ display:flex; align-items:center; justify-content:flex-end; gap:0.5rem; }
+  #cartModal .cx-offer-line .cart-offer-input{ flex:1 1 auto; min-width:0; width:auto; font-size:21px; }
+  #cartModal .cx-offer-line .cart-offer-cur{ flex:0 0 auto; }
+  #cartModal .cx-sentence{ text-align:center; color:#fff; font-size:13px; font-weight:700; letter-spacing:0.05em; white-space:nowrap; padding:0.35rem 0 0.5rem; border-bottom:1px solid rgba(var(--collection-accent-rgb), 0.15); }
+  #cartModal .cx-sentence span{ color:var(--cyan); }
+  #cartModal .cx-seg .list-duration-btn[data-days="0"]{ font-family:"Segoe UI Symbol", "Arial", sans-serif !important; font-size:26px !important; font-weight:400; line-height:1; padding-top:0.05em; padding-bottom:0.05em; }
+  @media (max-width:600px){
+    #cartModal .cart-row{ grid-template-columns:64px 1fr !important; }
+    #cartModal .cart-row img, #cartModal .cart-row .cx-noimg{ width:64px !important; height:64px !important; }
+    #cartModal .cx-head .cart-row-name{ font-size:15px; }
+    #cartModal .cx-sentence{ font-size:11px; white-space:normal; }
+    #cartModal .simple-picker-header .cx-clear{ font-size:10px; padding:0.4em 0.6em; }
+  }
   #cartModal .cx-duration{ display:flex; flex-direction:column; gap:0.4rem; }
   #cartModal .cx-small-label{ font-size:12px; font-weight:700; letter-spacing:0.14em; color:#fff; opacity:0.85; text-align:center; }
   #cartModal .cx-seg{ display:flex; padding:3px; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); background:#000; }
@@ -5183,12 +5212,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   #cartModal .cart-status{ font-size:14px; }
   @media (max-width:600px){
     #cartModal .cart-modal-panel{ padding:1.2rem 0.9rem; }
-    #cartModal .cart-row{ grid-template-columns:56px 1fr 2rem; }
     #cartModal .cart-row img, #cartModal .cart-row > span:first-child{ width:56px; height:56px; }
-    #cartModal .cart-row > div:nth-child(3){ grid-column:2 / 3; justify-self:start; }
-    #cartModal .cart-row > div.cx-offer-box{ grid-column:1 / -1; justify-self:stretch; }
     #cartModal .cx-offer-line{ justify-content:flex-end; }
-    #cartModal .cart-row > :last-child{ grid-column:3; grid-row:1; }
     #cartModal .cx-bal-value{ font-size:17px; }
     #cartModal .cx-seg .list-duration-btn{ font-size:11px; letter-spacing:0; padding:0.65em 0; }
     #cartModal .cx-sum-row{ font-size:11px; letter-spacing:0.04em; }
@@ -10979,6 +11004,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     <div id="cartModal" style="display:none;">
       <div class="pigeons-calc-panel cart-modal-panel">
         <div class="simple-picker-header">
+          <button type="button" class="cx-clear" id="cartClearBtn">CLEAR ALL</button>
           <span class="simple-picker-title cart-title">&#128722; CART</span>
           <button type="button" class="simple-picker-close" id="cartCloseBtn" title="CL0SE">&times;</button>
         </div>
@@ -10986,10 +11012,6 @@ const SWAP_HTML = `<!DOCTYPE html>
              balance tiles up top, rounded boxes, small labels inside,
              a summary box, then BACK + the main button. -->
         <div class="cx-balances" id="cartBalances"></div>
-        <div class="cx-bar">
-          <span class="cx-count" id="cartCount"></span>
-          <button type="button" class="cx-clear" id="cartClearBtn">CLEAR ALL</button>
-        </div>
         <div class="cart-list" id="cartList"></div>
         <div class="cx-duration" id="cartDuration" style="display:none;">
           <div class="cx-small-label">0FFERS LAST</div>
@@ -13678,7 +13700,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
-   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartCount','cartBackBtn','sweepModal','sweepCloseBtn','openSweepBtn',
+   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartBackBtn','sweepModal','sweepCloseBtn','openSweepBtn',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
    'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -19662,7 +19684,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // One cart per wallet across every collection (each item remembers its
   // own). 25 max — every item is its own Xaman signature, and 25 is about
   // as many as anyone wants to sign in one go.
-  var CART_MAX = 25;
+  var CART_MAX = 15;
   function getCart(){
     try {
       var v = JSON.parse(localStorage.getItem(cartKey()) || '[]');
@@ -19750,26 +19772,33 @@ const SWAP_HTML = `<!DOCTYPE html>
   function cartRowHtml(c, running){
     var st = cartRowState[c.nftId];
     var meta = COLLECTION_META[c.collection] || {};
+    var isOffer = c.mode === 'offer';
+    // Second line: BUY N0W / 0FFER tag + collection — or, while SUBM!T ALL
+    // runs, how this one is going (setCartRow rewrites this same element).
     var sub = st ? '<div class="cart-row-state ' + st.cls + '">' + escapeHtml(st.text) + '</div>'
-      : (c.mode === 'offer' ? '<div class="cx-tag cx-tag-offer">0FFER</div>' : '<div class="cx-tag cx-tag-buy">BUY N0W</div>');
-    var right;
-    if (c.mode === 'offer'){
+      : '<div class="cx-sub"><span class="cx-tag ' + (isOffer ? 'cx-tag-offer' : 'cx-tag-buy') + '">' + (isOffer ? '0FFER' : 'BUY N0W') + '</span><span class="cx-coll">' + escapeHtml(meta.label || '') + '</span></div>';
+    var body;
+    if (isOffer){
       var curToggle = meta.xrpOnly ? '<span class="cart-offer-unit">XRP</span>'
         : '<span class="cart-offer-cur">' +
             '<button type="button" class="' + (c.currency === 'token' ? 'active' : '') + '" data-offer-cur="token" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>' + escapeHtml(cartTokenLabel(c)) + '</button>' +
             '<button type="button" class="' + (c.currency === 'xrp' ? 'active' : '') + '" data-offer-cur="xrp" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>XRP</button>' +
           '</span>';
-      right = '<div class="cx-offer-box"><span class="cx-offer-label">Y0UR 0FFER</span><div class="cx-offer-line">' +
+      body = '<label class="cx-offer-box"><span class="cx-offer-label">Y0UR 0FFER</span><span class="cx-offer-line">' +
         '<input class="cart-offer-input" type="text" inputmode="decimal" placeholder="0" data-nftid="' + escapeHtml(c.nftId) + '" value="' + escapeHtml(c.price || '') + '"' + (running ? ' disabled' : '') + '>' +
-        curToggle + '</div></div>';
+        curToggle + '</span></label>';
     } else {
-      right = '<div class="cart-row-price">' + escapeHtml(cartAmountText(c, c.price)) + '</div>';
+      body = '<div class="cx-price-box"><span class="cx-offer-label">PR!CE</span><span class="cart-row-price">' + escapeHtml(cartAmountText(c, c.price)) + '</span></div>';
     }
-    return '<div class="cart-row' + (c.mode === 'offer' ? ' cart-row-offer' : '') + '" data-nftid="' + escapeHtml(c.nftId) + '">' +
-      (c.image ? '<img src="' + escapeHtml(c.image) + '" alt="">' : '<span></span>') +
-      '<div><div class="cart-row-name">' + cartItemLabel(c) + '</div>' + sub + '</div>' +
-      right +
-      (running ? '<span></span>' : '<button type="button" class="cart-row-remove" data-nftid="' + escapeHtml(c.nftId) + '" title="REM0VE">&times;</button>') +
+    return '<div class="cart-row' + (isOffer ? ' cart-row-offer' : '') + '" data-nftid="' + escapeHtml(c.nftId) + '">' +
+      (c.image ? '<img src="' + escapeHtml(c.image) + '" alt="">' : '<span class="cx-noimg"></span>') +
+      '<div class="cx-main">' +
+        '<div class="cx-head"><span class="cart-row-name">' + cartItemLabel(c) + '</span>' +
+          (running ? '' : '<button type="button" class="cart-row-remove" data-nftid="' + escapeHtml(c.nftId) + '" title="REM0VE">&times;</button>') +
+        '</div>' +
+        sub +
+        body +
+      '</div>' +
     '</div>';
   }
   function renderCartTotals(){
@@ -19786,14 +19815,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     var offers = rows.length - buys;
     function row(label, value, cls){ return '<div class="cx-sum-row' + (cls ? ' ' + cls : '') + '"><span>' + label + '</span><span class="cx-sum-val">' + value + '</span></div>'; }
     var html = '';
+    function nfts(k){ return k + ' NFT' + (k === 1 ? '' : 'S'); }
     if (rows.length){
-      if (buys) html += row('BUY!NG', buys + ' NFT' + (buys === 1 ? '' : 'S'));
-      if (offers) html += row('0FFER!NG 0N', offers + ' NFT' + (offers === 1 ? '' : 'S'));
+      // One line, e.g. "BUY!NG 2 NFTS AND 0FFER!NG 0N 1 NFT · 3 XAMAN S!GNATURES".
+      var what = [];
+      if (buys) what.push('BUY!NG ' + nfts(buys));
+      if (offers) what.push('0FFER!NG 0N ' + nfts(offers));
+      html += '<div class="cx-sentence">' + what.join(' AND ') + ' <span>·</span> ' + rows.length + ' XAMAN S!GNATURE' + (rows.length === 1 ? '' : 'S') + '</div>';
       Object.keys(sums).forEach(function(k){
         html += row(k === 'xrp' ? 'T0TAL XRP' : 'T0TAL ' + escapeHtml(COLLECTION_META[k.slice(6)].tokenLabel), escapeHtml(k === 'xrp' ? fmtXrp(sums[k]) + ' XRP' : fmtPigeonsCompact(sums[k], k.slice(6))), 'cx-sum-total');
       });
       if (buys) html += row('Σκύλλα FEE (BUYS)', '1.3% XRP · 1.023% T0KEN');
-      html += row('XAMAN S!GNATURES', String(rows.length));
     }
     el.cartTotal.innerHTML = html;
     el.cartDuration.style.display = offers ? '' : 'none';
@@ -19823,7 +19855,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.cartDuration.querySelectorAll('.list-duration-btn').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-days') === String(cartOfferDays));
     });
-    el.cartCount.textContent = (running ? cartRun.items.length : list.length) + ' / ' + CART_MAX + ' NFTS';
     renderCartTotals();
     renderCartBalances();
   }
@@ -19958,7 +19989,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     cartRowState[nftId] = { cls: cls, text: text };
     var row = el.cartList.querySelector('.cart-row[data-nftid="' + nftId + '"]');
     if (!row){ renderCart(); return; }
-    var box = row.children[1];
+    var box = row.querySelector('.cx-main');
     var line = box && box.children[1];
     if (line){ line.className = 'cart-row-state ' + cls; line.textContent = text; }
   }
