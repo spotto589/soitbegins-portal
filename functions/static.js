@@ -7861,6 +7861,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-rarity-row .tc-label{ font-size:11px !important; margin:0 !important; }
   #screenDetail .detail-rarity-row .tc-value{ font-size:17px !important; margin:0.1rem 0 0 !important; }
   #detailRarityExpandBtn{ display:none !important; }
+  #pigeonsMergedPanel .pigeons-bar-thumb{ background-size:cover !important; background-position:center !important; background-color:#000; border:2px solid rgba(0,0,0,0.55) !important; border-radius:14px !important; box-shadow:0 0 0 1px rgba(255,255,255,0.35), 0 6px 18px rgba(0,0,0,0.45) !important; }
   /* TRANSACT!0N H!ST0RY + DETA!LS side by side. */
   #screenDetail .detail-history{ display:flex; gap:0.5rem; width:100% !important; align-self:stretch; margin-left:0 !important; margin-right:0 !important; }
   #screenDetail .detail-history .detail-history-btn{ flex:1 1 0; min-width:0; }
@@ -7884,14 +7885,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .nd-flag.on{ border-color:rgba(52,255,133,0.7); color:rgb(52,255,133); }
   @media (max-width:600px){ .nd-row{ flex-direction:column; align-items:flex-start; gap:0.35rem; } .nd-value{ justify-content:flex-start; text-align:left; } }
 
-  /* The coin beside every $TOKEN (reported live 2026-09-27): the round
-     logo from the C0!N page, with a thin gold rim so it reads as a coin. */
-  .tk::before, .tk-img{ content:''; display:inline-block; flex:0 0 auto; width:1.6em; height:1.6em; min-width:20px; min-height:20px; margin-right:0.4em; vertical-align:middle; border-radius:50%; background:var(--tk-logo, var(--token-logo)) center / cover no-repeat; box-shadow:0 0 0 1.5px rgba(245,197,24,0.85), 0 0 7px rgba(245,197,24,0.35), inset 0 0 0 1px rgba(0,0,0,0.35); }
-  .tk-img{ object-fit:cover; }
-  body:not(.has-token-logo) .tk:not([style*="--tk-logo"])::before{ display:none; }
-  .thumb-listing-badge.tk::before{ width:1.3em; height:1.3em; margin-right:0.3em; }
-  /* Banner picture as the coin: round, gold rim, filling its circle. */
-  .pigeons-bar-thumb.is-coin{ border-radius:50% !important; background-size:cover !important; background-position:center !important; box-shadow:0 0 0 3px rgba(245,197,24,0.85), 0 0 22px rgba(245,197,24,0.35) !important; border-color:transparent !important; }
   /* STAT!C://QUERY :: N F0UND under the 🎒 / 🧹 buttons, not above. */
   .status-line-standalone-row{ display:flex; flex-direction:column; align-items:center; }
   .status-line-standalone-row #resultsQuick{ order:-1; margin:0.2rem 0 0.5rem; }
@@ -7907,6 +7900,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* ◂ ▸ next to BACK. */
   .detail-top-left{ position:absolute; left:0; top:50%; transform:translateY(-50%); z-index:2; display:flex; gap:0.35rem; align-items:center; }
   .detail-top-left .detail-back-btn-top{ position:static; transform:none; }
+  .detail-top-left .detail-nav-btn{ display:none !important; }
   .detail-top-left .detail-nav-btn{ position:static !important; transform:none !important; top:auto !important; left:auto !important; right:auto !important; width:auto; height:auto; align-self:stretch; padding:0 0.85em; border-radius:var(--radius); border:1px solid var(--border-mid); background:transparent; color:var(--cyan); font-size:16px; line-height:1; text-shadow:none; }
   .detail-top-left .detail-nav-btn:hover:not(:disabled){ background:var(--cyan-faint); border-color:var(--cyan-dim); }
   /* Bottom bar: ◂ PREV | ← BACK | NEXT ▸ */
@@ -9598,24 +9592,25 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* 0FF-S!TE BUY warning */
   #extBuyModal{ display:none; position:fixed; inset:0; z-index:1100; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:1.5rem 1rem; }
   #extBuyModal *{ text-transform:none; }
-  #extBuyModal .ext-buy-panel{ width:min(520px, 96vw); max-height:92vh; overflow-y:auto; display:flex; flex-direction:column; gap:0.9rem; padding:1.4rem; }
+  #extBuyModal .ext-buy-panel{ width:min(620px, 96vw); max-height:92vh; overflow-y:auto; display:flex; flex-direction:column; gap:1.2rem; padding:1.8rem 1.6rem; }
   #extBuyModal .simple-picker-header{ position:relative; justify-content:center; }
-  #extBuyModal .simple-picker-title{ flex:1; text-align:center; font-size:22px; font-weight:700; letter-spacing:0.1em; }
+  #extBuyModal .simple-picker-title{ flex:1; text-align:center; font-size:28px; font-weight:700; letter-spacing:0.1em; }
   #extBuyModal .simple-picker-close{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
   .ext-buy-nft{ display:flex; align-items:center; justify-content:center; gap:0.8rem; }
-  .ext-buy-nft img{ width:64px; height:64px; border-radius:10px; object-fit:cover; border:1px solid rgba(var(--collection-accent-rgb), 0.6); }
-  .ext-buy-nft b{ display:block; color:#fff; font-size:16px; }
-  .ext-buy-nft .ebn-price{ display:block; color:rgb(52,255,133); font-size:18px; font-weight:700; }
-  .ext-buy-text{ color:#fff; font-size:14px; font-weight:700; letter-spacing:0.04em; line-height:1.5; text-align:center; }
+  .ext-buy-nft img{ width:96px; height:96px; border-radius:12px; object-fit:cover; border:1px solid rgba(var(--collection-accent-rgb), 0.6); }
+  .ext-buy-nft b{ display:block; color:#fff; font-size:22px; }
+  .ext-buy-nft .ebn-price{ display:block; color:rgb(52,255,133); font-size:26px; font-weight:700; }
+  .ext-buy-text{ color:#fff; font-size:20px; font-weight:700; letter-spacing:0.05em; line-height:1.4; text-align:center; }
   .ext-buy-text .hi{ color:var(--cyan); }
   .ext-buy-fees{ display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; }
-  .ext-fee{ border:1px solid rgba(var(--collection-accent-rgb), 0.35); border-radius:12px; background:#000; padding:0.7rem 0.6rem; text-align:center; }
+  .ext-fee{ border:1px solid rgba(var(--collection-accent-rgb), 0.35); border-radius:14px; background:#000; padding:1rem 0.6rem; text-align:center; }
   .ext-fee-us{ border-color:rgba(52,255,133,0.6); box-shadow:0 0 12px rgba(52,255,133,0.15); }
-  .ext-fee-label{ display:block; color:#fff; opacity:0.75; font-size:11px; font-weight:700; letter-spacing:0.1em; }
-  .ext-fee-val{ display:block; color:#fff; font-size:20px; font-weight:700; margin-top:0.2rem; }
+  .ext-fee-label{ display:block; color:#fff; opacity:0.8; font-size:15px; font-weight:700; letter-spacing:0.1em; }
+  .ext-fee-val{ display:block; color:#fff; font-size:34px; font-weight:700; margin:0.2rem 0; }
   .ext-fee-us .ext-fee-val{ color:rgb(52,255,133); }
   .ext-fee-sub{ display:block; color:#fff; opacity:0.6; font-size:11px; font-weight:700; margin-top:0.15rem; }
-  .ext-buy-tip{ color:#fff; opacity:0.8; font-size:12.5px; font-weight:700; letter-spacing:0.03em; line-height:1.5; text-align:center; }
+  .ext-buy-tip:empty{ display:none; }
+  #extBuyModal .coin-action{ min-height:58px; font-size:17px; }
   #extBuyModal .ext-buy-actions{ grid-template-columns:1fr; }
   @media (max-width:600px){
     #coinModal .cpop-actions{ grid-template-columns:1fr; }
@@ -11166,7 +11161,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="pigeons-bar-left-body">
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
             <div class="pigeons-bar-identity-actions">
-              <a class="pigeons-bar-balance-buy tk" id="pigeonsBarDexBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER</a>
+              <a class="pigeons-bar-balance-buy" id="pigeonsBarDexBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER</a>
               <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">V!EW MY P!GE0NS</button>
               <!-- WATCHL!ST for THIS collection specifically (reported live)
                    — unlike V!EW NFTs above (which reopens the MA!NFRAME
@@ -11192,11 +11187,11 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div class="pigeons-bar-balance-info">
             <div class="pigeons-bar-balance-label">BALANCE:</div>
-            <div class="pigeons-bar-balance-value tk" id="pigeonsBalanceValue" style="display:none;">…</div>
+            <div class="pigeons-bar-balance-value" id="pigeonsBalanceValue" style="display:none;">…</div>
             <div class="pigeons-bar-balance-login" id="pigeonsBalanceLoginWrap">
               <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">L0G!N T0 V!EW BALANCE</button>
             </div>
-            <button class="pigeons-bar-balance-buy tk" id="pigeonsBalanceBuyBtn" style="display:none;">SWAP $P!GE0NS</button>
+            <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;">SWAP $P!GE0NS</button>
             <!-- Under BUY $P!GE0NS (reported live 2026-09-25). -->
             <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openCartBtn">&#127890; <span id="openCartLabel">SATCHEL</span> <span id="openCartCount"></span></button>
           </div>
@@ -11256,13 +11251,13 @@ const SWAP_HTML = `<!DOCTYPE html>
             <input class="buyswap-input" id="pigeonsCalcPigeonsInput" type="text" inputmode="decimal" placeholder="0" autocomplete="off">
             <div class="buyswap-trailing">
               <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
-              <span class="buyswap-unit tk" id="pigeonsCalcPigeonsUnit">$P!GE0NS</span>
+              <span class="buyswap-unit" id="pigeonsCalcPigeonsUnit">$P!GE0NS</span>
             </div>
           </div>
         </div>
         <div class="detail-actions">
           <button type="button" class="secondary-btn" id="pigeonsCalcCloseBtn">CL0SE</button>
-          <button type="button" class="action-btn offer-confirm-xaman-btn tk" id="pigeonsCalcBuyBtn">BUY $P!GE0NS</button>
+          <button type="button" class="action-btn offer-confirm-xaman-btn" id="pigeonsCalcBuyBtn">BUY $P!GE0NS</button>
         </div>
       </div>
     </div>
@@ -11291,7 +11286,7 @@ const SWAP_HTML = `<!DOCTYPE html>
              and one XRP FL00R — the cheapest XRP listing anywhere (any
              marketplace, never named. It sorts the grid by L0WEST (XRP)
              instead of linking out. -->
-        <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY L!STED THR0UGH SCYLLA"><div class="stat-label tk" id="statScyllaListedLabel">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+        <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY L!STED THR0UGH SCYLLA"><div class="stat-label" id="statScyllaListedLabel">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
         <button class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorExternalTile" title="S0RT BY L0WEST (XRP)"><div class="stat-label">XRP FL00R</div><div class="stat-value" id="statFloorExternal">…</div></button>
       </div>
       <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
@@ -11307,7 +11302,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
       <!-- The collection's coin (reported live 2026-09-27); taps open the C0!N page. -->
       <div class="stats-strip stats-strip-coin stats-page" id="statsStripCoin">
-        <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label tk" id="statCoinLabel">C0!N PR!CE</div><div class="stat-value" id="statCoinPrice">…</div></button>
+        <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label" id="statCoinLabel">C0!N PR!CE</div><div class="stat-value" id="statCoinPrice">…</div></button>
         <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label">24H</div><div class="stat-value" id="statCoinChange">…</div></button>
         <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label">MARKET CAP</div><div class="stat-value" id="statCoinMcap">…</div></button>
         <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label">L!QU!D!TY</div><div class="stat-value" id="statCoinLiq">…</div></button>
@@ -11437,7 +11432,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
         <div class="sweep-sub" id="sweepSub"></div>
         <div class="sale-currency-toggle cart-sweep-currency" id="cartSweepCurrency">
-          <button type="button" class="sale-currency-btn sale-currency-btn-active tk" data-currency="token" id="cartSweepTokenTab">$T0KEN</button>
+          <button type="button" class="sale-currency-btn sale-currency-btn-active" data-currency="token" id="cartSweepTokenTab">$T0KEN</button>
           <button type="button" class="sale-currency-btn" data-currency="xrp">XRP</button>
         </div>
         <div class="sweep-avail" id="sweepAvail">…</div>
@@ -11499,7 +11494,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="ml-tools">
           <button type="button" class="ml-tool-btn" id="mlAddAllBtn">+ ADD ALL UNL!STED</button>
           <div class="ml-setall" id="mlSetAll"><span class="cx-small-label">SET ALL T0</span><div class="cx-seg">
-            <button type="button" class="cx-sort-btn tk" data-ml-all="token" id="mlSetAllToken">$T0KEN</button>
+            <button type="button" class="cx-sort-btn" data-ml-all="token" id="mlSetAllToken">$T0KEN</button>
             <button type="button" class="cx-sort-btn" data-ml-all="xrp">XRP</button>
           </div></div>
         </div>
@@ -11580,8 +11575,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="ext-buy-fees" id="extBuyFees"></div>
         <div class="ext-buy-tip" id="extBuyTip"></div>
         <div class="cpop-actions ext-buy-actions">
-          <button type="button" class="coin-action coin-action-main" id="extBuyOfferBtn"><span class="coin-action-ico">Σ</span><span>MAKE AN 0FFER 0N Σκύλλα</span></button>
-          <a class="coin-action coin-action-ghost" id="extBuyGoBtn" href="#" target="_blank" rel="noopener"><span>C0NT!NUE 0FF-S!TE</span><span class="coin-action-ico">&#8599;</span></a>
+          <button type="button" class="coin-action coin-action-main" id="extBuyOfferBtn"><span>MAKE AN 0FFER 0N <span class="sk-word">Σκύλλα</span></span></button>
+          <a class="coin-action coin-action-ghost" id="extBuyGoBtn" href="#" target="_blank" rel="noopener"><span id="extBuyGoLabel">C0NT!NUE</span><span class="coin-action-ico">&#8599;</span></a>
         </div>
       </div>
     </div>
@@ -12762,8 +12757,8 @@ const SWAP_HTML = `<!DOCTYPE html>
           <!-- ◂ ▸ beside BACK (reported live 2026-09-27), not floating over the picture. -->
           <div class="detail-top-left">
             <button class="detail-back-btn-top" id="backToBrowseBtnTop">← BACK</button>
-            <button class="detail-nav-btn detail-nav-prev" id="detailPrevBtn" title="PREV!0US (◂)">◂</button>
-            <button class="detail-nav-btn detail-nav-next" id="detailNextBtn" title="NEXT (▸)">▸</button>
+            <button class="detail-nav-btn detail-nav-prev" id="detailPrevBtn" title="PREV!0US (◂)" hidden>◂</button>
+            <button class="detail-nav-btn detail-nav-next" id="detailNextBtn" title="NEXT (▸)" hidden>▸</button>
           </div>
           <div class="detail-num" id="detailNum"></div>
           <button class="detail-share-btn" id="detailShareBtn" title="C0PY A SHAREABLE L!NK T0 TH!S P!GE0N">SHARE</button>
@@ -13066,7 +13061,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <!-- List in the collection's token, XRP, or B0TH (two sell offers,
                two Xaman signatures, one after the other). -->
           <div class="sale-currency-toggle amount-currency-toggle" id="amountEntryListCurrency">
-            <button type="button" class="sale-currency-btn sale-currency-btn-active tk" data-currency="token" id="amountEntryListTokenTab">$P!GE0NS</button>
+            <button type="button" class="sale-currency-btn sale-currency-btn-active" data-currency="token" id="amountEntryListTokenTab">$P!GE0NS</button>
             <button type="button" class="sale-currency-btn" data-currency="xrp">XRP</button>
             <button type="button" class="sale-currency-btn" data-currency="both">B0TH</button>
           </div>
@@ -14060,28 +14055,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   // redirect flash. null on the plain /static route, which keeps falling
   // back to the ?collection= query-string handling further down (and, if
   // neither is present, plain P!GE0NS via state's own default above).
-  // Each collection's coin logo (the round one the C0!N page shows), put
-  // beside its $TOKEN wherever it's written (reported live 2026-09-27).
-  // $P!GE0NS is known up front; the rest fill in from the rate lookup.
-  var TOKEN_LOGOS = { pigeons: 'https://cdn.dexscreener.com/cms/images/5fa79ec7f125929e17daa181f8c297898712d973679cfc3227edcb299c36259c?width=256&height=256&quality=95&format=auto' };
-  function tokenLogoUrl(key){ return TOKEN_LOGOS[key] || null; }
-  // Marks an element whose text is a token with that token's coin
-  // (the .tk ::before icon); off when it isn't a token or there's no logo.
-  function markTk(node, key, on){
-    if (!node) return;
-    var url = on ? tokenLogoUrl(key) : null;
-    node.classList.toggle('tk', !!url);
-    if (url) node.style.setProperty('--tk-logo', 'url("' + url + '")'); else node.style.removeProperty('--tk-logo');
-  }
-  function tokenCoinImg(key){ var u = tokenLogoUrl(key); return u ? '<img class="tk-img" src="' + escapeHtml(u) + '" alt="">' : ''; }
-  function applyTokenLogos(){
-    var url = tokenLogoUrl(state.collection);
-    var meta = COLLECTION_META[state.collection] || {};
-    document.documentElement.style.setProperty('--token-logo', url ? 'url("' + url + '")' : 'none');
-    document.body.classList.toggle('has-token-logo', !!url && !meta.xrpOnly);
-    document.querySelectorAll('.make-offer-input-coin').forEach(function(img){ if (url) img.src = url; });
-    if (el && el.pigeonsBarThumb) updateTrustlineThumb(state.collection);
-  }
   var SERVER_COLLECTION = "__SWAP_COLLECTION__";
   // Set server-side only by the /profile/<wallet> route (functions/
   // profile/[wallet].js — see renderProfile below) so a shared profile
@@ -16537,7 +16510,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // the token slip; both stack in the corner when a Pigeon has both.
     var ownCard = p.owner === MY_WALLET;
     var tokenSlip = p.scyllaListing
-      ? '<div class="thumb-listing-badge tk' + (ownCard ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>'
+      ? '<div class="thumb-listing-badge' + (ownCard ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>'
       : '';
     var xrpSlip = (p.xrpListing && p.xrpListing.priceXrp)
       ? '<div class="thumb-listing-badge thumb-listing-badge-xrp' + (ownCard ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtXrp(p.xrpListing.priceXrp)) + ' XRP</div>'
@@ -16706,8 +16679,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // same art MAINFRAME's cards and MY C0!NS already use for it), not a
       // hardcoded $PIGEONS image regardless of what's on screen.
       var listMeta = COLLECTION_META[state.collection];
-      if (tokenLogoUrl(state.collection)) el.amountEntryListCoin.src = tokenLogoUrl(state.collection);
-      else if (listMeta && listMeta.thumb) el.amountEntryListCoin.src = listMeta.thumb;
+      if (listMeta && listMeta.thumb) el.amountEntryListCoin.src = listMeta.thumb;
       // F0REVER (∞) is P!GE0NS-only — reported live as wanting every other
       // collection to always get a real, finite deadline instead. Hidden
       // outright rather than merely disabled, so a non-P!GE0N listing
@@ -19577,8 +19549,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
     el.buySwapPayUnit.textContent = selling ? buySwapTokenShort() : 'XRP';
     el.buySwapReceiveUnit.textContent = selling ? 'XRP' : buySwapTokenShort();
-    markTk(el.buySwapPayUnit, buySwapCollection, selling);
-    markTk(el.buySwapReceiveUnit, buySwapCollection, !selling);
   }
   function setBuySwapDirection(dir){
     if (dir !== 'buy' && dir !== 'sell') return;
@@ -20498,7 +20468,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function cartAmountText(c, value){
     return c.currency === 'xrp' ? fmtXrp(Number(value)) + ' XRP' : fmtPigeonsCompact(value, c.collection);
   }
-  function cartAmountHtml(c, value){ return (c.currency === 'xrp' ? '' : tokenCoinImg(c.collection)) + escapeHtml(cartAmountText(c, value)); }
+  function cartAmountHtml(c, value){ return escapeHtml(cartAmountText(c, value)); }
   function cartTokenLabel(c){ return (COLLECTION_META[c.collection] || {}).tokenLabel || '$T0KEN'; }
   var cartRowState = {}; // nftId -> { cls, text } while/after SUBM!T ALL runs
   var cartSortFirst = 'buy';
@@ -20515,7 +20485,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (isOffer){
       var curToggle = meta.xrpOnly ? '<span class="cx-unit-fixed">XRP</span>'
         : '<span class="cx-unit-seg">' +
-            '<button type="button" class="' + (c.currency === 'token' ? 'active' : '') + '" data-offer-cur="token" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>' + tokenCoinImg(c.collection) + escapeHtml(cartTokenLabel(c)) + '</button>' +
+            '<button type="button" class="' + (c.currency === 'token' ? 'active' : '') + '" data-offer-cur="token" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>' + escapeHtml(cartTokenLabel(c)) + '</button>' +
             '<button type="button" class="' + (c.currency === 'xrp' ? 'active' : '') + '" data-offer-cur="xrp" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>XRP</button>' +
           '</span>';
       body = '<div class="cx-offer">' +
@@ -20632,7 +20602,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     cartTokenCollections().forEach(function(k){
       var v = cartBalances.tokens[k];
       var lbl = COLLECTION_META[k].tokenLabel.replace(/^[$]/, '');
-      html += tile(escapeHtml(lbl) + ' BALANCE', v === undefined || v === null ? '…' : tokenCoinImg(k) + escapeHtml(compactPigeonsNumber(v)));
+      html += tile(escapeHtml(lbl) + ' BALANCE', v === undefined || v === null ? '…' : escapeHtml(compactPigeonsNumber(v)));
     });
     el.cartBalances.innerHTML = html;
   }
@@ -21064,7 +21034,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var meta = COLLECTION_META[c.collection] || {};
     var curToggle = meta.xrpOnly ? '<span class="cx-unit-fixed">XRP</span>'
       : '<span class="cx-unit-seg">' +
-          '<button type="button" class="' + (c.currency === 'token' ? 'active' : '') + '" data-ml-cur="token" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>' + tokenCoinImg(c.collection) + escapeHtml(meta.tokenLabel || '$T0KEN') + '</button>' +
+          '<button type="button" class="' + (c.currency === 'token' ? 'active' : '') + '" data-ml-cur="token" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>' + escapeHtml(meta.tokenLabel || '$T0KEN') + '</button>' +
           '<button type="button" class="' + (c.currency === 'xrp' ? 'active' : '') + '" data-ml-cur="xrp" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>XRP</button>' +
         '</span>';
     return '<div class="cart-row cart-row-offer" data-nftid="' + escapeHtml(c.nftId) + '">' +
@@ -22837,13 +22807,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // representative item" rule.
   function updateTrustlineThumb(collectionKey){
     var meta = COLLECTION_META[collectionKey];
-    // The collection's coin (the C0!N page's logo) when it has one
-    // (reported live 2026-09-27), else the collection art as before.
-    var coin = !meta || meta.xrpOnly ? null : tokenLogoUrl(collectionKey);
-    el.pigeonsBarThumb.classList.toggle('is-coin', !!coin);
-    if (coin){ el.pigeonsBarThumb.style.backgroundImage = 'url("' + coin + '")'; return; }
     if (!meta || !meta.thumb) return;
-    el.pigeonsBarThumb.style.backgroundImage = 'linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.35), rgba(var(--collection-accent-2-rgb),0.45)), url("' + meta.thumb + '")';
+    // The art itself, untinted (the purple wash over it made it look faded
+    // — reported live 2026-09-27).
+    el.pigeonsBarThumb.style.backgroundImage = 'url("' + meta.thumb + '")';
   }
   // Everything in the trustline banner that isn't already driven by
   // fmtPigeons/collectionItemLabel — title text, issuer address + COPY,
@@ -23439,8 +23406,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         el.pigeonsBarDexBtn.href = data.dexUrl;
         el.pigeonsBarDexBtn.textContent = COLLECTION_META[state.collection].tokenLabel + ' C0!N';
         coinPageDexUrl = data.dexUrl;
-        if (data.tokenImageUrl) TOKEN_LOGOS[state.collection] = data.tokenImageUrl;
-        applyTokenLogos();
         el.pigeonsDexLink.style.display = '';
         el.pigeonsBarDexBtn.style.display = MY_WALLET ? '' : 'none';
         updateCarouselCoin(data);
@@ -23451,7 +23416,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
     }).catch(function(){});
   }
-  applyTokenLogos();
   refreshTrustlineRate();
   setInterval(refreshTrustlineRate, 60000);
   // ---- $TOKEN C0!N page ----
@@ -23807,13 +23771,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.extBuyNft.innerHTML = p
       ? (p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '') + '<div><b>' + collectionItemLabel() + ' ' + itemNumberLabel(p) + '</b>' + (price ? '<span class="ebn-price">' + escapeHtml(fmtXrp(price)) + ' XRP</span>' : '') + '</div>'
       : '';
-    el.extBuyText.innerHTML = 'Y0U' + String.fromCharCode(39) + 'RE AB0UT T0 BE SENT T0 <span class="hi">' + escapeHtml(m.name) + '</span> T0 BUY TH!S — !T' + String.fromCharCode(39) + 'S L!STED THERE, S0 !T CAN 0NLY BE B0UGHT THERE.';
+    el.extBuyText.innerHTML = 'TH!S NFT !S L!STED 0N <span class="hi">' + escapeHtml(m.name) + '</span>';
     el.extBuyFees.innerHTML =
-      '<div class="ext-fee"><span class="ext-fee-label">' + escapeHtml(m.name) + ' FEE</span><span class="ext-fee-val">' + escapeHtml(m.fee) + '</span><span class="ext-fee-sub">' + escapeHtml(m.sub) + '</span></div>' +
-      '<div class="ext-fee ext-fee-us"><span class="ext-fee-label">Σκύλλα FEE</span><span class="ext-fee-val">1.23%</span><span class="ext-fee-sub">!N XRP · 1.023% !N ' + escapeHtml((COLLECTION_META[state.collection] || {}).tokenLabel || '$T0KEN') + '</span></div>';
-    el.extBuyTip.textContent = 'THE CREAT0R R0YALTY !S THE SAME EVERYWHERE. 0R MAKE THE 0WNER AN 0FFER 0N Σκύλλα !NSTEAD — !F THEY ACCEPT, !T SETTLES HERE F0R 0UR FEE.';
+      '<div class="ext-fee"><span class="ext-fee-label">' + escapeHtml(m.name) + '</span><span class="ext-fee-val">' + escapeHtml(m.fee) + '</span><span class="ext-fee-label">FEE</span></div>' +
+      '<div class="ext-fee ext-fee-us"><span class="ext-fee-label"><span class="sk-word">Σκύλλα</span></span><span class="ext-fee-val">1.23%</span><span class="ext-fee-label">FEE</span></div>';
+    el.extBuyTip.textContent = '';
     el.extBuyOfferBtn.style.display = (p && COLLECTION_META[state.collection].tradeable && MY_WALLET !== p.owner) ? '' : 'none';
     el.extBuyGoBtn.href = a.href;
+    document.getElementById('extBuyGoLabel').textContent = 'C0NT!NUE T0 ' + m.name;
     el.extBuyModal.style.display = 'flex';
   }
   function closeExtBuyWarning(){ el.extBuyModal.style.display = 'none'; extBuyNft = null; }
