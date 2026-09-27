@@ -5127,6 +5127,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   .card-cart-toggle{ position:absolute; top:0.3rem; left:0.3rem; z-index:2; width:1.9em; height:1.9em; line-height:1.9em; padding:0; background:rgba(0,0,0,0.85); border:1px solid rgba(52,255,133,0.85); border-radius:8px; box-shadow:0 0 8px rgba(52,255,133,0.3); color:#fff; font-size:16px; font-weight:700; text-align:center; cursor:pointer; }
   .card-cart-toggle:hover{ background:rgba(52,255,133,0.25); }
   .card-cart-toggle.in-cart{ background:rgb(52,255,133); color:#000; }
+  .results-quick{ display:flex; justify-content:center; gap:0.6rem; margin:0.2rem 0 0.8rem; }
+  .rq-btn{ position:relative; width:3rem; height:3rem; display:flex; align-items:center; justify-content:center; background:#000; border:1px solid rgba(52,255,133,0.8); border-radius:50%; box-shadow:0 0 10px rgba(52,255,133,0.25); font-size:20px; cursor:pointer; padding:0; }
+  .rq-btn:hover{ background:rgba(52,255,133,0.2); }
+  .rq-count{ position:absolute; top:-0.3rem; right:-0.3rem; min-width:1.2rem; height:1.2rem; padding:0 0.25rem; border-radius:999px; background:rgb(52,255,133); color:#000; font-size:11px; font-weight:700; line-height:1.2rem; }
+  .rq-count:empty{ display:none; }
+  #sweepModal .sweep-scope{ display:flex; padding:3px; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); background:#000; }
+  #sweepModal .sweep-scope-btn{ flex:1 1 0; min-width:0; border:none; border-radius:var(--radius); background:none; color:#fff; font-family:inherit; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:0.6em 0; cursor:pointer; }
+  #sweepModal .sweep-scope-btn.active{ background:rgba(var(--collection-accent-rgb), 0.9); }
+  #sweepModal .sweep-sub .hi{ color:var(--cyan); }
+  body.collection-browse-only .results-quick{ display:none; }
   #sweepModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
   #sweepModal .sweep-modal-panel{ width:min(520px, 94vw); display:flex; flex-direction:column; gap:0.8rem; }
   #sweepModal .simple-picker-header{ position:relative; justify-content:center; }
@@ -6135,8 +6145,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Same shape, own colours (reported live): CANCEL red, L!ST cyan. */
   :is(.result-card .card-action-box .delist-pigeon-btn, #detailScyllaDelistBtn){ border-color:rgba(255,59,92,0.9) !important; box-shadow:0 0 10px rgba(255,59,92,0.3), inset 0 0 12px rgba(255,59,92,0.08) !important; color:#ff3b5c !important; }
   :is(.result-card .card-action-box .delist-pigeon-btn, #detailScyllaDelistBtn):hover{ background:#ff3b5c !important; color:#000 !important; }
-  :is(.result-card .card-action-box .list-open-modal-btn, #detailScyllaListBtn){ border-color:rgba(61,243,236,0.9) !important; box-shadow:0 0 10px rgba(61,243,236,0.3), inset 0 0 12px rgba(61,243,236,0.08) !important; color:var(--cyan) !important; }
-  :is(.result-card .card-action-box .list-open-modal-btn, #detailScyllaListBtn):hover{ background:var(--cyan) !important; color:#000 !important; }
+  :is(.result-card .card-action-box :is(.list-open-modal-btn, .transfer-open-modal-btn), #detailScyllaListBtn, #detailScyllaTransferBtn){ border-color:rgba(61,243,236,0.9) !important; box-shadow:0 0 10px rgba(61,243,236,0.3), inset 0 0 12px rgba(61,243,236,0.08) !important; color:var(--cyan) !important; }
+  :is(.result-card .card-action-box :is(.list-open-modal-btn, .transfer-open-modal-btn), #detailScyllaListBtn, #detailScyllaTransferBtn):hover{ background:var(--cyan) !important; color:#000 !important; }
   #detailScyllaOwnedRow > .bar-btn{ flex:1 1 0; }
   @media (max-width:600px){
     .result-card .card-action-box :is(.delist-pigeon-btn, .list-open-modal-btn, .transfer-open-modal-btn){ height:40px; min-height:40px; padding:0 0.35em !important; font-size:10.5px; letter-spacing:0.01em; }
@@ -9322,6 +9332,32 @@ const SWAP_HTML = `<!DOCTYPE html>
   .market-buy-link:hover{ background:var(--green); color:#000; }
   .xaman-push-toast{ position:fixed; left:50%; top:1.2rem; transform:translate(-50%, -150%); z-index:3000; max-width:92vw; padding:0.9em 1.3em; background:var(--panel-bg-solid); border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 30px rgba(var(--collection-accent-rgb), 0.25); color:var(--white); font-size:15px; font-weight:700; letter-spacing:0.05em; text-align:center; transition:transform 0.25s ease; pointer-events:none; }
   .xaman-push-toast.show{ transform:translate(-50%, 0); }
+  /* Banner, shorter (reported live 2026-09-27: "taking up too much of the
+     page"): the middle buttons sit 2 x 2 instead of stacked, every banner
+     button is the same slimmer height, and the carousel moves up. */
+  @media (min-width:701px){
+    #pigeonsMergedPanel .pigeons-bar{ padding-top:0.5rem; padding-bottom:0.4rem; }
+    #pigeonsMergedPanel .pigeons-bar-balance{ align-items:center; gap:0.9rem; }
+    #pigeonsMergedPanel .pigeons-bar-thumb{ width:92px; height:92px; flex:0 0 92px; }
+    #pigeonsMergedPanel .pigeons-bar-balance-info{ display:grid !important; grid-template-columns:1fr 1fr; gap:0.4rem; align-items:center; }
+    #pigeonsMergedPanel .pigeons-bar-balance-info > .pigeons-bar-balance-label,
+    #pigeonsMergedPanel .pigeons-bar-balance-info > .pigeons-bar-balance-value,
+    #pigeonsMergedPanel .pigeons-bar-balance-info > .pigeons-bar-balance-login{ grid-column:1 / -1; margin:0; }
+    #pigeonsMergedPanel .pigeons-bar-balance-info > .pigeons-bar-balance-buy{ margin:0; width:100%; min-width:0; height:40px; padding:0 0.5em; font-size:13px; white-space:nowrap; }
+    #pigeonsMergedPanel :is(#pigeonsBarLoggedIn, #pigeonsBarCalc) :is(.pigeons-bar-balance-buy, .pigeons-calc-toggle-btn){ height:40px; min-height:0; padding-top:0; padding-bottom:0; margin:0; }
+    #pigeonsMergedPanel :is(#pigeonsBarLoggedIn .pigeons-bar-identity-actions, #pigeonsBarCalc){ gap:0.4rem; }
+    #collectionDetailsPanel .stats-carousel{ margin-top:0.1rem; }
+  }
+  #xamanDailyModal{ display:none; position:fixed; inset:0; z-index:3500; background:rgba(5,5,6,0.8); align-items:center; justify-content:center; padding:1rem; }
+  #xamanDailyModal.show{ display:flex; }
+  #xamanDailyModal .xd-panel{ width:min(420px, 92vw); background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.8); border-radius:14px; box-shadow:0 0 24px rgba(var(--collection-accent-rgb), 0.35); padding:1.5rem 1.3rem; text-align:center; display:flex; flex-direction:column; gap:0.9rem; }
+  #xamanDailyModal .xd-title{ color:#fff; font-size:20px; font-weight:700; letter-spacing:0.1em; }
+  #xamanDailyModal .xd-text{ color:#fff; font-size:13px; font-weight:700; letter-spacing:0.05em; line-height:1.6; opacity:0.9; }
+  #xamanDailyModal .xd-text b{ color:rgb(52,255,133); }
+  #xamanDailyModal .xd-actions{ display:flex; flex-direction:column; gap:0.5rem; }
+  #xamanDailyModal .xd-open{ background:rgba(var(--collection-accent-rgb), 0.95); border:1px solid var(--collection-accent); border-radius:999px; color:#fff; font-family:inherit; font-size:16px; font-weight:700; letter-spacing:0.08em; padding:0.85em 1em; cursor:pointer; box-shadow:0 0 14px rgba(var(--collection-accent-rgb), 0.45); }
+  #xamanDailyModal .xd-open:hover{ background:rgb(52,255,133); border-color:rgb(52,255,133); color:#000; }
+  #xamanDailyModal .xd-cancel{ background:none; border:1px solid rgba(255,255,255,0.3); border-radius:999px; color:#fff; font-family:inherit; font-size:13px; font-weight:700; letter-spacing:0.08em; padding:0.6em 1em; cursor:pointer; }
   .xaman-reconnect-bar{ position:fixed; left:50%; bottom:4.4rem; transform:translate(-50%, 200%); z-index:2900; width:min(560px, 92vw); padding:0.8em 1.2em; background:#000; border:1px solid rgba(52,255,133,0.85); border-radius:999px; box-shadow:0 0 16px rgba(52,255,133,0.35); color:#fff; font-family:inherit; font-size:13px; font-weight:700; letter-spacing:0.05em; text-align:center; cursor:pointer; transition:transform 0.25s ease; }
   .xaman-reconnect-bar.show{ transform:translate(-50%, 0); }
   .xaman-reconnect-bar:hover{ background:rgb(52,255,133); color:#000; }
@@ -11032,7 +11068,11 @@ const SWAP_HTML = `<!DOCTYPE html>
           <span class="simple-picker-title cart-title">SWEEP THE FL00R</span>
           <button type="button" class="simple-picker-close" id="sweepCloseBtn" title="CL0SE">&times;</button>
         </div>
-        <div class="sweep-sub">ADDS THE CHEAPEST NFTS L!STED 0N Σκύλλα T0 Y0UR CART.</div>
+        <div class="sweep-sub" id="sweepSub">ADDS THE CHEAPEST NFTS L!STED 0N Σκύλλα T0 Y0UR CART.</div>
+        <div class="cx-seg sweep-scope" id="sweepScope">
+          <button type="button" class="sweep-scope-btn active" data-scope="view">TH!S V!EW</button>
+          <button type="button" class="sweep-scope-btn" data-scope="all">WH0LE C0LLECT!0N</button>
+        </div>
         <div class="cart-sweep">
           <div class="cart-sweep-row">
             <div class="sale-currency-toggle cart-sweep-currency" id="cartSweepCurrency">
@@ -12218,6 +12258,10 @@ const SWAP_HTML = `<!DOCTYPE html>
                pigeons list itself. -->
           <div class="status-line-standalone-row">
             <div class="status-line" id="statusLine"></div>
+            <div class="results-quick" id="resultsQuick">
+              <button type="button" class="rq-btn" id="quickCartBtn" title="CART">&#128722;<span class="rq-count" id="quickCartCount"></span></button>
+              <button type="button" class="rq-btn" id="quickSweepBtn" title="SWEEP THE FL00R">&#129529;</button>
+            </div>
           </div>
           <div id="resultsArea"></div>
           <div class="scroll-sentinel" id="scrollSentinel"></div>
@@ -12275,7 +12319,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="scylla-listing-row" id="detailScyllaListingRow">
                 <span class="scylla-listing-price" id="detailScyllaPrice">N0 L!ST!NG</span>
                 <button class="scylla-buy-btn" id="detailScyllaBuyBtn" style="display:none;">BUY N0W</button>
-                <button class="bar-btn" id="detailScyllaDelistBtn" style="display:none;">CANCEL</button>
+                <button class="bar-btn" id="detailScyllaDelistBtn" style="display:none;">CANCEL MY L!ST!NG</button>
               </div>
               <div class="listing-countdown" id="detailScyllaCountdown" style="display:none;"></div>
               <!-- Owned + unlisted — real L!ST/TRANSFER buttons side by
@@ -13396,53 +13440,84 @@ const SWAP_HTML = `<!DOCTYPE html>
   var xamanReconnecting = false;
   var xamanReconnectPromise = null;
   function xamanSessionMissing(){ return !!(MY_WALLET && !xamanSdk && window.XummPkce); }
+  // First signature of the day: a small Σκύλλa pop-up explains it and
+  // opens Xaman's sign-in from its own button (Xaman won't let its page
+  // be shown inside another site — frame-ancestors 'self' — so the
+  // approval itself happens in Xaman's window / app). Once approved it
+  // says every other signature today goes straight to the Xaman app, and
+  // the request that asked carries on by itself.
   function startXamanReconnect(){
     if (xamanReconnectPromise) return xamanReconnectPromise;
     var pk = getXamanPkce();
     if (!pk) return Promise.resolve(false);
     xamanReconnecting = true;
-    showXamanReconnectBar('waiting');
     xamanReconnectPromise = new Promise(function(resolve){
-      var done = false;
-      var poll = setInterval(function(){ if (xamanSdk) finish(true); }, 400);
-      var cap = setTimeout(function(){ finish(!!xamanSdk); }, 120000);
+      var done = false, poll = null, cap = null;
       function finish(ok){
         if (done) return;
         done = true;
-        clearInterval(poll);
-        clearTimeout(cap);
+        if (poll) clearInterval(poll);
+        if (cap) clearTimeout(cap);
         xamanReconnecting = false;
         xamanReconnectPromise = null;
-        hideXamanReconnectBar();
+        if (ok){
+          showXamanDaily('done');
+          setTimeout(closeXamanDaily, 2600);
+        } else closeXamanDaily();
         resolve(ok);
       }
-      try {
-        var r = pk.authorize();
-        if (r && r.then) r.then(function(){ adoptXamanSession(false); }, function(){ finish(false); });
-      } catch (e){ finish(false); }
+      showXamanDaily('ask', function(){
+        showXamanDaily('waiting');
+        poll = setInterval(function(){ if (xamanSdk) finish(true); }, 400);
+        cap = setTimeout(function(){ finish(!!xamanSdk); }, 180000);
+        try {
+          var r = pk.authorize();
+          if (r && r.then) r.then(function(){ adoptXamanSession(false); }, function(){ finish(false); });
+        } catch (e){ finish(false); }
+      }, function(){ finish(false); });
     });
     return xamanReconnectPromise;
   }
-  // The small bar that says so (and is itself a reconnect button).
-  function showXamanReconnectBar(mode){
-    var b = document.getElementById('xamanReconnectBar');
-    if (!b){
-      b = document.createElement('button');
-      b.type = 'button';
-      b.id = 'xamanReconnectBar';
-      b.className = 'xaman-reconnect-bar';
-      b.addEventListener('click', function(){ if (!xamanReconnectPromise) startXamanReconnect(); });
-      document.body.appendChild(b);
+  function showXamanDaily(mode, onOpen, onCancel){
+    var o = document.getElementById('xamanDailyModal');
+    if (!o){
+      o = document.createElement('div');
+      o.id = 'xamanDailyModal';
+      o.innerHTML = '<div class="xd-panel">' +
+        '<div class="xd-title"></div><div class="xd-text"></div>' +
+        '<div class="xd-actions"><button type="button" class="xd-open"></button><button type="button" class="xd-cancel">CANCEL</button></div>' +
+      '</div>';
+      document.body.appendChild(o);
     }
-    b.innerHTML = mode === 'waiting'
-      ? '0NE QU!CK APPR0VAL !N <span style="text-transform:none;">Xaman</span> (0NCE A DAY) — THEN Y0UR REQUEST G0ES STRA!GHT T0 THE APP'
-      : '<span style="text-transform:none;">Xaman</span> S!GN-!N EXP!RED (!T LASTS 24H) — TAP T0 REC0NNECT S0 REQUESTS G0 STRA!GHT T0 Y0UR APP';
-    b.classList.add('show');
+    var title = o.querySelector('.xd-title'), text = o.querySelector('.xd-text');
+    var openBtn = o.querySelector('.xd-open'), cancelBtn = o.querySelector('.xd-cancel');
+    var X = '<span style="text-transform:none;">Xaman</span>';
+    if (mode === 'ask'){
+      title.innerHTML = 'F!RST S!GNATURE T0DAY';
+      text.innerHTML = 'APPR0VE 0NE QU!CK S!GN-!N !N ' + X + ' (!T LASTS 24 H0URS).<br><b>AFTER TH!S, EVERY S!GNATURE T0DAY G0ES STRA!GHT T0 Y0UR ' + X + ' APP</b> — N0 QR C0DES.';
+      openBtn.innerHTML = '0PEN ' + X;
+      openBtn.style.display = '';
+      cancelBtn.style.display = '';
+      openBtn.onclick = function(){ if (onOpen) onOpen(); };
+      cancelBtn.onclick = function(){ if (onCancel) onCancel(); };
+    } else if (mode === 'waiting'){
+      title.innerHTML = 'APPR0VE !N ' + X;
+      text.innerHTML = 'APPR0VE THE S!GN-!N !N ' + X + ' — Y0UR REQUEST G0ES STRA!GHT T0 THE APP AFTER.';
+      openBtn.style.display = 'none';
+      cancelBtn.style.display = '';
+    } else {
+      title.innerHTML = 'C0NNECTED ✓';
+      text.innerHTML = 'EVERY 0THER S!GNATURE T0DAY G0ES STRA!GHT T0 Y0UR ' + X + ' APP.';
+      openBtn.style.display = 'none';
+      cancelBtn.style.display = 'none';
+    }
+    o.classList.add('show');
   }
-  function hideXamanReconnectBar(){
-    var b = document.getElementById('xamanReconnectBar');
-    if (b) b.classList.remove('show');
+  function closeXamanDaily(){
+    var o = document.getElementById('xamanDailyModal');
+    if (o) o.classList.remove('show');
   }
+  function hideXamanReconnectBar(){} // (the old bottom bar — replaced by the pop-up above)
   // Waits for a reconnect that a click just started, then signs normally.
   function signFetch(url, init){
     if (!xamanSdk && xamanReconnectPromise){
@@ -13749,7 +13824,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
-   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartSortBar','sweepModal','sweepCloseBtn','openSweepBtn',
+   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartSortBar','sweepModal','sweepCloseBtn','openSweepBtn','sweepSub','sweepScope',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
    'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -13776,7 +13851,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutSelected','traitsFlyoutCats','traitsFlyoutVals','traitsFlyoutBack','traitsCatsScrollPrevBtn','traitsCatsScrollNextBtn',
    'traitsFlyoutSortRarity','traitsFlyoutSortAz','traitsFlyoutSearchInput',
-   'statusLine','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
+   'statusLine','resultsQuick','quickCartBtn','quickCartCount','quickSweepBtn','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote','salesCurrencyToggle',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle','walletScopeBanner','walletScopeCoins',
    'flockGridPanel',
@@ -15654,7 +15729,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         // already covers el.resultsArea too) — no separate wiring needed.
         return '<div class="thumb-offer thumb-offer-own" data-nftid="' + escapeHtml(p.nftId) + '">' +
           '<div class="owned-action-row">' +
-            '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '">CANCEL</button>' +
+            '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '">CANCEL MY L!ST!NG</button>' +
           '</div>' +
         '</div>';
       }
@@ -17587,7 +17662,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? '<div class="listing-countdown" style="text-align:center; margin-bottom:0.5rem;">' + escapeHtml(ownedListingCountdown) + '</div>'
       : '';
     var primaryBtn = listedInfo
-      ? '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '">CANCEL</button>'
+      ? '<button class="bar-btn delist-pigeon-btn" data-nftid="' + escapeHtml(p.nftId) + '">CANCEL MY L!ST!NG</button>'
       : '<button class="bar-btn list-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">L!ST</button>';
     var transferBtn = '<button class="bar-btn transfer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">TRANSFER</button>';
     return offersHtml + listedNote + '<div class="owned-stack-row">' + primaryBtn + transferBtn + '</div>';
@@ -19819,6 +19894,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       b.textContent = on ? '✓ !N CART' : 'ADD T0 CART';
     });
     el.openCartCount.textContent = list.length ? '(' + list.length + ')' : '';
+    el.quickCartCount.textContent = list.length ? String(list.length) : '';
     el.cartPillCount.textContent = list.length;
     el.cartPill.style.display = (list.length && MY_WALLET) ? '' : 'none';
   }
@@ -19994,6 +20070,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.cartSweepTokenTab.style.display = meta.xrpOnly ? 'none' : '';
     setCartSweepCurrency(meta.xrpOnly ? 'xrp' : cartSweepCurrency);
     el.cartSweepNote.textContent = '';
+    // TH!S V!EW = whatever traits / edition you're looking at right now
+    // (e.g. one trait with 3 listed); only offered when something is picked.
+    var viewDesc = sweepViewDesc();
+    el.sweepScope.style.display = viewDesc ? '' : 'none';
+    setSweepScope(viewDesc ? 'view' : 'all'); // something selected: sweep that by default
     el.sweepModal.style.display = 'flex';
     setTimeout(function(){ try { el.cartSweepInput.focus(); } catch (e){} }, 50);
   }
@@ -20023,6 +20104,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   // SWEEP: the N cheapest Σκύλλa listings in this collection (in the chosen
   // currency), skipping your own and anything already in the cart.
+  var sweepScope = 'view';
+  function sweepViewDesc(){
+    var f = activeFilters();
+    var parts = f.map(function(x){ return String(x.trait).toUpperCase() + ': ' + String(x.value).toUpperCase(); });
+    if (state.edition === 'LOW') parts.push('1ST ED!T!0N');
+    if (state.edition === 'HIGH') parts.push('2ND ED!T!0N');
+    return parts.join(' · ');
+  }
+  function setSweepScope(v){
+    sweepScope = v;
+    el.sweepScope.querySelectorAll('.sweep-scope-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-scope') === v); });
+    var desc = sweepViewDesc();
+    el.sweepSub.innerHTML = v === 'view' && desc
+      ? 'THE CHEAPEST Σκύλλα L!ST!NGS !N <span class="hi">' + escapeHtml(desc) + '</span>'
+      : 'THE CHEAPEST Σκύλλα L!ST!NGS !N THE WH0LE C0LLECT!0N';
+  }
+  el.sweepScope.addEventListener('click', function(e){
+    var b = e.target.closest('.sweep-scope-btn');
+    if (b) setSweepScope(b.getAttribute('data-scope'));
+  });
   function sweepFloor(){
     if (cartRun) return;
     var n = parseInt(String(el.cartSweepInput.value).replace(/[^0-9]/g, ''), 10);
@@ -20034,9 +20135,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     var curLabel = cur === 'xrp' ? 'XRP' : COLLECTION_META[state.collection].tokenLabel;
     el.cartSweepNote.textContent = 'F!ND!NG THE FL00R...';
     el.cartSweepBtn.disabled = true;
+    var scoped = sweepScope === 'view' && sweepViewDesc();
+    var f = scoped ? activeFilters() : [];
+    var extra = {
+      filters: f.length ? JSON.stringify(f) : undefined,
+      numberRange: scoped && (state.edition === 'LOW' || state.edition === 'HIGH') ? (state.edition === 'LOW' ? 'low' : 'high') : undefined
+    };
     var req = cur === 'xrp'
-      ? api({ crossListing: 'asc', marketplace: 'scylla', skip: 0, limit: 60 })
-      : api({ scyllaListed: 1, dir: 'asc', skip: 0, limit: 60 });
+      ? api(Object.assign({ crossListing: 'asc', marketplace: 'scylla', skip: 0, limit: 60 }, extra))
+      : api(Object.assign({ scyllaListed: 1, dir: 'asc', skip: 0, limit: 60 }, extra));
     req.then(function(data){
       var list = getCart();
       var have = {};
@@ -20051,7 +20158,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         added++;
       });
       setCart(list);
-      el.cartSweepNote.textContent = !added ? 'N0TH!NG M0RE L!STED 0N Σκύλλα !N ' + curLabel + '.'
+      el.cartSweepNote.textContent = !added ? 'N0TH!NG M0RE L!STED 0N Σκύλλα !N ' + curLabel + (scoped ? ' F0R TH!S V!EW' : '') + '.'
         : added < n ? 'ADDED ' + added + ' — THAT\\'S EVERY 0THER ' + curLabel + ' L!ST!NG 0N Σκύλλα.'
         : 'ADDED THE ' + added + ' CHEAPEST.';
       refreshCartBadges();
@@ -20238,6 +20345,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderCart();
   });
   el.openSweepBtn.addEventListener('click', openSweep);
+  el.quickCartBtn.addEventListener('click', openCart);
+  el.quickSweepBtn.addEventListener('click', openSweep);
   el.sweepCloseBtn.addEventListener('click', closeSweep);
   el.sweepModal.addEventListener('click', function(e){ if (e.target === el.sweepModal) closeSweep(); });
   el.cartPill.addEventListener('click', openCart);
