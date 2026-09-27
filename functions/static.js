@@ -4246,11 +4246,20 @@ const SWAP_HTML = `<!DOCTYPE html>
      size/weight now come from the shared .bottom-controls-btn base (all
      three read the same size) — this only overrides layout/spacing. */
   .bottom-controls-btn-top{ flex:0 0 auto; padding:0.75em 1.1em; }
+  .bottom-quick{ flex:0 0 auto; display:flex; align-items:center; gap:0.5rem; padding:0.35rem 0.7rem; border-left:1px solid var(--border-dim); }
+  .bottom-quick .bq-btn{ width:2.7rem; height:2.7rem; font-size:18px; }
+  .bottom-quick .bq-top{ color:var(--cyan); border-color:rgba(61,243,236,0.85); box-shadow:0 0 10px rgba(61,243,236,0.3); font-size:16px; }
+  .bottom-quick .bq-top:hover{ background:rgba(61,243,236,0.18); }
+  body.own-scope .bottom-quick :is(#bottomSatchelBtn, #bottomSweepBtn){ display:none; }
+  body:not(.own-scope) #bottomMultiListBtn{ display:none; }
+  body.collection-browse-only .bottom-quick .bq-btn:not(.bq-top){ display:none; }
   /* Phones (reported live 2026-09-25: DATABASE "broken on mobile"):
      18px labels cut off at 390px wide ("S0RT B...", "F!LTER ..."). */
   @media (max-width:700px){
     .bottom-controls-btn{ font-size:13px; letter-spacing:0.03em; white-space:normal; line-height:1.2; }
     .bottom-controls-btn-top{ padding:0.6em 0.8em; }
+    .bottom-quick{ gap:0.3rem; padding:0.3rem 0.35rem; }
+    .bottom-quick .bq-btn{ width:2.3rem; height:2.3rem; font-size:15px; }
   }
   /* Own bottom padding on the page's actual scrollable content so the
      last row of result cards never sits underneath this fixed bar with
@@ -6616,6 +6625,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   .notify-toast{ pointer-events:auto; display:flex; align-items:center; gap:0.75rem; padding:0.75em 0.9em; background:var(--panel-bg-solid); border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-left:4px solid var(--green); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.6); color:var(--white); text-decoration:none; font-size:14px; font-weight:700; letter-spacing:0.04em; animation:notifyIn 0.25s ease; cursor:pointer; }
   .notify-toast img{ width:44px; height:44px; border-radius:var(--radius); object-fit:cover; flex:0 0 auto; }
   .notify-toast .nt-sub{ display:block; font-size:12px; font-weight:400; color:var(--grey); margin-top:0.15rem; }
+  .notify-toast{ position:relative; padding-right:2.4em; }
+  .notify-toast .nt-x{ position:absolute; top:50%; right:0.45rem; transform:translateY(-50%); width:1.7em; height:1.7em; padding:0; border-radius:50%; background:#000; border:1px solid rgba(255,255,255,0.35); color:#fff; font-size:15px; line-height:1; cursor:pointer; }
+  .notify-toast .nt-x:hover{ border-color:#ff3b5c; color:#ff3b5c; }
+  .nt-clear-all{ pointer-events:auto; align-self:flex-end; background:#000; border:1px solid rgba(255,59,92,0.85); border-radius:999px; color:#ff3b5c; font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.08em; padding:0.4em 0.9em; cursor:pointer; }
+  .nt-clear-all:hover{ background:#ff3b5c; color:#000; }
   .notify-toast.nt-sale{ border-left-color:var(--cyan); }
   .notify-toast.nt-burn, .notify-toast.nt-delist{ border-left-color:var(--magenta); }
   @keyframes notifyIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
@@ -7847,6 +7861,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-rarity-row .tc-label{ font-size:11px !important; margin:0 !important; }
   #screenDetail .detail-rarity-row .tc-value{ font-size:17px !important; margin:0.1rem 0 0 !important; }
   #detailRarityExpandBtn{ display:none !important; }
+  body.popup-open #bottomControlsBar{ display:none !important; }
+  /* Phones (reported live 2026-09-27): the NFT page is its own page, not a
+     box floating over DATABASE — it starts right under the real top bar
+     (--top-bar-h, measured in JS; the fixed 66px left a strip of the
+     banner showing), no panel border, the picture edge to edge, and the
+     ‹ › arrows in the corners of the bottom BACK bar instead of over the
+     picture. */
+  @media (max-width:760px){
+    #screenDetail, #screenProfile, #screenWalletHistory, #screenAchievements{ top:var(--top-bar-h, var(--global-ticker-h)) !important; }
+    #screenDetail{ border:none !important; border-radius:0 !important; box-shadow:none !important; padding-bottom:calc(56px + env(safe-area-inset-bottom, 0px)) !important; }
+    #screenDetail #detailImgBox{ width:calc(100% + 2 * var(--detail-pad-x, 16px)) !important; max-width:none !important; height:auto !important; aspect-ratio:1 / 1; margin-left:calc(-1 * var(--detail-pad-x, 16px)) !important; margin-right:calc(-1 * var(--detail-pad-x, 16px)) !important; border-left:none !important; border-right:none !important; border-radius:0 !important; }
+    #screenDetail #detailImgBox img{ width:100%; height:100%; object-fit:contain; }
+    #screenDetail > .detail-nav-btn, .detail-nav-btn#detailPrevBtn, .detail-nav-btn#detailNextBtn{ top:auto !important; bottom:calc(2px + env(safe-area-inset-bottom, 0px)) !important; transform:none !important; z-index:80; width:34px; height:34px; }
+    #detailPrevBtn{ left:0.5rem !important; }
+    #detailNextBtn{ right:0.5rem !important; }
+  }
   /* Picture capped by the screen's height so the offer box under it fits
      without scrolling (full 560px on tall screens). */
   @media (min-width:701px){
@@ -11018,7 +11048,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   <div class="flyout-popup-backdrop" id="flyoutPopupBackdrop"></div>
   <div class="bottom-controls-bar" id="bottomControlsBar" style="display:none;">
     <button type="button" class="bottom-controls-btn" id="bottomSortBtn">S0RT BY ▾</button>
-    <button type="button" class="bottom-controls-btn bottom-controls-btn-top" id="backToTopBtn" aria-label="BACK T0 T0P">▲ BACK T0 T0P</button>
+    <!-- SATCHEL / BACK T0 T0P / SWEEP as round buttons in the middle
+         (reported live 2026-09-27); your own view gets MULT!-L!ST. -->
+    <div class="bottom-quick">
+      <button type="button" class="rq-btn bq-btn" id="bottomSatchelBtn" title="SATCHEL">&#127890;<span class="rq-count" id="bottomSatchelCount"></span></button>
+      <button type="button" class="rq-btn bq-btn rq-btn-mlist" id="bottomMultiListBtn" title="MULT!-L!ST">&#127991;&#65039;<span class="rq-count" id="bottomMultiListCount"></span></button>
+      <button type="button" class="rq-btn bq-btn bq-top" id="backToTopBtn" title="BACK T0 T0P" aria-label="BACK T0 T0P">&#9650;</button>
+      <button type="button" class="rq-btn bq-btn" id="bottomSweepBtn" title="SWEEP THE FL00R">&#129529;</button>
+    </div>
     <button type="button" class="bottom-controls-btn" id="bottomTraitsBtn">F!LTER BY TRA!TS ▾</button>
   </div>
 
@@ -11091,7 +11128,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
             <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;">SWAP $P!GE0NS</button>
             <!-- Under BUY $P!GE0NS (reported live 2026-09-25). -->
-            <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openCartBtn">&#128722; CART <span id="openCartCount"></span></button>
+            <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openCartBtn">&#127890; SATCHEL <span id="openCartCount"></span></button>
           </div>
         </div>
 
@@ -11340,7 +11377,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <button type="button" class="sweep-step" id="sweepPlus">+</button>
           <button type="button" class="sweep-max" id="sweepMax">MAX</button>
         </div>
-        <button type="button" class="cart-buy-btn cx-submit" id="cartSweepBtn">ADD T0 CART</button>
+        <button type="button" class="cart-buy-btn cx-submit" id="cartSweepBtn">ADD T0 SATCHEL</button>
         <div class="cart-sweep-note" id="cartSweepNote"></div>
       </div>
     </div>
@@ -11348,7 +11385,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="pigeons-calc-panel cart-modal-panel">
         <div class="simple-picker-header">
           <button type="button" class="cx-clear" id="cartClearBtn">CLEAR ALL</button>
-          <span class="simple-picker-title cart-title">&#128722; CART</span>
+          <span class="simple-picker-title cart-title">&#127890; SATCHEL</span>
           <button type="button" class="simple-picker-close" id="cartCloseBtn" title="CL0SE">&times;</button>
         </div>
         <!-- Same layout language as SWAP (reported live as the guide):
@@ -11378,7 +11415,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <button type="button" class="cart-buy-btn cx-submit" id="cartBuyBtn">SUBM!T ALL S!GNATURES</button>
       </div>
     </div>
-    <button type="button" class="cart-pill" id="cartPill" style="display:none;">&#128722; <span id="cartPillCount">0</span> :: V!EW CART</button>
+    <button type="button" class="cart-pill" id="cartPill" style="display:none;">&#127890; <span id="cartPillCount">0</span> :: V!EW SATCHEL</button>
 
     <!-- MULT!-L!ST — list several of your own NFTs at once, each at its own
          price (your own view's replacement for CART + SWEEP). -->
@@ -12616,7 +12653,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="status-line-standalone-row">
             <div class="status-line" id="statusLine"></div>
             <div class="results-quick" id="resultsQuick">
-              <button type="button" class="rq-btn" id="quickCartBtn" title="CART">&#128722;<span class="rq-count" id="quickCartCount"></span></button>
+              <button type="button" class="rq-btn" id="quickCartBtn" title="SATCHEL">&#127890;<span class="rq-count" id="quickCartCount"></span></button>
               <button type="button" class="rq-btn" id="quickSweepBtn" title="SWEEP THE FL00R">&#129529;</button>
               <button type="button" class="rq-btn rq-btn-mlist" id="quickMultiListBtn" title="MULT!-L!ST">&#127991;&#65039;<span class="rq-count" id="quickMultiListCount"></span></button>
             </div>
@@ -13718,13 +13755,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   var xamanPkce = null;
   var xamanSdk = null;
   var pkceLoginPending = false;
-  function getXamanPkce(){
+  // redirectUrl: where Xaman sends a phone back to after signing in —
+  // normally this page; the daily sign-in may add ?satchel=<backup id>
+  // (see startXamanReconnect) so the satchel comes back with it.
+  function getXamanPkce(redirectUrl){
+    if (redirectUrl && xamanPkce && xamanPkce.__redirect !== redirectUrl) xamanPkce = null;
     if (!xamanPkce && window.XummPkce){
       xamanPkce = new window.XummPkce(XAMAN_BROWSER_KEY, {
         implicit: true,
         rememberJwt: true,
-        redirectUrl: window.location.origin + window.location.pathname
+        redirectUrl: redirectUrl || (window.location.origin + window.location.pathname)
       });
+      xamanPkce.__redirect = redirectUrl || null;
       xamanPkce.on('error', function(){
         if (!pkceLoginPending) return;
         pkceLoginPending = false;
@@ -13815,6 +13857,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     var pk = getXamanPkce();
     if (!pk) return Promise.resolve(false);
     xamanReconnecting = true;
+    // Back the satchel up first (phones leave the page for this sign-in and
+    // may come back in another browser) — ready long before OPEN is tapped.
+    var satchelBackupId = null;
+    var satchelNow = MY_WALLET ? getCart() : [];
+    if (satchelNow.length){
+      fetch('/api/satchel-backup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: satchelNow }) })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ if (d && d.ok && d.id) satchelBackupId = d.id; })
+        .catch(function(){});
+    }
     xamanReconnectPromise = new Promise(function(resolve){
       var done = false, poll = null, cap = null;
       function finish(ok){
@@ -13835,6 +13887,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         poll = setInterval(function(){ if (xamanSdk) finish(true); }, 400);
         cap = setTimeout(function(){ finish(!!xamanSdk); }, 180000);
         try {
+          if (satchelBackupId) pk = getXamanPkce(window.location.origin + window.location.pathname + '?satchel=' + satchelBackupId) || pk;
           var r = pk.authorize();
           if (r && r.then) r.then(function(){ adoptXamanSession(false); }, function(){ finish(false); });
         } catch (e){ finish(false); }
@@ -14167,7 +14220,7 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','dbViewBtn','dbViewMenu','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
-   'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','traitsFlyoutEyebrow','bottomControlsBar','bottomSortBtn','bottomTraitsBtn','backToTopBtn',
+   'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','traitsFlyoutEyebrow','bottomControlsBar','bottomSortBtn','bottomTraitsBtn','backToTopBtn','bottomSatchelBtn','bottomSatchelCount','bottomMultiListBtn','bottomMultiListCount','bottomSweepBtn',
    'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','showCollectionWatchlistBtn','pigeonsBarDexBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
@@ -14942,6 +14995,30 @@ const SWAP_HTML = `<!DOCTYPE html>
     new ResizeObserver(updateTraitsCatsHscrollArrows).observe(el.traitsFlyoutCats);
   }
 
+  // SORT BY / BACK T0 T0P / FILTER BY TRA!TS only while you're looking at
+  // the grid itself: hidden whenever any pop-up (#...Modal) is open.
+  (function(){
+    var modals = Array.prototype.slice.call(document.querySelectorAll('[id$="Modal"]'));
+    function sync(){
+      var open = modals.some(function(m){ return m.isConnected && getComputedStyle(m).display !== 'none' && getComputedStyle(m).visibility !== 'hidden'; });
+      document.body.classList.toggle('popup-open', open);
+    }
+    if (window.MutationObserver){
+      var mo = new MutationObserver(sync);
+      modals.forEach(function(m){ mo.observe(m, { attributes: true, attributeFilter: ['style', 'class'] }); });
+    }
+    sync();
+  })();
+  // The real height of the fixed top bar (it's shorter on phones than the
+  // desktop --global-ticker-h), for the full-screen pages to start under.
+  (function(){
+    var bar = document.getElementById('globalTopBar');
+    if (!bar) return;
+    function sync(){ var h = Math.round(bar.getBoundingClientRect().height); if (h > 0) document.documentElement.style.setProperty('--top-bar-h', h + 'px'); }
+    sync();
+    window.addEventListener('resize', sync);
+    if (window.ResizeObserver) new ResizeObserver(sync).observe(bar);
+  })();
   function showScreen(name){
     if (el.rarityModal) el.rarityModal.style.display = 'none';
     if (name === 'browse'){
@@ -16135,7 +16212,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var cartSide = '';
     if (cartListingOf(p)){
       var inCartBuy = isInCart(p.nftId);
-      cartSide = '<button type="button" class="card-buy-cart-btn' + (inCartBuy ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="' + (inCartBuy ? 'REM0VE FR0M CART' : 'ADD T0 CART') + '">' + (inCartBuy ? '✓' : '&#128722;') + '</button>';
+      cartSide = '<button type="button" class="card-buy-cart-btn' + (inCartBuy ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="' + (inCartBuy ? 'REM0VE FR0M SATCHEL' : 'ADD T0 SATCHEL') + '">' + (inCartBuy ? '✓' : '&#127890;') + '</button>';
     }
     if (canBuy){
       topHtml = '<div class="card-buy-split"><button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -16148,7 +16225,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Not listed anywhere: into the cart as an 0FFER (amount typed in
       // the cart, sent with everything else from there).
       var inCart = isInCart(p.nftId);
-      topHtml = '<button type="button" class="card-add-cart-btn' + (inCart ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' + (inCart ? '✓ !N CART' : 'ADD T0 CART') + '</button>';
+      topHtml = '<button type="button" class="card-add-cart-btn' + (inCart ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' + (inCart ? '✓ !N SATCHEL' : 'ADD T0 SATCHEL') + '</button>';
     }
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="owned-action-row has-market-buy">' +
@@ -16584,8 +16661,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
     }
     el.amountEntryModal.style.display = 'flex';
-    (mode === 'list' ? el.amountEntryListInput : mode === 'offer' ? el.amountEntryOfferInput : el.amountEntryTransferInput).focus();
+    // Phones: just the pop-up, no keyboard jumping up until you tap the
+    // box yourself (reported live 2026-09-27).
+    if (!isTouchPhone()) (mode === 'list' ? el.amountEntryListInput : mode === 'offer' ? el.amountEntryOfferInput : el.amountEntryTransferInput).focus();
   }
+  function isTouchPhone(){ return window.matchMedia && window.matchMedia('(max-width: 760px), (hover: none) and (pointer: coarse)').matches; }
   function closeAmountEntryModal(){
     el.amountEntryModal.style.display = 'none';
     amountEntryPigeon = null;
@@ -20237,7 +20317,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function cartToggleHtml(p){
     if (!cartListingOf(p)) return '';
     var inCart = isInCart(p.nftId);
-    return '<button class="card-cart-toggle' + (inCart ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="' + (inCart ? 'REM0VE FR0M CART' : 'ADD T0 CART') + '">' + (inCart ? '✓' : '+') + '</button>';
+    return '<button class="card-cart-toggle' + (inCart ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="' + (inCart ? 'REM0VE FR0M SATCHEL' : 'ADD T0 SATCHEL') + '">' + (inCart ? '✓' : '+') + '</button>';
   }
   function cartEntryFor(p, l){
     return { mode: 'buy', nftId: p.nftId, collection: state.collection, currency: l.currency, price: l.price, number: p.number, name: p.name || null, image: p.image || null };
@@ -20254,7 +20334,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var idx = list.findIndex(function(c){ return c.nftId === p.nftId; });
     if (idx !== -1) list.splice(idx, 1);
     else if (list.length >= CART_MAX){
-      alert('Y0UR CART !S FULL — ' + CART_MAX + ' NFTS MAX.');
+      alert('Y0UR SATCHEL !S FULL — ' + CART_MAX + ' NFTS MAX.');
       return;
     }
     else if (mode === 'offer'){
@@ -20277,21 +20357,22 @@ const SWAP_HTML = `<!DOCTYPE html>
       var on = !!ids[b.getAttribute('data-nftid')];
       b.classList.toggle('in-cart', on);
       b.textContent = on ? '✓' : '+';
-      b.title = on ? 'REM0VE FR0M CART' : 'ADD T0 CART';
+      b.title = on ? 'REM0VE FR0M SATCHEL' : 'ADD T0 SATCHEL';
     });
     document.querySelectorAll('.card-buy-cart-btn').forEach(function(b){
       var on = !!ids[b.getAttribute('data-nftid')];
       b.classList.toggle('in-cart', on);
-      b.innerHTML = on ? '✓' : '&#128722;';
-      b.title = on ? 'REM0VE FR0M CART' : 'ADD T0 CART';
+      b.innerHTML = on ? '✓' : '&#127890;';
+      b.title = on ? 'REM0VE FR0M SATCHEL' : 'ADD T0 SATCHEL';
     });
     document.querySelectorAll('.card-add-cart-btn').forEach(function(b){
       var on = !!ids[b.getAttribute('data-nftid')];
       b.classList.toggle('in-cart', on);
-      b.textContent = on ? '✓ !N CART' : 'ADD T0 CART';
+      b.textContent = on ? '✓ !N SATCHEL' : 'ADD T0 SATCHEL';
     });
     el.openCartCount.textContent = list.length ? '(' + list.length + ')' : '';
     el.quickCartCount.textContent = list.length ? String(list.length) : '';
+    el.bottomSatchelCount.textContent = list.length ? String(list.length) : '';
     el.cartPillCount.textContent = list.length;
     el.cartPill.style.display = (list.length && MY_WALLET) ? '' : 'none';
   }
@@ -20390,7 +20471,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var list = getCart();
     var running = !!cartRun;
     if (!list.length && !running){
-      el.cartList.innerHTML = '<div class="cart-empty"><div class="cart-empty-title">Y0UR CART !S EMPTY</div><div class="cart-empty-sub">ADD NFTS L!STED 0N <span class="sk-word">Σκύλλα</span>, THEN S!GN F0R THEM ALL !N 0NE G0.</div></div>';
+      el.cartList.innerHTML = '<div class="cart-empty"><div class="cart-empty-title">Y0UR SATCHEL !S EMPTY</div><div class="cart-empty-sub">ADD NFTS L!STED 0N <span class="sk-word">Σκύλλα</span>, THEN S!GN F0R THEM ALL !N 0NE G0.</div></div>';
     } else {
       var rows = (running ? cartRun.items : list).slice();
       // S0RT: buys first or offers first (stable within each kind).
@@ -20516,7 +20597,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.sweepPlus.disabled = sweepN >= max;
     el.sweepMax.disabled = !max;
     el.cartSweepBtn.disabled = !max;
-    el.cartSweepBtn.textContent = max ? 'ADD ' + sweepN + ' T0 CART' : 'N0TH!NG T0 ADD';
+    el.cartSweepBtn.textContent = max ? 'ADD ' + sweepN + ' T0 SATCHEL' : 'N0TH!NG T0 ADD';
   }
   function loadSweepCandidates(){
     var cur = COLLECTION_META[state.collection].xrpOnly ? 'xrp' : cartSweepCurrency;
@@ -20537,7 +20618,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       getCart().forEach(function(c){ have[c.nftId] = true; });
       sweepCandidates = (data.items || []).filter(function(p){ return !have[p.nftId] && cartListingOf(p, cur); });
       el.sweepAvail.innerHTML = '<span class="hi">' + sweepCandidates.length + '</span> L!STED 0N Σκύλλα !N ' + escapeHtml(curLabel) +
-        (sweepRoom() < sweepCandidates.length ? ' · Y0UR CART HAS R00M F0R ' + sweepRoom() : '');
+        (sweepRoom() < sweepCandidates.length ? ' · Y0UR SATCHEL HAS R00M F0R ' + sweepRoom() : '');
       sweepN = Math.min(sweepCandidates.length, sweepRoom());
       renderSweepPicker();
     }).catch(function(){
@@ -20752,12 +20833,37 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.quickCartBtn.addEventListener('click', openCart);
   el.quickSweepBtn.addEventListener('click', openSweep);
+  el.bottomSatchelBtn.addEventListener('click', openCart);
+  el.bottomSweepBtn.addEventListener('click', openSweep);
   el.sweepCloseBtn.addEventListener('click', closeSweep);
   el.sweepModal.addEventListener('click', function(e){ if (e.target === el.sweepModal) closeSweep(); });
   el.cartPill.addEventListener('click', openCart);
   el.cartCloseBtn.addEventListener('click', closeCart);
   el.cartModal.addEventListener('click', function(e){ if (e.target === el.cartModal) closeCart(); });
   refreshCartBadges();
+  // Back from Xaman's daily sign-in with ?satchel=<id>: put the saved
+  // satchel back (merged with anything already here), then show it.
+  (function restoreSatchelBackup(){
+    var id = null;
+    try { id = new URLSearchParams(window.location.search).get('satchel'); } catch (e){}
+    if (!id || !/^[0-9a-f]{24}$/.test(id)) return;
+    try {
+      var u = new URL(window.location.href);
+      u.searchParams.delete('satchel');
+      history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+    } catch (e){}
+    fetch('/api/satchel-backup?id=' + id).then(function(r){ return r.json(); }).then(function(d){
+      if (!d || !d.ok || !Array.isArray(d.items) || !d.items.length) return;
+      if (MY_WALLET && d.wallet && d.wallet !== MY_WALLET) return;
+      var list = getCart();
+      var have = {};
+      list.forEach(function(c){ have[c.nftId] = true; });
+      d.items.forEach(function(c){ if (!have[c.nftId] && list.length < CART_MAX) list.push(c); });
+      setCart(list);
+      refreshCartBadges();
+      if (MY_WALLET) openCart();
+    }).catch(function(){});
+  })();
 
   // ---- MULT!-L!ST — your own NFTs (the FL0CK / own-wallet view) take the
   // place of CART + SWEEP there (reported live 2026-09-27): tap + on any
@@ -20808,6 +20914,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       b.title = on ? 'REM0VE FR0M MULT!-L!ST' : 'ADD T0 MULT!-L!ST';
     });
     el.quickMultiListCount.textContent = list.length ? String(list.length) : '';
+    el.bottomMultiListCount.textContent = list.length ? String(list.length) : '';
   }
   // Your own view swaps CART + SWEEP for MULT!-L!ST.
   function syncOwnScopeQuick(){
@@ -21055,6 +21162,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (!mlRun.uuid) runMListStep(openXamanPopup());
   });
   el.quickMultiListBtn.addEventListener('click', openMultiList);
+  el.bottomMultiListBtn.addEventListener('click', openMultiList);
   el.mlCloseBtn.addEventListener('click', closeMultiList);
   el.multiListModal.addEventListener('click', function(e){ if (e.target === el.multiListModal) closeMultiList(); });
 
@@ -23899,11 +24007,40 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (href) t.href = href;
     t.innerHTML = (meta.thumb ? '<img src="' + escapeHtml(meta.thumb) + '" alt="">' : '') +
       '<span>' + escapeHtml((meta.itemLabel || key) + (e.number ? ' #' + e.number : '')) + ' ' + NOTIFY_VERBS[e.type] + (price ? ' ' + escapeHtml(price) : '') +
-      '<span class="nt-sub">' + escapeHtml(meta.label || key) + ' :: ' + escapeHtml(relativeTimeText(new Date(e.time * 1000).toISOString())) + '</span></span>';
+      '<span class="nt-sub">' + escapeHtml(meta.label || key) + ' :: ' + escapeHtml(relativeTimeText(new Date(e.time * 1000).toISOString())) + '</span></span>' +
+      '<button type="button" class="nt-x" title="CLEAR" aria-label="CLEAR">&times;</button>';
     el.notifyToasts.appendChild(t);
-    while (el.notifyToasts.children.length > 4) el.notifyToasts.removeChild(el.notifyToasts.firstChild);
-    setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 15000);
+    var toasts = el.notifyToasts.querySelectorAll('.notify-toast');
+    for (var i = 0; i < toasts.length - 4; i++) toasts[i].parentNode.removeChild(toasts[i]);
+    syncNotifyClearAll();
+    setTimeout(function(){ if (t.parentNode){ t.parentNode.removeChild(t); syncNotifyClearAll(); } }, 15000);
   }
+  // ✕ on each pop-up, and CLEAR ALL once there's more than one (reported
+  // live 2026-09-27).
+  function syncNotifyClearAll(){
+    var n = el.notifyToasts.querySelectorAll('.notify-toast').length;
+    var btn = el.notifyToasts.querySelector('.nt-clear-all');
+    if (n >= 2 && !btn){
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'nt-clear-all';
+      btn.textContent = 'CLEAR ALL';
+      el.notifyToasts.insertBefore(btn, el.notifyToasts.firstChild);
+    } else if (n < 2 && btn) btn.parentNode.removeChild(btn);
+  }
+  el.notifyToasts.addEventListener('click', function(e){
+    if (e.target.closest('.nt-clear-all')){
+      el.notifyToasts.innerHTML = '';
+      return;
+    }
+    var x = e.target.closest('.nt-x');
+    if (!x) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var t = x.closest('.notify-toast');
+    if (t && t.parentNode) t.parentNode.removeChild(t);
+    syncNotifyClearAll();
+  });
   var notifyPollTimer = null;
   function pollNotifications(){
     if (notifyPollTimer) clearTimeout(notifyPollTimer);
