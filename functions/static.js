@@ -5110,6 +5110,45 @@ const SWAP_HTML = `<!DOCTYPE html>
      wiring (card-select-toggle click handler, state.target, etc.) stays
      intact and this is a one-line revert when that's ready. */
   .card-select-toggle{ display:none; }
+  /* CART "+" (top-left of the picture) — only on NFTs listed on Σκύλλa. */
+  .card-cart-toggle{ position:absolute; top:0.3rem; left:0.3rem; z-index:2; width:1.9em; height:1.9em; line-height:1.9em; padding:0; background:rgba(0,0,0,0.85); border:1px solid rgba(52,255,133,0.85); border-radius:8px; box-shadow:0 0 8px rgba(52,255,133,0.3); color:#fff; font-size:16px; font-weight:700; text-align:center; cursor:pointer; }
+  .card-cart-toggle:hover{ background:rgba(52,255,133,0.25); }
+  .card-cart-toggle.in-cart{ background:rgb(52,255,133); color:#000; }
+  #cartModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  #cartModal .cart-modal-panel{ width:min(560px, 94vw); max-height:88vh; display:flex; flex-direction:column; gap:0.8rem; }
+  #cartModal .simple-picker-header{ position:relative; justify-content:center; }
+  #cartModal .simple-picker-title{ flex:1; text-align:center; font-size:24px; font-weight:700; letter-spacing:0.1em; }
+  #cartModal .simple-picker-close{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
+  .cart-sweep{ border:1px solid rgba(var(--collection-accent-rgb, 136,72,248), 0.6); border-radius:12px; background:#000; padding:0.7rem; display:flex; flex-direction:column; gap:0.5rem; }
+  .cart-sweep-label{ text-align:center; font-weight:700; letter-spacing:0.1em; color:#fff; font-size:14px; }
+  .cart-sweep-row{ display:flex; gap:0.5rem; align-items:center; }
+  .cart-sweep-currency{ flex:0 0 auto; margin:0; }
+  .cart-sweep-input{ flex:1 1 auto; min-width:0; background:#000; border:1px solid var(--border-mid); border-radius:10px; color:#fff; font-family:inherit; font-size:15px; padding:0.6em 0.7em; text-align:center; }
+  .cart-sweep-btn, .cart-clear-btn, .cart-buy-btn{ background:#000; border:1px solid rgba(52,255,133,0.85); border-radius:10px; box-shadow:0 0 10px rgba(52,255,133,0.25); color:#fff; font-family:inherit; font-size:14px; font-weight:700; letter-spacing:0.06em; padding:0.7em 1em; cursor:pointer; white-space:nowrap; }
+  .cart-sweep-btn:hover, .cart-buy-btn:hover:not(:disabled){ background:rgb(52,255,133); color:#000; }
+  .cart-clear-btn{ border-color:var(--border-mid); box-shadow:none; }
+  .cart-buy-btn:disabled{ opacity:0.45; cursor:not-allowed; }
+  .cart-sweep-note, .cart-status{ text-align:center; font-size:13px; color:var(--cyan); min-height:1em; }
+  .cart-sweep-note:empty, .cart-status:empty{ display:none; }
+  .cart-list{ flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:0.4rem; }
+  .cart-empty{ text-align:center; color:#fff; opacity:0.7; padding:1rem 0; font-size:14px; }
+  .cart-row{ display:grid; grid-template-columns:48px 1fr auto auto; align-items:center; gap:0.7rem; padding:0.35rem 0.5rem 0.35rem 0.35rem; border:1px solid rgba(var(--collection-accent-rgb, 136,72,248), 0.35); border-radius:10px; background:#000; }
+  .cart-row img{ width:48px; height:48px; object-fit:cover; border-radius:6px; }
+  .cart-row > div{ text-align:left; }
+  .cart-row-name{ color:#fff; font-weight:700; font-size:14px; letter-spacing:0.04em; }
+  .cart-row-coll{ color:var(--cyan); font-size:11px; letter-spacing:0.08em; }
+  .cart-row-price{ color:rgb(52,255,133); font-weight:700; font-size:14px; white-space:nowrap; }
+  .cart-row-state{ font-size:11px; letter-spacing:0.06em; }
+  .cart-row-state.ok{ color:rgb(52,255,133); }
+  .cart-row-state.bad{ color:#ff4d6d; }
+  .cart-row-state.now{ color:var(--cyan); }
+  .cart-row-remove{ background:none; border:1px solid var(--border-mid); border-radius:8px; color:#fff; width:2rem; height:2rem; cursor:pointer; font-size:16px; }
+  .cart-total{ text-align:center; color:#fff; font-size:16px; font-weight:700; letter-spacing:0.05em; }
+  .cart-total .cart-fee{ display:block; font-size:11px; font-weight:400; opacity:0.75; margin-top:0.2rem; }
+  .cart-actions{ display:flex; gap:0.6rem; }
+  .cart-actions .cart-buy-btn{ flex:1 1 auto; font-size:16px; }
+  .cart-pill{ position:fixed; right:1rem; bottom:4.2rem; z-index:900; background:#000; border:1px solid rgba(52,255,133,0.9); border-radius:999px; box-shadow:0 0 14px rgba(52,255,133,0.4); color:#fff; font-family:inherit; font-size:14px; font-weight:700; letter-spacing:0.06em; padding:0.65em 1.2em; cursor:pointer; }
+  .cart-pill:hover{ background:rgb(52,255,133); color:#000; }
   .card-select-toggle, .my-pigeon-offer-toggle{
     position:absolute;
     top:0.3rem;
@@ -10553,6 +10592,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;">SWAP $P!GE0NS</button>
             <!-- Under BUY $P!GE0NS (reported live 2026-09-25). -->
             <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openNotifyBtn">&#128276; N0T!F!CAT!0NS</button>
+            <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openCartBtn">&#128722; CART <span id="openCartCount"></span></button>
           </div>
         </div>
 
@@ -10768,6 +10808,39 @@ const SWAP_HTML = `<!DOCTYPE html>
          table (still the same #topHoldersList/renderTopHoldersList this
          always had, just ranks 4+ now, #1-#3 live in the podium instead)
          stays collapsed behind an EXPAND toggle until asked for. -->
+    <!-- CART (multi-buy) — only NFTs listed on Σκύλλa itself can go in
+         (anything else can only be bought on its own marketplace). SWEEP
+         adds the N cheapest Σκύλλa listings; BUY ALL sends one Xaman sign
+         request per NFT, one after another. -->
+    <div id="cartModal" style="display:none;">
+      <div class="pigeons-calc-panel cart-modal-panel">
+        <div class="simple-picker-header">
+          <span class="simple-picker-title cart-title">CART</span>
+          <button type="button" class="simple-picker-close" id="cartCloseBtn" title="CL0SE">&times;</button>
+        </div>
+        <div class="cart-sweep">
+          <div class="cart-sweep-label">SWEEP THE FL00R</div>
+          <div class="cart-sweep-row">
+            <div class="sale-currency-toggle cart-sweep-currency" id="cartSweepCurrency">
+              <button type="button" class="sale-currency-btn sale-currency-btn-active" data-currency="token" id="cartSweepTokenTab">$T0KEN</button>
+              <button type="button" class="sale-currency-btn" data-currency="xrp">XRP</button>
+            </div>
+            <input class="cart-sweep-input" id="cartSweepInput" type="text" inputmode="numeric" placeholder="H0W MANY" autocomplete="off">
+            <button type="button" class="cart-sweep-btn" id="cartSweepBtn">SWEEP</button>
+          </div>
+          <div class="cart-sweep-note" id="cartSweepNote"></div>
+        </div>
+        <div class="cart-list" id="cartList"></div>
+        <div class="cart-total" id="cartTotal"></div>
+        <div class="cart-status" id="cartStatus"></div>
+        <div class="cart-actions">
+          <button type="button" class="cart-clear-btn" id="cartClearBtn">EMPTY CART</button>
+          <button type="button" class="cart-buy-btn" id="cartBuyBtn">BUY ALL</button>
+        </div>
+      </div>
+    </div>
+    <button type="button" class="cart-pill" id="cartPill" style="display:none;">&#128722; <span id="cartPillCount">0</span> :: V!EW CART</button>
+
     <div id="topHoldersModal" style="display:none;">
       <div class="pigeons-calc-panel top-holders-modal-panel">
         <div class="simple-picker-header">
@@ -13370,6 +13443,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
+   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepInput','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
    'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -15411,6 +15485,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="pigeon-img-box bc-img" data-nftid="' + escapeHtml(p.nftId) + '">' +
           linkWrap(nftHrefFor(p), 'pigeon-img-link', img) +
           '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
+          cartToggleHtml(p) +
+          cartToggleHtml(p) +
           watchlistToggleHtml(p) +
         '</div>' +
         traits.top +
@@ -15515,6 +15591,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         linkWrap(nftHrefFor(p), 'pigeon-img-link', img) +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
+        cartToggleHtml(p) +
         watchlistBtn +
         listingBadge +
         ownedBadge +
@@ -15930,6 +16007,13 @@ const SWAP_HTML = `<!DOCTYPE html>
             btn.title = nowWatching ? 'REM0VE FR0M WATCHL!ST' : 'ADD T0 WATCHL!ST';
           });
         }
+        return;
+      }
+      var cartBtn = e.target.closest('.card-cart-toggle');
+      if (cartBtn){
+        e.preventDefault();
+        var cp = source().filter(function(x){ return x.nftId === cartBtn.getAttribute('data-nftid'); })[0];
+        if (cp) toggleCartItem(cp);
         return;
       }
       var toggle = e.target.closest('.card-select-toggle');
@@ -19298,6 +19382,305 @@ const SWAP_HTML = `<!DOCTYPE html>
     closeBuyConfirmModal();
     runQuery(); // refreshes the LISTED grid so the now-sold Pigeon disappears
   });
+
+  // ---- CART (multi-buy, reported live 2026-09-27) — "+" on a card adds
+  // it, SWEEP adds the N cheapest, BUY ALL sends one Xaman sign request
+  // per NFT, one after another, through the same swap-buy-payload/status
+  // endpoints BUY N0W uses. Only NFTs listed on Σκύλλa itself can go in:
+  // a listing on another marketplace can only be filled by that
+  // marketplace, so it can't be signed from here. Per wallet, kept in
+  // this browser only. ----
+  function cartKey(){ return 'scylla_cart:' + (MY_WALLET || 'anon'); }
+  function getCart(){
+    try { var v = JSON.parse(localStorage.getItem(cartKey()) || '[]'); return Array.isArray(v) ? v : []; } catch (e){ return []; }
+  }
+  function setCart(list){ try { localStorage.setItem(cartKey(), JSON.stringify(list)); } catch (e){} }
+  function isInCart(nftId){ return getCart().some(function(c){ return c.nftId === nftId; }); }
+  // The Σκύλλa listing on this NFT, if any: { currency, price }. want
+  // limits it to one currency (SWEEP picks $T0KEN or XRP).
+  function cartListingOf(p, want){
+    if (!p || (MY_WALLET && p.owner === MY_WALLET)) return null;
+    var meta = COLLECTION_META[state.collection] || {};
+    if ((!want || want === 'token') && p.scyllaListing && !meta.xrpOnly) return { currency: 'token', price: String(p.scyllaListing.price) };
+    if (!want || want === 'xrp'){
+      var ml = (p.marketListings || []).filter(function(l){ return l.internal; })[0];
+      if (ml) return { currency: 'xrp', price: String(ml.priceXrp) };
+      if (p.xrpListing && p.xrpListing.internal) return { currency: 'xrp', price: String(p.xrpListing.priceXrp) };
+    }
+    return null;
+  }
+  function cartToggleHtml(p){
+    if (!cartListingOf(p)) return '';
+    var inCart = isInCart(p.nftId);
+    return '<button class="card-cart-toggle' + (inCart ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="' + (inCart ? 'REM0VE FR0M CART' : 'ADD T0 CART') + '">' + (inCart ? '✓' : '+') + '</button>';
+  }
+  function cartEntryFor(p, l){
+    return { nftId: p.nftId, collection: state.collection, currency: l.currency, price: l.price, number: p.number, name: p.name || null, image: p.image || null };
+  }
+  function toggleCartItem(p){
+    if (!MY_WALLET){ startAuthorize(); return; }
+    if (cartRun) return; // not while BUY ALL is running
+    var list = getCart();
+    var idx = list.findIndex(function(c){ return c.nftId === p.nftId; });
+    if (idx !== -1) list.splice(idx, 1);
+    else {
+      var l = cartListingOf(p);
+      if (!l) return;
+      list.push(cartEntryFor(p, l));
+    }
+    setCart(list);
+    refreshCartBadges();
+    if (el.cartModal.style.display === 'flex') renderCart();
+  }
+  function refreshCartBadges(){
+    var list = getCart();
+    var ids = {};
+    list.forEach(function(c){ ids[c.nftId] = true; });
+    document.querySelectorAll('.card-cart-toggle').forEach(function(b){
+      var on = !!ids[b.getAttribute('data-nftid')];
+      b.classList.toggle('in-cart', on);
+      b.textContent = on ? '✓' : '+';
+      b.title = on ? 'REM0VE FR0M CART' : 'ADD T0 CART';
+    });
+    el.openCartCount.textContent = list.length ? '(' + list.length + ')' : '';
+    el.cartPillCount.textContent = list.length;
+    el.cartPill.style.display = (list.length && MY_WALLET) ? '' : 'none';
+  }
+  function cartItemLabel(c){
+    var meta = COLLECTION_META[c.collection] || {};
+    return (meta.itemLabel || '') + ' ' + (c.number !== null && c.number !== undefined ? '#' + c.number : escapeHtml(c.name || ''));
+  }
+  function cartPriceText(c){
+    return c.currency === 'xrp' ? fmtXrp(Number(c.price)) + ' XRP' : fmtPigeonsCompact(c.price, c.collection);
+  }
+  var cartRowState = {}; // nftId -> { cls, text } while/after BUY ALL runs
+  function renderCart(){
+    var list = getCart();
+    var running = !!cartRun;
+    if (!list.length && !running){
+      el.cartList.innerHTML = '<div class="cart-empty">Y0UR CART !S EMPTY — TAP + 0N ANY NFT L!STED 0N Σκύλλα, 0R SWEEP THE FL00R ABOVE.</div>';
+    } else {
+      var rows = running ? cartRun.items : list;
+      el.cartList.innerHTML = rows.map(function(c){
+        var st = cartRowState[c.nftId];
+        return '<div class="cart-row" data-nftid="' + escapeHtml(c.nftId) + '">' +
+          (c.image ? '<img src="' + escapeHtml(c.image) + '" alt="">' : '<span></span>') +
+          '<div><div class="cart-row-name">' + cartItemLabel(c) + '</div>' +
+            (st ? '<div class="cart-row-state ' + st.cls + '">' + escapeHtml(st.text) + '</div>' : '<div class="cart-row-coll">' + escapeHtml((COLLECTION_META[c.collection] || {}).label || '') + '</div>') +
+          '</div>' +
+          '<div class="cart-row-price">' + escapeHtml(cartPriceText(c)) + '</div>' +
+          (running ? '<span></span>' : '<button type="button" class="cart-row-remove" data-nftid="' + escapeHtml(c.nftId) + '" title="REM0VE">&times;</button>') +
+        '</div>';
+      }).join('');
+    }
+    // Totals per currency (XRP, and each collection's own token).
+    var sums = {};
+    (running ? cartRun.items : list).forEach(function(c){
+      var k = c.currency === 'xrp' ? 'xrp' : 'token:' + c.collection;
+      sums[k] = (sums[k] || 0) + (Number(c.price) || 0);
+    });
+    var parts = Object.keys(sums).map(function(k){
+      return k === 'xrp' ? fmtXrp(sums[k]) + ' XRP' : fmtPigeonsCompact(sums[k], k.slice(6));
+    });
+    el.cartTotal.innerHTML = parts.length
+      ? 'T0TAL :: ' + escapeHtml(parts.join(' + ')) + '<span class="cart-fee">PLUS THE Σκύλλα FEE (1.3% !N XRP · 1.023% !N A T0KEN) · 0NE XAMAN S!GNATURE PER NFT</span>'
+      : '';
+    if (!running){
+      el.cartBuyBtn.disabled = !list.length;
+      el.cartBuyBtn.textContent = list.length ? 'BUY ALL (' + list.length + ')' : 'BUY ALL';
+      el.cartClearBtn.style.display = list.length ? '' : 'none';
+    }
+  }
+  function openCart(){
+    if (!MY_WALLET){ startAuthorize(); return; }
+    var meta = COLLECTION_META[state.collection] || {};
+    // Sweep currency: this collection's token or XRP (K!NG: XRP only).
+    el.cartSweepTokenTab.textContent = meta.tokenLabel || '$T0KEN';
+    el.cartSweepTokenTab.style.display = meta.xrpOnly ? 'none' : '';
+    if (meta.xrpOnly) setCartSweepCurrency('xrp');
+    el.cartSweepNote.textContent = '';
+    renderCart();
+    el.cartModal.style.display = 'flex';
+  }
+  function closeCart(){
+    el.cartModal.style.display = 'none';
+    if (cartRun && cartRun.finished) finishCartRun();
+  }
+  var cartSweepCurrency = 'token';
+  function setCartSweepCurrency(v){
+    cartSweepCurrency = v;
+    el.cartSweepCurrency.querySelectorAll('.sale-currency-btn').forEach(function(b){
+      b.classList.toggle('sale-currency-btn-active', b.getAttribute('data-currency') === v);
+    });
+  }
+  el.cartSweepCurrency.addEventListener('click', function(e){
+    var b = e.target.closest('.sale-currency-btn');
+    if (b) setCartSweepCurrency(b.getAttribute('data-currency'));
+  });
+  // SWEEP: the N cheapest Σκύλλa listings in this collection (in the chosen
+  // currency), skipping your own and anything already in the cart.
+  function sweepFloor(){
+    if (cartRun) return;
+    var n = parseInt(String(el.cartSweepInput.value).replace(/[^0-9]/g, ''), 10);
+    if (!(n >= 1)){ el.cartSweepNote.textContent = 'ENTER H0W MANY T0 SWEEP.'; return; }
+    n = Math.min(n, 50);
+    var cur = COLLECTION_META[state.collection].xrpOnly ? 'xrp' : cartSweepCurrency;
+    el.cartSweepNote.textContent = 'F!ND!NG THE FL00R...';
+    el.cartSweepBtn.disabled = true;
+    var req = cur === 'xrp'
+      ? api({ crossListing: 'asc', marketplace: 'scylla', skip: 0, limit: 60 })
+      : api({ scyllaListed: 1, dir: 'asc', skip: 0, limit: 60 });
+    req.then(function(data){
+      var list = getCart();
+      var have = {};
+      list.forEach(function(c){ have[c.nftId] = true; });
+      var added = 0;
+      (data.items || []).forEach(function(p){
+        if (added >= n || have[p.nftId]) return;
+        var l = cartListingOf(p, cur);
+        if (!l) return;
+        list.push(cartEntryFor(p, l));
+        have[p.nftId] = true;
+        added++;
+      });
+      setCart(list);
+      el.cartSweepNote.textContent = !added ? 'N0TH!NG M0RE L!STED 0N Σκύλλα !N ' + (cur === 'xrp' ? 'XRP' : COLLECTION_META[state.collection].tokenLabel) + '.'
+        : added < n ? 'ADDED ' + added + ' — THAT\\'S EVERY 0THER ' + (cur === 'xrp' ? 'XRP' : COLLECTION_META[state.collection].tokenLabel) + ' L!ST!NG 0N Σκύλλα.'
+        : 'ADDED THE ' + added + ' CHEAPEST.';
+      refreshCartBadges();
+      renderCart();
+    }).catch(function(){
+      el.cartSweepNote.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
+    }).then(function(){ el.cartSweepBtn.disabled = false; });
+  }
+  el.cartSweepBtn.addEventListener('click', sweepFloor);
+  el.cartSweepInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') sweepFloor(); });
+
+  // BUY ALL — one NFT at a time: create its sign request, wait for it to
+  // settle (or fail), then the next. When Xaman pushes requests straight to
+  // the phone the next one follows by itself; otherwise the button becomes
+  // S!GN NEXT, since a browser only opens the Xaman window from a click.
+  var cartRun = null; // { items, i, tab, uuid, timer, pushed, bought, finished }
+  function setCartRow(nftId, cls, text){
+    cartRowState[nftId] = { cls: cls, text: text };
+    var row = el.cartList.querySelector('.cart-row[data-nftid="' + nftId + '"]');
+    if (!row){ renderCart(); return; }
+    var box = row.children[1];
+    var line = box && box.children[1];
+    if (line){ line.className = 'cart-row-state ' + cls; line.textContent = text; }
+  }
+  function startCartBuy(){
+    if (!MY_WALLET){ startAuthorize(); return; }
+    var items = getCart();
+    if (!items.length) return;
+    cartRowState = {};
+    cartRun = { items: items.slice(), i: 0, tab: null, uuid: null, timer: null, pushed: false, bought: 0, finished: false };
+    items.forEach(function(c){ cartRowState[c.nftId] = { cls: '', text: 'WA!T!NG' }; });
+    el.cartClearBtn.style.display = 'none';
+    renderCart();
+    runCartStep(openXamanPopup());
+  }
+  function runCartStep(tab){
+    var c = cartRun.items[cartRun.i];
+    cartRun.tab = tab;
+    el.cartBuyBtn.disabled = true;
+    el.cartBuyBtn.textContent = 'BUY!NG ' + (cartRun.i + 1) + ' 0F ' + cartRun.items.length + '...';
+    el.cartStatus.textContent = 'REQUEST!NG...';
+    setCartRow(c.nftId, 'now', 'S!GN !N XAMAN');
+    signFetch('/api/swap-buy-payload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: c.nftId, collection: c.collection, currency: c.currency })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        closeXamanTabAndFocus(tab);
+        cartStepDone(false, listingErrorMessage(res.data && res.data.error));
+        return;
+      }
+      cartRun.uuid = res.data.uuid;
+      cartRun.pushed = !!(res.data.next && res.data.next.pushed);
+      navigateXamanPopup(tab, res.data.next.always, res.data.next.pushed);
+      el.cartStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN\\'T 0PEN? TAP HERE.</a>';
+      pollCartStep();
+    }).catch(function(){
+      closeXamanTabAndFocus(tab);
+      cartStepDone(false, 'ERR://S!GNAL_L0ST');
+    });
+  }
+  function pollCartStep(){
+    if (!cartRun || !cartRun.uuid) return;
+    var c = cartRun.items[cartRun.i];
+    fetch('/api/swap-buy-status?uuid=' + encodeURIComponent(cartRun.uuid) + '&nftId=' + encodeURIComponent(c.nftId) + '&collection=' + encodeURIComponent(c.collection))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'settled'){ closeXamanTabAndFocus(cartRun.tab); cartStepDone(true, 'B0UGHT'); return; }
+        if (data.status === 'rejected'){ cartStepDone(false, 'REJECTED !N XAMAN'); return; }
+        if (data.status === 'expired'){ cartStepDone(false, 'S!GN REQUEST EXP!RED'); return; }
+        if (data.status === 'sell_offer_gone'){ cartStepDone(false, 'S0LD 0R CANCELLED F!RST'); return; }
+        if (data.status === 'failed'){ cartStepDone(false, 'XRPL REJECTED (' + (data.result || 'UNKN0WN') + ')'); return; }
+        if (!data.status){ closeXamanTabAndFocus(cartRun.tab); cartStepDone(false, pollFailureMessage(data)); return; }
+        if (data.status === 'brokering_in_progress') setCartRow(c.nftId, 'now', 'SETTL!NG...');
+        else if (data.status === 'signed_pending_ledger') setCartRow(c.nftId, 'now', 'S!GNED — C0NF!RM!NG...');
+        cartRun.timer = setTimeout(pollCartStep, 2000);
+      }).catch(function(){ cartRun.timer = setTimeout(pollCartStep, 3000); });
+  }
+  function cartStepDone(ok, text){
+    var c = cartRun.items[cartRun.i];
+    setCartRow(c.nftId, ok ? 'ok' : 'bad', text);
+    if (ok) cartRun.bought++;
+    cartRun.uuid = null;
+    cartRun.i++;
+    if (cartRun.i >= cartRun.items.length){
+      cartRun.finished = true;
+      el.cartStatus.textContent = 'D0NE — B0UGHT ' + cartRun.bought + ' 0F ' + cartRun.items.length + '.';
+      el.cartBuyBtn.disabled = false;
+      el.cartBuyBtn.textContent = 'D0NE';
+      return;
+    }
+    // Pushed to the phone: the next request can go straight out too.
+    if (cartRun.pushed && MY_PUSH_READY){ runCartStep(null); return; }
+    el.cartStatus.textContent = (ok ? 'B0UGHT. ' : '') + 'READY F0R THE NEXT 0NE.';
+    el.cartBuyBtn.disabled = false;
+    el.cartBuyBtn.textContent = 'S!GN NEXT (' + (cartRun.i + 1) + ' 0F ' + cartRun.items.length + ')';
+  }
+  // Bought NFTs leave the cart; failed ones stay so they can be retried.
+  function finishCartRun(){
+    var bought = {};
+    cartRun.items.forEach(function(c){ if (cartRowState[c.nftId] && cartRowState[c.nftId].cls === 'ok') bought[c.nftId] = true; });
+    setCart(getCart().filter(function(c){ return !bought[c.nftId]; }));
+    var anyBought = cartRun.bought > 0;
+    cartRun = null;
+    cartRowState = {};
+    el.cartStatus.textContent = '';
+    refreshCartBadges();
+    renderCart();
+    if (anyBought) runQuery();
+  }
+  el.cartBuyBtn.addEventListener('click', function(){
+    if (!cartRun){ startCartBuy(); return; }
+    if (cartRun.finished){ finishCartRun(); return; }
+    if (!cartRun.uuid) runCartStep(openXamanPopup());
+  });
+  el.cartClearBtn.addEventListener('click', function(){
+    if (cartRun) return;
+    setCart([]);
+    refreshCartBadges();
+    renderCart();
+  });
+  el.cartList.addEventListener('click', function(e){
+    var rm = e.target.closest('.cart-row-remove');
+    if (!rm || cartRun) return;
+    setCart(getCart().filter(function(c){ return c.nftId !== rm.getAttribute('data-nftid'); }));
+    refreshCartBadges();
+    renderCart();
+  });
+  el.openCartBtn.addEventListener('click', openCart);
+  el.cartPill.addEventListener('click', openCart);
+  el.cartCloseBtn.addEventListener('click', closeCart);
+  el.cartModal.addEventListener('click', function(e){ if (e.target === el.cartModal) closeCart(); });
+  refreshCartBadges();
+
 
   // ---- DELIST — Σκύλλα SWAP phase 2: NFTokenCancelOffer for the seller's
   // own active offer. ----
@@ -27190,7 +27573,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var boxes = [];
     ['pigeonsCalcModal','topHoldersModal','salesModal','notifyModal','rarityModal','offerConfirmModal','transferConfirmModal',
      'acceptTransferConfirmModal','buySwapModal','buyConfirmModal','delistConfirmModal','acceptOfferConfirmModal',
-     'conspiracyPickerModal','simpleOfferPickerModal','amountEntryModal','historyModal','profileEditModal'].forEach(function(id){
+     'conspiracyPickerModal','simpleOfferPickerModal','amountEntryModal','historyModal','profileEditModal','cartModal'].forEach(function(id){
       var modal = document.getElementById(id);
       if (modal && modal.firstElementChild) boxes.push(modal.firstElementChild);
     });
