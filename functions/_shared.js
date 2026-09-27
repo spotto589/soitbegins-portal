@@ -3342,44 +3342,80 @@ export async function mapWithConcurrency(items, limit, fn) {
 // The NFT's own description, from its metadata file (URI on the ledger ->
 // IPFS). Shown under TRANSACT!0N H!ST0RY on the NFT's page. null when it
 // has none or can't be read.
-export async function fetchNftDescription(nftId) {
-  try {
-    let uriHex = null;
-    for (const endpoint of [CLIO_ENDPOINT, 'https://xrplcluster.com', 'https://s1.ripple.com:51234']) {
-      try {
-        const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ method: 'nft_info', params: [{ nft_id: nftId }] }) });
-        const data = await res.json();
-        if (data && data.result && data.result.uri) { uriHex = data.result.uri; break; }
-      } catch (e) {}
-    }
-    if (!uriHex) return null;
-    const uri = hexToUtf8(uriHex);
-    // Every NFT in one metadata folder carries the same description (e.g.
-    // all of P!GE0NS' first edition), so one good read is cached for the
-    // whole folder — the rest never wait on IPFS again.
-    const folder = uri.slice(0, uri.lastIndexOf('/') + 1);
-    const cache = typeof caches !== 'undefined' ? caches.default : null;
-    const folderKey = folder ? new Request('https://soitbegins.xyz/__cache/nft-desc-folder/v1/' + encodeURIComponent(folder)) : null;
-    if (cache && folderKey) {
-      const hit = await cache.match(folderKey);
-      if (hit) { const j = await hit.json(); if (j && j.description) return j.description; }
-    }
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const res = await fetchIpfs(resolveIpfsUri(uri), { timeoutMs: 10000 });
-        if (!res.ok) continue;
-        const meta = await res.json();
-        const d = meta && typeof meta.description === 'string' ? meta.description.trim().slice(0, 1000) : '';
-        if (d && cache && folderKey) {
-          await cache.put(folderKey, new Response(JSON.stringify({ description: d }), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=604800' } }));
-        }
-        return d || null;
-      } catch (e) {}
-    }
-    return null;
-  } catch (e) {
-    return null;
+// The collection's own description, used when an NFT's metadata has none
+// or only repeats the collection name (P!GE0NS' first edition was minted
+// with just "PIGEONS"; the second with the full line).
+export const COLLECTION_DESCRIPTIONS = {
+  pigeons: 'Original PIGEONS on the XRP Ledger.'
+};
+
+// Everything the NFT's DETA!LS pop-up shows, straight from the ledger
+// (nft_info) plus its metadata file. null when the ledger lookup fails.
+export async function fetchNftDetails(nftId) {
+  let info = null;
+  for (const endpoint of [CLIO_ENDPOINT, 'https://xrplcluster.com', 'https://s1.ripple.com:51234']) {
+    try {
+      const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ method: 'nft_info', params: [{ nft_id: nftId }] }) });
+      const data = await res.json();
+      if (data && data.result && data.result.nft_id) { info = data.result; break; }
+    } catch (e) {}
   }
+  if (!info) return null;
+  const uri = info.uri ? hexToUtf8(info.uri) : null;
+  const flags = Number(info.flags) || 0;
+  const scheme = uri ? (uri.match(/^([a-z0-9]+):/i) || [])[1] : null;
+  const storage = !uri ? null
+    : /^ipfs:/i.test(uri) || /[/]ipfs[/]/i.test(uri) ? 'IPFS'
+    : /^ar:/i.test(uri) || /arweave/i.test(uri) ? 'ARWEAVE'
+    : /^https?:/i.test(uri) ? 'WEB (HTTP)'
+    : (scheme || 'OTHER').toUpperCase();
+  const details = {
+    nftId: info.nft_id,
+    issuer: info.issuer || null,
+    owner: info.owner || null,
+    taxon: info.nft_taxon !== undefined ? info.nft_taxon : null,
+    serial: info.nft_serial !== undefined ? info.nft_serial : null,
+    transferFeePct: info.transfer_fee !== undefined ? Number(info.transfer_fee) / 1000 : null,
+    flags,
+    burnable: !!(flags & 0x0001),
+    onlyXrp: !!(flags & 0x0002),
+    transferable: !!(flags & 0x0008),
+    mutable: !!(flags & 0x0010),
+    burned: !!info.is_burned,
+    standard: 'XLS-20',
+    uri,
+    storage,
+    metadataUrl: uri ? resolveIpfsUri(uri) : null,
+    description: null,
+    metadataRead: false
+  };
+  if (!uri) return details;
+  // Every NFT in one metadata folder carries the same description, so one
+  // good read is cached for the whole folder.
+  const folder = uri.slice(0, uri.lastIndexOf('/') + 1);
+  const cache = typeof caches !== 'undefined' ? caches.default : null;
+  const folderKey = folder ? new Request('https://soitbegins.xyz/__cache/nft-desc-folder/v1/' + encodeURIComponent(folder)) : null;
+  if (cache && folderKey) {
+    try {
+      const hit = await cache.match(folderKey);
+      if (hit) { const j = await hit.json(); if (j && j.description) { details.description = j.description; details.metadataRead = true; return details; } }
+    } catch (e) {}
+  }
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchIpfs(details.metadataUrl, { timeoutMs: 10000 });
+      if (!res.ok) continue;
+      const meta = await res.json();
+      details.metadataRead = true;
+      const d = meta && typeof meta.description === 'string' ? meta.description.trim().slice(0, 1000) : '';
+      details.description = d || null;
+      if (d && cache && folderKey) {
+        await cache.put(folderKey, new Response(JSON.stringify({ description: d }), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=604800' } }));
+      }
+      break;
+    } catch (e) {}
+  }
+  return details;
 }
 
 // IPFS fallback for the rare token Deeptide hasn't synced yet — number,

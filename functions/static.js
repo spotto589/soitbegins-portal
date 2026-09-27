@@ -7861,6 +7861,28 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-rarity-row .tc-label{ font-size:11px !important; margin:0 !important; }
   #screenDetail .detail-rarity-row .tc-value{ font-size:17px !important; margin:0.1rem 0 0 !important; }
   #detailRarityExpandBtn{ display:none !important; }
+  /* TRANSACT!0N H!ST0RY + DETA!LS side by side. */
+  #screenDetail .detail-history{ display:flex; gap:0.5rem; width:100% !important; align-self:stretch; margin-left:0 !important; margin-right:0 !important; }
+  #screenDetail .detail-history .detail-history-btn{ flex:1 1 0; min-width:0; }
+  #nftDataModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:1.5rem 1rem; }
+  #nftDataModal .nft-data-panel{ width:min(560px, 96vw); max-height:90vh; overflow-y:auto; display:flex; flex-direction:column; gap:0.8rem; padding:1.4rem; }
+  #nftDataModal .simple-picker-header{ position:relative; justify-content:center; }
+  #nftDataModal .simple-picker-title{ flex:1; text-align:center; font-size:22px; font-weight:700; letter-spacing:0.1em; }
+  #nftDataModal .simple-picker-close{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
+  .nft-data-list{ border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:14px; background:#000; overflow:hidden; }
+  .nd-row{ display:flex; align-items:center; justify-content:space-between; gap:0.8rem; padding:0.75rem 0.95rem; border-bottom:1px solid rgba(255,255,255,0.07); }
+  .nd-row:last-child{ border-bottom:none; }
+  .nd-label{ flex:0 0 auto; color:#fff; opacity:0.7; font-size:12px; font-weight:700; letter-spacing:0.1em; }
+  .nd-value{ display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:0.4rem; color:#fff; font-size:15px; font-weight:700; text-align:right; min-width:0; }
+  .nd-mono{ font-family:var(--font-mono); letter-spacing:0.02em; }
+  .nd-sub{ color:#fff; opacity:0.55; font-size:10.5px; letter-spacing:0.06em; }
+  .nd-link{ color:var(--cyan); text-decoration:none; }
+  .nd-link:hover{ text-decoration:underline; }
+  .nd-copy{ background:none; border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:999px; color:#fff; font-family:inherit; font-size:10.5px; font-weight:700; letter-spacing:0.08em; padding:0.25em 0.7em; cursor:pointer; }
+  .nd-copy:hover{ border-color:var(--cyan); color:var(--cyan); }
+  .nd-flag{ border:1px solid rgba(255,255,255,0.2); border-radius:999px; padding:0.2em 0.65em; font-size:11px; letter-spacing:0.06em; color:rgba(255,255,255,0.45); }
+  .nd-flag.on{ border-color:rgba(52,255,133,0.7); color:rgb(52,255,133); }
+  @media (max-width:600px){ .nd-row{ flex-direction:column; align-items:flex-start; gap:0.35rem; } .nd-value{ justify-content:flex-start; text-align:left; } }
 
   /* The coin beside every $TOKEN (reported live 2026-09-27): the round
      logo from the C0!N page, with a thin gold rim so it reads as a coin. */
@@ -12834,6 +12856,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div class="detail-history">
             <button class="detail-history-btn" id="detailHistoryToggle">TRANSACT!0N H!ST0RY</button>
+            <button class="detail-history-btn" id="detailDataBtn">DETA!LS</button>
           </div>
           <!-- The NFT's own description, from its metadata (reported live
                2026-09-27: fill the empty space under TRANSACT!0N H!ST0RY). -->
@@ -13134,6 +13157,17 @@ const SWAP_HTML = `<!DOCTYPE html>
          the Pigeon centred on top, two stat tiles, then every sale as its
          own card with the price big and green, FR0M -> T0, and the mint
          (date/time + who minted it) at the bottom. -->
+    <!-- DETA!LS — the NFT's own data, straight from the ledger (reported
+         live 2026-09-27, "like xrp.cafe"). -->
+    <div id="nftDataModal" style="display:none;">
+      <div class="pigeons-calc-panel nft-data-panel">
+        <div class="simple-picker-header">
+          <span class="simple-picker-title" id="nftDataTitle">DETA!LS</span>
+          <button type="button" class="simple-picker-close" id="nftDataCloseBtn" title="CL0SE">&times;</button>
+        </div>
+        <div class="nft-data-list" id="nftDataList"></div>
+      </div>
+    </div>
     <div id="historyModal" style="display:none;">
       <div class="offer-confirm-panel history-modal-panel" id="screenHistory">
         <button type="button" class="simple-picker-close history-modal-close" id="historyModalClose" title="CL0SE">&times;</button>
@@ -14360,7 +14394,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','detailPrevBtnBottom','detailNextBtnBottom','backToBrowseBtnTop',
-   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailRarityScoreCell','detailRarityExpandBtn','detailDescription','detailDescriptionText','detailRarityBreakdown','rarityModal','rarityModalTitle','rarityModalBadges','rarityCloseBtn','detailPriceRow','detailPrice','detailMarkets','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
+   'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailRarityScoreCell','detailRarityExpandBtn','detailDescription','detailDescriptionText','detailDataBtn','nftDataModal','nftDataTitle','nftDataCloseBtn','nftDataList','detailRarityBreakdown','rarityModal','rarityModalTitle','rarityModalBadges','rarityCloseBtn','detailPriceRow','detailPrice','detailMarkets','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose','historyThumb','historyVolume','historySaleCount','historyMintDate','historyMintBy',
    'screenProfile','profileScreenBackBtn','profileScreenShareBtn','profileScreenBanner','profileScreenCollections','profileScreenCoins','profileScreenMessageBtn',
@@ -25428,10 +25462,57 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.detailDescriptionText.classList.toggle('empty', !text);
     el.detailDescription.style.display = '';
   }
+  var nftDataCache = {};
+  function nftDataRow(label, value){ return '<div class="nd-row"><span class="nd-label">' + label + '</span><span class="nd-value">' + value + '</span></div>'; }
+  function renderNftData(){
+    var p = state.currentDetail;
+    if (!p) return;
+    el.nftDataTitle.innerHTML = 'DETA!LS' + (p.number != null ? ' :: #' + greenNum(String(p.number)) : '');
+    var d = nftDataCache[p.nftId];
+    if (!d){ el.nftDataList.innerHTML = '<div class="coin-chart-msg" style="height:auto;padding:1.5rem 0;">L0AD!NG...</div>'; return; }
+    function copyBtn(v){ return '<button type="button" class="nd-copy" data-copy="' + escapeHtml(v) + '">C0PY</button>'; }
+    function yes(on, label){ return '<span class="nd-flag' + (on ? ' on' : '') + '">' + (on ? '✓ ' : '✕ ') + label + '</span>'; }
+    var html = '';
+    html += nftDataRow('CREAT0R WALLET', d.issuer ? '<a class="nd-link" href="' + escapeHtml(walletHrefFor(d.issuer)) + '" data-wallet="' + escapeHtml(d.issuer) + '">' + escapeHtml(shortAddr(d.issuer)) + '</a>' + copyBtn(d.issuer) : '—');
+    html += nftDataRow('T0KEN !D', '<span class="nd-mono">' + escapeHtml(d.nftId.slice(0, 10) + '…' + d.nftId.slice(-8)) + '</span>' + copyBtn(d.nftId));
+    html += nftDataRow('STANDARD', escapeHtml(d.standard || 'XLS-20'));
+    html += nftDataRow('TAX0N / SER!AL', escapeHtml((d.taxon != null ? d.taxon : '—') + ' / ' + (d.serial != null ? d.serial : '—')));
+    html += nftDataRow('R0YALTY', d.transferFeePct != null ? escapeHtml(d.transferFeePct + '%') + ' <span class="nd-sub">T0 THE CREAT0R 0N EVERY SALE</span>' : '—');
+    html += nftDataRow('METADATA', d.metadataUrl ? (d.metadataRead ? '<span class="nd-flag on">CACHED</span>' : '') + '<a class="nd-link" href="' + escapeHtml(d.metadataUrl) + '" target="_blank" rel="noopener">URL ↗</a>' : 'N0NE');
+    html += nftDataRow('ST0RAGE', escapeHtml(d.storage || '—'));
+    html += nftDataRow('FLAGS', yes(d.transferable, 'TRANSFERABLE') + yes(d.burnable, 'BURNABLE') + yes(d.onlyXrp, 'XRP 0NLY') + yes(d.mutable, 'MUTABLE'));
+    html += nftDataRow('0N THE LEDGER', '<a class="nd-link" href="https://bithomp.com/en/nft/' + escapeHtml(d.nftId) + '" target="_blank" rel="noopener">B!TH0MP ↗</a>');
+    el.nftDataList.innerHTML = html;
+  }
+  el.detailDataBtn.addEventListener('click', function(){
+    if (!state.currentDetail) return;
+    renderNftData();
+    el.nftDataModal.style.display = 'flex';
+    if (!nftDataCache[state.currentDetail.nftId]) loadDetailDescription(state.currentDetail.nftId, true);
+  });
+  el.nftDataCloseBtn.addEventListener('click', function(){ el.nftDataModal.style.display = 'none'; });
+  el.nftDataModal.addEventListener('click', function(e){
+    if (e.target === el.nftDataModal){ el.nftDataModal.style.display = 'none'; return; }
+    var c = e.target.closest('.nd-copy');
+    if (c){
+      var v = c.getAttribute('data-copy');
+      var done = function(){ c.textContent = 'C0P!ED'; setTimeout(function(){ c.textContent = 'C0PY'; }, 1400); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done, done); else done();
+      return;
+    }
+    var w = e.target.closest('a.nd-link[data-wallet]');
+    if (w && !e.ctrlKey && !e.metaKey){
+      e.preventDefault();
+      el.nftDataModal.style.display = 'none';
+      openWalletProfile(w.getAttribute('data-wallet'), shortAddr(w.getAttribute('data-wallet')));
+    }
+  });
   function loadDetailDescription(nftId, retried){
-    if (detailDescriptions[nftId]){ showDetailDescription(detailDescriptions[nftId]); return; }
+    if (detailDescriptions[nftId] && nftDataCache[nftId]){ showDetailDescription(detailDescriptions[nftId]); return; }
     showDetailDescription('', true);
     api({ nftDescription: 1, nftId: nftId, _r: retried ? 1 : undefined }).then(function(d){
+      if (d && d.details) nftDataCache[nftId] = d.details;
+      if (el.nftDataModal.style.display === 'flex' && state.currentDetail && state.currentDetail.nftId === nftId) renderNftData();
       var text = (d && d.description) || '';
       if (text) detailDescriptions[nftId] = text;
       if (!(state.currentDetail && state.currentDetail.nftId === nftId)) return;
@@ -29636,7 +29717,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var boxes = [];
     ['pigeonsCalcModal','topHoldersModal','salesModal','notifyModal','rarityModal','offerConfirmModal','transferConfirmModal',
      'acceptTransferConfirmModal','buySwapModal','buyConfirmModal','delistConfirmModal','acceptOfferConfirmModal',
-     'conspiracyPickerModal','simpleOfferPickerModal','amountEntryModal','historyModal','profileEditModal','cartModal','sweepModal','coinModal','extBuyModal','multiListModal'].forEach(function(id){
+     'conspiracyPickerModal','simpleOfferPickerModal','amountEntryModal','historyModal','profileEditModal','cartModal','sweepModal','coinModal','extBuyModal','multiListModal','nftDataModal'].forEach(function(id){
       var modal = document.getElementById(id);
       if (modal && modal.firstElementChild) boxes.push(modal.firstElementChild);
     });

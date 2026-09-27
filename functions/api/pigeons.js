@@ -7,7 +7,7 @@ import { marketListingsFromOffers, marketMeta,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, quoteXrpForTokenAmount, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG, isPopularCoinKey, ensurePopularCoinConfig,
   getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
-  fetchRecentAccountTxCached, fetchTopTokenHolders, fetchCoinStats, getCoinHistory, fetchGeckoCoinHistory, fetchXrpUsdDailyCloses, fetchTokenSupply, fetchNftDescription
+  fetchRecentAccountTxCached, fetchTopTokenHolders, fetchCoinStats, getCoinHistory, fetchGeckoCoinHistory, fetchXrpUsdDailyCloses, fetchTokenSupply, fetchNftDetails, COLLECTION_DESCRIPTIONS
 } from '../_shared.js';
 
 // Deeptide's own item page — the real place to buy a listed Pigeon.
@@ -445,18 +445,27 @@ export async function onRequestGet(context) {
     return json({ xrpPerPigeon: rate.xrpPerPigeon, usdPerPigeon: rate.usdPerPigeon, marketCapUsd: rate.marketCapUsd, liquidityUsd: rate.liquidityUsd, tokenImageUrl: rate.tokenImageUrl, dexUrl: rate.dexUrl });
   }
 
-  // An NFT's own description (its metadata never changes, so cached for a day).
+  // An NFT's DETA!LS (creator, token id, flags, royalty, metadata, storage)
+  // and description. Cached for a day once the metadata was read; a failed
+  // read isn't kept, so the next look tries again.
   if (params.get('nftDescription') === '1') {
     const nftId = params.get('nftId') || '';
     if (!/^[0-9A-Fa-f]{64}$/.test(nftId)) return json({ error: 'bad_nft' }, 400);
-    const cacheKey = new Request('https://soitbegins.xyz/__cache/nft-desc/v1/' + nftId.toUpperCase());
+    const cacheKey = new Request('https://soitbegins.xyz/__cache/nft-details/v1/' + tradeKey + '/' + nftId.toUpperCase());
     const cache = typeof caches !== 'undefined' ? caches.default : null;
     const hit = cache ? await cache.match(cacheKey) : null;
     if (hit) return hit;
-    const description = await fetchNftDescription(nftId);
-    const res = new Response(JSON.stringify({ description }), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=' + (description ? 86400 : 30) } });
-    // A failed read (IPFS timing out) isn't kept — the next look tries again.
-    if (cache && description) context.waitUntil(cache.put(cacheKey, res.clone()));
+    const details = await fetchNftDetails(nftId);
+    if (!details) return json({ description: null, details: null }, 200);
+    // The collection's own line when the NFT's is missing or only repeats
+    // the collection's name (P!GE0NS #1-1515 say just "PIGEONS").
+    let description = details.description;
+    const fallback = COLLECTION_DESCRIPTIONS[tradeKey];
+    const bare = (description || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+    if (fallback && details.metadataRead && (!bare || bare === tradeKey.toLowerCase() || bare === String(coll.label || '').replace(/[^a-z0-9]/gi, '').toLowerCase())) description = fallback;
+    const good = details.metadataRead;
+    const res = new Response(JSON.stringify({ description, details }), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=' + (good ? 86400 : 30) } });
+    if (cache && good) context.waitUntil(cache.put(cacheKey, res.clone()));
     return res;
   }
 
