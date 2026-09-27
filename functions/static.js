@@ -5182,6 +5182,23 @@ const SWAP_HTML = `<!DOCTYPE html>
   #cartModal .cx-offer-line{ display:flex; align-items:center; justify-content:flex-end; gap:0.5rem; }
   #cartModal .cx-offer-line .cart-offer-input{ flex:1 1 auto; min-width:0; width:auto; font-size:21px; }
   #cartModal .cx-offer-line .cart-offer-cur{ flex:0 0 auto; }
+  /* Offer (2026-09-27 redesign): label above, then one field — amount
+     left, currency switch right, styled like SWAP's BUY/SELL. */
+  #cartModal .cx-offer{ display:flex; flex-direction:column; gap:0.3rem; }
+  #cartModal .cx-offer-title{ font-size:11px; font-weight:700; letter-spacing:0.14em; color:#fff; opacity:0.8; }
+  #cartModal .cx-offer-field{ display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0.3rem 0.3rem 0.8rem; border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:12px; background:#000; box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.18); cursor:text; }
+  #cartModal .cx-offer-field:focus-within{ border-color:var(--collection-accent); box-shadow:0 0 14px rgba(var(--collection-accent-rgb), 0.45); }
+  #cartModal .cx-offer-field .cart-offer-input{ flex:1 1 auto; min-width:0; width:auto; border:none; background:transparent; color:#fff; font-family:inherit; font-size:22px; font-weight:700; text-align:left; padding:0.25rem 0; }
+  #cartModal .cx-offer-field .cart-offer-input::placeholder{ color:rgba(255,255,255,0.3); }
+  #cartModal .cx-offer-field .cart-offer-input:focus{ outline:none; }
+  #cartModal .cx-unit-seg{ flex:0 0 auto; display:inline-flex; padding:3px; gap:2px; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:999px; background:#000; }
+  #cartModal .cx-unit-seg button{ border:none; border-radius:999px; background:none; color:#fff; font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.05em; padding:0.5em 0.8em; cursor:pointer; }
+  #cartModal .cx-unit-seg button.active{ background:rgba(var(--collection-accent-rgb), 0.9); color:#fff; }
+  #cartModal .cx-unit-fixed{ flex:0 0 auto; padding:0.5em 0.9em; border-radius:999px; background:rgba(var(--collection-accent-rgb), 0.9); color:#fff; font-size:12px; font-weight:700; letter-spacing:0.05em; }
+  @media (max-width:600px){
+    #cartModal .cx-offer-field .cart-offer-input{ font-size:18px; }
+    #cartModal .cx-unit-seg button{ font-size:10px; padding:0.45em 0.55em; }
+  }
   #cartModal .cx-sentence{ text-align:center; color:#fff; font-size:13px; font-weight:700; letter-spacing:0.05em; white-space:nowrap; padding:0.35rem 0 0.5rem; border-bottom:1px solid rgba(var(--collection-accent-rgb), 0.15); }
   #cartModal .cx-sentence span{ color:var(--cyan); }
   #cartModal .cx-seg .list-duration-btn[data-days="0"]{ font-family:"Segoe UI Symbol", "Arial", sans-serif !important; font-size:26px !important; font-weight:400; line-height:1; padding-top:0.05em; padding-bottom:0.05em; }
@@ -13364,7 +13381,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         clearTimeout(cap);
         xamanReconnecting = false;
         xamanReconnectPromise = null;
-        if (ok) hideXamanReconnectBar(); else showXamanReconnectBar('idle');
+        hideXamanReconnectBar();
         resolve(ok);
       }
       try {
@@ -13386,7 +13403,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       document.body.appendChild(b);
     }
     b.innerHTML = mode === 'waiting'
-      ? 'APPR0VE THE S!GN-!N !N <span style="text-transform:none;">Xaman</span> — Y0UR REQUEST G0ES STRA!GHT T0 THE APP AFTER'
+      ? '0NE QU!CK APPR0VAL !N <span style="text-transform:none;">Xaman</span> (0NCE A DAY) — THEN Y0UR REQUEST G0ES STRA!GHT T0 THE APP'
       : '<span style="text-transform:none;">Xaman</span> S!GN-!N EXP!RED (!T LASTS 24H) — TAP T0 REC0NNECT S0 REQUESTS G0 STRA!GHT T0 Y0UR APP';
     b.classList.add('show');
   }
@@ -18328,8 +18345,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // on, rather than manually unwinding every piece of client state that
   // reads MY_WALLET across this whole file.
   if (getXamanPkce()) getXamanPkce().state().then(function(st){ if (st) adoptXamanSession(false); }).catch(function(){});
-  // Still no Xaman session for this wallet a few seconds in: say so.
-  setTimeout(function(){ if (xamanSessionMissing() && !xamanReconnectPromise) showXamanReconnectBar('idle'); }, 5000);
+  // (No bar on page load — reported live as noise. It only appears while
+  // a sign click is reconnecting; see startXamanReconnect.)
   el.scyllaSignOutBtn.addEventListener('click', function(){
     el.scyllaSignOutBtn.disabled = true;
     try { if (getXamanPkce()) getXamanPkce().logout(); } catch (e){}
@@ -19779,14 +19796,18 @@ const SWAP_HTML = `<!DOCTYPE html>
       : '<div class="cx-sub"><span class="cx-tag ' + (isOffer ? 'cx-tag-offer' : 'cx-tag-buy') + '">' + (isOffer ? '0FFER' : 'BUY N0W') + '</span><span class="cx-coll">' + escapeHtml(meta.label || '') + '</span></div>';
     var body;
     if (isOffer){
-      var curToggle = meta.xrpOnly ? '<span class="cart-offer-unit">XRP</span>'
-        : '<span class="cart-offer-cur">' +
+      var curToggle = meta.xrpOnly ? '<span class="cx-unit-fixed">XRP</span>'
+        : '<span class="cx-unit-seg">' +
             '<button type="button" class="' + (c.currency === 'token' ? 'active' : '') + '" data-offer-cur="token" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>' + escapeHtml(cartTokenLabel(c)) + '</button>' +
             '<button type="button" class="' + (c.currency === 'xrp' ? 'active' : '') + '" data-offer-cur="xrp" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>XRP</button>' +
           '</span>';
-      body = '<label class="cx-offer-box"><span class="cx-offer-label">Y0UR 0FFER</span><span class="cx-offer-line">' +
-        '<input class="cart-offer-input" type="text" inputmode="decimal" placeholder="0" data-nftid="' + escapeHtml(c.nftId) + '" value="' + escapeHtml(c.price || '') + '"' + (running ? ' disabled' : '') + '>' +
-        curToggle + '</span></label>';
+      body = '<div class="cx-offer">' +
+        '<div class="cx-offer-title">Y0UR 0FFER</div>' +
+        '<label class="cx-offer-field">' +
+          '<input class="cart-offer-input" type="text" inputmode="decimal" placeholder="0.00" data-nftid="' + escapeHtml(c.nftId) + '" value="' + escapeHtml(c.price || '') + '"' + (running ? ' disabled' : '') + '>' +
+          curToggle +
+        '</label>' +
+      '</div>';
     } else {
       body = '<div class="cx-price-box"><span class="cx-offer-label">PR!CE</span><span class="cart-row-price">' + escapeHtml(cartAmountText(c, c.price)) + '</span></div>';
     }
