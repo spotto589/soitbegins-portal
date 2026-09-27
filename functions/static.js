@@ -339,7 +339,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   body.collection-xrp-only #statScyllaListedTile,
   body.collection-xrp-only #salesCurrencyPigeonsBtn,
   body.collection-xrp-only #pigeonsBalanceBuyBtn,
-  body.collection-xrp-only #pigeonsBarDexBtn{ display:none !important; }
+  body.collection-xrp-only #pigeonsBarDexBtn,
+  body.collection-xrp-only #detailMakeOfferRow .make-offer-input-coin{ display:none !important; }
   /* EDITION (1-1515/1516-3015) and the # 0R WALLET search box both depend
      on the $PIGEONS-only number-map crawl (search resolves a number via
      that map; EDITION is a hardcoded $PIGEONS mint-era number range) —
@@ -5941,7 +5942,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card .card-action-box .thumb-offer{ border:none !important; background:none !important; box-shadow:none !important; padding:0 !important; }
   .result-card .owned-action-row.has-market-buy{ flex-direction:column; align-items:stretch; gap:0.45rem; }
   .result-card .owned-action-row.has-market-buy > *{ flex:0 0 auto !important; }
-  .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn){
+  .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn, .card-add-cart-btn, .card-not-listed){
     display:flex; align-items:center; justify-content:center; gap:0.4em; width:100%; box-sizing:border-box;
     height:46px; margin:0; padding:0 0.6em;
     background:#000 !important; border:1px solid rgba(52,255,133,0.85) !important; border-radius:10px;
@@ -5949,11 +5950,30 @@ const SWAP_HTML = `<!DOCTYPE html>
     color:#fff !important; font-family:inherit; font-size:14px; font-weight:700; letter-spacing:0.05em;
     white-space:nowrap; overflow:hidden; text-decoration:none; text-shadow:none; cursor:pointer;
   }
-  .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn):hover{ background:rgb(52,255,133) !important; color:#000 !important; }
+  .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn, .card-add-cart-btn):hover{ background:rgb(52,255,133) !important; color:#000 !important; }
+  /* Same new button look everywhere (reported live 2026-09-27): L!ST,
+     CANCEL, TRANSFER on your own cards; BUY N0W / CANCEL / L!ST /
+     TRANSFER and the off-site BUY links on an NFT's own page. */
+  :is(.result-card .card-action-box :is(.delist-pigeon-btn, .list-open-modal-btn, .transfer-open-modal-btn), #detailScyllaBuyBtn, #detailScyllaDelistBtn, #detailScyllaListBtn, #detailScyllaTransferBtn, .detail-market-row .market-buy-link){
+    display:inline-flex; align-items:center; justify-content:center; gap:0.4em; box-sizing:border-box;
+    min-height:46px; margin:0; padding:0 1.1em !important;
+    background:#000 !important; border:1px solid rgba(52,255,133,0.85) !important; border-radius:10px !important;
+    box-shadow:0 0 10px rgba(52,255,133,0.28), inset 0 0 12px rgba(52,255,133,0.08) !important;
+    color:#fff !important; font-family:inherit; font-size:14px; font-weight:700; letter-spacing:0.05em;
+    white-space:nowrap; text-decoration:none; text-shadow:none !important; cursor:pointer; animation:none;
+  }
+  :is(.result-card .card-action-box :is(.delist-pigeon-btn, .list-open-modal-btn, .transfer-open-modal-btn), #detailScyllaBuyBtn, #detailScyllaDelistBtn, #detailScyllaListBtn, #detailScyllaTransferBtn, .detail-market-row .market-buy-link):hover{ background:rgb(52,255,133) !important; color:#000 !important; }
+  .result-card .card-action-box :is(.delist-pigeon-btn, .list-open-modal-btn, .transfer-open-modal-btn){ flex:1 1 0; width:100%; height:46px; }
+  #detailScyllaOwnedRow > .bar-btn{ flex:1 1 0; }
+  @media (max-width:600px){
+    .result-card .card-action-box :is(.delist-pigeon-btn, .list-open-modal-btn, .transfer-open-modal-btn){ height:40px; min-height:40px; padding:0 0.35em !important; font-size:10.5px; letter-spacing:0.01em; }
+  }
+  .result-card .card-action-box .card-add-cart-btn.in-cart{ background:rgba(52,255,133,0.18) !important; color:rgb(52,255,133) !important; }
+  .result-card .card-action-box .card-not-listed{ opacity:0.4; cursor:default; box-shadow:none; border-color:rgba(255,255,255,0.35) !important; }
   .result-card .card-action-box :is(.mbl-price, .thumb-buy-price){ color:rgb(52,255,133); }
   .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn):hover :is(.mbl-price, .thumb-buy-price){ color:#000; }
   @media (max-width:600px){
-    .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn){ height:40px; padding:0 0.35em; font-size:10.5px; letter-spacing:0.01em; gap:0.3em; }
+    .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn, .card-add-cart-btn, .card-not-listed){ height:40px; padding:0 0.35em; font-size:10.5px; letter-spacing:0.01em; gap:0.3em; }
   }
   /* Sized by the card itself, not the screen (cards are ~130px on phones
      but also ~200px in the 6-across desktop grid): "0FF-S!TE" drops when
@@ -5963,7 +5983,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     .result-card .card-market-buy .mbl-off{ display:none; }
   }
   @container (max-width:150px){
-    .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn){ font-size:9.5px; letter-spacing:0; }
+    .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn, .card-add-cart-btn, .card-not-listed){ font-size:9.5px; letter-spacing:0; }
   }
   .result-num{
     /* Bumped up from the old 15px (matched to button text) — direct
@@ -15387,14 +15407,23 @@ const SWAP_HTML = `<!DOCTYPE html>
     // control centred underneath. When there's no real listing (canBuy
     // false) 0FFER is still wrapped in the plain .owned-action-row alone,
     // full width, same as before.
+    // Two buttons on every card (reported live 2026-09-27), the top one:
+    // listed on Σκύλλa -> ADD T0 CART (its price is on the picture);
+    // listed only off-site -> BUY N0W ... 0FF-S!TE ↗; not listed -> a
+    // dimmed N0T L!STED. 0FFER always underneath.
+    var topHtml;
+    if (cartListingOf(p)){
+      var inCart = isInCart(p.nftId);
+      topHtml = '<button type="button" class="card-add-cart-btn' + (inCart ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' + (inCart ? '✓ !N CART' : 'ADD T0 CART') + '</button>';
+    } else if (marketBuyHtml){
+      topHtml = marketBuyHtml;
+    } else {
+      topHtml = '<span class="card-not-listed">N0T L!STED</span>';
+    }
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      '<div class="owned-action-row' + (canBuy ? ' owned-action-row-buy' : '') + (marketBuyHtml ? ' has-market-buy' : '') + '">' +
-        (marketBuyHtml || '') +
-        (canBuy ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">' +
-          '<span class="thumb-buy-label">BUY N0W ::</span>' +
-          '<span class="thumb-buy-price">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</span>' +
-        '</button>' : '') +
-        '<button class="bar-btn offer-open-modal-btn' + (canBuy ? ' offer-open-modal-btn-secondary' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">0FFER</button>' +
+      '<div class="owned-action-row has-market-buy">' +
+        topHtml +
+        '<button class="bar-btn offer-open-modal-btn" data-nftid="' + escapeHtml(p.nftId) + '">0FFER</button>' +
       '</div>' +
     '</div>';
   }
@@ -16024,7 +16053,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         }
         return;
       }
-      var cartBtn = e.target.closest('.card-cart-toggle');
+      var cartBtn = e.target.closest('.card-cart-toggle, .card-add-cart-btn');
       if (cartBtn){
         e.preventDefault();
         var cp = source().filter(function(x){ return x.nftId === cartBtn.getAttribute('data-nftid'); })[0];
@@ -19456,6 +19485,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       b.classList.toggle('in-cart', on);
       b.textContent = on ? '✓' : '+';
       b.title = on ? 'REM0VE FR0M CART' : 'ADD T0 CART';
+    });
+    document.querySelectorAll('.card-add-cart-btn').forEach(function(b){
+      var on = !!ids[b.getAttribute('data-nftid')];
+      b.classList.toggle('in-cart', on);
+      b.textContent = on ? '✓ !N CART' : 'ADD T0 CART';
     });
     el.openCartCount.textContent = list.length ? '(' + list.length + ')' : '';
     el.cartPillCount.textContent = list.length;
@@ -23251,7 +23285,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   function sendDetailMakeOffer(){
     if (!state.currentDetail) return;
     var priceValue = el.detailMakeOfferInput.value.trim().replace(/,/g, '');
-    submitMakeOffer(state.currentDetail, priceValue, el.detailMakeOfferRow, detailMakeOfferDurationDays);
+    // XRP-only collection (K!NG): the page's own MAKE AN 0FFER is in XRP.
+    submitMakeOffer(state.currentDetail, priceValue, el.detailMakeOfferRow, detailMakeOfferDurationDays, COLLECTION_META[state.collection].xrpOnly ? 'xrp' : undefined);
   }
   el.detailMakeOfferSend.addEventListener('click', sendDetailMakeOffer);
   el.detailMakeOfferInput.addEventListener('input', function(){ formatThousandsInput(el.detailMakeOfferInput); });
