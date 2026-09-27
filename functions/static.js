@@ -5137,149 +5137,160 @@ const SWAP_HTML = `<!DOCTYPE html>
   #sweepModal .sweep-scope-btn.active{ background:rgba(var(--collection-accent-rgb), 0.9); }
   #sweepModal .sweep-sub .hi{ color:var(--cyan); }
   body.collection-browse-only .results-quick{ display:none; }
+  /* Your own view: MULT!-L!ST instead of CART + SWEEP. */
+  body.own-scope #quickCartBtn, body.own-scope #quickSweepBtn{ display:none; }
+  body:not(.own-scope) #quickMultiListBtn{ display:none; }
+  .rq-btn-mlist{ border-color:rgba(var(--collection-accent-rgb), 0.9); box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.35); }
+  .rq-btn-mlist:hover{ background:rgba(var(--collection-accent-rgb), 0.25); }
+  .ml-tools{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:0.5rem; }
+  .ml-tool-btn{ background:#000; border:1px solid rgba(52,255,133,0.8); border-radius:999px; color:rgb(52,255,133); font-family:inherit; font-size:13px; font-weight:700; letter-spacing:0.08em; padding:0.55em 1em; cursor:pointer; }
+  .ml-tool-btn:hover{ background:rgba(52,255,133,0.18); }
+  .ml-setall{ display:flex; align-items:center; gap:0.5rem; }
+  #mlSetAll .cx-sort-btn{ font-size:12px; padding:0.5em 0.9em; white-space:nowrap; }
+  .cx-tag-list{ color:var(--cyan); border-color:var(--cyan); }
   #sweepModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
   #sweepModal .sweep-modal-panel{ width:min(520px, 94vw); display:flex; flex-direction:column; gap:0.8rem; }
   #sweepModal .simple-picker-header{ position:relative; justify-content:center; }
   #sweepModal .simple-picker-title{ flex:1; text-align:center; font-size:22px; font-weight:700; letter-spacing:0.1em; }
   #sweepModal .simple-picker-close{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
   .sweep-sub{ text-align:center; color:#fff; font-size:12px; letter-spacing:0.06em; opacity:0.85; }
-  #cartModal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
-  #cartModal .cart-modal-panel{ width:min(560px, 94vw); max-height:90vh; display:flex; flex-direction:column; gap:0.9rem; padding:1.6rem 1.5rem; }
+  :is(#cartModal, #multiListModal){ display:none; position:fixed; inset:0; z-index:1000; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:2rem 1rem; }
+  :is(#cartModal, #multiListModal) .cart-modal-panel{ width:min(560px, 94vw); max-height:90vh; display:flex; flex-direction:column; gap:0.9rem; padding:1.6rem 1.5rem; }
   /* ---- CART, SWAP-style (2026-09-27) ---- */
   /* Only the list scrolls/shrinks — balances, totals and buttons keep
      their full size. */
-  #cartModal .cart-modal-panel > :not(.cart-list){ flex-shrink:0; }
-  #cartModal .cart-modal-panel{ overflow-y:auto; }
-  #cartModal .cart-modal-panel > .cart-list{ flex:0 0 auto; overflow:visible; max-height:none; }
-  #cartModal .cart-row > div:nth-child(2){ min-width:0; }
-  #cartModal .cart-row-name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #cartModal .cx-balances{ display:flex; flex-wrap:wrap; border:1px solid rgba(var(--collection-accent-rgb), 0.35); border-radius:var(--radius); background:#000; overflow:hidden; }
-  #cartModal .cx-bal{ flex:1 1 0; min-width:9rem; text-align:center; padding:0.75em 0.5em; }
-  #cartModal .cx-bal + .cx-bal{ border-left:1px solid rgba(var(--collection-accent-rgb), 0.35); }
-  #cartModal .cx-bal-label{ display:block; font-size:12px; font-weight:700; letter-spacing:0.12em; color:#fff; opacity:0.85; margin-bottom:0.25rem; }
-  #cartModal .cx-bal-value{ display:block; font-size:21px; font-weight:700; color:rgb(52,255,133); text-shadow:0 0 6px rgba(52,255,133,0.35); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #cartModal .simple-picker-header .cx-clear{ position:absolute; left:0; top:50%; transform:translateY(-50%); }
-  #cartModal .cx-count{ color:#fff; font-size:14px; font-weight:700; letter-spacing:0.08em; }
-  #cartModal .cx-clear{ background:none; border:1px solid rgba(255,59,92,0.85); border-radius:999px; color:#ff3b5c; font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.08em; padding:0.45em 0.95em; cursor:pointer; }
-  #cartModal .cx-clear:hover{ background:#ff3b5c; color:#000; }
-  #cartModal .cart-list{ gap:0.6rem; padding-right:0.2rem; }
-  #cartModal .cart-group{ font-size:13px; margin:0.4rem 0 0; }
-  #cartModal .cart-row{ grid-template-columns:72px 1fr auto 2.2rem; gap:0.9rem; padding:0.55rem 0.6rem 0.55rem 0.55rem; border:1px solid rgba(var(--collection-accent-rgb), 0.55); border-radius:var(--radius); box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.18); }
-  #cartModal .cart-row img, #cartModal .cart-row > span:first-child{ width:72px; height:72px; border-radius:10px; object-fit:cover; background:#111; }
-  #cartModal .cart-row-name{ font-size:17px; }
-  #cartModal .cx-tag{ display:inline-block; margin-top:0.3rem; font-size:11px; font-weight:700; letter-spacing:0.12em; padding:0.2em 0.6em; border-radius:999px; border:1px solid currentColor; }
-  #cartModal .cx-tag-buy{ color:rgb(52,255,133); }
-  #cartModal .cx-tag-offer{ color:var(--cyan); }
-  #cartModal .cart-row-state{ margin-top:0.3rem; font-size:12px; }
-  #cartModal .cart-row-price{ font-size:18px; text-align:right; }
-  #cartModal .cart-row-remove{ width:2.2rem; height:2.2rem; border-radius:50%; }
-  #cartModal .cx-offer-box{ position:relative; border:1px solid rgba(var(--collection-accent-rgb), 0.55); border-radius:10px; padding:1.25rem 0.6rem 0.4rem; background:#000; }
-  #cartModal .cx-offer-box:focus-within{ border-color:var(--collection-accent); box-shadow:0 0 12px rgba(var(--collection-accent-rgb), 0.4); }
-  #cartModal .cx-offer-label{ position:absolute; top:0.35rem; left:0.6rem; font-size:10px; font-weight:700; letter-spacing:0.14em; color:#fff; opacity:0.75; }
-  #cartModal .cx-offer-line{ display:flex; align-items:center; gap:0.45rem; }
-  #cartModal .cart-offer-input{ width:4.6rem; border:none; background:transparent; font-size:20px; padding:0; text-align:right; }
-  #cartModal .cart-offer-input:focus{ outline:none; }
-  #cartModal .cart-offer-unit{ font-size:14px; }
+  :is(#cartModal, #multiListModal) .cart-modal-panel > :not(.cart-list){ flex-shrink:0; }
+  :is(#cartModal, #multiListModal) .cart-modal-panel{ overflow-y:auto; }
+  :is(#cartModal, #multiListModal) .cart-modal-panel > .cart-list{ flex:0 0 auto; overflow:visible; max-height:none; }
+  :is(#cartModal, #multiListModal) .cart-row > div:nth-child(2){ min-width:0; }
+  :is(#cartModal, #multiListModal) .cart-row-name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  :is(#cartModal, #multiListModal) .cx-balances{ display:flex; flex-wrap:wrap; border:1px solid rgba(var(--collection-accent-rgb), 0.35); border-radius:var(--radius); background:#000; overflow:hidden; }
+  :is(#cartModal, #multiListModal) .cx-bal{ flex:1 1 0; min-width:9rem; text-align:center; padding:0.75em 0.5em; }
+  :is(#cartModal, #multiListModal) .cx-bal + .cx-bal{ border-left:1px solid rgba(var(--collection-accent-rgb), 0.35); }
+  :is(#cartModal, #multiListModal) .cx-bal-label{ display:block; font-size:12px; font-weight:700; letter-spacing:0.12em; color:#fff; opacity:0.85; margin-bottom:0.25rem; }
+  :is(#cartModal, #multiListModal) .cx-bal-value{ display:block; font-size:21px; font-weight:700; color:rgb(52,255,133); text-shadow:0 0 6px rgba(52,255,133,0.35); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  :is(#cartModal, #multiListModal) .simple-picker-header .cx-clear{ position:absolute; left:0; top:50%; transform:translateY(-50%); }
+  :is(#cartModal, #multiListModal) .cx-count{ color:#fff; font-size:14px; font-weight:700; letter-spacing:0.08em; }
+  :is(#cartModal, #multiListModal) .cx-clear{ background:none; border:1px solid rgba(255,59,92,0.85); border-radius:999px; color:#ff3b5c; font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.08em; padding:0.45em 0.95em; cursor:pointer; }
+  :is(#cartModal, #multiListModal) .cx-clear:hover{ background:#ff3b5c; color:#000; }
+  :is(#cartModal, #multiListModal) .cart-list{ gap:0.6rem; padding-right:0.2rem; }
+  :is(#cartModal, #multiListModal) .cart-group{ font-size:13px; margin:0.4rem 0 0; }
+  :is(#cartModal, #multiListModal) .cart-row{ grid-template-columns:72px 1fr auto 2.2rem; gap:0.9rem; padding:0.55rem 0.6rem 0.55rem 0.55rem; border:1px solid rgba(var(--collection-accent-rgb), 0.55); border-radius:var(--radius); box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.18); }
+  :is(#cartModal, #multiListModal) .cart-row img, :is(#cartModal, #multiListModal) .cart-row > span:first-child{ width:72px; height:72px; border-radius:10px; object-fit:cover; background:#111; }
+  :is(#cartModal, #multiListModal) .cart-row-name{ font-size:17px; }
+  :is(#cartModal, #multiListModal) .cx-tag{ display:inline-block; margin-top:0.3rem; font-size:11px; font-weight:700; letter-spacing:0.12em; padding:0.2em 0.6em; border-radius:999px; border:1px solid currentColor; }
+  :is(#cartModal, #multiListModal) .cx-tag-buy{ color:rgb(52,255,133); }
+  :is(#cartModal, #multiListModal) .cx-tag-offer{ color:var(--cyan); }
+  :is(#cartModal, #multiListModal) .cart-row-state{ margin-top:0.3rem; font-size:12px; }
+  :is(#cartModal, #multiListModal) .cart-row-price{ font-size:18px; text-align:right; }
+  :is(#cartModal, #multiListModal) .cart-row-remove{ width:2.2rem; height:2.2rem; border-radius:50%; }
+  :is(#cartModal, #multiListModal) .cx-offer-box{ position:relative; border:1px solid rgba(var(--collection-accent-rgb), 0.55); border-radius:10px; padding:1.25rem 0.6rem 0.4rem; background:#000; }
+  :is(#cartModal, #multiListModal) .cx-offer-box:focus-within{ border-color:var(--collection-accent); box-shadow:0 0 12px rgba(var(--collection-accent-rgb), 0.4); }
+  :is(#cartModal, #multiListModal) .cx-offer-label{ position:absolute; top:0.35rem; left:0.6rem; font-size:10px; font-weight:700; letter-spacing:0.14em; color:#fff; opacity:0.75; }
+  :is(#cartModal, #multiListModal) .cx-offer-line{ display:flex; align-items:center; gap:0.45rem; }
+  :is(#cartModal, #multiListModal) .cart-offer-input{ width:4.6rem; border:none; background:transparent; font-size:20px; padding:0; text-align:right; }
+  :is(#cartModal, #multiListModal) .cart-offer-input:focus{ outline:none; }
+  :is(#cartModal, #multiListModal) .cart-offer-unit{ font-size:14px; }
   /* Row (2026-09-27 redesign): big picture | name + × / tag + collection /
      price or Y0UR 0FFER box. */
-  #cartModal .cart-row{ display:grid; grid-template-columns:88px 1fr !important; align-items:start; gap:0.9rem; padding:0.65rem; }
-  #cartModal .cart-row img, #cartModal .cart-row .cx-noimg{ width:88px !important; height:88px !important; border-radius:12px; object-fit:cover; background:#111; display:block; }
-  #cartModal .cx-main{ display:flex; flex-direction:column; gap:0.45rem; min-width:0; }
-  #cartModal .cx-head{ display:flex; align-items:center; justify-content:space-between; gap:0.5rem; }
-  #cartModal .cx-head .cart-row-name{ font-size:18px; }
-  #cartModal .cx-head .cart-row-remove{ flex:0 0 auto; width:1.9rem; height:1.9rem; border-radius:50%; font-size:15px; line-height:1; }
-  #cartModal .cx-sub{ display:flex; align-items:center; gap:0.5rem; min-width:0; }
-  #cartModal .cx-sub .cx-tag{ margin:0; }
-  #cartModal .cx-coll{ color:#fff; opacity:0.7; font-size:12px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #cartModal .cart-row-state{ margin:0; }
-  #cartModal .cx-price-box, #cartModal .cx-offer-box{ position:relative; display:block; border:1px solid rgba(var(--collection-accent-rgb), 0.5); border-radius:10px; background:#000; padding:1.3rem 0.7rem 0.45rem; cursor:text; }
-  #cartModal .cx-price-box{ cursor:default; }
-  #cartModal .cx-offer-box:focus-within{ border-color:var(--collection-accent); box-shadow:0 0 12px rgba(var(--collection-accent-rgb), 0.4); }
-  #cartModal .cx-price-box .cart-row-price{ display:block; text-align:right; font-size:19px; }
-  #cartModal .cx-offer-line{ display:flex; align-items:center; justify-content:flex-end; gap:0.5rem; }
-  #cartModal .cx-offer-line .cart-offer-input{ flex:1 1 auto; min-width:0; width:auto; font-size:21px; }
-  #cartModal .cx-offer-line .cart-offer-cur{ flex:0 0 auto; }
+  :is(#cartModal, #multiListModal) .cart-row{ display:grid; grid-template-columns:88px 1fr !important; align-items:start; gap:0.9rem; padding:0.65rem; }
+  :is(#cartModal, #multiListModal) .cart-row img, :is(#cartModal, #multiListModal) .cart-row .cx-noimg{ width:88px !important; height:88px !important; border-radius:12px; object-fit:cover; background:#111; display:block; }
+  :is(#cartModal, #multiListModal) .cx-main{ display:flex; flex-direction:column; gap:0.45rem; min-width:0; }
+  :is(#cartModal, #multiListModal) .cx-head{ display:flex; align-items:center; justify-content:space-between; gap:0.5rem; }
+  :is(#cartModal, #multiListModal) .cx-head .cart-row-name{ font-size:18px; }
+  :is(#cartModal, #multiListModal) .cx-head .cart-row-remove{ flex:0 0 auto; width:1.9rem; height:1.9rem; border-radius:50%; font-size:15px; line-height:1; }
+  :is(#cartModal, #multiListModal) .cx-sub{ display:flex; align-items:center; gap:0.5rem; min-width:0; }
+  :is(#cartModal, #multiListModal) .cx-sub .cx-tag{ margin:0; }
+  :is(#cartModal, #multiListModal) .cx-coll{ color:#fff; opacity:0.7; font-size:12px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  :is(#cartModal, #multiListModal) .cart-row-state{ margin:0; }
+  :is(#cartModal, #multiListModal) .cx-price-box, :is(#cartModal, #multiListModal) .cx-offer-box{ position:relative; display:block; border:1px solid rgba(var(--collection-accent-rgb), 0.5); border-radius:10px; background:#000; padding:1.3rem 0.7rem 0.45rem; cursor:text; }
+  :is(#cartModal, #multiListModal) .cx-price-box{ cursor:default; }
+  :is(#cartModal, #multiListModal) .cx-offer-box:focus-within{ border-color:var(--collection-accent); box-shadow:0 0 12px rgba(var(--collection-accent-rgb), 0.4); }
+  :is(#cartModal, #multiListModal) .cx-price-box .cart-row-price{ display:block; text-align:right; font-size:19px; }
+  :is(#cartModal, #multiListModal) .cx-offer-line{ display:flex; align-items:center; justify-content:flex-end; gap:0.5rem; }
+  :is(#cartModal, #multiListModal) .cx-offer-line .cart-offer-input{ flex:1 1 auto; min-width:0; width:auto; font-size:21px; }
+  :is(#cartModal, #multiListModal) .cx-offer-line .cart-offer-cur{ flex:0 0 auto; }
   /* Offer (2026-09-27 redesign): label above, then one field — amount
      left, currency switch right, styled like SWAP's BUY/SELL. */
-  #cartModal .cx-offer{ display:flex; flex-direction:column; gap:0.3rem; }
-  #cartModal .cx-offer-title{ font-size:11px; font-weight:700; letter-spacing:0.14em; color:#fff; opacity:0.8; }
-  #cartModal .cx-offer-field{ display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0.3rem 0.3rem 0.8rem; border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:12px; background:#000; box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.18); cursor:text; }
-  #cartModal .cx-offer-field:focus-within{ border-color:var(--collection-accent); box-shadow:0 0 14px rgba(var(--collection-accent-rgb), 0.45); }
-  #cartModal .cx-offer-field .cart-offer-input{ flex:1 1 auto; min-width:0; width:auto; border:none; background:transparent; color:#fff; font-family:inherit; font-size:22px; font-weight:700; text-align:left; padding:0.25rem 0; }
-  #cartModal .cx-offer-field .cart-offer-input::placeholder{ color:rgba(255,255,255,0.3); }
-  #cartModal .cx-offer-field .cart-offer-input:focus{ outline:none; }
-  #cartModal .cx-unit-seg{ flex:0 0 auto; display:inline-flex; padding:3px; gap:2px; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:999px; background:#000; }
-  #cartModal .cx-unit-seg button{ border:none; border-radius:999px; background:none; color:#fff; font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.05em; padding:0.5em 0.8em; cursor:pointer; }
-  #cartModal .cx-unit-seg button.active{ background:rgba(var(--collection-accent-rgb), 0.9); color:#fff; }
-  #cartModal .cx-unit-fixed{ flex:0 0 auto; padding:0.5em 0.9em; border-radius:999px; background:rgba(var(--collection-accent-rgb), 0.9); color:#fff; font-size:12px; font-weight:700; letter-spacing:0.05em; }
+  :is(#cartModal, #multiListModal) .cx-offer{ display:flex; flex-direction:column; gap:0.3rem; }
+  :is(#cartModal, #multiListModal) .cx-offer-title{ font-size:11px; font-weight:700; letter-spacing:0.14em; color:#fff; opacity:0.8; }
+  :is(#cartModal, #multiListModal) .cx-offer-field{ display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0.3rem 0.3rem 0.8rem; border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:12px; background:#000; box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.18); cursor:text; }
+  :is(#cartModal, #multiListModal) .cx-offer-field:focus-within{ border-color:var(--collection-accent); box-shadow:0 0 14px rgba(var(--collection-accent-rgb), 0.45); }
+  :is(#cartModal, #multiListModal) .cx-offer-field .cart-offer-input{ flex:1 1 auto; min-width:0; width:auto; border:none; background:transparent; color:#fff; font-family:inherit; font-size:22px; font-weight:700; text-align:left; padding:0.25rem 0; }
+  :is(#cartModal, #multiListModal) .cx-offer-field .cart-offer-input::placeholder{ color:rgba(255,255,255,0.3); }
+  :is(#cartModal, #multiListModal) .cx-offer-field .cart-offer-input:focus{ outline:none; }
+  :is(#cartModal, #multiListModal) .cx-unit-seg{ flex:0 0 auto; display:inline-flex; padding:3px; gap:2px; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:999px; background:#000; }
+  :is(#cartModal, #multiListModal) .cx-unit-seg button{ border:none; border-radius:999px; background:none; color:#fff; font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.05em; padding:0.5em 0.8em; cursor:pointer; }
+  :is(#cartModal, #multiListModal) .cx-unit-seg button.active{ background:rgba(var(--collection-accent-rgb), 0.9); color:#fff; }
+  :is(#cartModal, #multiListModal) .cx-unit-fixed{ flex:0 0 auto; padding:0.5em 0.9em; border-radius:999px; background:rgba(var(--collection-accent-rgb), 0.9); color:#fff; font-size:12px; font-weight:700; letter-spacing:0.05em; }
   @media (max-width:600px){
-    #cartModal .cx-offer-field .cart-offer-input{ font-size:18px; }
-    #cartModal .cx-unit-seg button{ font-size:10px; padding:0.45em 0.55em; }
+    :is(#cartModal, #multiListModal) .cx-offer-field .cart-offer-input{ font-size:18px; }
+    :is(#cartModal, #multiListModal) .cx-unit-seg button{ font-size:10px; padding:0.45em 0.55em; }
   }
-  #cartModal .cx-name-wrap{ display:flex; align-items:center; gap:0.55rem; min-width:0; }
-  #cartModal .cx-name-wrap .cx-tag{ margin:0; flex:0 0 auto; }
-  #cartModal .cart-row-state:empty{ display:none; }
-  #cartModal .cx-price-box{ padding:0.55rem 0.8rem; }
-  #cartModal .cx-sortbar{ display:flex; align-items:center; gap:0.6rem; }
-  #cartModal .cx-sortbar .cx-small-label{ flex:0 0 auto; }
-  #cartModal .cx-sortbar .cx-seg{ flex:1 1 auto; }
-  #cartModal .cx-sort-btn{ flex:1 1 0; min-width:0; margin:0; border:none; border-radius:var(--radius); background:none; color:#fff; font-family:inherit; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:0.55em 0; cursor:pointer; }
-  #cartModal .cx-sort-btn.active{ background:rgba(var(--collection-accent-rgb), 0.9); color:#fff; }
-  #cartModal .cx-cost{ text-align:center; padding:0.6rem 0 0.2rem; }
-  #cartModal .cx-cost-label{ font-size:12px; font-weight:700; letter-spacing:0.16em; color:#fff; opacity:0.85; }
-  #cartModal .cx-cost-val{ font-size:26px; font-weight:700; color:rgb(52,255,133); text-shadow:0 0 8px rgba(52,255,133,0.35); line-height:1.3; }
-  #cartModal .cx-plus{ color:#fff; opacity:0.6; margin:0 0.45em; font-size:20px; }
-  #cartModal .cx-cost-note{ font-size:11px; color:#fff; opacity:0.7; letter-spacing:0.05em; margin-top:0.2rem; }
-  #cartModal .cx-cost-note:empty{ display:none; }
-  #cartModal .cx-submit{ width:100%; margin:0; font-size:17px !important; padding:0.95em 1em !important; letter-spacing:0.08em; }
+  :is(#cartModal, #multiListModal) .cx-name-wrap{ display:flex; align-items:center; gap:0.55rem; min-width:0; }
+  :is(#cartModal, #multiListModal) .cx-name-wrap .cx-tag{ margin:0; flex:0 0 auto; }
+  :is(#cartModal, #multiListModal) .cart-row-state:empty{ display:none; }
+  :is(#cartModal, #multiListModal) .cx-price-box{ padding:0.55rem 0.8rem; }
+  :is(#cartModal, #multiListModal) .cx-sortbar{ display:flex; align-items:center; gap:0.6rem; }
+  :is(#cartModal, #multiListModal) .cx-sortbar .cx-small-label{ flex:0 0 auto; }
+  :is(#cartModal, #multiListModal) .cx-sortbar .cx-seg{ flex:1 1 auto; }
+  :is(#cartModal, #multiListModal) .cx-sort-btn{ flex:1 1 0; min-width:0; margin:0; border:none; border-radius:var(--radius); background:none; color:#fff; font-family:inherit; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:0.55em 0; cursor:pointer; }
+  :is(#cartModal, #multiListModal) .cx-sort-btn.active{ background:rgba(var(--collection-accent-rgb), 0.9); color:#fff; }
+  :is(#cartModal, #multiListModal) .cx-cost{ text-align:center; padding:0.6rem 0 0.2rem; }
+  :is(#cartModal, #multiListModal) .cx-cost-label{ font-size:12px; font-weight:700; letter-spacing:0.16em; color:#fff; opacity:0.85; }
+  :is(#cartModal, #multiListModal) .cx-cost-val{ font-size:26px; font-weight:700; color:rgb(52,255,133); text-shadow:0 0 8px rgba(52,255,133,0.35); line-height:1.3; }
+  :is(#cartModal, #multiListModal) .cx-plus{ color:#fff; opacity:0.6; margin:0 0.45em; font-size:20px; }
+  :is(#cartModal, #multiListModal) .cx-cost-note{ font-size:11px; color:#fff; opacity:0.7; letter-spacing:0.05em; margin-top:0.2rem; }
+  :is(#cartModal, #multiListModal) .cx-cost-note:empty{ display:none; }
+  :is(#cartModal, #multiListModal) .cx-submit{ width:100%; margin:0; font-size:17px !important; padding:0.95em 1em !important; letter-spacing:0.08em; }
   @media (max-width:600px){
-    #cartModal .cx-cost-val{ font-size:20px; }
-    #cartModal .cx-sort-btn{ font-size:11px; }
-    #cartModal .cx-submit{ font-size:14px !important; }
+    :is(#cartModal, #multiListModal) .cx-cost-val{ font-size:20px; }
+    :is(#cartModal, #multiListModal) .cx-sort-btn{ font-size:11px; }
+    :is(#cartModal, #multiListModal) .cx-submit{ font-size:14px !important; }
   }
-  #cartModal .cx-sentence{ text-align:center; color:#fff; font-size:13px; font-weight:700; letter-spacing:0.05em; white-space:nowrap; padding:0.35rem 0 0.5rem; border-bottom:1px solid rgba(var(--collection-accent-rgb), 0.15); }
-  #cartModal .cx-sentence span{ color:var(--cyan); }
-  #cartModal .cx-seg .list-duration-btn[data-days="0"]{ font-family:"Segoe UI Symbol", "Arial", sans-serif !important; font-size:26px !important; font-weight:400; line-height:1; padding-top:0.05em; padding-bottom:0.05em; }
+  :is(#cartModal, #multiListModal) .cx-sentence{ text-align:center; color:#fff; font-size:13px; font-weight:700; letter-spacing:0.05em; white-space:nowrap; padding:0.35rem 0 0.5rem; border-bottom:1px solid rgba(var(--collection-accent-rgb), 0.15); }
+  :is(#cartModal, #multiListModal) .cx-sentence span{ color:var(--cyan); }
+  :is(#cartModal, #multiListModal) .cx-seg .list-duration-btn[data-days="0"]{ font-family:"Segoe UI Symbol", "Arial", sans-serif !important; font-size:26px !important; font-weight:400; line-height:1; padding-top:0.05em; padding-bottom:0.05em; }
   @media (max-width:600px){
-    #cartModal .cart-row{ grid-template-columns:64px 1fr !important; }
-    #cartModal .cart-row img, #cartModal .cart-row .cx-noimg{ width:64px !important; height:64px !important; }
-    #cartModal .cx-head .cart-row-name{ font-size:15px; }
-    #cartModal .cx-sentence{ font-size:11px; white-space:normal; }
-    #cartModal .simple-picker-header .cx-clear{ font-size:10px; padding:0.4em 0.6em; }
+    :is(#cartModal, #multiListModal) .cart-row{ grid-template-columns:64px 1fr !important; }
+    :is(#cartModal, #multiListModal) .cart-row img, :is(#cartModal, #multiListModal) .cart-row .cx-noimg{ width:64px !important; height:64px !important; }
+    :is(#cartModal, #multiListModal) .cx-head .cart-row-name{ font-size:15px; }
+    :is(#cartModal, #multiListModal) .cx-sentence{ font-size:11px; white-space:normal; }
+    :is(#cartModal, #multiListModal) .simple-picker-header .cx-clear{ font-size:10px; padding:0.4em 0.6em; }
   }
-  #cartModal .cx-duration{ display:flex; flex-direction:column; gap:0.4rem; }
-  #cartModal .cx-small-label{ font-size:12px; font-weight:700; letter-spacing:0.14em; color:#fff; opacity:0.85; text-align:center; }
-  #cartModal .cx-seg{ display:flex; padding:3px; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); background:#000; }
-  #cartModal .cx-seg .list-duration-btn{ flex:1 1 0; min-width:0; margin:0; border:none !important; border-radius:var(--radius); background:none; box-shadow:none; color:#fff; font-size:14px; font-weight:700; padding:0.6em 0; }
-  #cartModal .cx-seg .list-duration-btn.active{ background:rgba(var(--collection-accent-rgb), 0.9) !important; color:#fff; }
-  #cartModal .cx-summary{ border:1px solid rgba(var(--collection-accent-rgb), 0.3); border-radius:var(--radius); background:#000; padding:0.5rem 0.9rem; }
-  #cartModal .cx-summary:empty{ display:none; }
-  #cartModal .cx-sum-row{ display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:0.35rem 0; font-size:13px; font-weight:700; letter-spacing:0.08em; color:#fff; }
-  #cartModal .cx-sum-row + .cx-sum-row{ border-top:1px solid rgba(var(--collection-accent-rgb), 0.15); }
-  #cartModal .cx-sum-row .cx-sum-val{ color:rgb(52,255,133); font-size:15px; text-align:right; }
-  #cartModal .cx-sum-row.cx-sum-total .cx-sum-val{ font-size:18px; }
-  #cartModal .cx-actions{ display:flex; gap:0.6rem; }
-  #cartModal .cx-actions > button{ flex:1 1 0; margin:0; }
-  #cartModal .cx-back{ background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:999px; color:#fff; font-family:inherit; font-size:15px; font-weight:700; letter-spacing:0.08em; padding:0.8em 1em; cursor:pointer; }
-  #cartModal .cx-back:hover{ border-color:var(--collection-accent); }
-  #cartModal .cart-buy-btn{ border-radius:999px; font-size:16px; padding:0.8em 1em; background:rgba(var(--collection-accent-rgb), 0.95); border-color:var(--collection-accent); color:#fff; box-shadow:0 0 14px rgba(var(--collection-accent-rgb), 0.45); }
-  #cartModal .cart-buy-btn:hover:not(:disabled){ background:rgb(52,255,133); border-color:rgb(52,255,133); color:#000; }
-  #cartModal .cart-status{ font-size:14px; }
+  :is(#cartModal, #multiListModal) .cx-duration{ display:flex; flex-direction:column; gap:0.4rem; }
+  :is(#cartModal, #multiListModal) .cx-small-label{ font-size:12px; font-weight:700; letter-spacing:0.14em; color:#fff; opacity:0.85; text-align:center; }
+  :is(#cartModal, #multiListModal) .cx-seg{ display:flex; padding:3px; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); background:#000; }
+  :is(#cartModal, #multiListModal) .cx-seg .list-duration-btn{ flex:1 1 0; min-width:0; margin:0; border:none !important; border-radius:var(--radius); background:none; box-shadow:none; color:#fff; font-size:14px; font-weight:700; padding:0.6em 0; }
+  :is(#cartModal, #multiListModal) .cx-seg .list-duration-btn.active{ background:rgba(var(--collection-accent-rgb), 0.9) !important; color:#fff; }
+  :is(#cartModal, #multiListModal) .cx-summary{ border:1px solid rgba(var(--collection-accent-rgb), 0.3); border-radius:var(--radius); background:#000; padding:0.5rem 0.9rem; }
+  :is(#cartModal, #multiListModal) .cx-summary:empty{ display:none; }
+  :is(#cartModal, #multiListModal) .cx-sum-row{ display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:0.35rem 0; font-size:13px; font-weight:700; letter-spacing:0.08em; color:#fff; }
+  :is(#cartModal, #multiListModal) .cx-sum-row + .cx-sum-row{ border-top:1px solid rgba(var(--collection-accent-rgb), 0.15); }
+  :is(#cartModal, #multiListModal) .cx-sum-row .cx-sum-val{ color:rgb(52,255,133); font-size:15px; text-align:right; }
+  :is(#cartModal, #multiListModal) .cx-sum-row.cx-sum-total .cx-sum-val{ font-size:18px; }
+  :is(#cartModal, #multiListModal) .cx-actions{ display:flex; gap:0.6rem; }
+  :is(#cartModal, #multiListModal) .cx-actions > button{ flex:1 1 0; margin:0; }
+  :is(#cartModal, #multiListModal) .cx-back{ background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:999px; color:#fff; font-family:inherit; font-size:15px; font-weight:700; letter-spacing:0.08em; padding:0.8em 1em; cursor:pointer; }
+  :is(#cartModal, #multiListModal) .cx-back:hover{ border-color:var(--collection-accent); }
+  :is(#cartModal, #multiListModal) .cart-buy-btn{ border-radius:999px; font-size:16px; padding:0.8em 1em; background:rgba(var(--collection-accent-rgb), 0.95); border-color:var(--collection-accent); color:#fff; box-shadow:0 0 14px rgba(var(--collection-accent-rgb), 0.45); }
+  :is(#cartModal, #multiListModal) .cart-buy-btn:hover:not(:disabled){ background:rgb(52,255,133); border-color:rgb(52,255,133); color:#000; }
+  :is(#cartModal, #multiListModal) .cart-status{ font-size:14px; }
   @media (max-width:600px){
-    #cartModal .cart-modal-panel{ padding:1.2rem 0.9rem; }
-    #cartModal .cart-row img, #cartModal .cart-row > span:first-child{ width:56px; height:56px; }
-    #cartModal .cx-offer-line{ justify-content:flex-end; }
-    #cartModal .cx-bal-value{ font-size:17px; }
-    #cartModal .cx-seg .list-duration-btn{ font-size:11px; letter-spacing:0; padding:0.65em 0; }
-    #cartModal .cx-sum-row{ font-size:11px; letter-spacing:0.04em; }
-    #cartModal .cx-sum-row .cx-sum-val{ font-size:13px; }
-    #cartModal .cx-sum-row.cx-sum-total .cx-sum-val{ font-size:15px; }
+    :is(#cartModal, #multiListModal) .cart-modal-panel{ padding:1.2rem 0.9rem; }
+    :is(#cartModal, #multiListModal) .cart-row img, :is(#cartModal, #multiListModal) .cart-row > span:first-child{ width:56px; height:56px; }
+    :is(#cartModal, #multiListModal) .cx-offer-line{ justify-content:flex-end; }
+    :is(#cartModal, #multiListModal) .cx-bal-value{ font-size:17px; }
+    :is(#cartModal, #multiListModal) .cx-seg .list-duration-btn{ font-size:11px; letter-spacing:0; padding:0.65em 0; }
+    :is(#cartModal, #multiListModal) .cx-sum-row{ font-size:11px; letter-spacing:0.04em; }
+    :is(#cartModal, #multiListModal) .cx-sum-row .cx-sum-val{ font-size:13px; }
+    :is(#cartModal, #multiListModal) .cx-sum-row.cx-sum-total .cx-sum-val{ font-size:15px; }
   }
-  #cartModal .cx-sum-row > span:first-child{ text-align:left; }
-  #cartModal .cx-sum-row .cx-sum-val{ white-space:nowrap; }
-  #cartModal .simple-picker-header{ position:relative; justify-content:center; }
-  #cartModal .simple-picker-title{ flex:1; text-align:center; font-size:24px; font-weight:700; letter-spacing:0.1em; }
-  #cartModal .simple-picker-close{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
+  :is(#cartModal, #multiListModal) .cx-sum-row > span:first-child{ text-align:left; }
+  :is(#cartModal, #multiListModal) .cx-sum-row .cx-sum-val{ white-space:nowrap; }
+  :is(#cartModal, #multiListModal) .simple-picker-header{ position:relative; justify-content:center; }
+  :is(#cartModal, #multiListModal) .simple-picker-title{ flex:1; text-align:center; font-size:24px; font-weight:700; letter-spacing:0.1em; }
+  :is(#cartModal, #multiListModal) .simple-picker-close{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
   .cart-sweep{ border:1px solid rgba(var(--collection-accent-rgb, 136,72,248), 0.6); border-radius:12px; background:#000; padding:0.7rem; display:flex; flex-direction:column; gap:0.5rem; }
   .cart-sweep-label{ text-align:center; font-weight:700; letter-spacing:0.1em; color:#fff; font-size:14px; }
   .cart-sweep-row{ display:flex; gap:0.5rem; align-items:center; }
@@ -5385,6 +5396,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .watchlist-toggle:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
   .watchlist-toggle.watching{ background:rgba(8,9,11,0.9); color:#ffd23d; border-color:#ffd23d; text-shadow:0 0 6px rgba(255,210,61,0.6); }
+  /* The star sits right of the NFT's number now, not on the picture
+     (reported live 2026-09-27). */
+  .result-num .watchlist-toggle{ position:static; display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; margin:-0.2em 0 -0.2em 0.4em; width:1.45em; height:1.45em; line-height:1; font-size:17px; background:none; border-color:transparent; }
+  .result-num .watchlist-toggle.watching{ background:none; border-color:transparent; }
   /* Listing price — moved here (bottom-right corner of the picture
      itself) off the purple action box below, which used to carry this
      text and grow/shrink depending on whether a Pigeon was listed. Same
@@ -9393,14 +9408,112 @@ const SWAP_HTML = `<!DOCTYPE html>
   .coin-stat{ border:1px solid rgba(var(--collection-accent-rgb), 0.3); border-radius:10px; background:#000; padding:0.55rem 0.6rem; text-align:center; min-width:0; }
   .coin-stat-label{ display:block; color:#fff; opacity:0.75; font-size:10px; font-weight:700; letter-spacing:0.12em; }
   .coin-stat-val{ display:block; color:rgb(52,255,133); font-size:15px; font-weight:700; margin-top:0.2rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .coin-links{ display:flex; flex-wrap:wrap; gap:0.45rem; justify-content:center; }
-  .coin-links a{ border:1px solid rgba(var(--collection-accent-rgb), 0.5); border-radius:999px; color:#fff; text-decoration:none; font-size:12px; font-weight:700; letter-spacing:0.08em; padding:0.45em 0.9em; }
-  .coin-links a:hover{ border-color:var(--cyan); color:var(--cyan); }
-  #coinModal .cx-submit{ width:100%; margin:0; font-size:17px !important; padding:0.9em 1em !important; border-radius:999px; background:rgba(var(--collection-accent-rgb), 0.95); border:1px solid var(--collection-accent); color:#fff; }
+  /* Socials — round icons under the price (reported live 2026-09-27:
+     "put all the socials at the top"). */
+  .coin-links{ display:flex; flex-wrap:wrap; gap:0.55rem; justify-content:center; }
+  .coin-links:empty{ display:none; }
+  .coin-social{ width:40px; height:40px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.55); color:#fff; box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.18); transition:transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease; }
+  .coin-social svg{ width:18px; height:18px; fill:currentColor; }
+  .coin-social svg[fill="none"]{ fill:none; }
+  .coin-social:hover{ transform:translateY(-2px); border-color:var(--collection-accent); color:var(--cyan); box-shadow:0 0 16px rgba(var(--collection-accent-rgb), 0.55); }
+  .coin-chart-ranges{ flex-wrap:wrap; }
+  .coin-stat-sub{ display:block; color:#fff; opacity:0.6; font-size:10.5px; font-weight:700; letter-spacing:0.04em; margin-top:0.15rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .coin-stat-val .up{ color:rgb(52,255,133); }
+  .coin-stat-val .down{ color:#ff3b5c; }
+  .coin-stat-wide{ grid-column:1 / -1; }
+  /* Bottom actions — two soft pills with a glow instead of flat boxes. */
+  :is(#coinModal, #extBuyModal) .cpop-actions{ display:grid !important; grid-template-columns:1fr 1.4fr; gap:0.6rem; }
+  .coin-action{ display:flex; align-items:center; justify-content:center; gap:0.55em; min-height:52px; padding:0 1.1em; border-radius:999px; font-family:inherit; font-size:15px; font-weight:700; letter-spacing:0.08em; text-transform:none; text-decoration:none; cursor:pointer; transition:transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease; }
+  .coin-action:active{ transform:scale(0.98); }
+  .coin-action-ico{ font-size:18px; line-height:1; }
+  .coin-action-ghost{ background:#000; color:#fff; border:1px solid rgba(var(--collection-accent-rgb), 0.6); box-shadow:inset 0 0 14px rgba(var(--collection-accent-rgb), 0.15); }
+  .coin-action-ghost:hover{ border-color:var(--collection-accent); box-shadow:inset 0 0 18px rgba(var(--collection-accent-rgb), 0.3), 0 0 14px rgba(var(--collection-accent-rgb), 0.35); }
+  .coin-action-main{ color:#fff; border:1px solid rgba(255,255,255,0.35); background:linear-gradient(135deg, rgba(var(--collection-accent-rgb), 1), rgba(var(--collection-accent-2-rgb), 1)); box-shadow:0 6px 22px rgba(var(--collection-accent-rgb), 0.45), inset 0 1px 0 rgba(255,255,255,0.25); text-shadow:0 1px 3px rgba(0,0,0,0.45); }
+  .coin-action-main:hover{ transform:translateY(-1px); box-shadow:0 8px 28px rgba(var(--collection-accent-rgb), 0.65), inset 0 1px 0 rgba(255,255,255,0.3); }
+  /* T0P 10 WALLETS */
+  .coin-holders{ border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); background:#000; padding:0.6rem 0.8rem; display:flex; flex-direction:column; gap:0.15rem; }
+  .coin-holders-msg{ height:auto; padding:1.2rem 0; }
+  .coin-holders-head{ display:flex; justify-content:space-between; color:#fff; font-size:12px; font-weight:700; letter-spacing:0.12em; opacity:0.8; padding:0.1rem 0 0.4rem; border-bottom:1px solid rgba(255,255,255,0.08); margin-bottom:0.2rem; }
+  .ch-row{ display:grid; grid-template-columns:2rem minmax(0, 1fr) auto; align-items:center; gap:0.7rem; padding:0.45rem 0.1rem; border-bottom:1px solid rgba(255,255,255,0.05); }
+  .ch-row:last-of-type{ border-bottom:none; }
+  .ch-rank{ text-align:center; color:#fff; font-size:15px; font-weight:700; opacity:0.85; }
+  .ch-row-lp .ch-rank{ opacity:1; }
+  .ch-drop{ font-size:18px; filter:drop-shadow(0 0 5px rgba(0,200,255,0.8)); }
+  .ch-who{ min-width:0; display:flex; flex-direction:column; align-items:stretch; gap:0.3rem; text-align:left; }
+  .ch-wallet{ color:#fff; text-decoration:none; font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ch-wallet:hover{ color:var(--cyan); }
+  .ch-lp{ color:#6fdcff; font-size:14px; font-weight:700; letter-spacing:0.08em; }
+  .ch-bar{ display:block; height:4px; border-radius:2px; background:rgba(255,255,255,0.07); overflow:hidden; }
+  .ch-bar i{ display:block; height:100%; border-radius:2px; background:var(--collection-accent); }
+  .ch-row-lp .ch-bar i{ background:#35c8ff; }
+  .ch-amt{ text-align:right; color:rgb(52,255,133); font-size:15px; font-weight:700; white-space:nowrap; }
+  .ch-amt small{ display:block; color:#fff; opacity:0.6; font-size:11px; }
+  .coin-holders-note{ color:#fff; opacity:0.55; font-size:11px; font-weight:700; letter-spacing:0.06em; text-align:center; padding-top:0.4rem; }
+  /* 0FF-S!TE BUY warning */
+  #extBuyModal{ display:none; position:fixed; inset:0; z-index:1100; background:rgba(5,5,6,0.88); align-items:center; justify-content:center; padding:1.5rem 1rem; }
+  #extBuyModal *{ text-transform:none; }
+  #extBuyModal .ext-buy-panel{ width:min(520px, 96vw); max-height:92vh; overflow-y:auto; display:flex; flex-direction:column; gap:0.9rem; padding:1.4rem; }
+  #extBuyModal .simple-picker-header{ position:relative; justify-content:center; }
+  #extBuyModal .simple-picker-title{ flex:1; text-align:center; font-size:22px; font-weight:700; letter-spacing:0.1em; }
+  #extBuyModal .simple-picker-close{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
+  .ext-buy-nft{ display:flex; align-items:center; justify-content:center; gap:0.8rem; }
+  .ext-buy-nft img{ width:64px; height:64px; border-radius:10px; object-fit:cover; border:1px solid rgba(var(--collection-accent-rgb), 0.6); }
+  .ext-buy-nft b{ display:block; color:#fff; font-size:16px; }
+  .ext-buy-nft .ebn-price{ display:block; color:rgb(52,255,133); font-size:18px; font-weight:700; }
+  .ext-buy-text{ color:#fff; font-size:14px; font-weight:700; letter-spacing:0.04em; line-height:1.5; text-align:center; }
+  .ext-buy-text .hi{ color:var(--cyan); }
+  .ext-buy-fees{ display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; }
+  .ext-fee{ border:1px solid rgba(var(--collection-accent-rgb), 0.35); border-radius:12px; background:#000; padding:0.7rem 0.6rem; text-align:center; }
+  .ext-fee-us{ border-color:rgba(52,255,133,0.6); box-shadow:0 0 12px rgba(52,255,133,0.15); }
+  .ext-fee-label{ display:block; color:#fff; opacity:0.75; font-size:11px; font-weight:700; letter-spacing:0.1em; }
+  .ext-fee-val{ display:block; color:#fff; font-size:20px; font-weight:700; margin-top:0.2rem; }
+  .ext-fee-us .ext-fee-val{ color:rgb(52,255,133); }
+  .ext-fee-sub{ display:block; color:#fff; opacity:0.6; font-size:11px; font-weight:700; margin-top:0.15rem; }
+  .ext-buy-tip{ color:#fff; opacity:0.8; font-size:12.5px; font-weight:700; letter-spacing:0.03em; line-height:1.5; text-align:center; }
+  #extBuyModal .ext-buy-actions{ grid-template-columns:1fr; }
+  @media (max-width:600px){
+    #coinModal .cpop-actions{ grid-template-columns:1fr; }
+    .coin-chart-bar{ flex-wrap:wrap; }
+    #coinModal .coin-chart-ranges{ flex-wrap:nowrap; }
+    #coinModal .coin-chart-ranges button{ padding:0.4em 0.55em; font-size:11px; }
+    .coin-action{ min-height:48px; font-size:14px; }
+  }
   @media (max-width:600px){
     .coin-stats{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
     .coin-chart-plot{ height:210px; }
     .coin-hero-price{ font-size:20px; }
+  }
+  /* Stats carousel, tighter (reported live 2026-09-27: "remove dead space
+     ... smaller and cleaner"): tiles fill the row instead of floating in
+     the middle, less padding everywhere, smaller arrows and dots. */
+  .stats-page.stats-page-off{ display:none !important; }
+  .stat-coin-tile .stat-value.stat-up{ color:rgb(52,255,133) !important; }
+  .stat-coin-tile .stat-value.stat-down{ color:#ff3b5c !important; }
+  @media (min-width:701px){
+    #collectionDetailsPanel{ padding:0.5rem 1rem 0.45rem; }
+    #collectionDetailsPanel .stats-strip{ gap:0.5rem; }
+    #collectionDetailsPanel .stats-strip .stat-tile{ flex:1 1 0; min-width:0; padding:0.45rem 0.5rem; }
+    #collectionDetailsPanel .stat-label{ font-size:10.5px; margin-bottom:0.2rem; white-space:nowrap; }
+    #collectionDetailsPanel .stat-value{ font-size:15px; font-weight:700; white-space:nowrap; }
+    #collectionDetailsPanel .stats-carousel-arrow{ width:1.9em; height:1.9em; font-size:15px; }
+    #collectionDetailsPanel .stats-carousel-viewport{ min-height:0; }
+    #collectionDetailsPanel .stats-carousel-dots{ margin-top:0.35rem; }
+    #collectionDetailsPanel .stats-dot{ width:5px; height:5px; }
+  }
+  /* $TOKEN C0!N button — text centred in its box (it's a link, so it
+     didn't centre like the buttons beside it). */
+  #pigeonsBarDexBtn{ display:flex; align-items:center; justify-content:center; text-align:center; }
+  #pigeonsBarDexBtn[style*="none"]{ display:none !important; }
+  /* Banner: bigger coin picture, bigger SWAP + CART (reported live 2026-09-27). */
+  @media (min-width:701px){
+    #pigeonsMergedPanel .pigeons-bar-thumb{ width:124px; height:124px; flex:0 0 124px; }
+    #pigeonsMergedPanel .pigeons-bar-balance-info > .pigeons-bar-balance-buy{ height:50px; font-size:15px; padding:0 0.9em; }
+  }
+  @media (max-width:700px){
+    #pigeonsMergedPanel .pigeons-bar-thumb-wrap .pigeons-bar-thumb{ width:132px !important; height:132px !important; }
+    /* 12 tiles = 4 even rows on phones; liquidity stays on the C0!N page. */
+    .stats-carousel-viewport .stats-strip-coin .stat-tile:last-child{ display:none !important; }
+    #pigeonsMergedPanel .pigeons-bar-balance .pigeons-bar-balance-info .pigeons-bar-balance-buy{ min-height:50px !important; font-size:15px !important; }
   }
   /* SWEEP picker */
   #sweepModal .cart-sweep-currency{ display:flex; justify-content:center; margin:0; }
@@ -11037,11 +11150,19 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="stat-tile"><div class="stat-label">24H V0LUME</div><div class="stat-value" id="statVolume24h">…</div></div>
         <button class="stat-tile stat-tile-link" id="statSalesTile" title="G0 T0 SALES H!ST0RY"><div class="stat-label">24H SALES</div><div class="stat-value" id="statSales24h">…</div></button>
       </div>
+      <!-- The collection's coin (reported live 2026-09-27); taps open the C0!N page. -->
+      <div class="stats-strip stats-strip-coin stats-page" id="statsStripCoin">
+        <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label" id="statCoinLabel">C0!N PR!CE</div><div class="stat-value" id="statCoinPrice">…</div></button>
+        <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label">24H</div><div class="stat-value" id="statCoinChange">…</div></button>
+        <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label">MARKET CAP</div><div class="stat-value" id="statCoinMcap">…</div></button>
+        <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label">L!QU!D!TY</div><div class="stat-value" id="statCoinLiq">…</div></button>
+      </div>
       </div>
       <button class="stats-carousel-arrow" id="statsNextBtn" aria-label="NEXT">▸</button>
       </div>
       <div class="stats-carousel-dots" id="statsCarouselDots">
         <span class="stats-dot active"></span>
+        <span class="stats-dot"></span>
         <span class="stats-dot"></span>
         <span class="stats-dot"></span>
       </div>
@@ -11211,6 +11332,39 @@ const SWAP_HTML = `<!DOCTYPE html>
     </div>
     <button type="button" class="cart-pill" id="cartPill" style="display:none;">&#128722; <span id="cartPillCount">0</span> :: V!EW CART</button>
 
+    <!-- MULT!-L!ST — list several of your own NFTs at once, each at its own
+         price (your own view's replacement for CART + SWEEP). -->
+    <div id="multiListModal" style="display:none;">
+      <div class="pigeons-calc-panel cart-modal-panel">
+        <div class="simple-picker-header">
+          <button type="button" class="cx-clear" id="mlClearBtn">CLEAR ALL</button>
+          <span class="simple-picker-title cart-title">&#127991;&#65039; MULT!-L!ST</span>
+          <button type="button" class="simple-picker-close" id="mlCloseBtn" title="CL0SE">&times;</button>
+        </div>
+        <div class="ml-tools">
+          <button type="button" class="ml-tool-btn" id="mlAddAllBtn">+ ADD ALL UNL!STED</button>
+          <div class="ml-setall" id="mlSetAll"><span class="cx-small-label">SET ALL T0</span><div class="cx-seg">
+            <button type="button" class="cx-sort-btn" data-ml-all="token" id="mlSetAllToken">$T0KEN</button>
+            <button type="button" class="cx-sort-btn" data-ml-all="xrp">XRP</button>
+          </div></div>
+        </div>
+        <div class="cart-list" id="mlList"></div>
+        <div class="cx-duration" id="mlDuration">
+          <div class="cx-small-label">L!ST!NGS LAST</div>
+          <div class="cx-seg">
+            <button type="button" class="list-duration-btn" data-days="1">1 DAY</button>
+            <button type="button" class="list-duration-btn" data-days="3">3 DAYS</button>
+            <button type="button" class="list-duration-btn" data-days="7">7 DAYS</button>
+            <button type="button" class="list-duration-btn" data-days="30">30 DAYS</button>
+            <button type="button" class="list-duration-btn" data-days="0">&#8734;</button>
+          </div>
+        </div>
+        <div class="cx-summary" id="mlTotal"></div>
+        <div class="cart-status" id="mlStatus"></div>
+        <button type="button" class="cart-buy-btn cx-submit" id="mlSubmitBtn">L!ST ALL</button>
+      </div>
+    </div>
+
     <!-- $TOKEN C0!N — the collection's coin on its own page (reported live:
          instead of linking out to DexScreener): live chart (DexScreener's
          embed) + every number we have on it. -->
@@ -11228,6 +11382,8 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div class="coin-hero-change" id="coinChange"></div>
         </div>
+        <!-- Socials up top, as round icons (reported live 2026-09-27). -->
+        <div class="coin-links" id="coinLinks"></div>
         <!-- Our own chart (price history from GeckoTerminal's public API) —
              DexScreener's embed wouldn't load inside the pop-up. -->
         <div class="coin-chart" id="coinChart">
@@ -11237,14 +11393,41 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" data-range="7D" class="active">7D</button>
               <button type="button" data-range="1M">1M</button>
               <button type="button" data-range="3M">3M</button>
+              <button type="button" data-range="6M">6M</button>
+              <button type="button" data-range="1Y">1Y</button>
+              <button type="button" data-range="ALL">ALL</button>
             </div>
             <span class="coin-chart-change" id="coinChartChange"></span>
           </div>
           <div class="coin-chart-plot" id="coinChartPlot"><div class="coin-chart-msg">L0AD!NG CHART...</div></div>
         </div>
         <div class="coin-stats" id="coinStats"></div>
-        <div class="coin-links" id="coinLinks"></div>
-        <button type="button" class="cart-buy-btn cx-submit" id="coinSwapBtn">SWAP</button>
+        <!-- T0P 10 WALLETS — opens in place; the pool shows as the LP (💧). -->
+        <div class="coin-holders" id="coinHolders" style="display:none;"></div>
+        <div class="cpop-actions">
+          <button type="button" class="coin-action coin-action-ghost" id="coinHoldersBtn"><span class="coin-action-ico">&#128081;</span><span id="coinHoldersBtnLabel">T0P 10 WALLETS</span></button>
+          <button type="button" class="coin-action coin-action-main" id="coinSwapBtn"><span class="coin-action-ico">&#8644;</span><span id="coinSwapBtnLabel">SWAP</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 0FF-S!TE BUY warning — shown before any BUY N0W that leaves the
+         site: which marketplace, their fee vs ours, and a way to make an
+         offer here instead (reported live 2026-09-27). -->
+    <div id="extBuyModal" style="display:none;">
+      <div class="pigeons-calc-panel ext-buy-panel">
+        <div class="simple-picker-header">
+          <span class="simple-picker-title">LEAV!NG Σκύλλα</span>
+          <button type="button" class="simple-picker-close" id="extBuyCloseBtn" title="CL0SE">&times;</button>
+        </div>
+        <div class="ext-buy-nft" id="extBuyNft"></div>
+        <div class="ext-buy-text" id="extBuyText"></div>
+        <div class="ext-buy-fees" id="extBuyFees"></div>
+        <div class="ext-buy-tip" id="extBuyTip"></div>
+        <div class="cpop-actions ext-buy-actions">
+          <button type="button" class="coin-action coin-action-main" id="extBuyOfferBtn"><span class="coin-action-ico">Σ</span><span>MAKE AN 0FFER 0N Σκύλλα</span></button>
+          <a class="coin-action coin-action-ghost" id="extBuyGoBtn" href="#" target="_blank" rel="noopener"><span>C0NT!NUE 0FF-S!TE</span><span class="coin-action-ico">&#8599;</span></a>
+        </div>
       </div>
     </div>
 
@@ -12387,6 +12570,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="results-quick" id="resultsQuick">
               <button type="button" class="rq-btn" id="quickCartBtn" title="CART">&#128722;<span class="rq-count" id="quickCartCount"></span></button>
               <button type="button" class="rq-btn" id="quickSweepBtn" title="SWEEP THE FL00R">&#129529;</button>
+              <button type="button" class="rq-btn rq-btn-mlist" id="quickMultiListBtn" title="MULT!-L!ST">&#127991;&#65039;<span class="rq-count" id="quickMultiListCount"></span></button>
             </div>
           </div>
           <div id="resultsArea"></div>
@@ -13952,6 +14136,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
    'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartSortBar','sweepModal','sweepCloseBtn','sweepSub','sweepAvail','sweepN','sweepMinus','sweepPlus','sweepMax',
    'coinModal','coinCloseBtn','coinTitle','coinImg','coinPrice','coinPriceSub','coinChange','coinChart','coinChartRanges','coinChartChange','coinChartPlot','coinStats','coinLinks','coinSwapBtn',
+   'coinHolders','coinHoldersBtn','coinHoldersBtnLabel','coinSwapBtnLabel','extBuyModal','extBuyCloseBtn','extBuyNft','extBuyText','extBuyFees','extBuyTip','extBuyOfferBtn','extBuyGoBtn',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
    'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
    'crownPeriodSelect','crownLeaderboardList',
@@ -13978,7 +14163,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutSelected','traitsFlyoutCats','traitsFlyoutVals','traitsFlyoutBack','traitsCatsScrollPrevBtn','traitsCatsScrollNextBtn',
    'traitsFlyoutSortRarity','traitsFlyoutSortAz','traitsFlyoutSearchInput',
-   'statusLine','resultsQuick','quickCartBtn','quickCartCount','quickSweepBtn','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
+   'statusLine','resultsQuick','quickCartBtn','quickCartCount','quickSweepBtn','quickMultiListBtn','quickMultiListCount','multiListModal','mlClearBtn','mlCloseBtn','mlAddAllBtn','mlSetAll','mlSetAllToken','mlList','mlDuration','mlTotal','mlStatus','mlSubmitBtn','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote','salesCurrencyToggle',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle','walletScopeBanner','walletScopeCoins',
    'flockGridPanel',
@@ -14961,7 +15146,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Currently browsing your own wallet — step back to the full
       // collection so a target Pigeon (and its owner) can be picked,
       // without clearing either pile.
-      state.scope = null;
+      state.scope = null; syncOwnScopeQuick();
       state.scopeAllItems = [];
       state.traitFilters = [];
       renderTraitRows();
@@ -15463,7 +15648,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.screenProfile.style.display = 'none';
     document.body.classList.remove('detail-open');
     profileScreenReturnPath = null;
-    state.scope = { wallet: wallet, ownerShort: ownerShort || wallet };
+    state.scope = { wallet: wallet, ownerShort: ownerShort || wallet }; syncOwnScopeQuick();
     state.targetAssets = {};
     state.traitFilters = [];
     // A trait click just before this (setting pendingTraitScroll, see its
@@ -15716,7 +15901,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // step back to the full collection without losing progress on either
   // side.
   function exitWalletScope(){
-    state.scope = null;
+    state.scope = null; syncOwnScopeQuick();
     state.scopeAllItems = [];
     state.traitFilters = [];
     renderTraitRows();
@@ -16014,14 +16199,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     var traits = boxedTraitsHtml(p);
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-row boxed-card">' +
-        '<div class="result-num bc-num">' + collectionItemLabel() + ' ' + num + '</div>' +
+        '<div class="result-num bc-num">' + collectionItemLabel() + ' ' + num + watchlistToggleHtml(p) + '</div>' +
         '<div class="bc-summary">' + rarityAboveTraitsHtml + '</div>' +
         '<div class="pigeon-img-box bc-img" data-nftid="' + escapeHtml(p.nftId) + '">' +
           linkWrap(nftHrefFor(p), 'pigeon-img-link', img) +
           '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
           cartToggleHtml(p) +
-          cartToggleHtml(p) +
-          watchlistToggleHtml(p) +
+          multiListToggleHtml(p) +
         '</div>' +
         traits.top +
         '<div class="bc-actions">' +
@@ -16119,15 +16303,15 @@ const SWAP_HTML = `<!DOCTYPE html>
       ? '<div class="thumb-listing-badge thumb-listing-badge-xrp' + (ownCard ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtXrp(p.xrpListing.priceXrp)) + ' XRP</div>'
       : '';
     var listingBadge = (tokenSlip || xrpSlip) ? '<div class="thumb-listing-stack">' + xrpSlip + tokenSlip + '</div>' : '';
-    var ownedBadge = (p.owner === MY_WALLET && !p.scyllaListing && !(p.xrpListing && p.xrpListing.priceXrp)) ? '<div class="thumb-owned-badge">0WNED</div>' : '';
+    var ownedBadge = (p.owner === MY_WALLET && !isOwnWalletScope() && !p.scyllaListing && !(p.xrpListing && p.xrpListing.priceXrp)) ? '<div class="thumb-owned-badge">0WNED</div>' : '';
     var watchlistBtn = watchlistToggleHtml(p);
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      '<div class="result-num">' + collectionItemLabel() + ' ' + num + '</div>' +
+      '<div class="result-num">' + collectionItemLabel() + ' ' + num + watchlistBtn + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         linkWrap(nftHrefFor(p), 'pigeon-img-link', img) +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
         cartToggleHtml(p) +
-        watchlistBtn +
+        multiListToggleHtml(p) +
         listingBadge +
         ownedBadge +
       '</div>' +
@@ -16148,6 +16332,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     fitBoxedTraitText(list);
   }
   function renderResultsReplace(items){
+    syncOwnScopeQuick();
     el.resultsArea.innerHTML = items.length ? '<div class="result-list' + (state.dbView === 'thumbnails' ? ' view-thumbnails' : '') + '">' + items.map(cardHtmlForView).join('') + '</div>' : '';
     fitBoxedTraitText(el.resultsArea);
   }
@@ -16543,6 +16728,13 @@ const SWAP_HTML = `<!DOCTYPE html>
             btn.title = nowWatching ? 'REM0VE FR0M WATCHL!ST' : 'ADD T0 WATCHL!ST';
           });
         }
+        return;
+      }
+      var mlBtn = e.target.closest('.card-mlist-toggle');
+      if (mlBtn){
+        e.preventDefault();
+        var mp = source().filter(function(x){ return x.nftId === mlBtn.getAttribute('data-nftid'); })[0];
+        if (mp) toggleMListItem(mp);
         return;
       }
       var cartBtn = e.target.closest('.card-cart-toggle, .card-add-cart-btn, .card-buy-cart-btn');
@@ -20513,6 +20705,305 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.cartModal.addEventListener('click', function(e){ if (e.target === el.cartModal) closeCart(); });
   refreshCartBadges();
 
+  // ---- MULT!-L!ST — your own NFTs (the FL0CK / own-wallet view) take the
+  // place of CART + SWEEP there (reported live 2026-09-27): tap + on any
+  // unlisted NFT of yours, give each its own price, L!ST ALL. One Xaman
+  // signature per NFT, one after another, through the same endpoints the
+  // single L!ST uses. Per wallet + collection, kept in this browser only. ----
+  var MLIST_MAX = 15;
+  function mlistKey(){ return 'scylla_mlist:' + (MY_WALLET || 'anon') + ':' + state.collection; }
+  function getMList(){
+    try { var v = JSON.parse(localStorage.getItem(mlistKey()) || '[]'); return Array.isArray(v) ? v : []; } catch (e){ return []; }
+  }
+  function setMList(list){ try { localStorage.setItem(mlistKey(), JSON.stringify(list)); } catch (e){} }
+  function isInMList(nftId){ return getMList().some(function(c){ return c.nftId === nftId; }); }
+  // Yours, in your own view, on a tradeable collection, and not already
+  // listed on Σκύλλa.
+  function multiListable(p){
+    var meta = COLLECTION_META[state.collection] || {};
+    return !!(p && MY_WALLET && p.owner === MY_WALLET && isOwnWalletScope() && meta.tradeable &&
+      !myListedData[p.nftId] && !p.scyllaListing && !(p.xrpListing && p.xrpListing.internal));
+  }
+  function multiListToggleHtml(p){
+    if (!multiListable(p)) return '';
+    var on = isInMList(p.nftId);
+    return '<button type="button" class="card-cart-toggle card-mlist-toggle' + (on ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="' + (on ? 'REM0VE FR0M MULT!-L!ST' : 'ADD T0 MULT!-L!ST') + '">' + (on ? '✓' : '+') + '</button>';
+  }
+  function mlistDefaultCurrency(){ return (COLLECTION_META[state.collection] || {}).xrpOnly ? 'xrp' : 'token'; }
+  function toggleMListItem(p){
+    if (!MY_WALLET){ startAuthorize(); return; }
+    if (mlRun) return;
+    var list = getMList();
+    var idx = list.findIndex(function(c){ return c.nftId === p.nftId; });
+    if (idx !== -1) list.splice(idx, 1);
+    else if (list.length >= MLIST_MAX){ alert('MULT!-L!ST !S FULL — ' + MLIST_MAX + ' NFTS AT A T!ME.'); return; }
+    else if (multiListable(p)) list.push({ nftId: p.nftId, collection: state.collection, currency: mlistDefaultCurrency(), price: '', number: p.number, name: p.name || null, image: p.image || null });
+    else return;
+    setMList(list);
+    refreshMListBadges();
+    if (el.multiListModal.style.display === 'flex') renderMList();
+  }
+  function refreshMListBadges(){
+    var ids = {};
+    var list = getMList();
+    list.forEach(function(c){ ids[c.nftId] = true; });
+    document.querySelectorAll('.card-mlist-toggle').forEach(function(b){
+      var on = !!ids[b.getAttribute('data-nftid')];
+      b.classList.toggle('in-cart', on);
+      b.textContent = on ? '✓' : '+';
+      b.title = on ? 'REM0VE FR0M MULT!-L!ST' : 'ADD T0 MULT!-L!ST';
+    });
+    el.quickMultiListCount.textContent = list.length ? String(list.length) : '';
+  }
+  // Your own view swaps CART + SWEEP for MULT!-L!ST.
+  function syncOwnScopeQuick(){
+    document.body.classList.toggle('own-scope', isOwnWalletScope());
+    refreshMListBadges();
+  }
+  var mlRowState = {};
+  var mlDays = 0;
+  function mlForeverAllowed(){ return state.collection === 'pigeons'; }
+  function mlRowHtml(c, running){
+    var st = mlRowState[c.nftId];
+    var meta = COLLECTION_META[c.collection] || {};
+    var curToggle = meta.xrpOnly ? '<span class="cx-unit-fixed">XRP</span>'
+      : '<span class="cx-unit-seg">' +
+          '<button type="button" class="' + (c.currency === 'token' ? 'active' : '') + '" data-ml-cur="token" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>' + escapeHtml(meta.tokenLabel || '$T0KEN') + '</button>' +
+          '<button type="button" class="' + (c.currency === 'xrp' ? 'active' : '') + '" data-ml-cur="xrp" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>XRP</button>' +
+        '</span>';
+    return '<div class="cart-row cart-row-offer" data-nftid="' + escapeHtml(c.nftId) + '">' +
+      (c.image ? '<img src="' + escapeHtml(c.image) + '" alt="">' : '<span class="cx-noimg"></span>') +
+      '<div class="cx-main">' +
+        '<div class="cx-head"><span class="cx-name-wrap"><span class="cart-row-name">' + cartItemLabel(c) + '</span><span class="cx-tag cx-tag-list">L!ST</span></span>' +
+          (running ? '' : '<button type="button" class="cart-row-remove" data-nftid="' + escapeHtml(c.nftId) + '" title="REM0VE">&times;</button>') +
+        '</div>' +
+        '<div class="cart-row-state' + (st ? ' ' + st.cls : '') + '">' + (st ? escapeHtml(st.text) : '') + '</div>' +
+        '<div class="cx-offer"><label class="cx-offer-field">' +
+          '<input class="cart-offer-input ml-price-input" type="text" inputmode="decimal" placeholder="PR!CE" data-nftid="' + escapeHtml(c.nftId) + '" value="' + escapeHtml(c.price || '') + '"' + (running ? ' disabled' : '') + '>' +
+          curToggle +
+        '</label></div>' +
+      '</div>' +
+    '</div>';
+  }
+  function renderMListTotals(){
+    var rows = mlRun ? mlRun.items : getMList();
+    var sum = {};
+    rows.forEach(function(c){ var v = Number(c.price); if (v > 0) sum[c.currency] = (sum[c.currency] || 0) + v; });
+    var parts = [];
+    if (sum.xrp) parts.push(escapeHtml(fmtXrp(Math.round(sum.xrp * 100) / 100) + ' XRP'));
+    if (sum.token) parts.push(escapeHtml(fmtPigeonsCompact(sum.token, state.collection)));
+    el.mlTotal.innerHTML = rows.length
+      ? '<div class="cx-cost"><div class="cx-cost-label">Y0U RECE!VE !F THEY ALL SELL</div><div class="cx-cost-val">' + (parts.length ? parts.join('<span class="cx-plus">+</span>') : '—') + '</div>' +
+        '<div class="cx-cost-note">Y0UR PR!CE !S WHAT Y0U GET — THE BUYER PAYS THE Σκύλλα FEE 0N T0P</div></div>'
+      : '';
+    if (!mlRun){
+      el.mlSubmitBtn.disabled = !rows.length;
+      el.mlSubmitBtn.textContent = 'L!ST ALL (' + rows.length + ')';
+      el.mlClearBtn.style.display = rows.length ? '' : 'none';
+    }
+  }
+  function renderMList(){
+    var list = mlRun ? mlRun.items : getMList();
+    el.mlList.innerHTML = list.length
+      ? list.map(function(c){ return mlRowHtml(c, !!mlRun); }).join('')
+      : '<div class="cart-empty">N0TH!NG HERE YET — TAP + 0N ANY 0F Y0UR UNL!STED NFTS, 0R ADD ALL 0F THEM BEL0W.</div>';
+    var forever = mlForeverAllowed();
+    if (!forever && mlDays === 0) mlDays = 30;
+    el.mlDuration.querySelectorAll('.list-duration-btn').forEach(function(b){
+      var d = b.getAttribute('data-days');
+      if (d === '0') b.style.display = forever ? '' : 'none';
+      b.classList.toggle('active', d === String(mlDays));
+      b.disabled = !!mlRun;
+    });
+    el.mlAddAllBtn.style.display = mlRun ? 'none' : '';
+    el.mlSetAll.style.display = (mlRun || (COLLECTION_META[state.collection] || {}).xrpOnly || list.length < 2) ? 'none' : '';
+    renderMListTotals();
+  }
+  function openMultiList(){
+    if (!MY_WALLET){ startAuthorize(); return; }
+    mlDays = mlForeverAllowed() ? 0 : 30;
+    el.mlSetAllToken.textContent = (COLLECTION_META[state.collection] || {}).tokenLabel || '$T0KEN';
+    renderMList();
+    el.multiListModal.style.display = 'flex';
+  }
+  function closeMultiList(){
+    el.multiListModal.style.display = 'none';
+    if (mlRun && mlRun.finished) finishMListRun();
+  }
+  // + ADD ALL: every unlisted NFT of yours on screen, up to the cap.
+  el.mlAddAllBtn.addEventListener('click', function(){
+    if (mlRun) return;
+    var list = getMList();
+    var have = {};
+    list.forEach(function(c){ have[c.nftId] = true; });
+    (state.items || []).forEach(function(p){
+      if (list.length >= MLIST_MAX || have[p.nftId] || !multiListable(p)) return;
+      list.push({ nftId: p.nftId, collection: state.collection, currency: mlistDefaultCurrency(), price: '', number: p.number, name: p.name || null, image: p.image || null });
+    });
+    setMList(list);
+    refreshMListBadges();
+    renderMList();
+  });
+  el.mlSetAll.addEventListener('click', function(e){
+    var b = e.target.closest('[data-ml-all]');
+    if (!b || mlRun) return;
+    var cur = b.getAttribute('data-ml-all');
+    setMList(getMList().map(function(c){ c.currency = cur; return c; }));
+    renderMList();
+  });
+  el.mlDuration.addEventListener('click', function(e){
+    var b = e.target.closest('.list-duration-btn');
+    if (!b || mlRun) return;
+    mlDays = parseInt(b.getAttribute('data-days'), 10) || 0;
+    renderMList();
+  });
+  el.mlList.addEventListener('click', function(e){
+    if (mlRun) return;
+    var rm = e.target.closest('.cart-row-remove');
+    if (rm){
+      setMList(getMList().filter(function(c){ return c.nftId !== rm.getAttribute('data-nftid'); }));
+      refreshMListBadges();
+      renderMList();
+      return;
+    }
+    var cur = e.target.closest('[data-ml-cur]');
+    if (cur){
+      var id = cur.getAttribute('data-nftid');
+      setMList(getMList().map(function(c){ if (c.nftId === id) c.currency = cur.getAttribute('data-ml-cur'); return c; }));
+      renderMList();
+    }
+  });
+  el.mlList.addEventListener('input', function(e){
+    var inp = e.target.closest('.ml-price-input');
+    if (!inp || mlRun) return;
+    var id = inp.getAttribute('data-nftid');
+    var v = inp.value.replace(/[^0-9.]/g, '');
+    if (v !== inp.value) inp.value = v;
+    setMList(getMList().map(function(c){ if (c.nftId === id) c.price = v; return c; }));
+    renderMListTotals();
+  });
+  el.mlClearBtn.addEventListener('click', function(){
+    if (mlRun) return;
+    setMList([]);
+    refreshMListBadges();
+    renderMList();
+  });
+  // L!ST ALL — same one-at-a-time run as the CART's SUBM!T ALL.
+  var mlRun = null; // { items, i, tab, uuid, timer, pushed, done, finished, days }
+  function setMListRow(nftId, cls, text){
+    mlRowState[nftId] = { cls: cls, text: text };
+    var row = el.mlList.querySelector('.cart-row[data-nftid="' + nftId + '"]');
+    var line = row && row.querySelector('.cart-row-state');
+    if (line){ line.className = 'cart-row-state ' + cls; line.textContent = text; }
+  }
+  function startMListRun(){
+    var items = getMList();
+    if (!items.length) return;
+    var bad = items.filter(function(c){
+      var v = String(c.price || '');
+      return !(Number(v) > 0) || (c.currency === 'xrp' && !/^[0-9]+([.][0-9]{1,6})?$/.test(v));
+    });
+    if (bad.length){
+      el.mlStatus.textContent = 'ENTER A PR!CE F0R ' + (bad.length === 1 ? cartItemLabel(bad[0]) : bad.length + ' NFTS') + ' (XRP UP T0 6 DEC!MALS).';
+      var inp = el.mlList.querySelector('.ml-price-input[data-nftid="' + bad[0].nftId + '"]');
+      if (inp) inp.focus();
+      return;
+    }
+    mlRowState = {};
+    mlRun = { items: items.slice(), i: 0, tab: null, uuid: null, timer: null, pushed: false, done: 0, finished: false, days: mlDays };
+    items.forEach(function(c){ mlRowState[c.nftId] = { cls: '', text: 'WA!T!NG' }; });
+    el.mlClearBtn.style.display = 'none';
+    renderMList();
+    runMListStep(openXamanPopup());
+  }
+  function runMListStep(tab){
+    var c = mlRun.items[mlRun.i];
+    mlRun.tab = tab;
+    el.mlSubmitBtn.disabled = true;
+    el.mlSubmitBtn.textContent = 'L!ST!NG ' + (mlRun.i + 1) + ' 0F ' + mlRun.items.length + '...';
+    el.mlStatus.textContent = 'REQUEST!NG...';
+    setMListRow(c.nftId, 'now', 'S!GN !N XAMAN');
+    signFetch('/api/swap-listing-payload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nftId: c.nftId, priceValue: String(c.price), durationDays: mlRun.days, collection: c.collection, currency: c.currency })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok){
+        closeXamanTabAndFocus(tab);
+        mlStepDone(false, listingErrorMessage(res.data && res.data.error));
+        return;
+      }
+      mlRun.uuid = res.data.uuid;
+      mlRun.pushed = !!(res.data.next && res.data.next.pushed);
+      navigateXamanPopup(tab, res.data.next.always, res.data.next.pushed);
+      el.mlStatus.innerHTML = '<a href="' + escapeHtml(res.data.next.always) + '" target="_blank" rel="noopener" class="xaman-manual-link">XAMAN D!DN\\'T 0PEN? TAP HERE.</a>';
+      pollMListStep();
+    }).catch(function(){
+      closeXamanTabAndFocus(tab);
+      mlStepDone(false, 'ERR://S!GNAL_L0ST');
+    });
+  }
+  function pollMListStep(){
+    if (!mlRun || !mlRun.uuid) return;
+    var c = mlRun.items[mlRun.i];
+    fetch('/api/swap-listing-status?uuid=' + encodeURIComponent(mlRun.uuid) + '&nftId=' + encodeURIComponent(c.nftId) + '&collection=' + encodeURIComponent(c.collection) + '&currency=' + encodeURIComponent(c.currency))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'listed'){
+          if (data.offerCurrency !== 'xrp') myListedData[c.nftId] = { price: data.price, currency: data.currency, offerId: data.offerId, expiration: data.expiration || null };
+          closeXamanTabAndFocus(mlRun.tab);
+          mlStepDone(true, 'L!STED');
+          return;
+        }
+        if (data.status === 'rejected'){ mlStepDone(false, 'REJECTED !N XAMAN'); return; }
+        if (data.status === 'expired'){ mlStepDone(false, 'S!GN REQUEST EXP!RED'); return; }
+        if (data.status === 'failed'){ mlStepDone(false, 'XRPL REJECTED (' + (data.result || 'UNKN0WN') + ')'); return; }
+        if (!data.status){ closeXamanTabAndFocus(mlRun.tab); mlStepDone(false, pollFailureMessage(data)); return; }
+        if (data.status === 'signed_pending_ledger') setMListRow(c.nftId, 'now', 'S!GNED — C0NF!RM!NG...');
+        mlRun.timer = setTimeout(pollMListStep, 2000);
+      }).catch(function(){ mlRun.timer = setTimeout(pollMListStep, 3000); });
+  }
+  function mlStepDone(ok, text){
+    var c = mlRun.items[mlRun.i];
+    setMListRow(c.nftId, ok ? 'ok' : 'bad', text);
+    if (ok) mlRun.done++;
+    mlRun.uuid = null;
+    mlRun.i++;
+    if (mlRun.i >= mlRun.items.length){
+      mlRun.finished = true;
+      el.mlStatus.textContent = 'D0NE — ' + mlRun.done + ' 0F ' + mlRun.items.length + ' L!STED.';
+      el.mlSubmitBtn.disabled = false;
+      el.mlSubmitBtn.textContent = 'D0NE';
+      return;
+    }
+    if (mlRun.pushed && MY_PUSH_READY){ runMListStep(null); return; }
+    el.mlStatus.textContent = (ok ? text + '. ' : '') + 'READY F0R THE NEXT 0NE.';
+    el.mlSubmitBtn.disabled = false;
+    el.mlSubmitBtn.textContent = 'S!GN NEXT (' + (mlRun.i + 1) + ' 0F ' + mlRun.items.length + ')';
+  }
+  // Listed ones leave the list; failed ones stay to try again.
+  function finishMListRun(){
+    var gone = {};
+    mlRun.items.forEach(function(c){ if (mlRowState[c.nftId] && mlRowState[c.nftId].cls === 'ok') gone[c.nftId] = true; });
+    setMList(getMList().filter(function(c){ return !gone[c.nftId]; }));
+    var any = mlRun.done > 0;
+    mlRun = null;
+    mlRowState = {};
+    el.mlStatus.textContent = '';
+    refreshMListBadges();
+    renderMList();
+    if (any) runQuery();
+  }
+  el.mlSubmitBtn.addEventListener('click', function(){
+    if (!mlRun){ startMListRun(); return; }
+    if (mlRun.finished){ finishMListRun(); closeMultiList(); return; }
+    if (!mlRun.uuid) runMListStep(openXamanPopup());
+  });
+  el.quickMultiListBtn.addEventListener('click', openMultiList);
+  el.mlCloseBtn.addEventListener('click', closeMultiList);
+  el.multiListModal.addEventListener('click', function(e){ if (e.target === el.multiListModal) closeMultiList(); });
+
 
   // ---- DELIST — Σκύλλα SWAP phase 2: NFTokenCancelOffer for the seller's
   // own active offer. ----
@@ -22170,7 +22661,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.traitFilters = [];
     state.traitCategories = null;
     state.traitValuesCache = {};
-    state.scope = null;
+    state.scope = null; syncOwnScopeQuick();
     renderTraitRows();
     renderSortTag();
     updateSearchPanelTitleForPaws();
@@ -22648,9 +23139,11 @@ const SWAP_HTML = `<!DOCTYPE html>
         coinPageDexUrl = data.dexUrl;
         el.pigeonsDexLink.style.display = '';
         el.pigeonsBarDexBtn.style.display = MY_WALLET ? '' : 'none';
+        updateCarouselCoin(data);
       } else {
         el.pigeonsDexLink.style.display = 'none';
         el.pigeonsBarDexBtn.style.display = 'none';
+        updateCarouselCoin(null);
       }
     }).catch(function(){});
   }
@@ -22658,74 +23151,188 @@ const SWAP_HTML = `<!DOCTYPE html>
   setInterval(refreshTrustlineRate, 60000);
   // ---- $TOKEN C0!N page ----
   var coinPageDexUrl = null;
+  // The C0!N page of the stats carousel: price, 24h, market cap, liquidity
+  // (the 24h change comes from the same DexScreener pair). Hidden for a
+  // collection with no coin.
+  function updateCarouselCoin(rate){
+    var page = document.getElementById('statsStripCoin');
+    var meta = COLLECTION_META[state.collection] || {};
+    if (!rate || meta.xrpOnly){ statsCarouselSetPageOff(page, true); return; }
+    statsCarouselSetPageOff(page, false);
+    var key = state.collection;
+    document.getElementById('statCoinLabel').textContent = meta.tokenLabel + ' PR!CE';
+    document.getElementById('statCoinPrice').textContent = typeof rate.xrpPerPigeon === 'number' ? Number(rate.xrpPerPigeon).toPrecision(4) + ' XRP' : '—';
+    document.getElementById('statCoinMcap').textContent = rate.marketCapUsd != null ? fmtUsd(rate.marketCapUsd) : '—';
+    document.getElementById('statCoinLiq').textContent = rate.liquidityUsd != null ? fmtUsd(rate.liquidityUsd) : '—';
+    fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + String(rate.dexUrl).split('/').pop())
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (state.collection !== key) return;
+        var ch = d && d.pairs && d.pairs[0] && d.pairs[0].priceChange ? d.pairs[0].priceChange.h24 : null;
+        var cEl = document.getElementById('statCoinChange');
+        cEl.textContent = ch === null || ch === undefined ? '—' : (ch >= 0 ? '+' : '') + ch + '%';
+        cEl.className = 'stat-value ' + (ch === null || ch === undefined ? '' : ch >= 0 ? 'stat-up' : 'stat-down');
+      }).catch(function(){});
+  }
+  document.getElementById('statsStripCoin').addEventListener('click', function(e){
+    if (e.target.closest('[data-coin-open]')) openCoinPage();
+  });
   function fmtUsd(n){
     if (n === null || n === undefined || !isFinite(n)) return '—';
-    if (n >= 1) return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    if (n >= 1) return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: n >= 1000 ? 0 : 2 });
     return '$' + Number(n).toPrecision(3);
+  }
+  // Round social icons for the top of the C0!N page.
+  var COIN_SOCIAL_ICONS = {
+    twitter: '<svg viewBox="0 0 24 24"><path d="M18.9 2H22l-7.4 8.5L23.3 22h-6.8l-5.3-6.9L5 22H2l7.9-9.1L1.5 2h7l4.8 6.3L18.9 2zm-1.2 18h1.9L7.4 3.9h-2L17.7 20z"/></svg>',
+    telegram: '<svg viewBox="0 0 24 24"><path d="M21.9 4.3l-3.2 15.1c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 13.1 1.4 11.6c-1-.3-1.1-1 .2-1.5L20.6 2.8c.9-.3 1.6.2 1.3 1.5z"/></svg>',
+    discord: '<svg viewBox="0 0 24 24"><path d="M20.3 4.4A19.6 19.6 0 0 0 15.4 3l-.6 1.3a18 18 0 0 0-5.5 0L8.7 3a19.5 19.5 0 0 0-4.9 1.5C.7 9.1-.2 13.6.3 18.1a19.8 19.8 0 0 0 6 3l1.3-2.1a12.8 12.8 0 0 1-2-1l.5-.4a14 14 0 0 0 11.9 0l.5.4c-.6.4-1.3.7-2 1l1.3 2.1a19.7 19.7 0 0 0 6-3c.6-5.2-.8-9.7-3.5-13.7zM8.3 15.3c-1.2 0-2.1-1.1-2.1-2.4s.9-2.4 2.1-2.4 2.2 1.1 2.1 2.4c0 1.3-.9 2.4-2.1 2.4zm7.4 0c-1.2 0-2.1-1.1-2.1-2.4s.9-2.4 2.1-2.4 2.2 1.1 2.1 2.4c0 1.3-.9 2.4-2.1 2.4z"/></svg>',
+    web: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.8 3.9 6 3.9 9.5s-1.3 6.7-3.9 9.5c-2.6-2.8-3.9-6-3.9-9.5S9.4 5.3 12 2.5z"/></svg>'
+  };
+  // Websites that don't actually load — left off (reported live).
+  var COIN_DEAD_SITES = /(^|[.])gold-rush[.]gold$/i;
+  var coinAth = {}; // pool -> { xrp, usd, t } all-time highs, fetched once per pool (null = unavailable)
+  function coinSocialHtml(url, kind, title){
+    return '<a class="coin-social" href="' + escapeHtml(url) + '" target="_blank" rel="noopener" title="' + escapeHtml(title) + '">' + (COIN_SOCIAL_ICONS[kind] || COIN_SOCIAL_ICONS.web) + '</a>';
   }
   function openCoinPage(){
     var key = state.collection;
     var meta = COLLECTION_META[key] || {};
     if (!coinPageDexUrl || meta.xrpOnly) return;
-    el.coinTitle.textContent = meta.tokenLabel;
+    el.coinTitle.textContent = meta.tokenLabel + ' C0!N';
     el.coinImg.src = meta.thumb || '';
     el.coinPrice.textContent = '…';
     el.coinPriceSub.textContent = '';
     el.coinChange.textContent = '';
     el.coinStats.innerHTML = '';
     el.coinLinks.innerHTML = '';
-    el.coinSwapBtn.textContent = 'SWAP ' + meta.tokenLabel;
+    el.coinHolders.style.display = 'none';
+    el.coinHolders.innerHTML = '';
+    el.coinHoldersBtnLabel.textContent = 'T0P 10 WALLETS';
+    el.coinSwapBtnLabel.textContent = 'SWAP ' + meta.tokenLabel;
     var pair = coinPageDexUrl.split('/').pop();
     coinChartPool = null;
     el.coinChartPlot.innerHTML = '<div class="coin-chart-msg">L0AD!NG CHART...</div>';
     el.coinChartChange.textContent = '';
     el.coinModal.style.display = 'flex';
-    function stat(label, value, cls){ return '<div class="coin-stat"><span class="coin-stat-label">' + label + '</span><span class="coin-stat-val' + (cls ? ' ' + cls : '') + '">' + value + '</span></div>'; }
-    Promise.all([
-      fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + pair).then(function(r){ return r.json(); }).catch(function(){ return null; }),
-      MY_WALLET ? apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET, collection: key }).catch(function(){ return null; }) : Promise.resolve(null),
-      MY_WALLET ? apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).catch(function(){ return null; }) : Promise.resolve(null)
-    ]).then(function(res){
-      var d = res[0] && res[0].pairs && res[0].pairs[0];
-      var line = res[1], xb = res[2];
-      if (d){
-        coinChartPool = d.pairAddress || pair;
-        loadCoinChart(coinChartRange);
-        if (d.info && d.info.imageUrl) el.coinImg.src = d.info.imageUrl;
-        el.coinPrice.textContent = Number(d.priceNative).toPrecision(4) + ' XRP';
-        el.coinPriceSub.textContent = fmtUsd(Number(d.priceUsd)) + ' USD';
-        var ch = d.priceChange && d.priceChange.h24;
-        if (ch !== undefined && ch !== null){
-          el.coinChange.textContent = (ch >= 0 ? '+' : '') + ch + '% 24H';
-          el.coinChange.className = 'coin-hero-change ' + (ch >= 0 ? 'up' : 'down');
-        }
-        var t = (d.txns && d.txns.h24) || {};
+    function stat(label, value, sub){ return '<div class="coin-stat"><span class="coin-stat-label">' + label + '</span><span class="coin-stat-val">' + value + '</span>' + (sub ? '<span class="coin-stat-sub">' + sub + '</span>' : '') + '</div>'; }
+    fetch('https://api.dexscreener.com/latest/dex/pairs/xrpl/' + pair).then(function(r){ return r.json(); }).catch(function(){ return null; }).then(function(res){
+      if (el.coinModal.style.display !== 'flex' || state.collection !== key) return;
+      var d = res && res.pairs && res.pairs[0];
+      if (!d){
+        el.coinPrice.textContent = '—';
+        el.coinStats.innerHTML = '<div class="coin-stat coin-stat-wide"><span class="coin-stat-label">C0ULDN\\'T L0AD THE C0!N DATA — TRY AGA!N</span></div>';
+        return;
+      }
+      coinChartPool = d.pairAddress || pair;
+      loadCoinChart(coinChartRange);
+      if (d.info && d.info.imageUrl) el.coinImg.src = d.info.imageUrl;
+      el.coinPrice.textContent = Number(d.priceNative).toPrecision(4) + ' XRP';
+      el.coinPriceSub.textContent = fmtUsd(Number(d.priceUsd)) + ' USD';
+      var ch = d.priceChange && d.priceChange.h24;
+      if (ch !== undefined && ch !== null){
+        el.coinChange.textContent = (ch >= 0 ? '+' : '') + ch + '% 24H';
+        el.coinChange.className = 'coin-hero-change ' + (ch >= 0 ? 'up' : 'down');
+      }
+      var mcap = d.marketCap || d.fdv;
+      var supply = mcap && Number(d.priceUsd) ? mcap / Number(d.priceUsd) : null;
+      var t = (d.txns && d.txns.h24) || {};
+      var pool = coinChartPool;
+      function renderStats(){
+        if (pool !== coinChartPool) return;
+        var ath = coinAth[pool];
         var html = '';
-        html += stat('MARKET CAP', fmtUsd(d.marketCap || d.fdv));
+        html += stat('MARKET CAP', fmtUsd(mcap));
         html += stat('L!QU!D!TY', fmtUsd(d.liquidity && d.liquidity.usd));
         html += stat('24H V0LUME', fmtUsd(d.volume && d.volume.h24));
-        html += stat('24H BUYS / SELLS', (t.buys || 0) + ' / ' + (t.sells || 0));
-        html += stat('6H CHANGE', d.priceChange && d.priceChange.h6 !== undefined ? (d.priceChange.h6 >= 0 ? '+' : '') + d.priceChange.h6 + '%' : '—');
-        html += stat('P00L', d.liquidity ? Math.round(d.liquidity.base).toLocaleString() + ' + ' + Math.round(d.liquidity.quote).toLocaleString() + ' XRP' : '—');
-        if (d.marketCap && Number(d.priceUsd)) html += stat('SUPPLY', Math.round(d.marketCap / Number(d.priceUsd)).toLocaleString());
-        if (d.pairCreatedAt) html += stat('P00L CREATED', new Date(d.pairCreatedAt).toLocaleDateString());
+        html += stat('PR!CE ATH', ath === undefined ? '…' : ath ? escapeHtml(fmtCoinPrice(ath.xrp)) : '—',
+          ath ? escapeHtml((ath.usd ? fmtUsd(ath.usd) + ' · ' : '') + new Date(ath.t * 1000).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })) : '');
+        html += stat('MARKET CAP ATH', ath === undefined ? '…' : (ath && ath.usd && supply) ? fmtUsd(ath.usd * supply) : '—');
+        html += stat('24H BUYS / SELLS', '<span class="up">' + (t.buys || 0) + '</span> / <span class="down">' + (t.sells || 0) + '</span>');
+        html += stat('P00L', d.liquidity ? escapeHtml(compactPigeonsNumber(Math.round(d.liquidity.base))) + ' + ' + escapeHtml(fmtXrp(Math.round(d.liquidity.quote))) + ' XRP' : '—');
+        if (supply) html += stat('SUPPLY', escapeHtml(compactPigeonsNumber(Math.round(supply))));
+        html += stat('!SSUER', escapeHtml(shortAddr(meta.tokenIssuer || '')));
         el.coinStats.innerHTML = html;
-        var links = [];
-        ((d.info && d.info.websites) || []).forEach(function(w){ links.push('<a href="' + escapeHtml(w.url) + '" target="_blank" rel="noopener">' + escapeHtml(((w.label && w.label.length > 1) ? w.label : (String(w.url).replace(/^https?:[/][/](www[.])?/, '').split('/')[0] || 'WEBS!TE')).toUpperCase()) + ' ↗</a>'); });
-        ((d.info && d.info.socials) || []).forEach(function(w){ links.push('<a href="' + escapeHtml(w.url) + '" target="_blank" rel="noopener">' + escapeHtml(String(w.type || 'S0C!AL').toUpperCase()) + ' ↗</a>'); });
-        links.push('<a href="' + escapeHtml(coinPageDexUrl) + '" target="_blank" rel="noopener">CHART ↗</a>');
-        el.coinLinks.innerHTML = links.join('');
-      } else {
-        el.coinPrice.textContent = '—';
-        el.coinStats.innerHTML = '<div class="coin-stat"><span class="coin-stat-label">C0ULDN\\'T L0AD THE C0!N DATA — TRY AGA!N</span></div>';
       }
-      var mine = '';
-      mine += stat('!SSUER', escapeHtml(shortAddr(meta.tokenIssuer || '')));
-      if (line) mine += stat('Y0UR ' + escapeHtml(meta.tokenLabel), line.hasTrustline ? escapeHtml(Number(line.balance || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })) : 'N0 TRUSTL!NE');
-      if (xb && xb.drops != null) mine += stat('Y0UR XRP', escapeHtml(fmtXrp(Math.floor(spendableXrpOf(xb) * 100) / 100)));
-      el.coinStats.insertAdjacentHTML('beforeend', mine);
+      renderStats();
+      if (coinAth[pool] === undefined) loadCoinAth(pool, renderStats);
+      var links = [];
+      ((d.info && d.info.socials) || []).forEach(function(w){
+        var kind = String(w.type || '').toLowerCase();
+        links.push(coinSocialHtml(w.url, kind === 'x' ? 'twitter' : kind, kind.toUpperCase()));
+      });
+      ((d.info && d.info.websites) || []).forEach(function(w){
+        var host = String(w.url || '').replace(/^https?:[/][/](www[.])?/i, '').split('/')[0];
+        if (!host || COIN_DEAD_SITES.test(host)) return;
+        links.push(coinSocialHtml(w.url, 'web', host.toUpperCase()));
+      });
+      el.coinLinks.innerHTML = links.join('');
     });
   }
+  // All-time highs: GeckoTerminal daily candles (up to 1000 days) in XRP
+  // and in USD, the highest wick of each.
+  function loadCoinAth(pool, done){
+    function daily(cur){
+      return fetch('https://api.geckoterminal.com/api/v2/networks/xrpl/pools/' + encodeURIComponent(pool) + '/ohlcv/day?aggregate=1&limit=1000&currency=' + cur)
+        .then(function(r){ return r.json(); })
+        .then(function(d){ return (d && d.data && d.data.attributes && d.data.attributes.ohlcv_list) || []; });
+    }
+    Promise.all([daily('token'), daily('usd').catch(function(){ return []; })]).then(function(r){
+      var best = null;
+      r[0].forEach(function(c){ if (!best || Number(c[2]) > best.xrp) best = { xrp: Number(c[2]), t: c[0] }; });
+      var usd = 0;
+      r[1].forEach(function(c){ if (Number(c[2]) > usd) usd = Number(c[2]); });
+      coinAth[pool] = best ? { xrp: best.xrp, usd: usd || null, t: best.t } : null;
+    }).catch(function(){ coinAth[pool] = null; }).then(done);
+  }
+  // T0P 10 WALLETS — the coin's biggest holders; the AMM pool shows as the
+  // LP with a drop, not as a wallet.
+  function toggleCoinHolders(){
+    if (el.coinHolders.style.display !== 'none'){
+      el.coinHolders.style.display = 'none';
+      el.coinHoldersBtnLabel.textContent = 'T0P 10 WALLETS';
+      return;
+    }
+    el.coinHolders.style.display = '';
+    el.coinHoldersBtnLabel.textContent = 'H!DE WALLETS';
+    var key = state.collection;
+    var label = COLLECTION_META[key].tokenLabel;
+    el.coinHolders.innerHTML = '<div class="coin-chart-msg coin-holders-msg">L0AD!NG WALLETS...</div>';
+    api({ tokenHolders: 1 }).then(function(data){
+      if (state.collection !== key) return;
+      if (!data || data.error) throw new Error('holders');
+      // Ten real wallets, plus the LP wherever it ranks.
+      var shown = 0;
+      var list = (data.holders || []).filter(function(h){ return h.isLp || shown++ < 10; });
+      if (!list.length){ el.coinHolders.innerHTML = '<div class="coin-chart-msg coin-holders-msg">N0 H0LDERS F0UND</div>'; return; }
+      var top = list[0].pct || 1;
+      var rank = 0;
+      el.coinHolders.innerHTML =
+        '<div class="coin-holders-head"><span>T0P 10 WALLETS</span><span>' + (data.holderCount ? escapeHtml(data.holderCount.toLocaleString()) + ' H0LDERS' : '') + '</span></div>' +
+        list.map(function(h){
+          var who = h.isLp
+            ? '<span class="ch-lp">L!QU!D!TY P00L</span>'
+            : '<a class="ch-wallet" href="' + escapeHtml(walletHrefFor(h.account)) + '" data-wallet="' + escapeHtml(h.account) + '">' + walletTagHtml(h.account, shortAddr(h.account)) + '</a>';
+          var bar = Math.max(2, Math.min(100, (h.pct || 0) / top * 100));
+          return '<div class="ch-row' + (h.isLp ? ' ch-row-lp' : '') + '">' +
+            '<span class="ch-rank">' + (h.isLp ? '<span class="ch-drop" title="L!QU!D!TY P00L">&#128167;</span>' : String(++rank)) + '</span>' +
+            '<span class="ch-who">' + who + '<span class="ch-bar"><i style="width:' + bar.toFixed(1) + '%"></i></span></span>' +
+            '<span class="ch-amt">' + escapeHtml(compactPigeonsNumber(h.balance)) + '<small>' + (h.pct != null ? h.pct.toFixed(2) + '%' : '') + '</small></span>' +
+          '</div>';
+        }).join('') +
+        '<div class="coin-holders-note">&#128167; THE ' + escapeHtml(label) + ' / XRP P00L — L!QU!D!TY, N0T A WALLET</div>';
+    }).catch(function(){
+      if (state.collection === key) el.coinHolders.innerHTML = '<div class="coin-chart-msg coin-holders-msg">C0ULDN' + String.fromCharCode(39) + 'T L0AD THE WALLETS — TRY AGA!N</div>';
+    });
+  }
+  el.coinHoldersBtn.addEventListener('click', toggleCoinHolders);
+  el.coinHolders.addEventListener('click', function(e){
+    var a = e.target.closest('a.ch-wallet');
+    if (!a || e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
+    closeCoinPage();
+    openWalletProfile(a.getAttribute('data-wallet'), shortAddr(a.getAttribute('data-wallet')));
+  });
   function closeCoinPage(){
     el.coinModal.style.display = 'none';
     coinChartPool = null;
@@ -22734,7 +23341,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // fill, quiet grid, crosshair + tooltip on hover. ----
   var coinChartPool = null;
   var coinChartRange = '7D';
-  var COIN_CHART_RANGES = { '1D': ['hour', 1, 24], '7D': ['hour', 4, 42], '1M': ['day', 1, 30], '3M': ['day', 1, 90] };
+  var COIN_CHART_RANGES = { '1D': ['hour', 1, 24], '7D': ['hour', 4, 42], '1M': ['day', 1, 30], '3M': ['day', 1, 90], '6M': ['day', 1, 182], '1Y': ['day', 1, 365], 'ALL': ['day', 1, 1000] };
   function fmtCoinPrice(v){ return Number(v).toPrecision(4) + ' XRP'; }
   function loadCoinChart(range){
     if (!coinChartPool) return;
@@ -22776,7 +23383,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       labels += '<text x="' + (W - R + 8) + '" y="' + (gy + 4).toFixed(1) + '" class="cc-axis">' + Number(gv).toPrecision(3) + '</text>';
     }
     var hourly = COIN_CHART_RANGES[coinChartRange][0] === 'hour' && coinChartRange === '1D';
-    function when(t){ var dt = new Date(t * 1000); return hourly ? dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : dt.toLocaleDateString([], { day: 'numeric', month: 'short' }); }
+    var yearly = coinChartRange === '1Y' || coinChartRange === 'ALL';
+    function when(t){ var dt = new Date(t * 1000); return hourly ? dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : yearly ? dt.toLocaleDateString([], { month: 'short', year: '2-digit' }) : dt.toLocaleDateString([], { day: 'numeric', month: 'short' }); }
     for (var k = 0; k < 4; k++){
       var tt = t0 + (t1 - t0) * (k + 0.5) / 4;
       labels += '<text x="' + x(tt).toFixed(1) + '" y="' + (H - 7) + '" class="cc-axis" text-anchor="middle">' + escapeHtml(when(tt)) + '</text>';
@@ -22833,6 +23441,72 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.coinCloseBtn.addEventListener('click', closeCoinPage);
   el.coinModal.addEventListener('click', function(e){ if (e.target === el.coinModal) closeCoinPage(); });
   el.coinSwapBtn.addEventListener('click', function(){ closeCoinPage(); openBuySwapPanel(state.collection); });
+
+  // ---- 0FF-S!TE BUY warning: every BUY N0W that leaves the site stops here
+  // first — which marketplace, what it charges vs Σκύλλa, and the option to
+  // make an offer here instead. Marketplace fees were read off real sales on
+  // the ledger (NFTokenBrokerFee / the seller's price, 2026-09-27).
+  var EXT_MARKETS = {
+    'xrp.cafe': { name: 'XRP.CAFE', fee: '1.59%', sub: 'ADDED 0N T0P 0F THE PR!CE' },
+    'deeptide.co': { name: 'DEEPT!DE', fee: '1–1.6%', sub: 'ADDED 0N T0P 0F THE PR!CE' },
+    'bidds.com': { name: 'B!DDS', fee: 'THE!R 0WN', sub: 'SEE B!DDS F0R THE!R FEE' },
+    'bithomp.com': { name: 'B!TH0MP', fee: 'N0NE', sub: 'A D!RECT L!ST!NG — N0 MARKETPLACE' }
+  };
+  var extBuyNft = null;
+  function extMarketFor(href){
+    var host = '';
+    try { host = new URL(href, location.href).hostname.replace(/^www[.]/, ''); } catch (e){}
+    return EXT_MARKETS[host] || { name: host.toUpperCase() || '0FF-S!TE', fee: 'THE!R 0WN', sub: 'SET BY THAT MARKETPLACE' };
+  }
+  function findNftForExtLink(a){
+    var holder = a.closest('[data-nftid]');
+    var id = holder && holder.getAttribute('data-nftid');
+    if (!id && state.currentDetail && el.detailMarkets && el.detailMarkets.contains(a)) id = state.currentDetail.nftId;
+    if (!id) return null;
+    if (state.currentDetail && state.currentDetail.nftId === id) return state.currentDetail;
+    return (state.items || []).filter(function(x){ return x.nftId === id; })[0] || null;
+  }
+  function openExtBuyWarning(a){
+    var m = extMarketFor(a.href);
+    var p = findNftForExtLink(a);
+    var href = a.getAttribute('href');
+    extBuyNft = p;
+    var price = null;
+    if (p){
+      var ml = (p.marketListings || []).filter(function(l){ return l.url === href; })[0];
+      price = ml ? ml.priceXrp : (p.xrpListing && p.xrpListing.url === href ? p.xrpListing.priceXrp : null);
+    }
+    el.extBuyNft.innerHTML = p
+      ? (p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : '') + '<div><b>' + collectionItemLabel() + ' ' + itemNumberLabel(p) + '</b>' + (price ? '<span class="ebn-price">' + escapeHtml(fmtXrp(price)) + ' XRP</span>' : '') + '</div>'
+      : '';
+    el.extBuyText.innerHTML = 'Y0U' + String.fromCharCode(39) + 'RE AB0UT T0 BE SENT T0 <span class="hi">' + escapeHtml(m.name) + '</span> T0 BUY TH!S — !T' + String.fromCharCode(39) + 'S L!STED THERE, S0 !T CAN 0NLY BE B0UGHT THERE.';
+    el.extBuyFees.innerHTML =
+      '<div class="ext-fee"><span class="ext-fee-label">' + escapeHtml(m.name) + ' FEE</span><span class="ext-fee-val">' + escapeHtml(m.fee) + '</span><span class="ext-fee-sub">' + escapeHtml(m.sub) + '</span></div>' +
+      '<div class="ext-fee ext-fee-us"><span class="ext-fee-label">Σκύλλα FEE</span><span class="ext-fee-val">1.3%</span><span class="ext-fee-sub">!N XRP · 1.023% !N ' + escapeHtml((COLLECTION_META[state.collection] || {}).tokenLabel || '$T0KEN') + '</span></div>';
+    el.extBuyTip.textContent = 'THE CREAT0R R0YALTY !S THE SAME EVERYWHERE. 0R MAKE THE 0WNER AN 0FFER 0N Σκύλλα !NSTEAD — !F THEY ACCEPT, !T SETTLES HERE F0R 0UR FEE.';
+    el.extBuyOfferBtn.style.display = (p && COLLECTION_META[state.collection].tradeable && MY_WALLET !== p.owner) ? '' : 'none';
+    el.extBuyGoBtn.href = a.href;
+    el.extBuyModal.style.display = 'flex';
+  }
+  function closeExtBuyWarning(){ el.extBuyModal.style.display = 'none'; extBuyNft = null; }
+  // Capture phase, so it runs before the cards' own click handlers.
+  document.addEventListener('click', function(e){
+    var a = e.target.closest && e.target.closest('a.market-buy-link[target="_blank"]');
+    if (!a || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openExtBuyWarning(a);
+  }, true);
+  el.extBuyCloseBtn.addEventListener('click', closeExtBuyWarning);
+  el.extBuyModal.addEventListener('click', function(e){ if (e.target === el.extBuyModal) closeExtBuyWarning(); });
+  el.extBuyGoBtn.addEventListener('click', function(){ setTimeout(closeExtBuyWarning, 0); });
+  el.extBuyOfferBtn.addEventListener('click', function(){
+    var p = extBuyNft;
+    closeExtBuyWarning();
+    if (!p) return;
+    if (!MY_WALLET){ startAuthorize(); return; }
+    openAmountEntryModal('offer', p);
+  });
 
   // Hard cap on the XRP side — matches whatever's actually reasonable to
   // type into a quick calculator, and doubles as the ceiling every
@@ -27940,6 +28614,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     return { totalValue: total, feeValue: feeValue, sellerValue: total - feeValue };
   }
   el.statFloorExternalTile.addEventListener('click', function(){ applySort('PRICE_ASC'); });
+  var statsCarouselSetPageOff = function(){};
   function loadCollectionStats(){
     api({ stats: 1 }).then(function(data){
       el.statItems.textContent = data.items !== null && data.items !== undefined ? data.items.toLocaleString() : '—';
@@ -28004,19 +28679,35 @@ const SWAP_HTML = `<!DOCTYPE html>
         outgoing.classList.remove('stats-page-prev', 'stats-page-exit-right');
       }, 500);
     }
+    // Pages marked .stats-page-off (the C0!N page on a collection with no
+    // coin) are skipped, dot and all.
+    function stepFrom(i, dir){
+      for (var k = 1; k <= pages.length; k++){
+        var j = (i + dir * k + pages.length * k) % pages.length;
+        if (!pages[j].classList.contains('stats-page-off')) return j;
+      }
+      return i;
+    }
     function startAutoRotate(){
-      autoTimer = setInterval(function(){ gotoStatsPage((current + 1) % pages.length, 1); }, 10000);
+      autoTimer = setInterval(function(){ gotoStatsPage(stepFrom(current, 1), 1); }, 10000);
     }
     el.statsNextBtn.addEventListener('click', function(){
-      gotoStatsPage((current + 1) % pages.length, 1);
+      gotoStatsPage(stepFrom(current, 1), 1);
       clearInterval(autoTimer);
       startAutoRotate();
     });
     el.statsPrevBtn.addEventListener('click', function(){
-      gotoStatsPage((current - 1 + pages.length) % pages.length, -1);
+      gotoStatsPage(stepFrom(current, -1), -1);
       clearInterval(autoTimer);
       startAutoRotate();
     });
+    statsCarouselSetPageOff = function(page, off){
+      var i = Array.prototype.indexOf.call(pages, page);
+      if (i === -1) return;
+      page.classList.toggle('stats-page-off', off);
+      dots[i].style.display = off ? 'none' : '';
+      if (off && current === i) gotoStatsPage(stepFrom(current, 1), 1);
+    };
     startAutoRotate();
   })();
   // 24H SALES stat tile (title="G0 T0 SALES H!ST0RY") used to set a
@@ -28055,7 +28746,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         renderSortTag();
       }
       if (state.scope){
-        state.scope = null;
+        state.scope = null; syncOwnScopeQuick();
         state.scopeAllItems = [];
         state.targetAssets = {};
         el.nodeHeaderPanel.style.display = 'none';
@@ -28592,7 +29283,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var boxes = [];
     ['pigeonsCalcModal','topHoldersModal','salesModal','notifyModal','rarityModal','offerConfirmModal','transferConfirmModal',
      'acceptTransferConfirmModal','buySwapModal','buyConfirmModal','delistConfirmModal','acceptOfferConfirmModal',
-     'conspiracyPickerModal','simpleOfferPickerModal','amountEntryModal','historyModal','profileEditModal','cartModal','sweepModal','coinModal'].forEach(function(id){
+     'conspiracyPickerModal','simpleOfferPickerModal','amountEntryModal','historyModal','profileEditModal','cartModal','sweepModal','coinModal','extBuyModal','multiListModal'].forEach(function(id){
       var modal = document.getElementById(id);
       if (modal && modal.firstElementChild) boxes.push(modal.firstElementChild);
     });

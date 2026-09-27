@@ -7,7 +7,7 @@ import { marketListingsFromOffers, marketMeta,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, quoteXrpForTokenAmount, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG, isPopularCoinKey, ensurePopularCoinConfig,
   getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
-  fetchRecentAccountTxCached
+  fetchRecentAccountTxCached, fetchTopTokenHolders
 } from '../_shared.js';
 
 // Deeptide's own item page — the real place to buy a listed Pigeon.
@@ -443,6 +443,20 @@ export async function onRequestGet(context) {
   if (params.get('pigeonsRate') === '1') {
     const rate = await fetchPigeonsXrpRate(env.coin, tradeKey);
     return json({ xrpPerPigeon: rate.xrpPerPigeon, usdPerPigeon: rate.usdPerPigeon, marketCapUsd: rate.marketCapUsd, liquidityUsd: rate.liquidityUsd, tokenImageUrl: rate.tokenImageUrl, dexUrl: rate.dexUrl });
+  }
+
+  // T0P 10 wallets for the collection's token (C0!N page). Edge-cached
+  // 10 minutes (Cache API, not KV — no write quota spent).
+  if (params.get('tokenHolders') === '1') {
+    const cacheKey = new Request('https://soitbegins.xyz/__cache/token-holders/' + tradeKey);
+    const cache = typeof caches !== 'undefined' ? caches.default : null;
+    const hit = cache ? await cache.match(cacheKey) : null;
+    if (hit) return hit;
+    const top = await fetchTopTokenHolders(tradeKey, 11); // 10 wallets + the LP
+    if (!top) return json({ error: 'ledger_lookup_failed' }, 502);
+    const res = new Response(JSON.stringify(top), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=600' } });
+    if (cache) context.waitUntil(cache.put(cacheKey, res.clone()));
+    return res;
   }
 
   // Real $PIGEONS trustline + balance for the logged-in wallet (LOGIN

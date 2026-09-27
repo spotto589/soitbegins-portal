@@ -1966,6 +1966,40 @@ export async function fetchPigeonsAccountLine(account, tokenConfig = PIGEONS_TOK
   return { hasTrustline: true, balance: parseFloat(line.balance) || 0, balanceStr: line.balance };
 }
 
+// T0P 10 wallets for a collection's token (C0!N page): every trustline on
+// the issuer (account_lines from the issuer's side — a holder's balance
+// shows there as a negative number), biggest first. The AMM pool's own
+// account is flagged isLp so the page can show it as the LP, not a whale.
+// Returns null on a failed lookup.
+export async function fetchTopTokenHolders(collectionKey, n = 10) {
+  const cfg = getTradeConfig(collectionKey);
+  if (!hasCollectionToken(cfg)) return null;
+  const tc = cfg.tokenConfig;
+  const wantCurrency = encodeCurrencyCode(tc.currency);
+  const ammAccount = cfg.ammAccount || COLLECTION_AMM_ACCOUNTS[collectionKey] || null;
+  const holders = [];
+  let marker;
+  for (let page = 0; page < 40; page++) {
+    const data = await fetchXrplClusterJson({ method: 'account_lines', params: [{ account: tc.issuer, limit: 400, ...(marker ? { marker } : {}) }] });
+    if (!data || !data.result || !Array.isArray(data.result.lines)) return null;
+    for (const l of data.result.lines) {
+      if (l.currency !== wantCurrency) continue;
+      const bal = -parseFloat(l.balance);
+      if (bal > 0) holders.push({ account: l.account, balance: bal });
+    }
+    marker = data.result.marker;
+    if (!marker) break;
+  }
+  const circulating = holders.reduce((s, h) => s + h.balance, 0);
+  holders.sort((a, b) => b.balance - a.balance);
+  return {
+    holders: holders.slice(0, n).map(h => ({ ...h, pct: circulating ? h.balance / circulating * 100 : null, ...(h.account === ammAccount ? { isLp: true } : {}) })),
+    holderCount: holders.length,
+    circulating,
+    ammAccount
+  };
+}
+
 // All of a wallet's real trustlines in ONE account_lines call (no peer
 // filter) — used by the wallet PROFILE view's own COINS section, which
 // needs every tradeable collection's balance for an arbitrary wallet
