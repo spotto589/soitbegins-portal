@@ -4382,9 +4382,14 @@ const SWAP_HTML = `<!DOCTYPE html>
      trait boxes spaced apart instead of touching; ◂ BACK T0 CATEG0R!ES
      pinned to the very top edge of the pop-up while it scrolls (it used to
      stick a little below the top, under the pop-up's own padding). */
-  #traitsFlyout.flyout-popup .traits-flyout-toolbar{ flex-direction:column; align-items:stretch; gap:0.65rem; margin:0 0 1rem; }
-  #traitsFlyout.flyout-popup .traits-flyout-search-input{ order:-1; flex:0 0 auto; width:100%; text-align:center; }
-  #traitsFlyout.flyout-popup .traits-flyout-sort-toggle{ align-self:center; }
+  /* One bar (reported live 2026-09-27): RAR!TY % | A-Z | SEARCH, joined
+     inside a single rounded border, search taking the rest of the row. */
+  #traitsFlyout.flyout-popup .traits-flyout-toolbar{ flex-direction:row; flex-wrap:nowrap; align-items:stretch; gap:0; margin:0 0 1rem; border:1px solid rgba(var(--collection-accent-rgb, 136,72,248), 0.75); border-radius:12px; background:#000; overflow:hidden; box-shadow:0 0 10px rgba(var(--collection-accent-rgb, 136,72,248), 0.25); }
+  #traitsFlyout.flyout-popup .traits-flyout-sort-toggle{ flex:0 0 auto; border:none; border-radius:0; border-right:1px solid rgba(var(--collection-accent-rgb, 136,72,248), 0.5); }
+  #traitsFlyout.flyout-popup .tfs-toggle-btn{ padding:0.75em 0.9em; }
+  #traitsFlyout.flyout-popup .tfs-toggle-btn.active{ background:rgba(var(--collection-accent-rgb, 136,72,248), 0.9); color:#fff; }
+  #traitsFlyout.flyout-popup .traits-flyout-search-input{ order:0; flex:1 1 auto; width:auto; min-width:0; border:none !important; border-radius:0 !important; box-shadow:none !important; background:transparent !important; text-align:left; padding:0.75em 0.9em; }
+  #traitsFlyout.flyout-popup .traits-flyout-search-input:focus{ outline:none; background:rgba(255,255,255,0.04) !important; }
   /* Only while drilled into a category (or searching, which also sets
      .flyout-drilled) — on the CATEG0R!ES step the list stays hidden
      (reported live: after BACK T0 CATEG0R!ES the old values showed under
@@ -5933,6 +5938,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* Card BUY N0W / 0FFER (reported live 2026-09-27: same size, same look,
      one line): black, glowing green edge, white text, rounded; fills
      green on hover. The XRP price inside BUY N0W stays green. */
+  .result-card .card-action-box .thumb-offer{ border:none !important; background:none !important; box-shadow:none !important; padding:0 !important; }
   .result-card .owned-action-row.has-market-buy{ flex-direction:column; align-items:stretch; gap:0.45rem; }
   .result-card .owned-action-row.has-market-buy > *{ flex:0 0 auto !important; }
   .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn){
@@ -5948,8 +5954,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn):hover :is(.mbl-price, .thumb-buy-price){ color:#000; }
   @media (max-width:600px){
     .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn){ height:40px; padding:0 0.35em; font-size:10.5px; letter-spacing:0.01em; gap:0.3em; }
-    /* Phone cards are ~130px — "0FF-S!TE" drops, the ↗ still says it. */
+  }
+  /* Sized by the card itself, not the screen (cards are ~130px on phones
+     but also ~200px in the 6-across desktop grid): "0FF-S!TE" drops when
+     the whole line wouldn't fit, the ↗ still says it's off-site. */
+  .result-card .card-action-box{ container-type:inline-size; }
+  @container (max-width:250px){
     .result-card .card-market-buy .mbl-off{ display:none; }
+  }
+  @container (max-width:150px){
+    .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn){ font-size:9.5px; letter-spacing:0; }
   }
   .result-num{
     /* Bumped up from the old 15px (matched to button text) — direct
@@ -11930,7 +11944,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                       <button type="button" class="tfs-toggle-btn active" id="traitsFlyoutSortRarity" data-sort="rarity">RAR!TY %</button>
                       <button type="button" class="tfs-toggle-btn" id="traitsFlyoutSortAz" data-sort="az">A-Z</button>
                     </div>
-                    <input type="text" class="traits-flyout-search-input" id="traitsFlyoutSearchInput" placeholder="SEARCH TRA!TS..." autocomplete="off">
+                    <input type="text" class="traits-flyout-search-input" id="traitsFlyoutSearchInput" placeholder="SEARCH..." autocomplete="off">
                   </div>
                   <!-- Desktop only (see .traits-flyout-cats' own CSS) — a
                        horizontal row of every trait category (Background,
@@ -15534,7 +15548,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // line when there's no score yet).
     var floorSort = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC' || state.sort === 'XRPCAFE_PRICE_ASC' || state.sort === 'XRPCAFE_PRICE_DESC';
     var marketBuyHtml = '';
-    var cheapest = floorSort && p.marketListings && p.marketListings.length ? p.marketListings[0] : null;
+    var cheapest = floorSort && p.marketListings && p.marketListings.length ? p.marketListings[0]
+      : (p.xrpListing && p.xrpListing.priceXrp && (p.xrpListing.internal || p.xrpListing.url)) ? p.xrpListing : null;
     if (cheapest && p.owner !== MY_WALLET){
       // "BUY N0W 9.8 XRP 0FF-S!TE ↗" on one line, in 0FFER's own box and
       // the same size/look as 0FFER (reported live 2026-09-27).
@@ -15542,7 +15557,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       marketBuyHtml = cheapest.internal
         ? '<button type="button" class="market-buy-link card-market-buy scylla-xrp-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY N0W ' + priceHtml + '</button>'
         : '<a class="market-buy-link card-market-buy" href="' + escapeHtml(cheapest.url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY N0W ' + priceHtml + ' <span class="mbl-off">0FF-S!TE</span> ↗</a>';
-      avgSaleLine = '';
+      if (floorSort) avgSaleLine = '';
     } else if (floorSort && p.marketListings && p.marketListings.length){
       // Only the cheapest listing (reported live 2026-09-23), as one
       // button: "BUY 0N XRP.CAFE F0R 16 XRP" (a brokered listing can only

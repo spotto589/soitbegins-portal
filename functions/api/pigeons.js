@@ -281,7 +281,12 @@ async function attachListings(kv, items, cap = LISTINGS_ENRICH_CAP, collectionKe
   items.forEach(it => {
     const c = floorById[it.nftId];
     if (c && typeof c.priceXrp === 'number' && c.priceXrp > 0) {
-      it.xrpListing = { priceXrp: c.priceXrp, internal: !!(c.markets && c.markets.scylla === c.priceXrp) };
+      const internal = !!(c.markets && c.markets.scylla === c.priceXrp);
+      // Where the cheapest one is (a card's BUY N0W links there in every
+      // sort, not just the floor sorts — reported live 2026-09-27).
+      const key = internal ? 'scylla' : (c.venue || (c.markets ? Object.keys(c.markets).find(k => c.markets[k] === c.priceXrp) : null));
+      const m = key ? marketMeta(key) : null;
+      it.xrpListing = { priceXrp: c.priceXrp, internal, url: m ? m.url(it.nftId) : null };
     }
   });
   await Promise.all(capped.map(async (it) => {
@@ -297,7 +302,7 @@ async function attachListings(kv, items, cap = LISTINGS_ENRICH_CAP, collectionKe
     // the cheaper one (or the index hasn't seen this listing yet).
     const live = it.listings.xrpCafe.priceXrp;
     if (typeof live === 'number' && live > 0 && (!it.xrpListing || live < it.xrpListing.priceXrp)) {
-      it.xrpListing = { priceXrp: live, internal: false };
+      it.xrpListing = { priceXrp: live, internal: false, url: `https://xrp.cafe/nft/${it.nftId}` };
     }
   }));
   return items;
