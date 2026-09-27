@@ -3,7 +3,7 @@ import { marketListingsFromOffers, marketMeta,
   fetchDeeptideListings, fetchDeeptideNftDetail, fetchDeeptideNftHistory, fetchDeeptideRealFloor, getTraitCategoriesWithPercent, getNoTraitCounts, resolveDetailsCached,
   fetchDeeptideSalesHistory, fetchXrpCafeCollectionStats, fetchXrpCafeNftListing, getPigeonNumberMap, getPigeonNumberMapStats, maybeRefreshPigeonNumberMap, getTraitExampleMap,
   getHighSaleMap, maybeRefreshHighSaleMap, getRarityMap, getRarityStats, maybeRefreshRarityScores,
-  getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, findCollectionOffer, getSwapSalesLog, identifySaleVenue, getFloorIndex,
+  getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, findCollectionOffer, getSwapSalesLog, identifySaleVenue, getFloorIndex, hasFloorIndex,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, quoteXrpForTokenAmount, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG, isPopularCoinKey, ensurePopularCoinConfig,
   getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
@@ -100,7 +100,11 @@ const COLLECTIONS = {
   thirdeye: { key: 'thirdeye', shopSlug: null, vanitySlug: null, xrpCafeUrl: 'https://xrp.cafe/collection/3rdeyemiracles33', sizeApprox: null, tradeable: true },
   bear: { key: 'bear', shopSlug: 'bearxrpl', vanitySlug: 'bearxrpl', xrpCafeUrl: 'https://xrp.cafe/collection/bearxrpl', sizeApprox: null, tradeable: true },
   cult: { key: 'cult', shopSlug: 'cultorigin', vanitySlug: 'cultorigin', xrpCafeUrl: 'https://xrp.cafe/collection/cultorigin', sizeApprox: null, tradeable: true },
-  smoki: { key: 'smoki', shopSlug: null, vanitySlug: null, xrpCafeUrl: 'https://xrp.cafe/collection/smoki', sizeApprox: null, tradeable: true }
+  smoki: { key: 'smoki', shopSlug: null, vanitySlug: null, xrpCafeUrl: 'https://xrp.cafe/collection/smoki', sizeApprox: null, tradeable: true },
+  // K!NG — real Deeptide shop king-thwncy + xrp.cafe collection "king",
+  // 3147 items (Deeptide's own total, 2026-09-27). XRP only (no token,
+  // see TRADEABLE_COLLECTIONS.king in _shared.js).
+  king: { key: 'king', shopSlug: 'king-thwncy', vanitySlug: 'king', xrpCafeUrl: 'https://xrp.cafe/collection/king', sizeApprox: 3147, tradeable: true }
 };
 function resolveCollection(params) {
   const key = params.get('collection');
@@ -266,12 +270,12 @@ const LISTINGS_ENRICH_CAP_LOW = 36;
 // resolveDetailsCached (_shared.js) alongside the bulk PIGEON_DETAIL_MAP_KEY
 // lookup it now checks first — see that function's own comment for why a
 // live per-item fetch is the rare fallback case now, not the normal path.
-async function attachListings(kv, items, cap = LISTINGS_ENRICH_CAP) {
+async function attachListings(kv, items, cap = LISTINGS_ENRICH_CAP, collectionKey = 'pigeons') {
   const capped = items.slice(0, cap);
   // Lowest XRP listing anywhere, for the card's XRP slip (2026-09-25):
   // the floor index (every marketplace, direct, Σκύλλα's own XRP) —
   // one KV read for the whole page, Pigeons-only like the index itself.
-  const floorIndex = kv ? await getFloorIndex(kv).catch(() => null) : null;
+  const floorIndex = kv ? await getFloorIndex(kv, collectionKey).catch(() => null) : null;
   const floorById = {};
   ((floorIndex && floorIndex.items) || []).forEach(c => { floorById[c.nftId] = c; });
   items.forEach(it => {
@@ -312,7 +316,7 @@ export async function onRequestGet(context) {
   // card. Falls back to $PIGEONS' currency for a non-tradeable collection
   // (never actually read there, scyllaListingsMap is always empty).
   const tradeCfg = tradeable ? getTradeConfig(coll.key) : null;
-  const tokenCurrency = tradeCfg ? tradeCfg.tokenConfig.currency : PIGEONS_TOKEN_CONFIG.currency;
+  const tokenCurrency = tradeCfg ? (tradeCfg.tokenConfig.currency || 'XRP') : PIGEONS_TOKEN_CONFIG.currency;
 
   // Highest-ever sale price per token, Σκύλλα SWAP listings, and the
   // $PIGEONS-denominated sales log — three independent KV reads, reused
@@ -554,7 +558,7 @@ export async function onRequestGet(context) {
       fetchDeeptideSalesHistory({ limit: 50, sort: 'date-desc', shopSlug: coll.shopSlug }),
       // Every marketplace + direct + Σκύλλa's own XRP listings (the same
       // index the L0WEST (XRP) sort reads) — Pigeons-only, like the index.
-      coll.key === 'pigeons' && env.coin ? getFloorIndex(env.coin).catch(() => null) : Promise.resolve(null)
+      hasFloorIndex(coll.key) && env.coin ? getFloorIndex(env.coin, coll.key).catch(() => null) : Promise.resolve(null)
     ]);
     // XRP FL00R (banner, 2026-09-25): the lowest XRP listing anywhere.
     const xrpFloorCandidates = [
@@ -1198,7 +1202,7 @@ export async function onRequestGet(context) {
       }
     })());
 
-    await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
+    await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW, coll.key);
 
     return json({
       items,
@@ -1250,7 +1254,7 @@ export async function onRequestGet(context) {
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await resolveDetailsCached(context, coll.key, pageIds);
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
-    await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
+    await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW, coll.key);
     return json({
       items,
       total: sortedIds.length,
@@ -1305,7 +1309,7 @@ export async function onRequestGet(context) {
       const pageNums = nums.slice(skip, skip + limit);
       const resolved = await resolveDetailsCached(context, coll.key, pageNums.map(n => map[n]));
       const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
-      await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
+      await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW, coll.key);
       return json({
         items,
         total,
@@ -1337,7 +1341,7 @@ export async function onRequestGet(context) {
       if (!page.hasMore) { exhausted = true; break; }
     }
     const items = matched.map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
-    await attachListings(env.coin, items);
+    await attachListings(env.coin, items, LISTINGS_ENRICH_CAP, coll.key);
     return json({
       items,
       total: numberRange === 'low' ? PIGEON_LOW_EDITION_MAX : (PIGEON_COLLECTION_SIZE_APPROX - PIGEON_LOW_EDITION_MAX),
@@ -1373,7 +1377,7 @@ export async function onRequestGet(context) {
     const pageNums = nums.slice(skip, skip + limit);
     const resolved = await resolveDetailsCached(context, coll.key, pageNums.map(n => map[n]));
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
-    await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
+    await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW, coll.key);
     return json({
       items,
       total,
@@ -1404,7 +1408,7 @@ export async function onRequestGet(context) {
       : (c.markets ? (c.markets[marketplace] !== undefined ? c.markets[marketplace] : null)
         : (marketplace === 'xrpcafe' ? (c.xrpcafeXrp !== undefined ? c.xrpcafeXrp : (c.venue === 'xrpcafe' ? c.priceXrp : null))
           : (c.venue === marketplace ? c.priceXrp : null)));
-    const floorIndex = await getFloorIndex(env.coin);
+    const floorIndex = await getFloorIndex(env.coin, coll.key);
     let candidates = ((floorIndex && floorIndex.items) || []).filter(c => indexPrice(c) !== null && indexPrice(c) !== undefined);
     if (numberRange === 'low' || numberRange === 'high') {
       candidates = candidates.filter(c =>
@@ -1427,7 +1431,7 @@ export async function onRequestGet(context) {
     const pageCandidates = candidates.slice(skip, skip + limit);
     const details = await resolveDetailsCached(context, coll.key, pageCandidates.map(c => c.nftId));
     let items = pageCandidates.map((c, i) => toItem(c.nftId, details[i] || { number: c.number, attributes: [], image: null }, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
-    await attachListings(env.coin, items, items.length);
+    await attachListings(env.coin, items, items.length, coll.key);
     // Every marketplace this Pigeon is listed on (from the owner-checked
     // floor index), with xrp.cafe re-checked live; cheapest first. The
     // card's BUY button goes to the first one (or the chosen marketplace).
@@ -1506,7 +1510,7 @@ export async function onRequestGet(context) {
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await resolveDetailsCached(context, coll.key, pageIds);
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
-    await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW);
+    await attachListings(env.coin, items, LISTINGS_ENRICH_CAP_LOW, coll.key);
     return json({
       items,
       total: sortedIds.length,
@@ -1533,7 +1537,7 @@ export async function onRequestGet(context) {
   // every collection, tradeable or not (still useful: it's real
   // marketplace listing data, shown on the card regardless of whether
   // Σκύλλα's own BUY N0W/0FFER apply).
-  await attachListings(env.coin, items);
+  await attachListings(env.coin, items, LISTINGS_ENRICH_CAP, coll.key);
 
   if (tradeable) {
     context.waitUntil(maybeRefreshPigeonNumberMap(env.coin, coll.key));

@@ -543,8 +543,29 @@ export const TRADEABLE_COLLECTIONS = {
     tokenConfig: { currency: 'SMOKI', issuer: 'rpHyEYhaL9edeXWr7spsGUbo8n13ivzzty', configured: true },
     deeptideShopSlug: null,
     tradeable: true
+  },
+  // K!NG — the KING NFTs (same issuer/taxon the Signal Assessment key
+  // already checks), Deeptide shop king-thwncy, 3147 items (2026-09-27).
+  // No token of its own (the dev has no trustlines), so it trades in XRP
+  // only: tokenConfig is an empty placeholder with configured:false, so
+  // every token path (LIST/OFFER in a token, BUY-with-XRP swap, trustline
+  // banner, MY C0!NS) matches nothing and refuses, and xrpOnly tells the
+  // page to offer XRP alone.
+  king: {
+    key: 'king',
+    label: 'K!NG',
+    nftIssuer: KING_ISSUER,
+    nftTaxon: KING_TAXON,
+    tokenConfig: { currency: null, issuer: null, configured: false },
+    xrpOnly: true,
+    deeptideShopSlug: 'king-thwncy',
+    tradeable: true
   }
 };
+// Does this collection have a real token of its own? (K!NG doesn't.)
+export function hasCollectionToken(cfg) {
+  return !!(cfg && cfg.tokenConfig && cfg.tokenConfig.configured && cfg.tokenConfig.currency && cfg.tokenConfig.issuer);
+}
 
 // The one lookup every collection-aware endpoint should use — returns
 // null for an unknown key or a collection that isn't (yet) tradeable, so
@@ -1596,7 +1617,7 @@ const COLLECTION_AMM_ACCOUNTS = {
 // ever signed, same as every other transaction this app builds).
 export async function quotePigeonsForXrpDrops(xrpDropsStr, collectionKey = 'pigeons') {
   const cfg = getTradeConfig(collectionKey);
-  if (!cfg || !cfg.tokenConfig) return { ok: false, error: 'invalid_collection' };
+  if (!hasCollectionToken(cfg)) return { ok: false, error: 'invalid_collection' };
   let xrpDrops;
   try { xrpDrops = BigInt(xrpDropsStr); } catch (e) { return { ok: false, error: 'bad_amount' }; }
   if (xrpDrops <= 0n) return { ok: false, error: 'bad_amount' };
@@ -1700,7 +1721,7 @@ function accountReserveDrops(ownerCount) {
 // atomically with no funds moved, never a partial fill.
 export async function buildBuySwapTxjson(buyer, xrpDrops, collectionKey = 'pigeons') {
   const cfg = getTradeConfig(collectionKey);
-  if (!cfg || !cfg.tokenConfig) {
+  if (!hasCollectionToken(cfg)) {
     return { ok: false, error: 'invalid_collection' };
   }
   if (typeof xrpDrops !== 'string' || !/^[1-9][0-9]*$/.test(xrpDrops)) {
@@ -1838,7 +1859,7 @@ async function fetchTokenSupply(tokenConfig) {
 
 export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
   const cfg = getTradeConfig(collectionKey);
-  if (!cfg || !cfg.tokenConfig) return { xrpPerPigeon: null, usdPerPigeon: null, dexUrl: null };
+  if (!hasCollectionToken(cfg)) return { xrpPerPigeon: null, usdPerPigeon: null, dexUrl: null };
   // Popular coins: the BUY panel only needs a link to check the coin
   // before trusting it — its xrpl.to page. No KV cache write per coin.
   if (cfg.isPopularCoin) return { xrpPerPigeon: null, usdPerPigeon: null, marketCapUsd: null, liquidityUsd: null, tokenImageUrl: null, dexUrl: cfg.xrplToUrl };
@@ -1918,6 +1939,8 @@ export async function fetchPigeonsXrpRate(kv, collectionKey = 'pigeons') {
 // failure returns nulls so callers can tell "no trustline" from
 // "couldn't check" and not conflate the two.
 export async function fetchPigeonsAccountLine(account, tokenConfig = PIGEONS_TOKEN_CONFIG) {
+  // A collection with no token (K!NG) has no trustline to check.
+  if (!tokenConfig || !tokenConfig.currency || !tokenConfig.issuer) return { hasTrustline: false, balance: 0 };
   // Routed through the same retrying fetchXrplClusterJson every other
   // xrplcluster.com call in the BUY $PIGEONS path now uses — this one had
   // zero retry until confirmed live as the direct cause of "N0 TRUSTL!NE"
@@ -1968,7 +1991,7 @@ export async function fetchAllAccountLines(account) {
 // trustline") so the client can render "COULDN'T LOAD" instead of a
 // false 0 for a wallet that actually holds a real balance.
 export function matchAccountLinesToCollections(lines) {
-  return Object.values(TRADEABLE_COLLECTIONS).map(cfg => {
+  return Object.values(TRADEABLE_COLLECTIONS).filter(hasCollectionToken).map(cfg => {
     if (lines === null) return { key: cfg.key, label: cfg.label, hasTrustline: null, balance: null };
     const wantCurrency = encodeCurrencyCode(cfg.tokenConfig.currency);
     const line = lines.find(l => l.currency === wantCurrency && l.account === cfg.tokenConfig.issuer);
@@ -4609,7 +4632,10 @@ function namedSetMatchForItem(attrs, collectionKey) {
 // build-snapshot.mjs) instead of Deeptide — anyone can download the file,
 // check its SHA-256 seal and recompute every score (verify.mjs). Rebuild
 // the file and push to update; the new seal triggers an instant re-score.
-const RARITY_SNAPSHOT_FILES = { pigeons: '/assets/rarity-data/pigeons-traits.json' };
+const RARITY_SNAPSHOT_FILES = {
+  pigeons: '/assets/rarity-data/pigeons-traits.json',
+  king: '/assets/rarity-data/king-traits.json',
+};
 
 // The sealed file -> the same { items, dist, completedAt } shape the
 // Deeptide crawl produces. dist is counted from the file itself: every
@@ -5367,13 +5393,24 @@ const FLOOR_INDEX_CONCURRENCY = 8;
 const FLOOR_INDEX_REFRESH_STALE_SECONDS = 3 * 3600; // floor items don't move minute to minute — re-scan every 3h once a pass completes
 const FLOOR_INDEX_CONCURRENT_GUARD_SECONDS = 10;
 
-export async function getFloorIndex(kv) {
-  const raw = await kv.get(FLOOR_INDEX_KEY) || await kv.get(FLOOR_INDEX_V1_KEY);
+// Collections with a floor index: every listing on every marketplace,
+// read straight off the ledger. K!NG added 2026-09-27 (XRP-only, so its
+// whole market is off-site listings). Pigeons keeps its original keys;
+// every other collection's are suffixed ':<key>' (kvKeyFor).
+export const FLOOR_INDEX_COLLECTIONS = ['pigeons', 'king'];
+export function hasFloorIndex(collectionKey) {
+  return FLOOR_INDEX_COLLECTIONS.indexOf(collectionKey || 'pigeons') !== -1;
+}
+
+export async function getFloorIndex(kv, collectionKey) {
+  if (!hasFloorIndex(collectionKey)) return null;
+  const pigeons = !collectionKey || collectionKey === 'pigeons';
+  const raw = await kv.get(kvKeyFor(FLOOR_INDEX_KEY, collectionKey)) || (pigeons ? await kv.get(FLOOR_INDEX_V1_KEY) : null);
   return raw ? JSON.parse(raw) : null;
 }
 
-async function getFloorIndexStaging(kv) {
-  const raw = await kv.get(FLOOR_INDEX_STAGING_KEY);
+async function getFloorIndexStaging(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(FLOOR_INDEX_STAGING_KEY, collectionKey));
   return raw ? JSON.parse(raw) : { candidates: [] };
 }
 
@@ -5436,8 +5473,12 @@ async function fetchNftCurrentOwner(nftId) {
   }
 }
 
-export async function maybeRefreshFloorIndex(kv) {
-  const statsRaw = await kv.get(FLOOR_INDEX_STATS_KEY);
+export async function maybeRefreshFloorIndex(kv, collectionKey = 'pigeons') {
+  if (!hasFloorIndex(collectionKey)) return;
+  const statsKey = kvKeyFor(FLOOR_INDEX_STATS_KEY, collectionKey);
+  const stagingKey = kvKeyFor(FLOOR_INDEX_STAGING_KEY, collectionKey);
+  const indexKey = kvKeyFor(FLOOR_INDEX_KEY, collectionKey);
+  const statsRaw = await kv.get(statsKey);
   const stats = statsRaw ? JSON.parse(statsRaw) : null;
   const now = Math.floor(Date.now() / 1000);
   if (stats && stats.inProgress && now - stats.updatedAt < FLOOR_INDEX_CONCURRENT_GUARD_SECONDS) return;
@@ -5445,7 +5486,7 @@ export async function maybeRefreshFloorIndex(kv) {
 
   // Not built yet (very first deploy, before the number-map's own first
   // pass ever completes)? Skip this tick rather than crawling zero tokens.
-  const numberMap = await getPigeonNumberMap(kv);
+  const numberMap = await getPigeonNumberMap(kv, collectionKey);
   const numbers = Object.keys(numberMap).map(Number).sort((a, b) => a - b);
   if (!numbers.length) return;
   const allIds = numbers.map(n => numberMap[n]);
@@ -5456,7 +5497,7 @@ export async function maybeRefreshFloorIndex(kv) {
   // A stale in-progress cursor past the (possibly-shrunk) current list —
   // start the pass over rather than throwing on an out-of-range slice.
   if (nextIndex >= allIds.length) nextIndex = 0;
-  const staging = stats && stats.inProgress ? await getFloorIndexStaging(kv) : { candidates: [] };
+  const staging = stats && stats.inProgress ? await getFloorIndexStaging(kv, collectionKey) : { candidates: [] };
   // Every real candidate found this pass is kept (not trimmed to
   // FLOOR_INDEX_TOP_N until the pass fully completes below) — trimming
   // mid-pass would risk permanently dropping a token that's genuinely
@@ -5475,16 +5516,16 @@ export async function maybeRefreshFloorIndex(kv) {
     // The ledger watcher (functions/_ledgerwatch.js) patched some Pigeons
     // while this pass was running — those are fresher than what the pass
     // saw earlier, so they win (see recordFloorPatches).
-    candidates = await applyRecentFloorPatches(kv, candidates, (stats && stats.startedAt) || 0);
+    candidates = await applyRecentFloorPatches(kv, candidates, (stats && stats.startedAt) || 0, collectionKey);
     // Every listed Pigeon, cheapest first (see FLOOR_INDEX_KEY's comment).
     candidates.sort((a, b) => a.priceXrp - b.priceXrp);
-    await safeKvPut(kv, FLOOR_INDEX_KEY, JSON.stringify({ items: candidates, updatedAt: now }));
-    await safeKvPut(kv, FLOOR_INDEX_STATS_KEY, JSON.stringify({ inProgress: false, completedAt: now, updatedAt: now }));
-    await safeKvPut(kv, FLOOR_INDEX_STAGING_KEY, JSON.stringify({ candidates: [] }));
+    await safeKvPut(kv, indexKey, JSON.stringify({ items: candidates, updatedAt: now }));
+    await safeKvPut(kv, statsKey, JSON.stringify({ inProgress: false, completedAt: now, updatedAt: now }));
+    await safeKvPut(kv, stagingKey, JSON.stringify({ candidates: [] }));
     return;
   }
-  await safeKvPut(kv, FLOOR_INDEX_STAGING_KEY, JSON.stringify({ candidates }));
-  await safeKvPut(kv, FLOOR_INDEX_STATS_KEY, JSON.stringify({ inProgress: true, nextIndex, startedAt: (stats && stats.inProgress && stats.startedAt) || now, updatedAt: now }));
+  await safeKvPut(kv, stagingKey, JSON.stringify({ candidates }));
+  await safeKvPut(kv, statsKey, JSON.stringify({ inProgress: true, nextIndex, startedAt: (stats && stats.inProgress && stats.startedAt) || now, updatedAt: now }));
 }
 
 // One Pigeon's floor entry (null = not listed in XRP by its current owner).
@@ -5524,23 +5565,24 @@ export async function floorEntryForNft(nftId, number) {
 const FLOOR_PATCHES_KEY = 'pswap:floorpatches:v1';
 const FLOOR_PATCH_KEEP_SECONDS = 12 * 3600;
 // entries: { nftId: entry | null } (null = no longer listed in XRP).
-export async function patchFloorIndex(kv, entries) {
+export async function patchFloorIndex(kv, entries, collectionKey = 'pigeons') {
   const ids = Object.keys(entries);
-  if (!ids.length) return;
+  if (!ids.length || !hasFloorIndex(collectionKey)) return;
   const now = Math.floor(Date.now() / 1000);
-  const index = (await getFloorIndex(kv)) || { items: [] };
+  const index = (await getFloorIndex(kv, collectionKey)) || { items: [] };
   let items = (index.items || []).filter(c => !(c.nftId in entries));
   ids.forEach(id => { if (entries[id]) items.push(entries[id]); });
   items.sort((a, b) => a.priceXrp - b.priceXrp);
-  await safeKvPut(kv, FLOOR_INDEX_KEY, JSON.stringify({ items, updatedAt: index.updatedAt || now, patchedAt: now }));
-  const raw = await kv.get(FLOOR_PATCHES_KEY);
+  await safeKvPut(kv, kvKeyFor(FLOOR_INDEX_KEY, collectionKey), JSON.stringify({ items, updatedAt: index.updatedAt || now, patchedAt: now }));
+  const patchesKey = kvKeyFor(FLOOR_PATCHES_KEY, collectionKey);
+  const raw = await kv.get(patchesKey);
   const patches = raw ? JSON.parse(raw) : {};
   ids.forEach(id => { patches[id] = { entry: entries[id], at: now }; });
   Object.keys(patches).forEach(id => { if (now - patches[id].at > FLOOR_PATCH_KEEP_SECONDS) delete patches[id]; });
-  await safeKvPut(kv, FLOOR_PATCHES_KEY, JSON.stringify(patches));
+  await safeKvPut(kv, patchesKey, JSON.stringify(patches));
 }
-async function applyRecentFloorPatches(kv, candidates, passStartedAt) {
-  const raw = await kv.get(FLOOR_PATCHES_KEY);
+async function applyRecentFloorPatches(kv, candidates, passStartedAt, collectionKey) {
+  const raw = await kv.get(kvKeyFor(FLOOR_PATCHES_KEY, collectionKey));
   const patches = raw ? JSON.parse(raw) : {};
   const fresh = Object.keys(patches).filter(id => patches[id].at >= passStartedAt);
   if (!fresh.length) return candidates;

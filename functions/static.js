@@ -325,6 +325,21 @@ const SWAP_HTML = `<!DOCTYPE html>
     --collection-accent-glow:rgba(79,209,249,0.4);
     --collection-accent-2-rgb:61,161,192;
   }
+  /* K!NG — royal gold. */
+  body.collection-king{
+    --collection-accent:#f2b705;
+    --collection-accent-rgb:242,183,5;
+    --collection-accent-dim:rgba(242,183,5,0.4);
+    --collection-accent-glow:rgba(242,183,5,0.4);
+    --collection-accent-2-rgb:184,139,4;
+  }
+  /* XRP-only collections (K!NG): nothing token-related to show — no
+     token FL00R tile, no token tab in SALES H!ST0RY, no token balance
+     SWAP. The banner shows the wallet's XRP balance instead. */
+  body.collection-xrp-only #statScyllaListedTile,
+  body.collection-xrp-only #salesCurrencyPigeonsBtn,
+  body.collection-xrp-only #pigeonsBalanceBuyBtn,
+  body.collection-xrp-only #pigeonsBarDexBtn{ display:none !important; }
   /* EDITION (1-1515/1516-3015) and the # 0R WALLET search box both depend
      on the $PIGEONS-only number-map crawl (search resolves a number via
      that map; EDITION is a hardcoded $PIGEONS mint-era number range) —
@@ -5876,6 +5891,25 @@ const SWAP_HTML = `<!DOCTYPE html>
      button/tag in a row lands on the same line regardless of how much
      (or how little) sits above it. */
   .card-action-box{ margin-top:auto; }
+  /* Card BUY N0W / 0FFER (reported live 2026-09-27: same size, same look,
+     one line): black, glowing green edge, white text, rounded; fills
+     green on hover. The XRP price inside BUY N0W stays green. */
+  .result-card .owned-action-row.has-market-buy{ flex-direction:column; align-items:stretch; gap:0.45rem; }
+  .result-card .owned-action-row.has-market-buy > *{ flex:0 0 auto !important; }
+  .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn){
+    display:flex; align-items:center; justify-content:center; gap:0.4em; width:100%; box-sizing:border-box;
+    height:46px; margin:0; padding:0 0.6em;
+    background:#000 !important; border:1px solid rgba(52,255,133,0.85) !important; border-radius:10px;
+    box-shadow:0 0 10px rgba(52,255,133,0.28), inset 0 0 12px rgba(52,255,133,0.08);
+    color:#fff !important; font-family:inherit; font-size:14px; font-weight:700; letter-spacing:0.05em;
+    white-space:nowrap; overflow:hidden; text-decoration:none; text-shadow:none; cursor:pointer;
+  }
+  .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn):hover{ background:rgb(52,255,133) !important; color:#000 !important; }
+  .result-card .card-action-box :is(.mbl-price, .thumb-buy-price){ color:rgb(52,255,133); }
+  .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn):hover :is(.mbl-price, .thumb-buy-price){ color:#000; }
+  @media (max-width:600px){
+    .result-card .card-action-box :is(.card-market-buy, .thumb-buy-btn, .offer-open-modal-btn){ height:40px; padding:0 0.35em; font-size:10.5px; letter-spacing:0.01em; gap:0.3em; }
+  }
   .result-num{
     /* Bumped up from the old 15px (matched to button text) — direct
        instruction: text on the Pigeon cards themselves reads too small,
@@ -9881,6 +9915,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-bear .mainframe-card-art,
   .mainframe-card-cult .mainframe-card-art,
   .mainframe-card-smoki .mainframe-card-art{ background-position:center center; }
+  .mainframe-card-king .mainframe-card-art{ background-position:center 48%; }
+  .mainframe-card-enter{ display:block; text-align:center; text-decoration:none; }
   /* BEAR's badge specifically is a small circle with a lot of flat empty
      margin around it (unlike 3RD EYE/CULT/SM0K!'s own logos, which are
      closer to full-bleed already) — plain cover left that margin visible
@@ -11435,6 +11471,19 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <div class="mainframe-card-stats" id="mainframeStatsPigeons"></div>
               </a>
               <button type="button" class="mainframe-card-buy" data-collection="pigeons">SWAP $P!GE0NS</button>
+            </div>
+          </div>
+          <!-- K!NG — live, walk-in DATABASE (XRP only, no token: the
+               button just walks in, same as clicking the card). -->
+          <div class="mainframe-card mainframe-card-king" data-collection="king" role="button" tabindex="0" style="--card-accent:242,183,5; --card-art:url('/assets/cards/king.png');">
+            <div class="mainframe-card-art"></div>
+            <div class="mainframe-card-body">
+              <a class="mainframe-card-label-link" href="/king">
+                <div class="mainframe-card-label">K!NG</div>
+                <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
+                <div class="mainframe-card-stats" id="mainframeStatsKing"></div>
+              </a>
+              <a class="mainframe-card-buy mainframe-card-enter" href="/king">TRADES !N XRP</a>
             </div>
           </div>
           <!-- $P!GE0NS is the only card you can click into for now (reported
@@ -13214,6 +13263,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // popup (openBuySwapPanel — reads only those two fields, never
   // .tradeable) works correctly for all four.
   var COLLECTION_META = {
+    // K!NG — XRP only (no token; see TRADEABLE_COLLECTIONS.king in
+    // _shared.js). tokenLabel 'XRP' so every label that names "the
+    // currency" reads right; xrpOnly hides the token-only controls.
+    king: { label: 'K!NG', itemLabel: 'K!NG', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'rKingAa11yp4eCuxVraesW2UAvz5THWNCy', hasAmm: false, accent: '#f2b705', accentRgb: '242,183,5', thumb: '/assets/cards/king.png' },
     pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true, accent: '#8848f8', accentRgb: '136,72,248', thumb: '/assets/mainframe/pigeons.jpeg?v=2' },
     phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: true, accent: '#ff5a1f', accentRgb: '255,90,31', thumb: '/assets/mainframe/phnix.jpeg?v=2' },
     teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: true, accent: '#a6632e', accentRgb: '166,99,46', thumb: '/assets/mainframe/teddy.jpeg?v=2' },
@@ -13300,7 +13353,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcBuyBtn','pigeonsCalcPigeonsUnit','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'screenMainframe','mainframeGrid','mainframeSubtitle','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
-   'mainframeStatsThirdeye','mainframeStatsBear','mainframeStatsCult','mainframeStatsSmoki',
+   'mainframeStatsThirdeye','mainframeStatsBear','mainframeStatsCult','mainframeStatsSmoki','mainframeStatsKing',
    'conspiracyPickerModal','screenConspiracyPicker','conspiracyPickAreaBtn','conspiracyPickRabbitBtn','conspiracyPickerBackBtn',
    'globalTopBar','globalTopBarHeading',
    'mainframeDexPigeons','mainframeDexPhnixs','mainframeDexTeddybg','mainframeDexSeal','mainframeDexFuzzy','mainframeDexConspiracy','mainframeArrowPrev','mainframeArrowNext','mainframeSearchInput','mainframeSortSelect',
@@ -14783,7 +14836,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var onFlock = state.activeTab === 'mypigeons' && isOwnWalletScope();
     el.searchPanelTitle.textContent = onFlock
       ? 'SH0W!NG Y0UR ' + collectionItemLabel() + 'S :: ' + state.scopeAllItems.length
-      : 'SEARCH!NG ' + COLLECTION_META[state.collection].tokenLabel + ' DATABASE';
+      : 'SEARCH!NG ' + (COLLECTION_META[state.collection].xrpOnly ? COLLECTION_META[state.collection].label : COLLECTION_META[state.collection].tokenLabel) + ' DATABASE';
     el.searchPanelTitle.classList.toggle('search-panel-title-flock', onFlock);
     // flockWalletBox ("the address bar") and flockAccountBoxes ("my
     // pigeons bar" + its MESSAGE !NB0X/0FFERS/TRANSACT!0N H!ST0RY/CR0WN
@@ -15191,7 +15244,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // one button (0FFER) if it's neither, or a plain label (!N Y0UR FL0CK)
   // if it's yours and unlisted — never a variable-height stack of price/
   // countdown/button lines.
-  function pigeonsActionBoxHtml(p){
+  // marketBuyHtml: an XRP BUY N0W from the floor sorts (see resultCardHtml)
+  // — sits in the same box as 0FFER, same size and look (reported live).
+  function pigeonsActionBoxHtml(p, marketBuyHtml){
     // Browse only for PHN!X/TEDDY (see COLLECTION_META/switchCollection) —
     // BUY N0W/0FFER/CANCEL all call $PIGEONS-specific endpoints
     // (swap-makeoffer-*, swap-buy-*) that assume PIGEON_ISSUER/TAXON, no
@@ -15243,7 +15298,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // false) 0FFER is still wrapped in the plain .owned-action-row alone,
     // full width, same as before.
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      '<div class="owned-action-row' + (canBuy ? ' owned-action-row-buy' : '') + '">' +
+      '<div class="owned-action-row' + (canBuy ? ' owned-action-row-buy' : '') + (marketBuyHtml ? ' has-market-buy' : '') + '">' +
+        (marketBuyHtml || '') +
         (canBuy ? '<button class="buy-scylla-btn thumb-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">' +
           '<span class="thumb-buy-label">BUY N0W ::</span>' +
           '<span class="thumb-buy-price">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</span>' +
@@ -15399,7 +15455,17 @@ const SWAP_HTML = `<!DOCTYPE html>
     // rarity score instead of its average sale (falls back to the normal
     // line when there's no score yet).
     var floorSort = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC' || state.sort === 'XRPCAFE_PRICE_ASC' || state.sort === 'XRPCAFE_PRICE_DESC';
-    if (floorSort && p.marketListings && p.marketListings.length){
+    var marketBuyHtml = '';
+    var cheapest = floorSort && p.marketListings && p.marketListings.length ? p.marketListings[0] : null;
+    if (cheapest && p.owner !== MY_WALLET){
+      // "BUY N0W 9.8 XRP 0FF-S!TE ↗" on one line, in 0FFER's own box and
+      // the same size/look as 0FFER (reported live 2026-09-27).
+      var priceHtml = '<span class="mbl-price">' + fmtXrp(cheapest.priceXrp) + ' XRP</span>';
+      marketBuyHtml = cheapest.internal
+        ? '<button type="button" class="market-buy-link card-market-buy scylla-xrp-buy-btn" data-nftid="' + escapeHtml(p.nftId) + '">BUY N0W ' + priceHtml + '</button>'
+        : '<a class="market-buy-link card-market-buy" href="' + escapeHtml(cheapest.url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">BUY N0W ' + priceHtml + ' 0FF-S!TE ↗</a>';
+      avgSaleLine = '';
+    } else if (floorSort && p.marketListings && p.marketListings.length){
       // Only the cheapest listing (reported live 2026-09-23), as one
       // button: "BUY 0N XRP.CAFE F0R 16 XRP" (a brokered listing can only
       // be bought on its own marketplace, so it goes there).
@@ -15423,7 +15489,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var atCap = offerCtxCard
       ? (!inTarget && offerCount() >= OFFER_MAX)
       : (!inTarget && targetCount() >= OFFER_MAX);
-    var pigeonsActionHtml = pigeonsActionBoxHtml(p);
+    var pigeonsActionHtml = pigeonsActionBoxHtml(p, marketBuyHtml);
     // Listing price now lives here, on the picture itself (bottom-right
     // corner, see .thumb-listing-badge), not inside the purple action box
     // below — that box is buttons only now, always the same size
@@ -15578,7 +15644,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.amountEntryListXrpInput.value = '';
       dualListing = null;
       el.amountEntryListTokenTab.textContent = COLLECTION_META[state.collection].tokenLabel;
-      setListCurrency('token');
+      // XRP-only collection (K!NG): no token tab, no B0TH.
+      var listXrpOnly = !!COLLECTION_META[state.collection].xrpOnly;
+      el.amountEntryListCurrency.style.display = listXrpOnly ? 'none' : '';
+      setListCurrency(listXrpOnly ? 'xrp' : 'token');
       el.amountEntryListBtn.disabled = false;
       el.amountEntryListStatus.style.display = 'none';
       el.amountEntryListStatus.textContent = '';
@@ -15640,7 +15709,10 @@ const SWAP_HTML = `<!DOCTYPE html>
         el.amountEntryOfferBalanceLine.style.display = 'none';
       }
       el.amountEntryOfferTokenTab.textContent = COLLECTION_META[state.collection].tokenLabel;
-      setOfferCurrency('token');
+      var offerXrpOnly = !!COLLECTION_META[state.collection].xrpOnly;
+      el.amountEntryOfferCurrency.style.display = offerXrpOnly ? 'none' : '';
+      if (offerXrpOnly) el.amountEntryOfferBalanceLine.style.display = 'none';
+      setOfferCurrency(offerXrpOnly ? 'xrp' : 'token');
     } else {
       el.amountEntryTitle.textContent = 'TRANSFER T0 WALLET';
       el.amountEntryTransferInput.value = '';
@@ -17920,6 +17992,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // paints as soon as it's ready instead of the slower of the two
     // gating both.
     loadMyOwnPigeonsCache();
+    if (COLLECTION_META[state.collection].xrpOnly){
+      // No token: the balance is the wallet's spendable XRP.
+      apiWithRetry({ xrpBalance: 1, wallet: MY_WALLET }).then(function(data){
+        trustlineBalanceNum = data && data.drops != null ? Math.round(spendableXrpOf(data) * 100) / 100 : 0;
+        renderTrustlineSummary();
+      }).catch(function(){});
+      return;
+    }
     apiWithRetry({ pigeonsAccountLine: 1, wallet: MY_WALLET }).then(function(line){
       trustlineBalanceNum = (line && line.hasTrustline) ? (line.balance || 0) : 0;
       renderTrustlineSummary();
@@ -18860,8 +18940,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.pigeonsBalanceBuyBtn.addEventListener('click', function(){ openBuySwapPanel(state.collection); });
   // The coin thumbnail beside it opens SWAP too (reported live: it looked
   // like a button but did nothing).
-  el.pigeonsBarThumb.addEventListener('click', function(){ openBuySwapPanel(state.collection); });
-  el.pigeonsBarThumb.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openBuySwapPanel(state.collection); } });
+  el.pigeonsBarThumb.addEventListener('click', function(){ if (!COLLECTION_META[state.collection].xrpOnly) openBuySwapPanel(state.collection); });
+  el.pigeonsBarThumb.addEventListener('keydown', function(e){ if ((e.key === 'Enter' || e.key === ' ') && !COLLECTION_META[state.collection].xrpOnly){ e.preventDefault(); openBuySwapPanel(state.collection); } });
   // BUY $P!GE0NS is the one entry point everywhere now (FL0CK shows the
   // exact same banner as DATABASE, no more BALANCE-amount-as-buy-button
   // substitution — that only existed while FL0CK's banner was slimmed).
@@ -20763,11 +20843,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // collection only ever means one more COLLECTION_META entry.
   function updateTrustlineBannerChrome(collectionKey){
     var meta = COLLECTION_META[collectionKey];
-    el.trustlineTitleLabel.textContent = 'SET ' + meta.tokenLabel + ' TRUSTL!NE';
+    document.body.classList.toggle('collection-xrp-only', !!meta.xrpOnly);
+    el.trustlineTitleLabel.textContent = meta.xrpOnly ? meta.label + ' :: TRADES !N XRP' : 'SET ' + meta.tokenLabel + ' TRUSTL!NE';
     el.pigeonsBarThumb.title = 'SWAP ' + meta.tokenLabel;
-    if (meta.tokenIssuer){
-      el.ciIssuerAddr.setAttribute('data-full', meta.tokenIssuer);
-      el.ciIssuerAddr.textContent = meta.tokenIssuer.slice(0, 5) + '...' + meta.tokenIssuer.slice(-3);
+    var bannerIssuer = meta.tokenIssuer || meta.nftIssuer;
+    if (bannerIssuer){
+      el.ciIssuerAddr.setAttribute('data-full', bannerIssuer);
+      el.ciIssuerAddr.textContent = bannerIssuer.slice(0, 5) + '...' + bannerIssuer.slice(-3);
     } else {
       el.ciIssuerAddr.setAttribute('data-full', '');
       el.ciIssuerAddr.textContent = 'N/A';
@@ -20828,7 +20910,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // once PHN!X flipped to tradeable: meta.tradeable became true, so this
     // class never got added and the trustline banner stayed purple instead
     // of PHN!X's own real orange/red (#ff5a1f) — confirmed live.
-    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy', 'collection-whiterabbit', 'collection-thirdeye', 'collection-bear', 'collection-cult', 'collection-smoki');
+    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy', 'collection-whiterabbit', 'collection-thirdeye', 'collection-bear', 'collection-cult', 'collection-smoki', 'collection-king');
     if (newCollection !== 'pigeons') document.body.classList.add('collection-' + newCollection);
     document.body.classList.toggle('collection-browse-only', !meta.tradeable);
     // ED!T!ON/# 0R WALLET search (see their own CSS comment) are
@@ -20963,7 +21045,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // whatever the subtitle said before.
   var mainframeLockedTimer = null;
   el.mainframeGrid.addEventListener('click', function(e){
-    var buyBtn = e.target.closest('.mainframe-card-buy');
+    var buyBtn = e.target.closest('.mainframe-card-buy:not(.mainframe-card-enter)');
     if (buyBtn){
       e.stopPropagation();
       openBuySwapPanel(buyBtn.getAttribute('data-collection'));
@@ -20981,7 +21063,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // browser open it in a new tab natively instead of also SPA-navigating
     // this tab via enterMainframeCollection below.
     if (e.ctrlKey || e.metaKey) return;
-    var labelLink = e.target.closest('.mainframe-card-label-link');
+    var labelLink = e.target.closest('.mainframe-card-label-link, .mainframe-card-enter');
     if (labelLink) e.preventDefault();
     // C0NSP!RACY's own card covers two real collections, not one — see its
     // own HTML comment.
@@ -21220,7 +21302,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     { collection: 'thirdeye', target: 'mainframeStatsThirdeye', dexTarget: 'mainframeDexThirdeye', hasShopSlug: false },
     { collection: 'bear', target: 'mainframeStatsBear', dexTarget: 'mainframeDexBear', hasShopSlug: true },
     { collection: 'cult', target: 'mainframeStatsCult', dexTarget: 'mainframeDexCult', hasShopSlug: true },
-    { collection: 'smoki', target: 'mainframeStatsSmoki', dexTarget: 'mainframeDexSmoki', hasShopSlug: false }
+    { collection: 'smoki', target: 'mainframeStatsSmoki', dexTarget: 'mainframeDexSmoki', hasShopSlug: false },
+    { collection: 'king', target: 'mainframeStatsKing', dexTarget: null, hasShopSlug: true }
   ].forEach(function(cfg){
     Promise.all([
       cfg.hasShopSlug ? api({ stats: 1, collection: cfg.collection }).catch(function(){ return {}; }) : Promise.resolve({}),
@@ -22021,6 +22104,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!tradeable && cat !== 'RAR!TY' && cat !== 'ALPHABET!CAL') return;
       html += '<div class="sort-cat-heading">' + escapeHtml(cat) + '</div>';
       SORT_CATEGORIES[cat].forEach(function(o){
+        // No token of its own (K!NG): no token price / token average sorts.
+        if (COLLECTION_META[state.collection].xrpOnly && (o.value === 'SCYLLA_PRICE_ASC' || o.value === 'SCYLLA_PRICE_DESC' || o.value === 'AVG_SALE_PIGEONS_ASC')) return;
         html += '<button type="button" class="traits-flyout-val' + (state.sort === o.value ? ' selected' : '') + (o.disabled ? ' tfv-disabled' : '') + '" data-value="' + o.value + '"' + (o.disabled ? ' disabled' : '') + '>' +
           '<span>' + escapeHtml(o.label) + '</span>' +
           (o.disabled ? '<span class="db-soon">C0M!NG S00N</span>' : '') +

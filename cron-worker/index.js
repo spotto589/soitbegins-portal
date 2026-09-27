@@ -11,7 +11,7 @@
 // reached yet showed as "not indexed" to whoever searched for it first.
 // This worker just keeps both indexes warm on its own, independent of
 // whether anyone is on the site.
-import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshFloorIndex, recomputeCrownHolder, TRADEABLE_COLLECTIONS } from '../functions/_shared.js';
+import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshFloorIndex, recomputeCrownHolder, TRADEABLE_COLLECTIONS, FLOOR_INDEX_COLLECTIONS } from '../functions/_shared.js';
 import { runLedgerWatch } from '../functions/_ledgerwatch.js';
 import { stepPopularCoins } from '../functions/_coins.js';
 
@@ -80,7 +80,8 @@ export default {
       // maybeRefreshPigeonNumberMap call, same as every other independent
       // crawl here. Still P!GE0NS-only (see this function's own comment
       // above on why it isn't looped here too).
-      maybeRefreshFloorIndex(env.coin),
+      // Every collection with a floor index (P!GE0NS, K!NG).
+      ...FLOOR_INDEX_COLLECTIONS.map(key => maybeRefreshFloorIndex(env.coin, key)),
       // T0P 123 H0LDERS/CR0WN — its own background recompute-on-stale
       // trigger was deliberately removed from the request path (see
       // pigeons.js's own comment on the topHolders handler, "to stop the

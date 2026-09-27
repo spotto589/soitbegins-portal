@@ -1,6 +1,6 @@
 import {
   fetchXrplClusterJson, getPigeonNumberMap, TRADEABLE_COLLECTIONS, safeKvPut,
-  mapWithConcurrency, floorEntryForNft, patchFloorIndex, fetchDeeptideNftDetail
+  mapWithConcurrency, floorEntryForNft, patchFloorIndex, FLOOR_INDEX_COLLECTIONS, fetchDeeptideNftDetail
 } from './_shared.js';
 import { pushEventsToDevices } from './_webpush.js';
 
@@ -194,17 +194,18 @@ export async function runLedgerWatch(kv, opts) {
       await safeKvPut(kv, eventsKey(key), JSON.stringify(list));
     }
 
-    // Minute-fresh XRP floor for Pigeons (the only collection with a floor index).
-    const touched = new Set();
-    (byCollection.pigeons || []).forEach(e => {
-      if (['listing', 'delist', 'sale', 'transfer', 'burn'].indexOf(e.type) !== -1) touched.add(e.nftId);
-    });
-    if (touched.size && !opts.skipFloor) {
+    // Minute-fresh XRP floor for every collection with a floor index.
+    for (const floorKey of FLOOR_INDEX_COLLECTIONS) {
+      const touched = new Set();
+      (byCollection[floorKey] || []).forEach(e => {
+        if (['listing', 'delist', 'sale', 'transfer', 'burn'].indexOf(e.type) !== -1) touched.add(e.nftId);
+      });
+      if (!touched.size || opts.skipFloor) continue;
       const ids = Array.from(touched);
       const entries = {};
       const results = await mapWithConcurrency(ids, 4, id => floorEntryForNft(id, idx.numbers[id] || null).catch(() => undefined));
       ids.forEach((id, i) => { if (results[i] !== undefined) entries[id] = results[i]; });
-      await patchFloorIndex(kv, entries);
+      await patchFloorIndex(kv, entries, floorKey);
     }
 
     // Phone/desktop notifications for devices that switched these on.

@@ -19,7 +19,7 @@
 // Usage:  node scripts/rarity-data/build-snapshot.mjs pigeons
 
 import { createHash } from 'node:crypto';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -28,6 +28,12 @@ const COLLECTIONS = {
     issuer: 'rpigeoNwEPTN5JGWGQ8MCoa7SpQpz1537v',
     taxon: 1,
     // Metadata names look like "PIGEONS1875".
+    numberFromName: name => { const m = String(name || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : null; },
+  },
+  king: {
+    issuer: 'rKingAa11yp4eCuxVraesW2UAvz5THWNCy',
+    taxon: 123,
+    // Metadata names look like "KING #120".
     numberFromName: name => { const m = String(name || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : null; },
   },
 };
@@ -79,15 +85,26 @@ async function listNfts() {
   return { nfts, ledgerIndex };
 }
 
+// Optional resume cache (RARITY_CACHE_DIR=some/folder): each fetched
+// metadata file is kept there, so a run cut short by a gateway timeout
+// picks up where it stopped. IPFS content never changes for an address,
+// so a cached copy is exactly what a gateway would return again.
+const CACHE_DIR = process.env.RARITY_CACHE_DIR || null;
+if (CACHE_DIR) mkdirSync(CACHE_DIR, { recursive: true });
 async function fetchMetadata(uri) {
   const path = uri.replace(/^ipfs:\/\//, '');
+  const cacheFile = CACHE_DIR ? join(CACHE_DIR, path.replace(/[^A-Za-z0-9._-]/g, '_')) : null;
+  if (cacheFile && existsSync(cacheFile)) return JSON.parse(readFileSync(cacheFile, 'utf8'));
   let lastErr;
-  for (let round = 0; round < 3; round++) {
+  for (let round = 0; round < 6; round++) {
     for (const g of GATEWAYS) {
       try {
         const res = await fetch(g + path, { signal: AbortSignal.timeout(30000) });
         if (!res.ok) throw new Error(g + ' HTTP ' + res.status);
-        return await res.json();
+        const text = await res.text();
+        const json = JSON.parse(text);
+        if (cacheFile) writeFileSync(cacheFile, text);
+        return json;
       } catch (e) { lastErr = e; }
     }
     await new Promise(r => setTimeout(r, 2000 * (round + 1)));
