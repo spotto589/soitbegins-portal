@@ -454,8 +454,9 @@ export async function onRequestGet(context) {
     const hit = cache ? await cache.match(cacheKey) : null;
     if (hit) return hit;
     const description = await fetchNftDescription(nftId);
-    const res = new Response(JSON.stringify({ description }), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=' + (description ? 86400 : 600) } });
-    if (cache) context.waitUntil(cache.put(cacheKey, res.clone()));
+    const res = new Response(JSON.stringify({ description }), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=' + (description ? 86400 : 30) } });
+    // A failed read (IPFS timing out) isn't kept — the next look tries again.
+    if (cache && description) context.waitUntil(cache.put(cacheKey, res.clone()));
     return res;
   }
 

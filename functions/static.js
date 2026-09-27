@@ -6225,7 +6225,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* AVG SALE PR!CE / COND!T!ON label above its own value, not side by
      side on one line — same stacked shape as .stat-label/.stat-value
      elsewhere on the page, just sized down to fit a thumbnail card. */
-  .result-stat-stack{ display:flex; flex-direction:column; align-items:center; gap:0.1rem; }
+  .result-stat-stack{ display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:baseline; gap:0.1rem 0.4rem; }
   .result-stat-stack .stat-label{ font-size:12px; margin-bottom:0; color:var(--white); }
   .result-stat-stack .stat-value{ font-size:17px; color:var(--white); }
   .css-item{ font-size:13px; letter-spacing:0.02em; color:var(--white); text-align:center; font-weight:600; }
@@ -7864,10 +7864,12 @@ const SWAP_HTML = `<!DOCTYPE html>
 
   /* The coin beside every $TOKEN (reported live 2026-09-27): the round
      logo from the C0!N page, with a thin gold rim so it reads as a coin. */
-  .tk::before, .tk-img{ content:''; display:inline-block; flex:0 0 auto; width:1.15em; height:1.15em; margin-right:0.35em; vertical-align:-0.2em; border-radius:50%; background:var(--tk-logo, var(--token-logo)) center / cover no-repeat; box-shadow:0 0 0 1.5px rgba(245,197,24,0.85), 0 0 7px rgba(245,197,24,0.35), inset 0 0 0 1px rgba(0,0,0,0.35); }
+  .tk::before, .tk-img{ content:''; display:inline-block; flex:0 0 auto; width:1.6em; height:1.6em; min-width:20px; min-height:20px; margin-right:0.4em; vertical-align:middle; border-radius:50%; background:var(--tk-logo, var(--token-logo)) center / cover no-repeat; box-shadow:0 0 0 1.5px rgba(245,197,24,0.85), 0 0 7px rgba(245,197,24,0.35), inset 0 0 0 1px rgba(0,0,0,0.35); }
   .tk-img{ object-fit:cover; }
   body:not(.has-token-logo) .tk:not([style*="--tk-logo"])::before{ display:none; }
-  .thumb-listing-badge.tk::before{ width:1.05em; height:1.05em; margin-right:0.3em; }
+  .thumb-listing-badge.tk::before{ width:1.3em; height:1.3em; margin-right:0.3em; }
+  /* Banner picture as the coin: round, gold rim, filling its circle. */
+  .pigeons-bar-thumb.is-coin{ border-radius:50% !important; background-size:cover !important; background-position:center !important; box-shadow:0 0 0 3px rgba(245,197,24,0.85), 0 0 22px rgba(245,197,24,0.35) !important; border-color:transparent !important; }
   /* STAT!C://QUERY :: N F0UND under the 🎒 / 🧹 buttons, not above. */
   .status-line-standalone-row{ display:flex; flex-direction:column; align-items:center; }
   .status-line-standalone-row #resultsQuick{ order:-1; margin:0.2rem 0 0.5rem; }
@@ -14027,7 +14029,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Each collection's coin logo (the round one the C0!N page shows), put
   // beside its $TOKEN wherever it's written (reported live 2026-09-27).
   // $P!GE0NS is known up front; the rest fill in from the rate lookup.
-  var TOKEN_LOGOS = { pigeons: 'https://cdn.dexscreener.com/cms/images/5fa79ec7f125929e17daa181f8c297898712d973679cfc3227edcb299c36259c?width=128&height=128&quality=95&format=auto' };
+  var TOKEN_LOGOS = { pigeons: 'https://cdn.dexscreener.com/cms/images/5fa79ec7f125929e17daa181f8c297898712d973679cfc3227edcb299c36259c?width=256&height=256&quality=95&format=auto' };
   function tokenLogoUrl(key){ return TOKEN_LOGOS[key] || null; }
   // Marks an element whose text is a token with that token's coin
   // (the .tk ::before icon); off when it isn't a token or there's no logo.
@@ -14044,6 +14046,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     document.documentElement.style.setProperty('--token-logo', url ? 'url("' + url + '")' : 'none');
     document.body.classList.toggle('has-token-logo', !!url && !meta.xrpOnly);
     document.querySelectorAll('.make-offer-input-coin').forEach(function(img){ if (url) img.src = url; });
+    if (el && el.pigeonsBarThumb) updateTrustlineThumb(state.collection);
   }
   var SERVER_COLLECTION = "__SWAP_COLLECTION__";
   // Set server-side only by the /profile/<wallet> route (functions/
@@ -16297,7 +16300,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Not listed anywhere: into the cart as an 0FFER (amount typed in
       // the cart, sent with everything else from there).
       var inCart = isInCart(p.nftId);
-      topHtml = '<button type="button" class="card-add-cart-btn' + (inCart ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' + (inCart ? '✓ !N SATCHEL' : '&#127890; ADD T0 SATCHEL') + '</button>';
+      topHtml = '<button type="button" class="card-add-cart-btn' + (inCart ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' + (inCart ? '✓ !N SATCHEL' : 'ADD T0 SATCHEL') + '</button>';
     }
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="owned-action-row has-market-buy">' +
@@ -16505,7 +16508,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var xrpSlip = (p.xrpListing && p.xrpListing.priceXrp)
       ? '<div class="thumb-listing-badge thumb-listing-badge-xrp' + (ownCard ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtXrp(p.xrpListing.priceXrp)) + ' XRP</div>'
       : '';
-    var listingBadge = (tokenSlip || xrpSlip) ? '<div class="thumb-listing-stack">' + xrpSlip + tokenSlip + '</div>' : '';
+    var listingBadge = (ownCard && (tokenSlip || xrpSlip)) ? '<div class="thumb-listing-stack">' + xrpSlip + tokenSlip + '</div>' : '';
     var ownedBadge = (p.owner === MY_WALLET && !isOwnWalletScope() && !p.scyllaListing && !(p.xrpListing && p.xrpListing.priceXrp)) ? '<div class="thumb-owned-badge">0WNED</div>' : '';
     var watchlistBtn = watchlistToggleHtml(p);
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
@@ -20443,7 +20446,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     document.querySelectorAll('.card-add-cart-btn').forEach(function(b){
       var on = !!ids[b.getAttribute('data-nftid')];
       b.classList.toggle('in-cart', on);
-      b.innerHTML = on ? '✓ !N SATCHEL' : '&#127890; ADD T0 SATCHEL';
+      b.textContent = on ? '✓ !N SATCHEL' : 'ADD T0 SATCHEL';
     });
     el.openCartCount.textContent = list.length ? '(' + list.length + ')' : '';
     el.openCartLabel.textContent = list.length ? 'V!EW SATCHEL' : 'SATCHEL';
@@ -20550,7 +20553,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var list = getCart();
     var running = !!cartRun;
     if (!list.length && !running){
-      el.cartList.innerHTML = '<div class="cart-empty"><div class="cart-empty-title">Y0UR SATCHEL !S EMPTY</div><div class="cart-empty-sub">ADD NFTS L!STED 0N <span class="sk-word">Σκύλλα</span>, THEN S!GN F0R THEM ALL !N 0NE G0.</div></div>';
+      el.cartList.innerHTML = '<div class="cart-empty"><div class="cart-empty-title">Y0UR SATCHEL !S EMPTY</div><div class="cart-empty-sub">Y0UR SATCHEL H0LDS EVERY NFT Y0U WANT T0 BUY 0R 0FFER 0N, S0 Y0U CAN S!GN F0R THEM ALL !N 0NE G0. ADD NFTS L!STED W!TH <span class="sk-word">Σκύλλα</span>.</div></div>';
     } else {
       var rows = (running ? cartRun.items : list).slice();
       // S0RT: buys first or offers first (stable within each kind).
@@ -20627,8 +20630,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     var desc = sweepViewDesc();
     el.sweepSub.innerHTML = 'THE CHEAPEST Σκύλλα L!ST!NGS ' + (desc ? '!N <span class="hi">' + escapeHtml(desc) + '</span>' : '!N THE WH0LE C0LLECT!0N');
     el.sweepModal.style.display = 'flex';
+    // Opening SWEEP puts the two cheapest straight into the satchel
+    // (reported live 2026-09-27); the picker below adds more.
+    sweepAutoAdd = true;
     setCartSweepCurrency(meta.xrpOnly ? 'xrp' : cartSweepCurrency);
   }
+  var sweepAutoAdd = false;
   function closeSweep(){ el.sweepModal.style.display = 'none'; }
   function closeCart(){
     el.cartModal.style.display = 'none';
@@ -20696,9 +20703,24 @@ const SWAP_HTML = `<!DOCTYPE html>
       var have = {};
       getCart().forEach(function(c){ have[c.nftId] = true; });
       sweepCandidates = (data.items || []).filter(function(p){ return !have[p.nftId] && cartListingOf(p, cur); });
-      el.sweepAvail.innerHTML = '<span class="hi">' + sweepCandidates.length + '</span> L!STED 0N Σκύλλα !N ' + escapeHtml(curLabel) +
+      el.sweepAvail.innerHTML = '<span class="hi">' + sweepCandidates.length + '</span> L!STED W!TH <span class="sk-word">Σκύλλα</span> !N ' + escapeHtml(curLabel) +
         (sweepRoom() < sweepCandidates.length ? ' · Y0UR SATCHEL HAS R00M F0R ' + sweepRoom() : '');
-      sweepN = Math.min(sweepCandidates.length, sweepRoom());
+      var autoAdded = 0;
+      if (sweepAutoAdd){
+        sweepAutoAdd = false;
+        var list = getCart();
+        sweepCandidates.slice(0, Math.min(2, sweepRoom())).forEach(function(p){
+          var l = cartListingOf(p, cur);
+          if (l){ list.push(cartEntryFor(p, l)); autoAdded++; }
+        });
+        if (autoAdded){
+          setCart(list);
+          refreshCartBadges();
+          sweepCandidates = sweepCandidates.slice(autoAdded);
+          el.sweepAvail.innerHTML = '<span class="hi">✓ ' + autoAdded + '</span> CHEAPEST ADDED T0 Y0UR SATCHEL · <span class="hi">' + sweepCandidates.length + '</span> M0RE L!STED W!TH <span class="sk-word">Σκύλλα</span>';
+        }
+      }
+      sweepN = autoAdded ? Math.min(1, sweepCandidates.length, sweepRoom()) : Math.min(sweepCandidates.length, sweepRoom());
       renderSweepPicker();
     }).catch(function(){
       el.sweepAvail.textContent = 'ERR://S!GNAL_L0ST — TRY AGA!N.';
@@ -22781,6 +22803,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   // representative item" rule.
   function updateTrustlineThumb(collectionKey){
     var meta = COLLECTION_META[collectionKey];
+    // The collection's coin (the C0!N page's logo) when it has one
+    // (reported live 2026-09-27), else the collection art as before.
+    var coin = !meta || meta.xrpOnly ? null : tokenLogoUrl(collectionKey);
+    el.pigeonsBarThumb.classList.toggle('is-coin', !!coin);
+    if (coin){ el.pigeonsBarThumb.style.backgroundImage = 'url("' + coin + '")'; return; }
     if (!meta || !meta.thumb) return;
     el.pigeonsBarThumb.style.backgroundImage = 'linear-gradient(160deg, rgba(var(--collection-accent-rgb),0.35), rgba(var(--collection-accent-2-rgb),0.45)), url("' + meta.thumb + '")';
   }
@@ -25401,14 +25428,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.detailDescriptionText.classList.toggle('empty', !text);
     el.detailDescription.style.display = '';
   }
-  function loadDetailDescription(nftId){
-    if (detailDescriptions[nftId] !== undefined){ showDetailDescription(detailDescriptions[nftId]); return; }
+  function loadDetailDescription(nftId, retried){
+    if (detailDescriptions[nftId]){ showDetailDescription(detailDescriptions[nftId]); return; }
     showDetailDescription('', true);
-    api({ nftDescription: 1, nftId: nftId }).then(function(d){
-      detailDescriptions[nftId] = (d && d.description) || '';
-      if (state.currentDetail && state.currentDetail.nftId === nftId) showDetailDescription(detailDescriptions[nftId]);
-    }).catch(function(){ if (state.currentDetail && state.currentDetail.nftId === nftId) showDetailDescription(''); });
+    api({ nftDescription: 1, nftId: nftId, _r: retried ? 1 : undefined }).then(function(d){
+      var text = (d && d.description) || '';
+      if (text) detailDescriptions[nftId] = text;
+      if (!(state.currentDetail && state.currentDetail.nftId === nftId)) return;
+      // Nothing back (IPFS was slow): one more try before saying so.
+      if (!text && !retried){ setTimeout(function(){ if (state.currentDetail && state.currentDetail.nftId === nftId) loadDetailDescription(nftId, true); }, 2500); return; }
+      showDetailDescription(text);
+    }).catch(function(){
+      if (!(state.currentDetail && state.currentDetail.nftId === nftId)) return;
+      if (!retried) setTimeout(function(){ loadDetailDescription(nftId, true); }, 2500); else showDetailDescription('');
+    });
   }
+
   function openDetail(nftId){
     scrollBeforeDetail = window.scrollY;
     var known = findKnown(nftId);

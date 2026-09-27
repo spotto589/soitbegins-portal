@@ -3345,7 +3345,7 @@ export async function mapWithConcurrency(items, limit, fn) {
 export async function fetchNftDescription(nftId) {
   try {
     let uriHex = null;
-    for (const endpoint of [CLIO_ENDPOINT, 'https://xrplcluster.com']) {
+    for (const endpoint of [CLIO_ENDPOINT, 'https://xrplcluster.com', 'https://s1.ripple.com:51234']) {
       try {
         const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ method: 'nft_info', params: [{ nft_id: nftId }] }) });
         const data = await res.json();
@@ -3353,11 +3353,30 @@ export async function fetchNftDescription(nftId) {
       } catch (e) {}
     }
     if (!uriHex) return null;
-    const res = await fetchIpfs(resolveIpfsUri(hexToUtf8(uriHex)), { timeoutMs: 6000 });
-    if (!res.ok) return null;
-    const meta = await res.json();
-    const d = meta && typeof meta.description === 'string' ? meta.description.trim() : '';
-    return d ? d.slice(0, 1000) : null;
+    const uri = hexToUtf8(uriHex);
+    // Every NFT in one metadata folder carries the same description (e.g.
+    // all of P!GE0NS' first edition), so one good read is cached for the
+    // whole folder — the rest never wait on IPFS again.
+    const folder = uri.slice(0, uri.lastIndexOf('/') + 1);
+    const cache = typeof caches !== 'undefined' ? caches.default : null;
+    const folderKey = folder ? new Request('https://soitbegins.xyz/__cache/nft-desc-folder/v1/' + encodeURIComponent(folder)) : null;
+    if (cache && folderKey) {
+      const hit = await cache.match(folderKey);
+      if (hit) { const j = await hit.json(); if (j && j.description) return j.description; }
+    }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetchIpfs(resolveIpfsUri(uri), { timeoutMs: 10000 });
+        if (!res.ok) continue;
+        const meta = await res.json();
+        const d = meta && typeof meta.description === 'string' ? meta.description.trim().slice(0, 1000) : '';
+        if (d && cache && folderKey) {
+          await cache.put(folderKey, new Response(JSON.stringify({ description: d }), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=604800' } }));
+        }
+        return d || null;
+      } catch (e) {}
+    }
+    return null;
   } catch (e) {
     return null;
   }
