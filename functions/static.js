@@ -7861,6 +7861,60 @@ const SWAP_HTML = `<!DOCTYPE html>
   #screenDetail .detail-rarity-row .tc-label{ font-size:11px !important; margin:0 !important; }
   #screenDetail .detail-rarity-row .tc-value{ font-size:17px !important; margin:0.1rem 0 0 !important; }
   #detailRarityExpandBtn{ display:none !important; }
+
+  /* The coin beside every $TOKEN (reported live 2026-09-27): the round
+     logo from the C0!N page, with a thin gold rim so it reads as a coin. */
+  .tk::before, .tk-img{ content:''; display:inline-block; flex:0 0 auto; width:1.15em; height:1.15em; margin-right:0.35em; vertical-align:-0.2em; border-radius:50%; background:var(--tk-logo, var(--token-logo)) center / cover no-repeat; box-shadow:0 0 0 1.5px rgba(245,197,24,0.85), 0 0 7px rgba(245,197,24,0.35), inset 0 0 0 1px rgba(0,0,0,0.35); }
+  .tk-img{ object-fit:cover; }
+  body:not(.has-token-logo) .tk:not([style*="--tk-logo"])::before{ display:none; }
+  .thumb-listing-badge.tk::before{ width:1.05em; height:1.05em; margin-right:0.3em; }
+  /* STAT!C://QUERY :: N F0UND under the 🎒 / 🧹 buttons, not above. */
+  .status-line-standalone-row{ display:flex; flex-direction:column; align-items:center; }
+  .status-line-standalone-row #resultsQuick{ order:-1; margin:0.2rem 0 0.5rem; }
+  /* Watchlist star a little bigger, and out of the text flow so
+     P!GE0N #N stays centred on the card. */
+  .result-num{ position:relative; }
+  .result-num .watchlist-toggle{ position:absolute !important; right:0.35rem; top:50%; transform:translateY(-50%); margin:0 !important; font-size:21px !important; width:1.4em !important; height:1.4em !important; }
+  .boxed-card .bc-num .watchlist-toggle{ right:0.2rem; }
+  /* FILTER BY TRA!TS: as tall as what's in it (was a fixed 75% of the
+     screen like S0RT BY, leaving empty space), rows the same size as S0RT BY's. */
+  #traitsFlyout.traits-flyout.flyout-popup, #traitsFlyout.traits-flyout.flyout-popup:not(.flyout-flat):not(.flyout-drilled){ height:auto !important; max-height:75vh !important; }
+  #traitsFlyout.flyout-popup .traits-flyout-cats .traits-flyout-cat, #traitsFlyout.flyout-popup .traits-flyout-vals .traits-flyout-val{ font-size:17px !important; padding:0.8em 1em !important; }
+  /* ◂ ▸ next to BACK. */
+  .detail-top-left{ position:absolute; left:0; top:50%; transform:translateY(-50%); z-index:2; display:flex; gap:0.35rem; align-items:center; }
+  .detail-top-left .detail-back-btn-top{ position:static; transform:none; }
+  .detail-top-left .detail-nav-btn{ position:static !important; transform:none !important; top:auto !important; left:auto !important; right:auto !important; width:auto; height:auto; align-self:stretch; padding:0 0.85em; border-radius:var(--radius); border:1px solid var(--border-mid); background:transparent; color:var(--cyan); font-size:16px; line-height:1; text-shadow:none; }
+  .detail-top-left .detail-nav-btn:hover:not(:disabled){ background:var(--cyan-faint); border-color:var(--cyan-dim); }
+  /* Bottom bar: ◂ PREV | ← BACK | NEXT ▸ */
+  #screenDetail .detail-step-bottom{ position:fixed; bottom:0; z-index:6; width:26%; font-family:var(--font-mono); font-size:14px; font-weight:700; letter-spacing:0.08em; color:var(--cyan); background:var(--bg); border:none; border-top:1px solid var(--border-mid); padding:0.7em 0.5em; padding-bottom:calc(0.7em + env(safe-area-inset-bottom, 0px)); cursor:pointer; }
+  #screenDetail .detail-step-bottom-prev{ left:0; border-right:1px solid var(--border-mid); }
+  #screenDetail .detail-step-bottom-next{ right:0; border-left:1px solid var(--border-mid); }
+  #screenDetail .detail-step-bottom:hover:not(:disabled){ background:var(--cyan-faint); }
+  #screenDetail .detail-step-bottom:disabled{ opacity:0.3; cursor:not-allowed; }
+  @media (max-width:760px){
+    .detail-top-left .detail-nav-btn{ display:none; }
+    #screenDetail .detail-step-bottom{ font-size:12px; }
+    #screenDetail #detailMakeOfferRow .thumb-offer-row{ flex-direction:column; }
+    #screenDetail #detailMakeOfferRow .make-offer-send{ width:100%; min-height:46px; }
+  }
+  /* No "N0 L!ST!NG" line (reported live) — the price row only shows when
+     there's a real listing. */
+  #screenDetail .scylla-listing-row.not-listed{ display:none !important; }
+  /* MAKE AN 0FFER as the same card the SATCHEL / SWAP use: black, rounded,
+     collection-colour glow, rounded amount field with the coin, a pill
+     SUBM!T, and the duration as one segmented control. */
+  #screenDetail .scylla-listing-block{ background:#000 !important; border:1px solid rgba(var(--collection-accent-rgb), 0.55) !important; border-radius:16px !important; box-shadow:0 0 18px rgba(var(--collection-accent-rgb), 0.18); padding:0.8rem 0.9rem !important; }
+  #screenDetail #detailMakeOfferRow{ margin-top:0 !important; padding-top:0 !important; border-top:none !important; flex-direction:column; gap:0.55rem; }
+  #screenDetail #detailMakeOfferRow:not([style*="none"]){ display:flex; }
+  #screenDetail #detailScyllaListingRow:not(.not-listed) ~ #detailMakeOfferRow{ margin-top:0.6rem !important; padding-top:0.6rem !important; border-top:1px solid rgba(255,255,255,0.08) !important; }
+  #screenDetail .make-offer-box-title{ color:#fff; opacity:0.85; text-align:center; font-size:12px; letter-spacing:0.14em; margin:0; }
+  #screenDetail #detailMakeOfferRow .thumb-offer-row{ display:flex; gap:0.5rem; align-items:stretch; }
+  #screenDetail #detailMakeOfferRow .make-offer-input-wrap{ background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.5); border-radius:12px; }
+  #screenDetail #detailMakeOfferRow .make-offer-input{ background:transparent !important; border:none !important; box-shadow:none !important; border-radius:12px; font-size:20px; padding:0.55em 2.2em 0.55em 2.6em; color:#fff; }
+  #screenDetail #detailMakeOfferRow .make-offer-send{ border-radius:999px !important; border:1px solid rgba(255,255,255,0.35) !important; background:linear-gradient(135deg, rgba(var(--collection-accent-rgb), 1), rgba(var(--collection-accent-2-rgb), 1)) !important; color:#fff !important; box-shadow:0 6px 18px rgba(var(--collection-accent-rgb), 0.4) !important; text-shadow:0 1px 3px rgba(0,0,0,0.45); padding:0 1.3em !important; font-size:15px !important; letter-spacing:0.08em; }
+  #screenDetail #detailMakeOfferDuration{ display:flex; gap:2px; padding:3px; margin:0; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:12px; background:#000; }
+  #screenDetail #detailMakeOfferDuration .list-duration-btn{ flex:1 1 0; min-width:0; margin:0; border:none !important; border-radius:9px !important; background:none !important; box-shadow:none !important; color:#fff !important; font-size:13px; font-weight:700; padding:0.55em 0; }
+  #screenDetail #detailMakeOfferDuration .list-duration-btn.active{ background:rgba(var(--collection-accent-rgb), 0.9) !important; color:#fff !important; }
   body.popup-open #bottomControlsBar{ display:none !important; }
   /* Phones (reported live 2026-09-27): the NFT page is its own page, not a
      box floating over DATABASE — it starts right under the real top bar
@@ -7871,23 +7925,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:760px){
     #screenDetail, #screenProfile, #screenWalletHistory, #screenAchievements{ top:var(--top-bar-h, var(--global-ticker-h)) !important; }
     #screenDetail{ border:none !important; border-radius:0 !important; box-shadow:none !important; padding-bottom:calc(56px + env(safe-area-inset-bottom, 0px)) !important; }
-    #screenDetail #detailImgBox{ width:calc(100% + 2 * var(--detail-pad-x, 16px)) !important; max-width:none !important; height:auto !important; aspect-ratio:1 / 1; margin-left:calc(-1 * var(--detail-pad-x, 16px)) !important; margin-right:calc(-1 * var(--detail-pad-x, 16px)) !important; border-left:none !important; border-right:none !important; border-radius:0 !important; }
-    #screenDetail #detailImgBox img{ width:100%; height:100%; object-fit:contain; }
-    #screenDetail > .detail-nav-btn, .detail-nav-btn#detailPrevBtn, .detail-nav-btn#detailNextBtn{ top:auto !important; bottom:calc(2px + env(safe-area-inset-bottom, 0px)) !important; transform:none !important; z-index:80; width:34px; height:34px; }
-    #detailPrevBtn{ left:0.5rem !important; }
-    #detailNextBtn{ right:0.5rem !important; }
-  }
-  /* Picture capped by the screen's height so the offer box under it fits
-     without scrolling (full 560px on tall screens). */
-  @media (min-width:701px){
-    #screenDetail #detailImgBox{ width:min(100%, max(300px, calc(100vh - 435px))) !important; height:auto !important; aspect-ratio:1 / 1; margin-left:auto; margin-right:auto; }
   }
   /* DESCR!PT!0N fills the rest of the right column. */
   #screenDetail .detail-col-right{ display:flex; flex-direction:column; align-self:stretch; }
-  #screenDetail .detail-description{ flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.5rem; margin-top:0.75rem; padding:1rem; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); background:#000; box-shadow:0 0 14px rgba(var(--collection-accent-rgb), 0.18); text-align:center; }
+  /* DESCR!PT!0N — same box as REC0RD / RECENT / AVERAGE SALE above it. */
+  #screenDetail .detail-description{ flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.45rem; margin-top:0.6rem; padding:0.9rem 1rem; background:var(--panel-bg-solid); border:1px solid var(--border-mid); border-radius:var(--radius); text-align:center; min-height:4.5rem; }
   #screenDetail .detail-description[style*="none"]{ display:none !important; }
-  .detail-description-label{ color:#fff; opacity:0.6; font-size:13px; font-weight:700; letter-spacing:0.16em; }
-  .detail-description-text{ color:#fff; font-size:clamp(20px, 2.2vw, 32px); font-weight:700; letter-spacing:0.04em; line-height:1.35; text-transform:none; overflow-wrap:anywhere; }
+  .detail-description-label{ color:var(--grey-dim); font-size:11px; letter-spacing:0.06em; text-transform:uppercase; }
+  .detail-description-text{ color:#fff; font-size:19px; font-weight:700; letter-spacing:0.03em; line-height:1.4; overflow-wrap:anywhere; }
+  .detail-description-text.empty{ color:var(--grey-dim); font-size:14px; font-weight:400; }
   /* RARITY SCORE cell only (not RARITY) — tap it to see the actual
      Layer 1 + Layer 2 math for THIS Pigeon (see updateDetailRarity in
      the client script and scoreAgainstDistribution's own comment in
@@ -11096,7 +11142,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="pigeons-bar-left-body">
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
             <div class="pigeons-bar-identity-actions">
-              <a class="pigeons-bar-balance-buy" id="pigeonsBarDexBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER</a>
+              <a class="pigeons-bar-balance-buy tk" id="pigeonsBarDexBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER</a>
               <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">V!EW MY P!GE0NS</button>
               <!-- WATCHL!ST for THIS collection specifically (reported live)
                    — unlike V!EW NFTs above (which reopens the MA!NFRAME
@@ -11122,13 +11168,13 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div class="pigeons-bar-balance-info">
             <div class="pigeons-bar-balance-label">BALANCE:</div>
-            <div class="pigeons-bar-balance-value" id="pigeonsBalanceValue" style="display:none;">…</div>
+            <div class="pigeons-bar-balance-value tk" id="pigeonsBalanceValue" style="display:none;">…</div>
             <div class="pigeons-bar-balance-login" id="pigeonsBalanceLoginWrap">
               <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">L0G!N T0 V!EW BALANCE</button>
             </div>
-            <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;">SWAP $P!GE0NS</button>
+            <button class="pigeons-bar-balance-buy tk" id="pigeonsBalanceBuyBtn" style="display:none;">SWAP $P!GE0NS</button>
             <!-- Under BUY $P!GE0NS (reported live 2026-09-25). -->
-            <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openCartBtn">&#127890; SATCHEL <span id="openCartCount"></span></button>
+            <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openCartBtn">&#127890; <span id="openCartLabel">SATCHEL</span> <span id="openCartCount"></span></button>
           </div>
         </div>
 
@@ -11186,13 +11232,13 @@ const SWAP_HTML = `<!DOCTYPE html>
             <input class="buyswap-input" id="pigeonsCalcPigeonsInput" type="text" inputmode="decimal" placeholder="0" autocomplete="off">
             <div class="buyswap-trailing">
               <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
-              <span class="buyswap-unit" id="pigeonsCalcPigeonsUnit">$P!GE0NS</span>
+              <span class="buyswap-unit tk" id="pigeonsCalcPigeonsUnit">$P!GE0NS</span>
             </div>
           </div>
         </div>
         <div class="detail-actions">
           <button type="button" class="secondary-btn" id="pigeonsCalcCloseBtn">CL0SE</button>
-          <button type="button" class="action-btn offer-confirm-xaman-btn" id="pigeonsCalcBuyBtn">BUY $P!GE0NS</button>
+          <button type="button" class="action-btn offer-confirm-xaman-btn tk" id="pigeonsCalcBuyBtn">BUY $P!GE0NS</button>
         </div>
       </div>
     </div>
@@ -11221,7 +11267,7 @@ const SWAP_HTML = `<!DOCTYPE html>
              and one XRP FL00R — the cheapest XRP listing anywhere (any
              marketplace, never named. It sorts the grid by L0WEST (XRP)
              instead of linking out. -->
-        <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY L!STED THR0UGH SCYLLA"><div class="stat-label" id="statScyllaListedLabel">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
+        <button class="stat-tile stat-tile-link stat-tile-pigeons" id="statScyllaListedTile" title="SH0W 0NLY L!STED THR0UGH SCYLLA"><div class="stat-label tk" id="statScyllaListedLabel">$P!GE0NS FL00R</div><div class="stat-value" id="statScyllaListedCount">…</div></button>
         <button class="stat-tile stat-tile-link stat-tile-xrpcafe" id="statFloorExternalTile" title="S0RT BY L0WEST (XRP)"><div class="stat-label">XRP FL00R</div><div class="stat-value" id="statFloorExternal">…</div></button>
       </div>
       <div class="stats-strip stats-strip-main stats-page" id="statsStrip">
@@ -11237,7 +11283,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
       <!-- The collection's coin (reported live 2026-09-27); taps open the C0!N page. -->
       <div class="stats-strip stats-strip-coin stats-page" id="statsStripCoin">
-        <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label" id="statCoinLabel">C0!N PR!CE</div><div class="stat-value" id="statCoinPrice">…</div></button>
+        <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label tk" id="statCoinLabel">C0!N PR!CE</div><div class="stat-value" id="statCoinPrice">…</div></button>
         <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label">24H</div><div class="stat-value" id="statCoinChange">…</div></button>
         <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label">MARKET CAP</div><div class="stat-value" id="statCoinMcap">…</div></button>
         <button class="stat-tile stat-tile-link stat-coin-tile" data-coin-open="1"><div class="stat-label">L!QU!D!TY</div><div class="stat-value" id="statCoinLiq">…</div></button>
@@ -11367,7 +11413,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         </div>
         <div class="sweep-sub" id="sweepSub"></div>
         <div class="sale-currency-toggle cart-sweep-currency" id="cartSweepCurrency">
-          <button type="button" class="sale-currency-btn sale-currency-btn-active" data-currency="token" id="cartSweepTokenTab">$T0KEN</button>
+          <button type="button" class="sale-currency-btn sale-currency-btn-active tk" data-currency="token" id="cartSweepTokenTab">$T0KEN</button>
           <button type="button" class="sale-currency-btn" data-currency="xrp">XRP</button>
         </div>
         <div class="sweep-avail" id="sweepAvail">…</div>
@@ -11429,7 +11475,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         <div class="ml-tools">
           <button type="button" class="ml-tool-btn" id="mlAddAllBtn">+ ADD ALL UNL!STED</button>
           <div class="ml-setall" id="mlSetAll"><span class="cx-small-label">SET ALL T0</span><div class="cx-seg">
-            <button type="button" class="cx-sort-btn" data-ml-all="token" id="mlSetAllToken">$T0KEN</button>
+            <button type="button" class="cx-sort-btn tk" data-ml-all="token" id="mlSetAllToken">$T0KEN</button>
             <button type="button" class="cx-sort-btn" data-ml-all="xrp">XRP</button>
           </div></div>
         </div>
@@ -12673,8 +12719,6 @@ const SWAP_HTML = `<!DOCTYPE html>
            (state.items for the whole-collection browse, state.scopeAllItems
            for a wallet scope), in whatever order it was sorted/filtered at
            the time — not a fixed collection-wide sequence. -->
-      <button class="detail-nav-btn detail-nav-prev" id="detailPrevBtn" title="PREV!0US P!GE0N (◂)">◂</button>
-      <button class="detail-nav-btn detail-nav-next" id="detailNextBtn" title="NEXT P!GE0N (▸)">▸</button>
       <!-- S!GNATURE BANNER — this Pigeon's real owner (reported live as
            wanting the banner to show "when im clicked into a pigeon and i
            own this"), built by signatureBannerHtml/openDetail. Hidden
@@ -12691,7 +12735,12 @@ const SWAP_HTML = `<!DOCTYPE html>
                independent of it — moved down here and paired on purpose,
                centered together instead of two unrelated-looking
                elements landing near each other by coincidence). -->
-          <button class="detail-back-btn-top" id="backToBrowseBtnTop">← BACK</button>
+          <!-- ◂ ▸ beside BACK (reported live 2026-09-27), not floating over the picture. -->
+          <div class="detail-top-left">
+            <button class="detail-back-btn-top" id="backToBrowseBtnTop">← BACK</button>
+            <button class="detail-nav-btn detail-nav-prev" id="detailPrevBtn" title="PREV!0US (◂)">◂</button>
+            <button class="detail-nav-btn detail-nav-next" id="detailNextBtn" title="NEXT (▸)">▸</button>
+          </div>
           <div class="detail-num" id="detailNum"></div>
           <button class="detail-share-btn" id="detailShareBtn" title="C0PY A SHAREABLE L!NK T0 TH!S P!GE0N">SHARE</button>
         </div>
@@ -12797,6 +12846,8 @@ const SWAP_HTML = `<!DOCTYPE html>
            sitting in-flow under TRANSACT!0N H!ST0RY — same cyan as the
            top BACK button, same goBackFromDetail(). -->
       <button class="detail-back-btn-bottom" id="detailBackBtnBottom">← BACK</button>
+      <button class="detail-step-bottom detail-step-bottom-prev" id="detailPrevBtnBottom" title="PREV!0US">◂ PREV</button>
+      <button class="detail-step-bottom detail-step-bottom-next" id="detailNextBtnBottom" title="NEXT">NEXT ▸</button>
     </div>
 
     <!-- SCREEN: PR0F!LE — every wallet link on the site opens here now
@@ -12990,7 +13041,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <!-- List in the collection's token, XRP, or B0TH (two sell offers,
                two Xaman signatures, one after the other). -->
           <div class="sale-currency-toggle amount-currency-toggle" id="amountEntryListCurrency">
-            <button type="button" class="sale-currency-btn sale-currency-btn-active" data-currency="token" id="amountEntryListTokenTab">$P!GE0NS</button>
+            <button type="button" class="sale-currency-btn sale-currency-btn-active tk" data-currency="token" id="amountEntryListTokenTab">$P!GE0NS</button>
             <button type="button" class="sale-currency-btn" data-currency="xrp">XRP</button>
             <button type="button" class="sale-currency-btn" data-currency="both">B0TH</button>
           </div>
@@ -13973,6 +14024,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   // redirect flash. null on the plain /static route, which keeps falling
   // back to the ?collection= query-string handling further down (and, if
   // neither is present, plain P!GE0NS via state's own default above).
+  // Each collection's coin logo (the round one the C0!N page shows), put
+  // beside its $TOKEN wherever it's written (reported live 2026-09-27).
+  // $P!GE0NS is known up front; the rest fill in from the rate lookup.
+  var TOKEN_LOGOS = { pigeons: 'https://cdn.dexscreener.com/cms/images/5fa79ec7f125929e17daa181f8c297898712d973679cfc3227edcb299c36259c?width=128&height=128&quality=95&format=auto' };
+  function tokenLogoUrl(key){ return TOKEN_LOGOS[key] || null; }
+  // Marks an element whose text is a token with that token's coin
+  // (the .tk ::before icon); off when it isn't a token or there's no logo.
+  function markTk(node, key, on){
+    if (!node) return;
+    var url = on ? tokenLogoUrl(key) : null;
+    node.classList.toggle('tk', !!url);
+    if (url) node.style.setProperty('--tk-logo', 'url("' + url + '")'); else node.style.removeProperty('--tk-logo');
+  }
+  function tokenCoinImg(key){ var u = tokenLogoUrl(key); return u ? '<img class="tk-img" src="' + escapeHtml(u) + '" alt="">' : ''; }
+  function applyTokenLogos(){
+    var url = tokenLogoUrl(state.collection);
+    var meta = COLLECTION_META[state.collection] || {};
+    document.documentElement.style.setProperty('--token-logo', url ? 'url("' + url + '")' : 'none');
+    document.body.classList.toggle('has-token-logo', !!url && !meta.xrpOnly);
+    document.querySelectorAll('.make-offer-input-coin').forEach(function(img){ if (url) img.src = url; });
+  }
   var SERVER_COLLECTION = "__SWAP_COLLECTION__";
   // Set server-side only by the /profile/<wallet> route (functions/
   // profile/[wallet].js — see renderProfile below) so a shared profile
@@ -14241,7 +14313,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
    'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
-   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartCount','cartDuration','cartBalances','cartSortBar','sweepModal','sweepCloseBtn','sweepSub','sweepAvail','sweepN','sweepMinus','sweepPlus','sweepMax',
+   'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartLabel','openCartCount','cartDuration','cartBalances','cartSortBar','sweepModal','sweepCloseBtn','sweepSub','sweepAvail','sweepN','sweepMinus','sweepPlus','sweepMax',
    'coinModal','coinCloseBtn','coinTitle','coinImg','coinPrice','coinPriceSub','coinChange','coinChart','coinChartRanges','coinChartChange','coinChartPlot','coinStats','coinLinks','coinSwapBtn',
    'coinHolders','coinHoldersBtn','coinHoldersBtnLabel','coinSwapBtnLabel','extBuyModal','extBuyCloseBtn','extBuyNft','extBuyText','extBuyFees','extBuyTip','extBuyOfferBtn','extBuyGoBtn',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
@@ -14284,7 +14356,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapOfferResult','swapResultNftId','swapResultToWallet','swapResultStatus','swapResultOfferId','swapResultTxLink','swapResultDoneBtn',
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
-   'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','backToBrowseBtnTop',
+   'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','detailPrevBtnBottom','detailNextBtnBottom','backToBrowseBtnTop',
    'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailRarityScoreCell','detailRarityExpandBtn','detailDescription','detailDescriptionText','detailRarityBreakdown','rarityModal','rarityModalTitle','rarityModalBadges','rarityCloseBtn','detailPriceRow','detailPrice','detailMarkets','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose','historyThumb','historyVolume','historySaleCount','historyMintDate','historyMintBy',
@@ -16225,7 +16297,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Not listed anywhere: into the cart as an 0FFER (amount typed in
       // the cart, sent with everything else from there).
       var inCart = isInCart(p.nftId);
-      topHtml = '<button type="button" class="card-add-cart-btn' + (inCart ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' + (inCart ? '✓ !N SATCHEL' : 'ADD T0 SATCHEL') + '</button>';
+      topHtml = '<button type="button" class="card-add-cart-btn' + (inCart ? ' in-cart' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' + (inCart ? '✓ !N SATCHEL' : '&#127890; ADD T0 SATCHEL') + '</button>';
     }
     return '<div class="thumb-offer" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="owned-action-row has-market-buy">' +
@@ -16428,7 +16500,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // the token slip; both stack in the corner when a Pigeon has both.
     var ownCard = p.owner === MY_WALLET;
     var tokenSlip = p.scyllaListing
-      ? '<div class="thumb-listing-badge' + (ownCard ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>'
+      ? '<div class="thumb-listing-badge tk' + (ownCard ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtPigeonsCompact(p.scyllaListing.price)) + '</div>'
       : '';
     var xrpSlip = (p.xrpListing && p.xrpListing.priceXrp)
       ? '<div class="thumb-listing-badge thumb-listing-badge-xrp' + (ownCard ? ' thumb-listing-badge-own' : '') + '">' + escapeHtml(fmtXrp(p.xrpListing.priceXrp)) + ' XRP</div>'
@@ -16597,7 +16669,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       // same art MAINFRAME's cards and MY C0!NS already use for it), not a
       // hardcoded $PIGEONS image regardless of what's on screen.
       var listMeta = COLLECTION_META[state.collection];
-      if (listMeta && listMeta.thumb) el.amountEntryListCoin.src = listMeta.thumb;
+      if (tokenLogoUrl(state.collection)) el.amountEntryListCoin.src = tokenLogoUrl(state.collection);
+      else if (listMeta && listMeta.thumb) el.amountEntryListCoin.src = listMeta.thumb;
       // F0REVER (∞) is P!GE0NS-only — reported live as wanting every other
       // collection to always get a real, finite deadline instead. Hidden
       // outright rather than merely disabled, so a non-P!GE0N listing
@@ -19467,6 +19540,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
     el.buySwapPayUnit.textContent = selling ? buySwapTokenShort() : 'XRP';
     el.buySwapReceiveUnit.textContent = selling ? 'XRP' : buySwapTokenShort();
+    markTk(el.buySwapPayUnit, buySwapCollection, selling);
+    markTk(el.buySwapReceiveUnit, buySwapCollection, !selling);
   }
   function setBuySwapDirection(dir){
     if (dir !== 'buy' && dir !== 'sell') return;
@@ -20368,13 +20443,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     document.querySelectorAll('.card-add-cart-btn').forEach(function(b){
       var on = !!ids[b.getAttribute('data-nftid')];
       b.classList.toggle('in-cart', on);
-      b.textContent = on ? '✓ !N SATCHEL' : 'ADD T0 SATCHEL';
+      b.innerHTML = on ? '✓ !N SATCHEL' : '&#127890; ADD T0 SATCHEL';
     });
     el.openCartCount.textContent = list.length ? '(' + list.length + ')' : '';
+    el.openCartLabel.textContent = list.length ? 'V!EW SATCHEL' : 'SATCHEL';
     el.quickCartCount.textContent = list.length ? String(list.length) : '';
     el.bottomSatchelCount.textContent = list.length ? String(list.length) : '';
     el.cartPillCount.textContent = list.length;
-    el.cartPill.style.display = (list.length && MY_WALLET) ? '' : 'none';
+    // The bottom-right V!EW SATCHEL pill is gone (reported live) — the
+    // banner's SATCHEL button says V!EW SATCHEL (N) instead.
+    el.cartPill.style.display = 'none';
   }
   function cartItemLabel(c){
     var meta = COLLECTION_META[c.collection] || {};
@@ -20383,6 +20461,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function cartAmountText(c, value){
     return c.currency === 'xrp' ? fmtXrp(Number(value)) + ' XRP' : fmtPigeonsCompact(value, c.collection);
   }
+  function cartAmountHtml(c, value){ return (c.currency === 'xrp' ? '' : tokenCoinImg(c.collection)) + escapeHtml(cartAmountText(c, value)); }
   function cartTokenLabel(c){ return (COLLECTION_META[c.collection] || {}).tokenLabel || '$T0KEN'; }
   var cartRowState = {}; // nftId -> { cls, text } while/after SUBM!T ALL runs
   var cartSortFirst = 'buy';
@@ -20399,7 +20478,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (isOffer){
       var curToggle = meta.xrpOnly ? '<span class="cx-unit-fixed">XRP</span>'
         : '<span class="cx-unit-seg">' +
-            '<button type="button" class="' + (c.currency === 'token' ? 'active' : '') + '" data-offer-cur="token" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>' + escapeHtml(cartTokenLabel(c)) + '</button>' +
+            '<button type="button" class="' + (c.currency === 'token' ? 'active' : '') + '" data-offer-cur="token" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>' + tokenCoinImg(c.collection) + escapeHtml(cartTokenLabel(c)) + '</button>' +
             '<button type="button" class="' + (c.currency === 'xrp' ? 'active' : '') + '" data-offer-cur="xrp" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>XRP</button>' +
           '</span>';
       body = '<div class="cx-offer">' +
@@ -20409,7 +20488,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '</label>' +
       '</div>';
     } else {
-      body = '<div class="cx-price-box"><span class="cart-row-price">' + escapeHtml(cartAmountText(c, c.price)) + '</span></div>';
+      body = '<div class="cx-price-box"><span class="cart-row-price">' + cartAmountHtml(c, c.price) + '</span></div>';
     }
     return '<div class="cart-row' + (isOffer ? ' cart-row-offer' : '') + '" data-nftid="' + escapeHtml(c.nftId) + '">' +
       (c.image ? '<img src="' + escapeHtml(c.image) + '" alt="">' : '<span class="cx-noimg"></span>') +
@@ -20516,7 +20595,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     cartTokenCollections().forEach(function(k){
       var v = cartBalances.tokens[k];
       var lbl = COLLECTION_META[k].tokenLabel.replace(/^[$]/, '');
-      html += tile(escapeHtml(lbl) + ' BALANCE', v === undefined || v === null ? '…' : escapeHtml(compactPigeonsNumber(v)));
+      html += tile(escapeHtml(lbl) + ' BALANCE', v === undefined || v === null ? '…' : tokenCoinImg(k) + escapeHtml(compactPigeonsNumber(v)));
     });
     el.cartBalances.innerHTML = html;
   }
@@ -20929,7 +21008,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var meta = COLLECTION_META[c.collection] || {};
     var curToggle = meta.xrpOnly ? '<span class="cx-unit-fixed">XRP</span>'
       : '<span class="cx-unit-seg">' +
-          '<button type="button" class="' + (c.currency === 'token' ? 'active' : '') + '" data-ml-cur="token" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>' + escapeHtml(meta.tokenLabel || '$T0KEN') + '</button>' +
+          '<button type="button" class="' + (c.currency === 'token' ? 'active' : '') + '" data-ml-cur="token" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>' + tokenCoinImg(c.collection) + escapeHtml(meta.tokenLabel || '$T0KEN') + '</button>' +
           '<button type="button" class="' + (c.currency === 'xrp' ? 'active' : '') + '" data-ml-cur="xrp" data-nftid="' + escapeHtml(c.nftId) + '"' + (running ? ' disabled' : '') + '>XRP</button>' +
         '</span>';
     return '<div class="cart-row cart-row-offer" data-nftid="' + escapeHtml(c.nftId) + '">' +
@@ -23299,6 +23378,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         el.pigeonsBarDexBtn.href = data.dexUrl;
         el.pigeonsBarDexBtn.textContent = COLLECTION_META[state.collection].tokenLabel + ' C0!N';
         coinPageDexUrl = data.dexUrl;
+        if (data.tokenImageUrl) TOKEN_LOGOS[state.collection] = data.tokenImageUrl;
+        applyTokenLogos();
         el.pigeonsDexLink.style.display = '';
         el.pigeonsBarDexBtn.style.display = MY_WALLET ? '' : 'none';
         updateCarouselCoin(data);
@@ -23309,6 +23390,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
     }).catch(function(){});
   }
+  applyTokenLogos();
   refreshTrustlineRate();
   setInterval(refreshTrustlineRate, 60000);
   // ---- $TOKEN C0!N page ----
@@ -25312,17 +25394,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   var urlBeforeDetail = null;
   // The NFT's own description, straight from its metadata (server-cached).
   var detailDescriptions = {};
-  function showDetailDescription(text){
-    el.detailDescriptionText.textContent = text || '';
-    el.detailDescription.style.display = text ? '' : 'none';
+  // On every NFT (reported live 2026-09-27): its own text, or a plain note
+  // when its metadata has none.
+  function showDetailDescription(text, loading){
+    el.detailDescriptionText.textContent = loading ? 'L0AD!NG…' : (text || 'N0 DESCR!PT!0N !N TH!S NFT' + String.fromCharCode(39) + 'S METADATA.');
+    el.detailDescriptionText.classList.toggle('empty', !text);
+    el.detailDescription.style.display = '';
   }
   function loadDetailDescription(nftId){
     if (detailDescriptions[nftId] !== undefined){ showDetailDescription(detailDescriptions[nftId]); return; }
-    showDetailDescription('');
+    showDetailDescription('', true);
     api({ nftDescription: 1, nftId: nftId }).then(function(d){
       detailDescriptions[nftId] = (d && d.description) || '';
       if (state.currentDetail && state.currentDetail.nftId === nftId) showDetailDescription(detailDescriptions[nftId]);
-    }).catch(function(){});
+    }).catch(function(){ if (state.currentDetail && state.currentDetail.nftId === nftId) showDetailDescription(''); });
   }
   function openDetail(nftId){
     scrollBeforeDetail = window.scrollY;
@@ -25429,6 +25514,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // keep them in lockstep with the detail screen's own.
     el.lightboxPrevBtn.disabled = el.detailPrevBtn.disabled;
     el.lightboxNextBtn.disabled = el.detailNextBtn.disabled;
+    el.detailPrevBtnBottom.disabled = el.detailPrevBtn.disabled;
+    el.detailNextBtnBottom.disabled = el.detailNextBtn.disabled;
   }
   function navigateDetail(direction){
     var list = currentBrowseList();
@@ -25456,6 +25543,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.detailPrevBtn.addEventListener('click', function(){ navigateDetail(-1); });
   el.detailNextBtn.addEventListener('click', function(){ navigateDetail(1); });
+  el.detailPrevBtnBottom.addEventListener('click', function(){ navigateDetail(-1); });
+  el.detailNextBtnBottom.addEventListener('click', function(){ navigateDetail(1); });
   // Left/Right arrow keys as a shortcut for the same click — ignored
   // while actually typing in a field (the detail screen's own MAKE
   // OFFER input included) so this never hijacks normal text editing.
