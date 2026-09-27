@@ -14055,6 +14055,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         // until this reset was added, same reasoning switchCollection's
         // own identical reset already documents.
         state.sort = 'RARITY_ASC';
+        state.pickedSort = null;
         state.scyllaListedOnly = false;
         el.statScyllaListedTile.classList.toggle('scylla-active', false);
         updateSortLabelsForCollection();
@@ -15965,6 +15966,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           state.traitFilters = [{ id: state.nextTraitRowId++, category: trait, value: value }];
           renderTraitRows();
           state.sort = 'RARITY_ASC';
+          state.pickedSort = null;
           renderSortTag();
           el.searchInput.value = '';
           showScreen('browse');
@@ -16397,6 +16399,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       // an explicit choice.
       if (state.scyllaListedOnly && !state.hasMore){
         state.scyllaListedOnly = false;
+        // The menu keeps showing what you picked (reported live: it
+        // sometimes highlighted a sort you never chose — this one).
+        if (!state.pickedSort) state.pickedSort = state.sort;
         state.sort = 'AVG_SALE_XRP_ASC';
         el.statScyllaListedTile.classList.remove('scylla-active');
         state.skip = 0;
@@ -16433,6 +16438,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // still a silent auto-continuation, not a real user pick, so the
       // visible tag stays put here too.
       if (filters.length && isSalesSort && state.sort !== 'RARITY_ASC' && !state.hasMore){
+        if (!state.pickedSort) state.pickedSort = state.sort;
         state.sort = 'RARITY_ASC';
         state.skip = 0;
         state.hasMore = true;
@@ -21365,6 +21371,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Every collection, P!GE0NS included, lands on H!GHEST RAR!TY now
     // (see state.sort's own default).
     state.sort = 'RARITY_ASC';
+    state.pickedSort = null;
     state.scyllaListedOnly = false;
     el.statScyllaListedTile.classList.toggle('scylla-active', state.scyllaListedOnly);
     updateSortLabelsForCollection();
@@ -22516,7 +22523,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // exactly one: picking a new sort replaces state.sort outright (see
   // applySort), so there's never a previous tag to remove first.
   function renderSortTag(){
-    el.sortRows.innerHTML = '<div class="trait-row trait-row-tag"><span class="trait-tag-label">' + escapeHtml(sortLabelOf(state.sort).toUpperCase()) + '</span></div>';
+    el.sortRows.innerHTML = '<div class="trait-row trait-row-tag"><span class="trait-tag-label">' + escapeHtml(sortLabelOf(state.pickedSort || state.sort).toUpperCase()) + '</span></div>';
   }
   // SORT BY used to be a two-level category -> values flyout (same shape
   // as F!LTER BY TRA!TS), but with only 4 categories and ~10 options total
@@ -22540,7 +22547,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       SORT_CATEGORIES[cat].forEach(function(o){
         // No token of its own (K!NG): no token price / token average sorts.
         if (COLLECTION_META[state.collection].xrpOnly && (o.value === 'SCYLLA_PRICE_ASC' || o.value === 'SCYLLA_PRICE_DESC' || o.value === 'AVG_SALE_PIGEONS_ASC')) return;
-        html += '<button type="button" class="traits-flyout-val' + (state.sort === o.value ? ' selected' : '') + (o.disabled ? ' tfv-disabled' : '') + '" data-value="' + o.value + '"' + (o.disabled ? ' disabled' : '') + '>' +
+        html += '<button type="button" class="traits-flyout-val' + ((state.pickedSort || state.sort) === o.value ? ' selected' : '') + (o.disabled ? ' tfv-disabled' : '') + '" data-value="' + o.value + '"' + (o.disabled ? ' disabled' : '') + '>' +
           '<span>' + escapeHtml(o.label) + '</span>' +
           (o.disabled ? '<span class="db-soon">C0M!NG S00N</span>' : '') +
         '</button>';
@@ -22573,6 +22580,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function applySort(value){
     state.sort = value;
+    state.pickedSort = null;
     renderSortTag();
     // Desktop's strip (#sortFlyoutVals) is always visible, not just
     // shown while the flyout is open — its .selected class only ever got
@@ -22827,6 +22835,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.traitFilters = [];
     renderTraitRows();
     state.sort = 'RARITY_ASC';
+    state.pickedSort = null;
     renderSortTag();
     if (state.activeTab === 'mypigeons'){
       // FL0CK only ever shows your own Pigeons, no exceptions — RESET
@@ -27084,6 +27093,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         // Highest-first is the default entry into LISTED — the main
         // attraction of the site, not a niche filter.
         state.sort = 'SCYLLA_PRICE_DESC';
+        state.pickedSort = null;
         renderSortTag();
       }
       if (state.scope){
@@ -27096,6 +27106,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
     } else if (state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC'){
       state.sort = 'RARITY_ASC';
+      state.pickedSort = null;
       renderSortTag();
     }
     runQuery();
