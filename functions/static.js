@@ -10992,6 +10992,145 @@ const SWAP_HTML = `<!DOCTYPE html>
   .db-page-row{ display:flex; border-bottom:1px solid var(--border-mid); }
   .db-page-opt{ flex:1; text-align:center; padding:0.65em 0.5em; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
   .db-page-opt-active{ color:var(--cyan); text-shadow:0 0 6px var(--cyan-glow); background:var(--cyan-faint); cursor:default; }
+  /* ---- Mobile pass (reported live 2026-09-27). Kept at the very end of
+     the stylesheet on purpose: several earlier mobile blocks lose to
+     later same-specificity base rules on source order (see the handoff's
+     cascade gotcha), so these land last. ---- */
+
+  /* Short button labels — the full one everywhere but phones. */
+  .lbl-short{ display:none; }
+
+  /* F!LTER BY TRA!TS: green, not pink, for "this is picked" — pink isn't
+     used anywhere else on the page; green already means "applied" on the
+     tag under the trigger. */
+  #traitsFlyout .traits-flyout-val.selected{ background:rgba(52,255,133,0.1); border-color:var(--green); color:var(--green); text-shadow:0 0 5px var(--green-glow); }
+  #traitsFlyout #traitsFlyoutVals .traits-flyout-val.has-preview.selected{ border-color:var(--green); box-shadow:inset 0 0 0 2px var(--green); color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+  #traitsFlyout .tfv-select-badge{ background:var(--green); border-color:var(--green); }
+  #traitsFlyout .traits-flyout-cat.active{ background:rgba(52,255,133,0.1); color:var(--green); text-shadow:0 0 5px var(--green-glow); }
+  #traitsFlyout .traits-flyout-cat.has-selection{ box-shadow:inset 0 0 0 1px var(--green); }
+  #traitsFlyout .traits-flyout-cat.has-selection::after{ background:var(--green); box-shadow:0 0 4px var(--green-glow); }
+  #traitsFlyout .tfs-chip{ background:rgba(52,255,133,0.1); border-color:var(--green); color:var(--green); text-shadow:0 0 5px var(--green-glow); }
+  #traitsFlyout .tfs-chip:hover{ background:var(--green); color:#08090b; text-shadow:none; }
+  #traitRows .trait-row-remove{ color:var(--green); border-color:rgba(52,255,133,0.6); }
+  #traitRows .trait-row-remove:hover{ background:rgba(52,255,133,0.12); }
+
+  /* Inside a category (or a search) the big F!LTER BY TRA!TS title goes;
+     the category's own name sits right above its list instead, with
+     BACK T0 CATEG0R!ES flush at the top of the pop-up. */
+  #traitsFlyout.flyout-popup.flyout-drilled{ display:flex !important; flex-direction:column; }
+  #traitsFlyout.flyout-popup.flyout-drilled .sort-popup-title{ display:none !important; }
+  #traitsFlyout.flyout-popup.flyout-drilled .flyout-back-btn{ order:0; flex:0 0 auto; margin-top:-2rem !important; }
+  #traitsFlyout.flyout-popup.flyout-drilled .traits-flyout-toolbar{ order:1; flex:0 0 auto; }
+  #traitsFlyout.flyout-popup.flyout-drilled .traits-popup-eyebrow{ order:2; flex:0 0 auto; margin:0 0 0.6rem !important; font-size:18px; }
+  #traitsFlyout.flyout-popup.flyout-drilled .traits-flyout-vals{ order:3; flex:0 0 auto; max-height:none; overflow:visible; }
+  #traitsFlyout.flyout-popup.flyout-drilled .flyout-popup-close-btn{ z-index:3; top:0.35rem; }
+
+  @media (max-width:700px){
+    /* F!LTER BY TRA!TS always inside the screen; on the CATEG0R!ES step
+       the categories share whatever height is left, so no scroll bar. */
+    #traitsFlyout.traits-flyout.flyout-popup,
+    #traitsFlyout.traits-flyout.flyout-popup:not(.flyout-flat):not(.flyout-drilled){ width:calc(100vw - 1.5rem) !important; max-width:480px; top:calc(50% + var(--top-bar-h, 40px) / 2) !important; max-height:calc(100vh - var(--top-bar-h, 40px) - 1.5rem) !important; max-height:calc(100dvh - var(--top-bar-h, 40px) - 1.5rem) !important; padding:1.6rem 1rem 0.9rem !important; }
+    #traitsFlyout.flyout-popup:not(.flyout-drilled){ display:flex !important; flex-direction:column; overflow:hidden !important; }
+    #traitsFlyout.flyout-popup:not(.flyout-drilled) > *{ flex:0 0 auto; }
+    #traitsFlyout.flyout-popup .sort-popup-title{ font-size:24px !important; }
+    #traitsFlyout.flyout-popup .traits-flyout-toolbar{ margin-bottom:0.7rem !important; }
+    #traitsFlyout.flyout-popup:not(.flyout-drilled) .traits-flyout-cats-row{ flex:1 1 auto !important; min-height:0; display:flex; }
+    #traitsFlyout.flyout-popup:not(.flyout-drilled) #traitsFlyoutCats{ flex:1 1 auto; min-height:0; height:auto; overflow-y:auto; gap:0.45rem; }
+    #traitsFlyout.flyout-popup:not(.flyout-drilled) #traitsFlyoutCats .traits-flyout-cat{ flex:1 1 0 !important; min-height:38px; max-height:54px; display:flex; align-items:center; justify-content:center; margin:0 !important; padding:0 1em !important; box-sizing:border-box; }
+    #traitsFlyout.traits-flyout.flyout-popup.flyout-drilled .flyout-back-btn{ margin-left:-1rem !important; margin-right:-1rem !important; width:calc(100% + 2rem) !important; top:-1.6rem; margin-top:-1.6rem !important; }
+
+    /* Bottom S0RT BY / 🎒 ▲ 🧹 / F!LTER BY TRA!TS bar — bigger on phones. */
+    .bottom-controls-bar{ padding-bottom:env(safe-area-inset-bottom); }
+    .bottom-controls-btn{ font-size:16px !important; letter-spacing:0.04em; padding:0.9em 0.3em !important; line-height:1.15; }
+    .bottom-quick{ gap:0.4rem !important; padding:0.5rem 0.45rem !important; }
+    .bottom-quick .bq-btn{ width:3rem !important; height:3rem !important; font-size:20px !important; }
+    body.has-bottom-bar #screenBrowse{ padding-bottom:5.5rem; }
+
+    /* P!GE0N #N moves left when the watchlist star is on the card. */
+    #resultsArea .result-num:has(.watchlist-toggle){ text-align:left; font-size:17px !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-left:0.55rem !important; padding-right:1.9rem !important; }
+    #resultsArea .result-num .watchlist-toggle{ right:0.2rem !important; }
+
+    /* SWAP box — always fits the screen: tighter spacing, a smaller coin
+       picture, and it scrolls inside itself as a last resort. */
+    #buySwapModal{ padding:calc(var(--top-bar-h, 40px) + 0.6rem) 0.75rem 0.6rem !important; }
+    #buySwapModal .buyswap-modal-panel{ max-height:calc(100vh - var(--top-bar-h, 40px) - 1.2rem); max-height:calc(100dvh - var(--top-bar-h, 40px) - 1.2rem); overflow-y:auto; box-sizing:border-box; padding:1rem 0.9rem !important; }
+    #buySwapModal .buyswap-thumb{ width:64px; height:64px; margin-bottom:0.6rem; }
+    #buySwapModal .buyswap-direction{ margin-bottom:0.6rem; }
+    #buySwapModal .buyswap-direction .sale-currency-btn{ padding:0.45em 0; }
+    #buySwapModal .buyswap-balances-row{ margin-bottom:0.7rem; border-radius:var(--radius); overflow:hidden; }
+    #buySwapModal .buyswap-balance-tile{ padding:0.45em 0.4em; }
+    #buySwapModal .buyswap-balance-label{ font-size:11px; }
+    #buySwapModal .buyswap-balance-value{ font-size:17px; }
+    #buySwapModal .buyswap-input-wrap{ padding:1.55rem 0.85rem 0.5rem; }
+    #buySwapModal .buyswap-input, #buySwapModal .buyswap-receive-value{ font-size:24px; }
+    #buySwapModal #buySwapQuoteSection > .buyswap-flip{ width:2.2rem; max-width:2.2rem; height:2.2rem; margin:-0.8rem auto; font-size:17px; }
+    #buySwapModal #buySwapStatus{ margin-top:0.45rem; font-size:13px; }
+    #buySwapModal .buyswap-stats-box{ margin:0.6rem auto 0.2rem; padding:0.45rem 0.85rem; }
+    #buySwapModal .buyswap-stats-box .df-label{ font-size:11px; }
+    #buySwapModal .buyswap-stats-box .df-value{ font-size:14px; }
+    #buySwapModal .buyswap-trustline-warning{ padding:0.7rem; margin-bottom:0.7rem; }
+    #buySwapModal #buySwapEntryState > .detail-actions{ margin-top:0.7rem; }
+    #buySwapModal .detail-actions > button{ font-size:15px !important; padding:0.7em 0.5em !important; white-space:nowrap; }
+    #buySwapModal .buyswap-checking{ font-size:16px; }
+  }
+  @media (max-width:700px) and (max-height:640px){
+    #buySwapModal .buyswap-thumb{ display:none !important; }
+
+    /* Trustline banner — compact on phones: coin + balance + SWAP/SATCHEL
+       side by side, the trustline on one short line, then one row of
+       short emoji buttons. */
+    .lbl-full{ display:none; }
+    .lbl-short{ display:inline; }
+    #pigeonsMergedPanel .pigeons-bar{ padding:0.8rem 0.8rem 0.7rem !important; }
+    #pigeonsMergedPanel .pigeons-bar-main-row{ display:flex !important; flex-direction:column; gap:0.65rem !important; }
+    #pigeonsMergedPanel .pigeons-bar-balance{ order:1; display:flex !important; flex-direction:row !important; align-items:center !important; gap:0.8rem; margin:0 !important; width:100%; }
+    #pigeonsMergedPanel .pigeons-bar-thumb-wrap .pigeons-bar-thumb{ width:84px !important; height:84px !important; flex:0 0 84px !important; margin:0 !important; }
+    #pigeonsMergedPanel .bar-bell, #pigeonsMergedPanel #openNotifyBtn.bar-bell{ width:26px; height:26px; font-size:12px; top:-7px; right:-7px; }
+    #pigeonsMergedPanel .pigeons-bar-balance-info{ flex:1 1 auto; min-width:0; display:grid !important; grid-template-columns:1fr 1fr; gap:0.4rem !important; align-items:center !important; text-align:left; }
+    #pigeonsMergedPanel .pigeons-bar-balance-info > :is(.pigeons-bar-balance-label, .pigeons-bar-balance-value, .pigeons-bar-balance-login){ grid-column:1 / -1; margin:0 !important; text-align:left; }
+    #pigeonsMergedPanel .pigeons-bar-balance-label{ font-size:11px; letter-spacing:0.18em; }
+    #pigeonsMergedPanel .pigeons-bar-balance-value{ font-size:20px; line-height:1.15; overflow-wrap:anywhere; }
+    #pigeonsMergedPanel .pigeons-bar-balance-login .bar-btn{ width:100%; margin:0; font-size:13px !important; padding:0.55em 0.4em !important; min-height:0 !important; white-space:nowrap; }
+    #pigeonsMergedPanel .pigeons-bar-balance .pigeons-bar-balance-info .pigeons-bar-balance-buy{ grid-column:auto; width:100% !important; max-width:none !important; min-width:0; min-height:38px !important; height:38px; margin:0 !important; padding:0 0.3em !important; font-size:12px !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #pigeonsMergedPanel #pigeonsBalanceBuyBtn[style*="none"] + #openCartBtn{ grid-column:1 / -1; }
+    #pigeonsMergedPanel .pigeons-bar-left{ order:2; width:100%; align-items:stretch !important; gap:0.45rem; margin:0 !important; }
+    #pigeonsMergedPanel #pigeonsBarLoggedOut .pigeons-bar-left-body-row{ display:flex !important; flex-direction:row !important; align-items:center; justify-content:space-between; gap:0.6rem; padding:0.5rem 0.65rem; border:1px solid rgba(255,255,255,0.22); border-radius:var(--radius); background:rgba(0,0,0,0.28); text-align:left; }
+    #pigeonsMergedPanel #pigeonsBarLoggedOut .pigeons-bar-left-lines{ min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:0.1rem; }
+    #pigeonsMergedPanel #pigeonsBarLoggedOut .pigeons-bar-text-lg{ font-size:13px !important; letter-spacing:0.06em !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+    #pigeonsMergedPanel #pigeonsBarLoggedOut .pigeons-bar-sublabel.pigeons-bar-text-lg{ font-size:11px !important; opacity:0.85; }
+    #pigeonsMergedPanel .pigeons-bar-copy-btn{ flex:0 0 auto; margin:0 !important; font-size:12px !important; padding:0.4em 0.8em !important; }
+    #pigeonsMergedPanel .pigeons-bar-help-box{ align-self:center; margin:0 !important; font-size:12px !important; padding:0.35em 0.8em !important; }
+    #pigeonsMergedPanel .pigeons-bar-help-mark{ width:1.25em; height:1.25em; font-size:11px; }
+    #pigeonsMergedPanel #pigeonsBarLoggedIn .pigeons-bar-left-body{ gap:0.4rem; }
+    #pigeonsMergedPanel #pigeonsBarLoggedIn .pigeons-bar-sublabel:empty{ display:none; }
+    #pigeonsMergedPanel .pigeons-bar-identity-actions{ display:flex !important; flex-direction:row !important; gap:0.4rem !important; width:100%; }
+    #pigeonsMergedPanel .pigeons-bar-identity-actions > *{ flex:1 1 0; min-width:0; }
+    #pigeonsMergedPanel :is(#pigeonsBarLoggedIn .pigeons-bar-balance-buy, .pigeons-calc-toggle-btn){ height:38px; min-height:0 !important; margin:0 !important; padding:0 0.3em !important; font-size:12px !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; box-sizing:border-box; }
+    #pigeonsMergedPanel .pigeons-bar-calc-col{ order:3; display:grid !important; grid-template-columns:repeat(3, minmax(0, 1fr)) !important; gap:0.4rem !important; width:100%; }
+    #pigeonsMergedPanel .pigeons-bar-calc-col[style*="none"]{ display:none !important; }
+    #pigeonsMergedPanel .pigeons-bar-calc-col > :first-child{ grid-column:auto !important; }
+
+    /* Stats carousel — a real swipeable carousel again on phones (one
+       page of tiles at a time, dots underneath) instead of every tile
+       stacked in one block. */
+    #collectionDetailsPanel{ padding:0.6rem 0.8rem 0.55rem !important; }
+    #collectionDetailsPanel .stats-carousel-arrow{ display:none !important; }
+    #collectionDetailsPanel .stats-carousel-dots{ display:flex !important; margin-top:0.45rem; gap:0.2rem; }
+    #collectionDetailsPanel .stats-dot{ width:7px; height:7px; box-sizing:content-box; border:5px solid transparent; background-clip:padding-box; cursor:pointer; }
+    #collectionDetailsPanel .stats-carousel-viewport{ display:grid !important; grid-template-columns:minmax(0, 1fr) !important; position:relative; overflow:hidden !important; min-height:0 !important; touch-action:pan-y; }
+    #collectionDetailsPanel .stats-carousel-viewport .stats-page{ display:flex !important; grid-area:1 / 1; position:relative !important; align-self:center; width:100% !important; transition:transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease !important; }
+    #collectionDetailsPanel .stats-carousel-viewport .stats-page{ transform:translateX(100%) !important; opacity:0 !important; pointer-events:none !important; }
+    #collectionDetailsPanel .stats-carousel-viewport .stats-page.stats-page-active{ transform:translateX(0) !important; opacity:1 !important; pointer-events:auto !important; }
+    #collectionDetailsPanel .stats-carousel-viewport .stats-page.stats-page-prev{ transform:translateX(-100%) !important; }
+    #collectionDetailsPanel .stats-carousel-viewport .stats-page.stats-page-exit-right{ transform:translateX(100%) !important; }
+    #collectionDetailsPanel .stats-carousel-viewport .stats-page.stats-page-park-left{ transition:none !important; transform:translateX(-100%) !important; }
+    #collectionDetailsPanel .stats-carousel-viewport .stats-page.stats-page-off{ display:none !important; }
+    #collectionDetailsPanel .stats-strip{ flex-wrap:wrap !important; gap:0.4rem !important; }
+    #collectionDetailsPanel .stats-strip{ flex-wrap:nowrap !important; align-items:stretch; }
+    #collectionDetailsPanel .stats-carousel-viewport .stat-tile{ flex:1 1 0 !important; min-width:0 !important; width:auto !important; min-height:58px; box-sizing:border-box; padding:0.5rem 0.25rem !important; background:rgba(0,0,0,0.35); border-color:rgba(255,255,255,0.16); }
+    #collectionDetailsPanel .stats-carousel-viewport .stat-label{ font-size:9.5px !important; letter-spacing:0.08em; line-height:1.25; margin-bottom:0.25rem; white-space:normal !important; max-width:100%; }
+    #collectionDetailsPanel .stats-carousel-viewport .stat-value{ font-size:13px !important; font-weight:700; line-height:1.2; white-space:normal !important; overflow-wrap:anywhere; max-width:100%; }
+  }
 </style>
 </head>
 <body>
@@ -11112,7 +11251,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        since there's no ancestor display:none left here to hide behind. -->
   <div class="flyout-popup-backdrop" id="flyoutPopupBackdrop"></div>
   <div class="bottom-controls-bar" id="bottomControlsBar" style="display:none;">
-    <button type="button" class="bottom-controls-btn" id="bottomSortBtn">S0RT BY ▾</button>
+    <button type="button" class="bottom-controls-btn" id="bottomSortBtn">S0RT BY</button>
     <!-- SATCHEL / BACK T0 T0P / SWEEP as round buttons in the middle
          (reported live 2026-09-27); your own view gets MULT!-L!ST. -->
     <div class="bottom-quick">
@@ -11121,7 +11260,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <button type="button" class="rq-btn bq-btn bq-top" id="backToTopBtn" title="BACK T0 T0P" aria-label="BACK T0 T0P">&#9650;</button>
       <button type="button" class="rq-btn bq-btn" id="bottomSweepBtn" title="SWEEP THE FL00R">&#129529;</button>
     </div>
-    <button type="button" class="bottom-controls-btn" id="bottomTraitsBtn">F!LTER BY TRA!TS ▾</button>
+    <button type="button" class="bottom-controls-btn" id="bottomTraitsBtn">F!LTER BY TRA!TS</button>
   </div>
 
   <div class="page">
@@ -11150,7 +11289,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
             <button class="pigeons-bar-copy-btn" id="copyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="copyIssuerLabel">C0PY</span></button>
           </div>
-          <button class="pigeons-bar-help-box" id="onboardLink"><span class="pigeons-bar-help-mark">?</span> New to the XRPL, NFTs, memes? Click here.</button>
+          <button class="pigeons-bar-help-box" id="onboardLink"><span class="pigeons-bar-help-mark">?</span> <span class="lbl-full">New to the XRPL, NFTs, memes? Click here.</span><span class="lbl-short">NEW HERE? START HERE</span></button>
         </div>
         <!-- Shown instead of the block above once MY_WALLET is set (real
              server-verified session, see onRequestGet/__SWAP_WALLET__) —
@@ -11162,7 +11301,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
             <div class="pigeons-bar-identity-actions">
               <a class="pigeons-bar-balance-buy" id="pigeonsBarDexBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER</a>
-              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn">V!EW MY P!GE0NS</button>
+              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn"><span class="lbl-full">V!EW MY P!GE0NS</span><span class="lbl-short">&#128038; MY NFTS</span></button>
               <!-- WATCHL!ST for THIS collection specifically (reported live)
                    — unlike V!EW NFTs above (which reopens the MA!NFRAME
                    picker to pick a collection first), this one already knows
@@ -11170,7 +11309,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                    WATCHL!ST panel (Σκύλλα's own profileTabPanelWatchlist,
                    see renderProfileWatchlist) pre-filtered to state.collection
                    — see showWatchlistBtn's own click handler in the JS. -->
-              <button class="pigeons-bar-balance-buy" id="showCollectionWatchlistBtn">WATCHL!ST</button>
+              <button class="pigeons-bar-balance-buy" id="showCollectionWatchlistBtn"><span class="lbl-full">WATCHL!ST</span><span class="lbl-short">&#11088; WATCHL!ST</span></button>
             </div>
           </div>
         </div>
@@ -11204,10 +11343,10 @@ const SWAP_HTML = `<!DOCTYPE html>
              #pigeonsCalcModal already had), not separate screens. -->
         <div class="pigeons-bar-calc-col" id="pigeonsBarCalc" style="display:none;">
           <button type="button" class="pigeons-calc-toggle-btn" id="pigeonsCalcToggleBtn">
-            <span id="pigeonsCalcToggleLabel">EXCHANGE CALCULAT0R</span> <span class="pigeons-calc-toggle-arrow">▾</span>
+            <span class="lbl-full"><span id="pigeonsCalcToggleLabel">EXCHANGE CALCULAT0R</span> <span class="pigeons-calc-toggle-arrow">▾</span></span><span class="lbl-short">&#129518; CALC</span>
           </button>
-          <button type="button" class="pigeons-calc-toggle-btn" id="openTopHoldersBtn">T0P 123 H0LDERS</button>
-          <button type="button" class="pigeons-calc-toggle-btn" id="openSalesBtn">SALES H!ST0RY</button>
+          <button type="button" class="pigeons-calc-toggle-btn" id="openTopHoldersBtn"><span class="lbl-full">T0P 123 H0LDERS</span><span class="lbl-short">&#127942; H0LDERS</span></button>
+          <button type="button" class="pigeons-calc-toggle-btn" id="openSalesBtn"><span class="lbl-full">SALES H!ST0RY</span><span class="lbl-short">&#128220; SALES</span></button>
         </div>
       </div>
     </div>
@@ -29107,6 +29246,31 @@ const SWAP_HTML = `<!DOCTYPE html>
       dots[i].style.display = off ? 'none' : '';
       if (off && current === i) gotoStatsPage(stepFrom(current, 1), 1);
     };
+    // Phones have no ◂ / ▸ (see the mobile carousel CSS) — swipe the
+    // strip sideways, or tap a dot, instead.
+    function restartAutoRotate(){ clearInterval(autoTimer); startAutoRotate(); }
+    var swipeX = null, swipeY = null;
+    viewport.addEventListener('touchstart', function(e){
+      swipeX = e.touches[0].clientX;
+      swipeY = e.touches[0].clientY;
+    }, { passive: true });
+    viewport.addEventListener('touchend', function(e){
+      if (swipeX === null) return;
+      var dx = e.changedTouches[0].clientX - swipeX;
+      var dy = e.changedTouches[0].clientY - swipeY;
+      swipeX = null;
+      if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+      var dir = dx < 0 ? 1 : -1;
+      gotoStatsPage(stepFrom(current, dir), dir);
+      restartAutoRotate();
+    }, { passive: true });
+    Array.prototype.forEach.call(dots, function(dot, i){
+      dot.addEventListener('click', function(){
+        if (i === current || pages[i].classList.contains('stats-page-off')) return;
+        gotoStatsPage(i, i > current ? 1 : -1);
+        restartAutoRotate();
+      });
+    });
     startAutoRotate();
   })();
   // 24H SALES stat tile (title="G0 T0 SALES H!ST0RY") used to set a
