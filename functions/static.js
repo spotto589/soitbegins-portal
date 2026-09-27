@@ -9252,6 +9252,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   .market-buy-link:hover{ background:var(--green); color:#000; }
   .xaman-push-toast{ position:fixed; left:50%; top:1.2rem; transform:translate(-50%, -150%); z-index:3000; max-width:92vw; padding:0.9em 1.3em; background:var(--panel-bg-solid); border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 30px rgba(var(--collection-accent-rgb), 0.25); color:var(--white); font-size:15px; font-weight:700; letter-spacing:0.05em; text-align:center; transition:transform 0.25s ease; pointer-events:none; }
   .xaman-push-toast.show{ transform:translate(-50%, 0); }
+  .xaman-reconnect-bar{ position:fixed; left:50%; bottom:4.4rem; transform:translate(-50%, 200%); z-index:2900; width:min(560px, 92vw); padding:0.8em 1.2em; background:#000; border:1px solid rgba(52,255,133,0.85); border-radius:999px; box-shadow:0 0 16px rgba(52,255,133,0.35); color:#fff; font-family:inherit; font-size:13px; font-weight:700; letter-spacing:0.05em; text-align:center; cursor:pointer; transition:transform 0.25s ease; }
+  .xaman-reconnect-bar.show{ transform:translate(-50%, 0); }
+  .xaman-reconnect-bar:hover{ background:rgb(52,255,133); color:#000; }
   .xaman-push-toast.clickable{ pointer-events:auto; cursor:pointer; color:var(--green); text-decoration:none; border-color:var(--green); }
   .market-buy-list{ display:flex; flex-direction:column; align-items:stretch; gap:0.35rem; width:100%; }
   .market-buy-list .market-buy-link{ margin:0; text-align:center; white-space:normal; font-size:15px; padding:0.8em 0.6em; }
@@ -13262,8 +13265,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (MY_WALLET && account === MY_WALLET){
         xamanSdk = st.sdk;
         MY_PUSH_READY = true;
+        hideXamanReconnectBar();
         return;
       }
+      if (xamanReconnecting) return; // reconnecting this wallet, not switching to another
       if (!fromLogin && !pkceLoginPending) return; // a remembered session for some other wallet: ignore
       pkceLoginPending = false;
       fetch('/api/connect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jwt: st.jwt }) })
@@ -13311,7 +13316,70 @@ const SWAP_HTML = `<!DOCTYPE html>
   // app (no QR), and answers like the server would have:
   // { ok, uuid, next: { always, pushed:true } }. Anything going wrong on
   // the browser side falls back to the normal server-created request.
+  // ---- Xaman's browser sign-in lasts 24 hours (Xaman's own limit). Once it
+  // runs out, requests could only be made server-side, and while Xaman has
+  // push switched off for this app those don't reach the phone — the page
+  // fell back to the QR (reported live on L!ST/0FFER/CANCEL). Now the next
+  // sign click reconnects first (one approval in Xaman), then the request
+  // goes straight to the Xaman app as normal. ----
+  var xamanReconnecting = false;
+  var xamanReconnectPromise = null;
+  function xamanSessionMissing(){ return !!(MY_WALLET && !xamanSdk && window.XummPkce); }
+  function startXamanReconnect(){
+    if (xamanReconnectPromise) return xamanReconnectPromise;
+    var pk = getXamanPkce();
+    if (!pk) return Promise.resolve(false);
+    xamanReconnecting = true;
+    showXamanReconnectBar('waiting');
+    xamanReconnectPromise = new Promise(function(resolve){
+      var done = false;
+      var poll = setInterval(function(){ if (xamanSdk) finish(true); }, 400);
+      var cap = setTimeout(function(){ finish(!!xamanSdk); }, 120000);
+      function finish(ok){
+        if (done) return;
+        done = true;
+        clearInterval(poll);
+        clearTimeout(cap);
+        xamanReconnecting = false;
+        xamanReconnectPromise = null;
+        if (ok) hideXamanReconnectBar(); else showXamanReconnectBar('idle');
+        resolve(ok);
+      }
+      try {
+        var r = pk.authorize();
+        if (r && r.then) r.then(function(){ adoptXamanSession(false); }, function(){ finish(false); });
+      } catch (e){ finish(false); }
+    });
+    return xamanReconnectPromise;
+  }
+  // The small bar that says so (and is itself a reconnect button).
+  function showXamanReconnectBar(mode){
+    var b = document.getElementById('xamanReconnectBar');
+    if (!b){
+      b = document.createElement('button');
+      b.type = 'button';
+      b.id = 'xamanReconnectBar';
+      b.className = 'xaman-reconnect-bar';
+      b.addEventListener('click', function(){ if (!xamanReconnectPromise) startXamanReconnect(); });
+      document.body.appendChild(b);
+    }
+    b.innerHTML = mode === 'waiting'
+      ? 'APPR0VE THE S!GN-!N !N <span style="text-transform:none;">Xaman</span> — Y0UR REQUEST G0ES STRA!GHT T0 THE APP AFTER'
+      : '<span style="text-transform:none;">Xaman</span> S!GN-!N EXP!RED (!T LASTS 24H) — TAP T0 REC0NNECT S0 REQUESTS G0 STRA!GHT T0 Y0UR APP';
+    b.classList.add('show');
+  }
+  function hideXamanReconnectBar(){
+    var b = document.getElementById('xamanReconnectBar');
+    if (b) b.classList.remove('show');
+  }
+  // Waits for a reconnect that a click just started, then signs normally.
   function signFetch(url, init){
+    if (!xamanSdk && xamanReconnectPromise){
+      return xamanReconnectPromise.then(function(){ return signFetchNow(url, init); });
+    }
+    return signFetchNow(url, init);
+  }
+  function signFetchNow(url, init){
     if (!xamanSdk) return fetch(url, init);
     var body = {};
     try { body = JSON.parse((init && init.body) || '{}'); } catch (e){ return fetch(url, init); }
@@ -18238,6 +18306,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // on, rather than manually unwinding every piece of client state that
   // reads MY_WALLET across this whole file.
   if (getXamanPkce()) getXamanPkce().state().then(function(st){ if (st) adoptXamanSession(false); }).catch(function(){});
+  // Still no Xaman session for this wallet a few seconds in: say so.
+  setTimeout(function(){ if (xamanSessionMissing() && !xamanReconnectPromise) showXamanReconnectBar('idle'); }, 5000);
   el.scyllaSignOutBtn.addEventListener('click', function(){
     el.scyllaSignOutBtn.disabled = true;
     try { if (getXamanPkce()) getXamanPkce().logout(); } catch (e){}
@@ -18356,6 +18426,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // No popup at all on mobile — see navigateXamanPopup's own comment for
   // why. Only relevant above the mobile breakpoint now.
   function openXamanPopup(){
+    // Sign-in expired: reconnect (inside this click, so Xaman's window is
+    // allowed), then the request goes straight to the app — no QR window.
+    if (xamanSessionMissing()){ startXamanReconnect(); return null; }
     if (MY_PUSH_READY) return null; // pushed to the phone instead — see navigateXamanPopup
     return window.innerWidth <= 700 ? null : window.open('', 'xamanSign', XAMAN_POPUP_FEATURES);
   }
@@ -18538,17 +18611,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     // it once the fetch resolves — window.open() called inside the async
     // .then() below gets silently popup-blocked in most browsers.
     listingXamanTab = openXamanPopup();
-    var viaBrowser = !!xamanSdk;
-    fetch('/api/swap-listing-payload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays, collection: state.collection, currency: currency, clientSign: viaBrowser || undefined })
+    (xamanReconnectPromise || Promise.resolve()).then(function(){
+      var viaBrowser = !!xamanSdk;
+      return fetch('/api/swap-listing-payload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nftId: p.nftId, priceValue: priceValue, durationDays: durationDays, collection: state.collection, currency: currency, clientSign: viaBrowser || undefined })
+      });
     }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
     .then(function(res){
       // Browser session: create the request here so Xaman pushes it.
       if (res.ok && res.data && res.data.clientSign){
         return createFromBrowser(res.data.txjson, res.data.intent).then(function(created){
-          return { ok: true, data: { ok: true, uuid: created.uuid, next: created.next, pushedFlag: !!created.pushed } };
+          return { ok: true, data: { ok: true, uuid: created.uuid, next: created.next || { always: 'https://xumm.app/sign/' + created.uuid }, pushedFlag: true } };
         });
       }
       return res;
