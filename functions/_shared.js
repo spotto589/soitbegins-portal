@@ -2014,7 +2014,7 @@ export async function fetchTopTokenHolders(collectionKey, n = 10) {
 // ─────────────────────────────────────────────────────────────────────────
 const COIN_HIST_KEY = 'coinhist:v1';
 const COIN_HIST_REFRESH_MS = 30 * 60 * 1000;
-const COIN_HIST_PAGES_PER_STEP = 8;
+const COIN_HIST_PAGES_PER_STEP = 4; // 8 hit the background time limit on the live site
 const COIN_HIST_HOURS_KEPT = 9 * 24;
 const RIPPLE_EPOCH = 946684800;
 
